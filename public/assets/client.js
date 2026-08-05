@@ -61,6 +61,22 @@ export class Live {
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) this.checkAlive(true);
     });
+
+    /*
+     * Keep the server awake.
+     *
+     * Hosts that sleep idle apps (Render's free tier does, after 15 minutes)
+     * count INBOUND requests. Our live connection is outbound-only once it is
+     * open — the server pushes to it and the browser never sends anything —
+     * so a quiet lobby or a long gap between rounds could look like no
+     * traffic at all and put the app to sleep with the room watching.
+     *
+     * One tiny request every four minutes is enough to stop that. It costs
+     * nothing and it removes a whole category of gig-night disaster.
+     */
+    setInterval(() => {
+      fetch('/health', { cache: 'no-store' }).catch(() => {});
+    }, 4 * 60 * 1000);
   }
 
   connect() {

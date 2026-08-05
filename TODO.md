@@ -21,13 +21,18 @@ deployed anything.
 - [ ] Open `https://YOURNAME.onrender.com/console?key=YOUR_HOST_KEY` and
       **bookmark it on your phone** — everything else is one tap from there
 
-**Decide: free tier or $7/month Starter?**
+**DECIDED: free tier**, waking it up before each gig.
 
-The free tier goes to sleep after 15 minutes idle and takes 30–60 seconds to
-wake. That is a blank screen while sixty people are scanning your QR code.
+The free tier sleeps after 15 minutes with no traffic and takes 30–60 seconds
+to wake. Your routine on the night:
 
-- [ ] Either pay for **Starter** (~£5.50/mo, never sleeps), **or** commit to
-      opening the big screen five minutes before the room fills every single time
+- [ ] Open the big screen **five minutes before** the room starts filling, and
+      leave the tab open. Once a screen or phone is connected the app pings the
+      server every four minutes on its own, so it will not drop off mid-quiz.
+- [ ] If you get a blank page, that is it waking up — wait a minute, do not
+      refresh repeatedly.
+
+Move to **Starter** ($7/mo) if the waking-up ever catches you out.
 
 ---
 
@@ -111,21 +116,22 @@ This one matters and is easy to miss, because **nothing breaks when it goes
 wrong**. The history lives in the `data/` folder, and Render wipes that on
 every deploy. The generator just quietly stops blocking songs it should block.
 
-Pick one:
+**DECIDED: generate at home and commit.** Render disks need a paid instance,
+so on the free tier this is the only way the memory survives.
 
-- [ ] **Option A — Render Disk.** Service → Settings → Disks → Add Disk, mount
-      path `/opt/render/project/src/data`, 1 GB. About 20p/month, needs a paid
-      instance. Then generate whenever you like and it remembers.
-- [ ] **Option B — generate at home.** Run the app on your laptop, build packs
-      there, then commit both the pack and the history:
+`.gitignore` is already set up for it — `data/track-history.json` is tracked
+while the rest of `data/` is not. So the routine is:
+
+- [ ] Build packs on your laptop (`npm start`, then the console's **Build it**)
+- [ ] Commit the pack and the history together:
       ```bash
-      git add bingo/ data/track-history.json
-      git commit -m "New bingo round" && git push
+      git add bingo/ quizzes/ data/track-history.json
+      git commit -m "New bingo round"
+      git push
       ```
-      If you go this way, remove the `data/` line from `.gitignore` first.
 
-Do nothing and the app still works fine — you will just get repeats sooner
-than you meant to.
+Generating on the **live** site still works, but that pack and its history
+entries vanish on the next deploy. Do it at home.
 
 ---
 

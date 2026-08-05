@@ -1,8 +1,14 @@
 node_modules/
 
-# Live quiz state and the generated host key. Machine-specific, and the state
+# Live game state and the generated host key — machine-specific, and the state
 # file is rewritten constantly during a gig.
-data/
+data/*
+
+# ...but the song history IS worth keeping. It is what stops the generator
+# repeating songs between gigs, and on a host that wipes its filesystem on
+# every deploy (Render's free tier does) committing it is the only way it
+# survives. Generate packs at home, commit this file, push.
+!data/track-history.json
 
 # NOTE: images/ is deliberately NOT ignored. Your host builds from git, so any
 # picture that is not committed does not exist on the deployed app and round 2
