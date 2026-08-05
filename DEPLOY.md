@@ -23,14 +23,13 @@ That is it. No credit card needed for the free tier.
 
 ---
 
-## Step 1 — make sure GitHub has a `main` branch
+## Step 1 — know your branch name
 
-The code is already on GitHub, but on a branch with an awkward name, and
-Render expects `main`. Rename it — it takes three clicks and loses nothing:
+The code is on GitHub on a branch called **`MusicQuizApp`**. Render asks which
+branch to watch, and that is the answer.
 
-1. Go to https://github.com/markh1984-spec/MusicQuizApp/branches
-2. Click the **pencil icon** next to `claude/new-session-jzx988`
-3. Type `main` and click **Rename branch**
+Most guides say `main`. Yours is not called that, which is fine — just use
+`MusicQuizApp` wherever a guide says `main`.
 
 If you are working from a copy on your own computer, push any changes first:
 
@@ -58,7 +57,7 @@ account password. GitHub's own prompt links to where you make one.
    |---|---|
    | **Name** | `musicquiz` — this becomes your web address, so pick something you would not mind reading out |
    | **Region** | **Frankfurt** — closest to the UK, so the lowest lag on the night |
-   | **Branch** | `main` |
+   | **Branch** | `MusicQuizApp` |
    | **Runtime** | Node |
    | **Build Command** | leave it as `npm install` |
    | **Start Command** | `npm start` |

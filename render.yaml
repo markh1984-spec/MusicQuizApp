@@ -11,7 +11,7 @@ services:
     runtime: node
     plan: free            # change to "starter" so it never sleeps — see DEPLOY.md
     region: frankfurt     # closest Render region to the UK
-    branch: main
+    branch: MusicQuizApp
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /health

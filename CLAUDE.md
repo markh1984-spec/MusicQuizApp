@@ -166,6 +166,17 @@ anything structural:
 
 ---
 
+## Where to push
+
+The deploy branch is **`MusicQuizApp`** — not `main`, which does not exist.
+Render watches it, so anything not pushed there does not reach the live app.
+Push straight to it; the host asked for that rather than merging by hand.
+
+`claude/new-session-jzx988` is a leftover with identical content and can be
+ignored or deleted.
+
+---
+
 ## Current state
 
 All five build stages plus bingo, the console and generation are done, tested

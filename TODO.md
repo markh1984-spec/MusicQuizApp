@@ -7,18 +7,18 @@ you can copy and paste.
 
 ---
 
-# PART 1 — Tidy up GitHub (3 minutes)
+# PART 1 — GitHub (done)
 
-Right now all the code sits on a branch with an awkward name, and there is no
-`main` branch at all. Renaming it makes everything afterwards simpler.
+Your branch is called **`MusicQuizApp`**. That is the one Render should watch,
+and the one all changes get pushed to.
 
-1. Go to **https://github.com/markh1984-spec/MusicQuizApp/branches**
-2. You will see one branch: `claude/new-session-jzx988`
-3. On the right of that row, click the **pencil icon** (rename)
-4. Delete what is there and type: `main`
-5. Click **Rename branch**
+Most guides online say `main` — yours is not called that, and it does not
+matter. Wherever a guide says `main`, use `MusicQuizApp`.
 
-Done. Nothing is lost and the repository address stays the same.
+**Optional tidy-up:** there is a leftover branch called
+`claude/new-session-jzx988` with identical content. To get rid of it, go to
+**https://github.com/markh1984-spec/MusicQuizApp/branches**, and click the
+**bin icon** next to it. Purely cosmetic — nothing depends on it.
 
 ---
 
@@ -44,7 +44,7 @@ Done. Nothing is lost and the repository address stays the same.
 |---|---|
 | **Name** | `musicquiz` (this becomes your web address) |
 | **Region** | `Frankfurt (EU Central)` |
-| **Branch** | `main` |
+| **Branch** | `MusicQuizApp` |
 | **Build Command** | `npm install` |
 | **Start Command** | `npm start` |
 | **Instance Type** | `Free` |
