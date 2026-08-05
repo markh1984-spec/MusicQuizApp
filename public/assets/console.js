@@ -159,7 +159,7 @@ function backupWarning(gen) {
        Check GITHUB_TOKEN has <b>Contents: read and write</b> on
        ${esc(process_repo(gen))}, and that GITHUB_REPO looks like <code>owner/name</code>.`
     : `Set <b>GITHUB_TOKEN</b> and <b>GITHUB_REPO</b> to have packs filed into your
-       repository automatically. See TODO.md part 4.`;
+       repository automatically. See TODO.md part 2c.`;
 
   return [node(`
     <div class="panel backup-warn">

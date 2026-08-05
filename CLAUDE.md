@@ -231,11 +231,16 @@ recreate it.
 
 ## Current state
 
-All five build stages plus bingo, the console and generation are done, tested
-and pushed to `claude/new-session-jzx988`. Nothing is half-finished in the
-tree.
+All five build stages plus bingo, the console, generation, pack import and the
+tickable review flags are done, tested and pushed to **`MusicQuizApp`**.
+Nothing is half-finished in the tree. 176 tests green.
 
-Outstanding work is all on the host's side — see **TODO.md**.
+(An earlier version of this line named `claude/new-session-jzx988`. That branch
+is gone — see **Where to push**.)
+
+Outstanding work is all on the host's side — see **TODO.md**. Short version:
+an OpenAI key for the round 2 portraits, and the one-time Spotify login. Both
+optional; the app runs a full quiz and a full bingo night without either.
 
 Designed for but deliberately not built: photo uploads, filters, semi-automated
 social posting, team play, venue branding. The data model and screen layout

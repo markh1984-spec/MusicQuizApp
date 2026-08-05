@@ -6,6 +6,33 @@ Every step has the link you need next to it. Work down it in order.
 
 ---
 
+## Where the project is right now
+
+The app is finished and pushed. Nothing is half-built, and nothing is waiting
+on me. Everything left is on your side, and only two things cost money:
+
+| | What | Where | Costs |
+|---|---|---|---|
+| 1 | Set your own `HOST_KEY` so bookmarks stop breaking | Part 2a | free |
+| 2 | Read the questions before anyone else does | Part 3 | free |
+| 3 | OpenAI key, so round 2 stops using placeholder drawings | Part 6 | ~£8 once, ~50p a quiz |
+| 4 | Spotify login, so bingo builds its own playlist | Part 7 | free |
+| 5 | Move to the $7 tier before the first paying gig | Part 10 | $7/mo |
+
+3 and 4 are genuinely optional — the app runs a whole quiz night and a whole
+bingo night without either. Round 2 just looks like placeholder art, and you
+build the bingo playlist by hand.
+
+**Newest since you last looked:**
+
+- **Flags you can tick off** as you read a quiz through — Part 3a. This is the
+  one that changes your evening.
+- **Import a track list you already have** into a bingo pack, from a Spotify
+  link or pasted text — Part 7e. Means your existing Claude-in-the-browser way
+  of building rounds still works.
+
+---
+
 ## Quick links — the ones you will use constantly
 
 | What | Link |
@@ -115,7 +142,44 @@ From then on that bookmark just opens. Same trick works for
 If a key ever stops being accepted, the page gives you a box to type the new
 one in rather than an error you cannot get past.
 
-## 2c. Test it end to end
+## 2c. Keep what you make on the live site — you have already done this
+
+**Already set up.** Written down because nothing else records it, and if you
+ever rebuild the service you will need it again.
+
+The live app has no permanent disk on the free tier. Anything generated or
+edited there is wiped on the next redeploy, and a redeploy happens every time
+you push. So instead the app **commits packs back to your repository**.
+
+Three variables on 🔗
+https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env :
+
+| Key | Value |
+|---|---|
+| `GITHUB_TOKEN` | a fine-grained token, below |
+| `GITHUB_REPO` | `markh1984-spec/MusicQuizApp` |
+| `GITHUB_BRANCH` | `MusicQuizApp` — optional, that is already the default |
+
+The token comes from 🔗 https://github.com/settings/personal-access-tokens —
+**Generate new token**, repository access **Only select repositories** →
+`MusicQuizApp`, and exactly two permissions:
+
+- **Contents**: Read and write
+- **Metadata**: Read-only (it adds this itself)
+
+Its commit messages end in `[skip render]` so filing a pack does **not**
+restart the app — which matters if it ever happens mid-gig.
+
+You will know it is working: the yellow "nothing here is being saved
+permanently" banner at the top of the Console disappears, and generating a pack
+says *backed up* rather than *saved here only*.
+
+> Still safer to generate at home (Part 8). The backup covers the pack, but a
+> pack generated on the live site loses its song history on the next deploy —
+> which is what makes bingo repeat itself. **If songs start repeating, that is
+> the first thing to check.**
+
+## 2d. Test it end to end
 
 - [ ] Open https://musicquizapp.onrender.com/screen on your laptop — you should
       get a lobby with a QR code
@@ -141,6 +205,36 @@ If all that works, the hard part is done and you have a usable quiz.
 
 The one job I genuinely cannot do for you.
 
+## 3a. Work through the flags
+
+Start in the **Console**, not the Editor — press **Read** on a pack and the
+suspicious questions are listed at the top, before the questions themselves.
+
+🔗 `https://musicquizapp.onrender.com/console?key=YOURKEY`
+
+These are hunches, not errors. The app cannot tell whether a fact is true; it
+can only spot the shapes that usually hide a second defensible answer — a fact
+that names one of the wrong options, words like "only" or "first", a correct
+answer that is a negative.
+
+- [ ] Read each flag, decide, and press **Checked**
+- [ ] It drops off the list, so what is left is only what you have not looked
+      at yet. When the last one goes the panel turns green.
+- [ ] Ticked one by mistake? **Show N you have checked** → **Undo**
+
+The ticks are saved on the question, not in the browser — so you can start on
+the laptop and finish on your phone. Rewrite the wording a flag was about and
+the flag comes back, on purpose: a tick means "I read this wording", not "stop
+bothering me about this question".
+
+You can also rename the quiz and its rounds from this same panel. That needs
+**Save**; the flag ticks save themselves as you press them.
+
+## 3b. Read the rest
+
+The flags only catch the mechanical faults. A question can be perfectly shaped
+and still wrong.
+
 🔗 `https://musicquizapp.onrender.com/editor?key=YOURKEY`
 
 - [ ] Read all 30 questions. The correct answer is the green one.
@@ -148,7 +242,7 @@ The one job I genuinely cannot do for you.
       identical options), but **not** factual ones. Only you can do those.
 - [ ] Fix anything you disagree with. Click **Save** when done.
 - [ ] Anything you change on the live site is lost the next time the app
-      redeploys, so also press **Download** and keep the file. See Part 7 for
+      redeploys, so also press **Download** and keep the file. See Part 8 for
       how to make changes permanent.
 
 ---
@@ -340,6 +434,36 @@ npm run spotify:login
 They never expire. **Keep them private** — do not paste them into a message and
 do not commit them.
 
+> **If you set Spotify up before today, run `npm run spotify:login` again.**
+> Reading your own private playlists needs a permission the original setup did
+> not ask for. Without it, importing a private playlist fails with "does not
+> exist" — which is Spotify's unhelpful way of saying "you did not ask for
+> permission". Same steps, takes two minutes, and it replaces the three lines
+> in `.env`.
+
+## 7e. Bringing in a list you already have
+
+You do not have to generate every bingo round from a blank box. On the **Music
+Bingo** tab, under the generator, there is **Or bring in a list you already
+have**. It takes either:
+
+- **a Spotify playlist link** — one you built yourself, or one Claude built for
+  you in your browser. Paste the link, press **Import**.
+- **a pasted track list** — click *or paste a track list instead*. One track
+  per line. It copes with numbered lists, bullets, bold, `Title — Artist`,
+  `Title by Artist`, and a year on the end.
+
+With Spotify connected it looks each track up so the pack matches what your DJ
+app will actually play. Without it, the pack keeps the names as you typed them,
+which is fine — you are the one playing the tracks.
+
+A 4×4 card needs **at least 24 tracks**, not 16. Sixteen would fill every card
+with the same sixteen songs and the whole room would finish at once.
+
+**Skip songs played recently** is off by default here, because an imported list
+is usually one you chose on purpose. Tick it if you want the no-repeats rule
+applied.
+
 ---
 
 # PART 8 — Making new rounds from now on
@@ -356,9 +480,10 @@ npm start
 
 Then in the Console:
 
-1. Type a theme into **New bingo round**
-2. Press **Build it**
-3. Open the **Editor** and read through it
+1. Type a theme into **New bingo round** and press **Build it** — or paste a
+   list you already have into **Or bring in a list you already have** (7e)
+2. Press **Read** on the new pack and work through the flags (Part 3a)
+3. Open the **Editor** if you want to change any wording
 4. Stop the app with `Ctrl` and `C`
 
 Then send it to the live app:
