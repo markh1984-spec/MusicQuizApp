@@ -93,7 +93,9 @@ Only the four options. Keeps the room looking up, makes googling harder.
 | **No build step** | Plain HTML/CSS/JS. Mark comes back to change this between gigs. |
 | **Packs are JSON files** | That is what makes a quiz reusable months later and the editor simple. No database. |
 | **No profanity filter on team names** | Explicitly requested. Rude names go on the projector as typed. Only control characters stripped, 28-char cap, HTML escaped — that is anti-breakage, not censorship. **Do not add word filtering.** |
-| **Photo uploads will auto-publish** | Host decided; he will handle the room with the mic. Build a manual kill switch, not an approval queue. |
+| **Photo uploads auto-publish** | Host decided; he will handle the room with the mic. There is a kill switch and a per-photo bin in `src/photos.js` and **no approve step anywhere**. Do not add one. |
+| **Photos are never backed up to git** | Everything else saved is a pack worth having in six months. These are pictures of members of the public and the repo is not the place for them. They live for the night. |
+| **Filters are pixel maths, not `ctx.filter`** | `public/assets/filters.js`. Older iOS does not implement `ctx.filter`, and a filter that silently does nothing on a third of the room is worse than none. The preview and the upload go through the same function so they cannot drift. |
 | **No Instagram follow-for-points** | No API can verify a follow. Told the host; he agreed to drop it rather than fake it. |
 | **British spelling and UK chart references** | Crowds are Essex, Kent and Surrey. This is in the generation prompts too. |
 | **Deploying on Render** | Chosen by the host. Serverless (Vercel/Netlify) is wrong — the app holds a live connection to every phone all night. |
@@ -177,6 +179,8 @@ src/history.js         no-repeats memory for bingo generation
 src/generate-bingo.js  theme -> Claude -> history filter -> Spotify -> pack
 src/spotify.js         playlist building
 src/qrcode.js          dependency-free QR encoder
+src/photos.js          photos from the room: store, kill switch, bin
+src/generate-images.js round 2 artwork (placeholder or OpenAI)
 public/                the screens; *-bingo.js files hold the bingo variants
 quizzes/ bingo/        the library
 data/                  live state, history, archived nights (gitignored)

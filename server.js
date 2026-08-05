@@ -18,6 +18,7 @@ import path from 'node:path';
 import { config, paths, hostKey } from './src/config.js';
 import { Store } from './src/store.js';
 import { Hub } from './src/sse.js';
+import { Photos, MAX_BYTES } from './src/photos.js';
 import { Session } from './src/session.js';
 import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked } from './src/quizzes.js';
 import { validateBingoPack, normaliseBingoPack } from './src/bingo.js';
@@ -34,6 +35,10 @@ import { toSvg } from './src/qrcode.js';
 const HOST_KEY = hostKey();
 const store = new Store(paths.state);
 const hub = new Hub();
+// Kept outside the game state: a night is often a quiz and then bingo, and
+// launching the second one throws the first game away. The photos should not
+// go with it.
+const photos = new Photos(paths.photos);
 
 const session = new Session({ config, store, onPush: () => pushState() }).boot();
 
@@ -57,6 +62,11 @@ function viewFor(client) {
   const view = client.role === 'host' ? session.hostView()
     : client.role === 'player' ? session.playerView(client.playerId)
     : session.screenView();
+  // The wall of photos rides along with whatever else is on screen, so it
+  // survives every phase change and every game without each card knowing.
+  if (client.role === 'screen') view.photos = photos.forScreen();
+  else if (client.role === 'host') view.photos = { enabled: photos.enabled, count: photos.count(), items: photos.forHost() };
+  else view.photosOpen = photos.enabled;
   // Your name travels with every payload, so a page never has to ask for it
   // separately or flash the wrong thing while it loads.
   view.brand = config.brandName;
@@ -83,6 +93,18 @@ function send(res, status, body, headers = {}) {
 
 function sendJson(res, status, data) {
   send(res, status, JSON.stringify(data), { 'Content-Type': 'application/json; charset=utf-8' });
+}
+
+/** Raw bytes, refused rather than truncated once they go over the limit. */
+async function readBody(req, limitBytes) {
+  const chunks = [];
+  let total = 0;
+  for await (const chunk of req) {
+    total += chunk.length;
+    if (total > limitBytes) throw new Error('Body too large');
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
 }
 
 async function readJson(req, limitBytes = 1024 * 1024) {
@@ -191,6 +213,36 @@ async function handleGet(req, res, url, route) {
     const swap = rel.replace(/\.(png|jpg|jpeg|webp)$/i, '.svg');
     const exists = fs.existsSync(path.join(config.imageDir, rel));
     return serveFile(res, config.imageDir, exists ? rel : swap, { cache: true }), true;
+  }
+
+  /*
+   * Serving a photo. Only a filename the app itself issued is ever looked up,
+   * so nothing from the request reaches the filesystem as a path.
+   *
+   * No key on this one — it has to load on the projector, which has no key,
+   * and the whole point is that the room can see them.
+   */
+  if (route.startsWith('/photos/')) {
+    const full = photos.fileFor(decodeURIComponent(route.slice('/photos/'.length)));
+    if (!full) return send(res, 404, 'Not found'), true;
+    return fs.readFile(full, (err, data) => {
+      if (err) return send(res, 404, 'Not found');
+      res.writeHead(200, {
+        'Content-Type': MIME[path.extname(full).toLowerCase()] || 'image/jpeg',
+        'Cache-Control': 'public, max-age=3600',
+      });
+      res.end(data);
+    }), true;
+  }
+
+  // Everything from the night in one go, for the social posts afterwards.
+  if (route === '/api/photos.zip' || route === '/api/photos/list') {
+    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    return sendJson(res, 200, {
+      enabled: photos.enabled,
+      count: photos.count(),
+      photos: photos.forHost(1000),
+    }), true;
   }
 
   // ---- the join QR
@@ -371,6 +423,44 @@ async function handleWrite(req, res, url, route) {
     return sendJson(res, 200, { id: player.id, name: player.name, score: player.score ?? 0, game: session.kind }), true;
   }
 
+  /*
+   * A photo from somebody's phone, straight onto the big screen.
+   *
+   * There is no approval step, on purpose and by the host's explicit decision:
+   * the fun is that it is theirs to do, and he handles the room with the mic.
+   * What he has instead is a switch that stops the lot and a bin for one, both
+   * on his control view and both one tap.
+   *
+   * The body is the image itself rather than a form or base64. A phone photo
+   * is already scaled down before it is sent; wrapping it in base64 would add
+   * a third again for nothing, on the worst wifi in the building.
+   */
+  if (route === '/api/photo' && req.method === 'POST') {
+    if (!photos.enabled) return sendJson(res, 200, { ok: false, reason: 'off' }), true;
+
+    const playerId = String(url.searchParams.get('playerId') || '');
+    const player = session.engine.state.players[playerId];
+    // Joined phones only. Not a security boundary — it stops a stray request
+    // putting an unattributed picture on a projector.
+    if (!player) return sendJson(res, 200, { ok: false, reason: 'not_playing' }), true;
+
+    let bytes;
+    try {
+      bytes = await readBody(req, MAX_BYTES);
+    } catch {
+      return sendJson(res, 200, { ok: false, reason: 'too_big' }), true;
+    }
+
+    const result = photos.add(bytes, {
+      contentType: req.headers['content-type'],
+      playerId,
+      teamName: player.name,
+      filter: String(url.searchParams.get('filter') || ''),
+    });
+    if (result.ok) pushState();
+    return sendJson(res, 200, result.ok ? { ok: true, id: result.photo.id } : result), true;
+  }
+
   // What a phone is allowed to do: answer a question, or mark a bingo square
   // and call house. Nothing else, and nothing that could hand out a new card.
   if (['/api/answer', '/api/mark', '/api/claim'].includes(route) && req.method === 'POST') {
@@ -397,6 +487,25 @@ async function handleWrite(req, res, url, route) {
       } catch (err) {
         return sendJson(res, 400, { error: err.message }), true;
       }
+    }
+
+    // The photo controls: the switch, and the bin. Deliberately as immediate
+    // as every other button on that view — something on the projector that
+    // should not be there is not a moment for a confirmation dialog.
+    if (action === 'photosOn') {
+      photos.setEnabled(body.on !== false);
+      pushState();
+      return sendJson(res, 200, { ok: true, enabled: photos.enabled }), true;
+    }
+    if (action === 'photoRemove') {
+      const removed = photos.remove(String(body.id || ''));
+      if (removed) pushState();
+      return sendJson(res, 200, { ok: removed }), true;
+    }
+    if (action === 'photosClear') {
+      const n = photos.clear();
+      pushState();
+      return sendJson(res, 200, { ok: true, cleared: n }), true;
     }
 
     const ok = session.run(action, body);

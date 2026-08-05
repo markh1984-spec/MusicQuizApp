@@ -36,6 +36,10 @@ export const config = {
 export const paths = {
   state: path.join(config.dataDir, 'state.json'),
   hostKey: path.join(config.dataDir, 'host-key.txt'),
+  // Under data/, so gitignored. Photos of the public do not belong in a
+  // repository, and unlike a pack there is no reason to want them in six
+  // months — they are for the night and the download button.
+  photos: path.join(config.dataDir, 'photos'),
 };
 
 /**

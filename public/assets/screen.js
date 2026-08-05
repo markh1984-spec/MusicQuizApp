@@ -71,6 +71,58 @@ function draw(next) {
   } else if (card.update) {
     card.update(state);
   }
+
+  paintPhotos(state);
+}
+
+/**
+ * The wall of photos from the room.
+ *
+ * Lives outside the card so it survives every phase change without each card
+ * having to know it exists — the same reason the clock and the connection do.
+ *
+ * Only on the screens where the room is looking around rather than at a
+ * question: the lobby while people arrive, and between rounds. Never during a
+ * question, where twenty seconds of four options wants the whole projector and
+ * a wall of faces is exactly the wrong thing to be looking at.
+ *
+ * Newest first, so a photo taken thirty seconds ago is the one on the left
+ * where everybody is looking.
+ */
+const PHOTO_PHASES = new Set(['lobby', 'round_board', 'final', 'won', 'finished']);
+
+function paintPhotos(s) {
+  const items = s.photos || [];
+  let strip = document.getElementById('photoStrip');
+  const wanted = items.length > 0 && PHOTO_PHASES.has(s.phase);
+
+  if (!wanted) {
+    if (strip) strip.remove();
+    return;
+  }
+  if (!strip) {
+    strip = node('<div class="photo-strip" id="photoStrip"></div>');
+    document.querySelector('.stage').appendChild(strip);
+  }
+
+  // Rebuild only what changed. A strip that re-renders wholesale on every
+  // state push would flash on the projector every time anybody answered.
+  const have = new Map([...strip.children].map((c) => [c.dataset.id, c]));
+  const wantedIds = new Set(items.map((p) => p.id));
+  for (const [id, el] of have) if (!wantedIds.has(id)) el.remove();
+
+  items.forEach((p, i) => {
+    let el = have.get(p.id);
+    if (!el) {
+      el = node(`
+        <figure class="photo" data-id="${esc(p.id)}">
+          <img src="${esc(p.url)}" alt="">
+          ${p.teamName ? `<figcaption>${esc(p.teamName)}</figcaption>` : ''}
+        </figure>`);
+    }
+    // Keep them in order without disturbing ones already in place.
+    if (strip.children[i] !== el) strip.insertBefore(el, strip.children[i] || null);
+  });
 }
 
 // ------------------------------------------------------------------- lobby

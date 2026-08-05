@@ -59,7 +59,7 @@ function draw(next) {
   }
   whereEl.textContent = whereLabel(state);
   connEl.textContent = `${state.playerCount} ${state.playerCount === 1 ? 'team' : 'teams'} in`;
-  mainEl.replaceChildren(...restartNotice(state), ...buildPanels(state));
+  mainEl.replaceChildren(...restartNotice(state), ...buildPanels(state), ...photoPanel(state));
   actionsEl.replaceChildren(...buildActions(state));
 }
 
@@ -111,6 +111,57 @@ function whereLabel(s) {
     case 'final': return 'Final results';
     default: return 'Control';
   }
+}
+
+/**
+ * The photo controls: a switch and a bin.
+ *
+ * Deliberately not an approval queue. The host decided that at the start and
+ * for a good reason — the fun is that the room can do it without him, and he
+ * would rather say "no naughtiness" over the mic than spend a quiz night
+ * approving pictures. What he needs instead is to be able to kill it instantly
+ * when something does go up, which is one switch and one tap per photo.
+ *
+ * The switch is a single control on purpose. "Stop accepting" and "hide the
+ * ones already up" as separate settings is a thing to reason about in a dark
+ * room with sixty people watching. Off means off: nothing new is taken, and
+ * nothing already there is on the screen.
+ *
+ * The host keeps seeing them when it is off, because otherwise the offending
+ * photo becomes invisible to the only person who can delete it.
+ */
+function photoPanel(s) {
+  const info = s.photos;
+  if (!info) return [];
+
+  const el = node(`
+    <div class="panel photos ${info.enabled ? '' : 'off'}">
+      <div class="photo-head">
+        <h3>Photos on the big screen</h3>
+        <button class="minor ${info.enabled ? 'danger' : ''}" data-a="toggle">${info.enabled ? 'Switch off' : 'Switch on'}</button>
+      </div>
+      <div class="tiny">${info.enabled
+        ? `${info.count} up. They go straight to the screen — tap one to bin it.`
+        : `Off. Nothing new is accepted and the screen is showing none of the ${info.count}.`}</div>
+      <div class="photo-grid"></div>
+      ${info.count ? '<button class="minor danger clear" style="margin-top:10px">Clear all photos</button>' : ''}
+    </div>`);
+
+  el.querySelector('[data-a="toggle"]').addEventListener('click', () => act('photosOn', { on: !info.enabled }));
+  el.querySelector('.clear')?.addEventListener('click', () => {
+    if (confirm(`Delete all ${info.count} photos?\n\nThis cannot be undone.`)) act('photosClear', {});
+  });
+
+  const grid = el.querySelector('.photo-grid');
+  for (const p of info.items) {
+    const fig = node(`<button class="host-photo" title="Bin this one"><img src="${esc(p.url)}" alt=""><span>${esc(p.teamName || '')}</span></button>`);
+    fig.addEventListener('click', () => {
+      if (confirm(`Bin this photo${p.teamName ? ` from ${p.teamName}` : ''}?`)) act('photoRemove', { id: p.id });
+    });
+    grid.appendChild(fig);
+  }
+
+  return [el];
 }
 
 function buildPanels(s) {

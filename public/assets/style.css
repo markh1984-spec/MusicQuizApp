@@ -1485,3 +1485,121 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .panel.pics .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .panel.pics .redo { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
 .pics-slot:empty { display: none; }
+
+/* ================================================================== PHOTOS
+   Pictures from the room. On the projector they are a filmstrip along the
+   bottom, on the phone a sheet with the filters, on the control view a grid
+   small enough to scan and tap in the dark. */
+
+/* ---- the projector */
+.photo-strip {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  display: flex;
+  gap: 0.8vw;
+  padding: 1.2vh 2.2vw;
+  overflow: hidden;
+  align-items: flex-end;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent);
+}
+.photo-strip .photo {
+  margin: 0;
+  flex: 0 0 auto;
+  width: 13vh;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--panel-line);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  animation: pop 420ms cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+.photo-strip .photo img { display: block; width: 100%; height: 13vh; object-fit: cover; }
+.photo-strip .photo figcaption {
+  font-size: 1.3vh; font-weight: 700; padding: 0.5vh 0.6vw;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ---- the phone */
+.camera-btn {
+  position: fixed;
+  right: 16px; bottom: 58px;
+  width: 58px; height: 58px;
+  border-radius: 50%;
+  border: 1px solid var(--panel-line);
+  background: linear-gradient(140deg, var(--hot), var(--hot-2));
+  font-size: 25px; line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5);
+  z-index: 40;
+}
+.camera-btn:active { transform: scale(0.94); }
+
+.cam-overlay {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.cam-sheet {
+  width: 100%; max-width: 560px;
+  max-height: 92vh; overflow-y: auto;
+  background: var(--bg-2);
+  border: 1px solid var(--panel-line);
+  border-radius: 20px 20px 0 0;
+  padding: 16px;
+}
+.cam-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cam-close {
+  background: none; border: 0; color: var(--ink-dim);
+  font-size: 20px; cursor: pointer; padding: 4px 8px;
+}
+.cam-warn { color: var(--gold); }
+.cam-pick {
+  display: block; margin-top: 12px; padding: 18px;
+  text-align: center; font-weight: 800; cursor: pointer;
+  border: 2px dashed var(--panel-line); border-radius: 14px;
+}
+.cam-stage { margin-top: 12px; }
+.cam-canvas {
+  width: 100%; height: auto; max-height: 46vh;
+  object-fit: contain; border-radius: 14px; background: #000;
+}
+.cam-filters {
+  display: flex; gap: 8px; overflow-x: auto;
+  padding: 12px 0; -webkit-overflow-scrolling: touch;
+}
+.cam-chip {
+  flex: 0 0 auto; cursor: pointer;
+  padding: 9px 14px; border-radius: 999px;
+  font: inherit; font-size: 13px; font-weight: 700;
+  color: var(--ink); background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--panel-line);
+}
+.cam-chip.on { background: linear-gradient(140deg, var(--hot), var(--hot-2)); border-color: transparent; }
+.cam-send {
+  width: 100%; padding: 16px; cursor: pointer;
+  font: inherit; font-size: 17px; font-weight: 900;
+  border: 0; border-radius: 14px; color: #fff;
+  background: linear-gradient(140deg, var(--hot), var(--hot-2));
+}
+.cam-send:disabled { opacity: 0.6; }
+.cam-status { margin-top: 10px; color: var(--bad); }
+
+/* ---- the control view */
+.panel.photos.off { opacity: 0.75; }
+.panel.photos .photo-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.panel.photos .photo-head h3 { margin: 0; }
+.photo-grid {
+  display: grid; gap: 8px; margin-top: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+}
+.host-photo {
+  position: relative; padding: 0; cursor: pointer;
+  border: 1px solid var(--panel-line); border-radius: 10px;
+  overflow: hidden; background: none;
+}
+.host-photo img { display: block; width: 100%; height: 84px; object-fit: cover; }
+.host-photo span {
+  display: block; font-size: 11px; font-weight: 700; color: var(--ink);
+  padding: 4px 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}

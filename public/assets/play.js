@@ -15,6 +15,7 @@
 
 import { esc, node, ServerClock, Live, postJson, brandMark } from './client.js';
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
+import { FILTERS, drawFiltered, toJpeg } from './filters.js';
 
 const STORE_KEY = 'musicquiz.player';
 
@@ -133,6 +134,126 @@ async function silentRejoin() {
   }
 }
 
+/* ------------------------------------------------------------------ camera
+ *
+ * Pick or take a photo, choose a look, send it to the projector.
+ *
+ * No approval queue anywhere in this — the host decided that early and for a
+ * good reason: the fun is that it is theirs to do, and he would rather deal
+ * with a rude photo over the mic than spend a quiz night as a moderator. So
+ * the phone says plainly that it goes straight up, and there is no "waiting to
+ * be approved" state to design because there is no approval.
+ *
+ * A plain file input rather than a live camera feed. It opens the phone's own
+ * camera on every phone ever made, needs no permission prompt of our own, and
+ * cannot get into the state where a borrowed Android shows a black rectangle
+ * with a room watching.
+ */
+function openCamera() {
+  const sheet = node(`
+    <div class="cam-overlay">
+      <div class="cam-sheet">
+        <div class="cam-head">
+          <b>Put a photo on the big screen</b>
+          <button class="cam-close" title="Close">✕</button>
+        </div>
+        <p class="tiny cam-warn">It goes straight up, no approval. Keep it decent.</p>
+        <label class="cam-pick">
+          <input type="file" accept="image/*" hidden>
+          <span>Take or choose a photo</span>
+        </label>
+        <div class="cam-stage" hidden>
+          <canvas class="cam-canvas"></canvas>
+          <div class="cam-filters"></div>
+          <button class="cam-send">Send it up</button>
+        </div>
+        <div class="tiny cam-status"></div>
+      </div>
+    </div>`);
+
+  const close = () => sheet.remove();
+  sheet.querySelector('.cam-close').addEventListener('click', close);
+  sheet.addEventListener('click', (e) => { if (e.target === sheet) close(); });
+
+  const input = sheet.querySelector('input[type=file]');
+  const stage = sheet.querySelector('.cam-stage');
+  const canvas = sheet.querySelector('.cam-canvas');
+  const chips = sheet.querySelector('.cam-filters');
+  const sendBtn = sheet.querySelector('.cam-send');
+  const status = sheet.querySelector('.cam-status');
+
+  let source = null;
+  let chosen = 'none';
+
+  const repaint = () => {
+    if (!source) return;
+    drawFiltered(canvas, source, chosen);
+    for (const chip of chips.children) chip.classList.toggle('on', chip.dataset.id === chosen);
+  };
+
+  for (const f of FILTERS) {
+    const chip = node(`<button class="cam-chip" data-id="${f.id}">${esc(f.label)}</button>`);
+    chip.addEventListener('click', () => { chosen = f.id; repaint(); });
+    chips.appendChild(chip);
+  }
+
+  input.addEventListener('change', () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    status.textContent = 'Loading…';
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(img.src);
+      source = img;
+      stage.hidden = false;
+      status.textContent = '';
+      repaint();
+    };
+    img.onerror = () => { status.textContent = 'That did not look like a photo.'; };
+    img.src = URL.createObjectURL(file);
+  });
+
+  sendBtn.addEventListener('click', async () => {
+    if (!source || !me) return;
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Sending…';
+    status.textContent = '';
+    try {
+      const blob = await toJpeg(canvas);
+      const res = await fetch(`/api/photo?playerId=${encodeURIComponent(me.id)}&filter=${encodeURIComponent(chosen)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'image/jpeg' },
+        body: blob,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!data.ok) throw new Error(reasonText(data.reason));
+      sheet.querySelector('.cam-sheet').replaceChildren(node(`
+        <div style="text-align:center;padding:22px 6px">
+          <div style="font-size:44px">🎉</div>
+          <b>It is on the screen</b>
+          <p class="tiny">Have a look up.</p>
+        </div>`));
+      setTimeout(close, 1800);
+    } catch (err) {
+      status.textContent = err.message;
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Send it up';
+    }
+  });
+
+  document.body.appendChild(sheet);
+}
+
+function reasonText(reason) {
+  return {
+    off: 'Photos are switched off just now.',
+    too_big: 'That photo is too big — try another.',
+    not_an_image: 'That did not look like a photo.',
+    not_playing: 'Join the quiz first.',
+    could_not_save: 'The server could not save it.',
+  }[reason] || 'It did not send. Try again.';
+}
+
 // ------------------------------------------------------------------ screens
 
 function draw(next) {
@@ -182,6 +303,34 @@ function draw(next) {
   } else {
     updateScreen(state);
   }
+
+  paintCameraButton(state);
+}
+
+/**
+ * The camera button.
+ *
+ * Lives outside the body so it survives every redraw — the body is thrown away
+ * and rebuilt on each phase change, and a button that vanished every question
+ * would never get used.
+ *
+ * Hidden while a question is live. Twenty seconds with four options wants the
+ * whole screen and the whole player, and anybody taking a photo during it is
+ * losing the points they came for.
+ */
+function paintCameraButton(s) {
+  const wanted = Boolean(s.photosOpen && s.you && s.phase !== 'question');
+  let btn = document.getElementById('cameraBtn');
+  if (!wanted) {
+    if (btn) btn.remove();
+    return;
+  }
+  if (btn) return;
+  btn = node('<button class="camera-btn" id="cameraBtn" title="Put a photo on the big screen">📷</button>');
+  btn.addEventListener('click', openCamera);
+  // Fixed-position, so it goes on the body rather than inside the scrolling
+  // wrap — the phone layout has no positioned container to hang it off.
+  document.body.appendChild(btn);
 }
 
 function screenKey(s) {
