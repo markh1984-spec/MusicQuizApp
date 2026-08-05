@@ -1167,3 +1167,21 @@ body.screen { cursor: none; }
 .tab.on .tabcount { background: var(--hot); color: #fff; }
 
 .tabbody { animation: cardIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+/* Launch is the big one; delete is deliberately small and quiet, so it is
+   never mistaken for it in a hurry. */
+.pack-actions { margin-top: auto; display: flex; gap: 8px; align-items: stretch; }
+.pack-actions .go { margin-top: 0; flex: 1 1 auto; }
+.pack-del {
+  flex: 0 0 auto;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  color: var(--ink-dim);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-line);
+}
+.pack-del:hover { color: var(--bad); border-color: rgba(255, 77, 94, 0.5); background: rgba(255, 77, 94, 0.1); }
+.pack-del:disabled { opacity: 0.5; cursor: default; }

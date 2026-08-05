@@ -21,7 +21,7 @@ import { Hub } from './src/sse.js';
 import { Session } from './src/session.js';
 import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz } from './src/quizzes.js';
 import { validateBingoPack, normaliseBingoPack } from './src/bingo.js';
-import { fullLibrary, listArchive, loadArchived, saveBingoPack, loadBingoPack } from './src/library.js';
+import { fullLibrary, listArchive, loadArchived, saveBingoPack, loadBingoPack, deleteBingoPack } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
 import { generateQuizPack } from './src/generate-quiz.js';
 import { recentTracks, forgetAll } from './src/history.js';
@@ -451,6 +451,19 @@ async function handleWrite(req, res, url, route) {
   if (route === '/api/bingo/__validate' && req.method === 'POST') {
     const body = await readJson(req, 4 * 1024 * 1024);
     return sendJson(res, 200, { problems: validateBingoPack(normaliseBingoPack(body, body.id)) }), true;
+  }
+
+  if (route.startsWith('/api/bingo/') && req.method === 'DELETE') {
+    const id = decodeURIComponent(route.slice('/api/bingo/'.length));
+    if (session.kind === 'bingo' && session.pack.id === id) {
+      return sendJson(res, 400, { error: 'That pack is currently loaded. Launch something else first.' }), true;
+    }
+    try {
+      deleteBingoPack(config.bingoDir, id);
+      return sendJson(res, 200, { ok: true }), true;
+    } catch (err) {
+      return sendJson(res, 404, { error: err.message }), true;
+    }
   }
 
   if (route.startsWith('/api/bingo/') && req.method === 'PUT') {

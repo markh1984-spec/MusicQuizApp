@@ -63,6 +63,11 @@ export function saveBingoPack(dir, id, pack) {
   return true;
 }
 
+export function deleteBingoPack(dir, id) {
+  fs.unlinkSync(path.join(dir, safePackFile(id)));
+  return true;
+}
+
 export function safePackFile(id) {
   const clean = String(id || '').replace(/[^a-zA-Z0-9._-]/g, '');
   if (!clean || clean.startsWith('.')) throw new Error('Bad pack id: ' + id);

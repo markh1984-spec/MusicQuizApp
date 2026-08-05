@@ -475,8 +475,31 @@ function packCard(kind, pack) {
       <div class="tiny played">${esc(played)}</div>
       ${pack.broken ? `<div class="tiny" style="color:var(--bad)">Broken: ${esc(pack.broken)}</div>` : ''}
       ${pack.problems ? `<div class="tiny" style="color:var(--bad)">${pack.problems} thing${pack.problems === 1 ? '' : 's'} to fix</div>` : ''}
-      <button class="go launch" ${pack.broken ? 'disabled' : ''}>Launch</button>
+      <div class="pack-actions">
+        <button class="go launch" ${pack.broken ? 'disabled' : ''}>Launch</button>
+        <button class="pack-del" title="Delete this pack">Delete</button>
+      </div>
     </div>`);
+
+  el.querySelector('.pack-del')?.addEventListener('click', async () => {
+    if (!confirm(`Delete "${pack.title}"?\n\nThis removes it from your library for good.`)) return;
+    const button = el.querySelector('.pack-del');
+    button.disabled = true;
+    button.textContent = 'Deleting…';
+    try {
+      const res = await fetch(keyed(`/api/${kind}/` + encodeURIComponent(pack.id)), {
+        method: 'DELETE',
+        headers: { 'X-Host-Key': hostKey },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Could not delete it');
+      await load();
+    } catch (err) {
+      button.disabled = false;
+      button.textContent = 'Delete';
+      alert(err.message);
+    }
+  });
 
   el.querySelector('.launch')?.addEventListener('click', async () => {
     const running = library.running;
