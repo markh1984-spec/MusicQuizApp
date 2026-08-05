@@ -548,7 +548,7 @@ export class Engine {
           image: q.image ? `/quiz-images/${q.image}` : null,
           // The caption that makes clear these are illustrations, not photos.
           imageCaption: q.imageCaption || round.imageCaption || 'AI-generated illustration — not a real photograph',
-          zoomFrom: q.zoomFrom ?? round.zoomFrom ?? 7,
+          zoomFrom: q.zoomFrom ?? round.zoomFrom ?? 6,
           zoomTo: q.zoomTo ?? round.zoomTo ?? 1,
           zoomOriginX: q.zoomOriginX ?? 50,
           zoomOriginY: q.zoomOriginY ?? 40,

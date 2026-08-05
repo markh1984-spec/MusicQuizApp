@@ -211,7 +211,13 @@ async function handleGet(req, res, url, route) {
     return serveFile(res, config.publicDir, route), true;
   }
   if (route.startsWith('/quiz-images/')) {
-    return serveFile(res, config.imageDir, decodeURIComponent(route.slice('/quiz-images/'.length)), { cache: true }), true;
+    const rel = decodeURIComponent(route.slice('/quiz-images/'.length));
+    // If the real artwork is not there yet, fall back to a placeholder of the
+    // same name. That way a quiz pack can name its final .png files from the
+    // start and still be rehearsable before any images have been made.
+    const swap = rel.replace(/\.(png|jpg|jpeg|webp)$/i, '.svg');
+    const exists = fs.existsSync(path.join(config.imageDir, rel));
+    return serveFile(res, config.imageDir, exists ? rel : swap, { cache: true }), true;
   }
 
   // ---- the join QR

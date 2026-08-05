@@ -657,3 +657,107 @@ body.host::after { display: none; }
   padding: 10px 18px; border-radius: 999px; z-index: 60; font-size: 14px;
   box-shadow: var(--shadow);
 }
+
+/* ============================================================= ROUND TYPES
+   A round is a plugin: it brings its own media block and its own option
+   layout, and nothing else on the screen has to know about it. */
+
+/* ---- round 2: whose face is this?
+   The image starts hard in on the face and pulls back over the twenty
+   seconds, so an early guess is worth more. The caption stays put the whole
+   time: these are illustrations, and the screen says so. */
+/* A 4:3 window in the middle of the screen rather than a full-width letterbox,
+   so a portrait is framed properly instead of being cropped to a strip of
+   cheek when it pulls back. */
+.zoom-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-bottom: 2vh;
+  display: flex;
+  justify-content: center;
+}
+.zoom-frame {
+  position: relative;
+  height: 100%;
+  aspect-ratio: 4 / 3;
+  max-width: 100%;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #05050a;
+  border: 2px solid var(--panel-line);
+  box-shadow: var(--shadow);
+}
+.zoom-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  will-change: transform;
+  /* No CSS transition: the zoom is redrawn every frame from the server's
+     clock, so it stays in step with the countdown rather than drifting. */
+}
+.zoom-caption {
+  position: absolute;
+  left: 1vw;
+  bottom: 1.2vh;
+  padding: 0.6vh 1.1vw;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.66);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  font-size: 1.7vh;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #fff;
+  backdrop-filter: blur(4px);
+}
+
+/* ---- round 3: name that intro
+   Nothing on this screen names the track — the host is reading the same
+   screen the room is. It is a visual only. */
+.intro-visual {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-bottom: 2vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7vw;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid var(--panel-line);
+}
+.intro-visual i {
+  display: block;
+  width: 1vw;
+  height: 20%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--hot), var(--cool));
+  animation: eq 1.15s ease-in-out infinite alternate;
+  animation-delay: calc(var(--i) * -70ms);
+}
+@keyframes eq {
+  from { height: 7%; opacity: 0.55; }
+  to   { height: 72%; opacity: 1; }
+}
+
+/* With a big picture or visual above them, the options go across in one row
+   so the media keeps the height it needs. */
+.type-image .options,
+.type-intro .options {
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: auto;
+  flex: 0 0 auto;
+}
+.type-image .option,
+.type-intro .option {
+  font-size: 2.7vh;
+  padding: 1.8vh 1vw;
+  gap: 0.8vw;
+}
+.type-image .q-prompt,
+.type-intro .q-prompt {
+  font-size: 3.6vh;
+  margin-bottom: 1.6vh;
+}
+.type-image .option .tally,
+.type-intro .option .tally { display: none; }

@@ -128,8 +128,10 @@ function renderQuestion(s) {
   const long = (q.prompt || '').length > 78;
   const media = renderQuestionMedia(s, q);
 
+  // The round type becomes a class, and the stylesheet does the rest. A new
+  // round type needs a media block above and a rule here; nothing else.
   const el = node(`
-    <div class="question" style="display:flex;flex-direction:column;height:100%">
+    <div class="question type-${esc(s.roundType || 'text')}" style="display:flex;flex-direction:column;height:100%">
       <div class="q-head">
         <span class="pill q-counter">Question ${s.questionIndex + 1} of ${s.questionCount}</span>
         <span class="answered-count" id="answeredCount"></span>
@@ -163,9 +165,11 @@ function renderQuestion(s) {
 function renderQuestionMedia(s, q) {
   if (s.roundType === 'image' && q.image) {
     return `
-      <div class="zoom-frame" id="zoomFrame">
-        <img class="zoom-img" id="zoomImg" src="${esc(q.image)}" alt="Mystery musician">
-        <div class="zoom-caption">${esc(q.imageCaption || '')}</div>
+      <div class="zoom-stage">
+        <div class="zoom-frame" id="zoomFrame">
+          <img class="zoom-img" id="zoomImg" src="${esc(q.image)}" alt="Mystery musician">
+          <div class="zoom-caption">${esc(q.imageCaption || '')}</div>
+        </div>
       </div>`;
   }
   if (s.roundType === 'intro') {
@@ -190,7 +194,7 @@ function updateQuestion(s) {
     const total = s.clock.endsAt - s.clock.startedAt;
     const elapsed = Math.min(total, Math.max(0, clock.now() - s.clock.startedAt));
     const t = total > 0 ? elapsed / total : 1;
-    const from = q.zoomFrom ?? 7;
+    const from = q.zoomFrom ?? 6;
     const to = q.zoomTo ?? 1;
     const scale = revealing ? to : from + (to - from) * easeOut(t);
     img.style.transform = `scale(${scale.toFixed(3)})`;

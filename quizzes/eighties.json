@@ -83,6 +83,184 @@
           "note": "The trick one. Expect groaning."
         }
       ]
+    },
+    {
+      "id": "r2",
+      "type": "image",
+      "title": "Round Two — Whose Face Is This?",
+      "blurb": "The picture pulls back as the clock runs down. Guess early, score more.",
+      "imageCaption": "AI-generated illustration — not a real photograph",
+      "questions": [
+        {
+          "id": "r2q1",
+          "prompt": "Whose face is this?",
+          "options": ["Madonna", "Cyndi Lauper", "Debbie Harry", "Kim Wilde"],
+          "correctIndex": 0,
+          "image": "eighties/madonna.png",
+          "imagePrompt": "A bold stylised digital illustration, clearly a drawing rather than a photograph, of the musician Madonna in her mid-1980s look. Head and shoulders, facing the viewer, dramatic lighting, plain dark background, no text anywhere in the image.",
+          "zoomFrom": 6,
+          "zoomOriginY": 38
+        },
+        {
+          "id": "r2q2",
+          "prompt": "Whose face is this?",
+          "options": ["Elton John", "Freddie Mercury", "George Michael", "Phil Collins"],
+          "correctIndex": 1,
+          "image": "eighties/freddie-mercury.png",
+          "imagePrompt": "A bold stylised digital illustration, clearly a drawing rather than a photograph, of the musician Freddie Mercury in his mid-1980s look. Head and shoulders, facing the viewer, dramatic lighting, plain dark background, no text anywhere in the image.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q3",
+          "prompt": "Whose face is this?",
+          "options": ["Bryan Ferry", "Sting", "David Bowie", "Peter Gabriel"],
+          "correctIndex": 2,
+          "image": "eighties/david-bowie.png",
+          "imagePrompt": "A bold stylised digital illustration, clearly a drawing rather than a photograph, of the musician David Bowie in his 1983 'Let's Dance' era look. Head and shoulders, facing the viewer, dramatic lighting, plain dark background, no text anywhere in the image.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q4",
+          "prompt": "Whose face is this?",
+          "options": ["Annie Lennox", "Kate Bush", "Alison Moyet", "Siouxsie Sioux"],
+          "correctIndex": 1,
+          "image": "eighties/kate-bush.png",
+          "imagePrompt": "A bold stylised digital illustration, clearly a drawing rather than a photograph, of the musician Kate Bush in her mid-1980s look. Head and shoulders, facing the viewer, dramatic lighting, plain dark background, no text anywhere in the image.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q5",
+          "prompt": "Whose face is this?",
+          "options": ["Prince", "Michael Jackson", "Lionel Richie", "Terence Trent D'Arby"],
+          "correctIndex": 0,
+          "image": "eighties/prince.png",
+          "imagePrompt": "A bold stylised digital illustration, clearly a drawing rather than a photograph, of the musician Prince in his 1984 'Purple Rain' era look. Head and shoulders, facing the viewer, dramatic lighting, plain dark background, no text anywhere in the image.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q6",
+          "prompt": "Whose face is this?",
+          "options": ["Simon Le Bon", "Boy George", "Marc Almond", "Adam Ant"],
+          "correctIndex": 1,
+          "image": "eighties/boy-george.png",
+          "imagePrompt": "A bold stylised digital illustration, clearly a drawing rather than a photograph, of the musician Boy George in his 1983 Culture Club look. Head and shoulders, facing the viewer, dramatic lighting, plain dark background, no text anywhere in the image.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q7",
+          "prompt": "Whose face is this?",
+          "options": ["Belinda Carlisle", "Debbie Harry", "Chrissie Hynde", "Pat Benatar"],
+          "correctIndex": 2,
+          "image": "eighties/chrissie-hynde.png",
+          "imagePrompt": "A bold stylised digital illustration, clearly a drawing rather than a photograph, of the musician Chrissie Hynde of The Pretenders in her early 1980s look. Head and shoulders, facing the viewer, dramatic lighting, plain dark background, no text anywhere in the image.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q8",
+          "prompt": "Whose face is this?",
+          "options": ["Paul Weller", "Billy Idol", "Sting", "Bono"],
+          "correctIndex": 3,
+          "image": "eighties/bono.png",
+          "imagePrompt": "A bold stylised digital illustration, clearly a drawing rather than a photograph, of the musician Bono of U2 in his 1987 'The Joshua Tree' era look. Head and shoulders, facing the viewer, dramatic lighting, plain dark background, no text anywhere in the image.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q9",
+          "prompt": "Whose face is this?",
+          "options": ["Annie Lennox", "Alison Moyet", "Sade", "Tracey Thorn"],
+          "correctIndex": 0,
+          "image": "eighties/annie-lennox.png",
+          "imagePrompt": "A bold stylised digital illustration, clearly a drawing rather than a photograph, of the musician Annie Lennox of Eurythmics in her 1983 look with cropped orange hair. Head and shoulders, facing the viewer, dramatic lighting, plain dark background, no text anywhere in the image.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q10",
+          "prompt": "Whose face is this?",
+          "options": ["Rick Astley", "Andrew Ridgeley", "George Michael", "Nik Kershaw"],
+          "correctIndex": 2,
+          "image": "eighties/george-michael.png",
+          "imagePrompt": "A bold stylised digital illustration, clearly a drawing rather than a photograph, of the musician George Michael in his 1987 'Faith' era look. Head and shoulders, facing the viewer, dramatic lighting, plain dark background, no text anywhere in the image.",
+          "zoomFrom": 6
+        }
+      ]
+    },
+    {
+      "id": "r3",
+      "type": "intro",
+      "title": "Round Three — Name That Intro",
+      "blurb": "Ten intros. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r3q1",
+          "prompt": "Which track is this?",
+          "options": ["Billie Jean", "Beat It", "Smooth Criminal", "Bad"],
+          "correctIndex": 0,
+          "cue": { "title": "Billie Jean", "artist": "Michael Jackson", "from": "0:00", "hint": "Let the drum and bass intro run about 8 seconds" }
+        },
+        {
+          "id": "r3q2",
+          "prompt": "Which track is this?",
+          "options": ["Here Comes the Rain Again", "Love Is a Stranger", "Sweet Dreams (Are Made of This)", "Who's That Girl?"],
+          "correctIndex": 2,
+          "cue": { "title": "Sweet Dreams (Are Made of This)", "artist": "Eurythmics", "from": "0:00", "hint": "The synth riff is instant — 5 seconds is plenty" }
+        },
+        {
+          "id": "r3q3",
+          "prompt": "Which track is this?",
+          "options": ["Bizarre Love Triangle", "Blue Monday", "True Faith", "Temptation"],
+          "correctIndex": 1,
+          "cue": { "title": "Blue Monday", "artist": "New Order", "from": "0:00", "hint": "The kick drum pattern. Give it 10 seconds — it builds" }
+        },
+        {
+          "id": "r3q4",
+          "prompt": "Which track is this?",
+          "options": ["Message in a Bottle", "Every Breath You Take", "Roxanne", "Walking on the Moon"],
+          "correctIndex": 1,
+          "cue": { "title": "Every Breath You Take", "artist": "The Police", "from": "0:00", "hint": "That guitar figure. 6 seconds" }
+        },
+        {
+          "id": "r3q5",
+          "prompt": "Which track is this?",
+          "options": ["Alive and Kicking", "Don't You (Forget About Me)", "Belfast Child", "Waterfront"],
+          "correctIndex": 1,
+          "cue": { "title": "Don't You (Forget About Me)", "artist": "Simple Minds", "from": "0:00", "hint": "Drums then the guitar. About 8 seconds" }
+        },
+        {
+          "id": "r3q6",
+          "prompt": "Which track is this?",
+          "options": ["It's a Sin", "West End Girls", "Always on My Mind", "Opportunities"],
+          "correctIndex": 1,
+          "cue": { "title": "West End Girls", "artist": "Pet Shop Boys", "from": "0:00", "hint": "Moody synth pad and the bassline" }
+        },
+        {
+          "id": "r3q7",
+          "prompt": "Which track is this?",
+          "options": ["You Give Love a Bad Name", "Wanted Dead or Alive", "Livin' on a Prayer", "Bad Medicine"],
+          "correctIndex": 2,
+          "cue": { "title": "Livin' on a Prayer", "artist": "Bon Jovi", "from": "0:00", "hint": "The talk box intro. 7 seconds" }
+        },
+        {
+          "id": "r3q8",
+          "prompt": "Which track is this?",
+          "options": ["The Sun Always Shines on T.V.", "Take On Me", "Hunting High and Low", "Cry Wolf"],
+          "correctIndex": 1,
+          "cue": { "title": "Take On Me", "artist": "a-ha", "from": "0:00", "hint": "The keyboard riff. Everyone gets this one" }
+        },
+        {
+          "id": "r3q9",
+          "prompt": "Which track is this?",
+          "options": ["The Final Countdown", "Carrie", "Rock the Night", "Superstitious"],
+          "correctIndex": 0,
+          "cue": { "title": "The Final Countdown", "artist": "Europe", "from": "0:00", "hint": "The fanfare. 5 seconds and stop" }
+        },
+        {
+          "id": "r3q10",
+          "prompt": "Which track is this?",
+          "options": ["Geno", "Come On Eileen", "Jackie Wilson Said", "There, There, My Dear"],
+          "correctIndex": 1,
+          "cue": { "title": "Come On Eileen", "artist": "Dexys Midnight Runners", "from": "0:00", "hint": "The fiddle intro. Best last question of the night" }
+        }
+      ]
     }
   ]
 }
