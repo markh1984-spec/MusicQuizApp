@@ -89,6 +89,10 @@ Only the four options. Keeps the room looking up, makes googling harder.
   set it up. Round 2 runs on placeholder art until then.
 - **Spotify not set up yet.** One-time developer app + `scripts/spotify-login.mjs`.
   Bingo generation works without it, just no playlist.
+- **On Render's free tier**, by choice. Connected browser tabs ping `/health`
+  every four minutes so the app cannot sleep mid-gig; the host's routine is to
+  open the big screen five minutes early. Agreed to move to Starter ($7/mo)
+  before the first paying gig.
 - **Persistent disk not decided.** The no-repeats song history lives in `data/`,
   which Render wipes on redeploy. Flagged prominently in DEPLOY.md and TODO.md.
   If the host reports repeats appearing, this is why.

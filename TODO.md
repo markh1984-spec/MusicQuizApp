@@ -40,10 +40,15 @@ to wake. Your routine on the night:
       Render → Settings → Instance Type → Starter. It is a dropdown, takes
       effect immediately, and you can switch back any time.
 
-While you are on free: **do not leave the big screen tab open overnight.** The
-app pings the server to stay awake while a screen is connected, and left going
-24/7 that eats the 750 free instance-hours a month. Close the tab when you are
-finished and it sleeps as intended.
+While you are on free: **shut the laptop when you leave.** While a browser tab
+is open on the app it pings the server to keep it awake, and a laptop left
+running for days with the quiz tab open would eat the 750 free instance-hours a
+month. Closing the lid is enough — the browser suspends, the pings stop, and
+the app sleeps 15 minutes later as intended.
+
+(Nothing to do with the HDMI cable — the server has no idea whether a projector
+is plugged in. It only sees the browser tab. Players' phones do not count
+either: phone browsers suspend background tabs as soon as the screen locks.)
 
 ---
 
