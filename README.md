@@ -1,20 +1,27 @@
-# Music Quiz
+# Music Quiz & Bingo
 
-A live interactive music quiz for pubs and clubs. You put the big screen on a
-projector, players join with their own phones by scanning a QR code, and you
-run the whole thing from a private control view that only you can see.
+Live pub games run from your laptop. The big screen goes on a projector,
+players join with their own phones by scanning a QR code, and you run
+everything from a private control view only you can see.
+
+Two games so far:
+
+- **Music Quiz** — three rounds of ten, twenty seconds a question, fastest
+  fingers win.
+- **Music Bingo** — you play the tracks from your DJ app, every phone gets its
+  own card, and the big screen keeps a call sheet of what has gone.
 
 Built to be boring and reliable: plain Node, **no dependencies**, no build step,
-no database. Quizzes are JSON files you can read and edit.
+no database. Everything you save is a JSON file you can read and edit.
 
 ---
 
 ## The night, in short
 
 1. Laptop into the projector. Open **`/screen`**.
-2. Control view open on your phone: **`/host?key=…`**.
-3. Room scans the QR code, types a team name, and plays.
-4. Three rounds of ten. Twenty seconds a question. Leaderboard, then a winner.
+2. On your phone, open **`/console?key=…`** and launch a game.
+3. Room scans the QR code and types a team name.
+4. Run it from **`/host?key=…`**.
 
 ---
 
@@ -44,10 +51,11 @@ To put it on the internet so people's phones can reach it, see **[DEPLOY.md](DEP
 
 | Screen | Who sees it | What is on it |
 |---|---|---|
-| **`/screen`** | the room | Join QR, question, options, timer, reveal, leaderboard, winner |
-| **`/play`** | each player's phone | The four options only — never the question text |
-| **`/host?key=…`** | you, and only you | Answer key, the round 3 track cue, start/reveal/next, skip, redo, team fixes |
-| **`/editor?key=…`** | you | Read and fix every question before the gig |
+| **`/console?key=…`** | you | Launch a game, your whole library, past nights, the generator |
+| **`/screen`** | the room | Join QR, the game itself, leaderboard or call sheet |
+| **`/play`** | each player's phone | Four options, or their own bingo card |
+| **`/host?key=…`** | you, and only you | Answer key, the round 3 cue, the bingo track list, all the controls |
+| **`/editor?key=…`** | you | Read and fix every question and track list before the gig |
 
 ### Why the phones do not show the question
 
@@ -148,6 +156,92 @@ Claude writes the *prompts*, something else draws them. The app does not care
 where the files came from: drop your own pictures into `images/` with the right
 filenames and they just work.
 
+
+---
+
+## Music bingo
+
+You play the tracks from your own DJ app. The app hands out the cards, keeps
+the call sheet on the big screen, and checks the claims.
+
+**Running it:** launch a bingo pack from the console, then tap each track in
+your control view as you play it. That is the whole job. The big screen shows
+what you just played, and an **alphabetical call sheet** of everything so far —
+alphabetical rather than in play order, because half a pub is there for a
+drink and is scanning for "have they done Africa yet?".
+
+**Players** tap a square when they hear it. A square they have marked turns
+**green** once you have actually played that track, and **amber** if you have
+not — so a team that taps the wrong thing can see it before they shout.
+
+**Winning:** the BINGO button lights up when they have marked a full line. The
+server then checks it against what you genuinely played. A line with a track
+you never played is a false alarm, recorded as one, and the game carries on.
+After a line you can play on for a full house.
+
+### Cards cannot be regenerated
+
+This is deliberate and it is enforced on the server, not in the phone:
+
+- A card is built **when the phone joins** and stored against that player.
+- Refreshing, reopening the link, clearing the browser or rejoining all return
+  **the identical card**.
+- There is **no endpoint that issues a new card**, and no card-generating code
+  on the phone at all.
+- Every card in the room is different.
+
+A new round (your "New round" button) is the only thing that reissues cards,
+and it does it for everybody at once.
+
+---
+
+## Building a bingo round with one button
+
+In the console, type a theme and press **Build it**. Then:
+
+1. Claude picks the songs, and is told what you have played recently so it
+   does not suggest it.
+2. Anything that slips through is filtered out against your history file.
+3. Each track is looked up **on Spotify**, so what ends up on the cards is what
+   your DJ app can actually play — not a title a model invented.
+4. A private Spotify playlist is created and filled, ready to open.
+5. The pack lands in your library, and every track goes into the history.
+
+Needs `ANTHROPIC_API_KEY`. Spotify is optional — without it you get the pack
+but no playlist. Setting Spotify up is a one-off:
+
+```bash
+node scripts/spotify-login.mjs
+```
+
+It walks you through making a free Spotify app and prints three values to put
+in your host's settings. See [DEPLOY.md](DEPLOY.md#spotify-for-the-bingo-playlists).
+
+### No repeats
+
+Every generated track is recorded with the date, and the generator refuses to
+reuse anything inside your chosen window (three months by default, adjustable
+from no limit to a year). Matching is loose, so *Take On Me*, *take on me* and
+*Take On Me (Remastered 2017)* all count as the same record.
+
+> **This memory lives in the `data/` folder, which most hosts wipe on every
+> deploy.** If you want it to survive, either add a Render Disk mounted at
+> `data/` (about 20p a month, needs a paid instance) or generate your packs on
+> your own laptop, where the file stays put. Without one of those the
+> no-repeats rule silently resets to nothing every time you push a change.
+> See [DEPLOY.md](DEPLOY.md#something-important-about-files).
+
+---
+
+## Your library
+
+Everything you have ever saved is on the console, with how many times you have
+run it and when you last did. A Harry Potter quiz written in March is one tap
+away in November — that is the whole reason packs are files rather than
+something typed in fresh each time.
+
+Finished games are archived under **Past nights** with the final scores.
+
 ---
 
 ## Seeing the screens without running a quiz
@@ -173,10 +267,11 @@ including the zoom part-way through.
 npm test
 ```
 
-84 tests, no network, no waiting on clocks — every timestamp is injected, so
+127 tests, no network, no waiting on clocks — every timestamp is injected, so
 a "twenty second question" runs instantly and identically every time. They
-cover the scoring maths, the question state machine, crash recovery, and the
-rule that nothing sensitive reaches the big screen.
+cover the scoring maths, the question state machine, crash recovery, the rule
+that nothing sensitive reaches the big screen, the bingo card anti-cheat
+guarantees, and the no-repeats history.
 
 ---
 
@@ -184,17 +279,32 @@ rule that nothing sensitive reaches the big screen.
 
 ```
 server.js              routing, SSE, static files
-src/engine.js          the state machine: phases, players, answers, the three views
-src/scoring.js         the scoring maths, pure and testable
+src/session.js         which game is running; the server talks only to this
+src/engine.js          the quiz: phases, players, answers, the three views
+src/bingo.js           bingo: cards, calls, claims
+src/scoring.js         the quiz scoring maths, pure and testable
 src/store.js           crash recovery — atomic JSON snapshot
 src/quizzes.js         loading, validating and saving quiz packs
+src/library.js         your saved packs, play counts and past nights
+src/history.js         what you have played, so the generator stops repeating
+src/generate-bingo.js  theme in, playable pack out
+src/spotify.js         playlist building
 src/qrcode.js          QR encoder, written out so there are no dependencies
 src/sse.js             the live connection to every screen and phone
-public/                the four screens: plain HTML, CSS and JS, no build step
+public/                the screens: plain HTML, CSS and JS, no build step
 quizzes/*.json         one file per quiz
+bingo/*.json           one file per bingo pack
 images/                round 2 pictures
-data/state.json        the live quiz, rewritten as it runs
+data/                  live state, play history, archived nights
 ```
+
+### Adding another game
+
+`src/session.js` holds whichever game is running and gives the server one
+shape to talk to: `screenView()`, `playerView()`, `hostView()`, `run(action)`.
+A new game means writing an engine with those methods, adding it to
+`LAUNCHERS`, and giving the screens a set of cards. Nothing else needs to know
+it exists.
 
 **Server-sent events, not websockets.** SSE is ordinary HTTP, so it survives pub
 wifi, mobile data and whatever proxy a venue has in front of it, and browsers
@@ -256,7 +366,9 @@ All optional — it runs with none of them set.
 | `HOST_KEY` | generated once, kept in `data/` | Password for the control view and editor |
 | `PUBLIC_URL` | worked out from the request | Only needed if you put your own domain in front |
 | `QUIZ_ID` | first quiz found | Which quiz loads on a cold start |
-| `QUIZ_DIR` / `DATA_DIR` / `IMAGE_DIR` | `./quizzes`, `./data`, `./images` | |
+| `QUIZ_DIR` / `BINGO_DIR` / `DATA_DIR` / `IMAGE_DIR` | `./quizzes`, `./bingo`, `./data`, `./images` | |
+| `ANTHROPIC_API_KEY` | — | Needed to generate quizzes and bingo rounds |
+| `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` / `SPOTIFY_REFRESH_TOKEN` | — | Needed to build Spotify playlists. `scripts/spotify-login.mjs` gets you these |
 
 ---
 

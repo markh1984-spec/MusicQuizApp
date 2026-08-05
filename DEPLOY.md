@@ -89,17 +89,23 @@ Open these in a browser:
 
 | What | Address |
 |---|---|
+| Console (start here) | `https://musicquiz.onrender.com/console?key=YOUR_HOST_KEY` |
 | Big screen | `https://musicquiz.onrender.com/screen` |
 | Player phone | `https://musicquiz.onrender.com/play` |
 | Your control view | `https://musicquiz.onrender.com/host?key=YOUR_HOST_KEY` |
-| Question editor | `https://musicquiz.onrender.com/editor?key=YOUR_HOST_KEY` |
+| Editor | `https://musicquiz.onrender.com/editor?key=YOUR_HOST_KEY` |
 
 Open the big screen, scan the QR code with your own phone, join as a team, then
 open the control view on another device and press **Start the quiz**. If the
 question appears on both, you are done.
 
-**Bookmark the control view address on your phone now**, with the key in it. In
-a dark venue you do not want to be typing it.
+**Bookmark the console address on your phone now**, with the key in it. In a
+dark venue you do not want to be typing it — and everything else is one tap
+from there.
+
+If you want the AI generation, add one more environment variable while you are
+in there: `ANTHROPIC_API_KEY`, set to your Anthropic key. Spotify needs three
+more — see below.
 
 ---
 
@@ -130,19 +136,78 @@ Render gives your app a **fresh, empty filesystem every time it redeploys**.
 
 What that means in practice:
 
-- **Quiz packs you edit on the live site are lost on the next deploy.** The
-  editor has a **Download** button for exactly this reason. Edit, download the
-  `.json`, drop it in your local `quizzes/` folder, `git push`. Now it is
-  permanent.
+- **Packs you edit or generate on the live site are lost on the next deploy.**
+  The editor has a **Download** button for exactly this reason. Edit, download
+  the `.json`, drop it in your local `quizzes/` or `bingo/` folder, `git push`.
+  Now it is permanent.
+- **The "no repeats for 3 months" memory resets too.** This one is easy to
+  miss, because nothing breaks — the generator just quietly starts allowing
+  songs it should be blocking.
 - **Scores survive a crash, but not a redeploy.** If the app process falls over
-  mid-quiz it comes straight back with every team and score intact — that is
+  mid-game it comes straight back with every team and score intact — that is
   what the crash recovery is for. But do not push a code change during a gig.
 
-If you would rather edit questions on the live site and have them stick, you
-can add a **Render Disk**: service → **Settings** → **Disks** → **Add Disk**,
-mount path `/opt/render/project/src/data`, 1 GB. It is about £0.20/month but
-needs a paid instance. Honestly, for most people the download-and-commit
-routine is simpler.
+### If you want the song history to actually stick
+
+Two options. Pick one:
+
+**Option A — a Render Disk (recommended if you generate on the live site).**
+Service → **Settings** → **Disks** → **Add Disk**. Mount path
+`/opt/render/project/src/data`, size 1 GB. About £0.20/month, but it needs a
+paid instance. Everything in `data/` then survives deploys: song history,
+archived results, play counts.
+
+**Option B — generate on your own laptop.** Run the app locally, use the
+console's **Build it** button there, then commit the new pack:
+
+```bash
+git add bingo/ data/track-history.json
+git commit -m "New bingo round"
+git push
+```
+
+The history file lives in `data/`, which is gitignored by default. If you go
+this route, remove the `data/` line from `.gitignore` so the history travels
+with your repo.
+
+---
+
+## Spotify, for the bingo playlists
+
+Optional. Without it the app still builds bingo packs — you just do not get a
+playlist made for you.
+
+Spotify will not let an app touch your account without your say-so, so there is
+a one-time setup. Do it on your own laptop; it takes about five minutes.
+
+1. Go to [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard)
+   and log in with your **normal Spotify account** — the same one your DJ app
+   uses.
+2. Click **Create app**. Name it anything, "Music Quiz" is fine.
+3. **Redirect URI** must be exactly:
+   ```
+   http://127.0.0.1:8888/callback
+   ```
+   Tick **Web API**. Save.
+4. Open the app's **Settings** and copy the **Client ID** and **Client Secret**.
+5. In your project folder, run:
+   ```bash
+   node scripts/spotify-login.mjs
+   ```
+   Paste the two values when asked. It opens a Spotify page, you click Agree,
+   and it prints three lines.
+6. Put those three lines into Render: your service → **Environment** → **Add
+   Environment Variable**, one each for `SPOTIFY_CLIENT_ID`,
+   `SPOTIFY_CLIENT_SECRET` and `SPOTIFY_REFRESH_TOKEN`.
+
+That is it — they do not expire.
+
+**Keep the secret and the refresh token private.** Between them they can create
+and edit playlists in your Spotify account. They are fine in Render's
+environment variables; do not commit them to GitHub.
+
+Playlists it creates are **private** and belong to you, so they show up in your
+DJ app's playlist list like any other.
 
 ---
 

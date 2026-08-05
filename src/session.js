@@ -32,7 +32,18 @@ const LAUNCHERS = {
     load: (config, id) => normaliseBingoPack(loadBingoPack(config.bingoDir, id), id),
     list: (config) => listBingoPacks(config.bingoDir),
     make: (pack, opts) => new BingoGame({ pack, ...opts }),
-    milestone: (s) => `${s.phase}:${s.round}:${s.called.length}:${Object.keys(s.players).length}`,
+    // Marks count as a milestone, unlike quiz answers. A lost quiz answer is
+    // recoverable — you press Redo and ask again. A player who loses the ten
+    // squares they had ticked cannot get them back, because they would have
+    // to remember every song of the last half hour. So every tap goes
+    // straight to disk.
+    milestone: (s) => {
+      let marks = 0;
+      for (const p of Object.values(s.players)) {
+        for (const m of p.marks) if (m) marks++;
+      }
+      return `${s.phase}:${s.round}:${s.called.length}:${Object.keys(s.players).length}:${marks}`;
+    },
     isOver: (s) => s.phase === BINGO_PHASES.FINISHED,
     empty: { id: 'empty', title: 'No bingo pack loaded', tracks: [], cardSize: 4 },
   },
