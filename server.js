@@ -26,6 +26,7 @@ import { generateBingoPack } from './src/generate-bingo.js';
 import { generateQuizPack } from './src/generate-quiz.js';
 import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig } from './src/spotify.js';
+import { githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess } from './src/github.js';
 import { toSvg } from './src/qrcode.js';
 
 const HOST_KEY = hostKey();
@@ -33,6 +34,20 @@ const store = new Store(paths.state);
 const hub = new Hub();
 
 const session = new Session({ config, store, onPush: () => pushState() }).boot();
+
+/**
+ * Whether the GitHub backup actually works, not just whether it is configured.
+ * Checked at most every five minutes so the console can say "token rejected"
+ * up front rather than letting you find out after generating a quiz.
+ */
+let backupCheck = { at: 0, result: null };
+async function backupStatus() {
+  if (!githubConfigured()) return { ok: false, error: 'not set up' };
+  if (backupCheck.result && Date.now() - backupCheck.at < 5 * 60 * 1000) return backupCheck.result;
+  const result = await checkAccess();
+  backupCheck = { at: Date.now(), result };
+  return result;
+}
 
 // ------------------------------------------------------------- broadcasting
 
@@ -219,6 +234,7 @@ async function handleGet(req, res, url, route) {
   if (route === '/api/library') {
     if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
     const library = fullLibrary(config);
+    const backup = await backupStatus();
     return sendJson(res, 200, {
       ...library,
       running: { game: session.kind, packId: session.pack.id, title: session.pack.title, phase: session.engine.state.phase, playerCount: session.engine.playerList().length },
@@ -228,6 +244,11 @@ async function handleGet(req, res, url, route) {
         spotify: spotifyConfigured(),
         spotifyMissing: missingSpotifyConfig(),
         recentCount: recentTracks(config.dataDir, 3).length,
+        backup: backup.ok,
+        backupConfigured: githubConfigured(),
+        backupError: backup.ok ? null : backup.error,
+        backupRepo: backup.repo || null,
+        backupMissing: missingGithubConfig(),
       },
     }), true;
   }
@@ -282,6 +303,25 @@ async function handleGet(req, res, url, route) {
   }
 
   return false;
+}
+
+/**
+ * File a pack into the repository so it survives a restart.
+ *
+ * Never throws and never blocks what you were doing — a failed backup is
+ * reported and moved on from, because losing the pack you just made because
+ * the backup failed would be daft.
+ */
+async function backUp(relPath, contents, message, log = () => {}) {
+  if (!githubConfigured()) {
+    log(`not backed up — GitHub backup is not set up, so this will be lost when the app restarts`);
+    return { ok: false };
+  }
+  const result = await putFile(relPath, contents, message);
+  log(result.ok
+    ? `backed up to GitHub — this one is permanent`
+    : `saved here, but NOT backed up: ${result.error}`);
+  return result;
 }
 
 function csvCell(value) {
@@ -351,13 +391,15 @@ async function handleWrite(req, res, url, route) {
         session.engine.clampPointers();
         session.engine.changed();
       }
-      return sendJson(res, 200, { ok: true }), true;
+      const backup = await backUp(`quizzes/${id}.json`, JSON.stringify(normaliseQuiz(body, id), null, 2) + '\n', `Edit quiz: ${body.title || id}`);
+      return sendJson(res, 200, { ok: true, backedUp: backup.ok, backupError: backup.error }), true;
     }
     if (req.method === 'DELETE') {
       if (session.kind === 'quiz' && session.pack.id === id) {
         return sendJson(res, 400, { error: 'That quiz is currently loaded.' }), true;
       }
       deleteQuiz(config.quizDir, id);
+      if (githubConfigured()) await deleteFile(`quizzes/${id}.json`, `Delete quiz: ${id}`);
       return sendJson(res, 200, { ok: true }), true;
     }
   }
@@ -392,11 +434,29 @@ async function handleWrite(req, res, url, route) {
         avoidMonths: Math.min(24, Math.max(0, Number(body.avoidMonths ?? 3))),
         log,
       });
+      const backup = await backUp(
+        `bingo/${result.pack.id}.json`,
+        JSON.stringify(result.pack, null, 2) + '\n',
+        `Add bingo pack: ${result.pack.title}`,
+        log,
+      );
+      // The song history matters as much as the pack — without it the
+      // no-repeats rule quietly forgets everything on the next restart.
+      try {
+        const historyFile = path.join(config.dataDir, 'track-history.json');
+        if (fs.existsSync(historyFile)) {
+          await backUp('data/track-history.json', fs.readFileSync(historyFile, 'utf8'), 'Update song history', () => {});
+          log('song history backed up too');
+        }
+      } catch (err) {
+        log('could not back up the song history: ' + err.message);
+      }
       log('DONE ' + JSON.stringify({
         id: result.pack.id,
         title: result.pack.title,
         trackCount: result.pack.tracks.length,
         playlist: result.playlist ? result.playlist.url : null,
+        backedUp: backup.ok,
       }));
     } catch (err) {
       log('ERROR ' + err.message);
@@ -427,6 +487,12 @@ async function handleWrite(req, res, url, route) {
         hard: Boolean(body.hard),
         log,
       });
+      const backup = await backUp(
+        `quizzes/${result.quiz.id}.json`,
+        JSON.stringify(result.quiz, null, 2) + '\n',
+        `Add quiz: ${result.quiz.title}`,
+        log,
+      );
       log('DONE ' + JSON.stringify({
         id: result.quiz.id,
         title: result.quiz.title,
@@ -434,6 +500,7 @@ async function handleWrite(req, res, url, route) {
         questionCount: result.quiz.rounds.reduce((n, r) => n + r.questions.length, 0),
         problems: result.problems,
         needsImages: result.needsImages,
+        backedUp: backup.ok,
       }));
     } catch (err) {
       log('ERROR ' + err.message);
@@ -460,6 +527,7 @@ async function handleWrite(req, res, url, route) {
     }
     try {
       deleteBingoPack(config.bingoDir, id);
+      if (githubConfigured()) await deleteFile(`bingo/${id}.json`, `Delete bingo pack: ${id}`);
       return sendJson(res, 200, { ok: true }), true;
     } catch (err) {
       return sendJson(res, 404, { error: err.message }), true;
@@ -473,7 +541,8 @@ async function handleWrite(req, res, url, route) {
     const problems = validateBingoPack(pack);
     if (problems.length) return sendJson(res, 400, { error: 'Bingo pack is not valid', problems }), true;
     saveBingoPack(config.bingoDir, id, pack);
-    return sendJson(res, 200, { ok: true }), true;
+    const backup = await backUp(`bingo/${id}.json`, JSON.stringify(pack, null, 2) + '\n', `Edit bingo pack: ${pack.title || id}`);
+    return sendJson(res, 200, { ok: true, backedUp: backup.ok, backupError: backup.error }), true;
   }
 
   if (route === '/api/bingo' && req.method === 'POST') {

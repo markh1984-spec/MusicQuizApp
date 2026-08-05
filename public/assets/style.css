@@ -1185,3 +1185,9 @@ body.screen { cursor: none; }
 }
 .pack-del:hover { color: var(--bad); border-color: rgba(255, 77, 94, 0.5); background: rgba(255, 77, 94, 0.1); }
 .pack-del:disabled { opacity: 0.5; cursor: default; }
+
+/* Loud on purpose: without backup, work disappears and nothing looks wrong
+   until the day it has gone. */
+.panel.backup-warn { border-color: var(--gold); background: rgba(255, 210, 63, 0.12); }
+.panel.backup-warn h3 { color: var(--gold); }
+.panel.backup-warn .tiny { font-size: 13.5px; line-height: 1.6; color: var(--ink); }

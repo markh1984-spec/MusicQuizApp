@@ -121,10 +121,46 @@ function render() {
   const active = currentTab();
 
   mainEl.replaceChildren(
+    ...(backupWarning(library.generation || {}) || []),
     runningPanel(running),
     tabBar(active),
     tabBody(active),
   );
+}
+
+/**
+ * The one warning worth putting at the top of the page.
+ *
+ * Without backup, everything made here is temporary — and nothing looks wrong
+ * until the day it has gone. That is exactly the kind of failure that deserves
+ * to be loud.
+ */
+function backupWarning(gen) {
+  if (gen.backup) return null;
+
+  // Configured but broken is a different problem from never set up, and needs
+  // a different fix, so say which.
+  const detail = gen.backupConfigured
+    ? `<b>GitHub backup is set up but not working:</b> ${esc(gen.backupError || 'unknown problem')}.
+       Check GITHUB_TOKEN has <b>Contents: read and write</b> on
+       ${esc(process_repo(gen))}, and that GITHUB_REPO looks like <code>owner/name</code>.`
+    : `Set <b>GITHUB_TOKEN</b> and <b>GITHUB_REPO</b> to have packs filed into your
+       repository automatically. See TODO.md part 4.`;
+
+  return [node(`
+    <div class="panel backup-warn">
+      <h3>Nothing here is being saved permanently</h3>
+      <p class="tiny">
+        Packs you generate or edit live on this server only, and the server is
+        wiped every time it restarts — which on the free tier includes waking
+        from sleep.
+        <br><br>${detail}
+      </p>
+    </div>`)];
+}
+
+function process_repo(gen) {
+  return gen.backupRepo || 'your repository';
 }
 
 function tabBar(active) {
@@ -241,6 +277,7 @@ async function generateQuiz(panel) {
       <div class="gen-good">
         Written <b>${esc(done.title)}</b> — ${done.questionCount} questions across
         ${done.rounds} round${done.rounds === 1 ? '' : 's'}.
+        ${done.backedUp ? '<br>Backed up to GitHub — this one is permanent.' : '<br><b>Not backed up</b> — this will be lost when the app restarts.'}
         <br><b>Now read it.</b> <a href="${linkTo('/editor')}">Open the editor</a> and
         check every question before anyone else sees it.
         ${done.needsImages ? '<br><span class="tiny">The face round has no pictures yet — it will use placeholders until you generate them. See TODO.md part 6.</span>' : ''}
@@ -405,6 +442,7 @@ async function generate(panel) {
       <div class="gen-good">
         Built <b>${esc(done.title)}</b> — ${done.trackCount} tracks.
         ${done.playlist ? `<a href="${esc(done.playlist)}" target="_blank" rel="noopener">Open the Spotify playlist</a>` : 'No Spotify playlist.'}
+        ${done.backedUp ? '<br>Backed up to GitHub — this one is permanent.' : '<br><b>Not backed up</b> — this will be lost when the app restarts.'}
       </div>`));
     button.textContent = 'Built';
     await load(); // refresh the library so the new pack is there to launch

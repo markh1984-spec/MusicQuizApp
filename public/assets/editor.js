@@ -421,12 +421,14 @@ function swap(list, a, b) {
 
 async function save() {
   try {
-    await api(`${apiBase()}/` + encodeURIComponent(quiz.id), { method: 'PUT', body: JSON.stringify(quiz) });
+    const result = await api(`${apiBase()}/` + encodeURIComponent(quiz.id), { method: 'PUT', body: JSON.stringify(quiz) });
     problems = [];
     problems.checked = true;
     setDirty(false);
     render();
-    flash('Saved');
+    // Say whether it is permanent, because "Saved" on its own is misleading
+    // when the server's filesystem is temporary.
+    flash(result.backedUp ? 'Saved and backed up' : 'Saved here only — not backed up');
   } catch (err) {
     // The server validates too, and refuses to write a broken quiz to disk.
     problems = err.data && err.data.problems ? err.data.problems : [err.message];
