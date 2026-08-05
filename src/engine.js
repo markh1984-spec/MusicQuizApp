@@ -1,0 +1,854 @@
+/**
+ * The quiz engine: players, phases, answers and scores.
+ *
+ * Design rules that everything else depends on:
+ *
+ *  1. THE SERVER OWNS THE CLOCK. Every timestamp used for scoring comes from
+ *     `now()`, injected here. Phones never tell us how fast they were.
+ *  2. NOTHING SENSITIVE LEAVES IN THE WRONG PAYLOAD. The answer key, the host
+ *     notes and the round 3 "play this now" cue exist only in hostView().
+ *     screenView() and playerView() build their objects field by field, so a
+ *     new sensitive field cannot leak by accident.
+ *  3. THE WHOLE THING IS SERIALISABLE. `this.state` is plain JSON, so crash
+ *     recovery is just writing it to disk and reading it back.
+ *
+ * Rounds are plugins: a round has a `type` (`text`, `image`, `intro`) and the
+ * only thing the engine does differently per type is decide which extra fields
+ * the big screen and the host get. Adding a type means adding a case in
+ * `screenQuestionExtras` / `hostQuestionExtras`, nothing else.
+ */
+
+import { scoreAnswer, responseSeconds, rankPlayers } from './scoring.js';
+
+export const PHASES = {
+  LOBBY: 'lobby',
+  ROUND_INTRO: 'round_intro',
+  QUESTION: 'question',
+  REVEAL: 'reveal',
+  ROUND_BOARD: 'round_board',
+  FINAL: 'final',
+};
+
+const DEFAULT_QUESTION_SECONDS = 20;
+
+export class Engine {
+  /**
+   * @param {object} opts
+   * @param {object} opts.quiz   a quiz pack (see quizzes/*.json)
+   * @param {function(): number} [opts.now]  injectable clock, ms since epoch
+   * @param {object} [opts.state] restored state from disk
+   * @param {function(Engine): void} [opts.onChange] called after every mutation
+   */
+  constructor({ quiz, now = () => Date.now(), state = null, onChange = null }) {
+    this.quiz = quiz;
+    this.now = now;
+    this.onChange = onChange;
+    this.state = state || Engine.freshState(quiz);
+    // A restored state can point at a quiz that has since been edited; clamp
+    // the pointers so we never crash on a missing question.
+    this.clampPointers();
+  }
+
+  static freshState(quiz) {
+    return {
+      quizId: quiz.id,
+      phase: PHASES.LOBBY,
+      roundIndex: 0,
+      questionIndex: 0,
+      // Monotonic counter bumped on every change, so clients can spot a
+      // missed update and the screen can re-key its animations.
+      version: 0,
+      question: null, // { startedAt, endsAt, seconds, closed }
+      players: {}, // id -> player
+      answers: {}, // "roundIndex:questionIndex" -> { playerId -> answer }
+      history: [], // one entry per completed question, for the recap
+      startedAt: null,
+      finishedAt: null,
+    };
+  }
+
+  // ---------------------------------------------------------------- helpers
+
+  changed() {
+    this.state.version++;
+    if (this.onChange) this.onChange(this);
+  }
+
+  get rounds() {
+    return this.quiz.rounds || [];
+  }
+
+  round(i = this.state.roundIndex) {
+    return this.rounds[i] || null;
+  }
+
+  questions(i = this.state.roundIndex) {
+    const r = this.round(i);
+    return (r && r.questions) || [];
+  }
+
+  question(ri = this.state.roundIndex, qi = this.state.questionIndex) {
+    return this.questions(ri)[qi] || null;
+  }
+
+  questionSeconds(ri = this.state.roundIndex) {
+    const r = this.round(ri);
+    return (r && r.questionSeconds) || this.quiz.questionSeconds || DEFAULT_QUESTION_SECONDS;
+  }
+
+  answerKey(ri = this.state.roundIndex, qi = this.state.questionIndex) {
+    return `${ri}:${qi}`;
+  }
+
+  answersFor(ri = this.state.roundIndex, qi = this.state.questionIndex) {
+    return this.state.answers[this.answerKey(ri, qi)] || {};
+  }
+
+  clampPointers() {
+    const lastRound = Math.max(0, this.rounds.length - 1);
+    this.state.roundIndex = Math.min(Math.max(0, this.state.roundIndex), lastRound);
+    const lastQuestion = Math.max(0, this.questions().length - 1);
+    this.state.questionIndex = Math.min(Math.max(0, this.state.questionIndex), lastQuestion);
+  }
+
+  /** Milliseconds left on the clock, or null when no question is running. */
+  msRemaining() {
+    if (this.state.phase !== PHASES.QUESTION || !this.state.question) return null;
+    return Math.max(0, this.state.question.endsAt - this.now());
+  }
+
+  /** True once the clock has run out on the current question. */
+  isExpired() {
+    const left = this.msRemaining();
+    return left !== null && left <= 0;
+  }
+
+  // ---------------------------------------------------------------- players
+
+  /**
+   * Join, or rejoin with an existing id. Rejoining keeps the score: phones
+   * lock, people refresh, someone drops off wifi.
+   */
+  join({ playerId, name }) {
+    const at = this.now();
+    const existing = playerId && this.state.players[playerId];
+
+    if (existing) {
+      existing.connected = true;
+      existing.lastSeenAt = at;
+      const cleanName = cleanTeamName(name);
+      // Only take a new name if they actually typed one (a reconnect posts
+      // the stored name back, and we do not want a blank to wipe it).
+      if (cleanName && cleanName !== existing.name) existing.name = cleanName;
+      this.changed();
+      return existing;
+    }
+
+    const player = {
+      id: playerId && isSafeId(playerId) ? playerId : newId(),
+      name: cleanTeamName(name) || 'Team ' + (Object.keys(this.state.players).length + 1),
+      score: 0,
+      correctCount: 0,
+      answeredCount: 0,
+      totalResponseMs: 0,
+      joinedAt: at,
+      lastSeenAt: at,
+      connected: true,
+      // Latecomers are marked so the host knows why their score is low.
+      joinedDuringQuiz: this.state.phase !== PHASES.LOBBY,
+    };
+    this.state.players[player.id] = player;
+    this.changed();
+    return player;
+  }
+
+  touch(playerId) {
+    const p = this.state.players[playerId];
+    if (!p) return null;
+    p.lastSeenAt = this.now();
+    p.connected = true;
+    return p;
+  }
+
+  removePlayer(playerId) {
+    if (!this.state.players[playerId]) return false;
+    delete this.state.players[playerId];
+    for (const key of Object.keys(this.state.answers)) {
+      delete this.state.answers[key][playerId];
+    }
+    this.changed();
+    return true;
+  }
+
+  renamePlayer(playerId, name) {
+    const p = this.state.players[playerId];
+    const clean = cleanTeamName(name);
+    if (!p || !clean) return false;
+    p.name = clean;
+    this.changed();
+    return true;
+  }
+
+  /** Host safety valve: nudge a score by hand when something goes wrong. */
+  adjustScore(playerId, delta) {
+    const p = this.state.players[playerId];
+    if (!p) return false;
+    const n = Math.round(Number(delta));
+    if (!Number.isFinite(n)) return false;
+    p.score += n;
+    this.changed();
+    return true;
+  }
+
+  playerList() {
+    return Object.values(this.state.players);
+  }
+
+  leaderboard() {
+    return rankPlayers(this.playerList());
+  }
+
+  // ----------------------------------------------------------------- phases
+
+  start() {
+    if (this.rounds.length === 0) return false;
+    this.state.phase = PHASES.ROUND_INTRO;
+    this.state.roundIndex = 0;
+    this.state.questionIndex = 0;
+    this.state.startedAt = this.now();
+    this.state.finishedAt = null;
+    this.changed();
+    return true;
+  }
+
+  /** Put the current question on the screen and start the clock. */
+  askQuestion() {
+    if (!this.question()) return false;
+    const seconds = this.questionSeconds();
+    const startedAt = this.now();
+    this.state.phase = PHASES.QUESTION;
+    this.state.question = {
+      startedAt,
+      endsAt: startedAt + seconds * 1000,
+      seconds,
+      closed: false,
+    };
+    this.changed();
+    return true;
+  }
+
+  /**
+   * Close the question and show the answer. Called by the host, or
+   * automatically when the clock runs out.
+   */
+  reveal() {
+    if (this.state.phase !== PHASES.QUESTION) return false;
+    this.state.question.closed = true;
+    this.state.question.revealedAt = this.now();
+    this.state.phase = PHASES.REVEAL;
+
+    // Freeze a summary of the question for the recap and the export.
+    const q = this.question();
+    const answers = this.answersFor();
+    this.state.history = this.state.history.filter(
+      (h) => !(h.roundIndex === this.state.roundIndex && h.questionIndex === this.state.questionIndex),
+    );
+    this.state.history.push({
+      roundIndex: this.state.roundIndex,
+      questionIndex: this.state.questionIndex,
+      prompt: q ? q.prompt : '',
+      correctIndex: q ? q.correctIndex : -1,
+      answerCount: Object.keys(answers).length,
+      correctCount: Object.values(answers).filter((a) => a.correct).length,
+      revealedAt: this.state.question.revealedAt,
+    });
+    this.changed();
+    return true;
+  }
+
+  /**
+   * The host's single "onwards" button. Moves through:
+   * lobby -> round intro -> question -> reveal -> ... -> round board -> ... -> final
+   */
+  next() {
+    const s = this.state;
+    switch (s.phase) {
+      case PHASES.LOBBY:
+        return this.start();
+
+      case PHASES.ROUND_INTRO:
+        s.questionIndex = 0;
+        return this.askQuestion();
+
+      case PHASES.QUESTION:
+        return this.reveal();
+
+      case PHASES.REVEAL: {
+        const isLastQuestion = s.questionIndex >= this.questions().length - 1;
+        if (isLastQuestion) {
+          s.phase = PHASES.ROUND_BOARD;
+          s.question = null;
+          this.changed();
+          return true;
+        }
+        s.questionIndex++;
+        return this.askQuestion();
+      }
+
+      case PHASES.ROUND_BOARD: {
+        const isLastRound = s.roundIndex >= this.rounds.length - 1;
+        if (isLastRound) {
+          s.phase = PHASES.FINAL;
+          s.finishedAt = this.now();
+          s.question = null;
+          this.changed();
+          return true;
+        }
+        s.roundIndex++;
+        s.questionIndex = 0;
+        s.phase = PHASES.ROUND_INTRO;
+        s.question = null;
+        this.changed();
+        return true;
+      }
+
+      case PHASES.FINAL:
+      default:
+        return false;
+    }
+  }
+
+  /** Step backwards. Useful when the host overshoots in front of a room. */
+  back() {
+    const s = this.state;
+    switch (s.phase) {
+      case PHASES.REVEAL:
+        // Back from a reveal reopens the same question, cleared, from the top.
+        return this.redoQuestion();
+      case PHASES.QUESTION:
+        s.phase = PHASES.ROUND_INTRO;
+        s.question = null;
+        this.changed();
+        return true;
+      case PHASES.ROUND_BOARD:
+        s.questionIndex = Math.max(0, this.questions().length - 1);
+        s.phase = PHASES.REVEAL;
+        this.changed();
+        return true;
+      case PHASES.ROUND_INTRO:
+        if (s.roundIndex === 0) return false;
+        s.roundIndex--;
+        s.phase = PHASES.ROUND_BOARD;
+        this.changed();
+        return true;
+      case PHASES.FINAL:
+        s.phase = PHASES.ROUND_BOARD;
+        s.finishedAt = null;
+        this.changed();
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Skip the current question entirely: no scores, straight to the next one.
+   * For when a question turns out to be wrong, or the room has heard it.
+   */
+  skipQuestion() {
+    const s = this.state;
+    if (s.phase !== PHASES.QUESTION && s.phase !== PHASES.REVEAL) return false;
+    this.clearQuestionScores(s.roundIndex, s.questionIndex);
+    s.history = s.history.filter(
+      (h) => !(h.roundIndex === s.roundIndex && h.questionIndex === s.questionIndex),
+    );
+
+    const isLastQuestion = s.questionIndex >= this.questions().length - 1;
+    if (isLastQuestion) {
+      s.phase = PHASES.ROUND_BOARD;
+      s.question = null;
+      this.changed();
+      return true;
+    }
+    s.questionIndex++;
+    return this.askQuestion();
+  }
+
+  /**
+   * Run the current question again from scratch: wipe the points it awarded
+   * and restart the clock. For when the PA cut out or the projector dropped.
+   */
+  redoQuestion() {
+    const s = this.state;
+    if (s.phase !== PHASES.QUESTION && s.phase !== PHASES.REVEAL) return false;
+    this.clearQuestionScores(s.roundIndex, s.questionIndex);
+    s.history = s.history.filter(
+      (h) => !(h.roundIndex === s.roundIndex && h.questionIndex === s.questionIndex),
+    );
+    return this.askQuestion();
+  }
+
+  /** Jump straight to a question. Used by the host view and the preview tool. */
+  goTo(roundIndex, questionIndex) {
+    if (!this.rounds[roundIndex]) return false;
+    if (!this.questions(roundIndex)[questionIndex]) return false;
+    this.state.roundIndex = roundIndex;
+    this.state.questionIndex = questionIndex;
+    return this.askQuestion();
+  }
+
+  /** Undo every point a single question awarded, and the per-player tallies. */
+  clearQuestionScores(ri, qi) {
+    const key = this.answerKey(ri, qi);
+    const answers = this.state.answers[key];
+    if (!answers) return;
+    for (const [playerId, a] of Object.entries(answers)) {
+      const p = this.state.players[playerId];
+      if (!p) continue;
+      p.score -= a.points;
+      p.answeredCount = Math.max(0, p.answeredCount - 1);
+      if (a.correct) p.correctCount = Math.max(0, p.correctCount - 1);
+      p.totalResponseMs = Math.max(0, p.totalResponseMs - a.responseMs);
+    }
+    delete this.state.answers[key];
+  }
+
+  /** Wipe every score and answer but keep the players. Between-gig reset. */
+  resetScores() {
+    this.state.answers = {};
+    this.state.history = [];
+    for (const p of this.playerList()) {
+      p.score = 0;
+      p.correctCount = 0;
+      p.answeredCount = 0;
+      p.totalResponseMs = 0;
+    }
+    this.changed();
+    return true;
+  }
+
+  /** Back to an empty lobby, ready for the next room. */
+  resetAll() {
+    this.state = Engine.freshState(this.quiz);
+    this.changed();
+    return true;
+  }
+
+  // ---------------------------------------------------------------- answers
+
+  /**
+   * Take an answer from a phone. The phone sends only which option it picked;
+   * the timing and the scoring are entirely ours.
+   *
+   * @returns {{ok: boolean, reason?: string, points?: number}}
+   */
+  answer({ playerId, optionIndex }) {
+    const s = this.state;
+    const player = s.players[playerId];
+    if (!player) return { ok: false, reason: 'unknown_player' };
+    if (s.phase !== PHASES.QUESTION || !s.question) return { ok: false, reason: 'not_open' };
+
+    const at = this.now();
+    if (at >= s.question.endsAt || s.question.closed) return { ok: false, reason: 'too_late' };
+
+    const q = this.question();
+    if (!q) return { ok: false, reason: 'no_question' };
+
+    const index = Number(optionIndex);
+    if (!Number.isInteger(index) || index < 0 || index >= q.options.length) {
+      return { ok: false, reason: 'bad_option' };
+    }
+
+    const key = this.answerKey();
+    if (!s.answers[key]) s.answers[key] = {};
+    const answers = s.answers[key];
+    // One answer per player per question. First one is final: no changing your
+    // mind once it is in, which is what keeps the timing honest.
+    if (answers[playerId]) return { ok: false, reason: 'already_answered' };
+
+    const correct = index === q.correctIndex;
+    // The bonus goes to the first CORRECT answer, so a fast wrong guess
+    // cannot take it off the player who actually knew.
+    const isFirstCorrect = correct && !Object.values(answers).some((a) => a.correct);
+    const points = scoreAnswer({ correct, answeredAt: at, endsAt: s.question.endsAt, isFirstCorrect });
+    const responseMs = Math.max(0, at - s.question.startedAt);
+
+    answers[playerId] = {
+      optionIndex: index,
+      answeredAt: at,
+      responseMs,
+      responseSeconds: responseSeconds(at, s.question.startedAt),
+      correct,
+      isFirstCorrect,
+      points,
+    };
+
+    player.score += points;
+    player.answeredCount++;
+    player.totalResponseMs += responseMs;
+    if (correct) player.correctCount++;
+    player.lastSeenAt = at;
+
+    this.changed();
+    return { ok: true, points, correct, isFirstCorrect };
+  }
+
+  /** The "Fastest finger" line: first correct answer of the current question. */
+  fastestFinger(ri = this.state.roundIndex, qi = this.state.questionIndex) {
+    const answers = this.answersFor(ri, qi);
+    let best = null;
+    for (const [playerId, a] of Object.entries(answers)) {
+      if (!a.correct) continue;
+      if (!best || a.answeredAt < best.answeredAt) best = { ...a, playerId };
+    }
+    if (!best) return null;
+    const p = this.state.players[best.playerId];
+    return {
+      playerId: best.playerId,
+      name: p ? p.name : 'Unknown',
+      seconds: best.responseSeconds,
+      points: best.points,
+    };
+  }
+
+  // ------------------------------------------------------------------ views
+  //
+  // Three payloads, built separately on purpose. The big screen payload is
+  // assembled field by field from a whitelist, so nothing sensitive can ever
+  // ride along in it.
+
+  /** Shared, safe-for-anyone context. */
+  baseView() {
+    const s = this.state;
+    const round = this.round();
+    return {
+      version: s.version,
+      phase: s.phase,
+      serverNow: this.now(),
+      quizTitle: this.quiz.title,
+      roundIndex: s.roundIndex,
+      roundCount: this.rounds.length,
+      questionIndex: s.questionIndex,
+      questionCount: this.questions().length,
+      roundTitle: round ? round.title : '',
+      roundType: round ? round.type : null,
+      playerCount: this.playerList().length,
+    };
+  }
+
+  /**
+   * Extra fields the big screen needs for this round type.
+   * ROUND 3 RULE: the intro round deliberately returns nothing here. The track
+   * title and artist live in `question.cue`, which only hostView() ever reads.
+   */
+  screenQuestionExtras(q, round) {
+    switch (round.type) {
+      case 'image':
+        return {
+          image: q.image ? `/quiz-images/${q.image}` : null,
+          // The caption that makes clear these are illustrations, not photos.
+          imageCaption: q.imageCaption || round.imageCaption || 'AI-generated illustration — not a real photograph',
+          zoomFrom: q.zoomFrom ?? round.zoomFrom ?? 7,
+          zoomTo: q.zoomTo ?? round.zoomTo ?? 1,
+          zoomOriginX: q.zoomOriginX ?? 50,
+          zoomOriginY: q.zoomOriginY ?? 40,
+        };
+      case 'intro':
+        // Nothing. Not the title, not the artist, not the hint.
+        return {};
+      case 'text':
+      default:
+        return {};
+    }
+  }
+
+  /** What the projector shows. Never contains the answer key. */
+  screenView() {
+    const s = this.state;
+    const view = this.baseView();
+    const round = this.round();
+
+    if (s.phase === PHASES.QUESTION || s.phase === PHASES.REVEAL) {
+      const q = this.question();
+      if (q && round) {
+        view.question = {
+          id: q.id,
+          prompt: q.prompt,
+          options: q.options,
+          ...this.screenQuestionExtras(q, round),
+        };
+        view.clock = s.question
+          ? {
+              startedAt: s.question.startedAt,
+              endsAt: s.question.endsAt,
+              seconds: s.question.seconds,
+              closed: s.question.closed,
+            }
+          : null;
+        view.answeredCount = Object.keys(this.answersFor()).length;
+      }
+    }
+
+    if (s.phase === PHASES.REVEAL) {
+      const q = this.question();
+      // Safe here and only here: the question is over, the room is meant to see it.
+      view.reveal = {
+        correctIndex: q ? q.correctIndex : -1,
+        correctText: q ? q.options[q.correctIndex] : '',
+        fastest: this.fastestFinger(),
+        tally: this.optionTally(),
+        answerNote: q ? q.answerNote || '' : '',
+      };
+    }
+
+    if (s.phase === PHASES.ROUND_INTRO && round) {
+      view.roundIntro = {
+        title: round.title,
+        blurb: round.blurb || '',
+        questionCount: this.questions().length,
+        seconds: this.questionSeconds(),
+        type: round.type,
+      };
+    }
+
+    if (s.phase === PHASES.ROUND_BOARD || s.phase === PHASES.FINAL || s.phase === PHASES.LOBBY) {
+      view.leaderboard = this.leaderboard().map(publicPlayer);
+    }
+
+    if (s.phase === PHASES.LOBBY) {
+      view.lobby = {
+        players: this.playerList()
+          .sort((a, b) => b.joinedAt - a.joinedAt)
+          .map((p) => ({ id: p.id, name: p.name })),
+      };
+    }
+
+    return view;
+  }
+
+  /** How many picked each option — a nice reveal graphic, gives nothing away early. */
+  optionTally() {
+    const q = this.question();
+    if (!q) return [];
+    const tally = q.options.map(() => 0);
+    for (const a of Object.values(this.answersFor())) {
+      if (tally[a.optionIndex] !== undefined) tally[a.optionIndex]++;
+    }
+    return tally;
+  }
+
+  /**
+   * What one phone sees. Deliberately NOT the question text: the question is
+   * on the big screen, which keeps the room looking up at the host and makes
+   * googling harder.
+   */
+  playerView(playerId) {
+    const s = this.state;
+    const player = s.players[playerId];
+    const round = this.round();
+    const view = {
+      version: s.version,
+      phase: s.phase,
+      serverNow: this.now(),
+      quizTitle: this.quiz.title,
+      roundIndex: s.roundIndex,
+      roundCount: this.rounds.length,
+      questionIndex: s.questionIndex,
+      questionCount: this.questions().length,
+      roundTitle: round ? round.title : '',
+      you: player
+        ? {
+            id: player.id,
+            name: player.name,
+            score: player.score,
+            correctCount: player.correctCount,
+            position: this.leaderboard().find((p) => p.id === player.id)?.position ?? null,
+            playerCount: this.playerList().length,
+          }
+        : null,
+    };
+    if (!player) {
+      view.kicked = true;
+      return view;
+    }
+
+    if (s.phase === PHASES.QUESTION || s.phase === PHASES.REVEAL) {
+      const q = this.question();
+      if (q) {
+        view.options = q.options; // options only, never the prompt
+        view.clock = s.question
+          ? { startedAt: s.question.startedAt, endsAt: s.question.endsAt, seconds: s.question.seconds, closed: s.question.closed }
+          : null;
+        const mine = this.answersFor()[playerId];
+        view.yourAnswer = mine
+          ? {
+              optionIndex: mine.optionIndex,
+              // Never tell them whether they were right until the reveal.
+              ...(s.phase === PHASES.REVEAL
+                ? { correct: mine.correct, points: mine.points, isFirstCorrect: mine.isFirstCorrect, seconds: mine.responseSeconds }
+                : {}),
+            }
+          : null;
+        if (s.phase === PHASES.REVEAL) {
+          view.reveal = {
+            correctIndex: q.correctIndex,
+            correctText: q.options[q.correctIndex],
+            fastest: this.fastestFinger(),
+          };
+        }
+      }
+    }
+
+    if (s.phase === PHASES.ROUND_BOARD || s.phase === PHASES.FINAL) {
+      view.leaderboard = this.leaderboard().slice(0, 10).map(publicPlayer);
+    }
+
+    return view;
+  }
+
+  /** Extra fields only the host gets. This is where the secrets live. */
+  hostQuestionExtras(q, round) {
+    const extras = {
+      correctIndex: q.correctIndex,
+      correctText: q.options[q.correctIndex],
+      note: q.note || '',
+      answerNote: q.answerNote || '',
+    };
+    if (round.type === 'intro' && q.cue) {
+      // The round 3 "play this now" cue. Host phone only, never the projector.
+      extras.cue = {
+        title: q.cue.title || '',
+        artist: q.cue.artist || '',
+        from: q.cue.from || '',
+        hint: q.cue.hint || '',
+      };
+    }
+    if (round.type === 'image') {
+      extras.image = q.image ? `/quiz-images/${q.image}` : null;
+    }
+    return extras;
+  }
+
+  /** The control view: everything, including the answer key. */
+  hostView() {
+    const s = this.state;
+    const view = this.baseView();
+    const round = this.round();
+    const q = this.question();
+
+    view.canStart = s.phase === PHASES.LOBBY && this.rounds.length > 0;
+    view.msRemaining = this.msRemaining();
+    view.clock = s.question ? { ...s.question } : null;
+
+    if (q && round) {
+      view.question = {
+        id: q.id,
+        prompt: q.prompt,
+        options: q.options,
+        ...this.hostQuestionExtras(q, round),
+      };
+      view.answeredCount = Object.keys(this.answersFor()).length;
+      view.tally = this.optionTally();
+      view.fastest = this.fastestFinger();
+    }
+
+    // Always give the host the next question too, so they can read ahead and
+    // cue up the track for round 3 before it goes on screen.
+    const upcoming = this.peekNext();
+    view.upcoming = upcoming;
+
+    view.players = this.leaderboard().map((p) => ({
+      id: p.id,
+      name: p.name,
+      score: p.score,
+      position: p.position,
+      correctCount: p.correctCount,
+      answeredCount: p.answeredCount,
+      connected: p.connected,
+      joinedDuringQuiz: p.joinedDuringQuiz,
+      answeredThisQuestion: Boolean(this.answersFor()[p.id]),
+      lastSeenAt: p.lastSeenAt,
+    }));
+
+    view.rounds = this.rounds.map((r, i) => ({
+      index: i,
+      title: r.title,
+      type: r.type,
+      questionCount: (r.questions || []).length,
+      current: i === s.roundIndex,
+    }));
+
+    return view;
+  }
+
+  /** The question after this one, for the host's read-ahead panel. */
+  peekNext() {
+    const s = this.state;
+    let ri = s.roundIndex;
+    let qi = s.questionIndex;
+    if (s.phase === PHASES.LOBBY || s.phase === PHASES.ROUND_INTRO) {
+      qi = 0;
+    } else if (qi >= this.questions(ri).length - 1) {
+      ri++;
+      qi = 0;
+    } else {
+      qi++;
+    }
+    const round = this.rounds[ri];
+    const q = round && (round.questions || [])[qi];
+    if (!q || !round) return null;
+    return {
+      roundIndex: ri,
+      questionIndex: qi,
+      roundTitle: round.title,
+      roundType: round.type,
+      prompt: q.prompt,
+      options: q.options,
+      ...this.hostQuestionExtras(q, round),
+    };
+  }
+
+  /** Everything needed for an end-of-night results export. */
+  results() {
+    return {
+      quizId: this.quiz.id,
+      quizTitle: this.quiz.title,
+      startedAt: this.state.startedAt,
+      finishedAt: this.state.finishedAt,
+      leaderboard: this.leaderboard().map((p) => ({
+        position: p.position,
+        name: p.name,
+        score: p.score,
+        correctCount: p.correctCount,
+        answeredCount: p.answeredCount,
+      })),
+      questions: this.state.history,
+    };
+  }
+}
+
+function publicPlayer(p) {
+  return { id: p.id, name: p.name, score: p.score, position: p.position, correctCount: p.correctCount };
+}
+
+export function cleanTeamName(name) {
+  if (typeof name !== 'string') return '';
+  // Strip control characters, collapse whitespace, cap the length so nobody
+  // can blow up the projected leaderboard with a wall of text.
+  return name
+    .replace(/[\u0000-\u001f\u007f-\u009f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 28);
+}
+
+export function isSafeId(id) {
+  return typeof id === 'string' && /^[A-Za-z0-9_-]{6,64}$/.test(id);
+}
+
+export function newId() {
+  // Short, URL-safe, and unguessable enough that nobody hijacks a team.
+  const bytes = new Uint8Array(16);
+  globalThis.crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}

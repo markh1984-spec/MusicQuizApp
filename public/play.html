@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+  <meta name="theme-color" content="#07070e">
+  <title>Music Quiz</title>
+  <link rel="stylesheet" href="/assets/style.css">
+  <link rel="icon" href="data:,">
+</head>
+<body class="phone">
+  <div class="wrap">
+    <header class="head" id="head" hidden>
+      <div>
+        <div class="team" id="teamName"></div>
+        <div class="muted" id="teamRank" style="font-size:13px"></div>
+      </div>
+      <div class="score" id="teamScore">0</div>
+    </header>
+
+    <main class="body" id="body"></main>
+
+    <footer class="foot">
+      <span class="status-dot" id="statusDot"></span><span id="statusText">Connecting…</span>
+    </footer>
+  </div>
+  <script type="module" src="/assets/play.js"></script>
+</body>
+</html>

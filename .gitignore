@@ -1,0 +1,16 @@
+node_modules/
+
+# Live quiz state and the generated host key. Machine-specific, and the state
+# file is rewritten constantly during a gig.
+data/
+
+# Generated round 2 portraits. Keep the prompts in the quiz pack instead, and
+# regenerate. Delete this line if you would rather commit your image library.
+images/
+
+# Screenshots from scripts/shots.mjs
+screenshots/
+
+.DS_Store
+*.log
+.env
