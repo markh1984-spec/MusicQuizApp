@@ -30,9 +30,13 @@ const hostKey = new URL(location.href).searchParams.get('key')
   || localStorage.getItem('musicquiz.hostkey')
   || '';
 
-let quiz = null;
+let quiz = null;      // the pack being edited, quiz or bingo
+let kind = 'quiz';    // which of the two
 let dirty = false;
 let problems = [];
+
+const isBingo = () => kind === 'bingo';
+const apiBase = () => (isBingo() ? '/api/bingo' : '/api/quiz');
 
 // ------------------------------------------------------------------ loading
 
@@ -47,21 +51,42 @@ async function api(path, options = {}) {
   return data;
 }
 
+/**
+ * One picker for everything you have saved, quizzes and bingo packs together,
+ * because "the thing I want to edit" is not usefully split by game.
+ */
 async function loadQuizList(selectId) {
-  const { quizzes } = await api('/api/quizzes');
-  pickEl.replaceChildren(
-    ...quizzes.map((q) => node(`<option value="${esc(q.id)}">${esc(q.title)} — ${q.questionCount} questions${q.broken ? ' (BROKEN)' : ''}</option>`)),
-  );
+  const library = await api('/api/library');
+  const options = [];
+
+  if (library.quizzes.length) {
+    options.push(node('<optgroup label="Music quizzes"></optgroup>'));
+    for (const q of library.quizzes) {
+      options[options.length - 1].appendChild(node(
+        `<option value="quiz:${esc(q.id)}">${esc(q.title)} — ${q.questionCount} questions${q.broken ? ' (BROKEN)' : ''}</option>`));
+    }
+  }
+  if (library.bingo.length) {
+    options.push(node('<optgroup label="Music bingo"></optgroup>'));
+    for (const b of library.bingo) {
+      options[options.length - 1].appendChild(node(
+        `<option value="bingo:${esc(b.id)}">${esc(b.title)} — ${b.trackCount} tracks${b.broken ? ' (BROKEN)' : ''}</option>`));
+    }
+  }
+
+  pickEl.replaceChildren(...options);
   if (selectId) pickEl.value = selectId;
-  if (pickEl.value) await openQuiz(pickEl.value);
+  if (pickEl.value) await openPack(pickEl.value);
 }
 
-async function openQuiz(id) {
+async function openPack(value) {
   if (dirty && !confirm('You have unsaved changes. Throw them away?')) {
-    pickEl.value = quiz.id;
+    pickEl.value = `${kind}:${quiz.id}`;
     return;
   }
-  quiz = await api('/api/quiz/' + encodeURIComponent(id));
+  const [nextKind, id] = value.split(':');
+  kind = nextKind;
+  quiz = await api(`${apiBase()}/` + encodeURIComponent(id));
   problems = [];
   setDirty(false);
   render();
@@ -95,6 +120,13 @@ function render() {
     parts.push(node('<div class="problems ok"><strong>All good. Nothing wrong with this quiz.</strong></div>'));
   }
 
+  if (isBingo()) {
+    parts.push(bingoHeader());
+    parts.push(trackListBlock());
+    mainEl.replaceChildren(...parts);
+    return;
+  }
+
   parts.push(quizHeader());
   quiz.rounds.forEach((round, ri) => parts.push(roundBlock(round, ri)));
 
@@ -112,6 +144,91 @@ function render() {
   parts.push(addRound);
 
   mainEl.replaceChildren(...parts);
+}
+
+// ------------------------------------------------------------ bingo packs
+
+function bingoHeader() {
+  const el = node(`
+    <div class="round-block">
+      <div class="round-head">
+        <span class="type-tag">Bingo</span>
+        <input class="title" id="bTitle" value="${esc(quiz.title)}" placeholder="Pack title">
+        <label class="muted" style="font-size:13px">Card
+          <select id="bSize" style="margin-left:6px">
+            ${[3, 4, 5].map((n) => `<option value="${n}" ${quiz.cardSize === n ? 'selected' : ''}>${n}×${n}</option>`).join('')}
+          </select>
+        </label>
+        <span class="muted" style="font-size:13px">File: ${esc(quiz.id)}.json</span>
+      </div>
+      <div class="qcard" style="border-radius:0 0 14px 14px">
+        <label class="muted" style="font-size:12px;font-weight:700">Subtitle shown on the lobby screen</label>
+        <input type="text" id="bSubtitle" value="${esc(quiz.subtitle || '')}" style="width:100%;margin:5px 0 10px">
+        ${quiz.spotifyPlaylist ? `<div class="tiny">Spotify playlist: <a href="${esc(quiz.spotifyPlaylist.url)}" target="_blank" rel="noopener">open it</a></div>` : ''}
+        ${quiz.notes ? `<div class="muted" style="font-size:12px;margin-top:6px">${esc(quiz.notes)}</div>` : ''}
+      </div>
+    </div>`);
+
+  el.querySelector('#bTitle').addEventListener('input', (e) => change(() => { quiz.title = e.target.value; }));
+  el.querySelector('#bSubtitle').addEventListener('input', (e) => change(() => { quiz.subtitle = e.target.value; }));
+  el.querySelector('#bSize').addEventListener('change', (e) => change(() => { quiz.cardSize = Number(e.target.value); render(); }));
+  return el;
+}
+
+/**
+ * The track list. A ${n}×${n} card needs at least n² tracks and really wants
+ * half again, so the count is shown against what the card size demands rather
+ * than left for you to work out.
+ */
+function trackListBlock() {
+  const size = quiz.cardSize || 4;
+  const needed = size * size;
+  const comfortable = Math.ceil(needed * 1.5);
+  const have = quiz.tracks.length;
+
+  const el = node(`
+    <div class="round-block">
+      <div class="round-head">
+        <span class="type-tag">${have} tracks</span>
+        <span style="font-weight:700;font-size:14px" class="${have < needed ? 'shortfall' : ''}">
+          ${have < needed
+            ? `Not enough — a ${size}×${size} card needs ${needed}`
+            : have < comfortable
+              ? `Playable, but ${comfortable}+ makes the cards more varied`
+              : 'Plenty for varied cards'}
+        </span>
+        <button class="small" id="addTrack" style="margin-left:auto">Add a track</button>
+      </div>
+      <div class="qcard" style="border-radius:0 0 14px 14px">
+        <div class="tracklist-edit" id="trackEdit"></div>
+      </div>
+    </div>`);
+
+  const list = el.querySelector('#trackEdit');
+  quiz.tracks.forEach((track, i) => {
+    const row = node(`
+      <div class="track-edit-row">
+        <span class="tnum">${i + 1}</span>
+        <input type="text" class="ttitle" value="${esc(track.title)}" placeholder="Track title">
+        <input type="text" class="tartist" value="${esc(track.artist || '')}" placeholder="Artist">
+        <button class="small up" ${i === 0 ? 'disabled' : ''}>↑</button>
+        <button class="small down" ${i === quiz.tracks.length - 1 ? 'disabled' : ''}>↓</button>
+        <button class="small danger del">×</button>
+      </div>`);
+
+    row.querySelector('.ttitle').addEventListener('input', (e) => change(() => { track.title = e.target.value; }));
+    row.querySelector('.tartist').addEventListener('input', (e) => change(() => { track.artist = e.target.value; }));
+    row.querySelector('.up').addEventListener('click', () => change(() => { swap(quiz.tracks, i, i - 1); render(); }));
+    row.querySelector('.down').addEventListener('click', () => change(() => { swap(quiz.tracks, i, i + 1); render(); }));
+    row.querySelector('.del').addEventListener('click', () => change(() => { quiz.tracks.splice(i, 1); render(); }));
+    list.appendChild(row);
+  });
+
+  el.querySelector('#addTrack').addEventListener('click', () => change(() => {
+    quiz.tracks.push({ id: 't' + (quiz.tracks.length + 1), title: '', artist: '' });
+    render();
+  }));
+  return el;
 }
 
 function quizHeader() {
@@ -297,7 +414,7 @@ function swap(list, a, b) {
 
 async function save() {
   try {
-    await api('/api/quiz/' + encodeURIComponent(quiz.id), { method: 'PUT', body: JSON.stringify(quiz) });
+    await api(`${apiBase()}/` + encodeURIComponent(quiz.id), { method: 'PUT', body: JSON.stringify(quiz) });
     problems = [];
     problems.checked = true;
     setDirty(false);
@@ -314,7 +431,7 @@ async function save() {
 /** Check without saving, so you can see what is wrong mid-edit. */
 async function check() {
   try {
-    const res = await fetch('/api/quiz/__validate?key=' + encodeURIComponent(hostKey), {
+    const res = await fetch(`${apiBase()}/__validate?key=` + encodeURIComponent(hostKey), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
       body: JSON.stringify(quiz),
@@ -338,7 +455,7 @@ function flash(message) {
 
 // --------------------------------------------------------------------- boot
 
-pickEl.addEventListener('change', () => openQuiz(pickEl.value));
+pickEl.addEventListener('change', () => openPack(pickEl.value));
 saveEl.addEventListener('click', save);
 checkEl.addEventListener('click', check);
 

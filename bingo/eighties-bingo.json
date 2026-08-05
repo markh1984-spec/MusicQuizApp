@@ -1,0 +1,251 @@
+{
+  "id": "eighties-bingo",
+  "kind": "bingo",
+  "title": "1980s Music Bingo",
+  "subtitle": "Sixteen tracks on your card. Tap them as you hear them.",
+  "cardSize": 4,
+  "notes": "Forty floor-fillers. Play them in whatever order suits the room — the app does not care, it only records what you called.",
+  "createdAt": null,
+  "tracks": [
+    {
+      "id": "t1",
+      "title": "Billie Jean",
+      "artist": "Michael Jackson",
+      "year": 1983
+    },
+    {
+      "id": "t2",
+      "title": "Sweet Dreams (Are Made of This)",
+      "artist": "Eurythmics",
+      "year": 1983
+    },
+    {
+      "id": "t3",
+      "title": "Blue Monday",
+      "artist": "New Order",
+      "year": 1983
+    },
+    {
+      "id": "t4",
+      "title": "Every Breath You Take",
+      "artist": "The Police",
+      "year": 1983
+    },
+    {
+      "id": "t5",
+      "title": "Don't You (Forget About Me)",
+      "artist": "Simple Minds",
+      "year": 1985
+    },
+    {
+      "id": "t6",
+      "title": "West End Girls",
+      "artist": "Pet Shop Boys",
+      "year": 1985
+    },
+    {
+      "id": "t7",
+      "title": "Livin' on a Prayer",
+      "artist": "Bon Jovi",
+      "year": 1986
+    },
+    {
+      "id": "t8",
+      "title": "Take On Me",
+      "artist": "a-ha",
+      "year": 1985
+    },
+    {
+      "id": "t9",
+      "title": "The Final Countdown",
+      "artist": "Europe",
+      "year": 1986
+    },
+    {
+      "id": "t10",
+      "title": "Come On Eileen",
+      "artist": "Dexys Midnight Runners",
+      "year": 1982
+    },
+    {
+      "id": "t11",
+      "title": "Tainted Love",
+      "artist": "Soft Cell",
+      "year": 1981
+    },
+    {
+      "id": "t12",
+      "title": "Girls Just Want to Have Fun",
+      "artist": "Cyndi Lauper",
+      "year": 1983
+    },
+    {
+      "id": "t13",
+      "title": "Karma Chameleon",
+      "artist": "Culture Club",
+      "year": 1983
+    },
+    {
+      "id": "t14",
+      "title": "Relax",
+      "artist": "Frankie Goes to Hollywood",
+      "year": 1983
+    },
+    {
+      "id": "t15",
+      "title": "Never Gonna Give You Up",
+      "artist": "Rick Astley",
+      "year": 1987
+    },
+    {
+      "id": "t16",
+      "title": "Wake Me Up Before You Go-Go",
+      "artist": "Wham!",
+      "year": 1984
+    },
+    {
+      "id": "t17",
+      "title": "Into the Groove",
+      "artist": "Madonna",
+      "year": 1985
+    },
+    {
+      "id": "t18",
+      "title": "Let's Dance",
+      "artist": "David Bowie",
+      "year": 1983
+    },
+    {
+      "id": "t19",
+      "title": "Running Up That Hill",
+      "artist": "Kate Bush",
+      "year": 1985
+    },
+    {
+      "id": "t20",
+      "title": "I Wanna Dance with Somebody",
+      "artist": "Whitney Houston",
+      "year": 1987
+    },
+    {
+      "id": "t21",
+      "title": "Uptown Girl",
+      "artist": "Billy Joel",
+      "year": 1983
+    },
+    {
+      "id": "t22",
+      "title": "Africa",
+      "artist": "Toto",
+      "year": 1982
+    },
+    {
+      "id": "t23",
+      "title": "Don't Stop Believin'",
+      "artist": "Journey",
+      "year": 1981
+    },
+    {
+      "id": "t24",
+      "title": "Total Eclipse of the Heart",
+      "artist": "Bonnie Tyler",
+      "year": 1983
+    },
+    {
+      "id": "t25",
+      "title": "Eye of the Tiger",
+      "artist": "Survivor",
+      "year": 1982
+    },
+    {
+      "id": "t26",
+      "title": "Should I Stay or Should I Go",
+      "artist": "The Clash",
+      "year": 1982
+    },
+    {
+      "id": "t27",
+      "title": "Ghostbusters",
+      "artist": "Ray Parker Jr.",
+      "year": 1984
+    },
+    {
+      "id": "t28",
+      "title": "Enola Gay",
+      "artist": "Orchestral Manoeuvres in the Dark",
+      "year": 1980
+    },
+    {
+      "id": "t29",
+      "title": "Don't You Want Me",
+      "artist": "The Human League",
+      "year": 1981
+    },
+    {
+      "id": "t30",
+      "title": "Video Killed the Radio Star",
+      "artist": "The Buggles",
+      "year": 1980
+    },
+    {
+      "id": "t31",
+      "title": "Rio",
+      "artist": "Duran Duran",
+      "year": 1982
+    },
+    {
+      "id": "t32",
+      "title": "This Charming Man",
+      "artist": "The Smiths",
+      "year": 1983
+    },
+    {
+      "id": "t33",
+      "title": "Purple Rain",
+      "artist": "Prince",
+      "year": 1984
+    },
+    {
+      "id": "t34",
+      "title": "Faith",
+      "artist": "George Michael",
+      "year": 1987
+    },
+    {
+      "id": "t35",
+      "title": "With or Without You",
+      "artist": "U2",
+      "year": 1987
+    },
+    {
+      "id": "t36",
+      "title": "Brass in Pocket",
+      "artist": "The Pretenders",
+      "year": 1980
+    },
+    {
+      "id": "t37",
+      "title": "Ashes to Ashes",
+      "artist": "David Bowie",
+      "year": 1980
+    },
+    {
+      "id": "t38",
+      "title": "Just Can't Get Enough",
+      "artist": "Depeche Mode",
+      "year": 1981
+    },
+    {
+      "id": "t39",
+      "title": "Church of the Poison Mind",
+      "artist": "Culture Club",
+      "year": 1983
+    },
+    {
+      "id": "t40",
+      "title": "You Spin Me Round (Like a Record)",
+      "artist": "Dead or Alive",
+      "year": 1984
+    }
+  ]
+}

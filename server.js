@@ -1,116 +1,44 @@
 /**
- * The quiz server.
+ * The game server.
  *
  * One small always-on Node process. No framework, no build step, no database:
- * quiz packs are JSON files, live state is one JSON file, and the realtime
+ * game packs are JSON files, live state is one JSON file, and the realtime
  * channel is server-sent events. Fewer moving parts is the whole point —
  * every dependency is something that can break on a Wednesday night.
+ *
+ * It runs one game at a time — a music quiz or music bingo — chosen from the
+ * console. The Session object hides which, so everything below this point
+ * works the same either way.
  */
 
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { config, paths, hostKey } from './src/config.js';
-import { Engine, PHASES } from './src/engine.js';
 import { Store } from './src/store.js';
 import { Hub } from './src/sse.js';
-import { listQuizzes, loadQuiz, saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz } from './src/quizzes.js';
+import { Session } from './src/session.js';
+import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz } from './src/quizzes.js';
+import { validateBingoPack, normaliseBingoPack } from './src/bingo.js';
+import { fullLibrary, listArchive, loadArchived, saveBingoPack, loadBingoPack } from './src/library.js';
+import { generateBingoPack } from './src/generate-bingo.js';
+import { recentTracks, forgetAll } from './src/history.js';
+import { spotifyConfigured, missingSpotifyConfig } from './src/spotify.js';
 import { toSvg } from './src/qrcode.js';
 
 const HOST_KEY = hostKey();
 const store = new Store(paths.state);
 const hub = new Hub();
 
-// ---------------------------------------------------------------- boot state
-
-/** Pick a quiz to run: the configured one, the saved one, or the first found. */
-function pickQuiz(savedQuizId) {
-  const available = listQuizzes(config.quizDir).filter((q) => !q.broken);
-  const wanted = config.defaultQuizId || savedQuizId || (available[0] && available[0].id);
-  if (!wanted) {
-    console.error(`[quiz] no quiz packs found in ${config.quizDir}`);
-    return { id: 'empty', title: 'No quiz loaded', rounds: [] };
-  }
-  try {
-    return loadQuiz(config.quizDir, wanted);
-  } catch (err) {
-    console.error(`[quiz] could not load "${wanted}": ${err.message}`);
-    return { id: 'empty', title: 'No quiz loaded', rounds: [] };
-  }
-}
-
-const saved = store.load();
-const quiz = pickQuiz(saved && saved.quizId);
-// A saved state only makes sense against the quiz it was recorded for.
-const restoredState = saved && saved.quizId === quiz.id ? saved : null;
-if (restoredState) {
-  console.log(`[quiz] restored a quiz in progress: ${Object.keys(restoredState.players || {}).length} players, phase ${restoredState.phase}`);
-}
-
-/**
- * Saving.
- *
- * Answers are debounced, because sixty phones answering at once should not be
- * sixty separate writes. But anything that MOVES THE QUIZ — a new question, a
- * reveal, a new round, a team joining or leaving — is written to disk straight
- * away, with no debounce at all.
- *
- * The reason is what a crash costs. Losing a quarter of a second of answers is
- * recoverable: you press Redo and ask the question again. Coming back up on
- * the wrong question in front of a room is not.
- */
-function milestoneOf(state) {
-  return `${state.phase}:${state.roundIndex}:${state.questionIndex}:${Object.keys(state.players).length}`;
-}
-let lastMilestone = milestoneOf(restoredState || Engine.freshState(quiz));
-
-const engine = new Engine({
-  quiz,
-  state: restoredState,
-  onChange: () => {
-    store.save(engine.state);
-    const milestone = milestoneOf(engine.state);
-    if (milestone !== lastMilestone) {
-      lastMilestone = milestone;
-      store.flush();
-    }
-    pushState();
-    armAutoReveal();
-  },
-});
-
-// ------------------------------------------------------------- the clock
-
-/**
- * The server owns the clock, so the server also decides when time is up. One
- * timer per question, re-armed whenever anything changes (including after a
- * restart, so a crash mid-question still ends that question on time).
- */
-let autoRevealTimer = null;
-function armAutoReveal() {
-  if (autoRevealTimer) {
-    clearTimeout(autoRevealTimer);
-    autoRevealTimer = null;
-  }
-  if (engine.state.phase !== PHASES.QUESTION) return;
-  const left = engine.msRemaining();
-  if (left === null) return;
-  autoRevealTimer = setTimeout(() => {
-    autoRevealTimer = null;
-    if (engine.state.phase === PHASES.QUESTION && engine.isExpired()) engine.reveal();
-  }, Math.max(0, left) + 50); // a beat of slack so a last-instant answer lands
-  if (autoRevealTimer.unref) autoRevealTimer.unref();
-}
-armAutoReveal();
+const session = new Session({ config, store, onPush: () => pushState() }).boot();
 
 // ------------------------------------------------------------- broadcasting
 
 function viewFor(client) {
-  if (client.role === 'host') return engine.hostView();
-  if (client.role === 'player') return engine.playerView(client.playerId);
-  return engine.screenView();
+  if (client.role === 'host') return session.hostView();
+  if (client.role === 'player') return session.playerView(client.playerId);
+  return session.screenView();
 }
 
 let pushQueued = false;
@@ -226,7 +154,8 @@ async function handleGet(req, res, url, route) {
   if (route === '/play') return serveFile(res, config.publicDir, 'play.html'), true;
   if (route === '/host') return serveFile(res, config.publicDir, 'host.html'), true;
   if (route === '/editor') return serveFile(res, config.publicDir, 'editor.html'), true;
-  if (route === '/health') return sendJson(res, 200, { ok: true, phase: engine.state.phase }), true;
+  if (route === '/console') return serveFile(res, config.publicDir, 'console.html'), true;
+  if (route === '/health') return sendJson(res, 200, { ok: true, game: session.kind, phase: session.engine.state.phase }), true;
 
   // ---- static
   if (route.startsWith('/assets/')) {
@@ -264,7 +193,7 @@ async function handleGet(req, res, url, route) {
     const role = url.searchParams.get('role') || 'screen';
     if (role === 'host' && !isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
     const playerId = url.searchParams.get('playerId') || null;
-    if (playerId) engine.touch(playerId);
+    if (playerId) session.engine.touch(playerId);
     const client = hub.add(res, { role, playerId });
     hub.send(client, 'state', viewFor(client));
     return true;
@@ -283,7 +212,47 @@ async function handleGet(req, res, url, route) {
   // ---- host-only reads
   if (route === '/api/quizzes') {
     if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
-    return sendJson(res, 200, { quizzes: listQuizzes(config.quizDir), loaded: engine.quiz.id }), true;
+    return sendJson(res, 200, { quizzes: fullLibrary(config).quizzes, loaded: session.pack.id }), true;
+  }
+  // The console's library: every quiz and every bingo pack you have saved.
+  if (route === '/api/library') {
+    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    const library = fullLibrary(config);
+    return sendJson(res, 200, {
+      ...library,
+      running: { game: session.kind, packId: session.pack.id, title: session.pack.title, phase: session.engine.state.phase, playerCount: session.engine.playerList().length },
+      archive: listArchive(config.dataDir),
+      generation: {
+        claude: Boolean(process.env.ANTHROPIC_API_KEY),
+        spotify: spotifyConfigured(),
+        spotifyMissing: missingSpotifyConfig(),
+        recentCount: recentTracks(config.dataDir, 3).length,
+      },
+    }), true;
+  }
+  if (route.startsWith('/api/bingo/')) {
+    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    const id = decodeURIComponent(route.slice('/api/bingo/'.length));
+    try {
+      return sendJson(res, 200, normaliseBingoPack(loadBingoPack(config.bingoDir, id), id)), true;
+    } catch (err) {
+      return sendJson(res, 404, { error: err.message }), true;
+    }
+  }
+  // What the generator is currently refusing to reuse.
+  if (route === '/api/history') {
+    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    const months = Number(url.searchParams.get('months')) || 3;
+    return sendJson(res, 200, { months, tracks: recentTracks(config.dataDir, months) }), true;
+  }
+  if (route.startsWith('/api/archive/')) {
+    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    const id = decodeURIComponent(route.slice('/api/archive/'.length));
+    try {
+      return sendJson(res, 200, loadArchived(config.dataDir, id)), true;
+    } catch (err) {
+      return sendJson(res, 404, { error: err.message }), true;
+    }
   }
   if (route.startsWith('/api/quiz/')) {
     if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
@@ -296,14 +265,14 @@ async function handleGet(req, res, url, route) {
   }
   if (route === '/api/results.json') {
     if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
-    return sendJson(res, 200, engine.results()), true;
+    return sendJson(res, 200, session.results()), true;
   }
   if (route === '/api/results.csv') {
     if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
-    const rows = [['Position', 'Team', 'Score', 'Correct', 'Answered']];
-    for (const p of engine.results().leaderboard) {
-      rows.push([p.position, p.name, p.score, p.correctCount, p.answeredCount]);
-    }
+    const results = session.results();
+    const rows = session.kind === 'bingo'
+      ? [['Team', 'Squares away', 'False calls', 'Won'], ...results.leaderboard.map((p) => [p.name, p.away, p.falseCalls, p.won ? 'yes' : ''])]
+      : [['Position', 'Team', 'Score', 'Correct', 'Answered'], ...results.leaderboard.map((p) => [p.position, p.name, p.score, p.correctCount, p.answeredCount])];
     const csv = rows.map((r) => r.map(csvCell).join(',')).join('\r\n');
     return send(res, 200, csv, {
       'Content-Type': 'text/csv; charset=utf-8',
@@ -323,14 +292,17 @@ async function handleWrite(req, res, url, route) {
   // ---- players (open to anyone with the join link)
   if (route === '/api/join' && req.method === 'POST') {
     const body = await readJson(req);
-    const player = engine.join({ playerId: body.playerId, name: body.name });
-    return sendJson(res, 200, { id: player.id, name: player.name, score: player.score }), true;
+    const player = session.engine.join({ playerId: body.playerId, name: body.name });
+    return sendJson(res, 200, { id: player.id, name: player.name, score: player.score ?? 0, game: session.kind }), true;
   }
 
-  if (route === '/api/answer' && req.method === 'POST') {
+  // What a phone is allowed to do: answer a question, or mark a bingo square
+  // and call house. Nothing else, and nothing that could hand out a new card.
+  if (['/api/answer', '/api/mark', '/api/claim'].includes(route) && req.method === 'POST') {
     const body = await readJson(req);
-    const result = engine.answer({ playerId: body.playerId, optionIndex: body.optionIndex });
-    // 200 either way: the phone shows its own feedback, and a rejected answer
+    const action = route.slice('/api/'.length);
+    const result = session.runPlayerAction(action, body);
+    // 200 either way: the phone shows its own feedback, and a rejected action
     // is a normal thing (too late, already answered), not an error.
     return sendJson(res, 200, result), true;
   }
@@ -341,9 +313,20 @@ async function handleWrite(req, res, url, route) {
   if (route.startsWith('/api/host/') && req.method === 'POST') {
     const action = route.slice('/api/host/'.length);
     const body = await readJson(req);
-    const ok = runHostAction(action, body);
+
+    // Launching a different game is the one action that replaces the engine.
+    if (action === 'launch') {
+      try {
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId));
+        return sendJson(res, 200, { ok: true, started, view: session.hostView() }), true;
+      } catch (err) {
+        return sendJson(res, 400, { error: err.message }), true;
+      }
+    }
+
+    const ok = session.run(action, body);
     if (ok === undefined) return sendJson(res, 404, { error: 'Unknown action: ' + action }), true;
-    return sendJson(res, 200, { ok, view: engine.hostView() }), true;
+    return sendJson(res, 200, { ok, view: session.hostView() }), true;
   }
 
   // ---- the editor
@@ -361,15 +344,18 @@ async function handleWrite(req, res, url, route) {
       if (problems.length) return sendJson(res, 400, { error: 'Quiz is not valid', problems }), true;
       saveQuiz(config.quizDir, id, body);
       // If the running quiz was the one just edited, pick up the changes live.
-      if (engine.quiz.id === id) {
-        engine.quiz = loadQuiz(config.quizDir, id);
-        engine.clampPointers();
-        engine.changed();
+      if (session.kind === 'quiz' && session.pack.id === id) {
+        session.pack = loadQuiz(config.quizDir, id);
+        session.engine.quiz = session.pack;
+        session.engine.clampPointers();
+        session.engine.changed();
       }
       return sendJson(res, 200, { ok: true }), true;
     }
     if (req.method === 'DELETE') {
-      if (engine.quiz.id === id) return sendJson(res, 400, { error: 'That quiz is currently loaded.' }), true;
+      if (session.kind === 'quiz' && session.pack.id === id) {
+        return sendJson(res, 400, { error: 'That quiz is currently loaded.' }), true;
+      }
       deleteQuiz(config.quizDir, id);
       return sendJson(res, 200, { ok: true }), true;
     }
@@ -384,33 +370,71 @@ async function handleWrite(req, res, url, route) {
     return sendJson(res, 200, { ok: true, id: quizToSave.id }), true;
   }
 
-  return false;
-}
-
-/** Every button on the control view maps to one of these. */
-function runHostAction(action, body) {
-  switch (action) {
-    case 'start': return engine.start();
-    case 'next': return engine.next();
-    case 'back': return engine.back();
-    case 'reveal': return engine.reveal();
-    case 'skip': return engine.skipQuestion();
-    case 'redo': return engine.redoQuestion();
-    case 'goto': return engine.goTo(Number(body.roundIndex), Number(body.questionIndex));
-    case 'removePlayer': return engine.removePlayer(String(body.playerId));
-    case 'renamePlayer': return engine.renamePlayer(String(body.playerId), String(body.name));
-    case 'adjustScore': return engine.adjustScore(String(body.playerId), Number(body.delta));
-    case 'resetScores': return engine.resetScores();
-    case 'resetAll': return engine.resetAll();
-    case 'loadQuiz': {
-      const next = loadQuiz(config.quizDir, String(body.quizId));
-      engine.quiz = next;
-      engine.state = Engine.freshState(next);
-      engine.changed();
-      return true;
+  // ---- one button: theme in, playable bingo game out.
+  // Generation takes a while (Claude, then a Spotify lookup per track), so
+  // this streams progress lines as it goes rather than leaving the console
+  // staring at a spinner with no idea whether it is working.
+  if (route === '/api/generate/bingo' && req.method === 'POST') {
+    const body = await readJson(req);
+    res.writeHead(200, {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      'X-Accel-Buffering': 'no',
+    });
+    const log = (line) => { try { res.write(line + '\n'); } catch { /* client left */ } };
+    try {
+      const result = await generateBingoPack({
+        config,
+        theme: String(body.theme || '').slice(0, 200),
+        trackCount: Math.min(90, Math.max(9, Number(body.trackCount) || 40)),
+        cardSize: [3, 4, 5].includes(Number(body.cardSize)) ? Number(body.cardSize) : 4,
+        avoidMonths: Math.min(24, Math.max(0, Number(body.avoidMonths ?? 3))),
+        log,
+      });
+      log('DONE ' + JSON.stringify({
+        id: result.pack.id,
+        title: result.pack.title,
+        trackCount: result.pack.tracks.length,
+        playlist: result.playlist ? result.playlist.url : null,
+      }));
+    } catch (err) {
+      log('ERROR ' + err.message);
     }
-    default: return undefined;
+    res.end();
+    return true;
   }
+
+  if (route === '/api/history/forget' && req.method === 'POST') {
+    forgetAll(config.dataDir);
+    return sendJson(res, 200, { ok: true }), true;
+  }
+
+  // ---- bingo packs, same shape as the quiz endpoints
+  if (route === '/api/bingo/__validate' && req.method === 'POST') {
+    const body = await readJson(req, 4 * 1024 * 1024);
+    return sendJson(res, 200, { problems: validateBingoPack(normaliseBingoPack(body, body.id)) }), true;
+  }
+
+  if (route.startsWith('/api/bingo/') && req.method === 'PUT') {
+    const id = decodeURIComponent(route.slice('/api/bingo/'.length));
+    const body = await readJson(req, 4 * 1024 * 1024);
+    const pack = normaliseBingoPack(body, id);
+    const problems = validateBingoPack(pack);
+    if (problems.length) return sendJson(res, 400, { error: 'Bingo pack is not valid', problems }), true;
+    saveBingoPack(config.bingoDir, id, pack);
+    return sendJson(res, 200, { ok: true }), true;
+  }
+
+  if (route === '/api/bingo' && req.method === 'POST') {
+    const body = await readJson(req, 4 * 1024 * 1024);
+    const pack = normaliseBingoPack(body, body.id);
+    const problems = validateBingoPack(pack);
+    if (problems.length) return sendJson(res, 400, { error: 'Bingo pack is not valid', problems }), true;
+    saveBingoPack(config.bingoDir, pack.id, pack);
+    return sendJson(res, 200, { ok: true, id: pack.id }), true;
+  }
+
+  return false;
 }
 
 // ------------------------------------------------------------------ startup
@@ -419,7 +443,7 @@ server.listen(config.port, () => {
   const local = `http://localhost:${config.port}`;
   console.log('');
   console.log('  ┌───────────────────────────────────────────────┐');
-  console.log('  │  Music Quiz is running                        │');
+  console.log('  │  Music Quiz & Bingo is running                │');
   console.log('  └───────────────────────────────────────────────┘');
   console.log('');
   console.log(`  Big screen   ${local}/screen`);
@@ -427,7 +451,9 @@ server.listen(config.port, () => {
   console.log(`  Your control ${local}/host?key=${HOST_KEY}`);
   console.log(`  Editor       ${local}/editor?key=${HOST_KEY}`);
   console.log('');
-  console.log(`  Quiz loaded: ${engine.quiz.title} (${engine.quiz.rounds.length} rounds)`);
+  console.log(`  Console      ${local}/console?key=${HOST_KEY}`);
+  console.log('');
+  console.log(`  Loaded:      ${session.pack.title} (${session.kind})`);
   console.log(`  Host key:    ${HOST_KEY}`);
   console.log('');
 });
@@ -448,4 +474,4 @@ process.on('uncaughtException', (err) => {
   store.flush();
 });
 
-export { server, engine };
+export { server, session };

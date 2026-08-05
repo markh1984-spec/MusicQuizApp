@@ -14,6 +14,7 @@
  */
 
 import { esc, node, ServerClock, Live, postJson } from './client.js';
+import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
 
 const STORE_KEY = 'musicquiz.player';
 
@@ -107,10 +108,16 @@ function draw(next) {
   if (state.you) {
     headEl.hidden = false;
     teamNameEl.textContent = state.you.name;
-    teamScoreEl.textContent = state.you.score.toLocaleString('en-GB');
-    teamRankEl.textContent = state.you.position
-      ? `${ordinal(state.you.position)} of ${state.you.playerCount}`
-      : '';
+    if (state.game === 'bingo') {
+      // No score in bingo — what matters is how close you are.
+      teamScoreEl.textContent = state.you.squaresAway === 0 ? '✓' : state.you.squaresAway;
+      teamRankEl.textContent = state.you.squaresAway === 0 ? 'line complete' : 'squares to go';
+    } else {
+      teamScoreEl.textContent = state.you.score.toLocaleString('en-GB');
+      teamRankEl.textContent = state.you.position
+        ? `${ordinal(state.you.position)} of ${state.you.playerCount}`
+        : '';
+    }
   }
 
   const key = screenKey(state);
@@ -124,11 +131,13 @@ function draw(next) {
 }
 
 function screenKey(s) {
+  if (s.game === 'bingo') return bingoKey(s);
   if (s.phase === 'question' || s.phase === 'reveal') return `q:${s.roundIndex}:${s.questionIndex}:${s.phase}`;
   return `${s.phase}:${s.roundIndex}`;
 }
 
 function buildScreen(s) {
+  if (s.game === 'bingo') return renderBingo(s, me);
   switch (s.phase) {
     case 'question': return buildAnswers(s);
     case 'reveal': return buildReveal(s);
@@ -200,6 +209,7 @@ function paintChoice(index) {
 }
 
 function updateScreen(s) {
+  if (s.game === 'bingo') return updateBingo(s, me);
   if (s.phase === 'question') {
     const chosen = s.yourAnswer ? s.yourAnswer.optionIndex : pendingChoice;
     if (chosen !== null && chosen !== undefined) paintChoice(chosen);

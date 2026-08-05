@@ -11,6 +11,7 @@
  */
 
 import { esc, node, ServerClock, Live, postJson } from './client.js';
+import { bingoPanels, bingoActions } from './host-bingo.js';
 
 const KEY_STORE = 'musicquiz.hostkey';
 
@@ -56,6 +57,13 @@ function draw(next) {
 }
 
 function whereLabel(s) {
+  if (s.game === 'bingo') {
+    return s.phase === 'lobby'
+      ? 'Bingo — waiting to start'
+      : s.phase === 'finished'
+        ? 'Bingo — finished'
+        : `Bingo round ${s.round} — ${s.target === 'full' ? 'full house' : 'one line'}`;
+  }
   switch (s.phase) {
     case 'lobby': return 'Lobby — waiting to start';
     case 'round_intro': return `Round ${s.roundIndex + 1} intro`;
@@ -68,6 +76,7 @@ function whereLabel(s) {
 }
 
 function buildPanels(s) {
+  if (s.game === 'bingo') return bingoPanels(s, act);
   const panels = [];
 
   // The cue comes first when it matters: on the intro round you need to know
@@ -253,7 +262,14 @@ function toolsPanel(s) {
 
 // ----------------------------------------------------------- primary button
 
+function minorButton(text, handler, danger = false) {
+  const b = node(`<button class="minor ${danger ? 'danger' : ''}">${esc(text)}</button>`);
+  b.addEventListener('click', handler);
+  return b;
+}
+
 function buildActions(s) {
+  if (s.game === 'bingo') return bingoActions(s, act, minorButton);
   const label = {
     lobby: 'Start the quiz',
     round_intro: 'First question',
@@ -307,6 +323,11 @@ function showScores() {
 function tick() {
   requestAnimationFrame(tick);
   if (!state) return;
+  if (state.game === 'bingo') {
+    clockEl.textContent = state.calledCount ?? '';
+    clockEl.classList.remove('urgent');
+    return;
+  }
   if (state.phase !== 'question' || !state.clock) {
     clockEl.textContent = state.phase === 'reveal' ? '0' : '--';
     clockEl.classList.remove('urgent');

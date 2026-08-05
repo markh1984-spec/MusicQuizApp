@@ -11,6 +11,7 @@
  */
 
 import { esc, node, ServerClock, Live } from './client.js';
+import { bingoCard, bingoTopbar } from './screen-bingo.js';
 
 const cardEl = document.getElementById('card');
 const quizTitleEl = document.getElementById('quizTitle');
@@ -40,19 +41,26 @@ function draw(next) {
   state = next;
   clock.sync(state.serverNow);
 
-  quizTitleEl.textContent = state.quizTitle || 'Music Quiz';
+  quizTitleEl.textContent = state.quizTitle || state.title || 'Music Quiz';
   playerPillEl.textContent = `${state.playerCount} ${state.playerCount === 1 ? 'team' : 'teams'}`;
-  roundPillEl.textContent = state.phase === 'lobby'
-    ? 'Join now'
-    : state.phase === 'final'
-      ? 'Results'
-      : `Round ${state.roundIndex + 1} of ${state.roundCount}`;
 
-  const card = cards[state.phase] || cards.lobby;
+  // Which game is running decides which set of cards to draw from. Everything
+  // else on this page — the connection, the clock, the swap animation — is
+  // shared, so a new game only has to bring its own cards.
+  const isBingo = state.game === 'bingo';
+  roundPillEl.textContent = isBingo
+    ? bingoTopbar(state)
+    : state.phase === 'lobby'
+      ? 'Join now'
+      : state.phase === 'final'
+        ? 'Results'
+        : `Round ${state.roundIndex + 1} of ${state.roundCount}`;
+
+  const card = isBingo ? bingoCard(state) : (cards[state.phase] || cards.lobby);
   const key = card.key(state);
   if (key !== currentKey) {
     currentKey = key;
-    cardEl.replaceChildren(card.render(state));
+    cardEl.replaceChildren(card.render(state, joinUrl));
   } else if (card.update) {
     card.update(state);
   }

@@ -19,6 +19,7 @@ export const config = {
   publicUrl: process.env.PUBLIC_URL || '',
 
   quizDir: process.env.QUIZ_DIR || path.join(ROOT, 'quizzes'),
+  bingoDir: process.env.BINGO_DIR || path.join(ROOT, 'bingo'),
   dataDir: process.env.DATA_DIR || path.join(ROOT, 'data'),
   imageDir: process.env.IMAGE_DIR || path.join(ROOT, 'images'),
   publicDir: path.join(ROOT, 'public'),
