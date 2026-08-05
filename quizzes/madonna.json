@@ -61,7 +61,8 @@
           "answerNote": "Earlier hits like Holiday and Like a Virgin had stalled just outside the top spot in the UK.",
           "checked": [
             "note-names-wrong-option:like-a-virgin",
-            "note-names-wrong-option:holiday"
+            "note-names-wrong-option:holiday",
+            "slippery-wording:first"
           ]
         },
         {
