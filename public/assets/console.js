@@ -706,6 +706,7 @@ function renderQuizPreview(body, sub, quiz, markDirty = () => {}) {
           <input class="pv-round-name" value="${esc(round.title)}" title="Click to rename this round">
           <span class="tiny">${esc({ text: 'General knowledge', image: 'Whose face is this?', intro: 'Name that intro' }[round.type] || round.type)}</span>
         </div>
+        ${round.spotifyPlaylist ? `<a class="pv-playlist" href="${esc(round.spotifyPlaylist.url)}" target="_blank" rel="noopener">Spotify playlist for this round</a>` : ''}
       </div>`);
     head.querySelector('.pv-round-name').addEventListener('input', (e) => {
       round.title = e.target.value;

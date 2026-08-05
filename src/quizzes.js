@@ -93,6 +93,7 @@ export function normaliseQuiz(quiz, fallbackId = 'quiz') {
       blurb: round.blurb || '',
       ...(round.questionSeconds ? { questionSeconds: round.questionSeconds } : {}),
       ...(round.imageCaption ? { imageCaption: round.imageCaption } : {}),
+      ...(round.spotifyPlaylist ? { spotifyPlaylist: round.spotifyPlaylist } : {}),
       questions: (round.questions || []).map((q, qi) => ({
         id: q.id || `${round.id || 'r' + (ri + 1)}q${qi + 1}`,
         prompt: q.prompt || '',

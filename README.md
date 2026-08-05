@@ -167,6 +167,24 @@ answer marked, two identical options, a picture question with no picture.
 > On a host like Render the filesystem is wiped on redeploy. Use the editor's
 > **Download** button, drop the file in your local `quizzes/`, and commit it.
 
+### Playlists for the intro round
+
+If Spotify is set up, generating a quiz with a **Name that intro** round also:
+
+- looks every cue up on Spotify, so the pack points at a track that genuinely
+  exists rather than a title a model invented
+- builds a playlist **in question order** — track one is question one
+- stores the track link on each cue, so your control view offers **Open this
+  track** and you are one tap from playing it
+
+**Spotify's API cannot create folders**, and no app can work around that. So
+every playlist is named with the same prefix — `Quiz Intros — The 1990s Quiz` —
+which makes them sort together in your sidebar so you can drag them into a
+folder yourself in one go. Change or remove the prefix with
+`SPOTIFY_PLAYLIST_PREFIX`.
+
+The links are **host-only**, like the rest of the cue. There is a test for that.
+
 ### Pictures for round 2
 
 ```bash

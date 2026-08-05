@@ -1393,3 +1393,27 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   color: #12000c; font-weight: 900; font-size: 13px;
 }
 .sheet-actions .go:disabled { opacity: 0.6; cursor: default; }
+
+/* One tap from the cue to the track, so there is nothing to search for while
+   a room waits. Host view only — the room never sees these. */
+.cue-links { display: flex; gap: 8px; margin-top: 11px; }
+.cue-open {
+  flex: 1 1 auto;
+  text-align: center;
+  padding: 11px 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  background: #1db954;           /* Spotify green — instantly recognisable */
+  color: #04240f;
+}
+.cue-open.ghost { background: rgba(255, 255, 255, 0.1); color: var(--ink); border: 1px solid var(--panel-line); }
+
+.pv-playlist {
+  display: inline-block;
+  margin: 2px 0 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #1db954;
+}

@@ -90,10 +90,10 @@ function buildPanels(s) {
   // what to play before the question is even on screen.
   if (s.phase === 'round_intro' || s.phase === 'reveal' || s.phase === 'lobby') {
     const up = s.upcoming;
-    if (up && up.cue) panels.push(cuePanel(up.cue, `Coming up — R${up.roundIndex + 1} Q${up.questionIndex + 1}`));
+    if (up && up.cue) panels.push(cuePanel(up.cue, `Coming up — R${up.roundIndex + 1} Q${up.questionIndex + 1}`, up.playlist));
   }
   if ((s.phase === 'question' || s.phase === 'reveal') && s.question && s.question.cue) {
-    panels.push(cuePanel(s.question.cue, 'Play this now'));
+    panels.push(cuePanel(s.question.cue, 'Play this now', s.question.playlist));
   }
 
   if (s.question && (s.phase === 'question' || s.phase === 'reveal')) {
@@ -113,7 +113,7 @@ function buildPanels(s) {
   return panels;
 }
 
-function cuePanel(cue, title) {
+function cuePanel(cue, title, playlist) {
   return node(`
     <div class="panel secret">
       <h3>${esc(title)}</h3>
@@ -123,6 +123,11 @@ function cuePanel(cue, title) {
         ${cue.from ? `<div class="from">From ${esc(cue.from)}</div>` : ''}
         ${cue.hint ? `<div class="from">${esc(cue.hint)}</div>` : ''}
       </div>
+      ${cue.spotifyUri || playlist ? `
+        <div class="cue-links">
+          ${cue.spotifyUri ? `<a class="cue-open" href="${esc(cue.spotifyUri)}">Open this track</a>` : ''}
+          ${playlist ? `<a class="cue-open ghost" href="${esc(playlist.uri || playlist.url)}">Whole playlist</a>` : ''}
+        </div>` : ''}
     </div>
   `);
 }

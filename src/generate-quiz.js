@@ -16,6 +16,7 @@ import path from 'node:path';
 
 import { normaliseQuiz, validateQuiz } from './quizzes.js';
 import { cleanTheme, quizTitleFor, themeSlug, titleCase } from './theme.js';
+import { spotifyConfigured, findTrack, createPlaylist } from './spotify.js';
 
 export const DEFAULT_MODEL = 'claude-sonnet-5';
 
@@ -270,6 +271,64 @@ function roundBlurb(type, theme, perRound) {
 }
 
 /**
+ * Turn an intro round's cues into a Spotify playlist you can just press play on.
+ *
+ * Each cue is looked up so the pack ends up pointing at a track that genuinely
+ * exists — a title the model invented gets caught here rather than in a pub —
+ * and the track's uri is stored on the cue, so the control view can offer a tap
+ * to open it.
+ *
+ * The playlist is in question order, so track one is question one.
+ *
+ * NOTE: Spotify's API cannot create folders or move playlists into them. That
+ * is a gap in their API, not something we can work round. Instead every
+ * playlist is named with the same prefix, so they sort together and can be
+ * dragged into a folder in one go.
+ */
+async function buildIntroPlaylist({ round, quizTitle, log }) {
+  const prefix = process.env.SPOTIFY_PLAYLIST_PREFIX ?? 'Quiz Intros';
+  const name = prefix ? `${prefix} — ${quizTitle}` : quizTitle;
+
+  log(`  looking the intro tracks up on Spotify…`);
+  const uris = [];
+  let missing = 0;
+
+  for (const q of round.questions) {
+    if (!q.cue || !q.cue.title) continue;
+    try {
+      const found = await findTrack(q.cue.title, q.cue.artist);
+      if (!found) {
+        missing++;
+        log(`    not on Spotify: ${q.cue.title} — ${q.cue.artist}`);
+        continue;
+      }
+      // Trust Spotify's spelling, and keep the uri so the cue can be tapped.
+      q.cue.title = found.title;
+      q.cue.artist = found.artist;
+      q.cue.spotifyUri = found.uri;
+      q.cue.spotifyUrl = `https://open.spotify.com/track/${found.id}`;
+      uris.push(found.uri);
+    } catch (err) {
+      missing++;
+      log(`    lookup failed for ${q.cue.title}: ${err.message}`);
+    }
+  }
+
+  if (!uris.length) {
+    log(`  no tracks found — no playlist made`);
+    return null;
+  }
+
+  const playlist = await createPlaylist({
+    name,
+    description: `Name that intro — ${quizTitle}. In question order.`,
+    uris,
+  });
+  log(`  playlist: ${playlist.url}${missing ? ` (${missing} not found)` : ''}`);
+  return { ...playlist, missing };
+}
+
+/**
  * Build one round of exactly `perRound` questions that have passed the check.
  *
  * A round of nine is not acceptable — the host asked for ten and the screen
@@ -424,6 +483,21 @@ export async function generateQuizPack({
           : {}),
       })),
     });
+  }
+
+  // Intro rounds get a playlist, so the tracks you have to play are one tap
+  // away rather than something to hunt for on the night.
+  if (spotifyConfigured()) {
+    for (const round of built.filter((r) => r.type === 'intro')) {
+      try {
+        const playlist = await buildIntroPlaylist({ round, quizTitle, log });
+        if (playlist) round.spotifyPlaylist = { id: playlist.id, url: playlist.url, uri: playlist.uri };
+      } catch (err) {
+        log(`  could not build the intro playlist: ${err.message}`);
+      }
+    }
+  } else if (built.some((r) => r.type === 'intro')) {
+    log('Spotify is not set up — no intro playlist made. See DEPLOY.md.');
   }
 
   const quiz = normaliseQuiz({

@@ -462,6 +462,26 @@ test('ROUND 3: the track title and artist never reach the big screen', () => {
   }
 });
 
+test('ROUND 3: a Spotify link on the cue is host-only, like the rest of it', () => {
+  const quiz = makeQuiz();
+  const introRound = quiz.rounds[2];
+  introRound.spotifyPlaylist = { id: 'pl1', url: 'https://open.spotify.com/playlist/pl1', uri: 'spotify:playlist:pl1' };
+  introRound.questions[0].cue.spotifyUri = 'spotify:track:abc123';
+  introRound.questions[0].cue.spotifyUrl = 'https://open.spotify.com/track/abc123';
+
+  const engine = new Engine({ quiz, now: () => START });
+  engine.goTo(2, 0);
+
+  const screen = JSON.stringify(engine.screenView());
+  assert.equal(screen.includes('spotify'), false, 'no spotify link reached the big screen');
+  assert.equal(screen.includes('abc123'), false);
+  assert.equal(screen.includes('pl1'), false);
+
+  const host = engine.hostView();
+  assert.equal(host.question.cue.spotifyUri, 'spotify:track:abc123');
+  assert.equal(host.question.playlist.url, 'https://open.spotify.com/playlist/pl1');
+});
+
 test('ROUND 3: the host DOES get the cue, because that is the whole point', () => {
   const { engine } = makeEngine();
   engine.goTo(2, 0);

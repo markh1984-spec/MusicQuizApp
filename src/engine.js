@@ -733,11 +733,16 @@ export class Engine {
         artist: q.cue.artist || '',
         from: q.cue.from || '',
         hint: q.cue.hint || '',
+        // Tapping the cue opens the track, so there is nothing to search for
+        // while a room waits. Host view only, like the rest of the cue.
+        ...(q.cue.spotifyUri ? { spotifyUri: q.cue.spotifyUri } : {}),
+        ...(q.cue.spotifyUrl ? { spotifyUrl: q.cue.spotifyUrl } : {}),
       };
     }
     if (round.type === 'image') {
       extras.image = q.image ? `/quiz-images/${q.image}` : null;
     }
+    if (round.spotifyPlaylist) extras.playlist = round.spotifyPlaylist;
     return extras;
   }
 
