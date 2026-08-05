@@ -638,6 +638,17 @@ Needs decisions on which platform first and whether you want captions written
 for you.
 *Bigger. Needs a conversation before I start.*
 
+### 5. Advertising slides between rounds — your idea, parked for later
+Two audiences: the venue (drinks offers, a band playing at the end of the
+month) and you. The pull is a **QR code to ticket sales you take a cut of**, so
+this is a revenue feature rather than decoration.
+
+Cheap to build when you want it — the big screen is already a registry of
+slides and the app already writes its own QR codes. The part worth thinking
+about first is where the slides live: one set per venue you can reuse, or a
+fresh one each night? Between rounds is the obvious slot, next to the
+scoreboard button.
+
 ### Also possible, not on the list unless you want it
 - **Venue branding** — a venue's name and colours on the big screen.
 - **Your own domain** — about £10/year, steps in DEPLOY.md. Your job, not mine.

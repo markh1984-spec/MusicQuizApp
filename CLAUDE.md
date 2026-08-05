@@ -302,7 +302,35 @@ Outstanding work is all on the host's side — see **TODO.md**. Short version:
 an OpenAI key for the round 2 portraits, and the one-time Spotify login. Both
 optional; the app runs a full quiz and a full bingo night without either.
 
-Designed for but deliberately not built: photo uploads, filters, semi-automated
-social posting, team play, venue branding. The data model and screen layout
-already have room for them (rounds are plugins, the big screen is a card
-registry, outbound posting is meant to be a queue with adapters).
+### Asked for, not built yet
+
+In the host's own order of interest:
+
+1. **Getting the photos off after a night.** The only thing that leaves a
+   shipped feature incomplete — they sit in `data/photos/` and there is no way
+   to download them. He is comparing this to KaraFun emailing him photos, which
+   he finds clunky; the answer he wants is the photos ending up on the phone he
+   posts from.
+2. **Filters on the round 2 portraits.** The pictures and the filters both
+   already exist; this is wiring.
+3. **Team play — several phones, one team, scores AVERAGED across members.**
+   His idea, and a good one: averaging means a big team of chancers cannot beat
+   a small team who know their stuff, and it makes a traditional pub quiz work
+   without pens and paper. He wants it built even though he will not use it
+   immediately.
+4. **Instagram posting.** The point is *proving his quiz nights are popular* —
+   visual evidence, not automation for its own sake. Full auto-posting needs an
+   Instagram Business account, a linked Facebook Page and Meta app review; tell
+   him that before building anything that pretends otherwise.
+5. **Advertising slides between rounds.** His idea, for later. Two audiences:
+   the venue (drinks offers, a band playing at the end of the month) and
+   himself. The pull is a **QR code to ticket sales that he takes a cut of** —
+   so this is a revenue feature, not decoration. The big screen is already a
+   card registry and `src/qrcode.js` already encodes anything, so a slide with
+   a heading, an image and a QR is a small build. The interesting part is where
+   the slides live (per venue? per night? a pack of their own?) and when they
+   fire — between rounds is the obvious slot, alongside the scoreboard.
+
+Deliberately not built: **venue branding** beyond `BRAND_NAME`, and
+**Instagram follow-for-points** (no API can verify a follow — he agreed to drop
+it rather than fake it).
