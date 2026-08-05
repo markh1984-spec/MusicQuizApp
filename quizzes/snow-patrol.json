@@ -1,0 +1,138 @@
+{
+  "id": "snow-patrol",
+  "title": "The Snow Patrol Quiz",
+  "subtitle": "Three rounds. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-08-05T20:58:06.108Z",
+  "notes": "Written by claude-sonnet-5 for \"snow patrol\". NOT YET REVIEWED — read every question in the editor before the gig.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "text",
+      "title": "Round One — Snow Patrol",
+      "blurb": "10 questions on snow patrol",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "In which Scottish city was Snow Patrol originally formed?",
+          "options": [
+            "Glasgow",
+            "Dundee",
+            "Edinburgh",
+            "Aberdeen"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Snow Patrol formed in Dundee in 1994 while its members were at university there."
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Who is the lead singer of Snow Patrol?",
+          "options": [
+            "Johnny McDaid",
+            "Nathan Connolly",
+            "Gary Lightbody",
+            "Jonny Quinn"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Gary Lightbody has fronted Snow Patrol since its formation."
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which Snow Patrol song opens with the line \"If I lay here, if I just lay here\"?",
+          "options": [
+            "Run",
+            "Chasing Cars",
+            "Open Your Eyes",
+            "Just Say Yes"
+          ],
+          "correctIndex": 1,
+          "answerNote": "That line opens Chasing Cars, one of the most played songs on UK radio ever."
+        },
+        {
+          "id": "r1q4",
+          "prompt": "\"Chasing Cars\" appears on which Snow Patrol album?",
+          "options": [
+            "Final Straw",
+            "Eyes Open",
+            "A Hundred Million Suns",
+            "Fallen Empires"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Eyes Open, released in 2006, was the album that made Snow Patrol massive."
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which 2003 album was Snow Patrol's commercial breakthrough?",
+          "options": [
+            "Songs for Polarbears",
+            "Eyes Open",
+            "Final Straw",
+            "Wildness"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Final Straw, released in 2003, turned Snow Patrol into a chart-topping act."
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Snow Patrol's album \"Eyes Open\" reached which position on the UK album chart?",
+          "options": [
+            "Number 3",
+            "Number 2",
+            "Number 4",
+            "Number 1"
+          ],
+          "correctIndex": 3,
+          "answerNote": "Eyes Open went straight to number one on the UK albums chart in 2006."
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which Snow Patrol member later co-wrote hits for Ed Sheeran and One Direction?",
+          "options": [
+            "Paul Wilson",
+            "Johnny McDaid",
+            "Nathan Connolly",
+            "Jonny Quinn"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Johnny McDaid, who joined Snow Patrol on keyboards, is also an in-demand co-writer for other pop stars."
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Gary Lightbody was born in which Northern Irish town?",
+          "options": [
+            "Newry",
+            "Lisburn",
+            "Bangor",
+            "Armagh"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Gary Lightbody grew up in Bangor, County Down."
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Snow Patrol's song \"Set the Fire to the Third Bar\" is a duet with which singer?",
+          "options": [
+            "Chocolate",
+            "Martha Wainwright",
+            "Feist",
+            "Shut Your Eyes"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Canadian singer Martha Wainwright duets with Gary Lightbody on that Eyes Open track."
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which side project, featuring R.E.M.'s Peter Buck, did Gary Lightbody form in 2010?",
+          "options": [
+            "The Reindeer Section",
+            "Ashes Divide",
+            "Tired Pony",
+            "Amusement Parks on Fire"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Tired Pony released their debut album, Tired Pony: The Place We Ran From, in 2010."
+        }
+      ]
+    }
+  ]
+}
