@@ -341,31 +341,59 @@ requestAnimationFrame(tick);
 
 // -------------------------------------------------------------------- boot
 
-function askForKey() {
+/**
+ * Ask for the key. Also reached when a remembered key stops being accepted,
+ * so a changed key is a box to type in rather than a dead end mid-gig.
+ */
+function askForKey(message = '') {
   mainEl.replaceChildren(node(`
     <div class="panel">
       <h3>Host key</h3>
-      <p class="tiny">This is printed in the server log when the app starts.</p>
+      ${message ? `<p class="tiny" style="color:var(--bad)">${esc(message)}</p>` : ''}
+      <p class="tiny">Set as HOST_KEY on your host. If you never set one, the app
+        invents one and prints it in the startup log.</p>
       <div class="row" style="margin-top:10px">
         <input type="text" id="keyIn" placeholder="host key" style="flex:1 1 auto">
         <button class="minor" id="keyGo">Unlock</button>
       </div>
     </div>`));
-  document.getElementById('keyGo').addEventListener('click', () => {
-    hostKey = document.getElementById('keyIn').value.trim();
+  const go = () => {
+    const key = document.getElementById('keyIn').value.trim();
+    if (!key) return;
+    hostKey = key;
     localStorage.setItem(KEY_STORE, hostKey);
     location.href = `/host?key=${encodeURIComponent(hostKey)}`;
+  };
+  document.getElementById('keyGo').addEventListener('click', go);
+  document.getElementById('keyIn').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') go();
   });
 }
 
 if (!hostKey) {
   askForKey();
 } else {
-  new Live(`/api/stream?role=host&key=${encodeURIComponent(hostKey)}`, {
-    onState: draw,
-    onStatus: (status) => {
-      if (status !== 'online') connEl.textContent = 'Reconnecting…';
-    },
+  // Check the key before opening a live connection, so a wrong one asks to be
+  // retyped instead of silently never connecting.
+  fetch(`/api/state?role=host&key=${encodeURIComponent(hostKey)}`).then((res) => {
+    if (res.status === 401) {
+      localStorage.removeItem(KEY_STORE);
+      askForKey('That key was not accepted. It may have changed \u2014 check your host\u2019s startup log.');
+      return;
+    }
+    new Live(`/api/stream?role=host&key=${encodeURIComponent(hostKey)}`, {
+      onState: draw,
+      onStatus: (status) => {
+        if (status !== 'online') connEl.textContent = 'Reconnecting…';
+      },
+    });
+  }).catch(() => {
+    new Live(`/api/stream?role=host&key=${encodeURIComponent(hostKey)}`, {
+      onState: draw,
+      onStatus: (status) => {
+        if (status !== 'online') connEl.textContent = 'Reconnecting…';
+      },
+    });
   });
   // Keep the control view awake: a locked phone mid-round is a bad moment.
   if ('wakeLock' in navigator) {

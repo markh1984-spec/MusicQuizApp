@@ -12,10 +12,45 @@ import { esc, node, postJson } from './client.js';
 const mainEl = document.getElementById('main');
 const runningEl = document.getElementById('runningNow');
 
+/**
+ * The key is remembered on this device once you have arrived with it in the
+ * address, so you can bookmark plain /console and never think about it again.
+ */
 const hostKey = new URL(location.href).searchParams.get('key')
   || localStorage.getItem('musicquiz.hostkey')
   || '';
 if (hostKey) localStorage.setItem('musicquiz.hostkey', hostKey);
+
+/**
+ * Ask for the key.
+ *
+ * Also used when a remembered key stops working — which happens if HOST_KEY is
+ * left unset on a host that wipes its filesystem, because the app then invents
+ * a new one on each deploy. Without this you would be stuck on an error with
+ * nothing to click.
+ */
+function askForKey(message = '') {
+  mainEl.replaceChildren(node(`
+    <div class="panel">
+      <h3>Host key</h3>
+      ${message ? `<p class="tiny" style="color:var(--bad)">${esc(message)}</p>` : ''}
+      <p class="tiny">Set as HOST_KEY on your host. If you never set one, the app
+        invents one and prints it in the startup log.</p>
+      <div class="row" style="margin-top:10px;display:flex;gap:8px">
+        <input type="text" id="keyIn" placeholder="host key" style="flex:1 1 auto;padding:11px;border-radius:10px;background:rgba(255,255,255,0.08);color:var(--ink);border:1px solid var(--panel-line)">
+        <button class="minor" id="keyGo" style="cursor:pointer">Unlock</button>
+      </div>
+    </div>`));
+  document.getElementById('keyGo').addEventListener('click', () => {
+    const key = document.getElementById('keyIn').value.trim();
+    if (!key) return;
+    localStorage.setItem('musicquiz.hostkey', key);
+    location.href = '/console?key=' + encodeURIComponent(key);
+  });
+  document.getElementById('keyIn').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('keyGo').click();
+  });
+}
 
 const keyed = (path) => path + (path.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(hostKey);
 const linkTo = (path) => keyed(path);
@@ -24,7 +59,14 @@ let library = null;
 
 async function load() {
   const res = await fetch(keyed('/api/library'));
-  if (!res.ok) throw new Error(res.status === 401 ? 'Wrong host key' : 'Could not load the library');
+  if (res.status === 401) {
+    // The remembered key is no longer right. Forget it and ask again rather
+    // than leaving them staring at an error.
+    localStorage.removeItem('musicquiz.hostkey');
+    askForKey('That key was not accepted. It may have changed — check your host\u2019s startup log.');
+    return;
+  }
+  if (!res.ok) throw new Error('Could not load the library');
   library = await res.json();
   render();
 }
@@ -291,20 +333,7 @@ function whenish(ts) {
 }
 
 if (!hostKey) {
-  mainEl.replaceChildren(node(`
-    <div class="panel">
-      <h3>Host key</h3>
-      <p class="tiny">This is printed in the server log when the app starts.</p>
-      <div class="row" style="margin-top:10px">
-        <input type="text" id="keyIn" placeholder="host key" style="flex:1 1 auto">
-        <button class="minor" id="keyGo">Unlock</button>
-      </div>
-    </div>`));
-  document.getElementById('keyGo').addEventListener('click', () => {
-    const key = document.getElementById('keyIn').value.trim();
-    localStorage.setItem('musicquiz.hostkey', key);
-    location.href = '/console?key=' + encodeURIComponent(key);
-  });
+  askForKey();
 } else {
   load().catch((err) => {
     mainEl.replaceChildren(node(`<div class="panel"><h3>Could not load</h3><div class="tiny">${esc(err.message)}</div></div>`));

@@ -47,6 +47,13 @@ async function api(path, options = {}) {
   });
   const text = await res.text();
   const data = text ? JSON.parse(text) : {};
+  if (res.status === 401) {
+    // A remembered key that no longer works should send you somewhere you can
+    // fix it, not leave you stuck on an error.
+    localStorage.removeItem('musicquiz.hostkey');
+    location.href = '/console';
+    throw new Error('Host key not accepted');
+  }
   if (!res.ok) throw Object.assign(new Error(data.error || res.statusText), { data });
   return data;
 }

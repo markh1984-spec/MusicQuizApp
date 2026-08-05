@@ -96,8 +96,24 @@ Swap `YOURKEY` for the host key you set in 2a:
 The big screen needs no key — it is meant to be looked at by a room. The other
 three do, because they show the answers.
 
-- [ ] **Bookmark the Console link on your phone.** Everything else is one tap
-      from it, and you do not want to be typing that in a dark pub.
+### Bookmark it so you never type a key again
+
+The key is remembered on each device the first time you arrive with it in the
+address. So do this once per device:
+
+1. Visit **`https://musicquizapp.onrender.com/console?key=YOURKEY`** — the full
+   version, with the key
+2. Then **bookmark the plain version**, no key on the end:
+   **https://musicquizapp.onrender.com/console**
+
+From then on that bookmark just opens. Same trick works for
+`/host` and `/editor`.
+
+- [ ] Do this on your phone
+- [ ] Do it on your laptop too
+
+If a key ever stops being accepted, the page gives you a box to type the new
+one in rather than an error you cannot get past.
 
 ## 2c. Test it end to end
 
