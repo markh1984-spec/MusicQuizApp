@@ -253,15 +253,45 @@ export class Engine {
     }
     if (this.state.scoreboard === wanted) return { ok: true, scoreboard: wanted };
     this.state.scoreboard = wanted;
+    if (wanted) this.state.advert = null;
     this.changed();
     return { ok: true, scoreboard: wanted };
+  }
+
+  /**
+   * Put an advertising slide on the big screen, between rounds.
+   *
+   * Same shape as the scoreboard and for the same reason: a flag, not a phase.
+   * The quiz does not move, so there is nothing to undo and no way to lose
+   * your place — and pressing onwards takes it down and carries on.
+   *
+   * Refused over a live question. A pizza offer over a question with the clock
+   * running is the one thing that would make a venue slide feel like an
+   * intrusion rather than part of the night.
+   */
+  showAdvert(ref) {
+    if (!ref) {
+      if (!this.state.advert) return { ok: true, advert: null };
+      this.state.advert = null;
+      this.changed();
+      return { ok: true, advert: null };
+    }
+    if (this.state.phase === PHASES.QUESTION && !this.state.question?.closed) {
+      return { ok: false, reason: 'question_live' };
+    }
+    this.state.advert = { packId: String(ref.packId || ''), slideId: String(ref.slideId || '') };
+    // Two things cannot be on the projector at once.
+    this.state.scoreboard = false;
+    this.changed();
+    return { ok: true, advert: this.state.advert };
   }
 
   /** Put the current question on the screen and start the clock. */
   askQuestion() {
     if (!this.question()) return false;
-    // A question can never appear behind the scoreboard.
+    // A question can never appear behind the scoreboard or an advert.
     this.state.scoreboard = false;
+    this.state.advert = null;
     const seconds = this.questionSeconds();
     const startedAt = this.now();
     this.state.phase = PHASES.QUESTION;
@@ -311,8 +341,10 @@ export class Engine {
   next() {
     const s = this.state;
     // Moving on always puts the quiz back on screen. Pressing onwards with the
-    // scores up should do the obvious thing rather than need two presses.
+    // scores or an advert up should do the obvious thing rather than need two
+    // presses.
     s.scoreboard = false;
+    s.advert = null;
     switch (s.phase) {
       case PHASES.LOBBY:
         return this.start();
@@ -368,6 +400,7 @@ export class Engine {
   back() {
     const s = this.state;
     s.scoreboard = false;
+    s.advert = null;
     switch (s.phase) {
       case PHASES.REVEAL:
         // Back from a reveal reopens the same question, cleared, from the top.
@@ -778,6 +811,24 @@ export class Engine {
     view.scoreboard = Boolean(s.scoreboard);
     if (s.scoreboard) view.leaderboard = this.leaderboard().map(publicPlayer);
 
+    // An advert is looked up by the server rather than carried in state, so
+    // editing a venue's slide changes what is on the projector without
+    // anybody having to take it down and put it back up.
+    if (s.advert && this.advertLookup) {
+      const found = this.advertLookup(s.advert);
+      if (found) {
+        view.advert = {
+          venue: found.pack.venue || '',
+          heading: found.slide.heading,
+          body: found.slide.body,
+          image: found.slide.image ? `/quiz-images/${found.slide.image}` : null,
+          link: found.slide.link || '',
+          linkLabel: found.slide.linkLabel || '',
+          // `say` is the host's line for the mic. Host view only, like a cue.
+        };
+      }
+    }
+
     if (s.phase === PHASES.ROUND_INTRO && round) {
       view.roundIntro = {
         title: round.title,
@@ -912,6 +963,14 @@ export class Engine {
     };
   }
 
+  /** Which advert is up, if any, and whether one could be. */
+  advertState() {
+    return {
+      showing: this.state.advert || null,
+      allowed: !(this.state.phase === PHASES.QUESTION && !this.state.question?.closed),
+    };
+  }
+
   /** Extra fields only the host gets. This is where the secrets live. */
   hostQuestionExtras(q, round) {
     const right = [...this.correctSet(q, round)];
@@ -954,6 +1013,14 @@ export class Engine {
     view.msRemaining = this.msRemaining();
     view.clock = s.question ? { ...s.question } : null;
     view.scoreboard = this.scoreboardState();
+    view.advert = this.advertState();
+    if (s.advert && this.advertLookup) {
+      const found = this.advertLookup(s.advert);
+      // What to say over the mic while it is up — the host's line, never the
+      // projector's.
+      if (found) view.advert.say = found.slide.say || '';
+      if (found) view.advert.heading = found.slide.heading;
+    }
     if (s.phase === PHASES.RULES) view.rules = this.rulesView();
 
     if (q && round) {

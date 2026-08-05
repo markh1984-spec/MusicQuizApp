@@ -17,6 +17,7 @@ import { Engine, PHASES, isSafeId } from './engine.js';
 import { BingoGame, BINGO_PHASES, normaliseBingoPack } from './bingo.js';
 import { listQuizzes, loadQuiz } from './quizzes.js';
 import { listBingoPacks, loadBingoPack, recordLaunch, archiveResults } from './library.js';
+import { findSlide } from './adverts.js';
 
 const LAUNCHERS = {
   quiz: {
@@ -140,6 +141,26 @@ export class Session {
       now: this.now,
       onChange: () => this.handleChange(),
     });
+    /*
+     * How the engine reads an advertising slide.
+     *
+     * The engine holds only which slide is up, and asks for the words when it
+     * builds a view. That way editing a venue's offer changes what is on the
+     * projector immediately — you do not have to take the slide down and put
+     * it back to pick up a corrected price.
+     *
+     * Handed in rather than imported so the engine keeps knowing nothing about
+     * the filesystem, which is what makes it testable with an injected clock
+     * and no disk at all.
+     */
+    this.engine.advertLookup = (ref) => {
+      if (!ref || !ref.packId) return null;
+      try {
+        return findSlide(this.config.advertDir, ref.packId, ref.slideId);
+      } catch {
+        return null; // the set was deleted while it was on screen
+      }
+    };
     // Games do not all record their pack the same way; make sure the state
     // always says what it is, so a restart can pick the right one back up.
     this.engine.state.kind = kind;
@@ -265,6 +286,10 @@ export class Session {
       reveal: () => this.engine.reveal(),
       // The scores on the big screen, without moving the quiz.
       scoreboard: () => this.engine.showScoreboard(body.on !== false),
+      // An advertising slide, the same way.
+      advert: () => this.engine.showAdvert(
+        body.packId ? { packId: body.packId, slideId: body.slideId } : null,
+      ),
       skip: () => this.engine.skipQuestion(),
       redo: () => this.engine.redoQuestion(),
       goto: () => this.engine.goTo(Number(body.roundIndex), Number(body.questionIndex)),

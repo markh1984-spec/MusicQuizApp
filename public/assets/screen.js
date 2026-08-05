@@ -36,6 +36,7 @@ const cards = {
   // every state push and flash the projector every time anybody's phone
   // pinged.
   scoreboard: { key: () => 'scores', render: renderScoreboard, update: updateScoreboard },
+  advert: { key: (s) => `ad:${s.advert && s.advert.heading}`, render: renderAdvert },
   round_intro: { key: (s) => `intro:${s.roundIndex}`, render: renderRoundIntro },
   question: { key: (s) => `q:${s.roundIndex}:${s.questionIndex}`, render: renderQuestion, update: updateQuestion },
   reveal: { key: (s) => `q:${s.roundIndex}:${s.questionIndex}`, render: renderQuestion, update: updateQuestion },
@@ -71,9 +72,11 @@ function draw(next) {
 
   // The scoreboard is shown over whatever the quiz is doing, without moving
   // it. Picked here rather than as a phase so there is nothing to undo.
-  const card = state.scoreboard
-    ? cards.scoreboard
-    : isBingo ? bingoCard(state) : (cards[state.phase] || cards.lobby);
+  const card = state.advert && state.advert.heading !== undefined
+    ? cards.advert
+    : state.scoreboard
+      ? cards.scoreboard
+      : isBingo ? bingoCard(state) : (cards[state.phase] || cards.lobby);
   const key = card.key(state);
   if (key !== currentKey) {
     currentKey = key;
@@ -169,6 +172,41 @@ function updateScoreboard(s) {
   rows.innerHTML = all.length
     ? all.map((p, i) => boardRow(p, i)).join('')
     : '<div class="muted" style="font-size:3vh">No scores yet.</div>';
+}
+
+/**
+ * A venue's advertising slide.
+ *
+ * This one earns money, so it gets the whole screen rather than a corner: the
+ * host sells himself to venues on shifting their pizzas and their gig tickets,
+ * and a slide that looks like an afterthought is not worth selling.
+ *
+ * The QR is drawn by the server's own encoder, so a ticket link works with a
+ * phone camera from the back of a room with no internet round trip.
+ *
+ * The host's line for the mic (`say`) is NOT here — that goes to the control
+ * view only, like every other thing meant for the host and not the room.
+ */
+function renderAdvert(s) {
+  const a = s.advert || {};
+  const hasQr = Boolean(a.link);
+  return node(`
+    <div class="advert ${a.image ? 'has-image' : ''} ${hasQr ? 'has-qr' : ''}">
+      ${a.venue ? `<div class="ad-venue">${esc(a.venue)}</div>` : ''}
+      <div class="ad-body">
+        <div class="ad-words">
+          ${a.heading ? `<h1>${esc(a.heading)}</h1>` : ''}
+          ${a.body ? `<p>${esc(a.body)}</p>` : ''}
+        </div>
+        ${a.image ? `<div class="ad-image"><img src="${esc(a.image)}" alt=""></div>` : ''}
+        ${hasQr ? `
+          <div class="ad-qr">
+            <img src="/qr.svg?text=${encodeURIComponent(a.link)}" alt="Scan for more">
+            <div class="ad-qr-label">${esc(a.linkLabel || 'Scan me')}</div>
+          </div>` : ''}
+      </div>
+    </div>
+  `);
 }
 
 /**

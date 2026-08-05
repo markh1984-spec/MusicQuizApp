@@ -101,9 +101,17 @@ const TABS = [
     },
   },
   {
+    id: 'adverts',
+    label: 'Adverts',
+    blurb: 'Slides for between rounds. One set per venue, reused every week.',
+    count: () => (library.adverts || []).length,
+    render: () => advertsSection(library.adverts || []),
+  },
+  {
     id: 'past',
     label: 'Past nights',
     blurb: 'Results are saved when a game finishes.',
+    count: () => (library.archive || []).length,
     render: () => archiveSection(library.archive || []),
   },
 ];
@@ -180,7 +188,9 @@ function process_repo(gen) {
 function tabBar(active) {
   const bar = node('<div class="tabbar" role="tablist"></div>');
   for (const tab of TABS) {
-    const count = tab.packs ? (tab.packs() || []).length : (library.archive || []).length;
+    // Each tab says how to count itself. It used to fall back to the archive
+    // length, which was right for one tab by accident and wrong for any other.
+    const count = tab.count ? tab.count() : (tab.packs() || []).length;
     const button = node(`
       <button class="tab ${tab.id === active ? 'on' : ''}" role="tab" data-tab="${tab.id}">
         ${esc(tab.label)}${count ? `<span class="tabcount">${count}</span>` : ''}
@@ -1155,4 +1165,170 @@ if (!hostKey) {
   load().catch((err) => {
     mainEl.replaceChildren(node(`<div class="panel"><h3>Could not load</h3><div class="tiny">${esc(err.message)}</div></div>`));
   });
+}
+
+/* ================================================================= ADVERTS
+ *
+ * Slides for between rounds. This is a revenue feature, not decoration: the
+ * host sells himself to venues on shifting their pizzas and their gig tickets,
+ * so a set belongs to a VENUE and gets reused every week rather than being
+ * written fresh each night.
+ *
+ * Kept deliberately plain — a heading, a line of words, an optional QR — because
+ * a slide has to be readable from the back of a pub in three seconds, and
+ * because he will be typing these in between other jobs.
+ */
+function advertsSection(sets) {
+  const el = node(`
+    <div class="game-section">
+      <div class="game-head">
+        <div>
+          <h2>Advert slides</h2>
+          <div class="tiny">One set per venue. Put one up from your control view, between rounds.</div>
+        </div>
+        <button class="go new-set">New set</button>
+      </div>
+      <div class="pack-grid"></div>
+    </div>`);
+
+  el.querySelector('.new-set').addEventListener('click', () => editAdvertSet(null));
+
+  const grid = el.querySelector('.pack-grid');
+  if (!sets.length) {
+    grid.appendChild(node(`
+      <div class="tiny">Nothing yet. A set might be "The Crown" with a slide for the
+      Tuesday pizza deal and one for the band on the 28th, with a QR to tickets.</div>`));
+    return el;
+  }
+
+  for (const set of sets) {
+    const card = node(`
+      <div class="pack-card ${set.broken ? 'broken' : ''}">
+        <button class="pack-title">${esc(set.title)}</button>
+        <div class="tiny">${esc(set.venue || 'No venue set')}</div>
+        <div class="tiny played">${set.slideCount} slide${set.slideCount === 1 ? '' : 's'}</div>
+        ${set.broken ? `<div class="tiny" style="color:var(--bad)">Broken: ${esc(set.broken)}</div>` : ''}
+        <div class="pack-actions">
+          <button class="go edit">Edit</button>
+          <button class="pack-del">Delete</button>
+        </div>
+      </div>`);
+    const open = () => editAdvertSet(set.id);
+    card.querySelector('.pack-title').addEventListener('click', open);
+    card.querySelector('.edit').addEventListener('click', open);
+    card.querySelector('.pack-del').addEventListener('click', async () => {
+      if (!confirm(`Delete "${set.title}" and its ${set.slideCount} slide${set.slideCount === 1 ? '' : 's'}?`)) return;
+      await fetch(keyed('/api/advert/' + encodeURIComponent(set.id)), {
+        method: 'DELETE', headers: { 'X-Host-Key': hostKey },
+      });
+      await load();
+    });
+    grid.appendChild(card);
+  }
+  return el;
+}
+
+function editAdvertSet(id) {
+  const overlay = node(`
+    <div class="sheet-overlay">
+      <div class="sheet">
+        <div class="sheet-head">
+          <div>
+            <input class="sheet-title" id="adTitle" placeholder="What to call this set">
+            <input class="tiny ad-venue-in" id="adVenue" placeholder="Venue — e.g. The Crown, Chelmsford">
+          </div>
+          <div class="row">
+            <button class="go" id="adSave">Save</button>
+            <button class="minor" id="adClose">Close</button>
+          </div>
+        </div>
+        <div class="sheet-body" id="adBody"></div>
+      </div>
+    </div>`);
+  document.body.appendChild(overlay);
+
+  const body = overlay.querySelector('#adBody');
+  const close = () => overlay.remove();
+  overlay.querySelector('#adClose').addEventListener('click', close);
+
+  let pack = { id: '', title: '', venue: '', slides: [] };
+
+  const draw = () => {
+    overlay.querySelector('#adTitle').value = pack.title;
+    overlay.querySelector('#adVenue').value = pack.venue;
+    const parts = pack.slides.map((slide, i) => slideEditor(slide, i, pack, draw));
+    const add = node('<button class="minor" style="margin-top:12px">Add a slide</button>');
+    add.addEventListener('click', () => {
+      pack.slides.push({ id: 's' + (pack.slides.length + 1), heading: '', body: '', say: '' });
+      draw();
+    });
+    parts.push(add);
+    body.replaceChildren(...parts);
+  };
+
+  overlay.querySelector('#adTitle').addEventListener('input', (e) => { pack.title = e.target.value; });
+  overlay.querySelector('#adVenue').addEventListener('input', (e) => { pack.venue = e.target.value; });
+
+  overlay.querySelector('#adSave').addEventListener('click', async () => {
+    const btn = overlay.querySelector('#adSave');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    // A new set gets its filename from the venue, or the title if there is no
+    // venue — the same way a quiz is named after its theme.
+    const slug = (pack.id || pack.venue || pack.title || 'adverts')
+      .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'adverts';
+    try {
+      const res = await fetch(keyed('/api/advert/' + encodeURIComponent(slug)), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
+        body: JSON.stringify({ ...pack, id: slug }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error((data.problems || [data.error]).join('\n'));
+      close();
+      await load();
+    } catch (err) {
+      alert(err.message);
+      btn.disabled = false;
+      btn.textContent = 'Save';
+    }
+  });
+
+  if (!id) { pack.title = 'New advert set'; draw(); return; }
+  fetch(keyed('/api/advert/' + encodeURIComponent(id)))
+    .then((r) => r.json())
+    .then((loaded) => { pack = loaded; draw(); })
+    .catch(() => { body.replaceChildren(node('<div class="tiny">Could not open it.</div>')); });
+}
+
+function slideEditor(slide, i, pack, redraw) {
+  const el = node(`
+    <div class="ad-slide">
+      <div class="ad-slide-head">
+        <b>Slide ${i + 1}</b>
+        <button class="minor danger small ad-del">Delete</button>
+      </div>
+      <label class="tiny">On the screen, big</label>
+      <input class="ad-h" maxlength="60" placeholder="PIZZA — 2 FOR 1 TONIGHT" value="${esc(slide.heading || '')}">
+      <label class="tiny">Underneath, smaller</label>
+      <input class="ad-b" maxlength="160" placeholder="Kitchen open till 10. Ask at the bar." value="${esc(slide.body || '')}">
+      <label class="tiny">A link to put a QR code on the slide — tickets, a booking page</label>
+      <input class="ad-l" placeholder="https://..." value="${esc(slide.link || '')}">
+      <input class="ad-ll" maxlength="40" placeholder="What the QR is for — e.g. Tickets for the 28th" value="${esc(slide.linkLabel || '')}">
+      <label class="tiny">Your line for the mic — never goes on the screen</label>
+      <input class="ad-say" maxlength="160" placeholder="Mention the pizza deal while this is up" value="${esc(slide.say || '')}">
+    </div>`);
+
+  const bind = (sel, key) => el.querySelector(sel).addEventListener('input', (e) => { slide[key] = e.target.value; });
+  bind('.ad-h', 'heading');
+  bind('.ad-b', 'body');
+  bind('.ad-l', 'link');
+  bind('.ad-ll', 'linkLabel');
+  bind('.ad-say', 'say');
+
+  el.querySelector('.ad-del').addEventListener('click', () => {
+    pack.slides.splice(i, 1);
+    redraw();
+  });
+  return el;
 }

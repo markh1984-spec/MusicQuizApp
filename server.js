@@ -26,6 +26,7 @@ import { fullLibrary, listArchive, loadArchived, saveBingoPack, loadBingoPack, d
 import { generateBingoPack } from './src/generate-bingo.js';
 import { generateQuizPack, buildIntroPlaylists } from './src/generate-quiz.js';
 import { importBingoPack } from './src/import-bingo.js';
+import { listAdvertPacks, loadAdvertPack, saveAdvertPack, deleteAdvertPack, validateAdvertPack, normaliseAdvertPack } from './src/adverts.js';
 import { generateImages, imageStatus, imageJobs, openaiConfigured } from './src/generate-images.js';
 import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig } from './src/spotify.js';
@@ -303,6 +304,7 @@ async function handleGet(req, res, url, route) {
     return sendJson(res, 200, {
       brand: config.brandName,
       ...library,
+      adverts: listAdvertPacks(config.advertDir),
       running: { game: session.kind, packId: session.pack.id, title: session.pack.title, phase: session.engine.state.phase, playerCount: session.engine.playerList().length },
       archive: listArchive(config.dataDir),
       generation: {
@@ -319,6 +321,16 @@ async function handleGet(req, res, url, route) {
       },
     }), true;
   }
+  if (route.startsWith('/api/advert/')) {
+    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    const id = decodeURIComponent(route.slice('/api/advert/'.length));
+    try {
+      return sendJson(res, 200, loadAdvertPack(config.advertDir, id)), true;
+    } catch (err) {
+      return sendJson(res, 404, { error: err.message }), true;
+    }
+  }
+
   // What round 2 actually has on disk: real portraits, stand-ins, or nothing.
   // Read before spending anything, so the panel can say what it is about to do.
   if (route.startsWith('/api/images/')) {
@@ -521,6 +533,37 @@ async function handleWrite(req, res, url, route) {
   if (route === '/api/quiz/__validate' && req.method === 'POST') {
     const body = await readJson(req, 4 * 1024 * 1024);
     return sendJson(res, 200, { problems: validateQuiz(normaliseQuiz(body, body.id)) }), true;
+  }
+
+  /*
+   * Advertising slides: save and delete a venue's set.
+   *
+   * Backed up like a quiz pack, because a venue's offer is worth having again
+   * next week and losing it to a redeploy would make the feature useless as a
+   * thing to sell.
+   */
+  if (route.startsWith('/api/advert/') && (req.method === 'PUT' || req.method === 'DELETE')) {
+    const id = decodeURIComponent(route.slice('/api/advert/'.length));
+    if (req.method === 'DELETE') {
+      try {
+        deleteAdvertPack(config.advertDir, id);
+      } catch (err) {
+        return sendJson(res, 404, { error: err.message }), true;
+      }
+      if (githubConfigured()) await deleteFile(`adverts/${id}.json`, `Delete adverts: ${id}`);
+      return sendJson(res, 200, { ok: true }), true;
+    }
+
+    const body = await readJson(req, 512 * 1024);
+    const problems = validateAdvertPack(body);
+    if (problems.length) return sendJson(res, 400, { error: 'Advert set is not valid', problems }), true;
+    saveAdvertPack(config.advertDir, id, body);
+    const backup = await backUp(
+      `adverts/${id}.json`,
+      JSON.stringify(normaliseAdvertPack(body, id), null, 2) + '\n',
+      `Adverts: ${body.title || id}`,
+    );
+    return sendJson(res, 200, { ok: true, backedUp: backup.ok, backupError: backup.error }), true;
   }
 
   // Ticking a review flag off as you read a quiz through. Deliberately its own

@@ -20,6 +20,9 @@ export const config = {
 
   quizDir: process.env.QUIZ_DIR || path.join(ROOT, 'quizzes'),
   bingoDir: process.env.BINGO_DIR || path.join(ROOT, 'bingo'),
+  // Advertising slides, per venue. In the repo like every other pack, because
+  // a venue's offer is worth having again next week.
+  advertDir: process.env.ADVERT_DIR || path.join(ROOT, 'adverts'),
   dataDir: process.env.DATA_DIR || path.join(ROOT, 'data'),
   imageDir: process.env.IMAGE_DIR || path.join(ROOT, 'images'),
   publicDir: path.join(ROOT, 'public'),

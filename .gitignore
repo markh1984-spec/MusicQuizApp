@@ -14,6 +14,10 @@ data/*
 # picture that is not committed does not exist on the deployed app and round 2
 # comes up blank. Commit your artwork.
 
+# NOTE: adverts/ is deliberately NOT ignored. A venue's slides are worth having
+# again next week, and the live app builds from git — an advert set that is not
+# committed does not exist on the deployed app.
+
 # Screenshots from scripts/shots.mjs
 screenshots/
 

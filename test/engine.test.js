@@ -1037,3 +1037,107 @@ test('THE TWO-SCREENS RULE HOLDS on the rules slide too', () => {
   assert.equal(screen.includes('correctIndex'), false);
   assert.equal(screen.includes('Blue Monday'), false, 'no round 3 cue');
 });
+
+// ---- Advertising slides, over the quiz but never moving it.
+
+test('an advert goes up without moving the quiz, and comes down on its own', () => {
+  const { engine, at } = makeEngine();
+  const [a] = joinThree(engine);
+  toFirstQuestion(engine);
+  at(2_000);
+  engine.answer({ playerId: a.id, optionIndex: 1 });
+  engine.reveal();
+
+  // The engine holds only which slide is up; the words are looked up when a
+  // view is built, so editing a venue's offer changes the screen at once.
+  engine.advertLookup = () => ({
+    pack: { venue: 'The Crown' },
+    slide: { heading: 'PIZZA — 2 FOR 1', body: 'Till 10.', say: 'Mention the pizza' },
+  });
+
+  const where = { phase: engine.state.phase, round: engine.state.roundIndex, question: engine.state.questionIndex };
+  assert.equal(engine.showAdvert({ packId: 'the-crown', slideId: 's1' }).ok, true);
+
+  const screen = engine.screenView();
+  assert.equal(screen.advert.heading, 'PIZZA — 2 FOR 1');
+  assert.equal(screen.advert.venue, 'The Crown');
+  assert.deepEqual(
+    { phase: engine.state.phase, round: engine.state.roundIndex, question: engine.state.questionIndex },
+    where,
+    'the quiz has not moved',
+  );
+
+  engine.next();
+  assert.equal(engine.state.advert, null, 'onwards takes it down');
+  assert.equal(engine.screenView().advert, undefined);
+});
+
+test('THE TWO-SCREENS RULE: the host gets the mic line, the projector does not', () => {
+  const { engine, at } = makeEngine();
+  joinThree(engine);
+  toFirstQuestion(engine);
+  at(1_000);
+  engine.reveal();
+  engine.advertLookup = () => ({
+    pack: { venue: 'The Crown' },
+    slide: { heading: 'PIZZA', body: 'Till 10.', say: 'Push the pizza deal, mention the kitchen closes at ten' },
+  });
+  engine.showAdvert({ packId: 'the-crown', slideId: 's1' });
+
+  const screen = JSON.stringify(engine.screenView());
+  assert.equal(screen.includes('Push the pizza deal'), false, 'the mic line is not on the projector');
+
+  const host = engine.hostView();
+  assert.match(host.advert.say, /Push the pizza deal/);
+});
+
+test('an advert is refused over a live question', () => {
+  const { engine } = makeEngine();
+  joinThree(engine);
+  toFirstQuestion(engine);
+  const result = engine.showAdvert({ packId: 'the-crown', slideId: 's1' });
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, 'question_live');
+  assert.ok(!engine.state.advert, 'nothing went up');
+});
+
+test('the scoreboard and an advert are never both up', () => {
+  const { engine, at } = makeEngine();
+  joinThree(engine);
+  toFirstQuestion(engine);
+  at(1_000);
+  engine.reveal();
+  engine.advertLookup = () => ({ pack: {}, slide: { heading: 'PIZZA' } });
+
+  engine.showAdvert({ packId: 'p', slideId: 's1' });
+  engine.showScoreboard(true);
+  assert.equal(engine.state.advert, null, 'the scores replace the advert');
+
+  engine.showAdvert({ packId: 'p', slideId: 's1' });
+  assert.equal(engine.state.scoreboard, false, 'and the advert replaces the scores');
+});
+
+test('a slide deleted while it is on screen does not break the projector', () => {
+  const { engine, at } = makeEngine();
+  joinThree(engine);
+  toFirstQuestion(engine);
+  at(1_000);
+  engine.reveal();
+  engine.advertLookup = () => null; // the set was deleted underneath it
+  engine.showAdvert({ packId: 'gone', slideId: 's1' });
+
+  assert.doesNotThrow(() => engine.screenView());
+  assert.equal(engine.screenView().advert, undefined, 'it simply shows the quiz');
+});
+
+test('taking the advert down needs no arguments', () => {
+  const { engine, at } = makeEngine();
+  joinThree(engine);
+  toFirstQuestion(engine);
+  at(1_000);
+  engine.reveal();
+  engine.advertLookup = () => ({ pack: {}, slide: { heading: 'PIZZA' } });
+  engine.showAdvert({ packId: 'p', slideId: 's1' });
+  assert.equal(engine.showAdvert(null).ok, true);
+  assert.equal(engine.state.advert, null);
+});

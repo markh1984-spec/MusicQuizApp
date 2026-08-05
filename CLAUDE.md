@@ -83,13 +83,19 @@ Redo, but nobody can re-tap ten songs they heard half an hour ago.
 ### 6. Phones never show the question text
 Only the options. Keeps the room looking up, makes googling harder.
 
-### 7. The scoreboard is a flag, never a phase
-`state.scoreboard` puts the scores over whatever the quiz is doing without
-moving it. A phase change would have to be undone to get back, which is the
-one mistake that loses everybody's place mid-round.
+### 7. The scoreboard and adverts are flags, never phases
+`state.scoreboard` and `state.advert` put something over whatever the quiz is
+doing without moving it. A phase change would have to be undone to get back,
+which is the one mistake that loses everybody's place mid-round.
 
-It is refused over a live question and cleared by any move, so a question can
-never appear behind it.
+Both are refused over a live question and cleared by any move, so a question
+can never appear behind either. They also clear each other — two things cannot
+be on one projector.
+
+An advert's **words are looked up when a view is built**, not copied into
+state, so correcting a price on a venue's slide changes the projector without
+taking it down and putting it back. The host's mic line (`say`) is host-view
+only, like a round 3 cue.
 
 ### 8. "Pick them all" tells the room HOW MANY, never which
 A `multi` question shows six options with 2–3 correct. The screen and the phone
@@ -210,6 +216,7 @@ src/generate-bingo.js  theme -> Claude -> history filter -> Spotify -> pack
 src/spotify.js         playlist building
 src/qrcode.js          dependency-free QR encoder
 src/photos.js          photos from the room: store, kill switch, bin
+src/adverts.js         venue advertising slides, per venue
 src/generate-images.js round 2 artwork (placeholder or OpenAI)
 public/                the screens; *-bingo.js files hold the bingo variants
 quizzes/ bingo/        the library

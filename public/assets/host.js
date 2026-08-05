@@ -59,7 +59,7 @@ function draw(next) {
   }
   whereEl.textContent = whereLabel(state);
   connEl.textContent = `${state.playerCount} ${state.playerCount === 1 ? 'team' : 'teams'} in`;
-  mainEl.replaceChildren(...restartNotice(state), ...buildPanels(state), ...photoPanel(state));
+  mainEl.replaceChildren(...restartNotice(state), ...advertPanel(state), ...buildPanels(state), ...photoPanel(state));
   actionsEl.replaceChildren(...buildActions(state));
 }
 
@@ -104,6 +104,7 @@ function whereLabel(s) {
   }
   // What the projector is showing wins over where the quiz is, because that is
   // the thing you would otherwise have to turn round to check.
+  if (s.advert && s.advert.showing && s.advert.heading) return `Advert: ${s.advert.heading}`;
   if (s.scoreboard && s.scoreboard.on) return 'Scores on the big screen';
   switch (s.phase) {
     case 'lobby': return 'Lobby — waiting to start';
@@ -115,6 +116,18 @@ function whereLabel(s) {
     case 'final': return 'Final results';
     default: return 'Control';
   }
+}
+
+/** What to say over the mic while a slide is up. Never on the projector. */
+function advertPanel(s) {
+  const ad = s.advert || {};
+  if (!ad.showing || !ad.showing.packId) return [];
+  return [node(`
+    <div class="panel warn">
+      <h3>On screen: ${esc(ad.heading || 'an advert')}</h3>
+      ${ad.say ? `<div class="tiny" style="font-size:15px;color:var(--ink)">${esc(ad.say)}</div>` : ''}
+      <div class="tiny" style="margin-top:8px">Press onwards when you are done — it comes down on its own.</div>
+    </div>`)];
 }
 
 /**
@@ -432,7 +445,76 @@ function buildActions(s) {
   // The host's own copy, on their phone, which is a different thing from
   // putting it on the projector.
   out.push(minor('My scores', () => showScores()));
+
+  /*
+   * The venue's advertising slides.
+   *
+   * Same rules as the scoreboard — a flag, refused over a live question, taken
+   * down by pressing onwards — because they are the same kind of thing:
+   * something shown over the quiz without moving it.
+   */
+  const ad = s.advert || {};
+  if (ad.showing && ad.showing.packId) {
+    const stop = minor('Take the advert down', () => act('advert', {}));
+    stop.classList.add('on');
+    out.push(stop);
+  } else if (ad.allowed) {
+    out.push(minor('Advert', () => showAdvertPicker()));
+  }
   return out;
+}
+
+/**
+ * Pick a slide to put up.
+ *
+ * A list rather than anything cleverer: it is used between rounds, in the
+ * dark, with a room waiting, and the venue rarely has more than three or four
+ * offers. The host's line for the mic is shown under each one so there is
+ * something to say while it is up.
+ */
+async function showAdvertPicker() {
+  let sets = [];
+  try {
+    const res = await fetch(`/api/library?key=${encodeURIComponent(hostKey)}`);
+    sets = (await res.json()).adverts || [];
+  } catch {
+    alert('Could not load the adverts.');
+    return;
+  }
+  const usable = sets.filter((set) => !set.broken && set.slideCount);
+  if (!usable.length) {
+    alert('No advert slides yet. Make some on the Adverts tab in the console.');
+    return;
+  }
+
+  const sheet = node(`
+    <div class="cam-overlay">
+      <div class="cam-sheet">
+        <div class="cam-head"><b>Put an advert up</b><button class="cam-close">✕</button></div>
+        <div class="ad-picks"></div>
+      </div>
+    </div>`);
+  const close = () => sheet.remove();
+  sheet.querySelector('.cam-close').addEventListener('click', close);
+  sheet.addEventListener('click', (e) => { if (e.target === sheet) close(); });
+
+  const list = sheet.querySelector('.ad-picks');
+  for (const set of usable) {
+    list.appendChild(node(`<div class="ad-set">${esc(set.venue || set.title)}</div>`));
+    for (const slide of set.slides) {
+      const row = node(`
+        <button class="ad-pick">
+          <span class="ad-pick-head">${esc(slide.heading || '(no heading)')}</span>
+          ${slide.hasLink ? '<span class="ad-pick-tag">QR</span>' : ''}
+        </button>`);
+      row.addEventListener('click', async () => {
+        await act('advert', { packId: set.id, slideId: slide.id });
+        close();
+      });
+      list.appendChild(row);
+    }
+  }
+  document.body.appendChild(sheet);
 }
 
 function showScores() {
