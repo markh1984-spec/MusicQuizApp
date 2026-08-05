@@ -131,6 +131,9 @@ export class Engine {
    */
   join({ playerId, name }) {
     const at = this.now();
+    // Joining again clears a previous removal — the host removes a team to tidy
+    // up a duplicate or a name they regret, not to bar a phone for the night.
+    if (playerId) forgetRemoved(this.state, playerId);
     const existing = playerId && this.state.players[playerId];
 
     if (existing) {
@@ -176,6 +179,7 @@ export class Engine {
     for (const key of Object.keys(this.state.answers)) {
       delete this.state.answers[key][playerId];
     }
+    rememberRemoved(this.state, playerId);
     this.changed();
     return true;
   }
@@ -680,7 +684,10 @@ export class Engine {
         : null,
     };
     if (!player) {
-      view.kicked = true;
+      // Two very different things used to land here. Telling them apart is the
+      // whole point: only one of them should throw somebody out.
+      if (wasRemoved(s, playerId)) view.kicked = true;
+      else view.rejoin = true;
       return view;
     }
 
@@ -861,6 +868,43 @@ export function cleanTeamName(name) {
 
 export function isSafeId(id) {
   return typeof id === 'string' && /^[A-Za-z0-9_-]{6,64}$/.test(id);
+}
+
+/**
+ * Who the host actually threw out.
+ *
+ * A phone whose id the server does not recognise used to be told it had been
+ * removed — which was true when the host removed it, and wrong every other
+ * time. Every other time is a lost game: a redeploy, a restart on a host with
+ * no permanent disk, or a fresh game launched over the top of a full lobby.
+ *
+ * Those all deserve a silent rejoin, not "you were removed from the quiz" and
+ * a wiped team name. So removals are written down, and only a phone on this
+ * list is ever told it was thrown out.
+ *
+ * The list is deliberately small — one entry per team the host removed by
+ * hand, capped so a very long night cannot grow it without bound.
+ */
+const REMOVED_CAP = 200;
+
+export function rememberRemoved(state, playerId) {
+  if (!isSafeId(playerId)) return;
+  const list = Array.isArray(state.removed) ? state.removed : [];
+  state.removed = [...list.filter((id) => id !== playerId), playerId].slice(-REMOVED_CAP);
+}
+
+export function wasRemoved(state, playerId) {
+  return Array.isArray(state.removed) && state.removed.includes(playerId);
+}
+
+/**
+ * Rejoining after a removal is allowed — the host removes a team to clear a
+ * duplicate or a name they have thought better of, not to ban a phone from the
+ * building. Joining again just takes them off the list.
+ */
+export function forgetRemoved(state, playerId) {
+  if (!Array.isArray(state.removed)) return;
+  state.removed = state.removed.filter((id) => id !== playerId);
 }
 
 export function newId() {

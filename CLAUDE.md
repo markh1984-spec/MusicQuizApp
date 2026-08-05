@@ -44,14 +44,27 @@ to the host view only.
 Every timestamp used for scoring comes from an injected `now()`. Phones send
 only which option they tapped. Never trust a client timestamp.
 
-### 3. Bingo cards cannot be regenerated
+### 3. Only a real removal throws a phone out
+
+A phone whose id the server does not recognise is asked to **rejoin silently**
+(`view.rejoin`). It is told it was removed (`view.kicked`) **only** if the host
+actually removed it — which is why removals are written into `state.removed`
+rather than inferred from the player being absent.
+
+Absent has many causes and only one of them is a kick: a redeploy, a restart on
+a host with no permanent disk, a fresh game launched over a full lobby. Those
+used to throw the whole room out mid-question and wipe their team names.
+`kicked` wipes localStorage on the phone, so getting this wrong is not
+cosmetic. Do not reintroduce "no player found, therefore kicked".
+
+### 4. Bingo cards cannot be regenerated
 The card is built server-side on join and stored against the player. There is
 **no endpoint that issues a new card** and no card-generating code on the
 phone. Refresh, reopen, clear the browser, rejoin — same card. Do not add a
 "new card" feature; the host asked for this explicitly to stop cheating.
 `newRound()` is the only thing that reissues, and it does everyone at once.
 
-### 4. Crash recovery
+### 5. Crash recovery
 State is one JSON object written atomically. Anything that **moves a game
 forward** flushes to disk immediately (new question, reveal, round change, a
 team joining, a bingo track called, a bingo square marked). Only high-frequency
@@ -60,7 +73,7 @@ low-stakes things are debounced.
 Bingo marks are deliberately immediate: a lost quiz answer is recoverable with
 Redo, but nobody can re-tap ten songs they heard half an hour ago.
 
-### 5. Phones never show the question text
+### 6. Phones never show the question text
 Only the four options. Keeps the room looking up, makes googling harder.
 
 ---

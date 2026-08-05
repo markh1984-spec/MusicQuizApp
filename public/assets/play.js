@@ -99,6 +99,40 @@ function showJoin(message = '') {
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
 }
 
+/**
+ * Put ourselves back after the server forgot the game.
+ *
+ * Backed off rather than fired on every state push: if the rejoin itself is
+ * failing, hammering it sixty phones at a time is the last thing a struggling
+ * server needs. Only gives up and asks for a team name after several goes,
+ * because a name typed once should not have to be typed again.
+ */
+let rejoinAt = 0;
+let rejoinTries = 0;
+
+async function silentRejoin() {
+  if (!me || !me.id) { showJoin(); return; }
+  const now = Date.now();
+  if (now < rejoinAt) return;
+  rejoinAt = now + Math.min(8000, 500 * 2 ** rejoinTries);
+  rejoinTries++;
+
+  try {
+    const player = await postJson('/api/join', { playerId: me.id, name: me.name });
+    const changedId = player.id !== me.id;
+    saveMe(player);
+    rejoinTries = 0;
+    rejoinAt = 0;
+    // The stream carries our id in its URL, so a new one means a new stream.
+    if (changedId) startLive();
+  } catch {
+    if (rejoinTries > 6) {
+      rejoinTries = 0;
+      showJoin('Lost the connection to the quiz. Tap Join to come back in.');
+    }
+  }
+}
+
 // ------------------------------------------------------------------ screens
 
 function draw(next) {
@@ -112,6 +146,16 @@ function draw(next) {
     me = null;
     if (live && live.source) live.source.close();
     showJoin('You were removed from the quiz. Join again below.');
+    return;
+  }
+
+  // The server does not know us, and nobody removed us — so it lost its memory
+  // of the game: a restart, a redeploy, or a fresh game launched over the top.
+  // Quietly join again with the same id and name. Whatever is on screen stays
+  // there while that happens, because being thrown back to "pick a team name"
+  // mid-question is exactly what this is here to prevent.
+  if (state.rejoin) {
+    silentRejoin();
     return;
   }
 

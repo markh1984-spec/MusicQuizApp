@@ -19,7 +19,7 @@
  * silently ignored, because a false alarm is half the fun in a room.
  */
 
-import { cleanTeamName, isSafeId, newId } from './engine.js';
+import { cleanTeamName, isSafeId, newId, rememberRemoved, wasRemoved, forgetRemoved } from './engine.js';
 
 export const BINGO_PHASES = {
   LOBBY: 'lobby',
@@ -124,6 +124,8 @@ export class BingoGame {
 
   join({ playerId, name }) {
     const at = this.now();
+    // Same reasoning as the quiz: joining again clears a previous removal.
+    if (playerId) forgetRemoved(this.state, playerId);
     const existing = playerId && this.state.players[playerId];
 
     if (existing) {
@@ -164,6 +166,7 @@ export class BingoGame {
   removePlayer(playerId) {
     if (!this.state.players[playerId]) return false;
     delete this.state.players[playerId];
+    rememberRemoved(this.state, playerId);
     this.changed();
     return true;
   }
@@ -428,7 +431,11 @@ export class BingoGame {
     const view = this.baseView();
     const p = this.state.players[playerId];
     if (!p) {
-      view.kicked = true;
+      // Only a team the host actually removed gets thrown out. Anything else
+      // — a restart, a relaunch over a full lobby — is a silent rejoin, which
+      // for bingo also means the same card comes back rather than a new one.
+      if (wasRemoved(this.state, playerId)) view.kicked = true;
+      else view.rejoin = true;
       return view;
     }
 

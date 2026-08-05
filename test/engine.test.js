@@ -536,6 +536,85 @@ test('a removed team is told, so their phone can start again', () => {
   assert.equal(engine.playerView(a.id).kicked, true);
 });
 
+// ---- Being forgotten is not the same as being thrown out.
+//
+// Both used to send `kicked`, which wipes the team name off the phone and puts
+// up "you were removed from the quiz". That is right when the host removed
+// somebody and wrong every other time — and every other time is a lost game:
+// a redeploy, a restart on a host with no permanent disk, or a fresh game
+// launched over the top of a full lobby. A room being told it was thrown out
+// mid-question, sixty phones at once, is the failure this prevents.
+
+test('a phone the server has never heard of is asked to rejoin, not thrown out', () => {
+  const { engine } = makeEngine();
+  joinThree(engine);
+  const view = engine.playerView('abcdef123456');
+  assert.equal(view.kicked, undefined);
+  assert.equal(view.rejoin, true);
+});
+
+test('a game that lost its memory asks everyone back rather than kicking them', () => {
+  // What a restart with no saved state looks like: same phones, new engine.
+  const first = makeEngine().engine;
+  const [a, b] = joinThree(first);
+
+  const fresh = makeEngine().engine;
+  for (const id of [a.id, b.id]) {
+    const view = fresh.playerView(id);
+    assert.equal(view.rejoin, true, 'asked back');
+    assert.equal(view.kicked, undefined, 'not told they were removed');
+  }
+});
+
+test('rejoining after being forgotten keeps the team name', () => {
+  const first = makeEngine().engine;
+  const [a] = joinThree(first);
+
+  const fresh = makeEngine().engine;
+  const back = fresh.join({ playerId: a.id, name: a.name });
+  assert.equal(back.id, a.id, 'same phone, same id');
+  assert.equal(back.name, a.name);
+  assert.equal(fresh.playerView(a.id).rejoin, undefined);
+});
+
+test('a removal survives a reload, so a removed team is not silently let back in', () => {
+  const { engine } = makeEngine();
+  const [a] = joinThree(engine);
+  engine.removePlayer(a.id);
+
+  // The removal is part of the saved state, not something held in memory.
+  const onDisk = JSON.parse(JSON.stringify(engine.state));
+  const reloaded = new Engine({ quiz: makeQuiz(), state: onDisk, now: () => START });
+  assert.equal(reloaded.playerView(a.id).kicked, true);
+});
+
+test('a removed team that joins again is a team again, not permanently barred', () => {
+  // Removing is for tidying up a duplicate or a name thought better of. It is
+  // not a ban, and the same phone has to be able to come back.
+  const { engine } = makeEngine();
+  const [a] = joinThree(engine);
+  engine.removePlayer(a.id);
+  assert.equal(engine.playerView(a.id).kicked, true);
+
+  engine.join({ playerId: a.id, name: 'Back Again' });
+  const view = engine.playerView(a.id);
+  assert.equal(view.kicked, undefined);
+  assert.equal(view.you.name, 'Back Again');
+});
+
+test('the removed list cannot grow without bound over a long night', () => {
+  const { engine } = makeEngine();
+  for (let i = 0; i < 260; i++) {
+    const p = engine.join({ name: `Team ${i}` });
+    engine.removePlayer(p.id);
+  }
+  assert.ok(engine.state.removed.length <= 200, engine.state.removed.length);
+  // The most recent removals are the ones that still matter.
+  const last = engine.join({ name: 'Last' });
+  engine.removePlayer(last.id);
+  assert.equal(engine.playerView(last.id).kicked, true);
+});
+
 test('the picture round tells the screen how to zoom, and captions itself', () => {
   const { engine } = makeEngine();
   engine.goTo(1, 0);

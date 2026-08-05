@@ -346,6 +346,34 @@ test('a removed team is told, so their phone can start again', () => {
   assert.equal(game.playerView(p.id).kicked, true);
 });
 
+test('a phone the server has forgotten is asked back, and gets its card back', () => {
+  // The worst version of this bug: half an hour of marked squares thrown away
+  // because the app restarted, with no way to re-tap songs already played.
+  const first = makeGame().game;
+  const p = first.join({ playerId: 'abcdef123456', name: 'X' });
+  const cardBefore = [...p.card];
+
+  const fresh = makeGame().game;
+  const view = fresh.playerView(p.id);
+  assert.equal(view.rejoin, true);
+  assert.equal(view.kicked, undefined);
+
+  // Cards are derived from the player id and the pack, so rejoining rebuilds
+  // the same one rather than handing out a fresh card mid-round.
+  const back = fresh.join({ playerId: p.id, name: 'X' });
+  assert.deepEqual(back.card, cardBefore);
+});
+
+test('a removed bingo team stays told, and can still come back', () => {
+  const { game } = makeGame();
+  const p = game.join({ name: 'X' });
+  game.removePlayer(p.id);
+  assert.equal(game.playerView(p.id).kicked, true);
+
+  game.join({ playerId: p.id, name: 'X' });
+  assert.equal(game.playerView(p.id).kicked, undefined);
+});
+
 // -------------------------------------------------------------- persistence
 
 test('a crash mid-game comes back with the same cards and the same marks', () => {

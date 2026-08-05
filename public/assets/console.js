@@ -645,10 +645,19 @@ function packCard(kind, pack) {
   });
 
   el.querySelector('.launch')?.addEventListener('click', async () => {
+    // Warn whenever anybody has joined — including in the lobby, which used to
+    // be treated as safe. The lobby is exactly when a room full of people has
+    // just scanned the code, so it is the worst moment to wipe them, not the
+    // best. Launching over the top throws every one of them out.
     const running = library.running;
-    const live = running && running.phase !== 'lobby' && running.phase !== 'finished';
-    if (live && !confirm(`"${running.title}" is still running with ${running.playerCount} teams in. Launching this will clear it. Carry on?`)) {
-      return;
+    const joined = (running && running.playerCount) || 0;
+    const over = running && running.phase === 'finished';
+    if (joined > 0 && !over) {
+      const teams = `${joined} team${joined === 1 ? '' : 's'}`;
+      const doing = running.phase === 'lobby'
+        ? `${teams} have already joined "${running.title}"`
+        : `"${running.title}" is still running with ${teams} in`;
+      if (!confirm(`${doing}.\n\nLaunching this will remove them and they will have to scan and join again. Carry on?`)) return;
     }
     const button = el.querySelector('.launch');
     button.disabled = true;
