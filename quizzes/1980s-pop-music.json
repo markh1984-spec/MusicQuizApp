@@ -3,7 +3,7 @@
   "title": "The 1980s Pop Music Quiz",
   "subtitle": "Three rounds. Twenty seconds a question. Fastest fingers win.",
   "questionSeconds": 20,
-  "createdAt": "2026-08-05T21:58:28.667Z",
+  "createdAt": "2026-08-05T21:58:57.830Z",
   "notes": "Written by claude-sonnet-5 for \"1980s Pop Music\". NOT YET REVIEWED — read every question in the editor before the gig.",
   "rounds": [
     {
@@ -14,42 +14,18 @@
       "questions": [
         {
           "id": "r1q1",
-          "prompt": "Which song gave The Human League the Christmas number one in 1981?",
+          "prompt": "Which 1984 charity single kept Wham!'s \"Last Christmas\" off UK No.1?",
           "options": [
-            "Love Action",
-            "Don't You Want Me",
-            "Mirror Man",
-            "Fascination"
+            "Do They Know It's Christmas?",
+            "Merry Christmas Everyone",
+            "I Wish It Could Be Christmas Everyday",
+            "Fairytale of New York"
           ],
-          "correctIndex": 1,
-          "answerNote": "It topped the chart for five weeks over Christmas 1981."
+          "correctIndex": 0,
+          "answerNote": "Band Aid's charity single blocked Wham!'s 'Last Christmas' from the top spot in December 1984."
         },
         {
           "id": "r1q2",
-          "prompt": "Which charity single was Christmas number one in the UK in 1984?",
-          "options": [
-            "Last Christmas",
-            "Merry Christmas Everyone",
-            "Do They Know It's Christmas?",
-            "Freedom"
-          ],
-          "correctIndex": 2,
-          "answerNote": "Band Aid's single famously kept Wham!'s \"Last Christmas\" stuck at number two."
-        },
-        {
-          "id": "r1q3",
-          "prompt": "Which 1985 single was Madonna's first UK number one?",
-          "options": [
-            "Like a Virgin",
-            "Into the Groove",
-            "Material Girl",
-            "Holiday"
-          ],
-          "correctIndex": 1,
-          "answerNote": "\"Like a Virgin\" only reached number three in the UK, so \"Into the Groove\" got there first."
-        },
-        {
-          "id": "r1q4",
           "prompt": "Which 1982 Michael Jackson album became the best-selling album of all time?",
           "options": [
             "Bad",
@@ -58,129 +34,103 @@
             "Dangerous"
           ],
           "correctIndex": 2,
-          "answerNote": "Thriller spawned seven top ten singles in the US and remains the biggest-selling album worldwide."
+          "answerNote": "Thriller was released in November 1982 and still dominated UK charts through 1983."
+        },
+        {
+          "id": "r1q3",
+          "prompt": "\"Every Breath You Take\" was a 1983 UK number one for which band?",
+          "options": [
+            "The Police",
+            "Duran Duran",
+            "Simple Minds",
+            "Ultravox"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It turned out to be The Police's final UK number one before they split up."
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which duo topped the UK charts in early 1986 with \"West End Girls\"?",
+          "options": [
+            "Erasure",
+            "Pet Shop Boys",
+            "Soft Cell",
+            "Eurythmics"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Neil Tennant and Chris Lowe had been a journalist and architecture student before forming the duo."
         },
         {
           "id": "r1q5",
-          "prompt": "Duran Duran formed in which English city in the late 1970s?",
+          "prompt": "Which Frankie Goes to Hollywood single was famously banned by BBC Radio 1 in 1984?",
           "options": [
-            "Manchester",
-            "Liverpool",
-            "Leeds",
-            "Birmingham"
+            "Two Tribes",
+            "The Power of Love",
+            "Relax",
+            "Welcome to the Pleasuredome"
           ],
-          "correctIndex": 3,
-          "answerNote": "They started out playing at Birmingham's Rum Runner nightclub."
+          "correctIndex": 2,
+          "answerNote": "DJ Mike Read refused to play 'Relax' on air, which only boosted its sales."
         },
         {
           "id": "r1q6",
-          "prompt": "Which Frankie Goes to Hollywood single spent nine weeks at UK number one in 1984?",
+          "prompt": "Culture Club's \"Karma Chameleon\" was the UK's best-selling single of which year?",
           "options": [
-            "Relax",
-            "Two Tribes",
-            "The Power of Love",
-            "Welcome to the Pleasuredome"
+            "1982",
+            "1983",
+            "1984",
+            "1985"
           ],
           "correctIndex": 1,
-          "answerNote": "\"Two Tribes\" held the top spot for nine weeks, while \"Relax\" only managed five."
+          "answerNote": "It topped the UK charts for three weeks in autumn 1983."
         },
         {
           "id": "r1q7",
-          "prompt": "Which Norwegian band's \"Take On Me\" peaked at number two in the UK in 1985?",
+          "prompt": "Which Norwegian band had a huge 1985 hit with \"Take On Me\"?",
           "options": [
             "Europe",
-            "Roxette",
             "a-ha",
+            "Roxette",
             "Ace of Base"
           ],
-          "correctIndex": 2,
-          "answerNote": "Despite huge global success, it was famously kept off the UK top spot."
+          "correctIndex": 1,
+          "answerNote": "The song's pencil-sketch animated video won six MTV awards in 1986."
         },
         {
           "id": "r1q8",
-          "prompt": "Eurythmics was a duo made up of Annie Lennox and which musician?",
+          "prompt": "Kylie Minogue's UK number one debut single in 1988 was called what?",
           "options": [
-            "Vince Clarke",
-            "Dave Stewart",
-            "Midge Ure",
-            "Howard Jones"
+            "Especially for You",
+            "I Should Be So Lucky",
+            "The Loco-Motion",
+            "Hand on Your Heart"
           ],
           "correctIndex": 1,
-          "answerNote": "Dave Stewart co-wrote and produced most of Eurythmics' 1980s hits with Lennox."
+          "answerNote": "It launched Kylie's pop career straight after her role in Neighbours."
         },
         {
           "id": "r1q9",
-          "prompt": "Which Spandau Ballet song topped the UK charts in 1983?",
+          "prompt": "Rick Astley topped the UK charts in 1987 with which song?",
           "options": [
-            "Gold",
-            "Only When You Leave",
-            "True",
-            "Communication"
+            "Together Forever",
+            "Whenever You Need Somebody",
+            "Never Gonna Give You Up",
+            "She Wants to Dance with Me"
           ],
           "correctIndex": 2,
-          "answerNote": "\"Gold\", released the same year, only made it to number two."
+          "answerNote": "The song became internet-famous decades later through 'Rickrolling'."
         },
         {
           "id": "r1q10",
-          "prompt": "Which duo scored a 1986 UK number one with \"West End Girls\"?",
+          "prompt": "Live Aid, featuring Queen's famous Wembley set, was held in which year?",
           "options": [
-            "Erasure",
-            "Tears for Fears",
-            "Pet Shop Boys",
-            "Wham!"
+            "1984",
+            "1985",
+            "1986",
+            "1987"
           ],
-          "correctIndex": 2,
-          "answerNote": "It became the Pet Shop Boys' breakthrough hit and a defining sound of mid-80s pop."
-        }
-      ]
-    },
-    {
-      "id": "r2",
-      "type": "image",
-      "title": "Round Two — Whose Face Is This?",
-      "blurb": "The picture pulls back as the clock runs down. Guess early, score more.",
-      "imageCaption": "AI-generated illustration — not a real photograph",
-      "questions": [
-        {
-          "id": "r2q1",
-          "prompt": "Whose face is this?",
-          "options": [
-            "George Michael",
-            "Simon Le Bon",
-            "Rick Astley",
-            "Nik Kershaw"
-          ],
-          "correctIndex": 0,
-          "answerNote": "George Michael found solo and Wham! fame in the same decade, topping the charts repeatedly.",
-          "image": "1980s-pop-music/george-michael.png",
-          "imagePrompt": "Bold stylised digital illustration, hand-drawn style, of George Michael, head and shoulders, dramatic lighting, plain dark background, no text anywhere in the image",
-          "zoomFrom": 6
-        }
-      ]
-    },
-    {
-      "id": "r3",
-      "type": "intro",
-      "title": "Round Three — Name That Intro",
-      "blurb": "10 intros. You get the first few seconds and nothing else.",
-      "questions": [
-        {
-          "id": "r3q1",
-          "prompt": "Which track is this?",
-          "options": [
-            "Wanna Be Startin' Somethin'",
-            "Beat It",
-            "Billie Jean",
-            "Thriller"
-          ],
-          "correctIndex": 2,
-          "answerNote": "Billie Jean gave Michael Jackson a UK number one in March 1983.",
-          "cue": {
-            "title": "Billie Jean",
-            "artist": "Michael Jackson",
-            "from": "0:00",
-            "hint": "Let the bassline intro play for about 6 seconds before pausing."
-          }
+          "correctIndex": 1,
+          "answerNote": "Live Aid took place simultaneously at Wembley Stadium and Philadelphia's JFK Stadium."
         }
       ]
     }
