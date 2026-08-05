@@ -1112,3 +1112,9 @@ body.console::after { display: none; }
 /* Nothing on the big screen is clickable, and a mouse pointer sitting in the
    middle of a projected image looks amateurish. Hide it. */
 body.screen { cursor: none; }
+
+/* The quiz generator, distinguished from the bingo one below it. */
+.panel.quiz-generate { border-color: rgba(75, 216, 255, 0.4); background: rgba(75, 216, 255, 0.07); }
+.panel.quiz-generate .gen-row .go { background: linear-gradient(120deg, var(--cool), #7cf76b); color: #04222c; }
+.gen-opts input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--hot); }
+.gen-good ul, .gen-bad ul { font-size: 13px; }

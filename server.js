@@ -23,6 +23,7 @@ import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz } from './s
 import { validateBingoPack, normaliseBingoPack } from './src/bingo.js';
 import { fullLibrary, listArchive, loadArchived, saveBingoPack, loadBingoPack } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
+import { generateQuizPack } from './src/generate-quiz.js';
 import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig } from './src/spotify.js';
 import { toSvg } from './src/qrcode.js';
@@ -396,6 +397,43 @@ async function handleWrite(req, res, url, route) {
         title: result.pack.title,
         trackCount: result.pack.tracks.length,
         playlist: result.playlist ? result.playlist.url : null,
+      }));
+    } catch (err) {
+      log('ERROR ' + err.message);
+    }
+    res.end();
+    return true;
+  }
+
+  // Same shape as the bingo generator: streams progress while it works,
+  // because three rounds of Claude takes the best part of a minute.
+  if (route === '/api/generate/quiz' && req.method === 'POST') {
+    const body = await readJson(req);
+    res.writeHead(200, {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      'X-Accel-Buffering': 'no',
+    });
+    const log = (line) => { try { res.write(line + '\n'); } catch { /* client left */ } };
+    try {
+      const rounds = Array.isArray(body.rounds) && body.rounds.length
+        ? body.rounds.filter((r) => ['text', 'image', 'intro'].includes(r))
+        : ['text', 'image', 'intro'];
+      const result = await generateQuizPack({
+        config,
+        theme: String(body.theme || '').slice(0, 200),
+        rounds,
+        perRound: Math.min(20, Math.max(3, Number(body.perRound) || 10)),
+        hard: Boolean(body.hard),
+        log,
+      });
+      log('DONE ' + JSON.stringify({
+        id: result.quiz.id,
+        title: result.quiz.title,
+        rounds: result.quiz.rounds.length,
+        questionCount: result.quiz.rounds.reduce((n, r) => n + r.questions.length, 0),
+        problems: result.problems,
+        needsImages: result.needsImages,
       }));
     } catch (err) {
       log('ERROR ' + err.message);

@@ -227,8 +227,17 @@ An API key bills separately from any Claude subscription.
 npm start
 ```
 
-- [ ] Open the Console address it prints, type a theme into **New bingo round**,
-      press **Build it**. You will watch it work line by line.
+The Console has two generators at the top:
+
+- [ ] **New quiz** — type a theme (`the 1990s`, `Motown`, `Britpop`, `Harry
+      Potter soundtracks`), tick which rounds you want, press **Write it**.
+      Takes about a minute for three rounds.
+- [ ] **New bingo round** — type a theme, press **Build it**.
+
+Both stream their progress so you can see what they are doing.
+
+**Then read what they wrote in the Editor.** Neither is finished until you
+have.
 
 ---
 

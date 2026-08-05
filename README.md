@@ -120,16 +120,20 @@ with the same score. Latecomers can join partway through.
 
 ### Write it with Claude
 
+From the console: **New quiz** → type a theme → **Write it**. Tick which of the
+three round types you want. Takes about a minute and costs a few pence. British
+charts and British spelling are baked into the prompt.
+
+Or from a terminal, if you would rather type:
+
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...
-node scripts/generate-quiz.mjs --decade 1990s
+npm run generate:quiz -- --theme "the 1990s"
+npm run generate:quiz -- --theme "Motown" --rounds text,intro --questions 10 --hard
 ```
 
-Writes `quizzes/1990s.json`. Costs a few pence. British charts and British
-spelling are baked into the prompt.
-
-Options: `--decade`, `--id`, `--title`, `--rounds text,image,intro`,
-`--questions 10`, `--hard`.
+Options: `--theme`, `--id`, `--title`, `--rounds text,image,intro`,
+`--questions`, `--hard`, `--model`. Both routes share the same house style in
+`src/generate-quiz.js`.
 
 ### Then read every word of it
 

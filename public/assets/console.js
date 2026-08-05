@@ -79,11 +79,145 @@ function render() {
 
   mainEl.replaceChildren(
     runningPanel(running),
+    quizGeneratePanel(library.generation || {}),
     generatePanel(library.generation || {}),
     gameSection('quiz', 'Music Quiz', 'Three rounds, twenty seconds a question, fastest fingers win.', library.quizzes),
     gameSection('bingo', 'Music Bingo', 'You play the tracks. Every phone gets its own card.', library.bingo),
     archiveSection(library.archive || []),
   );
+}
+
+/**
+ * Build a whole quiz from a theme.
+ *
+ * Same shape as the bingo generator below it, so there is one place on this
+ * page for "make me something new" rather than a button for one game and a
+ * terminal command for the other.
+ */
+function quizGeneratePanel(gen) {
+  const el = node(`
+    <div class="panel generate quiz-generate">
+      <h3>New quiz</h3>
+      <div class="gen-row">
+        <input type="text" id="qTheme" placeholder="A theme — the 1990s, Motown, Christmas number ones, Britpop…" autocomplete="off">
+        <button class="go" id="qGo" ${gen.claude ? '' : 'disabled'}>Write it</button>
+      </div>
+      <div class="gen-opts">
+        <label>Questions per round <input type="number" id="qPer" value="10" min="3" max="20" style="width:60px"></label>
+        <label><input type="checkbox" id="qText" checked> General knowledge</label>
+        <label><input type="checkbox" id="qImage" checked> Whose face</label>
+        <label><input type="checkbox" id="qIntro" checked> Name that intro</label>
+        <label><input type="checkbox" id="qHard"> Harder than usual</label>
+      </div>
+      <div class="gen-status" id="qStatus"></div>
+      ${gen.claude ? '' : '<div class="tiny warn">Set ANTHROPIC_API_KEY to write quizzes.</div>'}
+    </div>`);
+
+  el.querySelector('#qGo')?.addEventListener('click', () => generateQuiz(el));
+  el.querySelector('#qTheme')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') generateQuiz(el);
+  });
+  return el;
+}
+
+async function generateQuiz(panel) {
+  const theme = panel.querySelector('#qTheme').value.trim();
+  const status = panel.querySelector('#qStatus');
+  const button = panel.querySelector('#qGo');
+  if (!theme) {
+    status.textContent = 'Give it a theme first.';
+    return;
+  }
+
+  const rounds = [];
+  if (panel.querySelector('#qText').checked) rounds.push('text');
+  if (panel.querySelector('#qImage').checked) rounds.push('image');
+  if (panel.querySelector('#qIntro').checked) rounds.push('intro');
+  if (!rounds.length) {
+    status.textContent = 'Pick at least one round.';
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = 'Writing…';
+  status.innerHTML = '<div class="gen-log"></div>';
+  const logEl = status.querySelector('.gen-log');
+  const say = (line) => {
+    logEl.appendChild(node(`<div>${esc(line)}</div>`));
+    logEl.scrollTop = logEl.scrollHeight;
+  };
+
+  try {
+    const result = await streamGeneration('/api/generate/quiz', {
+      theme,
+      rounds,
+      perRound: Number(panel.querySelector('#qPer').value),
+      hard: panel.querySelector('#qHard').checked,
+    }, say);
+
+    if (result.error) {
+      status.appendChild(node(`<div class="gen-bad">${esc(result.error)}</div>`));
+      button.disabled = false;
+      button.textContent = 'Write it';
+      return;
+    }
+
+    const done = result.done;
+    const problems = done.problems || [];
+    status.appendChild(node(`
+      <div class="gen-good">
+        Written <b>${esc(done.title)}</b> — ${done.questionCount} questions across
+        ${done.rounds} round${done.rounds === 1 ? '' : 's'}.
+        <br><b>Now read it.</b> <a href="${linkTo('/editor')}">Open the editor</a> and
+        check every question before anyone else sees it.
+        ${done.needsImages ? '<br><span class="tiny">The face round has no pictures yet — it will use placeholders until you generate them. See TODO.md part 6.</span>' : ''}
+      </div>`));
+    if (problems.length) {
+      status.appendChild(node(`
+        <div class="gen-bad">${problems.length} thing${problems.length === 1 ? '' : 's'} to fix in the editor:
+          <ul style="margin:6px 0 0 18px">${problems.slice(0, 8).map((p) => `<li>${esc(p)}</li>`).join('')}</ul>
+        </div>`));
+    }
+    button.textContent = 'Written';
+    await load();
+  } catch (err) {
+    status.appendChild(node(`<div class="gen-bad">${esc(err.message)}</div>`));
+    button.disabled = false;
+    button.textContent = 'Write it';
+  }
+}
+
+/**
+ * Read a streaming generation response, calling `say` for each progress line.
+ * Both generators send plain lines, then one final DONE or ERROR line.
+ */
+async function streamGeneration(path, body, say) {
+  const res = await fetch(keyed(path), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
+    body: JSON.stringify(body),
+  });
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let done = null;
+  let error = null;
+
+  for (;;) {
+    const chunk = await reader.read();
+    if (chunk.done) break;
+    buffer += decoder.decode(chunk.value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    for (const line of lines) {
+      if (!line) continue;
+      if (line.startsWith('DONE ')) done = JSON.parse(line.slice(5));
+      else if (line.startsWith('ERROR ')) error = line.slice(6);
+      else say(line);
+    }
+  }
+  return { done, error };
 }
 
 /**
