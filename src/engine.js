@@ -18,7 +18,7 @@
  * `screenQuestionExtras` / `hostQuestionExtras`, nothing else.
  */
 
-import { scoreAnswer, responseSeconds, rankPlayers } from './scoring.js';
+import { scoreAnswer, scoreMultiAnswer, responseSeconds, rankPlayers } from './scoring.js';
 
 export const PHASES = {
   LOBBY: 'lobby',
@@ -458,7 +458,7 @@ export class Engine {
    *
    * @returns {{ok: boolean, reason?: string, points?: number}}
    */
-  answer({ playerId, optionIndex }) {
+  answer({ playerId, optionIndex, optionIndexes }) {
     const s = this.state;
     const player = s.players[playerId];
     if (!player) return { ok: false, reason: 'unknown_player' };
@@ -468,11 +468,29 @@ export class Engine {
     if (at >= s.question.endsAt || s.question.closed) return { ok: false, reason: 'too_late' };
 
     const q = this.question();
-    if (!q) return { ok: false, reason: 'no_question' };
+    const round = this.round();
+    if (!q || !round) return { ok: false, reason: 'no_question' };
 
-    const index = Number(optionIndex);
-    if (!Number.isInteger(index) || index < 0 || index >= q.options.length) {
-      return { ok: false, reason: 'bad_option' };
+    const isMulti = round.type === 'multi';
+    const valid = (i) => Number.isInteger(i) && i >= 0 && i < q.options.length;
+
+    // A phone sends which options it locked in, and nothing else. The timing
+    // and the scoring stay here, exactly as they do for every other round.
+    let picks;
+    if (isMulti) {
+      const wanted = this.pickCount(q, round);
+      const raw = Array.isArray(optionIndexes) ? optionIndexes.map(Number) : [];
+      picks = [...new Set(raw)];
+      if (!picks.every(valid)) return { ok: false, reason: 'bad_option' };
+      // Exactly N, refused rather than trimmed. Part marks only mean anything
+      // against a fixed number of picks — allowing four when three were asked
+      // for would let somebody cover the board and still score.
+      if (picks.length !== wanted) return { ok: false, reason: 'wrong_count', wanted };
+      picks.sort((a, b) => a - b);
+    } else {
+      const index = Number(optionIndex);
+      if (!valid(index)) return { ok: false, reason: 'bad_option' };
+      picks = [index];
     }
 
     const key = this.answerKey();
@@ -482,15 +500,25 @@ export class Engine {
     // mind once it is in, which is what keeps the timing honest.
     if (answers[playerId]) return { ok: false, reason: 'already_answered' };
 
-    const correct = index === q.correctIndex;
+    const right = this.correctSet(q, round);
+    const gotRight = picks.filter((i) => right.has(i)).length;
+    // "Correct" means the whole set, on both kinds of question. Part marks
+    // exist so nobody walks away with nothing, not as a second way of being
+    // right — the bonus and the fastest-finger line both key off this.
+    const correct = gotRight === right.size && picks.length === right.size;
     // The bonus goes to the first CORRECT answer, so a fast wrong guess
     // cannot take it off the player who actually knew.
     const isFirstCorrect = correct && !Object.values(answers).some((a) => a.correct);
-    const points = scoreAnswer({ correct, answeredAt: at, endsAt: s.question.endsAt, isFirstCorrect });
+    const points = isMulti
+      ? scoreMultiAnswer({ gotRight, totalCorrect: right.size, answeredAt: at, endsAt: s.question.endsAt, isFirstCorrect })
+      : scoreAnswer({ correct, answeredAt: at, endsAt: s.question.endsAt, isFirstCorrect });
     const responseMs = Math.max(0, at - s.question.startedAt);
 
     answers[playerId] = {
-      optionIndex: index,
+      optionIndex: picks[0],
+      optionIndexes: picks,
+      gotRight,
+      outOf: right.size,
       answeredAt: at,
       responseMs,
       responseSeconds: responseSeconds(at, s.question.startedAt),
@@ -506,7 +534,25 @@ export class Engine {
     player.lastSeenAt = at;
 
     this.changed();
-    return { ok: true, points, correct, isFirstCorrect };
+    // "2 of 3" only means something on a pick-them-all question; on a normal
+    // one it would be "0 of 1", which is just a noisier way of saying wrong.
+    return { ok: true, points, correct, isFirstCorrect, ...(isMulti ? { gotRight, outOf: right.size } : {}) };
+  }
+
+  /**
+   * The right answers for a question, however many there are.
+   *
+   * One shape for both kinds so nothing downstream has to branch: a normal
+   * question is a set of one.
+   */
+  correctSet(q, round) {
+    if (round && round.type === 'multi') return new Set(q.correctIndexes || []);
+    return new Set([q.correctIndex]);
+  }
+
+  /** How many they must lock in. The room is told this; which ones, never. */
+  pickCount(q, round) {
+    return round && round.type === 'multi' ? (q.correctIndexes || []).length : 1;
   }
 
   /** The "Fastest finger" line: first correct answer of the current question. */
@@ -572,6 +618,11 @@ export class Engine {
       case 'intro':
         // Nothing. Not the title, not the artist, not the hint.
         return {};
+      case 'multi':
+        // How many to lock in, and nothing else. The count is the instruction
+        // — without it the round is a guessing game about how long the answer
+        // is. WHICH ones is the answer key and stays in the host view.
+        return { pickCount: (q.correctIndexes || []).length };
       case 'text':
       default:
         return {};
@@ -608,9 +659,14 @@ export class Engine {
     if (s.phase === PHASES.REVEAL) {
       const q = this.question();
       // Safe here and only here: the question is over, the room is meant to see it.
+      const revealRound = this.round();
+      const right = q && revealRound ? [...this.correctSet(q, revealRound)] : [];
       view.reveal = {
+        // Kept for every round type so nothing downstream has to branch; a
+        // normal question is a set of one.
         correctIndex: q ? q.correctIndex : -1,
-        correctText: q ? q.options[q.correctIndex] : '',
+        correctIndexes: right,
+        correctText: q ? right.map((i) => q.options[i]).join(', ') : '',
         fastest: this.fastestFinger(),
         tally: this.optionTally(),
         answerNote: q ? q.answerNote || '' : '',
@@ -648,7 +704,10 @@ export class Engine {
     if (!q) return [];
     const tally = q.options.map(() => 0);
     for (const a of Object.values(this.answersFor())) {
-      if (tally[a.optionIndex] !== undefined) tally[a.optionIndex]++;
+      // Every option they locked in counts, so the bars add up to the picks
+      // made rather than the players who answered.
+      const picks = a.optionIndexes || [a.optionIndex];
+      for (const i of picks) if (tally[i] !== undefined) tally[i]++;
     }
     return tally;
   }
@@ -695,6 +754,9 @@ export class Engine {
       const q = this.question();
       if (q) {
         view.options = q.options; // options only, never the prompt
+        // How many to lock in. The count only; which ones is the answer key.
+        view.pickCount = this.pickCount(q, round);
+        view.multi = Boolean(round && round.type === 'multi');
         view.clock = s.question
           ? { startedAt: s.question.startedAt, endsAt: s.question.endsAt, seconds: s.question.seconds, closed: s.question.closed }
           : null;
@@ -702,16 +764,27 @@ export class Engine {
         view.yourAnswer = mine
           ? {
               optionIndex: mine.optionIndex,
+              optionIndexes: mine.optionIndexes || [mine.optionIndex],
               // Never tell them whether they were right until the reveal.
               ...(s.phase === PHASES.REVEAL
-                ? { correct: mine.correct, points: mine.points, isFirstCorrect: mine.isFirstCorrect, seconds: mine.responseSeconds }
+                ? {
+                    correct: mine.correct,
+                    points: mine.points,
+                    isFirstCorrect: mine.isFirstCorrect,
+                    seconds: mine.responseSeconds,
+                    // "You got 2 of 3" — the part-marks version of being told
+                    // whether you were right.
+                    ...(mine.outOf > 1 ? { gotRight: mine.gotRight, outOf: mine.outOf } : {}),
+                  }
                 : {}),
             }
           : null;
         if (s.phase === PHASES.REVEAL) {
+          const right = [...this.correctSet(q, round)];
           view.reveal = {
             correctIndex: q.correctIndex,
-            correctText: q.options[q.correctIndex],
+            correctIndexes: right,
+            correctText: right.map((i) => q.options[i]).join(', '),
             fastest: this.fastestFinger(),
           };
         }
@@ -727,9 +800,12 @@ export class Engine {
 
   /** Extra fields only the host gets. This is where the secrets live. */
   hostQuestionExtras(q, round) {
+    const right = [...this.correctSet(q, round)];
     const extras = {
       correctIndex: q.correctIndex,
-      correctText: q.options[q.correctIndex],
+      correctIndexes: right,
+      correctText: right.map((i) => q.options[i]).join(', '),
+      pickCount: this.pickCount(q, round),
       note: q.note || '',
       answerNote: q.answerNote || '',
     };

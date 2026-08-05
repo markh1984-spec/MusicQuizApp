@@ -13,11 +13,12 @@
 
 import { esc, node, postJson, brandLink } from './client.js';
 
-const LETTERS = ['A', 'B', 'C', 'D'];
+const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 const ROUND_TYPES = [
   ['text', 'Text — general knowledge'],
   ['image', 'Picture — whose face is this?'],
   ['intro', 'Intro — you play the track'],
+  ['multi', 'Pick them all — several right answers'],
 ];
 
 const mainEl = document.getElementById('main');
@@ -279,7 +280,15 @@ function roundBlock(round, ri) {
     </div>`);
 
   el.querySelector('.title').addEventListener('input', (e) => change(() => { round.title = e.target.value; }));
-  el.querySelector('.rtype').addEventListener('change', (e) => change(() => { round.type = e.target.value; render(); }));
+  el.querySelector('.rtype').addEventListener('change', (e) => change(() => {
+    round.type = e.target.value;
+    // Switching to or from pick-them-all changes how many options a question
+    // has, so the questions have to be reshaped rather than left at four with
+    // two boxes missing. Nothing typed is thrown away — going the other way
+    // just stops showing E and F, and they come back if you switch back.
+    for (const q of round.questions) reshapeForType(q, round.type);
+    render();
+  }));
   el.querySelector('.delete-round').addEventListener('click', () => {
     if (confirm(`Delete "${round.title}" and all ${round.questions.length} of its questions?`)) {
       change(() => { quiz.rounds.splice(ri, 1); render(); });
@@ -337,25 +346,54 @@ function questionCard(round, q, ri, qi) {
     if (confirm('Delete this question?')) change(() => { round.questions.splice(qi, 1); render(); });
   });
 
-  // ---- the four options, with a radio for which one is right
+  /*
+   * The options, with a way to mark which are right.
+   *
+   * A pick-them-all round has six options and a set of right answers, so it
+   * gets tickboxes; every other round has four and one answer, so it gets
+   * radios. Same rows either way — the difference is what "correct" can mean.
+   *
+   * Without this the editor would show the first four of six and quietly drop
+   * E and F on the next save, which is the sort of thing you would only find
+   * out in front of a room.
+   */
+  const isMulti = round.type === 'multi';
+  const count = isMulti ? 6 : 4;
   const opts = el.querySelector('.opts');
-  for (let i = 0; i < 4; i++) {
+  if (isMulti && !Array.isArray(q.correctIndexes)) q.correctIndexes = [];
+
+  const isRight = (i) => (isMulti ? q.correctIndexes.includes(i) : q.correctIndex === i);
+
+  for (let i = 0; i < count; i++) {
     const row = node(`
-      <div class="opt-row ${q.correctIndex === i ? 'is-correct' : ''}">
+      <div class="opt-row ${isRight(i) ? 'is-correct' : ''}">
         <label>
-          <input type="radio" name="correct-${ri}-${qi}" ${q.correctIndex === i ? 'checked' : ''}>
+          <input type="${isMulti ? 'checkbox' : 'radio'}" name="correct-${ri}-${qi}" ${isRight(i) ? 'checked' : ''}>
           ${LETTERS[i]}
         </label>
         <input type="text" value="${esc(q.options[i] ?? '')}" placeholder="Option ${LETTERS[i]}">
       </div>`);
-    row.querySelector('input[type="radio"]').addEventListener('change', () => change(() => {
-      q.correctIndex = i;
+    row.querySelector('input[type="radio"], input[type="checkbox"]').addEventListener('change', (e) => change(() => {
+      if (!isMulti) {
+        q.correctIndex = i;
+      } else if (e.target.checked) {
+        q.correctIndexes = [...new Set([...q.correctIndexes, i])].sort((a, b) => a - b);
+      } else {
+        q.correctIndexes = q.correctIndexes.filter((n) => n !== i);
+      }
       render();
     }));
     row.querySelector('input[type="text"]').addEventListener('input', (e) => change(() => {
       q.options[i] = e.target.value;
     }));
     opts.appendChild(row);
+  }
+
+  if (isMulti) {
+    const n = q.correctIndexes.length;
+    opts.appendChild(node(`<div class="tiny" style="margin-top:6px;color:${n >= 2 ? 'var(--ink-dim)' : 'var(--bad)'}">
+      ${n < 2 ? 'Tick at least two — that is what makes it a pick-them-all question.' : `The room is told to lock in ${n}.`}
+    </div>`));
   }
 
   // ---- fields that only some round types need
@@ -410,7 +448,35 @@ function cueFields(q) {
   return el;
 }
 
+/**
+ * Make an existing question fit a round type it has just been moved into.
+ *
+ * Deliberately additive: switching away from pick-them-all keeps the extra two
+ * options and the marked set on the object, so switching back restores what was
+ * typed. Only the shape the round needs is guaranteed.
+ */
+function reshapeForType(q, type) {
+  if (type === 'multi') {
+    while (q.options.length < 6) q.options.push('');
+    if (!Array.isArray(q.correctIndexes) || !q.correctIndexes.length) {
+      // Carry the single answer over as the first of the set, so the question
+      // is not left with nothing marked.
+      q.correctIndexes = Number.isInteger(q.correctIndex) ? [q.correctIndex] : [];
+    }
+  } else if (Array.isArray(q.correctIndexes) && q.correctIndexes.length) {
+    // Going back to one answer: keep the first of the set as the right one, so
+    // there is always something marked.
+    const first = q.correctIndexes.find((i) => i < 4);
+    if (first !== undefined) q.correctIndex = first;
+  }
+}
+
 function blankQuestion(type, id) {
+  // A pick-them-all question is six options and a set of right ones; every
+  // other kind is four and a single answer.
+  if (type === 'multi') {
+    return { id, prompt: '', options: ['', '', '', '', '', ''], correctIndex: 0, correctIndexes: [] };
+  }
   const q = { id, prompt: '', options: ['', '', '', ''], correctIndex: 0 };
   if (type === 'image') q.image = '';
   if (type === 'intro') q.cue = { title: '', artist: '', from: '', hint: '' };

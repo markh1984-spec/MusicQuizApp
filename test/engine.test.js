@@ -696,3 +696,196 @@ test('the results export has the leaderboard and the questions asked', () => {
   assert.equal(results.questions.length, 1);
   assert.equal(results.questions[0].correctCount, 1);
 });
+
+// ============================================================ pick-them-all
+//
+// The fourth round type: several answers are right and you lock in all of
+// them. Part marks, but you must pick exactly as many as the room was told,
+// so nobody can cover the board and still score.
+
+function multiQuiz() {
+  return {
+    id: 'multi', title: 'Multi Quiz',
+    rounds: [{
+      id: 'r1', type: 'multi', title: 'Pick them all',
+      questions: [{
+        id: 'm1',
+        prompt: 'Which three were UK number ones?',
+        options: ['One', 'Two', 'Three', 'Four', 'Five', 'Six'],
+        correctIndexes: [0, 2, 4],
+        answerNote: 'Three of them topped the chart.',
+      }],
+    }],
+  };
+}
+
+function multiEngine() {
+  const made = makeEngine(multiQuiz());
+  made.engine.start();
+  made.engine.next();
+  return made;
+}
+
+test('locking in every right answer scores the lot', () => {
+  const { engine, at } = multiEngine();
+  const [a] = joinThree(engine);
+  at(3_000);
+  const r = engine.answer({ playerId: a.id, optionIndexes: [4, 0, 2] });
+  assert.equal(r.ok, true);
+  assert.equal(r.correct, true);
+  assert.equal(r.gotRight, 3);
+  assert.equal(r.isFirstCorrect, true);
+  // 17 whole seconds left: 100 + 170, all of it, plus the 100 bonus.
+  assert.equal(r.points, 370);
+});
+
+test('part marks: two of three is two thirds of what it was worth', () => {
+  const { engine, at } = multiEngine();
+  const [a] = joinThree(engine);
+  at(3_000);
+  const r = engine.answer({ playerId: a.id, optionIndexes: [0, 2, 1] });
+  assert.equal(r.correct, false, 'not a complete answer');
+  assert.equal(r.gotRight, 2);
+  // Two thirds of (100 + 170), and no bonus for a partial answer.
+  assert.equal(r.points, Math.round((2 / 3) * 270));
+});
+
+test('a partial answer never takes the bonus off somebody who knew them all', () => {
+  const { engine, at } = multiEngine();
+  const [fast, slower] = joinThree(engine);
+
+  at(500);
+  const partial = engine.answer({ playerId: fast.id, optionIndexes: [0, 2, 1] });
+  assert.equal(partial.isFirstCorrect, false);
+
+  at(4_000);
+  const full = engine.answer({ playerId: slower.id, optionIndexes: [0, 2, 4] });
+  assert.equal(full.isFirstCorrect, true, 'the bonus waits for a complete answer');
+});
+
+test('picking none of them scores nothing', () => {
+  const { engine, at } = multiEngine();
+  const [a] = joinThree(engine);
+  at(3_000);
+  const r = engine.answer({ playerId: a.id, optionIndexes: [1, 3, 5] });
+  assert.equal(r.points, 0);
+  assert.equal(r.correct, false);
+});
+
+test('you cannot cover the board — it has to be exactly the number asked for', () => {
+  const { engine, at } = multiEngine();
+  const [a, b] = joinThree(engine);
+  at(1_000);
+
+  // All six would contain every right answer. Refused.
+  const all = engine.answer({ playerId: a.id, optionIndexes: [0, 1, 2, 3, 4, 5] });
+  assert.equal(all.ok, false);
+  assert.equal(all.reason, 'wrong_count');
+  assert.equal(all.wanted, 3);
+
+  // Too few is refused as well — you commit to three or you do not answer.
+  assert.equal(engine.answer({ playerId: b.id, optionIndexes: [0] }).reason, 'wrong_count');
+  assert.equal(engine.state.players[a.id].score, 0);
+});
+
+test('the same option twice does not count as two picks', () => {
+  const { engine, at } = multiEngine();
+  const [a] = joinThree(engine);
+  at(1_000);
+  // Three entries, but only two distinct — that is a two-pick answer.
+  assert.equal(engine.answer({ playerId: a.id, optionIndexes: [0, 0, 2] }).reason, 'wrong_count');
+});
+
+test('an option that does not exist is refused', () => {
+  const { engine, at } = multiEngine();
+  const [a] = joinThree(engine);
+  at(1_000);
+  assert.equal(engine.answer({ playerId: a.id, optionIndexes: [0, 2, 99] }).reason, 'bad_option');
+});
+
+test('still one answer per team, and no changing your mind', () => {
+  const { engine, at } = multiEngine();
+  const [a] = joinThree(engine);
+  at(1_000);
+  assert.equal(engine.answer({ playerId: a.id, optionIndexes: [0, 2, 4] }).ok, true);
+  at(2_000);
+  assert.equal(engine.answer({ playerId: a.id, optionIndexes: [1, 3, 5] }).reason, 'already_answered');
+});
+
+test('THE TWO-SCREENS RULE HOLDS: the projector is told how many, never which', () => {
+  const { engine, at } = multiEngine();
+  const [a] = joinThree(engine);
+  at(1_000);
+  engine.answer({ playerId: a.id, optionIndexes: [0, 2, 4] });
+
+  const screen = engine.screenView();
+  assert.equal(screen.question.pickCount, 3, 'the room is told to pick three');
+  assert.equal(screen.question.correctIndexes, undefined);
+  assert.equal(screen.question.correctIndex, undefined);
+  assert.equal(JSON.stringify(screen).includes('correctIndexes'), false);
+
+  // The host has the answer key, as they must.
+  const host = engine.hostView();
+  assert.deepEqual(host.question.correctIndexes, [0, 2, 4]);
+  assert.equal(host.question.correctText, 'One, Three, Five');
+  assert.equal(host.question.pickCount, 3);
+});
+
+test('a phone is told how many to pick, and not which', () => {
+  const { engine } = multiEngine();
+  const [a] = joinThree(engine);
+  const view = engine.playerView(a.id);
+  assert.equal(view.pickCount, 3);
+  assert.equal(view.multi, true);
+  assert.equal(view.options.length, 6);
+  assert.equal(view.prompt, undefined, 'still no question text on the phone');
+  assert.equal(JSON.stringify(view).includes('correctIndexes'), false);
+});
+
+test('the reveal names every right answer, on both screens', () => {
+  const { engine, at } = multiEngine();
+  const [a] = joinThree(engine);
+  at(1_000);
+  engine.answer({ playerId: a.id, optionIndexes: [0, 2, 1] });
+  engine.reveal();
+
+  const screen = engine.screenView();
+  assert.deepEqual(screen.reveal.correctIndexes, [0, 2, 4]);
+  assert.equal(screen.reveal.correctText, 'One, Three, Five');
+
+  // And the player is told how they did, in part-marks terms.
+  const mine = engine.playerView(a.id);
+  assert.equal(mine.yourAnswer.gotRight, 2);
+  assert.equal(mine.yourAnswer.outOf, 3);
+  assert.deepEqual(mine.reveal.correctIndexes, [0, 2, 4]);
+});
+
+test('the tally counts every pick, not every player', () => {
+  const { engine, at } = multiEngine();
+  const [a, b] = joinThree(engine);
+  at(1_000);
+  engine.answer({ playerId: a.id, optionIndexes: [0, 2, 4] });
+  engine.answer({ playerId: b.id, optionIndexes: [0, 1, 2] });
+  engine.reveal();
+
+  const tally = engine.screenView().reveal.tally;
+  assert.equal(tally[0], 2, 'both picked One');
+  assert.equal(tally[1], 1);
+  assert.equal(tally[2], 2);
+  assert.equal(tally[4], 1);
+  assert.equal(tally.reduce((n, x) => n + x, 0), 6, 'two teams, three picks each');
+});
+
+test('a pick-them-all round survives a crash with its answers intact', () => {
+  const { engine, at } = multiEngine();
+  const [a] = joinThree(engine);
+  at(2_000);
+  engine.answer({ playerId: a.id, optionIndexes: [0, 2, 4] });
+  const score = engine.state.players[a.id].score;
+
+  const onDisk = JSON.parse(JSON.stringify(engine.state));
+  const revived = new Engine({ quiz: multiQuiz(), state: onDisk, now: () => START + 5_000 });
+  assert.equal(revived.state.players[a.id].score, score);
+  revived.reveal();
+  assert.deepEqual(revived.screenView().reveal.correctIndexes, [0, 2, 4]);
+});

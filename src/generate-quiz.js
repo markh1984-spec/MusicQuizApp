@@ -14,7 +14,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { normaliseQuiz, validateQuiz } from './quizzes.js';
+import { normaliseQuiz, validateQuiz, MULTI_OPTIONS } from './quizzes.js';
 import { cleanTheme, quizTitleFor, themeSlug, titleCase } from './theme.js';
 import { spotifyConfigured, findTrack, createPlaylist } from './spotify.js';
 
@@ -112,6 +112,27 @@ Set "prompt" to exactly "Which track is this?" for every question in this round.
 Give each question a "cue" object with "title", "artist", "from" (a timestamp like "0:00")
 and "hint" (a short instruction to the host, e.g. "let the riff run about 6 seconds").
 The cue is shown ONLY on the host's private phone and never on the big screen.`,
+
+    multi: `Round type "multi": several answers are right and the room has to lock in ALL of
+them. Write ${perRound} questions fitting "${theme}".
+
+Each question has SIX options and a "correctIndexes" array — NOT a "correctIndex" —
+listing the positions (0-5) of every correct one. Use two or three correct answers per
+question; vary which, so the room cannot settle into a pattern.
+
+This shape only works when membership of the set is a genuine fact, not a judgement.
+Good: "which three of these were UK number ones", "which two of these are on Rumours",
+"which three of these were released in 1985". Bad: anything involving "best", "most
+famous" or "influential" — with six options and part marks on offer, a fuzzy boundary
+is six arguments rather than one.
+
+The wrong options must be as plausible as the right ones and from the same era or act,
+so nobody can pick by elimination. Do not let the correct answers be the longest, the
+shortest, or all bunched at one end.
+
+Set "prompt" so it states plainly what makes an option correct, e.g. "Which three of
+these Blur singles reached the UK top 10?". The screen tells the room how many to pick,
+so do not write the number into the option text.`,
   };
 }
 
@@ -229,6 +250,9 @@ Reply with JSON and nothing else — no preamble, no markdown fence. Shape:
 
 correctIndex is the 0-based position of the right answer. Vary which position it
 lands in across the round — do not put the answer in slot A every time.
+
+A "multi" round is the exception: it has SIX options and, instead of correctIndex, a
+"correctIndexes" array listing every right position, e.g. "correctIndexes": [0, 2, 5].
 `.trim();
 
 async function askClaude({ system, prompt, apiKey, model }) {
@@ -261,12 +285,14 @@ function roundTitle(type, index, theme) {
   const ordinal = ['One', 'Two', 'Three', 'Four', 'Five'][index] || String(index + 1);
   if (type === 'image') return `Round ${ordinal} — Whose Face Is This?`;
   if (type === 'intro') return `Round ${ordinal} — Name That Intro`;
+  if (type === 'multi') return `Round ${ordinal} — Pick Them All`;
   return `Round ${ordinal} — ${titleCase(theme)}`;
 }
 
 function roundBlurb(type, theme, perRound) {
   if (type === 'image') return 'The picture pulls back as the clock runs down. Guess early, score more.';
   if (type === 'intro') return `${perRound} intros. You get the first few seconds and nothing else.`;
+  if (type === 'multi') return 'More than one answer is right. Lock in every one of them.';
   return `${perRound} questions on ${theme}`;
 }
 
@@ -458,7 +484,7 @@ async function buildRound({ brief, perRound, check, system, apiKey, model, log, 
 export async function generateQuizPack({
   config,
   theme,
-  rounds = ['text', 'image', 'intro'],
+  rounds = ['text', 'image', 'intro'],  // 'multi' is opt-in from the console
   perRound = 10,
   hard = false,
   id,
@@ -503,8 +529,11 @@ export async function generateQuizPack({
       questions: questions.map((q, qi) => ({
         id: `r${i + 1}q${qi + 1}`,
         prompt: String(q.prompt || '').trim(),
-        options: (q.options || []).slice(0, 4).map((o) => String(o).trim()),
+        options: (q.options || []).slice(0, type === 'multi' ? MULTI_OPTIONS : 4).map((o) => String(o).trim()),
         correctIndex: Number.isInteger(q.correctIndex) ? q.correctIndex : 0,
+        ...(type === 'multi'
+          ? { correctIndexes: [...new Set((q.correctIndexes || []).filter(Number.isInteger))].sort((a, b) => a - b) }
+          : {}),
         ...(q.answerNote ? { answerNote: String(q.answerNote).trim() } : {}),
         ...(type === 'image'
           ? {

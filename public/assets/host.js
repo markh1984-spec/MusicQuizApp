@@ -22,7 +22,7 @@ const clockEl = document.getElementById('clock');
 const connEl = document.getElementById('connText');
 
 const clock = new ServerClock();
-const LETTERS = ['A', 'B', 'C', 'D'];
+const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 let hostKey = new URL(location.href).searchParams.get('key') || localStorage.getItem(KEY_STORE) || '';
 let state = null;
@@ -221,9 +221,10 @@ function questionPanel(s) {
     <div class="panel">
       <h3>Round ${s.roundIndex + 1}, question ${s.questionIndex + 1} of ${s.questionCount} — answer key</h3>
       <p class="prompt">${esc(q.prompt)}</p>
+      ${q.pickCount > 1 ? `<div class="tiny" style="margin-bottom:8px;color:var(--cool)">They lock in ${q.pickCount} — part marks for getting some.</div>` : ''}
       <div class="keylist">
         ${q.options.map((opt, i) => `
-          <div class="keyrow ${i === q.correctIndex ? 'is-correct' : ''}">
+          <div class="keyrow ${rightSet(q).has(i) ? 'is-correct' : ''}">
             <span class="letter">${LETTERS[i]}</span>
             <span>${esc(opt)}</span>
             <span class="n">${tally[i] || 0}</span>
@@ -239,6 +240,14 @@ function questionPanel(s) {
   return el;
 }
 
+/**
+ * The right answers, however many there are. One shape for every round type so
+ * the key rows do not have to know which kind they are showing.
+ */
+function rightSet(q) {
+  return new Set(q.correctIndexes && q.correctIndexes.length ? q.correctIndexes : [q.correctIndex]);
+}
+
 function nextUpPanel(s) {
   const up = s.upcoming;
   if (!up) return node('<div class="panel"><h3>Next up</h3><div class="tiny">Nothing queued.</div></div>');
@@ -246,9 +255,10 @@ function nextUpPanel(s) {
     <div class="panel">
       <h3>Next up — R${up.roundIndex + 1} Q${up.questionIndex + 1}</h3>
       <p class="prompt">${esc(up.prompt)}</p>
+      ${up.pickCount > 1 ? `<div class="tiny" style="margin-bottom:8px;color:var(--cool)">Pick ${up.pickCount}</div>` : ''}
       <div class="keylist">
         ${up.options.map((opt, i) => `
-          <div class="keyrow ${i === up.correctIndex ? 'is-correct' : ''}">
+          <div class="keyrow ${rightSet(up).has(i) ? 'is-correct' : ''}">
             <span class="letter">${LETTERS[i]}</span><span>${esc(opt)}</span>
           </div>`).join('')}
       </div>

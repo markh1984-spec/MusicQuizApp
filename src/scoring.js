@@ -45,6 +45,34 @@ export function scoreAnswer({ correct, answeredAt, endsAt, isFirstCorrect = fals
 }
 
 /**
+ * Points for a "pick exactly N" question, where part marks are on offer.
+ *
+ * The share of the answer they got right is applied to what the question was
+ * worth to them at that moment — the base AND the seconds they had left. Two
+ * of three right does not earn a full speed bonus; it earns two thirds of the
+ * whole thing. Anything else would pay more for a fast, mostly-wrong lock-in
+ * than for a slower right one.
+ *
+ * The first-correct bonus is only ever for a complete answer. Part marks are
+ * there so nobody walks away with nothing, not so that a lucky third of an
+ * answer can take the bonus off somebody who knew all three.
+ *
+ * @param {object} a
+ * @param {number} a.gotRight     how many of their picks were correct
+ * @param {number} a.totalCorrect how many correct answers the question has
+ * @param {number} a.answeredAt
+ * @param {number} a.endsAt
+ * @param {boolean} a.isFirstCorrect  first player to get the whole set
+ * @returns {number} points, always an integer >= 0
+ */
+export function scoreMultiAnswer({ gotRight, totalCorrect, answeredAt, endsAt, isFirstCorrect = false }) {
+  if (!(totalCorrect > 0) || !(gotRight > 0)) return 0;
+  const share = Math.min(1, gotRight / totalCorrect);
+  const earned = POINTS_CORRECT + POINTS_PER_WHOLE_SECOND * wholeSecondsRemaining(answeredAt, endsAt);
+  return Math.round(share * earned) + (share === 1 && isFirstCorrect ? POINTS_FIRST_CORRECT : 0);
+}
+
+/**
  * How long they took to answer, in seconds, for the "Fastest finger" line.
  * Rounded to one decimal place because that is how it is read out.
  */

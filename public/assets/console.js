@@ -230,6 +230,7 @@ function quizGeneratePanel(gen) {
         <label><input type="checkbox" id="qText" checked> General knowledge</label>
         <label><input type="checkbox" id="qImage" checked> Whose face</label>
         <label><input type="checkbox" id="qIntro" checked> Name that intro</label>
+        <label title="Several answers are right — the room locks in all of them"><input type="checkbox" id="qMulti"> Pick them all</label>
         <label><input type="checkbox" id="qHard"> Harder than usual</label>
         <span class="tiny">Every question is checked by a second pass before you see it.</span>
       </div>
@@ -257,6 +258,7 @@ async function generateQuiz(panel) {
   if (panel.querySelector('#qText').checked) rounds.push('text');
   if (panel.querySelector('#qImage').checked) rounds.push('image');
   if (panel.querySelector('#qIntro').checked) rounds.push('intro');
+  if (panel.querySelector('#qMulti').checked) rounds.push('multi');
   if (!rounds.length) {
     status.textContent = 'Pick at least one round.';
     return;
@@ -941,7 +943,7 @@ async function preview(kind, pack) {
   }
 }
 
-const LETTERS = ['A', 'B', 'C', 'D'];
+const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 /**
  * The flags, with a way to tick each one off.
@@ -1034,8 +1036,16 @@ function warningPanel(quiz, warnings) {
 
 function renderQuizPreview(body, sub, quiz, markDirty = () => {}) {
   const all = quiz.rounds.flatMap((r) => r.questions);
-  const spread = [0, 0, 0, 0];
-  for (const q of all) if (spread[q.correctIndex] !== undefined) spread[q.correctIndex]++;
+  // Long enough for the widest round in the pack: four for most, six for a
+  // pick-them-all round.
+  const spread = new Array(Math.max(4, ...all.map((q) => (q.options || []).length))).fill(0);
+  // A pick-them-all question has several right answers, so it contributes to
+  // several slots — otherwise the "answers land A x3 B x1" line would treat
+  // one of them as the answer and call the round lopsided when it is not.
+  for (const q of all) {
+    const right = q.correctIndexes && q.correctIndexes.length ? q.correctIndexes : [q.correctIndex];
+    for (const i of right) if (spread[i] !== undefined) spread[i]++;
+  }
   const noNotes = all.filter((q) => !q.answerNote).length;
 
   sub.innerHTML = `${all.length} questions across ${quiz.rounds.length} round${quiz.rounds.length === 1 ? '' : 's'}
@@ -1054,7 +1064,7 @@ function renderQuizPreview(body, sub, quiz, markDirty = () => {}) {
       <div class="pv-round">
         <div class="pv-round-head">
           <input class="pv-round-name" value="${esc(round.title)}" title="Click to rename this round">
-          <span class="tiny">${esc({ text: 'General knowledge', image: 'Whose face is this?', intro: 'Name that intro' }[round.type] || round.type)}</span>
+          <span class="tiny">${esc({ text: 'General knowledge', image: 'Whose face is this?', intro: 'Name that intro', multi: 'Pick them all' }[round.type] || round.type)}</span>
         </div>
         ${round.spotifyPlaylist ? `<a class="pv-playlist" href="${esc(round.spotifyPlaylist.url)}" target="_blank" rel="noopener">Spotify playlist for this round</a>` : ''}
       </div>`);
@@ -1070,7 +1080,7 @@ function renderQuizPreview(body, sub, quiz, markDirty = () => {}) {
           <div class="pv-prompt"><span class="pv-num">${i + 1}</span>${esc(q.prompt)}</div>
           <div class="pv-opts">
             ${q.options.map((o, oi) => `
-              <div class="pv-opt ${oi === q.correctIndex ? 'right' : ''}">
+              <div class="pv-opt ${(q.correctIndexes && q.correctIndexes.length ? q.correctIndexes : [q.correctIndex]).includes(oi) ? 'right' : ''}">
                 <span class="pv-letter">${LETTERS[oi]}</span>${esc(o)}
               </div>`).join('')}
           </div>

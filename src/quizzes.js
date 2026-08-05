@@ -9,7 +9,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-export const ROUND_TYPES = ['text', 'image', 'intro'];
+export const ROUND_TYPES = ['text', 'image', 'intro', 'multi'];
+
+/**
+ * A "pick exactly N" round shows six options rather than four.
+ *
+ * Four options with two right leaves only six possible answers, which a room
+ * guesses its way through. Six with two or three right is a real question, and
+ * a 2x3 grid still reads from the back of a pub.
+ */
+export const MULTI_OPTIONS = 6;
 
 export function listQuizzes(dir) {
   let files = [];
@@ -99,6 +108,11 @@ export function normaliseQuiz(quiz, fallbackId = 'quiz') {
         prompt: q.prompt || '',
         options: (q.options || []).map((o) => String(o)),
         correctIndex: Number.isInteger(q.correctIndex) ? q.correctIndex : 0,
+        // Sorted and de-duplicated so the reveal always reads left to right and
+        // "how many to pick" cannot be inflated by a repeat.
+        ...(Array.isArray(q.correctIndexes)
+          ? { correctIndexes: [...new Set(q.correctIndexes.filter(Number.isInteger))].sort((a, b) => a - b) }
+          : {}),
         ...(q.note ? { note: q.note } : {}),
         ...(q.answerNote ? { answerNote: q.answerNote } : {}),
         ...(q.image ? { image: q.image } : {}),
@@ -146,7 +160,16 @@ export function reviewWarnings(quiz) {
     (round.questions || []).forEach((q, qi) => {
       const at = `Round ${ri + 1} question ${qi + 1}`;
       const options = q.options || [];
-      const correct = options[q.correctIndex];
+      // A pick-them-all question has a set of right answers, not one. Without
+      // this the check below would flag every correct option as a wrong one
+      // being named, and twenty false flags is how a host learns to ignore
+      // the panel entirely.
+      const rightSet = round.type === 'multi'
+        ? new Set(q.correctIndexes || [])
+        : new Set([q.correctIndex]);
+      const correct = round.type === 'multi'
+        ? (q.correctIndexes || []).map((i) => options[i]).join(', ')
+        : options[q.correctIndex];
       const ticked = new Set((q.checked || []).map(String));
       const questionId = q.id || `r${ri + 1}q${qi + 1}`;
 
@@ -168,7 +191,7 @@ export function reviewWarnings(quiz) {
       const note = String(q.answerNote || '');
       if (note) {
         options.forEach((option, oi) => {
-          if (oi === q.correctIndex) return;
+          if (rightSet.has(oi)) return;
           const text = String(option || '').trim();
           if (text.length < 4) return;
           if (note.toLowerCase().includes(text.toLowerCase())) {
@@ -187,8 +210,9 @@ export function reviewWarnings(quiz) {
           `uses "${found.join('", "')}" — worth checking no other option also fits.`);
       }
 
-      // An answer that contradicts the question it is answering.
-      if (/^(neither|none|no one|nobody|they (were|had) n)/i.test(String(correct || ''))) {
+      // An answer that contradicts the question it is answering. Single-answer
+      // questions only — a negative reads differently in a list of three.
+      if (round.type !== 'multi' && /^(neither|none|no one|nobody|they (were|had) n)/i.test(String(correct || ''))) {
         flag('negative-answer', '',
           `the correct answer is a negative ("${correct}"), which often contradicts the question. Read it back.`);
       }
@@ -239,7 +263,7 @@ export function validateQuiz(quiz) {
   (quiz.rounds || []).forEach((round, ri) => {
     const where = `Round ${ri + 1}`;
     if (!ROUND_TYPES.includes(round.type)) {
-      problems.push(`${where}: unknown round type "${round.type}". Use text, image or intro.`);
+      problems.push(`${where}: unknown round type "${round.type}". Use ${ROUND_TYPES.join(', ')}.`);
     }
     if (!Array.isArray(round.questions) || round.questions.length === 0) {
       problems.push(`${where}: no questions.`);
@@ -249,11 +273,24 @@ export function validateQuiz(quiz) {
       const at = `${where} question ${qi + 1}`;
       if (!q.prompt || !String(q.prompt).trim()) problems.push(`${at}: no question text.`);
       const options = q.options || [];
-      if (options.length !== 4) problems.push(`${at}: needs exactly 4 options (it has ${options.length}).`);
+      const wanted = round.type === 'multi' ? MULTI_OPTIONS : 4;
+      if (options.length !== wanted) problems.push(`${at}: needs exactly ${wanted} options (it has ${options.length}).`);
       if (options.some((o) => !String(o).trim())) problems.push(`${at}: has a blank option.`);
       const seen = new Set(options.map((o) => String(o).trim().toLowerCase()));
       if (seen.size !== options.length) problems.push(`${at}: has two identical options.`);
-      if (!Number.isInteger(q.correctIndex) || q.correctIndex < 0 || q.correctIndex >= options.length) {
+
+      if (round.type === 'multi') {
+        const picks = q.correctIndexes;
+        if (!Array.isArray(picks) || picks.length < 2) {
+          problems.push(`${at}: a pick-them-all question needs at least 2 correct answers marked.`);
+        } else if (picks.length >= options.length) {
+          problems.push(`${at}: every option is marked correct, so there is nothing to work out.`);
+        } else if (picks.some((i) => !Number.isInteger(i) || i < 0 || i >= options.length)) {
+          problems.push(`${at}: a correct answer points at an option that does not exist.`);
+        } else if (new Set(picks).size !== picks.length) {
+          problems.push(`${at}: the same correct answer is marked twice.`);
+        }
+      } else if (!Number.isInteger(q.correctIndex) || q.correctIndex < 0 || q.correctIndex >= options.length) {
         problems.push(`${at}: no correct answer is marked.`);
       }
       if (round.type === 'image' && !q.image) problems.push(`${at}: picture round question has no image file.`);

@@ -28,7 +28,7 @@ const statusDot = document.getElementById('statusDot');
 const statusText = document.getElementById('statusText');
 
 const clock = new ServerClock();
-const LETTERS = ['A', 'B', 'C', 'D'];
+const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 let me = loadMe();
 let state = null;
@@ -362,6 +362,7 @@ function buildWaiting(s, kicker, title, sub) {
 }
 
 function buildAnswers(s) {
+  if (s.multi) return buildMultiAnswers(s);
   const options = s.options || [];
   const el = node(`
     <div style="display:flex;flex-direction:column;gap:16px;flex:1 1 auto">
@@ -384,6 +385,106 @@ function buildAnswers(s) {
     btn.addEventListener('click', () => choose(Number(btn.dataset.i)));
   });
   return el;
+}
+
+/**
+ * Pick-them-all: tap to select, tap again to change your mind, then lock in.
+ *
+ * Nothing is sent until Lock in is pressed, which is the whole difference from
+ * every other round — the timing that scores you is the moment you commit, not
+ * the moment you first tapped something. So selecting is free and reversible,
+ * and there is one deliberate action that ends it.
+ *
+ * The Lock in button is the only place that says how many are still needed.
+ * Putting a count somewhere else as well is one more thing to read in a dark
+ * pub with a clock running.
+ */
+let picks = new Set();
+
+function buildMultiAnswers(s) {
+  const options = s.options || [];
+  const want = s.pickCount || 2;
+  picks = new Set();
+
+  const el = node(`
+    <div style="display:flex;flex-direction:column;gap:14px;flex:1 1 auto">
+      <div class="timer">
+        <div class="bar"><span id="pTimerBar"></span></div>
+        <div class="num" id="pTimerNum">--</div>
+      </div>
+      <div class="muted" id="pHint" style="font-size:15px;text-align:center">
+        Question ${s.questionIndex + 1} of ${s.questionCount} — pick <b>${want}</b>
+      </div>
+      <div class="answers multi" id="answers">
+        ${options.map((opt, i) => `
+          <button class="answer-btn pickable" data-i="${i}">
+            <span class="letter">${LETTERS[i]}</span>
+            <span class="text">${esc(opt)}</span>
+            <span class="tick">✓</span>
+          </button>`).join('')}
+      </div>
+      <button class="lock-btn" id="lockBtn" disabled>Pick ${want}</button>
+    </div>
+  `);
+
+  const lock = el.querySelector('#lockBtn');
+  const refresh = () => {
+    for (const btn of el.querySelectorAll('.answer-btn')) {
+      btn.classList.toggle('picked', picks.has(Number(btn.dataset.i)));
+    }
+    const left = want - picks.size;
+    lock.disabled = left !== 0;
+    lock.textContent = left === 0
+      ? 'Lock it in'
+      : left > 0 ? `Pick ${left} more` : `${-left} too many`;
+  };
+
+  el.querySelectorAll('.answer-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (pendingChoice !== null || answered(state)) return;
+      const i = Number(btn.dataset.i);
+      if (picks.has(i)) picks.delete(i);
+      else if (picks.size < want) picks.add(i);
+      else return; // full: they have to un-pick one first
+      if (navigator.vibrate) navigator.vibrate(10);
+      refresh();
+    });
+  });
+
+  lock.addEventListener('click', () => lockIn([...picks]));
+  refresh();
+  return el;
+}
+
+function answered(s) {
+  return Boolean(s && s.yourAnswer && s.yourAnswer.optionIndex !== undefined);
+}
+
+async function lockIn(optionIndexes) {
+  if (pendingChoice !== null || answered(state)) return;
+  pendingChoice = optionIndexes;
+  paintLocked(optionIndexes);
+  if (navigator.vibrate) navigator.vibrate(24);
+  try {
+    await postJson('/api/answer', { playerId: me.id, optionIndexes });
+  } catch {
+    pendingChoice = null;
+  }
+}
+
+function paintLocked(indexes) {
+  const set = new Set(indexes);
+  document.querySelectorAll('.answer-btn').forEach((btn) => {
+    const i = Number(btn.dataset.i);
+    btn.disabled = true;
+    btn.classList.toggle('picked', set.has(i));
+    btn.classList.toggle('chosen', set.has(i));
+    btn.classList.toggle('faded', !set.has(i));
+  });
+  const lock = document.getElementById('lockBtn');
+  if (lock) { lock.disabled = true; lock.textContent = 'Locked in'; }
+  const hint = document.getElementById('pHint');
+  if (hint) hint.textContent = 'Locked in. No changing your mind.';
 }
 
 async function choose(optionIndex) {
@@ -413,10 +514,15 @@ function paintChoice(index) {
 
 function updateScreen(s) {
   if (s.game === 'bingo') return updateBingo(s, me);
-  if (s.phase === 'question') {
-    const chosen = s.yourAnswer ? s.yourAnswer.optionIndex : pendingChoice;
-    if (chosen !== null && chosen !== undefined) paintChoice(chosen);
+  if (s.phase !== 'question') return;
+
+  if (s.multi) {
+    const locked = s.yourAnswer ? s.yourAnswer.optionIndexes : pendingChoice;
+    if (Array.isArray(locked)) paintLocked(locked);
+    return;
   }
+  const chosen = s.yourAnswer ? s.yourAnswer.optionIndex : pendingChoice;
+  if (chosen !== null && chosen !== undefined) paintChoice(chosen);
 }
 
 function buildReveal(s) {
@@ -432,15 +538,23 @@ function buildReveal(s) {
        </div>`
     : correct
       ? `<div class="result good">
-           <div class="big">Correct</div>
+           <div class="big">${mine.outOf > 1 ? 'All ' + mine.outOf : 'Correct'}</div>
            <div class="pts">+${mine.points}</div>
            <div class="sub">${mine.seconds.toFixed(1)} seconds</div>
            ${mine.isFirstCorrect ? '<div class="bonus">First correct — +100 bonus</div>' : ''}
          </div>`
-      : `<div class="result bad">
-           <div class="big">Not this time</div>
-           <div class="sub">The answer was <strong>${esc(r.correctText || '')}</strong></div>
-         </div>`;
+      // Part marks deserve their own face. "Not this time" over a score of 180
+      // reads as a bug, and "2 of 3" is the thing they want to know.
+      : mine.gotRight > 0
+        ? `<div class="result part">
+             <div class="big">${mine.gotRight} of ${mine.outOf}</div>
+             <div class="pts">+${mine.points}</div>
+             <div class="sub">They were <strong>${esc(r.correctText || '')}</strong></div>
+           </div>`
+        : `<div class="result bad">
+             <div class="big">Not this time</div>
+             <div class="sub">The answer${(r.correctIndexes || []).length > 1 ? 's were' : ' was'} <strong>${esc(r.correctText || '')}</strong></div>
+           </div>`;
 
   const fastest = r.fastest
     ? `<div class="mini-row"><span class="pos">⚡</span><span>${esc(r.fastest.name)}</span><span class="score">${r.fastest.seconds.toFixed(1)}s</span></div>`

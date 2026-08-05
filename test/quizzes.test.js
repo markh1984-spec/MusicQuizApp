@@ -375,3 +375,79 @@ test('editing the question the flag was about brings the flag back', () => {
   assert.ok(fresh, 'the new wording raises its own flag');
   assert.equal(fresh.cleared, false, 'and it is not silently pre-checked');
 });
+
+// ---- The fourth round type: several right answers, locked in together.
+
+function multiRound(overrides = {}) {
+  return {
+    id: 'multi', title: 'Multi Quiz',
+    rounds: [{
+      id: 'r1', type: 'multi', title: 'Pick them all',
+      questions: [{
+        id: 'm1',
+        prompt: 'Which three were UK number ones?',
+        options: ['One', 'Two', 'Three', 'Four', 'Five', 'Six'],
+        correctIndexes: [0, 2, 4],
+        ...overrides,
+      }],
+    }],
+  };
+}
+
+test('a well formed pick-them-all round is valid', () => {
+  assert.deepEqual(validateQuiz(multiRound()), []);
+});
+
+test('a pick-them-all round needs six options, not four', () => {
+  const quiz = multiRound();
+  quiz.rounds[0].questions[0].options = ['One', 'Two', 'Three', 'Four'];
+  quiz.rounds[0].questions[0].correctIndexes = [0, 2];
+  assert.match(validateQuiz(quiz).join(' '), /needs exactly 6 options/);
+});
+
+test('one correct answer is not a pick-them-all question', () => {
+  assert.match(validateQuiz(multiRound({ correctIndexes: [1] })).join(' '), /at least 2 correct answers/);
+  assert.match(validateQuiz(multiRound({ correctIndexes: [] })).join(' '), /at least 2 correct answers/);
+});
+
+test('marking every option correct is caught', () => {
+  // Nothing to work out, and everybody scores full marks for tapping the lot.
+  assert.match(validateQuiz(multiRound({ correctIndexes: [0, 1, 2, 3, 4, 5] })).join(' '), /nothing to work out/);
+});
+
+test('a correct answer pointing nowhere is caught', () => {
+  assert.match(validateQuiz(multiRound({ correctIndexes: [0, 9] })).join(' '), /does not exist/);
+});
+
+test('the same correct answer twice is caught', () => {
+  assert.match(validateQuiz(multiRound({ correctIndexes: [2, 2] })).join(' '), /marked twice/);
+});
+
+test('normalising sorts and de-duplicates the correct answers', () => {
+  // Two entries for the same option would otherwise inflate "pick N".
+  const quiz = normaliseQuiz(multiRound({ correctIndexes: [4, 0, 4, 2] }));
+  assert.deepEqual(quiz.rounds[0].questions[0].correctIndexes, [0, 2, 4]);
+});
+
+test('a pick-them-all question survives a save and load', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'quiz-test-'));
+  try {
+    saveQuiz(dir, 'multi', multiRound());
+    const loaded = loadQuiz(dir, 'multi');
+    assert.deepEqual(loaded.rounds[0].questions[0].correctIndexes, [0, 2, 4]);
+    assert.equal(loaded.rounds[0].type, 'multi');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('the review flags read the whole set of right answers', () => {
+  // The fact names option "Three", which IS correct here. Flagging it would be
+  // crying wolf, and a panel that cries wolf gets ignored.
+  const fine = multiRound({ answerNote: 'Three and Five both spent a week at the top.' });
+  assert.equal(reviewWarnings(fine).some((w) => w.kind === 'note-names-wrong-option'), false);
+
+  // Naming a WRONG option is still the thing worth catching.
+  const bad = multiRound({ answerNote: 'Some argue that "Four" belongs here too.' });
+  assert.ok(reviewWarnings(bad).some((w) => w.kind === 'note-names-wrong-option' && w.text.includes('Four')));
+});

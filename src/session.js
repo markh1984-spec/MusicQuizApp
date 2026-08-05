@@ -311,7 +311,13 @@ export class Session {
       if (action === 'claim') return this.engine.claim(String(body.playerId));
     }
     if (this.kind === 'quiz' && action === 'answer') {
-      return this.engine.answer({ playerId: body.playerId, optionIndex: body.optionIndex });
+      // optionIndexes is the pick-them-all round; optionIndex every other one.
+      // Both are forwarded, and the engine decides which the round wants.
+      return this.engine.answer({
+        playerId: body.playerId,
+        optionIndex: body.optionIndex,
+        optionIndexes: body.optionIndexes,
+      });
     }
     return { ok: false, reason: 'not_available' };
   }

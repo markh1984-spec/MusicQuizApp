@@ -21,7 +21,8 @@ decides most arguments in this codebase.
 
 Two games so far:
 
-- **Music quiz** — 3 rounds × 10 questions, 20 seconds each, four options.
+- **Music quiz** — rounds of 10 questions, 20 seconds each. Four round types:
+  text, image, intro, and **multi** ("pick them all").
 - **Music bingo** — host plays tracks from a DJ app, phones get cards.
 
 ---
@@ -80,7 +81,16 @@ Bingo marks are deliberately immediate: a lost quiz answer is recoverable with
 Redo, but nobody can re-tap ten songs they heard half an hour ago.
 
 ### 6. Phones never show the question text
-Only the four options. Keeps the room looking up, makes googling harder.
+Only the options. Keeps the room looking up, makes googling harder.
+
+### 7. "Pick them all" tells the room HOW MANY, never which
+A `multi` question shows six options with 2–3 correct. The screen and the phone
+get `pickCount`; `correctIndexes` is host-only, like every other answer key.
+
+Part marks — the share you got right, applied to the base AND the seconds left,
+so a fast mostly-wrong answer cannot out-earn a slower right one. The
+first-correct bonus needs the **whole** set. Exactly N picks is enforced server
+side and refused rather than trimmed, or somebody covers the board and scores.
 
 ---
 
@@ -198,10 +208,17 @@ data/                  live state, history, archived nights (gitignored)
 Nothing outside those four places needs to know it exists.
 
 ### Adding a quiz round type
-1. `ROUND_TYPES` in `src/quizzes.js`
+1. `ROUND_TYPES` in `src/quizzes.js`, plus any per-type validation
 2. a case in `screenQuestionExtras` **and** `hostQuestionExtras` in `src/engine.js`
    — think about which fields are secret
 3. a media block in `renderQuestionMedia` + a `.type-x` CSS rule
+4. a brief in `roundBriefs()` in `src/generate-quiz.js`, a checkbox in the
+   console generator, and an entry in `ROUND_TYPES` in `public/assets/editor.js`
+
+**A type that changes the answering mechanic touches more than that.** `multi`
+needed `answer()` to take a set, `session.runPlayerAction` to forward it (it
+silently dropped the new field at first), a scoring function, and the editor to
+switch from radios to tickboxes.
 
 ---
 

@@ -24,7 +24,7 @@ let state = null;
 let currentKey = null;
 let joinUrl = '';
 
-const LETTERS = ['A', 'B', 'C', 'D'];
+const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 // --------------------------------------------------------------- card registry
 
@@ -173,7 +173,7 @@ function updateLobby(s) {
 
 function renderRoundIntro(s) {
   const intro = s.roundIntro || {};
-  const typeLabel = { text: 'General knowledge', image: 'Whose face is this?', intro: 'Name that intro' }[intro.type] || '';
+  const typeLabel = { text: 'General knowledge', image: 'Whose face is this?', intro: 'Name that intro', multi: 'Pick them all' }[intro.type] || '';
   return node(`
     <div class="round-intro">
       <div class="kicker">Round ${s.roundIndex + 1}</div>
@@ -244,6 +244,11 @@ function renderQuestionMedia(s, q) {
   if (s.roundType === 'intro') {
     return `<div class="intro-visual" id="introVisual">${Array.from({ length: 28 }, (_, i) => `<i style="--i:${i}"></i>`).join('')}</div>`;
   }
+  if (s.roundType === 'multi' && q.pickCount) {
+    // The instruction, not the answer. How many is what makes the round
+    // playable; which ones never reaches this screen.
+    return `<div class="pick-banner">Lock in <b>${q.pickCount}</b> answers</div>`;
+  }
   return '';
 }
 
@@ -272,10 +277,13 @@ function updateQuestion(s) {
 
   const optionEls = [...document.querySelectorAll('.option')];
   if (revealing && s.reveal) {
+    // One right answer or several — the same set either way, so nothing here
+    // has to know which kind of round it is.
+    const right = new Set(s.reveal.correctIndexes || [s.reveal.correctIndex]);
     for (const el of optionEls) {
       const i = Number(el.dataset.i);
-      el.classList.toggle('correct', i === s.reveal.correctIndex);
-      el.classList.toggle('dimmed', i !== s.reveal.correctIndex);
+      el.classList.toggle('correct', right.has(i));
+      el.classList.toggle('dimmed', !right.has(i));
       const tallyEl = el.querySelector('[data-tally]');
       const tally = (s.reveal.tally || [])[i] || 0;
       if (tallyEl) tallyEl.textContent = tally ? `${tally}` : '';
