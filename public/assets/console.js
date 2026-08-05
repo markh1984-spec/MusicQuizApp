@@ -690,6 +690,72 @@ function picturePanel(pack) {
   return el;
 }
 
+function hasIntroRound(pack) {
+  return (pack.rounds || []).some((r) => r.type === 'intro');
+}
+
+/**
+ * The Spotify playlist for a "name that intro" round.
+ *
+ * Its own button rather than only a step inside generation, because you can
+ * easily have an intro round before you have a Spotify login — and because a
+ * playlist deleted by accident should not mean regenerating the quiz and
+ * getting a different set of questions.
+ *
+ * Building it also writes Spotify's own spelling and a track link back onto
+ * each cue, so the control view can offer a tap to open the track instead of
+ * leaving you searching for it with a room waiting.
+ */
+function playlistPanel(pack) {
+  const gen = library.generation || {};
+  const el = node(`
+    <div class="panel pics">
+      <div class="tiny status">Builds a Spotify playlist in question order — track one is question one.</div>
+      <div class="row" style="margin-top:8px">
+        <button class="go build">Build the playlist</button>
+      </div>
+      <div class="tiny note"></div>
+      <pre class="gen-log" hidden></pre>
+    </div>`);
+
+  const note = el.querySelector('.note');
+  const button = el.querySelector('.build');
+  const logEl = el.querySelector('.gen-log');
+
+  if (!gen.spotify) {
+    button.disabled = true;
+    note.style.color = 'var(--gold)';
+    note.textContent = `Spotify is not set up — run \`npm run spotify:login\`. Missing: ${(gen.spotifyMissing || []).join(', ')}`;
+  } else {
+    note.textContent = 'Spotify cannot make folders through its API, so every playlist is named the same way and they sort together — drag them into a folder in one go.';
+  }
+
+  button.addEventListener('click', async () => {
+    button.disabled = true;
+    button.textContent = 'Building…';
+    logEl.hidden = false;
+    logEl.textContent = '';
+    const say = (line) => { logEl.textContent += line + '\n'; logEl.scrollTop = logEl.scrollHeight; };
+    try {
+      const { done, error } = await streamGeneration('/api/playlist/intro', { quizId: pack.id }, say);
+      if (error) say('\n' + error);
+      else if (done) {
+        for (const p of done.playlists) {
+          say(`\n${p.round}: ${p.url}${p.missing ? ` (${p.missing} not found on Spotify)` : ''}`);
+        }
+        if (!done.playlists.length) say('\nNo playlist made.');
+        await load();
+      }
+    } catch (err) {
+      say('\n' + err.message);
+    }
+    button.disabled = false;
+    button.textContent = 'Build the playlist';
+  });
+
+  return el;
+}
+
 function packCard(kind, pack) {
   const detail = kind === 'quiz'
     ? `${pack.questionCount} questions · ${(pack.rounds || []).length} rounds`
@@ -710,17 +776,22 @@ function packCard(kind, pack) {
         <button class="go launch" ${pack.broken ? 'disabled' : ''}>Launch</button>
         <button class="pack-read" title="Read it through">Read</button>
         ${hasPictureRound(pack) ? '<button class="pack-pics" title="Make the round 2 portraits">Pictures</button>' : ''}
+        ${hasIntroRound(pack) ? '<button class="pack-playlist" title="Build the Spotify playlist for the intro round">Playlist</button>' : ''}
         <button class="pack-del" title="Delete this pack">Delete</button>
       </div>
       <div class="pics-slot"></div>
     </div>`);
 
   const openIt = () => preview(kind, pack);
-  el.querySelector('.pack-pics')?.addEventListener('click', () => {
+  const toggle = (build) => {
     const slot = el.querySelector('.pics-slot');
-    if (slot.firstChild) slot.replaceChildren();
-    else slot.replaceChildren(picturePanel(pack));
-  });
+    const already = slot.dataset.which === build.name;
+    slot.replaceChildren();
+    slot.dataset.which = already ? '' : build.name;
+    if (!already) slot.appendChild(build(pack));
+  };
+  el.querySelector('.pack-pics')?.addEventListener('click', () => toggle(picturePanel));
+  el.querySelector('.pack-playlist')?.addEventListener('click', () => toggle(playlistPanel));
   el.querySelector('.pack-title')?.addEventListener('click', openIt);
   el.querySelector('.pack-read')?.addEventListener('click', openIt);
 

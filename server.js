@@ -23,7 +23,7 @@ import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarn
 import { validateBingoPack, normaliseBingoPack } from './src/bingo.js';
 import { fullLibrary, listArchive, loadArchived, saveBingoPack, loadBingoPack, deleteBingoPack } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
-import { generateQuizPack } from './src/generate-quiz.js';
+import { generateQuizPack, buildIntroPlaylists } from './src/generate-quiz.js';
 import { importBingoPack } from './src/import-bingo.js';
 import { generateImages, imageStatus, imageJobs, openaiConfigured } from './src/generate-images.js';
 import { recentTracks, forgetAll } from './src/history.js';
@@ -620,6 +620,49 @@ async function handleWrite(req, res, url, route) {
         failed: result.failed.length,
         status: imageStatus(quiz, config.imageDir),
         backedUp,
+      }));
+    } catch (err) {
+      log('ERROR ' + err.message);
+    }
+    res.end();
+    return true;
+  }
+
+  /*
+   * The playlist for a "name that intro" round, built after the fact.
+   *
+   * You can easily have an intro round before you have a Spotify login, and a
+   * playlist deleted by accident should not mean regenerating the quiz and
+   * getting different questions. So this is its own button rather than only
+   * something that happens once, during generation.
+   */
+  if (route === '/api/playlist/intro' && req.method === 'POST') {
+    const body = await readJson(req);
+    res.writeHead(200, {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      'X-Accel-Buffering': 'no',
+    });
+    const log = (line) => { try { res.write(line + '\n'); } catch { /* client left */ } };
+    try {
+      const id = String(body.quizId || '');
+      const quiz = loadQuiz(config.quizDir, id);
+      const results = await buildIntroPlaylists({ quiz, log });
+
+      // The lookups rewrote the cues with Spotify's spelling and uris, so the
+      // pack has to be saved or the control view still points at the guesses.
+      saveQuiz(config.quizDir, id, quiz);
+      if (session.kind === 'quiz' && session.pack.id === id) {
+        session.pack = loadQuiz(config.quizDir, id);
+        session.engine.quiz = session.pack;
+        session.engine.changed();
+      }
+      const backup = await backUp(`quizzes/${id}.json`, JSON.stringify(normaliseQuiz(quiz, id), null, 2) + '\n', `Intro playlist: ${quiz.title}`, log);
+
+      log('DONE ' + JSON.stringify({
+        quizId: id,
+        playlists: results.filter((r) => r.playlist).map((r) => ({ round: r.round, url: r.playlist.url, missing: r.playlist.missing })),
+        backedUp: backup.ok,
       }));
     } catch (err) {
       log('ERROR ' + err.message);

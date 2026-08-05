@@ -285,7 +285,7 @@ function roundBlurb(type, theme, perRound) {
  * playlist is named with the same prefix, so they sort together and can be
  * dragged into a folder in one go.
  */
-async function buildIntroPlaylist({ round, quizTitle, log }) {
+export async function buildIntroPlaylist({ round, quizTitle, log = () => {} }) {
   const prefix = process.env.SPOTIFY_PLAYLIST_PREFIX ?? 'Quiz Intros';
   const name = prefix ? `${prefix} — ${quizTitle}` : quizTitle;
 
@@ -326,6 +326,41 @@ async function buildIntroPlaylist({ round, quizTitle, log }) {
   });
   log(`  playlist: ${playlist.url}${missing ? ` (${missing} not found)` : ''}`);
   return { ...playlist, missing };
+}
+
+/**
+ * Build the playlists for a quiz that already exists.
+ *
+ * The same job the generator does, but reachable afterwards — because you can
+ * have an intro round long before you have a Spotify login, and because a
+ * playlist you deleted by accident should not mean regenerating the whole
+ * quiz and getting different questions.
+ *
+ * Mutates the quiz in place: cues gain Spotify's spelling and a uri, the round
+ * gains its playlist. The caller saves it.
+ *
+ * @returns {Promise<Array<{round: string, playlist: object|null, error?: string}>>}
+ */
+export async function buildIntroPlaylists({ quiz, log = () => {} }) {
+  if (!spotifyConfigured()) {
+    throw new Error('Spotify is not set up, so no playlist can be made. Run `npm run spotify:login` first.');
+  }
+  const rounds = (quiz.rounds || []).filter((r) => r.type === 'intro');
+  if (!rounds.length) throw new Error('This quiz has no "name that intro" round, so there is nothing to build.');
+
+  const out = [];
+  for (const round of rounds) {
+    log(`${round.title}`);
+    try {
+      const playlist = await buildIntroPlaylist({ round, quizTitle: quiz.title, log });
+      if (playlist) round.spotifyPlaylist = { id: playlist.id, url: playlist.url, uri: playlist.uri };
+      out.push({ round: round.title, playlist: playlist || null });
+    } catch (err) {
+      log(`  could not build it: ${err.message}`);
+      out.push({ round: round.title, playlist: null, error: err.message });
+    }
+  }
+  return out;
 }
 
 /**
