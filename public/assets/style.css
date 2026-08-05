@@ -1283,3 +1283,11 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
   .pv-opts { grid-template-columns: 1fr; margin-left: 0; }
   .pv-note, .pv-cue { margin-left: 0; }
 }
+
+.pv-warn {
+  margin-bottom: 16px; padding: 13px 15px; border-radius: 11px;
+  background: rgba(255, 210, 63, 0.12); border: 1px solid rgba(255, 210, 63, 0.5);
+  font-size: 13.5px; line-height: 1.55;
+}
+.pv-warn ul { margin: 7px 0 0; padding-left: 19px; }
+.pv-warn li { margin-bottom: 4px; }

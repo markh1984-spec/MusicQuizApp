@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { validateQuiz, normaliseQuiz, safeQuizFile, saveQuiz, loadQuiz, listQuizzes } from '../src/quizzes.js';
+import { validateQuiz, normaliseQuiz, safeQuizFile, saveQuiz, loadQuiz, listQuizzes, reviewWarnings } from '../src/quizzes.js';
 
 function goodQuiz() {
   return {
@@ -156,4 +156,94 @@ test('the quiz that ships with the app is valid', () => {
   const quiz = loadQuiz(new URL('../quizzes/', import.meta.url).pathname, 'eighties');
   assert.deepEqual(validateQuiz(quiz), []);
   assert.equal(quiz.rounds[0].questions.length, 10);
+});
+
+// ---------------------------------------------------------- review warnings
+//
+// These came out of a real generated quiz. Claude wrote a question asking who
+// Justine Frischmann "previously dated", marked Damon Albarn correct, put Brett
+// Anderson in as a wrong option, and then wrote a fact saying she had been with
+// Brett Anderson. A player picking Brett would be marked wrong and could prove
+// they were right from the app's own screen. That is the argument you cannot
+// win in front of a room, and it is mechanically detectable.
+
+test('a fact naming one of the wrong options is flagged', () => {
+  const quiz = {
+    rounds: [{
+      type: 'text',
+      questions: [{
+        prompt: 'Justine Frischmann previously dated which frontman?',
+        options: ['Brett Anderson', 'Damon Albarn', 'Jarvis Cocker', 'Liam Gallagher'],
+        correctIndex: 1,
+        answerNote: "She left Suede, where she'd been with Brett Anderson, and later formed Elastica.",
+      }],
+    }],
+  };
+  const warnings = reviewWarnings(quiz);
+  assert.ok(warnings.some((w) => w.includes('Brett Anderson') && w.includes('marked wrong')));
+});
+
+test('a fact naming the CORRECT option is not flagged', () => {
+  const quiz = {
+    rounds: [{
+      type: 'text',
+      questions: [{
+        prompt: 'Which band released Definitely Maybe?',
+        options: ['Blur', 'Oasis', 'Pulp', 'Suede'],
+        correctIndex: 1,
+        answerNote: 'Oasis made it the fastest-selling debut album in UK history.',
+      }],
+    }],
+  };
+  assert.deepEqual(reviewWarnings(quiz), []);
+});
+
+test('slippery words that usually hide a second right answer are flagged', () => {
+  const ask = (prompt) => reviewWarnings({
+    rounds: [{ type: 'text', questions: [{ prompt, options: ['a', 'b', 'c', 'd'], correctIndex: 0 }] }],
+  });
+  assert.ok(ask("What was Blur's only UK number one?").some((w) => w.includes('only')));
+  assert.ok(ask('Who did she previously date?').some((w) => w.includes('previously')));
+  assert.ok(ask('Which was their first UK hit?').some((w) => w.includes('first')));
+  // ...but not when the word merely appears inside another word
+  assert.deepEqual(ask('Which band recorded Firstborn?'), []);
+});
+
+test('an answer that contradicts its own question is flagged', () => {
+  const warnings = reviewWarnings({
+    rounds: [{
+      type: 'text',
+      questions: [{
+        prompt: 'Anderson and Butler left which band to form Suede?',
+        options: ['The Smiths', 'Neither had a previous band', 'Blur', 'Pulp'],
+        correctIndex: 1,
+      }],
+    }],
+  });
+  assert.ok(warnings.some((w) => w.includes('negative')));
+});
+
+test('a clean quiz produces no warnings at all', () => {
+  assert.deepEqual(reviewWarnings(goodQuiz()), []);
+});
+
+test('very short options are not flagged, or every quiz would cry wolf', () => {
+  // "Two" appearing in a sentence means nothing. Flagging it would train you
+  // to ignore the warnings, which is worse than not having them.
+  const quiz = goodQuiz();
+  quiz.rounds[0].questions[0].answerNote = 'It took two years to record.';
+  assert.deepEqual(reviewWarnings(quiz), []);
+});
+
+test('warnings never block saving — they are advice, not errors', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'quiz-test-'));
+  try {
+    const quiz = goodQuiz();
+    // "Four" is a wrong option here, and long enough to be worth flagging.
+    quiz.rounds[0].questions[0].answerNote = 'Some say Four is arguable too.';
+    assert.ok(reviewWarnings(quiz).length > 0, 'it is flagged');
+    assert.doesNotThrow(() => saveQuiz(dir, 'advisory', quiz), 'but it still saves');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });

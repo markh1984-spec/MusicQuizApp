@@ -628,6 +628,18 @@ function renderQuizPreview(body, sub, quiz) {
     ${noNotes ? ` · ${noNotes} with no fact to read out` : ''}`;
 
   const parts = [];
+
+  // The questions most likely to cause an argument, listed first so they are
+  // the ones you actually look at.
+  const warnings = quiz.reviewWarnings || [];
+  if (warnings.length) {
+    parts.push(node(`
+      <div class="pv-warn">
+        <b>${warnings.length} question${warnings.length === 1 ? '' : 's'} worth a second look</b>
+        <ul>${warnings.map((w) => `<li>${esc(w)}</li>`).join('')}</ul>
+        <div class="tiny" style="margin-top:8px">These are hunches, not errors — the app cannot tell whether a fact is true. Read them and decide.</div>
+      </div>`));
+  }
   for (const round of quiz.rounds) {
     parts.push(node(`
       <div class="pv-round">

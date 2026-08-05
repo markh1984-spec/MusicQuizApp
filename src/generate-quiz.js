@@ -37,11 +37,32 @@ Rules, all of them important:
 
 - BRITISH throughout. UK chart positions, British spelling ("favourite", "colour"),
   British references. Never use Billboard positions.
-- Every question has exactly FOUR options and exactly ONE defensible answer. If a
-  question could be argued at the bar, do not write it.
+- Every question has exactly FOUR options and exactly ONE defensible answer.
+
+- CHECK THE THREE WRONG OPTIONS ONE AT A TIME. For each, ask "could somebody who
+  knows this subject well argue that this is also correct?" If the answer is yes
+  for any of them, replace that option or write a different question. A player who
+  is marked wrong while being right will argue in front of the room, and they will
+  be correct. This is the single worst thing that can happen.
+
+  Be especially careful with: relationships and who-dated-whom; anything using the
+  words "only", "first", "last" or "previously"; and superlatives like
+  "biggest-selling". These almost always have a second defensible answer.
+
+- THE FACT YOU READ OUT MUST NOT UNDERMINE THE ANSWER. If the "answerNote"
+  mentions one of the other three options in a way that makes it sound correct
+  too, the question is broken. Write the note first if it helps, then check the
+  options against it.
+
+- NEVER write a question whose correct answer contradicts its own premise. If the
+  question asks "which band did they leave", the answer cannot be "they were never
+  in a band". Rewrite the question so the premise is true.
+
 - Only state facts you are confident are correct. If you are unsure of a chart
-  position or a date, write a different question rather than guessing. An
-  approximately-right answer is a wrong answer in a pub.
+  position, a date, or whether something actually reached number one, write a
+  different question rather than guessing. "Number two" and "number one" are not
+  close enough. An approximately-right answer is a wrong answer in a pub.
+
 - The three wrong options must be plausible to somebody who half-knows the answer:
   same era, same genre, comparable fame. Never pad with something obviously silly.
 - Keep each question under about 110 characters so it reads from the back of a room.

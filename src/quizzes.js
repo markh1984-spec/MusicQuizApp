@@ -114,9 +114,62 @@ export function normaliseQuiz(quiz, fallbackId = 'quiz') {
 }
 
 /**
+ * Advisory warnings — things that are probably wrong rather than definitely.
+ *
+ * Kept separate from validateQuiz because these are judgement calls and must
+ * never block you saving. They are shown when you read a quiz through, so the
+ * suspicious ones are the first you look at.
+ *
+ * The one that matters most: a fact that names one of the WRONG options. That
+ * is how you get a question where a knowledgeable player picks the wrong-marked
+ * option, is told they are wrong, and can then point at your own screen to
+ * prove they were right. It happened on the first generated quiz, and it is
+ * exactly the argument you cannot win in front of a room.
+ */
+export function reviewWarnings(quiz) {
+  const warnings = [];
+
+  (quiz.rounds || []).forEach((round, ri) => {
+    (round.questions || []).forEach((q, qi) => {
+      const at = `Round ${ri + 1} question ${qi + 1}`;
+      const options = q.options || [];
+      const correct = options[q.correctIndex];
+
+      // A fact that names a wrong option usually means two answers are defensible.
+      const note = String(q.answerNote || '');
+      if (note) {
+        options.forEach((option, oi) => {
+          if (oi === q.correctIndex) return;
+          const text = String(option || '').trim();
+          if (text.length < 4) return;
+          if (note.toLowerCase().includes(text.toLowerCase())) {
+            warnings.push(`${at}: the fact you read out mentions "${text}", which is marked wrong. Check it is not also a correct answer.`);
+          }
+        });
+      }
+
+      // Words that almost always hide a second defensible answer.
+      const prompt = String(q.prompt || '');
+      const slippery = ['only', 'first', 'last', 'previously', 'biggest', 'best-selling', 'biggest-selling'];
+      const found = slippery.filter((w) => new RegExp(`\\b${w}\\b`, 'i').test(prompt));
+      if (found.length) {
+        warnings.push(`${at}: uses "${found.join('", "')}" — worth checking no other option also fits.`);
+      }
+
+      // An answer that contradicts the question it is answering.
+      if (/^(neither|none|no one|nobody|they (were|had) n)/i.test(String(correct || ''))) {
+        warnings.push(`${at}: the correct answer is a negative ("${correct}"), which often contradicts the question. Read it back.`);
+      }
+    });
+  });
+
+  return warnings;
+}
+
+/**
  * Catch the mistakes that would ruin a question in front of a room: no correct
  * answer marked, duplicate options, a missing option. Returns a list of plain
- * English problems for the editor to show.
+ * English problems for the editor to show. These DO block saving.
  */
 export function validateQuiz(quiz) {
   const problems = [];

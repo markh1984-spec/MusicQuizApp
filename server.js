@@ -19,7 +19,7 @@ import { config, paths, hostKey } from './src/config.js';
 import { Store } from './src/store.js';
 import { Hub } from './src/sse.js';
 import { Session } from './src/session.js';
-import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz } from './src/quizzes.js';
+import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings } from './src/quizzes.js';
 import { validateBingoPack, normaliseBingoPack } from './src/bingo.js';
 import { fullLibrary, listArchive, loadArchived, saveBingoPack, loadBingoPack, deleteBingoPack } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
@@ -280,7 +280,8 @@ async function handleGet(req, res, url, route) {
     if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
     const id = decodeURIComponent(route.slice('/api/quiz/'.length));
     try {
-      return sendJson(res, 200, loadQuiz(config.quizDir, id)), true;
+      const quiz = loadQuiz(config.quizDir, id);
+      return sendJson(res, 200, { ...quiz, reviewWarnings: reviewWarnings(quiz) }), true;
     } catch (err) {
       return sendJson(res, 404, { error: err.message }), true;
     }
