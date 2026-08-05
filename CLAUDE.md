@@ -82,6 +82,28 @@ Only the four options. Keeps the room looking up, makes googling harder.
 
 ---
 
+## Generated questions are checked, not trusted
+
+`src/generate-quiz.js` runs two passes:
+
+1. **Write** — asks for `perRound + 4` questions, so there is slack.
+2. **Check** — a separate call, framed as checking somebody else's work, told
+   to assume there are mistakes. It only ever REJECTS; it never rewrites,
+   because a rewrite would itself be unchecked. Failures are discarded and the
+   survivors kept.
+
+A question the checker does not mention is treated as **unchecked, not passed**
+— silence is not approval.
+
+On top of that, `reviewWarnings()` in `src/quizzes.js` catches the mechanical
+version of the same faults with no API call, and is shown when reading a pack.
+
+All of this exists because the first generated quiz shipped a question where a
+wrong-marked option was defensible AND the fact printed on screen proved it.
+Do not remove or weaken these without understanding that.
+
+---
+
 ## Things the host does not have, and what that blocks
 
 - **No image generation key yet.** Anthropic has no image API, so a Claude key

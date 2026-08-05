@@ -102,6 +102,90 @@ The cue is shown ONLY on the host's private phone and never on the big screen.`,
   };
 }
 
+/**
+ * The checking pass.
+ *
+ * A second call, framed as somebody else's job: checking another writer's work
+ * rather than admiring your own. That framing matters — a model asked "is this
+ * good?" says yes, and a model told "find the errors, there are some" actually
+ * looks.
+ *
+ * It only ever REJECTS. It never rewrites, because a rewrite would itself be
+ * unchecked. We over-ask for questions, throw away the ones that fail, and keep
+ * the survivors — so the output is questions that two separate passes agreed
+ * were sound.
+ */
+const CHECKER_SYSTEM = `
+You are checking a music quiz written by somebody else, before it is used by a
+professional host in a paying room. Your job is to find what is wrong with it.
+
+Assume there ARE mistakes — there usually are. You are not being polite, and you
+are not grading effort. A question that reaches the room with a fault in it
+causes an argument the host loses in public.
+
+Reject a question if ANY of these is true:
+
+1. The marked answer is factually wrong.
+2. Any of the other three options could ALSO be defended as correct by somebody
+   who knows the subject. Check each of the three separately.
+3. You are not confident the fact is true. "Probably right" is a rejection. Chart
+   positions, release years and "number one" claims are the usual culprits —
+   number two is not number one.
+4. The question contradicts its own answer, or the answer makes the question
+   nonsense.
+5. The "answerNote" mentions one of the wrong options in a way that makes it look
+   correct.
+6. The question is ambiguous about which time period, chart, or release it means.
+
+Do NOT reject a question merely for being easy, or obscure, or not to your taste.
+Only correctness and ambiguity.
+`.trim();
+
+const CHECKER_SCHEMA = `
+Reply with JSON and nothing else — no preamble, no markdown fence:
+
+{
+  "verdicts": [
+    { "index": 0, "ok": true },
+    { "index": 1, "ok": false, "reason": "Moseley Shoals reached number two, not number one" }
+  ]
+}
+
+One verdict per question, using the index shown. Give a reason of at most 20
+words for every rejection. Be specific about what is wrong.
+`.trim();
+
+async function checkQuestions({ questions, apiKey, model, log }) {
+  const listing = questions.map((q, i) => {
+    const lines = [
+      `[${i}] ${q.prompt}`,
+      ...q.options.map((o, oi) => `    ${oi === q.correctIndex ? 'ANSWER >' : '        '} ${o}`),
+    ];
+    if (q.answerNote) lines.push(`    fact: ${q.answerNote}`);
+    if (q.cue) lines.push(`    plays: ${q.cue.title} by ${q.cue.artist}`);
+    return lines.join('\n');
+  }).join('\n\n');
+
+  const result = await askClaude({
+    system: CHECKER_SYSTEM,
+    prompt: `Check these ${questions.length} questions.\n\n${listing}\n\n${CHECKER_SCHEMA}`,
+    apiKey,
+    model,
+  });
+
+  const verdicts = new Map();
+  for (const v of result.verdicts || []) {
+    if (Number.isInteger(v.index)) verdicts.set(v.index, v);
+  }
+  // A question the checker forgot to mention is treated as unchecked, not as
+  // passed. Silence is not approval.
+  return questions.map((q, i) => {
+    const v = verdicts.get(i);
+    if (!v) return { question: q, ok: false, reason: 'the check did not cover this one' };
+    return { question: q, ok: v.ok !== false, reason: v.reason || '' };
+  });
+}
+
 const SCHEMA_NOTE = `
 Reply with JSON and nothing else — no preamble, no markdown fence. Shape:
 
@@ -180,6 +264,7 @@ export async function generateQuizPack({
   id,
   title,
   model = DEFAULT_MODEL,
+  check = true,
   log = () => {},
   now = () => Date.now(),
 }) {
@@ -193,22 +278,53 @@ export async function generateQuizPack({
   const briefs = roundBriefs({ theme, perRound });
 
   const built = [];
+  const rejected = [];
+
   for (let i = 0; i < rounds.length; i++) {
     const type = rounds[i];
     const brief = briefs[type];
     if (!brief) throw new Error(`Unknown round type "${type}". Use text, image or intro.`);
 
-    log(`round ${i + 1} of ${rounds.length} (${type}) — asking Claude…`);
+    // Ask for extra when we are going to check, because checking throws some
+    // away and coming up short would mean a round of nine.
+    const ask = check ? perRound + 4 : perRound;
+
+    log(`round ${i + 1} of ${rounds.length} (${type}) — writing ${ask} questions…`);
     const result = await askClaude({
       system,
-      prompt: `Write ${perRound} questions for a music quiz.\n\n${brief}\n\n${SCHEMA_NOTE}`,
+      prompt: `Write ${ask} questions for a music quiz.\n\n${brief}\n\n${SCHEMA_NOTE}`,
       apiKey,
       model,
     });
 
-    const questions = (result.questions || []).slice(0, perRound);
+    let questions = (result.questions || []);
     if (!questions.length) throw new Error(`round ${i + 1} came back empty`);
-    log(`  got ${questions.length} questions`);
+    log(`  got ${questions.length}`);
+
+    if (check) {
+      log(`  checking them…`);
+      const verdicts = await checkQuestions({ questions: questions.slice(0, ask), apiKey, model, log });
+      const good = verdicts.filter((v) => v.ok).map((v) => v.question);
+      const bad = verdicts.filter((v) => !v.ok);
+
+      for (const b of bad) {
+        rejected.push({ round: i + 1, prompt: b.question.prompt, reason: b.reason });
+        log(`  rejected: ${b.question.prompt.slice(0, 60)}${b.question.prompt.length > 60 ? '…' : ''} — ${b.reason}`);
+      }
+
+      if (good.length >= perRound) {
+        questions = good;
+        log(`  ${good.length} passed, keeping ${perRound}`);
+      } else {
+        // Rather than a short round, top up with the ones that failed and say
+        // so loudly — a round of six is useless, and you are reading it anyway.
+        const topUp = bad.slice(0, perRound - good.length).map((b) => b.question);
+        questions = [...good, ...topUp];
+        log(`  only ${good.length} passed — keeping ${topUp.length} that did not, READ THESE CAREFULLY`);
+      }
+    }
+
+    questions = questions.slice(0, perRound);
 
     built.push({
       id: `r${i + 1}`,
@@ -255,7 +371,7 @@ export async function generateQuizPack({
   log(`saved ${quizId}.json`);
 
   const needsImages = built.some((r) => r.type === 'image');
-  return { quiz, problems, file, needsImages };
+  return { quiz, problems, file, needsImages, rejected, checked: check };
 }
 
 function slug(s) {

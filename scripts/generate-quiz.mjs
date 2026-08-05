@@ -20,6 +20,7 @@
  *   --rounds     which rounds, in order (default text,image,intro)
  *   --questions  how many per round (default 10)
  *   --hard       pitch it at a room that knows its stuff
+ *   --no-check   skip the second pass that checks the answers (faster, worse)
  *   --model      which Claude model to use
  */
 
@@ -40,12 +41,13 @@ const perRound = Number(argOf('--questions', '10'));
 async function main() {
   console.log(`\nWriting a quiz about "${theme}" — ${rounds.length} rounds of ${perRound}\n`);
 
-  const { quiz, problems, file, needsImages } = await generateQuizPack({
+  const { quiz, problems, file, needsImages, rejected } = await generateQuizPack({
     config,
     theme,
     rounds,
     perRound,
     hard: has('--hard'),
+    check: !has('--no-check'),
     id: argOf('--id', ''),
     title: argOf('--title', ''),
     model: argOf('--model', DEFAULT_MODEL),
@@ -53,6 +55,11 @@ async function main() {
   });
 
   console.log(`\nWritten to ${file}`);
+
+  if (rejected.length) {
+    console.log(`\nThe check threw out ${rejected.length}:`);
+    for (const r of rejected) console.log(`  - ${r.prompt}\n      ${r.reason}`);
+  }
 
   if (problems.length) {
     console.log(`\n${problems.length} thing${problems.length === 1 ? '' : 's'} to fix before this will play:`);

@@ -486,6 +486,7 @@ async function handleWrite(req, res, url, route) {
         rounds,
         perRound: Math.min(20, Math.max(3, Number(body.perRound) || 10)),
         hard: Boolean(body.hard),
+        check: body.check !== false,
         log,
       });
       const backup = await backUp(
@@ -502,6 +503,8 @@ async function handleWrite(req, res, url, route) {
         problems: result.problems,
         needsImages: result.needsImages,
         backedUp: backup.ok,
+        checked: result.checked,
+        rejected: result.rejected.length,
       }));
     } catch (err) {
       log('ERROR ' + err.message);

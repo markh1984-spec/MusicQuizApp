@@ -121,8 +121,18 @@ with the same score. Latecomers can join partway through.
 ### Write it with Claude
 
 From the console: **New quiz** → type a theme → **Write it**. Tick which of the
-three round types you want. Takes about a minute and costs a few pence. British
+three round types you want. Takes a minute or two and costs a few pence. British
 charts and British spelling are baked into the prompt.
+
+**It checks its own work.** A second pass reads the questions back with a
+different job — find the mistakes, assume there are some — and throws out any
+where the marked answer is wrong, another option is also defensible, or the fact
+is not certain. Extra questions are written up front to cover the losses. The
+console tells you how many were thrown out.
+
+That roughly doubles the cost (still pennies) and adds a few seconds per round.
+Turn it off with the **Double-check the answers** box if you are in a hurry, but
+it is on by default for a reason.
 
 Or from a terminal, if you would rather type:
 
