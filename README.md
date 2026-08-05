@@ -124,15 +124,19 @@ From the console: **New quiz** → type a theme → **Write it**. Tick which of 
 three round types you want. Takes a minute or two and costs a few pence. British
 charts and British spelling are baked into the prompt.
 
-**It checks its own work.** A second pass reads the questions back with a
-different job — find the mistakes, assume there are some — and throws out any
+**It checks its own work, always.** A second pass reads the questions back with
+a different job — find the mistakes, assume there are some — and throws out any
 where the marked answer is wrong, another option is also defensible, or the fact
-is not certain. Extra questions are written up front to cover the losses. The
-console tells you how many were thrown out.
+is not certain. Extra questions are written up front to cover the losses, and
+the console tells you how many were binned.
 
-That roughly doubles the cost (still pennies) and adds a few seconds per round.
-Turn it off with the **Double-check the answers** box if you are in a hurry, but
-it is on by default for a reason.
+The checking pass uses a **stronger model** than the writing pass. Writing
+questions is a fluency job; catching a wrong chart position is a knowledge job,
+and that is the one that costs you in front of a room.
+
+There is no way to turn this off from the console, on purpose — an option that
+only ever makes the questions worse does not belong on a panel you use in a
+hurry. The command line has `--no-check` for debugging.
 
 Or from a terminal, if you would rather type:
 

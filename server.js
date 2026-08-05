@@ -486,7 +486,10 @@ async function handleWrite(req, res, url, route) {
         rounds,
         perRound: Math.min(20, Math.max(3, Number(body.perRound) || 10)),
         hard: Boolean(body.hard),
-        check: body.check !== false,
+        // Always checked. The console deliberately offers no way to skip it —
+        // an option that only ever makes the questions worse is a footgun on a
+        // panel used in a hurry.
+        check: true,
         log,
       });
       const backup = await backUp(

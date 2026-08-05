@@ -16,7 +16,18 @@ import path from 'node:path';
 
 import { normaliseQuiz, validateQuiz } from './quizzes.js';
 
-export const DEFAULT_MODEL = 'claude-sonnet-4-5';
+export const DEFAULT_MODEL = 'claude-sonnet-5';
+
+/**
+ * The checking pass uses a stronger model than the writing pass.
+ *
+ * Writing questions is a fluency job; catching a wrong chart position is a
+ * knowledge job, and it is the one that costs you in front of a room. It is one
+ * call per round, so the extra is pennies. If the account cannot reach this
+ * model we quietly fall back to the writing model rather than failing.
+ */
+export const CHECKER_MODEL = process.env.CHECKER_MODEL || 'claude-opus-5';
+
 const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
 
 /**
@@ -155,7 +166,7 @@ One verdict per question, using the index shown. Give a reason of at most 20
 words for every rejection. Be specific about what is wrong.
 `.trim();
 
-async function checkQuestions({ questions, apiKey, model, log }) {
+async function checkQuestions({ questions, apiKey, model, log = () => {} }) {
   const listing = questions.map((q, i) => {
     const lines = [
       `[${i}] ${q.prompt}`,
@@ -166,12 +177,25 @@ async function checkQuestions({ questions, apiKey, model, log }) {
     return lines.join('\n');
   }).join('\n\n');
 
-  const result = await askClaude({
-    system: CHECKER_SYSTEM,
-    prompt: `Check these ${questions.length} questions.\n\n${listing}\n\n${CHECKER_SCHEMA}`,
-    apiKey,
-    model,
-  });
+  let result;
+  try {
+    result = await askClaude({
+      system: CHECKER_SYSTEM,
+      prompt: `Check these ${questions.length} questions.\n\n${listing}\n\n${CHECKER_SCHEMA}`,
+      apiKey,
+      model: CHECKER_MODEL,
+    });
+  } catch (err) {
+    // Most likely the account cannot reach the stronger model. Check with the
+    // writing model rather than shipping unchecked questions.
+    log(`  (checking with ${model} instead: ${err.message.slice(0, 80)})`);
+    result = await askClaude({
+      system: CHECKER_SYSTEM,
+      prompt: `Check these ${questions.length} questions.\n\n${listing}\n\n${CHECKER_SCHEMA}`,
+      apiKey,
+      model,
+    });
+  }
 
   const verdicts = new Map();
   for (const v of result.verdicts || []) {
@@ -302,7 +326,7 @@ export async function generateQuizPack({
     log(`  got ${questions.length}`);
 
     if (check) {
-      log(`  checking them…`);
+      log(`  checking them with ${CHECKER_MODEL}…`);
       const verdicts = await checkQuestions({ questions: questions.slice(0, ask), apiKey, model, log });
       const good = verdicts.filter((v) => v.ok).map((v) => v.question);
       const bad = verdicts.filter((v) => !v.ok);

@@ -217,7 +217,7 @@ function quizGeneratePanel(gen) {
         <label><input type="checkbox" id="qImage" checked> Whose face</label>
         <label><input type="checkbox" id="qIntro" checked> Name that intro</label>
         <label><input type="checkbox" id="qHard"> Harder than usual</label>
-        <label title="A second pass that tries to find errors. Slower, and worth it."><input type="checkbox" id="qCheck" checked> Double-check the answers</label>
+        <span class="tiny">Every question is checked by a second pass before you see it.</span>
       </div>
       <div class="gen-status" id="qStatus"></div>
       ${gen.claude ? '' : '<div class="tiny warn">Set ANTHROPIC_API_KEY to write quizzes.</div>'}
@@ -263,7 +263,6 @@ async function generateQuiz(panel) {
       rounds,
       perRound: Number(panel.querySelector('#qPer').value),
       hard: panel.querySelector('#qHard').checked,
-      check: panel.querySelector('#qCheck').checked,
     }, say);
 
     if (result.error) {
@@ -279,9 +278,7 @@ async function generateQuiz(panel) {
       <div class="gen-good">
         Written <b>${esc(done.title)}</b> — ${done.questionCount} questions across
         ${done.rounds} round${done.rounds === 1 ? '' : 's'}.
-        ${done.checked
-          ? `<br>Checked over — ${done.rejected} question${done.rejected === 1 ? '' : 's'} thrown out and replaced.`
-          : '<br><b>Not checked</b> — read it especially carefully.'}
+        <br>Checked over — ${done.rejected} question${done.rejected === 1 ? '' : 's'} thrown out and replaced.
         ${done.backedUp ? '<br>Backed up to GitHub — this one is permanent.' : '<br><b>Not backed up</b> — this will be lost when the app restarts.'}
         <br><b>Now read it.</b> <a href="${linkTo('/editor')}">Open the editor</a> and
         check every question before anyone else sees it.
@@ -447,9 +444,7 @@ async function generate(panel) {
       <div class="gen-good">
         Built <b>${esc(done.title)}</b> — ${done.trackCount} tracks.
         ${done.playlist ? `<a href="${esc(done.playlist)}" target="_blank" rel="noopener">Open the Spotify playlist</a>` : 'No Spotify playlist.'}
-        ${done.checked
-          ? `<br>Checked over — ${done.rejected} question${done.rejected === 1 ? '' : 's'} thrown out and replaced.`
-          : '<br><b>Not checked</b> — read it especially carefully.'}
+        <br>Checked over — ${done.rejected} question${done.rejected === 1 ? '' : 's'} thrown out and replaced.
         ${done.backedUp ? '<br>Backed up to GitHub — this one is permanent.' : '<br><b>Not backed up</b> — this will be lost when the app restarts.'}
       </div>`));
     button.textContent = 'Built';
