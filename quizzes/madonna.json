@@ -1,0 +1,138 @@
+{
+  "id": "madonna",
+  "title": "The Madonna Quiz",
+  "subtitle": "Three rounds. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-08-05T20:03:17.294Z",
+  "notes": "Written by claude-sonnet-5 for \"Madonna\". NOT YET REVIEWED — read every question in the editor before the gig.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "text",
+      "title": "Round One — Madonna",
+      "blurb": "10 questions on Madonna",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "What is Madonna's real surname, given at birth in 1958?",
+          "options": [
+            "Colombo",
+            "Ciccone",
+            "Ciccolina",
+            "Cicconi"
+          ],
+          "correctIndex": 1,
+          "answerNote": "She was born Madonna Louise Ciccone in Bay City, Michigan."
+        },
+        {
+          "id": "r1q2",
+          "prompt": "In which US state was Madonna born?",
+          "options": [
+            "Ohio",
+            "Wisconsin",
+            "Michigan",
+            "Illinois"
+          ],
+          "correctIndex": 2,
+          "answerNote": "She was born in the town of Bay City, Michigan, in 1958."
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Madonna's hit 'Vogue' featured on the soundtrack of which 1990 film?",
+          "options": [
+            "Desperately Seeking Susan",
+            "A League of Their Own",
+            "Evita",
+            "Dick Tracy"
+          ],
+          "correctIndex": 3,
+          "answerNote": "Madonna starred as Breathless Mahoney in Dick Tracy, which featured 'Vogue'."
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which 1985 song gave Madonna her first UK number one single?",
+          "options": [
+            "Like a Virgin",
+            "Into the Groove",
+            "Material Girl",
+            "Holiday"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Earlier hits like Holiday and Like a Virgin had stalled just outside the top spot in the UK."
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Madonna won a Golden Globe for playing Eva Perón in which 1996 film?",
+          "options": [
+            "Body of Evidence",
+            "Evita",
+            "Dick Tracy",
+            "A League of Their Own"
+          ],
+          "correctIndex": 1,
+          "answerNote": "She won Best Actress in a Musical or Comedy at the Golden Globes for Evita."
+        },
+        {
+          "id": "r1q6",
+          "prompt": "'Frozen' and the title track came from which 1998 Madonna album?",
+          "options": [
+            "Bedtime Stories",
+            "Erotica",
+            "Ray of Light",
+            "Music"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Ray of Light won four Grammy Awards in 1999."
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Madonna's 2005 hit 'Hung Up' famously samples a 1979 song by which group?",
+          "options": [
+            "Bee Gees",
+            "Blondie",
+            "Kool & the Gang",
+            "ABBA"
+          ],
+          "correctIndex": 3,
+          "answerNote": "It samples ABBA's 'Gimme! Gimme! Gimme! (A Man After Midnight)'."
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which record label did Madonna co-found in 1992?",
+          "options": [
+            "Def Jam",
+            "Maverick Records",
+            "Rough Trade",
+            "Parlophone"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Maverick Records was co-founded with manager Freddy DeMann and Guy Oseary."
+        },
+        {
+          "id": "r1q9",
+          "prompt": "In which decade did Madonna release her self-titled debut album?",
+          "options": [
+            "1970s",
+            "2000s",
+            "1990s",
+            "1980s"
+          ],
+          "correctIndex": 3,
+          "answerNote": "Her debut album, simply titled Madonna, came out in 1983."
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which world tour, famous for a cone bra by Jean Paul Gaultier, began in 1990?",
+          "options": [
+            "Girlie Show Tour",
+            "Drowned World Tour",
+            "Blond Ambition Tour",
+            "Confessions Tour"
+          ],
+          "correctIndex": 2,
+          "answerNote": "The Blond Ambition Tour's cone bra costume became one of pop's most iconic images."
+        }
+      ]
+    }
+  ]
+}
