@@ -8,11 +8,12 @@
     "node": ">=20"
   },
   "scripts": {
-    "start": "node server.js",
+    "start": "node --env-file-if-exists=.env server.js",
     "test": "node --test test/*.test.js",
     "screenshots": "node scripts/shots.mjs",
-    "generate:quiz": "node scripts/generate-quiz.mjs",
-    "generate:images": "node scripts/generate-images.mjs"
+    "generate:quiz": "node --env-file-if-exists=.env scripts/generate-quiz.mjs",
+    "generate:images": "node --env-file-if-exists=.env scripts/generate-images.mjs",
+    "spotify:login": "node --env-file-if-exists=.env scripts/spotify-login.mjs"
   },
   "dependencies": {}
 }
