@@ -1,4 +1,4 @@
-# Music Quiz & Bingo
+# Mark's Music Madness
 
 Live pub games run from your laptop. The big screen goes on a projector,
 players join with their own phones by scanning a QR code, and you run
@@ -391,6 +391,7 @@ All optional — it runs with none of them set.
 | `PORT` | 3000 | |
 | `HOST_KEY` | generated once, kept in `data/` | Password for the control view and editor |
 | `PUBLIC_URL` | worked out from the request | Only needed if you put your own domain in front |
+| `BRAND_NAME` | `Mark's Music Madness` | Your name on every screen |
 | `QUIZ_ID` | first quiz found | Which quiz loads on a cold start |
 | `QUIZ_DIR` / `BINGO_DIR` / `DATA_DIR` / `IMAGE_DIR` | `./quizzes`, `./bingo`, `./data`, `./images` | |
 | `ANTHROPIC_API_KEY` | — | Needed to generate quizzes and bingo rounds |

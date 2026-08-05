@@ -3,6 +3,42 @@
  * server, and a couple of DOM helpers. Deliberately tiny and framework-free.
  */
 
+/**
+ * The logo: a record, drawn rather than loaded, so it costs no request and
+ * stays sharp at any size. Each one gets its own gradient id, because two on a
+ * page with the same id would fight.
+ */
+let markCount = 0;
+export function brandMark(size = 30) {
+  const id = `bm${++markCount}`;
+  return `
+    <svg class="brand-mark" width="${size}" height="${size}" viewBox="0 0 40 40" aria-hidden="true">
+      <defs>
+        <linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#ff2e88"/>
+          <stop offset="55%" stop-color="#ff8a3d"/>
+          <stop offset="100%" stop-color="#ffd23f"/>
+        </linearGradient>
+      </defs>
+      <circle cx="20" cy="20" r="19" fill="url(#${id})"/>
+      <circle cx="20" cy="20" r="13" fill="none" stroke="rgba(0,0,0,0.22)" stroke-width="1.6"/>
+      <circle cx="20" cy="20" r="8.5" fill="none" stroke="rgba(0,0,0,0.18)" stroke-width="1.2"/>
+      <circle cx="20" cy="20" r="3.6" fill="#0a0a12"/>
+    </svg>`;
+}
+
+/**
+ * The logo and the name, as a link back to the console — the way the top left
+ * of any website behaves. Keeps the host key on the link so it does not ask
+ * for it again.
+ */
+export function brandLink(name, { key = '', size = 30 } = {}) {
+  const href = '/console' + (key ? '?key=' + encodeURIComponent(key) : '');
+  return `<a class="brand" href="${href}" title="Back to the console">
+    ${brandMark(size)}<span class="brand-name">${esc(name)}</span>
+  </a>`;
+}
+
 export function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',

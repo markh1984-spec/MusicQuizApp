@@ -1291,3 +1291,64 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
 }
 .pv-warn ul { margin: 7px 0 0; padding-left: 19px; }
 .pv-warn li { margin-bottom: 4px; }
+
+/* ================================================================== BRAND
+   Logo and name, top left, linking back to the console — the way the corner of
+   any website behaves. */
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--ink);
+  border-radius: 10px;
+  padding: 4px 8px 4px 4px;
+  margin-left: -4px;
+  transition: background 160ms;
+}
+.brand:hover { background: rgba(255, 255, 255, 0.07); }
+.brand-mark { flex: 0 0 auto; display: block; }
+.brand-name {
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.console .brand-name { font-size: 18px; }
+.host .brand-name, .editor .brand-name { font-size: 15px; }
+
+/* The control view's bar puts the brand above the "where am I" line. */
+.host .bar { flex-wrap: wrap; }
+.host .bar #brandSlot { flex: 1 1 100%; margin-bottom: 2px; }
+
+/* Big screen: brand in the corner all night, quiz title beside it. */
+.screen .titles { display: flex; align-items: center; gap: 1.1vw; min-width: 0; }
+/* The slot holds the logo and the name, side by side rather than stacked. */
+.screen .titles #brandSlot { display: flex; align-items: center; gap: 0.7vw; }
+.screen .titles .brand-mark { width: 3.4vh; height: 3.4vh; }
+.screen .titles .brand-name {
+  font-size: 1.9vh;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+.screen .titles .title {
+  padding-left: 1.1vw;
+  border-left: 1px solid var(--panel-line);
+  opacity: 0.7;
+}
+
+/* Players see it too — they are looking at their phone all night. */
+.phone-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  padding-bottom: 4px;
+  opacity: 0.85;
+}
+.phone-brand .brand-name { font-size: 14px; letter-spacing: 0.02em; }
+
+@media (max-width: 430px) {
+  .console .brand-name { font-size: 16px; }
+}

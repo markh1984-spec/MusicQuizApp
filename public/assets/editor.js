@@ -11,7 +11,7 @@
  * is exactly what plays tonight.
  */
 
-import { esc, node, postJson } from './client.js';
+import { esc, node, postJson, brandLink } from './client.js';
 
 const LETTERS = ['A', 'B', 'C', 'D'];
 const ROUND_TYPES = [
@@ -64,6 +64,11 @@ async function api(path, options = {}) {
  */
 async function loadQuizList(selectId) {
   const library = await api('/api/library');
+  const slot = document.getElementById('brandSlot');
+  if (slot && library.brand) {
+    slot.innerHTML = brandLink(library.brand, { key: hostKey, size: 26 });
+    document.title = `Editor — ${library.brand}`;
+  }
   const options = [];
 
   if (library.quizzes.length) {

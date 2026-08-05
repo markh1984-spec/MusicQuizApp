@@ -52,9 +52,13 @@ async function backupStatus() {
 // ------------------------------------------------------------- broadcasting
 
 function viewFor(client) {
-  if (client.role === 'host') return session.hostView();
-  if (client.role === 'player') return session.playerView(client.playerId);
-  return session.screenView();
+  const view = client.role === 'host' ? session.hostView()
+    : client.role === 'player' ? session.playerView(client.playerId)
+    : session.screenView();
+  // Your name travels with every payload, so a page never has to ask for it
+  // separately or flash the wrong thing while it loads.
+  view.brand = config.brandName;
+  return view;
 }
 
 let pushQueued = false;
@@ -217,7 +221,11 @@ async function handleGet(req, res, url, route) {
 
   // ---- info
   if (route === '/api/join-url') {
-    return sendJson(res, 200, { url: `${publicOrigin(req)}/play` }), true;
+    return sendJson(res, 200, { url: `${publicOrigin(req)}/play`, brand: config.brandName }), true;
+  }
+  // Open, because the join page needs it before anybody has joined.
+  if (route === '/api/brand') {
+    return sendJson(res, 200, { name: config.brandName }), true;
   }
   if (route === '/api/state') {
     const role = url.searchParams.get('role') || 'screen';
@@ -236,6 +244,7 @@ async function handleGet(req, res, url, route) {
     const library = fullLibrary(config);
     const backup = await backupStatus();
     return sendJson(res, 200, {
+      brand: config.brandName,
       ...library,
       running: { game: session.kind, packId: session.pack.id, title: session.pack.title, phase: session.engine.state.phase, playerCount: session.engine.playerList().length },
       archive: listArchive(config.dataDir),
@@ -570,7 +579,7 @@ server.listen(config.port, () => {
   const local = `http://localhost:${config.port}`;
   console.log('');
   console.log('  ┌───────────────────────────────────────────────┐');
-  console.log('  │  Music Quiz & Bingo is running                │');
+  console.log(`  │  ${config.brandName.padEnd(43).slice(0, 43)}│`);
   console.log('  └───────────────────────────────────────────────┘');
   console.log('');
   console.log(`  Big screen   ${local}/screen`);

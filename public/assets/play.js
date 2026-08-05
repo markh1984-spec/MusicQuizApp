@@ -13,7 +13,7 @@
  *    makes googling an answer that bit harder.
  */
 
-import { esc, node, ServerClock, Live, postJson } from './client.js';
+import { esc, node, ServerClock, Live, postJson, brandMark } from './client.js';
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
 
 const STORE_KEY = 'musicquiz.player';
@@ -34,6 +34,15 @@ let state = null;
 let currentKey = null;
 let live = null;
 let pendingChoice = null; // shown immediately, before the server confirms
+
+/** Your name on the players' phones too — they are looking at it all night. */
+function paintBrand(name) {
+  const slot = document.getElementById('brandSlot');
+  if (!slot || !name || slot.dataset.done) return;
+  slot.innerHTML = `${brandMark(22)}<span class="brand-name">${esc(name)}</span>`;
+  slot.dataset.done = '1';
+  document.title = name;
+}
 
 function loadMe() {
   try {
@@ -95,6 +104,7 @@ function showJoin(message = '') {
 function draw(next) {
   state = next;
   clock.sync(state.serverNow);
+  paintBrand(state.brand);
 
   // The host removed this team: drop the stored id and start again.
   if (state.kicked) {
@@ -320,6 +330,8 @@ function startLive() {
  * lets somebody who wandered in late join partway through.
  */
 async function boot() {
+  fetch('/api/brand').then((r) => r.json()).then((d) => paintBrand(d.name)).catch(() => {});
+
   if (me && me.id) {
     try {
       const player = await postJson('/api/join', { playerId: me.id, name: me.name });

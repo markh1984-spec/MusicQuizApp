@@ -26,6 +26,11 @@ export const config = {
 
   // Which quiz is loaded when the server starts with no saved state.
   defaultQuizId: process.env.QUIZ_ID || '',
+
+  // Your name on it. Change BRAND_NAME and it changes everywhere: the console,
+  // the control view, the editor, the browser tab and the corner of the big
+  // screen. Left as one setting so venue branding can slot in later.
+  brandName: process.env.BRAND_NAME || "Mark's Music Madness",
 };
 
 export const paths = {

@@ -10,7 +10,7 @@
  * simply does not put it in this payload.
  */
 
-import { esc, node, ServerClock, Live } from './client.js';
+import { esc, node, ServerClock, Live, brandMark } from './client.js';
 import { bingoCard, bingoTopbar } from './screen-bingo.js';
 
 const cardEl = document.getElementById('card');
@@ -41,6 +41,13 @@ function draw(next) {
   state = next;
   clock.sync(state.serverNow);
 
+  // The brand sits in the corner all night; the quiz title sits next to it.
+  if (state.brand && !document.getElementById('brandSlot').dataset.done) {
+    const slot = document.getElementById('brandSlot');
+    slot.innerHTML = `${brandMark(26)}<span class="brand-name">${esc(state.brand)}</span>`;
+    slot.dataset.done = '1';
+    document.title = `${state.brand} — Big Screen`;
+  }
   quizTitleEl.textContent = state.quizTitle || state.title || 'Music Quiz';
   playerPillEl.textContent = `${state.playerCount} ${state.playerCount === 1 ? 'team' : 'teams'}`;
 

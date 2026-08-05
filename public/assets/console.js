@@ -7,7 +7,7 @@
  * something typed in fresh each time.
  */
 
-import { esc, node, postJson } from './client.js';
+import { esc, node, postJson, brandLink } from './client.js';
 
 const mainEl = document.getElementById('main');
 const runningEl = document.getElementById('runningNow');
@@ -105,6 +105,14 @@ const TABS = [
 
 const TAB_STORE = 'musicquiz.consoletab';
 
+/** Logo and name, top left, linking home — as any website does. */
+function paintBrand(name) {
+  const slot = document.getElementById('brandSlot');
+  if (!slot || !name) return;
+  slot.innerHTML = brandLink(name, { key: hostKey, size: 30 });
+  document.title = `Console — ${name}`;
+}
+
 function currentTab() {
   const wanted = new URL(location.href).searchParams.get('tab')
     || localStorage.getItem(TAB_STORE)
@@ -113,6 +121,7 @@ function currentTab() {
 }
 
 function render() {
+  paintBrand(library.brand);
   const running = library.running;
   runningEl.textContent = running
     ? `Now: ${running.title} (${running.playerCount} in)`

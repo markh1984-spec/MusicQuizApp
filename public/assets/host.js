@@ -10,7 +10,7 @@
  * always does the obvious next thing, in the same place every time.
  */
 
-import { esc, node, ServerClock, Live, postJson } from './client.js';
+import { esc, node, ServerClock, Live, postJson, brandLink } from './client.js';
 import { bingoPanels, bingoActions } from './host-bingo.js';
 
 const KEY_STORE = 'musicquiz.hostkey';
@@ -47,9 +47,16 @@ function toast(message) {
 
 // -------------------------------------------------------------------- draw
 
+let brandPainted = false;
 function draw(next) {
   state = next;
   clock.sync(state.serverNow);
+  if (!brandPainted && state.brand) {
+    const slot = document.getElementById('brandSlot');
+    if (slot) slot.innerHTML = brandLink(state.brand, { key: hostKey, size: 26 });
+    document.title = `Control — ${state.brand}`;
+    brandPainted = true;
+  }
   whereEl.textContent = whereLabel(state);
   connEl.textContent = `${state.playerCount} ${state.playerCount === 1 ? 'team' : 'teams'} in`;
   mainEl.replaceChildren(...buildPanels(state));
