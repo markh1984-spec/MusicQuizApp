@@ -508,16 +508,21 @@ function packCard(kind, pack) {
 
   const el = node(`
     <div class="pack-card ${pack.broken ? 'broken' : ''}">
-      <div class="pack-title">${esc(pack.title)}</div>
+      <button class="pack-title" title="Read it">${esc(pack.title)}</button>
       <div class="tiny">${esc(detail)}</div>
       <div class="tiny played">${esc(played)}</div>
       ${pack.broken ? `<div class="tiny" style="color:var(--bad)">Broken: ${esc(pack.broken)}</div>` : ''}
       ${pack.problems ? `<div class="tiny" style="color:var(--bad)">${pack.problems} thing${pack.problems === 1 ? '' : 's'} to fix</div>` : ''}
       <div class="pack-actions">
         <button class="go launch" ${pack.broken ? 'disabled' : ''}>Launch</button>
+        <button class="pack-read" title="Read it through">Read</button>
         <button class="pack-del" title="Delete this pack">Delete</button>
       </div>
     </div>`);
+
+  const openIt = () => preview(kind, pack);
+  el.querySelector('.pack-title')?.addEventListener('click', openIt);
+  el.querySelector('.pack-read')?.addEventListener('click', openIt);
 
   el.querySelector('.pack-del')?.addEventListener('click', async () => {
     if (!confirm(`Delete "${pack.title}"?\n\nThis removes it from your library for good.`)) return;
@@ -558,6 +563,110 @@ function packCard(kind, pack) {
     }
   });
   return el;
+}
+
+/**
+ * Read a pack through without leaving the console.
+ *
+ * The point is answering "is this any good?" in the thirty seconds before you
+ * decide to run it — so the correct answer is obvious at a glance, and there is
+ * a summary at the top flagging the things that make a quiz feel cheap: the
+ * answer always being in the same slot, or a round with no interesting facts to
+ * read out.
+ */
+async function preview(kind, pack) {
+  const overlay = node(`
+    <div class="overlay">
+      <div class="sheet">
+        <div class="sheet-head">
+          <div>
+            <div class="sheet-title">${esc(pack.title)}</div>
+            <div class="tiny" id="sheetSub">Loading…</div>
+          </div>
+          <div class="sheet-actions">
+            <a class="minor" href="${linkTo('/editor')}">Edit</a>
+            <button class="minor" id="sheetClose">Close</button>
+          </div>
+        </div>
+        <div class="sheet-body" id="sheetBody"></div>
+      </div>
+    </div>`);
+
+  document.body.appendChild(overlay);
+  const close = () => overlay.remove();
+  overlay.querySelector('#sheetClose').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  const onKey = (e) => { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); } };
+  document.addEventListener('keydown', onKey);
+
+  const body = overlay.querySelector('#sheetBody');
+  const sub = overlay.querySelector('#sheetSub');
+
+  try {
+    const res = await fetch(keyed(`/api/${kind}/` + encodeURIComponent(pack.id)));
+    if (!res.ok) throw new Error('Could not open it');
+    const data = await res.json();
+    if (kind === 'bingo') renderBingoPreview(body, sub, data);
+    else renderQuizPreview(body, sub, data);
+  } catch (err) {
+    sub.textContent = '';
+    body.replaceChildren(node(`<div class="tiny" style="color:var(--bad)">${esc(err.message)}</div>`));
+  }
+}
+
+const LETTERS = ['A', 'B', 'C', 'D'];
+
+function renderQuizPreview(body, sub, quiz) {
+  const all = quiz.rounds.flatMap((r) => r.questions);
+  const spread = [0, 0, 0, 0];
+  for (const q of all) if (spread[q.correctIndex] !== undefined) spread[q.correctIndex]++;
+  const noNotes = all.filter((q) => !q.answerNote).length;
+
+  sub.innerHTML = `${all.length} questions across ${quiz.rounds.length} round${quiz.rounds.length === 1 ? '' : 's'}
+    · answers land ${spread.map((n, i) => `${LETTERS[i]}&times;${n}`).join(' ')}
+    ${spread.some((n) => n > all.length * 0.5) ? '<b style="color:var(--gold)"> — lopsided, worth shuffling</b>' : ''}
+    ${noNotes ? ` · ${noNotes} with no fact to read out` : ''}`;
+
+  const parts = [];
+  for (const round of quiz.rounds) {
+    parts.push(node(`
+      <div class="pv-round">
+        <div class="pv-round-head">${esc(round.title)}<span class="tiny">${esc({ text: 'General knowledge', image: 'Whose face is this?', intro: 'Name that intro' }[round.type] || round.type)}</span></div>
+      </div>`));
+
+    round.questions.forEach((q, i) => {
+      parts.push(node(`
+        <div class="pv-q">
+          <div class="pv-prompt"><span class="pv-num">${i + 1}</span>${esc(q.prompt)}</div>
+          <div class="pv-opts">
+            ${q.options.map((o, oi) => `
+              <div class="pv-opt ${oi === q.correctIndex ? 'right' : ''}">
+                <span class="pv-letter">${LETTERS[oi]}</span>${esc(o)}
+              </div>`).join('')}
+          </div>
+          ${q.cue ? `<div class="pv-cue">Play: <b>${esc(q.cue.title)}</b> — ${esc(q.cue.artist)}${q.cue.hint ? ` · ${esc(q.cue.hint)}` : ''}</div>` : ''}
+          ${q.answerNote ? `<div class="pv-note">${esc(q.answerNote)}</div>` : ''}
+          ${q.note ? `<div class="pv-note">Your note: ${esc(q.note)}</div>` : ''}
+        </div>`));
+    });
+  }
+  body.replaceChildren(...parts);
+}
+
+function renderBingoPreview(body, sub, pack) {
+  const size = pack.cardSize || 4;
+  sub.innerHTML = `${pack.tracks.length} tracks · ${size}&times;${size} card
+    ${pack.spotifyPlaylist ? ` · <a href="${esc(pack.spotifyPlaylist.url)}" target="_blank" rel="noopener">Spotify playlist</a>` : ''}`;
+
+  body.replaceChildren(node(`
+    <div class="pv-tracks">
+      ${pack.tracks.map((t, i) => `
+        <div class="pv-track">
+          <span class="pv-num">${i + 1}</span>
+          <span class="pv-tt">${esc(t.title)}</span>
+          <span class="pv-ta">${esc(t.artist || '')}</span>
+        </div>`).join('')}
+    </div>`));
 }
 
 function archiveSection(archive) {
