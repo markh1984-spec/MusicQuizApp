@@ -15,10 +15,7 @@ and the one all changes get pushed to.
 Most guides online say `main` — yours is not called that, and it does not
 matter. Wherever a guide says `main`, use `MusicQuizApp`.
 
-**Optional tidy-up:** there is a leftover branch called
-`claude/new-session-jzx988` with identical content. To get rid of it, go to
-**https://github.com/markh1984-spec/MusicQuizApp/branches**, and click the
-**bin icon** next to it. Purely cosmetic — nothing depends on it.
+One branch, and it is the default. Nothing else to do here.
 
 ---
 

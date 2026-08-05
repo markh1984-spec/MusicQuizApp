@@ -168,12 +168,16 @@ anything structural:
 
 ## Where to push
 
-The deploy branch is **`MusicQuizApp`** — not `main`, which does not exist.
-Render watches it, so anything not pushed there does not reach the live app.
-Push straight to it; the host asked for that rather than merging by hand.
+**There is one branch: `MusicQuizApp`.** It is the default and the only one.
+There is no `main`. Render watches it, so anything not pushed there does not
+reach the live app.
 
-`claude/new-session-jzx988` is a leftover with identical content and can be
-ignored or deleted.
+Push straight to it — the host asked for that rather than merging by hand.
+
+**Do not create or push to `claude/new-session-jzx988` or any other session
+branch.** It existed, it was identical, the host deleted it deliberately and
+asked for the repo to stay tidy. Pushing a session branch would silently
+recreate it.
 
 ---
 
