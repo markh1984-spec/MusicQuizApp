@@ -13,7 +13,7 @@
  * need to know what games exist.
  */
 
-import { Engine, PHASES } from './engine.js';
+import { Engine, PHASES, isSafeId } from './engine.js';
 import { BingoGame, BINGO_PHASES, normaliseBingoPack } from './bingo.js';
 import { listQuizzes, loadQuiz } from './quizzes.js';
 import { listBingoPacks, loadBingoPack, recordLaunch, archiveResults } from './library.js';
@@ -86,9 +86,27 @@ export class Session {
 
     this.build(kind, pack, state);
 
+    /*
+     * Say out loud what happened, including the boring case.
+     *
+     * This used to log only when it restored something, so the expensive case
+     * — starting with no memory of a game that was running — left no trace at
+     * all. That is the case worth knowing about: on a host with no permanent
+     * disk, a restart means everyone's scores are gone, and the first anyone
+     * hears of it is confused players. Now the log says which of the three
+     * things happened, and the control view can show it.
+     */
+    this.startedAt = this.now();
+    this.restoredOnBoot = Boolean(state);
+    this.strandedPhones = 0;
+
     if (state) {
       const players = Object.keys(state.players || {}).length;
       console.log(`[session] restored ${kind} "${pack.title}" in progress: ${players} teams, phase ${state.phase}`);
+    } else if (saved) {
+      console.warn(`[session] STARTED FRESH — the saved game was for a different pack (saved "${saved.packId || saved.quizId}", loaded "${pack.id}"). Scores and teams from it are gone.`);
+    } else {
+      console.warn(`[session] STARTED FRESH — no saved game on disk. If a game was running before this restart, its scores and teams are gone.`);
     }
     return this;
   }
@@ -207,7 +225,18 @@ export class Session {
   }
 
   hostView() {
-    return { ...this.engine.hostView(), game: this.kind, packId: this.pack.id };
+    return {
+      ...this.engine.hostView(),
+      game: this.kind,
+      packId: this.pack.id,
+      // So the control view can tell you the app restarted, rather than
+      // leaving you to work it out from everyone's score being zero.
+      server: {
+        startedAt: this.startedAt,
+        restored: this.restoredOnBoot,
+        strandedPhones: this.strandedPhones,
+      },
+    };
   }
 
   results() {
@@ -251,6 +280,28 @@ export class Session {
 
     const handler = { ...shared, ...perGame }[action];
     return handler ? handler() : undefined;
+  }
+
+  /**
+   * A phone joining. Goes through here rather than straight to the engine so
+   * one thing can notice a phone arriving with an id we have never issued.
+   *
+   * That is proof, not a guess: it means the phone was in a game this process
+   * has no memory of. On a first-ever start nobody has a stored id, so this
+   * stays at zero and the control view keeps quiet. It only counts against
+   * this boot — a game the host launched deliberately is not a lost one.
+   */
+  joinPlayer({ playerId, name }) {
+    const known = playerId && this.engine.state.players[playerId];
+    const stranded = Boolean(playerId && isSafeId(playerId) && !known && !this.restoredOnBoot);
+    const player = this.engine.join({ playerId, name });
+    if (stranded) {
+      this.strandedPhones++;
+      if (this.strandedPhones === 1) {
+        console.warn('[session] a phone rejoined from a game this process never saw — the restart lost a game in progress');
+      }
+    }
+    return player;
   }
 
   /** Actions a player's phone is allowed to trigger. */

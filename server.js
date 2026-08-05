@@ -344,7 +344,7 @@ async function handleWrite(req, res, url, route) {
   // ---- players (open to anyone with the join link)
   if (route === '/api/join' && req.method === 'POST') {
     const body = await readJson(req);
-    const player = session.engine.join({ playerId: body.playerId, name: body.name });
+    const player = session.joinPlayer({ playerId: body.playerId, name: body.name });
     return sendJson(res, 200, { id: player.id, name: player.name, score: player.score ?? 0, game: session.kind }), true;
   }
 

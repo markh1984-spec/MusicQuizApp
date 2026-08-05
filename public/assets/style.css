@@ -1101,6 +1101,13 @@ body.console::after { display: none; }
 }
 .tiny.warn { margin-top: 10px; color: var(--gold); }
 
+/* Something the host needs to read mid-gig, in the dark, at a glance. */
+.panel.warn {
+  background: rgba(255, 210, 63, 0.12);
+  border: 1px solid rgba(255, 210, 63, 0.55);
+}
+.panel.warn h3 { color: var(--gold); }
+
 /* ---- bingo track list in the editor */
 .tracklist-edit { display: grid; gap: 6px; }
 .track-edit-row { display: flex; align-items: center; gap: 7px; }

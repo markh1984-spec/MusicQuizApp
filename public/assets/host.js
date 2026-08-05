@@ -59,8 +59,39 @@ function draw(next) {
   }
   whereEl.textContent = whereLabel(state);
   connEl.textContent = `${state.playerCount} ${state.playerCount === 1 ? 'team' : 'teams'} in`;
-  mainEl.replaceChildren(...buildPanels(state));
+  mainEl.replaceChildren(...restartNotice(state), ...buildPanels(state));
   actionsEl.replaceChildren(...buildActions(state));
+}
+
+/**
+ * Tell the host the app restarted, instead of leaving them to work it out.
+ *
+ * On a host with no permanent disk a restart takes the scores with it. Phones
+ * put themselves back on their own, so from the front of the room the only
+ * clue is that everybody is suddenly on nothing — which looks like a scoring
+ * bug rather than what it is. Saying so plainly is the difference between
+ * "the app is broken" and "we restarted, here is what I do about it".
+ *
+ * Only shown while it is still actionable: once the game has moved on there is
+ * nothing to be done about it and it is just noise on a busy screen.
+ */
+function restartNotice(s) {
+  const info = s.server;
+  // Not shown on a plain fresh start — only when a phone has turned up holding
+  // an id from a game this process never saw. That is proof a game was lost,
+  // rather than a warning on every startup, which you would learn to ignore.
+  if (!info || info.restored || !info.startedAt || !info.strandedPhones) return [];
+  const mins = Math.floor((clock.now() - info.startedAt) / 60000);
+  if (mins > 20) return [];
+  const when = mins < 1 ? 'less than a minute ago' : `${mins} minute${mins === 1 ? '' : 's'} ago`;
+  const n = info.strandedPhones;
+  return [node(`
+    <div class="panel warn">
+      <h3>The app restarted ${esc(when)}</h3>
+      <div class="tiny">It came back with no saved game, so scores from before then are gone.
+      ${n} phone${n === 1 ? '' : 's'} that ${n === 1 ? 'was' : 'were'} already playing put ${n === 1 ? 'itself' : 'themselves'} back in —
+      nobody has to scan again. Tap a team name to put their points back.</div>
+    </div>`)];
 }
 
 function whereLabel(s) {
