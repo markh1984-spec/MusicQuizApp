@@ -167,8 +167,10 @@ function renderQuestionMedia(s, q) {
     return `
       <div class="zoom-stage">
         <div class="zoom-frame" id="zoomFrame">
-          <img class="zoom-img" id="zoomImg" src="${esc(q.image)}" alt="Mystery musician">
+          <img class="zoom-img" id="zoomImg" src="${esc(q.image)}" alt="Mystery musician"
+               onerror="this.closest('.zoom-frame').classList.add('no-image')">
           <div class="zoom-caption">${esc(q.imageCaption || '')}</div>
+          <div class="zoom-missing">Picture missing — read this one out</div>
         </div>
       </div>`;
   }
@@ -254,13 +256,16 @@ function easeOut(t) {
 // -------------------------------------------------------------- leaderboard
 
 function renderBoard(s) {
-  const rows = (s.leaderboard || []).slice(0, 10);
+  const all = s.leaderboard || [];
+  const rows = all.slice(0, 10);
+  const more = all.length - rows.length;
   return node(`
     <div class="board">
       <h1 class="grad-text">After round ${s.roundIndex + 1}</h1>
       <div class="board-rows">
         ${rows.length ? rows.map((p, i) => boardRow(p, i)).join('') : '<div class="muted" style="font-size:3vh">No scores yet.</div>'}
       </div>
+      ${more > 0 ? `<div class="muted" style="font-size:2.2vh;margin-top:1.6vh">and ${more} more team${more === 1 ? '' : 's'} — everyone can see their own position on their phone</div>` : ''}
     </div>
   `);
 }

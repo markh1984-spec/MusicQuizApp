@@ -326,6 +326,18 @@ export class Engine {
         // Back from a reveal reopens the same question, cleared, from the top.
         return this.redoQuestion();
       case PHASES.QUESTION:
+        // The usual reason for pressing Back here is pressing Next once too
+        // often on the previous reveal. So go back to that reveal, with its
+        // scores and its fastest finger intact, rather than anywhere clever.
+        if (s.questionIndex > 0) {
+          s.questionIndex--;
+          s.phase = PHASES.REVEAL;
+          const seconds = this.questionSeconds();
+          const at = this.now();
+          s.question = { startedAt: at - seconds * 1000, endsAt: at, seconds, closed: true, revealedAt: at };
+          this.changed();
+          return true;
+        }
         s.phase = PHASES.ROUND_INTRO;
         s.question = null;
         this.changed();

@@ -295,6 +295,35 @@ test('going back from a reveal reopens the same question, cleared', () => {
   assert.equal(engine.state.players[a.id].score, 0);
 });
 
+test('going back from a question returns to the previous reveal, scores intact', () => {
+  const { engine, at } = makeEngine();
+  const [a] = joinThree(engine);
+  engine.start();
+  engine.next(); // q1
+  at(1_000);
+  engine.answer({ playerId: a.id, optionIndex: 1 });
+  engine.next(); // reveal q1
+  engine.next(); // q2 — one press too many
+
+  engine.back();
+  assert.equal(engine.state.phase, PHASES.REVEAL);
+  assert.equal(engine.state.questionIndex, 0);
+  // The points that question awarded are still there.
+  assert.equal(engine.state.players[a.id].score, 390);
+  assert.equal(engine.fastestFinger().name, 'Sofa King Good');
+  // And the clock reads as finished rather than counting down again.
+  assert.equal(engine.state.question.closed, true);
+  assert.equal(engine.msRemaining(), null);
+});
+
+test('going back from the first question of a round returns to the round intro', () => {
+  const { engine } = makeEngine();
+  engine.start();
+  engine.next(); // q1
+  engine.back();
+  assert.equal(engine.state.phase, PHASES.ROUND_INTRO);
+});
+
 test('the host can jump straight to any question', () => {
   const { engine } = makeEngine();
   assert.equal(engine.goTo(2, 0), true);

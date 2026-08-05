@@ -330,7 +330,9 @@ body::after {
 .reveal-banner .pts { margin-left: auto; font-weight: 900; color: var(--gold); font-size: 1.5em; }
 
 /* ---- leaderboard */
-.board { display: flex; flex-direction: column; height: 100%; }
+/* Centred vertically, so four teams look deliberate rather than stranded at
+   the top, and ten still fit comfortably. */
+.board { display: flex; flex-direction: column; height: 100%; justify-content: center; }
 .board h1 { font-size: 6.4vh; margin: 0 0 2.5vh; font-weight: 900; letter-spacing: -0.02em; }
 .board-rows { display: grid; gap: 1.1vh; align-content: start; overflow: hidden; }
 .board-row {
@@ -867,4 +869,19 @@ body.editor::after { display: none; }
   position: fixed; right: 20px; bottom: 20px; z-index: 60;
   padding: 12px 20px; border-radius: 999px; font-weight: 900;
   background: var(--good); color: #04240f; box-shadow: var(--shadow);
+}
+
+/* If a picture file is missing, say so plainly rather than showing the
+   browser's broken-image icon on a projector. The host can read the question
+   out and carry on. */
+.zoom-missing { display: none; }
+.zoom-frame.no-image .zoom-img { display: none; }
+.zoom-frame.no-image .zoom-caption { display: none; }
+.zoom-frame.no-image .zoom-missing {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  font-size: 3vh;
+  font-weight: 800;
+  color: var(--ink-dim);
 }

@@ -173,7 +173,7 @@ including the zoom part-way through.
 npm test
 ```
 
-75 tests, no network, no waiting on clocks — every timestamp is injected, so
+84 tests, no network, no waiting on clocks — every timestamp is injected, so
 a "twenty second question" runs instantly and identically every time. They
 cover the scoring maths, the question state machine, crash recovery, and the
 rule that nothing sensitive reaches the big screen.

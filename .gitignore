@@ -4,9 +4,9 @@ node_modules/
 # file is rewritten constantly during a gig.
 data/
 
-# Generated round 2 portraits. Keep the prompts in the quiz pack instead, and
-# regenerate. Delete this line if you would rather commit your image library.
-images/
+# NOTE: images/ is deliberately NOT ignored. Your host builds from git, so any
+# picture that is not committed does not exist on the deployed app and round 2
+# comes up blank. Commit your artwork.
 
 # Screenshots from scripts/shots.mjs
 screenshots/
