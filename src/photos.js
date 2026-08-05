@@ -136,7 +136,7 @@ export class Photos {
       return { ok: false, reason: 'could_not_save', error: err.message };
     }
 
-    const item = { id, file: name, at, playerId, teamName, filter, bytes: bytes.length };
+    const item = { id, file: name, at, playerId, teamName, filter, bytes: bytes.length, night: nightOf(at) };
     this.state.items.push(item);
 
     // Oldest out first when it fills up. A night that takes 300 photos is a
@@ -199,6 +199,69 @@ export class Photos {
     return this.state.items
       .slice(-limit)
       .reverse()
-      .map((p) => ({ id: p.id, url: `/photos/${p.file}`, teamName: p.teamName, at: p.at }));
+      .map((p) => ({ id: p.id, url: `/photos/${p.file}`, teamName: p.teamName, at: p.at, filed: Boolean(p.filed) }));
   }
+
+  /** Everything, grouped by the night it was taken, for the console. */
+  nights() {
+    return byNight(this.state.items.map((p) => ({
+      id: p.id,
+      url: `/photos/${p.file}`,
+      file: p.file,
+      teamName: p.teamName,
+      at: p.at,
+      night: p.night || nightOf(p.at),
+      filed: Boolean(p.filed),
+    })));
+  }
+
+  /** Note that a photo reached the private repo, so the console can say so. */
+  markFiled(id) {
+    const item = this.state.items.find((p) => p.id === id);
+    if (!item || item.filed) return false;
+    item.filed = true;
+    this.save();
+    return true;
+  }
+
+  /** Anything not yet filed away — what an "archive the rest" button acts on. */
+  unfiled() {
+    return this.state.items.filter((p) => !p.filed);
+  }
+
+  /** The bytes of one photo, for filing it. */
+  read(id) {
+    const item = this.state.items.find((p) => p.id === id);
+    if (!item) return null;
+    try {
+      return { item, bytes: fs.readFileSync(path.join(this.dir, item.file)) };
+    } catch {
+      return null;
+    }
+  }
+}
+
+/**
+ * Which night a photo belongs to.
+ *
+ * A quiz that runs past midnight is still the same night, so the day rolls
+ * over at 6am rather than at twelve. Nobody wants half a gig filed under
+ * Tuesday and half under Wednesday.
+ */
+export function nightOf(at) {
+  const d = new Date(at - 6 * 60 * 60 * 1000);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Everything from one night, newest first. */
+export function byNight(items) {
+  const nights = new Map();
+  for (const p of items) {
+    const key = p.night || nightOf(p.at);
+    if (!nights.has(key)) nights.set(key, []);
+    nights.get(key).push(p);
+  }
+  return [...nights.entries()]
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([night, list]) => ({ night, photos: [...list].reverse() }));
 }

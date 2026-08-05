@@ -30,7 +30,7 @@ import { listAdvertPacks, loadAdvertPack, saveAdvertPack, deleteAdvertPack, vali
 import { generateImages, imageStatus, imageJobs, openaiConfigured } from './src/generate-images.js';
 import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig } from './src/spotify.js';
-import { githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess } from './src/github.js';
+import { githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess, photosRepoConfigured, photosRepoName } from './src/github.js';
 import { toSvg } from './src/qrcode.js';
 
 const HOST_KEY = hostKey();
@@ -245,7 +245,10 @@ async function handleGet(req, res, url, route) {
     return sendJson(res, 200, {
       enabled: photos.enabled,
       count: photos.count(),
-      photos: photos.forHost(1000),
+      unfiled: photos.unfiled().length,
+      repo: photosRepoName(),
+      repoReady: photosRepoConfigured(),
+      nights: photos.nights(),
     }), true;
   }
 
@@ -425,6 +428,33 @@ async function backUp(relPath, contents, message, log = () => {}) {
   return result;
 }
 
+/**
+ * Put one photo in the private repository, foldered by night.
+ *
+ * Never throws and never blocks a response: a failure here means the photo is
+ * still on screen and still on this server, just not yet permanent. It is
+ * retried by the "file the rest away" button rather than in a loop, because a
+ * loop on a bad token would hammer GitHub all night for nothing.
+ */
+async function fileAway(photo) {
+  if (!photosRepoConfigured()) return { ok: false };
+  const read = photos.read(photo.id);
+  if (!read) return { ok: false };
+  const result = await putFile(
+    `photos/${photo.night}/${photo.file}`,
+    read.bytes,
+    `${photo.night}${photo.teamName ? ` — ${photo.teamName}` : ''}`,
+    'photos',
+  );
+  if (result.ok) {
+    photos.markFiled(photo.id);
+    pushState();
+  } else {
+    console.warn('[photos] could not file one away:', result.error);
+  }
+  return result;
+}
+
 function csvCell(value) {
   const s = String(value ?? '');
   return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
@@ -472,7 +502,14 @@ async function handleWrite(req, res, url, route) {
       teamName: player.name,
       filter: String(url.searchParams.get('filter') || ''),
     });
-    if (result.ok) pushState();
+    if (result.ok) {
+      pushState();
+      // File it away in the background. The phone gets its answer first —
+      // nobody should watch a spinner while GitHub thinks about it — and the
+      // photo is on screen either way. This is only about surviving the
+      // restart that would otherwise wipe it.
+      fileAway(result.photo);
+    }
     return sendJson(res, 200, result.ok ? { ok: true, id: result.photo.id } : result), true;
   }
 
@@ -516,6 +553,20 @@ async function handleWrite(req, res, url, route) {
       const removed = photos.remove(String(body.id || ''));
       if (removed) pushState();
       return sendJson(res, 200, { ok: removed }), true;
+    }
+    // File everything that has not made it to the private repo yet. Used at
+    // the end of a night, or after a spell where GitHub was unreachable.
+    if (action === 'photosFile') {
+      if (!photosRepoConfigured()) {
+        return sendJson(res, 200, { ok: false, reason: 'no_repo' }), true;
+      }
+      const todo = photos.unfiled();
+      let filed = 0;
+      for (const photo of todo) {
+        const result = await fileAway(photo);
+        if (result.ok) filed++;
+      }
+      return sendJson(res, 200, { ok: true, filed, failed: todo.length - filed }), true;
     }
     if (action === 'photosClear') {
       const n = photos.clear();

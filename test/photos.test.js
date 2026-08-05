@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { Photos, sniffType, extensionFor, MAX_BYTES, MAX_PHOTOS } from '../src/photos.js';
+import { Photos, sniffType, extensionFor, nightOf, MAX_BYTES, MAX_PHOTOS } from '../src/photos.js';
 
 function tempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'mmm-photos-'));
@@ -203,6 +203,83 @@ test('the screen payload is capped, because it goes to every device', () => {
     const photos = new Photos(dir, () => (t += 10));
     for (let i = 0; i < 80; i++) photos.add(jpeg(), { contentType: 'image/jpeg' });
     assert.ok(photos.forScreen().length <= 40, photos.forScreen().length);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// ---- Foldered by night, and filed away so a restart cannot take them.
+
+test('a night rolls over at 6am, not midnight', () => {
+  // A quiz that runs past twelve is still the same night. Half a gig under
+  // Tuesday and half under Wednesday would be useless for posting.
+  assert.equal(nightOf(Date.parse('2026-08-05T21:30:00Z')), '2026-08-05');
+  assert.equal(nightOf(Date.parse('2026-08-06T00:30:00Z')), '2026-08-05', 'still that night');
+  assert.equal(nightOf(Date.parse('2026-08-06T01:45:00Z')), '2026-08-05');
+  assert.equal(nightOf(Date.parse('2026-08-06T09:00:00Z')), '2026-08-06', 'a new day');
+});
+
+test('photos group into nights, newest night first', () => {
+  const dir = tempDir();
+  try {
+    const times = [
+      Date.parse('2026-08-05T21:00:00Z'),
+      Date.parse('2026-08-06T00:10:00Z'), // same night, past midnight
+      Date.parse('2026-08-12T21:00:00Z'), // the following week
+    ];
+    let i = 0;
+    const photos = new Photos(dir, () => times[i]);
+    for (; i < times.length; i++) photos.add(jpeg(), { contentType: 'image/jpeg', teamName: `T${i}` });
+
+    const nights = photos.nights();
+    assert.equal(nights.length, 2);
+    assert.equal(nights[0].night, '2026-08-12', 'newest night first');
+    assert.equal(nights[1].night, '2026-08-05');
+    assert.equal(nights[1].photos.length, 2, 'the one after midnight belongs to the same night');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a photo is not filed until it actually reaches the repository', () => {
+  const dir = tempDir();
+  try {
+    const photos = new Photos(dir, () => 1000);
+    const { photo } = photos.add(jpeg(), { contentType: 'image/jpeg' });
+    assert.equal(photos.unfiled().length, 1, 'not safe yet');
+    assert.equal(photos.forHost()[0].filed, false);
+
+    photos.markFiled(photo.id);
+    assert.equal(photos.unfiled().length, 0);
+    assert.equal(photos.forHost()[0].filed, true);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('being filed survives a restart, so nothing is uploaded twice', () => {
+  const dir = tempDir();
+  try {
+    const first = new Photos(dir, () => 1000);
+    const { photo } = first.add(jpeg(), { contentType: 'image/jpeg' });
+    first.markFiled(photo.id);
+
+    const second = new Photos(dir, () => 2000);
+    assert.equal(second.unfiled().length, 0);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('reading a photo back gives the bytes that were stored', () => {
+  const dir = tempDir();
+  try {
+    const photos = new Photos(dir, () => 1000);
+    const original = jpeg(128);
+    const { photo } = photos.add(original, { contentType: 'image/jpeg' });
+    const read = photos.read(photo.id);
+    assert.ok(read.bytes.equals(original));
+    assert.equal(photos.read('nope'), null);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

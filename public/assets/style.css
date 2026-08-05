@@ -1802,3 +1802,53 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   padding: 3px 8px; border-radius: 999px;
   background: rgba(75, 216, 255, 0.2); color: var(--cool);
 }
+
+/* ============================================================ PHOTOS TAB
+   A night's photos in the console: bin the duds, share the rest. */
+
+.night { margin-bottom: 26px; }
+.night-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+.night-head h3 { margin: 0; font-size: 18px; }
+.night-head .minor { margin-left: auto; }
+
+.night-grid {
+  display: grid; gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+.cphoto {
+  margin: 0; position: relative; overflow: hidden;
+  border-radius: 12px; background: var(--panel);
+  border: 1px solid var(--panel-line);
+}
+.cphoto img { display: block; width: 100%; height: 150px; object-fit: cover; }
+.cphoto figcaption {
+  font-size: 12px; font-weight: 700; padding: 7px 9px 8px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* A green edge means it is in the private repo and safe from a restart. */
+.cphoto.filed { border-color: rgba(47, 224, 122, 0.5); }
+.cphoto:not(.filed)::after {
+  content: 'not filed';
+  position: absolute; top: 8px; right: 8px;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 3px 7px; border-radius: 999px;
+  background: rgba(255, 210, 63, 0.9); color: #221a00;
+}
+.cphoto-acts {
+  position: absolute; left: 0; right: 0; bottom: 34px;
+  display: flex; gap: 6px; justify-content: center;
+  opacity: 0; transition: opacity 140ms;
+}
+.cphoto:hover .cphoto-acts, .cphoto:focus-within .cphoto-acts { opacity: 1; }
+.cphoto-acts button {
+  cursor: pointer; font: inherit; font-size: 12px; font-weight: 700;
+  padding: 6px 12px; border-radius: 999px;
+  color: var(--ink); background: rgba(10, 10, 18, 0.86);
+  border: 1px solid var(--panel-line);
+}
+.cphoto-acts .bin { color: var(--bad); }
+
+/* Touch screens have no hover, and this tab is used on a phone. */
+@media (hover: none) {
+  .cphoto-acts { opacity: 1; position: static; padding: 0 8px 8px; }
+}

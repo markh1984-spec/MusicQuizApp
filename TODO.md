@@ -492,6 +492,78 @@ applied.
 
 ---
 
+# PART 7f — A second repo, for the photos (10 minutes, once ever)
+
+Photos of the public must not go in your main repository — it is **public**,
+and git keeps everything forever, so deleting a photo would not really delete
+it. A second, **private** repo fixes that and costs nothing.
+
+It also fixes a real problem: right now the live app has no permanent disk, so
+a night's photos are wiped when the app restarts. Once this is set up they are
+filed away as they arrive.
+
+## 7f.1 — Make the repo
+
+- [ ] 🔗 **https://github.com/new**
+- [ ] **Repository name**: `MusicQuizPhotos`
+- [ ] **Description**: anything, or leave it
+- [ ] Choose **Private** ← the important one. Do not leave it on Public.
+- [ ] Tick **Add a README file** ← also important. A completely empty repo has
+      no branch yet, and the app cannot file anything into a repo with no
+      branch. The README gives it one.
+- [ ] **Create repository**
+
+## 7f.2 — Note the branch name
+
+New GitHub repos call their branch **`main`**. Your quiz repo is the odd one
+out at `MusicQuizApp`, so do not assume they match — look at the top left of
+the new repo's page and note what it says. It will almost certainly be `main`.
+
+## 7f.3 — Let your existing token reach it
+
+Your token is currently allowed to touch `MusicQuizApp` and nothing else, which
+is exactly right — so it has to be told about the new one.
+
+- [ ] 🔗 **https://github.com/settings/personal-access-tokens**
+- [ ] Click the token you made for the quiz app
+- [ ] Under **Repository access** → **Only select repositories** → **Select
+      repositories** → tick **`MusicQuizPhotos`** as well as `MusicQuizApp`
+- [ ] Check **Permissions → Repository permissions** still shows
+      **Contents: Read and write**
+- [ ] **Update token** at the bottom
+
+> You do not get a new token and nothing you have already set up changes. The
+> same token now reaches both repos.
+
+> **Rather keep them separate?** Make a second token instead, scoped only to
+> `MusicQuizPhotos`, and set `PHOTO_TOKEN` on Render as well. The app will use
+> that one for photos if it is there, and fall back to `GITHUB_TOKEN` if not.
+
+## 7f.4 — Tell the app about it
+
+🔗 **https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env**
+
+| Key | Value |
+|---|---|
+| `PHOTO_REPO` | `markh1984-spec/MusicQuizPhotos` |
+| `PHOTO_BRANCH` | `main` — only needed if step 7f.2 said something else |
+
+- [ ] **Save changes**. Render redeploys, about a minute.
+
+## 7f.5 — Check it worked
+
+- [ ] Open the **Photos** tab in the console. It should say photos are being
+      filed to `MusicQuizPhotos` rather than warning you they are temporary.
+- [ ] Join on your phone, send a photo, and refresh
+      🔗 https://github.com/markh1984-spec/MusicQuizPhotos — there should be a
+      dated folder with it in.
+
+> **Doing this on your own machine too?** Put the same two lines in `.env`.
+> Not required — it only matters on the live app, which is the one that wipes
+> itself.
+
+---
+
 # PART 8 — Making new rounds from now on
 
 **Always build at home, never on the live site.** Anything generated on the

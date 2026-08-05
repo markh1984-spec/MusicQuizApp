@@ -118,7 +118,7 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 | **Packs are JSON files** | That is what makes a quiz reusable months later and the editor simple. No database. |
 | **No profanity filter on team names** | Explicitly requested. Rude names go on the projector as typed. Only control characters stripped, 28-char cap, HTML escaped — that is anti-breakage, not censorship. **Do not add word filtering.** |
 | **Photo uploads auto-publish** | Host decided; he will handle the room with the mic. There is a kill switch and a per-photo bin in `src/photos.js` and **no approve step anywhere**. Do not add one. |
-| **Photos never go in THIS repo** | It is public (checked). Pictures of members of the public, kept in git history forever, is not acceptable. A separate **private** repo is a legitimate store and is the host's own suggestion — that is a different decision and is open. |
+| **Photos go in a SEPARATE PRIVATE repo** | `PHOTO_REPO`, filed as `photos/<night>/<file>` as they arrive. Never the main repo: it is public (checked), and git history is forever. `src/github.js` takes a `which` argument for this. |
 | **Filters are pixel maths, not `ctx.filter`** | `public/assets/filters.js`. Older iOS does not implement `ctx.filter`, and a filter that silently does nothing on a third of the room is worse than none. The preview and the upload go through the same function so they cannot drift. |
 | **No Instagram follow-for-points** | No API can verify a follow. Told the host; he agreed to drop it rather than fake it. |
 | **British spelling and UK chart references** | Crowds are Essex, Kent and Surrey. This is in the generation prompts too. |
@@ -331,7 +331,12 @@ In the host's own order of interest:
      **private** repo would work, is free and persistent, and reuses the token
      he already has. The alternative is a Render persistent disk, which needs
      the paid instance. His call.
-2. **Snapchat-style face filters — dog ears, clown noses.** NOT what
+2. **Draggable stickers — dog ears, clown noses.** Settled: he asked whether
+   Snapchat's own could be had via an API. They can — **Snap Camera Kit** has a
+   web SDK — but it needs partner approval, costs money above a threshold, and
+   loads megabytes onto a stranger's phone over pub wifi. He chose stickers for
+   now and wants to revisit Camera Kit later. Detail on why face tracking is
+   off the table: NOT what
    `filters.js` does; that is colour grading. He was clear he means the silly
    AR kind. Real face tracking needs a model (MediaPipe/TF.js, megabytes, and
    heavy on an old phone) or `FaceDetector`, which iOS Safari does not have —

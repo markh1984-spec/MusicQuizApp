@@ -34,20 +34,44 @@ export function missingGithubConfig() {
   return ['GITHUB_TOKEN', 'GITHUB_REPO'].filter((name) => !process.env[name]);
 }
 
-function settings() {
-  const repo = process.env.GITHUB_REPO || '';
+/**
+ * Which repository we are talking to.
+ *
+ * There are two. The code and the packs go in the main one. Photos of members
+ * of the public go in a **separate private** one, because the main repo is
+ * public and git history is forever — see PHOTO_REPO.
+ *
+ * @param {'app'|'photos'} which
+ */
+function settings(which = 'app') {
+  const isPhotos = which === 'photos';
+  const repo = (isPhotos ? process.env.PHOTO_REPO : process.env.GITHUB_REPO) || '';
   const [owner, name] = repo.split('/');
-  if (!owner || !name) throw new Error('GITHUB_REPO should look like "owner/repository"');
+  if (!owner || !name) {
+    throw new Error(`${isPhotos ? 'PHOTO_REPO' : 'GITHUB_REPO'} should look like "owner/repository"`);
+  }
   return {
     owner,
     name,
-    branch: process.env.GITHUB_BRANCH || 'MusicQuizApp',
-    token: process.env.GITHUB_TOKEN,
+    branch: isPhotos
+      // New GitHub repos default to main; the quiz repo is the odd one out.
+      ? (process.env.PHOTO_BRANCH || 'main')
+      : (process.env.GITHUB_BRANCH || 'MusicQuizApp'),
+    // A separate token is allowed but not required — one token can reach both.
+    token: (isPhotos && process.env.PHOTO_TOKEN) || process.env.GITHUB_TOKEN,
   };
 }
 
-async function api(path, options = {}) {
-  const { token } = settings();
+export function photosRepoConfigured() {
+  return Boolean(process.env.PHOTO_REPO && (process.env.PHOTO_TOKEN || process.env.GITHUB_TOKEN));
+}
+
+export function photosRepoName() {
+  return process.env.PHOTO_REPO || '';
+}
+
+async function api(path, options = {}, which = 'app') {
+  const { token } = settings(which);
   const res = await fetch(API + path, {
     ...options,
     headers: {
@@ -63,9 +87,9 @@ async function api(path, options = {}) {
 }
 
 /** The current sha of a file, or null if it is not there yet. */
-async function shaOf(filePath) {
-  const { owner, name, branch } = settings();
-  const res = await api(`/repos/${owner}/${name}/contents/${encodeURI(filePath)}?ref=${encodeURIComponent(branch)}`);
+async function shaOf(filePath, which = 'app') {
+  const { owner, name, branch } = settings(which);
+  const res = await api(`/repos/${owner}/${name}/contents/${encodeURI(filePath)}?ref=${encodeURIComponent(branch)}`, {}, which);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`GitHub ${res.status}: ${(await res.text()).slice(0, 160)}`);
   const data = await res.json();
@@ -76,11 +100,12 @@ async function shaOf(filePath) {
  * Create or update a file.
  * @returns {{ok: boolean, url?: string, error?: string}}
  */
-export async function putFile(filePath, contents, message) {
-  if (!githubConfigured()) return { ok: false, error: 'GitHub backup is not set up' };
+export async function putFile(filePath, contents, message, which = 'app') {
+  const ready = which === 'photos' ? photosRepoConfigured() : githubConfigured();
+  if (!ready) return { ok: false, error: `${which === 'photos' ? 'The photo repository' : 'GitHub backup'} is not set up` };
   try {
-    const { owner, name, branch } = settings();
-    const sha = await shaOf(filePath);
+    const { owner, name, branch } = settings(which);
+    const sha = await shaOf(filePath, which);
     const res = await api(`/repos/${owner}/${name}/contents/${encodeURI(filePath)}`, {
       method: 'PUT',
       body: JSON.stringify({
@@ -93,7 +118,7 @@ export async function putFile(filePath, contents, message) {
         branch,
         ...(sha ? { sha } : {}),
       }),
-    });
+    }, which);
     if (!res.ok) return { ok: false, error: `GitHub ${res.status}: ${(await res.text()).slice(0, 160)}` };
     const data = await res.json();
     return { ok: true, url: data.content?.html_url };
@@ -102,16 +127,17 @@ export async function putFile(filePath, contents, message) {
   }
 }
 
-export async function deleteFile(filePath, message) {
-  if (!githubConfigured()) return { ok: false, error: 'GitHub backup is not set up' };
+export async function deleteFile(filePath, message, which = 'app') {
+  const ready = which === 'photos' ? photosRepoConfigured() : githubConfigured();
+  if (!ready) return { ok: false, error: 'not set up' };
   try {
-    const { owner, name, branch } = settings();
-    const sha = await shaOf(filePath);
+    const { owner, name, branch } = settings(which);
+    const sha = await shaOf(filePath, which);
     if (!sha) return { ok: true, error: 'was not in the repository anyway' };
     const res = await api(`/repos/${owner}/${name}/contents/${encodeURI(filePath)}`, {
       method: 'DELETE',
       body: JSON.stringify({ message: `${message} [skip render]`, sha, branch }),
-    });
+    }, which);
     if (!res.ok) return { ok: false, error: `GitHub ${res.status}: ${(await res.text()).slice(0, 160)}` };
     return { ok: true };
   } catch (err) {
@@ -120,11 +146,12 @@ export async function deleteFile(filePath, message) {
 }
 
 /** A quick check that the token works and can write, for the console to show. */
-export async function checkAccess() {
-  if (!githubConfigured()) return { ok: false, error: 'not set up' };
+export async function checkAccess(which = 'app') {
+  const ready = which === 'photos' ? photosRepoConfigured() : githubConfigured();
+  if (!ready) return { ok: false, error: 'not set up' };
   try {
-    const { owner, name } = settings();
-    const res = await api(`/repos/${owner}/${name}`);
+    const { owner, name } = settings(which);
+    const res = await api(`/repos/${owner}/${name}`, {}, which);
     if (res.status === 401) return { ok: false, error: 'token rejected' };
     if (res.status === 404) return { ok: false, error: 'repository not found, or the token cannot see it' };
     if (!res.ok) return { ok: false, error: `GitHub ${res.status}` };
@@ -132,7 +159,9 @@ export async function checkAccess() {
     if (data.permissions && data.permissions.push === false) {
       return { ok: false, error: 'token can read but not write' };
     }
-    return { ok: true, repo: data.full_name };
+    // Worth surfacing for the photo repo: a public one would be the wrong
+    // place for pictures of the public, and it is an easy tick to miss.
+    return { ok: true, repo: data.full_name, private: data.private === true };
   } catch (err) {
     return { ok: false, error: err.message };
   }
