@@ -24,6 +24,7 @@ import { validateBingoPack, normaliseBingoPack } from './src/bingo.js';
 import { fullLibrary, listArchive, loadArchived, saveBingoPack, loadBingoPack, deleteBingoPack } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
 import { generateQuizPack } from './src/generate-quiz.js';
+import { importBingoPack } from './src/import-bingo.js';
 import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig } from './src/spotify.js';
 import { githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess } from './src/github.js';
@@ -517,6 +518,46 @@ async function handleWrite(req, res, url, route) {
         backedUp: backup.ok,
         checked: result.checked,
         rejected: result.rejected.length,
+      }));
+    } catch (err) {
+      log('ERROR ' + err.message);
+    }
+    res.end();
+    return true;
+  }
+
+  // Bring in a track list you already have — a Spotify playlist you built, or
+  // one Claude made for you in a browser. Streams like the generators do.
+  if (route === '/api/import/bingo' && req.method === 'POST') {
+    const body = await readJson(req, 512 * 1024);
+    res.writeHead(200, {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      'X-Accel-Buffering': 'no',
+    });
+    const log = (line) => { try { res.write(line + '\n'); } catch { /* client left */ } };
+    try {
+      const result = await importBingoPack({
+        config,
+        playlistUrl: String(body.playlistUrl || ''),
+        text: String(body.text || ''),
+        title: String(body.title || '').slice(0, 80) || undefined,
+        cardSize: [3, 4, 5].includes(Number(body.cardSize)) ? Number(body.cardSize) : 4,
+        avoidMonths: Math.min(24, Math.max(0, Number(body.avoidMonths ?? 0))),
+        log,
+      });
+      const backup = await backUp(
+        `bingo/${result.pack.id}.json`,
+        JSON.stringify(result.pack, null, 2) + '\n',
+        `Import bingo pack: ${result.pack.title}`,
+        log,
+      );
+      log('DONE ' + JSON.stringify({
+        id: result.pack.id,
+        title: result.pack.title,
+        trackCount: result.pack.tracks.length,
+        playlist: result.playlist ? result.playlist.url : null,
+        backedUp: backup.ok,
       }));
     } catch (err) {
       log('ERROR ' + err.message);

@@ -1417,3 +1417,21 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   font-weight: 700;
   color: #1db954;
 }
+
+/* ---- importing a list you already have */
+.panel.import { border-color: rgba(29, 185, 84, 0.4); background: rgba(29, 185, 84, 0.06); }
+.panel.import .gen-row .go { background: #1db954; color: #04240f; }
+.import-paste { margin-top: 12px; }
+.import-paste summary {
+  cursor: pointer; font-size: 13px; font-weight: 700; color: var(--ink-dim);
+  padding: 4px 0;
+}
+.import-paste summary:hover { color: var(--ink); }
+.import-paste textarea {
+  width: 100%; margin-top: 8px; padding: 11px 13px;
+  border-radius: 10px; border: 1px solid var(--panel-line);
+  background: rgba(0, 0, 0, 0.3); color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px; line-height: 1.6; resize: vertical;
+}
+.import-paste textarea:focus { outline: 2px solid #1db954; outline-offset: 1px; }

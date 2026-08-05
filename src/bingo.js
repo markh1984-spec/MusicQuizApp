@@ -559,6 +559,18 @@ function cardSignature(card) {
   return (card || []).join('|');
 }
 
+/**
+ * How many tracks a pack really needs.
+ *
+ * Sixteen tracks fills a 4x4 card, but it fills every card with the same
+ * sixteen — only the arrangement differs, so the room finishes together and
+ * nobody feels they won anything. Half again gives enough spare for cards to
+ * genuinely differ.
+ */
+export function minimumTracks(cardSize = 4) {
+  return Math.ceil(cardSize * cardSize * 1.5);
+}
+
 /** Same shape of checks as the quiz packs: catch it now, not on the night. */
 export function validateBingoPack(pack) {
   const problems = [];
@@ -572,8 +584,8 @@ export function validateBingoPack(pack) {
   const squares = size * size;
   if (tracks.length < squares) {
     problems.push(`Only ${tracks.length} tracks for a ${size}x${size} card — you need at least ${squares}.`);
-  } else if (tracks.length < squares * 1.5) {
-    problems.push(`Only ${tracks.length} tracks for a ${size}x${size} card. Add more (${Math.ceil(squares * 1.5)}+) or cards will look too alike.`);
+  } else if (tracks.length < minimumTracks(size)) {
+    problems.push(`Only ${tracks.length} tracks for a ${size}x${size} card. Add more (${minimumTracks(size)}+) or cards will look too alike.`);
   }
 
   const seen = new Set();

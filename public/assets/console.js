@@ -93,7 +93,12 @@ const TABS = [
     blurb: 'You play the tracks. Every phone gets its own card.',
     editLabel: 'Edit track lists',
     packs: () => library.bingo,
-    generator: () => generatePanel(library.generation || {}),
+    generator: () => {
+      const wrap = document.createDocumentFragment();
+      wrap.appendChild(generatePanel(library.generation || {}));
+      wrap.appendChild(importPanel(library.generation || {}));
+      return wrap;
+    },
   },
   {
     id: 'past',
@@ -339,6 +344,89 @@ async function streamGeneration(path, body, say) {
     }
   }
   return { done, error };
+}
+
+/**
+ * Bring in a list you already have.
+ *
+ * There is more than one good way to end up with forty songs — a playlist you
+ * built over months, or Claude in your browser with its own instructions and a
+ * Spotify connector. None of that should have to be redone here.
+ */
+function importPanel(gen) {
+  const el = node(`
+    <div class="panel import">
+      <h3>Or bring in a list you already have</h3>
+      <div class="gen-row">
+        <input type="text" id="impUrl" placeholder="Paste a Spotify playlist link…" autocomplete="off">
+        <button class="go" id="impGo">Import</button>
+      </div>
+      <details class="import-paste">
+        <summary>or paste a track list instead</summary>
+        <textarea id="impText" rows="7" placeholder="One per line — any of these work:&#10;&#10;Billie Jean — Michael Jackson&#10;1. Take On Me - a-ha&#10;Blue Monday by New Order"></textarea>
+      </details>
+      <div class="gen-opts">
+        <label>Card <select id="impSize"><option value="3">3×3</option><option value="4" selected>4×4</option><option value="5">5×5</option></select></label>
+        <label>Call it <input type="text" id="impTitle" placeholder="optional" style="width:150px"></label>
+        <label title="Off by default — you probably built this list on purpose."><input type="checkbox" id="impAvoid"> Skip songs played recently</label>
+      </div>
+      <div class="gen-status" id="impStatus"></div>
+      ${gen.spotify ? '' : '<div class="tiny warn">Spotify is not set up, so playlist links will not work — paste a list instead.</div>'}
+    </div>`);
+
+  el.querySelector('#impGo').addEventListener('click', () => runImport(el));
+  el.querySelector('#impUrl').addEventListener('keydown', (e) => { if (e.key === 'Enter') runImport(el); });
+  return el;
+}
+
+async function runImport(panel) {
+  const playlistUrl = panel.querySelector('#impUrl').value.trim();
+  const text = panel.querySelector('#impText').value.trim();
+  const status = panel.querySelector('#impStatus');
+  const button = panel.querySelector('#impGo');
+
+  if (!playlistUrl && !text) {
+    status.textContent = 'Paste a playlist link, or a track list.';
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = 'Importing…';
+  status.innerHTML = '<div class="gen-log"></div>';
+  const logEl = status.querySelector('.gen-log');
+  const say = (line) => {
+    logEl.appendChild(node(`<div>${esc(line)}</div>`));
+    logEl.scrollTop = logEl.scrollHeight;
+  };
+
+  try {
+    const { done, error } = await streamGeneration('/api/import/bingo', {
+      playlistUrl,
+      text,
+      title: panel.querySelector('#impTitle').value.trim(),
+      cardSize: Number(panel.querySelector('#impSize').value),
+      avoidMonths: panel.querySelector('#impAvoid').checked ? 3 : 0,
+    }, say);
+
+    if (error) {
+      status.appendChild(node(`<div class="gen-bad">${esc(error)}</div>`));
+      button.disabled = false;
+      button.textContent = 'Import';
+      return;
+    }
+
+    status.appendChild(node(`
+      <div class="gen-good">
+        Imported <b>${esc(done.title)}</b> — ${done.trackCount} tracks.
+        ${done.backedUp ? '<br>Backed up to GitHub — this one is permanent.' : '<br><b>Not backed up.</b>'}
+      </div>`));
+    button.textContent = 'Imported';
+    await load();
+  } catch (err) {
+    status.appendChild(node(`<div class="gen-bad">${esc(err.message)}</div>`));
+    button.disabled = false;
+    button.textContent = 'Import';
+  }
 }
 
 /**

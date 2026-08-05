@@ -21,8 +21,23 @@
 const ACCOUNTS = 'https://accounts.spotify.com';
 const API = 'https://api.spotify.com/v1';
 
-/** The scopes the app needs, and no more than that. */
-export const SCOPES = ['playlist-modify-private', 'playlist-modify-public'];
+/**
+ * The scopes the app needs, and no more than that.
+ *
+ * The two "read" ones are what let it import a playlist you already made — in
+ * the Spotify app, or by asking Claude in your browser. Without them a private
+ * playlist comes back as "not found", which is a confusing way for Spotify to
+ * say "you did not ask for permission".
+ *
+ * If you set Spotify up before importing existed, re-run
+ * `npm run spotify:login` to pick these up.
+ */
+export const SCOPES = [
+  'playlist-modify-private',
+  'playlist-modify-public',
+  'playlist-read-private',
+  'playlist-read-collaborative',
+];
 
 export function spotifyConfigured() {
   return Boolean(
@@ -163,6 +178,66 @@ export async function createPlaylist({ name, description = '', uris = [], isPubl
     url: playlist.external_urls?.spotify || `https://open.spotify.com/playlist/${playlist.id}`,
     uri: playlist.uri,
     trackCount: uris.length,
+  };
+}
+
+/** Pull the id out of anything Spotify hands you for a playlist. */
+export function playlistId(input) {
+  const s = String(input || '').trim();
+  const uri = s.match(/^spotify:playlist:([A-Za-z0-9]+)/);
+  if (uri) return uri[1];
+  const url = s.match(/playlist\/([A-Za-z0-9]+)/);
+  if (url) return url[1];
+  if (/^[A-Za-z0-9]{20,}$/.test(s)) return s;
+  return null;
+}
+
+/**
+ * Read a playlist you already made — in the Spotify app, or by asking Claude
+ * in your browser to build one. Lets an existing way of working feed straight
+ * into a bingo pack rather than being redone here.
+ */
+export async function playlistTracks(input) {
+  const id = playlistId(input);
+  if (!id) throw new Error('That does not look like a Spotify playlist link');
+
+  let meta;
+  try {
+    meta = await api(`/playlists/${id}?fields=name,external_urls,uri`);
+  } catch (err) {
+    if (/\(404\)/.test(err.message)) {
+      throw new Error(
+        'Spotify says that playlist does not exist. If it is private, re-run '
+        + '`npm run spotify:login` — reading private playlists needs a permission '
+        + 'that older setups did not ask for.',
+      );
+    }
+    throw err;
+  }
+  const tracks = [];
+  let url = `/playlists/${id}/tracks?limit=100&fields=next,items(track(id,uri,name,artists(name),album(release_date)))`;
+
+  while (url) {
+    const page = await api(url);
+    for (const item of page.items || []) {
+      const t = item.track;
+      if (!t || !t.id) continue; // local files and removed tracks have no id
+      tracks.push({
+        title: t.name,
+        artist: (t.artists || []).map((a) => a.name).join(', '),
+        year: Number((t.album?.release_date || '').slice(0, 4)) || undefined,
+        spotifyUri: t.uri,
+      });
+    }
+    // The next link comes back absolute; we only want the path.
+    url = page.next ? page.next.replace('https://api.spotify.com/v1', '') : null;
+  }
+
+  return {
+    name: meta.name,
+    url: meta.external_urls?.spotify || '',
+    uri: meta.uri,
+    tracks,
   };
 }
 
