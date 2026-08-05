@@ -144,7 +144,7 @@ function draw(next) {
   if (state.kicked) {
     localStorage.removeItem(STORE_KEY);
     me = null;
-    if (live && live.source) live.source.close();
+    if (live) { live.stop(); live = null; }
     showJoin('You were removed from the quiz. Join again below.');
     return;
   }
@@ -362,6 +362,10 @@ function setStatus(status) {
 }
 
 function startLive() {
+  // Retire the old one first. A live connection carries the player id in its
+  // URL, so leaving a previous one running means a second stream still
+  // claiming to be whoever we used to be.
+  if (live) live.stop();
   live = new Live(`/api/stream?role=player&playerId=${encodeURIComponent(me.id)}`, {
     onState: draw,
     onStatus: setStatus,

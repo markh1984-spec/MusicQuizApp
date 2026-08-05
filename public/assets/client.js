@@ -92,11 +92,12 @@ export class Live {
     this.onStatus = onStatus || (() => {});
     this.source = null;
     this.lastMessageAt = 0;
+    this.stopped = false;
+    this.timers = [];
     this.connect();
-    setInterval(() => this.checkAlive(), 5000);
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) this.checkAlive(true);
-    });
+    this.timers.push(setInterval(() => this.checkAlive(), 5000));
+    this.onVisible = () => { if (!document.hidden) this.checkAlive(true); };
+    document.addEventListener('visibilitychange', this.onVisible);
 
     /*
      * Keep the server awake.
@@ -110,12 +111,35 @@ export class Live {
      * One tiny request every four minutes is enough to stop that. It costs
      * nothing and it removes a whole category of gig-night disaster.
      */
-    setInterval(() => {
+    this.timers.push(setInterval(() => {
       fetch('/health', { cache: 'no-store' }).catch(() => {});
-    }, 4 * 60 * 1000);
+    }, 4 * 60 * 1000));
+  }
+
+  /**
+   * Shut this connection down for good — stream closed, timers cleared.
+   *
+   * Without this, replacing a connection left the old one alive: its stream
+   * was closed but its keep-alive timer was not, so forty seconds later it
+   * reopened itself and started delivering state again under the OLD player
+   * id. The server rightly said it did not know that id, and the phone threw
+   * the player out — a player who was, by then, perfectly happily rejoined
+   * under a new one. One stray disconnection turned into being kicked over
+   * and over for the rest of the night.
+   */
+  stop() {
+    this.stopped = true;
+    for (const t of this.timers) clearInterval(t);
+    this.timers = [];
+    document.removeEventListener('visibilitychange', this.onVisible);
+    if (this.source) {
+      try { this.source.close(); } catch { /* already gone */ }
+      this.source = null;
+    }
   }
 
   connect() {
+    if (this.stopped) return;
     if (this.source) this.source.close();
     this.source = new EventSource(this.url);
     this.source.addEventListener('open', () => {
@@ -136,6 +160,7 @@ export class Live {
 
   /** Heartbeats arrive every 15s; 40s of silence means the link is dead. */
   checkAlive(force = false) {
+    if (this.stopped) return;
     const quietFor = Date.now() - this.lastMessageAt;
     if (force || quietFor > 40000) {
       if (quietFor > 20000 || force) {

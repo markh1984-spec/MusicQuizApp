@@ -57,6 +57,12 @@ used to throw the whole room out mid-question and wipe their team names.
 `kicked` wipes localStorage on the phone, so getting this wrong is not
 cosmetic. Do not reintroduce "no player found, therefore kicked".
 
+Related, and the thing that made it recur: a `Live` carries the player id in
+its URL, so replacing one **must** call `live.stop()` first. It used to only
+close the stream and leave the keep-alive timer running, which reopened the
+old stream under the old id forty seconds later. Every rejoin left another one
+behind, all of them claiming to be someone the server no longer had.
+
 ### 4. Bingo cards cannot be regenerated
 The card is built server-side on join and stored against the player. There is
 **no endpoint that issues a new card** and no card-generating code on the
