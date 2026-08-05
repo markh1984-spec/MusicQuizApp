@@ -12,34 +12,27 @@ Every step has the link you need next to it. Work down it in order.
 |---|---|
 | Your repository | https://github.com/markh1984-spec/MusicQuizApp |
 | Render dashboard | https://dashboard.render.com |
+| **Your service — environment variables** | https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env |
+| **Your service — settings** | https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/settings |
+| **Your service — logs** | https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/logs |
 | Anthropic billing | https://console.anthropic.com/settings/billing |
 | OpenAI API keys | https://platform.openai.com/api-keys |
 | Spotify dashboard | https://developer.spotify.com/dashboard |
 
-### How to get a direct link to any Render page
+### Two levels in Render, and why it is confusing
 
-Render's own addresses contain a service id it invents, so I cannot write them
-out for you in advance. But once you have clicked into your service, the
-address bar shows something like:
+Render wraps your service inside a **project**, and the two look similar:
 
-```
-https://dashboard.render.com/web/srv-d1abc2de3fg4h5i6j7k8
-```
-
-**Copy that once and keep it.** Every page of your service is that address with
-one word on the end:
-
-| Page | Add to the end |
+| Address starts with | What it is |
 |---|---|
-| Environment variables | `/env` |
-| Settings | `/settings` |
-| Logs | `/logs` |
-| Deploy history | `/deploys` |
+| `/project/prj-…` | the **project** — wrong level. Its "environments" and "environment groups" are a different feature and not what you want. |
+| `/web/srv-…` | the **service** — right level. This is where environment variables live. |
 
-So your environment variables page is permanently:
-`https://dashboard.render.com/web/srv-YOURID/env`
+Your service is **`srv-d9pnk0e417fc73bvjdkg`**, and the links in the table above
+go straight to it, so you never have to click through the project again.
 
-Worth writing that one down — it is the page you will come back to most.
+Lost? Press **Ctrl+K** (or **Cmd+K** on a Mac) anywhere in the Render dashboard
+and type `musicquiz`.
 
 ---
 
@@ -64,13 +57,11 @@ it can see every answer, so it is worth choosing properly.
 Right now the app has invented one for you, but a generated key **changes every
 time the app redeploys**, so bookmarks break. Set your own and it stays put.
 
-🔗 **https://dashboard.render.com** → click your service → **Environment** in
-the left sidebar (or add `/env` to the address as described above)
+🔗 **https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env**
 
-On that page look for the section headed **Environment Variables** — *not*
+On that page find the section headed **Environment Variables** — *not*
 **Environment Groups**, which is a different feature for sharing variables
-between several services and is not what you want. The variables section is
-usually above it.
+between several services.
 
 Click **+ Add Environment Variable** and fill in:
 
@@ -81,8 +72,8 @@ Click **+ Add Environment Variable** and fill in:
 Then **Save changes**. Render redeploys itself, about a minute.
 
 > **Cannot find the section?** Try the Settings page instead —
-> `https://dashboard.render.com/web/srv-YOURID/settings` — and scroll to
-> **Environment Variables**. Same effect.
+> https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/settings — and
+> scroll to **Environment Variables**. Same effect.
 
 > **Choosing the key:** not the venue name, not your Instagram handle, not
 > "quiz". Three unrelated words is memorable, typeable one-handed in the dark,
@@ -391,8 +382,8 @@ you commit it.
 - [ ] **Test round 3 properly** — music app open, check your phone tells you
       what to play while the big screen gives nothing away.
 - [ ] **Switch to the paid tier.** 🔗
-      `https://dashboard.render.com/web/srv-YOURID/settings` → **Instance
-      Type** → **Starter** ($7/mo). A dropdown, applies instantly, switch back
+      https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/settings →
+      **Instance Type** → **Starter** ($7/mo). A dropdown, applies instantly, switch back
       any time. What it buys is removing the "arrived late, forgot to open the
       screen early, sixty people scanned into a blank page" problem. About 3%
       of one night's fee.
@@ -435,7 +426,7 @@ Free tier waking up. Wait 60 seconds, do not keep refreshing.
 
 **"Wrong host key"**
 The key in your address does not match `HOST_KEY` in Render.
-🔗 `https://dashboard.render.com/web/srv-YOURID/env`
+🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env
 
 **Phones join but nothing updates**
 Venue wifi. Tell people to turn wifi off and use mobile data — the app is built
@@ -449,5 +440,5 @@ Console → the game you want → **Launch**. Starts completely fresh. Teams rej
 in ten seconds.
 
 **Still stuck**
-🔗 `https://dashboard.render.com/web/srv-YOURID/logs` — errors are in plain
-English.
+🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/logs — errors are
+in plain English.
