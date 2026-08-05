@@ -32,7 +32,18 @@ to wake. Your routine on the night:
 - [ ] If you get a blank page, that is it waking up — wait a minute, do not
       refresh repeatedly.
 
-Move to **Starter** ($7/mo) if the waking-up ever catches you out.
+- [ ] **Before your first paying gig, switch to Starter ($7/mo).** Free is fine
+      for testing at home. What the money buys is removing the "arrived late,
+      forgot to open the screen early, sixty people scanned into a blank page"
+      failure — which is a human risk, not a technical one, and it lands on the
+      night you are already flustered. About 3% of one night's fee.
+      Render → Settings → Instance Type → Starter. It is a dropdown, takes
+      effect immediately, and you can switch back any time.
+
+While you are on free: **do not leave the big screen tab open overnight.** The
+app pings the server to stay awake while a screen is connected, and left going
+24/7 that eats the 750 free instance-hours a month. Close the tab when you are
+finished and it sleeps as intended.
 
 ---
 
