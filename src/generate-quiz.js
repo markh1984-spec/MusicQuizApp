@@ -269,6 +269,87 @@ function roundBlurb(type, theme, perRound) {
 }
 
 /**
+ * Build one round of exactly `perRound` questions that have passed the check.
+ *
+ * A round of nine is not acceptable — the host asked for ten and the screen
+ * says "question 10 of 10". So when the check throws questions away, we go back
+ * and write more rather than making up the shortfall with the ones that just
+ * failed. Each attempt is told what has already been written so it does not
+ * repeat itself.
+ *
+ * Only if three attempts still cannot produce enough do we fall back to filling
+ * from the rejects — and then the log shouts about it, because at that point
+ * you need to read those specific questions.
+ */
+const MAX_ATTEMPTS = 3;
+
+async function buildRound({ brief, perRound, check, system, apiKey, model, log, onReject }) {
+  const accepted = [];
+  const failed = [];
+  const seen = new Set();
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS && accepted.length < perRound; attempt++) {
+    const need = perRound - accepted.length;
+    // Ask for more than we need so the check has something to throw away.
+    const ask = check ? need + Math.max(3, Math.ceil(need * 0.5)) : need;
+
+    const alreadyWritten = [...accepted, ...failed].map((q) => q.prompt);
+    const avoid = alreadyWritten.length
+      ? `\n\nYou have already written these — do not repeat them or ask the same thing a different way:\n${alreadyWritten.map((p) => `- ${p}`).join('\n')}`
+      : '';
+
+    log(attempt === 1
+      ? `  writing ${ask} questions…`
+      : `  ${accepted.length} of ${perRound} so far — writing ${ask} more (attempt ${attempt})…`);
+
+    const result = await askClaude({
+      system,
+      prompt: `Write ${ask} questions for a music quiz.\n\n${brief}${avoid}\n\n${SCHEMA_NOTE}`,
+      apiKey,
+      model,
+    });
+
+    // Drop anything we have already got before spending a check on it.
+    const fresh = (result.questions || []).filter((q) => {
+      const key = String(q.prompt || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    if (!fresh.length) {
+      log(`  nothing new came back`);
+      continue;
+    }
+
+    if (!check) {
+      accepted.push(...fresh);
+      continue;
+    }
+
+    log(`  checking ${fresh.length} with ${CHECKER_MODEL}…`);
+    const verdicts = await checkQuestions({ questions: fresh, apiKey, model, log });
+    for (const v of verdicts) {
+      if (v.ok) {
+        accepted.push(v.question);
+      } else {
+        failed.push(v.question);
+        onReject(v.question, v.reason);
+        log(`  binned: ${v.question.prompt.slice(0, 55)}${v.question.prompt.length > 55 ? '…' : ''} — ${v.reason}`);
+      }
+    }
+    log(`  ${accepted.length} of ${perRound} good`);
+  }
+
+  if (accepted.length >= perRound) return accepted.slice(0, perRound);
+
+  // Last resort. Never ship a short round, but be loud about why.
+  const shortfall = perRound - accepted.length;
+  log(`  COULD NOT FIND ${perRound} GOOD QUESTIONS after ${MAX_ATTEMPTS} attempts.`);
+  log(`  Filling the last ${shortfall} from the rejects — READ THOSE ONES CAREFULLY.`);
+  return [...accepted, ...failed.slice(0, shortfall)];
+}
+
+/**
  * @param {object} opts
  * @param {object} opts.config           app config (needs quizDir)
  * @param {string} opts.theme            "the 1990s", "Harry Potter soundtracks", …
@@ -309,46 +390,11 @@ export async function generateQuizPack({
     const brief = briefs[type];
     if (!brief) throw new Error(`Unknown round type "${type}". Use text, image or intro.`);
 
-    // Ask for extra when we are going to check, because checking throws some
-    // away and coming up short would mean a round of nine.
-    const ask = check ? perRound + 4 : perRound;
-
-    log(`round ${i + 1} of ${rounds.length} (${type}) — writing ${ask} questions…`);
-    const result = await askClaude({
-      system,
-      prompt: `Write ${ask} questions for a music quiz.\n\n${brief}\n\n${SCHEMA_NOTE}`,
-      apiKey,
-      model,
+    log(`round ${i + 1} of ${rounds.length} (${type})`);
+    const questions = await buildRound({
+      brief, perRound, check, system, apiKey, model, log,
+      onReject: (q, reason) => rejected.push({ round: i + 1, prompt: q.prompt, reason }),
     });
-
-    let questions = (result.questions || []);
-    if (!questions.length) throw new Error(`round ${i + 1} came back empty`);
-    log(`  got ${questions.length}`);
-
-    if (check) {
-      log(`  checking them with ${CHECKER_MODEL}…`);
-      const verdicts = await checkQuestions({ questions: questions.slice(0, ask), apiKey, model, log });
-      const good = verdicts.filter((v) => v.ok).map((v) => v.question);
-      const bad = verdicts.filter((v) => !v.ok);
-
-      for (const b of bad) {
-        rejected.push({ round: i + 1, prompt: b.question.prompt, reason: b.reason });
-        log(`  rejected: ${b.question.prompt.slice(0, 60)}${b.question.prompt.length > 60 ? '…' : ''} — ${b.reason}`);
-      }
-
-      if (good.length >= perRound) {
-        questions = good;
-        log(`  ${good.length} passed, keeping ${perRound}`);
-      } else {
-        // Rather than a short round, top up with the ones that failed and say
-        // so loudly — a round of six is useless, and you are reading it anyway.
-        const topUp = bad.slice(0, perRound - good.length).map((b) => b.question);
-        questions = [...good, ...topUp];
-        log(`  only ${good.length} passed — keeping ${topUp.length} that did not, READ THESE CAREFULLY`);
-      }
-    }
-
-    questions = questions.slice(0, perRound);
 
     built.push({
       id: `r${i + 1}`,
