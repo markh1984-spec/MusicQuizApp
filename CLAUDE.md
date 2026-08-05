@@ -135,9 +135,15 @@ data/                  live state, history, archived nights (gitignored)
 ```
 
 ### Adding a game
-`src/session.js` exposes `screenView()`, `playerView()`, `hostView()`,
-`run(action)`. Write an engine with those, add it to `LAUNCHERS`, give the
-screens a card set. Nothing else needs to know it exists.
+1. Write an engine exposing `screenView()`, `playerView()`, `hostView()`,
+   `join()`, `results()` — see `src/bingo.js` for the shape
+2. Add it to `LAUNCHERS` in `src/session.js`
+3. Add a card set for the big screen and a branch in `play.js` / `host.js`,
+   following the `*-bingo.js` files
+4. Add one entry to `TABS` in `public/assets/console.js` — that gives it a tab,
+   a generator slot and a pack grid with nothing else to write
+
+Nothing outside those four places needs to know it exists.
 
 ### Adding a quiz round type
 1. `ROUND_TYPES` in `src/quizzes.js`

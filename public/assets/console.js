@@ -71,20 +71,93 @@ async function load() {
   render();
 }
 
+/**
+ * The tabs.
+ *
+ * One entry per thing you can run. Adding a third game means adding one entry
+ * here and nothing else on this page — the tab bar, the panel and the pack
+ * grid are all built from this list.
+ */
+const TABS = [
+  {
+    id: 'quiz',
+    label: 'Music Quiz',
+    blurb: 'Three rounds, twenty seconds a question, fastest fingers win.',
+    editLabel: 'Edit questions',
+    packs: () => library.quizzes,
+    generator: () => quizGeneratePanel(library.generation || {}),
+  },
+  {
+    id: 'bingo',
+    label: 'Music Bingo',
+    blurb: 'You play the tracks. Every phone gets its own card.',
+    editLabel: 'Edit track lists',
+    packs: () => library.bingo,
+    generator: () => generatePanel(library.generation || {}),
+  },
+  {
+    id: 'past',
+    label: 'Past nights',
+    blurb: 'Results are saved when a game finishes.',
+    render: () => archiveSection(library.archive || []),
+  },
+];
+
+const TAB_STORE = 'musicquiz.consoletab';
+
+function currentTab() {
+  const wanted = new URL(location.href).searchParams.get('tab')
+    || localStorage.getItem(TAB_STORE)
+    || 'quiz';
+  return TABS.some((t) => t.id === wanted) ? wanted : 'quiz';
+}
+
 function render() {
   const running = library.running;
   runningEl.textContent = running
     ? `Now: ${running.title} (${running.playerCount} in)`
     : '';
 
+  const active = currentTab();
+
   mainEl.replaceChildren(
     runningPanel(running),
-    quizGeneratePanel(library.generation || {}),
-    generatePanel(library.generation || {}),
-    gameSection('quiz', 'Music Quiz', 'Three rounds, twenty seconds a question, fastest fingers win.', library.quizzes),
-    gameSection('bingo', 'Music Bingo', 'You play the tracks. Every phone gets its own card.', library.bingo),
-    archiveSection(library.archive || []),
+    tabBar(active),
+    tabBody(active),
   );
+}
+
+function tabBar(active) {
+  const bar = node('<div class="tabbar" role="tablist"></div>');
+  for (const tab of TABS) {
+    const count = tab.packs ? (tab.packs() || []).length : (library.archive || []).length;
+    const button = node(`
+      <button class="tab ${tab.id === active ? 'on' : ''}" role="tab" data-tab="${tab.id}">
+        ${esc(tab.label)}${count ? `<span class="tabcount">${count}</span>` : ''}
+      </button>`);
+    button.addEventListener('click', () => {
+      localStorage.setItem(TAB_STORE, tab.id);
+      render();
+      window.scrollTo({ top: 0 });
+    });
+    bar.appendChild(button);
+  }
+  return bar;
+}
+
+function tabBody(active) {
+  const tab = TABS.find((t) => t.id === active) || TABS[0];
+  const wrap = node('<div class="tabbody"></div>');
+
+  // A tab is either a game (generator + its saved packs) or a one-off panel.
+  if (tab.render) {
+    wrap.appendChild(tab.render());
+    return wrap;
+  }
+
+  if (tab.generator) wrap.appendChild(tab.generator());
+  wrap.appendChild(gameSection(tab.id, tab.label, tab.blurb, tab.packs(), tab.editLabel));
+  return wrap;
 }
 
 /**
@@ -361,22 +434,22 @@ function runningPanel(running) {
     </div>`);
 }
 
-function gameSection(kind, title, blurb, packs) {
+function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
   const el = node(`
     <div class="game-section">
       <div class="game-head">
         <div>
-          <h2>${esc(title)}</h2>
+          <h2>Your saved ${kind === 'quiz' ? 'quizzes' : 'bingo packs'}</h2>
           <div class="tiny">${esc(blurb)}</div>
         </div>
-        <a class="minor" href="${linkTo('/editor')}">${kind === 'quiz' ? 'Edit questions' : 'Edit track lists'}</a>
+        <a class="minor" href="${linkTo('/editor')}">${esc(editLabel)}</a>
       </div>
       <div class="pack-grid"></div>
     </div>`);
 
   const grid = el.querySelector('.pack-grid');
   if (!packs || !packs.length) {
-    grid.appendChild(node('<div class="tiny">Nothing saved yet.</div>'));
+    grid.appendChild(node(`<div class="tiny">Nothing saved yet — build one above.</div>`));
     return el;
   }
 
@@ -432,7 +505,7 @@ function archiveSection(archive) {
       <div class="game-head">
         <div>
           <h2>Past nights</h2>
-          <div class="tiny">Results are saved when a game finishes.</div>
+          <div class="tiny">Saved automatically when a game finishes.</div>
         </div>
       </div>
       <div class="archive-list"></div>
