@@ -45,6 +45,14 @@ Editor       http://localhost:3000/editor?key=amber-jukebox-marble-47
 
 To put it on the internet so people's phones can reach it, see **[DEPLOY.md](DEPLOY.md)**.
 
+Other files worth knowing about:
+
+| File | What it is |
+|---|---|
+| **[TODO.md](TODO.md)** | Your checklist — everything that needs you rather than the code |
+| **[DEPLOY.md](DEPLOY.md)** | Getting it online, step by step, assuming you have never done it |
+| **[CLAUDE.md](CLAUDE.md)** | Notes for Claude Code, so a new session picks up where the last left off |
+
 ---
 
 ## The four screens
