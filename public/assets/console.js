@@ -591,12 +591,13 @@ async function preview(kind, pack) {
     <div class="overlay">
       <div class="sheet">
         <div class="sheet-head">
-          <div>
-            <div class="sheet-title">${esc(pack.title)}</div>
+          <div style="min-width:0;flex:1 1 auto">
+            <input class="sheet-title" id="sheetTitle" value="${esc(pack.title)}" title="Click to rename">
             <div class="tiny" id="sheetSub">Loading…</div>
           </div>
           <div class="sheet-actions">
-            <a class="minor" href="${linkTo('/editor')}">Edit</a>
+            <button class="go" id="sheetSave" hidden>Save</button>
+            <a class="minor" href="${linkTo('/editor')}">Edit questions</a>
             <button class="minor" id="sheetClose">Close</button>
           </div>
         </div>
@@ -613,13 +614,59 @@ async function preview(kind, pack) {
 
   const body = overlay.querySelector('#sheetBody');
   const sub = overlay.querySelector('#sheetSub');
+  const saveBtn = overlay.querySelector('#sheetSave');
+  const titleInput = overlay.querySelector('#sheetTitle');
+
+  // Renaming happens here rather than in the editor, because reading a pack
+  // through is when you notice a round is called the wrong thing.
+  let loaded = null;
+  let dirty = false;
+  const markDirty = () => {
+    dirty = true;
+    saveBtn.hidden = false;
+    saveBtn.textContent = 'Save';
+    saveBtn.disabled = false;
+  };
+
+  titleInput.addEventListener('input', () => {
+    if (loaded) { loaded.title = titleInput.value; markDirty(); }
+  });
+
+  saveBtn.addEventListener('click', async () => {
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+    try {
+      const res = await fetch(keyed(`/api/${kind}/` + encodeURIComponent(pack.id)), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
+        body: JSON.stringify(loaded),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Could not save');
+      dirty = false;
+      saveBtn.textContent = data.backedUp ? 'Saved and backed up' : 'Saved here only';
+      await load();
+    } catch (err) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save';
+      alert(err.message);
+    }
+  });
+
+  // Do not let a click outside quietly bin a rename.
+  const guardedClose = () => {
+    if (dirty && !confirm('You have unsaved changes. Close anyway?')) return;
+    close();
+  };
+  overlay.querySelector('#sheetClose').removeEventListener('click', close);
+  overlay.querySelector('#sheetClose').addEventListener('click', guardedClose);
 
   try {
     const res = await fetch(keyed(`/api/${kind}/` + encodeURIComponent(pack.id)));
     if (!res.ok) throw new Error('Could not open it');
-    const data = await res.json();
-    if (kind === 'bingo') renderBingoPreview(body, sub, data);
-    else renderQuizPreview(body, sub, data);
+    loaded = await res.json();
+    if (kind === 'bingo') renderBingoPreview(body, sub, loaded, markDirty);
+    else renderQuizPreview(body, sub, loaded, markDirty);
   } catch (err) {
     sub.textContent = '';
     body.replaceChildren(node(`<div class="tiny" style="color:var(--bad)">${esc(err.message)}</div>`));
@@ -628,7 +675,7 @@ async function preview(kind, pack) {
 
 const LETTERS = ['A', 'B', 'C', 'D'];
 
-function renderQuizPreview(body, sub, quiz) {
+function renderQuizPreview(body, sub, quiz, markDirty = () => {}) {
   const all = quiz.rounds.flatMap((r) => r.questions);
   const spread = [0, 0, 0, 0];
   for (const q of all) if (spread[q.correctIndex] !== undefined) spread[q.correctIndex]++;
@@ -653,10 +700,18 @@ function renderQuizPreview(body, sub, quiz) {
       </div>`));
   }
   for (const round of quiz.rounds) {
-    parts.push(node(`
+    const head = node(`
       <div class="pv-round">
-        <div class="pv-round-head">${esc(round.title)}<span class="tiny">${esc({ text: 'General knowledge', image: 'Whose face is this?', intro: 'Name that intro' }[round.type] || round.type)}</span></div>
-      </div>`));
+        <div class="pv-round-head">
+          <input class="pv-round-name" value="${esc(round.title)}" title="Click to rename this round">
+          <span class="tiny">${esc({ text: 'General knowledge', image: 'Whose face is this?', intro: 'Name that intro' }[round.type] || round.type)}</span>
+        </div>
+      </div>`);
+    head.querySelector('.pv-round-name').addEventListener('input', (e) => {
+      round.title = e.target.value;
+      markDirty();
+    });
+    parts.push(head);
 
     round.questions.forEach((q, i) => {
       parts.push(node(`
@@ -677,7 +732,7 @@ function renderQuizPreview(body, sub, quiz) {
   body.replaceChildren(...parts);
 }
 
-function renderBingoPreview(body, sub, pack) {
+function renderBingoPreview(body, sub, pack, markDirty = () => {}) {
   const size = pack.cardSize || 4;
   sub.innerHTML = `${pack.tracks.length} tracks · ${size}&times;${size} card
     ${pack.spotifyPlaylist ? ` · <a href="${esc(pack.spotifyPlaylist.url)}" target="_blank" rel="noopener">Spotify playlist</a>` : ''}`;
