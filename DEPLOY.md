@@ -23,14 +23,20 @@ That is it. No credit card needed for the free tier.
 
 ---
 
-## Step 1 — get the code onto GitHub
+## Step 1 — make sure GitHub has a `main` branch
 
-If you are reading this file inside the project folder on your own computer,
-the code is already a git repository. Push it up:
+The code is already on GitHub, but on a branch with an awkward name, and
+Render expects `main`. Rename it — it takes three clicks and loses nothing:
+
+1. Go to https://github.com/markh1984-spec/MusicQuizApp/branches
+2. Click the **pencil icon** next to `claude/new-session-jzx988`
+3. Type `main` and click **Rename branch**
+
+If you are working from a copy on your own computer, push any changes first:
 
 ```bash
 git add -A
-git commit -m "My quiz app"
+git commit -m "My changes"
 git push
 ```
 
