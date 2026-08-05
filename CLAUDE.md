@@ -93,9 +93,13 @@ Only the four options. Keeps the room looking up, makes googling harder.
   every four minutes so the app cannot sleep mid-gig; the host's routine is to
   open the big screen five minutes early. Agreed to move to Starter ($7/mo)
   before the first paying gig.
-- **Persistent disk not decided.** The no-repeats song history lives in `data/`,
-  which Render wipes on redeploy. Flagged prominently in DEPLOY.md and TODO.md.
-  If the host reports repeats appearing, this is why.
+- **No persistent disk** — Render disks need a paid instance and the host is on
+  free. The no-repeats song history therefore survives by being **committed to
+  git**: `.gitignore` tracks `data/track-history.json` while ignoring the rest
+  of `data/`. The host generates packs at home and commits them.
+  **If he reports songs repeating, first check whether he generated on the live
+  site instead of locally** — that pack's history entries are lost on the next
+  deploy.
 
 ---
 
