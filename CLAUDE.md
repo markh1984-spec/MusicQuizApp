@@ -112,7 +112,7 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 | **Packs are JSON files** | That is what makes a quiz reusable months later and the editor simple. No database. |
 | **No profanity filter on team names** | Explicitly requested. Rude names go on the projector as typed. Only control characters stripped, 28-char cap, HTML escaped — that is anti-breakage, not censorship. **Do not add word filtering.** |
 | **Photo uploads auto-publish** | Host decided; he will handle the room with the mic. There is a kill switch and a per-photo bin in `src/photos.js` and **no approve step anywhere**. Do not add one. |
-| **Photos are never backed up to git** | Everything else saved is a pack worth having in six months. These are pictures of members of the public and the repo is not the place for them. They live for the night. |
+| **Photos never go in THIS repo** | It is public (checked). Pictures of members of the public, kept in git history forever, is not acceptable. A separate **private** repo is a legitimate store and is the host's own suggestion — that is a different decision and is open. |
 | **Filters are pixel maths, not `ctx.filter`** | `public/assets/filters.js`. Older iOS does not implement `ctx.filter`, and a filter that silently does nothing on a third of the room is worse than none. The preview and the upload go through the same function so they cannot drift. |
 | **No Instagram follow-for-points** | No API can verify a follow. Told the host; he agreed to drop it rather than fake it. |
 | **British spelling and UK chart references** | Crowds are Essex, Kent and Surrey. This is in the generation prompts too. |
@@ -307,12 +307,33 @@ optional; the app runs a full quiz and a full bingo night without either.
 In the host's own order of interest:
 
 1. **Getting the photos off after a night.** The only thing that leaves a
-   shipped feature incomplete — they sit in `data/photos/` and there is no way
-   to download them. He is comparing this to KaraFun emailing him photos, which
-   he finds clunky; the answer he wants is the photos ending up on the phone he
-   posts from.
-2. **Filters on the round 2 portraits.** The pictures and the filters both
-   already exist; this is wiring.
+   shipped feature incomplete — they sit in `data/photos/`, which is wiped on
+   every restart, and there is no way to download them.
+
+   What he actually wants: a **Photos tab in the console, foldered by night**,
+   where he bins the duds and shares the rest to Instagram — without tapping
+   each one and without them going near an inbox. KaraFun emails him and he
+   finds that clunky.
+
+   Two things settle the design:
+   - **`navigator.share({ files })`** puts Instagram in the native share sheet
+     straight from the console on his phone, so nothing has to touch the camera
+     roll. Test on his actual phone before promising multi-image.
+   - **The photos repo cannot be this one — it is PUBLIC** (checked). Pictures
+     of the public, kept in git history forever, is not acceptable. A separate
+     **private** repo would work, is free and persistent, and reuses the token
+     he already has. The alternative is a Render persistent disk, which needs
+     the paid instance. His call.
+2. **Snapchat-style face filters — dog ears, clown noses.** NOT what
+   `filters.js` does; that is colour grading. He was clear he means the silly
+   AR kind. Real face tracking needs a model (MediaPipe/TF.js, megabytes, and
+   heavy on an old phone) or `FaceDetector`, which iOS Safari does not have —
+   both break **no dependencies** and both fail on somebody's phone in a room.
+   Snapchat's own lenses need Camera Kit, a partner programme with approval.
+   The buildable version is **draggable stickers**: tap a prop, drag it onto
+   the face, pinch to size. No detection, works everywhere, and people
+   misplacing them deliberately is funnier anyway. Offered; awaiting his call.
+   (Colour filters on the round 2 portraits are still a separate small job.)
 3. **Team play — several phones, one team, scores AVERAGED across members.**
    His idea, and a good one: averaging means a big team of chancers cannot beat
    a small team who know their stuff, and it makes a traditional pub quiz work
@@ -322,14 +343,17 @@ In the host's own order of interest:
    visual evidence, not automation for its own sake. Full auto-posting needs an
    Instagram Business account, a linked Facebook Page and Meta app review; tell
    him that before building anything that pretends otherwise.
-5. **Advertising slides between rounds.** His idea, for later. Two audiences:
-   the venue (drinks offers, a band playing at the end of the month) and
-   himself. The pull is a **QR code to ticket sales that he takes a cut of** —
-   so this is a revenue feature, not decoration. The big screen is already a
-   card registry and `src/qrcode.js` already encodes anything, so a slide with
-   a heading, an image and a QR is a small build. The interesting part is where
-   the slides live (per venue? per night? a pack of their own?) and when they
-   fire — between rounds is the obvious slot, alongside the scoreboard.
+5. **Advertising slides between rounds.** Upgraded by him from "later" to a
+   commercial argument: he sells himself to venues on **increasing their other
+   revenue** — a pizza, a drink, a night they want to push — not just on
+   running a quiz. That makes the slides part of the pitch, so they have to
+   look like the venue's, not like an afterthought.
+
+   **Settled: slides live per venue**, reusable across nights, because that is
+   how he sells them. Also his own promos, and the one that pays: a **QR to
+   ticket sales he takes a cut of**. The big screen is already a card registry
+   and `src/qrcode.js` encodes anything, so a slide with a heading, an image
+   and a QR is small. Between rounds is the slot, next to the scoreboard.
 
 Deliberately not built: **venue branding** beyond `BRAND_NAME`, and
 **Instagram follow-for-points** (no API can verify a follow — he agreed to drop
