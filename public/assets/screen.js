@@ -348,3 +348,31 @@ new Live('/api/stream?role=screen', {
   onState: draw,
   onStatus: (status) => connWarnEl.classList.toggle('hidden', status === 'online'),
 });
+
+/**
+ * Keep the projector awake.
+ *
+ * A laptop that dims or sleeps during a long lobby takes the pub's screen with
+ * it. This asks the browser to hold the display on for as long as this page is
+ * open, and re-asks after the tab has been in the background (the lock is
+ * dropped automatically when you switch away).
+ *
+ * It is not a substitute for turning off sleep in system settings, but it
+ * covers the common case of nobody touching the laptop for twenty minutes
+ * while the room fills up.
+ */
+if ('wakeLock' in navigator) {
+  let lock = null;
+  const hold = async () => {
+    try {
+      lock = await navigator.wakeLock.request('screen');
+      lock.addEventListener('release', () => { lock = null; });
+    } catch {
+      /* denied, or the tab is not visible — nothing we can do */
+    }
+  };
+  hold();
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && !lock) hold();
+  });
+}

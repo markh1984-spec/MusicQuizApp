@@ -1108,3 +1108,7 @@ body.console::after { display: none; }
 .track-edit-row .ttitle { flex: 2 1 200px; }
 .track-edit-row .tartist { flex: 1 1 140px; }
 .editor .shortfall { color: var(--bad); }
+
+/* Nothing on the big screen is clickable, and a mouse pointer sitting in the
+   middle of a projected image looks amateurish. Hide it. */
+body.screen { cursor: none; }
