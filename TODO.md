@@ -8,28 +8,37 @@ Every step has the link you need next to it. Work down it in order.
 
 ## Where the project is right now
 
-The app is finished and pushed. Nothing is half-built, and nothing is waiting
-on me. Everything left is on your side, and only two things cost money:
+Everything talked about is now built except four things, listed at the bottom
+under **Still to build**. Nothing is half-finished in the tree.
 
-| | What | Where | Costs |
-|---|---|---|---|
-| 1 | Set your own `HOST_KEY` so bookmarks stop breaking | Part 2a | free |
-| 2 | Read the questions before anyone else does | Part 3 | free |
-| 3 | OpenAI key, so round 2 stops using placeholder drawings | Part 6 | ~£8 once, ~50p a quiz |
-| 4 | Spotify login, so bingo builds its own playlist | Part 7 | free |
-| 5 | Move to the $7 tier before the first paying gig | Part 10 | $7/mo |
+Your list, shortest first. Only two of these cost anything:
 
-3 and 4 are genuinely optional — the app runs a whole quiz night and a whole
-bingo night without either. Round 2 just looks like placeholder art, and you
-build the bingo playlist by hand.
+| | What | Where | Costs | Blocks what |
+|---|---|---|---|---|
+| 1 | Check your `HOST_KEY` is set on Render | Part 2a | free | bookmarks breaking on every deploy |
+| 2 | Read the questions and tick the flags | Part 3 | free | nothing — but do it before a room does |
+| 3 | Dry run with wifi off on the phones | Part 10 | free | the one failure a home test cannot find |
+| 4 | OpenAI key | Part 6 | ~£8 once, ~50p a quiz | round 2 portraits — placeholders until then |
+| 5 | Spotify login (re-run it even if done) | Part 7 | free | bingo and intro playlists building themselves |
+| 6 | Move to the $7 tier | Part 10 | $7/mo | before the first paying gig, not before that |
 
-**Newest since you last looked:**
+4 and 5 are genuinely optional. The app runs a full quiz night and a full bingo
+night without either — round 2 just uses placeholder drawings, and you build
+playlists by hand.
 
-- **Flags you can tick off** as you read a quiz through — Part 3a. This is the
-  one that changes your evening.
-- **Import a track list you already have** into a bingo pack, from a Spotify
-  link or pasted text — Part 7e. Means your existing Claude-in-the-browser way
-  of building rounds still works.
+### New since you last read this
+
+- **Pictures from the console** — a Pictures button on any quiz with a face
+  round. Draw free stand-ins, or real portraits once your OpenAI key is in.
+  Part 6c.
+- **A Playlist button** on any quiz with an intro round, so a playlist can be
+  built long after the quiz was written. Part 7e.
+- **Photos from the room onto the big screen**, with filters, a kill switch and
+  a bin. Part 9b.
+- **Pick them all** — a fourth round type where several answers are right.
+  Part 5c.
+- **The rules as the first slide** of every quiz, and **scores on the big
+  screen** whenever you want them. Part 9a.
 
 ---
 
@@ -326,6 +335,10 @@ The Console has two generators at the top:
 - [ ] **New quiz** — type a theme (`the 1990s`, `Motown`, `Britpop`, `Harry
       Potter soundtracks`), tick which rounds you want, press **Write it**.
       Takes about a minute for three rounds.
+      There are now **four** round types to tick:
+      *General knowledge*, *Whose face*, *Name that intro*, and
+      **Pick them all** — several answers are right and the room locks in all
+      of them, six options, part marks. It is off by default; tick it to try.
 - [ ] **New bingo round** — type a theme, press **Build it**.
 
 Both stream their progress so you can see what they are doing.
@@ -356,7 +369,20 @@ The "whose face is this?" round currently uses obvious placeholder drawings.
       OPENAI_API_KEY=sk-proj-xxxxxxxxxxxx
       ```
 
-## 6c. Make the pictures
+## 6c. Make the pictures — from the Console now
+
+Easiest way: open the Console, find a quiz with a face round, press
+**Pictures**. It tells you how many are real and how many are still stand-ins,
+then gives you two buttons:
+
+- **Draw stand-ins** — free, instant, no key. Use it to rehearse the round.
+- **Make real portraits** — about 4p each, tells you the total first and asks
+  before spending. Disabled until `OPENAI_API_KEY` is set.
+
+Neither replaces a picture already there unless you tick *replace ones already
+there*, so a portrait you have paid for cannot be overwritten by accident.
+
+Still works from the command line if you prefer:
 
 ```bash
 npm run generate:images -- --quiz eighties --provider openai --force
@@ -521,6 +547,37 @@ you commit it.
 - **Back** — if you press onwards once too often
 - Tap any team name to fix a score, rename them or remove them
 
+### 9a. The two screens you can call up
+
+- **The rules** come up on their own as the first slide, right after you press
+  *Start the quiz*. Read them out or let the room read them; press onwards when
+  you are ready. **Back** returns to them if somebody walks in late and asks.
+- **Scores on screen** — put the leaderboard on the projector whenever you
+  like, roughly every five questions. Press it again to hide, or just press the
+  big pink button and it goes away as the quiz carries on. Greyed out while a
+  question is live, because the room cannot answer what it cannot see.
+  Your control view header says *Scores on the big screen* so you never have to
+  turn round to check what they are looking at.
+- **My scores** is different — that is your own copy, on your phone.
+
+### 9b. Photos from the room
+
+A camera button appears on every joined phone (hidden while a question is
+live). They pick or take a photo, choose a filter, and it is on the projector
+in about a second with their team name under it.
+
+**There is no approval step**, by your own decision — say "no naughtiness" over
+the mic. What you have instead, on your control view:
+
+- **Switch off** — stops new ones AND takes the existing ones off the screen.
+  You can still see them, so you can bin the offending one.
+- **Tap any photo** to bin just that one.
+- **Clear all photos** when the night is over.
+
+> Photos live on the server for the night and are **not** backed up to GitHub —
+> they are pictures of the public and the repository is not the place for them.
+> Getting them off in one go is on the *Still to build* list.
+
 **Afterwards**
 - [ ] Download the results from the Control view if you want them
 - [ ] Unplug HDMI, **shut the laptop**. That is all — it sleeps on its own.
@@ -552,23 +609,42 @@ either: phone browsers suspend background tabs the moment the screen locks.)
 
 ---
 
-# Later in the project
+# Still to build
 
-Talked about and designed for, not built:
+Four things, in the order I would do them. Say the word on any of them.
 
-- **Photo uploads to the big screen**, published straight away with a kill
-  switch for you
-- **Filters on those photos** — ours work day one; Snapchat's need a business
-  account and their approval
-- **Filters on the round 2 portraits** — nearly free, just a different prompt
-- **Semi-automated social posting** — the app bundles the night's photos, you
-  tap post
-- **Team play** (several phones, one score) and **venue branding**
-- **Your own domain** — about £10/year, steps in DEPLOY.md
+### 1. Getting the photos off after a night
+The only one that makes something already built incomplete. Right now the
+night's photos sit on the server and there is no way to download them, so the
+"photos for social" part of the idea does not work yet. A **Download the
+night's photos** button on the control view, as one file.
+*Small. No decisions needed.*
+
+### 2. Filters on the round 2 portraits
+The same filters the room gets on their own photos, applied to the generated
+portraits — an eighties duotone face round looks like a different game. Nearly
+free, because the pictures are already made and the filters already exist.
+*Small. No decisions needed.*
+
+### 3. Team play — several phones, one score
+Two or three people at a table on one team, so a group of friends is not forced
+to compete with each other. Needs a decision from you: does the first person to
+answer lock it in for the table, or does the table vote and the majority count?
+*Medium. Needs one decision.*
+
+### 4. Semi-automated social posting
+The app bundles the night's photos and results into a post you tap to publish.
+Needs decisions on which platform first and whether you want captions written
+for you.
+*Bigger. Needs a conversation before I start.*
+
+### Also possible, not on the list unless you want it
+- **Venue branding** — a venue's name and colours on the big screen.
+- **Your own domain** — about £10/year, steps in DEPLOY.md. Your job, not mine.
 
 Not building: **Instagram follow for points.** No API can verify that somebody
 followed you, so it would be a button that lies. Awarding it by hand from your
-Control view works and is honest.
+control view works and is honest.
 
 ---
 

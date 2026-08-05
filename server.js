@@ -236,7 +236,10 @@ async function handleGet(req, res, url, route) {
   }
 
   // Everything from the night in one go, for the social posts afterwards.
-  if (route === '/api/photos.zip' || route === '/api/photos/list') {
+  // The night's photos as a list. NOT a download yet — getting them off in one
+  // go still has to be built, and a route called .zip that hands back JSON is
+  // the kind of thing somebody trusts at the wrong moment.
+  if (route === '/api/photos/list') {
     if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
     return sendJson(res, 200, {
       enabled: photos.enabled,
