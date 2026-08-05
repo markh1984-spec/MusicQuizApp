@@ -10,6 +10,7 @@ Every step has the link you need next to it. Work down it in order.
 
 | What | Link |
 |---|---|
+| **Your live app** | https://musicquizapp.onrender.com |
 | Your repository | https://github.com/markh1984-spec/MusicQuizApp |
 | Render dashboard | https://dashboard.render.com |
 | **Your service — environment variables** | https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env |
@@ -79,27 +80,29 @@ Then **Save changes**. Render redeploys itself, about a minute.
 > "quiz". Three unrelated words is memorable, typeable one-handed in the dark,
 > and not guessable by a bored punter.
 
-## 2b. Write down your four addresses
+## 2b. Your four addresses
 
-Your web address is at the top of the Render service page — something like
-`https://musicquiz.onrender.com`.
+Your app lives at **https://musicquizapp.onrender.com**
 
-Take it and make these four, swapping in the key you just set:
+Swap `YOURKEY` for the host key you set in 2a:
 
 | What it is | Address |
 |---|---|
-| **Console** — start here every time | `https://musicquiz.onrender.com/console?key=YOURKEY` |
-| **Big screen** — goes on the projector | `https://musicquiz.onrender.com/screen` |
-| **Control view** — your phone | `https://musicquiz.onrender.com/host?key=YOURKEY` |
-| **Editor** — checking questions | `https://musicquiz.onrender.com/editor?key=YOURKEY` |
+| **Console** — start here every time | `https://musicquizapp.onrender.com/console?key=YOURKEY` |
+| **Big screen** — goes on the projector | https://musicquizapp.onrender.com/screen |
+| **Control view** — your phone | `https://musicquizapp.onrender.com/host?key=YOURKEY` |
+| **Editor** — checking questions | `https://musicquizapp.onrender.com/editor?key=YOURKEY` |
+
+The big screen needs no key — it is meant to be looked at by a room. The other
+three do, because they show the answers.
 
 - [ ] **Bookmark the Console link on your phone.** Everything else is one tap
       from it, and you do not want to be typing that in a dark pub.
 
 ## 2c. Test it end to end
 
-- [ ] Open the **Big screen** link on your laptop — you should get a lobby with
-      a QR code
+- [ ] Open https://musicquizapp.onrender.com/screen on your laptop — you should
+      get a lobby with a QR code
 - [ ] Scan it with your phone, type a team name, tap **Join**
 - [ ] Your team name appears on the laptop within about a second
 - [ ] Open the **Console** on your phone, tap **Launch** under
@@ -122,7 +125,7 @@ If all that works, the hard part is done and you have a usable quiz.
 
 The one job I genuinely cannot do for you.
 
-🔗 Your Editor link — `https://musicquiz.onrender.com/editor?key=YOURKEY`
+🔗 `https://musicquizapp.onrender.com/editor?key=YOURKEY`
 
 - [ ] Read all 30 questions. The correct answer is the green one.
 - [ ] Press **Check** — it catches structural mistakes (no answer marked, two

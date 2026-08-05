@@ -166,6 +166,19 @@ anything structural:
 
 ---
 
+## The host's deployment
+
+- Live app: **https://musicquizapp.onrender.com**
+- Render service: `srv-d9pnk0e417fc73bvjdkg` (Frankfurt, free tier)
+- Repo: https://github.com/markh1984-spec/MusicQuizApp
+
+Render's newer UI nests the service inside a project. `/project/prj-…` is the
+wrong level and its "environment groups" are unrelated to environment
+variables; `/web/srv-…` is the right level. This cost the host a lot of
+clicking — do not send him to the project page.
+
+---
+
 ## Where to push
 
 **There is one branch: `MusicQuizApp`.** It is the default and the only one.
