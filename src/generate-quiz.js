@@ -15,6 +15,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { normaliseQuiz, validateQuiz } from './quizzes.js';
+import { cleanTheme, quizTitleFor, themeSlug, titleCase } from './theme.js';
 
 export const DEFAULT_MODEL = 'claude-sonnet-5';
 
@@ -377,10 +378,13 @@ export async function generateQuizPack({
   if (!apiKey) throw new Error('Set ANTHROPIC_API_KEY to write quizzes');
   if (!theme || !theme.trim()) throw new Error('Give it a theme');
 
-  const quizId = id || slug(theme);
-  const quizTitle = title || `The ${titleCase(theme)} Music Quiz`;
-  const system = houseStyle({ theme, hard });
-  const briefs = roundBriefs({ theme, perRound });
+  // What you typed may be a request ("can I have a One Direction quiz"), so
+  // strip that before naming anything after it.
+  const subject = cleanTheme(theme);
+  const quizId = id || themeSlug(theme);
+  const quizTitle = title || quizTitleFor(theme);
+  const system = houseStyle({ theme: subject, hard });
+  const briefs = roundBriefs({ theme: subject, perRound });
 
   const built = [];
   const rejected = [];
@@ -399,8 +403,8 @@ export async function generateQuizPack({
     built.push({
       id: `r${i + 1}`,
       type,
-      title: roundTitle(type, i, theme),
-      blurb: roundBlurb(type, theme, perRound),
+      title: roundTitle(type, i, subject),
+      blurb: roundBlurb(type, subject, perRound),
       ...(type === 'image' ? { imageCaption: 'AI-generated illustration — not a real photograph' } : {}),
       questions: questions.map((q, qi) => ({
         id: `r${i + 1}q${qi + 1}`,
@@ -428,7 +432,7 @@ export async function generateQuizPack({
     subtitle: 'Three rounds. Twenty seconds a question. Fastest fingers win.',
     questionSeconds: 20,
     createdAt: new Date(now()).toISOString(),
-    notes: `Written by ${model} for "${theme}". NOT YET REVIEWED — read every question in the editor before the gig.`,
+    notes: `Written by ${model} for "${subject}". NOT YET REVIEWED — read every question in the editor before the gig.`,
     rounds: built,
   }, quizId);
 
@@ -446,8 +450,4 @@ export async function generateQuizPack({
 
 function slug(s) {
   return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'quiz';
-}
-
-function titleCase(s) {
-  return String(s).replace(/\b\w/g, (c) => c.toUpperCase());
 }

@@ -1,16 +1,16 @@
 {
-  "id": "can-i-have-a-one-direction-quiz",
-  "title": "The Can I Have A One Direction Quiz Music Quiz",
+  "id": "one-direction",
+  "title": "The One Direction Quiz",
   "subtitle": "Three rounds. Twenty seconds a question. Fastest fingers win.",
   "questionSeconds": 20,
   "createdAt": "2026-08-05T19:53:29.008Z",
-  "notes": "Written by claude-sonnet-5 for \"can I have a One Direction quiz\". NOT YET REVIEWED — read every question in the editor before the gig.",
+  "notes": "Written by claude-sonnet-5 for \"One Direction\". NOT YET REVIEWED — read every question in the editor before the gig.",
   "rounds": [
     {
       "id": "r1",
       "type": "text",
-      "title": "Round One — Can I Have A One Direction Quiz",
-      "blurb": "10 questions on can I have a One Direction quiz",
+      "title": "Round One — One Direction",
+      "blurb": "10 questions on One Direction",
       "questions": [
         {
           "id": "r1q1",

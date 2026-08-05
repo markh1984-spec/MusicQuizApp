@@ -21,6 +21,7 @@ import { filterRecent, recordUsed, recentTracks, trackKey } from './history.js';
 import { normaliseBingoPack, validateBingoPack } from './bingo.js';
 import { saveBingoPack } from './library.js';
 import { spotifyConfigured, findTrack, createPlaylist } from './spotify.js';
+import { cleanTheme, bingoTitleFor, themeSlug } from './theme.js';
 
 const MODEL = 'claude-sonnet-5';
 const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
@@ -103,8 +104,9 @@ export async function generateBingoPack({
   if (!apiKey) throw new Error('Set ANTHROPIC_API_KEY to generate track lists');
 
   const useSpotify = spotify === undefined ? spotifyConfigured() : Boolean(spotify);
-  const packId = id || slug(theme);
-  const packTitle = title || `${titleCase(theme)} Bingo`;
+  const subject = cleanTheme(theme);
+  const packId = id || themeSlug(theme);
+  const packTitle = title || bingoTitleFor(theme);
 
   // ---- 1. what is off limits
   const avoid = recentTracks(config.dataDir, avoidMonths, now());
@@ -113,7 +115,7 @@ export async function generateBingoPack({
   // ---- 2. ask for more than we need, then filter
   const overAsk = Math.min(100, Math.round(trackCount * 1.6));
   log(`asking Claude for ${overAsk} candidates…`);
-  const candidates = await askClaude({ theme, wanted: overAsk, avoid, apiKey, model });
+  const candidates = await askClaude({ theme: subject, wanted: overAsk, avoid, apiKey, model });
   log(`  got ${candidates.length}`);
 
   const { kept, dropped } = filterRecent(config.dataDir, candidates, avoidMonths, now());
@@ -168,7 +170,7 @@ export async function generateBingoPack({
     log('creating the Spotify playlist…');
     playlist = await createPlaylist({
       name: packTitle,
-      description: `Music bingo — ${theme}. Generated ${new Date(now()).toLocaleDateString('en-GB')}.`,
+      description: `Music bingo — ${subject}. Generated ${new Date(now()).toLocaleDateString('en-GB')}.`,
       uris: resolved.map((t) => t.spotifyUri).filter(Boolean),
     });
     log(`  ${playlist.url}`);
@@ -182,7 +184,7 @@ export async function generateBingoPack({
     cardSize,
     createdAt: new Date(now()).toISOString(),
     notes: [
-      `Generated for "${theme}".`,
+      `Generated for "${subject}".`,
       playlist ? `Spotify playlist: ${playlist.url}` : 'No Spotify playlist — play these from wherever you like.',
       'Not yet reviewed — have a look before the gig.',
     ].join(' '),
@@ -205,10 +207,4 @@ export async function generateBingoPack({
   return { pack, playlist, dropped, candidates: candidates.length };
 }
 
-function slug(s) {
-  return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'bingo';
-}
 
-function titleCase(s) {
-  return String(s).replace(/\b\w/g, (c) => c.toUpperCase());
-}
