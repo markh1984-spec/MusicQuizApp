@@ -152,10 +152,25 @@ test('saving an invalid quiz is refused, so a bad file never reaches a gig', () 
   }
 });
 
-test('the quiz that ships with the app is valid', () => {
-  const quiz = loadQuiz(new URL('../quizzes/', import.meta.url).pathname, 'eighties');
-  assert.deepEqual(validateQuiz(quiz), []);
-  assert.equal(quiz.rounds[0].questions.length, 10);
+test('every quiz in the library is valid and has full rounds', () => {
+  // Not one named pack: the library is the host's, and he adds and deletes
+  // packs from the console. A test pinned to one filename fails the day he
+  // tidies up, which teaches everyone to ignore a red suite. Checking all of
+  // them is also the more useful test — it catches a generated pack that came
+  // out malformed.
+  const dir = new URL('../quizzes/', import.meta.url).pathname;
+  const packs = listQuizzes(dir);
+  assert.ok(packs.length > 0, 'there is at least one quiz to run');
+
+  for (const listed of packs) {
+    assert.equal(listed.broken, undefined, `${listed.file} is readable`);
+    const quiz = loadQuiz(dir, listed.id);
+    assert.deepEqual(validateQuiz(quiz), [], `${listed.id} is valid`);
+    for (const round of quiz.rounds) {
+      // A round of nine is not acceptable — the screen says "10 of 10".
+      assert.ok(round.questions.length >= 3, `${listed.id}/${round.id} has enough questions`);
+    }
+  }
 });
 
 // ---------------------------------------------------------- review warnings
