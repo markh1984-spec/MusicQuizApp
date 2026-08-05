@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { validateQuiz, normaliseQuiz, safeQuizFile, saveQuiz, loadQuiz, listQuizzes, reviewWarnings } from '../src/quizzes.js';
+import { validateQuiz, normaliseQuiz, safeQuizFile, saveQuiz, loadQuiz, listQuizzes, reviewWarnings, setWarningChecked } from '../src/quizzes.js';
 
 function goodQuiz() {
   return {
@@ -180,7 +180,7 @@ test('a fact naming one of the wrong options is flagged', () => {
     }],
   };
   const warnings = reviewWarnings(quiz);
-  assert.ok(warnings.some((w) => w.includes('Brett Anderson') && w.includes('marked wrong')));
+  assert.ok(warnings.some((w) => w.text.includes('Brett Anderson') && w.text.includes('marked wrong')));
 });
 
 test('a fact naming the CORRECT option is not flagged', () => {
@@ -202,9 +202,9 @@ test('slippery words that usually hide a second right answer are flagged', () =>
   const ask = (prompt) => reviewWarnings({
     rounds: [{ type: 'text', questions: [{ prompt, options: ['a', 'b', 'c', 'd'], correctIndex: 0 }] }],
   });
-  assert.ok(ask("What was Blur's only UK number one?").some((w) => w.includes('only')));
-  assert.ok(ask('Who did she previously date?').some((w) => w.includes('previously')));
-  assert.ok(ask('Which was their first UK hit?').some((w) => w.includes('first')));
+  assert.ok(ask("What was Blur's only UK number one?").some((w) => w.text.includes('only')));
+  assert.ok(ask('Who did she previously date?').some((w) => w.text.includes('previously')));
+  assert.ok(ask('Which was their first UK hit?').some((w) => w.text.includes('first')));
   // ...but not when the word merely appears inside another word
   assert.deepEqual(ask('Which band recorded Firstborn?'), []);
 });
@@ -220,7 +220,7 @@ test('an answer that contradicts its own question is flagged', () => {
       }],
     }],
   });
-  assert.ok(warnings.some((w) => w.includes('negative')));
+  assert.ok(warnings.some((w) => w.text.includes('negative')));
 });
 
 test('a clean quiz produces no warnings at all', () => {
@@ -246,4 +246,117 @@ test('warnings never block saving — they are advice, not errors', () => {
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
+});
+
+// ---- Ticking flags off as you read a quiz through.
+//
+// Twenty flags is a long enough list to lose your place in. The ones you have
+// already looked at should stop staring back at you, and should still be gone
+// the next time you open the pack — including on a different device.
+
+function flaggedQuiz() {
+  return {
+    id: 'flagged',
+    title: 'A Flagged Quiz',
+    rounds: [{
+      id: 'r1', type: 'text', title: 'Round One',
+      questions: [{
+        id: 'q1',
+        prompt: 'Justine Frischmann previously dated which frontman?',
+        options: ['Brett Anderson', 'Damon Albarn', 'Jarvis Cocker', 'Liam Gallagher'],
+        correctIndex: 1,
+        answerNote: "She left Suede, where she'd been with Brett Anderson, and later formed Elastica.",
+      }],
+    }],
+  };
+}
+
+test('a flag arrives unchecked and can be ticked off', () => {
+  const quiz = flaggedQuiz();
+  const before = reviewWarnings(quiz);
+  assert.ok(before.length >= 1);
+  assert.equal(before.every((w) => w.cleared === false), true);
+
+  assert.equal(setWarningChecked(quiz, 'q1', before[0].id, true), true);
+  const after = reviewWarnings(quiz);
+  assert.equal(after.find((w) => w.id === before[0].id).cleared, true);
+});
+
+test('ticking one flag leaves the others alone', () => {
+  const quiz = flaggedQuiz();
+  // This question now trips two different rules.
+  const warnings = reviewWarnings(quiz);
+  assert.ok(warnings.length >= 2, 'both the wrong-option and the "previously" rule fire');
+
+  setWarningChecked(quiz, 'q1', warnings[0].id, true);
+  const after = reviewWarnings(quiz);
+  assert.equal(after.filter((w) => w.cleared).length, 1);
+  assert.equal(after.filter((w) => !w.cleared).length, warnings.length - 1);
+});
+
+test('a tick can be undone', () => {
+  const quiz = flaggedQuiz();
+  const id = reviewWarnings(quiz)[0].id;
+  setWarningChecked(quiz, 'q1', id, true);
+  setWarningChecked(quiz, 'q1', id, false);
+  assert.equal(reviewWarnings(quiz).find((w) => w.id === id).cleared, false);
+  // ...and the empty list is not left lying on the question.
+  assert.equal('checked' in quiz.rounds[0].questions[0], false);
+});
+
+test('ticking the same flag twice is not counted twice', () => {
+  const quiz = flaggedQuiz();
+  const id = reviewWarnings(quiz)[0].id;
+  setWarningChecked(quiz, 'q1', id, true);
+  setWarningChecked(quiz, 'q1', id, true);
+  assert.deepEqual(quiz.rounds[0].questions[0].checked, [id]);
+});
+
+test('a tick lands on the right question after a round is reordered', () => {
+  // Flags are keyed by question id, not position, because rounds get renamed
+  // and shuffled between the read-through and the gig.
+  const quiz = flaggedQuiz();
+  quiz.rounds[0].questions.unshift({
+    id: 'q0', prompt: 'A plain question?', options: ['One', 'Two', 'Three', 'Four'], correctIndex: 0,
+  });
+  const flag = reviewWarnings(quiz).find((w) => w.questionId === 'q1');
+  assert.equal(setWarningChecked(quiz, 'q1', flag.id, true), true);
+  assert.equal(reviewWarnings(quiz).find((w) => w.id === flag.id).cleared, true);
+  assert.equal('checked' in quiz.rounds[0].questions[0], false, 'not the question that moved into first place');
+});
+
+test('ticking a question that is not there says so rather than pretending', () => {
+  assert.equal(setWarningChecked(flaggedQuiz(), 'nope', 'slippery-wording:previously', true), false);
+});
+
+test('ticks survive a save and reload', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'quiz-test-'));
+  try {
+    const quiz = flaggedQuiz();
+    const id = reviewWarnings(quiz)[0].id;
+    setWarningChecked(quiz, 'q1', id, true);
+    saveQuiz(dir, 'flagged', quiz);
+
+    const reloaded = loadQuiz(dir, 'flagged');
+    assert.equal(reviewWarnings(reloaded).find((w) => w.id === id).cleared, true);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('editing the question the flag was about brings the flag back', () => {
+  // A tick means "I have read this and it is fine". Rewrite the fact and it is
+  // a different claim, so it deserves reading again rather than staying quiet.
+  const quiz = flaggedQuiz();
+  const id = reviewWarnings(quiz).find((w) => w.kind === 'note-names-wrong-option').id;
+  setWarningChecked(quiz, 'q1', id, true);
+
+  quiz.rounds[0].questions[0].options[0] = 'Bernard Butler';
+  const after = reviewWarnings(quiz);
+  assert.equal(after.some((w) => w.kind === 'note-names-wrong-option'), false, 'the old flag no longer applies');
+
+  quiz.rounds[0].questions[0].answerNote = 'She had been with Bernard Butler in Suede.';
+  const fresh = reviewWarnings(quiz).find((w) => w.kind === 'note-names-wrong-option');
+  assert.ok(fresh, 'the new wording raises its own flag');
+  assert.equal(fresh.cleared, false, 'and it is not silently pre-checked');
 });

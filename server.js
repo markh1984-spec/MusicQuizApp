@@ -19,7 +19,7 @@ import { config, paths, hostKey } from './src/config.js';
 import { Store } from './src/store.js';
 import { Hub } from './src/sse.js';
 import { Session } from './src/session.js';
-import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings } from './src/quizzes.js';
+import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked } from './src/quizzes.js';
 import { validateBingoPack, normaliseBingoPack } from './src/bingo.js';
 import { fullLibrary, listArchive, loadArchived, saveBingoPack, loadBingoPack, deleteBingoPack } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
@@ -386,6 +386,29 @@ async function handleWrite(req, res, url, route) {
   if (route === '/api/quiz/__validate' && req.method === 'POST') {
     const body = await readJson(req, 4 * 1024 * 1024);
     return sendJson(res, 200, { problems: validateQuiz(normaliseQuiz(body, body.id)) }), true;
+  }
+
+  // Ticking a review flag off as you read a quiz through. Deliberately its own
+  // endpoint rather than part of the Save button: a tick records that YOU have
+  // looked at something, and losing it because you shut the panel would mean
+  // reading the same twenty flags again.
+  if (route.startsWith('/api/quiz/') && route.endsWith('/checked') && req.method === 'POST') {
+    const id = decodeURIComponent(route.slice('/api/quiz/'.length, -'/checked'.length));
+    const body = await readJson(req, 16 * 1024);
+    let quiz;
+    try {
+      quiz = loadQuiz(config.quizDir, id);
+    } catch {
+      return sendJson(res, 404, { error: 'No such quiz' }), true;
+    }
+    const found = setWarningChecked(quiz, String(body.questionId || ''), String(body.warning || ''), body.checked !== false);
+    if (!found) return sendJson(res, 409, { error: 'That question is not in this quiz any more. Reopen it.' }), true;
+
+    saveQuiz(config.quizDir, id, quiz);
+    // Back up in the background — a tick is not worth making you wait for
+    // GitHub, and the next save will carry it anyway if this one misses.
+    const backup = await backUp(`quizzes/${id}.json`, JSON.stringify(normaliseQuiz(quiz, id), null, 2) + '\n', `Review notes: ${quiz.title || id}`);
+    return sendJson(res, 200, { ok: true, backedUp: backup.ok, warnings: reviewWarnings(quiz) }), true;
   }
 
   if (route.startsWith('/api/quiz/')) {

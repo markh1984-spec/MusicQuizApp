@@ -1289,8 +1289,44 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
   background: rgba(255, 210, 63, 0.12); border: 1px solid rgba(255, 210, 63, 0.5);
   font-size: 13.5px; line-height: 1.55;
 }
-.pv-warn ul { margin: 7px 0 0; padding-left: 19px; }
-.pv-warn li { margin-bottom: 4px; }
+.pv-warn ul { margin: 7px 0 0; padding-left: 0; list-style: none; }
+
+/* Once everything is ticked the panel stops shouting. Leaving it yellow would
+   mean the one glance you get before a gig still says "problem". */
+.pv-warn.all-clear {
+  background: rgba(86, 211, 100, 0.09);
+  border-color: rgba(86, 211, 100, 0.4);
+}
+.pv-warn-head.all-clear { color: var(--good, #56d364); }
+
+/* Each flag is a row you can tick off, so a long list becomes a job you can
+   work through rather than a wall of yellow. */
+.pv-flag {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 6px 0; border-bottom: 1px solid rgba(255, 210, 63, 0.16);
+}
+.pv-flag:last-child { border-bottom: 0; }
+.pv-flag-text { flex: 1 1 auto; }
+.pv-tick {
+  flex: 0 0 auto; cursor: pointer;
+  font: inherit; font-size: 12px; font-weight: 700;
+  padding: 4px 11px; border-radius: 999px;
+  color: var(--ink); background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.pv-tick:hover:not(:disabled) { background: rgba(255, 255, 255, 0.17); }
+.pv-tick:disabled { opacity: 0.5; cursor: default; }
+
+/* Checked ones are kept, not deleted — dismissing one by mistake should be
+   undoable, and rewriting a question means wanting its flag back. */
+.pv-cleared { margin-top: 9px; }
+.pv-cleared-toggle {
+  cursor: pointer; font: inherit; font-size: 12px;
+  padding: 0; border: 0; background: none; color: var(--dim);
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.pv-cleared-toggle:hover { color: var(--ink); }
+.pv-flag.done .pv-flag-text { opacity: 0.55; text-decoration: line-through; }
 
 /* ================================================================== BRAND
    Logo and name, top left, linking back to the console — the way the corner of

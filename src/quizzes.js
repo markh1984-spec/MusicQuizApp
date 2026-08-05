@@ -109,6 +109,12 @@ export function normaliseQuiz(quiz, fallbackId = 'quiz') {
         ...(Number.isFinite(q.zoomOriginX) ? { zoomOriginX: q.zoomOriginX } : {}),
         ...(Number.isFinite(q.zoomOriginY) ? { zoomOriginY: q.zoomOriginY } : {}),
         ...(q.cue ? { cue: q.cue } : {}),
+        // Which flags you have read and decided about. Kept on the question so
+        // it travels with the pack — you might read a quiz through on the
+        // laptop and glance at it again on your phone in the car park.
+        ...(Array.isArray(q.checked) && q.checked.length
+          ? { checked: [...new Set(q.checked.map(String))] }
+          : {}),
       })),
     })),
   };
@@ -126,6 +132,12 @@ export function normaliseQuiz(quiz, fallbackId = 'quiz') {
  * option, is told they are wrong, and can then point at your own screen to
  * prove they were right. It happened on the first generated quiz, and it is
  * exactly the argument you cannot win in front of a room.
+ *
+ * Each warning carries an id so it can be ticked off once you have looked at
+ * it. Working through twenty flags is a lot easier when the ones you have
+ * already read stop staring back at you. The id is built from the kind of
+ * warning and what triggered it, NOT from where the question sits — rounds get
+ * renamed and reordered, and a tick should survive that.
  */
 export function reviewWarnings(quiz) {
   const warnings = [];
@@ -135,6 +147,22 @@ export function reviewWarnings(quiz) {
       const at = `Round ${ri + 1} question ${qi + 1}`;
       const options = q.options || [];
       const correct = options[q.correctIndex];
+      const ticked = new Set((q.checked || []).map(String));
+      const questionId = q.id || `r${ri + 1}q${qi + 1}`;
+
+      const flag = (kind, detail, text) => {
+        const id = detail ? `${kind}:${slugFor(detail)}` : kind;
+        warnings.push({
+          id,
+          questionId,
+          roundIndex: ri,
+          questionIndex: qi,
+          where: at,
+          kind,
+          text: `${at}: ${text}`,
+          cleared: ticked.has(id),
+        });
+      };
 
       // A fact that names a wrong option usually means two answers are defensible.
       const note = String(q.answerNote || '');
@@ -144,7 +172,8 @@ export function reviewWarnings(quiz) {
           const text = String(option || '').trim();
           if (text.length < 4) return;
           if (note.toLowerCase().includes(text.toLowerCase())) {
-            warnings.push(`${at}: the fact you read out mentions "${text}", which is marked wrong. Check it is not also a correct answer.`);
+            flag('note-names-wrong-option', text,
+              `the fact you read out mentions "${text}", which is marked wrong. Check it is not also a correct answer.`);
           }
         });
       }
@@ -154,17 +183,46 @@ export function reviewWarnings(quiz) {
       const slippery = ['only', 'first', 'last', 'previously', 'biggest', 'best-selling', 'biggest-selling'];
       const found = slippery.filter((w) => new RegExp(`\\b${w}\\b`, 'i').test(prompt));
       if (found.length) {
-        warnings.push(`${at}: uses "${found.join('", "')}" — worth checking no other option also fits.`);
+        flag('slippery-wording', found.join('-'),
+          `uses "${found.join('", "')}" — worth checking no other option also fits.`);
       }
 
       // An answer that contradicts the question it is answering.
       if (/^(neither|none|no one|nobody|they (were|had) n)/i.test(String(correct || ''))) {
-        warnings.push(`${at}: the correct answer is a negative ("${correct}"), which often contradicts the question. Read it back.`);
+        flag('negative-answer', '',
+          `the correct answer is a negative ("${correct}"), which often contradicts the question. Read it back.`);
       }
     });
   });
 
   return warnings;
+}
+
+function slugFor(text) {
+  return String(text).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+}
+
+/**
+ * Tick a flag off, or put it back.
+ *
+ * Finds the question by its id rather than its position, so this still lands on
+ * the right question if a round was reordered since the list was drawn.
+ * Returns false if there is no such question, which the caller should treat as
+ * "your page is out of date" rather than quietly succeeding.
+ */
+export function setWarningChecked(quiz, questionId, warningId, checked = true) {
+  for (const round of quiz.rounds || []) {
+    for (const q of round.questions || []) {
+      if (q.id !== questionId) continue;
+      const ticked = new Set((q.checked || []).map(String));
+      if (checked) ticked.add(String(warningId));
+      else ticked.delete(String(warningId));
+      if (ticked.size) q.checked = [...ticked];
+      else delete q.checked;
+      return true;
+    }
+  }
+  return false;
 }
 
 /**

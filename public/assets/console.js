@@ -763,6 +763,95 @@ async function preview(kind, pack) {
 
 const LETTERS = ['A', 'B', 'C', 'D'];
 
+/**
+ * The flags, with a way to tick each one off.
+ *
+ * Reading twenty of these is a job, and a job you can lose your place in. So a
+ * checked flag drops out of the list into a folded-away pile at the bottom,
+ * leaving only what you have not looked at yet — and it stays checked next
+ * time, because it is saved on the question rather than in this browser.
+ *
+ * They are never removed outright: a flag you dismissed by mistake, or one on
+ * a question you later rewrote, has to be gettable back.
+ */
+function warningPanel(quiz, warnings) {
+  const el = node(`
+    <div class="pv-warn">
+      <b class="pv-warn-head"></b>
+      <ul class="pv-flags"></ul>
+      <div class="pv-cleared" hidden>
+        <button class="pv-cleared-toggle" type="button"></button>
+        <ul class="pv-flags done" hidden></ul>
+      </div>
+      <div class="tiny" style="margin-top:8px">These are hunches, not errors — the app cannot tell whether a fact is true. Read them and decide.</div>
+    </div>`);
+
+  const head = el.querySelector('.pv-warn-head');
+  const openList = el.querySelector('.pv-flags');
+  const clearedBox = el.querySelector('.pv-cleared');
+  const clearedToggle = el.querySelector('.pv-cleared-toggle');
+  const clearedList = el.querySelector('.pv-flags.done');
+  let showCleared = false;
+
+  const draw = () => {
+    const open = warnings.filter((w) => !w.cleared);
+    const done = warnings.filter((w) => w.cleared);
+
+    head.textContent = open.length
+      ? `${open.length} thing${open.length === 1 ? '' : 's'} worth a second look`
+      : 'All checked — nothing left to look at';
+    head.classList.toggle('all-clear', open.length === 0);
+    el.classList.toggle('all-clear', open.length === 0);
+
+    openList.replaceChildren(...open.map((w) => row(w, false)));
+    clearedBox.hidden = done.length === 0;
+    clearedToggle.textContent = `${showCleared ? 'Hide' : 'Show'} ${done.length} you have checked`;
+    clearedList.hidden = !showCleared;
+    clearedList.replaceChildren(...done.map((w) => row(w, true)));
+  };
+
+  const row = (w, done) => {
+    const li = node(`
+      <li class="pv-flag ${done ? 'done' : ''}">
+        <span class="pv-flag-text">${esc(w.text)}</span>
+        <button class="pv-tick" type="button">${done ? 'Undo' : 'Checked'}</button>
+      </li>`);
+    const button = li.querySelector('.pv-tick');
+    button.addEventListener('click', async () => {
+      button.disabled = true;
+      const wanted = !w.cleared;
+      try {
+        const res = await fetch(keyed(`/api/quiz/${encodeURIComponent(quiz.id)}/checked`), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
+          body: JSON.stringify({ questionId: w.questionId, warning: w.id, checked: wanted }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Could not save that');
+        // Trust the server's list over the local one — it has just written it.
+        if (Array.isArray(data.warnings)) {
+          const fresh = new Map(data.warnings.map((x) => [`${x.questionId}|${x.id}`, x.cleared]));
+          for (const other of warnings) {
+            const state = fresh.get(`${other.questionId}|${other.id}`);
+            if (state !== undefined) other.cleared = state;
+          }
+        } else {
+          w.cleared = wanted;
+        }
+        draw();
+      } catch (err) {
+        button.disabled = false;
+        alert(err.message);
+      }
+    });
+    return li;
+  };
+
+  clearedToggle.addEventListener('click', () => { showCleared = !showCleared; draw(); });
+  draw();
+  return el;
+}
+
 function renderQuizPreview(body, sub, quiz, markDirty = () => {}) {
   const all = quiz.rounds.flatMap((r) => r.questions);
   const spread = [0, 0, 0, 0];
@@ -779,14 +868,7 @@ function renderQuizPreview(body, sub, quiz, markDirty = () => {}) {
   // The questions most likely to cause an argument, listed first so they are
   // the ones you actually look at.
   const warnings = quiz.reviewWarnings || [];
-  if (warnings.length) {
-    parts.push(node(`
-      <div class="pv-warn">
-        <b>${warnings.length} question${warnings.length === 1 ? '' : 's'} worth a second look</b>
-        <ul>${warnings.map((w) => `<li>${esc(w)}</li>`).join('')}</ul>
-        <div class="tiny" style="margin-top:8px">These are hunches, not errors — the app cannot tell whether a fact is true. Read them and decide.</div>
-      </div>`));
-  }
+  if (warnings.length) parts.push(warningPanel(quiz, warnings));
   for (const round of quiz.rounds) {
     const head = node(`
       <div class="pv-round">

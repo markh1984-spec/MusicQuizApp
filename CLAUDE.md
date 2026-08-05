@@ -97,6 +97,13 @@ A question the checker does not mention is treated as **unchecked, not passed**
 
 On top of that, `reviewWarnings()` in `src/quizzes.js` catches the mechanical
 version of the same faults with no API call, and is shown when reading a pack.
+Each flag can be ticked off as the host reads through it; the tick is stored as
+`question.checked` in the pack itself, so it survives a restart, a backup and a
+different device. Flag ids are built from the kind of warning and what set it
+off — never from the question's position — so a tick outlives renaming and
+reordering rounds. Rewrite the question and the old flag stops applying while
+any new one arrives unticked, which is the point: a tick means "I read this
+wording", not "leave me alone about this question".
 
 All of this exists because the first generated quiz shipped a question where a
 wrong-marked option was defensible AND the fact printed on screen proved it.
