@@ -18,10 +18,18 @@
  * `screenQuestionExtras` / `hostQuestionExtras`, nothing else.
  */
 
-import { scoreAnswer, scoreMultiAnswer, responseSeconds, rankPlayers } from './scoring.js';
+import {
+  scoreAnswer, scoreMultiAnswer, responseSeconds, rankPlayers,
+  POINTS_CORRECT, POINTS_PER_WHOLE_SECOND, POINTS_FIRST_CORRECT,
+} from './scoring.js';
 
 export const PHASES = {
   LOBBY: 'lobby',
+  // How it works and how it scores, before anything is asked. Every room has
+  // people who have never played this, and "why did they get more than us for
+  // the same answer" is a question you want to answer once, up front, on the
+  // screen — not six times at the bar.
+  RULES: 'rules',
   ROUND_INTRO: 'round_intro',
   QUESTION: 'question',
   REVEAL: 'reveal',
@@ -216,7 +224,8 @@ export class Engine {
 
   start() {
     if (this.rounds.length === 0) return false;
-    this.state.phase = PHASES.ROUND_INTRO;
+    // The rules come first, unless a pack says otherwise.
+    this.state.phase = this.quiz.showRules === false ? PHASES.ROUND_INTRO : PHASES.RULES;
     this.state.roundIndex = 0;
     this.state.questionIndex = 0;
     this.state.startedAt = this.now();
@@ -225,9 +234,34 @@ export class Engine {
     return true;
   }
 
+  /**
+   * Put the scores on the big screen, mid-round, without moving the quiz.
+   *
+   * Deliberately a flag rather than a phase. The host wants this every few
+   * questions, and a phase change would have to be undone to get back — which
+   * is one more thing to get wrong in front of a room, and the one failure
+   * that would lose everybody's place. Nothing about where the quiz is changes
+   * here; the screen simply shows something else for a minute.
+   *
+   * Refused while a question is live: the room cannot answer what it cannot
+   * see, and the clock would keep running behind it.
+   */
+  showScoreboard(on = true) {
+    const wanted = Boolean(on);
+    if (wanted && this.state.phase === PHASES.QUESTION && !this.state.question?.closed) {
+      return { ok: false, reason: 'question_live' };
+    }
+    if (this.state.scoreboard === wanted) return { ok: true, scoreboard: wanted };
+    this.state.scoreboard = wanted;
+    this.changed();
+    return { ok: true, scoreboard: wanted };
+  }
+
   /** Put the current question on the screen and start the clock. */
   askQuestion() {
     if (!this.question()) return false;
+    // A question can never appear behind the scoreboard.
+    this.state.scoreboard = false;
     const seconds = this.questionSeconds();
     const startedAt = this.now();
     this.state.phase = PHASES.QUESTION;
@@ -276,9 +310,17 @@ export class Engine {
    */
   next() {
     const s = this.state;
+    // Moving on always puts the quiz back on screen. Pressing onwards with the
+    // scores up should do the obvious thing rather than need two presses.
+    s.scoreboard = false;
     switch (s.phase) {
       case PHASES.LOBBY:
         return this.start();
+
+      case PHASES.RULES:
+        s.phase = PHASES.ROUND_INTRO;
+        this.changed();
+        return true;
 
       case PHASES.ROUND_INTRO:
         s.questionIndex = 0;
@@ -325,6 +367,7 @@ export class Engine {
   /** Step backwards. Useful when the host overshoots in front of a room. */
   back() {
     const s = this.state;
+    s.scoreboard = false;
     switch (s.phase) {
       case PHASES.REVEAL:
         // Back from a reveal reopens the same question, cleared, from the top.
@@ -352,9 +395,21 @@ export class Engine {
         this.changed();
         return true;
       case PHASES.ROUND_INTRO:
-        if (s.roundIndex === 0) return false;
+        // Back from the very first round is back to the rules, which is where
+        // it came from — usually because somebody walked in late and asked how
+        // the scoring works.
+        if (s.roundIndex === 0) {
+          if (this.quiz.showRules === false) return false;
+          s.phase = PHASES.RULES;
+          this.changed();
+          return true;
+        }
         s.roundIndex--;
         s.phase = PHASES.ROUND_BOARD;
+        this.changed();
+        return true;
+      case PHASES.RULES:
+        s.phase = PHASES.LOBBY;
         this.changed();
         return true;
       case PHASES.FINAL:
@@ -629,6 +684,49 @@ export class Engine {
     }
   }
 
+  /**
+   * The rules slide.
+   *
+   * Built from the pack and from the scoring constants themselves, never
+   * written out by hand. If the points ever change, this changes with them —
+   * a rules slide that quietly disagrees with the scoring is worse than no
+   * rules slide, because the room will hold you to what it said.
+   *
+   * Only mentions round types the quiz actually has. A room does not need to
+   * be told about picking three answers in a quiz that never asks it to.
+   */
+  rulesView() {
+    const types = new Set(this.rounds.map((r) => r.type));
+    const seconds = this.quiz.questionSeconds || DEFAULT_QUESTION_SECONDS;
+    const questionCount = this.rounds.reduce((n, r) => n + (r.questions || []).length, 0);
+
+    const scoring = [
+      { big: `${POINTS_CORRECT}`, text: 'for a correct answer' },
+      { big: `+${POINTS_PER_WHOLE_SECOND}`, text: 'for every whole second left on the clock — answer fast' },
+      { big: `+${POINTS_FIRST_CORRECT}`, text: 'to the first team to get it right' },
+    ];
+
+    const how = [
+      `${this.rounds.length} round${this.rounds.length === 1 ? '' : 's'}, ${questionCount} questions, ${seconds} seconds each`,
+      'The question is on this screen. Your phone shows the answers only — so look up',
+      'One answer per team, and no changing your mind once it is in',
+    ];
+    if (types.has('image')) how.push('Picture round: the photo pulls back as the clock runs down, so an early guess is worth more');
+    if (types.has('intro')) how.push('Name that intro: you get the first few seconds and nothing else');
+    if (types.has('multi')) {
+      how.push(`Pick them all: more than one answer is right — lock in exactly the number asked for, and part marks for getting some of them`);
+    }
+
+    return {
+      title: this.quiz.title,
+      subtitle: this.quiz.subtitle || '',
+      scoring,
+      how,
+      // The bit that settles the argument before it starts.
+      fastest: 'A fast wrong answer never takes the bonus off a team that knew it.',
+    };
+  }
+
   /** What the projector shows. Never contains the answer key. */
   screenView() {
     const s = this.state;
@@ -672,6 +770,13 @@ export class Engine {
         answerNote: q ? q.answerNote || '' : '',
       };
     }
+
+    if (s.phase === PHASES.RULES) view.rules = this.rulesView();
+
+    // The scoreboard rides over whatever else is on screen, so the leaderboard
+    // has to be there for it to draw.
+    view.scoreboard = Boolean(s.scoreboard);
+    if (s.scoreboard) view.leaderboard = this.leaderboard().map(publicPlayer);
 
     if (s.phase === PHASES.ROUND_INTRO && round) {
       view.roundIntro = {
@@ -798,6 +903,15 @@ export class Engine {
     return view;
   }
 
+  /** What the host needs to work the scoreboard button. */
+  scoreboardState() {
+    return {
+      on: Boolean(this.state.scoreboard),
+      // Never over a live question: the room cannot answer what it cannot see.
+      allowed: !(this.state.phase === PHASES.QUESTION && !this.state.question?.closed),
+    };
+  }
+
   /** Extra fields only the host gets. This is where the secrets live. */
   hostQuestionExtras(q, round) {
     const right = [...this.correctSet(q, round)];
@@ -839,6 +953,8 @@ export class Engine {
     view.canStart = s.phase === PHASES.LOBBY && this.rounds.length > 0;
     view.msRemaining = this.msRemaining();
     view.clock = s.question ? { ...s.question } : null;
+    view.scoreboard = this.scoreboardState();
+    if (s.phase === PHASES.RULES) view.rules = this.rulesView();
 
     if (q && round) {
       view.question = {

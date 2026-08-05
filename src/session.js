@@ -263,6 +263,8 @@ export class Session {
       next: () => this.engine.next(),
       back: () => this.engine.back(),
       reveal: () => this.engine.reveal(),
+      // The scores on the big screen, without moving the quiz.
+      scoreboard: () => this.engine.showScoreboard(body.on !== false),
       skip: () => this.engine.skipQuestion(),
       redo: () => this.engine.redoQuestion(),
       goto: () => this.engine.goTo(Number(body.roundIndex), Number(body.questionIndex)),

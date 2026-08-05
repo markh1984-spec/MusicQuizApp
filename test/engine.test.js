@@ -9,6 +9,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { Engine, PHASES, cleanTeamName } from '../src/engine.js';
+import { POINTS_CORRECT, POINTS_PER_WHOLE_SECOND, POINTS_FIRST_CORRECT } from '../src/scoring.js';
 
 const START = 1_700_000_000_000;
 
@@ -56,6 +57,19 @@ function makeEngine(quiz = makeQuiz()) {
   };
 }
 
+/**
+ * Straight to the first question, however many slides come before it.
+ *
+ * Written as a loop rather than a fixed number of next() calls so that adding
+ * a slide to the front of a quiz — the rules, one day a sponsor card — does
+ * not break every test that just wants a question open.
+ */
+function toFirstQuestion(engine) {
+  engine.start();
+  for (let i = 0; i < 10 && engine.state.phase !== PHASES.QUESTION; i++) engine.next();
+  if (engine.state.phase !== PHASES.QUESTION) throw new Error('never reached a question');
+}
+
 function joinThree(engine) {
   return [
     engine.join({ name: 'Sofa King Good' }),
@@ -66,9 +80,13 @@ function joinThree(engine) {
 
 // -------------------------------------------------------------- transitions
 
-test('a quiz walks lobby -> intro -> question -> reveal -> board -> next round', () => {
+test('a quiz walks lobby -> rules -> intro -> question -> reveal -> board -> next round', () => {
   const { engine } = makeEngine();
   assert.equal(engine.state.phase, PHASES.LOBBY);
+
+  // The rules are the first slide of every quiz, before any round.
+  engine.next();
+  assert.equal(engine.state.phase, PHASES.RULES);
 
   engine.next();
   assert.equal(engine.state.phase, PHASES.ROUND_INTRO);
@@ -104,8 +122,7 @@ test('the last round board leads to the final results, and stops there', () => {
 test('the clock is set from the server, not from anything a phone sends', () => {
   const { engine, at } = makeEngine();
   at(5_000);
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   assert.equal(engine.state.question.startedAt, START + 5_000);
   assert.equal(engine.state.question.endsAt, START + 25_000);
   at(9_000);
@@ -114,8 +131,7 @@ test('the clock is set from the server, not from anything a phone sends', () => 
 
 test('a question that has run out of time reports itself as expired', () => {
   const { engine, at } = makeEngine();
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   at(19_999);
   assert.equal(engine.isExpired(), false);
   at(20_000);
@@ -127,8 +143,7 @@ test('a question that has run out of time reports itself as expired', () => {
 test('the first correct answer takes the bonus, a faster wrong one does not', () => {
   const { engine, at } = makeEngine();
   const [fast, slower] = joinThree(engine);
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
 
   // The button-masher is in first, but wrong.
   at(300);
@@ -149,8 +164,7 @@ test('the first correct answer takes the bonus, a faster wrong one does not', ()
 test('only the first correct answer of the question gets the bonus', () => {
   const { engine, at } = makeEngine();
   const [a, b] = joinThree(engine);
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
 
   at(1_000);
   engine.answer({ playerId: a.id, optionIndex: 1 });
@@ -163,8 +177,7 @@ test('only the first correct answer of the question gets the bonus', () => {
 test('a team gets one answer per question and cannot change its mind', () => {
   const { engine, at } = makeEngine();
   const [a] = joinThree(engine);
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
 
   at(1_000);
   assert.equal(engine.answer({ playerId: a.id, optionIndex: 0 }).ok, true);
@@ -176,8 +189,7 @@ test('a team gets one answer per question and cannot change its mind', () => {
 test('answers are refused once the clock has run out', () => {
   const { engine, at } = makeEngine();
   const [a] = joinThree(engine);
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   at(20_001);
   assert.deepEqual(engine.answer({ playerId: a.id, optionIndex: 1 }), { ok: false, reason: 'too_late' });
 });
@@ -186,8 +198,7 @@ test('answers are refused when no question is open', () => {
   const { engine } = makeEngine();
   const [a] = joinThree(engine);
   assert.deepEqual(engine.answer({ playerId: a.id, optionIndex: 1 }), { ok: false, reason: 'not_open' });
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   engine.reveal();
   assert.deepEqual(engine.answer({ playerId: a.id, optionIndex: 1 }), { ok: false, reason: 'not_open' });
 });
@@ -195,8 +206,7 @@ test('answers are refused when no question is open', () => {
 test('nonsense from a phone is rejected rather than scored', () => {
   const { engine } = makeEngine();
   const [a] = joinThree(engine);
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   assert.equal(engine.answer({ playerId: a.id, optionIndex: 9 }).reason, 'bad_option');
   assert.equal(engine.answer({ playerId: a.id, optionIndex: -1 }).reason, 'bad_option');
   assert.equal(engine.answer({ playerId: a.id, optionIndex: 'one' }).reason, 'bad_option');
@@ -207,8 +217,7 @@ test('nonsense from a phone is rejected rather than scored', () => {
 test('the fastest finger is the first CORRECT answer, not the first answer', () => {
   const { engine, at } = makeEngine();
   const [wrongFast, rightSlower] = joinThree(engine);
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   at(500);
   engine.answer({ playerId: wrongFast.id, optionIndex: 3 });
   at(2_800);
@@ -224,8 +233,7 @@ test('the fastest finger is the first CORRECT answer, not the first answer', () 
 test('with nobody correct there is no fastest finger', () => {
   const { engine, at } = makeEngine();
   const [a] = joinThree(engine);
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   at(1_000);
   engine.answer({ playerId: a.id, optionIndex: 0 });
   engine.reveal();
@@ -237,8 +245,7 @@ test('with nobody correct there is no fastest finger', () => {
 test('skipping a question takes back every point it awarded', () => {
   const { engine, at } = makeEngine();
   const [a] = joinThree(engine);
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   at(1_000);
   engine.answer({ playerId: a.id, optionIndex: 1 });
   assert.equal(engine.state.players[a.id].score, 390);
@@ -254,8 +261,7 @@ test('skipping a question takes back every point it awarded', () => {
 test('redoing a question wipes its points and starts the clock again', () => {
   const { engine, at } = makeEngine();
   const [a] = joinThree(engine);
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   at(1_000);
   engine.answer({ playerId: a.id, optionIndex: 1 });
   engine.reveal();
@@ -273,8 +279,7 @@ test('redoing a question wipes its points and starts the clock again', () => {
 
 test('skipping the last question of a round goes to the round board', () => {
   const { engine } = makeEngine();
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   engine.next(); // reveal q1
   engine.next(); // q2
   engine.skipQuestion();
@@ -284,8 +289,7 @@ test('skipping the last question of a round goes to the round board', () => {
 test('going back from a reveal reopens the same question, cleared', () => {
   const { engine, at } = makeEngine();
   const [a] = joinThree(engine);
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   at(1_000);
   engine.answer({ playerId: a.id, optionIndex: 1 });
   engine.reveal();
@@ -298,8 +302,7 @@ test('going back from a reveal reopens the same question, cleared', () => {
 test('going back from a question returns to the previous reveal, scores intact', () => {
   const { engine, at } = makeEngine();
   const [a] = joinThree(engine);
-  engine.start();
-  engine.next(); // q1
+  toFirstQuestion(engine); // q1
   at(1_000);
   engine.answer({ playerId: a.id, optionIndex: 1 });
   engine.next(); // reveal q1
@@ -318,8 +321,7 @@ test('going back from a question returns to the previous reveal, scores intact',
 
 test('going back from the first question of a round returns to the round intro', () => {
   const { engine } = makeEngine();
-  engine.start();
-  engine.next(); // q1
+  toFirstQuestion(engine); // q1
   engine.back();
   assert.equal(engine.state.phase, PHASES.ROUND_INTRO);
 });
@@ -338,8 +340,7 @@ test('the host can jump straight to any question', () => {
 test('rejoining with the same id keeps the score', () => {
   const { engine, at } = makeEngine();
   const [a] = joinThree(engine);
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   at(1_000);
   engine.answer({ playerId: a.id, optionIndex: 1 });
   const scoreBefore = engine.state.players[a.id].score;
@@ -374,8 +375,7 @@ test('an unknown id is treated as a new team, not an error', () => {
 
 test('latecomers can join partway through and are marked as such', () => {
   const { engine } = makeEngine();
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   const late = engine.join({ name: 'Just Arrived' });
   assert.equal(late.joinedDuringQuiz, true);
   assert.equal(late.score, 0);
@@ -384,8 +384,7 @@ test('latecomers can join partway through and are marked as such', () => {
 test('removing a team takes their answers with them', () => {
   const { engine, at } = makeEngine();
   const [a, b] = joinThree(engine);
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   at(1_000);
   engine.answer({ playerId: a.id, optionIndex: 1 });
   engine.answer({ playerId: b.id, optionIndex: 1 });
@@ -412,8 +411,7 @@ test('the host can nudge a score by hand', () => {
 test('resetting scores keeps the teams but zeroes everything', () => {
   const { engine, at } = makeEngine();
   const [a] = joinThree(engine);
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   at(1_000);
   engine.answer({ playerId: a.id, optionIndex: 1 });
   engine.resetScores();
@@ -436,8 +434,7 @@ test('team names are tidied but never censored', () => {
 
 test('the big screen never receives the answer key before the reveal', () => {
   const { engine } = makeEngine();
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   const view = engine.screenView();
   const asText = JSON.stringify(view);
 
@@ -502,8 +499,7 @@ test('the host can read ahead to the next question and its cue', () => {
 test('phones get the options but never the question text', () => {
   const { engine } = makeEngine();
   const [a] = joinThree(engine);
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   const view = engine.playerView(a.id);
   assert.deepEqual(view.options, ['A', 'B', 'C', 'D']);
   assert.equal(JSON.stringify(view).includes('First question?'), false);
@@ -513,8 +509,7 @@ test('phones get the options but never the question text', () => {
 test('a phone is not told whether it was right until the reveal', () => {
   const { engine, at } = makeEngine();
   const [a] = joinThree(engine);
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   at(1_000);
   engine.answer({ playerId: a.id, optionIndex: 1 });
 
@@ -627,8 +622,7 @@ test('the picture round tells the screen how to zoom, and captions itself', () =
 test('the reveal tally shows how the room voted', () => {
   const { engine, at } = makeEngine();
   const [a, b, c] = joinThree(engine);
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   at(1_000);
   engine.answer({ playerId: a.id, optionIndex: 1 });
   engine.answer({ playerId: b.id, optionIndex: 1 });
@@ -642,8 +636,7 @@ test('the reveal tally shows how the room voted', () => {
 test('a crash mid-quiz comes back with the scores and the players intact', () => {
   const { engine, at } = makeEngine();
   const [a, b] = joinThree(engine);
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   at(1_000);
   engine.answer({ playerId: a.id, optionIndex: 1 });
   engine.answer({ playerId: b.id, optionIndex: 0 });
@@ -683,8 +676,7 @@ test('every change bumps the version, so clients can spot a missed update', () =
 test('the results export has the leaderboard and the questions asked', () => {
   const { engine, at } = makeEngine();
   const [a] = joinThree(engine);
-  engine.start();
-  engine.next();
+  toFirstQuestion(engine);
   at(1_000);
   engine.answer({ playerId: a.id, optionIndex: 1 });
   engine.reveal();
@@ -721,8 +713,7 @@ function multiQuiz() {
 
 function multiEngine() {
   const made = makeEngine(multiQuiz());
-  made.engine.start();
-  made.engine.next();
+  toFirstQuestion(made.engine);
   return made;
 }
 
@@ -888,4 +879,161 @@ test('a pick-them-all round survives a crash with its answers intact', () => {
   assert.equal(revived.state.players[a.id].score, score);
   revived.reveal();
   assert.deepEqual(revived.screenView().reveal.correctIndexes, [0, 2, 4]);
+});
+
+// ================================================== the rules, and the scores
+//
+// Two things the host asked for that must not disturb the quiz: a rules slide
+// at the front, and a leaderboard he can throw up mid-round every few
+// questions without losing his place.
+
+test('the rules are the first slide, before any round', () => {
+  const { engine } = makeEngine();
+  engine.start();
+  assert.equal(engine.state.phase, PHASES.RULES);
+
+  const view = engine.screenView();
+  assert.ok(view.rules, 'the screen gets something to draw');
+  assert.equal(view.rules.title, 'Test Quiz');
+
+  engine.next();
+  assert.equal(engine.state.phase, PHASES.ROUND_INTRO);
+  assert.equal(engine.state.roundIndex, 0);
+});
+
+test('the rules quote the real scoring, so the screen cannot promise a lie', () => {
+  const { engine } = makeEngine();
+  engine.start();
+  const { scoring } = engine.screenView().rules;
+  // Straight from scoring.js, never typed out by hand.
+  assert.deepEqual(scoring.map((r) => r.big), [
+    String(POINTS_CORRECT),
+    `+${POINTS_PER_WHOLE_SECOND}`,
+    `+${POINTS_FIRST_CORRECT}`,
+  ]);
+});
+
+test('the rules only mention rounds this quiz actually has', () => {
+  const { engine } = makeEngine();
+  engine.start();
+  const how = engine.screenView().rules.how.join(' ');
+  assert.match(how, /picture round/i, 'this quiz has one');
+  assert.match(how, /intro/i);
+  assert.equal(/pick them all/i.test(how), false, 'and no pick-them-all round to mention');
+
+  // A quiz with one gets told about it.
+  const multi = makeEngine(multiQuiz()).engine;
+  multi.start();
+  assert.match(multi.screenView().rules.how.join(' '), /pick them all/i);
+});
+
+test('a pack can turn the rules off', () => {
+  const quiz = makeQuiz();
+  quiz.showRules = false;
+  const { engine } = makeEngine(quiz);
+  engine.start();
+  assert.equal(engine.state.phase, PHASES.ROUND_INTRO, 'straight to round one');
+});
+
+test('back from the first round returns to the rules', () => {
+  const { engine } = makeEngine();
+  engine.start();
+  engine.next();
+  assert.equal(engine.state.phase, PHASES.ROUND_INTRO);
+  engine.back();
+  assert.equal(engine.state.phase, PHASES.RULES);
+  engine.back();
+  assert.equal(engine.state.phase, PHASES.LOBBY);
+});
+
+test('the scoreboard goes up without moving the quiz an inch', () => {
+  const { engine, at } = makeEngine();
+  const [a] = joinThree(engine);
+  toFirstQuestion(engine);
+  at(2_000);
+  engine.answer({ playerId: a.id, optionIndex: 1 });
+  engine.reveal();
+
+  const where = { phase: engine.state.phase, round: engine.state.roundIndex, question: engine.state.questionIndex };
+
+  assert.deepEqual(engine.showScoreboard(true), { ok: true, scoreboard: true });
+  assert.equal(engine.screenView().scoreboard, true);
+  assert.ok(engine.screenView().leaderboard.length, 'and something to show');
+  // Nothing about the quiz moved.
+  assert.deepEqual(
+    { phase: engine.state.phase, round: engine.state.roundIndex, question: engine.state.questionIndex },
+    where,
+  );
+
+  engine.showScoreboard(false);
+  assert.equal(engine.screenView().scoreboard, false);
+  assert.deepEqual(
+    { phase: engine.state.phase, round: engine.state.roundIndex, question: engine.state.questionIndex },
+    where,
+    'and it comes back to exactly where it was',
+  );
+});
+
+test('the scoreboard is refused over a live question', () => {
+  const { engine } = makeEngine();
+  joinThree(engine);
+  toFirstQuestion(engine);
+  const result = engine.showScoreboard(true);
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, 'question_live');
+  assert.equal(engine.screenView().scoreboard, false, 'the question stays on screen');
+
+  // Once revealed it is fine — that is when it gets used.
+  engine.reveal();
+  assert.equal(engine.showScoreboard(true).ok, true);
+});
+
+test('moving on takes the scoreboard down — a question can never hide behind it', () => {
+  const { engine, at } = makeEngine();
+  joinThree(engine);
+  toFirstQuestion(engine);
+  at(1_000);
+  engine.reveal();
+  engine.showScoreboard(true);
+  assert.equal(engine.state.scoreboard, true);
+
+  engine.next(); // on to the next question
+  assert.equal(engine.state.phase, PHASES.QUESTION);
+  assert.equal(engine.state.scoreboard, false, 'down automatically');
+  assert.equal(engine.screenView().scoreboard, false);
+});
+
+test('the host can see whether the scoreboard is up, and whether it is allowed', () => {
+  const { engine } = makeEngine();
+  joinThree(engine);
+  toFirstQuestion(engine);
+  assert.deepEqual(engine.hostView().scoreboard, { on: false, allowed: false }, 'not over a live question');
+
+  engine.reveal();
+  assert.deepEqual(engine.hostView().scoreboard, { on: false, allowed: true });
+  engine.showScoreboard(true);
+  assert.deepEqual(engine.hostView().scoreboard, { on: true, allowed: true });
+});
+
+test('the scoreboard survives a crash, because it is part of the state', () => {
+  const { engine, at } = makeEngine();
+  joinThree(engine);
+  toFirstQuestion(engine);
+  at(1_000);
+  engine.reveal();
+  engine.showScoreboard(true);
+
+  const onDisk = JSON.parse(JSON.stringify(engine.state));
+  const revived = new Engine({ quiz: makeQuiz(), state: onDisk, now: () => START + 2_000 });
+  assert.equal(revived.screenView().scoreboard, true);
+});
+
+test('THE TWO-SCREENS RULE HOLDS on the rules slide too', () => {
+  // It is the first thing on the projector, so it is worth being sure it
+  // carries nothing from the questions with it.
+  const { engine } = makeEngine();
+  engine.start();
+  const screen = JSON.stringify(engine.screenView());
+  assert.equal(screen.includes('correctIndex'), false);
+  assert.equal(screen.includes('Blue Monday'), false, 'no round 3 cue');
 });

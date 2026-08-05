@@ -102,8 +102,12 @@ function whereLabel(s) {
         ? 'Bingo — finished'
         : `Bingo round ${s.round} — ${s.target === 'full' ? 'full house' : 'one line'}`;
   }
+  // What the projector is showing wins over where the quiz is, because that is
+  // the thing you would otherwise have to turn round to check.
+  if (s.scoreboard && s.scoreboard.on) return 'Scores on the big screen';
   switch (s.phase) {
     case 'lobby': return 'Lobby — waiting to start';
+    case 'rules': return 'The rules';
     case 'round_intro': return `Round ${s.roundIndex + 1} intro`;
     case 'question': return `R${s.roundIndex + 1} Q${s.questionIndex + 1} — live`;
     case 'reveal': return `R${s.roundIndex + 1} Q${s.questionIndex + 1} — revealed`;
@@ -376,6 +380,7 @@ function buildActions(s) {
   if (s.game === 'bingo') return bingoActions(s, act, minorButton);
   const label = {
     lobby: 'Start the quiz',
+    rules: 'On to round 1',
     round_intro: 'First question',
     question: 'Reveal the answer',
     reveal: 'Next question',
@@ -404,7 +409,29 @@ function buildActions(s) {
     out.push(minor('Edit', () => { location.href = `/editor?key=${encodeURIComponent(hostKey)}`; }));
   }
 
-  out.push(minor(s.phase === 'reveal' ? 'Leaderboard' : 'Scores', () => showScores()));
+  /*
+   * The scores on the big screen, on demand — roughly every five questions.
+   *
+   * A toggle rather than a phase, so it never has to be undone and cannot lose
+   * your place. Pressing the big onwards button while it is up simply carries
+   * on with the quiz and takes it down, which is what anybody would expect.
+   *
+   * Disabled while a question is live: the room cannot answer what it cannot
+   * see, and the clock would keep running behind it.
+   */
+  const board = s.scoreboard || {};
+  const showing = Boolean(board.on);
+  const boardBtn = minor(showing ? 'Hide the scores' : 'Scores on screen', () => act('scoreboard', { on: !showing }));
+  boardBtn.classList.toggle('on', showing);
+  if (!board.allowed && !showing) {
+    boardBtn.disabled = true;
+    boardBtn.title = 'Not while a question is live — the room needs to see it';
+  }
+  out.push(boardBtn);
+
+  // The host's own copy, on their phone, which is a different thing from
+  // putting it on the projector.
+  out.push(minor('My scores', () => showScores()));
   return out;
 }
 

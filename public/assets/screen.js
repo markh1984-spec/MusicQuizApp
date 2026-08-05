@@ -30,6 +30,12 @@ const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 const cards = {
   lobby: { key: () => 'lobby', render: renderLobby, update: updateLobby },
+  rules: { key: () => 'rules', render: renderRules },
+  // A stable key: the card is built once when the scoreboard opens, and the
+  // rows are refreshed in place. Keying on the version would rebuild it on
+  // every state push and flash the projector every time anybody's phone
+  // pinged.
+  scoreboard: { key: () => 'scores', render: renderScoreboard, update: updateScoreboard },
   round_intro: { key: (s) => `intro:${s.roundIndex}`, render: renderRoundIntro },
   question: { key: (s) => `q:${s.roundIndex}:${s.questionIndex}`, render: renderQuestion, update: updateQuestion },
   reveal: { key: (s) => `q:${s.roundIndex}:${s.questionIndex}`, render: renderQuestion, update: updateQuestion },
@@ -63,7 +69,11 @@ function draw(next) {
         ? 'Results'
         : `Round ${state.roundIndex + 1} of ${state.roundCount}`;
 
-  const card = isBingo ? bingoCard(state) : (cards[state.phase] || cards.lobby);
+  // The scoreboard is shown over whatever the quiz is doing, without moving
+  // it. Picked here rather than as a phase so there is nothing to undo.
+  const card = state.scoreboard
+    ? cards.scoreboard
+    : isBingo ? bingoCard(state) : (cards[state.phase] || cards.lobby);
   const key = card.key(state);
   if (key !== currentKey) {
     currentKey = key;
@@ -123,6 +133,74 @@ function paintPhotos(s) {
     // Keep them in order without disturbing ones already in place.
     if (strip.children[i] !== el) strip.insertBefore(el, strip.children[i] || null);
   });
+}
+
+/**
+ * Mid-quiz scores, on demand.
+ *
+ * Deliberately the same rows as the round board, so the room reads it the same
+ * way it has all night rather than learning a second layout. The heading says
+ * where the quiz is, because "how are we doing" is really "how are we doing so
+ * far" and a leaderboard with no position in it starts arguments.
+ */
+function renderScoreboard(s) {
+  const all = s.leaderboard || [];
+  const rows = all.slice(0, 10);
+  const more = all.length - rows.length;
+  const where = s.phase === 'reveal' || s.phase === 'question'
+    ? `after ${s.questionIndex + 1} question${s.questionIndex === 0 ? '' : 's'} of round ${s.roundIndex + 1}`
+    : 'so far';
+  return node(`
+    <div class="board">
+      <h1 class="grad-text">How it stands</h1>
+      <div class="board-sub">${esc(where)}</div>
+      <div class="board-rows">
+        ${rows.length ? rows.map((p, i) => boardRow(p, i)).join('') : '<div class="muted" style="font-size:3vh">No scores yet.</div>'}
+      </div>
+      ${more > 0 ? `<div class="muted" style="font-size:2.2vh;margin-top:1.6vh">and ${more} more team${more === 1 ? '' : 's'} — everyone can see their own position on their phone</div>` : ''}
+    </div>
+  `);
+}
+
+function updateScoreboard(s) {
+  const rows = document.querySelector('.board-rows');
+  if (!rows) return;
+  const all = (s.leaderboard || []).slice(0, 10);
+  rows.innerHTML = all.length
+    ? all.map((p, i) => boardRow(p, i)).join('')
+    : '<div class="muted" style="font-size:3vh">No scores yet.</div>';
+}
+
+/**
+ * The rules, as the first slide of the night.
+ *
+ * The numbers come from the server, which reads them off the scoring code, so
+ * this slide cannot end up promising something the app does not do. That
+ * matters more than it sounds: a room will hold you to what the screen said.
+ */
+function renderRules(s) {
+  const r = s.rules || { scoring: [], how: [] };
+  return node(`
+    <div class="rules">
+      <h1 class="grad-text">How it works</h1>
+      <div class="rules-grid">
+        <div class="rules-how">
+          <ol>
+            ${(r.how || []).map((line) => `<li>${esc(line)}</li>`).join('')}
+          </ol>
+        </div>
+        <div class="rules-score">
+          <div class="rules-score-head">Points</div>
+          ${(r.scoring || []).map((row) => `
+            <div class="rules-score-row">
+              <span class="big">${esc(row.big)}</span>
+              <span class="what">${esc(row.text)}</span>
+            </div>`).join('')}
+          ${r.fastest ? `<div class="rules-note">${esc(r.fastest)}</div>` : ''}
+        </div>
+      </div>
+    </div>
+  `);
 }
 
 // ------------------------------------------------------------------- lobby

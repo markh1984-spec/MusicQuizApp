@@ -83,7 +83,15 @@ Redo, but nobody can re-tap ten songs they heard half an hour ago.
 ### 6. Phones never show the question text
 Only the options. Keeps the room looking up, makes googling harder.
 
-### 7. "Pick them all" tells the room HOW MANY, never which
+### 7. The scoreboard is a flag, never a phase
+`state.scoreboard` puts the scores over whatever the quiz is doing without
+moving it. A phase change would have to be undone to get back, which is the
+one mistake that loses everybody's place mid-round.
+
+It is refused over a live question and cleared by any move, so a question can
+never appear behind it.
+
+### 8. "Pick them all" tells the room HOW MANY, never which
 A `multi` question shows six options with 2–3 correct. The screen and the phone
 get `pickCount`; `correctIndexes` is host-only, like every other answer key.
 
@@ -110,6 +118,18 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 | **British spelling and UK chart references** | Crowds are Essex, Kent and Surrey. This is in the generation prompts too. |
 | **Deploying on Render** | Chosen by the host. Serverless (Vercel/Netlify) is wrong — the app holds a live connection to every phone all night. |
 | **Alphabetical bingo call sheet** | Not play order. Half the room is drinking and scanning for "have they done Africa yet?". |
+
+---
+
+## The rules slide
+
+`PHASES.RULES` is the first slide of every quiz, between the lobby and round
+one. `rulesView()` builds it from the pack and **from the scoring constants
+themselves** — never written out by hand, because a rules slide that disagrees
+with the scoring is worse than none: the room will hold you to what it said.
+
+It only lists round types the quiz actually contains. A pack can opt out with
+`showRules: false`.
 
 ---
 
