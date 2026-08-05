@@ -49,11 +49,33 @@ if (restoredState) {
   console.log(`[quiz] restored a quiz in progress: ${Object.keys(restoredState.players || {}).length} players, phase ${restoredState.phase}`);
 }
 
+/**
+ * Saving.
+ *
+ * Answers are debounced, because sixty phones answering at once should not be
+ * sixty separate writes. But anything that MOVES THE QUIZ — a new question, a
+ * reveal, a new round, a team joining or leaving — is written to disk straight
+ * away, with no debounce at all.
+ *
+ * The reason is what a crash costs. Losing a quarter of a second of answers is
+ * recoverable: you press Redo and ask the question again. Coming back up on
+ * the wrong question in front of a room is not.
+ */
+function milestoneOf(state) {
+  return `${state.phase}:${state.roundIndex}:${state.questionIndex}:${Object.keys(state.players).length}`;
+}
+let lastMilestone = milestoneOf(restoredState || Engine.freshState(quiz));
+
 const engine = new Engine({
   quiz,
   state: restoredState,
   onChange: () => {
     store.save(engine.state);
+    const milestone = milestoneOf(engine.state);
+    if (milestone !== lastMilestone) {
+      lastMilestone = milestone;
+      store.flush();
+    }
     pushState();
     armAutoReveal();
   },
@@ -325,6 +347,12 @@ async function handleWrite(req, res, url, route) {
   }
 
   // ---- the editor
+  // Check a quiz without saving it, so problems can be seen mid-edit.
+  if (route === '/api/quiz/__validate' && req.method === 'POST') {
+    const body = await readJson(req, 4 * 1024 * 1024);
+    return sendJson(res, 200, { problems: validateQuiz(normaliseQuiz(body, body.id)) }), true;
+  }
+
   if (route.startsWith('/api/quiz/')) {
     const id = decodeURIComponent(route.slice('/api/quiz/'.length));
     if (req.method === 'PUT') {

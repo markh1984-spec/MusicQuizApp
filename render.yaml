@@ -1,0 +1,24 @@
+# Render's own config file. If you connect this repository to Render as a
+# "Blueprint" instead of filling in the form by hand, it reads this and sets
+# everything up for you.
+#
+# Either way works. DEPLOY.md walks through the by-hand version, which is
+# easier to follow the first time.
+
+services:
+  - type: web
+    name: musicquiz
+    runtime: node
+    plan: free            # change to "starter" so it never sleeps — see DEPLOY.md
+    region: frankfurt     # closest Render region to the UK
+    branch: main
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: HOST_KEY
+        # Render generates one and shows it in the dashboard under Environment.
+        # Replace it with something you can type in the dark if you prefer.
+        generateValue: true
+      - key: NODE_VERSION
+        value: "22"

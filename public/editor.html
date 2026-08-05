@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quiz Editor</title>
+  <link rel="stylesheet" href="/assets/style.css">
+  <link rel="icon" href="data:,">
+</head>
+<body class="editor">
+  <div class="wrap">
+    <div class="topbar">
+      <h1>Quiz editor</h1>
+      <select id="quizPick"></select>
+      <button id="newQuiz">New quiz</button>
+      <button id="download" title="Save this quiz to your computer">Download</button>
+      <button id="upload" title="Load a quiz file from your computer">Upload</button>
+      <input type="file" id="uploadInput" accept="application/json,.json" hidden>
+      <span class="spacer"></span>
+      <span class="muted" id="dirtyFlag" style="font-size:13px"></span>
+      <button id="check">Check</button>
+      <button class="go" id="save" disabled>Save</button>
+    </div>
+    <main id="main"></main>
+  </div>
+  <script type="module" src="/assets/editor.js"></script>
+</body>
+</html>

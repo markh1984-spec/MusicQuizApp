@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node server.js",
     "test": "node --test test/*.test.js",
-    "demo": "node scripts/demo.mjs",
+    "screenshots": "node scripts/shots.mjs",
     "generate:quiz": "node scripts/generate-quiz.mjs",
     "generate:images": "node scripts/generate-images.mjs"
   },

@@ -761,3 +761,110 @@ body.host::after { display: none; }
 }
 .type-image .option .tally,
 .type-intro .option .tally { display: none; }
+
+/* =================================================================== EDITOR
+   Where you check every question before the gig. Built for a laptop and a cup
+   of tea the afternoon before, not for use in a dark room.
+
+   The most important thing on this screen is that the correct answer is
+   obvious at a glance, because the whole point of this page is catching the
+   one question the AI got wrong. */
+
+body.editor { overflow: auto; background: #0b0b14; }
+body.editor::after { display: none; }
+
+.editor .wrap { max-width: 1000px; margin: 0 auto; padding: 0 16px 120px; }
+
+.editor .topbar {
+  position: sticky; top: 0; z-index: 20;
+  margin: 0 -16px 18px;
+  padding: 14px 22px;
+  background: rgba(11, 11, 20, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--panel-line);
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+}
+.editor .topbar h1 { font-size: 19px; margin: 0; font-weight: 900; }
+.editor .topbar .spacer { flex: 1 1 auto; }
+
+.editor button, .editor select, .editor input, .editor textarea {
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--panel-line);
+  border-radius: 9px;
+  padding: 9px 11px;
+}
+.editor textarea { width: 100%; resize: vertical; line-height: 1.45; }
+.editor input:focus, .editor textarea:focus, .editor select:focus { outline: 2px solid var(--hot); outline-offset: 1px; }
+.editor button { cursor: pointer; font-weight: 700; }
+.editor button:hover { background: rgba(255, 255, 255, 0.14); }
+.editor button.go {
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
+  border: none; color: #12000c; font-weight: 900; padding: 11px 20px;
+}
+.editor button.go:disabled { opacity: 0.5; cursor: default; }
+.editor button.danger { color: var(--bad); border-color: rgba(255, 77, 94, 0.4); }
+.editor button.small { padding: 5px 9px; font-size: 13px; }
+
+.round-block { margin-bottom: 26px; }
+.round-head {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 14px 16px;
+  border-radius: 14px 14px 0 0;
+  background: linear-gradient(100deg, rgba(255, 46, 136, 0.2), rgba(75, 216, 255, 0.1));
+  border: 1px solid var(--panel-line);
+  border-bottom: none;
+}
+.round-head input.title { flex: 1 1 240px; font-weight: 800; font-size: 17px; }
+.round-head .type-tag {
+  padding: 4px 11px; border-radius: 999px; font-size: 11px; font-weight: 900;
+  letter-spacing: 0.12em; text-transform: uppercase; background: rgba(0,0,0,0.35);
+}
+
+.qcard {
+  border: 1px solid var(--panel-line);
+  border-top: none;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 16px;
+}
+.qcard:last-child { border-radius: 0 0 14px 14px; }
+.qcard.flagged { background: rgba(255, 77, 94, 0.09); }
+
+.qcard .qtop { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.qcard .qnum { font-size: 12px; font-weight: 900; letter-spacing: 0.14em; color: var(--ink-dim); text-transform: uppercase; }
+.qcard .qtools { margin-left: auto; display: flex; gap: 6px; }
+
+.opts { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 11px; }
+.opt-row { display: flex; align-items: center; gap: 9px; }
+.opt-row input[type="text"] { flex: 1 1 auto; }
+.opt-row label {
+  display: flex; align-items: center; gap: 7px;
+  padding: 8px 11px; border-radius: 9px; cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-line);
+  font-weight: 900; font-size: 13px;
+  white-space: nowrap;
+}
+.opt-row.is-correct label { background: rgba(47, 224, 122, 0.24); border-color: var(--good); }
+.opt-row.is-correct input[type="text"] { border-color: var(--good); }
+
+.extra-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 9px; margin-top: 11px; }
+.extra-fields label { display: grid; gap: 5px; font-size: 12px; color: var(--ink-dim); font-weight: 700; }
+.extra-fields.cue { padding: 11px; border-radius: 10px; background: rgba(255, 210, 63, 0.08); border: 1px solid rgba(255, 210, 63, 0.3); }
+.extra-fields.cue > .note { grid-column: 1 / -1; font-size: 12px; color: var(--gold); font-weight: 700; }
+
+.problems {
+  border-radius: 12px; padding: 14px 16px; margin-bottom: 18px;
+  background: rgba(255, 77, 94, 0.14); border: 1px solid var(--bad);
+}
+.problems ul { margin: 8px 0 0; padding-left: 20px; }
+.problems li { margin-bottom: 4px; font-size: 14px; }
+.problems.ok { background: rgba(47, 224, 122, 0.14); border-color: var(--good); }
+
+.saved-flash {
+  position: fixed; right: 20px; bottom: 20px; z-index: 60;
+  padding: 12px 20px; border-radius: 999px; font-weight: 900;
+  background: var(--good); color: #04240f; box-shadow: var(--shadow);
+}
