@@ -1478,3 +1478,10 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   font-size: 13px; line-height: 1.6; resize: vertical;
 }
 .import-paste textarea:focus { outline: 2px solid #1db954; outline-offset: 1px; }
+
+/* Round 2 artwork, opened from a pack card. Free stand-ins and paid portraits
+   are different decisions, so they are different buttons. */
+.panel.pics { margin-top: 10px; }
+.panel.pics .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.panel.pics .redo { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.pics-slot:empty { display: none; }

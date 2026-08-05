@@ -25,6 +25,7 @@ import { fullLibrary, listArchive, loadArchived, saveBingoPack, loadBingoPack, d
 import { generateBingoPack } from './src/generate-bingo.js';
 import { generateQuizPack } from './src/generate-quiz.js';
 import { importBingoPack } from './src/import-bingo.js';
+import { generateImages, imageStatus, imageJobs, openaiConfigured } from './src/generate-images.js';
 import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig } from './src/spotify.js';
 import { githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess } from './src/github.js';
@@ -251,6 +252,7 @@ async function handleGet(req, res, url, route) {
       archive: listArchive(config.dataDir),
       generation: {
         claude: Boolean(process.env.ANTHROPIC_API_KEY),
+        openai: openaiConfigured(),
         spotify: spotifyConfigured(),
         spotifyMissing: missingSpotifyConfig(),
         recentCount: recentTracks(config.dataDir, 3).length,
@@ -261,6 +263,27 @@ async function handleGet(req, res, url, route) {
         backupMissing: missingGithubConfig(),
       },
     }), true;
+  }
+  // What round 2 actually has on disk: real portraits, stand-ins, or nothing.
+  // Read before spending anything, so the panel can say what it is about to do.
+  if (route.startsWith('/api/images/')) {
+    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    const id = decodeURIComponent(route.slice('/api/images/'.length));
+    try {
+      const quiz = loadQuiz(config.quizDir, id);
+      return sendJson(res, 200, {
+        ...imageStatus(quiz, config.imageDir),
+        openai: openaiConfigured(),
+        questions: imageJobs(quiz).map((q) => ({
+          id: q.id,
+          answer: q.options[q.correctIndex],
+          image: q.image,
+          real: fs.existsSync(path.join(config.imageDir, q.image)),
+        })),
+      }), true;
+    } catch (err) {
+      return sendJson(res, 404, { error: err.message }), true;
+    }
   }
   if (route.startsWith('/api/bingo/')) {
     if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
@@ -541,6 +564,62 @@ async function handleWrite(req, res, url, route) {
         backedUp: backup.ok,
         checked: result.checked,
         rejected: result.rejected.length,
+      }));
+    } catch (err) {
+      log('ERROR ' + err.message);
+    }
+    res.end();
+    return true;
+  }
+
+  /*
+   * Round 2 artwork.
+   *
+   * Streams like the other generators, because ten real portraits is the best
+   * part of a minute and you are watching money being spent.
+   *
+   * Each picture is backed up the moment it lands rather than all at the end:
+   * if the run dies halfway, the ones already paid for are safe.
+   */
+  if (route === '/api/generate/images' && req.method === 'POST') {
+    const body = await readJson(req);
+    res.writeHead(200, {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      'X-Accel-Buffering': 'no',
+    });
+    const log = (line) => { try { res.write(line + '\n'); } catch { /* client left */ } };
+    try {
+      const id = String(body.quizId || '');
+      const quiz = loadQuiz(config.quizDir, id);
+      const provider = body.provider === 'openai' ? 'openai' : 'placeholder';
+
+      const result = await generateImages({
+        quiz,
+        imageDir: config.imageDir,
+        provider,
+        only: String(body.only || ''),
+        force: Boolean(body.force),
+        log,
+        onFile: async (name, bytes) => {
+          await backUp(`images/${name}`, bytes, `Round 2 picture: ${name}`, () => {});
+        },
+      });
+
+      const backedUp = githubConfigured();
+      if (result.made.length) {
+        log(backedUp
+          ? `${result.made.length} backed up to GitHub — they will survive a restart`
+          : 'NOT backed up — set GITHUB_TOKEN or these vanish when the app restarts');
+      }
+      log('DONE ' + JSON.stringify({
+        quizId: id,
+        provider,
+        made: result.made.length,
+        skipped: result.skipped.length,
+        failed: result.failed.length,
+        status: imageStatus(quiz, config.imageDir),
+        backedUp,
       }));
     } catch (err) {
       log('ERROR ' + err.message);

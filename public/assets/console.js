@@ -597,6 +597,99 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
   return el;
 }
 
+function hasPictureRound(pack) {
+  return (pack.rounds || []).some((r) => r.type === 'image');
+}
+
+/**
+ * Round 2 artwork, from the console.
+ *
+ * Two buttons rather than one, because they are not the same decision.
+ * Placeholders are free and instant and exist so the round is rehearsable;
+ * real portraits cost money per press. The panel says which questions still
+ * have a stand-in before you spend anything, and never quietly replaces a
+ * real picture — one you have already paid for, or redrawn by hand, has to be
+ * asked for again explicitly.
+ */
+function picturePanel(pack) {
+  const el = node(`
+    <div class="panel pics">
+      <div class="tiny status">Checking what round 2 has…</div>
+      <div class="row" style="margin-top:8px">
+        <button class="minor draw">Draw stand-ins</button>
+        <button class="go make">Make real portraits</button>
+        <label class="tiny redo"><input type="checkbox" class="force"> replace ones already there</label>
+      </div>
+      <div class="tiny note"></div>
+      <pre class="gen-log" hidden></pre>
+    </div>`);
+
+  const status = el.querySelector('.status');
+  const note = el.querySelector('.note');
+  const logEl = el.querySelector('.gen-log');
+  const makeBtn = el.querySelector('.make');
+  const drawBtn = el.querySelector('.draw');
+
+  const refresh = async () => {
+    try {
+      const res = await fetch(keyed(`/api/images/${encodeURIComponent(pack.id)}`));
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Could not read it');
+      const bits = [`${d.total} picture${d.total === 1 ? '' : 's'} in round 2`];
+      if (d.real) bits.push(`${d.real} real`);
+      if (d.placeholder) bits.push(`${d.placeholder} stand-in${d.placeholder === 1 ? '' : 's'}`);
+      if (d.missing) bits.push(`${d.missing} with nothing yet`);
+      status.textContent = bits.join(' · ');
+
+      if (!d.openai) {
+        makeBtn.disabled = true;
+        note.textContent = 'Set OPENAI_API_KEY to make real portraits. Stand-ins work without it.';
+        note.style.color = 'var(--gold)';
+      } else {
+        const todo = d.questions.filter((q) => !q.real).length;
+        note.textContent = todo
+          ? `${todo} to make — roughly ${(todo * 4 / 100).toFixed(2)} pounds.`
+          : 'All ten have real artwork. Tick the box to redo any.';
+        note.style.color = '';
+      }
+    } catch (err) {
+      status.textContent = err.message;
+    }
+  };
+  refresh();
+
+  const run = async (provider, button) => {
+    const force = el.querySelector('.force').checked;
+    if (provider === 'openai' && !confirm('Generate with OpenAI? This costs about 4p a picture.')) return;
+    for (const b of [makeBtn, drawBtn]) b.disabled = true;
+    button.textContent = provider === 'openai' ? 'Making…' : 'Drawing…';
+    logEl.hidden = false;
+    logEl.textContent = '';
+    const say = (line) => { logEl.textContent += line + '\n'; logEl.scrollTop = logEl.scrollHeight; };
+
+    try {
+      const { done, error } = await streamGeneration('/api/generate/images', {
+        quizId: pack.id, provider, force,
+      }, say);
+      if (error) say('\n' + error);
+      else if (done) {
+        say(`\n${done.made} made, ${done.skipped} skipped${done.failed ? `, ${done.failed} failed` : ''}.`);
+        if (!done.backedUp && done.made) say('These are on this server only — generate at home and commit them to keep them.');
+      }
+    } catch (err) {
+      say('\n' + err.message);
+    }
+    for (const b of [makeBtn, drawBtn]) b.disabled = false;
+    makeBtn.textContent = 'Make real portraits';
+    drawBtn.textContent = 'Draw stand-ins';
+    refresh();
+  };
+
+  makeBtn.addEventListener('click', () => run('openai', makeBtn));
+  drawBtn.addEventListener('click', () => run('placeholder', drawBtn));
+  return el;
+}
+
 function packCard(kind, pack) {
   const detail = kind === 'quiz'
     ? `${pack.questionCount} questions · ${(pack.rounds || []).length} rounds`
@@ -616,11 +709,18 @@ function packCard(kind, pack) {
       <div class="pack-actions">
         <button class="go launch" ${pack.broken ? 'disabled' : ''}>Launch</button>
         <button class="pack-read" title="Read it through">Read</button>
+        ${hasPictureRound(pack) ? '<button class="pack-pics" title="Make the round 2 portraits">Pictures</button>' : ''}
         <button class="pack-del" title="Delete this pack">Delete</button>
       </div>
+      <div class="pics-slot"></div>
     </div>`);
 
   const openIt = () => preview(kind, pack);
+  el.querySelector('.pack-pics')?.addEventListener('click', () => {
+    const slot = el.querySelector('.pics-slot');
+    if (slot.firstChild) slot.replaceChildren();
+    else slot.replaceChildren(picturePanel(pack));
+  });
   el.querySelector('.pack-title')?.addEventListener('click', openIt);
   el.querySelector('.pack-read')?.addEventListener('click', openIt);
 

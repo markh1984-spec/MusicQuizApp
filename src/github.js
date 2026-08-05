@@ -87,7 +87,9 @@ export async function putFile(filePath, contents, message) {
         // [skip render] stops the host redeploying, so filing a pack never
         // restarts the app while somebody is using it.
         message: `${message} [skip render]`,
-        content: Buffer.from(contents, 'utf8').toString('base64'),
+        // A Buffer goes up as-is. Running a PNG through utf8 would replace
+        // every byte that is not valid utf8 and file a corrupt image.
+        content: (Buffer.isBuffer(contents) ? contents : Buffer.from(contents, 'utf8')).toString('base64'),
         branch,
         ...(sha ? { sha } : {}),
       }),
