@@ -39,6 +39,26 @@ export function brandLink(name, { key = '', size = 30 } = {}) {
   </a>`;
 }
 
+/**
+ * A bin, drawn rather than written out as a word or an emoji.
+ *
+ * Emoji bins are a different picture on every phone and some of them are a
+ * cheerful little basket. This is the same everywhere, sharp at any size, and
+ * inherits its colour — which matters, because the whole point is that the
+ * host can see what a tap is about to do before it does it.
+ */
+export function binIcon(size = 18) {
+  return `
+    <svg class="bin-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+         aria-hidden="true">
+      <path d="M3 6h18"/>
+      <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/>
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+      <path d="M10 11v6M14 11v6"/>
+    </svg>`;
+}
+
 export function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',

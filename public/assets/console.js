@@ -7,7 +7,7 @@
  * something typed in fresh each time.
  */
 
-import { esc, node, postJson, brandLink } from './client.js';
+import { esc, node, postJson, brandLink, binIcon } from './client.js';
 
 const mainEl = document.getElementById('main');
 const runningEl = document.getElementById('runningNow');
@@ -581,7 +581,7 @@ function runningPanel(running) {
       <div class="running-row">
         <div>
           <div class="running-title">${esc(running.title)}</div>
-          <div class="tiny">${esc(running.game === 'bingo' ? 'Music bingo' : 'Music quiz')} — ${running.playerCount} team${running.playerCount === 1 ? '' : 's'} in</div>
+          <div class="tiny">${esc(running.game === 'bingo' ? 'Music bingo' : 'Music quiz')} — ${running.playerCount} playing</div>
         </div>
         <div class="running-links">
           <a class="minor" href="${linkTo('/host')}">Control view</a>
@@ -843,10 +843,10 @@ function packCard(kind, pack) {
     const joined = (running && running.playerCount) || 0;
     const over = running && running.phase === 'finished';
     if (joined > 0 && !over) {
-      const teams = `${joined} team${joined === 1 ? '' : 's'}`;
+      const who = `${joined} ${joined === 1 ? 'person' : 'people'}`;
       const doing = running.phase === 'lobby'
-        ? `${teams} have already joined "${running.title}"`
-        : `"${running.title}" is still running with ${teams} in`;
+        ? `${who} ${joined === 1 ? 'has' : 'have'} already joined "${running.title}"`
+        : `"${running.title}" is still running with ${who} in`;
       if (!confirm(`${doing}.\n\nLaunching this will remove them and they will have to scan and join again. Carry on?`)) return;
     }
     const button = el.querySelector('.launch');
@@ -1149,7 +1149,7 @@ function archiveSection(archive) {
       <a class="archive-row" href="${linkTo('/api/archive/' + encodeURIComponent(night.id))}" target="_blank" rel="noopener">
         <span class="an">${esc(night.title)}</span>
         <span class="tiny">${esc(night.winner ? 'Won by ' + night.winner : 'No winner recorded')}</span>
-        <span class="tiny">${night.playerCount} team${night.playerCount === 1 ? '' : 's'}</span>
+        <span class="tiny">${night.playerCount} playing</span>
         <span class="tiny">${night.archivedAt ? whenish(night.archivedAt) : ''}</span>
       </a>`));
   }
@@ -1469,7 +1469,7 @@ function nightBlock(night, refresh) {
         <figcaption>${esc(p.teamName || '')}</figcaption>
         <div class="cphoto-acts">
           <button class="share" title="Share this one">Share</button>
-          <button class="bin" title="Delete it">Bin</button>
+          <button class="bin" title="Delete it">${binIcon(15)} Bin</button>
         </div>
       </figure>`);
 

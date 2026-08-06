@@ -41,7 +41,7 @@ function renderLobby(s, joinUrl) {
           <div class="sub">Scan the code. Your card appears on your phone.</div>
           <ol class="join-steps">
             <li><span class="n">1</span><span>Point your camera at the code</span></li>
-            <li><span class="n">2</span><span>Type in a team name</span></li>
+            <li><span class="n">2</span><span>Type in a name</span></li>
             <li><span class="n">3</span><span>Tap a song when you hear it</span></li>
           </ol>
           <div class="muted" style="font-size:2.1vh;margin-top:2.5vh">

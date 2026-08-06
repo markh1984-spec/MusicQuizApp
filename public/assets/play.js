@@ -71,9 +71,9 @@ function showJoin(message = '') {
   bodyEl.replaceChildren(node(`
     <div style="display:grid;gap:16px">
       <h1 class="grad-text">Join the quiz</h1>
-      <p>Pick a team name. It goes on the big screen, so make it a good one.</p>
+      <p>Pick a name. It goes on the big screen, so make it a good one.</p>
       ${message ? `<p style="color:var(--bad);font-weight:700">${esc(message)}</p>` : ''}
-      <input type="text" id="nameInput" placeholder="Your team name" maxlength="28"
+      <input type="text" id="nameInput" placeholder="Your name" maxlength="28"
              autocomplete="off" autocapitalize="words" enterkeyhint="go" value="${esc((me && me.name) || '')}">
       <button class="btn" id="joinBtn">Join</button>
     </div>
@@ -164,6 +164,7 @@ function openCamera() {
         </label>
         <div class="cam-stage" hidden>
           <canvas class="cam-canvas"></canvas>
+          <div class="cam-looks-head">Give it a look</div>
           <div class="cam-filters"></div>
           <button class="cam-send">Send it up</button>
         </div>
@@ -191,8 +192,28 @@ function openCamera() {
     for (const chip of chips.children) chip.classList.toggle('on', chip.dataset.id === chosen);
   };
 
+  /*
+   * Every look, as a thumbnail of their own photo.
+   *
+   * It was a scrolling row of grey pills, and the host went through the whole
+   * thing on his own phone without noticing it was there — three of the seven
+   * were off the right-hand edge with nothing to say so. Now they all fit, and
+   * each one shows what it does rather than naming it. Same maths as the big
+   * preview and the upload, just drawn small, so nothing can drift.
+   */
+  const paintThumbs = () => {
+    if (!source) return;
+    for (const chip of chips.children) {
+      drawFiltered(chip.querySelector('canvas'), source, chip.dataset.id, 120);
+    }
+  };
+
   for (const f of FILTERS) {
-    const chip = node(`<button class="cam-chip" data-id="${f.id}">${esc(f.label)}</button>`);
+    const chip = node(`
+      <button class="cam-chip" data-id="${f.id}">
+        <canvas></canvas>
+        <span>${esc(f.label)}</span>
+      </button>`);
     chip.addEventListener('click', () => { chosen = f.id; repaint(); });
     chips.appendChild(chip);
   }
@@ -208,6 +229,7 @@ function openCamera() {
       stage.hidden = false;
       status.textContent = '';
       repaint();
+      paintThumbs();
     };
     img.onerror = () => { status.textContent = 'That did not look like a photo.'; };
     img.src = URL.createObjectURL(file);

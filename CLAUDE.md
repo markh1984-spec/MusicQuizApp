@@ -120,6 +120,8 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 | **Photo uploads auto-publish** | Host decided; he will handle the room with the mic. There is a kill switch and a per-photo bin in `src/photos.js` and **no approve step anywhere**. Do not add one. |
 | **Photos go in a SEPARATE PRIVATE repo** | `PHOTO_REPO`, filed as `photos/<night>/<file>` as they arrive. Never the main repo: it is public (checked), and git history is forever. `src/github.js` takes a `which` argument for this. |
 | **Filters are pixel maths, not `ctx.filter`** | `public/assets/filters.js`. Older iOS does not implement `ctx.filter`, and a filter that silently does nothing on a third of the room is worse than none. The preview and the upload go through the same function so they cannot drift. |
+| **The looks are shown, not named** | Each filter is a thumbnail of *their own photo* with it applied, all seven on screen at once. They were a scrolling row of named grey pills and the host went through the whole flow on his own phone without noticing they existed — three of the seven were off the right-hand edge with nothing to say so. Same `drawFiltered()` as the preview and the upload, just at `maxSide` 120. |
+| **Anything that deletes shows a bin** | `binIcon()` in `client.js`, drawn rather than an emoji (every phone draws the emoji one differently, and some of them as a cheerful basket). The host's photo grid used to delete a picture when you tapped it, with nothing on screen saying so. |
 | **No Instagram follow-for-points** | No API can verify a follow. Told the host; he agreed to drop it rather than fake it. |
 | **British spelling and UK chart references** | Crowds are Essex, Kent and Surrey. This is in the generation prompts too. |
 | **Deploying on Render** | Chosen by the host. Serverless (Vercel/Netlify) is wrong — the app holds a live connection to every phone all night. |
@@ -130,18 +132,26 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 ## The rules slide
 
 `PHASES.RULES` is the first slide of every quiz, between the lobby and round
-one. `rulesView()` builds it from the pack and **from the scoring constants
-themselves** — never written out by hand, because a rules slide that disagrees
-with the scoring is worse than none: the room will hold you to what it said.
+one. `rulesView()` builds it **from the scoring constants themselves** — never
+written out by hand, because a rules slide that disagrees with the scoring is
+worse than none: the room will hold you to what it said. A pack can opt out
+with `showRules: false`.
 
-It only lists round types the quiz actually contains. A pack can opt out with
-`showRules: false`.
+It is two things and nothing else: **the points on the left, the join code
+filling the whole right half.** This slide is up while the room is still
+filling, so it is the most valuable place on the night for a code.
 
-**Its right half is the join code**, as big as the projector allows, with the
-rules squeezed into the left half. This slide is up while the room is still
-filling, so it is the most valuable place on the night for a code. The worst
-case — a quiz with all four round types, six rules lines — was checked at
-1920×1080 and fits.
+Each row is the number in orange with `PTS` after it, and what it is for in
+smaller white underneath. There was also a numbered how-it-works list, and a
+line per round type the quiz contained. **The host took both off** — he says
+all of that on the mic while the room is getting a drink in, and a slide full
+of small text is a slide nobody reads. If a future round type needs explaining
+on the projector, that is a new decision, not a bug to fix.
+
+**Nothing on this slide says "team".** The quiz is played by individuals for
+now, and the same goes for the lobby steps, the phone's join screen and the
+topbar count ("6 playing"). When team play lands, that is the wording to
+revisit. There is a test that fails if "team" comes back to the rules slide.
 
 ---
 
@@ -159,6 +169,15 @@ to know about it).
 **Never during a question or a reveal.** Twenty seconds with four options wants
 the whole projector. Also never over the scoreboard or an advert. That list is
 `NO_JOIN_CORNER` in `public/assets/screen.js`.
+
+**No card ever waits for the join address.** The QR image is drawn by the
+server at a fixed URL, so it can go up the instant a card is built; the
+written-out address is fetched at boot and can easily arrive after a slide is
+already on screen. Cards mark the slot with `data-join-url` and `paintJoinUrls()`
+fills every one of them in whenever it lands. Gating the whole code on that
+fetch — which is what it did at first — put a rules slide on the projector with
+an empty half, and it never came back, because the card only rebuilds on a
+phase change.
 
 ---
 

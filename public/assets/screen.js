@@ -56,7 +56,7 @@ function draw(next) {
     document.title = `${state.brand} — Big Screen`;
   }
   quizTitleEl.textContent = state.quizTitle || state.title || 'Music Quiz';
-  playerPillEl.textContent = `${state.playerCount} ${state.playerCount === 1 ? 'team' : 'teams'}`;
+  playerPillEl.textContent = `${state.playerCount} playing`;
 
   // Which game is running decides which set of cards to draw from. Everything
   // else on this page — the connection, the clock, the swap animation — is
@@ -87,6 +87,23 @@ function draw(next) {
 
   paintPhotos(state);
   paintJoinCorner(state);
+  paintJoinUrls();
+}
+
+/**
+ * Fill in the address under every code on the page.
+ *
+ * The QR image itself is drawn by the server at a fixed address, so it can go
+ * on screen the moment a card is built. The written-out address cannot: it is
+ * fetched at boot, and a slide can easily be up before that lands. So no card
+ * waits for it — they mark the slot with data-join-url and this fills it in
+ * whenever it turns up. Getting this wrong once meant a rules slide with an
+ * empty half where the code should have been, on a screen the room is looking
+ * at while it decides whether to bother joining.
+ */
+function paintJoinUrls() {
+  if (!joinUrl) return;
+  for (const el of document.querySelectorAll('[data-join-url]')) el.textContent = joinUrl;
 }
 
 /**
@@ -107,8 +124,7 @@ function draw(next) {
 const NO_JOIN_CORNER = new Set(['lobby', 'rules', 'question', 'reveal', 'final', 'won', 'finished']);
 
 function paintJoinCorner(s) {
-  const wanted = Boolean(joinUrl)
-    && !NO_JOIN_CORNER.has(s.phase)
+  const wanted = !NO_JOIN_CORNER.has(s.phase)
     && !s.scoreboard
     && !(s.advert && s.advert.heading !== undefined);
 
@@ -123,7 +139,7 @@ function paintJoinCorner(s) {
       <img src="/join-qr.svg" alt="Scan to join">
       <div class="join-corner-words">
         <b>Just arrived?</b>
-        <span>${esc(joinUrl)}</span>
+        <span data-join-url></span>
       </div>
     </div>`);
   document.querySelector('.stage').appendChild(el);
@@ -201,7 +217,7 @@ function renderScoreboard(s) {
       <div class="board-rows">
         ${rows.length ? rows.map((p, i) => boardRow(p, i)).join('') : '<div class="muted" style="font-size:3vh">No scores yet.</div>'}
       </div>
-      ${more > 0 ? `<div class="muted" style="font-size:2.2vh;margin-top:1.6vh">and ${more} more team${more === 1 ? '' : 's'} — everyone can see their own position on their phone</div>` : ''}
+      ${more > 0 ? `<div class="muted" style="font-size:2.2vh;margin-top:1.6vh">and ${more} more — everyone can see their own position on their phone</div>` : ''}
     </div>
   `);
 }
@@ -258,42 +274,31 @@ function renderAdvert(s) {
  * matters more than it sounds: a room will hold you to what the screen said.
  */
 function renderRules(s) {
-  const r = s.rules || { scoring: [], how: [] };
+  const r = s.rules || { scoring: [] };
   // The whole right half is the code. This is the slide that is up while the
   // room is still filling, so it is worth more here than anywhere else — and
-  // half a projector of QR reads from the back of a pub. The rules go left.
-  const join = joinUrl
-    ? `<div class="rules-join">
-         <div class="qr-panel">
-           <img src="/join-qr.svg" alt="Scan to join the quiz">
-           <div class="url">${esc(joinUrl)}</div>
-         </div>
-         <div class="rules-join-head">Not in yet? Point your camera at this</div>
-       </div>`
-    : '';
+  // half a projector of QR reads from the back of a pub. The points go left.
   return node(`
-    <div class="rules${join ? ' has-join' : ''}">
+    <div class="rules">
       <div class="rules-split">
         <div class="rules-left">
           <h1 class="grad-text">How it works</h1>
-          <div class="rules-grid">
-            <div class="rules-how">
-              <ol>
-                ${(r.how || []).map((line) => `<li>${esc(line)}</li>`).join('')}
-              </ol>
-            </div>
-            <div class="rules-score">
-              <div class="rules-score-head">Points</div>
-              ${(r.scoring || []).map((row) => `
-                <div class="rules-score-row">
-                  <span class="big">${esc(row.big)}</span>
-                  <span class="what">${esc(row.text)}</span>
-                </div>`).join('')}
-              ${r.fastest ? `<div class="rules-note">${esc(r.fastest)}</div>` : ''}
-            </div>
+          <div class="rules-score">
+            ${(r.scoring || []).map((row) => `
+              <div class="rules-score-row">
+                <span class="big">${esc(row.big)}<i>PTS</i></span>
+                <span class="what">${esc(row.text)}</span>
+              </div>`).join('')}
+            ${r.fastest ? `<div class="rules-note">${esc(r.fastest)}</div>` : ''}
           </div>
         </div>
-        ${join}
+        <div class="rules-join">
+          <div class="qr-panel">
+            <img src="/join-qr.svg" alt="Scan to join the quiz">
+            <div class="url" data-join-url></div>
+          </div>
+          <div class="rules-join-head">Not in yet? Point your camera at this</div>
+        </div>
       </div>
     </div>
   `);
@@ -310,13 +315,13 @@ function renderLobby(s) {
           <div class="sub">Grab your phone. It takes ten seconds.</div>
           <ol class="join-steps">
             <li><span class="n">1</span><span>Point your camera at the code</span></li>
-            <li><span class="n">2</span><span>Type in a team name</span></li>
+            <li><span class="n">2</span><span>Type in a name</span></li>
             <li><span class="n">3</span><span>Wait for the first question</span></li>
           </ol>
         </div>
         <div class="qr-panel">
           <img src="/join-qr.svg" alt="Scan to join the quiz">
-          <div class="url" id="joinUrl">${esc(joinUrl)}</div>
+          <div class="url" data-join-url>${esc(joinUrl)}</div>
         </div>
       </div>
       <div class="player-strip" id="playerStrip"></div>
@@ -339,8 +344,7 @@ function updateLobby(s) {
   for (const child of [...strip.children]) {
     if (!wantedIds.has(child.dataset.id)) child.remove();
   }
-  const urlEl = document.getElementById('joinUrl');
-  if (urlEl && joinUrl) urlEl.textContent = joinUrl;
+  paintJoinUrls();
 }
 
 // -------------------------------------------------------------- round intro
@@ -514,7 +518,7 @@ function renderBoard(s) {
       <div class="board-rows">
         ${rows.length ? rows.map((p, i) => boardRow(p, i)).join('') : '<div class="muted" style="font-size:3vh">No scores yet.</div>'}
       </div>
-      ${more > 0 ? `<div class="muted" style="font-size:2.2vh;margin-top:1.6vh">and ${more} more team${more === 1 ? '' : 's'} — everyone can see their own position on their phone</div>` : ''}
+      ${more > 0 ? `<div class="muted" style="font-size:2.2vh;margin-top:1.6vh">and ${more} more — everyone can see their own position on their phone</div>` : ''}
     </div>
   `);
 }
@@ -580,8 +584,7 @@ fetch('/api/join-url')
   .then((r) => r.json())
   .then((d) => {
     joinUrl = (d.url || '').replace(/^https?:\/\//, '');
-    const el = document.getElementById('joinUrl');
-    if (el) el.textContent = joinUrl;
+    paintJoinUrls();
   })
   .catch(() => {});
 

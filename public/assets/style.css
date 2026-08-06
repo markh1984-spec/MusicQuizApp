@@ -1569,21 +1569,39 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 }
 .cam-stage { margin-top: 12px; }
 .cam-canvas {
-  width: 100%; height: auto; max-height: 46vh;
+  width: 100%; height: auto; max-height: 34vh;
   object-fit: contain; border-radius: 14px; background: #000;
 }
+
+/* The looks. All of them on screen at once, each showing what it does to
+   their own photo — a scrolling row of named grey pills got missed
+   completely. */
+.cam-looks-head {
+  margin: 14px 0 8px;
+  font-size: 13px; font-weight: 800; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--gold);
+}
 .cam-filters {
-  display: flex; gap: 8px; overflow-x: auto;
-  padding: 12px 0; -webkit-overflow-scrolling: touch;
+  display: grid; gap: 8px;
+  grid-template-columns: repeat(4, 1fr);
 }
 .cam-chip {
-  flex: 0 0 auto; cursor: pointer;
-  padding: 9px 14px; border-radius: 999px;
-  font: inherit; font-size: 13px; font-weight: 700;
-  color: var(--ink); background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--panel-line);
+  cursor: pointer; padding: 0; overflow: hidden;
+  border-radius: 12px; background: rgba(255, 255, 255, 0.06);
+  border: 2px solid transparent;
+  font: inherit; color: var(--ink-dim);
+  display: block; text-align: center;
 }
-.cam-chip.on { background: linear-gradient(140deg, var(--hot), var(--hot-2)); border-color: transparent; }
+.cam-chip canvas {
+  display: block; width: 100%; height: 54px;
+  object-fit: cover; background: #000;
+}
+.cam-chip span {
+  display: block; padding: 5px 2px;
+  font-size: 10px; font-weight: 700; line-height: 1.1;
+}
+.cam-chip.on { border-color: var(--hot-2); color: var(--ink); }
+.cam-chip.on span { background: linear-gradient(140deg, var(--hot), var(--hot-2)); color: #fff; }
 .cam-send {
   width: 100%; padding: 16px; cursor: pointer;
   font: inherit; font-size: 17px; font-weight: 900;
@@ -1607,10 +1625,19 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   overflow: hidden; background: none;
 }
 .host-photo img { display: block; width: 100%; height: 84px; object-fit: cover; }
-.host-photo span {
+.host-photo .who {
   display: block; font-size: 11px; font-weight: 700; color: var(--ink);
   padding: 4px 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+/* Says what a tap does before it does it. */
+.host-photo .bin-badge {
+  position: absolute; top: 5px; right: 5px;
+  display: grid; place-items: center;
+  width: 26px; height: 26px; border-radius: 8px;
+  color: #fff; background: rgba(214, 42, 62, 0.92);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+.host-photo:active .bin-badge { transform: scale(0.9); }
 
 /* ========================================================== PICK-THEM-ALL
    The fourth round type: several answers are right and you lock in all of
@@ -1682,18 +1709,9 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 
 .rules { display: flex; flex-direction: column; height: 100%; justify-content: center; }
 .rules h1 { font-size: 8vh; margin: 0 0 3vh; font-weight: 900; letter-spacing: -0.02em; }
-.rules-grid { display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 3.5vw; align-items: start; }
 
-.rules-split { display: grid; grid-template-columns: 1fr; gap: 3vw; align-items: center; }
+.rules-split { display: grid; grid-template-columns: 1fr 1fr; gap: 3vw; align-items: center; }
 .rules-left { min-width: 0; }
-
-/* With the code up, the two rules panels stack instead of sitting side by
-   side — half a screen is not wide enough for both, and shrinking the type to
-   make it fit would defeat the point of the slide. */
-.rules.has-join .rules-split { grid-template-columns: 1fr 1fr; }
-.rules.has-join .rules-grid { grid-template-columns: 1fr; gap: 3vh; }
-.rules.has-join h1 { font-size: 6.4vh; margin-bottom: 2.4vh; }
-.rules.has-join .rules-how li { font-size: 2.5vh; }
 
 .rules-join { display: grid; justify-items: center; gap: 1.6vh; min-width: 0; }
 .rules-join .qr-panel { width: 100%; max-width: min(44vw, 66vh); }
@@ -1702,31 +1720,33 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   font-size: 2.4vh; font-weight: 800; color: var(--gold); text-align: center;
 }
 
-.rules-how ol { margin: 0; padding-left: 1.4em; display: grid; gap: 1.8vh; }
-.rules-how li { font-size: 2.9vh; line-height: 1.35; }
-
+/* The points box. The only thing on the slide besides the code, so it gets to
+   be big: the number in orange, what it is for in white underneath it. */
 .rules-score {
-  padding: 2.4vh 2vw;
+  padding: 3.4vh 2.4vw;
   border-radius: var(--radius);
   background: var(--panel);
   border: 1px solid var(--panel-line);
 }
-.rules-score-head {
-  font-size: 1.7vh; letter-spacing: 0.32em; text-transform: uppercase;
-  color: var(--ink-dim); margin-bottom: 1.8vh;
-}
-.rules-score-row { display: flex; align-items: baseline; gap: 1.2vw; margin-bottom: 1.8vh; }
+.rules-score-row { margin-bottom: 3.2vh; }
+.rules-score-row:last-of-type { margin-bottom: 0; }
 .rules-score-row .big {
-  flex: 0 0 auto; min-width: 2.6em; text-align: right;
-  font-size: 5vh; font-weight: 900; line-height: 1;
-  background: linear-gradient(100deg, var(--hot), var(--hot-2) 60%, var(--gold));
-  -webkit-background-clip: text; background-clip: text; color: transparent;
+  display: block;
+  font-size: 7.4vh; font-weight: 900; line-height: 1;
+  color: var(--hot-2);
 }
-.rules-score-row .what { font-size: 2.2vh; color: var(--ink-dim); line-height: 1.3; }
+.rules-score-row .big i {
+  font-style: normal; font-size: 0.44em; font-weight: 900;
+  letter-spacing: 0.06em; margin-left: 0.24em;
+}
+.rules-score-row .what {
+  display: block; margin-top: 0.8vh;
+  font-size: 2.6vh; font-weight: 600; color: var(--ink); line-height: 1.3;
+}
 .rules-note {
-  margin-top: 0.6vh; padding-top: 1.6vh;
+  margin-top: 3vh; padding-top: 2vh;
   border-top: 1px solid var(--panel-line);
-  font-size: 2vh; color: var(--gold); font-weight: 700;
+  font-size: 2.2vh; color: var(--gold); font-weight: 700;
 }
 
 /* The mid-quiz scoreboard reuses the round board, with a line saying where in
@@ -1865,6 +1885,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   color: var(--ink); background: rgba(10, 10, 18, 0.86);
   border: 1px solid var(--panel-line);
 }
+.cphoto-acts button { display: inline-flex; align-items: center; gap: 5px; }
 .cphoto-acts .bin { color: var(--bad); }
 
 /* Touch screens have no hover, and this tab is used on a phone. */

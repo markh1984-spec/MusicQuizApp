@@ -10,7 +10,7 @@
  * always does the obvious next thing, in the same place every time.
  */
 
-import { esc, node, ServerClock, Live, postJson, brandLink } from './client.js';
+import { esc, node, ServerClock, Live, postJson, brandLink, binIcon } from './client.js';
 import { bingoPanels, bingoActions } from './host-bingo.js';
 
 const KEY_STORE = 'musicquiz.hostkey';
@@ -58,7 +58,7 @@ function draw(next) {
     brandPainted = true;
   }
   whereEl.textContent = whereLabel(state);
-  connEl.textContent = `${state.playerCount} ${state.playerCount === 1 ? 'team' : 'teams'} in`;
+  connEl.textContent = `${state.playerCount} playing`;
   mainEl.replaceChildren(...restartNotice(state), ...advertPanel(state), ...buildPanels(state), ...photoPanel(state));
   actionsEl.replaceChildren(...buildActions(state));
 }
@@ -90,7 +90,7 @@ function restartNotice(s) {
       <h3>The app restarted ${esc(when)}</h3>
       <div class="tiny">It came back with no saved game, so scores from before then are gone.
       ${n} phone${n === 1 ? '' : 's'} that ${n === 1 ? 'was' : 'were'} already playing put ${n === 1 ? 'itself' : 'themselves'} back in —
-      nobody has to scan again. Tap a team name to put their points back.</div>
+      nobody has to scan again. Tap a name to put their points back.</div>
     </div>`)];
 }
 
@@ -158,7 +158,7 @@ function photoPanel(s) {
         <button class="minor ${info.enabled ? 'danger' : ''}" data-a="toggle">${info.enabled ? 'Switch off' : 'Switch on'}</button>
       </div>
       <div class="tiny">${info.enabled
-        ? `${info.count} up. They go straight to the screen — tap one to bin it.`
+        ? `${info.count} up. They go straight to the screen — tap the bin on one to delete it.`
         : `Off. Nothing new is accepted and the screen is showing none of the ${info.count}.`}</div>
       <div class="photo-grid"></div>
       ${info.count ? '<button class="minor danger clear" style="margin-top:10px">Clear all photos</button>' : ''}
@@ -171,7 +171,14 @@ function photoPanel(s) {
 
   const grid = el.querySelector('.photo-grid');
   for (const p of info.items) {
-    const fig = node(`<button class="host-photo" title="Bin this one"><img src="${esc(p.url)}" alt=""><span>${esc(p.teamName || '')}</span></button>`);
+    // The bin badge is the only thing that says what tapping does. Without it
+    // this was a grid of pictures that deleted one when you touched it.
+    const fig = node(`
+      <button class="host-photo" title="Bin this one">
+        <img src="${esc(p.url)}" alt="">
+        <span class="bin-badge">${binIcon(16)}</span>
+        <span class="who">${esc(p.teamName || '')}</span>
+      </button>`);
     fig.addEventListener('click', () => {
       if (confirm(`Bin this photo${p.teamName ? ` from ${p.teamName}` : ''}?`)) act('photoRemove', { id: p.id });
     });
@@ -286,7 +293,7 @@ function nextUpPanel(s) {
 function playersPanel(s) {
   const el = node(`
     <div class="panel">
-      <h3>Teams — tap a name to fix a score or remove</h3>
+      <h3>Playing — tap a name to fix a score or remove</h3>
       <div class="plist">
         ${(s.players || []).map((p) => `
           <div class="prow" data-id="${esc(p.id)}">
@@ -330,7 +337,7 @@ function openPlayerMenu(playerId, name) {
     if (a === 'remove') {
       if (confirm(`Remove ${name} from the quiz?`)) await act('removePlayer', { playerId });
     } else if (a === 'rename') {
-      const newName = prompt('New team name', name);
+      const newName = prompt('New name', name);
       if (newName) await act('renamePlayer', { playerId, name: newName });
     } else if (a !== 'close') {
       await act('adjustScore', { playerId, delta: Number(a) });
@@ -370,10 +377,10 @@ function toolsPanel(s) {
 
   el.querySelector('#loadQuiz').addEventListener('click', async () => {
     const id = el.querySelector('#quizPick').value;
-    if (id && confirm('Load this quiz? Scores and teams will be cleared.')) await act('loadQuiz', { quizId: id });
+    if (id && confirm('Load this quiz? Scores and players will be cleared.')) await act('loadQuiz', { quizId: id });
   });
   el.querySelector('#resetScores').addEventListener('click', async () => {
-    if (confirm('Set every score back to zero? Teams stay in.')) await act('resetScores');
+    if (confirm('Set every score back to zero? Everyone stays in.')) await act('resetScores');
   });
   el.querySelector('#resetAll').addEventListener('click', async () => {
     if (confirm('Clear everything and go back to an empty lobby?')) await act('resetAll');

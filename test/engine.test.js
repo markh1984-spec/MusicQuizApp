@@ -948,18 +948,18 @@ test('the rules quote the real scoring, so the screen cannot promise a lie', () 
   ]);
 });
 
-test('the rules only mention rounds this quiz actually has', () => {
+test('the rules slide is the points and nothing else — no team, no wall of text', () => {
   const { engine } = makeEngine();
   engine.start();
-  const how = engine.screenView().rules.how.join(' ');
-  assert.match(how, /picture round/i, 'this quiz has one');
-  assert.match(how, /intro/i);
-  assert.equal(/pick them all/i.test(how), false, 'and no pick-them-all round to mention');
+  const rules = engine.screenView().rules;
 
-  // A quiz with one gets told about it.
-  const multi = makeEngine(multiQuiz()).engine;
-  multi.start();
-  assert.match(multi.screenView().rules.how.join(' '), /pick them all/i);
+  // The numbered how-it-works list was taken off: the host says it on the mic.
+  assert.equal(rules.how, undefined);
+
+  // The quiz is played by individuals for now, so nothing on the projector
+  // tells the room to answer as a team.
+  const words = [...rules.scoring.map((r) => r.text), rules.fastest].join(' ');
+  assert.equal(/team/i.test(words), false, `"team" is back on the rules slide: ${words}`);
 });
 
 test('a pack can turn the rules off', () => {

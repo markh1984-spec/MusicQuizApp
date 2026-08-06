@@ -750,38 +750,28 @@ export class Engine {
    * a rules slide that quietly disagrees with the scoring is worse than no
    * rules slide, because the room will hold you to what it said.
    *
-   * Only mentions round types the quiz actually has. A room does not need to
-   * be told about picking three answers in a quiz that never asks it to.
+   * The points and nothing else. There was a numbered list of how the night
+   * works as well; the host took it off, because he says all of it on the mic
+   * while the room is still getting a drink in, and a wall of text on the
+   * slide the code is on is a wall of text nobody reads.
+   *
+   * "Team" is deliberately absent from the wording — this is played by
+   * individuals for now. When team play lands, this is where the word comes
+   * back.
    */
   rulesView() {
-    const types = new Set(this.rounds.map((r) => r.type));
-    const seconds = this.quiz.questionSeconds || DEFAULT_QUESTION_SECONDS;
-    const questionCount = this.rounds.reduce((n, r) => n + (r.questions || []).length, 0);
-
     const scoring = [
       { big: `${POINTS_CORRECT}`, text: 'for a correct answer' },
       { big: `+${POINTS_PER_WHOLE_SECOND}`, text: 'for every whole second left on the clock — answer fast' },
-      { big: `+${POINTS_FIRST_CORRECT}`, text: 'to the first team to get it right' },
+      { big: `+${POINTS_FIRST_CORRECT}`, text: 'for the first correct answer in' },
     ];
-
-    const how = [
-      `${this.rounds.length} round${this.rounds.length === 1 ? '' : 's'}, ${questionCount} questions, ${seconds} seconds each`,
-      'The question is on this screen. Your phone shows the answers only — so look up',
-      'One answer per team, and no changing your mind once it is in',
-    ];
-    if (types.has('image')) how.push('Picture round: the photo pulls back as the clock runs down, so an early guess is worth more');
-    if (types.has('intro')) how.push('Name that intro: you get the first few seconds and nothing else');
-    if (types.has('multi')) {
-      how.push(`Pick them all: more than one answer is right — lock in exactly the number asked for, and part marks for getting some of them`);
-    }
 
     return {
       title: this.quiz.title,
       subtitle: this.quiz.subtitle || '',
       scoring,
-      how,
       // The bit that settles the argument before it starts.
-      fastest: 'A fast wrong answer never takes the bonus off a team that knew it.',
+      fastest: 'A fast wrong answer never takes the bonus off somebody who knew it.',
     };
   }
 
