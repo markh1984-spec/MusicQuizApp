@@ -189,6 +189,10 @@ function photoPanel(s) {
 }
 
 function buildPanels(s) {
+  // Bingo's call sheet wants the whole screen — forty tracks in a grid rather
+  // than forty rows down a 720px column. The quiz's panels are read, not
+  // scanned, so they keep the narrower measure.
+  document.body.classList.toggle('bingo', s.game === 'bingo');
   if (s.game === 'bingo') return bingoPanels(s, act);
   const panels = [];
 

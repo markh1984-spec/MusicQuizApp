@@ -1176,3 +1176,42 @@ test('taking the advert down needs no arguments', () => {
   assert.equal(engine.showAdvert(null).ok, true);
   assert.equal(engine.state.advert, null);
 });
+
+/*
+ * Where the quiz has got to, in one line.
+ *
+ * The console shows this on the panel that runs the night, so it is the only
+ * thing telling you whether the room is between rounds or twelve seconds into
+ * a question — which decides whether you touch anything.
+ */
+test('where() names the round and the question, not just the phase', () => {
+  const { engine } = makeEngine();
+  assert.match(engine.where(), /lobby/i);
+
+  engine.start();
+  assert.match(engine.where(), /rules/i);
+
+  toFirstQuestion(engine);
+  assert.equal(engine.where(), 'Round One — question 1 of 2');
+
+  engine.reveal();
+  assert.equal(engine.where(), 'Round One — question 1 of 2, answer showing');
+
+  engine.next(); // question 2
+  assert.equal(engine.where(), 'Round One — question 2 of 2');
+
+  engine.finish();
+  assert.match(engine.where(), /finished/i);
+});
+
+test('where() never mentions an answer', () => {
+  // It goes to the console, which is host-only — but the console is the one
+  // screen a host opens with the projector mirrored, so it stays clean.
+  const { engine } = makeEngine();
+  toFirstQuestion(engine);
+  engine.reveal();
+  const said = engine.where().toLowerCase();
+  for (const option of ['a', 'b', 'c', 'd']) {
+    assert.equal(said.includes(`answer is ${option}`), false);
+  }
+});

@@ -60,29 +60,45 @@ function winPanel(s, act) {
     </div>`);
 }
 
+/**
+ * The call sheet: forty tracks, alphabetical, as many on screen at once as fit.
+ *
+ * It was one track per row in pack order, which is wrong twice over. Pack order
+ * means hunting for the song you have just played — the one thing you are doing
+ * here, with a record running and a room in front of you. And a full-width row
+ * per track puts forty of them over three screenfuls with the middle of every
+ * row empty, so the answer to "have I done Africa?" is a scroll rather than a
+ * glance.
+ *
+ * Alphabetical by title, same as the big screen's called list, so the two agree
+ * when somebody at the bar asks. Called tracks stay exactly where they are and
+ * go green with a tick — a list that reorders itself under your thumb mid-gig
+ * is how you tap the wrong song.
+ */
 function callerPanel(s, act) {
   const el = node(`
     <div class="panel">
       <h3>Tap a track when you have played it — ${s.calledCount} of ${s.trackCount} called</h3>
       <input type="text" id="trackFilter" placeholder="Search the list…" value="${esc(filter)}" style="width:100%;margin-bottom:10px">
-      <div class="tracklist" id="trackList"></div>
+      <div class="trackgrid" id="trackList"></div>
     </div>`);
 
   const list = el.querySelector('#trackList');
   const paint = () => {
     const needle = filter.trim().toLowerCase();
-    const shown = (s.tracks || []).filter((t) =>
-      !needle || t.title.toLowerCase().includes(needle) || (t.artist || '').toLowerCase().includes(needle));
+    const shown = (s.tracks || [])
+      .filter((t) => !needle || t.title.toLowerCase().includes(needle) || (t.artist || '').toLowerCase().includes(needle))
+      .sort((a, b) => a.title.localeCompare(b.title, 'en-GB', { sensitivity: 'base' }));
 
     list.replaceChildren(...shown.map((t) => {
-      const row = node(`
-        <button class="trackrow ${t.called ? 'called' : ''}" data-id="${esc(t.id)}">
+      const box = node(`
+        <button class="trackbox ${t.called ? 'called' : ''}" data-id="${esc(t.id)}">
           <span class="tick">${t.called ? '✓' : ''}</span>
           <span class="tt">${esc(t.title)}</span>
           <span class="ta">${esc(t.artist || '')}</span>
         </button>`);
-      row.addEventListener('click', () => act(t.called ? 'uncall' : 'call', { trackId: t.id }));
-      return row;
+      box.addEventListener('click', () => act(t.called ? 'uncall' : 'call', { trackId: t.id }));
+      return box;
     }));
     if (!shown.length) list.appendChild(node('<div class="tiny">Nothing matches that.</div>'));
   };

@@ -319,7 +319,16 @@ async function handleGet(req, res, url, route) {
       brand: config.brandName,
       ...library,
       adverts: listAdvertPacks(config.advertDir),
-      running: { game: session.kind, packId: session.pack.id, title: session.pack.title, phase: session.engine.state.phase, playerCount: session.engine.playerList().length },
+      running: {
+        game: session.kind,
+        packId: session.pack.id,
+        title: session.pack.title,
+        phase: session.engine.state.phase,
+        // Optional on an engine — a new game that has not written one still
+        // shows up in the console, it just says less about itself.
+        at: typeof session.engine.where === 'function' ? session.engine.where() : '',
+        playerCount: session.engine.playerList().length,
+      },
       archive: listArchive(config.dataDir),
       generation: {
         claude: Boolean(process.env.ANTHROPIC_API_KEY),

@@ -128,7 +128,8 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 | **No Instagram follow-for-points** | No API can verify a follow. Told the host; he agreed to drop it rather than fake it. |
 | **British spelling and UK chart references** | Crowds are Essex, Kent and Surrey. This is in the generation prompts too. |
 | **Deploying on Render** | Chosen by the host. Serverless (Vercel/Netlify) is wrong — the app holds a live connection to every phone all night. |
-| **Alphabetical bingo call sheet** | Not play order. Half the room is drinking and scanning for "have they done Africa yet?". |
+| **Alphabetical bingo call sheet** | Not play order — on the big screen AND on the host's own sheet. Half the room is drinking and scanning for "have they done Africa yet?", and so is the host, with a record running. |
+| **The call sheet is a grid, not a list** | Forty tracks one per row is three screenfuls with the middle of every row empty. `.trackgrid` wraps to fit — seven across a laptop, two across a phone — and the host page widens to 1280px for bingo only (`body.host.bingo`). Called tracks stay put and go green; a sheet that reorders itself under your thumb mid-gig is how you tap the wrong song. |
 | **A generated pack keeps its playlist** | `pack.spotifyPlaylist`, surfaced by `listBingoPacks()` and shown as a green Playlist button on the pack card. The link used to appear once in the generator's log and then you had to go and find it in Spotify on the night. |
 
 ---
@@ -195,6 +196,27 @@ through every remaining question.
 It keeps every score and clears the scoreboard and advert flags, and `back()`
 from FINAL returns to the round board — so a mis-tap on the host's phone is one
 press to undo. That is why it is not a reset.
+
+### The console's running panel is the way in
+
+**Stopping and driving a game both live on that panel** — `runningPanel()` in
+`console.js`. Stop calls `/api/host/resetAll`; **Take control** goes to `/host`.
+The host reported having neither, twice, while both were on the panel: the
+first time Stop genuinely was not built, the second time "Control view" was a
+small grey link sitting between "Big screen" and "Stop", which reads as a
+caption rather than as the way you run the night. It is the primary button now.
+**If he says a control is missing, check what is deployed before building it
+again** — and check the label says what it does.
+
+The panel also shows where the game has got to, from `engine.where()` — "Round
+Two — question 4 of 10", "Round 1 — 12 of 40 played". Both engines have one and
+the server calls it defensively (`typeof … === 'function'`), so it is optional
+for a new game rather than a fifth thing the contract demands.
+
+**Navigation itself is deliberately NOT duplicated in the console.** The
+control view drives the game over SSE with the engine's version; a second set
+of Next/Back buttons polling the library would eventually double-advance a
+room. One place that moves a quiz, one tap away.
 
 ---
 
@@ -424,7 +446,7 @@ generates one round of every type so a fifth one cannot repeat this.
 ## Checks
 
 ```bash
-npm test        # 280 tests, no network, injected clocks — must stay green
+npm test        # 283 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -472,7 +494,7 @@ recreate it.
 
 All five build stages plus bingo, the console, generation, pack import and the
 tickable review flags are done, tested and pushed to **`MusicQuizApp`**.
-Nothing is half-finished in the tree. 280 tests green.
+Nothing is half-finished in the tree. 283 tests green.
 
 (An earlier version of this line named `claude/new-session-jzx988`. That branch
 is gone — see **Where to push**.)

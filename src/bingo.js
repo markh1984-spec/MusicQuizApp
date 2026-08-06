@@ -471,6 +471,21 @@ export class BingoGame {
     return this.lines().some((line) => line.every((i) => player.marks[i]));
   }
 
+  /** Where the game has got to, in one line — see Engine.where(). */
+  where() {
+    const called = this.state.called.length;
+    const total = this.tracks.length;
+    switch (this.state.phase) {
+      case BINGO_PHASES.LOBBY: return 'Waiting in the lobby';
+      case BINGO_PHASES.PLAYING:
+        return `Round ${this.state.round} — ${called} of ${total} played, going for ${this.state.target === TARGETS.FULL ? 'a full house' : 'a line'}`;
+      case BINGO_PHASES.WON:
+        return `Round ${this.state.round} — ${this.state.target === TARGETS.FULL ? 'full house' : 'a line'} claimed, ${called} of ${total} played`;
+      case BINGO_PHASES.FINISHED: return 'Finished — the winners are up';
+      default: return '';
+    }
+  }
+
   /** Your caller's view: the full track list and who is close. */
   hostView() {
     const view = this.baseView();

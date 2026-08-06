@@ -119,6 +119,31 @@ export class Engine {
     this.state.questionIndex = Math.min(Math.max(0, this.state.questionIndex), lastQuestion);
   }
 
+  /**
+   * Where the quiz has got to, in one line, for somebody not looking at it.
+   *
+   * The console knew a quiz was running and nothing else, which reads as a
+   * label rather than a live game — you cannot tell from it whether the room
+   * is between rounds or twelve seconds into a question, and that decides
+   * whether you touch anything.
+   */
+  where() {
+    const s = this.state;
+    const round = this.round();
+    const roundName = round ? (round.title || `Round ${s.roundIndex + 1}`) : `Round ${s.roundIndex + 1}`;
+    const n = this.questions().length;
+    switch (s.phase) {
+      case PHASES.LOBBY: return 'Waiting in the lobby';
+      case PHASES.RULES: return 'The rules slide is up';
+      case PHASES.ROUND_INTRO: return `${roundName} — about to start`;
+      case PHASES.QUESTION: return `${roundName} — question ${s.questionIndex + 1} of ${n}`;
+      case PHASES.REVEAL: return `${roundName} — question ${s.questionIndex + 1} of ${n}, answer showing`;
+      case PHASES.ROUND_BOARD: return `Scores after ${roundName}`;
+      case PHASES.FINAL: return 'Finished — the final scores are up';
+      default: return '';
+    }
+  }
+
   /** Milliseconds left on the clock, or null when no question is running. */
   msRemaining() {
     if (this.state.phase !== PHASES.QUESTION || !this.state.question) return null;

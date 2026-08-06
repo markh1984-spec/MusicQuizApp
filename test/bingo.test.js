@@ -425,3 +425,23 @@ test('the bingo pack that ships with the app is valid', async () => {
   const pack = JSON.parse(fs.readFileSync(url, 'utf8'));
   assert.deepEqual(validateBingoPack(pack), []);
 });
+
+/*
+ * The same one-line "where are we" the quiz engine has, so the console panel
+ * reads the same whichever game is on.
+ */
+test('where() counts the tracks played and says what they are going for', () => {
+  const { game } = makeGame();
+  assert.match(game.where(), /lobby/i);
+
+  game.join({ name: 'Mum' });
+  game.start();
+  assert.equal(game.where(), 'Round 1 — 0 of 40 played, going for a line');
+
+  game.call('t1');
+  game.call('t2');
+  assert.equal(game.where(), 'Round 1 — 2 of 40 played, going for a line');
+
+  game.finish();
+  assert.match(game.where(), /finished/i);
+});

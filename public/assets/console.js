@@ -590,19 +590,35 @@ async function generate(panel) {
   }
 }
 
+/**
+ * What is on the projector right now, and the two things you might want to do
+ * about it: drive it, or stop it.
+ *
+ * "Control view" used to be a small grey link between "Big screen" and "Stop",
+ * which reads as a footnote rather than as the way you run the night. It is the
+ * one button on this panel that does the actual job, so it looks like it —
+ * everything else on the panel is a link or a warning.
+ *
+ * The line underneath says where the game has got to, from the engine itself,
+ * because "a quiz is running" and "they are twelve seconds into round 2
+ * question 4" are very different things to walk in on.
+ */
 function runningPanel(running) {
   if (!running) return node('<div></div>');
   const live = running.phase !== 'lobby' && running.phase !== 'finished';
+  const what = running.game === 'bingo' ? 'Music bingo' : 'Music quiz';
+  const who = `${running.playerCount} playing`;
   const el = node(`
     <div class="panel running ${live ? 'live' : ''}">
       <h3>${live ? 'Running now' : 'Loaded and waiting'}</h3>
       <div class="running-row">
         <div>
           <div class="running-title">${esc(running.title)}</div>
-          <div class="tiny">${esc(running.game === 'bingo' ? 'Music bingo' : 'Music quiz')} — ${running.playerCount} playing</div>
+          <div class="tiny">${esc(what)} — ${who}</div>
+          ${running.at ? `<div class="running-at">${esc(running.at)}</div>` : ''}
         </div>
         <div class="running-links">
-          <a class="minor" href="${linkTo('/host')}">Control view</a>
+          <a class="go control-link" href="${linkTo('/host')}">${live ? 'Take control' : 'Open the controls'}</a>
           <a class="minor" href="/screen" target="_blank" rel="noopener">Big screen</a>
           <button class="minor danger stop-running" title="Clear it and go back to waiting">Stop</button>
         </div>
