@@ -211,6 +211,16 @@ press to undo. That is why it is not a reset.
 A question the checker does not mention is treated as **unchecked, not passed**
 — silence is not approval.
 
+**The checker works in small batches, run at the same time.** `CHECK_BATCH`
+is 6. It used to send a whole round in one call — the longest call in the app,
+a stronger model with thinking, several minutes of single point of failure, and
+the thing that died on the host. Batching makes each call short, limits a hang
+to one batch, and cuts the wall clock rather than adding to it. A `multi`
+question is six options to verify rather than four, so those batches are the
+slowest — which is why the answer to "the multi round is slow" is smaller
+batches, not fewer options. Six options with 2–3 correct is the round type; four
+would make it a giveaway.
+
 **But a checker that cannot be reached must not lose the quiz.** By the time
 the second pass runs, the generation is minutes and real money deep. If both
 the checker model and the fallback fail, the questions are kept, the round is

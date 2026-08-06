@@ -194,7 +194,37 @@ One verdict per question, using the index shown. Give a reason of at most 20
 words for every rejection. Be specific about what is wrong.
 `.trim();
 
+/**
+ * How many questions go to the checker in one call.
+ *
+ * Small on purpose. The checker is the longest call in the app — a stronger
+ * model, thinking, verifying every option of every question — and one call
+ * covering fifteen questions is a single point of failure several minutes
+ * long. It is what died on the host and took a whole two-round quiz with it.
+ *
+ * Small batches, run at the same time, means each call is short, a hang costs
+ * one batch instead of the lot, and the wall clock goes down rather than up.
+ * A "pick them all" question is the reason this matters: six options is six
+ * facts to verify rather than four, so those batches are the slowest.
+ */
+const CHECK_BATCH = 6;
+
 async function checkQuestions({ questions, apiKey, model, log = () => {} }) {
+  if (questions.length <= CHECK_BATCH) {
+    return checkBatch({ questions, apiKey, model, log });
+  }
+  const batches = [];
+  for (let i = 0; i < questions.length; i += CHECK_BATCH) {
+    batches.push(questions.slice(i, i + CHECK_BATCH));
+  }
+  log(`  (in ${batches.length} batches, at the same time)`);
+  const done = await Promise.all(
+    batches.map((batch) => checkBatch({ questions: batch, apiKey, model, log })),
+  );
+  return done.flat();
+}
+
+async function checkBatch({ questions, apiKey, model, log = () => {} }) {
   const listing = questions.map((q, i) => {
     const lines = [
       `[${i}] ${q.prompt}`,

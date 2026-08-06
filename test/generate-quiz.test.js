@@ -283,3 +283,51 @@ test('a Claude call that times out says so in words, and carries a real deadline
   assert.ok(sawSignal, 'a deadline was actually attached to the request');
   assert.equal(typeof sawSignal.aborted, 'boolean');
 });
+
+
+/**
+ * The checker is the longest call in the app, and it used to be one call
+ * covering the whole round — several minutes of single point of failure. That
+ * is what died on the host and took a two-round quiz with it.
+ */
+test('the checker works in small batches, at the same time', async () => {
+  const sizes = [];
+  let concurrent = 0;
+  let peak = 0;
+  globalThis.fetch = async (url, options) => {
+    const prompt = JSON.parse(options.body).messages[0].content;
+    const reply = (payload) => ({
+      ok: true, status: 200, text: async () => '',
+      json: async () => ({ content: [{ type: 'text', text: JSON.stringify(payload) }] }),
+    });
+
+    if (prompt.startsWith('Check these')) {
+      const n = Number(prompt.match(/^Check these (\d+)/)[1]);
+      sizes.push(n);
+      concurrent++;
+      peak = Math.max(peak, concurrent);
+      await new Promise((r) => setTimeout(r, 20));
+      concurrent--;
+      return reply({ verdicts: Array.from({ length: n }, (_, i) => ({ index: i, ok: true })) });
+    }
+
+    const asked = Number(prompt.match(/^Write (\d+) questions/)[1]);
+    return reply({
+      questions: Array.from({ length: asked }, (_, i) => ({
+        prompt: `Q${sizes.length}-${i}-${Math.random()}?`,
+        options: ['a', 'b', 'c', 'd'],
+        correctIndex: 0,
+        answerNote: 'x',
+      })),
+    });
+  };
+
+  await withTmpDir(async (config) => {
+    const { quiz } = await generateQuizPack({ config, theme: 'test', rounds: ['text'], perRound: 10 });
+    assert.equal(quiz.rounds[0].questions.length, 10);
+  });
+
+  assert.ok(sizes.length > 1, 'the round was split across several checker calls');
+  assert.ok(Math.max(...sizes) <= 6, `no batch bigger than 6, got ${sizes.join(', ')}`);
+  assert.ok(peak > 1, 'and they ran at the same time rather than one after another');
+});
