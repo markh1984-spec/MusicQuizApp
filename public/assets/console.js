@@ -1407,6 +1407,12 @@ function photosSection() {
       status.innerHTML = `${data.count} photo${data.count === 1 ? '' : 's'} ·
         <b style="color:var(--gold)">${data.unfiled} not filed away yet</b> ·
         going to ${esc(data.repo)}`;
+    } else if (!data.count) {
+      // "0 photos, all filed" is true and says nothing. Before the first one
+      // arrives, what you want to know is that it is pointed at the right
+      // place and working.
+      status.innerHTML = `<b style="color:var(--good)">Ready.</b>
+        Photos will be filed to ${esc(data.repo)} as they arrive.`;
     } else {
       status.innerHTML = `${data.count} photo${data.count === 1 ? '' : 's'} ·
         <b style="color:var(--good)">all filed to ${esc(data.repo)}</b>`;
