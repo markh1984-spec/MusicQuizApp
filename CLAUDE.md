@@ -222,6 +222,27 @@ All of this exists because the first generated quiz shipped a question where a
 wrong-marked option was defensible AND the fact printed on screen proved it.
 Do not remove or weaken these without understanding that.
 
+### Reading a reply is its own job
+
+`readTracks()` in `src/generate-bingo.js`, and it has tests. A generation died
+on the host with nothing but "Claude did not return usable JSON" on a theme
+that had worked minutes before. Three things keep that from happening:
+
+- the assistant turn is **prefilled** with `{"tracks":[`, so the reply cannot
+  open with "Here are forty songs…";
+- 8000 max tokens, because sixty-odd tracks is a long reply and one that runs
+  out mid-track is not JSON at all;
+- and if it still will not parse, the individual track objects are picked out
+  with a regex. Fifty-five whole ones and a fifty-sixth cut in half is not
+  valid JSON, but it is fifty-five tracks and only forty are needed.
+
+**Failure messages have to name the cause.** Both of these were mysteries at
+midnight before they were fixed: this one, and Spotify's bare 403 `Forbidden`
+on creating a playlist, which is now told apart by asking the token which
+scopes it was actually granted (`grantedScopes()` / `explain403()` in
+`src/spotify.js`) — a missing write scope and an account not admitted to a
+Development-mode app look identical otherwise.
+
 ---
 
 ## Things the host does not have, and what that blocks
@@ -308,7 +329,7 @@ switch from radios to tickboxes.
 ## Checks
 
 ```bash
-npm test        # 255 tests, no network, injected clocks — must stay green
+npm test        # 261 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -356,7 +377,7 @@ recreate it.
 
 All five build stages plus bingo, the console, generation, pack import and the
 tickable review flags are done, tested and pushed to **`MusicQuizApp`**.
-Nothing is half-finished in the tree. 255 tests green.
+Nothing is half-finished in the tree. 261 tests green.
 
 (An earlier version of this line named `claude/new-session-jzx988`. That branch
 is gone — see **Where to push**.)
