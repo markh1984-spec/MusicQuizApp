@@ -52,7 +52,18 @@ export function missingSpotifyConfig() {
     .filter((name) => !process.env[name]);
 }
 
-let cachedToken = null; // { token, expiresAt }
+let cachedToken = null; // { token, expiresAt, scope }
+
+/**
+ * What the saved login is actually allowed to do.
+ *
+ * Spotify hands this back every time the refresh token is exchanged, and it is
+ * the only way to tell a permission problem from an account problem — both of
+ * which arrive as a bare 403 with the word "Forbidden" and nothing else.
+ */
+export function grantedScopes() {
+  return cachedToken ? String(cachedToken.scope || '').split(' ').filter(Boolean) : [];
+}
 
 /** Swap the long-lived refresh token for a short-lived access token. */
 export async function accessToken() {
@@ -81,7 +92,11 @@ export async function accessToken() {
     throw new Error(`Spotify refused the refresh token (${res.status}). Run scripts/spotify-login.mjs again.`);
   }
   const data = await res.json();
-  cachedToken = { token: data.access_token, expiresAt: Date.now() + (data.expires_in || 3600) * 1000 };
+  cachedToken = {
+    token: data.access_token,
+    expiresAt: Date.now() + (data.expires_in || 3600) * 1000,
+    scope: data.scope || '',
+  };
   return cachedToken.token;
 }
 
@@ -154,6 +169,35 @@ function simplify(s) {
 }
 
 /**
+ * Turn Spotify's "Forbidden" into something you can act on.
+ *
+ * Reading works with any valid login, so everything up to this point can
+ * succeed and then creating the playlist is refused. Spotify says only
+ * "Forbidden" and there are two quite different reasons for it — the saved
+ * login not being allowed to write playlists, or the account not being let
+ * into the app at all. Guessing between those at midnight is not a good use of
+ * anybody's evening, so ask the token which one it is.
+ */
+function explain403(err, user) {
+  if (!/\(403\)/.test(err.message)) return err;
+  const granted = grantedScopes();
+  const missing = ['playlist-modify-private', 'playlist-modify-public'].filter((s) => !granted.includes(s));
+
+  if (missing.length) {
+    return new Error(
+      `Spotify will not let this login create playlists — it was never given permission to (missing ${missing.join(' and ')}). `
+      + 'Run "npm run spotify:login" again, click Agree, and replace SPOTIFY_REFRESH_TOKEN with the new one.',
+    );
+  }
+  return new Error(
+    `Spotify refused to create the playlist in ${user.id}, even though the login has permission to. `
+    + 'That is usually the app being in Development mode with this account not listed: on developer.spotify.com, '
+    + 'open the app, Settings, User Management, and add the name and email of this Spotify account. '
+    + `(Permissions the login does have: ${granted.join(', ') || 'none reported'}.)`,
+  );
+}
+
+/**
  * Make a playlist and fill it. Private by default — it is a working playlist
  * for a gig, not something to publish.
  */
@@ -162,7 +206,7 @@ export async function createPlaylist({ name, description = '', uris = [], isPubl
   const playlist = await api(`/users/${encodeURIComponent(user.id)}/playlists`, {
     method: 'POST',
     body: JSON.stringify({ name, description, public: isPublic }),
-  });
+  }).catch((err) => { throw explain403(err, user); });
 
   // The API takes 100 at a time.
   for (let i = 0; i < uris.length; i += 100) {
