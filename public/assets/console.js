@@ -960,10 +960,34 @@ function playlistPanel(pack) {
   return el;
 }
 
+/**
+ * The card shapes this pack has enough tracks for, ready to launch with.
+ *
+ * The shape belongs to the NIGHT, not to the pack: the same forty-two songs are
+ * a quick game on a 3x3 and a long one on a strip, and which you want depends
+ * on how much of the evening is left — something you know when you press
+ * Launch, not when you filed the songs weeks ago. So it is chosen here, and
+ * never written back to the file.
+ *
+ * Shapes the list cannot fill are left out rather than shown and refused.
+ */
+function shapeOptions(pack) {
+  const shapes = (library && library.cardShapes) || [];
+  const fits = shapes.filter((s) => pack.trackCount >= s.minimum);
+  const usable = fits.length ? fits : shapes.slice(0, 1);
+  // The pack's own shape is the default, if it is one of the ones on offer.
+  const own = usable.find((s) => s.rows === pack.cardRows && s.cols === pack.cardCols)
+    || usable.find((s) => s.rows === s.cols && s.rows === pack.cardSize)
+    || usable[usable.length - 1];
+  // "line of 8" is the number that actually decides how long the game runs —
+  // on a square it is the side, on a strip it is the long way.
+  return usable.map((s) => `<option value='{"rows":${s.rows},"cols":${s.cols}}' ${s === own ? 'selected' : ''}>${esc(s.label)} — line of ${Math.max(s.rows, s.cols)}</option>`).join('');
+}
+
 function packCard(kind, pack) {
   const detail = kind === 'quiz'
     ? `${pack.questionCount} questions · ${(pack.rounds || []).length} rounds`
-    : `${pack.trackCount} tracks · ${pack.cardSize}×${pack.cardSize} card`;
+    : `${pack.trackCount} tracks`;
 
   const played = pack.playCount
     ? `Played ${pack.playCount} time${pack.playCount === 1 ? '' : 's'}${pack.lastPlayedAt ? ` · last ${whenish(pack.lastPlayedAt)}` : ''}`
@@ -976,6 +1000,10 @@ function packCard(kind, pack) {
       <div class="tiny played">${esc(played)}</div>
       ${pack.broken ? `<div class="tiny" style="color:var(--bad)">Broken: ${esc(pack.broken)}</div>` : ''}
       ${pack.problems ? `<div class="tiny" style="color:var(--bad)">${pack.problems} thing${pack.problems === 1 ? '' : 's'} to fix</div>` : ''}
+      ${kind === 'bingo' && !pack.broken ? `
+        <label class="pack-shape">Cards
+          <select class="shape-pick">${shapeOptions(pack)}</select>
+        </label>` : ''}
       <div class="pack-actions">
         <button class="go launch" ${pack.broken ? 'disabled' : ''}>Launch</button>
         <button class="pack-read" title="Read it through">Read</button>
@@ -1083,7 +1111,9 @@ function packCard(kind, pack) {
     button.disabled = true;
     button.textContent = 'Launching…';
     try {
-      await postJson('/api/host/launch', { game: kind, packId: pack.id }, { 'X-Host-Key': hostKey });
+      const picked = el.querySelector('.shape-pick');
+      const shape = picked ? JSON.parse(picked.value) : null;
+      await postJson('/api/host/launch', { game: kind, packId: pack.id, shape }, { 'X-Host-Key': hostKey });
       location.href = linkTo('/host');
     } catch (err) {
       button.disabled = false;

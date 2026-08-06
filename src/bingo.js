@@ -28,6 +28,15 @@ export const BINGO_PHASES = {
   FINISHED: 'finished',
 };
 
+/**
+ * The most squares a card may have.
+ *
+ * Not an arbitrary number: 5x5 is 25 and a 3-across strip of 8 is 24, so this
+ * leaves room for a 6x6 and stops anything that would be unreadable on the
+ * phone in somebody's hand in a dark pub.
+ */
+export const MAX_SQUARES = 36;
+
 /** What a full card has to look like to win. */
 export const TARGETS = {
   LINE: 'line',
@@ -75,12 +84,25 @@ export class BingoGame {
 
   // ------------------------------------------------------------------- cards
 
+  /**
+   * The card's shape.
+   *
+   * A pack may say `cardSize: 4` (square, and every pack said this until
+   * strips arrived) or `cardRows`/`cardCols`. `cardShape()` reads either, so
+   * nothing that was already on disk has to be rewritten.
+   */
+  get shape() {
+    return cardShape(this.pack);
+  }
+
+  /** Kept for everything that only ever wanted "how wide is it". */
   get size() {
-    return this.pack.cardSize || 4;
+    return this.shape.cols;
   }
 
   get squareCount() {
-    return this.size * this.size;
+    const { rows, cols } = this.shape;
+    return rows * cols;
   }
 
   get tracks() {
@@ -235,15 +257,9 @@ export class BingoGame {
 
   // ------------------------------------------------------------------ claims
 
-  /** Every line, column and diagonal on a card of this size. */
+  /** Every winning line on a card of this shape — see cardLines(). */
   lines() {
-    const n = this.size;
-    const out = [];
-    for (let r = 0; r < n; r++) out.push(Array.from({ length: n }, (_, c) => r * n + c));
-    for (let c = 0; c < n; c++) out.push(Array.from({ length: n }, (_, r) => r * n + c));
-    out.push(Array.from({ length: n }, (_, i) => i * n + i));
-    out.push(Array.from({ length: n }, (_, i) => i * n + (n - 1 - i)));
-    return out;
+    return cardLines(this.shape);
   }
 
   /** A square counts only if the player marked it AND you actually played it. */
@@ -377,7 +393,11 @@ export class BingoGame {
       title: this.pack.title,
       target: this.state.target,
       round: this.state.round,
-      cardSize: this.size,
+      // Both spellings: cardSize for anything that only knows squares, and the
+      // shape for the phone, which lays the grid out from it.
+      cardSize: this.shape.cols,
+      cardRows: this.shape.rows,
+      cardCols: this.shape.cols,
       trackCount: this.tracks.length,
       calledCount: this.state.called.length,
       playerCount: this.playerList().length,
@@ -589,9 +609,103 @@ function cardSignature(card) {
  * nobody feels they won anything. Half again gives enough spare for cards to
  * genuinely differ.
  */
-export function minimumTracks(cardSize = 4) {
-  return Math.ceil(cardSize * cardSize * 1.5);
+/**
+ * What shape a pack's cards are, from whichever way it says so.
+ *
+ * `cardSize: 4` means 4x4 and is what every pack said before strips existed.
+ * `cardRows` / `cardCols` say it outright. Reading both here means no pack on
+ * disk had to be rewritten, and nothing else in the app has to know there are
+ * two spellings.
+ */
+export function cardShape(pack = {}) {
+  const rows = Number(pack.cardRows) || Number(pack.cardSize) || 4;
+  const cols = Number(pack.cardCols) || Number(pack.cardSize) || 4;
+  return { rows, cols };
 }
+
+/**
+ * Every winning line on a card.
+ *
+ * On a SQUARE card that is rows, columns and both diagonals — the traditional
+ * grid, unchanged.
+ *
+ * On a STRIP — 3 rows of 8, the shape of a paper bingo ticket — it is the long
+ * rows only. Not the short columns, and this is the whole point rather than a
+ * simplification: a card whose lines are different lengths is not a fair game,
+ * because somebody would call on a column of three while everybody else needs
+ * eight. Diagonals do not exist on a strip at all.
+ *
+ * So: whichever axis is longer is the line. An 8x3 gives the same game as a
+ * 3x8, just turned round.
+ */
+export function cardLines({ rows, cols }) {
+  const at = (r, c) => r * cols + c;
+  const out = [];
+  const row = (r) => Array.from({ length: cols }, (_, c) => at(r, c));
+  const col = (c) => Array.from({ length: rows }, (_, r) => at(r, c));
+
+  if (rows === cols) {
+    for (let r = 0; r < rows; r++) out.push(row(r));
+    for (let c = 0; c < cols; c++) out.push(col(c));
+    out.push(Array.from({ length: rows }, (_, i) => at(i, i)));
+    out.push(Array.from({ length: rows }, (_, i) => at(i, cols - 1 - i)));
+    return out;
+  }
+
+  if (cols > rows) for (let r = 0; r < rows; r++) out.push(row(r));
+  else for (let c = 0; c < cols; c++) out.push(col(c));
+  return out;
+}
+
+/**
+ * How many tracks a card of this shape really wants.
+ *
+ * Half again as many as there are squares, so two cards drawn from the pool do
+ * not come out looking like each other.
+ */
+export function minimumTracks(shape = 4) {
+  const { rows, cols } = typeof shape === 'number' ? { rows: shape, cols: shape } : shape;
+  return Math.ceil(rows * cols * 1.5);
+}
+
+/**
+ * One spelling of a card's shape, used everywhere it is said.
+ *
+ * A square is "4×4" and needs no explaining. A strip is spelled out — "3 across
+ * × 8 down" — because "3×8" is read both ways round by different people, and
+ * getting it backwards is the difference between a portrait card that fits a
+ * phone and a landscape one that does not.
+ */
+export function shapeLabel(shape) {
+  const { rows, cols } = typeof shape === 'number' ? { rows: shape, cols: shape } : shape;
+  return rows === cols ? `${rows}×${cols}` : `${cols} across × ${rows} down`;
+}
+
+/**
+ * A shape as the fields a pack carries.
+ *
+ * A square one still writes `cardSize` as well, so a pack saved today is still
+ * read correctly by anything that only knows the old spelling — including a
+ * copy of the app that has not been redeployed yet.
+ */
+export function shapeFields({ rows, cols }) {
+  return { cardRows: rows, cardCols: cols, ...(rows === cols ? { cardSize: rows } : {}) };
+}
+
+/**
+ * The shapes offered when you launch a round, in the order they are shown.
+ *
+ * The strips are TALLER than they are wide, because a phone is: 3 across and 8
+ * down, not the other way about. A line is the long way — eight — which is
+ * what makes them longer games than a 5×5 despite having one fewer square.
+ */
+export const CARD_SHAPES = [
+  { rows: 3, cols: 3 },
+  { rows: 4, cols: 4 },
+  { rows: 5, cols: 5 },
+  { rows: 6, cols: 4 },
+  { rows: 8, cols: 3 },
+];
 
 /** Same shape of checks as the quiz packs: catch it now, not on the night. */
 export function validateBingoPack(pack) {
@@ -599,15 +713,24 @@ export function validateBingoPack(pack) {
   if (!pack || typeof pack !== 'object') return ['That is not a bingo pack.'];
   if (!pack.title) problems.push('The pack needs a title.');
 
-  const size = pack.cardSize || 4;
-  if (![3, 4, 5].includes(size)) problems.push(`Card size must be 3, 4 or 5 (it is ${size}).`);
+  const shape = cardShape(pack);
+  const label = shapeLabel(shape);
+  // Loose enough for a strip you typed in by hand, tight enough to catch a
+  // card nobody could play: the limit is what fits on a phone and what a
+  // sensible track list can fill.
+  const sane = (n) => Number.isInteger(n) && n >= 2 && n <= 10;
+  if (!sane(shape.rows) || !sane(shape.cols)) {
+    problems.push(`Card shape must be between 2 and 10 each way (it is ${label}).`);
+  } else if (shape.rows * shape.cols > MAX_SQUARES) {
+    problems.push(`A ${label} card is ${shape.rows * shape.cols} squares — too many to read on a phone (${MAX_SQUARES} is the most).`);
+  }
 
   const tracks = pack.tracks || [];
-  const squares = size * size;
+  const squares = shape.rows * shape.cols;
   if (tracks.length < squares) {
-    problems.push(`Only ${tracks.length} tracks for a ${size}x${size} card — you need at least ${squares}.`);
-  } else if (tracks.length < minimumTracks(size)) {
-    problems.push(`Only ${tracks.length} tracks for a ${size}x${size} card. Add more (${minimumTracks(size)}+) or cards will look too alike.`);
+    problems.push(`Only ${tracks.length} tracks for a ${label} card — you need at least ${squares}.`);
+  } else if (tracks.length < minimumTracks(shape)) {
+    problems.push(`Only ${tracks.length} tracks for a ${label} card. Add more (${minimumTracks(shape)}+) or cards will look too alike.`);
   }
 
   const seen = new Set();
@@ -627,7 +750,7 @@ export function normaliseBingoPack(pack, fallbackId = 'bingo') {
     kind: 'bingo',
     title: pack.title || 'Music Bingo',
     subtitle: pack.subtitle || '',
-    cardSize: pack.cardSize || 4,
+    ...shapeFields(cardShape(pack)),
     notes: pack.notes || '',
     createdAt: pack.createdAt || null,
     tracks: (pack.tracks || []).map((t, i) => ({

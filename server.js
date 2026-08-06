@@ -21,7 +21,7 @@ import { Hub } from './src/sse.js';
 import { Photos, MAX_BYTES } from './src/photos.js';
 import { Session } from './src/session.js';
 import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked, ROUND_TYPES } from './src/quizzes.js';
-import { validateBingoPack, normaliseBingoPack, minimumTracks } from './src/bingo.js';
+import { validateBingoPack, normaliseBingoPack, minimumTracks, CARD_SHAPES, shapeLabel } from './src/bingo.js';
 import { fullLibrary, listArchive, loadArchived, saveBingoPack, loadBingoPack, deleteBingoPack } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
 import { generateQuizPack, buildIntroPlaylists } from './src/generate-quiz.js';
@@ -322,7 +322,9 @@ async function handleGet(req, res, url, route) {
       // How many tracks each card size wants, straight from the rule itself so
       // the console can size a pasted list without keeping its own copy of the
       // sum and drifting from it.
-      cardSizes: [3, 4, 5].map((size) => ({ size, minimum: minimumTracks(size) })),
+      // The card shapes on offer, with what each needs, straight from the rules
+      // themselves so the console keeps no copy of the sum to drift from.
+      cardShapes: CARD_SHAPES.map((shape) => ({ ...shape, label: shapeLabel(shape), minimum: minimumTracks(shape) })),
       running: {
         game: session.kind,
         packId: session.pack.id,
@@ -615,7 +617,13 @@ async function handleWrite(req, res, url, route) {
     // Launching a different game is the one action that replaces the engine.
     if (action === 'launch') {
       try {
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId));
+        // The card shape is chosen at launch, not stored on the pack: the same
+        // forty-two songs are a quick game on a 3x3 and a long one on a strip,
+        // and which you want is a decision about tonight.
+        const shape = body.shape && Number(body.shape.rows) && Number(body.shape.cols)
+          ? { rows: Number(body.shape.rows), cols: Number(body.shape.cols) }
+          : null;
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape });
         return sendJson(res, 200, { ok: true, started, view: session.hostView() }), true;
       } catch (err) {
         return sendJson(res, 400, { error: err.message }), true;

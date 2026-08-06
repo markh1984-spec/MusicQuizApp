@@ -834,6 +834,92 @@ control view works and is honest.
 
 ---
 
+# Where this might go — three directions, and what each really costs
+
+None of this is being built yet. It is written down so that a change made
+today does not quietly make one of them harder tomorrow.
+
+**The one thing that governs all of it: the app runs ONE game at a time.** One
+state file, one host key, one session, one join code. That is the right design
+for you running your own nights and the wrong one for anybody else using it at
+the same time as you. Directions 1 and 2 both need that undone first, and it is
+much cheaper to do while there are eight packs and one account than when there
+are hundreds of both.
+
+## 1. Selling other quiz masters a subscription — doable
+
+They log in, use quizzes you have written, cannot write their own. Around
+£9.99 a month.
+
+The work, in order of size:
+
+- **Multi-tenancy.** Concurrent games, per-account state, room codes so two
+  nights do not collide on one join URL. The engines are already classes with
+  injected state so several can exist at once; it is `server.js`, the store and
+  the live connections that assume one of everything.
+- **Accounts.** Real ones, hashed passwords, sessions — where today there is
+  one shared key.
+- **Payments.** Stripe Checkout and a webhook. Can be done over plain HTTP with
+  no library, so it does not break the no-dependencies rule.
+- **Hosting.** Ten hosts times sixty phones is six hundred connections held
+  open all evening. That is off the free tier for real.
+
+Worth saying plainly: **"they cannot make their own" is a content commitment.**
+A subscription means owing them new quizzes every month, not just software.
+
+## 2. On the App Store, a few pounds a go — hard, and a different product
+
+Not a port of this. This app is one host driving a projector with phones as
+buzzers. "Friends competing on their phones" has no host to press Next and no
+big screen — it is a second game that happens to reuse the scoring.
+
+Three things to know before spending anything:
+
+- **Music licensing is the real blocker.** Today YOU play the music, in a
+  venue, under that venue's PRS/PPL cover. An app that plays clips to consumers
+  has no such cover, and licensing recorded music for an app is slow and
+  expensive. Without audio it is a text quiz, which is a far weaker product
+  than the one you actually run.
+- **Apple takes 15–30%** and requires in-app purchase for digital goods.
+- **Apple rejects thin web wrappers** (guideline 4.2), so it needs to be
+  genuinely native — which ends the no-build-step rule, and adds $99 a year and
+  an app review queue.
+
+Cheaper first step: sell it as a **paid web app**. Same price, Stripe, no
+review, no wrapper. If people pay, then decide whether native is worth it.
+
+## 3. Paid TikTok streams with cash prizes — easy to build, hard to be allowed
+
+The smallest code change of the three: QR joining, live scoring and a winner
+all exist. Bolting a payment onto the join screen is a week.
+
+The problems are not technical:
+
+- **Taking entry money and paying out prizes is regulated.** Done wrong it is
+  an unlicensed lottery. A quiz can be a lawful prize competition under the
+  Gambling Act 2005, but only if the skill genuinely deters a significant
+  proportion of entrants — a legal test, not a design preference. Take advice
+  before accepting a single payment.
+- **You become a payment intermediary**, paying money to strangers. Stripe
+  Connect can do it but contests need explicit approval and identity checks on
+  the people being paid.
+- **Stream delay breaks the scoring.** TikTok Live runs 5–20 seconds behind,
+  and by a different amount for each viewer. Points here are "correct answer
+  plus seconds left on the clock" — the thing that makes this quiz good is
+  exactly the thing that does not survive a stream. That format needs a
+  different scoring model, not a tweak.
+
+## What to avoid doing in the meantime
+
+- Do not add anything that assumes a single global game, a single host key, or
+  a single set of packs, without at least leaving a note here.
+- Keep the engines free of the filesystem and the clock, the way they are now.
+  That is what makes running several at once possible at all.
+- Keep packs as files with ids. Per-account packs are a folder per account
+  before they are a database.
+
+---
+
 # If something goes wrong
 
 **Blank page when you first open it**

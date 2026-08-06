@@ -16,7 +16,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { listQuizzes } from './quizzes.js';
-import { validateBingoPack } from './bingo.js';
+import { validateBingoPack, cardShape, shapeFields } from './bingo.js';
 
 export const GAME_KINDS = ['quiz', 'bingo'];
 
@@ -38,7 +38,11 @@ export function listBingoPacks(dir) {
           file,
           title: pack.title || file,
           subtitle: pack.subtitle || '',
+          // The shape it was filed as. Only a default — the shape is chosen
+          // when you launch it, so the same pack can be a quick game one week
+          // and a long one the next.
           cardSize: pack.cardSize || 4,
+          ...shapeFields(cardShape(pack)),
           trackCount: (pack.tracks || []).length,
           // The playlist this pack was built with, so the console can put it
           // one tap away on the night. It was only ever shown once, in the

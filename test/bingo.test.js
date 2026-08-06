@@ -9,7 +9,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { BingoGame, BINGO_PHASES, TARGETS, validateBingoPack, normaliseBingoPack, shuffle } from '../src/bingo.js';
+import {
+  BingoGame, BINGO_PHASES, TARGETS, validateBingoPack, normaliseBingoPack, shuffle,
+  cardLines, cardShape, shapeLabel, minimumTracks, CARD_SHAPES,
+} from '../src/bingo.js';
 
 const START = 1_700_000_000_000;
 
@@ -407,9 +410,13 @@ test('a duplicate track in a pack is caught', () => {
   assert.match(validateBingoPack(pack).join(' '), /appears twice/);
 });
 
-test('a silly card size is caught', () => {
-  const pack = makePack(80, 7);
-  assert.match(validateBingoPack(pack).join(' '), /Card size must be 3, 4 or 5/);
+test('a card too big to read on a phone is caught', () => {
+  const pack = makePack(80, 7); // 49 squares
+  assert.match(validateBingoPack(pack).join(' '), /too many to read on a phone/);
+});
+
+test('a card shape that is not a shape is caught', () => {
+  assert.match(validateBingoPack({ ...makePack(40), cardRows: 1, cardCols: 3 }).join(' '), /between 2 and 10/);
 });
 
 test('normalising fills in ids and trims the shape', () => {
@@ -444,4 +451,101 @@ test('where() counts the tracks played and says what they are going for', () => 
 
   game.finish();
   assert.match(game.where(), /finished/i);
+});
+
+// -------------------------------------------------------------- card shapes
+
+/*
+ * Strips: 3 across and 8 down, the shape of a paper bingo ticket and the shape
+ * of a phone.
+ *
+ * The rule that makes it a fair game is that every winning line is the same
+ * length. On a strip that means the LONG way only — win on the eight, never on
+ * the three, or somebody calls in the first few tracks while everybody else
+ * needs eight.
+ */
+test('a strip wins on the long way, never the short way', () => {
+  const shape = { rows: 8, cols: 3 };
+  const lines = cardLines(shape);
+  assert.equal(lines.length, 3, 'three columns of eight, and nothing else');
+  for (const line of lines) assert.equal(line.length, 8);
+  // No line is a row of three, and none is a diagonal.
+  const flat = lines.flat().sort((a, b) => a - b);
+  assert.deepEqual(flat, Array.from({ length: 24 }, (_, i) => i), 'every square is on exactly one line');
+});
+
+test('a square card is exactly as it always was', () => {
+  const lines = cardLines({ rows: 4, cols: 4 });
+  assert.equal(lines.length, 10, '4 rows + 4 columns + 2 diagonals');
+  assert.deepEqual(lines[0], [0, 1, 2, 3]);
+  assert.deepEqual(lines[4], [0, 4, 8, 12]);
+  assert.deepEqual(lines[8], [0, 5, 10, 15], 'the diagonal');
+  assert.deepEqual(lines[9], [3, 6, 9, 12], 'and the other one');
+});
+
+test('turning a strip on its side gives the same game', () => {
+  const tall = cardLines({ rows: 8, cols: 3 });
+  const wide = cardLines({ rows: 3, cols: 8 });
+  assert.equal(wide.length, 3);
+  for (const line of wide) assert.equal(line.length, 8);
+  assert.equal(tall.length, wide.length, 'three lines of eight either way round');
+});
+
+test('a pack still says its shape the old way, and is read the same', () => {
+  assert.deepEqual(cardShape({ cardSize: 5 }), { rows: 5, cols: 5 });
+  assert.deepEqual(cardShape({ cardRows: 8, cardCols: 3 }), { rows: 8, cols: 3 });
+  assert.deepEqual(cardShape({}), { rows: 4, cols: 4 }, 'the default is unchanged');
+});
+
+test('a strip card is dealt the right number of squares and wins properly', () => {
+  const pack = { ...makePack(42), cardRows: 8, cardCols: 3 };
+  delete pack.cardSize;
+  const { game } = makeGame(pack);
+  const p = game.join({ name: 'Sharon' });
+  assert.equal(p.card.length, 24);
+  assert.equal(p.marks.length, 24);
+
+  // Mark and call a full column of eight.
+  const line = game.lines()[0];
+  assert.equal(line.length, 8);
+  for (const i of line) {
+    game.call(p.card[i]);
+    game.mark({ playerId: p.id, index: i, marked: true });
+  }
+  const result = game.claim(p.id);
+  assert.equal(result.valid, true);
+  assert.equal(result.pattern, 'line');
+});
+
+test('a row of three on a strip is NOT a win', () => {
+  const pack = { ...makePack(42), cardRows: 8, cardCols: 3 };
+  delete pack.cardSize;
+  const { game } = makeGame(pack);
+  const p = game.join({ name: 'Chancer' });
+  // The top row: squares 0, 1, 2 — three across.
+  for (const i of [0, 1, 2]) {
+    game.call(p.card[i]);
+    game.mark({ playerId: p.id, index: i, marked: true });
+  }
+  const result = game.claim(p.id);
+  assert.equal(result.valid, false, 'three across is not a line on a strip');
+  assert.equal(game.state.players[p.id].falseCalls, 1);
+});
+
+test('the shape is said one way round only, so nobody has to guess', () => {
+  assert.equal(shapeLabel({ rows: 4, cols: 4 }), '4×4');
+  assert.equal(shapeLabel({ rows: 8, cols: 3 }), '3 across × 8 down');
+  assert.equal(shapeLabel(5), '5×5');
+});
+
+test('every offered shape is playable with a normal track list', () => {
+  for (const shape of CARD_SHAPES) {
+    const squares = shape.rows * shape.cols;
+    assert.ok(squares <= 36, `${shapeLabel(shape)} is ${squares} squares`);
+    assert.ok(minimumTracks(shape) <= 42, `${shapeLabel(shape)} wants ${minimumTracks(shape)} tracks, more than a round has`);
+    // Every line the same length — the thing that makes it fair.
+    const lines = cardLines(shape);
+    const lengths = new Set(lines.map((l) => l.length));
+    assert.equal(lengths.size, 1, `${shapeLabel(shape)} has lines of different lengths: ${[...lengths]}`);
+  }
 });

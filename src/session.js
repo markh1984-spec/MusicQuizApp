@@ -14,7 +14,7 @@
  */
 
 import { Engine, PHASES, isSafeId } from './engine.js';
-import { BingoGame, BINGO_PHASES, normaliseBingoPack } from './bingo.js';
+import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFields } from './bingo.js';
 import { listQuizzes, loadQuiz } from './quizzes.js';
 import { listBingoPacks, loadBingoPack, recordLaunch, archiveResults } from './library.js';
 import { findSlide } from './adverts.js';
@@ -203,10 +203,26 @@ export class Session {
    * Start a different game. Everything about the old one is thrown away, so
    * this is only ever reached from the console behind the host key.
    */
-  launch(kind, packId) {
+  /**
+   * @param {object} [opts]
+   * @param {{rows:number, cols:number}} [opts.shape]  bingo card shape for tonight
+   *
+   * The card shape belongs to the NIGHT, not to the pack. The same forty-two
+   * songs are a quick game on a 3x3 and a long one on a 3x8, and which you
+   * want depends on how much of the evening you have — something you know when
+   * you press Launch and not when you filed the songs weeks earlier. The pack's
+   * own shape is the default; this overrides it for this game only and is never
+   * written back to the file.
+   */
+  launch(kind, packId, { shape = null } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     const pack = LAUNCHERS[kind].load(this.config, packId);
     const normalised = kind === 'bingo' ? normaliseBingoPack(pack, packId) : pack;
+    if (kind === 'bingo' && shape) {
+      const problems = validateBingoPack({ ...normalised, ...shapeFields(shape) });
+      if (problems.length) throw new Error(problems[0]);
+      Object.assign(normalised, shapeFields(shape));
+    }
     this.build(kind, normalised, null);
     recordLaunch(this.config.dataDir, kind, normalised.id, this.now());
     this.engine.changed();

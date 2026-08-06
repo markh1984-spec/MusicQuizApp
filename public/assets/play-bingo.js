@@ -14,6 +14,24 @@ export function bingoKey(s) {
   return `bingo:${s.phase}:${s.round}:${s.target}`;
 }
 
+/**
+ * What counts as a line, in words, for the phone holding the card.
+ *
+ * On a square card "a full line" is unambiguous — any row, column or diagonal,
+ * all the same length. On a strip it is not: somebody looking at three across
+ * and eight down will read "a line" as the three, mark them, and shout. So the
+ * strip says which way it runs and how many, and that is the difference
+ * between a false alarm and a win.
+ */
+function lineWording(s) {
+  const cols = s.cardCols || s.cardSize || 4;
+  const rows = s.cardRows || s.cardSize || 4;
+  if (rows === cols) return 'Get a full line';
+  return rows > cols
+    ? `Get a full column — ${rows} down`
+    : `Get a full row — ${cols} across`;
+}
+
 export function renderBingo(s, me) {
   if (s.phase === 'lobby') {
     return node(`
@@ -25,11 +43,16 @@ export function renderBingo(s, me) {
       </div>`);
   }
 
-  const size = s.cardSize || 4;
+  // Columns, not "size": a card can be a strip — 3 across and 8 down, the
+  // shape of a paper bingo ticket and of the phone it is on.
+  const cols = s.cardCols || s.cardSize || 4;
+  const rows = s.cardRows || s.cardSize || 4;
+  // Taller than it is wide, so the squares have to be rows rather than boxes.
+  const strip = rows > cols ? ' strip' : '';
   const el = node(`
     <div class="bingo-wrap">
       <div class="bingo-status" id="bingoStatus"></div>
-      <div class="bingo-grid cols-${size}" style="grid-template-columns:repeat(${size}, 1fr)" id="bingoGrid"></div>
+      <div class="bingo-grid cols-${cols}${strip}" style="grid-template-columns:repeat(${cols}, 1fr)" id="bingoGrid"></div>
       <button class="btn bingo-call" id="bingoCall" disabled>BINGO!</button>
     </div>`);
 
@@ -82,7 +105,7 @@ function paintCard(root, s, me) {
     } else if (s.target === 'full') {
       status.innerHTML = `<span>Playing for a <b>full house</b></span><span class="away">${away} to go</span>`;
     } else {
-      status.innerHTML = `<span>Get a full line</span><span class="away ${away === 1 ? 'hot' : ''}">${
+      status.innerHTML = `<span>${esc(lineWording(s))}</span><span class="away ${away === 1 ? 'hot' : ''}">${
         away === 0 ? 'Press BINGO!' : `${away} to go`
       }</span>`;
     }
@@ -91,7 +114,7 @@ function paintCard(root, s, me) {
   const button = root.querySelector('#bingoCall');
   if (button) {
     button.disabled = !s.canClaim;
-    button.textContent = s.canClaim ? 'BINGO!' : 'Mark a full line first';
+    button.textContent = s.canClaim ? 'BINGO!' : `Mark ${lineWording(s).replace(/^Get /, '')} first`;
   }
 }
 
