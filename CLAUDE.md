@@ -557,6 +557,21 @@ before curating and writes nothing back. The app appends when a pack is
 imported, and `backUpHistory()` pushes it to git — which is what makes the raw
 URL current rather than a snapshot.
 
+**Is the push automatic? Yes, and there is no deploy step.** `putFile()` commits
+straight to the branch over the Contents API, so the raw URL is current the
+moment the import finishes. It carries `[skip render]` like every other backup,
+so filing a pack never bounces the server mid-gig. Two things are NOT automatic
+and both are now said out loud in the banner:
+
+- **It needs `GITHUB_TOKEN`.** Without it the history is written here and
+  nowhere else, and Claude keeps reading the old list. `historyBackedUp` is
+  reported separately from the pack's own `backedUp` because they can differ,
+  and it is this one that causes a repeat in front of a room while the pack
+  itself looks perfectly fine.
+- **`raw.githubusercontent.com` is CDN-cached** for a few minutes. Building two
+  rounds back to back is exactly when that bites, so the fetch wants a
+  cache-busting query (`?t=<now>`) — that is Claude's side, not the app's.
+
 Recording at IMPORT rather than at curation is deliberate: a round Claude wrote
 and the host binned should not burn 42 songs for three months. It also means
 the guarantee is "no song appears in two rounds within three months" rather

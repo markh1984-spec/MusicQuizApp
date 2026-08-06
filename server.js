@@ -523,11 +523,15 @@ async function backUp(relPath, contents, message, log = () => {}) {
 async function backUpHistory(log = () => {}) {
   try {
     const historyFile = path.join(config.dataDir, 'track-history.json');
-    if (!fs.existsSync(historyFile)) return;
-    await backUp('data/track-history.json', fs.readFileSync(historyFile, 'utf8'), 'Update song history', () => {});
-    log('song history backed up too');
+    if (!fs.existsSync(historyFile)) return { ok: false };
+    const result = await backUp('data/track-history.json', fs.readFileSync(historyFile, 'utf8'), 'Update song history', () => {});
+    log(result.ok
+      ? 'song history pushed to GitHub'
+      : `song history NOT pushed: ${result.error || 'GitHub backup is not set up'}`);
+    return result;
   } catch (err) {
     log('could not back up the song history: ' + err.message);
+    return { ok: false, error: err.message };
   }
 }
 
@@ -804,7 +808,7 @@ async function handleWrite(req, res, url, route) {
         `Add bingo pack: ${result.pack.title}`,
         log,
       );
-      await backUpHistory(log);
+      const history = await backUpHistory(log);
       log('DONE ' + JSON.stringify({
         id: result.pack.id,
         title: result.pack.title,
@@ -812,6 +816,11 @@ async function handleWrite(req, res, url, route) {
         playlist: result.playlist ? result.playlist.url : null,
         playlistError: result.playlistError || null,
         backedUp: backup.ok,
+        // Reported separately from the pack's own backup. They can differ, and
+        // when they do it is this one that matters: Claude in the browser reads
+        // the pushed history to decide what NOT to pick, so a history that
+        // stayed here means the next round can repeat these songs.
+        historyBackedUp: history.ok,
       }));
     } catch (err) {
       log('ERROR ' + err.message);
@@ -988,7 +997,7 @@ async function handleWrite(req, res, url, route) {
       );
       // The import writes every track into the no-repeats history too, so that
       // has to survive the next restart just as it does when generating.
-      await backUpHistory(log);
+      const history = await backUpHistory(log);
       log('DONE ' + JSON.stringify({
         id: result.pack.id,
         title: result.pack.title,
@@ -996,6 +1005,11 @@ async function handleWrite(req, res, url, route) {
         playlist: result.playlist ? result.playlist.url : null,
         playlistError: result.playlistError || null,
         backedUp: backup.ok,
+        // Reported separately from the pack's own backup. They can differ, and
+        // when they do it is this one that matters: Claude in the browser reads
+        // the pushed history to decide what NOT to pick, so a history that
+        // stayed here means the next round can repeat these songs.
+        historyBackedUp: history.ok,
       }));
     } catch (err) {
       log('ERROR ' + err.message);

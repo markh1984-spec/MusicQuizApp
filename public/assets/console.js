@@ -351,7 +351,8 @@ async function generateQuiz(panel) {
         check every question before anyone else sees it.
         ${done.needsImages ? '<br><span class="tiny">The face round has no pictures yet — it will use placeholders until you generate them. See TODO.md part 6.</span>' : ''}`;
     status.appendChild(node(`<div class="gen-good">${said}</div>`));
-    showDone('good', said);
+    // A quiz has no song history, so backup is the only thing that can be amiss.
+    showDone(done.backedUp && !(done.unchecked || []).length ? 'good' : 'warn', said);
     if (problems.length) {
       status.appendChild(node(`
         <div class="gen-bad">${problems.length} thing${problems.length === 1 ? '' : 's'} to fix in the editor:
@@ -406,6 +407,24 @@ async function streamGeneration(path, body, say) {
     error = 'The connection dropped before it finished. It may still have completed — reload and look at your packs before running it again.';
   }
   return { done, error };
+}
+
+/**
+ * Whether the no-repeats list actually made it to GitHub.
+ *
+ * Said separately from the pack's own backup, because they can differ and when
+ * they do it is this one that bites. Claude in the browser reads the PUSHED
+ * history to decide what not to pick, so a history that only made it as far as
+ * this server means next week's round can hand the room the same songs — and
+ * nothing about the pack you are looking at would suggest anything was wrong.
+ */
+function historyLine(done) {
+  if (done.historyBackedUp) {
+    return '<br>These songs are now in the no-repeats list on GitHub, so the next round will avoid them.';
+  }
+  return `<br><b>These songs did NOT reach the no-repeats list on GitHub.</b>
+    They are recorded here, but anything reading the list from GitHub — Claude in your
+    browser — will not see them, and could pick them again. Import it again once backup is working.`;
 }
 
 /**
@@ -559,11 +578,15 @@ async function runImport(panel) {
     // Said here AND in the banner: here while you are still looking at the
     // panel, and in the banner because load() below rebuilds this panel and
     // would otherwise take the only word you got with it.
-    const said = `Imported <b>${esc(done.title)}</b> — ${done.trackCount} tracks, and they are in the no-repeats history now.
-      ${done.backedUp ? 'Backed up to GitHub — this one is permanent.' : '<b>Not backed up</b>, so it will be lost when the app restarts.'}`;
+    const said = `Imported <b>${esc(done.title)}</b> — ${done.trackCount} tracks.
+      ${done.backedUp ? 'Backed up to GitHub — this one is permanent.' : '<b>Not backed up</b>, so it will be lost when the app restarts.'}
+      ${historyLine(done)}`;
     status.appendChild(node(`<div class="gen-good">${said}</div>`));
     button.textContent = 'Imported';
-    showDone('good', said);
+    // Amber rather than green when something in it is a warning. A green box
+    // you have to read to the end to discover a problem is a box you stop
+    // reading to the end of.
+    showDone(done.backedUp && done.historyBackedUp ? 'good' : 'warn', said);
     await load();
   } catch (err) {
     status.appendChild(node(`<div class="gen-bad">${esc(err.message)}</div>`));
@@ -691,9 +714,10 @@ async function generate(panel) {
           : done.playlistError
             ? `<br><b>No Spotify playlist:</b> ${esc(done.playlistError)}<br>The pack itself is fine — build the playlist by hand from the call sheet.`
             : 'No Spotify playlist — build one yourself from the call sheet.'}
-        ${done.backedUp ? '<br>Backed up to GitHub — this one is permanent.' : '<br><b>Not backed up</b> — this will be lost when the app restarts.'}`;
+        ${done.backedUp ? '<br>Backed up to GitHub — this one is permanent.' : '<br><b>Not backed up</b> — this will be lost when the app restarts.'}
+        ${historyLine(done)}`;
     status.appendChild(node(`<div class="gen-good">${said}</div>`));
-    showDone('good', said);
+    showDone(done.backedUp && done.historyBackedUp ? 'good' : 'warn', said);
     button.textContent = 'Built';
     await load(); // refresh the library so the new pack is there to launch
   } catch (err) {

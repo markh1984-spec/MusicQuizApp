@@ -1558,6 +1558,13 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .panel.done-banner .done-text { flex: 1 1 auto; font-size: 14px; line-height: 1.55; }
 .panel.done-banner .done-text a { color: var(--good); font-weight: 700; }
 .panel.done-banner .done-close { flex: 0 0 auto; }
+/* It worked, but something in it needs reading. A green box you have to read to
+   the end of to find the problem is a box you stop reading to the end of. */
+.panel.done-banner.warn {
+  border-color: rgba(255, 176, 32, 0.55);
+  background: rgba(255, 176, 32, 0.09);
+}
+.panel.done-banner.warn .done-text a { color: var(--gold); }
 
 /* The brief you hand to Claude in a browser. Boxed off inside the import panel
    because it is the step BEFORE importing, not another way of importing. */
