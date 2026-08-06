@@ -44,6 +44,14 @@ payload field by field from a whitelist (`screenQuestionExtras` vs
 `hostQuestionExtras` in `src/engine.js`). A new sensitive field must be added
 to the host view only.
 
+**Who answered what is host-only too.** `whoPicked` in `hostView()` names every
+team under the option they chose, plus who let it go by — the counts said four
+got it wrong, this says which four, which is what the host reads off the mic.
+It is not in `screenView()` or `playerView()`, and it only appears on the
+REVEAL: during the question a mirrored or glanced-at control view would give
+away the popular answer while the room is still thinking. There are tests for
+both halves.
+
 ### 2. The server owns the clock
 Every timestamp used for scoring comes from an injected `now()`. Phones send
 only which option they tapped. Never trust a client timestamp.
@@ -460,7 +468,7 @@ generates one round of every type so a fifth one cannot repeat this.
 ## Checks
 
 ```bash
-npm test        # 314 tests, no network, injected clocks — must stay green
+npm test        # 317 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -508,7 +516,7 @@ recreate it.
 
 All five build stages plus bingo, the console, generation, pack import and the
 tickable review flags are done, tested and pushed to **`MusicQuizApp`**.
-Nothing is half-finished in the tree. 314 tests green.
+Nothing is half-finished in the tree. 317 tests green.
 
 (An earlier version of this line named `claude/new-session-jzx988`. That branch
 is gone — see **Where to push**.)

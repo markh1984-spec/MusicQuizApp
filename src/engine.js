@@ -895,6 +895,51 @@ export class Engine {
   }
 
   /** How many picked each option — a nice reveal graphic, gives nothing away early. */
+  /**
+   * Which teams picked each option, by name, and who did not answer at all.
+   *
+   * The counts already told the host that four got it wrong; this tells them
+   * which four, which is the difference between "most of you had that" and
+   * "Sofa King Good, what were you thinking". Named in the order they answered
+   * so the first one in is the first one out of the host's mouth.
+   *
+   * A pick-them-all answer appears under every option it locked in — the same
+   * as the tally, which is what makes the two agree.
+   */
+  whoPicked() {
+    const q = this.question();
+    if (!q) return null;
+    const answers = this.answersFor();
+    const byOption = (q.options || []).map(() => []);
+    const answered = new Set();
+
+    // In the order they answered, so the first one in is the first one out of
+    // the host's mouth.
+    const inOrder = Object.entries(answers)
+      .sort(([, a], [, b]) => (a.answeredAt || 0) - (b.answeredAt || 0));
+
+    for (const [playerId, a] of inOrder) {
+      const player = this.state.players[playerId];
+      if (!player) continue;
+      answered.add(playerId);
+      const picks = Array.isArray(a.optionIndexes) && a.optionIndexes.length
+        ? a.optionIndexes
+        : [a.optionIndex];
+      for (const i of picks) {
+        if (byOption[i]) byOption[i].push({ name: player.name, correct: Boolean(a.correct) });
+      }
+    }
+
+    return {
+      options: byOption,
+      // Everyone still in the room who let it go by. Worth as much as the
+      // wrong answers on a mic.
+      missing: this.playerList()
+        .filter((p) => !answered.has(p.id))
+        .map((p) => p.name),
+    };
+  }
+
   optionTally() {
     const q = this.question();
     if (!q) return [];
@@ -1073,6 +1118,11 @@ export class Engine {
       view.answeredCount = Object.keys(this.answersFor()).length;
       view.tally = this.optionTally();
       view.fastest = this.fastestFinger();
+      // WHO picked what, for the banter. Host view only, like the answer key
+      // itself — putting names on the projector beside a wrong answer is a
+      // different decision from the host reading one out, and not one to make
+      // by accident.
+      view.whoPicked = this.whoPicked();
     }
 
     // Always give the host the next question too, so they can read ahead and

@@ -242,6 +242,34 @@ function cuePanel(cue, title, playlist) {
   `);
 }
 
+/*
+ * WHO picked this one, by name.
+ *
+ * The counts already say four got it wrong; this says which four, which is the
+ * difference between "most of you had that" and naming them on the microphone.
+ * It is the whole reason the host asked for it.
+ *
+ * Only shown on the REVEAL. During the question it would be a running list of
+ * who has answered and what they said, which is a distraction while a clock is
+ * going and — with the control view mirrored or glanced at — a way to leak the
+ * popular answer before the room has finished thinking.
+ */
+function who(s, i) {
+  if (s.phase !== 'reveal' || !s.whoPicked) return '';
+  const names = s.whoPicked.options[i] || [];
+  if (!names.length) return '';
+  return `<div class="keywho">${names.map((n) => `<span class="${n.correct ? 'right' : ''}">${esc(n.name)}</span>`).join('')}</div>`;
+}
+
+/** Who let it go by entirely — worth as much as a wrong answer on a mic. */
+function missing(s) {
+  if (s.phase !== 'reveal' || !s.whoPicked || !s.whoPicked.missing.length) return '';
+  const list = s.whoPicked.missing;
+  return `<div class="keywho none">
+    <b>No answer:</b>${list.map((n) => `<span>${esc(n)}</span>`).join('')}
+  </div>`;
+}
+
 function questionPanel(s) {
   const q = s.question;
   const tally = s.tally || [];
@@ -256,8 +284,10 @@ function questionPanel(s) {
             <span class="letter">${LETTERS[i]}</span>
             <span>${esc(opt)}</span>
             <span class="n">${tally[i] || 0}</span>
-          </div>`).join('')}
+          </div>
+          ${who(s, i)}`).join('')}
       </div>
+      ${missing(s)}
       ${q.note ? `<div class="tiny" style="margin-top:10px">Note: ${esc(q.note)}</div>` : ''}
       ${q.answerNote ? `<div class="tiny" style="margin-top:6px">${esc(q.answerNote)}</div>` : ''}
       <div class="tiny" style="margin-top:10px">

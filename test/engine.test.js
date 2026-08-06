@@ -1215,3 +1215,64 @@ test('where() never mentions an answer', () => {
     assert.equal(said.includes(`answer is ${option}`), false);
   }
 });
+
+/*
+ * Who picked what, for the banter — and only on the host's own screen.
+ *
+ * The counts already told the host that four got it wrong. This says which
+ * four, which is the difference between "most of you had that" and naming
+ * them on the microphone.
+ */
+test('the host is told who picked each answer, in the order they answered', () => {
+  const { engine, advance } = makeEngine();
+  const [a, b, c] = joinThree(engine);
+  const d = engine.join({ name: 'Menage a Trivia' });
+  toFirstQuestion(engine);
+
+  advance(2000); engine.answer({ playerId: b.id, optionIndex: 1 }); // correct
+  advance(1000); engine.answer({ playerId: a.id, optionIndex: 3 }); // wrong
+  advance(1000); engine.answer({ playerId: c.id, optionIndex: 1 }); // correct
+  // d says nothing at all.
+  engine.reveal();
+
+  const who = engine.hostView().whoPicked;
+  assert.deepEqual(who.options[1].map((x) => x.name), [b.name, c.name], 'in answer order');
+  assert.deepEqual(who.options[3].map((x) => x.name), [a.name]);
+  assert.deepEqual(who.options[0], []);
+  assert.equal(who.options[1][0].correct, true);
+  assert.equal(who.options[3][0].correct, false);
+  assert.deepEqual(who.missing, [d.name], 'and who let it go by');
+});
+
+test('TWO SCREENS: nobody is named on the projector or on a phone', () => {
+  const { engine, advance } = makeEngine();
+  const [a] = joinThree(engine);
+  toFirstQuestion(engine);
+  advance(1000);
+  engine.answer({ playerId: a.id, optionIndex: 3 });
+  engine.reveal();
+
+  assert.equal(engine.screenView().whoPicked, undefined, 'the big screen never gets it');
+  assert.equal(engine.playerView(a.id).whoPicked, undefined, 'and neither does a phone');
+  assert.ok(engine.hostView().whoPicked, 'only the control view');
+});
+
+test('a pick-them-all answer names them under every option they locked in', () => {
+  const { engine, advance } = makeEngine(multiQuiz());
+  const a = engine.join({ name: 'Sofa King Good' });
+  toFirstQuestion(engine);
+  advance(1000);
+  // Exactly three, because that is what the question asks for.
+  engine.answer({ playerId: a.id, optionIndexes: [0, 2, 3] });
+  engine.reveal();
+
+  const who = engine.hostView().whoPicked;
+  for (const i of [0, 2, 3]) {
+    assert.deepEqual(who.options[i].map((x) => x.name), ['Sofa King Good'], `option ${i}`);
+  }
+  assert.deepEqual(who.options[1], [], 'and not under one they did not pick');
+  // The names under each option add up to the same total as the bar chart.
+  const named = who.options.reduce((n, list) => n + list.length, 0);
+  const tallied = engine.hostView().tally.reduce((n, x) => n + x, 0);
+  assert.equal(named, tallied);
+});

@@ -1721,6 +1721,22 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
+/* Who picked each answer, under it, on the reveal only. Names the host can
+   read straight off the screen while the room is still groaning. */
+.keywho {
+  display: flex; flex-wrap: wrap; gap: 5px;
+  margin: -2px 0 8px 34px;
+}
+.keywho span {
+  padding: 3px 8px; border-radius: 999px;
+  font-size: 12px; font-weight: 700;
+  background: rgba(255, 255, 255, 0.07); color: var(--ink-dim);
+  border: 1px solid var(--panel-line);
+}
+.keywho span.right { color: var(--good); border-color: rgba(47, 224, 122, 0.45); background: rgba(47, 224, 122, 0.12); }
+.keywho.none { margin-left: 0; align-items: center; }
+.keywho.none b { font-size: 12px; color: var(--gold); margin-right: 2px; }
+
 /* ---- the phone */
 .camera-btn {
   position: fixed;
