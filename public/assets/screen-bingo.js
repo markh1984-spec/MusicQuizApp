@@ -111,7 +111,7 @@ function updatePlaying(s) {
   const tension = document.getElementById('tension');
   if (tension) {
     tension.textContent = s.onesAway > 0
-      ? `${s.onesAway} team${s.onesAway === 1 ? '' : 's'} one away`
+      ? `${s.onesAway} one square away`
       : `${s.playerCount} playing`;
     tension.classList.toggle('hot', s.onesAway > 0);
   }

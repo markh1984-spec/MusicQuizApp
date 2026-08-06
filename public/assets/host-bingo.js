@@ -97,7 +97,7 @@ function playersPanel(s) {
   const closest = (s.players || []).slice(0, 12);
   return node(`
     <div class="panel">
-      <h3>${s.onesAway} team${s.onesAway === 1 ? '' : 's'} one square away — closest first</h3>
+      <h3>${s.onesAway} one square away — closest first</h3>
       <div class="plist">
         ${closest.map((p) => `
           <div class="prow">
