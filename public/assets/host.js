@@ -461,6 +461,24 @@ function buildActions(s) {
   } else if (ad.allowed) {
     out.push(minor('Advert', () => showAdvertPicker()));
   }
+
+  /*
+   * Stop here and show the winner.
+   *
+   * The Setup panel — with "Clear everything" in it — only appears in the
+   * lobby and at the end, so until now a night that had to finish early left
+   * no way out but pressing onwards through every remaining question.
+   *
+   * Behind a confirm, because it is one tap from the onwards button. Not
+   * destructive though: it jumps to the final scores with everything intact,
+   * and Back from there returns to the round board, so a mis-tap is one press
+   * to undo.
+   */
+  if (s.phase !== 'lobby' && s.phase !== 'final') {
+    out.push(minor('Stop the quiz', () => {
+      if (confirm('Stop here and show the winner? The scores are kept, and Back undoes it.')) act('finish');
+    }, true));
+  }
   return out;
 }
 

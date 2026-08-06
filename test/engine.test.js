@@ -119,6 +119,41 @@ test('the last round board leads to the final results, and stops there', () => {
   assert.equal(engine.state.phase, PHASES.FINAL);
 });
 
+test('the quiz can be stopped mid-round, with the scores intact and Back to undo it', () => {
+  const { engine } = makeEngine();
+  const [a, b] = joinThree(engine);
+  toFirstQuestion(engine);
+  engine.answer({ playerId: a.id, optionIndex: 1 });   // right
+  engine.answer({ playerId: b.id, optionIndex: 0 });   // wrong
+  const scoreBefore = engine.state.players[a.id].score;
+  assert.ok(scoreBefore > 0);
+
+  assert.equal(engine.finish(), true);
+  assert.equal(engine.state.phase, PHASES.FINAL);
+  assert.equal(engine.state.question, null);
+  assert.equal(engine.state.players[a.id].score, scoreBefore);
+  assert.equal(engine.screenView().leaderboard[0].id, a.id);
+
+  // Stopping twice does nothing, and Back is the way out of a mis-tap.
+  assert.equal(engine.finish(), false);
+  assert.equal(engine.back(), true);
+  assert.equal(engine.state.phase, PHASES.ROUND_BOARD);
+  assert.equal(engine.state.players[a.id].score, scoreBefore);
+});
+
+test('stopping the quiz takes the scoreboard and any advert down with it', () => {
+  const { engine } = makeEngine();
+  joinThree(engine);
+  engine.start();
+  engine.showScoreboard(true);
+  assert.equal(engine.state.scoreboard, true);
+
+  engine.finish();
+  assert.equal(engine.state.scoreboard, false);
+  assert.equal(engine.state.advert, null);
+  assert.equal(engine.screenView().phase, PHASES.FINAL);
+});
+
 test('the clock is set from the server, not from anything a phone sends', () => {
   const { engine, at } = makeEngine();
   at(5_000);

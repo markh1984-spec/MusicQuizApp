@@ -86,6 +86,47 @@ function draw(next) {
   }
 
   paintPhotos(state);
+  paintJoinCorner(state);
+}
+
+/**
+ * A small join code, on every screen where somebody could still walk in.
+ *
+ * The big QR is on the lobby, and it used to be the ONLY one — so the moment
+ * the quiz started there was nothing on the projector telling a latecomer
+ * where to go. That was true from the beginning; the rules slide simply made
+ * it obvious by putting a big empty screen where a code ought to be.
+ *
+ * Not during a question or a reveal. Twenty seconds with four options wants
+ * the whole projector, and a code in the corner is one more thing for the room
+ * to look at instead of the answer. Not on the lobby or the rules either,
+ * where the code is already half the screen, and not once the game is over.
+ *
+ * Lives outside the card, like the photo strip, so no card has to know.
+ */
+const NO_JOIN_CORNER = new Set(['lobby', 'rules', 'question', 'reveal', 'final', 'won', 'finished']);
+
+function paintJoinCorner(s) {
+  const wanted = Boolean(joinUrl)
+    && !NO_JOIN_CORNER.has(s.phase)
+    && !s.scoreboard
+    && !(s.advert && s.advert.heading !== undefined);
+
+  let el = document.getElementById('joinCorner');
+  if (!wanted) {
+    if (el) el.remove();
+    return;
+  }
+  if (el) return;
+  el = node(`
+    <div class="join-corner" id="joinCorner">
+      <img src="/join-qr.svg" alt="Scan to join">
+      <div class="join-corner-words">
+        <b>Just arrived?</b>
+        <span>${esc(joinUrl)}</span>
+      </div>
+    </div>`);
+  document.querySelector('.stage').appendChild(el);
 }
 
 /**
@@ -218,24 +259,41 @@ function renderAdvert(s) {
  */
 function renderRules(s) {
   const r = s.rules || { scoring: [], how: [] };
+  // The whole right half is the code. This is the slide that is up while the
+  // room is still filling, so it is worth more here than anywhere else — and
+  // half a projector of QR reads from the back of a pub. The rules go left.
+  const join = joinUrl
+    ? `<div class="rules-join">
+         <div class="qr-panel">
+           <img src="/join-qr.svg" alt="Scan to join the quiz">
+           <div class="url">${esc(joinUrl)}</div>
+         </div>
+         <div class="rules-join-head">Not in yet? Point your camera at this</div>
+       </div>`
+    : '';
   return node(`
-    <div class="rules">
-      <h1 class="grad-text">How it works</h1>
-      <div class="rules-grid">
-        <div class="rules-how">
-          <ol>
-            ${(r.how || []).map((line) => `<li>${esc(line)}</li>`).join('')}
-          </ol>
+    <div class="rules${join ? ' has-join' : ''}">
+      <div class="rules-split">
+        <div class="rules-left">
+          <h1 class="grad-text">How it works</h1>
+          <div class="rules-grid">
+            <div class="rules-how">
+              <ol>
+                ${(r.how || []).map((line) => `<li>${esc(line)}</li>`).join('')}
+              </ol>
+            </div>
+            <div class="rules-score">
+              <div class="rules-score-head">Points</div>
+              ${(r.scoring || []).map((row) => `
+                <div class="rules-score-row">
+                  <span class="big">${esc(row.big)}</span>
+                  <span class="what">${esc(row.text)}</span>
+                </div>`).join('')}
+              ${r.fastest ? `<div class="rules-note">${esc(r.fastest)}</div>` : ''}
+            </div>
+          </div>
         </div>
-        <div class="rules-score">
-          <div class="rules-score-head">Points</div>
-          ${(r.scoring || []).map((row) => `
-            <div class="rules-score-row">
-              <span class="big">${esc(row.big)}</span>
-              <span class="what">${esc(row.text)}</span>
-            </div>`).join('')}
-          ${r.fastest ? `<div class="rules-note">${esc(r.fastest)}</div>` : ''}
-        </div>
+        ${join}
       </div>
     </div>
   `);

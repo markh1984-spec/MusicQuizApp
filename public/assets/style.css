@@ -1676,12 +1676,31 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .result.part .big { color: var(--gold); }
 
 /* ==================================================================== RULES
-   The first slide of every quiz. Two columns: how it works on the left,
-   what it pays on the right, both readable from the back of a pub. */
+   The first slide of every quiz. The right half is the join code, as big as
+   the projector allows — this slide is up while the room is still filling.
+   Everything the room has to read lives in the left half. */
 
 .rules { display: flex; flex-direction: column; height: 100%; justify-content: center; }
 .rules h1 { font-size: 8vh; margin: 0 0 3vh; font-weight: 900; letter-spacing: -0.02em; }
 .rules-grid { display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 3.5vw; align-items: start; }
+
+.rules-split { display: grid; grid-template-columns: 1fr; gap: 3vw; align-items: center; }
+.rules-left { min-width: 0; }
+
+/* With the code up, the two rules panels stack instead of sitting side by
+   side — half a screen is not wide enough for both, and shrinking the type to
+   make it fit would defeat the point of the slide. */
+.rules.has-join .rules-split { grid-template-columns: 1fr 1fr; }
+.rules.has-join .rules-grid { grid-template-columns: 1fr; gap: 3vh; }
+.rules.has-join h1 { font-size: 6.4vh; margin-bottom: 2.4vh; }
+.rules.has-join .rules-how li { font-size: 2.5vh; }
+
+.rules-join { display: grid; justify-items: center; gap: 1.6vh; min-width: 0; }
+.rules-join .qr-panel { width: 100%; max-width: min(44vw, 66vh); }
+.rules-join .qr-panel .url { font-size: 2.4vh; }
+.rules-join-head {
+  font-size: 2.4vh; font-weight: 800; color: var(--gold); text-align: center;
+}
 
 .rules-how ol { margin: 0; padding-left: 1.4em; display: grid; gap: 1.8vh; }
 .rules-how li { font-size: 2.9vh; line-height: 1.35; }
@@ -1852,3 +1871,24 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 @media (hover: none) {
   .cphoto-acts { opacity: 1; position: static; padding: 0 8px 8px; }
 }
+
+/* ============================================================ JOIN CORNER
+   A small code on every screen where somebody could still walk in. Top right,
+   under the topbar, so it never collides with the photo strip along the
+   bottom. Deliberately absent during a question — the room should be looking
+   at the answers, not at this. */
+
+.join-corner {
+  position: absolute;
+  top: 8.5vh; right: 2.2vw;
+  display: flex; align-items: center; gap: 1vw;
+  padding: 1.1vh 1.2vw;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  animation: pop 400ms cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+.join-corner img { width: 11vh; height: 11vh; display: block; }
+.join-corner-words { display: grid; gap: 0.3vh; color: #12121c; }
+.join-corner-words b { font-size: 2vh; font-weight: 900; }
+.join-corner-words span { font-size: 1.6vh; font-weight: 700; opacity: 0.72; }

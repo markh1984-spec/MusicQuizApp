@@ -295,6 +295,10 @@ export class Session {
       goto: () => this.engine.goTo(Number(body.roundIndex), Number(body.questionIndex)),
       adjustScore: () => this.engine.adjustScore(String(body.playerId), Number(body.delta)),
       resetScores: () => this.engine.resetScores(),
+      // Stop here and show the winner. Bingo has always had this; the quiz
+      // did not, which left no way to end a night early except pressing
+      // onwards through every remaining question.
+      finish: () => this.engine.finish(),
     } : {
       start: () => this.engine.start(),
       call: () => this.engine.call(String(body.trackId)),

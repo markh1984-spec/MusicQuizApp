@@ -396,6 +396,31 @@ export class Engine {
     }
   }
 
+  /**
+   * End the quiz now, wherever it is.
+   *
+   * A night runs long, the kitchen wants the room back, or the pub empties —
+   * and pressing onwards through eleven remaining questions to reach the
+   * winner is not a thing anybody should have to do in front of people.
+   *
+   * Scores are kept and the final board is shown, so the night still ends
+   * properly with a winner rather than just stopping. It is archived on the
+   * way, like any finished game.
+   *
+   * Recoverable: Back from the final results returns to the round board, so a
+   * mis-tap is one press to undo.
+   */
+  finish() {
+    if (this.state.phase === PHASES.FINAL) return false;
+    this.state.phase = PHASES.FINAL;
+    this.state.finishedAt = this.now();
+    this.state.question = null;
+    this.state.scoreboard = false;
+    this.state.advert = null;
+    this.changed();
+    return true;
+  }
+
   /** Step backwards. Useful when the host overshoots in front of a room. */
   back() {
     const s = this.state;

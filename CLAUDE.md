@@ -137,6 +137,42 @@ with the scoring is worse than none: the room will hold you to what it said.
 It only lists round types the quiz actually contains. A pack can opt out with
 `showRules: false`.
 
+**Its right half is the join code**, as big as the projector allows, with the
+rules squeezed into the left half. This slide is up while the room is still
+filling, so it is the most valuable place on the night for a code. The worst
+case — a quiz with all four round types, six rules lines — was checked at
+1920×1080 and fits.
+
+---
+
+## The join code is on more than the lobby
+
+The big QR used to be drawn in exactly one place, `renderLobby()`, so it
+vanished the moment the quiz started and a latecomer had nothing to scan. That
+was true from the beginning; the rules slide only made it obvious.
+
+Now: the lobby and the rules slide carry a **big** code, and every other slide
+where somebody could still walk in carries a small one in the top right
+(`paintJoinCorner`, an overlay on `.stage` like the photo strip, so no card has
+to know about it).
+
+**Never during a question or a reveal.** Twenty seconds with four options wants
+the whole projector. Also never over the scoreboard or an advert. That list is
+`NO_JOIN_CORNER` in `public/assets/screen.js`.
+
+---
+
+## Stopping a quiz early
+
+`Engine.finish()` jumps to `PHASES.FINAL` from wherever the quiz is. The Setup
+panel — with "Clear everything" — only appears in the lobby and at the end, so
+before this there was no way to end a night early except pressing onwards
+through every remaining question.
+
+It keeps every score and clears the scoreboard and advert flags, and `back()`
+from FINAL returns to the round board — so a mis-tap on the host's phone is one
+press to undo. That is why it is not a reset.
+
 ---
 
 ## Generated questions are checked, not trusted
@@ -252,7 +288,7 @@ switch from radios to tickboxes.
 ## Checks
 
 ```bash
-npm test        # 127 tests, no network, injected clocks — must stay green
+npm test        # 255 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -300,7 +336,7 @@ recreate it.
 
 All five build stages plus bingo, the console, generation, pack import and the
 tickable review flags are done, tested and pushed to **`MusicQuizApp`**.
-Nothing is half-finished in the tree. 176 tests green.
+Nothing is half-finished in the tree. 255 tests green.
 
 (An earlier version of this line named `claude/new-session-jzx988`. That branch
 is gone — see **Where to push**.)
