@@ -589,7 +589,7 @@ async function generate(panel) {
 function runningPanel(running) {
   if (!running) return node('<div></div>');
   const live = running.phase !== 'lobby' && running.phase !== 'finished';
-  return node(`
+  const el = node(`
     <div class="panel running ${live ? 'live' : ''}">
       <h3>${live ? 'Running now' : 'Loaded and waiting'}</h3>
       <div class="running-row">
@@ -600,9 +600,42 @@ function runningPanel(running) {
         <div class="running-links">
           <a class="minor" href="${linkTo('/host')}">Control view</a>
           <a class="minor" href="/screen" target="_blank" rel="noopener">Big screen</a>
+          <button class="minor danger stop-running" title="Clear it and go back to waiting">Stop</button>
         </div>
       </div>
     </div>`);
+
+  /*
+   * Stop whatever is running, from here.
+   *
+   * The control view can end a game, but you have to know that and go there.
+   * From the console the only way out was to launch something else over the
+   * top of it, which is a odd way to say "I am finished with this one".
+   *
+   * It clears scores, cards and players and leaves the pack loaded and
+   * waiting — the same state as just after a launch. Nothing is deleted.
+   */
+  el.querySelector('.stop-running')?.addEventListener('click', async () => {
+    const n = running.playerCount;
+    const alsoKicks = n
+      ? `\n\n${n} ${n === 1 ? 'phone is' : 'phones are'} in, and will have to scan and join again.`
+      : '';
+    if (!confirm(`Stop "${running.title}"?\n\nScores and cards are cleared and it goes back to waiting.${alsoKicks}`)) return;
+
+    const button = el.querySelector('.stop-running');
+    button.disabled = true;
+    button.textContent = 'Stopping…';
+    try {
+      await postJson('/api/host/resetAll', {}, { 'X-Host-Key': hostKey });
+      await load();
+    } catch (err) {
+      alert(`Could not stop it: ${err.message}`);
+      button.disabled = false;
+      button.textContent = 'Stop';
+    }
+  });
+
+  return el;
 }
 
 function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {

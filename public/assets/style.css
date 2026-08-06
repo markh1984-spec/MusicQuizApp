@@ -1029,11 +1029,17 @@ body.console::after { display: none; }
 .console .topbar h1 { font-size: 19px; margin: 0; font-weight: 900; }
 .console .spacer { flex: 1 1 auto; }
 .console .tiny { font-size: 12.5px; color: var(--ink-dim); }
-.console a.minor {
+/* The console's small buttons. Links and <button>s both, because the running
+   panel mixes them — two links out to the other screens and one real action. */
+.console a.minor, .console button.minor {
   text-decoration: none; display: inline-block;
   padding: 9px 13px; border-radius: 10px; font-size: 13px; font-weight: 800;
+  font-family: inherit; cursor: pointer;
   background: rgba(255, 255, 255, 0.08); border: 1px solid var(--panel-line); color: var(--ink);
 }
+.console button.minor.danger { color: var(--bad); border-color: rgba(255, 77, 94, 0.4); }
+.console button.minor.danger:hover { background: rgba(255, 77, 94, 0.12); }
+.console button.minor:disabled { opacity: 0.6; cursor: default; }
 .console .panel { border-radius: 14px; background: var(--panel); border: 1px solid var(--panel-line); padding: 16px; margin-bottom: 24px; }
 .console .panel h3 { margin: 0 0 12px; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim); font-weight: 800; }
 .console .panel.running.live { border-color: var(--good); background: rgba(47, 224, 122, 0.1); }
