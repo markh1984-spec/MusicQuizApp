@@ -1,0 +1,305 @@
+{
+  "id": "mbc-4",
+  "kind": "bingo",
+  "title": "MBC 4",
+  "subtitle": "42 tracks. Tap them as you hear them.",
+  "cardSize": 4,
+  "notes": "Imported from a pasted track list.",
+  "createdAt": "2026-08-06T03:07:21.408Z",
+  "tracks": [
+    {
+      "id": "t1",
+      "title": "Fireflies",
+      "artist": "Owl City",
+      "year": 2009,
+      "spotifyUri": "spotify:track:7zZV0st7iiQSz5Rlarl77U"
+    },
+    {
+      "id": "t2",
+      "title": "Where Have You Been",
+      "artist": "Rihanna",
+      "year": 2011,
+      "spotifyUri": "spotify:track:5WQQIDU3HRaMyPkob8mpFb"
+    },
+    {
+      "id": "t3",
+      "title": "Levitating (feat. DaBaby)",
+      "artist": "Dua Lipa, DaBaby",
+      "year": 2020,
+      "spotifyUri": "spotify:track:5nujrmhLynf4yMoMtj8AQF"
+    },
+    {
+      "id": "t4",
+      "title": "Don't Start Now",
+      "artist": "Dua Lipa",
+      "year": 2019,
+      "spotifyUri": "spotify:track:6WrI0LAC5M1Rw2MnX2ZvEg"
+    },
+    {
+      "id": "t5",
+      "title": "Blank Space (Taylor's Version)",
+      "artist": "Taylor Swift",
+      "year": 2023,
+      "spotifyUri": "spotify:track:45wMBGri1PORPjM9PwFfrS"
+    },
+    {
+      "id": "t6",
+      "title": "I Knew You Were Trouble.",
+      "artist": "Taylor Swift",
+      "year": 2012,
+      "spotifyUri": "spotify:track:3lKZf71jeNi14udIFPJ29V"
+    },
+    {
+      "id": "t7",
+      "title": "Wrecking Ball",
+      "artist": "Miley Cyrus",
+      "year": 2013,
+      "spotifyUri": "spotify:track:2vwlzO0Qp8kfEtzTsCXfyE"
+    },
+    {
+      "id": "t8",
+      "title": "We Can't Stop",
+      "artist": "Miley Cyrus",
+      "year": 2013,
+      "spotifyUri": "spotify:track:2y4lAQpi5VTNLu2ldeTdUH"
+    },
+    {
+      "id": "t9",
+      "title": "Sorry Not Sorry",
+      "artist": "Demi Lovato",
+      "year": 2017,
+      "spotifyUri": "spotify:track:0yvPEnB032fojLfVluFjUv"
+    },
+    {
+      "id": "t10",
+      "title": "Confident",
+      "artist": "Demi Lovato",
+      "year": 2015,
+      "spotifyUri": "spotify:track:18xfL5bAbwy1IhIOaaHf57"
+    },
+    {
+      "id": "t11",
+      "title": "Side To Side",
+      "artist": "Ariana Grande, Nicki Minaj",
+      "year": 2016,
+      "spotifyUri": "spotify:track:44ONERBHALxftQNWq6dmyd"
+    },
+    {
+      "id": "t12",
+      "title": "Break Free",
+      "artist": "Ariana Grande, Zedd",
+      "year": 2014,
+      "spotifyUri": "spotify:track:12KUFSHFgT0XCoiSlvdQi4"
+    },
+    {
+      "id": "t13",
+      "title": "Señorita",
+      "artist": "Shawn Mendes, Camila Cabello",
+      "year": 2019,
+      "spotifyUri": "spotify:track:0TK2YIli7K1leLovkQiNik"
+    },
+    {
+      "id": "t14",
+      "title": "There's Nothing Holdin' Me Back",
+      "artist": "Shawn Mendes",
+      "year": 2017,
+      "spotifyUri": "spotify:track:7JJmb5XwzOO8jgpou264Ml"
+    },
+    {
+      "id": "t15",
+      "title": "Sucker",
+      "artist": "Jonas Brothers",
+      "year": 2019,
+      "spotifyUri": "spotify:track:22vgEDb5hykfaTwLuskFGD"
+    },
+    {
+      "id": "t16",
+      "title": "Cake By The Ocean",
+      "artist": "DNCE",
+      "year": 2016,
+      "spotifyUri": "spotify:track:76hfruVvmfQbw0eYn1nmeC"
+    },
+    {
+      "id": "t17",
+      "title": "Blinding Lights",
+      "artist": "The Weeknd",
+      "year": 2020,
+      "spotifyUri": "spotify:track:0VjIjW4GlUZAMYd2vXMi3b"
+    },
+    {
+      "id": "t18",
+      "title": "The Hills",
+      "artist": "The Weeknd",
+      "year": 2015,
+      "spotifyUri": "spotify:track:7fBv7CLKzipRk6EC6TWHOB"
+    },
+    {
+      "id": "t19",
+      "title": "Roses",
+      "artist": "The Chainsmokers, ROZES",
+      "year": 2015,
+      "spotifyUri": "spotify:track:3vv9phIu6Y1vX3jcqaGz5Z"
+    },
+    {
+      "id": "t20",
+      "title": "Don't Let Me Down",
+      "artist": "The Chainsmokers, Daya",
+      "year": 2016,
+      "spotifyUri": "spotify:track:1i1fxkWeaMmKEB4T7zqbzK"
+    },
+    {
+      "id": "t21",
+      "title": "Cheerleader (Felix Jaehn Remix) - Radio Edit",
+      "artist": "OMI, felix jaehn",
+      "year": 2015,
+      "spotifyUri": "spotify:track:7vFoFDWqTX0mHzLfrF1Cfy"
+    },
+    {
+      "id": "t22",
+      "title": "Rude",
+      "artist": "MAGIC!",
+      "year": 2014,
+      "spotifyUri": "spotify:track:18n3RlT0UNcy2yHImHy8IT"
+    },
+    {
+      "id": "t23",
+      "title": "Drop It Like It's Hot",
+      "artist": "Snoop Dogg, Pharrell Williams",
+      "year": 2004,
+      "spotifyUri": "spotify:track:2NBQmPrOEEjA8VbeWOQGxO"
+    },
+    {
+      "id": "t24",
+      "title": "Get Low",
+      "artist": "Lil Jon & The East Side Boyz, Ying Yang Twins",
+      "year": 2002,
+      "spotifyUri": "spotify:track:0r2Bul2NuCViraT2zX1l5j"
+    },
+    {
+      "id": "t25",
+      "title": "Grillz",
+      "artist": "Nelly, Paul Wall, Ali & Gipp",
+      "year": 2005,
+      "spotifyUri": "spotify:track:6MyRJF1ttIyBTFLoqzCRwV"
+    },
+    {
+      "id": "t26",
+      "title": "Ridin'",
+      "artist": "Chamillionaire, Krayzie Bone",
+      "year": 2005,
+      "spotifyUri": "spotify:track:3kZoay4ANo86ehb6s4RwS9"
+    },
+    {
+      "id": "t27",
+      "title": "Stronger",
+      "artist": "Kanye West",
+      "year": 2007,
+      "spotifyUri": "spotify:track:0j2T0R9dR9qdJYsB7ciXhf"
+    },
+    {
+      "id": "t28",
+      "title": "Good Life",
+      "artist": "Kanye West, T-Pain",
+      "year": 2007,
+      "spotifyUri": "spotify:track:4ZPdLEztrlZqbJkgHNw54L"
+    },
+    {
+      "id": "t29",
+      "title": "Points of Authority / 99 Problems / One Step Closer",
+      "artist": "JAŸ-Z, Linkin Park",
+      "year": 2004,
+      "spotifyUri": "spotify:track:65eohvrL4ttjA7EfFkQOhX"
+    },
+    {
+      "id": "t30",
+      "title": "The Real Slim Shady",
+      "artist": "Eminem",
+      "year": 2000,
+      "spotifyUri": "spotify:track:3yfqSUWxFvZELEM4PmlwIR"
+    },
+    {
+      "id": "t31",
+      "title": "Stan",
+      "artist": "Eminem, Dido",
+      "year": 2000,
+      "spotifyUri": "spotify:track:3UmaczJpikHgJFyBTAJVoz"
+    },
+    {
+      "id": "t32",
+      "title": "Hotline Bling",
+      "artist": "Drake",
+      "year": 2016,
+      "spotifyUri": "spotify:track:0wwPcA6wtMf6HUMpIRdeP7"
+    },
+    {
+      "id": "t33",
+      "title": "SICKO MODE",
+      "artist": "Travis Scott",
+      "year": 2018,
+      "spotifyUri": "spotify:track:2xLMifQCjDGFmkHkpNLD9h"
+    },
+    {
+      "id": "t34",
+      "title": "Alright",
+      "artist": "Kendrick Lamar",
+      "year": 2015,
+      "spotifyUri": "spotify:track:3iVcZ5G6tvkXZkZKlMpIUs"
+    },
+    {
+      "id": "t35",
+      "title": "No Role Modelz",
+      "artist": "J. Cole",
+      "year": 2014,
+      "spotifyUri": "spotify:track:68Dni7IE4VyPkTOH9mRWHr"
+    },
+    {
+      "id": "t36",
+      "title": "Panda",
+      "artist": "Desiigner",
+      "year": 2016,
+      "spotifyUri": "spotify:track:5YEOzOojehCqxGQCcQiyR4"
+    },
+    {
+      "id": "t37",
+      "title": "Bodak Yellow",
+      "artist": "Cardi B",
+      "year": 2018,
+      "spotifyUri": "spotify:track:6KBYefIoo7KydImq1uUQlL"
+    },
+    {
+      "id": "t38",
+      "title": "Truth Hurts",
+      "artist": "Lizzo",
+      "year": 2023,
+      "spotifyUri": "spotify:track:03BjQo9lc9P44mDVLS109h"
+    },
+    {
+      "id": "t39",
+      "title": "High Hopes",
+      "artist": "Panic! At The Disco",
+      "year": 2018,
+      "spotifyUri": "spotify:track:1rqqCSm0Qe4I9rUvWncaom"
+    },
+    {
+      "id": "t40",
+      "title": "Say So",
+      "artist": "Doja Cat",
+      "year": 2019,
+      "spotifyUri": "spotify:track:3Dv1eDb0MEgF93GpLXlucZ"
+    },
+    {
+      "id": "t41",
+      "title": "Sunflower - Spider-Man: Into the Spider-Verse",
+      "artist": "Post Malone, Swae Lee",
+      "year": 2018,
+      "spotifyUri": "spotify:track:3KkXRkHbMCARz0aVfEt68P"
+    },
+    {
+      "id": "t42",
+      "title": "Shallow",
+      "artist": "Lady Gaga, Bradley Cooper",
+      "year": 2018,
+      "spotifyUri": "spotify:track:2VxeLyX666F8uXCJ0dZF8B"
+    }
+  ]
+}
