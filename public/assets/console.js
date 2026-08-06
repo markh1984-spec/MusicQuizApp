@@ -1387,10 +1387,22 @@ function photosSection() {
 
     // The one thing worth being loud about: on the free tier the server's disk
     // is wiped on every restart, so an unfiled photo is one restart from gone.
-    if (!data.repoReady) {
-      status.innerHTML = `<b style="color:var(--gold)">These are temporary.</b>
-        Set <b>PHOTO_REPO</b> to a private repository and they get filed away as
-        they arrive — see TODO.md part 7f. Until then a restart loses them.`;
+    if (!data.repoReady || data.repoProblem) {
+      // Say which variable, not just that something is wrong. On a host whose
+      // settings page has a project level and a service level that look the
+      // same, "I set it" and "the app can see it" are different things.
+      const seen = data.seen || {};
+      const detail = data.repoProblem
+        ? `<b style="color:var(--bad)">${esc(data.repoProblem)}</b>`
+        : `The app cannot see <b>${esc((data.missing || []).join(' or '))}</b>.`;
+      status.innerHTML = `<b style="color:var(--gold)">These are temporary.</b> ${detail}
+        <br><span class="tiny">What this app can actually see right now:
+        PHOTO_REPO ${seen.PHOTO_REPO ? '✓ set' : '✗ not set'} ·
+        PHOTO_TOKEN ${seen.PHOTO_TOKEN ? '✓ set' : '✗ not set'} ·
+        GITHUB_TOKEN ${seen.GITHUB_TOKEN ? '✓ set' : '✗ not set'} ·
+        branch ${esc(String(seen.PHOTO_BRANCH || ''))}.
+        Set them on the <b>service</b> page (/web/srv-…), not the project page —
+        see TODO.md part 7f.</span>`;
     } else if (data.unfiled) {
       status.innerHTML = `${data.count} photo${data.count === 1 ? '' : 's'} ·
         <b style="color:var(--gold)">${data.unfiled} not filed away yet</b> ·

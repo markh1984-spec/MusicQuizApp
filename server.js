@@ -30,7 +30,7 @@ import { listAdvertPacks, loadAdvertPack, saveAdvertPack, deleteAdvertPack, vali
 import { generateImages, imageStatus, imageJobs, openaiConfigured } from './src/generate-images.js';
 import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig } from './src/spotify.js';
-import { githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess, photosRepoConfigured, photosRepoName } from './src/github.js';
+import { githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem } from './src/github.js';
 import { toSvg } from './src/qrcode.js';
 
 const HOST_KEY = hostKey();
@@ -248,6 +248,17 @@ async function handleGet(req, res, url, route) {
       unfiled: photos.unfiled().length,
       repo: photosRepoName(),
       repoReady: photosRepoConfigured(),
+      // Which variable is actually missing, and whether one that IS set looks
+      // wrong. "It says temporary" is not something anybody can act on.
+      missing: missingPhotoConfig(),
+      repoProblem: photoRepoProblem(),
+      // Proof the app can see a value at all, without printing a token.
+      seen: {
+        PHOTO_REPO: Boolean(process.env.PHOTO_REPO),
+        PHOTO_BRANCH: process.env.PHOTO_BRANCH || '(default: main)',
+        PHOTO_TOKEN: Boolean(process.env.PHOTO_TOKEN),
+        GITHUB_TOKEN: Boolean(process.env.GITHUB_TOKEN),
+      },
       nights: photos.nights(),
     }), true;
   }

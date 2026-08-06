@@ -70,6 +70,36 @@ export function photosRepoName() {
   return process.env.PHOTO_REPO || '';
 }
 
+/**
+ * Which photo variables are missing, by name.
+ *
+ * "It says temporary" is not a diagnosis. Saying *which* variable the app
+ * cannot see turns it into one — and on a host where the settings page has a
+ * project level and a service level that look alike, "I definitely set it" and
+ * "the app can see it" are genuinely different things.
+ */
+export function missingPhotoConfig() {
+  const missing = [];
+  if (!process.env.PHOTO_REPO) missing.push('PHOTO_REPO');
+  if (!process.env.PHOTO_TOKEN && !process.env.GITHUB_TOKEN) missing.push('PHOTO_TOKEN or GITHUB_TOKEN');
+  return missing;
+}
+
+/** A value that is set but malformed is its own problem, and worth naming. */
+export function photoRepoProblem() {
+  const repo = process.env.PHOTO_REPO;
+  if (!repo) return null;
+  const trimmed = repo.trim();
+  if (trimmed !== repo) return 'PHOTO_REPO has a space at the start or end of it.';
+  if (trimmed.startsWith('http')) return 'PHOTO_REPO should be owner/name, not a full web address.';
+  const parts = trimmed.split('/');
+  if (parts.length !== 2 || !parts[0] || !parts[1]) {
+    return `PHOTO_REPO should look like owner/name — it is currently "${trimmed}".`;
+  }
+  if (trimmed.endsWith('.git')) return 'PHOTO_REPO should not end in .git.';
+  return null;
+}
+
 async function api(path, options = {}, which = 'app') {
   const { token } = settings(which);
   const res = await fetch(API + path, {
