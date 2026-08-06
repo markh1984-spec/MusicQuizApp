@@ -344,6 +344,12 @@ needed `answer()` to take a set, `session.runPlayerAction` to forward it (it
 silently dropped the new field at first), a scoring function, and the editor to
 switch from radios to tickboxes.
 
+**And check for hardcoded lists of round types.** `/api/generate/quiz` had its
+own `['text', 'image', 'intro']` whitelist, so ticking "pick them all" in the
+console sent `multi`, the server filtered it out, and the quiz came back
+without the round and without an error. It reads `ROUND_TYPES` now, and a test
+generates one round of every type so a fifth one cannot repeat this.
+
 ---
 
 ## Checks

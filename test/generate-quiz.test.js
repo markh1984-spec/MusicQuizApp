@@ -13,7 +13,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { generateQuizPack } from '../src/generate-quiz.js';
+import { generateQuizPack, roundBriefsFor } from '../src/generate-quiz.js';
+import { ROUND_TYPES } from '../src/quizzes.js';
 
 /**
  * Stand in for the Anthropic API.
@@ -193,5 +194,31 @@ test('the same question is never used twice in a round', async () => {
     const { quiz } = await generateQuizPack({ config, theme: 'test', rounds: ['text'], perRound: 10 });
     const prompts = quiz.rounds[0].questions.map((q) => q.prompt);
     assert.equal(new Set(prompts).size, prompts.length);
+  });
+});
+
+
+/**
+ * The bug this catches: the console offered "pick them all", sent it, and the
+ * server's own hardcoded whitelist — written when there were three round types
+ * — silently dropped it. The quiz came back without the round and nothing said
+ * why.
+ *
+ * So: every round type the app knows about must be generatable end to end.
+ * Adding a fifth type without a brief now fails here rather than on a Tuesday.
+ */
+test('every round type the app offers can actually be generated', async () => {
+  for (const type of ROUND_TYPES) {
+    assert.ok(roundBriefsFor(type), `no generation brief for round type "${type}"`);
+  }
+
+  const calls = stubClaude();
+  await withTmpDir(async (config) => {
+    const { quiz } = await generateQuizPack({ config, theme: 'test', rounds: [...ROUND_TYPES], perRound: 4 });
+    assert.deepEqual(quiz.rounds.map((r) => r.type), [...ROUND_TYPES], 'one round per type, in order');
+    for (const round of quiz.rounds) {
+      assert.equal(round.questions.length, 4, `${round.type} came up short`);
+    }
+    assert.ok(calls.write > 0);
   });
 });

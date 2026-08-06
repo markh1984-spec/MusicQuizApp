@@ -89,6 +89,11 @@ The theme for this quiz is: ${theme}
 `.trim();
 }
 
+/** Is there a generation brief for this round type? Used by the tests. */
+export function roundBriefsFor(type) {
+  return roundBriefs({ theme: 'anything', perRound: 10 })[type] || null;
+}
+
 function roundBriefs({ theme, perRound }) {
   return {
     text: `Round type "text": general knowledge about ${theme}.`,

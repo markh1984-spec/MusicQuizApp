@@ -20,7 +20,7 @@ import { Store } from './src/store.js';
 import { Hub } from './src/sse.js';
 import { Photos, MAX_BYTES } from './src/photos.js';
 import { Session } from './src/session.js';
-import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked } from './src/quizzes.js';
+import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked, ROUND_TYPES } from './src/quizzes.js';
 import { validateBingoPack, normaliseBingoPack } from './src/bingo.js';
 import { fullLibrary, listArchive, loadArchived, saveBingoPack, loadBingoPack, deleteBingoPack } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
@@ -751,9 +751,15 @@ async function handleWrite(req, res, url, route) {
     });
     const log = (line) => { try { res.write(line + '\n'); } catch { /* client left */ } };
     try {
-      const rounds = Array.isArray(body.rounds) && body.rounds.length
-        ? body.rounds.filter((r) => ['text', 'image', 'intro'].includes(r))
-        : ['text', 'image', 'intro'];
+      // Whitelisted against ROUND_TYPES rather than a list written out here.
+      // It was written out here, and "multi" was added to the app months
+      // later — so the console offered the round, sent it, and this quietly
+      // dropped it on the floor. A quiz came back with the tickbox ignored and
+      // nothing anywhere saying why.
+      const asked = Array.isArray(body.rounds)
+        ? body.rounds.filter((r) => ROUND_TYPES.includes(r))
+        : [];
+      const rounds = asked.length ? asked : ['text', 'image', 'intro'];
       const result = await generateQuizPack({
         config,
         theme: String(body.theme || '').slice(0, 200),
