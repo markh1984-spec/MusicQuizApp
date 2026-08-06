@@ -1,0 +1,258 @@
+{
+  "id": "one-direction",
+  "title": "The One Direction Quiz",
+  "subtitle": "Three rounds. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-08-06T03:13:26.627Z",
+  "notes": "Written by claude-sonnet-5 for \"One Direction\". NOT YET REVIEWED — read every question in the editor before the gig.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "text",
+      "title": "Round One — One Direction",
+      "blurb": "20 questions on One Direction",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which TV talent show did One Direction form on in 2010?",
+          "options": [
+            "The Voice UK",
+            "Britain's Got Talent",
+            "The X Factor",
+            "Pop Idol"
+          ],
+          "correctIndex": 2,
+          "answerNote": "They were put together as a group after failing solo auditions."
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which One Direction member left the band in 2015?",
+          "options": [
+            "Niall Horan",
+            "Zayn Malik",
+            "Liam Payne",
+            "Louis Tomlinson"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Zayn Malik departed in March 2015 to pursue a solo career."
+        },
+        {
+          "id": "r1q3",
+          "prompt": "What was One Direction's debut single in 2011?",
+          "options": [
+            "One Thing",
+            "What Makes You Beautiful",
+            "Live While We're Young",
+            "Kiss You"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It reached number one on the UK singles chart in September 2011."
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which One Direction member is from Mullingar, Ireland?",
+          "options": [
+            "Niall Horan",
+            "Harry Styles",
+            "Louis Tomlinson",
+            "Liam Payne"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Niall was the only Irish member of the band."
+        },
+        {
+          "id": "r1q5",
+          "prompt": "What was the title of One Direction's debut studio album?",
+          "options": [
+            "Take Me Home",
+            "Up All Night",
+            "Midnight Memories",
+            "Four"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Up All Night was released in November 2011."
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which One Direction single features the lyric \"You don't know you're beautiful\"?",
+          "options": [
+            "One Thing",
+            "What Makes You Beautiful",
+            "Best Song Ever",
+            "Live While We're Young"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It became their breakthrough debut single in 2011."
+        },
+        {
+          "id": "r1q7",
+          "prompt": "In which year did One Direction announce their hiatus?",
+          "options": [
+            "2014",
+            "2015",
+            "2016",
+            "2017"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The hiatus was announced in August 2015, taking effect from 2016."
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which of these was NOT a One Direction studio album?",
+          "options": [
+            "Four",
+            "Midnight Memories",
+            "Fearless",
+            "Made in the A.M."
+          ],
+          "correctIndex": 2,
+          "answerNote": "Fearless is a Taylor Swift album, not a One Direction one."
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which member of One Direction is from Bradford, West Yorkshire?",
+          "options": [
+            "Zayn Malik",
+            "Harry Styles",
+            "Niall Horan",
+            "Louis Tomlinson"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Zayn later returned to music with his solo debut Mind of Mine."
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which record label signed One Direction after The X Factor?",
+          "options": [
+            "Columbia Records",
+            "Syco Music",
+            "Parlophone",
+            "Polydor"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Syco Music, run by Simon Cowell, signed the band in 2010."
+        },
+        {
+          "id": "r1q11",
+          "prompt": "Which One Direction song was used as the theme for their 2013 documentary film?",
+          "options": [
+            "Best Song Ever",
+            "Story of My Life",
+            "One Way or Another",
+            "Midnight Memories"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Best Song Ever promoted the film This Is Us."
+        },
+        {
+          "id": "r1q12",
+          "prompt": "What is the title of One Direction's 2013 concert documentary film?",
+          "options": [
+            "This Is Us",
+            "Where We Are",
+            "On the Road Again",
+            "1D: The Movie"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It was directed by Morgan Spurlock."
+        },
+        {
+          "id": "r1q13",
+          "prompt": "Which One Direction member released the solo single \"Strip That Down\" in 2017?",
+          "options": [
+            "Liam Payne",
+            "Niall Horan",
+            "Louis Tomlinson",
+            "Zayn Malik"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It featured rapper Quavo and reached the UK top five."
+        },
+        {
+          "id": "r1q14",
+          "prompt": "What is the title of Louis Tomlinson's debut solo album, released in 2020?",
+          "options": [
+            "Walls",
+            "Two of Us",
+            "Kill My Mind",
+            "Copy of a Copy of a Copy"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Walls came out in January 2020, his first full solo album."
+        },
+        {
+          "id": "r1q15",
+          "prompt": "Which stadium tour did One Direction embark on in 2014?",
+          "options": [
+            "Where We Are Tour",
+            "On the Road Again Tour",
+            "Take Me Home Tour",
+            "Up All Night Tour"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It was one of the highest-grossing tours of that year."
+        },
+        {
+          "id": "r1q16",
+          "prompt": "Which One Direction song features the lyric \"Baby you light up my world like nobody else\"?",
+          "options": [
+            "Little Things",
+            "What Makes You Beautiful",
+            "Kiss You",
+            "Story of My Life"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It's the opening line of their debut single."
+        },
+        {
+          "id": "r1q17",
+          "prompt": "One Direction's \"Drag Me Down\" was the lead single from which album?",
+          "options": [
+            "Four",
+            "Made in the A.M.",
+            "Midnight Memories",
+            "Take Me Home"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It was the first single released after Zayn Malik's departure."
+        },
+        {
+          "id": "r1q18",
+          "prompt": "Which One Direction member has a tattoo collection famously featuring a ship on his arm?",
+          "options": [
+            "Harry Styles",
+            "Louis Tomlinson",
+            "Liam Payne",
+            "Zayn Malik"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Harry Styles has a large ship tattoo on his forearm."
+        },
+        {
+          "id": "r1q19",
+          "prompt": "In which year did One Direction perform at the London 2012 Olympics closing ceremony?",
+          "options": [
+            "2011",
+            "2012",
+            "2013",
+            "2014"
+          ],
+          "correctIndex": 1,
+          "answerNote": "They performed What Makes You Beautiful at the closing ceremony."
+        },
+        {
+          "id": "r1q20",
+          "prompt": "Which One Direction song was co-written by Ed Sheeran?",
+          "options": [
+            "Little Things",
+            "Story of My Life",
+            "Night Changes",
+            "Kiss You"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Ed Sheeran co-wrote Little Things, released in 2012."
+        }
+      ]
+    }
+  ]
+}
