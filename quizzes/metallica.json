@@ -215,7 +215,10 @@
             1,
             2
           ],
-          "answerNote": "Whiplash, Seek and Destroy and Motorbreath are all from the debut Kill 'Em All instead."
+          "answerNote": "Whiplash, Seek and Destroy and Motorbreath are all from the debut Kill 'Em All instead.",
+          "checked": [
+            "note-names-wrong-option:whiplash"
+          ]
         },
         {
           "id": "r2q5",
