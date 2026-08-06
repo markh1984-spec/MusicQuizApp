@@ -94,7 +94,10 @@
             "2017"
           ],
           "correctIndex": 1,
-          "answerNote": "The hiatus was announced in August 2015, taking effect from 2016."
+          "answerNote": "The hiatus was announced in August 2015, taking effect from 2016.",
+          "checked": [
+            "note-names-wrong-option:2016"
+          ]
         },
         {
           "id": "r1q8",
