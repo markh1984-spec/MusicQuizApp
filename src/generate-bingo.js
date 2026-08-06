@@ -57,23 +57,72 @@ Reply with JSON and nothing else, no markdown fence:
   const res = await fetch(ANTHROPIC_API, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model, max_tokens: 4000, messages: [{ role: 'user', content: prompt }] }),
+    body: JSON.stringify({
+      model,
+      // Sixty-odd tracks is a long reply, and a reply that runs out of room
+      // mid-track is not JSON at all. Plenty of headroom is free — unused
+      // tokens cost nothing.
+      max_tokens: 8000,
+      messages: [
+        { role: 'user', content: prompt },
+        // Put the opening of the JSON in its mouth. It cannot then begin with
+        // "Here are forty songs…", which is the usual reason a reply that is
+        // perfectly good does not parse.
+        { role: 'assistant', content: OPENING },
+      ],
+    }),
   });
 
   if (!res.ok) throw new Error(`Claude said ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
-  const text = (data.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('');
-  const cleaned = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
-  let parsed;
-  try {
-    parsed = JSON.parse(cleaned);
-  } catch {
-    const a = cleaned.indexOf('{');
-    const b = cleaned.lastIndexOf('}');
-    if (a < 0 || b <= a) throw new Error('Claude did not return usable JSON');
-    parsed = JSON.parse(cleaned.slice(a, b + 1));
+  const reply = (data.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('');
+  const tracks = readTracks(OPENING + reply);
+
+  if (!tracks.length) {
+    // Say what actually came back. "Did not return usable JSON" on its own
+    // leaves you guessing at midnight with a room booked.
+    const why = data.stop_reason === 'max_tokens'
+      ? 'the reply was cut off before it finished'
+      : `it stopped because "${data.stop_reason}"`;
+    throw new Error(`Claude did not return a usable track list — ${why}. It began: ${reply.slice(0, 160)}`);
   }
-  return (parsed.tracks || []).filter((t) => t && t.title);
+  return tracks;
+}
+
+const OPENING = '{"tracks":[';
+
+/**
+ * Read the track list out of whatever came back.
+ *
+ * Tries the whole thing as JSON first, and falls back to picking out the
+ * individual track objects. That fallback is what makes a reply that ran out
+ * of room still worth having: fifty-five complete tracks and a fifty-sixth cut
+ * in half is not valid JSON, but it is still fifty-five tracks, and we only
+ * needed forty.
+ */
+export function readTracks(text) {
+  const cleaned = String(text || '').trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/```\s*$/, '');
+
+  try {
+    const parsed = JSON.parse(cleaned);
+    const list = Array.isArray(parsed) ? parsed : parsed.tracks;
+    if (Array.isArray(list)) return list.filter((t) => t && t.title).map(tidy);
+  } catch { /* fall through and salvage what is there */ }
+
+  const found = [];
+  for (const match of cleaned.matchAll(/\{[^{}]*\}/g)) {
+    try {
+      const t = JSON.parse(match[0]);
+      if (t && t.title) found.push(tidy(t));
+    } catch { /* a half-written one at the end, which is exactly the case this is for */ }
+  }
+  return found;
+}
+
+function tidy(t) {
+  return { title: String(t.title).trim(), artist: String(t.artist || '').trim() };
 }
 
 /**
