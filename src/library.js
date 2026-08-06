@@ -40,6 +40,10 @@ export function listBingoPacks(dir) {
           subtitle: pack.subtitle || '',
           cardSize: pack.cardSize || 4,
           trackCount: (pack.tracks || []).length,
+          // The playlist this pack was built with, so the console can put it
+          // one tap away on the night. It was only ever shown once, in the
+          // generator's log, and then you had to go and find it in Spotify.
+          playlist: (pack.spotifyPlaylist && pack.spotifyPlaylist.url) || '',
           problems: validateBingoPack(pack).length,
         };
       } catch (err) {

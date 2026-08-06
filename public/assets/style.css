@@ -1294,6 +1294,15 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
 }
 .pack-read:hover { background: rgba(255, 255, 255, 0.16); }
 
+/* The playlist this pack was built with — Spotify green, so it is findable at
+   a glance on a phone in a dark room. */
+.pack-spotify {
+  flex: 0 0 auto; display: grid; place-items: center; padding: 0 12px;
+  border-radius: 10px; font-size: 13px; font-weight: 800; text-decoration: none;
+  color: #0b0b14; background: #1ed760; border: 1px solid transparent;
+}
+.pack-spotify:hover { background: #29e26b; }
+
 @media (max-width: 560px) {
   .pv-opts { grid-template-columns: 1fr; margin-left: 0; }
   .pv-note, .pv-cue { margin-left: 0; }

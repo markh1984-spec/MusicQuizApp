@@ -421,6 +421,21 @@ pushed does not exist on it. Render redeploys in about a minute.
 Optional. Without it bingo rounds still generate, you just build the playlist
 yourself.
 
+**What you get when this is done.** In the console, Music Bingo tab: type a
+theme, press **Build it**, and one press gives you
+
+- forty tracks chosen for a British pub crowd, nothing you have played in the
+  last three months,
+- every one of them looked up on Spotify so the pack has the real title and
+  artist rather than something invented,
+- **a private Spotify playlist in play order**, ready for your DJ app,
+- the pack saved and committed to your repo so it survives a restart,
+- and every track written into the no-repeats history.
+
+Two keys make that work: `ANTHROPIC_API_KEY` (Part 2b) writes the track list,
+and the three Spotify values below build the playlist. With the Claude key but
+no Spotify you still get the pack and the call sheet — just no playlist.
+
 ## 7a. Make a Spotify app
 
 - [ ] 🔗 https://developer.spotify.com/dashboard — log in with **the same
@@ -452,7 +467,11 @@ npm run spotify:login
 - [ ] It prints a long URL — open it in your browser, click **Agree**
 - [ ] The page says "Done — you can close this"
 
-## 7d. Save the three lines it printed
+## 7d. Save the three lines it printed — in BOTH places
+
+The helper prints three lines. They go in two places, and it matters which:
+
+**On your laptop**, so generating at home works:
 
 - [ ] Copy all three into `.env`, replacing the commented-out versions:
       ```
@@ -460,6 +479,19 @@ npm run spotify:login
       SPOTIFY_CLIENT_SECRET=...
       SPOTIFY_REFRESH_TOKEN=...
       ```
+
+**On Render**, so the Build it button works from the live console — which is
+where you will actually press it:
+
+- [ ] 🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env
+- [ ] **+ Add Environment Variable**, three times, one per line above
+- [ ] While you are there, check **ANTHROPIC_API_KEY** is set too — without it
+      the Build it button is greyed out
+- [ ] **Save changes**. Render redeploys, about a minute
+
+Then open the console's **Music Bingo** tab. If it still says anything about
+missing Spotify values, the deploy has not finished — give it another minute
+and reload.
 
 They never expire. **Keep them private** — do not paste them into a message and
 do not commit them.

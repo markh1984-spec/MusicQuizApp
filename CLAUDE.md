@@ -126,6 +126,7 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 | **British spelling and UK chart references** | Crowds are Essex, Kent and Surrey. This is in the generation prompts too. |
 | **Deploying on Render** | Chosen by the host. Serverless (Vercel/Netlify) is wrong — the app holds a live connection to every phone all night. |
 | **Alphabetical bingo call sheet** | Not play order. Half the room is drinking and scanning for "have they done Africa yet?". |
+| **A generated pack keeps its playlist** | `pack.spotifyPlaylist`, surfaced by `listBingoPacks()` and shown as a green Playlist button on the pack card. The link used to appear once in the generator's log and then you had to go and find it in Spotify on the night. |
 
 ---
 

@@ -559,8 +559,9 @@ async function generate(panel) {
     status.appendChild(node(`
       <div class="gen-good">
         Built <b>${esc(done.title)}</b> — ${done.trackCount} tracks.
-        ${done.playlist ? `<a href="${esc(done.playlist)}" target="_blank" rel="noopener">Open the Spotify playlist</a>` : 'No Spotify playlist.'}
-        <br>Checked over — ${done.rejected} question${done.rejected === 1 ? '' : 's'} thrown out and replaced.
+        ${done.playlist
+          ? `<a href="${esc(done.playlist)}" target="_blank" rel="noopener">Open the Spotify playlist</a>`
+          : 'No Spotify playlist — build one yourself from the call sheet.'}
         ${done.backedUp ? '<br>Backed up to GitHub — this one is permanent.' : '<br><b>Not backed up</b> — this will be lost when the app restarts.'}
       </div>`));
     button.textContent = 'Built';
@@ -794,6 +795,7 @@ function packCard(kind, pack) {
       <div class="pack-actions">
         <button class="go launch" ${pack.broken ? 'disabled' : ''}>Launch</button>
         <button class="pack-read" title="Read it through">Read</button>
+        ${pack.playlist ? `<a class="pack-spotify" href="${esc(pack.playlist)}" target="_blank" rel="noopener" title="Open it in Spotify">Playlist</a>` : ''}
         ${hasPictureRound(pack) ? '<button class="pack-pics" title="Make the round 2 portraits">Pictures</button>' : ''}
         ${hasIntroRound(pack) ? '<button class="pack-playlist" title="Build the Spotify playlist for the intro round">Playlist</button>' : ''}
         <button class="pack-del" title="Delete this pack">Delete</button>
