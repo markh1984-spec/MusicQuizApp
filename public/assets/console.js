@@ -312,6 +312,9 @@ async function generateQuiz(panel) {
         Written <b>${esc(done.title)}</b> — ${done.questionCount} questions across
         ${done.rounds} round${done.rounds === 1 ? '' : 's'}.
         <br>Checked over — ${done.rejected} question${done.rejected === 1 ? '' : 's'} thrown out and replaced.
+        ${(done.unchecked || []).length
+          ? `<br><b>Round${done.unchecked.length === 1 ? '' : 's'} ${done.unchecked.join(', ')} could NOT be checked</b> — the second pass was unreachable. Read ${done.unchecked.length === 1 ? 'that round' : 'those rounds'} line by line.`
+          : ''}
         ${done.backedUp ? '<br>Backed up to GitHub — this one is permanent.' : '<br><b>Not backed up</b> — this will be lost when the app restarts.'}
         <br><b>Now read it.</b> <a href="${linkTo('/editor')}">Open the editor</a> and
         check every question before anyone else sees it.

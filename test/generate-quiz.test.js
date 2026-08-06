@@ -222,3 +222,64 @@ test('every round type the app offers can actually be generated', async () => {
     assert.ok(calls.write > 0);
   });
 });
+
+
+/**
+ * A generation is minutes and real money deep by the time the second pass
+ * runs. If the checker is unreachable, throwing away every question already
+ * written is the wrong trade — the step meant to make the quiz safer would be
+ * the step that loses it. Keep the questions, say plainly they were not
+ * checked, and let the host decide.
+ */
+test('a checker that cannot be reached keeps the quiz, and says so', async () => {
+  let calls = 0;
+  globalThis.fetch = async (url, options) => {
+    const body = JSON.parse(options.body);
+    const prompt = body.messages[0].content;
+    calls++;
+    if (prompt.startsWith('Check these')) throw new Error('network is down');
+    const asked = Number((prompt.match(/^Write (\d+) questions/) || [])[1] || 0);
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({
+        content: [{ type: 'text', text: JSON.stringify({
+          questions: Array.from({ length: asked }, (_, i) => ({
+            prompt: `Stub ${calls}-${i}?`,
+            options: ['A', 'B', 'C', 'D'],
+            correctIndex: 1,
+            answerNote: 'A fact.',
+          })),
+        }) }],
+      }),
+      text: async () => '',
+    };
+  };
+
+  await withTmpDir(async (config) => {
+    const result = await generateQuizPack({ config, theme: 'test', rounds: ['text'], perRound: 5 });
+    assert.equal(result.quiz.rounds[0].questions.length, 5, 'the questions survived');
+    assert.deepEqual(result.unchecked, [1], 'and round 1 is flagged as unchecked');
+    assert.match(result.quiz.notes, /could NOT be checked/i, 'the pack itself says so');
+  });
+});
+
+test('a Claude call that times out says so in words, and carries a real deadline', async () => {
+  let sawSignal = null;
+  globalThis.fetch = async (url, options) => {
+    sawSignal = options.signal;
+    const err = new Error('The operation was aborted due to timeout');
+    err.name = 'TimeoutError';
+    throw err;
+  };
+
+  await withTmpDir(async (config) => {
+    await assert.rejects(
+      generateQuizPack({ config, theme: 'test', rounds: ['text'], perRound: 3 }),
+      /took too long to answer/,
+      'the host is told what happened, not handed a raw abort',
+    );
+  });
+  assert.ok(sawSignal, 'a deadline was actually attached to the request');
+  assert.equal(typeof sawSignal.aborted, 'boolean');
+});

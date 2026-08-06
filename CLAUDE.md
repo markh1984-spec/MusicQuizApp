@@ -211,6 +211,16 @@ press to undo. That is why it is not a reset.
 A question the checker does not mention is treated as **unchecked, not passed**
 — silence is not approval.
 
+**But a checker that cannot be reached must not lose the quiz.** By the time
+the second pass runs, the generation is minutes and real money deep. If both
+the checker model and the fallback fail, the questions are kept, the round is
+recorded in `unchecked`, and that is said in the pack's own notes and in the
+console — read those rounds line by line. Throwing there once binned a whole
+two-round Metallica quiz on the last call of the job. Every Claude call also
+carries a timeout now (4 minutes when thinking, 2 without); without one a hung
+call hangs the whole generation, which from the console looks exactly like the
+connection dropping for no reason.
+
 On top of that, `reviewWarnings()` in `src/quizzes.js` catches the mechanical
 version of the same faults with no API call, and is shown when reading a pack.
 Each flag can be ticked off as the host reads through it; the tick is stored as

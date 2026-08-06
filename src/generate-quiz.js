@@ -218,13 +218,28 @@ async function checkQuestions({ questions, apiKey, model, log = () => {} }) {
     // Most likely the account cannot reach the stronger model. Check with the
     // writing model rather than shipping unchecked questions.
     log(`  (checking with ${model} instead: ${err.message.slice(0, 80)})`);
-    result = await askClaude({
-      system: CHECKER_SYSTEM,
-      prompt: `Check these ${questions.length} questions.\n\n${listing}\n\n${CHECKER_SCHEMA}`,
-      apiKey,
-      model,
-      think: true,
-    });
+    try {
+      result = await askClaude({
+        system: CHECKER_SYSTEM,
+        prompt: `Check these ${questions.length} questions.\n\n${listing}\n\n${CHECKER_SCHEMA}`,
+        apiKey,
+        model,
+        think: true,
+      });
+    } catch (second) {
+      /*
+       * Both checkers are down, and this generation is minutes deep.
+       *
+       * Throwing here bins every question already written and paid for — the
+       * whole quiz, for a failure in the step that is meant to make it safer.
+       * So keep the questions and hand back "not checked" for all of them,
+       * which the caller already knows how to be loud about. Unchecked is a
+       * worse quiz; no quiz at all is a worse night.
+       */
+      log(`  COULD NOT CHECK THIS ROUND: ${second.message}`);
+      log('  keeping the questions unchecked — read this round especially carefully');
+      return questions.map((q) => ({ question: q, ok: true, unchecked: true, reason: '' }));
+    }
   }
 
   const verdicts = new Map();
@@ -284,11 +299,23 @@ async function askClaude({ system, prompt, apiKey, model, think = false }) {
     body.output_config = { effort: 'low' };
   }
 
-  const res = await fetch(ANTHROPIC_API, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify(body),
-  });
+  // A call with no timeout can hang for as long as the socket stays open, and
+  // the whole generation hangs with it — which from the console looks like the
+  // connection dropping for no reason. Fail loudly instead.
+  let res;
+  try {
+    res = await fetch(ANTHROPIC_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(think ? 240_000 : 120_000),
+    });
+  } catch (err) {
+    if (err.name === 'TimeoutError' || err.name === 'AbortError') {
+      throw new Error(`${model} took too long to answer (over ${think ? 4 : 2} minutes)`);
+    }
+    throw err;
+  }
 
   if (!res.ok) throw new Error(`Claude said ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
@@ -432,7 +459,7 @@ export async function buildIntroPlaylists({ quiz, log = () => {} }) {
  */
 const MAX_ATTEMPTS = 3;
 
-async function buildRound({ brief, perRound, check, system, apiKey, model, log, onReject }) {
+async function buildRound({ brief, perRound, check, system, apiKey, model, log, onReject, onUnchecked = () => {} }) {
   const accepted = [];
   const failed = [];
   const seen = new Set();
@@ -477,6 +504,7 @@ async function buildRound({ brief, perRound, check, system, apiKey, model, log, 
 
     log(`  checking ${fresh.length} with ${CHECKER_MODEL}…`);
     const verdicts = await checkQuestions({ questions: fresh, apiKey, model, log });
+    if (verdicts.some((v) => v.unchecked)) onUnchecked();
     for (const v of verdicts) {
       if (v.ok) {
         accepted.push(v.question);
@@ -536,6 +564,7 @@ export async function generateQuizPack({
 
   const built = [];
   const rejected = [];
+  const unchecked = [];   // rounds the checking pass could not reach at all
 
   for (let i = 0; i < rounds.length; i++) {
     const type = rounds[i];
@@ -546,6 +575,7 @@ export async function generateQuizPack({
     const questions = await buildRound({
       brief, perRound, check, system, apiKey, model, log,
       onReject: (q, reason) => rejected.push({ round: i + 1, prompt: q.prompt, reason }),
+      onUnchecked: () => { if (!unchecked.includes(i + 1)) unchecked.push(i + 1); },
     });
 
     built.push({
@@ -598,7 +628,10 @@ export async function generateQuizPack({
     subtitle: 'Three rounds. Twenty seconds a question. Fastest fingers win.',
     questionSeconds: 20,
     createdAt: new Date(now()).toISOString(),
-    notes: `Written by ${model} for "${subject}". NOT YET REVIEWED — read every question in the editor before the gig.`,
+    notes: `Written by ${model} for "${subject}". NOT YET REVIEWED — read every question in the editor before the gig.`
+      + (unchecked.length
+        ? ` Round${unchecked.length === 1 ? '' : 's'} ${unchecked.join(', ')} could NOT be checked by the second pass — read ${unchecked.length === 1 ? 'that one' : 'those'} line by line.`
+        : ''),
     rounds: built,
   }, quizId);
 
@@ -611,7 +644,7 @@ export async function generateQuizPack({
   log(`saved ${quizId}.json`);
 
   const needsImages = built.some((r) => r.type === 'image');
-  return { quiz, problems, file, needsImages, rejected, checked: check };
+  return { quiz, problems, file, needsImages, rejected, unchecked, checked: check };
 }
 
 function slug(s) {

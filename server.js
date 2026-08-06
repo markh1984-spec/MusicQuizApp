@@ -807,6 +807,7 @@ async function handleWrite(req, res, url, route) {
         backedUp: backup.ok,
         checked: result.checked,
         rejected: result.rejected.length,
+        unchecked: result.unchecked || [],
       }));
     } catch (err) {
       log('ERROR ' + err.message);
