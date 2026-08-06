@@ -32,6 +32,9 @@ import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig } from './src/spotify.js';
 import { githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem } from './src/github.js';
 import { toSvg } from './src/qrcode.js';
+// The logo, shared with the browser so the tab icon and the on-screen mark are
+// one drawing rather than two that look alike today.
+import { faviconSvg } from './public/assets/brandmark.js';
 
 const HOST_KEY = hostKey();
 const store = new Store(paths.state);
@@ -200,6 +203,21 @@ async function handleGet(req, res, url, route) {
   if (route === '/host') return serveFile(res, config.publicDir, 'host.html'), true;
   if (route === '/editor') return serveFile(res, config.publicDir, 'editor.html'), true;
   if (route === '/console') return serveFile(res, config.publicDir, 'console.html'), true;
+  /*
+   * The tab icon: the same record that is in the top left of every screen,
+   * from the same drawing, so the two cannot drift apart.
+   *
+   * SVG rather than a .ico because there is no build step here to make one,
+   * and every browser worth worrying about has taken SVG favicons since 2022.
+   * A browser that has not simply shows its default, which is what it showed
+   * before this existed.
+   */
+  if (route === '/favicon.svg') {
+    return send(res, 200, faviconSvg(), {
+      'Content-Type': 'image/svg+xml; charset=utf-8',
+      'Cache-Control': 'public, max-age=86400',
+    }), true;
+  }
   if (route === '/health') return sendJson(res, 200, { ok: true, game: session.kind, phase: session.engine.state.phase }), true;
 
   // ---- static

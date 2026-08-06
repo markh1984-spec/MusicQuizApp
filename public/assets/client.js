@@ -3,28 +3,18 @@
  * server, and a couple of DOM helpers. Deliberately tiny and framework-free.
  */
 
+import { recordMark } from './brandmark.js';
+
 /**
- * The logo: a record, drawn rather than loaded, so it costs no request and
- * stays sharp at any size. Each one gets its own gradient id, because two on a
- * page with the same id would fight.
+ * The logo: a record. The drawing lives in brandmark.js because the server
+ * serves the very same one as the tab icon, and two copies would be a logo
+ * that changes in one place and not the other.
+ *
+ * Each one on a page gets its own gradient id — two sharing one would fight.
  */
 let markCount = 0;
 export function brandMark(size = 30) {
-  const id = `bm${++markCount}`;
-  return `
-    <svg class="brand-mark" width="${size}" height="${size}" viewBox="0 0 40 40" aria-hidden="true">
-      <defs>
-        <linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#ff2e88"/>
-          <stop offset="55%" stop-color="#ff8a3d"/>
-          <stop offset="100%" stop-color="#ffd23f"/>
-        </linearGradient>
-      </defs>
-      <circle cx="20" cy="20" r="19" fill="url(#${id})"/>
-      <circle cx="20" cy="20" r="13" fill="none" stroke="rgba(0,0,0,0.22)" stroke-width="1.6"/>
-      <circle cx="20" cy="20" r="8.5" fill="none" stroke="rgba(0,0,0,0.18)" stroke-width="1.2"/>
-      <circle cx="20" cy="20" r="3.6" fill="#0a0a12"/>
-    </svg>`;
+  return recordMark({ size, id: `bm${++markCount}`, cls: 'brand-mark' });
 }
 
 /**

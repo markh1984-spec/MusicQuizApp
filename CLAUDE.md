@@ -133,6 +133,7 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 | **The card shape is chosen at LAUNCH, not stored on the pack** | The same forty-two songs are a quick game on a 3×3 and a long one on a strip, and which you want depends on how much of the evening is left — a decision about tonight, not about the pack. `session.launch(kind, id, { shape })` overrides the pack's own shape for that game and never writes it back. The picker is on the pack card next to Launch, and only offers shapes the track list can fill. |
 | **A strip wins the long way only** | `cardLines()` in `src/bingo.js`. A card can be 3 across and 8 down — the shape of a paper bingo ticket and of a phone. Every winning line must be the SAME LENGTH or the game is not fair: on a strip somebody would call on a row of three while everyone else needed eight. So a square keeps rows, columns and both diagonals; anything else uses the long axis only, and the phone says which way it runs ("Get a full column — 8 down") because a player looking at three across will otherwise mark the three and shout. There are tests for all of it. |
 | **Launch is the last thing on a pack card, and full width** | Read / Rename / Delete sit in a row above it, sharing ONE rule rather than four near-identical ones that had already drifted on size. Launch is the biggest thing on the card and nothing sits under it, so it cannot be hit on the way to something else. |
+| **The tab icon and the logo are one drawing** | `public/assets/brandmark.js`, imported by `client.js` in the browser AND by `server.js` for `/favicon.svg`. Two copies of a logo is one that gets changed in one place and not the other and goes unnoticed for a month. SVG rather than `.ico` because there is no build step to make one; a browser too old for SVG favicons just shows its default, as it did before. The tab version has thicker grooves — at 16px a 1.6-wide stroke on a 40 viewBox is two thirds of a pixel and turns to mush. There are tests that the two agree. |
 | **Native controls are told the page is dark** | `color-scheme: dark` on `:root`. Without it the browser draws tickboxes, radios, scrollbars and the open list of a dropdown for a white page, and they arrive as white slabs — the console's dropdowns were the loudest thing on a pack card, louder than Launch. A `<select>` also gets `appearance: none`, the page's own fill, and a drawn chevron on a gradient block so it reads as part of the app without competing with the button underneath it. |
 | **A pack still says `cardSize`** | `cardShape()` reads `cardSize` OR `cardRows`/`cardCols`, so no pack on disk had to be rewritten and an older deploy still reads a newer pack. `shapeFields()` writes both when it is square. |
 | **The card is sized from the list, not from a default** | A round of 42 is a 5x5 round. Import always said 4x4, so 42 songs quietly became sixteen squares — a line lands early and most of the round never reaches a card. The dropdown moves itself to the biggest card the pasted list carries and says so, and stops the moment you touch it. `cardSizes` comes from `minimumTracks()` over the library payload so the console keeps no copy of the sum. |
@@ -415,6 +416,7 @@ src/photos.js          photos from the room: store, kill switch, bin
 src/adverts.js         venue advertising slides, per venue
 src/generate-images.js round 2 artwork (placeholder or OpenAI)
 public/                the screens; *-bingo.js files hold the bingo variants
+  assets/brandmark.js  the record logo, shared with the server as the favicon
 quizzes/ bingo/        the library
 data/                  live state, history, archived nights (gitignored)
 ```
@@ -454,7 +456,7 @@ generates one round of every type so a fifth one cannot repeat this.
 ## Checks
 
 ```bash
-npm test        # 295 tests, no network, injected clocks — must stay green
+npm test        # 298 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -502,7 +504,7 @@ recreate it.
 
 All five build stages plus bingo, the console, generation, pack import and the
 tickable review flags are done, tested and pushed to **`MusicQuizApp`**.
-Nothing is half-finished in the tree. 295 tests green.
+Nothing is half-finished in the tree. 298 tests green.
 
 (An earlier version of this line named `claude/new-session-jzx988`. That branch
 is gone — see **Where to push**.)
