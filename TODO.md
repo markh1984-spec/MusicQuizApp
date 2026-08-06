@@ -19,12 +19,55 @@ Your list, shortest first. Only two of these cost anything:
 | 2 | Read the questions and tick the flags | Part 3 | free | nothing — but do it before a room does |
 | 3 | Dry run with wifi off on the phones | Part 10 | free | the one failure a home test cannot find |
 | 4 | OpenAI key | Part 6 | ~£8 once, ~50p a quiz | round 2 portraits — placeholders until then |
-| 5 | Spotify login (re-run it even if done) | Part 7 | free | bingo and intro playlists building themselves |
+| 5 | **Finish Spotify** — re-run the login, one thing left | *Where we stopped*, just below | free | playlists building themselves (everything else works) |
 | 6 | Move to the $7 tier | Part 10 | $7/mo | before the first paying gig, not before that |
 
 4 and 5 are genuinely optional. The app runs a full quiz night and a full bingo
 night without either — round 2 just uses placeholder drawings, and you build
 playlists by hand.
+
+### Where we stopped last night — read this first
+
+Spotify is **nearly** done. Node is installed, the app is created, the login
+ran, and all three `SPOTIFY_*` values are on Render alongside your Claude key.
+
+Generation works: Claude writes the list, all forty tracks are found on
+Spotify, and then the very last step — creating the playlist — is refused with
+a bare "Forbidden". The login definitely has permission (it reports all four
+scopes back), and you have already added the account under User Management.
+
+**Three things to try, in this order.** Stop as soon as one works.
+
+- [ ] **Re-run the login.** In a terminal, in that folder:
+      ```bash
+      cd ~/Downloads/MusicQuizApp-MusicQuizApp
+      npm run spotify:login
+      ```
+      Same Client ID and Secret, click **Agree**. Then on Render replace
+      **only** `SPOTIFY_REFRESH_TOKEN` with the new one — leave the other two
+      alone. 🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env
+
+      *Why this first:* Spotify grants permission per app-and-user, and yours
+      was granted before that account was added to User Management.
+
+- [ ] **Check which account the dashboard is logged in as.** Top right of
+      developer.spotify.com. If the app was created by a different account
+      from the one you authorised, that is the mismatch.
+
+- [ ] **Check the User Management email is exactly right** — it must match the
+      email on that Spotify account (spotify.com → Account → Profile). A
+      near-miss does nothing and says nothing.
+
+**You are not blocked in the meantime.** Ask Claude in your browser for a
+playlist, then paste its link into the console's **Import** box — the cards are
+built from that playlist, so they match it exactly, and it goes into your
+no-repeats history like any other pack. Reading a playlist is a different
+permission from creating one, and yours has it. If Spotify will not let the app
+read an AI-made playlist, paste the track list into the **"or paste a track
+list instead"** box, which needs no Spotify at all.
+
+Nothing else is outstanding. A generation that cannot make a playlist now saves
+the pack anyway and tells you why, so you always get a playable bingo round.
 
 ### New since you last read this
 
@@ -416,7 +459,7 @@ pushed does not exist on it. Render redeploys in about a minute.
 
 ---
 
-# PART 7 — Spotify playlists (10 minutes, once ever)
+# PART 7 — Spotify playlists (nearly done — see 7f)
 
 Optional. Without it bingo rounds still generate, you just build the playlist
 yourself.

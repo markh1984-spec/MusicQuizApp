@@ -400,8 +400,44 @@ Nothing is half-finished in the tree. 263 tests green.
 is gone — see **Where to push**.)
 
 Outstanding work is all on the host's side — see **TODO.md**. Short version:
-an OpenAI key for the round 2 portraits, and the one-time Spotify login. Both
+an OpenAI key for the round 2 portraits, and finishing the Spotify setup. Both
 optional; the app runs a full quiz and a full bingo night without either.
+
+### Where the Spotify setup got to (stopped here, mid-setup)
+
+Done on his side: Node installed on the Mac, the repo unzipped to
+`~/Downloads/MusicQuizApp-MusicQuizApp`, a Spotify app created, `spotify:login`
+run, and all three `SPOTIFY_*` values plus `ANTHROPIC_API_KEY` set on Render.
+
+**Generation works end to end. Only the playlist step is refused.** Claude
+writes the list, all forty tracks resolve on Spotify, and then
+`POST /users/djmarkstar/playlists` returns a bare `403 Forbidden`.
+
+What is already ruled out: the login **has** all four scopes
+(`playlist-modify-private`, `playlist-modify-public`, `playlist-read-private`,
+`playlist-read-collaborative` — `grantedScopes()` reports them), and the
+account has been added under **User Management** in the Spotify dashboard.
+
+Next things to try, in order:
+
+1. **Re-run `npm run spotify:login`** and replace only `SPOTIFY_REFRESH_TOKEN`
+   on Render. A Spotify grant is per app-and-user, and his was authorised
+   *before* the account was added to User Management.
+2. **Check the dashboard is logged in as the same account that authorised**
+   (`djmarkstar`). An app owned by a different account is the obvious mismatch.
+3. **Check the User Management email matches** the one on that Spotify account
+   exactly. A near-miss silently does nothing.
+
+**Meanwhile there is a working way round, and it is arguably the better
+direction anyway.** Claude in the browser has a Spotify connector and can
+build the playlist; paste its link into the console's **Import** box and the
+pack's cards are generated from that exact playlist. Reading a playlist is a
+different permission from creating one and his login has it, so import should
+work while generation does not. If Spotify blocks reading an AI-generated
+playlist over the API, the **paste-a-track-list** box needs no Spotify at all.
+For bingo the playlist and the cards have to be the same forty songs, so
+building the playlist first and the cards from it is a legitimate workflow, not
+just a stopgap.
 
 ### Asked for, not built yet
 
