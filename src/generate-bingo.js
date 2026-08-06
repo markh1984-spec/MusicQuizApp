@@ -44,6 +44,10 @@ Theme: ${theme}
 
 What makes a good music bingo track:
 - Recognisable within a few seconds to a room that is half-listening and drinking.
+- THE CHORUS is what gets played. The host plays one chorus and moves on, so a
+  song that is only recognisable from a long intro, a riff, or an instrumental
+  section is a poor choice however famous it is. The chorus has to land on its
+  own, and ideally be singable.
 - Well known in the UK specifically — think what fills a floor in Essex or Kent.
 - A spread across the theme rather than six songs by the same artist. Two by one
   artist at the very most.

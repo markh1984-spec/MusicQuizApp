@@ -23,7 +23,10 @@ Two games so far:
 
 - **Music quiz** — rounds of 10 questions, 20 seconds each. Four round types:
   text, image, intro, and **multi** ("pick them all").
-- **Music bingo** — host plays tracks from a DJ app, phones get cards.
+- **Music bingo** — host plays tracks from a DJ app, phones get cards. **He
+  plays one chorus and moves on**, which is why the generation prompt asks for
+  tracks whose chorus lands on its own — a song recognisable only from a long
+  intro or a riff is a poor pick however famous.
 
 ---
 
