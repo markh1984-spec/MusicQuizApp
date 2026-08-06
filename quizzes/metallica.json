@@ -4,12 +4,12 @@
   "subtitle": "Three rounds. Twenty seconds a question. Fastest fingers win.",
   "questionSeconds": 20,
   "createdAt": "2026-08-06T10:43:27.763Z",
-  "notes": "Written by claude-sonnet-5 for \"Metallica\". NOT YET REVIEWED \u2014 read every question in the editor before the gig.",
+  "notes": "Written by claude-sonnet-5 for \"Metallica\". NOT YET REVIEWED — read every question in the editor before the gig.",
   "rounds": [
     {
       "id": "r1",
       "type": "text",
-      "title": "Round One \u2014 Metallica",
+      "title": "Round One — Metallica",
       "blurb": "10 questions on Metallica",
       "questions": [
         {
@@ -58,7 +58,10 @@
             "None of these"
           ],
           "correctIndex": 3,
-          "answerNote": "None of Metallica's singles have topped the UK singles chart, despite huge airplay."
+          "answerNote": "None of Metallica's singles have topped the UK singles chart, despite huge airplay.",
+          "checked": [
+            "negative-answer"
+          ]
         },
         {
           "id": "r1q5",
@@ -137,7 +140,7 @@
     {
       "id": "r2",
       "type": "multi",
-      "title": "Round Two \u2014 Pick Them All",
+      "title": "Round Two — Pick Them All",
       "blurb": "More than one answer is right. Lock in every one of them.",
       "questions": [
         {
