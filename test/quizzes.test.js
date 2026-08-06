@@ -451,3 +451,43 @@ test('the review flags read the whole set of right answers', () => {
   const bad = multiRound({ answerNote: 'Some argue that "Four" belongs here too.' });
   assert.ok(reviewWarnings(bad).some((w) => w.kind === 'note-names-wrong-option' && w.text.includes('Four')));
 });
+
+
+/**
+ * The generator wrote "Which three of these..." and marked one answer correct.
+ * The screen tells the room to pick three, the answer key wants one, and there
+ * is no version of that which ends well in front of a paying room.
+ */
+test('a pick-them-all question whose words and answer key disagree is flagged', () => {
+  const quiz = {
+    id: 'q', title: 'Q',
+    rounds: [{
+      id: 'r1', type: 'multi', title: 'Pick them all',
+      questions: [
+        { id: 'a', prompt: 'Which three of these were number ones?', options: ['a', 'b', 'c', 'd', 'e', 'f'], correctIndexes: [0] },
+        { id: 'b', prompt: 'Which two of these were number ones?', options: ['a', 'b', 'c', 'd', 'e', 'f'], correctIndexes: [0, 1] },
+      ],
+    }],
+  };
+  const flags = reviewWarnings(quiz).filter((w) => w.kind === 'count-mismatch');
+  assert.equal(flags.length, 1, 'only the one that disagrees');
+  assert.equal(flags[0].questionId, 'a');
+  assert.match(flags[0].text, /says "three" but 1 answer is marked/);
+});
+
+test('a review tick still saves when some other question is broken', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'quiz-tick-'));
+  const quiz = {
+    id: 'q', title: 'Q',
+    rounds: [{
+      id: 'r1', type: 'multi', title: 'Pick them all',
+      questions: [
+        { id: 'a', prompt: 'Which three?', options: ['a', 'b', 'c', 'd', 'e', 'f'], correctIndexes: [0] },
+      ],
+    }],
+  };
+  assert.ok(validateQuiz(quiz).length, 'this quiz is genuinely broken');
+  assert.throws(() => saveQuiz(dir, 'q', quiz), /not valid/, 'editing it is still refused');
+  assert.ok(saveQuiz(dir, 'q', quiz, { allowProblems: true }), 'but annotating it is not');
+  fs.rmSync(dir, { recursive: true, force: true });
+});

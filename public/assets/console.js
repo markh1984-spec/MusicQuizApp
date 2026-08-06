@@ -1169,6 +1169,22 @@ function renderQuizPreview(body, sub, quiz, markDirty = () => {}) {
 
   // The questions most likely to cause an argument, listed first so they are
   // the ones you actually look at.
+  // Real errors first: these stop the quiz being played and stop the editor
+  // saving, so they come above the hunches and read differently. Without this
+  // the only sign was an alert saying "Quiz is not valid" with no clue which
+  // question was at fault.
+  const problems = quiz.problems || [];
+  if (problems.length) {
+    parts.push(node(`
+      <div class="pv-warn pv-broken">
+        <b class="pv-warn-head">${problems.length} thing${problems.length === 1 ? '' : 's'} to fix before this can be played</b>
+        <ul class="pv-flags">
+          ${problems.map((p) => `<li class="pv-flag"><span class="pv-flag-text">${esc(p)}</span></li>`).join('')}
+        </ul>
+        <div class="tiny" style="margin-top:8px">Fix ${problems.length === 1 ? 'this' : 'these'} in the editor. Ticking the notes below still works meanwhile.</div>
+      </div>`));
+  }
+
   const warnings = quiz.reviewWarnings || [];
   if (warnings.length) parts.push(warningPanel(quiz, warnings));
   for (const round of quiz.rounds) {

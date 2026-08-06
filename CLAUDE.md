@@ -245,6 +245,13 @@ All of this exists because the first generated quiz shipped a question where a
 wrong-marked option was defensible AND the fact printed on screen proved it.
 Do not remove or weaken these without understanding that.
 
+**Ticking a review flag is annotating, not editing.** `saveQuiz` refuses to
+write a quiz that does not validate, which is right for the editor and wrong
+for the review list — one broken question in round 2 locked every flag in the
+quiz, and all it said was "Quiz is not valid". The `/checked` route passes
+`{ allowProblems: true }`. The read-through also shows validation problems
+above the hunches, in red, so you can see *which* question is at fault.
+
 ### Reading a reply is its own job
 
 `readTracks()` in `src/generate-bingo.js`, and it has tests. A generation died

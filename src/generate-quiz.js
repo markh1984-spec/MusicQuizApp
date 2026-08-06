@@ -137,7 +137,13 @@ shortest, or all bunched at one end.
 
 Set "prompt" so it states plainly what makes an option correct, e.g. "Which three of
 these Blur singles reached the UK top 10?". The screen tells the room how many to pick,
-so do not write the number into the option text.`,
+so do not write the number into the option text.
+
+IF YOU NAME A NUMBER IN THE QUESTION, "correctIndexes" MUST HAVE EXACTLY THAT MANY
+ENTRIES. "Which three of these..." with two right answers is a broken question, and so
+is "which three" with one. Count them before you write the number. If only one option
+is genuinely correct, this is not a pick-them-all question at all — write a different
+one.`,
   };
 }
 

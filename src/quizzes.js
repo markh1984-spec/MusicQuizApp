@@ -55,8 +55,20 @@ export function loadQuiz(dir, id) {
   return normaliseQuiz(quiz, id);
 }
 
-export function saveQuiz(dir, id, quiz) {
-  const problems = validateQuiz(quiz);
+/**
+ * @param {object} [opts]
+ * @param {boolean} [opts.allowProblems]  write it even if it does not validate
+ *
+ * The gate is right for editing: a quiz that cannot be played should never
+ * reach the disk from the editor. It is wrong for annotating. Ticking "I have
+ * read this one" on the review list is a note about the reading, not a change
+ * to the quiz — and refusing it because some *other* question is broken locks
+ * you out of the review flow exactly when you need it most. That is what
+ * happened: one bad pick-them-all question in round 2 meant no flag anywhere
+ * in the quiz could be ticked, and the only thing said was "Quiz is not valid".
+ */
+export function saveQuiz(dir, id, quiz, { allowProblems = false } = {}) {
+  const problems = allowProblems ? [] : validateQuiz(quiz);
   if (problems.length) {
     const err = new Error('Quiz is not valid');
     err.problems = problems;
@@ -208,6 +220,25 @@ export function reviewWarnings(quiz) {
       if (found.length) {
         flag('slippery-wording', found.join('-'),
           `uses "${found.join('", "')}" — worth checking no other option also fits.`);
+      }
+
+      // "Which THREE of these..." with two right answers marked. The room is
+      // told how many to pick from correctIndexes, so the number in the words
+      // and the number in the key have to agree — otherwise the screen asks
+      // for three and the answer key wants two, and there is no version of
+      // that which ends well. This is a real error, not a hunch, but it is
+      // flagged rather than blocked so a half-written quiz still saves.
+      if (round.type === 'multi') {
+        const NUMBERS = { one: 1, two: 2, three: 3, four: 4, five: 5 };
+        const said = String(q.prompt || '').match(/\b(one|two|three|four|five|[1-5])\b/i);
+        if (said) {
+          const wanted = NUMBERS[said[1].toLowerCase()] ?? Number(said[1]);
+          const marked = (q.correctIndexes || []).length;
+          if (wanted !== marked) {
+            flag('count-mismatch', `${wanted}-${marked}`,
+              `the question says "${said[1]}" but ${marked} answer${marked === 1 ? ' is' : 's are'} marked correct. One of them is wrong.`);
+          }
+        }
       }
 
       // An answer that contradicts the question it is answering. Single-answer

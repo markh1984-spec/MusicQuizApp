@@ -395,7 +395,7 @@ async function handleGet(req, res, url, route) {
     const id = decodeURIComponent(route.slice('/api/quiz/'.length));
     try {
       const quiz = loadQuiz(config.quizDir, id);
-      return sendJson(res, 200, { ...quiz, reviewWarnings: reviewWarnings(quiz) }), true;
+      return sendJson(res, 200, { ...quiz, reviewWarnings: reviewWarnings(quiz), problems: validateQuiz(quiz) }), true;
     } catch (err) {
       return sendJson(res, 404, { error: err.message }), true;
     }
@@ -671,7 +671,9 @@ async function handleWrite(req, res, url, route) {
     const found = setWarningChecked(quiz, String(body.questionId || ''), String(body.warning || ''), body.checked !== false);
     if (!found) return sendJson(res, 409, { error: 'That question is not in this quiz any more. Reopen it.' }), true;
 
-    saveQuiz(config.quizDir, id, quiz);
+    // Annotating, not editing — see saveQuiz. A broken question elsewhere in
+    // the quiz must not stop you recording that you have read this one.
+    saveQuiz(config.quizDir, id, quiz, { allowProblems: true });
     // Back up in the background — a tick is not worth making you wait for
     // GitHub, and the next save will carry it anyway if this one misses.
     const backup = await backUp(`quizzes/${id}.json`, JSON.stringify(normaliseQuiz(quiz, id), null, 2) + '\n', `Review notes: ${quiz.title || id}`);

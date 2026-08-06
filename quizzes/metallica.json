@@ -4,12 +4,12 @@
   "subtitle": "Three rounds. Twenty seconds a question. Fastest fingers win.",
   "questionSeconds": 20,
   "createdAt": "2026-08-06T10:43:27.763Z",
-  "notes": "Written by claude-sonnet-5 for \"Metallica\". NOT YET REVIEWED — read every question in the editor before the gig.",
+  "notes": "Written by claude-sonnet-5 for \"Metallica\". NOT YET REVIEWED \u2014 read every question in the editor before the gig.",
   "rounds": [
     {
       "id": "r1",
       "type": "text",
-      "title": "Round One — Metallica",
+      "title": "Round One \u2014 Metallica",
       "blurb": "10 questions on Metallica",
       "questions": [
         {
@@ -137,7 +137,7 @@
     {
       "id": "r2",
       "type": "multi",
-      "title": "Round Two — Pick Them All",
+      "title": "Round Two \u2014 Pick Them All",
       "blurb": "More than one answer is right. Lock in every one of them.",
       "questions": [
         {
@@ -290,7 +290,7 @@
         },
         {
           "id": "r2q9",
-          "prompt": "Which three of these albums are officially self-titled or known as 'The Black Album'?",
+          "prompt": "Which two of these Metallica albums were released in the 1990s?",
           "options": [
             "Metallica (1991)",
             "Master of Puppets",
@@ -301,9 +301,10 @@
           ],
           "correctIndex": 0,
           "correctIndexes": [
-            0
+            0,
+            5
           ],
-          "answerNote": "Only the 1991 album is self-titled and nicknamed 'The Black Album' due to its dark cover."
+          "answerNote": "Metallica arrived in 1991 and Load in 1995; the other four are all 1980s records."
         },
         {
           "id": "r2q10",
