@@ -467,34 +467,59 @@ body.phone {
 /* ---- answer buttons */
 /* The four buttons share whatever height is going, so they are enormous thumb
    targets and nobody has to aim in a dark pub. */
-.answers { display: grid; gap: 12px; flex: 1 1 auto; grid-auto-rows: 1fr; min-height: 0; }
+/* Two columns, in the same order and the same colours as the projector.
+   A player looks up at the big screen, decides "the pink one, bottom left",
+   and looks down at their phone — so the phone has to be the same picture, or
+   they have to re-read four options against the clock. It was a single column,
+   which meant the same four answers in a different arrangement on each screen. */
+.answers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  flex: 1 1 auto;
+  grid-auto-rows: 1fr;
+  min-height: 0;
+}
 .answer-btn {
+  /* The letter above the text rather than beside it. Beside it costs 42 of the
+     ~140 pixels a half-width cell has on the smallest phone, which was enough
+     to break "Christmas" across two lines mid-word. The letter stays top left,
+     the same letter and the same colour as the projector. */
   display: flex;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
-  padding: 20px 16px;
+  padding: 12px;
   border-radius: 16px;
   border: 2px solid var(--panel-line);
   background: var(--panel);
   color: var(--ink);
-  font-size: 19px;
+  /* Smaller than the single column was, because half the width has to hold
+     "I Wish It Could Be Christmas Everyday" without turning it into a column
+     of single words. Still the biggest thing on the phone. */
+  font-size: 16px;
   font-weight: 800;
   text-align: left;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: transform 120ms, opacity 200ms, border-color 200ms, background 200ms;
   min-height: 72px;
+  overflow: hidden;
 }
+/* break-word, not anywhere: only split a word that cannot fit a line on its
+   own, so "Christmas" wraps whole instead of coming apart. */
+.answer-btn .text { width: 100%; overflow-wrap: break-word; line-height: 1.22; }
 .answer-btn:active { transform: scale(0.98); }
 .answer-btn .letter {
   flex: 0 0 auto;
-  width: 40px; height: 40px;
+  width: 32px; height: 32px;
   display: grid; place-items: center;
-  border-radius: 11px;
+  border-radius: 10px;
   font-weight: 900;
   color: #0a0a12;
-  font-size: 18px;
+  font-size: 16px;
 }
 .answer-btn:nth-child(1) .letter { background: var(--a); }
 .answer-btn:nth-child(2) .letter { background: var(--b); }

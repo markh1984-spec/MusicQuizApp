@@ -107,6 +107,12 @@ async function main() {
   console.log(`\nDriving a demo quiz at ${BASE}\n`);
 
   await hostAction('resetAll');
+  // Launch a known pack rather than photographing whatever happened to be
+  // loaded — otherwise the shots are of a different quiz every time, and the
+  // scripted answers below land on questions they were not written for.
+  const quizzes = await (await fetch(`${BASE}/api/quizzes?key=${encodeURIComponent(KEY)}`)).json();
+  const wanted = argOf('--quiz', (quizzes.quizzes[0] || {}).id);
+  if (wanted) await hostAction('launch', { game: 'quiz', packId: wanted });
   await screen.goto(`${BASE}/screen`, { waitUntil: 'domcontentloaded' });
 
   // Teams join.
@@ -176,7 +182,10 @@ async function main() {
   await shotAt(screen, 'screen-round-board', 'round_board');
   await shot(phones[0].page, 'phone-round-board');
 
-  await advanceTo('final');
+  // finish() jumps to the end from wherever the quiz is, so this works whether
+  // the loaded pack has one round or five. Pressing next until something looks
+  // like the end only worked on a one-round quiz, and failed loudly on a two.
+  await hostAction('finish');
   await screen.waitForTimeout(900);
   await shotAt(screen, 'screen-winner', 'final');
   await shot(host, 'host-final');
