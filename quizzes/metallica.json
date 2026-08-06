@@ -1,0 +1,329 @@
+{
+  "id": "metallica",
+  "title": "The Metallica Quiz",
+  "subtitle": "Three rounds. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-08-06T10:43:27.763Z",
+  "notes": "Written by claude-sonnet-5 for \"Metallica\". NOT YET REVIEWED — read every question in the editor before the gig.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "text",
+      "title": "Round One — Metallica",
+      "blurb": "10 questions on Metallica",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Who is Metallica's lead vocalist and rhythm guitarist?",
+          "options": [
+            "Dave Mustaine",
+            "James Hetfield",
+            "Kirk Hammett",
+            "Cliff Burton"
+          ],
+          "correctIndex": 1,
+          "answerNote": "James Hetfield co-founded the band and has been its frontman throughout its entire history."
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which Metallica bassist died in a tour bus accident in 1986?",
+          "options": [
+            "Jason Newsted",
+            "Robert Trujillo",
+            "Cliff Burton",
+            "Ron McGovney"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Cliff Burton died in Sweden when the band's tour bus overturned."
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which 1991 album is commonly known simply as 'The Black Album'?",
+          "options": [
+            "Metallica",
+            "Master of Puppets",
+            "...And Justice for All",
+            "Load"
+          ],
+          "correctIndex": 0,
+          "answerNote": "The self-titled 1991 album has a plain black cover, giving it its nickname."
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which Metallica song reached number one in the UK singles chart?",
+          "options": [
+            "Enter Sandman",
+            "Nothing Else Matters",
+            "Whiskey in the Jar",
+            "None of these"
+          ],
+          "correctIndex": 3,
+          "answerNote": "None of Metallica's singles have topped the UK singles chart, despite huge airplay."
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which guitarist replaced Dave Mustaine in Metallica in 1983?",
+          "options": [
+            "Kirk Hammett",
+            "Marty Friedman",
+            "Jason Newsted",
+            "Robert Trujillo"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Kirk Hammett joined shortly before their debut album Kill 'Em All and remains lead guitarist today."
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which Metallica album features the song 'Master of Puppets'?",
+          "options": [
+            "Ride the Lightning",
+            "Master of Puppets",
+            "Kill 'Em All",
+            "...And Justice for All"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Released in 1986, Master of Puppets is often cited as one of the greatest metal albums ever made."
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which bassist has played with Metallica since 2003, following Jason Newsted's departure?",
+          "options": [
+            "Robert Trujillo",
+            "Duff McKagan",
+            "Nikki Sixx",
+            "Tom Araya"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Robert Trujillo, formerly of Suicidal Tendencies, remains Metallica's bassist to this day."
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which 2003 Metallica documentary chronicled the making of St. Anger and internal band tensions?",
+          "options": [
+            "Some Kind of Monster",
+            "Cliff 'Em All",
+            "Through the Never",
+            "The Big Four"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Metallica: Some Kind of Monster showed the band in therapy amid recording struggles."
+        },
+        {
+          "id": "r1q9",
+          "prompt": "In which year did Metallica release their most recent studio album '72 Seasons'?",
+          "options": [
+            "2021",
+            "2022",
+            "2023",
+            "2024"
+          ],
+          "correctIndex": 2,
+          "answerNote": "72 Seasons was released in April 2023, exploring themes of childhood and adolescence."
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which Metallica drummer has been with the band since its formation in 1981?",
+          "options": [
+            "Lars Ulrich",
+            "Chris Adler",
+            "Mike Portnoy",
+            "Dave Lombardo"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Lars Ulrich co-founded Metallica with James Hetfield and remains the band's drummer."
+        }
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "multi",
+      "title": "Round Two — Pick Them All",
+      "blurb": "More than one answer is right. Lock in every one of them.",
+      "questions": [
+        {
+          "id": "r2q1",
+          "prompt": "Which three of these songs feature on the album Master of Puppets?",
+          "options": [
+            "Battery",
+            "One",
+            "Master of Puppets",
+            "Enter Sandman",
+            "Welcome Home (Sanitarium)",
+            "Nothing Else Matters"
+          ],
+          "correctIndex": 0,
+          "correctIndexes": [
+            0,
+            2,
+            4
+          ],
+          "answerNote": "Battery, Master of Puppets and Welcome Home (Sanitarium) all appear on the 1986 album."
+        },
+        {
+          "id": "r2q2",
+          "prompt": "Which two of these guitarists have been full members of Metallica's lineup?",
+          "options": [
+            "Kirk Hammett",
+            "Dave Mustaine",
+            "Marty Friedman",
+            "Kerry King",
+            "Dimebag Darrell",
+            "Zakk Wylde"
+          ],
+          "correctIndex": 0,
+          "correctIndexes": [
+            0,
+            1
+          ],
+          "answerNote": "Hammett has played lead guitar since 1983, and Mustaine was an original member before being fired."
+        },
+        {
+          "id": "r2q3",
+          "prompt": "Which two of these songs were written or co-written for the S&M live album with an orchestra?",
+          "options": [
+            "No Leaf Clover",
+            "-Human",
+            "Battery",
+            "Fuel",
+            "Master of Puppets",
+            "One"
+          ],
+          "correctIndex": 0,
+          "correctIndexes": [
+            0,
+            1
+          ],
+          "answerNote": "No Leaf Clover and -Human were both new songs written specifically for the 1999 S&M project with the San Francisco Symphony."
+        },
+        {
+          "id": "r2q4",
+          "prompt": "Which three of these are songs from the 1984 album Ride the Lightning's era single releases or the album itself?",
+          "options": [
+            "Fight Fire with Fire",
+            "Trapped Under Ice",
+            "Escape",
+            "Whiplash",
+            "Seek and Destroy",
+            "Motorbreath"
+          ],
+          "correctIndex": 0,
+          "correctIndexes": [
+            0,
+            1,
+            2
+          ],
+          "answerNote": "Whiplash, Seek and Destroy and Motorbreath are all from the debut Kill 'Em All instead."
+        },
+        {
+          "id": "r2q5",
+          "prompt": "Which two of these are songs from the debut album Kill 'Em All?",
+          "options": [
+            "Whiplash",
+            "Seek and Destroy",
+            "Fade to Black",
+            "Creeping Death",
+            "For Whom the Bell Tolls",
+            "Battery"
+          ],
+          "correctIndex": 0,
+          "correctIndexes": [
+            0,
+            1
+          ],
+          "answerNote": "Kill 'Em All, released in 1983, introduced the world to Metallica's raw early thrash sound."
+        },
+        {
+          "id": "r2q6",
+          "prompt": "Which three of these songs feature on the 2003 album St. Anger?",
+          "options": [
+            "Frantic",
+            "St. Anger",
+            "Some Kind of Monster",
+            "Whiplash",
+            "Fuel",
+            "Sad But True"
+          ],
+          "correctIndex": 0,
+          "correctIndexes": [
+            0,
+            1,
+            2
+          ],
+          "answerNote": "St. Anger famously had no guitar solos on any track."
+        },
+        {
+          "id": "r2q7",
+          "prompt": "Which two of these are Metallica live albums?",
+          "options": [
+            "S&M",
+            "Live Shit: Binge & Purge",
+            "Garage Inc.",
+            "Reload",
+            "Master of Puppets",
+            "St. Anger"
+          ],
+          "correctIndex": 0,
+          "correctIndexes": [
+            0,
+            1
+          ],
+          "answerNote": "S&M was recorded with the San Francisco Symphony Orchestra."
+        },
+        {
+          "id": "r2q8",
+          "prompt": "Which three of these are original founding members of Metallica?",
+          "options": [
+            "James Hetfield",
+            "Lars Ulrich",
+            "Kirk Hammett",
+            "Robert Trujillo",
+            "Cliff Burton",
+            "Dave Mustaine"
+          ],
+          "correctIndex": 0,
+          "correctIndexes": [
+            0,
+            1,
+            5
+          ],
+          "answerNote": "Hetfield and Ulrich founded the band in 1981, with Dave Mustaine on guitar until he was fired in 1983."
+        },
+        {
+          "id": "r2q9",
+          "prompt": "Which three of these albums are officially self-titled or known as 'The Black Album'?",
+          "options": [
+            "Metallica (1991)",
+            "Master of Puppets",
+            "Ride the Lightning",
+            "Kill 'Em All",
+            "...And Justice for All",
+            "Load"
+          ],
+          "correctIndex": 0,
+          "correctIndexes": [
+            0
+          ],
+          "answerNote": "Only the 1991 album is self-titled and nicknamed 'The Black Album' due to its dark cover."
+        },
+        {
+          "id": "r2q10",
+          "prompt": "Which two of these bassists have played bass for Metallica?",
+          "options": [
+            "Cliff Burton",
+            "Jason Newsted",
+            "Frank Bello",
+            "Robert Trujillo",
+            "Tom Araya",
+            "Nikki Sixx"
+          ],
+          "correctIndex": 0,
+          "correctIndexes": [
+            0,
+            1
+          ],
+          "answerNote": "This question asks about the earlier era - Burton and Newsted both played bass before Trujillo joined in 2003."
+        }
+      ]
+    }
+  ]
+}
