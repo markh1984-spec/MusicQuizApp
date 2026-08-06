@@ -540,12 +540,55 @@ so building the playlist first and the cards from it is the right order anyway.
 The loop is: **Copy the brief → paste into Claude → paste its list back into
 Import.**
 
+### Who owns what — settled, and the thing most likely to be broken by accident
+
+Claude in the browser has its own skill for this, with its own copy of the
+house rules and, until now, **its own `used_songs.json`**. Two files that both
+get written drift apart: one thinks a round happened, the other does not. So:
+
+| | Owns | Never |
+|---|---|---|
+| **Claude in the browser** | the house rules (its `SKILL.md`), picking the songs, building the playlist | writing any song list of its own |
+| **This app** | `data/track-history.json`, the cards, the night | telling Claude what its rules are |
+
+**One list, one writer.** Claude READS
+`raw.githubusercontent.com/markh1984-spec/MusicQuizApp/MusicQuizApp/data/track-history.json`
+before curating and writes nothing back. The app appends when a pack is
+imported, and `backUpHistory()` pushes it to git — which is what makes the raw
+URL current rather than a snapshot.
+
+Recording at IMPORT rather than at curation is deliberate: a round Claude wrote
+and the host binned should not burn 42 songs for three months. It also means
+the guarantee is "no song appears in two rounds within three months" rather
+than "no song is heard twice" — stronger, and simpler to reason about, since a
+pack sitting unplayed still holds its songs against the next one.
+
+His `used_songs.json` was deleted rather than merged; he was happy to start
+from what the packs themselves say. **Do not add a way for the app to publish
+its rules to Claude, or a way for Claude to write the history.** Either one
+recreates the two-copies problem this replaced.
+
 `src/bingo-brief.js` writes the brief, and the one thing that makes it worth
 having is that **it carries the no-repeats list**. The house rules are what
 guarantee no song repeats for three months, and a brief typed fresh each week
 is a brief that quietly drops that — which is the only part a regular at a
 Tuesday night would actually notice. `GET /api/bingo-brief?theme=…` builds it
 from `recentTracks()`.
+
+**The brief is now the FALLBACK, not the route.** Once Claude fetches the raw
+URL itself the button has nothing left to do, and it should come out — a panel
+with two ways to do the same thing is how you end up doing the old one by
+habit. It is still there only because the fetch has not been confirmed working
+from his account yet. If a future session finds that confirmed, delete
+`evenerButton`'s neighbour — the whole `.brief-box`, `copyBrief()`, the
+`/api/bingo-brief` route — and keep `rulesBlock()`, which the in-app generator
+still uses.
+
+**The history had a hole, and it will happen again.** It is written when a pack
+is MADE, so a pack that arrives any other way is invisible to it — 119 songs
+across three packs were free to come back. `scripts/backfill-history.mjs` walks
+`bingo/` and adds anything missing; dry by default, `--write` to commit, safe
+to run twice. Run it after adding a pack by hand.
 
 Both prompts are built from **`rulesBlock()` in that one file**, so the in-app
 generator and the browser brief cannot drift apart on what makes a good bingo
