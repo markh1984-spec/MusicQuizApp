@@ -141,6 +141,35 @@ function currentTab() {
   return TABS.some((t) => t.id === wanted) ? wanted : 'quiz';
 }
 
+/**
+ * What the last job said, kept outside the panel that said it.
+ *
+ * A finished import or generation calls load(), which rebuilds the whole page
+ * from the library — and took the result with it. You pressed Import, watched
+ * it work, and were left looking at an empty form with no word either way. The
+ * pack WAS there, in the grid below, but nothing said so.
+ *
+ * So the result is held here and drawn at the top on every render. It stays up
+ * until you dismiss it or start another job, which is right for something you
+ * might walk away from mid-generation.
+ */
+let lastDone = null;
+
+function showDone(tone, html) {
+  lastDone = { tone, html };
+}
+
+function doneBanner() {
+  if (!lastDone) return [];
+  const el = node(`
+    <div class="panel done-banner ${lastDone.tone}">
+      <div class="done-text">${lastDone.html}</div>
+      <button class="minor done-close" title="Dismiss">Close</button>
+    </div>`);
+  el.querySelector('.done-close').addEventListener('click', () => { lastDone = null; render(); });
+  return [el];
+}
+
 function render() {
   paintBrand(library.brand);
   const running = library.running;
@@ -152,6 +181,7 @@ function render() {
 
   mainEl.replaceChildren(
     ...(backupWarning(library.generation || {}) || []),
+    ...doneBanner(),
     runningPanel(running),
     tabBar(active),
     tabBody(active),
@@ -284,6 +314,7 @@ async function generateQuiz(panel) {
 
   button.disabled = true;
   button.textContent = 'Writing…';
+  lastDone = null; // a new job supersedes the last one's banner
   status.innerHTML = '<div class="gen-log"></div>';
   const logEl = status.querySelector('.gen-log');
   const say = (line) => {
@@ -308,8 +339,7 @@ async function generateQuiz(panel) {
 
     const done = result.done;
     const problems = done.problems || [];
-    status.appendChild(node(`
-      <div class="gen-good">
+    const said = `
         Written <b>${esc(done.title)}</b> — ${done.questionCount} questions across
         ${done.rounds} round${done.rounds === 1 ? '' : 's'}.
         <br>Checked over — ${done.rejected} question${done.rejected === 1 ? '' : 's'} thrown out and replaced.
@@ -319,8 +349,9 @@ async function generateQuiz(panel) {
         ${done.backedUp ? '<br>Backed up to GitHub — this one is permanent.' : '<br><b>Not backed up</b> — this will be lost when the app restarts.'}
         <br><b>Now read it.</b> <a href="${linkTo('/editor')}">Open the editor</a> and
         check every question before anyone else sees it.
-        ${done.needsImages ? '<br><span class="tiny">The face round has no pictures yet — it will use placeholders until you generate them. See TODO.md part 6.</span>' : ''}
-      </div>`));
+        ${done.needsImages ? '<br><span class="tiny">The face round has no pictures yet — it will use placeholders until you generate them. See TODO.md part 6.</span>' : ''}`;
+    status.appendChild(node(`<div class="gen-good">${said}</div>`));
+    showDone('good', said);
     if (problems.length) {
       status.appendChild(node(`
         <div class="gen-bad">${problems.length} thing${problems.length === 1 ? '' : 's'} to fix in the editor:
@@ -388,6 +419,17 @@ function importPanel(gen) {
   const el = node(`
     <div class="panel import">
       <h3>Or bring in a list you already have</h3>
+      <div class="brief-box">
+        <div class="brief-head">
+          <b>Building it with Claude in your browser?</b>
+          <div class="tiny">Claude there can make the Spotify playlist, which this app cannot yet. Copy the brief, paste it in, then paste the list it prints back into the box below.</div>
+        </div>
+        <div class="gen-row">
+          <input type="text" id="briefTheme" placeholder="A theme — 90s dance anthems, Motown…" autocomplete="off">
+          <button class="minor" id="briefGo">Copy the brief</button>
+        </div>
+        <div class="brief-status" id="briefStatus"></div>
+      </div>
       <div class="gen-row">
         <input type="text" id="impUrl" placeholder="Paste a Spotify playlist link…" autocomplete="off">
         <button class="go" id="impGo">Import</button>
@@ -407,7 +449,74 @@ function importPanel(gen) {
 
   el.querySelector('#impGo').addEventListener('click', () => runImport(el));
   el.querySelector('#impUrl').addEventListener('keydown', (e) => { if (e.key === 'Enter') runImport(el); });
+  el.querySelector('#briefGo').addEventListener('click', () => copyBrief(el));
+  el.querySelector('#briefTheme').addEventListener('keydown', (e) => { if (e.key === 'Enter') copyBrief(el); });
   return el;
+}
+
+/**
+ * Put the brief on the clipboard, and on the screen either way.
+ *
+ * The clipboard is the convenience; the textarea underneath is the guarantee.
+ * `navigator.clipboard` needs a secure context and a real gesture and still
+ * refuses on some phones for reasons it does not explain, and "Copied" that
+ * quietly copied nothing is worse than no button — you find out by pasting an
+ * empty message into Claude with a gig to write.
+ *
+ * It is shown either way for a second reason: it is a long brief with the
+ * whole no-repeats list in it, and being able to read what you are about to
+ * send beats trusting it.
+ */
+async function copyBrief(panel) {
+  const theme = panel.querySelector('#briefTheme').value.trim();
+  const status = panel.querySelector('#briefStatus');
+  const button = panel.querySelector('#briefGo');
+
+  if (!theme) {
+    status.replaceChildren(node('<div class="gen-bad">Give it a theme first.</div>'));
+    panel.querySelector('#briefTheme').focus();
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = 'Getting it…';
+  try {
+    const res = await fetch(keyed(`/api/bingo-brief?theme=${encodeURIComponent(theme)}`));
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Could not build the brief');
+
+    let copied = false;
+    try {
+      await navigator.clipboard.writeText(data.text);
+      copied = true;
+    } catch { /* shown below instead */ }
+
+    status.replaceChildren(node(`
+      <div class="gen-good">
+        ${copied ? 'Copied.' : 'Could not reach the clipboard — copy it from here.'}
+        Paste it into Claude, then paste the list it prints back into the box below.
+        ${data.avoidCount
+          ? `<br>It tells Claude to avoid the <b>${data.avoidCount}</b> songs you have played in the last 3 months.`
+          : '<br><b>Nothing in the history yet</b>, so it has nothing to avoid.'}
+      </div>`));
+    const box = node('<textarea class="brief-text" rows="8" readonly></textarea>');
+    box.value = data.text;
+    status.appendChild(box);
+    if (!copied) { box.focus(); box.select(); }
+
+    // Open the paste box now, because that is the next thing that happens: you
+    // go to Claude, come back, and the place the answer goes is a collapsed
+    // "or paste a track list instead" you have to find first.
+    const paste = panel.querySelector('.import-paste');
+    if (paste) paste.open = true;
+
+    button.disabled = false;
+    button.textContent = copied ? 'Copied' : 'Copy the brief';
+  } catch (err) {
+    status.replaceChildren(node(`<div class="gen-bad">${esc(err.message)}</div>`));
+    button.disabled = false;
+    button.textContent = 'Copy the brief';
+  }
 }
 
 async function runImport(panel) {
@@ -423,6 +532,7 @@ async function runImport(panel) {
 
   button.disabled = true;
   button.textContent = 'Importing…';
+  lastDone = null; // a new job supersedes the last one's banner
   status.innerHTML = '<div class="gen-log"></div>';
   const logEl = status.querySelector('.gen-log');
   const say = (line) => {
@@ -446,12 +556,14 @@ async function runImport(panel) {
       return;
     }
 
-    status.appendChild(node(`
-      <div class="gen-good">
-        Imported <b>${esc(done.title)}</b> — ${done.trackCount} tracks.
-        ${done.backedUp ? '<br>Backed up to GitHub — this one is permanent.' : '<br><b>Not backed up.</b>'}
-      </div>`));
+    // Said here AND in the banner: here while you are still looking at the
+    // panel, and in the banner because load() below rebuilds this panel and
+    // would otherwise take the only word you got with it.
+    const said = `Imported <b>${esc(done.title)}</b> — ${done.trackCount} tracks, and they are in the no-repeats history now.
+      ${done.backedUp ? 'Backed up to GitHub — this one is permanent.' : '<b>Not backed up</b>, so it will be lost when the app restarts.'}`;
+    status.appendChild(node(`<div class="gen-good">${said}</div>`));
     button.textContent = 'Imported';
+    showDone('good', said);
     await load();
   } catch (err) {
     status.appendChild(node(`<div class="gen-bad">${esc(err.message)}</div>`));
@@ -520,6 +632,7 @@ async function generate(panel) {
 
   button.disabled = true;
   button.textContent = 'Building…';
+  lastDone = null; // a new job supersedes the last one's banner
   status.innerHTML = '<div class="gen-log"></div>';
   const logEl = status.querySelector('.gen-log');
   const say = (line) => {
@@ -571,16 +684,16 @@ async function generate(panel) {
       return;
     }
 
-    status.appendChild(node(`
-      <div class="gen-good">
+    const said = `
         Built <b>${esc(done.title)}</b> — ${done.trackCount} tracks.
         ${done.playlist
           ? `<a href="${esc(done.playlist)}" target="_blank" rel="noopener">Open the Spotify playlist</a>`
           : done.playlistError
             ? `<br><b>No Spotify playlist:</b> ${esc(done.playlistError)}<br>The pack itself is fine — build the playlist by hand from the call sheet.`
             : 'No Spotify playlist — build one yourself from the call sheet.'}
-        ${done.backedUp ? '<br>Backed up to GitHub — this one is permanent.' : '<br><b>Not backed up</b> — this will be lost when the app restarts.'}
-      </div>`));
+        ${done.backedUp ? '<br>Backed up to GitHub — this one is permanent.' : '<br><b>Not backed up</b> — this will be lost when the app restarts.'}`;
+    status.appendChild(node(`<div class="gen-good">${said}</div>`));
+    showDone('good', said);
     button.textContent = 'Built';
     await load(); // refresh the library so the new pack is there to launch
   } catch (err) {

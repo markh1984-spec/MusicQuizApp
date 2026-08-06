@@ -29,7 +29,14 @@ export function cleanTheme(raw) {
   s = s.replace(/^\s*(a|an|the)\s+/i, '');
   // "…quiz", "…music quiz", "…bingo round", "…please"
   s = s.replace(/\s+please\s*$/i, '');
-  s = s.replace(/\s*(music\s+)?(quiz|bingo|round)\s*$/i, '');
+  // Looped, because they stack: "a 90s dance bingo round" ends in TWO of these,
+  // and stripping one left "90s dance bingo", which bingoTitleFor turned into
+  // "90s Dance Bingo Bingo" on the projector.
+  for (let i = 0; i < 3; i++) {
+    const shorter = s.replace(/\s*(music\s+)?(quiz|bingo|round)\s*$/i, '');
+    if (shorter === s) break;
+    s = shorter;
+  }
   // leftover punctuation from a question
   s = s.replace(/[?.!,;:\s]+$/, '').trim();
 

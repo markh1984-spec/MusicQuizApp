@@ -401,6 +401,7 @@ src/quizzes.js         quiz packs: load, validate, save
 src/library.js         saved packs, play counts, past nights
 src/history.js         no-repeats memory for bingo generation
 src/generate-bingo.js  theme -> Claude -> history filter -> Spotify -> pack
+src/bingo-brief.js     the house rules, for the app AND for Claude in a browser
 src/spotify.js         playlist building
 src/qrcode.js          dependency-free QR encoder
 src/photos.js          photos from the room: store, kill switch, bin
@@ -446,7 +447,7 @@ generates one round of every type so a fifth one cannot repeat this.
 ## Checks
 
 ```bash
-npm test        # 283 tests, no network, injected clocks — must stay green
+npm test        # 292 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -494,7 +495,7 @@ recreate it.
 
 All five build stages plus bingo, the console, generation, pack import and the
 tickable review flags are done, tested and pushed to **`MusicQuizApp`**.
-Nothing is half-finished in the tree. 283 tests green.
+Nothing is half-finished in the tree. 292 tests green.
 
 (An earlier version of this line named `claude/new-session-jzx988`. That branch
 is gone — see **Where to push**.)
@@ -528,16 +529,46 @@ Next things to try, in order:
 3. **Check the User Management email matches** the one on that Spotify account
    exactly. A near-miss silently does nothing.
 
-**Meanwhile there is a working way round, and it is arguably the better
-direction anyway.** Claude in the browser has a Spotify connector and can
-build the playlist; paste its link into the console's **Import** box and the
-pack's cards are generated from that exact playlist. Reading a playlist is a
-different permission from creating one and his login has it, so import should
-work while generation does not. If Spotify blocks reading an AI-generated
-playlist over the API, the **paste-a-track-list** box needs no Spotify at all.
-For bingo the playlist and the cards have to be the same forty songs, so
-building the playlist first and the cards from it is a legitimate workflow, not
-just a stopgap.
+### The way round it — and it is the host's chosen route now
+
+Claude in a browser has a Spotify connector and can build the playlist. He
+tried it, it worked, and he asked for the app to be built around it rather than
+waiting on the 403. **Treat this as the main way bingo packs get made**, not a
+stopgap: for bingo the playlist and the cards have to be the same forty songs,
+so building the playlist first and the cards from it is the right order anyway.
+
+The loop is: **Copy the brief → paste into Claude → paste its list back into
+Import.**
+
+`src/bingo-brief.js` writes the brief, and the one thing that makes it worth
+having is that **it carries the no-repeats list**. The house rules are what
+guarantee no song repeats for three months, and a brief typed fresh each week
+is a brief that quietly drops that — which is the only part a regular at a
+Tuesday night would actually notice. `GET /api/bingo-brief?theme=…` builds it
+from `recentTracks()`.
+
+Both prompts are built from **`rulesBlock()` in that one file**, so the in-app
+generator and the browser brief cannot drift apart on what makes a good bingo
+track. Change it in one place.
+
+The brief is fussy about one thing, and it is not pedantry: **what Claude
+prints has to be what actually went into the playlist.** If a track was not
+findable and something replaced it, a pack built from the original list puts a
+square on somebody's card that can never be marked.
+
+Not `/api/bingo/brief` — `/api/bingo/…` is a catch-all that reads the rest of
+the path as a pack id, so that route would have been a pack called "brief".
+
+**Importing writes to the history too, and that now gets backed up.** It did
+not, while generating did — invisible right up until importing became the main
+way packs are made, at which point the no-repeats memory would have quietly
+reset on every restart. `backUpHistory()` in `server.js`, called by both.
+
+**A finished job says so in a banner, not in the panel.** Import and both
+generators call `load()` when they finish, which rebuilds the page from the
+library and used to take the result with it: you pressed Import, watched it
+work, and were left looking at an empty form. `showDone()` / `doneBanner()`
+hold it above everything until you dismiss it or start another job.
 
 ### Asked for, not built yet
 

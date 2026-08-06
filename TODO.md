@@ -58,13 +58,26 @@ scopes back), and you have already added the account under User Management.
       email on that Spotify account (spotify.com → Account → Profile). A
       near-miss does nothing and says nothing.
 
-**You are not blocked in the meantime.** Ask Claude in your browser for a
-playlist, then paste its link into the console's **Import** box — the cards are
-built from that playlist, so they match it exactly, and it goes into your
-no-repeats history like any other pack. Reading a playlist is a different
-permission from creating one, and yours has it. If Spotify will not let the app
-read an AI-made playlist, paste the track list into the **"or paste a track
-list instead"** box, which needs no Spotify at all.
+**You are not blocked in the meantime, and this is now the quickest way to
+build a round anyway.** Three steps, all in the console's **Import** panel:
+
+1. Type the theme in **"Building it with Claude in your browser?"** and press
+   **Copy the brief**. That copies a full instruction — the house rules, how
+   many tracks, and **every song you have played in the last three months, by
+   name, so it does not pick one of them again**. It also shows you the text,
+   so if the clipboard misbehaves on your phone you can select it by hand.
+2. Paste it into Claude in your browser. It builds the Spotify playlist and
+   then prints the track list in a code block.
+3. Copy that block into the **"or paste a track list instead"** box (already
+   open for you) and press **Import**.
+
+You get a pack whose cards are exactly the songs in the playlist, and every one
+of them goes into your no-repeats history — so next week's brief avoids them
+too, without you keeping track of anything.
+
+If you would rather have the playlist read straight off Spotify, pasting its
+**link** into the box above still works: reading a playlist is a different
+permission from creating one, and yours has it.
 
 Nothing else is outstanding. A generation that cannot make a playlist now saves
 the pack anyway and tells you why, so you always get a playable bingo round.

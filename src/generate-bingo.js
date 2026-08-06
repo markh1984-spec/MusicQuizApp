@@ -22,6 +22,9 @@ import { normaliseBingoPack, validateBingoPack } from './bingo.js';
 import { saveBingoPack } from './library.js';
 import { spotifyConfigured, findTrack, createPlaylist } from './spotify.js';
 import { cleanTheme, bingoTitleFor, themeSlug } from './theme.js';
+// The same idea of a good bingo track that the browser brief is built from, so
+// the two cannot drift apart.
+import { rulesBlock } from './bingo-brief.js';
 
 const MODEL = 'claude-sonnet-5';
 const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
@@ -43,16 +46,7 @@ async function askClaude({ theme, wanted, avoid, apiKey, model = MODEL }) {
 Theme: ${theme}
 
 What makes a good music bingo track:
-- Recognisable within a few seconds to a room that is half-listening and drinking.
-- THE CHORUS is what gets played. The host plays one chorus and moves on, so a
-  song that is only recognisable from a long intro, a riff, or an instrumental
-  section is a poor choice however famous it is. The chorus has to land on its
-  own, and ideally be singable.
-- Well known in the UK specifically — think what fills a floor in Essex or Kent.
-- A spread across the theme rather than six songs by the same artist. Two by one
-  artist at the very most.
-- Real songs with the exact title as released. Do not invent anything, and do not
-  guess at a title you are unsure of.${avoidList}
+${rulesBlock()}${avoidList}
 
 Reply with JSON and nothing else, no markdown fence:
 
