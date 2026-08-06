@@ -1,0 +1,211 @@
+{
+  "id": "pub-floor-fillers",
+  "kind": "bingo",
+  "title": "Pub Floor-Fillers Bingo",
+  "subtitle": "Forty floor-fillers, the seventies to now. Tap them as you hear them.",
+  "cardSize": 4,
+  "notes": "Built by hand for a mixed pub crowd: recognisable within a few seconds, big in the UK specifically, spread across the decades, never more than two by one act. No overlap with the 1980s pack. No Spotify playlist \u2014 play them from wherever you like and tick them off the call sheet.",
+  "createdAt": "2026-08-06T02:26:25.572Z",
+  "tracks": [
+    {
+      "id": "t1",
+      "title": "Dancing Queen",
+      "artist": "ABBA"
+    },
+    {
+      "id": "t2",
+      "title": "Don't Stop Me Now",
+      "artist": "Queen"
+    },
+    {
+      "id": "t3",
+      "title": "I Will Survive",
+      "artist": "Gloria Gaynor"
+    },
+    {
+      "id": "t4",
+      "title": "September",
+      "artist": "Earth, Wind & Fire"
+    },
+    {
+      "id": "t5",
+      "title": "Y.M.C.A.",
+      "artist": "Village People"
+    },
+    {
+      "id": "t6",
+      "title": "Mr. Blue Sky",
+      "artist": "Electric Light Orchestra"
+    },
+    {
+      "id": "t7",
+      "title": "Bohemian Rhapsody",
+      "artist": "Queen"
+    },
+    {
+      "id": "t8",
+      "title": "Sweet Caroline",
+      "artist": "Neil Diamond"
+    },
+    {
+      "id": "t9",
+      "title": "Walking on Sunshine",
+      "artist": "Katrina and the Waves"
+    },
+    {
+      "id": "t10",
+      "title": "Sweet Child o' Mine",
+      "artist": "Guns N' Roses"
+    },
+    {
+      "id": "t11",
+      "title": "Like a Prayer",
+      "artist": "Madonna"
+    },
+    {
+      "id": "t12",
+      "title": "I'm Still Standing",
+      "artist": "Elton John"
+    },
+    {
+      "id": "t13",
+      "title": "Hungry Like the Wolf",
+      "artist": "Duran Duran"
+    },
+    {
+      "id": "t14",
+      "title": "Wonderwall",
+      "artist": "Oasis"
+    },
+    {
+      "id": "t15",
+      "title": "Wannabe",
+      "artist": "Spice Girls"
+    },
+    {
+      "id": "t16",
+      "title": "Believe",
+      "artist": "Cher"
+    },
+    {
+      "id": "t17",
+      "title": "Common People",
+      "artist": "Pulp"
+    },
+    {
+      "id": "t18",
+      "title": "Song 2",
+      "artist": "Blur"
+    },
+    {
+      "id": "t19",
+      "title": "...Baby One More Time",
+      "artist": "Britney Spears"
+    },
+    {
+      "id": "t20",
+      "title": "Angels",
+      "artist": "Robbie Williams"
+    },
+    {
+      "id": "t21",
+      "title": "No Diggity",
+      "artist": "Blackstreet"
+    },
+    {
+      "id": "t22",
+      "title": "Cotton Eye Joe",
+      "artist": "Rednex"
+    },
+    {
+      "id": "t23",
+      "title": "Mr. Brightside",
+      "artist": "The Killers"
+    },
+    {
+      "id": "t24",
+      "title": "Hey Ya!",
+      "artist": "OutKast"
+    },
+    {
+      "id": "t25",
+      "title": "Crazy in Love",
+      "artist": "Beyonc\u00e9"
+    },
+    {
+      "id": "t26",
+      "title": "Chelsea Dagger",
+      "artist": "The Fratellis"
+    },
+    {
+      "id": "t27",
+      "title": "I Bet You Look Good on the Dancefloor",
+      "artist": "Arctic Monkeys"
+    },
+    {
+      "id": "t28",
+      "title": "Valerie",
+      "artist": "Mark Ronson"
+    },
+    {
+      "id": "t29",
+      "title": "Sex on Fire",
+      "artist": "Kings of Leon"
+    },
+    {
+      "id": "t30",
+      "title": "Umbrella",
+      "artist": "Rihanna"
+    },
+    {
+      "id": "t31",
+      "title": "Since U Been Gone",
+      "artist": "Kelly Clarkson"
+    },
+    {
+      "id": "t32",
+      "title": "Uptown Funk",
+      "artist": "Mark Ronson"
+    },
+    {
+      "id": "t33",
+      "title": "Get Lucky",
+      "artist": "Daft Punk"
+    },
+    {
+      "id": "t34",
+      "title": "Shape of You",
+      "artist": "Ed Sheeran"
+    },
+    {
+      "id": "t35",
+      "title": "Happy",
+      "artist": "Pharrell Williams"
+    },
+    {
+      "id": "t36",
+      "title": "Dancing On My Own",
+      "artist": "Robyn"
+    },
+    {
+      "id": "t37",
+      "title": "Can't Stop the Feeling!",
+      "artist": "Justin Timberlake"
+    },
+    {
+      "id": "t38",
+      "title": "Blinding Lights",
+      "artist": "The Weeknd"
+    },
+    {
+      "id": "t39",
+      "title": "Don't Start Now",
+      "artist": "Dua Lipa"
+    },
+    {
+      "id": "t40",
+      "title": "As It Was",
+      "artist": "Harry Styles"
+    }
+  ]
+}
