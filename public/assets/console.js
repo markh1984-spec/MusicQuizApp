@@ -1005,7 +1005,6 @@ function packCard(kind, pack) {
           <select class="shape-pick">${shapeOptions(pack)}</select>
         </label>` : ''}
       <div class="pack-actions">
-        <button class="go launch" ${pack.broken ? 'disabled' : ''}>Launch</button>
         <button class="pack-read" title="Read it through">Read</button>
         <button class="pack-rename" ${pack.broken ? 'disabled' : ''} title="Change what it is called">Rename</button>
         ${pack.playlist ? `<a class="pack-spotify" href="${esc(pack.playlist)}" target="_blank" rel="noopener" title="Open it in Spotify">Playlist</a>` : ''}
@@ -1013,6 +1012,7 @@ function packCard(kind, pack) {
         ${hasIntroRound(pack) ? '<button class="pack-playlist" title="Build the Spotify playlist for the intro round">Playlist</button>' : ''}
         <button class="pack-del" title="Delete this pack">Delete</button>
       </div>
+      <button class="go launch" ${pack.broken ? 'disabled' : ''}>Launch</button>
       <div class="pics-slot"></div>
     </div>`);
 
