@@ -8,6 +8,7 @@
  */
 
 import { esc, node, postJson, brandLink, binIcon } from './client.js';
+import { balanceAnswers } from './balance.js';
 
 const mainEl = document.getElementById('main');
 const runningEl = document.getElementById('runningNow');
@@ -1003,6 +1004,17 @@ async function preview(kind, pack) {
   // through is when you notice a round is called the wrong thing.
   let loaded = null;
   let dirty = false;
+  // Redrawn rather than left as it was after a save, so the summary line at the
+  // top stops saying "press Save" once you have. Keeping the scroll matters:
+  // this is a list you read down, and being thrown back to the top after
+  // renaming a round in the middle of it is the sort of small rudeness that
+  // makes you stop using a panel.
+  const drawPreview = () => {
+    const y = body.scrollTop;
+    if (kind === 'bingo') renderBingoPreview(body, sub, loaded, markDirty);
+    else renderQuizPreview(body, sub, loaded, markDirty);
+    body.scrollTop = y;
+  };
   const markDirty = () => {
     dirty = true;
     saveBtn.hidden = false;
@@ -1027,6 +1039,7 @@ async function preview(kind, pack) {
       if (!res.ok) throw new Error(data.error || 'Could not save');
       dirty = false;
       saveBtn.textContent = data.backedUp ? 'Saved and backed up' : 'Saved here only';
+      drawPreview();
       await load();
     } catch (err) {
       saveBtn.disabled = false;
@@ -1047,8 +1060,7 @@ async function preview(kind, pack) {
     const res = await fetch(keyed(`/api/${kind}/` + encodeURIComponent(pack.id)));
     if (!res.ok) throw new Error('Could not open it');
     loaded = await res.json();
-    if (kind === 'bingo') renderBingoPreview(body, sub, loaded, markDirty);
-    else renderQuizPreview(body, sub, loaded, markDirty);
+    drawPreview();
   } catch (err) {
     sub.textContent = '';
     body.replaceChildren(node(`<div class="tiny" style="color:var(--bad)">${esc(err.message)}</div>`));
@@ -1158,12 +1170,14 @@ function renderQuizPreview(body, sub, quiz, markDirty = () => {}) {
     const right = q.correctIndexes && q.correctIndexes.length ? q.correctIndexes : [q.correctIndex];
     for (const i of right) if (spread[i] !== undefined) spread[i]++;
   }
+  const lopsided = spread.some((n) => n > all.length * 0.5);
   const noNotes = all.filter((q) => !q.answerNote).length;
 
   sub.innerHTML = `${all.length} questions across ${quiz.rounds.length} round${quiz.rounds.length === 1 ? '' : 's'}
     · answers land ${spread.map((n, i) => `${LETTERS[i]}&times;${n}`).join(' ')}
-    ${spread.some((n) => n > all.length * 0.5) ? '<b style="color:var(--gold)"> — lopsided, worth shuffling</b>' : ''}
+    ${lopsided ? '<b style="color:var(--gold)"> — lopsided</b>' : ''}
     ${noNotes ? ` · ${noNotes} with no fact to read out` : ''}`;
+  sub.appendChild(evenerButton(body, sub, quiz, markDirty, lopsided));
 
   const parts = [];
 
@@ -1219,6 +1233,49 @@ function renderQuizPreview(body, sub, quiz, markDirty = () => {}) {
     });
   }
   body.replaceChildren(...parts);
+}
+
+/**
+ * The button that does something about a lopsided quiz.
+ *
+ * The read-through has always said "answers land A x15 B x10 — lopsided" and
+ * then left you looking at it: the only way to move an answer was to open the
+ * editor and retype four options in a different order, twenty times.
+ *
+ * It rearranges here and leaves Save lit rather than writing straight away, so
+ * you can look at what it did, press it again if you do not like the look of
+ * it, and close without saving if you would rather it had not.
+ *
+ * NOT while that quiz is live in front of a room. Saving a quiz reloads it in
+ * the running game, so this would swap the options under sixty people who are
+ * mid-question — the answer would still be right, but on a different letter to
+ * the one on the projector when they read it. It is offered again the moment
+ * the game is over.
+ */
+function evenerButton(body, sub, quiz, markDirty, lopsided) {
+  const running = (library && library.running) || null;
+  const live = running && running.game === 'quiz' && running.packId === quiz.id
+    && running.phase !== 'lobby' && running.phase !== 'finished';
+
+  if (live) {
+    return node('<span class="pv-even off" title="Saving a quiz reloads it in the running game">Even out the answers — not while this one is live</span>');
+  }
+
+  const button = node(`<button class="pv-even ${lopsided ? 'urge' : ''}" type="button">Even out the answers</button>`);
+  button.addEventListener('click', () => {
+    const moved = balanceAnswers(quiz);
+    if (!moved) {
+      button.textContent = 'Nothing to move';
+      return;
+    }
+    markDirty();
+    renderQuizPreview(body, sub, quiz, markDirty);
+    // Say what happened where the eye already is — the spread line one line up
+    // has just changed, and this explains why.
+    const again = sub.querySelector('.pv-even');
+    if (again) again.textContent = `Moved ${moved} — press Save`;
+  });
+  return button;
 }
 
 function renderBingoPreview(body, sub, pack, markDirty = () => {}) {

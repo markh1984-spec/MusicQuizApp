@@ -252,6 +252,39 @@ quiz, and all it said was "Quiz is not valid". The `/checked` route passes
 `{ allowProblems: true }`. The read-through also shows validation problems
 above the hunches, in red, so you can see *which* question is at fault.
 
+### A complaint on screen needs something to press
+
+The read-through said "answers land A×15 B×10 C×5 D×1 — lopsided" and then
+left you looking at it: the only way to move an answer was the editor, four
+options at a time, twenty times. **Even out the answers** is on the end of
+that same line now — `balanceAnswers()` in `public/assets/balance.js`.
+
+It deals the right answers into the least-loaded letters, ties broken at
+random, which beats a plain shuffle: on twenty questions a plain shuffle
+leaves a visible lean about as often as not, and the lean is the thing being
+fixed. It shuffles first and then does a **stable** sort by load, so equally
+loaded letters keep their random order and the answer cannot settle into
+A, B, C, D, A, B, C, D — which is as recognisable from the floor as a lean.
+
+**It never touches a word.** Same options, same right answer, different letter
+— which is why it is safe on a pack you have already read through: review flag
+ids are built from option TEXT, so every tick survives it. There is a test.
+
+Two refusals, both deliberate:
+
+- **Not while that quiz is live.** Saving a quiz reloads it in the running
+  game, so this would swap the options under a room mid-question. The button
+  is shown greyed with the reason rather than hidden — one that vanishes
+  mid-gig just looks broken. It comes back when the game ends.
+- **A broken question is left alone.** Nothing marked correct, or everything
+  marked correct, is the editor's job; rearranging a question whose answer
+  nobody knows only makes the fix harder.
+
+It rearranges and lights Save rather than writing straight away, so you can
+look at what it did, press again if you do not like it, and close without
+saving. The file lives in `public/assets/` rather than `src/` because the
+console imports it in the browser and the test imports it in node.
+
 ### Reading a reply is its own job
 
 `readTracks()` in `src/generate-bingo.js`, and it has tests. A generation died
@@ -391,7 +424,7 @@ generates one round of every type so a fifth one cannot repeat this.
 ## Checks
 
 ```bash
-npm test        # 263 tests, no network, injected clocks — must stay green
+npm test        # 280 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -439,7 +472,7 @@ recreate it.
 
 All five build stages plus bingo, the console, generation, pack import and the
 tickable review flags are done, tested and pushed to **`MusicQuizApp`**.
-Nothing is half-finished in the tree. 263 tests green.
+Nothing is half-finished in the tree. 280 tests green.
 
 (An earlier version of this line named `claude/new-session-jzx988`. That branch
 is gone — see **Where to push**.)

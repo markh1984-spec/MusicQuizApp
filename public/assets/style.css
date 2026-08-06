@@ -1943,3 +1943,28 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   background: rgba(255, 77, 94, 0.08);
 }
 .pv-warn.pv-broken .pv-warn-head { color: var(--bad); }
+
+/* Doing something about "answers land A x15 B x10 — lopsided". Sits on the end
+   of that same line, so the complaint and the fix are one sentence. */
+.pv-even {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 10px;
+  border: 1px solid var(--panel-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pv-even:hover { background: rgba(255, 255, 255, 0.14); }
+.pv-even.urge {
+  border-color: var(--gold);
+  background: rgba(255, 176, 32, 0.16);
+  color: var(--gold);
+}
+/* Offered but refused, with the reason in the title — a button that vanishes
+   mid-game just looks broken. */
+.pv-even.off { opacity: 0.5; cursor: default; }
+.pv-even.off:hover { background: rgba(255, 255, 255, 0.06); }
