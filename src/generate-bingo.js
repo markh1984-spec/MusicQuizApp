@@ -63,20 +63,17 @@ Reply with JSON and nothing else, no markdown fence:
       // mid-track is not JSON at all. Plenty of headroom is free — unused
       // tokens cost nothing.
       max_tokens: 8000,
-      messages: [
-        { role: 'user', content: prompt },
-        // Put the opening of the JSON in its mouth. It cannot then begin with
-        // "Here are forty songs…", which is the usual reason a reply that is
-        // perfectly good does not parse.
-        { role: 'assistant', content: OPENING },
-      ],
+      // No assistant prefill here, tempting as it is: this model refuses a
+      // conversation that does not end with a user message. Keeping the reply
+      // readable is readTracks()'s job instead.
+      messages: [{ role: 'user', content: prompt }],
     }),
   });
 
   if (!res.ok) throw new Error(`Claude said ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
   const reply = (data.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('');
-  const tracks = readTracks(OPENING + reply);
+  const tracks = readTracks(reply);
 
   if (!tracks.length) {
     // Say what actually came back. "Did not return usable JSON" on its own
@@ -88,8 +85,6 @@ Reply with JSON and nothing else, no markdown fence:
   }
   return tracks;
 }
-
-const OPENING = '{"tracks":[';
 
 /**
  * Read the track list out of whatever came back.

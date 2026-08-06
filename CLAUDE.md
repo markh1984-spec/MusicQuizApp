@@ -228,13 +228,16 @@ Do not remove or weaken these without understanding that.
 on the host with nothing but "Claude did not return usable JSON" on a theme
 that had worked minutes before. Three things keep that from happening:
 
-- the assistant turn is **prefilled** with `{"tracks":[`, so the reply cannot
-  open with "Here are forty songs…";
 - 8000 max tokens, because sixty-odd tracks is a long reply and one that runs
   out mid-track is not JSON at all;
 - and if it still will not parse, the individual track objects are picked out
   with a regex. Fifty-five whole ones and a fifty-sixth cut in half is not
   valid JSON, but it is fifty-five tracks and only forty are needed.
+
+**Do not reach for an assistant prefill** to stop the reply being chatty. It is
+the obvious fix and `claude-sonnet-5` rejects it outright — *"This model does
+not support assistant message prefill. The conversation must end with a user
+message."* Reading the reply properly is the answer instead.
 
 **Failure messages have to name the cause.** Both of these were mysteries at
 midnight before they were fixed: this one, and Spotify's bare 403 `Forbidden`
