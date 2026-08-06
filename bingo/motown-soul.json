@@ -1,0 +1,211 @@
+{
+  "id": "motown-soul",
+  "kind": "bingo",
+  "title": "Motown & Soul Bingo",
+  "subtitle": "Forty Motown and soul classics. Tap them as you hear them.",
+  "cardSize": 4,
+  "notes": "Broadest age range of the set \u2014 strong with an older or mixed room. Picked by hand to the house rules: recognisable within a few seconds, the chorus lands on its own, big in the UK, never more than two by one act. No track appears on any other pack. No Spotify playlist attached.",
+  "createdAt": "2026-08-06T02:45:09.386Z",
+  "tracks": [
+    {
+      "id": "t1",
+      "title": "My Girl",
+      "artist": "The Temptations"
+    },
+    {
+      "id": "t2",
+      "title": "Papa Was a Rollin' Stone",
+      "artist": "The Temptations"
+    },
+    {
+      "id": "t3",
+      "title": "Ain't No Mountain High Enough",
+      "artist": "Marvin Gaye & Tammi Terrell"
+    },
+    {
+      "id": "t4",
+      "title": "I Heard It Through the Grapevine",
+      "artist": "Marvin Gaye"
+    },
+    {
+      "id": "t5",
+      "title": "Dancing in the Street",
+      "artist": "Martha Reeves & The Vandellas"
+    },
+    {
+      "id": "t6",
+      "title": "Heatwave",
+      "artist": "Martha Reeves & The Vandellas"
+    },
+    {
+      "id": "t7",
+      "title": "Superstition",
+      "artist": "Stevie Wonder"
+    },
+    {
+      "id": "t8",
+      "title": "Signed, Sealed, Delivered I'm Yours",
+      "artist": "Stevie Wonder"
+    },
+    {
+      "id": "t9",
+      "title": "Baby Love",
+      "artist": "The Supremes"
+    },
+    {
+      "id": "t10",
+      "title": "You Can't Hurry Love",
+      "artist": "The Supremes"
+    },
+    {
+      "id": "t11",
+      "title": "Reach Out I'll Be There",
+      "artist": "Four Tops"
+    },
+    {
+      "id": "t12",
+      "title": "I Can't Help Myself (Sugar Pie Honey Bunch)",
+      "artist": "Four Tops"
+    },
+    {
+      "id": "t13",
+      "title": "The Tracks of My Tears",
+      "artist": "Smokey Robinson & The Miracles"
+    },
+    {
+      "id": "t14",
+      "title": "Respect",
+      "artist": "Aretha Franklin"
+    },
+    {
+      "id": "t15",
+      "title": "(Sittin' On) The Dock of the Bay",
+      "artist": "Otis Redding"
+    },
+    {
+      "id": "t16",
+      "title": "Midnight Train to Georgia",
+      "artist": "Gladys Knight & The Pips"
+    },
+    {
+      "id": "t17",
+      "title": "Let's Stay Together",
+      "artist": "Al Green"
+    },
+    {
+      "id": "t18",
+      "title": "Higher and Higher",
+      "artist": "Jackie Wilson"
+    },
+    {
+      "id": "t19",
+      "title": "Build Me Up Buttercup",
+      "artist": "The Foundations"
+    },
+    {
+      "id": "t20",
+      "title": "Soul Man",
+      "artist": "Sam & Dave"
+    },
+    {
+      "id": "t21",
+      "title": "Stand by Me",
+      "artist": "Ben E. King"
+    },
+    {
+      "id": "t22",
+      "title": "Twistin' the Night Away",
+      "artist": "Sam Cooke"
+    },
+    {
+      "id": "t23",
+      "title": "Wonderful World",
+      "artist": "Sam Cooke"
+    },
+    {
+      "id": "t24",
+      "title": "What Becomes of the Brokenhearted",
+      "artist": "Jimmy Ruffin"
+    },
+    {
+      "id": "t25",
+      "title": "Move On Up",
+      "artist": "Curtis Mayfield"
+    },
+    {
+      "id": "t26",
+      "title": "Ain't Nobody",
+      "artist": "Chaka Khan"
+    },
+    {
+      "id": "t27",
+      "title": "Lovely Day",
+      "artist": "Bill Withers"
+    },
+    {
+      "id": "t28",
+      "title": "Ain't No Sunshine",
+      "artist": "Bill Withers"
+    },
+    {
+      "id": "t29",
+      "title": "Papa's Got a Brand New Bag",
+      "artist": "James Brown"
+    },
+    {
+      "id": "t30",
+      "title": "I Got You (I Feel Good)",
+      "artist": "James Brown"
+    },
+    {
+      "id": "t31",
+      "title": "Under the Boardwalk",
+      "artist": "The Drifters"
+    },
+    {
+      "id": "t32",
+      "title": "Rescue Me",
+      "artist": "Fontella Bass"
+    },
+    {
+      "id": "t33",
+      "title": "River Deep - Mountain High",
+      "artist": "Ike & Tina Turner"
+    },
+    {
+      "id": "t34",
+      "title": "Proud Mary",
+      "artist": "Tina Turner"
+    },
+    {
+      "id": "t35",
+      "title": "Please Mr. Postman",
+      "artist": "The Marvelettes"
+    },
+    {
+      "id": "t36",
+      "title": "ABC",
+      "artist": "The Jackson 5"
+    },
+    {
+      "id": "t37",
+      "title": "I Want You Back",
+      "artist": "The Jackson 5"
+    },
+    {
+      "id": "t38",
+      "title": "Best of My Love",
+      "artist": "The Emotions"
+    },
+    {
+      "id": "t39",
+      "title": "Car Wash",
+      "artist": "Rose Royce"
+    },
+    {
+      "id": "t40",
+      "title": "Money (That's What I Want)",
+      "artist": "Barrett Strong"
+    }
+  ]
+}

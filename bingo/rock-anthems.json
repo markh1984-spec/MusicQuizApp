@@ -1,0 +1,211 @@
+{
+  "id": "rock-anthems",
+  "kind": "bingo",
+  "title": "Rock Anthems Bingo",
+  "subtitle": "Forty rock anthems. Tap them as you hear them.",
+  "cardSize": 4,
+  "notes": "Loud and singable. Best with a crowd that came for a band night. Picked by hand to the house rules: recognisable within a few seconds, the chorus lands on its own, big in the UK, never more than two by one act. No track appears on any other pack. No Spotify playlist attached.",
+  "createdAt": "2026-08-06T02:45:09.391Z",
+  "tracks": [
+    {
+      "id": "t1",
+      "title": "You Give Love a Bad Name",
+      "artist": "Bon Jovi"
+    },
+    {
+      "id": "t2",
+      "title": "Wanted Dead or Alive",
+      "artist": "Bon Jovi"
+    },
+    {
+      "id": "t3",
+      "title": "Highway to Hell",
+      "artist": "AC/DC"
+    },
+    {
+      "id": "t4",
+      "title": "Thunderstruck",
+      "artist": "AC/DC"
+    },
+    {
+      "id": "t5",
+      "title": "Enter Sandman",
+      "artist": "Metallica"
+    },
+    {
+      "id": "t6",
+      "title": "Smells Like Teen Spirit",
+      "artist": "Nirvana"
+    },
+    {
+      "id": "t7",
+      "title": "Come As You Are",
+      "artist": "Nirvana"
+    },
+    {
+      "id": "t8",
+      "title": "Basket Case",
+      "artist": "Green Day"
+    },
+    {
+      "id": "t9",
+      "title": "American Idiot",
+      "artist": "Green Day"
+    },
+    {
+      "id": "t10",
+      "title": "Seven Nation Army",
+      "artist": "The White Stripes"
+    },
+    {
+      "id": "t11",
+      "title": "Killing in the Name",
+      "artist": "Rage Against the Machine"
+    },
+    {
+      "id": "t12",
+      "title": "Whole Lotta Love",
+      "artist": "Led Zeppelin"
+    },
+    {
+      "id": "t13",
+      "title": "Rock and Roll",
+      "artist": "Led Zeppelin"
+    },
+    {
+      "id": "t14",
+      "title": "Paranoid",
+      "artist": "Black Sabbath"
+    },
+    {
+      "id": "t15",
+      "title": "Ace of Spades",
+      "artist": "Motorhead"
+    },
+    {
+      "id": "t16",
+      "title": "Born to Run",
+      "artist": "Bruce Springsteen"
+    },
+    {
+      "id": "t17",
+      "title": "Dancing in the Dark",
+      "artist": "Bruce Springsteen"
+    },
+    {
+      "id": "t18",
+      "title": "Summer of 69",
+      "artist": "Bryan Adams"
+    },
+    {
+      "id": "t19",
+      "title": "I Love Rock 'n' Roll",
+      "artist": "Joan Jett & the Blackhearts"
+    },
+    {
+      "id": "t20",
+      "title": "We Will Rock You",
+      "artist": "Queen"
+    },
+    {
+      "id": "t21",
+      "title": "Another One Bites the Dust",
+      "artist": "Queen"
+    },
+    {
+      "id": "t22",
+      "title": "Pour Some Sugar on Me",
+      "artist": "Def Leppard"
+    },
+    {
+      "id": "t23",
+      "title": "The Boys Are Back in Town",
+      "artist": "Thin Lizzy"
+    },
+    {
+      "id": "t24",
+      "title": "Whiskey in the Jar",
+      "artist": "Thin Lizzy"
+    },
+    {
+      "id": "t25",
+      "title": "All Right Now",
+      "artist": "Free"
+    },
+    {
+      "id": "t26",
+      "title": "Smoke on the Water",
+      "artist": "Deep Purple"
+    },
+    {
+      "id": "t27",
+      "title": "Sweet Home Alabama",
+      "artist": "Lynyrd Skynyrd"
+    },
+    {
+      "id": "t28",
+      "title": "Hotel California",
+      "artist": "Eagles"
+    },
+    {
+      "id": "t29",
+      "title": "Take It Easy",
+      "artist": "Eagles"
+    },
+    {
+      "id": "t30",
+      "title": "Baba O'Riley",
+      "artist": "The Who"
+    },
+    {
+      "id": "t31",
+      "title": "My Generation",
+      "artist": "The Who"
+    },
+    {
+      "id": "t32",
+      "title": "Jumpin' Jack Flash",
+      "artist": "The Rolling Stones"
+    },
+    {
+      "id": "t33",
+      "title": "Satisfaction",
+      "artist": "The Rolling Stones"
+    },
+    {
+      "id": "t34",
+      "title": "All the Small Things",
+      "artist": "blink-182"
+    },
+    {
+      "id": "t35",
+      "title": "Teenage Dirtbag",
+      "artist": "Wheatus"
+    },
+    {
+      "id": "t36",
+      "title": "Zombie",
+      "artist": "The Cranberries"
+    },
+    {
+      "id": "t37",
+      "title": "Learn to Fly",
+      "artist": "Foo Fighters"
+    },
+    {
+      "id": "t38",
+      "title": "The Pretender",
+      "artist": "Foo Fighters"
+    },
+    {
+      "id": "t39",
+      "title": "Don't Look Back in Anger",
+      "artist": "Oasis"
+    },
+    {
+      "id": "t40",
+      "title": "Live Forever",
+      "artist": "Oasis"
+    }
+  ]
+}

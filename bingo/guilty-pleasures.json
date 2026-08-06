@@ -1,0 +1,211 @@
+{
+  "id": "guilty-pleasures",
+  "kind": "bingo",
+  "title": "Guilty Pleasures Bingo",
+  "subtitle": "Forty guilty pleasures. Tap them as you hear them.",
+  "cardSize": 4,
+  "notes": "Cheese, novelty and the ones people pretend not to know. The noisiest round. Picked by hand to the house rules: recognisable within a few seconds, the chorus lands on its own, big in the UK, never more than two by one act. No track appears on any other pack. No Spotify playlist attached.",
+  "createdAt": "2026-08-06T02:45:09.392Z",
+  "tracks": [
+    {
+      "id": "t1",
+      "title": "Barbie Girl",
+      "artist": "Aqua"
+    },
+    {
+      "id": "t2",
+      "title": "Mambo No. 5",
+      "artist": "Lou Bega"
+    },
+    {
+      "id": "t3",
+      "title": "Macarena",
+      "artist": "Los Del Rio"
+    },
+    {
+      "id": "t4",
+      "title": "Saturday Night",
+      "artist": "Whigfield"
+    },
+    {
+      "id": "t5",
+      "title": "Blue (Da Ba Dee)",
+      "artist": "Eiffel 65"
+    },
+    {
+      "id": "t6",
+      "title": "Tragedy",
+      "artist": "Steps"
+    },
+    {
+      "id": "t7",
+      "title": "5, 6, 7, 8",
+      "artist": "Steps"
+    },
+    {
+      "id": "t8",
+      "title": "Reach",
+      "artist": "S Club 7"
+    },
+    {
+      "id": "t9",
+      "title": "Don't Stop Movin",
+      "artist": "S Club 7"
+    },
+    {
+      "id": "t10",
+      "title": "Relight My Fire",
+      "artist": "Take That"
+    },
+    {
+      "id": "t11",
+      "title": "Back for Good",
+      "artist": "Take That"
+    },
+    {
+      "id": "t12",
+      "title": "Bye Bye Bye",
+      "artist": "NSYNC"
+    },
+    {
+      "id": "t13",
+      "title": "I Want It That Way",
+      "artist": "Backstreet Boys"
+    },
+    {
+      "id": "t14",
+      "title": "Everybody (Backstreet's Back)",
+      "artist": "Backstreet Boys"
+    },
+    {
+      "id": "t15",
+      "title": "MMMBop",
+      "artist": "Hanson"
+    },
+    {
+      "id": "t16",
+      "title": "Spice Up Your Life",
+      "artist": "Spice Girls"
+    },
+    {
+      "id": "t17",
+      "title": "Say You'll Be There",
+      "artist": "Spice Girls"
+    },
+    {
+      "id": "t18",
+      "title": "Livin' La Vida Loca",
+      "artist": "Ricky Martin"
+    },
+    {
+      "id": "t19",
+      "title": "Ooh Aah... Just a Little Bit",
+      "artist": "Gina G"
+    },
+    {
+      "id": "t20",
+      "title": "Things Can Only Get Better",
+      "artist": "D:Ream"
+    },
+    {
+      "id": "t21",
+      "title": "Ice Ice Baby",
+      "artist": "Vanilla Ice"
+    },
+    {
+      "id": "t22",
+      "title": "U Can't Touch This",
+      "artist": "MC Hammer"
+    },
+    {
+      "id": "t23",
+      "title": "The Ketchup Song (Asereje)",
+      "artist": "Las Ketchup"
+    },
+    {
+      "id": "t24",
+      "title": "Who Let the Dogs Out",
+      "artist": "Baha Men"
+    },
+    {
+      "id": "t25",
+      "title": "Cha Cha Slide",
+      "artist": "DJ Casper"
+    },
+    {
+      "id": "t26",
+      "title": "Summer Nights",
+      "artist": "John Travolta & Olivia Newton-John"
+    },
+    {
+      "id": "t27",
+      "title": "You're the One That I Want",
+      "artist": "John Travolta & Olivia Newton-John"
+    },
+    {
+      "id": "t28",
+      "title": "The Time of My Life",
+      "artist": "Bill Medley & Jennifer Warnes"
+    },
+    {
+      "id": "t29",
+      "title": "Club Tropicana",
+      "artist": "Wham!"
+    },
+    {
+      "id": "t30",
+      "title": "Agadoo",
+      "artist": "Black Lace"
+    },
+    {
+      "id": "t31",
+      "title": "Superman (Gioca Jouer)",
+      "artist": "Black Lace"
+    },
+    {
+      "id": "t32",
+      "title": "Tubthumping",
+      "artist": "Chumbawamba"
+    },
+    {
+      "id": "t33",
+      "title": "Hey Baby",
+      "artist": "DJ Otzi"
+    },
+    {
+      "id": "t34",
+      "title": "Sk8er Boi",
+      "artist": "Avril Lavigne"
+    },
+    {
+      "id": "t35",
+      "title": "Complicated",
+      "artist": "Avril Lavigne"
+    },
+    {
+      "id": "t36",
+      "title": "Oops!... I Did It Again",
+      "artist": "Britney Spears"
+    },
+    {
+      "id": "t37",
+      "title": "Genie in a Bottle",
+      "artist": "Christina Aguilera"
+    },
+    {
+      "id": "t38",
+      "title": "Torn",
+      "artist": "Natalie Imbruglia"
+    },
+    {
+      "id": "t39",
+      "title": "All Star",
+      "artist": "Smash Mouth"
+    },
+    {
+      "id": "t40",
+      "title": "Rhythm Is a Dancer",
+      "artist": "Snap!"
+    }
+  ]
+}

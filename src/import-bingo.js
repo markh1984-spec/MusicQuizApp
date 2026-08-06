@@ -28,6 +28,14 @@ import { titleCase, themeSlug } from './theme.js';
  * copied out of a chat, lists with the artist first. The only thing it insists
  * on is one track per line.
  */
+/** Split on the last match of a separator, or null if there is not one. */
+function lastSplit(line, pattern) {
+  let at = null;
+  for (const m of line.matchAll(pattern)) at = m;
+  if (!at) return null;
+  return [line.slice(0, at.index), line.slice(at.index + at[0].length)];
+}
+
 export function parseTrackList(text) {
   const lines = String(text || '').split(/\r?\n/);
   const tracks = [];
@@ -44,13 +52,18 @@ export function parseTrackList(text) {
     // Skip anything that is obviously a heading rather than a track.
     if (/^#{1,6}\s/.test(line) || /^[A-Z][a-z]+ \d+:$/.test(line)) continue;
 
-    // "Title — Artist", "Title - Artist", "Title by Artist"
-    const split = line.match(/^(.*?)\s+(?:—|–|-{1,2}|by)\s+(.*)$/i);
+    // "Title — Artist", "Title - Artist", "Title by Artist".
+    //
+    // A dash wins over the word "by", and the LAST one wins over the first.
+    // Both matter: "Stand by Me - Ben E. King" split on the "by" and came out
+    // as "Stand" by "Me - Ben E. King", and "River Deep - Mountain High - Ike
+    // & Tina Turner" would lose half its title to the first dash.
+    const dash = lastSplit(line, /\s+(?:—|–|-{1,2})\s+/g);
+    const split = dash || lastSplit(line, /\s+by\s+/gi);
     if (split) {
-      const title = split[1].trim().replace(/^["'“”]|["'“”]$/g, '');
-      const artist = split[2].trim().replace(/\s*\(\d{4}\)\s*$/, '').trim();
-      if (title) tracks.push({ title, artist });
-      continue;
+      const title = split[0].trim().replace(/^["'“”]|["'“”]$/g, '');
+      const artist = split[1].trim().replace(/\s*\(\d{4}\)\s*$/, '').trim();
+      if (title && artist) { tracks.push({ title, artist }); continue; }
     }
     tracks.push({ title: line, artist: '' });
   }

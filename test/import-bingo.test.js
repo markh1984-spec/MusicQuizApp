@@ -49,6 +49,24 @@ test('a numbered list reads as tracks', () => {
   ]);
 });
 
+test('a title containing "by" survives — a dash beats the word by', () => {
+  // "Stand by Me - Ben E. King" came out as "Stand" by "Me - Ben E. King",
+  // because the split looked for the word "by" before it looked for a dash.
+  assert.deepEqual(parseTrackList('Stand by Me - Ben E. King'), [
+    { title: 'Stand by Me', artist: 'Ben E. King' },
+  ]);
+  // With no dash at all, "by" is still how you split it.
+  assert.deepEqual(parseTrackList('Stand by Me by Ben E. King'), [
+    { title: 'Stand by Me', artist: 'Ben E. King' },
+  ]);
+});
+
+test('a title with its own dash keeps all of itself', () => {
+  assert.deepEqual(parseTrackList('River Deep - Mountain High - Ike & Tina Turner'), [
+    { title: 'River Deep - Mountain High', artist: 'Ike & Tina Turner' },
+  ]);
+});
+
 test('bullets, bold and quotes are stripped', () => {
   const tracks = parseTrackList([
     '- **Parklife** — Blur',

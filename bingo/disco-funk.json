@@ -1,0 +1,211 @@
+{
+  "id": "disco-funk",
+  "kind": "bingo",
+  "title": "Disco & Funk Bingo",
+  "subtitle": "Forty disco and funk floor-fillers. Tap them as you hear them.",
+  "cardSize": 4,
+  "notes": "The one that gets people up. Good late in the night. Picked by hand to the house rules: recognisable within a few seconds, the chorus lands on its own, big in the UK, never more than two by one act. No track appears on any other pack. No Spotify playlist attached.",
+  "createdAt": "2026-08-06T02:45:09.390Z",
+  "tracks": [
+    {
+      "id": "t1",
+      "title": "Le Freak",
+      "artist": "Chic"
+    },
+    {
+      "id": "t2",
+      "title": "Good Times",
+      "artist": "Chic"
+    },
+    {
+      "id": "t3",
+      "title": "Stayin' Alive",
+      "artist": "Bee Gees"
+    },
+    {
+      "id": "t4",
+      "title": "Night Fever",
+      "artist": "Bee Gees"
+    },
+    {
+      "id": "t5",
+      "title": "Boogie Wonderland",
+      "artist": "Earth, Wind & Fire"
+    },
+    {
+      "id": "t6",
+      "title": "Get Down On It",
+      "artist": "Kool & The Gang"
+    },
+    {
+      "id": "t7",
+      "title": "Celebration",
+      "artist": "Kool & The Gang"
+    },
+    {
+      "id": "t8",
+      "title": "Play That Funky Music",
+      "artist": "Wild Cherry"
+    },
+    {
+      "id": "t9",
+      "title": "Blame It on the Boogie",
+      "artist": "The Jacksons"
+    },
+    {
+      "id": "t10",
+      "title": "Shake Your Body (Down to the Ground)",
+      "artist": "The Jacksons"
+    },
+    {
+      "id": "t11",
+      "title": "Don't Stop 'Til You Get Enough",
+      "artist": "Michael Jackson"
+    },
+    {
+      "id": "t12",
+      "title": "Rock with You",
+      "artist": "Michael Jackson"
+    },
+    {
+      "id": "t13",
+      "title": "We Are Family",
+      "artist": "Sister Sledge"
+    },
+    {
+      "id": "t14",
+      "title": "He's the Greatest Dancer",
+      "artist": "Sister Sledge"
+    },
+    {
+      "id": "t15",
+      "title": "I'm Every Woman",
+      "artist": "Chaka Khan"
+    },
+    {
+      "id": "t16",
+      "title": "Ring My Bell",
+      "artist": "Anita Ward"
+    },
+    {
+      "id": "t17",
+      "title": "Hot Stuff",
+      "artist": "Donna Summer"
+    },
+    {
+      "id": "t18",
+      "title": "I Feel Love",
+      "artist": "Donna Summer"
+    },
+    {
+      "id": "t19",
+      "title": "Disco Inferno",
+      "artist": "The Trammps"
+    },
+    {
+      "id": "t20",
+      "title": "That's the Way (I Like It)",
+      "artist": "KC and the Sunshine Band"
+    },
+    {
+      "id": "t21",
+      "title": "Give It Up",
+      "artist": "KC and the Sunshine Band"
+    },
+    {
+      "id": "t22",
+      "title": "Got to Be Real",
+      "artist": "Cheryl Lynn"
+    },
+    {
+      "id": "t23",
+      "title": "Never Too Much",
+      "artist": "Luther Vandross"
+    },
+    {
+      "id": "t24",
+      "title": "Upside Down",
+      "artist": "Diana Ross"
+    },
+    {
+      "id": "t25",
+      "title": "I'm Coming Out",
+      "artist": "Diana Ross"
+    },
+    {
+      "id": "t26",
+      "title": "Funkytown",
+      "artist": "Lipps Inc."
+    },
+    {
+      "id": "t27",
+      "title": "Boogie Oogie Oogie",
+      "artist": "A Taste of Honey"
+    },
+    {
+      "id": "t28",
+      "title": "Lady Marmalade",
+      "artist": "Labelle"
+    },
+    {
+      "id": "t29",
+      "title": "Love Train",
+      "artist": "The O'Jays"
+    },
+    {
+      "id": "t30",
+      "title": "Ain't No Stoppin' Us Now",
+      "artist": "McFadden & Whitehead"
+    },
+    {
+      "id": "t31",
+      "title": "Shame",
+      "artist": "Evelyn Champagne King"
+    },
+    {
+      "id": "t32",
+      "title": "Knock on Wood",
+      "artist": "Amii Stewart"
+    },
+    {
+      "id": "t33",
+      "title": "Turn the Beat Around",
+      "artist": "Vicki Sue Robinson"
+    },
+    {
+      "id": "t34",
+      "title": "Born to Be Alive",
+      "artist": "Patrick Hernandez"
+    },
+    {
+      "id": "t35",
+      "title": "Rapper's Delight",
+      "artist": "The Sugarhill Gang"
+    },
+    {
+      "id": "t36",
+      "title": "Word Up!",
+      "artist": "Cameo"
+    },
+    {
+      "id": "t37",
+      "title": "Super Freak",
+      "artist": "Rick James"
+    },
+    {
+      "id": "t38",
+      "title": "Brick House",
+      "artist": "Commodores"
+    },
+    {
+      "id": "t39",
+      "title": "Young Hearts Run Free",
+      "artist": "Candi Staton"
+    },
+    {
+      "id": "t40",
+      "title": "Yes Sir, I Can Boogie",
+      "artist": "Baccara"
+    }
+  ]
+}
