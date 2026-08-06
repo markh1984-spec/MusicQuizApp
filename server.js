@@ -730,6 +730,7 @@ async function handleWrite(req, res, url, route) {
         title: result.pack.title,
         trackCount: result.pack.tracks.length,
         playlist: result.playlist ? result.playlist.url : null,
+        playlistError: result.playlistError || null,
         backedUp: backup.ok,
       }));
     } catch (err) {
@@ -919,6 +920,7 @@ async function handleWrite(req, res, url, route) {
         title: result.pack.title,
         trackCount: result.pack.tracks.length,
         playlist: result.playlist ? result.playlist.url : null,
+        playlistError: result.playlistError || null,
         backedUp: backup.ok,
       }));
     } catch (err) {

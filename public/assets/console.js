@@ -561,7 +561,9 @@ async function generate(panel) {
         Built <b>${esc(done.title)}</b> — ${done.trackCount} tracks.
         ${done.playlist
           ? `<a href="${esc(done.playlist)}" target="_blank" rel="noopener">Open the Spotify playlist</a>`
-          : 'No Spotify playlist — build one yourself from the call sheet.'}
+          : done.playlistError
+            ? `<br><b>No Spotify playlist:</b> ${esc(done.playlistError)}<br>The pack itself is fine — build the playlist by hand from the call sheet.`
+            : 'No Spotify playlist — build one yourself from the call sheet.'}
         ${done.backedUp ? '<br>Backed up to GitHub — this one is permanent.' : '<br><b>Not backed up</b> — this will be lost when the app restarts.'}
       </div>`));
     button.textContent = 'Built';

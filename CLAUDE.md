@@ -247,6 +247,12 @@ the obvious fix and `claude-sonnet-5` rejects it outright — *"This model does
 not support assistant message prefill. The conversation must end with a user
 message."* Reading the reply properly is the answer instead.
 
+**A Spotify problem never costs you the pack.** The playlist is the last and
+least important step in `generateBingoPack()`, and it used to throw — losing
+sixty candidates and forty resolved lookups because the optional bit failed. It
+is caught, reported as `playlistError`, and the pack is saved regardless. There
+is a test.
+
 **Failure messages have to name the cause.** Both of these were mysteries at
 midnight before they were fixed: this one, and Spotify's bare 403 `Forbidden`
 on creating a playlist, which is now told apart by asking the token which
@@ -340,7 +346,7 @@ switch from radios to tickboxes.
 ## Checks
 
 ```bash
-npm test        # 261 tests, no network, injected clocks — must stay green
+npm test        # 263 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -388,7 +394,7 @@ recreate it.
 
 All five build stages plus bingo, the console, generation, pack import and the
 tickable review flags are done, tested and pushed to **`MusicQuizApp`**.
-Nothing is half-finished in the tree. 261 tests green.
+Nothing is half-finished in the tree. 263 tests green.
 
 (An earlier version of this line named `claude/new-session-jzx988`. That branch
 is gone — see **Where to push**.)

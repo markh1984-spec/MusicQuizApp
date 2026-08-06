@@ -219,14 +219,26 @@ export async function generateBingoPack({
   resolved = resolved.slice(0, trackCount);
 
   // ---- 4. the playlist your DJ app plays from
+  //
+  // Optional, and treated as optional. It used to throw, which threw away the
+  // whole generation with it — sixty-odd candidates and forty Spotify lookups
+  // lost because the last and least important step failed. The pack is the
+  // night; the playlist is a convenience.
+  let playlistError = null;
   if (useSpotify) {
     log('creating the Spotify playlist…');
-    playlist = await createPlaylist({
-      name: packTitle,
-      description: `Music bingo — ${subject}. Generated ${new Date(now()).toLocaleDateString('en-GB')}.`,
-      uris: resolved.map((t) => t.spotifyUri).filter(Boolean),
-    });
-    log(`  ${playlist.url}`);
+    try {
+      playlist = await createPlaylist({
+        name: packTitle,
+        description: `Music bingo — ${subject}. Generated ${new Date(now()).toLocaleDateString('en-GB')}.`,
+        uris: resolved.map((t) => t.spotifyUri).filter(Boolean),
+      });
+      log(`  ${playlist.url}`);
+    } catch (err) {
+      playlistError = err.message;
+      log(`  could not make the playlist: ${err.message}`);
+      log('  carrying on and saving the pack — you can build the playlist by hand from the call sheet');
+    }
   }
 
   // ---- 5. write the pack and remember what we used
@@ -257,7 +269,7 @@ export async function generateBingoPack({
   recordUsed(config.dataDir, pack.tracks, { packId: pack.id, at: now() });
   log(`saved ${pack.id}.json with ${pack.tracks.length} tracks`);
 
-  return { pack, playlist, dropped, candidates: candidates.length };
+  return { pack, playlist, playlistError, dropped, candidates: candidates.length };
 }
 
 
