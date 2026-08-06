@@ -234,6 +234,14 @@ that had worked minutes before. Three things keep that from happening:
   with a regex. Fifty-five whole ones and a fifty-sixth cut in half is not
   valid JSON, but it is fifty-five tracks and only forty are needed.
 
+**Thinking is ON by default on these models, and it is billed against the same
+`max_tokens` as the answer.** That is what actually broke the first generation:
+the whole budget went on thinking and the reply came back empty, on a theme that
+had worked minutes earlier. Writing a list of songs to a fixed shape does not
+need it, so both generators send `thinking: { type: 'disabled' }` with
+`output_config: { effort: 'low' }`. The quiz **checker** is the exception — that
+one is a judgement call, so it keeps thinking and gets 16000 tokens to do it in.
+
 **Do not reach for an assistant prefill** to stop the reply being chatty. It is
 the obvious fix and `claude-sonnet-5` rejects it outright — *"This model does
 not support assistant message prefill. The conversation must end with a user

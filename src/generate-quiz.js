@@ -207,6 +207,7 @@ async function checkQuestions({ questions, apiKey, model, log = () => {} }) {
       prompt: `Check these ${questions.length} questions.\n\n${listing}\n\n${CHECKER_SCHEMA}`,
       apiKey,
       model: CHECKER_MODEL,
+      think: true,
     });
   } catch (err) {
     // Most likely the account cannot reach the stronger model. Check with the
@@ -217,6 +218,7 @@ async function checkQuestions({ questions, apiKey, model, log = () => {} }) {
       prompt: `Check these ${questions.length} questions.\n\n${listing}\n\n${CHECKER_SCHEMA}`,
       apiKey,
       model,
+      think: true,
     });
   }
 
@@ -255,11 +257,32 @@ A "multi" round is the exception: it has SIX options and, instead of correctInde
 "correctIndexes" array listing every right position, e.g. "correctIndexes": [0, 2, 5].
 `.trim();
 
-async function askClaude({ system, prompt, apiKey, model }) {
+/**
+ * @param {object} opts
+ * @param {boolean} [opts.think]  let the model reason before answering
+ *
+ * Thinking is ON by default on these models, is billed against the same
+ * max_tokens as the answer, and returns no visible text — so a long reply can
+ * spend its whole budget thinking and come back empty. Writing out questions
+ * to a fixed shape does not need it and is turned off; the checking pass is a
+ * judgement call, so it keeps thinking and gets the room to do it in.
+ */
+async function askClaude({ system, prompt, apiKey, model, think = false }) {
+  const body = {
+    model,
+    max_tokens: think ? 16000 : 8000,
+    system,
+    messages: [{ role: 'user', content: prompt }],
+  };
+  if (!think) {
+    body.thinking = { type: 'disabled' };
+    body.output_config = { effort: 'low' };
+  }
+
   const res = await fetch(ANTHROPIC_API, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model, max_tokens: 8000, system, messages: [{ role: 'user', content: prompt }] }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) throw new Error(`Claude said ${res.status}: ${(await res.text()).slice(0, 300)}`);

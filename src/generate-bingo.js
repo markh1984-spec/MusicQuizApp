@@ -63,6 +63,15 @@ Reply with JSON and nothing else, no markdown fence:
       // mid-track is not JSON at all. Plenty of headroom is free — unused
       // tokens cost nothing.
       max_tokens: 8000,
+      // Thinking OFF, and this is the important line.
+      //
+      // On this model thinking is on unless you say otherwise, it is billed
+      // against the same max_tokens as the reply, and its text comes back
+      // empty by default. So the first attempt spent the whole budget
+      // thinking and returned nothing at all — a blank error on a theme that
+      // had worked minutes before. Naming forty pub songs does not need it.
+      thinking: { type: 'disabled' },
+      output_config: { effort: 'low' },
       // No assistant prefill here, tempting as it is: this model refuses a
       // conversation that does not end with a user message. Keeping the reply
       // readable is readTracks()'s job instead.
