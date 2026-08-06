@@ -1,0 +1,305 @@
+{
+  "id": "mbc-3",
+  "kind": "bingo",
+  "title": "MBC 3",
+  "subtitle": "42 tracks. Tap them as you hear them.",
+  "cardSize": 4,
+  "notes": "Imported from a pasted track list.",
+  "createdAt": "2026-08-06T03:05:30.989Z",
+  "tracks": [
+    {
+      "id": "t1",
+      "title": "Bad Romance",
+      "artist": "Lady Gaga",
+      "year": 2009,
+      "spotifyUri": "spotify:track:0SiywuOBRcynK0uKGWdCnn"
+    },
+    {
+      "id": "t2",
+      "title": "Bleeding Love",
+      "artist": "Leona Lewis",
+      "year": 2007,
+      "spotifyUri": "spotify:track:6LtPIXlIzPOTF8vTecYjRe"
+    },
+    {
+      "id": "t3",
+      "title": "Halo",
+      "artist": "Beyoncé",
+      "year": 2008,
+      "spotifyUri": "spotify:track:2CvOqDpQIMw69cCzWqr5yr"
+    },
+    {
+      "id": "t4",
+      "title": "Irreplaceable",
+      "artist": "Beyoncé",
+      "year": 2007,
+      "spotifyUri": "spotify:track:6RX5iL93VZ5fKmyvNXvF1r"
+    },
+    {
+      "id": "t5",
+      "title": "Hips Don't Lie (feat. Wyclef Jean)",
+      "artist": "Shakira, Wyclef Jean",
+      "year": 2005,
+      "spotifyUri": "spotify:track:3d0WouFnFmr0K3kjeza3fF"
+    },
+    {
+      "id": "t6",
+      "title": "Whenever, Wherever",
+      "artist": "Shakira",
+      "year": 2001,
+      "spotifyUri": "spotify:track:2lnzGkdtDj5mtlcOW2yRtG"
+    },
+    {
+      "id": "t7",
+      "title": "Complicated",
+      "artist": "Avril Lavigne",
+      "year": 2022,
+      "spotifyUri": "spotify:track:6ZHZe46Ch4BhQLRt4l9JUk"
+    },
+    {
+      "id": "t8",
+      "title": "Sk8er Boi",
+      "artist": "Avril Lavigne",
+      "year": 2002,
+      "spotifyUri": "spotify:track:00Mb3DuaIH1kjrwOku9CGU"
+    },
+    {
+      "id": "t9",
+      "title": "Fighter",
+      "artist": "Christina Aguilera",
+      "year": 2002,
+      "spotifyUri": "spotify:track:7nXq1vaZiz7PdbfojpPjW5"
+    },
+    {
+      "id": "t10",
+      "title": "Beautiful",
+      "artist": "Christina Aguilera",
+      "year": 2002,
+      "spotifyUri": "spotify:track:3TCauNPqFiniaYHBvEVoHG"
+    },
+    {
+      "id": "t11",
+      "title": "Wide Awake",
+      "artist": "Katy Perry",
+      "year": 2012,
+      "spotifyUri": "spotify:track:1rUQmXEy41tXwHIKFECNTa"
+    },
+    {
+      "id": "t12",
+      "title": "E.T.",
+      "artist": "Katy Perry, Kanye West",
+      "year": 2012,
+      "spotifyUri": "spotify:track:36ux3YuUsGTWPT8fXclS45"
+    },
+    {
+      "id": "t13",
+      "title": "Just the Way You Are",
+      "artist": "Bruno Mars",
+      "year": 2010,
+      "spotifyUri": "spotify:track:47Slg6LuqLaX0VodpSCvPt"
+    },
+    {
+      "id": "t14",
+      "title": "Grenade",
+      "artist": "Bruno Mars",
+      "year": 2010,
+      "spotifyUri": "spotify:track:4lLtanYk6tkMvooU0tWzG8"
+    },
+    {
+      "id": "t15",
+      "title": "I Gotta Feeling",
+      "artist": "Black Eyed Peas",
+      "year": 2009,
+      "spotifyUri": "spotify:track:2H1047e0oMSj10dgp7p2VG"
+    },
+    {
+      "id": "t16",
+      "title": "On The Floor",
+      "artist": "Jennifer Lopez, Pitbull",
+      "year": 2011,
+      "spotifyUri": "spotify:track:3C0nOe05EIt1390bVABLyN"
+    },
+    {
+      "id": "t17",
+      "title": "Blame It",
+      "artist": "Jamie Foxx, T-Pain",
+      "year": 2008,
+      "spotifyUri": "spotify:track:08uGhvS5MfBk7crUCpnjva"
+    },
+    {
+      "id": "t18",
+      "title": "Chandelier",
+      "artist": "Sia",
+      "year": 2014,
+      "spotifyUri": "spotify:track:4VrWlk8IQxevMvERoX08iC"
+    },
+    {
+      "id": "t19",
+      "title": "Elastic Heart - From \"The Hunger Games: Catching Fire\" Soundtrack",
+      "artist": "Sia, The Weeknd, Diplo",
+      "year": 2013,
+      "spotifyUri": "spotify:track:6x0ex5urwhqB3AYLREVRUd"
+    },
+    {
+      "id": "t20",
+      "title": "No Air (feat. Chris Brown)",
+      "artist": "Jordin Sparks, Chris Brown",
+      "year": 2007,
+      "spotifyUri": "spotify:track:1jUA4rb6ZCv4gby4YU53xq"
+    },
+    {
+      "id": "t21",
+      "title": "Say My Name",
+      "artist": "Destiny's Child",
+      "year": 1999,
+      "spotifyUri": "spotify:track:7H6ev70Weq6DdpZyyTmUXk"
+    },
+    {
+      "id": "t22",
+      "title": "Bootylicious",
+      "artist": "Destiny's Child",
+      "year": 2001,
+      "spotifyUri": "spotify:track:41nT1Sp6ChR65FbsdLlFHW"
+    },
+    {
+      "id": "t23",
+      "title": "Hot In Herre",
+      "artist": "Nelly",
+      "year": 2002,
+      "spotifyUri": "spotify:track:04KTF78FFg8sOHC1BADqbY"
+    },
+    {
+      "id": "t24",
+      "title": "Ms. Jackson",
+      "artist": "Outkast",
+      "year": 2000,
+      "spotifyUri": "spotify:track:0I3q5fE6wg7LIfHGngUTnV"
+    },
+    {
+      "id": "t25",
+      "title": "Get the Party Started",
+      "artist": "P!nk",
+      "year": 2001,
+      "spotifyUri": "spotify:track:2u1hMwcB9TwziV6P7jdyxX"
+    },
+    {
+      "id": "t26",
+      "title": "So What",
+      "artist": "P!nk",
+      "year": 2008,
+      "spotifyUri": "spotify:track:0JiY190vktuhSGN6aqJdrt"
+    },
+    {
+      "id": "t27",
+      "title": "Don't Cha",
+      "artist": "The Pussycat Dolls, Busta Rhymes",
+      "year": 2026,
+      "spotifyUri": "spotify:track:7274JsvASRGGu93GDBwvyR"
+    },
+    {
+      "id": "t28",
+      "title": "Buttons - Music Video Edit",
+      "artist": "The Pussycat Dolls, Snoop Dogg",
+      "year": 2025,
+      "spotifyUri": "spotify:track:7gbBw0S8FEVstZByLSaXTf"
+    },
+    {
+      "id": "t29",
+      "title": "Feel Good Inc.",
+      "artist": "Gorillaz, De La Soul",
+      "year": 2005,
+      "spotifyUri": "spotify:track:0d28khcov6AiegSCpG5TuT"
+    },
+    {
+      "id": "t30",
+      "title": "Clint Eastwood",
+      "artist": "Gorillaz, Del The Funky Homosapien",
+      "year": 2001,
+      "spotifyUri": "spotify:track:1RKUoGiLEbcXN4GY4spQDx"
+    },
+    {
+      "id": "t31",
+      "title": "In the End",
+      "artist": "Linkin Park",
+      "year": 2000,
+      "spotifyUri": "spotify:track:7q115ia4fQn9zonjpexWsY"
+    },
+    {
+      "id": "t32",
+      "title": "Numb",
+      "artist": "Linkin Park",
+      "year": 2003,
+      "spotifyUri": "spotify:track:2nLtzopw4rPReszdYBJU6h"
+    },
+    {
+      "id": "t33",
+      "title": "Boulevard of Broken Dreams",
+      "artist": "Green Day",
+      "year": 2004,
+      "spotifyUri": "spotify:track:1hwJKpe0BPUsq6UUrwBWTw"
+    },
+    {
+      "id": "t34",
+      "title": "American Idiot",
+      "artist": "Green Day",
+      "year": 2004,
+      "spotifyUri": "spotify:track:6nTiIhLmQ3FWhvrGafw2zj"
+    },
+    {
+      "id": "t35",
+      "title": "Chop Suey!",
+      "artist": "System Of A Down",
+      "year": 2001,
+      "spotifyUri": "spotify:track:2DlHlPMa4M17kufBvI2lEN"
+    },
+    {
+      "id": "t36",
+      "title": "Are You Gonna Be My Girl",
+      "artist": "Jet",
+      "year": 2003,
+      "spotifyUri": "spotify:track:72zZfHPYx43shcP3eKkYi5"
+    },
+    {
+      "id": "t37",
+      "title": "Best of You",
+      "artist": "Foo Fighters",
+      "year": 2005,
+      "spotifyUri": "spotify:track:5FZxsHWIvUsmSK1IAvm2pp"
+    },
+    {
+      "id": "t38",
+      "title": "Somebody Told Me",
+      "artist": "The Killers",
+      "year": 2004,
+      "spotifyUri": "spotify:track:3twNvmDtFQtAd5gMKedhLD"
+    },
+    {
+      "id": "t39",
+      "title": "Float On",
+      "artist": "Modest Mouse",
+      "year": 2004,
+      "spotifyUri": "spotify:track:2lwwrWVKdf3LR9lbbhnr6R"
+    },
+    {
+      "id": "t40",
+      "title": "Take Me Out",
+      "artist": "Franz Ferdinand",
+      "year": 2004,
+      "spotifyUri": "spotify:track:20I8RduZC2PWMWTDCZuuAN"
+    },
+    {
+      "id": "t41",
+      "title": "Sugar, We're Goin Down",
+      "artist": "Fall Out Boy",
+      "year": 2005,
+      "spotifyUri": "spotify:track:2TfSHkHiFO4gRztVIkggkE"
+    },
+    {
+      "id": "t42",
+      "title": "Feel It Still",
+      "artist": "Portugal. The Man",
+      "year": 2017,
+      "spotifyUri": "spotify:track:6QgjcU0zLnzq5OrUoSZ3OK"
+    }
+  ]
+}
