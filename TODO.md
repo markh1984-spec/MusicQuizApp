@@ -8,8 +8,8 @@ Every step has the link you need next to it. Work down it in order.
 
 ## Where the project is right now
 
-Everything talked about is now built except four things, listed at the bottom
-under **Still to build**. Nothing is half-finished in the tree.
+Everything talked about is now built except the four at the bottom under
+**Still to build**. Nothing is half-finished in the tree.
 
 Your list, shortest first. Only two of these cost anything:
 
@@ -39,6 +39,10 @@ playlists by hand.
   Part 5c.
 - **The rules as the first slide** of every quiz, and **scores on the big
   screen** whenever you want them. Part 9a.
+- **Advert slides between rounds**, one set per venue, with a QR to ticket
+  sales. Its own console tab; put one up from your control view.
+- **A Photos tab**, foldered by night, filed into a private repo so a restart
+  cannot lose them. Needs Part 7f setting up once.
 
 ---
 
@@ -646,9 +650,11 @@ the mic. What you have instead, on your control view:
 - **Tap any photo** to bin just that one.
 - **Clear all photos** when the night is over.
 
-> Photos live on the server for the night and are **not** backed up to GitHub —
-> they are pictures of the public and the repository is not the place for them.
-> Getting them off in one go is on the *Still to build* list.
+> Photos are filed into your **private** `MusicQuizPhotos` repo as they arrive
+> — never the main one, which is public and would keep them forever. See the
+> **Photos** tab in the console: foldered by night, with **Share** on each one
+> and on the whole night, which opens your phone's share sheet with Instagram
+> in it. Set up in Part 7f.
 
 **Afterwards**
 - [ ] Download the results from the Control view if you want them
@@ -685,12 +691,14 @@ either: phone browsers suspend background tabs the moment the screen locks.)
 
 Four things, in the order I would do them. Say the word on any of them.
 
-### 1. Getting the photos off after a night
-The only one that makes something already built incomplete. Right now the
-night's photos sit on the server and there is no way to download them, so the
-"photos for social" part of the idea does not work yet. A **Download the
-night's photos** button on the control view, as one file.
-*Small. No decisions needed.*
+### 1. Draggable stickers on the photos
+Dog ears, clown noses, silly hats — tap a prop, drag it onto a face, pinch to
+size. No face detection, so it works on every phone in the room.
+
+Not the same as Snapchat's own lenses, which need **Snap Camera Kit**: partner
+approval, money above a threshold, and megabytes of SDK on a stranger's phone
+over pub wifi. Parked, not forgotten.
+*Medium. No decisions needed.*
 
 ### 2. Filters on the round 2 portraits
 The same filters the room gets on their own photos, applied to the generated

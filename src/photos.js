@@ -15,11 +15,15 @@
  * then a bingo round, and launching the second one throws the first game away
  * — the photos should not go with it.
  *
- * They are deliberately NOT backed up to GitHub. Everything else this app
- * saves is a pack you would want back in six months; these are pictures of
- * members of the public, and the repository is not the place for them. They
- * live for the night, and there is a download button for the ones worth
- * keeping.
+ * They are filed into a SEPARATE PRIVATE repository (`PHOTO_REPO`), never the
+ * main one. The main repo is public and git history is forever, so pictures of
+ * members of the public would be permanent and undeletable there. The private
+ * one is free, survives the restart that wipes this disk, and is the host's
+ * own suggestion.
+ *
+ * Filing happens in the background, after the phone has already been answered.
+ * A photo is on the projector either way; filing only decides whether it is
+ * still there tomorrow.
  */
 
 import fs from 'node:fs';
