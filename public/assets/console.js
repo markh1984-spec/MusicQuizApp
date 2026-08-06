@@ -430,33 +430,25 @@ function historyLine(done) {
 /**
  * Bring in a list you already have.
  *
- * There is more than one good way to end up with forty songs — a playlist you
- * built over months, or Claude in your browser with its own instructions and a
- * Spotify connector. None of that should have to be redone here.
+ * This is how a bingo round gets made now: Claude in a browser reads the
+ * no-repeats list off this repository, picks the songs, builds the Spotify
+ * playlist, and prints the tracks. This box is where they land.
+ *
+ * The paste box is open and first because it is the route, not the fallback.
+ * It was behind a "or paste a track list instead" fold, from when a Spotify
+ * playlist link was the main way in — and a panel that hides the thing you
+ * came to do is a panel you use wrong.
  */
 function importPanel(gen) {
   const el = node(`
     <div class="panel import">
       <h3>Or bring in a list you already have</h3>
-      <div class="brief-box">
-        <div class="brief-head">
-          <b>Building it with Claude in your browser?</b>
-          <div class="tiny">Claude there can make the Spotify playlist, which this app cannot yet. Copy the brief, paste it in, then paste the list it prints back into the box below.</div>
-        </div>
-        <div class="gen-row">
-          <input type="text" id="briefTheme" placeholder="A theme — 90s dance anthems, Motown…" autocomplete="off">
-          <button class="minor" id="briefGo">Copy the brief</button>
-        </div>
-        <div class="brief-status" id="briefStatus"></div>
-      </div>
+      <div class="tiny">Paste what Claude printed — one track per line. It goes into the no-repeats list too, so next week's round avoids it.</div>
+      <textarea id="impText" rows="7" placeholder="One per line — any of these work:&#10;&#10;Billie Jean — Michael Jackson&#10;1. Take On Me - a-ha&#10;Blue Monday by New Order"></textarea>
       <div class="gen-row">
-        <input type="text" id="impUrl" placeholder="Paste a Spotify playlist link…" autocomplete="off">
+        <input type="text" id="impUrl" placeholder="…or a Spotify playlist link instead" autocomplete="off">
         <button class="go" id="impGo">Import</button>
       </div>
-      <details class="import-paste">
-        <summary>or paste a track list instead</summary>
-        <textarea id="impText" rows="7" placeholder="One per line — any of these work:&#10;&#10;Billie Jean — Michael Jackson&#10;1. Take On Me - a-ha&#10;Blue Monday by New Order"></textarea>
-      </details>
       <div class="gen-opts">
         <label>Card <select id="impSize"><option value="3">3×3</option><option value="4" selected>4×4</option><option value="5">5×5</option></select></label>
         <label>Call it <input type="text" id="impTitle" placeholder="optional" style="width:150px"></label>
@@ -468,74 +460,7 @@ function importPanel(gen) {
 
   el.querySelector('#impGo').addEventListener('click', () => runImport(el));
   el.querySelector('#impUrl').addEventListener('keydown', (e) => { if (e.key === 'Enter') runImport(el); });
-  el.querySelector('#briefGo').addEventListener('click', () => copyBrief(el));
-  el.querySelector('#briefTheme').addEventListener('keydown', (e) => { if (e.key === 'Enter') copyBrief(el); });
   return el;
-}
-
-/**
- * Put the brief on the clipboard, and on the screen either way.
- *
- * The clipboard is the convenience; the textarea underneath is the guarantee.
- * `navigator.clipboard` needs a secure context and a real gesture and still
- * refuses on some phones for reasons it does not explain, and "Copied" that
- * quietly copied nothing is worse than no button — you find out by pasting an
- * empty message into Claude with a gig to write.
- *
- * It is shown either way for a second reason: it is a long brief with the
- * whole no-repeats list in it, and being able to read what you are about to
- * send beats trusting it.
- */
-async function copyBrief(panel) {
-  const theme = panel.querySelector('#briefTheme').value.trim();
-  const status = panel.querySelector('#briefStatus');
-  const button = panel.querySelector('#briefGo');
-
-  if (!theme) {
-    status.replaceChildren(node('<div class="gen-bad">Give it a theme first.</div>'));
-    panel.querySelector('#briefTheme').focus();
-    return;
-  }
-
-  button.disabled = true;
-  button.textContent = 'Getting it…';
-  try {
-    const res = await fetch(keyed(`/api/bingo-brief?theme=${encodeURIComponent(theme)}`));
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || 'Could not build the brief');
-
-    let copied = false;
-    try {
-      await navigator.clipboard.writeText(data.text);
-      copied = true;
-    } catch { /* shown below instead */ }
-
-    status.replaceChildren(node(`
-      <div class="gen-good">
-        ${copied ? 'Copied.' : 'Could not reach the clipboard — copy it from here.'}
-        Paste it into Claude, then paste the list it prints back into the box below.
-        ${data.avoidCount
-          ? `<br>It tells Claude to avoid the <b>${data.avoidCount}</b> songs you have played in the last 3 months.`
-          : '<br><b>Nothing in the history yet</b>, so it has nothing to avoid.'}
-      </div>`));
-    const box = node('<textarea class="brief-text" rows="8" readonly></textarea>');
-    box.value = data.text;
-    status.appendChild(box);
-    if (!copied) { box.focus(); box.select(); }
-
-    // Open the paste box now, because that is the next thing that happens: you
-    // go to Claude, come back, and the place the answer goes is a collapsed
-    // "or paste a track list instead" you have to find first.
-    const paste = panel.querySelector('.import-paste');
-    if (paste) paste.open = true;
-
-    button.disabled = false;
-    button.textContent = copied ? 'Copied' : 'Copy the brief';
-  } catch (err) {
-    status.replaceChildren(node(`<div class="gen-bad">${esc(err.message)}</div>`));
-    button.disabled = false;
-    button.textContent = 'Copy the brief';
-  }
 }
 
 async function runImport(panel) {

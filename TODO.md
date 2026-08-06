@@ -58,25 +58,32 @@ scopes back), and you have already added the account under User Management.
       email on that Spotify account (spotify.com → Account → Profile). A
       near-miss does nothing and says nothing.
 
-**You are not blocked in the meantime, and this is now the quickest way to
-build a round anyway.** Three steps, all in the console's **Import** panel:
+**You are not blocked, and this is now the quickest way to build a round
+anyway — two steps.**
 
-1. Type the theme in **"Building it with Claude in your browser?"** and press
-   **Copy the brief**. That copies a full instruction — the house rules, how
-   many tracks, and **every song you have played in the last three months, by
-   name, so it does not pick one of them again**. It also shows you the text,
-   so if the clipboard misbehaves on your phone you can select it by hand.
-2. Paste it into Claude in your browser. It builds the Spotify playlist and
-   then prints the track list in a code block.
-3. Copy that block into the **"or paste a track list instead"** box (already
-   open for you) and press **Import**.
+1. **Ask Claude in your browser for the round.** It reads your no-repeats list
+   straight off this repository, so it already knows every song you have used
+   in the last three months and will not pick one. It builds the private
+   Spotify playlist and then prints the tracks in a code block.
+2. **Paste that block into the Import panel** in the console and press
+   **Import**. Nothing to fill in first; the box is the first thing on the
+   panel.
 
 You get a pack whose cards are exactly the songs in the playlist, and every one
-of them goes into your no-repeats history — so next week's brief avoids them
-too, without you keeping track of anything.
+of them goes into the no-repeats list — which the app pushes back to GitHub
+straight away, so next week Claude already knows about them. You keep track of
+nothing.
+
+**Import on the live site**, musicquizapp.onrender.com/console, rather than a
+copy on the laptop. That is where the GitHub token lives, and the push is what
+keeps Claude's list current.
+
+**Then glance at the banner.** Green means those songs reached the list. Amber
+means they did not — the round is still fine, but Claude will not know about
+them, so import it again. It says so in those words.
 
 If you would rather have the playlist read straight off Spotify, pasting its
-**link** into the box above still works: reading a playlist is a different
+**link** into the smaller box still works: reading a playlist is a different
 permission from creating one, and yours has it.
 
 Nothing else is outstanding. A generation that cannot make a playlist now saves

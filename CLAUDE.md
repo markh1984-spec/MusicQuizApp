@@ -401,7 +401,7 @@ src/quizzes.js         quiz packs: load, validate, save
 src/library.js         saved packs, play counts, past nights
 src/history.js         no-repeats memory for bingo generation
 src/generate-bingo.js  theme -> Claude -> history filter -> Spotify -> pack
-src/bingo-brief.js     the house rules, for the app AND for Claude in a browser
+src/bingo-rules.js     what makes a good bingo track, for the in-app generator
 src/spotify.js         playlist building
 src/qrcode.js          dependency-free QR encoder
 src/photos.js          photos from the room: store, kill switch, bin
@@ -447,7 +447,7 @@ generates one round of every type so a fifth one cannot repeat this.
 ## Checks
 
 ```bash
-npm test        # 292 tests, no network, injected clocks — must stay green
+npm test        # 286 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -495,7 +495,7 @@ recreate it.
 
 All five build stages plus bingo, the console, generation, pack import and the
 tickable review flags are done, tested and pushed to **`MusicQuizApp`**.
-Nothing is half-finished in the tree. 292 tests green.
+Nothing is half-finished in the tree. 286 tests green.
 
 (An earlier version of this line named `claude/new-session-jzx988`. That branch
 is gone — see **Where to push**.)
@@ -537,8 +537,8 @@ waiting on the 403. **Treat this as the main way bingo packs get made**, not a
 stopgap: for bingo the playlist and the cards have to be the same forty songs,
 so building the playlist first and the cards from it is the right order anyway.
 
-The loop is: **Copy the brief → paste into Claude → paste its list back into
-Import.**
+The loop is: **ask Claude for a round → paste the list it prints into Import.**
+Nothing is copied out of the app; Claude fetches what it needs itself.
 
 ### Who owns what — settled, and the thing most likely to be broken by accident
 
@@ -583,21 +583,19 @@ from what the packs themselves say. **Do not add a way for the app to publish
 its rules to Claude, or a way for Claude to write the history.** Either one
 recreates the two-copies problem this replaced.
 
-`src/bingo-brief.js` writes the brief, and the one thing that makes it worth
-having is that **it carries the no-repeats list**. The house rules are what
-guarantee no song repeats for three months, and a brief typed fresh each week
-is a brief that quietly drops that — which is the only part a regular at a
-Tuesday night would actually notice. `GET /api/bingo-brief?theme=…` builds it
-from `recentTracks()`.
+**There WAS a "Copy the brief" button, and it is gone. Do not build it again.**
+It pasted the house rules and the whole no-repeats list into the clipboard for
+handing to Claude, which was the right thing for one day — the day before the
+fetch was confirmed. Claude read the raw URL, reported 319 of 319 entries and
+the right first three titles, and at that point the button was a second way to
+do the same job. A panel with two ways to do one thing is how you end up doing
+the old one out of habit, and the old one was a snapshot where the new one is
+live. `src/bingo-rules.js` is what is left: `rulesBlock()`, for the in-app
+generator's prompt only.
 
-**The brief is now the FALLBACK, not the route.** Once Claude fetches the raw
-URL itself the button has nothing left to do, and it should come out — a panel
-with two ways to do the same thing is how you end up doing the old one by
-habit. It is still there only because the fetch has not been confirmed working
-from his account yet. If a future session finds that confirmed, delete
-`evenerButton`'s neighbour — the whole `.brief-box`, `copyBrief()`, the
-`/api/bingo-brief` route — and keep `rulesBlock()`, which the in-app generator
-still uses.
+**The paste box is the route, so it is open and first.** It spent a while
+folded behind "or paste a track list instead", from when a Spotify playlist
+link was the way in. The link box is still there, below it, in smaller words.
 
 **The history had a hole, and it will happen again.** It is written when a pack
 is MADE, so a pack that arrives any other way is invisible to it — 119 songs

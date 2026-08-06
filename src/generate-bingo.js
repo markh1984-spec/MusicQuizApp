@@ -24,7 +24,7 @@ import { spotifyConfigured, findTrack, createPlaylist } from './spotify.js';
 import { cleanTheme, bingoTitleFor, themeSlug } from './theme.js';
 // The same idea of a good bingo track that the browser brief is built from, so
 // the two cannot drift apart.
-import { rulesBlock } from './bingo-brief.js';
+import { rulesBlock } from './bingo-rules.js';
 
 const MODEL = 'claude-sonnet-5';
 const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';

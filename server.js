@@ -29,7 +29,6 @@ import { importBingoPack } from './src/import-bingo.js';
 import { listAdvertPacks, loadAdvertPack, saveAdvertPack, deleteAdvertPack, validateAdvertPack, normaliseAdvertPack } from './src/adverts.js';
 import { generateImages, imageStatus, imageJobs, openaiConfigured } from './src/generate-images.js';
 import { recentTracks, forgetAll } from './src/history.js';
-import { bingoBrief } from './src/bingo-brief.js';
 import { spotifyConfigured, missingSpotifyConfig } from './src/spotify.js';
 import { githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem } from './src/github.js';
 import { toSvg } from './src/qrcode.js';
@@ -390,35 +389,6 @@ async function handleGet(req, res, url, route) {
     if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
     const months = Number(url.searchParams.get('months')) || 3;
     return sendJson(res, 200, { months, tracks: recentTracks(config.dataDir, months) }), true;
-  }
-  /*
-   * The brief to hand to Claude in a browser, with the no-repeats list already
-   * in it.
-   *
-   * Building the Spotify playlist from here is refused (see TODO.md) and the
-   * playlist is the point — the host plays out of djay Pro. Claude in the
-   * browser has a Spotify connector and can build one, so the working route is
-   * to ask it there and paste the list back into Import.
-   *
-   * The reason this is a server route rather than something typed fresh each
-   * time: the "do not use these, I have played them" list lives here. A brief
-   * written by hand is a brief that silently drops the one rule a regular at a
-   * Tuesday night would actually notice.
-   */
-  // Not /api/bingo/brief: that is under a catch-all which reads the rest of the
-  // path as a pack id, so this would be a pack called "brief" — and would break
-  // for real the day somebody saved one.
-  if (route === '/api/bingo-brief') {
-    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
-    const theme = String(url.searchParams.get('theme') || '').slice(0, 200).trim();
-    if (!theme) return sendJson(res, 400, { error: 'Give it a theme first' }), true;
-    const months = Math.min(24, Math.max(0, Number(url.searchParams.get('months') ?? 3)));
-    const count = Math.min(90, Math.max(9, Number(url.searchParams.get('count')) || 40));
-    const avoid = months > 0 ? recentTracks(config.dataDir, months) : [];
-    return sendJson(res, 200, {
-      text: bingoBrief({ theme, count, avoid, avoidMonths: months }),
-      avoidCount: avoid.length,
-    }), true;
   }
   if (route.startsWith('/api/archive/')) {
     if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;

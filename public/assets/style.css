@@ -1534,20 +1534,16 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 /* ---- importing a list you already have */
 .panel.import { border-color: rgba(29, 185, 84, 0.4); background: rgba(29, 185, 84, 0.06); }
 .panel.import .gen-row .go { background: #1db954; color: #04240f; }
-.import-paste { margin-top: 12px; }
-.import-paste summary {
-  cursor: pointer; font-size: 13px; font-weight: 700; color: var(--ink-dim);
-  padding: 4px 0;
-}
-.import-paste summary:hover { color: var(--ink); }
-.import-paste textarea {
-  width: 100%; margin-top: 8px; padding: 11px 13px;
+/* The paste box is the route now, not a fold-away alternative, so it is always
+   open and sized to show a round's worth of tracks without scrolling. */
+#impText {
+  width: 100%; margin: 10px 0; padding: 11px 13px;
   border-radius: 10px; border: 1px solid var(--panel-line);
   background: rgba(0, 0, 0, 0.3); color: var(--ink);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 13px; line-height: 1.6; resize: vertical;
 }
-.import-paste textarea:focus { outline: 2px solid #1db954; outline-offset: 1px; }
+#impText:focus { outline: 2px solid #1db954; outline-offset: 1px; }
 
 /* What the last job said, kept where the panel rebuild cannot take it. */
 .panel.done-banner {
@@ -1565,28 +1561,6 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   background: rgba(255, 176, 32, 0.09);
 }
 .panel.done-banner.warn .done-text a { color: var(--gold); }
-
-/* The brief you hand to Claude in a browser. Boxed off inside the import panel
-   because it is the step BEFORE importing, not another way of importing. */
-.brief-box {
-  margin-bottom: 12px; padding: 12px;
-  border: 1px dashed var(--panel-line); border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
-}
-.brief-head { margin-bottom: 9px; }
-.brief-head b { font-size: 14px; }
-.brief-head .tiny { margin-top: 3px; }
-.brief-status:empty { display: none; }
-.brief-status { margin-top: 9px; }
-/* Shown whether or not the clipboard worked — "Copied" that copied nothing is
-   worse than no button at all, and it is worth reading before you send it. */
-.brief-text {
-  width: 100%; margin-top: 8px; padding: 11px 13px;
-  border-radius: 10px; border: 1px solid var(--panel-line);
-  background: rgba(0, 0, 0, 0.3); color: var(--ink);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12.5px; line-height: 1.55; resize: vertical;
-}
 
 /* Round 2 artwork, opened from a pack card. Free stand-ins and paid portraits
    are different decisions, so they are different buttons. */
