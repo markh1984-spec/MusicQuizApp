@@ -427,6 +427,33 @@ async function handleGet(req, res, url, route) {
  * reported and moved on from, because losing the pack you just made because
  * the backup failed would be daft.
  */
+/**
+ * Open a streaming progress response, and keep it open.
+ *
+ * Generation spends a minute or more inside one Claude call with nothing to
+ * report. Write nothing for that long and something between here and the
+ * browser — a proxy, a load balancer, the free tier — is entitled to hang up,
+ * and then the console is left holding a stream that ended with no result.
+ * That is exactly what it looked like from the host's side: the log stopped at
+ * "writing 15 questions…" and never said another word.
+ *
+ * So a PING goes down the wire every fifteen seconds. The console skips them.
+ */
+function progressStream(res) {
+  res.writeHead(200, {
+    'Content-Type': 'text/plain; charset=utf-8',
+    'Cache-Control': 'no-cache, no-transform',
+    'X-Accel-Buffering': 'no',
+  });
+  const write = (line) => { try { res.write(line + '\n'); } catch { /* client left */ } };
+  const beat = setInterval(() => write('PING'), 15_000);
+  if (beat.unref) beat.unref();
+  return {
+    log: write,
+    end() { clearInterval(beat); res.end(); },
+  };
+}
+
 async function backUp(relPath, contents, message, log = () => {}) {
   if (!githubConfigured()) {
     log(`not backed up — GitHub backup is not set up, so this will be lost when the app restarts`);
@@ -693,12 +720,8 @@ async function handleWrite(req, res, url, route) {
   // staring at a spinner with no idea whether it is working.
   if (route === '/api/generate/bingo' && req.method === 'POST') {
     const body = await readJson(req);
-    res.writeHead(200, {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'no-cache, no-transform',
-      'X-Accel-Buffering': 'no',
-    });
-    const log = (line) => { try { res.write(line + '\n'); } catch { /* client left */ } };
+    const stream = progressStream(res);
+    const log = stream.log;
     try {
       const result = await generateBingoPack({
         config,
@@ -736,7 +759,7 @@ async function handleWrite(req, res, url, route) {
     } catch (err) {
       log('ERROR ' + err.message);
     }
-    res.end();
+    stream.end();
     return true;
   }
 
@@ -744,12 +767,8 @@ async function handleWrite(req, res, url, route) {
   // because three rounds of Claude takes the best part of a minute.
   if (route === '/api/generate/quiz' && req.method === 'POST') {
     const body = await readJson(req);
-    res.writeHead(200, {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'no-cache, no-transform',
-      'X-Accel-Buffering': 'no',
-    });
-    const log = (line) => { try { res.write(line + '\n'); } catch { /* client left */ } };
+    const stream = progressStream(res);
+    const log = stream.log;
     try {
       // Whitelisted against ROUND_TYPES rather than a list written out here.
       // It was written out here, and "multi" was added to the app months
@@ -792,7 +811,7 @@ async function handleWrite(req, res, url, route) {
     } catch (err) {
       log('ERROR ' + err.message);
     }
-    res.end();
+    stream.end();
     return true;
   }
 
@@ -807,12 +826,8 @@ async function handleWrite(req, res, url, route) {
    */
   if (route === '/api/generate/images' && req.method === 'POST') {
     const body = await readJson(req);
-    res.writeHead(200, {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'no-cache, no-transform',
-      'X-Accel-Buffering': 'no',
-    });
-    const log = (line) => { try { res.write(line + '\n'); } catch { /* client left */ } };
+    const stream = progressStream(res);
+    const log = stream.log;
     try {
       const id = String(body.quizId || '');
       const quiz = loadQuiz(config.quizDir, id);
@@ -848,7 +863,7 @@ async function handleWrite(req, res, url, route) {
     } catch (err) {
       log('ERROR ' + err.message);
     }
-    res.end();
+    stream.end();
     return true;
   }
 
@@ -862,12 +877,8 @@ async function handleWrite(req, res, url, route) {
    */
   if (route === '/api/playlist/intro' && req.method === 'POST') {
     const body = await readJson(req);
-    res.writeHead(200, {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'no-cache, no-transform',
-      'X-Accel-Buffering': 'no',
-    });
-    const log = (line) => { try { res.write(line + '\n'); } catch { /* client left */ } };
+    const stream = progressStream(res);
+    const log = stream.log;
     try {
       const id = String(body.quizId || '');
       const quiz = loadQuiz(config.quizDir, id);
@@ -891,7 +902,7 @@ async function handleWrite(req, res, url, route) {
     } catch (err) {
       log('ERROR ' + err.message);
     }
-    res.end();
+    stream.end();
     return true;
   }
 
@@ -899,12 +910,8 @@ async function handleWrite(req, res, url, route) {
   // one Claude made for you in a browser. Streams like the generators do.
   if (route === '/api/import/bingo' && req.method === 'POST') {
     const body = await readJson(req, 512 * 1024);
-    res.writeHead(200, {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'no-cache, no-transform',
-      'X-Accel-Buffering': 'no',
-    });
-    const log = (line) => { try { res.write(line + '\n'); } catch { /* client left */ } };
+    const stream = progressStream(res);
+    const log = stream.log;
     try {
       const result = await importBingoPack({
         config,
@@ -932,7 +939,7 @@ async function handleWrite(req, res, url, route) {
     } catch (err) {
       log('ERROR ' + err.message);
     }
-    res.end();
+    stream.end();
     return true;
   }
 

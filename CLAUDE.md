@@ -256,6 +256,15 @@ sixty candidates and forty resolved lookups because the optional bit failed. It
 is caught, reported as `playlistError`, and the pack is saved regardless. There
 is a test.
 
+**A long job has to keep talking.** `progressStream()` in `server.js` sends a
+`PING` every fifteen seconds while a generator is inside a Claude call, because
+a minute of silence is long enough for something between the app and the
+browser to hang up. The console skips `PING` lines, and — the other half of the
+same bug — treats a stream that ends with **neither** a result nor an error as
+"the connection dropped, it may still have finished, go and look". It used to
+read `done.problems` off a null and show *"Cannot read properties of null"*,
+which told the host nothing about a generation that was probably still running.
+
 **Failure messages have to name the cause.** Both of these were mysteries at
 midnight before they were fixed: this one, and Spotify's bare 403 `Forbidden`
 on creating a playlist, which is now told apart by asking the token which

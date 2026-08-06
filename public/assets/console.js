@@ -356,11 +356,19 @@ async function streamGeneration(path, body, say) {
     const lines = buffer.split('\n');
     buffer = lines.pop();
     for (const line of lines) {
-      if (!line) continue;
+      if (!line || line === 'PING') continue;   // keep-alive, nothing to show
       if (line.startsWith('DONE ')) done = JSON.parse(line.slice(5));
       else if (line.startsWith('ERROR ')) error = line.slice(6);
       else say(line);
     }
+  }
+
+  // Neither a result nor a reason means the connection went away mid-job. The
+  // server carries on regardless, so say that rather than leaving somebody
+  // thinking it failed — and never hand a null back to the caller, which is
+  // how this first showed up: "Cannot read properties of null".
+  if (!done && !error) {
+    error = 'The connection dropped before it finished. It may still have completed — reload and look at your packs before running it again.';
   }
   return { done, error };
 }
@@ -541,13 +549,16 @@ async function generate(panel) {
       const lines = buffer.split('\n');
       buffer = lines.pop();
       for (const line of lines) {
-        if (!line) continue;
+        if (!line || line === 'PING') continue;   // keep-alive, nothing to show
         if (line.startsWith('DONE ')) done = JSON.parse(line.slice(5));
         else if (line.startsWith('ERROR ')) failed = line.slice(6);
         else say(line);
       }
     }
 
+    if (!done && !failed) {
+      failed = 'The connection dropped before it finished. It may still have completed — reload and look at your packs before running it again.';
+    }
     if (failed) {
       say('');
       status.appendChild(node(`<div class="gen-bad">${esc(failed)}</div>`));
