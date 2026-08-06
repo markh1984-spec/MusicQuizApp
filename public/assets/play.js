@@ -362,6 +362,11 @@ function screenKey(s) {
 }
 
 function buildScreen(s) {
+  // The camera button floats over the bottom right of the phone. On a bingo
+  // card that put 58 pixels of button on top of a square — one nobody can tap,
+  // and therefore a full house nobody can get. This tells the stylesheet to
+  // move it down beside the BINGO button instead.
+  document.body.classList.toggle('bingo-card', s.game === 'bingo' && s.phase !== 'lobby');
   if (s.game === 'bingo') return renderBingo(s, me);
   switch (s.phase) {
     case 'question': return buildAnswers(s);

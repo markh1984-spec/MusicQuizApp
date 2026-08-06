@@ -949,6 +949,13 @@ body.editor::after { display: none; }
 
 /* ---- player card */
 .bingo-wrap { display: flex; flex-direction: column; gap: 12px; flex: 1 1 auto; position: relative; }
+/* The camera button floats over the bottom right of the phone, and on a card
+   it sat ON a square — 58 pixels of button over "Fireflies", which is a square
+   nobody can tap and so a full house nobody can get. On a card it drops down
+   beside the BINGO button, which is wide enough to lose its right-hand end and
+   still be the easiest thing on the screen to hit. */
+body.bingo-card .camera-btn { bottom: 12px; right: 12px; width: 52px; height: 52px; font-size: 22px; }
+body.bingo-card .bingo-call { margin-right: 72px; }
 
 .bingo-status {
   display: flex; justify-content: space-between; align-items: center;
