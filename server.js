@@ -21,7 +21,7 @@ import { Hub } from './src/sse.js';
 import { Photos, MAX_BYTES } from './src/photos.js';
 import { Session } from './src/session.js';
 import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked, ROUND_TYPES } from './src/quizzes.js';
-import { validateBingoPack, normaliseBingoPack } from './src/bingo.js';
+import { validateBingoPack, normaliseBingoPack, minimumTracks } from './src/bingo.js';
 import { fullLibrary, listArchive, loadArchived, saveBingoPack, loadBingoPack, deleteBingoPack } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
 import { generateQuizPack, buildIntroPlaylists } from './src/generate-quiz.js';
@@ -319,6 +319,10 @@ async function handleGet(req, res, url, route) {
       brand: config.brandName,
       ...library,
       adverts: listAdvertPacks(config.advertDir),
+      // How many tracks each card size wants, straight from the rule itself so
+      // the console can size a pasted list without keeping its own copy of the
+      // sum and drifting from it.
+      cardSizes: [3, 4, 5].map((size) => ({ size, minimum: minimumTracks(size) })),
       running: {
         game: session.kind,
         packId: session.pack.id,

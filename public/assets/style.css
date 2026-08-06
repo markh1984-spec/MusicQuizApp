@@ -985,6 +985,21 @@ body.editor::after { display: none; }
 .bingo-cell.unconfirmed { border-color: var(--gold); background: rgba(255, 210, 63, 0.14); }
 .bingo-cell.unconfirmed .btick { color: var(--gold); }
 
+/* A 5x5 is twenty-five squares on a phone, so the type has to come down with
+   the cell. At the sizes above, "Bootylicious" came out as "Bootyliciou" and
+   "Irreplaceable" as "rreplaceabl" — a square you cannot read is a square you
+   cannot mark, and on the night that is somebody missing a full house. Four
+   lines rather than three, because the words are what matter here, not the
+   tidiness of the grid. */
+.bingo-grid.cols-5 { gap: 4px; }
+.bingo-grid.cols-5 .bingo-cell { padding: 4px 2px; gap: 1px; border-radius: 9px; border-width: 1.5px; }
+.bingo-grid.cols-5 .bingo-cell .bt { font-size: 10.5px; line-height: 1.1; -webkit-line-clamp: 4; }
+.bingo-grid.cols-5 .bingo-cell .ba { font-size: 8.5px; }
+.bingo-grid.cols-5 .bingo-cell .btick { font-size: 30px; }
+/* Nine big squares can afford to be read from further away. */
+.bingo-grid.cols-3 .bingo-cell .bt { font-size: 15px; }
+.bingo-grid.cols-3 .bingo-cell .ba { font-size: 12px; }
+
 .bingo-call {
   flex: 0 0 auto;
   background: linear-gradient(120deg, var(--good), var(--cool));

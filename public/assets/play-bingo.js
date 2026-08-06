@@ -29,7 +29,7 @@ export function renderBingo(s, me) {
   const el = node(`
     <div class="bingo-wrap">
       <div class="bingo-status" id="bingoStatus"></div>
-      <div class="bingo-grid" style="grid-template-columns:repeat(${size}, 1fr)" id="bingoGrid"></div>
+      <div class="bingo-grid cols-${size}" style="grid-template-columns:repeat(${size}, 1fr)" id="bingoGrid"></div>
       <button class="btn bingo-call" id="bingoCall" disabled>BINGO!</button>
     </div>`);
 

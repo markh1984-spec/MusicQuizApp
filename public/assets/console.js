@@ -453,6 +453,7 @@ function importPanel(gen) {
         <label>Card <select id="impSize"><option value="3">3×3</option><option value="4" selected>4×4</option><option value="5">5×5</option></select></label>
         <label>Call it <input type="text" id="impTitle" placeholder="optional" style="width:150px"></label>
         <label title="Off by default — you probably built this list on purpose."><input type="checkbox" id="impAvoid"> Skip songs played recently</label>
+        <span class="tiny" id="impFit"></span>
       </div>
       <div class="gen-status" id="impStatus"></div>
       ${gen.spotify ? '' : '<div class="tiny warn">Spotify is not set up, so playlist links will not work — paste a list instead.</div>'}
@@ -460,7 +461,62 @@ function importPanel(gen) {
 
   el.querySelector('#impGo').addEventListener('click', () => runImport(el));
   el.querySelector('#impUrl').addEventListener('keydown', (e) => { if (e.key === 'Enter') runImport(el); });
+  fitCardSize(el);
   return el;
+}
+
+/**
+ * Size the card from the list you just pasted.
+ *
+ * A round of 42 is a 5x5 round, and pasting one into a box that always said
+ * 4x4 quietly made it a 4x4 — sixteen squares out of forty-two songs, so a
+ * line lands early and most of the round never reaches anybody's card. It was
+ * a dropdown you had to know to change, defaulting to the wrong answer for the
+ * list in front of it.
+ *
+ * So it moves itself to the biggest card the list will carry, and says what it
+ * did. Biggest rather than smallest because more squares is a longer game, and
+ * a list of that size was written for a longer game.
+ *
+ * It stops adjusting the moment you touch the dropdown yourself. A control
+ * that overrules you is worse than one that never helped.
+ */
+function fitCardSize(panel) {
+  const text = panel.querySelector('#impText');
+  const select = panel.querySelector('#impSize');
+  const note = panel.querySelector('#impFit');
+  // Straight from minimumTracks() on the server, so this cannot drift from the
+  // rule the import will actually apply.
+  const sizes = (library && library.cardSizes) || [];
+  if (!sizes.length) return;
+
+  let yours = false;
+  select.addEventListener('change', () => { yours = true; note.textContent = ''; });
+
+  const paint = () => {
+    const count = text.value.split('\n').filter((l) => l.trim()).length;
+    if (!count) { note.textContent = ''; return; }
+
+    const fits = sizes.filter((s) => count >= s.minimum);
+    if (!fits.length) {
+      const smallest = sizes[0];
+      note.innerHTML = `<b>${count} tracks — too few.</b> The smallest card (${smallest.size}×${smallest.size}) needs ${smallest.minimum}.`;
+      return;
+    }
+    const best = fits[fits.length - 1];
+    if (!yours) select.value = String(best.size);
+    const named = fits.map((s) => `${s.size}×${s.size}`);
+    const listed = named.length === 1 ? named[0] : `${named.slice(0, -1).join(', ')} or ${named[named.length - 1]}`;
+    note.textContent = yours
+      ? `${count} tracks — ${listed} would work.`
+      : `${count} tracks, so a ${best.size}×${best.size} card. Change it if you would rather.`;
+  };
+
+  text.addEventListener('input', paint);
+  // Pasting fires input on every browser worth worrying about, but a paste
+  // handler runs before the value lands, so this one waits a tick.
+  text.addEventListener('paste', () => setTimeout(paint, 0));
+  paint();
 }
 
 async function runImport(panel) {
