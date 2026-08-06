@@ -797,6 +797,7 @@ function packCard(kind, pack) {
       <div class="pack-actions">
         <button class="go launch" ${pack.broken ? 'disabled' : ''}>Launch</button>
         <button class="pack-read" title="Read it through">Read</button>
+        <button class="pack-rename" ${pack.broken ? 'disabled' : ''} title="Change what it is called">Rename</button>
         ${pack.playlist ? `<a class="pack-spotify" href="${esc(pack.playlist)}" target="_blank" rel="noopener" title="Open it in Spotify">Playlist</a>` : ''}
         ${hasPictureRound(pack) ? '<button class="pack-pics" title="Make the round 2 portraits">Pictures</button>' : ''}
         ${hasIntroRound(pack) ? '<button class="pack-playlist" title="Build the Spotify playlist for the intro round">Playlist</button>' : ''}
@@ -817,6 +818,49 @@ function packCard(kind, pack) {
   el.querySelector('.pack-playlist')?.addEventListener('click', () => toggle(playlistPanel));
   el.querySelector('.pack-title')?.addEventListener('click', openIt);
   el.querySelector('.pack-read')?.addEventListener('click', openIt);
+
+  /*
+   * Rename without opening the pack.
+   *
+   * The title is the only thing you ever want to change from out here — a pack
+   * called "1980s Music Bingo" is fine until the night you run two of them.
+   *
+   * The id is deliberately left alone. It is what the play counts, the song
+   * history and the backup file are all keyed on, so renaming the file to
+   * match would quietly orphan all three. What the pack is called and what it
+   * is filed under are different things.
+   */
+  el.querySelector('.pack-rename')?.addEventListener('click', async () => {
+    const answer = prompt('What should this be called?', pack.title);
+    if (answer === null) return;
+    const title = answer.trim();
+    if (!title || title === pack.title) return;
+
+    const button = el.querySelector('.pack-rename');
+    button.disabled = true;
+    button.textContent = 'Saving…';
+    try {
+      const url = keyed(`/api/${kind}/` + encodeURIComponent(pack.id));
+      const res = await fetch(url, { headers: { 'X-Host-Key': hostKey } });
+      if (!res.ok) throw new Error('Could not read that pack');
+      const full = await res.json();
+      delete full.reviewWarnings;   // added by the server when reading, not part of the pack
+      full.title = title;
+
+      const saved = await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
+        body: JSON.stringify(full),
+      });
+      const data = await saved.json().catch(() => ({}));
+      if (!saved.ok) throw new Error((data.problems || []).join('; ') || data.error || 'Could not save it');
+      await load();
+    } catch (err) {
+      alert(`Could not rename it: ${err.message}`);
+      button.disabled = false;
+      button.textContent = 'Rename';
+    }
+  });
 
   el.querySelector('.pack-del')?.addEventListener('click', async () => {
     if (!confirm(`Delete "${pack.title}"?\n\nThis removes it from your library for good.`)) return;
