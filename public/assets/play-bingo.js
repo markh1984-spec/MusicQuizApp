@@ -11,7 +11,7 @@ import { esc, node, postJson } from './client.js';
 let marking = new Set(); // squares tapped but not yet confirmed by the server
 
 export function bingoKey(s) {
-  return `bingo:${s.phase}:${s.round}:${s.target}`;
+  return `bingo:${s.phase}:${s.round}:${s.target}:${s.stage ? s.stage.index : 0}`;
 }
 
 /**
@@ -26,10 +26,10 @@ export function bingoKey(s) {
 function lineWording(s) {
   const cols = s.cardCols || s.cardSize || 4;
   const rows = s.cardRows || s.cardSize || 4;
-  if (rows === cols) return 'Get a full line';
-  return rows > cols
-    ? `Get a full column — ${rows} down`
-    : `Get a full row — ${cols} across`;
+  const needs = s.stage ? s.stage.needs : 1;
+  const which = rows === cols ? 'line' : (rows > cols ? `column — ${rows} down` : `row — ${cols} across`);
+  if (needs === 'full') return 'Get a full house';
+  return needs > 1 ? `Get ${needs} full ${rows === cols ? 'lines' : which + 's'}` : `Get a full ${which}`;
 }
 
 export function renderBingo(s, me) {
@@ -100,14 +100,20 @@ function paintCard(root, s, me) {
   const status = root.querySelector('#bingoStatus');
   if (status) {
     const away = s.you ? s.you.squaresAway : null;
+    // What they have already won stays on screen beside what is being played
+    // for now, so somebody who took the first prize can still see how close
+    // they are to the next one.
+    const already = (s.yourPrizes || []).length
+      ? `<span class="yours">You have won ${esc(s.yourPrizes.join(' and '))}</span>`
+      : '';
     if (s.won) {
       status.innerHTML = '<span class="won">You got it. Well done.</span>';
-    } else if (s.target === 'full') {
-      status.innerHTML = `<span>Playing for a <b>full house</b></span><span class="away">${away} to go</span>`;
+    } else if (s.stage && s.stage.needs === 'full') {
+      status.innerHTML = `<span>Playing for a <b>full house</b></span><span class="away">${away} to go</span>${already}`;
     } else {
       status.innerHTML = `<span>${esc(lineWording(s))}</span><span class="away ${away === 1 ? 'hot' : ''}">${
         away === 0 ? 'Press BINGO!' : `${away} to go`
-      }</span>`;
+      }</span>${already}`;
     }
   }
 

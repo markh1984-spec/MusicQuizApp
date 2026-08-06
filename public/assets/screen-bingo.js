@@ -23,11 +23,13 @@ export function bingoCard(state) {
 }
 
 export function bingoTopbar(state) {
-  return state.phase === 'lobby'
-    ? 'Join now'
-    : state.target === 'full'
-      ? 'Playing for a full house'
-      : `Round ${state.round} — one line`;
+  if (state.phase === 'lobby') return 'Join now';
+  const stage = state.stage;
+  if (!stage) return `Round ${state.round} — one line`;
+  // With more than one prize the room wants to know which they are on, because
+  // "playing for a line" and "playing for the last one" are different rooms.
+  const which = stage.total > 1 ? ` — prize ${stage.index + 1} of ${stage.total}` : '';
+  return `Playing for ${stage.label}${which}`;
 }
 
 // ------------------------------------------------------------------- lobby
@@ -151,15 +153,21 @@ function renderWin(s) {
 }
 
 function renderFinished(s) {
-  const line = (s.winners && s.winners.line) || [];
-  const full = (s.winners && s.winners.full) || [];
+  // One row per prize, in the order they were won, so the room sees every
+  // winner of the night rather than just "line" and "full house".
+  const prizes = (s.prizes || []).filter((p) => p.winner);
+  const fallback = [
+    ...(((s.winners && s.winners.line) || []).map((n) => ({ label: 'a line', winner: n }))),
+    ...(((s.winners && s.winners.full) || []).map((n) => ({ label: 'a full house', winner: n }))),
+  ];
+  const rows = prizes.length ? prizes : fallback;
   return node(`
     <div class="winner">
       <div class="kicker">That is your lot</div>
       <h1 class="grad-text">${esc(s.title)}</h1>
       <div class="runners" style="flex-direction:column;gap:1.4vh">
-        ${line.length ? `<span>Line: ${line.map(esc).join(', ')}</span>` : ''}
-        ${full.length ? `<span>Full house: ${full.map(esc).join(', ')}</span>` : ''}
+        ${rows.map((p) => `<span>${esc(p.label.replace(/^a /, '').replace(/^./, (c) => c.toUpperCase()))}: ${esc(p.winner)}</span>`).join('')}
+        ${rows.length ? '' : '<span>Nobody got there</span>'}
       </div>
     </div>
   `);

@@ -14,7 +14,7 @@
  */
 
 import { Engine, PHASES, isSafeId } from './engine.js';
-import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFields } from './bingo.js';
+import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFields, stagePlan, maxPrizes } from './bingo.js';
 import { listQuizzes, loadQuiz } from './quizzes.js';
 import { listBingoPacks, loadBingoPack, recordLaunch, archiveResults } from './library.js';
 import { findSlide } from './adverts.js';
@@ -206,6 +206,7 @@ export class Session {
   /**
    * @param {object} [opts]
    * @param {{rows:number, cols:number}} [opts.shape]  bingo card shape for tonight
+   * @param {number} [opts.prizes]                     how many prizes to give out
    *
    * The card shape belongs to the NIGHT, not to the pack. The same forty-two
    * songs are a quick game on a 3x3 and a long one on a 3x8, and which you
@@ -214,7 +215,7 @@ export class Session {
    * own shape is the default; this overrides it for this game only and is never
    * written back to the file.
    */
-  launch(kind, packId, { shape = null } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0 } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     const pack = LAUNCHERS[kind].load(this.config, packId);
     const normalised = kind === 'bingo' ? normaliseBingoPack(pack, packId) : pack;
@@ -224,6 +225,14 @@ export class Session {
       Object.assign(normalised, shapeFields(shape));
     }
     this.build(kind, normalised, null);
+    // How many prizes tonight, decided alongside the card shape and for the
+    // same reason: it is a decision about this evening, not about the pack.
+    if (kind === 'bingo' && prizes) {
+      const wanted = Math.max(1, Math.min(maxPrizes(this.engine.shape), Math.floor(prizes)));
+      this.engine.state.stages = stagePlan(wanted);
+      this.engine.state.stageIndex = 0;
+      this.engine.syncTarget();
+    }
     recordLaunch(this.config.dataDir, kind, normalised.id, this.now());
     this.engine.changed();
     return { kind, id: normalised.id, title: normalised.title };

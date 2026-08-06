@@ -24,16 +24,21 @@ export function bingoPanels(s, act) {
 export function bingoActions(s, act, minor) {
   const out = [];
 
+  // What the next prize is, by name, rather than "a full house" whatever it
+  // actually is. With three prizes the host is announcing "now play on for two
+  // lines", and the button has to agree with what they are about to say.
+  const stage = s.stage || { index: 0, total: 2, label: 'a line', last: false };
+  const nextLabel = (s.prizes && s.prizes[stage.index + 1] && s.prizes[stage.index + 1].label) || 'a full house';
   const primaryLabel = s.phase === 'lobby'
     ? 'Start — then call your first track'
     : s.win
-      ? (s.target === 'full' ? 'Finish the game' : 'Play on for a full house')
+      ? (stage.last ? 'Finish the game' : `Play on for ${nextLabel}`)
       : 'Tap a track above as you play it';
 
   const primary = node(`<button class="primary" ${!s.win && s.phase !== 'lobby' ? 'disabled' : ''}>${esc(primaryLabel)}</button>`);
   primary.addEventListener('click', () => {
     if (s.phase === 'lobby') act('start');
-    else if (s.win) act(s.target === 'full' ? 'finish' : 'playOn', { target: 'full' });
+    else if (s.win) act(stage.last ? 'finish' : 'playOn');
   });
   out.push(primary);
 
@@ -52,7 +57,7 @@ export function bingoActions(s, act, minor) {
 function winPanel(s, act) {
   return node(`
     <div class="panel secret">
-      <h3>${s.win.pattern === 'full' ? 'Full house' : 'Line'} claimed — and it checks out</h3>
+      <h3>${esc(((s.win.label || 'a line').charAt(0).toUpperCase() + (s.win.label || 'a line').slice(1)))} claimed — and it checks out</h3>
       <div class="cue">
         <div class="track">${esc(s.win.name)}</div>
         <div class="from">Verified against what you actually played.</div>

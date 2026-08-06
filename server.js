@@ -21,7 +21,7 @@ import { Hub } from './src/sse.js';
 import { Photos, MAX_BYTES } from './src/photos.js';
 import { Session } from './src/session.js';
 import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked, ROUND_TYPES } from './src/quizzes.js';
-import { validateBingoPack, normaliseBingoPack, minimumTracks, CARD_SHAPES, shapeLabel } from './src/bingo.js';
+import { validateBingoPack, normaliseBingoPack, minimumTracks, CARD_SHAPES, shapeLabel, maxPrizes, stagePlan, stageLabel } from './src/bingo.js';
 import { fullLibrary, listArchive, loadArchived, saveBingoPack, loadBingoPack, deleteBingoPack } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
 import { generateQuizPack, buildIntroPlaylists } from './src/generate-quiz.js';
@@ -342,7 +342,15 @@ async function handleGet(req, res, url, route) {
       // sum and drifting from it.
       // The card shapes on offer, with what each needs, straight from the rules
       // themselves so the console keeps no copy of the sum to drift from.
-      cardShapes: CARD_SHAPES.map((shape) => ({ ...shape, label: shapeLabel(shape), minimum: minimumTracks(shape) })),
+      cardShapes: CARD_SHAPES.map((shape) => ({
+        ...shape,
+        label: shapeLabel(shape),
+        minimum: minimumTracks(shape),
+        // How many prizes this shape can carry, and what each of them is, so
+        // the console can offer the right ones without doing the sums itself.
+        maxPrizes: maxPrizes(shape),
+        plans: Array.from({ length: maxPrizes(shape) }, (_, i) => stagePlan(i + 1).map(stageLabel)),
+      })),
       running: {
         game: session.kind,
         packId: session.pack.id,
@@ -641,7 +649,8 @@ async function handleWrite(req, res, url, route) {
         const shape = body.shape && Number(body.shape.rows) && Number(body.shape.cols)
           ? { rows: Number(body.shape.rows), cols: Number(body.shape.cols) }
           : null;
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape });
+        const prizes = Math.max(0, Math.min(5, Number(body.prizes) || 0));
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes });
         return sendJson(res, 200, { ok: true, started, view: session.hostView() }), true;
       } catch (err) {
         return sendJson(res, 400, { error: err.message }), true;

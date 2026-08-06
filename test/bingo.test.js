@@ -12,6 +12,7 @@ import assert from 'node:assert/strict';
 import {
   BingoGame, BINGO_PHASES, TARGETS, validateBingoPack, normaliseBingoPack, shuffle,
   cardLines, cardShape, shapeLabel, minimumTracks, CARD_SHAPES,
+  stagePlan, maxPrizes, stageLabel, DEFAULT_STAGES,
 } from '../src/bingo.js';
 
 const START = 1_700_000_000_000;
@@ -443,11 +444,11 @@ test('where() counts the tracks played and says what they are going for', () => 
 
   game.join({ name: 'Mum' });
   game.start();
-  assert.equal(game.where(), 'Round 1 — 0 of 40 played, going for a line');
+  assert.equal(game.where(), 'Round 1 — 0 of 40 played, going for a line (prize 1 of 2)');
 
   game.call('t1');
   game.call('t2');
-  assert.equal(game.where(), 'Round 1 — 2 of 40 played, going for a line');
+  assert.equal(game.where(), 'Round 1 — 2 of 40 played, going for a line (prize 1 of 2)');
 
   game.finish();
   assert.match(game.where(), /finished/i);
@@ -588,4 +589,214 @@ test('a game saved before shapes existed still comes back square', () => {
   delete onDisk.cardSize;
   const revived = new BingoGame({ pack: makePack(), state: onDisk, now: () => START });
   assert.deepEqual(revived.shape, { rows: 4, cols: 4 });
+});
+
+// --------------------------------------------------------------- the prizes
+
+/*
+ * More than one winner in a round: a line, then two lines, then a full house.
+ * Traditional pub bingo, and the thing that turns one prize into three.
+ *
+ * The risk in staged prizes is a claim being judged against the wrong stage —
+ * either a player winning early on a target nobody announced, or the game
+ * refusing a genuine win. Both end in an argument in front of a room.
+ */
+function stagedGame(prizes = 3, pack = makePack(40)) {
+  const { game } = makeGame(pack);
+  game.state.stages = stagePlan(prizes);
+  game.state.stageIndex = 0;
+  game.syncTarget();
+  return game;
+}
+
+/** Call and mark every square of the player's nth line. */
+function completeLine(game, player, n) {
+  for (const i of game.lines()[n]) {
+    game.call(player.card[i]);
+    game.mark({ playerId: player.id, index: i, marked: true });
+  }
+}
+
+test('the default is what it always was — a line, then a full house', () => {
+  const { game } = makeGame();
+  assert.deepEqual(game.stages, DEFAULT_STAGES);
+  assert.deepEqual(game.stages, [1, 'full']);
+  assert.equal(game.state.target, TARGETS.LINE);
+});
+
+test('three prizes are a line, two lines, then a full house', () => {
+  assert.deepEqual(stagePlan(1), ['full']);
+  assert.deepEqual(stagePlan(2), [1, 'full']);
+  assert.deepEqual(stagePlan(3), [1, 2, 'full']);
+  assert.deepEqual(stagePlan(4), [1, 2, 3, 'full']);
+});
+
+test('one line does not win the two-line prize', () => {
+  const game = stagedGame(3);
+  const p = game.join({ name: 'Keen' });
+  game.start();
+  completeLine(game, p, 0);
+  assert.equal(game.claim(p.id).valid, true, 'the first prize is one line');
+
+  game.playOn();
+  assert.equal(game.stage, 2, 'now playing for two lines');
+  // The same card, the same one line — and it must not win again.
+  assert.equal(game.claim(p.id).valid, false);
+  assert.equal(game.state.players[p.id].falseCalls, 1);
+
+  completeLine(game, p, 1);
+  assert.equal(game.claim(p.id).valid, true, 'two lines wins the second prize');
+});
+
+test('the prizes are won in order and each has its own winner', () => {
+  const game = stagedGame(3);
+  const a = game.join({ name: 'Sharon' });
+  const b = game.join({ name: 'Dave' });
+  game.start();
+
+  completeLine(game, a, 0);
+  game.claim(a.id);
+  game.playOn();
+  completeLine(game, b, 0);
+  completeLine(game, b, 1);
+  game.claim(b.id);
+
+  const prizes = game.hostView().prizes;
+  assert.deepEqual(prizes.map((x) => x.label), ['a line', '2 lines', 'a full house']);
+  assert.equal(prizes[0].winner, 'Sharon');
+  assert.equal(prizes[1].winner, 'Dave');
+  assert.equal(prizes[2].winner, null, 'the full house is still to play for');
+});
+
+test('there is nothing to play on to after the last prize', () => {
+  const game = stagedGame(2);
+  const p = game.join({ name: 'X' });
+  game.start();
+  completeLine(game, p, 0);
+  game.claim(p.id);
+  assert.equal(game.playOn(), true, 'on to the full house');
+  assert.equal(game.stage, TARGETS.FULL);
+  assert.equal(game.playOn(), false, 'and no further — that was the last one');
+  assert.equal(game.stage, TARGETS.FULL, 'it did not wrap round and restart the round');
+});
+
+test('"how many to go" counts to the prize in play, not to one line', () => {
+  const game = stagedGame(3);
+  const p = game.join({ name: 'X' });
+  game.start();
+  const before = game.squaresAway(game.state.players[p.id]);
+  completeLine(game, p, 0);
+  assert.equal(game.squaresAway(game.state.players[p.id]), 0, 'one line, one prize');
+
+  game.playOn();
+  const away = game.squaresAway(game.state.players[p.id]);
+  assert.ok(away > 0, 'two lines is further away than one');
+  assert.ok(away < before, 'but nearer than starting from nothing');
+});
+
+test('crossing lines are counted together, not one after the other', () => {
+  // Two lines that share a square are cheaper together than separately, and a
+  // player told "8 to go" when it is really 7 will not press the button.
+  const game = stagedGame(3);
+  const p = game.join({ name: 'X' });
+  game.start();
+  const player = game.state.players[p.id];
+  game.playOn(); // straight to the two-line prize
+  assert.equal(game.stage, 2);
+
+  const lines = game.lines();
+  const cheapest = Math.min(...lines.flatMap((a, i) =>
+    lines.slice(i + 1).map((b) => new Set([...a, ...b]).size)));
+  assert.equal(game.squaresAway(player), cheapest,
+    'the smallest pair of lines, counted as a set rather than added up');
+});
+
+test('a new round puts the prizes back to the first one', () => {
+  const game = stagedGame(3);
+  const p = game.join({ name: 'X' });
+  game.start();
+  completeLine(game, p, 0);
+  game.claim(p.id);
+  game.playOn();
+  assert.equal(game.state.stageIndex, 1);
+
+  game.newRound();
+  assert.equal(game.state.stageIndex, 0);
+  assert.equal(game.stage, 1);
+  assert.deepEqual(game.hostView().prizes.map((x) => x.winner), [null, null, null]);
+});
+
+test('the prizes survive a crash, like the shape does', () => {
+  const game = stagedGame(3);
+  const p = game.join({ name: 'X' });
+  game.start();
+  completeLine(game, p, 0);
+  game.claim(p.id);
+  game.playOn();
+
+  const onDisk = JSON.parse(JSON.stringify(game.state));
+  const revived = new BingoGame({ pack: makePack(40), state: onDisk, now: () => START });
+  assert.deepEqual(revived.stages, [1, 2, 'full']);
+  assert.equal(revived.stage, 2, 'still playing for two lines');
+  assert.equal(revived.hostView().prizes[0].winner, 'X', 'and the first prize is still won');
+});
+
+test('a game saved before prizes existed still plays line then full house', () => {
+  const { game } = makeGame();
+  const onDisk = JSON.parse(JSON.stringify(game.state));
+  delete onDisk.stages;
+  delete onDisk.stageIndex;
+  const revived = new BingoGame({ pack: makePack(), state: onDisk, now: () => START });
+  assert.deepEqual(revived.stages, [1, 'full']);
+  assert.equal(revived.stage, 1);
+});
+
+test('a card is only offered as many prizes as it has lines to give', () => {
+  // A 3-across strip has three lines, and finishing all three IS a full house,
+  // so a third line prize would be the same prize twice.
+  assert.equal(maxPrizes({ rows: 8, cols: 3 }), 3);
+  assert.equal(maxPrizes({ rows: 5, cols: 5 }), 5);
+  for (const shape of CARD_SHAPES) {
+    const plan = stagePlan(maxPrizes(shape));
+    const lineStages = plan.filter((x) => x !== 'full');
+    assert.ok(Math.max(0, ...lineStages) < cardLines(shape).length,
+      `${shapeLabel(shape)}: the last line prize must land before the full house`);
+  }
+});
+
+test('the wording is the same everywhere it is said', () => {
+  assert.equal(stageLabel(1), 'a line');
+  assert.equal(stageLabel(2), '2 lines');
+  assert.equal(stageLabel('full'), 'a full house');
+});
+
+test('a player who has won one prize can still see how far off the next is', () => {
+  // With three prizes the first winner keeps playing. Their phone used to say
+  // "You got it. Well done." for the rest of the round, so the one person who
+  // had proved they were paying attention was the only one who could no longer
+  // see how close they were.
+  const game = stagedGame(3);
+  const p = game.join({ name: 'Sharon' });
+  game.start();
+  completeLine(game, p, 0);
+  game.claim(p.id);
+  assert.equal(game.playerView(p.id).won, true, 'while the win is on the projector');
+
+  game.playOn();
+  const view = game.playerView(p.id);
+  assert.equal(view.won, false, 'but not once the next prize is in play');
+  assert.deepEqual(view.yourPrizes, ['a line'], 'it still remembers what they won');
+  assert.ok(view.you.squaresAway > 0, 'and tells them how far off the next one is');
+});
+
+test('somebody else winning does not say "you got it" on your phone', () => {
+  const game = stagedGame(2);
+  const a = game.join({ name: 'Sharon' });
+  const b = game.join({ name: 'Dave' });
+  game.start();
+  completeLine(game, a, 0);
+  game.claim(a.id);
+  assert.equal(game.playerView(a.id).won, true);
+  assert.equal(game.playerView(b.id).won, false);
+  assert.deepEqual(game.playerView(b.id).yourPrizes, []);
 });

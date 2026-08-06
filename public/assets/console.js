@@ -1003,6 +1003,9 @@ function packCard(kind, pack) {
       ${kind === 'bingo' && !pack.broken ? `
         <label class="pack-shape">Cards
           <select class="shape-pick">${shapeOptions(pack)}</select>
+        </label>
+        <label class="pack-shape">Prizes
+          <select class="prize-pick"></select>
         </label>` : ''}
       <div class="pack-actions">
         <button class="pack-read" title="Read it through">Read</button>
@@ -1028,6 +1031,31 @@ function packCard(kind, pack) {
   el.querySelector('.pack-playlist')?.addEventListener('click', () => toggle(playlistPanel));
   el.querySelector('.pack-title')?.addEventListener('click', openIt);
   el.querySelector('.pack-read')?.addEventListener('click', openIt);
+
+  /*
+   * How many prizes, and what each one is.
+   *
+   * It depends on the card: a 3-across strip has only three lines, so two line
+   * prizes and a full house is all it can carry, and offering four would be
+   * offering one nobody could win. So the list is rebuilt whenever the shape
+   * changes rather than written out once.
+   */
+  const shapePick = el.querySelector('.shape-pick');
+  const prizePick = el.querySelector('.prize-pick');
+  const paintPrizes = () => {
+    if (!shapePick || !prizePick) return;
+    const chosen = JSON.parse(shapePick.value);
+    const shapes = (library && library.cardShapes) || [];
+    const found = shapes.find((s) => s.rows === chosen.rows && s.cols === chosen.cols);
+    if (!found) return;
+    const wanted = Number(prizePick.value) || 2;
+    prizePick.innerHTML = found.plans.map((plan, i) => {
+      const n = i + 1;
+      return `<option value="${n}" ${n === Math.min(wanted, found.maxPrizes) ? 'selected' : ''}>${n} — ${esc(plan.join(', then '))}</option>`;
+    }).join('');
+  };
+  shapePick?.addEventListener('change', paintPrizes);
+  paintPrizes();
 
   /*
    * Rename without opening the pack.
@@ -1113,7 +1141,8 @@ function packCard(kind, pack) {
     try {
       const picked = el.querySelector('.shape-pick');
       const shape = picked ? JSON.parse(picked.value) : null;
-      await postJson('/api/host/launch', { game: kind, packId: pack.id, shape }, { 'X-Host-Key': hostKey });
+      const prizes = Number(el.querySelector('.prize-pick')?.value) || 0;
+      await postJson('/api/host/launch', { game: kind, packId: pack.id, shape, prizes }, { 'X-Host-Key': hostKey });
       location.href = linkTo('/host');
     } catch (err) {
       button.disabled = false;

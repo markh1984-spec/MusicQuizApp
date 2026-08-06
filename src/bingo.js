@@ -43,6 +43,44 @@ export const TARGETS = {
   FULL: 'full',
 };
 
+/**
+ * The prizes in a round, in the order they are won.
+ *
+ * A stage is either a NUMBER — how many complete lines it takes — or the
+ * string 'full', a full house. `[1, 'full']` is one line then a full house,
+ * which is what every round did before this and is still the default.
+ *
+ * Traditional pub bingo is one line, two lines, full house, and that is the
+ * shape this follows: the line stages count up from one and the last prize is
+ * always the full card. Predictable matters more than clever here — the room
+ * already knows how bingo works, and the host has to say it out loud.
+ */
+export const DEFAULT_STAGES = [1, TARGETS.FULL];
+
+/** The stages for a given number of prizes: 1, 2, 3 … then a full house. */
+export function stagePlan(prizes = 2) {
+  const n = Math.max(1, Math.floor(prizes));
+  return [...Array(n - 1).keys()].map((i) => i + 1).concat(TARGETS.FULL);
+}
+
+/**
+ * How many prizes a card of this shape can carry.
+ *
+ * Capped by how many lines it has, because the last line stage has to be
+ * winnable BEFORE the full house — on a 3-across strip there are only three
+ * lines, and completing all three is a full house, so two line stages is the
+ * most that leaves the last prize meaning anything.
+ */
+export function maxPrizes(shape) {
+  return Math.max(1, Math.min(5, cardLines(shape).length));
+}
+
+/** "a line", "3 lines", "a full house" — one wording, used on every screen. */
+export function stageLabel(stage) {
+  if (stage === TARGETS.FULL) return 'a full house';
+  return stage === 1 ? 'a line' : `${stage} lines`;
+}
+
 export class BingoGame {
   /**
    * @param {object} opts
@@ -74,6 +112,13 @@ export class BingoGame {
       ...shapeFields(cardShape(pack)),
       phase: BINGO_PHASES.LOBBY,
       version: 0,
+      // The prizes, and which one is being played for. Chosen at launch beside
+      // the card shape and, like the shape, written here so a restart brings
+      // the same night back rather than the default.
+      stages: [...DEFAULT_STAGES],
+      stageIndex: 0,
+      // Derived from the stage above, and kept in the state because the phone,
+      // the projector and the control view have always read it.
       target: TARGETS.LINE,
       // Bumped whenever cards should all be reissued (a new round).
       round: 1,
@@ -116,6 +161,35 @@ export class BingoGame {
   get squareCount() {
     const { rows, cols } = this.shape;
     return rows * cols;
+  }
+
+  // ------------------------------------------------------------------ prizes
+
+  /** The prizes for this round, oldest games included. */
+  get stages() {
+    const list = this.state.stages;
+    return Array.isArray(list) && list.length ? list : [...DEFAULT_STAGES];
+  }
+
+  /** What is being played for right now. */
+  get stage() {
+    return this.stages[Math.min(this.state.stageIndex || 0, this.stages.length - 1)];
+  }
+
+  /** True once the last prize has been won. */
+  get onLastStage() {
+    return (this.state.stageIndex || 0) >= this.stages.length - 1;
+  }
+
+  /**
+   * Keep `target` in step with the stage.
+   *
+   * Everything that was written before prizes existed reads `state.target` and
+   * expects 'line' or 'full'. Rather than change all of it, the stage decides
+   * what target says, so an old screen still shows something true.
+   */
+  syncTarget() {
+    this.state.target = this.stage === TARGETS.FULL ? TARGETS.FULL : TARGETS.LINE;
   }
 
   get tracks() {
@@ -280,19 +354,30 @@ export class BingoGame {
     return Boolean(player.marks[index]) && this.state.called.includes(player.card[index]);
   }
 
+  /** Which of the card's lines this player has completed, as indexes into lines(). */
+  completedLines(player) {
+    const out = [];
+    this.lines().forEach((line, i) => { if (line.every((sq) => this.isGood(player, sq))) out.push(i); });
+    return out;
+  }
+
   /**
-   * Check a card against the current target. Returns the winning squares so
-   * the big screen can show exactly which line it was.
+   * Check a card against the prize currently being played for. Returns the
+   * winning squares so the big screen can show exactly which line it was.
    */
   evaluate(player) {
-    if (this.state.target === TARGETS.FULL) {
+    const stage = this.stage;
+    if (stage === TARGETS.FULL) {
       const all = player.card.map((_, i) => i);
       return all.every((i) => this.isGood(player, i)) ? { won: true, pattern: 'full', squares: all } : { won: false };
     }
-    for (const line of this.lines()) {
-      if (line.every((i) => this.isGood(player, i))) return { won: true, pattern: 'line', squares: line };
-    }
-    return { won: false };
+    const done = this.completedLines(player);
+    if (done.length < stage) return { won: false };
+    // Every square in the lines they have finished, so the projector can light
+    // up the whole win rather than an arbitrary one of them.
+    const all = this.lines();
+    const squares = [...new Set(done.flatMap((i) => all[i]))].sort((a, b) => a - b);
+    return { won: true, pattern: 'line', squares, lines: done.length };
   }
 
   /**
@@ -326,15 +411,33 @@ export class BingoGame {
 
     const list = this.state.winners[result.pattern];
     if (!list.includes(playerId)) list.push(playerId);
+    // Who won which prize, so the projector can list them at the end. Keyed by
+    // stage rather than by pattern, because "2 lines" and "3 lines" are both
+    // 'line' and are different prizes.
+    if (!Array.isArray(this.state.prizeWinners)) this.state.prizeWinners = [];
+    const stageIndex = this.state.stageIndex || 0;
+    if (!this.state.prizeWinners.some((w) => w.stageIndex === stageIndex)) {
+      this.state.prizeWinners.push({ stageIndex, playerId, name: p.name, stage: this.stage, at });
+    }
     this.state.phase = BINGO_PHASES.WON;
-    this.state.lastWin = { playerId, name: p.name, pattern: result.pattern, squares: result.squares, at };
+    this.state.lastWin = {
+      playerId, name: p.name, pattern: result.pattern, squares: result.squares, at,
+      stage: this.stage, stageIndex, label: stageLabel(this.stage),
+    };
     this.changed();
-    return { ok: true, valid: true, pattern: result.pattern };
+    return { ok: true, valid: true, pattern: result.pattern, stage: this.stage };
   }
 
-  /** Carry on after a line has been won — now they are playing for a full house. */
-  playOn(target = TARGETS.FULL) {
-    this.state.target = target;
+  /**
+   * Carry on to the next prize.
+   *
+   * There is nothing to carry on to once the last one has gone, so this says
+   * no rather than quietly restarting the round somebody has just won.
+   */
+  playOn() {
+    if (this.onLastStage) return false;
+    this.state.stageIndex = (this.state.stageIndex || 0) + 1;
+    this.syncTarget();
     this.state.phase = BINGO_PHASES.PLAYING;
     this.state.lastWin = null;
     this.changed();
@@ -358,8 +461,10 @@ export class BingoGame {
     this.state.calledAt = {};
     this.state.claims = [];
     this.state.winners = { line: [], full: [] };
+    this.state.prizeWinners = [];
     this.state.lastWin = null;
-    this.state.target = TARGETS.LINE;
+    this.state.stageIndex = 0;
+    this.syncTarget();
     this.state.phase = BINGO_PHASES.PLAYING;
     for (const p of this.playerList()) {
       p.card = this.uniqueCardFor(p.id);
@@ -379,17 +484,36 @@ export class BingoGame {
 
   // ------------------------------------------------------------------ views
 
-  /** How many squares a player still needs on their best line. */
+  /**
+   * How many more squares this player needs for the prize being played for.
+   *
+   * For one line that is the nearest line, as it always was. For several it is
+   * the SMALLEST set of squares that finishes that many — worked out over
+   * every combination of lines rather than by finishing the nearest ones one
+   * at a time, because lines share squares: two lines that cross can be four
+   * away together and three each. A card has at most a dozen lines, so trying
+   * the combinations outright is both exact and instant, and this number is on
+   * every phone in the room.
+   */
   squaresAway(player) {
-    if (this.state.target === TARGETS.FULL) {
+    const stage = this.stage;
+    if (stage === TARGETS.FULL) {
       return player.card.filter((_, i) => !this.isGood(player, i)).length;
     }
+    const missing = this.lines().map((line) => line.filter((i) => !this.isGood(player, i)));
+    const wanted = Math.min(stage, missing.length);
+
     let best = Infinity;
-    for (const line of this.lines()) {
-      const missing = line.filter((i) => !this.isGood(player, i)).length;
-      if (missing < best) best = missing;
-    }
-    return best === Infinity ? this.size : best;
+    const pick = (from, left, union) => {
+      if (union.size >= best) return;              // already worse than one we have
+      if (left === 0) { best = union.size; return; }
+      if (missing.length - from < left) return;    // not enough lines left to make it up
+      for (let i = from; i < missing.length; i++) {
+        pick(i + 1, left - 1, new Set([...union, ...missing[i]]));
+      }
+    };
+    pick(0, wanted, new Set());
+    return best === Infinity ? this.squareCount : best;
   }
 
   /** The tension metric: how many teams need one more track. */
@@ -405,6 +529,20 @@ export class BingoGame {
       serverNow: this.now(),
       title: this.pack.title,
       target: this.state.target,
+      // The prize being played for, in words, so no screen has to work it out
+      // for itself and they cannot end up saying different things.
+      stage: {
+        index: this.state.stageIndex || 0,
+        total: this.stages.length,
+        needs: this.stage,
+        label: stageLabel(this.stage),
+        last: this.onLastStage,
+      },
+      prizes: this.stages.map((st, i) => ({
+        needs: st,
+        label: stageLabel(st),
+        winner: (this.state.prizeWinners || []).find((w) => w.stageIndex === i)?.name || null,
+      })),
       round: this.state.round,
       // Both spellings: cardSize for anything that only knows squares, and the
       // shape for the phone, which lays the grid out from it.
@@ -493,14 +631,28 @@ export class BingoGame {
     // Can they legitimately press BINGO? They may still be wrong — this only
     // stops the button being mashed when no line is even marked.
     view.canClaim = this.hasMarkedPattern(p);
-    view.won = this.state.winners.line.includes(playerId) || this.state.winners.full.includes(playerId);
-    if (this.state.lastWin) view.win = { name: this.state.lastWin.name, pattern: this.state.lastWin.pattern };
+    /*
+     * "You got it" means the prize ON THE TABLE, not one won earlier.
+     *
+     * With three prizes a player wins a line and then keeps playing for two
+     * lines and a full house. Their phone used to say "You got it. Well done."
+     * for the rest of the round, so the one person in the room who had proved
+     * they were paying attention was the only one who could no longer see how
+     * close they were.
+     */
+    view.won = this.state.phase === BINGO_PHASES.WON
+      && Boolean(this.state.lastWin) && this.state.lastWin.playerId === playerId;
+    // What they have already taken, so the phone can keep score of their night.
+    view.yourPrizes = (this.state.prizeWinners || [])
+      .filter((w) => w.playerId === playerId)
+      .map((w) => stageLabel(w.stage));
+    if (this.state.lastWin) view.win = { name: this.state.lastWin.name, pattern: this.state.lastWin.pattern, label: this.state.lastWin.label };
     return view;
   }
 
   /** Marked a full line, regardless of whether those tracks were really played. */
   hasMarkedPattern(player) {
-    if (this.state.target === TARGETS.FULL) return player.marks.every(Boolean);
+    if (this.stage === TARGETS.FULL) return player.marks.every(Boolean);
     return this.lines().some((line) => line.every((i) => player.marks[i]));
   }
 
@@ -511,9 +663,9 @@ export class BingoGame {
     switch (this.state.phase) {
       case BINGO_PHASES.LOBBY: return 'Waiting in the lobby';
       case BINGO_PHASES.PLAYING:
-        return `Round ${this.state.round} — ${called} of ${total} played, going for ${this.state.target === TARGETS.FULL ? 'a full house' : 'a line'}`;
+        return `Round ${this.state.round} — ${called} of ${total} played, going for ${stageLabel(this.stage)}${this.stages.length > 1 ? ` (prize ${(this.state.stageIndex || 0) + 1} of ${this.stages.length})` : ''}`;
       case BINGO_PHASES.WON:
-        return `Round ${this.state.round} — ${this.state.target === TARGETS.FULL ? 'full house' : 'a line'} claimed, ${called} of ${total} played`;
+        return `Round ${this.state.round} — ${stageLabel(this.stage)} claimed, ${called} of ${total} played`;
       case BINGO_PHASES.FINISHED: return 'Finished — the winners are up';
       default: return '';
     }
