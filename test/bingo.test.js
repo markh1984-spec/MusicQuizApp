@@ -549,3 +549,43 @@ test('every offered shape is playable with a normal track list', () => {
     assert.equal(lengths.size, 1, `${shapeLabel(shape)} has lines of different lengths: ${[...lengths]}`);
   }
 });
+
+test('a strip survives a crash — the shape is in the game, not the pack', () => {
+  // The shape is chosen at launch and can differ from the file. It lived only
+  // on the in-memory pack at first, so a restart brought the game back as
+  // whatever the pack said: twenty-four squares on every phone and a 4x4's
+  // idea of a line on the server, which handed a player a win they had not
+  // got. It is written into the state now, which is what gets saved.
+  const pack = { ...makePack(42), cardRows: 8, cardCols: 3 };
+  delete pack.cardSize;
+  const { game } = makeGame(pack);
+  const p = game.join({ name: 'Sharon' });
+  const col = game.lines()[0];
+  for (const i of col.slice(0, 7)) {
+    game.call(p.card[i]);
+    game.mark({ playerId: p.id, index: i, marked: true });
+  }
+  assert.equal(game.squaresAway(game.state.players[p.id]), 1);
+
+  // The crash: the state goes to disk and comes back, but the pack on disk
+  // still says what it always said.
+  const onDisk = JSON.parse(JSON.stringify(game.state));
+  const fileSays = makePack(42); // a plain 4x4
+  const revived = new BingoGame({ pack: fileSays, state: onDisk, now: () => START });
+
+  assert.deepEqual(revived.shape, { rows: 8, cols: 3 }, 'still a strip');
+  assert.equal(revived.squareCount, 24);
+  assert.equal(revived.lines().length, 3);
+  assert.equal(revived.squaresAway(revived.state.players[p.id]), 1, 'and still one away, not a winner');
+  assert.equal(revived.claim(p.id).valid, false, 'nobody has won yet');
+});
+
+test('a game saved before shapes existed still comes back square', () => {
+  const { game } = makeGame();
+  const onDisk = JSON.parse(JSON.stringify(game.state));
+  delete onDisk.cardRows;
+  delete onDisk.cardCols;
+  delete onDisk.cardSize;
+  const revived = new BingoGame({ pack: makePack(), state: onDisk, now: () => START });
+  assert.deepEqual(revived.shape, { rows: 4, cols: 4 });
+});

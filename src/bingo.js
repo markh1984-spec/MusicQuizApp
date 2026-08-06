@@ -62,6 +62,16 @@ export class BingoGame {
     return {
       kind: 'bingo',
       packId: pack.id,
+      // The card shape is part of THIS GAME, not of the pack — it is chosen at
+      // launch and can differ from what the file says. Writing it here is what
+      // makes it survive a restart: the state is the record of the night, and
+      // the pack on disk is only the default it started from.
+      //
+      // It has to be here. When it lived only on the in-memory pack, a crash
+      // brought the game back as whatever the file said — twenty-four squares
+      // on every phone and a 4x4's idea of a line on the server, which handed
+      // somebody a win they had not got.
+      ...shapeFields(cardShape(pack)),
       phase: BINGO_PHASES.LOBBY,
       version: 0,
       target: TARGETS.LINE,
@@ -92,7 +102,10 @@ export class BingoGame {
    * nothing that was already on disk has to be rewritten.
    */
   get shape() {
-    return cardShape(this.pack);
+    // The state first: it is where the shape chosen at launch lives, and the
+    // only copy that survives a restart. The pack is the fallback for a game
+    // saved before shapes existed.
+    return this.state && this.state.cardCols ? cardShape(this.state) : cardShape(this.pack);
   }
 
   /** Kept for everything that only ever wanted "how wide is it". */

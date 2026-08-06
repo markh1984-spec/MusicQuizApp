@@ -63,6 +63,37 @@ async function hostAction(action, body = {}) {
   return res.json();
 }
 
+/**
+ * Where the game actually is, according to the server.
+ *
+ * The script used to assume it knew: press start, and you are on the round
+ * intro. Then the rules slide was added in front of round one and every shot
+ * after it was one step behind — "screen-question" was a picture of the round
+ * intro for months, and nothing said so. A screenshot tool that quietly lies
+ * is worse than no screenshot tool, so it asks now instead of assuming.
+ */
+async function phase() {
+  const res = await fetch(`${BASE}/health`);
+  return (await res.json()).phase;
+}
+
+/** Press onwards until the server says we have arrived. */
+async function advanceTo(wanted, limit = 12) {
+  for (let i = 0; i < limit; i++) {
+    if (await phase() === wanted) return;
+    await hostAction('next');
+    await wait(120);
+  }
+  throw new Error(`never reached "${wanted}" — stuck on "${await phase()}". Has a new slide been added?`);
+}
+
+/** Take the shot, and refuse to file it under a name that is not true. */
+async function shotAt(page, name, wanted) {
+  const now = await phase();
+  if (now !== wanted) throw new Error(`about to save "${name}" while the game is on "${now}", not "${wanted}"`);
+  await shot(page, name);
+}
+
 async function main() {
   if (!KEY) {
     console.error('Give me the host key:  node scripts/shots.mjs --key <key>   (or set HOST_KEY)');
@@ -96,26 +127,31 @@ async function main() {
   await host.waitForTimeout(400);
   await shot(host, 'host-lobby');
 
-  // Round intro.
+  // The rules slide, which is the first thing every quiz shows.
   await hostAction('start');
   await screen.waitForTimeout(500);
-  await shot(screen, 'screen-round-intro');
+  await shotAt(screen, 'screen-rules', 'rules');
+
+  // Round intro.
+  await advanceTo('round_intro');
+  await screen.waitForTimeout(500);
+  await shotAt(screen, 'screen-round-intro', 'round_intro');
 
   // First question: teams answer at staggered speeds so the reveal has a
   // proper "fastest finger" line and a spread of scores.
-  await hostAction('next');
+  await advanceTo('question');
   await screen.waitForTimeout(1200);
-  await shot(screen, 'screen-question');
+  await shotAt(screen, 'screen-question', 'question');
   await shot(phones[0].page, 'phone-question');
   await shot(host, 'host-question');
 
   await answerAll(phones, [0, 0, 2, 0], [300, 900, 1500, 2600]);
   await screen.waitForTimeout(500);
-  await shot(screen, 'screen-question-answers-in');
+  await shotAt(screen, 'screen-question-answers-in', 'question');
 
   await hostAction('reveal');
   await screen.waitForTimeout(700);
-  await shot(screen, 'screen-reveal');
+  await shotAt(screen, 'screen-reveal', 'reveal');
   await shot(phones[0].page, 'phone-reveal-correct');
   await shot(phones[2].page, 'phone-reveal-wrong');
   await shot(host, 'host-reveal');
@@ -135,14 +171,14 @@ async function main() {
   await answerAll(phones, [3, 3, 1, 3], [500, 1100, 1700, 2400]);
   await hostAction('reveal');
   await screen.waitForTimeout(400);
-  await hostAction('next');
+  await advanceTo('round_board');
   await screen.waitForTimeout(900);
-  await shot(screen, 'screen-round-board');
+  await shotAt(screen, 'screen-round-board', 'round_board');
   await shot(phones[0].page, 'phone-round-board');
 
-  await hostAction('next');
+  await advanceTo('final');
   await screen.waitForTimeout(900);
-  await shot(screen, 'screen-winner');
+  await shotAt(screen, 'screen-winner', 'final');
   await shot(host, 'host-final');
 
   await browser.close();
