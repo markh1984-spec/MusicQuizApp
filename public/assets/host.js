@@ -31,12 +31,44 @@ if (hostKey) localStorage.setItem(KEY_STORE, hostKey);
 
 // ------------------------------------------------------------------ actions
 
+/*
+ * The double-tap guard.
+ *
+ * This is a phone, held in one hand, in the dark, usually while talking. A
+ * button that does something irreversible-looking on the second of two
+ * accidental taps is a button that will eventually reveal an answer to a room
+ * that has not answered yet — which is exactly what happened.
+ *
+ * So the same action twice inside a second is treated as one press. Nothing is
+ * queued and nothing is undone; the second tap simply never happened.
+ */
+const DOUBLE_TAP_MS = 900;
+let lastAct = { action: '', at: 0 };
+
 async function act(action, body = {}) {
+  const at = Date.now();
+  if (action === lastAct.action && at - lastAct.at < DOUBLE_TAP_MS) return;
+  lastAct = { action, at };
   try {
     await postJson(`/api/host/${action}`, body, { 'X-Host-Key': hostKey });
   } catch (err) {
     toast(err.status === 401 ? 'Wrong host key' : `Failed: ${err.message}`);
   }
+}
+
+/**
+ * How long the question on screen has been up, in milliseconds.
+ *
+ * Used to refuse a reveal in the first few seconds. Nobody has ever meant to
+ * reveal an answer two seconds after asking it, and the clock reveals it by
+ * itself when the twenty seconds are up — so the button is only ever for
+ * "everybody has answered, do not make them wait", which cannot be true yet.
+ */
+const TOO_SOON_MS = 3000;
+
+function questionAge() {
+  if (!state || state.phase !== 'question' || !state.clock) return Infinity;
+  return clock.now() - state.clock.startedAt;
 }
 
 function toast(message) {
@@ -529,7 +561,15 @@ function buildActions(s) {
   }[s.phase] || 'Next';
 
   const primary = node(`<button class="primary" ${s.phase === 'final' ? 'disabled' : ''}>${esc(label)}</button>`);
-  primary.addEventListener('click', () => act('next'));
+  primary.addEventListener('click', () => {
+    // The one press worth being fussy about. Everything else Back undoes
+    // quietly; this one the room has already seen.
+    if (s.phase === 'question' && questionAge() < TOO_SOON_MS) {
+      toast('Too soon — the question only just went up');
+      return;
+    }
+    act('next');
+  });
 
   const out = [primary];
 

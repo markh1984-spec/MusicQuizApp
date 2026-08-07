@@ -192,6 +192,8 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 | **Photos go in a SEPARATE PRIVATE repo** | `PHOTO_REPO`, filed as `photos/<night>/<file>` as they arrive. Never the main repo: it is public (checked), and git history is forever. `src/github.js` takes a `which` argument for this. |
 | **Filters are pixel maths, not `ctx.filter`** | `public/assets/filters.js`. Older iOS does not implement `ctx.filter`, and a filter that silently does nothing on a third of the room is worse than none. The preview and the upload go through the same function so they cannot drift. |
 | **The looks are shown, not named** | Each filter is a thumbnail of *their own photo* with it applied, all seven on screen at once. They were a scrolling row of named grey pills and the host went through the whole flow on his own phone without noticing they existed — three of the seven were off the right-hand edge with nothing to say so. Same `drawFiltered()` as the preview and the upload, just at `maxSide` 120. |
+| **"Filters" means PROPS first, colour second** | `public/assets/stickers.js` — dog ears, a clown nose, a party hat, nine of them, drawn like the seasonal motifs and for the same reason. The host asked for "clown noses, dog ears etc." and found colour grading, which is what `filters.js` does; that is now folded away behind "Change the colour instead". **No face detection anywhere**: a model is megabytes on a stranger's phone over pub wifi and `FaceDetector` does not exist on iOS Safari — both break *no dependencies* and both fail on somebody's handset in a room. So a prop is tapped, dragged and pinched, which works everywhere and is funnier put on wrong. Positions are stored as a **fraction** of the canvas, never pixels, or the nose is on the chin at 320px and the ear at 1280. The prop tiles have a mid-grey fill: half the props are nearly black and on the page's own dark panel they read as empty squares. |
+| **A photo gets the MIDDLE of the screen, not a thumbnail** | `showBigPhoto()` in `screen.js` — 66vh, centred, name under it, fades in and away over about three and a half seconds, then it joins the strip (which is 18vh now, not 13). One at a time and queued: three people sending at once is three moments in a row, not three pictures fighting. **The first paint of a page shows none of them.** A projector opened an hour in, or reconnecting after the laptop slept, would otherwise replay the whole night one picture at a time — two minutes of slideshow over whatever the quiz was doing. `seenPhotos` is keyed by id rather than "the strip has not got one", because the strip is torn down whenever the phase has no room for it and a photo does not become new again because the scoreboard went up and came down. |
 | **The phone shows the answers as the projector does** | Same 2×2 (or 2×3) arrangement, same letters, same colours. A player looks up, decides "the pink one, bottom left", and looks down — so the phone has to be the same picture or they re-read four options against a clock. It was a single column, which made the two screens different arrangements of the same four answers. The letter sits ABOVE the text on the phone: beside it costs 42 of the ~140 pixels a half-width cell has on a 320px phone, which was enough to break "Christmas" across two lines mid-word. |
 | **…except the alphabet round, which is 5 across on the phone and 9 on the projector** | The row above is about options with WORDS on them, where a player is matching a position they picked out from the back of the room. A letter needs no matching — you already know you want F. What the phone has instead is a thumb problem: nine keys across a 320px phone is 28 pixels each. Same order, different number of columns, and A to Z rather than QWERTY because QWERTY is muscle memory for typing words and nobody is typing a word. |
 | **An alphabet answer may never begin with "The", "A" or "An"** | "The Beatles" is B to half a room and T to the other half, and both halves are right — the exact argument the house style exists to prevent. It is a hard validation error, said in the editor as you type, forbidden in the generator's brief and listed as a rejection reason for the checking pass. **Do not soften it to a warning.** |
@@ -267,6 +269,29 @@ fills every one of them in whenever it lands. Gating the whole code on that
 fetch — which is what it did at first — put a rules slide on the projector with
 an empty half, and it never came back, because the card only rebuilds on a
 phase change.
+
+---
+
+## A mis-tap must not reveal an answer
+
+He revealed one early at a gig — not a disaster, but the room saw it. Two
+guards, both in `public/assets/host.js`, and neither of them a confirm dialog:
+a host with a mic in one hand is not reading "are you sure?" on a phone.
+
+- **Every host action is deaf to a repeat of itself for 900ms** (`DOUBLE_TAP_MS`
+  in `act()`). A double-tap — the thing a laggy phone on pub wifi invites, because
+  the first press looks like it did nothing — sends once. It is keyed on the
+  action, so Next-then-Back still works instantly; it is only the *same* button
+  twice in a blink that is ignored.
+- **The primary button refuses to reveal in the first three seconds** of a
+  question (`TOO_SOON_MS`), with a toast saying why. Nobody has answered three
+  seconds in, so there is no honest reason to press it, and the palm-of-the-hand
+  press as the question goes up is exactly how this happened.
+
+**The button is not the only way an answer appears, and that is the point.**
+`session.js` reveals on its own when the clock expires, so the button means
+"everybody has answered, get on with it" — which is why refusing it early costs
+nothing at all.
 
 ---
 
@@ -835,7 +860,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 439 tests, no network, injected clocks — must stay green
+npm test        # 446 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -884,7 +909,7 @@ recreate it.
 All five build stages plus bingo, the console, generation, pack import, the
 tickable review flags, the alphabet round, per-type question counts and the
 picture round's four reveals, invoicing, the seasonal looks and the accounts
-foundation are done, tested and pushed to **`MusicQuizApp`**. 439 tests green.
+foundation are done, tested and pushed to **`MusicQuizApp`**. 446 tests green.
 
 **In progress:** accounts exist and gate every route, but the DATA is still
 shared — one library, one invoice book, one running game. Do not hand a second

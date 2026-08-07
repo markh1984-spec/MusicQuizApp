@@ -2660,3 +2660,108 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .sign-in .tiny { text-align: center; }
 .subs { display: grid; gap: 8px; }
 .inv-actions .addon.on { border-color: var(--good); color: var(--good); }
+
+/* A photo somebody has just sent, big, in the middle, for a few seconds.
+   The strip along the bottom is the record of the night; this is the moment.
+   At 13vh in the strip a face is the size of a stamp on a projector, which is
+   the opposite of the point of letting the room send them at all. */
+.photo-big {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 3;
+  background: radial-gradient(60% 60% at 50% 50%, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.35));
+  animation: photo-big-in 520ms cubic-bezier(0.2, 1.1, 0.4, 1);
+}
+.photo-big figure {
+  margin: 0;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--panel);
+  border: 3px solid var(--panel-line);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.7);
+}
+/* Tall rather than wide: a phone photo is portrait, and filling the height is
+   what makes it read from the back of a room. */
+.photo-big img {
+  display: block;
+  max-height: 66vh;
+  max-width: 78vw;
+  object-fit: contain;
+}
+.photo-big figcaption {
+  padding: 1.4vh 2vw;
+  font-size: 3.4vh;
+  font-weight: 900;
+  text-align: center;
+}
+.photo-big.going { animation: photo-big-out 900ms ease forwards; }
+
+@keyframes photo-big-in {
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes photo-big-out {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(1.04); }
+}
+
+/* The strip underneath, a size up. It was small enough that a face in it was
+   unidentifiable, which made it decoration rather than a record. */
+.photo-strip .photo { width: 18vh; }
+.photo-strip .photo img { height: 18vh; }
+.photo-strip .photo figcaption { font-size: 1.6vh; }
+
+/* Props to stick on a photo. The row people actually wanted — the colour looks
+   are still there, folded away underneath. */
+.cam-props {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 6px;
+}
+/* A MID-GREY tile, not the page's own dark panel.
+   Half these props are nearly black — the shades, the moustache, the disguise —
+   and on a dark tile they read as an empty square you would never tap. A pale
+   slab each is nine white blocks shouting on a dark phone, so it is a mid tone
+   that both the black shapes and the yellow crown stand out against. */
+.cam-prop {
+  aspect-ratio: 1;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--panel-line);
+  background: #8b91a6;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.cam-prop:active { transform: scale(0.94); }
+.cam-prop svg { width: 100%; height: 100%; display: block; }
+.cam-looks-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cam-undo {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--panel-line);
+  background: none;
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cam-hint { text-align: center; opacity: 0.75; margin-bottom: 8px; }
+/* touch-action none so dragging a prop does not scroll the sheet under it —
+   without this the picture slides away the moment a finger moves. */
+.cam-frame .cam-canvas { touch-action: none; }
+.cam-colour { margin-bottom: 10px; }
+.cam-colour summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-dim);
+  padding: 6px 0;
+}
+.cam-colour .cam-filters { margin-top: 6px; }

@@ -16,6 +16,7 @@
 import { esc, node, ServerClock, Live, postJson, brandMark } from './client.js';
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
 import { FILTERS, drawFiltered, toJpeg } from './filters.js';
+import { STICKERS, stickerSvg, drawStickers, stickerAt, placed, preloadStickers } from './stickers.js';
 import { paintLook, DEFAULT_LOOK } from './looks.js';
 
 const STORE_KEY = 'musicquiz.player';
@@ -164,9 +165,19 @@ function openCamera() {
           <span>Take or choose a photo</span>
         </label>
         <div class="cam-stage" hidden>
-          <canvas class="cam-canvas"></canvas>
-          <div class="cam-looks-head">Give it a look</div>
-          <div class="cam-filters"></div>
+          <div class="cam-frame">
+            <canvas class="cam-canvas"></canvas>
+          </div>
+          <div class="cam-looks-head">
+            <span>Stick something on</span>
+            <button class="cam-undo" hidden>Take it off</button>
+          </div>
+          <div class="cam-props"></div>
+          <div class="cam-hint tiny">Tap one, then drag it about. Pinch to make it bigger.</div>
+          <details class="cam-colour">
+            <summary>Change the colour instead</summary>
+            <div class="cam-filters"></div>
+          </details>
           <button class="cam-send">Send it up</button>
         </div>
         <div class="tiny cam-status"></div>
@@ -181,16 +192,25 @@ function openCamera() {
   const stage = sheet.querySelector('.cam-stage');
   const canvas = sheet.querySelector('.cam-canvas');
   const chips = sheet.querySelector('.cam-filters');
+  const props = sheet.querySelector('.cam-props');
+  const undoBtn = sheet.querySelector('.cam-undo');
   const sendBtn = sheet.querySelector('.cam-send');
   const status = sheet.querySelector('.cam-status');
 
   let source = null;
   let chosen = 'none';
+  // The props on the photo, in the order they were added. Positions are
+  // fractions of the picture, never pixels — see stickers.js.
+  let stuckOn = [];
 
   const repaint = () => {
     if (!source) return;
     drawFiltered(canvas, source, chosen);
+    // Awaited nowhere: the props are cached images after the first draw, so
+    // this settles within a frame and dragging stays smooth.
+    drawStickers(canvas, stuckOn);
     for (const chip of chips.children) chip.classList.toggle('on', chip.dataset.id === chosen);
+    undoBtn.hidden = stuckOn.length === 0;
   };
 
   /*
@@ -219,6 +239,100 @@ function openCamera() {
     chips.appendChild(chip);
   }
 
+  /*
+   * The props.
+   *
+   * Tap one and it lands in the middle of the picture, big enough to see;
+   * then it is dragged where it belongs. There is no face detection and there
+   * is not meant to be — putting the ears on wrong is most of the fun, and
+   * every way of doing it properly either needs a download or does not work on
+   * an iPhone. See stickers.js.
+   */
+  preloadStickers();
+  for (const s of STICKERS) {
+    const chip = node(`
+      <button class="cam-prop" data-id="${s.id}" title="${esc(s.label)}" aria-label="${esc(s.label)}">
+        ${stickerSvg(s.id)}
+      </button>`);
+    chip.addEventListener('click', async () => {
+      stuckOn.push(placed(s.id));
+      if (navigator.vibrate) navigator.vibrate(12);
+      repaint();
+    });
+    props.appendChild(chip);
+  }
+
+  undoBtn.addEventListener('click', () => {
+    stuckOn.pop();
+    repaint();
+  });
+
+  /*
+   * Dragging, and pinching to size.
+   *
+   * Pointer events rather than touch events, so the same code works on a phone,
+   * a tablet and a laptop with a mouse — and so a second finger arriving is a
+   * normal thing to handle rather than a different API.
+   */
+  const pointers = new Map();
+  let dragging = null;
+  let pinchFrom = 0;
+  let sizeFrom = 0;
+
+  const spotOf = (e) => {
+    const box = canvas.getBoundingClientRect();
+    return { x: (e.clientX - box.left) / box.width, y: (e.clientY - box.top) / box.height };
+  };
+  const gap = () => {
+    const [a, b] = [...pointers.values()];
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  };
+
+  canvas.addEventListener('pointerdown', (e) => {
+    if (!source) return;
+    canvas.setPointerCapture(e.pointerId);
+    const spot = spotOf(e);
+    pointers.set(e.pointerId, spot);
+    if (pointers.size === 1) {
+      dragging = stickerAt(stuckOn, spot.x, spot.y, canvas);
+      // Whatever you grab comes to the front, so the next drag gets the same one.
+      if (dragging) {
+        stuckOn = [...stuckOn.filter((s) => s !== dragging), dragging];
+        repaint();
+      }
+    } else if (pointers.size === 2 && dragging) {
+      pinchFrom = gap();
+      sizeFrom = dragging.size;
+    }
+  });
+
+  canvas.addEventListener('pointermove', (e) => {
+    if (!pointers.has(e.pointerId)) return;
+    e.preventDefault();
+    pointers.set(e.pointerId, spotOf(e));
+    if (!dragging) return;
+
+    if (pointers.size >= 2 && pinchFrom > 0) {
+      const scale = gap() / pinchFrom;
+      dragging.size = Math.max(0.06, Math.min(1.1, sizeFrom * scale));
+    } else {
+      const spot = spotOf(e);
+      // Allowed slightly off the edge: half a pair of ears hanging off the top
+      // of the picture is a normal thing to want.
+      dragging.x = Math.max(-0.2, Math.min(1.2, spot.x));
+      dragging.y = Math.max(-0.2, Math.min(1.2, spot.y));
+    }
+    repaint();
+  });
+
+  const letGo = (e) => {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinchFrom = 0;
+    if (pointers.size === 0) dragging = null;
+  };
+  canvas.addEventListener('pointerup', letGo);
+  canvas.addEventListener('pointercancel', letGo);
+
   input.addEventListener('change', () => {
     const file = input.files && input.files[0];
     if (!file) return;
@@ -242,6 +356,11 @@ function openCamera() {
     sendBtn.textContent = 'Sending…';
     status.textContent = '';
     try {
+      // Redrawn full size rather than sent as the preview: the preview canvas
+      // is however big the phone is, and the projector deserves the real thing.
+      // Same functions as the preview, so what they saw is what goes up.
+      drawFiltered(canvas, source, chosen, 1280);
+      await drawStickers(canvas, stuckOn);
       const blob = await toJpeg(canvas);
       const res = await fetch(`/api/photo?playerId=${encodeURIComponent(me.id)}&filter=${encodeURIComponent(chosen)}`, {
         method: 'POST',

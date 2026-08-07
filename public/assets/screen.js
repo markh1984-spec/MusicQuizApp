@@ -110,6 +110,54 @@ function paintTheLook(s) {
   paintLook(document.querySelector('.stage'), look);
 }
 
+/*
+ * A new photo gets the middle of the screen for a few seconds.
+ *
+ * The strip along the bottom is the record of the night — it is where you look
+ * to see everything that has been sent. But at 13vh a face is about the size of
+ * a stamp on a projector, so a photo somebody has just taken arrives with no
+ * moment at all, which is the opposite of the point. This gives it one: big,
+ * centred, and gone again on its own.
+ *
+ * The same phase rule as the strip, so it can never land over a live question —
+ * `paintPhotos` has already checked that before this is reached.
+ *
+ * Only ever ONE at a time. Three people sending at once should be three
+ * moments in a row, not three pictures fighting over the middle of the screen,
+ * so they queue.
+ */
+const BIG_PHOTO_MS = 3600;
+const bigQueue = [];
+let bigShowing = false;
+const seenPhotos = new Set();
+let photosSeeded = false;
+
+function showBigPhoto(p) {
+  bigQueue.push(p);
+  if (!bigShowing) nextBigPhoto();
+}
+
+function nextBigPhoto() {
+  const p = bigQueue.shift();
+  if (!p) { bigShowing = false; return; }
+  bigShowing = true;
+
+  const el = node(`
+    <div class="photo-big" id="photoBig">
+      <figure>
+        <img src="${esc(p.url)}" alt="">
+        ${p.teamName ? `<figcaption>${esc(p.teamName)}</figcaption>` : ''}
+      </figure>
+    </div>`);
+  document.querySelector('.stage').appendChild(el);
+
+  // Fade out on its own, then hand over to whoever is behind it in the queue.
+  setTimeout(() => {
+    el.classList.add('going');
+    setTimeout(() => { el.remove(); nextBigPhoto(); }, 900);
+  }, BIG_PHOTO_MS);
+}
+
 /**
  * Fill in the address under every code on the page.
  *
@@ -186,6 +234,18 @@ function paintPhotos(s) {
   let strip = document.getElementById('photoStrip');
   const wanted = items.length > 0 && PHOTO_PHASES.has(s.phase);
 
+  // The first paint of this page is not thirty new photos arriving at once.
+  // Opening the big screen an hour in — or a projector reconnecting after the
+  // laptop slept — would otherwise queue every picture of the night for its
+  // own three and a half seconds in the middle of the screen, which is two
+  // minutes of slideshow over whatever the quiz was doing. Note what is
+  // already there, show none of it, and only a genuinely new arrival gets a
+  // moment. Found by the sticker test: a third run had a queue three deep.
+  if (!photosSeeded) {
+    photosSeeded = true;
+    for (const p of items) seenPhotos.add(p.id);
+  }
+
   if (!wanted) {
     if (strip) strip.remove();
     return;
@@ -209,6 +269,14 @@ function paintPhotos(s) {
           <img src="${esc(p.url)}" alt="">
           ${p.teamName ? `<figcaption>${esc(p.teamName)}</figcaption>` : ''}
         </figure>`);
+      // Brand new, so give it its moment in the middle of the screen first.
+      // Tracked by id rather than by "the strip has not got one": the strip is
+      // torn down whenever the phase has no room for it, and a photo does not
+      // become new again because the scoreboard went up and came down.
+      if (!seenPhotos.has(p.id)) {
+        seenPhotos.add(p.id);
+        showBigPhoto(p);
+      }
     }
     // Keep them in order without disturbing ones already in place.
     if (strip.children[i] !== el) strip.insertBefore(el, strip.children[i] || null);
