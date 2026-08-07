@@ -1048,6 +1048,22 @@ function shapeOptions(pack) {
   return usable.map((s) => `<option value='{"rows":${s.rows},"cols":${s.cols}}' ${s === own ? 'selected' : ''}>${esc(s.label)} — line of ${Math.max(s.rows, s.cols)}</option>`).join('');
 }
 
+/**
+ * How it looks tonight.
+ *
+ * The pack carries a default — a Halloween quiz should look like one without
+ * being asked — and this overrides it for this evening only, the same as the
+ * card shape and the number of prizes. Nothing about how a round plays changes;
+ * it is a palette and some drawn shapes down the sides.
+ */
+function lookOptions(pack) {
+  const looks = library.looks || [];
+  const current = pack.look || 'default';
+  return looks
+    .map((l) => `<option value="${esc(l.id)}" ${l.id === current ? 'selected' : ''} title="${esc(l.blurb || '')}">${esc(l.label)}</option>`)
+    .join('');
+}
+
 function packCard(kind, pack) {
   const detail = kind === 'quiz'
     ? `${pack.questionCount} questions · ${(pack.rounds || []).length} rounds`
@@ -1071,6 +1087,10 @@ function packCard(kind, pack) {
         <label class="pack-shape">Prizes
           <select class="prize-pick"></select>
         </label>` : ''}
+      ${pack.broken ? '' : `
+        <label class="pack-shape">Look
+          <select class="look-pick">${lookOptions(pack)}</select>
+        </label>`}
       <div class="pack-actions">
         <button class="pack-read" title="Read it through">Read</button>
         <button class="pack-rename" ${pack.broken ? 'disabled' : ''} title="Change what it is called">Rename</button>
@@ -1206,7 +1226,8 @@ function packCard(kind, pack) {
       const picked = el.querySelector('.shape-pick');
       const shape = picked ? JSON.parse(picked.value) : null;
       const prizes = Number(el.querySelector('.prize-pick')?.value) || 0;
-      await postJson('/api/host/launch', { game: kind, packId: pack.id, shape, prizes }, { 'X-Host-Key': hostKey });
+      const look = el.querySelector('.look-pick')?.value || '';
+      await postJson('/api/host/launch', { game: kind, packId: pack.id, shape, prizes, look }, { 'X-Host-Key': hostKey });
       location.href = linkTo('/host');
     } catch (err) {
       button.disabled = false;

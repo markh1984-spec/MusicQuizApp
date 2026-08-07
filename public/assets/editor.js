@@ -12,6 +12,7 @@
  */
 
 import { esc, node, postJson, brandLink } from './client.js';
+import { LOOKS } from './looks.js';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 const ROUND_TYPES = [
@@ -189,6 +190,9 @@ function bingoHeader() {
             ${[3, 4, 5].map((n) => `<option value="${n}" ${quiz.cardSize === n ? 'selected' : ''}>${n}×${n}</option>`).join('')}
           </select>
         </label>
+        <label class="muted" style="font-size:13px">Look
+          <select id="bLook" style="margin-left:6px">${lookOptions(quiz.look)}</select>
+        </label>
         <span class="muted" style="font-size:13px">File: ${esc(quiz.id)}.json</span>
       </div>
       <div class="qcard" style="border-radius:0 0 14px 14px">
@@ -202,6 +206,7 @@ function bingoHeader() {
   el.querySelector('#bTitle').addEventListener('input', (e) => change(() => { quiz.title = e.target.value; }));
   el.querySelector('#bSubtitle').addEventListener('input', (e) => change(() => { quiz.subtitle = e.target.value; }));
   el.querySelector('#bSize').addEventListener('change', (e) => change(() => { quiz.cardSize = Number(e.target.value); render(); }));
+  el.querySelector('#bLook').addEventListener('change', (e) => change(() => { quiz.look = e.target.value; }));
   return el;
 }
 
@@ -261,6 +266,17 @@ function trackListBlock() {
   return el;
 }
 
+/**
+ * The pack's own look — only its DEFAULT. A Halloween quiz should come up
+ * looking like one without being asked, but which look runs tonight is picked
+ * on the pack card when you launch it, the same as the bingo card shape.
+ */
+function lookOptions(current) {
+  return LOOKS
+    .map((l) => `<option value="${l.id}" ${(current || 'default') === l.id ? 'selected' : ''}>${esc(l.label)}</option>`)
+    .join('');
+}
+
 function quizHeader() {
   const el = node(`
     <div class="round-block">
@@ -268,6 +284,9 @@ function quizHeader() {
         <input class="title" id="quizTitle" value="${esc(quiz.title)}" placeholder="Quiz title">
         <label class="muted" style="font-size:13px">Seconds per question
           <input type="number" id="quizSeconds" min="5" max="120" value="${quiz.questionSeconds}" style="width:70px;margin-left:6px">
+        </label>
+        <label class="muted" style="font-size:13px" title="How the night looks. You can override this when you launch it.">Look
+          <select id="quizLook" style="margin-left:6px">${lookOptions(quiz.look)}</select>
         </label>
         <span class="muted" style="font-size:13px">File: ${esc(quiz.id)}.json</span>
       </div>
@@ -280,6 +299,7 @@ function quizHeader() {
   el.querySelector('#quizTitle').addEventListener('input', (e) => change(() => { quiz.title = e.target.value; }));
   el.querySelector('#quizSubtitle').addEventListener('input', (e) => change(() => { quiz.subtitle = e.target.value; }));
   el.querySelector('#quizSeconds').addEventListener('input', (e) => change(() => { quiz.questionSeconds = Number(e.target.value) || 20; }));
+  el.querySelector('#quizLook').addEventListener('change', (e) => change(() => { quiz.look = e.target.value; }));
   return el;
 }
 

@@ -18,6 +18,9 @@ import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFi
 import { listQuizzes, loadQuiz } from './quizzes.js';
 import { listBingoPacks, loadBingoPack, recordLaunch, archiveResults } from './library.js';
 import { findSlide } from './adverts.js';
+// Shared with the browser, so the list of looks cannot drift between the server
+// deciding one and the screens drawing it.
+import { LOOKS, DEFAULT_LOOK } from '../public/assets/looks.js';
 
 const LAUNCHERS = {
   quiz: {
@@ -215,7 +218,7 @@ export class Session {
    * own shape is the default; this overrides it for this game only and is never
    * written back to the file.
    */
-  launch(kind, packId, { shape = null, prizes = 0 } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, look = '' } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     const pack = LAUNCHERS[kind].load(this.config, packId);
     const normalised = kind === 'bingo' ? normaliseBingoPack(pack, packId) : pack;
@@ -233,6 +236,22 @@ export class Session {
       this.engine.state.stageIndex = 0;
       this.engine.syncTarget();
     }
+    /*
+     * How it looks tonight.
+     *
+     * Written into the GAME STATE, not left on the in-memory pack — the same
+     * lesson the card shape taught the hard way. A SIGKILL mid-round would
+     * otherwise bring the game back wearing whatever the file said, and a room
+     * that was black and orange five minutes ago would suddenly be pink.
+     *
+     * The pack carries a default (a Halloween quiz should look like one without
+     * being asked) and the launch can override it, because "it is the fourteenth
+     * of February" is a fact about tonight rather than about the pack.
+     */
+    this.engine.state.look = LOOKS.some((l) => l.id === look)
+      ? look
+      : (LOOKS.some((l) => l.id === normalised.look) ? normalised.look : DEFAULT_LOOK);
+
     recordLaunch(this.config.dataDir, kind, normalised.id, this.now());
     this.engine.changed();
     return { kind, id: normalised.id, title: normalised.title };
@@ -262,18 +281,31 @@ export class Session {
 
   // ------------------------------------------------------------------ views
 
+  /**
+   * How it looks, on every payload.
+   *
+   * All three, always — the option colours have to change on the projector and
+   * on the phones at the same moment or "the pink one, bottom left" stops
+   * meaning anything.
+   */
+  get look() {
+    const chosen = this.engine.state && this.engine.state.look;
+    return LOOKS.some((l) => l.id === chosen) ? chosen : DEFAULT_LOOK;
+  }
+
   screenView() {
-    return { ...this.engine.screenView(), game: this.kind };
+    return { ...this.engine.screenView(), game: this.kind, look: this.look };
   }
 
   playerView(playerId) {
-    return { ...this.engine.playerView(playerId), game: this.kind };
+    return { ...this.engine.playerView(playerId), game: this.kind, look: this.look };
   }
 
   hostView() {
     return {
       ...this.engine.hostView(),
       game: this.kind,
+      look: this.look,
       packId: this.pack.id,
       // So the control view can tell you the app restarted, rather than
       // leaving you to work it out from everyone's score being zero.

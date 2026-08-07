@@ -915,6 +915,7 @@ export function normaliseBingoPack(pack, fallbackId = 'bingo') {
     kind: 'bingo',
     title: pack.title || 'Music Bingo',
     subtitle: pack.subtitle || '',
+    ...(pack.look ? { look: pack.look } : {}),
     ...shapeFields(cardShape(pack)),
     notes: pack.notes || '',
     createdAt: pack.createdAt || null,

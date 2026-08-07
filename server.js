@@ -34,6 +34,7 @@ import { githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess
 import { Invoices, totals, toPence, money } from './src/invoices.js';
 import { invoicePdf, invoiceFilename } from './src/invoice-pdf.js';
 import { toSvg } from './src/qrcode.js';
+import { LOOKS } from './public/assets/looks.js';
 // The logo, shared with the browser so the tab icon and the on-screen mark are
 // one drawing rather than two that look alike today.
 import { faviconSvg } from './public/assets/brandmark.js';
@@ -369,6 +370,9 @@ async function handleGet(req, res, url, route) {
         finished: session.engine.state.phase === 'final' || Boolean(session.engine.state.finishedAt),
       },
       archive: listArchive(config.dataDir),
+      // Offered on every pack card, so a night can be dressed up without
+      // editing anything.
+      looks: LOOKS.map(({ id, label, blurb }) => ({ id, label, blurb })),
       // Just the totals, so the Invoices tab can wear a badge saying how many
       // are still unpaid. The invoices themselves are never in this payload.
       invoicing: invoices.summary(),
@@ -836,7 +840,11 @@ async function handleWrite(req, res, url, route) {
           ? { rows: Number(body.shape.rows), cols: Number(body.shape.cols) }
           : null;
         const prizes = Math.max(0, Math.min(5, Number(body.prizes) || 0));
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes });
+        // How it looks tonight. Same reasoning as the card shape: the pack
+        // carries a default, and "it is the fourteenth of February" is a fact
+        // about this evening rather than about the pack.
+        const look = String(body.look || '');
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look });
         return sendJson(res, 200, { ok: true, started, view: session.hostView() }), true;
       } catch (err) {
         return sendJson(res, 400, { error: err.message }), true;

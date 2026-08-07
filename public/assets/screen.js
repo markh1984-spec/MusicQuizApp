@@ -12,6 +12,7 @@
 
 import { esc, node, ServerClock, Live, brandMark } from './client.js';
 import { bingoCard, bingoTopbar } from './screen-bingo.js';
+import { paintLook, DEFAULT_LOOK } from './looks.js';
 
 const cardEl = document.getElementById('card');
 const quizTitleEl = document.getElementById('quizTitle');
@@ -88,6 +89,25 @@ function draw(next) {
   paintPhotos(state);
   paintJoinCorner(state);
   paintJoinUrls();
+  paintTheLook(state);
+}
+
+/**
+ * Dress the night up: a palette and some drawn shapes down the side margins.
+ *
+ * The palette goes on the root element so it reaches everything at once,
+ * including the cards that were built before the look was known. The shapes go
+ * on the stage, like the photo strip and the join corner, so no card has to
+ * know they exist — and they are rebuilt only when the look actually changes,
+ * because this runs on every state push and a decoration that restarts its
+ * animation each time somebody answers would twitch all night.
+ */
+function paintTheLook(s) {
+  const look = s.look || DEFAULT_LOOK;
+  if (document.documentElement.dataset.look !== look) {
+    document.documentElement.dataset.look = look;
+  }
+  paintLook(document.querySelector('.stage'), look);
 }
 
 /**

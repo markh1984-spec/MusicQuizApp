@@ -116,6 +116,27 @@ with the same score. Latecomers can join partway through.
 
 ---
 
+## Dressing a night up
+
+Every pack has a **Look** picker on its card in the console, next to Launch:
+**Halloween** (skulls, ghosts and bats over pumpkin orange), **Valentine's**
+(hearts, red and pink), **Christmas** (trees and snowflakes over green and red),
+**Summer**, or the usual pink and orange.
+
+It changes the colours and puts a few slowly drifting shapes down the sides of
+the projector. **Nothing about how a round plays changes** — same questions,
+same scoring, same twenty seconds.
+
+The colours change on the phones at the same time, and that is deliberate
+rather than decorative: players pick an answer by its colour and position on
+the big screen and then look down at their phone, so the two have to agree.
+
+Set a **default** on a pack in the editor (a Halloween quiz should come up
+looking like one), and override it at launch for a night that is not what the
+pack was written for.
+
+---
+
 ## Getting paid
 
 There is an **Invoices** tab in the console. Fill in your own details and your

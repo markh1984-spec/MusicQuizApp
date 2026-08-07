@@ -16,6 +16,7 @@
 import { esc, node, ServerClock, Live, postJson, brandMark } from './client.js';
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
 import { FILTERS, drawFiltered, toJpeg } from './filters.js';
+import { paintLook, DEFAULT_LOOK } from './looks.js';
 
 const STORE_KEY = 'musicquiz.player';
 
@@ -327,6 +328,21 @@ function draw(next) {
   }
 
   paintCameraButton(state);
+
+  /*
+   * The same look as the projector, and this is not decoration on the phone —
+   * it is the option colours. A player looks up, decides "the pink one, bottom
+   * left", and looks back down. If the big screen went orange and the phone
+   * stayed pink that mapping breaks, and the theme has cost them points.
+   *
+   * The shapes are much fainter here. There is no margin on a phone, and the
+   * buttons matter more than the atmosphere.
+   */
+  const look = state.look || DEFAULT_LOOK;
+  if (document.documentElement.dataset.look !== look) {
+    document.documentElement.dataset.look = look;
+  }
+  paintLook(document.body, look, { count: 6, size: 34 });
 }
 
 /**

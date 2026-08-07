@@ -9,6 +9,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+// Shared with the browser so the list of looks cannot drift between what a
+// pack is allowed to ask for and what the screens can draw.
+import { LOOKS } from '../public/assets/looks.js';
+
 export const ROUND_TYPES = ['text', 'image', 'intro', 'multi', 'alphabet'];
 
 /**
@@ -108,6 +112,9 @@ export function listQuizzes(dir) {
           questionCount: (r.questions || []).length,
         })),
         questionCount: (quiz.rounds || []).reduce((n, r) => n + (r.questions || []).length, 0),
+        // Only the default. The look is chosen when you launch it, so a normal
+        // pack can be dressed up for a Valentine's night without being edited.
+        look: quiz.look || 'default',
       });
     } catch (err) {
       out.push({ id: path.basename(file, '.json'), file, title: file, broken: err.message, rounds: [] });
@@ -172,6 +179,7 @@ export function normaliseQuiz(quiz, fallbackId = 'quiz') {
     title: quiz.title || 'Music Quiz',
     subtitle: quiz.subtitle || '',
     questionSeconds: quiz.questionSeconds || 20,
+    ...(quiz.look ? { look: quiz.look } : {}),
     createdAt: quiz.createdAt || null,
     notes: quiz.notes || '',
     rounds: (quiz.rounds || []).map((round, ri) => {
@@ -372,6 +380,11 @@ export function validateQuiz(quiz) {
   const problems = [];
   if (!quiz || typeof quiz !== 'object') return ['That is not a quiz.'];
   if (!quiz.title) problems.push('The quiz needs a title.');
+  // A misspelt look would quietly come up as the ordinary one, and you would
+  // find out by watching an undressed Halloween quiz go up in front of a room.
+  if (quiz.look && !LOOKS.some((l) => l.id === quiz.look)) {
+    problems.push(`"${quiz.look}" is not a look. Use ${LOOKS.map((l) => l.id).join(', ')}.`);
+  }
   if (!Array.isArray(quiz.rounds) || quiz.rounds.length === 0) problems.push('The quiz has no rounds.');
 
   (quiz.rounds || []).forEach((round, ri) => {

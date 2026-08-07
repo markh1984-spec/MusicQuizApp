@@ -150,6 +150,7 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 | **…except the alphabet round, which is 5 across on the phone and 9 on the projector** | The row above is about options with WORDS on them, where a player is matching a position they picked out from the back of the room. A letter needs no matching — you already know you want F. What the phone has instead is a thumb problem: nine keys across a 320px phone is 28 pixels each. Same order, different number of columns, and A to Z rather than QWERTY because QWERTY is muscle memory for typing words and nobody is typing a word. |
 | **An alphabet answer may never begin with "The", "A" or "An"** | "The Beatles" is B to half a room and T to the other half, and both halves are right — the exact argument the house style exists to prevent. It is a hard validation error, said in the editor as you type, forbidden in the generator's brief and listed as a rejection reason for the checking pass. **Do not soften it to a warning.** |
 | **The picture round's effects all run on one curve** | Zoom, pixelate, blur and tiles are four looks, not four difficulties. You score more the earlier you answer, so the reveal curve IS how many points a question is worth — a mode with a curve of its own makes that round quietly worth more or less than the rest, and nobody would ever blame the animation. Pixelate needs a GEOMETRIC resolution ramp to sit on that curve; linear made it a giveaway. |
+| **A seasonal look is a palette and some shapes, never a change to the game** | Skulls for Halloween, hearts for Valentine's. The rounds, the scoring and the timings are identical — so a themed night cannot play differently from a normal one, and there is nothing extra to test before a gig. |
 | **Anything that deletes shows a bin** | `binIcon()` in `client.js`, drawn rather than an emoji (every phone draws the emoji one differently, and some of them as a cheerful basket). The host's photo grid used to delete a picture when you tapped it, with nothing on screen saying so. |
 | **No Instagram follow-for-points** | No API can verify a follow. Told the host; he agreed to drop it rather than fake it. |
 | **British spelling and UK chart references** | Crowds are Essex, Kent and Surrey. This is in the generation prompts too. |
@@ -576,6 +577,50 @@ typo is dropped rather than quietly becoming a round of general knowledge.
 
 ---
 
+## Looks — dressing a night up
+
+`public/assets/looks.js` (the list and the shapes) and the `[data-look="…"]`
+blocks in `style.css` (the palettes). Halloween, Valentine's, Christmas and
+Summer so far. **Nothing about how a round plays changes** — it is a palette
+and some drawn shapes.
+
+**The palette changes on the projector AND the phones, or neither.** This is
+the load-bearing rule. A player looks up, decides "the pink one, bottom left",
+and looks back down; if the big screen went orange and the phone stayed pink,
+the theme has cost somebody points. Both pages carry `data-look` on the root
+element and the option colours `--a` to `--f` are set in the same block. There
+are tests that every look sets all six and that no two are the same colour.
+
+**The shapes are DRAWN, never emoji** — same rule as the bin icon, and there is
+a test that greps `looks.js` for emoji. Some phones render a skull as something
+cheerful.
+
+**They go behind everything and the panels are opaque on a themed night.**
+`--panel` is normally translucent, which let a ghost show faintly through
+option C; each look sets it to a solid tint instead. The layer starts 64px down
+so nothing sits behind the logo or the countdown, runs 8%–88% of the height so
+nothing lands in a corner, and spreads evenly down each side — scattering them
+by arithmetic put four in a heap in one corner and left the rest bare, which
+reads as a fault rather than as decoration. The big text also gets a
+`text-shadow` on a themed night so the question is never in the argument.
+
+**The look lives in the GAME STATE**, set by `session.launch()`. Same lesson
+the bingo card shape taught: a `SIGKILL` mid-round would otherwise bring the
+game back wearing whatever the pack file said, and a room that was black and
+orange five minutes ago would suddenly be pink. Tested.
+
+**A pack carries a default, the launch overrides it** — the picker is on the
+pack card next to the card shape and the prizes, for the same reason: "it is
+the fourteenth of February" is a fact about tonight, not about the pack. A
+misspelt look is a validation problem rather than a silent fall back to the
+ordinary one.
+
+The two corner washes and the drifting blobs behind everything are variables
+now (`--glow-1`, `--glow-2`, `--drift-1`, `--drift-2`). They were written out
+as hex, which meant changing `--bg` for Halloween moved almost nothing.
+
+---
+
 ## Invoicing
 
 `src/invoices.js` (what an invoice is), `src/invoice-pdf.js` (what it looks
@@ -671,7 +716,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 387 tests, no network, injected clocks — must stay green
+npm test        # 401 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -719,8 +764,9 @@ recreate it.
 
 All five build stages plus bingo, the console, generation, pack import, the
 tickable review flags, the alphabet round, per-type question counts and the
-picture round's four reveals and invoicing are done, tested and pushed to
-**`MusicQuizApp`**. Nothing is half-finished in the tree. 387 tests green.
+picture round's four reveals, invoicing and the seasonal looks are done, tested
+and pushed to **`MusicQuizApp`**. Nothing is half-finished in the tree.
+401 tests green.
 
 (An earlier version of this line named `claude/new-session-jzx988`. That branch
 is gone — see **Where to push**.)

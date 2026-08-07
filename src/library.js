@@ -41,6 +41,7 @@ export function listBingoPacks(dir) {
           // The shape it was filed as. Only a default — the shape is chosen
           // when you launch it, so the same pack can be a quick game one week
           // and a long one the next.
+          look: pack.look || 'default',
           cardSize: pack.cardSize || 4,
           ...shapeFields(cardShape(pack)),
           trackCount: (pack.tracks || []).length,

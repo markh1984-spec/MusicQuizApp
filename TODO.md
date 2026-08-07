@@ -105,6 +105,12 @@ the pack anyway and tells you why, so you always get a playable bingo round.
   loses a point to spelling.
 - **A number of questions per round type**, so a quiz can be fifteen general
   knowledge and five pictures rather than ten of everything.
+- **Seasonal looks.** A **Look** picker on every pack card next to Launch:
+  Halloween, Valentine's, Christmas, Summer, or the usual. It changes the
+  colours on the big screen and on everybody's phone at once, and drifts a few
+  skulls or hearts or snowflakes down the sides. Nothing about how the quiz
+  plays changes. Set a default on a pack in the Editor and override it at
+  launch for a night the pack was not written for.
 - **Invoicing.** An **Invoices** tab in the console. Fill in your details and
   your bank once, add the venues you work for, and then billing for a night is:
   press **Invoice this** on the panel that says the quiz has finished, check the

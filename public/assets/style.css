@@ -15,6 +15,13 @@
   --panel: rgba(255, 255, 255, 0.06);
   --panel-line: rgba(255, 255, 255, 0.14);
 
+  /* The two corner washes and the two slowly drifting blobs. Named so a look
+     can change the whole mood of the room rather than just the buttons. */
+  --glow-1: #241348;
+  --glow-2: #07304a;
+  --drift-1: rgba(255, 46, 136, 0.16);
+  --drift-2: rgba(75, 216, 255, 0.14);
+
   --hot: #ff2e88;
   --hot-2: #ff8a3d;
   --cool: #4bd8ff;
@@ -56,9 +63,12 @@ html, body {
 
 body {
   overflow: hidden;
+  /* Through variables so a look can repaint the whole room. These were written
+     out as hex here, which meant changing --bg for Halloween moved almost
+     nothing — the two corner glows were still the ordinary purple and teal. */
   background:
-    radial-gradient(120% 90% at 12% 0%, #241348 0%, transparent 55%),
-    radial-gradient(120% 90% at 88% 100%, #07304a 0%, transparent 55%),
+    radial-gradient(120% 90% at 12% 0%, var(--glow-1) 0%, transparent 55%),
+    radial-gradient(120% 90% at 88% 100%, var(--glow-2) 0%, transparent 55%),
     var(--bg);
 }
 
@@ -69,8 +79,8 @@ body::after {
   inset: -30%;
   pointer-events: none;
   background:
-    radial-gradient(38% 38% at 30% 30%, rgba(255, 46, 136, 0.16), transparent 70%),
-    radial-gradient(38% 38% at 72% 66%, rgba(75, 216, 255, 0.14), transparent 70%);
+    radial-gradient(38% 38% at 30% 30%, var(--drift-1), transparent 70%),
+    radial-gradient(38% 38% at 72% 66%, var(--drift-2), transparent 70%);
   animation: drift 26s ease-in-out infinite alternate;
   z-index: 0;
 }
@@ -402,9 +412,12 @@ body::after {
 
 body.phone {
   overflow: auto;
+  /* Through the same variables as the projector, or a themed night leaves the
+     phones looking like an ordinary one — and the two screens being the same
+     night is the whole point. */
   background:
-    radial-gradient(110% 60% at 20% 0%, #2a1550 0%, transparent 60%),
-    radial-gradient(110% 60% at 80% 100%, #07304a 0%, transparent 60%),
+    radial-gradient(110% 60% at 20% 0%, var(--glow-1) 0%, transparent 60%),
+    radial-gradient(110% 60% at 80% 100%, var(--glow-2) 0%, transparent 60%),
     var(--bg);
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
@@ -2429,3 +2442,174 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   border: 1px solid var(--panel-line);
 }
 .inv-cust > div { flex: 1 1 auto; min-width: 0; }
+
+/* ==================================================================== looks
+   Dressing a night up: a palette and a handful of drawn shapes. The quiz
+   underneath is identical — nothing about how a round plays changes.
+
+   The palettes live here rather than in looks.js so there is one place to
+   change a colour, and there is a test that every look in that file has a
+   block here. A look with no palette would silently be the ordinary one
+   wearing skulls.
+
+   THE OPTION COLOURS (--a to --f) MUST CHANGE ON BOTH SCREENS OR NEITHER.
+   A player looks up, decides "the pink one, bottom left", and looks back down
+   — so if the projector goes orange and the phone stays pink, that mapping is
+   broken and the theme has cost somebody points. Both pages carry data-look
+   for exactly this reason. Keep the six well spaced round the wheel: they have
+   to be told apart from the back of a room, which matters more than the
+   palette being tasteful. */
+
+[data-look="halloween"] {
+  --glow-1: #2a1038;
+  --glow-2: #3d1a05;
+  --drift-1: rgba(255, 117, 24, 0.18);
+  --drift-2: rgba(157, 123, 255, 0.16);
+  /* Opaque, unlike the usual translucent panel, so the shapes drifting behind
+     the screen do not show through the answers. A ghost half-visible through
+     option C is a muddier option C, and legibility beats atmosphere. */
+  --panel: #1b1226;
+  --hot: #ff7518;
+  --hot-2: #ffb03a;
+  --cool: #9d7bff;
+  --gold: #ffc93c;
+  --bg: #0b0611;
+  --bg-2: #1a0d22;
+  --a: #ff8a3d;   /* pumpkin */
+  --b: #9d7bff;   /* witch purple */
+  --c: #6fe36f;   /* slime */
+  --d: #ffd23f;   /* candle */
+  --e: #ff5470;   /* blood */
+  --f: #63d6ff;   /* ghost */
+}
+
+[data-look="valentines"] {
+  --glow-1: #3d0d29;
+  --glow-2: #2a0616;
+  --drift-1: rgba(255, 45, 111, 0.2);
+  --drift-2: rgba(255, 158, 205, 0.14);
+  --panel: #26101c;
+  --hot: #ff2d6f;
+  --hot-2: #ff86b0;
+  --cool: #ff9ecd;
+  --gold: #ffd6e4;
+  --bg: #12040c;
+  --bg-2: #26081a;
+  --a: #ff6b9d;
+  --b: #ffd23f;
+  --c: #b48cff;
+  --d: #ff9d5c;
+  --e: #63d6ff;
+  --f: #7cf76b;
+}
+
+[data-look="christmas"] {
+  --glow-1: #0d2e1c;
+  --glow-2: #35060f;
+  --drift-1: rgba(232, 18, 60, 0.16);
+  --drift-2: rgba(92, 225, 160, 0.16);
+  --panel: #0f1f18;
+  --hot: #e8123c;
+  --hot-2: #ff5f5f;
+  --cool: #5ce1a0;
+  --gold: #ffd23f;
+  --bg: #04100c;
+  --bg-2: #0a2018;
+  --a: #ff4d5e;   /* holly berry */
+  --b: #ffd23f;   /* tinsel */
+  --c: #5ce1a0;   /* tree */
+  --d: #9fd8ff;   /* frost */
+  --e: #ff9d5c;
+  --f: #d9b3ff;
+}
+
+[data-look="summer"] {
+  --glow-1: #0d3350;
+  --glow-2: #4a2a05;
+  --drift-1: rgba(255, 140, 26, 0.18);
+  --drift-2: rgba(23, 195, 247, 0.16);
+  --panel: #0d2130;
+  --hot: #ff8c1a;
+  --hot-2: #ffd23f;
+  --cool: #17c3f7;
+  --gold: #ffe066;
+  --bg: #04121c;
+  --bg-2: #0a2436;
+  --a: #ffd23f;   /* sun */
+  --b: #17c3f7;   /* sea */
+  --c: #ff6f61;   /* coral */
+  --d: #7cf76b;   /* palm */
+  --e: #ff9ecd;
+  --f: #b48cff;
+}
+
+/* ---- the shapes themselves
+   Down the two side margins and nowhere near the middle. A question with a
+   clock running wants the whole centre of the projector, and a ghost drifting
+   over an option is the one way a decoration could actually lose somebody
+   points. */
+/* Starts below the topbar. The brand and the countdown live up there on a
+   transparent strip, and a pumpkin behind the logo reads as a fault rather
+   than as decoration. */
+.look-layer {
+  position: absolute;
+  inset: 64px 0 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+.motif {
+  position: absolute;
+  display: block;
+  color: var(--hot-2);
+  /* Faint enough to be atmosphere rather than something to look at, but not so
+     faint that a projector in a bright function room shows nothing at all. */
+  opacity: 0.22;
+  transform: scale(var(--scale, 1));
+  animation: motif-drift var(--drift, 22s) ease-in-out infinite alternate;
+  animation-delay: var(--delay, 0s);
+}
+.motif.right { transform: scale(var(--scale, 1)) scaleX(-1); }
+.motif:nth-child(3n) { color: var(--cool); }
+.motif:nth-child(3n + 2) { color: var(--hot); }
+
+@keyframes motif-drift {
+  from { transform: translateY(-14px) rotate(-7deg) scale(var(--scale, 1)); }
+  to   { transform: translateY(14px) rotate(7deg) scale(var(--scale, 1)); }
+}
+/* Mirrored ones need their own frames, or the scaleX is thrown away mid-drift. */
+.motif.right { animation-name: motif-drift-right; }
+@keyframes motif-drift-right {
+  from { transform: translateY(-14px) rotate(7deg) scale(var(--scale, 1)) scaleX(-1); }
+  to   { transform: translateY(14px) rotate(-7deg) scale(var(--scale, 1)) scaleX(-1); }
+}
+
+/* Everything the room reads sits above them, whatever else changes. */
+.stage > .card, .stage > .topbar { position: relative; z-index: 1; }
+
+/* And the big text separates itself from whatever drifts behind it. The panels
+   are opaque so an answer is safe, but the question and the countdown sit on
+   bare background — a snowflake behind the word "UK" is legible in a dark room
+   and less so in a function room with the lights half up. One shadow costs
+   nothing and takes the question out of the argument entirely. */
+[data-look]:not([data-look="default"]) .q-prompt,
+[data-look]:not([data-look="default"]) .timer-num,
+[data-look]:not([data-look="default"]) .brand-name,
+[data-look]:not([data-look="default"]) .round-intro h1,
+[data-look]:not([data-look="default"]) .answer-said {
+  text-shadow: 0 2px 12px var(--bg), 0 0 3px var(--bg);
+}
+
+/* Somebody who has asked their device to stop moving things gets a still
+   picture rather than no picture — the look is the point, the drifting is not. */
+@media (prefers-reduced-motion: reduce) {
+  .motif { animation: none; }
+}
+
+/* On a phone they go behind everything at a lower strength: the screen is
+   small, the buttons matter, and there is no margin to speak of.
+   `.wrap` has to be lifted or the shapes float over the answer buttons — the
+   projector gets this from `.stage > .card` and the phone has no equivalent. */
+.phone .look-layer { position: fixed; z-index: 0; }
+.phone .wrap { position: relative; z-index: 1; }
+.phone .motif { opacity: 0.1; }
