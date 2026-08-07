@@ -133,6 +133,15 @@ const TABS = [
     render: () => photosSection(),
   },
   {
+    id: 'invoices',
+    label: 'Invoices',
+    blurb: 'Bill for a night before you have left the car park.',
+    // The badge is what you are still owed, not how many you have ever sent —
+    // the number worth seeing without opening anything.
+    count: () => (library.invoicing || {}).unpaidCount || 0,
+    render: () => invoicesSection(),
+  },
+  {
     id: 'past',
     label: 'Past nights',
     blurb: 'Results are saved when a game finishes.',
@@ -769,10 +778,34 @@ function runningPanel(running) {
         <div class="running-links">
           <a class="go control-link" href="${linkTo('/host')}">${live ? 'Take control' : 'Open the controls'}</a>
           <a class="minor" href="/screen" target="_blank" rel="noopener">Big screen</a>
+          ${running.finished ? '<button class="minor invoice-it" title="Bill for this one">Invoice this</button>' : ''}
           <button class="minor danger stop-running" title="Clear it and go back to waiting">Stop</button>
         </div>
       </div>
     </div>`);
+
+  /*
+   * Bill for the night that has just finished, from where you already are.
+   *
+   * It appears only once a game has actually ended, and it fills the venue and
+   * the date in from the night itself — so the usual case is picking the
+   * customer, checking a number you already agreed weeks ago, and pressing
+   * send. This is the whole point of the feature: at half eleven, an invoice
+   * that needs ten minutes of typing is an invoice that gets sent on Sunday, or
+   * not at all.
+   */
+  el.querySelector('.invoice-it')?.addEventListener('click', async () => {
+    try {
+      book = await invoiceApi('/api/invoices');
+    } catch (err) {
+      alert('Could not open the invoices: ' + err.message);
+      return;
+    }
+    openInvoiceForm({
+      event: { title: running.game === 'bingo' ? 'Music bingo night' : 'Music quiz night', date: new Date().toISOString().slice(0, 10) },
+      description: running.game === 'bingo' ? 'Music bingo night' : 'Music quiz night',
+    }, () => load());
+  });
 
   /*
    * Stop whatever is running, from here.
@@ -1948,4 +1981,498 @@ async function sharePhotos(list) {
     a.click();
     URL.revokeObjectURL(a.href);
   }
+}
+
+/* ==========================================================================
+ * Invoicing.
+ *
+ * The night ends, the room empties, and the thing most likely not to happen is
+ * the invoice — because by then it is half eleven and everything is in the car.
+ * So this sits one tap from the end of a game and fills itself in.
+ *
+ * Sending it is deliberately the phone's own share sheet rather than the app
+ * emailing it: it goes out from your address, so replies come to you and it
+ * does not land in a spam folder addressed from nobody. The app's job is to
+ * keep the record of who was invoiced and who has paid, which it does whether
+ * you send it from here, from a laptop, or not at all.
+ */
+
+let book = null;   // { settings, customers, invoices, summary, backupReady }
+
+async function invoiceApi(path, options) {
+  const res = await fetch(keyed(path), {
+    headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
+    ...options,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+}
+
+function invoicesSection() {
+  const el = node(`
+    <div class="game-section">
+      <div class="game-head">
+        <div>
+          <h2>Invoices</h2>
+          <div class="tiny status">Loading…</div>
+        </div>
+        <div class="row">
+          <button class="minor who-to">Customers</button>
+          <button class="minor my-details">Your details</button>
+          <button class="go new-invoice">New invoice</button>
+        </div>
+      </div>
+      <div class="inv-warn"></div>
+      <div class="inv-body"></div>
+    </div>`);
+
+  const status = el.querySelector('.status');
+  const body = el.querySelector('.inv-body');
+  const warn = el.querySelector('.inv-warn');
+
+  const refresh = async () => {
+    try {
+      book = await invoiceApi('/api/invoices');
+    } catch (err) {
+      status.textContent = err.message;
+      return;
+    }
+    const s = book.summary;
+    status.innerHTML = s.count
+      ? `${s.count} invoice${s.count === 1 ? '' : 's'} · <b>${esc(money(s.outstanding))}</b> outstanding`
+        + (s.overdueCount ? ` · <b style="color:var(--bad)">${esc(money(s.overdue))} overdue</b>` : '')
+      : 'Nothing invoiced yet.';
+
+    /*
+     * The one warning that matters, and it is the same shape as the song
+     * history's: there is no permanent disk, so without the private repo an
+     * invoice lives until the next deploy. An invoice you think you have a
+     * record of and do not is worse than no record at all.
+     */
+    warn.replaceChildren(...(book.backupReady ? [] : [node(`
+      <div class="pv-warn pv-broken" style="margin-bottom:12px">
+        <b class="pv-warn-head">Invoices are not being backed up</b>
+        <div class="tiny" style="margin-top:6px">
+          They are saved here, and this server has no permanent disk — so everything on
+          this page disappears the next time the app redeploys, including the invoice
+          numbering. Set <b>PHOTO_REPO</b> and <b>GITHUB_TOKEN</b> on Render to a
+          <b>private</b> repository and they become permanent. It must be private:
+          this file has your customers' addresses and your own bank details in it.
+        </div>
+      </div>`)]));
+
+    drawList(body, refresh);
+  };
+
+  el.querySelector('.new-invoice').addEventListener('click', () => openInvoiceForm({}, refresh));
+  el.querySelector('.my-details').addEventListener('click', () => openSettings(refresh));
+  el.querySelector('.who-to').addEventListener('click', () => openCustomers(refresh));
+  refresh();
+  return el;
+}
+
+/** Pence to "£350.00", the same sum the server did. Never adds anything up. */
+function money(pence) {
+  const n = Math.round(Number(pence) || 0);
+  const abs = Math.abs(n);
+  const pounds = String(Math.floor(abs / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return `${n < 0 ? '-' : ''}£${pounds}.${String(abs % 100).padStart(2, '0')}`;
+}
+
+const STATUS_LABEL = { draft: 'Draft', sent: 'Awaiting payment', paid: 'Paid', cancelled: 'Cancelled' };
+
+function drawList(body, refresh) {
+  if (!book.invoices.length) {
+    body.replaceChildren(node(`
+      <div class="tiny" style="padding:18px 0">
+        Nothing yet. Fill in <b>Your details</b> once, add the venues you work for under
+        <b>Customers</b>, and an invoice is then two taps at the end of a night.
+      </div>`));
+    return;
+  }
+
+  const rows = book.invoices.map((invoice) => {
+    const row = node(`
+      <div class="inv-row status-${esc(invoice.status)}">
+        <div class="inv-main">
+          <div class="inv-top">
+            <b>${esc(invoice.number)}</b>
+            <span class="inv-who">${esc(invoice.to.name)}</span>
+            <span class="inv-status">${esc(STATUS_LABEL[invoice.status] || invoice.status)}</span>
+          </div>
+          <div class="tiny">${esc(invoice.lines.map((l) => l.description).join(' · '))}</div>
+        </div>
+        <div class="inv-amount">${esc(money(invoice.totals.due))}</div>
+        <div class="inv-actions">
+          <a class="minor" href="${esc(keyed('/api/invoices/' + encodeURIComponent(invoice.number) + '.pdf'))}" target="_blank" rel="noopener">Open</a>
+          <button class="minor send">Send</button>
+          ${invoice.status === 'paid'
+            ? '<button class="minor unpaid">Not paid</button>'
+            : invoice.status === 'cancelled' ? '' : '<button class="go paid">Mark paid</button>'}
+        </div>
+      </div>`);
+
+    row.querySelector('.send').addEventListener('click', () => share(invoice));
+    row.querySelector('.paid')?.addEventListener('click', async () => {
+      await invoiceApi(`/api/invoices/${encodeURIComponent(invoice.number)}`, { method: 'POST', body: JSON.stringify({ status: 'paid' }) });
+      refresh();
+    });
+    row.querySelector('.unpaid')?.addEventListener('click', async () => {
+      await invoiceApi(`/api/invoices/${encodeURIComponent(invoice.number)}`, { method: 'POST', body: JSON.stringify({ status: 'sent' }) });
+      refresh();
+    });
+    return row;
+  });
+  body.replaceChildren(...rows);
+}
+
+/**
+ * Send it.
+ *
+ * The share sheet where the phone has one, which puts the PDF straight into
+ * Mail or WhatsApp from your own account. On a laptop there is no share sheet,
+ * so it opens the customer's email with the subject and body written and the
+ * PDF in another tab to attach — clumsier, but a laptop is where you have the
+ * patience for it.
+ */
+async function share(invoice) {
+  const url = keyed(`/api/invoices/${encodeURIComponent(invoice.number)}.pdf`);
+  const subject = `Invoice ${invoice.number} — ${invoice.from.name || 'Quiz night'}`;
+  const lines = [
+    `Hi${invoice.to.contact ? ' ' + invoice.to.contact : ''},`,
+    '',
+    `Thanks for having us. Invoice ${invoice.number} is attached — ${money(invoice.totals.due)}, ${invoice.terms || 'payable on receipt'}.`,
+    '',
+    'Best,',
+    invoice.from.contact || invoice.from.name || '',
+  ].join('\n');
+
+  try {
+    const res = await fetch(url, { headers: { 'X-Host-Key': hostKey } });
+    const blob = await res.blob();
+    const file = new File([blob], invoice.number + '.pdf', { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: subject, text: lines });
+      return;
+    }
+  } catch (err) {
+    // A cancelled share sheet throws too. Falling through to the email draft
+    // would then open a window they did not ask for, so only carry on if the
+    // share genuinely was not available.
+    if (err && err.name === 'AbortError') return;
+  }
+
+  window.open(url, '_blank', 'noopener');
+  if (invoice.to.email) {
+    location.href = `mailto:${encodeURIComponent(invoice.to.email)}`
+      + `?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines)}`;
+  }
+}
+
+/** A plain sheet with a title, a body and a Save. Escape and the backdrop close it. */
+function sheet(title, buildBody, onSave, { saveLabel = 'Save' } = {}) {
+  const overlay = node(`
+    <div class="overlay">
+      <div class="sheet">
+        <div class="sheet-head">
+          <div style="min-width:0;flex:1 1 auto"><b>${esc(title)}</b><div class="tiny inv-sheet-note"></div></div>
+          <div class="sheet-actions">
+            <button class="go inv-save">${esc(saveLabel)}</button>
+            <button class="minor inv-close">Close</button>
+          </div>
+        </div>
+        <div class="sheet-body inv-form"></div>
+      </div>
+    </div>`);
+  const close = () => { overlay.remove(); document.removeEventListener('keydown', onKey); };
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+  overlay.querySelector('.inv-close').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+  const form = overlay.querySelector('.inv-form');
+  const note = overlay.querySelector('.inv-sheet-note');
+  buildBody(form, { close, note });
+
+  overlay.querySelector('.inv-save').addEventListener('click', async (e) => {
+    e.target.disabled = true;
+    try {
+      await onSave(form, { close, note });
+    } catch (err) {
+      note.textContent = err.message;
+      note.style.color = 'var(--bad)';
+      e.target.disabled = false;
+    }
+  });
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+const field = (label, name, value = '', { type = 'text', placeholder = '', wide = false } = {}) => `
+  <label class="inv-field ${wide ? 'wide' : ''}">
+    <span>${esc(label)}</span>
+    ${type === 'textarea'
+      ? `<textarea name="${name}" rows="3" placeholder="${esc(placeholder)}">${esc(value)}</textarea>`
+      : `<input type="${type}" name="${name}" value="${esc(value)}" placeholder="${esc(placeholder)}">`}
+  </label>`;
+
+const valuesOf = (form) => {
+  const out = {};
+  for (const el of form.querySelectorAll('[name]')) out[el.name] = el.type === 'checkbox' ? el.checked : el.value.trim();
+  return out;
+};
+
+/** Your own details. Typed once, printed on every invoice from then on. */
+function openSettings(refresh) {
+  const s = book.settings;
+  sheet('Your details', (form) => {
+    form.innerHTML = `
+      <div class="inv-group"><h4>Who the invoice is from</h4>
+        ${field('Trading name', 'name', s.business.name, { placeholder: "Mark's Music Madness" })}
+        ${field('Your name', 'contact', s.business.contact)}
+        ${field('Address', 'address', s.business.address, { type: 'textarea', wide: true })}
+        ${field('Email', 'email', s.business.email)}
+        ${field('Phone', 'phone', s.business.phone)}
+      </div>
+      <div class="inv-group"><h4>How they pay you</h4>
+        ${field('Account name', 'bankName', s.bank.name)}
+        ${field('Sort code', 'sortCode', s.bank.sortCode, { placeholder: '00-00-00' })}
+        ${field('Account number', 'accountNumber', s.bank.accountNumber)}
+        ${field('Payment reference', 'reference', s.bank.reference, { placeholder: 'Leave blank to use the invoice number' })}
+      </div>
+      <div class="inv-group"><h4>The small print</h4>
+        ${field('Payment terms', 'terms', s.terms, { type: 'textarea', wide: true })}
+        ${field('Invoice number prefix', 'prefix', s.prefix, { placeholder: 'INV' })}
+        <div class="tiny" style="align-self:end">Next invoice will be <b>${esc(s.prefix)}-${String(s.nextNumber).padStart(4, '0')}</b></div>
+      </div>
+      <div class="inv-group"><h4>VAT</h4>
+        <label class="inv-field"><span>Registered for VAT</span>
+          <input type="checkbox" name="vatRegistered" ${s.vat.registered ? 'checked' : ''}>
+        </label>
+        ${field('VAT number', 'vatNumber', s.vat.number, { placeholder: 'GB123456789' })}
+        ${field('Rate %', 'vatRate', String(s.vat.ratePercent), { type: 'number' })}
+        <div class="tiny wide">
+          Leave this off unless you are actually registered. An invoice from somebody who
+          is not registered must not mention VAT at all — so while this is off, nothing
+          on the page says the word. Turning it on later does not change any invoice you
+          have already sent.
+        </div>
+      </div>`;
+  }, async (form, { close }) => {
+    const v = valuesOf(form);
+    await invoiceApi('/api/invoices/settings', {
+      method: 'PUT',
+      body: JSON.stringify({
+        business: { name: v.name, contact: v.contact, address: v.address, email: v.email, phone: v.phone },
+        bank: { name: v.bankName, sortCode: v.sortCode, accountNumber: v.accountNumber, reference: v.reference },
+        vat: { registered: v.vatRegistered, number: v.vatNumber, ratePercent: Number(v.vatRate) || 20 },
+        terms: v.terms,
+        prefix: v.prefix || 'INV',
+      }),
+    });
+    close();
+    refresh();
+  });
+}
+
+/** The venues you work for, so an invoice is a pick rather than a retype. */
+function openCustomers(refresh) {
+  sheet('Customers', (form) => {
+    const draw = () => {
+      form.innerHTML = `<div class="inv-customers">${book.customers.map((c) => `
+        <div class="inv-cust" data-id="${esc(c.id)}">
+          <div><b>${esc(c.name)}</b>${c.contact ? ` · ${esc(c.contact)}` : ''}
+            <div class="tiny">${esc((c.address || '').replace(/\n/g, ', '))}${c.usualFeePence != null ? ` · usually ${esc(money(c.usualFeePence))}` : ''}</div>
+          </div>
+          <button class="minor danger del">Remove</button>
+        </div>`).join('') || '<div class="tiny">Nobody yet.</div>'}</div>
+        <div class="inv-group"><h4>Add a customer</h4>
+          ${field('Name', 'name', '', { placeholder: 'The Crown' })}
+          ${field('Contact', 'contact', '', { placeholder: 'Dave' })}
+          ${field('Address', 'address', '', { type: 'textarea', wide: true })}
+          ${field('Email', 'email', '')}
+          ${field('Usual fee', 'usualFee', '', { placeholder: '350' })}
+        </div>`;
+      for (const row of form.querySelectorAll('.inv-cust')) {
+        row.querySelector('.del').addEventListener('click', async () => {
+          await invoiceApi(`/api/invoices/customers/${encodeURIComponent(row.dataset.id)}`, { method: 'DELETE' });
+          book = await invoiceApi('/api/invoices');
+          draw();
+          refresh();
+        });
+      }
+    };
+    draw();
+  }, async (form, { close }) => {
+    const v = valuesOf(form);
+    if (!v.name) throw new Error('A customer needs a name.');
+    await invoiceApi('/api/invoices/customers', { method: 'POST', body: JSON.stringify(v) });
+    close();
+    refresh();
+  });
+}
+
+/**
+ * The invoice itself.
+ *
+ * Pre-filled from the customer and from the night that has just finished, so
+ * the usual case is: check the number, press Issue, press Send.
+ */
+function openInvoiceForm(prefill, refresh) {
+  sheet('New invoice', (form, { note }) => {
+    if (!book.settings.business.name) {
+      note.textContent = 'Fill in "Your details" first — an invoice with no name on it is not much use.';
+    }
+    // The first line describes itself from the event, and keeps doing so until
+    // you type over it. Left blank it produced an invoice with a charge on it
+    // and nothing saying what the charge was for, which is the one line that
+    // gets an invoice queried.
+    const lines = prefill.lines && prefill.lines.length
+      ? prefill.lines
+      : [{ description: prefill.description || 'Music quiz night', amount: '' }];
+
+    form.innerHTML = `
+      <div class="inv-group"><h4>Who it is for</h4>
+        <label class="inv-field wide"><span>Customer</span>
+          <select name="customerId">
+            <option value="">Someone not on the list…</option>
+            ${book.customers.map((c) => `<option value="${esc(c.id)}" ${prefill.customerId === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
+          </select>
+        </label>
+        <div class="inv-oneoff" hidden>
+          ${field('Name', 'toName', '')}
+          ${field('Contact', 'toContact', '')}
+          ${field('Address', 'toAddress', '', { type: 'textarea', wide: true })}
+          ${field('Email', 'toEmail', '')}
+        </div>
+      </div>
+      <div class="inv-group"><h4>The event</h4>
+        ${field('What it was', 'eventTitle', prefill.event?.title || 'Music quiz night')}
+        ${field('Venue', 'eventVenue', prefill.event?.venue || '')}
+        ${field('Date', 'eventDate', prefill.event?.date || new Date().toISOString().slice(0, 10), { type: 'date' })}
+      </div>
+      <div class="inv-group wide"><h4>What they owe</h4>
+        <div class="inv-lines"></div>
+        <button class="minor add-line" type="button">Add a line</button>
+      </div>
+      <div class="inv-group">
+        ${field('Deposit already paid', 'deposit', prefill.deposit || '', { placeholder: '0' })}
+        ${field('Anything else on the invoice', 'notes', '', { type: 'textarea', wide: true })}
+      </div>
+      <div class="inv-total tiny"></div>`;
+
+    const linesEl = form.querySelector('.inv-lines');
+    const totalEl = form.querySelector('.inv-total');
+
+    // The running total is worked out here only to show you what you typed.
+    // The invoice's own figures come back from the server, which is the one
+    // place money is ever added up.
+    const retotal = () => {
+      let pence = 0;
+      let bad = false;
+      for (const row of linesEl.querySelectorAll('.inv-line')) {
+        const raw = row.querySelector('[data-amount]').value.trim();
+        if (!raw) continue;
+        const parsed = readMoney(raw);
+        if (parsed === null) bad = true;
+        else pence += parsed;
+      }
+      const deposit = readMoney(form.querySelector('[name=deposit]').value.trim() || '0');
+      totalEl.innerHTML = bad || deposit === null
+        ? '<b style="color:var(--bad)">That does not look like an amount — try 350 or 350.00</b>'
+        : `Amount due <b>${esc(money(pence - (deposit || 0)))}</b>`;
+    };
+
+    const addLine = (line = { description: '', amount: '' }) => {
+      const row = node(`
+        <div class="inv-line">
+          <input type="text" data-desc placeholder="Music quiz night" value="${esc(line.description || '')}">
+          <input type="text" data-amount placeholder="350" value="${esc(line.amount || '')}" inputmode="decimal">
+          <button class="minor danger" type="button">×</button>
+        </div>`);
+      row.querySelector('button').addEventListener('click', () => { row.remove(); retotal(); });
+      row.querySelector('[data-amount]').addEventListener('input', retotal);
+      linesEl.appendChild(row);
+      retotal();
+    };
+    for (const line of lines) addLine(line);
+    form.querySelector('.add-line').addEventListener('click', () => addLine());
+    form.querySelector('[name=deposit]').addEventListener('input', retotal);
+
+    /*
+     * Keep the first line reading like the night it is for, until it is edited.
+     * "Music quiz night — The Crown" writes itself as you fill the form in;
+     * touch the box and it stops, because from then on it is yours.
+     */
+    const firstDesc = () => linesEl.querySelector('.inv-line [data-desc]');
+    let autoDesc = firstDesc() ? firstDesc().value : '';
+    const describe = () => {
+      const box = firstDesc();
+      if (!box || box.value !== autoDesc) return;
+      const bits = [form.querySelector('[name=eventTitle]').value.trim(), form.querySelector('[name=eventVenue]').value.trim()];
+      autoDesc = bits.filter(Boolean).join(' — ');
+      box.value = autoDesc;
+    };
+    for (const name of ['eventTitle', 'eventVenue']) {
+      form.querySelector(`[name=${name}]`).addEventListener('input', describe);
+    }
+
+    // A one-off booking should not have to become a saved customer first.
+    const picker = form.querySelector('[name=customerId]');
+    const oneOff = form.querySelector('.inv-oneoff');
+    const togglePicker = () => { oneOff.hidden = Boolean(picker.value); };
+    picker.addEventListener('change', () => {
+      togglePicker();
+      const customer = book.customers.find((c) => c.id === picker.value);
+      const first = linesEl.querySelector('[data-amount]');
+      if (customer && customer.usualFeePence != null && first && !first.value) {
+        first.value = money(customer.usualFeePence).replace('£', '');
+        retotal();
+      }
+      // A venue you already know the name of should not have to be typed twice.
+      const venue = form.querySelector('[name=eventVenue]');
+      if (customer && !venue.value) {
+        venue.value = customer.name;
+        describe();
+      }
+    });
+    togglePicker();
+    picker.dispatchEvent(new Event('change'));
+  }, async (form, { close }) => {
+    const v = valuesOf(form);
+    const lines = [...form.querySelectorAll('.inv-line')].map((row) => ({
+      description: row.querySelector('[data-desc]').value.trim(),
+      amount: row.querySelector('[data-amount]').value.trim() || '0',
+    })).filter((l) => l.description || l.amount !== '0');
+
+    const done = await invoiceApi('/api/invoices', {
+      method: 'POST',
+      body: JSON.stringify({
+        customerId: v.customerId,
+        toName: v.toName, toContact: v.toContact, toAddress: v.toAddress, toEmail: v.toEmail,
+        event: { title: v.eventTitle, venue: v.eventVenue, date: v.eventDate },
+        lines,
+        deposit: v.deposit || '0',
+        notes: v.notes,
+      }),
+    });
+    close();
+    refresh();
+    // Straight into sending it, because that is what you opened this to do.
+    share(done.invoice);
+  // "Save" is ambiguous on an invoice — saved as a draft, or sent? This one
+  // hands out a number and cannot be taken back, so it says so.
+  }, { saveLabel: 'Issue and send' });
+}
+
+/** Mirrors toPence in src/invoices.js — same rules, so the same things are refused. */
+function readMoney(input) {
+  const cleaned = String(input ?? '').trim().replace(/[£,\s]/g, '');
+  if (!cleaned) return null;
+  if (!/^-?\d+(\.\d{1,2})?$/.test(cleaned)) return null;
+  const negative = cleaned.startsWith('-');
+  const [pounds, pence = ''] = cleaned.replace('-', '').split('.');
+  const total = Number(pounds) * 100 + Number(pence.padEnd(2, '0'));
+  return negative ? -total : total;
 }

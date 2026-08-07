@@ -43,6 +43,11 @@ export const paths = {
   // repository, and unlike a pack there is no reason to want them in six
   // months — they are for the night and the download button.
   photos: path.join(config.dataDir, 'photos'),
+  // Your business details, your customers, and every invoice you have issued.
+  // Under data/ like everything else, so it is gitignored — and unlike the song
+  // history it must NEVER be committed to the main repo, which is public. It
+  // is backed up to the private one instead. See backUpInvoices() in server.js.
+  invoices: path.join(config.dataDir, 'invoicing.json'),
 };
 
 /**

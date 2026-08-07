@@ -105,6 +105,24 @@ the pack anyway and tells you why, so you always get a playable bingo round.
   loses a point to spelling.
 - **A number of questions per round type**, so a quiz can be fifteen general
   knowledge and five pictures rather than ten of everything.
+- **Invoicing.** An **Invoices** tab in the console. Fill in your details and
+  your bank once, add the venues you work for, and then billing for a night is:
+  press **Invoice this** on the panel that says the quiz has finished, check the
+  fee, press **Issue and send**. It makes a proper PDF and hands it to your
+  phone's share sheet, so it goes out from your own email with your address on
+  it. The app keeps the record — who was invoiced, what is outstanding, what is
+  overdue — and the tab wears a badge showing how many are still unpaid.
+
+  **Two things to set up before you use it in anger**, both in TODO order:
+  fill in *Your details* (nothing works properly without your bank details on
+  it), and set `PHOTO_REPO` on Render to a **private** repository. Without the
+  second one, every invoice and the invoice numbering disappears on the next
+  redeploy — the tab says so in red until you do. It must be private: that file
+  has your customers' addresses and your own account number in it.
+
+  VAT is off, and while it is off the invoice does not mention VAT anywhere,
+  because it must not. When you register, turn it on under *Your details* and
+  put your number in; invoices you have already sent are not changed.
 - **Four ways for a round 2 picture to give itself away** — zoom out, pixelate,
   come into focus, or tiles coming away — set per round in the Editor, or `mix`
   for a different one each question. They all get easy at the same rate, so

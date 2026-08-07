@@ -37,29 +37,40 @@ export function missingGithubConfig() {
 /**
  * Which repository we are talking to.
  *
- * There are two. The code and the packs go in the main one. Photos of members
- * of the public go in a **separate private** one, because the main repo is
+ * There are two. The code and the packs go in the main one. Anything that must
+ * never be public goes in a **separate private** one, because the main repo is
  * public and git history is forever — see PHOTO_REPO.
  *
- * @param {'app'|'photos'} which
+ * "photos" and "private" are the same repository under two names. Photos of
+ * members of the public were the first thing that needed it; invoices were the
+ * second, and they carry customer addresses and the host's own bank details,
+ * which is if anything a worse thing to commit to a public repo by accident.
+ * One private repo is enough, and one is easier to explain than two.
+ *
+ * @param {'app'|'photos'|'private'} which
  */
 function settings(which = 'app') {
-  const isPhotos = which === 'photos';
-  const repo = (isPhotos ? process.env.PHOTO_REPO : process.env.GITHUB_REPO) || '';
+  const isPrivate = which === 'photos' || which === 'private';
+  const repo = (isPrivate ? process.env.PHOTO_REPO : process.env.GITHUB_REPO) || '';
   const [owner, name] = repo.split('/');
   if (!owner || !name) {
-    throw new Error(`${isPhotos ? 'PHOTO_REPO' : 'GITHUB_REPO'} should look like "owner/repository"`);
+    throw new Error(`${isPrivate ? 'PHOTO_REPO' : 'GITHUB_REPO'} should look like "owner/repository"`);
   }
   return {
     owner,
     name,
-    branch: isPhotos
+    branch: isPrivate
       // New GitHub repos default to main; the quiz repo is the odd one out.
       ? (process.env.PHOTO_BRANCH || 'main')
       : (process.env.GITHUB_BRANCH || 'MusicQuizApp'),
     // A separate token is allowed but not required — one token can reach both.
-    token: (isPhotos && process.env.PHOTO_TOKEN) || process.env.GITHUB_TOKEN,
+    token: (isPrivate && process.env.PHOTO_TOKEN) || process.env.GITHUB_TOKEN,
   };
+}
+
+/** The private repo, by its other name. Same repo, different reason for it. */
+export function privateRepoConfigured() {
+  return photosRepoConfigured();
 }
 
 export function photosRepoConfigured() {
@@ -131,8 +142,9 @@ async function shaOf(filePath, which = 'app') {
  * @returns {{ok: boolean, url?: string, error?: string}}
  */
 export async function putFile(filePath, contents, message, which = 'app') {
-  const ready = which === 'photos' ? photosRepoConfigured() : githubConfigured();
-  if (!ready) return { ok: false, error: `${which === 'photos' ? 'The photo repository' : 'GitHub backup'} is not set up` };
+  const isPrivate = which === 'photos' || which === 'private';
+  const ready = isPrivate ? photosRepoConfigured() : githubConfigured();
+  if (!ready) return { ok: false, error: `${isPrivate ? 'The private repository' : 'GitHub backup'} is not set up` };
   try {
     const { owner, name, branch } = settings(which);
     const sha = await shaOf(filePath, which);
@@ -158,7 +170,7 @@ export async function putFile(filePath, contents, message, which = 'app') {
 }
 
 export async function deleteFile(filePath, message, which = 'app') {
-  const ready = which === 'photos' ? photosRepoConfigured() : githubConfigured();
+  const ready = (which === 'photos' || which === 'private') ? photosRepoConfigured() : githubConfigured();
   if (!ready) return { ok: false, error: 'not set up' };
   try {
     const { owner, name, branch } = settings(which);
@@ -177,7 +189,7 @@ export async function deleteFile(filePath, message, which = 'app') {
 
 /** A quick check that the token works and can write, for the console to show. */
 export async function checkAccess(which = 'app') {
-  const ready = which === 'photos' ? photosRepoConfigured() : githubConfigured();
+  const ready = (which === 'photos' || which === 'private') ? photosRepoConfigured() : githubConfigured();
   if (!ready) return { ok: false, error: 'not set up' };
   try {
     const { owner, name } = settings(which);

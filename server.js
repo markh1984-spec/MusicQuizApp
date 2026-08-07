@@ -30,7 +30,9 @@ import { listAdvertPacks, loadAdvertPack, saveAdvertPack, deleteAdvertPack, vali
 import { generateImages, imageStatus, imageJobs, openaiConfigured } from './src/generate-images.js';
 import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig } from './src/spotify.js';
-import { githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem } from './src/github.js';
+import { githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem, privateRepoConfigured } from './src/github.js';
+import { Invoices, totals, toPence, money } from './src/invoices.js';
+import { invoicePdf, invoiceFilename } from './src/invoice-pdf.js';
 import { toSvg } from './src/qrcode.js';
 // The logo, shared with the browser so the tab icon and the on-screen mark are
 // one drawing rather than two that look alike today.
@@ -43,6 +45,7 @@ const hub = new Hub();
 // launching the second one throws the first game away. The photos should not
 // go with it.
 const photos = new Photos(paths.photos);
+const invoices = new Invoices(paths.invoices);
 
 const session = new Session({ config, store, onPush: () => pushState() }).boot();
 
@@ -360,8 +363,15 @@ async function handleGet(req, res, url, route) {
         // shows up in the console, it just says less about itself.
         at: typeof session.engine.where === 'function' ? session.engine.where() : '',
         playerCount: session.engine.playerList().length,
+        // The console offers to invoice for a night that has actually ended,
+        // and only then — an invoice raised in the middle of round two is a
+        // mis-tap, not a decision.
+        finished: session.engine.state.phase === 'final' || Boolean(session.engine.state.finishedAt),
       },
       archive: listArchive(config.dataDir),
+      // Just the totals, so the Invoices tab can wear a badge saying how many
+      // are still unpaid. The invoices themselves are never in this payload.
+      invoicing: invoices.summary(),
       generation: {
         claude: Boolean(process.env.ANTHROPIC_API_KEY),
         openai: openaiConfigured(),
@@ -422,6 +432,37 @@ async function handleGet(req, res, url, route) {
     const months = Number(url.searchParams.get('months')) || 3;
     return sendJson(res, 200, { months, tracks: recentTracks(config.dataDir, months) }), true;
   }
+  /*
+   * ---- invoicing
+   *
+   * All of it behind the host key, and none of it in any player or screen
+   * payload. Customer addresses and your own bank details have no business
+   * being one mistyped URL away from a room full of phones.
+   *
+   * The PDF route comes first because the catch-all below it would otherwise
+   * read "MMM-0001.pdf" as an invoice number.
+   */
+  if (route.startsWith('/api/invoices/') && route.endsWith('.pdf')) {
+    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    const number = decodeURIComponent(route.slice('/api/invoices/'.length, -4));
+    const invoice = invoices.find(number);
+    if (!invoice) return sendJson(res, 404, { error: 'No invoice with that number' }), true;
+    const pdf = invoicePdf(invoice);
+    // `inline` so tapping it on a phone opens a preview to check before
+    // sending, rather than dropping a file into Downloads unseen.
+    res.writeHead(200, {
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="${invoiceFilename(invoice)}"`,
+      'Cache-Control': 'no-store',
+    });
+    return res.end(pdf), true;
+  }
+
+  if (route === '/api/invoices' && req.method === 'GET') {
+    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    return sendJson(res, 200, invoiceState()), true;
+  }
+
   if (route.startsWith('/api/archive/')) {
     if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
     const id = decodeURIComponent(route.slice('/api/archive/'.length));
@@ -522,6 +563,75 @@ async function backUp(relPath, contents, message, log = () => {}) {
  * Never throws: the pack is already saved by this point and a GitHub problem
  * must not turn a finished job into a failed one.
  */
+/**
+ * Back up the invoice book.
+ *
+ * To the PRIVATE repository, never the main one. The main one is public, and
+ * this file holds customer addresses and the host's own sort code and account
+ * number — committing that to a public repo is not something you can undo,
+ * because git history is forever. Same reasoning as the photos, same repo.
+ *
+ * There is no persistent disk on the free tier, so without this an invoice
+ * survives exactly until the next deploy. That is why every route that changes
+ * anything reports `backedUp` and the console says so out loud: an invoice you
+ * think you have a record of and do not is worse than no record at all.
+ */
+async function backUpInvoices() {
+  if (!privateRepoConfigured()) return { ok: false, error: 'no private repo set up' };
+  try {
+    return await putFile('invoicing.json', invoices.serialise(), 'Update invoices', 'private');
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+/** Everything the invoices tab draws itself from. */
+function invoiceState() {
+  return {
+    settings: invoices.settings,
+    customers: invoices.customers,
+    invoices: invoices.invoices.map(withTotals),
+    summary: invoices.summary(),
+    // Reported separately from anything else, because this is the one that
+    // quietly loses a year of records on a redeploy.
+    backupReady: privateRepoConfigured(),
+  };
+}
+
+/** The sums travel with the invoice so the browser never adds money up. */
+function withTotals(invoice) {
+  return { ...invoice, totals: totals(invoice) };
+}
+
+/**
+ * Read a draft off the wire.
+ *
+ * Money arrives as whatever was typed into a box — "350", "£350.00", "1,250.50"
+ * — and becomes integer pence here, at the edge, so nothing past this point
+ * has to wonder. A line whose amount cannot be read is refused rather than
+ * quietly counted as nothing.
+ */
+function readDraft(body = {}) {
+  const lines = (Array.isArray(body.lines) ? body.lines : []).map((line, i) => {
+    const pence = toPence(line.amountPence ?? line.amount);
+    if (pence === null) throw new Error(`Line ${i + 1}: "${line.amount ?? ''}" is not an amount.`);
+    return { description: String(line.description || ''), amountPence: pence };
+  });
+  const deposit = body.deposit || body.depositPence ? toPence(body.depositPence ?? body.deposit) : 0;
+  if (deposit === null) throw new Error(`"${body.deposit}" is not an amount.`);
+  return {
+    customerId: String(body.customerId || ''),
+    toName: body.toName,
+    toContact: body.toContact,
+    toAddress: body.toAddress,
+    toEmail: body.toEmail,
+    event: body.event || {},
+    lines,
+    depositPence: deposit,
+    notes: body.notes,
+  };
+}
+
 async function backUpHistory(log = () => {}) {
   try {
     const historyFile = path.join(config.dataDir, 'track-history.json');
@@ -570,6 +680,82 @@ function csvCell(value) {
 }
 
 async function handleWrite(req, res, url, route) {
+  /*
+   * ---- invoicing, the parts that change something
+   *
+   * Split from the reads because the server routes GET and everything else
+   * through different functions. Putting these on the GET side meant the PDF
+   * worked and nothing could be saved, which is a confusing way to fail.
+   */
+
+  if (route === '/api/invoices') {
+    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+
+    if (req.method === 'GET') {
+      return sendJson(res, 200, invoiceState()), true;
+    }
+
+    // Issue one. This is the only thing that hands out a number.
+    if (req.method === 'POST') {
+      const body = await readJson(req);
+      try {
+        const invoice = invoices.issue(readDraft(body));
+        const backup = await backUpInvoices();
+        return sendJson(res, 200, {
+          invoice: withTotals(invoice),
+          filename: invoiceFilename(invoice),
+          backedUp: backup.ok,
+          ...invoiceState(),
+        }), true;
+      } catch (err) {
+        return sendJson(res, 400, { error: err.message }), true;
+      }
+    }
+  }
+
+  if (route === '/api/invoices/settings' && req.method === 'PUT') {
+    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    const body = await readJson(req);
+    invoices.saveSettings(body);
+    const backup = await backUpInvoices();
+    return sendJson(res, 200, { backedUp: backup.ok, ...invoiceState() }), true;
+  }
+
+  if (route === '/api/invoices/customers' && req.method === 'POST') {
+    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    const body = await readJson(req);
+    try {
+      invoices.saveCustomer(body);
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message }), true;
+    }
+    const backup = await backUpInvoices();
+    return sendJson(res, 200, { backedUp: backup.ok, ...invoiceState() }), true;
+  }
+
+  if (route.startsWith('/api/invoices/customers/') && req.method === 'DELETE') {
+    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    invoices.deleteCustomer(decodeURIComponent(route.slice('/api/invoices/customers/'.length)));
+    const backup = await backUpInvoices();
+    return sendJson(res, 200, { backedUp: backup.ok, ...invoiceState() }), true;
+  }
+
+  // Mark it sent, paid or cancelled. Status is the only thing that can move on
+  // an invoice that has already gone out — see src/invoices.js.
+  if (route.startsWith('/api/invoices/') && req.method === 'POST') {
+    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    const number = decodeURIComponent(route.slice('/api/invoices/'.length));
+    const body = await readJson(req);
+    try {
+      const invoice = invoices.setStatus(number, String(body.status || ''));
+      if (!invoice) return sendJson(res, 404, { error: 'No invoice with that number' }), true;
+      const backup = await backUpInvoices();
+      return sendJson(res, 200, { backedUp: backup.ok, ...invoiceState() }), true;
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message }), true;
+    }
+  }
+
   // ---- players (open to anyone with the join link)
   if (route === '/api/join' && req.method === 'POST') {
     const body = await readJson(req);

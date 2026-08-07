@@ -2337,3 +2337,95 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 /* A picture that did not load says so, whichever effect it was going to use. */
 .zoom-frame.no-image .pix-canvas,
 .zoom-frame.no-image .tile-grid { display: none; }
+
+/* The primary action on a section heading. `.go` was only ever styled inside a
+   pack card and the editor, so a button using it anywhere else came out looking
+   like the secondary ones next to it — which on this panel is the wrong way
+   round: New invoice is the thing you came here to press. */
+.game-head .row { margin-left: auto; }
+.game-head .go, .sheet-actions .go, .inv-actions .go {
+  border: none;
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
+  color: #12000c;
+  font-weight: 900;
+}
+.game-head .go:hover, .sheet-actions .go:hover, .inv-actions .go:hover { filter: brightness(1.08); }
+.game-head .go:disabled, .sheet-actions .go:disabled { opacity: 0.5; cursor: default; filter: none; }
+
+/* ============================================================== invoicing
+   Read at half eleven on a phone, in a car park, by somebody who wants to go
+   home. Everything is one column and the amount is the biggest thing on it. */
+
+.inv-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--panel-line);
+  background: rgba(255, 255, 255, 0.04);
+  margin-bottom: 8px;
+}
+.inv-main { flex: 1 1 220px; min-width: 0; }
+.inv-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.inv-who { font-weight: 700; }
+.inv-status {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+  color: var(--ink-dim);
+}
+.inv-row.status-paid .inv-status { background: rgba(47, 224, 122, 0.2); color: var(--good); }
+.inv-row.status-cancelled { opacity: 0.55; }
+.inv-row.status-cancelled .inv-amount { text-decoration: line-through; }
+.inv-amount { font-weight: 900; font-size: 19px; margin-left: auto; }
+.inv-actions { display: flex; gap: 6px; align-items: center; }
+.inv-actions a.minor { text-decoration: none; display: inline-flex; align-items: center; }
+
+/* The forms. A two-column grid that collapses on a phone, because these get
+   filled in on a laptop and read on a phone. */
+.inv-form { display: grid; gap: 16px; }
+.inv-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px 14px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--panel-line);
+  background: rgba(255, 255, 255, 0.03);
+}
+.inv-group h4 {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.inv-field { display: grid; gap: 4px; font-size: 13px; font-weight: 700; }
+.inv-field.wide, .inv-group .wide, .inv-group.wide { grid-column: 1 / -1; }
+.inv-field span { color: var(--ink-dim); font-size: 12px; }
+.inv-field input[type="checkbox"] { justify-self: start; width: 20px; height: 20px; }
+
+.inv-lines { display: grid; gap: 6px; grid-column: 1 / -1; }
+.inv-line { display: flex; gap: 8px; }
+.inv-line [data-desc] { flex: 1 1 auto; min-width: 0; }
+/* Wide enough for "1,250.50" and no wider — it is a number, not a sentence. */
+.inv-line [data-amount] { flex: 0 0 110px; text-align: right; font-weight: 800; }
+.inv-total { grid-column: 1 / -1; font-size: 15px; text-align: right; }
+
+.inv-customers { display: grid; gap: 6px; }
+.inv-cust {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--panel-line);
+}
+.inv-cust > div { flex: 1 1 auto; min-width: 0; }

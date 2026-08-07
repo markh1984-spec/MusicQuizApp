@@ -116,6 +116,29 @@ with the same score. Latecomers can join partway through.
 
 ---
 
+## Getting paid
+
+There is an **Invoices** tab in the console. Fill in your own details and your
+bank once, add the venues you work for, and billing for a night is three taps:
+**Invoice this** on the panel that says the game has finished, check the fee,
+**Issue and send**.
+
+It makes a proper PDF and hands it to your phone's share sheet, so it goes out
+from your own email address rather than from the app — replies come to you, and
+it does not land in a spam folder. The app keeps the record: what is
+outstanding, what is overdue, and who has paid.
+
+Two things worth knowing:
+
+- **Set `PHOTO_REPO` to a private repository first.** There is no permanent disk,
+  so without it every invoice and the numbering vanishes on the next deploy. It
+  has to be private — that file holds customer addresses and your bank details.
+- **VAT is off unless you turn it on.** While it is off the invoice does not
+  mention VAT at all, which is how it must be if you are not registered.
+  Turning it on later never changes an invoice you have already sent.
+
+---
+
 ## How many people can play
 
 **Up to 300.** That is the supported number, and it is comfortably inside what

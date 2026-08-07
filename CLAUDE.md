@@ -576,6 +576,62 @@ typo is dropped rather than quietly becoming a round of general knowledge.
 
 ---
 
+## Invoicing
+
+`src/invoices.js` (what an invoice is), `src/invoice-pdf.js` (what it looks
+like) and `src/pdf.js` (a small dependency-free PDF writer, written out for the
+same reason `qrcode.js` was). Split three ways so changing the look can never
+change the arithmetic, which is the only part a customer argues about.
+
+**Three rules, all of them about not being embarrassed by somebody about to pay
+you:**
+
+1. **Money is integer pence, never a float.** Pounds exist only where a human
+   types or reads a number. There is a test named after 0.1 + 0.2.
+2. **An issued invoice never changes.** It carries its own copy of your details,
+   the customer's details, the VAT position, the terms and the bank details, so
+   correcting your address next month does not rewrite what somebody was sent in
+   August. Only the status moves. Registering for VAT does not add a VAT line to
+   last year's invoices, and there is a test for that.
+3. **Numbers are sequential and never reused.** A number is handed out when an
+   invoice is ISSUED, never when a draft is started, so an abandoned draft
+   leaves no hole. Cancelling keeps the number and the record rather than
+   deleting it — a missing number is a question you have to answer later.
+
+**VAT is off, and while it is off the invoice does not contain the word.**
+Charging VAT, or looking like you are, when you are not registered is an
+offence. The fields all exist behind `settings.vat.registered`. The host is not
+registered and does not know whether he will be; this is the ground prepared,
+not a feature waiting to be switched on for fun.
+
+**It backs up to the PRIVATE repo, never the main one.** The main repo is
+public and this file has customer addresses and the host's own sort code and
+account number in it. `putFile(..., 'private')` — the same repo as the photos,
+under a second name, because one private repo is easier to explain than two.
+Without it configured an invoice survives until the next deploy, so the tab says
+so in red. That warning is the same shape as the song history's and exists for
+the same reason.
+
+**Sending is the phone's own share sheet, not the app emailing.** It goes out
+from the host's address, so replies reach him and it does not land in spam
+addressed from nobody. On a laptop there is no share sheet, so it opens the PDF
+and a pre-written email draft instead. The app's job is the RECORD — who was
+invoiced, who has paid — which it keeps whether the sending happened here or
+not. Do not add an email service without asking: it costs money, needs an
+account, and sends from an address nobody replies to.
+
+**Dates are formatted in Europe/London and assembled by hand.** A quiz that ends
+at half past midnight in August is 23:30 the previous day in UTC, which is what
+the server's clock says — and the invoice has to agree with the person who ran
+the quiz. The pieces come from `formatToParts` rather than `toLocaleDateString`
+so punctuation cannot change under a different ICU build. Same reasoning for the
+thousands separator in `formatPence`.
+
+**A charge with no description is refused.** It is the one line that gets an
+invoice queried. A £0 line that explains itself ("Prizes — included") is fine.
+
+---
+
 ## How many people can play
 
 **Say 300. That is the documented number and it is deliberately below what the
@@ -615,7 +671,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 355 tests, no network, injected clocks — must stay green
+npm test        # 387 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -663,8 +719,8 @@ recreate it.
 
 All five build stages plus bingo, the console, generation, pack import, the
 tickable review flags, the alphabet round, per-type question counts and the
-picture round's four reveals are done, tested and pushed to **`MusicQuizApp`**.
-Nothing is half-finished in the tree. 355 tests green.
+picture round's four reveals and invoicing are done, tested and pushed to
+**`MusicQuizApp`**. Nothing is half-finished in the tree. 387 tests green.
 
 (An earlier version of this line named `claude/new-session-jzx988`. That branch
 is gone — see **Where to push**.)
