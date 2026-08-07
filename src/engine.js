@@ -12,16 +12,20 @@
  *  3. THE WHOLE THING IS SERIALISABLE. `this.state` is plain JSON, so crash
  *     recovery is just writing it to disk and reading it back.
  *
- * Rounds are plugins: a round has a `type` (`text`, `image`, `intro`) and the
- * only thing the engine does differently per type is decide which extra fields
- * the big screen and the host get. Adding a type means adding a case in
- * `screenQuestionExtras` / `hostQuestionExtras`, nothing else.
+ * Rounds are plugins: a round has a `type` (`text`, `image`, `intro`, `multi`,
+ * `alphabet`) and the only thing the engine does differently per type is decide
+ * what there is to pick from, which of those picks are right, and which extra
+ * fields the big screen and the host get. Those are `optionsFor`, `correctSet`
+ * and `screenQuestionExtras` / `hostQuestionExtras`. Everything else — the
+ * clock, the scoring, the tally, who picked what — works on indexes into a list
+ * and does not know one round type from another.
  */
 
 import {
   scoreAnswer, scoreMultiAnswer, responseSeconds, rankPlayers,
   POINTS_CORRECT, POINTS_PER_WHOLE_SECOND, POINTS_FIRST_CORRECT,
 } from './scoring.js';
+import { ALPHABET, answerLetter, answerLetterIndex } from './quizzes.js';
 
 export const PHASES = {
   LOBBY: 'lobby',
@@ -342,6 +346,7 @@ export class Engine {
 
     // Freeze a summary of the question for the recap and the export.
     const q = this.question();
+    const round = this.round();
     const answers = this.answersFor();
     this.state.history = this.state.history.filter(
       (h) => !(h.roundIndex === this.state.roundIndex && h.questionIndex === this.state.questionIndex),
@@ -350,7 +355,8 @@ export class Engine {
       roundIndex: this.state.roundIndex,
       questionIndex: this.state.questionIndex,
       prompt: q ? q.prompt : '',
-      correctIndex: q ? q.correctIndex : -1,
+      correctIndex: q && round ? [...this.correctSet(q, round)][0] ?? -1 : -1,
+      correctText: q && round ? this.answerText(q, round) : '',
       answerCount: Object.keys(answers).length,
       correctCount: Object.values(answers).filter((a) => a.correct).length,
       revealedAt: this.state.question.revealedAt,
@@ -610,7 +616,8 @@ export class Engine {
     if (!q || !round) return { ok: false, reason: 'no_question' };
 
     const isMulti = round.type === 'multi';
-    const valid = (i) => Number.isInteger(i) && i >= 0 && i < q.options.length;
+    const options = this.optionsFor(q, round);
+    const valid = (i) => Number.isInteger(i) && i >= 0 && i < options.length;
 
     // A phone sends which options it locked in, and nothing else. The timing
     // and the scoring stay here, exactly as they do for every other round.
@@ -678,14 +685,41 @@ export class Engine {
   }
 
   /**
+   * What there is to pick from.
+   *
+   * Every round type answers with an index into a list, which is what lets one
+   * `answer()`, one tally and one who-picked-what serve all of them. An
+   * alphabet round's list is the twenty-six letters — it is not written into
+   * the pack, so it is put back here.
+   */
+  optionsFor(q, round) {
+    if (round && round.type === 'alphabet') return ALPHABET;
+    return (q && q.options) || [];
+  }
+
+  /**
    * The right answers for a question, however many there are.
    *
-   * One shape for both kinds so nothing downstream has to branch: a normal
-   * question is a set of one.
+   * One shape for every kind so nothing downstream has to branch: a normal
+   * question is a set of one, and so is an alphabet question — the position of
+   * its first letter in the keyboard.
    */
   correctSet(q, round) {
     if (round && round.type === 'multi') return new Set(q.correctIndexes || []);
+    if (round && round.type === 'alphabet') return new Set([answerLetterIndex(q.answer)]);
     return new Set([q.correctIndex]);
+  }
+
+  /**
+   * What to say the answer WAS, once the question is over.
+   *
+   * On an alphabet round this is the thing that matters: the room needs to hear
+   * "Fleetwood Mac", not "F". The letter is only how they told you they knew it.
+   */
+  answerText(q, round) {
+    if (round && round.type === 'alphabet') return q.answer || '';
+    const options = this.optionsFor(q, round);
+    return [...this.correctSet(q, round)].map((i) => options[i]).join(', ');
   }
 
   /** How many they must lock in. The room is told this; which ones, never. */
@@ -761,6 +795,11 @@ export class Engine {
         // — without it the round is a guessing game about how long the answer
         // is. WHICH ones is the answer key and stays in the host view.
         return { pickCount: (q.correctIndexes || []).length };
+      case 'alphabet':
+        // A flag and nothing else. The options ARE the alphabet, which gives
+        // nothing away; the answer and its letter are the answer key and stay
+        // in the host view until the reveal.
+        return { alphabet: true };
       case 'text':
       default:
         return {};
@@ -812,7 +851,7 @@ export class Engine {
         view.question = {
           id: q.id,
           prompt: q.prompt,
-          options: q.options,
+          options: this.optionsFor(q, round),
           ...this.screenQuestionExtras(q, round),
         };
         view.clock = s.question
@@ -835,9 +874,14 @@ export class Engine {
       view.reveal = {
         // Kept for every round type so nothing downstream has to branch; a
         // normal question is a set of one.
-        correctIndex: q ? q.correctIndex : -1,
+        correctIndex: right[0] ?? -1,
         correctIndexes: right,
-        correctText: q ? right.map((i) => q.options[i]).join(', ') : '',
+        correctText: q && revealRound ? this.answerText(q, revealRound) : '',
+        // The letter, said out loud, so the big screen can show "F — Fleetwood
+        // Mac" rather than leaving the room to count along the keyboard.
+        ...(revealRound && revealRound.type === 'alphabet'
+          ? { correctLetter: answerLetter(q && q.answer) }
+          : {}),
         fastest: this.fastestFinger(),
         tally: this.optionTally(),
         answerNote: q ? q.answerNote || '' : '',
@@ -910,7 +954,7 @@ export class Engine {
     const q = this.question();
     if (!q) return null;
     const answers = this.answersFor();
-    const byOption = (q.options || []).map(() => []);
+    const byOption = this.optionsFor(q, this.round()).map(() => []);
     const answered = new Set();
 
     // In the order they answered, so the first one in is the first one out of
@@ -943,7 +987,7 @@ export class Engine {
   optionTally() {
     const q = this.question();
     if (!q) return [];
-    const tally = q.options.map(() => 0);
+    const tally = this.optionsFor(q, this.round()).map(() => 0);
     for (const a of Object.values(this.answersFor())) {
       // Every option they locked in counts, so the bars add up to the picks
       // made rather than the players who answered.
@@ -994,10 +1038,12 @@ export class Engine {
     if (s.phase === PHASES.QUESTION || s.phase === PHASES.REVEAL) {
       const q = this.question();
       if (q) {
-        view.options = q.options; // options only, never the prompt
+        view.options = this.optionsFor(q, round); // options only, never the prompt
         // How many to lock in. The count only; which ones is the answer key.
         view.pickCount = this.pickCount(q, round);
         view.multi = Boolean(round && round.type === 'multi');
+        // Which keyboard to draw. Not a secret — the alphabet is the alphabet.
+        view.alphabet = Boolean(round && round.type === 'alphabet');
         view.clock = s.question
           ? { startedAt: s.question.startedAt, endsAt: s.question.endsAt, seconds: s.question.seconds, closed: s.question.closed }
           : null;
@@ -1023,9 +1069,10 @@ export class Engine {
         if (s.phase === PHASES.REVEAL) {
           const right = [...this.correctSet(q, round)];
           view.reveal = {
-            correctIndex: q.correctIndex,
+            correctIndex: right[0] ?? -1,
             correctIndexes: right,
-            correctText: right.map((i) => q.options[i]).join(', '),
+            correctText: this.answerText(q, round),
+            ...(round && round.type === 'alphabet' ? { correctLetter: answerLetter(q.answer) } : {}),
             fastest: this.fastestFinger(),
           };
         }
@@ -1060,13 +1107,20 @@ export class Engine {
   hostQuestionExtras(q, round) {
     const right = [...this.correctSet(q, round)];
     const extras = {
-      correctIndex: q.correctIndex,
+      correctIndex: right[0] ?? -1,
       correctIndexes: right,
-      correctText: right.map((i) => q.options[i]).join(', '),
+      correctText: this.answerText(q, round),
       pickCount: this.pickCount(q, round),
       note: q.note || '',
       answerNote: q.answerNote || '',
     };
+    if (round.type === 'alphabet') {
+      // The answer in full and the letter it turns on. Host only until the
+      // reveal, like every other answer key.
+      extras.alphabet = true;
+      extras.answer = q.answer || '';
+      extras.correctLetter = answerLetter(q.answer);
+    }
     if (round.type === 'intro' && q.cue) {
       // The round 3 "play this now" cue. Host phone only, never the projector.
       extras.cue = {
@@ -1112,7 +1166,7 @@ export class Engine {
       view.question = {
         id: q.id,
         prompt: q.prompt,
-        options: q.options,
+        options: this.optionsFor(q, round),
         ...this.hostQuestionExtras(q, round),
       };
       view.answeredCount = Object.keys(this.answersFor()).length;
@@ -1176,7 +1230,7 @@ export class Engine {
       roundTitle: round.title,
       roundType: round.type,
       prompt: q.prompt,
-      options: q.options,
+      options: this.optionsFor(q, round),
       ...this.hostQuestionExtras(q, round),
     };
   }

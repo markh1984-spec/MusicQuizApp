@@ -14,7 +14,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { normaliseQuiz, validateQuiz, MULTI_OPTIONS } from './quizzes.js';
+import { normaliseQuiz, validateQuiz, MULTI_OPTIONS, ROUND_TYPES, answerLetter } from './quizzes.js';
 import { cleanTheme, quizTitleFor, themeSlug, titleCase } from './theme.js';
 import { spotifyConfigured, findTrack, createPlaylist } from './spotify.js';
 
@@ -89,12 +89,44 @@ The theme for this quiz is: ${theme}
 `.trim();
 }
 
-/** Is there a generation brief for this round type? Used by the tests. */
-export function roundBriefsFor(type) {
-  return roundBriefs({ theme: 'anything', perRound: 10 })[type] || null;
+/**
+ * How many questions of each type, in order.
+ *
+ * The generator used to take one number and apply it to every round, which is
+ * not how a quiz night is actually shaped: fifteen general knowledge, five
+ * pictures and ten of something else is a normal Wednesday, and "ten of
+ * everything" is not. So `rounds` may be a list of type names (each gets the
+ * fallback count) or a list of `{ type, count }`, and everything downstream
+ * works from the plan rather than from a single number.
+ *
+ * Anything not in ROUND_TYPES is dropped here rather than deeper in, so a
+ * typo cannot silently become a round of general knowledge.
+ *
+ * @param {Array<string|{type: string, count: number}>} rounds
+ * @param {number} fallback  the count for an entry that does not carry one
+ * @returns {Array<{type: string, count: number}>}
+ */
+export function roundPlan(rounds, fallback = 10) {
+  const list = Array.isArray(rounds) ? rounds : [];
+  const out = [];
+  for (const entry of list) {
+    const type = typeof entry === 'string' ? entry : String(entry && entry.type || '');
+    if (!ROUND_TYPES.includes(type)) continue;
+    const asked = typeof entry === 'object' && entry ? Number(entry.count) : NaN;
+    const count = Number.isFinite(asked) ? asked : Number(fallback);
+    // A round of nought is not a round; a round of fifty is a night on its own.
+    out.push({ type, count: Math.min(30, Math.max(1, Math.round(count) || 1)) });
+  }
+  return out;
 }
 
-function roundBriefs({ theme, perRound }) {
+/** Is there a generation brief for this round type? Used by the tests. */
+export function roundBriefsFor(type) {
+  return roundBriefs({ theme: 'anything', count: 10 })[type] || null;
+}
+
+function roundBriefs({ theme, count }) {
+  const perRound = count;
   return {
     text: `Round type "text": general knowledge about ${theme}.`,
 
@@ -144,6 +176,31 @@ ENTRIES. "Which three of these..." with two right answers is a broken question, 
 is "which three" with one. Count them before you write the number. If only one option
 is genuinely correct, this is not a pick-them-all question at all — write a different
 one.`,
+
+    alphabet: `Round type "alphabet": there are NO options. The room is shown the question and
+given a keyboard, and all they have to get right is the FIRST LETTER of the answer —
+which means spelling does not matter and neither does the rest of the answer.
+
+Write ${perRound} questions fitting "${theme}". Give each one an "answer" field with the
+answer written out in full, exactly as the host will read it aloud. Do NOT give options,
+correctIndex or correctIndexes.
+
+The whole round lives or dies on one thing: THERE MUST BE NO ARGUMENT ABOUT WHICH LETTER
+THE ANSWER STARTS WITH. So:
+
+- Never write an answer beginning with "The", "A" or "An". "The Beatles" is B to half a
+  room and T to the other half, and both halves are right. Write "Beatles".
+- Never write an answer that is commonly known by another name starting with a different
+  letter — a stage name and a real name, an abbreviation and what it stands for, a
+  British title and an American one. If somebody could reasonably give a different
+  correct answer that starts with a different letter, the question is broken.
+- Prefer answers that are one word or one name. A long phrase invites somebody to answer
+  it a different way round.
+- Say clearly in the question what KIND of thing you want back — the artist, the song,
+  the city, the instrument — so nobody answers a different question correctly and gets
+  the wrong letter for it.
+
+Vary the letter across the round. Do not let half of them start with the same one.`,
   };
 }
 
@@ -181,6 +238,10 @@ Reject a question if ANY of these is true:
 5. The "answerNote" mentions one of the wrong options in a way that makes it look
    correct.
 6. The question is ambiguous about which time period, chart, or release it means.
+7. On a question shown with an ANSWER and a first letter and no options: another
+   correct answer to the same question starts with a DIFFERENT letter, or the
+   answer is commonly known by another name starting with a different letter, or
+   it begins with "The", "A" or "An". Any of those and the round is unplayable.
 
 Do NOT reject a question merely for being easy, or obscure, or not to your taste.
 Only correctness and ambiguity.
@@ -232,10 +293,14 @@ async function checkQuestions({ questions, apiKey, model, log = () => {} }) {
 
 async function checkBatch({ questions, apiKey, model, log = () => {} }) {
   const listing = questions.map((q, i) => {
-    const lines = [
-      `[${i}] ${q.prompt}`,
-      ...q.options.map((o, oi) => `    ${oi === q.correctIndex ? 'ANSWER >' : '        '} ${o}`),
-    ];
+    // An alphabet question has no options — what has to be checked is the
+    // answer itself and, above all, that its first letter is not arguable.
+    const lines = q.answer !== undefined && !(q.options || []).length
+      ? [`[${i}] ${q.prompt}`, `    ANSWER > ${q.answer}  (first letter ${answerLetter(q.answer) || '?'})`]
+      : [
+          `[${i}] ${q.prompt}`,
+          ...(q.options || []).map((o, oi) => `    ${oi === q.correctIndex ? 'ANSWER >' : '        '} ${o}`),
+        ];
     if (q.answerNote) lines.push(`    fact: ${q.answerNote}`);
     if (q.cue) lines.push(`    plays: ${q.cue.title} by ${q.cue.artist}`);
     return lines.join('\n');
@@ -311,6 +376,9 @@ lands in across the round — do not put the answer in slot A every time.
 
 A "multi" round is the exception: it has SIX options and, instead of correctIndex, a
 "correctIndexes" array listing every right position, e.g. "correctIndexes": [0, 2, 5].
+
+An "alphabet" round is the other exception: no options and no correctIndex at all, just
+"answer" with the answer written out in full.
 `.trim();
 
 /**
@@ -377,6 +445,7 @@ function roundTitle(type, index, theme) {
   if (type === 'image') return `Round ${ordinal} — Whose Face Is This?`;
   if (type === 'intro') return `Round ${ordinal} — Name That Intro`;
   if (type === 'multi') return `Round ${ordinal} — Pick Them All`;
+  if (type === 'alphabet') return `Round ${ordinal} — First Letter`;
   return `Round ${ordinal} — ${titleCase(theme)}`;
 }
 
@@ -384,6 +453,7 @@ function roundBlurb(type, theme, perRound) {
   if (type === 'image') return 'The picture pulls back as the clock runs down. Guess early, score more.';
   if (type === 'intro') return `${perRound} intros. You get the first few seconds and nothing else.`;
   if (type === 'multi') return 'More than one answer is right. Lock in every one of them.';
+  if (type === 'alphabet') return 'Just the first letter of the answer. Spelling does not count.';
   return `${perRound} questions on ${theme}`;
 }
 
@@ -566,8 +636,9 @@ async function buildRound({ brief, perRound, check, system, apiKey, model, log, 
  * @param {object} opts
  * @param {object} opts.config           app config (needs quizDir)
  * @param {string} opts.theme            "the 1990s", "Harry Potter soundtracks", …
- * @param {string[]} [opts.rounds]       which round types, in order
- * @param {number} [opts.perRound]       questions per round
+ * @param {Array<string|{type: string, count: number}>} [opts.rounds]
+ *        which round types, in order, and how many questions each — see roundPlan
+ * @param {number} [opts.perRound]       the count for a round that does not name one
  * @param {boolean} [opts.hard]
  * @param {string} [opts.id]             filename, without .json
  * @param {string} [opts.title]
@@ -596,20 +667,23 @@ export async function generateQuizPack({
   const quizId = id || themeSlug(theme);
   const quizTitle = title || quizTitleFor(theme);
   const system = houseStyle({ theme: subject, hard });
-  const briefs = roundBriefs({ theme: subject, perRound });
+
+  const plan = roundPlan(rounds, perRound);
+  if (!plan.length) throw new Error(`No usable round types. Use ${ROUND_TYPES.join(', ')}.`);
 
   const built = [];
   const rejected = [];
   const unchecked = [];   // rounds the checking pass could not reach at all
 
-  for (let i = 0; i < rounds.length; i++) {
-    const type = rounds[i];
-    const brief = briefs[type];
-    if (!brief) throw new Error(`Unknown round type "${type}". Use text, image or intro.`);
+  for (let i = 0; i < plan.length; i++) {
+    const { type, count } = plan[i];
+    // Built per round rather than once, because the brief tells the model how
+    // many to write and that is now different from one round to the next.
+    const brief = roundBriefs({ theme: subject, count })[type];
 
-    log(`round ${i + 1} of ${rounds.length} (${type})`);
+    log(`round ${i + 1} of ${plan.length} (${type}, ${count} question${count === 1 ? '' : 's'})`);
     const questions = await buildRound({
-      brief, perRound, check, system, apiKey, model, log,
+      brief, perRound: count, check, system, apiKey, model, log,
       onReject: (q, reason) => rejected.push({ round: i + 1, prompt: q.prompt, reason }),
       onUnchecked: () => { if (!unchecked.includes(i + 1)) unchecked.push(i + 1); },
     });
@@ -618,16 +692,20 @@ export async function generateQuizPack({
       id: `r${i + 1}`,
       type,
       title: roundTitle(type, i, subject),
-      blurb: roundBlurb(type, subject, perRound),
+      blurb: roundBlurb(type, subject, count),
       ...(type === 'image' ? { imageCaption: 'AI-generated illustration — not a real photograph' } : {}),
       questions: questions.map((q, qi) => ({
         id: `r${i + 1}q${qi + 1}`,
         prompt: String(q.prompt || '').trim(),
-        options: (q.options || []).slice(0, type === 'multi' ? MULTI_OPTIONS : 4).map((o) => String(o).trim()),
-        correctIndex: Number.isInteger(q.correctIndex) ? q.correctIndex : 0,
-        ...(type === 'multi'
-          ? { correctIndexes: [...new Set((q.correctIndexes || []).filter(Number.isInteger))].sort((a, b) => a - b) }
-          : {}),
+        ...(type === 'alphabet'
+          ? { answer: String(q.answer || '').trim() }
+          : {
+              options: (q.options || []).slice(0, type === 'multi' ? MULTI_OPTIONS : 4).map((o) => String(o).trim()),
+              correctIndex: Number.isInteger(q.correctIndex) ? q.correctIndex : 0,
+              ...(type === 'multi'
+                ? { correctIndexes: [...new Set((q.correctIndexes || []).filter(Number.isInteger))].sort((a, b) => a - b) }
+                : {}),
+            }),
         ...(q.answerNote ? { answerNote: String(q.answerNote).trim() } : {}),
         ...(type === 'image'
           ? {
@@ -661,7 +739,7 @@ export async function generateQuizPack({
   const quiz = normaliseQuiz({
     id: quizId,
     title: quizTitle,
-    subtitle: 'Three rounds. Twenty seconds a question. Fastest fingers win.',
+    subtitle: `${['One', 'Two', 'Three', 'Four', 'Five', 'Six'][plan.length - 1] || plan.length} round${plan.length === 1 ? '' : 's'}. Twenty seconds a question. Fastest fingers win.`,
     questionSeconds: 20,
     createdAt: new Date(now()).toISOString(),
     notes: `Written by ${model} for "${subject}". NOT YET REVIEWED — read every question in the editor before the gig.`

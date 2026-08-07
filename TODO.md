@@ -100,6 +100,11 @@ the pack anyway and tells you why, so you always get a playable bingo round.
   a bin. Part 9b.
 - **Pick them all** — a fourth round type where several answers are right.
   Part 5c.
+- **First letter** — a fifth round type with no options at all: the room gets a
+  keyboard and only the first letter of the answer has to be right, so nobody
+  loses a point to spelling.
+- **A number of questions per round type**, so a quiz can be fifteen general
+  knowledge and five pictures rather than ten of everything.
 - **The rules as the first slide** of every quiz, and **scores on the big
   screen** whenever you want them. Part 9a.
 - **Advert slides between rounds**, one set per venue, with a QR to ticket
@@ -400,12 +405,26 @@ npm start
 The Console has two generators at the top:
 
 - [ ] **New quiz** — type a theme (`the 1990s`, `Motown`, `Britpop`, `Harry
-      Potter soundtracks`), tick which rounds you want, press **Write it**.
-      Takes about a minute for three rounds.
-      There are now **four** round types to tick:
-      *General knowledge*, *Whose face*, *Name that intro*, and
+      Potter soundtracks`), tick which rounds you want, **put a number next to
+      each one**, press **Write it**. Takes about a minute for three rounds.
+
+      There are **five** round types to tick, each with its own count — so
+      fifteen general knowledge, five pictures and ten first-letter is one job
+      rather than ten of everything:
+
+      *General knowledge*, *Whose face*, *Name that intro*,
       **Pick them all** — several answers are right and the room locks in all
-      of them, six options, part marks. It is off by default; tick it to try.
+      of them, six options, part marks — and
+      **First letter** — no options at all: the room gets a keyboard and only
+      the first letter of the answer has to be right. Spelling never costs
+      anybody a point, which is the whole idea. The last two are off by
+      default; tick them to try.
+
+      One thing to know about the first-letter round before you write your own:
+      **an answer can never start with "The", "A" or "An".** "The Beatles" is B
+      to half a room and T to the other half, and both halves are right. The
+      app refuses to save one, the editor tells you as you type, and the
+      generator is told not to write one.
 - [ ] **New bingo round** — type a theme, press **Build it**.
 
 Both stream their progress so you can see what they are doing.

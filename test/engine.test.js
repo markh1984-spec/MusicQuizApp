@@ -1276,3 +1276,150 @@ test('a pick-them-all answer names them under every option they locked in', () =
   const tallied = engine.hostView().tally.reduce((n, x) => n + x, 0);
   assert.equal(named, tallied);
 });
+
+/* ------------------------------------------------------------------------
+ * The alphabet round.
+ *
+ * No options in the pack at all: one answer written out the way the host says
+ * it, and the twenty-six letters put back by the engine. The rest of the
+ * machinery — the clock, the scoring, the tally, who picked what — works on
+ * indexes into a list and must not need to know this round type exists.
+ */
+
+function alphabetQuiz() {
+  return {
+    id: 'alpha', title: 'Alphabet', questionSeconds: 20,
+    rounds: [{
+      id: 'r1', type: 'alphabet', title: 'First Letter',
+      questions: [
+        { id: 'q1', prompt: 'Who wrote Rumours?', answer: 'Fleetwood Mac', answerNote: 'Nineteen seventy-seven.' },
+        { id: 'q2', prompt: 'Which city gave us Merseybeat?', answer: 'Liverpool' },
+      ],
+    }],
+  };
+}
+
+/** Where a letter sits on the keyboard the engine hands out. */
+const KEY = (letter) => letter.charCodeAt(0) - 65;
+
+function startedAlphabet() {
+  const h = makeEngine(alphabetQuiz());
+  h.engine.join({ name: 'Right' });
+  h.engine.join({ name: 'Wrong' });
+  h.engine.start();
+  h.engine.next();          // rules -> round intro
+  h.engine.next();          // -> first question
+  return h;
+}
+
+test('an alphabet question hands out twenty-six options and no answer', () => {
+  const { engine } = startedAlphabet();
+  const screen = engine.screenView();
+  assert.equal(screen.question.options.length, 26);
+  assert.equal(screen.question.options[0], 'A');
+  assert.equal(screen.question.options[25], 'Z');
+  assert.equal(screen.question.alphabet, true);
+  // The whole answer key, in every shape it could leak in.
+  const json = JSON.stringify(screen);
+  assert.ok(!json.includes('Fleetwood'), 'the answer must not reach the projector');
+  assert.equal(screen.question.answer, undefined);
+  assert.equal(screen.question.correctLetter, undefined);
+  assert.equal(screen.question.correctIndex, undefined);
+});
+
+test('the phone gets the keyboard but never the answer', () => {
+  const { engine } = startedAlphabet();
+  const me = engine.playerList()[0];
+  const view = engine.playerView(me.id);
+  assert.equal(view.alphabet, true);
+  assert.equal(view.options.length, 26);
+  assert.equal(view.pickCount, 1);
+  assert.ok(!JSON.stringify(view).includes('Fleetwood'));
+  // Rule 6 still holds: the question itself is on the big screen.
+  assert.equal(view.prompt, undefined);
+});
+
+test('the host gets the answer in full and the letter it turns on', () => {
+  const { engine } = startedAlphabet();
+  const view = engine.hostView();
+  assert.equal(view.question.answer, 'Fleetwood Mac');
+  assert.equal(view.question.correctLetter, 'F');
+  assert.equal(view.question.correctText, 'Fleetwood Mac');
+  assert.deepEqual(view.question.correctIndexes, [KEY('F')]);
+});
+
+test('the first letter is the whole of being right — spelling never comes into it', () => {
+  const h = startedAlphabet();
+  const [right, wrong] = h.engine.playerList();
+
+  h.at(3000);
+  const good = h.engine.answer({ playerId: right.id, optionIndex: KEY('F') });
+  assert.equal(good.ok, true);
+  assert.equal(good.correct, true);
+  // 100 + 17 whole seconds left + the first-correct bonus.
+  assert.equal(good.points, POINTS_CORRECT + POINTS_PER_WHOLE_SECOND * 17 + POINTS_FIRST_CORRECT);
+
+  h.at(4000);
+  const bad = h.engine.answer({ playerId: wrong.id, optionIndex: KEY('M') });
+  assert.equal(bad.ok, true);
+  assert.equal(bad.correct, false, 'Mac is not what it starts with');
+  assert.equal(bad.points, 0);
+});
+
+test('the reveal says the answer, not the letter it was hiding behind', () => {
+  const h = startedAlphabet();
+  const [right] = h.engine.playerList();
+  h.at(2000);
+  h.engine.answer({ playerId: right.id, optionIndex: KEY('F') });
+  h.engine.reveal();
+
+  const screen = h.engine.screenView();
+  assert.equal(screen.reveal.correctText, 'Fleetwood Mac');
+  assert.equal(screen.reveal.correctLetter, 'F');
+  assert.deepEqual(screen.reveal.correctIndexes, [KEY('F')]);
+  assert.equal(screen.reveal.tally[KEY('F')], 1);
+
+  const view = h.engine.playerView(right.id);
+  assert.equal(view.reveal.correctText, 'Fleetwood Mac');
+  assert.equal(view.yourAnswer.correct, true);
+});
+
+test('who picked what works on a keyboard too, and stays host-only', () => {
+  const h = startedAlphabet();
+  const [right, wrong] = h.engine.playerList();
+  h.at(1000);
+  h.engine.answer({ playerId: right.id, optionIndex: KEY('F') });
+  h.at(2000);
+  h.engine.answer({ playerId: wrong.id, optionIndex: KEY('B') });
+
+  const who = h.engine.hostView().whoPicked;
+  assert.equal(who.options.length, 26);
+  assert.deepEqual(who.options[KEY('F')].map((n) => n.name), ['Right']);
+  assert.deepEqual(who.options[KEY('B')].map((n) => n.name), ['Wrong']);
+  assert.deepEqual(who.options[KEY('Z')], []);
+  assert.equal(h.engine.screenView().whoPicked, undefined);
+  assert.equal(h.engine.playerView(right.id).whoPicked, undefined);
+});
+
+test('a letter that is not on the keyboard is refused', () => {
+  const h = startedAlphabet();
+  const [player] = h.engine.playerList();
+  assert.equal(h.engine.answer({ playerId: player.id, optionIndex: 26 }).reason, 'bad_option');
+  assert.equal(h.engine.answer({ playerId: player.id, optionIndex: -1 }).reason, 'bad_option');
+});
+
+test('the fastest finger and the recap survive a round with no options', () => {
+  const h = startedAlphabet();
+  const [right, wrong] = h.engine.playerList();
+  h.at(5000);
+  h.engine.answer({ playerId: wrong.id, optionIndex: KEY('Z') });
+  h.at(6000);
+  h.engine.answer({ playerId: right.id, optionIndex: KEY('F') });
+  h.engine.reveal();
+
+  assert.equal(h.engine.fastestFinger().name, 'Right', 'a fast wrong letter takes nothing');
+  const recap = h.engine.state.history.at(-1);
+  assert.equal(recap.correctIndex, KEY('F'));
+  assert.equal(recap.correctText, 'Fleetwood Mac');
+  assert.equal(recap.correctCount, 1);
+});

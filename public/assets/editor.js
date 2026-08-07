@@ -19,6 +19,7 @@ const ROUND_TYPES = [
   ['image', 'Picture — whose face is this?'],
   ['intro', 'Intro — you play the track'],
   ['multi', 'Pick them all — several right answers'],
+  ['alphabet', 'First letter — they get a keyboard'],
 ];
 
 const mainEl = document.getElementById('main');
@@ -357,9 +358,46 @@ function questionCard(round, q, ri, qi) {
    * E and F on the next save, which is the sort of thing you would only find
    * out in front of a room.
    */
+  const opts = el.querySelector('.opts');
+
+  /*
+   * The first-letter round has no options at all — one answer, written out the
+   * way it will be read aloud, and the letter follows from it. Showing it is
+   * the point: the letter is what is being marked, so it is shown next to the
+   * box rather than left to be worked out.
+   */
+  if (round.type === 'alphabet') {
+    const letterOf = (a) => (String(a || '').trim().match(/[a-z]/i) || [''])[0].toUpperCase();
+    const article = /^(the|a|an)\s+/i;
+    const row = node(`
+      <div class="opt-row is-correct">
+        <label class="alpha-letter">${esc(letterOf(q.answer) || '?')}</label>
+        <input type="text" value="${esc(q.answer || '')}" placeholder="The answer, in full — the host reads this out">
+      </div>
+      `);
+    const warn = node(`<div class="tiny" style="margin-top:6px"></div>`);
+    const sayLetter = () => {
+      const answer = String(q.answer || '').trim();
+      row.querySelector('.alpha-letter').textContent = letterOf(answer) || '?';
+      warn.style.color = '';
+      if (!answer) warn.textContent = 'No answer yet, so there is no letter to be right about.';
+      else if (!letterOf(answer)) { warn.style.color = 'var(--bad)'; warn.textContent = 'That does not start with a letter.'; }
+      else if (article.test(answer)) {
+        warn.style.color = 'var(--bad)';
+        warn.textContent = `Drop the "${answer.split(/\s+/)[0]}" — half the room would press ${letterOf(answer)} and half ${letterOf(answer.replace(article, ''))}, and both would be right.`;
+      } else warn.textContent = `They have to press ${letterOf(answer)}. Spelling does not count.`;
+    };
+    row.querySelector('input').addEventListener('input', (e) => change(() => {
+      q.answer = e.target.value;
+      sayLetter();
+    }));
+    sayLetter();
+    opts.append(row, warn);
+    return el;
+  }
+
   const isMulti = round.type === 'multi';
   const count = isMulti ? 6 : 4;
-  const opts = el.querySelector('.opts');
   if (isMulti && !Array.isArray(q.correctIndexes)) q.correctIndexes = [];
 
   const isRight = (i) => (isMulti ? q.correctIndexes.includes(i) : q.correctIndex === i);
@@ -456,6 +494,14 @@ function cueFields(q) {
  * typed. Only the shape the round needs is guaranteed.
  */
 function reshapeForType(q, type) {
+  if (type === 'alphabet') {
+    // Carry the marked answer over as the answer, so switching a round across
+    // does not leave every question blank. Same rule as everywhere else here:
+    // the options stay on the object, so switching back restores them.
+    if (!q.answer) q.answer = (q.options || [])[q.correctIndex] || '';
+    return;
+  }
+  if (!Array.isArray(q.options)) q.options = [];
   if (type === 'multi') {
     while (q.options.length < 6) q.options.push('');
     if (!Array.isArray(q.correctIndexes) || !q.correctIndexes.length) {
@@ -472,6 +518,8 @@ function reshapeForType(q, type) {
 }
 
 function blankQuestion(type, id) {
+  // A first-letter question has no options at all — just the answer.
+  if (type === 'alphabet') return { id, prompt: '', answer: '' };
   // A pick-them-all question is six options and a set of right ones; every
   // other kind is four and a single answer.
   if (type === 'multi') {

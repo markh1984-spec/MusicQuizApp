@@ -73,6 +73,23 @@ async function load() {
 }
 
 /**
+ * The rounds the quiz generator can write, and how many of each by default.
+ *
+ * A count each rather than one number for the lot: "fifteen general knowledge,
+ * five pictures and ten of the first-letter round" is what a night actually
+ * looks like, and "ten of everything" is what the generator used to insist on.
+ *
+ * [id, label, default count, on by default, tooltip]
+ */
+const QUIZ_ROUNDS = [
+  ['text', 'General knowledge', 10, true, ''],
+  ['image', 'Whose face', 10, true, 'An illustrated portrait that pulls back as the clock runs down'],
+  ['intro', 'Name that intro', 10, true, 'You play the first few seconds off your own music app'],
+  ['multi', 'Pick them all', 10, false, 'Several answers are right — the room locks in all of them'],
+  ['alphabet', 'First letter', 10, false, 'No options: they get a keyboard and only the first letter of the answer has to be right'],
+];
+
+/**
  * The tabs.
  *
  * One entry per thing you can run. Adding a third game means adding one entry
@@ -273,18 +290,31 @@ function quizGeneratePanel(gen) {
         <input type="text" id="qTheme" placeholder="A theme — the 1990s, Motown, Christmas number ones, Britpop…" autocomplete="off">
         <button class="go" id="qGo" ${gen.claude ? '' : 'disabled'}>Write it</button>
       </div>
+      <div class="gen-rounds">
+        ${QUIZ_ROUNDS.map(([id, label, count, checked, hint]) => `
+          <label class="gen-round ${checked ? '' : 'off'}" ${hint ? `title="${esc(hint)}"` : ''}>
+            <input type="checkbox" data-round="${id}" ${checked ? 'checked' : ''}>
+            <span class="gen-round-name">${esc(label)}</span>
+            <input type="number" data-count="${id}" value="${count}" min="1" max="30" ${checked ? '' : 'disabled'}>
+          </label>`).join('')}
+      </div>
       <div class="gen-opts">
-        <label>Questions per round <input type="number" id="qPer" value="10" min="3" max="20" style="width:60px"></label>
-        <label><input type="checkbox" id="qText" checked> General knowledge</label>
-        <label><input type="checkbox" id="qImage" checked> Whose face</label>
-        <label><input type="checkbox" id="qIntro" checked> Name that intro</label>
-        <label title="Several answers are right — the room locks in all of them"><input type="checkbox" id="qMulti"> Pick them all</label>
         <label><input type="checkbox" id="qHard"> Harder than usual</label>
-        <span class="tiny">Every question is checked by a second pass before you see it.</span>
+        <span class="tiny">A number each — fifteen general knowledge and five pictures is a normal night. Every question is checked by a second pass before you see it.</span>
       </div>
       <div class="gen-status" id="qStatus"></div>
       ${gen.claude ? '' : '<div class="tiny warn">Set ANTHROPIC_API_KEY to write quizzes.</div>'}
     </div>`);
+
+  // Unticking a round greys its number out rather than hiding it, so the
+  // count you had typed is still there when you tick it back on.
+  el.querySelectorAll('[data-round]').forEach((box) => {
+    box.addEventListener('change', () => {
+      const row = box.closest('.gen-round');
+      row.classList.toggle('off', !box.checked);
+      row.querySelector('[data-count]').disabled = !box.checked;
+    });
+  });
 
   el.querySelector('#qGo')?.addEventListener('click', () => generateQuiz(el));
   el.querySelector('#qTheme')?.addEventListener('keydown', (e) => {
@@ -302,11 +332,13 @@ async function generateQuiz(panel) {
     return;
   }
 
-  const rounds = [];
-  if (panel.querySelector('#qText').checked) rounds.push('text');
-  if (panel.querySelector('#qImage').checked) rounds.push('image');
-  if (panel.querySelector('#qIntro').checked) rounds.push('intro');
-  if (panel.querySelector('#qMulti').checked) rounds.push('multi');
+  // In the order they are listed, each with its own count.
+  const rounds = [...panel.querySelectorAll('[data-round]')]
+    .filter((box) => box.checked)
+    .map((box) => ({
+      type: box.dataset.round,
+      count: Number(panel.querySelector(`[data-count="${box.dataset.round}"]`).value) || 10,
+    }));
   if (!rounds.length) {
     status.textContent = 'Pick at least one round.';
     return;
@@ -326,7 +358,6 @@ async function generateQuiz(panel) {
     const result = await streamGeneration('/api/generate/quiz', {
       theme,
       rounds,
-      perRound: Number(panel.querySelector('#qPer').value),
       hard: panel.querySelector('#qHard').checked,
     }, say);
 
@@ -1261,6 +1292,19 @@ async function preview(kind, pack) {
 }
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+const ROUND_LABELS = {
+  text: 'General knowledge',
+  image: 'Whose face is this?',
+  intro: 'Name that intro',
+  multi: 'Pick them all',
+  alphabet: 'First letter only',
+};
+
+/** The letter an alphabet answer turns on. Mirrors answerLetter in src/quizzes.js. */
+function firstLetter(answer) {
+  const found = String(answer || '').trim().match(/[a-z]/i);
+  return found ? found[0].toUpperCase() : '';
+}
 
 /**
  * The flags, with a way to tick each one off.
@@ -1353,21 +1397,27 @@ function warningPanel(quiz, warnings) {
 
 function renderQuizPreview(body, sub, quiz, markDirty = () => {}) {
   const all = quiz.rounds.flatMap((r) => r.questions);
+  // A first-letter question has no options and no letter to lean on, so it is
+  // left out of this entirely — counted in, it would water the lean down and
+  // stop a genuinely lopsided pack being flagged.
+  const lettered = all.filter((q) => (q.options || []).length);
   // Long enough for the widest round in the pack: four for most, six for a
   // pick-them-all round.
-  const spread = new Array(Math.max(4, ...all.map((q) => (q.options || []).length))).fill(0);
+  const spread = new Array(Math.max(4, ...lettered.map((q) => q.options.length))).fill(0);
   // A pick-them-all question has several right answers, so it contributes to
   // several slots — otherwise the "answers land A x3 B x1" line would treat
   // one of them as the answer and call the round lopsided when it is not.
-  for (const q of all) {
+  for (const q of lettered) {
     const right = q.correctIndexes && q.correctIndexes.length ? q.correctIndexes : [q.correctIndex];
     for (const i of right) if (spread[i] !== undefined) spread[i]++;
   }
-  const lopsided = spread.some((n) => n > all.length * 0.5);
+  // Four is the fewest that can lean; below that "A x1 B x0 — lopsided" is
+  // just arithmetic being rude about a question that has to be somewhere.
+  const lopsided = lettered.length >= 4 && spread.some((n) => n > lettered.length * 0.5);
   const noNotes = all.filter((q) => !q.answerNote).length;
 
   sub.innerHTML = `${all.length} questions across ${quiz.rounds.length} round${quiz.rounds.length === 1 ? '' : 's'}
-    · answers land ${spread.map((n, i) => `${LETTERS[i]}&times;${n}`).join(' ')}
+    ${lettered.length ? `· answers land ${spread.map((n, i) => `${LETTERS[i]}&times;${n}`).join(' ')}` : ''}
     ${lopsided ? '<b style="color:var(--gold)"> — lopsided</b>' : ''}
     ${noNotes ? ` · ${noNotes} with no fact to read out` : ''}`;
   sub.appendChild(evenerButton(body, sub, quiz, markDirty, lopsided));
@@ -1399,7 +1449,7 @@ function renderQuizPreview(body, sub, quiz, markDirty = () => {}) {
       <div class="pv-round">
         <div class="pv-round-head">
           <input class="pv-round-name" value="${esc(round.title)}" title="Click to rename this round">
-          <span class="tiny">${esc({ text: 'General knowledge', image: 'Whose face is this?', intro: 'Name that intro', multi: 'Pick them all' }[round.type] || round.type)}</span>
+          <span class="tiny">${esc(ROUND_LABELS[round.type] || round.type)}</span>
         </div>
         ${round.spotifyPlaylist ? `<a class="pv-playlist" href="${esc(round.spotifyPlaylist.url)}" target="_blank" rel="noopener">Spotify playlist for this round</a>` : ''}
       </div>`);
@@ -1414,10 +1464,14 @@ function renderQuizPreview(body, sub, quiz, markDirty = () => {}) {
         <div class="pv-q">
           <div class="pv-prompt"><span class="pv-num">${i + 1}</span>${esc(q.prompt)}</div>
           <div class="pv-opts">
-            ${q.options.map((o, oi) => `
-              <div class="pv-opt ${(q.correctIndexes && q.correctIndexes.length ? q.correctIndexes : [q.correctIndex]).includes(oi) ? 'right' : ''}">
-                <span class="pv-letter">${LETTERS[oi]}</span>${esc(o)}
-              </div>`).join('')}
+            ${round.type === 'alphabet'
+              // No options to read through — the whole answer key is the answer
+              // and the letter it turns on, so show exactly that.
+              ? `<div class="pv-opt right"><span class="pv-letter">${esc(firstLetter(q.answer) || '?')}</span>${esc(q.answer || '')}</div>`
+              : (q.options || []).map((o, oi) => `
+                  <div class="pv-opt ${(q.correctIndexes && q.correctIndexes.length ? q.correctIndexes : [q.correctIndex]).includes(oi) ? 'right' : ''}">
+                    <span class="pv-letter">${LETTERS[oi]}</span>${esc(o)}
+                  </div>`).join('')}
           </div>
           ${q.cue ? `<div class="pv-cue">Play: <b>${esc(q.cue.title)}</b> — ${esc(q.cue.artist)}${q.cue.hint ? ` · ${esc(q.cue.hint)}` : ''}</div>` : ''}
           ${q.answerNote ? `<div class="pv-note">${esc(q.answerNote)}</div>` : ''}

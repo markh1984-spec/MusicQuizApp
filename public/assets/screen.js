@@ -351,7 +351,13 @@ function updateLobby(s) {
 
 function renderRoundIntro(s) {
   const intro = s.roundIntro || {};
-  const typeLabel = { text: 'General knowledge', image: 'Whose face is this?', intro: 'Name that intro', multi: 'Pick them all' }[intro.type] || '';
+  const typeLabel = {
+    text: 'General knowledge',
+    image: 'Whose face is this?',
+    intro: 'Name that intro',
+    multi: 'Pick them all',
+    alphabet: 'First letter only',
+  }[intro.type] || '';
   return node(`
     <div class="round-intro">
       <div class="kicker">Round ${s.roundIndex + 1}</div>
@@ -387,14 +393,26 @@ function renderQuestion(s) {
       </div>
       ${media}
       <h2 class="q-prompt ${long ? 'small' : ''}">${esc(q.prompt)}</h2>
-      <div class="options" id="options">
-        ${(q.options || []).map((opt, i) => `
-          <div class="option" data-i="${i}">
-            <span class="letter">${LETTERS[i]}</span>
-            <span class="text">${esc(opt)}</span>
-            <span class="tally" data-tally="${i}"></span>
-          </div>
-        `).join('')}
+      ${/* The answer in words, on the reveal, directly under the question it
+            answers. It gets its own slot up here rather than going in with the
+            fastest finger at the bottom, because down there it landed on top of
+            the last row of letters — and on this round it is the single most
+            important thing on the screen. */ ''}
+      <div id="answerSlot"></div>
+      <div class="options ${q.alphabet ? 'alphabet' : ''}" id="options">
+        ${(q.options || []).map((opt, i) => q.alphabet
+          // The option IS the letter, so there is no letter chip and no text
+          // beside it — twenty-six tiles, and the room watches its own answer
+          // fill up under each one.
+          ? `<div class="option" data-i="${i}">
+               <span class="text">${esc(opt)}</span>
+               <span class="tally" data-tally="${i}"></span>
+             </div>`
+          : `<div class="option" data-i="${i}">
+               <span class="letter">${LETTERS[i]}</span>
+               <span class="text">${esc(opt)}</span>
+               <span class="tally" data-tally="${i}"></span>
+             </div>`).join('')}
       </div>
       <div id="revealSlot"></div>
     </div>
@@ -426,6 +444,12 @@ function renderQuestionMedia(s, q) {
     // The instruction, not the answer. How many is what makes the round
     // playable; which ones never reaches this screen.
     return `<div class="pick-banner">Lock in <b>${q.pickCount}</b> answers</div>`;
+  }
+  if (s.roundType === 'alphabet') {
+    // The rule of the round, up where the room can see it. Half of them will
+    // not have heard it said, and the whole point is that they can stop
+    // worrying about spelling it.
+    return '<div class="pick-banner">Tap the <b>first letter</b> of the answer — spelling does not count</div>';
   }
   return '';
 }
@@ -466,6 +490,16 @@ function updateQuestion(s) {
       const tally = (s.reveal.tally || [])[i] || 0;
       if (tallyEl) tallyEl.textContent = tally ? `${tally}` : '';
     }
+    // A lit-up letter is not an answer. On the first-letter round the room has
+    // to be told what it actually was, in words, or the reveal says nothing.
+    const said = document.getElementById('answerSlot');
+    if (said && !said.firstElementChild && s.reveal.correctLetter) {
+      said.appendChild(node(`
+        <div class="answer-said">
+          <span class="answer-letter">${esc(s.reveal.correctLetter)}</span>
+          <span class="answer-words">${esc(s.reveal.correctText)}</span>
+        </div>`));
+    }
     const slot = document.getElementById('revealSlot');
     if (slot && !slot.firstElementChild) {
       slot.appendChild(renderRevealBanner(s));
@@ -478,6 +512,8 @@ function updateQuestion(s) {
     }
     const slot = document.getElementById('revealSlot');
     if (slot) slot.replaceChildren();
+    const said = document.getElementById('answerSlot');
+    if (said) said.replaceChildren();
   }
 }
 
@@ -488,7 +524,8 @@ function renderRevealBanner(s) {
       <div class="reveal-banner">
         <div>
           <div class="label">Nobody got it</div>
-          <div class="who">${esc(s.reveal.correctText)}</div>
+          ${/* Already spelled out above on the first-letter round. */ ''}
+          ${s.reveal.correctLetter ? '' : `<div class="who">${esc(s.reveal.correctText)}</div>`}
         </div>
       </div>`);
   }

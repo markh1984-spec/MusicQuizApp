@@ -120,9 +120,17 @@ with the same score. Latecomers can join partway through.
 
 ### Write it with Claude
 
-From the console: **New quiz** → type a theme → **Write it**. Tick which of the
-three round types you want. Takes a minute or two and costs a few pence. British
-charts and British spelling are baked into the prompt.
+From the console: **New quiz** → type a theme → **Write it**. Tick the rounds
+you want and put a number next to each — fifteen general knowledge, five
+pictures and ten first-letter is one job. Takes a minute or two and costs a few
+pence. British charts and British spelling are baked into the prompt.
+
+The five round types are **general knowledge**, **whose face is this** (an
+illustrated portrait that pulls back as the clock runs down), **name that
+intro** (you play the track), **pick them all** (six options, two or three
+right, part marks) and **first letter** — no options at all: the room gets a
+keyboard and only the first letter of the answer has to be right, so spelling
+never costs anybody a point.
 
 **It checks its own work, always.** A second pass reads the questions back with
 a different job — find the mistakes, assume there are some — and throws out any
@@ -363,7 +371,7 @@ reconnect on their own when a phone comes back from being locked.
   "questionSeconds": 20,
   "rounds": [
     {
-      "type": "text",              // text | image | intro
+      "type": "text",              // text | image | intro | multi | alphabet
       "title": "Round One — The Eighties",
       "questions": [
         {
@@ -378,9 +386,17 @@ reconnect on their own when a phone comes back from being locked.
           "imagePrompt": "…for the image generator",
           "zoomFrom": 6,
 
+          // pick-them-all rounds — six options, and this instead of correctIndex
+          "correctIndexes": [0, 2, 5],
+
           // intro rounds — never sent to the big screen
           "cue": { "title": "Billie Jean", "artist": "Michael Jackson",
                    "from": "0:00", "hint": "let the intro run 8 seconds" }
+
+          // first-letter rounds have NO options and NO correctIndex. Just:
+          //   { "prompt": "Who wrote Rumours?", "answer": "Fleetwood Mac" }
+          // The keyboard is put back by the engine, and the answer must not
+          // start with "The", "A" or "An" — two letters would both be right.
         }
       ]
     }
@@ -397,8 +413,16 @@ A round is a plugin. To add one:
    `hostQuestionExtras` (what only you see) in `src/engine.js`.
 3. Add a media block in `renderQuestionMedia` in `public/assets/screen.js` and a
    `.type-yourtype` rule in the stylesheet.
+4. Add a brief to `roundBriefs()` in `src/generate-quiz.js` so the generator can
+   write one, an entry in `QUIZ_ROUNDS` in `public/assets/console.js` and one in
+   `ROUND_TYPES` in `public/assets/editor.js`.
 
-Nothing else needs to know about it.
+Nothing else needs to know about it. Everything that is not per-type — the
+clock, the scoring, the tally, the fastest finger — works on indexes into a list
+of options, and the three functions that decide what that list is and which of
+it is right are `optionsFor()`, `correctSet()` and `answerText()` in
+`src/engine.js`. The first-letter round has no options in the pack at all: it
+stores `{ prompt, answer }` and those three put the alphabet back.
 
 ### Settings
 

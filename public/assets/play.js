@@ -388,8 +388,61 @@ function buildWaiting(s, kicker, title, sub) {
   `);
 }
 
+/**
+ * The first-letter round: a keyboard and nothing else.
+ *
+ * Twenty-six keys rather than four answers, and the same rule as every other
+ * round — one tap, locked in, no changing your mind. The point of the round is
+ * that spelling does not matter, so there is nothing to type and nothing to get
+ * wrong except the letter itself.
+ *
+ * A to Z, NOT QWERTY. Two reasons, and the second is the one that decided it:
+ * the projector shows A to Z, and hunting a single letter is faster in the
+ * order you already know it in — QWERTY is muscle memory for typing words, and
+ * nobody is typing a word here.
+ *
+ * Five across, where the projector is nine. This is the one place the two
+ * screens are deliberately a different shape, and it is a thumb problem: nine
+ * keys across a 320px phone is 28 pixels each, well under what anybody can hit
+ * in a dark pub against a clock. The order is the same, which is what actually
+ * matters — a player looking for F is not matching a position on the big
+ * screen, they already know which letter they want.
+ */
+const KEYBOARD = ['ABCDE', 'FGHIJ', 'KLMNO', 'PQRST', 'UVWXY', 'Z'];
+
+function buildAlphabetAnswers(s) {
+  const options = s.options || [];
+  const at = (letter) => options.indexOf(letter);
+
+  const el = node(`
+    <div style="display:flex;flex-direction:column;gap:14px;flex:1 1 auto">
+      <div class="timer">
+        <div class="bar"><span id="pTimerBar"></span></div>
+        <div class="num" id="pTimerNum">--</div>
+      </div>
+      <div class="muted" id="pHint" style="font-size:15px;text-align:center">
+        Question ${s.questionIndex + 1} of ${s.questionCount} — tap the <b>first letter</b> of the answer
+      </div>
+      <div class="keyboard" id="answers">
+        ${KEYBOARD.map((row) => `
+          <div class="keyboard-row">
+            ${[...row].map((letter) => `
+              <button class="answer-btn key" data-i="${at(letter)}">${letter}</button>`).join('')}
+          </div>`).join('')}
+      </div>
+      <div class="tiny" style="text-align:center;opacity:.7">Spelling does not count. Just the letter it starts with.</div>
+    </div>
+  `);
+
+  el.querySelectorAll('.answer-btn').forEach((btn) => {
+    btn.addEventListener('click', () => choose(Number(btn.dataset.i)));
+  });
+  return el;
+}
+
 function buildAnswers(s) {
   if (s.multi) return buildMultiAnswers(s);
+  if (s.alphabet) return buildAlphabetAnswers(s);
   const options = s.options || [];
   const el = node(`
     <div style="display:flex;flex-direction:column;gap:16px;flex:1 1 auto">
@@ -554,6 +607,9 @@ function updateScreen(s) {
 
 function buildReveal(s) {
   const r = s.reveal || {};
+  // On the first-letter round the answer is what they want to hear, and the
+  // letter is how they said it — so say both, in that order.
+  if (r.correctLetter) r.correctText = `${r.correctText} — ${r.correctLetter}`;
   const mine = s.yourAnswer;
   const answered = mine && mine.optionIndex !== undefined;
   const correct = answered && mine.correct;

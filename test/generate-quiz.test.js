@@ -13,8 +13,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { generateQuizPack, roundBriefsFor } from '../src/generate-quiz.js';
-import { ROUND_TYPES } from '../src/quizzes.js';
+import { generateQuizPack, roundBriefsFor, roundPlan } from '../src/generate-quiz.js';
+import { ROUND_TYPES, validateQuiz } from '../src/quizzes.js';
 
 /**
  * Stand in for the Anthropic API.
@@ -55,6 +55,9 @@ function stubClaude({ rejectHowMany = () => 0 } = {}) {
             prompt: `Stub question ${written}?`,
             options: [`A${written}`, `B${written}`, `C${written}`, `D${written}`],
             correctIndex: written % 4,
+            // An alphabet round takes this and ignores the options; every
+            // other round takes the options and ignores this.
+            answer: `${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[written % 26]}nswer ${written}`,
             answerNote: `Fact ${written}.`,
           };
         }),
@@ -330,4 +333,95 @@ test('the checker works in small batches, at the same time', async () => {
   assert.ok(sizes.length > 1, 'the round was split across several checker calls');
   assert.ok(Math.max(...sizes) <= 6, `no batch bigger than 6, got ${sizes.join(', ')}`);
   assert.ok(peak > 1, 'and they ran at the same time rather than one after another');
+});
+
+/* ------------------------------------------------------------------------
+ * How many of each.
+ *
+ * The generator used to take one number and apply it to every round, which is
+ * not the shape of a quiz night — fifteen general knowledge and five pictures
+ * is normal, ten of everything is not.
+ */
+
+test('a plan can be plain type names, and they all take the fallback', () => {
+  assert.deepEqual(roundPlan(['text', 'image'], 12), [
+    { type: 'text', count: 12 },
+    { type: 'image', count: 12 },
+  ]);
+});
+
+test('a plan can name a count per round, in the order given', () => {
+  assert.deepEqual(roundPlan([
+    { type: 'text', count: 15 },
+    { type: 'image', count: 5 },
+    { type: 'multi', count: 10 },
+    { type: 'alphabet', count: 10 },
+  ]), [
+    { type: 'text', count: 15 },
+    { type: 'image', count: 5 },
+    { type: 'multi', count: 10 },
+    { type: 'alphabet', count: 10 },
+  ]);
+});
+
+test('a plan can mix the two, and a missing count falls back', () => {
+  assert.deepEqual(roundPlan(['text', { type: 'alphabet', count: 20 }], 6), [
+    { type: 'text', count: 6 },
+    { type: 'alphabet', count: 20 },
+  ]);
+});
+
+test('a round type nobody has heard of is dropped rather than turned into text', () => {
+  assert.deepEqual(roundPlan(['text', 'karaoke', { type: 'nonsense', count: 4 }], 10), [
+    { type: 'text', count: 10 },
+  ]);
+  assert.deepEqual(roundPlan(null), []);
+  assert.deepEqual(roundPlan(['nope']), []);
+});
+
+test('a count is clamped rather than trusted', () => {
+  assert.deepEqual(roundPlan([
+    { type: 'text', count: 0 },
+    { type: 'image', count: -4 },
+    { type: 'intro', count: 500 },
+    { type: 'multi', count: 'lots' },
+  ], 7), [
+    { type: 'text', count: 1 },
+    { type: 'image', count: 1 },
+    { type: 'intro', count: 30 },
+    { type: 'multi', count: 7 },
+  ]);
+});
+
+test('each round comes back with its own number of questions', async () => {
+  process.env.ANTHROPIC_API_KEY = 'stub';
+  stubClaude();
+  await withTmpDir(async (config) => {
+    const { quiz } = await generateQuizPack({
+      config,
+      theme: 'test',
+      rounds: [
+        { type: 'text', count: 15 },
+        { type: 'image', count: 5 },
+        { type: 'multi', count: 3 },
+        { type: 'alphabet', count: 8 },
+      ],
+    });
+    assert.deepEqual(quiz.rounds.map((r) => r.questions.length), [15, 5, 3, 8]);
+  });
+});
+
+test('a generated alphabet round is answers, not options, and it validates', async () => {
+  process.env.ANTHROPIC_API_KEY = 'stub';
+  stubClaude();
+  await withTmpDir(async (config) => {
+    const { quiz } = await generateQuizPack({ config, theme: 'test', rounds: ['alphabet'], perRound: 5 });
+    const round = quiz.rounds[0];
+    assert.equal(round.type, 'alphabet');
+    for (const q of round.questions) {
+      assert.ok(q.answer, 'every question has an answer written out');
+      assert.equal(q.options, undefined, 'and no options at all');
+    }
+    assert.deepEqual(validateQuiz(quiz), []);
+  });
 });

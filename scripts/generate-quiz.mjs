@@ -10,22 +10,24 @@
  * Usage:
  *   npm run generate:quiz -- --theme "the 1990s"
  *   npm run generate:quiz -- --theme "Motown" --id motown-night --rounds text,intro
- *   npm run generate:quiz -- --theme "the 2000s" --questions 10 --hard
+ *   npm run generate:quiz -- --theme "the 2000s" --rounds text:15,image:5,alphabet:10
  *
  * Options:
  *   --theme      what the quiz is about (default "the 1990s")
  *   --decade     same thing, kept so older notes still work
  *   --id         filename to write, without .json
  *   --title      quiz title
- *   --rounds     which rounds, in order (default text,image,intro)
- *   --questions  how many per round (default 10)
+ *   --rounds     which rounds, in order (default text,image,intro). Put a count
+ *                on any of them with a colon — "text:15,image:5" — and the rest
+ *                fall back to --questions.
+ *   --questions  how many per round for rounds that do not name a count (default 10)
  *   --hard       pitch it at a room that knows its stuff
  *   --no-check   skip the second pass that checks the answers (faster, worse)
  *   --model      which Claude model to use
  */
 
 import { config } from '../src/config.js';
-import { generateQuizPack, DEFAULT_MODEL } from '../src/generate-quiz.js';
+import { generateQuizPack, DEFAULT_MODEL, roundPlan } from '../src/generate-quiz.js';
 
 const args = process.argv.slice(2);
 const has = (f) => args.includes(f);
@@ -35,11 +37,21 @@ const argOf = (name, fallback = '') => {
 };
 
 const theme = argOf('--theme', argOf('--decade', 'the 1990s'));
-const rounds = argOf('--rounds', 'text,image,intro').split(',').map((s) => s.trim()).filter(Boolean);
 const perRound = Number(argOf('--questions', '10'));
+// "text:15" is fifteen general knowledge; a bare "text" takes --questions.
+const rounds = argOf('--rounds', 'text,image,intro')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+  .map((s) => {
+    const [type, count] = s.split(':');
+    return count ? { type: type.trim(), count: Number(count) } : type;
+  });
 
 async function main() {
-  console.log(`\nWriting a quiz about "${theme}" — ${rounds.length} rounds of ${perRound}\n`);
+  const plan = roundPlan(rounds, perRound);
+  if (!plan.length) throw new Error(`No usable round types in "${argOf('--rounds', '')}".`);
+  console.log(`\nWriting a quiz about "${theme}" — ${plan.map((r) => `${r.count} ${r.type}`).join(', ')}\n`);
 
   const { quiz, problems, file, needsImages, rejected } = await generateQuizPack({
     config,

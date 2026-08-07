@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { validateQuiz, normaliseQuiz, safeQuizFile, saveQuiz, loadQuiz, listQuizzes, reviewWarnings, setWarningChecked } from '../src/quizzes.js';
+import { validateQuiz, normaliseQuiz, safeQuizFile, saveQuiz, loadQuiz, listQuizzes, reviewWarnings, setWarningChecked, answerLetter, answerLetterIndex, ALPHABET } from '../src/quizzes.js';
 
 function goodQuiz() {
   return {
@@ -490,4 +490,69 @@ test('a review tick still saves when some other question is broken', () => {
   assert.throws(() => saveQuiz(dir, 'q', quiz), /not valid/, 'editing it is still refused');
   assert.ok(saveQuiz(dir, 'q', quiz, { allowProblems: true }), 'but annotating it is not');
   fs.rmSync(dir, { recursive: true, force: true });
+});
+
+/* ------------------------------------------------------------------------
+ * The alphabet round: no options, one answer, and one letter nobody can argue
+ * about. The argument is the whole risk, so the article rule is a hard error
+ * rather than a hunch.
+ */
+
+function alphabetQuiz(answer = 'Fleetwood Mac') {
+  return {
+    id: 'alpha', title: 'Alphabet Quiz', questionSeconds: 20,
+    rounds: [{
+      id: 'r1', type: 'alphabet', title: 'First Letter',
+      questions: [{ id: 'q1', prompt: 'Who wrote Rumours?', answer }],
+    }],
+  };
+}
+
+test('the letter comes off the front of the answer', () => {
+  assert.equal(answerLetter('Fleetwood Mac'), 'F');
+  assert.equal(answerLetter('  liverpool '), 'L');
+  assert.equal(answerLetter("'Heroes'"), 'H');
+  assert.equal(answerLetter('1999'), '');
+  assert.equal(answerLetter(''), '');
+  assert.equal(answerLetterIndex('Fleetwood Mac'), 5);
+  assert.equal(answerLetterIndex('99 Red Balloons'), ALPHABET.indexOf('R'));
+});
+
+test('an alphabet question is valid with nothing but a prompt and an answer', () => {
+  assert.deepEqual(validateQuiz(alphabetQuiz()), []);
+});
+
+test('an alphabet question with no answer is refused', () => {
+  const problems = validateQuiz(alphabetQuiz(''));
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /no answer/);
+});
+
+test('an answer that does not start with a letter is refused', () => {
+  assert.match(validateQuiz(alphabetQuiz('1999'))[0], /does not start with a letter/);
+});
+
+test('an answer beginning with an article is refused, because both halves of the room are right', () => {
+  for (const answer of ['The Beatles', 'A Whiter Shade of Pale', 'An Innocent Man']) {
+    const problems = validateQuiz(alphabetQuiz(answer));
+    assert.equal(problems.length, 1, `"${answer}" should be refused`);
+    assert.match(problems[0], /without the article/);
+  }
+  // And the message says which two letters are in dispute, so the fix is obvious.
+  assert.match(validateQuiz(alphabetQuiz('The Beatles'))[0], /press T .*press B|press B .*press T/);
+});
+
+test('an alphabet question keeps its answer and grows no options', () => {
+  const quiz = normaliseQuiz(alphabetQuiz());
+  const q = quiz.rounds[0].questions[0];
+  assert.equal(q.answer, 'Fleetwood Mac');
+  assert.equal(q.options, undefined, 'the keyboard is not written into every question');
+  assert.equal(q.correctIndex, undefined);
+});
+
+test('an alphabet round is not held to the four-options rule', () => {
+  // Every other round type would fail this with no options at all.
+  const quiz = alphabetQuiz();
+  quiz.rounds[0].questions.push({ id: 'q2', prompt: 'Which city?', answer: 'Liverpool' });
+  assert.deepEqual(validateQuiz(quiz), []);
 });

@@ -297,18 +297,37 @@ function whoRow(s, i, list) {
   return el;
 }
 
+/**
+ * Which rows the answer key shows, in order.
+ *
+ * Every option, normally. On the first-letter round that would be twenty-six
+ * rows on a phone, most of them empty — so it shows the right letter plus
+ * whichever others somebody actually pressed, which is exactly the list you
+ * would read out. The index stays the real one, so the names underneath still
+ * line up with what the server sent.
+ */
+function keyRows(q, tally) {
+  const options = q.options || [];
+  if (!q.alphabet) return options.map((opt, i) => [i, LETTERS[i], opt]);
+  return options
+    .map((letter, i) => [i, letter, ''])
+    .filter(([i]) => rightSet(q).has(i) || (tally[i] || 0) > 0);
+}
+
 function questionPanel(s) {
   const q = s.question;
   const tally = s.tally || [];
+  const rows = keyRows(q, tally);
   const el = node(`
     <div class="panel">
       <h3>Round ${s.roundIndex + 1}, question ${s.questionIndex + 1} of ${s.questionCount} — answer key</h3>
       <p class="prompt">${esc(q.prompt)}</p>
+      ${q.alphabet ? `<div class="answer-said"><span class="answer-letter">${esc(q.correctLetter || '?')}</span><span class="answer-words">${esc(q.answer || '')}</span></div>` : ''}
       ${q.pickCount > 1 ? `<div class="tiny" style="margin-bottom:8px;color:var(--cool)">They lock in ${q.pickCount} — part marks for getting some.</div>` : ''}
       <div class="keylist">
-        ${q.options.map((opt, i) => `
+        ${rows.map(([i, letter, opt]) => `
           <button class="keyrow ${rightSet(q).has(i) ? 'is-correct' : ''} ${(picked(s)[i] || []).length ? 'has-who' : ''}" data-opt="${i}">
-            <span class="letter">${LETTERS[i]}</span>
+            <span class="letter">${esc(letter)}</span>
             <span>${esc(opt)}</span>
             <span class="n">${tally[i] || 0}</span>
             ${(picked(s)[i] || []).length ? `<span class="caret ${isOpen(s, i) ? 'open' : ''}">\u25be</span>` : ''}
@@ -332,7 +351,9 @@ function questionPanel(s) {
    * list that flickers every time somebody presses a button is unreadable.
    */
   const fill = () => {
-    q.options.forEach((_, i) => {
+    // Over the rows that were drawn, not every option — the first-letter round
+    // draws a handful of the twenty-six, and the rest have no slot to fill.
+    rows.forEach(([i]) => {
       const slot = el.querySelector(`.who-slot[data-slot="${i}"]`);
       const row = whoRow(s, i, picked(s)[i] || []);
       slot.replaceChildren(...(row ? [row] : []));
@@ -375,12 +396,16 @@ function nextUpPanel(s) {
       <h3>Next up — R${up.roundIndex + 1} Q${up.questionIndex + 1}</h3>
       <p class="prompt">${esc(up.prompt)}</p>
       ${up.pickCount > 1 ? `<div class="tiny" style="margin-bottom:8px;color:var(--cool)">Pick ${up.pickCount}</div>` : ''}
-      <div class="keylist">
+      ${up.alphabet
+        // No options to read ahead — the answer and its letter is the whole
+        // thing, and nobody has answered yet so there is no tally to show.
+        ? `<div class="answer-said"><span class="answer-letter">${esc(up.correctLetter || '?')}</span><span class="answer-words">${esc(up.answer || '')}</span></div>`
+        : `<div class="keylist">
         ${up.options.map((opt, i) => `
           <div class="keyrow ${rightSet(up).has(i) ? 'is-correct' : ''}">
             <span class="letter">${LETTERS[i]}</span><span>${esc(opt)}</span>
           </div>`).join('')}
-      </div>
+      </div>`}
     </div>
   `);
 }

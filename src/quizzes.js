@@ -9,7 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-export const ROUND_TYPES = ['text', 'image', 'intro', 'multi'];
+export const ROUND_TYPES = ['text', 'image', 'intro', 'multi', 'alphabet'];
 
 /**
  * A "pick exactly N" round shows six options rather than four.
@@ -19,6 +19,41 @@ export const ROUND_TYPES = ['text', 'image', 'intro', 'multi'];
  * a 2x3 grid still reads from the back of a pub.
  */
 export const MULTI_OPTIONS = 6;
+
+/**
+ * The alphabet round: no options at all, just the first letter.
+ *
+ * The question is asked out loud and on the projector, the phone shows a
+ * keyboard, and getting the FIRST LETTER of the answer right is the whole job.
+ * Nobody is marked wrong for spelling "Fleetwood Mac" with one word or two, and
+ * nobody has to type an answer on a phone in a dark pub against a clock.
+ *
+ * Mechanically it is still "pick one of a list of options" — the list is these
+ * twenty-six — so scoring, the tally, the fastest finger and who-picked-what
+ * all work without knowing this round type exists.
+ */
+export const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+/** The letter an answer starts with, or '' if it does not start with one. */
+export function answerLetter(answer) {
+  const found = String(answer || '').trim().match(/[a-z]/i);
+  return found ? found[0].toUpperCase() : '';
+}
+
+/** Where that letter sits in the keyboard, or -1. */
+export function answerLetterIndex(answer) {
+  return ALPHABET.indexOf(answerLetter(answer));
+}
+
+/**
+ * "The Beatles" is B to half a room and T to the other half.
+ *
+ * This is the one way an alphabet question can go wrong in front of people, and
+ * there is no clever fix — the answer has to be written without the article, or
+ * the question has to be a different question. So it is a hard validation
+ * error rather than a hunch: a quiz containing one does not save.
+ */
+export const LEADING_ARTICLE = /^(the|a|an)\s+/i;
 
 export function listQuizzes(dir) {
   let files = [];
@@ -107,9 +142,11 @@ export function normaliseQuiz(quiz, fallbackId = 'quiz') {
     questionSeconds: quiz.questionSeconds || 20,
     createdAt: quiz.createdAt || null,
     notes: quiz.notes || '',
-    rounds: (quiz.rounds || []).map((round, ri) => ({
+    rounds: (quiz.rounds || []).map((round, ri) => {
+      const type = ROUND_TYPES.includes(round.type) ? round.type : 'text';
+      return {
       id: round.id || `r${ri + 1}`,
-      type: ROUND_TYPES.includes(round.type) ? round.type : 'text',
+      type,
       title: round.title || `Round ${ri + 1}`,
       blurb: round.blurb || '',
       ...(round.questionSeconds ? { questionSeconds: round.questionSeconds } : {}),
@@ -118,13 +155,22 @@ export function normaliseQuiz(quiz, fallbackId = 'quiz') {
       questions: (round.questions || []).map((q, qi) => ({
         id: q.id || `${round.id || 'r' + (ri + 1)}q${qi + 1}`,
         prompt: q.prompt || '',
-        options: (q.options || []).map((o) => String(o)),
-        correctIndex: Number.isInteger(q.correctIndex) ? q.correctIndex : 0,
-        // Sorted and de-duplicated so the reveal always reads left to right and
-        // "how many to pick" cannot be inflated by a repeat.
-        ...(Array.isArray(q.correctIndexes)
-          ? { correctIndexes: [...new Set(q.correctIndexes.filter(Number.isInteger))].sort((a, b) => a - b) }
-          : {}),
+        // An alphabet question has no options to store — the keyboard is the
+        // same twenty-six every time, so writing them into every question would
+        // be 26 lines of noise per question in a file meant to be readable.
+        // The answer is written out in full because the host reads it aloud;
+        // the letter is worked out from it wherever it is needed.
+        ...(type === 'alphabet'
+          ? { answer: String(q.answer || '').trim() }
+          : {
+              options: (q.options || []).map((o) => String(o)),
+              correctIndex: Number.isInteger(q.correctIndex) ? q.correctIndex : 0,
+              // Sorted and de-duplicated so the reveal always reads left to right
+              // and "how many to pick" cannot be inflated by a repeat.
+              ...(Array.isArray(q.correctIndexes)
+                ? { correctIndexes: [...new Set(q.correctIndexes.filter(Number.isInteger))].sort((a, b) => a - b) }
+                : {}),
+            }),
         ...(q.note ? { note: q.note } : {}),
         ...(q.answerNote ? { answerNote: q.answerNote } : {}),
         ...(q.image ? { image: q.image } : {}),
@@ -142,7 +188,8 @@ export function normaliseQuiz(quiz, fallbackId = 'quiz') {
           ? { checked: [...new Set(q.checked.map(String))] }
           : {}),
       })),
-    })),
+      };
+    }),
   };
 }
 
@@ -181,7 +228,9 @@ export function reviewWarnings(quiz) {
         : new Set([q.correctIndex]);
       const correct = round.type === 'multi'
         ? (q.correctIndexes || []).map((i) => options[i]).join(', ')
-        : options[q.correctIndex];
+        : round.type === 'alphabet'
+          ? q.answer
+          : options[q.correctIndex];
       const ticked = new Set((q.checked || []).map(String));
       const questionId = q.id || `r${ri + 1}q${qi + 1}`;
 
@@ -303,6 +352,21 @@ export function validateQuiz(quiz) {
     round.questions.forEach((q, qi) => {
       const at = `${where} question ${qi + 1}`;
       if (!q.prompt || !String(q.prompt).trim()) problems.push(`${at}: no question text.`);
+
+      // An alphabet question has no options to check. What it has instead is
+      // one answer that has to begin with a letter nobody can argue about.
+      if (round.type === 'alphabet') {
+        const answer = String(q.answer || '').trim();
+        if (!answer) {
+          problems.push(`${at}: no answer, so there is no letter to be right about.`);
+        } else if (!answerLetter(answer)) {
+          problems.push(`${at}: the answer "${answer}" does not start with a letter.`);
+        } else if (LEADING_ARTICLE.test(answer)) {
+          problems.push(`${at}: "${answer}" starts with "${answer.split(/\s+/)[0]}", so half the room will press ${answerLetter(answer)} and half will press ${answerLetter(answer.replace(LEADING_ARTICLE, ''))}. Write it without the article.`);
+        }
+        return;
+      }
+
       const options = q.options || [];
       const wanted = round.type === 'multi' ? MULTI_OPTIONS : 4;
       if (options.length !== wanted) problems.push(`${at}: needs exactly ${wanted} options (it has ${options.length}).`);

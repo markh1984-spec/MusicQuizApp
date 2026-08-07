@@ -2170,3 +2170,112 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
    mid-game just looks broken. */
 .pv-even.off { opacity: 0.5; cursor: default; }
 .pv-even.off:hover { background: rgba(255, 255, 255, 0.06); }
+
+/* ============================================================ first letter
+   The alphabet round. No options: the question is asked, the phone shows a
+   keyboard, and only the first letter of the answer has to be right. */
+
+/* The projector's twenty-six. Deliberately NOT the two-column option grid —
+   at 3.9vh a row each they would run off the bottom of the screen. A tile is
+   just the letter, big enough to read from the back, with the count under it
+   as the answers come in. */
+.options.alphabet {
+  grid-template-columns: repeat(9, 1fr);
+  grid-auto-rows: 1fr;
+  gap: 1.4vh 1vw;
+}
+.options.alphabet .option {
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.3vh;
+  padding: 1vh 0.4vw;
+  font-size: 6vh;
+  font-weight: 900;
+  /* So the grid can give height back when the answer appears above it on the
+     reveal, rather than the two of them ending up on top of each other. */
+  min-height: 0;
+  overflow: hidden;
+}
+/* The count under each letter as the answers come in. Its space is held even
+   when it is empty, so the letters do not jump the moment somebody answers. */
+.options.alphabet .option .tally { margin-left: 0; font-size: 0.34em; min-height: 1.1em; }
+
+/* The answer said out loud on the reveal. A lit-up letter is not an answer —
+   the room has to be told it was Fleetwood Mac, in words, or the reveal says
+   nothing. Used on the projector and on the host's own answer key. */
+.answer-said {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  margin: 1.4vh 0;
+}
+.answer-said .answer-letter {
+  flex: 0 0 auto;
+  display: grid; place-items: center;
+  width: 2em; height: 2em;
+  border-radius: 14px;
+  background: var(--good);
+  color: #06110a;
+  font-weight: 900;
+}
+.answer-said .answer-words { font-weight: 900; }
+.screen .answer-said { font-size: 4.6vh; }
+.host .answer-said { font-size: 20px; margin: 4px 0 10px; }
+.host .answer-said .answer-letter { border-radius: 10px; }
+
+/* The phone's keyboard. Five across, not nine like the projector: nine keys on
+   a 320px phone is 28 pixels each, which nobody hits in a dark pub against a
+   clock. The ORDER is the same, and that is the part that matters — a player
+   looking for F already knows which letter they want. */
+.keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 auto;
+  justify-content: center;
+  min-height: 0;
+}
+/* The six rows share whatever height is left rather than each claiming a size
+   of its own. A fixed key height fits one phone and pushes Z off the bottom of
+   the next one, and a row you have to scroll to is a row nobody presses in
+   time — which on a 320px iPhone SE is exactly what happened. */
+.keyboard-row { display: flex; gap: 6px; flex: 1 1 0; min-height: 0; }
+.answer-btn.key {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: clamp(20px, 7vw, 34px);
+  font-weight: 900;
+  border-radius: 12px;
+}
+/* Z sits on its own on the last row. Left where the A above it is rather than
+   stretched across five columns — a key five times the width of every other
+   one reads as a different kind of button. */
+.keyboard-row:last-child .answer-btn.key { flex: 0 0 calc((100% - 24px) / 5); }
+/* A count per round type in the generator. Unticking greys the number rather
+   than hiding it, so what you typed is still there when you tick it back on. */
+.gen-rounds {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px;
+  margin: 10px 0 4px;
+}
+.gen-round {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--panel-line);
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: opacity 160ms, border-color 160ms;
+}
+.gen-round.off { opacity: 0.5; }
+.gen-round-name { flex: 1 1 auto; font-weight: 700; font-size: 13px; }
+.gen-round input[type="number"] { width: 52px; text-align: center; font-weight: 800; }

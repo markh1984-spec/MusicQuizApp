@@ -21,8 +21,9 @@ decides most arguments in this codebase.
 
 Two games so far:
 
-- **Music quiz** — rounds of 10 questions, 20 seconds each. Four round types:
-  text, image, intro, and **multi** ("pick them all").
+- **Music quiz** — rounds of 20 seconds a question, as many questions per round
+  as you ask for. Five round types: text, image, intro, **multi** ("pick them
+  all") and **alphabet** ("first letter only").
 - **Music bingo** — host plays tracks from a DJ app, phones get cards. **He
   plays one chorus and moves on**, which is why the generation prompt asks for
   tracks whose chorus lands on its own — a song recognisable only from a long
@@ -146,6 +147,8 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 | **Filters are pixel maths, not `ctx.filter`** | `public/assets/filters.js`. Older iOS does not implement `ctx.filter`, and a filter that silently does nothing on a third of the room is worse than none. The preview and the upload go through the same function so they cannot drift. |
 | **The looks are shown, not named** | Each filter is a thumbnail of *their own photo* with it applied, all seven on screen at once. They were a scrolling row of named grey pills and the host went through the whole flow on his own phone without noticing they existed — three of the seven were off the right-hand edge with nothing to say so. Same `drawFiltered()` as the preview and the upload, just at `maxSide` 120. |
 | **The phone shows the answers as the projector does** | Same 2×2 (or 2×3) arrangement, same letters, same colours. A player looks up, decides "the pink one, bottom left", and looks down — so the phone has to be the same picture or they re-read four options against a clock. It was a single column, which made the two screens different arrangements of the same four answers. The letter sits ABOVE the text on the phone: beside it costs 42 of the ~140 pixels a half-width cell has on a 320px phone, which was enough to break "Christmas" across two lines mid-word. |
+| **…except the alphabet round, which is 5 across on the phone and 9 on the projector** | The row above is about options with WORDS on them, where a player is matching a position they picked out from the back of the room. A letter needs no matching — you already know you want F. What the phone has instead is a thumb problem: nine keys across a 320px phone is 28 pixels each. Same order, different number of columns, and A to Z rather than QWERTY because QWERTY is muscle memory for typing words and nobody is typing a word. |
+| **An alphabet answer may never begin with "The", "A" or "An"** | "The Beatles" is B to half a room and T to the other half, and both halves are right — the exact argument the house style exists to prevent. It is a hard validation error, said in the editor as you type, forbidden in the generator's brief and listed as a rejection reason for the checking pass. **Do not soften it to a warning.** |
 | **Anything that deletes shows a bin** | `binIcon()` in `client.js`, drawn rather than an emoji (every phone draws the emoji one differently, and some of them as a cheerful basket). The host's photo grid used to delete a picture when you tapped it, with nothing on screen saying so. |
 | **No Instagram follow-for-points** | No API can verify a follow. Told the host; he agreed to drop it rather than fake it. |
 | **British spelling and UK chart references** | Crowds are Essex, Kent and Surrey. This is in the generation prompts too. |
@@ -462,8 +465,16 @@ Nothing outside those four places needs to know it exists.
 2. a case in `screenQuestionExtras` **and** `hostQuestionExtras` in `src/engine.js`
    — think about which fields are secret
 3. a media block in `renderQuestionMedia` + a `.type-x` CSS rule
-4. a brief in `roundBriefs()` in `src/generate-quiz.js`, a checkbox in the
-   console generator, and an entry in `ROUND_TYPES` in `public/assets/editor.js`
+4. a brief in `roundBriefs()` in `src/generate-quiz.js`, an entry in
+   `QUIZ_ROUNDS` in `public/assets/console.js`, and one in `ROUND_TYPES` in
+   `public/assets/editor.js`
+
+**Everything that is not per-type works on indexes into a list.** The clock, the
+scoring, the tally, the fastest finger and who-picked-what never ask what kind
+of round they are in — they take a list of options and a set of right ones. The
+three places that decide those are `optionsFor()`, `correctSet()` and
+`answerText()` in `src/engine.js`. A round type that fits through those needs
+almost nothing else; one that does not is a bigger job than it looks.
 
 **A type that changes the answering mechanic touches more than that.** `multi`
 needed `answer()` to take a set, `session.runPlayerAction` to forward it (it
@@ -473,15 +484,68 @@ switch from radios to tickboxes.
 **And check for hardcoded lists of round types.** `/api/generate/quiz` had its
 own `['text', 'image', 'intro']` whitelist, so ticking "pick them all" in the
 console sent `multi`, the server filtered it out, and the quiz came back
-without the round and without an error. It reads `ROUND_TYPES` now, and a test
-generates one round of every type so a fifth one cannot repeat this.
+without the round and without an error. Whitelisting is `roundPlan()`'s job
+now, against `ROUND_TYPES`, and a test generates one round of every type so a
+sixth one cannot repeat this. It has already earned its keep: adding
+`alphabet` failed that test before a line of the round was written.
+
+### The alphabet round — no options at all
+
+`type: 'alphabet'`. The question is asked on the projector, the phone shows a
+keyboard, and **only the first letter of the answer has to be right**. Spelling
+is irrelevant, which is the whole point — nobody types an answer on a phone in
+a dark pub against a clock.
+
+A question is `{ prompt, answer }` and nothing else. The twenty-six letters are
+**not written into the pack** — `optionsFor()` puts them back, so the file stays
+readable and a question is two lines rather than twenty-eight. Everything
+downstream then treats a letter as an option index like any other: `answer()`,
+the tally, `whoPicked()`, the fastest finger and the scoring are all untouched.
+
+**"The Beatles" is B to half a room and T to the other half, and both halves are
+right.** That is the one way this round breaks in front of people, and there is
+no clever fix — so an answer beginning with "The", "A" or "An" is a **hard
+validation error**, not a hunch. The editor says so as you type, the generator's
+brief forbids it, and the checking pass has a rule about it. Do not soften this
+into a warning; a round that produces an argument the host loses in public is
+worse than no round.
+
+`answerText()` is why the reveal says "Fleetwood Mac" and not "F". A lit-up
+letter is not an answer, and on this round the words are the single most
+important thing on the screen — they go **under the question**, in their own
+slot, not in with the fastest finger at the bottom, where they landed on top of
+the last row of letters.
+
+The host's answer key shows the answer in full and then **only the letters
+somebody actually pressed**, plus the right one. Twenty-six rows on a phone,
+most of them empty, is not a thing anyone reads on a mic.
+
+**The phone is five letters across where the projector is nine.** This is the
+one place the two screens are deliberately a different shape, and it is a thumb
+problem: nine across a 320px phone is 28 pixels a key. The ORDER is the same,
+and that is what matters — a player looking for F is not matching a position on
+the big screen, they already know which letter they want. A to Z rather than
+QWERTY for the same reason: QWERTY is muscle memory for typing words, and
+nobody is typing a word.
+
+### How many questions of each type
+
+`roundPlan()` in `src/generate-quiz.js`. `rounds` is a list of `{ type, count }`
+— or bare type names, which take the fallback — so "fifteen general knowledge,
+five pictures and ten first-letter" is one call. It used to be one number
+applied to every round, which is not the shape of a quiz night.
+
+The console has a count next to each round's tickbox. Unticking greys the
+number rather than hiding it, so what you typed is still there when you tick it
+back on. `roundPlan` is also the whitelist and the clamp, in one place, so a
+typo is dropped rather than quietly becoming a round of general knowledge.
 
 ---
 
 ## Checks
 
 ```bash
-npm test        # 317 tests, no network, injected clocks — must stay green
+npm test        # 339 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -527,9 +591,10 @@ recreate it.
 
 ## Current state
 
-All five build stages plus bingo, the console, generation, pack import and the
-tickable review flags are done, tested and pushed to **`MusicQuizApp`**.
-Nothing is half-finished in the tree. 317 tests green.
+All five build stages plus bingo, the console, generation, pack import, the
+tickable review flags, the alphabet round and per-type question counts are done,
+tested and pushed to **`MusicQuizApp`**. Nothing is half-finished in the tree.
+339 tests green.
 
 (An earlier version of this line named `claude/new-session-jzx988`. That branch
 is gone — see **Where to push**.)

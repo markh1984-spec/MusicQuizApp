@@ -24,7 +24,7 @@ import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarn
 import { validateBingoPack, normaliseBingoPack, minimumTracks, CARD_SHAPES, shapeLabel, maxPrizes, stagePlan, stageLabel } from './src/bingo.js';
 import { fullLibrary, listArchive, loadArchived, saveBingoPack, loadBingoPack, deleteBingoPack } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
-import { generateQuizPack, buildIntroPlaylists } from './src/generate-quiz.js';
+import { generateQuizPack, buildIntroPlaylists, roundPlan } from './src/generate-quiz.js';
 import { importBingoPack } from './src/import-bingo.js';
 import { listAdvertPacks, loadAdvertPack, saveAdvertPack, deleteAdvertPack, validateAdvertPack, normaliseAdvertPack } from './src/adverts.js';
 import { generateImages, imageStatus, imageJobs, openaiConfigured } from './src/generate-images.js';
@@ -845,20 +845,22 @@ async function handleWrite(req, res, url, route) {
     const stream = progressStream(res);
     const log = stream.log;
     try {
-      // Whitelisted against ROUND_TYPES rather than a list written out here.
-      // It was written out here, and "multi" was added to the app months
-      // later — so the console offered the round, sent it, and this quietly
-      // dropped it on the floor. A quiz came back with the tickbox ignored and
-      // nothing anywhere saying why.
-      const asked = Array.isArray(body.rounds)
-        ? body.rounds.filter((r) => ROUND_TYPES.includes(r))
-        : [];
+      // Whitelisting is roundPlan's job now, and it is done against
+      // ROUND_TYPES rather than a list written out here. It WAS written out
+      // here, and "multi" was added to the app months later — so the console
+      // offered the round, sent it, and this quietly dropped it on the floor.
+      // A quiz came back with the tickbox ignored and nothing saying why.
+      //
+      // Each entry may be a bare type name or { type, count }: the console
+      // sends a count per round now, because "fifteen general knowledge and
+      // five pictures" is a normal quiz and "ten of everything" is not.
+      const asked = roundPlan(body.rounds, Number(body.perRound) || 10);
       const rounds = asked.length ? asked : ['text', 'image', 'intro'];
       const result = await generateQuizPack({
         config,
         theme: String(body.theme || '').slice(0, 200),
         rounds,
-        perRound: Math.min(20, Math.max(3, Number(body.perRound) || 10)),
+        perRound: Math.min(30, Math.max(1, Number(body.perRound) || 10)),
         hard: Boolean(body.hard),
         // Always checked. The console deliberately offers no way to skip it —
         // an option that only ever makes the questions worse is a footgun on a
