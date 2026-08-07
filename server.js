@@ -35,6 +35,8 @@ import { Invoices, totals, toPence, money } from './src/invoices.js';
 import { invoicePdf, invoiceFilename } from './src/invoice-pdf.js';
 import { toSvg } from './src/qrcode.js';
 import { LOOKS } from './public/assets/looks.js';
+import { Accounts } from './src/accounts.js';
+import { FEATURES, whyNot, entitlements } from './public/assets/plans.js';
 // The logo, shared with the browser so the tab icon and the on-screen mark are
 // one drawing rather than two that look alike today.
 import { faviconSvg } from './public/assets/brandmark.js';
@@ -47,6 +49,7 @@ const hub = new Hub();
 // go with it.
 const photos = new Photos(paths.photos);
 const invoices = new Invoices(paths.invoices);
+const accounts = new Accounts(paths.accounts);
 
 const session = new Session({ config, store, onPush: () => pushState() }).boot();
 
@@ -135,10 +138,90 @@ function publicOrigin(req) {
   return `${proto}://${host}`;
 }
 
-/** The control view and the editor are behind a key. Everything else is open. */
-function isHost(req, url) {
+/**
+ * The host key: the way in before there were accounts.
+ *
+ * Still works, and deliberately still works. There are gigs in the diary and
+ * a printed `?key=…` on somebody's phone, so the day accounts arrived could not
+ * be the day the old way stopped. A request carrying the key is treated as the
+ * owner wearing every hat at once — see `whoIs`.
+ *
+ * It is transitional. Once the owner and quizmaster accounts are set up and
+ * signed in, HOST_KEY can be retired by removing this and the branch in
+ * `whoIs` that uses it. Nothing else knows about it.
+ */
+function isHostKey(req, url) {
   const supplied = req.headers['x-host-key'] || url.searchParams.get('key') || '';
   return timingSafeEqual(String(supplied), HOST_KEY);
+}
+
+const SESSION_COOKIE = 'mmm_session';
+
+/** One cookie out of a header, without pulling in a parser. */
+function cookie(req, name) {
+  const header = req.headers.cookie || '';
+  for (const part of header.split(';')) {
+    const at = part.indexOf('=');
+    if (at < 0) continue;
+    if (part.slice(0, at).trim() === name) return decodeURIComponent(part.slice(at + 1).trim());
+  }
+  return '';
+}
+
+/**
+ * Who is asking.
+ *
+ * A signed-in account, or the bootstrap host key, or nobody. The bootstrap
+ * account is not written to disk and cannot sign in — it exists only so the
+ * old `?key=` links keep working while the accounts are being set up.
+ */
+function whoIs(req, url) {
+  const account = accounts.fromToken(cookie(req, SESSION_COOKIE));
+  if (account) return account;
+  if (isHostKey(req, url)) return BOOTSTRAP;
+  return null;
+}
+
+const BOOTSTRAP = {
+  id: 'host-key',
+  email: '',
+  name: 'Host key',
+  role: 'quizmaster',
+  plan: 'basic',
+  addons: ['admin', 'stream'],
+  comped: true,
+  status: 'active',
+  bootstrap: true,
+};
+
+/**
+ * The gate. Every route that is not for the room goes through here.
+ *
+ * Two answers rather than one: 401 means "sign in", 403 means "signed in, but
+ * this is not on your plan" — and the 403 carries the reason in words, because
+ * a locked door with no sign on it is how people decide an app is broken
+ * rather than that they have not bought something.
+ *
+ * @param {boolean} [opts.live]  a running game rather than a new one. A failed
+ *   payment must never black out a projector mid-question, so anything the
+ *   control view and the live connection need asks with this set.
+ */
+function allowed(req, res, url, feature, { live = false } = {}) {
+  const account = whoIs(req, url);
+  if (!account) {
+    sendJson(res, 401, { error: 'Sign in first', signIn: '/login' });
+    return null;
+  }
+  // The bootstrap key is the owner with every hat on. Deliberately one branch,
+  // in one place, so retiring it later is deleting these two lines.
+  if (account.bootstrap) return account;
+
+  const ok = live ? accounts.mayCarryOn(account, feature) : accounts.mayStartSomething(account, feature);
+  if (!ok) {
+    sendJson(res, 403, { error: whyNot(account, feature), feature });
+    return null;
+  }
+  return account;
 }
 
 function timingSafeEqual(a, b) {
@@ -207,6 +290,8 @@ async function handleGet(req, res, url, route) {
   if (route === '/host') return serveFile(res, config.publicDir, 'host.html'), true;
   if (route === '/editor') return serveFile(res, config.publicDir, 'editor.html'), true;
   if (route === '/console') return serveFile(res, config.publicDir, 'console.html'), true;
+  if (route === '/login') return serveFile(res, config.publicDir, 'login.html'), true;
+  if (route === '/owner') return serveFile(res, config.publicDir, 'owner.html'), true;
   /*
    * The tab icon: the same record that is in the top left of every screen,
    * from the same drawing, so the two cannot drift apart.
@@ -263,7 +348,7 @@ async function handleGet(req, res, url, route) {
   // go still has to be built, and a route called .zip that hands back JSON is
   // the kind of thing somebody trusts at the wrong moment.
   if (route === '/api/photos/list') {
-    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    if (!allowed(req, res, url, FEATURES.PHOTOS)) return true;
     return sendJson(res, 200, {
       enabled: photos.enabled,
       count: photos.count(),
@@ -305,7 +390,10 @@ async function handleGet(req, res, url, route) {
   // ---- realtime
   if (route === '/api/stream') {
     const role = url.searchParams.get('role') || 'screen';
-    if (role === 'host' && !isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    // The projector and the phones are open by design; only the control view
+    // is not. Asked with `live` set, because this is the connection a running
+    // game hangs off and a failed payment must not cut it.
+    if (role === 'host' && !allowed(req, res, url, FEATURES.QUIZ, { live: true })) return true;
     const playerId = url.searchParams.get('playerId') || null;
     if (playerId) session.engine.touch(playerId);
     const client = hub.add(res, { role, playerId });
@@ -317,24 +405,64 @@ async function handleGet(req, res, url, route) {
   if (route === '/api/join-url') {
     return sendJson(res, 200, { url: `${publicOrigin(req)}/play`, brand: config.brandName }), true;
   }
+  /*
+   * ---- signing in
+   *
+   * Open, obviously — it is the way in. The token goes in an httpOnly cookie so
+   * a script on the page cannot read it, and SameSite=Lax so another site
+   * cannot spend it. `secure` only when the request actually arrived over
+   * https, or a laptop on http://localhost could never sign in.
+   */
+  if (route === '/api/owner/accounts') {
+    if (!allowed(req, res, url, FEATURES.SUBSCRIBERS)) return true;
+    return sendJson(res, 200, { accounts: subscriberList(), backupReady: privateRepoConfigured() }), true;
+  }
+
+  /*
+   * Are there accounts on this app at all?
+   *
+   * Open, and deliberately says nothing more than yes or no — it exists so the
+   * console can tell "sign in" apart from "type the host key", which are very
+   * different pieces of advice to give somebody locked out five minutes before
+   * a gig. It reveals no email address and no count.
+   */
+  if (route === '/api/has-accounts') {
+    return sendJson(res, 200, { any: accounts.all.length > 0 }), true;
+  }
+
+  if (route === '/api/me') {
+    const account = whoIs(req, url);
+    if (!account) return sendJson(res, 200, { signedIn: false }), true;
+    return sendJson(res, 200, {
+      signedIn: true,
+      account: { ...account, entitlements: entitlements(account) },
+      // Said out loud, because a bootstrap session looks exactly like a real
+      // one until something it cannot do goes wrong.
+      bootstrap: Boolean(account.bootstrap),
+    }), true;
+  }
+
   // Open, because the join page needs it before anybody has joined.
   if (route === '/api/brand') {
     return sendJson(res, 200, { name: config.brandName }), true;
   }
   if (route === '/api/state') {
     const role = url.searchParams.get('role') || 'screen';
-    if (role === 'host' && !isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    // The projector and the phones are open by design; only the control view
+    // is not. Asked with `live` set, because this is the connection a running
+    // game hangs off and a failed payment must not cut it.
+    if (role === 'host' && !allowed(req, res, url, FEATURES.QUIZ, { live: true })) return true;
     return sendJson(res, 200, viewFor({ role, playerId: url.searchParams.get('playerId') })), true;
   }
 
   // ---- host-only reads
   if (route === '/api/quizzes') {
-    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     return sendJson(res, 200, { quizzes: fullLibrary(config).quizzes, loaded: session.pack.id }), true;
   }
   // The console's library: every quiz and every bingo pack you have saved.
   if (route === '/api/library') {
-    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const library = fullLibrary(config);
     const backup = await backupStatus();
     return sendJson(res, 200, {
@@ -391,7 +519,7 @@ async function handleGet(req, res, url, route) {
     }), true;
   }
   if (route.startsWith('/api/advert/')) {
-    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const id = decodeURIComponent(route.slice('/api/advert/'.length));
     try {
       return sendJson(res, 200, loadAdvertPack(config.advertDir, id)), true;
@@ -403,7 +531,7 @@ async function handleGet(req, res, url, route) {
   // What round 2 actually has on disk: real portraits, stand-ins, or nothing.
   // Read before spending anything, so the panel can say what it is about to do.
   if (route.startsWith('/api/images/')) {
-    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const id = decodeURIComponent(route.slice('/api/images/'.length));
     try {
       const quiz = loadQuiz(config.quizDir, id);
@@ -422,7 +550,7 @@ async function handleGet(req, res, url, route) {
     }
   }
   if (route.startsWith('/api/bingo/')) {
-    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const id = decodeURIComponent(route.slice('/api/bingo/'.length));
     try {
       return sendJson(res, 200, normaliseBingoPack(loadBingoPack(config.bingoDir, id), id)), true;
@@ -432,7 +560,7 @@ async function handleGet(req, res, url, route) {
   }
   // What the generator is currently refusing to reuse.
   if (route === '/api/history') {
-    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const months = Number(url.searchParams.get('months')) || 3;
     return sendJson(res, 200, { months, tracks: recentTracks(config.dataDir, months) }), true;
   }
@@ -447,7 +575,7 @@ async function handleGet(req, res, url, route) {
    * read "MMM-0001.pdf" as an invoice number.
    */
   if (route.startsWith('/api/invoices/') && route.endsWith('.pdf')) {
-    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const number = decodeURIComponent(route.slice('/api/invoices/'.length, -4));
     const invoice = invoices.find(number);
     if (!invoice) return sendJson(res, 404, { error: 'No invoice with that number' }), true;
@@ -463,12 +591,12 @@ async function handleGet(req, res, url, route) {
   }
 
   if (route === '/api/invoices' && req.method === 'GET') {
-    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
     return sendJson(res, 200, invoiceState()), true;
   }
 
   if (route.startsWith('/api/archive/')) {
-    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
     const id = decodeURIComponent(route.slice('/api/archive/'.length));
     try {
       return sendJson(res, 200, loadArchived(config.dataDir, id)), true;
@@ -477,7 +605,7 @@ async function handleGet(req, res, url, route) {
     }
   }
   if (route.startsWith('/api/quiz/')) {
-    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const id = decodeURIComponent(route.slice('/api/quiz/'.length));
     try {
       const quiz = loadQuiz(config.quizDir, id);
@@ -487,11 +615,11 @@ async function handleGet(req, res, url, route) {
     }
   }
   if (route === '/api/results.json') {
-    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     return sendJson(res, 200, session.results()), true;
   }
   if (route === '/api/results.csv') {
-    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const results = session.results();
     const rows = session.kind === 'bingo'
       ? [['Team', 'Squares away', 'False calls', 'Won'], ...results.leaderboard.map((p) => [p.name, p.away, p.falseCalls, p.won ? 'yes' : ''])]
@@ -589,6 +717,32 @@ async function backUpInvoices() {
   }
 }
 
+/**
+ * Back up the accounts.
+ *
+ * To the PRIVATE repository, for the same reason as the invoices and more so:
+ * this file is every subscriber's email address, their password hash and their
+ * payment reference. The main repo is public and git history is forever.
+ */
+async function backUpAccounts() {
+  if (!privateRepoConfigured()) return { ok: false, error: 'no private repo set up' };
+  try {
+    return await putFile('accounts.json', accounts.serialise(), 'Update accounts', 'private');
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+/** What the owner console lists. Never a hash, and never a session token. */
+function subscriberList() {
+  return accounts.all
+    .filter((a) => a.role === 'quizmaster')
+    .map((a) => ({
+      ...accounts.view(a),
+      supportOpen: accounts.supportOpen(a.id),
+    }));
+}
+
 /** Everything the invoices tab draws itself from. */
 function invoiceState() {
   return {
@@ -684,6 +838,47 @@ function csvCell(value) {
 }
 
 async function handleWrite(req, res, url, route) {
+  if (route === '/api/sign-in' && req.method === 'POST') {
+    const body = await readJson(req);
+    const session = accounts.signIn(body.email, body.password);
+    // One message for a wrong password and for an address with no account —
+    // otherwise this page will happily tell anybody who has an account here.
+    if (!session) return sendJson(res, 401, { error: 'That email address and password do not match.' }), true;
+    const secure = (req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https';
+    res.setHeader('Set-Cookie', [
+      `${SESSION_COOKIE}=${encodeURIComponent(session.token)}`,
+      'Path=/',
+      'HttpOnly',
+      'SameSite=Lax',
+      `Max-Age=${30 * 86400}`,
+      ...(secure ? ['Secure'] : []),
+    ].join('; '));
+    return sendJson(res, 200, {
+      account: { ...session.account, entitlements: entitlements(session.account) },
+    }), true;
+  }
+
+  if (route === '/api/sign-out' && req.method === 'POST') {
+    accounts.signOut(cookie(req, SESSION_COOKIE));
+    res.setHeader('Set-Cookie', `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);
+    return sendJson(res, 200, { ok: true }), true;
+  }
+
+  // Your own password. The old one is required even though you are signed in:
+  // a borrowed laptop should not be a way to take somebody's account.
+  if (route === '/api/me/password' && req.method === 'PUT') {
+    const account = whoIs(req, url);
+    if (!account || account.bootstrap) return sendJson(res, 401, { error: 'Sign in first' }), true;
+    const body = await readJson(req);
+    try {
+      accounts.setPassword(account.id, body.password, { requireOld: body.current ?? '' });
+      await backUpAccounts();
+      return sendJson(res, 200, { ok: true, signedOut: true }), true;
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message }), true;
+    }
+  }
+
   /*
    * ---- invoicing, the parts that change something
    *
@@ -693,7 +888,7 @@ async function handleWrite(req, res, url, route) {
    */
 
   if (route === '/api/invoices') {
-    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
 
     if (req.method === 'GET') {
       return sendJson(res, 200, invoiceState()), true;
@@ -718,7 +913,7 @@ async function handleWrite(req, res, url, route) {
   }
 
   if (route === '/api/invoices/settings' && req.method === 'PUT') {
-    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
     const body = await readJson(req);
     invoices.saveSettings(body);
     const backup = await backUpInvoices();
@@ -726,7 +921,7 @@ async function handleWrite(req, res, url, route) {
   }
 
   if (route === '/api/invoices/customers' && req.method === 'POST') {
-    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
     const body = await readJson(req);
     try {
       invoices.saveCustomer(body);
@@ -738,7 +933,7 @@ async function handleWrite(req, res, url, route) {
   }
 
   if (route.startsWith('/api/invoices/customers/') && req.method === 'DELETE') {
-    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     invoices.deleteCustomer(decodeURIComponent(route.slice('/api/invoices/customers/'.length)));
     const backup = await backUpInvoices();
     return sendJson(res, 200, { backedUp: backup.ok, ...invoiceState() }), true;
@@ -747,7 +942,7 @@ async function handleWrite(req, res, url, route) {
   // Mark it sent, paid or cancelled. Status is the only thing that can move on
   // an invoice that has already gone out — see src/invoices.js.
   if (route.startsWith('/api/invoices/') && req.method === 'POST') {
-    if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+    if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const number = decodeURIComponent(route.slice('/api/invoices/'.length));
     const body = await readJson(req);
     try {
@@ -823,8 +1018,61 @@ async function handleWrite(req, res, url, route) {
     return sendJson(res, 200, result), true;
   }
 
-  // ---- everything below is the host
-  if (!isHost(req, url)) return sendJson(res, 401, { error: 'Wrong host key' }), true;
+  /*
+   * ---- everything below this line needs an account
+   *
+   * A broad gate first, so nothing new can be added below it and accidentally
+   * be public. The routes that need MORE than "is a quizmaster" ask for it
+   * themselves underneath — generating, in particular, is the owner's alone
+   * because it spends the owner's money.
+   *
+   * Asked with `live` set: this covers /api/host/*, which is the control view,
+   * and a failed payment must never take the Next button away in the middle of
+   * a round. A new night cannot be launched on a lapsed subscription — that is
+   * checked on `launch` itself, below.
+   */
+  //
+   // The owner's own routes are exempt from the broad gate below, because the
+   // owner deliberately has no quiz features — an owner account manages
+   // subscribers and writes the packs they buy, it does not run nights.
+  const OWNER_ONLY = ['/api/generate/', '/api/owner/'];
+  if (!OWNER_ONLY.some((prefix) => route.startsWith(prefix))) {
+    if (!allowed(req, res, url, FEATURES.QUIZ, { live: true })) return true;
+  }
+
+  // ---- managing subscribers
+  if (route === '/api/owner/accounts' && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.SUBSCRIBERS)) return true;
+    const body = await readJson(req);
+    try {
+      const made = accounts.create({
+        email: body.email,
+        password: body.password,
+        name: body.name,
+        plan: body.plan || 'basic',
+        addons: body.addons || [],
+        comped: Boolean(body.comped),
+        status: body.status || 'trialing',
+      });
+      const backup = await backUpAccounts();
+      return sendJson(res, 200, { account: made, backedUp: backup.ok, accounts: subscriberList() }), true;
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message }), true;
+    }
+  }
+
+  if (route.startsWith('/api/owner/accounts/') && (req.method === 'PUT' || req.method === 'DELETE')) {
+    if (!allowed(req, res, url, FEATURES.SUBSCRIBERS)) return true;
+    const id = decodeURIComponent(route.slice('/api/owner/accounts/'.length));
+    try {
+      const changed = req.method === 'DELETE' ? accounts.close(id) : accounts.update(id, await readJson(req));
+      if (!changed) return sendJson(res, 404, { error: 'No account with that id' }), true;
+      const backup = await backUpAccounts();
+      return sendJson(res, 200, { account: changed, backedUp: backup.ok, accounts: subscriberList() }), true;
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message }), true;
+    }
+  }
 
   if (route.startsWith('/api/host/') && req.method === 'POST') {
     const action = route.slice('/api/host/'.length);
@@ -832,6 +1080,17 @@ async function handleWrite(req, res, url, route) {
 
     // Launching a different game is the one action that replaces the engine.
     if (action === 'launch') {
+      /*
+       * The one host action a lapsed subscription DOES stop.
+       *
+       * Everything else under /api/host/ is asked with `live` set, because a
+       * card that failed on Tuesday must not take the Next button away from
+       * somebody mid-round on Wednesday. Starting a brand new night is the
+       * other side of that line: it is not an interruption, it is a beginning,
+       * and it is exactly where "you need to sort the payment out" belongs.
+       */
+      const wanted = String(body.game || 'quiz') === 'bingo' ? FEATURES.BINGO : FEATURES.QUIZ;
+      if (!allowed(req, res, url, wanted)) return true;
       try {
         // The card shape is chosen at launch, not stored on the pack: the same
         // forty-two songs are a quick game on a 3x3 and a long one on a strip,
@@ -993,6 +1252,7 @@ async function handleWrite(req, res, url, route) {
   // this streams progress lines as it goes rather than leaving the console
   // staring at a spinner with no idea whether it is working.
   if (route === '/api/generate/bingo' && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.GENERATE)) return true;
     const body = await readJson(req);
     const stream = progressStream(res);
     const log = stream.log;
@@ -1035,6 +1295,7 @@ async function handleWrite(req, res, url, route) {
   // Same shape as the bingo generator: streams progress while it works,
   // because three rounds of Claude takes the best part of a minute.
   if (route === '/api/generate/quiz' && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.GENERATE)) return true;
     const body = await readJson(req);
     const stream = progressStream(res);
     const log = stream.log;
@@ -1097,6 +1358,7 @@ async function handleWrite(req, res, url, route) {
    * if the run dies halfway, the ones already paid for are safe.
    */
   if (route === '/api/generate/images' && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.ARTWORK)) return true;
     const body = await readJson(req);
     const stream = progressStream(res);
     const log = stream.log;

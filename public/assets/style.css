@@ -2613,3 +2613,50 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .phone .look-layer { position: fixed; z-index: 0; }
 .phone .wrap { position: relative; z-index: 1; }
 .phone .motif { opacity: 0.1; }
+
+/* A tab for something not on this plan. Shown rather than hidden: a thing you
+   can see and cannot use is a thing you might buy, and a thing that is not
+   there is a thing nobody knew existed. */
+.tab.locked { opacity: 0.55; }
+.tab.locked:hover { opacity: 0.8; }
+.tabcount.lock { background: rgba(255, 210, 63, 0.22); color: var(--gold); }
+
+/* Signing in. One form, in the middle, on a page that does nothing else. */
+.sign-in { max-width: 380px; margin: 12vh auto; display: grid; gap: 16px; }
+.sign-in-brand { display: flex; align-items: center; gap: 10px; justify-content: center; }
+.sign-in h1 { margin: 0; text-align: center; font-size: 30px; }
+.sign-in form { display: grid; gap: 12px; }
+.sign-in label { display: grid; gap: 5px; font-size: 13px; font-weight: 700; color: var(--ink-dim); }
+.sign-in input {
+  padding: 13px;
+  border-radius: 12px;
+  border: 1px solid var(--panel-line);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px; /* iOS zooms the page in on anything smaller */
+}
+.sign-in input:focus { outline: none; border-color: var(--hot); }
+.sign-in button.go {
+  padding: 13px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
+  color: #12000c;
+  font: inherit;
+  font-weight: 900;
+  font-size: 16px;
+  cursor: pointer;
+}
+.sign-in button.go:disabled { opacity: 0.6; cursor: default; }
+.sign-in-problem:not(:empty) {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 77, 94, 0.14);
+  border: 1px solid rgba(255, 77, 94, 0.4);
+  color: var(--ink);
+  font-size: 14px;
+}
+.sign-in .tiny { text-align: center; }
+.subs { display: grid; gap: 8px; }
+.inv-actions .addon.on { border-color: var(--good); color: var(--good); }

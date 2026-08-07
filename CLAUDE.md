@@ -621,6 +621,79 @@ as hex, which meant changing `--bg` for Halloween moved almost nothing.
 
 ---
 
+## Accounts, and who is allowed to do what
+
+`src/accounts.js` (who is signed in) and `public/assets/plans.js` (what they may
+do). Plans lives under `public/assets/` for the same reason `looks.js` does: the
+browser needs the same list and two copies drift. **Enforcement is entirely
+server-side** — `allowed()` in `server.js`; the browser copy only decides what
+to draw.
+
+**Two kinds of account, and they are not the same shape.** One **owner** — the
+app dev. Writes and generates the packs, sells them, manages subscribers, and
+runs no nights at all. Then a **quizmaster** per subscriber. The owner's own
+quizmaster account is a separate login, marked `comped`: everything, for
+nothing.
+
+### The rule that decides which tier something goes in
+
+The host's own, and it settles arguments before they start: **anything that
+costs the owner money every time it is used is not in Basic.** Not "is it
+impressive" — does a subscriber using it put a line on the owner's bill?
+
+So a new round type, a new game, a new look and a new picture effect are Basic
+the day they are written. Generating with Claude and artwork with OpenAI are
+**owner-only** (a quizmaster never generates — the packs are written for them
+and sold, which is the whole arrangement). Streaming is a paid add-on because
+egress is a real per-use cost. There is a test that fails if any of the three
+ever lands in Basic.
+
+### A lapsed subscription never interrupts a night
+
+**This is the load-bearing rule and it has tests.** Cards expire on a Tuesday
+and banks get cautious at the worst moment. So `allowed(..., { live: true })`
+is asked by everything a running game touches — the control view, `/api/host/*`,
+the SSE stream, the state poll — and it says yes even when the subscription has
+lapsed. `mayStartSomething` is the real gate.
+
+The one host action that is NOT exempt is `launch`: starting a brand new night
+is a beginning, not an interruption, and it is exactly where "sort the payment
+out" belongs. That was a bug first time round — the broad `live` gate let a
+lapsed account launch — and it is now checked on the action itself.
+
+### Passwords and sessions
+
+scrypt from node's own crypto, salted per account, compared timing-safe. **The
+password is never stored**, so the owner genuinely cannot read a subscriber's —
+which is the honest version of "your account is private from me". Only the
+SHA-256 of a session token is stored, so a copy of the file is not a set of
+live logins. A wrong password and an unknown address give the identical message,
+or the page cheerfully confirms who has an account here.
+
+### The host key still works, and that is deliberate
+
+There are gigs in the diary and `?key=…` on somebody's phone, so the day
+accounts arrived could not be the day the old way stopped. A request carrying
+`HOST_KEY` is treated as every hat at once — `BOOTSTRAP` in `server.js`, one
+branch in `allowed()`. Retiring it later is deleting those two places.
+
+The first accounts are made from the command line (`npm run accounts`), not
+from a web page: a "create the first owner" route is a door that only ever
+needs opening once and can be walked through by whoever finds it first.
+
+**It backs up to the PRIVATE repo**, like the invoices, and for a stronger
+reason — email addresses and password hashes.
+
+### What this does NOT do yet
+
+Data is still shared: one library, one invoice book, one running game, one join
+code. So **a second quizmaster cannot safely be given a login yet** — they would
+see the owner's packs and could launch over a live night. Scoping the library
+and running more than one game at a time is the next piece, and it is the bigger
+one. The accounts exist so there is something to scope things TO.
+
+---
+
 ## Invoicing
 
 `src/invoices.js` (what an invoice is), `src/invoice-pdf.js` (what it looks
@@ -716,7 +789,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 401 tests, no network, injected clocks — must stay green
+npm test        # 439 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -764,9 +837,12 @@ recreate it.
 
 All five build stages plus bingo, the console, generation, pack import, the
 tickable review flags, the alphabet round, per-type question counts and the
-picture round's four reveals, invoicing and the seasonal looks are done, tested
-and pushed to **`MusicQuizApp`**. Nothing is half-finished in the tree.
-401 tests green.
+picture round's four reveals, invoicing, the seasonal looks and the accounts
+foundation are done, tested and pushed to **`MusicQuizApp`**. 439 tests green.
+
+**In progress:** accounts exist and gate every route, but the DATA is still
+shared — one library, one invoice book, one running game. Do not hand a second
+quizmaster a login until that is scoped. See "What this does NOT do yet" above.
 
 (An earlier version of this line named `claude/new-session-jzx988`. That branch
 is gone — see **Where to push**.)

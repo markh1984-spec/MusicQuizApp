@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a0a13">
+  <title>Sign in — Mark's Music Madness</title>
+  <link rel="stylesheet" href="/assets/style.css">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+</head>
+<body class="console">
+  <div class="wrap">
+    <div class="sign-in">
+      <div class="sign-in-brand" id="brandSlot"></div>
+      <h1 class="grad-text">Sign in</h1>
+      <form id="signIn" autocomplete="on">
+        <label>Email
+          <input type="email" name="email" autocomplete="username" required
+                 autocapitalize="none" spellcheck="false" enterkeyhint="next">
+        </label>
+        <label>Password
+          <input type="password" name="password" autocomplete="current-password" required
+                 enterkeyhint="go">
+        </label>
+        <button class="go" type="submit">Sign in</button>
+        <div class="sign-in-problem" id="problem" role="alert"></div>
+      </form>
+      <p class="tiny">
+        Forgotten it? There is no reset by email yet — ask Mark and he will set you a new one.
+      </p>
+    </div>
+  </div>
+  <script type="module" src="/assets/login.js"></script>
+</body>
+</html>

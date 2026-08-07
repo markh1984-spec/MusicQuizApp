@@ -48,6 +48,9 @@ export const paths = {
   // history it must NEVER be committed to the main repo, which is public. It
   // is backed up to the private one instead. See backUpInvoices() in server.js.
   invoices: path.join(config.dataDir, 'invoicing.json'),
+  // Email addresses, password hashes and payment references. Backed up to the
+  // PRIVATE repository like the invoices, never the public one.
+  accounts: path.join(config.dataDir, 'accounts.json'),
 };
 
 /**

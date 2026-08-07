@@ -9,6 +9,7 @@
 
 import { esc, node, postJson, brandLink, binIcon } from './client.js';
 import { balanceAnswers } from './balance.js';
+import { FEATURES } from './plans.js';
 
 const mainEl = document.getElementById('main');
 const runningEl = document.getElementById('runningNow');
@@ -57,19 +58,80 @@ const keyed = (path) => path + (path.includes('?') ? '&' : '?') + 'key=' + encod
 const linkTo = (path) => keyed(path);
 
 let library = null;
+/**
+ * What this account is allowed to do.
+ *
+ * Fetched once at boot and used to decide which tabs exist. The enforcement is
+ * entirely server-side — this only decides what to draw, so a fiddled copy in
+ * a browser gets a tab that answers 403.
+ */
+let me = null;
+const can = (feature) => !me || !me.entitlements || me.entitlements.features.includes(feature);
+const whyNotHere = (feature) => {
+  const missing = (me && me.entitlements ? me.entitlements.missing : []).find((m) => m.feature === feature);
+  return missing ? missing.why : '';
+};
+
+/** Does this app have accounts set up, or is it still host-key only? */
+async function hasAccounts() {
+  try {
+    return Boolean((await (await fetch('/api/has-accounts')).json()).any);
+  } catch {
+    return false;
+  }
+}
 
 async function load() {
+  // Who is this? Asked first, because it decides which tabs exist at all.
+  // A signed-in account needs no key; the key is the way in for anybody still
+  // using a `?key=` link from before there were accounts.
+  try {
+    const who = await (await fetch('/api/me')).json();
+    me = who.signedIn ? who.account : null;
+    if (me && me.role === 'owner') { location.href = '/owner'; return; }
+  } catch {
+    me = null;
+  }
+
   const res = await fetch(keyed('/api/library'));
   if (res.status === 401) {
-    // The remembered key is no longer right. Forget it and ask again rather
-    // than leaving them staring at an error.
+    // Nobody is signed in and the remembered key is no longer right. If there
+    // are accounts on this app, the sign-in page is the answer; if there are
+    // not, the key still is.
     localStorage.removeItem('musicquiz.hostkey');
-    askForKey('That key was not accepted. It may have changed — check your host\u2019s startup log.');
+    if (me) { location.href = '/login?next=/console'; return; }
+    // No account and no working key. If this app has accounts on it at all,
+    // signing in is the answer; the key box only helps somebody who has one.
+    if (await hasAccounts()) { location.href = '/login?next=/console'; return; }
+    askForKey(hostKey ? 'That key was not accepted. It may have changed — check your host\u2019s startup log.' : '');
+    return;
+  }
+  if (res.status === 403) {
+    const why = await res.json().catch(() => ({}));
+    mainEl.replaceChildren(node(`<div class="problems"><strong>${esc(why.error || 'Not on your plan.')}</strong></div>`));
     return;
   }
   if (!res.ok) throw new Error('Could not load the library');
   library = await res.json();
   render();
+}
+
+/**
+ * What a quizmaster sees where the owner sees a generator.
+ *
+ * Not an empty space and not a locked button: the packs being written FOR them
+ * is the arrangement, not a limitation, so it says so.
+ */
+function shopNote() {
+  return node(`
+    <div class="panel">
+      <h3>Quiz packs</h3>
+      <div class="tiny">
+        Packs are written and checked for you rather than generated here — every question
+        read through twice before it reaches a room. Have a look in the shop for the
+        newest ones.
+      </div>
+    </div>`);
 }
 
 /**
@@ -99,27 +161,32 @@ const QUIZ_ROUNDS = [
 const TABS = [
   {
     id: 'quiz',
+    needs: FEATURES.QUIZ,
     label: 'Music Quiz',
     blurb: 'Three rounds, twenty seconds a question, fastest fingers win.',
     editLabel: 'Edit questions',
     packs: () => library.quizzes,
-    generator: () => quizGeneratePanel(library.generation || {}),
+    // Generating is the owner's, on the owner's bill. A quizmaster buys packs.
+    generator: () => (can(FEATURES.GENERATE) ? quizGeneratePanel(library.generation || {}) : shopNote()),
   },
   {
     id: 'bingo',
+    needs: FEATURES.BINGO,
     label: 'Music Bingo',
     blurb: 'You play the tracks. Every phone gets its own card.',
     editLabel: 'Edit track lists',
     packs: () => library.bingo,
     generator: () => {
       const wrap = document.createDocumentFragment();
-      wrap.appendChild(generatePanel(library.generation || {}));
-      wrap.appendChild(importPanel(library.generation || {}));
+      if (can(FEATURES.GENERATE)) wrap.appendChild(generatePanel(library.generation || {}));
+      else wrap.appendChild(shopNote());
+      if (can(FEATURES.LIBRARY)) wrap.appendChild(importPanel(library.generation || {}));
       return wrap;
     },
   },
   {
     id: 'adverts',
+    needs: FEATURES.ADVERTS,
     label: 'Adverts',
     blurb: 'Slides for between rounds. One set per venue, reused every week.',
     count: () => (library.adverts || []).length,
@@ -127,6 +194,7 @@ const TABS = [
   },
   {
     id: 'photos',
+    needs: FEATURES.PHOTOS,
     label: 'Photos',
     blurb: 'Everything the room sent, foldered by night.',
     count: () => 0,
@@ -134,6 +202,7 @@ const TABS = [
   },
   {
     id: 'invoices',
+    needs: FEATURES.INVOICES,
     label: 'Invoices',
     blurb: 'Bill for a night before you have left the car park.',
     // The badge is what you are still owed, not how many you have ever sent —
@@ -249,9 +318,30 @@ function process_repo(gen) {
   return gen.backupRepo || 'your repository';
 }
 
+/**
+ * The tabs this account can see.
+ *
+ * A tab it has NOT paid for is still shown, greyed, with the reason on it —
+ * something you can see and cannot use is a thing you might buy, and something
+ * invisible is a thing you never knew existed. A tab its plan will never
+ * include at all is simply absent.
+ */
+function visibleTabs() {
+  return TABS.filter((tab) => !tab.needs || can(tab.needs) || whyNotHere(tab.needs));
+}
+
 function tabBar(active) {
   const bar = node('<div class="tabbar" role="tablist"></div>');
-  for (const tab of TABS) {
+  for (const tab of visibleTabs()) {
+    if (tab.needs && !can(tab.needs)) {
+      const locked = node(`
+        <button class="tab locked" role="tab" data-tab="${tab.id}" title="${esc(whyNotHere(tab.needs))}">
+          ${esc(tab.label)}<span class="tabcount lock">+</span>
+        </button>`);
+      locked.addEventListener('click', () => alert(whyNotHere(tab.needs)));
+      bar.appendChild(locked);
+      continue;
+    }
     // Each tab says how to count itself. It used to fall back to the archive
     // length, which was right for one tab by accident and wrong for any other.
     const count = tab.count ? tab.count() : (tab.packs() || []).length;
@@ -270,7 +360,17 @@ function tabBar(active) {
 }
 
 function tabBody(active) {
-  const tab = TABS.find((t) => t.id === active) || TABS[0];
+  const usable = visibleTabs().filter((t) => !t.needs || can(t.needs));
+  const tab = usable.find((t) => t.id === active) || usable[0];
+  if (!tab) {
+    return node(`
+      <div class="problems">
+        <strong>Nothing to show.</strong>
+        ${esc((me && me.entitlements && me.entitlements.status === 'past_due')
+          ? 'Your subscription needs a payment before your quizzes come back.'
+          : 'Your subscription has ended.')}
+      </div>`);
+  }
   const wrap = node('<div class="tabbody"></div>');
 
   // A tab is either a game (generator + its saved packs) or a one-off panel.
@@ -1645,13 +1745,21 @@ function whenish(ts) {
   return new Date(ts).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
 }
 
-if (!hostKey) {
-  askForKey();
-} else {
-  load().catch((err) => {
-    mainEl.replaceChildren(node(`<div class="panel"><h3>Could not load</h3><div class="tiny">${esc(err.message)}</div></div>`));
-  });
-}
+/*
+ * Getting in.
+ *
+ * Try to load first, whatever we do or do not have. `load()` asks who is
+ * signed in before anything else, so a real account never sees the host key
+ * box — that box is now only for somebody still using a `?key=` link from
+ * before there were accounts, and only when there is no session either.
+ *
+ * The order used to be the other way round, which meant a signed-in quizmaster
+ * was asked for a key they had never been given and could not get.
+ */
+load().catch((err) => {
+  if (!hostKey) return askForKey();
+  mainEl.replaceChildren(node(`<div class="panel"><h3>Could not load</h3><div class="tiny">${esc(err.message)}</div></div>`));
+});
 
 /* ================================================================= ADVERTS
  *
