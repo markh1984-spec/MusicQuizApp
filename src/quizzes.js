@@ -34,6 +34,38 @@ export const MULTI_OPTIONS = 6;
  */
 export const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
+/**
+ * How a picture round gives itself away.
+ *
+ * The round has always pulled back from a close crop. These are the same idea
+ * done four ways, and the reason they are worth having is that ten questions
+ * of one effect is ten questions of one effect — the room stops watching.
+ *
+ * They all run on the SAME curve (`easeOut` in `public/assets/screen.js`), and
+ * that is not decoration. You score more the earlier you answer, so how fast a
+ * picture becomes guessable is how many points are on offer. A steady
+ * unpixelate would hold the face back until second fifteen and quietly make
+ * that round worth half of a zoom round, for the same crowd and the same
+ * question. Same curve is the closest this gets to fair; do not give one mode
+ * a curve of its own without knowing that is what you are changing.
+ */
+export const REVEAL_MODES = ['zoom', 'pixelate', 'blur', 'tiles'];
+export const DEFAULT_REVEAL = 'zoom';
+
+/**
+ * Which reveal one question uses.
+ *
+ * A round names one for all of its questions, a question can override it, and
+ * `mix` rotates through all four **by position, not at random** — so the same
+ * pack plays the same way twice, and a Redo mid-gig does not hand the room a
+ * different effect from the one they were half way through.
+ */
+export function revealMode(round = {}, q = {}, questionIndex = 0) {
+  const asked = String(q.reveal || round.reveal || DEFAULT_REVEAL).toLowerCase();
+  if (asked === 'mix') return REVEAL_MODES[questionIndex % REVEAL_MODES.length];
+  return REVEAL_MODES.includes(asked) ? asked : DEFAULT_REVEAL;
+}
+
 /** The letter an answer starts with, or '' if it does not start with one. */
 export function answerLetter(answer) {
   const found = String(answer || '').trim().match(/[a-z]/i);
@@ -151,6 +183,7 @@ export function normaliseQuiz(quiz, fallbackId = 'quiz') {
       blurb: round.blurb || '',
       ...(round.questionSeconds ? { questionSeconds: round.questionSeconds } : {}),
       ...(round.imageCaption ? { imageCaption: round.imageCaption } : {}),
+      ...(round.reveal ? { reveal: round.reveal } : {}),
       ...(round.spotifyPlaylist ? { spotifyPlaylist: round.spotifyPlaylist } : {}),
       questions: (round.questions || []).map((q, qi) => ({
         id: q.id || `${round.id || 'r' + (ri + 1)}q${qi + 1}`,
@@ -175,6 +208,7 @@ export function normaliseQuiz(quiz, fallbackId = 'quiz') {
         ...(q.answerNote ? { answerNote: q.answerNote } : {}),
         ...(q.image ? { image: q.image } : {}),
         ...(q.imageCaption ? { imageCaption: q.imageCaption } : {}),
+        ...(q.reveal ? { reveal: q.reveal } : {}),
         ...(q.imagePrompt ? { imagePrompt: q.imagePrompt } : {}),
         ...(Number.isFinite(q.zoomFrom) ? { zoomFrom: q.zoomFrom } : {}),
         ...(Number.isFinite(q.zoomTo) ? { zoomTo: q.zoomTo } : {}),
@@ -345,6 +379,9 @@ export function validateQuiz(quiz) {
     if (!ROUND_TYPES.includes(round.type)) {
       problems.push(`${where}: unknown round type "${round.type}". Use ${ROUND_TYPES.join(', ')}.`);
     }
+    if (round.reveal && !REVEAL_MODES.includes(String(round.reveal).toLowerCase()) && String(round.reveal).toLowerCase() !== 'mix') {
+      problems.push(`${where}: "${round.reveal}" is not a reveal. Use ${REVEAL_MODES.join(', ')} or mix.`);
+    }
     if (!Array.isArray(round.questions) || round.questions.length === 0) {
       problems.push(`${where}: no questions.`);
       return;
@@ -389,6 +426,11 @@ export function validateQuiz(quiz) {
         problems.push(`${at}: no correct answer is marked.`);
       }
       if (round.type === 'image' && !q.image) problems.push(`${at}: picture round question has no image file.`);
+      // A misspelt mode would silently fall back to a zoom, and you would find
+      // out by watching the wrong effect in front of a room.
+      if (q.reveal && !REVEAL_MODES.includes(String(q.reveal).toLowerCase()) && String(q.reveal).toLowerCase() !== 'mix') {
+        problems.push(`${at}: "${q.reveal}" is not a reveal. Use ${REVEAL_MODES.join(', ')} or mix.`);
+      }
       if (round.type === 'intro' && !(q.cue && (q.cue.title || q.cue.artist))) {
         problems.push(`${at}: intro round question has no track cue for you to play.`);
       }

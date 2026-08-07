@@ -427,11 +427,14 @@ function renderQuestion(s) {
  */
 function renderQuestionMedia(s, q) {
   if (s.roundType === 'image' && q.image) {
+    const mode = q.reveal || 'zoom';
     return `
       <div class="zoom-stage">
-        <div class="zoom-frame" id="zoomFrame">
+        <div class="zoom-frame reveal-${esc(mode)}" id="zoomFrame">
           <img class="zoom-img" id="zoomImg" src="${esc(q.image)}" alt="Mystery musician"
                onerror="this.closest('.zoom-frame').classList.add('no-image')">
+          ${mode === 'pixelate' ? '<canvas class="pix-canvas" id="pixCanvas"></canvas>' : ''}
+          ${mode === 'tiles' ? tileGrid(s) : ''}
           <div class="zoom-caption">${esc(q.imageCaption || '')}</div>
           <div class="zoom-missing">Picture missing — read this one out</div>
         </div>
@@ -454,6 +457,125 @@ function renderQuestionMedia(s, q) {
   return '';
 }
 
+/* ---------------------------------------------------------- picture reveals
+ *
+ * Four ways for a portrait to give itself away, all on the SAME curve. That is
+ * the part that matters and the part that is easy to break: you score more the
+ * earlier you answer, so how fast a picture becomes guessable IS how many
+ * points are on offer. A steady unpixelate would hold the face back until
+ * second fifteen and quietly make that round worth half of a zoom round, for
+ * the same crowd and the same question.
+ *
+ * All four are plain canvas or plain CSS. No `ctx.filter` — older iOS does not
+ * implement it, and this is the same trap `filters.js` already exists to
+ * avoid. Nothing here loads a library.
+ */
+
+// How hidden each one starts. Tuned by eye on a 1080p projector: enough that
+// the face is genuinely unreadable at second nought, not so much that the
+// first five seconds are wasted showing nothing.
+const BLUR_FROM = 34;     // pixels of blur
+const PIX_FROM = 11;      // how many pixels wide the picture is drawn at
+const PIX_TO = 520;       // and by the end
+const TILE_ROWS = 4;
+const TILE_COLS = 6;
+
+/**
+ * The blind for the tiles reveal.
+ *
+ * The order tiles disappear in is shuffled, but shuffled the SAME WAY every
+ * time for a given question — seeded off its position, not off Math.random.
+ * A Redo mid-gig has to give the room the picture back the way they were half
+ * way through seeing it, not a fresh scramble.
+ */
+function tileGrid(s) {
+  const total = TILE_ROWS * TILE_COLS;
+  const order = [...Array(total).keys()];
+  let seed = (s.roundIndex + 1) * 7919 + (s.questionIndex + 1) * 104729;
+  for (let i = total - 1; i > 0; i--) {
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    const j = seed % (i + 1);
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  return `<div class="tile-grid" id="tileGrid" style="--rows:${TILE_ROWS};--cols:${TILE_COLS}">
+    ${order.map((o) => `<i data-order="${o}"></i>`).join('')}
+  </div>`;
+}
+
+/**
+ * @param {number} shown  0 = completely hidden, 1 = the whole picture
+ */
+function paintReveal(q, shown, revealing) {
+  const frame = document.getElementById('zoomFrame');
+  if (!frame) return;
+  const img = document.getElementById('zoomImg');
+  const mode = q.reveal || 'zoom';
+
+  if (mode === 'zoom') {
+    if (!img) return;
+    const from = q.zoomFrom ?? 6;
+    const to = q.zoomTo ?? 1;
+    const scale = from + (to - from) * shown;
+    img.style.transform = `scale(${scale.toFixed(3)})`;
+    img.style.transformOrigin = `${q.zoomOriginX ?? 50}% ${q.zoomOriginY ?? 40}%`;
+    return;
+  }
+
+  if (mode === 'blur') {
+    if (!img) return;
+    const blur = BLUR_FROM * (1 - shown);
+    img.style.filter = blur > 0.4 ? `blur(${blur.toFixed(1)}px)` : 'none';
+    // Blown up a touch while it is blurred, so the soft edge is off the side of
+    // the frame rather than fading into the panel behind it.
+    img.style.transform = `scale(${(1 + 0.09 * (1 - shown)).toFixed(3)})`;
+    return;
+  }
+
+  if (mode === 'pixelate') {
+    const canvas = document.getElementById('pixCanvas');
+    if (!canvas || !img || !img.complete || !img.naturalWidth) return;
+    // Drawn TINY and blown up by the browser, rather than blurred and sharpened
+    // in code: one drawImage of at most a few hundred pixels a frame, which
+    // costs nothing even on the laptop driving a projector all night.
+    //
+    // The resolution DOUBLES rather than climbing in equal steps, and that is
+    // the whole difference between this being fair and not. Going from 11
+    // pixels across to 22 gives away half the face; going from 260 to 520 gives
+    // away nothing anybody can see. Ramped in equal steps the picture was
+    // basically solved two seconds in — the same easeOut curve as the zoom, and
+    // a far easier question, which is exactly the unfairness these modes are
+    // meant to avoid.
+    const across = Math.max(2, Math.round(PIX_FROM * Math.pow(PIX_TO / PIX_FROM, shown)));
+    const down = Math.max(2, Math.round(across * (img.naturalHeight / img.naturalWidth)));
+    if (canvas.width !== across) {
+      canvas.width = across;
+      canvas.height = down;
+    }
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, 0, 0, across, down);
+    // At the very end hand over to the real picture, so the reveal is the
+    // photograph and not a very good impression of one.
+    frame.classList.toggle('pix-done', revealing || shown > 0.995);
+    return;
+  }
+
+  if (mode === 'tiles') {
+    const grid = document.getElementById('tileGrid');
+    if (!grid) return;
+    const total = TILE_ROWS * TILE_COLS;
+    const gone = revealing ? total : Math.floor(shown * total);
+    // Only touched when the count actually changes: this runs every frame, and
+    // toggling twenty-four classes sixty times a second for nothing is how a
+    // projector starts dropping frames.
+    if (grid.dataset.gone === String(gone)) return;
+    grid.dataset.gone = String(gone);
+    for (const tile of grid.children) {
+      tile.classList.toggle('gone', Number(tile.dataset.order) < gone);
+    }
+  }
+}
+
 function updateQuestion(s) {
   const q = s.question || {};
   const revealing = s.phase === 'reveal';
@@ -464,17 +586,14 @@ function updateQuestion(s) {
     counter.textContent = revealing ? '' : `${s.answeredCount || 0} of ${s.playerCount} answered`;
   }
 
-  // Zoom: pull back over the life of the question so early guesses score more.
-  const img = document.getElementById('zoomImg');
-  if (img && s.clock) {
+  // The picture gives itself away over the life of the question, so early
+  // guesses score more. Which way it does that is `q.reveal`; how fast is the
+  // same curve for all of them, because that curve is the difficulty.
+  if (s.roundType === 'image' && s.clock) {
     const total = s.clock.endsAt - s.clock.startedAt;
     const elapsed = Math.min(total, Math.max(0, clock.now() - s.clock.startedAt));
     const t = total > 0 ? elapsed / total : 1;
-    const from = q.zoomFrom ?? 6;
-    const to = q.zoomTo ?? 1;
-    const scale = revealing ? to : from + (to - from) * easeOut(t);
-    img.style.transform = `scale(${scale.toFixed(3)})`;
-    img.style.transformOrigin = `${q.zoomOriginX ?? 50}% ${q.zoomOriginY ?? 40}%`;
+    paintReveal(q, revealing ? 1 : easeOut(t), revealing);
   }
 
   const optionEls = [...document.querySelectorAll('.option')];

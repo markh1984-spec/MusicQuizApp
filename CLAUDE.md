@@ -149,6 +149,7 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 | **The phone shows the answers as the projector does** | Same 2×2 (or 2×3) arrangement, same letters, same colours. A player looks up, decides "the pink one, bottom left", and looks down — so the phone has to be the same picture or they re-read four options against a clock. It was a single column, which made the two screens different arrangements of the same four answers. The letter sits ABOVE the text on the phone: beside it costs 42 of the ~140 pixels a half-width cell has on a 320px phone, which was enough to break "Christmas" across two lines mid-word. |
 | **…except the alphabet round, which is 5 across on the phone and 9 on the projector** | The row above is about options with WORDS on them, where a player is matching a position they picked out from the back of the room. A letter needs no matching — you already know you want F. What the phone has instead is a thumb problem: nine keys across a 320px phone is 28 pixels each. Same order, different number of columns, and A to Z rather than QWERTY because QWERTY is muscle memory for typing words and nobody is typing a word. |
 | **An alphabet answer may never begin with "The", "A" or "An"** | "The Beatles" is B to half a room and T to the other half, and both halves are right — the exact argument the house style exists to prevent. It is a hard validation error, said in the editor as you type, forbidden in the generator's brief and listed as a rejection reason for the checking pass. **Do not soften it to a warning.** |
+| **The picture round's effects all run on one curve** | Zoom, pixelate, blur and tiles are four looks, not four difficulties. You score more the earlier you answer, so the reveal curve IS how many points a question is worth — a mode with a curve of its own makes that round quietly worth more or less than the rest, and nobody would ever blame the animation. Pixelate needs a GEOMETRIC resolution ramp to sit on that curve; linear made it a giveaway. |
 | **Anything that deletes shows a bin** | `binIcon()` in `client.js`, drawn rather than an emoji (every phone draws the emoji one differently, and some of them as a cheerful basket). The host's photo grid used to delete a picture when you tapped it, with nothing on screen saying so. |
 | **No Instagram follow-for-points** | No API can verify a follow. Told the host; he agreed to drop it rather than fake it. |
 | **British spelling and UK chart references** | Crowds are Essex, Kent and Surrey. This is in the generation prompts too. |
@@ -528,6 +529,39 @@ the big screen, they already know which letter they want. A to Z rather than
 QWERTY for the same reason: QWERTY is muscle memory for typing words, and
 nobody is typing a word.
 
+### The picture round's four reveals
+
+`REVEAL_MODES` in `src/quizzes.js`: **zoom** (the original, still the default),
+**pixelate**, **blur**, **tiles**. A round names one, a question can override
+it, and `mix` rotates through all four **by position, not at random** — so a
+Redo mid-gig hands the room back the effect they were half way through
+watching rather than a fresh scramble. There is a test for exactly that.
+
+**They all run on the same curve, and that is a SCORING decision, not a styling
+one.** You score more the earlier you answer, so how fast a picture becomes
+guessable is how many points are on offer. Give one mode a curve of its own and
+that round is quietly worth more or less than the others, for the same crowd and
+the same question — which nobody will ever attribute to the animation.
+
+This bit is the whole lesson, and it was wrong first time: **pixelate ramps its
+resolution GEOMETRICALLY, not in equal steps.** 11 pixels across to 22 gives
+away half the face; 260 to 520 gives away nothing anybody can see. Ramped
+linearly on the same `easeOut`, the picture was solved about two seconds in and
+that round was a giveaway next to a zoom round. `PIX_FROM * (PIX_TO/PIX_FROM) **
+shown` in `public/assets/screen.js`. Same curve does not mean same arithmetic.
+
+None of it needs a library: pixelate is one `drawImage` a frame into a canvas of
+at most a few hundred pixels, blown up by the browser with
+`image-rendering: pixelated`; blur is one CSS filter; tiles is a grid of opaque
+panels. **No `ctx.filter`** — the same old-iOS trap `filters.js` exists to
+avoid. The `image-rendering` fallbacks are ordered least-known-last on purpose;
+the other way round and the projector smooths the blocks into mush.
+
+A misspelt mode is a **validation problem**, not a silent fall back to zoom —
+otherwise you find out by watching the wrong effect in front of a room. The
+editor hides "Starting zoom" on a question that does not zoom, because a knob
+that does nothing reads as a knob you have to set.
+
 ### How many questions of each type
 
 `roundPlan()` in `src/generate-quiz.js`. `rounds` is a list of `{ type, count }`
@@ -545,7 +579,7 @@ typo is dropped rather than quietly becoming a round of general knowledge.
 ## Checks
 
 ```bash
-npm test        # 339 tests, no network, injected clocks — must stay green
+npm test        # 349 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -592,9 +626,9 @@ recreate it.
 ## Current state
 
 All five build stages plus bingo, the console, generation, pack import, the
-tickable review flags, the alphabet round and per-type question counts are done,
-tested and pushed to **`MusicQuizApp`**. Nothing is half-finished in the tree.
-339 tests green.
+tickable review flags, the alphabet round, per-type question counts and the
+picture round's four reveals are done, tested and pushed to **`MusicQuizApp`**.
+Nothing is half-finished in the tree. 349 tests green.
 
 (An earlier version of this line named `claude/new-session-jzx988`. That branch
 is gone — see **Where to push**.)

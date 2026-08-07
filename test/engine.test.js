@@ -1423,3 +1423,47 @@ test('the fastest finger and the recap survive a round with no options', () => {
   assert.equal(recap.correctText, 'Fleetwood Mac');
   assert.equal(recap.correctCount, 1);
 });
+
+/* The projector is told which effect to run, and the effect is not a secret —
+ * but the answer key still is. */
+
+function pictureQuiz(reveal) {
+  return {
+    id: 'pics', title: 'Pictures', questionSeconds: 20,
+    rounds: [{
+      id: 'r1', type: 'image', title: 'Faces', ...(reveal ? { reveal } : {}),
+      questions: [
+        { id: 'q1', prompt: 'Whose face?', options: ['Madonna', 'Cher', 'Kate Bush', 'Blondie'], correctIndex: 0, image: 'a.png' },
+        { id: 'q2', prompt: 'Whose face?', options: ['Prince', 'Sting', 'Bono', 'Seal'], correctIndex: 1, image: 'b.png' },
+        { id: 'q3', prompt: 'Whose face?', options: ['Adele', 'Duffy', 'Amy', 'Lily'], correctIndex: 2, image: 'c.png' },
+      ],
+    }],
+  };
+}
+
+function atPicture(reveal, questionIndex = 0) {
+  const h = makeEngine(pictureQuiz(reveal));
+  h.engine.start();
+  h.engine.next();
+  h.engine.next();
+  for (let i = 0; i < questionIndex; i++) { h.engine.reveal(); h.engine.next(); }
+  return h.engine;
+}
+
+test('the projector is told how the picture gives itself away', () => {
+  assert.equal(atPicture().screenView().question.reveal, 'zoom');
+  assert.equal(atPicture('blur').screenView().question.reveal, 'blur');
+});
+
+test('mix follows the question the room is actually on', () => {
+  assert.equal(atPicture('mix', 0).screenView().question.reveal, 'zoom');
+  assert.equal(atPicture('mix', 1).screenView().question.reveal, 'pixelate');
+  assert.equal(atPicture('mix', 2).screenView().question.reveal, 'blur');
+});
+
+test('the host knows which effect is coming, and still has the only answer key', () => {
+  const view = atPicture('tiles').hostView();
+  assert.equal(view.question.reveal, 'tiles');
+  assert.equal(view.question.correctText, 'Madonna');
+  assert.equal(atPicture('tiles').screenView().question.correctText, undefined);
+});

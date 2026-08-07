@@ -25,7 +25,7 @@ import {
   scoreAnswer, scoreMultiAnswer, responseSeconds, rankPlayers,
   POINTS_CORRECT, POINTS_PER_WHOLE_SECOND, POINTS_FIRST_CORRECT,
 } from './scoring.js';
-import { ALPHABET, answerLetter, answerLetterIndex } from './quizzes.js';
+import { ALPHABET, answerLetter, answerLetterIndex, revealMode } from './quizzes.js';
 
 export const PHASES = {
   LOBBY: 'lobby',
@@ -775,13 +775,17 @@ export class Engine {
    * ROUND 3 RULE: the intro round deliberately returns nothing here. The track
    * title and artist live in `question.cue`, which only hostView() ever reads.
    */
-  screenQuestionExtras(q, round) {
+  screenQuestionExtras(q, round, qi = 0) {
     switch (round.type) {
       case 'image':
         return {
           image: q.image ? `/quiz-images/${q.image}` : null,
           // The caption that makes clear these are illustrations, not photos.
           imageCaption: q.imageCaption || round.imageCaption || 'AI-generated illustration — not a real photograph',
+          // How it gives itself away. Worked out here rather than on the screen
+          // so `mix` rotates by the question's real position and the projector
+          // is not left guessing where in the round it is.
+          reveal: revealMode(round, q, qi),
           zoomFrom: q.zoomFrom ?? round.zoomFrom ?? 6,
           zoomTo: q.zoomTo ?? round.zoomTo ?? 1,
           zoomOriginX: q.zoomOriginX ?? 50,
@@ -852,7 +856,7 @@ export class Engine {
           id: q.id,
           prompt: q.prompt,
           options: this.optionsFor(q, round),
-          ...this.screenQuestionExtras(q, round),
+          ...this.screenQuestionExtras(q, round, s.questionIndex),
         };
         view.clock = s.question
           ? {
@@ -1104,7 +1108,7 @@ export class Engine {
   }
 
   /** Extra fields only the host gets. This is where the secrets live. */
-  hostQuestionExtras(q, round) {
+  hostQuestionExtras(q, round, qi = 0) {
     const right = [...this.correctSet(q, round)];
     const extras = {
       correctIndex: right[0] ?? -1,
@@ -1136,6 +1140,9 @@ export class Engine {
     }
     if (round.type === 'image') {
       extras.image = q.image ? `/quiz-images/${q.image}` : null;
+      // Which effect this one runs, so nothing on the projector is a surprise
+      // to the person talking over it.
+      extras.reveal = revealMode(round, q, qi);
     }
     if (round.spotifyPlaylist) extras.playlist = round.spotifyPlaylist;
     return extras;
@@ -1167,7 +1174,7 @@ export class Engine {
         id: q.id,
         prompt: q.prompt,
         options: this.optionsFor(q, round),
-        ...this.hostQuestionExtras(q, round),
+        ...this.hostQuestionExtras(q, round, s.questionIndex),
       };
       view.answeredCount = Object.keys(this.answersFor()).length;
       view.tally = this.optionTally();
@@ -1231,7 +1238,7 @@ export class Engine {
       roundType: round.type,
       prompt: q.prompt,
       options: this.optionsFor(q, round),
-      ...this.hostQuestionExtras(q, round),
+      ...this.hostQuestionExtras(q, round, qi),
     };
   }
 

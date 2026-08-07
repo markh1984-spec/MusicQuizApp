@@ -105,6 +105,10 @@ the pack anyway and tells you why, so you always get a playable bingo round.
   loses a point to spelling.
 - **A number of questions per round type**, so a quiz can be fifteen general
   knowledge and five pictures rather than ten of everything.
+- **Four ways for a round 2 picture to give itself away** — zoom out, pixelate,
+  come into focus, or tiles coming away — set per round in the Editor, or `mix`
+  for a different one each question. They all get easy at the same rate, so
+  which one you pick never changes how many points are on offer.
 - **The rules as the first slide** of every quiz, and **scores on the big
   screen** whenever you want them. Part 9a.
 - **Advert slides between rounds**, one set per venue, with a QR to ticket

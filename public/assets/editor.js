@@ -22,6 +22,22 @@ const ROUND_TYPES = [
   ['alphabet', 'First letter — they get a keyboard'],
 ];
 
+/**
+ * How a picture question gives itself away.
+ *
+ * `mix` rotates through the four by position, so a round of ten is not ten of
+ * the same effect. They all run on the same curve, so which one you pick does
+ * not change how many points are on offer — see REVEAL_MODES in
+ * `src/quizzes.js` before changing that.
+ */
+const REVEALS = [
+  ['zoom', 'Zoom out — pulls back from a close crop'],
+  ['pixelate', 'Pixelate — resolves out of big blocks'],
+  ['blur', 'Blur — comes into focus'],
+  ['tiles', 'Tiles — panels come away a few at a time'],
+  ['mix', 'Mix — a different one each question'],
+];
+
 const mainEl = document.getElementById('main');
 const pickEl = document.getElementById('quizPick');
 const saveEl = document.getElementById('save');
@@ -276,11 +292,19 @@ function roundBlock(round, ri) {
         <select class="rtype">
           ${ROUND_TYPES.map(([v, label]) => `<option value="${v}" ${round.type === v ? 'selected' : ''}>${esc(label)}</option>`).join('')}
         </select>
+        ${round.type === 'image' ? `
+          <select class="rreveal" title="How every picture in this round gives itself away. A question can override it.">
+            ${REVEALS.map(([v, label]) => `<option value="${v}" ${(round.reveal || 'zoom') === v ? 'selected' : ''}>${esc(label)}</option>`).join('')}
+          </select>` : ''}
         <button class="small danger delete-round">Delete round</button>
       </div>
     </div>`);
 
   el.querySelector('.title').addEventListener('input', (e) => change(() => { round.title = e.target.value; }));
+  el.querySelector('.rreveal')?.addEventListener('change', (e) => change(() => {
+    round.reveal = e.target.value;
+    render();
+  }));
   el.querySelector('.rtype').addEventListener('change', (e) => change(() => {
     round.type = e.target.value;
     // Switching to or from pick-them-all changes how many options a question
@@ -436,27 +460,46 @@ function questionCard(round, q, ri, qi) {
 
   // ---- fields that only some round types need
   const extras = el.querySelector('.extras');
-  if (round.type === 'image') extras.appendChild(imageFields(q));
+  if (round.type === 'image') extras.appendChild(imageFields(q, round));
   if (round.type === 'intro') extras.appendChild(cueFields(q));
 
   return el;
 }
 
-function imageFields(q) {
+function imageFields(q, round) {
+  const inherited = REVEALS.find(([v]) => v === (round.reveal || 'zoom'));
+  // The starting zoom is only a knob on a question that actually zooms. Shown
+  // next to a blur it reads as something you have to set, and it does nothing.
+  const effective = q.reveal || round.reveal || 'zoom';
+  const zooms = effective === 'zoom' || effective === 'mix';
   const el = node(`
     <div class="extra-fields" style="margin-top:11px">
       <label>Image file (in /images)
         <input type="text" class="image" value="${esc(q.image || '')}" placeholder="eighties/madonna.png">
       </label>
-      <label>Starting zoom
-        <input type="number" class="zoomFrom" min="1" max="12" step="0.5" value="${q.zoomFrom ?? 6}">
+      <label>How it gives itself away
+        <select class="reveal">
+          <option value="">Whatever the round says — ${esc((inherited ? inherited[1] : 'zoom').split(' — ')[0])}</option>
+          ${REVEALS.filter(([v]) => v !== 'mix').map(([v, label]) => `<option value="${v}" ${q.reveal === v ? 'selected' : ''}>${esc(label)}</option>`).join('')}
+        </select>
       </label>
+      ${zooms ? `<label>Starting zoom
+        <input type="number" class="zoomFrom" min="1" max="12" step="0.5" value="${q.zoomFrom ?? 6}">
+      </label>` : ''}
       <label>Prompt for the image generator
         <input type="text" class="imagePrompt" value="${esc(q.imagePrompt || '')}" placeholder="Optional — used by generate-images.mjs">
       </label>
     </div>`);
   el.querySelector('.image').addEventListener('input', (e) => change(() => { q.image = e.target.value; }));
-  el.querySelector('.zoomFrom').addEventListener('input', (e) => change(() => { q.zoomFrom = Number(e.target.value); }));
+  el.querySelector('.reveal').addEventListener('change', (e) => change(() => {
+    // Blank means "whatever the round says", so it is deleted rather than
+    // written out — otherwise changing the round's mode would leave every
+    // question quietly pinned to the old one.
+    if (e.target.value) q.reveal = e.target.value;
+    else delete q.reveal;
+    render();
+  }));
+  el.querySelector('.zoomFrom')?.addEventListener('input', (e) => change(() => { q.zoomFrom = Number(e.target.value); }));
   el.querySelector('.imagePrompt').addEventListener('input', (e) => change(() => { q.imagePrompt = e.target.value; }));
   return el;
 }

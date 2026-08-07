@@ -1299,6 +1299,13 @@ const ROUND_LABELS = {
   multi: 'Pick them all',
   alphabet: 'First letter only',
 };
+const REVEAL_LABELS = {
+  zoom: 'zooms out',
+  pixelate: 'pixelates',
+  blur: 'comes into focus',
+  tiles: 'tiles come away',
+  mix: 'a different effect each question',
+};
 
 /** The letter an alphabet answer turns on. Mirrors answerLetter in src/quizzes.js. */
 function firstLetter(answer) {
@@ -1449,7 +1456,10 @@ function renderQuizPreview(body, sub, quiz, markDirty = () => {}) {
       <div class="pv-round">
         <div class="pv-round-head">
           <input class="pv-round-name" value="${esc(round.title)}" title="Click to rename this round">
-          <span class="tiny">${esc(ROUND_LABELS[round.type] || round.type)}</span>
+          <span class="tiny">${esc(ROUND_LABELS[round.type] || round.type)}${
+            // Which effect the pictures use, because it is set in the editor
+            // and there is otherwise nowhere that says so at a glance.
+            round.type === 'image' ? ` · ${esc(REVEAL_LABELS[round.reveal || 'zoom'] || round.reveal)}` : ''}</span>
         </div>
         ${round.spotifyPlaylist ? `<a class="pv-playlist" href="${esc(round.spotifyPlaylist.url)}" target="_blank" rel="noopener">Spotify playlist for this round</a>` : ''}
       </div>`);

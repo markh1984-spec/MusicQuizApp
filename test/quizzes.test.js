@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { validateQuiz, normaliseQuiz, safeQuizFile, saveQuiz, loadQuiz, listQuizzes, reviewWarnings, setWarningChecked, answerLetter, answerLetterIndex, ALPHABET } from '../src/quizzes.js';
+import { validateQuiz, normaliseQuiz, safeQuizFile, saveQuiz, loadQuiz, listQuizzes, reviewWarnings, setWarningChecked, answerLetter, answerLetterIndex, ALPHABET, revealMode, REVEAL_MODES } from '../src/quizzes.js';
 
 function goodQuiz() {
   return {
@@ -555,4 +555,69 @@ test('an alphabet round is not held to the four-options rule', () => {
   const quiz = alphabetQuiz();
   quiz.rounds[0].questions.push({ id: 'q2', prompt: 'Which city?', answer: 'Liverpool' });
   assert.deepEqual(validateQuiz(quiz), []);
+});
+
+/* ------------------------------------------------------------------------
+ * How a picture round gives itself away.
+ *
+ * The point of the tests: `mix` must be the same every time. A Redo mid-gig
+ * has to give the room back the effect they were half way through watching,
+ * not a fresh scramble.
+ */
+
+test('a picture question zooms unless something says otherwise', () => {
+  assert.equal(revealMode({ type: 'image' }, {}, 0), 'zoom');
+  assert.equal(revealMode({}, {}, 7), 'zoom');
+  assert.equal(revealMode(), 'zoom');
+});
+
+test('a round sets the effect for all of its questions', () => {
+  const round = { type: 'image', reveal: 'pixelate' };
+  for (let i = 0; i < 6; i++) assert.equal(revealMode(round, {}, i), 'pixelate');
+});
+
+test('a question can override the round', () => {
+  assert.equal(revealMode({ reveal: 'blur' }, { reveal: 'tiles' }, 3), 'tiles');
+});
+
+test('mix rotates by position, and gives the same answer every time', () => {
+  const round = { type: 'image', reveal: 'mix' };
+  const first = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => revealMode(round, {}, i));
+  assert.deepEqual(first, [...REVEAL_MODES, ...REVEAL_MODES]);
+  // The thing that matters: ask again and get the same answer. A Redo must not
+  // hand the room a different effect from the one they were watching.
+  const again = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => revealMode(round, {}, i));
+  assert.deepEqual(again, first);
+});
+
+test('a mode nobody has heard of falls back rather than showing nothing', () => {
+  assert.equal(revealMode({ reveal: 'kaleidoscope' }, {}, 0), 'zoom');
+});
+
+test('but a mode nobody has heard of is a validation problem, so it is not silent', () => {
+  const quiz = {
+    id: 'p', title: 'Pictures', questionSeconds: 20,
+    rounds: [{
+      id: 'r1', type: 'image', title: 'Faces', reveal: 'kaleidoscope',
+      questions: [{ id: 'q1', prompt: 'Whose face?', options: ['a', 'b', 'c', 'd'], correctIndex: 0, image: 'x.png' }],
+    }],
+  };
+  assert.match(validateQuiz(quiz)[0], /not a reveal/);
+  quiz.rounds[0].reveal = 'mix';
+  quiz.rounds[0].questions[0].reveal = 'wobble';
+  assert.match(validateQuiz(quiz)[0], /not a reveal/);
+  quiz.rounds[0].questions[0].reveal = 'blur';
+  assert.deepEqual(validateQuiz(quiz), []);
+});
+
+test('the chosen effect survives a save and reload', () => {
+  const quiz = normaliseQuiz({
+    id: 'p', title: 'Pictures',
+    rounds: [{
+      id: 'r1', type: 'image', title: 'Faces', reveal: 'mix',
+      questions: [{ id: 'q1', prompt: 'Whose face?', options: ['a', 'b', 'c', 'd'], correctIndex: 0, image: 'x.png', reveal: 'tiles' }],
+    }],
+  });
+  assert.equal(quiz.rounds[0].reveal, 'mix');
+  assert.equal(quiz.rounds[0].questions[0].reveal, 'tiles');
 });

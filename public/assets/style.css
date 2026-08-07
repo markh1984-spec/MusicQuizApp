@@ -2279,3 +2279,61 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .gen-round.off { opacity: 0.5; }
 .gen-round-name { flex: 1 1 auto; font-weight: 700; font-size: 13px; }
 .gen-round input[type="number"] { width: 52px; text-align: center; font-weight: 800; }
+
+/* ========================================================= picture reveals
+   Four ways for round 2 to give itself away. The zoom is the original and
+   still the default; these are the same job done differently so ten questions
+   are not ten of the same effect.
+
+   All four run on the same curve in screen.js — that is a scoring decision,
+   not a styling one. See REVEAL_MODES in src/quizzes.js. */
+
+/* ---- pixelate: drawn tiny into a canvas and blown up by the browser, which
+   is the one way to do this that needs no library and no ctx.filter. */
+.pix-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  /* Least-known last, so a browser that understands `pixelated` uses it and one
+     that does not still falls back to something sharp. Order matters here: get
+     it the wrong way round and the projector smooths the blocks into mush,
+     which is the whole effect gone. */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+}
+/* The real picture waits underneath and takes over at the very end, so what
+   the room finally sees is the photograph rather than a good impression. */
+.reveal-pixelate .zoom-img { visibility: hidden; }
+.reveal-pixelate.pix-done .zoom-img { visibility: visible; }
+.reveal-pixelate.pix-done .pix-canvas { display: none; }
+
+/* ---- blur: one CSS filter, supported everywhere including the old iOS that
+   ctx.filter is not. */
+.reveal-blur .zoom-img { will-change: filter, transform; }
+
+/* ---- tiles: a blind of panels that come away a few at a time. */
+.tile-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 6), 1fr);
+  grid-template-rows: repeat(var(--rows, 4), 1fr);
+  gap: 3px;
+}
+.tile-grid i {
+  /* Opaque, not the usual translucent panel fill — a tile that lets the
+     picture through is a tile that is not covering anything. */
+  background: #14131f;
+  border: 1px solid var(--panel-line);
+  border-radius: 6px;
+  transition: opacity 420ms ease, transform 420ms ease;
+}
+.tile-grid i.gone { opacity: 0; transform: scale(0.82); }
+
+/* A picture that did not load says so, whichever effect it was going to use. */
+.zoom-frame.no-image .pix-canvas,
+.zoom-frame.no-image .tile-grid { display: none; }

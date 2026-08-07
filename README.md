@@ -126,8 +126,9 @@ pictures and ten first-letter is one job. Takes a minute or two and costs a few
 pence. British charts and British spelling are baked into the prompt.
 
 The five round types are **general knowledge**, **whose face is this** (an
-illustrated portrait that pulls back as the clock runs down), **name that
-intro** (you play the track), **pick them all** (six options, two or three
+illustrated portrait that gives itself away over the twenty seconds — it can
+zoom out, pixelate, come into focus or have tiles come away, set per round in
+the editor, or `mix` for a different one each question), **name that intro** (you play the track), **pick them all** (six options, two or three
 right, part marks) and **first letter** — no options at all: the room gets a
 keyboard and only the first letter of the answer has to be right, so spelling
 never costs anybody a point.
@@ -384,7 +385,12 @@ reconnect on their own when a phone comes back from being locked.
           // picture rounds
           "image": "eighties/madonna.png",
           "imagePrompt": "…for the image generator",
-          "zoomFrom": 6,
+          "reveal": "pixelate",   // zoom | pixelate | blur | tiles — or "mix"
+                                  // on the ROUND to rotate through them.
+                                  // They all run on the same curve, so which
+                                  // one you pick never changes how many points
+                                  // are on offer.
+          "zoomFrom": 6,          // zoom only
 
           // pick-them-all rounds — six options, and this instead of correctIndex
           "correctIndexes": [0, 2, 5],
