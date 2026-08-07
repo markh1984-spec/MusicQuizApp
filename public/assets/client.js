@@ -193,3 +193,44 @@ export async function postJson(url, body, headers = {}) {
   if (!res.ok) throw Object.assign(new Error(data.error || res.statusText), { data, status: res.status });
   return data;
 }
+
+/*
+ * Which game this browser belongs to.
+ *
+ * One place, imported by the phone, the bingo card and the projector, because
+ * three copies of "where do I read the code from" is three chances to disagree
+ * — and disagreeing means a phone answering into somebody else's question.
+ *
+ * Read from the page's URL (`?g=XXXX`) and then REMEMBERED, for the same reason
+ * the player id is remembered: a phone that locks, refreshes or drops off wifi
+ * has to come back to the same game rather than landing somewhere else with no
+ * score. No code anywhere means the house game, which is what every QR made
+ * before rooms existed says — that fallback is why nothing had to be reprinted.
+ */
+const ROOM_KEY = 'musicquiz.room';
+
+export function roomCode() {
+  let fromUrl = '';
+  try {
+    fromUrl = new URL(location.href).searchParams.get('g') || '';
+  } catch { /* no window: a test importing this for something else */ }
+  if (fromUrl) {
+    try { localStorage.setItem(ROOM_KEY, fromUrl); } catch { /* private browsing */ }
+    return fromUrl;
+  }
+  try { return localStorage.getItem(ROOM_KEY) || ''; } catch { return ''; }
+}
+
+/** `&g=…` for a query string that already has something in it, or nothing. */
+export function roomParam(prefix = '&') {
+  const code = roomCode();
+  return code ? `${prefix}g=${encodeURIComponent(code)}` : '';
+}
+
+export function rememberRoom(code) {
+  if (code === undefined || code === null) return;
+  try {
+    if (code) localStorage.setItem(ROOM_KEY, code);
+    else localStorage.removeItem(ROOM_KEY);
+  } catch { /* private browsing */ }
+}

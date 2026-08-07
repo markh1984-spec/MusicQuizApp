@@ -169,6 +169,34 @@ export async function putFile(filePath, contents, message, which = 'app') {
   }
 }
 
+/**
+ * Read a file back out of a repository.
+ *
+ * The other half of `putFile`, and it was missing — which meant the accounts
+ * and the invoice book were backed up faithfully and then never read again.
+ * On a host with no permanent disk that is the same as not backing them up at
+ * all: the file goes to GitHub, the disk is wiped on the next deploy, and the
+ * login you made last week has quietly stopped existing.
+ *
+ * Returns null rather than throwing when there is nothing there. A first boot
+ * with no backup yet is the normal case, not an error.
+ */
+export async function getFile(filePath, which = 'app') {
+  const isPrivate = which === 'photos' || which === 'private';
+  const ready = isPrivate ? photosRepoConfigured() : githubConfigured();
+  if (!ready) return null;
+  try {
+    const { owner, name, branch } = settings(which);
+    const res = await api(`/repos/${owner}/${name}/contents/${encodeURI(filePath)}?ref=${encodeURIComponent(branch)}`, {}, which);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data || typeof data.content !== 'string') return null;
+    return Buffer.from(data.content, 'base64');
+  } catch {
+    return null;
+  }
+}
+
 export async function deleteFile(filePath, message, which = 'app') {
   const ready = (which === 'photos' || which === 'private') ? photosRepoConfigured() : githubConfigured();
   if (!ready) return { ok: false, error: 'not set up' };

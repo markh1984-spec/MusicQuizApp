@@ -31,28 +31,37 @@ import { generateImages, imageStatus, imageJobs, imagePlan, openaiConfigured } f
 import { STYLES, findStyle, QUALITIES, DEFAULT_QUALITY } from './src/portraits.js';
 import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig } from './src/spotify.js';
-import { githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem, privateRepoConfigured } from './src/github.js';
+import { getFile, githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem, privateRepoConfigured } from './src/github.js';
 import { Invoices, totals, toPence, money } from './src/invoices.js';
 import { invoicePdf, invoiceFilename } from './src/invoice-pdf.js';
 import { toSvg } from './src/qrcode.js';
 import { LOOKS } from './public/assets/looks.js';
 import { Accounts } from './src/accounts.js';
+import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
 import { FEATURES, whyNot, entitlements } from './public/assets/plans.js';
 // The logo, shared with the browser so the tab icon and the on-screen mark are
 // one drawing rather than two that look alike today.
 import { faviconSvg } from './public/assets/brandmark.js';
 
 const HOST_KEY = hostKey();
-const store = new Store(paths.state);
 const hub = new Hub();
-// Kept outside the game state: a night is often a quiz and then bingo, and
-// launching the second one throws the first game away. The photos should not
-// go with it.
-const photos = new Photos(paths.photos);
 const invoices = new Invoices(paths.invoices);
 const accounts = new Accounts(paths.accounts);
 
-const session = new Session({ config, store, onPush: () => pushState() }).boot();
+/*
+ * One room per quizmaster.
+ *
+ * `session`, `store` and `photos` used to be module-level singletons, which is
+ * exactly what made a second login unsafe: Rob pressing Launch would have
+ * ended Mark's night mid-question. Everything that belongs to one night now
+ * hangs off a room, and every request resolves which room it is talking about
+ * before it touches a game. See src/rooms.js.
+ *
+ * The house room keeps the original file locations, so deploying this in the
+ * middle of a season does not lose a game that is being played as it restarts.
+ */
+const rooms = new Rooms({ config, paths, onPush: (room) => pushState(room) });
+rooms.get(HOUSE);
 
 /**
  * Whether the GitHub backup actually works, not just whether it is configured.
@@ -71,6 +80,11 @@ async function backupStatus() {
 // ------------------------------------------------------------- broadcasting
 
 function viewFor(client) {
+  // A client that arrived before its room existed, or whose room was never
+  // booted, is shown the house game rather than nothing — the same silent
+  // fallback a phone with no code gets.
+  const room = client.room || rooms.get(HOUSE);
+  const { session, photos } = room;
   const view = client.role === 'host' ? session.hostView()
     : client.role === 'player' ? session.playerView(client.playerId)
     : session.screenView();
@@ -82,17 +96,25 @@ function viewFor(client) {
   // Your name travels with every payload, so a page never has to ask for it
   // separately or flash the wrong thing while it loads.
   view.brand = config.brandName;
+  // Which game this is, so a phone that was handed a code can tell it reached
+  // the right one and the projector can print it for latecomers.
+  view.joinCode = room.code;
   return view;
 }
 
-let pushQueued = false;
-function pushState() {
+const pushQueued = new Set();
+function pushState(room) {
   // Coalesce: sixty phones answering at once is one broadcast, not sixty.
-  if (pushQueued) return;
-  pushQueued = true;
+  // Queued PER ROOM, so a busy game in one room cannot swallow the push that
+  // another room's question needed.
+  const id = room ? room.id : HOUSE;
+  if (pushQueued.has(id)) return;
+  pushQueued.add(id);
   queueMicrotask(() => {
-    pushQueued = false;
-    hub.broadcast('state', viewFor);
+    pushQueued.delete(id);
+    // Only the phones and screens watching THIS room. Broadcasting to everyone
+    // would put one quizmaster's question on another's projector.
+    hub.broadcast('state', viewFor, (client) => (client.room ? client.room.id : HOUSE) === id);
   });
 }
 
@@ -140,6 +162,18 @@ function publicOrigin(req) {
 }
 
 /**
+ * Where a phone should go to join a particular room.
+ *
+ * The house room gets the bare `/play` it has always had. That is not a
+ * cosmetic choice: there are printed cards and bookmarks and a QR that has been
+ * scanned at gigs, and every one of them says `/play`. Only the extra rooms
+ * carry a code.
+ */
+function joinUrlFor(origin, code) {
+  return code ? `${origin}/play?g=${encodeURIComponent(code)}` : `${origin}/play`;
+}
+
+/**
  * The host key: the way in before there were accounts.
  *
  * Still works, and deliberately still works. There are gigs in the diary and
@@ -181,6 +215,36 @@ function whoIs(req, url) {
   if (account) return account;
   if (isHostKey(req, url)) return BOOTSTRAP;
   return null;
+}
+
+/**
+ * Which room this request is talking about.
+ *
+ * Two quite different questions, deliberately answered separately:
+ *
+ *  - A QUIZMASTER is working on their own room, always. It is decided by who
+ *    they are signed in as and never by anything they send, so there is no
+ *    parameter to tamper with and no way to drive somebody else's night.
+ *  - A PHONE is told a code, off the projector. No code means the house room,
+ *    which is what every QR printed before today says, so nothing Mark has
+ *    already handed out or bookmarked stops working.
+ */
+function roomIdFor(account) {
+  // The owner and the host key both run the house room: it is Mark's, and it is
+  // the game that was already running before rooms existed.
+  if (!account || account.bootstrap || account.role === 'owner') return HOUSE;
+  return account.id;
+}
+
+function roomForHost(req, url) {
+  const account = whoIs(req, url);
+  return rooms.get(roomIdFor(account), account ? account.name || account.email : '');
+}
+
+function roomForPhone(req, url, body = null) {
+  const code = tidyCode((body && body.joinCode) || url.searchParams.get('g') || '');
+  if (!code) return rooms.get(HOUSE);
+  return rooms.byCode(code) || rooms.get(HOUSE);
 }
 
 const BOOTSTRAP = {
@@ -308,7 +372,10 @@ async function handleGet(req, res, url, route) {
       'Cache-Control': 'public, max-age=86400',
     }), true;
   }
-  if (route === '/health') return sendJson(res, 200, { ok: true, game: session.kind, phase: session.engine.state.phase }), true;
+  if (route === '/health') {
+    const house = rooms.get(HOUSE);
+    return sendJson(res, 200, { ok: true, game: house.session.kind, phase: house.session.engine.state.phase, rooms: rooms.all().length }), true;
+  }
 
   // ---- static
   if (route.startsWith('/assets/')) {
@@ -332,7 +399,15 @@ async function handleGet(req, res, url, route) {
    * and the whole point is that the room can see them.
    */
   if (route.startsWith('/photos/')) {
-    const full = photos.fileFor(decodeURIComponent(route.slice('/photos/'.length)));
+    // Every room's wall, because the URL carries only the filename the app
+    // itself issued. The name is unique across rooms (it has the timestamp and
+    // a counter in it), and a projector has no session to tell us whose it is.
+    const wanted = decodeURIComponent(route.slice('/photos/'.length));
+    let full = null;
+    for (const room of rooms.all()) {
+      full = room.photos.fileFor(wanted);
+      if (full) break;
+    }
     if (!full) return send(res, 404, 'Not found'), true;
     return fs.readFile(full, (err, data) => {
       if (err) return send(res, 404, 'Not found');
@@ -350,6 +425,7 @@ async function handleGet(req, res, url, route) {
   // the kind of thing somebody trusts at the wrong moment.
   if (route === '/api/photos/list') {
     if (!allowed(req, res, url, FEATURES.PHOTOS)) return true;
+    const { photos } = roomForHost(req, url);
     return sendJson(res, 200, {
       enabled: photos.enabled,
       count: photos.count(),
@@ -373,7 +449,11 @@ async function handleGet(req, res, url, route) {
 
   // ---- the join QR
   if (route === '/join-qr.svg') {
-    const target = `${publicOrigin(req)}/play`;
+    // The code of the room asking for it, so a phone that scans Rob's
+    // projector joins Rob's game. The house room has no code and its QR is the
+    // plain /play it has always been, so every printed card still works.
+    const room = roomForPhone(req, url) ;
+    const target = joinUrlFor(publicOrigin(req), room.code);
     send(res, 200, toSvg(target, { margin: 2, dark: '#0b0b12', light: '#ffffff' }), {
       'Content-Type': 'image/svg+xml; charset=utf-8',
     });
@@ -396,15 +476,23 @@ async function handleGet(req, res, url, route) {
     // game hangs off and a failed payment must not cut it.
     if (role === 'host' && !allowed(req, res, url, FEATURES.QUIZ, { live: true })) return true;
     const playerId = url.searchParams.get('playerId') || null;
-    if (playerId) session.engine.touch(playerId);
-    const client = hub.add(res, { role, playerId });
+    // The control view drives the room of whoever is signed in; a projector or
+    // a phone follows the code it was given.
+    const room = role === 'host' ? roomForHost(req, url) : roomForPhone(req, url);
+    if (playerId) room.session.engine.touch(playerId);
+    const client = hub.add(res, { role, playerId, room });
     hub.send(client, 'state', viewFor(client));
     return true;
   }
 
   // ---- info
   if (route === '/api/join-url') {
-    return sendJson(res, 200, { url: `${publicOrigin(req)}/play`, brand: config.brandName }), true;
+    const room = roomForPhone(req, url);
+    return sendJson(res, 200, {
+      url: joinUrlFor(publicOrigin(req), room.code),
+      code: room.code,
+      brand: config.brandName,
+    }), true;
   }
   /*
    * ---- signing in
@@ -453,19 +541,22 @@ async function handleGet(req, res, url, route) {
     // is not. Asked with `live` set, because this is the connection a running
     // game hangs off and a failed payment must not cut it.
     if (role === 'host' && !allowed(req, res, url, FEATURES.QUIZ, { live: true })) return true;
-    return sendJson(res, 200, viewFor({ role, playerId: url.searchParams.get('playerId') })), true;
+    const room = role === 'host' ? roomForHost(req, url) : roomForPhone(req, url);
+    return sendJson(res, 200, viewFor({ role, playerId: url.searchParams.get('playerId'), room })), true;
   }
 
   // ---- host-only reads
   if (route === '/api/quizzes') {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
-    return sendJson(res, 200, { quizzes: fullLibrary(config).quizzes, loaded: session.pack.id }), true;
+    return sendJson(res, 200, { quizzes: fullLibrary(config).quizzes, loaded: roomForHost(req, url).session.pack.id }), true;
   }
   // The console's library: every quiz and every bingo pack you have saved.
   if (route === '/api/library') {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const library = fullLibrary(config);
     const backup = await backupStatus();
+    const { session } = roomForHost(req, url);
+    const me = whoIs(req, url);
     return sendJson(res, 200, {
       brand: config.brandName,
       ...library,
@@ -484,7 +575,11 @@ async function handleGet(req, res, url, route) {
         maxPrizes: maxPrizes(shape),
         plans: Array.from({ length: maxPrizes(shape) }, (_, i) => stagePlan(i + 1).map(stageLabel)),
       })),
+      // Your own room, and only ever your own — Stop and Take control on this
+      // panel must never reach somebody else's night.
       running: {
+        room: roomIdFor(me),
+        joinCode: roomForHost(req, url).code,
         game: session.kind,
         packId: session.pack.id,
         title: session.pack.title,
@@ -498,6 +593,12 @@ async function handleGet(req, res, url, route) {
         // mis-tap, not a decision.
         finished: session.engine.state.phase === 'final' || Boolean(session.engine.state.finishedAt),
       },
+      // What every OTHER room is doing, owner only. Not so it can be driven
+      // from here — it cannot, and deliberately — but so the owner can see at a
+      // glance that somebody is mid-question before deploying over them.
+      otherRooms: me && me.role === 'owner'
+        ? rooms.summaries().filter((r) => r.id !== roomIdFor(me))
+        : [],
       archive: listArchive(config.dataDir),
       // Offered on every pack card, so a night can be dressed up without
       // editing anything.
@@ -629,10 +730,11 @@ async function handleGet(req, res, url, route) {
   }
   if (route === '/api/results.json') {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
-    return sendJson(res, 200, session.results()), true;
+    return sendJson(res, 200, roomForHost(req, url).session.results()), true;
   }
   if (route === '/api/results.csv') {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
+    const { session } = roomForHost(req, url);
     const results = session.results();
     const rows = session.kind === 'bingo'
       ? [['Team', 'Squares away', 'False calls', 'Won'], ...results.leaderboard.map((p) => [p.name, p.away, p.falseCalls, p.won ? 'yes' : ''])]
@@ -746,6 +848,46 @@ async function backUpAccounts() {
   }
 }
 
+/**
+ * Bring the accounts and the invoice book back from the private repository.
+ *
+ * This is the other half of a mechanism that was only ever half built: both
+ * files were backed up faithfully and nothing ever read them again. On Render's
+ * free tier there is no permanent disk, so `data/` is empty on every boot — the
+ * login you made last week had quietly stopped existing, and the only clue was
+ * being asked to sign in again.
+ *
+ * Only ever restores into an EMPTY file. Reading a backup over live data would
+ * sign everybody out and could roll a password change back to the one before
+ * it, so a disk that already has accounts on it always wins.
+ *
+ * Deliberately not fatal. A missing backup is the normal first boot, and a
+ * GitHub that is having a bad morning must not stop a quiz night starting — the
+ * host key still works either way.
+ */
+async function restoreFromBackup() {
+  if (!privateRepoConfigured()) {
+    if (!accounts.all.length) {
+      console.warn('[accounts] no accounts and no private repo configured — the host key is the only way in.');
+    }
+    return;
+  }
+  if (!accounts.all.length) {
+    const saved = await getFile('accounts.json', 'private');
+    if (saved) {
+      const result = accounts.restore(saved.toString('utf8'));
+      if (result.ok) console.log(`[accounts] restored ${result.accounts} account(s) from the private repository`);
+      else console.warn('[accounts] could not restore the backup:', result.reason);
+    } else {
+      console.log('[accounts] nothing backed up yet — this is a first boot, or nobody has been added.');
+    }
+  }
+  // NOT the invoice book yet. It is backed up the same way and has the same
+  // hole, but restoring it needs a little care about invoice NUMBERS — they are
+  // sequential and never reused, so a restore that lost the counter would hand
+  // out a number twice. That is its own job, not a line here.
+}
+
 /** What the owner console lists. Never a hash, and never a session token. */
 function subscriberList() {
   return accounts.all
@@ -826,8 +968,9 @@ async function backUpHistory(log = () => {}) {
  * retried by the "file the rest away" button rather than in a loop, because a
  * loop on a bad token would hammer GitHub all night for nothing.
  */
-async function fileAway(photo) {
+async function fileAway(room, photo) {
   if (!photosRepoConfigured()) return { ok: false };
+  const { photos } = room;
   const read = photos.read(photo.id);
   if (!read) return { ok: false };
   const result = await putFile(
@@ -838,11 +981,39 @@ async function fileAway(photo) {
   );
   if (result.ok) {
     photos.markFiled(photo.id);
-    pushState();
+    pushState(room);
   } else {
     console.warn('[photos] could not file one away:', result.error);
   }
   return result;
+}
+
+/**
+ * Reload a quiz pack in every room that is currently playing it.
+ *
+ * The library is shared, so one save can affect more than one live game. It
+ * used to reload "the" session because there was only ever one; missing a room
+ * here would leave that quizmaster running the version from before the edit,
+ * which is the sort of thing you only discover when the answer on the
+ * projector disagrees with the one on the host's phone.
+ */
+function reloadPackEverywhere(id, { clamp = true } = {}) {
+  let touched = 0;
+  for (const room of rooms.all()) {
+    const { session } = room;
+    if (session.kind !== 'quiz' || session.pack?.id !== id) continue;
+    session.pack = loadQuiz(config.quizDir, id);
+    session.engine.quiz = session.pack;
+    if (clamp) session.engine.clampPointers();
+    session.engine.changed();
+    touched++;
+  }
+  return touched;
+}
+
+/** Is any room playing this pack right now? */
+function packInUse(kind, id) {
+  return rooms.all().some((r) => r.session.kind === kind && r.session.pack?.id === id);
 }
 
 function csvCell(value) {
@@ -971,8 +1142,15 @@ async function handleWrite(req, res, url, route) {
   // ---- players (open to anyone with the join link)
   if (route === '/api/join' && req.method === 'POST') {
     const body = await readJson(req);
-    const player = session.joinPlayer({ playerId: body.playerId, name: body.name });
-    return sendJson(res, 200, { id: player.id, name: player.name, score: player.score ?? 0, game: session.kind }), true;
+    const room = roomForPhone(req, url, body);
+    const player = room.session.joinPlayer({ playerId: body.playerId, name: body.name });
+    // The code goes back with the player so the phone can keep hold of it and
+    // reconnect to the same game after a lock, a refresh or a lost signal —
+    // the same reason it keeps the player id.
+    return sendJson(res, 200, {
+      id: player.id, name: player.name, score: player.score ?? 0,
+      game: room.session.kind, joinCode: room.code,
+    }), true;
   }
 
   /*
@@ -988,6 +1166,8 @@ async function handleWrite(req, res, url, route) {
    * a third again for nothing, on the worst wifi in the building.
    */
   if (route === '/api/photo' && req.method === 'POST') {
+    const room = roomForPhone(req, url);
+    const { photos, session } = room;
     if (!photos.enabled) return sendJson(res, 200, { ok: false, reason: 'off' }), true;
 
     const playerId = String(url.searchParams.get('playerId') || '');
@@ -1010,12 +1190,12 @@ async function handleWrite(req, res, url, route) {
       filter: String(url.searchParams.get('filter') || ''),
     });
     if (result.ok) {
-      pushState();
+      pushState(room);
       // File it away in the background. The phone gets its answer first —
       // nobody should watch a spinner while GitHub thinks about it — and the
       // photo is on screen either way. This is only about surviving the
       // restart that would otherwise wipe it.
-      fileAway(result.photo);
+      fileAway(room, result.photo);
     }
     return sendJson(res, 200, result.ok ? { ok: true, id: result.photo.id } : result), true;
   }
@@ -1025,7 +1205,7 @@ async function handleWrite(req, res, url, route) {
   if (['/api/answer', '/api/mark', '/api/claim', '/api/wandered'].includes(route) && req.method === 'POST') {
     const body = await readJson(req);
     const action = route.slice('/api/'.length);
-    const result = session.runPlayerAction(action, body);
+    const result = roomForPhone(req, url, body).session.runPlayerAction(action, body);
     // 200 either way: the phone shows its own feedback, and a rejected action
     // is a normal thing (too late, already answered), not an error.
     return sendJson(res, 200, result), true;
@@ -1055,13 +1235,29 @@ async function handleWrite(req, res, url, route) {
 
   // ---- managing subscribers
   if (route === '/api/owner/accounts' && req.method === 'POST') {
-    if (!allowed(req, res, url, FEATURES.SUBSCRIBERS)) return true;
+    /*
+     * The very first account is a special case, and only this one.
+     *
+     * Making an owner needed the command line, and Render's free tier has no
+     * shell — so there was no way to create the first login on the live app at
+     * all. A "set up the first owner" page open to the world is the thing
+     * CLAUDE.md rules out, and rightly: it is a door that only ever needs
+     * opening once and can be walked through by whoever finds it first.
+     *
+     * Gated on the HOST KEY it is neither. The host key already grants every
+     * feature in the app, so this hands out nothing that holding it did not
+     * already give you. The moment one account exists it goes back to being
+     * owner-only, so the door closes behind you.
+     */
+    const first = accounts.all.length === 0 && isHostKey(req, url);
+    if (!first && !allowed(req, res, url, FEATURES.SUBSCRIBERS)) return true;
     const body = await readJson(req);
     try {
       const made = accounts.create({
         email: body.email,
         password: body.password,
         name: body.name,
+        role: first ? 'owner' : 'quizmaster',
         plan: body.plan || 'basic',
         addons: body.addons || [],
         comped: Boolean(body.comped),
@@ -1090,6 +1286,12 @@ async function handleWrite(req, res, url, route) {
   if (route.startsWith('/api/host/') && req.method === 'POST') {
     const action = route.slice('/api/host/'.length);
     const body = await readJson(req);
+    // Always your own room, worked out from who you are signed in as. There is
+    // no room parameter on any of these on purpose: a control view that could
+    // be pointed at somebody else's night is the whole thing rooms exist to
+    // prevent.
+    const room = roomForHost(req, url);
+    const { session, photos } = room;
 
     // Launching a different game is the one action that replaces the engine.
     if (action === 'launch') {
@@ -1128,12 +1330,12 @@ async function handleWrite(req, res, url, route) {
     // should not be there is not a moment for a confirmation dialog.
     if (action === 'photosOn') {
       photos.setEnabled(body.on !== false);
-      pushState();
+      pushState(room);
       return sendJson(res, 200, { ok: true, enabled: photos.enabled }), true;
     }
     if (action === 'photoRemove') {
       const removed = photos.remove(String(body.id || ''));
-      if (removed) pushState();
+      if (removed) pushState(room);
       return sendJson(res, 200, { ok: removed }), true;
     }
     // File everything that has not made it to the private repo yet. Used at
@@ -1145,14 +1347,14 @@ async function handleWrite(req, res, url, route) {
       const todo = photos.unfiled();
       let filed = 0;
       for (const photo of todo) {
-        const result = await fileAway(photo);
+        const result = await fileAway(room, photo);
         if (result.ok) filed++;
       }
       return sendJson(res, 200, { ok: true, filed, failed: todo.length - filed }), true;
     }
     if (action === 'photosClear') {
       const n = photos.clear();
-      pushState();
+      pushState(room);
       return sendJson(res, 200, { ok: true, cleared: n }), true;
     }
 
@@ -1231,19 +1433,15 @@ async function handleWrite(req, res, url, route) {
       const problems = validateQuiz(body);
       if (problems.length) return sendJson(res, 400, { error: 'Quiz is not valid', problems }), true;
       saveQuiz(config.quizDir, id, body);
-      // If the running quiz was the one just edited, pick up the changes live.
-      if (session.kind === 'quiz' && session.pack.id === id) {
-        session.pack = loadQuiz(config.quizDir, id);
-        session.engine.quiz = session.pack;
-        session.engine.clampPointers();
-        session.engine.changed();
-      }
+      // If a running quiz was the one just edited, pick up the changes live —
+      // in every room playing it, not just the editor's own.
+      reloadPackEverywhere(id);
       const backup = await backUp(`quizzes/${id}.json`, JSON.stringify(normaliseQuiz(body, id), null, 2) + '\n', `Edit quiz: ${body.title || id}`);
       return sendJson(res, 200, { ok: true, backedUp: backup.ok, backupError: backup.error }), true;
     }
     if (req.method === 'DELETE') {
-      if (session.kind === 'quiz' && session.pack.id === id) {
-        return sendJson(res, 400, { error: 'That quiz is currently loaded.' }), true;
+      if (packInUse('quiz', id)) {
+        return sendJson(res, 400, { error: 'That quiz is loaded in a game right now.' }), true;
       }
       deleteQuiz(config.quizDir, id);
       if (githubConfigured()) await deleteFile(`quizzes/${id}.json`, `Delete quiz: ${id}`);
@@ -1402,7 +1600,7 @@ async function handleWrite(req, res, url, route) {
       if (result.repointed.length) {
         saveQuiz(config.quizDir, id, quiz, { allowProblems: true });
         log(`${result.repointed.length} question${result.repointed.length === 1 ? '' : 's'} moved onto the shared picture library`);
-        if (session.kind === 'quiz' && session.pack?.id === id) session.pack = loadQuiz(config.quizDir, id);
+        reloadPackEverywhere(id, { clamp: false });
       }
 
       const backedUp = githubConfigured();
@@ -1450,11 +1648,7 @@ async function handleWrite(req, res, url, route) {
       // The lookups rewrote the cues with Spotify's spelling and uris, so the
       // pack has to be saved or the control view still points at the guesses.
       saveQuiz(config.quizDir, id, quiz);
-      if (session.kind === 'quiz' && session.pack.id === id) {
-        session.pack = loadQuiz(config.quizDir, id);
-        session.engine.quiz = session.pack;
-        session.engine.changed();
-      }
+      reloadPackEverywhere(id, { clamp: false });
       const backup = await backUp(`quizzes/${id}.json`, JSON.stringify(normaliseQuiz(quiz, id), null, 2) + '\n', `Intro playlist: ${quiz.title}`, log);
 
       log('DONE ' + JSON.stringify({
@@ -1527,8 +1721,8 @@ async function handleWrite(req, res, url, route) {
 
   if (route.startsWith('/api/bingo/') && req.method === 'DELETE') {
     const id = decodeURIComponent(route.slice('/api/bingo/'.length));
-    if (session.kind === 'bingo' && session.pack.id === id) {
-      return sendJson(res, 400, { error: 'That pack is currently loaded. Launch something else first.' }), true;
+    if (packInUse('bingo', id)) {
+      return sendJson(res, 400, { error: 'That pack is loaded in a game right now. Launch something else first.' }), true;
     }
     try {
       deleteBingoPack(config.bingoDir, id);
@@ -1564,6 +1758,15 @@ async function handleWrite(req, res, url, route) {
 
 // ------------------------------------------------------------------ startup
 
+/*
+ * Read the backups back before anything else happens.
+ *
+ * Before listening rather than after: a request that arrives in the gap would
+ * be told there are no accounts, and the login page would offer to set the app
+ * up from scratch on a server that already has subscribers.
+ */
+await restoreFromBackup();
+
 server.listen(config.port, () => {
   const local = `http://localhost:${config.port}`;
   console.log('');
@@ -1578,15 +1781,21 @@ server.listen(config.port, () => {
   console.log('');
   console.log(`  Console      ${local}/console?key=${HOST_KEY}`);
   console.log('');
-  console.log(`  Loaded:      ${session.pack.title} (${session.kind})`);
+  console.log(`  Loaded:      ${rooms.get(HOUSE).session.pack.title} (${rooms.get(HOUSE).session.kind})`);
   console.log(`  Host key:    ${HOST_KEY}`);
+  if (!accounts.all.length) {
+    console.log('');
+    console.log('  No accounts yet. The host key above is the way in, and it can');
+    console.log('  make the first owner from the Console — everything else about');
+    console.log('  accounts is owner-only once that exists.');
+  }
   console.log('');
 });
 
 /** Save on the way out, so even a deliberate restart loses nothing. */
 function shutdown(signal) {
   console.log(`\n[server] ${signal} — saving state and closing`);
-  store.flush();
+  for (const room of rooms.all()) room.store.flush();
   hub.closeAll();
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(0), 2000).unref();
@@ -1596,7 +1805,7 @@ process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('uncaughtException', (err) => {
   // Never take the quiz down over one bad request. Log it and carry on.
   console.error('[server] uncaught:', err);
-  store.flush();
+  for (const room of rooms.all()) room.store.flush();
 });
 
-export { server, session };
+export { server, rooms };

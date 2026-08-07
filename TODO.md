@@ -25,10 +25,11 @@ happens if you skip it.
 | 8 | Finish Spotify | 10 min | free | you build playlists by hand |
 | 9 | OpenAI key | 20 min | ~£8 + 50p a quiz | round 2 uses placeholder drawings |
 
-**Do not give another quizmaster a login yet.** The accounts work, but the
-library and the running game are still shared, so a second person would see
-your packs and could launch over the top of your night. That is the next piece
-of work. Steps 1 and 2 are still worth doing now — they are for you.
+**You CAN now give another quizmaster a login.** They get their own running
+game — they cannot launch over the top of your night — their own join code and
+their own photo wall, and read-only use of your packs. Do step 1 first, or the
+account you make will be gone at the next deploy. See "Giving Rob a login" just
+below.
 
 ---
 
@@ -65,21 +66,26 @@ You now get two accounts, deliberately kept apart:
   packs. No quiz controls anywhere near it.
 - **the quizmaster** — you on a Wednesday night. Runs the games.
 
-Both are made from a terminal, in your project folder on the Mac:
+**Make the first one from the Console — no terminal needed.**
+
+- [ ] Open 🔗 https://musicquizapp.onrender.com/console with your key
+- [ ] There is a **"No accounts yet — make yours"** panel at the top. Name,
+      email, a password of at least 10 characters, press the button. That is
+      your owner account. The panel disappears once it has worked.
+- [ ] Sign in 🔗 https://musicquizapp.onrender.com/login — you land on the
+      owner page.
+- [ ] On the owner page, **Add a quizmaster** for your own Wednesday-night
+      login (tick comped — free, everything on), and another for Rob.
+
+A short sentence makes a better password than punctuation and is easier to
+remember.
+
+Still available from a terminal on the Mac if you prefer:
 
 ```bash
-cd ~/Downloads/MusicQuizApp-MusicQuizApp
 npm run accounts -- add-owner --email you@example.com
-npm run accounts -- add --email you@example.com --name "Mark" --comped
+npm run accounts -- list
 ```
-
-It asks for a password twice each time. Use different ones, at least 10
-characters — a short sentence is ideal and easier to remember than punctuation.
-
-- [ ] Make the owner account
-- [ ] Make your quizmaster account (`--comped` means free, with everything on)
-- [ ] Check them: `npm run accounts -- list`
-- [ ] Sign in and look around 🔗 https://musicquizapp.onrender.com/login
 
 You land on the right page automatically. Signing in as the owner takes you to
 the subscriber list; as the quizmaster, to the usual console.
@@ -87,9 +93,10 @@ the subscriber list; as the quizmaster, to the usual console.
 **Your `?key=…` bookmarks still work exactly as before.** Nothing about tonight
 changes. The key stays until you are happy with the logins.
 
-*Note:* accounts made on your Mac are on your Mac. To have them on the live
-site, run the same commands there — or wait until step 1 is done, when they
-back themselves up.
+*Note:* accounts made on your Mac are on your Mac. Make the live ones on the
+live site. **And do step 1 first** — without the private repo they are wiped on
+the next deploy, because Render gives the free tier no permanent disk. With it,
+they back themselves up and come back on their own.
 
 ---
 
@@ -249,7 +256,41 @@ them, so import it again.
 
 ---
 
+## Giving Rob a login — the short version
+
+1. Open your Console with your key, as usual.
+2. If you have never made an account, there is now a **"No accounts yet — make
+   yours"** panel at the top. Put your name, your email and a password in it and
+   press the button. That makes YOUR owner account.
+3. Sign in properly at 🔗 https://musicquizapp.onrender.com/login
+4. You land on the owner page. Press **Add a quizmaster**, put Rob's email in,
+   and it gives you a password to send him.
+5. Rob signs in at the same `/login`. He gets **his own everything**: his own
+   game, his own join code, his own photo wall, and your whole pack library to
+   play with (he cannot edit or generate — that is yours).
+
+**Rob's players use a different link from yours.** His console shows a four
+letter join code, and his projector's QR has it built in. His phones go to
+`/play?g=XXXX`; yours still go to plain `/play`, so nothing you have printed or
+bookmarked changes.
+
+⚠️ **One thing to do first, or the logins vanish.** Render wipes the app's disk
+on every restart, so accounts have to be backed up to your private GitHub repo
+to survive. Set `GITHUB_TOKEN` and the private repo (step 1 above) BEFORE you
+create Rob's account — otherwise it works today and is gone at the next deploy.
+The Console says so in red if it is not set up.
+
+---
+
 ## What is new since you last read this
+
+- **A second quizmaster can have a login.** Rob gets his own running game, so
+  he cannot launch over your gig — that used to be one shared game and it was
+  the reason you could not hand anyone a login. He gets his own join code, his
+  own photo wall, and read-only use of your packs.
+- **Accounts survive a restart** (as long as the private repo is set up), and
+  you can make your first owner account from the Console instead of needing a
+  command line.
 
 - **The winner's face on the big screen** — whoever answers first gets their
   picture up next to "Fastest finger" on the reveal. If they have sent a photo

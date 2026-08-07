@@ -661,6 +661,7 @@ pick-them-all rounds being poor search targets.
 
 ```
 server.js              routing, SSE, static files
+src/rooms.js           a room per quizmaster: their game, photos and join code
 src/session.js         which game is running; the server talks only to this
 src/engine.js          the quiz state machine and its three views
 src/bingo.js           bingo: cards, calls, claims
@@ -895,6 +896,31 @@ is a beginning, not an interruption, and it is exactly where "sort the payment
 out" belongs. That was a bug first time round — the broad `live` gate let a
 lapsed account launch — and it is now checked on the action itself.
 
+### Accounts survive a restart now, and they did not before
+
+`accounts.restore()` and `restoreFromBackup()` in `server.js`, with `getFile()`
+in `src/github.js` — which simply did not exist. The accounts were backed up to
+the private repo faithfully and **nothing ever read them back**, which on a host
+with no permanent disk is the same as not backing them up at all: the login you
+made last week quietly stopped existing and the only clue was being asked to
+sign in again.
+
+**Only ever into an EMPTY file.** Reading a backup over live data would sign
+everybody out and could roll a password change back to the one before it, so a
+disk that already has accounts on it always wins. Not fatal either: a missing
+backup is the normal first boot, and a GitHub having a bad morning must not stop
+a quiz night — the host key still works regardless.
+
+### The first owner is made from the Console, with the host key
+
+Making an owner needed the command line and Render's free tier has no shell, so
+there was **no way to create the first login on the live app at all**. A "set up
+the first owner" page open to the world is the thing this file rules out, and
+rightly. Gated on the HOST KEY it is neither: the key already grants every
+feature, so it hands out nothing that holding it did not already give you. The
+panel only appears when there are zero accounts and the door closes behind you —
+everything after that is owner-only.
+
 ### Passwords and sessions
 
 scrypt from node's own crypto, salted per account, compared timing-safe. **The
@@ -918,13 +944,55 @@ needs opening once and can be walked through by whoever finds it first.
 **It backs up to the PRIVATE repo**, like the invoices, and for a stronger
 reason — email addresses and password hashes.
 
+### A room per quizmaster — how a second login became safe
+
+`src/rooms.js`. Everything that belongs to ONE NIGHT hangs off a room: the
+session, its own state file, its own photo wall and its own join code. Before
+this, `session`, `store` and `photos` were module-level singletons — which is
+exactly what made a second login dangerous. Rob pressing Launch would have
+ended Mark's night mid-question, and a photo Rob's tester sent would have gone
+six feet wide onto Mark's projector. There is a test for both.
+
+**A room is decided by WHO YOU ARE, never by anything a request carries.**
+`/api/host/*` takes no room parameter on purpose: a control view that could be
+pointed at somebody else's night is the whole thing this prevents. Phones are
+the other way round — they are told a code off the projector.
+
+**The house room keeps the original file locations, and that is not tidiness.**
+`data/state.json` and `data/photos/`, exactly where the single-game version put
+them. There are gigs in the diary and Mark may deploy between rounds; moving
+the state file would bring the app back with no game, no scores and an empty
+photo wall in front of sixty people. Only additional rooms get a folder.
+
+**The house room has no join code**, so `/play` with nothing after it still
+works — which is what every printed card, every bookmark and every QR scanned
+at a gig says. Nothing had to be reprinted. Other rooms are `/play?g=CODE`, and
+a phone REMEMBERS the code next to its player id, for the same reason it
+remembers the id: a locked phone that comes back must land in the same game
+rather than somewhere else with no score.
+
+Codes leave out vowels and O/0/I/1/L — no code can spell a word, and none of
+the pairs people mistype off a projector are in it. A code that does not match
+finds **nothing**, never a near miss: sending somebody into the wrong
+quizmaster's game is far worse than telling them to look again.
+
+**Still shared on purpose:** the pack library and the portrait library. The
+owner writes the quizzes and sells them; a quizmaster plays them and never
+generates. One library read by everybody IS the product. Whether you may EDIT
+one is a `plans.js` question, not a rooms question. Saving a pack reloads it in
+**every** room playing it (`reloadPackEverywhere`) — missing one would leave
+that quizmaster running the version from before the edit.
+
 ### What this does NOT do yet
 
-Data is still shared: one library, one invoice book, one running game, one join
-code. So **a second quizmaster cannot safely be given a login yet** — they would
-see the owner's packs and could launch over a live night. Scoping the library
-and running more than one game at a time is the next piece, and it is the bigger
-one. The accounts exist so there is something to scope things TO.
+- **The invoice book is still shared**, and still does not survive a deploy.
+  Restoring it needs care about invoice NUMBERS, which are sequential and never
+  reused — a restore that lost the counter would hand one out twice. Its own
+  job.
+- **Past nights and the archive are shared.**
+- **Advert slides are shared.**
+- Nothing stops two quizmasters launching the same pack at once, which is fine
+  and probably useful.
 
 ---
 
@@ -1023,7 +1091,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 473 tests, no network, injected clocks — must stay green
+npm test        # 488 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -1075,11 +1143,14 @@ picture round's four reveals, invoicing, the seasonal looks and the accounts
 foundation are done and tested. Since then: the photo props, the big photo
 moment, the double-tap and early-reveal guards, the shared portrait library
 with its style and quality settings, the leaving-the-app note, and the fastest
-finger's face on the reveal. All on **`MusicQuizApp`**. 473 tests green.
+finger's face on the reveal, and **a room per quizmaster** — so a second login
+is now safe to hand out. All on **`MusicQuizApp`**. 488 tests green.
 
-**In progress:** accounts exist and gate every route, but the DATA is still
-shared — one library, one invoice book, one running game. Do not hand a second
-quizmaster a login until that is scoped. See "What this does NOT do yet" above.
+**A second quizmaster CAN now be given a login.** They get their own running
+game, their own join code, their own photo wall and read-only access to the
+pack library. Still shared, and still to do: the invoice book (which also does
+not survive a deploy yet), the night archive and the advert slides. See "A room
+per quizmaster" above.
 
 (An earlier version of this line named `claude/new-session-jzx988`. That branch
 is gone — see **Where to push**.)

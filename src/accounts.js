@@ -76,6 +76,38 @@ export class Accounts {
     return JSON.stringify(this.data, null, 2) + '\n';
   }
 
+  /**
+   * Take a backup of the accounts file back in.
+   *
+   * Only ever used at boot, and only when there is nothing here already —
+   * restoring over a live file would sign everybody out and could roll a
+   * password change back to the one before it. On a host with no permanent
+   * disk this is what makes a login survive a deploy at all.
+   *
+   * Sessions come back with it on purpose: they are hashes of tokens sitting
+   * in people's cookies, and dropping them would sign the whole room out
+   * every time the app restarted, which is the thing accounts were supposed to
+   * stop being a problem.
+   */
+  restore(serialised) {
+    if (this.data.accounts.length) return { ok: false, reason: 'already_have_accounts' };
+    let parsed;
+    try {
+      parsed = JSON.parse(String(serialised));
+    } catch (err) {
+      return { ok: false, reason: 'unreadable', error: err.message };
+    }
+    if (!parsed || !Array.isArray(parsed.accounts) || !parsed.accounts.length) {
+      return { ok: false, reason: 'nothing_in_it' };
+    }
+    this.data = {
+      accounts: parsed.accounts,
+      sessions: Array.isArray(parsed.sessions) ? parsed.sessions : [],
+    };
+    this.save();
+    return { ok: true, accounts: this.data.accounts.length };
+  }
+
   // ------------------------------------------------------------- the accounts
 
   get all() {

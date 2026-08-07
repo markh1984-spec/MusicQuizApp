@@ -50,9 +50,14 @@ export class Hub {
    * Push an update to everyone. `build(client)` makes the payload for that
    * particular client, which is how the big screen, the phones and the host
    * each get a different view of the same moment.
+   *
+   * `only(client)` narrows it. That is how one quizmaster's question reaches
+   * their room and nobody else's — without it, Rob's phones would be told about
+   * Mark's question and would repaint mid-answer.
    */
-  broadcast(event, build) {
+  broadcast(event, build, only = null) {
     for (const client of this.clients) {
+      if (only && !only(client)) continue;
       this.send(client, event, build(client));
     }
   }

@@ -10,7 +10,7 @@
  * simply does not put it in this payload.
  */
 
-import { esc, node, ServerClock, Live, brandMark } from './client.js';
+import { esc, node, ServerClock, Live, brandMark, roomCode, roomParam } from './client.js';
 import { bingoCard, bingoTopbar } from './screen-bingo.js';
 import { paintLook, DEFAULT_LOOK } from './looks.js';
 import { faceFor } from './avatar.js';
@@ -20,6 +20,17 @@ const quizTitleEl = document.getElementById('quizTitle');
 const roundPillEl = document.getElementById('roundPill');
 const playerPillEl = document.getElementById('playerPill');
 const connWarnEl = document.getElementById('connWarn');
+
+/*
+ * Which room this projector is showing.
+ *
+ * Taken from the page's own URL — `/screen?g=XXXX` — rather than from the
+ * state payload, because the QR and the event stream are both needed before
+ * any state has arrived. No code means the house game, which is what every
+ * bookmark and printed card made before rooms existed says.
+ */
+const roomQuery = roomParam('?');
+const joinQr = `/join-qr.svg${roomQuery}`;
 
 const clock = new ServerClock();
 let state = null;
@@ -205,7 +216,7 @@ function paintJoinCorner(s) {
   if (el) return;
   el = node(`
     <div class="join-corner" id="joinCorner">
-      <img src="/join-qr.svg" alt="Scan to join">
+      <img src="${joinQr}" alt="Scan to join">
       <div class="join-corner-words">
         <b>Just arrived?</b>
         <span data-join-url></span>
@@ -383,7 +394,7 @@ function renderRules(s) {
         </div>
         <div class="rules-join">
           <div class="qr-panel">
-            <img src="/join-qr.svg" alt="Scan to join the quiz">
+            <img src="${joinQr}" alt="Scan to join the quiz">
             <div class="url" data-join-url></div>
           </div>
           <div class="rules-join-head">Not in yet? Point your camera at this</div>
@@ -409,7 +420,7 @@ function renderLobby(s) {
           </ol>
         </div>
         <div class="qr-panel">
-          <img src="/join-qr.svg" alt="Scan to join the quiz">
+          <img src="${joinQr}" alt="Scan to join the quiz">
           <div class="url" data-join-url>${esc(joinUrl)}</div>
         </div>
       </div>
@@ -826,7 +837,7 @@ requestAnimationFrame(tick);
 
 // -------------------------------------------------------------------- boot
 
-fetch('/api/join-url')
+fetch(`/api/join-url${roomQuery}`)
   .then((r) => r.json())
   .then((d) => {
     joinUrl = (d.url || '').replace(/^https?:\/\//, '');
@@ -834,7 +845,7 @@ fetch('/api/join-url')
   })
   .catch(() => {});
 
-new Live('/api/stream?role=screen', {
+new Live(`/api/stream?role=screen${roomParam()}`, {
   onState: draw,
   onStatus: (status) => connWarnEl.classList.toggle('hidden', status === 'online'),
 });

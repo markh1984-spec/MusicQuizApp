@@ -319,3 +319,64 @@ test('add-ons can be bought and dropped', () => {
     assert.equal(book.mayStartSomething(safe(book.find(made.id)), FEATURES.INVOICES), false);
   });
 });
+
+
+/*
+ * Surviving a deploy.
+ *
+ * On a host with no permanent disk `data/` is empty on every boot, so a backup
+ * that is only ever WRITTEN is the same as no backup at all: the login you made
+ * last week has quietly stopped existing and the only clue is being asked to
+ * sign in again.
+ */
+test('a wiped disk gets its accounts back from the backup', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'accounts-restore-'));
+  try {
+    const file = path.join(dir, 'accounts.json');
+    const book = new Accounts(file);
+    book.create({ email: 'mark@example.com', password: 'testpassword123', name: 'Mark', role: 'owner' });
+    book.create({ email: 'rob@example.com', password: 'robpassword123', name: 'Rob' });
+    const backup = book.serialise();
+
+    fs.rmSync(file);                       // the deploy
+    const fresh = new Accounts(file);
+    assert.equal(fresh.all.length, 0);
+
+    assert.equal(fresh.restore(backup).ok, true);
+    assert.equal(fresh.all.length, 2);
+    // The passwords have to still work, or the restore was decorative.
+    assert.ok(fresh.signIn('rob@example.com', 'robpassword123'));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a restore never runs over accounts that are already here', () => {
+  // Reading a backup over live data would sign everybody out and could roll a
+  // password change back to the one before it. The disk always wins.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'accounts-restore-'));
+  try {
+    const book = new Accounts(path.join(dir, 'accounts.json'));
+    book.create({ email: 'mark@example.com', password: 'testpassword123', name: 'Mark', role: 'owner' });
+    const result = book.restore(JSON.stringify({ accounts: [{ id: 'x', email: 'someone@else.com' }] }));
+    assert.equal(result.ok, false);
+    assert.equal(result.reason, 'already_have_accounts');
+    assert.equal(book.all.length, 1);
+    assert.equal(book.all[0].email, 'mark@example.com');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a corrupt or empty backup is refused rather than believed', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'accounts-restore-'));
+  try {
+    const book = new Accounts(path.join(dir, 'accounts.json'));
+    assert.equal(book.restore('not json at all').ok, false);
+    assert.equal(book.restore(JSON.stringify({ accounts: [] })).ok, false);
+    assert.equal(book.restore('{}').ok, false);
+    assert.equal(book.all.length, 0);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

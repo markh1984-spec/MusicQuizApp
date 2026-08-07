@@ -6,7 +6,7 @@
  * refresh into a better card. Reloading just fetches the same one back.
  */
 
-import { esc, node, postJson } from './client.js';
+import { esc, node, postJson, roomCode } from './client.js';
 
 let marking = new Set(); // squares tapped but not yet confirmed by the server
 
@@ -132,7 +132,7 @@ async function toggle(cell, index, me) {
   if (navigator.vibrate) navigator.vibrate(12);
 
   try {
-    await postJson('/api/mark', { playerId: me.id, index, marked: !wasMarked });
+    await postJson('/api/mark', { playerId: me.id, index, marked: !wasMarked, joinCode: roomCode() });
   } catch {
     // The next state push is the truth; put it back for now.
     cell.classList.toggle('marked', wasMarked);
@@ -146,7 +146,7 @@ async function claim(root) {
   const me = JSON.parse(localStorage.getItem('musicquiz.player') || '{}');
   button.disabled = true;
   try {
-    const result = await postJson('/api/claim', { playerId: me.id });
+    const result = await postJson('/api/claim', { playerId: me.id, joinCode: roomCode() });
     if (result.valid) {
       flash(root, 'BINGO — that is a line', true);
     } else {

@@ -13,13 +13,14 @@
  *    makes googling an answer that bit harder.
  */
 
-import { esc, node, ServerClock, Live, postJson, brandMark } from './client.js';
+import { esc, node, ServerClock, Live, postJson, brandMark, roomCode, roomParam, rememberRoom } from './client.js';
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
 import { FILTERS, drawFiltered, toJpeg } from './filters.js';
 import { STICKERS, stickerSvg, drawStickers, stickerAt, placed, preloadStickers } from './stickers.js';
 import { paintLook, DEFAULT_LOOK } from './looks.js';
 
 const STORE_KEY = 'musicquiz.player';
+
 
 const bodyEl = document.getElementById('body');
 const headEl = document.getElementById('head');
@@ -89,7 +90,8 @@ function showJoin(message = '') {
     button.disabled = true;
     button.textContent = 'Joining…';
     try {
-      const player = await postJson('/api/join', { playerId: me && me.id, name });
+      const player = await postJson('/api/join', { playerId: me && me.id, name, joinCode: roomCode() });
+      rememberRoom(player.joinCode);
       saveMe(player);
       startLive();
     } catch (err) {
@@ -121,7 +123,8 @@ async function silentRejoin() {
   rejoinTries++;
 
   try {
-    const player = await postJson('/api/join', { playerId: me.id, name: me.name });
+    const player = await postJson('/api/join', { playerId: me.id, name: me.name, joinCode: roomCode() });
+    rememberRoom(player.joinCode);
     const changedId = player.id !== me.id;
     saveMe(player);
     rejoinTries = 0;
@@ -362,7 +365,7 @@ function openCamera() {
       drawFiltered(canvas, source, chosen, 1280);
       await drawStickers(canvas, stuckOn);
       const blob = await toJpeg(canvas);
-      const res = await fetch(`/api/photo?playerId=${encodeURIComponent(me.id)}&filter=${encodeURIComponent(chosen)}`, {
+      const res = await fetch(`/api/photo?playerId=${encodeURIComponent(me.id)}&filter=${encodeURIComponent(chosen)}${roomParam()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'image/jpeg' },
         body: blob,
@@ -681,7 +684,7 @@ async function lockIn(optionIndexes) {
   paintLocked(optionIndexes);
   if (navigator.vibrate) navigator.vibrate(24);
   try {
-    await postJson('/api/answer', { playerId: me.id, optionIndexes });
+    await postJson('/api/answer', { playerId: me.id, optionIndexes, joinCode: roomCode() });
   } catch {
     pendingChoice = null;
   }
@@ -708,7 +711,7 @@ async function choose(optionIndex) {
   paintChoice(optionIndex);
   if (navigator.vibrate) navigator.vibrate(18);
   try {
-    await postJson('/api/answer', { playerId: me.id, optionIndex });
+    await postJson('/api/answer', { playerId: me.id, optionIndex, joinCode: roomCode() });
   } catch {
     // The state push is the source of truth; if the answer did not land the
     // buttons come back live on the next update.
@@ -847,7 +850,7 @@ function startLive() {
   // URL, so leaving a previous one running means a second stream still
   // claiming to be whoever we used to be.
   if (live) live.stop();
-  live = new Live(`/api/stream?role=player&playerId=${encodeURIComponent(me.id)}`, {
+  live = new Live(`/api/stream?role=player&playerId=${encodeURIComponent(me.id)}${roomParam()}`, {
     onState: draw,
     onStatus: setStatus,
   });
@@ -879,7 +882,7 @@ function watchForWandering() {
     if (!state || state.phase !== 'question') return;
     // Fire and forget. It must never delay or break anything a player is
     // doing, and it is only ever a note.
-    postJson('/api/wandered', { playerId: me.id }).catch(() => {});
+    postJson('/api/wandered', { playerId: me.id, joinCode: roomCode() }).catch(() => {});
   });
 }
 
@@ -889,7 +892,8 @@ async function boot() {
 
   if (me && me.id) {
     try {
-      const player = await postJson('/api/join', { playerId: me.id, name: me.name });
+      const player = await postJson('/api/join', { playerId: me.id, name: me.name, joinCode: roomCode() });
+      rememberRoom(player.joinCode);
       saveMe(player);
       startLive();
       return;

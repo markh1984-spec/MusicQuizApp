@@ -9,7 +9,7 @@
  * instead of listening.
  */
 
-import { esc, node } from './client.js';
+import { esc, node, roomParam } from './client.js';
 
 const cards = {
   lobby: { key: () => 'bingo:lobby', render: renderLobby, update: updateLobby },
@@ -17,6 +17,17 @@ const cards = {
   won: { key: (s) => `bingo:won:${s.win && s.win.at}`, render: renderWin },
   finished: { key: () => 'bingo:finished', render: renderFinished },
 };
+
+/*
+ * The join code this projector is showing, read from its own URL.
+ *
+ * A function rather than a constant because this module is imported by
+ * screen.js at load time, and reading `location` at import is one more thing
+ * to go wrong in a test harness that has no window.
+ */
+export function joinQr() {
+  return `/join-qr.svg${roomParam('?')}`;
+}
 
 export function bingoCard(state) {
   return cards[state.phase] || cards.lobby;
@@ -51,7 +62,7 @@ function renderLobby(s, joinUrl) {
           </div>
         </div>
         <div class="qr-panel">
-          <img src="/join-qr.svg" alt="Scan to get your bingo card">
+          <img src="${joinQr()}" alt="Scan to get your bingo card">
           <div class="url" id="joinUrl">${esc(joinUrl || '')}</div>
         </div>
       </div>

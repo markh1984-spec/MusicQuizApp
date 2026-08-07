@@ -93,6 +93,8 @@ async function load() {
     me = null;
   }
 
+  accountsExist = await hasAccounts();
+
   const res = await fetch(keyed('/api/library'));
   if (res.status === 401) {
     // Nobody is signed in and the remembered key is no longer right. If there
@@ -265,6 +267,12 @@ function doneBanner() {
   return [el];
 }
 
+// Whether this app has any accounts. Asked once at boot rather than on every
+// render, because `render` is synchronous — it runs on every state change and
+// an await in it would make the whole page repaint asynchronously for a
+// question nobody asks twice.
+let accountsExist = true;
+
 function render() {
   paintBrand(library.brand);
   const running = library.running;
@@ -277,10 +285,101 @@ function render() {
   mainEl.replaceChildren(
     ...(backupWarning(library.generation || {}) || []),
     ...doneBanner(),
+    ...firstOwnerPanel(),
+    ...otherRoomsPanel(library.otherRooms || []),
     runningPanel(running),
     tabBar(active),
     tabBody(active),
   );
+}
+
+/**
+ * Make the very first owner account, from here.
+ *
+ * Only ever shown when the app has NO accounts at all, and only to somebody
+ * holding the host key — which already grants everything, so this gives away
+ * nothing new. It exists because the alternative was the command line, and
+ * Render's free tier has no shell: there was simply no way to create the first
+ * login on the live app.
+ *
+ * It disappears the moment it succeeds. Everything after this is owner-only.
+ */
+function firstOwnerPanel() {
+  if (accountsExist) return [];
+
+  const el = node(`
+    <div class="panel warn">
+      <h3>No accounts yet — make yours</h3>
+      <div class="tiny">
+        Right now the only way in is the key in your address bar. An owner account
+        lets you sign in properly and hand a login to another quizmaster, who gets
+        their own game, their own join code and their own photo wall.
+      </div>
+      <div class="row" style="margin-top:10px">
+        <input class="ow-name" placeholder="Your name" autocomplete="off">
+        <input class="ow-email" type="email" placeholder="you@example.com" autocomplete="off">
+        <input class="ow-pass" type="password" placeholder="Password (10+ characters)" autocomplete="new-password">
+        <button class="go ow-make">Create the owner account</button>
+      </div>
+      <div class="tiny ow-said"></div>
+    </div>`);
+
+  const said = el.querySelector('.ow-said');
+  el.querySelector('.ow-make').addEventListener('click', async (e) => {
+    const name = el.querySelector('.ow-name').value.trim();
+    const email = el.querySelector('.ow-email').value.trim();
+    const password = el.querySelector('.ow-pass').value;
+    if (!email || password.length < 10) {
+      said.textContent = 'An email address and a password of at least 10 characters.';
+      said.style.color = 'var(--bad)';
+      return;
+    }
+    e.target.disabled = true;
+    e.target.textContent = 'Making it…';
+    try {
+      const res = await fetch(keyed('/api/owner/accounts'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, status: 'active', comped: true }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not make it');
+      said.style.color = '';
+      said.textContent = 'Done. Sign in at /login and you land on the owner page.';
+      accountsExist = true;
+      // Not a redirect: the password was just typed and a page that vanishes
+      // under you is how you end up not sure whether it worked.
+      e.target.textContent = 'Made';
+    } catch (err) {
+      said.textContent = err.message;
+      said.style.color = 'var(--bad)';
+      e.target.disabled = false;
+      e.target.textContent = 'Create the owner account';
+    }
+  });
+  return [el];
+}
+
+/**
+ * What everybody else's night is doing. Owner only, and read-only on purpose.
+ *
+ * Not so another room can be driven from here — it cannot, and deliberately:
+ * one place moves a quiz. It is so that before you deploy, or clear something
+ * out, you can see that somebody is halfway through a question.
+ */
+function otherRoomsPanel(others) {
+  if (!others.length) return [];
+  return [node(`
+    <div class="panel">
+      <h3>Other quizmasters</h3>
+      ${others.map((r) => `
+        <div class="tiny" style="display:flex;gap:10px;align-items:baseline;padding:3px 0">
+          <b style="min-width:120px">${esc(r.label || r.id)}</b>
+          <span style="color:var(--gold)">${esc(r.code)}</span>
+          <span>${r.live ? esc(r.where || 'mid-game') : 'not playing'}</span>
+          <span class="muted">${r.players} in</span>
+        </div>`).join('')}
+    </div>`)];
 }
 
 /**
