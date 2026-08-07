@@ -1280,6 +1280,23 @@ test('a phone that leaves mid-question is noted for the host only', () => {
   assert.equal(engine.playerView(b.id).wandered, undefined, 'nor anybody else');
 });
 
+test('the wander count never rides along on the leaderboard either', () => {
+  // `view.wandered` being host-only is not enough on its own: every view also
+  // carries a leaderboard built from the same player objects, and spreading
+  // one instead of naming its fields would put the count on the projector.
+  const { engine, advance } = makeEngine();
+  const [a] = joinThree(engine);
+  toFirstQuestion(engine);
+  advance(500);
+  engine.wandered(a.id);
+  engine.reveal();
+
+  const leaked = (view) => JSON.stringify(view).includes('wanderedCount');
+  assert.equal(leaked(engine.screenView()), false, 'it reached the projector');
+  assert.equal(leaked(engine.playerView(a.id)), false, 'it reached a phone');
+  assert.equal(leaked(engine.hostView()), true, 'the host lost it');
+});
+
 test('flicking in and out of the app is one question, not five offences', () => {
   const { engine, advance } = makeEngine();
   const [a] = joinThree(engine);
