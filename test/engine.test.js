@@ -1467,3 +1467,94 @@ test('the host knows which effect is coming, and still has the only answer key',
   assert.equal(view.question.correctText, 'Madonna');
   assert.equal(atPicture('tiles').screenView().question.correctText, undefined);
 });
+
+/* ------------------------------------------------------------------------
+ * The fan-out.
+ *
+ * Every state push builds a separate payload for every connected phone. Each
+ * one used to sort the whole room from scratch to find one player's position,
+ * so the cost of an update grew with the SQUARE of the crowd — and so did the
+ * number of updates. These tests pin the caching contract rather than timing,
+ * which would be flaky, but the shape they protect is the same one.
+ */
+
+test('the board is worked out once and reused until something changes', () => {
+  const { engine } = makeEngine();
+  joinThree(engine);
+  const first = engine.leaderboard();
+  assert.equal(engine.leaderboard(), first, 'the same board object, not a fresh sort');
+  // Every payload for every phone comes off that one board.
+  for (const p of engine.playerList()) engine.playerView(p.id);
+  assert.equal(engine.leaderboard(), first, 'and building payloads does not rebuild it');
+});
+
+test('anything that changes a score throws the board away', () => {
+  const { engine, at } = makeEngine();
+  const [a] = joinThree(engine);
+  toFirstQuestion(engine);
+  const before = engine.leaderboard();
+
+  at(1_000);
+  engine.answer({ playerId: a.id, optionIndex: 1 });
+  const after = engine.leaderboard();
+  assert.notEqual(after, before, 'an answer must not leave a stale board behind');
+  assert.equal(after.find((p) => p.id === a.id).score, engine.state.players[a.id].score);
+
+  // And the other things that move a score.
+  engine.adjustScore(a.id, 50);
+  assert.notEqual(engine.leaderboard(), after);
+  const nudged = engine.leaderboard();
+  engine.renamePlayer(a.id, 'Renamed');
+  assert.notEqual(engine.leaderboard(), nudged);
+  assert.equal(engine.leaderboard().find((p) => p.id === a.id).name, 'Renamed');
+});
+
+test('a phone saying hello shows up on the host list without a push', () => {
+  const { engine } = makeEngine();
+  const [a] = joinThree(engine);
+  engine.state.players[a.id].connected = false;
+  engine.forgetBoard();
+  assert.equal(engine.hostView().players.find((p) => p.id === a.id).connected, false);
+  // touch() deliberately does not bump the version — but the board holds
+  // copies, so it still has to be dropped or the host sees a stale "off".
+  engine.touch(a.id);
+  assert.equal(engine.hostView().players.find((p) => p.id === a.id).connected, true);
+});
+
+test('positions and the player count are the same as walking the board by hand', () => {
+  const { engine, at } = makeEngine();
+  const players = joinThree(engine);
+  toFirstQuestion(engine);
+  at(1_000);
+  engine.answer({ playerId: players[1].id, optionIndex: 1 });   // right
+  at(2_000);
+  engine.answer({ playerId: players[2].id, optionIndex: 0 });   // wrong
+
+  const board = engine.leaderboard();
+  for (const p of players) {
+    assert.equal(engine.positionOf(p.id), board.find((b) => b.id === p.id).position);
+    assert.equal(engine.playerView(p.id).you.position, engine.positionOf(p.id));
+    assert.equal(engine.playerView(p.id).you.playerCount, 3);
+  }
+  assert.equal(engine.positionOf('nobody'), null);
+  assert.equal(engine.playerCount(), 3);
+});
+
+test('a removed player leaves the board immediately', () => {
+  const { engine } = makeEngine();
+  const [a] = joinThree(engine);
+  assert.equal(engine.playerCount(), 3);
+  engine.removePlayer(a.id);
+  assert.equal(engine.playerCount(), 2);
+  assert.equal(engine.positionOf(a.id), null);
+  assert.equal(engine.leaderboard().some((p) => p.id === a.id), false);
+});
+
+test('a fresh game does not inherit the last one board', () => {
+  const { engine } = makeEngine();
+  joinThree(engine);
+  assert.equal(engine.playerCount(), 3);
+  engine.resetAll();
+  assert.equal(engine.playerCount(), 0);
+  assert.deepEqual(engine.leaderboard(), []);
+});

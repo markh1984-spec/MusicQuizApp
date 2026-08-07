@@ -116,6 +116,41 @@ with the same score. Latecomers can join partway through.
 
 ---
 
+## How many people can play
+
+**Up to 300.** That is the supported number, and it is comfortably inside what
+the app has been measured doing — a room of 300 uses a fraction of one CPU at
+the busiest moment of a question. Bigger rooms are possible but have not been
+run in front of anybody, so they are not promised.
+
+Everyone's phone holds one ordinary HTTPS connection for the whole night. That
+is why this runs on a normal always-on server and not on anything serverless.
+
+### Before a corporate booking, test the venue's network
+
+The thing that goes wrong in an office is almost never the number of people. It
+is the company's own proxy or security appliance holding the live connection in
+a buffer instead of passing it straight through, which freezes every phone in
+the room at the same moment.
+
+**Test it days before, on their network, with one phone.** If it works for one
+person on their wifi it will work for three hundred.
+
+If their IT team needs to allow something, this is the whole list — and it is
+deliberately boring:
+
+- **The app's address over ordinary HTTPS on port 443.** Nothing else.
+- **No websockets and no special ports.** This is usually the thing IT expects
+  to be asked for and is reluctant to grant. It is not needed.
+- **Do not buffer or "optimise" `text/event-stream` responses.** The app already
+  sends `X-Accel-Buffering: no`, which most proxies respect.
+- **Let a connection stay open.** The app sends a keep-alive every 15 seconds,
+  so ordinary idle timeouts do not trigger.
+
+Players can also just use mobile data, which sidesteps the whole question.
+
+---
+
 ## Building a quiz
 
 ### Write it with Claude

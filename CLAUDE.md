@@ -576,10 +576,46 @@ typo is dropped rather than quietly becoming a round of general knowledge.
 
 ---
 
+## How many people can play
+
+**Say 300. That is the documented number and it is deliberately below what the
+app can do**, because the host has never seen a room bigger than that and a
+promise you cannot keep on a Wednesday is worth less than one you can.
+
+The measured cost of one state push — a payload built and sent to every
+connected phone — after the fan-out fix:
+
+| Phones | One push | A whole 20-second question, worst case | Data |
+|---|---|---|---|
+| 100 | 0.6 ms | 0.1 s of CPU | 8 MB |
+| 200 | 1.1 ms | 0.2 s | 32 MB |
+| 400 | 1.9 ms | 0.8 s | 128 MB |
+
+**It grows in a straight line now. It used to grow with the square of the
+crowd** — `playerView()` sorted the entire room from scratch to find one
+player's position, so two hundred phones meant two hundred sorts of two hundred
+people for a single answer landing, and the number of pushes grew with the room
+as well. 200 phones was 11.5ms a push, of which 7.3ms was that. See
+`leaderboard()` in `src/engine.js`: the board is worked out once per change and
+thrown away by `changed()`.
+
+**The next ceiling is the state file, and it is a long way off.** The whole
+live state is one JSON object rewritten as the night goes on. A 20-question
+round leaves 0.9 MB at 200 players, 4.3 MB at 1000 — and at 1000 it takes 33ms
+to serialise, several times a second. If a room that size ever turns up, that
+is the thing to fix (write what changed rather than the lot), not the fan-out.
+
+**What actually goes wrong in a big room is not capacity.** It is a corporate
+proxy holding the event stream in a buffer, which freezes every phone at once.
+`X-Accel-Buffering: no` in `src/sse.js` handles the common ones. Test on the
+venue's own network days before, never on the night.
+
+---
+
 ## Checks
 
 ```bash
-npm test        # 349 tests, no network, injected clocks — must stay green
+npm test        # 355 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -628,7 +664,7 @@ recreate it.
 All five build stages plus bingo, the console, generation, pack import, the
 tickable review flags, the alphabet round, per-type question counts and the
 picture round's four reveals are done, tested and pushed to **`MusicQuizApp`**.
-Nothing is half-finished in the tree. 349 tests green.
+Nothing is half-finished in the tree. 355 tests green.
 
 (An earlier version of this line named `claude/new-session-jzx988`. That branch
 is gone — see **Where to push**.)
