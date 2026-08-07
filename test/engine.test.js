@@ -1257,6 +1257,74 @@ test('TWO SCREENS: nobody is named on the projector or on a phone', () => {
   assert.ok(engine.hostView().whoPicked, 'only the control view');
 });
 
+/*
+ * Leaving the app mid-question.
+ *
+ * A note for the host, never a penalty and never on the projector. It cannot
+ * stop anybody googling — nothing running in a browser can — so what it must
+ * get right is not over-claiming: once is a phone call, and the host is the one
+ * who decides what to do about a pattern.
+ */
+test('a phone that leaves mid-question is noted for the host only', () => {
+  const { engine, advance } = makeEngine();
+  const [a, b] = joinThree(engine);
+  toFirstQuestion(engine);
+  advance(1000);
+
+  assert.equal(engine.wandered(a.id).ok, true);
+  engine.reveal();
+
+  assert.deepEqual(engine.hostView().wandered, [a.name]);
+  assert.equal(engine.screenView().wandered, undefined, 'the projector never gets it');
+  assert.equal(engine.playerView(a.id).wandered, undefined, 'nor the phone that did it');
+  assert.equal(engine.playerView(b.id).wandered, undefined, 'nor anybody else');
+});
+
+test('flicking in and out of the app is one question, not five offences', () => {
+  const { engine, advance } = makeEngine();
+  const [a] = joinThree(engine);
+  toFirstQuestion(engine);
+  advance(500);
+
+  engine.wandered(a.id);
+  assert.equal(engine.wandered(a.id).already, true);
+  engine.wandered(a.id);
+
+  const me = engine.hostView().players.find((p) => p.id === a.id);
+  assert.equal(me.wanderedCount, 1);
+  assert.deepEqual(engine.hostView().wandered, [a.name]);
+});
+
+test('it counts questions, and each question keeps its own list', () => {
+  const { engine, advance } = makeEngine();
+  const [a, b] = joinThree(engine);
+  toFirstQuestion(engine);
+
+  advance(500);
+  engine.wandered(a.id);
+  engine.reveal();
+  engine.next();
+
+  advance(500);
+  engine.wandered(a.id);
+  engine.wandered(b.id);
+
+  const players = engine.hostView().players;
+  assert.equal(players.find((p) => p.id === a.id).wanderedCount, 2);
+  assert.equal(players.find((p) => p.id === b.id).wanderedCount, 1);
+  // This question's list, not the whole night's.
+  assert.deepEqual(engine.hostView().wandered.sort(), [a.name, b.name].sort());
+});
+
+test('leaving the app when no question is up is not recorded at all', () => {
+  // The lobby, the scoreboard and the gap between rounds are all times when
+  // looking at something else is entirely normal.
+  const { engine } = makeEngine();
+  const [a] = joinThree(engine);
+  assert.equal(engine.wandered(a.id).ok, false);
+  assert.equal(engine.hostView().players.find((p) => p.id === a.id).wanderedCount, 0);
+});
+
 test('a pick-them-all answer names them under every option they locked in', () => {
   const { engine, advance } = makeEngine(multiQuiz());
   const a = engine.join({ name: 'Sofa King Good' });

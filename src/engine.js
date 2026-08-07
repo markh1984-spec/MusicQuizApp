@@ -199,6 +199,8 @@ export class Engine {
       connected: true,
       // Latecomers are marked so the host knows why their score is low.
       joinedDuringQuiz: this.state.phase !== PHASES.LOBBY,
+      // How many questions this phone has left the app during. See wandered().
+      wanderedCount: 0,
     };
     this.state.players[player.id] = player;
     this.changed();
@@ -217,11 +219,59 @@ export class Engine {
     return p;
   }
 
+  /**
+   * This phone left the app while a question was up.
+   *
+   * **It is a note for the host, never a penalty, and it is never on the
+   * projector or the phone.** You cannot lock a browser out of its other tabs,
+   * and anything claiming to is theatre that fails in front of a room. What you
+   * CAN see is that a phone went to the background mid-question — and once is
+   * meaningless, because a phone call, a notification and the screen locking
+   * all look exactly like this. Every question is not.
+   *
+   * So the app counts and the host decides. Deducting points automatically
+   * would punish somebody whose mum rang, which on a Wednesday night is worse
+   * than a cheat getting away with it.
+   *
+   * Once per player per question: the tab flicking in and out five times is one
+   * person who left, not five offences.
+   */
+  wandered(playerId) {
+    if (this.state.phase !== PHASES.QUESTION) return { ok: false, reason: 'not_a_question' };
+    const player = this.state.players[playerId];
+    if (!player) return { ok: false, reason: 'no_player' };
+
+    const key = this.answerKey();
+    this.state.wandered = this.state.wandered || {};
+    const forQuestion = (this.state.wandered[key] = this.state.wandered[key] || {});
+    if (forQuestion[playerId]) return { ok: true, already: true };
+
+    forQuestion[playerId] = true;
+    player.wanderedCount = (player.wanderedCount || 0) + 1;
+    // Not `changed()`: the room does not need a push because somebody's screen
+    // went dark, and pushing one would tell every phone that something
+    // happened. The host sees it on the next state they get anyway.
+    this.forgetBoard();
+    return { ok: true };
+  }
+
+  /** Who left the app during the question now on screen. Host view only. */
+  wanderedNow() {
+    const forQuestion = (this.state.wandered || {})[this.answerKey()] || {};
+    return Object.keys(forQuestion)
+      .map((id) => this.state.players[id])
+      .filter(Boolean)
+      .map((p) => p.name);
+  }
+
   removePlayer(playerId) {
     if (!this.state.players[playerId]) return false;
     delete this.state.players[playerId];
     for (const key of Object.keys(this.state.answers)) {
       delete this.state.answers[key][playerId];
+    }
+    for (const key of Object.keys(this.state.wandered || {})) {
+      delete this.state.wandered[key][playerId];
     }
     rememberRemoved(this.state, playerId);
     this.changed();
@@ -1234,6 +1284,11 @@ export class Engine {
       // different decision from the host reading one out, and not one to make
       // by accident.
       view.whoPicked = this.whoPicked();
+      // Who left the app while this one was up. Host only, like the answer key
+      // — a name on the projector under the heading "possibly cheating" is a
+      // different decision from the host having a quiet word, and not one to
+      // make by accident on the strength of a phone call coming in.
+      view.wandered = this.wanderedNow();
     }
 
     // Always give the host the next question too, so they can read ahead and
@@ -1250,6 +1305,7 @@ export class Engine {
       answeredCount: p.answeredCount,
       connected: p.connected,
       joinedDuringQuiz: p.joinedDuringQuiz,
+      wanderedCount: p.wanderedCount || 0,
       answeredThisQuestion: Boolean(this.answersFor()[p.id]),
       lastSeenAt: p.lastSeenAt,
     }));

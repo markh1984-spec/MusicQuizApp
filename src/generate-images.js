@@ -12,7 +12,9 @@
  *                something to pull back from and the round is rehearsable
  *                before you have spent anything.
  *
- *   openai       Real portraits. Needs OPENAI_API_KEY. Roughly 3-4p each.
+ *   openai       Real portraits. Needs OPENAI_API_KEY. A penny to fourteen
+ *                pence each depending on the quality asked for, and free for
+ *                anybody already in the shared library — see src/portraits.js.
  *
  * Anthropic has no image API, so a Claude key cannot make these. Claude writes
  * the *prompts* during quiz generation; something else has to draw them.
@@ -24,21 +26,35 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import {
+  STYLES, DEFAULT_STYLE, findStyle, findQuality, DEFAULT_QUALITY,
+  portraitPath, isShared, musicianOf,
+} from './portraits.js';
+
 export const PROVIDERS = ['placeholder', 'openai'];
 
 export function openaiConfigured() {
   return Boolean(process.env.OPENAI_API_KEY);
 }
 
-/** Every picture question in a pack, with the file it wants. */
-export function imageJobs(quiz, { only = '' } = {}) {
+/**
+ * Every picture question in a pack, with the file it wants.
+ *
+ * `wants` is where the picture SHOULD live — the shared portrait library, keyed
+ * on the musician and the style. `q.image` is where the pack currently points,
+ * which for anything generated before the library existed is a per-quiz path.
+ * Generation moves one to the other; nothing else has to know.
+ */
+export function imageJobs(quiz, { only = '', style = DEFAULT_STYLE } = {}) {
+  const chosen = findStyle(style);
   const jobs = [];
   for (const round of quiz.rounds || []) {
     if (round.type !== 'image') continue;
     for (const q of round.questions || []) {
       if (!q.image) continue;
       if (only && q.id !== only) continue;
-      jobs.push(q);
+      const musician = musicianOf(q);
+      jobs.push({ q, musician, wants: musician ? portraitPath(musician, chosen) : q.image });
     }
   }
   return jobs;
@@ -49,11 +65,29 @@ export function imageStatus(quiz, imageDir) {
   const jobs = imageJobs(quiz);
   let real = 0;
   let placeholder = 0;
-  for (const q of jobs) {
+  for (const { q } of jobs) {
     if (fs.existsSync(path.join(imageDir, q.image))) real++;
     else if (fs.existsSync(path.join(imageDir, svgNameFor(q.image)))) placeholder++;
   }
   return { total: jobs.length, real, placeholder, missing: jobs.length - real - placeholder };
+}
+
+/**
+ * What making this quiz's pictures would cost, before you press anything.
+ *
+ * Split into what is already drawn and what is not, because the whole reason
+ * the library is shared is that the first number is usually the big one, and
+ * seeing it is what tells you it is working.
+ */
+export function imagePlan(quiz, imageDir, { style = DEFAULT_STYLE } = {}) {
+  const jobs = imageJobs(quiz, { style });
+  const have = [];
+  const need = [];
+  for (const job of jobs) {
+    const already = fs.existsSync(path.join(imageDir, job.wants));
+    (already ? have : need).push(job.musician || job.q.id);
+  }
+  return { style: findStyle(style), total: jobs.length, reused: have.length, toDraw: need.length, have, need };
 }
 
 function svgNameFor(image) {
@@ -78,6 +112,8 @@ export async function generateImages({
   provider = 'placeholder',
   only = '',
   force = false,
+  style = DEFAULT_STYLE,
+  quality = DEFAULT_QUALITY,
   log = () => {},
   onFile = null,
 }) {
@@ -88,7 +124,9 @@ export async function generateImages({
     throw new Error('Set OPENAI_API_KEY before generating real portraits. Without it you can still make placeholders.');
   }
 
-  const jobs = imageJobs(quiz, { only });
+  const chosen = findStyle(style);
+  const grade = findQuality(quality);
+  const jobs = imageJobs(quiz, { only, style: chosen });
   if (!jobs.length) {
     throw new Error(only
       ? `No picture question called "${only}" in this quiz.`
@@ -96,20 +134,33 @@ export async function generateImages({
   }
 
   fs.mkdirSync(imageDir, { recursive: true });
-  log(`${jobs.length} image${jobs.length === 1 ? '' : 's'} to make for "${quiz.title}" using ${provider}`);
+  log(`${jobs.length} picture${jobs.length === 1 ? '' : 's'} for "${quiz.title}" — ${STYLES[chosen].label.toLowerCase()}, ${provider}${provider === 'openai' ? `, ${grade} quality` : ''}`);
 
   const made = [];
   const skipped = [];
   const failed = [];
+  const repointed = [];
 
-  for (const q of jobs) {
-    const name = provider === 'placeholder' ? svgNameFor(q.image) : q.image;
+  for (const { q, musician, wants } of jobs) {
+    // Move the question onto the shared library as we go. A pack generated
+    // before the library existed says `eighties/madonna.png`; the moment its
+    // pictures are made again it says `portraits/madonna.png` and every later
+    // quiz that wants Madonna is free. The pack is saved by the caller, which
+    // is told by `repointed`.
+    if (q.image !== wants) {
+      repointed.push({ id: q.id, from: q.image, to: wants });
+      q.image = wants;
+    }
+
+    const name = provider === 'placeholder' ? svgNameFor(wants) : wants;
     const target = path.join(imageDir, name);
 
     // A real portrait already there is never overwritten by accident — it cost
-    // money and may have been redone by hand.
+    // money and may have been redone by hand. Now that pictures are shared this
+    // is also where the saving actually happens: the second quiz to want this
+    // person pays nothing, and says so.
     if (fs.existsSync(target) && !force) {
-      log(`  skip   ${name} — already there`);
+      log(`  have   ${musician || name}${isShared(wants) ? ' — already in the library, no charge' : ''}`);
       skipped.push(name);
       continue;
     }
@@ -118,18 +169,22 @@ export async function generateImages({
     try {
       const bytes = provider === 'placeholder'
         ? Buffer.from(placeholderSvg(q), 'utf8')
-        : await openaiImage(q);
+        : await openaiImage(q, { style: chosen, quality: grade });
       fs.writeFileSync(target, bytes);
-      log(`  ${provider === 'placeholder' ? 'drew' : 'made'}   ${name}`);
+      log(`  ${provider === 'placeholder' ? 'drew' : 'made'}   ${musician || name}`);
       made.push(name);
       if (onFile) await onFile(name, bytes);
     } catch (err) {
-      log(`  FAILED ${name}: ${err.message}`);
+      log(`  FAILED ${musician || name}: ${err.message}`);
       failed.push(name);
     }
   }
 
-  return { made, skipped, failed };
+  if (skipped.length && provider === 'openai') {
+    log(`${skipped.length} of ${jobs.length} came from the library — that is what you did not pay for`);
+  }
+
+  return { made, skipped, failed, repointed, style: chosen, quality: grade };
 }
 
 /**
@@ -180,26 +235,48 @@ function escapeXml(s) {
 }
 
 /**
- * The prompt matters as much as the model. It has to say "illustration, not a
- * photograph" — a photoreal fake of a real musician on a pub projector is a
- * different thing entirely — and "no lettering", because a model that writes
- * the artist's name across the picture gives the answer away.
+ * The prompt matters as much as the model.
+ *
+ * Two clauses are load-bearing and are added whatever the style says. "Not a
+ * photograph", because a convincing fake photo of a real musician in a pack
+ * that is SOLD is a different kind of problem from a drawing — the same reason
+ * the on-screen caption says so. And "no lettering", because a model that
+ * writes the artist's name across the picture gives the answer away.
+ *
+ * A question's own `imagePrompt` — written by Claude during generation — still
+ * describes the person, but the STYLE is the host's choice and always wins.
+ * Otherwise picking "as a superhero" would quietly do nothing on any question
+ * where Claude happened to write a prompt of its own, which is most of them,
+ * and would read as a broken setting.
  */
-export function promptFor(q) {
-  return q.imagePrompt
-    || `A bold stylised digital illustration, clearly a drawing rather than a photograph, `
-      + `of the musician ${q.options[q.correctIndex]}. Head and shoulders, facing the viewer, `
-      + `dramatic lighting, plain dark background, recognisable features, no text or lettering anywhere in the image.`;
+export function promptFor(q, { style = DEFAULT_STYLE } = {}) {
+  const look = STYLES[findStyle(style)];
+  const subject = q.imagePrompt
+    ? `${q.imagePrompt}`
+    : `the musician ${q.options[q.correctIndex]}`;
+  return `${look.prompt}. Subject: ${subject}. `
+    + `It must clearly be an illustration and not a photograph. `
+    + `No text, lettering, signature or watermark anywhere in the image.`;
 }
 
-async function openaiImage(q) {
+async function openaiImage(q, { style = DEFAULT_STYLE, quality = DEFAULT_QUALITY } = {}) {
   const key = process.env.OPENAI_API_KEY;
   if (!key) throw new Error('Set OPENAI_API_KEY first');
 
   const res = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-    body: JSON.stringify({ model: 'gpt-image-1', prompt: promptFor(q), size: '1024x1024', n: 1 }),
+    body: JSON.stringify({
+      model: 'gpt-image-1',
+      prompt: promptFor(q, { style }),
+      size: '1024x1024',
+      // Left unset until now, which meant OpenAI's own default — the expensive
+      // end — on every picture ever made. The round shows this zoomed in,
+      // pixelated or behind tiles for most of its twenty seconds, to a room
+      // several metres from a projector.
+      quality: findQuality(quality),
+      n: 1,
+    }),
   });
 
   if (!res.ok) {

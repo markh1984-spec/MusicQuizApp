@@ -17,6 +17,7 @@ import path from 'node:path';
 import { normaliseQuiz, validateQuiz, MULTI_OPTIONS, ROUND_TYPES, answerLetter } from './quizzes.js';
 import { cleanTheme, quizTitleFor, themeSlug, titleCase } from './theme.js';
 import { spotifyConfigured, findTrack, createPlaylist } from './spotify.js';
+import { portraitPath } from './portraits.js';
 
 export const DEFAULT_MODEL = 'claude-sonnet-5';
 
@@ -709,7 +710,11 @@ export async function generateQuizPack({
         ...(q.answerNote ? { answerNote: String(q.answerNote).trim() } : {}),
         ...(type === 'image'
           ? {
-              image: `${quizId}/${slug(q.options?.[q.correctIndex] || 'face-' + (qi + 1))}.png`,
+              // The SHARED library, named after the person rather than this
+              // quiz, so the second quiz to want Madonna costs nothing. See
+              // src/portraits.js for why the key is the name and not the
+              // prompt Claude just wrote.
+              image: portraitPath(q.options?.[q.correctIndex] || 'face-' + (qi + 1)),
               ...(q.imagePrompt ? { imagePrompt: String(q.imagePrompt) } : {}),
               zoomFrom: 6,
             }

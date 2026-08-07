@@ -195,7 +195,11 @@ export class Photos {
     return this.state.items
       .slice(-limit)
       .reverse()
-      .map((p) => ({ id: p.id, url: `/photos/${p.file}`, teamName: p.teamName, at: p.at }));
+      // `playerId` so the big screen can put a face to the fastest finger. It
+      // is not new information on that payload — the name is already beside
+      // the picture — it just saves matching people up by name, which breaks
+      // the moment two teams pick the same one.
+      .map((p) => ({ id: p.id, url: `/photos/${p.file}`, teamName: p.teamName, at: p.at, playerId: p.playerId || '' }));
   }
 
   /** The host sees them whether or not the screen does, so they can be binned. */

@@ -398,6 +398,11 @@ export class Session {
       if (action === 'mark') return this.engine.mark({ playerId: body.playerId, index: body.index, marked: body.marked });
       if (action === 'claim') return this.engine.claim(String(body.playerId));
     }
+    // "This phone went to the background while a question was up." A note for
+    // the host and nothing else — see Engine.wandered().
+    if (this.kind === 'quiz' && action === 'wandered') {
+      return this.engine.wandered(String(body.playerId || ''));
+    }
     if (this.kind === 'quiz' && action === 'answer') {
       // optionIndexes is the pick-them-all round; optionIndex every other one.
       // Both are forwarded, and the engine decides which the round wants.

@@ -198,10 +198,19 @@ way to build a bingo game anyway, and it is described just below.
 
 ---
 
-### 9. OpenAI key for round 2 portraits — 20 minutes, ~£8 then ~50p a quiz, optional
+### 9. OpenAI key for round 2 portraits — 20 minutes, ~£8 then a few pence a quiz, optional
 
 Round 2 uses obvious placeholder drawings until this is done. They work; they
 are just not real portraits.
+
+**It is much cheaper than the 50p a quiz you were quoted.** Two things changed.
+Pictures are now filed under the musician rather than under the quiz, so the
+second quiz that wants Madonna reuses the one you already paid for — on a full
+library most of a round costs nothing. And the quality setting was never being
+sent at all, so every picture was made at OpenAI's dearest setting; it is
+medium now, and low is worth trying. Roughly, per picture: low about 1p, medium
+about 4p, high about 14p. The Pictures panel prices the press before you make
+it.
 
 - [ ] Make an account 🔗 https://platform.openai.com/signup
 - [ ] Put £8 of credit on 🔗 https://platform.openai.com/settings/organization/billing/overview
@@ -242,6 +251,32 @@ them, so import it again.
 
 ## What is new since you last read this
 
+- **The winner's face on the big screen** — whoever answers first gets their
+  picture up next to "Fastest finger" on the reveal. If they have sent a photo
+  in tonight it is that; if they have not, it is a little cartoon face drawn
+  from their team name, so there is never an empty gap. The same team always
+  gets the same face all night.
+- **Round 2 pictures cost a lot less.** A portrait is now filed under the
+  MUSICIAN rather than under the quiz, so once you have paid for Madonna once
+  she is free in every quiz after that. The Pictures panel tells you before you
+  press anything: *"6 already in the library, free · 4 to draw — about 16p"*.
+- **Picture style and quality** on the same panel. Style is Portrait, Cartoon
+  or As a superhero. Quality is low / medium / high — it was never being set at
+  all before, so everything was being made at the dearest setting. Medium now.
+  Bear in mind each style is a whole separate set of pictures, so a superhero
+  round is a fresh bill even for people you already have.
+- **Props on the photos** — dog ears, clown nose, party hat, nine of them. Tap
+  one, drag it onto the face, pinch to size it. The black-and-white sort of
+  filter is still there, folded away under "Change the colour instead".
+- **Photos get the middle of the screen** for about three and a half seconds
+  before joining the strip along the bottom, which is bigger too.
+- **A guard on revealing early** — the same button pressed twice in a blink
+  only counts once, and it refuses to reveal in the first three seconds with a
+  note saying why. The clock still reveals on its own when it runs out.
+- **You can see who keeps leaving the app** mid-question, on your own screen
+  only. Nothing on the projector and nothing on their phone. It is a note, not
+  an accusation — a phone call looks exactly the same — so it only badges
+  somebody from three questions onwards. What you do about it is your call.
 - **First letter round** — no options at all: the room gets a keyboard and only
   the first letter of the answer has to be right, so nobody loses a point to
   spelling.
@@ -611,11 +646,43 @@ Easiest way: open the Console, find a quiz with a face round, press
 then gives you two buttons:
 
 - **Draw stand-ins** — free, instant, no key. Use it to rehearse the round.
-- **Make real portraits** — about 4p each, tells you the total first and asks
-  before spending. Disabled until `OPENAI_API_KEY` is set.
+- **Make real portraits** — tells you the total first and asks before spending.
+  Disabled until `OPENAI_API_KEY` is set.
 
 Neither replaces a picture already there unless you tick *replace ones already
 there*, so a portrait you have paid for cannot be overwritten by accident.
+
+### The line above the buttons is the one to read
+
+> **6 already in the library, free · 4 to draw — about 16p**
+
+Pictures are filed under the **musician**, not under the quiz. So the first
+time a quiz wants Madonna you pay for her; every quiz after that gets her for
+nothing, automatically, with nothing to remember. On a library you have been
+building for a while most of a round will say "free".
+
+### Two settings next to those buttons
+
+**Style** — *Portrait* (painted, true to life, the default and the easiest for
+a room to recognise), *Cartoon*, or *As a superhero*.
+
+⚠️ **Each style is a whole separate library of the same people.** A superhero
+Madonna is a different picture from a portrait Madonna, so switching style
+means paying for everybody again. The line above the buttons tells you: pick
+superhero and the "free" part disappears. Worth it for a themed night, not
+worth flicking between.
+
+There is deliberately no photo-realistic option. The caption on screen says
+"AI-generated illustration — not a real photograph", and that line is doing
+legal work in a pack you sell — a convincing fake photo of a living musician is
+the one version worth not having.
+
+**Quality** — low, medium or high. This was never being set at all before, so
+everything you have made so far was at OpenAI's dearest setting. Roughly 1p, 4p
+and 14p a picture. **Medium is the default.** The round shows the picture
+zoomed, pixelated or behind tiles for most of its twenty seconds, to a room
+several metres from a projector — so try low on one round and see whether you
+can tell from the back of the pub. If you cannot, that is your setting.
 
 Still works from the command line if you prefer:
 

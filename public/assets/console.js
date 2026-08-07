@@ -978,11 +978,26 @@ function hasPictureRound(pack) {
  * have a stand-in before you spend anything, and never quietly replaces a
  * real picture — one you have already paid for, or redrawn by hand, has to be
  * asked for again explicitly.
+ *
+ * The style and the quality are both here rather than on the pack, because
+ * both are decisions about what you are willing to spend today. Changing the
+ * style re-reads the plan, so "as a superhero" says out loud that it is a
+ * fresh set of ten and what that costs — a picture library is only shared
+ * within a style.
  */
 function picturePanel(pack) {
   const el = node(`
     <div class="panel pics">
       <div class="tiny status">Checking what round 2 has…</div>
+      <div class="row pic-opts" style="margin-top:8px">
+        <label class="tiny">Style
+          <select class="style"></select>
+        </label>
+        <label class="tiny">Quality
+          <select class="quality"></select>
+        </label>
+      </div>
+      <div class="tiny style-hint"></div>
       <div class="row" style="margin-top:8px">
         <button class="minor draw">Draw stand-ins</button>
         <button class="go make">Make real portraits</button>
@@ -997,12 +1012,33 @@ function picturePanel(pack) {
   const logEl = el.querySelector('.gen-log');
   const makeBtn = el.querySelector('.make');
   const drawBtn = el.querySelector('.draw');
+  const styleSel = el.querySelector('.style');
+  const qualitySel = el.querySelector('.quality');
+  const styleHint = el.querySelector('.style-hint');
+
+  // Roughly what OpenAI charges for one 1024x1024, in pence. Only ever used to
+  // put a figure in front of the host before he presses a button that spends
+  // money — so it is deliberately on the high side of what it might be.
+  const PENCE = { low: 1, medium: 4, high: 14 };
+  let filled = false;
 
   const refresh = async () => {
     try {
-      const res = await fetch(keyed(`/api/images/${encodeURIComponent(pack.id)}`));
+      const chosen = styleSel.value ? `?style=${encodeURIComponent(styleSel.value)}` : '';
+      const res = await fetch(keyed(`/api/images/${encodeURIComponent(pack.id)}${chosen}`));
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || 'Could not read it');
+
+      if (!filled) {
+        filled = true;
+        styleSel.innerHTML = d.styles
+          .map((st) => `<option value="${esc(st.id)}"${st.id === d.style ? ' selected' : ''}>${esc(st.label)}</option>`).join('');
+        qualitySel.innerHTML = d.qualities
+          .map((q) => `<option value="${esc(q)}"${q === d.defaultQuality ? ' selected' : ''}>${esc(q)}</option>`).join('');
+      }
+      const picked = d.styles.find((st) => st.id === styleSel.value);
+      styleHint.textContent = picked ? picked.hint : '';
+
       const bits = [`${d.total} picture${d.total === 1 ? '' : 's'} in round 2`];
       if (d.real) bits.push(`${d.real} real`);
       if (d.placeholder) bits.push(`${d.placeholder} stand-in${d.placeholder === 1 ? '' : 's'}`);
@@ -1014,10 +1050,17 @@ function picturePanel(pack) {
         note.textContent = 'Set OPENAI_API_KEY to make real portraits. Stand-ins work without it.';
         note.style.color = 'var(--gold)';
       } else {
-        const todo = d.questions.filter((q) => !q.real).length;
-        note.textContent = todo
-          ? `${todo} to make — roughly ${(todo * 4 / 100).toFixed(2)} pounds.`
-          : 'All ten have real artwork. Tick the box to redo any.';
+        // The plan, not the pack: what this press costs given what the shared
+        // library already holds. "6 already drawn" is the whole point of the
+        // library, so it is the first thing on the line.
+        const { reused, toDraw } = d.plan;
+        const cost = (toDraw * PENCE[qualitySel.value || d.defaultQuality]) / 100;
+        const parts = [];
+        if (reused) parts.push(`${reused} already in the library, free`);
+        parts.push(toDraw
+          ? `${toDraw} to draw — about ${cost < 0.1 ? `${Math.round(cost * 100)}p` : `£${cost.toFixed(2)}`}`
+          : 'nothing left to draw');
+        note.textContent = parts.join(' · ') + (toDraw ? '' : '. Tick the box to redo any.');
         note.style.color = '';
       }
     } catch (err) {
@@ -1025,10 +1068,12 @@ function picturePanel(pack) {
     }
   };
   refresh();
+  styleSel.addEventListener('change', refresh);
+  qualitySel.addEventListener('change', refresh);
 
   const run = async (provider, button) => {
     const force = el.querySelector('.force').checked;
-    if (provider === 'openai' && !confirm('Generate with OpenAI? This costs about 4p a picture.')) return;
+    if (provider === 'openai' && !confirm(`Generate with OpenAI at ${qualitySel.value} quality? ${note.textContent}`)) return;
     for (const b of [makeBtn, drawBtn]) b.disabled = true;
     button.textContent = provider === 'openai' ? 'Making…' : 'Drawing…';
     logEl.hidden = false;
@@ -1038,10 +1083,11 @@ function picturePanel(pack) {
     try {
       const { done, error } = await streamGeneration('/api/generate/images', {
         quizId: pack.id, provider, force,
+        style: styleSel.value, quality: qualitySel.value,
       }, say);
       if (error) say('\n' + error);
       else if (done) {
-        say(`\n${done.made} made, ${done.skipped} skipped${done.failed ? `, ${done.failed} failed` : ''}.`);
+        say(`\n${done.made} made, ${done.reused} from the library${done.failed ? `, ${done.failed} failed` : ''}.`);
         if (!done.backedUp && done.made) say('These are on this server only — generate at home and commit them to keep them.');
       }
     } catch (err) {

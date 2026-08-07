@@ -27,7 +27,8 @@ import { generateBingoPack } from './src/generate-bingo.js';
 import { generateQuizPack, buildIntroPlaylists, roundPlan } from './src/generate-quiz.js';
 import { importBingoPack } from './src/import-bingo.js';
 import { listAdvertPacks, loadAdvertPack, saveAdvertPack, deleteAdvertPack, validateAdvertPack, normaliseAdvertPack } from './src/adverts.js';
-import { generateImages, imageStatus, imageJobs, openaiConfigured } from './src/generate-images.js';
+import { generateImages, imageStatus, imageJobs, imagePlan, openaiConfigured } from './src/generate-images.js';
+import { STYLES, findStyle, QUALITIES, DEFAULT_QUALITY } from './src/portraits.js';
 import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig } from './src/spotify.js';
 import { githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem, privateRepoConfigured } from './src/github.js';
@@ -533,16 +534,28 @@ async function handleGet(req, res, url, route) {
   if (route.startsWith('/api/images/')) {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const id = decodeURIComponent(route.slice('/api/images/'.length));
+    const style = findStyle(url.searchParams.get('style') || '');
     try {
       const quiz = loadQuiz(config.quizDir, id);
       return sendJson(res, 200, {
         ...imageStatus(quiz, config.imageDir),
         openai: openaiConfigured(),
-        questions: imageJobs(quiz).map((q) => ({
+        // What pressing the button would actually cost, given what the shared
+        // library already holds. This is the number that shows the sharing
+        // working, so it is read before anything is spent, not reported after.
+        plan: imagePlan(quiz, config.imageDir, { style }),
+        styles: Object.entries(STYLES).map(([sid, st]) => ({ id: sid, label: st.label, hint: st.hint })),
+        style,
+        qualities: QUALITIES,
+        defaultQuality: DEFAULT_QUALITY,
+        questions: imageJobs(quiz, { style }).map(({ q, musician, wants }) => ({
           id: q.id,
           answer: q.options[q.correctIndex],
           image: q.image,
+          musician,
+          wants,
           real: fs.existsSync(path.join(config.imageDir, q.image)),
+          inLibrary: fs.existsSync(path.join(config.imageDir, wants)),
         })),
       }), true;
     } catch (err) {
@@ -1009,7 +1022,7 @@ async function handleWrite(req, res, url, route) {
 
   // What a phone is allowed to do: answer a question, or mark a bingo square
   // and call house. Nothing else, and nothing that could hand out a new card.
-  if (['/api/answer', '/api/mark', '/api/claim'].includes(route) && req.method === 'POST') {
+  if (['/api/answer', '/api/mark', '/api/claim', '/api/wandered'].includes(route) && req.method === 'POST') {
     const body = await readJson(req);
     const action = route.slice('/api/'.length);
     const result = session.runPlayerAction(action, body);
@@ -1373,11 +1386,24 @@ async function handleWrite(req, res, url, route) {
         provider,
         only: String(body.only || ''),
         force: Boolean(body.force),
+        style: String(body.style || ''),
+        quality: String(body.quality || ''),
         log,
         onFile: async (name, bytes) => {
           await backUp(`images/${name}`, bytes, `Round 2 picture: ${name}`, () => {});
         },
       });
+
+      // Questions moved onto the shared portrait library have to be written
+      // back, or the pack still points at its old per-quiz filename and the
+      // sharing buys nothing. `allowProblems` for the same reason ticking a
+      // review flag has it: one bad question in round 2 must not stop the
+      // pictures being filed.
+      if (result.repointed.length) {
+        saveQuiz(config.quizDir, id, quiz, { allowProblems: true });
+        log(`${result.repointed.length} question${result.repointed.length === 1 ? '' : 's'} moved onto the shared picture library`);
+        if (session.kind === 'quiz' && session.pack?.id === id) session.pack = loadQuiz(config.quizDir, id);
+      }
 
       const backedUp = githubConfigured();
       if (result.made.length) {
@@ -1391,6 +1417,9 @@ async function handleWrite(req, res, url, route) {
         made: result.made.length,
         skipped: result.skipped.length,
         failed: result.failed.length,
+        reused: result.skipped.length,
+        style: result.style,
+        quality: result.quality,
         status: imageStatus(quiz, config.imageDir),
         backedUp,
       }));

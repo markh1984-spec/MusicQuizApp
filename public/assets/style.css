@@ -350,6 +350,20 @@ body::after {
 .reveal-banner .label { font-size: 0.62em; letter-spacing: 0.24em; text-transform: uppercase; color: var(--gold); font-weight: 800; }
 .reveal-banner .who { font-weight: 900; font-size: 1.15em; }
 .reveal-banner .pts { margin-left: auto; font-weight: 900; color: var(--gold); font-size: 1.5em; }
+/* The fastest finger's own face. Sized in vh like everything else on the
+   projector so it holds its proportion from a laptop to a 4K screen, and
+   square-cropped because a photo from a phone is portrait and a drawn avatar
+   is square — one shape, or the banner changes height depending on who won. */
+.reveal-banner .fastest-face {
+  flex: 0 0 auto;
+  width: 11vh;
+  height: 11vh;
+  border-radius: 14px;
+  object-fit: cover;
+  background: var(--panel);
+  border: 2px solid rgba(255, 210, 63, 0.55);
+  animation: cardIn 420ms cubic-bezier(0.2, 0.8, 0.2, 1) 120ms backwards;
+}
 
 /* ---- leaderboard */
 /* Centred vertically, so four teams look deliberate rather than stranded at
@@ -710,6 +724,16 @@ body.host::after { display: none; }
 .prow .sc { margin-left: auto; font-weight: 900; font-variant-numeric: tabular-nums; }
 .prow .tick { color: var(--good); font-weight: 900; }
 .prow .off { color: var(--bad); font-size: 11px; }
+/* A note, not an accusation — so it is gold rather than red. Red beside a name
+   reads as "this one is cheating" and the app does not know that; it knows the
+   phone went dark, which a call coming in also does. */
+.prow .wandered-count {
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.keywho.wandered b { color: var(--gold); }
 .prow button {
   border: 1px solid var(--panel-line); background: rgba(255,255,255,0.06);
   color: var(--ink); border-radius: 8px; padding: 5px 8px; font-size: 13px; font-weight: 800; cursor: pointer;

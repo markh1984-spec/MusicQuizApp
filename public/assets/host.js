@@ -367,6 +367,7 @@ function questionPanel(s) {
           <div class="who-slot" data-slot="${i}"></div>`).join('')}
       </div>
       <div class="missing-slot"></div>
+      <div class="wandered-slot"></div>
       ${q.note ? `<div class="tiny" style="margin-top:10px">Note: ${esc(q.note)}</div>` : ''}
       ${q.answerNote ? `<div class="tiny" style="margin-top:6px">${esc(q.answerNote)}</div>` : ''}
       <div class="tiny" style="margin-top:10px">
@@ -398,6 +399,22 @@ function questionPanel(s) {
     slot.replaceChildren(...(waiting.length ? [node(`
       <div class="keywho none">
         <b>${s.phase === 'reveal' ? 'No answer:' : 'Still to answer:'}</b>${waiting.map((n) => `<span>${esc(n)}</span>`).join('')}
+      </div>`)] : []));
+
+    /*
+     * Who left the app while this question was up.
+     *
+     * Worded as "left the app", not "cheated", because that is all it knows: a
+     * call coming in, a notification and the screen locking look exactly the
+     * same from here. Anyone worth mentioning on the mic will be on this line
+     * question after question, and the running total beside their name on the
+     * board is where you see that. On its own it means nothing.
+     */
+    const off = s.wandered || [];
+    const wslot = el.querySelector('.wandered-slot');
+    wslot.replaceChildren(...(off.length ? [node(`
+      <div class="keywho none wandered">
+        <b>Left the app:</b>${off.map((n) => `<span>${esc(n)}</span>`).join('')}
       </div>`)] : []));
   };
 
@@ -442,6 +459,25 @@ function nextUpPanel(s) {
   `);
 }
 
+/*
+ * How many questions this phone has left the app during.
+ *
+ * Shown from THREE, not from one. One is a phone call. Two is a phone call and
+ * a text. The number here is meant to be ignorable until it is not, and a badge
+ * against half the room on the first notification of the night would be noise
+ * you learn to skip — which is the same as not having it.
+ */
+const WANDER_WORTH_SAYING = 3;
+
+function wanderMark(p) {
+  const n = p.wanderedCount || 0;
+  if (n < WANDER_WORTH_SAYING) return '';
+  // Text, not an emoji — same rule as the bin icon and the seasonal shapes.
+  // This is read off a phone in a dark room and "away x4" cannot be rendered
+  // as something else by somebody's handset.
+  return `<span class="wandered-count" title="Left the app during ${n} questions">away x${n}</span>`;
+}
+
 function playersPanel(s) {
   const el = node(`
     <div class="panel">
@@ -453,6 +489,7 @@ function playersPanel(s) {
             <span class="nm">${esc(p.name)}</span>
             ${p.answeredThisQuestion ? '<span class="tick">✓</span>' : ''}
             ${p.connected ? '' : '<span class="off">off</span>'}
+            ${wanderMark(p)}
             <span class="sc">${p.score.toLocaleString('en-GB')}</span>
             <button data-act="menu">···</button>
           </div>`).join('') || '<div class="tiny">Nobody has joined yet.</div>'}

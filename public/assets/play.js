@@ -858,8 +858,34 @@ function startLive() {
  * refresh, the locked phone and the dropped connection in one go, and it also
  * lets somebody who wandered in late join partway through.
  */
+/*
+ * Tell the server when this phone leaves the app mid-question.
+ *
+ * Not a lock and not a penalty — you cannot stop a browser opening another tab,
+ * and the phone in somebody's other hand is beyond anything running here. All
+ * this does is give the host a count on his own screen, which he can act on or
+ * ignore.
+ *
+ * Deliberately quiet about itself: nothing on the phone says it is happening,
+ * because a warning would make the innocent 95% of the room feel policed to
+ * catch the rest, and because announcing the check is how you teach people to
+ * beat it. It is also why one instance means nothing — a call coming in looks
+ * identical — so the server counts questions, not moments.
+ */
+function watchForWandering() {
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) return;
+    if (!me || !me.id) return;
+    if (!state || state.phase !== 'question') return;
+    // Fire and forget. It must never delay or break anything a player is
+    // doing, and it is only ever a note.
+    postJson('/api/wandered', { playerId: me.id }).catch(() => {});
+  });
+}
+
 async function boot() {
   fetch('/api/brand').then((r) => r.json()).then((d) => paintBrand(d.name)).catch(() => {});
+  watchForWandering();
 
   if (me && me.id) {
     try {

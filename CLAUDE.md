@@ -194,6 +194,9 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 | **The looks are shown, not named** | Each filter is a thumbnail of *their own photo* with it applied, all seven on screen at once. They were a scrolling row of named grey pills and the host went through the whole flow on his own phone without noticing they existed — three of the seven were off the right-hand edge with nothing to say so. Same `drawFiltered()` as the preview and the upload, just at `maxSide` 120. |
 | **"Filters" means PROPS first, colour second** | `public/assets/stickers.js` — dog ears, a clown nose, a party hat, nine of them, drawn like the seasonal motifs and for the same reason. The host asked for "clown noses, dog ears etc." and found colour grading, which is what `filters.js` does; that is now folded away behind "Change the colour instead". **No face detection anywhere**: a model is megabytes on a stranger's phone over pub wifi and `FaceDetector` does not exist on iOS Safari — both break *no dependencies* and both fail on somebody's handset in a room. So a prop is tapped, dragged and pinched, which works everywhere and is funnier put on wrong. Positions are stored as a **fraction** of the canvas, never pixels, or the nose is on the chin at 320px and the ear at 1280. The prop tiles have a mid-grey fill: half the props are nearly black and on the page's own dark panel they read as empty squares. |
 | **A photo gets the MIDDLE of the screen, not a thumbnail** | `showBigPhoto()` in `screen.js` — 66vh, centred, name under it, fades in and away over about three and a half seconds, then it joins the strip (which is 18vh now, not 13). One at a time and queued: three people sending at once is three moments in a row, not three pictures fighting. **The first paint of a page shows none of them.** A projector opened an hour in, or reconnecting after the laptop slept, would otherwise replay the whole night one picture at a time — two minutes of slideshow over whatever the quiz was doing. `seenPhotos` is keyed by id rather than "the strip has not got one", because the strip is torn down whenever the phase has no room for it and a photo does not become new again because the scoreboard went up and came down. |
+| **"Filters" means PROPS first, colour second** | `public/assets/stickers.js` — dog ears, a clown nose, a party hat, nine of them, drawn like the seasonal motifs and for the same reason. The host asked for "clown noses, dog ears etc." and found colour grading, which is what `filters.js` does; that is now folded away behind "Change the colour instead". **No face detection anywhere**: a model is megabytes on a stranger's phone over pub wifi and `FaceDetector` does not exist on iOS Safari — both break *no dependencies* and both fail on somebody's handset in a room. So a prop is tapped, dragged and pinched, which works everywhere and is funnier put on wrong. Positions are stored as a **fraction** of the canvas, never pixels, or the nose is on the chin at 320px and the ear at 1280. The prop tiles have a mid-grey fill: half the props are nearly black and on the page's own dark panel they read as empty squares. |
+| **A photo gets the MIDDLE of the screen, not a thumbnail** | `showBigPhoto()` in `screen.js` — 66vh, centred, name under it, fades in and away over about three and a half seconds, then it joins the strip (18vh now, not 13). One at a time and queued: three people sending at once is three moments in a row, not three pictures fighting. **The first paint of a page shows none of them.** A projector opened an hour in, or reconnecting after the laptop slept, would otherwise replay the whole night one picture at a time — two minutes of slideshow over whatever the quiz was doing. `seenPhotos` is keyed by id rather than "the strip has not got one", because the strip is torn down whenever the phase has no room for it and a photo does not become new again because the scoreboard went up and came down. |
+| **Speed scoring is FLAT — 10 points a second, and it stays that way** | Offered a curve where the early seconds are worth disproportionately more (a squared ramp: 1s→180, 10s→50, 15s→12). The host turned it down — *"10 points per second is actually fine, simplicity wins here"*. He is right, and there is a second reason to leave it: the rules slide is generated from the scoring constants and currently prints a number the room can hold you to. Under a curve there is no per-second number, only "up to 200, the quicker the more" — vaguer, on the one slide that is up while the room is filling. **Do not re-propose this.** |
 | **The phone shows the answers as the projector does** | Same 2×2 (or 2×3) arrangement, same letters, same colours. A player looks up, decides "the pink one, bottom left", and looks down — so the phone has to be the same picture or they re-read four options against a clock. It was a single column, which made the two screens different arrangements of the same four answers. The letter sits ABOVE the text on the phone: beside it costs 42 of the ~140 pixels a half-width cell has on a 320px phone, which was enough to break "Christmas" across two lines mid-word. |
 | **…except the alphabet round, which is 5 across on the phone and 9 on the projector** | The row above is about options with WORDS on them, where a player is matching a position they picked out from the back of the room. A letter needs no matching — you already know you want F. What the phone has instead is a thumb problem: nine keys across a 320px phone is 28 pixels each. Same order, different number of columns, and A to Z rather than QWERTY because QWERTY is muscle memory for typing words and nobody is typing a word. |
 | **An alphabet answer may never begin with "The", "A" or "An"** | "The Beatles" is B to half a room and T to the other half, and both halves are right — the exact argument the house style exists to prevent. It is a hard validation error, said in the editor as you type, forbidden in the generator's brief and listed as a rejection reason for the checking pass. **Do not soften it to a warning.** |
@@ -465,6 +468,163 @@ Development-mode app look identical otherwise.
 
 ---
 
+## The portrait library — one picture per musician, shared by every quiz
+
+`src/portraits.js`. Artwork used to be filed per quiz — `images/eighties/
+madonna.png` — so Madonna in the 80s quiz and Madonna in the Pop Divas quiz
+were two files, drawn twice and **paid for twice**. Across a few hundred
+musicians that was the largest avoidable cost in the app. A picture is now
+named after the PERSON: `portraits/madonna.png`.
+
+**The key is the musician's name and the style, and NOTHING else. That is the
+load-bearing decision and it was arrived at by getting it wrong first.** The
+obvious design keys off the question's own `imagePrompt` — but those are
+written by *Claude* during quiz generation, so two quizzes wanting Madonna get
+two slightly different sentences, two keys and two bills. The host never typed
+either sentence, so he could not know it had happened, and the saving would
+quietly evaporate looking exactly like success. A question's `imagePrompt`
+still shapes the drawing, but **only on the first draw of that person in that
+style**; every later pack reuses whatever is there.
+
+So **a second version of somebody only ever comes from the host doing something
+deliberate** — picking a different style, or asking for a redraw. Never from
+Claude's wording. There is no numeric cap and no "2 versions per person" rule,
+because a cap is the mess: it means deleting one the day you want a third, and
+nothing on screen says which of the two you are looking at.
+
+`generateImages()` **repoints a pack as it goes** and returns `repointed`; the
+server saves the quiz when it is non-empty (`allowProblems: true`, same reason
+ticking a review flag has it). So a pack written before the library existed
+moves onto it the next time its pictures are made, and pays nothing to do so.
+
+`imagePlan()` says what a press would cost **before** anything is spent —
+"6 already in the library, free · 4 to draw — about 16p". That number is the
+whole point of sharing, so it is read first rather than reported afterwards.
+
+### Three styles, and there is deliberately no photoreal one
+
+`STYLES`: **Portrait** (painted, true to life — the default and the easiest to
+recognise), **Cartoon**, **As a superhero**. The host's choice always beats
+whatever Claude wrote, or picking "as a superhero" would silently do nothing on
+the many questions where the generator wrote a prompt of its own, and would
+read as a broken setting.
+
+**Every style is a whole second library of the same people**, so five styles is
+five times the bill for the same musicians — which hands straight back what
+sharing just saved. Adding one is a line in that file; do it because a night
+needs it, not for the sake of choice. `--<style>` is the filename suffix and
+the default has none, so a library built before styles existed still fits.
+
+**There is no photoreal option on purpose, and that is a legal decision.** The
+on-screen caption "AI-generated illustration — not a real photograph" is doing
+real work: UK fair dealing is a closed list and does not cover commercial
+entertainment, so a convincing fake photograph of a real living musician in a
+pack that is SOLD is the one version worth not having. `promptFor()` appends
+"must clearly be an illustration and not a photograph" whatever the style says,
+and there is a test that every style does. There is also a test that no style
+id contains "photo" or "real".
+
+### Quality is a console setting, and it never was one
+
+`gpt-image-1` was called with **no `quality` parameter at all**, so every
+picture ever made used OpenAI's own default — the expensive end. It is now
+`low`/`medium`/`high` on the Pictures panel, **medium by default**, and the
+panel prices the press before you make it. Low is defensible: the picture is
+zoomed, pixelated, blurred or behind tiles for most of its twenty seconds and
+is then looked at from the back of a pub.
+
+---
+
+## The fastest finger gets their face on the projector
+
+`renderRevealBanner()` in `screen.js` and `faceFor()` in
+`public/assets/avatar.js`. On the reveal, beside "Fastest finger", the winner's
+picture: **their own photo if they sent one tonight** (the most recent — people
+send several and the latest is the one they meant), otherwise a cartoon face
+drawn from their team name.
+
+**There is always a face, and that is the load-bearing bit.** Most of the room
+will never open the camera, so a slot that is sometimes a person and sometimes
+a gap reads as a fault rather than a feature. The drawn fallback means it works
+from the first question of the first night with nothing to set up — no upload
+step bolted onto a join that is meant to take ten seconds.
+
+**Matched on `playerId`, never on the name.** Two teams picking the same name
+is a thing that happens — there is deliberately no name filter — and the wrong
+person's photograph six feet wide is not a small mistake. `forScreen()`
+therefore carries `playerId`; that is not new information on that payload,
+since the name is already printed beside the picture.
+
+**The drawn face is deterministic** — the same name always draws the same face,
+so a team is recognisable all night, across a restart and on a projector that
+reconnected. A random face each time would be worse than none, because the room
+would assume it meant something. Drawn rather than emoji, same rule as
+everything else, and deliberately a cartoon: it sits next to real photographs
+of real people and must never read as a guess at what somebody looks like.
+
+---
+
+## A mis-tap must not reveal an answer
+
+He revealed one early at a gig — not a disaster, but the room saw it. Two
+guards, both in `public/assets/host.js`, and neither of them a confirm dialog:
+a host with a mic in one hand is not reading "are you sure?" on a phone.
+
+- **Every host action is deaf to a repeat of itself for 900ms**
+  (`DOUBLE_TAP_MS` in `act()`). A double-tap — the thing a laggy phone on pub
+  wifi invites, because the first press looks like it did nothing — sends once.
+  It is keyed on the action, so Next-then-Back still works instantly.
+- **The primary button refuses to reveal in the first three seconds** of a
+  question (`TOO_SOON_MS`), with a toast saying why. Nobody has answered three
+  seconds in, so there is no honest reason to press it, and the palm-of-the-hand
+  press as the question goes up is exactly how this happened.
+
+**The button is not the only way an answer appears, and that is the point.**
+`session.js` reveals on its own when the clock expires, so the button means
+"everybody has answered, get on with it" — which is why refusing it early costs
+nothing at all.
+
+---
+
+## Leaving the app mid-question
+
+`Engine.wandered()`, `wanderedNow()`, and the `/api/wandered` a phone posts on
+`visibilitychange`. **It is a note for the host, never a penalty, and never on
+the projector or a phone** — host view only, like the answer key, with tests
+for all three.
+
+**You cannot lock a browser out of its other tabs**, and the phone in somebody's
+other hand is beyond anything running here. Anything claiming otherwise is
+theatre that fails in front of a room. What the app *can* see is a phone going
+to the background while a question is up.
+
+**Once means nothing** — a call coming in, a notification and the screen locking
+are indistinguishable from this. So: counted **once per player per question**
+(a tab flicking in and out five times is one person who left, not five
+offences), and the badge on the host's board only appears from **three**
+(`WANDER_WORTH_SAYING`). A badge against half the room on the first
+notification of the night is noise you learn to skip, which is the same as not
+having it. It is gold rather than red and says "away x4", because the app knows
+the screen went dark and does not know anybody cheated.
+
+**Deducting points automatically would punish somebody whose mum rang**, which
+on a Wednesday night is worse than a cheat getting away with it. The host reads
+the pattern and decides.
+
+The phone says nothing about any of this: a warning would make the innocent
+95% of the room feel policed to catch the rest, and announcing the check is how
+you teach people to beat it. `wandered()` deliberately does **not** call
+`changed()` — a screen going dark is not news to push to the room — so the host
+sees it on the next ordinary push, which during a question is the next answer.
+
+What already does most of the anti-cheating work, and none of it is new:
+twenty seconds; points for speed, so a googled answer at 18s scores far below a
+known one at 4s; **phones never showing the question text** (rule 6), so it has
+to be retyped from memory off the projector; and the picture, intro and
+pick-them-all rounds being poor search targets.
+
+---
+
 ## Things the host does not have, and what that blocks
 
 - **No image generation key yet.** Anthropic has no image API, so a Claude key
@@ -516,8 +676,11 @@ src/qrcode.js          dependency-free QR encoder
 src/photos.js          photos from the room: store, kill switch, bin
 src/adverts.js         venue advertising slides, per venue
 src/generate-images.js round 2 artwork (placeholder or OpenAI)
+src/portraits.js       the shared portrait library: one picture per musician
 public/                the screens; *-bingo.js files hold the bingo variants
   assets/brandmark.js  the record logo, shared with the server as the favicon
+  assets/avatar.js     a drawn face per team, for anyone who sent no photo
+  assets/stickers.js   props to drag onto a photo: dog ears, a clown nose
 quizzes/ bingo/        the library
 data/                  live state, history, archived nights (gitignored)
 ```
@@ -860,7 +1023,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 446 tests, no network, injected clocks — must stay green
+npm test        # 473 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -909,7 +1072,10 @@ recreate it.
 All five build stages plus bingo, the console, generation, pack import, the
 tickable review flags, the alphabet round, per-type question counts and the
 picture round's four reveals, invoicing, the seasonal looks and the accounts
-foundation are done, tested and pushed to **`MusicQuizApp`**. 446 tests green.
+foundation are done and tested. Since then: the photo props, the big photo
+moment, the double-tap and early-reveal guards, the shared portrait library
+with its style and quality settings, the leaving-the-app note, and the fastest
+finger's face on the reveal. All on **`MusicQuizApp`**. 473 tests green.
 
 **In progress:** accounts exist and gate every route, but the DATA is still
 shared — one library, one invoice book, one running game. Do not hand a second

@@ -13,6 +13,7 @@
 import { esc, node, ServerClock, Live, brandMark } from './client.js';
 import { bingoCard, bingoTopbar } from './screen-bingo.js';
 import { paintLook, DEFAULT_LOOK } from './looks.js';
+import { faceFor } from './avatar.js';
 
 const cardEl = document.getElementById('card');
 const quizTitleEl = document.getElementById('quizTitle');
@@ -738,6 +739,7 @@ function renderRevealBanner(s) {
   }
   return node(`
     <div class="reveal-banner">
+      <img class="fastest-face" src="${esc(faceFor(s.photos, fastest))}" alt="">
       <div>
         <div class="label">Fastest finger</div>
         <div class="who">${esc(fastest.name)} — ${fastest.seconds.toFixed(1)}s</div>
