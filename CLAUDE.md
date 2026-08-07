@@ -47,10 +47,23 @@ to the host view only.
 **Who answered what is host-only too.** `whoPicked` in `hostView()` names every
 team under the option they chose, plus who let it go by — the counts said four
 got it wrong, this says which four, which is what the host reads off the mic.
-It is not in `screenView()` or `playerView()`, and it only appears on the
-REVEAL: during the question a mirrored or glanced-at control view would give
-away the popular answer while the room is still thinking. There are tests for
-both halves.
+It is not in `screenView()` or `playerView()`, and there are tests for both.
+
+It shows **live as well as on the reveal**, folded away behind the count with a
+caret. The first version hid it during the question in case a mirrored control
+view gave the popular answer away — but the COUNTS are already on that screen
+and give it away first, so hiding the names bought nothing. Closed by default
+while the clock runs so it is not a moving list to read, open by default on the
+reveal, which is when you are talking about it.
+
+The open ones are remembered in a module-level Map in `host.js`, keyed by
+**phase**, round, question and option. It has to be outside the render: this
+panel is rebuilt on every state push, which during a question is every time
+somebody answers, so a list you had just opened would shut itself the moment the
+next team pressed a button. The phase is in the key because the first attempt
+stored "the opposite of the default" — and since the default flips at the
+reveal, the list you had opened closed itself and one you had never touched
+sprang open.
 
 ### 2. The server owns the clock
 Every timestamp used for scoring comes from an injected `now()`. Phones send

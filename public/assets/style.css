@@ -623,13 +623,27 @@ body.host::after { display: none; }
 .host .prompt { font-size: 20px; font-weight: 800; line-height: 1.25; margin: 0 0 12px; }
 
 .keylist { display: grid; gap: 7px; }
+/* A key row is a button now: tapping it shows who picked that answer. It still
+   has to look like a row rather than a control, because it is a list you read
+   far more often than you tap. */
 .keyrow {
   display: flex; align-items: center; gap: 10px;
+  width: 100%; text-align: left;
   padding: 10px 12px; border-radius: 10px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid transparent;
+  color: var(--ink); font-family: inherit;
   font-size: 15px; font-weight: 600;
+  cursor: default;
 }
+.keyrow.has-who { cursor: pointer; }
+.keyrow.has-who:hover { background: rgba(255, 255, 255, 0.09); }
+.keyrow .caret {
+  flex: 0 0 auto; margin-left: 4px;
+  color: var(--ink-dim); font-size: 13px;
+  transition: transform 140ms;
+}
+.keyrow .caret.open { transform: rotate(180deg); }
 .keyrow .letter {
   width: 26px; height: 26px; flex: 0 0 auto;
   display: grid; place-items: center; border-radius: 7px;
@@ -1725,8 +1739,9 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
    read straight off the screen while the room is still groaning. */
 .keywho {
   display: flex; flex-wrap: wrap; gap: 5px;
-  margin: -2px 0 8px 34px;
+  margin: 4px 0 8px 34px;
 }
+.keywho.shut { display: none; }
 .keywho span {
   padding: 3px 8px; border-radius: 999px;
   font-size: 12px; font-weight: 700;

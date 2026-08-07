@@ -243,31 +243,58 @@ function cuePanel(cue, title, playlist) {
 }
 
 /*
- * WHO picked this one, by name.
+ * WHO picked this one, by name — folded away behind the count.
  *
- * The counts already say four got it wrong; this says which four, which is the
- * difference between "most of you had that" and naming them on the microphone.
- * It is the whole reason the host asked for it.
+ * The counts already say nine had A and three had B. This says which three,
+ * which is the difference between "most of you had that" and naming them on
+ * the microphone. It is the whole reason the host asked for it.
  *
- * Only shown on the REVEAL. During the question it would be a running list of
- * who has answered and what they said, which is a distraction while a clock is
- * going and — with the control view mirrored or glanced at — a way to leak the
- * popular answer before the room has finished thinking.
+ * LIVE as well as on the reveal. The worry was that a control view gets
+ * mirrored or glanced at, so names would give the popular answer away — but
+ * the counts are already on this screen and give it away first, so hiding the
+ * names bought nothing. Folded away by default while the clock is running so
+ * it is not a moving list to read, and open by default on the reveal, which is
+ * when you are talking about it.
+ *
+ * The open ones are remembered OUT HERE, because this panel is rebuilt on
+ * every state push — which during a question is every time somebody answers.
+ * Kept in the render, a list you had just opened would shut itself the moment
+ * the next team pressed a button.
  */
-function who(s, i) {
-  if (s.phase !== 'reveal' || !s.whoPicked) return '';
-  const names = s.whoPicked.options[i] || [];
-  if (!names.length) return '';
-  return `<div class="keywho">${names.map((n) => `<span class="${n.correct ? 'right' : ''}">${esc(n.name)}</span>`).join('')}</div>`;
+const opened = new Map();
+
+/*
+ * The phase is part of the key on purpose.
+ *
+ * A list you opened while the clock was running used to shut itself the moment
+ * you pressed reveal, and one you had never touched sprang open — because the
+ * remembered state was "the opposite of the default" and the default changes
+ * at the reveal. Keyed by phase, each half of the question starts from its own
+ * default and remembers only what you did to it there.
+ */
+function pickKey(s, i) {
+  return `${s.phase}:${s.roundIndex}:${s.questionIndex}:${i}`;
 }
 
-/** Who let it go by entirely — worth as much as a wrong answer on a mic. */
-function missing(s) {
-  if (s.phase !== 'reveal' || !s.whoPicked || !s.whoPicked.missing.length) return '';
-  const list = s.whoPicked.missing;
-  return `<div class="keywho none">
-    <b>No answer:</b>${list.map((n) => `<span>${esc(n)}</span>`).join('')}
-  </div>`;
+function picked(s) {
+  return (s.whoPicked && s.whoPicked.options) || [];
+}
+
+function isOpen(s, i) {
+  // Open by default on the reveal, closed while the question is live — and
+  // either way, what the host last tapped wins.
+  const key = pickKey(s, i);
+  return opened.has(key) ? opened.get(key) : s.phase === 'reveal';
+}
+
+/** The row of names under one option, and the caret that shows and hides it. */
+function whoRow(s, i, list) {
+  if (!list.length) return null;
+  const el = node(`
+    <div class="keywho ${isOpen(s, i) ? '' : 'shut'}">
+      ${list.map((n) => `<span class="${n.correct ? 'right' : ''}">${esc(n.name)}</span>`).join('')}
+    </div>`);
+  return el;
 }
 
 function questionPanel(s) {
@@ -280,14 +307,15 @@ function questionPanel(s) {
       ${q.pickCount > 1 ? `<div class="tiny" style="margin-bottom:8px;color:var(--cool)">They lock in ${q.pickCount} — part marks for getting some.</div>` : ''}
       <div class="keylist">
         ${q.options.map((opt, i) => `
-          <div class="keyrow ${rightSet(q).has(i) ? 'is-correct' : ''}">
+          <button class="keyrow ${rightSet(q).has(i) ? 'is-correct' : ''} ${(picked(s)[i] || []).length ? 'has-who' : ''}" data-opt="${i}">
             <span class="letter">${LETTERS[i]}</span>
             <span>${esc(opt)}</span>
             <span class="n">${tally[i] || 0}</span>
-          </div>
-          ${who(s, i)}`).join('')}
+            ${(picked(s)[i] || []).length ? `<span class="caret ${isOpen(s, i) ? 'open' : ''}">\u25be</span>` : ''}
+          </button>
+          <div class="who-slot" data-slot="${i}"></div>`).join('')}
       </div>
-      ${missing(s)}
+      <div class="missing-slot"></div>
       ${q.note ? `<div class="tiny" style="margin-top:10px">Note: ${esc(q.note)}</div>` : ''}
       ${q.answerNote ? `<div class="tiny" style="margin-top:6px">${esc(q.answerNote)}</div>` : ''}
       <div class="tiny" style="margin-top:10px">
@@ -295,6 +323,39 @@ function questionPanel(s) {
       </div>
     </div>
   `);
+
+  /*
+   * Fill the name slots, and let a tap open and shut them.
+   *
+   * Filled here rather than in the template so the toggle can redraw ONE row
+   * instead of the whole panel — this thing rebuilds on every answer, and a
+   * list that flickers every time somebody presses a button is unreadable.
+   */
+  const fill = () => {
+    q.options.forEach((_, i) => {
+      const slot = el.querySelector(`.who-slot[data-slot="${i}"]`);
+      const row = whoRow(s, i, picked(s)[i] || []);
+      slot.replaceChildren(...(row ? [row] : []));
+      const caret = el.querySelector(`.keyrow[data-opt="${i}"] .caret`);
+      if (caret) caret.classList.toggle('open', isOpen(s, i));
+    });
+
+    const waiting = (s.whoPicked && s.whoPicked.missing) || [];
+    const slot = el.querySelector('.missing-slot');
+    slot.replaceChildren(...(waiting.length ? [node(`
+      <div class="keywho none">
+        <b>${s.phase === 'reveal' ? 'No answer:' : 'Still to answer:'}</b>${waiting.map((n) => `<span>${esc(n)}</span>`).join('')}
+      </div>`)] : []));
+  };
+
+  el.querySelectorAll('.keyrow').forEach((row) => {
+    row.addEventListener('click', () => {
+      const i = Number(row.dataset.opt);
+      opened.set(pickKey(s, i), !isOpen(s, i));
+      fill();
+    });
+  });
+  fill();
   return el;
 }
 
