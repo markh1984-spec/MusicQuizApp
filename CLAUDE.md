@@ -731,6 +731,23 @@ expensive later:
 - **Online mode must be a mode, never a layer.** A media service having a bad
   day cannot be allowed to touch a Wednesday night in a pub.
 
+**Payments stay processor-agnostic**: the app stores a customer id and a status
+and listens for a webhook, nothing more, so Stripe / PayPal / a merchant of
+record can be swapped without a redesign. Card details must never reach this
+server.
+
+**A subscriber's own quizzes are private, including from the owner.** Support
+access is a switch THEY turn on, it expires, and what was done while inside is
+logged for them to read. Other quiz hosts will ask; "only when you let me in,
+and here is the log" is a better answer than a promise.
+
+**Round 2 artwork is generated, and that is now a legal decision as well as a
+budget one.** UK fair dealing is a closed list and does not cover commercial
+entertainment, so a press photo in a pack you SELL is distribution at scale
+with your name on it. The on-screen caption "AI-generated illustration — not a
+real photograph" is doing legal work; do not quietly drop it. Bigger exposure
+still is the music: a venue's PRS/PPL covers a room, and covers nothing online.
+
 And the number that decides the pricing: **sending the host's picture costs
 about twenty times what sending their voice costs**. Four 100-person video
 nights a month is more egress than a £9.99 subscription covers; audio-first is

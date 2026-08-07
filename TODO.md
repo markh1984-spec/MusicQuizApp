@@ -917,6 +917,103 @@ neat: two builds and two app reviews, corporate IT blocks third-party meeting
 apps by default, and a product that only exists inside somebody else's meeting
 is a feature of their platform rather than a business of yours.
 
+### How the subscription actually works — settled enough to build against
+
+**Accounts.** Email and a password hashed with scrypt, which is in Node's own
+standard library, so no dependency. Each account owns everything it makes:
+quizzes, bingo packs, adverts, photos, its no-repeats history and its running
+game. The single `HOST_KEY` becomes one key per account.
+
+A hashed password means **you cannot see theirs even if you wanted to**. That
+is structural, not a promise, and it is worth saying out loud when you sell it.
+
+**Payments are deliberately processor-agnostic.** The app stores two fields —
+a customer id and a status — and listens for a webhook that says paid, lapsed
+or cancelled. Nothing else about billing lives here, and card details never
+touch this server at all. That means the processor can be swapped later without
+redesigning anything:
+
+| | Worth knowing |
+|---|---|
+| **Stripe** | Best developer experience. Being awkward at the moment. |
+| **PayPal** | Does subscriptions and one-offs. Clunkier API, less pleasant checkout, but perfectly workable. |
+| **Paddle / Lemon Squeezy** | **Merchant of record** — they are legally the seller, so they handle UK and EU VAT on digital goods for you. For a one-man band selling quiz packs across borders this is probably the right answer, and it removes the tax question below entirely. |
+
+**Support access, and why it is a selling point.** Other quiz hosts are not
+exactly competitors, but they will still wonder whether you can read the
+quizzes they wrote. Two different kinds of sensitive:
+
+- **Impossible for you to see:** their password (hashed) and their card (at the
+  processor). Nothing to design.
+- **Possible, because you own the database:** their quizzes, their player
+  names, their venues. No code changes that. What code CAN do is make it
+  consented and visible — support access is a switch THEY turn on, it expires
+  on its own, and every action taken while inside is written to a log they can
+  read.
+
+Answering "can you read my quizzes?" with "only when you let me in, and here is
+the list of everything I did" is a better answer than "I promise I do not".
+
+**The library.** Two kinds of pack in one place:
+
+- **Theirs** — written or uploaded, owned by their account, invisible to
+  everyone including you unless support access is on.
+- **Yours** — a shop. Buying grants a LICENCE, a row saying this account may
+  use this quiz, rather than copying the file. So when you fix a wrong answer
+  every subscriber gets the fix. Never delete a sold quiz; archive it.
+- **"Make my own version"** forks a bought quiz into their account as a copy.
+  They will ask for this within a week.
+- Bundles and promotions are a pricing decision, not a code one — the licence
+  row is the same however it was paid for.
+
+**Serving packs costs nothing worth charging for.** Measured: a quiz pack is
+4–11 KB. Two hundred subscribers taking four each a month is 6 MB. The only
+line that grows is artwork — real portraits are a few hundred KB each, so the
+same subscribers cost about 2 GB a month, still pennies, and a CDN removes even
+that. **Charge per quiz because your time writing it is worth money, not
+because serving it costs anything.**
+
+### Pictures in a quiz — the bit that changes when you start selling
+
+**"Fair use" is American. The UK has "fair dealing", and it is much narrower.**
+It is a closed list — research and private study, criticism and review,
+quotation, parody, news reporting. Commercial entertainment is not on it.
+**There is no "it is only a quiz" exception.** A press photograph on a
+projector at a paid gig is, strictly, copying and communicating somebody's
+copyright work to the public.
+
+On its own that is a small practical risk. It stops being small the moment
+packs are SOLD, because at that point they are being distributed at scale, with
+your name on them and revenue attached — which is a different order of
+exposure from using one picture on your own projector on a Tuesday.
+
+**So the instinct to generate the artwork was right**, and for a stronger
+reason than the one it was chosen for. Keep it. Points to hold on to:
+
+- **OpenAI's terms assign the output to you**, including commercial use, so
+  there is a contract behind the packs you sell.
+- **The caption already on screen — "AI-generated illustration, not a real
+  photograph" — is doing legal work as well as honest work.** It is a plain
+  statement that nobody is being passed off. Do not quietly drop it.
+- **Likeness is a separate question from copyright.** Using a recognisable face
+  AS THE SUBJECT of "whose face is this?" is much safer than using one to
+  suggest an endorsement, which is what passing off actually protects against.
+  Do not generate anything unflattering, and be more careful with the living
+  than the dead.
+- Alternatives if a generated picture will not do: **public domain**, or
+  Creative Commons with the attribution shown on screen — but share-alike
+  licences are awkward in a pack you sell. Licensed editorial stock costs real
+  money per image per use.
+
+**And the bigger exposure is the music, not the pictures.** In a venue, the
+venue's PRS and PPL licences cover what you play. **Online they do not.** A
+corporate quiz streamed to a hundred remote people is a public performance with
+nobody's licence behind it — worth an hour of an actual solicitor's time before
+the online mode is sold, not after.
+
+None of the above is legal advice. It is the shape of the problem, so the
+conversation with somebody qualified is short and cheap.
+
 ## 2. On the App Store, a few pounds a go — hard, and a different product
 
 Not a port of this. This app is one host driving a projector with phones as
