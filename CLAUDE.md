@@ -38,7 +38,7 @@ it stopped being harmless the moment packs became something to sell.
 
 | | The whole product | A part of it |
 |---|---|---|
-| **Music quiz** | a **quiz** — a night's worth, several rounds of questions | a **round** — ten general knowledge, five pictures, and so on |
+| **Music quiz** | a **quiz** — a night's worth, several rounds of questions | a **round** — ten general knowledge questions, *or* five pictures. All one type |
 | **Music bingo** | a **bingo game** — one theme, forty-odd tracks, the cards built from them | a **round** — `newRound()`, fresh cards to everybody, played until the last prize goes |
 
 And a third word, because the code leans on it: a **pack** is either of those
@@ -46,6 +46,12 @@ as a file on disk — `quizzes/eighties.json` and `bingo/disco-funk.json` are bo
 packs. It is the umbrella term for "a whole product, whichever game it is", and
 it is what `packId`, `packCard()` and `loadBingoPack()` all mean. Use it when a
 sentence has to cover both; use "quiz" or "bingo game" when it does not.
+
+**A round is all one type.** `round.type` is a single string, not a list — so
+"fifteen general knowledge and five pictures" is TWO rounds, not one mixed one.
+That is what `roundPlan()` produces: one round per `{ type, count }` you ask
+for. There is no such thing as a round with a couple of pictures in the middle
+of it.
 
 **A bingo pack has no rounds inside it on disk** — it is a title and a track
 list. The rounds are a thing that happens while it is being played. That is

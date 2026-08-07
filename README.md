@@ -18,8 +18,10 @@ no database. Everything you save is a JSON file you can read and edit.
 
 - A **quiz** is a whole night: several **rounds** of questions. A **bingo game**
   is a whole night too: one theme and forty-odd tracks.
-- A **round** is a part of one — ten general knowledge questions, or in bingo a
-  fresh set of cards played until the last prize goes.
+- A **round** is a part of one, and is **all the same type**: ten general
+  knowledge questions, *or* five pictures — never a mix. So "fifteen general
+  knowledge and five pictures" is two rounds. In bingo a round is a fresh set of
+  cards, played until the last prize goes.
 
 You buy, sell and launch whole quizzes and whole bingo games. You never buy a
 round.
