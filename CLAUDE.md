@@ -718,6 +718,25 @@ In the host's own order of interest:
    and `src/qrcode.js` encodes anything, so a slide with a heading, an image
    and a QR is small. Between rounds is the slot, next to the scoreboard.
 
+### Where this is going — read TODO.md before designing anything big
+
+He wants to sell subscriptions to other quiz hosts, with **in-person and online
+as two modes on one account**. Two things follow, and both are cheap now and
+expensive later:
+
+- **The app runs ONE game at a time** — one state file, one host key, one
+  session, one join code. Multi-tenancy is the prerequisite for every
+  commercial direction and is much cheaper to do at eight packs and one account
+  than at hundreds of both.
+- **Online mode must be a mode, never a layer.** A media service having a bad
+  day cannot be allowed to touch a Wednesday night in a pub.
+
+And the number that decides the pricing: **sending the host's picture costs
+about twenty times what sending their voice costs**. Four 100-person video
+nights a month is more egress than a £9.99 subscription covers; audio-first is
+under a pound. So audio is the product and video is a small tile — a design
+decision that is also the business model. The sums are in TODO.md.
+
 Deliberately not built: **venue branding** beyond `BRAND_NAME`, and
 **Instagram follow-for-points** (no API can verify a follow — he agreed to drop
 it rather than fake it).

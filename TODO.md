@@ -867,6 +867,56 @@ The work, in order of size:
 Worth saying plainly: **"they cannot make their own" is a content commitment.**
 A subscription means owing them new quizzes every month, not just software.
 
+### In-person and online as two modes on one account
+
+The plan: a subscriber flicks between **in-person** (projector, phones as
+buzzers — what exists) and **online** (one link, quiz and host and chat in one
+page). Two modes is a higher tier, and rightly so, because online genuinely
+costs you money per event where in-person costs you nothing.
+
+**The number that decides the tier.** Sending the host's picture to a room
+costs about twenty times what sending their voice costs. For a 90-minute quiz
+with a hundred people, at a typical five cents a gigabyte:
+
+| What is sent | Per viewer | For 100 | Four events a month |
+|---|---|---|---|
+| Video, 1 Mbps | 675 MB | 67.5 GB | **$13.50 per subscriber** |
+| Video, 500 kbps | 338 MB | 33.8 GB | $6.75 |
+| Audio only, 48 kbps | 32 MB | 3.2 GB | **$0.65** |
+
+A £9.99 subscriber running four full-video nights a month is **underwater
+before anything else is paid for**. The same subscriber on audio-first costs
+under a pound. Check the provider's current rate before committing, but the
+ratio is arithmetic and will not move.
+
+So audio-first is not only the right design — the quiz should own the screen,
+and audio survives bad home wifi — it is what makes the subscription work at
+all. Video is a small tile, off by default, and **any account that leaves it on
+all night needs metering or a higher tier**. Decide that before the first
+subscriber, not after the first invoice.
+
+**Keep the online path OFF the in-person path.** A media service having a bad
+day must never be able to affect a Wednesday night in a pub. That is nearly
+free to guarantee if the modes are separate from the start and close to
+impossible to retrofit — which is the whole reason it is written here.
+
+**Build order, whichever way the video goes:**
+
+1. **The combined player view** — question and answers on one device. Needed
+   for any remote quiz at all, and it is what keeps the speed scoring honest
+   when every viewer is a different number of seconds behind. Worth building on
+   its own merits.
+2. **Audio broadcast** from the console, host to players, one way.
+3. **The camera tile**, small by default.
+4. **Chat** — only worth building once the app IS the meeting. If a subscriber
+   is on Teams or Zoom, their people are already chatting there and a second
+   chat is a room nobody stands in.
+
+**Not building it inside Teams or Zoom**, despite their meeting-app SDKs being
+neat: two builds and two app reviews, corporate IT blocks third-party meeting
+apps by default, and a product that only exists inside somebody else's meeting
+is a feature of their platform rather than a business of yours.
+
 ## 2. On the App Store, a few pounds a go — hard, and a different product
 
 Not a port of this. This app is one host driving a projector with phones as
