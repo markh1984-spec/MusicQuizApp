@@ -1,65 +1,222 @@
 # Your to-do list
 
-Every step has the link you need next to it. Work down it in order.
-
-**Parts 1–3 are the ones that matter. Everything after that is optional.**
+Work down the numbered list below in order. Every step says how long it takes,
+what it costs, and what happens if you skip it, with the link you need next to
+it. The detailed walkthroughs are further down as **Parts** — you only need them
+if a step does not go smoothly.
 
 ---
 
-## Where the project is right now
+## Do these in this order
 
-Everything talked about is now built except the four at the bottom under
-**Still to build**. Nothing is half-finished in the tree.
+Nine things. The first four are the ones that matter; after that it is optional.
+Tick them off as you go — each one says how long, what it costs, and what
+happens if you skip it.
 
-Your list, shortest first. Only two of these cost anything:
-
-| | What | Where | Costs | Blocks what |
+| | What | How long | Cost | If you skip it |
 |---|---|---|---|---|
-| 1 | Check your `HOST_KEY` is set on Render | Part 2a | free | bookmarks breaking on every deploy |
-| 2 | Read the questions and tick the flags | Part 3 | free | nothing — but do it before a room does |
-| 3 | Dry run with wifi off on the phones | Part 10 | free | the one failure a home test cannot find |
-| 4 | OpenAI key | Part 6 | ~£8 once, ~50p a quiz | round 2 portraits — placeholders until then |
-| 5 | **Finish Spotify** — re-run the login, one thing left | *Where we stopped*, just below | free | playlists building themselves (everything else works) |
-| 6 | Move to the $7 tier | Part 10 | $7/mo | before the first paying gig, not before that |
+| 1 | Make a private repo | 10 min | free | invoices and accounts vanish on every deploy |
+| 2 | Set up your two logins | 5 min | free | nothing yet — but do it before step 3 |
+| 3 | Fill in your invoice details | 5 min | free | invoices have no bank details, so nobody can pay them |
+| 4 | Check `HOST_KEY` is set on Render | 2 min | free | your bookmarks break on every deploy |
+| 5 | Read a quiz through before a gig | 20 min | free | a wrong answer in front of a paying room |
+| 6 | Dry run on mobile data | 15 min | free | the one failure a home test cannot find |
+| 7 | Move to the $7 Render tier | 5 min | $7/mo | the app sleeps between gigs |
+| 8 | Finish Spotify | 10 min | free | you build playlists by hand |
+| 9 | OpenAI key | 20 min | ~£8 + 50p a quiz | round 2 uses placeholder drawings |
 
-4 and 5 are genuinely optional. The app runs a full quiz night and a full bingo
-night without either — round 2 just uses placeholder drawings, and you build
-playlists by hand.
+**Do not give another quizmaster a login yet.** The accounts work, but the
+library and the running game are still shared, so a second person would see
+your packs and could launch over the top of your night. That is the next piece
+of work. Steps 1 and 2 are still worth doing now — they are for you.
 
-### Where we stopped last night — read this first
+---
 
-Spotify is **nearly** done. Node is installed, the app is created, the login
-ran, and all three `SPOTIFY_*` values are on Render alongside your Claude key.
+### 1. Make a private repo — 10 minutes, free, DO THIS FIRST
 
-Generation works: Claude writes the list, all forty tracks are found on
-Spotify, and then the very last step — creating the playlist — is refused with
-a bare "Forbidden". The login definitely has permission (it reports all four
-scopes back), and you have already added the account under User Management.
+Your app has no permanent hard disk. Anything it saves is wiped every time it
+redeploys. Your quizzes are safe because they live in your public repo, but
+**invoices, accounts and photos cannot go there** — that repo is public and
+git history is forever, and those files have customer addresses, your bank
+details and password hashes in them.
 
-**Three things to try, in this order.** Stop as soon as one works.
+So they need a second, private repo. Once set up, everything files itself.
+
+- [ ] Make it. 🔗 https://github.com/new
+      Name it `mmm-private`, tick **Private**, tick **Add a README**, Create.
+- [ ] Check your token can reach it. 🔗 https://github.com/settings/tokens
+      Open the token you already made. If it says **All repositories**, you are
+      done. If it lists repos, add `mmm-private` and Save.
+- [ ] Tell the app. 🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env
+      Add one variable: `PHOTO_REPO` = `markh1984-spec/mmm-private`
+      (use your own GitHub username if it differs). Save — it redeploys itself.
+- [ ] Check. Open the Invoices tab. The red "not being backed up" warning
+      should be gone. 🔗 https://musicquizapp.onrender.com/console
+
+Full detail if you get stuck: **Part 7f** below.
+
+---
+
+### 2. Set up your two logins — 5 minutes, free
+
+You now get two accounts, deliberately kept apart:
+
+- **the owner** — you the app dev. Manages quizmasters, writes and generates
+  packs. No quiz controls anywhere near it.
+- **the quizmaster** — you on a Wednesday night. Runs the games.
+
+Both are made from a terminal, in your project folder on the Mac:
+
+```bash
+cd ~/Downloads/MusicQuizApp-MusicQuizApp
+npm run accounts -- add-owner --email you@example.com
+npm run accounts -- add --email you@example.com --name "Mark" --comped
+```
+
+It asks for a password twice each time. Use different ones, at least 10
+characters — a short sentence is ideal and easier to remember than punctuation.
+
+- [ ] Make the owner account
+- [ ] Make your quizmaster account (`--comped` means free, with everything on)
+- [ ] Check them: `npm run accounts -- list`
+- [ ] Sign in and look around 🔗 https://musicquizapp.onrender.com/login
+
+You land on the right page automatically. Signing in as the owner takes you to
+the subscriber list; as the quizmaster, to the usual console.
+
+**Your `?key=…` bookmarks still work exactly as before.** Nothing about tonight
+changes. The key stays until you are happy with the logins.
+
+*Note:* accounts made on your Mac are on your Mac. To have them on the live
+site, run the same commands there — or wait until step 1 is done, when they
+back themselves up.
+
+---
+
+### 3. Fill in your invoice details — 5 minutes, free
+
+Do this before you try to invoice anybody, or the PDF goes out with no bank
+details on it.
+
+- [ ] Open the **Invoices** tab 🔗 https://musicquizapp.onrender.com/console
+- [ ] Press **Your details**. Fill in your trading name, address, and the
+      account name, sort code and account number people should pay into.
+- [ ] Press **Customers** and add a venue or two — name, contact, address, and
+      what you usually charge them. The fee then fills itself in.
+- [ ] Leave VAT switched off unless you are actually registered.
+
+Then billing a night is: finish the quiz → **Invoice this** on the console →
+check the number → **Issue and send**.
+
+---
+
+### 4. Check your host key is set on Render — 2 minutes, free
+
+If `HOST_KEY` is not set, the app invents a new one every deploy and all your
+bookmarks stop working.
+
+- [ ] 🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env
+      Look for `HOST_KEY`. If it is not there, add it with any long phrase you
+      will not forget.
+
+Detail: **Part 2a** below.
+
+---
+
+### 5. Read a quiz through before you run it — 20 minutes, free
+
+The generator is good and still gets things wrong. Every pack gets read once
+before a room sees it.
+
+- [ ] Open the console, press **Read** on the pack you plan to run
+      🔗 https://musicquizapp.onrender.com/console
+- [ ] Work down the flags at the top and tick each one off as you read it
+- [ ] If it says the answers are lopsided, press **Even out the answers**
+
+Detail: **Part 3** below.
+
+---
+
+### 6. Dry run on mobile data — 15 minutes, free
+
+The one failure you cannot find at home is a venue's wifi or a company's
+firewall. Test on the network you will actually be on.
+
+- [ ] Open the big screen, launch a quiz, join with two phones **with wifi
+      switched off** so they are on mobile data
+- [ ] Answer a couple of questions, check the scores look right
+- [ ] Kill the browser tab on one phone and reopen it — the score should come back
+
+**For a corporate booking, do this on THEIR network a few days before.** If it
+works for one person on their wifi it will work for three hundred. What their
+IT team needs to allow is in README.md under "How many people can play" — it is
+a short list and does not include websockets, which is usually the thing they
+say no to.
+
+---
+
+### 7. Move to the $7 Render tier — 5 minutes, $7/month
+
+The free tier goes to sleep and gets a small slice of a processor. Agreed before
+the first paying gig.
+
+- [ ] 🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/settings
+      Find **Instance Type**, change Free to **Starter**.
+
+This also removes the need to open the big screen five minutes early to wake it.
+
+---
+
+### 8. Finish Spotify — 10 minutes, free, optional
+
+Everything works except the very last step: creating the playlist is refused
+with a bare "Forbidden". Three things to try, in order. Stop when one works.
 
 - [ ] **Re-run the login.** In a terminal, in that folder:
       ```bash
       cd ~/Downloads/MusicQuizApp-MusicQuizApp
       npm run spotify:login
       ```
-      Same Client ID and Secret, click **Agree**. Then on Render replace
-      **only** `SPOTIFY_REFRESH_TOKEN` with the new one — leave the other two
-      alone. 🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env
+      Same Client ID and Secret, click **Agree**. On Render replace **only**
+      `SPOTIFY_REFRESH_TOKEN` — leave the other two alone.
+      🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env
 
-      *Why this first:* Spotify grants permission per app-and-user, and yours
-      was granted before that account was added to User Management.
+      *Why first:* Spotify grants permission per app-and-user, and yours was
+      granted before that account was added to User Management.
 
-- [ ] **Check which account the dashboard is logged in as.** Top right of
-      developer.spotify.com. If the app was created by a different account
-      from the one you authorised, that is the mismatch.
+- [ ] **Check which account the dashboard is logged in as** — top right.
+      🔗 https://developer.spotify.com/dashboard
+      An app owned by a different account from the one you authorised is the
+      obvious mismatch.
 
-- [ ] **Check the User Management email is exactly right** — it must match the
-      email on that Spotify account (spotify.com → Account → Profile). A
-      near-miss does nothing and says nothing.
+- [ ] **Check the User Management email matches exactly** the email on that
+      Spotify account. A near-miss silently does nothing.
 
-**You are not blocked, and this is now the quickest way to build a round
-anyway — two steps.**
+**You are not blocked meanwhile.** Ask Claude in your browser for a round, paste
+what it prints into the **Import** box in the console. That is now the quickest
+way to build a bingo round anyway, and it is described just below.
+
+---
+
+### 9. OpenAI key for round 2 portraits — 20 minutes, ~£8 then ~50p a quiz, optional
+
+Round 2 uses obvious placeholder drawings until this is done. They work; they
+are just not real portraits.
+
+- [ ] Make an account 🔗 https://platform.openai.com/signup
+- [ ] Put £8 of credit on 🔗 https://platform.openai.com/settings/organization/billing/overview
+- [ ] Make a key 🔗 https://platform.openai.com/api-keys
+- [ ] Add it on Render as `OPENAI_API_KEY`
+      🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env
+- [ ] Press **Pictures** on any quiz with a face round
+
+Detail: **Part 6** below.
+
+---
+
+## Building a bingo round, from now on
+
+**Two steps, and this is the quickest route even once Spotify is fixed.**
 
 1. **Ask Claude in your browser for the round.** It reads your no-repeats list
    straight off this repository, so it already knows every song you have used
@@ -71,74 +228,38 @@ anyway — two steps.**
 
 You get a pack whose cards are exactly the songs in the playlist, and every one
 of them goes into the no-repeats list — which the app pushes back to GitHub
-straight away, so next week Claude already knows about them. You keep track of
-nothing.
+straight away, so next week Claude already knows about them.
 
-**Import on the live site**, musicquizapp.onrender.com/console, rather than a
-copy on the laptop. That is where the GitHub token lives, and the push is what
-keeps Claude's list current.
+**Import on the live site** 🔗 https://musicquizapp.onrender.com/console —
+not a copy on the laptop. That is where the GitHub token lives, and the push is
+what keeps Claude's list current.
 
 **Then glance at the banner.** Green means those songs reached the list. Amber
 means they did not — the round is still fine, but Claude will not know about
-them, so import it again. It says so in those words.
+them, so import it again.
 
-If you would rather have the playlist read straight off Spotify, pasting its
-**link** into the smaller box still works: reading a playlist is a different
-permission from creating one, and yours has it.
+---
 
-Nothing else is outstanding. A generation that cannot make a playlist now saves
-the pack anyway and tells you why, so you always get a playable bingo round.
+## What is new since you last read this
 
-### New since you last read this
-
-- **Pictures from the console** — a Pictures button on any quiz with a face
-  round. Draw free stand-ins, or real portraits once your OpenAI key is in.
-  Part 6c.
-- **A Playlist button** on any quiz with an intro round, so a playlist can be
-  built long after the quiz was written. Part 7e.
-- **Photos from the room onto the big screen**, with filters, a kill switch and
-  a bin. Part 9b.
-- **Pick them all** — a fourth round type where several answers are right.
-  Part 5c.
-- **First letter** — a fifth round type with no options at all: the room gets a
-  keyboard and only the first letter of the answer has to be right, so nobody
-  loses a point to spelling.
-- **A number of questions per round type**, so a quiz can be fifteen general
-  knowledge and five pictures rather than ten of everything.
-- **Seasonal looks.** A **Look** picker on every pack card next to Launch:
-  Halloween, Valentine's, Christmas, Summer, or the usual. It changes the
-  colours on the big screen and on everybody's phone at once, and drifts a few
-  skulls or hearts or snowflakes down the sides. Nothing about how the quiz
-  plays changes. Set a default on a pack in the Editor and override it at
-  launch for a night the pack was not written for.
-- **Invoicing.** An **Invoices** tab in the console. Fill in your details and
-  your bank once, add the venues you work for, and then billing for a night is:
-  press **Invoice this** on the panel that says the quiz has finished, check the
-  fee, press **Issue and send**. It makes a proper PDF and hands it to your
-  phone's share sheet, so it goes out from your own email with your address on
-  it. The app keeps the record — who was invoiced, what is outstanding, what is
-  overdue — and the tab wears a badge showing how many are still unpaid.
-
-  **Two things to set up before you use it in anger**, both in TODO order:
-  fill in *Your details* (nothing works properly without your bank details on
-  it), and set `PHOTO_REPO` on Render to a **private** repository. Without the
-  second one, every invoice and the invoice numbering disappears on the next
-  redeploy — the tab says so in red until you do. It must be private: that file
-  has your customers' addresses and your own account number in it.
-
-  VAT is off, and while it is off the invoice does not mention VAT anywhere,
-  because it must not. When you register, turn it on under *Your details* and
-  put your number in; invoices you have already sent are not changed.
+- **First letter round** — no options at all: the room gets a keyboard and only
+  the first letter of the answer has to be right, so nobody loses a point to
+  spelling.
+- **A number of questions per round type** — fifteen general knowledge and five
+  pictures rather than ten of everything.
 - **Four ways for a round 2 picture to give itself away** — zoom out, pixelate,
-  come into focus, or tiles coming away — set per round in the Editor, or `mix`
+  come into focus, or tiles coming away. Set per round in the Editor, or `mix`
   for a different one each question. They all get easy at the same rate, so
-  which one you pick never changes how many points are on offer.
-- **The rules as the first slide** of every quiz, and **scores on the big
-  screen** whenever you want them. Part 9a.
-- **Advert slides between rounds**, one set per venue, with a QR to ticket
-  sales. Its own console tab; put one up from your control view.
-- **A Photos tab**, foldered by night, filed into a private repo so a restart
-  cannot lose them. Needs Part 7f setting up once.
+  which you pick never changes how many points are on offer.
+- **Seasonal looks** — a **Look** picker on every pack card next to Launch:
+  Halloween, Valentine’s, Christmas, Summer. Changes the colours on the big
+  screen and every phone at once. Nothing about how the quiz plays changes.
+- **Invoicing** — see step 3 above.
+- **Accounts** — see step 2 above.
+- **Room for 300 players**, measured rather than guessed, and much faster than
+  it was.
+- Pictures and Playlist buttons on pack cards, photos from the room, advert
+  slides, the rules slide, scores on the big screen, pick-them-all rounds.
 
 ---
 
