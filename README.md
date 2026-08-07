@@ -14,6 +14,16 @@ Two games so far:
 Built to be boring and reliable: plain Node, **no dependencies**, no build step,
 no database. Everything you save is a JSON file you can read and edit.
 
+### Two words used precisely
+
+- A **quiz** is a whole night: several **rounds** of questions. A **bingo game**
+  is a whole night too: one theme and forty-odd tracks.
+- A **round** is a part of one — ten general knowledge questions, or in bingo a
+  fresh set of cards played until the last prize goes.
+
+You buy, sell and launch whole quizzes and whole bingo games. You never buy a
+round.
+
 ---
 
 ## The night, in short
@@ -327,7 +337,7 @@ and it does it for everybody at once.
 
 ---
 
-## Building a bingo round with one button
+## Building a bingo game with one button
 
 In the console, type a theme and press **Build it**. Then:
 
@@ -521,7 +531,7 @@ All optional — it runs with none of them set.
 | `BRAND_NAME` | `Mark's Music Madness` | Your name on every screen |
 | `QUIZ_ID` | first quiz found | Which quiz loads on a cold start |
 | `QUIZ_DIR` / `BINGO_DIR` / `DATA_DIR` / `IMAGE_DIR` | `./quizzes`, `./bingo`, `./data`, `./images` | |
-| `ANTHROPIC_API_KEY` | — | Needed to generate quizzes and bingo rounds |
+| `ANTHROPIC_API_KEY` | — | Needed to generate quizzes and bingo games |
 | `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` / `SPOTIFY_REFRESH_TOKEN` | — | Needed to build Spotify playlists. `scripts/spotify-login.mjs` gets you these |
 
 ---

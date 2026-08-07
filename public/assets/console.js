@@ -570,7 +570,7 @@ function historyLine(done) {
 /**
  * Bring in a list you already have.
  *
- * This is how a bingo round gets made now: Claude in a browser reads the
+ * This is how a bingo game gets made now: Claude in a browser reads the
  * no-repeats list off this repository, picks the songs, builds the Spotify
  * playlist, and prints the tracks. This box is where they land.
  *
@@ -726,7 +726,7 @@ async function runImport(panel) {
 function generatePanel(gen) {
   const el = node(`
     <div class="panel generate">
-      <h3>New bingo round</h3>
+      <h3>New bingo game</h3>
       <div class="gen-row">
         <input type="text" id="theme" placeholder="A theme — 1990s indie, Motown, Christmas number ones…" autocomplete="off">
         <button class="go" id="genGo" ${gen.claude ? '' : 'disabled'}>Build it</button>

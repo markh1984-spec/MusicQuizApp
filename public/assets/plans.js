@@ -33,7 +33,9 @@ export const FEATURES = {
   QUIZ: 'quiz.run',
   BINGO: 'bingo.run',
   LIBRARY: 'library.own',        // their own packs: write, edit, import
-  BUY_PACKS: 'packs.buy',        // the owner's catalogue
+  // Whole quizzes and whole bingo games from the owner's catalogue. Never
+  // individual rounds — a round is a part of a product, not a product.
+  BUY_PACKS: 'packs.buy',
   LOOKS: 'looks',                // seasonal palettes and picture reveals
   ADVERTS: 'adverts',            // venue slides
   PHOTOS: 'photos',              // photos from the room
@@ -80,7 +82,7 @@ export const PLANS = {
   basic: {
     id: 'basic',
     label: 'Basic',
-    blurb: 'Everything needed to run a night: both games, your own library, and the packs you buy.',
+    blurb: 'Everything needed to run a night: the music quiz, music bingo, your own library, and whole quizzes and bingo games bought from the shop.',
     features: BASIC,
   },
 };

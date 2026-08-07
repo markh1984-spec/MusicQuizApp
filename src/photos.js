@@ -12,7 +12,7 @@
  * to be one movement in the dark.
  *
  * These live outside the game state on purpose. A night is often a quiz and
- * then a bingo round, and launching the second one throws the first game away
+ * then a bingo game, and launching the second one throws the first away
  * — the photos should not go with it.
  *
  * They are filed into a SEPARATE PRIVATE repository (`PHOTO_REPO`), never the

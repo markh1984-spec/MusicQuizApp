@@ -31,6 +31,46 @@ Two games so far:
 
 ---
 
+## The words: a quiz is a product, a round is part of one
+
+Settled deliberately, because the two were used interchangeably for months and
+it stopped being harmless the moment packs became something to sell.
+
+| | The whole product | A part of it |
+|---|---|---|
+| **Music quiz** | a **quiz** — a night's worth, several rounds of questions | a **round** — ten general knowledge, five pictures, and so on |
+| **Music bingo** | a **bingo game** — one theme, forty-odd tracks, the cards built from them | a **round** — `newRound()`, fresh cards to everybody, played until the last prize goes |
+
+And a third word, because the code leans on it: a **pack** is either of those
+as a file on disk — `quizzes/eighties.json` and `bingo/disco-funk.json` are both
+packs. It is the umbrella term for "a whole product, whichever game it is", and
+it is what `packId`, `packCard()` and `loadBingoPack()` all mean. Use it when a
+sentence has to cover both; use "quiz" or "bingo game" when it does not.
+
+**A bingo pack has no rounds inside it on disk** — it is a title and a track
+list. The rounds are a thing that happens while it is being played. That is
+exactly why the console used to say "New bingo round" on a button that makes a
+whole game, which is the confusion this section exists to end.
+
+**What is bought and sold is a QUIZ or a BINGO GAME, never a round.** Pricing,
+the catalogue and anything a subscriber's library shows are in whole products.
+There is no such thing as buying round two of somebody else's quiz.
+
+### What each AI actually makes
+
+Precision here matters because it decides who pays for what:
+
+- **Claude writes a whole quiz** — every round in it, questions and answers,
+  then checks its own work. Owner only.
+- **Claude writes a whole bingo game** — the track list. Owner only, and these
+  days usually done in a browser and pasted into Import.
+- **OpenAI draws pictures for the picture ROUND of a quiz.** It writes nothing.
+  It does not generate a round and it certainly does not generate a quiz — it
+  takes questions that already exist and draws a portrait for each. That is why
+  it is `owner.artwork` and priced separately from `owner.generate`.
+
+---
+
 ## Rules that must not be broken
 
 These have tests. If a change makes one fail, the change is wrong.

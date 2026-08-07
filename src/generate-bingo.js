@@ -41,7 +41,7 @@ async function askClaude({ theme, wanted, avoid, apiKey, model = MODEL }) {
     ? `\n\nDO NOT include any of these — they have been played recently:\n${avoid.map((t) => `- ${t.title} — ${t.artist}`).join('\n')}`
     : '';
 
-  const prompt = `Choose ${wanted} songs for a music bingo round in a British pub.
+  const prompt = `Choose ${wanted} songs for a music bingo game in a British pub.
 
 Theme: ${theme}
 

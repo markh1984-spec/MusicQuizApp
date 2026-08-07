@@ -194,7 +194,7 @@ with a bare "Forbidden". Three things to try, in order. Stop when one works.
 
 **You are not blocked meanwhile.** Ask Claude in your browser for a round, paste
 what it prints into the **Import** box in the console. That is now the quickest
-way to build a bingo round anyway, and it is described just below.
+way to build a bingo game anyway, and it is described just below.
 
 ---
 
@@ -214,7 +214,7 @@ Detail: **Part 6** below.
 
 ---
 
-## Building a bingo round, from now on
+## Building a bingo game, from now on
 
 **Two steps, and this is the quickest route even once Spotify is fixed.**
 
@@ -528,7 +528,7 @@ in the terminal to stop it.
 
 # PART 5 — AI generation (you already have the key)
 
-Type "1990s indie" and get a whole quiz or bingo round built.
+Type "1990s indie" and get a whole quiz or bingo game built.
 
 ## 5a. Put the key in your file
 
@@ -574,7 +574,7 @@ The Console has two generators at the top:
       to half a room and T to the other half, and both halves are right. The
       app refuses to save one, the editor tells you as you type, and the
       generator is told not to write one.
-- [ ] **New bingo round** — type a theme, press **Build it**.
+- [ ] **New bingo game** — type a theme, press **Build it**.
 
 Both stream their progress so you can see what they are doing.
 
@@ -649,7 +649,7 @@ pushed does not exist on it. Render redeploys in about a minute.
 
 # PART 7 — Spotify playlists (nearly done — see 7f)
 
-Optional. Without it bingo rounds still generate, you just build the playlist
+Optional. Without it bingo games still generate, you just build the playlist
 yourself.
 
 **What you get when this is done.** In the console, Music Bingo tab: type a
@@ -736,7 +736,7 @@ do not commit them.
 
 ## 7e. Bringing in a list you already have
 
-You do not have to generate every bingo round from a blank box. On the **Music
+You do not have to generate every bingo game from a blank box. On the **Music
 Bingo** tab, under the generator, there is **Or bring in a list you already
 have**. It takes either:
 
@@ -845,7 +845,7 @@ npm start
 
 Then in the Console:
 
-1. Type a theme into **New bingo round** and press **Build it** — or paste a
+1. Type a theme into **New bingo game** and press **Build it** — or paste a
    list you already have into **Or bring in a list you already have** (7e)
 2. Press **Read** on the new pack and work through the flags (Part 3a)
 3. Open the **Editor** if you want to change any wording
