@@ -7,33 +7,87 @@ if a step does not go smoothly.
 
 ---
 
+## When you next sit down at the MacBook
+
+Three things, in this order, about twenty minutes. Steps 1 and 2 have to come
+first or step 3 will not stick.
+
+**1. Set `HOST_KEY` on Render — 2 minutes.** This is what stopped you on the
+phone. Right now the key is invented fresh on every deploy, so every bookmark
+you have breaks each time the app restarts.
+
+🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env
+Add `HOST_KEY` = any long phrase you will remember, e.g. `mark-quiz-night-2026`.
+Save. It redeploys itself and your bookmarks stop breaking forever.
+
+*To get in RIGHT NOW, before you set it:* the current key is in the startup
+banner at 🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/logs —
+scroll to the box with your brand name in it and find the `Host key:` line.
+
+**2. Make the private repo — 10 minutes.** Without it every account you make is
+wiped by the next deploy. Full steps in step B below.
+
+**3. Make your accounts — 5 minutes.** Console → the "No accounts yet" panel →
+owner account. Then sign in, and **Add a quizmaster** twice: once for yourself
+(use `you+quiz@…`, since the owner has your plain address) and once for Rob.
+Full steps under "Giving Rob a login" below.
+
+---
+
 ## Do these in this order
 
-Nine things. The first four are the ones that matter; after that it is optional.
-Tick them off as you go — each one says how long, what it costs, and what
-happens if you skip it.
+Nine things. The first three are the ones that matter; after that it is
+optional. Tick them off as you go — each one says how long, what it costs, and
+what happens if you skip it.
 
 | | What | How long | Cost | If you skip it |
 |---|---|---|---|---|
-| 1 | Make a private repo | 10 min | free | invoices and accounts vanish on every deploy |
-| 2 | Set up your two logins | 5 min | free | nothing yet — but do it before step 3 |
-| 3 | Fill in your invoice details | 5 min | free | invoices have no bank details, so nobody can pay them |
-| 4 | Check `HOST_KEY` is set on Render | 2 min | free | your bookmarks break on every deploy |
-| 5 | Read a quiz through before a gig | 20 min | free | a wrong answer in front of a paying room |
-| 6 | Dry run on mobile data | 15 min | free | the one failure a home test cannot find |
-| 7 | Move to the $7 Render tier | 5 min | $7/mo | the app sleeps between gigs |
-| 8 | Finish Spotify | 10 min | free | you build playlists by hand |
-| 9 | OpenAI key | 20 min | ~£8 + 50p a quiz | round 2 uses placeholder drawings |
+| A | Set `HOST_KEY` on Render | 2 min | free | **your bookmarks break on every deploy — this is what locked you out** |
+| B | Make a private repo | 10 min | free | invoices and accounts vanish on every deploy |
+| C | Make your accounts (and Rob's) | 5 min | free | no login; the key is the only way in |
+| D | Fill in your invoice details | 5 min | free | invoices have no bank details, so nobody can pay them |
+| E | Read a quiz through before a gig | 20 min | free | a wrong answer in front of a paying room |
+| F | Dry run on mobile data | 15 min | free | the one failure a home test cannot find |
+| G | Move to the $7 Render tier | 5 min | $7/mo | the app sleeps between gigs |
+| H | Finish Spotify | 10 min | free | you build playlists by hand |
+| I | OpenAI key | 20 min | ~£8 then pennies | round 2 uses placeholder drawings |
 
 **You CAN now give another quizmaster a login.** They get their own running
 game — they cannot launch over the top of your night — their own join code and
-their own photo wall, and read-only use of your packs. Do step 1 first, or the
+their own photo wall, and read-only use of your packs. Do A and B first, or the
 account you make will be gone at the next deploy. See "Giving Rob a login" just
 below.
 
 ---
 
-### 1. Make a private repo — 10 minutes, free, DO THIS FIRST
+### A. Set your host key on Render — 2 minutes, free, DO THIS FIRST
+
+**This is the one that locked you out of your own console.**
+
+If `HOST_KEY` is not set, the app invents a new key on startup and keeps it in
+`data/` — which Render's free tier wipes on every deploy. So every single deploy
+invents a different key and every bookmark you have stops working, with nothing
+on screen saying why. The app now prints a warning about this in its startup log,
+but the fix is thirty seconds.
+
+- [ ] 🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env
+      Look for `HOST_KEY`. If it is not there, add it with any long phrase you
+      will not forget — `mark-quiz-night-2026` is fine. Save.
+- [ ] Check: the warning is gone from the startup log, and your bookmark works
+      after the redeploy.
+
+**If you are locked out right now**, the current key is in the startup banner:
+🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/logs — scroll to
+the box with your brand name in it and read the `Host key:` line. Paste that
+into the console's key box, then do the above so it never happens again.
+
+Detail: **Part 2a** below.
+
+---
+
+---
+
+### B. Make a private repo — 10 minutes, free
 
 Your app has no permanent hard disk. Anything it saves is wiped every time it
 redeploys. Your quizzes are safe because they live in your public repo, but
@@ -58,7 +112,7 @@ Full detail if you get stuck: **Part 7f** below.
 
 ---
 
-### 2. Set up your two logins — 5 minutes, free
+### C. Make your accounts — 5 minutes, free
 
 You now get two accounts, deliberately kept apart:
 
@@ -94,13 +148,13 @@ the subscriber list; as the quizmaster, to the usual console.
 changes. The key stays until you are happy with the logins.
 
 *Note:* accounts made on your Mac are on your Mac. Make the live ones on the
-live site. **And do step 1 first** — without the private repo they are wiped on
+live site. **And do step B first** — without the private repo they are wiped on
 the next deploy, because Render gives the free tier no permanent disk. With it,
 they back themselves up and come back on their own.
 
 ---
 
-### 3. Fill in your invoice details — 5 minutes, free
+### D. Fill in your invoice details — 5 minutes, free
 
 Do this before you try to invoice anybody, or the PDF goes out with no bank
 details on it.
@@ -115,22 +169,7 @@ details on it.
 Then billing a night is: finish the quiz → **Invoice this** on the console →
 check the number → **Issue and send**.
 
----
-
-### 4. Check your host key is set on Render — 2 minutes, free
-
-If `HOST_KEY` is not set, the app invents a new one every deploy and all your
-bookmarks stop working.
-
-- [ ] 🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env
-      Look for `HOST_KEY`. If it is not there, add it with any long phrase you
-      will not forget.
-
-Detail: **Part 2a** below.
-
----
-
-### 5. Read a quiz through before you run it — 20 minutes, free
+### E. Read a quiz through before you run it — 20 minutes, free
 
 The generator is good and still gets things wrong. Every pack gets read once
 before a room sees it.
@@ -144,7 +183,7 @@ Detail: **Part 3** below.
 
 ---
 
-### 6. Dry run on mobile data — 15 minutes, free
+### F. Dry run on mobile data — 15 minutes, free
 
 The one failure you cannot find at home is a venue's wifi or a company's
 firewall. Test on the network you will actually be on.
@@ -162,7 +201,7 @@ say no to.
 
 ---
 
-### 7. Move to the $7 Render tier — 5 minutes, $7/month
+### G. Move to the $7 Render tier — 5 minutes, $7/month
 
 The free tier goes to sleep and gets a small slice of a processor. Agreed before
 the first paying gig.
@@ -174,7 +213,7 @@ This also removes the need to open the big screen five minutes early to wake it.
 
 ---
 
-### 8. Finish Spotify — 10 minutes, free, optional
+### H. Finish Spotify — 10 minutes, free, optional
 
 Everything works except the very last step: creating the playlist is refused
 with a bare "Forbidden". Three things to try, in order. Stop when one works.
@@ -205,7 +244,7 @@ way to build a bingo game anyway, and it is described just below.
 
 ---
 
-### 9. OpenAI key for round 2 portraits — 20 minutes, ~£8 then a few pence a quiz, optional
+### I. OpenAI key for round 2 portraits — 20 minutes, ~£8 then a few pence a quiz, optional
 
 Round 2 uses obvious placeholder drawings until this is done. They work; they
 are just not real portraits.
@@ -274,9 +313,9 @@ letter join code, and his projector's QR has it built in. His phones go to
 `/play?g=XXXX`; yours still go to plain `/play`, so nothing you have printed or
 bookmarked changes.
 
-⚠️ **One thing to do first, or the logins vanish.** Render wipes the app's disk
-on every restart, so accounts have to be backed up to your private GitHub repo
-to survive. Set `GITHUB_TOKEN` and the private repo (step 1 above) BEFORE you
+⚠️ **Two things to do first, or this does not work.** Set `HOST_KEY` (step A) or
+you cannot get into the Console at all after a deploy — that is what stopped you
+on the phone. Then set up the private repo (step B) BEFORE you
 create Rob's account — otherwise it works today and is gone at the next deploy.
 The Console says so in red if it is not set up.
 

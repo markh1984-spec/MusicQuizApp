@@ -60,6 +60,20 @@ export const paths = {
  * and kept on disk, so a server restart mid-quiz does not invalidate the tab
  * that is already open on your phone.
  */
+/**
+ * Is the key a temporary one this process invented?
+ *
+ * It matters more than it looks. Without `HOST_KEY` set, the key is generated
+ * into `data/` — and on a host with no permanent disk that folder is empty
+ * again after every deploy. So every deploy quietly invents a NEW key and every
+ * bookmark stops working, with nothing on screen saying why. That is worth
+ * saying out loud at boot rather than leaving somebody to discover it on a
+ * phone when they wanted to start a quiz.
+ */
+export function hostKeyIsTemporary() {
+  return !process.env.HOST_KEY;
+}
+
 export function hostKey() {
   if (process.env.HOST_KEY) return process.env.HOST_KEY;
   try {

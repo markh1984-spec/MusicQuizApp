@@ -15,7 +15,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { config, paths, hostKey } from './src/config.js';
+import { config, paths, hostKey, hostKeyIsTemporary } from './src/config.js';
 import { Store } from './src/store.js';
 import { Hub } from './src/sse.js';
 import { Photos, MAX_BYTES } from './src/photos.js';
@@ -1783,6 +1783,14 @@ server.listen(config.port, () => {
   console.log('');
   console.log(`  Loaded:      ${rooms.get(HOUSE).session.pack.title} (${rooms.get(HOUSE).session.kind})`);
   console.log(`  Host key:    ${HOST_KEY}`);
+  if (hostKeyIsTemporary()) {
+    console.log('');
+    console.log('  ** HOST_KEY is not set, so this key was invented just now. **');
+    console.log('  It is kept in data/, which a host with no permanent disk wipes');
+    console.log('  on every deploy — so the next deploy will invent a different');
+    console.log('  one and every bookmark you have will stop working. Set HOST_KEY');
+    console.log('  as an environment variable to any long phrase and it stops.');
+  }
   if (!accounts.all.length) {
     console.log('');
     console.log('  No accounts yet. The host key above is the way in, and it can');

@@ -1107,6 +1107,24 @@ anything structural:
 
 ---
 
+## The host key rotates on every deploy unless HOST_KEY is set
+
+This locked him out of his own console, on his phone, the first time he went to
+make an account — so it is worth knowing before anything else on the live app.
+
+`hostKey()` in `src/config.js` uses `HOST_KEY` when it is set, and otherwise
+**invents one and writes it to `data/`** — which on Render's free tier is empty
+again after every deploy. So each deploy silently hands out a different key and
+every bookmark stops working, with nothing on screen explaining why. The startup
+banner now says so (`hostKeyIsTemporary()`), because "failure messages have to
+name the cause" applies to setup as much as to generation.
+
+**If he says his bookmark stopped working, this is why.** The current key is in
+the Render startup banner on the `Host key:` line. The fix is one environment
+variable and it is step A of TODO.md.
+
+---
+
 ## The host's deployment
 
 - Live app: **https://musicquizapp.onrender.com**
@@ -1151,6 +1169,14 @@ game, their own join code, their own photo wall and read-only access to the
 pack library. Still shared, and still to do: the invoice book (which also does
 not survive a deploy yet), the night archive and the advert slides. See "A room
 per quizmaster" above.
+
+**Nobody has actually made an account yet.** He started on his phone, got as far
+as the console asking for a host key, and stopped to do it on the MacBook. Three
+things have to happen in this order, and they are the first thing in TODO.md:
+set `HOST_KEY` on Render (or he is locked out again after the next deploy), set
+up the private repo (or the accounts are wiped by it), then make the owner
+account from the Console panel and add quizmasters for himself and Rob. Until
+then the host key is the only way in, and it still works.
 
 (An earlier version of this line named `claude/new-session-jzx988`. That branch
 is gone — see **Where to push**.)
