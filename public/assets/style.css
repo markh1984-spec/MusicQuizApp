@@ -2493,6 +2493,48 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
    to be told apart from the back of a room, which matters more than the
    palette being tasteful. */
 
+/* ---- My account.
+
+   Everything about the person rather than about a pack or a night. Laid out as
+   plain rows of label-over-value, because most of it is a STATEMENT — what you
+   are on, what the room sees — and only two things on the page are controls.
+   Making the statements look like inputs is how somebody comes away thinking
+   they turned invoicing off when they cancelled a subscription. */
+.acct-grid {
+  display: flex; flex-wrap: wrap; gap: 22px 40px;
+  margin-bottom: 12px;
+}
+.acct-val { font-size: 17px; font-weight: 800; margin-top: 3px; }
+.acct-val.good { color: var(--good); }
+.acct-val.bad { color: var(--bad); }
+.acct-val.brand-preview {
+  background: linear-gradient(100deg, var(--hot), var(--hot-2) 70%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.acct-note { margin-top: 4px; }
+.acct-note.bad { color: var(--bad); }
+.acct-actions { margin-top: 14px; }
+.acct-missing { margin: 6px 0 0; padding-left: 20px; font-size: 12.5px; color: var(--ink-dim); }
+.acct-missing li { margin-bottom: 4px; }
+
+/* The only real switches on the page, so they are the only things that look
+   like switches. A whole row is the target — a 14px tickbox is not something
+   to aim at on a phone in a car park. */
+.acct-toggles { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.acct-toggle {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--panel-line);
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+}
+.acct-toggle:hover { background: rgba(255, 255, 255, 0.07); }
+.acct-toggle input { margin-top: 2px; width: 17px; height: 17px; accent-color: var(--hot); flex: 0 0 auto; }
+.acct-toggle span { min-width: 0; }
+
+.acct-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+
 /* ---- the colour picker on the console.
 
    The swatches are the colours themselves, not their names: "Orchid" means

@@ -10,7 +10,7 @@
 import { esc, node, postJson, brandLink, binIcon, hatSwitch } from './client.js';
 import { paintScheme } from './schemes.js';
 import { balanceAnswers } from './balance.js';
-import { FEATURES } from './plans.js';
+import { FEATURES, PLANS } from './plans.js';
 
 const mainEl = document.getElementById('main');
 const runningEl = document.getElementById('runningNow');
@@ -229,6 +229,7 @@ const TABS = [
   },
   {
     id: 'adverts',
+    hideable: true,
     needs: FEATURES.ADVERTS,
     label: 'Adverts',
     blurb: 'Slides for between rounds. One set per venue, reused every week.',
@@ -237,6 +238,7 @@ const TABS = [
   },
   {
     id: 'photos',
+    hideable: true,
     needs: FEATURES.PHOTOS,
     label: 'Photos',
     blurb: 'Everything the room sent, foldered by night.',
@@ -245,6 +247,7 @@ const TABS = [
   },
   {
     id: 'invoices',
+    hideable: true,
     needs: FEATURES.INVOICES,
     label: 'Invoices',
     blurb: 'Bill for a night before you have left the car park.',
@@ -255,10 +258,19 @@ const TABS = [
   },
   {
     id: 'past',
+    hideable: true,
     label: 'Past nights',
     blurb: 'Results are saved when a game finishes.',
     count: () => (library.archive || []).length,
     render: () => archiveSection(library.archive || []),
+  },
+  {
+    id: 'account',
+    label: 'My account',
+    blurb: 'Your name, your colours, what you are on, and everything else in one place.',
+    // Deliberately NOT hideable: it is where the hidden ones are turned back
+    // on, so hiding it would be a door that locks behind you.
+    render: () => accountSection(),
   },
 ];
 
@@ -276,7 +288,12 @@ function currentTab() {
   const wanted = new URL(location.href).searchParams.get('tab')
     || localStorage.getItem(TAB_STORE)
     || 'quiz';
-  return TABS.some((t) => t.id === wanted) ? wanted : 'quiz';
+  // A tab that has since been put away must not leave the page on something
+  // with no tab lit — the last thing you looked at is remembered, and hiding
+  // it is exactly when you would land back here.
+  const shown = visibleTabs();
+  if (shown.some((t) => t.id === wanted)) return wanted;
+  return shown.some((t) => t.id === 'quiz') ? 'quiz' : (shown[0] || { id: 'account' }).id;
 }
 
 /**
@@ -335,16 +352,247 @@ function render() {
     runningPanel(running),
     tabBar(active),
     tabBody(active),
-    ...schemePanel(),
   );
+  showActiveTab();
+}
+
+/**
+ * Bring the lit tab into view on a phone.
+ *
+ * The tab bar scrolls sideways on a narrow screen, and the tabs on the end —
+ * Past nights, My account — are off the right of it. Tapping one changed the
+ * page underneath while the tab you had just pressed stayed out of sight, so
+ * the bar still looked like it was showing Music Bingo. On a phone that reads
+ * as "did that work?" and gets tapped again.
+ *
+ * The bar's own `scrollLeft` rather than `scrollIntoView`, which would also
+ * scroll the PAGE — and jumping the whole console down to the tab bar on every
+ * render is a worse fault than the one being fixed.
+ */
+function showActiveTab() {
+  const bar = mainEl.querySelector('.tabbar');
+  const on = bar && bar.querySelector('.tab.on');
+  if (!bar || !on) return;
+  const barBox = bar.getBoundingClientRect();
+  const tabBox = on.getBoundingClientRect();
+  if (tabBox.left >= barBox.left && tabBox.right <= barBox.right) return;   // already there
+  // Centred when there is room, so the tabs either side of it are visible too
+  // and it is obvious the bar scrolls at all.
+  bar.scrollLeft += (tabBox.left - barBox.left) - (barBox.width - tabBox.width) / 2;
+}
+
+/* ========================================================== MY ACCOUNT
+ *
+ * Everything about YOU, rather than about a pack or a night: your name, your
+ * colours, what you are subscribed to, which tabs you want on screen, and the
+ * links to the rest of the app that were otherwise scattered.
+ *
+ * **The rule this page is built around: nothing here grants anything.**
+ *
+ * "Which features do I want" is two different questions and they must not share
+ * a switch. What you have PAID for is the plan and the add-ons, it is set by
+ * the owner, and there is no payment processor wired up yet — so a tick box
+ * that turned invoicing on would be the paywall being handed to the customer.
+ * What you want to LOOK at is a preference, it can only ever take a tab away,
+ * and it is stored under `prefs`. This page shows the first as a statement and
+ * offers the second as a switch, and the two are visibly different things.
+ */
+function accountSection() {
+  const wrap = document.createDocumentFragment();
+  wrap.appendChild(youPanel());
+  wrap.appendChild(schemePanel()[0] || node('<span></span>'));
+  wrap.appendChild(planPanel());
+  wrap.appendChild(tabPrefsPanel());
+  wrap.appendChild(linksPanel());
+  return wrap;
+}
+
+/** Who you are, and what the room sees when you run a night. */
+function youPanel() {
+  const name = (me && (me.name || me.email)) || 'the host key';
+  const el = node(`
+    <div class="panel">
+      <h3>You</h3>
+      <div class="acct-grid">
+        <div><div class="tiny">Name</div><div class="acct-val">${esc((me && me.name) || '—')}</div></div>
+        <div><div class="tiny">Email</div><div class="acct-val">${esc((me && me.email) || '—')}</div></div>
+        <div><div class="tiny">On your projector</div><div class="acct-val brand-preview">${esc(library.brand || '')}</div></div>
+      </div>
+      <div class="tiny acct-note">The big screen and every phone in your room say this. It is your
+        first name and the app's, so it matches how you introduce yourself.</div>
+      ${me && !me.bootstrap ? '<div class="row acct-actions"><button class="minor" id="acctPw">Change your password</button></div>' : ''}
+    </div>`);
+
+  el.querySelector('#acctPw')?.addEventListener('click', async () => {
+    const current = prompt('Your current password');
+    if (!current) return;
+    const next = prompt('Your new password — 10 characters or more');
+    if (!next) return;
+    try {
+      const res = await fetch('/api/me/password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ current, password: next }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Could not change it');
+      // Changing a password signs every other session out, this one included.
+      alert('Changed. You will need to sign in again.');
+      location.href = '/login';
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+  void name;
+  return el;
+}
+
+/**
+ * What you are on. READ ONLY, and that is deliberate.
+ *
+ * Turning an add-on on for yourself would be the shop with no till. When
+ * payments are wired up this is where "add it" goes, and it will talk to a
+ * processor rather than to `accounts.update()`.
+ */
+/*
+ * The reasons, not the feature ids.
+ *
+ * `missing` is one entry per FEATURE, so the admin add-on arrives three times
+ * (invoices, calendar, marketing) with the same sentence on each — and the
+ * sentence already names the add-on and says what it does. Printing
+ * "admin.invoices" in front of it is an internal identifier on a page a
+ * customer reads, three times over.
+ */
+const dedupe = (list) => [...new Set(list)];
+
+function planPanel() {
+  const ent = (me && me.entitlements) || { features: [], missing: [] };
+  const plan = ent.comped ? 'Everything, comped'
+    : ent.role === 'owner' ? 'Owner'
+    : `${(PLANS[ent.plan] || PLANS.basic).label}${(ent.addons || []).length ? ` + ${ent.addons.join(' + ')}` : ''}`;
+  const status = ent.status || 'active';
+  const bad = status === 'past_due' || status === 'cancelled';
+
+  const el = node(`
+    <div class="panel">
+      <h3>What you are on</h3>
+      <div class="acct-grid">
+        <div><div class="tiny">Plan</div><div class="acct-val">${esc(plan)}</div></div>
+        <div><div class="tiny">Subscription</div>
+          <div class="acct-val ${bad ? 'bad' : 'good'}">${esc(status.replace('_', ' '))}</div></div>
+      </div>
+      ${bad ? `<div class="tiny acct-note bad"><b>A lapsed subscription never interrupts a night.</b>
+        Everything a running game touches keeps working — it is starting a NEW one that stops.</div>` : ''}
+      ${ent.missing && ent.missing.length ? `
+        <div class="tiny acct-note">Not included on your plan:</div>
+        <ul class="acct-missing">
+          ${dedupe(ent.missing.map((m) => m.why)).map((why) => `<li>${esc(why)}</li>`).join('')}
+        </ul>
+        <div class="tiny acct-note">Adding one is not something you can do from here yet —
+          ask the owner and it goes on the same login.</div>`
+        : '<div class="tiny acct-note">You have everything your plan offers.</div>'}
+    </div>`);
+  return el;
+}
+
+/**
+ * Which tabs you want on screen.
+ *
+ * ONLY offers tabs this account already has, and can only ever take one away —
+ * see the note at the top of this section. A quizmaster who never invoices does
+ * not want an Invoices tab, and that is the whole feature.
+ */
+function tabPrefsPanel() {
+  const hidden = hiddenTabs();
+  const offer = TABS.filter((t) => t.hideable && (!t.needs || can(t.needs)));
+
+  if (!offer.length) {
+    return node(`
+      <div class="panel">
+        <h3>What you see</h3>
+        <div class="tiny">Nothing to put away yet — the tabs you have are the ones you use.</div>
+      </div>`);
+  }
+
+  const el = node(`
+    <div class="panel">
+      <h3>What you see</h3>
+      <div class="tiny">Tabs you never use can be put away. It only changes what is on
+        YOUR screen — nothing is turned off and nothing is cancelled, so you can
+        put one back any time.</div>
+      <div class="acct-toggles">
+        ${offer.map((t) => `
+          <label class="acct-toggle">
+            <input type="checkbox" data-tab="${esc(t.id)}" ${hidden.includes(t.id) ? '' : 'checked'}>
+            <span><b>${esc(t.label)}</b><br><span class="tiny">${esc(t.blurb)}</span></span>
+          </label>`).join('')}
+      </div>
+    </div>`);
+
+  for (const box of el.querySelectorAll('input[type=checkbox]')) {
+    box.addEventListener('change', async () => {
+      const next = [...el.querySelectorAll('input[type=checkbox]')]
+        .filter((b) => !b.checked).map((b) => b.dataset.tab);
+      try {
+        const res = await fetch(keyed('/api/me/prefs'), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
+          body: JSON.stringify({ hiddenTabs: next }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Could not save that');
+        library.prefs = data.prefs;
+        render();
+      } catch (err) {
+        box.checked = !box.checked;
+        alert(err.message);
+      }
+    });
+  }
+  return el;
+}
+
+/**
+ * Everywhere else in the app, in one place.
+ *
+ * These existed already but were scattered — two on the running panel, one in
+ * a tab header, and the join link nowhere at all unless a game was up. A hub
+ * is worth having precisely because you do not want to remember which page
+ * each of them was on five minutes before a gig.
+ */
+function linksPanel() {
+  const running = library.running || {};
+  const code = running.joinCode || '';
+  const play = code ? `/play?g=${encodeURIComponent(code)}` : '/play';
+
+  const el = node(`
+    <div class="panel">
+      <h3>Everything else</h3>
+      <div class="acct-links">
+        <a class="minor" href="${esc(linkTo('/host'))}">Your control view</a>
+        <a class="minor" href="${esc(linkTo('/screen'))}" target="_blank" rel="noopener">The big screen</a>
+        <a class="minor" href="${esc(play)}" target="_blank" rel="noopener">The join page${code ? ` (${esc(code)})` : ''}</a>
+        ${can(FEATURES.CATALOGUE) ? `<a class="minor" href="${esc(linkTo('/editor'))}">The pack editor</a>` : ''}
+        ${me && me.role === 'owner' ? '<a class="minor" href="/owner">The owner console</a>' : ''}
+        ${me && !me.bootstrap ? '<button class="minor" id="acctOut">Sign out</button>' : ''}
+      </div>
+      ${code ? `<div class="tiny acct-note">Your players use <b>${esc(play)}</b> — your own code, not
+        anybody else's. The QR on your big screen already has it built in.</div>` : ''}
+    </div>`);
+
+  el.querySelector('#acctOut')?.addEventListener('click', async () => {
+    await fetch('/api/sign-out', { method: 'POST' });
+    location.href = '/login';
+  });
+  return el;
 }
 
 /**
  * Pick your two colours.
  *
- * At the BOTTOM, under everything, because it is a thing you do once and then
- * never again — a setting that big and near the top would be competing with
- * Launch every time you open the page.
+ * On the My account tab, because it is a thing about YOU rather than about a
+ * pack or a night. It spent a while at the bottom of every tab, which is a
+ * setting following you around asking to be changed.
  *
  * The swatches are the colours themselves rather than their names. "Orchid"
  * means nothing until you have seen it, and the whole point is choosing
@@ -543,7 +791,21 @@ function process_repo(gen) {
  * include at all is simply absent.
  */
 function visibleTabs() {
-  return TABS.filter((tab) => !tab.needs || can(tab.needs) || whyNotHere(tab.needs));
+  const hidden = hiddenTabs();
+  return TABS.filter((tab) => !tab.needs || can(tab.needs) || whyNotHere(tab.needs))
+    // …and then whatever this account has chosen to put away. The order is the
+    // point: entitlement first, preference second. A preference can only ever
+    // remove a tab you already had, so it can never be a way to reach one you
+    // have not paid for. `can()` is not consulted again after this.
+    .filter((tab) => !hidden.includes(tab.id));
+}
+
+/** The tabs this account has put away. Cosmetic — see `setPrefs` in accounts.js. */
+function hiddenTabs() {
+  const list = (library && library.prefs && library.prefs.hiddenTabs) || [];
+  // The account tab can never be hidden, whatever is stored — it is the way
+  // back to everything else, and a stale value must not lock somebody out.
+  return list.filter((id) => id !== 'account');
 }
 
 function tabBar(active) {
@@ -560,7 +822,10 @@ function tabBar(active) {
     }
     // Each tab says how to count itself. It used to fall back to the archive
     // length, which was right for one tab by accident and wrong for any other.
-    const count = tab.count ? tab.count() : (tab.packs() || []).length;
+    // A tab with NEITHER — My account — simply wears no badge, rather than the
+    // whole page dying on `tab.packs is not a function`, which is how the
+    // account tab arrived.
+    const count = tab.count ? tab.count() : (tab.packs ? (tab.packs() || []).length : 0);
     const button = node(`
       <button class="tab ${tab.id === active ? 'on' : ''}" role="tab" data-tab="${tab.id}">
         ${esc(tab.label)}${count ? `<span class="tabcount">${count}</span>` : ''}
@@ -2035,7 +2300,12 @@ function whenish(ts) {
  * was asked for a key they had never been given and could not get.
  */
 load().catch((err) => {
-  if (!hostKey) return askForKey();
+  // Say what actually went wrong, always. This used to swallow the error and
+  // draw the host-key box, so a bug anywhere in the page looked exactly like a
+  // wrong key — which sent me hunting through the server for a 401 that was
+  // never there. Failure messages have to name the cause.
+  console.error('[console] could not load:', err);
+  if (!hostKey) return askForKey(err && err.message ? `Something went wrong loading the console: ${err.message}` : '');
   mainEl.replaceChildren(node(`<div class="panel"><h3>Could not load</h3><div class="tiny">${esc(err.message)}</div></div>`));
 });
 

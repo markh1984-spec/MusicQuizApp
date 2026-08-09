@@ -689,6 +689,9 @@ async function handleGet(req, res, url, route) {
     return sendJson(res, 200, {
       brand: brandForRoom(roomForHost(req, url)),
       scheme: schemeForRoom(roomForHost(req, url)),
+      // What this account has chosen to look at. Cosmetic, and read ONLY by
+      // the browser — nothing here decides what anybody is allowed to do.
+      prefs: (me && me.prefs) || {},
       // Every colour on offer, so the console can draw the picker without
       // keeping its own copy of the list and drifting from the stylesheet.
       schemes: SCHEMES,
@@ -1251,6 +1254,29 @@ async function handleWrite(req, res, url, route) {
     // the projector and every phone, without anybody reloading anything.
     pushState(rooms.get(roomIdFor(account)));
     return sendJson(res, 200, { ok: true, scheme: saved.scheme }), true;
+  }
+
+  /*
+   * What you choose to LOOK at — never what you are allowed to do.
+   *
+   * A quizmaster who never invoices does not want an Invoices tab, and that is
+   * all this is. It can only ever HIDE something the account already has:
+   * `allowed()` does not read prefs and never will, so there is no way for a
+   * setting on this page to hand anybody a feature. See `setPrefs()`.
+   */
+  if (route === '/api/me/prefs' && req.method === 'PUT') {
+    const account = whoIs(req, url);
+    if (!account) return sendJson(res, 401, { error: 'Sign in first' }), true;
+    if (account.bootstrap) {
+      return sendJson(res, 400, {
+        error: 'The host key is not an account, so there is nothing to remember this against. Sign in to change it.',
+      }), true;
+    }
+    const body = await readJson(req);
+    const saved = accounts.setPrefs(account.id, body);
+    if (!saved) return sendJson(res, 404, { error: 'No such account' }), true;
+    await backUpAccounts();
+    return sendJson(res, 200, { ok: true, prefs: saved.prefs || {} }), true;
   }
 
   // Your own password. The old one is required even though you are signed in:

@@ -252,6 +252,41 @@ export class Accounts {
   }
 
   /**
+   * What this account chooses to LOOK at. Never what it is allowed to do.
+   *
+   * **This is the load-bearing distinction and the whole reason prefs are a
+   * separate method from `update()`.** `update()` sets the plan, the add-ons
+   * and the subscription status — what somebody has PAID for, owner only. This
+   * sets which of the things they already have they want on screen, and it can
+   * only ever take something away.
+   *
+   * So a hidden tab is a tidier console and nothing else: `allowed()` in
+   * server.js never reads this, and there is a test that hiding invoicing does
+   * not change a single answer `can()` gives. Get that backwards and the
+   * paywall becomes a checkbox the customer ticks.
+   *
+   * Ids are not checked against a list of tabs on purpose — the tabs live in
+   * the browser, a stale id is simply a tab that no longer exists, and an
+   * account that will not save because a tab was renamed is a worse bug than
+   * a leftover string.
+   */
+  setPrefs(id, patch = {}) {
+    const account = this.find(id);
+    if (!account) return null;
+    const prefs = { ...(account.prefs || {}) };
+    if (patch.hiddenTabs !== undefined) {
+      prefs.hiddenTabs = [...new Set(
+        (Array.isArray(patch.hiddenTabs) ? patch.hiddenTabs : [])
+          .map((t) => String(t).slice(0, 40))
+          .filter(Boolean),
+      )].slice(0, 40);
+    }
+    account.prefs = prefs;
+    this.save();
+    return safe(account);
+  }
+
+  /**
    * Close an account without destroying the record.
    *
    * Deleting one would take their invoice history and their packs with it, and

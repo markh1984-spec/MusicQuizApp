@@ -13,7 +13,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { Accounts, verify, hashPassword, checkPassword, normaliseEmail, safe } from '../src/accounts.js';
-import { FEATURES } from '../public/assets/plans.js';
+import { FEATURES, can } from '../public/assets/plans.js';
 
 const AT = Date.parse('2026-08-07T20:00:00.000Z');
 
@@ -379,4 +379,89 @@ test('a corrupt or empty backup is refused rather than believed', () => {
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
+});
+
+// ------------------------------------------------- colours and preferences
+
+/*
+ * THE ONE THAT MATTERS ON THE MY ACCOUNT PAGE.
+ *
+ * That page shows two things side by side: what you are subscribed to, and
+ * which tabs you want on screen. They look similar and they are nothing alike
+ * — one is what you have paid for and one is what you feel like looking at. If
+ * a preference could ever grant a feature, the paywall would be a tick box the
+ * customer ticks for themselves.
+ *
+ * So: hide every tab there is, then check the account can do exactly what it
+ * could before. `allowed()` in server.js never reads prefs, and this is the
+ * test that fails if somebody ever wires it up.
+ */
+test('a display preference can never grant — or remove — a feature', () => {
+  withBook((book) => {
+    const made = book.create({ email: 'rob@example.com', password: PASSWORD, name: 'Rob', addons: ['admin'] });
+    const before = book.find(made.id);
+    const had = [...(before.addons || [])];
+
+    book.setPrefs(made.id, { hiddenTabs: ['invoices', 'photos', 'adverts', 'past', 'quiz', 'bingo'] });
+
+    const after = book.find(made.id);
+    assert.deepEqual(after.addons, had, 'hiding a tab changed what the account holds');
+    assert.equal(after.plan, before.plan);
+    assert.equal(after.status, before.status);
+    assert.equal(after.comped, before.comped);
+    assert.equal(after.role, before.role);
+    // And the thing the tabs are actually gated on is untouched.
+    assert.equal(can(after, FEATURES.INVOICES), true, 'hiding the Invoices tab took the add-on away');
+    assert.equal(can(after, FEATURES.QUIZ), true);
+  });
+});
+
+test('a preference cannot smuggle in a feature it does not hold', () => {
+  withBook((book) => {
+    const made = book.create({ email: 'rob@example.com', password: PASSWORD, name: 'Rob' });
+    // Nothing in this shape is read as an entitlement, whatever it is called.
+    book.setPrefs(made.id, {
+      hiddenTabs: [],
+      addons: ['admin'], plan: 'basic', comped: true, status: 'active', role: 'owner',
+    });
+    const after = book.find(made.id);
+    assert.deepEqual(after.addons, [], 'setPrefs handed out an add-on');
+    assert.equal(after.comped, false);
+    assert.equal(after.role, 'quizmaster');
+    assert.equal(can(after, FEATURES.INVOICES), false, 'a preference bought the admin add-on');
+    assert.equal(can(after, FEATURES.CATALOGUE), false);
+  });
+});
+
+// The account tab is where hidden tabs are turned back on. The browser filters
+// it out too, but a stored value that could lock somebody out of the way back
+// is worth not having in the first place.
+test('preferences are tidied, capped and deduplicated', () => {
+  withBook((book) => {
+    const made = book.create({ email: 'rob@example.com', password: PASSWORD });
+    const saved = book.setPrefs(made.id, { hiddenTabs: ['photos', 'photos', '', 'x'.repeat(200)] });
+    assert.deepEqual(saved.prefs.hiddenTabs.slice(0, 2), ['photos', 'x'.repeat(40)]);
+    assert.equal(saved.prefs.hiddenTabs.length, 2, 'an empty id or a duplicate was kept');
+  });
+});
+
+test('a colour is yours, and an unknown one lands on the ordinary scheme', () => {
+  withBook((book) => {
+    const made = book.create({ email: 'rob@example.com', password: PASSWORD });
+    assert.equal(made.scheme, 'sunset', 'a new account has no colour at all');
+    assert.equal(book.setScheme(made.id, 'ultra').scheme, 'ultra');
+    // From a dropdown, so a value that is not on the list is not worth an error.
+    assert.equal(book.setScheme(made.id, 'chartreuse').scheme, 'sunset');
+  });
+});
+
+// The owner has no subscription, so `update()` throws for them outright — but
+// a colour is not a subscription and the owner wants one too.
+test('the owner can pick a colour even though they have no plan to change', () => {
+  withBook((book) => {
+    const owner = book.create({ email: 'mark@example.com', password: PASSWORD, role: 'owner' });
+    assert.throws(() => book.update(owner.id, { plan: 'basic' }));
+    assert.equal(book.setScheme(owner.id, 'lagoon').scheme, 'lagoon');
+    assert.equal(book.setPrefs(owner.id, { hiddenTabs: ['past'] }).prefs.hiddenTabs[0], 'past');
+  });
 });

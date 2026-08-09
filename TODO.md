@@ -380,6 +380,14 @@ The Console says so in red if it is not set up.
 
 ## What is new since you last read this
 
+- **A "My account" tab** on the console — your name, your colours, what you are
+  subscribed to, which tabs you want on screen, and links to your control view,
+  your big screen and your join page all in one place. The colour picker moved
+  here from the bottom of every tab.
+  **Note what it deliberately does NOT do:** you cannot turn a paid feature on
+  for yourself there. Tabs you never use can be *put away* — that only changes
+  what is on your screen, nothing is cancelled and nothing is bought. Adding an
+  add-on stays yours to do from the owner page until payments are wired up.
 - **The app is called Quiztopia**, and each night is branded from whoever is
   running it — your projector says **"Mark's Quiztopia"**, Rob's says **"Rob's
   Quiztopia"**. First names only, the way you say it on the mic. ⚠️ If you have

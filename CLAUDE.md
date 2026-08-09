@@ -848,6 +848,59 @@ typo is dropped rather than quietly becoming a round of general knowledge.
 
 ---
 
+## My account — and the line that page is built along
+
+A tab on the console: your name, your colours, what you are subscribed to,
+which tabs you want on screen, and links to everything else. It exists because
+those were scattered — the colour picker sat at the bottom of every tab, and
+the join link, the big screen and the control view were on three different
+panels.
+
+**The rule the page is built around: NOTHING ON IT GRANTS ANYTHING.**
+
+"Which features do I want" is two questions wearing one coat, and they must
+never share a switch:
+
+| | What it is | Who sets it | Where it lives |
+|---|---|---|---|
+| **What you have** | plan, add-ons, subscription status | the OWNER | `plan` / `addons` / `status`, via `accounts.update()` |
+| **What you look at** | which tabs are on screen | you | `prefs.hiddenTabs`, via `accounts.setPrefs()` |
+
+The page shows the first as a **statement** and offers the second as a
+**switch**, and they are drawn differently on purpose — a tick box that turned
+invoicing on would be the paywall handed to the customer, and there is no
+payment processor wired up to charge for it.
+
+So `setPrefs()` is deliberately a separate method from `update()`: it writes
+only under `prefs`, it ignores anything shaped like an entitlement, and
+**`allowed()` in server.js never reads it.** `visibleTabs()` filters by `can()`
+FIRST and by preference second, so a preference can only ever remove a tab you
+already had. There are tests that hiding every tab changes nothing `can()`
+answers, and that a `prefs` payload carrying `addons`, `comped` or `role` hands
+out none of them.
+
+**The account tab itself can never be hidden.** It is where the others are
+turned back on, so hiding it would be a door that locks behind you — filtered
+out in `hiddenTabs()` whatever is stored, not just left off the offered list.
+
+Two things this found, both of which had been there a while:
+
+- **`tabBar()` assumed every tab had `packs()` or `count()`.** A tab with
+  neither took the whole console down with `tab.packs is not a function`.
+- **`load().catch()` swallowed the error and drew the host-key box**, so a bug
+  anywhere on the page looked exactly like a wrong key. It logs the cause now
+  and says so on screen. That is the rule about failure messages naming the
+  cause, applied to the console itself.
+
+**The lit tab is scrolled into view after every render** (`showActiveTab()`).
+The bar scrolls sideways on a phone and the tabs on the end were off the right
+of it, so tapping one changed the page while the tab you pressed stayed out of
+sight — which reads as "did that work?" and gets tapped again. It moves the
+BAR's own `scrollLeft`, never `scrollIntoView`, which would jump the whole page
+down to the tab bar on every render.
+
+---
+
 ## The name on it, and whose colours it wears
 
 `src/branding.js` and `public/assets/schemes.js`. Two settings, one idea: **a
@@ -1428,7 +1481,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 536 tests, no network, injected clocks — must stay green
+npm test        # 541 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -1506,8 +1559,8 @@ Most recently, and all of it live: **the Owner | Quizmaster switch** in the top
 right of the console and the owner page; **Quiztopia**, with each night branded
 from the quizmaster whose room it is; and **six colour schemes** on the account,
 so a subscriber does not have to put somebody else's pink-and-orange on a
-projector with their own name above it. All on **`MusicQuizApp`**. 536 tests
-green.
+projector with their own name above it; and a **My account** tab, where all
+of that now lives. All on **`MusicQuizApp`**. 541 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on
