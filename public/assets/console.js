@@ -86,9 +86,19 @@ async function load() {
   // A signed-in account needs no key; the key is the way in for anybody still
   // using a `?key=` link from before there were accounts.
   try {
-    const who = await (await fetch('/api/me')).json();
+    // Asked WITH the key, or the answer is wrong in the one case that matters:
+    // signed in as the owner on the laptop you run gigs from. Without the key
+    // the server sees only the cookie, says "owner", and the page draws itself
+    // with no Launch button on any pack — while the API behind it would have
+    // let the key launch perfectly well.
+    const who = await (await fetch(keyed('/api/me'))).json();
     me = who.signedIn ? who.account : null;
-    if (me && me.role === 'owner') { location.href = '/owner'; return; }
+    // The owner page is where an owner belongs — but NOT if they arrived with a
+    // host key. That key is how a night gets run, and on the one laptop that is
+    // both the dev machine and the gig machine, bouncing away from it would
+    // take the Launch button away minutes before a quiz. A key in the URL or
+    // remembered in this browser means "I am here to run something".
+    if (me && me.role === 'owner' && !hostKey) { location.href = '/owner'; return; }
   } catch {
     me = null;
   }

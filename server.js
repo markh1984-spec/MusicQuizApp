@@ -210,10 +210,26 @@ function cookie(req, name) {
  * account is not written to disk and cannot sign in — it exists only so the
  * old `?key=` links keep working while the accounts are being set up.
  */
+/**
+ * Who is making this request.
+ *
+ * **The host key beats a signed-in account, deliberately, and the order here
+ * matters more than it looks.** The owner account has no quiz controls at all —
+ * that is the design, the owner writes and sells packs and does not run nights.
+ * So on the one laptop that is both the dev machine and the gig machine,
+ * signing in as the owner would otherwise take the Launch button away from the
+ * `?key=` bookmark that has been running quiz nights for months. Minutes before
+ * a gig, with no way back except signing out.
+ *
+ * It gives nothing away: the key already grants every feature in the app, so
+ * preferring it cannot widen what the holder can do. It just means the way in
+ * that predates accounts keeps working no matter what else is going on in the
+ * browser, which is the whole reason it is still here.
+ */
 function whoIs(req, url) {
+  if (isHostKey(req, url)) return BOOTSTRAP;
   const account = accounts.fromToken(cookie(req, SESSION_COOKIE));
   if (account) return account;
-  if (isHostKey(req, url)) return BOOTSTRAP;
   return null;
 }
 

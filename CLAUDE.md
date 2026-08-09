@@ -930,6 +930,31 @@ SHA-256 of a session token is stored, so a copy of the file is not a set of
 live logins. A wrong password and an unknown address give the identical message,
 or the page cheerfully confirms who has an account here.
 
+### The host key BEATS a signed-in account, and that ordering is load-bearing
+
+`whoIs()` checks the key first. It looks like a detail and it is the difference
+between a gig running and not.
+
+The owner account has no quiz controls at all — that is the design, the owner
+writes and sells packs and does not run nights. But Mark is one person with two
+hats and **one laptop**. The evening he first makes an owner account, that
+browser holds an owner cookie; opening the `?key=` console bookmark that has run
+quiz nights for months would then bounce him to the owner page, which has no
+Launch button anywhere. Minutes before a gig, with no way back except working
+out that he had to sign out.
+
+It gives nothing away: the key already grants every feature, so preferring it
+cannot widen what its holder can do. It only means the way in that predates
+accounts keeps working whatever else is going on in the browser — which is the
+whole reason it is still here.
+
+Two matching rules on the browser side, and the second was found by testing the
+first: the console does not redirect an owner to `/owner` **if a key is
+present**, and it asks `/api/me` **with the key on it**. Without that second one
+the API would happily launch while the page drew no Launch buttons at all,
+because the browser copy of `plans.js` had been told it was the owner. There
+are tests that the owner cannot run a night and that the host-key identity can.
+
 ### The host key still works, and that is deliberate
 
 There are gigs in the diary and `?key=…` on somebody's phone, so the day
@@ -1091,7 +1116,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 488 tests, no network, injected clocks — must stay green
+npm test        # 490 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -1162,7 +1187,7 @@ foundation are done and tested. Since then: the photo props, the big photo
 moment, the double-tap and early-reveal guards, the shared portrait library
 with its style and quality settings, the leaving-the-app note, and the fastest
 finger's face on the reveal, and **a room per quizmaster** — so a second login
-is now safe to hand out. All on **`MusicQuizApp`**. 488 tests green.
+is now safe to hand out. All on **`MusicQuizApp`**. 490 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall and read-only access to the

@@ -113,3 +113,37 @@ test('a comped account is marked as such, so the owner console can see why it pa
   assert.equal(entitlements(mark).comped, true);
   assert.equal(entitlements(basic).comped, false);
 });
+
+
+/*
+ * The one that nearly broke a gig.
+ *
+ * The owner account deliberately has no quiz controls: the owner writes and
+ * sells packs and does not run nights. But Mark is one person with two hats and
+ * one laptop, and signing in as the owner on the machine he runs gigs from must
+ * not take the Launch button off his `?key=` bookmark.
+ *
+ * The rule that saves it is in server.js `whoIs()`: the HOST KEY beats a
+ * signed-in account. It gives nothing away, because the key already grants
+ * every feature — it just means the way in that predates accounts keeps working
+ * whatever else is going on in the browser.
+ */
+test('the owner genuinely cannot run a night — that part is on purpose', () => {
+  const owner = { role: 'owner', status: 'active' };
+  assert.equal(can(owner, FEATURES.QUIZ), false);
+  assert.equal(can(owner, FEATURES.BINGO), false);
+  // …and can do the things that ARE the owner's job.
+  assert.equal(can(owner, FEATURES.GENERATE), true);
+  assert.equal(can(owner, FEATURES.SUBSCRIBERS), true);
+});
+
+test('the host key identity can run a night, which is why it must win', () => {
+  // The shape server.js hands to `can()` for a request carrying the host key.
+  const bootstrap = {
+    role: 'quizmaster', plan: 'basic', addons: ['admin', 'stream'],
+    comped: true, status: 'active', bootstrap: true,
+  };
+  assert.equal(can(bootstrap, FEATURES.QUIZ), true);
+  assert.equal(can(bootstrap, FEATURES.BINGO), true);
+  assert.equal(can(bootstrap, FEATURES.LIBRARY), true);
+});
