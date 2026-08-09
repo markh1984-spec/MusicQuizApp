@@ -13,7 +13,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { Accounts, verify, hashPassword, checkPassword, normaliseEmail, safe } from '../src/accounts.js';
-import { FEATURES, can } from '../public/assets/plans.js';
+import { FEATURES, can, featuresFor, activeFeatures } from '../public/assets/plans.js';
 
 const AT = Date.parse('2026-08-07T20:00:00.000Z');
 
@@ -101,7 +101,7 @@ test('rubbish is refused rather than stored', () => {
   withBook((book) => {
     assert.throws(() => book.create({ email: 'not-an-email', password: PASSWORD }), /does not look like an email/);
     assert.throws(() => book.create({ email: 'a@b.com', password: PASSWORD, role: 'wizard' }), /is not a role/);
-    assert.throws(() => book.create({ email: 'a@b.com', password: PASSWORD, plan: 'gold' }), /is not a plan/);
+    assert.throws(() => book.create({ email: 'a@b.com', password: PASSWORD, tier: 'platinum' }), /is not a tier/);
     assert.throws(() => book.create({ email: 'a@b.com', password: PASSWORD, status: 'maybe' }), /is not a subscription status/);
     assert.equal(book.all.length, 0);
   });
@@ -110,7 +110,7 @@ test('rubbish is refused rather than stored', () => {
 test('an owner account has no subscription to change', () => {
   withBook((book) => {
     const owner = book.create({ email: 'owner@example.com', password: PASSWORD, role: 'owner' });
-    assert.equal(owner.plan, undefined);
+    assert.equal(owner.tier, undefined);
     assert.equal(owner.status, undefined);
     assert.throws(() => book.update(owner.id, { status: 'past_due' }), /no subscription/);
     assert.throws(() => book.close(owner.id), /cannot be closed/);
@@ -309,14 +309,59 @@ test('an account carries a payment reference and nothing else', () => {
   });
 });
 
-test('add-ons can be bought and dropped', () => {
+/*
+ * The ladder: Bronze, Silver, Gold, and they stack. Moving somebody up gives
+ * them everything below the new tier as well, which is the whole structure.
+ */
+test('the tier is the subscription, and the tiers stack', () => {
   withBook((book) => {
     const made = book.create({ email: 'dave@example.com', password: PASSWORD, status: 'active' });
-    book.update(made.id, { addons: ['admin', 'nonsense'] });
-    assert.deepEqual(book.find(made.id).addons, ['admin'], 'a made-up add-on is dropped');
-    assert.equal(book.mayStartSomething(safe(book.find(made.id)), FEATURES.INVOICES), true);
-    book.update(made.id, { addons: [] });
+    assert.equal(book.find(made.id).tier, 'bronze', 'a new account starts on the bottom rung');
+    assert.equal(book.mayStartSomething(safe(book.find(made.id)), FEATURES.QUIZ), true);
     assert.equal(book.mayStartSomething(safe(book.find(made.id)), FEATURES.INVOICES), false);
+
+    book.update(made.id, { tier: 'silver' });
+    assert.equal(book.mayStartSomething(safe(book.find(made.id)), FEATURES.INVOICES), true);
+    assert.equal(book.mayStartSomething(safe(book.find(made.id)), FEATURES.QUIZ), true, 'silver lost bronze');
+    assert.equal(book.mayStartSomething(safe(book.find(made.id)), FEATURES.STREAM), false);
+
+    book.update(made.id, { tier: 'gold' });
+    for (const f of [FEATURES.QUIZ, FEATURES.INVOICES, FEATURES.STREAM]) {
+      assert.equal(book.mayStartSomething(safe(book.find(made.id)), f), true, `gold is missing ${f}`);
+    }
+
+    book.update(made.id, { tier: 'bronze' });
+    assert.equal(book.mayStartSomething(safe(book.find(made.id)), FEATURES.INVOICES), false);
+    assert.throws(() => book.update(made.id, { tier: 'platinum' }), /is not a tier/);
+  });
+});
+
+/*
+ * An account written before the ladder existed is sitting on disk and in a
+ * backup. A subscriber silently dropping to Bronze because a field was renamed
+ * is not a migration, it is a bug with a bill attached.
+ */
+test('an account on the old plan-and-add-ons shape reads as the right tier', () => {
+  withBook((book) => {
+    const admin = book.create({ email: 'a@example.com', password: PASSWORD, plan: 'basic', addons: ['admin'], status: 'active' });
+    assert.equal(book.find(admin.id).tier, 'silver', 'the admin add-on was Silver');
+    const stream = book.create({ email: 'b@example.com', password: PASSWORD, plan: 'basic', addons: ['admin', 'stream'], status: 'active' });
+    assert.equal(book.find(stream.id).tier, 'gold', 'streaming was the top of the ladder');
+    const plain = book.create({ email: 'c@example.com', password: PASSWORD, plan: 'basic', addons: [], status: 'active' });
+    assert.equal(book.find(plain.id).tier, 'bronze');
+  });
+});
+
+// Two answers to one question is how the next person to read the file picks
+// the wrong one.
+test('moving a tier clears the old plan and add-on fields', () => {
+  withBook((book) => {
+    const made = book.create({ email: 'dave@example.com', password: PASSWORD, plan: 'basic', addons: ['admin'], status: 'active' });
+    book.update(made.id, { tier: 'gold' });
+    const account = book.find(made.id);
+    assert.equal(account.tier, 'gold');
+    assert.equal(account.plan, undefined);
+    assert.equal(account.addons, undefined);
   });
 });
 
@@ -396,52 +441,64 @@ test('a corrupt or empty backup is refused rather than believed', () => {
  * could before. `allowed()` in server.js never reads prefs, and this is the
  * test that fails if somebody ever wires it up.
  */
-test('a display preference can never grant — or remove — a feature', () => {
+test('switching a feature off never changes what the tier includes', () => {
   withBook((book) => {
-    const made = book.create({ email: 'rob@example.com', password: PASSWORD, name: 'Rob', addons: ['admin'] });
+    const made = book.create({ email: 'rob@example.com', password: PASSWORD, name: 'Rob', tier: 'silver', status: 'active' });
     const before = book.find(made.id);
-    const had = [...(before.addons || [])];
 
-    book.setPrefs(made.id, { hiddenTabs: ['invoices', 'photos', 'adverts', 'past', 'quiz', 'bingo'] });
+    book.setPrefs(made.id, {
+      featuresOff: [FEATURES.INVOICES, FEATURES.PHOTOS, FEATURES.ADVERTS, FEATURES.QUIZ],
+    });
 
     const after = book.find(made.id);
-    assert.deepEqual(after.addons, had, 'hiding a tab changed what the account holds');
-    assert.equal(after.plan, before.plan);
+    assert.equal(after.tier, before.tier, 'a switch changed the tier');
     assert.equal(after.status, before.status);
     assert.equal(after.comped, before.comped);
     assert.equal(after.role, before.role);
-    // And the thing the tabs are actually gated on is untouched.
-    assert.equal(can(after, FEATURES.INVOICES), true, 'hiding the Invoices tab took the add-on away');
+    // ENTITLEMENT is untouched — this is what the server gate asks, and it is
+    // why a switch cannot lock somebody out of their own gig.
+    assert.equal(can(after, FEATURES.INVOICES), true, 'switching invoicing off took the tier away');
     assert.equal(can(after, FEATURES.QUIZ), true);
+    // …while what is ON is a strict subset of it.
+    assert.ok(!activeFeatures(after).includes(FEATURES.INVOICES));
+    assert.ok(featuresFor(after).includes(FEATURES.INVOICES));
+    for (const f of activeFeatures(after)) {
+      assert.ok(featuresFor(after).includes(f), `${f} is on but not entitled`);
+    }
   });
 });
 
-test('a preference cannot smuggle in a feature it does not hold', () => {
+test('a preference cannot smuggle in a feature the tier does not include', () => {
   withBook((book) => {
-    const made = book.create({ email: 'rob@example.com', password: PASSWORD, name: 'Rob' });
-    // Nothing in this shape is read as an entitlement, whatever it is called.
+    const made = book.create({ email: 'rob@example.com', password: PASSWORD, name: 'Rob', tier: 'bronze', status: 'active' });
+    // Nothing in this shape is read as an entitlement, whatever it is called —
+    // and a feature above the tier cannot even be STORED as switched off.
     book.setPrefs(made.id, {
-      hiddenTabs: [],
-      addons: ['admin'], plan: 'basic', comped: true, status: 'active', role: 'owner',
+      featuresOff: [FEATURES.STREAM, FEATURES.INVOICES],
+      tier: 'gold', addons: ['admin'], plan: 'basic', comped: true, status: 'active', role: 'owner',
     });
     const after = book.find(made.id);
-    assert.deepEqual(after.addons, [], 'setPrefs handed out an add-on');
+    assert.equal(after.tier, 'bronze', 'setPrefs moved the tier');
     assert.equal(after.comped, false);
     assert.equal(after.role, 'quizmaster');
-    assert.equal(can(after, FEATURES.INVOICES), false, 'a preference bought the admin add-on');
+    assert.deepEqual(after.prefs.featuresOff, [], 'a feature above the tier was stored');
+    assert.equal(can(after, FEATURES.INVOICES), false, 'a preference bought a tier');
+    assert.equal(can(after, FEATURES.STREAM), false);
     assert.equal(can(after, FEATURES.CATALOGUE), false);
   });
 });
 
-// The account tab is where hidden tabs are turned back on. The browser filters
-// it out too, but a stored value that could lock somebody out of the way back
-// is worth not having in the first place.
-test('preferences are tidied, capped and deduplicated', () => {
+// Switching one off and back on has to actually come back, and a duplicate or
+// an id from a tier they have since dropped must not linger.
+test('switched-off features are deduplicated and kept to what is held', () => {
   withBook((book) => {
-    const made = book.create({ email: 'rob@example.com', password: PASSWORD });
-    const saved = book.setPrefs(made.id, { hiddenTabs: ['photos', 'photos', '', 'x'.repeat(200)] });
-    assert.deepEqual(saved.prefs.hiddenTabs.slice(0, 2), ['photos', 'x'.repeat(40)]);
-    assert.equal(saved.prefs.hiddenTabs.length, 2, 'an empty id or a duplicate was kept');
+    const made = book.create({ email: 'rob@example.com', password: PASSWORD, tier: 'silver', status: 'active' });
+    const saved = book.setPrefs(made.id, {
+      featuresOff: [FEATURES.INVOICES, FEATURES.INVOICES, FEATURES.STREAM, 'made.up'],
+    });
+    assert.deepEqual(saved.prefs.featuresOff, [FEATURES.INVOICES]);
+    assert.deepEqual(book.setPrefs(made.id, { featuresOff: [] }).prefs.featuresOff, []);
+    assert.equal(activeFeatures(book.find(made.id)).includes(FEATURES.INVOICES), true, 'it did not come back');
   });
 });
 

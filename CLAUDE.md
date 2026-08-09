@@ -856,32 +856,71 @@ those were scattered — the colour picker sat at the bottom of every tab, and
 the join link, the big screen and the control view were on three different
 panels.
 
-**The rule the page is built around: NOTHING ON IT GRANTS ANYTHING.**
+### The ladder: Bronze, Silver, Gold, and they STACK
+
+`TIERS` in `plans.js`. Gold includes Silver includes Bronze — one ordered list
+with a `rank`, and **`rank` is what the code compares, never the label and never
+the price.** Adding a fourth tier is one entry with a rank between two existing
+ones and nothing else in the app has to know. `FEATURE_TIER` says which rung
+each feature is on.
+
+**The tiers are the structure; where each feature sits is PROVISIONAL** and so
+are the prices. Moving one is a one-word edit in `FEATURE_TIER`. What is not
+provisional is the rule that decides it, which is the host's own: *anything that
+costs the owner money every time it is used is not in Bronze.*
+
+**Owner-only features are deliberately NOT on the ladder at all.** They are not
+for sale at any price, so putting one on a rung would be offering to sell it.
+There is a test.
+
+The account page draws a section per tier from `ladderFor()`: yours are marked
+and switchable, the ones above show their price and have nothing to press —
+something you can see and cannot use is a thing you might buy.
+
+**A tab has three states, and telling the last two apart is the point.** On;
+above your tier, so greyed with a `+`; or switched off by you, so gone
+completely. A `+` on the third would be the shop trying to sell somebody the
+thing they just put away.
+
+### NOTHING ON THAT PAGE GRANTS ANYTHING
 
 "Which features do I want" is two questions wearing one coat, and they must
 never share a switch:
 
 | | What it is | Who sets it | Where it lives |
 |---|---|---|---|
-| **What you have** | plan, add-ons, subscription status | the OWNER | `plan` / `addons` / `status`, via `accounts.update()` |
-| **What you look at** | which tabs are on screen | you | `prefs.hiddenTabs`, via `accounts.setPrefs()` |
+| **What you have** | the tier, and the subscription status | the OWNER | `tier` / `status`, via `accounts.update()` |
+| **What you have ON** | which of your tier's features you use | you | `prefs.featuresOff`, via `accounts.setPrefs()` |
 
 The page shows the first as a **statement** and offers the second as a
-**switch**, and they are drawn differently on purpose — a tick box that turned
-invoicing on would be the paywall handed to the customer, and there is no
-payment processor wired up to charge for it.
+**switch**, drawn differently on purpose — a tick box that turned invoicing on
+would be the paywall handed to the customer, and there is no payment processor
+wired up to charge for it.
 
-So `setPrefs()` is deliberately a separate method from `update()`: it writes
-only under `prefs`, it ignores anything shaped like an entitlement, and
-**`allowed()` in server.js never reads it.** `visibleTabs()` filters by `can()`
-FIRST and by preference second, so a preference can only ever remove a tab you
-already had. There are tests that hiding every tab changes nothing `can()`
-answers, and that a `prefs` payload carrying `addons`, `comped` or `role` hands
-out none of them.
+**A switch only ever SUBTRACTS.** `setPrefs()` is a separate method from
+`update()`: it writes only under `prefs`, it ignores anything shaped like an
+entitlement, and it will not even store a feature above the account's tier.
+`featuresFor()` is entitlement; `activeFeatures()` is that minus the switches,
+and is what the console draws from. There are tests that switching everything
+off changes nothing `can()` answers, that a `prefs` payload carrying `tier`,
+`comped` or `role` hands out none of them, and that ON is always a subset of
+ENTITLED.
 
-**The account tab itself can never be hidden.** It is where the others are
-turned back on, so hiding it would be a door that locks behind you — filtered
-out in `hiddenTabs()` whatever is stored, not just left off the offered list.
+**`can()` — and therefore `allowed()` on the server — reads entitlement only.**
+Switching something off does not make the API refuse it. That is deliberate: a
+switch on your own account page is about tidiness, and one that could 403 you in
+the middle of a gig is a reliability risk for no benefit, because nobody needs
+protecting from themselves. The console hides it; the server does not slam a
+door on it.
+
+**The My account tab can never be switched off.** It is where the others are
+turned back on, so it has no feature gating it at all.
+
+**An account written before the ladder still reads correctly.** `tierFor()`
+falls back to the old `plan`+`addons` shape — `admin` was Silver, `stream` was
+Gold — because a subscriber silently dropping to Bronze because a field was
+renamed is not a migration, it is a bug with a bill attached. Moving a tier
+deletes the old fields, so an account never carries two answers to one question.
 
 Two things this found, both of which had been there a while:
 
@@ -1481,7 +1520,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 541 tests, no network, injected clocks — must stay green
+npm test        # 549 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -1560,7 +1599,8 @@ right of the console and the owner page; **Quiztopia**, with each night branded
 from the quizmaster whose room it is; and **six colour schemes** on the account,
 so a subscriber does not have to put somebody else's pink-and-orange on a
 projector with their own name above it; and a **My account** tab, where all
-of that now lives. All on **`MusicQuizApp`**. 541 tests green.
+of that now lives, on a **Bronze / Silver / Gold ladder** that the pricing
+will hang off. All on **`MusicQuizApp`**. 549 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on

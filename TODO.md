@@ -380,14 +380,19 @@ The Console says so in red if it is not set up.
 
 ## What is new since you last read this
 
-- **A "My account" tab** on the console — your name, your colours, what you are
-  subscribed to, which tabs you want on screen, and links to your control view,
-  your big screen and your join page all in one place. The colour picker moved
-  here from the bottom of every tab.
-  **Note what it deliberately does NOT do:** you cannot turn a paid feature on
-  for yourself there. Tabs you never use can be *put away* — that only changes
-  what is on your screen, nothing is cancelled and nothing is bought. Adding an
-  add-on stays yours to do from the owner page until payments are wired up.
+- **A "My account" tab** on the console — your name, your colours, what tier you
+  are on, every feature laid out by tier with a switch on each, and links to your
+  control view, your big screen and your join page all in one place.
+- **Three tiers: Bronze (Basic), Silver (Elite), Gold (Pro)**, and they stack —
+  Gold includes Silver includes Bronze. On the owner page each quizmaster now has
+  a Bronze / Silver / Gold picker instead of a row of add-ons.
+  **⚠️ Which feature sits on which tier is a first guess, and so are the prices**
+  (Silver £15, Gold £30). Moving one is a one-line change — tell me where you
+  want them and I will shuffle them.
+  **What a quizmaster can and cannot do there:** they can switch OFF anything on
+  their own tier, which makes it disappear from their console. They cannot switch
+  ON anything above it — that is yours to grant from the owner page, and it stays
+  that way until payments are wired up.
 - **The app is called Quiztopia**, and each night is branded from whoever is
   running it — your projector says **"Mark's Quiztopia"**, Rob's says **"Rob's
   Quiztopia"**. First names only, the way you say it on the mic. ⚠️ If you have

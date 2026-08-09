@@ -61,36 +61,151 @@ export const FEATURES = {
   SUBSCRIBERS: 'owner.subscribers',
 };
 
-const BASIC = [
-  FEATURES.QUIZ, FEATURES.BINGO, FEATURES.LIBRARY,
-  FEATURES.BUY_PACKS, FEATURES.LOOKS, FEATURES.ADVERTS, FEATURES.PHOTOS,
+/**
+ * ============================================================== THE TIERS
+ *
+ * Three of them, and they STACK: Gold includes everything in Silver, which
+ * includes everything in Bronze. That is the whole structure, and it is the
+ * bit worth getting right before arguing about which feature goes where.
+ *
+ * `rank` is what the code actually compares — never the label, never the
+ * price. Adding a fourth tier is one entry here with a rank between two
+ * existing ones, and nothing else in the app has to know.
+ *
+ * **The prices are PROVISIONAL and so is every feature's tier.** The structure
+ * is what is being built; where each feature lands is a commercial decision
+ * still to be made, and moving one is a one-word edit in `FEATURE_TIER` below.
+ */
+export const TIERS = [
+  {
+    id: 'bronze',
+    label: 'Bronze',
+    plan: 'Basic',
+    rank: 0,
+    pence: 0,
+    blurb: 'Everything you need to run a night in a room.',
+  },
+  {
+    id: 'silver',
+    label: 'Silver',
+    plan: 'Elite',
+    rank: 1,
+    pence: 1500,
+    blurb: 'Bronze, plus running it as a business — invoicing and a calendar.',
+  },
+  {
+    id: 'gold',
+    label: 'Gold',
+    plan: 'Pro',
+    rank: 2,
+    pence: 3000,
+    blurb: 'Everything. Silver, plus running a night for a room that is not in the room.',
+  },
 ];
 
-/** The add-ons, and what each one turns on. */
-export const ADDONS = {
-  admin: {
-    id: 'admin',
-    label: 'Admin',
-    blurb: 'Invoicing, and a calendar of the nights you have booked.',
-    features: [FEATURES.INVOICES, FEATURES.CALENDAR, FEATURES.MARKETING],
-  },
-  stream: {
-    id: 'stream',
-    label: 'Online quizzes',
-    blurb: 'Run a night for a room that is not in the room.',
-    features: [FEATURES.STREAM],
-  },
+export const DEFAULT_TIER = 'bronze';
+
+/**
+ * Which tier each feature belongs to.
+ *
+ * **PROVISIONAL — this is the list to argue about, and moving a feature is one
+ * word.** What is NOT provisional is the rule that decides it, which is the
+ * host's own: *anything that costs the owner money every time it is used is
+ * not in Bronze.* Not "is it impressive" — does a subscriber using it put a
+ * line on the owner's bill? So a new round type, a new game, a new look and a
+ * new picture effect are Bronze the day they are written, because they cost
+ * nothing to run. Streaming is Gold because egress is a real per-use cost.
+ *
+ * Owner-only features are deliberately absent: they are not on the ladder at
+ * all, because they are not for sale at any tier.
+ */
+export const FEATURE_TIER = {
+  [FEATURES.QUIZ]: 'bronze',
+  [FEATURES.BINGO]: 'bronze',
+  [FEATURES.LIBRARY]: 'bronze',
+  [FEATURES.BUY_PACKS]: 'bronze',
+  [FEATURES.LOOKS]: 'bronze',
+  [FEATURES.ADVERTS]: 'bronze',
+  [FEATURES.PHOTOS]: 'bronze',
+
+  [FEATURES.INVOICES]: 'silver',
+  [FEATURES.CALENDAR]: 'silver',
+  [FEATURES.MARKETING]: 'silver',
+
+  [FEATURES.STREAM]: 'gold',
 };
 
-/** The plans a quizmaster can be on. */
-export const PLANS = {
-  basic: {
-    id: 'basic',
-    label: 'Basic',
-    blurb: 'Everything needed to run a night: the music quiz, music bingo, your own library, and whole quizzes and bingo games bought from the shop.',
-    features: BASIC,
-  },
+/**
+ * What each feature is called and what it does, for the account page.
+ *
+ * Here rather than in the console because the browser and the server both want
+ * it and two copies drift — the same reason the tiers and the looks live in
+ * files like this one.
+ */
+export const FEATURE_META = {
+  [FEATURES.QUIZ]: { label: 'Music Quiz', blurb: 'Rounds of twenty seconds a question, fastest fingers win.' },
+  [FEATURES.BINGO]: { label: 'Music Bingo', blurb: 'You play the tracks. Every phone gets its own card.' },
+  [FEATURES.LIBRARY]: { label: 'The pack library', blurb: 'Read and play every quiz and bingo game in the shop.' },
+  [FEATURES.BUY_PACKS]: { label: 'Buying packs', blurb: 'Whole quizzes and whole bingo games from the catalogue.' },
+  [FEATURES.LOOKS]: { label: 'Seasonal looks', blurb: 'Halloween, Valentine’s, Christmas — a palette and some shapes.' },
+  [FEATURES.ADVERTS]: { label: 'Advert slides', blurb: 'Slides for between rounds. One set per venue.' },
+  [FEATURES.PHOTOS]: { label: 'Photos from the room', blurb: 'The room sends pictures straight to the big screen.' },
+  [FEATURES.INVOICES]: { label: 'Invoicing', blurb: 'Bill for a night before you have left the car park.' },
+  [FEATURES.CALENDAR]: { label: 'Your calendar', blurb: 'The nights you have booked in.' },
+  [FEATURES.MARKETING]: { label: 'Marketing', blurb: 'Not built yet.' },
+  [FEATURES.STREAM]: { label: 'Online quizzes', blurb: 'Run a night for a room that is not in the room.' },
 };
+
+/** A tier by id, and its rank. An unknown one is the bottom of the ladder. */
+export function findTier(id) {
+  return TIERS.find((t) => t.id === String(id || '')) || TIERS[0];
+}
+
+export function tierRank(id) {
+  return findTier(id).rank;
+}
+
+/**
+ * Which tier is this account on?
+ *
+ * Reads `tier` when it is there, and works it out from the OLD plan-and-add-ons
+ * shape when it is not — accounts made before the ladder existed are on disk
+ * and in a backup, and a subscriber silently dropping to Bronze because the
+ * field was renamed is not a migration, it is a bug with a bill attached.
+ */
+export function tierFor(account = {}) {
+  if (account.tier) return findTier(account.tier).id;
+  const addons = account.addons || [];
+  if (addons.includes('stream')) return 'gold';
+  if (addons.includes('admin')) return 'silver';
+  return DEFAULT_TIER;
+}
+
+/** Everything at or below a tier, in ladder order. */
+export function featuresAt(tierId) {
+  const rank = tierRank(tierId);
+  return Object.keys(FEATURE_TIER).filter((f) => tierRank(FEATURE_TIER[f]) <= rank);
+}
+
+/**
+ * The ladder as the account page draws it: a section per tier, the features in
+ * it, and whether this account has reached that far.
+ *
+ * Built here rather than in the console so the page cannot invent a tier the
+ * rules do not have, and so the ordering is the ladder's rather than an
+ * object's key order.
+ */
+export function ladderFor(account = {}) {
+  const mine = tierRank(tierFor(account));
+  const held = new Set(featuresFor(account));
+  return TIERS.map((tier) => ({
+    ...tier,
+    included: tier.rank <= mine,
+    features: Object.keys(FEATURE_TIER)
+      .filter((f) => FEATURE_TIER[f] === tier.id)
+      .map((f) => ({ id: f, ...(FEATURE_META[f] || { label: f, blurb: '' }), held: held.has(f) })),
+  }));
+}
 
 const OWNER_FEATURES = [
   FEATURES.GENERATE, FEATURES.ARTWORK, FEATURES.CATALOGUE, FEATURES.SUBSCRIBERS,
@@ -111,6 +226,15 @@ const PAYING = new Set(['trialing', 'active']);
 /**
  * Can this account do this thing?
  *
+ * ENTITLEMENT ONLY, deliberately. This is what `allowed()` on the server asks,
+ * and it does not consider what somebody has switched off for themselves —
+ * because a switch on your own account page is about tidiness, and a switch
+ * that could 403 you in the middle of a gig is a reliability risk for no
+ * benefit at all. Nobody needs protecting from themselves here.
+ *
+ * The console draws itself from `entitlements.features`, which IS filtered by
+ * the switches, so turning something off does make it disappear.
+ *
  * @param {object} account
  * @param {string} feature   one of FEATURES
  */
@@ -130,20 +254,48 @@ export function can(account, feature) {
   return featuresFor(account).includes(feature);
 }
 
-/** Everything an account is entitled to, as a flat list. */
+/**
+ * Everything an account is ENTITLED to, as a flat list.
+ *
+ * Entitlement only. What somebody has chosen to switch off is a separate
+ * question asked in a separate place (`prefs`, and `switchedOn()` below) —
+ * because a preference must only ever be able to take something away, never to
+ * add one. That is the line the whole My account page is drawn along.
+ */
 export function featuresFor(account = {}) {
   // Everything, for the same reason `can()` says yes to everything: the key
   // already grants the lot server-side, so reporting less here only ever
   // hides a button that would have worked.
   if (account.bootstrap) return [...new Set([...Object.values(FEATURES)])];
   if (account.role === 'owner') return [...OWNER_FEATURES];
-  if (account.comped) {
-    return [...new Set([...BASIC, ...Object.values(ADDONS).flatMap((a) => a.features)])];
-  }
+  // The owner's own quizmaster account: everything on the ladder, for nothing.
+  if (account.comped) return featuresAt(TIERS[TIERS.length - 1].id);
   if (!PAYING.has(account.status)) return [];
-  const plan = PLANS[account.plan] || PLANS.basic;
-  const addons = (account.addons || []).flatMap((id) => (ADDONS[id] ? ADDONS[id].features : []));
-  return [...new Set([...plan.features, ...addons])];
+  return featuresAt(tierFor(account));
+}
+
+/**
+ * Has this account switched this feature off for itself?
+ *
+ * **Subtractive only, and that is the whole safety property.** A switch can
+ * take away something the tier includes; it can never reach one the tier does
+ * not. So this is asked AFTER `featuresFor`, never instead of it, and
+ * `allowed()` on the server does not ask it at all — see the note on
+ * `setPrefs()` in accounts.js.
+ */
+export function switchedOn(account = {}, feature) {
+  const off = (account.prefs && account.prefs.featuresOff) || [];
+  return !off.includes(feature);
+}
+
+/**
+ * What this account actually has ON: entitled to, and not switched off.
+ *
+ * This is what the console draws itself from. It can only ever be a subset of
+ * `featuresFor`, which is the thing the tests pin down.
+ */
+export function activeFeatures(account = {}) {
+  return featuresFor(account).filter((f) => switchedOn(account, f));
 }
 
 /**
@@ -162,8 +314,18 @@ export function whyNot(account, feature) {
       ? 'Your subscription needs a payment before this comes back.'
       : 'Your subscription has ended. Renew it to use this again.';
   }
-  const addon = Object.values(ADDONS).find((a) => a.features.includes(feature));
-  if (addon) return `${addon.label} is an add-on. ${addon.blurb}`;
+  // Above your tier: say which tier it is on, because "not on your plan" is a
+  // dead end and "that is on Silver" is something you can act on.
+  const needs = FEATURE_TIER[feature];
+  if (needs && tierRank(needs) > tierRank(tierFor(account))) {
+    const tier = findTier(needs);
+    return `${(FEATURE_META[feature] || {}).label || 'That'} is on ${tier.label} (${tier.plan}). ${tier.blurb}`;
+  }
+  // On your tier, but you have switched it off yourself. Worth telling apart
+  // from not having bought it — one is a shop and one is a switch you flicked.
+  if (needs && !switchedOn(account, feature)) {
+    return `${(FEATURE_META[feature] || {}).label || 'That'} is turned off on your account. Turn it back on under My account.`;
+  }
   if (OWNER_FEATURES.includes(feature)) {
     // The generator is the one people ask about, so it says why rather than
     // just no: the packs are written by the owner and sold, and that is the
@@ -181,18 +343,28 @@ export function whyNot(account, feature) {
  */
 export function entitlements(account) {
   const held = featuresFor(account);
+  const on = activeFeatures(account);
   return {
     role: account.role,
-    plan: account.role === 'owner' ? 'owner' : (account.plan || 'basic'),
+    // The ladder is the plan now. `plan` is kept as the tier id so anything
+    // still reading it gets something sensible rather than undefined.
+    tier: account.role === 'owner' ? 'owner' : tierFor(account),
+    plan: account.role === 'owner' ? 'owner' : tierFor(account),
     addons: account.addons || [],
     comped: Boolean(account.comped),
     status: account.status,
-    features: held,
+    // What is ON — entitled to AND not switched off. This is what the console
+    // draws tabs from, and it can only ever be a subset of `entitled`.
+    features: on,
+    // What the tier includes, whether or not it is switched on. The account
+    // page needs both to draw a switch in the right position.
+    entitled: held,
+    ladder: account.role === 'owner' ? [] : ladderFor(account),
     // Everything they do NOT have, with the reason, so the console can offer it
     // rather than hide it. Something you can see and cannot use is a thing you
     // might buy; something invisible is a thing you never knew existed.
     missing: Object.values(FEATURES)
-      .filter((f) => !held.includes(f))
+      .filter((f) => !on.includes(f))
       // Owner features are not for sale, so they are not offered.
       .filter((f) => !OWNER_FEATURES.includes(f))
       .map((f) => ({ feature: f, why: whyNot(account, f) })),

@@ -10,7 +10,7 @@
 import { esc, node, postJson, brandLink, binIcon, hatSwitch } from './client.js';
 import { paintScheme } from './schemes.js';
 import { balanceAnswers } from './balance.js';
-import { FEATURES, PLANS } from './plans.js';
+import { FEATURES } from './plans.js';
 
 const mainEl = document.getElementById('main');
 const runningEl = document.getElementById('runningNow');
@@ -229,7 +229,6 @@ const TABS = [
   },
   {
     id: 'adverts',
-    hideable: true,
     needs: FEATURES.ADVERTS,
     label: 'Adverts',
     blurb: 'Slides for between rounds. One set per venue, reused every week.',
@@ -238,7 +237,6 @@ const TABS = [
   },
   {
     id: 'photos',
-    hideable: true,
     needs: FEATURES.PHOTOS,
     label: 'Photos',
     blurb: 'Everything the room sent, foldered by night.',
@@ -247,7 +245,6 @@ const TABS = [
   },
   {
     id: 'invoices',
-    hideable: true,
     needs: FEATURES.INVOICES,
     label: 'Invoices',
     blurb: 'Bill for a night before you have left the car park.',
@@ -258,7 +255,6 @@ const TABS = [
   },
   {
     id: 'past',
-    hideable: true,
     label: 'Past nights',
     blurb: 'Results are saved when a game finishes.',
     count: () => (library.archive || []).length,
@@ -268,8 +264,8 @@ const TABS = [
     id: 'account',
     label: 'My account',
     blurb: 'Your name, your colours, what you are on, and everything else in one place.',
-    // Deliberately NOT hideable: it is where the hidden ones are turned back
-    // on, so hiding it would be a door that locks behind you.
+    // Always here, whatever is switched off — it is where things are switched
+    // back on, so it can never be one of the things that goes away.
     render: () => accountSection(),
   },
 ];
@@ -402,9 +398,94 @@ function accountSection() {
   wrap.appendChild(youPanel());
   wrap.appendChild(schemePanel()[0] || node('<span></span>'));
   wrap.appendChild(planPanel());
-  wrap.appendChild(tabPrefsPanel());
+  for (const tier of ladderPanels()) wrap.appendChild(tier);
   wrap.appendChild(linksPanel());
   return wrap;
+}
+
+/**
+ * The ladder: a section per tier, the features in it, and a switch on each.
+ *
+ * **Bronze, Silver, Gold, and they STACK** — Gold includes Silver includes
+ * Bronze. Which section you can touch is your tier; a section above it is shown
+ * with its price and nothing to press, because something you can see and cannot
+ * use is a thing you might buy and something invisible is a thing you never
+ * knew existed.
+ *
+ * The switches inside a section you HAVE are yours: they turn a feature off for
+ * yourself and put it away. They can only ever subtract — turning one on that
+ * your tier does not include is not something the switch can express, because
+ * the switch is not drawn there at all, and the server would refuse it anyway
+ * (`setPrefs` filters against the tier the account actually holds).
+ *
+ * The list of tiers and which feature is in which comes from `plans.js`, so
+ * this page cannot invent a tier and moving a feature is a one-word edit there.
+ */
+function ladderPanels() {
+  const ladder = (me && me.entitlements && me.entitlements.ladder) || [];
+  if (!ladder.length) return [];
+  const off = new Set(((library.prefs || {}).featuresOff) || []);
+
+  return ladder.map((tier) => {
+    const el = node(`
+      <div class="panel tier-panel tier-${esc(tier.id)} ${tier.included ? 'have' : 'locked'}">
+        <h3><span class="tier-dot"></span>${esc(tier.label)} — ${esc(tier.plan)}
+          ${tier.included ? '<span class="tier-yours">yours</span>'
+            : `<span class="tier-price">${esc(priceLabel(tier.pence))}</span>`}</h3>
+        <div class="tiny">${esc(tier.blurb)}</div>
+        <div class="acct-toggles">
+          ${tier.features.map((f) => `
+            <label class="acct-toggle ${tier.included ? '' : 'locked'}">
+              <input type="checkbox" data-feature="${esc(f.id)}"
+                     ${off.has(f.id) ? '' : 'checked'} ${tier.included ? '' : 'disabled'}>
+              <span><b>${esc(f.label)}</b><br><span class="tiny">${esc(f.blurb)}</span></span>
+            </label>`).join('')}
+        </div>
+        ${tier.included ? '' : `<div class="tiny acct-note">Ask the owner to move you up — it goes
+          on the same login, and nothing you have set up changes.</div>`}
+      </div>`);
+
+    for (const box of el.querySelectorAll('input[type=checkbox]:not(:disabled)')) {
+      box.addEventListener('change', () => saveFeaturesOff(el));
+    }
+    return el;
+  });
+}
+
+/** £30 a month, £15 a month, or "included". Pence in, words out. */
+function priceLabel(pence) {
+  if (!pence) return 'included';
+  return `£${(pence / 100).toFixed(pence % 100 ? 2 : 0)} a month`;
+}
+
+/**
+ * Collect every switch across every tier section and save the ones that are
+ * off, in one go.
+ *
+ * All of them rather than just the one that moved, so the stored list is always
+ * the whole truth — a patch per tick would leave the file disagreeing with the
+ * page the first time one of them failed.
+ */
+async function saveFeaturesOff(inPanel) {
+  const boxes = [...document.querySelectorAll('.tier-panel input[type=feature], .tier-panel input[type=checkbox]')];
+  const featuresOff = boxes.filter((b) => !b.disabled && !b.checked).map((b) => b.dataset.feature);
+  try {
+    const res = await fetch(keyed('/api/me/prefs'), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
+      body: JSON.stringify({ featuresOff }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Could not save that');
+    library.prefs = data.prefs;
+    // Reload rather than re-render: turning a feature off changes which TABS
+    // exist, and those come from `/api/me`, which has to be asked again.
+    await load();
+  } catch (err) {
+    alert(err.message);
+    void inPanel;
+    await load();
+  }
 }
 
 /** Who you are, and what the room sees when you run a night. */
@@ -467,90 +548,34 @@ const dedupe = (list) => [...new Set(list)];
 
 function planPanel() {
   const ent = (me && me.entitlements) || { features: [], missing: [] };
-  const plan = ent.comped ? 'Everything, comped'
+  const tier = (ent.ladder || []).filter((t) => t.included).slice(-1)[0];
+  const name = ent.comped ? 'Everything, comped'
     : ent.role === 'owner' ? 'Owner'
-    : `${(PLANS[ent.plan] || PLANS.basic).label}${(ent.addons || []).length ? ` + ${ent.addons.join(' + ')}` : ''}`;
+    : tier ? `${tier.label} — ${tier.plan}` : 'None';
   const status = ent.status || 'active';
   const bad = status === 'past_due' || status === 'cancelled';
 
-  const el = node(`
+  return node(`
     <div class="panel">
       <h3>What you are on</h3>
       <div class="acct-grid">
-        <div><div class="tiny">Plan</div><div class="acct-val">${esc(plan)}</div></div>
+        <div><div class="tiny">Tier</div><div class="acct-val">${esc(name)}</div></div>
         <div><div class="tiny">Subscription</div>
           <div class="acct-val ${bad ? 'bad' : 'good'}">${esc(status.replace('_', ' '))}</div></div>
       </div>
       ${bad ? `<div class="tiny acct-note bad"><b>A lapsed subscription never interrupts a night.</b>
         Everything a running game touches keeps working — it is starting a NEW one that stops.</div>` : ''}
-      ${ent.missing && ent.missing.length ? `
-        <div class="tiny acct-note">Not included on your plan:</div>
-        <ul class="acct-missing">
-          ${dedupe(ent.missing.map((m) => m.why)).map((why) => `<li>${esc(why)}</li>`).join('')}
-        </ul>
-        <div class="tiny acct-note">Adding one is not something you can do from here yet —
-          ask the owner and it goes on the same login.</div>`
-        : '<div class="tiny acct-note">You have everything your plan offers.</div>'}
+      <div class="tiny acct-note">Everything on your tier and below is yours. Switch off anything you
+        do not use and it goes away — nothing is cancelled and you can put it back any time.</div>
     </div>`);
-  return el;
 }
 
-/**
- * Which tabs you want on screen.
- *
- * ONLY offers tabs this account already has, and can only ever take one away —
- * see the note at the top of this section. A quizmaster who never invoices does
- * not want an Invoices tab, and that is the whole feature.
+/*
+ * There was a "What you see" panel here that hid whole TABS. The tier sections
+ * above do the same job better — they switch the FEATURE off, which takes its
+ * tab with it, and they say which tier the feature is on while they are at it.
+ * Two ways to do one thing is how you end up using the worse one out of habit.
  */
-function tabPrefsPanel() {
-  const hidden = hiddenTabs();
-  const offer = TABS.filter((t) => t.hideable && (!t.needs || can(t.needs)));
-
-  if (!offer.length) {
-    return node(`
-      <div class="panel">
-        <h3>What you see</h3>
-        <div class="tiny">Nothing to put away yet — the tabs you have are the ones you use.</div>
-      </div>`);
-  }
-
-  const el = node(`
-    <div class="panel">
-      <h3>What you see</h3>
-      <div class="tiny">Tabs you never use can be put away. It only changes what is on
-        YOUR screen — nothing is turned off and nothing is cancelled, so you can
-        put one back any time.</div>
-      <div class="acct-toggles">
-        ${offer.map((t) => `
-          <label class="acct-toggle">
-            <input type="checkbox" data-tab="${esc(t.id)}" ${hidden.includes(t.id) ? '' : 'checked'}>
-            <span><b>${esc(t.label)}</b><br><span class="tiny">${esc(t.blurb)}</span></span>
-          </label>`).join('')}
-      </div>
-    </div>`);
-
-  for (const box of el.querySelectorAll('input[type=checkbox]')) {
-    box.addEventListener('change', async () => {
-      const next = [...el.querySelectorAll('input[type=checkbox]')]
-        .filter((b) => !b.checked).map((b) => b.dataset.tab);
-      try {
-        const res = await fetch(keyed('/api/me/prefs'), {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
-          body: JSON.stringify({ hiddenTabs: next }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || 'Could not save that');
-        library.prefs = data.prefs;
-        render();
-      } catch (err) {
-        box.checked = !box.checked;
-        alert(err.message);
-      }
-    });
-  }
-  return el;
-}
 
 /**
  * Everywhere else in the app, in one place.
@@ -791,21 +816,29 @@ function process_repo(gen) {
  * include at all is simply absent.
  */
 function visibleTabs() {
-  const hidden = hiddenTabs();
-  return TABS.filter((tab) => !tab.needs || can(tab.needs) || whyNotHere(tab.needs))
-    // …and then whatever this account has chosen to put away. The order is the
-    // point: entitlement first, preference second. A preference can only ever
-    // remove a tab you already had, so it can never be a way to reach one you
-    // have not paid for. `can()` is not consulted again after this.
-    .filter((tab) => !hidden.includes(tab.id));
+  /*
+   * Three states, and telling the middle one from the last is the point.
+   *
+   *  - ON — `can()` reads `entitlements.features`, the tier's features MINUS
+   *    anything switched off. Drawn normally.
+   *  - ABOVE YOUR TIER — drawn greyed with a `+`, because something you can see
+   *    and cannot use is a thing you might buy.
+   *  - SWITCHED OFF BY YOU — gone completely. A `+` on it would be the shop
+   *    trying to sell somebody the thing they just put away, which is both
+   *    wrong and annoying.
+   */
+  return TABS.filter((tab) => {
+    if (!tab.needs) return true;
+    if (can(tab.needs)) return true;
+    if (switchedOff(tab.needs)) return false;
+    return Boolean(whyNotHere(tab.needs));
+  });
 }
 
-/** The tabs this account has put away. Cosmetic — see `setPrefs` in accounts.js. */
-function hiddenTabs() {
-  const list = (library && library.prefs && library.prefs.hiddenTabs) || [];
-  // The account tab can never be hidden, whatever is stored — it is the way
-  // back to everything else, and a stale value must not lock somebody out.
-  return list.filter((id) => id !== 'account');
+/** Entitled to it, but you turned it off yourself on the My account tab. */
+function switchedOff(feature) {
+  const ent = (me && me.entitlements) || {};
+  return Boolean(ent.entitled && ent.entitled.includes(feature) && !(ent.features || []).includes(feature));
 }
 
 function tabBar(active) {

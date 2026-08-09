@@ -2535,6 +2535,45 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 
 .acct-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
 
+/* ---- the tier ladder.
+
+   Bronze, Silver, Gold, and they stack. Each section is edged in its own metal
+   so the three are told apart at a glance rather than by reading three
+   headings — and a tier ABOVE yours is dimmed as a whole rather than hidden,
+   because something you can see and cannot use is a thing you might buy.
+
+   The metals are written out rather than taken from --hot: they are the same
+   three on everybody's account, whatever colour scheme is on, because a tier is
+   a fact about what you pay and not part of anybody's branding. */
+.tier-panel { border-left: 3px solid var(--tier); }
+.tier-panel.tier-bronze { --tier: #cd7f32; }
+.tier-panel.tier-silver { --tier: #c0c7d0; }
+.tier-panel.tier-gold   { --tier: #ffd23f; }
+.tier-panel h3 { display: flex; align-items: center; gap: 9px; color: var(--ink); }
+.tier-dot {
+  width: 11px; height: 11px; border-radius: 50%;
+  background: var(--tier);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tier) 22%, transparent);
+  flex: 0 0 auto;
+}
+.tier-yours, .tier-price {
+  margin-left: auto;
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 800;
+  padding: 3px 9px; border-radius: 999px;
+}
+.tier-yours { background: rgba(47, 224, 122, 0.18); color: var(--good); }
+.tier-price { background: rgba(255, 255, 255, 0.08); color: var(--ink-dim); letter-spacing: 0.04em; text-transform: none; }
+
+/* A rung you have not reached. Legible, obviously not yours, nothing to press. */
+.tier-panel.locked { opacity: 0.72; }
+.tier-panel.locked .acct-toggle { cursor: default; background: none; border-style: dashed; }
+.tier-panel.locked .acct-toggle:hover { background: none; }
+.tier-panel.locked .acct-toggle input { opacity: 0.4; }
+
+/* The owner's tier picker on the subscriber list. */
+.tier-pick { display: inline-flex; gap: 6px; }
+.tier-pick .tierbtn.on { border-color: var(--hot); color: var(--ink); background: rgba(255, 255, 255, 0.12); }
+
 /* ---- the colour picker on the console.
 
    The swatches are the colours themselves, not their names: "Orchid" means

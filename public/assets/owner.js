@@ -8,7 +8,7 @@
  */
 
 import { esc, node, brandMark, hatSwitch } from './client.js';
-import { ADDONS, PLANS } from './plans.js';
+import { TIERS, tierFor, findTier } from './plans.js';
 
 const mainEl = document.getElementById('main');
 const whoEl = document.getElementById('whoami');
@@ -199,13 +199,15 @@ function subscriberRow(account) {
           ${account.supportOpen ? '<span class="inv-status" style="background:rgba(255,210,63,.2);color:var(--gold)">Support open</span>' : ''}
         </div>
         <div class="tiny">
-          ${esc(PLANS.basic.label)}${account.addons.length ? ' + ' + account.addons.map((a) => esc(ADDONS[a] ? ADDONS[a].label : a)).join(' + ') : ''}
+          ${esc(findTier(tierFor(account)).label)} — ${esc(findTier(tierFor(account)).plan)}
         </div>
       </div>
       <div class="inv-actions">
-        ${Object.values(ADDONS).map((a) => `
-          <button class="minor addon ${account.addons.includes(a.id) ? 'on' : ''}" data-addon="${a.id}"
-                  title="${esc(a.blurb)}">${esc(a.label)}</button>`).join('')}
+        <span class="tier-pick">
+          ${TIERS.map((t) => `
+            <button class="minor tierbtn ${tierFor(account) === t.id ? 'on' : ''}" data-tier="${t.id}"
+                    title="${esc(t.blurb)}">${esc(t.label)}</button>`).join('')}
+        </span>
         <button class="minor comp">${account.comped ? 'Charge them' : 'Comp'}</button>
         <button class="minor danger close">Close</button>
       </div>
@@ -223,14 +225,10 @@ function subscriberRow(account) {
     }
   };
 
-  for (const button of row.querySelectorAll('.addon')) {
-    button.addEventListener('click', () => {
-      const id = button.dataset.addon;
-      const addons = account.addons.includes(id)
-        ? account.addons.filter((a) => a !== id)
-        : [...account.addons, id];
-      save({ addons });
-    });
+  // The tier IS the subscription. One choice of three rather than a row of
+  // add-ons to remember the combination of.
+  for (const button of row.querySelectorAll('.tierbtn')) {
+    button.addEventListener('click', () => save({ tier: button.dataset.tier }));
   }
   row.querySelector('.comp').addEventListener('click', () => save({ comped: !account.comped }));
   row.querySelector('.close').addEventListener('click', async () => {

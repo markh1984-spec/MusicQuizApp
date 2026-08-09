@@ -33,7 +33,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-import { PLANS, ADDONS, ROLES, STATUSES, can, featuresFor, entitlements } from '../public/assets/plans.js';
+import { ROLES, STATUSES, TIERS, DEFAULT_TIER, findTier, tierFor, can, featuresFor, entitlements, FEATURE_TIER } from '../public/assets/plans.js';
 import { findScheme, DEFAULT_SCHEME } from '../public/assets/schemes.js';
 
 /** Work factor for scrypt. Slow enough to matter, fast enough for a login. */
@@ -147,7 +147,7 @@ export class Accounts {
    * @param {boolean} [opts.comped]  everything, for nothing. The owner's own
    *                                 quizmaster account, and anybody he gifts it to.
    */
-  create({ email, password, name = '', role = 'quizmaster', plan = 'basic', addons = [], comped = false, status = 'trialing', ownedBy = '' }) {
+  create({ email, password, name = '', role = 'quizmaster', tier = '', plan = '', addons = [], comped = false, status = 'trialing', ownedBy = '' }) {
     const clean = normaliseEmail(email);
     if (!clean || !clean.includes('@')) throw new Error('That does not look like an email address.');
     if (this.byEmail(clean)) throw new Error('There is already an account with that email address.');
@@ -155,7 +155,13 @@ export class Accounts {
     // One owner, and only one. A second would be a second person able to see
     // every subscriber, which is not something to create by accident.
     if (role === 'owner' && this.owner) throw new Error('There is already an owner account.');
-    if (!PLANS[plan]) throw new Error(`"${plan}" is not a plan.`);
+    // `plan` and `addons` are the OLD shape and are still accepted, because a
+    // backup written before the ladder existed is restored through here.
+    // No tier given? Work it out from the OLD plan-and-add-ons shape, which is
+    // what a backup written before the ladder existed carries. `tierFor` lands
+    // on the bottom rung when there is nothing to go on.
+    const wanted = tier || tierFor({ plan, addons });
+    if (!TIERS.some((t) => t.id === wanted)) throw new Error(`"${wanted}" is not a tier.`);
     if (!STATUSES.includes(status)) throw new Error(`"${status}" is not a subscription status.`);
     checkPassword(password);
 
@@ -175,8 +181,7 @@ export class Accounts {
       // a different feature from wearing your own second hat.
       ...(ownedBy ? { ownedBy } : {}),
       ...(role === 'owner' ? {} : {
-        plan,
-        addons: (addons || []).filter((a) => ADDONS[a]),
+        tier: wanted,
         comped: Boolean(comped),
         status: comped ? 'active' : status,
         // Whatever the payment processor calls them. Deliberately just a string:
@@ -213,12 +218,20 @@ export class Accounts {
     const account = this.find(id);
     if (!account) return null;
     if (account.role === 'owner') throw new Error('The owner account has no subscription to change.');
-    if (patch.plan !== undefined) {
-      if (!PLANS[patch.plan]) throw new Error(`"${patch.plan}" is not a plan.`);
-      account.plan = patch.plan;
-    }
-    if (patch.addons !== undefined) {
-      account.addons = (patch.addons || []).filter((a) => ADDONS[a]);
+    // The tier IS the subscription now. `plan` and `addons` are still accepted
+    // so an older console, or a script somebody wrote last month, keeps working
+    // — they are simply read as a tier.
+    const wantedTier = patch.tier !== undefined ? patch.tier
+      : (patch.plan !== undefined || patch.addons !== undefined)
+        ? tierFor({ plan: patch.plan, addons: patch.addons })
+        : undefined;
+    if (wantedTier !== undefined) {
+      if (!TIERS.some((t) => t.id === wantedTier)) throw new Error(`"${wantedTier}" is not a tier.`);
+      account.tier = wantedTier;
+      // The old fields go, or an account carries two answers to one question
+      // and the next person to read it picks the wrong one.
+      delete account.plan;
+      delete account.addons;
     }
     if (patch.status !== undefined) {
       if (!STATUSES.includes(patch.status)) throw new Error(`"${patch.status}" is not a subscription status.`);
@@ -274,6 +287,23 @@ export class Accounts {
     const account = this.find(id);
     if (!account) return null;
     const prefs = { ...(account.prefs || {}) };
+    /*
+     * Features switched off for yourself.
+     *
+     * Filtered against the tier the account actually holds, so an id it was
+     * never entitled to cannot be stored — not because storing one would grant
+     * anything (it could not; this list only ever SUBTRACTS) but because a
+     * preferences file full of features somebody never had is a thing that
+     * looks meaningful to whoever reads it next.
+     */
+    if (patch.featuresOff !== undefined) {
+      const held = new Set(featuresFor(account));
+      prefs.featuresOff = [...new Set(
+        (Array.isArray(patch.featuresOff) ? patch.featuresOff : [])
+          .map((f) => String(f))
+          .filter((f) => held.has(f) && FEATURE_TIER[f]),
+      )];
+    }
     if (patch.hiddenTabs !== undefined) {
       prefs.hiddenTabs = [...new Set(
         (Array.isArray(patch.hiddenTabs) ? patch.hiddenTabs : [])
