@@ -1449,6 +1449,33 @@ nights a month is more egress than a £9.99 subscription covers; audio-first is
 under a pound. So audio is the product and video is a small tile — a design
 decision that is also the business model. The sums are in TODO.md.
 
+**Karaoke is a wanted direction, and the licensing answer is already settled.**
+He asked whether the app could add karaoke tracks once he has a music licence,
+streamed for a fee or downloaded in bulk. The conclusion, written up properly in
+TODO.md direction 2: **build the show, never the songs.**
+
+TheMusicLicence (PRS/PPL) covers *public performance on premises*. It says
+nothing about distributing tracks to other quizmasters — that is reproduction
+and making-available, a different right and a different bill. And a karaoke
+track is three licensed things stacked up, not one: the backing track is a NEW
+recording needing a mechanical licence, **the on-screen lyrics are a separate
+reproduction right controlled by the publisher**, and then the performance. That
+third layer is the one people miss and it is why the catalogues are licensing
+businesses.
+
+So the buildable version is **exactly the shape music bingo already has**: the
+host plays the track from KaraFun on their own laptop, and the app is the queue,
+the singer rotation, the "Now singing / Up next" projector card and — the part
+that makes it a product rather than a karaoke box — the room voting for a
+winner. No audio ever touches this server, which also keeps it off pub wifi,
+where a stalled backing track in front of a singer is worse than a slow
+question.
+
+If tracks ever do belong in the product, the route is a **B2B deal with a
+catalogue that already holds the rights** (he is already a KaraFun customer), not
+licensing songs directly. The runner above is what a catalogue would bolt onto,
+so it is not wasted either way. **Do not propose hosting or streaming the audio.**
+
 Deliberately not built: **venue branding** beyond `BRAND_NAME`, and
 **Instagram follow-for-points** (no API can verify a follow — he agreed to drop
 it rather than fake it).
