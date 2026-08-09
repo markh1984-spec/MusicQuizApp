@@ -85,8 +85,6 @@ Detail: **Part 2a** below.
 
 ---
 
----
-
 ### B. Make a private repo — 10 minutes, free
 
 Your app has no permanent hard disk. Anything it saves is wiped every time it
