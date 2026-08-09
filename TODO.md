@@ -43,7 +43,7 @@ what happens if you skip it.
 | | What | How long | Cost | If you skip it |
 |---|---|---|---|---|
 | A | Set `HOST_KEY` on Render | 2 min | free | **your bookmarks break on every deploy — this is what locked you out** |
-| B | Make a private repo | 10 min | free | invoices and accounts vanish on every deploy |
+| B | Make a private repo | 10 min | free | invoices, accounts and photos vanish on every deploy |
 | C | Make your accounts (and Rob's) | 5 min | free | no login; the key is the only way in |
 | D | Fill in your invoice details | 5 min | free | invoices have no bank details, so nobody can pay them |
 | E | Read a quiz through before a gig | 20 min | free | a wrong answer in front of a paying room |

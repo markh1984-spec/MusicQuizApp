@@ -898,10 +898,21 @@ async function restoreFromBackup() {
       console.log('[accounts] nothing backed up yet — this is a first boot, or nobody has been added.');
     }
   }
-  // NOT the invoice book yet. It is backed up the same way and has the same
-  // hole, but restoring it needs a little care about invoice NUMBERS — they are
-  // sequential and never reused, so a restore that lost the counter would hand
-  // out a number twice. That is its own job, not a line here.
+  // The invoice book, same rules. The care it needs is all inside
+  // `invoices.restore()`: the counter is rebuilt from the invoices themselves
+  // rather than trusted from the file, so a backup written a few minutes before
+  // the last invoice was issued still cannot hand out a number twice.
+  if (invoices.isEmpty()) {
+    const saved = await getFile('invoicing.json', 'private');
+    if (saved) {
+      const result = invoices.restore(saved.toString('utf8'));
+      if (result.ok) {
+        console.log(`[invoices] restored ${result.invoices} invoice(s) and ${result.customers} customer(s); next number ${result.nextNumber}`);
+      } else {
+        console.warn('[invoices] could not restore the backup:', result.reason);
+      }
+    }
+  }
 }
 
 /** What the owner console lists. Never a hash, and never a session token. */

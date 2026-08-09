@@ -459,3 +459,98 @@ test('nothing on the page overlaps anything else on it', () => {
     for (const item of placed) assert.ok(item.y > 40, `"${item.text}" is off the page`);
   });
 });
+
+
+/*
+ * Surviving a deploy.
+ *
+ * The invoice book lives in `data/`, which a host with no permanent disk empties
+ * on every deploy. It was backed up to the private repo and never read back,
+ * which is the same as not backing it up: a year of invoices gone, and the first
+ * you know is a customer asking for a copy.
+ *
+ * The care this needs, and the reason it was not done alongside the accounts, is
+ * INVOICE NUMBERS. They are sequential and never reused.
+ */
+test('a wiped disk gets the invoice book back', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'invoices-restore-'));
+  try {
+    const file = path.join(dir, 'invoicing.json');
+    const book = new Invoices(file);
+    book.saveSettings({ business: { name: 'Mark\u2019s Music Madness' } });
+    const customer = book.saveCustomer({ name: 'The Red Lion', feePence: 15000 });
+    book.issue(book.draft({ customerId: customer.id }), { now: () => Date.parse('2026-03-01T20:00:00Z') });
+    const backup = book.serialise();
+
+    fs.rmSync(file);                        // the deploy
+    const fresh = new Invoices(file);
+    assert.equal(fresh.invoices.length, 0);
+
+    const result = fresh.restore(backup);
+    assert.equal(result.ok, true);
+    assert.equal(fresh.invoices.length, 1);
+    assert.equal(fresh.customers.length, 1);
+    assert.equal(fresh.settings.business.name, 'Mark\u2019s Music Madness');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('A STALE BACKUP CAN NEVER REISSUE A NUMBER', () => {
+  // The one that decides the whole design. A backup taken a few minutes before
+  // the last invoice went out will claim a counter that is already spent. If
+  // that were believed, two different customers would hold an invoice with the
+  // same number on it — which is the one mistake here that an accountant asks
+  // about.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'invoices-restore-'));
+  try {
+    const file = path.join(dir, 'invoicing.json');
+    const book = new Invoices(file);
+    const customer = book.saveCustomer({ name: 'The Red Lion', feePence: 15000 });
+    const first = book.issue(book.draft({ customerId: customer.id }), { now: () => 1 });
+    const second = book.issue(book.draft({ customerId: customer.id }), { now: () => 2 });
+
+    // A backup that has the invoices but an out-of-date counter, exactly as a
+    // half-written or slightly old file would.
+    const stale = JSON.parse(book.serialise());
+    stale.settings.nextNumber = 1;
+
+    fs.rmSync(file);
+    const fresh = new Invoices(file);
+    fresh.restore(JSON.stringify(stale));
+
+    const third = fresh.issue(fresh.draft({ customerId: fresh.customers[0].id }), { now: () => 3 });
+    assert.notEqual(third.number, first.number);
+    assert.notEqual(third.number, second.number);
+    // And it carried on from the highest one actually issued.
+    assert.equal(third.number, second.number.replace(/(\d+)$/, (n) => String(Number(n) + 1).padStart(n.length, '0')));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a book that is already in use is never restored over', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'invoices-restore-'));
+  try {
+    const book = new Invoices(path.join(dir, 'invoicing.json'));
+    book.saveCustomer({ name: 'The Red Lion', feePence: 15000 });
+    const result = book.restore(JSON.stringify({ invoices: [], customers: [{ id: 'x', name: 'Somebody else' }] }));
+    assert.equal(result.ok, false);
+    assert.equal(result.reason, 'already_in_use');
+    assert.equal(book.customers[0].name, 'The Red Lion');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a corrupt backup is refused rather than believed', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'invoices-restore-'));
+  try {
+    const book = new Invoices(path.join(dir, 'invoicing.json'));
+    assert.equal(book.restore('not json').ok, false);
+    assert.equal(book.restore('null').ok, false);
+    assert.equal(book.invoices.length, 0);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

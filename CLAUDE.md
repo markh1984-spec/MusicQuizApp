@@ -911,6 +911,29 @@ disk that already has accounts on it always wins. Not fatal either: a missing
 backup is the normal first boot, and a GitHub having a bad morning must not stop
 a quiz night — the host key still works regardless.
 
+### The invoice book comes back too, and the counter is rebuilt not trusted
+
+`invoices.restore()`, the same shape as the accounts: only into an empty book,
+only at boot, a corrupt backup refused rather than believed.
+
+**The care it needs is invoice NUMBERS, and it is not where you would expect.**
+They are sequential and never reused. A backup can easily be a few minutes
+stale — written before the last invoice went out — so believing its
+`nextNumber` would hand out a number that is already on somebody's invoice. Two
+customers holding invoice 7 is the one mistake in this area that an accountant
+asks about.
+
+So the counter is **rebuilt from the invoices themselves**: one past the highest
+number actually present, or the file's own value, whichever is HIGHER. It can
+only ever move forwards. There is a test called
+"A STALE BACKUP CAN NEVER REISSUE A NUMBER" that issues two, restores a backup
+claiming the counter is back at 1, and checks the next one issued is 3.
+
+The prefix is read off the end of the number with a digit match rather than by
+splitting on the prefix, because the prefix may well have been changed since —
+`renaming the prefix later cannot renumber anything already issued` is already a
+rule in that file.
+
 ### The first owner is made from the Console, with the host key
 
 Making an owner needed the command line and Render's free tier has no shell, so
@@ -1010,10 +1033,10 @@ that quizmaster running the version from before the edit.
 
 ### What this does NOT do yet
 
-- **The invoice book is still shared**, and still does not survive a deploy.
-  Restoring it needs care about invoice NUMBERS, which are sequential and never
-  reused — a restore that lost the counter would hand one out twice. Its own
-  job.
+- **The invoice book is still SHARED between quizmasters.** It does survive a
+  deploy now (see below), but Rob would see Mark's customers. Nobody has the
+  admin add-on yet, so nothing is exposed today — but scope it before anybody
+  does.
 - **Past nights and the archive are shared.**
 - **Advert slides are shared.**
 - Nothing stops two quizmasters launching the same pack at once, which is fine
@@ -1116,7 +1139,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 490 tests, no network, injected clocks — must stay green
+npm test        # 494 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -1187,7 +1210,7 @@ foundation are done and tested. Since then: the photo props, the big photo
 moment, the double-tap and early-reveal guards, the shared portrait library
 with its style and quality settings, the leaving-the-app note, and the fastest
 finger's face on the reveal, and **a room per quizmaster** — so a second login
-is now safe to hand out. All on **`MusicQuizApp`**. 490 tests green.
+is now safe to hand out. All on **`MusicQuizApp`**. 494 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall and read-only access to the

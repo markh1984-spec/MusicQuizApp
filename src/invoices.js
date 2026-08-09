@@ -159,6 +159,67 @@ export class Invoices {
     return JSON.stringify(this.data, null, 2) + '\n';
   }
 
+  /**
+   * Nothing has been done in this book yet.
+   *
+   * Used to decide whether a backup may be read in. Deliberately strict: a
+   * single customer typed in counts as "in use", because restoring over it
+   * would throw that away and the person who typed it would have no idea.
+   */
+  isEmpty() {
+    return this.data.invoices.length === 0 && this.data.customers.length === 0;
+  }
+
+  /**
+   * Read a backed-up invoice book back in.
+   *
+   * The same rules as the accounts: only ever into an EMPTY book, only at boot,
+   * and a corrupt backup is refused rather than believed. On a host with no
+   * permanent disk this is what stops a deploy taking a year of invoices with
+   * it.
+   *
+   * **The counter is rebuilt from the invoices themselves, never trusted from
+   * the file.** Invoice numbers are sequential and never reused, and a backup
+   * can easily be a few minutes stale — written before the last invoice was
+   * issued. Believing its `nextNumber` would hand out a number that is already
+   * on somebody's invoice, which is the one mistake in this whole area that a
+   * customer notices and an accountant asks about. So the counter comes out at
+   * one past the highest number actually present, or the file's own value,
+   * whichever is HIGHER. It can only ever move forwards.
+   */
+  restore(serialised) {
+    if (!this.isEmpty()) return { ok: false, reason: 'already_in_use' };
+    let parsed;
+    try {
+      parsed = JSON.parse(String(serialised));
+    } catch (err) {
+      return { ok: false, reason: 'unreadable', error: err.message };
+    }
+    if (!parsed || typeof parsed !== 'object') return { ok: false, reason: 'unreadable' };
+
+    const invoices = Array.isArray(parsed.invoices) ? parsed.invoices : [];
+    const customers = Array.isArray(parsed.customers) ? parsed.customers : [];
+    const settings = { ...blankSettings(), ...(parsed.settings || {}) };
+
+    // A number is `PREFIX-0007`; the digits on the end are what counts, and the
+    // prefix may well have been changed since. Anything unparseable is ignored
+    // rather than guessed at.
+    let highest = 0;
+    for (const invoice of invoices) {
+      const digits = /(\d+)\s*$/.exec(String(invoice && invoice.number ? invoice.number : ''));
+      if (digits) highest = Math.max(highest, Number(digits[1]));
+    }
+    const claimed = Number(settings.nextNumber);
+    settings.nextNumber = Math.max(
+      Number.isFinite(claimed) && claimed > 0 ? claimed : 1,
+      highest + 1,
+    );
+
+    this.data = { settings, customers, invoices };
+    this.save();
+    return { ok: true, invoices: invoices.length, customers: customers.length, nextNumber: settings.nextNumber };
+  }
+
   get settings() {
     return this.data.settings;
   }
