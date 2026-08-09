@@ -42,6 +42,8 @@ import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
 import { FEATURES, whyNot, entitlements } from './public/assets/plans.js';
 import { OWNER_ONLY, changesTheLibrary } from './src/gates.js';
+import { brandFor } from './src/branding.js';
+import { findScheme, DEFAULT_SCHEME, SCHEMES } from './public/assets/schemes.js';
 // The logo, shared with the browser so the tab icon and the on-screen mark are
 // one drawing rather than two that look alike today.
 import { faviconSvg } from './public/assets/brandmark.js';
@@ -99,9 +101,13 @@ function viewFor(client) {
   if (client.role === 'screen') view.photos = photos.forScreen();
   else if (client.role === 'host') view.photos = { enabled: photos.enabled, count: photos.count(), items: photos.forHost() };
   else view.photosOpen = photos.enabled;
-  // Your name travels with every payload, so a page never has to ask for it
-  // separately or flash the wrong thing while it loads.
-  view.brand = config.brandName;
+  // Whose night this is — the name AND the two colours — travels with every
+  // payload, so a page never has to ask for it separately or flash the wrong
+  // thing while it loads. Taken from the ROOM, never from whoever is looking:
+  // a phone at Rob's night says Rob's Quiztopia in Rob's colours even while
+  // the owner has the console open in the next tab.
+  view.brand = brandForRoom(room);
+  view.scheme = schemeForRoom(room);
   // Which game this is, so a phone that was handed a code can tell it reached
   // the right one and the projector can print it for latecomers.
   view.joinCode = room.code;
@@ -294,6 +300,41 @@ function roomIdFor(account) {
   // the game that was already running before rooms existed.
   if (!account || account.bootstrap || account.role === 'owner') return HOUSE;
   return account.id;
+}
+
+/*
+ * Whose room is this, as an account?
+ *
+ * Looked up in the accounts book by room id rather than read off the room's own
+ * `label`, and that is the load-bearing bit. A label is only set when somebody
+ * who knows their own name touches the room — but the first thing to touch a
+ * room after a restart is usually the PROJECTOR, which knows nothing. Branding
+ * off the label would leave a big screen saying plain "Quiztopia" until the
+ * host happened to open a page, which is exactly the five minutes before a gig.
+ *
+ * A room id IS the account id (see `roomIdFor`), so the book always knows.
+ */
+function whoseRoom(room) {
+  const id = room ? room.id : HOUSE;
+  // The house room is the owner's own: it is the game that predates rooms and
+  // it is what both the owner account and the host key drive.
+  if (id === HOUSE) return accounts.owner;
+  return accounts.find(id);
+}
+
+/** The name on this room's projector, phones and control view. */
+function brandForRoom(room) {
+  const who = whoseRoom(room);
+  return brandFor(who ? (who.name || who.email) : '', {
+    appName: config.appName,
+    override: config.brandName,
+  });
+}
+
+/** The two colours this room's screens wear. */
+function schemeForRoom(room) {
+  const who = whoseRoom(room);
+  return findScheme(who ? who.scheme : DEFAULT_SCHEME);
 }
 
 function roomForHost(req, url) {
@@ -551,7 +592,7 @@ async function handleGet(req, res, url, route) {
     return sendJson(res, 200, {
       url: joinUrlFor(publicOrigin(req), room.code),
       code: room.code,
-      brand: config.brandName,
+      brand: brandForRoom(room),
     }), true;
   }
   /*
@@ -605,9 +646,23 @@ async function handleGet(req, res, url, route) {
     }), true;
   }
 
-  // Open, because the join page needs it before anybody has joined.
+  /*
+   * Whose night is this, and what does it look like.
+   *
+   * Open, because the join page needs it before anybody has joined — and it
+   * answers for the ROOM the caller reached for, so a phone that scanned Rob's
+   * projector gets Rob's name and Rob's colours without signing in to anything.
+   * The console asks with `role=host` to get its own instead.
+   */
   if (route === '/api/brand') {
-    return sendJson(res, 200, { name: config.brandName }), true;
+    const room = url.searchParams.get('role') === 'host'
+      ? roomForHost(req, url)
+      : roomForPhone(req, url);
+    return sendJson(res, 200, {
+      name: brandForRoom(room),
+      scheme: schemeForRoom(room),
+      appName: config.appName,
+    }), true;
   }
   if (route === '/api/state') {
     const role = url.searchParams.get('role') || 'screen';
@@ -632,7 +687,11 @@ async function handleGet(req, res, url, route) {
     const { session } = roomForHost(req, url);
     const me = whoIs(req, url);
     return sendJson(res, 200, {
-      brand: config.brandName,
+      brand: brandForRoom(roomForHost(req, url)),
+      scheme: schemeForRoom(roomForHost(req, url)),
+      // Every colour on offer, so the console can draw the picker without
+      // keeping its own copy of the list and drifting from the stylesheet.
+      schemes: SCHEMES,
       ...library,
       adverts: listAdvertPacks(config.advertDir),
       // How many tracks each card size wants, straight from the rule itself so
@@ -1162,6 +1221,36 @@ async function handleWrite(req, res, url, route) {
     accounts.signOut(cookie(req, SESSION_COOKIE));
     res.setHeader('Set-Cookie', `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);
     return sendJson(res, 200, { ok: true }), true;
+  }
+
+  /*
+   * Your own two colours.
+   *
+   * Yours and only yours — the account is read off the cookie, and there is no
+   * id in the request, so this cannot repaint anybody else's projector. It sits
+   * up here with the other `/api/me` routes rather than behind a feature gate
+   * because it is nobody's paid extra: it costs nothing to run, which under the
+   * host's own tier rule makes it Basic, and an owner needs it too.
+   *
+   * The host key has no account to save it against, so it is told so plainly
+   * rather than silently doing nothing.
+   */
+  if (route === '/api/me/scheme' && req.method === 'PUT') {
+    const account = whoIs(req, url);
+    if (!account) return sendJson(res, 401, { error: 'Sign in first' }), true;
+    if (account.bootstrap) {
+      return sendJson(res, 400, {
+        error: 'The host key is not an account, so there is nothing to save a colour against. Sign in to pick one.',
+      }), true;
+    }
+    const body = await readJson(req);
+    const saved = accounts.setScheme(account.id, body.scheme);
+    if (!saved) return sendJson(res, 404, { error: 'No such account' }), true;
+    await backUpAccounts();
+    // Everything already on a screen in this room, repainted where it stands —
+    // the projector and every phone, without anybody reloading anything.
+    pushState(rooms.get(roomIdFor(account)));
+    return sendJson(res, 200, { ok: true, scheme: saved.scheme }), true;
   }
 
   // Your own password. The old one is required even though you are signed in:
@@ -1987,7 +2076,9 @@ server.listen(config.port, () => {
   const local = `http://localhost:${config.port}`;
   console.log('');
   console.log('  ┌───────────────────────────────────────────────┐');
-  console.log(`  │  ${config.brandName.padEnd(43).slice(0, 43)}│`);
+  const banner = config.brandName
+    || brandFor(accounts.owner ? (accounts.owner.name || accounts.owner.email) : '', { appName: config.appName });
+  console.log(`  │  ${banner.padEnd(43).slice(0, 43)}│`);
   console.log('  └───────────────────────────────────────────────┘');
   console.log('');
   console.log(`  Big screen   ${local}/screen`);

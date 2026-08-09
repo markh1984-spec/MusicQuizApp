@@ -8,6 +8,7 @@
  */
 
 import { esc, node, postJson, brandLink, binIcon, hatSwitch } from './client.js';
+import { paintScheme } from './schemes.js';
 import { balanceAnswers } from './balance.js';
 import { FEATURES } from './plans.js';
 
@@ -315,6 +316,10 @@ let accountsExist = true;
 
 function render() {
   paintBrand(library.brand);
+  // Your own colours on your own console, straight away — the picker at the
+  // bottom is where they are changed, but this is what makes the page arrive
+  // already wearing them.
+  paintScheme(library.scheme);
   const running = library.running;
   runningEl.textContent = running
     ? `Now: ${running.title} (${running.playerCount} in)`
@@ -330,7 +335,79 @@ function render() {
     runningPanel(running),
     tabBar(active),
     tabBody(active),
+    ...schemePanel(),
   );
+}
+
+/**
+ * Pick your two colours.
+ *
+ * At the BOTTOM, under everything, because it is a thing you do once and then
+ * never again — a setting that big and near the top would be competing with
+ * Launch every time you open the page.
+ *
+ * The swatches are the colours themselves rather than their names. "Orchid"
+ * means nothing until you have seen it, and the whole point is choosing
+ * something you like the look of. Same reasoning as the photo filters being
+ * shown rather than listed.
+ *
+ * It saves on the tap and repaints everything at once — the projector and every
+ * phone in your room, over the connection they already have. There is no Save
+ * button because there is nothing to lose: tap another one if you liked the
+ * last better.
+ */
+function schemePanel() {
+  const list = library.schemes || [];
+  // The host key has no account to save a colour against, so it is told that
+  // rather than shown a picker that quietly does nothing.
+  if (!list.length) return [];
+  const mine = library.scheme || list[0].id;
+  const keyOnly = Boolean(hostKey) && !me;
+
+  const el = node(`
+    <div class="panel scheme-panel">
+      <h3>Your colours</h3>
+      <div class="tiny">The two colours behind your logo, your buttons and your big screen.
+        ${keyOnly
+          ? '<b>Sign in to pick one</b> — the host key is a way in rather than an account, so there is nothing to save it against.'
+          : 'Changes the projector and every phone in your room straight away. A themed night still wins over it.'}</div>
+      <div class="scheme-row">
+        ${list.map((s) => `
+          <button type="button" class="scheme-swatch ${s.id === mine ? 'live' : ''}"
+                  data-scheme="${esc(s.id)}" title="${esc(s.blurb)}" ${keyOnly ? 'disabled' : ''}>
+            <span class="scheme-blob" data-swatch="${esc(s.id)}"></span>
+            <span class="scheme-label">${esc(s.label)}</span>
+          </button>`).join('')}
+      </div>
+    </div>`);
+
+  for (const button of el.querySelectorAll('.scheme-swatch')) {
+    button.addEventListener('click', async () => {
+      const wanted = button.dataset.scheme;
+      if (wanted === mine) return;
+      // Repaint before the round trip. It is a colour: if the save fails we put
+      // it back, and waiting on the network to see a colour feels broken.
+      paintScheme(wanted);
+      for (const other of el.querySelectorAll('.scheme-swatch')) {
+        other.classList.toggle('live', other === button);
+      }
+      try {
+        const res = await fetch(keyed('/api/me/scheme'), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
+          body: JSON.stringify({ scheme: wanted }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Could not save that');
+        library.scheme = data.scheme;
+      } catch (err) {
+        paintScheme(mine);
+        render();
+        alert(err.message);
+      }
+    });
+  }
+  return [el];
 }
 
 /**

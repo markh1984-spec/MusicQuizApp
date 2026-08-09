@@ -26,12 +26,26 @@ export function recordMark({ size = 0, id = 'bm', bold = false, cls = '' } = {})
   const groove = bold ? 2.6 : 1.6;
   const inner = bold ? 2 : 1.2;
   const dims = size ? ` width="${size}" height="${size}"` : '';
+  /*
+   * The disc takes the quizmaster's own two colours, and this is the only
+   * fiddly bit of the whole drawing.
+   *
+   * `stop-color` as a plain attribute cannot hold a `var()`, so each stop
+   * carries it as a CSS property in a `style` instead — where a custom
+   * property does resolve. The hard-coded hex is the FALLBACK, and it is doing
+   * real work rather than being belt and braces: this same function is served
+   * as /favicon.svg, a standalone document with no stylesheet and therefore no
+   * `--hot` at all, and a tab icon that came out transparent would be a bug
+   * nobody would connect to a colour picker.
+   */
+  const stop = (offset, v, fallback) =>
+    `<stop offset="${offset}" style="stop-color: var(${v}, ${fallback})"/>`;
   return `<svg xmlns="http://www.w3.org/2000/svg"${dims} viewBox="0 0 40 40"${cls ? ` class="${cls}"` : ''} aria-hidden="true">
   <defs>
     <linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#ff2e88"/>
-      <stop offset="55%" stop-color="#ff8a3d"/>
-      <stop offset="100%" stop-color="#ffd23f"/>
+      ${stop('0%', '--hot', '#ff2e88')}
+      ${stop('55%', '--hot-2', '#ff8a3d')}
+      ${stop('100%', '--mark-3', '#ffd23f')}
     </linearGradient>
   </defs>
   <circle cx="20" cy="20" r="19" fill="url(#${id})"/>

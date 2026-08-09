@@ -13,6 +13,7 @@
 import { esc, node, ServerClock, Live, brandMark, roomCode, roomParam } from './client.js';
 import { bingoCard, bingoTopbar } from './screen-bingo.js';
 import { paintLook, DEFAULT_LOOK } from './looks.js';
+import { paintScheme } from './schemes.js';
 import { faceFor } from './avatar.js';
 
 const cardEl = document.getElementById('card');
@@ -119,6 +120,9 @@ function paintTheLook(s) {
   if (document.documentElement.dataset.look !== look) {
     document.documentElement.dataset.look = look;
   }
+  // Whose night this is, in colour. Under the look, which wins where the two
+  // overlap — a themed night looks like the season, not like an account.
+  paintScheme(s.scheme);
   paintLook(document.querySelector('.stage'), look);
 }
 

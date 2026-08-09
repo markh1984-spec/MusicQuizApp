@@ -7,6 +7,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { APP_NAME } from './branding.js';
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.resolve(here, '..');
 
@@ -30,10 +32,23 @@ export const config = {
   // Which quiz is loaded when the server starts with no saved state.
   defaultQuizId: process.env.QUIZ_ID || '',
 
-  // Your name on it. Change BRAND_NAME and it changes everywhere: the console,
-  // the control view, the editor, the browser tab and the corner of the big
-  // screen. Left as one setting so venue branding can slot in later.
-  brandName: process.env.BRAND_NAME || "Mark's Music Madness",
+  /*
+   * What the app is called. A night is branded from the QUIZMASTER whose room
+   * it is — "Mark's Quiztopia", "Rob's Quiztopia" — so this is the half of the
+   * name that does not change. See `src/branding.js`.
+   */
+  appName: APP_NAME,
+
+  /*
+   * An outright override, and it beats the per-quizmaster name everywhere.
+   *
+   * Empty by DEFAULT now, which is the change: it used to default to a name,
+   * which meant every room on the server said the same thing whoever was
+   * running it. Somebody who sets `BRAND_NAME` has said what they want it
+   * called, so that still wins — but nobody has to set it to get their own
+   * name on their own projector.
+   */
+  brandName: process.env.BRAND_NAME || '',
 };
 
 export const paths = {

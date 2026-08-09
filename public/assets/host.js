@@ -11,6 +11,7 @@
  */
 
 import { esc, node, ServerClock, Live, postJson, brandLink, binIcon, actingBar } from './client.js';
+import { paintScheme } from './schemes.js';
 import { bingoPanels, bingoActions } from './host-bingo.js';
 
 const KEY_STORE = 'musicquiz.hostkey';
@@ -89,6 +90,10 @@ function draw(next) {
     document.title = `Control — ${state.brand}`;
     brandPainted = true;
   }
+  // Your own two colours on your own control view, so the phone in your hand
+  // matches the projector you are driving. Not gated on `brandPainted`: the
+  // colours can change mid-night from the console, the name cannot.
+  paintScheme(state.scheme);
   whereEl.textContent = whereLabel(state);
   connEl.textContent = `${state.playerCount} playing`;
   mainEl.replaceChildren(...restartNotice(state), ...advertPanel(state), ...buildPanels(state), ...photoPanel(state));

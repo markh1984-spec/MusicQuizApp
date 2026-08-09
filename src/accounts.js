@@ -34,6 +34,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 
 import { PLANS, ADDONS, ROLES, STATUSES, can, featuresFor, entitlements } from '../public/assets/plans.js';
+import { findScheme, DEFAULT_SCHEME } from '../public/assets/schemes.js';
 
 /** Work factor for scrypt. Slow enough to matter, fast enough for a login. */
 const SCRYPT = { N: 16384, r: 8, p: 1, keylen: 64 };
@@ -163,6 +164,10 @@ export class Accounts {
       email: clean,
       name: String(name || '').trim(),
       role,
+      // Their two colours. Written on at creation rather than left undefined so
+      // an account made before schemes existed and one made after read the
+      // same, and so `safe()` always carries one to the browser.
+      scheme: DEFAULT_SCHEME,
       ...hashPassword(password),
       // The owner's own quizmaster account. Marked so the owner page can offer
       // to switch into it, and so nothing else can: acting as somebody ELSE's
@@ -222,6 +227,26 @@ export class Accounts {
     if (patch.comped !== undefined) account.comped = Boolean(patch.comped);
     if (patch.name !== undefined) account.name = String(patch.name).trim();
     if (patch.billing) account.billing = { ...account.billing, ...patch.billing };
+    this.save();
+    return safe(account);
+  }
+
+  /**
+   * The two colours this account's screens wear.
+   *
+   * Its own method rather than a field on `update()`, because `update()` is the
+   * SUBSCRIPTION — plan, add-ons, status — and it throws outright for the owner,
+   * who has no subscription to change. Picking a colour is neither of those
+   * things: it is yours, it is cosmetic, and the owner wants it too.
+   *
+   * An unknown id lands on the ordinary scheme rather than throwing. This comes
+   * from a dropdown, and a colour that will not save is a strange thing to be
+   * stopped by.
+   */
+  setScheme(id, scheme) {
+    const account = this.find(id);
+    if (!account) return null;
+    account.scheme = findScheme(scheme);
     this.save();
     return safe(account);
   }

@@ -24,6 +24,10 @@
 
   --hot: #ff2e88;
   --hot-2: #ff8a3d;
+  /* The far end of the logo's gradient. Its own variable rather than reusing
+     --gold, because gold is the right third colour for a pink-and-orange
+     record and quite wrong for a turquoise one. */
+  --mark-3: #ffd23f;
   --cool: #4bd8ff;
   --gold: #ffd23f;
   --good: #2fe07a;
@@ -2488,6 +2492,110 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
    for exactly this reason. Keep the six well spaced round the wheel: they have
    to be told apart from the back of a room, which matters more than the
    palette being tasteful. */
+
+/* ---- the colour picker on the console.
+
+   The swatches are the colours themselves, not their names: "Orchid" means
+   nothing until you have seen it, and the point is choosing one you like the
+   look of. Same reasoning as the photo filters being shown rather than listed.
+
+   Each blob is written out here rather than taking var(--hot), because they all
+   have to be on screen AT ONCE and a variable would make every one of them the
+   colour you already have. Keep these in step with the [data-scheme] blocks
+   below — there is a test that the ids match, though not the hexes. */
+.scheme-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.scheme-swatch {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 14px 8px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--panel-line);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--ink-dim);
+  font: inherit; font-size: 13px; font-weight: 800;
+  cursor: pointer;
+}
+.scheme-swatch:hover:not(:disabled) { background: rgba(255, 255, 255, 0.09); color: var(--ink); }
+.scheme-swatch.live { border-color: var(--hot); color: var(--ink); background: rgba(255, 255, 255, 0.1); }
+.scheme-swatch:disabled { opacity: 0.45; cursor: default; }
+.scheme-blob {
+  width: 26px; height: 26px; border-radius: 50%;
+  flex: 0 0 auto;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+.scheme-blob[data-swatch="sunset"] { background: linear-gradient(120deg, #ff2e88, #ff8a3d); }
+.scheme-blob[data-swatch="orchid"] { background: linear-gradient(120deg, #ff4fa3, #a855f7); }
+.scheme-blob[data-swatch="lagoon"] { background: linear-gradient(120deg, #2ad3c5, #3d8bff); }
+.scheme-blob[data-swatch="ember"]  { background: linear-gradient(120deg, #ff3d3d, #ffa62b); }
+.scheme-blob[data-swatch="citrus"] { background: linear-gradient(120deg, #9ae62b, #ffd23f); }
+.scheme-blob[data-swatch="ultra"]  { background: linear-gradient(120deg, #8b5cf6, #ff2ed6); }
+
+/* ============================================================== SCHEMES
+   A quizmaster's own two colours — see public/assets/schemes.js.
+
+   A SCHEME IS A BRAND; A LOOK IS A NIGHT. A scheme sets --hot and --hot-2 and
+   the washes behind everything, and deliberately does NOT touch --a to --f.
+   Those are the option colours, they are how a player matches "the pink one,
+   bottom left" between the projector and their phone, and they belong to the
+   looks below and to nothing else.
+
+   THESE BLOCKS MUST STAY ABOVE THE LOOKS. Both are a single attribute selector,
+   so they have the same specificity and source order is what decides. A themed
+   night has to beat somebody's brand colours — Halloween is orange and black on
+   everybody's account. There is a test that this file keeps them in this order.
+
+   "sunset" is the original and needs no block: it is what :root already says,
+   so an account with no scheme set, and every page before the scheme arrives,
+   looks exactly as it always did. */
+
+[data-scheme="orchid"] {
+  --mark-3: #ffc2f0;
+  --hot: #ff4fa3;
+  --hot-2: #a855f7;
+  --glow-1: #2d1245;
+  --glow-2: #3b0f3a;
+  --drift-1: rgba(255, 79, 163, 0.16);
+  --drift-2: rgba(168, 85, 247, 0.15);
+}
+
+[data-scheme="lagoon"] {
+  --mark-3: #8df2e4;
+  --hot: #2ad3c5;
+  --hot-2: #3d8bff;
+  --glow-1: #0b2f45;
+  --glow-2: #10324a;
+  --drift-1: rgba(42, 211, 197, 0.16);
+  --drift-2: rgba(61, 139, 255, 0.15);
+}
+
+[data-scheme="ember"] {
+  --mark-3: #ffe08a;
+  --hot: #ff3d3d;
+  --hot-2: #ffa62b;
+  --glow-1: #3a1108;
+  --glow-2: #40210a;
+  --drift-1: rgba(255, 61, 61, 0.16);
+  --drift-2: rgba(255, 166, 43, 0.15);
+}
+
+[data-scheme="citrus"] {
+  --mark-3: #fff6a8;
+  --hot: #9ae62b;
+  --hot-2: #ffd23f;
+  --glow-1: #17330d;
+  --glow-2: #3a3208;
+  --drift-1: rgba(154, 230, 43, 0.15);
+  --drift-2: rgba(255, 210, 63, 0.14);
+}
+
+[data-scheme="ultra"] {
+  --mark-3: #ff9df0;
+  --hot: #8b5cf6;
+  --hot-2: #ff2ed6;
+  --glow-1: #1f1150;
+  --glow-2: #3d0b47;
+  --drift-1: rgba(139, 92, 246, 0.17);
+  --drift-2: rgba(255, 46, 214, 0.15);
+}
 
 [data-look="halloween"] {
   --glow-1: #2a1038;

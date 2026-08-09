@@ -18,6 +18,7 @@ import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
 import { FILTERS, drawFiltered, toJpeg } from './filters.js';
 import { STICKERS, stickerSvg, drawStickers, stickerAt, placed, preloadStickers } from './stickers.js';
 import { paintLook, DEFAULT_LOOK } from './looks.js';
+import { paintScheme } from './schemes.js';
 
 const STORE_KEY = 'musicquiz.player';
 
@@ -464,6 +465,10 @@ function draw(next) {
   if (document.documentElement.dataset.look !== look) {
     document.documentElement.dataset.look = look;
   }
+  // The quizmaster's own two colours, under the look. Taken from the payload,
+  // so this phone wears the colours of the room it JOINED — the same rule the
+  // look follows, and for the same reason: both screens or neither.
+  paintScheme(state.scheme);
   paintLook(document.body, look, { count: 6, size: 34 });
 }
 
@@ -887,7 +892,15 @@ function watchForWandering() {
 }
 
 async function boot() {
-  fetch('/api/brand').then((r) => r.json()).then((d) => paintBrand(d.name)).catch(() => {});
+  // The room's name and colours before a single state push has arrived, so the
+  // join screen is already the right quizmaster's rather than flashing the
+  // house colours and changing under somebody's thumb. Carries the join code,
+  // because at this point the phone knows which game it is heading for and the
+  // server has no cookie to work it out from.
+  fetch(`/api/brand${roomParam('?')}`).then((r) => r.json()).then((d) => {
+    paintBrand(d.name);
+    paintScheme(d.scheme);
+  }).catch(() => {});
   watchForWandering();
 
   if (me && me.id) {

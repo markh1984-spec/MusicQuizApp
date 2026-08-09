@@ -11,9 +11,10 @@ would need to know, add it here in the same turn.
 
 ## What this is
 
-Live games for pub and club quiz nights, run by a professional host (Mark).
-He is hired as the entertainer, never the organiser, so it runs on his kit in
-someone else's venue in front of a paying room.
+**The app is called Quiztopia.** Live games for pub and club quiz nights, run
+by a professional host (Mark). He is hired as the entertainer, never the
+organiser, so it runs on his kit in someone else's venue in front of a paying
+room.
 
 **Reliability beats cleverness everywhere.** If it is flaky on a Wednesday
 night with sixty people watching, it is worthless. That single sentence
@@ -710,10 +711,13 @@ src/reports.js         "that one's wrong" — corrections from a night
 src/adverts.js         venue advertising slides, per venue
 src/generate-images.js round 2 artwork (placeholder or OpenAI)
 src/portraits.js       the shared portrait library: one picture per musician
+src/branding.js        "Mark's Quiztopia" — the app name and whose night it is
+src/gates.js           which routes are the owner's, as two testable lists
 public/                the screens; *-bingo.js files hold the bingo variants
   assets/brandmark.js  the record logo, shared with the server as the favicon
   assets/avatar.js     a drawn face per team, for anyone who sent no photo
   assets/stickers.js   props to drag onto a photo: dog ears, a clown nose
+  assets/schemes.js    a quizmaster's own two colours, shared with the server
 quizzes/ bingo/        the library
 data/                  live state, history, archived nights (gitignored)
 ```
@@ -841,6 +845,74 @@ The console has a count next to each round's tickbox. Unticking greys the
 number rather than hiding it, so what you typed is still there when you tick it
 back on. `roundPlan` is also the whitelist and the clamp, in one place, so a
 typo is dropped rather than quietly becoming a round of general knowledge.
+
+---
+
+## The name on it, and whose colours it wears
+
+`src/branding.js` and `public/assets/schemes.js`. Two settings, one idea: **a
+night belongs to one quizmaster, and every screen in that room says so.**
+
+### "Mark's Quiztopia", "Rob's Quiztopia"
+
+The product is **Quiztopia** (`APP_NAME`). What goes on a projector is the
+room's host possessive-plus-that — **first names only**, because that is how he
+introduces himself on the mic and a surname on a projector reads like a
+letterhead. `brandFor()` also copes with the account having no name on it, by
+falling back to the local part of the email: `rob@…` is still somebody telling
+you they are Rob.
+
+**It is taken from the ROOM, never from whoever is looking at the page.** A
+phone that scanned Rob's projector says Rob's Quiztopia even while the owner has
+the console open in the next tab.
+
+**And the room's host is looked up in the ACCOUNTS BOOK by room id, not read off
+the room's `label`.** A label is only set when somebody who knows their own name
+touches the room, and the first thing to touch a room after a restart is usually
+the projector, which knows nothing. Branding off the label would leave a big
+screen saying plain "Quiztopia" for the five minutes before a gig. A room id IS
+an account id (`roomIdFor`), so the book always knows.
+
+`BRAND_NAME` still beats all of it and is unchanged — it is the documented way
+to put one name on the whole app. What DID change is that it no longer *defaults*
+to a name: it used to, which meant every room on the server said the same thing
+whoever was running it.
+
+### A scheme is a BRAND. A look is a NIGHT.
+
+`SCHEMES` — six of them, stored on the account, changed from "Your colours" at
+the bottom of the console. A scheme sets `--hot`, `--hot-2` and the washes
+behind everything, so a quizmaster who does not want pink-and-orange does not
+have to put somebody else's app on a projector with their own name above it.
+
+**A scheme never touches `--a` to `--f`.** Those are the option colours — how a
+player looks up, decides "the pink one, bottom left", and looks back down — and
+they belong to `looks.js` and to nothing else. Two features fighting over the
+one thing that has to agree between the projector and the phone is the way this
+loses somebody points. There is a test.
+
+**A look WINS where they overlap**, which is why the `[data-scheme]` blocks sit
+ABOVE the `[data-look]` blocks in `style.css`: both are one attribute selector,
+so source order is all that decides. Halloween is orange and black on
+everybody's account, because a themed night is about the night rather than about
+whose it is. There is a test for the ordering, because moving a block would
+silently reverse it.
+
+The ordinary scheme (`sunset`) deliberately has **no block of its own** — it is
+whatever `:root` already says. So an account with no scheme, and every page in
+the moment before the scheme arrives, looks exactly as the app always did.
+
+**The record logo takes the colours too**, through `var(--hot, #ff2e88)` in the
+gradient stops rather than bare hex. The fallback is load-bearing rather than
+belt-and-braces: the same function is served as `/favicon.svg`, a standalone
+document with no stylesheet and therefore no `--hot` at all, and a tab icon that
+came out transparent is not a bug anybody would connect to a colour picker.
+
+`PUT /api/me/scheme` is your own account and takes no id, so it cannot repaint
+anybody else's projector. It is not behind a feature gate: it costs nothing to
+run, which under the host's own tier rule makes it Basic, and the owner wants it
+too. Saving pushes the room, so the projector and every phone change where they
+stand without anybody reloading anything.
 
 ---
 
@@ -1023,8 +1095,33 @@ or the page cheerfully confirms who has an account here.
 
 ### One login, two hats — and it is how the quizmaster's bugs get found
 
-`ACTING_COOKIE` in `server.js`, `ownQuizmasterFor()` in `accounts.js`, the
-switch on `/owner`, the gold bar from `actingBar()` in `client.js`.
+`ACTING_COOKIE` in `server.js`, `ownQuizmasterFor()` in `accounts.js`, and
+`hatSwitch()` in `client.js`.
+
+**The switch is a two-position tab in the top right — Owner | Quizmaster — and
+it is the SIGN as well as the switch.** The live half is a solid block of
+colour, pink for the owner and gold for the quizmaster, so which hat is on is
+answered from across the room rather than read. The topbar is sticky, so unlike
+the bar it replaced it never scrolls away, and the body picks up a gold hairline
+while the hat is on so even a screenshot of the middle of the console says which
+hat it was taken in.
+
+It replaced a "Become a quizmaster" panel on `/owner` AND a bar across the top
+of everything. Two ways to do one job is how you end up using the worse one out
+of habit, and the worse one was the panel — it only existed on the owner page,
+so getting back meant finding a bar at the top of a different one.
+
+**Only an owner ever sees it, and only their own two hats.** A real quizmaster
+has nothing to switch to; neither does the HOST KEY, which is not an owner
+account at all but every hat at once by a different route, so a toggle there
+would be a control that could not mean anything.
+
+**Switching cannot disturb a night in progress**, which is why there is no
+confirm step: the two hats are two ROOMS, and a room keeps its own game, its own
+phones and its own state file. The worst a mis-tap does is show you the other
+room until you tap back. `actingBar()` survives on the control view only, where
+it is the indicator and not a switch — you change hats where you administer, not
+while driving a night.
 
 Mark is the app dev AND a quizmaster, on one laptop. Two logins meant two
 passwords and signing in and out; the host key meant every hat at once, which
@@ -1331,7 +1428,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 518 tests, no network, injected clocks — must stay green
+npm test        # 536 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -1403,7 +1500,7 @@ moment, the double-tap and early-reveal guards, the shared portrait library
 with its style and quality settings, the leaving-the-app note, and the fastest
 finger's face on the reveal, and **a room per quizmaster** — so a second login
 is now safe to hand out, and a permissions sweep run AS a quizmaster has
-closed five holes it found. All on **`MusicQuizApp`**. 518 tests green.
+closed five holes it found. All on **`MusicQuizApp`**. 536 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall and read-only access to the

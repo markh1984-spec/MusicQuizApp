@@ -1,4 +1,4 @@
-# Mark's Music Madness
+# Quiztopia
 
 Live pub games run from your laptop. The big screen goes on a projector,
 players join with their own phones by scanning a QR code, and you run
@@ -530,7 +530,8 @@ All optional — it runs with none of them set.
 | `PORT` | 3000 | |
 | `HOST_KEY` | generated once, kept in `data/` | Password for the control view and editor |
 | `PUBLIC_URL` | worked out from the request | Only needed if you put your own domain in front |
-| `BRAND_NAME` | `Mark's Music Madness` | Your name on every screen |
+| `APP_NAME` | `Quiztopia` | The product name. A night is branded from the quizmaster whose room it is — "Mark's Quiztopia", "Rob's Quiztopia" |
+| `BRAND_NAME` | — | One name for every screen on the server, overriding the per-quizmaster one. Only set it if you want that |
 | `QUIZ_ID` | first quiz found | Which quiz loads on a cold start |
 | `QUIZ_DIR` / `BINGO_DIR` / `DATA_DIR` / `IMAGE_DIR` | `./quizzes`, `./bingo`, `./data`, `./images` | |
 | `ANTHROPIC_API_KEY` | — | Needed to generate quizzes and bingo games |
