@@ -7,30 +7,77 @@ if a step does not go smoothly.
 
 ---
 
-## When you next sit down at the MacBook
+## READY TO HOST ON THURSDAY — do these in order
 
-Three things, in this order, about twenty minutes. Steps 1 and 2 have to come
-first or step 3 will not stick.
+About twenty minutes, all in one sitting. Each one depends on the one before it,
+so do not skip ahead.
 
-**1. Set `HOST_KEY` on Render — 2 minutes.** This is what stopped you on the
-phone. Right now the key is invented fresh on every deploy, so every bookmark
-you have breaks each time the app restarts.
+### 1 · Set `HOST_KEY` — 2 minutes
 
 🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env
-Add `HOST_KEY` = any long phrase you will remember, e.g. `mark-quiz-night-2026`.
-Save. It redeploys itself and your bookmarks stop breaking forever.
 
-*To get in RIGHT NOW, before you set it:* the current key is in the startup
-banner at 🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/logs —
-scroll to the box with your brand name in it and find the `Host key:` line.
+Add `HOST_KEY` = any long phrase you will remember (`mark-quiz-night-2026` is
+fine). Save; it redeploys itself.
 
-**2. Make the private repo — 10 minutes.** Without it every account you make is
-wiped by the next deploy. Full steps in step B below.
+*Without this the app invents a new key on every deploy and every bookmark you
+own stops working — which is what stopped you last time.*
 
-**3. Make your accounts — 5 minutes.** Console → the "No accounts yet" panel →
-owner account. Then sign in, and **Add a quizmaster** twice: once for yourself
-(use `you+quiz@…`, since the owner has your plain address) and once for Rob.
-Full steps under "Giving Rob a login" below.
+- [ ] Done
+
+**Locked out right now?** The key in use is in the startup banner:
+🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/logs — find the
+`Host key:` line.
+
+### 2 · Private repo — 5 minutes
+
+🔗 https://github.com/new — name it `mmm-private`, tick **Private**, Create.
+
+Then 🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env — add
+`PHOTO_REPO` = `markh1984-spec/mmm-private`. Save.
+
+*Without this every account, invoice and reported question is wiped by the next
+deploy. You would be doing step 3 again.*
+
+- [ ] Repo made
+- [ ] `PHOTO_REPO` set
+
+### 3 · Your accounts — 5 minutes
+
+🔗 https://musicquizapp.onrender.com/console (with your key)
+
+- [ ] The **"No accounts yet — make yours"** panel at the top → your name, email,
+      a password of 10+ characters → **Create the owner account**
+- [ ] Sign in 🔗 https://musicquizapp.onrender.com/login — you land on `/owner`
+- [ ] **Add a quizmaster** → `mark+quiz@…` (your plain address belongs to the
+      owner account now). Copy the password it shows you — it is not stored
+      anywhere you can read it again.
+- [ ] Same again for Rob, and for James if he is in
+
+### 4 · Prove it works — 5 minutes, and do this BEFORE Thursday
+
+🔗 https://musicquizapp.onrender.com/login as `mark+quiz@…`
+
+- [ ] Launch a quiz from your quizmaster console
+- [ ] Your console shows a **4-letter join code** — note it
+- [ ] Open the big screen at `…/screen?g=YOURCODE` and check the QR is there
+- [ ] Join from your phone at `…/play?g=YOURCODE`, answer one question
+- [ ] Do the same for a bingo game
+
+**If anything is wrong, you still have your host key.** It runs the house game
+exactly as it always has, from 🔗 https://musicquizapp.onrender.com/console —
+that is your fallback on the night and nothing about it has changed.
+
+### On the night
+
+| | |
+|---|---|
+| Your console | `…/console` (signed in) or `…/console?key=…` |
+| Your control view | `…/host` — no key needed once signed in |
+| Big screen | `…/screen?g=YOURCODE` |
+| Players | `…/play?g=YOURCODE` |
+
+**Using the host key instead?** Then it is plain `/screen` and `/play` with no
+code, exactly as now.
 
 ---
 
@@ -52,11 +99,15 @@ what happens if you skip it.
 | H | Finish Spotify | 10 min | free | you build playlists by hand |
 | I | OpenAI key | 20 min | ~£8 then pennies | round 2 uses placeholder drawings |
 
-**You CAN now give another quizmaster a login.** They get their own running
-game — they cannot launch over the top of your night — their own join code and
-their own photo wall, and read-only use of your packs. Do A and B first, or the
-account you make will be gone at the next deploy. See "Giving Rob a login" just
-below.
+**Rob and James can have logins.** Each gets their own running game — they
+cannot launch over the top of your night — their own join code and their own
+photo wall, and read-only use of your packs.
+
+**They cannot edit or generate your packs**, on purpose. What they CAN do is tap
+**"Something wrong with this one?"** at the bottom of the answer key on their
+control view. One tap, no typing, mid-gig. It lands on your owner page with the
+question, the answer, which pack, and who reported it — so corrections reach you
+without anybody being able to change a word of a pack.
 
 ---
 

@@ -2789,3 +2789,38 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   padding: 6px 0;
 }
 .cam-colour .cam-filters { margin-top: 6px; }
+
+/* "Something wrong with this one?" on the control view.
+   Deliberately quiet and full width at the bottom of the answer key, nowhere
+   near the primary button — it is never needed in a hurry, and a mis-tap
+   beside Reveal is the thing the rest of that screen exists to prevent. */
+.report-q {
+  margin-top: 12px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px dashed var(--panel-line);
+  background: none;
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.report-q:hover:not(:disabled) { color: var(--ink); border-color: var(--gold); }
+.report-q:disabled { opacity: 0.7; cursor: default; color: var(--gold); border-style: solid; }
+
+/* Reported questions on the owner page. The question itself is the thing you
+   read, so it gets the size; everything else is context underneath it. */
+.rep-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--panel-line);
+}
+.rep-row:last-child { border-bottom: 0; }
+.rep-row.done { opacity: 0.55; }
+.rep-main { flex: 1 1 auto; min-width: 0; }
+.rep-q { font-weight: 700; margin-bottom: 4px; }
+.rep-acts { flex: 0 0 auto; display: flex; gap: 8px; align-items: center; }
+.rep-acts a.minor { text-decoration: none; display: inline-block; }

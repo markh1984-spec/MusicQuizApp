@@ -706,6 +706,7 @@ src/bingo-rules.js     what makes a good bingo track, for the in-app generator
 src/spotify.js         playlist building
 src/qrcode.js          dependency-free QR encoder
 src/photos.js          photos from the room: store, kill switch, bin
+src/reports.js         "that one's wrong" — corrections from a night
 src/adverts.js         venue advertising slides, per venue
 src/generate-images.js round 2 artwork (placeholder or OpenAI)
 src/portraits.js       the shared portrait library: one picture per musician
@@ -942,6 +943,42 @@ disk that already has accounts on it always wins. Not fatal either: a missing
 backup is the normal first boot, and a GitHub having a bad morning must not stop
 a quiz night — the host key still works regardless.
 
+## Read-only packs, and the other half of that
+
+A quizmaster cannot edit or generate a pack. That is the arrangement — the
+packs are written to a house style and sold, and three people editing them is
+how that style stops being one.
+
+**So they need a way to tell you a question is wrong, or the whole thing just
+routes round you by text message.** `src/reports.js`, and it is one tap on the
+control view: "Something wrong with this one?" at the bottom of the answer key.
+No typing, no dialog, no confirm — the room has just said a question is wrong
+and sixty people are waiting, and anything more than a tap does not get used.
+The server reads the question off the RUNNING GAME rather than trusting the
+browser, so a stale page cannot mis-report.
+
+**A report carries a COPY of the question, not a pointer to it.** By the time it
+is read the pack may have been edited or reordered, and "round 2 question 7"
+against a changed quiz sends you confidently to the wrong question. The copy is
+what was actually on the projector.
+
+The same person reporting the same question twice is ONE report with a later
+timestamp — same reasoning as the double-tap guard. Two DIFFERENT people
+reporting it is two, because that is evidence rather than noise. When the file
+fills, the ones already dealt with go first: an open report is somebody waiting.
+
+Global rather than per-room, deliberately: the packs are shared, so a fault Rob
+finds is a fault in the owner's pack. The list is owner-only — a quizmaster
+seeing everybody else's corrections is the same mistake as a shared invoice
+book — and it sits at the top of `/owner`, above the quizmaster list, because it
+is the only thing on that page somebody is waiting on.
+
+**`/api/reports/` had to go in `OWNER_ONLY`.** The broad `FEATURES.QUIZ` gate in
+`handleWrite` catches everything that is not exempt, and the owner has no quiz
+features to pass it with — so the owner got a 403 dealing with a report on their
+own pack. That trap has now bitten twice (generation was the first). Anything
+new that only an owner does belongs in that list.
+
 ### The invoice book comes back too, and the counter is rebuilt not trusted
 
 `invoices.restore()`, the same shape as the accounts: only into an empty book,
@@ -983,6 +1020,16 @@ which is the honest version of "your account is private from me". Only the
 SHA-256 of a session token is stored, so a copy of the file is not a set of
 live logins. A wrong password and an unknown address give the identical message,
 or the page cheerfully confirms who has an account here.
+
+### The control view no longer needs a key at all
+
+A quizmaster who signed in and opened `/host` was asked for a host key they have
+never been given and no way to get — so Rob could launch a game from his console
+and then not drive it. Their cookie already says who they are and which room is
+theirs; that is enough, and `/host` now asks the server before deciding.
+
+The key still works and still wins where both are present, for the same reason
+it wins on the server.
 
 ### The host key BEATS a signed-in account, and that ordering is load-bearing
 
@@ -1170,7 +1217,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 499 tests, no network, injected clocks — must stay green
+npm test        # 507 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -1241,7 +1288,7 @@ foundation are done and tested. Since then: the photo props, the big photo
 moment, the double-tap and early-reveal guards, the shared portrait library
 with its style and quality settings, the leaving-the-app note, and the fastest
 finger's face on the reveal, and **a room per quizmaster** — so a second login
-is now safe to hand out. All on **`MusicQuizApp`**. 499 tests green.
+is now safe to hand out. All on **`MusicQuizApp`**. 507 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall and read-only access to the

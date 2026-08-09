@@ -51,6 +51,7 @@ export const paths = {
   // Email addresses, password hashes and payment references. Backed up to the
   // PRIVATE repository like the invoices, never the public one.
   accounts: path.join(config.dataDir, 'accounts.json'),
+  reports: path.join(config.dataDir, 'reports.json'),
 };
 
 /**

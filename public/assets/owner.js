@@ -48,14 +48,81 @@ async function boot() {
   await load();
 }
 
+let reports = [];
+
 async function load() {
   const data = await api('/api/owner/accounts');
   subscribers = data.accounts || [];
+  // Never fatal. A quizmaster list that will not draw because the reports
+  // route had a bad moment is a worse outcome than no reports panel.
+  try {
+    reports = (await api('/api/reports')).reports || [];
+  } catch {
+    reports = [];
+  }
   draw(data);
 }
 
+/**
+ * Corrections sent in from a night.
+ *
+ * At the top, above the quizmaster list, because it is the only thing on this
+ * page that somebody is waiting on. Each one carries a COPY of the question as
+ * it was on screen — the pack may well have been edited since, and a report
+ * that only pointed at "round 2 question 7" would send you confidently to the
+ * wrong question.
+ */
+function reportsPanel() {
+  const open = reports.filter((r) => r.status === 'open');
+  if (!reports.length) return [];
+
+  const when = (at) => {
+    const days = Math.floor((Date.now() - at) / 86400000);
+    return days < 1 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`;
+  };
+
+  const el = node(`
+    <div class="game-section">
+      <div class="game-head">
+        <div>
+          <h2>Reported questions</h2>
+          <div class="tiny">${open.length} to look at${reports.length - open.length ? ` · ${reports.length - open.length} dealt with` : ''}</div>
+        </div>
+      </div>
+      <div class="reports"></div>
+    </div>`);
+
+  const list = el.querySelector('.reports');
+  const shown = open.length ? open : reports.slice(0, 5);
+  for (const r of shown) {
+    const row = node(`
+      <div class="rep-row${r.status === 'done' ? ' done' : ''}">
+        <div class="rep-main">
+          <div class="rep-q">${esc(r.prompt || '(no question text)')}</div>
+          <div class="tiny">${esc(r.packId)}${r.roundIndex !== null ? ` · round ${r.roundIndex + 1} question ${r.questionIndex + 1}` : ''}
+            ${r.answer ? ` · answer: ${esc(r.answer)}` : ''}</div>
+          <div class="tiny">reported by ${esc(r.by || 'somebody')} ${esc(when(r.at))}${r.note ? ` — ${esc(r.note)}` : ''}</div>
+        </div>
+        <div class="rep-acts">
+          <a class="minor" href="/editor?quiz=${encodeURIComponent(r.packId)}">Open</a>
+          ${r.status === 'open' ? '<button class="minor fixed">Dealt with</button>' : '<button class="minor reopen">Reopen</button>'}
+        </div>
+      </div>`);
+    const set = async (status) => {
+      await api(`/api/reports/${encodeURIComponent(r.id)}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }),
+      });
+      load();
+    };
+    row.querySelector('.fixed')?.addEventListener('click', () => set('done'));
+    row.querySelector('.reopen')?.addEventListener('click', () => set('open'));
+    list.appendChild(row);
+  }
+  return [el];
+}
+
 function draw(data) {
-  const parts = [];
+  const parts = [...reportsPanel()];
 
   if (!data.backupReady) {
     parts.push(node(`

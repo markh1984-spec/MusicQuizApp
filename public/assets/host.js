@@ -373,6 +373,7 @@ function questionPanel(s) {
       <div class="tiny" style="margin-top:10px">
         ${s.answeredCount || 0} of ${s.playerCount} answered${s.fastest ? ` — fastest ${esc(s.fastest.name)} at ${s.fastest.seconds.toFixed(1)}s` : ''}
       </div>
+      <button class="report-q" type="button">Something wrong with this one?</button>
     </div>
   `);
 
@@ -417,6 +418,32 @@ function questionPanel(s) {
         <b>Left the app:</b>${off.map((n) => `<span>${esc(n)}</span>`).join('')}
       </div>`)] : []));
   };
+
+  /*
+   * "That one's wrong" — one tap, and back to the room.
+   *
+   * The room has just told the host a question is wrong and sixty people are
+   * waiting. Anything with typing in it does not get used mid-gig, so this
+   * takes nothing: the server reads the question off the running game itself.
+   *
+   * Deliberately small, quiet, and nowhere near the primary button. It is not
+   * an action anybody needs to find in a hurry, and a mis-tap next to Reveal is
+   * exactly what the rest of this file exists to prevent.
+   */
+  const reportBtn = el.querySelector('.report-q');
+  if (reportBtn) {
+    reportBtn.addEventListener('click', async () => {
+      reportBtn.disabled = true;
+      try {
+        await postJson('/api/host/reportQuestion', {}, { 'X-Host-Key': hostKey });
+        reportBtn.textContent = 'Noted \u2014 thanks';
+        toast('Reported. Carry on; it is on the owner\u2019s list.');
+      } catch (err) {
+        reportBtn.disabled = false;
+        toast('Could not report it: ' + err.message);
+      }
+    });
+  }
 
   el.querySelectorAll('.keyrow').forEach((row) => {
     row.addEventListener('click', () => {
@@ -805,30 +832,50 @@ function askForKey(message = '') {
   });
 }
 
-if (!hostKey) {
-  askForKey();
-} else {
-  // Check the key before opening a live connection, so a wrong one asks to be
-  // retyped instead of silently never connecting.
-  fetch(`/api/state?role=host&key=${encodeURIComponent(hostKey)}`).then((res) => {
+/*
+ * Getting in: a signed-in quizmaster, or the host key, or both.
+ *
+ * **The key is no longer required, and that was a blocker.** A quizmaster who
+ * signed in and opened their control view was asked for a host key they have
+ * never been given and have no way of getting — so Rob could launch a game from
+ * his console and then not drive it. Their cookie already says who they are and
+ * which room is theirs; that is enough.
+ *
+ * The key still works and still wins where both are present, for the same
+ * reason it wins on the server: it is the way in that predates accounts and it
+ * must keep working whatever else is going on in the browser.
+ *
+ * Asked once before opening a live connection, so a key that is no longer right
+ * is a box to retype rather than a stream that silently never connects.
+ */
+const keyQuery = hostKey ? `&key=${encodeURIComponent(hostKey)}` : '';
+
+function openStream() {
+  new Live(`/api/stream?role=host${keyQuery}`, {
+    onState: draw,
+    onStatus: (status) => {
+      if (status !== 'online') connEl.textContent = 'Reconnecting…';
+    },
+  });
+}
+
+{
+  fetch(`/api/state?role=host${keyQuery}`).then((res) => {
     if (res.status === 401) {
-      localStorage.removeItem(KEY_STORE);
-      askForKey('That key was not accepted. It may have changed \u2014 check your host\u2019s startup log.');
+      // Nobody signed in and no key that works. If a key was remembered it is
+      // stale, so forget it rather than letting it fail silently for ever.
+      if (hostKey) localStorage.removeItem(KEY_STORE);
+      askForKey(hostKey
+        ? 'That key was not accepted. It may have changed \u2014 check your host\u2019s startup log.'
+        : 'Sign in at /login, or paste your host key here.');
       return;
     }
-    new Live(`/api/stream?role=host&key=${encodeURIComponent(hostKey)}`, {
-      onState: draw,
-      onStatus: (status) => {
-        if (status !== 'online') connEl.textContent = 'Reconnecting…';
-      },
-    });
+    openStream();
   }).catch(() => {
-    new Live(`/api/stream?role=host&key=${encodeURIComponent(hostKey)}`, {
-      onState: draw,
-      onStatus: (status) => {
-        if (status !== 'online') connEl.textContent = 'Reconnecting…';
-      },
-    });
+    // The network had a moment. Opening the stream anyway is the right bet: it
+    // reconnects on its own, and a control view that refuses to appear because
+    // one fetch failed is worse than one that is briefly empty.
+    openStream();
   });
   // Keep the control view awake: a locked phone mid-round is a bad moment.
   if ('wakeLock' in navigator) {

@@ -37,6 +37,7 @@ import { invoicePdf, invoiceFilename } from './src/invoice-pdf.js';
 import { toSvg } from './src/qrcode.js';
 import { LOOKS } from './public/assets/looks.js';
 import { Accounts } from './src/accounts.js';
+import { Reports } from './src/reports.js';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
 import { FEATURES, whyNot, entitlements } from './public/assets/plans.js';
 // The logo, shared with the browser so the tab icon and the on-screen mark are
@@ -47,6 +48,9 @@ const HOST_KEY = hostKey();
 const hub = new Hub();
 const invoices = new Invoices(paths.invoices);
 const accounts = new Accounts(paths.accounts);
+// Corrections on a question, from whoever was running it. Global rather than
+// per-room: the packs are shared, so a fault Rob finds is a fault in the pack.
+const reports = new Reports(paths.reports);
 
 /*
  * One room per quizmaster.
@@ -518,6 +522,16 @@ async function handleGet(req, res, url, route) {
    * cannot spend it. `secure` only when the request actually arrived over
    * https, or a laptop on http://localhost could never sign in.
    */
+  /*
+   * The reports. Owner only — these are corrections to the owner's own packs,
+   * and a quizmaster seeing everybody else's would be the same mistake as the
+   * invoice book being shared.
+   */
+  if (route === '/api/reports') {
+    if (!allowed(req, res, url, FEATURES.CATALOGUE)) return true;
+    return sendJson(res, 200, { reports: reports.all(), ...reports.summary() }), true;
+  }
+
   if (route === '/api/owner/accounts') {
     if (!allowed(req, res, url, FEATURES.SUBSCRIBERS)) return true;
     return sendJson(res, 200, { accounts: subscriberList(), backupReady: privateRepoConfigured() }), true;
@@ -622,6 +636,9 @@ async function handleGet(req, res, url, route) {
       // Just the totals, so the Invoices tab can wear a badge saying how many
       // are still unpaid. The invoices themselves are never in this payload.
       invoicing: invoices.summary(),
+      // Only a count here. The reports themselves are owner-only and come from
+      // their own route.
+      reports: me && me.role === 'owner' ? reports.summary() : { open: 0, total: 0 },
       generation: {
         claude: Boolean(process.env.ANTHROPIC_API_KEY),
         openai: openaiConfigured(),
@@ -898,6 +915,14 @@ async function restoreFromBackup() {
       console.log('[accounts] nothing backed up yet — this is a first boot, or nobody has been added.');
     }
   }
+  if (reports.isEmpty()) {
+    const saved = await getFile('reports.json', 'private');
+    if (saved) {
+      const result = reports.restore(saved.toString('utf8'));
+      if (result.ok) console.log(`[reports] restored ${result.reports} question report(s)`);
+    }
+  }
+
   // The invoice book, same rules. The care it needs is all inside
   // `invoices.restore()`: the counter is rebuilt from the invoices themselves
   // rather than trusted from the file, so a backup written a few minutes before
@@ -913,6 +938,22 @@ async function restoreFromBackup() {
       }
     }
   }
+}
+
+/**
+ * Back up the reports.
+ *
+ * The private repo like everything else in data/, and for the ordinary reason:
+ * without it a deploy loses every correction anybody has sent, which is worse
+ * than not collecting them — somebody took the trouble to tell you.
+ *
+ * Never awaited by a request. A host tapping "wrong" mid-gig gets an instant
+ * yes; whether GitHub is having a good day is not their problem.
+ */
+function backUpReports() {
+  if (!privateRepoConfigured()) return;
+  putFile('reports.json', reports.serialise(), 'Update question reports', 'private')
+    .catch((err) => console.warn('[reports] could not back up:', err.message));
 }
 
 /** What the owner console lists. Never a hash, and never a session token. */
@@ -1255,12 +1296,30 @@ async function handleWrite(req, res, url, route) {
    // The owner's own routes are exempt from the broad gate below, because the
    // owner deliberately has no quiz features — an owner account manages
    // subscribers and writes the packs they buy, it does not run nights.
-  const OWNER_ONLY = ['/api/generate/', '/api/owner/'];
+  // `/api/reports/` is here for the same reason: dealing with a correction to
+  // a pack is the owner's job, and the owner has no quiz features to pass the
+  // gate below with. This bit the generation routes first and has now bitten
+  // twice — anything new that only an owner does belongs in this list.
+  const OWNER_ONLY = ['/api/generate/', '/api/owner/', '/api/reports/'];
   if (!OWNER_ONLY.some((prefix) => route.startsWith(prefix))) {
     if (!allowed(req, res, url, FEATURES.QUIZ, { live: true })) return true;
   }
 
   // ---- managing subscribers
+  if (route.startsWith('/api/reports/') && (req.method === 'POST' || req.method === 'DELETE')) {
+    if (!allowed(req, res, url, FEATURES.CATALOGUE)) return true;
+    const id = decodeURIComponent(route.slice('/api/reports/'.length));
+    if (req.method === 'DELETE') {
+      const gone = reports.remove(id);
+      if (gone) backUpReports();
+      return sendJson(res, 200, { ok: gone, ...reports.summary() }), true;
+    }
+    const body = await readJson(req);
+    const ok = reports.setStatus(id, String(body.status || 'done'));
+    if (ok) backUpReports();
+    return sendJson(res, 200, { ok, ...reports.summary() }), true;
+  }
+
   if (route === '/api/owner/accounts' && req.method === 'POST') {
     /*
      * The very first account is a special case, and only this one.
@@ -1350,6 +1409,39 @@ async function handleWrite(req, res, url, route) {
       } catch (err) {
         return sendJson(res, 400, { error: err.message }), true;
       }
+    }
+
+    /*
+     * "That one's wrong."
+     *
+     * One tap, no typing, no dialog. The room has just told the host a question
+     * is wrong and there are sixty people waiting — anything more than a tap
+     * does not get used, and a correction that does not get reported is a
+     * correction that reaches nobody.
+     *
+     * What is reported is read off the RUNNING GAME rather than sent by the
+     * browser, so there is nothing to get out of step and nothing a stale page
+     * can mis-report.
+     */
+    if (action === 'reportQuestion') {
+      const engine = session.engine;
+      const q = typeof engine.question === 'function' ? engine.question() : null;
+      const round = typeof engine.round === 'function' ? engine.round() : null;
+      if (!q) return sendJson(res, 200, { ok: false, reason: 'no_question' }), true;
+      const me = whoIs(req, url);
+      const result = reports.add({
+        packId: session.pack?.id || '',
+        packKind: session.kind,
+        roundIndex: engine.state.roundIndex,
+        questionIndex: engine.state.questionIndex,
+        questionId: q.id || '',
+        prompt: q.prompt || '',
+        answer: typeof engine.answerText === 'function' ? engine.answerText(q, round) : '',
+        note: String(body.note || ''),
+        by: (me && (me.name || me.email)) || 'Host key',
+      });
+      if (result.ok) backUpReports();
+      return sendJson(res, 200, result), true;
     }
 
     // The photo controls: the switch, and the bin. Deliberately as immediate
