@@ -2824,3 +2824,30 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .rep-q { font-weight: 700; margin-bottom: 4px; }
 .rep-acts { flex: 0 0 auto; display: flex; gap: 8px; align-items: center; }
 .rep-acts a.minor { text-decoration: none; display: inline-block; }
+
+/* "You are wearing the quizmaster hat." Gold rather than red — it is a mode,
+   not a fault — and in the flow of the page rather than floating over it, so
+   it cannot cover a control on a phone held in the dark. */
+.acting-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 8px 14px;
+  background: rgba(255, 210, 63, 0.14);
+  border-bottom: 1px solid rgba(255, 210, 63, 0.45);
+  color: var(--ink);
+  font-size: 13px;
+}
+.acting-bar button {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 210, 63, 0.6);
+  background: none;
+  color: var(--gold);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}

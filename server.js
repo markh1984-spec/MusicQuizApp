@@ -38,6 +38,7 @@ import { toSvg } from './src/qrcode.js';
 import { LOOKS } from './public/assets/looks.js';
 import { Accounts } from './src/accounts.js';
 import { Reports } from './src/reports.js';
+import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
 import { FEATURES, whyNot, entitlements } from './public/assets/plans.js';
 // The logo, shared with the browser so the tab icon and the on-screen mark are
@@ -196,6 +197,33 @@ function isHostKey(req, url) {
 
 const SESSION_COOKIE = 'mmm_session';
 
+/*
+ * The owner wearing their quizmaster hat.
+ *
+ * One login, two hats. Mark is the app dev AND a quizmaster, and switching
+ * rather than keeping two logins is not a convenience — it is the only way he
+ * ever experiences the app as a subscriber does. The host key gives him every
+ * feature at once, so any irritation a real quizmaster hits is invisible from
+ * behind it. Wearing the hat properly is what finds those.
+ *
+ * It is only ever a DOWNGRADE: an owner becomes one specific quizmaster, with
+ * that account's permissions, that account's room and the same read-only packs
+ * everybody else gets. It cannot be used the other way round, and it cannot
+ * reach anybody else's account — acting as ROB is support access, which is his
+ * to grant and is logged, and that is a different feature.
+ */
+const ACTING_COOKIE = 'mmm_acting';
+
+/** One cookie, with the same rules as the session one. */
+function cookieFor(req, name, value, days = 30) {
+  const secure = (req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https';
+  return [
+    `${name}=${encodeURIComponent(value)}`,
+    'Path=/', 'HttpOnly', 'SameSite=Lax', `Max-Age=${days * 86400}`,
+    ...(secure ? ['Secure'] : []),
+  ].join('; ');
+}
+
 /** One cookie out of a header, without pulling in a parser. */
 function cookie(req, name) {
   const header = req.headers.cookie || '';
@@ -233,8 +261,19 @@ function cookie(req, name) {
 function whoIs(req, url) {
   if (isHostKey(req, url)) return BOOTSTRAP;
   const account = accounts.fromToken(cookie(req, SESSION_COOKIE));
-  if (account) return account;
-  return null;
+  if (!account) return null;
+
+  // Wearing the quizmaster hat. Checked against the account book rather than
+  // trusted from the cookie, and only ever the owner's OWN linked quizmaster —
+  // so this can never become a way into somebody else's night.
+  const actingId = cookie(req, ACTING_COOKIE);
+  if (actingId && account.role === 'owner') {
+    const hat = accounts.find(actingId);
+    if (hat && hat.role === 'quizmaster' && hat.ownedBy === account.id) {
+      return { ...hat, actingAs: true, realName: account.name || account.email };
+    }
+  }
+  return account;
 }
 
 /**
@@ -558,6 +597,10 @@ async function handleGet(req, res, url, route) {
       // Said out loud, because a bootstrap session looks exactly like a real
       // one until something it cannot do goes wrong.
       bootstrap: Boolean(account.bootstrap),
+      // Wearing the quizmaster hat. Every page shows a bar saying so — being
+      // unsure which hat is on is worse than either hat.
+      actingAs: Boolean(account.actingAs),
+      realName: account.realName || '',
     }), true;
   }
 
@@ -1301,7 +1344,35 @@ async function handleWrite(req, res, url, route) {
   // gate below with. This bit the generation routes first and has now bitten
   // twice — anything new that only an owner does belongs in this list.
   const OWNER_ONLY = ['/api/generate/', '/api/owner/', '/api/reports/'];
-  if (!OWNER_ONLY.some((prefix) => route.startsWith(prefix))) {
+
+  /*
+   * Writing to the pack LIBRARY is the owner's alone.
+   *
+   * Reading it is `FEATURES.LIBRARY`, which every quizmaster has — they play
+   * the packs, that is the arrangement. But saving, deleting, importing and
+   * annotating one are `FEATURES.CATALOGUE`, which only the owner has.
+   *
+   * This was open, and it was not theoretical: a signed-in quizmaster could
+   * DELETE one of the owner's quizzes with a single request, and it was found
+   * by the owner putting the quizmaster hat on and looking at his own console.
+   * The packs are written to a house style and sold; three people editing them
+   * is how that style stops being one, and one person deleting them is worse.
+   *
+   * Listed as prefixes here rather than checked route by route because the
+   * next pack-writing route somebody adds will otherwise be open too.
+   */
+  const CHANGES_THE_LIBRARY = (r, method) => {
+    if (method !== 'PUT' && method !== 'DELETE' && method !== 'POST') return false;
+    if (r === '/api/quiz/__validate') return false;   // checks, saves nothing
+    return r.startsWith('/api/quiz/') || r.startsWith('/api/bingo/');
+  };
+  const changesLibrary = CHANGES_THE_LIBRARY(route, req.method);
+  if (changesLibrary) {
+    if (!allowed(req, res, url, FEATURES.CATALOGUE)) return true;
+  }
+  // The owner has no quiz features by design, so anything they alone may do has
+  // to skip the broad gate below — the third time that has caught something.
+  if (!changesLibrary && !OWNER_ONLY.some((prefix) => route.startsWith(prefix))) {
     if (!allowed(req, res, url, FEATURES.QUIZ, { live: true })) return true;
   }
 
@@ -1318,6 +1389,43 @@ async function handleWrite(req, res, url, route) {
     const ok = reports.setStatus(id, String(body.status || 'done'));
     if (ok) backUpReports();
     return sendJson(res, 200, { ok, ...reports.summary() }), true;
+  }
+
+  /*
+   * Put the quizmaster hat on, or take it off.
+   *
+   * Creates the linked account the first time. It is given a long random
+   * password nobody ever sees, because it is not signed into directly — the
+   * whole point is ONE login. That also means there is no second password to
+   * lose, and no second account anybody could sign into if they got the address.
+   */
+  if (route === '/api/owner/act-as' && req.method === 'POST') {
+    const me = accounts.fromToken(cookie(req, SESSION_COOKIE));
+    if (!me || me.role !== 'owner') return sendJson(res, 403, { error: 'Owners only.' }), true;
+    const body = await readJson(req);
+
+    if (body.on === false) {
+      res.setHeader('Set-Cookie', `${ACTING_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`);
+      return sendJson(res, 200, { ok: true, acting: false }), true;
+    }
+
+    let hat = accounts.ownQuizmasterFor(me.id);
+    if (!hat) {
+      const [name, domain] = String(me.email).split('@');
+      hat = accounts.create({
+        // A + alias of the owner's own address: it is theirs, it is obviously
+        // theirs in the account list, and it cannot collide with a real one.
+        email: `${name}+quizmaster@${domain}`,
+        password: randomBytes(24).toString('hex'),
+        name: `${me.name || 'You'} (quizmaster)`,
+        comped: true,
+        status: 'active',
+        ownedBy: me.id,
+      });
+      await backUpAccounts();
+    }
+    res.setHeader('Set-Cookie', cookieFor(req, ACTING_COOKIE, hat.id));
+    return sendJson(res, 200, { ok: true, acting: true, account: accounts.view(hat) }), true;
   }
 
   if (route === '/api/owner/accounts' && req.method === 'POST') {

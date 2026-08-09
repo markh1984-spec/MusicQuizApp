@@ -10,7 +10,7 @@
  * always does the obvious next thing, in the same place every time.
  */
 
-import { esc, node, ServerClock, Live, postJson, brandLink, binIcon } from './client.js';
+import { esc, node, ServerClock, Live, postJson, brandLink, binIcon, actingBar } from './client.js';
 import { bingoPanels, bingoActions } from './host-bingo.js';
 
 const KEY_STORE = 'musicquiz.hostkey';
@@ -871,6 +871,9 @@ function openStream() {
       return;
     }
     openStream();
+    // Which hat is on. Asked separately because the state payload is about the
+    // game, not about who is looking at it.
+    fetch('/api/me').then((r) => r.json()).then((who) => actingBar(who)).catch(() => {});
   }).catch(() => {
     // The network had a moment. Opening the stream anyway is the right bet: it
     // reconnects on its own, and a control view that refuses to appear because

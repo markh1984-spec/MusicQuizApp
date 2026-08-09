@@ -121,8 +121,46 @@ function reportsPanel() {
   return [el];
 }
 
+/**
+ * Put the quizmaster hat on.
+ *
+ * One login, two hats. The host key gives the owner every feature at once, so
+ * anything that irritates a real quizmaster is invisible from behind it — this
+ * is the only way to see the app the way a subscriber does. It is a downgrade
+ * and nothing else: the owner's own linked account, its permissions, its room.
+ */
+function hatPanel() {
+  const el = node(`
+    <div class="game-section">
+      <div class="game-head">
+        <div>
+          <h2>Run a night yourself</h2>
+          <div class="tiny">Switch into your own quizmaster account — same login, no second
+            password. You get exactly what Rob gets: your own game, your own join code, and
+            packs you cannot edit. It is the only way to spot what annoys a quizmaster.</div>
+        </div>
+        <div class="row"><button class="go be-qm">Become a quizmaster</button></div>
+      </div>
+    </div>`);
+  el.querySelector('.be-qm').addEventListener('click', async (e) => {
+    e.target.disabled = true;
+    e.target.textContent = 'Switching…';
+    try {
+      await api('/api/owner/act-as', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on: true }),
+      });
+      location.href = '/console';
+    } catch (err) {
+      e.target.disabled = false;
+      e.target.textContent = 'Become a quizmaster';
+      alert(err.message);
+    }
+  });
+  return [el];
+}
+
 function draw(data) {
-  const parts = [...reportsPanel()];
+  const parts = [...reportsPanel(), ...hatPanel()];
 
   if (!data.backupReady) {
     parts.push(node(`

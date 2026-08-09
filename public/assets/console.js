@@ -7,7 +7,7 @@
  * something typed in fresh each time.
  */
 
-import { esc, node, postJson, brandLink, binIcon } from './client.js';
+import { esc, node, postJson, brandLink, binIcon, actingBar } from './client.js';
 import { balanceAnswers } from './balance.js';
 import { FEATURES } from './plans.js';
 
@@ -99,6 +99,8 @@ async function load() {
     // take the Launch button away minutes before a quiz. A key in the URL or
     // remembered in this browser means "I am here to run something".
     if (me && me.role === 'owner' && !hostKey) { location.href = '/owner'; return; }
+    // Wearing the quizmaster hat: say so, at the top, on every page.
+    actingBar(who);
   } catch {
     me = null;
   }

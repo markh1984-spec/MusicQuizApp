@@ -147,3 +147,30 @@ test('the host key identity can run a night, which is why it must win', () => {
   assert.equal(can(bootstrap, FEATURES.BINGO), true);
   assert.equal(can(bootstrap, FEATURES.LIBRARY), true);
 });
+
+
+/*
+ * Writing to the pack library is the owner's alone.
+ *
+ * Found by the owner putting the quizmaster hat on and looking at his own
+ * console: a signed-in quizmaster could DELETE one of the owner's quizzes with
+ * a single request. The packs are written to a house style and sold — three
+ * people editing them is how that style stops being one, and one person
+ * deleting them is worse.
+ *
+ * Reading is LIBRARY, which everybody has. Changing is CATALOGUE, which only
+ * the owner has. The gate itself lives in server.js `CHANGES_THE_LIBRARY`.
+ */
+test('a quizmaster can read the library but never change it', () => {
+  for (const plan of Object.keys(PLANS)) {
+    const qm = { role: 'quizmaster', plan, status: 'active', addons: ['admin', 'stream'] };
+    assert.equal(can(qm, FEATURES.LIBRARY), true, `${plan} cannot read the library`);
+    assert.equal(can(qm, FEATURES.CATALOGUE), false, `${plan} can CHANGE the library`);
+  }
+  // Comped and lapsed alike — this is not a billing question.
+  assert.equal(can({ role: 'quizmaster', plan: 'basic', comped: true, status: 'active' }, FEATURES.CATALOGUE), false);
+});
+
+test('the owner can change the library, because writing the packs is the job', () => {
+  assert.equal(can({ role: 'owner', status: 'active' }, FEATURES.CATALOGUE), true);
+});

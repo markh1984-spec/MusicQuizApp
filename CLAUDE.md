@@ -1021,6 +1021,47 @@ SHA-256 of a session token is stored, so a copy of the file is not a set of
 live logins. A wrong password and an unknown address give the identical message,
 or the page cheerfully confirms who has an account here.
 
+### One login, two hats — and it is how the quizmaster's bugs get found
+
+`ACTING_COOKIE` in `server.js`, `ownQuizmasterFor()` in `accounts.js`, the
+switch on `/owner`, the gold bar from `actingBar()` in `client.js`.
+
+Mark is the app dev AND a quizmaster, on one laptop. Two logins meant two
+passwords and signing in and out; the host key meant every hat at once, which
+is worse for a different reason — **behind the host key, every irritation a real
+quizmaster hits is invisible.** So the owner switches into their own linked
+quizmaster account and gets exactly what a subscriber gets: their own room,
+their own join code, read-only packs, no generator, owner routes 403.
+
+**It is only ever a DOWNGRADE, and only ever into the owner's OWN account.**
+The linked account carries `ownedBy: <ownerId>` and `whoIs()` checks that
+against the book rather than trusting the cookie. Acting as somebody ELSE's
+quizmaster is support access — theirs to grant, and logged — which is a
+different feature and deliberately not this one.
+
+The linked account has a long random password nobody ever sees: it is never
+signed into directly, which is what makes "one login" true and means there is
+no second password to lose.
+
+**This paid for itself immediately.** The first time the hat went on it showed a
+signed-in quizmaster could DELETE one of the owner's quizzes — see below.
+
+### Writing to the pack library is the owner's alone
+
+`CHANGES_THE_LIBRARY` in `server.js`. Reading the library is `FEATURES.LIBRARY`,
+which every quizmaster has — they play the packs, that is the arrangement.
+Saving, deleting, importing and annotating are `FEATURES.CATALOGUE`, owner only.
+
+Before this, every pack-write route was gated only by the broad `FEATURES.QUIZ`
+check, which every quizmaster passes. Rob could have deleted a quiz an hour
+before a gig. It is a prefix test rather than a check on each route precisely so
+the next pack-writing route somebody adds is covered without anybody
+remembering to.
+
+Note the ordering trap, which has now caught something **three** times: the
+owner has no quiz features, so anything only an owner may do must skip the broad
+gate as well as pass its own.
+
 ### The control view no longer needs a key at all
 
 A quizmaster who signed in and opened `/host` was asked for a host key they have
@@ -1217,7 +1258,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 507 tests, no network, injected clocks — must stay green
+npm test        # 509 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -1288,7 +1329,7 @@ foundation are done and tested. Since then: the photo props, the big photo
 moment, the double-tap and early-reveal guards, the shared portrait library
 with its style and quality settings, the leaving-the-app note, and the fastest
 finger's face on the reveal, and **a room per quizmaster** — so a second login
-is now safe to hand out. All on **`MusicQuizApp`**. 507 tests green.
+is now safe to hand out. All on **`MusicQuizApp`**. 509 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall and read-only access to the

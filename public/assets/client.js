@@ -234,3 +234,29 @@ export function rememberRoom(code) {
     else localStorage.removeItem(ROOM_KEY);
   } catch { /* private browsing */ }
 }
+
+/**
+ * A bar across the top saying which hat is on.
+ *
+ * Only ever shown to an owner who has switched into their own quizmaster
+ * account. Being unsure which hat you are wearing is worse than either hat —
+ * especially minutes before a gig, where "why is there no Launch button" and
+ * "why can I see everybody's invoices" are both alarming for the wrong reason.
+ *
+ * It goes at the very top and pushes the page down rather than floating over
+ * it, because something that covers a control is a bug of its own.
+ */
+export function actingBar(me) {
+  if (!me || !me.actingAs) return null;
+  const el = node(`
+    <div class="acting-bar">
+      <span>Wearing your <b>quizmaster</b> hat — this is exactly what a subscriber sees.</span>
+      <button type="button">Back to owner</button>
+    </div>`);
+  el.querySelector('button').addEventListener('click', async () => {
+    await postJson('/api/owner/act-as', { on: false });
+    location.href = '/owner';
+  });
+  document.body.prepend(el);
+  return el;
+}

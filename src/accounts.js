@@ -123,6 +123,19 @@ export class Accounts {
     return this.data.accounts.find((a) => a.email === wanted) || null;
   }
 
+  /**
+   * The owner's own quizmaster account, if they have made one.
+   *
+   * One login, two hats. Mark is the app dev and a quizmaster, and the point of
+   * switching rather than signing in twice is that he then experiences the app
+   * EXACTLY as a subscriber does — same permissions, same room, same read-only
+   * packs. Anything that irritates a quizmaster irritates him too, which is the
+   * only way those things get found.
+   */
+  ownQuizmasterFor(ownerId) {
+    return this.data.accounts.find((a) => a.role === 'quizmaster' && a.ownedBy === ownerId) || null;
+  }
+
   get owner() {
     return this.data.accounts.find((a) => a.role === 'owner') || null;
   }
@@ -133,7 +146,7 @@ export class Accounts {
    * @param {boolean} [opts.comped]  everything, for nothing. The owner's own
    *                                 quizmaster account, and anybody he gifts it to.
    */
-  create({ email, password, name = '', role = 'quizmaster', plan = 'basic', addons = [], comped = false, status = 'trialing' }) {
+  create({ email, password, name = '', role = 'quizmaster', plan = 'basic', addons = [], comped = false, status = 'trialing', ownedBy = '' }) {
     const clean = normaliseEmail(email);
     if (!clean || !clean.includes('@')) throw new Error('That does not look like an email address.');
     if (this.byEmail(clean)) throw new Error('There is already an account with that email address.');
@@ -151,6 +164,11 @@ export class Accounts {
       name: String(name || '').trim(),
       role,
       ...hashPassword(password),
+      // The owner's own quizmaster account. Marked so the owner page can offer
+      // to switch into it, and so nothing else can: acting as somebody ELSE's
+      // quizmaster is support access, which is theirs to grant and is logged —
+      // a different feature from wearing your own second hat.
+      ...(ownedBy ? { ownedBy } : {}),
       ...(role === 'owner' ? {} : {
         plan,
         addons: (addons || []).filter((a) => ADDONS[a]),

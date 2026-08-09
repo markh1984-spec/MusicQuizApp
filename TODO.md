@@ -48,14 +48,17 @@ deploy. You would be doing step 3 again.*
 - [ ] The **"No accounts yet — make yours"** panel at the top → your name, email,
       a password of 10+ characters → **Create the owner account**
 - [ ] Sign in 🔗 https://musicquizapp.onrender.com/login — you land on `/owner`
-- [ ] **Add a quizmaster** → `mark+quiz@…` (your plain address belongs to the
-      owner account now). Copy the password it shows you — it is not stored
-      anywhere you can read it again.
-- [ ] Same again for Rob, and for James if he is in
+- [ ] **Add a quizmaster** for Rob, and for James if he is in. Copy each
+      password it shows you — they are not stored anywhere you can read again.
+- [ ] **You do not need a second account for yourself.** On the owner page press
+      **Become a quizmaster** — same login, no second password. It puts you in
+      your own quizmaster account with your own game, your own join code and
+      read-only packs, which is exactly what Rob gets. A gold bar across the top
+      says which hat you are wearing, with **Back to owner** next to it.
 
 ### 4 · Prove it works — 5 minutes, and do this BEFORE Thursday
 
-🔗 https://musicquizapp.onrender.com/login as `mark+quiz@…`
+Sign in, then press **Become a quizmaster** on the owner page.
 
 - [ ] Launch a quiz from your quizmaster console
 - [ ] Your console shows a **4-letter join code** — note it
