@@ -1054,10 +1054,11 @@ has — they play the packs, that is the arrangement. Saving, deleting, renaming
 importing, annotating and the playlist step are `FEATURES.CATALOGUE`, owner only.
 
 Before this, every pack-write route was gated only by the broad `FEATURES.QUIZ`
-check, which every quizmaster passes. Rob could have deleted a quiz an hour
-before a gig. It is a prefix test rather than a check on each route precisely so
-the next pack-writing route somebody adds is covered without anybody
-remembering to.
+check, which every quizmaster passes. **A signed-in subscriber could have
+deleted a quiz an hour before a gig** — and far more likely by mis-tapping a
+Delete button the console was drawing for them than by meaning to. It is a
+prefix test rather than a check on each route precisely so the next
+pack-writing route somebody adds is covered without anybody remembering to.
 
 Note the ordering trap, which has now caught something **four** times: the
 owner has no quiz features, so anything only an owner may do must skip the broad
@@ -1072,13 +1073,20 @@ adds a fifth.
 
 ### What a sweep as a quizmaster actually found
 
-Signing in as Rob and trying, one request at a time, everything a subscriber
-should not be able to do. Five things worked, and the shape of each is worth
-keeping:
+**The burglar is called RoboRob, and he is not Rob.** Rob is a real person who
+is going to be handed a login, and he is the innocent second quizmaster in every
+other example in this file — the one who presses Launch, finds a wrong question,
+and needs his own room. **RoboRob is a throwaway test account** signed in and
+pointed at every route a subscriber should not reach. Where this file says a
+quizmaster "could have deleted a quiz", that is a statement about what the
+SOFTWARE allowed, never about anybody's intentions. Keep the two apart in
+anything written down: a repo is read by the people in it.
+
+Five things worked, and the shape of each is worth keeping:
 
 - **`POST /api/quiz` took the id in the BODY**, so `startsWith('/api/quiz/')` —
   with the trailing slash — never matched it. DELETE and PUT were shut and this
-  was wide open: the Madonna pack came back titled "ROB WAS HERE". `POST
+  was wide open: the Madonna pack came back titled "ROBOROB WAS HERE". `POST
   /api/bingo` was identical. **Match the bare path as well as the prefix.**
 - **Import, the playlist builder and `history/forget` were open**, because none
   of them looks like "saving a pack". Forgetting the history wiped all 319
@@ -1086,16 +1094,17 @@ keeping:
   front of a room.
 - **Three routes on the Invoices tab asked for `FEATURES.LIBRARY`**, which every
   quizmaster has, rather than the admin add-on: the PDF, the status change and
-  deleting a customer. Rob downloaded an invoice carrying the host's own sort
-  code. There is a test that reads `server.js` and fails if any `/api/invoices`
-  route is gated on the library — the same trick `looks.test.js` uses for emoji.
+  deleting a customer. A subscriber with no add-on at all downloaded an invoice
+  carrying the host's own sort code. There is a test that reads `server.js` and
+  fails if any `/api/invoices` route is gated on the library — the same trick
+  `looks.test.js` uses for emoji.
 
 **What held:** rooms. Every attempt to reach another quizmaster's night —
-`?g=CODE`, `room`, `roomId`, `joinCode` in the body — landed in Rob's own room,
-because `/api/host/*` works out the room from WHO YOU ARE and takes no room
-parameter. Mark's game carried on untouched. Also held: the account routes, the
-corrections book, generation, path traversal on every static route, and the
-screen payload, which carries no answer key to an unauthenticated fetch.
+`?g=CODE`, `room`, `roomId`, `joinCode` in the body — landed in the attacker's
+own room, because `/api/host/*` works out the room from WHO YOU ARE and takes no
+room parameter. The other game carried on untouched. Also held: the account
+routes, the corrections book, generation, path traversal on every static route,
+and the screen payload, which carries no answer key to an unauthenticated fetch.
 
 **And the console has to agree with the server.** Every one of these was fixed
 in `server.js` first and then in `console.js`, because a Delete button that
@@ -1215,9 +1224,10 @@ that quizmaster running the version from before the edit.
 - **Past nights and the archive are shared.** Gated on the admin add-on, so
   nobody can reach them today.
 - **Advert slides are shared**, so writing to them is currently the OWNER's —
-  a holding position, not a settled tier. One folder, not one per room, means
-  Rob deleting the set for The Crown lands on Mark's projector. Putting a slide
-  UP is untouched, because that is a host action and everybody has it. **When
+  a holding position, not a settled tier. One folder, not one per room, means a
+  second quizmaster tidying up what looks like their own venue list deletes the
+  set for The Crown off Mark's projector. Putting a slide UP is untouched,
+  because that is a host action and everybody has it. **When
   advert sets become per-room, take `/api/advert` back out of
   `changesTheLibrary()`** — the feature itself is Basic under the host's own
   tier rule, since it costs nothing to run.

@@ -1959,11 +1959,11 @@ load().catch((err) => {
 function advertsSection(sets) {
   /*
    * Advert sets are still SHARED between quizmasters — one folder, not one per
-   * room — so until they are scoped, writing to them is the owner's. Rob
-   * deleting the set for The Crown an hour before Mark's night there is the
-   * same accident as Rob deleting one of the quizzes, and it lands on Mark's
-   * projector. Everybody can still PUT ONE UP from their control view; it is
-   * only writing the slides that is shut.
+   * room — so until they are scoped, writing to them is the owner's. A second
+   * quizmaster tidying up what looks like their own venue list would delete the
+   * set for The Crown an hour before somebody else's night there, and it lands
+   * on their projector. Everybody can still PUT ONE UP from their control view;
+   * it is only writing the slides that is shut.
    */
   const mine = can(FEATURES.CATALOGUE);
   const el = node(`

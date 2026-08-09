@@ -33,7 +33,9 @@ export const OWNER_ONLY = ['/api/generate/', '/api/owner/', '/api/reports/'];
  * PUT were shut and `POST /api/quiz`, which takes the id in the BODY, was
  * wide open. A signed-in quizmaster could still overwrite any quiz in the
  * library with one request, and in the sweep that found it the Madonna pack
- * came back titled "ROB WAS HERE". `POST /api/bingo` had the identical gap.
+ * came back titled "ROBOROB WAS HERE". `POST /api/bingo` had the identical gap.
+ * (RoboRob is the throwaway account the sweep signs in as. Rob is a real
+ * quizmaster who had nothing to do with it — see CLAUDE.md.)
  *
  * Import, the playlist builder and the no-repeats memory are here too. None of
  * them looks like "saving a pack", and all three are the catalogue: importing
