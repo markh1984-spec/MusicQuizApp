@@ -136,14 +136,22 @@ async function load() {
  * Not an empty space and not a locked button: the packs being written FOR them
  * is the arrangement, not a limitation, so it says so.
  */
-function shopNote() {
+// What stands in for the generator on a quizmaster's console. It said "Quiz
+// packs — every question read through twice" on the BINGO tab too, where there
+// are no questions; a bingo pack is a track list, and what makes a good one is
+// a different promise. Same panel, the right words for the tab it is on.
+function shopNote(kind = 'quiz') {
+  const bingo = kind === 'bingo';
   return node(`
     <div class="panel">
-      <h3>Quiz packs</h3>
+      <h3>${bingo ? 'Bingo games' : 'Quiz packs'}</h3>
       <div class="tiny">
-        Packs are written and checked for you rather than generated here — every question
-        read through twice before it reaches a room. Have a look in the shop for the
-        newest ones.
+        ${bingo
+          ? `Track lists are put together for you rather than generated here — every song
+             picked so the chorus lands on its own, and no song repeated inside three months.`
+          : `Packs are written and checked for you rather than generated here — every question
+             read through twice before it reaches a room.`}
+        Have a look in the shop for the newest ones.
       </div>
     </div>`);
 }
@@ -193,8 +201,11 @@ const TABS = [
     generator: () => {
       const wrap = document.createDocumentFragment();
       if (can(FEATURES.GENERATE)) wrap.appendChild(generatePanel(library.generation || {}));
-      else wrap.appendChild(shopNote());
-      if (can(FEATURES.LIBRARY)) wrap.appendChild(importPanel(library.generation || {}));
+      else wrap.appendChild(shopNote('bingo'));
+      // Import writes a pack into the shared catalogue, so it is the owner's —
+      // it was offered on LIBRARY, which every quizmaster has, and the server
+      // now refuses it. A button that 403s is worse than no button.
+      if (can(FEATURES.CATALOGUE)) wrap.appendChild(importPanel(library.generation || {}));
       return wrap;
     },
   },
@@ -1059,7 +1070,7 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
           <h2>Your saved ${kind === 'quiz' ? 'quizzes' : 'bingo packs'}</h2>
           <div class="tiny">${esc(blurb)}</div>
         </div>
-        <a class="minor" href="${linkTo('/editor')}">${esc(editLabel)}</a>
+        ${can(FEATURES.CATALOGUE) ? `<a class="minor" href="${linkTo('/editor')}">${esc(editLabel)}</a>` : ''}
       </div>
       <div class="pack-grid"></div>
     </div>`);
@@ -1322,6 +1333,15 @@ function lookOptions(pack) {
 }
 
 function packCard(kind, pack) {
+  /*
+   * A quizmaster READS a pack and LAUNCHES it, and that is the arrangement —
+   * the packs are written to a house style and sold. Renaming, deleting,
+   * drawing the portraits and building the playlist all write to the shared
+   * catalogue, so they are the owner's alone and the server refuses them.
+   * Drawing them anyway is how you get a Delete button that says 403.
+   */
+  const mine = can(FEATURES.CATALOGUE);
+
   const detail = kind === 'quiz'
     ? `${pack.questionCount} questions · ${(pack.rounds || []).length} rounds`
     : `${pack.trackCount} tracks`;
@@ -1350,11 +1370,11 @@ function packCard(kind, pack) {
         </label>`}
       <div class="pack-actions">
         <button class="pack-read" title="Read it through">Read</button>
-        <button class="pack-rename" ${pack.broken ? 'disabled' : ''} title="Change what it is called">Rename</button>
+        ${mine ? `<button class="pack-rename" ${pack.broken ? 'disabled' : ''} title="Change what it is called">Rename</button>` : ''}
         ${pack.playlist ? `<a class="pack-spotify" href="${esc(pack.playlist)}" target="_blank" rel="noopener" title="Open it in Spotify">Playlist</a>` : ''}
-        ${hasPictureRound(pack) ? '<button class="pack-pics" title="Make the round 2 portraits">Pictures</button>' : ''}
-        ${hasIntroRound(pack) ? '<button class="pack-playlist" title="Build the Spotify playlist for the intro round">Playlist</button>' : ''}
-        <button class="pack-del" title="Delete this pack">Delete</button>
+        ${mine && hasPictureRound(pack) ? '<button class="pack-pics" title="Make the round 2 portraits">Pictures</button>' : ''}
+        ${mine && hasIntroRound(pack) ? '<button class="pack-playlist" title="Build the Spotify playlist for the intro round">Playlist</button>' : ''}
+        ${mine ? '<button class="pack-del" title="Delete this pack">Delete</button>' : ''}
       </div>
       <button class="go launch" ${pack.broken ? 'disabled' : ''}>Launch</button>
       <div class="pics-slot"></div>
@@ -1505,17 +1525,19 @@ function packCard(kind, pack) {
  * read out.
  */
 async function preview(kind, pack) {
+  // Reading a pack through is everybody's; changing a word in it is not.
+  const mine = can(FEATURES.CATALOGUE);
   const overlay = node(`
     <div class="overlay">
       <div class="sheet">
         <div class="sheet-head">
           <div style="min-width:0;flex:1 1 auto">
-            <input class="sheet-title" id="sheetTitle" value="${esc(pack.title)}" title="Click to rename">
+            <input class="sheet-title" id="sheetTitle" value="${esc(pack.title)}" title="${mine ? 'Click to rename' : 'These packs are read-only'}" ${mine ? '' : 'readonly'}>
             <div class="tiny" id="sheetSub">Loading…</div>
           </div>
           <div class="sheet-actions">
             <button class="go" id="sheetSave" hidden>Save</button>
-            <a class="minor" href="${linkTo('/editor')}">Edit questions</a>
+            ${mine ? `<a class="minor" href="${linkTo('/editor')}">Edit questions</a>` : ''}
             <button class="minor" id="sheetClose">Close</button>
           </div>
         </div>
@@ -1672,13 +1694,16 @@ function warningPanel(quiz, warnings) {
   };
 
   const row = (w, done) => {
+    // A tick is written into the pack itself, so it is the owner's — a
+    // quizmaster reads the hunches and reports anything wrong from the
+    // control view instead.
     const li = node(`
       <li class="pv-flag ${done ? 'done' : ''}">
         <span class="pv-flag-text">${esc(w.text)}</span>
-        <button class="pv-tick" type="button">${done ? 'Undo' : 'Checked'}</button>
+        ${can(FEATURES.CATALOGUE) ? `<button class="pv-tick" type="button">${done ? 'Undo' : 'Checked'}</button>` : ''}
       </li>`);
     const button = li.querySelector('.pv-tick');
-    button.addEventListener('click', async () => {
+    button?.addEventListener('click', async () => {
       button.disabled = true;
       const wanted = !w.cleared;
       try {
@@ -1738,7 +1763,9 @@ function renderQuizPreview(body, sub, quiz, markDirty = () => {}) {
     ${lettered.length ? `· answers land ${spread.map((n, i) => `${LETTERS[i]}&times;${n}`).join(' ')}` : ''}
     ${lopsided ? '<b style="color:var(--gold)"> — lopsided</b>' : ''}
     ${noNotes ? ` · ${noNotes} with no fact to read out` : ''}`;
-  sub.appendChild(evenerButton(body, sub, quiz, markDirty, lopsided));
+  // Rearranging the options rewrites the pack, so it is the owner's — the
+  // complaint about a lopsided quiz still shows, it just has nothing to press.
+  if (can(FEATURES.CATALOGUE)) sub.appendChild(evenerButton(body, sub, quiz, markDirty, lopsided));
 
   const parts = [];
 
@@ -1930,6 +1957,15 @@ load().catch((err) => {
  * because he will be typing these in between other jobs.
  */
 function advertsSection(sets) {
+  /*
+   * Advert sets are still SHARED between quizmasters — one folder, not one per
+   * room — so until they are scoped, writing to them is the owner's. Rob
+   * deleting the set for The Crown an hour before Mark's night there is the
+   * same accident as Rob deleting one of the quizzes, and it lands on Mark's
+   * projector. Everybody can still PUT ONE UP from their control view; it is
+   * only writing the slides that is shut.
+   */
+  const mine = can(FEATURES.CATALOGUE);
   const el = node(`
     <div class="game-section">
       <div class="game-head">
@@ -1937,12 +1973,12 @@ function advertsSection(sets) {
           <h2>Advert slides</h2>
           <div class="tiny">One set per venue. Put one up from your control view, between rounds.</div>
         </div>
-        <button class="go new-set">New set</button>
+        ${mine ? '<button class="go new-set">New set</button>' : ''}
       </div>
       <div class="pack-grid"></div>
     </div>`);
 
-  el.querySelector('.new-set').addEventListener('click', () => editAdvertSet(null));
+  el.querySelector('.new-set')?.addEventListener('click', () => editAdvertSet(null));
 
   const grid = el.querySelector('.pack-grid');
   if (!sets.length) {
@@ -1960,14 +1996,14 @@ function advertsSection(sets) {
         <div class="tiny played">${set.slideCount} slide${set.slideCount === 1 ? '' : 's'}</div>
         ${set.broken ? `<div class="tiny" style="color:var(--bad)">Broken: ${esc(set.broken)}</div>` : ''}
         <div class="pack-actions">
-          <button class="go edit">Edit</button>
-          <button class="pack-del">Delete</button>
+          <button class="go edit">${mine ? 'Edit' : 'Read'}</button>
+          ${mine ? '<button class="pack-del">Delete</button>' : ''}
         </div>
       </div>`);
     const open = () => editAdvertSet(set.id);
     card.querySelector('.pack-title').addEventListener('click', open);
     card.querySelector('.edit').addEventListener('click', open);
-    card.querySelector('.pack-del').addEventListener('click', async () => {
+    card.querySelector('.pack-del')?.addEventListener('click', async () => {
       if (!confirm(`Delete "${set.title}" and its ${set.slideCount} slide${set.slideCount === 1 ? '' : 's'}?`)) return;
       await fetch(keyed('/api/advert/' + encodeURIComponent(set.id)), {
         method: 'DELETE', headers: { 'X-Host-Key': hostKey },

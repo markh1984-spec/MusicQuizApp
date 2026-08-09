@@ -32,7 +32,12 @@ export const FEATURES = {
   // ---- Basic. Free to run, so free to include.
   QUIZ: 'quiz.run',
   BINGO: 'bingo.run',
-  LIBRARY: 'library.own',        // their own packs: write, edit, import
+  // READING the pack library. Everybody has this — a quizmaster plays the
+  // packs, and that is the arrangement. Writing to it is CATALOGUE, below:
+  // saving, deleting, renaming, importing, annotating and the playlist step
+  // are all the owner's, because the packs are written to a house style and
+  // sold, and three people editing them is how that style stops being one.
+  LIBRARY: 'library.own',
   // Whole quizzes and whole bingo games from the owner's catalogue. Never
   // individual rounds — a round is a part of a product, not a product.
   BUY_PACKS: 'packs.buy',
@@ -111,6 +116,12 @@ const PAYING = new Set(['trialing', 'active']);
  */
 export function can(account, feature) {
   if (!account || !feature) return false;
+  // The host key is every hat at once — see `allowed()` in server.js, which
+  // short-circuits on the same flag. Both have to agree or the page draws one
+  // thing and the API does another; that has happened twice now, and the
+  // second time the console showed "have a look in the shop" to the man who
+  // writes the packs.
+  if (account.bootstrap) return true;
   if (account.role === 'owner') return OWNER_FEATURES.includes(feature);
 
   // Everything else — comped, paying, or lapsed — is one question, asked in
@@ -121,6 +132,10 @@ export function can(account, feature) {
 
 /** Everything an account is entitled to, as a flat list. */
 export function featuresFor(account = {}) {
+  // Everything, for the same reason `can()` says yes to everything: the key
+  // already grants the lot server-side, so reporting less here only ever
+  // hides a button that would have worked.
+  if (account.bootstrap) return [...new Set([...Object.values(FEATURES)])];
   if (account.role === 'owner') return [...OWNER_FEATURES];
   if (account.comped) {
     return [...new Set([...BASIC, ...Object.values(ADDONS).flatMap((a) => a.features)])];

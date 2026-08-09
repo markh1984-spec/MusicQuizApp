@@ -148,6 +148,33 @@ test('the host key identity can run a night, which is why it must win', () => {
   assert.equal(can(bootstrap, FEATURES.LIBRARY), true);
 });
 
+/*
+ * …and it can do EVERYTHING, because that is what `allowed()` in server.js
+ * already does: it short-circuits on the same `bootstrap` flag and never asks
+ * about a feature at all. The browser's copy said basic-plus-add-ons, so the
+ * console drew a page for somebody who could not generate a quiz or touch the
+ * catalogue — with a "have a look in the shop" note where the generator goes,
+ * shown to the man who writes the packs.
+ *
+ * The key already grants the lot, so agreeing with it cannot widen anything.
+ * Every feature, asked one at a time, so a new one cannot be missed.
+ */
+test('the host key is every hat at once, on the page as well as on the server', () => {
+  const bootstrap = {
+    role: 'quizmaster', plan: 'basic', addons: ['admin', 'stream'],
+    comped: true, status: 'active', bootstrap: true,
+  };
+  for (const feature of Object.values(FEATURES)) {
+    assert.equal(can(bootstrap, feature), true, `the host key cannot ${feature}`);
+  }
+  const held = entitlements(bootstrap).features;
+  for (const feature of Object.values(FEATURES)) {
+    assert.ok(held.includes(feature), `/api/me would not report ${feature} for the host key`);
+  }
+  // Nothing to offer for sale to somebody who already has all of it.
+  assert.deepEqual(entitlements(bootstrap).missing, []);
+});
+
 
 /*
  * Writing to the pack library is the owner's alone.

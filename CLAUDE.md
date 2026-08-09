@@ -1048,9 +1048,10 @@ signed-in quizmaster could DELETE one of the owner's quizzes — see below.
 
 ### Writing to the pack library is the owner's alone
 
-`CHANGES_THE_LIBRARY` in `server.js`. Reading the library is `FEATURES.LIBRARY`,
-which every quizmaster has — they play the packs, that is the arrangement.
-Saving, deleting, importing and annotating are `FEATURES.CATALOGUE`, owner only.
+**`src/gates.js`** — `changesTheLibrary()` and `OWNER_ONLY`, imported by
+`server.js`. Reading the library is `FEATURES.LIBRARY`, which every quizmaster
+has — they play the packs, that is the arrangement. Saving, deleting, renaming,
+importing, annotating and the playlist step are `FEATURES.CATALOGUE`, owner only.
 
 Before this, every pack-write route was gated only by the broad `FEATURES.QUIZ`
 check, which every quizmaster passes. Rob could have deleted a quiz an hour
@@ -1058,9 +1059,64 @@ before a gig. It is a prefix test rather than a check on each route precisely so
 the next pack-writing route somebody adds is covered without anybody
 remembering to.
 
-Note the ordering trap, which has now caught something **three** times: the
+Note the ordering trap, which has now caught something **four** times: the
 owner has no quiz features, so anything only an owner may do must skip the broad
-gate as well as pass its own.
+gate as well as pass its own. The fourth was **Import** — the main way bingo
+packs are made — where the owner got a 403 on his own console.
+
+**It lives in its own file because a rule you cannot import is a rule you cannot
+write a test for**, and this one was wrong twice. `test/gates.test.js` asserts
+the bare path AND the prefix for every pack route, and that every owner-only
+route is on one list or the other, which is the thing that fails when somebody
+adds a fifth.
+
+### What a sweep as a quizmaster actually found
+
+Signing in as Rob and trying, one request at a time, everything a subscriber
+should not be able to do. Five things worked, and the shape of each is worth
+keeping:
+
+- **`POST /api/quiz` took the id in the BODY**, so `startsWith('/api/quiz/')` —
+  with the trailing slash — never matched it. DELETE and PUT were shut and this
+  was wide open: the Madonna pack came back titled "ROB WAS HERE". `POST
+  /api/bingo` was identical. **Match the bare path as well as the prefix.**
+- **Import, the playlist builder and `history/forget` were open**, because none
+  of them looks like "saving a pack". Forgetting the history wiped all 319
+  entries — the failure nobody sees for three months, when a song comes back in
+  front of a room.
+- **Three routes on the Invoices tab asked for `FEATURES.LIBRARY`**, which every
+  quizmaster has, rather than the admin add-on: the PDF, the status change and
+  deleting a customer. Rob downloaded an invoice carrying the host's own sort
+  code. There is a test that reads `server.js` and fails if any `/api/invoices`
+  route is gated on the library — the same trick `looks.test.js` uses for emoji.
+
+**What held:** rooms. Every attempt to reach another quizmaster's night —
+`?g=CODE`, `room`, `roomId`, `joinCode` in the body — landed in Rob's own room,
+because `/api/host/*` works out the room from WHO YOU ARE and takes no room
+parameter. Mark's game carried on untouched. Also held: the account routes, the
+corrections book, generation, path traversal on every static route, and the
+screen payload, which carries no answer key to an unauthenticated fetch.
+
+**And the console has to agree with the server.** Every one of these was fixed
+in `server.js` first and then in `console.js`, because a Delete button that
+returns 403 is worse than no Delete button. A quizmaster's pack card is **Read
+and Launch** and nothing else; the read-through shows the questions, the answers
+and the review flags with nothing to press.
+
+### The host key was showing itself the shop
+
+Found by the same sweep, and it was live: `allowed()` in `server.js`
+short-circuits on `account.bootstrap` and grants everything, but the BROWSER
+copy of `plans.js` scored the host key as a basic quizmaster with two add-ons.
+So `/api/me` reported no `owner.*` features and the console drew a page for
+somebody who cannot generate — **"have a look in the shop" where the generator
+goes, shown to the man who writes the packs.**
+
+`can()` and `featuresFor()` now say yes to everything for a bootstrap account,
+which cannot widen anything: the key already grants the lot server-side. This is
+the third time the two copies have disagreed, after the launch buttons and the
+`keyed('/api/me')` fetch. **If a control is missing on the host key, suspect
+this before building it again.**
 
 ### The control view no longer needs a key at all
 
@@ -1156,8 +1212,15 @@ that quizmaster running the version from before the edit.
   deploy now (see below), but Rob would see Mark's customers. Nobody has the
   admin add-on yet, so nothing is exposed today — but scope it before anybody
   does.
-- **Past nights and the archive are shared.**
-- **Advert slides are shared.**
+- **Past nights and the archive are shared.** Gated on the admin add-on, so
+  nobody can reach them today.
+- **Advert slides are shared**, so writing to them is currently the OWNER's —
+  a holding position, not a settled tier. One folder, not one per room, means
+  Rob deleting the set for The Crown lands on Mark's projector. Putting a slide
+  UP is untouched, because that is a host action and everybody has it. **When
+  advert sets become per-room, take `/api/advert` back out of
+  `changesTheLibrary()`** — the feature itself is Basic under the host's own
+  tier rule, since it costs nothing to run.
 - Nothing stops two quizmasters launching the same pack at once, which is fine
   and probably useful.
 
@@ -1258,7 +1321,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 509 tests, no network, injected clocks — must stay green
+npm test        # 518 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -1329,7 +1392,8 @@ foundation are done and tested. Since then: the photo props, the big photo
 moment, the double-tap and early-reveal guards, the shared portrait library
 with its style and quality settings, the leaving-the-app note, and the fastest
 finger's face on the reveal, and **a room per quizmaster** — so a second login
-is now safe to hand out. All on **`MusicQuizApp`**. 509 tests green.
+is now safe to hand out, and a permissions sweep run AS a quizmaster has
+closed five holes it found. All on **`MusicQuizApp`**. 518 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall and read-only access to the

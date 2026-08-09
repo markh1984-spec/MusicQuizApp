@@ -41,6 +41,7 @@ import { Reports } from './src/reports.js';
 import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
 import { FEATURES, whyNot, entitlements } from './public/assets/plans.js';
+import { OWNER_ONLY, changesTheLibrary } from './src/gates.js';
 // The logo, shared with the browser so the tab icon and the on-screen mark are
 // one drawing rather than two that look alike today.
 import { faviconSvg } from './public/assets/brandmark.js';
@@ -765,7 +766,11 @@ async function handleGet(req, res, url, route) {
    * read "MMM-0001.pdf" as an invoice number.
    */
   if (route.startsWith('/api/invoices/') && route.endsWith('.pdf')) {
-    if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
+    // INVOICES, not LIBRARY. This asked for LIBRARY, which every quizmaster
+    // has, so anybody with a login could download anybody's invoice — and an
+    // invoice carries the host's own sort code and account number and the
+    // customer's address. Found by a signed-in quizmaster fetching one.
+    if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
     const number = decodeURIComponent(route.slice('/api/invoices/'.length, -4));
     const invoice = invoices.find(number);
     if (!invoice) return sendJson(res, 404, { error: 'No invoice with that number' }), true;
@@ -1228,7 +1233,8 @@ async function handleWrite(req, res, url, route) {
   }
 
   if (route.startsWith('/api/invoices/customers/') && req.method === 'DELETE') {
-    if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
+    // INVOICES, like every other route on this tab — see the PDF one above.
+    if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
     invoices.deleteCustomer(decodeURIComponent(route.slice('/api/invoices/customers/'.length)));
     const backup = await backUpInvoices();
     return sendJson(res, 200, { backedUp: backup.ok, ...invoiceState() }), true;
@@ -1237,7 +1243,10 @@ async function handleWrite(req, res, url, route) {
   // Mark it sent, paid or cancelled. Status is the only thing that can move on
   // an invoice that has already gone out — see src/invoices.js.
   if (route.startsWith('/api/invoices/') && req.method === 'POST') {
-    if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
+    // INVOICES, like every other route on this tab — see the PDF one above.
+    // On LIBRARY, anybody with a login could mark somebody else's invoice paid
+    // or cancel it, which is the invoice book quietly telling you a lie.
+    if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
     const number = decodeURIComponent(route.slice('/api/invoices/'.length));
     const body = await readJson(req);
     try {
@@ -1336,37 +1345,10 @@ async function handleWrite(req, res, url, route) {
    * checked on `launch` itself, below.
    */
   //
-   // The owner's own routes are exempt from the broad gate below, because the
-   // owner deliberately has no quiz features — an owner account manages
-   // subscribers and writes the packs they buy, it does not run nights.
-  // `/api/reports/` is here for the same reason: dealing with a correction to
-  // a pack is the owner's job, and the owner has no quiz features to pass the
-  // gate below with. This bit the generation routes first and has now bitten
-  // twice — anything new that only an owner does belongs in this list.
-  const OWNER_ONLY = ['/api/generate/', '/api/owner/', '/api/reports/'];
-
-  /*
-   * Writing to the pack LIBRARY is the owner's alone.
-   *
-   * Reading it is `FEATURES.LIBRARY`, which every quizmaster has — they play
-   * the packs, that is the arrangement. But saving, deleting, importing and
-   * annotating one are `FEATURES.CATALOGUE`, which only the owner has.
-   *
-   * This was open, and it was not theoretical: a signed-in quizmaster could
-   * DELETE one of the owner's quizzes with a single request, and it was found
-   * by the owner putting the quizmaster hat on and looking at his own console.
-   * The packs are written to a house style and sold; three people editing them
-   * is how that style stops being one, and one person deleting them is worse.
-   *
-   * Listed as prefixes here rather than checked route by route because the
-   * next pack-writing route somebody adds will otherwise be open too.
-   */
-  const CHANGES_THE_LIBRARY = (r, method) => {
-    if (method !== 'PUT' && method !== 'DELETE' && method !== 'POST') return false;
-    if (r === '/api/quiz/__validate') return false;   // checks, saves nothing
-    return r.startsWith('/api/quiz/') || r.startsWith('/api/bingo/');
-  };
-  const changesLibrary = CHANGES_THE_LIBRARY(route, req.method);
+  // Both lists live in `src/gates.js` — a rule you cannot import is a rule you
+  // cannot write a test for, and this one has been wrong twice. Read the
+  // comments there before adding a route to either.
+  const changesLibrary = changesTheLibrary(route, req.method);
   if (changesLibrary) {
     if (!allowed(req, res, url, FEATURES.CATALOGUE)) return true;
   }
@@ -1670,7 +1652,14 @@ async function handleWrite(req, res, url, route) {
       if (packInUse('quiz', id)) {
         return sendJson(res, 400, { error: 'That quiz is loaded in a game right now.' }), true;
       }
-      deleteQuiz(config.quizDir, id);
+      // A pack that is not there is a 404, not a 500 with the server's own
+      // filesystem path in the message. Two people deleting the same pack from
+      // two consoles is the ordinary way to arrive here.
+      try {
+        deleteQuiz(config.quizDir, id);
+      } catch {
+        return sendJson(res, 404, { error: 'No such quiz' }), true;
+      }
       if (githubConfigured()) await deleteFile(`quizzes/${id}.json`, `Delete quiz: ${id}`);
       return sendJson(res, 200, { ok: true }), true;
     }
