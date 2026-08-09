@@ -9,20 +9,37 @@ if a step does not go smoothly.
 
 ## READY TO HOST ON THURSDAY — do these in order
 
-About twenty minutes, all in one sitting. Each one depends on the one before it,
-so do not skip ahead.
+About twenty minutes, all in one sitting. **The order matters and steps 1 and 2
+are one visit to the same page**, because saving them redeploys the app — and a
+redeploy wipes anything not backed up, including the account you make in step 3.
+Do them the other way round and you make that account twice.
+
+> ⚠️ **The owner account you made earlier is almost certainly gone already.**
+> Nothing deleted it: `data/` is gitignored, Render's free tier has no permanent
+> disk, and the backup does nothing until step 2 is done — so it only ever
+> existed on a disk that gets replaced on every restart. Several deploys have
+> been through since. Check by opening the Console with your key: if the
+> **"No accounts yet — make yours"** panel is at the top, that is your answer.
+> Steps 1 and 2 are exactly what stops it happening again.
 
 ### 1 · Set `HOST_KEY` — 2 minutes
 
 🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env
 
 Add `HOST_KEY` = any long phrase you will remember (`mark-quiz-night-2026` is
-fine). Save; it redeploys itself.
+fine). **Do not save yet — add step 2's variables in the same visit**, so the
+app redeploys once instead of twice.
 
 *Without this the app invents a new key on every deploy and every bookmark you
 own stops working — which is what stopped you last time.*
 
 - [ ] Done
+
+**While you are on that page:** if `BRAND_NAME` is set to "Mark's Music
+Madness", **delete it**. It overrides the new per-quizmaster naming, so your
+projector would still say the old name and it would look like a failed deploy.
+
+- [ ] `BRAND_NAME` checked
 
 **Locked out right now?** The key in use is in the startup banner:
 🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/logs — find the
@@ -47,8 +64,8 @@ deploy. You would be doing step 3 again.*
 
 - [ ] The **"No accounts yet — make yours"** panel at the top → your name, email,
       a password of 10+ characters → **Create the owner account**.
-      *You have already done this one — but the owner account does not survive a
-      deploy until step 2 is finished, so check you can still sign in.*
+      *Do this AFTER steps 1 and 2, not before. Backed up within seconds of
+      existing, it survives the next deploy; made first, it does not.*
 - [ ] Sign in 🔗 https://musicquizapp.onrender.com/login — you land on `/owner`
 - [ ] **Add a quizmaster** for Rob, and for James if he is in. Copy each
       password it shows you — they are not stored anywhere you can read again.
@@ -69,6 +86,10 @@ Sign in, then tap **Quizmaster** on the switch in the top right.
 - [ ] Open the big screen at `…/screen?g=YOURCODE` and check the QR is there
 - [ ] Join from your phone at `…/play?g=YOURCODE`, answer one question
 - [ ] Do the same for a bingo game
+- [ ] **Then trigger one more deploy and sign in again.** Any push does it, or
+      press Manual Deploy on Render. This is the only real proof that step 2
+      worked — everything above passes just as happily on a disk that is about
+      to be wiped.
 
 **If anything is wrong, you still have your host key.** It runs the house game
 exactly as it always has, from 🔗 https://musicquizapp.onrender.com/console —
@@ -375,6 +396,33 @@ you cannot get into the Console at all after a deploy — that is what stopped y
 on the phone. Then set up the private repo (step B) BEFORE you
 create Rob's account — otherwise it works today and is gone at the next deploy.
 The Console says so in red if it is not set up.
+
+---
+
+## Waiting on a decision from you — no rush, nothing is blocked
+
+**Which features sit on which tier, and what the middle two cost.** The ladder
+is built and works; where each feature sits is a first guess I made so there was
+something to look at. Moving one is a one-line change.
+
+| | Plan | Price | What is on it today |
+|---|---|---|---|
+| 🥉 **Bronze** | Basic | included | Music Quiz, Music Bingo, the pack library, buying packs, seasonal looks, advert slides, photos from the room |
+| 🥈 **Silver** | Elite | £15/mo | Invoicing, your calendar, marketing |
+| 🥇 **Gold** | Pro | £30/mo | Online quizzes (streaming) |
+
+The one rule I did NOT guess at, because it is yours: *anything that costs the
+owner money every time it is used is not in Bronze.* That is why streaming is at
+the top — egress is a real per-use bill — and why a new round type or a new
+seasonal look is Bronze the day it is written.
+
+**The quickest way to decide is to look at it.** Put the quizmaster hat on, tap
+**B** on the switch in the top right, and sit on Bronze for a few minutes. If it
+feels like a crippled app rather than a free tier, something needs moving down.
+
+Two things deliberately NOT on the ladder at any price: generating packs with
+Claude, and drawing artwork with OpenAI. Those are yours, on your bill, and the
+packs being written for subscribers is the whole arrangement.
 
 ---
 

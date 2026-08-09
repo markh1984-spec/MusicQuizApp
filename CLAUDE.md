@@ -1642,12 +1642,40 @@ the projector, and read-only access to the pack library. Still shared, and still
 to do: the invoice book (which also does not survive a deploy yet), the night
 archive and the advert slides. See "A room per quizmaster" above.
 
-**The owner account exists; nobody else has a login yet.** Two things still have
-to happen and the order matters, and they are the first thing in TODO.md: set
-`HOST_KEY` on Render (or the bookmark dies at every deploy), and set up the
-private repo (or the owner account is wiped by the next one — it has no
-permanent disk to live on). Then add quizmasters for Rob and James. Until then
-the host key is the way in, and it still works.
+### Nobody has a login yet, and the order of the next three steps matters
+
+He made an owner account, and **it is almost certainly gone.** Nothing deleted
+it. `data/` is gitignored, Render's free tier has no permanent disk, and
+`backUpAccounts()` returns on its first line while `PHOTO_REPO` is unset — so it
+only ever existed on a disk that is replaced on every restart, and several
+deploys have been through since. `restoreFromBackup()` logs *"no accounts and no
+private repo configured"* and gives up for the same reason.
+
+So the order is not a preference, it is the whole point:
+
+1. **`HOST_KEY`** on Render, or the bookmark dies at every deploy.
+2. **`PHOTO_REPO` + `PHOTO_TOKEN`** — in the SAME save, so it redeploys once.
+3. **Then** make the owner account, and add Rob and James.
+
+Making the account first just means making it twice. **The only real proof step
+2 worked is a deploy AFTER signing in** — everything else passes just as happily
+on a disk that is about to be wiped.
+
+Also gone on every restart, and worth knowing before somebody reports it as a
+bug: the invoice book, reported questions, `data/photos/`, play counts, the
+night archive, and `room-codes.json` — so another quizmaster's four-letter join
+code CHANGES. Mark's own printed QR is safe, because the house room deliberately
+has no code. What survives is anything in git: the packs, the adverts, the
+images, and `data/track-history.json`, which is the one file exempted from the
+ignore rule.
+
+Until all that is done the host key is the way in, and it still works.
+
+**Which feature sits on which TIER is still to be decided** — see the ladder
+above. What is there now is a first guess so there was something to look at;
+`FEATURE_TIER` is one word per feature. The quickest way to settle it is to wear
+the hat on Bronze for a few minutes and see whether it reads as a free tier or a
+crippled app.
 
 **If he says the projector still says "Mark's Music Madness"**, check
 `BRAND_NAME` on Render before anything else. It beats the per-quizmaster name by
