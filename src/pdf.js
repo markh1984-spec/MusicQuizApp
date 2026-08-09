@@ -15,6 +15,8 @@
  * the moment to think again rather than to grow this file.
  */
 
+import { APP_NAME } from './branding.js';
+
 const A4 = { width: 595.28, height: 841.89 };
 
 /** Points, from the top of the page — which is how a human thinks about it. */
@@ -99,7 +101,10 @@ export function renderPdf(page, { title = 'Invoice' } = {}) {
     `<< /Length ${byteLength(content)} >>\nstream\n${content}\nendstream`,
     '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>',
     '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>',
-    `<< /Title (${escapeText(title)}) /Producer (Mark's Music Madness) >>`,
+    // The software that wrote the file, which is the APP — not the trading
+    // name on the invoice, which is the customer's business and lives in the
+    // invoice's own settings.
+    `<< /Title (${escapeText(title)}) /Producer (${escapeText(APP_NAME)}) >>`,
   ];
 
   let pdf = '%PDF-1.4\n';

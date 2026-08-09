@@ -2645,7 +2645,7 @@ function openSettings(refresh) {
   sheet('Your details', (form) => {
     form.innerHTML = `
       <div class="inv-group"><h4>Who the invoice is from</h4>
-        ${field('Trading name', 'name', s.business.name, { placeholder: "Mark's Music Madness" })}
+        ${field('Trading name', 'name', s.business.name, { placeholder: 'Quiztopia' })}
         ${field('Your name', 'contact', s.business.contact)}
         ${field('Address', 'address', s.business.address, { type: 'textarea', wide: true })}
         ${field('Email', 'email', s.business.email)}

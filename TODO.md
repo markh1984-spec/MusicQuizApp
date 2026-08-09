@@ -46,19 +46,23 @@ deploy. You would be doing step 3 again.*
 🔗 https://musicquizapp.onrender.com/console (with your key)
 
 - [ ] The **"No accounts yet — make yours"** panel at the top → your name, email,
-      a password of 10+ characters → **Create the owner account**
+      a password of 10+ characters → **Create the owner account**.
+      *You have already done this one — but the owner account does not survive a
+      deploy until step 2 is finished, so check you can still sign in.*
 - [ ] Sign in 🔗 https://musicquizapp.onrender.com/login — you land on `/owner`
 - [ ] **Add a quizmaster** for Rob, and for James if he is in. Copy each
       password it shows you — they are not stored anywhere you can read again.
-- [ ] **You do not need a second account for yourself.** On the owner page press
-      **Become a quizmaster** — same login, no second password. It puts you in
-      your own quizmaster account with your own game, your own join code and
-      read-only packs, which is exactly what Rob gets. A gold bar across the top
-      says which hat you are wearing, with **Back to owner** next to it.
+- [ ] **You do not need a second account for yourself.** Top right of the page
+      there is an **Owner | Quizmaster** switch. Tap Quizmaster and you are in
+      your own quizmaster account — same login, no second password, your own
+      game, your own join code and read-only packs, which is exactly what Rob
+      gets. The live half is a solid block of colour (gold means the quizmaster
+      hat is on) so you can never be unsure which one you are wearing. Tap Owner
+      to come back.
 
 ### 4 · Prove it works — 5 minutes, and do this BEFORE Thursday
 
-Sign in, then press **Become a quizmaster** on the owner page.
+Sign in, then tap **Quizmaster** on the switch in the top right.
 
 - [ ] Launch a quiz from your quizmaster console
 - [ ] Your console shows a **4-letter join code** — note it
@@ -355,7 +359,8 @@ them, so import it again.
    press the button. That makes YOUR owner account.
 3. Sign in properly at 🔗 https://musicquizapp.onrender.com/login
 4. You land on the owner page. Press **Add a quizmaster**, put Rob's email in,
-   and it gives you a password to send him.
+   and it gives you a password to send him. (Your own second hat is the
+   **Owner | Quizmaster** switch in the top right — no extra account needed.)
 5. Rob signs in at the same `/login`. He gets **his own everything**: his own
    game, his own join code, his own photo wall, and your whole pack library to
    play with (he cannot edit or generate — that is yours).
@@ -375,6 +380,22 @@ The Console says so in red if it is not set up.
 
 ## What is new since you last read this
 
+- **The app is called Quiztopia**, and each night is branded from whoever is
+  running it — your projector says **"Mark's Quiztopia"**, Rob's says **"Rob's
+  Quiztopia"**. First names only, the way you say it on the mic. ⚠️ If you have
+  `BRAND_NAME` set on Render from before, that still wins over all of it and you
+  will see the old name — clear it to get this.
+- **Your own two colours.** Six of them (Sunset, Orchid, Lagoon, Ember, Citrus,
+  Ultraviolet), at the bottom of the console under **Your colours**. Tap one and
+  your projector and every phone in your room change straight away. It is on the
+  ACCOUNT, so Rob can have his own and yours is untouched. A themed night —
+  Halloween, Valentine's — still wins over it, and the four answer colours never
+  change, because those are how a player matches the big screen to their phone.
+- **An Owner | Quizmaster switch** in the top right of the console and the owner
+  page, one tap either way, replacing the button that was buried on the owner
+  page. The live half is a solid block of colour so you can never be unsure
+  which hat is on. Switching cannot disturb a night that is running — the two
+  hats are two separate rooms.
 - **A second quizmaster can have a login.** Rob gets his own running game, so
   he cannot launch over your gig — that used to be one shared game and it was
   the reason you could not hand anyone a login. He gets his own join code, his

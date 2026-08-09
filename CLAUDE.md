@@ -1500,21 +1500,32 @@ moment, the double-tap and early-reveal guards, the shared portrait library
 with its style and quality settings, the leaving-the-app note, and the fastest
 finger's face on the reveal, and **a room per quizmaster** — so a second login
 is now safe to hand out, and a permissions sweep run AS a quizmaster has
-closed five holes it found. All on **`MusicQuizApp`**. 536 tests green.
+closed five holes it found.
+
+Most recently, and all of it live: **the Owner | Quizmaster switch** in the top
+right of the console and the owner page; **Quiztopia**, with each night branded
+from the quizmaster whose room it is; and **six colour schemes** on the account,
+so a subscriber does not have to put somebody else's pink-and-orange on a
+projector with their own name above it. All on **`MusicQuizApp`**. 536 tests
+green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
-game, their own join code, their own photo wall and read-only access to the
-pack library. Still shared, and still to do: the invoice book (which also does
-not survive a deploy yet), the night archive and the advert slides. See "A room
-per quizmaster" above.
+game, their own join code, their own photo wall, their own name and colours on
+the projector, and read-only access to the pack library. Still shared, and still
+to do: the invoice book (which also does not survive a deploy yet), the night
+archive and the advert slides. See "A room per quizmaster" above.
 
-**Nobody has actually made an account yet.** He started on his phone, got as far
-as the console asking for a host key, and stopped to do it on the MacBook. Three
-things have to happen in this order, and they are the first thing in TODO.md:
-set `HOST_KEY` on Render (or he is locked out again after the next deploy), set
-up the private repo (or the accounts are wiped by it), then make the owner
-account from the Console panel and add quizmasters for himself and Rob. Until
-then the host key is the only way in, and it still works.
+**The owner account exists; nobody else has a login yet.** Two things still have
+to happen and the order matters, and they are the first thing in TODO.md: set
+`HOST_KEY` on Render (or the bookmark dies at every deploy), and set up the
+private repo (or the owner account is wiped by the next one — it has no
+permanent disk to live on). Then add quizmasters for Rob and James. Until then
+the host key is the way in, and it still works.
+
+**If he says the projector still says "Mark's Music Madness"**, check
+`BRAND_NAME` on Render before anything else. It beats the per-quizmaster name by
+design, so a value left over from before this change would hide the whole
+feature and look exactly like it had not deployed.
 
 (An earlier version of this line named `claude/new-session-jzx988`. That branch
 is gone — see **Where to push**.)
