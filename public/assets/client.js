@@ -247,7 +247,7 @@ export function rememberRoom(code) {
  * it, because something that covers a control is a bug of its own.
  */
 export function actingBar(me) {
-  if (!me || !me.actingAs) return null;
+  if (!hatOn(me)) return null;
   const el = node(`
     <div class="acting-bar">
       <span>Wearing your <b>quizmaster</b> hat — this is exactly what a subscriber sees.</span>
@@ -258,5 +258,71 @@ export function actingBar(me) {
     location.href = '/owner';
   });
   document.body.prepend(el);
+  return el;
+}
+
+/*
+ * Two shapes reach these helpers and both are legitimate: the whole `/api/me`
+ * payload (which is what the control view has) and the `account` off it (which
+ * is what the console keeps). `actingAs` and `bootstrap` are set on BOTH by
+ * `whoIs()` in server.js, so accept either rather than making every caller
+ * remember which it is holding.
+ */
+const hat = (me) => (me && me.account) || me || {};
+const hatOn = (me) => Boolean(hat(me).actingAs || (me && me.actingAs));
+const isOwner = (me) => hat(me).role === 'owner' || (me && me.account && me.account.role === 'owner');
+
+/**
+ * The hat switch: Owner | Quizmaster, in the top right, one tap either way.
+ *
+ * It is BOTH the switch and the sign saying which hat is on, which is why the
+ * live half is a solid block of colour rather than a tick — pink for the owner,
+ * gold for the quizmaster, so it is answered from across the room and not read.
+ * "Being unsure which hat you are wearing is worse than either hat" was already
+ * the rule; a sticky corner beats a bar you scroll past.
+ *
+ * **Only an owner ever sees it, and only their own two hats.** A real
+ * quizmaster has nothing to switch to. Neither does the HOST KEY, which is not
+ * an owner account at all — it is every hat at once by a different route, so a
+ * toggle there would be a control that cannot mean anything.
+ *
+ * Switching cannot disturb a night in progress. The two hats are two ROOMS, and
+ * a room keeps its own game, its own phones and its own state file — so the
+ * worst a mis-tap does is show you the other room until you tap back. Nothing
+ * is stopped and nothing is lost, which is why this needs no confirm step.
+ */
+export function hatSwitch(me, { onSwitch = null } = {}) {
+  const on = hatOn(me);
+  if (!on && !isOwner(me)) return null;
+  // The host key is not an owner account; it holds every hat by another route.
+  if (hat(me).bootstrap || (me && me.bootstrap)) return null;
+
+  const el = node(`
+    <div class="hat-switch" role="group" aria-label="Which hat you are wearing"
+         title="Switch between the owner console and your own quizmaster account. Same login, no second password — it is the only way to spot what annoys a quizmaster.">
+      <button type="button" class="hat-half owner ${on ? '' : 'live'}" ${on ? '' : 'aria-current="true"'}>Owner</button>
+      <button type="button" class="hat-half qm ${on ? 'live' : ''}" ${on ? 'aria-current="true"' : ''}>Quizmaster</button>
+    </div>`);
+
+  const go = async (wanted) => {
+    if (wanted === on) return;                       // already wearing it
+    el.classList.add('working');
+    for (const b of el.querySelectorAll('button')) b.disabled = true;
+    try {
+      await postJson('/api/owner/act-as', { on: wanted });
+      if (onSwitch) return onSwitch(wanted);
+      // Stay where you are, so the toggle reads as "the same page with the
+      // other powers". The exception is the owner page itself, which a
+      // quizmaster may not open — going there would be a 403 on your own tap.
+      const here = location.pathname;
+      location.href = wanted && here === '/owner' ? '/console' : here;
+    } catch (err) {
+      el.classList.remove('working');
+      for (const b of el.querySelectorAll('button')) b.disabled = false;
+      alert(err.message || 'Could not switch.');
+    }
+  };
+  el.querySelector('.owner').addEventListener('click', () => go(false));
+  el.querySelector('.qm').addEventListener('click', () => go(true));
   return el;
 }

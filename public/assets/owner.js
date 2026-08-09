@@ -7,7 +7,7 @@
  * from the Next button during somebody's gig.
  */
 
-import { esc, node, brandMark } from './client.js';
+import { esc, node, brandMark, hatSwitch } from './client.js';
 import { ADDONS, PLANS } from './plans.js';
 
 const mainEl = document.getElementById('main');
@@ -36,6 +36,13 @@ async function boot() {
   document.getElementById('brandSlot').innerHTML =
     `${brandMark(26)}<span class="brand-name">${esc(brand.name)}</span>`;
   whoEl.textContent = me.role === 'owner' ? `Owner — ${me.email}` : `Signed in as ${me.email}`;
+
+  // The switch into your own quizmaster account, in the same corner it sits in
+  // on the console — so it is one control in one place rather than a button
+  // buried in a panel halfway down this page.
+  const slot = document.getElementById('hatSlot');
+  const hat = hatSwitch(who);
+  if (slot && hat) slot.replaceChildren(hat);
 
   if (me.role !== 'owner') {
     mainEl.replaceChildren(node(`
@@ -129,38 +136,16 @@ function reportsPanel() {
  * is the only way to see the app the way a subscriber does. It is a downgrade
  * and nothing else: the owner's own linked account, its permissions, its room.
  */
-function hatPanel() {
-  const el = node(`
-    <div class="game-section">
-      <div class="game-head">
-        <div>
-          <h2>Run a night yourself</h2>
-          <div class="tiny">Switch into your own quizmaster account — same login, no second
-            password. You get exactly what Rob gets: your own game, your own join code, and
-            packs you cannot edit. It is the only way to spot what annoys a quizmaster.</div>
-        </div>
-        <div class="row"><button class="go be-qm">Become a quizmaster</button></div>
-      </div>
-    </div>`);
-  el.querySelector('.be-qm').addEventListener('click', async (e) => {
-    e.target.disabled = true;
-    e.target.textContent = 'Switching…';
-    try {
-      await api('/api/owner/act-as', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on: true }),
-      });
-      location.href = '/console';
-    } catch (err) {
-      e.target.disabled = false;
-      e.target.textContent = 'Become a quizmaster';
-      alert(err.message);
-    }
-  });
-  return [el];
-}
 
 function draw(data) {
-  const parts = [...reportsPanel(), ...hatPanel()];
+  /*
+   * There used to be a "Become a quizmaster" panel here, with a button that did
+   * exactly what the Owner | Quizmaster switch in the topbar now does. Two ways
+   * to do one job is how you end up using the worse one out of habit — and the
+   * worse one was this, because it only existed on this page, so getting back
+   * meant finding a bar at the top of a different one.
+   */
+  const parts = [...reportsPanel()];
 
   if (!data.backupReady) {
     parts.push(node(`

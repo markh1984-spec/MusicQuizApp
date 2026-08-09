@@ -7,7 +7,7 @@
  * something typed in fresh each time.
  */
 
-import { esc, node, postJson, brandLink, binIcon, actingBar } from './client.js';
+import { esc, node, postJson, brandLink, binIcon, hatSwitch } from './client.js';
 import { balanceAnswers } from './balance.js';
 import { FEATURES } from './plans.js';
 
@@ -72,6 +72,21 @@ const whyNotHere = (feature) => {
   return missing ? missing.why : '';
 };
 
+/**
+ * Draw the Owner | Quizmaster switch into the topbar, if this account has two
+ * hats to switch between. `hatSwitch` returns null for everybody else, so the
+ * slot simply stays empty rather than the page having to know the rule.
+ */
+function paintHatSwitch(who) {
+  const slot = document.getElementById('hatSlot');
+  if (!slot) return;
+  const el = hatSwitch(who);
+  slot.replaceChildren(...(el ? [el] : []));
+  // A gold hairline under the topbar while the hat is on, so even a screenshot
+  // of the middle of the page says which hat it was taken in.
+  document.body.classList.toggle('wearing-hat', Boolean(who && who.actingAs));
+}
+
 /** Does this app have accounts set up, or is it still host-key only? */
 async function hasAccounts() {
   try {
@@ -99,8 +114,10 @@ async function load() {
     // take the Launch button away minutes before a quiz. A key in the URL or
     // remembered in this browser means "I am here to run something".
     if (me && me.role === 'owner' && !hostKey) { location.href = '/owner'; return; }
-    // Wearing the quizmaster hat: say so, at the top, on every page.
-    actingBar(who);
+    // Which hat is on, and the way to change it — one control doing both, in
+    // the top right, rather than a bar you scroll past and a button on another
+    // page. Nothing is drawn at all for anybody with only one hat.
+    paintHatSwitch(who);
   } catch {
     me = null;
   }

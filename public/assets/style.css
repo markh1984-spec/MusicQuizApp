@@ -1547,6 +1547,11 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
 }
 .console .brand-name { font-size: 18px; }
 .host .brand-name, .editor .brand-name { font-size: 15px; }
+/* The owner page drops the logo and the name straight into the slot rather
+   than wrapping them in a `.brand` link, so the slot has to be the flex row —
+   otherwise the name falls under the mark the moment anything shares the bar
+   with it, which is what the hat switch does. */
+.console .topbar #brandSlot { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
 
 /* The control view's bar puts the brand above the "where am I" line. */
 .host .bar { flex-wrap: wrap; }
@@ -2850,4 +2855,54 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
+}
+
+/* ---- the hat switch: Owner | Quizmaster, top right, one tap either way.
+   It is the sign as well as the switch, so the LIVE half is a solid block of
+   colour and the other is barely there — pink for the owner, gold for the
+   quizmaster, the same gold the acting bar has always used. Answered at a
+   glance, not read. The dim half still passes contrast, because it is a button
+   you are meant to find. */
+.hat-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-line);
+  flex: 0 0 auto;
+}
+.hat-switch .hat-half {
+  padding: 7px 14px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 140ms ease, color 140ms ease;
+}
+.hat-switch .hat-half:hover:not(.live) { background: rgba(255, 255, 255, 0.08); color: var(--ink); }
+.hat-switch .owner.live {
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
+  color: #12000c;
+}
+.hat-switch .qm.live { background: var(--gold); color: #1a1200; }
+.hat-switch.working { opacity: 0.55; }
+.hat-switch .hat-half:disabled { cursor: default; }
+
+/* The whole page picks up a gold hairline while the quizmaster hat is on, so
+   even a screenshot of the middle of the console says which hat it was taken
+   in. Cheaper than a banner and it covers nothing. */
+body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
+
+/* On a phone the topbar is already tight, so the switch loses its padding
+   before it loses its words — "Owner" and "Quizmaster" are the whole point. */
+@media (max-width: 560px) {
+  .hat-switch .hat-half { padding: 6px 10px; font-size: 11px; }
 }
