@@ -3085,6 +3085,30 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .hat-switch.working { opacity: 0.55; }
 .hat-switch .hat-half:disabled { cursor: default; }
 
+/* Which RUNG the hat is being worn as. Inside the switch, because it only means
+   anything while the hat is on. Initials rather than words — B S G with "All"
+   in front — because this is a corner of a topbar, not a settings page, and the
+   metal on the live one says which is which faster than the label would. */
+.tier-preview {
+  display: inline-flex; align-items: center; gap: 2px;
+  margin-left: 4px; padding-left: 6px;
+  border-left: 1px solid var(--panel-line);
+}
+.tier-preview .tier-half {
+  min-width: 24px;
+  padding: 5px 6px;
+  border: none; border-radius: 999px;
+  background: none; color: var(--ink-dim);
+  font: inherit; font-size: 11px; font-weight: 800;
+  cursor: pointer;
+}
+.tier-preview .tier-half:hover:not(.live) { background: rgba(255, 255, 255, 0.1); color: var(--ink); }
+.tier-preview .tier-half.live { background: rgba(255, 255, 255, 0.16); color: var(--ink); }
+.tier-preview .tier-half.t-bronze.live { background: #cd7f32; color: #1a0e02; }
+.tier-preview .tier-half.t-silver.live { background: #c0c7d0; color: #10131a; }
+.tier-preview .tier-half.t-gold.live   { background: #ffd23f; color: #1a1200; }
+.tier-preview .tier-half:disabled { opacity: 0.5; cursor: default; }
+
 /* The whole page picks up a gold hairline while the quizmaster hat is on, so
    even a screenshot of the middle of the console says which hat it was taken
    in. Cheaper than a banner and it covers nothing. */

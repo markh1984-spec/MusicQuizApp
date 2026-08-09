@@ -1208,6 +1208,39 @@ has nothing to switch to; neither does the HOST KEY, which is not an owner
 account at all but every hat at once by a different route, so a toggle there
 would be a control that could not mean anything.
 
+### …and as a Bronze, Silver or Gold subscriber
+
+`TIER_COOKIE` in server.js, `tierPreview()` in client.js. With the hat on, the
+switch grows a second half — **All · B · S · G** — and picking a rung shows the
+console exactly as a subscriber on that tier sees it.
+
+**This is the other half of the problem the hat was built for.** The hat exists
+because every irritation a real quizmaster hits is invisible from behind the
+host key. But the linked quizmaster account is **comped**, so wearing the hat
+has only ever shown the TOP of the ladder — and every irritation a Bronze
+subscriber hits is invisible from there for exactly the same reason. "Rob says
+the Invoices tab has gone" is not a question answerable from an account that has
+everything.
+
+**It is a genuine downgrade, gate included.** The console draws as that tier and
+`/api/invoices` returns 403 for a Bronze preview — because the whole value is
+catching the places where the page and the API disagree, which is precisely what
+the permissions sweep found five of. A preview that only changed the drawing
+would hide the bug it exists to find.
+
+**`comped` MUST be cleared when a tier is previewed**, or the tier is
+decoration: a comped account holds the whole ladder whatever tier it says. There
+is a test named after that failure.
+
+**Only ever a downgrade, and only the owner's own account.** There is no rung
+above the top of the ladder and the linked account already holds all of it, so
+this cannot widen anything. A real quizmaster is sent no picker to draw and gets
+a 403 asking for one directly — both checked in a browser.
+
+Taking the hat off clears the preview cookie as well as the acting one. A tier
+left behind would silently apply the next time the hat went on, which is how you
+end up hunting for a bug in the app that is really in your own session.
+
 **Switching cannot disturb a night in progress**, which is why there is no
 confirm step: the two hats are two ROOMS, and a room keeps its own game, its own
 phones and its own state file. The worst a mis-tap does is show you the other
@@ -1520,7 +1553,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 549 tests, no network, injected clocks — must stay green
+npm test        # 552 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -1600,7 +1633,8 @@ from the quizmaster whose room it is; and **six colour schemes** on the account,
 so a subscriber does not have to put somebody else's pink-and-orange on a
 projector with their own name above it; and a **My account** tab, where all
 of that now lives, on a **Bronze / Silver / Gold ladder** that the pricing
-will hang off. All on **`MusicQuizApp`**. 549 tests green.
+will hang off — and the owner can look at the console as a subscriber on any
+rung of it. All on **`MusicQuizApp`**. 552 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on

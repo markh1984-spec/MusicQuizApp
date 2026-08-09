@@ -324,5 +324,60 @@ export function hatSwitch(me, { onSwitch = null } = {}) {
   };
   el.querySelector('.owner').addEventListener('click', () => go(false));
   el.querySelector('.qm').addEventListener('click', () => go(true));
+
+  // With the hat on, which RUNG of the ladder to wear it as.
+  if (on) {
+    const picker = tierPreview(me);
+    if (picker) el.appendChild(picker);
+  }
+  return el;
+}
+
+/**
+ * Look at the app as a Bronze / Silver / Gold subscriber would.
+ *
+ * The hat exists because every irritation a real quizmaster hits is invisible
+ * from behind the host key. The linked quizmaster account is COMPED, though, so
+ * wearing the hat has only ever shown the top of the ladder — and every
+ * irritation a Bronze subscriber hits is invisible from there for exactly the
+ * same reason. "Rob says the Invoices tab has gone" is not a question you can
+ * answer from an account that has everything.
+ *
+ * It sits inside the hat switch rather than beside it because it only means
+ * anything while the hat is on: three rungs, the live one filled, one tap each.
+ * "All" is the linked account as it really is — comped, the whole ladder — and
+ * is the one to come back to before doing anything real.
+ *
+ * ONLY EVER A DOWNGRADE, and only ever the owner's own account. The server
+ * checks the same thing again; this is the control, not the rule.
+ */
+function tierPreview(me) {
+  const tiers = (me && me.tiers) || [];
+  if (!tiers.length) return null;
+  const now = (me && me.previewTier) || '';
+
+  const el = node(`
+    <span class="tier-preview" title="Look at the console as a subscriber on this tier would see it">
+      <button type="button" class="tier-half ${now ? '' : 'live'}" data-tier="">All</button>
+      ${tiers.map((t) => `
+        <button type="button" class="tier-half t-${esc(t.id)} ${now === t.id ? 'live' : ''}"
+                data-tier="${esc(t.id)}" title="${esc(t.label)} — ${esc(t.plan)}">${esc(t.label[0])}</button>`).join('')}
+    </span>`);
+
+  for (const button of el.querySelectorAll('button')) {
+    button.addEventListener('click', async (event) => {
+      // The hat switch itself is two buttons in the same box; without this a
+      // tap on a rung would also read as a tap on "Quizmaster".
+      event.stopPropagation();
+      for (const b of el.querySelectorAll('button')) b.disabled = true;
+      try {
+        await postJson('/api/owner/act-as', { tier: button.dataset.tier });
+        location.reload();
+      } catch (err) {
+        for (const b of el.querySelectorAll('button')) b.disabled = false;
+        alert(err.message || 'Could not change tier.');
+      }
+    });
+  }
   return el;
 }

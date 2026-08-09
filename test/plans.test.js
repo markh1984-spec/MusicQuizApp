@@ -294,3 +294,52 @@ test('a quizmaster can read the library but never change it', () => {
 test('the owner can change the library, because writing the packs is the job', () => {
   assert.equal(can({ role: 'owner', status: 'active' }, FEATURES.CATALOGUE), true);
 });
+
+/*
+ * ---------------------------------------- looking at it AS a subscriber
+ *
+ * The owner previewing a tier is `whoIs()` in server.js handing `can()` an
+ * account with a `tier` and `comped` cleared. Two things have to hold, and both
+ * are asserted on the shape the server actually builds:
+ *
+ *  1. it is a real downgrade — the console AND the gate agree, or a preview is
+ *     a lie and worse than not having one;
+ *  2. `comped` MUST be cleared, or the tier means nothing at all, because a
+ *     comped account holds the whole ladder whatever tier it says.
+ */
+test('previewing a tier is a genuine downgrade, gate included', () => {
+  const hat = { role: 'quizmaster', tier: 'gold', comped: true, status: 'active', actingAs: true };
+  // As itself: comped, so the whole ladder.
+  assert.equal(can(hat, FEATURES.STREAM), true);
+  assert.equal(can(hat, FEATURES.INVOICES), true);
+
+  const asBronze = { ...hat, previewTier: 'bronze', tier: 'bronze', comped: false };
+  assert.equal(can(asBronze, FEATURES.QUIZ), true);
+  assert.equal(can(asBronze, FEATURES.INVOICES), false, 'a Bronze preview could still invoice');
+  assert.equal(can(asBronze, FEATURES.STREAM), false);
+  assert.match(whyNot(asBronze, FEATURES.INVOICES), /Silver/);
+
+  const asSilver = { ...hat, previewTier: 'silver', tier: 'silver', comped: false };
+  assert.equal(can(asSilver, FEATURES.INVOICES), true);
+  assert.equal(can(asSilver, FEATURES.STREAM), false);
+});
+
+test('a preview that forgot to clear comped would show everything — so that is pinned', () => {
+  // The failure mode this guards: keep `comped` and the tier is decoration.
+  const wrong = { role: 'quizmaster', tier: 'bronze', comped: true, status: 'active' };
+  assert.equal(can(wrong, FEATURES.STREAM), true, 'comped no longer means the whole ladder');
+  const right = { ...wrong, comped: false };
+  assert.equal(can(right, FEATURES.STREAM), false);
+});
+
+// It can only ever show LESS. There is nothing above the top of the ladder, and
+// the account being previewed already holds all of it.
+test('there is no tier above the top, so a preview can only subtract', () => {
+  const top = TIERS[TIERS.length - 1].id;
+  const everything = featuresAt(top);
+  for (const tier of TIERS) {
+    for (const f of featuresAt(tier.id)) {
+      assert.ok(everything.includes(f), `${tier.id} has ${f}, which the top of the ladder does not`);
+    }
+  }
+});

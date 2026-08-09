@@ -383,6 +383,12 @@ The Console says so in red if it is not set up.
 - **A "My account" tab** on the console — your name, your colours, what tier you
   are on, every feature laid out by tier with a switch on each, and links to your
   control view, your big screen and your join page all in one place.
+- **You can look at the console as a Bronze, Silver or Gold subscriber.** Put
+  the quizmaster hat on and the switch grows **All · B · S · G** next to it —
+  tap a letter and you see exactly what somebody on that tier sees, tabs missing
+  and all. It is a real downgrade, not a preview: the API refuses what that tier
+  cannot do, so anything broken for a subscriber breaks for you too. Tap **All**
+  to go back to everything. Taking the hat off clears it.
 - **Three tiers: Bronze (Basic), Silver (Elite), Gold (Pro)**, and they stack —
   Gold includes Silver includes Bronze. On the owner page each quizmaster now has
   a Bronze / Silver / Gold picker instead of a row of add-ons.

@@ -40,7 +40,7 @@ import { Accounts } from './src/accounts.js';
 import { Reports } from './src/reports.js';
 import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
-import { FEATURES, whyNot, entitlements } from './public/assets/plans.js';
+import { FEATURES, TIERS, whyNot, entitlements } from './public/assets/plans.js';
 import { OWNER_ONLY, changesTheLibrary } from './src/gates.js';
 import { brandFor } from './src/branding.js';
 import { findScheme, DEFAULT_SCHEME, SCHEMES } from './public/assets/schemes.js';
@@ -221,6 +221,20 @@ const SESSION_COOKIE = 'mmm_session';
  */
 const ACTING_COOKIE = 'mmm_acting';
 
+/*
+ * Which TIER the hat is being worn as.
+ *
+ * Its own cookie rather than a field on the acting one, because the two answer
+ * different questions and are cleared at different times: taking the hat off
+ * ends the acting session, but which tier you were last looking at is worth
+ * keeping for the next time you put it on.
+ *
+ * Read ONLY inside the acting branch of `whoIs`, so it means nothing at all to
+ * a real quizmaster or to anybody not signed in as the owner. See the note
+ * there for why it can only ever be a downgrade.
+ */
+const TIER_COOKIE = 'mmm_tier';
+
 /** One cookie, with the same rules as the session one. */
 function cookieFor(req, name, value, days = 30) {
   const secure = (req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https';
@@ -277,7 +291,33 @@ function whoIs(req, url) {
   if (actingId && account.role === 'owner') {
     const hat = accounts.find(actingId);
     if (hat && hat.role === 'quizmaster' && hat.ownedBy === account.id) {
-      return { ...hat, actingAs: true, realName: account.name || account.email };
+      const wearing = { ...hat, actingAs: true, realName: account.name || account.email };
+      /*
+       * …and, optionally, AS A PARTICULAR TIER.
+       *
+       * The linked quizmaster account is comped, so wearing the hat has always
+       * shown the top of the ladder. That is the wrong half of the problem:
+       * every irritation a real quizmaster hits is invisible behind the host
+       * key, which is why the hat exists — and every irritation a BRONZE
+       * quizmaster hits is invisible behind a comped account, for exactly the
+       * same reason. "Rob says Invoices has gone" is not answerable from an
+       * account that has everything.
+       *
+       * `comped` has to be cleared or the tier would mean nothing: a comped
+       * account holds the whole ladder whatever tier it says. `status` is set
+       * to active so a preview looks like a paying subscriber rather than a
+       * lapsed one, which is a different thing worth being able to see on
+       * purpose rather than by accident.
+       *
+       * ONLY EVER A DOWNGRADE. The account being previewed is the owner's own,
+       * it already holds everything, and there is no tier above the top of the
+       * ladder — so this can only ever show LESS than the hat already shows.
+       */
+      const preview = cookie(req, TIER_COOKIE);
+      if (preview && TIERS.some((t) => t.id === preview)) {
+        return { ...wearing, previewTier: preview, tier: preview, comped: false, status: 'active' };
+      }
+      return wearing;
     }
   }
   return account;
@@ -643,6 +683,12 @@ async function handleGet(req, res, url, route) {
       // unsure which hat is on is worse than either hat.
       actingAs: Boolean(account.actingAs),
       realName: account.realName || '',
+      // Which rung of the ladder the hat is being worn as, if any. Empty means
+      // "as the linked account really is", which is comped — the whole ladder.
+      previewTier: account.previewTier || '',
+      // The rungs to offer, and ONLY while the hat is on. A real quizmaster has
+      // nothing to preview, so they are not sent a picker to draw.
+      tiers: account.actingAs ? TIERS.map(({ id, label, plan }) => ({ id, label, plan })) : [],
     }), true;
   }
 
@@ -1502,8 +1548,33 @@ async function handleWrite(req, res, url, route) {
     const body = await readJson(req);
 
     if (body.on === false) {
-      res.setHeader('Set-Cookie', `${ACTING_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`);
+      // Both cookies. A preview tier left behind would silently apply the next
+      // time the hat went on, which is exactly the kind of thing that has you
+      // hunting for a bug in the app rather than in your own session.
+      res.setHeader('Set-Cookie', [
+        `${ACTING_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`,
+        `${TIER_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`,
+      ]);
       return sendJson(res, 200, { ok: true, acting: false }), true;
+    }
+
+    /*
+     * Look at it as a Bronze / Silver / Gold subscriber would.
+     *
+     * The owner only, and only while the hat is on — a real quizmaster has
+     * nothing to preview and this cookie means nothing to them. Sent as its own
+     * little request rather than folded into `on: true` so changing tier does
+     * not re-create the linked account or disturb the room.
+     */
+    if (body.tier !== undefined) {
+      const wanted = String(body.tier || '');
+      if (wanted && !TIERS.some((t) => t.id === wanted)) {
+        return sendJson(res, 400, { error: `"${wanted}" is not a tier.` }), true;
+      }
+      res.setHeader('Set-Cookie', wanted
+        ? cookieFor(req, TIER_COOKIE, wanted)
+        : `${TIER_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`);
+      return sendJson(res, 200, { ok: true, acting: true, previewTier: wanted }), true;
     }
 
     let hat = accounts.ownQuizmasterFor(me.id);
