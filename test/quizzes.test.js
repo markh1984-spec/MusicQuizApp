@@ -621,3 +621,78 @@ test('the chosen effect survives a save and reload', () => {
   assert.equal(quiz.rounds[0].reveal, 'mix');
   assert.equal(quiz.rounds[0].questions[0].reveal, 'tiles');
 });
+
+
+/*
+ * Questions that go out of date on their own.
+ *
+ * A pack is written once and run for months, then sold to somebody else. "How
+ * old is Harry Styles" is right for a year and wrong for ever after, and unlike
+ * every other fault in this file it gets worse while nobody is looking.
+ *
+ * Caught from the WORDING, free and with no API call — the same split as the
+ * rest of the review flags, where the mechanical pass runs on every read-through
+ * and the AI pass only has to look at what this cannot see.
+ */
+const ageingFlags = (prompt, answerNote = '') => reviewWarnings({
+  id: 't', title: 'T',
+  rounds: [{ type: 'text', questions: [{ id: 'q1', prompt, answerNote, options: ['A', 'B', 'C', 'D'], correctIndex: 0 }] }],
+}).filter((w) => w.kind === 'ages-out');
+
+test('a question tied to now is flagged as going out of date', () => {
+  for (const prompt of [
+    'How old is Harry Styles?',
+    'Who is currently the lead singer of Queen?',
+    'Which studio album is their most recent?',
+    'Which song is the most streamed of all time?',
+    'Which band still tours with its original line-up?',
+    'Who holds the record for the youngest ever number one?',
+  ]) {
+    assert.equal(ageingFlags(prompt).length, 1, `not flagged: ${prompt}`);
+  }
+});
+
+test('a settled fact is left alone', () => {
+  // The panel is only read if it is mostly right. Twenty false flags is how a
+  // host learns to skip it.
+  for (const prompt of [
+    'Who released Thriller in 1982?',
+    'Which 1984 charity single kept Wham off number one?',
+    'Which Beatle played bass?',
+    'In which city did Oasis form?',
+  ]) {
+    assert.deepEqual(ageingFlags(prompt), [], `wrongly flagged: ${prompt}`);
+  }
+});
+
+test('a record in the FACT you read out is history, not a warning', () => {
+  // "one of the highest-grossing tours of that year" is pinned to that year and
+  // cannot go out of date. Found on the host's own library — it was the only
+  // false alarm in ninety questions, and it is the kind that costs you the
+  // whole panel.
+  assert.deepEqual(
+    ageingFlags('Which stadium tour did One Direction embark on in 2014?',
+      'It was one of the highest-grossing tours of that year.'),
+    [],
+  );
+});
+
+test('but a fact dated to a year IS a warning, because you read it out', () => {
+  assert.equal(
+    ageingFlags('Which 1984 charity single kept Wham off number one?',
+      'As of 2019 it had sold 3.8 million copies.').length,
+    1,
+  );
+});
+
+test('an ageing flag can be ticked off like any other', () => {
+  const quiz = {
+    id: 't', title: 'T',
+    rounds: [{ type: 'text', questions: [{ id: 'q1', prompt: 'How old is Harry Styles?', options: ['A', 'B', 'C', 'D'], correctIndex: 0 }] }],
+  };
+  const [flag] = reviewWarnings(quiz).filter((w) => w.kind === 'ages-out');
+  assert.equal(flag.cleared, false);
+  assert.equal(setWarningChecked(quiz, 'q1', flag.id, true), true);
+  const [again] = reviewWarnings(quiz).filter((w) => w.kind === 'ages-out');
+  assert.equal(again.cleared, true, 'the tick did not survive');
+});

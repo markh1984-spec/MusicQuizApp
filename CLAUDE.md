@@ -386,6 +386,37 @@ quiz, and all it said was "Quiz is not valid". The `/checked` route passes
 `{ allowProblems: true }`. The read-through also shows validation problems
 above the hunches, in red, so you can see *which* question is at fault.
 
+### A question that goes out of date on its own
+
+`ages-out` in `reviewWarnings()`. "How old is Harry Styles" is right for a year
+and wrong for ever after; so is "their most recent studio album", which the
+host's own Metallica pack contains and which breaks the day Metallica release
+another one. Unlike every other fault in that file, this one **gets worse while
+nobody is looking**, and a pack is written once and then run for months and sold
+on.
+
+**Most of it is visible in the WORDING, so it is caught mechanically and free.**
+Two lists, and the split between them is the whole design:
+
+- **Now-words** (`currently`, `as of`, `to date`, `the latest`, `most recent`…)
+  are checked in the question AND in the fact read out afterwards, because a
+  note saying "as of 2019 it had sold 3.8 million" is read aloud and can be
+  wrong.
+- **Moving records** (`of all time`, `how old`, `still`, `highest-grossing`,
+  `youngest ever`…) are checked in the QUESTION ONLY. In the fact afterwards
+  they are almost always historical — "one of the highest-grossing tours of that
+  year" is pinned to that year and cannot age. That was the single false alarm
+  in ninety questions of the real library, and it is exactly the kind that
+  teaches a host to skip the whole panel.
+
+Two of ninety flagged, both genuine. That ratio is the point.
+
+**The monthly AI pass is the other half and is NOT built.** Written up in
+TODO.md. The important part of the design is that it runs *after* this one, on
+the questions this cannot see — a fact that has quietly changed with no
+tell-tale wording, like a band member leaving. Doing it the other way round
+means paying a model to re-read ninety settled questions every month.
+
 ### A complaint on screen needs something to press
 
 The read-through said "answers land A×15 B×10 C×5 D×1 — lopsided" and then
@@ -1139,7 +1170,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 494 tests, no network, injected clocks — must stay green
+npm test        # 499 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -1210,7 +1241,7 @@ foundation are done and tested. Since then: the photo props, the big photo
 moment, the double-tap and early-reveal guards, the shared portrait library
 with its style and quality settings, the leaving-the-app note, and the fastest
 finger's face on the reveal, and **a room per quizmaster** — so a second login
-is now safe to hand out. All on **`MusicQuizApp`**. 494 tests green.
+is now safe to hand out. All on **`MusicQuizApp`**. 499 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall and read-only access to the

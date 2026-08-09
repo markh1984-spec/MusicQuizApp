@@ -332,6 +332,52 @@ export function reviewWarnings(quiz) {
         }
       }
 
+      /*
+       * A question whose answer changes while the pack sits on the shelf.
+       *
+       * "How old is Harry Styles" is right for a year and wrong for ever
+       * after. So is "the most streamed song of all time", and so is anything
+       * hanging off the word "currently". A pack is written once and run for
+       * months, sometimes sold to somebody else, so this is not a small
+       * category — and unlike most faults here it gets worse on its own.
+       *
+       * Caught mechanically and free, because most of it is visible in the
+       * WORDING rather than in the fact. A monthly AI pass is the other half of
+       * this and is a much smaller, cheaper job once these are already marked:
+       * it only has to look at what this cannot see.
+       *
+       * Kept deliberately tight. Twenty false flags is how a host learns to
+       * ignore the whole panel, so this only fires on phrasing that is
+       * genuinely tied to a moment rather than anything merely superlative.
+       */
+      const NOW_WORDS = [
+        /\bcurrently\b/i, /\bright now\b/i, /\bat the moment\b/i, /\bthese days\b/i,
+        /\bnowadays\b/i, /\bas of\b/i, /\bto date\b/i, /\bso far\b/i,
+        /\bthis (year|month|week)\b/i, /\bthe latest\b/i, /\bmost recent(ly)?\b/i,
+      ];
+      // These only count in the QUESTION, where they define the answer. In the
+      // fact you read out afterwards they are almost always historical — "one
+      // of the highest-grossing tours of that year" is pinned to that year and
+      // cannot go out of date, and flagging it would be the kind of false
+      // alarm that teaches you to skip the whole panel.
+      const MOVING_RECORDS = [
+        /\bhow old\b/i, /\bwhat age\b/i,
+        /\bstill\b/i, /\bmost[- ]streamed\b/i, /\bof all time\b/i, /\brecord for\b/i,
+        /\byoungest ever\b/i, /\boldest ever\b/i, /\blongest[- ]running\b/i,
+        /\bhighest[- ](selling|charting|grossing)\b/i,
+      ];
+      const hits = (list, text) => list
+        .filter((re) => re.test(text))
+        .map((re) => (text.match(re) || [''])[0].trim().toLowerCase());
+      const ageing = [...new Set([
+        ...hits(NOW_WORDS, `${prompt} ${note}`),
+        ...hits(MOVING_RECORDS, prompt),
+      ])];
+      if (ageing.length) {
+        flag('ages-out', ageing.join('-'),
+          `"${ageing.join('", "')}" ties this to when it was written — the answer may have changed since. Check it still stands, or reword it so it cannot go out of date.`);
+      }
+
       // An answer that contradicts the question it is answering. Single-answer
       // questions only — a negative reads differently in a list of three.
       if (round.type !== 'multi' && /^(neither|none|no one|nobody|they (were|had) n)/i.test(String(correct || ''))) {
