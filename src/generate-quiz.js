@@ -428,17 +428,59 @@ async function askClaude({ system, prompt, apiKey, model, think = false }) {
   return parseJson(text);
 }
 
-/** Models sometimes wrap JSON in a fence however firmly you ask them not to. */
-function parseJson(text) {
-  const cleaned = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
+/**
+ * Read a reply that is MEANT to be JSON, and get the questions out of it
+ * whatever state it is in.
+ *
+ * The bingo generator learned this the hard way and the quiz generator had
+ * never been given it: a single malformed reply threw a raw parser message
+ * ("Expected double-quoted property name in JSON at position 138") straight
+ * through the whole job, binning fifteen questions and several minutes of real
+ * money because ONE of three attempts came back untidy.
+ *
+ * Three passes, worst case:
+ *
+ *  1. parse it;
+ *  2. parse from the first `{` to the last `}`, which handles a preamble or a
+ *     fence the model added anyway;
+ *  3. pick the question objects out one at a time with a regex. Fourteen whole
+ *     ones and a fifteenth cut in half is not valid JSON, but it is fourteen
+ *     questions and only ten are needed.
+ *
+ * @param {string} text
+ * @param {string} [want]  the array to salvage — "questions" or "verdicts"
+ */
+export function parseJson(text, want = 'questions') {
+  const cleaned = String(text || '').trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/```\s*$/, '');
+
   try {
     return JSON.parse(cleaned);
-  } catch {
-    const a = cleaned.indexOf('{');
-    const b = cleaned.lastIndexOf('}');
-    if (a >= 0 && b > a) return JSON.parse(cleaned.slice(a, b + 1));
-    throw new Error('Claude did not return usable JSON');
+  } catch { /* fall through */ }
+
+  const a = cleaned.indexOf('{');
+  const b = cleaned.lastIndexOf('}');
+  if (a >= 0 && b > a) {
+    try {
+      return JSON.parse(cleaned.slice(a, b + 1));
+    } catch { /* fall through */ }
   }
+
+  // Salvage. Objects one nesting deep are matched too, because a question
+  // carries an options array and an intro question carries a cue object.
+  const found = [];
+  for (const match of cleaned.matchAll(/\{(?:[^{}]|\{[^{}]*\})*\}/g)) {
+    try {
+      const item = JSON.parse(match[0]);
+      if (item && (item.prompt || item.index !== undefined)) found.push(item);
+    } catch { /* the half-written one at the end, which is the case this is for */ }
+  }
+  if (found.length) return { [want]: found };
+  // Tagged, so `buildRound` can tell "that reply was gibberish, have another
+  // go" apart from "the network went away" or "the call timed out" — the first
+  // is worth retrying quietly, the other two the host needs telling about.
+  throw Object.assign(new Error('Claude did not return usable JSON'), { unreadable: true });
 }
 
 function roundTitle(type, index, theme) {
@@ -612,12 +654,28 @@ async function buildRound({ brief, perRound, check, system, apiKey, model, log, 
       ? `  writing ${ask} questions…`
       : `  ${accepted.length} of ${perRound} so far — writing ${ask} more (attempt ${attempt})…`);
 
-    const result = await askClaude({
-      system,
-      prompt: `Write ${ask} questions for a music quiz.\n\n${brief}${avoid}\n\n${SCHEMA_NOTE}`,
-      apiKey,
-      model,
-    });
+    /*
+     * A bad reply costs this ATTEMPT, never the round.
+     *
+     * There are two more goes, and everything accepted so far is already in
+     * hand — throwing here binned fifteen questions and several minutes of
+     * paid-for work because one reply in three came back untidy.
+     */
+    let result;
+    try {
+      result = await askClaude({
+        system,
+        prompt: `Write ${ask} questions for a music quiz.\n\n${brief}${avoid}\n\n${SCHEMA_NOTE}`,
+        apiKey,
+        model,
+      });
+    } catch (err) {
+      // Only an unreadable REPLY is worth quietly having another go at. A
+      // timeout or a dead connection is something the host has to be told.
+      if (!err.unreadable) throw err;
+      log(`  that reply could not be read — trying again`);
+      continue;
+    }
 
     // Drop anything we have already got before spending a check on it.
     const fresh = (result.questions || []).filter((q) => {

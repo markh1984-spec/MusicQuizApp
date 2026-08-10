@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { generateQuizPack, roundBriefsFor, roundPlan, questionKey } from '../src/generate-quiz.js';
+import { generateQuizPack, roundBriefsFor, roundPlan, questionKey, parseJson } from '../src/generate-quiz.js';
 import { ROUND_TYPES, validateQuiz } from '../src/quizzes.js';
 
 /**
@@ -456,4 +456,49 @@ test('a first-letter question is told apart by its answer', () => {
   const a = { prompt: 'Name the band', answer: 'Fleetwood Mac' };
   const b = { prompt: 'Name the band', answer: 'Blondie' };
   assert.notEqual(questionKey(a), questionKey(b));
+});
+
+/*
+ * A reply that is not quite JSON must not cost the whole job.
+ *
+ * Seen live: three attempts into a round, one reply came back untidy and the
+ * raw parser message — "Expected double-quoted property name in JSON at
+ * position 138" — went straight through the generation, binning fifteen
+ * questions and several minutes of paid-for work. The bingo generator had
+ * learned this and the quiz generator never had.
+ */
+test('a fenced or chatty reply is still read', () => {
+  const wrapped = '```json\n{"questions":[{"prompt":"a","options":["x"],"correctIndex":0}]}\n```';
+  assert.equal(parseJson(wrapped).questions.length, 1);
+  const chatty = 'Here you go!\n{"questions":[{"prompt":"a"}]}\nHope that helps.';
+  assert.equal(parseJson(chatty).questions.length, 1);
+});
+
+test('whole questions are salvaged from a reply that was cut off mid-write', () => {
+  // Two complete, a third half-written — not valid JSON, but two questions.
+  const truncated = '{"questions":[{"prompt":"one","options":["a","b"],"correctIndex":0},'
+    + '{"prompt":"two","options":["c","d"],"correctIndex":1},{"prompt":"three","opt';
+  const got = parseJson(truncated);
+  assert.equal(got.questions.length, 2, 'the two whole ones should survive');
+  assert.equal(got.questions[0].prompt, 'one');
+});
+
+// An intro question carries a nested `cue`, so the salvage has to match one
+// level of nesting or it would skip every question in an intro round.
+test('an intro question survives the salvage, cue and all', () => {
+  const truncated = '{"questions":[{"prompt":"Which track is this?","options":["a","b"],'
+    + '"correctIndex":0,"cue":{"title":"Duality","artist":"Slipknot"}},{"prompt":"cut';
+  const got = parseJson(truncated);
+  assert.equal(got.questions.length, 1);
+  assert.equal(got.questions[0].cue.artist, 'Slipknot');
+});
+
+test('a reply with nothing usable in it still says so plainly', () => {
+  assert.throws(() => parseJson('I am afraid I cannot help with that.'), /did not return usable JSON/);
+  // …and is tagged, so one bad reply costs an attempt rather than the round.
+  try {
+    parseJson('nonsense');
+  } catch (err) {
+    assert.equal(err.unreadable, true);
+  }
 });

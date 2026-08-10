@@ -401,6 +401,36 @@ The Console says so in red if it is not set up.
 
 ## Asked for, not yet specced
 
+### A quizmaster's OWN quizzes — and they are private from you
+
+Wanted, and the constraint is the important half: **a subscriber uploads their
+own material and you must not be able to see it unless they let you.** It is
+their intellectual property, not stock in your catalogue.
+
+Also settled by the same sentence: **they do not generate with Claude.** That
+is your bill and your house style. They write or upload; the app stores.
+
+What that means, none of it built:
+
+- **A second library, per account** — `quizzes/` stays yours and shared. Theirs
+  lives somewhere keyed to their account id, and the pack routes have to know
+  which of the two a pack id belongs to.
+- **The owner cannot read it.** Not "the console does not show it" — the API
+  has to refuse the owner, which is the opposite of every other gate in the
+  app and needs its own test saying so.
+- **Support access is how you ever see one**: they switch it on, it expires,
+  and what was looked at is written down for them to read. That is already the
+  design in this file for support generally; this is the first thing that
+  actually needs it.
+- **Backup is theirs too.** The private repo is yours and holds your accounts
+  and invoices — somebody else's packs cannot go in it.
+- **Which tier it sits on** is undecided. Storage costs you something, so under
+  your own rule it is not automatically Bronze.
+
+That last point aside, this is a bigger job than it looks, because "the owner
+cannot see it" cuts against how every route in the app is written today.
+
+
 ### Build out the owner admin console
 
 `/owner` is currently two things: reported questions, and the quizmaster list.
