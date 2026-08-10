@@ -2633,8 +2633,27 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   cursor: pointer;
 }
 .acct-toggle:hover { background: rgba(255, 255, 255, 0.07); }
-.acct-toggle input { margin-top: 2px; width: 17px; height: 17px; accent-color: var(--hot); flex: 0 0 auto; }
 .acct-toggle span { min-width: 0; }
+/* The words take the room, the switch sits on the right at a fixed size. It
+   was a tick box, which reads as a form you fill in; this is the SAME control
+   as the hat switch in the top right, because one shape for "is this on"
+   across the app is recognised rather than read. */
+.acct-toggle { align-items: center; justify-content: space-between; cursor: default; }
+.acct-toggle-what { flex: 1 1 auto; }
+.feat-switch { flex: 0 0 auto; }
+.feat-switch .hat-half { padding: 6px 13px; font-size: 11.5px; }
+/* A tier above yours gets the tab bar's "+" rather than a switch reading Off.
+   You did not turn it off — you do not have it, and telling those two apart is
+   the whole point of the three states. */
+.feat-plus {
+  flex: 0 0 auto;
+  display: grid; place-items: center;
+  width: 30px; height: 30px;
+  border-radius: 999px;
+  border: 1px dashed var(--panel-line);
+  color: var(--ink-dim);
+  font-weight: 900; font-size: 15px; line-height: 1;
+}
 
 .acct-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
 
@@ -2671,7 +2690,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .tier-panel.locked { opacity: 0.72; }
 .tier-panel.locked .acct-toggle { cursor: default; background: none; border-style: dashed; }
 .tier-panel.locked .acct-toggle:hover { background: none; }
-.tier-panel.locked .acct-toggle input { opacity: 0.4; }
+.tier-panel.locked .feat-plus { opacity: 0.75; }
 
 /* The owner's tier picker on the subscriber list. */
 .tier-pick { display: inline-flex; gap: 6px; }

@@ -908,6 +908,14 @@ above your tier, so greyed with a `+`; or switched off by you, so gone
 completely. A `+` on the third would be the shop trying to sell somebody the
 thing they just put away.
 
+**Each feature carries the SAME switch as the hat in the top right** — an
+On | Off pill, the live half in the app's own red-into-orange. It was a tick
+box, which reads as a form you fill in rather than something you operate; one
+control shape for "is this on" across the whole app is recognised instead of
+read. A feature on a tier ABOVE yours gets the tab bar's `+` in a dashed circle
+rather than a switch showing Off: you did not turn it off, you do not have it,
+and keeping those apart is the whole point of the three states.
+
 ### The upsell lever is CONTENT, not capability
 
 `TIER_PACKS` and `packsFor()` in `plans.js`; `onlyTheirPacks()` and the launch

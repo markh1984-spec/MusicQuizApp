@@ -542,18 +542,42 @@ function ladderPanels() {
         <div class="tiny">${esc(tier.blurb)}</div>
         <div class="acct-toggles">
           ${tier.features.map((f) => `
-            <label class="acct-toggle ${tier.included ? '' : 'locked'}">
-              <input type="checkbox" data-feature="${esc(f.id)}"
-                     ${off.has(f.id) ? '' : 'checked'} ${tier.included ? '' : 'disabled'}>
-              <span><b>${esc(f.label)}</b><br><span class="tiny">${esc(f.blurb)}</span></span>
-            </label>`).join('')}
+            <div class="acct-toggle ${tier.included ? '' : 'locked'}">
+              <span class="acct-toggle-what"><b>${esc(f.label)}</b><br><span class="tiny">${esc(f.blurb)}</span></span>
+              ${tier.included ? `
+                <span class="hat-switch feat-switch" data-feature="${esc(f.id)}" data-on="${off.has(f.id) ? '0' : '1'}">
+                  <button class="hat-half ${off.has(f.id) ? '' : 'live'}" data-want="1">On</button>
+                  <button class="hat-half ${off.has(f.id) ? 'live' : ''}" data-want="0">Off</button>
+                </span>`
+                // A tier ABOVE yours gets the same "+" the tab bar uses, never a
+                // switch showing Off — you did not turn it off, you do not have
+                // it, and those are different things worth telling apart.
+                : '<span class="feat-plus" title="On a higher tier">+</span>'}
+            </div>`).join('')}
         </div>
         ${tier.included ? '' : `<div class="tiny acct-note">Ask the owner to move you up — it goes
           on the same login, and nothing you have set up changes.</div>`}
       </div>`);
 
-    for (const box of el.querySelectorAll('input[type=checkbox]:not(:disabled)')) {
-      box.addEventListener('change', () => saveFeaturesOff(el));
+    /*
+     * The same control as the hat switch in the top right, deliberately.
+     *
+     * A tick box reads as a form you fill in; this reads as something you
+     * switch, which is what it is. One control shape for "is this on" across
+     * the whole app means it is recognised rather than read.
+     */
+    for (const sw of el.querySelectorAll('.feat-switch')) {
+      for (const half of sw.querySelectorAll('.hat-half')) {
+        half.addEventListener('click', () => {
+          const want = half.dataset.want;
+          if (sw.dataset.on === want) return;   // already there; do not re-save
+          sw.dataset.on = want;
+          for (const h of sw.querySelectorAll('.hat-half')) {
+            h.classList.toggle('live', h.dataset.want === want);
+          }
+          saveFeaturesOff(el);
+        });
+      }
     }
     return el;
   });
@@ -574,8 +598,8 @@ function priceLabel(pence) {
  * page the first time one of them failed.
  */
 async function saveFeaturesOff(inPanel) {
-  const boxes = [...document.querySelectorAll('.tier-panel input[type=feature], .tier-panel input[type=checkbox]')];
-  const featuresOff = boxes.filter((b) => !b.disabled && !b.checked).map((b) => b.dataset.feature);
+  const switches = [...document.querySelectorAll('.tier-panel .feat-switch')];
+  const featuresOff = switches.filter((s) => s.dataset.on === '0').map((s) => s.dataset.feature);
   try {
     const res = await fetch(keyed('/api/me/prefs'), {
       method: 'PUT',
