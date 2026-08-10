@@ -1367,6 +1367,32 @@ the third time the two copies have disagreed, after the launch buttons and the
 `keyed('/api/me')` fetch. **If a control is missing on the host key, suspect
 this before building it again.**
 
+### The console is the CATALOGUE, and the catalogue is the owner's
+
+An owner used to be bounced from `/console` straight to `/owner`, which left
+nowhere at all to generate or import a pack: the generator lives on the console
+and the owner page had only subscribers and reported questions on it. So the
+only way to write a quiz was the HOST KEY — an account was strictly worse than
+the thing it replaced, and that is what the host reported.
+
+So the split is by JOB rather than by page:
+
+- **`/owner` is the business** — who subscribes, what tier, what they reported.
+- **`/console` is the product** — every pack, the generators, Import, the
+  read-through, the editor.
+
+Both pages carry the hat switch, and there is one link between them.
+
+The pack tabs therefore ask for `FEATURES.LIBRARY` rather than for the game
+features: reading and writing the catalogue is not the same question as running
+a night. What an owner still cannot do on the console is LAUNCH — the Launch
+buttons and the whole running panel are gated on `QUIZ`/`BINGO`, which an owner
+deliberately has none of, so their room can never be driven from there.
+
+**An owner is never sold anything.** `visibleTabs()` drops a tab they do not
+hold rather than greying it with a price — the upsell is for subscribers, and
+the owner is not a customer.
+
 ### The control view no longer needs a key at all
 
 A quizmaster who signed in and opened `/host` was asked for a host key they have

@@ -151,6 +151,25 @@ function draw(data) {
    */
   const parts = [...reportsPanel()];
 
+  /*
+   * The way to the catalogue.
+   *
+   * Writing and generating packs lives on the console, and an owner used to be
+   * bounced away from it — so there was nowhere to make a quiz except the host
+   * key. This page is the BUSINESS (who subscribes, what they reported); the
+   * console is the PRODUCT. Two pages, one link between them.
+   */
+  parts.push(node(`
+    <div class="panel">
+      <h3>The packs</h3>
+      <div class="tiny">Writing, generating, importing and reading through every quiz and
+        bingo game — all on the console. You cannot launch one from there; that is a
+        quizmaster's job, and yours is on the switch above.</div>
+      <div class="acct-links" style="margin-top:12px">
+        <a class="go" href="/console">Open the catalogue</a>
+      </div>
+    </div>`));
+
   if (!data.backupReady) {
     parts.push(node(`
       <div class="pv-warn pv-broken" style="margin-bottom:14px">

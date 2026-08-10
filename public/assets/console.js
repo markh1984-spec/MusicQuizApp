@@ -130,12 +130,18 @@ async function load() {
     // let the key launch perfectly well.
     const who = await (await fetch(keyed('/api/me'))).json();
     me = who.signedIn ? who.account : null;
-    // The owner page is where an owner belongs — but NOT if they arrived with a
-    // host key. That key is how a night gets run, and on the one laptop that is
-    // both the dev machine and the gig machine, bouncing away from it would
-    // take the Launch button away minutes before a quiz. A key in the URL or
-    // remembered in this browser means "I am here to run something".
-    if (me && me.role === 'owner' && !hostKey) { location.href = '/owner'; return; }
+    /*
+     * An owner used to be bounced straight to /owner from here, which left
+     * NOWHERE to generate or import a pack: the generator lives on this page
+     * and the owner page has only subscribers and reported questions on it. So
+     * the only way to write a quiz was the host key — an account was strictly
+     * worse than the thing it replaced.
+     *
+     * The console is the CATALOGUE now, and the catalogue is the owner's job.
+     * What an owner still cannot do here is run a night: the Launch buttons and
+     * the running panel are gated on the game features, which an owner
+     * deliberately has none of.
+     */
     // Which hat is on, and the way to change it — one control doing both, in
     // the top right, rather than a bar you scroll past and a button on another
     // page. Nothing is drawn at all for anybody with only one hat.
@@ -222,7 +228,7 @@ const QUIZ_ROUNDS = [
 const TABS = [
   {
     id: 'quiz',
-    needs: FEATURES.QUIZ,
+    needs: FEATURES.LIBRARY,
     label: 'Music Quiz',
     blurb: 'Three rounds, twenty seconds a question, fastest fingers win.',
     editLabel: 'Edit questions',
@@ -232,7 +238,7 @@ const TABS = [
   },
   {
     id: 'bingo',
-    needs: FEATURES.BINGO,
+    needs: FEATURES.LIBRARY,
     label: 'Music Bingo',
     blurb: 'You play the tracks. Every phone gets its own card.',
     editLabel: 'Edit track lists',
@@ -276,6 +282,10 @@ const TABS = [
   },
   {
     id: 'past',
+    // The archive route is gated on the admin add-on server-side, so the tab
+    // has to ask for the same thing — it was open to everybody, which meant
+    // opening a past night 403'd for anyone without it.
+    needs: FEATURES.INVOICES,
     label: 'Past nights',
     blurb: 'Results are saved when a game finishes.',
     count: () => (library.archive || []).length,
@@ -615,14 +625,14 @@ function linksPanel() {
     <div class="panel">
       <h3>Everything else</h3>
       <div class="acct-links">
-        <a class="minor" href="${esc(linkTo('/host'))}">Your control view</a>
-        <a class="minor" href="${esc(linkTo('/screen'))}" target="_blank" rel="noopener">The big screen</a>
-        <a class="minor" href="${esc(play)}" target="_blank" rel="noopener">The join page${code ? ` (${esc(code)})` : ''}</a>
+        ${canRun('quiz') ? `<a class="minor" href="${esc(linkTo('/host'))}">Your control view</a>` : ''}
+        ${canRun('quiz') ? `<a class="minor" href="${esc(linkTo('/screen'))}" target="_blank" rel="noopener">The big screen</a>` : ''}
+        ${canRun('quiz') ? `<a class="minor" href="${esc(play)}" target="_blank" rel="noopener">The join page${code ? ` (${esc(code)})` : ''}</a>` : ''}
         ${can(FEATURES.CATALOGUE) ? `<a class="minor" href="${esc(linkTo('/editor'))}">The pack editor</a>` : ''}
         ${me && me.role === 'owner' ? '<a class="minor" href="/owner">The owner console</a>' : ''}
         ${me && !me.bootstrap ? '<button class="minor" id="acctOut">Sign out</button>' : ''}
       </div>
-      ${code ? `<div class="tiny acct-note">Your players use <b>${esc(play)}</b> — your own code, not
+      ${code && canRun('quiz') ? `<div class="tiny acct-note">Your players use <b>${esc(play)}</b> — your own code, not
         anybody else's. The QR on your big screen already has it built in.</div>` : ''}
     </div>`);
 
@@ -852,6 +862,9 @@ function visibleTabs() {
     if (!tab.needs) return true;
     if (can(tab.needs)) return true;
     if (switchedOff(tab.needs)) return false;
+    // An owner is not a customer, so nothing is dangled at them. A tab they do
+    // not hold is simply absent rather than greyed with a price on it.
+    if (me && me.role === 'owner') return false;
     return Boolean(whyNotHere(tab.needs));
   });
 }
@@ -1398,6 +1411,10 @@ async function generate(panel) {
  */
 function runningPanel(running) {
   if (!running) return node('<div></div>');
+  // An owner runs no nights, so there is no night of theirs to show or stop.
+  // Their room is the house one, and driving it from here would be a Stop
+  // button over a game somebody else is in the middle of.
+  if (!can(FEATURES.QUIZ) && !can(FEATURES.BINGO)) return node('<div></div>');
   const live = running.phase !== 'lobby' && running.phase !== 'finished';
   const what = running.game === 'bingo' ? 'Music bingo' : 'Music quiz';
   const who = `${running.playerCount} playing`;
@@ -1745,6 +1762,9 @@ function lookOptions(pack) {
     .join('');
 }
 
+/** Can this account actually RUN this game? An owner writes packs, never plays. */
+const canRun = (kind) => can(kind === 'bingo' ? FEATURES.BINGO : FEATURES.QUIZ);
+
 function packCard(kind, pack) {
   /*
    * A quizmaster READS a pack and LAUNCHES it, and that is the arrangement —
@@ -1789,7 +1809,7 @@ function packCard(kind, pack) {
         ${mine && hasIntroRound(pack) ? '<button class="pack-playlist" title="Build the Spotify playlist for the intro round">Playlist</button>' : ''}
         ${mine ? '<button class="pack-del" title="Delete this pack">Delete</button>' : ''}
       </div>
-      <button class="go launch" ${pack.broken ? 'disabled' : ''}>Launch</button>
+      ${canRun(kind) ? `<button class="go launch" ${pack.broken ? 'disabled' : ''}>Launch</button>` : ''}
       <div class="pics-slot"></div>
     </div>`);
 
