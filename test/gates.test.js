@@ -23,7 +23,7 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
  */
 
 test('a pack cannot be written by the path the id is not in', () => {
-  for (const base of ['/api/quiz', '/api/bingo', '/api/advert']) {
+  for (const base of ['/api/quiz', '/api/bingo']) {
     for (const method of ['POST', 'PUT', 'DELETE']) {
       // The id in the body…
       assert.equal(changesTheLibrary(base, method), true,
@@ -126,7 +126,6 @@ test('every owner-only route escapes the broad quiz gate', () => {
     ['/api/quiz/madonna', 'DELETE'],
     ['/api/bingo', 'POST'],
     ['/api/bingo/disco-funk', 'DELETE'],
-    ['/api/advert/the-crown', 'PUT'],
   ];
   for (const [route, method] of ownerRoutes) {
     const exempt = changesTheLibrary(route, method)
@@ -134,4 +133,38 @@ test('every owner-only route escapes the broad quiz gate', () => {
     assert.equal(exempt, true,
       `${method} ${route} would 403 for the OWNER — it is on neither list`);
   }
+});
+
+/*
+ * Advert sets came OFF the owner-only list when they became per room.
+ *
+ * They were only ever there because one shared folder meant a quizmaster
+ * tidying their own venue list could delete somebody else's slides off a
+ * projector. Rooms fixed that, and a slide costs nothing to run — so under the
+ * host's own tier rule, writing one is a quizmaster's job.
+ *
+ * The trap this pins: taking a route off `changesTheLibrary()` drops it into
+ * the broad quiz gate, which the OWNER fails, because an owner deliberately
+ * holds no quiz features. That has caught something four times, so adverts get
+ * their own explicit gate in server.js and this test says the route is on
+ * neither owner list on purpose.
+ */
+test('advert writes are a quizmaster’s, not the owner’s', () => {
+  for (const method of ['POST', 'PUT', 'DELETE']) {
+    assert.equal(changesTheLibrary('/api/advert', method), false,
+      'adverts are back on the owner-only list — was that deliberate?');
+    assert.equal(changesTheLibrary('/api/advert/the-crown', method), false);
+  }
+  assert.equal(OWNER_ONLY.some((p) => '/api/advert/the-crown'.startsWith(p)), false);
+});
+
+/*
+ * And the gate that replaced it has to actually be in server.js. A route on
+ * neither owner list and with no explicit gate of its own would fall through
+ * to the broad quiz check, where the owner gets a 403 that talks about quizzes.
+ */
+test('server.js gates advert writes on ADVERTS explicitly', () => {
+  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  assert.match(server, /advertRoute[\s\S]{0,200}FEATURES\.ADVERTS/,
+    'advert writes have no explicit gate — they will fall into the broad quiz check');
 });

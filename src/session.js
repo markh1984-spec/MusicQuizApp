@@ -13,6 +13,8 @@
  * need to know what games exist.
  */
 
+import path from 'node:path';
+
 import { Engine, PHASES, isSafeId } from './engine.js';
 import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFields, stagePlan, maxPrizes } from './bingo.js';
 import { listQuizzes, loadQuiz } from './quizzes.js';
@@ -61,12 +63,23 @@ export class Session {
    * @param {function(): void} opts.onPush   tell the live connections something changed
    * @param {function(): number} [opts.now]
    */
-  constructor({ config, store, onPush, now = () => Date.now(), roomId = HOUSE_ROOM }) {
+  constructor({ config, store, onPush, now = () => Date.now(), roomId = HOUSE_ROOM, paths = {} }) {
     this.config = config;
     this.store = store;
     this.onPush = onPush;
     this.now = now;
     this.roomId = roomId;
+    /*
+     * Where THIS quizmaster's nights and venue slides live.
+     *
+     * Both used to come off `config`, which meant one archive and one advert
+     * folder for the whole server. A second quizmaster tidying up what looked
+     * like their own venue list would have deleted somebody else's set off a
+     * projector. Defaults keep the old locations, so nothing moves for the
+     * house room or for a Session built without a room in a test.
+     */
+    this.archiveDir = paths.archive || path.join(config.dataDir, 'archive');
+    this.advertDir = paths.adverts || config.advertDir;
     this.kind = 'quiz';
     this.engine = null;
     this.lastMilestone = '';
@@ -160,7 +173,7 @@ export class Session {
     this.engine.advertLookup = (ref) => {
       if (!ref || !ref.packId) return null;
       try {
-        return findSlide(this.config.advertDir, ref.packId, ref.slideId);
+        return findSlide(this.advertDir, ref.packId, ref.slideId);
       } catch {
         return null; // the set was deleted while it was on screen
       }
@@ -193,7 +206,7 @@ export class Session {
     if (this.launcher.isOver(state) && !this.archivedThisGame) {
       this.archivedThisGame = true;
       try {
-        archiveResults(this.config.dataDir, this.engine.results(), this.now());
+        archiveResults(this.archiveDir, this.engine.results(), this.now());
       } catch (err) {
         console.error('[session] could not archive results:', err.message);
       }

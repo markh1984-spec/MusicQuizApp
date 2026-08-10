@@ -50,7 +50,6 @@ import { faviconSvg } from './public/assets/brandmark.js';
 
 const HOST_KEY = hostKey();
 const hub = new Hub();
-const invoices = new Invoices(paths.invoices);
 const accounts = new Accounts(paths.accounts);
 // Corrections on a question, from whoever was running it. Global rather than
 // per-room: the packs are shared, so a fault Rob finds is a fault in the pack.
@@ -887,7 +886,7 @@ async function handleGet(req, res, url, route) {
       // The account page says "3 of 20" from these two, and stays quiet when
       // they match.
       catalogue,
-      adverts: listAdvertPacks(config.advertDir),
+      adverts: listAdvertPacks(roomForHost(req, url).paths.adverts),
       // How many tracks each card size wants, straight from the rule itself so
       // the console can size a pasted list without keeping its own copy of the
       // sum and drifting from it.
@@ -926,13 +925,13 @@ async function handleGet(req, res, url, route) {
       otherRooms: me && me.role === 'owner'
         ? rooms.summaries().filter((r) => r.id !== roomIdFor(me))
         : [],
-      archive: listArchive(config.dataDir),
+      archive: listArchive(roomForHost(req, url).paths.archive),
       // Offered on every pack card, so a night can be dressed up without
       // editing anything.
       looks: LOOKS.map(({ id, label, blurb }) => ({ id, label, blurb })),
       // Just the totals, so the Invoices tab can wear a badge saying how many
       // are still unpaid. The invoices themselves are never in this payload.
-      invoicing: invoices.summary(),
+      invoicing: roomForHost(req, url).invoices.summary(),
       // Only a count here. The reports themselves are owner-only and come from
       // their own route.
       reports: me && me.role === 'owner' ? reports.summary() : { open: 0, total: 0 },
@@ -954,9 +953,17 @@ async function handleGet(req, res, url, route) {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const id = decodeURIComponent(route.slice('/api/advert/'.length));
     try {
-      return sendJson(res, 200, loadAdvertPack(config.advertDir, id)), true;
-    } catch (err) {
-      return sendJson(res, 404, { error: err.message }), true;
+      return sendJson(res, 200, loadAdvertPack(roomForHost(req, url).paths.adverts, id)), true;
+    } catch {
+      /*
+       * The reason is deliberately NOT passed through.
+       *
+       * Now that every quizmaster has their own folder, asking for somebody
+       * else's set is an ordinary miss — and `err.message` on a miss is an
+       * ENOENT carrying the server's absolute path, which told an unknown
+       * caller the directory layout and the room id it was looking in.
+       */
+      return sendJson(res, 404, { error: 'No advert set with that name.' }), true;
     }
   }
 
@@ -1025,7 +1032,12 @@ async function handleGet(req, res, url, route) {
     // customer's address. Found by a signed-in quizmaster fetching one.
     if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
     const number = decodeURIComponent(route.slice('/api/invoices/'.length, -4));
-    const invoice = invoices.find(number);
+    const room = roomForHost(req, url);
+    await ensureInvoicesRestored(room);
+    // Their own book. Looked up in a SHARED book, a number somebody guessed
+    // would have handed them another quizmaster's invoice, complete with that
+    // quizmaster's sort code — which is the whole reason these are now split.
+    const invoice = room.invoices.find(number);
     if (!invoice) return sendJson(res, 404, { error: 'No invoice with that number' }), true;
     const pdf = invoicePdf(invoice);
     // `inline` so tapping it on a phone opens a preview to check before
@@ -1040,14 +1052,19 @@ async function handleGet(req, res, url, route) {
 
   if (route === '/api/invoices' && req.method === 'GET') {
     if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
-    return sendJson(res, 200, invoiceState()), true;
+    // Their own book, worked out from who they are. This is the route the tab
+    // actually loads from — the one in handleWrite only answers GET when the
+    // request reaches it, which it does not.
+    const room = roomForHost(req, url);
+    await ensureInvoicesRestored(room);
+    return sendJson(res, 200, invoiceState(room.invoices)), true;
   }
 
   if (route.startsWith('/api/archive/')) {
     if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
     const id = decodeURIComponent(route.slice('/api/archive/'.length));
     try {
-      return sendJson(res, 200, loadArchived(config.dataDir, id)), true;
+      return sendJson(res, 200, loadArchived(roomForHost(req, url).paths.archive, id)), true;
     } catch (err) {
       return sendJson(res, 404, { error: err.message }), true;
     }
@@ -1157,10 +1174,22 @@ async function backUp(relPath, contents, message, log = () => {}) {
  * anything reports `backedUp` and the console says so out loud: an invoice you
  * think you have a record of and do not is worse than no record at all.
  */
-async function backUpInvoices() {
+/**
+ * The file one room's invoice book is backed up as.
+ *
+ * The house keeps the original name, so the backup Mark already has in the
+ * private repo carries on being read and written exactly as before. Only an
+ * additional quizmaster gets a file of their own — and it has to BE their own,
+ * because an invoice book holds customer addresses and a sort code.
+ */
+function invoiceBackupName(room) {
+  return room.id === HOUSE ? 'invoicing.json' : `invoicing-${room.id}.json`;
+}
+
+async function backUpInvoices(room) {
   if (!privateRepoConfigured()) return { ok: false, error: 'no private repo set up' };
   try {
-    return await putFile('invoicing.json', invoices.serialise(), 'Update invoices', 'private');
+    return await putFile(invoiceBackupName(room), room.invoices.serialise(), 'Update invoices', 'private');
   } catch (err) {
     return { ok: false, error: err.message };
   }
@@ -1224,21 +1253,10 @@ async function restoreFromBackup() {
     }
   }
 
-  // The invoice book, same rules. The care it needs is all inside
-  // `invoices.restore()`: the counter is rebuilt from the invoices themselves
-  // rather than trusted from the file, so a backup written a few minutes before
-  // the last invoice was issued still cannot hand out a number twice.
-  if (invoices.isEmpty()) {
-    const saved = await getFile('invoicing.json', 'private');
-    if (saved) {
-      const result = invoices.restore(saved.toString('utf8'));
-      if (result.ok) {
-        console.log(`[invoices] restored ${result.invoices} invoice(s) and ${result.customers} customer(s); next number ${result.nextNumber}`);
-      } else {
-        console.warn('[invoices] could not restore the backup:', result.reason);
-      }
-    }
-  }
+  // The house invoice book. Every other room's is restored the first time that
+  // quizmaster opens their Invoices tab, because rooms are created lazily and
+  // this runs once at boot — see ensureInvoicesRestored below.
+  await ensureInvoicesRestored(rooms.get(HOUSE));
 
   /*
    * Play counts, and the same rule as everything else: only into an empty
@@ -1259,6 +1277,38 @@ async function restoreFromBackup() {
         console.warn('[library] could not restore play counts:', err.message);
       }
     }
+  }
+}
+
+/**
+ * Bring one room's invoice book back from the private repo, once.
+ *
+ * The care it needs is all inside `invoices.restore()`: the counter is rebuilt
+ * from the invoices themselves rather than trusted from the file, so a backup
+ * written a few minutes before the last invoice went out still cannot hand out
+ * a number twice.
+ *
+ * Only ever into an EMPTY book, like the accounts — a disk that already has
+ * invoices on it is ahead of any backup. And only once per room per boot,
+ * tracked here rather than asking GitHub every time the tab is opened.
+ */
+const invoicesRestored = new Set();
+async function ensureInvoicesRestored(room) {
+  if (invoicesRestored.has(room.id)) return;
+  invoicesRestored.add(room.id);
+  if (!privateRepoConfigured() || !room.invoices.isEmpty()) return;
+  try {
+    const saved = await getFile(invoiceBackupName(room), 'private');
+    if (!saved) return;
+    const result = room.invoices.restore(saved.toString('utf8'));
+    if (result.ok) {
+      console.log(`[invoices] restored ${result.invoices} invoice(s) and ${result.customers} customer(s) for ${room.id}; next number ${result.nextNumber}`);
+    } else {
+      console.warn(`[invoices] could not restore ${room.id}:`, result.reason);
+    }
+  } catch (err) {
+    // Never fatal: GitHub having a bad morning must not stop a quiz night.
+    console.warn(`[invoices] could not fetch the backup for ${room.id}:`, err.message);
   }
 }
 
@@ -1310,13 +1360,13 @@ function subscriberList() {
     }));
 }
 
-/** Everything the invoices tab draws itself from. */
-function invoiceState() {
+/** Everything the invoices tab draws itself from, for ONE quizmaster's book. */
+function invoiceState(books) {
   return {
-    settings: invoices.settings,
-    customers: invoices.customers,
-    invoices: invoices.invoices.map(withTotals),
-    summary: invoices.summary(),
+    settings: books.settings,
+    customers: books.customers,
+    invoices: books.invoices.map(withTotals),
+    summary: books.summary(),
     // Reported separately from anything else, because this is the one that
     // quietly loses a year of records on a redeploy.
     backupReady: privateRepoConfigured(),
@@ -1538,22 +1588,27 @@ async function handleWrite(req, res, url, route) {
 
   if (route === '/api/invoices') {
     if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
+    // Always your OWN book, worked out from who you are — the same rule as
+    // /api/host/*. There is no room parameter on any of these on purpose.
+    const room = roomForHost(req, url);
+    await ensureInvoicesRestored(room);
+    const books = room.invoices;
 
     if (req.method === 'GET') {
-      return sendJson(res, 200, invoiceState()), true;
+      return sendJson(res, 200, invoiceState(books)), true;
     }
 
     // Issue one. This is the only thing that hands out a number.
     if (req.method === 'POST') {
       const body = await readJson(req);
       try {
-        const invoice = invoices.issue(readDraft(body));
-        const backup = await backUpInvoices();
+        const invoice = books.issue(readDraft(body));
+        const backup = await backUpInvoices(room);
         return sendJson(res, 200, {
           invoice: withTotals(invoice),
           filename: invoiceFilename(invoice),
           backedUp: backup.ok,
-          ...invoiceState(),
+          ...invoiceState(books),
         }), true;
       } catch (err) {
         return sendJson(res, 400, { error: err.message }), true;
@@ -1563,30 +1618,36 @@ async function handleWrite(req, res, url, route) {
 
   if (route === '/api/invoices/settings' && req.method === 'PUT') {
     if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
+    const room = roomForHost(req, url);
+    await ensureInvoicesRestored(room);
     const body = await readJson(req);
-    invoices.saveSettings(body);
-    const backup = await backUpInvoices();
-    return sendJson(res, 200, { backedUp: backup.ok, ...invoiceState() }), true;
+    room.invoices.saveSettings(body);
+    const backup = await backUpInvoices(room);
+    return sendJson(res, 200, { backedUp: backup.ok, ...invoiceState(room.invoices) }), true;
   }
 
   if (route === '/api/invoices/customers' && req.method === 'POST') {
     if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
+    const room = roomForHost(req, url);
+    await ensureInvoicesRestored(room);
     const body = await readJson(req);
     try {
-      invoices.saveCustomer(body);
+      room.invoices.saveCustomer(body);
     } catch (err) {
       return sendJson(res, 400, { error: err.message }), true;
     }
-    const backup = await backUpInvoices();
-    return sendJson(res, 200, { backedUp: backup.ok, ...invoiceState() }), true;
+    const backup = await backUpInvoices(room);
+    return sendJson(res, 200, { backedUp: backup.ok, ...invoiceState(room.invoices) }), true;
   }
 
   if (route.startsWith('/api/invoices/customers/') && req.method === 'DELETE') {
     // INVOICES, like every other route on this tab — see the PDF one above.
     if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
-    invoices.deleteCustomer(decodeURIComponent(route.slice('/api/invoices/customers/'.length)));
-    const backup = await backUpInvoices();
-    return sendJson(res, 200, { backedUp: backup.ok, ...invoiceState() }), true;
+    const room = roomForHost(req, url);
+    await ensureInvoicesRestored(room);
+    room.invoices.deleteCustomer(decodeURIComponent(route.slice('/api/invoices/customers/'.length)));
+    const backup = await backUpInvoices(room);
+    return sendJson(res, 200, { backedUp: backup.ok, ...invoiceState(room.invoices) }), true;
   }
 
   // Mark it sent, paid or cancelled. Status is the only thing that can move on
@@ -1596,13 +1657,15 @@ async function handleWrite(req, res, url, route) {
     // On LIBRARY, anybody with a login could mark somebody else's invoice paid
     // or cancel it, which is the invoice book quietly telling you a lie.
     if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
+    const room = roomForHost(req, url);
+    await ensureInvoicesRestored(room);
     const number = decodeURIComponent(route.slice('/api/invoices/'.length));
     const body = await readJson(req);
     try {
-      const invoice = invoices.setStatus(number, String(body.status || ''));
+      const invoice = room.invoices.setStatus(number, String(body.status || ''));
       if (!invoice) return sendJson(res, 404, { error: 'No invoice with that number' }), true;
-      const backup = await backUpInvoices();
-      return sendJson(res, 200, { backedUp: backup.ok, ...invoiceState() }), true;
+      const backup = await backUpInvoices(room);
+      return sendJson(res, 200, { backedUp: backup.ok, ...invoiceState(room.invoices) }), true;
     } catch (err) {
       return sendJson(res, 400, { error: err.message }), true;
     }
@@ -1701,9 +1764,28 @@ async function handleWrite(req, res, url, route) {
   if (changesLibrary) {
     if (!allowed(req, res, url, FEATURES.CATALOGUE)) return true;
   }
+
+  /*
+   * Advert sets have their own gate now that they are per room.
+   *
+   * They used to be owner-only, purely because one shared folder meant a
+   * second quizmaster tidying their venue list could delete somebody else's
+   * slides. That is fixed, and under the host's own tier rule a slide costs
+   * nothing to run — so writing them is a quizmaster's, on their own set.
+   *
+   * Asked EXPLICITLY rather than left to the broad quiz gate below, so the
+   * refusal names adverts instead of talking about quiz features. The owner
+   * still cannot write one, and that is consistent rather than an oversight:
+   * an owner runs no nights, so they have no projector to put a slide on.
+   */
+  const advertRoute = route === '/api/advert' || route.startsWith('/api/advert/');
+  if (advertRoute && !changesLibrary) {
+    if (!allowed(req, res, url, FEATURES.ADVERTS, { live: true })) return true;
+  }
+
   // The owner has no quiz features by design, so anything they alone may do has
   // to skip the broad gate below — the third time that has caught something.
-  if (!changesLibrary && !OWNER_ONLY.some((prefix) => route.startsWith(prefix))) {
+  if (!changesLibrary && !advertRoute && !OWNER_ONLY.some((prefix) => route.startsWith(prefix))) {
     if (!allowed(req, res, url, FEATURES.QUIZ, { live: true })) return true;
   }
 
@@ -1990,7 +2072,7 @@ async function handleWrite(req, res, url, route) {
     const id = decodeURIComponent(route.slice('/api/advert/'.length));
     if (req.method === 'DELETE') {
       try {
-        deleteAdvertPack(config.advertDir, id);
+        deleteAdvertPack(roomForHost(req, url).paths.adverts, id);
       } catch (err) {
         return sendJson(res, 404, { error: err.message }), true;
       }
@@ -2001,7 +2083,7 @@ async function handleWrite(req, res, url, route) {
     const body = await readJson(req, 512 * 1024);
     const problems = validateAdvertPack(body);
     if (problems.length) return sendJson(res, 400, { error: 'Advert set is not valid', problems }), true;
-    saveAdvertPack(config.advertDir, id, body);
+    saveAdvertPack(roomForHost(req, url).paths.adverts, id, body);
     const backup = await backUp(
       `adverts/${id}.json`,
       JSON.stringify(normaliseAdvertPack(body, id), null, 2) + '\n',

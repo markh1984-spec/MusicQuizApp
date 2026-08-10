@@ -1618,22 +1618,51 @@ than the same string written out twice — if those two ever disagreed, launches
 would be filed under a room nothing reads and the count would silently stay on
 zero. There is a test that they are one string.
 
+### The invoice book, the archive and the advert slides are per room now
+
+They were the three things rooms left behind, and each was a different problem
+waiting for the day a second login existed. `pathsFor()` in `rooms.js` decides
+where they live; nothing else had to learn that rooms exist, because all three
+already took a path.
+
+- **The invoice book** holds a quizmaster's own customers, their addresses and
+  their own sort code. Rob would have seen Mark's, and a guessed invoice number
+  would have downloaded Mark's PDF.
+- **The archive** is a record of somebody's own nights.
+- **The advert slides** were the loud one: one folder meant a second quizmaster
+  tidying what looked like their own venue list would delete The Crown's set off
+  Mark's projector.
+
+**The house room keeps every original location** — `data/invoicing.json`,
+`data/archive/`, the top-level `adverts/` — for exactly the reason the state
+file did: a deploy mid-season must not bring the app back with an empty invoice
+book. Only an additional room gets a folder. Tested.
+
+**Invoice NUMBERS are per book, and two quizmasters both starting at 1 is
+correct.** They are separate businesses issuing their own invoices, not two
+people sharing a pad. Each book backs up under its own name in the private repo
+— the house keeps `invoicing.json` so the backup Mark already has carries on
+working — and a room's book is restored the first time that quizmaster opens
+the tab, because rooms are made lazily and the boot restore runs once.
+
+**`/api/advert` came OFF `changesTheLibrary()`**, which this file promised would
+happen the day they were scoped per room. Watch the trap, because it has now
+caught something FIVE times: taking a route off that list drops it into the
+broad `FEATURES.QUIZ` gate, which the OWNER fails by design. Advert writes
+therefore have an explicit `FEATURES.ADVERTS` gate of their own, and there is a
+test that reads `server.js` and fails if it goes missing. An owner still cannot
+write one, and that is consistent rather than an oversight — an owner runs no
+nights, so they have no projector to put a slide on.
+
+**A missing advert set says "No advert set with that name."** It used to pass
+`err.message` through, which on a miss is an ENOENT carrying the server's
+absolute path — telling an unknown caller the directory layout and the room id
+it had just looked in.
+
 ### What this does NOT do yet
 
-- **The invoice book is still SHARED between quizmasters.** It does survive a
-  deploy now (see below), but Rob would see Mark's customers. Nobody has the
-  admin add-on yet, so nothing is exposed today — but scope it before anybody
-  does.
-- **Past nights and the archive are shared.** Gated on the admin add-on, so
-  nobody can reach them today.
-- **Advert slides are shared**, so writing to them is currently the OWNER's —
-  a holding position, not a settled tier. One folder, not one per room, means a
-  second quizmaster tidying up what looks like their own venue list deletes the
-  set for The Crown off Mark's projector. Putting a slide UP is untouched,
-  because that is a host action and everybody has it. **When
-  advert sets become per-room, take `/api/advert` back out of
-  `changesTheLibrary()`** — the feature itself is Basic under the host's own
-  tier rule, since it costs nothing to run.
+- **A quizmaster cannot keep their own quizzes yet.** Wanted, and the constraint
+  is the important half — see TODO.md. It needs support access first.
 - Nothing stops two quizmasters launching the same pack at once, which is fine
   and probably useful.
 
@@ -1836,7 +1865,7 @@ is `'all'` today, so nothing changed for anybody. The account page shows it —
 carries the same **On | Off** switch as the hat in the top right, with a `+`
 where a tier above yours would be.
 
-All on **`MusicQuizApp`**. 584 tests green.
+All on **`MusicQuizApp`**. 592 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on

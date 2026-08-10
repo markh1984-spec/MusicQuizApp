@@ -43,11 +43,14 @@ export const OWNER_ONLY = ['/api/generate/', '/api/owner/', '/api/reports/'];
  * Spotify account, and forgetting the history is what brings a song back in
  * front of a room months early.
  *
- * Advert sets are here as a HOLDING POSITION, not a settled tier. They are
- * still shared between quizmasters rather than scoped per room, so one person
- * deleting the set for The Crown lands on somebody else's projector. Putting a
- * slide UP is untouched — it is a host action, and everybody has it. When
- * advert sets become per-room, take this line out again.
+ * ADVERT SETS ARE NO LONGER HERE, and that was a promise this file made.
+ *
+ * They were owner-only as a holding position, for one reason only: they were
+ * shared between quizmasters, so one person deleting the set for The Crown
+ * landed on somebody else's projector. They are per room now — `pathsFor()` in
+ * rooms.js — so that reason has gone, and under the host's own tier rule the
+ * feature is Basic anyway, since a slide costs nothing to run. A quizmaster
+ * writes their own venue's slides and cannot reach anybody else's.
  *
  * @param {string} route   the pathname, no query
  * @param {string} method  the HTTP method
@@ -57,6 +60,6 @@ export function changesTheLibrary(route, method) {
   // Both of these check a pasted pack against the rules and save nothing.
   if (route === '/api/quiz/__validate' || route === '/api/bingo/__validate') return false;
   const pack = (base) => route === base || route.startsWith(`${base}/`);
-  return pack('/api/quiz') || pack('/api/bingo') || pack('/api/advert')
+  return pack('/api/quiz') || pack('/api/bingo')
     || pack('/api/import') || pack('/api/playlist') || pack('/api/history');
 }

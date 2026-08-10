@@ -42,6 +42,7 @@ import crypto from 'node:crypto';
 import { Session } from './session.js';
 import { Store } from './store.js';
 import { Photos } from './photos.js';
+import { Invoices } from './invoices.js';
 import { HOUSE_ROOM } from './library.js';
 
 /**
@@ -89,6 +90,17 @@ export class Room {
     this.label = label || '';
     this.store = new Store(paths.state);
     this.photos = new Photos(paths.photos);
+    /*
+     * A quizmaster's own business, their own record of their own nights, and
+     * their own venue slides.
+     *
+     * `paths` is what decides where these live, and the house room deliberately
+     * keeps the original locations — `data/invoicing.json`, `data/archive/` and
+     * the top-level `adverts/` folder — so nothing Mark already has moves. Only
+     * an additional room gets a folder of its own.
+     */
+    this.paths = paths;
+    this.invoices = new Invoices(paths.invoices);
     this.session = new Session({
       config,
       store: this.store,
@@ -97,6 +109,9 @@ export class Room {
       // So a launch is counted against THIS quizmaster's nights rather than
       // against the pack, which everybody shares.
       roomId: id,
+      // And so the night is archived, and the venue slides read, from this
+      // room's own folders rather than one set shared by the whole server.
+      paths,
     }).boot();
   }
 
@@ -185,9 +200,36 @@ export class Rooms {
    * a game that is being played while it deploys.
    */
   pathsFor(roomId) {
-    if (roomId === HOUSE) return { state: this.paths.state, photos: this.paths.photos };
+    if (roomId === HOUSE) {
+      // Each falls back to where the single-game version put it, so a caller
+      // that only knows about the state file and the photos — a test, or any
+      // older code — still gets a working room rather than a crash.
+      return {
+        state: this.paths.state || path.join(this.config.dataDir, 'state.json'),
+        photos: this.paths.photos || path.join(this.config.dataDir, 'photos'),
+        invoices: this.paths.invoices || path.join(this.config.dataDir, 'invoicing.json'),
+        archive: this.paths.archive || path.join(this.config.dataDir, 'archive'),
+        adverts: this.paths.adverts || this.config.advertDir,
+      };
+    }
     const dir = path.join(this.config.dataDir, 'rooms', roomId);
-    return { state: path.join(dir, 'state.json'), photos: path.join(dir, 'photos') };
+    return {
+      state: path.join(dir, 'state.json'),
+      photos: path.join(dir, 'photos'),
+      /*
+       * Everything below here used to be one shared copy for the whole server.
+       *
+       * That was safe only while one person had a login. The invoice book holds
+       * a quizmaster's own customers and their bank details; the archive is a
+       * record of THEIR nights; and a venue advert set belongs to whoever sells
+       * that venue. One shared advert folder is the loudest of the three: a
+       * second quizmaster tidying up what looks like their own venue list would
+       * have deleted The Crown's slides off Mark's projector.
+       */
+      invoices: path.join(dir, 'invoicing.json'),
+      archive: path.join(dir, 'archive'),
+      adverts: path.join(dir, 'adverts'),
+    };
   }
 
   /** The room for this id, booted from its own saved state the first time. */

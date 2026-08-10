@@ -180,16 +180,21 @@ export function recordLaunch(dataDir, kind, id, at = Date.now(), roomId = HOUSE_
 
 // ------------------------------------------------------------- past nights
 
-function archiveDir(dataDir) {
-  return path.join(dataDir, 'archive');
-}
+/*
+ * These take the ARCHIVE DIRECTORY, not the data directory.
+ *
+ * A record of the nights you have run is a fact about YOUR nights, so it
+ * belongs to a room rather than to the server — `rooms.pathsFor()` decides
+ * where, and the house keeps `data/archive/` exactly where it always was.
+ * Taking the folder itself rather than appending "archive" here is what makes
+ * that possible without this file knowing rooms exist.
+ */
 
 /**
  * Keep the result of a night. Named by date and pack so the list reads like a
  * diary: 2026-08-05-eighties.json.
  */
-export function archiveResults(dataDir, results, at = Date.now()) {
-  const dir = archiveDir(dataDir);
+export function archiveResults(dir, results, at = Date.now()) {
   fs.mkdirSync(dir, { recursive: true });
   const date = new Date(at).toISOString().slice(0, 10);
   const base = `${date}-${String(results.packId || results.quizId || 'game').replace(/[^a-z0-9-]/gi, '')}`;
@@ -204,17 +209,17 @@ export function archiveResults(dataDir, results, at = Date.now()) {
   return record;
 }
 
-export function listArchive(dataDir) {
+export function listArchive(dir) {
   let files = [];
   try {
-    files = fs.readdirSync(archiveDir(dataDir)).filter((f) => f.endsWith('.json'));
+    files = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
   } catch {
     return [];
   }
   return files
     .map((file) => {
       try {
-        const r = JSON.parse(fs.readFileSync(path.join(archiveDir(dataDir), file), 'utf8'));
+        const r = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
         return {
           id: r.id || path.basename(file, '.json'),
           kind: r.kind || 'quiz',
@@ -231,6 +236,6 @@ export function listArchive(dataDir) {
     .sort((a, b) => (b.archivedAt || 0) - (a.archivedAt || 0));
 }
 
-export function loadArchived(dataDir, id) {
-  return JSON.parse(fs.readFileSync(path.join(archiveDir(dataDir), safePackFile(id)), 'utf8'));
+export function loadArchived(dir, id) {
+  return JSON.parse(fs.readFileSync(path.join(dir, safePackFile(id)), 'utf8'));
 }
