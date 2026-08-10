@@ -1416,6 +1416,12 @@ body.screen { cursor: none; }
   margin-top: auto;
   display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 6px;
 }
+/* Four actions are 2x2, not three and a straggler. `auto-fit` packs as many
+   per row as will go, which is right for three and wrong for four: the fourth
+   drops onto a row of its own and reads as a button that has come loose. Six
+   go 3x2 for the same reason. */
+.pack-actions[data-count="4"] { grid-template-columns: repeat(2, 1fr); }
+.pack-actions[data-count="6"] { grid-template-columns: repeat(3, 1fr); }
 .pack-actions > * {
   display: grid; place-items: center;
   min-height: 36px; padding: 0 10px;

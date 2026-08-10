@@ -1939,12 +1939,31 @@ function packCard(kind, pack) {
         ${mine ? `<button class="pack-rename" ${pack.broken ? 'disabled' : ''} title="Change what it is called">Rename</button>` : ''}
         ${pack.playlist ? `<a class="pack-spotify" href="${esc(pack.playlist)}" target="_blank" rel="noopener" title="Open it in Spotify">Playlist</a>` : ''}
         ${mine && hasPictureRound(pack) ? '<button class="pack-pics" title="Make the round 2 portraits">Pictures</button>' : ''}
-        ${mine && hasIntroRound(pack) ? '<button class="pack-playlist" title="Build the Spotify playlist for the intro round">Playlist</button>' : ''}
+        ${mine && hasIntroRound(pack) ? (pack.playlist
+          // Once one exists, the green button beside this one is already called
+          // Playlist — two buttons with the same word on one card is a card you
+          // have to try to understand. This one says what it does instead, and
+          // its tooltip is honest that Spotify gets a second playlist rather
+          // than an updated one.
+          ? '<button class="pack-playlist" title="Build it again. Spotify gets a NEW playlist — the existing one is left alone.">Rebuild</button>'
+          : '<button class="pack-playlist" title="Build the Spotify playlist for the intro round">Playlist</button>') : ''}
         ${mine ? '<button class="pack-del" title="Delete this pack">Delete</button>' : ''}
       </div>
       ${canRun(kind) ? `<button class="go launch" ${pack.broken ? 'disabled' : ''}>Launch</button>` : ''}
       <div class="pics-slot"></div>
     </div>`);
+
+  /*
+   * How many actions this card ended up with, so the stylesheet can lay them
+   * out in an even block rather than leaving a ragged last row.
+   *
+   * A card carries between one and five of these depending on what the pack
+   * is and who is looking, and "as many as fit per row" put four out as three
+   * and a lonely one — which reads as a button that has come loose rather than
+   * as a row. Counting them here is the only place that knows.
+   */
+  const actions = el.querySelector('.pack-actions');
+  if (actions) actions.dataset.count = actions.children.length;
 
   const openIt = () => preview(kind, pack);
   const toggle = (build) => {
