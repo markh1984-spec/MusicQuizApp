@@ -42,9 +42,17 @@ import crypto from 'node:crypto';
 import { Session } from './session.js';
 import { Store } from './store.js';
 import { Photos } from './photos.js';
+import { HOUSE_ROOM } from './library.js';
 
-/** The room the app has always had. Anyone signed in as the owner gets it. */
-export const HOUSE = 'house';
+/**
+ * The room the app has always had. Anyone signed in as the owner gets it.
+ *
+ * Defined in `library.js` and re-exported here rather than written out twice.
+ * The play counts are filed under it, so two copies of this string would mean
+ * a room whose launches were recorded somewhere nothing ever read — and the
+ * only symptom would be a count that stayed on zero.
+ */
+export const HOUSE = HOUSE_ROOM;
 
 /**
  * Codes a phone can be told down a microphone and typed without a question.
@@ -86,6 +94,9 @@ export class Room {
       store: this.store,
       onPush: () => onPush(this),
       now,
+      // So a launch is counted against THIS quizmaster's nights rather than
+      // against the pack, which everybody shares.
+      roomId: id,
     }).boot();
   }
 

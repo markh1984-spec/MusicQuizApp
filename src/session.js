@@ -16,7 +16,7 @@
 import { Engine, PHASES, isSafeId } from './engine.js';
 import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFields, stagePlan, maxPrizes } from './bingo.js';
 import { listQuizzes, loadQuiz } from './quizzes.js';
-import { listBingoPacks, loadBingoPack, recordLaunch, archiveResults } from './library.js';
+import { listBingoPacks, loadBingoPack, recordLaunch, archiveResults, HOUSE_ROOM } from './library.js';
 import { findSlide } from './adverts.js';
 // Shared with the browser, so the list of looks cannot drift between the server
 // deciding one and the screens drawing it.
@@ -61,11 +61,12 @@ export class Session {
    * @param {function(): void} opts.onPush   tell the live connections something changed
    * @param {function(): number} [opts.now]
    */
-  constructor({ config, store, onPush, now = () => Date.now() }) {
+  constructor({ config, store, onPush, now = () => Date.now(), roomId = HOUSE_ROOM }) {
     this.config = config;
     this.store = store;
     this.onPush = onPush;
     this.now = now;
+    this.roomId = roomId;
     this.kind = 'quiz';
     this.engine = null;
     this.lastMilestone = '';
@@ -252,7 +253,7 @@ export class Session {
       ? look
       : (LOOKS.some((l) => l.id === normalised.look) ? normalised.look : DEFAULT_LOOK);
 
-    recordLaunch(this.config.dataDir, kind, normalised.id, this.now());
+    recordLaunch(this.config.dataDir, kind, normalised.id, this.now(), this.roomId);
     this.engine.changed();
     return { kind, id: normalised.id, title: normalised.title };
   }

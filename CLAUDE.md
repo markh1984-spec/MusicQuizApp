@@ -214,7 +214,7 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 | **How many prizes is chosen at launch too** | Next to the card shape, and for the same reason — it is a decision about tonight. `state.stages` is the list, `[1, 'full']` by default, which is exactly what every round did before. Three prizes is `[1, 2, 'full']`: traditional pub bingo, counting up and ending in a full house. Predictable beats clever — the room already knows how bingo works and the host has to say it on the mic. Only offered as many as the card has lines for: a 3-across strip has three lines and finishing all three IS a full house, so two line prizes is its limit. |
 | **"You got it" means the prize ON THE TABLE** | With three prizes the first winner keeps playing, and `view.won` used to stay true for the rest of the round — so the one person who had proved they were paying attention was the only one who could no longer see how close they were. It is now "won the prize currently being shown", and `yourPrizes` keeps a note of what they have already taken. |
 | **A strip wins the long way only** | `cardLines()` in `src/bingo.js`. A card can be 3 across and 8 down — the shape of a paper bingo ticket and of a phone. Every winning line must be the SAME LENGTH or the game is not fair: on a strip somebody would call on a row of three while everyone else needed eight. So a square keeps rows, columns and both diagonals; anything else uses the long axis only, and the phone says which way it runs ("Get a full column — 8 down") because a player looking at three across will otherwise mark the three and shout. There are tests for all of it. |
-| **Launch is the last thing on a pack card, and full width** | Read / Rename / Delete sit in a row above it, sharing ONE rule rather than four near-identical ones that had already drifted on size. Launch is the biggest thing on the card and nothing sits under it, so it cannot be hit on the way to something else. |
+| **Launch is the last thing on a pack card, and full width** | Read / Rename / Delete sit in a row above it, sharing ONE rule rather than four near-identical ones that had already drifted on size. Launch is the biggest thing on the card and nothing sits under it, so it cannot be hit on the way to something else. **That row is a GRID, not a wrapping flex row** — it was `flex: 1 1 auto`, which is fine on the three most cards carry and wrong the moment a fourth appears: on a pack with an intro round, Playlist pushed Delete onto a line of its own, where being the only item stretched it full width. The destructive button became the biggest target on the card, directly above Launch — the exact thing this rule exists to prevent. `repeat(auto-fit, minmax(84px, 1fr))` wraps a fourth button into the next cell at the same size as the rest. |
 | **The tab icon and the logo are one drawing** | `public/assets/brandmark.js`, imported by `client.js` in the browser AND by `server.js` for `/favicon.svg`. Two copies of a logo is one that gets changed in one place and not the other and goes unnoticed for a month. SVG rather than `.ico` because there is no build step to make one; a browser too old for SVG favicons just shows its default, as it did before. The tab version has thicker strokes — at 16px a 1.6-wide stroke on a 40 viewBox is two thirds of a pixel and turns to mush. There are tests that the two agree. |
 | **A MICROPHONE AND A NOTE, knocked out of a filled disc** | `quizMark()`. It was a vinyl record, which said "music quiz" and nothing else — and the app already runs general knowledge, first-letter and bingo rounds. A mic is the host, the note is what the night is mostly about, and together they cover a general knowledge quiz too. **The disc is the composition, not decoration:** at 16 pixels in a browser tab a solid coloured blob with something cut out of it is legible where an outline drawing is grey mush, so everything inside is a HOLE rather than a line on top. The note is small and tucked in the top right, wholly inside the disc — a flag clipped by the edge reads as a mistake rather than as a design, which is what the first attempt did. At favicon size it degrades into a nick in the edge, which is the right thing for it to become: **what has to survive at 16px is the microphone.** |
 | **The name stacks — the possessive above, the app underlining it** | `brandWords()` in `client.js`. "Mark's" small and tilted 5° above **Quiztopia** in the account's own gradient, so the app name reads as the thing and whose night it is reads as the label on it. **It splits on the APP NAME, never on the last word** — so `BRAND_NAME="The Crown Quiz League"` stays one line instead of being guessed at and broken in the wrong place. A name that does not end in the app name is not stacked at all. |
@@ -1516,6 +1516,36 @@ one is a `plans.js` question, not a rooms question. Saving a pack reloads it in
 **every** room playing it (`reloadPackEverywhere`) — missing one would leave
 that quizmaster running the version from before the edit.
 
+### "Never played" means YOUR nights
+
+`library-stats.json`, keyed by room — `statsFor()` and `recordLaunch()` in
+`src/library.js`. The pack library is shared, but how often you have run
+something is a fact about your nights rather than about the file. Counted
+globally it would tell Rob that a quiz he has never opened was played twice
+last week, which is worse than no count at all: the only use of that line is
+deciding what not to run at the same venue again.
+
+One file rather than one per room, so it is one thing to back up.
+
+**It was the only thing in `data/` with no backup at all**, which is why the
+host reported packs saying "Never played" after playing them — every deploy
+reset the lot, and nothing on screen tells "never" apart from "forgotten". It
+goes to the PRIVATE repo like the accounts and the invoices: it is a record of
+somebody's nights, not of the packs, which are the public repo's. Restored only
+into an absent file, same rule as everything else — a disk with counts on it is
+ahead of any backup.
+
+**The flat shape from before rooms is read as the HOUSE's**, because back then
+there was only one game and all of it was Mark's. Reading it as anybody's would
+hand a brand new quizmaster somebody else's history; throwing it away would
+reset the counts it is the point of. It is folded into the house on the next
+launch so the file never holds two answers to one question. Tested.
+
+`HOUSE` in `rooms.js` is now `HOUSE_ROOM` re-exported from `library.js` rather
+than the same string written out twice — if those two ever disagreed, launches
+would be filed under a room nothing reads and the count would silently stay on
+zero. There is a test that they are one string.
+
 ### What this does NOT do yet
 
 - **The invoice book is still SHARED between quizmasters.** It does survive a
@@ -1715,7 +1745,7 @@ of that now lives, on a **Bronze / Silver / Gold ladder** that the pricing
 will hang off — and the owner can look at the console as a subscriber on any
 rung of it; **a mic-and-note logo** with the name stacked under it, replacing the
 vinyl record, since the app was never only a music quiz. All on
-**`MusicQuizApp`**. 559 tests green.
+**`MusicQuizApp`**. 567 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on

@@ -793,12 +793,13 @@ async function handleGet(req, res, url, route) {
   // ---- host-only reads
   if (route === '/api/quizzes') {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
-    return sendJson(res, 200, { quizzes: fullLibrary(config).quizzes, loaded: roomForHost(req, url).session.pack.id }), true;
+    const room = roomForHost(req, url);
+    return sendJson(res, 200, { quizzes: fullLibrary(config, room.id).quizzes, loaded: room.session.pack.id }), true;
   }
   // The console's library: every quiz and every bingo pack you have saved.
   if (route === '/api/library') {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
-    const library = fullLibrary(config);
+    const library = fullLibrary(config, roomForHost(req, url).id);
     const backup = await backupStatus();
     const { session } = roomForHost(req, url);
     const me = whoIs(req, url);
@@ -1165,6 +1166,27 @@ async function restoreFromBackup() {
       }
     }
   }
+
+  /*
+   * Play counts, and the same rule as everything else: only into an empty
+   * file. A disk that already has counts on it is ahead of any backup, and
+   * writing the backup over it would undo tonight's launches.
+   */
+  const statsFile = path.join(config.dataDir, 'library-stats.json');
+  if (!fs.existsSync(statsFile)) {
+    const saved = await getFile('library-stats.json', 'private');
+    if (saved) {
+      try {
+        const text = saved.toString('utf8');
+        JSON.parse(text); // refuse a corrupt backup rather than write it back
+        fs.mkdirSync(config.dataDir, { recursive: true });
+        fs.writeFileSync(statsFile, text, 'utf8');
+        console.log('[library] restored play counts from the private repository');
+      } catch (err) {
+        console.warn('[library] could not restore play counts:', err.message);
+      }
+    }
+  }
 }
 
 /**
@@ -1181,6 +1203,28 @@ function backUpReports() {
   if (!privateRepoConfigured()) return;
   putFile('reports.json', reports.serialise(), 'Update question reports', 'private')
     .catch((err) => console.warn('[reports] could not back up:', err.message));
+}
+
+/**
+ * How many times each pack has been run.
+ *
+ * This was the one thing in `data/` with no backup at all, so every deploy
+ * reset the whole library to "Never played" — the counter looked broken rather
+ * than empty, because nothing on screen distinguishes "never" from "forgotten".
+ * It goes to the private repo like the rest: it is a record of somebody's
+ * nights, not of the packs, which are the public repo's.
+ */
+function backUpLibraryStats() {
+  if (!privateRepoConfigured()) return;
+  const file = path.join(config.dataDir, 'library-stats.json');
+  let contents;
+  try {
+    contents = fs.readFileSync(file, 'utf8');
+  } catch {
+    return; // nothing has been launched yet
+  }
+  putFile('library-stats.json', contents, 'Update play counts', 'private')
+    .catch((err) => console.warn('[library] could not back up play counts:', err.message));
 }
 
 /** What the owner console lists. Never a hash, and never a session token. */
@@ -1752,6 +1796,9 @@ async function handleWrite(req, res, url, route) {
         // about this evening rather than about the pack.
         const look = String(body.look || '');
         const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look });
+        // Never awaited: a host pressing Launch with a room waiting does not
+        // care whether GitHub is having a good day.
+        backUpLibraryStats();
         return sendJson(res, 200, { ok: true, started, view: session.hostView() }), true;
       } catch (err) {
         return sendJson(res, 400, { error: err.message }), true;

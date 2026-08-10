@@ -1250,7 +1250,7 @@ body.console::after { display: none; }
 .pack-grid.dense .played { display: none; }
 .pack-grid.dense .pack-shape { font-size: 11px; }
 .pack-grid.dense .pack-shape select { padding: 5px 24px 5px 8px; font-size: 12px; }
-.pack-grid.dense .pack-actions { gap: 4px; }
+.pack-grid.dense .pack-actions { gap: 4px; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); }
 .pack-grid.dense .pack-actions button, .pack-grid.dense .pack-actions a { padding: 5px 8px; font-size: 11.5px; }
 .pack-grid.dense .pack-card .go { padding: 8px; font-size: 14px; margin-top: 5px; }
 .pack-card {
@@ -1400,11 +1400,23 @@ body.screen { cursor: none; }
    accident on the way to Rename.
    They share one rule rather than four near-identical ones, so they cannot
    drift apart on size or weight the way they had. */
+/*
+ * A GRID, not a wrapping flex row — so every action is the same size however
+ * many there are.
+ *
+ * These were `flex: 1 1 auto`, which is fine on the three most cards carry and
+ * wrong the moment a fourth appears: Playlist pushed Delete onto a row of its
+ * own, where being the only item on the line stretched it full width. That made
+ * the destructive button the biggest target on the card, sitting directly above
+ * Launch — the exact thing "Launch is the last thing on a pack card, and full
+ * width" exists to prevent. Columns are worked out from the card, so a fourth
+ * button wraps into the next cell at the same width as the rest.
+ */
 .pack-actions {
-  margin-top: auto; display: flex; flex-wrap: wrap; gap: 6px; align-items: stretch;
+  margin-top: auto;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 6px;
 }
 .pack-actions > * {
-  flex: 1 1 auto;
   display: grid; place-items: center;
   min-height: 36px; padding: 0 10px;
   border-radius: 10px;

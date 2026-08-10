@@ -93,12 +93,12 @@ export function safePackFile(id) {
  * The whole library: quizzes and bingo packs together, each tagged with how
  * often you have run it and when you last did.
  */
-export function fullLibrary({ quizDir, bingoDir, dataDir }) {
-  const stats = readStats(dataDir);
+export function fullLibrary({ quizDir, bingoDir, dataDir }, roomId = HOUSE_ROOM) {
+  const mine = statsFor(readStats(dataDir), roomId);
   const decorate = (item) => ({
     ...item,
-    playCount: stats[`${item.kind}:${item.id}`]?.playCount || 0,
-    lastPlayedAt: stats[`${item.kind}:${item.id}`]?.lastPlayedAt || null,
+    playCount: mine[`${item.kind}:${item.id}`]?.playCount || 0,
+    lastPlayedAt: mine[`${item.kind}:${item.id}`]?.lastPlayedAt || null,
   });
 
   return {
@@ -108,6 +108,20 @@ export function fullLibrary({ quizDir, bingoDir, dataDir }) {
 }
 
 // ------------------------------------------------------------- play history
+
+/**
+ * "Never played" is per QUIZMASTER, not per pack.
+ *
+ * The library is shared — the owner writes the packs and everybody plays them
+ * — but how often YOU have run one is a fact about your nights, not about the
+ * file. Counting them globally would tell Rob a quiz he has never opened was
+ * played twice last week, which is worse than no count at all: the whole use
+ * of this line is deciding what not to run at the same venue again.
+ *
+ * One file rather than one per room, so it is one thing to back up, keyed by
+ * room inside it.
+ */
+export const HOUSE_ROOM = 'house';
 
 function statsPath(dataDir) {
   return path.join(dataDir, 'library-stats.json');
@@ -121,11 +135,38 @@ export function readStats(dataDir) {
   }
 }
 
-export function recordLaunch(dataDir, kind, id, at = Date.now()) {
+/**
+ * One room's counts, coping with the flat shape this file used to have.
+ *
+ * Everything recorded before rooms existed was the house room's by definition
+ * — it was the only game there was — so it is read as the house's rather than
+ * thrown away. A pack a quizmaster has genuinely never played still reads as
+ * never played, because a bare `kind:id` key is only ever the house's.
+ */
+export function statsFor(stats, roomId = HOUSE_ROOM) {
+  const rooms = stats && stats.rooms ? stats.rooms : {};
+  const old = Object.fromEntries(
+    Object.entries(stats || {}).filter(([k]) => k.includes(':')),
+  );
+  const mine = rooms[roomId] || {};
+  return roomId === HOUSE_ROOM ? { ...old, ...mine } : mine;
+}
+
+export function recordLaunch(dataDir, kind, id, at = Date.now(), roomId = HOUSE_ROOM) {
   const stats = readStats(dataDir);
+  if (!stats.rooms) stats.rooms = {};
+  // Fold anything from before rooms into the house on first write, so the file
+  // only ever holds one answer to "how many times has the house played this".
+  if (!stats.rooms[HOUSE_ROOM]) {
+    const old = Object.entries(stats).filter(([k]) => k.includes(':'));
+    if (old.length) stats.rooms[HOUSE_ROOM] = Object.fromEntries(old);
+  }
+  for (const key of Object.keys(stats)) if (key.includes(':')) delete stats[key];
+
+  const room = stats.rooms[roomId] || (stats.rooms[roomId] = {});
   const key = `${kind}:${id}`;
-  stats[key] = {
-    playCount: (stats[key]?.playCount || 0) + 1,
+  room[key] = {
+    playCount: (room[key]?.playCount || 0) + 1,
     lastPlayedAt: at,
   };
   try {
@@ -134,7 +175,7 @@ export function recordLaunch(dataDir, kind, id, at = Date.now()) {
   } catch {
     /* best effort — never block a launch over a stats file */
   }
-  return stats[key];
+  return room[key];
 }
 
 // ------------------------------------------------------------- past nights
