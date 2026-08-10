@@ -506,6 +506,7 @@ function accountSection() {
   wrap.appendChild(planPanel());
   wrap.appendChild(libraryPanel());
   wrap.appendChild(supportPanel());
+  wrap.appendChild(suggestionPanel());
   for (const tier of ladderPanels()) wrap.appendChild(tier);
   wrap.appendChild(linksPanel());
   return wrap;
@@ -618,6 +619,77 @@ async function saveFeaturesOff(inPanel) {
     void inPanel;
     await load();
   }
+}
+
+/**
+ * The suggestion box.
+ *
+ * The same shape as "Something wrong with this one?" on the answer key, and it
+ * works for the same reason: it catches the thought at the moment it happens.
+ * A scheduled support hour asks somebody to remember at 7pm on a Tuesday what
+ * annoyed them at 9:40pm mid-gig, and the good ones do not survive that trip.
+ *
+ * Three kinds, because they want completely different things doing about them
+ * — an idea goes on a list, an irritation is a design question, a bug is a job
+ * — and because three is what somebody can pick from without reading.
+ *
+ * Not gated on a tier, deliberately: the people most worth hearing from are
+ * the ones having the worst time, who are the least likely to be on the top
+ * rung.
+ */
+function suggestionPanel() {
+  const el = node(`
+    <div class="panel">
+      <h3>Suggestion box</h3>
+      <div class="tiny">Anything at all — an idea, something that got in your way, something broken.
+        It goes straight to Mark, who reads them in batches. No reply needed for it to be worth sending.</div>
+      <div class="row sugg-kinds" style="margin-top:12px">
+        <button class="minor sugg-kind on" data-kind="idea">An idea</button>
+        <button class="minor sugg-kind" data-kind="annoying">Got in my way</button>
+        <button class="minor sugg-kind" data-kind="broken">Something broken</button>
+      </div>
+      <textarea class="sugg-text" rows="3" maxlength="1200"
+        placeholder="What happened, or what would make it better?"></textarea>
+      <div class="row" style="margin-top:8px;align-items:center;gap:12px">
+        <button class="go sugg-send">Send it</button>
+        <span class="tiny sugg-said"></span>
+      </div>
+    </div>`);
+
+  let kind = 'idea';
+  for (const b of el.querySelectorAll('.sugg-kind')) {
+    b.addEventListener('click', () => {
+      kind = b.dataset.kind;
+      for (const other of el.querySelectorAll('.sugg-kind')) other.classList.toggle('on', other === b);
+    });
+  }
+
+  const text = el.querySelector('.sugg-text');
+  const said = el.querySelector('.sugg-said');
+  el.querySelector('.sugg-send').addEventListener('click', async () => {
+    const words = text.value.trim();
+    if (!words) { text.focus(); return; }
+    try {
+      const res = await fetch(keyed('/api/suggestions'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
+        // Which tab they were on. Sent rather than guessed, and it is the
+        // difference between "the editor is confusing" being actionable and
+        // being a shrug.
+        body: JSON.stringify({ text: words, kind, where: currentTab() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Could not send that');
+      // Cleared and acknowledged in place. No reload: a panel that rebuilt the
+      // whole page would lose anything else half-typed on it.
+      text.value = '';
+      said.textContent = 'Sent — thank you.';
+      setTimeout(() => { said.textContent = ''; }, 6000);
+    } catch (err) {
+      said.textContent = err.message;
+    }
+  });
+  return el;
 }
 
 /**

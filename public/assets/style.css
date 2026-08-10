@@ -3268,3 +3268,27 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   background: rgba(255, 210, 63, 0.1);
   font-size: 13.5px;
 }
+
+/* The suggestion box. Plain and quick: the point is that sending one costs
+   almost nothing, so it must not look like a form to fill in. */
+.sugg-kinds { flex-wrap: wrap; gap: 6px; }
+.sugg-kind.on {
+  background: linear-gradient(120deg, var(--hot), var(--hot-2)) !important;
+  color: #12000c; border-color: transparent;
+}
+.sugg-text {
+  width: 100%; margin-top: 10px; padding: 11px 13px;
+  border-radius: 12px; border: 1px solid var(--panel-line);
+  background: rgba(255, 255, 255, 0.05); color: var(--ink);
+  font: inherit; font-size: 14px; resize: vertical;
+}
+.sugg-text:focus { outline: none; border-color: var(--hot); }
+/* Every `.go` in this stylesheet is scoped to the panel it sits in — there is
+   no generic rule — so this button needs its own or it draws as the browser's
+   default grey, which reads as disabled next to the lit kind chips. */
+.sugg-send {
+  border: none; border-radius: 10px; padding: 11px 20px; cursor: pointer;
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
+  color: #12000c; font-family: inherit; font-weight: 900; font-size: 14.5px;
+}
+.sugg-send:hover { filter: brightness(1.08); }

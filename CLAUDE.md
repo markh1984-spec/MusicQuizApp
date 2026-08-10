@@ -1618,6 +1618,43 @@ than the same string written out twice — if those two ever disagreed, launches
 would be filed under a room nothing reads and the count would silently stay on
 zero. There is a test that they are one string.
 
+### The suggestion box — ideas, irritations and bugs
+
+`src/suggestions.js`, `suggestionPanel()` in `console.js`, `suggestionsPanel()`
+in `owner.js`.
+
+**Deliberately NOT the same list as `reports.js`.** A report says "this
+question is wrong", which is a fault in a pack and is answered by editing the
+pack. A suggestion is about the APP. One pile of both is a page you skim rather
+than work through.
+
+**Why a box and not a support hour.** The host asked about a weekly Q&A window.
+A scheduled hour only works at a scale that does not exist yet — with two
+subscribers it is a phone call — and it asks somebody to REMEMBER at 7pm on a
+Tuesday what annoyed them at 9:40pm mid-gig. The good ones do not survive that
+trip. This is the same shape as "Something wrong with this one?" on the answer
+key and works for the same reason: it catches the thought as it happens. It is
+asynchronous on purpose, so nobody is ever on call.
+
+**Three kinds** — an idea, something that got in the way, something broken —
+because they want completely different things doing about them and because
+three is what somebody can pick from without reading.
+
+**Sending is open to anybody signed in and NOT gated on a tier.** The people
+most worth hearing from are the ones having the worst time, who are the least
+likely to be on the top rung. Reading the list is owner-only, same reasoning as
+the corrections book: a quizmaster seeing everybody else's complaints is the
+shared-invoice-book mistake again.
+
+**It carries which tab they were on**, sent by the browser rather than guessed.
+That is the difference between "the editor is confusing" being actionable and
+being a shrug.
+
+**The routes answer BEFORE the broad `FEATURES.QUIZ` gate**, or the owner would
+get a 403 on their own suggestion box — the trap that has now caught something
+six times. That works because of where they sit in the file, which is fragile,
+so `test/gates.test.js` pins the ORDERING rather than the behaviour.
+
 ### Support access — their door, their log
 
 `openSupport()` / `closeSupport()` / `supportOpen()` / `noteSupport()` in
@@ -1921,7 +1958,7 @@ is `'all'` today, so nothing changed for anybody. The account page shows it —
 carries the same **On | Off** switch as the hat in the top right, with a `+`
 where a tier above yours would be.
 
-All on **`MusicQuizApp`**. 603 tests green.
+All on **`MusicQuizApp`**. 607 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on

@@ -168,3 +168,37 @@ test('server.js gates advert writes on ADVERTS explicitly', () => {
   assert.match(server, /advertRoute[\s\S]{0,200}FEATURES\.ADVERTS/,
     'advert writes have no explicit gate — they will fall into the broad quiz check');
 });
+
+/*
+ * The suggestion box has to be reachable by the OWNER and by everybody else.
+ *
+ * Sending one is open to anybody signed in — a feedback route behind a paywall
+ * hears only from people already happy enough to have paid. Reading and
+ * closing them is the owner's. But the owner holds no quiz features, so any
+ * route that falls through to the broad FEATURES.QUIZ check 403s for them:
+ * the trap that has now caught something six times.
+ *
+ * These routes answer BEFORE that check rather than being exempted from it,
+ * which works and is fragile — it depends on where they sit in the file. So
+ * the ordering is what gets pinned.
+ */
+test('the suggestion box answers before the broad quiz gate', () => {
+  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const gate = server.indexOf('const changesLibrary = changesTheLibrary(');
+  assert.ok(gate > 0, 'the broad gate has moved — re-read this test');
+
+  for (const route of ["route === '/api/suggestions' && req.method === 'POST'",
+                       "route.startsWith('/api/suggestions/')"]) {
+    const at = server.indexOf(route);
+    assert.ok(at > 0, `${route} has gone`);
+    assert.ok(at < gate,
+      `${route} now sits after the broad quiz gate — the OWNER will get a 403 on their own suggestion box`);
+  }
+});
+
+test('suggestions are not treated as a pack write', () => {
+  for (const method of ['POST', 'DELETE']) {
+    assert.equal(changesTheLibrary('/api/suggestions', method), false);
+    assert.equal(changesTheLibrary('/api/suggestions/s123', method), false);
+  }
+});

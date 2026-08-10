@@ -67,6 +67,10 @@ export const paths = {
   // PRIVATE repository like the invoices, never the public one.
   accounts: path.join(config.dataDir, 'accounts.json'),
   reports: path.join(config.dataDir, 'reports.json'),
+  // Ideas, irritations and bugs from the people using it. Global rather than
+  // per room: a suggestion is about the APP, which everybody shares, and the
+  // owner reads them as one list.
+  suggestions: path.join(config.dataDir, 'suggestions.json'),
 };
 
 /**

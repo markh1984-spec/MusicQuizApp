@@ -60,6 +60,7 @@ async function boot() {
 }
 
 let reports = [];
+let suggestions = [];
 
 async function load() {
   const data = await api('/api/owner/accounts');
@@ -70,6 +71,13 @@ async function load() {
     reports = (await api('/api/reports')).reports || [];
   } catch {
     reports = [];
+  }
+  // Never fatal either, and for the same reason: a quizmaster list that will
+  // not draw because the suggestion box had a bad moment is a worse outcome.
+  try {
+    suggestions = (await api('/api/suggestions')).suggestions || [];
+  } catch {
+    suggestions = [];
   }
   draw(data);
 }
@@ -133,6 +141,77 @@ function reportsPanel() {
 }
 
 /**
+ * The suggestion box, from the reading end.
+ *
+ * Ideas, irritations and bugs about the APP — deliberately a different list
+ * from the reported questions above, because a report is answered by editing a
+ * pack and a suggestion is answered by a decision. One pile of both would be a
+ * page you skim rather than work through.
+ *
+ * Open ones first. A suggestion nobody has closed is somebody who took the
+ * trouble to tell you something and has heard nothing back.
+ */
+const SUGG_LABEL = {
+  idea: 'Idea',
+  annoying: 'Got in the way',
+  broken: 'Broken',
+};
+
+function suggestionsPanel() {
+  if (!suggestions.length) return [];
+  const open = suggestions.filter((s) => s.status === 'open');
+
+  const when = (at) => {
+    const days = Math.floor((Date.now() - at) / 86400000);
+    return days < 1 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`;
+  };
+
+  const el = node(`
+    <div class="game-section">
+      <div class="game-head">
+        <div>
+          <h2>Suggestion box</h2>
+          <div class="tiny">${open.length} to read${suggestions.length - open.length ? ` · ${suggestions.length - open.length} dealt with` : ''}</div>
+        </div>
+      </div>
+      <div class="suggs"></div>
+    </div>`);
+
+  const list = el.querySelector('.suggs');
+  const shown = open.length ? open : suggestions.slice(0, 8);
+  for (const s of shown) {
+    const row = node(`
+      <div class="rep-row${s.status === 'done' ? ' done' : ''}">
+        <div class="rep-main">
+          <div class="tiny"><b>${esc(SUGG_LABEL[s.kind] || s.kind)}</b>${s.where ? ` · from the ${esc(s.where)} tab` : ''}</div>
+          <div class="rep-q">${esc(s.text)}</div>
+          <div class="tiny">${esc(s.by || 'somebody')} · ${esc(when(s.at))}</div>
+        </div>
+        <div class="rep-acts">
+          ${s.status === 'open' ? '<button class="minor fixed">Dealt with</button>' : '<button class="minor reopen">Reopen</button>'}
+          <button class="minor danger bin">Bin</button>
+        </div>
+      </div>`);
+
+    const set = async (status) => {
+      await api(`/api/suggestions/${encodeURIComponent(s.id)}`, {
+        method: 'POST', body: JSON.stringify({ status }),
+      });
+      load();
+    };
+    row.querySelector('.fixed')?.addEventListener('click', () => set('done'));
+    row.querySelector('.reopen')?.addEventListener('click', () => set('open'));
+    row.querySelector('.bin').addEventListener('click', async () => {
+      if (!confirm('Bin this suggestion? Somebody took the trouble to send it.')) return;
+      await api(`/api/suggestions/${encodeURIComponent(s.id)}`, { method: 'DELETE' });
+      load();
+    });
+    list.appendChild(row);
+  }
+  return [el];
+}
+
+/**
  * Put the quizmaster hat on.
  *
  * One login, two hats. The host key gives the owner every feature at once, so
@@ -149,7 +228,7 @@ function draw(data) {
    * worse one was this, because it only existed on this page, so getting back
    * meant finding a bar at the top of a different one.
    */
-  const parts = [...reportsPanel()];
+  const parts = [...reportsPanel(), ...suggestionsPanel()];
 
   /*
    * The way to the catalogue.

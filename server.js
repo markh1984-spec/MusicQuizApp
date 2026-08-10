@@ -41,6 +41,7 @@ import { Reports } from './src/reports.js';
 import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, canPlayPack } from './public/assets/plans.js';
+import { Suggestions, KINDS } from './src/suggestions.js';
 import { OWNER_ONLY, changesTheLibrary } from './src/gates.js';
 import { brandFor } from './src/branding.js';
 import { findScheme, DEFAULT_SCHEME, SCHEMES } from './public/assets/schemes.js';
@@ -54,6 +55,7 @@ const accounts = new Accounts(paths.accounts);
 // Corrections on a question, from whoever was running it. Global rather than
 // per-room: the packs are shared, so a fault Rob finds is a fault in the pack.
 const reports = new Reports(paths.reports);
+const suggestions = new Suggestions(paths.suggestions);
 
 /*
  * One room per quizmaster.
@@ -1155,6 +1157,26 @@ async function handleGet(req, res, url, route) {
     return res.end(pdf), true;
   }
 
+  /*
+   * The suggestion box.
+   *
+   * READING the list is the owner's — a quizmaster seeing everybody else's
+   * complaints is the same mistake as a shared invoice book. SENDING one is
+   * everybody's, and deliberately not gated on a tier: the whole point is to
+   * hear from the people who are finding it hardest, who are the least likely
+   * to be on the top rung.
+   */
+  if (route === '/api/suggestions' && req.method === 'GET') {
+    const me = whoIs(req, url);
+    if (!me || (me.role !== 'owner' && !me.bootstrap)) {
+      return sendJson(res, 403, { error: 'Owners only.' }), true;
+    }
+    return sendJson(res, 200, {
+      suggestions: suggestions.all,
+      summary: suggestions.summary(),
+    }), true;
+  }
+
   if (route === '/api/invoices' && req.method === 'GET') {
     if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
     // Their own book, worked out from who they are. This is the route the tab
@@ -1358,6 +1380,14 @@ async function restoreFromBackup() {
     }
   }
 
+  if (suggestions.isEmpty()) {
+    const saved = await getFile('suggestions.json', 'private');
+    if (saved) {
+      const result = suggestions.restore(saved.toString('utf8'));
+      if (result.ok) console.log(`[suggestions] restored ${result.suggestions} suggestion(s)`);
+    }
+  }
+
   // The house invoice book. Every other room's is restored the first time that
   // quizmaster opens their Invoices tab, because rooms are created lazily and
   // this runs once at boot — see ensureInvoicesRestored below.
@@ -1431,6 +1461,20 @@ function backUpReports() {
   if (!privateRepoConfigured()) return;
   putFile('reports.json', reports.serialise(), 'Update question reports', 'private')
     .catch((err) => console.warn('[reports] could not back up:', err.message));
+}
+
+/**
+ * The suggestion box, same rules as the reports.
+ *
+ * Somebody took the trouble to tell you the app got in their way; losing that
+ * on the next deploy is worse than never having asked. Private repo like the
+ * rest of `data/` — these are people's words about their own experience, not
+ * something for the public one.
+ */
+function backUpSuggestions() {
+  if (!privateRepoConfigured()) return;
+  putFile('suggestions.json', suggestions.serialise(), 'Update the suggestion box', 'private')
+    .catch((err) => console.warn('[suggestions] could not back up:', err.message));
 }
 
 /**
@@ -1653,6 +1697,49 @@ async function handleWrite(req, res, url, route) {
    * `allowed()` does not read prefs and never will, so there is no way for a
    * setting on this page to hand anybody a feature. See `setPrefs()`.
    */
+  /*
+   * ---- the suggestion box
+   *
+   * One box, three kinds, no ceremony. Open to anybody signed in and to the
+   * host key, because the people most worth hearing from are the ones having
+   * the worst time — and a feedback route behind a paywall hears only from
+   * people who are already happy enough to have paid for the top tier.
+   */
+  if (route === '/api/suggestions' && req.method === 'POST') {
+    const me = whoIs(req, url);
+    if (!me) return sendJson(res, 401, { error: 'Sign in first' }), true;
+    const body = await readJson(req);
+    const result = suggestions.add({
+      text: body.text,
+      kind: KINDS.includes(String(body.kind)) ? String(body.kind) : 'idea',
+      by: me.name || me.email || 'the host key',
+      byId: me.id || '',
+      where: body.where,
+    });
+    if (!result.ok) return sendJson(res, 400, { error: result.error }), true;
+    backUpSuggestions();
+    return sendJson(res, 200, { ok: true, suggestion: result.suggestion }), true;
+  }
+
+  // Dealt with, reopened, or binned. The owner's, like reading them.
+  if (route.startsWith('/api/suggestions/') && (req.method === 'POST' || req.method === 'DELETE')) {
+    const me = whoIs(req, url);
+    if (!me || (me.role !== 'owner' && !me.bootstrap)) {
+      return sendJson(res, 403, { error: 'Owners only.' }), true;
+    }
+    const id = decodeURIComponent(route.slice('/api/suggestions/'.length));
+    if (req.method === 'DELETE') {
+      if (!suggestions.remove(id)) return sendJson(res, 404, { error: 'No such suggestion' }), true;
+    } else {
+      const body = await readJson(req);
+      if (!suggestions.setStatus(id, String(body.status || ''))) {
+        return sendJson(res, 400, { error: 'That is not a status.' }), true;
+      }
+    }
+    backUpSuggestions();
+    return sendJson(res, 200, { ok: true, suggestions: suggestions.all, summary: suggestions.summary() }), true;
+  }
+
   /*
    * ---- support access: the subscriber's own door, and only theirs
    *
