@@ -634,7 +634,8 @@ async function saveFeaturesOff(inPanel) {
  */
 function supportPanel() {
   const support = (me && me.support) || null;
-  const open = Boolean(support && Date.parse(support.expiresAt) > Date.now());
+  const until = support ? Date.parse(support.expiresAt) : 0;
+  const open = Boolean(until > Date.now());
   const log = (support && support.log) || [];
 
   const el = node(`
@@ -643,18 +644,17 @@ function supportPanel() {
       <div class="acct-toggle" style="margin-top:10px">
         <span class="acct-toggle-what">
           <b>Support access</b><br>
-          <span class="tiny">${open
-            ? 'Open. They can look at your account and fix things — but not run a night. Switch it off the moment you are done.'
-            : 'Shut. Nobody can open your account but you — not the owner, not a key. Switch it on if you have asked for help.'}</span>
+          <span class="tiny support-say">${open
+            ? 'Open. They can look at your account and fix things — but not run a night.'
+            : 'Shut. Nobody can open your account but you — not the owner, not a key.'}</span>
         </span>
         <span class="hat-switch feat-switch" data-on="${open ? '1' : '0'}">
           <button class="hat-half ${open ? 'live' : ''}" data-want="1">On</button>
           <button class="hat-half ${open ? '' : 'live'}" data-want="0">Off</button>
         </span>
       </div>
-      <div class="tiny acct-note">${open
-        ? 'It closes itself after a day if you forget, but switching it off here is instant.'
-        : 'While it is off, a game you are running cannot be touched and your packs cannot be opened.'}</div>
+      <div class="support-still" hidden></div>
+      <div class="tiny acct-note support-note"></div>
       ${log.length ? `
         <div class="tiny" style="margin-top:14px"><b>Everything they have done, most recent first</b></div>
         <div class="support-log">
@@ -667,26 +667,76 @@ function supportPanel() {
         : '<div class="tiny acct-note">Nothing to show — nobody has been in.</div>'}
     </div>`);
 
+  const set = async (want) => {
+    try {
+      const res = await fetch(keyed('/api/me/support'), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
+        body: JSON.stringify({ open: want }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Could not change that');
+      await load();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   for (const half of el.querySelectorAll('.hat-half')) {
-    half.addEventListener('click', async () => {
+    half.addEventListener('click', () => {
       const want = half.dataset.want === '1';
-      if (want === open) return;
-      try {
-        const res = await fetch(keyed('/api/me/support'), {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
-          body: JSON.stringify({ open: want }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || 'Could not change that');
-        await load();
-      } catch (err) {
-        alert(err.message);
-      }
+      if (want !== open) set(want);
     });
   }
+
+  /*
+   * The dead man's switch, drawn.
+   *
+   * It runs down in half an hour and the app asks whether help is still needed
+   * as it gets close. Saying yes resets it; saying nothing at all closes it,
+   * which is the right outcome for somebody who has been called away — and
+   * reopening is one tap, so being shut out early costs almost nothing.
+   *
+   * A local timer rather than anything live: the console holds no connection,
+   * and this is a clock counting down, which the browser can do on its own.
+   * Cleared on every render (see `supportTimer`) or each one would leave
+   * another behind and they would all fight over the same panel.
+   */
+  const note = el.querySelector('.support-note');
+  const still = el.querySelector('.support-still');
+  const tick = () => {
+    const left = until - Date.now();
+    if (!open) {
+      note.textContent = 'While it is off, your packs cannot be opened and your game cannot be touched.';
+      return;
+    }
+    if (left <= 0) {
+      // It ran out while they were looking at it. Redraw from the server
+      // rather than guess, so the log comes back with it.
+      clearInterval(supportTimer);
+      load();
+      return;
+    }
+    const mins = Math.floor(left / 60000);
+    const secs = Math.floor((left % 60000) / 1000);
+    note.textContent = `It switches itself off in ${mins}:${String(secs).padStart(2, '0')} unless you say you still need help. Switching it off yourself is instant.`;
+    // Asked while there is still time to answer, not at the moment it dies.
+    if (left < 5 * 60000 && still.hidden) {
+      still.hidden = false;
+      still.className = 'support-still';
+      still.innerHTML = '<b>Still need help?</b> <button class="minor keep">Yes, keep it open</button>';
+      still.querySelector('.keep').addEventListener('click', () => set(true));
+    }
+  };
+  clearInterval(supportTimer);
+  tick();
+  if (open) supportTimer = setInterval(tick, 1000);
+
   return el;
 }
+
+// Module level, so a re-render replaces the countdown rather than adding one.
+let supportTimer = 0;
 
 /**
  * What you can play — the CONTENT half of a tier.

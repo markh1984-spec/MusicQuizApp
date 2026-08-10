@@ -1631,10 +1631,17 @@ and everything done inside is written down where they can read it.
 
 **It is a SWITCH, not a duration to pick.** Choosing "1 hour or 8 or 24" is a
 decision at the worst possible moment — they do not yet know how long the
-problem takes. On, then off the second it is sorted, and off is instant. The
-expiry stays as a BACKSTOP rather than a plan: the real risk with a plain
-toggle is them forgetting it is on, not the owner overstaying, so a grant
-nobody closes closes itself after a day.
+problem takes. On, then off the second it is sorted, and off is instant.
+
+**And it runs on a DEAD MAN'S SWITCH.** Half an hour at a time; the panel
+counts down, asks "still need help?" with five minutes left, and one tap resets
+it. Nobody has to remember to close anything — walking away IS closing it,
+which is the right outcome for somebody called away mid-conversation. Reopening
+costs one tap, so being shut out early is cheap while being left open for a
+week is impossible. `openedAt` is when they FIRST let you in and is not
+rewritten by a confirmation, or the log would misreport when the session
+started. The countdown is a plain local timer, because the console holds no
+live connection and a clock is something a browser can do on its own.
 
 **Checked on every request, not once on the way in.** Otherwise a session
 outlives the window, which is the whole guarantee undone by a cookie.

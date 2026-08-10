@@ -417,14 +417,23 @@ export class Accounts {
    * a promise — so this is opt-in, it expires, and it keeps a log the
    * subscriber can read.
    */
-  openSupport(id, hours = 24) {
+  /**
+   * @param {string} id
+   * @param {number} [minutes]  how long THIS stretch lasts. Minutes, not hours,
+   *   because the window is a dead man's switch rather than a booking: it runs
+   *   out fast on purpose and the subscriber keeps it alive by saying they
+   *   still need help. Forgetting is meant to close it.
+   */
+  openSupport(id, minutes = 30) {
     const account = this.find(id);
     if (!account) return null;
     const at = this.now();
-    const span = Math.max(1, Math.min(168, Math.floor(hours)));
+    const span = Math.max(5, Math.min(1440, Math.floor(minutes)));
     account.support = {
-      openedAt: new Date(at).toISOString(),
-      expiresAt: new Date(at + span * 3_600_000).toISOString(),
+      openedAt: (account.support && account.support.openedAt) || new Date(at).toISOString(),
+      // Reset every time they confirm, so the countdown starts again rather
+      // than the grant having one fixed end whatever they do.
+      expiresAt: new Date(at + span * 60_000).toISOString(),
       log: (account.support && account.support.log) || [],
     };
     this.save();

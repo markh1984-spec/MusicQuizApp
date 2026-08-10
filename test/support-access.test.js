@@ -42,33 +42,70 @@ test('the door starts shut, and only the account holder can open it', () => {
   const { rob } = twoAccounts(accounts);
   assert.equal(accounts.supportOpen(rob.id), false);
 
-  accounts.openSupport(rob.id, 24);
+  accounts.openSupport(rob.id);
   assert.equal(accounts.supportOpen(rob.id), true);
 });
 
 test('switching it off is instant, not a countdown', () => {
   const accounts = book();
   const { rob } = twoAccounts(accounts);
-  accounts.openSupport(rob.id, 24);
+  accounts.openSupport(rob.id);
   accounts.closeSupport(rob.id);
   assert.equal(accounts.supportOpen(rob.id), false, 'the door stayed open after being shut');
 });
 
 /*
- * The backstop. A plain toggle's real risk is the subscriber forgetting it is
- * on, not the owner overstaying — so a grant that nobody closes closes itself.
+ * A dead man's switch, not a booking.
+ *
+ * The window is short and the subscriber keeps it alive by saying they still
+ * need help. Walking away IS closing it, which is the right outcome for
+ * somebody who has been called away mid-conversation — and reopening costs one
+ * tap, so being shut out early is cheap while being left open for a week is
+ * impossible.
  */
-test('a forgotten grant expires on its own', () => {
+test('a grant nobody confirms runs out in half an hour', () => {
   let clock = 1_000_000;
   const accounts = book(() => clock);
   const { rob } = twoAccounts(accounts);
 
-  accounts.openSupport(rob.id, 24);
-  clock += 23 * 3_600_000;
+  accounts.openSupport(rob.id);
+  clock += 25 * 60_000;
   assert.equal(accounts.supportOpen(rob.id), true, 'it expired early');
 
-  clock += 2 * 3_600_000;
-  assert.equal(accounts.supportOpen(rob.id), false, 'a forgotten grant is still open a day later');
+  clock += 10 * 60_000;
+  assert.equal(accounts.supportOpen(rob.id), false, 'a grant nobody confirmed is still open');
+});
+
+test('saying "still need help" resets the clock rather than extending it once', () => {
+  let clock = 1_000_000;
+  const accounts = book(() => clock);
+  const { rob } = twoAccounts(accounts);
+
+  accounts.openSupport(rob.id);
+  clock += 27 * 60_000;
+  accounts.openSupport(rob.id);          // "yes, keep it open"
+  clock += 25 * 60_000;
+  assert.equal(accounts.supportOpen(rob.id), true, 'confirming did not restart the window');
+
+  clock += 10 * 60_000;
+  assert.equal(accounts.supportOpen(rob.id), false, 'and it still runs out afterwards');
+});
+
+/*
+ * `openedAt` is when they FIRST let you in, not when they last confirmed —
+ * otherwise the log would say the session started five minutes ago after an
+ * hour of confirmations, which is the one thing it must not misreport.
+ */
+test('confirming does not rewrite when the session started', () => {
+  let clock = 1_000_000;
+  const accounts = book(() => clock);
+  const { rob } = twoAccounts(accounts);
+
+  accounts.openSupport(rob.id);
+  const started = accounts.find(rob.id).support.openedAt;
+  clock += 20 * 60_000;
+  accounts.openSupport(rob.id);
+  assert.equal(accounts.find(rob.id).support.openedAt, started);
 });
 
 /*
@@ -78,7 +115,7 @@ test('a forgotten grant expires on its own', () => {
 test('the log records what was done, and the subscriber can read it', () => {
   const accounts = book();
   const { rob } = twoAccounts(accounts);
-  accounts.openSupport(rob.id, 24);
+  accounts.openSupport(rob.id);
 
   accounts.noteSupport(rob.id, 'GET /api/quiz/their-own-pack');
   accounts.noteSupport(rob.id, 'PUT /api/invoices/settings');
@@ -92,10 +129,10 @@ test('the log records what was done, and the subscriber can read it', () => {
 test('the log survives the door being shut and reopened', () => {
   const accounts = book();
   const { rob } = twoAccounts(accounts);
-  accounts.openSupport(rob.id, 24);
+  accounts.openSupport(rob.id);
   accounts.noteSupport(rob.id, 'GET /api/quiz/one');
   accounts.closeSupport(rob.id);
-  accounts.openSupport(rob.id, 24);
+  accounts.openSupport(rob.id);
 
   assert.equal(accounts.find(rob.id).support.log.length, 1,
     'closing the door wiped the record of what was done through it');

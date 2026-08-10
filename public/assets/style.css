@@ -3256,3 +3256,15 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   font-size: 12.5px;
 }
 .support-row .tiny { flex: 0 0 auto; min-width: 132px; }
+
+/* "Still need help?" — shown while there is still time to answer, not at the
+   moment the grant dies. Gold rather than red: nothing is wrong, something is
+   about to lapse, and those are different feelings. */
+.support-still {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-top: 10px; padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 210, 63, 0.5);
+  background: rgba(255, 210, 63, 0.1);
+  font-size: 13.5px;
+}

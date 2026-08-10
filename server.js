@@ -637,8 +637,12 @@ const server = http.createServer(async (req, res) => {
  * poll, the live stream, health checks and static files — none of which says
  * anything a subscriber would want to read.
  */
-/** How long a grant lasts if they forget to switch it off. */
-const SUPPORT_BACKSTOP_HOURS = 24;
+/**
+ * How long one stretch of support access lasts before the subscriber has to
+ * say they still need it. A dead man's switch, not a booking — see
+ * `openSupport()` in accounts.js.
+ */
+const SUPPORT_MINUTES = 30;
 
 const SUPPORT_NEVER = ['/api/host/'];
 const SUPPORT_QUIET = ['/api/state', '/api/live', '/health', '/api/me', '/api/brand', '/api/has-accounts'];
@@ -1686,15 +1690,18 @@ async function handleWrite(req, res, url, route) {
      * they do not know yet how long the problem takes. On, then off the second
      * it is sorted, is the control they actually want, and off is instant.
      *
-     * The expiry stays anyway, as a BACKSTOP rather than a plan: the real risk
-     * with a plain toggle is them forgetting it is on, not the owner
-     * overstaying. A day is long enough that it never interrupts a genuine
-     * session, and short enough that a forgotten grant is not a standing one.
+     * And it runs on a DEAD MAN'S SWITCH rather than a booking. Half an hour
+     * at a time; the app asks whether help is still needed as it runs down,
+     * and one tap keeps it alive. So nobody has to remember to close
+     * anything — walking away closes it, which is the behaviour you actually
+     * want from somebody who has been distracted by a phone call. Opening it
+     * again costs one tap, so being shut out early is cheap and being left
+     * open for a week is impossible.
      */
     const body = await readJson(req);
     const saved = body.open === false
       ? accounts.closeSupport(account.id)
-      : accounts.openSupport(account.id, Number(body.hours) || SUPPORT_BACKSTOP_HOURS);
+      : accounts.openSupport(account.id, Number(body.minutes) || SUPPORT_MINUTES);
     if (!saved) return sendJson(res, 404, { error: 'No such account' }), true;
     await backUpAccounts();
     return sendJson(res, 200, {
