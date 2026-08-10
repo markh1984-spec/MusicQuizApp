@@ -354,12 +354,18 @@ export function hatSwitch(me, { onSwitch = null, forgetKey = null } = {}) {
   el.querySelector('.owner').addEventListener('click', () => go(false));
   el.querySelector('.qm').addEventListener('click', () => go(true));
 
-  // With the hat on, which RUNG of the ladder to wear it as. Never on the key,
-  // which is not a subscription and has no rung.
-  if (on && !keyed) {
-    const picker = tierPreview(me);
-    if (picker) el.appendChild(picker);
-  }
+  /*
+   * The rungs, in EVERY state rather than only with the hat on.
+   *
+   * One menu wherever you are, so the switch is the same shape on the owner
+   * page, the console and behind the key — you never have to work out why it
+   * looks different here. Tapping a rung from any of them means "put the hat
+   * on and show me that tier", which is what somebody pressing B actually
+   * wants; making them press Quizmaster first was a step that only existed
+   * because of how the code happened to be arranged.
+   */
+  const picker = tierPreview(me, { hatIsOn: on && !keyed, forgetKey: keyed ? forgetKey : null });
+  if (picker) el.appendChild(picker);
   return el;
 }
 
@@ -381,10 +387,12 @@ export function hatSwitch(me, { onSwitch = null, forgetKey = null } = {}) {
  * ONLY EVER A DOWNGRADE, and only ever the owner's own account. The server
  * checks the same thing again; this is the control, not the rule.
  */
-function tierPreview(me) {
+function tierPreview(me, { hatIsOn = true, forgetKey = null } = {}) {
   const tiers = (me && me.tiers) || [];
   if (!tiers.length) return null;
-  const now = (me && me.previewTier) || '';
+  // With the hat off there is no tier being previewed, so nothing is lit but
+  // "All" — which is also what the hat shows when worn as itself.
+  const now = (hatIsOn && me && me.previewTier) || '';
 
   const el = node(`
     <span class="tier-preview" title="Look at the console as a subscriber on this tier would see it">
@@ -401,6 +409,12 @@ function tierPreview(me) {
       event.stopPropagation();
       for (const b of el.querySelectorAll('button')) b.disabled = true;
       try {
+        if (forgetKey) forgetKey();
+        // The hat has to be on for a tier to mean anything, so put it on first
+        // if it is not. Two calls rather than one because they are two separate
+        // decisions on the server and folding them together would make the
+        // act-as route do two jobs.
+        if (!hatIsOn) await postJson('/api/owner/act-as', { on: true });
         await postJson('/api/owner/act-as', { tier: button.dataset.tier });
         location.reload();
       } catch (err) {

@@ -1190,10 +1190,18 @@ or the page cheerfully confirms who has an account here.
 `ACTING_COOKIE` in `server.js`, `ownQuizmasterFor()` in `accounts.js`, and
 `hatSwitch()` in `client.js`.
 
-**The switch is a two-position tab in the top right — Owner | Quizmaster — and
-it is the SIGN as well as the switch.** The live half is a solid block of
-colour, pink for the owner and gold for the quizmaster, so which hat is on is
-answered from across the room rather than read. The topbar is sticky, so unlike
+**The switch is a tab in the top right — Owner | Quizmaster, plus the rungs —
+and it is the SIGN as well as the switch.** ONE MENU IN EVERY STATE: the same
+control on the owner page, the console and behind the host key, so it is never a
+different shape depending where you are. Tapping a rung with the hat off means
+"put it on and show me that tier", because that is what pressing B actually
+means — making somebody press Quizmaster first was a step that existed only
+because of how the code was arranged.
+
+**Two colour languages would be one too many, so there is one.** Whichever half
+is live wears the app's own red-into-orange, whatever it is; the rungs beside it
+carry the metals, because there the colour IS the meaning. Which hat is on stays
+unmissable through the gold hairline under the topbar. The topbar is sticky, so unlike
 the bar it replaced it never scrolls away, and the body picks up a gold hairline
 while the hat is on so even a screenshot of the middle of the console says which
 hat it was taken in.

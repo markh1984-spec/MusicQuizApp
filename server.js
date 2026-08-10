@@ -706,9 +706,15 @@ async function handleGet(req, res, url, route) {
       // Which rung of the ladder the hat is being worn as, if any. Empty means
       // "as the linked account really is", which is comped — the whole ladder.
       previewTier: account.previewTier || '',
-      // The rungs to offer, and ONLY while the hat is on. A real quizmaster has
-      // nothing to preview, so they are not sent a picker to draw.
-      tiers: account.actingAs ? TIERS.map(({ id, label, plan }) => ({ id, label, plan })) : [],
+      /*
+       * The rungs to offer. Anybody who can WEAR the hat gets them, not only
+       * somebody already wearing it — the switch is one menu in every state,
+       * and tapping a rung with the hat off means "put it on and show me that".
+       * A real quizmaster has nothing to preview and is sent nothing to draw.
+       */
+      tiers: (account.actingAs || account.role === 'owner' || account.bootstrap)
+        ? TIERS.map(({ id, label, plan }) => ({ id, label, plan }))
+        : [],
     }), true;
   }
 
