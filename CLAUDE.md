@@ -1744,8 +1744,17 @@ projector with their own name above it; and a **My account** tab, where all
 of that now lives, on a **Bronze / Silver / Gold ladder** that the pricing
 will hang off — and the owner can look at the console as a subscriber on any
 rung of it; **a mic-and-note logo** with the name stacked under it, replacing the
-vinyl record, since the app was never only a music quiz. All on
-**`MusicQuizApp`**. 572 tests green.
+vinyl record, since the app was never only a music quiz.
+
+Most recent session, all pushed: **generated packs arrive with the answers
+already spread across A-D** rather than the host pressing a button to fix a
+lean the app had just created; **"Never played" means YOUR nights** and now
+survives a deploy, which is why it kept resetting; and three faults on the
+intro-round playlist button, the worst of which made **a Spotify refusal look
+identical to a success** — it is the reason an evening went on a 403 with
+nothing on screen to name it.
+
+All on **`MusicQuizApp`**. 572 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on
@@ -1753,34 +1762,34 @@ the projector, and read-only access to the pack library. Still shared, and still
 to do: the invoice book (which also does not survive a deploy yet), the night
 archive and the advert slides. See "A room per quizmaster" above.
 
-### Nobody has a login yet, and the order of the next three steps matters
+### The live app is set up now — this is what is actually on Render
 
-He made an owner account, and **it is almost certainly gone.** Nothing deleted
-it. `data/` is gitignored, Render's free tier has no permanent disk, and
-`backUpAccounts()` returns on its first line while `PHOTO_REPO` is unset — so it
-only ever existed on a disk that is replaced on every restart, and several
-deploys have been through since. `restoreFromBackup()` logs *"no accounts and no
-private repo configured"* and gives up for the same reason.
+Confirmed by reading the environment list on the dashboard:
 
-So the order is not a preference, it is the whole point:
+`HOST_KEY`, `PHOTO_REPO`, `PHOTO_TOKEN`, `GITHUB_REPO`, `GITHUB_TOKEN`,
+`ANTHROPIC_API_KEY`, `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`,
+`SPOTIFY_REFRESH_TOKEN`. **No `BRAND_NAME`** — checked deliberately, because it
+overrides the per-quizmaster naming and a leftover value would hide that whole
+feature while looking exactly like a failed deploy. **No `OPENAI_API_KEY`**, so
+round 2 is still placeholder art.
 
-1. **`HOST_KEY`** on Render, or the bookmark dies at every deploy.
-2. **`PHOTO_REPO` + `PHOTO_TOKEN`** — in the SAME save, so it redeploys once.
-3. **Then** make the owner account, and add Rob and James.
+So the bookmark survives a deploy, and accounts, invoices, reported questions
+and play counts all back up to the private repo and come back at boot. The owner
+account exists and has survived a redeploy, which is the only real proof any of
+it worked.
 
-Making the account first just means making it twice. **The only real proof step
-2 worked is a deploy AFTER signing in** — everything else passes just as happily
-on a disk that is about to be wiped.
+**Still wiped on every restart**, and worth knowing before somebody reports it
+as a bug: `data/photos/`, the night archive, and `room-codes.json` — so another
+quizmaster's four-letter join code CHANGES on a deploy. Mark's own printed QR is
+safe, because the house room deliberately has no code. What survives is anything
+in git (the packs, the adverts, the images, `data/track-history.json`) and
+anything in the private repo (accounts, invoices, reports, play counts).
 
-Also gone on every restart, and worth knowing before somebody reports it as a
-bug: the invoice book, reported questions, `data/photos/`, play counts, the
-night archive, and `room-codes.json` — so another quizmaster's four-letter join
-code CHANGES. Mark's own printed QR is safe, because the house room deliberately
-has no code. What survives is anything in git: the packs, the adverts, the
-images, and `data/track-history.json`, which is the one file exempted from the
-ignore rule.
+**Rob and James have not been added yet** — he has not asked for their emails.
+Two minutes each on the owner page when he does. He needs no second account for
+himself: the Owner | Quizmaster switch is that.
 
-Until all that is done the host key is the way in, and it still works.
+The host key still works and still beats a signed-in account, unchanged.
 
 **Which feature sits on which TIER is still to be decided** — see the ladder
 above. What is there now is a first guess so there was something to look at;
@@ -1815,15 +1824,31 @@ What is already ruled out: the login **has** all four scopes
 `playlist-read-collaborative` — `grantedScopes()` reports them), and the
 account has been added under **User Management** in the Spotify dashboard.
 
-Next things to try, in order:
+**Step 1 has now been done and it was NOT the cause.** He re-ran
+`npm run spotify:login` and replaced `SPOTIFY_REFRESH_TOKEN` on Render; the
+refusal is identical. Worth having done anyway — the new grant picked up the
+two playback scopes the autoplay feature needs — but rule it out for good.
 
-1. **Re-run `npm run spotify:login`** and replace only `SPOTIFY_REFRESH_TOKEN`
-   on Render. A Spotify grant is per app-and-user, and his was authorised
-   *before* the account was added to User Management.
-2. **Check the dashboard is logged in as the same account that authorised**
-   (`djmarkstar`). An app owned by a different account is the obvious mismatch.
-3. **Check the User Management email matches** the one on that Spotify account
-   exactly. A near-miss silently does nothing.
+The refusal is now reported in words on the console rather than swallowed (see
+below), and it says the login holds all four playlist scopes. **So the token is
+not the problem and there is no point regenerating it again.**
+
+What is left, both two-minute checks:
+
+1. **Check the dashboard is logged in as the same account that authorised**
+   (`djmarkstar`). If the app is owned by a different account, adding
+   `djmarkstar` under User Management adds it to an allow-list this token is
+   never checked against — which looks exactly like the setting not working.
+2. **Check the User Management entry matches** the full name and email on that
+   Spotify account exactly. A near-miss silently does nothing, with no error
+   anywhere.
+
+**A refresh token does not expire and does not rotate**, so this is not a thing
+he has to keep doing. `src/spotify.js` uses the authorization-code flow with a
+client secret, not PKCE: the refresh token is swapped for a one-hour access
+token as needed and never rewritten. Only a NEW SCOPE, a revoked app or a
+rotated client secret invalidates it — and a new scope is the one to warn him
+about, because that is a change made here rather than by him.
 
 ### The way round it — and it is the host's chosen route now
 
