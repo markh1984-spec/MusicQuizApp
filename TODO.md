@@ -7,125 +7,120 @@ if a step does not go smoothly.
 
 ---
 
-## READY TO HOST ON THURSDAY — do these in order
+## WHEN YOU GET BACK — in order
 
-About twenty minutes, all in one sitting. **The order matters and steps 1 and 2
-are one visit to the same page**, because saving them redeploys the app — and a
-redeploy wipes anything not backed up, including the account you make in step 3.
-Do them the other way round and you make that account twice.
+Setup is finished. `HOST_KEY`, the private repo, your owner account and the
+backups are all done and confirmed live, so nothing below can lock you out or
+lose work. What is left is proving it on your own kit and two decisions.
 
-> ⚠️ **The owner account you made earlier is almost certainly gone already.**
-> Nothing deleted it: `data/` is gitignored, Render's free tier has no permanent
-> disk, and the backup does nothing until step 2 is done — so it only ever
-> existed on a disk that gets replaced on every restart. Several deploys have
-> been through since. Check by opening the Console with your key: if the
-> **"No accounts yet — make yours"** panel is at the top, that is your answer.
-> Steps 1 and 2 are exactly what stops it happening again.
+### 1 · Prove it end to end — 10 minutes, and this is the one that matters
 
-### 1 · Set `HOST_KEY` — 2 minutes
+Everything else has been tested by me on a copy. This is the only test on YOUR
+Render instance with YOUR data.
 
-🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env
-
-Add `HOST_KEY` = any long phrase you will remember (`mark-quiz-night-2026` is
-fine). **Do not save yet — add step 2's variables in the same visit**, so the
-app redeploys once instead of twice.
-
-*Without this the app invents a new key on every deploy and every bookmark you
-own stops working — which is what stopped you last time.*
-
-- [ ] Done
-
-**While you are on that page:** if `BRAND_NAME` is set to "Mark's Music
-Madness", **delete it**. It overrides the new per-quizmaster naming, so your
-projector would still say the old name and it would look like a failed deploy.
-
-- [ ] `BRAND_NAME` checked
-
-**Locked out right now?** The key in use is in the startup banner:
-🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/logs — find the
-`Host key:` line.
-
-### 2 · Private repo — 5 minutes
-
-🔗 https://github.com/new — name it `mmm-private`, tick **Private**, Create.
-
-Then 🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env — add
-`PHOTO_REPO` = `markh1984-spec/mmm-private`. Save.
-
-*Without this every account, invoice and reported question is wiped by the next
-deploy. You would be doing step 3 again.*
-
-- [ ] Repo made
-- [ ] `PHOTO_REPO` set
-
-### 3 · Your accounts — 5 minutes
-
-🔗 https://musicquizapp.onrender.com/console (with your key)
-
-- [ ] The **"No accounts yet — make yours"** panel at the top → your name, email,
-      a password of 10+ characters → **Create the owner account**.
-      *Do this AFTER steps 1 and 2, not before. Backed up within seconds of
-      existing, it survives the next deploy; made first, it does not.*
-- [ ] Sign in 🔗 https://musicquizapp.onrender.com/login — you land on `/owner`
-- [ ] **Add a quizmaster** for Rob, and for James if he is in. Copy each
-      password it shows you — they are not stored anywhere you can read again.
-- [ ] **You do not need a second account for yourself.** Top right of the page
-      there is an **Owner | Quizmaster** switch. Tap Quizmaster and you are in
-      your own quizmaster account — same login, no second password, your own
-      game, your own join code and read-only packs, which is exactly what Rob
-      gets. The live half is a solid block of colour (gold means the quizmaster
-      hat is on) so you can never be unsure which one you are wearing. Tap Owner
-      to come back.
-
-### 4 · Prove it works — 5 minutes, and do this BEFORE Thursday
-
-Sign in, then tap **Quizmaster** on the switch in the top right.
+🔗 https://musicquizapp.onrender.com/login → sign in, then tap **Quizmaster**
+on the switch top right.
 
 - [ ] Launch a quiz from your quizmaster console
-- [ ] Your console shows a **4-letter join code** — note it
-- [ ] Open the big screen at `…/screen?g=YOURCODE` and check the QR is there
+- [ ] Note the **4-letter join code** it shows you
+- [ ] Big screen at `…/screen?g=YOURCODE` — check the QR is there
 - [ ] Join from your phone at `…/play?g=YOURCODE`, answer one question
-- [ ] Do the same for a bingo game
-- [ ] **Then trigger one more deploy and sign in again.** Any push does it, or
-      press Manual Deploy on Render. This is the only real proof that step 2
-      worked — everything above passes just as happily on a disk that is about
-      to be wiped.
+- [ ] Launch a bingo game, mark a square
+- [ ] **Then redeploy** (Manual Deploy on Render) **and sign in again.** This
+      is the only real proof the backup works — everything above passes just as
+      happily on a disk about to be wiped.
+- [ ] Check the quiz you launched now says **"Played 1 time"** and not
+      "Never played". That is the fix from this session; if it says never, tell
+      me, because it means the restore is not firing.
 
-**If anything is wrong, you still have your host key.** It runs the house game
-exactly as it always has, from 🔗 https://musicquizapp.onrender.com/console —
-that is your fallback on the night and nothing about it has changed.
+**Fallback on the night:** your host key still works and still beats a signed-in
+account. 🔗 https://musicquizapp.onrender.com/console?key=…
 
-### On the night
+### 2 · Read Thursday's quiz through — 20 minutes
 
-| | |
-|---|---|
-| Your console | `…/console` (signed in) or `…/console?key=…` |
-| Your control view | `…/host` — no key needed once signed in |
-| Big screen | `…/screen?g=YOURCODE` |
-| Players | `…/play?g=YOURCODE` |
+The one thing no amount of code protects you from is a wrong answer in front of
+a paying room. Open the pack, press **Read**, and work down the review flags —
+each tick is stored in the pack itself, so it survives a restart and you can
+stop halfway.
 
-**Using the host key instead?** Then it is plain `/screen` and `/play` with no
-code, exactly as now.
+- [ ] Pick which pack you are running Thursday
+- [ ] Read it through and tick the flags off
+
+### 3 · Dry run on mobile data — 15 minutes
+
+The one failure a home test cannot find: a venue's network holding the event
+stream in a buffer, which freezes every phone at once. Turn your laptop's wifi
+off, tether it to your phone, and run a few questions with a second phone
+joined.
+
+- [ ] Works on mobile data
+- [ ] Ideally: test at the venue itself, days before, never on the night
+
+### 4 · Spotify — 5 minutes, optional
+
+**Not the token.** That was regenerated and it changed nothing; the console now
+confirms the login holds all four playlist scopes. Two checks left, both in
+🔗 https://developer.spotify.com/dashboard
+
+- [ ] Is the dashboard signed in as **djmarkstar** — the account that
+      authorised? If the app is owned by a different account, adding
+      `djmarkstar` under User Management adds it to a list your token is never
+      checked against, which looks exactly like the setting not working.
+- [ ] Does the **User Management** entry match the full name AND email on that
+      Spotify account exactly? A near-miss silently does nothing.
+
+If neither is it, stop. The browser route works and is the better order for
+bingo anyway. Round 3 cues already carry Spotify links from the two builds you
+ran, so the control view can tap through to each track regardless.
+
+### 5 · Two decisions I am waiting on — no rush, nothing is blocked
+
+- [ ] **Which features sit on which tier, and the prices.** `FEATURE_TIER` is
+      one word per feature. The quickest way to settle it is to put the hat on,
+      pick **Bronze** on the switch, and spend two minutes seeing whether it
+      reads as a free tier or a crippled app.
+- [ ] **Advert slides: owner-only, or per quizmaster?** They are shared today,
+      which means a second quizmaster tidying up what looks like their own venue
+      list would delete The Crown's set off your projector. Nobody else has a
+      login yet, so it is safe — but it needs deciding before Rob gets one.
+
+### 6 · Costs money — before the first PAYING gig, not before Thursday
+
+- [ ] **Render Starter, $7/month.** Stops the app sleeping between gigs. Your
+      current routine (open the big screen five minutes early) covers the free
+      tier, but it is one less thing to remember.
+      🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/settings
+- [ ] **OpenAI key, ~£8 then pennies.** Round 2 runs on placeholder art until
+      then. Everything else works without it.
+
+### 7 · When you have their emails
+
+- [ ] Add **Rob**, and **James** if he is in — two minutes each on
+      🔗 https://musicquizapp.onrender.com/owner
+      They get their own game, join code, photo wall, name and colours, and
+      read-only packs. You need no second account for yourself.
 
 ---
 
-## Do these in this order
+## The full list, with A-C now done
 
-Nine things. The first three are the ones that matter; after that it is
-optional. Tick them off as you go — each one says how long, what it costs, and
-what happens if you skip it.
+Nine things. Tick them off as you go — each one says how long, what it costs,
+and what happens if you skip it.
 
 | | What | How long | Cost | If you skip it |
 |---|---|---|---|---|
-| A | Set `HOST_KEY` on Render | 2 min | free | **your bookmarks break on every deploy — this is what locked you out** |
-| B | Make a private repo | 10 min | free | invoices, accounts and photos vanish on every deploy |
-| C | Make your accounts (and Rob's) | 5 min | free | no login; the key is the only way in |
+| A | Set `HOST_KEY` on Render | 2 min | free | ✅ **DONE** |
+| B | Make a private repo | 10 min | free | ✅ **DONE** — accounts, invoices, reports and play counts all back up |
+| C | Make your accounts | 5 min | free | ✅ **DONE** — owner account made and survived a redeploy. Rob and James still to add |
 | D | Fill in your invoice details | 5 min | free | invoices have no bank details, so nobody can pay them |
 | E | Read a quiz through before a gig | 20 min | free | a wrong answer in front of a paying room |
 | F | Dry run on mobile data | 15 min | free | the one failure a home test cannot find |
 | G | Move to the $7 Render tier | 5 min | $7/mo | the app sleeps between gigs |
-| H | Finish Spotify | 10 min | free | you build playlists by hand |
+| H | Finish Spotify | 10 min | free | ⚠️ token ruled out — two dashboard checks left, see step 4 above |
 | I | OpenAI key | 20 min | ~£8 then pennies | round 2 uses placeholder drawings |
+
+**A, B and C are done and confirmed live.** The sections below are kept for
+reference and for when something goes wrong, not as work outstanding.
 
 **Rob and James can have logins.** Each gets their own running game — they
 cannot launch over the top of your night — their own join code and their own
