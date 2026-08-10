@@ -908,6 +908,51 @@ above your tier, so greyed with a `+`; or switched off by you, so gone
 completely. A `+` on the third would be the shop trying to sell somebody the
 thing they just put away.
 
+### The upsell lever is CONTENT, not capability
+
+`TIER_PACKS` and `packsFor()` in `plans.js`; `onlyTheirPacks()` and the launch
+check in `server.js`.
+
+**Bronze is the whole machine and a starter library.** Every capability you
+withhold is something that looks broken in front of a room — and a Bronze host
+running a venue's Christmas party is the shop window, so a thinner projector is
+the PRODUCT looking cheap rather than the tier looking cheap. It also cuts
+against rule one: nothing surprising on a Wednesday night, and a control that
+refuses is a small version of exactly that.
+
+Content pressure grows with success instead, which is what makes it implicit: a
+host with three quizzes hits the ceiling in month four when the room has heard
+them, while doing well, and never mid-question.
+
+So **picture rounds and intro rounds stay in Bronze.** They are what makes a
+night feel produced, and crippling the demo is the opposite of an upsell.
+Portraits are also the wrong thing to charge for — they are keyed to the
+musician and SHARED, so the second eighties pack wanting Madonna costs nothing.
+That bill amortises towards zero; pricing it as premium prices a cost that is
+disappearing.
+
+**Every tier is `'all'` today and that is deliberate** — the mechanism is in
+with nothing switched on, so nobody's library changed. Making Bronze a starter
+set is one line in `TIER_PACKS`, or a `packs` list on one account, which beats
+the tier.
+
+**`packs` is an ENTITLEMENT, so it is `accounts.update()` and never
+`setPrefs()`** — the same wall that stops a preferences payload handing out a
+tier. `null` clears it back to the tier; an empty ARRAY means none, and the two
+must not be confused. There are tests for both.
+
+**The server filters, not just the console.** A library trimmed only in the
+browser is decoration — the tier-preview work already proved how fast a page
+and its API drift apart. `/api/host/launch` checks the pack id from the request
+body, because that is exactly the shape of the hole `POST /api/quiz` had.
+
+**Pay-per-pack is deliberately NOT built.** A shop needs a payment flow, a
+purchase record and a story for a card that fails mid-month — a week of work,
+spent building something that competes with the upgrade you want people to
+take. The data model is the same either way: whether an id lands in `packs`
+because of a tier or because somebody bought it is one line, so this is not a
+dead end.
+
 ### NOTHING ON THAT PAGE GRANTS ANYTHING
 
 "Which features do I want" is two questions wearing one coat, and they must
@@ -1754,7 +1799,7 @@ intro-round playlist button, the worst of which made **a Spotify refusal look
 identical to a success** — it is the reason an evening went on a 403 with
 nothing on screen to name it.
 
-All on **`MusicQuizApp`**. 572 tests green.
+All on **`MusicQuizApp`**. 581 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on

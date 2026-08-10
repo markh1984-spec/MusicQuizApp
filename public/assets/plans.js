@@ -106,6 +106,65 @@ export const TIERS = [
 export const DEFAULT_TIER = 'bronze';
 
 /**
+ * ====================================================== WHAT YOU CAN PLAY
+ *
+ * The other half of a tier, and it is CONTENT rather than capability.
+ *
+ * The upsell is deliberately not a greyed-out button. Every capability you
+ * withhold is something that looks broken in front of a room — and a Bronze
+ * host running a venue's Christmas party is the shop window, so a thinner
+ * projector is the product looking cheap rather than the tier looking cheap.
+ * It also cuts against the first rule in this codebase: nothing should be
+ * surprising on a Wednesday night, and a control that refuses is a small
+ * version of exactly that.
+ *
+ * So the lever is the library. A Bronze host gets the whole machine and a
+ * starter set of packs; the pressure to move up arrives on its own, at the
+ * fourth month in the same pub when the room has heard them all. Nobody has to
+ * be told what they are missing — they hit it while doing well, and it never
+ * interrupts a night.
+ *
+ * `'all'` means the whole catalogue. An ARRAY means only those pack ids.
+ *
+ * **Every tier is `'all'` today and that is deliberate**: this is the mechanism
+ * with nothing switched on, so today's subscribers see exactly what they saw
+ * before. Making Bronze a starter set is changing one line here — or setting
+ * `packs` on one account, below, which beats it.
+ */
+export const TIER_PACKS = {
+  bronze: 'all',
+  silver: 'all',
+  gold: 'all',
+};
+
+/**
+ * Which packs this account may see and launch.
+ *
+ * Order matters and it is the usual one: the owner and the host key see
+ * everything, a comped account sees everything, an explicit list on the
+ * account beats its tier, and otherwise the tier decides.
+ *
+ * An account-level list is an ENTITLEMENT, so it is set by the owner through
+ * `accounts.update()` and never through `setPrefs()` — the same wall that
+ * stops a preferences payload handing out a tier. That is also what makes a
+ * shop possible later without a redesign: whether an id lands in that list
+ * because of a tier or because somebody bought it is one line, and nothing
+ * downstream cares which.
+ */
+export function packsFor(account = {}) {
+  if (!account || account.bootstrap || account.role === 'owner' || account.comped) return 'all';
+  if (Array.isArray(account.packs)) return account.packs.slice();
+  const scope = TIER_PACKS[tierFor(account)];
+  return scope === 'all' ? 'all' : (scope || []).slice();
+}
+
+/** Is this one pack in reach? The single question every caller actually asks. */
+export function canPlayPack(account, packId) {
+  const allowed = packsFor(account);
+  return allowed === 'all' || allowed.includes(String(packId));
+}
+
+/**
  * Which tier each feature belongs to.
  *
  * **PROVISIONAL — this is the list to argue about, and moving a feature is one

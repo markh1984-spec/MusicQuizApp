@@ -237,6 +237,22 @@ export class Accounts {
       if (!STATUSES.includes(patch.status)) throw new Error(`"${patch.status}" is not a subscription status.`);
       account.status = patch.status;
     }
+    /*
+     * Which packs this account can reach.
+     *
+     * An ENTITLEMENT, so it lives here in `update()` — the owner's method —
+     * and deliberately not in `setPrefs()`, which only ever subtracts. Same
+     * wall that stops a preferences payload handing out a tier.
+     *
+     * `null` clears it back to whatever the tier says, which is the only way
+     * to undo a starter list without guessing at the tier's contents. An empty
+     * ARRAY is a real answer meaning "none", and must not be confused with it.
+     */
+    if (patch.packs !== undefined) {
+      if (patch.packs === null) delete account.packs;
+      else if (!Array.isArray(patch.packs)) throw new Error('packs must be a list of pack ids, or null to follow the tier.');
+      else account.packs = [...new Set(patch.packs.map((p) => String(p).slice(0, 120)).filter(Boolean))];
+    }
     if (patch.comped !== undefined) account.comped = Boolean(patch.comped);
     if (patch.name !== undefined) account.name = String(patch.name).trim();
     if (patch.billing) account.billing = { ...account.billing, ...patch.billing };

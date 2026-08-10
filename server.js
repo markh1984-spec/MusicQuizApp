@@ -40,7 +40,7 @@ import { Accounts } from './src/accounts.js';
 import { Reports } from './src/reports.js';
 import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
-import { FEATURES, TIERS, whyNot, entitlements } from './public/assets/plans.js';
+import { FEATURES, TIERS, whyNot, entitlements, packsFor, canPlayPack } from './public/assets/plans.js';
 import { OWNER_ONLY, changesTheLibrary } from './src/gates.js';
 import { brandFor } from './src/branding.js';
 import { findScheme, DEFAULT_SCHEME, SCHEMES } from './public/assets/schemes.js';
@@ -413,6 +413,29 @@ function whoseRoom(room) {
 }
 
 /** The name on this room's projector, phones and control view. */
+/**
+ * The packs this request is allowed to see.
+ *
+ * The console filters too, but this is the one that counts: a library that is
+ * only trimmed in the browser is decoration, and the tier-preview work already
+ * proved how quickly a page and its API drift apart. Same reasoning as the
+ * Bronze preview returning a real 403 on invoices rather than just drawing
+ * fewer tabs.
+ *
+ * `'all'` short-circuits, which is every account today — this is the mechanism
+ * with nothing switched on.
+ */
+function onlyTheirPacks(library, who) {
+  const allowed = packsFor(who || {});
+  if (allowed === 'all') return library;
+  const mine = new Set(allowed);
+  return {
+    ...library,
+    quizzes: (library.quizzes || []).filter((p) => mine.has(p.id)),
+    bingo: (library.bingo || []).filter((p) => mine.has(p.id)),
+  };
+}
+
 function brandForRoom(room) {
   const who = whoseRoom(room);
   return brandFor(who ? (who.name || who.email) : '', {
@@ -794,12 +817,13 @@ async function handleGet(req, res, url, route) {
   if (route === '/api/quizzes') {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const room = roomForHost(req, url);
-    return sendJson(res, 200, { quizzes: fullLibrary(config, room.id).quizzes, loaded: room.session.pack.id }), true;
+    const seen = onlyTheirPacks(fullLibrary(config, room.id), whoIs(req, url));
+    return sendJson(res, 200, { quizzes: seen.quizzes, loaded: room.session.pack.id }), true;
   }
   // The console's library: every quiz and every bingo pack you have saved.
   if (route === '/api/library') {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
-    const library = fullLibrary(config, roomForHost(req, url).id);
+    const library = onlyTheirPacks(fullLibrary(config, roomForHost(req, url).id), whoIs(req, url));
     const backup = await backupStatus();
     const { session } = roomForHost(req, url);
     const me = whoIs(req, url);
@@ -1783,6 +1807,24 @@ async function handleWrite(req, res, url, route) {
        */
       const wanted = String(body.game || 'quiz') === 'bingo' ? FEATURES.BINGO : FEATURES.QUIZ;
       if (!allowed(req, res, url, wanted)) return true;
+
+      /*
+       * And it has to be a pack they actually hold.
+       *
+       * Checked here rather than trusted to the console not drawing a Launch
+       * button, because a pack id is one word in a request body — the same
+       * hole `POST /api/quiz` had, where the id was in the body and the route
+       * prefix never matched it. Refused as a 403 with the reason in words
+       * rather than a bare no: on a starter library "that one is not in your
+       * library" is a sentence somebody can act on, and a silent failure at
+       * launch is the worst possible moment for one.
+       */
+      if (!canPlayPack(whoIs(req, url), String(body.packId))) {
+        return sendJson(res, 403, {
+          error: 'That pack is not in your library.',
+          upgrade: true,
+        }), true;
+      }
       try {
         // The card shape is chosen at launch, not stored on the pack: the same
         // forty-two songs are a quick game on a 3x3 and a long one on a strip,
