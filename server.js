@@ -2180,9 +2180,27 @@ async function handleWrite(req, res, url, route) {
       reloadPackEverywhere(id, { clamp: false });
       const backup = await backUp(`quizzes/${id}.json`, JSON.stringify(normaliseQuiz(quiz, id), null, 2) + '\n', `Intro playlist: ${quiz.title}`, log);
 
+      /*
+       * Carry the FAILURES through, not just the successes.
+       *
+       * `buildIntroPlaylists` catches a per-round problem and returns a null
+       * playlist with the reason on it, so filtering to the ones that worked
+       * threw the reason away and reported `playlists: []` — a success
+       * envelope with nothing in it. A Spotify 403 then looked exactly like a
+       * quiz with no tracks, and the only account of what went wrong was a log
+       * line the console tore down a moment later.
+       *
+       * That is the "failure messages have to name the cause" rule, and this
+       * is the one place it had been missed.
+       */
       log('DONE ' + JSON.stringify({
         quizId: id,
         playlists: results.filter((r) => r.playlist).map((r) => ({ round: r.round, url: r.playlist.url, missing: r.playlist.missing })),
+        failed: results.filter((r) => !r.playlist).map((r) => ({
+          round: r.round,
+          // No error means the lookups simply found nothing to put in it.
+          error: r.error || 'none of its tracks could be found on Spotify',
+        })),
         backedUp: backup.ok,
       }));
     } catch (err) {

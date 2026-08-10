@@ -1745,7 +1745,7 @@ of that now lives, on a **Bronze / Silver / Gold ladder** that the pricing
 will hang off — and the owner can look at the console as a subscriber on any
 rung of it; **a mic-and-note logo** with the name stacked under it, replacing the
 vinyl record, since the app was never only a music quiz. All on
-**`MusicQuizApp`**. 569 tests green.
+**`MusicQuizApp`**. 572 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on
@@ -1922,7 +1922,20 @@ library and used to take the result with it: you pressed Import, watched it
 work, and were left looking at an empty form. `showDone()` / `doneBanner()`
 hold it above everything until you dismiss it or start another job.
 
-**The intro playlist button had the same fault and it hid a SUCCESS.** It
+**The intro playlist button had the same fault, and a THIRD one under it that
+made a failure look like a success.** `buildIntroPlaylists()` catches a
+per-round problem and returns a null playlist with the reason on it — right,
+because one bad round must not lose the others — but the route reported only
+the rounds that WORKED. So a Spotify 403 came back as `playlists: []`: a
+success envelope with nothing in it, identical to a quiz whose tracks are all
+misspelt, and the only account of the cause was a log line the reload tore
+down a moment later. `failed` is now carried through with its reason, the
+banner says which round and why, and it is red rather than green. There are
+tests that a refusal and an empty search do not produce the same message —
+they want completely different things doing about them. **This is the
+"failure messages have to name the cause" rule; it had been missed here.**
+
+**The same button also hid a SUCCESS.** It
 printed the link into its own panel and then called `load()`, which tore the
 panel down — from the outside, a button that says "Building…" and then closes
 with nothing to show. Worse, a quiz summary did not carry `playlist` at all

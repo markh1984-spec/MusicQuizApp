@@ -1825,9 +1825,23 @@ function playlistPanel(pack) {
          * closes, with nothing to show for a playlist that was in fact made.
          * Exactly the fault the generators had, and the same fix.
          */
-        showDone(done.playlists.length ? 'good' : 'warn', done.playlists.length
+        const failed = done.failed || [];
+        for (const f of failed) say(`\n${f.round}: ${f.error}`);
+        /*
+         * Say WHICH round failed and WHY. "No playlist made" on its own was
+         * the same message for a Spotify permission being refused and for a
+         * quiz whose tracks are all misspelt — and those want completely
+         * different things doing about them.
+         */
+        const built = done.playlists.length
           ? `<b>Playlist built.</b> ${done.playlists.map((p) => `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.round)}</a>${p.missing ? ` <span class="tiny">(${p.missing} not found on Spotify)</span>` : ''}`).join(' · ')}`
-          : '<b>No playlist made.</b> Nothing in this quiz has an intro round with tracks on it.');
+          : '';
+        const broke = failed.length
+          ? `<b>Could not build ${failed.length === 1 ? 'it' : 'them'}.</b> ${failed.map((f) => `${esc(f.round)} — ${esc(f.error)}`).join(' · ')}`
+          : '';
+        showDone(built && !broke ? 'good' : broke ? 'bad' : 'warn',
+          [built, broke].filter(Boolean).join('<br>')
+            || '<b>No playlist made.</b> This quiz has no intro round with tracks on it.');
         await load();
       }
     } catch (err) {

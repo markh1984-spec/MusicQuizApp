@@ -1828,6 +1828,14 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   background: rgba(255, 176, 32, 0.09);
 }
 .panel.done-banner.warn .done-text a { color: var(--gold); }
+/* It did not work. Green is the default here, so a job that failed would
+   otherwise announce itself in the colour that means "done" — and the reason
+   is the only thing on the banner worth reading. */
+.panel.done-banner.bad {
+  border-color: rgba(255, 77, 94, 0.55);
+  background: rgba(255, 77, 94, 0.1);
+}
+.panel.done-banner.bad .done-text a { color: var(--bad); }
 
 /* Round 2 artwork, opened from a pack card. Free stand-ins and paid portraits
    are different decisions, so they are different buttons. */
