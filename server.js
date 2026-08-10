@@ -30,7 +30,7 @@ import { listAdvertPacks, loadAdvertPack, saveAdvertPack, deleteAdvertPack, vali
 import { generateImages, imageStatus, imageJobs, imagePlan, openaiConfigured } from './src/generate-images.js';
 import { STYLES, findStyle, QUALITIES, DEFAULT_QUALITY } from './src/portraits.js';
 import { recentTracks, forgetAll } from './src/history.js';
-import { spotifyConfigured, missingSpotifyConfig } from './src/spotify.js';
+import { spotifyConfigured, missingSpotifyConfig, playTrack } from './src/spotify.js';
 import { getFile, githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem, privateRepoConfigured } from './src/github.js';
 import { Invoices, totals, toPence, money } from './src/invoices.js';
 import { invoicePdf, invoiceFilename } from './src/invoice-pdf.js';
@@ -108,10 +108,50 @@ function viewFor(client) {
   // the owner has the console open in the next tab.
   view.brand = brandForRoom(room);
   view.scheme = schemeForRoom(room);
+  // Auto-play could not start the track. Host view only — it is a note to tap
+  // the link, and it is nobody else's business.
+  if (client.role === 'host' && room.introPlay) view.introPlay = room.introPlay;
   // Which game this is, so a phone that was handed a code can tell it reached
   // the right one and the projector can print it for latecomers.
   view.joinCode = room.code;
   return view;
+}
+
+/*
+ * Press play on an intro question, best effort, never in the way.
+ *
+ * **The question goes up whether this works or not, and that is the whole
+ * design.** The host has pressed Next with a room waiting; nothing here is
+ * awaited before they get their answer back, nothing here can throw into the
+ * request, and a failure is a line on their own control view rather than an
+ * error. If it does not play they tap the Spotify link exactly as before —
+ * which is what they were doing five minutes ago anyway.
+ *
+ * Only ever on the way IN to a question. Not on a reveal, not on Back, not on
+ * a re-render: restarting the track because somebody pressed Back to check
+ * something would be worse than not playing it at all.
+ */
+const introPlayed = new Map();
+function startIntroTrack(room, view) {
+  const uri = view && view.phase === 'question' && view.question
+    && view.question.cue && view.question.cue.spotifyUri;
+  if (!uri || !spotifyConfigured()) return;
+
+  // Once per question. `run` is called for every host action, and a Back and a
+  // Next landing on the same question must not start it over.
+  const at = `${room.id}:${view.roundIndex}:${view.questionIndex}`;
+  if (introPlayed.get(room.id) === at) return;
+  introPlayed.set(room.id, at);
+
+  playTrack(uri).then((result) => {
+    // Remembered on the ROOM so the control view can say what happened, rather
+    // than the host wondering whether they mis-tapped. Cleared by the next one.
+    room.introPlay = result.ok ? null : { why: result.why, at: Date.now() };
+    if (!result.ok) {
+      console.warn('[spotify] could not start the intro track:', result.why);
+      pushState(room);
+    }
+  }).catch(() => { /* never the request's problem */ });
 }
 
 const pushQueued = new Set();
@@ -1781,7 +1821,12 @@ async function handleWrite(req, res, url, route) {
 
     const ok = session.run(action, body);
     if (ok === undefined) return sendJson(res, 404, { error: 'Unknown action: ' + action }), true;
-    return sendJson(res, 200, { ok, view: session.hostView() }), true;
+    const view = session.hostView();
+    // Start the track for an intro question, without making anybody wait for
+    // it. The reply goes back first and the question is already on the
+    // projector — see `startIntroTrack`.
+    startIntroTrack(room, view);
+    return sendJson(res, 200, { ok, view }), true;
   }
 
   // ---- the editor

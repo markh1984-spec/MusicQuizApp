@@ -240,7 +240,7 @@ function buildPanels(s) {
     if (up && up.cue) panels.push(cuePanel(up.cue, `Coming up — R${up.roundIndex + 1} Q${up.questionIndex + 1}`, up.playlist));
   }
   if ((s.phase === 'question' || s.phase === 'reveal') && s.question && s.question.cue) {
-    panels.push(cuePanel(s.question.cue, 'Play this now', s.question.playlist));
+    panels.push(cuePanel(s.question.cue, 'Play this now', s.question.playlist, s.introPlay));
   }
 
   if (s.question && (s.phase === 'question' || s.phase === 'reveal')) {
@@ -260,7 +260,12 @@ function buildPanels(s) {
   return panels;
 }
 
-function cuePanel(cue, title, playlist) {
+/**
+ * @param {object} [failed]  auto-play could not start it — say so and why, so
+ *                           the host taps the link instead of wondering. The
+ *                           question is already up either way.
+ */
+function cuePanel(cue, title, playlist, failed = null) {
   return node(`
     <div class="panel secret">
       <h3>${esc(title)}</h3>
@@ -269,6 +274,7 @@ function cuePanel(cue, title, playlist) {
         <div class="artist">${esc(cue.artist || '')}</div>
         ${cue.from ? `<div class="from">From ${esc(cue.from)}</div>` : ''}
         ${cue.hint ? `<div class="from">${esc(cue.hint)}</div>` : ''}
+        ${failed ? `<div class="cue-failed">Did not start on its own — tap below. <span class="tiny">${esc(failed.why)}</span></div>` : ''}
       </div>
       ${cue.spotifyUri || playlist ? `
         <div class="cue-links">

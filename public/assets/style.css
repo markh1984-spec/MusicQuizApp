@@ -687,6 +687,15 @@ body.host::after { display: none; }
 .cue { display: grid; gap: 4px; }
 .cue .track { font-size: 26px; font-weight: 900; line-height: 1.1; }
 .cue .artist { font-size: 19px; font-weight: 700; color: var(--gold); }
+/* Auto-play did not start it. Gold rather than red: the question is up, the
+   night is fine, and all this means is "use your thumb". */
+.cue-failed {
+  margin-top: 8px; padding: 8px 10px; border-radius: 10px;
+  background: rgba(255, 210, 63, 0.14);
+  border: 1px solid rgba(255, 210, 63, 0.4);
+  color: var(--gold); font-size: 13px; font-weight: 700;
+}
+.cue-failed .tiny { display: block; color: var(--ink-dim); font-weight: 400; margin-top: 2px; }
 .cue .from { font-size: 14px; color: var(--ink-dim); }
 
 .actions {

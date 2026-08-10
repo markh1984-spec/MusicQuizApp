@@ -37,7 +37,63 @@ export const SCOPES = [
   'playlist-modify-public',
   'playlist-read-private',
   'playlist-read-collaborative',
+  // Starting the track for an intro question from the Next button. Playback
+  // over the Web API is Premium-only and needs a device that is already awake,
+  // so this is always best-effort — see `playTrack`.
+  'user-modify-playback-state',
+  'user-read-playback-state',
 ];
+
+/**
+ * Start a track playing on whatever Spotify is already open.
+ *
+ * **Best effort, always, and it must never be in the way of the question.** The
+ * host has pressed Next and there is a room waiting: the question is already on
+ * the projector by the time this runs, and if it fails they tap the track link
+ * on their own control view exactly as they did before. A quiz that stops
+ * because Spotify had a moment is the failure this app exists not to have.
+ *
+ * The ways it legitimately fails, all of them normal:
+ *
+ *  - **no Premium** — Web API playback is a Premium feature, 403;
+ *  - **no active device** — Spotify not open, or asleep, 404 "no active
+ *    device". Opening Spotify and playing anything for a second fixes it;
+ *  - **the old refresh token** — the two playback scopes are new, so a login
+ *    from before this needs running again.
+ *
+ * Each one is reported in words rather than as a bare status, because
+ * "Spotify said 404" tells a host nothing they can act on at 9pm.
+ */
+export async function playTrack(uri, { deviceId = '' } = {}) {
+  if (!spotifyConfigured()) return { ok: false, why: 'Spotify is not set up.' };
+  if (!uri) return { ok: false, why: 'That question has no Spotify track on it.' };
+  try {
+    // Its own fetch rather than `api()`, which throws on anything but a 2xx —
+    // and here the STATUS is the whole message: 404 and 403 mean two entirely
+    // different things to fix, and the host needs to be told which.
+    const query = deviceId ? `?device_id=${encodeURIComponent(deviceId)}` : '';
+    const token = await accessToken();
+    const res = await fetch(`${API}/me/player/play${query}`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uris: [uri] }),
+    });
+    if (res.ok || res.status === 204) return { ok: true };
+    if (res.status === 404) {
+      return { ok: false, why: 'No Spotify is open to play on. Open it, play anything for a second, then try again.' };
+    }
+    if (res.status === 403) {
+      const granted = grantedScopes();
+      if (!granted.includes('user-modify-playback-state')) {
+        return { ok: false, why: 'This Spotify login predates auto-play. Run `npm run spotify:login` again and update SPOTIFY_REFRESH_TOKEN.' };
+      }
+      return { ok: false, why: 'Spotify refused — Web API playback needs a Premium account.' };
+    }
+    return { ok: false, why: `Spotify said ${res.status}.` };
+  } catch (err) {
+    return { ok: false, why: err.message };
+  }
+}
 
 export function spotifyConfigured() {
   return Boolean(
