@@ -16,12 +16,12 @@
           "id": "r1q1",
           "prompt": "Which track is this?",
           "options": [
-            "Duality",
-            "Psychosocial",
             "Before I Forget",
-            "Sulfur"
+            "Sulfur",
+            "Duality",
+            "Psychosocial"
           ],
-          "correctIndex": 1,
+          "correctIndex": 3,
           "answerNote": "Psychosocial was the lead single from Slipknot's 2008 album All Hope Is Gone.",
           "cue": {
             "title": "Psychosocial",
@@ -37,9 +37,9 @@
           "prompt": "Which track is this?",
           "options": [
             "In the End",
-            "Numb",
             "Faint",
-            "Breaking the Habit"
+            "Breaking the Habit",
+            "Numb"
           ],
           "correctIndex": 0,
           "answerNote": "In the End, released in 2001, features the iconic piano riff that opens the track.",
@@ -56,12 +56,12 @@
           "id": "r1q3",
           "prompt": "Which track is this?",
           "options": [
-            "Cochise",
-            "Rooster",
             "Show Me How to Live",
+            "Rooster",
+            "Cochise",
             "Be Yourself"
           ],
-          "correctIndex": 0,
+          "correctIndex": 2,
           "answerNote": "Cochise was the lead single from Audioslave's self-titled 2002 debut album.",
           "cue": {
             "title": "Cochise",
@@ -76,12 +76,12 @@
           "id": "r1q4",
           "prompt": "Which track is this?",
           "options": [
+            "Blind",
             "Bodies",
             "Last Resort",
-            "Blind",
             "Hollow"
           ],
-          "correctIndex": 0,
+          "correctIndex": 1,
           "answerNote": "Bodies by Drowning Pool became a staple of wrestling and sports entrances in the early 2000s.",
           "cue": {
             "title": "Bodies",
@@ -96,8 +96,8 @@
           "id": "r1q5",
           "prompt": "Which track is this?",
           "options": [
-            "Killing in the Name",
             "Bulls on Parade",
+            "Killing in the Name",
             "Guerrilla Radio",
             "Testify"
           ],
@@ -117,8 +117,8 @@
           "prompt": "Which track is this?",
           "options": [
             "Freak on a Leash",
-            "Falling Away from Me",
             "Got the Life",
+            "Falling Away from Me",
             "Here to Stay"
           ],
           "correctIndex": 3,
@@ -136,12 +136,12 @@
           "id": "r1q7",
           "prompt": "Which track is this?",
           "options": [
-            "Redneck",
             "Before I Forget",
+            "Vermilion",
             "Prowler",
-            "Vermilion"
+            "Redneck"
           ],
-          "correctIndex": 1,
+          "correctIndex": 0,
           "answerNote": "Before I Forget won a Grammy in 2006 and appeared on Slipknot's Vol. 3: The Subliminal Verses.",
           "cue": {
             "title": "Before I Forget",
@@ -156,12 +156,12 @@
           "id": "r1q8",
           "prompt": "Which track is this?",
           "options": [
-            "Duality",
             "Prison Sex",
             "Schism",
+            "Duality",
             "The Pot"
           ],
-          "correctIndex": 2,
+          "correctIndex": 1,
           "answerNote": "Schism's odd-time bass intro from 2001's Lateralus is instantly recognisable to fans.",
           "cue": {
             "title": "Schism",
@@ -177,9 +177,9 @@
           "prompt": "Which track is this?",
           "options": [
             "Last Resort",
+            "Not Falling",
             "Chop Suey!",
-            "In the End",
-            "Not Falling"
+            "In the End"
           ],
           "correctIndex": 0,
           "answerNote": "Last Resort's clean intro riff was a huge MTV2 staple in 2000.",
@@ -198,10 +198,10 @@
           "options": [
             "Numb",
             "In the End",
-            "One Step Closer",
-            "Faint"
+            "Faint",
+            "One Step Closer"
           ],
-          "correctIndex": 2,
+          "correctIndex": 3,
           "answerNote": "One Step Closer opens with that scratchy guitar riff before it explodes into the chorus scream.",
           "cue": {
             "title": "One Step Closer",
