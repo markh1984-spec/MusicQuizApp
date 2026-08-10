@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { generateQuizPack, roundBriefsFor, roundPlan } from '../src/generate-quiz.js';
+import { generateQuizPack, roundBriefsFor, roundPlan, questionKey } from '../src/generate-quiz.js';
 import { ROUND_TYPES, validateQuiz } from '../src/quizzes.js';
 
 /**
@@ -424,4 +424,36 @@ test('a generated alphabet round is answers, not options, and it validates', asy
     }
     assert.deepEqual(validateQuiz(quiz), []);
   });
+});
+
+/*
+ * Every intro question in a round has the SAME prompt — the brief says to set
+ * it to exactly "Which track is this?", because the track is the question and
+ * the track lives in the cue.
+ *
+ * De-duplicating on the prompt alone therefore threw away nine questions out
+ * of ten, every single time, and reported it as a success because nothing had
+ * been rejected — nothing had been checked. An intro round could only ever
+ * come out with one question in it.
+ */
+test('two intro questions with the same prompt are different questions', () => {
+  const a = { prompt: 'Which track is this?', cue: { artist: 'Slipknot', title: 'Duality' } };
+  const b = { prompt: 'Which track is this?', cue: { artist: 'Korn', title: 'Freak on a Leash' } };
+  assert.notEqual(questionKey(a), questionKey(b), 'the whole intro round would collapse to one');
+  // The same track twice IS the same question, which is what the check is for.
+  const again = { prompt: 'Which track is this?', cue: { artist: 'slipknot', title: 'DUALITY' } };
+  assert.equal(questionKey(a), questionKey(again));
+});
+
+test('an ordinary question is told apart by its prompt and its answer', () => {
+  const one = { prompt: 'Who sang this?', options: ['Abba', 'Blondie'], correctIndex: 0 };
+  const two = { prompt: 'Who sang this?', options: ['Abba', 'Blondie'], correctIndex: 1 };
+  assert.notEqual(questionKey(one), questionKey(two));
+  assert.equal(questionKey(one), questionKey({ ...one }));
+});
+
+test('a first-letter question is told apart by its answer', () => {
+  const a = { prompt: 'Name the band', answer: 'Fleetwood Mac' };
+  const b = { prompt: 'Name the band', answer: 'Blondie' };
+  assert.notEqual(questionKey(a), questionKey(b));
 });

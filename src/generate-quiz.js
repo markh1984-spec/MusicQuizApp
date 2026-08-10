@@ -566,6 +566,33 @@ export async function buildIntroPlaylists({ quiz, log = () => {} }) {
  */
 const MAX_ATTEMPTS = 3;
 
+/**
+ * What makes two questions the same question.
+ *
+ * **NOT the prompt on its own, and that was a guaranteed bug rather than a
+ * rare one.** The intro brief says, in as many words, to set the prompt to
+ * exactly "Which track is this?" for every question in the round — the track
+ * is the question, and it lives in the cue. So all ten came back correctly
+ * written and nine were binned as duplicates of the first, every time, and an
+ * intro round could only ever contain ONE question. It reported itself as a
+ * success because nothing had been rejected: nothing had been *checked*.
+ *
+ * So the key is the prompt AND whatever actually distinguishes one question
+ * from the next — the cue for an intro, the answer otherwise. A quiz where two
+ * questions genuinely share both is a quiz with a repeat in it, which is what
+ * this is for.
+ */
+export function questionKey(q) {
+  const tidy = (v) => String(v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const what = q.cue
+    ? `${tidy(q.cue.artist)}${tidy(q.cue.title)}`
+    : tidy(q.answer !== undefined ? q.answer : (q.options || [])[q.correctIndex]);
+  const prompt = tidy(q.prompt);
+  // Either half alone is enough to identify it; both empty means there is
+  // nothing here to keep.
+  return prompt || what ? `${prompt}|${what}` : '';
+}
+
 async function buildRound({ brief, perRound, check, system, apiKey, model, log, onReject, onUnchecked = () => {}, onShort = () => {} }) {
   const accepted = [];
   const failed = [];
@@ -594,7 +621,7 @@ async function buildRound({ brief, perRound, check, system, apiKey, model, log, 
 
     // Drop anything we have already got before spending a check on it.
     const fresh = (result.questions || []).filter((q) => {
-      const key = String(q.prompt || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const key = questionKey(q);
       if (!key || seen.has(key)) return false;
       seen.add(key);
       return true;
