@@ -505,6 +505,7 @@ function accountSection() {
   wrap.appendChild(schemePanel()[0] || node('<span></span>'));
   wrap.appendChild(planPanel());
   wrap.appendChild(libraryPanel());
+  wrap.appendChild(supportPanel());
   for (const tier of ladderPanels()) wrap.appendChild(tier);
   wrap.appendChild(linksPanel());
   return wrap;
@@ -617,6 +618,74 @@ async function saveFeaturesOff(inPanel) {
     void inPanel;
     await load();
   }
+}
+
+/**
+ * Letting the owner into your account — your switch, and your log.
+ *
+ * A quizmaster's own material is their work, and "only when you let me in, it
+ * shuts itself off, and here is everything I did" is a better answer than a
+ * promise. So this is the whole feature from their side: one switch, the same
+ * On | Off pill as everything else on this page, and the record underneath it.
+ *
+ * The log is the point. It shows READS as well as writes, because "did you
+ * look at my quizzes" is the question it exists to answer, and a writes-only
+ * log would be silent about exactly that.
+ */
+function supportPanel() {
+  const support = (me && me.support) || null;
+  const open = Boolean(support && Date.parse(support.expiresAt) > Date.now());
+  const log = (support && support.log) || [];
+
+  const el = node(`
+    <div class="panel">
+      <h3>Letting the owner in</h3>
+      <div class="acct-toggle" style="margin-top:10px">
+        <span class="acct-toggle-what">
+          <b>Support access</b><br>
+          <span class="tiny">${open
+            ? 'Open. They can look at your account and fix things — but not run a night. Switch it off the moment you are done.'
+            : 'Shut. Nobody can open your account but you — not the owner, not a key. Switch it on if you have asked for help.'}</span>
+        </span>
+        <span class="hat-switch feat-switch" data-on="${open ? '1' : '0'}">
+          <button class="hat-half ${open ? 'live' : ''}" data-want="1">On</button>
+          <button class="hat-half ${open ? '' : 'live'}" data-want="0">Off</button>
+        </span>
+      </div>
+      <div class="tiny acct-note">${open
+        ? 'It closes itself after a day if you forget, but switching it off here is instant.'
+        : 'While it is off, a game you are running cannot be touched and your packs cannot be opened.'}</div>
+      ${log.length ? `
+        <div class="tiny" style="margin-top:14px"><b>Everything they have done, most recent first</b></div>
+        <div class="support-log">
+          ${log.slice(-40).reverse().map((row) => `
+            <div class="support-row">
+              <span class="tiny">${esc(new Date(row.at).toLocaleString('en-GB'))}</span>
+              <span>${esc(row.what)}</span>
+            </div>`).join('')}
+        </div>`
+        : '<div class="tiny acct-note">Nothing to show — nobody has been in.</div>'}
+    </div>`);
+
+  for (const half of el.querySelectorAll('.hat-half')) {
+    half.addEventListener('click', async () => {
+      const want = half.dataset.want === '1';
+      if (want === open) return;
+      try {
+        const res = await fetch(keyed('/api/me/support'), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
+          body: JSON.stringify({ open: want }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Could not change that');
+        await load();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  }
+  return el;
 }
 
 /**

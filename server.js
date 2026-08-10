@@ -333,8 +333,35 @@ function whoIs(req, url) {
   const actingId = cookie(req, ACTING_COOKIE);
   if (actingId && account.role === 'owner') {
     const hat = accounts.find(actingId);
-    if (hat && hat.role === 'quizmaster' && hat.ownedBy === account.id) {
-      const wearing = { ...hat, actingAs: true, realName: account.name || account.email };
+    /*
+     * Two quite different ways to be inside a quizmaster account, and they are
+     * deliberately not the same rule.
+     *
+     *  - YOUR OWN HAT: the owner's linked quizmaster, checked with `ownedBy`
+     *    against the book rather than trusted from the cookie. Always allowed,
+     *    because it is your own account.
+     *  - SUPPORT ACCESS: somebody else's, and ONLY while they have opened the
+     *    door. Checked on EVERY request rather than once on the way in, so a
+     *    session cannot outlive the window — an hour later the same cookie
+     *    stops working on its own, with nothing to remember to press.
+     *
+     * There is no third way in. The host key cannot reach here at all: it
+     * returns BOOTSTRAP above and never reads this cookie, so holding the key
+     * does not open a subscriber's account either. That is the promise, and
+     * `test/support-access.test.js` is named after it.
+     */
+    const mine = hat && hat.ownedBy === account.id;
+    const invited = hat && accounts.supportOpen(hat.id);
+    if (hat && hat.role === 'quizmaster' && (mine || invited)) {
+      const wearing = {
+        ...hat,
+        actingAs: true,
+        realName: account.name || account.email,
+        // Marked so every gate downstream can tell "the owner in their own
+        // account" from "the owner inside somebody else's", which are not the
+        // same thing and must not be allowed the same actions.
+        ...(mine ? {} : { support: true, supportFor: account.id }),
+      };
       /*
        * …and, optionally, AS A PARTICULAR TIER.
        *
@@ -575,6 +602,11 @@ const server = http.createServer(async (req, res) => {
   const route = url.pathname;
 
   try {
+    // Everything done inside somebody else's account is written down for them,
+    // and some of it is refused outright. One place, so a route added later is
+    // covered without anybody remembering to.
+    if (!supportGuard(req, res, url, route)) return;
+
     if (req.method === 'GET' || req.method === 'HEAD') {
       if (await handleGet(req, res, url, route)) return;
     } else if (req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE') {
@@ -587,6 +619,75 @@ const server = http.createServer(async (req, res) => {
     else res.end();
   }
 });
+
+/*
+ * ---- what a support session may do, and what it writes down
+ *
+ * Both halves live here rather than on each route, so the next route somebody
+ * adds is covered without them having to think about it.
+ *
+ * REFUSED: anything under /api/host/*. That is the running of a night — Next,
+ * Back, Reveal, Launch — and the whole reason support access waits for the gig
+ * to be over. Entry already refuses while their game is live; this is the
+ * other half, for a game that starts WHILE somebody is inside.
+ *
+ * LOGGED: reads as well as writes, because "did you look at my quizzes" is the
+ * question this log exists to answer, and a writes-only log is silent about
+ * exactly that. What is skipped is the noise that would drown it — the state
+ * poll, the live stream, health checks and static files — none of which says
+ * anything a subscriber would want to read.
+ */
+/** How long a grant lasts if they forget to switch it off. */
+const SUPPORT_BACKSTOP_HOURS = 24;
+
+const SUPPORT_NEVER = ['/api/host/'];
+const SUPPORT_QUIET = ['/api/state', '/api/live', '/health', '/api/me', '/api/brand', '/api/has-accounts'];
+
+/**
+ * What a support session did, in words a subscriber would use.
+ *
+ * The log is read by somebody deciding whether they trust you, so it has to
+ * say what happened rather than which endpoint was called. "GET /api/library"
+ * is developer-speak; "Looked at your pack library" is the same fact in a
+ * sentence they can judge. Anything unmapped falls back to the raw route,
+ * which is honest — better an ugly line than a missing one.
+ */
+function supportWords(method, route) {
+  const read = method === 'GET';
+  if (route.startsWith('/api/quiz/') || route.startsWith('/api/bingo/')) {
+    const id = decodeURIComponent(route.split('/')[3] || '');
+    return read ? `Opened your pack "${id}"` : `Changed your pack "${id}"`;
+  }
+  if (route.startsWith('/api/invoices')) {
+    return read ? 'Looked at your invoices' : 'Changed something in your invoices';
+  }
+  if (route.startsWith('/api/advert')) {
+    return read ? 'Looked at your venue slides' : 'Changed your venue slides';
+  }
+  if (route.startsWith('/api/archive')) return 'Looked at your past nights';
+  if (route.startsWith('/api/photos')) return 'Looked at your photos';
+  if (route === '/api/library') return 'Looked at your pack library';
+  return `${method} ${route}`;
+}
+
+function supportGuard(req, res, url, route) {
+  if (!route.startsWith('/api/')) return true;
+  const who = whoIs(req, url);
+  if (!who || !who.support) return true;
+
+  if (SUPPORT_NEVER.some((p) => route.startsWith(p))) {
+    accounts.noteSupport(who.id, 'Tried to run your game — refused, support access cannot touch a night');
+    sendJson(res, 403, {
+      error: 'Support access cannot run a night. Ask them to close the game first, or come back when it is over.',
+    });
+    return false;
+  }
+
+  if (!SUPPORT_QUIET.some((p) => route === p || route.startsWith(p + '/'))) {
+    accounts.noteSupport(who.id, supportWords(req.method, route));
+  }
+  return true;
+}
 
 async function handleGet(req, res, url, route) {
   // ---- pages
@@ -1548,6 +1649,61 @@ async function handleWrite(req, res, url, route) {
    * `allowed()` does not read prefs and never will, so there is no way for a
    * setting on this page to hand anybody a feature. See `setPrefs()`.
    */
+  /*
+   * ---- support access: the subscriber's own door, and only theirs
+   *
+   * The one thing on this page that is not cosmetic. A quizmaster's own
+   * material is their work, and other quizmasters will assume the worst about
+   * a competitor who can read it — so "only when you let me in, it runs out on
+   * its own, and here is everything I did" is the answer, rather than a promise.
+   *
+   * Only the account itself can open it. Not the owner, and not the host key:
+   * `whoIs` returns BOOTSTRAP for a key and there is no account to write it
+   * against, so the key cannot open a door for itself either.
+   */
+  if (route === '/api/me/support' && req.method === 'PUT') {
+    const account = whoIs(req, url);
+    if (!account) return sendJson(res, 401, { error: 'Sign in first' }), true;
+    if (account.bootstrap) {
+      return sendJson(res, 400, {
+        error: 'The host key is not an account, so there is no door to open. Sign in as the account you want to grant access to.',
+      }), true;
+    }
+    /*
+     * And NOT while acting as somebody. Letting the owner open the door from
+     * inside a support session would mean one grant could extend itself for
+     * ever, which is the whole point of an expiry undone in one line.
+     */
+    if (account.actingAs) {
+      return sendJson(res, 403, {
+        error: 'Support access can only be changed by the account holder, signed in as themselves.',
+      }), true;
+    }
+    /*
+     * A SWITCH, not a duration to choose.
+     *
+     * Picking "1 hour or 8 or 24" is a decision at the worst possible moment —
+     * they do not know yet how long the problem takes. On, then off the second
+     * it is sorted, is the control they actually want, and off is instant.
+     *
+     * The expiry stays anyway, as a BACKSTOP rather than a plan: the real risk
+     * with a plain toggle is them forgetting it is on, not the owner
+     * overstaying. A day is long enough that it never interrupts a genuine
+     * session, and short enough that a forgotten grant is not a standing one.
+     */
+    const body = await readJson(req);
+    const saved = body.open === false
+      ? accounts.closeSupport(account.id)
+      : accounts.openSupport(account.id, Number(body.hours) || SUPPORT_BACKSTOP_HOURS);
+    if (!saved) return sendJson(res, 404, { error: 'No such account' }), true;
+    await backUpAccounts();
+    return sendJson(res, 200, {
+      ok: true,
+      support: saved.support || null,
+      open: accounts.supportOpen(account.id),
+    }), true;
+  }
+
   if (route === '/api/me/prefs' && req.method === 'PUT') {
     const account = whoIs(req, url);
     if (!account) return sendJson(res, 401, { error: 'Sign in first' }), true;
@@ -1845,6 +2001,40 @@ async function handleWrite(req, res, url, route) {
         ? cookieFor(req, TIER_COOKIE, wanted)
         : `${TIER_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`);
       return sendJson(res, 200, { ok: true, acting: true, previewTier: wanted }), true;
+    }
+
+    /*
+     * ---- into SOMEBODY ELSE's account, on their invitation
+     *
+     * Three refusals, and each is a different failure:
+     *
+     *  - no grant, or an expired one: the door is shut. This is the promise.
+     *  - their game is LIVE: you would be one mis-tap from ending somebody's
+     *    night in front of sixty people. Support is for between gigs, and the
+     *    refusal says so rather than just failing.
+     *  - not a quizmaster: there is nothing to act as.
+     */
+    if (body.accountId) {
+      const them = accounts.find(String(body.accountId));
+      if (!them || them.role !== 'quizmaster') {
+        return sendJson(res, 404, { error: 'No such quizmaster.' }), true;
+      }
+      if (!accounts.supportOpen(them.id)) {
+        return sendJson(res, 403, {
+          error: 'They have not let you in. Ask them to switch support access on from their account page — it is theirs to grant and it expires on its own.',
+        }), true;
+      }
+      if (rooms.get(them.id).live) {
+        return sendJson(res, 409, {
+          error: 'They are running a game right now. Support access waits until the night is over — going in mid-round is one mis-tap from ending it.',
+        }), true;
+      }
+      accounts.noteSupport(them.id, `${me.name || me.email} came in`);
+      await backUpAccounts();
+      res.setHeader('Set-Cookie', cookieFor(req, ACTING_COOKIE, them.id));
+      return sendJson(res, 200, {
+        ok: true, acting: true, support: true, account: accounts.view(them),
+      }), true;
     }
 
     let hat = accounts.ownQuizmasterFor(me.id);

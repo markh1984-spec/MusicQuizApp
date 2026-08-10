@@ -226,6 +226,7 @@ function subscriberRow(account) {
         </div>
       </div>
       <div class="inv-actions">
+        ${account.supportOpen ? '<button class="minor go-in" title="They have opened their account to you">Go in</button>' : ''}
         <span class="tier-pick">
           ${TIERS.map((t) => `
             <button class="minor tierbtn ${tierFor(account) === t.id ? 'on' : ''}" data-tier="${t.id}"
@@ -253,6 +254,26 @@ function subscriberRow(account) {
   for (const button of row.querySelectorAll('.tierbtn')) {
     button.addEventListener('click', () => save({ tier: button.dataset.tier }));
   }
+  /*
+   * Into their account, on their invitation.
+   *
+   * Only drawn when they have actually opened the door — a button that always
+   * showed and then 403'd would read as a broken feature rather than as a
+   * closed one. The server refuses regardless; this is just not offering
+   * something that cannot work.
+   */
+  row.querySelector('.go-in')?.addEventListener('click', async () => {
+    try {
+      const data = await api('/api/owner/act-as', {
+        method: 'POST', body: JSON.stringify({ accountId: account.id }),
+      });
+      if (!data.ok) throw new Error(data.error || 'Could not go in');
+      // Their console, as them. Everything from here is written into their log.
+      location.href = '/console';
+    } catch (err) {
+      alert(err.message);
+    }
+  });
   row.querySelector('.comp').addEventListener('click', () => save({ comped: !account.comped }));
   row.querySelector('.close').addEventListener('click', async () => {
     if (!confirm(`Close ${account.email}?\n\nThey are signed out and cannot run a night. Nothing is deleted — their packs and invoices are kept in case they come back.`)) return;

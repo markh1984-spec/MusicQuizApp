@@ -1618,6 +1618,55 @@ than the same string written out twice — if those two ever disagreed, launches
 would be filed under a room nothing reads and the count would silently stay on
 zero. There is a test that they are one string.
 
+### Support access — their door, their log
+
+`openSupport()` / `closeSupport()` / `supportOpen()` / `noteSupport()` in
+`src/accounts.js`, the second branch of `whoIs()` and `supportGuard()` in
+`server.js`, `supportPanel()` in `console.js`.
+
+**A quizmaster's own material is their work**, and other quizmasters will assume
+the worst about a competitor who can read it. So the answer is not a promise
+not to look: the app refuses until they open the door, it shuts itself again,
+and everything done inside is written down where they can read it.
+
+**It is a SWITCH, not a duration to pick.** Choosing "1 hour or 8 or 24" is a
+decision at the worst possible moment — they do not yet know how long the
+problem takes. On, then off the second it is sorted, and off is instant. The
+expiry stays as a BACKSTOP rather than a plan: the real risk with a plain
+toggle is them forgetting it is on, not the owner overstaying, so a grant
+nobody closes closes itself after a day.
+
+**Checked on every request, not once on the way in.** Otherwise a session
+outlives the window, which is the whole guarantee undone by a cookie.
+
+**Three refusals, each a different failure:** no grant or an expired one; their
+game is LIVE, because going in mid-round is one mis-tap from ending somebody's
+night; and host actions are blocked for the whole session, in case a game
+starts while somebody is already inside. The owner also cannot open the door
+from within a session — one grant extending itself for ever is the expiry
+undone in one line.
+
+**The host key cannot act as anybody, grant or no grant.** `whoIs()` returns
+`BOOTSTRAP` for a key and never reads the acting cookie, so holding the key
+does not open a subscriber's account either. There is a test asserting that
+ORDER, because flipping it would silently make the key a way into every
+account.
+
+**Reads are logged as well as writes.** "Did you look at my quizzes" is the
+question the log exists to answer, and a writes-only log is silent about
+exactly that. The noise that would drown it — the state poll, the live stream,
+health, `/api/me` — is skipped. Entries are written in WORDS (`supportWords()`)
+rather than route paths: this is read by somebody deciding whether they trust
+you, so "Looked at your pack library" beats "GET /api/library". Anything
+unmapped falls back to the raw route, because an ugly line beats a missing one.
+
+**What this cannot promise, and do not overstate it to a subscriber:** the owner
+runs the server, the disk and the backups, and the server has to be able to
+read a quiz to put it on a projector — so end-to-end encryption is impossible
+here by construction. This is access control and an audit trail, which is what
+every hosted service has. The honest pitch is "the app will not let me in
+unless you let me, and here is the log", not "I cannot see it".
+
 ### The invoice book, the archive and the advert slides are per room now
 
 They were the three things rooms left behind, and each was a different problem
@@ -1865,7 +1914,7 @@ is `'all'` today, so nothing changed for anybody. The account page shows it —
 carries the same **On | Off** switch as the hat in the top right, with a `+`
 where a tier above yours would be.
 
-All on **`MusicQuizApp`**. 592 tests green.
+All on **`MusicQuizApp`**. 603 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on
