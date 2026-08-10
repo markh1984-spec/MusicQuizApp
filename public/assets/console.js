@@ -1881,9 +1881,10 @@ function packCard(kind, pack) {
    */
   const mine = can(FEATURES.CATALOGUE);
 
+  const roundCount = (pack.rounds || []).length;
   const detail = kind === 'quiz'
-    ? `${pack.questionCount} questions · ${(pack.rounds || []).length} rounds`
-    : `${pack.trackCount} tracks`;
+    ? `${pack.questionCount} question${pack.questionCount === 1 ? '' : 's'} · ${roundCount} round${roundCount === 1 ? '' : 's'}`
+    : `${pack.trackCount} track${pack.trackCount === 1 ? '' : 's'}`;
 
   const played = pack.playCount
     ? `Played ${pack.playCount} time${pack.playCount === 1 ? '' : 's'}${pack.lastPlayedAt ? ` · last ${whenish(pack.lastPlayedAt)}` : ''}`
