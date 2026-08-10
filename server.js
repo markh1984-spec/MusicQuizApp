@@ -2024,6 +2024,10 @@ async function handleWrite(req, res, url, route) {
         checked: result.checked,
         rejected: result.rejected.length,
         unchecked: result.unchecked || [],
+        // Rounds the WRITER could not fill — a different failure from the
+        // checker binning things, and the one that reads as success if it is
+        // not said out loud.
+        short: result.short || [],
       }));
     } catch (err) {
       log('ERROR ' + err.message);

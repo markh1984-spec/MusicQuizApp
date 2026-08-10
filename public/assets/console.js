@@ -1059,6 +1059,11 @@ async function generateQuiz(panel) {
         Written <b>${esc(done.title)}</b> — ${done.questionCount} questions across
         ${done.rounds} round${done.rounds === 1 ? '' : 's'}.
         <br>Checked over — ${done.rejected} question${done.rejected === 1 ? '' : 's'} thrown out and replaced.
+        ${(done.short || []).length
+          ? `<br><b style="color:var(--bad)">Round${done.short.length === 1 ? '' : 's'} ${done.short.map((r) => `${r.round} came back with only ${r.got} of ${r.wanted}`).join(', ')}.</b>
+             That is the WRITER running out of questions it was confident about, not the checker throwing them away.
+             Try a broader theme, or ask for fewer.`
+          : ''}
         ${(done.unchecked || []).length
           ? `<br><b>Round${done.unchecked.length === 1 ? '' : 's'} ${done.unchecked.join(', ')} could NOT be checked</b> — the second pass was unreachable. Read ${done.unchecked.length === 1 ? 'that round' : 'those rounds'} line by line.`
           : ''}
@@ -1068,7 +1073,7 @@ async function generateQuiz(panel) {
         ${done.needsImages ? '<br><span class="tiny">The face round has no pictures yet — it will use placeholders until you generate them. See TODO.md part 6.</span>' : ''}`;
     status.appendChild(node(`<div class="gen-good">${said}</div>`));
     // A quiz has no song history, so backup is the only thing that can be amiss.
-    showDone(done.backedUp && !(done.unchecked || []).length ? 'good' : 'warn', said);
+    showDone(done.backedUp && !(done.unchecked || []).length && !(done.short || []).length ? 'good' : 'warn', said);
     if (problems.length) {
       status.appendChild(node(`
         <div class="gen-bad">${problems.length} thing${problems.length === 1 ? '' : 's'} to fix in the editor:

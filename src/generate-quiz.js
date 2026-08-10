@@ -566,7 +566,7 @@ export async function buildIntroPlaylists({ quiz, log = () => {} }) {
  */
 const MAX_ATTEMPTS = 3;
 
-async function buildRound({ brief, perRound, check, system, apiKey, model, log, onReject, onUnchecked = () => {} }) {
+async function buildRound({ brief, perRound, check, system, apiKey, model, log, onReject, onUnchecked = () => {}, onShort = () => {} }) {
   const accepted = [];
   const failed = [];
   const seen = new Set();
@@ -626,11 +626,22 @@ async function buildRound({ brief, perRound, check, system, apiKey, model, log, 
 
   if (accepted.length >= perRound) return accepted.slice(0, perRound);
 
-  // Last resort. Never ship a short round, but be loud about why.
+  // Last resort. Never ship a short round quietly, and be loud about why.
   const shortfall = perRound - accepted.length;
   log(`  COULD NOT FIND ${perRound} GOOD QUESTIONS after ${MAX_ATTEMPTS} attempts.`);
   log(`  Filling the last ${shortfall} from the rejects — READ THOSE ONES CAREFULLY.`);
-  return [...accepted, ...failed.slice(0, shortfall)];
+  const out = [...accepted, ...failed.slice(0, shortfall)];
+  /*
+   * And say so where it cannot be missed.
+   *
+   * This was only ever a line in a log that scrolls past while you look at
+   * something else — so a round that came back with ONE question out of ten
+   * was announced as "Written The 2000s Metal Quiz — 1 questions across 1
+   * round" on a green banner, which reads as success. The writer had simply
+   * stopped producing questions and nothing said so.
+   */
+  if (out.length < perRound) onShort(out.length, perRound);
+  return out;
 }
 
 /**
@@ -675,6 +686,7 @@ export async function generateQuizPack({
   const built = [];
   const rejected = [];
   const unchecked = [];   // rounds the checking pass could not reach at all
+  const short = [];       // rounds the WRITER would not fill, which is different
 
   for (let i = 0; i < plan.length; i++) {
     const { type, count } = plan[i];
@@ -687,13 +699,17 @@ export async function generateQuizPack({
       brief, perRound: count, check, system, apiKey, model, log,
       onReject: (q, reason) => rejected.push({ round: i + 1, prompt: q.prompt, reason }),
       onUnchecked: () => { if (!unchecked.includes(i + 1)) unchecked.push(i + 1); },
+      onShort: (got, wanted) => short.push({ round: i + 1, type, got, wanted }),
     });
 
     built.push({
       id: `r${i + 1}`,
       type,
       title: roundTitle(type, i, subject),
-      blurb: roundBlurb(type, subject, count),
+      // The count the round ACTUALLY has, not the one that was asked for — a
+      // round of one saying "10 intros" on the projector is a lie the room can
+      // see.
+      blurb: roundBlurb(type, subject, questions.length),
       ...(type === 'image' ? { imageCaption: 'AI-generated illustration — not a real photograph' } : {}),
       questions: questions.map((q, qi) => ({
         id: `r${i + 1}q${qi + 1}`,
@@ -763,7 +779,7 @@ export async function generateQuizPack({
   log(`saved ${quizId}.json`);
 
   const needsImages = built.some((r) => r.type === 'image');
-  return { quiz, problems, file, needsImages, rejected, unchecked, checked: check };
+  return { quiz, problems, file, needsImages, rejected, unchecked, short, checked: check };
 }
 
 function slug(s) {

@@ -60,18 +60,30 @@ const apiBase = () => (isBingo() ? '/api/bingo' : '/api/quiz');
 // ------------------------------------------------------------------ loading
 
 async function api(path, options = {}) {
-  const res = await fetch(path + (path.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(hostKey), {
-    headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
+  // The key is appended only when there IS one. A signed-in owner has a cookie
+  // and needs no key, and `?key=` with nothing after it is not the same as no
+  // key at all — it is a wrong key, which is a 401.
+  const url = hostKey
+    ? path + (path.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(hostKey)
+    : path;
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json', ...(hostKey ? { 'X-Host-Key': hostKey } : {}) },
     ...options,
   });
   const text = await res.text();
   const data = text ? JSON.parse(text) : {};
   if (res.status === 401) {
-    // A remembered key that no longer works should send you somewhere you can
-    // fix it, not leave you stuck on an error.
+    // Not signed in and no working key. A remembered key that has stopped
+    // working should send you somewhere you can fix it rather than leaving you
+    // on an error.
     localStorage.removeItem('musicquiz.hostkey');
-    location.href = '/console';
-    throw new Error('Host key not accepted');
+    location.href = hostKey ? '/console' : '/login?next=/editor';
+    throw new Error('Not signed in');
+  }
+  if (res.status === 403) {
+    mainEl.replaceChildren(node(`<div class="problems"><strong>${esc(data.error || 'Not allowed.')}</strong>
+      Writing packs is the owner's — <a href="/console">back to the console</a>.</div>`));
+    throw new Error(data.error || 'Not allowed');
   }
   if (!res.ok) throw Object.assign(new Error(data.error || res.statusText), { data });
   return data;
@@ -722,10 +734,15 @@ document.addEventListener('keydown', (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); if (dirty) save(); }
 });
 
-if (!hostKey) {
-  mainEl.replaceChildren(node('<div class="problems"><strong>No host key.</strong> Open this page from the control view, or add ?key=… to the address.</div>'));
-} else {
-  loadQuizList().catch((err) => {
-    mainEl.replaceChildren(node(`<div class="problems"><strong>Could not load the quizzes:</strong> ${esc(err.message)}</div>`));
-  });
-}
+/*
+ * No key needed any more.
+ *
+ * The editor used to refuse outright without one, which was right when the key
+ * was the only identity there was — and wrong the moment an owner could sign
+ * in, because writing packs is the OWNER's job and they have no key. Same fix
+ * the control view needed: ask the server and let it decide, rather than
+ * deciding here on the strength of a string in the address bar.
+ */
+loadQuizList().catch((err) => {
+  mainEl.replaceChildren(node(`<div class="problems"><strong>Could not load the quizzes:</strong> ${esc(err.message)}</div>`));
+});
