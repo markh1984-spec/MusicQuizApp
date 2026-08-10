@@ -399,6 +399,33 @@ The Console says so in red if it is not set up.
 
 ---
 
+## Asked for, not yet specced
+
+### Build out the owner admin console
+
+`/owner` is currently two things: reported questions, and the quizmaster list.
+That is the minimum it needed to exist, not what it should be. Wanted, but not
+yet pinned down — **needs a conversation before anything is built.**
+
+Obvious candidates, in no order and none of them agreed:
+
+- **Who is running what, right now** — every room, what is on its projector,
+  how many are in. `rooms.summaries()` already returns it and the console shows
+  it in a thin strip; it belongs here properly.
+- **The catalogue as a product** — which packs exist, which are selling, which
+  have never been played, which have open corrections against them.
+- **Money** — who is on which tier, who is lapsed, what is owed. The invoice
+  book is a quizmaster tool today; the OWNER's view of revenue is a different
+  thing and does not exist.
+- **What generation has cost** — Claude and OpenAI spend per pack, because that
+  is the number the whole tier structure is built on.
+- **A subscriber's account, from the outside** — their tier, their room, their
+  join code, a way to reset their password, and support access with a log.
+- **The song history and the packs**, which are owner-owned but currently live
+  on the quizmaster console because that is where they were built first.
+
+---
+
 ## Waiting on a decision from you — no rush, nothing is blocked
 
 **Which features sit on which tier, and what the middle two cost.** The ladder
