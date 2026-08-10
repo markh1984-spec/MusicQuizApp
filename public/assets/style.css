@@ -1215,6 +1215,35 @@ body.console::after { display: none; }
 .game-head a { margin-left: auto; }
 
 .pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+
+/* ---- finding a pack when there are eighty of them.
+
+   COMPACT keeps every control — it is about fitting more on screen, not about
+   taking anything away. What goes is the blurb and the play count, which are
+   the two lines you read once and never again; the launch-time pickers stay,
+   because choosing the card shape and the look IS the launch. */
+.pack-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pack-search {
+  width: 190px; max-width: 42vw;
+  padding: 8px 12px; border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--panel-line);
+  color: var(--ink); font: inherit; font-size: 13px;
+}
+.pack-search:focus { outline: none; border-color: var(--hot); background: rgba(255, 255, 255, 0.1); }
+.pack-search::placeholder { color: var(--ink-dim); }
+
+.pack-grid.dense { grid-template-columns: repeat(auto-fill, minmax(178px, 1fr)); gap: 8px; }
+.pack-grid.dense .pack-card { padding: 10px 12px; gap: 3px; }
+.pack-grid.dense .pack-title { font-size: 15px; }
+/* The blurb and "played 39 times" — read once, then noise. */
+.pack-grid.dense .pack-card > .tiny:not([style]) { display: none; }
+.pack-grid.dense .played { display: none; }
+.pack-grid.dense .pack-shape { font-size: 11px; }
+.pack-grid.dense .pack-shape select { padding: 5px 24px 5px 8px; font-size: 12px; }
+.pack-grid.dense .pack-actions { gap: 4px; }
+.pack-grid.dense .pack-actions button, .pack-grid.dense .pack-actions a { padding: 5px 8px; font-size: 11.5px; }
+.pack-grid.dense .pack-card .go { padding: 8px; font-size: 14px; margin-top: 5px; }
 .pack-card {
   display: flex; flex-direction: column; gap: 5px;
   padding: 16px; border-radius: 14px;

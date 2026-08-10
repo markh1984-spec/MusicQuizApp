@@ -1520,7 +1520,28 @@ function runningPanel(running) {
   return el;
 }
 
+/*
+ * Finding a pack when there are eighty of them.
+ *
+ * A search box and a compact toggle. Both are about the same problem: the grid
+ * was fine at eight packs and is unusable at eighty, and eighty is where this
+ * is going the moment packs are something to sell.
+ *
+ * SEARCH LOOKS INSIDE THE PACK, not just at its title. "Madonna" should find
+ * the Madonna quiz AND the 80s pack with three Madonna questions in it, because
+ * the second is what you actually cannot find any other way — and it is the
+ * thing you want when a venue asks for a Madonna round.
+ *
+ * COMPACT is remembered, per tab, because it is a preference about how you
+ * work rather than about this visit.
+ */
+const DENSE_STORE = 'musicquiz.compactpacks';
+let packQuery = { quiz: '', bingo: '' };
+
 function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
+  const dense = localStorage.getItem(DENSE_STORE) === '1';
+  const query = packQuery[kind] || '';
+
   const el = node(`
     <div class="game-section">
       <div class="game-head">
@@ -1528,21 +1549,73 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
           <h2>Your saved ${kind === 'quiz' ? 'quizzes' : 'bingo packs'}</h2>
           <div class="tiny">${esc(blurb)}</div>
         </div>
-        ${can(FEATURES.CATALOGUE) ? `<a class="minor" href="${linkTo('/editor')}">${esc(editLabel)}</a>` : ''}
+        <div class="pack-tools">
+          <input class="pack-search" type="search" placeholder="Search ${packs ? packs.length : 0}…"
+                 value="${esc(query)}" aria-label="Search packs">
+          <button class="minor pack-dense" title="${dense ? 'Show the full cards' : 'Squeeze more on screen'}"
+                  aria-pressed="${dense}">${dense ? 'Cards' : 'Compact'}</button>
+          ${can(FEATURES.CATALOGUE) ? `<a class="minor" href="${linkTo('/editor')}">${esc(editLabel)}</a>` : ''}
+        </div>
       </div>
-      <div class="pack-grid"></div>
+      <div class="pack-grid ${dense ? 'dense' : ''}"></div>
     </div>`);
 
   const grid = el.querySelector('.pack-grid');
-  if (!packs || !packs.length) {
-    grid.appendChild(node(`<div class="tiny">Nothing saved yet — build one above.</div>`));
-    return el;
-  }
+  const search = el.querySelector('.pack-search');
 
-  for (const pack of packs) {
-    grid.appendChild(packCard(kind, pack));
-  }
+  const paint = () => {
+    const found = matchPacks(packs || [], packQuery[kind]);
+    grid.replaceChildren();
+    if (!packs || !packs.length) {
+      grid.appendChild(node('<div class="tiny">Nothing saved yet — build one above.</div>'));
+      return;
+    }
+    if (!found.length) {
+      grid.appendChild(node(`<div class="tiny">Nothing matches “${esc(packQuery[kind])}”.</div>`));
+      return;
+    }
+    for (const pack of found) grid.appendChild(packCard(kind, pack));
+  };
+
+  // Redrawn in place rather than through render(), so the box keeps focus and
+  // the caret does not jump to the end after every letter.
+  search.addEventListener('input', () => { packQuery[kind] = search.value; paint(); });
+
+  el.querySelector('.pack-dense').addEventListener('click', () => {
+    localStorage.setItem(DENSE_STORE, dense ? '0' : '1');
+    render();
+  });
+
+  paint();
   return el;
+}
+
+/**
+ * Which packs match what was typed.
+ *
+ * Every word has to appear SOMEWHERE in the pack — title, id, round names,
+ * question text, answers, artists, track titles — so "abba disco" finds the
+ * disco pack with Abba on it rather than nothing at all. Words rather than the
+ * whole phrase, because nobody types a title in the order it was saved.
+ */
+function matchPacks(packs, query) {
+  const words = String(query || '').toLowerCase().split(/\s+/).filter(Boolean);
+  if (!words.length) return packs;
+  return packs.filter((pack) => {
+    const hay = searchText(pack);
+    return words.every((w) => hay.includes(w));
+  });
+}
+
+/*
+ * `pack.search` is built SERVER-SIDE — every question, answer, artist and track
+ * title, deduplicated down to words. The console only ever receives a summary
+ * of a pack, so without it a search could match a title and nothing else, and
+ * "which pack has the Wham question in it" is precisely the search you cannot
+ * do any other way. See `searchBlob` in src/quizzes.js.
+ */
+function searchText(pack) {
+  return `${pack.title || ''} ${pack.id || ''} ${pack.search || ''}`.toLowerCase();
 }
 
 function hasPictureRound(pack) {

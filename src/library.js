@@ -15,7 +15,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { listQuizzes } from './quizzes.js';
+import { listQuizzes, searchBlob } from './quizzes.js';
 import { validateBingoPack, cardShape, shapeFields } from './bingo.js';
 
 export const GAME_KINDS = ['quiz', 'bingo'];
@@ -45,6 +45,12 @@ export function listBingoPacks(dir) {
           cardSize: pack.cardSize || 4,
           ...shapeFields(cardShape(pack)),
           trackCount: (pack.tracks || []).length,
+          // Every artist and title, so the console's search box can answer
+          // "which pack has Abba on it" — see `searchBlob` in quizzes.js.
+          search: searchBlob([
+            pack.title, pack.subtitle,
+            ...(pack.tracks || []).flatMap((t) => [t.artist, t.title]),
+          ]),
           // The playlist this pack was built with, so the console can put it
           // one tap away on the night. It was only ever shown once, in the
           // generator's log, and then you had to go and find it in Spotify.

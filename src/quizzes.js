@@ -91,6 +91,25 @@ export function answerLetterIndex(answer) {
  */
 export const LEADING_ARTICLE = /^(the|a|an)\s+/i;
 
+/**
+ * The text a pack can be found by, as one lowercase string.
+ *
+ * Deduplicated and capped: a whole quiz is several thousand words and the
+ * console downloads every pack's blob at once, so an uncapped one would put
+ * half a megabyte on a phone over pub wifi to save a scroll. Words rather than
+ * sentences, because that is all a search needs.
+ */
+export function searchBlob(bits, max = 3000) {
+  const words = new Set();
+  for (const bit of bits) {
+    if (!bit) continue;
+    for (const word of String(bit).toLowerCase().split(/[^a-z0-9']+/)) {
+      if (word.length > 1) words.add(word);
+    }
+  }
+  return [...words].join(' ').slice(0, max);
+}
+
 export function listQuizzes(dir) {
   let files = [];
   try {
@@ -112,6 +131,18 @@ export function listQuizzes(dir) {
           questionCount: (r.questions || []).length,
         })),
         questionCount: (quiz.rounds || []).reduce((n, r) => n + (r.questions || []).length, 0),
+        // What the console's search box looks through. Built here because the
+        // whole pack is already parsed and the console only ever gets a
+        // summary — without it, searching could only ever match a title, and
+        // "which pack has the Wham question in it" is the search you cannot
+        // answer any other way.
+        search: searchBlob([
+          quiz.title,
+          ...(quiz.rounds || []).flatMap((r) => [
+            r.title,
+            ...(r.questions || []).flatMap((q) => [q.prompt, q.answer, q.answerNote, q.musician, ...(q.options || [])]),
+          ]),
+        ]),
         // Only the default. The look is chosen when you launch it, so a normal
         // pack can be dressed up for a Valentine's night without being edited.
         look: quiz.look || 'default',
