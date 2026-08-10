@@ -946,6 +946,24 @@ browser is decoration — the tier-preview work already proved how fast a page
 and its API drift apart. `/api/host/launch` checks the pack id from the request
 body, because that is exactly the shape of the hole `POST /api/quiz` had.
 
+**The account page shows it, as a statement and never a shop.** `libraryPanel()`
+in `console.js` — "Quizzes 3 of 7", with the line underneath naming the lowest
+tier ABOVE this one that holds the whole catalogue. The ladder below it lists
+capabilities, every one of which is already Bronze's, so before this the page
+had nothing on it saying what a higher tier would actually get you.
+
+Two things it gets right, both found by looking at it rather than by reasoning:
+
+- **It only names a tier ABOVE the reader's own.** The first version named the
+  lowest tier holding everything, which today is Bronze — so a Bronze
+  subscriber on a starter list was told "Bronze includes every pack" while
+  looking at three of seven. That reads as a fault in their account rather than
+  as an offer. If their own tier already holds everything, the limit is an
+  explicit list rather than the ladder and it says nothing about tiers at all.
+- **It is silent when the whole catalogue is in reach**, which is everybody
+  today. A page that congratulates you on owning everything is one you learn to
+  skip, and the line has to still be worth reading on the day it changes.
+
 **Pay-per-pack is deliberately NOT built.** A shop needs a payment flow, a
 purchase record and a story for a card that fails mid-month — a week of work,
 spent building something that competes with the upgrade you want people to
@@ -1799,7 +1817,7 @@ intro-round playlist button, the worst of which made **a Spotify refusal look
 identical to a success** — it is the reason an evening went on a 403 with
 nothing on screen to name it.
 
-All on **`MusicQuizApp`**. 581 tests green.
+All on **`MusicQuizApp`**. 584 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on

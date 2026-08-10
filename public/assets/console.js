@@ -504,6 +504,7 @@ function accountSection() {
   wrap.appendChild(youPanel());
   wrap.appendChild(schemePanel()[0] || node('<span></span>'));
   wrap.appendChild(planPanel());
+  wrap.appendChild(libraryPanel());
   for (const tier of ladderPanels()) wrap.appendChild(tier);
   wrap.appendChild(linksPanel());
   return wrap;
@@ -592,6 +593,52 @@ async function saveFeaturesOff(inPanel) {
     void inPanel;
     await load();
   }
+}
+
+/**
+ * What you can play — the CONTENT half of a tier.
+ *
+ * The ladder below lists capabilities, and every one of them is already
+ * yours on Bronze, so the page had nothing on it that said what a higher tier
+ * would actually get you. The library is the lever, and this is where it shows.
+ *
+ * **A statement, never a switch, and never a shop.** It says what is in reach
+ * and — only when something is not — what a tier above holds. That is the whole
+ * upsell: it arrives while somebody is doing well, at the point they go looking
+ * for something new to run, rather than as a button that interrupts them.
+ *
+ * Silent when the whole catalogue is in reach, which is everybody today. A
+ * panel saying "you have all 15 of 15" is a line nobody needs to read, and a
+ * page that congratulates you on owning everything is one you learn to skip.
+ */
+function libraryPanel() {
+  const mine = (library.quizzes || []).length;
+  const mineBingo = (library.bingo || []).length;
+  // Sent by /api/library, which is the side that can actually count the files.
+  const total = library.catalogue || null;
+
+  const restricted = total && (total.quizzes > mine || total.bingo > mineBingo);
+  if (!restricted) {
+    return node(`
+      <div class="panel">
+        <h3>Your library</h3>
+        <div class="acct-grid">
+          <div><div class="tiny">Quizzes</div><div class="acct-val">${mine}</div></div>
+          <div><div class="tiny">Bingo games</div><div class="acct-val">${mineBingo}</div></div>
+        </div>
+        <div class="tiny acct-note">Every pack in the catalogue is yours to run. New ones appear here as they are written.</div>
+      </div>`);
+  }
+
+  return node(`
+    <div class="panel">
+      <h3>Your library</h3>
+      <div class="acct-grid">
+        <div><div class="tiny">Quizzes</div><div class="acct-val">${mine} <span class="tiny">of ${total.quizzes}</span></div></div>
+        <div><div class="tiny">Bingo games</div><div class="acct-val">${mineBingo} <span class="tiny">of ${total.bingo}</span></div></div>
+      </div>
+      <div class="tiny acct-note">${esc(total.blurb || 'A higher tier includes every pack in the catalogue, and each new one as it is written.')}</div>
+    </div>`);
 }
 
 /** Who you are, and what the room sees when you run a night. */

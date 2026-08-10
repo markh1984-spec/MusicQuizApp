@@ -18,6 +18,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import * as plans from '../public/assets/plans.js';
 import { packsFor, canPlayPack, TIER_PACKS, FEATURES, can } from '../public/assets/plans.js';
 import { Accounts } from '../src/accounts.js';
 
@@ -111,4 +112,46 @@ test('a smaller library takes away no features at all', () => {
   for (const feature of [FEATURES.QUIZ, FEATURES.BINGO, FEATURES.LIBRARY, FEATURES.PHOTOS, FEATURES.LOOKS]) {
     assert.equal(can(starter, feature), can(full, feature), `${feature} changed with the pack list`);
   }
+});
+
+/*
+ * The account page's line about what a higher tier holds.
+ *
+ * The first version named the LOWEST tier that includes the whole catalogue —
+ * which today is Bronze, since nothing is switched on. So a Bronze subscriber
+ * on a starter list was told "Bronze includes every pack" while looking at
+ * three of seven. That reads as a fault in their account, not as an offer.
+ *
+ * Kept in step with server.js: only ever a tier ABOVE this one, and nothing
+ * about tiers at all when the limit is an explicit list rather than the ladder.
+ */
+function upsellLine(who, tierPacks) {
+  const { TIERS, tierFor } = plans;
+  const theirs = TIERS.find((t) => t.id === tierFor(who || {}));
+  const rank = theirs ? theirs.rank : -1;
+  const up = TIERS
+    .filter((t) => t.rank > rank && tierPacks[t.id] === 'all')
+    .sort((a, b) => a.rank - b.rank)[0];
+  return up ? `${up.label} includes every pack` : 'Ask about the rest of the catalogue.';
+}
+
+test('the upsell never names the tier the reader is already on', () => {
+  const allAll = { bronze: 'all', silver: 'all', gold: 'all' };
+  const rob = { role: 'quizmaster', tier: 'bronze', packs: ['one'] };
+  const line = upsellLine(rob, allAll);
+  assert.doesNotMatch(line, /Bronze/, 'told a Bronze reader that Bronze has everything');
+  assert.match(line, /Silver/);
+});
+
+test('a Gold reader with a hand-set list is sold nothing, because there is nothing above', () => {
+  const allAll = { bronze: 'all', silver: 'all', gold: 'all' };
+  const line = upsellLine({ role: 'quizmaster', tier: 'gold', packs: ['one'] }, allAll);
+  assert.match(line, /Ask about the rest/);
+  assert.doesNotMatch(line, /Gold|Silver|Bronze/);
+});
+
+test('once Bronze is a starter set, a Bronze reader is pointed at Silver', () => {
+  const starter = { bronze: ['one', 'two'], silver: 'all', gold: 'all' };
+  const line = upsellLine({ role: 'quizmaster', tier: 'bronze' }, starter);
+  assert.match(line, /Silver includes every pack/);
 });

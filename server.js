@@ -40,7 +40,7 @@ import { Accounts } from './src/accounts.js';
 import { Reports } from './src/reports.js';
 import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
-import { FEATURES, TIERS, whyNot, entitlements, packsFor, canPlayPack } from './public/assets/plans.js';
+import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, canPlayPack } from './public/assets/plans.js';
 import { OWNER_ONLY, changesTheLibrary } from './src/gates.js';
 import { brandFor } from './src/branding.js';
 import { findScheme, DEFAULT_SCHEME, SCHEMES } from './public/assets/schemes.js';
@@ -425,6 +425,37 @@ function whoseRoom(room) {
  * `'all'` short-circuits, which is every account today — this is the mechanism
  * with nothing switched on.
  */
+/**
+ * The lowest tier that includes the whole catalogue, said in words.
+ *
+ * Worked out from `TIER_PACKS` rather than written out, so moving the line
+ * between a starter set and everything cannot leave the account page quietly
+ * naming the wrong tier at somebody who is being asked to pay for it.
+ */
+function fullLibraryTier(who) {
+  const theirs = TIERS.find((t) => t.id === tierFor(who || {}));
+  const rank = theirs ? theirs.rank : -1;
+
+  /*
+   * Only ever a tier ABOVE this one.
+   *
+   * The first version named the lowest tier holding the whole catalogue, which
+   * today is Bronze — so a Bronze subscriber on a starter list was told that
+   * Bronze includes every pack while looking at three of seven. That reads as
+   * a bug in their account rather than as an offer.
+   *
+   * If their own tier already includes everything, the limit is an explicit
+   * list on the account rather than the ladder, and there is no tier to sell
+   * them — so it says nothing about tiers at all.
+   */
+  const up = TIERS
+    .filter((t) => t.rank > rank && TIER_PACKS[t.id] === 'all')
+    .sort((a, b) => a.rank - b.rank)[0];
+  return up
+    ? `${up.label} includes every pack in the catalogue, and each new one as it is written.`
+    : 'Ask about the rest of the catalogue.';
+}
+
 function onlyTheirPacks(library, who) {
   const allowed = packsFor(who || {});
   if (allowed === 'all') return library;
@@ -823,7 +854,21 @@ async function handleGet(req, res, url, route) {
   // The console's library: every quiz and every bingo pack you have saved.
   if (route === '/api/library') {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
-    const library = onlyTheirPacks(fullLibrary(config, roomForHost(req, url).id), whoIs(req, url));
+    const everything = fullLibrary(config, roomForHost(req, url).id);
+    const library = onlyTheirPacks(everything, whoIs(req, url));
+    /*
+     * How big the whole catalogue is, so the account page can say "3 of 20".
+     *
+     * Sent always and compared in the browser, rather than the server deciding
+     * whether somebody is missing anything: the console already has its own
+     * count, and one side working it out from two numbers cannot disagree with
+     * the other about what those numbers are.
+     */
+    const catalogue = {
+      quizzes: (everything.quizzes || []).length,
+      bingo: (everything.bingo || []).length,
+      blurb: fullLibraryTier(whoIs(req, url)),
+    };
     const backup = await backupStatus();
     const { session } = roomForHost(req, url);
     const me = whoIs(req, url);
@@ -838,6 +883,10 @@ async function handleGet(req, res, url, route) {
       // keeping its own copy of the list and drifting from the stylesheet.
       schemes: SCHEMES,
       ...library,
+      // How big the whole catalogue is, next to what this account can reach.
+      // The account page says "3 of 20" from these two, and stays quiet when
+      // they match.
+      catalogue,
       adverts: listAdvertPacks(config.advertDir),
       // How many tracks each card size wants, straight from the rule itself so
       // the console can size a pasted list without keeping its own copy of the
