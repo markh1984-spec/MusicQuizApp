@@ -146,6 +146,24 @@ export function listQuizzes(dir) {
         // Only the default. The look is chosen when you launch it, so a normal
         // pack can be dressed up for a Valentine's night without being edited.
         look: quiz.look || 'default',
+        /*
+         * The intro round's Spotify playlist, so the console can put it one
+         * tap away on the night.
+         *
+         * A bingo pack has carried this from the start and a quiz did not,
+         * which meant building the playlist for an intro round left NOTHING
+         * on screen: the panel that printed the link was torn down by the
+         * reload, and the card had nowhere to show it. The link existed only
+         * in a log that had already gone — which is the exact problem the
+         * green Playlist button was added to solve.
+         *
+         * It hangs off the ROUND rather than the pack, because a quiz can hold
+         * more than one intro round. The card shows the first; the panel lists
+         * them all.
+         */
+        playlist: (quiz.rounds || [])
+          .map((r) => r.spotifyPlaylist && r.spotifyPlaylist.url)
+          .find(Boolean) || '',
       });
     } catch (err) {
       out.push({ id: path.basename(file, '.json'), file, title: file, broken: err.message, rounds: [] });

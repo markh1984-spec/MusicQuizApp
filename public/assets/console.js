@@ -1816,6 +1816,18 @@ function playlistPanel(pack) {
           say(`\n${p.round}: ${p.url}${p.missing ? ` (${p.missing} not found on Spotify)` : ''}`);
         }
         if (!done.playlists.length) say('\nNo playlist made.');
+        /*
+         * Hold the result above everything BEFORE reloading.
+         *
+         * `load()` rebuilds the page from the library, which tears down this
+         * card and takes the panel — and the link it just printed — with it.
+         * From the outside that is a button that says "Building…" and then
+         * closes, with nothing to show for a playlist that was in fact made.
+         * Exactly the fault the generators had, and the same fix.
+         */
+        showDone(done.playlists.length ? 'good' : 'warn', done.playlists.length
+          ? `<b>Playlist built.</b> ${done.playlists.map((p) => `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.round)}</a>${p.missing ? ` <span class="tiny">(${p.missing} not found on Spotify)</span>` : ''}`).join(' · ')}`
+          : '<b>No playlist made.</b> Nothing in this quiz has an intro round with tracks on it.');
         await load();
       }
     } catch (err) {

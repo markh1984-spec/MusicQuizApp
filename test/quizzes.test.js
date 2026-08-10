@@ -696,3 +696,41 @@ test('an ageing flag can be ticked off like any other', () => {
   const [again] = reviewWarnings(quiz).filter((w) => w.kind === 'ages-out');
   assert.equal(again.cleared, true, 'the tick did not survive');
 });
+
+/*
+ * A quiz's intro round carries a Spotify playlist, and the console has to be
+ * able to see it.
+ *
+ * A bingo pack has surfaced this from the start; a quiz did not. So building
+ * the playlist for an intro round put NOTHING on screen — the panel that
+ * printed the link was torn down by the reload that followed, and the card had
+ * nowhere to show it. The link existed only in a log that had already gone,
+ * which is the exact problem the green Playlist button was added to solve.
+ */
+test('a quiz summary carries its intro round playlist', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'quiz-pl-'));
+  fs.writeFileSync(path.join(dir, 'x.json'), JSON.stringify({
+    id: 'x',
+    title: 'X',
+    rounds: [
+      { title: 'One', type: 'text', questions: [] },
+      {
+        title: 'Two', type: 'intro', questions: [],
+        spotifyPlaylist: { id: 'p', url: 'https://open.spotify.com/playlist/p' },
+      },
+    ],
+  }), 'utf8');
+
+  const [pack] = listQuizzes(dir);
+  assert.equal(pack.playlist, 'https://open.spotify.com/playlist/p');
+});
+
+test('a quiz with no playlist says so with an empty string, not undefined', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'quiz-pl-'));
+  fs.writeFileSync(path.join(dir, 'y.json'), JSON.stringify({
+    id: 'y', title: 'Y', rounds: [{ title: 'One', type: 'text', questions: [] }],
+  }), 'utf8');
+
+  const [pack] = listQuizzes(dir);
+  assert.equal(pack.playlist, '');
+});

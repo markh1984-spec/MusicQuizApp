@@ -1745,7 +1745,7 @@ of that now lives, on a **Bronze / Silver / Gold ladder** that the pricing
 will hang off — and the owner can look at the console as a subscriber on any
 rung of it; **a mic-and-note logo** with the name stacked under it, replacing the
 vinyl record, since the app was never only a music quiz. All on
-**`MusicQuizApp`**. 567 tests green.
+**`MusicQuizApp`**. 569 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on
@@ -1921,6 +1921,16 @@ generators call `load()` when they finish, which rebuilds the page from the
 library and used to take the result with it: you pressed Import, watched it
 work, and were left looking at an empty form. `showDone()` / `doneBanner()`
 hold it above everything until you dismiss it or start another job.
+
+**The intro playlist button had the same fault and it hid a SUCCESS.** It
+printed the link into its own panel and then called `load()`, which tore the
+panel down — from the outside, a button that says "Building…" and then closes
+with nothing to show. Worse, a quiz summary did not carry `playlist` at all
+(only a bingo pack did), so the card had nowhere to show it either: the
+playlist was built, and the only record of it was a log that had already gone.
+`listQuizzes()` now surfaces the first intro round's URL, and the banner holds
+every one of them. It hangs off the ROUND, not the pack, because a quiz can
+hold more than one intro round.
 
 **And "Open the editor" on that banner opens the pack you just made.** It went to
 the editor with nothing chosen, which lands on whatever the list happens to put
