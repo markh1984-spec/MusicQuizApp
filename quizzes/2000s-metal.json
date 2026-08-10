@@ -16,12 +16,12 @@
           "id": "r1q1",
           "prompt": "Which track is this?",
           "options": [
-            "Before I Forget",
             "Sulfur",
-            "Duality",
-            "Psychosocial"
+            "Psychosocial",
+            "Before I Forget",
+            "Duality"
           ],
-          "correctIndex": 3,
+          "correctIndex": 1,
           "answerNote": "Psychosocial was the lead single from Slipknot's 2008 album All Hope Is Gone.",
           "cue": {
             "title": "Psychosocial",
@@ -37,9 +37,9 @@
           "prompt": "Which track is this?",
           "options": [
             "In the End",
+            "Numb",
             "Faint",
-            "Breaking the Habit",
-            "Numb"
+            "Breaking the Habit"
           ],
           "correctIndex": 0,
           "answerNote": "In the End, released in 2001, features the iconic piano riff that opens the track.",
@@ -56,12 +56,12 @@
           "id": "r1q3",
           "prompt": "Which track is this?",
           "options": [
-            "Show Me How to Live",
             "Rooster",
-            "Cochise",
-            "Be Yourself"
+            "Be Yourself",
+            "Show Me How to Live",
+            "Cochise"
           ],
-          "correctIndex": 2,
+          "correctIndex": 3,
           "answerNote": "Cochise was the lead single from Audioslave's self-titled 2002 debut album.",
           "cue": {
             "title": "Cochise",
@@ -77,11 +77,11 @@
           "prompt": "Which track is this?",
           "options": [
             "Blind",
+            "Hollow",
             "Bodies",
-            "Last Resort",
-            "Hollow"
+            "Last Resort"
           ],
-          "correctIndex": 1,
+          "correctIndex": 2,
           "answerNote": "Bodies by Drowning Pool became a staple of wrestling and sports entrances in the early 2000s.",
           "cue": {
             "title": "Bodies",
@@ -97,11 +97,11 @@
           "prompt": "Which track is this?",
           "options": [
             "Bulls on Parade",
+            "Testify",
             "Killing in the Name",
-            "Guerrilla Radio",
-            "Testify"
+            "Guerrilla Radio"
           ],
-          "correctIndex": 2,
+          "correctIndex": 3,
           "answerNote": "Guerrilla Radio was the lead single from Rage Against the Machine's 1999 album The Battle of Los Angeles.",
           "cue": {
             "title": "Guerrilla Radio",
@@ -116,12 +116,12 @@
           "id": "r1q6",
           "prompt": "Which track is this?",
           "options": [
-            "Freak on a Leash",
             "Got the Life",
-            "Falling Away from Me",
-            "Here to Stay"
+            "Freak on a Leash",
+            "Here to Stay",
+            "Falling Away from Me"
           ],
-          "correctIndex": 3,
+          "correctIndex": 2,
           "answerNote": "Here to Stay was released in 2002 from Korn's album Untouchables.",
           "cue": {
             "title": "Here To Stay",
@@ -136,12 +136,12 @@
           "id": "r1q7",
           "prompt": "Which track is this?",
           "options": [
-            "Before I Forget",
             "Vermilion",
-            "Prowler",
-            "Redneck"
+            "Before I Forget",
+            "Redneck",
+            "Prowler"
           ],
-          "correctIndex": 0,
+          "correctIndex": 1,
           "answerNote": "Before I Forget won a Grammy in 2006 and appeared on Slipknot's Vol. 3: The Subliminal Verses.",
           "cue": {
             "title": "Before I Forget",
@@ -156,12 +156,12 @@
           "id": "r1q8",
           "prompt": "Which track is this?",
           "options": [
-            "Prison Sex",
             "Schism",
-            "Duality",
-            "The Pot"
+            "The Pot",
+            "Prison Sex",
+            "Duality"
           ],
-          "correctIndex": 1,
+          "correctIndex": 0,
           "answerNote": "Schism's odd-time bass intro from 2001's Lateralus is instantly recognisable to fans.",
           "cue": {
             "title": "Schism",
@@ -176,12 +176,12 @@
           "id": "r1q9",
           "prompt": "Which track is this?",
           "options": [
+            "Chop Suey!",
             "Last Resort",
             "Not Falling",
-            "Chop Suey!",
             "In the End"
           ],
-          "correctIndex": 0,
+          "correctIndex": 1,
           "answerNote": "Last Resort's clean intro riff was a huge MTV2 staple in 2000.",
           "cue": {
             "title": "Last Resort",
@@ -198,10 +198,10 @@
           "options": [
             "Numb",
             "In the End",
-            "Faint",
-            "One Step Closer"
+            "One Step Closer",
+            "Faint"
           ],
-          "correctIndex": 3,
+          "correctIndex": 2,
           "answerNote": "One Step Closer opens with that scratchy guitar riff before it explodes into the chorus scream.",
           "cue": {
             "title": "One Step Closer",
