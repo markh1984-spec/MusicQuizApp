@@ -18,6 +18,7 @@ import { normaliseQuiz, validateQuiz, MULTI_OPTIONS, ROUND_TYPES, answerLetter }
 import { cleanTheme, quizTitleFor, themeSlug, titleCase } from './theme.js';
 import { spotifyConfigured, findTrack, createPlaylist } from './spotify.js';
 import { portraitPath } from './portraits.js';
+import { balanceAnswers } from '../public/assets/balance.js';
 
 export const DEFAULT_MODEL = 'claude-sonnet-5';
 
@@ -854,6 +855,28 @@ export async function generateQuizPack({
         : ''),
     rounds: built,
   }, quizId);
+
+  /*
+   * Spread the right answers across the letters before the pack is ever saved.
+   *
+   * A generated quiz leans hard on A: Claude writes the true statement first
+   * and the decoys after it. That was a warning on the read-through with a
+   * button next to it — but a lean is not a judgement call, it is always
+   * wrong, so making somebody press a button to fix a fault the app has just
+   * created is a step that only existed because of the order things were
+   * built in. Every generated pack now arrives even.
+   *
+   * Safe to do here and nowhere near the words: same options, same right
+   * answer, different letter. In particular the picture round's `image` was
+   * worked out above from the ANSWER TEXT rather than from its position, so
+   * moving the letter cannot point a question at the wrong portrait.
+   *
+   * The button stays on the read-through for packs written before this and
+   * for anything imported, and because a second press deals them again if you
+   * do not like what you are looking at.
+   */
+  const evened = balanceAnswers(quiz);
+  if (evened) log(`evened out the answers — ${evened} question${evened === 1 ? '' : 's'} moved`);
 
   const problems = validateQuiz(quiz);
   // Written even with problems, because fixing them in the editor beats

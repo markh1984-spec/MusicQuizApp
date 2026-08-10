@@ -420,12 +420,36 @@ the questions this cannot see — a fact that has quietly changed with no
 tell-tale wording, like a band member leaving. Doing it the other way round
 means paying a model to re-read ninety settled questions every month.
 
-### A complaint on screen needs something to press
+### The answers are evened out before a pack is ever saved
+
+`balanceAnswers()` in `public/assets/balance.js`, called by
+`generateQuizPack()` just before the file is written.
+
+**A lean is never a judgement call, so it is not a decision to put in front of
+anybody.** The model writes the true statement first and the decoys after it,
+so a generated quiz lands on A far more often than it should. That used to be a
+warning on the read-through with a button beside it — which meant the host
+pressing a button to fix a fault the app had just created. Doing it at
+generation is the same work with the step taken out.
+
+Two things this must not break, both pinned by tests:
+
+- **The picture round's portrait follows the ANSWER TEXT, not the position**
+  (`portraitPath(q.options[q.correctIndex])` is worked out before the deal), so
+  moving a right answer to another letter cannot show somebody else's face.
+- **An alphabet question has no options in the pack at all** — the letters are
+  put back by `optionsFor()` — so there is nothing to deal and it is skipped
+  rather than handed an empty array.
+
+### The button is still there, for the packs this cannot reach
 
 The read-through said "answers land A×15 B×10 C×5 D×1 — lopsided" and then
 left you looking at it: the only way to move an answer was the editor, four
 options at a time, twenty times. **Even out the answers** is on the end of
-that same line now — `balanceAnswers()` in `public/assets/balance.js`.
+that same line. It stays because a generated pack is not the only kind there
+is — anything imported, anything written by hand and anything made before this
+still leans — and because a second press deals them again if you do not like
+what you are looking at.
 
 It deals the right answers into the least-loaded letters, ties broken at
 random, which beats a plain shuffle: on twenty questions a plain shuffle

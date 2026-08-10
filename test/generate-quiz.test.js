@@ -15,14 +15,17 @@ import path from 'node:path';
 
 import { generateQuizPack, roundBriefsFor, roundPlan, questionKey, parseJson } from '../src/generate-quiz.js';
 import { ROUND_TYPES, validateQuiz } from '../src/quizzes.js';
+import { portraitPath } from '../src/portraits.js';
 
 /**
  * Stand in for the Anthropic API.
  *
  * @param {object} opts
  * @param {function(number): number} opts.rejectHowMany  given the batch size, how many to fail
+ * @param {boolean} opts.lean  put every right answer at A, which is what the
+ *   real model does: it writes the true statement first and the decoys after.
  */
-function stubClaude({ rejectHowMany = () => 0 } = {}) {
+function stubClaude({ rejectHowMany = () => 0, lean = false } = {}) {
   const calls = { write: 0, check: 0, asked: [] };
   let written = 0;
 
@@ -54,7 +57,7 @@ function stubClaude({ rejectHowMany = () => 0 } = {}) {
           return {
             prompt: `Stub question ${written}?`,
             options: [`A${written}`, `B${written}`, `C${written}`, `D${written}`],
-            correctIndex: written % 4,
+            correctIndex: lean ? 0 : written % 4,
             // An alphabet round takes this and ignores the options; every
             // other round takes the options and ignores this.
             answer: `${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[written % 26]}nswer ${written}`,
@@ -223,6 +226,62 @@ test('every round type the app offers can actually be generated', async () => {
       assert.equal(round.questions.length, 4, `${round.type} came up short`);
     }
     assert.ok(calls.write > 0);
+  });
+});
+
+
+/*
+ * The model leans on A — it writes the true statement first and the decoys
+ * after it. That was a warning on the read-through with a button beside it,
+ * which made the host fix a fault the app had just created. A lean is never a
+ * judgement call, so it is dealt out before the pack is ever saved.
+ */
+test('a generated pack arrives with the answers spread across the letters', async () => {
+  stubClaude({ lean: true });
+  await withTmpDir(async (config) => {
+    const { quiz } = await generateQuizPack({ config, theme: 'test', rounds: ['text'], perRound: 20 });
+
+    const tally = [0, 0, 0, 0];
+    for (const q of quiz.rounds[0].questions) tally[q.correctIndex]++;
+    assert.deepEqual(tally, [5, 5, 5, 5], `still lopsided: ${tally.join('/')}`);
+
+    // What is saved to disk is what was balanced, not the pre-balance version.
+    const onDisk = JSON.parse(fs.readFileSync(path.join(config.quizDir, quiz.id + '.json'), 'utf8'));
+    assert.deepEqual(onDisk.rounds[0].questions.map((q) => q.correctIndex),
+      quiz.rounds[0].questions.map((q) => q.correctIndex));
+  });
+});
+
+/*
+ * The picture round's portrait is worked out from the ANSWER TEXT rather than
+ * from its position, so moving the right answer to another letter cannot point
+ * a question at somebody else's face. This is the one way balancing a pack
+ * could quietly break it, so it is pinned.
+ */
+test('evening out the answers never separates a portrait from its musician', async () => {
+  stubClaude({ lean: true });
+  await withTmpDir(async (config) => {
+    const { quiz } = await generateQuizPack({ config, theme: 'test', rounds: ['image'], perRound: 8 });
+    for (const q of quiz.rounds[0].questions) {
+      assert.equal(q.image, portraitPath(q.options[q.correctIndex]),
+        `${q.prompt} shows the wrong person`);
+    }
+  });
+});
+
+/*
+ * An alphabet question has no options in the pack at all — the letters are put
+ * back by optionsFor(). There is nothing to deal out, so it must be left
+ * exactly as written rather than handed an empty options array.
+ */
+test('an alphabet round is left alone by the balancing', async () => {
+  stubClaude({ lean: true });
+  await withTmpDir(async (config) => {
+    const { quiz } = await generateQuizPack({ config, theme: 'test', rounds: ['alphabet'], perRound: 6 });
+    for (const q of quiz.rounds[0].questions) {
+      assert.ok(q.answer, 'the answer survived');
+      assert.equal(q.options, undefined, 'and no options were invented for it');
+    }
   });
 });
 
