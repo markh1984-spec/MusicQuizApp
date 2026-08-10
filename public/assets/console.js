@@ -22,6 +22,19 @@ const runningEl = document.getElementById('runningNow');
 const hostKey = new URL(location.href).searchParams.get('key')
   || localStorage.getItem('musicquiz.hostkey')
   || '';
+/*
+ * Remembered only while it is the way you are actually getting in.
+ *
+ * A key put in `?key=…` once used to be kept for good, so a browser that had
+ * touched a key link stayed on the key for ever — and the switch showed a third
+ * position saying "Host key" long after there was any reason to. That reads as
+ * a bug you have forgotten about, which is worse than the small convenience of
+ * not retyping it.
+ *
+ * It is still remembered when the key is genuinely how you are getting in
+ * (nobody signed in), because that is the case it exists for. The moment a
+ * signed-in owner is found, `load()` drops it — see below.
+ */
 if (hostKey) localStorage.setItem('musicquiz.hostkey', hostKey);
 
 /**
@@ -141,7 +154,22 @@ async function load() {
      * What an owner still cannot do here is run a night: the Launch buttons and
      * the running panel are gated on the game features, which an owner
      * deliberately has none of.
+     *
+     * And if a key is remembered from some earlier visit, forget it: an owner
+     * signed in properly has no use for it, and a "Host key" tab hanging about
+     * afterwards reads as a bug nobody can account for. The bookmark still
+     * works — the key is in its URL, and using one deliberately still puts you
+     * on it for that visit.
      */
+    // NOT `me.role` — with a key in play the server answers as the bootstrap
+    // identity, whose role is "quizmaster". `alsoSignedIn` is the cookie it
+    // found underneath, which is the thing that says an owner is really here.
+    const keyInUrl = new URL(location.href).searchParams.has('key');
+    if (who.alsoSignedIn && who.alsoSignedIn.role === 'owner' && hostKey && !keyInUrl) {
+      forgetKey();
+      location.reload();
+      return;
+    }
     // Which hat is on, and the way to change it — one control doing both, in
     // the top right, rather than a bar you scroll past and a button on another
     // page. Nothing is drawn at all for anybody with only one hat.

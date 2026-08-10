@@ -1214,6 +1214,14 @@ so getting back meant finding a bar at the top of a different one.
 **Only an owner ever sees it, and only their own two hats.** A real quizmaster
 has nothing to switch to.
 
+**A remembered key is dropped the moment a signed-in owner turns up.** A key
+typed once used to be kept for good, so a browser that had ever touched a
+`?key=` link stayed on the key — and the switch showed a third position long
+after there was any reason for it, which reads as a bug nobody can account for.
+The check is on `alsoSignedIn`, NOT on `me.role`: with a key in play the server
+answers as the bootstrap identity, whose role is "quizmaster". Using a `?key=`
+link deliberately still puts you on the key for that visit.
+
 **On the HOST KEY it grows a third position — Host key | Owner | Quizmaster.**
 The key beats the cookie on the server and that ordering stays exactly as it
 was, but it used to mean the switch vanished the moment a browser had seen
