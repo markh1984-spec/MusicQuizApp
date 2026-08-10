@@ -13,7 +13,7 @@
  *    makes googling an answer that bit harder.
  */
 
-import { esc, node, ServerClock, Live, postJson, brandMark, roomCode, roomParam, rememberRoom } from './client.js';
+import { esc, node, ServerClock, Live, postJson, brandMark, brandWords, roomCode, roomParam, rememberRoom } from './client.js';
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
 import { FILTERS, drawFiltered, toJpeg } from './filters.js';
 import { STICKERS, stickerSvg, drawStickers, stickerAt, placed, preloadStickers } from './stickers.js';
@@ -41,10 +41,14 @@ let live = null;
 let pendingChoice = null; // shown immediately, before the server confirms
 
 /** Your name on the players' phones too — they are looking at it all night. */
-function paintBrand(name) {
+// The product half of the name, kept so the wordmark can be stacked. Set by
+// whichever of /api/brand or the state payload arrives first.
+let brandApp = '';
+function paintBrand(name, appName) {
+  if (appName) brandApp = appName;
   const slot = document.getElementById('brandSlot');
   if (!slot || !name || slot.dataset.done) return;
-  slot.innerHTML = `${brandMark(22)}<span class="brand-name">${esc(name)}</span>`;
+  slot.innerHTML = `${brandMark(22)}${brandWords(name, brandApp)}`;
   slot.dataset.done = '1';
   document.title = name;
 }
@@ -405,7 +409,7 @@ function reasonText(reason) {
 function draw(next) {
   state = next;
   clock.sync(state.serverNow);
-  paintBrand(state.brand);
+  paintBrand(state.brand, state.appName);
 
   // The host removed this team: drop the stored id and start again.
   if (state.kicked) {
@@ -898,7 +902,7 @@ async function boot() {
   // because at this point the phone knows which game it is heading for and the
   // server has no cookie to work it out from.
   fetch(`/api/brand${roomParam('?')}`).then((r) => r.json()).then((d) => {
-    paintBrand(d.name);
+    paintBrand(d.name, d.appName);
     paintScheme(d.scheme);
   }).catch(() => {});
   watchForWandering();

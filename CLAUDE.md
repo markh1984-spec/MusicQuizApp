@@ -215,7 +215,9 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 | **"You got it" means the prize ON THE TABLE** | With three prizes the first winner keeps playing, and `view.won` used to stay true for the rest of the round — so the one person who had proved they were paying attention was the only one who could no longer see how close they were. It is now "won the prize currently being shown", and `yourPrizes` keeps a note of what they have already taken. |
 | **A strip wins the long way only** | `cardLines()` in `src/bingo.js`. A card can be 3 across and 8 down — the shape of a paper bingo ticket and of a phone. Every winning line must be the SAME LENGTH or the game is not fair: on a strip somebody would call on a row of three while everyone else needed eight. So a square keeps rows, columns and both diagonals; anything else uses the long axis only, and the phone says which way it runs ("Get a full column — 8 down") because a player looking at three across will otherwise mark the three and shout. There are tests for all of it. |
 | **Launch is the last thing on a pack card, and full width** | Read / Rename / Delete sit in a row above it, sharing ONE rule rather than four near-identical ones that had already drifted on size. Launch is the biggest thing on the card and nothing sits under it, so it cannot be hit on the way to something else. |
-| **The tab icon and the logo are one drawing** | `public/assets/brandmark.js`, imported by `client.js` in the browser AND by `server.js` for `/favicon.svg`. Two copies of a logo is one that gets changed in one place and not the other and goes unnoticed for a month. SVG rather than `.ico` because there is no build step to make one; a browser too old for SVG favicons just shows its default, as it did before. The tab version has thicker grooves — at 16px a 1.6-wide stroke on a 40 viewBox is two thirds of a pixel and turns to mush. There are tests that the two agree. |
+| **The tab icon and the logo are one drawing** | `public/assets/brandmark.js`, imported by `client.js` in the browser AND by `server.js` for `/favicon.svg`. Two copies of a logo is one that gets changed in one place and not the other and goes unnoticed for a month. SVG rather than `.ico` because there is no build step to make one; a browser too old for SVG favicons just shows its default, as it did before. The tab version has thicker strokes — at 16px a 1.6-wide stroke on a 40 viewBox is two thirds of a pixel and turns to mush. There are tests that the two agree. |
+| **A MICROPHONE AND A NOTE, knocked out of a filled disc** | `quizMark()`. It was a vinyl record, which said "music quiz" and nothing else — and the app already runs general knowledge, first-letter and bingo rounds. A mic is the host, the note is what the night is mostly about, and together they cover a general knowledge quiz too. **The disc is the composition, not decoration:** at 16 pixels in a browser tab a solid coloured blob with something cut out of it is legible where an outline drawing is grey mush, so everything inside is a HOLE rather than a line on top. The note is small and tucked in the top right, wholly inside the disc — a flag clipped by the edge reads as a mistake rather than as a design, which is what the first attempt did. At favicon size it degrades into a nick in the edge, which is the right thing for it to become: **what has to survive at 16px is the microphone.** |
+| **The name stacks — the possessive above, the app underlining it** | `brandWords()` in `client.js`. "Mark's" small and tilted 5° above **Quiztopia** in the account's own gradient, so the app name reads as the thing and whose night it is reads as the label on it. **It splits on the APP NAME, never on the last word** — so `BRAND_NAME="The Crown Quiz League"` stays one line instead of being guessed at and broken in the wrong place. A name that does not end in the app name is not stacked at all. |
 | **Native controls are told the page is dark** | `color-scheme: dark` on `:root`. Without it the browser draws tickboxes, radios, scrollbars and the open list of a dropdown for a white page, and they arrive as white slabs — the console's dropdowns were the loudest thing on a pack card, louder than Launch. A `<select>` also gets `appearance: none`, the page's own fill, and a drawn chevron on a gradient block so it reads as part of the app without competing with the button underneath it. |
 | **A pack still says `cardSize`** | `cardShape()` reads `cardSize` OR `cardRows`/`cardCols`, so no pack on disk had to be rewritten and an older deploy still reads a newer pack. `shapeFields()` writes both when it is square. |
 | **The card is sized from the list, not from a default** | A round of 42 is a 5x5 round. Import always said 4x4, so 42 songs quietly became sixteen squares — a line lands early and most of the round never reaches a card. The dropdown moves itself to the biggest card the pasted list carries and says so, and stops the moment you touch it. `cardSizes` comes from `minimumTracks()` over the library payload so the console keeps no copy of the sum. |
@@ -714,7 +716,7 @@ src/portraits.js       the shared portrait library: one picture per musician
 src/branding.js        "Mark's Quiztopia" — the app name and whose night it is
 src/gates.js           which routes are the owner's, as two testable lists
 public/                the screens; *-bingo.js files hold the bingo variants
-  assets/brandmark.js  the record logo, shared with the server as the favicon
+  assets/brandmark.js  the mic-and-note logo, shared with the server as the favicon
   assets/avatar.js     a drawn face per team, for anyone who sent no photo
   assets/stickers.js   props to drag onto a photo: dog ears, a clown nose
   assets/schemes.js    a quizmaster's own two colours, shared with the server
@@ -994,11 +996,12 @@ The ordinary scheme (`sunset`) deliberately has **no block of its own** — it i
 whatever `:root` already says. So an account with no scheme, and every page in
 the moment before the scheme arrives, looks exactly as the app always did.
 
-**The record logo takes the colours too**, through `var(--hot, #ff2e88)` in the
-gradient stops rather than bare hex. The fallback is load-bearing rather than
-belt-and-braces: the same function is served as `/favicon.svg`, a standalone
-document with no stylesheet and therefore no `--hot` at all, and a tab icon that
-came out transparent is not a bug anybody would connect to a colour picker.
+**The logo takes the colours too** — the disc it is cut out of, and the app name
+under the possessive — through `var(--hot, #ff2e88)` in the gradient stops rather
+than bare hex. The fallback is load-bearing rather than belt-and-braces: the same
+function is served as `/favicon.svg`, a standalone document with no stylesheet
+and therefore no `--hot` at all, and a tab icon that came out transparent is not
+a bug anybody would connect to a colour picker.
 
 `PUT /api/me/scheme` is your own account and takes no id, so it cannot repaint
 anybody else's projector. It is not behind a feature gate: it costs nothing to
@@ -1686,7 +1689,9 @@ so a subscriber does not have to put somebody else's pink-and-orange on a
 projector with their own name above it; and a **My account** tab, where all
 of that now lives, on a **Bronze / Silver / Gold ladder** that the pricing
 will hang off — and the owner can look at the console as a subscriber on any
-rung of it. All on **`MusicQuizApp`**. 552 tests green.
+rung of it; **a mic-and-note logo** with the name stacked under it, replacing the
+vinyl record, since the app was never only a music quiz. All on
+**`MusicQuizApp`**. 559 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on
@@ -1862,6 +1867,14 @@ generators call `load()` when they finish, which rebuilds the page from the
 library and used to take the result with it: you pressed Import, watched it
 work, and were left looking at an empty form. `showDone()` / `doneBanner()`
 hold it above everything until you dismiss it or start another job.
+
+**And "Open the editor" on that banner opens the pack you just made.** It went to
+the editor with nothing chosen, which lands on whatever the list happens to put
+first — so after waiting several minutes for a round you were shown somebody
+else's quiz and had to go and find yours. The banner carries `done.id` into
+`?quiz=` / `?bingo=`, and `editor.js` selects it if the list has it. Silently
+ignored if it does not, because a deleted pack in a stale link should open the
+editor, not an error.
 
 ### Asked for, not built yet
 

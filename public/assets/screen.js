@@ -10,7 +10,7 @@
  * simply does not put it in this payload.
  */
 
-import { esc, node, ServerClock, Live, brandMark, roomCode, roomParam } from './client.js';
+import { esc, node, ServerClock, Live, brandMark, brandWords, roomCode, roomParam } from './client.js';
 import { bingoCard, bingoTopbar } from './screen-bingo.js';
 import { paintLook, DEFAULT_LOOK } from './looks.js';
 import { paintScheme } from './schemes.js';
@@ -65,7 +65,7 @@ function draw(next) {
   // The brand sits in the corner all night; the quiz title sits next to it.
   if (state.brand && !document.getElementById('brandSlot').dataset.done) {
     const slot = document.getElementById('brandSlot');
-    slot.innerHTML = `${brandMark(26)}<span class="brand-name">${esc(state.brand)}</span>`;
+    slot.innerHTML = `${brandMark(26)}${brandWords(state.brand, state.appName || '')}`;
     slot.dataset.done = '1';
     document.title = `${state.brand} — Big Screen`;
   }

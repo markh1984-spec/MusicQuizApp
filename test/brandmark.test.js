@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { recordMark, faviconSvg } from '../public/assets/brandmark.js';
+import { quizMark, faviconSvg } from '../public/assets/brandmark.js';
 
 /*
  * The tab icon and the logo on the page are ONE drawing.
@@ -19,13 +19,18 @@ import { recordMark, faviconSvg } from '../public/assets/brandmark.js';
  * draws, from the same file.
  */
 test('the favicon is the same record as the one on the page', () => {
-  const onPage = recordMark({ size: 30, id: 'bm1' });
+  const onPage = quizMark({ size: 30, id: 'bm1' });
   const inTab = faviconSvg();
 
-  // Same shape: same circles, in the same places.
-  const circles = (svg) => [...svg.matchAll(/<circle[^>]*cx="([\d.]+)"[^>]*cy="([\d.]+)"[^>]*r="([\d.]+)"/g)]
-    .map((m) => m.slice(1).join(','));
-  assert.deepEqual(circles(inTab), circles(onPage));
+  // Same shape: the disc, the mic and the note in the same places. Compared as
+  // the whole drawing minus the bits that are ALLOWED to differ (the size, the
+  // gradient id and the stroke weights), so a change to one and not the other
+  // cannot slip through.
+  const shape = (svg) => svg
+    .replace(/ (?:width|height)="[^"]*"/g, '')
+    .replace(/(?:id|fill)="url\(#[^)]*\)"|id="[^"]*"/g, '')
+    .replace(/stroke-width="[^"]*"/g, '');
+  assert.equal(shape(inTab), shape(onPage));
 
   /*
    * Same colours — and each stop is now a variable with a hard-coded fallback,
@@ -48,7 +53,7 @@ test('the favicon is the same record as the one on the page', () => {
  * exactly the record this app has always had.
  */
 test('with no scheme at all the record is the original', () => {
-  const svg = recordMark({ size: 30 });
+  const svg = quizMark({ size: 30 });
   for (const hex of ['#ff2e88', '#ff8a3d', '#ffd23f']) {
     assert.ok(svg.includes(hex), `the record lost its ${hex} fallback`);
   }
@@ -66,8 +71,8 @@ test('the favicon is a standalone svg a browser can fetch', () => {
 
 test('two marks on one page do not share a gradient id', () => {
   // They would fight: the second definition wins and the first turns flat.
-  const a = recordMark({ size: 30, id: 'bm1' });
-  const b = recordMark({ size: 30, id: 'bm2' });
+  const a = quizMark({ size: 30, id: 'bm1' });
+  const b = quizMark({ size: 30, id: 'bm2' });
   assert.match(a, /id="bm1"/);
   assert.match(a, /url\(#bm1\)/);
   assert.match(b, /url\(#bm2\)/);

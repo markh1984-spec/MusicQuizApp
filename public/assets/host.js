@@ -86,7 +86,7 @@ function draw(next) {
   clock.sync(state.serverNow);
   if (!brandPainted && state.brand) {
     const slot = document.getElementById('brandSlot');
-    if (slot) slot.innerHTML = brandLink(state.brand, { key: hostKey, size: 26 });
+    if (slot) slot.innerHTML = brandLink(state.brand, { key: hostKey, size: 26, appName: state.appName || '' });
     document.title = `Control — ${state.brand}`;
     brandPainted = true;
   }

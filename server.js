@@ -107,6 +107,10 @@ function viewFor(client) {
   // a phone at Rob's night says Rob's Quiztopia in Rob's colours even while
   // the owner has the console open in the next tab.
   view.brand = brandForRoom(room);
+  // The product half of the name, so a page can stack "Mark's" over
+  // "Quiztopia" instead of splitting on the last word and getting it wrong the
+  // moment BRAND_NAME is set to something else. See `brandWords` in client.js.
+  view.appName = config.appName;
   view.scheme = schemeForRoom(room);
   // Auto-play could not start the track. Host view only — it is a note to tap
   // the link, and it is nobody else's business.
@@ -800,6 +804,7 @@ async function handleGet(req, res, url, route) {
     const me = whoIs(req, url);
     return sendJson(res, 200, {
       brand: brandForRoom(roomForHost(req, url)),
+      appName: config.appName,
       scheme: schemeForRoom(roomForHost(req, url)),
       // What this account has chosen to look at. Cosmetic, and read ONLY by
       // the browser — nothing here decides what anybody is allowed to do.

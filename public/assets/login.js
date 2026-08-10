@@ -9,7 +9,7 @@
  * nothing on the page can read it and nothing on the page can leak it.
  */
 
-import { brandMark } from './client.js';
+import { brandMark, brandWords } from './client.js';
 
 const form = document.getElementById('signIn');
 const problem = document.getElementById('problem');
@@ -18,7 +18,7 @@ fetch('/api/brand')
   .then((r) => r.json())
   .then((d) => {
     const slot = document.getElementById('brandSlot');
-    slot.innerHTML = `${brandMark(30)}<span class="brand-name">${d.name}</span>`;
+    slot.innerHTML = `${brandMark(30)}${brandWords(d.name, d.appName || '')}`;
     document.title = `Sign in — ${d.name}`;
   })
   .catch(() => { /* the form works perfectly well without a logo on it */ });

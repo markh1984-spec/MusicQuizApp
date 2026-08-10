@@ -335,7 +335,7 @@ const TAB_STORE = 'musicquiz.consoletab';
 function paintBrand(name) {
   const slot = document.getElementById('brandSlot');
   if (!slot || !name) return;
-  slot.innerHTML = brandLink(name, { key: hostKey, size: 30 });
+  slot.innerHTML = brandLink(name, { key: hostKey, size: 30, appName: (library && library.appName) || '' });
   document.title = `Console — ${name}`;
 }
 
@@ -1068,7 +1068,7 @@ async function generateQuiz(panel) {
           ? `<br><b>Round${done.unchecked.length === 1 ? '' : 's'} ${done.unchecked.join(', ')} could NOT be checked</b> — the second pass was unreachable. Read ${done.unchecked.length === 1 ? 'that round' : 'those rounds'} line by line.`
           : ''}
         ${done.backedUp ? '<br>Backed up to GitHub — this one is permanent.' : '<br><b>Not backed up</b> — this will be lost when the app restarts.'}
-        <br><b>Now read it.</b> <a href="${linkTo('/editor')}">Open the editor</a> and
+        <br><b>Now read it.</b> <a href="${linkTo('/editor')}${done.id ? (linkTo('/editor').includes('?') ? '&' : '?') + 'quiz=' + encodeURIComponent(done.id) : ''}">Open the editor</a> and
         check every question before anyone else sees it.
         ${done.needsImages ? '<br><span class="tiny">The face round has no pictures yet — it will use placeholders until you generate them. See TODO.md part 6.</span>' : ''}`;
     status.appendChild(node(`<div class="gen-good">${said}</div>`));

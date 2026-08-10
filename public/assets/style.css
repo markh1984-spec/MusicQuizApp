@@ -1587,6 +1587,45 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
   letter-spacing: -0.01em;
   white-space: nowrap;
 }
+
+/* ---- the stacked wordmark: "Mark's" over "Quiztopia".
+
+   Whimsy without a font file, because there is no build step and a webfont is
+   a request that can fail on pub wifi. So it comes from the ARRANGEMENT: the
+   possessive small and tilted, sitting on the product name like a signature,
+   and the product name heavy and wide enough to rule it off underneath.
+
+   The tilt is 5 degrees and no more. It is the difference between playful and
+   broken, and this is read from the back of a room. */
+.brand-name.stacked {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 0.92;
+  white-space: nowrap;
+}
+.brand-who {
+  font-size: 0.58em;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: var(--ink-dim);
+  transform: rotate(-5deg);
+  transform-origin: 0 100%;
+  /* Nudged in so the tilt does not put it left of the product name's stem. */
+  margin-left: 0.14em;
+  margin-bottom: 0.06em;
+}
+.brand-app {
+  font-weight: 900;
+  letter-spacing: -0.015em;
+  background: linear-gradient(100deg, var(--hot), var(--hot-2) 60%, var(--mark-3));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+/* On the projector the possessive is the quieter half but still has to carry
+   to the back of a room, so it keeps more of the size than it does elsewhere. */
+.screen .brand-who { font-size: 0.66em; color: var(--ink); opacity: 0.82; }
 .console .brand-name { font-size: 18px; }
 .host .brand-name, .editor .brand-name { font-size: 15px; }
 /* The owner page drops the logo and the name straight into the slot rather

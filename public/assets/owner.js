@@ -7,7 +7,7 @@
  * from the Next button during somebody's gig.
  */
 
-import { esc, node, brandMark, hatSwitch } from './client.js';
+import { esc, node, brandMark, brandWords, hatSwitch } from './client.js';
 import { TIERS, tierFor, findTier } from './plans.js';
 
 const mainEl = document.getElementById('main');
@@ -34,7 +34,7 @@ async function boot() {
 
   const brand = await api('/api/brand');
   document.getElementById('brandSlot').innerHTML =
-    `${brandMark(26)}<span class="brand-name">${esc(brand.name)}</span>`;
+    `${brandMark(26)}${brandWords(brand.name, brand.appName || '')}`;
   whoEl.textContent = me.role === 'owner' ? `Owner — ${me.email}` : `Signed in as ${me.email}`;
 
   // The switch into your own quizmaster account, in the same corner it sits in

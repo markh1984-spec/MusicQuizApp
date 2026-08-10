@@ -3,7 +3,7 @@
  * server, and a couple of DOM helpers. Deliberately tiny and framework-free.
  */
 
-import { recordMark } from './brandmark.js';
+import { quizMark } from './brandmark.js';
 
 /**
  * The logo: a record. The drawing lives in brandmark.js because the server
@@ -14,7 +14,7 @@ import { recordMark } from './brandmark.js';
  */
 let markCount = 0;
 export function brandMark(size = 30) {
-  return recordMark({ size, id: `bm${++markCount}`, cls: 'brand-mark' });
+  return quizMark({ size, id: `bm${++markCount}`, cls: 'brand-mark' });
 }
 
 /**
@@ -22,11 +22,38 @@ export function brandMark(size = 30) {
  * of any website behaves. Keeps the host key on the link so it does not ask
  * for it again.
  */
-export function brandLink(name, { key = '', size = 30 } = {}) {
+export function brandLink(name, { key = '', size = 30, appName = '' } = {}) {
   const href = '/console' + (key ? '?key=' + encodeURIComponent(key) : '');
   return `<a class="brand" href="${href}" title="Back to the console">
-    ${brandMark(size)}<span class="brand-name">${esc(name)}</span>
+    ${brandMark(size)}${brandWords(name, appName)}
   </a>`;
+}
+
+/**
+ * "Mark's" on top, "Quiztopia" underneath and doing the underlining.
+ *
+ * Two lines rather than one because the two halves are different things: whose
+ * night it is, and what the thing is called. Stacked, the longer product name
+ * sits under the shorter possessive and rules it off, which is the shape a
+ * pub-quiz logo wants — and it takes half the width in a topbar that also has
+ * to hold a hat switch.
+ *
+ * SPLIT ON THE APP NAME, never on the last word. `BRAND_NAME` can be set to
+ * anything at all — "The Crown Quiz League" — and splitting on the last word
+ * would stack that as "The Crown Quiz" over "League", which is nonsense. A
+ * name that does not end in the product name is simply left as one line, which
+ * is exactly right for somebody who has overridden it.
+ */
+export function brandWords(name, appName = '') {
+  const full = String(name || '');
+  const tail = appName ? ` ${appName}` : '';
+  if (!tail || !full.endsWith(tail) || full.length === tail.length) {
+    return `<span class="brand-name">${esc(full)}</span>`;
+  }
+  const who = full.slice(0, -tail.length);
+  return `<span class="brand-name stacked">
+    <span class="brand-who">${esc(who)}</span><span class="brand-app">${esc(appName)}</span>
+  </span>`;
 }
 
 /**

@@ -97,7 +97,7 @@ async function loadQuizList(selectId) {
   const library = await api('/api/library');
   const slot = document.getElementById('brandSlot');
   if (slot && library.brand) {
-    slot.innerHTML = brandLink(library.brand, { key: hostKey, size: 26 });
+    slot.innerHTML = brandLink(library.brand, { key: hostKey, size: 26, appName: library.appName || '' });
     document.title = `Editor — ${library.brand}`;
   }
   const options = [];
@@ -118,7 +118,22 @@ async function loadQuizList(selectId) {
   }
 
   pickEl.replaceChildren(...options);
-  if (selectId) pickEl.value = selectId;
+
+  /*
+   * Open the pack that was ASKED for, not whichever happens to be first.
+   *
+   * `?quiz=…` and `?bingo=…` were being linked to from two places — the "Open
+   * the editor" line on a finished generation, and Open on a reported question
+   * — and read by neither. Both landed you on the top of the list, which after
+   * generating a quiz is somebody else's pack with your work nowhere in sight.
+   */
+  const url = new URL(location.href);
+  const wanted = selectId
+    || (url.searchParams.get('quiz') ? `quiz:${url.searchParams.get('quiz')}` : '')
+    || (url.searchParams.get('bingo') ? `bingo:${url.searchParams.get('bingo')}` : '');
+  // Only if it is really in the list. A stale link should open the editor on
+  // something rather than on nothing at all.
+  if (wanted && [...pickEl.options].some((o) => o.value === wanted)) pickEl.value = wanted;
   if (pickEl.value) await openPack(pickEl.value);
 }
 
