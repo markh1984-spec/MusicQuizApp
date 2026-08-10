@@ -201,6 +201,53 @@ async function load() {
   if (!res.ok) throw new Error('Could not load the library');
   library = await res.json();
   render();
+  openRequestedRead();
+}
+
+/**
+ * `?read=quiz:eighties` — open a pack's read-through straight from a link.
+ *
+ * There was no way to link one at all: the read-through only ever opened from
+ * a click on its card, so "have a look at this pack" meant "open the console,
+ * find it, press Read". On a phone, with the packs three to a row, that is the
+ * difference between reading a quiz through on the train and not.
+ *
+ * Only ONCE per page load, tracked here rather than by tidying the URL —
+ * `load()` runs again after every save, and a link that reopened the sheet
+ * each time would trap you in it. Leaving the parameter in the address bar is
+ * deliberate too: it is what makes the link worth sending, and pasting it a
+ * second time should work exactly as it did the first.
+ *
+ * An id that is not there is IGNORED rather than an error. A pack can be
+ * renamed or deleted between somebody sending a link and somebody opening it,
+ * and landing on the console is the right outcome — not a page saying no.
+ */
+let readOpened = false;
+function openRequestedRead() {
+  if (readOpened) return;
+  const wanted = new URL(location.href).searchParams.get('read');
+  if (!wanted) return;
+  readOpened = true;
+
+  const [head, ...rest] = String(wanted).split(':');
+  const kind = (head === 'quiz' || head === 'bingo') ? head : '';
+  const id = kind ? rest.join(':') : wanted;
+
+  const find = (k) => (library[k === 'quiz' ? 'quizzes' : 'bingo'] || []).find((p) => p.id === id);
+  // Unprefixed is allowed and looks in both, so a link can be written by hand.
+  const found = kind ? { kind, pack: find(kind) } : (find('quiz')
+    ? { kind: 'quiz', pack: find('quiz') }
+    : { kind: 'bingo', pack: find('bingo') });
+  if (!found.pack) return;
+
+  // The pack is on a tab, and opening its read-through over a different one
+  // would leave you somewhere unexpected when you close it. `?tab=` in the
+  // link still wins, because that is somebody being explicit.
+  if (!new URL(location.href).searchParams.get('tab')) {
+    localStorage.setItem(TAB_STORE, found.kind);
+    render();
+  }
+  preview(found.kind, found.pack);
 }
 
 /**

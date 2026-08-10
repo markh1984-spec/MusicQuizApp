@@ -1970,6 +1970,18 @@ playlist was built, and the only record of it was a log that had already gone.
 every one of them. It hangs off the ROUND, not the pack, because a quiz can
 hold more than one intro round.
 
+**A pack's read-through can be linked.** `?read=quiz:<id>` on the console, or
+`?read=<id>` to look in both libraries — `openRequestedRead()` in `console.js`.
+There was no way to link one at all: it only opened from a click on its card,
+so "have a look at this pack" meant "open the console, find it, press Read",
+which on a phone with the packs three to a row is the difference between
+reading a quiz through on the train and not. It fires **once per page load**,
+tracked in a flag rather than by tidying the URL — `load()` runs again after
+every save, and a link that reopened the sheet each time would trap you in it.
+An id that is not there is ignored rather than an error, because a pack can be
+renamed between somebody sending a link and somebody opening it, and landing on
+the console is the right outcome.
+
 **And "Open the editor" on that banner opens the pack you just made.** It went to
 the editor with nothing chosen, which lands on whatever the list happens to put
 first — so after waiting several minutes for a round you were shown somebody
