@@ -335,6 +335,12 @@ function whoIs(req, url) {
  *    which is what every QR printed before today says, so nothing Mark has
  *    already handed out or bookmarked stops working.
  */
+/** Just enough about an account for the topbar to draw a switch. Never a hash. */
+function summarise(account) {
+  if (!account) return null;
+  return { id: account.id, role: account.role, name: account.name || '', email: account.email || '' };
+}
+
 function roomIdFor(account) {
   // The owner and the host key both run the house room: it is Mark's, and it is
   // the game that was already running before rooms existed.
@@ -683,6 +689,20 @@ async function handleGet(req, res, url, route) {
       // unsure which hat is on is worse than either hat.
       actingAs: Boolean(account.actingAs),
       realName: account.realName || '',
+      /*
+       * Signed in AS WELL as holding the host key.
+       *
+       * The key deliberately beats the cookie (see `whoIs`), which is right on a
+       * gig night — but it meant that once a browser had seen `?key=…`, the hat
+       * switch vanished for good, because a bootstrap request has no owner
+       * identity to switch between. You could never look at the quizmaster side
+       * from the laptop you actually work on.
+       *
+       * So the browser is told the cookie is there too. It draws the switch,
+       * and picking a hat forgets the remembered key — the server's ordering is
+       * untouched, and the bookmark still works because the key is in its URL.
+       */
+      alsoSignedIn: account.bootstrap ? summarise(accounts.fromToken(cookie(req, SESSION_COOKIE))) : null,
       // Which rung of the ladder the hat is being worn as, if any. Empty means
       // "as the linked account really is", which is comped — the whole ladder.
       previewTier: account.previewTier || '',

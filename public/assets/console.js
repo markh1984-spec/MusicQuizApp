@@ -25,6 +25,27 @@ const hostKey = new URL(location.href).searchParams.get('key')
 if (hostKey) localStorage.setItem('musicquiz.hostkey', hostKey);
 
 /**
+ * Stop using the host key in this browser.
+ *
+ * Called when the owner picks a hat on the switch. The key is not revoked and
+ * not changed — it is simply no longer REMEMBERED here, and taken out of the
+ * address bar so a reload does not put it straight back. Without both of those
+ * the key would win again on the very next page load (it beats a cookie by
+ * design) and the switch would look like it had done nothing at all.
+ *
+ * The bookmark still works, because the key is in its URL rather than only in
+ * storage — so this is a way out, never a lock-out.
+ */
+function forgetKey() {
+  try { localStorage.removeItem('musicquiz.hostkey'); } catch { /* private browsing */ }
+  const url = new URL(location.href);
+  if (url.searchParams.has('key')) {
+    url.searchParams.delete('key');
+    history.replaceState(null, '', url.toString());
+  }
+}
+
+/**
  * Ask for the key.
  *
  * Also used when a remembered key stops working — which happens if HOST_KEY is
@@ -81,7 +102,7 @@ const whyNotHere = (feature) => {
 function paintHatSwitch(who) {
   const slot = document.getElementById('hatSlot');
   if (!slot) return;
-  const el = hatSwitch(who);
+  const el = hatSwitch(who, { forgetKey });
   slot.replaceChildren(...(el ? [el] : []));
   // A gold hairline under the topbar while the hat is on, so even a screenshot
   // of the middle of the page says which hat it was taken in.

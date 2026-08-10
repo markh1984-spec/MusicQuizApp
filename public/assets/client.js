@@ -291,24 +291,53 @@ const isOwner = (me) => hat(me).role === 'owner' || (me && me.account && me.acco
  * worst a mis-tap does is show you the other room until you tap back. Nothing
  * is stopped and nothing is lost, which is why this needs no confirm step.
  */
-export function hatSwitch(me, { onSwitch = null } = {}) {
+export function hatSwitch(me, { onSwitch = null, forgetKey = null } = {}) {
   const on = hatOn(me);
-  if (!on && !isOwner(me)) return null;
-  // The host key is not an owner account; it holds every hat by another route.
-  if (hat(me).bootstrap || (me && me.bootstrap)) return null;
+  const keyed = Boolean(hat(me).bootstrap || (me && me.bootstrap));
 
+  /*
+   * On the host key, AND signed in as the owner in the same browser.
+   *
+   * The key beats the cookie on the server, which is right — that ordering is
+   * what keeps a gig-night bookmark working whatever else is going on. But it
+   * used to mean the switch simply vanished once a browser had seen `?key=…`,
+   * so the one laptop that is both the dev machine and the gig machine could
+   * never look at the quizmaster side at all.
+   *
+   * So: draw it anyway, and picking a hat FORGETS the remembered key. Nothing
+   * about the server's ordering changes, and the bookmark still works because
+   * the key is in its URL rather than only in storage.
+   */
+  const alsoOwner = keyed && me && me.alsoSignedIn && me.alsoSignedIn.role === 'owner';
+  if (keyed && !alsoOwner) return null;
+  if (!on && !keyed && !isOwner(me)) return null;
+
+  /*
+   * THREE states, not two, because the host key is a third thing.
+   *
+   * On the key you are every hat at once — which is neither of the two hats and
+   * is worth saying so, since it is why the console looks different from what a
+   * subscriber sees. It only appears while a key is actually in use, so nobody
+   * who has never held one ever sees a third button.
+   */
   const el = node(`
     <div class="hat-switch" role="group" aria-label="Which hat you are wearing"
          title="Switch between the owner console and your own quizmaster account. Same login, no second password — it is the only way to spot what annoys a quizmaster.">
-      <button type="button" class="hat-half owner ${on ? '' : 'live'}" ${on ? '' : 'aria-current="true"'}>Owner</button>
-      <button type="button" class="hat-half qm ${on ? 'live' : ''}" ${on ? 'aria-current="true"' : ''}>Quizmaster</button>
+      ${keyed ? '<button type="button" class="hat-half key live" aria-current="true" title="Signed in with the host key — every hat at once. This is not what a subscriber sees.">Host key</button>' : ''}
+      <button type="button" class="hat-half owner ${!keyed && !on ? 'live' : ''}" ${!keyed && !on ? 'aria-current="true"' : ''}>Owner</button>
+      <button type="button" class="hat-half qm ${!keyed && on ? 'live' : ''}" ${!keyed && on ? 'aria-current="true"' : ''}>Quizmaster</button>
     </div>`);
 
   const go = async (wanted) => {
-    if (wanted === on) return;                       // already wearing it
+    if (!keyed && wanted === on) return;             // already wearing it
     el.classList.add('working');
     for (const b of el.querySelectorAll('button')) b.disabled = true;
     try {
+      // Picking a hat means "stop being the host key". The key still works —
+      // it is in the bookmark's URL — but it stops being REMEMBERED, or it
+      // would win again on the very next page load and the switch would look
+      // like it had done nothing.
+      if (keyed && forgetKey) forgetKey();
       await postJson('/api/owner/act-as', { on: wanted });
       if (onSwitch) return onSwitch(wanted);
       // Stay where you are, so the toggle reads as "the same page with the
@@ -325,8 +354,9 @@ export function hatSwitch(me, { onSwitch = null } = {}) {
   el.querySelector('.owner').addEventListener('click', () => go(false));
   el.querySelector('.qm').addEventListener('click', () => go(true));
 
-  // With the hat on, which RUNG of the ladder to wear it as.
-  if (on) {
+  // With the hat on, which RUNG of the ladder to wear it as. Never on the key,
+  // which is not a subscription and has no rung.
+  if (on && !keyed) {
     const picker = tierPreview(me);
     if (picker) el.appendChild(picker);
   }

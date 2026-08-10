@@ -41,7 +41,11 @@ async function boot() {
   // on the console — so it is one control in one place rather than a button
   // buried in a panel halfway down this page.
   const slot = document.getElementById('hatSlot');
-  const hat = hatSwitch(who);
+  // The owner page has no key of its own to forget, but pass one anyway so the
+  // switch behaves identically wherever it is drawn.
+  const hat = hatSwitch(who, {
+    forgetKey: () => { try { localStorage.removeItem('musicquiz.hostkey'); } catch { /* private */ } },
+  });
   if (slot && hat) slot.replaceChildren(hat);
 
   if (me.role !== 'owner') {

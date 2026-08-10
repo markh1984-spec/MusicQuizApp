@@ -1204,9 +1204,19 @@ of habit, and the worse one was the panel — it only existed on the owner page,
 so getting back meant finding a bar at the top of a different one.
 
 **Only an owner ever sees it, and only their own two hats.** A real quizmaster
-has nothing to switch to; neither does the HOST KEY, which is not an owner
-account at all but every hat at once by a different route, so a toggle there
-would be a control that could not mean anything.
+has nothing to switch to.
+
+**On the HOST KEY it grows a third position — Host key | Owner | Quizmaster.**
+The key beats the cookie on the server and that ordering stays exactly as it
+was, but it used to mean the switch vanished the moment a browser had seen
+`?key=…` — so the one laptop that is both the dev machine and the gig machine
+could never look at the quizmaster side at all. `/api/me` now reports
+`alsoSignedIn` when a bootstrap request also carries an owner cookie, and
+picking a hat FORGETS the remembered key (localStorage and the `?key=` in the
+address bar, or it would win again on the next load and the switch would look
+broken). The bookmark still works, because the key lives in its URL — so this
+is a way out, never a lock-out. Saying "Host key" out loud matters too: it is
+why that console looks nothing like what a subscriber sees.
 
 ### …and as a Bronze, Silver or Gold subscriber
 

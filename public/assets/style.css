@@ -3082,6 +3082,13 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   color: #12000c;
 }
 .hat-switch .qm.live { background: var(--gold); color: #1a1200; }
+/* The host key: every hat at once, which is neither of the two. Deliberately
+   the app's own gradient rather than a metal — it is not a rung and not a hat,
+   it is the way in that predates accounts. */
+.hat-switch .key.live {
+  background: linear-gradient(120deg, var(--cool), var(--hot-2));
+  color: #06121a;
+}
 .hat-switch.working { opacity: 0.55; }
 .hat-switch .hat-half:disabled { cursor: default; }
 
