@@ -73,18 +73,49 @@ If neither is it, stop. The browser route works and is the better order for
 bingo anyway. Round 3 cues already carry Spotify links from the two builds you
 ran, so the control view can tap through to each track regardless.
 
-### 5 · Two decisions I am waiting on — no rush, nothing is blocked
+### 5 · Have a look at what changed while you were out — 5 minutes
+
+All live, all safe: **nothing anybody can see has changed unless you switch it
+on.**
+
+🔗 https://musicquizapp.onrender.com/console?tab=account (put the Quizmaster hat
+on first, or the page has no ladder to draw)
+
+- [ ] **Each feature is now an On | Off switch**, the same control as the
+      Owner | Quizmaster tab in the top right, rather than a tick box. A tier
+      above yours shows a **+** instead — you did not switch it off, you do not
+      have it, and those needed telling apart.
+- [ ] **A "Your library" panel** above the ladder. It says how many packs you
+      can reach and, only when something is out of reach, which tier holds the
+      rest. Silent today, because everybody can reach everything.
+- [ ] **Deep links to a read-through**, which is the phone job:
+      `…/console?read=quiz:metallica`
+
+**What is underneath it, and what is NOT switched on:** every tier can still
+reach every pack. The mechanism to give Bronze a starter set is in and tested,
+but `TIER_PACKS` says `'all'` for all three, so no library changed. Switching
+it on later is one line — or a `packs` list on one account, which beats the
+tier.
+
+### 6 · Two decisions I am waiting on — no rush, nothing is blocked
 
 - [ ] **Which features sit on which tier, and the prices.** `FEATURE_TIER` is
       one word per feature. The quickest way to settle it is to put the hat on,
       pick **Bronze** on the switch, and spend two minutes seeing whether it
       reads as a free tier or a crippled app.
+- [ ] **What goes in the Bronze starter set** — which packs, and how many.
+      That is the whole upsell now, so it is worth more thought than the
+      feature list. One line in `TIER_PACKS` when you decide.
+- [ ] **Two bits of wording that stop being true the day you switch it on:**
+      the Bronze blurb says "read and play every quiz and bingo game in the
+      shop", and there is a **Buying packs** feature listed that nothing
+      implements. Both are on the account page a subscriber reads.
 - [ ] **Advert slides: owner-only, or per quizmaster?** They are shared today,
       which means a second quizmaster tidying up what looks like their own venue
       list would delete The Crown's set off your projector. Nobody else has a
       login yet, so it is safe — but it needs deciding before Rob gets one.
 
-### 6 · Costs money — before the first PAYING gig, not before Thursday
+### 7 · Costs money — before the first PAYING gig, not before Thursday
 
 - [ ] **Render Starter, $7/month.** Stops the app sleeping between gigs. Your
       current routine (open the big screen five minutes early) covers the free
@@ -93,7 +124,7 @@ ran, so the control view can tap through to each track regardless.
 - [ ] **OpenAI key, ~£8 then pennies.** Round 2 runs on placeholder art until
       then. Everything else works without it.
 
-### 7 · When you have their emails
+### 8 · When you have their emails
 
 - [ ] Add **Rob**, and **James** if he is in — two minutes each on
       🔗 https://musicquizapp.onrender.com/owner

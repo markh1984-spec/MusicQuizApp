@@ -1825,6 +1825,15 @@ intro-round playlist button, the worst of which made **a Spotify refusal look
 identical to a success** — it is the reason an evening went on a 403 with
 nothing on screen to name it.
 
+And the commercial foundation: **the tier lever is the LIBRARY, not the
+buttons.** A starter set of packs runs out on its own in month four while the
+host is doing well, where a greyed control would look broken in front of a
+room. `packsFor()` filters the library and the launch server-side; every tier
+is `'all'` today, so nothing changed for anybody. The account page shows it —
+"Quizzes 3 of 7" with the tier that holds the rest — and each feature now
+carries the same **On | Off** switch as the hat in the top right, with a `+`
+where a tier above yours would be.
+
 All on **`MusicQuizApp`**. 584 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
