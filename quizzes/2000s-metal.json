@@ -1,0 +1,218 @@
+{
+  "id": "2000s-metal",
+  "title": "The 2000s Metal Quiz",
+  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-08-10T02:30:59.891Z",
+  "notes": "Written by claude-sonnet-5 for \"2000s metal\". NOT YET REVIEWED — read every question in the editor before the gig.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "intro",
+      "title": "Round One — Name That Intro",
+      "blurb": "10 intros. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Duality",
+            "Psychosocial",
+            "Before I Forget",
+            "Sulfur"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Psychosocial was the lead single from Slipknot's 2008 album All Hope Is Gone.",
+          "cue": {
+            "title": "Psychosocial",
+            "artist": "Slipknot",
+            "from": "0:00",
+            "hint": "let the guitar intro riff run about 6 seconds",
+            "spotifyUri": "spotify:track:3RAFcUBrCNaboRXoP3S5t1",
+            "spotifyUrl": "https://open.spotify.com/track/3RAFcUBrCNaboRXoP3S5t1"
+          }
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "In the End",
+            "Numb",
+            "Faint",
+            "Breaking the Habit"
+          ],
+          "correctIndex": 0,
+          "answerNote": "In the End, released in 2001, features the iconic piano riff that opens the track.",
+          "cue": {
+            "title": "In the End",
+            "artist": "Linkin Park",
+            "from": "0:00",
+            "hint": "let the piano intro play about 5 seconds",
+            "spotifyUri": "spotify:track:7q115ia4fQn9zonjpexWsY",
+            "spotifyUrl": "https://open.spotify.com/track/7q115ia4fQn9zonjpexWsY"
+          }
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Cochise",
+            "Rooster",
+            "Show Me How to Live",
+            "Be Yourself"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Cochise was the lead single from Audioslave's self-titled 2002 debut album.",
+          "cue": {
+            "title": "Cochise",
+            "artist": "Audioslave",
+            "from": "0:00",
+            "hint": "let the opening riff run about 6 seconds",
+            "spotifyUri": "spotify:track:1TDk2Jmi4dVZhm2dum3Jim",
+            "spotifyUrl": "https://open.spotify.com/track/1TDk2Jmi4dVZhm2dum3Jim"
+          }
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Bodies",
+            "Last Resort",
+            "Blind",
+            "Hollow"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Bodies by Drowning Pool became a staple of wrestling and sports entrances in the early 2000s.",
+          "cue": {
+            "title": "Bodies",
+            "artist": "Drowning Pool",
+            "from": "0:00",
+            "hint": "let the drum intro run about 5 seconds before the shout",
+            "spotifyUri": "spotify:track:7CpbhqKUedOIrcvc94p60Y",
+            "spotifyUrl": "https://open.spotify.com/track/7CpbhqKUedOIrcvc94p60Y"
+          }
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Killing in the Name",
+            "Bulls on Parade",
+            "Guerrilla Radio",
+            "Testify"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Guerrilla Radio was the lead single from Rage Against the Machine's 1999 album The Battle of Los Angeles.",
+          "cue": {
+            "title": "Guerrilla Radio",
+            "artist": "Rage Against The Machine",
+            "from": "0:00",
+            "hint": "let the wah-wah guitar riff run about 6 seconds",
+            "spotifyUri": "spotify:track:1wsRitfRRtWyEapl0q22o8",
+            "spotifyUrl": "https://open.spotify.com/track/1wsRitfRRtWyEapl0q22o8"
+          }
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Freak on a Leash",
+            "Falling Away from Me",
+            "Got the Life",
+            "Here to Stay"
+          ],
+          "correctIndex": 3,
+          "answerNote": "Here to Stay was released in 2002 from Korn's album Untouchables.",
+          "cue": {
+            "title": "Here To Stay",
+            "artist": "Korn",
+            "from": "0:00",
+            "hint": "let the distinctive guitar riff run about 6 seconds",
+            "spotifyUri": "spotify:track:66LT15XEqCaWiMG44NGQRE",
+            "spotifyUrl": "https://open.spotify.com/track/66LT15XEqCaWiMG44NGQRE"
+          }
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Redneck",
+            "Before I Forget",
+            "Prowler",
+            "Vermilion"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Before I Forget won a Grammy in 2006 and appeared on Slipknot's Vol. 3: The Subliminal Verses.",
+          "cue": {
+            "title": "Before I Forget",
+            "artist": "Slipknot",
+            "from": "0:00",
+            "hint": "let the intro riff and drums build for about 6 seconds",
+            "spotifyUri": "spotify:track:6wqJeItl3Vc3az4ZicSQAB",
+            "spotifyUrl": "https://open.spotify.com/track/6wqJeItl3Vc3az4ZicSQAB"
+          }
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Duality",
+            "Prison Sex",
+            "Schism",
+            "The Pot"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Schism's odd-time bass intro from 2001's Lateralus is instantly recognisable to fans.",
+          "cue": {
+            "title": "Schism",
+            "artist": "TOOL",
+            "from": "0:00",
+            "hint": "let the bass intro run about 8 seconds",
+            "spotifyUri": "spotify:track:55mJleti2WfWEFNFcBduhc",
+            "spotifyUrl": "https://open.spotify.com/track/55mJleti2WfWEFNFcBduhc"
+          }
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Last Resort",
+            "Chop Suey!",
+            "In the End",
+            "Not Falling"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Last Resort's clean intro riff was a huge MTV2 staple in 2000.",
+          "cue": {
+            "title": "Last Resort",
+            "artist": "Papa Roach",
+            "from": "0:00",
+            "hint": "let the intro riff run about 7 seconds",
+            "spotifyUri": "spotify:track:4YLI2hVQu66q23ScZKFg47",
+            "spotifyUrl": "https://open.spotify.com/track/4YLI2hVQu66q23ScZKFg47"
+          }
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Numb",
+            "In the End",
+            "One Step Closer",
+            "Faint"
+          ],
+          "correctIndex": 2,
+          "answerNote": "One Step Closer opens with that scratchy guitar riff before it explodes into the chorus scream.",
+          "cue": {
+            "title": "One Step Closer",
+            "artist": "Linkin Park",
+            "from": "0:00",
+            "hint": "let the scratchy riff run about 6 seconds",
+            "spotifyUri": "spotify:track:3K4HG9evC7dg3N0R9cYqk4",
+            "spotifyUrl": "https://open.spotify.com/track/3K4HG9evC7dg3N0R9cYqk4"
+          }
+        }
+      ]
+    }
+  ]
+}
