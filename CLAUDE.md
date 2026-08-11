@@ -1031,12 +1031,25 @@ moves onto it the next time its pictures are made, and pays nothing to do so.
 "6 already in the library, free · 4 to draw — about 16p". That number is the
 whole point of sharing, so it is read first rather than reported afterwards.
 
-### Two styles, both cartoons, and no photoreal one
+### ONE style, and that is a measured result
 
-`STYLES`: **Cartoon** (the default) and **As a superhero**. The host's choice
-always beats whatever Claude wrote, or picking "as a superhero" would silently
-do nothing on the many questions where the generator wrote a prompt of its own,
-and would read as a broken setting.
+`STYLES`: **Cartoon**, and nothing else. The host's choice always beats
+whatever Claude wrote, or choosing a style would silently do nothing on the
+many questions where the generator wrote a prompt of its own, and would read as
+a broken setting.
+
+**Two of the three styles written have been refused by the supplier.**
+`portrait` (painted, true to life) and `As a superhero` both came back with
+*"the model could not generate the image based on the prompt provided"* in
+Google's own playground. Putting a real musician into an invented costume is
+apparently a step past a caricature of them, whatever register the words are
+in. Both were deleted rather than reworded, on the host's own rule: do not ship
+a setting that pretends we can do something we cannot.
+
+So **adding a style is a line in the file and a minute in the playground
+FIRST**, and the hit rate so far is one in three. Candidates worth trying, all
+of which keep the person looking as they actually look: pop-art halftone,
+black-and-white comic inking, cut-paper collage, 8-bit pixel art.
 
 **Every style is a whole second library of the same people**, so five styles is
 five times the bill for the same musicians — which hands straight back what

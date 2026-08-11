@@ -74,12 +74,21 @@ export function slugName(name) {
  * gone rather than reworded, because the host's own call was: if we cannot do
  * the realistic end, do not ship a setting that pretends we can.
  *
- * **Adding one is a line here and a minute in the playground first.** Try the
+ * **There is ONE style, and that is a measured result rather than a shortage of
+ * ideas.** "As a superhero" was written, looked reasonable, and was refused in
+ * the playground — *"the model could not generate the image based on the
+ * prompt provided"* — so it went the same way `portrait` did. Putting a real
+ * musician into an invented costume is apparently a step past a caricature of
+ * them, whatever register the words are in.
+ *
+ * **Adding one is a line here and a minute in the playground FIRST.** Try the
  * prompt at https://aistudio.google.com before it goes in — a style that
  * refuses is a control that does nothing, which is the fault this codebase
- * keeps recording. Candidates worth trying, in rough order of how likely they
- * are to be allowed: pop-art halftone, black-and-white comic inking, cut-paper
- * collage, 8-bit pixel art.
+ * keeps recording, and two of the three tried so far have been refused.
+ * Candidates worth trying, in rough order of how likely they are to be
+ * allowed, and note that all of them keep the person as they actually look:
+ * pop-art halftone, black-and-white comic inking, cut-paper collage, 8-bit
+ * pixel art.
  */
 export const STYLES = {
   cartoon: {
@@ -87,14 +96,6 @@ export const STYLES = {
     hint: 'Broad and comic. The one that is known to work.',
     prompt: 'A bold cartoon caricature with clean heavy outlines and flat bright colour, '
       + 'head and shoulders, facing the viewer, plain dark background, '
-      + 'exaggerated but instantly recognisable features',
-  },
-  superhero: {
-    label: 'As a superhero',
-    hint: 'Comic-book costume and cape. Good for a fun night.',
-    prompt: 'A bold cartoon caricature in an invented comic-book superhero costume with a cape, '
-      + 'heroic pose, head and chest, clean heavy outlines and flat bright colour, '
-      + 'dramatic comic-book lighting, plain dark background, '
       + 'exaggerated but instantly recognisable features',
   },
 };

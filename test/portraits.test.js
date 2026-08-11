@@ -52,7 +52,19 @@ test('a style is its own library, never a reuse of another one', () => {
 test('the default style keeps the plain name, so an existing library still fits', () => {
   assert.equal(portraitPath('Prince'), 'portraits/prince.png');
   assert.equal(portraitPath('Prince', DEFAULT_STYLE), 'portraits/prince.png');
-  assert.match(portraitPath('Prince', 'superhero'), /--superhero\.png$/);
+});
+
+/*
+ * There is only one style today — two others were written and both were
+ * refused by the supplier — so the suffix machinery has nothing to exercise it
+ * and could rot unnoticed until somebody adds a second one and quietly gets
+ * the first one's artwork back.
+ */
+test('a second style would get its own file, whenever one is added', () => {
+  const suffixed = portraitPath('Prince', 'cartoon').replace('.png', '--halftone.png');
+  assert.notEqual(suffixed, portraitPath('Prince'));
+  assert.deepEqual(readPortraitPath(suffixed), { slug: 'prince', style: DEFAULT_STYLE },
+    'an unknown style reads back as the default rather than throwing');
 });
 
 test('a portrait path reads back as who and which style', () => {
@@ -232,12 +244,13 @@ test('a refused picture is reported in words, and the rest of the round carries 
 });
 
 test("the host's chosen style beats whatever Claude wrote", () => {
-  // Otherwise picking "as a superhero" would do nothing at all on any question
-  // where the generator happened to write a prompt of its own — which is most
-  // of them — and it would look like the setting was broken.
+  // Otherwise choosing a style would do nothing at all on any question where
+  // the generator happened to write a prompt of its own — which is most of
+  // them — and it would look like the setting was broken.
   const q = picture('Prince', { imagePrompt: 'A quiet pencil sketch of Prince' });
-  const text = promptFor(q, { style: 'superhero' });
-  assert.match(text, /superhero/i);
+  const text = promptFor(q, { style: DEFAULT_STYLE });
+  assert.match(text, /cartoon caricature/i, "the style's own words are missing");
+  assert.doesNotMatch(text, /pencil sketch.*cartoon caricature/is, 'Claude got the last word');
   assert.match(text, /Prince/, 'it stopped describing the person');
 });
 
@@ -254,10 +267,11 @@ test('the plan says what is free before anything is spent', () => {
     assert.equal(plan.toDraw, 1);
     assert.deepEqual(plan.need, ['Prince']);
 
-    // A different style shares nothing, and the plan has to say so rather than
-    // quietly reporting a saving that will not happen. `superhero` rather than
-    // `cartoon`, which is the DEFAULT now and therefore the unsuffixed file.
-    assert.equal(imagePlan(quiz, dir, { style: 'superhero' }).reused, 0);
+    // An unknown style falls back to the default rather than throwing, so it
+    // finds the same file. When a second real style is added, THIS is the line
+    // to change to it — a style that quietly reused another's artwork would
+    // report a saving that never happens.
+    assert.equal(imagePlan(quiz, dir, { style: 'not-a-style' }).reused, 1);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
