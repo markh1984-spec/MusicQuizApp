@@ -488,6 +488,67 @@ the list in the same breath as renaming a pack — a rename silently drops a pac
 out of Bronze, and there is a test that fails if an id in that list is not in
 the catalogue.
 
+### A marketplace: quizmasters write, you resell, they earn credit
+
+Your idea, and a good one. A subscriber who enjoys writing submits a pack, you
+sell it in the catalogue, they get 50% as **credit against their account**
+rather than money. Written up here rather than built, because two of the
+questions below have to be answered before a line of code.
+
+**The real win is not free content — it is that your time changes job.** The
+catalogue has to keep growing or Silver stops being worth paying for, and today
+that is your writing hours forever. This does not remove the editorial step and
+must not: a badly written pack in your catalogue reflects on YOUR app, because
+the buyer sees a Quiztopia pack, not Rob's pack. But **reading three packs
+through is far quicker than writing three**, and the read-through machinery
+already exists — the review flags, the tickable warnings, the answer-balance
+check. So the job becomes "read it, tick the flags, press Accept".
+
+**Credit rather than cash is the right call and worth protecting.** No payouts,
+no bank details, no minimum thresholds, no self-assessment questions, no
+processor fees on the way out. Credit is a discount on something they already
+buy. The moment it becomes money it becomes a finance function.
+
+**Be honest about the size of it.** At £3 a pack and a 50% share, a sale is
+£1.50 — so seven sales covers a month of Bronze and fourteen covers Silver. On
+a subscriber base of thirty, a good pack might sell a handful of times. That is
+**a discount for people who enjoy writing, not a side income**, and pitching it
+as the second would disappoint everybody. Pitched as the first it is a genuinely
+nice thing to offer.
+
+**Two things to settle BEFORE building anything:**
+
+1. **A one-page agreement.** Who owns the pack once it has sold; whether they
+   can sell it elsewhere too (non-exclusive is the sensible answer); what
+   happens to it in the catalogue if they leave; and the author warranting it
+   is their own work and not copied out of somebody else's quiz. This is a page,
+   not a legal project — but the first dispute is unanswerable without it, and
+   the first dispute always comes after the money has moved.
+2. **What happens to credit if they cancel.** Answer it up front rather than
+   the day somebody asks. Rolling over is simplest; letting credit buy PACKS as
+   well as subscription time is nicer, because it closes the loop and gives
+   somebody who earns more than their subscription costs somewhere to spend it.
+
+**Then the build, and it needs the shop taking money first** — credit is
+meaningless until there are purchases to discount.
+
+- **A credit ledger, not a number on an account.** Same rules as the invoice
+  book: integer pence, never a float, entries never rewritten. "You have £6" is
+  not enough; the first time somebody queries their balance you need to show
+  them the four sales it came from.
+- **Submitting is publishing, and the page has to say so unmistakably.** Today
+  the strongest promise this app makes a subscriber is that you cannot read
+  their packs. Submitting one is them opening that door deliberately, which is
+  consistent — but it cannot be a button they press by accident, and it cannot
+  be quietly undoable, because by then you have read it.
+- **Credit the author on the pack card.** Honest, motivating, and the
+  alternative is a thing that goes wrong publicly. Your read-through is still
+  what puts it in the catalogue, so the quality guarantee is unchanged.
+
+One thing it quietly fixes later: if topical content is what sells Silver, other
+people writing topical rounds — for their own regions, their own crowds — is
+worth more than one person can produce.
+
 ### Marketing — for later, but written down now
 
 Neither of these is a code job yet. They are here so they are not lost, because
