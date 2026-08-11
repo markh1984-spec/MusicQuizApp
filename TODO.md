@@ -554,6 +554,110 @@ One thing it quietly fixes later: if topical content is what sells Silver, other
 people writing topical rounds — for their own regions, their own crowds — is
 worth more than one person can produce.
 
+### Group accounts — SEATS on a Gold, for a quizmaster company
+
+Your idea, and the interesting half of it is not the discount.
+
+Rob runs a company (Interrupt the Routine) with more than one host. Today his
+only options are three separate Gold accounts at £90 a month, or one account
+shared between three people — and the second one breaks a night, badly, see
+**A shared login can end somebody else's night** below.
+
+**The real win is INTERNAL PACK DISTRIBUTION, and it dissolves the objection
+that blocked pack sharing.** CLAUDE.md says a quizmaster cannot share a pack
+with another quizmaster because "anything better needs a story about who owns
+the copy afterwards". A company IS that story. Between two independent
+quizmasters ownership is ambiguous; inside one company it is not — the company
+owns it, and nobody has to agree on anything. So the company writes a quiz once
+and every host can run it, in the app, without it ever leaving the company or
+passing through the owner.
+
+Three consequences, all settled in conversation:
+
+- **Seats are a different product, not a discount.** Three separate Gold
+  accounts genuinely cannot do what one Gold plus two seats does, at any price.
+  So the comparison is not "£60 instead of £90" — it is **"£60 instead of
+  £30"**, because at £90-with-no-sharing the company buys one login and shares
+  the password. Seats turn a one-account customer into a three-account one.
+  **£20 a seat** rather than half, because the seat now carries real value.
+- **Streaming is excluded from a seat**, and for the house rule's own reason
+  rather than meanness: egress is the one genuinely per-use cost in the
+  product, and it scales per SEAT. It is the one thing that should be priced
+  per seat when it exists.
+- **Gold's value survives it.** A company that writes its own packs needs the
+  evergreen catalogue less — but it cannot produce a weekly topical quiz by
+  hand at any sane cost, and the generator stays owner-only. That decision is
+  what makes this safe to offer.
+
+#### The shape that keeps the privacy promise structural
+
+This is the part to get right, because it is the first thing that could put a
+hole in a guarantee that currently holds by construction rather than by a
+check. Today the owner cannot read a quizmaster's packs because a room's packs
+live in that room's folder and **no route takes a room parameter**.
+
+So: a company gets its own folder, `packs/<companyId>/`, and resolution goes
+**own → company → catalogue**. A seat reads its own folder and its company's.
+The owner is not a member of any company, resolves against the house room, and
+finds nothing — exactly as now. Do NOT implement this as "which accounts may
+read this pack", which is a permission somebody has to remember to write and
+therefore a permission somebody will eventually forget.
+
+**The company account writes; seats read.** Same relationship the app already
+has between the owner and a subscriber, and it keeps "three people editing them
+is how a house style stops being one" true inside a company as well as outside.
+
+#### What a seat still gets on its own
+
+- **Its own room** — its own game, join code, photo wall, state file, and its
+  own name and colours on the projector. That already works; a room is a room.
+- **Its own suggestion box.** Settled: a seat raises tickets like anybody else,
+  for the same reason a Bronze or a Silver does — *"they might have sub-account
+  specific frustrations that I can't see"*. Sending is already open to anybody
+  signed in and not gated on a tier, so this needs nothing new; do not gate it
+  to the company account.
+
+#### Still to decide, and neither blocks anything
+
+- **The invoice book belongs to the COMPANY**, not the host — decided, and the
+  opposite of how it works today (per room). Revisit when seats are built; it
+  is a real fork rather than a detail.
+- **Whose support door opens the company folder?** Per account today. Probably
+  the company owner's, but that is a decision.
+
+#### Why not now
+
+No payment flow exists, so group billing would be the harder case built before
+the easy one. Rob has no login yet, so this is a hypothesis about a customer
+who has not used it. And `PACKS_REPO` is still not configured — a company's
+shared library would live only until the next deploy, which makes step **B2**
+above load-bearing rather than optional the moment anything is shared.
+
+### A shared login can end somebody else's night — a real bug, today
+
+Found while thinking about group accounts, and it needs no group account to
+happen. `session.launch()` in `src/session.js` builds a fresh game
+**unconditionally** — there is no check for a night already in progress.
+
+So if two people share one login and both press Launch, the second one silently
+ends the first one's game mid-question: scores gone, every phone thrown into a
+new lobby, in front of a paying room. That is this codebase's first rule broken
+in the worst possible way, and the person it happens to has no idea why.
+
+Reachable today by password sharing, which is exactly what people do when three
+seats cost £90.
+
+**The fix is small and independent of everything above.** The console's running
+panel already knows what is live — `engine.where()` gives "Round Two — question
+4 of 10" and the connected count is right there. Launching over a game that has
+players connected and is past the lobby should say what it is about to destroy.
+**Not a bare refusal**: a control that refuses in front of a room is the mistake
+this codebase keeps recording. But "14 phones are playing The 80s Quiz right
+now, round 2 question 4 — launching will end it" is not something anybody
+presses through by accident.
+
+Worth doing before group accounts rather than after.
+
 ### Marketing — for later, but written down now
 
 Neither of these is a code job yet. They are here so they are not lost, because
@@ -745,6 +849,45 @@ packs being written for subscribers is the whole arrangement.
 ---
 
 ## What is new since you last read this
+
+### The topical quiz, and the ladder it settled
+
+**One button: "The month just gone."** It reads the last month off the web and
+writes forty questions from it — 20 news and 10 music from the month, then 10
+music from any era so the pack is not all one thing and does not punish
+anybody who was on holiday. Named after the date, marked current for a
+fortnight. Tick "Harder than usual" for the second, harder one; the two are
+filed separately so they do not collide.
+
+**It costs about £2 a pack** (£1.20 to £3.90 depending on how much the checker
+thinks), measured rather than guessed. The checking pass is 86% of that; being
+topical only adds about 26p.
+
+**That measurement set Bronze / Silver / Gold**, on your own observation that
+the one-off packs and the topical ones are different animals — an evergreen
+pack is an asset written once, a topical one is a service written every week.
+So Silver is the whole evergreen catalogue and **Gold is the weekly topical
+quiz**. Gold is sellable now; it used to be streaming and nothing else, which
+made it Silver at a £10 markup.
+
+The arithmetic that makes it a ladder: Silver at £20 plus four topical packs at
+£3 is £32, which is **more than Gold at £30** — so a Silver subscriber who
+wants topical weekly has an unambiguous reason to climb, and it arrives every
+week rather than in month four. There is a test that this holds.
+
+**What it commits you to is a weekly deadline, not money.** The writing is a
+button press and £2; the read-through is twenty minutes, every week, for as
+long as one Gold subscription exists. That is the only part of the arrangement
+that cannot be undone by editing a line in `plans.js`.
+
+### Two things worth reading in this file
+
+- **Group accounts** (below, under "Asked for, not yet specced") — seats on a
+  Gold for a quizmaster company, and why the interesting half is internal pack
+  distribution rather than the discount.
+- **A shared login can end somebody else's night** — a real bug, reachable
+  today, small to fix.
+
 
 - **A "My account" tab** on the console — your name, your colours, what tier you
   are on, every feature laid out by tier with a switch on each, and links to your

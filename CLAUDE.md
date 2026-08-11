@@ -2465,6 +2465,19 @@ advert sets, in new places.
   Download and re-upload is the whole mechanism today, which is deliberate:
   anything better needs a story about who owns the copy afterwards.
 
+  **A COMPANY is that story, and that is the shape sharing will eventually
+  take.** Between two independent quizmasters ownership is ambiguous; inside
+  one company it is not. So the answer is a company folder
+  (`packs/<companyId>/`) resolved **own → company → catalogue**, never a
+  "which accounts may read this pack" permission — the owner is in no company,
+  so they still resolve against the house room and find nothing, and the
+  guarantee stays structural rather than becoming a check somebody has to
+  remember to write. Written up in TODO.md under **Group accounts**; not built.
+- **`session.launch()` does not check for a night already in progress**, so two
+  people sharing one login can end each other's games mid-question. See TODO.md
+  — the fix is the running panel saying what a launch is about to destroy,
+  which is a small job and worth doing before anything else here.
+
 ---
 
 ## Invoicing
@@ -2699,12 +2712,16 @@ whether anybody is mid-question right now (so a deploy waits), and what the AI
 has actually cost, from a ledger written as each call happens. That second one
 is the number the whole tier structure rests on and it existed nowhere.
 
-**The ladder has its numbers now**: Bronze £10 with eight packs, Silver £20
-with the whole catalogue, Gold £30 for online — and **Gold must not be offered
-until streaming exists**, because today it is Silver at a £10 markup. Advert
-slides moved to Silver, the one feature up a rung for a reason other than cost:
-it makes the QUIZMASTER money, and withholding it cannot make a night look
-cheap because a slide is not part of the game.
+**The ladder has its numbers and its logic now**: Bronze £10 with eight packs,
+Silver £20 with the whole EVERGREEN catalogue, Gold £30 adding a topical quiz
+every week. **Gold is sellable** — it used to be streaming and nothing else, so
+it bought Silver at a £10 markup; now it is the one thing nobody can buy once
+and reuse. See **The ladder is CAPEX AND OPEX** above for the arithmetic that
+makes the gradient hold, and note the commitment it carries: a weekly
+read-through, for as long as one Gold subscription exists. Advert slides moved
+to Silver, the one feature up a rung for a reason other than cost: it makes the
+QUIZMASTER money, and withholding it cannot make a night look cheap because a
+slide is not part of the game.
 
 **A quizmaster now keeps their OWN packs**, and this is the one gate in the app
 that runs backwards: the owner cannot read them. Enforced structurally — no
