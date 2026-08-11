@@ -2429,6 +2429,15 @@ does not open a subscriber's account either. There is a test asserting that
 ORDER, because flipping it would silently make the key a way into every
 account.
 
+**The log is what the OWNER did, never what the subscriber did.** It answers
+"what did you do in my account", not "here is a diary of your own use" — a
+quizmaster scrolling their own launches and pack-opens back would learn nothing
+about the owner and would have to pick their activity out of it to find the
+entries that matter, which is the same as not having it. The whole guarantee is
+one early return in `supportGuard`, and it has a test of its own because the
+flag could be named right and this could still break by somebody moving the
+logging call above the return.
+
 **Reads are logged as well as writes.** "Did you look at my quizzes" is the
 question the log exists to answer, and a writes-only log is silent about
 exactly that. The noise that would drown it — the state poll, the live stream,

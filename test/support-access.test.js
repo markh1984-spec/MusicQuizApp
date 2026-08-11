@@ -288,3 +288,32 @@ test('the support panel reads the grant off `me`, which is already the account',
   assert.doesNotMatch(panel, /me\.account\.support/,
     'the panel is reading me.account.support — `me` is already the account, so that is always undefined');
 });
+
+/**
+ * **THE LOG IS WHAT THE OWNER DID, NEVER WHAT THE SUBSCRIBER DID.**
+ *
+ * The host's own framing, and it is the thing that makes the log worth having:
+ * it answers "what did you do in my account", not "here is a diary of your own
+ * use". A subscriber scrolling their own launches and pack-opens back would
+ * learn nothing about the owner and would have to pick their own activity out
+ * of it to find the entries that matter — which is the same as not having it.
+ *
+ * The whole guarantee rests on one early return in `supportGuard`, so it is
+ * worth a test of its own rather than being folded into the flag-name one
+ * above: the flag could be renamed correctly and this could still break by
+ * somebody moving the logging call above the return.
+ */
+test('nothing a subscriber does in their OWN account is ever written down', () => {
+  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const at = server.indexOf('function supportGuard');
+  const guard = server.slice(at, at + 1200);
+
+  // The early return has to come FIRST — before any noteSupport call — or a
+  // subscriber's own activity lands in the log meant for the owner's.
+  const bailsAt = guard.indexOf('return true;');
+  const firstNote = guard.indexOf('noteSupport');
+  assert.ok(bailsAt > 0, 'the guard no longer bails out for a non-support request');
+  assert.ok(firstNote > bailsAt,
+    'something is written to the log before the guard has established this is a support session — '
+    + 'a subscriber working in their own account would appear in the log kept for the owner');
+});
