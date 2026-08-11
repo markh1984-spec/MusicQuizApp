@@ -3096,10 +3096,36 @@ expensive later:
 - **Online mode must be a mode, never a layer.** A media service having a bad
   day cannot be allowed to touch a Wednesday night in a pub.
 
-**Payments stay processor-agnostic**: the app stores a customer id and a status
-and listens for a webhook, nothing more, so Stripe / PayPal / a merchant of
-record can be swapped without a redesign. Card details must never reach this
-server.
+**Payments stay processor-agnostic**, and `src/billing.js` is what makes that
+structural rather than a good intention. The host is on PayPal at 2.9% and
+expects to move to Stripe, so the split is: an adapter translates a processor's
+webhooks into **five events** (started, renewed, payment_failed, cancelled,
+expired) and knows nothing about accounts; `billing.js` applies those to an
+account and knows nothing about the processor. **There is a test that greps the
+code for the word "paypal" and fails if it appears outside an adapter.**
+
+Four properties, all tested, and each is there for a reason:
+
+- **A webhook may only ever move a SUBSCRIPTION** — a tier, a status, and an
+  opaque reference. Never `comped`, a role, `packs`, an email or a password.
+  That endpoint is reachable by anybody who finds the URL and a signature check
+  is all that stands in front of it, so a bug there must cost a wrong tier and
+  never an account. `accounts.setBilling()` is its own method for the same
+  reason `setPrefs()` is.
+- **A failed payment moves the STATUS and never the tier** — the lapsed-
+  subscription rule, applied. Demoting somebody because a card expired on a
+  Tuesday would take their packs away mid-week.
+- **An older event can never roll a subscription backwards.** Retries and
+  out-of-order delivery are normal; a stale "cancelled" arriving after a fresh
+  "started" would close an account that has just been paid for. Same lesson as
+  the invoice counter.
+- **Nothing throws.** A webhook endpoint that 500s makes the processor retry
+  the same bad payload for hours, so a malformed event is reported and answered
+  200 — "received and ignored" is the honest reply.
+
+Card details must never reach this server. **The PayPal adapter itself is not
+written**: `developer.paypal.com` is blocked by the environment's egress policy
+and a payments integration must not be written from memory — see TODO.md.
 
 **A subscriber's own quizzes are private, including from the owner.** Support
 access is a switch THEY turn on, it expires, and what was done while inside is

@@ -554,6 +554,81 @@ One thing it quietly fixes later: if topical content is what sells Silver, other
 people writing topical rounds — for their own regions, their own crowds — is
 worth more than one person can produce.
 
+### PayPal — the half that is built, and the half that is blocked
+
+**Subscriptions rather than invoices**, on your own reasoning: chasing ten
+quizmasters every month is worse than chasing venues, and PayPal charges the
+card by itself.
+
+#### Built and tested — `src/billing.js`
+
+The processor-agnostic half, which is the half that matters because **you are
+on 2.9% and expect to move to Stripe.** Five events and nothing else — started,
+renewed, payment_failed, cancelled, expired — applied to an account by one
+function. Four properties, all with tests:
+
+- **A webhook may only ever move a SUBSCRIPTION.** It sets a tier and a status
+  and stores an opaque reference. It cannot set `comped`, a role, `packs`, an
+  email or a password. That endpoint is reachable by anybody who finds the URL
+  and a signature check is the only thing in front of it, so a bug there has to
+  cost a wrong tier and never an account.
+- **A failed payment moves the STATUS and never the tier**, which is the rule
+  this codebase already has tests for: a lapsed subscription never interrupts a
+  night. Dropping somebody to Bronze because a card expired on a Tuesday would
+  take their packs away mid-week.
+- **An older event can never roll a subscription backwards.** Webhooks retry
+  and arrive out of order, and a stale "cancelled" landing after a fresh
+  "started" would close an account somebody has just paid for. Same lesson the
+  invoice counter learned.
+- **Nothing outside a processor's own adapter knows which processor it is** —
+  there is a test that greps the code for the words. Moving to Stripe is one
+  new adapter file and one route, not a search through the codebase.
+
+#### Blocked — the PayPal adapter itself
+
+`developer.paypal.com` is blocked by this environment's network egress policy,
+so the API surface cannot be read from here. **The adapter has deliberately NOT
+been written from memory.** A wrong webhook-verification path is not a bug, it
+is a hole where anybody can POST "subscription activated" and hand themselves
+Gold — which is exactly the wall `billing.js` exists to keep narrow.
+
+Two ways to unblock it, either is fine:
+
+1. **Allow `developer.paypal.com` and `api-m.sandbox.paypal.com`** in the
+   environment's network settings (see the Claude Code on the web docs), and it
+   gets written and tested against the real shapes.
+2. **Paste the relevant doc pages in**, or hand over sandbox credentials — the
+   sandbox API answers questions about itself.
+
+#### What is needed from you either way — about 5 minutes
+
+On the kids'-party PayPal business account, at developer.paypal.com:
+
+- `PAYPAL_CLIENT_ID` and `PAYPAL_SECRET` — **sandbox first**, so nothing
+  touches real money until the whole loop is proven
+- `PAYPAL_WEBHOOK_ID` — from creating a webhook pointed at
+  `https://musicquizapp.onrender.com/api/paypal/webhook`
+
+#### Then, and it is small
+
+- `src/paypal.js` — token, plan creation, webhook signature verification.
+- `scripts/paypal-setup.mjs` — creates the product and the three plans **from
+  `TIERS` in plans.js**, so the price on the ladder and the price PayPal charges
+  cannot drift apart.
+- `POST /api/paypal/webhook` — verify, translate to one of the five events,
+  hand to `applyBilling`. Nothing else.
+- A Subscribe button per rung on the account page. Card details never reach
+  this server.
+
+#### One number worth knowing before the pack shop opens
+
+At 2.9% plus a fixed fee, **the fixed fee is what hurts a £3 pack sale and
+barely touches a £30 subscription.** Roughly: a £3 pack keeps about 87% after
+fees, a £30 subscription keeps about 96%. That is another quiet argument for
+the subscription being the business and the pack sale being the on-ramp, which
+is what the pricing already assumes — and if pack sales ever become common, it
+is an argument for selling three at once rather than one at a time.
+
 ### Group accounts — SEATS on a Gold, for a quizmaster company
 
 Your idea, and the interesting half of it is not the discount.

@@ -299,6 +299,34 @@ export class Accounts {
    * account that will not save because a tab was renamed is a worse bug than
    * a leftover string.
    */
+  /**
+   * The receipt from a payment processor, and NOTHING else.
+   *
+   * Its own method for the same reason `setPrefs` is: `update()` is what a
+   * webhook already talks to, and the narrower the thing a webhook can touch,
+   * the smaller a bug in the signature check costs. This one writes under
+   * `billing` and cannot reach a tier, a status, a role or a password —
+   * changing the subscription is `update()`, and `src/billing.js` is the only
+   * caller of both.
+   *
+   * Stored rather than interpreted: `reference` means something in the
+   * processor's own dashboard and nothing here. `processor` is on it because
+   * a migration runs both for a while, and "which one is actually billing this
+   * person" is a question somebody will need to answer in a hurry.
+   */
+  setBilling(id, { processor = '', reference = '', at = 0, last = '' } = {}) {
+    const account = this.find(id);
+    if (!account) return null;
+    account.billing = {
+      processor: String(processor).slice(0, 24),
+      reference: String(reference).slice(0, 120),
+      at: Number(at) || 0,
+      last: String(last).slice(0, 32),
+    };
+    this.save();
+    return account.billing;
+  }
+
   setPrefs(id, patch = {}) {
     const account = this.find(id);
     if (!account) return null;
