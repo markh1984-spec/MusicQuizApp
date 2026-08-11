@@ -2919,7 +2919,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 797 tests, no network, injected clocks — must stay green
+npm test        # 800 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -2932,6 +2932,13 @@ anything structural:
 - `SIGKILL` mid-quiz and mid-bingo, checking the right question/track and all
   scores, cards and marks come back
 - QR output decoded with a real scanner (OpenCV) across versions 1–10
+
+**A full software audit was run before handing out a second login — see
+`AUDIT.md`.** It is the record of what was checked, what it found, what held,
+and — the part worth reading before promising anything — **what an audit from a
+container cannot tell you**: real iOS Safari, pub wifi, a projector, a phone
+camera, and the photo round trip, which has no repository configured here and is
+the one shipped feature whose happy path is still unproven.
 
 ---
 
@@ -3078,7 +3085,7 @@ private repo (`PACKS_REPO`), never the one holding the owner's accounts and
 invoices; until that is set the console says so in red and every own pack has a
 Download button.
 
-All on **`MusicQuizApp`**. 797 tests green.
+All on **`MusicQuizApp`**. 800 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on
