@@ -306,10 +306,13 @@ test('a checker that cannot be reached keeps the quiz, and says so', async () =>
       status: 200,
       json: async () => ({
         content: [{ type: 'text', text: JSON.stringify({
+          // Every question needs a DIFFERENT right answer, or the catalogue's
+          // answer dedupe drops them as repeats and it does so correctly — see
+          // question-history.js. Real questions do not all answer "B".
           questions: Array.from({ length: asked }, (_, i) => ({
             prompt: `Stub ${calls}-${i}?`,
-            options: ['A', 'B', 'C', 'D'],
-            correctIndex: 1,
+            options: [`Right ${calls}-${i}`, 'Wrong one', 'Wrong two', 'Wrong three'],
+            correctIndex: 0,
             answerNote: 'A fact.',
           })),
         }) }],
@@ -377,7 +380,8 @@ test('the checker works in small batches, at the same time', async () => {
     return reply({
       questions: Array.from({ length: asked }, (_, i) => ({
         prompt: `Q${sizes.length}-${i}-${Math.random()}?`,
-        options: ['a', 'b', 'c', 'd'],
+        // Distinct right answers, for the reason above.
+        options: [`right-${sizes.length}-${i}-${Math.random()}`, 'b', 'c', 'd'],
         correctIndex: 0,
         answerNote: 'x',
       })),
@@ -560,4 +564,63 @@ test('a reply with nothing usable in it still says so plainly', () => {
   } catch (err) {
     assert.equal(err.unreadable, true);
   }
+});
+
+/*
+ * The catalogue-wide answer check, end to end.
+ *
+ * The unit tests for it are in question-history.test.js; this one is about the
+ * WIRING — that a generation actually reads the packs already on disk, tells
+ * the writer about them, and drops a repeat before spending a checker call on
+ * it. That last part matters: the check is the most expensive call in the job,
+ * and running one on a question that is going to be thrown away is the worst
+ * possible place to spend it.
+ */
+test('a question the catalogue already asks is dropped before it is checked', async () => {
+  const checked = [];
+  let told = '';
+  globalThis.fetch = async (url, options) => {
+    const prompt = JSON.parse(options.body).messages[0].content;
+    const reply = (payload) => ({
+      ok: true, status: 200, text: async () => '',
+      json: async () => ({ content: [{ type: 'text', text: JSON.stringify(payload) }] }),
+    });
+    if (prompt.startsWith('Check these')) {
+      checked.push(prompt);
+      const n = Number(prompt.match(/^Check these (\d+)/)[1]);
+      return reply({ verdicts: Array.from({ length: n }, (_, i) => ({ index: i, ok: true })) });
+    }
+    told = prompt;
+    // One answer is already in the catalogue below; the rest are new.
+    return reply({
+      questions: [
+        { prompt: 'Asked a different way entirely?', options: ['Kate Bush', 'x', 'y', 'z'], correctIndex: 0, answerNote: 'f' },
+        { prompt: 'Something new?', options: ['Blondie', 'x', 'y', 'z'], correctIndex: 0, answerNote: 'f' },
+        { prompt: 'Something else new?', options: ['Squeeze', 'x', 'y', 'z'], correctIndex: 0, answerNote: 'f' },
+      ],
+    });
+  };
+
+  await withTmpDir(async (config) => {
+    fs.writeFileSync(path.join(config.quizDir, 'already.json'), JSON.stringify({
+      id: 'already',
+      title: 'The Existing Quiz',
+      rounds: [{ id: 'r1', type: 'text', questions: [
+        { prompt: 'Who sang Wuthering Heights?', options: ['Kate Bush', 'a', 'b', 'c'], correctIndex: 0 },
+      ] }],
+    }), 'utf8');
+
+    const result = await generateQuizPack({ config, theme: 'test', rounds: ['text'], perRound: 2 });
+
+    const answers = result.quiz.rounds[0].questions.map((q) => q.options[q.correctIndex]);
+    assert.ok(!answers.includes('Kate Bush'), 'an answer already in the catalogue got through');
+    assert.equal(result.repeated.length, 1, 'the repeat was not reported');
+    assert.match(result.repeated[0].because, /The Existing Quiz/);
+
+    // Told to the writer as well, so the over-ask is not wasted on it.
+    assert.match(told, /Kate Bush/, 'the writer was never told what to avoid');
+
+    // And never checked — the expensive call must not be spent on a discard.
+    assert.ok(!checked.some((c) => c.includes('Kate Bush')), 'a doomed question was sent to the checker');
+  });
 });

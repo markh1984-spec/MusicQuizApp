@@ -19,6 +19,9 @@ import { cleanTheme, quizTitleFor, themeSlug, titleCase } from './theme.js';
 import { spotifyConfigured, findTrack, createPlaylist } from './spotify.js';
 import { portraitPath } from './portraits.js';
 import { balanceAnswers } from '../public/assets/balance.js';
+// Not asking the same thing twice across the catalogue. Keyed on the ANSWER,
+// because two questions with the same answer are the same question to a room.
+import { answersInCatalogue, filterSeen, avoidAnswers, DEFAULT_MONTHS as ANSWER_MONTHS } from './question-history.js';
 
 export const DEFAULT_MODEL = 'claude-sonnet-5';
 
@@ -662,7 +665,13 @@ export function questionKey(q) {
   return prompt || what ? `${prompt}|${what}` : '';
 }
 
-async function buildRound({ brief, perRound, check, system, apiKey, model, log, onReject, onUnchecked = () => {}, onShort = () => {}, onSpend = () => {} }) {
+/**
+ * @param {Map} [seenAnswers]  answers already used somewhere in the catalogue.
+ *   See question-history.js — keyed on the ANSWER rather than the wording,
+ *   because two questions with the same answer are the same question to a room
+ *   however differently they are phrased.
+ */
+async function buildRound({ brief, perRound, check, system, apiKey, model, log, onReject, onUnchecked = () => {}, onShort = () => {}, onSpend = () => {}, seenAnswers = new Map(), onRepeat = () => {} }) {
   const accepted = [];
   const failed = [];
   const seen = new Set();
@@ -675,6 +684,18 @@ async function buildRound({ brief, perRound, check, system, apiKey, model, log, 
     const alreadyWritten = [...accepted, ...failed].map((q) => q.prompt);
     const avoid = alreadyWritten.length
       ? `\n\nYou have already written these — do not repeat them or ask the same thing a different way:\n${alreadyWritten.map((p) => `- ${p}`).join('\n')}`
+      : '';
+    /*
+     * And what the rest of the catalogue has already asked about.
+     *
+     * Told to the writer so the over-ask is not spent on questions that are
+     * going to be dropped anyway — but the guarantee is the mechanical filter
+     * below, not this. A model told not to repeat itself will do it now and
+     * again, and the failure is silent.
+     */
+    const used = avoidAnswers(seenAnswers);
+    const notThese = used.length
+      ? `\n\nThese have been the answer to a question in another quiz recently. Do not write a question whose answer is any of them:\n${used.map((a) => `- ${a}`).join('\n')}`
       : '';
 
     log(attempt === 1
@@ -692,7 +713,7 @@ async function buildRound({ brief, perRound, check, system, apiKey, model, log, 
     try {
       result = await askClaude({
         system,
-        prompt: `Write ${ask} questions for a music quiz.\n\n${brief}${avoid}\n\n${SCHEMA_NOTE}`,
+        prompt: `Write ${ask} questions for a music quiz.\n\n${brief}${avoid}${notThese}\n\n${SCHEMA_NOTE}`,
         apiKey,
         model,
         what: 'wrote a round',
@@ -707,12 +728,22 @@ async function buildRound({ brief, perRound, check, system, apiKey, model, log, 
     }
 
     // Drop anything we have already got before spending a check on it.
-    const fresh = (result.questions || []).filter((q) => {
+    const sameRun = (result.questions || []).filter((q) => {
       const key = questionKey(q);
       if (!key || seen.has(key)) return false;
       seen.add(key);
       return true;
     });
+    /*
+     * And anything the CATALOGUE has already asked about — before the checker
+     * sees it, because a check on a question that is going to be thrown away
+     * is the most expensive call in the job spent on nothing.
+     */
+    const { kept: fresh, dropped: repeats } = filterSeen(seenAnswers, sameRun);
+    for (const r of repeats) {
+      onRepeat(r);
+      log(`  already asked: ${r.because}`);
+    }
     if (!fresh.length) {
       log(`  nothing new came back`);
       continue;
@@ -780,6 +811,15 @@ export async function generateQuizPack({
   title,
   model = DEFAULT_MODEL,
   check = true,
+  /*
+   * How far back "we have already asked that" reaches, in months.
+   *
+   * A window rather than forever, for the same reason bingo has one: on the
+   * thirtieth pack every common answer would be used and there would be
+   * nothing left to write. Six months is roughly how long a venue takes to
+   * cycle through a library, which is when a repeat actually gets noticed.
+   */
+  avoidAnswerMonths = ANSWER_MONTHS,
   log = () => {},
   // What each call cost, for the owner's own ledger. Defaults to nothing, so
   // a test or a script gets a generator with no accounting attached rather
@@ -801,9 +841,20 @@ export async function generateQuizPack({
   const plan = roundPlan(rounds, perRound);
   if (!plan.length) throw new Error(`No usable round types. Use ${ROUND_TYPES.join(', ')}.`);
 
+  /*
+   * What the catalogue has already asked about.
+   *
+   * Read ONCE for the whole job rather than per round, because it is a
+   * directory of packs and it cannot change while a generation is running.
+   * Shared across every round too, so round three does not repeat round one.
+   */
+  const seenAnswers = answersInCatalogue(config.quizDir, { months: avoidAnswerMonths, now: now() });
+  if (seenAnswers.size) log(`${seenAnswers.size} answers already used in the catalogue — not asking those again`);
+
   const built = [];
   const rejected = [];
   const unchecked = [];   // rounds the checking pass could not reach at all
+  const repeated = [];    // questions dropped because the catalogue already asks them
   const short = [];       // rounds the WRITER would not fill, which is different
 
   for (let i = 0; i < plan.length; i++) {
@@ -815,6 +866,8 @@ export async function generateQuizPack({
     log(`round ${i + 1} of ${plan.length} (${type}, ${count} question${count === 1 ? '' : 's'})`);
     const questions = await buildRound({
       brief, perRound: count, check, system, apiKey, model, log, onSpend,
+      seenAnswers,
+      onRepeat: (r) => repeated.push({ round: i + 1, prompt: r.question.prompt, because: r.because }),
       onReject: (q, reason) => rejected.push({ round: i + 1, prompt: q.prompt, reason }),
       onUnchecked: () => { if (!unchecked.includes(i + 1)) unchecked.push(i + 1); },
       onShort: (got, wanted) => short.push({ round: i + 1, type, got, wanted }),
@@ -919,7 +972,7 @@ export async function generateQuizPack({
   log(`saved ${quizId}.json`);
 
   const needsImages = built.some((r) => r.type === 'image');
-  return { quiz, problems, file, needsImages, rejected, unchecked, short, checked: check };
+  return { quiz, problems, file, needsImages, rejected, unchecked, short, repeated, checked: check };
 }
 
 function slug(s) {

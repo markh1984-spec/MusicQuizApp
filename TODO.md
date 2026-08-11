@@ -541,9 +541,14 @@ meaningless until there are purchases to discount.
   their packs. Submitting one is them opening that door deliberately, which is
   consistent — but it cannot be a button they press by accident, and it cannot
   be quietly undoable, because by then you have read it.
-- **Credit the author on the pack card.** Honest, motivating, and the
-  alternative is a thing that goes wrong publicly. Your read-through is still
-  what puts it in the catalogue, so the quality guarantee is unchanged.
+- **Credit the author, and give them their own SECTION and TAG.** Settled.
+  It does two jobs at once: the author gets the credit, and a "written by
+  quizmasters" shelf keeps your own house style a distinct thing rather than
+  something that quietly dilutes as the catalogue fills up. A buyer knows what
+  they are getting, which protects you — and your read-through is still what
+  puts a pack on that shelf at all, so the quality guarantee is unchanged.
+  Same shape as the **Yours** tag on a subscriber's own packs, and the shop
+  grid already splits into sections, so neither is new machinery.
 
 One thing it quietly fixes later: if topical content is what sells Silver, other
 people writing topical rounds — for their own regions, their own crowds — is

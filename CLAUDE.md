@@ -516,6 +516,58 @@ quiz, and all it said was "Quiz is not valid". The `/checked` route passes
 `{ allowProblems: true }`. The read-through also shows validation problems
 above the hunches, in red, so you can see *which* question is at fault.
 
+### Not asking the same thing twice, across the catalogue
+
+`src/question-history.js`. The bingo side has had this from the beginning —
+`history.js` remembers every track and refuses it for three months. Quizzes
+never got the equivalent, and the gap was invisible at seven packs:
+`questionKey()` dedupes within one generation run and each round is told what
+the earlier rounds wrote, but pack twenty had no idea what was in packs one to
+nineteen. Two eighties quizzes six months apart could share half a dozen
+answers, and the first anybody hears is a regular saying "we had this one".
+
+**IT KEYS ON THE ANSWER, NOT THE WORDING, and that is the whole design.** A
+bingo track is a `{title, artist}` pair so matching the words works. A question
+is prose, and these are the same question:
+
+> *"Who had a number one with Flowers in 2023?"*
+> *"Which Miley Cyrus single topped the charts that year?"*
+
+Almost no shared words. Any text comparison finds nothing. The answer is the
+stable part — and it is what the room experiences: somebody who heard "Miley
+Cyrus" last month feels the repeat however it was phrased.
+
+**There is no history FILE, deliberately.** The bingo one exists because Claude
+in a browser reads it before curating, and because a curated round can be
+binned before it becomes a pack — so "what was used" is not something the packs
+can tell you. Quizzes have neither problem: the catalogue is on disk, so **the
+packs ARE the record.** No file to keep in sync, no backfill, no backup, and a
+deleted pack stops blocking its own answers the moment it goes.
+
+**The CATALOGUE only**, which falls out rather than needing a check: generating
+is the owner's, and the owner cannot read a quizmaster's own packs.
+
+Four details that are each there for a reason:
+
+- **A window, not forever** (six months). On the thirtieth pack every common
+  answer would be used and there would be nothing left to write. Six months is
+  roughly how long a venue takes to cycle through a library, which is when a
+  repeat is actually noticed.
+- **An undated pack counts as RECENT.** It is almost always an OLD one, from
+  before `createdAt` existed — so treating it as expired would quietly unblock
+  exactly the answers most likely to have been heard. Blocking is the cheap
+  mistake: the generator over-asks, so a wrongly withheld answer costs nothing.
+- **Dropped BEFORE the checker sees it.** The check is the most expensive call
+  in the job and a doomed question is the worst place to spend one. There is a
+  test.
+- **The writer is told as well, but that is not the guarantee.** It stops the
+  over-ask being wasted; the mechanical filter is what actually holds, because
+  a model asked not to repeat itself will do it now and again and the failure
+  is silent.
+
+A pick-them-all question counts EVERY right option, not just the first —
+otherwise a later question could reuse one of them unnoticed.
+
 ### A question that goes out of date on its own
 
 `ages-out` in `reviewWarnings()`. "How old is Harry Styles" is right for a year
@@ -855,6 +907,7 @@ src/store.js           crash recovery
 src/quizzes.js         quiz packs: load, validate, save
 src/library.js         saved packs, play counts, past nights
 src/history.js         no-repeats memory for bingo generation
+src/question-history.js  the same, for quiz ANSWERS — read off the packs, not a file
 src/generate-bingo.js  theme -> Claude -> history filter -> Spotify -> pack
 src/bingo-rules.js     what makes a good bingo track, for the in-app generator
 src/spotify.js         playlist building
