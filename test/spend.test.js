@@ -83,12 +83,31 @@ test('the summary counts the searches separately from the money', () => {
 });
 
 test('a picture is priced from the quality that was actually asked for', () => {
-  assert.equal(imagePence({ quality: 'low', images: 10 }), PRICES.image.low * 10);
-  assert.equal(imagePence({ quality: 'high', images: 2 }), PRICES.image.high * 2);
+  const g = PRICES.image.google;
+  assert.equal(imagePence({ provider: 'google', quality: 'low', images: 10 }), g.low * 10);
+  assert.equal(imagePence({ provider: 'google', quality: 'high', images: 2 }), g.high * 2);
   // An unrecognised quality falls to the middle rather than to nothing — a
   // free row is worse than an approximate one, because it looks like it did
   // not happen.
-  assert.equal(imagePence({ quality: 'nonsense', images: 1 }), PRICES.image.medium);
+  assert.equal(imagePence({ provider: 'google', quality: 'nonsense', images: 1 }), g.medium);
+});
+
+test('the two suppliers are priced apart, and an unknown one is priced as the dearest', () => {
+  /*
+   * Imagen and gpt-image-1 are nothing like each other at the TOP of the
+   * range — 5p against 14p — which is the whole reason these are two tables.
+   * A single one would have reported whichever supplier you were not using.
+   *
+   * Note it is deliberately not "Google is cheaper everywhere": gpt-image-1's
+   * bottom tier is genuinely under Imagen Fast. The saving is at high quality,
+   * which is where a picture being sold on actually gets drawn.
+   */
+  assert.ok(PRICES.image.google.high < PRICES.image.openai.high / 2,
+    'the high-quality gap is the reason for two tables');
+  // Same rule as an unknown model: a row that reads high is a question, and a
+  // row that reads low is a bill nobody saw coming.
+  assert.equal(imagePence({ provider: 'not-a-supplier', quality: 'high', images: 1 }), PRICES.image.openai.high);
+  assert.equal(imagePence({ quality: 'high', images: 1 }), PRICES.image.openai.high);
 });
 
 /*
@@ -119,10 +138,10 @@ test('a row keeps fractions of a penny', () => {
 test('the summary splits Claude from the pictures, and adds up', () => {
   const { spend } = ledger();
   spend.record({ kind: 'claude', packId: 'madonna', model: 'claude-sonnet-5', tokensIn: 10000, tokensOut: 10000 });
-  spend.record({ kind: 'image', packId: 'madonna', quality: 'medium', images: 10 });
+  spend.record({ kind: 'image', packId: 'madonna', provider: 'google', quality: 'medium', images: 10 });
 
   const sum = spend.summary();
-  assert.equal(sum.image, PRICES.image.medium * 10);
+  assert.equal(sum.image, PRICES.image.google.medium * 10);
   assert.equal(Math.round((sum.claude + sum.image) * 100) / 100, sum.total);
   assert.equal(sum.packs.length, 1);
   assert.equal(sum.packs[0].packId, 'madonna');

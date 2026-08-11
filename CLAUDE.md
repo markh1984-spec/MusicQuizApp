@@ -947,13 +947,12 @@ moves onto it the next time its pictures are made, and pays nothing to do so.
 "6 already in the library, free · 4 to draw — about 16p". That number is the
 whole point of sharing, so it is read first rather than reported afterwards.
 
-### Three styles, and there is deliberately no photoreal one
+### Two styles, both cartoons, and no photoreal one
 
-`STYLES`: **Portrait** (painted, true to life — the default and the easiest to
-recognise), **Cartoon**, **As a superhero**. The host's choice always beats
-whatever Claude wrote, or picking "as a superhero" would silently do nothing on
-the many questions where the generator wrote a prompt of its own, and would
-read as a broken setting.
+`STYLES`: **Cartoon** (the default) and **As a superhero**. The host's choice
+always beats whatever Claude wrote, or picking "as a superhero" would silently
+do nothing on the many questions where the generator wrote a prompt of its own,
+and would read as a broken setting.
 
 **Every style is a whole second library of the same people**, so five styles is
 five times the bill for the same musicians — which hands straight back what
@@ -965,10 +964,108 @@ the default has none, so a library built before styles existed still fits.
 on-screen caption "AI-generated illustration — not a real photograph" is doing
 real work: UK fair dealing is a closed list and does not cover commercial
 entertainment, so a convincing fake photograph of a real living musician in a
-pack that is SOLD is the one version worth not having. `promptFor()` appends
-"must clearly be an illustration and not a photograph" whatever the style says,
-and there is a test that every style does. There is also a test that no style
-id contains "photo" or "real".
+pack that is SOLD is the one version worth not having. `promptFor()` rules out
+a photograph whatever the style says, and there is a test that every style
+does. There is also a test that no style id contains "photo" or "real".
+
+**There used to be a third, `portrait` — painted, true to life, and the
+DEFAULT — and it is gone because the supplier will not draw it.** Tested by
+hand in Google's own playground: *"do me a Michael Jackson cartoon"* is drawn,
+and asking for an *illustration* of the same person is refused. The line is how
+real the picture is trying to look, not who is in it. The host's call was:
+**if we cannot do the realistic end, do not ship a setting that pretends we
+can** — so it was deleted rather than reworded, and every remaining style is in
+the cartoon register.
+
+**And the refused word was in the prompt EVERY style sends.** `promptFor()`
+appended *"It must clearly be an illustration and not a photograph"* — so all
+three would have been refused, on every question, and from the console that
+looks exactly like a bad key. It now says "It is a cartoon drawing, not a
+photograph": same guarantee, and it leads with what IS wanted rather than with
+what is not. There is a test that no prompt contains the word "illustration"
+and that every one says "cartoon".
+
+**Adding a style is a line in the file and a minute in the playground FIRST.**
+A style that gets refused is a control that does nothing, which is the fault
+this file keeps recording. Candidates worth trying, roughly in order of how
+likely they are to be allowed: pop-art halftone, black-and-white comic inking,
+cut-paper collage, 8-bit pixel art.
+
+### Moving the default style was free exactly once
+
+The default has no filename suffix — `portraits/madonna.png` — so changing
+which style is the default silently changes what every unsuffixed file MEANS.
+`images/portraits/` was empty when this happened (there has never been an image
+key on this app), so there was nothing to rename and nothing to orphan.
+
+Do it after a library exists and every painted picture quietly becomes "the
+cartoon of that person", while every `--cartoon` file already on disk is
+orphaned and paid for twice. **If the default ever moves again it is a rename
+job, not a one-word edit.**
+
+### The picture round runs on GOOGLE
+
+`src/generate-images.js`. Imagen 4 on `GOOGLE_API_KEY`, via the plain Gemini
+API. The host's OpenAI account was deactivated with no route back, and
+Anthropic has no image API — so this is the only working supplier, not a
+preference. The OpenAI code stays because it works and costs nothing to keep.
+
+**The AI Studio door rather than Vertex AI, and that is the no-dependencies
+rule deciding it.** Vertex authenticates with a service-account JWT that has to
+be signed and refreshed hourly; this is one header on one POST. Same models,
+same prices, same Google Cloud project, a tenth of the code.
+
+**Nobody picks a supplier on a button.** `artProvider()` returns whichever key
+is set, cheapest first, and the console has one "Make real portraits" press.
+The console used to send the literal string `"openai"` in the request body — a
+request body choosing who gets billed, which is the same shape of hole
+`POST /api/quiz` had, and it would have gone on calling a dead account after
+the switch. The server works it out now and the old value still maps through,
+so a stale page in somebody's tab keeps working.
+
+**Imagen's three tiers ARE the quality setting.** Fast, Standard and Ultra
+against low, medium and high — so there was no second control to build and no
+new word for the host to learn. About 2p, 4p and 5p a picture, so a ten-picture
+round is 16p to 50p.
+
+Two request fields are load-bearing and neither is obvious:
+
+- **`personGeneration: 'allow_adult'`.** Left unset it defaults to blocking
+  people — and the round is "whose face is this", so every picture would come
+  back refused and it would read as a bad key.
+- **`includeRaiReason: true`.** Without it a refusal arrives as an empty
+  prediction list, indistinguishable from a network problem. With it the reason
+  is said in words and the message adds "try a different style", because a
+  refusal is nearly always the STYLE and that is only obvious if somebody says
+  so. Same rule as the Spotify 403.
+
+**None of it could be checked from the container it was written in** — the
+egress policy blocks Google — so the request shape is pinned against a stubbed
+`fetch` instead: the model per quality, the header, both parameters above, and
+that a refusal is reported per question while the rest of the round carries on.
+
+### The prices were three times too high, and it was Claude's row
+
+`PRICES.claude['claude-opus-5']` said `{ in: 1.2, out: 6.0 }` per 1,000 tokens,
+which is a $15/$75 model. Opus 5 is $5/$25, so at the 80p-to-the-dollar rate
+every other row in that table already used, it is `{ in: 0.4, out: 2.0 }`.
+
+**Every Claude figure the Money tab ever showed was inflated by three**,
+including the "about £2 a topical pack" the tier arithmetic was sanity-checked
+against — the real number is nearer 70p. Rows already written keep their stored
+pence, which is the point of storing them, so the history stays true to what
+was reported at the time.
+
+The image prices are **per supplier** now, because Imagen and gpt-image-1 are
+nothing like each other at the top of the range (5p against 14p) and one table
+would have reported whichever supplier you were not using. Note it is not
+"Google is cheaper everywhere" — gpt-image-1's bottom tier is genuinely under
+Imagen Fast — and there is a test that says so, because the first version of it
+asserted the tidier thing and was wrong.
+
+**The console had its own copy of the price table**, which is exactly the drift
+the ledger's own comment says it prevents. The prices come down with the
+payload now.
 
 ### Quality is a console setting, and it never was one
 
@@ -1088,9 +1185,12 @@ pick-them-all rounds being poor search targets.
 
 ## Things the host does not have, and what that blocks
 
-- **No image generation key yet.** Anthropic has no image API, so a Claude key
-  cannot make round 2 portraits. Host agreed to OpenAI (~50p/quiz) but has not
-  set it up. Round 2 runs on placeholder art until then.
+- **Round 2 portraits are on GOOGLE now, not OpenAI.** Anthropic has no image
+  API, so a Claude key cannot make them. OpenAI was the plan for months and
+  then **the host's OpenAI account was deactivated**, with no route back — so
+  the provider is Imagen 4 on `GOOGLE_API_KEY`, and the OpenAI code stays only
+  because it costs nothing to keep. See **The picture round runs on Google**
+  below. Round 2 is placeholder art until the key is on Render.
 - **Spotify not set up yet.** One-time developer app + `scripts/spotify-login.mjs`.
   Bingo generation works without it, just no playlist.
 - **On Render's free tier**, by choice. Connected browser tabs ping `/health`
@@ -3103,8 +3203,10 @@ Confirmed by reading the environment list on the dashboard:
 saved but not permanent — their console says so in red and offers Download. One
 more private repo and one variable fixes it; see TODO.md. **No `BRAND_NAME`** — checked deliberately, because it
 overrides the per-quizmaster naming and a leftover value would hide that whole
-feature while looking exactly like a failed deploy. **No `OPENAI_API_KEY`**, so
-round 2 is still placeholder art.
+feature while looking exactly like a failed deploy. **No `GOOGLE_API_KEY`**, so
+round 2 is still placeholder art — that is the one variable the picture round
+now waits on, and `OPENAI_API_KEY` is dead ground because the account behind it
+was deactivated.
 
 So the bookmark survives a deploy, and accounts, invoices, reported questions
 and play counts all back up to the private repo and come back at boot. The owner

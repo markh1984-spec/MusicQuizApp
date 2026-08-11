@@ -57,20 +57,34 @@ export function slugName(name) {
  * illustration — not a real photograph" is doing legal work: UK fair dealing is
  * a closed list and does not cover commercial entertainment, so a convincing
  * fake photograph of a real living musician, in a pack that is SOLD, is the one
- * version worth not having. `portrait` is true to life and clearly painted,
- * which is the recognisable end of the range without being a photograph.
+ * version worth not having.
+ *
+ * ---
+ *
+ * **EVERY STYLE HERE IS IN THE CARTOON REGISTER, AND THAT IS THE PROVIDER
+ * TALKING RATHER THAN TASTE.** Tested against Google in their own playground:
+ * "do me a Michael Jackson cartoon" draws it; asking for an *illustration* of
+ * the same person is refused. The line is drawn at how real the picture is
+ * trying to look, not at who is in it — a caricature of somebody famous is
+ * fine, anything reaching for a plausible likeness is not.
+ *
+ * There used to be a `portrait` style here — "clearly a painting rather than a
+ * photograph", true to life, and the DEFAULT. Every picture in the app would
+ * have been drawn with it, and every one of them would have been refused. It is
+ * gone rather than reworded, because the host's own call was: if we cannot do
+ * the realistic end, do not ship a setting that pretends we can.
+ *
+ * **Adding one is a line here and a minute in the playground first.** Try the
+ * prompt at https://aistudio.google.com before it goes in — a style that
+ * refuses is a control that does nothing, which is the fault this codebase
+ * keeps recording. Candidates worth trying, in rough order of how likely they
+ * are to be allowed: pop-art halftone, black-and-white comic inking, cut-paper
+ * collage, 8-bit pixel art.
  */
 export const STYLES = {
-  portrait: {
-    label: 'Portrait',
-    hint: 'Painted, true to life. The easiest to recognise.',
-    prompt: 'A bold stylised digital illustration, clearly a painting rather than a photograph, '
-      + 'head and shoulders, facing the viewer, dramatic lighting, plain dark background, '
-      + 'strongly recognisable features',
-  },
   cartoon: {
     label: 'Cartoon',
-    hint: 'Broad and comic. Nobody could mistake it for a photo.',
+    hint: 'Broad and comic. The one that is known to work.',
     prompt: 'A bold cartoon caricature with clean heavy outlines and flat bright colour, '
       + 'head and shoulders, facing the viewer, plain dark background, '
       + 'exaggerated but instantly recognisable features',
@@ -78,13 +92,14 @@ export const STYLES = {
   superhero: {
     label: 'As a superhero',
     hint: 'Comic-book costume and cape. Good for a fun night.',
-    prompt: 'A comic-book superhero illustration: the person in an invented superhero costume '
-      + 'with a cape, heroic pose, head and chest, dramatic comic-book lighting and bold inking, '
-      + 'plain dark background, face clearly recognisable',
+    prompt: 'A bold cartoon caricature in an invented comic-book superhero costume with a cape, '
+      + 'heroic pose, head and chest, clean heavy outlines and flat bright colour, '
+      + 'dramatic comic-book lighting, plain dark background, '
+      + 'exaggerated but instantly recognisable features',
   },
 };
 
-export const DEFAULT_STYLE = 'portrait';
+export const DEFAULT_STYLE = 'cartoon';
 
 export function findStyle(id) {
   return STYLES[id] ? id : DEFAULT_STYLE;
@@ -111,6 +126,14 @@ export function findQuality(q) {
  * The default style has no suffix, so the commonest case reads as a plain name
  * and — the reason that matters — a library built before styles existed keeps
  * exactly the filenames it already had.
+ *
+ * **Which is why moving the default from `portrait` to `cartoon` had to happen
+ * BEFORE any real artwork existed, and did.** `images/portraits/` was empty —
+ * there has never been an image key on this app — so the unsuffixed name simply
+ * changed meaning with nothing filed under it. Do that after a library exists
+ * and every painted picture silently becomes "the cartoon of that person",
+ * while every `--cartoon` file already on disk is orphaned. If the default ever
+ * moves again, it is a rename job and not a one-word edit.
  */
 export function portraitPath(musician, style = DEFAULT_STYLE) {
   const id = findStyle(style);

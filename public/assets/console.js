@@ -2367,7 +2367,13 @@ function picturePanel(pack) {
   // Roughly what OpenAI charges for one 1024x1024, in pence. Only ever used to
   // put a figure in front of the host before he presses a button that spends
   // money — so it is deliberately on the high side of what it might be.
-  const PENCE = { low: 1, medium: 4, high: 14 };
+  // The prices come from the server, which reads them off the ledger's own
+  // table. There was a second copy of them here, so the quote before the press
+  // and the record after it could disagree — which is the one thing the price
+  // table's own comment says it exists to prevent. This is only the fallback
+  // for a payload from an older server.
+  let pence = { low: 1, medium: 4, high: 14 };
+  let supplier = '';
   let filled = false;
 
   const refresh = async () => {
@@ -2393,16 +2399,19 @@ function picturePanel(pack) {
       if (d.missing) bits.push(`${d.missing} with nothing yet`);
       status.textContent = bits.join(' · ');
 
-      if (!d.openai) {
+      if (d.pence) pence = d.pence;
+      supplier = { google: 'Google', openai: 'OpenAI' }[d.art] || '';
+      if (!d.art) {
         makeBtn.disabled = true;
-        note.textContent = 'Set OPENAI_API_KEY to make real portraits. Stand-ins work without it.';
+        note.textContent = 'Set GOOGLE_API_KEY to make real portraits. Stand-ins work without it.';
         note.style.color = 'var(--gold)';
       } else {
+        makeBtn.disabled = false;
         // The plan, not the pack: what this press costs given what the shared
         // library already holds. "6 already drawn" is the whole point of the
         // library, so it is the first thing on the line.
         const { reused, toDraw } = d.plan;
-        const cost = (toDraw * PENCE[qualitySel.value || d.defaultQuality]) / 100;
+        const cost = (toDraw * (pence[qualitySel.value || d.defaultQuality] ?? 0)) / 100;
         const parts = [];
         if (reused) parts.push(`${reused} already in the library, free`);
         parts.push(toDraw
@@ -2421,9 +2430,10 @@ function picturePanel(pack) {
 
   const run = async (provider, button) => {
     const force = el.querySelector('.force').checked;
-    if (provider === 'openai' && !confirm(`Generate with OpenAI at ${qualitySel.value} quality? ${note.textContent}`)) return;
+    const real = provider !== 'placeholder';
+    if (real && !confirm(`Generate with ${supplier || 'the picture service'} at ${qualitySel.value} quality? ${note.textContent}`)) return;
     for (const b of [makeBtn, drawBtn]) b.disabled = true;
-    button.textContent = provider === 'openai' ? 'Making…' : 'Drawing…';
+    button.textContent = real ? 'Making…' : 'Drawing…';
     logEl.hidden = false;
     logEl.textContent = '';
     const say = (line) => { logEl.textContent += line + '\n'; logEl.scrollTop = logEl.scrollHeight; };
@@ -2447,7 +2457,9 @@ function picturePanel(pack) {
     refresh();
   };
 
-  makeBtn.addEventListener('click', () => run('openai', makeBtn));
+  // "real" rather than a supplier name: which one gets billed is the server's
+  // decision, from which key is set. See /api/generate/images.
+  makeBtn.addEventListener('click', () => run('real', makeBtn));
   drawBtn.addEventListener('click', () => run('placeholder', drawBtn));
   return el;
 }

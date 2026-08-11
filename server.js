@@ -27,7 +27,10 @@ import { generateBingoPack } from './src/generate-bingo.js';
 import { generateQuizPack, buildIntroPlaylists, roundPlan, TOPICAL_ROUNDS, TOPICAL_DAYS, topicalNaming } from './src/generate-quiz.js';
 import { importBingoPack } from './src/import-bingo.js';
 import { listAdvertPacks, loadAdvertPack, saveAdvertPack, deleteAdvertPack, validateAdvertPack, normaliseAdvertPack, safeAdvertFile } from './src/adverts.js';
-import { generateImages, imageStatus, imageJobs, imagePlan, openaiConfigured } from './src/generate-images.js';
+import {
+  generateImages, imageStatus, imageJobs, imagePlan,
+  openaiConfigured, googleConfigured, artProvider,
+} from './src/generate-images.js';
 import { STYLES, findStyle, QUALITIES, DEFAULT_QUALITY } from './src/portraits.js';
 import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig, playTrack } from './src/spotify.js';
@@ -43,7 +46,7 @@ import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, PACK_PENCE } from './public/assets/plans.js';
 import { Suggestions, KINDS, PACK_REQUEST_KIND } from './src/suggestions.js';
-import { Spend, spendRecorder } from './src/spend.js';
+import { Spend, spendRecorder, imagePrices } from './src/spend.js';
 // The pack id a generation is going to produce, so a cost has a subject from
 // the moment it is spent rather than only once the pack lands.
 import { themeSlug } from './src/theme.js';
@@ -1375,7 +1378,11 @@ async function handleGet(req, res, url, route) {
       reports: me && me.role === 'owner' ? reports.summary() : { open: 0, total: 0 },
       generation: {
         claude: Boolean(process.env.ANTHROPIC_API_KEY),
+        // `art` is the one that decides whether a button works; the two named
+        // flags are only so a warning can say WHICH key is missing.
+        art: artProvider(),
         openai: openaiConfigured(),
+        google: googleConfigured(),
         spotify: spotifyConfigured(),
         spotifyMissing: missingSpotifyConfig(),
         recentCount: recentTracks(config.dataDir, 3).length,
@@ -1420,7 +1427,14 @@ async function handleGet(req, res, url, route) {
       const quiz = loadQuiz(config.quizDir, id);
       return sendJson(res, 200, {
         ...imageStatus(quiz, config.imageDir),
+        // Which supplier will draw, and what it charges. The prices come from
+        // the ledger's own table rather than a second copy in the browser —
+        // the console had one, and a quoted price that disagrees with the
+        // recorded one is the exact drift `src/spend.js` says it prevents.
+        art: artProvider(),
+        pence: imagePrices(artProvider()),
         openai: openaiConfigured(),
+        google: googleConfigured(),
         // What pressing the button would actually cost, given what the shared
         // library already holds. This is the number that shows the sharing
         // working, so it is read before anything is spent, not reported after.
@@ -3819,7 +3833,18 @@ async function handleWrite(req, res, url, route) {
     try {
       const id = String(body.quizId || '');
       const quiz = loadQuiz(config.quizDir, id);
-      const provider = body.provider === 'openai' ? 'openai' : 'placeholder';
+      /*
+       * "real" means whichever supplier is actually configured, worked out
+       * HERE rather than taken from the browser.
+       *
+       * The console used to send the literal string "openai", which made a
+       * request body the thing that chose who gets billed — the same shape of
+       * hole `POST /api/quiz` had, and it would have quietly kept calling a
+       * dead OpenAI account after the switch to Google. The old value is still
+       * accepted so a stale page in somebody's tab does not stop working.
+       */
+      const asked = String(body.provider || '');
+      const provider = asked === 'placeholder' || !asked ? 'placeholder' : (artProvider() || 'placeholder');
 
       const result = await generateImages({
         quiz,

@@ -46,19 +46,37 @@ import path from 'node:path';
  * actually billed.
  */
 export const PRICES = {
-  // Per 1,000 tokens. Checked against Anthropic's published rates, Aug 2026.
+  // Per 1,000 tokens. Checked against Anthropic's published rates, Aug 2026,
+  // converted at $1 = 80p — which is the rate every row here already implied.
   claude: {
-    'claude-opus-5': { in: 1.2, out: 6.0 },
+    // Opus 5 is $5/$25 per million. This row USED to say 1.2 and 6.0, which is
+    // a $15/$75 model — three times the truth, on the one page whose whole job
+    // is answering "what did the AI actually cost". Every Claude figure the
+    // Money tab has ever shown was inflated by it, including the "£2 a topical
+    // pack" that the tier arithmetic was sanity-checked against; the real
+    // number is nearer 70p. Rows already written keep their stored pence, so
+    // the history stays true to what was reported at the time — this only
+    // affects what is written from here on.
+    'claude-opus-5': { in: 0.4, out: 2.0 },
     'claude-sonnet-5': { in: 0.24, out: 1.2 },
     'claude-haiku-4-5-20251001': { in: 0.08, out: 0.4 },
     // Anything unrecognised is priced as the dearest model there is, so a new
     // model name can only ever make the sums look WORSE than they are. The
-    // other way round is a bill nobody saw coming.
-    default: { in: 1.2, out: 6.0 },
+    // other way round is a bill nobody saw coming. That is Fable 5 at $10/$50.
+    default: { in: 0.8, out: 4.0 },
   },
-  // Per 1024x1024 image. The same table the console quotes before you press
-  // the button — one copy, so the estimate and the record cannot drift.
-  image: { low: 1, medium: 4, high: 14 },
+  /*
+   * Per 1024x1024 image, PER SUPPLIER — because they are priced nothing like
+   * each other and an average would misreport whichever one you are using.
+   *
+   * Google's three tiers are Imagen 4 Fast, Standard and Ultra, which line up
+   * exactly with low / medium / high, so the quality control the console
+   * already has needs no second meaning.
+   */
+  image: {
+    google: { low: 2, medium: 4, high: 5 },
+    openai: { low: 1, medium: 4, high: 14 },
+  },
   /*
    * Cached input, as MULTIPLES of the model's ordinary input rate.
    *
@@ -99,8 +117,18 @@ export function claudePence({
     + (Number(searches) || 0) * PRICES.search;
 }
 
-export function imagePence({ quality = 'medium', images = 1 } = {}) {
-  const each = PRICES.image[quality] ?? PRICES.image.medium;
+/**
+ * An unknown supplier is priced as the DEAREST one, same rule as an unknown
+ * model: a row that reads high is a question, and a row that reads low is a
+ * bill nobody saw coming.
+ */
+export function imagePrices(provider = '') {
+  return PRICES.image[provider] || PRICES.image.openai;
+}
+
+export function imagePence({ provider = '', quality = 'medium', images = 1 } = {}) {
+  const table = imagePrices(provider);
+  const each = table[quality] ?? table.medium;
   return each * (Number(images) || 0);
 }
 
@@ -184,13 +212,13 @@ export class Spend {
    * @param {string} [row.packId] which pack it was for, so a cost has a subject
    */
   record({
-    kind, what = '', packId = '', model = '', quality = '',
+    kind, what = '', packId = '', model = '', quality = '', provider = '',
     tokensIn = 0, tokensOut = 0, images = 0,
     cacheRead = 0, cacheWrite = 0, searches = 0,
   } = {}) {
     try {
       const pence = kind === 'image'
-        ? imagePence({ quality, images })
+        ? imagePence({ provider, quality, images })
         : claudePence({ model, tokensIn, tokensOut, cacheRead, cacheWrite, searches });
 
       const row = {
@@ -199,6 +227,7 @@ export class Spend {
         what: String(what).slice(0, 80),
         packId: String(packId).slice(0, 80),
         ...(model ? { model } : {}),
+        ...(provider ? { provider } : {}),
         ...(quality ? { quality } : {}),
         ...(tokensIn ? { tokensIn: Math.round(tokensIn) } : {}),
         ...(tokensOut ? { tokensOut: Math.round(tokensOut) } : {}),

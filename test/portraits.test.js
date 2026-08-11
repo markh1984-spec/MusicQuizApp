@@ -16,7 +16,9 @@ import {
   STYLES, DEFAULT_STYLE, DEFAULT_QUALITY, QUALITIES,
   portraitPath, readPortraitPath, slugName, findStyle, findQuality, musicianOf, isShared,
 } from '../src/portraits.js';
-import { imageJobs, imagePlan, promptFor, generateImages } from '../src/generate-images.js';
+import {
+  imageJobs, imagePlan, promptFor, generateImages, artProvider, PROVIDERS,
+} from '../src/generate-images.js';
 
 const picture = (answer, extra = {}) => ({
   id: 'q1', prompt: 'Who is this?', options: [answer, 'Someone', 'Else', 'Again'],
@@ -76,6 +78,155 @@ test('there is no photoreal style, and every style says it is not a photograph',
   }
 });
 
+/*
+ * THE WORD THAT WOULD HAVE BROKEN EVERY PICTURE ON DAY ONE.
+ *
+ * Tested by hand against Google: "do me a Michael Jackson cartoon" is drawn,
+ * "an illustration" of the same person is refused. Every prompt this app sends
+ * used to end "It must clearly be an illustration and not a photograph" — so
+ * every style, on every question, would have come back refused, and from the
+ * console that looks exactly like a bad key.
+ *
+ * The guarantee underneath it is unchanged and tested above: nothing may ask
+ * for a photograph. This only pins HOW that is said.
+ */
+test('no prompt asks for an illustration, which is the word that gets refused', () => {
+  for (const id of Object.keys(STYLES)) {
+    const text = promptFor(picture('Prince'), { style: id });
+    assert.doesNotMatch(text, /illustration/i, `${id} asks for an illustration and will be refused`);
+    assert.match(text, /cartoon/i, `${id} is not in the register that is known to work`);
+  }
+});
+
+test('there is no painted or true-to-life style left, and cartoon is the default', () => {
+  // The host's call once the realistic end turned out to be off the table:
+  // do not ship a setting that pretends we can do it.
+  assert.equal(DEFAULT_STYLE, 'cartoon');
+  assert.ok(!('portrait' in STYLES), 'the painted style is back, and it gets refused');
+  for (const st of Object.values(STYLES)) {
+    assert.doesNotMatch(st.prompt, /painting|painted|true to life|lifelike/i);
+  }
+});
+
+/*
+ * Which supplier gets billed is worked out from what is CONFIGURED, never sent
+ * up from the browser — the same shape of hole `POST /api/quiz` had. It also
+ * means the switch away from a dead OpenAI account needed no console change.
+ */
+test('the cheaper picture supplier wins, and no key means no real pictures', () => {
+  const before = { g: process.env.GOOGLE_API_KEY, o: process.env.OPENAI_API_KEY };
+  try {
+    delete process.env.GOOGLE_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+    assert.equal(artProvider(), '', 'it offered to spend money with no key set');
+
+    process.env.OPENAI_API_KEY = 'sk-test';
+    assert.equal(artProvider(), 'openai');
+
+    process.env.GOOGLE_API_KEY = 'AIza-test';
+    assert.equal(artProvider(), 'google', 'the dearer supplier won');
+
+    for (const p of ['placeholder', 'google', 'openai']) assert.ok(PROVIDERS.includes(p));
+  } finally {
+    if (before.g === undefined) delete process.env.GOOGLE_API_KEY; else process.env.GOOGLE_API_KEY = before.g;
+    if (before.o === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = before.o;
+  }
+});
+
+/*
+ * The Google request, pinned against a stub.
+ *
+ * Written because it CANNOT be checked from here — this container's egress
+ * policy blocks Google — so the first real call is on the host's machine, and
+ * a typo in a field name would look like a broken key at the worst moment.
+ * Every assertion below is a thing the API cares about.
+ */
+async function withStubbedFetch(reply, run) {
+  const real = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, opts) => {
+    calls.push({ url: String(url), opts });
+    return reply;
+  };
+  try {
+    return { result: await run(), calls };
+  } finally {
+    globalThis.fetch = real;
+  }
+}
+
+const okImage = (b64) => ({
+  ok: true, status: 200,
+  json: async () => ({ predictions: [{ bytesBase64Encoded: b64 }] }),
+  text: async () => '',
+});
+
+test('the Google request says what Imagen needs it to say', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'portraits-g-'));
+  const before = process.env.GOOGLE_API_KEY;
+  process.env.GOOGLE_API_KEY = 'AIza-test';
+  try {
+    const quiz = quizOf(picture('Madonna'));
+    const png = Buffer.from('pretend-png').toString('base64');
+    const { result, calls } = await withStubbedFetch(okImage(png), () => generateImages({
+      quiz, imageDir: dir, provider: 'google', quality: 'low',
+    }));
+
+    assert.deepEqual(result.made, ['portraits/madonna.png']);
+    assert.equal(fs.readFileSync(path.join(dir, 'portraits/madonna.png'), 'utf8'), 'pretend-png');
+
+    assert.equal(calls.length, 1);
+    const [{ url, opts }] = calls;
+    // Quality picks the model, so `low` must be the Fast one or the cheap
+    // setting quietly bills at the standard rate.
+    assert.match(url, /imagen-4\.0-fast-generate-001:predict$/);
+    assert.equal(opts.headers['x-goog-api-key'], 'AIza-test');
+
+    const body = JSON.parse(opts.body);
+    assert.equal(body.instances.length, 1);
+    assert.match(body.instances[0].prompt, /Madonna/);
+    // Unset, this defaults to blocking people — and the round is "whose face
+    // is this", so every picture would come back refused.
+    assert.equal(body.parameters.personGeneration, 'allow_adult');
+    // Without this a refusal arrives as an empty list, indistinguishable from
+    // a network problem.
+    assert.equal(body.parameters.includeRaiReason, true);
+    assert.equal(body.parameters.sampleCount, 1);
+  } finally {
+    if (before === undefined) delete process.env.GOOGLE_API_KEY; else process.env.GOOGLE_API_KEY = before;
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a refused picture is reported in words, and the rest of the round carries on', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'portraits-r-'));
+  const before = process.env.GOOGLE_API_KEY;
+  process.env.GOOGLE_API_KEY = 'AIza-test';
+  const said = [];
+  try {
+    const quiz = quizOf(picture('Madonna'), { ...picture('Prince'), id: 'q2' });
+    const refused = {
+      ok: true, status: 200,
+      json: async () => ({ predictions: [{ raiFilteredReason: 'Blocked. Support codes: 1234' }] }),
+      text: async () => '',
+    };
+    const { result } = await withStubbedFetch(refused, () => generateImages({
+      quiz, imageDir: dir, provider: 'google', log: (l) => said.push(l),
+    }));
+
+    // Both refused, neither thrown — nine portraits and one stand-in is a round
+    // you can still run tonight.
+    assert.equal(result.made.length, 0);
+    assert.equal(result.failed.length, 2);
+    const why = said.join('\n');
+    assert.match(why, /Support codes: 1234/, 'the reason was swallowed');
+    assert.match(why, /different style/i, 'it does not say what to do about it');
+  } finally {
+    if (before === undefined) delete process.env.GOOGLE_API_KEY; else process.env.GOOGLE_API_KEY = before;
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("the host's chosen style beats whatever Claude wrote", () => {
   // Otherwise picking "as a superhero" would do nothing at all on any question
   // where the generator happened to write a prompt of its own — which is most
@@ -100,8 +251,9 @@ test('the plan says what is free before anything is spent', () => {
     assert.deepEqual(plan.need, ['Prince']);
 
     // A different style shares nothing, and the plan has to say so rather than
-    // quietly reporting a saving that will not happen.
-    assert.equal(imagePlan(quiz, dir, { style: 'cartoon' }).reused, 0);
+    // quietly reporting a saving that will not happen. `superhero` rather than
+    // `cartoon`, which is the DEFAULT now and therefore the unsuffixed file.
+    assert.equal(imagePlan(quiz, dir, { style: 'superhero' }).reused, 0);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

@@ -5,19 +5,28 @@
  * by name. So you can generate them here, draw them yourself, or drop your own
  * in with the right filenames, and the round works the same either way.
  *
- * Two providers:
+ * Three providers:
  *
  *   placeholder  Drawn locally from the question's own text. No key, no cost,
  *                no network. Every one looks different, so the zoom has
  *                something to pull back from and the round is rehearsable
  *                before you have spent anything.
  *
- *   openai       Real portraits. Needs OPENAI_API_KEY. A penny to fourteen
- *                pence each depending on the quality asked for, and free for
- *                anybody already in the shared library — see src/portraits.js.
+ *   google       Imagen 4, on GOOGLE_API_KEY. **The one in use.** Two to six
+ *                pence a picture depending on quality, and free for anybody
+ *                already in the shared library — see src/portraits.js.
+ *
+ *   openai       gpt-image-1, on OPENAI_API_KEY. Kept because it works and
+ *                costs nothing to keep, but the host's OpenAI account was
+ *                deactivated, which is why Google exists here at all.
  *
  * Anthropic has no image API, so a Claude key cannot make these. Claude writes
  * the *prompts* during quiz generation; something else has to draw them.
+ *
+ * **Nobody chooses a provider on a button.** `artProvider()` picks whichever
+ * key is actually set, cheapest first, and the console shows one "make the real
+ * pictures" press. A dropdown asking a host to pick a supplier minutes before a
+ * gig is a decision with no right answer at the moment it is being asked.
  *
  * This lives in src/ rather than in the script so the console can call it too.
  * The script is a thin wrapper.
@@ -31,11 +40,39 @@ import {
   portraitPath, isShared, musicianOf,
 } from './portraits.js';
 
-export const PROVIDERS = ['placeholder', 'openai'];
+export const PROVIDERS = ['placeholder', 'openai', 'google'];
 
 export function openaiConfigured() {
   return Boolean(process.env.OPENAI_API_KEY);
 }
+
+export function googleConfigured() {
+  return Boolean(process.env.GOOGLE_API_KEY);
+}
+
+/**
+ * Which provider actually draws, given what is configured.
+ *
+ * Google first because it is a third of the price for a picture that spends
+ * most of its twenty seconds pixelated, blurred or behind tiles. `''` means no
+ * key at all, which is the placeholder-only case the console reports in words.
+ */
+export function artProvider() {
+  if (googleConfigured()) return 'google';
+  if (openaiConfigured()) return 'openai';
+  return '';
+}
+
+/**
+ * Imagen's three tiers, mapped onto the quality setting the console already
+ * has. They line up exactly — Fast, Standard, Ultra against low, medium, high —
+ * so there is no second control to build and no new word for the host to learn.
+ */
+const GOOGLE_MODELS = {
+  low: 'imagen-4.0-fast-generate-001',
+  medium: 'imagen-4.0-generate-001',
+  high: 'imagen-4.0-ultra-generate-001',
+};
 
 /**
  * Every picture question in a pack, with the file it wants.
@@ -127,6 +164,9 @@ export async function generateImages({
   if (provider === 'openai' && !openaiConfigured()) {
     throw new Error('Set OPENAI_API_KEY before generating real portraits. Without it you can still make placeholders.');
   }
+  if (provider === 'google' && !googleConfigured()) {
+    throw new Error('Set GOOGLE_API_KEY before generating real portraits. Without it you can still make placeholders.');
+  }
 
   const chosen = findStyle(style);
   const grade = findQuality(quality);
@@ -138,7 +178,8 @@ export async function generateImages({
   }
 
   fs.mkdirSync(imageDir, { recursive: true });
-  log(`${jobs.length} picture${jobs.length === 1 ? '' : 's'} for "${quiz.title}" — ${STYLES[chosen].label.toLowerCase()}, ${provider}${provider === 'openai' ? `, ${grade} quality` : ''}`);
+  const paid = provider !== 'placeholder';
+  log(`${jobs.length} picture${jobs.length === 1 ? '' : 's'} for "${quiz.title}" — ${STYLES[chosen].label.toLowerCase()}, ${provider}${paid ? `, ${grade} quality` : ''}`);
 
   const made = [];
   const skipped = [];
@@ -171,10 +212,14 @@ export async function generateImages({
     fs.mkdirSync(path.dirname(target), { recursive: true });
 
     try {
-      const bytes = provider === 'placeholder'
-        ? Buffer.from(placeholderSvg(q), 'utf8')
-        : await openaiImage(q, { style: chosen, quality: grade });
-      if (provider === 'openai') onSpend({ kind: 'image', what: 'a portrait', quality: grade, images: 1 });
+      let bytes;
+      if (provider === 'placeholder') bytes = Buffer.from(placeholderSvg(q), 'utf8');
+      else if (provider === 'google') bytes = await googleImage(q, { style: chosen, quality: grade });
+      else bytes = await openaiImage(q, { style: chosen, quality: grade });
+      // The provider goes on the row because the two are priced completely
+      // differently, and a ledger that averaged them would misreport whichever
+      // one you were actually using.
+      if (paid) onSpend({ kind: 'image', what: 'a portrait', provider, quality: grade, images: 1 });
       fs.writeFileSync(target, bytes);
       log(`  ${provider === 'placeholder' ? 'drew' : 'made'}   ${musician || name}`);
       made.push(name);
@@ -185,7 +230,7 @@ export async function generateImages({
     }
   }
 
-  if (skipped.length && provider === 'openai') {
+  if (skipped.length && paid) {
     log(`${skipped.length} of ${jobs.length} came from the library — that is what you did not pay for`);
   }
 
@@ -242,11 +287,21 @@ function escapeXml(s) {
 /**
  * The prompt matters as much as the model.
  *
- * Two clauses are load-bearing and are added whatever the style says. "Not a
- * photograph", because a convincing fake photo of a real musician in a pack
- * that is SOLD is a different kind of problem from a drawing — the same reason
- * the on-screen caption says so. And "no lettering", because a model that
- * writes the artist's name across the picture gives the answer away.
+ * Two clauses are load-bearing and are added whatever the style says. Not a
+ * photograph, because a convincing fake photo of a real musician in a pack that
+ * is SOLD is a different kind of problem from a drawing — the same reason the
+ * on-screen caption says so. And "no lettering", because a model that writes
+ * the artist's name across the picture gives the answer away. Both were here
+ * before Google was; neither is new.
+ *
+ * **The WORDING of the first one is, though, and it was the thing that would
+ * have broken this on day one.** It used to read "It must clearly be an
+ * illustration and not a photograph" — and asking Google for an *illustration*
+ * of a named musician is refused, where asking for a cartoon of the same person
+ * is drawn. That sentence was appended to every style, so all of them would
+ * have failed, and from the console it would have looked exactly like a bad
+ * key. It says "cartoon drawing" now and leads with what IS wanted rather than
+ * with what is not.
  *
  * A question's own `imagePrompt` — written by Claude during generation — still
  * describes the person, but the STYLE is the host's choice and always wins.
@@ -260,7 +315,7 @@ export function promptFor(q, { style = DEFAULT_STYLE } = {}) {
     ? `${q.imagePrompt}`
     : `the musician ${q.options[q.correctIndex]}`;
   return `${look.prompt}. Subject: ${subject}. `
-    + `It must clearly be an illustration and not a photograph. `
+    + `It is a cartoon drawing, not a photograph. `
     + `No text, lettering, signature or watermark anywhere in the image.`;
 }
 
@@ -293,5 +348,64 @@ async function openaiImage(q, { style = DEFAULT_STYLE, quality = DEFAULT_QUALITY
   const data = await res.json();
   const b64 = data.data?.[0]?.b64_json;
   if (!b64) throw new Error('No image came back');
+  return Buffer.from(b64, 'base64');
+}
+
+/**
+ * Imagen 4, over the plain Gemini API.
+ *
+ * The AI Studio door rather than Vertex AI, and that is a no-dependencies
+ * decision: Vertex authenticates with a service-account JWT that has to be
+ * signed and refreshed hourly, where this is one header on one POST. Same
+ * models, same prices, same Google Cloud project and bill.
+ *
+ * **A refusal is reported in words, which is what `includeRaiReason` is for.**
+ * Without it a blocked picture comes back as an empty prediction list and is
+ * indistinguishable from a network problem — and the thing most likely to be
+ * refused is a style, which means the answer is "pick another one", which is
+ * only obvious if somebody says so. Same rule as the Spotify 403.
+ */
+async function googleImage(q, { style = DEFAULT_STYLE, quality = DEFAULT_QUALITY } = {}) {
+  const key = process.env.GOOGLE_API_KEY;
+  if (!key) throw new Error('Set GOOGLE_API_KEY first');
+
+  const model = GOOGLE_MODELS[findQuality(quality)] || GOOGLE_MODELS[DEFAULT_QUALITY];
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:predict`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    body: JSON.stringify({
+      instances: [{ prompt: promptFor(q, { style }) }],
+      parameters: {
+        sampleCount: 1,
+        aspectRatio: '1:1',
+        // The round is "whose face is this", so people are the entire point.
+        // Left unset this defaults to blocking them and every picture comes
+        // back refused, which reads as the key being wrong.
+        personGeneration: 'allow_adult',
+        includeRaiReason: true,
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const body = (await res.text()).slice(0, 300);
+    if (res.status === 400 && /billing/i.test(body)) {
+      throw new Error('Google needs billing switched on for this project. console.cloud.google.com/billing');
+    }
+    if (res.status === 400) throw new Error(`Google rejected the request: ${body}`);
+    if (res.status === 401 || res.status === 403) {
+      throw new Error(`Google refused the key — check GOOGLE_API_KEY, and that billing is on for its project: ${body}`);
+    }
+    if (res.status === 429) throw new Error('Google rate limit or quota reached. Try again shortly.');
+    throw new Error(`Google said ${res.status}: ${body}`);
+  }
+
+  const data = await res.json();
+  const first = data.predictions?.[0];
+  if (first?.raiFilteredReason) {
+    throw new Error(`Google would not draw this one: ${first.raiFilteredReason}. Try a different style.`);
+  }
+  const b64 = first?.bytesBase64Encoded;
+  if (!b64) throw new Error('No image came back, and Google gave no reason.');
   return Buffer.from(b64, 'base64');
 }
