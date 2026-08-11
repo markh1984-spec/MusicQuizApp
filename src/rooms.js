@@ -84,7 +84,7 @@ export function tidyCode(raw) {
 }
 
 export class Room {
-  constructor({ id, code, label, config, paths, onPush, now }) {
+  constructor({ id, code, label, config, paths, onPush, onArchive = () => {}, now }) {
     this.id = id;
     this.code = code;
     this.label = label || '';
@@ -105,6 +105,9 @@ export class Room {
       config,
       store: this.store,
       onPush: () => onPush(this),
+      // A night has been filed. Which room's it is has to travel with it, or a
+      // backup would have no way of knowing whose history it is writing.
+      onArchive: () => onArchive(this),
       now,
       // So a launch is counted against THIS quizmaster's nights rather than
       // against the pack, which everybody shares.
@@ -163,10 +166,11 @@ export class Rooms {
    * @param {function(Room): void} opts.onPush
    * @param {function(): number} [opts.now]
    */
-  constructor({ config, paths, onPush, now = () => Date.now() }) {
+  constructor({ config, paths, onPush, onArchive = () => {}, now = () => Date.now() }) {
     this.config = config;
     this.paths = paths;
     this.onPush = onPush;
+    this.onArchive = onArchive;
     this.now = now;
     this.rooms = new Map();
     this.codesFile = path.join(config.dataDir, 'room-codes.json');
@@ -287,6 +291,7 @@ export class Rooms {
       config: this.config,
       paths: this.pathsFor(id),
       onPush: this.onPush,
+      onArchive: this.onArchive,
       now: this.now,
     });
     this.rooms.set(id, room);

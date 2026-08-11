@@ -226,6 +226,78 @@ export function archiveResults(dir, results, at = Date.now()) {
   return record;
 }
 
+/**
+ * The whole archive as one file, for the backup.
+ *
+ * **A night archive that does not survive a deploy is not a record of
+ * anything.** It lives in `data/`, which on a host with no permanent disk is
+ * empty again every time the app restarts — so every gig a quizmaster had
+ * played simply vanished, and the only clue was a page that used to have
+ * things on it and now does not.
+ *
+ * That mattered little while it was a curiosity. It matters a lot now the
+ * archive is the "past gigs" record a quizmaster shows a venue when they are
+ * pitching for work.
+ */
+export function serialiseArchive(dir) {
+  let files = [];
+  try {
+    files = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
+  } catch {
+    return JSON.stringify({ nights: [] }, null, 2) + '\n';
+  }
+  const nights = [];
+  for (const file of files) {
+    try {
+      nights.push(JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8')));
+    } catch {
+      // A single unreadable night must not cost the rest of somebody's history.
+    }
+  }
+  return JSON.stringify({ nights }, null, 2) + '\n';
+}
+
+/**
+ * Put it back, and ONLY into an empty archive.
+ *
+ * The same rule as the accounts, the invoice book and the play counts: a disk
+ * that already has nights on it is ahead of any backup, and reading one over
+ * the top would either duplicate a night or lose one, depending which way it
+ * went.
+ */
+export function restoreArchive(dir, serialised) {
+  let already = [];
+  try {
+    already = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
+  } catch { /* no folder yet is exactly the case this is for */ }
+  if (already.length) return { ok: false, reason: 'already_have_some' };
+
+  let parsed;
+  try {
+    parsed = JSON.parse(String(serialised));
+  } catch (err) {
+    return { ok: false, reason: 'unreadable', error: err.message };
+  }
+  if (!parsed || !Array.isArray(parsed.nights)) return { ok: false, reason: 'nothing_in_it' };
+
+  fs.mkdirSync(dir, { recursive: true });
+  let written = 0;
+  for (const night of parsed.nights) {
+    /*
+     * Refused, not scrubbed. `archiveResults` only ever issues an id of
+     * letters, digits and hyphens, so anything else did not come from here —
+     * and stripping the bad characters out would quietly invent a filename
+     * ("../../escaped" becoming "escaped.json") rather than saying no to
+     * something that has no business being in a backup.
+     */
+    const id = String(night && night.id || '');
+    if (!/^[a-z0-9-]+$/i.test(id)) continue;
+    fs.writeFileSync(path.join(dir, id + '.json'), JSON.stringify(night, null, 2) + '\n', 'utf8');
+    written++;
+  }
+  return { ok: true, nights: written };
+}
+
 export function listArchive(dir) {
   let files = [];
   try {

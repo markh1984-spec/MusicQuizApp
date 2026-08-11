@@ -9,6 +9,7 @@
 
 import { esc, node, brandMark, brandWords, hatSwitch } from './client.js';
 import { TIERS, tierFor, findTier } from './plans.js';
+import { photosSection } from './photos-tab.js';
 
 const mainEl = document.getElementById('main');
 const whoEl = document.getElementById('whoami');
@@ -786,6 +787,18 @@ const OWNER_TABS = [
   { id: 'people', label: 'People', body: () => peopleTab(), count: () => 0 },
   { id: 'money', label: 'Money', body: () => moneyTab(), count: () => 0 },
   { id: 'catalogue', label: 'Catalogue', body: () => catalogueTab(), count: () => 0 },
+  /*
+   * Getting a night's photos out and onto social media.
+   *
+   * Here rather than on the console, and asked for that way: it is one person's
+   * morning-after workflow on one person's own room, so drawing it for every
+   * subscriber is one more control to read past. A quizmaster's own record of
+   * their nights and the pictures from them is Past gigs on their console, read
+   * only — and the switch and the bin for something that should not be on the
+   * projector are on the control view, where they are wanted with a mic in one
+   * hand rather than on a page.
+   */
+  { id: 'photos', label: 'Photos', body: () => [photosSection()], count: () => 0 },
   {
     id: 'inbox',
     label: 'Inbox',

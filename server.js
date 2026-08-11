@@ -22,7 +22,7 @@ import { Photos, MAX_BYTES } from './src/photos.js';
 import { Session } from './src/session.js';
 import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked, ROUND_TYPES } from './src/quizzes.js';
 import { validateBingoPack, normaliseBingoPack, minimumTracks, CARD_SHAPES, shapeLabel, maxPrizes, stagePlan, stageLabel } from './src/bingo.js';
-import { fullLibrary, listArchive, loadArchived, saveBingoPack, loadBingoPack, deleteBingoPack, readStats } from './src/library.js';
+import { fullLibrary, listArchive, loadArchived, serialiseArchive, restoreArchive, saveBingoPack, loadBingoPack, deleteBingoPack, readStats } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
 import { generateQuizPack, buildIntroPlaylists, roundPlan, TOPICAL_ROUNDS, TOPICAL_DAYS, topicalNaming } from './src/generate-quiz.js';
 import { importBingoPack } from './src/import-bingo.js';
@@ -31,7 +31,8 @@ import { generateImages, imageStatus, imageJobs, imagePlan, openaiConfigured } f
 import { STYLES, findStyle, QUALITIES, DEFAULT_QUALITY } from './src/portraits.js';
 import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig, playTrack } from './src/spotify.js';
-import { getFile, listDir, githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem, privateRepoConfigured, packsRepoConfigured, packsRepoName } from './src/github.js';
+import { photoFolder, mergeGigs, safePhotoName, isNightFolder } from './src/past-gigs.js';
+import { getFile, listDir, listDirs, githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem, privateRepoConfigured, packsRepoConfigured, packsRepoName } from './src/github.js';
 import { Invoices, totals, toPence, money } from './src/invoices.js';
 import { invoicePdf, invoiceFilename } from './src/invoice-pdf.js';
 import { toSvg } from './src/qrcode.js';
@@ -84,7 +85,14 @@ const spend = new Spend(paths.spend);
  * The house room keeps the original file locations, so deploying this in the
  * middle of a season does not lose a game that is being played as it restarts.
  */
-const rooms = new Rooms({ config, paths, onPush: (room) => pushState(room) });
+const rooms = new Rooms({
+  config,
+  paths,
+  onPush: (room) => pushState(room),
+  // A night has just been filed. Keep it, or the record of somebody's gigs
+  // lasts exactly until the next deploy. Never awaited — see backUpArchive.
+  onArchive: (room) => { backUpArchive(room).catch(() => {}); },
+});
 rooms.get(HOUSE);
 
 /**
@@ -970,12 +978,22 @@ async function handleGet(req, res, url, route) {
     }), true;
   }
 
-  // Everything from the night in one go, for the social posts afterwards.
-  // The night's photos as a list. NOT a download yet — getting them off in one
-  // go still has to be built, and a route called .zip that hands back JSON is
-  // the kind of thing somebody trusts at the wrong moment.
-  if (route === '/api/photos/list') {
-    if (!allowed(req, res, url, FEATURES.PHOTOS)) return true;
+  /*
+   * Everything on this server, foldered by night — the owner's tab.
+   *
+   * **`PHOTO_EXPORT`, not `PHOTOS`, and the difference is who it is for.** Every
+   * quizmaster has photos from the room; what is here is getting them off and
+   * onto social media afterwards, which is Mark's own workflow on Mark's own
+   * room and was asked for on the owner's page rather than in the console every
+   * subscriber sees. A quizmaster sees their nights and the pictures from them
+   * on Past gigs, read only — the switch and the bin are on the control view,
+   * where they are needed with a mic in one hand.
+   *
+   * It is `/api/owner/…` so it skips the broad quiz gate — an owner holds no
+   * quiz features by design, which is the trap this file has recorded six times.
+   */
+  if (route === '/api/owner/photos') {
+    if (!allowed(req, res, url, FEATURES.PHOTO_EXPORT)) return true;
     const { photos } = roomForHost(req, url);
     return sendJson(res, 200, {
       enabled: photos.enabled,
@@ -1227,6 +1245,8 @@ async function handleGet(req, res, url, route) {
     // host that wipes its disk every deploy. Awaited, because a library drawn
     // without them looks exactly like a library that has lost them.
     await ensureOwnPacksRestored(libRoom);
+    // And their past nights, for the same reason and by the same rule.
+    await ensureArchiveRestored(libRoom);
     const everything = fullLibrary(config, libRoom.id, listOwn(libRoom.paths));
     // The console sees the whole catalogue: theirs to play, the rest to buy.
     // Everything they do not hold comes back stripped — see withShop.
@@ -1321,7 +1341,15 @@ async function handleGet(req, res, url, route) {
       otherRooms: me && me.role === 'owner'
         ? rooms.summaries().filter((r) => r.id !== roomIdFor(me))
         : [],
-      archive: listArchive(roomForHost(req, url).paths.archive),
+      /*
+       * How many NIGHTS, for the Past gigs badge — not how many games.
+       *
+       * A quiz and the bingo after it are one evening's work, so counting games
+       * puts a 5 on the tab above a list of four rows. Worked out here, with
+       * the same roll-over the page itself uses, rather than in the browser
+       * from a list it would have to group a second way.
+       */
+      archiveNights: mergeGigs(listArchive(roomForHost(req, url).paths.archive), []).length,
       // Offered on every pack card, so a night can be dressed up without
       // editing anything.
       looks: LOOKS.map(({ id, label, blurb }) => ({ id, label, blurb })),
@@ -1522,13 +1550,96 @@ async function handleGet(req, res, url, route) {
   }
 
   if (route.startsWith('/api/archive/')) {
-    if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
+    // Past gigs, not invoicing. It asked for the invoicing add-on because that
+    // is where the tab used to live; a record of somebody's own nights has
+    // nothing to do with whether they bill for them.
+    if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
     const id = decodeURIComponent(route.slice('/api/archive/'.length));
     try {
       return sendJson(res, 200, loadArchived(roomForHost(req, url).paths.archive, id)), true;
-    } catch (err) {
-      return sendJson(res, 404, { error: err.message }), true;
+    } catch {
+      // Never `err.message`: on a miss that is an ENOENT carrying the server's
+      // absolute path, which names the directory layout and the room id it just
+      // looked in. The same fault this codebase has already recorded twice.
+      return sendJson(res, 404, { error: 'No night saved under that name.' }), true;
     }
+  }
+
+  /*
+   * PAST GIGS — the nights, the packs and the pictures, in one list.
+   *
+   * Two records joined up: the archive on disk (what was played, by how many,
+   * who won) and the photo repository (what the room sent). The photos are read
+   * from the REPO rather than from `data/photos/`, because that folder is wiped
+   * on every deploy — a page built from it would show tonight and swear nothing
+   * else had ever happened.
+   *
+   * Which room's gigs these are comes from WHO YOU ARE, like every other host
+   * route. There is no night, id or folder anybody can send that reaches
+   * another quizmaster's history.
+   */
+  if (route === '/api/past-gigs') {
+    if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
+    const gigRoom = roomForHost(req, url);
+    await ensureArchiveRestored(gigRoom);
+    const folders = photosRepoConfigured()
+      ? await listDirs(photoFolder(gigRoom.id), 'photos')
+      : [];
+    return sendJson(res, 200, {
+      nights: mergeGigs(listArchive(gigRoom.paths.archive), folders.map((f) => f.name)),
+      // So the page can say why there are no pictures against an old night,
+      // rather than implying nobody took any.
+      photosKept: photosRepoConfigured(),
+    }), true;
+  }
+
+  if (route.startsWith('/api/past-gigs/')) {
+    if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
+    const night = decodeURIComponent(route.slice('/api/past-gigs/'.length));
+    if (!isNightFolder(night)) return sendJson(res, 404, { error: 'No night with that date.' }), true;
+    const gigRoom = roomForHost(req, url);
+    const files = photosRepoConfigured()
+      ? await listDir(`${photoFolder(gigRoom.id)}/${night}`, 'photos')
+      : [];
+    return sendJson(res, 200, {
+      night,
+      photos: files
+        .map((f) => safePhotoName(f.name))
+        .filter(Boolean)
+        // Served back through this server, because the photo repository is
+        // private and a browser cannot fetch from it.
+        .map((name) => ({ name, url: `/past-photo/${night}/${name}` })),
+    }), true;
+  }
+
+  /*
+   * One photo out of the repository.
+   *
+   * A proxy rather than a redirect, and it has to be: that repo is private, so
+   * a link to it is a 404 in anybody's browser. The room comes from the signed
+   * in account, so this can only ever hand back pictures from the asker's own
+   * nights.
+   */
+  if (route.startsWith('/past-photo/')) {
+    if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
+    const parts = route.slice('/past-photo/'.length).split('/');
+    const night = decodeURIComponent(parts[0] || '');
+    const name = safePhotoName(decodeURIComponent(parts[1] || ''));
+    if (!isNightFolder(night) || !name || parts.length !== 2) {
+      return sendJson(res, 404, { error: 'No photo there.' }), true;
+    }
+    const bytes = photosRepoConfigured()
+      ? await getFile(`${photoFolder(roomForHost(req, url).id)}/${night}/${name}`, 'photos')
+      : null;
+    if (!bytes) return sendJson(res, 404, { error: 'No photo there.' }), true;
+    res.writeHead(200, {
+      'Content-Type': name.endsWith('.png') ? 'image/png' : name.endsWith('.webp') ? 'image/webp' : 'image/jpeg',
+      'Content-Length': bytes.length,
+      // A filed photo never changes — it is written once and never rewritten —
+      // so a page of forty of them should not fetch forty every time it opens.
+      'Cache-Control': 'private, max-age=86400',
+    });
+    return res.end(bytes), true;
   }
   if (route.startsWith('/api/quiz/')) {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
@@ -1667,6 +1778,68 @@ async function backUpInvoices(room) {
 }
 
 /**
+ * The file one room's night archive is backed up as.
+ *
+ * Same shape as the invoice book's, and the house keeps a plain name for the
+ * same reason. It goes to the PRIVATE repo: an archive is a record of who
+ * played somebody's nights and what they scored, which is theirs rather than
+ * the public repo's.
+ */
+function archiveBackupName(room) {
+  return room.id === HOUSE ? 'archive.json' : `archive-${room.id}.json`;
+}
+
+/**
+ * Keep a quizmaster's past nights.
+ *
+ * **Without this the archive is wiped on every deploy**, because it lives in
+ * `data/` and the free tier has no permanent disk. That was tolerable while it
+ * was a curiosity nothing pointed at. It is not tolerable now Past gigs is a
+ * quizmaster's record of their own work — the thing they show a venue they are
+ * pitching to — and "everything you have ever run" going blank because somebody
+ * else pushed a commit is the worst version of a lost record: it looks like the
+ * app forgot on purpose.
+ *
+ * Never awaited by anything a room can feel. It is called when a night ends,
+ * which is the moment the projector is showing a scoreboard and nobody is
+ * waiting on the server.
+ */
+async function backUpArchive(room) {
+  if (!privateRepoConfigured()) return { ok: false, error: 'no private repo set up' };
+  try {
+    return await putFile(archiveBackupName(room), serialiseArchive(room.paths.archive), 'Update past nights', 'private');
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+/**
+ * Bring one room's past nights back, once per boot.
+ *
+ * Only into an EMPTY archive, the same rule as everything else here — a disk
+ * that already has nights on it is ahead of any backup. Rooms are made lazily,
+ * so for anybody but the house this happens the first time they open their
+ * console, and it is awaited there: a Past gigs page drawn while this was still
+ * running would show an empty shelf, which looks exactly like the work having
+ * been lost.
+ */
+const archiveRestored = new Set();
+async function ensureArchiveRestored(room) {
+  if (archiveRestored.has(room.id)) return;
+  archiveRestored.add(room.id);
+  if (!privateRepoConfigured()) return;
+  try {
+    const saved = await getFile(archiveBackupName(room), 'private');
+    if (!saved) return;
+    const result = restoreArchive(room.paths.archive, saved.toString('utf8'));
+    if (result.ok && result.nights) console.log(`[archive] restored ${result.nights} past night(s) for ${room.id}`);
+  } catch (err) {
+    // Never fatal. A GitHub having a bad morning must not stop a quiz night.
+    console.warn(`[archive] could not fetch the backup for ${room.id}:`, err.message);
+  }
+}
+
+/**
  * Back up the accounts.
  *
  * To the PRIVATE repository, for the same reason as the invoices and more so:
@@ -1744,6 +1917,9 @@ async function restoreFromBackup() {
   // quizmaster opens their Invoices tab, because rooms are created lazily and
   // this runs once at boot — see ensureInvoicesRestored below.
   await ensureInvoicesRestored(rooms.get(HOUSE));
+  // And the house's past nights. Every other room's comes back the first time
+  // that quizmaster opens their console, for the same lazy-rooms reason.
+  await ensureArchiveRestored(rooms.get(HOUSE));
 
   /*
    * Play counts, and the same rule as everything else: only into an empty
@@ -2052,7 +2228,11 @@ async function fileAway(room, photo) {
   const read = photos.read(photo.id);
   if (!read) return { ok: false };
   const result = await putFile(
-    `photos/${photo.night}/${photo.file}`,
+    // Foldered per room, so one quizmaster's night is never mixed in with
+    // another's. The house keeps the flat path it has always used — Mark has
+    // nights filed under it already and moving them would make his own history
+    // vanish from the page this record exists to be.
+    `${photoFolder(room.id)}/${photo.night}/${photo.file}`,
     read.bytes,
     `${photo.night}${photo.teamName ? ` — ${photo.teamName}` : ''}`,
     'photos',
@@ -3059,6 +3239,46 @@ async function handleWrite(req, res, url, route) {
     } catch (err) {
       return sendJson(res, 400, { error: err.message }), true;
     }
+  }
+
+  /*
+   * The owner's own photo tab: file the rest away, bin one, clear the lot.
+   *
+   * The same three things the control view can do, reachable from a page rather
+   * than from a running game — because the job here is the morning after, not
+   * the night itself. They are separate routes rather than `/api/host/*` with a
+   * wider gate on purpose: `/api/host/*` is the running of a night, an owner
+   * runs none, and loosening that is how a guard quietly stops meaning what it
+   * says.
+   */
+  if (route.startsWith('/api/owner/photos/') && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.PHOTO_EXPORT)) return true;
+    const what = route.slice('/api/owner/photos/'.length);
+    const room = roomForHost(req, url);
+    const { photos } = room;
+    const body = await readJson(req);
+
+    if (what === 'file') {
+      if (!photosRepoConfigured()) return sendJson(res, 200, { ok: false, reason: 'no_repo' }), true;
+      const todo = photos.unfiled();
+      let filed = 0;
+      for (const photo of todo) {
+        const result = await fileAway(room, photo);
+        if (result.ok) filed++;
+      }
+      return sendJson(res, 200, { ok: true, filed, failed: todo.length - filed }), true;
+    }
+    if (what === 'remove') {
+      const removed = photos.remove(String(body.id || ''));
+      if (removed) pushState(room);
+      return sendJson(res, 200, { ok: removed }), true;
+    }
+    if (what === 'clear') {
+      const n = photos.clear();
+      pushState(room);
+      return sendJson(res, 200, { ok: true, cleared: n }), true;
+    }
+    return sendJson(res, 404, { error: 'Unknown action: ' + what }), true;
   }
 
   if (route.startsWith('/api/host/') && req.method === 'POST') {

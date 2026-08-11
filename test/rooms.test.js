@@ -266,3 +266,35 @@ test('the launch route asks the session what is live, and offers a second press'
   // and a control that simply refuses is the mistake this codebase records.
   assert.match(route, /body\.replace/, 'there is no way to launch over a live game deliberately');
 });
+
+/*
+ * A night that ends has to be KEPT.
+ *
+ * The archive lives in `data/`, which on a host with no permanent disk is empty
+ * again after every deploy — so before this a quizmaster's whole history
+ * vanished whenever anybody pushed a commit, and the only clue was a Past gigs
+ * page that used to have things on it and now did not.
+ *
+ * The room tells somebody else; it does not do the backing up itself. Same
+ * shape as `onSpend` on the generators, and for the same reason — this file has
+ * no business knowing that GitHub exists.
+ */
+test('a room says when a night has been archived, so it can be backed up', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rooms-'));
+  try {
+    const config = { ...appConfig, dataDir: dir };
+    const paths = { state: path.join(dir, 'state.json'), photos: path.join(dir, 'photos') };
+    const told = [];
+    const rooms = new Rooms({ config, paths, onPush: () => {}, onArchive: (room) => told.push(room.id) });
+
+    const rob = rooms.get('acct-rob');
+    rob.session.run('finish', {});
+
+    assert.deepEqual(told, ['acct-rob'], 'nobody was told the night had been filed');
+    // And which room it was has to travel with it, or a backup would have no
+    // way of knowing whose history it was writing.
+    assert.equal(fs.readdirSync(rob.paths.archive).filter((f) => f.endsWith('.json')).length, 1);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

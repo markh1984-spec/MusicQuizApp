@@ -71,10 +71,19 @@ export class Session {
    * @param {function(): void} opts.onPush   tell the live connections something changed
    * @param {function(): number} [opts.now]
    */
-  constructor({ config, store, onPush, now = () => Date.now(), roomId = HOUSE_ROOM, paths = {} }) {
+  constructor({ config, store, onPush, onArchive = () => {}, now = () => Date.now(), roomId = HOUSE_ROOM, paths = {} }) {
     this.config = config;
     this.store = store;
     this.onPush = onPush;
+    /*
+     * Told when a night has been filed, so somebody else can back it up.
+     *
+     * A callback rather than the backup itself, exactly like `onSpend` on the
+     * generators: this file has no business knowing that GitHub exists, and
+     * every test and script that builds a Session carries on working because
+     * the default does nothing.
+     */
+    this.onArchive = onArchive;
     this.now = now;
     this.roomId = roomId;
     /*
@@ -224,7 +233,15 @@ export class Session {
     if (this.launcher.isOver(state) && !this.archivedThisGame) {
       this.archivedThisGame = true;
       try {
-        archiveResults(this.archiveDir, this.engine.results(), this.now());
+        const record = archiveResults(this.archiveDir, this.engine.results(), this.now());
+        // Never awaited. The night has ended and the room is looking at a
+        // scoreboard; whether GitHub is having a good evening is not their
+        // problem, and a backup that held up the final slide would be.
+        try {
+          this.onArchive(record);
+        } catch (err) {
+          console.error('[session] could not back up the archive:', err.message);
+        }
       } catch (err) {
         console.error('[session] could not archive results:', err.message);
       }

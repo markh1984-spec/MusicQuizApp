@@ -276,6 +276,32 @@ export async function listDir(dirPath, which = 'app') {
   }
 }
 
+/**
+ * The FOLDERS in a folder, which `listDir` deliberately throws away.
+ *
+ * Past gigs needs this and nothing else does: photos are filed one folder per
+ * night, and the list of nights somebody has run is exactly the list of folder
+ * names. Keeping it a separate function rather than a flag on `listDir` means
+ * every existing caller carries on getting files and only files — a restore
+ * that suddenly started copying directory entries into a pack folder would be
+ * a quiet mess.
+ */
+export async function listDirs(dirPath, which = 'app') {
+  if (!readyFor(which)) return [];
+  try {
+    const { owner, name, branch } = settings(which);
+    const res = await api(`/repos/${owner}/${name}/contents/${encodeURI(dirPath)}?ref=${encodeURIComponent(branch)}`, {}, which);
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!Array.isArray(data)) return [];
+    return data
+      .filter((entry) => entry && entry.type === 'dir')
+      .map((entry) => ({ name: entry.name, path: entry.path }));
+  } catch {
+    return [];
+  }
+}
+
 export async function deleteFile(filePath, message, which = 'app') {
   if (!readyFor(which)) return { ok: false, error: 'not set up' };
   try {

@@ -203,3 +203,57 @@ test('suggestions are not treated as a pack write', () => {
     assert.equal(changesTheLibrary('/api/suggestions/s123', method), false);
   }
 });
+
+/*
+ * Past gigs and the photo export are two different questions and two different
+ * gates, and the whole point of the split is who each one is for.
+ *
+ * A quizmaster reads their own nights and the pictures from them; the owner
+ * gets them off and onto social media. Both are pinned here because both are
+ * one word in a route that somebody could widen without noticing — and the
+ * cheap mistake in either direction is a bad one. Loosen the export and every
+ * subscriber gets a Clear all button pointed at their own night; tighten past
+ * gigs and a quizmaster is refused their own history.
+ */
+test('the past-gigs routes ask for PAST_GIGS, not for the invoicing add-on', () => {
+  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  for (const route of ["'/api/past-gigs'", "'/api/past-gigs/'", "'/past-photo/'", "'/api/archive/'"]) {
+    const at = server.indexOf(route);
+    assert.ok(at > 0, `${route} has moved or gone`);
+    assert.match(server.slice(at, at + 400), /FEATURES\.PAST_GIGS/,
+      `${route} is no longer gated on past gigs`);
+  }
+});
+
+test('the owner photo tab is gated on PHOTO_EXPORT and nothing else', () => {
+  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  for (const route of ["'/api/owner/photos'", "'/api/owner/photos/'"]) {
+    const at = server.indexOf(route);
+    assert.ok(at > 0, `${route} has moved or gone`);
+    assert.match(server.slice(at, at + 300), /FEATURES\.PHOTO_EXPORT/,
+      `${route} is no longer the owner's alone`);
+  }
+});
+
+test('the owner photo routes are owner-only by path, so they skip the broad quiz gate', () => {
+  // The trap this file already records six times: the owner holds no quiz
+  // features, so anything falling through that check 403s on their own page.
+  assert.ok(OWNER_ONLY.some((prefix) => '/api/owner/photos/clear'.startsWith(prefix)),
+    'the owner photo actions are not on the owner-only list');
+});
+
+/*
+ * The photos a room sends are foldered PER ROOM in the private repository.
+ *
+ * Without the room in that path two quizmasters' nights land in one folder —
+ * and on the one feature whose whole point is "this is my work", showing
+ * somebody else's pictures is about as wrong as it gets. The house keeps the
+ * flat path it has always used, so nothing Mark already has moves.
+ */
+test('a photo is filed under its own room', () => {
+  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const at = server.indexOf('async function fileAway(');
+  assert.ok(at > 0, 'fileAway has moved');
+  assert.match(server.slice(at, at + 900), /photoFolder\(room\.id\)/,
+    'photos are being filed without the room in the path — two quizmasters would share a folder');
+});

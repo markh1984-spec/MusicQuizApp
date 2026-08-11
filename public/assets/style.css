@@ -7,6 +7,18 @@
  * problem — big thumb targets, one decision per screen, no scrolling needed.
  */
 
+/*
+ * `hidden` has to actually hide.
+ *
+ * The browser's own rule is `[hidden] { display: none }`, which any rule of
+ * ours setting `display` beats on specificity — so `.minor { display:
+ * inline-block }` quietly made every `hidden` button on the console visible.
+ * "File the rest away" and "Clear all" sat there on a night with no photos at
+ * all, and both would have failed if pressed. One line here rather than
+ * remembering it at every call site.
+ */
+[hidden] { display: none !important; }
+
 :root {
   --ink: #f7f7fb;
   --ink-dim: #a7a7c2;
@@ -1270,14 +1282,23 @@ body.console::after { display: none; }
 .pack-card .go:hover { filter: brightness(1.08); }
 .pack-card .go:disabled { opacity: 0.4; cursor: default; filter: none; }
 
-.archive-list { display: grid; gap: 7px; }
-.archive-row {
-  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  padding: 12px 14px; border-radius: 10px; text-decoration: none;
+/* ---- Past gigs: one row a night, the photos folded away behind it.
+ *
+ * The row is a BUTTON rather than a link, because opening a night loads its
+ * pictures rather than going anywhere — and a control that looks like a link
+ * and does not navigate is one people middle-click and then wonder about. It
+ * keeps the old archive row's shape so the page still reads as a list. */
+.gig-list { display: grid; gap: 7px; }
+.gig-head {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap; width: 100%;
+  padding: 12px 14px; border-radius: 10px; text-align: left; cursor: pointer;
   background: var(--panel); border: 1px solid var(--panel-line); color: var(--ink);
+  font-family: inherit; font-size: 13px;
 }
-.archive-row .an { font-weight: 800; font-size: 15px; }
-.archive-row .tiny:last-child { margin-left: auto; }
+.gig-head:hover { border-color: var(--hot); }
+.gig-head .an { font-weight: 800; font-size: 15px; }
+.gig-head .gig-more { margin-left: auto; color: var(--hot); font-weight: 700; }
+.gig-body { padding: 10px 14px 4px; display: grid; gap: 8px; }
 
 /* ---- the one-button generator on the console */
 .panel.generate { border-color: rgba(255, 46, 136, 0.4); background: rgba(255, 46, 136, 0.07); }

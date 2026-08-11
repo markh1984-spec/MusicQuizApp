@@ -90,6 +90,22 @@ export const FEATURES = {
   PHOTOS: 'photos',              // photos from the room
 
   /*
+   * **The record of what they have run — BRONZE.**
+   *
+   * Every night that has ended, which pack it was, how many played and the
+   * pictures the room sent. It costs nothing per use — it is reading back
+   * something the app was already writing down — so under the house rule it is
+   * Bronze, and there is a second reason to keep it there: this is what a
+   * quizmaster shows a venue they are pitching to. Withholding the evidence
+   * that somebody is good at their job from the rung where they are still
+   * building the business is the wrong way round.
+   *
+   * It is READ ONLY on a quizmaster's console. Getting the pictures off and
+   * onto social media is the owner's own tab, on the owner's own page.
+   */
+  PAST_GIGS: 'gigs.past',        // the nights already run, and their photos
+
+  /*
    * **Asking for a pack that does not exist yet — GOLD.**
    *
    * "There is no One Direction quiz and I want one." The owner writes it and
@@ -142,6 +158,22 @@ export const FEATURES = {
   ARTWORK: 'owner.artwork',      // OpenAI portraits — likewise
   CATALOGUE: 'owner.catalogue',  // the packs offered for sale
   SUBSCRIBERS: 'owner.subscribers',
+  /*
+   * **Getting the pictures off a night and onto social media — the owner's,
+   * and asked for that way.**
+   *
+   * Every quizmaster can see their own past nights and the photographs from
+   * them; that is Bronze and it is their record of their own work. What is
+   * here is the other half: filing the lot away, sharing them out and binning
+   * the duds. It is Mark's own workflow on Mark's own room, and he asked for
+   * it to live on the owner page rather than in the console every subscriber
+   * sees — a control drawn for somebody who has no use for it is one more
+   * thing to read past.
+   *
+   * Owner-only features are deliberately not on the ladder: they are not for
+   * sale at any price, so putting one on a rung would be offering to sell it.
+   */
+  PHOTO_EXPORT: 'owner.photos',
 };
 
 /**
@@ -422,6 +454,7 @@ export const FEATURE_TIER = {
   [FEATURES.LOOKS]: 'bronze',
   [FEATURES.ADVERTS]: 'silver',
   [FEATURES.PHOTOS]: 'bronze',
+  [FEATURES.PAST_GIGS]: 'bronze',
   [FEATURES.REQUEST_PACK]: 'gold',
 
   [FEATURES.INVOICES]: 'bronze',
@@ -447,6 +480,7 @@ export const FEATURE_META = {
   [FEATURES.LOOKS]: { label: 'Seasonal looks', blurb: 'Halloween, Valentine’s, Christmas — a palette and some shapes.' },
   [FEATURES.ADVERTS]: { label: 'Advert slides', blurb: 'Sell the venue a slide between rounds — their offer, or a QR to tickets. One set per venue, reused every week.' },
   [FEATURES.PHOTOS]: { label: 'Photos from the room', blurb: 'The room sends pictures straight to the big screen.' },
+  [FEATURES.PAST_GIGS]: { label: 'Past gigs', blurb: 'Every night you have run, the packs you played and the photos from them. Proof of the work, for the next venue.' },
   [FEATURES.INVOICES]: { label: 'Invoicing', blurb: 'Bill for a night before you have left the car park.' },
   // Not built. It is on the ladder and drawn on the account page, so it has to
   // say so — the same honesty rule streaming gets. A rung that lists something
@@ -539,9 +573,15 @@ export function ladderFor(account = {}) {
 
 const OWNER_FEATURES = [
   FEATURES.GENERATE, FEATURES.ARTWORK, FEATURES.CATALOGUE, FEATURES.SUBSCRIBERS,
+  FEATURES.PHOTO_EXPORT,
   // The owner also needs the library, because writing and fixing the packs that
   // get sold is the job.
   FEATURES.LIBRARY,
+  // And their own past nights: the owner runs gigs too — on the host key, in
+  // the house room — so the record of them is theirs to read. It is on the
+  // ladder as well, because it is every quizmaster's own record; this line is
+  // what stops an OWNER-signed-in browser being refused their own history.
+  FEATURES.PAST_GIGS,
 ];
 
 export const ROLES = ['owner', 'quizmaster'];

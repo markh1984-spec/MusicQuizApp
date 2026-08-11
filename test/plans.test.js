@@ -106,7 +106,7 @@ test('every feature on the ladder is on exactly one rung', () => {
   }
   // Owner-only features are deliberately NOT on the ladder — they are not for
   // sale at any price, so putting one on a rung would be offering to sell it.
-  for (const f of [FEATURES.GENERATE, FEATURES.ARTWORK, FEATURES.CATALOGUE, FEATURES.SUBSCRIBERS]) {
+  for (const f of [FEATURES.GENERATE, FEATURES.ARTWORK, FEATURES.CATALOGUE, FEATURES.SUBSCRIBERS, FEATURES.PHOTO_EXPORT]) {
     assert.equal(FEATURE_TIER[f], undefined, `${f} is on the ladder and must not be`);
   }
 });
@@ -395,4 +395,29 @@ test('a feature that is not built says so on its own card', () => {
     assert.doesNotMatch(meta.blurb, /not built yet/i,
       `${f} says it is not built — if that is now true, add it to the list above`);
   }
+});
+
+/*
+ * Past gigs, and the line between looking and exporting.
+ *
+ * A quizmaster's own record of their nights is theirs — it is what they show a
+ * venue they are pitching to, and withholding the evidence that somebody is
+ * good at their job from the rung where they are still building the business
+ * is the wrong way round. Getting the pictures OUT and onto social media is a
+ * different job and a different person's: it is the owner's own workflow, on
+ * the owner's own page.
+ */
+test('every quizmaster can see their own past gigs, from the bottom rung up', () => {
+  assert.equal(can({ tier: 'bronze', status: 'active' }, FEATURES.PAST_GIGS), true);
+  assert.equal(FEATURE_TIER[FEATURES.PAST_GIGS], 'bronze');
+});
+
+test('the owner can read their own past nights but a quizmaster cannot export photos', () => {
+  // The owner runs gigs too — on the host key, in the house room — so the
+  // record of them is theirs to read.
+  assert.equal(can(owner, FEATURES.PAST_GIGS), true);
+  assert.equal(can(owner, FEATURES.PHOTO_EXPORT), true);
+  // And it is owner-only, so no rung and no comp hands it out.
+  assert.equal(can({ tier: 'gold', status: 'active' }, FEATURES.PHOTO_EXPORT), false);
+  assert.equal(can({ tier: 'gold', status: 'active', comped: true }, FEATURES.PHOTO_EXPORT), false);
 });

@@ -803,6 +803,117 @@ Development-mode app look identical otherwise.
 
 ---
 
+## Past gigs — the record of somebody's work, and who may take it away
+
+`src/past-gigs.js`, the `/api/past-gigs` routes, and the **Past gigs** tab on
+the console. Every night already run: the date, what was played, how many were
+in, who won, and the photographs from it.
+
+**It is a record of somebody's WORK rather than a feature of the game**, which
+is the host's own framing: a quizmaster pitching for a Thursday at a new venue
+gets asked what they have done, and one page with two years of nights, the
+packs and the pictures answers it. Both halves were already being written down
+— the archive when a game ends, the photos as they arrive — and neither was
+being shown to anybody. The tab that existed was "Past nights", a list of
+titles, gated on the invoicing add-on because that is where it happened to
+live.
+
+### Neither half survived a deploy, and that was the real job
+
+Found before building any of it, and it is the reason the page is worth
+anything: **the night archive and the photo files both live in `data/`**, which
+on a host with no permanent disk is empty again after every push. A Past gigs
+page built on top of that would have gone blank every time the app was
+deployed, which on the one feature whose point is "here is my history" is worse
+than not having it.
+
+So, before the page:
+
+- **The archive backs up to the private repo** (`archive.json` for the house,
+  `archive-<roomId>.json` for everybody else) and is restored **only into an
+  empty folder** — the same rule as the accounts, the invoice book and the play
+  counts, because a disk that already has nights on it is ahead of any backup.
+  A night in a backup whose id is not plain letters, digits and hyphens is
+  **refused rather than scrubbed**: stripping the bad characters out would
+  quietly invent a filename rather than saying no to something that has no
+  business being in a backup.
+- **A room TELLS somebody a night has been filed** — `onArchive`, defaulting to
+  nothing, exactly like `onSpend` on the generators. `session.js` has no
+  business knowing that GitHub exists, and every test and script that builds a
+  Session carries on working.
+- **Photos are read from the REPOSITORY, never from the disk**, and served back
+  through this server because that repo is private and a browser cannot fetch
+  from it. Listing the folders in it is what the night list is made of, so
+  there is no photo index to keep in sync — the same reasoning that makes the
+  packs the record for `question-history.js`.
+
+### They are foldered per ROOM now, and were not
+
+`photos/<roomId>/<night>/<file>`. **The house keeps the flat `photos/<night>/`
+it has always used**, for the same reason every other house path is unchanged:
+Mark already has nights filed under it and moving them would make his own
+history disappear off the page that exists to show it. Without the room in the
+path two quizmasters' nights land in one folder — on the one feature whose
+whole point is "this is my work", showing somebody else's pictures is about as
+wrong as it gets.
+
+### Looking is Bronze. Getting them OUT is the owner's
+
+Asked for explicitly: *"I only want the photos export feature on my account
+please, perhaps in future if I want features that only I use put them in the
+owner console and not the QM console."*
+
+So the Photos tab — file the lot away, bin the duds, hand them to the phone's
+share sheet — **moved off the console and onto `/owner`**, as
+`public/assets/photos-tab.js` and `FEATURES.PHOTO_EXPORT`, which is owner-only
+and therefore deliberately not on the ladder. What a quizmaster gets instead is
+Past gigs, **read only**: no bin, no download, no share sheet.
+
+Two things that makes true, and neither is a compromise:
+
+- **A quizmaster loses nothing operationally.** The kill switch and the
+  per-photo bin are on the CONTROL VIEW, which is where they are wanted — with
+  a mic in one hand, while the thing is on the projector. A page is the wrong
+  place for that and always was.
+- **Filing still happens for everybody.** A photo is pushed to the repo as it
+  arrives, and `photosFile` (the retry, for when GitHub was having a bad
+  evening) is still a host action. If it were the owner's, every subscriber's
+  past gigs would be empty.
+
+Be honest about what read-only means: there is no bin and no share button, and
+a browser can still save an image. The point is that this is a shelf to look
+along rather than an export tool, not that the pixels are locked up.
+
+**`FEATURES.PAST_GIGS` is Bronze**, and the second reason matters as much as
+the per-use rule: this is what a quizmaster shows a venue they are pitching to,
+and withholding the evidence that somebody is good at their job from the rung
+where they are still building the business is the wrong way round.
+
+**The owner holds `PAST_GIGS` too** — listed in `OWNER_FEATURES`, not special
+cased in `allowed()`. The owner runs gigs, on the host key, in the house room,
+so the record of them is theirs to read. That is the sixth-time trap avoided
+rather than hit: an owner holds no quiz features by design, so anything reached
+from the owner's own page must be on that list or it 403s.
+
+### Two smaller things it turned up
+
+- **`[hidden]` did not hide.** `.minor { display: inline-block }` beats the
+  browser's own `[hidden] { display: none }` on specificity, so "File the rest
+  away" and "Clear all" sat there on a night with no photos at all, and both
+  would have failed if pressed. One `[hidden] { display: none !important }` at
+  the top of the stylesheet rather than remembering it at every call site.
+- **`GET /api/archive/<id>` passed `err.message` through on a miss**, which is
+  an ENOENT carrying the server's absolute path — naming the directory layout
+  and the room id it had just looked in. The same fault this file already
+  records for the advert sets and `GET /api/quiz/<id>`, in a third place.
+
+**The tab badge counts NIGHTS, not games.** A quiz and the bingo after it are
+one evening's work, so counting games put a 5 on the tab above a list of four
+rows. Worked out on the server (`archiveNights`) with the same 6am roll-over
+the page uses — and the roll-over has to match the photos' own, or a gig that
+finished at half past midnight appears twice: the games under one date and all
+the pictures under another.
+
 ## The portrait library — one picture per musician, shared by every quiz
 
 `src/portraits.js`. Artwork used to be filed per quiz — `images/eighties/
@@ -1026,6 +1137,7 @@ src/bingo-rules.js     what makes a good bingo track, for the in-app generator
 src/spotify.js         playlist building
 src/qrcode.js          dependency-free QR encoder
 src/photos.js          photos from the room: store, kill switch, bin
+src/past-gigs.js       the nights already run, and where their photos are filed
 src/reports.js         "that one's wrong" — corrections from a night
 src/adverts.js         venue advertising slides, per venue
 src/generate-images.js round 2 artwork (placeholder or OpenAI)
@@ -2807,7 +2919,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 681 tests, no network, injected clocks — must stay green
+npm test        # 797 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -2966,7 +3078,7 @@ private repo (`PACKS_REPO`), never the one holding the owner's accounts and
 invoices; until that is set the console says so in red and every own pack has a
 Download button.
 
-All on **`MusicQuizApp`**. 681 tests green.
+All on **`MusicQuizApp`**. 797 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on
@@ -2993,11 +3105,12 @@ account exists and has survived a redeploy, which is the only real proof any of
 it worked.
 
 **Still wiped on every restart**, and worth knowing before somebody reports it
-as a bug: `data/photos/`, the night archive, and `room-codes.json` — so another
+as a bug: `data/photos/` and `room-codes.json` — so another
 quizmaster's four-letter join code CHANGES on a deploy. Mark's own printed QR is
 safe, because the house room deliberately has no code. What survives is anything
 in git (the packs, the adverts, the images, `data/track-history.json`) and
-anything in the private repo (accounts, invoices, reports, play counts).
+anything in the private repo (accounts, invoices, reports, play counts, the
+night archive, and the photos themselves once they have been filed).
 
 **Rob and James have not been added yet** — he has not asked for their emails.
 Two minutes each on the owner page when he does. He needs no second account for
@@ -3208,25 +3321,7 @@ editor, not an error.
 
 In the host's own order of interest:
 
-1. **Getting the photos off after a night.** The only thing that leaves a
-   shipped feature incomplete — they sit in `data/photos/`, which is wiped on
-   every restart, and there is no way to download them.
-
-   What he actually wants: a **Photos tab in the console, foldered by night**,
-   where he bins the duds and shares the rest to Instagram — without tapping
-   each one and without them going near an inbox. KaraFun emails him and he
-   finds that clunky.
-
-   Two things settle the design:
-   - **`navigator.share({ files })`** puts Instagram in the native share sheet
-     straight from the console on his phone, so nothing has to touch the camera
-     roll. Test on his actual phone before promising multi-image.
-   - **The photos repo cannot be this one — it is PUBLIC** (checked). Pictures
-     of the public, kept in git history forever, is not acceptable. A separate
-     **private** repo would work, is free and persistent, and reuses the token
-     he already has. The alternative is a Render persistent disk, which needs
-     the paid instance. His call.
-2. **Draggable stickers — dog ears, clown noses.** Settled: he asked whether
+1. **Draggable stickers — dog ears, clown noses.** Settled: he asked whether
    Snapchat's own could be had via an API. They can — **Snap Camera Kit** has a
    web SDK — but it needs partner approval, costs money above a threshold, and
    loads megabytes onto a stranger's phone over pub wifi. He chose stickers for
@@ -3241,16 +3336,16 @@ In the host's own order of interest:
    the face, pinch to size. No detection, works everywhere, and people
    misplacing them deliberately is funnier anyway. Offered; awaiting his call.
    (Colour filters on the round 2 portraits are still a separate small job.)
-3. **Team play — several phones, one team, scores AVERAGED across members.**
+2. **Team play — several phones, one team, scores AVERAGED across members.**
    His idea, and a good one: averaging means a big team of chancers cannot beat
    a small team who know their stuff, and it makes a traditional pub quiz work
    without pens and paper. He wants it built even though he will not use it
    immediately.
-4. **Instagram posting.** The point is *proving his quiz nights are popular* —
+3. **Instagram posting.** The point is *proving his quiz nights are popular* —
    visual evidence, not automation for its own sake. Full auto-posting needs an
    Instagram Business account, a linked Facebook Page and Meta app review; tell
    him that before building anything that pretends otherwise.
-5. **Advertising slides between rounds.** Upgraded by him from "later" to a
+4. **Advertising slides between rounds.** Upgraded by him from "later" to a
    commercial argument: he sells himself to venues on **increasing their other
    revenue** — a pizza, a drink, a night they want to push — not just on
    running a quiz. That makes the slides part of the pitch, so they have to
