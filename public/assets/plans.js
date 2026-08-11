@@ -95,16 +95,16 @@ export const TIERS = [
     label: 'Bronze',
     plan: 'Basic',
     rank: 0,
-    pence: 0,
-    blurb: 'Everything you need to run a night in a room.',
+    pence: 1000,
+    blurb: 'The whole machine, and eight packs to start with. Buy more as you need them.',
   },
   {
     id: 'silver',
     label: 'Silver',
     plan: 'Elite',
     rank: 1,
-    pence: 1500,
-    blurb: 'Bronze, plus running it as a business — invoicing and a calendar.',
+    pence: 2000,
+    blurb: 'Every pack included, and every new one as it is written — plus invoicing and a calendar.',
   },
   {
     id: 'gold',
@@ -112,11 +112,23 @@ export const TIERS = [
     plan: 'Pro',
     rank: 2,
     pence: 3000,
-    blurb: 'Everything. Silver, plus running a night for a room that is not in the room.',
+    blurb: 'Everything in Silver, plus running a night for a room that is not in the room.',
   },
 ];
 
 export const DEFAULT_TIER = 'bronze';
+
+/*
+ * **THERE IS NO FREE TIER, and that is the host's own decision.** Bronze is
+ * £10 rather than £0. A free rung would be a shop window that never asks for
+ * anything, and the machine is the same at every level — so somebody could run
+ * a paying gig on it forever.
+ *
+ * Note what "no free tier" does NOT mean: `status: 'trialing'` still exists and
+ * is treated as paying, so a month on the house is a status rather than a rung.
+ * Do not add a fourth tier at £0 to get a trial — that is a permanent hole in
+ * the ladder to solve a temporary problem.
+ */
 
 /**
  * ====================================================== WHAT YOU CAN PLAY
@@ -144,8 +156,45 @@ export const DEFAULT_TIER = 'bronze';
  * before. Making Bronze a starter set is changing one line here — or setting
  * `packs` on one account, below, which beats it.
  */
+/**
+ * **This is the Bronze-to-Silver delineation, and it is the whole ladder.**
+ *
+ * The host's own reasoning, and it settles what each rung is FOR: *Bronze buys
+ * packs, Silver gets them included.* That is also why a quizmaster never
+ * generates — if they could write their own with Claude there would be nothing
+ * on the ladder worth paying to climb, which is a stronger reason than the
+ * bill and is recorded in CLAUDE.md.
+ *
+ * **Eight to start with: four quizzes and four bingo games.** A weekly host
+ * gets one to two months out of that, which is the intended shape — the
+ * ceiling arrives while they are doing well, at the fourth month in the same
+ * pub when the room has heard them, and never mid-question.
+ *
+ * **Which eight is deliberate too.** The starter set is the packs that work in
+ * ANY room — decades and genres — because a new subscriber needs to be able to
+ * walk into any venue with them. The artist packs are held back, because those
+ * are the ones you pick for a specific night, which is exactly when somebody
+ * is willing to buy one.
+ *
+ * A note on the shape rather than the contents: this is a list of pack IDS, so
+ * a new pack in the catalogue does NOT join Bronze on its own, which is the
+ * point — Silver's promise is "and every new one as it is written". The cost
+ * is that renaming a starter pack silently drops it out of Bronze, so change
+ * this list in the same breath as a rename.
+ */
 export const TIER_PACKS = {
-  bronze: 'all',
+  bronze: [
+    // Quizzes — three decade/genre packs and the broadest of the artist ones.
+    '1980s-pop-music',
+    '2000s-pop-rnb-and-chart',
+    '2000s-metal',
+    'madonna',
+    // Bingo — all four general, none of them tied to a theme night.
+    'disco-funk',
+    'eighties-bingo',
+    'pub-floor-fillers',
+    'motown-soul',
+  ],
   silver: 'all',
   gold: 'all',
 };

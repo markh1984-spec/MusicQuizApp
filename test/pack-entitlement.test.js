@@ -19,18 +19,63 @@ import os from 'node:os';
 import path from 'node:path';
 
 import * as plans from '../public/assets/plans.js';
-import { packsFor, canPlayPack, TIER_PACKS, FEATURES, can } from '../public/assets/plans.js';
+import { packsFor, canPlayPack, TIER_PACKS, TIERS, FEATURES, can } from '../public/assets/plans.js';
 import { Accounts } from '../src/accounts.js';
+
+import { fileURLToPath } from 'node:url';
+
+const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 function book() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'quiz-ent-'));
   return new Accounts(path.join(dir, 'accounts.json'));
 }
 
-test('nothing is restricted today — every tier sees the whole catalogue', () => {
-  for (const [tier, scope] of Object.entries(TIER_PACKS)) {
-    assert.equal(scope, 'all', `${tier} is no longer 'all' — was that deliberate?`);
+/*
+ * The lever, switched on. This is what the whole ladder is made of: Bronze
+ * buys packs, Silver gets them included — the host's own reasoning, and also
+ * why a quizmaster never generates.
+ *
+ * Deliberately asserts the SHAPE rather than the contents. Which eight packs
+ * Bronze starts with is a commercial decision that will move, and a test that
+ * named them would fail every time somebody changed their mind rather than
+ * every time something broke.
+ */
+test('Bronze is a starter set, and every rung above it is the whole catalogue', () => {
+  assert.ok(Array.isArray(TIER_PACKS.bronze), 'Bronze is no longer a starter set — was that deliberate?');
+  assert.ok(TIER_PACKS.bronze.length >= 4, 'the starter set is too thin to run a month on');
+  assert.equal(new Set(TIER_PACKS.bronze).size, TIER_PACKS.bronze.length, 'a pack is listed twice');
+
+  for (const tier of ['silver', 'gold']) {
+    assert.equal(TIER_PACKS[tier], 'all', `${tier} no longer includes the whole catalogue`);
     assert.equal(packsFor({ role: 'quizmaster', tier }), 'all');
+  }
+  assert.deepEqual(packsFor({ role: 'quizmaster', tier: 'bronze' }), TIER_PACKS.bronze);
+});
+
+/*
+ * The starter packs have to BE packs. A list of ids drifts silently when one is
+ * renamed — the pack does not disappear, it just stops being in Bronze, and
+ * nothing on any screen says so.
+ */
+test('every pack in the starter set is really in the catalogue', () => {
+  const inLibrary = new Set([
+    ...fs.readdirSync(path.join(ROOT, 'quizzes')).filter((f) => f.endsWith('.json')).map((f) => f.slice(0, -5)),
+    ...fs.readdirSync(path.join(ROOT, 'bingo')).filter((f) => f.endsWith('.json')).map((f) => f.slice(0, -5)),
+  ]);
+  for (const id of TIER_PACKS.bronze) {
+    assert.ok(inLibrary.has(id), `Bronze starts with "${id}", which is not in the catalogue — renamed?`);
+  }
+});
+
+/*
+ * A price is a decision, but a FREE rung is a structural one: the machine is
+ * the same at every level, so a £0 tier is somebody running paying gigs on it
+ * forever. The host decided against one. A trial is a status, not a rung.
+ */
+test('there is no free rung', () => {
+  for (const tier of TIERS) {
+    assert.ok(tier.pence > 0, `${tier.id} is free — a trial is a status, not a tier`);
   }
 });
 
@@ -82,7 +127,9 @@ test('null clears the list back to the tier, an empty array does not', () => {
 
   accounts.update(rob.id, { packs: null });
   assert.equal(accounts.find(rob.id).packs, undefined, 'null follows the tier again');
-  assert.equal(packsFor(accounts.find(rob.id)), 'all');
+  // Back to whatever the tier says — which for a brand new account is Bronze's
+  // starter set, not the whole catalogue.
+  assert.deepEqual(packsFor(accounts.find(rob.id)), TIER_PACKS.bronze);
 });
 
 test('duplicate ids are folded, and rubbish is dropped', () => {

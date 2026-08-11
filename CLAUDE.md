@@ -1083,10 +1083,32 @@ flow and a purchase record, and there is none — see "Pay-per-pack is deliberat
 NOT built" below. The data model is ready for it (`packs` on an account), so this
 is a decision waiting on a processor rather than a redesign.
 
-**Every tier is `'all'` today and that is deliberate** — the mechanism is in
-with nothing switched on, so nobody's library changed. Making Bronze a starter
-set is one line in `TIER_PACKS`, or a `packs` list on one account, which beats
-the tier.
+**The lever is switched on now: Bronze is EIGHT PACKS, four quizzes and four
+bingo games.** Silver and Gold are the whole catalogue. A weekly host gets one
+to two months out of eight, which is the intended shape — the ceiling arrives
+while they are doing well and never mid-question.
+
+**Which eight is deliberate.** The starter set is the packs that work in ANY
+room, decades and genres, because a new subscriber has to be able to walk into
+any venue with them. The artist packs are held back: those are the ones you
+pick for a specific night, which is exactly when somebody will buy one.
+
+It is a list of pack IDS, so a new pack does not join Bronze on its own — that
+is the point, because Silver's promise is "and every new one as it is written".
+The cost is that **renaming a starter pack silently drops it out of Bronze**, so
+change the list in the same breath as a rename. There is a test that every id in
+it is really in the catalogue.
+
+**There is NO FREE TIER, and that is a structural decision rather than a price
+one.** Bronze is £10, Silver £20, Gold £30 — the machine is identical at every
+level, so a £0 rung is somebody running paying gigs on it forever. A month on
+the house is `status: 'trialing'`, which already exists and is treated as
+paying. **Do not add a fourth tier at £0 to get a trial** — that is a permanent
+hole in the ladder to solve a temporary problem. There is a test that no rung
+is free.
+
+An account-level `packs` list still beats the tier, which is what makes
+pay-per-pack a one-line change rather than a redesign.
 
 **`packs` is an ENTITLEMENT, so it is `accounts.update()` and never
 `setPrefs()`** — the same wall that stops a preferences payload handing out a
