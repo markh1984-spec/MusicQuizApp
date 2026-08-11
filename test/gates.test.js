@@ -257,3 +257,39 @@ test('a photo is filed under its own room', () => {
   assert.match(server.slice(at, at + 900), /photoFolder\(room\.id\)/,
     'photos are being filed without the room in the path — two quizmasters would share a folder');
 });
+
+/*
+ * ============================================================ the projector
+ *
+ * A "Big screen" link with no ?g= opens the HOUSE room's projector. For the
+ * owner that is right, because their room IS the house room — which is exactly
+ * why this was invisible until a second login existed, and why it is worth a
+ * test that reads the files rather than trusting a comment.
+ *
+ * For a quizmaster it is somebody else's game on their projector, five minutes
+ * before their own gig.
+ */
+test('no Big screen link opens the house projector by accident', () => {
+  const console_ = fs.readFileSync(new URL('../public/assets/console.js', import.meta.url), 'utf8');
+  const host = fs.readFileSync(new URL('../public/assets/host.js', import.meta.url), 'utf8');
+
+  // A bare '/screen' in a link or window.open, with no room code anywhere near
+  // it, is the bug. screenLink() and the ?g= template are the two right ways.
+  const bare = /(?:href=["'`]|window\.open\(\s*["'`])\/screen["'`]/g;
+  for (const [name, src] of [['console.js', console_], ['host.js', host]]) {
+    const found = src.match(bare) || [];
+    assert.equal(found.length, 0,
+      `${name} has a Big screen link with no room code: ${found.join(', ')}`);
+  }
+  assert.match(console_, /function screenLink\(/, 'the helper that adds the code has gone');
+});
+
+test('the room code is on the library payload, not only on a running game', () => {
+  // Before a launch there is no `running`, and the console still has to know
+  // which room it is — the host opens the big screen five minutes early, which
+  // is precisely when nothing is running yet.
+  const src = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const library = src.slice(src.indexOf('running: {') - 2000, src.indexOf('running: {'));
+  assert.match(library, /joinCode: roomForHost\(req, url\)\.code/,
+    'the room code rides on `running` only, so it vanishes before a launch');
+});

@@ -92,6 +92,25 @@ function askForKey(message = '') {
 const keyed = (path) => path + (path.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(hostKey);
 const linkTo = (path) => keyed(path);
 
+/**
+ * The big screen — for THIS room.
+ *
+ * `linkTo` adds the host KEY, which says who you are; it says nothing about
+ * which room's projector you want. So every "Big screen" link in the app was a
+ * bare `/screen`, which is the HOUSE room — and a quizmaster pressing it got
+ * somebody else's projector, or an empty lobby, at their own gig.
+ *
+ * Invisible to the owner, whose room IS the house room, which is exactly why
+ * it survived: it is only ever wrong for the second login.
+ *
+ * The house room deliberately has no code, so a bare `/screen` stays right for
+ * it and every printed card and bookmark carries on working.
+ */
+function screenLink() {
+  const code = library && library.joinCode;
+  return linkTo(code ? `/screen?g=${encodeURIComponent(code)}` : '/screen');
+}
+
 let library = null;
 /**
  * What this account is allowed to do.
@@ -1150,7 +1169,7 @@ function linksPanel() {
       <h3>Everything else</h3>
       <div class="acct-links">
         ${canRun('quiz') ? `<a class="minor" href="${esc(linkTo('/host'))}">Your control view</a>` : ''}
-        ${canRun('quiz') ? `<a class="minor" href="${esc(linkTo('/screen'))}" target="_blank" rel="noopener">The big screen</a>` : ''}
+        ${canRun('quiz') ? `<a class="minor" href="${esc(screenLink())}" target="_blank" rel="noopener">The big screen</a>` : ''}
         ${canRun('quiz') ? `<a class="minor" href="${esc(play)}" target="_blank" rel="noopener">The join page${code ? ` (${esc(code)})` : ''}</a>` : ''}
         ${can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS) ? `<a class="minor" href="${esc(linkTo('/editor'))}">The pack editor</a>` : ''}
         ${me && me.role === 'owner' ? '<a class="minor" href="/owner">The owner console</a>' : ''}
@@ -2047,7 +2066,7 @@ function runningPanel(running) {
         </div>
         <div class="running-links">
           <a class="go control-link" href="${linkTo('/host')}">${live ? 'Take control' : 'Open the controls'}</a>
-          <a class="minor" href="/screen" target="_blank" rel="noopener">Big screen</a>
+          <a class="minor" href="${screenLink()}" target="_blank" rel="noopener">Big screen</a>
           ${running.finished ? '<button class="minor invoice-it" title="Bill for this one">Invoice this</button>' : ''}
           <button class="minor danger stop-running" title="Clear it and go back to waiting">Stop</button>
         </div>

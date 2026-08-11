@@ -1326,6 +1326,16 @@ async function handleGet(req, res, url, route) {
         maxPrizes: maxPrizes(shape),
         plans: Array.from({ length: maxPrizes(shape) }, (_, i) => stagePlan(i + 1).map(stageLabel)),
       })),
+      /*
+       * Your room's code, whether or not a game is running.
+       *
+       * It used to ride on `running` only — so before a launch the console had
+       * no idea which room it was, and every "Big screen" link fell back to the
+       * HOUSE room's projector. A quizmaster opening the big screen five
+       * minutes early, which is the documented routine, got somebody else's
+       * game. The house room has no code and that is still correct for it.
+       */
+      joinCode: roomForHost(req, url).code,
       // Your own room, and only ever your own — Stop and Take control on this
       // panel must never reach somebody else's night.
       running: {

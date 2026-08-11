@@ -623,7 +623,7 @@ function toolsPanel(s) {
         <a class="minor" style="text-decoration:none;display:inline-block" href="/editor?key=${encodeURIComponent(hostKey)}">Edit questions</a>
       </div>
       <div class="row" style="margin-top:10px">
-        <a class="minor" style="text-decoration:none;display:inline-block" href="/screen" target="_blank" rel="noopener">Open big screen</a>
+        <a class="minor" style="text-decoration:none;display:inline-block" href="${s.joinCode ? `/screen?g=${encodeURIComponent(s.joinCode)}` : '/screen'}" target="_blank" rel="noopener">Open big screen</a>
         <a class="minor" style="text-decoration:none;display:inline-block" href="/api/results.csv?key=${encodeURIComponent(hostKey)}">Download results</a>
         <button class="minor danger" id="resetScores">Reset scores</button>
         <button class="minor danger" id="resetAll">Clear everything</button>
@@ -699,7 +699,10 @@ function buildActions(s) {
     out.push(minor('Redo', () => act('redo')));
     out.push(minor('Skip', () => act('skip'), true));
   } else {
-    out.push(minor('Big screen', () => window.open('/screen', '_blank')));
+    // ?g= or it opens the HOUSE room's projector rather than this one — see
+    // screenLink() in console.js for what that cost.
+    out.push(minor('Big screen', () => window.open(
+      s.joinCode ? `/screen?g=${encodeURIComponent(s.joinCode)}` : '/screen', '_blank')));
     out.push(minor('Edit', () => { location.href = `/editor?key=${encodeURIComponent(hostKey)}`; }));
   }
 
