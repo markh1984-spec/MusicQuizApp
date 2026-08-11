@@ -3365,3 +3365,58 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   font: inherit; font-size: 13.5px; resize: vertical;
 }
 .house-text:focus { outline: none; border-color: var(--hot); }
+
+
+/*
+ * A pack somebody wrote themselves.
+ *
+ * A quiet gold hairline and a small word, not a badge shouting for attention:
+ * the grid is mostly the catalogue and this says "and this one is mine" at a
+ * glance without turning the shelf into two shelves. Same gold as the hat's
+ * hairline, because it means the same thing there — whose this is.
+ */
+.pack-card.own { position: relative; border-color: rgba(255, 200, 90, 0.45); }
+/* The title is a button and runs full width, so the badge must not eat a tap
+   meant for it — hence pointer-events: none below. */
+.pack-card.own .pack-title { padding-right: 56px; }
+.pack-yours {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 0.62rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #ffc85a;
+  border: 1px solid rgba(255, 200, 90, 0.45);
+  border-radius: 999px;
+  padding: 1px 7px;
+  pointer-events: none;
+}
+
+/*
+ * "Open the editor" on the own-packs panel.
+ *
+ * Every `.go` in this stylesheet is scoped to the panel it sits in — there is
+ * no generic rule — so an anchor with that class drew as a plain underlined
+ * link, which reads as a footnote rather than as the way in. Its own class,
+ * sized to sit under a paragraph rather than fill the panel.
+ */
+.own-open {
+  /* inline-block, not a bare inline: with padding on an inline element the
+     button overlaps the paragraph above and below it rather than taking a line
+     of its own. */
+  display: inline-block;
+  align-self: flex-start;
+  margin: 12px 0 4px;
+  border-radius: 10px;
+  padding: 11px 20px;
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
+  color: #12000c;
+  font-weight: 900;
+  font-size: 15px;
+  text-decoration: none;
+}
+.own-open:hover { filter: brightness(1.08); }
+
+/* The not-backed-up line under it is a separate thought, not a caption. */
+.panel .own-open + .warn { display: block; margin-top: 8px; }

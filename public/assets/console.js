@@ -277,6 +277,56 @@ function shopNote(kind = 'quiz') {
 }
 
 /**
+ * Their own packs — the half of the library that is theirs.
+ *
+ * It sits where the generator would be, because that is the honest shape of
+ * the arrangement: the owner's packs are written FOR them, and this is what
+ * they do instead of generating. Nothing here calls a model.
+ *
+ * The privacy line is said plainly and it is deliberately not a boast. What
+ * the app promises is that it will not let the owner in unless they open the
+ * door, and that what was done inside is written down for them to read — not
+ * that the owner is incapable of reading a disk they own. Overstating it here
+ * would be the one sentence a subscriber could later hold against the whole
+ * feature.
+ */
+function ownQuizPanel() {
+  const el = node(`
+    <div class="panel">
+      <h3>Write your own</h3>
+      <div class="tiny">
+        Quizzes you write yourself sit in this library alongside the ones written for you,
+        marked <b>Yours</b>. They are yours: nobody else's console lists them, and the app
+        will not let anybody in to read one unless you switch on support access under
+        <b>My account</b> — which expires on its own and writes down what was looked at.
+      </div>
+      <a class="own-open" href="${esc(linkTo('/editor'))}">Open the editor</a>
+    </div>`);
+  const warning = ownPacksNote();
+  if (warning) el.appendChild(warning);
+  return el;
+}
+
+/**
+ * Whether their own packs survive a restart, said in red when they do not.
+ *
+ * The same shape as the invoice book's warning and there for the same reason:
+ * on a host with no permanent disk, a quiz somebody wrote and a quiz somebody
+ * wrote once look identical until the day they differ. Silence would be the
+ * app quietly deciding on their behalf that it did not matter.
+ */
+function ownPacksNote() {
+  const own = (library && library.ownPacks) || null;
+  if (!own || own.backedUp) return null;
+  return node(`
+    <div class="tiny warn">
+      <b>Not backed up.</b> Your own packs are saved here but there is nowhere permanent to
+      keep them yet, so a restart of the app loses them. Use <b>Download</b> on a pack card
+      to keep a copy, and ask about turning the backup on.
+    </div>`);
+}
+
+/**
  * The rounds the quiz generator can write, and how many of each by default.
  *
  * A count each rather than one number for the lot: "fifteen general knowledge,
@@ -308,8 +358,15 @@ const TABS = [
     blurb: 'Three rounds, twenty seconds a question, fastest fingers win.',
     editLabel: 'Edit questions',
     packs: () => library.quizzes,
-    // Generating is the owner's, on the owner's bill. A quizmaster buys packs.
-    generator: () => (can(FEATURES.GENERATE) ? quizGeneratePanel(library.generation || {}) : shopNote()),
+    // Generating is the owner's, on the owner's bill. A quizmaster buys packs
+    // — and writes their own, which is a different library and a different
+    // panel rather than a cheaper generator.
+    generator: () => {
+      const wrap = document.createDocumentFragment();
+      wrap.appendChild(can(FEATURES.GENERATE) ? quizGeneratePanel(library.generation || {}) : shopNote());
+      if (can(FEATURES.OWN_PACKS) && !can(FEATURES.CATALOGUE)) wrap.appendChild(ownQuizPanel());
+      return wrap;
+    },
   },
   {
     id: 'bingo',
@@ -326,6 +383,11 @@ const TABS = [
       // it was offered on LIBRARY, which every quizmaster has, and the server
       // now refuses it. A button that 403s is worse than no button.
       if (can(FEATURES.CATALOGUE)) wrap.appendChild(importPanel(library.generation || {}));
+      else if (can(FEATURES.OWN_PACKS)) {
+        // Their own track lists, filed in their own library. Same importer,
+        // pointed somewhere else — see /api/mine/import.
+        wrap.appendChild(importPanel(library.generation || {}, { own: true }));
+      }
       return wrap;
     },
   },
@@ -990,7 +1052,7 @@ function linksPanel() {
         ${canRun('quiz') ? `<a class="minor" href="${esc(linkTo('/host'))}">Your control view</a>` : ''}
         ${canRun('quiz') ? `<a class="minor" href="${esc(linkTo('/screen'))}" target="_blank" rel="noopener">The big screen</a>` : ''}
         ${canRun('quiz') ? `<a class="minor" href="${esc(play)}" target="_blank" rel="noopener">The join page${code ? ` (${esc(code)})` : ''}</a>` : ''}
-        ${can(FEATURES.CATALOGUE) ? `<a class="minor" href="${esc(linkTo('/editor'))}">The pack editor</a>` : ''}
+        ${can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS) ? `<a class="minor" href="${esc(linkTo('/editor'))}">The pack editor</a>` : ''}
         ${me && me.role === 'owner' ? '<a class="minor" href="/owner">The owner console</a>' : ''}
         ${me && !me.bootstrap ? '<button class="minor" id="acctOut">Sign out</button>' : ''}
       </div>
@@ -1174,6 +1236,16 @@ function otherRoomsPanel(others) {
  */
 function backupWarning(gen) {
   if (gen.backup) return null;
+  /*
+   * The OWNER's warning, about the OWNER's repository.
+   *
+   * It talks about generating packs and names two environment variables only
+   * the owner can set, so a subscriber was being shown a setup instruction for
+   * somebody else's server and told, in the loudest panel on the page, that
+   * nothing they did was being kept. Their own version of this is
+   * `ownPacksNote()`, which is about their packs and says what THEY can do.
+   */
+  if (!can(FEATURES.CATALOGUE)) return null;
 
   // Configured but broken is a different problem from never set up, and needs
   // a different fix, so say which.
@@ -1494,11 +1566,21 @@ function historyLine(done) {
  * playlist link was the main way in — and a panel that hides the thing you
  * came to do is a panel you use wrong.
  */
-function importPanel(gen) {
+/**
+ * @param {object} [opts]
+ * @param {boolean} [opts.own]  file it in THEIR library rather than the
+ *   catalogue. The no-repeats memory is left out of it in both directions —
+ *   that is the owner's generator's record of what it has used, and neither
+ *   half of that is true of a list somebody else pasted.
+ */
+function importPanel(gen, { own = false } = {}) {
   const el = node(`
     <div class="panel import">
-      <h3>Or bring in a list you already have</h3>
-      <div class="tiny">Paste what Claude printed — one track per line. It goes into the no-repeats list too, so next week's round avoids it.</div>
+      <h3>${own ? 'Make a bingo game of your own' : 'Or bring in a list you already have'}</h3>
+      <div class="tiny">${own
+        ? `Paste a track list — one per line — and it becomes a bingo game only you can see.
+           Everything else works exactly as it does with a pack from the catalogue.`
+        : `Paste what Claude printed — one track per line. It goes into the no-repeats list too, so next week's round avoids it.`}</div>
       <textarea id="impText" rows="7" placeholder="One per line — any of these work:&#10;&#10;Billie Jean — Michael Jackson&#10;1. Take On Me - a-ha&#10;Blue Monday by New Order"></textarea>
       <div class="gen-row">
         <input type="text" id="impUrl" placeholder="…or a Spotify playlist link instead" autocomplete="off">
@@ -1507,13 +1589,21 @@ function importPanel(gen) {
       <div class="gen-opts">
         <label>Card <select id="impSize"><option value="3">3×3</option><option value="4" selected>4×4</option><option value="5">5×5</option></select></label>
         <label>Call it <input type="text" id="impTitle" placeholder="optional" style="width:150px"></label>
-        <label title="Off by default — you probably built this list on purpose."><input type="checkbox" id="impAvoid"> Skip songs played recently</label>
+        ${own ? '' : '<label title="Off by default — you probably built this list on purpose."><input type="checkbox" id="impAvoid"> Skip songs played recently</label>'}
         <span class="tiny" id="impFit"></span>
       </div>
       <div class="gen-status" id="impStatus"></div>
       ${gen.spotify ? '' : '<div class="tiny warn">Spotify is not set up, so playlist links will not work — paste a list instead.</div>'}
     </div>`);
 
+  if (own) {
+    el.dataset.own = 'yes';
+    // Inside the panel rather than under it: a loose warning between a panel
+    // and the pack grid reads as a caption on the grid, which is not what it
+    // is about.
+    const warning = ownPacksNote();
+    if (warning) el.appendChild(warning);
+  }
   el.querySelector('#impGo').addEventListener('click', () => runImport(el));
   el.querySelector('#impUrl').addEventListener('keydown', (e) => { if (e.key === 'Enter') runImport(el); });
   fitCardSize(el);
@@ -1595,13 +1685,14 @@ async function runImport(panel) {
     logEl.scrollTop = logEl.scrollHeight;
   };
 
+  const own = panel.dataset.own === 'yes';
   try {
-    const { done, error } = await streamGeneration('/api/import/bingo', {
+    const { done, error } = await streamGeneration(own ? '/api/mine/import' : '/api/import/bingo', {
       playlistUrl,
       text,
       title: panel.querySelector('#impTitle').value.trim(),
       cardSize: Number(panel.querySelector('#impSize').value),
-      avoidMonths: panel.querySelector('#impAvoid').checked ? 3 : 0,
+      avoidMonths: panel.querySelector('#impAvoid')?.checked ? 3 : 0,
     }, say);
 
     if (error) {
@@ -1615,8 +1706,8 @@ async function runImport(panel) {
     // panel, and in the banner because load() below rebuilds this panel and
     // would otherwise take the only word you got with it.
     const said = `Imported <b>${esc(done.title)}</b> — ${done.trackCount} tracks.
-      ${done.backedUp ? 'Backed up to GitHub — this one is permanent.' : '<b>Not backed up</b>, so it will be lost when the app restarts.'}
-      ${historyLine(done)}`;
+      ${done.backedUp ? 'Backed up — this one is permanent.' : '<b>Not backed up</b>, so it will be lost when the app restarts.'}
+      ${done.mine ? 'It is yours: nobody else can read it.' : historyLine(done)}`;
     status.appendChild(node(`<div class="gen-good">${said}</div>`));
     button.textContent = 'Imported';
     // Amber rather than green when something in it is a warning. A green box
@@ -1893,7 +1984,7 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
                  value="${esc(query)}" aria-label="Search packs">
           <button class="minor pack-dense" title="${dense ? 'Show the full cards' : 'Squeeze more on screen'}"
                   aria-pressed="${dense}">${dense ? 'Cards' : 'Compact'}</button>
-          ${can(FEATURES.CATALOGUE) ? `<a class="minor" href="${linkTo('/editor')}">${esc(editLabel)}</a>` : ''}
+          ${can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS) ? `<a class="minor" href="${linkTo('/editor')}">${esc(editLabel)}</a>` : ''}
         </div>
       </div>
       <div class="pack-grid ${dense ? 'dense' : ''}"></div>
@@ -2238,8 +2329,19 @@ function packCard(kind, pack) {
    * drawing the portraits and building the playlist all write to the shared
    * catalogue, so they are the owner's alone and the server refuses them.
    * Drawing them anyway is how you get a Delete button that says 403.
+   *
+   * A pack they WROTE is the other way round entirely. It is theirs, so they
+   * rename it, edit it, delete it and take a copy of it away — and the OWNER is
+   * the one with nothing to press, because it is not in the catalogue and not
+   * the owner's to touch. So the question is never "who is looking", it is
+   * "whose pack is this", asked per card.
    */
-  const mine = can(FEATURES.CATALOGUE);
+  const ownPack = Boolean(pack.mine);
+  const mine = ownPack ? can(FEATURES.OWN_PACKS) : can(FEATURES.CATALOGUE);
+  // Portraits cost the owner money at OpenAI and the playlist step writes to
+  // the owner's own Spotify account, so both stay the owner's whoever wrote
+  // the pack.
+  const ownersJob = can(FEATURES.CATALOGUE);
 
   const roundCount = (pack.rounds || []).length;
   const detail = kind === 'quiz'
@@ -2251,8 +2353,9 @@ function packCard(kind, pack) {
     : 'Never played';
 
   const el = node(`
-    <div class="pack-card ${pack.broken ? 'broken' : ''}">
+    <div class="pack-card ${pack.broken ? 'broken' : ''} ${ownPack ? 'own' : ''}">
       <button class="pack-title" title="Read it">${esc(pack.title)}</button>
+      ${ownPack ? '<div class="pack-yours" title="You wrote this one. Nobody else can read it.">Yours</div>' : ''}
       <div class="tiny">${esc(detail)}</div>
       <div class="tiny played">${esc(played)}</div>
       ${pack.broken ? `<div class="tiny" style="color:var(--bad)">Broken: ${esc(pack.broken)}</div>` : ''}
@@ -2272,8 +2375,9 @@ function packCard(kind, pack) {
         <button class="pack-read" title="Read it through">Read</button>
         ${mine ? `<button class="pack-rename" ${pack.broken ? 'disabled' : ''} title="Change what it is called">Rename</button>` : ''}
         ${pack.playlist ? `<a class="pack-spotify" href="${esc(pack.playlist)}" target="_blank" rel="noopener" title="Open it in Spotify">Playlist</a>` : ''}
-        ${mine && hasPictureRound(pack) ? '<button class="pack-pics" title="Make the round 2 portraits">Pictures</button>' : ''}
-        ${mine && hasIntroRound(pack) ? (pack.playlist
+        ${ownPack ? '<button class="pack-save" title="Download it as a file you keep">Download</button>' : ''}
+        ${ownersJob && hasPictureRound(pack) ? '<button class="pack-pics" title="Make the round 2 portraits">Pictures</button>' : ''}
+        ${ownersJob && hasIntroRound(pack) ? (pack.playlist
           // Once one exists, the green button beside this one is already called
           // Playlist — two buttons with the same word on one card is a card you
           // have to try to understand. This one says what it does instead, and
@@ -2311,6 +2415,34 @@ function packCard(kind, pack) {
   el.querySelector('.pack-playlist')?.addEventListener('click', () => toggle(playlistPanel));
   el.querySelector('.pack-title')?.addEventListener('click', openIt);
   el.querySelector('.pack-read')?.addEventListener('click', openIt);
+
+  /*
+   * Take a copy away.
+   *
+   * On their own packs only, and it is not a nicety: this is their work. It is
+   * the one thing that makes "kept on somebody else's server" acceptable —
+   * whatever happens to the app, to the backup or to the subscription, the file
+   * is a file and they can hold it. It is also how a pack moves between
+   * accounts, which is the honest answer to "what if I leave".
+   */
+  el.querySelector('.pack-save')?.addEventListener('click', async () => {
+    try {
+      const res = await fetch(keyed(`/api/${kind}/` + encodeURIComponent(pack.id)), { headers: { 'X-Host-Key': hostKey } });
+      if (!res.ok) throw new Error('Could not read that pack');
+      const full = await res.json();
+      delete full.reviewWarnings;
+      delete full.problems;
+      delete full.mine;
+      const blob = new Blob([JSON.stringify(full, null, 2) + '\n'], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${pack.id}.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    } catch (err) {
+      alert('Could not download it: ' + err.message);
+    }
+  });
 
   /*
    * How many prizes, and what each one is.
@@ -2363,13 +2495,23 @@ function packCard(kind, pack) {
       if (!res.ok) throw new Error('Could not read that pack');
       const full = await res.json();
       delete full.reviewWarnings;   // added by the server when reading, not part of the pack
+      delete full.mine;             // likewise: which library it came from, not part of it
       full.title = title;
 
-      const saved = await fetch(url, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
-        body: JSON.stringify(full),
-      });
+      // One of theirs goes back to their own library, never to the catalogue —
+      // two prefixes, because a path test cannot tell which library a pack id
+      // belongs to. See the note on /api/mine in server.js.
+      const saved = ownPack
+        ? await fetch(keyed(`/api/mine/${kind}`), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
+          body: JSON.stringify(full),
+        })
+        : await fetch(url, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
+          body: JSON.stringify(full),
+        });
       const data = await saved.json().catch(() => ({}));
       if (!saved.ok) throw new Error((data.problems || []).join('; ') || data.error || 'Could not save it');
       await load();
@@ -2386,7 +2528,8 @@ function packCard(kind, pack) {
     button.disabled = true;
     button.textContent = 'Deleting…';
     try {
-      const res = await fetch(keyed(`/api/${kind}/` + encodeURIComponent(pack.id)), {
+      const base = ownPack ? `/api/mine/${kind}/` : `/api/${kind}/`;
+      const res = await fetch(keyed(base + encodeURIComponent(pack.id)), {
         method: 'DELETE',
         headers: { 'X-Host-Key': hostKey },
       });

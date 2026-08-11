@@ -93,7 +93,18 @@ export function safePackFile(id) {
  * The whole library: quizzes and bingo packs together, each tagged with how
  * often you have run it and when you last did.
  */
-export function fullLibrary({ quizDir, bingoDir, dataDir }, roomId = HOUSE_ROOM) {
+/**
+ * @param {object} [own]  this room's OWN packs, already summarised — see
+ *   `listOwn()` in own-packs.js. Passed IN rather than read here, because the
+ *   folder they live in is a rooms question and this file deliberately does
+ *   not know rooms exist. (It is also what keeps the two modules from
+ *   importing each other in a circle.)
+ *
+ *   They go through the same decoration as the catalogue's, so "played twice"
+ *   works on a quiz somebody wrote themselves, and they carry `mine: true` so
+ *   the console can mark them without a second kind of pack card.
+ */
+export function fullLibrary({ quizDir, bingoDir, dataDir }, roomId = HOUSE_ROOM, own = null) {
   const mine = statsFor(readStats(dataDir), roomId);
   const decorate = (item) => ({
     ...item,
@@ -102,8 +113,14 @@ export function fullLibrary({ quizDir, bingoDir, dataDir }, roomId = HOUSE_ROOM)
   });
 
   return {
-    quizzes: listQuizzes(quizDir).map((q) => decorate({ ...q, kind: 'quiz' })),
-    bingo: listBingoPacks(bingoDir).map(decorate),
+    quizzes: [
+      ...listQuizzes(quizDir).map((q) => decorate({ ...q, kind: 'quiz' })),
+      ...((own && own.quizzes) || []).map((q) => decorate({ ...q, kind: 'quiz' })),
+    ],
+    bingo: [
+      ...listBingoPacks(bingoDir).map(decorate),
+      ...((own && own.bingo) || []).map((b) => decorate({ ...b, kind: 'bingo' })),
+    ],
   };
 }
 

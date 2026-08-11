@@ -740,6 +740,7 @@ src/generate-images.js round 2 artwork (placeholder or OpenAI)
 src/portraits.js       the shared portrait library: one picture per musician
 src/branding.js        "Mark's Quiztopia" — the app name and whose night it is
 src/gates.js           which routes are the owner's, as two testable lists
+src/own-packs.js       a quizmaster's own packs — theirs, and private from the owner
 public/                the screens; *-bingo.js files hold the bingo variants
   assets/brandmark.js  the question-in-a-mic logo, shared with the server as the favicon
   assets/avatar.js     a drawn face per team, for anyone who sent no photo
@@ -1825,12 +1826,117 @@ nights, so they have no projector to put a slide on.
 absolute path — telling an unknown caller the directory layout and the room id
 it had just looked in.
 
+### A quizmaster's OWN packs — and the one rule that runs backwards
+
+`src/own-packs.js`, `paths.ownQuizzes` / `paths.ownBingo` in `rooms.js`, and
+the `/api/mine/*` routes. A subscriber writes their own quizzes and bingo games
+alongside the catalogue's, marked **Yours** on the pack card.
+
+**Every other gate in this app asks "has this account paid for that". This one
+asks the opposite: the OWNER must not be able to read them.** It is their
+intellectual property, not stock in somebody else's shop, and every other
+quizmaster will assume the worst about a competitor who can read their
+questions.
+
+**The enforcement is structural, not a check somebody has to remember to
+write.** No route takes a room parameter — every one works the room out from
+who you are — and a room's own packs live under that room's own folder. So
+there is no pack id and no query string that reaches another room's folder,
+which is the same property that already stops one quizmaster driving another's
+game. An owner asking by id resolves against the house room, finds nothing, and
+falls through to the catalogue. The one way in is **support access**, which they
+switch on, which expires on its own, and which writes "Opened your pack …" into
+the log they can read. This is the first feature that genuinely needed it.
+
+**Be honest about what that is.** The owner runs the server, the disk and the
+backups, and the server has to be able to read a quiz to put it on a projector,
+so it cannot be encrypted from the person hosting it. This is access control and
+an audit trail — "the app will not let me in unless you let me, and here is the
+log", never "I cannot see it".
+
+**Two prefixes, because a path test cannot look inside a request.**
+`changesTheLibrary()` in `gates.js` is what keeps subscribers out of the
+catalogue, and it matches on the route alone — it cannot tell which of two
+libraries a pack id belongs to. So `/api/quiz` and `/api/bingo` write the
+CATALOGUE and stay the owner's, and `/api/mine/*` writes the room's own folder
+and can never touch the catalogue. Sharing one route would have meant either
+loosening the tested rule or writing a second copy of it with no test on it.
+There is a test that every `/api/mine` route asks for `OWN_PACKS` by name.
+
+**Reading is ONE route for both**, resolved own-library-first
+(`readPack`). That is what lets every existing route carry on taking a bare
+pack id rather than growing a "which library" parameter somebody would
+eventually pass from a request body.
+
+**They still do not generate.** No Claude call exists anywhere under
+`/api/mine/`. That is the owner's bill and the owner's house style, and it is
+the arrangement. What they get instead is the editor and the same track-list
+importer, pointed at their own folder — with the **no-repeats memory left out
+in both directions**, because that is the owner's generator's record of what IT
+has used: reading it would silently drop songs out of a list a subscriber pasted
+deliberately, and writing to it would make the owner's next generated pack avoid
+tracks it has never played.
+
+**A tier can never take a pack they wrote away from them.** The tier lever is
+the owner's catalogue — a starter set that runs out in month four. Applying it
+to their own work would mean their quiz disappearing off their own console
+because of what they pay the owner, which is not an upsell. `onlyTheirPacks()`
+spares anything marked `mine`, and there is a test.
+
+**Their own pack may not take a catalogue id.** Resolution looks in their folder
+first, so it would SHADOW it — Launch would quietly play a different quiz from
+the one everybody else sees under that name. Refused with words, because
+renaming is one field and a silently shadowed pack is a mystery nobody would
+think to look for.
+
+**On Bronze**, under the host's own rule: writing a JSON file costs nothing per
+use. Worth knowing what moving it up would mean, though — a subscriber's own
+work becoming unreachable the month their card fails.
+
+#### Where they are kept, and it is a THIRD repository
+
+`PACKS_REPO`, `PACKS_TOKEN` (falls back to `GITHUB_TOKEN`), filed as
+`packs/<roomId>/<kind>/<id>.json` — one folder per room, so "these are Rob's,
+and only Rob's" is something you can see rather than something you have to
+trust.
+
+Not the public repo, obviously. **And not the owner's private one either**: that
+holds the owner's accounts, invoices and customer records, and mixing somebody
+else's work in with the owner's business records is the wrong boundary however
+careful everybody is. `packsRepoConfigured()` deliberately has **no fallback**
+to `PHOTO_REPO`, because falling back would put a subscriber's quiz in there
+quietly on the day the variable was missing, with nothing on screen saying so.
+There is a test that greps for exactly that.
+
+Restored **once per room per boot, only into an empty folder** — the same rule
+as the accounts and the invoice book, because a disk with packs on it is ahead
+of any backup. Rooms are made lazily, so it happens the first time that
+quizmaster opens their console, and it is awaited there: a library drawn while
+it was still running would show them an empty shelf, which looks exactly like
+their work having been lost. `listDir()` in `github.js` is new and exists for
+this — every other restore reads one file at a known name; a folder of unknown
+names needs a listing.
+
+**Without it configured the console says so in red**, in the panel where they
+write one, and every own pack card carries **Download**. That button is not a
+nicety: whatever happens to the app, the backup or the subscription, the file is
+a file and they can hold it. It is also the honest answer to "what if I leave".
+
+Two things this found on the way, both pre-existing: the owner's
+**"nothing here is being saved permanently"** banner was being shown to
+subscribers — it talks about generating packs and names two environment
+variables only the owner can set — and `GET /api/quiz/<id>` **passed `err.message`
+through on a miss**, which is an ENOENT carrying the server's absolute path.
+Both are the same faults this file already records for the tab bar and the
+advert sets, in new places.
+
 ### What this does NOT do yet
 
-- **A quizmaster cannot keep their own quizzes yet.** Wanted, and the constraint
-  is the important half — see TODO.md. It needs support access first.
 - Nothing stops two quizmasters launching the same pack at once, which is fine
   and probably useful.
+- **A quizmaster cannot share one of their own packs with another quizmaster.**
+  Download and re-upload is the whole mechanism today, which is deliberate:
+  anything better needs a story about who owns the copy afterwards.
 
 ---
 
@@ -1929,7 +2035,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 552 tests, no network, injected clocks — must stay green
+npm test        # 664 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -2031,13 +2137,24 @@ is `'all'` today, so nothing changed for anybody. The account page shows it —
 carries the same **On | Off** switch as the hat in the top right, with a `+`
 where a tier above yours would be.
 
-All on **`MusicQuizApp`**. 642 tests green.
+**A quizmaster now keeps their OWN packs**, and this is the one gate in the app
+that runs backwards: the owner cannot read them. Enforced structurally — no
+route takes a room parameter, so there is no id anybody can send that reaches
+another room's folder — and the only way in is the support-access door they open
+themselves, which expires and logs what was looked at. `/api/mine/*` writes
+their library, `/api/quiz` and `/api/bingo` still write the catalogue and are
+still the owner's, and they still do not generate. They back up to a THIRD
+private repo (`PACKS_REPO`), never the one holding the owner's accounts and
+invoices; until that is set the console says so in red and every own pack has a
+Download button.
+
+All on **`MusicQuizApp`**. 664 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on
-the projector, and read-only access to the pack library. Still shared, and still
-to do: the invoice book (which also does not survive a deploy yet), the night
-archive and the advert slides. See "A room per quizmaster" above.
+the projector, read-only access to the pack library — **and a library of their
+own, which the owner cannot read**. The invoice book, the night archive and the
+advert slides are per room too. See "A room per quizmaster" above.
 
 ### The live app is set up now — this is what is actually on Render
 
@@ -2045,7 +2162,9 @@ Confirmed by reading the environment list on the dashboard:
 
 `HOST_KEY`, `PHOTO_REPO`, `PHOTO_TOKEN`, `GITHUB_REPO`, `GITHUB_TOKEN`,
 `ANTHROPIC_API_KEY`, `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`,
-`SPOTIFY_REFRESH_TOKEN`. **No `BRAND_NAME`** — checked deliberately, because it
+`SPOTIFY_REFRESH_TOKEN`. **No `PACKS_REPO`**, so a quizmaster's own packs are
+saved but not permanent — their console says so in red and offers Download. One
+more private repo and one variable fixes it; see TODO.md. **No `BRAND_NAME`** — checked deliberately, because it
 overrides the per-quizmaster naming and a leftover value would hide that whole
 feature while looking exactly like a failed deploy. **No `OPENAI_API_KEY`**, so
 round 2 is still placeholder art.

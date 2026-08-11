@@ -83,6 +83,19 @@ export function parseTrackList(text) {
  */
 export async function importBingoPack({
   config,
+  /*
+   * Where the pack lands, and whether its tracks go into the no-repeats memory.
+   *
+   * Both default to the catalogue's, which is what importing has always meant.
+   * A QUIZMASTER importing one of their own passes their own folder and
+   * `remember: false`: the history is the owner's generator's memory of what it
+   * has already used, and neither half of that is true of somebody else's pack.
+   * Writing to it would make the owner's next generated pack avoid songs it has
+   * never used, and reading from it would silently drop tracks out of a list a
+   * subscriber pasted deliberately.
+   */
+  dir = null,
+  remember = true,
   playlistUrl = '',
   text = '',
   title,
@@ -182,8 +195,8 @@ export async function importBingoPack({
   const problems = validateBingoPack(pack);
   if (problems.length) throw new Error('That did not make a valid pack: ' + problems.join('; '));
 
-  saveBingoPack(config.bingoDir, pack.id, pack);
-  recordUsed(config.dataDir, pack.tracks, { packId: pack.id, at: now() });
+  saveBingoPack(dir || config.bingoDir, pack.id, pack);
+  if (remember) recordUsed(config.dataDir, pack.tracks, { packId: pack.id, at: now() });
   log(`saved ${pack.id}.json with ${pack.tracks.length} tracks`);
 
   return { pack, playlist };

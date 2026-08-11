@@ -148,6 +148,7 @@ and what happens if you skip it.
 | F | Dry run on mobile data | 15 min | free | the one failure a home test cannot find |
 | G | Move to the $7 Render tier | 5 min | $7/mo | the app sleeps between gigs |
 | H | Finish Spotify | 10 min | free | ⚠️ token ruled out — two dashboard checks left, see step 4 above |
+| B2 | Make a **second** private repo, for subscribers' own packs | 10 min | free | a quizmaster writes their own quiz and loses it on the next deploy |
 | I | OpenAI key | 20 min | ~£8 then pennies | round 2 uses placeholder drawings |
 
 **A, B and C are done and confirmed live.** The sections below are kept for
@@ -212,6 +213,43 @@ So they need a second, private repo. Once set up, everything files itself.
       should be gone. 🔗 https://musicquizapp.onrender.com/console
 
 Full detail if you get stuck: **Part 7f** below.
+
+---
+
+### B2. A second private repo — for THEIR packs, not yours — 10 minutes, free
+
+A quizmaster can now write their own quizzes and bingo games. Those are **their
+work, not yours**, and the app enforces that: you cannot read one unless they
+switch on support access, and when they do, what you looked at goes in a log
+they can read.
+
+Which is exactly why they cannot go in `mmm-private`. That one holds your
+accounts, your invoices and your customers' addresses. Somebody else's material
+does not belong in with your business records, and there is deliberately no
+fallback in the code — if this variable is missing the app says so in red on
+their console rather than quietly filing their quiz next to your sort code.
+
+Until you do this, their packs work perfectly and vanish on the next deploy.
+Their console tells them so and every pack of theirs has a **Download** button,
+so nothing is lost silently — but it is not somewhere you want a paying
+subscriber to be.
+
+- [ ] Make it. 🔗 https://github.com/new
+      Name it `mmm-packs`, tick **Private**, tick **Add a README**, Create.
+- [ ] Check your token can reach it. 🔗 https://github.com/settings/tokens
+      If it says **All repositories**, you are done. If it lists repos, add
+      `mmm-packs` and Save.
+- [ ] Tell the app. 🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env
+      Add one variable: `PACKS_REPO` = `markh1984-spec/mmm-packs`. Save.
+- [ ] Check. Wear the quizmaster hat, open the Music Quiz tab, and the red
+      "Not backed up" line under **Write your own** should be gone.
+
+> **Worth knowing, and worth saying to a subscriber honestly if they ask.**
+> This is not encryption and nobody should tell them it is. You run the server
+> and the backups, and the server has to be able to read a quiz to put it on a
+> projector. What the app promises is that it will not let you in unless they
+> let you, and that there is a log. That is what every hosted service offers,
+> and it is a better answer than a promise.
 
 ---
 
@@ -427,34 +465,47 @@ The Console says so in red if it is not set up.
 
 ## Asked for, not yet specced
 
-### A quizmaster's OWN quizzes — and they are private from you
+### A quizmaster's OWN quizzes — and they are private from you — ✅ BUILT
 
-Wanted, and the constraint is the important half: **a subscriber uploads their
-own material and you must not be able to see it unless they let you.** It is
-their intellectual property, not stock in your catalogue.
+Described properly in CLAUDE.md under "A quizmaster's OWN packs". Left here
+because the reasoning is the valuable part, and it is what any change to it has
+to keep.
+
+**The only thing outstanding is step B2 above** — a second private repo, so
+their packs survive a deploy. Without it the feature works and their work is
+temporary, which their console says in red.
+
+The constraint was the important half: **a subscriber writes their own material
+and you must not be able to see it unless they let you.** It is their
+intellectual property, not stock in your catalogue.
 
 Also settled by the same sentence: **they do not generate with Claude.** That
 is your bill and your house style. They write or upload; the app stores.
 
-What that means, none of it built:
+What that meant, and how each half landed:
 
 - **A second library, per account** — `quizzes/` stays yours and shared. Theirs
-  lives somewhere keyed to their account id, and the pack routes have to know
-  which of the two a pack id belongs to.
+  lives under their room, and the pack routes resolve their library first and
+  the catalogue second, so a bare pack id still means one thing.
 - **The owner cannot read it.** Not "the console does not show it" — the API
-  has to refuse the owner, which is the opposite of every other gate in the
-  app and needs its own test saying so.
-- **Support access is how you ever see one**: they switch it on, it expires,
-  and what was looked at is written down for them to read. That is already the
-  design in this file for support generally; this is the first thing that
-  actually needs it.
-- **Backup is theirs too.** The private repo is yours and holds your accounts
-  and invoices — somebody else's packs cannot go in it.
-- **Which tier it sits on** is undecided. Storage costs you something, so under
-  your own rule it is not automatically Bronze.
+  refuses. Enforced structurally rather than by a check somebody has to
+  remember: **no route takes a room parameter**, so there is no id you can send
+  that reaches another room's folder. There is a test called
+  "THE OWNER CANNOT READ A QUIZMASTER'S OWN PACK".
+- **Support access is how you ever see one.** They switch it on, it expires, and
+  "Opened your pack …" goes in the log they read. This is the first thing that
+  actually needed it, and it works end to end.
+- **Backup is theirs too** — `PACKS_REPO`, a third repository, with no fallback
+  to yours. Step B2 above.
+- **Which tier it sits on**: Bronze, under your own rule — writing a JSON file
+  costs you nothing per use. One word in `FEATURE_TIER` moves it, but note what
+  moving it up would mean: their own work becoming unreachable the month their
+  card fails.
 
-That last point aside, this is a bigger job than it looks, because "the owner
-cannot see it" cuts against how every route in the app is written today.
+They still do NOT generate. That is your bill and your house style. They write
+in the editor, or paste a track list into the same importer — with the
+no-repeats memory left out of it entirely, since that is your generator's record
+of what IT has used.
 
 
 ### Build out the owner admin console

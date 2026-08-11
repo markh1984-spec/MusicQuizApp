@@ -47,25 +47,77 @@ export function missingGithubConfig() {
  * which is if anything a worse thing to commit to a public repo by accident.
  * One private repo is enough, and one is easier to explain than two.
  *
- * @param {'app'|'photos'|'private'} which
+ * And a THIRD, for a thing that is nobody's business but the quizmaster's:
+ * **their own packs**. Those are their intellectual property, not stock in the
+ * owner's catalogue, so they do not go in the public repo (obviously) and they
+ * do not go in the owner's private one either — that file holds the owner's
+ * accounts, invoices and customer records, and mixing somebody else's work into
+ * the owner's business records is the wrong boundary however careful everyone
+ * is. `PACKS_REPO` is its own private repository, filed one folder per room.
+ *
+ * Be honest about what this is and is not. It does not put a subscriber's packs
+ * beyond the owner's reach — the owner runs the server, the disk and the
+ * backups, and the server has to be able to read a quiz to put it on a
+ * projector. It keeps their work in its own place, where "these are Rob's" is
+ * something you can see rather than something you have to trust, and it is what
+ * makes the app's own refusal (own-packs.js) worth anything on a host that
+ * wipes its disk every deploy.
+ *
+ * @param {'app'|'photos'|'private'|'packs'} which
  */
 function settings(which = 'app') {
+  const isPacks = which === 'packs';
   const isPrivate = which === 'photos' || which === 'private';
-  const repo = (isPrivate ? process.env.PHOTO_REPO : process.env.GITHUB_REPO) || '';
+  const variable = isPacks ? 'PACKS_REPO' : isPrivate ? 'PHOTO_REPO' : 'GITHUB_REPO';
+  const repo = process.env[variable] || '';
   const [owner, name] = repo.split('/');
   if (!owner || !name) {
-    throw new Error(`${isPrivate ? 'PHOTO_REPO' : 'GITHUB_REPO'} should look like "owner/repository"`);
+    throw new Error(`${variable} should look like "owner/repository"`);
   }
   return {
     owner,
     name,
-    branch: isPrivate
-      // New GitHub repos default to main; the quiz repo is the odd one out.
-      ? (process.env.PHOTO_BRANCH || 'main')
-      : (process.env.GITHUB_BRANCH || 'MusicQuizApp'),
-    // A separate token is allowed but not required — one token can reach both.
-    token: (isPrivate && process.env.PHOTO_TOKEN) || process.env.GITHUB_TOKEN,
+    branch: isPacks
+      ? (process.env.PACKS_BRANCH || 'main')
+      : isPrivate
+        // New GitHub repos default to main; the quiz repo is the odd one out.
+        ? (process.env.PHOTO_BRANCH || 'main')
+        : (process.env.GITHUB_BRANCH || 'MusicQuizApp'),
+    // A separate token is allowed but not required — one token can reach all
+    // three, and asking for three is three things to get wrong at midnight.
+    token: (isPacks && process.env.PACKS_TOKEN)
+      || (isPrivate && process.env.PHOTO_TOKEN)
+      || process.env.GITHUB_TOKEN,
   };
+}
+
+/**
+ * Is the repository this call needs actually set up?
+ *
+ * One function rather than the same ternary written out at every call site,
+ * which is how `packs` would otherwise have been silently treated as the app
+ * repo — a subscriber's quiz committed to the PUBLIC one. Worth the five lines.
+ */
+function readyFor(which) {
+  if (which === 'packs') return packsRepoConfigured();
+  if (which === 'photos' || which === 'private') return photosRepoConfigured();
+  return githubConfigured();
+}
+
+/**
+ * The repository a quizmaster's own packs are filed in.
+ *
+ * Deliberately has NO fallback to the private repo. Falling back would quietly
+ * put somebody else's work in with the owner's books the day the variable was
+ * missing, and nothing on screen would say so — the console says it is not set
+ * up instead, which is a thing the host can fix.
+ */
+export function packsRepoConfigured() {
+  return Boolean(process.env.PACKS_REPO && (process.env.PACKS_TOKEN || process.env.GITHUB_TOKEN));
+}
+
+export function packsRepoName() {
+  return process.env.PACKS_REPO || '';
 }
 
 /** The private repo, by its other name. Same repo, different reason for it. */
@@ -142,9 +194,12 @@ async function shaOf(filePath, which = 'app') {
  * @returns {{ok: boolean, url?: string, error?: string}}
  */
 export async function putFile(filePath, contents, message, which = 'app') {
-  const isPrivate = which === 'photos' || which === 'private';
-  const ready = isPrivate ? photosRepoConfigured() : githubConfigured();
-  if (!ready) return { ok: false, error: `${isPrivate ? 'The private repository' : 'GitHub backup'} is not set up` };
+  if (!readyFor(which)) {
+    const named = which === 'packs' ? 'The packs repository'
+      : (which === 'photos' || which === 'private') ? 'The private repository'
+        : 'GitHub backup';
+    return { ok: false, error: `${named} is not set up` };
+  }
   try {
     const { owner, name, branch } = settings(which);
     const sha = await shaOf(filePath, which);
@@ -182,9 +237,7 @@ export async function putFile(filePath, contents, message, which = 'app') {
  * with no backup yet is the normal case, not an error.
  */
 export async function getFile(filePath, which = 'app') {
-  const isPrivate = which === 'photos' || which === 'private';
-  const ready = isPrivate ? photosRepoConfigured() : githubConfigured();
-  if (!ready) return null;
+  if (!readyFor(which)) return null;
   try {
     const { owner, name, branch } = settings(which);
     const res = await api(`/repos/${owner}/${name}/contents/${encodeURI(filePath)}?ref=${encodeURIComponent(branch)}`, {}, which);
@@ -197,9 +250,34 @@ export async function getFile(filePath, which = 'app') {
   }
 }
 
+/**
+ * What is in a folder, so a whole library can be brought back rather than one
+ * file whose name you already knew.
+ *
+ * Every other restore in this app reads one file at a fixed name — the
+ * accounts, the invoices, the reports. A quizmaster's own packs are a FOLDER of
+ * unknown names, so restoring them needs this. Empty array rather than a throw
+ * when the folder is not there: a subscriber who has written nothing yet is the
+ * normal case, not a failure.
+ */
+export async function listDir(dirPath, which = 'app') {
+  if (!readyFor(which)) return [];
+  try {
+    const { owner, name, branch } = settings(which);
+    const res = await api(`/repos/${owner}/${name}/contents/${encodeURI(dirPath)}?ref=${encodeURIComponent(branch)}`, {}, which);
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!Array.isArray(data)) return [];
+    return data
+      .filter((entry) => entry && entry.type === 'file')
+      .map((entry) => ({ name: entry.name, path: entry.path }));
+  } catch {
+    return [];
+  }
+}
+
 export async function deleteFile(filePath, message, which = 'app') {
-  const ready = (which === 'photos' || which === 'private') ? photosRepoConfigured() : githubConfigured();
-  if (!ready) return { ok: false, error: 'not set up' };
+  if (!readyFor(which)) return { ok: false, error: 'not set up' };
   try {
     const { owner, name, branch } = settings(which);
     const sha = await shaOf(filePath, which);
@@ -217,8 +295,7 @@ export async function deleteFile(filePath, message, which = 'app') {
 
 /** A quick check that the token works and can write, for the console to show. */
 export async function checkAccess(which = 'app') {
-  const ready = (which === 'photos' || which === 'private') ? photosRepoConfigured() : githubConfigured();
-  if (!ready) return { ok: false, error: 'not set up' };
+  if (!readyFor(which)) return { ok: false, error: 'not set up' };
   try {
     const { owner, name } = settings(which);
     const res = await api(`/repos/${owner}/${name}`, {}, which);

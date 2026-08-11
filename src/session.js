@@ -17,17 +17,24 @@ import path from 'node:path';
 
 import { Engine, PHASES, isSafeId } from './engine.js';
 import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFields, stagePlan, maxPrizes } from './bingo.js';
-import { listQuizzes, loadQuiz } from './quizzes.js';
-import { listBingoPacks, loadBingoPack, recordLaunch, archiveResults, HOUSE_ROOM } from './library.js';
+import { listQuizzes } from './quizzes.js';
+import { listBingoPacks, recordLaunch, archiveResults, HOUSE_ROOM } from './library.js';
 import { findSlide } from './adverts.js';
+import { readPack, listOwn } from './own-packs.js';
 // Shared with the browser, so the list of looks cannot drift between the server
 // deciding one and the screens drawing it.
 import { LOOKS, DEFAULT_LOOK } from '../public/assets/looks.js';
 
+/*
+ * `load` and `list` take the ROOM'S PATHS as well as the config, because a
+ * quizmaster's own packs are not in the catalogue folder — see own-packs.js.
+ * `readPack` looks in their own library first and the catalogue second, so a
+ * bare pack id still means one thing and every caller carries on passing one.
+ */
 const LAUNCHERS = {
   quiz: {
-    load: (config, id) => loadQuiz(config.quizDir, id),
-    list: (config) => listQuizzes(config.quizDir),
+    load: (config, id, paths) => readPack('quiz', id, { config, paths }).pack,
+    list: (config, paths) => [...listQuizzes(config.quizDir), ...listOwn(paths).quizzes],
     make: (pack, opts) => new Engine({ quiz: pack, ...opts }),
     /** What counts as "worth writing to disk this instant". */
     milestone: (s) => `${s.phase}:${s.roundIndex}:${s.questionIndex}:${Object.keys(s.players).length}`,
@@ -35,8 +42,8 @@ const LAUNCHERS = {
     empty: { id: 'empty', title: 'No quiz loaded', rounds: [] },
   },
   bingo: {
-    load: (config, id) => normaliseBingoPack(loadBingoPack(config.bingoDir, id), id),
-    list: (config) => listBingoPacks(config.bingoDir),
+    load: (config, id, paths) => readPack('bingo', id, { config, paths }).pack,
+    list: (config, paths) => [...listBingoPacks(config.bingoDir), ...listOwn(paths).bingo],
     make: (pack, opts) => new BingoGame({ pack, ...opts }),
     // Marks count as a milestone, unlike quiz answers. A lost quiz answer is
     // recoverable — you press Redo and ask again. A player who loses the ten
@@ -80,6 +87,10 @@ export class Session {
      */
     this.archiveDir = paths.archive || path.join(config.dataDir, 'archive');
     this.advertDir = paths.adverts || config.advertDir;
+    // And where this quizmaster's OWN packs live, so a launch can play one.
+    // Kept whole rather than picked apart, because own-packs.js is what knows
+    // which field is which and this file should not learn.
+    this.paths = paths;
     this.kind = 'quiz';
     this.engine = null;
     this.lastMilestone = '';
@@ -131,14 +142,14 @@ export class Session {
 
   pickPack(kind, wantedId) {
     const launcher = LAUNCHERS[kind];
-    const available = launcher.list(this.config).filter((p) => !p.broken);
+    const available = launcher.list(this.config, this.paths).filter((p) => !p.broken);
     const id = wantedId || this.config.defaultQuizId || (available[0] && available[0].id);
     if (!id) {
       console.error(`[session] no ${kind} packs found`);
       return launcher.empty;
     }
     try {
-      return launcher.load(this.config, id);
+      return launcher.load(this.config, id, this.paths);
     } catch (err) {
       console.error(`[session] could not load ${kind} "${id}": ${err.message}`);
       return launcher.empty;
@@ -234,7 +245,7 @@ export class Session {
    */
   launch(kind, packId, { shape = null, prizes = 0, look = '' } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
-    const pack = LAUNCHERS[kind].load(this.config, packId);
+    const pack = LAUNCHERS[kind].load(this.config, packId, this.paths);
     const normalised = kind === 'bingo' ? normaliseBingoPack(pack, packId) : pack;
     if (kind === 'bingo' && shape) {
       const problems = validateBingoPack({ ...normalised, ...shapeFields(shape) });

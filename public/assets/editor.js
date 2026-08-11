@@ -53,9 +53,27 @@ let quiz = null;      // the pack being edited, quiz or bingo
 let kind = 'quiz';    // which of the two
 let dirty = false;
 let problems = [];
+/*
+ * Which library this pack belongs to, and which one a NEW pack would go in.
+ *
+ * The catalogue is the owner's; a quizmaster writes their own, which live in
+ * their room's own folder and go to a different route — `/api/mine/*`. The two
+ * cannot share a route, because the rule that keeps subscribers out of the
+ * catalogue is a path test and a path cannot say which of two libraries a pack
+ * id is in. See own-packs.js.
+ *
+ * Both default to "the catalogue", so the host key and anything that cannot
+ * reach /api/me behave exactly as they always did.
+ */
+let ownPack = false;
+let catalogue = true;
 
 const isBingo = () => kind === 'bingo';
 const apiBase = () => (isBingo() ? '/api/bingo' : '/api/quiz');
+// Where a SAVE goes. Reading is one route for both — it resolves their own
+// library first — but writing has to name which one.
+const saveTo = () => (ownPack || !catalogue ? `/api/mine/${kind}` : `${apiBase()}/` + encodeURIComponent(quiz.id));
+const saveMethod = () => (ownPack || !catalogue ? 'POST' : 'PUT');
 
 // ------------------------------------------------------------------ loading
 
@@ -82,7 +100,8 @@ async function api(path, options = {}) {
   }
   if (res.status === 403) {
     mainEl.replaceChildren(node(`<div class="problems"><strong>${esc(data.error || 'Not allowed.')}</strong>
-      Writing packs is the owner's — <a href="/console">back to the console</a>.</div>`));
+      The packs in the catalogue are written for you and cannot be edited here. Quizzes you
+      write yourself can — <a href="/console">back to the console</a>.</div>`));
     throw new Error(data.error || 'Not allowed');
   }
   if (!res.ok) throw Object.assign(new Error(data.error || res.statusText), { data });
@@ -94,6 +113,16 @@ async function api(path, options = {}) {
  * because "the thing I want to edit" is not usefully split by game.
  */
 async function loadQuizList(selectId) {
+  // Who is looking, so a save knows which library it is writing to. Failing
+  // this must not take the editor down — it falls back to the catalogue, which
+  // is what the page did before there were two.
+  try {
+    const me = await api('/api/me');
+    const features = (me && me.account && me.account.entitlements && me.account.entitlements.features) || null;
+    if (features) catalogue = features.includes('owner.catalogue');
+  } catch {
+    catalogue = true;
+  }
   const library = await api('/api/library');
   const slot = document.getElementById('brandSlot');
   if (slot && library.brand) {
@@ -145,6 +174,10 @@ async function openPack(value) {
   const [nextKind, id] = value.split(':');
   kind = nextKind;
   quiz = await api(`${apiBase()}/` + encodeURIComponent(id));
+  // The server says which library it came out of, so an edit goes back where
+  // it came from rather than wherever this page last guessed.
+  ownPack = Boolean(quiz.mine);
+  delete quiz.mine;
   problems = [];
   setDirty(false);
   render();
@@ -630,7 +663,7 @@ function swap(list, a, b) {
 
 async function save() {
   try {
-    const result = await api(`${apiBase()}/` + encodeURIComponent(quiz.id), { method: 'PUT', body: JSON.stringify(quiz) });
+    const result = await api(saveTo(), { method: saveMethod(), body: JSON.stringify(quiz) });
     problems = [];
     problems.checked = true;
     setDirty(false);
@@ -686,7 +719,9 @@ document.getElementById('newQuiz').addEventListener('click', async () => {
     rounds: [{ id: 'r1', type: 'text', title: 'Round One', blurb: '', questions: [blankQuestion('text', 'r1q1')] }],
   };
   try {
-    await api('/api/quiz', { method: 'POST', body: JSON.stringify(fresh) });
+    kind = 'quiz';
+    ownPack = !catalogue;
+    await api(catalogue ? '/api/quiz' : '/api/mine/quiz', { method: 'POST', body: JSON.stringify(fresh) });
     await loadQuizList(id);
   } catch (err) {
     // A brand new quiz has empty questions, which the validator rightly
@@ -729,6 +764,9 @@ document.getElementById('uploadInput').addEventListener('change', async (e) => {
     if (!incoming.rounds) throw new Error('That file is not a quiz pack.');
     quiz = incoming;
     quiz.id = quiz.id || file.name.replace(/\.json$/i, '');
+    delete quiz.mine;
+    // A file off somebody's laptop goes into THEIR library, not the catalogue.
+    ownPack = !catalogue;
     problems = [];
     setDirty(true);
     render();

@@ -31,7 +31,7 @@ import { generateImages, imageStatus, imageJobs, imagePlan, openaiConfigured } f
 import { STYLES, findStyle, QUALITIES, DEFAULT_QUALITY } from './src/portraits.js';
 import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig, playTrack } from './src/spotify.js';
-import { getFile, githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem, privateRepoConfigured } from './src/github.js';
+import { getFile, listDir, githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem, privateRepoConfigured, packsRepoConfigured, packsRepoName } from './src/github.js';
 import { Invoices, totals, toPence, money } from './src/invoices.js';
 import { invoicePdf, invoiceFilename } from './src/invoice-pdf.js';
 import { toSvg } from './src/qrcode.js';
@@ -44,6 +44,7 @@ import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, c
 import { Suggestions, KINDS } from './src/suggestions.js';
 import { draftReply, briefFor, mostlyMine } from './src/reply-draft.js';
 import { OWNER_ONLY, changesTheLibrary } from './src/gates.js';
+import { listOwn, readPack, saveOwn, deleteOwn, isOwnPack, countOwn, backupPath, MAX_OWN } from './src/own-packs.js';
 import { brandFor } from './src/branding.js';
 import { findScheme, DEFAULT_SCHEME, SCHEMES } from './public/assets/schemes.js';
 // The logo, shared with the browser so the tab icon and the on-screen mark are
@@ -489,11 +490,33 @@ function onlyTheirPacks(library, who) {
   const allowed = packsFor(who || {});
   if (allowed === 'all') return library;
   const mine = new Set(allowed);
+  /*
+   * A pack they WROTE is never filtered by a tier.
+   *
+   * The tier lever is the owner's catalogue — a starter set that runs out in
+   * month four. Applying it to somebody's own work would mean their quiz
+   * disappearing off their own console because of what they pay the owner,
+   * which is not an upsell, it is taking their property away.
+   */
+  const keep = (p) => p.mine || mine.has(p.id);
   return {
     ...library,
-    quizzes: (library.quizzes || []).filter((p) => mine.has(p.id)),
-    bingo: (library.bingo || []).filter((p) => mine.has(p.id)),
+    quizzes: (library.quizzes || []).filter(keep),
+    bingo: (library.bingo || []).filter(keep),
   };
+}
+
+/**
+ * Everything this request may load a pack from: the shared catalogue, and the
+ * room's own folder.
+ *
+ * The room comes from WHO YOU ARE, never from anything the request carries —
+ * which is the whole enforcement for "the owner cannot read a subscriber's
+ * packs". There is no id and no query string that reaches another room's
+ * folder. See own-packs.js.
+ */
+function packCtx(req, url) {
+  return { config, paths: roomForHost(req, url).paths };
 }
 
 function brandForRoom(room) {
@@ -664,6 +687,20 @@ function supportWords(method, route) {
   if (route.startsWith('/api/quiz/') || route.startsWith('/api/bingo/')) {
     const id = decodeURIComponent(route.split('/')[3] || '');
     return read ? `Opened your pack "${id}"` : `Changed your pack "${id}"`;
+  }
+  /*
+   * Their OWN packs, which is the whole reason support access exists.
+   *
+   * Said in the plainest words in this list, because these are the lines
+   * somebody scrolls back to when they are deciding whether they still trust
+   * you with a key to their material.
+   */
+  if (route.startsWith('/api/mine/')) {
+    const id = decodeURIComponent(route.split('/')[4] || '');
+    if (route.startsWith('/api/mine/import')) return 'Imported a track list into your own packs';
+    return id
+      ? `Changed your own pack "${id}"`
+      : 'Saved one of your own packs';
   }
   if (route.startsWith('/api/invoices')) {
     return read ? 'Looked at your invoices' : 'Changed something in your invoices';
@@ -955,13 +992,18 @@ async function handleGet(req, res, url, route) {
   if (route === '/api/quizzes') {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const room = roomForHost(req, url);
-    const seen = onlyTheirPacks(fullLibrary(config, room.id), whoIs(req, url));
+    const seen = onlyTheirPacks(fullLibrary(config, room.id, listOwn(room.paths)), whoIs(req, url));
     return sendJson(res, 200, { quizzes: seen.quizzes, loaded: room.session.pack.id }), true;
   }
   // The console's library: every quiz and every bingo pack you have saved.
   if (route === '/api/library') {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
-    const everything = fullLibrary(config, roomForHost(req, url).id);
+    const libRoom = roomForHost(req, url);
+    // Their own packs come back from the backup the first time they look, on a
+    // host that wipes its disk every deploy. Awaited, because a library drawn
+    // without them looks exactly like a library that has lost them.
+    await ensureOwnPacksRestored(libRoom);
+    const everything = fullLibrary(config, libRoom.id, listOwn(libRoom.paths));
     const library = onlyTheirPacks(everything, whoIs(req, url));
     /*
      * How big the whole catalogue is, so the account page can say "3 of 20".
@@ -972,8 +1014,11 @@ async function handleGet(req, res, url, route) {
      * the other about what those numbers are.
      */
     const catalogue = {
-      quizzes: (everything.quizzes || []).length,
-      bingo: (everything.bingo || []).length,
+      // The CATALOGUE's size, so "3 of 7" counts what is for sale. Packs they
+      // wrote themselves are not part of what a tier holds, so they are not
+      // part of what a tier is measured against either.
+      quizzes: (everything.quizzes || []).filter((p) => !p.mine).length,
+      bingo: (everything.bingo || []).filter((p) => !p.mine).length,
       blurb: fullLibraryTier(whoIs(req, url)),
     };
     const backup = await backupStatus();
@@ -994,6 +1039,20 @@ async function handleGet(req, res, url, route) {
       // The account page says "3 of 20" from these two, and stays quiet when
       // they match.
       catalogue,
+      /*
+       * Their own library, and whether it survives a restart.
+       *
+       * Said out loud rather than left to be discovered, because on a host with
+       * no permanent disk the difference between "backed up" and "here for now"
+       * is the difference between a quiz they wrote and a quiz they wrote once.
+       * Same shape as the invoice book's warning and there for the same reason.
+       */
+      ownPacks: {
+        count: countOwn(libRoom.paths),
+        max: MAX_OWN,
+        backedUp: packsRepoConfigured(),
+        repo: packsRepoName(),
+      },
       adverts: listAdvertPacks(roomForHost(req, url).paths.adverts),
       // How many tracks each card size wants, straight from the rule itself so
       // the console can size a pasted list without keeping its own copy of the
@@ -1112,9 +1171,10 @@ async function handleGet(req, res, url, route) {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const id = decodeURIComponent(route.slice('/api/bingo/'.length));
     try {
-      return sendJson(res, 200, normaliseBingoPack(loadBingoPack(config.bingoDir, id), id)), true;
-    } catch (err) {
-      return sendJson(res, 404, { error: err.message }), true;
+      const { pack, mine } = readPack('bingo', id, packCtx(req, url));
+      return sendJson(res, 200, { ...pack, mine }), true;
+    } catch {
+      return sendJson(res, 404, { error: 'No bingo pack with that name.' }), true;
     }
   }
   // What the generator is currently refusing to reuse.
@@ -1227,10 +1287,15 @@ async function handleGet(req, res, url, route) {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const id = decodeURIComponent(route.slice('/api/quiz/'.length));
     try {
-      const quiz = loadQuiz(config.quizDir, id);
-      return sendJson(res, 200, { ...quiz, reviewWarnings: reviewWarnings(quiz), problems: validateQuiz(quiz) }), true;
-    } catch (err) {
-      return sendJson(res, 404, { error: err.message }), true;
+      // Their own library first, the catalogue second. An owner asking resolves
+      // against the house room, so there is no id that reaches a subscriber's.
+      const { pack: quiz, mine } = readPack('quiz', id, packCtx(req, url));
+      return sendJson(res, 200, { ...quiz, mine, reviewWarnings: reviewWarnings(quiz), problems: validateQuiz(quiz) }), true;
+    } catch {
+      // Never `err.message`: on a miss that is an ENOENT carrying the server's
+      // own absolute path, which tells an unknown caller the directory layout
+      // and which room it just looked in. The same fault the advert sets had.
+      return sendJson(res, 404, { error: 'No quiz with that name.' }), true;
     }
   }
   if (route === '/api/results.json') {
@@ -1660,7 +1725,9 @@ function reloadPackEverywhere(id, { clamp = true } = {}) {
   for (const room of rooms.all()) {
     const { session } = room;
     if (session.kind !== 'quiz' || session.pack?.id !== id) continue;
-    session.pack = loadQuiz(config.quizDir, id);
+    // Resolved against THIS room, so a quizmaster editing one of their own
+    // reloads theirs rather than blowing up looking for it in the catalogue.
+    session.pack = readPack('quiz', id, { config, paths: room.paths }).pack;
     session.engine.quiz = session.pack;
     if (clamp) session.engine.clampPointers();
     session.engine.changed();
@@ -1669,9 +1736,86 @@ function reloadPackEverywhere(id, { clamp = true } = {}) {
   return touched;
 }
 
-/** Is any room playing this pack right now? */
-function packInUse(kind, id) {
-  return rooms.all().some((r) => r.session.kind === kind && r.session.pack?.id === id);
+/**
+ * Is any room playing this pack right now?
+ *
+ * Global for a CATALOGUE pack, because everybody shares that file. Narrowed to
+ * one room for a quizmaster's OWN pack: two subscribers can each have a pack
+ * called `christmas`, and one of them playing theirs is no reason to stop the
+ * other deleting theirs.
+ */
+function packInUse(kind, id, onlyRoom = null) {
+  const where = onlyRoom ? [onlyRoom] : rooms.all();
+  return where.some((r) => r.session.kind === kind && r.session.pack?.id === id);
+}
+
+/*
+ * ---------------------------------------------------- a quizmaster's own packs
+ *
+ * Filed one folder per room in their OWN repository (`PACKS_REPO`), never the
+ * public one and never the owner's private one — that holds the owner's
+ * accounts, invoices and customer records, and somebody else's work does not
+ * belong in with them. See the note in src/github.js.
+ *
+ * Not configured is not fatal: the pack is saved and playable, and the console
+ * says in red that it will not survive a restart. Same shape as the invoice
+ * book's warning, and for the same reason — a record you think you have and do
+ * not is worse than one you know you have not got.
+ */
+async function backUpOwnPack(room, kind, id, contents) {
+  if (!packsRepoConfigured()) return { ok: false, error: 'no packs repository set up' };
+  try {
+    return await putFile(backupPath(room.id, kind, id), contents, `Update ${kind} pack: ${id}`, 'packs');
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+async function removeOwnPackBackup(room, kind, id) {
+  if (!packsRepoConfigured()) return { ok: false };
+  try {
+    return await deleteFile(backupPath(room.id, kind, id), `Delete ${kind} pack: ${id}`, 'packs');
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+/**
+ * Bring a room's own packs back after a restart.
+ *
+ * Once per room per boot, and — the same rule as the accounts and the invoice
+ * book — **only into an empty folder**. A disk that already has packs on it is
+ * ahead of any backup, and reading a backup over live files could roll an edit
+ * back to the version before it.
+ *
+ * Rooms are made lazily, so this runs the first time that quizmaster opens
+ * their console rather than at boot. It is awaited there, because a library
+ * drawn while this was still running would show them an empty shelf, which
+ * looks exactly like their work having been lost.
+ */
+const ownPacksRestored = new Set();
+
+async function ensureOwnPacksRestored(room) {
+  if (ownPacksRestored.has(room.id) || !packsRepoConfigured()) return;
+  ownPacksRestored.add(room.id);
+  if (countOwn(room.paths)) return;   // disk wins, always
+  for (const kind of ['quiz', 'bingo']) {
+    const dir = kind === 'quiz' ? room.paths.ownQuizzes : room.paths.ownBingo;
+    if (!dir) continue;
+    const files = await listDir(`packs/${room.id}/${kind}`, 'packs');
+    for (const file of files) {
+      if (!file.name.endsWith('.json')) continue;
+      const body = await getFile(file.path, 'packs');
+      if (!body) continue;
+      try {
+        fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(path.join(dir, file.name), body);
+      } catch (err) {
+        console.error(`[own-packs] could not restore ${file.path}:`, err.message);
+      }
+    }
+    if (files.length) console.log(`[own-packs] restored ${files.length} ${kind} pack(s) for room ${room.id}`);
+  }
 }
 
 function csvCell(value) {
@@ -2171,6 +2315,145 @@ async function handleWrite(req, res, url, route) {
     if (!allowed(req, res, url, FEATURES.QUIZ, { live: true })) return true;
   }
 
+  /*
+   * ---- a quizmaster's OWN packs
+   *
+   * Separate routes from `/api/quiz` and `/api/bingo` on purpose, and that is
+   * the load-bearing bit. `changesTheLibrary()` in gates.js is a PATH test —
+   * it cannot look inside a request and work out which of two libraries a pack
+   * id belongs to. Sharing one route would mean either loosening the rule that
+   * keeps subscribers out of the catalogue, or writing a second copy of it
+   * somewhere with no test on it. Two prefixes, two rules, both testable.
+   *
+   * So: `/api/quiz` and `/api/bingo` write the CATALOGUE and stay the owner's.
+   * `/api/mine/*` writes the room's own folder and can never touch the
+   * catalogue — `saveOwn` and `deleteOwn` in own-packs.js take the room's own
+   * directory and nothing else.
+   *
+   * They still do not GENERATE. There is no Claude call anywhere under here;
+   * that is the owner's bill and the owner's house style.
+   */
+  if (route === '/api/mine/quiz' && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.OWN_PACKS)) return true;
+    const room = roomForHost(req, url);
+    const body = await readJson(req, 4 * 1024 * 1024);
+    const quiz = normaliseQuiz(body, body.id);
+    const problems = validateQuiz(quiz);
+    if (problems.length) return sendJson(res, 400, { error: 'Quiz is not valid', problems }), true;
+    try {
+      saveOwn('quiz', quiz.id, quiz, { config, paths: room.paths });
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message }), true;
+    }
+    // If they were playing it, pick the edit up live — same as the catalogue.
+    reloadPackEverywhere(quiz.id);
+    const backup = await backUpOwnPack(room, 'quiz', quiz.id, JSON.stringify(quiz, null, 2) + '\n');
+    return sendJson(res, 200, {
+      ok: true, id: quiz.id, backedUp: backup.ok, backupError: backup.error,
+    }), true;
+  }
+
+  if (route.startsWith('/api/mine/quiz/') && req.method === 'DELETE') {
+    if (!allowed(req, res, url, FEATURES.OWN_PACKS)) return true;
+    const room = roomForHost(req, url);
+    const id = decodeURIComponent(route.slice('/api/mine/quiz/'.length));
+    // Only THEIR room — two quizmasters can each have one called `christmas`,
+    // and one of them playing theirs is no reason to refuse the other.
+    if (packInUse('quiz', id, room)) {
+      return sendJson(res, 400, { error: 'That quiz is loaded in a game right now.' }), true;
+    }
+    try {
+      deleteOwn('quiz', id, { config, paths: room.paths });
+    } catch (err) {
+      return sendJson(res, 404, { error: err.message }), true;
+    }
+    await removeOwnPackBackup(room, 'quiz', id);
+    return sendJson(res, 200, { ok: true }), true;
+  }
+
+  if (route === '/api/mine/bingo' && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.OWN_PACKS)) return true;
+    const room = roomForHost(req, url);
+    const body = await readJson(req, 4 * 1024 * 1024);
+    const pack = normaliseBingoPack(body, body.id);
+    const problems = validateBingoPack(pack);
+    if (problems.length) return sendJson(res, 400, { error: 'That pack is not valid', problems }), true;
+    try {
+      saveOwn('bingo', pack.id, pack, { config, paths: room.paths });
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message }), true;
+    }
+    const backup = await backUpOwnPack(room, 'bingo', pack.id, JSON.stringify(pack, null, 2) + '\n');
+    return sendJson(res, 200, {
+      ok: true, id: pack.id, backedUp: backup.ok, backupError: backup.error,
+    }), true;
+  }
+
+  if (route.startsWith('/api/mine/bingo/') && req.method === 'DELETE') {
+    if (!allowed(req, res, url, FEATURES.OWN_PACKS)) return true;
+    const room = roomForHost(req, url);
+    const id = decodeURIComponent(route.slice('/api/mine/bingo/'.length));
+    if (packInUse('bingo', id, room)) {
+      return sendJson(res, 400, { error: 'That pack is loaded in a game right now. Launch something else first.' }), true;
+    }
+    try {
+      deleteOwn('bingo', id, { config, paths: room.paths });
+    } catch (err) {
+      return sendJson(res, 404, { error: err.message }), true;
+    }
+    await removeOwnPackBackup(room, 'bingo', id);
+    return sendJson(res, 200, { ok: true }), true;
+  }
+
+  /*
+   * Pasting a track list into a bingo game of their own.
+   *
+   * The same importer the owner's catalogue uses, pointed at their folder —
+   * with the no-repeats memory switched OFF in both directions. That history is
+   * the owner's generator's record of what IT has already used: reading it here
+   * would silently drop songs out of a list a subscriber pasted deliberately,
+   * and writing to it would make the owner's next generated pack avoid tracks
+   * it has never played.
+   */
+  if (route === '/api/mine/import' && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.OWN_PACKS)) return true;
+    const room = roomForHost(req, url);
+    const body = await readJson(req, 512 * 1024);
+    const stream = progressStream(res);
+    const log = stream.log;
+    try {
+      if (countOwn(room.paths) >= MAX_OWN) {
+        throw new Error(`You have ${MAX_OWN} of your own packs, which is as many as an account holds. Delete one first.`);
+      }
+      const result = await importBingoPack({
+        config,
+        dir: room.paths.ownBingo,
+        remember: false,
+        avoidMonths: 0,
+        playlistUrl: String(body.playlistUrl || ''),
+        text: String(body.text || ''),
+        title: String(body.title || '').slice(0, 80) || undefined,
+        cardSize: [3, 4, 5].includes(Number(body.cardSize)) ? Number(body.cardSize) : 4,
+        log,
+      });
+      const backup = await backUpOwnPack(room, 'bingo', result.pack.id, JSON.stringify(result.pack, null, 2) + '\n');
+      log(backup.ok
+        ? 'backed up — this one survives a restart'
+        : `saved here, but NOT backed up: ${backup.error || 'no packs repository set up'}`);
+      log('DONE ' + JSON.stringify({
+        id: result.pack.id,
+        title: result.pack.title,
+        trackCount: result.pack.tracks.length,
+        mine: true,
+        backedUp: backup.ok,
+      }));
+    } catch (err) {
+      log('ERROR ' + err.message);
+    }
+    stream.end();
+    return true;
+  }
+
   // ---- managing subscribers
   if (route.startsWith('/api/reports/') && (req.method === 'POST' || req.method === 'DELETE')) {
     if (!allowed(req, res, url, FEATURES.CATALOGUE)) return true;
@@ -2366,7 +2649,9 @@ async function handleWrite(req, res, url, route) {
        * library" is a sentence somebody can act on, and a silent failure at
        * launch is the worst possible moment for one.
        */
-      if (!canPlayPack(whoIs(req, url), String(body.packId))) {
+      const launchKind = String(body.game || 'quiz') === 'bingo' ? 'bingo' : 'quiz';
+      const ownPack = isOwnPack(launchKind, String(body.packId), room.paths);
+      if (!ownPack && !canPlayPack(whoIs(req, url), String(body.packId))) {
         return sendJson(res, 403, {
           error: 'That pack is not in your library.',
           upgrade: true,

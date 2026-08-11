@@ -41,6 +41,19 @@ export const FEATURES = {
   // Whole quizzes and whole bingo games from the owner's catalogue. Never
   // individual rounds — a round is a part of a product, not a product.
   BUY_PACKS: 'packs.buy',
+  /*
+   * Their OWN packs — the ones they wrote, which are theirs and not the
+   * owner's. A separate feature from LIBRARY on purpose: reading the catalogue
+   * and keeping a library of your own are different arrangements, and only one
+   * of them is a thing the owner can look at.
+   *
+   * Bronze, under the host's own rule: writing a JSON file costs nothing per
+   * use, so there is no bill to cover. That is the rule doing its job rather
+   * than a commercial decision, and moving it up is one word below — but note
+   * what moving it would mean, which is a subscriber's own work becoming
+   * unreachable the month their card fails.
+   */
+  OWN_PACKS: 'packs.own',
   LOOKS: 'looks',                // seasonal palettes and picture reveals
   ADVERTS: 'adverts',            // venue slides
   PHOTOS: 'photos',              // photos from the room
@@ -183,6 +196,7 @@ export const FEATURE_TIER = {
   [FEATURES.BINGO]: 'bronze',
   [FEATURES.LIBRARY]: 'bronze',
   [FEATURES.BUY_PACKS]: 'bronze',
+  [FEATURES.OWN_PACKS]: 'bronze',
   [FEATURES.LOOKS]: 'bronze',
   [FEATURES.ADVERTS]: 'bronze',
   [FEATURES.PHOTOS]: 'bronze',
@@ -206,6 +220,7 @@ export const FEATURE_META = {
   [FEATURES.BINGO]: { label: 'Music Bingo', blurb: 'You play the tracks. Every phone gets its own card.' },
   [FEATURES.LIBRARY]: { label: 'The pack library', blurb: 'Read and play every quiz and bingo game in the shop.' },
   [FEATURES.BUY_PACKS]: { label: 'Buying packs', blurb: 'Whole quizzes and whole bingo games from the catalogue.' },
+  [FEATURES.OWN_PACKS]: { label: 'Your own packs', blurb: 'Quizzes and bingo games you write yourself. Nobody else can read them.' },
   [FEATURES.LOOKS]: { label: 'Seasonal looks', blurb: 'Halloween, Valentine’s, Christmas — a palette and some shapes.' },
   [FEATURES.ADVERTS]: { label: 'Advert slides', blurb: 'Slides for between rounds. One set per venue.' },
   [FEATURES.PHOTOS]: { label: 'Photos from the room', blurb: 'The room sends pictures straight to the big screen.' },

@@ -210,6 +210,17 @@ export class Rooms {
         invoices: this.paths.invoices || path.join(this.config.dataDir, 'invoicing.json'),
         archive: this.paths.archive || path.join(this.config.dataDir, 'archive'),
         adverts: this.paths.adverts || this.config.advertDir,
+        /*
+         * The house room's OWN packs, as opposed to the catalogue.
+         *
+         * The owner has no such thing — they write the catalogue, which is the
+         * whole arrangement — so in practice nothing is ever filed here. It
+         * exists so every room answers the same question the same way, and so
+         * the host key (which resolves to this room and grants everything) has
+         * somewhere to put one rather than a route that half works.
+         */
+        ownQuizzes: this.paths.ownQuizzes || path.join(this.config.dataDir, 'own', 'quizzes'),
+        ownBingo: this.paths.ownBingo || path.join(this.config.dataDir, 'own', 'bingo'),
       };
     }
     const dir = path.join(this.config.dataDir, 'rooms', roomId);
@@ -229,6 +240,17 @@ export class Rooms {
       invoices: path.join(dir, 'invoicing.json'),
       archive: path.join(dir, 'archive'),
       adverts: path.join(dir, 'adverts'),
+      /*
+       * The packs this quizmaster wrote themselves, which are THEIRS.
+       *
+       * Under the room, like everything else here, and that placement is the
+       * enforcement rather than a filing preference: no route takes a room
+       * parameter, so there is no id anybody can send that reaches another
+       * room's folder. The owner asking for one of these resolves against the
+       * house room, finds nothing, and gets the catalogue. See own-packs.js.
+       */
+      ownQuizzes: path.join(dir, 'quizzes'),
+      ownBingo: path.join(dir, 'bingo'),
     };
   }
 
