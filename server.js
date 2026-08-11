@@ -377,7 +377,19 @@ function whoIs(req, url) {
         // Marked so every gate downstream can tell "the owner in their own
         // account" from "the owner inside somebody else's", which are not the
         // same thing and must not be allowed the same actions.
-        ...(mine ? {} : { support: true, supportFor: account.id }),
+        /*
+         * `inSupport`, not `support` — and the collision was a gig-night bug.
+         *
+         * This used to set `support: true`, which is ALSO the name of the
+         * grant object every subscriber who has switched support access on
+         * carries on their own account. So `supportGuard` read a truthy
+         * `support` on Rob-signed-in-as-Rob and treated him as if he were the
+         * owner inside his account: every `/api/host/*` route 403'd with
+         * "support access cannot run a night", and his own Next and Reveal
+         * were written into the log as though somebody else had tried them.
+         * A quizmaster who left the door open could not run their own quiz.
+         */
+        ...(mine ? {} : { inSupport: true, supportFor: account.id }),
       };
       /*
        * …and, optionally, AS A PARTICULAR TIER.
@@ -800,9 +812,19 @@ function supportWords(method, route) {
   if (route.startsWith('/api/mine/')) {
     const id = decodeURIComponent(route.split('/')[4] || '');
     if (route.startsWith('/api/mine/import')) return 'Imported a track list into your own packs';
-    return id
-      ? `Changed your own pack "${id}"`
-      : 'Saved one of your own packs';
+    /*
+     * **Looking is not changing, and this log said it was.**
+     *
+     * `read` was worked out at the top of this function and then ignored here,
+     * so a GET of somebody's own pack was written down as "Changed your own
+     * pack" and a GET of the list as "Saved one of your own packs". On the one
+     * log whose entire job is telling a subscriber what was done to their
+     * material, that accuses you of altering their work when you only opened
+     * it — which is worse than a missing entry, because they will believe it.
+     * The block above gets this right for the catalogue; this one did not.
+     */
+    if (id) return read ? `Opened your own pack "${id}"` : `Changed your own pack "${id}"`;
+    return read ? 'Looked at your own packs' : 'Saved one of your own packs';
   }
   if (route.startsWith('/api/invoices')) {
     return read ? 'Looked at your invoices' : 'Changed something in your invoices';
@@ -819,7 +841,9 @@ function supportWords(method, route) {
 function supportGuard(req, res, url, route) {
   if (!route.startsWith('/api/')) return true;
   const who = whoIs(req, url);
-  if (!who || !who.support) return true;
+  // The flag set by whoIs on an ACTING identity, never the grant object a
+  // subscriber carries on their own account — see the note there.
+  if (!who || !who.inSupport) return true;
 
   if (SUPPORT_NEVER.some((p) => route.startsWith(p))) {
     accounts.noteSupport(who.id, 'Tried to run your game — refused, support access cannot touch a night');
@@ -2859,9 +2883,19 @@ async function handleWrite(req, res, url, route) {
           error: 'They have not let you in. Ask them to switch support access on from their account page — it is theirs to grant and it expires on its own.',
         }), true;
       }
-      if (rooms.get(them.id).live) {
+      /*
+       * `busy`, not `live` — and the difference is forty people.
+       *
+       * `live` means "past the lobby", so a room with forty players sitting in
+       * a lobby with their team names typed in did not count as a night in
+       * progress and support access was let straight in. The launch guard uses
+       * the opposite standard (any joined player counts, lobby or not), and two
+       * guards with two definitions of "somebody is mid-night" is how one of
+       * them quietly becomes wrong.
+       */
+      if (rooms.get(them.id).busy) {
         return sendJson(res, 409, {
-          error: 'They are running a game right now. Support access waits until the night is over — going in mid-round is one mis-tap from ending it.',
+          error: 'They have a game up with people in it. Support access waits until the night is over — going in mid-round is one mis-tap from ending it.',
         }), true;
       }
       accounts.noteSupport(them.id, `${me.name || me.email} came in`);

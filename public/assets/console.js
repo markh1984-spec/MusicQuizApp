@@ -889,6 +889,15 @@ function suggestionPanel() {
  * log would be silent about exactly that.
  */
 function supportPanel() {
+  /*
+   * `me` IS the account here — `load()` does `me = who.signedIn ? who.account
+   * : null` — so the grant hangs straight off it.
+   *
+   * Worth saying, because it looks wrong from the outside: `/api/me` answers
+   * `{ signedIn, account, ... }`, so anybody reading the raw payload concludes
+   * this is looking in the wrong place, "corrects" it one level deeper, and
+   * silently empties the log without breaking anything else on the page.
+   */
   const support = (me && me.support) || null;
   const until = support ? Date.parse(support.expiresAt) : 0;
   const open = Boolean(until > Date.now());

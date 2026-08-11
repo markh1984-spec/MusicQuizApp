@@ -121,6 +121,20 @@ export class Room {
     return Boolean(phase) && phase !== 'lobby' && phase !== 'final' && phase !== 'finished';
   }
 
+  /**
+   * Is there anything in this room that somebody would LOSE?
+   *
+   * Wider than `live` on purpose. `live` answers "is a game being played" —
+   * the right question for "can I deploy". This answers "would walking in here
+   * cost somebody something", which includes forty people sitting in a lobby
+   * with their team names typed in, and that is the standard the launch guard
+   * already uses. Two guards with two definitions of a night in progress is
+   * how one of them quietly becomes wrong.
+   */
+  get busy() {
+    return this.live || Boolean(this.session.inProgress());
+  }
+
   summary() {
     const engine = this.session.engine;
     return {
