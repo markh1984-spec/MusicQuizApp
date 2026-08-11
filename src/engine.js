@@ -26,6 +26,8 @@ import {
   POINTS_CORRECT, POINTS_PER_WHOLE_SECOND, POINTS_FIRST_CORRECT,
 } from './scoring.js';
 import { ALPHABET, answerLetter, answerLetterIndex, revealMode } from './quizzes.js';
+// For faceKey — a player's public handle, derived one way from their id.
+import { createHash } from 'node:crypto';
 
 export const PHASES = {
   LOBBY: 'lobby',
@@ -827,8 +829,14 @@ export class Engine {
     return round && round.type === 'multi' ? (q.correctIndexes || []).length : 1;
   }
 
-  /** The "Fastest finger" line: first correct answer of the current question. */
-  fastestFinger(ri = this.state.roundIndex, qi = this.state.questionIndex) {
+  /**
+   * The "Fastest finger" line: first correct answer of the current question.
+   *
+   * @param {boolean} [withId]  include the real player id. **Host view only.**
+   *   A player id is a bearer credential — see `faceKey` — so the screen and
+   *   the phones get the derived handle and nothing else.
+   */
+  fastestFinger(ri = this.state.roundIndex, qi = this.state.questionIndex, { withId = false } = {}) {
     const answers = this.answersFor(ri, qi);
     let best = null;
     for (const [playerId, a] of Object.entries(answers)) {
@@ -838,7 +846,9 @@ export class Engine {
     if (!best) return null;
     const p = this.state.players[best.playerId];
     return {
-      playerId: best.playerId,
+      // Safe anywhere. The real id rides along only for the host.
+      faceKey: faceKey(best.playerId),
+      ...(withId ? { playerId: best.playerId } : {}),
       name: p ? p.name : 'Unknown',
       seconds: best.responseSeconds,
       points: best.points,
@@ -1278,7 +1288,7 @@ export class Engine {
       };
       view.answeredCount = Object.keys(this.answersFor()).length;
       view.tally = this.optionTally();
-      view.fastest = this.fastestFinger();
+      view.fastest = this.fastestFinger(this.state.roundIndex, this.state.questionIndex, { withId: true });
       // WHO picked what, for the banter. Host view only, like the answer key
       // itself — putting names on the projector beside a wrong answer is a
       // different decision from the host reading one out, and not one to make
@@ -1428,4 +1438,30 @@ export function newId() {
   const bytes = new Uint8Array(16);
   globalThis.crypto.getRandomValues(bytes);
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * A player's PUBLIC handle — safe to put on the projector, useless as a key.
+ *
+ * **A player id is a bearer credential.** There is no login for a phone: the id
+ * IS the proof, so anything holding it can answer as that player and rename
+ * them. It therefore must never appear in a payload anybody can fetch — and
+ * the join code is printed on the projector and read out on the mic, so
+ * `/api/state?role=screen&g=CODE` is exactly that.
+ *
+ * It used to carry the real id, on the "Fastest finger" line. So the person
+ * winning was the person whose credential was published, and anyone in the
+ * room could lock out their next answer with a deliberately wrong one, or
+ * rename them to anything at all on the big screen.
+ *
+ * The screen still needs a STABLE key, because a photo is matched to the
+ * fastest finger by id rather than by name — two teams picking the same name
+ * is a thing that happens, and the wrong person's face six feet wide is not a
+ * small mistake. So it gets a one-way derivation instead: the same player
+ * always gives the same key, and the key gives nothing back.
+ */
+export function faceKey(playerId) {
+  const id = String(playerId || '');
+  if (!id) return '';
+  return createHash('sha256').update(`face:${id}`).digest('hex').slice(0, 16);
 }

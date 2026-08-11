@@ -816,11 +816,26 @@ a gap reads as a fault rather than a feature. The drawn fallback means it works
 from the first question of the first night with nothing to set up — no upload
 step bolted onto a join that is meant to take ten seconds.
 
-**Matched on `playerId`, never on the name.** Two teams picking the same name
-is a thing that happens — there is deliberately no name filter — and the wrong
-person's photograph six feet wide is not a small mistake. `forScreen()`
-therefore carries `playerId`; that is not new information on that payload,
-since the name is already printed beside the picture.
+**Matched on identity, never on the name.** Two teams picking the same name is
+a thing that happens — there is deliberately no name filter — and the wrong
+person's photograph six feet wide is not a small mistake.
+
+**The handle is `faceKey`, NOT the player id, and that is a security fix rather
+than a naming preference.** A PLAYER ID IS A BEARER CREDENTIAL: there is no
+login for a phone, so holding the id is enough to answer as that player —
+locking out their real answer with a deliberately wrong one — and to rename
+them to anything on the projector by rejoining with it. The join code is
+printed on the big screen and read out on the mic, so
+`/api/state?role=screen&g=CODE` is a payload anybody in the room can fetch, and
+it used to carry the fastest finger's real id. **The person WINNING was the
+person the back table could sabotage.** Found by joining a game as two phones
+and playing one against the other.
+
+`faceKey()` in `engine.js` derives a stable handle one way from the id: the
+same player always gives the same key, a photo still finds its person, and the
+key gives nothing back. The host view keeps the real id, because removing or
+renaming somebody needs it and the control view is not public. There is a test
+that no screen or player payload contains a player id at all.
 
 **The drawn face is deterministic** — the same name always draws the same face,
 so a team is recognisable all night, across a restart and on a projector that

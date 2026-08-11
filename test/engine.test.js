@@ -8,7 +8,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { Engine, PHASES, cleanTeamName } from '../src/engine.js';
+import { Engine, PHASES, cleanTeamName, faceKey } from '../src/engine.js';
 import { POINTS_CORRECT, POINTS_PER_WHOLE_SECOND, POINTS_FIRST_CORRECT } from '../src/scoring.js';
 
 const START = 1_700_000_000_000;
@@ -1642,4 +1642,62 @@ test('a fresh game does not inherit the last one board', () => {
   engine.resetAll();
   assert.equal(engine.playerCount(), 0);
   assert.deepEqual(engine.leaderboard(), []);
+});
+
+// ============================ a player id is a credential, so it stays private
+
+/**
+ * **NOTHING THE ROOM CAN FETCH MAY CONTAIN A PLAYER ID.**
+ *
+ * There is no login for a phone. The id IS the proof of who you are, so
+ * anything holding it can answer as that player — locking out their real
+ * answer with a deliberately wrong one — and rename them to anything on the
+ * projector by rejoining with it.
+ *
+ * And the join code is printed on the big screen and read out on the mic, so
+ * `/api/state?role=screen&g=CODE` is a payload anybody in the room can fetch.
+ * It used to carry the fastest finger's real id: the person WINNING was the
+ * person the back table could sabotage. Found by joining a game as two phones
+ * and playing one against the other.
+ *
+ * The screen and the phones get `faceKey` — derived one way from the id, so it
+ * matches a photo to a person just as well and gives nothing back.
+ */
+test('THE SCREEN AND PLAYER PAYLOADS NEVER CARRY A PLAYER ID', () => {
+  const { engine } = makeEngine();
+  const alice = engine.join({ name: 'The Quizzy Rascals' });
+  const bob = engine.join({ name: 'Back Table' });
+  toFirstQuestion(engine);
+
+  // Somebody answers correctly, so there IS a fastest finger to publish.
+  const q = engine.hostView().question;
+  engine.answer({ playerId: alice.id, optionIndex: q.correctIndex });
+  engine.reveal();
+
+  const ids = [alice.id, bob.id];
+  for (const [role, view] of [['screen', engine.screenView()], ['player', engine.playerView(bob.id)]]) {
+    const blob = JSON.stringify(view);
+    for (const id of ids) {
+      // A player's own view legitimately knows its own id.
+      if (role === 'player' && id === bob.id) continue;
+      assert.ok(!blob.includes(id),
+        `the ${role} payload contains a player id — anybody with the join code can now answer and rename as them`);
+    }
+  }
+
+  // The host keeps the real thing, because the control view is not public and
+  // removing or renaming somebody needs it.
+  assert.equal(engine.hostView().fastest.playerId, alice.id);
+  // And everyone gets the derived handle, so a photo still finds its person.
+  const shown = engine.screenView().reveal.fastest;
+  assert.equal(shown.faceKey, faceKey(alice.id));
+  assert.equal(shown.playerId, undefined, 'the projector is publishing a credential again');
+  assert.ok(shown.faceKey.length >= 12);
+});
+
+test('faceKey is stable for a person and gives nothing back', () => {
+  assert.equal(faceKey('abc123'), faceKey('abc123'), 'the same player got two different faces');
+  assert.notEqual(faceKey('abc123'), faceKey('abc124'));
+  assert.ok(!faceKey('abc123').includes('abc123'), 'the id is recoverable from its own handle');
+  assert.equal(faceKey(''), '');
 });

@@ -129,18 +129,26 @@ export function avatarUrl(name, opts) {
  * reads as a fault rather than as a feature, and most of the room never opens
  * the camera.
  *
- * **Matched on the player id, NEVER on the name.** Two teams picking the same
- * name is a thing that happens on a real night — there is deliberately no name
+ * **Matched on identity, NEVER on the name.** Two teams picking the same name
+ * is a thing that happens on a real night — there is deliberately no name
  * filter — and the wrong person's photograph six feet wide is not a small
- * mistake. A photo with no id attached matches nobody rather than falling back
- * to the name.
+ * mistake. A photo with no key attached matches nobody rather than falling
+ * back to the name.
+ *
+ * **The key is `faceKey`, not the player id, and that is a security fix rather
+ * than a rename.** A player id is a bearer credential — there is no login for
+ * a phone, so holding the id is enough to answer as that player or rename
+ * them — and this payload goes to anyone with the join code, which is printed
+ * on the projector. Publishing the fastest finger's id meant the person
+ * winning was the person the room could sabotage. `faceKey` is derived one way
+ * from the id: it matches just as well and gives nothing back.
  *
  * Lives here rather than in `screen.js` so it can be tested without a browser.
  */
-export function faceFor(photos, { playerId = '', name = '' } = {}) {
+export function faceFor(photos, { faceKey = '', name = '' } = {}) {
   let best = null;
   for (const p of photos || []) {
-    if (!p || !p.playerId || !playerId || p.playerId !== playerId) continue;
+    if (!p || !p.faceKey || !faceKey || p.faceKey !== faceKey) continue;
     if (!best || (p.at || 0) > (best.at || 0)) best = p;
   }
   return best && best.url ? best.url : avatarUrl(name);

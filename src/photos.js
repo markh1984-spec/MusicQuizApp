@@ -29,6 +29,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+// A player's PUBLIC handle. The screen matches a photo to the fastest finger
+// by identity, and a player id is a bearer credential — see faceKey there.
+import { faceKey } from './engine.js';
+
 /** Room for a busy night without ever filling a small disk. */
 export const MAX_PHOTOS = 300;
 
@@ -195,11 +199,21 @@ export class Photos {
     return this.state.items
       .slice(-limit)
       .reverse()
-      // `playerId` so the big screen can put a face to the fastest finger. It
-      // is not new information on that payload — the name is already beside
-      // the picture — it just saves matching people up by name, which breaks
-      // the moment two teams pick the same one.
-      .map((p) => ({ id: p.id, url: `/photos/${p.file}`, teamName: p.teamName, at: p.at, playerId: p.playerId || '' }));
+      /*
+       * `faceKey`, NEVER the player id.
+       *
+       * The screen needs a stable handle so a photo can be matched to the
+       * fastest finger by identity rather than by name — two teams picking the
+       * same name is a thing that happens, and the wrong person's face six
+       * feet wide is not a small mistake.
+       *
+       * But this payload goes to anybody holding the join code, which is
+       * printed on the projector — and a player id is a bearer credential, so
+       * publishing one lets the room answer and rename as that player. The
+       * derived key matches just as well and gives nothing back. See `faceKey`
+       * in engine.js.
+       */
+      .map((p) => ({ id: p.id, url: `/photos/${p.file}`, teamName: p.teamName, at: p.at, faceKey: faceKey(p.playerId || '') }));
   }
 
   /** The host sees them whether or not the screen does, so they can be binned. */

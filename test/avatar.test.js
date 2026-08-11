@@ -59,44 +59,47 @@ test('the faces are drawn, never emoji', () => {
  * Which face goes beside the fastest finger.
  *
  * The failure that matters is putting the WRONG person's photograph six feet
- * wide in front of a room, so matching is on the player id and never on the
- * name.
+ * wide in front of a room, so matching is on identity and never on the name.
+ *
+ * The handle is `faceKey`, NOT the player id, and that is a security fix
+ * rather than a rename: a player id is a bearer credential, and this payload
+ * goes to anybody holding the join code — which is printed on the projector.
  */
 const drawn = (url) => url.startsWith('data:');
 
 test('somebody who sent a photo gets their own face', () => {
-  const photos = [{ playerId: 'p1', url: '/photos/a.jpg', at: 10 }];
-  assert.equal(faceFor(photos, { playerId: 'p1', name: 'Sofa King Good' }), '/photos/a.jpg');
+  const photos = [{ faceKey: 'k1', url: '/photos/a.jpg', at: 10 }];
+  assert.equal(faceFor(photos, { faceKey: 'k1', name: 'Sofa King Good' }), '/photos/a.jpg');
 });
 
 test('the most recent one, because people send several', () => {
   const photos = [
-    { playerId: 'p1', url: '/photos/early.jpg', at: 10 },
-    { playerId: 'p1', url: '/photos/late.jpg', at: 99 },
-    { playerId: 'p1', url: '/photos/middle.jpg', at: 50 },
+    { faceKey: 'k1', url: '/photos/early.jpg', at: 10 },
+    { faceKey: 'k1', url: '/photos/late.jpg', at: 99 },
+    { faceKey: 'k1', url: '/photos/middle.jpg', at: 50 },
   ];
-  assert.equal(faceFor(photos, { playerId: 'p1', name: 'Sofa King Good' }), '/photos/late.jpg');
+  assert.equal(faceFor(photos, { faceKey: 'k1', name: 'Sofa King Good' }), '/photos/late.jpg');
 });
 
 test('TWO TEAMS, ONE NAME: never matched on the name', () => {
   // Two teams picking the same name happens on a real night, and the app does
   // not filter names. Matching on it would put a stranger's photograph on the
   // projector under somebody else's name.
-  const photos = [{ playerId: 'p1', teamName: 'Sofa King Good', url: '/photos/them.jpg', at: 10 }];
-  const face = faceFor(photos, { playerId: 'p2', name: 'Sofa King Good' });
+  const photos = [{ faceKey: 'k1', teamName: 'Sofa King Good', url: '/photos/them.jpg', at: 10 }];
+  const face = faceFor(photos, { faceKey: 'k2', name: 'Sofa King Good' });
   assert.notEqual(face, '/photos/them.jpg');
   assert.ok(drawn(face), 'it should have fallen back to a drawn face');
 });
 
 test('somebody who never opened the camera still gets a face', () => {
-  assert.ok(drawn(faceFor([], { playerId: 'p1', name: 'Quiz Akabusi' })));
-  assert.ok(drawn(faceFor(null, { playerId: 'p1', name: 'Quiz Akabusi' })));
+  assert.ok(drawn(faceFor([], { faceKey: 'k1', name: 'Quiz Akabusi' })));
+  assert.ok(drawn(faceFor(null, { faceKey: 'k1', name: 'Quiz Akabusi' })));
   assert.ok(drawn(faceFor(undefined, {})));
 });
 
 test('a photo with no id attached matches nobody', () => {
   const photos = [{ url: '/photos/orphan.jpg', at: 10 }];
-  assert.ok(drawn(faceFor(photos, { playerId: 'p1', name: 'Quiz Akabusi' })));
+  assert.ok(drawn(faceFor(photos, { faceKey: 'k1', name: 'Quiz Akabusi' })));
   // …and an empty player id does not match an empty photo id either.
   assert.ok(drawn(faceFor(photos, { playerId: '', name: 'Quiz Akabusi' })));
 });
