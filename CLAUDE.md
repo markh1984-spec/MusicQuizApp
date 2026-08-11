@@ -2393,10 +2393,33 @@ live connection and a clock is something a browser can do on its own.
 **Checked on every request, not once on the way in.** Otherwise a session
 outlives the window, which is the whole guarantee undone by a cookie.
 
+**The acting flag is `inSupport`, and it must NEVER be the account's own
+`support` object.** It was `support: true` — which collides with the name of
+the GRANT that every subscriber who switches access on carries. So
+`supportGuard` read a truthy `support` on Rob-signed-in-as-Rob and treated him
+as the owner inside his own account: every `/api/host/*` route 403'd with
+"support access cannot run a night", **so a quizmaster who left the door open
+could not run their own quiz**, and his own Next and Reveal went into the log
+as though somebody else had tried them. Two meanings on one field name, found
+by signing in as the owner and probing a live server.
+
+**In the console the grant is `me.support`, because `me` IS the account**
+(`me = who.signedIn ? who.account : null`). `/api/me` answers
+`{ signedIn, account, … }`, so reading the raw payload makes that look wrong
+and invites a "correction" one level deeper — which is undefined, and silently
+empties the log without breaking anything else on the page. There is a test
+pinning it both ways.
+
 **Three refusals, each a different failure:** no grant or an expired one; their
-game is LIVE, because going in mid-round is one mis-tap from ending somebody's
+room is BUSY, because going in mid-round is one mis-tap from ending somebody's
 night; and host actions are blocked for the whole session, in case a game
-starts while somebody is already inside. The owner also cannot open the door
+starts while somebody is already inside.
+
+`busy` rather than `live` matters: `live` means "past the lobby", so forty
+people sitting in a lobby with their team names typed in did not count and the
+owner was let straight in. `busy` means what the launch guard already means —
+anybody joined counts — and two guards with two definitions of "a night in
+progress" is how one of them quietly becomes wrong. The owner also cannot open the door
 from within a session — one grant extending itself for ever is the expiry
 undone in one line.
 
@@ -2413,6 +2436,14 @@ health, `/api/me` — is skipped. Entries are written in WORDS (`supportWords()`
 rather than route paths: this is read by somebody deciding whether they trust
 you, so "Looked at your pack library" beats "GET /api/library". Anything
 unmapped falls back to the raw route, because an ugly line beats a missing one.
+
+**And looking has to be told apart from changing on their OWN packs, not just
+the catalogue.** `read` was worked out and then ignored for `/api/mine/*`, so
+opening one of their quizzes was written down as *"Changed your own pack"* and
+listing them as *"Saved one of your own packs"*. On the one log whose whole job
+is saying what was done to somebody's material, an entry that accuses you of
+altering their work when you only looked is worse than a missing one — because
+they will believe it.
 
 **What this cannot promise, and do not overstate it to a subscriber:** the owner
 runs the server, the disk and the backups, and the server has to be able to
