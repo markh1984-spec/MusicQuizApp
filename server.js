@@ -41,7 +41,7 @@ import { Reports } from './src/reports.js';
 import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, PACK_PENCE } from './public/assets/plans.js';
-import { Suggestions, KINDS } from './src/suggestions.js';
+import { Suggestions, KINDS, PACK_REQUEST_KIND } from './src/suggestions.js';
 import { Spend, spendRecorder } from './src/spend.js';
 // The pack id a generation is going to produce, so a cost has a subject from
 // the moment it is spent rather than only once the pack lands.
@@ -2187,9 +2187,33 @@ async function handleWrite(req, res, url, route) {
     const me = whoIs(req, url);
     if (!me) return sendJson(res, 401, { error: 'Sign in first' }), true;
     const body = await readJson(req);
+    const kind = KINDS.includes(String(body.kind)) ? String(body.kind) : 'idea';
+
+    /*
+     * Sending is open to anybody signed in and is deliberately NOT gated on a
+     * tier — the people most worth hearing from are the ones having the worst
+     * time, who are the least likely to be on the top rung.
+     *
+     * A pack request is the one exception, because it is a claim on the
+     * owner's writing time rather than a message. Checked HERE and not left to
+     * the console not drawing the option: a kind is one word in a request
+     * body, which is exactly the shape of the hole `POST /api/quiz` had.
+     */
+    if (kind === PACK_REQUEST_KIND) {
+      if (!allowed(req, res, url, FEATURES.REQUEST_PACK)) return true;
+      const already = suggestions.openPackRequest(me.id || '');
+      if (already) {
+        return sendJson(res, 409, {
+          error: 'You already have a pack on the list — "' + already.text.slice(0, 60)
+            + '". That one gets written first.',
+          waiting: true,
+        }), true;
+      }
+    }
+
     const result = suggestions.add({
       text: body.text,
-      kind: KINDS.includes(String(body.kind)) ? String(body.kind) : 'idea',
+      kind,
       by: me.name || me.email || 'the host key',
       byId: me.id || '',
       where: body.where,

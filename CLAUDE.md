@@ -2221,6 +2221,35 @@ asynchronous on purpose, so nobody is ever on call.
 because they want completely different things doing about them and because
 three is what somebody can pick from without reading.
 
+**A fourth kind is a PACK REQUEST, and it is the one that is gated.** "There is
+no One Direction quiz and I want one." It lives in this box rather than in a
+subsystem of its own because what it needs is exactly what a suggestion needs —
+somebody to read it, decide, and say yes or no in words — and the inbox, the
+reply that clears it, the draft button and the been-opened receipt all already
+exist. A second list would be a second place to forget to look.
+
+**The reason it is Gold is NOT the per-use rule**, and getting that straight
+matters for the next feature: a request costs nothing until the owner agrees to
+it, so no bill is ever automatic. What it spends is the **owner's writing
+time** — about £2 and twenty minutes of reading, for one person — which is the
+one genuinely scarce thing in this business. And that is the same thing Gold
+already sells: **Silver buys the owner's BACK CATALOGUE, Gold buys the owner's
+TIME.** A weekly topical quiz, and now a pack written to order.
+
+**One open request at a time**, enforced in `suggestions.js`. Worse than not
+offering this is offering it and not delivering, and a subscriber who could
+queue ten would turn a promise into a backlog.
+
+**Gated on the SERVER**, where the kind is received — not left to the console
+not drawing the option. A kind is one word in a request body, which is exactly
+the shape of the hole `POST /api/quiz` had. There is a test that reads
+`server.js` and fails if the check goes missing.
+
+The entry point is under the SHOP on the pack tabs rather than in this panel,
+because that is where the want actually arrives: you have scrolled the
+catalogue, you have scrolled the shelf, and neither has the thing. A rung below
+Gold sees the offer rather than nothing — same as the tab bar's `+`.
+
 **Sending is open to anybody signed in and NOT gated on a tier.** The people
 most worth hearing from are the ones having the worst time, who are the least
 likely to be on the top rung. Reading the list is owner-only, same reasoning as

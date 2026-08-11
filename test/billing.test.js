@@ -20,6 +20,8 @@ import { fileURLToPath } from 'node:url';
 
 import { Accounts } from '../src/accounts.js';
 import { applyBilling, readEvent, BILLING_EVENTS } from '../src/billing.js';
+import { ladderFor, can, whyNot, FEATURES, FEATURE_TIER } from '../public/assets/plans.js';
+import { Suggestions, PACK_REQUEST_KIND } from '../src/suggestions.js';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PASSWORD = 'a-long-test-password';
@@ -209,9 +211,129 @@ test('nothing outside a processor adapter knows which processor it is', () => {
     'the accounts book has learned the name of a processor');
 });
 
+// ======================================== the account that must never be billed
+
+/*
+ * The owner is a quizmaster too, on one laptop, through the Owner | Quizmaster
+ * hat — and that linked account is `comped`: everything, for nothing. It has no
+ * subscription and must never be offered one.
+ *
+ * It carries no TIER, though, so before this it read as Bronze while
+ * `featuresFor` handed it the lot: the account page drew Silver and Gold as
+ * locked, with a price on each, to the person who wrote the app. Harmless
+ * while there was nothing to press. Not harmless the moment a Subscribe button
+ * exists, because a button belongs on a rung that is not included — so the one
+ * account that must never be billed would have been the one being sold to.
+ */
+test('a comped account holds every rung, so it is never sold anything', () => {
+  for (const who of [
+    { role: 'quizmaster', comped: true, status: 'active', ownedBy: 'owner-1' },
+    { bootstrap: true, role: 'quizmaster' },
+  ]) {
+    const ladder = ladderFor(who);
+    assert.ok(ladder.every((t) => t.included), 'a comped account was shown a rung it does not have');
+    // And every feature on every rung reads as held, or the page contradicts
+    // itself: an included tier full of things you apparently cannot use.
+    assert.ok(ladder.every((t) => t.features.every((f) => f.held)));
+  }
+});
+
+/*
+ * And it must not leak into the tier preview, which is the whole point of that
+ * feature: the owner looks at the console as a Bronze subscriber sees it.
+ * Previewing CLEARS comped first — a rule that already has a test named after
+ * the day it did not — so the ladder has to go back to being locked.
+ */
+test('previewing a tier still shows the rungs above as locked', () => {
+  const preview = { role: 'quizmaster', tier: 'bronze', status: 'active', comped: false };
+  const ladder = ladderFor(preview);
+  assert.equal(ladder.find((t) => t.id === 'bronze').included, true);
+  assert.equal(ladder.find((t) => t.id === 'silver').included, false, 'a Bronze preview held Silver');
+  assert.equal(ladder.find((t) => t.id === 'gold').included, false);
+});
+
+/*
+ * The other half of the same guarantee: nothing a processor says can start
+ * billing an account that is comped, because a webhook cannot reach `comped`
+ * at all. Belt and braces — no subscription exists for it in the first place.
+ */
+test('a stray webhook cannot un-comp the owner\'s own quizmaster account', () => {
+  const accounts = book();
+  const hat = accounts.create({
+    email: 'me+quizmaster@example.com', password: PASSWORD, comped: true, status: 'active', ownedBy: 'owner-1',
+  });
+  applyBilling(accounts, { ...event('cancelled', { accountId: hat.id, at: NOW + 9000 }) });
+  assert.equal(accounts.find(hat.id).comped, true, 'a webhook took the comp away');
+});
+
 test('the five events are the whole vocabulary', () => {
   // A processor that wants to say something outside this list is telling the
   // app about something it should not be reacting to automatically.
   assert.deepEqual([...BILLING_EVENTS].sort(),
     ['cancelled', 'expired', 'payment_failed', 'renewed', 'started']);
+});
+
+// ================================================= asking for a pack — Gold only
+
+/*
+ * "There is no One Direction quiz and I want one."
+ *
+ * It lives in the SUGGESTION BOX rather than a subsystem of its own, because
+ * what it needs is exactly what a suggestion needs — somebody to read it,
+ * decide, and say yes or no in words — and the inbox, the reply that clears
+ * it, the draft button and the been-opened receipt all already exist.
+ *
+ * It is the one kind that is gated, and the reason is NOT the per-use rule:
+ * a request costs nothing until the owner agrees to it. What it spends is the
+ * owner's writing time, which is the same thing Gold already sells. Silver
+ * buys the back catalogue; Gold buys the owner's time.
+ */
+test('a pack request is Gold, and every other kind stays open to everybody', () => {
+  const bronze = { role: 'quizmaster', tier: 'bronze', status: 'active' };
+  const gold = { role: 'quizmaster', tier: 'gold', status: 'active' };
+
+  assert.equal(can(bronze, FEATURES.REQUEST_PACK), false);
+  assert.equal(can(gold, FEATURES.REQUEST_PACK), true);
+  assert.match(whyNot(bronze, FEATURES.REQUEST_PACK), /Gold/);
+  // The box itself is deliberately not gated at all — the people most worth
+  // hearing from are the ones having the worst time, who are least likely to
+  // be on the top rung.
+  assert.equal(FEATURE_TIER[FEATURES.REQUEST_PACK], 'gold');
+});
+
+/*
+ * **Checked on the SERVER, not left to the console not drawing the option.** A
+ * kind is one word in a request body, which is exactly the shape of the hole
+ * `POST /api/quiz` had — the id was in the body and the route prefix never
+ * matched it.
+ */
+test('the kind is gated where it is received, not where it is drawn', () => {
+  const server = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  const at = server.indexOf("if (route === '/api/suggestions' && req.method === 'POST')");
+  assert.ok(at > 0, 'the suggestions route has moved');
+  const route = server.slice(at, at + 1800);
+  assert.match(route, /PACK_REQUEST_KIND/, 'a pack request is no longer told apart on the server');
+  assert.match(route, /FEATURES\.REQUEST_PACK/, 'the pack-request kind is not gated on the server');
+  assert.match(route, /openPackRequest/, 'nothing stops a subscriber queueing ten of them');
+});
+
+/*
+ * One at a time, and that is what makes the offer deliverable rather than a
+ * backlog. Worse than not having this feature is having it and not delivering.
+ */
+test('one open pack request at a time, per account', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sugg-'));
+  const box = new Suggestions(path.join(dir, 'suggestions.json'), () => NOW);
+
+  box.add({ text: 'A One Direction quiz please', kind: PACK_REQUEST_KIND, byId: 'rob' });
+  assert.ok(box.openPackRequest('rob'), 'the request is not on the list');
+  // Somebody else asking is not affected by Rob's.
+  assert.equal(box.openPackRequest('dave'), null);
+  // And an ordinary suggestion is never mistaken for one.
+  box.add({ text: 'The editor is confusing', kind: 'annoying', byId: 'dave' });
+  assert.equal(box.openPackRequest('dave'), null);
+
+  // Answered and cleared, so the next one may be asked for.
+  box.reply(box.openPackRequest('rob').id, 'Written — it is in your library.');
+  assert.equal(box.openPackRequest('rob'), null, 'a cleared request still blocks the next one');
 });

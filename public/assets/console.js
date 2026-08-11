@@ -704,6 +704,66 @@ async function saveFeaturesOff(inPanel) {
  * the ones having the worst time, who are the least likely to be on the top
  * rung.
  */
+/**
+ * Ask for a pack that does not exist yet — Gold.
+ *
+ * It posts into the suggestion box as a `pack` kind rather than to a route of
+ * its own, so it arrives in the inbox the owner already reads, gets a reply
+ * that clears it, and can be drafted like anything else. One list, one place
+ * to look.
+ *
+ * **A rung above yours gets the offer rather than nothing**, which is the same
+ * shape the tab bar and the account page already use: something you can see
+ * and cannot use is a thing you might buy, where a control that is simply
+ * absent is a feature nobody knows exists.
+ */
+function askForPackPanel(kind) {
+  const may = can(FEATURES.REQUEST_PACK);
+  const what = kind === 'bingo' ? 'bingo game' : 'quiz';
+
+  if (!may) {
+    return node(`
+      <div class="panel ask-pack locked">
+        <h3>Nothing here for the night you have booked?</h3>
+        <div class="tiny">On <b>Gold</b> you can ask for a ${esc(what)} that does not exist yet —
+          name the theme and it gets written into the catalogue. One at a time.</div>
+      </div>`);
+  }
+
+  const el = node(`
+    <div class="panel ask-pack">
+      <h3>Ask for a ${esc(what)}</h3>
+      <div class="tiny">Nothing in the catalogue for the night you have booked? Say what you want and
+        it gets written — a theme, and anything about the room that would help.
+        <b>One at a time</b>, so the one you ask for is the one that gets done.</div>
+      <textarea class="ask-text" rows="3" maxlength="1200"
+        placeholder="A One Direction ${esc(what)} — it is a hen night at The Crown, mostly late twenties…"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="go ask-send">Ask for it</button>
+        <span class="tiny ask-said"></span>
+      </div>
+    </div>`);
+
+  const said = el.querySelector('.ask-said');
+  el.querySelector('.ask-send').addEventListener('click', async () => {
+    const text = el.querySelector('.ask-text').value.trim();
+    if (!text) { said.textContent = 'Say what you are after first.'; return; }
+    const button = el.querySelector('.ask-send');
+    button.disabled = true;
+    try {
+      await postJson('/api/suggestions', { text, kind: 'pack', where: `${kind} packs` }, { 'X-Host-Key': hostKey });
+      el.querySelector('.ask-text').value = '';
+      said.textContent = 'Asked. You will get a yes or a no — not silence.';
+    } catch (err) {
+      // The one refusal worth wording properly: they already have one waiting,
+      // which is not a failure, it is the queue working.
+      said.textContent = err.message;
+    }
+    button.disabled = false;
+  });
+  return el;
+}
+
 function suggestionPanel() {
   const el = node(`
     <div class="panel">
@@ -2105,7 +2165,19 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
         </div>
       </div>
       <div class="pack-grid shop-grid ${dense ? 'dense' : ''}"></div>
+      <div class="ask-slot"></div>
     </div>`);
+
+  /*
+   * "There is nothing here for the night I have booked."
+   *
+   * It goes UNDER the shop, because that is the moment the want actually
+   * arrives: you have scrolled the catalogue, you have scrolled the shelf, and
+   * neither has the thing. Putting it in the suggestion box on another tab
+   * would mean remembering it later, which is exactly what that box exists to
+   * avoid needing.
+   */
+  el.querySelector('.ask-slot').appendChild(askForPackPanel(kind));
 
   const grid = el.querySelector('.pack-grid');
   const shop = el.querySelector('.shop-grid');

@@ -25,15 +25,29 @@ import path from 'node:path';
 /**
  * What kind of thing this is, chosen by the sender in one tap.
  *
- * Three, because three is what people can pick from without reading, and
- * because the three want completely different things doing about them: an idea
- * goes on a list, an irritation is a design question, and a bug is a job.
+ * Three to start with, because three is what people can pick from without
+ * reading, and because the three want completely different things doing about
+ * them: an idea goes on a list, an irritation is a design question, and a bug
+ * is a job.
+ *
+ * **A pack request is the fourth, and it is deliberately in HERE rather than
+ * in a subsystem of its own.** "There is no One Direction quiz and I want one"
+ * needs exactly what a suggestion needs — somebody to read it, decide, and say
+ * yes or no in words — and all of that already exists: the inbox with its two
+ * piles, the reply that clears it, the draft button, the badge, the
+ * been-opened receipt. A second list with its own version of all that would be
+ * a second place to forget to look.
+ *
+ * It is the one kind that is GATED, and `PACK_REQUEST_KIND` is exported so the
+ * server can check it. See `FEATURES.REQUEST_PACK`.
  */
-export const KINDS = ['idea', 'annoying', 'broken'];
+export const PACK_REQUEST_KIND = 'pack';
+export const KINDS = ['idea', 'annoying', 'broken', PACK_REQUEST_KIND];
 export const KIND_LABEL = {
   idea: 'An idea',
   annoying: 'Something that got in the way',
   broken: 'Something broken',
+  [PACK_REQUEST_KIND]: 'A pack they want written',
 };
 
 export const STATUSES = ['open', 'done'];
@@ -142,6 +156,26 @@ export class Suggestions {
 
   open() {
     return this.data.suggestions.filter((s) => s.status === 'open');
+  }
+
+  /**
+   * Has this account got a pack request still waiting?
+   *
+   * **One at a time, and that is what makes the feature deliverable.** A
+   * request is a claim on the owner's writing time — about £2 and twenty
+   * minutes of reading, for one person — and a Gold subscriber who could queue
+   * ten would turn a promise into a backlog. One open request also makes the
+   * answer easy to give: it is the next one, and they can see that it is.
+   *
+   * Worse than not having the feature is having it and not delivering, so the
+   * limit is the honest half of the offer rather than a meanness.
+   */
+  openPackRequest(accountId) {
+    const id = String(accountId || '');
+    if (!id) return null;
+    return this.data.suggestions.find(
+      (s) => s.status === 'open' && s.kind === PACK_REQUEST_KIND && s.byId === id,
+    ) || null;
   }
 
   /**

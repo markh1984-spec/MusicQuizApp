@@ -90,6 +90,30 @@ export const FEATURES = {
   PHOTOS: 'photos',              // photos from the room
 
   /*
+   * **Asking for a pack that does not exist yet — GOLD.**
+   *
+   * "There is no One Direction quiz and I want one." The owner writes it and
+   * it joins the catalogue for everybody, so the subscriber gets the pack and
+   * the library gets bigger — which is why it is worth doing at all.
+   *
+   * The reason it is not in Bronze is NOT the per-use rule, and getting that
+   * straight matters for the next feature: a request costs nothing until the
+   * owner agrees to it, so the bill is never automatic. What it spends is
+   * **the owner's writing time**, which is the one genuinely scarce thing in
+   * this business — about £2 and twenty minutes of reading per pack, for one
+   * person.
+   *
+   * And that is the same thing Gold already sells. Silver buys the owner's
+   * BACK CATALOGUE; Gold buys the owner's TIME — a fresh topical quiz every
+   * week, and now a pack written to order. Putting it anywhere else would
+   * either give that time away or make the weekly promise undeliverable.
+   *
+   * One open request at a time, enforced in `suggestions.js`: worse than not
+   * offering this is offering it and not delivering.
+   */
+  REQUEST_PACK: 'packs.request',
+
+  /*
    * ---- Running a business rather than running a night. BRONZE, all of it.
    *
    * These were a paid add-on and the host moved them down, on a rule worth
@@ -398,6 +422,7 @@ export const FEATURE_TIER = {
   [FEATURES.LOOKS]: 'bronze',
   [FEATURES.ADVERTS]: 'silver',
   [FEATURES.PHOTOS]: 'bronze',
+  [FEATURES.REQUEST_PACK]: 'gold',
 
   [FEATURES.INVOICES]: 'bronze',
   [FEATURES.CALENDAR]: 'bronze',
@@ -425,6 +450,7 @@ export const FEATURE_META = {
   [FEATURES.INVOICES]: { label: 'Invoicing', blurb: 'Bill for a night before you have left the car park.' },
   [FEATURES.CALENDAR]: { label: 'Your calendar', blurb: 'The nights you have booked in.' },
   [FEATURES.MARKETING]: { label: 'Marketing', blurb: 'Not built yet.' },
+  [FEATURES.REQUEST_PACK]: { label: 'Ask for a pack', blurb: 'Nothing in the catalogue for the night you have booked? Ask, and it gets written. One request at a time.' },
   [FEATURES.STREAM]: { label: 'Online quizzes', blurb: 'Run a night for a room that is not in the room. Not built yet.' },
 };
 
@@ -470,9 +496,27 @@ export function featuresAt(tierId) {
 export function ladderFor(account = {}) {
   const mine = tierRank(tierFor(account));
   const held = new Set(featuresFor(account));
+  /*
+   * **Comped holds every rung, whatever the tier field says.**
+   *
+   * A comped account — the owner's own quizmaster hat, and anybody they gift
+   * it to — carries no tier, so it read as Bronze while `featuresFor` handed
+   * it everything. The page then drew Silver and Gold as locked, with a price
+   * on each and "ask the owner to move you up", to the owner. A shop selling
+   * somebody what they already have reads as a fault in their account.
+   *
+   * It matters more now than it looked, because a Subscribe button belongs on
+   * a rung that is NOT included — so without this the one account that must
+   * never be billed would be the one being offered a subscription.
+   *
+   * Note this cannot leak into the tier preview: previewing a rung CLEARS
+   * `comped` first, which is a rule that already has a test named after the
+   * day it did not.
+   */
+  const everything = Boolean(account && (account.comped || account.bootstrap));
   return TIERS.map((tier) => ({
     ...tier,
-    included: tier.rank <= mine,
+    included: everything || tier.rank <= mine,
     /*
      * What PACKS this rung holds, drawn as a statement rather than a switch.
      *
