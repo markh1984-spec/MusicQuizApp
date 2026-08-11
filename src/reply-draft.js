@@ -117,7 +117,10 @@ export function voiceFrom(suggestions = [], limit = 6) {
   const replies = [];
   for (const item of suggestions) {
     for (const reply of item.replies || []) {
-      if (reply.text) replies.push(reply);
+      // Skip anything the MODEL largely wrote. See `mostlyMine` below: without
+      // this, a draft sent almost unedited becomes an example for the next
+      // draft, and the thing ends up imitating itself rather than the owner.
+      if (reply.text && !reply.machine) replies.push(reply);
     }
   }
   if (!replies.length) return '';
@@ -126,6 +129,52 @@ export function voiceFrom(suggestions = [], limit = 6) {
 TONE and the way they open and sign off. Do NOT reuse anything specific from
 them — a promise made to one person about one thing is not a promise to
 anybody else:\n\n${recent.map((r) => `---\n${r.text}`).join('\n')}\n---\n`;
+}
+
+/**
+ * Did the owner actually write this, or did they send the draft as it came?
+ *
+ * **This is what stops the drafting model learning from itself.** The voice
+ * examples are the only part that improves on its own, and they only improve
+ * while they are examples of the OWNER. Send a draft unedited and store it as
+ * an example, and the next draft imitates the last one: a little more generic
+ * each time, and any phrase the owner would never use quietly amplified,
+ * because it keeps being fed back in as evidence of how they write.
+ *
+ * So a reply only counts as theirs if enough of it changed. Measured on WORDS
+ * rather than characters, because fixing a typo is not writing it yourself and
+ * rewriting a sentence is — and word overlap tells those apart where a
+ * character diff would not.
+ *
+ * The failure mode is deliberately one-sided: something wrongly judged
+ * machine-written is merely not used as an example, which costs nothing.
+ * Something wrongly judged human POISONS the examples, which is the whole
+ * problem. So the threshold leans towards calling it machine.
+ *
+ * @returns {boolean} true if the owner's own words are what got sent
+ */
+export function mostlyMine(sent, draft) {
+  const words = (t) => String(t || '').toLowerCase().match(/[a-z0-9']+/g) || [];
+  const theirs = words(sent);
+  const drafted = words(draft);
+  if (!drafted.length) return true;      // no draft involved: they wrote it
+  if (!theirs.length) return false;
+
+  // How much of the draft survived, as a multiset — so repeated words have to
+  // survive repeatedly rather than one match covering them all.
+  const left = new Map();
+  for (const w of drafted) left.set(w, (left.get(w) || 0) + 1);
+  let kept = 0;
+  for (const w of theirs) {
+    const n = left.get(w) || 0;
+    if (n > 0) { left.set(w, n - 1); kept++; }
+  }
+  const survived = kept / drafted.length;
+  const lengthLike = Math.min(theirs.length, drafted.length) / Math.max(theirs.length, drafted.length);
+
+  // Nearly all the draft's words still there AND about the same length: they
+  // pressed Send. Anything less and there is real editing in it.
+  return !(survived >= 0.8 && lengthLike >= 0.8);
 }
 
 /**

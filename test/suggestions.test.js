@@ -13,7 +13,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { Suggestions, KINDS } from '../src/suggestions.js';
-import { draftReply, briefFor, factsFor, voiceFrom } from '../src/reply-draft.js';
+import { draftReply, briefFor, factsFor, voiceFrom, mostlyMine } from '../src/reply-draft.js';
 
 function box(now = () => 1_000_000) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'suggest-'));
@@ -330,4 +330,76 @@ test('house notes are stored on the box and survive a reload', () => {
   const one = new Suggestions(file);
   one.setHouse('Bronze has no invoicing.');
   assert.equal(new Suggestions(file).house, 'Bronze has no invoicing.');
+});
+
+// ------------------------------------ not learning from its own output
+
+/*
+ * THE FEEDBACK LOOP, and the thing that stops it.
+ *
+ * The voice examples are the only part of the drafting that improves on its
+ * own — and they only improve while they are examples of the OWNER. Send a
+ * draft unedited and store it as an example, and the next draft imitates the
+ * last one: a little more generic each time, and any phrase the owner would
+ * never use quietly amplified because it keeps coming back as evidence of how
+ * they write.
+ */
+test('a draft sent as it came does not count as the owner’s writing', () => {
+  const draft = 'Thanks Rob — I have logged that and will take a look this week.';
+  assert.equal(mostlyMine(draft, draft), false);
+  // A typo fix is not writing it yourself either.
+  assert.equal(mostlyMine('Thanks Rob — I have logged that and will take a look this week', draft), false);
+});
+
+test('a rewrite counts as the owner’s writing', () => {
+  const draft = 'Thanks Rob — I have logged that and will take a look this week.';
+  const mine = 'Cheers Rob. That one is my fault, the squares do not resize on a small screen. '
+    + 'Fixing it tonight and I will tell you when it is up.';
+  assert.equal(mostlyMine(mine, draft), true);
+});
+
+test('a reply written from scratch is always the owner’s', () => {
+  assert.equal(mostlyMine('Anything at all', ''), true);
+  assert.equal(mostlyMine('Anything at all', undefined), true);
+});
+
+/*
+ * The failure is deliberately one-sided. Wrongly calling something machine
+ * merely means it is not used as an example, which costs nothing. Wrongly
+ * calling something human poisons the examples, which is the whole problem.
+ */
+test('a half-edited draft leans towards being called machine', () => {
+  const draft = 'Thanks Rob — I have logged that and will take a look this week.';
+  const tweaked = 'Thanks Rob — I have logged that and will take a look this week, cheers.';
+  assert.equal(mostlyMine(tweaked, draft), false);
+});
+
+test('machine-written replies are kept out of the voice examples', () => {
+  const voice = voiceFrom([
+    { replies: [{ at: 3, text: 'A machine wrote this one.', machine: true }] },
+    { replies: [{ at: 2, text: 'And Mark wrote this one himself.', machine: false }] },
+  ]);
+  assert.match(voice, /Mark wrote this one himself/);
+  assert.doesNotMatch(voice, /A machine wrote this one/);
+});
+
+/*
+ * If every reply so far was sent unedited there are simply no examples, and
+ * the draft falls back to the written brief. That is the right way round: no
+ * voice at all beats a voice made of its own echoes.
+ */
+test('with nothing but machine replies there are no examples at all', () => {
+  const voice = voiceFrom([{ replies: [{ at: 1, text: 'Machine.', machine: true }] }]);
+  assert.equal(voice, '');
+});
+
+test('the flag is stored on the reply, so it survives a reload', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'suggest-'));
+  const file = path.join(dir, 'suggestions.json');
+  const one = new Suggestions(file);
+  const { suggestion } = one.add({ text: 'A thing', byId: 'acct-rob' });
+  one.reply(suggestion.id, 'Sent as drafted', { by: 'Mark', machine: true });
+
+  const two = new Suggestions(file);
+  assert.equal(two.all[0].replies[0].machine, true);
 });

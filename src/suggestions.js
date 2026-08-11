@@ -197,7 +197,12 @@ export class Suggestions {
    * is one you stop trusting to tell you what is left. Reopening is one tap
    * if the answer did not settle it.
    */
-  reply(id, text, { by = '', clear = true } = {}) {
+  /**
+   * @param {object} [opts]
+   * @param {boolean} [opts.machine]  the model largely wrote this, so it must
+   *   NOT be fed back as an example of the owner's voice — see `mostlyMine()`.
+   */
+  reply(id, text, { by = '', clear = true, machine = false } = {}) {
     const item = this.find(id);
     if (!item) return { ok: false, error: 'No such suggestion' };
     const words = String(text || '').trim().slice(0, MAX_TEXT);
@@ -209,6 +214,8 @@ export class Suggestions {
       text: words,
       // Filled in when their console next draws this thread. See markSeen.
       seenAt: null,
+      // Kept so the drafting model can be stopped from learning from itself.
+      machine: Boolean(machine),
     }];
     if (clear) {
       item.status = 'done';

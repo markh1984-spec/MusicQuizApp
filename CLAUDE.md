@@ -1691,6 +1691,22 @@ anywhere, and it is worth saying that plainly to anybody who asks:
   reply may carry a promise made to one person about one thing and a model told
   to be consistent would repeat it to somebody else.
 
+**AND IT MUST NOT LEARN FROM ITSELF.** The host spotted this before it was
+built: press Draft, send it barely edited, and that reply becomes an example
+for the next draft — so it imitates its own output, drifting a little more
+generic each time and quietly amplifying any phrase the owner would never use,
+because it keeps coming back as evidence of how they write.
+
+So `mostlyMine()` compares what was SENT against the draft that was offered,
+and anything largely unedited is stored `machine: true` and kept out of the
+examples. Measured on WORDS, because fixing a typo is not writing it yourself
+and rewriting a sentence is — a character diff cannot tell those apart. **The
+threshold leans towards calling it machine on purpose**: wrongly excluding one
+costs nothing, while wrongly including one poisons the examples, which is the
+whole problem. With nothing but machine replies there are simply no examples
+and the draft falls back to the written brief — no voice beats a voice made of
+its own echoes.
+
 **The button only appears when there is a key.** `canDraft` comes back with the
 list, so a missing `ANTHROPIC_API_KEY` is a button that is not there rather than
 one that errors when pressed.
@@ -2015,7 +2031,7 @@ is `'all'` today, so nothing changed for anybody. The account page shows it —
 carries the same **On | Off** switch as the hat in the top right, with a `+`
 where a tier above yours would be.
 
-All on **`MusicQuizApp`**. 635 tests green.
+All on **`MusicQuizApp`**. 642 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on

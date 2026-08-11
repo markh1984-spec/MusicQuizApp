@@ -42,7 +42,7 @@ import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, canPlayPack } from './public/assets/plans.js';
 import { Suggestions, KINDS } from './src/suggestions.js';
-import { draftReply, briefFor } from './src/reply-draft.js';
+import { draftReply, briefFor, mostlyMine } from './src/reply-draft.js';
 import { OWNER_ONLY, changesTheLibrary } from './src/gates.js';
 import { brandFor } from './src/branding.js';
 import { findScheme, DEFAULT_SCHEME, SCHEMES } from './public/assets/schemes.js';
@@ -1815,9 +1815,18 @@ async function handleWrite(req, res, url, route) {
     }
     const id = decodeURIComponent(route.slice('/api/suggestions/'.length, -'/reply'.length));
     const body = await readJson(req);
+    /*
+     * Was this the owner's writing, or the draft sent as it came?
+     *
+     * The browser sends back the draft it was given, and the two are compared.
+     * Anything largely machine-written is stored as such and kept OUT of the
+     * voice examples — otherwise the drafting model learns from its own output
+     * and drifts a little further from the owner every time.
+     */
     const result = suggestions.reply(id, body.text, {
       by: firstNameOf(accounts.owner) || 'Mark',
       clear: body.clear !== false,
+      machine: !mostlyMine(body.text, body.draft),
     });
     if (!result.ok) return sendJson(res, 400, { error: result.error }), true;
     backUpSuggestions();

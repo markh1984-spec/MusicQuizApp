@@ -286,6 +286,10 @@ function suggestionsPanel() {
       try {
         const data = await api(`/api/suggestions/${encodeURIComponent(s.id)}/draft`, { method: 'POST' });
         box.value = data.draft || '';
+        // Kept so the server can tell how much of it you actually rewrote —
+        // see mostlyMine(). A draft sent as it came must not become an example
+        // of your voice, or the thing ends up learning from itself.
+        box.dataset.draft = data.draft || '';
         note.textContent = 'A draft — read it before you send it.';
       } catch (err) {
         note.textContent = err.message;
@@ -299,7 +303,7 @@ function suggestionsPanel() {
       if (!words) { box.focus(); return; }
       try {
         await api(`/api/suggestions/${encodeURIComponent(s.id)}/reply`, {
-          method: 'POST', body: JSON.stringify({ text: words }),
+          method: 'POST', body: JSON.stringify({ text: words, draft: box.dataset.draft || '' }),
         });
         load();
       } catch (err) {
