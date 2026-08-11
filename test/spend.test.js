@@ -18,7 +18,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { Spend, PRICES, claudePence, imagePence, spendRecorder } from '../src/spend.js';
+import {
+  Spend, PRICES, claudePence, imagePence, spendRecorder, monthKey, tidyBudget,
+} from '../src/spend.js';
 
 function ledger(now = () => 1_700_000_000_000) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'spend-'));
@@ -235,4 +237,103 @@ test('an unreadable ledger on disk is set aside, not overwritten', () => {
   const spend = new Spend(file);
   assert.equal(spend.rows.length, 0);
   assert.ok(fs.existsSync(file + '.broken'), 'the unreadable ledger was thrown away');
+});
+
+/*
+ * ============================================================ the budget
+ *
+ * A ceiling for the month. The tests that matter are the two that would make
+ * it lie — a month boundary read in the wrong timezone, and a budget that
+ * quietly refused something.
+ */
+
+test('a month is a LONDON month, not a UTC one', () => {
+  // 00:30 on 1 July, British Summer Time — which is 23:30 on 30 June in UTC.
+  // `toISOString().slice(0, 7)` files this under June, and the host generates
+  // in the evening, so it is the ordinary case rather than an edge one.
+  const halfTwelveJuly = Date.parse('2026-06-30T23:30:00Z');
+  assert.equal(monthKey(halfTwelveJuly), '2026-07');
+  assert.equal(new Date(halfTwelveJuly).toISOString().slice(0, 7), '2026-06');
+
+  // And in winter, when London IS UTC, the two agree.
+  assert.equal(monthKey(Date.parse('2026-01-15T12:00:00Z')), '2026-01');
+});
+
+test('the budget counts THIS calendar month and nothing else', () => {
+  const july = Date.parse('2026-07-20T12:00:00Z');
+  const { spend } = ledger(() => july);
+  spend.setBudget(2000);
+
+  // 400p in July, 900p back in June. Only July counts.
+  spend.rows.push({ at: july, kind: 'image', pence: 400 });
+  spend.rows.push({ at: Date.parse('2026-06-20T12:00:00Z'), kind: 'claude', pence: 900 });
+
+  const state = spend.budgetState();
+  assert.equal(state.month, '2026-07');
+  assert.equal(state.spent, 400);
+  assert.equal(state.budget, 2000);
+  assert.equal(state.left, 1600);
+  assert.equal(state.state, 'ok');
+});
+
+test('close and over are told apart, and nothing is ever refused', () => {
+  const at = Date.parse('2026-07-20T12:00:00Z');
+  const { spend } = ledger(() => at);
+  spend.setBudget(1000);
+
+  spend.record({ kind: 'image', provider: 'google', quality: 'high', images: 170 }); // 850p
+  assert.equal(spend.budgetState().state, 'close');
+
+  // WELL over — and the point of this test is the next line, not this one.
+  spend.record({ kind: 'image', provider: 'google', quality: 'high', images: 100 });
+  const over = spend.budgetState();
+  assert.equal(over.state, 'over');
+  assert.ok(over.left < 0, 'over budget should read as a negative amount left');
+
+  // A budget warns. It has no way to refuse, and there is nothing to unstick
+  // if somebody sails past it mid-generation.
+  const after = spend.record({ kind: 'claude', model: 'claude-sonnet-5', tokensIn: 1000, tokensOut: 1000 });
+  assert.ok(after && after.pence > 0, 'the ledger stopped recording once over budget');
+});
+
+test('no budget means no ceiling, and a nonsense one is the same as none', () => {
+  const { spend } = ledger();
+  assert.equal(spend.budgetState().state, 'none');
+  assert.equal(spend.budgetState().budget, 0);
+
+  for (const junk of [NaN, -50, 'twenty', null, undefined, {}]) {
+    assert.equal(tidyBudget(junk), 0, `${String(junk)} should read as no ceiling`);
+  }
+  // A NaN budget would draw an empty bar and report every month as over.
+  spend.setBudget('twenty');
+  assert.equal(spend.budgetState().state, 'none');
+});
+
+test('the budget survives a restart, and a backup cannot overwrite a newer one', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'spend-b-'));
+  const file = path.join(dir, 'spend.json');
+
+  const first = new Spend(file);
+  first.setBudget(2500);
+  assert.equal(new Spend(file).budgetPence, 2500, 'the budget did not survive a restart');
+
+  // A backup restores into an EMPTY ledger — but if a budget has already been
+  // set here, the disk wins, same rule as everywhere else in the app.
+  const fresh = new Spend(path.join(dir, 'other.json'));
+  fresh.setBudget(9900);
+  fresh.restore(JSON.stringify({ rows: [{ at: 1, kind: 'claude', pence: 5 }], budgetPence: 100 }));
+  assert.equal(fresh.budgetPence, 9900, 'a stale backup rolled the budget back');
+  assert.equal(fresh.rows.length, 1, 'the rows did not come back');
+
+  // With no budget set here, the backup's is what there is.
+  const empty = new Spend(path.join(dir, 'third.json'));
+  empty.restore(JSON.stringify({ rows: [], budgetPence: 700 }));
+  assert.equal(empty.budgetPence, 700);
+});
+
+test('a ledger with no budget writes the file it always wrote', () => {
+  const { spend } = ledger();
+  spend.record({ kind: 'claude', model: 'claude-sonnet-5', tokensIn: 10, tokensOut: 10 });
+  const onDisk = JSON.parse(fs.readFileSync(spend.filePath, 'utf8'));
+  assert.deepEqual(Object.keys(onDisk), ['rows'], 'an unused budget is cluttering the ledger file');
 });

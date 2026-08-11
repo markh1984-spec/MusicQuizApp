@@ -3487,6 +3487,42 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .own-fig.bad { border-color: var(--bad); }
 .own-fig.bad b { color: var(--bad); }
 
+/*
+ * The month against its ceiling.
+ *
+ * Three states rather than a colour that slides: "fine", "getting close" and
+ * "over" are the only three things anybody does anything about, and a bar that
+ * shaded gradually would need reading rather than glancing at.
+ */
+.budget-bar {
+  margin-top: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+  overflow: hidden;
+}
+.budget-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--hot, #ff2e88), var(--hot-2, #ff8a3d));
+}
+.budget-bar.close span { background: var(--gold); }
+.budget-bar.over span { background: var(--bad); }
+
+.budget-set { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.budget-set label { display: flex; align-items: center; gap: 8px; }
+.budget-input {
+  width: 108px;
+  padding: 8px 10px;
+  font: inherit;
+  color: inherit;
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+  border-radius: 8px;
+}
+
 .own-rows { display: grid; gap: 6px; }
 .own-row {
   display: flex; align-items: center; justify-content: space-between; gap: 14px;

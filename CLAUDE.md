@@ -503,6 +503,69 @@ are worth, not annualised and not what the lapsed ones would be worth back. A
 number on that page that turned out to be a projection is one nobody would
 trust again.
 
+### A ceiling for the month, which warns and never refuses
+
+`setBudget()` / `budgetState()` in `src/spend.js`, `PUT /api/owner/budget`, and
+the panel on the Money tab. One number: what a calendar month of AI is allowed
+to cost.
+
+**It is the only place both suppliers are added up.** Google's own budget alerts
+see the pictures and nothing else; Anthropic's see the writing and nothing else.
+Neither can tell you what a pack cost, which is the question that decides
+pricing — so a budget that lives in either supplier's console is answering a
+different question from the one being asked.
+
+**NOTHING READS IT TO REFUSE ANYTHING**, and that is the design rather than an
+unfinished edge. A ceiling that stopped a generation would stop it halfway,
+when the money is already spent and the only thing left to lose is the pack —
+the same reasoning that makes launching an expired topical pack warn and go
+ahead. There is a test that the ledger carries on recording well past the
+ceiling.
+
+**No email, either.** That needs an account and costs money, and this file says
+not to add one without asking. The alert is on the page.
+
+Three smaller things, each there for a reason:
+
+- **The warning sits ABOVE the tabs**, like the accounts-not-backed-up one.
+  Being over for the month is a fact about the business rather than about the
+  Money tab, and one you would find out about afterwards if you had to go
+  looking. It is deliberately **not a badge**: only Inbox wears one, because
+  Inbox is the only tab where somebody is waiting, and a second badge costs the
+  first one its meaning.
+- **A month is a LONDON month.** `monthKey()` rather than
+  `toISOString().slice(0, 7)`, which is UTC — the host generates in the evening,
+  so a pack written at half past midnight would land in the previous month's
+  total, which is the one number the budget is compared against. Same rule and
+  the same `formatToParts` approach as the invoice dates. It fixed the by-month
+  report as well, which had the same fault.
+- **Three states, not a sliding colour.** Fine, past 80%, and over are the only
+  three things anybody acts on, and a bar that shaded gradually would want
+  reading rather than glancing at. 80% is not a second setting to get wrong.
+
+**A budget already set here beats one in a backup.** Restores only run into an
+empty ledger, so in practice there is none — but "the disk is ahead of the
+backup" is the rule everywhere else, and a ceiling quietly reverting to last
+week's number is exactly what nobody would think to check. A ledger with no
+budget on it writes byte-for-byte the file it wrote before budgets existed.
+
+`/api/owner/` was already on `OWNER_ONLY`, so this needed no list of its own —
+which is the trap that has caught six routes going the other way.
+
+### The owner page redrew itself with the backup warning switched off
+
+Found while screenshotting the budget panel. `draw()` took the backup state as
+an argument, and **every redraw except the first passed `backupReady: true` as
+a literal** — six call sites. So "accounts are not being backed up" appeared on
+the first paint and vanished the moment you touched a tab, answered a
+suggestion or added a subscriber.
+
+That is a worse version of the fault its own comment describes: the warning was
+moved above the tabs so you could not miss it by being on the wrong one, and
+then it disappeared on any interaction at all. It is module state now, like the
+tab and the overview, and `redraw()` takes no arguments so there is nothing to
+pass wrongly.
+
 ### Catalogue — "never played by ANYBODY"
 
 The line that could not be drawn before. A quizmaster's console says "never

@@ -28,6 +28,17 @@ let overview = { rooms: [], packs: [], spend: null, spendBackedUp: false };
 /* Which tab. Module level so answering something does not send you back to
  * the top of a different one. */
 let ownerTab = 'people';
+/*
+ * Whether the accounts are being backed up.
+ *
+ * Module level for the same reason the tab is, and it was NOT: every redraw
+ * except the first passed `backupReady: true` as a literal, so the "accounts
+ * are not being backed up" warning appeared on the first paint and then
+ * vanished the moment you touched a tab. That is a worse version of the fault
+ * its own comment describes — a warning you have to have been looking at the
+ * right moment to see.
+ */
+let backupReady = true;
 
 async function api(path, options) {
   const res = await fetch(path, {
@@ -105,7 +116,8 @@ async function load() {
   } catch {
     overview = { rooms: [], packs: [], spend: null, spendBackedUp: false };
   }
-  draw(data);
+  backupReady = Boolean(data.backedUp);
+  redraw();
 }
 
 /**
@@ -254,7 +266,7 @@ function suggestionsPanel() {
   });
 
   for (const b of el.querySelectorAll('.pile')) {
-    b.addEventListener('click', () => { inboxShow = b.dataset.show; draw({ accounts: subscribers, backupReady: true }); });
+    b.addEventListener('click', () => { inboxShow = b.dataset.show; redraw(); });
   }
 
   const list = el.querySelector('.suggs');
@@ -480,6 +492,8 @@ function moneyTab() {
         are in <code>plans.js</code> and are still provisional.</div>
     </div>`));
 
+  parts.push(budgetPanel(spend.budget || { state: 'none', spent: 0, budget: 0 }, monthly));
+
   if (spend.months.length) {
     parts.push(node(`
       <div class="panel">
@@ -522,6 +536,70 @@ function moneyTab() {
   }
 
   return parts;
+}
+
+/**
+ * A ceiling for the month, and how close this month is to it.
+ *
+ * **It warns and never refuses**, which is the whole design and worth reading
+ * before anybody is tempted to wire it into the generator. A budget that
+ * stopped a job would stop it halfway, with the money already spent and only
+ * the pack left to lose — the same reason launching an expired topical pack
+ * warns and goes ahead.
+ *
+ * It is also the only number here that counts BOTH suppliers. Google's own
+ * budget alerts see the pictures and nothing else; Anthropic's see the writing
+ * and nothing else. Neither can tell you what a pack cost.
+ */
+function budgetPanel(state, monthly) {
+  const set = state.state !== 'none';
+  const pct = Math.min(1, state.pct || 0);
+  const bar = set ? `
+    <div class="budget-bar ${esc(state.state)}">
+      <span style="width:${(pct * 100).toFixed(1)}%"></span>
+    </div>
+    <div class="tiny" style="margin-top:6px">
+      ${esc(money(state.spent))} of ${esc(money(state.budget))} this month
+      ${state.state === 'over'
+        ? `— <b>${esc(money(-state.left))} over</b>`
+        : `· ${esc(money(state.left))} left`}
+    </div>` : '';
+
+  const el = node(`
+    <div class="panel">
+      <h3>A ceiling for the month</h3>
+      <div class="tiny">What you are happy for the AI to cost in a calendar month, counting Claude
+        and the pictures together. <b>Nothing is ever refused because of it</b> — it is a number to
+        look at, not a lock. Set it to nothing to turn it off.</div>
+      ${bar}
+      <div class="budget-set">
+        <label class="tiny">Budget <input type="number" class="budget-input" min="0" step="1"
+          value="${set ? (state.budget / 100).toFixed(2).replace(/\.00$/, '') : ''}" placeholder="none"></label>
+        <button class="btn small budget-save">Save</button>
+        <span class="tiny budget-said"></span>
+      </div>
+      ${monthly ? `<div class="tiny" style="margin-top:8px">For comparison, ${esc(money(monthly))} a month
+        is coming in from subscriptions.</div>` : ''}
+    </div>`);
+
+  const input = el.querySelector('.budget-input');
+  const said = el.querySelector('.budget-said');
+  el.querySelector('.budget-save').addEventListener('click', async () => {
+    said.textContent = 'Saving…';
+    try {
+      // Pounds in the box, pence on the wire — the same split the invoices use,
+      // because a float that has been through a text field is how 0.1 + 0.2
+      // gets into the accounts.
+      const pounds = input.value.trim();
+      const pence = pounds === '' ? 0 : Math.round(Number(pounds) * 100);
+      if (!Number.isFinite(pence) || pence < 0) throw new Error('That is not an amount');
+      await api('/api/owner/budget', { method: 'PUT', body: JSON.stringify({ pence }) });
+      await load();
+    } catch (err) {
+      said.textContent = err.message;
+    }
+  });
+  return el;
 }
 
 // ==================================================================== tonight
@@ -756,7 +834,7 @@ async function resetPassword(account) {
       method: 'POST', body: JSON.stringify({ password }),
     });
     subscribers = data.accounts;
-    draw({ accounts: subscribers, backupReady: true });
+    redraw();
     alert(`Done.\n\nSend them:\n\n  ${location.origin}/login\n  ${account.email}\n  ${password}\n\nThis is not stored anywhere you can read it again, so copy it now.`);
   } catch (err) {
     alert(err.message);
@@ -821,7 +899,7 @@ function ownerTabBar() {
       </button>`);
     button.addEventListener('click', () => {
       ownerTab = tab.id;
-      draw({ accounts: subscribers, backupReady: true });
+      redraw();
       window.scrollTo({ top: 0 });
     });
     bar.appendChild(button);
@@ -888,7 +966,12 @@ function peopleTab() {
   return parts;
 }
 
-function draw(data) {
+/** Redraw from what is already in hand — no fetch, no state reset. */
+function redraw() {
+  draw();
+}
+
+function draw() {
   /*
    * There used to be a "Become a quizmaster" panel here, with a button that did
    * exactly what the Owner | Quizmaster switch in the topbar now does. Two ways
@@ -905,7 +988,7 @@ function draw(data) {
    * a fact about one tab, and a warning you have to be on the right tab to see
    * is one you find out about afterwards.
    */
-  if (data && !data.backupReady) {
+  if (!backupReady) {
     parts.push(node(`
       <div class="pv-warn pv-broken" style="margin-bottom:14px">
         <b class="pv-warn-head">Accounts are not being backed up</b>
@@ -914,6 +997,33 @@ function draw(data) {
           disappears on the next redeploy. Set <b>PHOTO_REPO</b> to a <b>private</b>
           repository on Render. It has to be private: this file holds email
           addresses and password hashes.
+        </div>
+      </div>`));
+  }
+
+  /*
+   * And so does the budget warning, for the same reason.
+   *
+   * "This month has cost more than I said I was happy with" is a fact about the
+   * business rather than about the Money tab, and one you would find out about
+   * afterwards if you had to go looking. It is also why this is NOT a badge on
+   * the tab: only Inbox wears one, because Inbox is the only tab where somebody
+   * is waiting, and a second badge would cost the first one its meaning.
+   *
+   * Nothing here stops anything. It is the number, said where it will be seen.
+   */
+  const budget = (overview.spend && overview.spend.budget) || null;
+  if (budget && (budget.state === 'over' || budget.state === 'close')) {
+    const over = budget.state === 'over';
+    parts.push(node(`
+      <div class="pv-warn ${over ? 'pv-broken' : ''}" style="margin-bottom:14px">
+        <b class="pv-warn-head">${over
+          ? `This month is ${esc(money(-budget.left))} over your AI budget`
+          : `This month has used ${Math.round(budget.pct * 100)}% of your AI budget`}</b>
+        <div class="tiny" style="margin-top:6px">
+          ${esc(money(budget.spent))} of ${esc(money(budget.budget))} for ${esc(monthName(budget.month))},
+          counting Claude and the pictures together. Nothing is being refused — generation carries on
+          exactly as it did. The ceiling is on the Money tab if it wants changing.
         </div>
       </div>`));
   }
@@ -966,7 +1076,7 @@ function subscriberRow(account) {
         method: 'PUT', body: JSON.stringify(patch),
       });
       subscribers = data.accounts;
-      draw({ accounts: subscribers, backupReady: true });
+      redraw();
     } catch (err) {
       alert(err.message);
     }
@@ -987,7 +1097,7 @@ function subscriberRow(account) {
    */
   const toggle = () => {
     openPerson = openPerson === account.id ? '' : account.id;
-    draw({ accounts: subscribers, backupReady: true });
+    redraw();
   };
   row.querySelector('.open-person').addEventListener('click', toggle);
   row.querySelector('.open-person').addEventListener('keydown', (e) => {
@@ -999,7 +1109,7 @@ function subscriberRow(account) {
     try {
       const data = await api(`/api/owner/accounts/${encodeURIComponent(account.id)}`, { method: 'DELETE' });
       subscribers = data.accounts;
-      draw({ accounts: subscribers, backupReady: true });
+      redraw();
     } catch (err) {
       alert(err.message);
     }
@@ -1022,7 +1132,8 @@ async function addSubscriber() {
       body: JSON.stringify({ email, name, password, status: 'trialing' }),
     });
     subscribers = data.accounts;
-    draw({ accounts: subscribers, backupReady: data.backedUp });
+    backupReady = Boolean(data.backedUp);
+    redraw();
     alert(`Done.\n\nSend them:\n\n  ${location.origin}/login\n  ${email}\n  ${password}\n\nThis password is not stored anywhere you can read it again, so copy it now.`);
   } catch (err) {
     alert(err.message);

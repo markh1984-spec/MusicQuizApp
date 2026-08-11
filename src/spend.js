@@ -135,6 +135,45 @@ export function imagePence({ provider = '', quality = 'medium', images = 1 } = {
 /** Enough to answer "what did last year cost", small enough to keep in one file. */
 const MAX_ROWS = 5000;
 
+/**
+ * Which calendar month a moment falls in, in LONDON.
+ *
+ * `toISOString().slice(0, 7)` is UTC, and the host generates in the evening —
+ * so a pack written at half past midnight in July lands in June's total, which
+ * is the one number a budget is compared against. Same reasoning, and the same
+ * `formatToParts` approach, as the invoice dates: assembled by hand so
+ * punctuation cannot change under a different ICU build.
+ */
+const MONTH_PARTS = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Europe/London', year: 'numeric', month: '2-digit',
+});
+
+export function monthKey(at) {
+  const parts = Object.fromEntries(MONTH_PARTS.formatToParts(new Date(at || 0)).map((p) => [p.type, p.value]));
+  return `${parts.year}-${parts.month}`;
+}
+
+/**
+ * How close to the ceiling counts as worth saying.
+ *
+ * Not a second setting: a threshold somebody has to choose is one more thing to
+ * get wrong, and 80% is far enough in to mean something with enough left to act
+ * on. Below it the bar is drawn and says nothing.
+ */
+export const BUDGET_CLOSE = 0.8;
+
+/**
+ * A budget is whole pence and never negative.
+ *
+ * Anything that is not a number at all becomes 0, which means "no ceiling" —
+ * the same as never having set one. A budget that came back as NaN would draw
+ * a bar of no width and report every month as over.
+ */
+export function tidyBudget(pence) {
+  const n = Math.round(Number(pence));
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
 export class Spend {
   constructor(filePath, now = () => Date.now()) {
     this.filePath = filePath;
@@ -142,6 +181,7 @@ export class Spend {
     this.now = now;
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     this.rows = this.load();
+    this.budgetPence = this.loadBudget();
   }
 
   load() {
@@ -159,9 +199,25 @@ export class Spend {
     }
   }
 
+  /** Read separately from the rows, so an unreadable one cannot lose the other. */
+  loadBudget() {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(this.filePath, 'utf8'));
+      return tidyBudget(parsed.budgetPence);
+    } catch {
+      return 0;
+    }
+  }
+
+  contents() {
+    // `budgetPence` only when it is set, so a ledger with no budget on it is
+    // byte-for-byte the file this wrote before budgets existed.
+    return { rows: this.rows, ...(this.budgetPence ? { budgetPence: this.budgetPence } : {}) };
+  }
+
   save() {
     try {
-      fs.writeFileSync(this.tmpPath, JSON.stringify({ rows: this.rows }, null, 2) + '\n', 'utf8');
+      fs.writeFileSync(this.tmpPath, JSON.stringify(this.contents(), null, 2) + '\n', 'utf8');
       fs.renameSync(this.tmpPath, this.filePath);
       return true;
     } catch (err) {
@@ -171,7 +227,48 @@ export class Spend {
   }
 
   serialise() {
-    return JSON.stringify({ rows: this.rows }, null, 2) + '\n';
+    return JSON.stringify(this.contents(), null, 2) + '\n';
+  }
+
+  /**
+   * What you have decided a month of AI is worth, in pence. 0 is "no ceiling",
+   * which is what every ledger written before this says.
+   *
+   * **Setting one never stops anything.** It is compared against and drawn as a
+   * bar; nothing anywhere reads it to refuse a generation. A budget that halted
+   * a job would do it halfway through, when the money is already spent and the
+   * only thing left to lose is the pack.
+   */
+  setBudget(pence) {
+    this.budgetPence = tidyBudget(pence);
+    this.save();
+    return this.budgetPence;
+  }
+
+  /**
+   * This month against the ceiling.
+   *
+   * The CALENDAR month rather than the last thirty days, because that is what
+   * somebody means by "my budget" and what every card statement does.
+   */
+  budgetState({ at = this.now() } = {}) {
+    const month = monthKey(at);
+    const spent = Math.round(this.rows
+      .filter((r) => monthKey(r.at) === month)
+      .reduce((n, r) => n + (Number(r.pence) || 0), 0) * 100) / 100;
+
+    const budget = this.budgetPence;
+    if (!budget) return { month, spent, budget: 0, left: 0, pct: 0, state: 'none' };
+
+    const pct = spent / budget;
+    return {
+      month,
+      spent,
+      budget,
+      left: Math.round((budget - spent) * 100) / 100,
+      pct: Math.round(pct * 1000) / 1000,
+      state: pct >= 1 ? 'over' : pct >= BUDGET_CLOSE ? 'close' : 'ok',
+    };
   }
 
   isEmpty() {
@@ -194,6 +291,11 @@ export class Spend {
     }
     if (!parsed || !Array.isArray(parsed.rows)) return { ok: false, reason: 'nothing_in_it' };
     this.rows = parsed.rows;
+    // A budget already set here WINS. The restore runs at boot, so in practice
+    // there is none — but "the disk is ahead of the backup" is the rule
+    // everywhere else in this app, and a budget quietly reverting to last
+    // week's number is exactly the kind of thing nobody would think to check.
+    if (!this.budgetPence) this.budgetPence = tidyBudget(parsed.budgetPence);
     this.save();
     return { ok: true, rows: this.rows.length };
   }
@@ -273,7 +375,7 @@ export class Spend {
       searches += Number(row.searches) || 0;
       if (row.kind === 'image') image += pence; else claude += pence;
 
-      const month = new Date(row.at || 0).toISOString().slice(0, 7);
+      const month = monthKey(row.at);
       byMonth.set(month, (byMonth.get(month) || 0) + pence);
 
       if (row.packId) {
@@ -304,6 +406,9 @@ export class Spend {
         .sort((a, b) => b.pence - a.pence),
       // What a pack costs on average, which is the number a price is set from.
       perPack: byPack.size ? round((claude + image) / byPack.size) : 0,
+      // This month against the ceiling, so the page has it without a second
+      // request and the warning above the tabs can be drawn from one payload.
+      budget: this.budgetState({ at }),
     };
   }
 }

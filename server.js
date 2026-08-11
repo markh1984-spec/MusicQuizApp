@@ -3349,6 +3349,26 @@ async function handleWrite(req, res, url, route) {
    * is what a payment webhook talks to, and a webhook payload that could carry
    * a password is a door nobody meant to leave open.
    */
+  /*
+   * What a month of AI is allowed to cost.
+   *
+   * **It only ever draws a warning.** Nothing reads it to refuse a generation,
+   * and that is deliberate rather than unfinished: a ceiling that stopped a job
+   * would stop it halfway, when the money is already spent and the only thing
+   * left to lose is the pack. Same reasoning as the expired-topical launch,
+   * which warns and goes ahead.
+   *
+   * `/api/owner/` is already on OWNER_ONLY, so this needs no list of its own —
+   * which is the trap that has caught six other routes going the other way.
+   */
+  if (route === '/api/owner/budget' && req.method === 'PUT') {
+    if (!allowed(req, res, url, FEATURES.SUBSCRIBERS)) return true;
+    const body = await readJson(req);
+    spend.setBudget(body.pence);
+    backUpSpend();
+    return sendJson(res, 200, { ok: true, budget: spend.budgetState() }), true;
+  }
+
   if (route.startsWith('/api/owner/accounts/') && route.endsWith('/password') && req.method === 'POST') {
     if (!allowed(req, res, url, FEATURES.SUBSCRIBERS)) return true;
     const id = decodeURIComponent(route.slice('/api/owner/accounts/'.length, -'/password'.length));
