@@ -3667,3 +3667,11 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .pack-card .fresh.gone { color: var(--muted); }
 .pack-card.stale { opacity: 0.72; }
 .pack-card.stale:hover { opacity: 1; }
+
+/* Your four letters, at a size you can read out over a microphone. */
+.room-code {
+  font-size: 40px; font-weight: 900; letter-spacing: 0.14em;
+  line-height: 1.1; margin: 6px 0 8px;
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}

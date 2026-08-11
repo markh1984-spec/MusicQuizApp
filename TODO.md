@@ -7,6 +7,82 @@ if a step does not go smoothly.
 
 ---
 
+## THE WORDS, AND THE SHOP WINDOW — the biggest thing not yet started
+
+Raised on 11 August 2026 and parked deliberately, because it is a thinking job
+rather than a build and it was midnight. It is also the highest-value item on
+this list, because everything downstream of it — the pricing page, what an
+advertiser is sold, what a subscriber thinks they are buying — is decided by
+the words.
+
+### 1. The words are settled INSIDE the app and nowhere else
+
+CLAUDE.md already pins **pack**, **quiz**, **bingo game** and **round**, and
+those hold up in the code. What has no name at all is the thing being sold to
+a venue: **a night.**
+
+The app has no object called a night. It has games, and it has an archive
+entry per evening, and Past gigs merges them with a 6am roll-over — but
+nothing in the data model says "this was the Thursday at The Crown". So:
+
+- **An advertiser is buying a NIGHT, not a quiz.** "Your slide, every
+  Thursday at The Crown, in front of 60 people" is the sentence that sells.
+  The app cannot currently say any part of it.
+- **A quizmaster wants to name and edit a night afterwards** — which venue,
+  how many were in, how it went. Asked for explicitly. The invoice book
+  already holds customers with addresses, so the venue list EXISTS; a night
+  should pick from it rather than inventing a second list of venues.
+- That one change turns Past gigs from a list of dates into the thing a
+  quizmaster shows a venue they are pitching to, which is what it was built
+  for in the first place.
+
+**Do the data model before the marketing.** A night with a venue on it is
+what makes the advertising pitch true; writing the pitch first means writing
+a promise the app cannot keep.
+
+### 2. Advertising is a Silver/Gold economic argument, and it is under-sold
+
+The advert slides sit at Silver on the reasoning that they win the QUIZMASTER
+a booking rather than being part of the show. That still holds — but the
+commercial size of it has never been worked out, and the host thinks it is
+significant. Worth answering properly:
+
+- What does a venue pay for a slide, and who bills it — the quizmaster or the
+  owner? Today the quizmaster does, and the app is not in that transaction at
+  all.
+- Does the owner ever take a cut? The QR-to-ticket-sales idea in CLAUDE.md
+  says yes for some slides, which is a different arrangement from a venue
+  promoting its own pizza.
+- Is "reach" sellable? Nights × players is a number the app already has.
+
+### 3. A website that sells this AS A QUIZMASTER SOLUTION
+
+There is none. There is an app and a login, and the only way in is somebody
+being handed an account by hand. What a prospective subscriber needs to see
+before they will pay:
+
+- **What a night looks like** — projector, phones, the reveal. Screenshots or
+  a thirty-second video, not prose.
+- **What they get for the money**, in the ladder's own words: Bronze buys
+  packs, Silver includes them, Gold is a fresh topical quiz every week.
+- **Proof it is run by somebody who does this for a living**, which is the
+  differentiator against a generic quiz app. Past gigs is that proof.
+- **The honest limits**, because a quizmaster who buys and then finds out is
+  a refund and a bad review: they cannot generate their own packs, and the
+  starter set is eight.
+
+Note what this implies and is NOT built: a signup flow, a payment processor
+and a public marketing page. See "Pay-per-pack is deliberately NOT built" in
+CLAUDE.md — the data model is ready, the money is not.
+
+### Where to start
+
+The words, then the night object, then the page. In that order, because each
+one is the input to the next and doing them the other way round means writing
+the page twice.
+
+---
+
 ## WHEN YOU GET BACK — in order
 
 Setup is finished. `HOST_KEY`, the private repo, your owner account and the

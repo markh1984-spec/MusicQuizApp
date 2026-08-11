@@ -442,6 +442,19 @@ const TABS = [
     render: () => pastGigsSection(),
   },
   {
+    id: 'help',
+    label: 'Help',
+    blurb: 'The support door, the suggestion box, and what you have heard back.',
+    /*
+     * No `needs`, deliberately, like My account.
+     *
+     * This is where somebody goes when something is wrong — including when the
+     * thing that is wrong is their subscription. A help tab that disappears at
+     * the moment you need help is worse than not having one.
+     */
+    render: () => helpSection(),
+  },
+  {
     id: 'account',
     label: 'My account',
     blurb: 'Your name, your colours, what you are on, and everything else in one place.',
@@ -574,14 +587,85 @@ function showActiveTab() {
  * and it is stored under `prefs`. This page shows the first as a statement and
  * offers the second as a switch, and the two are visibly different things.
  */
+/**
+ * Where you go when something is wrong.
+ *
+ * It did not exist, and the pieces were scattered in a way only somebody who
+ * had already been shown them could find: the support door and the suggestion
+ * box were the last two panels of **My account**, under your name, your
+ * colours, your plan and your library, and asking for a pack that does not
+ * exist is a fourth thing on a different tab entirely.
+ *
+ * So a quizmaster with a problem had to already know where the answer was
+ * kept, which is the opposite of what a help page is for.
+ *
+ * The pack request deliberately STAYS on the pack tabs, under the shop — that
+ * is where the want actually arrives, when you have scrolled the catalogue and
+ * the shelf and neither has the thing. This tab points at it rather than
+ * drawing a second copy: two ways to do one job is how you end up using the
+ * worse one out of habit.
+ */
+function helpSection() {
+  const wrap = document.createDocumentFragment();
+  wrap.appendChild(roomPanel());
+  wrap.appendChild(supportPanel());
+  wrap.appendChild(suggestionPanel());
+  // A POINTER, not a second copy of the form. Asking for a pack belongs where
+  // the want arrives — under the shop, once the catalogue and the shelf have
+  // both failed you — but somebody on a help page should not have to already
+  // know that.
+  wrap.appendChild(node(`
+    <div class="panel">
+      <h3>Want a quiz that does not exist yet?</h3>
+      <div class="tiny">Ask for one at the bottom of the <b>Music Quiz</b> or <b>Music Bingo</b> tab,
+        under the catalogue — that is where the shop is, so you can see what is already there first.</div>
+    </div>`));
+  return wrap;
+}
+
+/**
+ * Which room is yours, and the address your players actually use.
+ *
+ * Asked for after an evening of confusion that came down to not knowing which
+ * of two rooms a phone had landed in. Nothing on any page said, so "why does
+ * the console say nobody is playing when my phone says I am" had no answer you
+ * could look up.
+ *
+ * The house room has no code and that is correct — bare /play reaches it, which
+ * is what every printed card from before rooms existed says. So this panel says
+ * WHICH of the two you are, in words, rather than showing an empty box.
+ */
+function roomPanel() {
+  const code = (library && library.joinCode) || '';
+  const play = `${location.origin}${code ? `/play?g=${encodeURIComponent(code)}` : '/play'}`;
+
+  const el = node(`
+    <div class="panel">
+      <h3>Your room</h3>
+      ${code ? `
+        <div class="room-code">${esc(code)}</div>
+        <div class="tiny">Your four letters, and they do not change — not on a deploy, not between nights.
+          Every quiz and every bingo game you run uses them.</div>
+        <div class="tiny" style="margin-top:8px">Players go to <b>${esc(play)}</b>. The QR on your big screen
+          already has it built in, so nobody has to type anything.</div>
+      ` : `
+        <div class="tiny"><b>You are the house room</b>, which has no code — players go to
+          <b>${esc(play)}</b> with nothing after it. That is deliberate: it is what every card printed
+          before join codes existed says, so none of them had to be reprinted.</div>
+      `}
+    </div>`);
+  return el;
+}
+
 function accountSection() {
   const wrap = document.createDocumentFragment();
   wrap.appendChild(youPanel());
   wrap.appendChild(schemePanel()[0] || node('<span></span>'));
   wrap.appendChild(planPanel());
   wrap.appendChild(libraryPanel());
-  wrap.appendChild(supportPanel());
-  wrap.appendChild(suggestionPanel());
+  // The support door and the suggestion box moved to Help. They were the
+  // bottom two panels of a page about your name and your colours, which is
+  // not where anybody looks when something has gone wrong.
   for (const tier of ladderPanels()) wrap.appendChild(tier);
   wrap.appendChild(linksPanel());
   return wrap;
@@ -1161,7 +1245,9 @@ function planPanel() {
  */
 function linksPanel() {
   const running = library.running || {};
-  const code = running.joinCode || '';
+  // `library.joinCode` first: `running` is absent until something is launched,
+  // and the join link is most wanted BEFORE a night rather than during one.
+  const code = library.joinCode || running.joinCode || '';
   const play = code ? `/play?g=${encodeURIComponent(code)}` : '/play';
 
   const el = node(`
