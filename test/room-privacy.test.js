@@ -150,3 +150,34 @@ test('another room gets a folder of its own, under its account id', () => {
     cleanup();
   }
 });
+
+// ================================ the control view follows WHO YOU ARE, not a code
+
+/**
+ * **`role=host` resolves the room from identity; only a phone follows a code.**
+ *
+ * This is the property the whole two-quizmasters guarantee rests on, and it is
+ * the one an attacker actually reaches for: a join code is printed on the
+ * projector and read out on the mic, so anybody in the room has one. If the
+ * control view followed it, the code on the wall would be the key to the
+ * answer key — every question, every right answer, and who picked what.
+ *
+ * Confirmed live by signing in as a second quizmaster and asking for
+ * `/api/state?role=host&g=<somebody else's code>`: it came back with his OWN
+ * game, a different question entirely. This pins the branch that makes that
+ * true, because it is one line and it reads as a tidy-up waiting to happen.
+ */
+test('THE HOST VIEW IGNORES A JOIN CODE — the projector and phones follow it, the control view never does', () => {
+  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+
+  for (const route of ["route === '/api/state'", "route === '/api/stream'"]) {
+    const at = server.indexOf(route);
+    assert.ok(at > 0, `${route} has moved`);
+    const body = server.slice(at, at + 900);
+    assert.match(body, /role === 'host' \? roomForHost\(req, url\) : roomForPhone\(req, url\)/,
+      `${route} no longer works the host's room out from who they are — a join code would reach somebody else's answer key`);
+    // And the control view is the only one that needs an account at all.
+    assert.match(body, /role === 'host' && !allowed\(/,
+      `${route} no longer checks that a host view belongs to somebody entitled to it`);
+  }
+});
