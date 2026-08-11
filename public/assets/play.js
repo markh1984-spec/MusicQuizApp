@@ -865,7 +865,9 @@ function buildReveal(s) {
 function buildBoard(s) {
   const rows = s.leaderboard || [];
   const isFinal = s.phase === 'final';
-  const youId = s.you ? s.you.id : '';
+  // The public handle rather than the id: the board carries keys now, because
+  // it goes to every phone and used to publish everybody else's credential.
+  const youKey = s.you ? s.you.key : '';
   const winner = rows[0];
 
   return node(`
@@ -874,13 +876,13 @@ function buildBoard(s) {
       ${isFinal && winner ? `<div class="result good"><div class="sub">Winner</div><div class="big">${esc(winner.name)}</div><div class="pts">${winner.score.toLocaleString('en-GB')}</div></div>` : ''}
       <div class="mini-board">
         ${rows.map((p) => `
-          <div class="mini-row ${p.id === youId ? 'you' : ''}">
+          <div class="mini-row ${p.key === youKey ? 'you' : ''}">
             <span class="pos">${p.position}</span>
             <span>${esc(p.name)}</span>
             <span class="score">${p.score.toLocaleString('en-GB')}</span>
           </div>`).join('')}
       </div>
-      ${s.you && !rows.some((p) => p.id === youId)
+      ${s.you && !rows.some((p) => p.key === youKey)
         ? `<div class="mini-row you"><span class="pos">${s.you.position || '—'}</span><span>${esc(s.you.name)}</span><span class="score">${s.you.score.toLocaleString('en-GB')}</span></div>`
         : ''}
     </div>

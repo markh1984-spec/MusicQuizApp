@@ -73,7 +73,24 @@ export class JoinGate {
     this.now = now;
     /** When each NEW player joined. Rejoins are never in here. */
     this.recent = [];
-    /** Phones turned away since the host last looked, by id, so the count is people not attempts. */
+    /*
+     * Phones held since the host last looked, keyed so ten retries by one
+     * phone count as one person rather than ten.
+     *
+     * **The key is the phone's own `tryId`** — a random string it keeps in
+     * localStorage, sent with every attempt. A caller that sends none gets a
+     * near-enough anonymous key instead, and several of those collapse
+     * together: measured, a script firing 300 joins shows the host about 40
+     * rather than 180.
+     *
+     * That is worth knowing and is deliberately NOT fixed by counting attempts,
+     * because it errs the way this whole file errs. An inflated number makes a
+     * host hesitate over a real room while they are on a mic, which is the show
+     * stopping; a deflated one makes them let some junk teams through, which is
+     * one tap to tidy up afterwards. Real phones send a `tryId` — it is how
+     * they remember who they are at all — so a genuine room counts correctly
+     * and it is only a script that reads low.
+     */
     this.waiting = new Map();
     this.openUntil = 0;
   }

@@ -133,7 +133,9 @@ test('the quiz can be stopped mid-round, with the scores intact and Back to undo
   assert.equal(engine.state.phase, PHASES.FINAL);
   assert.equal(engine.state.question, null);
   assert.equal(engine.state.players[a.id].score, scoreBefore);
-  assert.equal(engine.screenView().leaderboard[0].id, a.id);
+  // `key`, not `id` — see publicPlayer. The projector's leaderboard used to
+  // publish a bearer credential for every player in the room.
+  assert.equal(engine.screenView().leaderboard[0].key, faceKey(a.id));
 
   // Stopping twice does nothing, and Back is the way out of a mis-tap.
   assert.equal(engine.finish(), false);
@@ -1732,15 +1734,19 @@ test('THE SCREEN AND PLAYER PAYLOADS NEVER CARRY A PLAYER ID', () => {
   engine.reveal();
 
   const ids = [alice.id, bob.id];
-  for (const [role, view] of [['screen', engine.screenView()], ['player', engine.playerView(bob.id)]]) {
-    const blob = JSON.stringify(view);
-    for (const id of ids) {
-      // A player's own view legitimately knows its own id.
-      if (role === 'player' && id === bob.id) continue;
-      assert.ok(!blob.includes(id),
-        `the ${role} payload contains a player id — anybody with the join code can now answer and rename as them`);
+  const look = (where) => {
+    for (const [role, view] of [['screen', engine.screenView()], ['player', engine.playerView(bob.id)]]) {
+      const blob = JSON.stringify(view);
+      for (const id of ids) {
+        // A player's own view legitimately knows its own id.
+        if (role === 'player' && id === bob.id) continue;
+        assert.ok(!blob.includes(id),
+          `the ${role} payload contains a player id at ${where} — anybody with the join code can now answer and rename as them`);
+      }
     }
-  }
+  };
+  look('the reveal');
+
 
   // The host keeps the real thing, because the control view is not public and
   // removing or renaming somebody needs it.
@@ -1750,6 +1756,34 @@ test('THE SCREEN AND PLAYER PAYLOADS NEVER CARRY A PLAYER ID', () => {
   assert.equal(shown.faceKey, faceKey(alice.id));
   assert.equal(shown.playerId, undefined, 'the projector is publishing a credential again');
   assert.ok(shown.faceKey.length >= 12);
+
+  /*
+   * EVERY PHASE, not just this one.
+   *
+   * The first version of this test stopped here, because the reveal is where
+   * the fastest finger was found — and that left the LEADERBOARD unchecked,
+   * which is in the screen payload at the round board, at the final, whenever
+   * the scoreboard flag is up, and in the lobby. So the projector was
+   * publishing an id for every player in the room, all night, rather than for
+   * one of them for twenty seconds. Found by walking a whole quiz rather than
+   * by reading the code.
+   */
+  engine.showScoreboard(true);
+  look('the scoreboard');
+  engine.showScoreboard(false);
+
+  for (let i = 0; i < 60 && engine.state.phase !== PHASES.FINAL; i++) {
+    engine.next();
+    look(engine.state.phase);
+  }
+  assert.equal(engine.state.phase, PHASES.FINAL, 'the walk never reached the end of the quiz');
+
+  // …and the lobby, which is the one place the WHOLE room is listed at once.
+  const fresh = makeEngine();
+  const carol = fresh.engine.join({ name: 'The Back Table' });
+  assert.ok(!JSON.stringify(fresh.engine.screenView()).includes(carol.id),
+    'the lobby list on the projector carries player ids');
+  assert.ok(fresh.engine.screenView().lobby.players[0].key, 'the lobby list lost its handle altogether');
 });
 
 test('faceKey is stable for a person and gives nothing back', () => {

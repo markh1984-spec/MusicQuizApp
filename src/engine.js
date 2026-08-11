@@ -1081,9 +1081,12 @@ export class Engine {
 
     if (s.phase === PHASES.LOBBY) {
       view.lobby = {
+        // The derived handle, for the same reason as the leaderboard: this
+        // payload is public to anybody holding the join code, and the lobby is
+        // where the whole room is listed at once.
         players: this.playerList()
           .sort((a, b) => b.joinedAt - a.joinedAt)
-          .map((p) => ({ id: p.id, name: p.name })),
+          .map((p) => ({ key: faceKey(p.id), name: p.name })),
       };
     }
 
@@ -1171,6 +1174,9 @@ export class Engine {
       you: player
         ? {
             id: player.id,
+            // Their own public handle, so the phone can find its own row on a
+            // board that now carries keys rather than ids.
+            key: faceKey(player.id),
             name: player.name,
             score: player.score,
             correctCount: player.correctCount,
@@ -1415,8 +1421,26 @@ export class Engine {
   }
 }
 
+/**
+ * A player as anybody in the room may see them.
+ *
+ * **`key`, never `id`, and this was a live leak.** The fastest finger was moved
+ * onto `faceKey` when it turned out that a player id is a bearer credential —
+ * but the LEADERBOARD was not, and the leaderboard is in the screen payload at
+ * the round board, at the final, whenever the scoreboard flag is up and in the
+ * lobby. So `/api/state?role=screen&g=CODE`, which anybody holding the code off
+ * the projector can fetch, published an id for EVERY player all night rather
+ * than for one of them at the reveal. The phone's own board carried everybody
+ * else's too.
+ *
+ * The test that was supposed to stop this only looked at the reveal, which is
+ * where the first one was found. It walks every phase now.
+ *
+ * `key` is still a stable handle, so the browser can use it to tell rows apart
+ * and a photo still finds its person — it just gives nothing back.
+ */
 function publicPlayer(p) {
-  return { id: p.id, name: p.name, score: p.score, position: p.position, correctCount: p.correctCount };
+  return { key: faceKey(p.id), name: p.name, score: p.score, position: p.position, correctCount: p.correctCount };
 }
 
 export function cleanTeamName(name) {

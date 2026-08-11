@@ -440,11 +440,11 @@ function updateLobby(s) {
   const wanted = (s.lobby && s.lobby.players) || [];
   const have = new Set([...strip.children].map((c) => c.dataset.id));
   for (const p of wanted) {
-    if (!have.has(p.id)) {
-      strip.prepend(node(`<div class="player-chip" data-id="${esc(p.id)}">${esc(p.name)}</div>`));
+    if (!have.has(p.key)) {
+      strip.prepend(node(`<div class="player-chip" data-id="${esc(p.key)}">${esc(p.name)}</div>`));
     }
   }
-  const wantedIds = new Set(wanted.map((p) => p.id));
+  const wantedIds = new Set(wanted.map((p) => p.key));
   for (const child of [...strip.children]) {
     if (!wantedIds.has(child.dataset.id)) child.remove();
   }
