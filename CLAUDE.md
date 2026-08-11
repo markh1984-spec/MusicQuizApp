@@ -1160,8 +1160,9 @@ it is really in the catalogue.
 
 ### Topical packs: a DATE, not a second class of pack
 
-Coming, and worth settling before it is built: rounds tied to a week — "the
-week that just went past" — alongside the evergreen catalogue.
+Rounds tied to a week — "the week that just went past" — alongside the
+evergreen catalogue. `freshness()` in `quizzes.js`, and the same shape read in
+the browser by `console.js` to sort and label.
 
 **They are the same price, and the reason is that a topical pack is worth MORE
 in its week, not less.** Pricing it lower would say the opposite of what is
@@ -1173,19 +1174,29 @@ content pushes people up the ladder **weekly**, rather than in month four when
 the starter set runs dry. That is the pressure arriving more often and more
 gently, which is the whole design.
 
-**What it needs in the data is `freshUntil`, a date — not `topical: true`.**
-A boolean says a pack is dated but not whether it is STALE, so the app still
-could not warn anybody. A date can:
+**It is `freshUntil`, a DATE — not `topical: true`.** A boolean says a pack is
+dated but not whether it is STALE, and stale is the only part anybody needs
+telling about. So:
 
-- the console sorts fresh ones to the top and marks an expired one plainly;
-- launching an expired one **warns and does not refuse** — a control that
-  refuses in front of a room is the mistake this codebase keeps recording, and
-  a host may well want to run last month's news round on purpose;
+- the console sorts fresh ones to the top and expired ones to the bottom,
+  **without hiding them** — a pack that vanished reads as lost work, and last
+  month's news round is a fine thing to run on purpose;
+- launching an expired one **warns and does not refuse**. A control that
+  refuses in front of a room is the mistake this codebase keeps recording;
+- **the `ages-out` review flags are switched off for a dated pack.** Every
+  question in a news round trips them — "this week", "the latest", "most
+  recent" is what a news round is made of — and a review list forty flags long
+  is one you stop reading, which would cost you the flags that matter on the
+  rounds that are NOT topical. The expiry date is a better warning anyway: it
+  says WHEN rather than merely that it might;
 - the owner's Catalogue tab drops expired topical packs out of "never played by
-  ANYBODY", which would otherwise fill with six-week-old packs and stop being a
-  signal about the writing;
-- a pack with no date is evergreen, so **nothing on disk has to change** and
-  every pack that exists today is already correct.
+  ANYBODY", because a pack that was meant to expire and did is not evidence
+  about the writing;
+- **a misspelt date is a validation problem**, not something quietly ignored.
+  Ignored, a topical pack silently becomes evergreen — no expiry warning AND
+  the ages-out flags off, which is the worst of both;
+- a pack with no date is evergreen, so **nothing on disk had to change** and
+  every pack written before this is already correct.
 
 The reason to build it at all is reliability rather than commerce: a "week that
 just went past" quiz run three months late is a quizmaster looking foolish in

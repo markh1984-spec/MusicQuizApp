@@ -143,6 +143,9 @@ export function listQuizzes(dir) {
             ...(r.questions || []).flatMap((q) => [q.prompt, q.answer, q.answerNote, q.musician, ...(q.options || [])]),
           ]),
         ]),
+        // When this stops being current, if it ever does. The console sorts on
+        // it and marks an expired pack; see freshness() below.
+        ...(quiz.freshUntil ? { freshUntil: quiz.freshUntil } : {}),
         // Only the default. The look is chosen when you launch it, so a normal
         // pack can be dressed up for a Valentine's night without being edited.
         look: quiz.look || 'default',
@@ -231,6 +234,9 @@ export function normaliseQuiz(quiz, fallbackId = 'quiz') {
     ...(quiz.look ? { look: quiz.look } : {}),
     createdAt: quiz.createdAt || null,
     notes: quiz.notes || '',
+    // Only carried when it is set, so an evergreen pack's file is unchanged
+    // and a pack written before this reads back exactly as it did.
+    ...(quiz.freshUntil ? { freshUntil: quiz.freshUntil } : {}),
     rounds: (quiz.rounds || []).map((round, ri) => {
       const type = ROUND_TYPES.includes(round.type) ? round.type : 'text';
       return {
@@ -303,8 +309,37 @@ export function normaliseQuiz(quiz, fallbackId = 'quiz') {
  * warning and what triggered it, NOT from where the question sits — rounds get
  * renamed and reordered, and a tick should survive that.
  */
-export function reviewWarnings(quiz) {
+/**
+ * Is this pack MEANT to go out of date?
+ *
+ * A pack with a `freshUntil` on it is topical on purpose — a round about the
+ * week that just went past, or a Christmas quiz. It is a date rather than a
+ * `topical: true` flag, and that is the load-bearing bit: a boolean says a
+ * pack is dated but not whether it is STALE, so the app could not warn anybody
+ * about the one thing that actually matters.
+ *
+ * A pack without one is evergreen, so every pack written before this is
+ * already correct and nothing on disk had to change.
+ */
+export function freshness(quiz, now = Date.now()) {
+  const until = Date.parse((quiz && quiz.freshUntil) || '');
+  if (!Number.isFinite(until)) return { topical: false, expired: false, until: null };
+  return { topical: true, expired: now > until, until };
+}
+
+export function reviewWarnings(quiz, { now = Date.now() } = {}) {
   const warnings = [];
+  /*
+   * A pack that is MEANT to expire does not get the ages-out flags.
+   *
+   * Every question in a topical round trips them — "this week", "the latest",
+   * "most recent" is what a news round is made of — and a review list forty
+   * flags long is one you stop reading, which would cost you the flags that
+   * matter on the rounds that are not topical. The pack carries its own expiry
+   * date instead, which is a better warning than forty of these: it says WHEN
+   * rather than merely that it might.
+   */
+  const dated = freshness(quiz, now).topical;
 
   (quiz.rounds || []).forEach((round, ri) => {
     (round.questions || []).forEach((q, qi) => {
@@ -422,7 +457,7 @@ export function reviewWarnings(quiz) {
         ...hits(NOW_WORDS, `${prompt} ${note}`),
         ...hits(MOVING_RECORDS, prompt),
       ])];
-      if (ageing.length) {
+      if (ageing.length && !dated) {
         flag('ages-out', ageing.join('-'),
           `"${ageing.join('", "')}" ties this to when it was written — the answer may have changed since. Check it still stands, or reword it so it cannot go out of date.`);
       }
@@ -479,6 +514,18 @@ export function validateQuiz(quiz) {
   // find out by watching an undressed Halloween quiz go up in front of a room.
   if (quiz.look && !LOOKS.some((l) => l.id === quiz.look)) {
     problems.push(`"${quiz.look}" is not a look. Use ${LOOKS.map((l) => l.id).join(', ')}.`);
+  }
+  /*
+   * A misspelt expiry date is a validation problem rather than something
+   * quietly ignored. Ignored, a topical pack would silently become evergreen —
+   * no expiry warning, and the ages-out flags switched off — which is the
+   * worst of both and would be found out by running last month's news quiz in
+   * front of a room.
+   */
+  if (quiz.freshUntil !== undefined && quiz.freshUntil !== null && quiz.freshUntil !== '') {
+    if (!Number.isFinite(Date.parse(quiz.freshUntil))) {
+      problems.push(`"${quiz.freshUntil}" is not a date. Use YYYY-MM-DD, or leave it out for a pack that does not go out of date.`);
+    }
   }
   if (!Array.isArray(quiz.rounds) || quiz.rounds.length === 0) problems.push('The quiz has no rounds.');
 

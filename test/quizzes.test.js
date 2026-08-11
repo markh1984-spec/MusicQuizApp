@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { validateQuiz, normaliseQuiz, safeQuizFile, saveQuiz, loadQuiz, listQuizzes, reviewWarnings, setWarningChecked, answerLetter, answerLetterIndex, ALPHABET, revealMode, REVEAL_MODES } from '../src/quizzes.js';
+import { validateQuiz, normaliseQuiz, safeQuizFile, saveQuiz, loadQuiz, listQuizzes, reviewWarnings, setWarningChecked, answerLetter, answerLetterIndex, ALPHABET, revealMode, REVEAL_MODES, freshness } from '../src/quizzes.js';
 
 function goodQuiz() {
   return {
@@ -733,4 +733,76 @@ test('a quiz with no playlist says so with an empty string, not undefined', () =
 
   const [pack] = listQuizzes(dir);
   assert.equal(pack.playlist, '');
+});
+
+/*
+ * ---------------------------------------------- a pack that is MEANT to expire
+ *
+ * A DATE rather than a `topical: true` flag, and that is the load-bearing part:
+ * a boolean says a pack is dated but not whether it is STALE, so the app could
+ * not warn anybody about the one thing that actually matters.
+ */
+test('a pack with no date is evergreen, which is every pack written so far', () => {
+  const f = freshness({ title: 'The Eighties' });
+  assert.equal(f.topical, false);
+  assert.equal(f.expired, false);
+});
+
+test('a dated pack knows whether it has gone off', () => {
+  const quiz = { title: 'The week that just went past', freshUntil: '2026-08-18' };
+  assert.equal(freshness(quiz, Date.parse('2026-08-14')).expired, false);
+  assert.equal(freshness(quiz, Date.parse('2026-09-14')).expired, true);
+  assert.equal(freshness(quiz, Date.parse('2026-09-14')).topical, true, 'it is still a topical pack');
+});
+
+/*
+ * Every question in a news round trips the ages-out flags — "this week", "the
+ * latest", "most recent" is what a news round is MADE of. Forty flags is a
+ * review list nobody reads, which would cost the flags that matter on the
+ * rounds that are not topical. The expiry date is the better warning anyway:
+ * it says WHEN rather than merely that it might.
+ */
+test('a pack that is meant to expire does not get forty ages-out flags', () => {
+  const rounds = [{
+    id: 'r1',
+    type: 'text',
+    questions: [{
+      id: 'r1q1',
+      prompt: 'Who is currently at number one?',
+      options: ['Somebody', 'A', 'B', 'C'],
+      correctIndex: 0,
+    }],
+  }];
+
+  const evergreen = reviewWarnings({ title: 'Pop', rounds });
+  assert.ok(evergreen.some((w) => w.kind === 'ages-out'), 'an undated pack lost its ages-out flag');
+
+  const topical = reviewWarnings({ title: 'This week', freshUntil: '2099-01-01', rounds });
+  assert.ok(!topical.some((w) => w.kind === 'ages-out'), 'a dated pack still gets ages-out flags');
+});
+
+/*
+ * A misspelt date must not be quietly ignored. Ignored, a topical pack becomes
+ * evergreen — no expiry warning AND the ages-out flags switched off, which is
+ * the worst of both, and it would be found out by running last month's news
+ * quiz in front of a room.
+ */
+test('a date that is not a date is a validation problem', () => {
+  const quiz = {
+    title: 'Nonsense',
+    freshUntil: 'next Tuesday-ish',
+    rounds: [{ id: 'r1', type: 'text', questions: [{
+      id: 'r1q1', prompt: 'Who?', options: ['A', 'B', 'C', 'D'], correctIndex: 0,
+    }] }],
+  };
+  assert.ok(validateQuiz(quiz).some((p) => /is not a date/.test(p)));
+  assert.deepEqual(validateQuiz({ ...quiz, freshUntil: '2026-08-18' }), []);
+  assert.deepEqual(validateQuiz({ ...quiz, freshUntil: '' }), [], 'empty means evergreen, not broken');
+});
+
+test('the date survives a round trip through normaliseQuiz', () => {
+  const out = normaliseQuiz({ title: 'x', freshUntil: '2026-08-18', rounds: [] });
+  assert.equal(out.freshUntil, '2026-08-18');
+  assert.ok(!('freshUntil' in normaliseQuiz({ title: 'x', rounds: [] })),
+    'an evergreen pack grew a field it does not need');
 });

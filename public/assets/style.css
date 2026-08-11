@@ -3500,3 +3500,15 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 }
 .pack-card.locked .go.buy:hover { background: rgba(255,255,255,0.16); }
 .game-section .shop-head { margin-top: 26px; }
+
+
+/* A pack written to be current, and one that no longer is.
+ *
+ * Not hidden when it expires — a pack that vanished reads as lost work, and
+ * last month's news round is a fine thing to run on purpose. It just stops
+ * being the first thing you see, and it says which week it was for.
+ */
+.pack-card .fresh { color: #ffc85a; }
+.pack-card .fresh.gone { color: var(--muted); }
+.pack-card.stale { opacity: 0.72; }
+.pack-card.stale:hover { opacity: 1; }

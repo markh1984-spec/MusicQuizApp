@@ -1842,6 +1842,10 @@ function cataloguePerformance() {
   const all = [...library.quizzes, ...library.bingo];
 
   return all.map((pack) => {
+    // A pack that was MEANT to expire and did is not a fact about the writing.
+    // Without this, "never played by anybody" fills with six-week-old topical
+    // packs and stops being the signal it exists to be.
+    const stale = Number.isFinite(Date.parse(pack.freshUntil || '')) && Date.now() > Date.parse(pack.freshUntil);
     const key = `${pack.kind}:${pack.id}`;
     let plays = 0;
     let rooms = 0;
@@ -1863,6 +1867,8 @@ function cataloguePerformance() {
       openReports: open.get(pack.id) || 0,
       problems: pack.problems || 0,
       broken: Boolean(pack.broken),
+      topical: Boolean(pack.freshUntil),
+      stale,
     };
   }).sort((a, b) => b.plays - a.plays || a.title.localeCompare(b.title));
 }

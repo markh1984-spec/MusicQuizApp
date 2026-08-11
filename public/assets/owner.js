@@ -575,7 +575,13 @@ function tonightTab() {
 function catalogueTab() {
   const packs = overview.packs || [];
   const played = packs.filter((p) => p.plays);
-  const never = packs.filter((p) => !p.plays);
+  /*
+   * "Never run by anybody" is about the WRITING, so a pack that was meant to
+   * expire and did is not evidence of anything. Without this the list fills
+   * with six-week-old topical packs and stops being a signal at all.
+   */
+  const never = packs.filter((p) => !p.plays && !p.stale);
+  const expired = packs.filter((p) => p.stale);
   const flagged = packs.filter((p) => p.openReports || p.problems || p.broken);
 
   const row = (p) => `
@@ -598,7 +604,8 @@ function catalogueTab() {
       <div class="game-head"><div>
         <h2>The catalogue</h2>
         <div class="tiny">${packs.length} pack${packs.length === 1 ? '' : 's'} ·
-          ${played.length} played by somebody · ${never.length} never run by anybody</div>
+          ${played.length} played by somebody · ${never.length} never run by anybody${
+  expired.length ? ` · ${expired.length} topical and out of date` : ''}</div>
       </div></div>
     </div>`)];
 

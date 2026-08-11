@@ -1990,6 +1990,32 @@ let packQuery = { quiz: '', bingo: '' };
  * Read off the library payload, never written out here, so the card and the
  * server cannot disagree about what a purchase would charge.
  */
+/**
+ * Is this pack topical, and has it gone off?
+ *
+ * A DATE rather than a `topical: true` flag, and that is the whole point: a
+ * boolean says a pack is dated but not whether it is STALE, and stale is the
+ * only part anybody needs telling about. A pack with no date is evergreen.
+ *
+ * Read in the browser as well as on the server because the console has to sort
+ * and label on it, and a second copy of the rule is exactly what `freshness()`
+ * in quizzes.js exists to prevent — so the shape is identical and this one only
+ * ever draws.
+ */
+function freshness(pack) {
+  const until = Date.parse(pack.freshUntil || '');
+  if (!Number.isFinite(until)) return { topical: false, expired: false, until: null };
+  return { topical: true, expired: Date.now() > until, until };
+}
+
+/** "for the week of 12 August", the way somebody would say it out loud. */
+function freshLabel(pack) {
+  const { topical, expired, until } = freshness(pack);
+  if (!topical) return '';
+  const when = new Date(until).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+  return expired ? `Was current to ${when}` : `Current until ${when}`;
+}
+
 function packPrice() {
   const pence = Number((library && library.packPence) || 0) || 300;
   return pence % 100 ? `£${(pence / 100).toFixed(2)}` : `£${pence / 100}`;
@@ -2056,8 +2082,20 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
       return;
     }
 
-    const yours = found.filter((p) => !p.locked);
-    const buyable = found.filter((p) => p.locked);
+    /*
+     * Fresh topical packs first, expired ones last.
+     *
+     * A "week that just went past" pack is only worth anything this week, so
+     * it belongs at the top while it is — and an expired one in the middle of
+     * the grid in November is somebody scrolling past six dead packs to find
+     * the quiz they wanted. It is NOT hidden: a pack that vanished would read
+     * as lost work, and last month's news round is a perfectly good thing to
+     * run on purpose.
+     */
+    const shelf = (p) => (freshness(p).expired ? 2 : freshness(p).topical ? 0 : 1);
+    const inOrder = [...found].sort((a, b) => shelf(a) - shelf(b));
+    const yours = inOrder.filter((p) => !p.locked);
+    const buyable = inOrder.filter((p) => p.locked);
 
     if (!yours.length) {
       grid.appendChild(node(`<div class="tiny">None of the ones you have match “${esc(packQuery[kind])}”.</div>`));
@@ -2429,11 +2467,12 @@ function packCard(kind, pack) {
     : 'Never played';
 
   const el = node(`
-    <div class="pack-card ${pack.broken ? 'broken' : ''} ${ownPack ? 'own' : ''}">
+    <div class="pack-card ${pack.broken ? 'broken' : ''} ${ownPack ? 'own' : ''} ${freshness(pack).expired ? 'stale' : ''}">
       <button class="pack-title" title="Read it">${esc(pack.title)}</button>
       ${ownPack ? '<div class="pack-yours" title="You wrote this one. Nobody else can read it.">Yours</div>' : ''}
       <div class="tiny">${esc(detail)}</div>
       <div class="tiny played">${esc(played)}</div>
+      ${freshLabel(pack) ? `<div class="tiny fresh ${freshness(pack).expired ? 'gone' : ''}">${esc(freshLabel(pack))}</div>` : ''}
       ${pack.broken ? `<div class="tiny" style="color:var(--bad)">Broken: ${esc(pack.broken)}</div>` : ''}
       ${pack.problems ? `<div class="tiny" style="color:var(--bad)">${pack.problems} thing${pack.problems === 1 ? '' : 's'} to fix</div>` : ''}
       ${kind === 'bingo' && !pack.broken ? `
@@ -2624,6 +2663,22 @@ function packCard(kind, pack) {
     // be treated as safe. The lobby is exactly when a room full of people has
     // just scanned the code, so it is the worst moment to wipe them, not the
     // best. Launching over the top throws every one of them out.
+    /*
+     * An expired topical pack WARNS and does not refuse.
+     *
+     * A control that refuses in front of a room is the mistake this codebase
+     * keeps recording, and there are good reasons to run last month's news
+     * round on purpose. But running one by accident is a quizmaster reading
+     * out "who won on Saturday" about a Saturday three months ago, which is
+     * exactly the thing the ages-out flags exist to prevent — so it has to be
+     * said once, plainly, before it goes on a projector.
+     */
+    const off = freshness(pack);
+    if (off.expired) {
+      const when = new Date(off.until).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+      if (!confirm(`"${pack.title}" was written to be current to ${when}.\n\nSome of the answers will have moved on. Run it anyway?`)) return;
+    }
+
     const running = library.running;
     const joined = (running && running.playerCount) || 0;
     const over = running && running.phase === 'finished';
