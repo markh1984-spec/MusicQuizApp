@@ -3523,6 +3523,22 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   border-radius: 8px;
 }
 
+/* One job's share of the bill, under its name. Thin on purpose — it is a sense
+ * of proportion beside a number, not a chart. */
+.job-bar {
+  margin-top: 6px;
+  height: 5px;
+  max-width: 380px;
+  border-radius: 999px;
+  background: var(--panel-line);
+  overflow: hidden;
+}
+.job-bar span {
+  display: block; height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--hot, #ff2e88), var(--hot-2, #ff8a3d));
+}
+.own-row-num .tiny { display: block; opacity: 0.7; font-weight: 600; }
+
 .own-rows { display: grid; gap: 6px; }
 .own-row {
   display: flex; align-items: center; justify-content: space-between; gap: 14px;

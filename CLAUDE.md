@@ -552,6 +552,27 @@ budget on it writes byte-for-byte the file it wrote before budgets existed.
 `/api/owner/` was already on `OWNER_ONLY`, so this needed no list of its own —
 which is the trap that has caught six routes going the other way.
 
+### "What the money went on" — the cut that says what to DO
+
+`jobs` in `summary()`. Every row has carried a `what` since the ledger was
+written — "checked a batch", "wrote a round", "a portrait", "read the last
+month", "picked bingo tracks", "drafted a reply" — and **nothing ever showed
+it**, so the only way to answer "what is the money actually going on" was to
+read the file by hand. Which is exactly how the 86%-is-checking figure in this
+document was arrived at.
+
+Three cuts now, and they answer three different questions: **by pack** is which
+quiz was dear, **by month** is whether it is going up, and **by job** is why.
+
+**The SHARE is the point, not the pence.** "Checking is 72% of it" is a
+sentence you can act on; "checking cost £2.70" needs the total held in your
+head first. It is worked out on the server so the page cannot divide it
+differently from anything else that reads the ledger.
+
+A row with no label is filed under "something else" rather than dropped —
+otherwise the shares would quietly add up to less than the total with nothing
+on screen saying so. There is a test.
+
 ### The owner page redrew itself with the backup warning switched off
 
 Found while screenshotting the budget panel. `draw()` took the backup state as

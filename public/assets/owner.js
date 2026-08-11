@@ -510,6 +510,36 @@ function moneyTab() {
       </div>`));
   }
 
+  /*
+   * What the money went ON, which is the cut that says what to do about it.
+   *
+   * By pack says which quiz was dear and by month says whether it is going up;
+   * only this says why. Every row has carried a `what` since the ledger was
+   * written and nothing showed it, so the one number anybody would act on —
+   * that the checking pass is most of a pack's bill — could only be got at by
+   * reading the file.
+   */
+  if (spend.jobs && spend.jobs.length) {
+    parts.push(node(`
+      <div class="panel">
+        <h3>What the money went on</h3>
+        <div class="tiny">Every call is filed under what it was doing. The share is of everything in the
+          last year, so it says where to look rather than just what things cost.</div>
+        <div class="own-rows" style="margin-top:10px">
+          ${spend.jobs.map((j) => `
+            <div class="own-row">
+              <div class="own-row-main">
+                <b>${esc(j.what)}</b>
+                <span class="tiny">${j.rows} call${j.rows === 1 ? '' : 's'}</span>
+                <div class="job-bar"><span style="width:${(Math.min(1, j.share) * 100).toFixed(1)}%"></span></div>
+              </div>
+              <div class="own-row-num"><b>${esc(money(j.pence))}</b>
+                <span class="tiny">${Math.round(j.share * 100)}%</span></div>
+            </div>`).join('')}
+        </div>
+      </div>`));
+  }
+
   if (spend.packs.length) {
     parts.push(node(`
       <div class="panel">

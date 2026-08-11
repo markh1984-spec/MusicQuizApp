@@ -337,3 +337,41 @@ test('a ledger with no budget writes the file it always wrote', () => {
   const onDisk = JSON.parse(fs.readFileSync(spend.filePath, 'utf8'));
   assert.deepEqual(Object.keys(onDisk), ['rows'], 'an unused budget is cluttering the ledger file');
 });
+
+/*
+ * What the money went ON.
+ *
+ * Every row has carried a `what` since this file was written and nothing ever
+ * showed it, so "is the checking really most of the bill" could only be
+ * answered by reading the ledger by hand.
+ */
+test('the ledger says what the money was spent doing, dearest first', () => {
+  const { spend } = ledger();
+  spend.record({ kind: 'claude', what: 'wrote a round', packId: 'p', model: 'claude-sonnet-5', tokensIn: 1000, tokensOut: 1000 });
+  spend.record({ kind: 'claude', what: 'checked a batch', packId: 'p', model: 'claude-opus-5', tokensIn: 20000, tokensOut: 20000 });
+  spend.record({ kind: 'claude', what: 'checked a batch', packId: 'p', model: 'claude-opus-5', tokensIn: 20000, tokensOut: 20000 });
+  spend.record({ kind: 'image', what: 'a portrait', packId: 'p', provider: 'google', quality: 'low', images: 4 });
+
+  const { jobs, total } = spend.summary();
+  assert.equal(jobs[0].what, 'checked a batch', 'the dearest job is not first');
+  assert.equal(jobs[0].rows, 2, 'the two batches were not added together');
+
+  // The shares are of the whole bill and add up to it.
+  assert.equal(Math.round(jobs.reduce((n, j) => n + j.share, 0) * 100) / 100, 1);
+  assert.equal(Math.round(jobs.reduce((n, j) => n + j.pence, 0) * 100) / 100, total);
+
+  // Checking really is the big one, which is the number this exists to show.
+  assert.ok(jobs[0].share > 0.5, 'checking should dominate a pack of this shape');
+});
+
+test('a row with no label still appears rather than vanishing', () => {
+  // A missing `what` is a bookkeeping slip, and a row that silently dropped out
+  // of this list would make the shares add up to less than the total with
+  // nothing on screen saying so.
+  const { spend } = ledger();
+  spend.record({ kind: 'claude', model: 'claude-sonnet-5', tokensIn: 1000, tokensOut: 1000 });
+  const { jobs, total } = spend.summary();
+  assert.equal(jobs.length, 1);
+  assert.equal(jobs[0].what, 'something else');
+  assert.equal(jobs[0].pence, total);
+});

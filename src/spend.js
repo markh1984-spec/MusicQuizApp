@@ -366,6 +366,7 @@ export class Spend {
 
     const byMonth = new Map();
     const byPack = new Map();
+    const byJob = new Map();
     let claude = 0;
     let image = 0;
     let searches = 0;
@@ -384,6 +385,23 @@ export class Spend {
         seen.rows++;
         byPack.set(row.packId, seen);
       }
+
+      /*
+       * What the call was DOING — "checked a batch", "wrote a round", "a
+       * portrait", "read the last month".
+       *
+       * Every row has carried this since the ledger was written and nothing
+       * ever showed it, so "what is the money actually going on" could only be
+       * answered by reading the file. It is the most useful cut of the three:
+       * by pack says which quiz was dear, by month says whether it is going up,
+       * and this says WHY — and the answer, measured by hand rather than from
+       * the ledger, was that the checking pass is most of the bill.
+       */
+      const what = String(row.what || '').trim() || 'something else';
+      const job = byJob.get(what) || { what, pence: 0, rows: 0 };
+      job.pence += pence;
+      job.rows++;
+      byJob.set(what, job);
     }
 
     const round = (n) => Math.round(n * 100) / 100;
@@ -403,6 +421,21 @@ export class Spend {
       // Dearest first — the point of this list is what to look at, not an index.
       packs: [...byPack.values()]
         .map((p) => ({ ...p, pence: round(p.pence) }))
+        .sort((a, b) => b.pence - a.pence),
+      /*
+       * The same, by job, with each one's SHARE of the bill.
+       *
+       * The share is the point rather than decoration: "checking is 86% of it"
+       * is a sentence you can act on, where "checking cost £1.60" needs the
+       * total held in your head to mean anything. Worked out here so the page
+       * and anything else reading this cannot each divide it differently.
+       */
+      jobs: [...byJob.values()]
+        .map((j) => ({
+          ...j,
+          pence: round(j.pence),
+          share: claude + image ? Math.round((j.pence / (claude + image)) * 1000) / 1000 : 0,
+        }))
         .sort((a, b) => b.pence - a.pence),
       // What a pack costs on average, which is the number a price is set from.
       perPack: byPack.size ? round((claude + image) / byPack.size) : 0,
