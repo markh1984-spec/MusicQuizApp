@@ -42,7 +42,7 @@ import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, canPlayPack } from './public/assets/plans.js';
 import { Suggestions, KINDS } from './src/suggestions.js';
-import { draftReply } from './src/reply-draft.js';
+import { draftReply, briefFor } from './src/reply-draft.js';
 import { OWNER_ONLY, changesTheLibrary } from './src/gates.js';
 import { brandFor } from './src/branding.js';
 import { findScheme, DEFAULT_SCHEME, SCHEMES } from './public/assets/schemes.js';
@@ -1196,6 +1196,8 @@ async function handleGet(req, res, url, route) {
     return sendJson(res, 200, {
       suggestions: suggestions.all.map((x) => ({ ...x, ref: accountRef(x.byId) })),
       summary: suggestions.summary(),
+      // What the owner has taught the drafting model, so they can edit it.
+      house: suggestions.house,
       // Whether the Draft button can work at all. Said up front rather than
       // found out by pressing it and getting an error.
       canDraft: Boolean(process.env.ANTHROPIC_API_KEY),
@@ -1787,6 +1789,15 @@ async function handleWrite(req, res, url, route) {
         apiKey: process.env.ANTHROPIC_API_KEY,
         ownerName: firstNameOf(accounts.owner) || 'Mark',
         appName: config.appName,
+        // 1. What the owner has taught it, from the box on their own page.
+        house: suggestions.house,
+        // 2. Who wrote in, and what else they have sent — the difference
+        //    between a plausible reply and one that could only be about them.
+        account: accounts.find(item.byId),
+        history: suggestions.forAccount(item.byId).filter((x) => x.id !== item.id),
+        // 3. How the owner has answered before. The only part that gets better
+        //    on its own: every reply sent is another example of their voice.
+        past: suggestions.everyReply(),
       });
       return sendJson(res, 200, { ok: true, draft: text }), true;
     } catch (err) {
@@ -1813,6 +1824,24 @@ async function handleWrite(req, res, url, route) {
     return sendJson(res, 200, {
       ok: true, suggestions: suggestions.all, summary: suggestions.summary(),
     }), true;
+  }
+
+  /*
+   * The owner's notes for the drafting model.
+   *
+   * This is how the drafts actually improve: every time one says something
+   * wrong, a line goes in here and it stops saying it. Nothing else in the app
+   * teaches it anything, so it is worth being easy to edit.
+   */
+  if (route === '/api/suggestions/house' && req.method === 'PUT') {
+    const me = whoIs(req, url);
+    if (!me || (me.role !== 'owner' && !me.bootstrap)) {
+      return sendJson(res, 403, { error: 'Owners only.' }), true;
+    }
+    const body = await readJson(req);
+    const house = suggestions.setHouse(body.house);
+    backUpSuggestions();
+    return sendJson(res, 200, { ok: true, house }), true;
   }
 
   // Dealt with, reopened, or binned. The owner's, like reading them.

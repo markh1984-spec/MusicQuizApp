@@ -62,6 +62,7 @@ async function boot() {
 let reports = [];
 let suggestions = [];
 let canDraft = false;
+let houseNotes = '';
 // Which pile you are looking at. Module level so working through the list does
 // not throw you back to the top every time you answer one.
 let inboxShow = 'open';
@@ -82,6 +83,7 @@ async function load() {
     const box = await api('/api/suggestions');
     suggestions = box.suggestions || [];
     canDraft = Boolean(box.canDraft);
+    houseNotes = box.house || '';
   } catch {
     suggestions = [];
   }
@@ -187,7 +189,36 @@ function suggestionsPanel() {
         </div>
       </div>
       <div class="suggs"></div>
+      ${canDraft ? `
+        <details class="house">
+          <summary class="tiny">What the drafting model knows about your business</summary>
+          <div class="tiny house-note">It is not trained on anything — it is told this, fresh, every
+            time you press Draft. Add a line whenever a draft says something wrong and it will stop
+            saying it. It is also given who wrote in and how you have answered before, so it gets
+            closer to your voice the more you use it.</div>
+          <textarea class="house-text" rows="6"
+            placeholder="e.g. Bronze does not include invoicing. I deploy on Sundays. Never offer a phone call.">${esc(houseNotes)}</textarea>
+          <div class="row" style="margin-top:8px;align-items:center;gap:10px">
+            <button class="minor house-save">Save these notes</button>
+            <span class="tiny house-said"></span>
+          </div>
+        </details>` : ''}
     </div>`);
+
+  const houseBox = el.querySelector('.house-text');
+  el.querySelector('.house-save')?.addEventListener('click', async () => {
+    const said = el.querySelector('.house-said');
+    try {
+      await api('/api/suggestions/house', {
+        method: 'PUT', body: JSON.stringify({ house: houseBox.value }),
+      });
+      houseNotes = houseBox.value;
+      said.textContent = 'Saved.';
+      setTimeout(() => { said.textContent = ''; }, 4000);
+    } catch (err) {
+      said.textContent = err.message;
+    }
+  });
 
   for (const b of el.querySelectorAll('.pile')) {
     b.addEventListener('click', () => { inboxShow = b.dataset.show; draw({ accounts: subscribers, backupReady: true }); });

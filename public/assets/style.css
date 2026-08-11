@@ -3351,3 +3351,17 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    meant, and overstating it would be the one thing on this page that lies. */
 .seen.yes { color: var(--good); }
 .seen.no { color: var(--ink-dim); }
+
+/* What the drafting model is told. Folded away, because it is a thing you edit
+   once a month rather than something to read every time you open the inbox. */
+.house { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--panel-line); }
+.house summary { cursor: pointer; color: var(--ink-dim); }
+.house summary:hover { color: var(--ink); }
+.house-note { margin: 8px 0; max-width: 720px; line-height: 1.55; }
+.house-text {
+  width: 100%; padding: 11px 13px;
+  border-radius: 12px; border: 1px solid var(--panel-line);
+  background: rgba(255, 255, 255, 0.05); color: var(--ink);
+  font: inherit; font-size: 13.5px; resize: vertical;
+}
+.house-text:focus { outline: none; border-color: var(--hot); }

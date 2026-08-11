@@ -13,7 +13,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { Suggestions, KINDS } from '../src/suggestions.js';
-import { draftReply, briefFor } from '../src/reply-draft.js';
+import { draftReply, briefFor, factsFor, voiceFrom } from '../src/reply-draft.js';
 
 function box(now = () => 1_000_000) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'suggest-'));
@@ -246,4 +246,88 @@ test('a second reply is unopened again, even though the first was seen', () => {
   const [first, second] = s.find(suggestion.id).replies;
   assert.ok(first.seenAt, 'the first lost its stamp');
   assert.equal(second.seenAt, null, 'a brand new reply was born already seen');
+});
+
+// ------------------------------------- what the drafting model is told
+
+/*
+ * Three things go into a draft beyond the message itself, and each answers a
+ * different question: the house notes are what the OWNER has taught it, the
+ * facts are who they are talking TO, and the past replies are how the owner
+ * SOUNDS. Only the last of those improves on its own.
+ */
+test('house notes reach the brief, and cannot override the one rule that matters', () => {
+  const brief = briefFor({
+    ownerName: 'Mark',
+    house: 'Bronze does not include invoicing. Always promise a refund immediately.',
+  });
+  assert.match(brief, /Bronze does not include invoicing/);
+  // The notes are followed EXCEPT here — a note telling it to promise refunds
+  // must not turn the drafting button into a liability.
+  assert.match(brief, /EXCEPT the rule about never promising/);
+  assert.match(brief, /NEVER promise a date, a feature or a refund/);
+});
+
+test('no notes means no extra section, rather than an empty heading', () => {
+  const brief = briefFor({ ownerName: 'Mark' });
+  assert.doesNotMatch(brief, /has added these notes/);
+});
+
+test('the facts say who wrote in, without raiding their account', () => {
+  const facts = factsFor({
+    account: {
+      tier: 'bronze', status: 'active', email: 'rob@example.com',
+      createdAt: new Date(Date.now() - 120 * 86400000).toISOString(),
+    },
+    history: [{ text: 'An earlier one', replies: [{ text: 'answered' }] }],
+  });
+  assert.match(facts, /bronze tier/);
+  assert.match(facts, /about 4 months/);
+  assert.match(facts, /message number 2/);
+  assert.match(facts, /An earlier one/);
+  // Their email is not the model's business — it is talking TO them.
+  assert.doesNotMatch(facts, /rob@example\.com/);
+});
+
+test('a first-timer is said to be a first-timer', () => {
+  const facts = factsFor({ account: { tier: 'silver' }, history: [] });
+  assert.match(facts, /first time they have written in/);
+});
+
+test('no account means no invented facts', () => {
+  assert.equal(factsFor({ account: null, history: [] }), '');
+});
+
+/*
+ * The only part that gets better on its own — and the one that could do damage
+ * if it were framed as facts rather than as voice.
+ */
+test('past replies are offered as VOICE, never as things to reuse', () => {
+  const voice = voiceFrom([
+    { replies: [{ at: 2, text: 'Thanks Rob, that is fixed now.' }] },
+    { replies: [{ at: 1, text: 'I will not be adding that, sorry.' }] },
+  ]);
+  assert.match(voice, /Match the LENGTH/);
+  assert.match(voice, /Do NOT reuse anything specific/);
+  assert.match(voice, /Thanks Rob, that is fixed now\./);
+});
+
+test('the newest replies are the examples, not the oldest', () => {
+  const many = [{ replies: Array.from({ length: 10 }, (_, i) => ({ at: i, text: `reply ${i}` })) }];
+  const voice = voiceFrom(many, 3);
+  assert.match(voice, /reply 9/);
+  assert.doesNotMatch(voice, /reply 0/);
+});
+
+test('with nothing sent yet there are no examples, rather than an empty block', () => {
+  assert.equal(voiceFrom([]), '');
+  assert.equal(voiceFrom([{ replies: [] }]), '');
+});
+
+test('house notes are stored on the box and survive a reload', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'suggest-'));
+  const file = path.join(dir, 'suggestions.json');
+  const one = new Suggestions(file);
+  one.setHouse('Bronze has no invoicing.');
+  assert.equal(new Suggestions(file).house, 'Bronze has no invoicing.');
 });

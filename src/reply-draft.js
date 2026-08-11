@@ -25,7 +25,7 @@ const MAX_TOKENS = 700;
  * brief that drifts with the code is a brief nobody trusts. It is only ever
  * used to draft a paragraph a human then reads.
  */
-export function briefFor({ appName = 'Quiztopia', ownerName = 'the owner' } = {}) {
+export function briefFor({ appName = 'Quiztopia', ownerName = 'the owner', house = '' } = {}) {
   return `You are drafting a short reply on behalf of ${ownerName}, who runs
 ${appName} — an app for live pub and club quiz nights. Its users are
 professional quiz hosts ("quizmasters") who run nights on their own kit in
@@ -51,7 +51,81 @@ How to write:
   rather than guessing.
 
 Write only the reply itself. No subject line, no preamble, no quotation of
-their message.`;
+their message.${house ? `
+
+${ownerName} has added these notes. Where they disagree with anything above,
+follow them — EXCEPT the rule about never promising a date, a feature or a
+refund, which stands whatever else is said:
+
+${house}` : ''}`;
+}
+
+/**
+ * Facts the app already knows about the person who wrote in.
+ *
+ * This is what moves a draft from plausible to "could only be about this
+ * person". None of it is guessed — it is read off the account and the box at
+ * the moment the button is pressed.
+ *
+ * Note what is NOT here: their email, their customers, anything from their
+ * invoice book. A reply needs to know who it is talking to, not everything
+ * about them.
+ */
+export function factsFor({ account = null, history = [] } = {}) {
+  if (!account) return '';
+  const lines = [];
+  if (account.tier) lines.push(`They are on the ${account.tier} tier.`);
+  if (account.comped) lines.push('Their account is comped.');
+  if (account.status && account.status !== 'active') {
+    lines.push(`Their subscription status is "${account.status}".`);
+  }
+  if (account.createdAt) {
+    const days = Math.floor((Date.now() - Date.parse(account.createdAt)) / 86400000);
+    if (Number.isFinite(days) && days >= 0) {
+      lines.push(days < 31
+        ? `They joined ${days} day${days === 1 ? '' : 's'} ago — still new.`
+        : `They have been subscribed about ${Math.round(days / 30)} months.`);
+    }
+  }
+  const earlier = history.filter((h) => h.text);
+  if (earlier.length) {
+    lines.push(`This is message number ${earlier.length + 1} from them. Earlier ones:`);
+    for (const h of earlier.slice(0, 4)) {
+      lines.push(`  - "${String(h.text).slice(0, 160)}"${(h.replies || []).length ? ' (answered)' : ' (never answered)'}`);
+    }
+  } else {
+    lines.push('This is the first time they have written in.');
+  }
+  return lines.length ? `\nWhat you know about them:\n${lines.join('\n')}\n` : '';
+}
+
+/**
+ * How the owner has answered before — the only part of this that gets better
+ * on its own.
+ *
+ * Given as EXAMPLES OF VOICE, not as facts to reuse. That distinction is
+ * load-bearing: a past reply may contain a promise made to one person about
+ * one thing, and a model told to "be consistent with these" would happily
+ * repeat it to somebody else. So they are labelled as style, and the rule
+ * about never promising anything sits above them in the brief where it
+ * outranks whatever they contain.
+ *
+ * Newest first and only a handful, because the point is the current voice
+ * rather than the whole history.
+ */
+export function voiceFrom(suggestions = [], limit = 6) {
+  const replies = [];
+  for (const item of suggestions) {
+    for (const reply of item.replies || []) {
+      if (reply.text) replies.push(reply);
+    }
+  }
+  if (!replies.length) return '';
+  const recent = replies.sort((a, b) => (b.at || 0) - (a.at || 0)).slice(0, limit);
+  return `\nHere are replies they have written before. Match the LENGTH, the
+TONE and the way they open and sign off. Do NOT reuse anything specific from
+them — a promise made to one person about one thing is not a promise to
+anybody else:\n\n${recent.map((r) => `---\n${r.text}`).join('\n')}\n---\n`;
 }
 
 /**
@@ -69,6 +143,13 @@ export async function draftReply({
   model = 'claude-sonnet-5',
   ownerName = 'Mark',
   appName = 'Quiztopia',
+  // Notes the owner has written for themselves, from the owner page.
+  house = '',
+  // Who wrote in, and what else they have sent.
+  account = null,
+  history = [],
+  // Every reply the owner has written, for voice.
+  past = [],
   fetchImpl = fetch,
 } = {}) {
   if (!apiKey) throw new Error('No ANTHROPIC_API_KEY is set, so there is nothing to draft with.');
@@ -88,7 +169,7 @@ export async function draftReply({
     suggestion.where ? `, from the ${suggestion.where} tab` : ''}:
 
 "${suggestion.text}"
-${said ? `\n${said}\n` : ''}
+${said ? `\n${said}\n` : ''}${factsFor({ account, history })}${voiceFrom(past)}
 Draft the reply.`;
 
   let res;
@@ -103,7 +184,7 @@ Draft the reply.`;
       body: JSON.stringify({
         model,
         max_tokens: MAX_TOKENS,
-        system: briefFor({ appName, ownerName }),
+        system: briefFor({ appName, ownerName, house }),
         messages: [{ role: 'user', content: prompt }],
         // Same reason the generators disable it: thinking is billed against
         // the same budget as the answer, and a four-sentence reply that spends

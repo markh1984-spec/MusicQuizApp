@@ -54,7 +54,13 @@ export class Suggestions {
   load() {
     try {
       const parsed = JSON.parse(fs.readFileSync(this.filePath, 'utf8'));
-      return { suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [] };
+      return {
+        suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
+        // Notes the owner writes for the drafting model. Kept in this file
+        // rather than on the account, because they belong to the box rather
+        // than to a person, and they back up with it.
+        house: typeof parsed.house === 'string' ? parsed.house : '',
+      };
     } catch (err) {
       if (err.code !== 'ENOENT') {
         // Never overwrite something unreadable — the same rule as the accounts,
@@ -63,7 +69,7 @@ export class Suggestions {
         console.error('[suggestions] could not read the file:', err.message);
         try { fs.renameSync(this.filePath, this.filePath + '.broken'); } catch { /* nothing useful */ }
       }
-      return { suggestions: [] };
+      return { suggestions: [], house: '' };
     }
   }
 
@@ -96,12 +102,37 @@ export class Suggestions {
       return { ok: false, reason: 'unreadable', error: err.message };
     }
     if (!parsed || !Array.isArray(parsed.suggestions)) return { ok: false, reason: 'nothing_in_it' };
-    this.data = { suggestions: parsed.suggestions };
+    this.data = {
+      suggestions: parsed.suggestions,
+      house: typeof parsed.house === 'string' ? parsed.house : '',
+    };
     this.save();
     return { ok: true, suggestions: this.data.suggestions.length };
   }
 
   get all() {
+    return this.data.suggestions;
+  }
+
+  /**
+   * The owner's own notes for the drafting model.
+   *
+   * The point of these being editable is that they are how the drafts get
+   * better: every time one says something wrong, a line goes in here and it
+   * stops saying it. Nothing else in the app teaches it anything.
+   */
+  get house() {
+    return this.data.house || '';
+  }
+
+  setHouse(text) {
+    this.data.house = String(text || '').trim().slice(0, 4000);
+    this.save();
+    return this.data.house;
+  }
+
+  /** Every reply the owner has written, newest first — examples of voice. */
+  everyReply() {
     return this.data.suggestions;
   }
 

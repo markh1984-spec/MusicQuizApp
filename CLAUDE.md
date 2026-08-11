@@ -1671,6 +1671,26 @@ writing (British English, no marketing voice, **never promise a date, a feature
 or a refund**, and ask one specific question rather than guessing). It is NOT
 the generator's `askClaude`: that parses JSON, and this wants prose.
 
+**Three things go into a draft beyond the message, and each answers a
+different question.** None of them is training — there is no learning loop
+anywhere, and it is worth saying that plainly to anybody who asks:
+
+- **The house notes** (`suggestions.house`, edited on the owner page) are what
+  the OWNER has taught it. This is the only way the drafts get corrected: a
+  draft says something wrong, a line goes in, it stops saying it. They are
+  followed where they disagree with the brief — **except** the rule about never
+  promising a date, a feature or a refund, which outranks them, or a careless
+  note would turn the button into a liability. There is a test.
+- **The facts** (`factsFor()`) are who it is talking TO: their tier, how long
+  they have subscribed, whether they have written in before and whether those
+  were answered. Deliberately NOT their email or anything from their invoice
+  book — a reply needs to know who it is addressing, not everything about them.
+- **The voice** (`voiceFrom()`) is how the owner has answered before, newest
+  six. **This is the only part that improves on its own**: every reply sent is
+  another example. Given as STYLE and never as facts to reuse, because a past
+  reply may carry a promise made to one person about one thing and a model told
+  to be consistent would repeat it to somebody else.
+
 **The button only appears when there is a key.** `canDraft` comes back with the
 list, so a missing `ANTHROPIC_API_KEY` is a button that is not there rather than
 one that errors when pressed.
@@ -1995,7 +2015,7 @@ is `'all'` today, so nothing changed for anybody. The account page shows it —
 carries the same **On | Off** switch as the hat in the top right, with a `+`
 where a tier above yours would be.
 
-All on **`MusicQuizApp`**. 626 tests green.
+All on **`MusicQuizApp`**. 635 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on
