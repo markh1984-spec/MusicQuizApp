@@ -181,3 +181,59 @@ test('THE HOST VIEW IGNORES A JOIN CODE — the projector and phones follow it, 
       `${route} no longer checks that a host view belongs to somebody entitled to it`);
   }
 });
+
+/*
+ * A VENUE'S SLIDES ARE THE QUIZMASTER'S, INCLUDING IN THE BACKUP.
+ *
+ * Advert sets were moved to a folder per room when rooms were built, and this
+ * file already records why: one folder meant a second quizmaster tidying what
+ * looked like their own venue list would delete The Crown's set off Mark's
+ * projector. The disk was fixed and the BACKUP was not — every room wrote to
+ * `adverts/<id>.json` in the MAIN repository with no room anywhere in the path.
+ * So Rob saving a set whose id matched one of Mark's overwrote Mark's file,
+ * deleting his deleted Mark's, and Rob's venue's offers and ticket-sales QR
+ * went into a PUBLIC repo where git history is forever.
+ *
+ * Found by an audit rather than by anybody hitting it, because there is no
+ * second quizmaster yet — which is exactly how long it would have survived.
+ */
+test('an advert backup carries the room, and only the house keeps the flat path', () => {
+  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const at = server.indexOf('function advertBackup(');
+  assert.ok(at > 0, 'the advert backup path has moved');
+  const body = server.slice(at, at + 700);
+
+  assert.match(body, /room\.id === HOUSE/, 'the advert backup no longer tells the house apart from anybody else');
+  assert.match(body, /adverts\/\$\{room\.id\}\//, 'a room is not in the advert backup path — two quizmasters would share one file');
+  // And not the public repository, which is where the house's deliberately go.
+  assert.match(body, /'packs'/, "a quizmaster's venue slides are no longer going to the packs repository");
+
+  // The save and the delete both have to use it, or one half still crosses.
+  for (const fn of ['async function backUpAdverts(', 'async function deleteAdvertBackup(']) {
+    const fnAt = server.indexOf(fn);
+    assert.ok(fnAt > 0, `${fn} has moved`);
+    assert.match(server.slice(fnAt, fnAt + 500), /advertBackup\(room, id\)/, `${fn} no longer asks where this room's adverts go`);
+  }
+});
+
+/*
+ * A JOIN CODE MUST NOT CHANGE UNDER A PRINTED QR.
+ *
+ * The codes live in `data/`, which on a host with no permanent disk is empty
+ * again after every deploy — so an additional quizmaster's four letters were
+ * silently reissued on every push. It could sit there unnoticed precisely
+ * because the house room has no code at all: Mark's own printed card was
+ * always safe, and the only person it would have broken is the second login.
+ */
+test('join codes are kept, and restored before anybody scans anything', () => {
+  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  assert.match(server, /onCodes:[\s\S]{0,200}backUpCodes/, 'nothing backs the join codes up any more');
+  assert.match(server, /rooms\.restoreCodes\(/, 'the join codes are never read back');
+
+  // At BOOT rather than lazily: a phone scanning a printed QR is often the
+  // first thing to touch a room after a restart, and by then it is too late.
+  const boot = server.indexOf('async function restoreFromBackup(');
+  assert.ok(boot > 0);
+  assert.ok(server.indexOf('rooms.restoreCodes(', boot) > 0 && server.indexOf('rooms.restoreCodes(', boot) < boot + 4000,
+    'the join codes are no longer restored at boot');
+});

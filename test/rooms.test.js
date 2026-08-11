@@ -298,3 +298,29 @@ test('a room says when a night has been archived, so it can be backed up', () =>
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('a restored join code is the SAME code, and a disk with codes on it wins', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rooms-'));
+  try {
+    const config = { ...appConfig, dataDir: dir };
+    const paths = { state: path.join(dir, 'state.json'), photos: path.join(dir, 'photos') };
+    const kept = [];
+    const rooms = new Rooms({ config, paths, onPush: () => {}, onCodes: (s) => kept.push(s) });
+
+    const code = rooms.codeFor('acct-rob');
+    assert.match(code, /^[0-9A-Z]{4,8}$/);
+    assert.ok(kept.length, 'nothing was told the code had been minted');
+
+    // A fresh server, no disk — the printed QR still has to work.
+    fs.rmSync(path.join(dir, 'room-codes.json'), { force: true });
+    const after = new Rooms({ config, paths, onPush: () => {} });
+    assert.equal(after.restoreCodes(kept[kept.length - 1]).ok, true);
+    assert.equal(after.codeFor('acct-rob'), code, 'a deploy reissued a code that is already on a printed card');
+
+    // …and a disk that already has codes on it is ahead of any backup.
+    assert.equal(after.restoreCodes(JSON.stringify({ 'acct-rob': 'ZZZZ' })).reason, 'already_have_some');
+    assert.equal(after.codeFor('acct-rob'), code);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

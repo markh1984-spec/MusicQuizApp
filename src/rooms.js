@@ -166,11 +166,23 @@ export class Rooms {
    * @param {function(Room): void} opts.onPush
    * @param {function(): number} [opts.now]
    */
-  constructor({ config, paths, onPush, onArchive = () => {}, now = () => Date.now() }) {
+  constructor({ config, paths, onPush, onArchive = () => {}, onCodes = () => {}, now = () => Date.now() }) {
     this.config = config;
     this.paths = paths;
     this.onPush = onPush;
     this.onArchive = onArchive;
+    /*
+     * Told when a join code is minted, so it can be kept.
+     *
+     * **A code that changes is a printed QR that stops working.** They live in
+     * `data/`, which is empty again after every deploy, so a second
+     * quizmaster's four-letter code was silently reissued on every push — and
+     * nobody would have found out until Rob's card sent a room to a game that
+     * does not exist. Mark's own is safe and always was, because the house room
+     * deliberately has no code, which is exactly why this could sit here
+     * unnoticed.
+     */
+    this.onCodes = onCodes;
     this.now = now;
     this.rooms = new Map();
     this.codesFile = path.join(config.dataDir, 'room-codes.json');
@@ -202,6 +214,45 @@ export class Rooms {
     } catch (err) {
       console.error('[rooms] could not save the join codes:', err.message);
     }
+    try {
+      this.onCodes(JSON.stringify(this.codes, null, 2) + '\n');
+    } catch (err) {
+      console.error('[rooms] could not back up the join codes:', err.message);
+    }
+  }
+
+  /**
+   * Put the codes back, and only into an empty book.
+   *
+   * The same rule as everything else: a disk that already has codes on it is
+   * ahead of any backup, and overwriting one would change a code under a room
+   * that is already scanning it — the one failure this whole feature cannot
+   * have.
+   */
+  restoreCodes(serialised) {
+    if (Object.keys(this.codes).length) return { ok: false, reason: 'already_have_some' };
+    let parsed;
+    try {
+      parsed = JSON.parse(String(serialised));
+    } catch (err) {
+      return { ok: false, reason: 'unreadable', error: err.message };
+    }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return { ok: false, reason: 'nothing_in_it' };
+    const codes = {};
+    for (const [roomId, code] of Object.entries(parsed)) {
+      const tidy = tidyCode(code);
+      if (roomId && tidy) codes[roomId] = tidy;
+    }
+    this.codes = codes;
+    // Written straight to disk rather than through saveCodes, which would push
+    // the backup we have just read back out again.
+    try {
+      fs.mkdirSync(this.config.dataDir, { recursive: true });
+      fs.writeFileSync(this.codesFile, JSON.stringify(this.codes, null, 2), 'utf8');
+    } catch (err) {
+      console.error('[rooms] could not write the restored join codes:', err.message);
+    }
+    return { ok: true, codes: Object.keys(codes).length };
   }
 
   codeFor(roomId) {

@@ -26,7 +26,7 @@ import { fullLibrary, listArchive, loadArchived, serialiseArchive, restoreArchiv
 import { generateBingoPack } from './src/generate-bingo.js';
 import { generateQuizPack, buildIntroPlaylists, roundPlan, TOPICAL_ROUNDS, TOPICAL_DAYS, topicalNaming } from './src/generate-quiz.js';
 import { importBingoPack } from './src/import-bingo.js';
-import { listAdvertPacks, loadAdvertPack, saveAdvertPack, deleteAdvertPack, validateAdvertPack, normaliseAdvertPack } from './src/adverts.js';
+import { listAdvertPacks, loadAdvertPack, saveAdvertPack, deleteAdvertPack, validateAdvertPack, normaliseAdvertPack, safeAdvertFile } from './src/adverts.js';
 import { generateImages, imageStatus, imageJobs, imagePlan, openaiConfigured } from './src/generate-images.js';
 import { STYLES, findStyle, QUALITIES, DEFAULT_QUALITY } from './src/portraits.js';
 import { recentTracks, forgetAll } from './src/history.js';
@@ -92,6 +92,9 @@ const rooms = new Rooms({
   // A night has just been filed. Keep it, or the record of somebody's gigs
   // lasts exactly until the next deploy. Never awaited — see backUpArchive.
   onArchive: (room) => { backUpArchive(room).catch(() => {}); },
+  // A join code has been minted. Keep it, or a quizmaster's printed QR sends a
+  // room to a game that does not exist after the next deploy.
+  onCodes: (serialised) => { backUpCodes(serialised).catch(() => {}); },
 });
 rooms.get(HOUSE);
 
@@ -1247,6 +1250,9 @@ async function handleGet(req, res, url, route) {
     await ensureOwnPacksRestored(libRoom);
     // And their past nights, for the same reason and by the same rule.
     await ensureArchiveRestored(libRoom);
+    // And their venue slides, which live in the packs repository under their
+    // own room — the house's are in the main repo and arrive with the deploy.
+    await ensureAdvertsRestored(libRoom);
     const everything = fullLibrary(config, libRoom.id, listOwn(libRoom.paths));
     // The console sees the whole catalogue: theirs to play, the rest to buy.
     // Everything they do not hold comes back stripped — see withShop.
@@ -1839,6 +1845,107 @@ async function ensureArchiveRestored(room) {
   }
 }
 
+/*
+ * ---- A venue's slides, and the backup that was still shared
+ *
+ * **This is the loud one, and it was live.** Advert sets were moved to a folder
+ * per room when rooms were built, and CLAUDE.md records why: one folder meant a
+ * second quizmaster tidying what looked like their own venue list would delete
+ * The Crown's set off Mark's projector. The DISK was fixed. **The BACKUP was
+ * not** — every room's set was written to `adverts/<id>.json` in the MAIN repo,
+ * with no room anywhere in the path. So the moment Rob saved a set whose id
+ * matched one of Mark's:
+ *
+ *   - it overwrote Mark's file in the repository,
+ *   - deleting his deleted Mark's,
+ *   - and Rob's venue's offers and their ticket-sales QR went into a PUBLIC
+ *     repository, where git history is forever.
+ *
+ * The house keeps `adverts/<id>.json` in the main repo, deliberately: those are
+ * Mark's, they are committed on purpose (see the note in `.gitignore`), and the
+ * live app builds from git. Everybody else goes to the PACKS repository under
+ * their own room — the same boundary as their own quizzes, for the same reason.
+ * Not the owner's private repo, which holds the owner's business records, and
+ * obviously not the public one.
+ */
+function advertBackup(room, id) {
+  const file = safeAdvertFile(id);
+  return room.id === HOUSE
+    ? { path: `adverts/${file}`, which: 'app', ready: githubConfigured() }
+    : { path: `adverts/${room.id}/${file}`, which: 'packs', ready: packsRepoConfigured() };
+}
+
+async function backUpAdverts(room, id, contents) {
+  const { path: at, which, ready } = advertBackup(room, id);
+  if (!ready) {
+    return { ok: false, error: room.id === HOUSE ? 'GitHub backup is not set up' : 'no packs repository set up' };
+  }
+  try {
+    return await putFile(at, contents, `Adverts: ${id}`, which);
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+async function deleteAdvertBackup(room, id) {
+  const { path: at, which, ready } = advertBackup(room, id);
+  if (!ready) return { ok: false };
+  try {
+    return await deleteFile(at, `Delete adverts: ${id}`, which);
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+/**
+ * Bring one room's venue slides back, once per boot.
+ *
+ * Only the additional rooms: the house's live in the main repo and arrive with
+ * the deploy, exactly as they always have. Only into an EMPTY folder, same rule
+ * as everything else, and awaited where the console reads them so a quizmaster
+ * is never shown an empty venue list that looks like lost work.
+ */
+const advertsRestored = new Set();
+async function ensureAdvertsRestored(room) {
+  if (room.id === HOUSE || advertsRestored.has(room.id) || !packsRepoConfigured()) return;
+  advertsRestored.add(room.id);
+  if (listAdvertPacks(room.paths.adverts).length) return;   // disk wins, always
+  try {
+    const files = await listDir(`adverts/${room.id}`, 'packs');
+    for (const file of files) {
+      if (!file.name.endsWith('.json')) continue;
+      const body = await getFile(file.path, 'packs');
+      if (!body) continue;
+      fs.mkdirSync(room.paths.adverts, { recursive: true });
+      fs.writeFileSync(path.join(room.paths.adverts, safeAdvertFile(file.name)), body);
+    }
+    if (files.length) console.log(`[adverts] restored ${files.length} venue set(s) for room ${room.id}`);
+  } catch (err) {
+    console.warn(`[adverts] could not restore ${room.id}:`, err.message);
+  }
+}
+
+/**
+ * Keep the join codes.
+ *
+ * **A code that changes is a printed QR that stops working**, and they lived in
+ * `data/` with no backup at all — so every deploy silently reissued every
+ * additional quizmaster's four letters. It could sit there unnoticed precisely
+ * because the house room has no code: Mark's own card was always safe, and the
+ * only person it broke was the second login, which nobody has yet.
+ *
+ * The private repo rather than the packs one: this is a mapping the OWNER
+ * administers, like the accounts book it is keyed by, not somebody's own work.
+ */
+async function backUpCodes(serialised) {
+  if (!privateRepoConfigured()) return { ok: false, error: 'no private repo set up' };
+  try {
+    return await putFile('room-codes.json', serialised, 'Update join codes', 'private');
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
 /**
  * Back up the accounts.
  *
@@ -1920,6 +2027,20 @@ async function restoreFromBackup() {
   // And the house's past nights. Every other room's comes back the first time
   // that quizmaster opens their console, for the same lazy-rooms reason.
   await ensureArchiveRestored(rooms.get(HOUSE));
+
+  /*
+   * The join codes, before anybody's phone arrives.
+   *
+   * This one has to be at BOOT rather than lazily, and that is the whole point:
+   * a phone scanning a printed QR is often the first thing to touch a room
+   * after a restart, and by then it is too late to discover the code should
+   * have been something else.
+   */
+  const restoredCodes = await getFile('room-codes.json', 'private').catch(() => null);
+  if (restoredCodes) {
+    const result = rooms.restoreCodes(restoredCodes.toString('utf8'));
+    if (result.ok) console.log(`[rooms] restored ${result.codes} join code(s) from the private repository`);
+  }
 
   /*
    * Play counts, and the same rule as everything else: only into an empty
@@ -3464,24 +3585,25 @@ async function handleWrite(req, res, url, route) {
    */
   if (route.startsWith('/api/advert/') && (req.method === 'PUT' || req.method === 'DELETE')) {
     const id = decodeURIComponent(route.slice('/api/advert/'.length));
+    const advertRoom = roomForHost(req, url);
     if (req.method === 'DELETE') {
       try {
-        deleteAdvertPack(roomForHost(req, url).paths.adverts, id);
+        deleteAdvertPack(advertRoom.paths.adverts, id);
       } catch (err) {
         return sendJson(res, 404, { error: err.message }), true;
       }
-      if (githubConfigured()) await deleteFile(`adverts/${id}.json`, `Delete adverts: ${id}`);
+      await deleteAdvertBackup(advertRoom, id);
       return sendJson(res, 200, { ok: true }), true;
     }
 
     const body = await readJson(req, 512 * 1024);
     const problems = validateAdvertPack(body);
     if (problems.length) return sendJson(res, 400, { error: 'Advert set is not valid', problems }), true;
-    saveAdvertPack(roomForHost(req, url).paths.adverts, id, body);
-    const backup = await backUp(
-      `adverts/${id}.json`,
+    saveAdvertPack(advertRoom.paths.adverts, id, body);
+    const backup = await backUpAdverts(
+      advertRoom,
+      id,
       JSON.stringify(normaliseAdvertPack(body, id), null, 2) + '\n',
-      `Adverts: ${body.title || id}`,
     );
     return sendJson(res, 200, { ok: true, backedUp: backup.ok, backupError: backup.error }), true;
   }
