@@ -1675,6 +1675,14 @@ the generator's `askClaude`: that parses JSON, and this wants prose.
 list, so a missing `ANTHROPIC_API_KEY` is a button that is not there rather than
 one that errors when pressed.
 
+**A reply says whether it has been OPENED.** `markSeen()` stamps a reply the
+first time that quizmaster's console draws their own threads — so the label is
+"opened", never "read", because their console rendering it is all any read
+receipt has ever meant. Only ever fills a blank: the FIRST time is the useful
+fact, and rewriting it on every page load would turn a receipt into a "they
+were looking a second ago" ticker. The owner refreshing their own inbox marks
+nothing, and a second reply is unopened again even though the first was seen.
+
 **The quizmaster sees their own thread and the replies to it.** Without that
 the box is one-way — you send something into the dark and never learn whether
 it landed, which is how a feedback route stops being used after the second time.
@@ -1987,7 +1995,7 @@ is `'all'` today, so nothing changed for anybody. The account page shows it —
 carries the same **On | Off** switch as the hat in the top right, with a `+`
 where a tier above yours would be.
 
-All on **`MusicQuizApp`**. 622 tests green.
+All on **`MusicQuizApp`**. 626 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on

@@ -185,3 +185,65 @@ test('the draft call does not pay for thinking it does not need', async () => {
   await draftReply({ suggestion: { text: 'x' }, apiKey: 'stub', fetchImpl });
   assert.deepEqual(body.thinking, { type: 'disabled' });
 });
+
+// ------------------------------------------------------- has it been seen
+
+/*
+ * "Opened", not "read" — it means their console drew the thread, which is all
+ * any read receipt has ever meant. Worth being honest about on the owner's
+ * side rather than dressing up as more than it is.
+ */
+test('a reply starts unopened and is stamped when their console draws it', () => {
+  let clock = 1000;
+  const s = box(() => clock);
+  const { suggestion } = s.add({ text: 'A thing', byId: 'acct-rob' });
+  s.reply(suggestion.id, 'An answer', { by: 'Mark' });
+  assert.equal(s.find(suggestion.id).replies[0].seenAt, null);
+
+  clock = 5000;
+  assert.equal(s.markSeen('acct-rob'), 1);
+  assert.equal(s.find(suggestion.id).replies[0].seenAt, 5000);
+});
+
+/*
+ * The FIRST time it was seen is the useful fact. Rewriting it on every page
+ * load would turn a read receipt into a "they were looking a second ago"
+ * ticker, which answers a different and less useful question.
+ */
+test('being seen again does not move the timestamp', () => {
+  let clock = 1000;
+  const s = box(() => clock);
+  const { suggestion } = s.add({ text: 'A thing', byId: 'acct-rob' });
+  s.reply(suggestion.id, 'An answer', { by: 'Mark' });
+  clock = 5000;
+  s.markSeen('acct-rob');
+  clock = 9000;
+  assert.equal(s.markSeen('acct-rob'), 0, 'it stamped an already-seen reply again');
+  assert.equal(s.find(suggestion.id).replies[0].seenAt, 5000);
+});
+
+test('opening your own threads never marks somebody else’s reply as seen', () => {
+  const s = box();
+  const rob = s.add({ text: 'Rob’s', byId: 'acct-rob' }).suggestion;
+  const james = s.add({ text: 'James’s', byId: 'acct-james' }).suggestion;
+  s.reply(rob.id, 'To Rob', { by: 'Mark' });
+  s.reply(james.id, 'To James', { by: 'Mark' });
+
+  s.markSeen('acct-rob');
+  assert.ok(s.find(rob.id).replies[0].seenAt);
+  assert.equal(s.find(james.id).replies[0].seenAt, null,
+    "Rob opening his thread marked James's reply as seen");
+});
+
+test('a second reply is unopened again, even though the first was seen', () => {
+  let clock = 1000;
+  const s = box(() => clock);
+  const { suggestion } = s.add({ text: 'A thing', byId: 'acct-rob' });
+  s.reply(suggestion.id, 'First', { by: 'Mark' });
+  s.markSeen('acct-rob');
+  s.reply(suggestion.id, 'Second', { by: 'Mark' });
+
+  const [first, second] = s.find(suggestion.id).replies;
+  assert.ok(first.seenAt, 'the first lost its stamp');
+  assert.equal(second.seenAt, null, 'a brand new reply was born already seen');
+});

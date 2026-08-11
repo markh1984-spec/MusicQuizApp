@@ -210,7 +210,11 @@ function suggestionsPanel() {
         </div>
         <div class="sugg-said">${esc(s.text)}</div>
         ${(s.replies || []).map((r) => `
-          <div class="sugg-reply"><span class="tiny">${esc(r.by || 'You')} replied ${esc(when(r.at))}</span>
+          <div class="sugg-reply">
+            <span class="tiny">${esc(r.by || 'You')} replied ${esc(when(r.at))}
+              · <span class="seen ${r.seenAt ? 'yes' : 'no'}">${r.seenAt
+                ? `opened ${esc(when(r.seenAt))}`
+                : 'not opened yet'}</span></span>
             <div>${esc(r.text)}</div></div>`).join('')}
         <div class="sugg-acts">
           ${canDraft ? '<button class="minor draft">Draft a reply</button>' : ''}

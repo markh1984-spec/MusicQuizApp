@@ -3345,3 +3345,9 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   padding: 10px 0; border-top: 1px solid var(--panel-line);
   font-size: 14px; line-height: 1.5;
 }
+
+/* Whether they have opened a reply. Deliberately "opened" rather than "read":
+   it means their console drew it, which is all any read receipt has ever
+   meant, and overstating it would be the one thing on this page that lies. */
+.seen.yes { color: var(--good); }
+.seen.no { color: var(--ink-dim); }

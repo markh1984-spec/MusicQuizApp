@@ -176,6 +176,8 @@ export class Suggestions {
       at: this.now(),
       by: String(by || '').slice(0, 120),
       text: words,
+      // Filled in when their console next draws this thread. See markSeen.
+      seenAt: null,
     }];
     if (clear) {
       item.status = 'done';
@@ -183,6 +185,30 @@ export class Suggestions {
     }
     this.save();
     return { ok: true, suggestion: item };
+  }
+
+  /**
+   * They have now had a chance to read what came back.
+   *
+   * Called when their console draws their own threads, so it means "their
+   * console opened it" rather than "they read it" — which is all any read
+   * receipt has ever meant, and is worth labelling honestly on the owner's
+   * side rather than dressing up as more than it is.
+   *
+   * Only ever fills a blank: the FIRST time it was seen is the useful fact,
+   * and rewriting it on every page load would turn a read receipt into a
+   * "they were looking a second ago" ticker, which answers a different and
+   * less useful question.
+   */
+  markSeen(accountId, at = this.now()) {
+    let marked = 0;
+    for (const item of this.forAccount(accountId)) {
+      for (const reply of item.replies || []) {
+        if (!reply.seenAt) { reply.seenAt = at; marked++; }
+      }
+    }
+    if (marked) this.save();
+    return marked;
   }
 
   /** Everything one account has sent, with whatever came back. */

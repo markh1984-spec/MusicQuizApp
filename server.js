@@ -1175,7 +1175,17 @@ async function handleGet(req, res, url, route) {
   if (route === '/api/suggestions/mine' && req.method === 'GET') {
     const me = whoIs(req, url);
     if (!me) return sendJson(res, 401, { error: 'Sign in first' }), true;
-    return sendJson(res, 200, { suggestions: suggestions.forAccount(me.id) }), true;
+    const mine = suggestions.forAccount(me.id);
+    /*
+     * Drawing it counts as opening it.
+     *
+     * Marked AFTER the payload is built, so the reply they are being shown
+     * right now is the one that gets stamped — and only if a real account is
+     * asking, since the owner reading their own inbox must not mark somebody
+     * else's reply as seen.
+     */
+    if (!me.actingAs && suggestions.markSeen(me.id)) backUpSuggestions();
+    return sendJson(res, 200, { suggestions: mine }), true;
   }
 
   if (route === '/api/suggestions' && req.method === 'GET') {
