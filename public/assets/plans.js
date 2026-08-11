@@ -448,7 +448,10 @@ export const FEATURE_META = {
   [FEATURES.ADVERTS]: { label: 'Advert slides', blurb: 'Sell the venue a slide between rounds — their offer, or a QR to tickets. One set per venue, reused every week.' },
   [FEATURES.PHOTOS]: { label: 'Photos from the room', blurb: 'The room sends pictures straight to the big screen.' },
   [FEATURES.INVOICES]: { label: 'Invoicing', blurb: 'Bill for a night before you have left the car park.' },
-  [FEATURES.CALENDAR]: { label: 'Your calendar', blurb: 'The nights you have booked in.' },
+  // Not built. It is on the ladder and drawn on the account page, so it has to
+  // say so — the same honesty rule streaming gets. A rung that lists something
+  // which does not exist is one nobody trusts the rest of.
+  [FEATURES.CALENDAR]: { label: 'Your calendar', blurb: 'The nights you have booked in. Not built yet.' },
   [FEATURES.MARKETING]: { label: 'Marketing', blurb: 'Not built yet.' },
   [FEATURES.REQUEST_PACK]: { label: 'Ask for a pack', blurb: 'Nothing in the catalogue for the night you have booked? Ask, and it gets written. One request at a time.' },
   [FEATURES.STREAM]: { label: 'Online quizzes', blurb: 'Run a night for a room that is not in the room. Not built yet.' },

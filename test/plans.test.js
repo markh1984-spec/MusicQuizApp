@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import {
   FEATURES, TIERS, FEATURE_TIER, DEFAULT_TIER,
   can, featuresFor, activeFeatures, whyNot, entitlements,
-  tierFor, tierRank, featuresAt, ladderFor,
+  tierFor, tierRank, featuresAt, ladderFor, FEATURE_META,
 } from '../public/assets/plans.js';
 
 const owner = { role: 'owner' };
@@ -368,5 +368,31 @@ test('there is no tier above the top, so a preview can only subtract', () => {
     for (const f of featuresAt(tier.id)) {
       assert.ok(everything.includes(f), `${tier.id} has ${f}, which the top of the ladder does not`);
     }
+  }
+});
+
+/*
+ * **Anything on the ladder that does not exist yet has to say so.**
+ *
+ * The account page draws a row per feature with its blurb, and a rung that
+ * lists something which is not built is a rung nobody trusts the rest of. This
+ * was already the rule for streaming and had been missed for the calendar,
+ * which advertised "the nights you have booked in" on a feature that exists
+ * only as a name.
+ *
+ * When one of these gets built, delete it from the list AND drop "Not built
+ * yet" from its blurb in the same breath.
+ */
+test('a feature that is not built says so on its own card', () => {
+  const NOT_BUILT = [FEATURES.CALENDAR, FEATURES.MARKETING, FEATURES.STREAM];
+  for (const f of NOT_BUILT) {
+    assert.match(FEATURE_META[f].blurb, /not built yet/i,
+      `${f} is on the ladder as though it works`);
+  }
+  // And the other way round: nothing that IS built should be claiming it is not.
+  for (const [f, meta] of Object.entries(FEATURE_META)) {
+    if (NOT_BUILT.includes(f)) continue;
+    assert.doesNotMatch(meta.blurb, /not built yet/i,
+      `${f} says it is not built — if that is now true, add it to the list above`);
   }
 });
