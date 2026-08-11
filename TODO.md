@@ -75,11 +75,26 @@ Note what this implies and is NOT built: a signup flow, a payment processor
 and a public marketing page. See "Pay-per-pack is deliberately NOT built" in
 CLAUDE.md — the data model is ready, the money is not.
 
+### 4. An FAQ, so the app can stay short
+
+Every blurb in the app is now one line — "Invoicing: bill a venue before you
+leave the car park" — because fourteen of them at two sentences each is a wall
+nobody reads, and a ladder nobody reads is a ladder that sells nothing.
+
+That only works if the detail lives somewhere. It does not yet. An FAQ is
+where "what happens to my packs if I cancel", "can you read my quizzes",
+"what does a pack cost and why" and "what is a night" get answered properly —
+and it is the same content the sales site needs, so write it once.
+
+Note what it is NOT: a manual. The app should not need one. It is the page
+somebody reads before they pay, and the page they are pointed at when a
+one-line blurb was not enough.
+
 ### Where to start
 
-The words, then the night object, then the page. In that order, because each
-one is the input to the next and doing them the other way round means writing
-the page twice.
+The words, then the night object, then the page and the FAQ together. In that
+order, because each one is the input to the next and doing them the other way
+round means writing the page twice.
 
 ---
 

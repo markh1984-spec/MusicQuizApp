@@ -455,9 +455,23 @@ const TABS = [
     render: () => helpSection(),
   },
   {
+    id: 'settings',
+    label: 'Settings',
+    blurb: 'Your colours, and which tabs you want on screen.',
+    /*
+     * Split from My account, because they answer different questions.
+     *
+     * My account is what you HAVE — your tier, your room, your library, and
+     * it is a page you read. Settings is what you have switched ON, and it is
+     * a page you operate. One tab holding both meant scrolling past six rungs
+     * of a ladder to change a colour.
+     */
+    render: () => settingsSection(),
+  },
+  {
     id: 'account',
     label: 'My account',
-    blurb: 'Your name, your colours, what you are on, and everything else in one place.',
+    blurb: 'Who you are, what you are on, and your room.',
     // Always here, whatever is switched off — it is where things are switched
     // back on, so it can never be one of the things that goes away.
     render: () => accountSection(),
@@ -607,7 +621,6 @@ function showActiveTab() {
  */
 function helpSection() {
   const wrap = document.createDocumentFragment();
-  wrap.appendChild(roomPanel());
   wrap.appendChild(supportPanel());
   wrap.appendChild(supportLogPanel());
   wrap.appendChild(suggestionPanel());
@@ -635,10 +648,9 @@ function roomPanel() {
       <h3>Your room</h3>
       ${code ? `
         <div class="room-code">${esc(code)}</div>
-        <div class="tiny">Your four letters, and they do not change — not on a deploy, not between nights.
-          Every quiz and every bingo game you run uses them.</div>
-        <div class="tiny" style="margin-top:8px">Players go to <b>${esc(play)}</b>. The QR on your big screen
-          already has it built in, so nobody has to type anything.</div>
+        <div class="tiny">Yours for good — every quiz and bingo game you run uses them.</div>
+        <div class="tiny" style="margin-top:8px">Players go to <b>${esc(play)}</b>, or scan the QR on your
+          big screen.</div>
       ` : `
         <div class="tiny"><b>You are the house room</b>, which has no code — players go to
           <b>${esc(play)}</b> with nothing after it. That is deliberate: it is what every card printed
@@ -648,18 +660,43 @@ function roomPanel() {
   return el;
 }
 
+/**
+ * The things you OPERATE: your two colours, and which features are on.
+ *
+ * The ladder lives here rather than on My account because every rung of it is
+ * a row of switches. What tier you are on is a fact and belongs with the other
+ * facts; what you have switched off is a preference, and preferences are a
+ * different page.
+ */
+function settingsSection() {
+  const wrap = document.createDocumentFragment();
+  wrap.appendChild(schemePanel()[0] || node('<span></span>'));
+  /*
+   * TOP RUNG FIRST — Gold, then Silver, then Bronze.
+   *
+   * Ladder order puts Bronze at the top, which is eleven rows of the basics
+   * before you reach the two or three things that are actually particular to
+   * what you pay for. Reversed, the rungs that distinguish a tier are the
+   * first thing on the page and the long list of fundamentals is where you
+   * scroll to, which is the right way round both for somebody managing their
+   * own switches and for somebody deciding whether to climb.
+   *
+   * `ladderFor()` still returns ladder order, because everything else that
+   * reads it — the arithmetic, the tests — depends on rank ascending. This is
+   * a display decision and it is made here.
+   */
+  for (const tier of ladderPanels().reverse()) wrap.appendChild(tier);
+  return wrap;
+}
+
 function accountSection() {
   const wrap = document.createDocumentFragment();
   // Who you are and what you are on, in one card at the top. They were two,
   // one under the other, both three short rows — which is two headings and two
   // borders around what is plainly one answer to "what is my account".
   wrap.appendChild(youPanel());
-  wrap.appendChild(schemePanel()[0] || node('<span></span>'));
+  wrap.appendChild(roomPanel());
   wrap.appendChild(libraryPanel());
-  // The support door and the suggestion box moved to Help. They were the
-  // bottom two panels of a page about your name and your colours, which is
-  // not where anybody looks when something has gone wrong.
-  for (const tier of ladderPanels()) wrap.appendChild(tier);
   wrap.appendChild(linksPanel());
   return wrap;
 }
@@ -1194,12 +1231,10 @@ function youPanel() {
         <div><div class="tiny">Subscription</div>
           <div class="acct-val ${bad ? 'bad' : 'good'}">${esc(status.replace('_', ' '))}</div></div>
       </div>
-      <div class="tiny acct-note">The big screen and every phone in your room say your name. It is your
-        first name and the app's, so it matches how you introduce yourself.</div>
+      <div class="tiny acct-note">Your projector name is your first name and the app's, so it matches
+        how you introduce yourself.</div>
       ${bad ? `<div class="tiny acct-note bad"><b>A lapsed subscription never interrupts a night.</b>
-        Everything a running game touches keeps working — it is starting a NEW one that stops.</div>` : ''}
-      <div class="tiny acct-note">Everything on your tier and below is yours. Switch off anything you
-        do not use and it goes away — nothing is cancelled and you can put it back any time.</div>
+        It is starting a NEW one that stops.</div>` : ''}
       ${me && !me.bootstrap ? '<div class="row acct-actions"><button class="minor" id="acctPw">Change your password</button></div>' : ''}
     </div>`);
 
@@ -1279,8 +1314,7 @@ function linksPanel() {
         ${me && me.role === 'owner' ? '<a class="minor" href="/owner">The owner console</a>' : ''}
         ${me && !me.bootstrap ? '<button class="minor" id="acctOut">Sign out</button>' : ''}
       </div>
-      ${code && canRun('quiz') ? `<div class="tiny acct-note">Your players use <b>${esc(play)}</b> — your own code, not
-        anybody else's. The QR on your big screen already has it built in.</div>` : ''}
+
     </div>`);
 
   el.querySelector('#acctOut')?.addEventListener('click', async () => {
@@ -1318,10 +1352,10 @@ function schemePanel() {
   const el = node(`
     <div class="panel scheme-panel">
       <h3>Your colours</h3>
-      <div class="tiny">The two colours behind your logo, your buttons and your big screen.
+      <div class="tiny">Behind your logo, your buttons and your big screen.
         ${keyOnly
-          ? '<b>Sign in to pick one</b> — the host key is a way in rather than an account, so there is nothing to save it against.'
-          : 'Changes the projector and every phone in your room straight away. A themed night still wins over it.'}</div>
+          ? '<b>Sign in to pick one</b> — the host key is a way in, not an account.'
+          : 'A themed night still wins over them.'}</div>
       <div class="scheme-row">
         ${list.map((s) => `
           <button type="button" class="scheme-swatch ${s.id === mine ? 'live' : ''}"

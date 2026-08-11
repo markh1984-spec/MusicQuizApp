@@ -198,8 +198,8 @@ export const TIERS = [
     plan: 'Basic',
     rank: 0,
     pence: 1000,
-    blurb: 'The whole machine, and eight packs to start with. Buy more as you need them.',
-    content: { label: 'Eight packs to start', blurb: 'Four quizzes and four bingo games that work in any room. Buy any of the others at £3.' },
+    blurb: 'The whole app, and eight packs to start.',
+    content: { label: 'Eight packs to start', blurb: 'Four quizzes and four bingo games. Buy more at £3.' },
   },
   {
     id: 'silver',
@@ -207,8 +207,8 @@ export const TIERS = [
     plan: 'Elite',
     rank: 1,
     pence: 2000,
-    blurb: 'Every pack in the catalogue, and every new one as it is written.',
-    content: { label: 'The whole catalogue', blurb: 'Every pack there is, and every new one as it is written. Nothing left to buy.' },
+    blurb: 'Every pack there is, and every new one free.',
+    content: { label: 'The whole catalogue', blurb: 'The lot, included. Nothing left to buy.' },
   },
   {
     id: 'gold',
@@ -216,8 +216,8 @@ export const TIERS = [
     plan: 'Pro',
     rank: 2,
     pence: 3000,
-    blurb: 'Everything in Silver, plus the week that just went past.',
-    content: { label: 'A topical quiz every week', blurb: 'The month just gone, written up for a pub while it is still news — one of average difficulty and one pitched harder. The one thing nobody can buy once and reuse.' },
+    blurb: 'All of Silver, plus a fresh quiz every week.',
+    content: { label: 'A topical quiz every week', blurb: 'The month just gone, while it is still news.' },
   },
 ];
 
@@ -471,24 +471,35 @@ export const FEATURE_TIER = {
  * it and two copies drift — the same reason the tiers and the looks live in
  * files like this one.
  */
+/*
+ * ONE SHORT LINE EACH, and that is a rule rather than a preference.
+ *
+ * These were two and three sentences, which on a page listing fourteen of them
+ * is a wall nobody reads — so the ladder stopped saying what you get and
+ * started being scrolled past. A blurb has one job: finish the sentence "this
+ * gives me…" in a breath.
+ *
+ * Anything that genuinely needs explaining belongs in an FAQ, not here. If a
+ * line will not fit, the feature needs a better name.
+ */
 export const FEATURE_META = {
-  [FEATURES.QUIZ]: { label: 'Music Quiz', blurb: 'Rounds of twenty seconds a question, fastest fingers win.' },
-  [FEATURES.BINGO]: { label: 'Music Bingo', blurb: 'You play the tracks. Every phone gets its own card.' },
-  [FEATURES.LIBRARY]: { label: 'The pack library', blurb: 'Read and play every quiz and bingo game in the shop.' },
-  [FEATURES.BUY_PACKS]: { label: 'Buying packs', blurb: 'Whole quizzes and whole bingo games from the catalogue.' },
-  [FEATURES.OWN_PACKS]: { label: 'Your own packs', blurb: 'Quizzes and bingo games you write yourself. Nobody else can read them.' },
-  [FEATURES.LOOKS]: { label: 'Seasonal looks', blurb: 'Halloween, Valentine’s, Christmas — a palette and some shapes.' },
-  [FEATURES.ADVERTS]: { label: 'Advert slides', blurb: 'Sell the venue a slide between rounds — their offer, or a QR to tickets. One set per venue, reused every week.' },
-  [FEATURES.PHOTOS]: { label: 'Photos from the room', blurb: 'The room sends pictures straight to the big screen.' },
-  [FEATURES.PAST_GIGS]: { label: 'Past gigs', blurb: 'Every night you have run, the packs you played and the photos from them. Proof of the work, for the next venue.' },
-  [FEATURES.INVOICES]: { label: 'Invoicing', blurb: 'Bill for a night before you have left the car park.' },
+  [FEATURES.QUIZ]: { label: 'Music Quiz', blurb: 'Twenty seconds a question, fastest fingers win.' },
+  [FEATURES.BINGO]: { label: 'Music Bingo', blurb: 'You play the tracks, every phone gets a card.' },
+  [FEATURES.LIBRARY]: { label: 'The pack library', blurb: 'Play anything in your library.' },
+  [FEATURES.BUY_PACKS]: { label: 'Buying packs', blurb: 'Buy any pack in the catalogue, £3 each.' },
+  [FEATURES.OWN_PACKS]: { label: 'Your own packs', blurb: 'Write your own. Nobody else can read them.' },
+  [FEATURES.LOOKS]: { label: 'Seasonal looks', blurb: 'Halloween, Valentine’s, Christmas.' },
+  [FEATURES.ADVERTS]: { label: 'Advert slides', blurb: 'Sell the venue a slide between rounds.' },
+  [FEATURES.PHOTOS]: { label: 'Photos from the room', blurb: 'The room sends pictures to the big screen.' },
+  [FEATURES.PAST_GIGS]: { label: 'Past gigs', blurb: 'Every night you have run. Proof for the next venue.' },
+  [FEATURES.INVOICES]: { label: 'Invoicing', blurb: 'Bill a venue before you leave the car park.' },
   // Not built. It is on the ladder and drawn on the account page, so it has to
   // say so — the same honesty rule streaming gets. A rung that lists something
   // which does not exist is one nobody trusts the rest of.
-  [FEATURES.CALENDAR]: { label: 'Your calendar', blurb: 'The nights you have booked in. Not built yet.' },
+  [FEATURES.CALENDAR]: { label: 'Your calendar', blurb: 'The nights you have booked. Not built yet.' },
   [FEATURES.MARKETING]: { label: 'Marketing', blurb: 'Not built yet.' },
-  [FEATURES.REQUEST_PACK]: { label: 'Ask for a pack', blurb: 'Nothing in the catalogue for the night you have booked? Ask, and it gets written. One request at a time.' },
-  [FEATURES.STREAM]: { label: 'Online quizzes', blurb: 'Run a night for a room that is not in the room. Not built yet.' },
+  [FEATURES.REQUEST_PACK]: { label: 'Ask for a pack', blurb: 'Name a theme, get a quiz written. One a month.' },
+  [FEATURES.STREAM]: { label: 'Online quizzes', blurb: 'Run a night for a room that is not there. Not built yet.' },
 };
 
 /** A tier by id, and its rank. An unknown one is the bottom of the ladder. */
