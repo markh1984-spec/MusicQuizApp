@@ -1650,6 +1650,35 @@ shared-invoice-book mistake again.
 That is the difference between "the editor is confusing" being actionable and
 being a shrug.
 
+**It is an INBOX, not a list.** `suggestionsPanel()` in `owner.js` shows two
+piles — "To deal with" and "Cleared" — and **replying clears it by default**,
+because the point of the list is that it gets shorter. An inbox where answering
+something leaves it sitting in the pile is one you stop trusting to tell you
+what is left, and then you stop reading it. Reopening is one tap.
+
+**Each message is signed with a first name and a short reference** (`#FAMQ`),
+taken from the account id rather than stored. Not secrecy — the owner can see
+email addresses elsewhere — but an inbox reads better as "Rob · #FAMQ" than as
+an address, and a reference can be quoted back at somebody without spelling out
+their email.
+
+**Draft a reply, never send one.** `src/reply-draft.js` asks Claude for three
+or four sentences and puts them in the box; Send is still a separate, deliberate
+press. A reply that goes out unread is the one that goes publicly wrong —
+apologising for something that did not happen, or promising a feature that is
+not being built. The brief carries what the app is and the house rules for
+writing (British English, no marketing voice, **never promise a date, a feature
+or a refund**, and ask one specific question rather than guessing). It is NOT
+the generator's `askClaude`: that parses JSON, and this wants prose.
+
+**The button only appears when there is a key.** `canDraft` comes back with the
+list, so a missing `ANTHROPIC_API_KEY` is a button that is not there rather than
+one that errors when pressed.
+
+**The quizmaster sees their own thread and the replies to it.** Without that
+the box is one-way — you send something into the dark and never learn whether
+it landed, which is how a feedback route stops being used after the second time.
+
 **The routes answer BEFORE the broad `FEATURES.QUIZ` gate**, or the owner would
 get a 403 on their own suggestion box — the trap that has now caught something
 six times. That works because of where they sit in the file, which is fragile,
@@ -1958,7 +1987,7 @@ is `'all'` today, so nothing changed for anybody. The account page shows it —
 carries the same **On | Off** switch as the hat in the top right, with a `+`
 where a tier above yours would be.
 
-All on **`MusicQuizApp`**. 607 tests green.
+All on **`MusicQuizApp`**. 622 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on

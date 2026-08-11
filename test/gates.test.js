@@ -187,13 +187,14 @@ test('the suggestion box answers before the broad quiz gate', () => {
   const gate = server.indexOf('const changesLibrary = changesTheLibrary(');
   assert.ok(gate > 0, 'the broad gate has moved — re-read this test');
 
-  for (const route of ["route === '/api/suggestions' && req.method === 'POST'",
-                       "route.startsWith('/api/suggestions/')"]) {
-    const at = server.indexOf(route);
-    assert.ok(at > 0, `${route} has gone`);
-    assert.ok(at < gate,
-      `${route} now sits after the broad quiz gate — the OWNER will get a 403 on their own suggestion box`);
-  }
+  // The LAST mention rather than the first, so a route added to this group
+  // later is covered without anybody remembering to update the test.
+  const last = server.lastIndexOf("'/api/suggestions", gate + 200_000);
+  const firstAfterGate = server.indexOf("'/api/suggestions", gate);
+  assert.ok(server.indexOf("'/api/suggestions") < gate, 'the suggestion box has moved below the broad gate');
+  assert.equal(firstAfterGate, -1,
+    'a suggestion route now sits after the broad quiz gate — the OWNER will get a 403 on their own inbox');
+  void last;
 });
 
 test('suggestions are not treated as a pack write', () => {

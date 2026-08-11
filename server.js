@@ -42,6 +42,7 @@ import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, canPlayPack } from './public/assets/plans.js';
 import { Suggestions, KINDS } from './src/suggestions.js';
+import { draftReply } from './src/reply-draft.js';
 import { OWNER_ONLY, changesTheLibrary } from './src/gates.js';
 import { brandFor } from './src/branding.js';
 import { findScheme, DEFAULT_SCHEME, SCHEMES } from './public/assets/schemes.js';
@@ -1166,14 +1167,28 @@ async function handleGet(req, res, url, route) {
    * hear from the people who are finding it hardest, who are the least likely
    * to be on the top rung.
    */
+  /*
+   * Their own thread. Without this the box is one-way — you send something into
+   * the dark and never learn whether it landed, which is how a feedback route
+   * stops being used after the second time.
+   */
+  if (route === '/api/suggestions/mine' && req.method === 'GET') {
+    const me = whoIs(req, url);
+    if (!me) return sendJson(res, 401, { error: 'Sign in first' }), true;
+    return sendJson(res, 200, { suggestions: suggestions.forAccount(me.id) }), true;
+  }
+
   if (route === '/api/suggestions' && req.method === 'GET') {
     const me = whoIs(req, url);
     if (!me || (me.role !== 'owner' && !me.bootstrap)) {
       return sendJson(res, 403, { error: 'Owners only.' }), true;
     }
     return sendJson(res, 200, {
-      suggestions: suggestions.all,
+      suggestions: suggestions.all.map((x) => ({ ...x, ref: accountRef(x.byId) })),
       summary: suggestions.summary(),
+      // Whether the Draft button can work at all. Said up front rather than
+      // found out by pressing it and getting an error.
+      canDraft: Boolean(process.env.ANTHROPIC_API_KEY),
     }), true;
   }
 
@@ -1471,6 +1486,26 @@ function backUpReports() {
  * rest of `data/` — these are people's words about their own experience, not
  * something for the public one.
  */
+/**
+ * How a message is signed in the inbox: a first name and a short reference.
+ *
+ * The owner CAN see email addresses elsewhere, so this is not secrecy — it is
+ * that an inbox reads better as "Rob · #ZG5T" than as an address, and the
+ * reference is something you can quote back at somebody without spelling out
+ * their email. Taken from the account id, so it is stable for the life of the
+ * account and needs nothing stored.
+ */
+function accountRef(id) {
+  return String(id || '').replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase();
+}
+
+function firstNameOf(account) {
+  if (!account) return '';
+  const name = String(account.name || '').trim();
+  if (name) return name.split(/\s+/)[0];
+  return String(account.email || '').split('@')[0];
+}
+
 function backUpSuggestions() {
   if (!privateRepoConfigured()) return;
   putFile('suggestions.json', suggestions.serialise(), 'Update the suggestion box', 'private')
@@ -1719,6 +1754,55 @@ async function handleWrite(req, res, url, route) {
     if (!result.ok) return sendJson(res, 400, { error: result.error }), true;
     backUpSuggestions();
     return sendJson(res, 200, { ok: true, suggestion: result.suggestion }), true;
+  }
+
+  /*
+   * Draft a reply, for a human to read and edit. It NEVER sends.
+   *
+   * An AI reply that goes out unread is the one that goes publicly wrong —
+   * apologising for something that did not happen, or promising a feature that
+   * is not being built. This saves the blank page and nothing else.
+   */
+  if (route.startsWith('/api/suggestions/') && route.endsWith('/draft') && req.method === 'POST') {
+    const me = whoIs(req, url);
+    if (!me || (me.role !== 'owner' && !me.bootstrap)) {
+      return sendJson(res, 403, { error: 'Owners only.' }), true;
+    }
+    const id = decodeURIComponent(route.slice('/api/suggestions/'.length, -'/draft'.length));
+    const item = suggestions.find(id);
+    if (!item) return sendJson(res, 404, { error: 'No such suggestion' }), true;
+    try {
+      const text = await draftReply({
+        suggestion: item,
+        apiKey: process.env.ANTHROPIC_API_KEY,
+        ownerName: firstNameOf(accounts.owner) || 'Mark',
+        appName: config.appName,
+      });
+      return sendJson(res, 200, { ok: true, draft: text }), true;
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message }), true;
+    }
+  }
+
+  // Sending it. Stored on the thread and shown to whoever wrote in, and it
+  // clears the item by default — an inbox where answering something leaves it
+  // sitting there is one you stop trusting.
+  if (route.startsWith('/api/suggestions/') && route.endsWith('/reply') && req.method === 'POST') {
+    const me = whoIs(req, url);
+    if (!me || (me.role !== 'owner' && !me.bootstrap)) {
+      return sendJson(res, 403, { error: 'Owners only.' }), true;
+    }
+    const id = decodeURIComponent(route.slice('/api/suggestions/'.length, -'/reply'.length));
+    const body = await readJson(req);
+    const result = suggestions.reply(id, body.text, {
+      by: firstNameOf(accounts.owner) || 'Mark',
+      clear: body.clear !== false,
+    });
+    if (!result.ok) return sendJson(res, 400, { error: result.error }), true;
+    backUpSuggestions();
+    return sendJson(res, 200, {
+      ok: true, suggestions: suggestions.all, summary: suggestions.summary(),
+    }), true;
   }
 
   // Dealt with, reopened, or binned. The owner's, like reading them.

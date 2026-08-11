@@ -654,7 +654,32 @@ function suggestionPanel() {
         <button class="go sugg-send">Send it</button>
         <span class="tiny sugg-said"></span>
       </div>
+      <div class="sugg-mine"></div>
     </div>`);
+
+  /*
+   * What you have sent, and anything that came back.
+   *
+   * Without this the box is one-way: you send something into the dark and
+   * never learn whether it landed, which is how a feedback route stops being
+   * used after the second time. Fetched rather than pushed, because it changes
+   * about once a week and the console holds no live connection.
+   */
+  const mine = el.querySelector('.sugg-mine');
+  fetch(keyed('/api/suggestions/mine')).then((r) => r.json()).then((d) => {
+    const sent = d.suggestions || [];
+    if (!sent.length) return;
+    mine.appendChild(node(`
+      <div class="tiny" style="margin-top:16px"><b>What you have sent</b></div>
+      ${sent.slice(0, 8).map((s) => `
+        <div class="sugg-mine-row">
+          <div>${esc(s.text)}</div>
+          ${(s.replies || []).map((r) => `
+            <div class="sugg-reply"><span class="tiny">${esc(r.by || 'Mark')} replied</span>
+              <div>${esc(r.text)}</div></div>`).join('')
+            || '<div class="tiny">Not answered yet — it is on the list.</div>'}
+        </div>`).join('')}`));
+  }).catch(() => { /* never worth an error on this panel */ });
 
   let kind = 'idea';
   for (const b of el.querySelectorAll('.sugg-kind')) {

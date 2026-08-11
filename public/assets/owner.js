@@ -61,6 +61,10 @@ async function boot() {
 
 let reports = [];
 let suggestions = [];
+let canDraft = false;
+// Which pile you are looking at. Module level so working through the list does
+// not throw you back to the top every time you answer one.
+let inboxShow = 'open';
 
 async function load() {
   const data = await api('/api/owner/accounts');
@@ -75,7 +79,9 @@ async function load() {
   // Never fatal either, and for the same reason: a quizmaster list that will
   // not draw because the suggestion box had a bad moment is a worse outcome.
   try {
-    suggestions = (await api('/api/suggestions')).suggestions || [];
+    const box = await api('/api/suggestions');
+    suggestions = box.suggestions || [];
+    canDraft = Boolean(box.canDraft);
   } catch {
     suggestions = [];
   }
@@ -160,6 +166,8 @@ const SUGG_LABEL = {
 function suggestionsPanel() {
   if (!suggestions.length) return [];
   const open = suggestions.filter((s) => s.status === 'open');
+  const done = suggestions.filter((s) => s.status !== 'open');
+  const shown = inboxShow === 'open' ? open : done;
 
   const when = (at) => {
     const days = Math.floor((Date.now() - at) / 86400000);
@@ -170,28 +178,99 @@ function suggestionsPanel() {
     <div class="game-section">
       <div class="game-head">
         <div>
-          <h2>Suggestion box</h2>
-          <div class="tiny">${open.length} to read${suggestions.length - open.length ? ` · ${suggestions.length - open.length} dealt with` : ''}</div>
+          <h2>Inbox</h2>
+          <div class="tiny">${open.length ? `${open.length} to deal with` : 'Nothing waiting — the list is clear.'}</div>
+        </div>
+        <div class="row">
+          <button class="minor pile ${inboxShow === 'open' ? 'on' : ''}" data-show="open">To deal with (${open.length})</button>
+          <button class="minor pile ${inboxShow === 'done' ? 'on' : ''}" data-show="done">Cleared (${done.length})</button>
         </div>
       </div>
       <div class="suggs"></div>
     </div>`);
 
+  for (const b of el.querySelectorAll('.pile')) {
+    b.addEventListener('click', () => { inboxShow = b.dataset.show; draw({ accounts: subscribers, backupReady: true }); });
+  }
+
   const list = el.querySelector('.suggs');
-  const shown = open.length ? open : suggestions.slice(0, 8);
+  if (!shown.length) {
+    list.appendChild(node(`<div class="tiny">${inboxShow === 'open'
+      ? 'Nothing waiting. Anything they send lands here.'
+      : 'Nothing cleared yet.'}</div>`));
+  }
+
   for (const s of shown) {
     const row = node(`
-      <div class="rep-row${s.status === 'done' ? ' done' : ''}">
-        <div class="rep-main">
-          <div class="tiny"><b>${esc(SUGG_LABEL[s.kind] || s.kind)}</b>${s.where ? ` · from the ${esc(s.where)} tab` : ''}</div>
-          <div class="rep-q">${esc(s.text)}</div>
-          <div class="tiny">${esc(s.by || 'somebody')} · ${esc(when(s.at))}</div>
+      <div class="sugg-item${s.status === 'done' ? ' done' : ''}">
+        <div class="sugg-head">
+          <span class="sugg-kind-tag ${esc(s.kind)}">${esc(SUGG_LABEL[s.kind] || s.kind)}</span>
+          <b>${esc(s.by || 'somebody')}</b>
+          <span class="tiny">#${esc(s.ref || '????')}${s.where ? ` · from the ${esc(s.where)} tab` : ''} · ${esc(when(s.at))}</span>
         </div>
-        <div class="rep-acts">
-          ${s.status === 'open' ? '<button class="minor fixed">Dealt with</button>' : '<button class="minor reopen">Reopen</button>'}
+        <div class="sugg-said">${esc(s.text)}</div>
+        ${(s.replies || []).map((r) => `
+          <div class="sugg-reply"><span class="tiny">${esc(r.by || 'You')} replied ${esc(when(r.at))}</span>
+            <div>${esc(r.text)}</div></div>`).join('')}
+        <div class="sugg-acts">
+          ${canDraft ? '<button class="minor draft">Draft a reply</button>' : ''}
+          <button class="minor write">${(s.replies || []).length ? 'Reply again' : 'Write a reply'}</button>
+          ${s.status === 'open'
+            ? '<button class="minor clear">Clear it without replying</button>'
+            : '<button class="minor reopen">Put it back</button>'}
           <button class="minor danger bin">Bin</button>
         </div>
+        <div class="sugg-compose" hidden>
+          <textarea rows="4" class="sugg-draft" placeholder="Your reply…"></textarea>
+          <div class="row" style="margin-top:8px;align-items:center;gap:10px">
+            <button class="go send">Send it</button>
+            <button class="minor cancel">Cancel</button>
+            <span class="tiny note"></span>
+          </div>
+        </div>
       </div>`);
+
+    const compose = row.querySelector('.sugg-compose');
+    const box = row.querySelector('.sugg-draft');
+    const note = row.querySelector('.note');
+    const show = () => { compose.hidden = false; box.focus(); };
+
+    row.querySelector('.write').addEventListener('click', show);
+    row.querySelector('.cancel').addEventListener('click', () => { compose.hidden = true; });
+
+    /*
+     * Draft, never send. A reply that goes out unread is the one that goes
+     * publicly wrong, so this only ever fills the box — the Send button is
+     * still a separate, deliberate press.
+     */
+    row.querySelector('.draft')?.addEventListener('click', async (e) => {
+      const button = e.currentTarget;
+      button.disabled = true;
+      button.textContent = 'Drafting…';
+      show();
+      try {
+        const data = await api(`/api/suggestions/${encodeURIComponent(s.id)}/draft`, { method: 'POST' });
+        box.value = data.draft || '';
+        note.textContent = 'A draft — read it before you send it.';
+      } catch (err) {
+        note.textContent = err.message;
+      }
+      button.disabled = false;
+      button.textContent = 'Draft a reply';
+    });
+
+    row.querySelector('.send').addEventListener('click', async () => {
+      const words = box.value.trim();
+      if (!words) { box.focus(); return; }
+      try {
+        await api(`/api/suggestions/${encodeURIComponent(s.id)}/reply`, {
+          method: 'POST', body: JSON.stringify({ text: words }),
+        });
+        load();
+      } catch (err) {
+        note.textContent = err.message;
+      }
+    });
 
     const set = async (status) => {
       await api(`/api/suggestions/${encodeURIComponent(s.id)}`, {
@@ -199,10 +278,10 @@ function suggestionsPanel() {
       });
       load();
     };
-    row.querySelector('.fixed')?.addEventListener('click', () => set('done'));
+    row.querySelector('.clear')?.addEventListener('click', () => set('done'));
     row.querySelector('.reopen')?.addEventListener('click', () => set('open'));
     row.querySelector('.bin').addEventListener('click', async () => {
-      if (!confirm('Bin this suggestion? Somebody took the trouble to send it.')) return;
+      if (!confirm('Bin this? Somebody took the trouble to send it.')) return;
       await api(`/api/suggestions/${encodeURIComponent(s.id)}`, { method: 'DELETE' });
       load();
     });

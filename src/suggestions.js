@@ -138,6 +138,10 @@ export class Suggestions {
       where: String(where || '').slice(0, 120),
       status: 'open',
       closedAt: null,
+      // What the owner said back. A list rather than one field, because a
+      // thread is the natural shape and because a second reply is a normal
+      // thing to want — "tried that, still broken" deserves an answer too.
+      replies: [],
     };
 
     this.data.suggestions.unshift(item);
@@ -152,6 +156,40 @@ export class Suggestions {
 
     this.save();
     return { ok: true, suggestion: item };
+  }
+
+  /**
+   * The owner answering one.
+   *
+   * Replying CLEARS it by default, because the point of the list is that it
+   * gets shorter: an inbox where answering something leaves it sitting there
+   * is one you stop trusting to tell you what is left. Reopening is one tap
+   * if the answer did not settle it.
+   */
+  reply(id, text, { by = '', clear = true } = {}) {
+    const item = this.find(id);
+    if (!item) return { ok: false, error: 'No such suggestion' };
+    const words = String(text || '').trim().slice(0, MAX_TEXT);
+    if (!words) return { ok: false, error: 'Write something first.' };
+
+    item.replies = [...(item.replies || []), {
+      at: this.now(),
+      by: String(by || '').slice(0, 120),
+      text: words,
+    }];
+    if (clear) {
+      item.status = 'done';
+      item.closedAt = this.now();
+    }
+    this.save();
+    return { ok: true, suggestion: item };
+  }
+
+  /** Everything one account has sent, with whatever came back. */
+  forAccount(accountId) {
+    const id = String(accountId || '');
+    if (!id) return [];
+    return this.data.suggestions.filter((s) => s.byId === id);
   }
 
   setStatus(id, status) {
