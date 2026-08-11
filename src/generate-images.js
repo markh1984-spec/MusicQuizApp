@@ -390,6 +390,16 @@ async function googleImage(q, { style = DEFAULT_STYLE, quality = DEFAULT_QUALITY
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ text: promptFor(q, { style }) }] }],
+      /*
+       * SQUARE, and it has to be asked for.
+       *
+       * These models default to landscape, where Imagen defaulted to 1:1. The
+       * projector crops a picture to fill its frame (`object-fit: cover` on
+       * `.zoom-img`), so a wide one loses its sides before anybody sees it —
+       * you pay for pixels that are cropped off, and the zoom pulls back to a
+       * composition that was never framed for the shape it ends up in.
+       */
+      generationConfig: { imageConfig: { aspectRatio: '1:1' } },
     }),
   });
 

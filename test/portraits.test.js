@@ -190,6 +190,10 @@ test('the Google request says what the image model needs it to say', async () =>
     // and it 404s: Imagen is a Vertex model on `:predict`, shut off in
     // August 2026 and already closed to new keys.
     assert.ok(!('instances' in body), 'this is the retired Imagen request shape');
+    // These models default to landscape where Imagen defaulted to square, and
+    // the projector crops to fill — so a wide picture loses its sides before
+    // anybody sees it.
+    assert.equal(body.generationConfig.imageConfig.aspectRatio, '1:1');
   } finally {
     if (before === undefined) delete process.env.GOOGLE_API_KEY; else process.env.GOOGLE_API_KEY = before;
     fs.rmSync(dir, { recursive: true, force: true });
