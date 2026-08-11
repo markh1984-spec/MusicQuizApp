@@ -1105,6 +1105,41 @@ The cost is that **renaming a starter pack silently drops it out of Bronze**, so
 change the list in the same breath as a rename. There is a test that every id in
 it is really in the catalogue.
 
+### Topical packs: a DATE, not a second class of pack
+
+Coming, and worth settling before it is built: rounds tied to a week — "the
+week that just went past" — alongside the evergreen catalogue.
+
+**They are the same price, and the reason is that a topical pack is worth MORE
+in its week, not less.** Pricing it lower would say the opposite of what is
+true. And its real job is not to be a cheap line in the shop: writing one every
+week is the strongest argument for a subscription there is, because it is the
+one thing that cannot be bought once and reused. A weekly host buying them at
+£3 spends £12 a month on top of Bronze, against £20 for Silver — so topical
+content pushes people up the ladder **weekly**, rather than in month four when
+the starter set runs dry. That is the pressure arriving more often and more
+gently, which is the whole design.
+
+**What it needs in the data is `freshUntil`, a date — not `topical: true`.**
+A boolean says a pack is dated but not whether it is STALE, so the app still
+could not warn anybody. A date can:
+
+- the console sorts fresh ones to the top and marks an expired one plainly;
+- launching an expired one **warns and does not refuse** — a control that
+  refuses in front of a room is the mistake this codebase keeps recording, and
+  a host may well want to run last month's news round on purpose;
+- the owner's Catalogue tab drops expired topical packs out of "never played by
+  ANYBODY", which would otherwise fill with six-week-old packs and stop being a
+  signal about the writing;
+- a pack with no date is evergreen, so **nothing on disk has to change** and
+  every pack that exists today is already correct.
+
+The reason to build it at all is reliability rather than commerce: a "week that
+just went past" quiz run three months late is a quizmaster looking foolish in
+front of a paying room, which is the thing `ages-out` in `reviewWarnings()`
+already exists to prevent. This is that hazard made deliberate, so it needs the
+same care.
+
 **GOLD IS NOT READY TO SELL.** It is settled that Gold is the online/streaming
 tier — that is the one thing on the ladder with a real per-use cost to the
 owner, so it belongs at the top under the host's own rule. But **streaming is
@@ -1226,6 +1261,44 @@ twice — build the pack shop, then look at what people actually buy. The
 arithmetic is also awkward: four rounds at £1 is more than a whole pack at £3,
 so the à-la-carte price has to sit above the bundle to make sense, and a
 "cheaper" option that is dearer confuses the page.
+
+### The shop — built as a WINDOW, with no money in it
+
+`withShop()` and `mayReadPack()` in `server.js`, `shopCard()` in `console.js`,
+`PACK_PENCE` in `plans.js`. A pack outside your library is shown as a dashed
+card with its title, its size and £3 on it, and **Buy takes no money and says
+so.** It exists so the shop can be LOOKED at before a processor is committed
+to: whether it reads as fair or as grabby is a judgement about wording and
+layout, and that is far cheaper to change now than after the money is plumbed.
+
+**Building it closed a hole the tier lever had opened, and that is the part
+worth remembering.** Launching a pack outside your library was refused from the
+day the lever was built — but READING one was not, and a pack read hands over
+every question and every answer. So a starter library could have been worked
+around by opening the other packs and copying them out. It was invisible for as
+long as every tier was `'all'`, which is exactly how this kind of hole survives.
+`mayReadPack()` now guards `/api/quiz/<id>`, `/api/bingo/<id>` and
+`/api/images/<id>` (that last one reports every question's ANSWER, so it is a
+pack read whatever else it is). There is a test naming all three.
+
+**A locked summary is STRIPPED on the server, not hidden in the browser.** A
+pack summary carries `search` — every question, answer, artist and track title
+blobbed together for the search box — and a bingo summary carries a Spotify
+link to the whole track list. A padlock drawn over a payload that still held
+either would be decoration. Tested.
+
+**Yours above, the shop below, with a heading between.** One mixed grid was the
+first attempt and it is wrong: a padlocked card three rows down among ones you
+can launch reads as a fault in your account rather than as a shelf. Separated,
+everything you can actually run tonight is above the fold, which is what
+somebody opening the console ten minutes before a gig came for.
+
+**The tab badge counts what you can RUN, never the shelf.** "Music Quiz 7" to
+somebody holding four reads as a fault rather than as an offer.
+
+**Buy is deliberately not the app's own red-into-orange.** That gradient is
+Launch, and one shape and one colour for "start the night" is worth more than a
+loud shop.
 
 **Pay-per-pack is deliberately NOT built.** A shop needs a payment flow, a
 purchase record and a story for a card that fails mid-month — a week of work,

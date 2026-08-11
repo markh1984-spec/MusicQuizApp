@@ -40,7 +40,7 @@ import { Accounts } from './src/accounts.js';
 import { Reports } from './src/reports.js';
 import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
-import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, canPlayPack } from './public/assets/plans.js';
+import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, canPlayPack, PACK_PENCE } from './public/assets/plans.js';
 import { Suggestions, KINDS } from './src/suggestions.js';
 import { Spend, spendRecorder } from './src/spend.js';
 // The pack id a generation is going to produce, so a cost has a subject from
@@ -530,6 +530,60 @@ function onlyTheirPacks(library, who) {
  */
 function packCtx(req, url) {
   return { config, paths: roomForHost(req, url).paths };
+}
+
+/**
+ * May this request READ the inside of this pack?
+ *
+ * **This is the gate the tier lever actually needs, and it was missing.**
+ * Launching a pack outside your library was refused from the day the lever was
+ * built — but READING one handed over every question and every answer, so a
+ * starter library could be worked around by opening the other packs and typing
+ * them out. A content lever with a hole in it is not a lever.
+ *
+ * Two things are always readable whatever the tier says: a pack they WROTE
+ * (their own library is not the owner's catalogue and no tier reaches it), and
+ * anything at all for an owner or the host key.
+ */
+function mayReadPack(req, url, kind, id) {
+  const room = roomForHost(req, url);
+  if (isOwnPack(kind, id, room.paths)) return true;
+  return canPlayPack(whoIs(req, url), String(id));
+}
+
+/**
+ * The catalogue as a SHOP: what they have, plus what they could buy.
+ *
+ * `onlyTheirPacks` above drops everything outside their library, which is
+ * right for the control view's picker — you cannot launch what you do not
+ * have, and offering it there is a button that refuses mid-gig. On the console
+ * it is wrong: a library that silently omits two thirds of the catalogue tells
+ * a subscriber nothing about what upgrading would get them.
+ *
+ * So the console gets both, and a locked one is **stripped down to what a shop
+ * window may show**. That stripping is the load-bearing part, not decoration:
+ * a pack summary carries `search`, which is every question and every answer
+ * blobbed together for the search box, and a bingo summary carries a Spotify
+ * link to the whole track list. Sending either would hand over the pack while
+ * drawing a padlock on it.
+ */
+function withShop(library, who) {
+  const allowed = packsFor(who || {});
+  if (allowed === 'all') return library;
+  const mine = new Set(allowed);
+
+  const shelf = (pack) => {
+    if (pack.mine || mine.has(pack.id)) return pack;
+    // Title, size and price. Nothing that is the thing itself.
+    const { search, playlist, problems, broken, ...rest } = pack;
+    return { ...rest, locked: true, pence: PACK_PENCE };
+  };
+
+  return {
+    ...library,
+    quizzes: (library.quizzes || []).map(shelf),
+    bingo: (library.bingo || []).map(shelf),
+  };
 }
 
 function brandForRoom(room) {
@@ -1079,7 +1133,9 @@ async function handleGet(req, res, url, route) {
     // without them looks exactly like a library that has lost them.
     await ensureOwnPacksRestored(libRoom);
     const everything = fullLibrary(config, libRoom.id, listOwn(libRoom.paths));
-    const library = onlyTheirPacks(everything, whoIs(req, url));
+    // The console sees the whole catalogue: theirs to play, the rest to buy.
+    // Everything they do not hold comes back stripped — see withShop.
+    const library = withShop(everything, whoIs(req, url));
     /*
      * How big the whole catalogue is, so the account page can say "3 of 20".
      *
@@ -1114,6 +1170,9 @@ async function handleGet(req, res, url, route) {
       // The account page says "3 of 20" from these two, and stays quiet when
       // they match.
       catalogue,
+      // What one costs, so the shop card never keeps its own copy of the price
+      // and cannot drift from what a purchase would actually charge.
+      packPence: PACK_PENCE,
       /*
        * Their own library, and whether it survives a restart.
        *
@@ -1214,6 +1273,11 @@ async function handleGet(req, res, url, route) {
   if (route.startsWith('/api/images/')) {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const id = decodeURIComponent(route.slice('/api/images/'.length));
+    // It reports every question's ANSWER, so it is a read of the pack whatever
+    // else it is.
+    if (!mayReadPack(req, url, 'quiz', id)) {
+      return sendJson(res, 403, { error: 'That pack is not in your library yet.', upgrade: true }), true;
+    }
     const style = findStyle(url.searchParams.get('style') || '');
     try {
       const quiz = loadQuiz(config.quizDir, id);
@@ -1245,6 +1309,11 @@ async function handleGet(req, res, url, route) {
   if (route.startsWith('/api/bingo/')) {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const id = decodeURIComponent(route.slice('/api/bingo/'.length));
+    if (!mayReadPack(req, url, 'bingo', id)) {
+      return sendJson(res, 403, {
+        error: 'That pack is not in your library yet.', upgrade: true, pence: PACK_PENCE,
+      }), true;
+    }
     try {
       const { pack, mine } = readPack('bingo', id, packCtx(req, url));
       return sendJson(res, 200, { ...pack, mine }), true;
@@ -1361,6 +1430,11 @@ async function handleGet(req, res, url, route) {
   if (route.startsWith('/api/quiz/')) {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const id = decodeURIComponent(route.slice('/api/quiz/'.length));
+    if (!mayReadPack(req, url, 'quiz', id)) {
+      return sendJson(res, 403, {
+        error: 'That pack is not in your library yet.', upgrade: true, pence: PACK_PENCE,
+      }), true;
+    }
     try {
       // Their own library first, the catalogue second. An owner asking resolves
       // against the house room, so there is no id that reaches a subscriber's.

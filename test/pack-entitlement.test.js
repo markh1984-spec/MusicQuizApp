@@ -19,7 +19,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import * as plans from '../public/assets/plans.js';
-import { packsFor, canPlayPack, TIER_PACKS, TIERS, FEATURES, can } from '../public/assets/plans.js';
+import { packsFor, canPlayPack, TIER_PACKS, TIERS, PACK_PENCE, FEATURES, can } from '../public/assets/plans.js';
 import { Accounts } from '../src/accounts.js';
 
 import { fileURLToPath } from 'node:url';
@@ -201,4 +201,63 @@ test('once Bronze is a starter set, a Bronze reader is pointed at Silver', () =>
   const starter = { bronze: ['one', 'two'], silver: 'all', gold: 'all' };
   const line = upsellLine({ role: 'quizmaster', tier: 'bronze' }, starter);
   assert.match(line, /Silver includes every pack/);
+});
+
+// ========================================================== the shop window
+
+/*
+ * **The hole the tier lever opened, and the test that keeps it shut.**
+ *
+ * Launching a pack outside your library was refused from the day the lever was
+ * built. READING one was not — and a pack read hands over every question and
+ * every answer, so a starter library could be worked around by opening the
+ * other packs and copying them out. A content lever with a hole in it is not a
+ * lever, and this one was invisible for as long as every tier was `'all'`.
+ */
+test('reading a pack you do not hold is refused, not just launching it', () => {
+  const server = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  const guard = server.match(/function mayReadPack[\s\S]*?\n}/);
+  assert.ok(guard, 'mayReadPack has gone — the pack read routes are open again');
+  assert.match(guard[0], /canPlayPack/, 'the read gate no longer asks what they hold');
+  // Their OWN packs are never a tier question — no tier reaches that library.
+  assert.match(guard[0], /isOwnPack/, 'a quizmaster can no longer read a pack they wrote');
+
+  for (const route of ["/api/quiz/", "/api/bingo/", "/api/images/"]) {
+    const at = server.indexOf(`route.slice('${route}'.length)`);
+    assert.ok(at > 0, `${route} has moved`);
+    assert.match(server.slice(at, at + 400), /mayReadPack/,
+      `${route} does not check what this account holds`);
+  }
+});
+
+/*
+ * A shop window shows the label, never the contents.
+ *
+ * A pack summary carries `search` — every question, answer, artist and track
+ * title blobbed together for the search box — and a bingo summary carries a
+ * Spotify link to the whole track list. Either one sent alongside a padlock
+ * would be decoration rather than a lever.
+ */
+test('a pack you have not bought is sent with nothing of the pack in it', () => {
+  const server = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  const shop = server.match(/function withShop[\s\S]*?\n}/);
+  assert.ok(shop, 'withShop has gone');
+  assert.match(shop[0], /search[\s\S]{0,40}playlist/,
+    'a locked summary no longer strips the search blob and the playlist link');
+  assert.match(shop[0], /locked: true/, 'a locked pack is no longer marked as one');
+});
+
+/*
+ * The price is set to make the UPGRADE obvious rather than to make money, so
+ * the floor is the Silver gap divided by a weekly host's four packs a month.
+ * Below £2.50 nobody running weekly ever has a reason to climb, and the whole
+ * Bronze-buys / Silver-includes structure stops being a ladder.
+ */
+test('a pack costs more than a quarter of the step up to Silver', () => {
+  const bronze = TIERS.find((t) => t.id === 'bronze');
+  const silver = TIERS.find((t) => t.id === 'silver');
+  const gap = silver.pence - bronze.pence;
+  assert.ok(PACK_PENCE * 4 > gap,
+    `at ${PACK_PENCE}p a pack, a weekly host pays ${PACK_PENCE * 4}p a month rather than `
+    + `${gap}p to upgrade — Bronze wins and the ladder stops being one`);
 });

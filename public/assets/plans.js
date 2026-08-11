@@ -219,6 +219,34 @@ export const TIER_PACKS = {
 };
 
 /**
+ * What one pack costs, in PENCE.
+ *
+ * **This number is set to make the UPGRADE obvious, not to make money.** The
+ * subscription is the business; a pack sale is the on-ramp. So the only
+ * question it has to answer is when somebody should stop buying and move to
+ * Silver — which makes it arithmetic rather than a judgement call.
+ *
+ * The floor is the Silver gap divided by how many packs a weekly host gets
+ * through: £10 / 4 = £2.50. Below that a weekly host never has a reason to
+ * climb and the Bronze-buys / Silver-includes structure quietly stops being a
+ * ladder at all. £3 is the lowest price above that floor.
+ *
+ * The ceiling is about how it READS. A quizmaster charges a venue well over
+ * £100 a night, so even £5 is about 3% of one fee — but it is HALF their
+ * monthly subscription for one night's content, and that ratio is what
+ * somebody reacts to. £3 is a fifth.
+ *
+ * A fortnightly host lands in the right place too: two packs is £6, so buying
+ * stays cheaper than upgrading, which is correct — they should not be pushed
+ * up a rung they would not use.
+ *
+ * One number here rather than a price per pack, because a catalogue where some
+ * packs cost more is a catalogue somebody has to shop around in, and the whole
+ * pitch is convenience. See CLAUDE.md, "What a pack costs".
+ */
+export const PACK_PENCE = 300;
+
+/**
  * Which packs this account may see and launch.
  *
  * Order matters and it is the usual one: the owner and the host key see

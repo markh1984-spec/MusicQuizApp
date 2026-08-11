@@ -1326,7 +1326,17 @@ function tabBar(active) {
     // A tab with NEITHER — My account — simply wears no badge, rather than the
     // whole page dying on `tab.packs is not a function`, which is how the
     // account tab arrived.
-    const count = tab.count ? tab.count() : (tab.packs ? (tab.packs() || []).length : 0);
+    /*
+     * The badge is what you can RUN, never what is on the shelf.
+     *
+     * Counting the shop in it would say "Music Quiz 7" to somebody holding
+     * four, which reads as a fault in their account rather than as a shelf
+     * they have not bought from. The grid gets the whole list and splits it
+     * itself — see gameSection.
+     */
+    const count = tab.count
+      ? tab.count()
+      : (tab.packs ? (tab.packs() || []).filter((p) => !p.locked).length : 0);
     const button = node(`
       <button class="tab ${tab.id === active ? 'on' : ''}" role="tab" data-tab="${tab.id}">
         ${esc(tab.label)}${count ? `<span class="tabcount">${count}</span>` : ''}
@@ -1968,6 +1978,23 @@ function runningPanel(running) {
 const DENSE_STORE = 'musicquiz.compactpacks';
 let packQuery = { quiz: '', bingo: '' };
 
+/**
+ * What one pack costs, said the way a price is said.
+ *
+ * `money()` on this page is the INVOICE formatter — it prints £3.00, because an
+ * invoice line with a bare £3 on it looks like somebody forgot the pence. A
+ * shop price is the other way round: £3.00 reads as a form, £3 reads as a
+ * price. Same number, different job, so it gets its own two lines rather than
+ * an option on the other one.
+ *
+ * Read off the library payload, never written out here, so the card and the
+ * server cannot disagree about what a purchase would charge.
+ */
+function packPrice() {
+  const pence = Number((library && library.packPence) || 0) || 300;
+  return pence % 100 ? `£${(pence / 100).toFixed(2)}` : `£${pence / 100}`;
+}
+
 function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
   const dense = localStorage.getItem(DENSE_STORE) === '1';
   const query = packQuery[kind] || '';
@@ -1980,7 +2007,7 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
           <div class="tiny">${esc(blurb)}</div>
         </div>
         <div class="pack-tools">
-          <input class="pack-search" type="search" placeholder="Search ${packs ? packs.length : 0}…"
+          <input class="pack-search" type="search" placeholder="Search ${(packs || []).filter((p) => !p.locked).length}…"
                  value="${esc(query)}" aria-label="Search packs">
           <button class="minor pack-dense" title="${dense ? 'Show the full cards' : 'Squeeze more on screen'}"
                   aria-pressed="${dense}">${dense ? 'Cards' : 'Compact'}</button>
@@ -1988,14 +2015,38 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
         </div>
       </div>
       <div class="pack-grid ${dense ? 'dense' : ''}"></div>
+      <div class="game-head shop-head" hidden>
+        <div>
+          <h2>The rest of the catalogue</h2>
+          <div class="tiny"><span class="shop-count"></span> —
+            ${esc(packPrice())} each.
+            ${esc((library.catalogue && library.catalogue.blurb) || '')}</div>
+        </div>
+      </div>
+      <div class="pack-grid shop-grid ${dense ? 'dense' : ''}"></div>
     </div>`);
 
   const grid = el.querySelector('.pack-grid');
+  const shop = el.querySelector('.shop-grid');
+  const shopHead = el.querySelector('.shop-head');
   const search = el.querySelector('.pack-search');
 
+  /*
+   * Yours first, then the shop, with a heading between them.
+   *
+   * One mixed grid was the first attempt and it is wrong: a padlocked card
+   * three rows down among ones you can launch reads as a fault in your account
+   * rather than as something for sale. Separated, the shop is a shelf you
+   * choose to look at, and the packs you can actually run tonight are all
+   * above it — which is what somebody opening this page ten minutes before a
+   * gig is looking for.
+   */
   const paint = () => {
     const found = matchPacks(packs || [], packQuery[kind]);
     grid.replaceChildren();
+    shop.replaceChildren();
+    shopHead.hidden = true;
+
     if (!packs || !packs.length) {
       grid.appendChild(node('<div class="tiny">Nothing saved yet — build one above.</div>'));
       return;
@@ -2004,7 +2055,21 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
       grid.appendChild(node(`<div class="tiny">Nothing matches “${esc(packQuery[kind])}”.</div>`));
       return;
     }
-    for (const pack of found) grid.appendChild(packCard(kind, pack));
+
+    const yours = found.filter((p) => !p.locked);
+    const buyable = found.filter((p) => p.locked);
+
+    if (!yours.length) {
+      grid.appendChild(node(`<div class="tiny">None of the ones you have match “${esc(packQuery[kind])}”.</div>`));
+    }
+    for (const pack of yours) grid.appendChild(packCard(kind, pack));
+
+    if (buyable.length) {
+      shopHead.hidden = false;
+      shopHead.querySelector('.shop-count').textContent =
+        `${buyable.length} more ${kind === 'quiz' ? (buyable.length === 1 ? 'quiz' : 'quizzes') : (buyable.length === 1 ? 'bingo game' : 'bingo games')}`;
+      for (const pack of buyable) shop.appendChild(packCard(kind, pack));
+    }
   };
 
   // Redrawn in place rather than through render(), so the box keeps focus and
@@ -2336,6 +2401,17 @@ function packCard(kind, pack) {
    * the owner's to touch. So the question is never "who is looking", it is
    * "whose pack is this", asked per card.
    */
+  /*
+   * A pack they do not hold: a shop card, and NOTHING else.
+   *
+   * Returned early rather than threaded through the ordinary card as a pile of
+   * conditionals — every control below this line is something a locked pack
+   * must not have, and "hide eight buttons" is how one of them survives a
+   * refactor and starts returning 403s. It carries no Read either: the server
+   * refuses that now, and a button that refuses is worse than no button.
+   */
+  if (pack.locked) return shopCard(kind, pack);
+
   const ownPack = Boolean(pack.mine);
   const mine = ownPack ? can(FEATURES.OWN_PACKS) : can(FEATURES.CATALOGUE);
   // Portraits cost the owner money at OpenAI and the playlist step writes to
@@ -2573,6 +2649,42 @@ function packCard(kind, pack) {
       button.textContent = 'Launch';
       alert('Could not launch: ' + err.message);
     }
+  });
+  return el;
+}
+
+/**
+ * A pack on the shelf rather than in the library.
+ *
+ * It shows the title, how big it is and what it costs — and deliberately not a
+ * word of what is inside. That is enforced on the SERVER, which strips the
+ * search blob and the playlist link out of a locked summary before it is sent,
+ * because a padlock drawn over a payload that still contained every question
+ * and answer would be decoration rather than a lever.
+ *
+ * **Buy takes no money yet and says so plainly.** There is no payment flow
+ * wired up, and a button that looked like it charged you and then did nothing
+ * is a worse first impression than an honest one. This is here so the shop can
+ * be LOOKED at before a processor is committed to — whether it reads as fair
+ * or as grabby is a judgement about wording and layout, and it is much cheaper
+ * to change now than after the money is plumbed in.
+ */
+function shopCard(kind, pack) {
+  const roundCount = (pack.rounds || []).length;
+  const detail = kind === 'quiz'
+    ? `${pack.questionCount} question${pack.questionCount === 1 ? '' : 's'} · ${roundCount} round${roundCount === 1 ? '' : 's'}`
+    : `${pack.trackCount} track${pack.trackCount === 1 ? '' : 's'}`;
+
+  const el = node(`
+    <div class="pack-card locked">
+      <div class="pack-title">${esc(pack.title)}</div>
+      <div class="tiny">${esc(detail)}</div>
+      <div class="tiny shop-price">${esc(packPrice())}</div>
+      <button class="go buy">Buy it</button>
+    </div>`);
+
+  el.querySelector('.buy').addEventListener('click', () => {
+    alert(`There is no way to pay yet.\n\n"${pack.title}" would be ${packPrice()}, and it would be in your library straight away — same as the ones you already have.\n\nThis is here so the shop can be looked at before the payments are wired up.`);
   });
   return el;
 }

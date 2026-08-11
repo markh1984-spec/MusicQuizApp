@@ -488,7 +488,53 @@ the list in the same breath as renaming a pack — a rename silently drops a pac
 out of Bronze, and there is a test that fails if an id in that list is not in
 the catalogue.
 
-### The pack shop — PayPal, and the shape before the money
+### Marketing — for later, but written down now
+
+Neither of these is a code job yet. They are here so they are not lost, because
+both are the sort of thing that is obvious once and then forgotten.
+
+**A bundle rate for QM COMPANIES.** An agency running six quizmasters is one
+conversation and six subscriptions, and they are the customer who brings you
+five more without you doing anything. Two shapes worth thinking about, and they
+are different businesses: a **per-seat discount** (six accounts at £15 rather
+than £20), or a **company account with rooms under it** — rooms already exist
+and are already per quizmaster, so the second is less work than it sounds. The
+per-seat version is the one to offer first, because it needs no code at all:
+set the tier and comp the difference.
+
+Worth knowing what it fixes as well as what it earns. A host with three pub
+residencies runs one pack at all three venues, so the busiest quizmaster hits
+the pack ceiling SLOWEST — which is backwards. A company rate is the honest way
+to charge for volume without metering anybody's nights.
+
+**Venue relationships, off the back of the advert slides.** The strongest one,
+and it is a genuinely different pitch from selling to quizmasters: a venue can
+be told that a quizmaster running this software will reliably put their offer
+on the projector between rounds — the pizza nobody is shifting, the Thursday
+they want busier, a QR to tickets. That is worth something to the VENUE, and it
+makes the quizmaster who uses it more likely to be rebooked, which sells the
+software twice.
+
+It is also why advert slides moved to Silver: the feature that makes a
+subscriber more valuable to their own customer is the one worth paying for.
+Nothing needs building for this — the slides work, and the per-venue sets are
+already how they are filed. It is a conversation to have, not a feature.
+
+### The pack shop — ✅ THE WINDOW IS BUILT, the money is not
+
+**£3 a pack, and the shop is on the console now** — a pack outside their
+library shows as a dashed card with its size and its price, under a heading
+saying how many more there are and what Silver would include. **Buy takes no
+money and says so.** Go and look at it wearing the hat on Bronze; whether it
+reads as fair or as grabby is a wording-and-layout judgement, and it is much
+cheaper to change now than after PayPal is wired.
+
+Building it closed a hole worth knowing about: reading a pack you did not hold
+was never refused, only launching one — so a starter library could have been
+worked around by opening the other packs and copying the questions out. Shut
+now, with a test.
+
+Still to do, and it is the money half:
 
 Settled: **£3 a pack** is the recommendation and the reasoning is in CLAUDE.md
 under "What a pack costs" — below £2.50 a weekly host never has a reason to

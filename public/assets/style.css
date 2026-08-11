@@ -3474,3 +3474,29 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .panel.person { border-color: var(--hot); margin: -2px 0 10px; }
 .inv-main.open-person { cursor: pointer; }
 .inv-main.open-person:hover b { text-decoration: underline; }
+
+
+/* --------------------------------------------------------------- the shop
+ *
+ * A pack on the shelf rather than in the library. Deliberately quieter than a
+ * card you can launch: it is something to consider, not something to do — and
+ * the packs you can actually run tonight have to stay the loud half of the
+ * page for somebody who opened it ten minutes before a gig.
+ */
+.pack-card.locked {
+  border-style: dashed;
+  border-color: var(--panel-line);
+  opacity: 0.92;
+}
+.pack-card.locked .pack-title { opacity: 0.9; }
+.shop-price { font-size: 20px; font-weight: 900; opacity: 1; margin-top: 4px; }
+.pack-card.locked .go.buy {
+  width: 100%; margin-top: 10px;
+  border: none; border-radius: 10px; padding: 11px; cursor: pointer;
+  /* Not the app's own red-into-orange: that gradient is Launch, and one shape
+     and one colour for "start the night" is worth more than a loud shop. */
+  background: rgba(255,255,255,0.1); color: var(--ink);
+  font-family: inherit; font-weight: 900; font-size: 15px;
+}
+.pack-card.locked .go.buy:hover { background: rgba(255,255,255,0.16); }
+.game-section .shop-head { margin-top: 26px; }
