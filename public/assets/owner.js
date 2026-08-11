@@ -116,7 +116,18 @@ async function load() {
   } catch {
     overview = { rooms: [], packs: [], spend: null, spendBackedUp: false };
   }
-  backupReady = Boolean(data.backedUp);
+  /*
+   * `backupReady`, not `backedUp` — two different facts, and reading the wrong
+   * one is why this warning was permanently on.
+   *
+   * GET /api/owner/accounts answers `backupReady`: is a private repository
+   * configured at all. The WRITE routes answer `backedUp`: did that particular
+   * save reach it. This warning says "set PHOTO_REPO", so it is the first one;
+   * `data.backedUp` is simply absent here, which read as false, which is how
+   * the owner page told Mark his accounts were not being backed up while they
+   * sat in the repository.
+   */
+  backupReady = Boolean(data.backupReady);
   redraw();
 }
 
@@ -1162,7 +1173,10 @@ async function addSubscriber() {
       body: JSON.stringify({ email, name, password, status: 'trialing' }),
     });
     subscribers = data.accounts;
-    backupReady = Boolean(data.backedUp);
+    // Deliberately NOT touching backupReady here. This route answers
+    // `backedUp` — did THIS save reach the repository — which is a different
+    // fact from whether backups are configured at all, and conflating the two
+    // is what kept the warning permanently on.
     redraw();
     alert(`Done.\n\nSend them:\n\n  ${location.origin}/login\n  ${email}\n  ${password}\n\nThis password is not stored anywhere you can read it again, so copy it now.`);
   } catch (err) {

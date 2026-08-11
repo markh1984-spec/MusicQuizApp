@@ -293,3 +293,19 @@ test('the room code is on the library payload, not only on a running game', () =
   assert.match(library, /joinCode: roomForHost\(req, url\)\.code/,
     'the room code rides on `running` only, so it vanishes before a launch');
 });
+
+/*
+ * Past gigs reads its photo list OUT of the private repository, so every
+ * picture it can show is filed by definition. Without the `filed` class the
+ * stylesheet's `:not(.filed)` rule stamps "NOT FILED" on all of them — telling
+ * a quizmaster their night's pictures are one restart from gone, on the one
+ * page whose whole job is "here is my work".
+ */
+test('a past-gigs photo is never labelled as unfiled', () => {
+  const src = fs.readFileSync(new URL('../public/assets/console.js', import.meta.url), 'utf8');
+  const rows = src.match(/class="cphoto[^"]*"/g) || [];
+  assert.ok(rows.length, 'the past-gigs photo grid has gone');
+  for (const row of rows) {
+    assert.match(row, /\bfiled\b/, `past gigs draws ${row}, which the CSS marks NOT FILED`);
+  }
+});

@@ -3464,7 +3464,17 @@ function gigRow(night) {
     more.textContent = `${data.photos.length} photo${data.photos.length === 1 ? '' : 's'}`;
     const grid = node('<div class="night-grid"></div>');
     for (const p of data.photos) {
-      grid.appendChild(node(`<figure class="cphoto"><img src="${esc(p.url)}" alt="" loading="lazy"></figure>`));
+      /*
+       * `filed`, always — and this was stamping "NOT FILED" on every one.
+       *
+       * The badge belongs to the owner's Photos tab, where a photo genuinely
+       * can be sitting on a disk that the next restart wipes. Past gigs reads
+       * the photo list OUT of the repository, so anything shown here is filed
+       * by definition. Without the class the CSS `:not(.filed)` rule fired on
+       * all of them — telling a quizmaster their night's pictures were about
+       * to be lost, on the one page whose whole job is "here is my work".
+       */
+      grid.appendChild(node(`<figure class="cphoto filed"><img src="${esc(p.url)}" alt="" loading="lazy"></figure>`));
     }
     body.appendChild(grid);
   });
