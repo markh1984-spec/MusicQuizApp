@@ -64,14 +64,24 @@ export function artProvider() {
 }
 
 /**
- * Imagen's three tiers, mapped onto the quality setting the console already
- * has. They line up exactly — Fast, Standard, Ultra against low, medium, high —
- * so there is no second control to build and no new word for the host to learn.
+ * Google's image models, mapped onto the quality setting the console already
+ * has — so there is no second control to build and no new word to learn.
+ *
+ * **NOT Imagen, and that was found the hard way on the first real call.**
+ * `imagen-4.0-*` is still listed by the models endpoint, but it is a Vertex
+ * model reached with `:predict`, it is shut off on 17 August 2026, and a key
+ * made after the cut-off is refused with a 404 saying "no longer available to
+ * new users". A dying model that still appears in a listing is the worst
+ * possible shape of wrong: it looks configured and fails at the till.
+ *
+ * These are the Nano Banana family, reached with `:generateContent` like any
+ * other Gemini model. Deliberately the names WITHOUT `-preview`, since a
+ * preview alias is the next thing to disappear.
  */
 const GOOGLE_MODELS = {
-  low: 'imagen-4.0-fast-generate-001',
-  medium: 'imagen-4.0-generate-001',
-  high: 'imagen-4.0-ultra-generate-001',
+  low: 'gemini-3.1-flash-lite-image',
+  medium: 'gemini-3.1-flash-image',
+  high: 'gemini-3-pro-image',
 };
 
 /**
@@ -352,17 +362,22 @@ async function openaiImage(q, { style = DEFAULT_STYLE, quality = DEFAULT_QUALITY
 }
 
 /**
- * Imagen 4, over the plain Gemini API.
+ * A picture from Google, over the plain Gemini API.
  *
  * The AI Studio door rather than Vertex AI, and that is a no-dependencies
  * decision: Vertex authenticates with a service-account JWT that has to be
  * signed and refreshed hourly, where this is one header on one POST. Same
  * models, same prices, same Google Cloud project and bill.
  *
- * **A refusal is reported in words, which is what `includeRaiReason` is for.**
- * Without it a blocked picture comes back as an empty prediction list and is
- * indistinguishable from a network problem — and the thing most likely to be
- * refused is a style, which means the answer is "pick another one", which is
+ * **An image model here is an ordinary `generateContent` call**, not a special
+ * endpoint — the picture comes back as an `inlineData` part alongside any text
+ * the model felt like adding. So the reply is WALKED for the first image part
+ * rather than read out of a fixed position.
+ *
+ * **A refusal has to be reported in words.** A blocked picture comes back as a
+ * 200 with no image part and a finish reason, which is otherwise
+ * indistinguishable from a bug at this end — and the thing most likely to be
+ * refused is a style, which means the answer is "pick another one", and that is
  * only obvious if somebody says so. Same rule as the Spotify 403.
  */
 async function googleImage(q, { style = DEFAULT_STYLE, quality = DEFAULT_QUALITY } = {}) {
@@ -370,42 +385,43 @@ async function googleImage(q, { style = DEFAULT_STYLE, quality = DEFAULT_QUALITY
   if (!key) throw new Error('Set GOOGLE_API_KEY first');
 
   const model = GOOGLE_MODELS[findQuality(quality)] || GOOGLE_MODELS[DEFAULT_QUALITY];
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:predict`, {
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
     body: JSON.stringify({
-      instances: [{ prompt: promptFor(q, { style }) }],
-      parameters: {
-        sampleCount: 1,
-        aspectRatio: '1:1',
-        // The round is "whose face is this", so people are the entire point.
-        // Left unset this defaults to blocking them and every picture comes
-        // back refused, which reads as the key being wrong.
-        personGeneration: 'allow_adult',
-        includeRaiReason: true,
-      },
+      contents: [{ role: 'user', parts: [{ text: promptFor(q, { style }) }] }],
     }),
   });
 
   if (!res.ok) {
-    const body = (await res.text()).slice(0, 300);
-    if (res.status === 400 && /billing/i.test(body)) {
-      throw new Error('Google needs billing switched on for this project. console.cloud.google.com/billing');
+    const body = (await res.text()).slice(0, 400);
+    if (/billing/i.test(body)) {
+      throw new Error('Google needs billing switched on for this project — console.cloud.google.com/billing');
     }
-    if (res.status === 400) throw new Error(`Google rejected the request: ${body}`);
+    if (res.status === 404) {
+      throw new Error(`Google has retired the "${model}" model: ${body}`);
+    }
     if (res.status === 401 || res.status === 403) {
-      throw new Error(`Google refused the key — check GOOGLE_API_KEY, and that billing is on for its project: ${body}`);
+      throw new Error(`Google refused the key — check GOOGLE_API_KEY and that billing is on for its project: ${body}`);
     }
     if (res.status === 429) throw new Error('Google rate limit or quota reached. Try again shortly.');
     throw new Error(`Google said ${res.status}: ${body}`);
   }
 
   const data = await res.json();
-  const first = data.predictions?.[0];
-  if (first?.raiFilteredReason) {
-    throw new Error(`Google would not draw this one: ${first.raiFilteredReason}. Try a different style.`);
-  }
-  const b64 = first?.bytesBase64Encoded;
-  if (!b64) throw new Error('No image came back, and Google gave no reason.');
-  return Buffer.from(b64, 'base64');
+  const candidate = data.candidates?.[0];
+  const parts = candidate?.content?.parts || [];
+  const image = parts.find((p) => p.inlineData?.data || p.inline_data?.data);
+  if (image) return Buffer.from(image.inlineData?.data || image.inline_data.data, 'base64');
+
+  // No picture. Say WHY, in this order of usefulness: the safety block, the
+  // finish reason, then whatever the model said in words instead of drawing —
+  // which is usually the clearest explanation of the three.
+  const blocked = data.promptFeedback?.blockReason;
+  const finish = candidate?.finishReason;
+  const said = parts.map((p) => p.text).filter(Boolean).join(' ').slice(0, 200);
+  if (blocked) throw new Error(`Google would not draw this one (${blocked}). Try a different style.`);
+  if (finish && finish !== 'STOP') throw new Error(`Google stopped without a picture (${finish}). Try a different style.`);
+  if (said) throw new Error(`Google answered with words instead of a picture: ${said}`);
+  throw new Error('No image came back, and Google gave no reason.');
 }

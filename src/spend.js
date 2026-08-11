@@ -69,12 +69,13 @@ export const PRICES = {
    * Per 1024x1024 image, PER SUPPLIER — because they are priced nothing like
    * each other and an average would misreport whichever one you are using.
    *
-   * Google's three tiers are Imagen 4 Fast, Standard and Ultra, which line up
-   * exactly with low / medium / high, so the quality control the console
-   * already has needs no second meaning.
+   * Google's three are the Nano Banana models — Flash Lite Image, Flash Image
+   * and Pro Image — which line up with low / medium / high, so the quality
+   * control the console already has needs no second meaning. Imagen was the
+   * plan and is being shut off on 17 August 2026; its prices are gone with it.
    */
   image: {
-    google: { low: 2, medium: 4, high: 5 },
+    google: { low: 3, medium: 6, high: 11 },
     openai: { low: 1, medium: 4, high: 14 },
   },
   /*

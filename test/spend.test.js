@@ -96,16 +96,18 @@ test('a picture is priced from the quality that was actually asked for', () => {
 
 test('the two suppliers are priced apart, and an unknown one is priced as the dearest', () => {
   /*
-   * Imagen and gpt-image-1 are nothing like each other at the TOP of the
-   * range — 5p against 14p — which is the whole reason these are two tables.
-   * A single one would have reported whichever supplier you were not using.
+   * The two suppliers do not track each other, which is the whole reason these
+   * are two tables — a single one would have reported whichever supplier you
+   * were NOT using.
    *
-   * Note it is deliberately not "Google is cheaper everywhere": gpt-image-1's
-   * bottom tier is genuinely under Imagen Fast. The saving is at high quality,
-   * which is where a picture being sold on actually gets drawn.
+   * Deliberately not asserted as "Google is cheaper everywhere", because it is
+   * not: gpt-image-1's bottom tier is under Nano Banana Lite. The gap is at the
+   * top, which is where a picture being sold on actually gets drawn.
    */
-  assert.ok(PRICES.image.google.high < PRICES.image.openai.high / 2,
+  assert.ok(PRICES.image.google.high < PRICES.image.openai.high,
     'the high-quality gap is the reason for two tables');
+  assert.ok(PRICES.image.google.low > PRICES.image.openai.low,
+    'this used to be asserted the tidy way round, and the tidy way was wrong');
   // Same rule as an unknown model: a row that reads high is a question, and a
   // row that reads low is a bill nobody saw coming.
   assert.equal(imagePence({ provider: 'not-a-supplier', quality: 'high', images: 1 }), PRICES.image.openai.high);
@@ -281,11 +283,11 @@ test('close and over are told apart, and nothing is ever refused', () => {
   const { spend } = ledger(() => at);
   spend.setBudget(1000);
 
-  spend.record({ kind: 'image', provider: 'google', quality: 'high', images: 170 }); // 850p
+  spend.record({ kind: 'image', provider: 'google', quality: 'low', images: 283 }); // 849p
   assert.equal(spend.budgetState().state, 'close');
 
   // WELL over — and the point of this test is the next line, not this one.
-  spend.record({ kind: 'image', provider: 'google', quality: 'high', images: 100 });
+  spend.record({ kind: 'image', provider: 'google', quality: 'low', images: 100 });
   const over = spend.budgetState();
   assert.equal(over.state, 'over');
   assert.ok(over.left < 0, 'over budget should read as a negative amount left');

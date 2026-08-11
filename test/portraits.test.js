@@ -157,11 +157,11 @@ async function withStubbedFetch(reply, run) {
 
 const okImage = (b64) => ({
   ok: true, status: 200,
-  json: async () => ({ predictions: [{ bytesBase64Encoded: b64 }] }),
+  json: async () => ({ candidates: [{ content: { parts: [{ inlineData: { mimeType: 'image/png', data: b64 } }] } }] }),
   text: async () => '',
 });
 
-test('the Google request says what Imagen needs it to say', async () => {
+test('the Google request says what the image model needs it to say', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'portraits-g-'));
   const before = process.env.GOOGLE_API_KEY;
   process.env.GOOGLE_API_KEY = 'AIza-test';
@@ -179,19 +179,17 @@ test('the Google request says what Imagen needs it to say', async () => {
     const [{ url, opts }] = calls;
     // Quality picks the model, so `low` must be the Fast one or the cheap
     // setting quietly bills at the standard rate.
-    assert.match(url, /imagen-4\.0-fast-generate-001:predict$/);
+    assert.match(url, /gemini-3\.1-flash-lite-image:generateContent$/);
     assert.equal(opts.headers['x-goog-api-key'], 'AIza-test');
 
     const body = JSON.parse(opts.body);
-    assert.equal(body.instances.length, 1);
-    assert.match(body.instances[0].prompt, /Madonna/);
-    // Unset, this defaults to blocking people — and the round is "whose face
-    // is this", so every picture would come back refused.
-    assert.equal(body.parameters.personGeneration, 'allow_adult');
-    // Without this a refusal arrives as an empty list, indistinguishable from
-    // a network problem.
-    assert.equal(body.parameters.includeRaiReason, true);
-    assert.equal(body.parameters.sampleCount, 1);
+    assert.equal(body.contents.length, 1);
+    assert.match(body.contents[0].parts[0].text, /Madonna/);
+    // An image model here is an ordinary generateContent call. Reaching for
+    // Imagen's `instances`/`parameters` shape is what the first attempt did,
+    // and it 404s: Imagen is a Vertex model on `:predict`, shut off in
+    // August 2026 and already closed to new keys.
+    assert.ok(!('instances' in body), 'this is the retired Imagen request shape');
   } finally {
     if (before === undefined) delete process.env.GOOGLE_API_KEY; else process.env.GOOGLE_API_KEY = before;
     fs.rmSync(dir, { recursive: true, force: true });
@@ -205,9 +203,11 @@ test('a refused picture is reported in words, and the rest of the round carries 
   const said = [];
   try {
     const quiz = quizOf(picture('Madonna'), { ...picture('Prince'), id: 'q2' });
+    // A block is a 200 with no image part — indistinguishable from a bug here
+    // unless the reason is dug out and said.
     const refused = {
       ok: true, status: 200,
-      json: async () => ({ predictions: [{ raiFilteredReason: 'Blocked. Support codes: 1234' }] }),
+      json: async () => ({ candidates: [{ finishReason: 'IMAGE_SAFETY', content: { parts: [] } }] }),
       text: async () => '',
     };
     const { result } = await withStubbedFetch(refused, () => generateImages({
@@ -219,7 +219,7 @@ test('a refused picture is reported in words, and the rest of the round carries 
     assert.equal(result.made.length, 0);
     assert.equal(result.failed.length, 2);
     const why = said.join('\n');
-    assert.match(why, /Support codes: 1234/, 'the reason was swallowed');
+    assert.match(why, /IMAGE_SAFETY/, 'the reason was swallowed');
     assert.match(why, /different style/i, 'it does not say what to do about it');
   } finally {
     if (before === undefined) delete process.env.GOOGLE_API_KEY; else process.env.GOOGLE_API_KEY = before;
