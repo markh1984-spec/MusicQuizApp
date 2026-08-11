@@ -1068,6 +1068,21 @@ musician and SHARED, so the second eighties pack wanting Madonna costs nothing.
 That bill amortises towards zero; pricing it as premium prices a cost that is
 disappearing.
 
+**The host has since settled WHY the generator stays owner-only, and it is a
+commercial reason rather than only a cost one.** In his words: *"the restriction
+from using Claude to generate quizzes is necessary. It's what makes the bronze
+buying packs and the silver getting them for free a delineation worth upgrading
+for."* So the ladder is meant to read: **Bronze buys packs, Silver gets them
+included.** That is a stronger reason than the bill — if a subscriber could
+generate, there would be nothing on the ladder worth paying to climb. Do not
+propose giving quizmasters the generator as a paid add-on; it is the thing the
+tiers are built out of.
+
+Note what it implies and what is NOT built: Bronze buying a pack needs a payment
+flow and a purchase record, and there is none — see "Pay-per-pack is deliberately
+NOT built" below. The data model is ready for it (`packs` on an account), so this
+is a decision waiting on a processor rather than a redesign.
+
 **Every tier is `'all'` today and that is deliberate** — the mechanism is in
 with nothing switched on, so nobody's library changed. Making Bronze a starter
 set is one line in `TIER_PACKS`, or a `packs` list on one account, which beats
