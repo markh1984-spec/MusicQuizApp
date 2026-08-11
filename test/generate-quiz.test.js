@@ -624,3 +624,147 @@ test('a question the catalogue already asks is dropped before it is checked', as
     assert.ok(!checked.some((c) => c.includes('Kate Bush')), 'a doomed question was sent to the checker');
   });
 });
+
+// ===================================================================== topical
+
+/*
+ * A quiz about the last month, which is the only kind that reads the web.
+ *
+ * The three things under test are the three that would cost money and be
+ * invisible: one digest rather than one per round, the same digest going to
+ * the writer AND the checker, and the checker's first batch going on its own
+ * so the rest can read the cache it writes instead of all paying for it.
+ */
+const NEWS = Array.from({ length: 40 }, (_, i) =>
+  `2026-08-${String((i % 28) + 1).padStart(2, '0')} — Fact number ${i}, in which somebody did a specific thing `
+  + `in front of a named number of people, namely ${i * 137}, and it was reported at the time. (bbc.co.uk)`,
+).join('\n');
+
+function stubTopical({ slowChecks = false } = {}) {
+  const seen = { research: 0, writes: [], checks: [], concurrent: 0, mostAtOnce: 0 };
+  let written = 0;
+
+  globalThis.fetch = async (url, options) => {
+    const body = JSON.parse(options.body);
+    const system = Array.isArray(body.system) ? body.system.map((b) => b.text).join('\n') : body.system;
+    const prompt = body.messages[0].content;
+
+    if (body.tools) {
+      seen.research++;
+      return {
+        ok: true,
+        json: async () => ({
+          stop_reason: 'end_turn',
+          usage: { input_tokens: 100, output_tokens: 100, server_tool_use: { web_search_requests: 5 } },
+          content: [{ type: 'text', text: NEWS }],
+        }),
+      };
+    }
+
+    const reply = (payload) => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ content: [{ type: 'text', text: JSON.stringify(payload) }] }),
+      text: async () => '',
+    });
+
+    if (prompt.startsWith('Check these')) {
+      seen.checks.push({ system, cached: (body.system || []).some?.((b) => b.cache_control) || false });
+      seen.concurrent++;
+      seen.mostAtOnce = Math.max(seen.mostAtOnce, seen.concurrent);
+      if (slowChecks) await new Promise((r) => setTimeout(r, 20));
+      seen.concurrent--;
+      const n = Number(prompt.match(/^Check these (\d+)/)[1]);
+      return reply({ verdicts: Array.from({ length: n }, (_, i) => ({ index: i, ok: true })) });
+    }
+
+    seen.writes.push({ system, prompt });
+    const asked = Number(prompt.match(/^Write (\d+) questions/)[1]);
+    return reply({
+      questions: Array.from({ length: asked }, () => {
+        written++;
+        return {
+          prompt: `Topical question ${written}?`,
+          options: [`One ${written}`, `Two ${written}`, `Three ${written}`, `Four ${written}`],
+          correctIndex: written % 4,
+          answerNote: `Fact ${written}.`,
+        };
+      }),
+    });
+  };
+  return seen;
+}
+
+test('the news is read ONCE, and only the topical rounds are written from it', async () => {
+  process.env.ANTHROPIC_API_KEY = 'stub';
+  const seen = stubTopical();
+
+  await withTmpDir(async (config) => {
+    const result = await generateQuizPack({
+      config,
+      theme: 'the last month',
+      freshDays: 14,
+      rounds: [
+        { type: 'text', count: 4, topical: true, label: 'The Month Just Gone', focus: 'news from the last month' },
+        { type: 'text', count: 4, label: 'Music', focus: 'music from any era' },
+      ],
+    });
+
+    assert.equal(seen.research, 1, 'the web was read more than once for one quiz');
+
+    // The topical round's writer saw the news; the evergreen round's did not —
+    // otherwise it writes about the news anyway and the pack has no ground in it.
+    const withNews = seen.writes.filter((w) => w.system.includes('Fact number 1,'));
+    assert.ok(withNews.length >= 1, 'the topical round was written without the news');
+    assert.ok(
+      seen.writes.some((w) => !w.system.includes('Fact number 1,')),
+      'the evergreen round was handed the news as well',
+    );
+
+    // And the checker was given the same facts, or it is judging questions
+    // against a different set of them and rejects true ones.
+    assert.ok(seen.checks.some((c) => c.system.includes('Fact number 1,')), 'the checker never saw the news');
+    assert.ok(seen.checks.some((c) => c.cached), 'the digest was sent to the checker uncached, on every batch');
+
+    // A pack that says when it stops being current.
+    assert.ok(result.quiz.freshUntil, 'no freshUntil on a topical pack');
+    assert.equal(result.searches, 5);
+    assert.equal(result.quiz.rounds[0].title, 'Round One — The Month Just Gone');
+    assert.equal(result.quiz.rounds[1].title, 'Round Two — Music');
+  });
+});
+
+/*
+ * The cache-warming rule, and it is the whole reason caching pays here.
+ *
+ * Concurrent requests cannot share a cache WRITE. Fire six batches at once and
+ * all six arrive before any has finished writing, so all six pay full price
+ * for the same couple of thousand tokens. One first, then the rest.
+ */
+test('with news attached, the first checker batch goes on its own', async () => {
+  process.env.ANTHROPIC_API_KEY = 'stub';
+  const seen = stubTopical({ slowChecks: true });
+
+  await withTmpDir(async (config) => {
+    await generateQuizPack({
+      config,
+      theme: 'the last month',
+      rounds: [{ type: 'text', count: 18, topical: true, focus: 'news from the last month' }],
+    });
+    assert.ok(seen.checks.length > 2, 'not enough batches to tell anything from');
+    // If they had all gone at once, the most in flight would be the batch count.
+    assert.ok(seen.mostAtOnce < seen.checks.length, 'every batch went at once — nothing can read the cache');
+  });
+});
+
+test('an ordinary quiz never reads the web at all', async () => {
+  process.env.ANTHROPIC_API_KEY = 'stub';
+  const seen = stubTopical();
+
+  await withTmpDir(async (config) => {
+    const result = await generateQuizPack({ config, theme: 'the 1980s', rounds: ['text'], perRound: 4 });
+    assert.equal(seen.research, 0, 'an evergreen quiz paid for a web search');
+    assert.equal(result.quiz.freshUntil, undefined, 'an evergreen quiz should have no date to go past');
+    assert.equal(result.searches, 0);
+  });
+});

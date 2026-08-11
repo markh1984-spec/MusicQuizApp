@@ -1403,6 +1403,15 @@ function quizGeneratePanel(gen) {
         <label><input type="checkbox" id="qHard"> Harder than usual</label>
         <span class="tiny">A number each — fifteen general knowledge and five pictures is a normal night. Every question is checked by a second pass before you see it.</span>
       </div>
+      <div class="gen-topical">
+        <button class="go ghost" id="qTopical" ${gen.claude ? '' : 'disabled'}>The month just gone</button>
+        <span class="tiny">
+          Forty questions off the news, no theme needed: <b>20</b> general knowledge and
+          <b>10</b> music from the last month, read off the web, then <b>10</b> music from any era so
+          it is not all one thing. It is named after today and marked as current for a fortnight.
+          Costs more than an ordinary quiz — it does the reading as well as the writing.
+        </span>
+      </div>
       <div class="gen-status" id="qStatus"></div>
       ${gen.claude ? '' : '<div class="tiny warn">Set ANTHROPIC_API_KEY to write quizzes.</div>'}
     </div>`);
@@ -1418,6 +1427,7 @@ function quizGeneratePanel(gen) {
   });
 
   el.querySelector('#qGo')?.addEventListener('click', () => generateQuiz(el));
+  el.querySelector('#qTopical')?.addEventListener('click', () => generateTopicalQuiz(el));
   el.querySelector('#qTheme')?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') generateQuiz(el);
   });
@@ -1427,7 +1437,6 @@ function quizGeneratePanel(gen) {
 async function generateQuiz(panel) {
   const theme = panel.querySelector('#qTheme').value.trim();
   const status = panel.querySelector('#qStatus');
-  const button = panel.querySelector('#qGo');
   if (!theme) {
     status.textContent = 'Give it a theme first.';
     return;
@@ -1445,7 +1454,48 @@ async function generateQuiz(panel) {
     return;
   }
 
-  button.disabled = true;
+  return runQuizJob(panel, '#qGo', 'Write it', {
+    theme,
+    rounds,
+    hard: panel.querySelector('#qHard').checked,
+  });
+}
+
+/**
+ * The topical quiz — one button, no form.
+ *
+ * It sends a flag and the difficulty tickbox and nothing else. The SHAPE lives
+ * on the server (TOPICAL_ROUNDS in src/generate-quiz.js) rather than being
+ * assembled here, so a curl call and a button press cannot produce different
+ * quizzes and there is one place to change what a topical night looks like.
+ *
+ * It ignores the theme box on purpose. The theme of this one is "the last
+ * month", it is named after the date, and a half-typed theme sitting in the
+ * box above is not an instruction — it is something somebody started and did
+ * not finish.
+ */
+async function generateTopicalQuiz(panel) {
+  return runQuizJob(panel, '#qTopical', 'The month just gone', {
+    topical: true,
+    hard: panel.querySelector('#qHard').checked,
+  });
+}
+
+/**
+ * Everything both quiz buttons do once they know what they are asking for.
+ *
+ * One copy, because the reporting is the part that has been wrong before —
+ * the round that came back short, the pack that was not backed up, the
+ * generation that ended with neither a result nor an error. A second button
+ * with its own copy of that is a second button where those get fixed once.
+ */
+async function runQuizJob(panel, buttonSel, buttonWords, payload) {
+  const status = panel.querySelector('#qStatus');
+  const button = panel.querySelector(buttonSel);
+  // Both buttons go down: two generations at once is two bills and a log that
+  // interleaves into nonsense.
+  const buttons = [...panel.querySelectorAll('#qGo, #qTopical')];
+  buttons.forEach((b) => { b.disabled = true; });
   button.textContent = 'Writing…';
   lastDone = null; // a new job supersedes the last one's banner
   status.innerHTML = '<div class="gen-log"></div>';
@@ -1456,16 +1506,12 @@ async function generateQuiz(panel) {
   };
 
   try {
-    const result = await streamGeneration('/api/generate/quiz', {
-      theme,
-      rounds,
-      hard: panel.querySelector('#qHard').checked,
-    }, say);
+    const result = await streamGeneration('/api/generate/quiz', payload, say);
 
     if (result.error) {
       status.appendChild(node(`<div class="gen-bad">${esc(result.error)}</div>`));
-      button.disabled = false;
-      button.textContent = 'Write it';
+      buttons.forEach((b) => { b.disabled = false; });
+      button.textContent = buttonWords;
       return;
     }
 
@@ -1486,6 +1532,10 @@ async function generateQuiz(panel) {
         ${done.backedUp ? '<br>Backed up to GitHub — this one is permanent.' : '<br><b>Not backed up</b> — this will be lost when the app restarts.'}
         <br><b>Now read it.</b> <a href="${linkTo('/editor')}${done.id ? (linkTo('/editor').includes('?') ? '&' : '?') + 'quiz=' + encodeURIComponent(done.id) : ''}">Open the editor</a> and
         check every question before anyone else sees it.
+        ${done.freshUntil
+          ? `<br>This one is <b>topical</b> — ${done.searches} web search${done.searches === 1 ? '' : 'es'}${(done.sources || []).length ? ` across ${done.sources.length} site${done.sources.length === 1 ? '' : 's'}` : ''}.
+             Worth running until <b>${esc(new Date(done.freshUntil).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }))}</b>, after which the room has stopped talking about it.`
+          : ''}
         ${done.needsImages ? '<br><span class="tiny">The face round has no pictures yet — it will use placeholders until you generate them. See TODO.md part 6.</span>' : ''}`;
     status.appendChild(node(`<div class="gen-good">${said}</div>`));
     // A quiz has no song history, so backup is the only thing that can be amiss.
@@ -1500,8 +1550,8 @@ async function generateQuiz(panel) {
     await load();
   } catch (err) {
     status.appendChild(node(`<div class="gen-bad">${esc(err.message)}</div>`));
-    button.disabled = false;
-    button.textContent = 'Write it';
+    buttons.forEach((b) => { b.disabled = false; });
+    button.textContent = buttonWords;
   }
 }
 

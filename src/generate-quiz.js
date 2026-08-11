@@ -22,6 +22,9 @@ import { balanceAnswers } from '../public/assets/balance.js';
 // Not asking the same thing twice across the catalogue. Keyed on the ANSWER,
 // because two questions with the same answer are the same question to a room.
 import { answersInCatalogue, filterSeen, avoidAnswers, DEFAULT_MONTHS as ANSWER_MONTHS } from './question-history.js';
+// Reading the last month of the actual world. One digest, read once, given to
+// the writer AND the checker — see src/research.js for why it must be one.
+import { researchDigest, digestBlock, worthCaching, DEFAULT_DAYS as RESEARCH_DAYS } from './research.js';
 
 export const DEFAULT_MODEL = 'claude-sonnet-5';
 
@@ -107,9 +110,22 @@ The theme for this quiz is: ${theme}
  * Anything not in ROUND_TYPES is dropped here rather than deeper in, so a
  * typo cannot silently become a round of general knowledge.
  *
- * @param {Array<string|{type: string, count: number}>} rounds
+ * Three optional things an entry may also carry, all of them added for the
+ * topical quiz and all of them useful on their own:
+ *
+ * - `focus` — what THIS round is about, where the quiz's theme is what the
+ *   whole pack is about. A topical night is one round of news and one round of
+ *   music, which are two different subjects inside one quiz, and before this
+ *   there was no way to say so.
+ * - `topical` — this round is written from the news digest rather than from
+ *   what the model already knows. Per round, not per pack, because a topical
+ *   quiz deliberately ends on an evergreen round.
+ * - `label` — what it is called on the projector. Derived from the theme
+ *   otherwise, which is right for a quiz about one subject and wrong for a
+ *   round that has its own.
+ *
+ * @param {Array<string|{type: string, count: number, focus?: string, topical?: boolean, label?: string}>} rounds
  * @param {number} fallback  the count for an entry that does not carry one
- * @returns {Array<{type: string, count: number}>}
  */
 export function roundPlan(rounds, fallback = 10) {
   const list = Array.isArray(rounds) ? rounds : [];
@@ -117,12 +133,79 @@ export function roundPlan(rounds, fallback = 10) {
   for (const entry of list) {
     const type = typeof entry === 'string' ? entry : String(entry && entry.type || '');
     if (!ROUND_TYPES.includes(type)) continue;
-    const asked = typeof entry === 'object' && entry ? Number(entry.count) : NaN;
+    const opts = typeof entry === 'object' && entry ? entry : {};
+    const asked = Number(opts.count);
     const count = Number.isFinite(asked) ? asked : Number(fallback);
-    // A round of nought is not a round; a round of fifty is a night on its own.
-    out.push({ type, count: Math.min(30, Math.max(1, Math.round(count) || 1)) });
+    const text = (v, cap) => String(v || '').replace(/\s+/g, ' ').trim().slice(0, cap);
+    out.push({
+      type,
+      // A round of nought is not a round; a round of fifty is a night on its own.
+      count: Math.min(30, Math.max(1, Math.round(count) || 1)),
+      ...(text(opts.focus, 200) ? { focus: text(opts.focus, 200) } : {}),
+      ...(text(opts.label, 60) ? { label: text(opts.label, 60) } : {}),
+      ...(opts.topical ? { topical: true } : {}),
+    });
   }
   return out;
+}
+
+/**
+ * The topical quiz — the shape of a week's news as a quiz night.
+ *
+ * Twenty general knowledge, ten music, then ten music from any era. The last
+ * round is the one worth explaining: a quiz made ENTIRELY of the last month is
+ * a quiz that punishes anybody who was on holiday, and the room notices about
+ * question thirty. It also gives the host somewhere to go if the month was
+ * quiet. Evergreen last so the night ends on ground everybody stands on.
+ *
+ * The split between news and music is twenty to ten because that is roughly
+ * how much of either a month actually produces that a pub crowd would have
+ * heard about — the other way round and the music round is scraping.
+ */
+export const TOPICAL_ROUNDS = [
+  {
+    type: 'text',
+    count: 20,
+    topical: true,
+    label: 'The Month Just Gone',
+    focus: 'news, sport, television, film and popular culture from the last month',
+  },
+  {
+    type: 'text',
+    count: 10,
+    topical: true,
+    label: 'Music This Month',
+    focus: 'music news from the last month — releases, chart positions, tours, awards and reunions',
+  },
+  {
+    type: 'text',
+    count: 10,
+    label: 'Music',
+    focus: 'music from any era — a general pub music round, nothing to do with the last month',
+  },
+];
+
+/**
+ * How long a topical pack is worth running.
+ *
+ * A fortnight, not a week. It is written for this week, but the same quiz gets
+ * a second outing at another venue seven days later — that is the whole
+ * economics of writing one — and after that the news has moved on and the room
+ * is being asked about things it has stopped talking about.
+ */
+export const TOPICAL_DAYS = 14;
+
+/** What a topical pack is called and filed as. Derived from the date, so two in one week do not collide. */
+export function topicalNaming(now = Date.now(), { hard = false } = {}) {
+  const day = new Date(now).toISOString().slice(0, 10);
+  const pretty = new Date(now).toLocaleDateString('en-GB', {
+    day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/London',
+  });
+  return {
+    id: `topical-${day}${hard ? '-hard' : ''}`,
+    title: `The Topical Quiz${hard ? ' — Hard' : ''} — ${pretty}`,
+    theme: 'the last month',
+  };
 }
 
 /** Is there a generation brief for this round type? Used by the tests. */
@@ -130,13 +213,17 @@ export function roundBriefsFor(type) {
   return roundBriefs({ theme: 'anything', count: 10 })[type] || null;
 }
 
-function roundBriefs({ theme, count }) {
+function roundBriefs({ theme, count, focus = '' }) {
   const perRound = count;
+  // What this ROUND is about, which is the quiz's theme unless the round says
+  // otherwise. A topical night is one round of news and one of music inside
+  // one pack, so the two are no longer the same question.
+  const about = focus || theme;
   return {
-    text: `Round type "text": general knowledge about ${theme}.`,
+    text: `Round type "text": general knowledge about ${about}.`,
 
     image: `Round type "image": each question shows an illustrated portrait of a musician
-and asks "Whose face is this?". Pick ${perRound} musicians who fit "${theme}" and whose
+and asks "Whose face is this?". Pick ${perRound} musicians who fit "${about}" and whose
 faces a pub crowd would actually recognise. The four options are four musician names —
 the correct one plus three plausible contemporaries.
 Also give each question an "imagePrompt": a prompt for an image generator asking for a
@@ -147,7 +234,7 @@ Set "prompt" to exactly "Whose face is this?" for every question in this round.`
 
     intro: `Round type "intro": the host plays the opening seconds of a track from their own
 music app, and the screen shows only the question and four possible track titles.
-Choose ${perRound} tracks fitting "${theme}" with intros a pub crowd would recognise within
+Choose ${perRound} tracks fitting "${about}" with intros a pub crowd would recognise within
 a few seconds. The four options are four track titles by the SAME artist where possible,
 or by very similar artists, so it is not a giveaway.
 Set "prompt" to exactly "Which track is this?" for every question in this round.
@@ -156,7 +243,7 @@ and "hint" (a short instruction to the host, e.g. "let the riff run about 6 seco
 The cue is shown ONLY on the host's private phone and never on the big screen.`,
 
     multi: `Round type "multi": several answers are right and the room has to lock in ALL of
-them. Write ${perRound} questions fitting "${theme}".
+them. Write ${perRound} questions fitting "${about}".
 
 Each question has SIX options and a "correctIndexes" array — NOT a "correctIndex" —
 listing the positions (0-5) of every correct one. Use two or three correct answers per
@@ -186,7 +273,7 @@ one.`,
 given a keyboard, and all they have to get right is the FIRST LETTER of the answer —
 which means spelling does not matter and neither does the rest of the answer.
 
-Write ${perRound} questions fitting "${theme}". Give each one an "answer" field with the
+Write ${perRound} questions fitting "${about}". Give each one an "answer" field with the
 answer written out in full, exactly as the host will read it aloud. Do NOT give options,
 correctIndex or correctIndexes.
 
@@ -281,22 +368,43 @@ words for every rejection. Be specific about what is wrong.
  */
 const CHECK_BATCH = 6;
 
-async function checkQuestions({ questions, apiKey, model, log = () => {}, onSpend = () => {} }) {
+async function checkQuestions({ questions, apiKey, model, digest = '', log = () => {}, onSpend = () => {} }) {
   if (questions.length <= CHECK_BATCH) {
-    return checkBatch({ questions, apiKey, model, log, onSpend });
+    return checkBatch({ questions, apiKey, model, digest, log, onSpend });
   }
   const batches = [];
   for (let i = 0; i < questions.length; i += CHECK_BATCH) {
     batches.push(questions.slice(i, i + CHECK_BATCH));
   }
+
+  /*
+   * With a news digest attached, the FIRST batch goes on its own.
+   *
+   * This looks like a pointless delay and is the opposite. The digest is a
+   * couple of thousand tokens repeated on every batch, so it is cached — but
+   * **concurrent requests cannot share a cache write.** Fire six batches at
+   * once and all six arrive before any of them has finished writing the cache,
+   * so all six pay full price for the same tokens and the cache is written six
+   * times over. Send one, wait for it to land, and the other five read what it
+   * wrote at a tenth of the price.
+   *
+   * Without a digest there is nothing worth caching, so nothing is bought by
+   * waiting and the whole lot goes at once, exactly as before.
+   */
+  const run = (batch) => checkBatch({ questions: batch, apiKey, model, digest, log, onSpend });
+  if (digest && batches.length > 1) {
+    log(`  (in ${batches.length} batches — one first, then the rest together)`);
+    const first = await run(batches[0]);
+    const rest = await Promise.all(batches.slice(1).map(run));
+    return [first, ...rest].flat();
+  }
+
   log(`  (in ${batches.length} batches, at the same time)`);
-  const done = await Promise.all(
-    batches.map((batch) => checkBatch({ questions: batch, apiKey, model, log, onSpend })),
-  );
+  const done = await Promise.all(batches.map(run));
   return done.flat();
 }
 
-async function checkBatch({ questions, apiKey, model, log = () => {}, onSpend = () => {} }) {
+async function checkBatch({ questions, apiKey, model, digest = '', log = () => {}, onSpend = () => {} }) {
   const listing = questions.map((q, i) => {
     // An alphabet question has no options — what has to be checked is the
     // answer itself and, above all, that its first letter is not arguable.
@@ -311,6 +419,11 @@ async function checkBatch({ questions, apiKey, model, log = () => {}, onSpend = 
     return lines.join('\n');
   }).join('\n\n');
 
+  // The news, if this round was written from it. Cached, because every batch
+  // of every topical round sends the identical block.
+  const evidence = digestBlock(digest);
+  const cache = Boolean(evidence) && worthCaching(CHECKER_SYSTEM, evidence);
+
   let result;
   try {
     result = await askClaude({
@@ -320,6 +433,8 @@ async function checkBatch({ questions, apiKey, model, log = () => {}, onSpend = 
       model: CHECKER_MODEL,
       think: true,
       what: 'checked a batch',
+      extra: evidence,
+      cache,
       onSpend,
     });
   } catch (err) {
@@ -334,6 +449,8 @@ async function checkBatch({ questions, apiKey, model, log = () => {}, onSpend = 
         model,
         think: true,
         what: 'checked a batch (fallback model)',
+        extra: evidence,
+        cache,
         onSpend,
       });
     } catch (second) {
@@ -406,11 +523,30 @@ An "alphabet" round is the other exception: no options and no correctIndex at al
  *   and every script that calls a generator carries on working with no
  *   accounting attached. See src/spend.js.
  */
-async function askClaude({ system, prompt, apiKey, model, think = false, what = '', onSpend = () => {} }) {
+/**
+ * @param {string} [extra]  a second system block — how the news digest is
+ *   carried. It goes in the SYSTEM rather than in the prompt because the
+ *   system is the part that stays identical from one call to the next, and a
+ *   cache only pays on a prefix that repeats: the questions being checked
+ *   change every time, the month's news does not. Its POSITION never changes
+ *   either, whether or not it is cached, so the prompt is always the same
+ *   shape.
+ * @param {boolean} [cache]  put a cache breakpoint on the end of it. A
+ *   breakpoint covers everything up to and including its own block, so the
+ *   order is standing-instructions, then digest, then the varying prompt.
+ *   Off when there is not enough to be worth it — below Anthropic's minimum a
+ *   cache write is not free, it is a surcharge on tokens nothing will reuse.
+ */
+async function askClaude({ system, extra = '', cache = false, prompt, apiKey, model, think = false, what = '', onSpend = () => {} }) {
   const body = {
     model,
     max_tokens: think ? 16000 : 8000,
-    system,
+    system: extra
+      ? [
+          { type: 'text', text: system },
+          { type: 'text', text: extra, ...(cache ? { cache_control: { type: 'ephemeral' } } : {}) },
+        ]
+      : system,
     messages: [{ role: 'user', content: prompt }],
   };
   if (!think) {
@@ -451,8 +587,13 @@ async function askClaude({ system, prompt, apiKey, model, think = false, what = 
     kind: 'claude',
     what,
     model,
+    // The three input counts do not overlap: `input_tokens` is the UNCACHED
+    // remainder. Adding them up and pricing the total as ordinary input is
+    // exactly the mistake that would make caching look like it saved nothing.
     tokensIn: usage.input_tokens || 0,
     tokensOut: (usage.output_tokens || 0),
+    cacheRead: usage.cache_read_input_tokens || 0,
+    cacheWrite: usage.cache_creation_input_tokens || 0,
   });
   const text = (data.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('');
   return parseJson(text);
@@ -513,21 +654,31 @@ export function parseJson(text, want = 'questions') {
   throw Object.assign(new Error('Claude did not return usable JSON'), { unreadable: true });
 }
 
-function roundTitle(type, index, theme) {
+/**
+ * A round's own name beats the derived one.
+ *
+ * Every round used to be named after the quiz, which is right when the whole
+ * pack is about one thing and wrong the moment a pack holds two subjects: a
+ * topical night is "The Month Just Gone" and then "Music This Month", and
+ * calling both of them "Round One — The Last Month" tells the room nothing.
+ * The type-specific names still win, because "Whose Face Is This?" says what
+ * to do rather than what it is about.
+ */
+function roundTitle(type, index, theme, label = '') {
   const ordinal = ['One', 'Two', 'Three', 'Four', 'Five'][index] || String(index + 1);
   if (type === 'image') return `Round ${ordinal} — Whose Face Is This?`;
   if (type === 'intro') return `Round ${ordinal} — Name That Intro`;
   if (type === 'multi') return `Round ${ordinal} — Pick Them All`;
   if (type === 'alphabet') return `Round ${ordinal} — First Letter`;
-  return `Round ${ordinal} — ${titleCase(theme)}`;
+  return `Round ${ordinal} — ${label || titleCase(theme)}`;
 }
 
-function roundBlurb(type, theme, perRound) {
+function roundBlurb(type, theme, perRound, label = '') {
   if (type === 'image') return 'The picture pulls back as the clock runs down. Guess early, score more.';
   if (type === 'intro') return `${perRound} intros. You get the first few seconds and nothing else.`;
   if (type === 'multi') return 'More than one answer is right. Lock in every one of them.';
   if (type === 'alphabet') return 'Just the first letter of the answer. Spelling does not count.';
-  return `${perRound} questions on ${theme}`;
+  return `${perRound} questions on ${label ? label.toLowerCase() : theme}`;
 }
 
 /**
@@ -670,11 +821,18 @@ export function questionKey(q) {
  *   See question-history.js — keyed on the ANSWER rather than the wording,
  *   because two questions with the same answer are the same question to a room
  *   however differently they are phrased.
+ * @param {string} [digest]  the last month, read off the web. Empty on an
+ *   ordinary round. When it is there it goes to the writer AND to the checker,
+ *   so the two are judging against the same facts — see src/research.js.
  */
-async function buildRound({ brief, perRound, check, system, apiKey, model, log, onReject, onUnchecked = () => {}, onShort = () => {}, onSpend = () => {}, seenAnswers = new Map(), onRepeat = () => {} }) {
+async function buildRound({ brief, perRound, check, system, apiKey, model, log, onReject, onUnchecked = () => {}, onShort = () => {}, onSpend = () => {}, seenAnswers = new Map(), onRepeat = () => {}, digest = '' }) {
   const accepted = [];
   const failed = [];
   const seen = new Set();
+  // The news, on a topical round. Worth a cache breakpoint only if there is
+  // enough of it — every attempt of every topical round sends the same block.
+  const evidence = digestBlock(digest);
+  const cache = Boolean(evidence) && worthCaching(system, evidence);
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS && accepted.length < perRound; attempt++) {
     const need = perRound - accepted.length;
@@ -713,6 +871,11 @@ async function buildRound({ brief, perRound, check, system, apiKey, model, log, 
     try {
       result = await askClaude({
         system,
+        // The news goes in the second half of the system, not in the prompt:
+        // it is identical on every attempt of every topical round, and the
+        // prompt is the part that changes.
+        extra: evidence,
+        cache,
         prompt: `Write ${ask} questions for a music quiz.\n\n${brief}${avoid}${notThese}\n\n${SCHEMA_NOTE}`,
         apiKey,
         model,
@@ -755,7 +918,7 @@ async function buildRound({ brief, perRound, check, system, apiKey, model, log, 
     }
 
     log(`  checking ${fresh.length} with ${CHECKER_MODEL}…`);
-    const verdicts = await checkQuestions({ questions: fresh, apiKey, model, log, onSpend });
+    const verdicts = await checkQuestions({ questions: fresh, apiKey, model, digest, log, onSpend });
     if (verdicts.some((v) => v.unchecked)) onUnchecked();
     for (const v of verdicts) {
       if (v.ok) {
@@ -820,6 +983,19 @@ export async function generateQuizPack({
    * cycle through a library, which is when a repeat actually gets noticed.
    */
   avoidAnswerMonths = ANSWER_MONTHS,
+  /*
+   * How long this pack is worth running, in days. 0 is evergreen, which is
+   * every ordinary quiz — a question about the 1980s does not go off.
+   *
+   * Only a pack that says so gets a `freshUntil`, so the console's "past its
+   * date" warning means something rather than appearing on the whole library.
+   */
+  freshDays = 0,
+  /*
+   * How far back the news digest reads, in days. Only used when a round in the
+   * plan is marked topical; there is one digest for the whole job.
+   */
+  researchDays = RESEARCH_DAYS,
   log = () => {},
   // What each call cost, for the owner's own ledger. Defaults to nothing, so
   // a test or a script gets a generator with no accounting attached rather
@@ -851,6 +1027,22 @@ export async function generateQuizPack({
   const seenAnswers = answersInCatalogue(config.quizDir, { months: avoidAnswerMonths, now: now() });
   if (seenAnswers.size) log(`${seenAnswers.size} answers already used in the catalogue — not asking those again`);
 
+  /*
+   * The last month, if any round in the plan is about it.
+   *
+   * FIRST, before a penny is spent on questions, and it is allowed to refuse
+   * where nothing else in this file is: the failure it prevents is a quiz of
+   * forty invented current events, and at this point there is nothing to lose
+   * by stopping. Everything downstream in this file keeps going on a failure
+   * because by then the job is minutes and real money deep. This one is not.
+   */
+  let digest = '';
+  let research = null;
+  if (plan.some((r) => r.topical)) {
+    research = await researchDigest({ apiKey, days: researchDays, log, onSpend, now });
+    digest = research.digest;
+  }
+
   const built = [];
   const rejected = [];
   const unchecked = [];   // rounds the checking pass could not reach at all
@@ -858,14 +1050,19 @@ export async function generateQuizPack({
   const short = [];       // rounds the WRITER would not fill, which is different
 
   for (let i = 0; i < plan.length; i++) {
-    const { type, count } = plan[i];
+    const { type, count, focus = '', label = '', topical = false } = plan[i];
     // Built per round rather than once, because the brief tells the model how
-    // many to write and that is now different from one round to the next.
-    const brief = roundBriefs({ theme: subject, count })[type];
+    // many to write and what it is about, and both of those are now different
+    // from one round to the next.
+    const brief = roundBriefs({ theme: subject, count, focus })[type];
 
-    log(`round ${i + 1} of ${plan.length} (${type}, ${count} question${count === 1 ? '' : 's'})`);
+    log(`round ${i + 1} of ${plan.length} (${type}, ${count} question${count === 1 ? '' : 's'}${topical ? ', from the news' : ''})`);
     const questions = await buildRound({
       brief, perRound: count, check, system, apiKey, model, log, onSpend,
+      // Only a round that asked for it. The evergreen round of a topical quiz
+      // is deliberately written without the news in front of it — otherwise it
+      // writes about the news anyway and the pack has no ground in it.
+      digest: topical ? digest : '',
       seenAnswers,
       onRepeat: (r) => repeated.push({ round: i + 1, prompt: r.question.prompt, because: r.because }),
       onReject: (q, reason) => rejected.push({ round: i + 1, prompt: q.prompt, reason }),
@@ -876,11 +1073,11 @@ export async function generateQuizPack({
     built.push({
       id: `r${i + 1}`,
       type,
-      title: roundTitle(type, i, subject),
+      title: roundTitle(type, i, subject, label),
       // The count the round ACTUALLY has, not the one that was asked for — a
       // round of one saying "10 intros" on the projector is a lie the room can
       // see.
-      blurb: roundBlurb(type, subject, questions.length),
+      blurb: roundBlurb(type, subject, questions.length, label),
       ...(type === 'image' ? { imageCaption: 'AI-generated illustration — not a real photograph' } : {}),
       questions: questions.map((q, qi) => ({
         id: `r${i + 1}q${qi + 1}`,
@@ -934,7 +1131,13 @@ export async function generateQuizPack({
     subtitle: `${['One', 'Two', 'Three', 'Four', 'Five', 'Six'][plan.length - 1] || plan.length} round${plan.length === 1 ? '' : 's'}. Twenty seconds a question. Fastest fingers win.`,
     questionSeconds: 20,
     createdAt: new Date(now()).toISOString(),
+    // When it stops being current. Only on a pack that IS current — an
+    // eighties quiz has no date to go past. See freshness() in quizzes.js.
+    ...(freshDays > 0 ? { freshUntil: new Date(now() + freshDays * 86400000).toISOString() } : {}),
     notes: `Written by ${model} for "${subject}". NOT YET REVIEWED — read every question in the editor before the gig.`
+      + (research
+        ? ` The topical rounds were written from ${research.lines} facts read off the web on ${new Date(now()).toISOString().slice(0, 10)}${research.sources.length ? ` (${research.sources.slice(0, 6).join(', ')})` : ''}.`
+        : '')
       + (unchecked.length
         ? ` Round${unchecked.length === 1 ? '' : 's'} ${unchecked.join(', ')} could NOT be checked by the second pass — read ${unchecked.length === 1 ? 'that one' : 'those'} line by line.`
         : ''),
@@ -972,7 +1175,15 @@ export async function generateQuizPack({
   log(`saved ${quizId}.json`);
 
   const needsImages = built.some((r) => r.type === 'image');
-  return { quiz, problems, file, needsImages, rejected, unchecked, short, repeated, checked: check };
+  return {
+    quiz, problems, file, needsImages, rejected, unchecked, short, repeated, checked: check,
+    // What the news cost, so the console can say it out loud. A topical pack
+    // is the only kind with a per-pack search bill and it is the number that
+    // decides whether writing one every week is worth it.
+    searches: research ? research.searches : 0,
+    sources: research ? research.sources : [],
+    freshUntil: quiz.freshUntil || null,
+  };
 }
 
 function slug(s) {

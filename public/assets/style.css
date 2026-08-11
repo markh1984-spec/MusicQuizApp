@@ -1294,6 +1294,21 @@ body.console::after { display: none; }
 }
 .gen-row .go:disabled { opacity: 0.45; cursor: default; }
 
+/*
+ * The topical quiz sits UNDER the theme box rather than beside it, because it
+ * is a different job rather than a different setting: it takes no theme, and a
+ * button on the same line as one you have to fill in reads as needing it.
+ * Outlined rather than filled so "Write it" stays the loudest thing here — a
+ * second gradient button of the same weight is two primaries and no primary.
+ */
+.gen-topical { display: flex; gap: 14px; align-items: flex-start; margin-top: 12px; flex-wrap: wrap; }
+.gen-topical .go {
+  border: 2px solid var(--hot); border-radius: 10px; padding: 11px 18px; cursor: pointer;
+  background: transparent; color: var(--ink); font-weight: 900; font-size: 14px; white-space: nowrap;
+}
+.gen-topical .go:disabled { opacity: 0.45; cursor: default; }
+.gen-topical .tiny { flex: 1 1 240px; line-height: 1.5; }
+
 .gen-opts { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-top: 12px; font-size: 13px; color: var(--ink-dim); }
 .gen-opts label { display: flex; gap: 6px; align-items: center; font-weight: 700; }
 .gen-opts input, .gen-opts select {

@@ -1204,6 +1204,94 @@ front of a paying room, which is the thing `ages-out` in `reviewWarnings()`
 already exists to prevent. This is that hazard made deliberate, so it needs the
 same care.
 
+### Where a topical pack comes from — the one thing here that reads the web
+
+`src/research.js`, and the **"The month just gone"** button on the console next
+to "Write it". Forty questions: **20 general knowledge and 10 music from the
+last month, then 10 music from any era.** Named after the date, marked current
+for a fortnight.
+
+**ONE digest, read ONCE, given to the WRITER and to the CHECKER.** That is the
+load-bearing decision and it has two separate reasons. If the two search
+separately they are working from different facts, so the checker rejects true
+questions and the log fills with rejections nobody can account for — checking
+only means anything against the same evidence the question was written from.
+And the checker runs in batches, several at a time, so a search each would read
+the same month of news ten times over at 0.8p a search plus every token it
+drags in.
+
+**Every line of the digest carries a DATE and a SOURCE**, because the checker's
+whole job is "are you sure" and it cannot be sure of a bare assertion.
+`tidyDigest()` throws away anything without a date — which also drops the
+opening sentence a model that has just done twelve searches cannot resist, and
+which would otherwise sit in the cached prefix being paid for over and over.
+
+**The last round is deliberately NOT topical.** A quiz made entirely of the
+last month punishes anybody who was on holiday, and the room notices about
+question thirty. That round's writer is not given the digest at all — handed
+it, it writes about the news anyway and the pack has no ground in it.
+
+**This is the ONE place in the app where a failure refuses the job.** Every
+other fallback here leans the other way — a checker that cannot be reached
+keeps the questions, because by then the generation is minutes and real money
+deep. The research call is the FIRST call, before a penny is spent, and what
+carrying on would produce is forty confidently invented current events. There
+is nothing to lose by stopping and everything to lose by not.
+
+**`web_search_20260209`, not the older `_20250305`.** The newer one filters
+results before they reach the context rather than after, which on "what
+happened last month" is the difference between reading the news and reading a
+page of search-engine furniture. And the server's own search loop stops after
+ten goes and hands back `stop_reason: 'pause_turn'` rather than an answer —
+resuming is the same conversation with the assistant's half appended and **no
+extra instruction**, because a "continue" message reads as a new request. Not
+resuming looks exactly like a quiet month: a short digest and no error.
+
+#### The checker's FIRST batch goes on its own, and that is not a delay
+
+The digest is a couple of thousand tokens sent identically on every batch, so
+it is cached — `cache_control: {type: 'ephemeral'}` on a second system block,
+after the standing instructions and before the varying prompt, because a
+breakpoint covers everything up to and including its own block.
+
+**But concurrent requests cannot share a cache WRITE.** The checker used to
+fire every batch at once with `Promise.all`, and under that shape all six
+arrive before any of them has finished writing — so all six pay full price for
+the same tokens and the cache is written six times over. One batch first,
+awaited, then the rest together: they read what it wrote at a tenth of the
+price. Without a digest there is nothing worth caching, so nothing is bought by
+waiting and the whole lot still goes at once, exactly as before.
+
+A breakpoint is only added when there is enough to be worth one
+(`worthCaching()`). Below Anthropic's minimum a cache write is not free — it is
+a quarter MORE than cold — so marking a small prompt for caching is a surcharge
+on tokens nothing will ever reuse. The digest's position never changes either
+way, so the prompt is always the same shape.
+
+**The ledger had to learn three new numbers or none of this would show up.**
+`cacheRead`, `cacheWrite` and `searches` in `src/spend.js`. The API reports the
+three input counts separately and they do NOT overlap — `input_tokens` is the
+uncached remainder — so adding them up and pricing the total as ordinary input
+is exactly what would make caching look like it saved nothing, on the one page
+whose job is to say what the AI actually costs. Searches get their own line in
+the summary because that is the only figure that grows with how TOPICAL the
+writing is rather than with how much of it there is.
+
+#### A round can now say what it is about
+
+`roundPlan()` entries carry three optional things, all added for this and all
+useful on their own: **`focus`** (what THIS round is about, where the theme is
+what the whole pack is about), **`topical`** (write it from the digest), and
+**`label`** (what it is called on the projector). Before this a pack could only
+be about one subject, so "twenty of the news and ten of music" had no way to be
+said. `TOPICAL_ROUNDS` and `topicalNaming()` live in `src/generate-quiz.js`
+rather than in the browser, so a curl call and a button press produce the same
+pack and there is one thing to test.
+
+Two topical quizzes on one day do not collide — the hard one is
+`topical-<date>-hard` — which is exactly what the host asked for: one of
+average difficulty and one pitched harder, every week.
+
 **GOLD IS NOT READY TO SELL.** It is settled that Gold is the online/streaming
 tier — that is the one thing on the ladder with a real per-use cost to the
 owner, so it belongs at the top under the host's own rule. But **streaming is
@@ -2509,6 +2597,15 @@ will hang off — and the owner can look at the console as a subscriber on any
 rung of it; **a question mark inside a microphone** with the name stacked under it —
 the mic is the host and the question is what every round actually is, which
 the vinyl record and the mic-and-note before it both failed to say.
+
+Most recently: **the topical quiz** — one button that reads the last month off
+the web and writes forty questions from it, 20 news and 10 music from the
+month plus 10 evergreen music so it is not all one thing. One digest, shared by
+the writer and the checker so they cannot judge against different facts; the
+checker's first batch sent alone so the rest can read the cache it writes
+instead of six of them paying for the same tokens; and the ledger taught to
+price a cached token and a web search, without which none of that would have
+shown up as a saving. See **Where a topical pack comes from** above.
 
 Most recent session, all pushed: **generated packs arrive with the answers
 already spread across A-D** rather than the host pressing a button to fix a

@@ -59,11 +59,44 @@ export const PRICES = {
   // Per 1024x1024 image. The same table the console quotes before you press
   // the button — one copy, so the estimate and the record cannot drift.
   image: { low: 1, medium: 4, high: 14 },
+  /*
+   * Cached input, as MULTIPLES of the model's ordinary input rate.
+   *
+   * Not a flat price, because the discount is proportional: a cache read is
+   * about a tenth of what the same tokens cost cold, and a write costs a
+   * quarter more than cold (the price of putting them there). Recording them
+   * as ordinary input — which is what happens if you ignore these fields —
+   * overstates a cached job by roughly ten times on the part that matters.
+   */
+  cache: { read: 0.1, write: 1.25 },
+  /*
+   * One web search, in pence. Published as $10 per 1,000, so 1p each at
+   * parity and 0.8p at a rough exchange rate — rounded UP for the same reason
+   * every price here is: the only safe direction to be wrong is dearer.
+   */
+  search: 0.8,
 };
 
-export function claudePence({ model = '', tokensIn = 0, tokensOut = 0 } = {}) {
+/**
+ * @param {object} row
+ * @param {number} [row.cacheRead]   input tokens served from the cache
+ * @param {number} [row.cacheWrite]  input tokens written INTO the cache
+ * @param {number} [row.searches]    web searches this call made
+ *
+ * `tokensIn` is the UNCACHED remainder only — the API reports the three
+ * separately and they do not overlap. Adding them together and pricing the
+ * total as ordinary input is the mistake this signature exists to prevent.
+ */
+export function claudePence({
+  model = '', tokensIn = 0, tokensOut = 0, cacheRead = 0, cacheWrite = 0, searches = 0,
+} = {}) {
   const rate = PRICES.claude[model] || PRICES.claude.default;
-  return (Number(tokensIn) || 0) / 1000 * rate.in + (Number(tokensOut) || 0) / 1000 * rate.out;
+  const n = (v) => (Number(v) || 0) / 1000;
+  return n(tokensIn) * rate.in
+    + n(tokensOut) * rate.out
+    + n(cacheRead) * rate.in * PRICES.cache.read
+    + n(cacheWrite) * rate.in * PRICES.cache.write
+    + (Number(searches) || 0) * PRICES.search;
 }
 
 export function imagePence({ quality = 'medium', images = 1 } = {}) {
@@ -150,11 +183,15 @@ export class Spend {
    * @param {string} row.what     "wrote a quiz", "checked a round", "a portrait"
    * @param {string} [row.packId] which pack it was for, so a cost has a subject
    */
-  record({ kind, what = '', packId = '', model = '', quality = '', tokensIn = 0, tokensOut = 0, images = 0 } = {}) {
+  record({
+    kind, what = '', packId = '', model = '', quality = '',
+    tokensIn = 0, tokensOut = 0, images = 0,
+    cacheRead = 0, cacheWrite = 0, searches = 0,
+  } = {}) {
     try {
       const pence = kind === 'image'
         ? imagePence({ quality, images })
-        : claudePence({ model, tokensIn, tokensOut });
+        : claudePence({ model, tokensIn, tokensOut, cacheRead, cacheWrite, searches });
 
       const row = {
         at: this.now(),
@@ -165,6 +202,9 @@ export class Spend {
         ...(quality ? { quality } : {}),
         ...(tokensIn ? { tokensIn: Math.round(tokensIn) } : {}),
         ...(tokensOut ? { tokensOut: Math.round(tokensOut) } : {}),
+        ...(cacheRead ? { cacheRead: Math.round(cacheRead) } : {}),
+        ...(cacheWrite ? { cacheWrite: Math.round(cacheWrite) } : {}),
+        ...(searches ? { searches } : {}),
         ...(images ? { images } : {}),
         // Kept to two decimal places of a penny. A single checker batch is
         // fractions of one, and rounding each row to a whole penny would turn
@@ -197,9 +237,11 @@ export class Spend {
     const byPack = new Map();
     let claude = 0;
     let image = 0;
+    let searches = 0;
 
     for (const row of recent) {
       const pence = Number(row.pence) || 0;
+      searches += Number(row.searches) || 0;
       if (row.kind === 'image') image += pence; else claude += pence;
 
       const month = new Date(row.at || 0).toISOString().slice(0, 7);
@@ -219,6 +261,10 @@ export class Spend {
       claude: round(claude),
       image: round(image),
       rows: recent.length,
+      // How much of the web was read. Worth its own number rather than being
+      // folded into the Claude total: it is the one line that grows with how
+      // TOPICAL the writing is rather than with how much of it there is.
+      searches,
       // Newest month first, so the interesting one is not at the bottom.
       months: [...byMonth.entries()]
         .map(([month, pence]) => ({ month, pence: round(pence) }))

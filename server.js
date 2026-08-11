@@ -24,7 +24,7 @@ import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarn
 import { validateBingoPack, normaliseBingoPack, minimumTracks, CARD_SHAPES, shapeLabel, maxPrizes, stagePlan, stageLabel } from './src/bingo.js';
 import { fullLibrary, listArchive, loadArchived, saveBingoPack, loadBingoPack, deleteBingoPack, readStats } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
-import { generateQuizPack, buildIntroPlaylists, roundPlan } from './src/generate-quiz.js';
+import { generateQuizPack, buildIntroPlaylists, roundPlan, TOPICAL_ROUNDS, TOPICAL_DAYS, topicalNaming } from './src/generate-quiz.js';
 import { importBingoPack } from './src/import-bingo.js';
 import { listAdvertPacks, loadAdvertPack, saveAdvertPack, deleteAdvertPack, validateAdvertPack, normaliseAdvertPack } from './src/adverts.js';
 import { generateImages, imageStatus, imageJobs, imagePlan, openaiConfigured } from './src/generate-images.js';
@@ -3206,19 +3206,32 @@ async function handleWrite(req, res, url, route) {
       // sends a count per round now, because "fifteen general knowledge and
       // five pictures" is a normal quiz and "ten of everything" is not.
       const asked = roundPlan(body.rounds, Number(body.perRound) || 10);
-      const rounds = asked.length ? asked : ['text', 'image', 'intro'];
+      /*
+       * The topical quiz is a SHAPE, decided here rather than in the browser.
+       *
+       * The console sends one flag and nothing else. Twenty news, ten music,
+       * ten evergreen — plus the name, which is the date, and the fortnight it
+       * is worth running for — all live in generate-quiz.js, so a curl call
+       * and a button press produce the same pack and there is one thing to
+       * test rather than two that can drift.
+       */
+      const topical = Boolean(body.topical);
+      const hard = Boolean(body.hard);
+      const naming = topical ? topicalNaming(Date.now(), { hard }) : null;
+      const rounds = topical ? TOPICAL_ROUNDS : (asked.length ? asked : ['text', 'image', 'intro']);
       const result = await generateQuizPack({
         config,
-        theme: String(body.theme || '').slice(0, 200),
+        theme: topical ? naming.theme : String(body.theme || '').slice(0, 200),
+        ...(topical ? { id: naming.id, title: naming.title, freshDays: TOPICAL_DAYS } : {}),
         rounds,
         perRound: Math.min(30, Math.max(1, Number(body.perRound) || 10)),
-        hard: Boolean(body.hard),
+        hard,
         // Always checked. The console deliberately offers no way to skip it —
         // an option that only ever makes the questions worse is a footgun on a
         // panel used in a hurry.
         check: true,
         log,
-        onSpend: spendRecorder(spend, { packId: body.id || themeSlug(String(body.theme || '')) }),
+        onSpend: spendRecorder(spend, { packId: topical ? naming.id : (body.id || themeSlug(String(body.theme || ''))) }),
       });
       backUpSpend();
       const backup = await backUp(
@@ -3242,6 +3255,11 @@ async function handleWrite(req, res, url, route) {
         // checker binning things, and the one that reads as success if it is
         // not said out loud.
         short: result.short || [],
+        // A topical pack only. How much of the web it read, and how long it is
+        // worth running — both of which the console says on the banner.
+        searches: result.searches || 0,
+        sources: result.sources || [],
+        freshUntil: result.freshUntil || null,
       }));
     } catch (err) {
       log('ERROR ' + err.message);

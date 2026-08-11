@@ -44,6 +44,44 @@ test('an unknown model is priced as the dearest one there is', () => {
   assert.ok(unknown >= dearest, 'an unrecognised model priced below a known one');
 });
 
+/*
+ * The three input counts do not overlap — `input_tokens` is the UNCACHED
+ * remainder. Pricing a cached call as if every token were ordinary input is
+ * what would make caching look like it saved nothing, on the one page whose
+ * job is to say what the AI actually costs.
+ */
+test('cached tokens are a tenth of cold ones, and a write costs a quarter more', () => {
+  const cold = claudePence({ model: 'claude-opus-5', tokensIn: 10000 });
+  const read = claudePence({ model: 'claude-opus-5', cacheRead: 10000 });
+  const write = claudePence({ model: 'claude-opus-5', cacheWrite: 10000 });
+
+  assert.equal(Math.round(read * 100) / 100, Math.round(cold * 0.1 * 100) / 100);
+  assert.equal(Math.round(write * 100) / 100, Math.round(cold * 1.25 * 100) / 100);
+  assert.ok(read < cold && cold < write, 'the three rates are in the wrong order');
+});
+
+/*
+ * A web search is charged per search, not per token, so it is the one line on
+ * the bill that grows with how TOPICAL the writing is rather than with how
+ * much of it there is. Worth its own number for exactly that reason.
+ */
+test('a web search costs the same whatever model made it', () => {
+  const opus = claudePence({ model: 'claude-opus-5', searches: 10 });
+  const sonnet = claudePence({ model: 'claude-sonnet-5', searches: 10 });
+  assert.equal(opus, sonnet);
+  assert.equal(opus, 8, 'ten searches should be 8p');
+});
+
+test('the summary counts the searches separately from the money', () => {
+  const { spend } = ledger();
+  spend.record({ kind: 'claude', what: 'read the last month', model: 'claude-sonnet-5', tokensIn: 1000, searches: 9, packId: 'topical' });
+  spend.record({ kind: 'claude', what: 'wrote a round', model: 'claude-sonnet-5', tokensIn: 1000, packId: 'topical' });
+
+  const sum = spend.summary();
+  assert.equal(sum.searches, 9);
+  assert.ok(sum.claude > 0);
+});
+
 test('a picture is priced from the quality that was actually asked for', () => {
   assert.equal(imagePence({ quality: 'low', images: 10 }), PRICES.image.low * 10);
   assert.equal(imagePence({ quality: 'high', images: 2 }), PRICES.image.high * 2);
