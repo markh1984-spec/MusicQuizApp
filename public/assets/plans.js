@@ -56,15 +56,22 @@ export const FEATURES = {
   OWN_PACKS: 'packs.own',
   LOOKS: 'looks',                // seasonal palettes and picture reveals
   /*
-   * Venue slides between rounds — SILVER, and it is the one feature that is
-   * up a rung for a reason other than cost.
+   * Venue slides between rounds — SILVER, and the only capability above Bronze.
    *
-   * A slide costs nothing to run, so the host's own rule does not force it out
-   * of Bronze. But that rule only says what CANNOT be in Bronze; it does not
-   * say everything cheap must be. This one earns its rung a different way: it
-   * makes the quizmaster more money. They sell the venue the pizza nobody is
-   * buying this week, and a QR to tickets they take a cut of — so it pays for
-   * the upgrade in the subscriber's own terms rather than in the owner's.
+   * **The recorded reason for this used to be "it makes the quizmaster money",
+   * and that argument is dead** — it is exactly the case that was made and
+   * rejected for invoicing, which also makes them money and is now Bronze. You
+   * cannot hold both.
+   *
+   * What keeps it at Silver is the rule that replaced it: **the tiers separate
+   * on quiz-app functionality, not on business tools.** An advert slide is a
+   * card on the projector between rounds — it is part of the show, in a way an
+   * invoice is not. That is a line you can hold for the next feature as well,
+   * which the old reason was not.
+   *
+   * It still costs nothing to run, so the host's own rule does not force it
+   * out of Bronze; that rule only says what CANNOT be in Bronze, never that
+   * everything cheap must be in it.
    *
    * The usual objection to withholding a capability does not apply here, and
    * that is what makes it safe. "Every capability you withhold looks broken in
@@ -77,7 +84,22 @@ export const FEATURES = {
   ADVERTS: 'adverts',            // venue slides
   PHOTOS: 'photos',              // photos from the room
 
-  // ---- The admin add-on. Running a business rather than running a night.
+  /*
+   * ---- Running a business rather than running a night. BRONZE, all of it.
+   *
+   * These were a paid add-on and the host moved them down, on a rule worth
+   * writing out because it decides where the next feature goes too: **the
+   * tiers separate on QUIZ-APP functionality, not on business tools.**
+   *
+   * Withholding invoicing creates no upgrade pressure — it just makes the app
+   * less useful to the person you most want recommending it. It is a
+   * nice-to-have that helps a quizmaster get paid, and a quizmaster who gets
+   * paid faster because of this app is the best advertisement it has.
+   *
+   * Note this is the CONTENT-not-capability rule applied honestly rather than
+   * a change of mind: the lever has always been the library, and every
+   * capability held back is something that looks thin for no good reason.
+   */
   INVOICES: 'admin.invoices',
   CALENDAR: 'admin.calendar',
   MARKETING: 'admin.marketing',  // not built yet
@@ -124,7 +146,7 @@ export const TIERS = [
     plan: 'Elite',
     rank: 1,
     pence: 2000,
-    blurb: 'The whole catalogue, plus the tools for running it as a business.',
+    blurb: 'Every pack in the catalogue, and every new one as it is written.',
     content: { label: 'The whole catalogue', blurb: 'Every pack there is, and every new one as it is written. Nothing left to buy.' },
   },
   {
@@ -372,9 +394,9 @@ export const FEATURE_TIER = {
   [FEATURES.ADVERTS]: 'silver',
   [FEATURES.PHOTOS]: 'bronze',
 
-  [FEATURES.INVOICES]: 'silver',
-  [FEATURES.CALENDAR]: 'silver',
-  [FEATURES.MARKETING]: 'silver',
+  [FEATURES.INVOICES]: 'bronze',
+  [FEATURES.CALENDAR]: 'bronze',
+  [FEATURES.MARKETING]: 'bronze',
 
   [FEATURES.STREAM]: 'gold',
 };

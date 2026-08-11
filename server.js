@@ -2973,6 +2973,32 @@ async function handleWrite(req, res, url, route) {
           upgrade: true,
         }), true;
       }
+      /*
+       * And it must not end a night somebody is in the middle of.
+       *
+       * `session.launch()` builds a fresh game unconditionally, so before this
+       * two people on one login could wipe each other's game mid-question —
+       * reachable today by password sharing, which is what happens the moment
+       * anybody decides three subscriptions are too many.
+       *
+       * **It says what it is about to destroy rather than refusing outright.**
+       * A control that simply says no in front of a room is the mistake this
+       * codebase keeps recording, and there are real reasons to launch over a
+       * live game — the wrong pack went up, or the night genuinely restarts.
+       * So the first press comes back with the game, the player count and
+       * where it has got to, and a second deliberate press carries `replace`.
+       * Nobody does that by accident.
+       */
+      const live = session.inProgress();
+      if (live && !body.replace) {
+        return sendJson(res, 409, {
+          error: `"${live.title}" is running right now — ${live.players} playing${live.at ? `, ${live.at}` : ''}.`
+            + ' Launching something else ends it and wipes the scores.',
+          live,
+          replace: true,
+        }), true;
+      }
+
       try {
         // The card shape is chosen at launch, not stored on the pack: the same
         // forty-two songs are a quick game on a 3x3 and a long one on a strip,

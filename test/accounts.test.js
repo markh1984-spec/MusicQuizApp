@@ -238,7 +238,7 @@ test('carrying on is not a way round the paywall', () => {
     const made = book.create({ email: 'dave@example.com', password: PASSWORD, status: 'past_due' });
     const lapsed = safe(book.find(made.id));
     // Never had the add-on, so a lapse does not hand it over.
-    assert.equal(book.mayCarryOn(lapsed, FEATURES.INVOICES), false);
+    assert.equal(book.mayCarryOn(lapsed, FEATURES.ADVERTS), false);
     assert.equal(book.mayCarryOn(lapsed, FEATURES.GENERATE), false);
     assert.equal(book.mayCarryOn(lapsed, FEATURES.STREAM), false);
   });
@@ -318,20 +318,23 @@ test('the tier is the subscription, and the tiers stack', () => {
     const made = book.create({ email: 'dave@example.com', password: PASSWORD, status: 'active' });
     assert.equal(book.find(made.id).tier, 'bronze', 'a new account starts on the bottom rung');
     assert.equal(book.mayStartSomething(safe(book.find(made.id)), FEATURES.QUIZ), true);
-    assert.equal(book.mayStartSomething(safe(book.find(made.id)), FEATURES.INVOICES), false);
+    // Invoicing is Bronze now — the tiers separate on quiz-app functionality,
+    // not on business tools — so an advert slide is what a bottom rung lacks.
+    assert.equal(book.mayStartSomething(safe(book.find(made.id)), FEATURES.INVOICES), true);
+    assert.equal(book.mayStartSomething(safe(book.find(made.id)), FEATURES.ADVERTS), false);
 
     book.update(made.id, { tier: 'silver' });
-    assert.equal(book.mayStartSomething(safe(book.find(made.id)), FEATURES.INVOICES), true);
+    assert.equal(book.mayStartSomething(safe(book.find(made.id)), FEATURES.ADVERTS), true);
     assert.equal(book.mayStartSomething(safe(book.find(made.id)), FEATURES.QUIZ), true, 'silver lost bronze');
     assert.equal(book.mayStartSomething(safe(book.find(made.id)), FEATURES.STREAM), false);
 
     book.update(made.id, { tier: 'gold' });
-    for (const f of [FEATURES.QUIZ, FEATURES.INVOICES, FEATURES.STREAM]) {
+    for (const f of [FEATURES.QUIZ, FEATURES.ADVERTS, FEATURES.STREAM]) {
       assert.equal(book.mayStartSomething(safe(book.find(made.id)), f), true, `gold is missing ${f}`);
     }
 
     book.update(made.id, { tier: 'bronze' });
-    assert.equal(book.mayStartSomething(safe(book.find(made.id)), FEATURES.INVOICES), false);
+    assert.equal(book.mayStartSomething(safe(book.find(made.id)), FEATURES.ADVERTS), false);
     assert.throws(() => book.update(made.id, { tier: 'platinum' }), /is not a tier/);
   });
 });
@@ -474,7 +477,7 @@ test('a preference cannot smuggle in a feature the tier does not include', () =>
     // Nothing in this shape is read as an entitlement, whatever it is called —
     // and a feature above the tier cannot even be STORED as switched off.
     book.setPrefs(made.id, {
-      featuresOff: [FEATURES.STREAM, FEATURES.INVOICES],
+      featuresOff: [FEATURES.STREAM, FEATURES.ADVERTS],
       tier: 'gold', addons: ['admin'], plan: 'basic', comped: true, status: 'active', role: 'owner',
     });
     const after = book.find(made.id);
@@ -482,7 +485,7 @@ test('a preference cannot smuggle in a feature the tier does not include', () =>
     assert.equal(after.comped, false);
     assert.equal(after.role, 'quizmaster');
     assert.deepEqual(after.prefs.featuresOff, [], 'a feature above the tier was stored');
-    assert.equal(can(after, FEATURES.INVOICES), false, 'a preference bought a tier');
+    assert.equal(can(after, FEATURES.ADVERTS), false, 'a preference bought a tier');
     assert.equal(can(after, FEATURES.STREAM), false);
     assert.equal(can(after, FEATURES.CATALOGUE), false);
   });

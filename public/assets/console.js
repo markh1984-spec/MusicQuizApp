@@ -2734,29 +2734,54 @@ function packCard(kind, pack) {
       if (!confirm(`"${pack.title}" was written to be current to ${when}.\n\nSome of the answers will have moved on. Run it anyway?`)) return;
     }
 
-    const running = library.running;
-    const joined = (running && running.playerCount) || 0;
-    const over = running && running.phase === 'finished';
-    if (joined > 0 && !over) {
-      const who = `${joined} ${joined === 1 ? 'person' : 'people'}`;
-      const doing = running.phase === 'lobby'
-        ? `${who} ${joined === 1 ? 'has' : 'have'} already joined "${running.title}"`
-        : `"${running.title}" is still running with ${who} in`;
-      if (!confirm(`${doing}.\n\nLaunching this will remove them and they will have to scan and join again. Carry on?`)) return;
-    }
     const button = el.querySelector('.launch');
     button.disabled = true;
     button.textContent = 'Launching…';
-    try {
-      const picked = el.querySelector('.shape-pick');
-      const shape = picked ? JSON.parse(picked.value) : null;
-      const prizes = Number(el.querySelector('.prize-pick')?.value) || 0;
-      const look = el.querySelector('.look-pick')?.value || '';
-      await postJson('/api/host/launch', { game: kind, packId: pack.id, shape, prizes, look }, { 'X-Host-Key': hostKey });
-      location.href = linkTo('/host');
-    } catch (err) {
+
+    const picked = el.querySelector('.shape-pick');
+    const shape = picked ? JSON.parse(picked.value) : null;
+    const prizes = Number(el.querySelector('.prize-pick')?.value) || 0;
+    const look = el.querySelector('.look-pick')?.value || '';
+    const send = (replace) => postJson(
+      '/api/host/launch',
+      { game: kind, packId: pack.id, shape, prizes, look, ...(replace ? { replace: true } : {}) },
+      { 'X-Host-Key': hostKey },
+    );
+    const back = () => {
       button.disabled = false;
       button.textContent = 'Launch';
+    };
+
+    /*
+     * **The SERVER decides whether a night is in progress, not this page.**
+     *
+     * This used to check `library.running`, which is a snapshot taken when the
+     * console was loaded. That works for one person on one device and is blind
+     * to the case that actually costs somebody their night: two people on one
+     * login, where this console was opened before the other one launched. It
+     * reported nothing running and went straight ahead.
+     *
+     * Same lesson as the tier lever — a guard that only exists in the browser
+     * is decoration. The server answers with what is live right now, and this
+     * asks once, deliberately, with the game and the player count in the
+     * question.
+     */
+    try {
+      await send(false);
+      location.href = linkTo('/host');
+    } catch (err) {
+      if (err.status === 409 && err.data && err.data.replace) {
+        if (!confirm(`${err.data.error}\n\nEnd it and launch this instead?`)) return back();
+        try {
+          await send(true);
+          location.href = linkTo('/host');
+        } catch (second) {
+          back();
+          alert('Could not launch: ' + second.message);
+        }
+        return;
+      }
+      back();
       alert('Could not launch: ' + err.message);
     }
   });

@@ -243,6 +243,39 @@ export class Session {
    * own shape is the default; this overrides it for this game only and is never
    * written back to the file.
    */
+  /**
+   * What a launch is about to destroy, or null if there is nothing to lose.
+   *
+   * **`launch()` builds a fresh game unconditionally, and that used to be the
+   * whole story.** Two people sharing one login — which is exactly what
+   * happens when a company decides three subscriptions are too many — could
+   * end each other's night mid-question: scores gone, every phone thrown back
+   * into a lobby, in front of a paying room, with nothing anywhere saying why.
+   * It is this codebase's first rule broken in the worst possible way.
+   *
+   * **ANY joined player counts, lobby or not.** The obvious version guards a
+   * game that is past the lobby, but forty people who have typed a team name
+   * and are waiting for the first question have something to lose too, and
+   * "everybody type your name in again" is not a thing you say on a mic.
+   *
+   * Nobody joined means nothing to protect, which covers the ordinary case
+   * this must not get in the way of: launching the wrong pack and launching
+   * again ten seconds later.
+   */
+  inProgress() {
+    if (!this.engine || !this.pack) return null;
+    const players = this.engine.playerList().length;
+    if (!players) return null;
+    return {
+      game: this.kind,
+      packId: this.pack.id,
+      title: this.pack.title,
+      players,
+      // Optional on an engine, like everywhere else it is asked for.
+      at: typeof this.engine.where === 'function' ? this.engine.where() : '',
+    };
+  }
+
   launch(kind, packId, { shape = null, prizes = 0, look = '' } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     const pack = LAUNCHERS[kind].load(this.config, packId, this.paths);

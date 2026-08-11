@@ -111,12 +111,20 @@ test('every feature on the ladder is on exactly one rung', () => {
   }
 });
 
-test('invoicing is above Bronze, and it says which tier rather than just no', () => {
-  assert.equal(can(basic, FEATURES.INVOICES), false);
-  assert.equal(can(withAdmin, FEATURES.INVOICES), true);
-  assert.equal(can(withAdmin, FEATURES.CALENDAR), true);
+/*
+ * Invoicing used to be the example here. It is Bronze now: the tiers separate
+ * on QUIZ-APP functionality rather than on business tools, and withholding the
+ * thing that helps a quizmaster get paid creates no upgrade pressure — it just
+ * makes the app less useful to the person you most want recommending it.
+ * Advert slides stay above Bronze because a slide is part of the show.
+ */
+test('a venue slide is above Bronze, and it says which tier rather than just no', () => {
+  assert.equal(can(basic, FEATURES.ADVERTS), false);
+  assert.equal(can(withAdmin, FEATURES.ADVERTS), true);
+  assert.equal(can(basic, FEATURES.CALENDAR), true, 'the calendar is a business tool, so it is Bronze');
+  assert.equal(can(basic, FEATURES.INVOICES), true, 'invoicing is a business tool, so it is Bronze');
   // "Not on your plan" is a dead end. "That is on Silver" is something to act on.
-  assert.match(whyNot(basic, FEATURES.INVOICES), /Silver/);
+  assert.match(whyNot(basic, FEATURES.ADVERTS), /Silver/);
 });
 
 test('streaming is the top of the ladder, because egress is a real bill', () => {
@@ -150,7 +158,7 @@ test('the ladder the account page draws says which rungs are yours', () => {
   assert.deepEqual(ladder.map((t) => t.id), TIERS.map((t) => t.id), 'the page would draw them out of order');
   assert.deepEqual(ladder.map((t) => t.included), [true, true, false]);
   const silver = ladder.find((t) => t.id === 'silver');
-  assert.ok(silver.features.some((f) => f.id === FEATURES.INVOICES));
+  assert.ok(silver.features.some((f) => f.id === FEATURES.ADVERTS));
   assert.ok(silver.features.every((f) => f.label), 'a feature reached the page with no name on it');
   // A tier above yours still lists what is in it — something you can see and
   // cannot use is a thing you might buy.
@@ -212,7 +220,7 @@ test('the console is told what is missing AND why, so it can offer it', () => {
   assert.ok(ent.features.includes(FEATURES.QUIZ));
   assert.ok(ent.ladder.length, 'the account page has no ladder to draw');
 
-  const invoices = ent.missing.find((m) => m.feature === FEATURES.INVOICES);
+  const invoices = ent.missing.find((m) => m.feature === FEATURES.ADVERTS);
   assert.ok(invoices, 'invoicing should be offered rather than hidden');
   assert.match(invoices.why, /Silver/);
 
@@ -334,12 +342,12 @@ test('previewing a tier is a genuine downgrade, gate included', () => {
 
   const asBronze = { ...hat, previewTier: 'bronze', tier: 'bronze', comped: false };
   assert.equal(can(asBronze, FEATURES.QUIZ), true);
-  assert.equal(can(asBronze, FEATURES.INVOICES), false, 'a Bronze preview could still invoice');
+  assert.equal(can(asBronze, FEATURES.ADVERTS), false, 'a Bronze preview could still sell an advert slide');
   assert.equal(can(asBronze, FEATURES.STREAM), false);
-  assert.match(whyNot(asBronze, FEATURES.INVOICES), /Silver/);
+  assert.match(whyNot(asBronze, FEATURES.ADVERTS), /Silver/);
 
   const asSilver = { ...hat, previewTier: 'silver', tier: 'silver', comped: false };
-  assert.equal(can(asSilver, FEATURES.INVOICES), true);
+  assert.equal(can(asSilver, FEATURES.ADVERTS), true);
   assert.equal(can(asSilver, FEATURES.STREAM), false);
 });
 

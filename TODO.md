@@ -572,22 +572,99 @@ owns it, and nobody has to agree on anything. So the company writes a quiz once
 and every host can run it, in the app, without it ever leaving the company or
 passing through the owner.
 
-Three consequences, all settled in conversation:
+**Settled, after a long argument about the price. £20 a seat, all-in.**
 
-- **Seats are a different product, not a discount.** Three separate Gold
-  accounts genuinely cannot do what one Gold plus two seats does, at any price.
-  So the comparison is not "£60 instead of £90" — it is **"£60 instead of
-  £30"**, because at £90-with-no-sharing the company buys one login and shares
-  the password. Seats turn a one-account customer into a three-account one.
-  **£20 a seat** rather than half, because the seat now carries real value.
-- **Streaming is excluded from a seat**, and for the house rule's own reason
-  rather than meanness: egress is the one genuinely per-use cost in the
-  product, and it scales per SEAT. It is the one thing that should be priced
-  per seat when it exists.
-- **Gold's value survives it.** A company that writes its own packs needs the
-  evergreen catalogue less — but it cannot produce a weekly topical quiz by
-  hand at any sane cost, and the generator stays owner-only. That decision is
-  what makes this safe to offer.
+- **A seat gets EVERYTHING**, not the company's tier passed down. "Every seat
+  gets the lot, £20" is a price rather than a rule you have to explain, and it
+  is what makes the company pitch true — every host can run this week's topical
+  quiz. The only exception is **streaming**, which stays out because egress is
+  the one genuinely per-use cost and it scales per head; price it per seat when
+  it exists.
+- **Per-seat tiers were considered and rejected.** Letting a company buy a
+  Bronze seat for a part-timer is attractive — the upsell would then run per
+  head, forever — but it breaks on how the work actually flows. **The cheapest
+  seat is always the cover host, and the cover host is the person who needs the
+  widest library at the shortest notice.** It also makes "every one of our
+  hosts runs a current quiz this week" untrue for the cheap seats, which is the
+  pitch the whole thing is meant to sell. £3 a month of extra revenue, three
+  SKUs to build, and it undermines its own product.
+- **A usage-capped "part time" seat was considered and rejected too.** Gold
+  functionality at a Bronze price with a limit on nights per month. The fatal
+  version is the obvious one: a cap that REFUSES is this codebase's first rule
+  broken at the worst possible moment — the cover host, at the venue, on night
+  five of four, with sixty people in. The only safe version bills rather than
+  blocks, and then it needs a definition of "a night" that survives a crash, a
+  redeploy and a quiz-then-bingo evening (a distinct calendar day with at least
+  five players joined is the one that would hold), plus variable billing, which
+  is strictly harder than the fixed subscriptions that do not exist yet. **The
+  trigger to build it: a company tells you they are keeping a host off the
+  books because of the price.** Until then it is a solution looking for its
+  problem.
+
+#### Why £20 rather than £15 or £10
+
+The number moved twice during the argument, so the reasoning is worth keeping.
+
+**£10 is the only one that is clearly wrong**, and it is arithmetic: for the
+seat route to stay dearer than everybody buying Silver separately, a seat has
+to cost more than `(20N - 30) / (N-1)` — **£10 at two hosts, £15 at three,
+£17.50 at five.** So £10 breaks at the commonest company size, and £20 is the
+only price where a seat never undercuts a tier at any headcount. The ladder
+then reads cleanly: *a seat is cheaper than a Gold account and dearer than a
+Silver one.*
+
+Two arguments that are not arithmetic and still hold:
+
+- **Your cheapest SKU becomes your reference price.** Price a whole working
+  quizmaster at £10 and "£10 a head" is what your app costs, whatever the
+  website says. That number travels between quizmasters and is very hard to
+  walk back.
+- **Support is the one genuinely per-seat cost.** Compute and content are
+  free at the margin; people are not. Twenty companies at three hosts is sixty
+  people who can email you.
+
+And the host's own argument, which is what settled it: **Gold-plus-a-seat is
+better value than two Silvers at the same money, which means the price was too
+low, not that Silver was being cannibalised.** The revenue is identical either
+way (£40 for two people) — so there was never a loss to protect against, and
+the right response to "my product beats the alternative at the same price" is
+to charge more of the difference.
+
+#### What a seat gets that a separate Silver account does not
+
+The table that actually sells one. Same price, £20 either way:
+
+| | Gold seat | Individual Silver |
+|---|---|---|
+| Whole evergreen catalogue | yes | yes |
+| **The weekly topical quizzes** | **yes** | no |
+| **The company's own shared packs** | **yes** | no |
+| **Invoicing the company directly** | **yes** (see below) | no |
+| Own room, join code, photo wall, branding | yes | yes |
+| Packs they write themselves | yes | yes |
+| Invoicing, calendar | yes | yes (Bronze now) |
+| Advert slides | yes | yes |
+| Streaming | no | no |
+
+**Two added, nothing taken away** — and it holds even for a company that writes
+nothing of its own, because the seat still carries the topical quizzes, which
+is £10 of Gold content at a Silver price.
+
+**What a separate account gives instead is not a feature, it is OWNERSHIP.** It
+is theirs: they keep it if they leave, with their packs, their venue history,
+their play counts, their invoice book and the join code printed on somebody's
+QR card. A seat is revocable by the company the afternoon somebody leaves —
+which is exactly why the company wants one and why a genuinely freelance host
+might not. When a host insists on independence the answer is "buy your own",
+which is a sale either way.
+
+A seat's OWN packs stay private from the company head too, because a seat is a
+room and no route takes a room parameter. Keep that: it means contributing to
+the company library is a deliberate act rather than a default.
+
+**Edge case worth a line:** a freelancer hosting for two companies needs their
+own account or two seats. Two seats works — a seat is an account — it is just
+slightly clunky.
 
 #### The shape that keeps the privacy promise structural
 
@@ -617,23 +694,51 @@ is how a house style stops being one" true inside a company as well as outside.
   signed in and not gated on a tier, so this needs nothing new; do not gate it
   to the company account.
 
-#### Still to decide, and neither blocks anything
+#### Still to decide — two that could bite, three that just need writing down
 
-- **The invoice book belongs to the COMPANY**, not the host — decided, and the
-  opposite of how it works today (per room). Revisit when seats are built; it
-  is a real fork rather than a detail.
+- **Whose invoice book is whose, and it now contradicts itself.** "The invoice
+  book belongs to the company" was settled early; then "a seat invoices the
+  company directly" became one of the three things a seat is worth. Both cannot
+  be true as stated — a seat billing the company needs a book of its own.
+  Probably: the company holds one for billing venues, each seat holds one for
+  billing the company. **Note this is a DESIGN, not a feature — it does not
+  exist, and it should not go in a sales sentence until it does.**
+- **What happens to a seat's own packs when the seat is switched off.** They
+  live in that host's room. Does the room survive? Does the person keep their
+  own material? "The company revoked my seat and I lost six months of my own
+  writing" is a support conversation you only want to have never.
 - **Whose support door opens the company folder?** Per account today. Probably
-  the company owner's, but that is a decision.
+  the company owner's.
+- The company head is a working host with their own room. Assumed throughout.
+- The company account writes the shared folder; seats read it. Same shape as
+  owner-and-subscriber, and it keeps "three people editing them is how a house
+  style stops being one" true inside a company as well as outside.
+- No seat limit.
 
-#### Why not now
+#### Why not now — and the useful thing about that
 
-No payment flow exists, so group billing would be the harder case built before
-the easy one. Rob has no login yet, so this is a hypothesis about a customer
-who has not used it. And `PACKS_REPO` is still not configured — a company's
-shared library would live only until the next deploy, which makes step **B2**
-above load-bearing rather than optional the moment anything is shared.
+Rob has no login yet, so this is a hypothesis about a customer who has not used
+it. `PACKS_REPO` is still not configured, which makes step **B2** above
+load-bearing rather than optional the moment anything is shared. And the eight
+starter packs are not worth selling yet.
 
-### A shared login can end somebody else's night — a real bug, today
+**But seats do NOT need PayPal, and that is worth knowing.** A seat is an
+account with a company on it — creatable by hand today. So a company account
+could be sold to Rob manually and invoiced **using the app's own invoicing
+feature**, and the whole hypothesis tested, with no payment processor in
+existence. The only real code is the company folder and own → company →
+catalogue resolution.
+
+The order that actually matters:
+
+1. ~~The launch-collision guard~~ — **done**, see below.
+2. `PACKS_REPO` — your ten minutes, step B2.
+3. **Rob gets a login.** You have never had a second real user, and everything
+   here is guesswork until then.
+4. The eight starter packs, so there is something worth paying for.
+5. Company accounts and shared packs.
+
+### ~~A shared login can end somebody else's night~~ — FIXED
 
 Found while thinking about group accounts, and it needs no group account to
 happen. `session.launch()` in `src/session.js` builds a fresh game
@@ -647,16 +752,26 @@ in the worst possible way, and the person it happens to has no idea why.
 Reachable today by password sharing, which is exactly what people do when three
 seats cost £90.
 
-**The fix is small and independent of everything above.** The console's running
-panel already knows what is live — `engine.where()` gives "Round Two — question
-4 of 10" and the connected count is right there. Launching over a game that has
-players connected and is past the lobby should say what it is about to destroy.
-**Not a bare refusal**: a control that refuses in front of a room is the mistake
-this codebase keeps recording. But "14 phones are playing The 80s Quiz right
-now, round 2 question 4 — launching will end it" is not something anybody
-presses through by accident.
+**Fixed.** `session.inProgress()` says what a launch is about to destroy, and
+`/api/host/launch` answers the first press with a 409 naming the game, the
+player count and where it has got to — *"The Madonna Quiz is running right now
+— 3 playing, Round One — question 1 of 10."* A second, deliberate press carries
+`replace` and goes through, because there are real reasons to launch over a
+live game and a control that simply refuses is the mistake this codebase keeps
+recording.
 
-Worth doing before group accounts rather than after.
+**The console already had a check, and it was blind to exactly this case**: it
+read `library.running`, a snapshot taken when the page loaded, so a console
+opened before the other device launched reported nothing running and went
+straight ahead. That check is gone and the server's answer is the only one now
+— the same lesson as the tier lever, where a guard that only lived in the
+browser turned out to be decoration.
+
+**Any joined player counts, lobby or not.** Forty people who have typed a team
+name have something to lose, and "everybody type your name in again" is not a
+thing anybody says on a mic. Nobody joined means nothing to protect, which
+leaves the ordinary case — wrong pack up, launch again ten seconds later —
+completely alone.
 
 ### Marketing — for later, but written down now
 

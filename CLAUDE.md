@@ -302,6 +302,36 @@ nothing at all.
 
 ---
 
+## A launch must say what it is about to destroy
+
+`session.inProgress()` and the 409 on `/api/host/launch`.
+
+`launch()` builds a fresh game unconditionally, and that used to be the whole
+story — so two people on one login could end each other's night mid-question:
+scores gone, every phone back in a lobby, in front of a paying room, with
+nothing anywhere saying why. Reachable today by password sharing, which is
+exactly what happens the moment somebody decides three subscriptions are too
+many.
+
+**It names what is live rather than refusing.** The first press comes back with
+the game, the player count and where it has got to — *"The Madonna Quiz is
+running right now — 3 playing, Round One — question 1 of 10"* — and a second,
+deliberate press carries `replace` and goes through. There are real reasons to
+launch over a live game (the wrong pack went up; the night genuinely restarts),
+and a control that simply says no is the mistake this file keeps recording.
+
+**ANY joined player counts, lobby or not.** The obvious version guards a game
+past the lobby, but forty people who have typed a team name have something to
+lose too, and "everybody type your name in again" is not a thing anybody says
+on a mic. Nobody joined means nothing to protect, which leaves the ordinary
+case — wrong pack up, launch again ten seconds later — completely alone.
+
+**The console had a check and it was blind to the case that matters.** It read
+`library.running`, a snapshot taken when the page loaded, so a console opened
+before the other device launched reported nothing running and went straight
+ahead. It is gone; the server's answer is the only one. Same lesson as the tier
+lever: a guard that only lives in the browser is decoration.
+
 ## Stopping a quiz early
 
 `Engine.finish()` jumps to `PHASES.FINAL` from wherever the quiz is. The Setup
@@ -1698,6 +1728,20 @@ nothing.
 The host's own, and it settles arguments before they start: **anything that
 costs the owner money every time it is used is not in Basic.** Not "is it
 impressive" — does a subscriber using it put a line on the owner's bill?
+
+**And a second rule, added later, which decides everything the first one does
+not: the tiers separate on QUIZ-APP FUNCTIONALITY, never on business tools.**
+Invoicing, the calendar and marketing were a paid add-on and are now Bronze.
+Withholding the thing that helps a quizmaster get paid creates no upgrade
+pressure — it just makes the app less useful to the person you most want
+recommending it.
+
+Note what this cost: **the recorded reason for advert slides being Silver was
+"it makes the quizmaster money", and that argument is dead**, because it is
+precisely the case that was made and rejected for invoicing. Adverts stay at
+Silver on the new rule instead — a slide is a card on the projector between
+rounds, so it is part of the show in a way an invoice is not. That is a line
+that holds for the next feature as well, which the old one was not.
 
 So a new round type, a new game, a new look and a new picture effect are Basic
 the day they are written. Generating with Claude and artwork with OpenAI are
