@@ -16,6 +16,7 @@
 import path from 'node:path';
 
 import { Engine, PHASES, isSafeId, ownsPlayer, newToken } from './engine.js';
+import { JoinGate } from './joins.js';
 import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFields, stagePlan, maxPrizes } from './bingo.js';
 import { listQuizzes } from './quizzes.js';
 import { listBingoPacks, recordLaunch, archiveResults, HOUSE_ROOM } from './library.js';
@@ -76,6 +77,12 @@ export class Session {
     this.onPush = onPush;
     this.now = now;
     this.roomId = roomId;
+    /*
+     * Who is knocking. In memory rather than in the state file on purpose: a
+     * restart is exactly when a room legitimately floods back in, so a counter
+     * that survived one would hold the whole night at the door.
+     */
+    this.joins = new JoinGate(now);
     /*
      * Where THIS quizmaster's nights and venue slides live.
      *
@@ -391,7 +398,15 @@ export class Session {
       join: () => this.engine.join({ playerId: body.playerId, name: body.name }),
       removePlayer: () => this.engine.removePlayer(String(body.playerId)),
       renamePlayer: () => this.engine.renamePlayer(String(body.playerId), String(body.name)),
-      resetAll: () => this.engine.resetAll(),
+      resetAll: () => { this.joins.reset(); return this.engine.resetAll(); },
+      // "18 phones waiting to join — Let them in." One tap, and the number on
+      // the button is what tells the host whether it is a room or mischief.
+      letThemIn: () => { const done = this.joins.letThemIn(); this.engine.changed(); return done; },
+      // Tidying a lobby: everybody who has joined and then done nothing at
+      // all. Useful on any night — duplicates, somebody who joined twice, a
+      // phone that wandered off — and it is also how a flood gets cleared up
+      // if one ever gets past the door.
+      removeIdle: () => this.engine.removeIdlePlayers(),
     };
 
     const perGame = this.kind === 'quiz' ? {
@@ -437,9 +452,27 @@ export class Session {
    * stays at zero and the control view keeps quiet. It only counts against
    * this boot — a game the host launched deliberately is not a lost one.
    */
-  joinPlayer({ playerId, token = '', name }) {
+  joinPlayer({ playerId, token = '', name, tryId = '' }) {
+    this.pendingWho = String(tryId || '').slice(0, 64);
     const known = playerId && this.engine.state.players[playerId];
     const stranded = Boolean(playerId && isSafeId(playerId) && !known && !this.restoredOnBoot);
+
+    /*
+     * Hold the door if a lot of NEW phones are arriving at once.
+     *
+     * A phone that can prove it is already a player goes straight through —
+     * that is `ownsPlayer`, and it is what stops a reconnection storm after a
+     * restart being mistaken for a flood. See src/joins.js.
+     */
+    const proven = Boolean(known && ownsPlayer(known, token));
+    const door = this.joins.ask({
+      known: proven,
+      // A phone that has joined before is keyed on its id; one that has not
+      // sends a scratch id it keeps in localStorage, so retries are one person.
+      who: String(playerId || '') || String(this.pendingWho || ''),
+    });
+    if (!door.ok) return { id: '', name: '', waiting: true, ahead: door.waiting };
+
     const player = this.engine.join({ playerId, token, name });
     if (stranded) {
       this.strandedPhones++;

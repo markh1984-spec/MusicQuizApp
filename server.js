@@ -115,7 +115,12 @@ function viewFor(client) {
   // The wall of photos rides along with whatever else is on screen, so it
   // survives every phase change and every game without each card knowing.
   if (client.role === 'screen') view.photos = photos.forScreen();
-  else if (client.role === 'host') view.photos = { enabled: photos.enabled, count: photos.count(), items: photos.forHost() };
+  else if (client.role === 'host') {
+    view.photos = { enabled: photos.enabled, count: photos.count(), items: photos.forHost() };
+    // Who is knocking. Host only — the number is the whole point, because it
+    // is what tells a room apart from somebody messing about.
+    view.joinsWaiting = session.joins.waitingCount();
+  }
   else view.photosOpen = photos.enabled;
   // Whose night this is — the name AND the two colours — travels with every
   // payload, so a page never has to ask for it separately or flash the wrong
@@ -2582,12 +2587,24 @@ async function handleWrite(req, res, url, route) {
   if (route === '/api/join' && req.method === 'POST') {
     const body = await readJson(req);
     const room = roomForPhone(req, url, body);
-    const player = room.session.joinPlayer({ playerId: body.playerId, token: body.token, name: body.name });
+    const player = room.session.joinPlayer({ playerId: body.playerId, token: body.token, name: body.name, tryId: body.tryId });
     // A game that will not hold any more phones. Says so rather than handing
     // back an empty team, which the phone would draw as a joined player with
     // no name — see MAX_PLAYERS.
     if (player.full) {
       return sendJson(res, 503, { error: 'This game is full.', full: true }), true;
+    }
+    /*
+     * Held at the door, not refused. A lot of NEW phones are arriving at once,
+     * so the host is being asked whether it is a room or somebody messing
+     * about — see src/joins.js. 202 rather than an error: nothing has gone
+     * wrong, it just has not happened yet, and the phone waits and asks again.
+     */
+    if (player.waiting) {
+      return sendJson(res, 202, {
+        waiting: true, ahead: player.ahead,
+        error: 'Waiting for the host to let everybody in.',
+      }), true;
     }
     /*
      * The code goes back with the player so the phone can keep hold of it and

@@ -140,13 +140,52 @@ finds its person.
 **A player with no token yet is trusted once and then bound.** Phones that
 joined before this existed hold an id and nothing else, and a redeploy
 mid-season must not lock a room out of its own game — the same reasoning as
-rule 4 below.
+rule 5 below.
 
 **A request that cannot prove itself is not refused with an error — it gets a
 team of its own**, which is what an honest new phone gets anyway. The attacker
 gains nothing and nobody legitimate is ever turned away.
 
-### 4. Only a real removal throws a phone out
+### 4. A flood is HELD at the door, never refused
+
+`src/joins.js`. The join code is on the projector and read out on the mic, so
+everybody in the room has it — and joining is an ordinary web request, so
+anybody bored can fire a few hundred from a phone browser. Measured against a
+running server: **300 joins landed in half a second.**
+
+Over the threshold, new phones are asked to wait rather than turned away, and
+the host's board says **"288 phones waiting to join — Let them in"**. One tap
+lets the lot through and holds the door open for a minute.
+
+**The NUMBER is what tells the host which it is.** Eighteen is a room; two
+hundred and eighty-eight is somebody messing about. That judgement takes a
+human a second, which is why it is not automated.
+
+**A PHONE THAT CAN PROVE WHO IT IS NEVER QUEUES.** Only joins that would create
+a NEW player are counted; a rejoin carries a token (rule 3), so it is provably
+somebody already in the game. That matters because a redeploy, a restart on a
+host with no disk or a wifi blip sends the whole room back at once — two
+hundred reconnects in a few seconds looks exactly like a flood, and holding
+them would be a self-inflicted outage mid-quiz.
+
+**The threshold errs LOOSE, and the asymmetry is the whole reason.** The first
+version was tight, on the theory that a wrong guess costs one tap. It does not:
+too tight and a real room gets a "just a moment" screen while the host is on a
+mic and not looking at their phone, which is the show stopping and this app's
+fault. Too loose and some junk teams reach the scoreboard — which no player
+sees, and which "remove the ones who answered nothing" clears in one tap. One
+of those is a gig going wrong and the other is tidying up.
+
+The gap makes that free: a pub peaks at two to six joins a second (people have
+to find the camera and type a name), two hundred people online clicking a link
+is five to ten, and a script does six hundred. The threshold is twelve.
+
+**Per-IP limiting is the obvious answer and it is wrong**: a pub puts the whole
+room behind one router, so it refuses the actual customers first. An office
+does the same online. One rule that holds in both modes beats two that each
+work in one.
+
+### 5. Only a real removal throws a phone out
 
 A phone whose id the server does not recognise is asked to **rejoin silently**
 (`view.rejoin`). It is told it was removed (`view.kicked`) **only** if the host
@@ -165,14 +204,14 @@ close the stream and leave the keep-alive timer running, which reopened the
 old stream under the old id forty seconds later. Every rejoin left another one
 behind, all of them claiming to be someone the server no longer had.
 
-### 5. Bingo cards cannot be regenerated
+### 6. Bingo cards cannot be regenerated
 The card is built server-side on join and stored against the player. There is
 **no endpoint that issues a new card** and no card-generating code on the
 phone. Refresh, reopen, clear the browser, rejoin — same card. Do not add a
 "new card" feature; the host asked for this explicitly to stop cheating.
 `newRound()` is the only thing that reissues, and it does everyone at once.
 
-### 6. Crash recovery
+### 7. Crash recovery
 State is one JSON object written atomically. Anything that **moves a game
 forward** flushes to disk immediately (new question, reveal, round change, a
 team joining, a bingo track called, a bingo square marked). Only high-frequency
@@ -181,10 +220,10 @@ low-stakes things are debounced.
 Bingo marks are deliberately immediate: a lost quiz answer is recoverable with
 Redo, but nobody can re-tap ten songs they heard half an hour ago.
 
-### 7. Phones never show the question text
+### 8. Phones never show the question text
 Only the options. Keeps the room looking up, makes googling harder.
 
-### 8. The scoreboard and adverts are flags, never phases
+### 9. The scoreboard and adverts are flags, never phases
 `state.scoreboard` and `state.advert` put something over whatever the quiz is
 doing without moving it. A phase change would have to be undone to get back,
 which is the one mistake that loses everybody's place mid-round.
@@ -198,7 +237,7 @@ state, so correcting a price on a venue's slide changes the projector without
 taking it down and putting it back. The host's mic line (`say`) is host-view
 only, like a round 3 cue.
 
-### 9. "Pick them all" tells the room HOW MANY, never which
+### 10. "Pick them all" tells the room HOW MANY, never which
 A `multi` question shows six options with 2–3 correct. The screen and the phone
 get `pickCount`; `correctIndexes` is host-only, like every other answer key.
 
@@ -930,7 +969,7 @@ sees it on the next ordinary push, which during a question is the next answer.
 
 What already does most of the anti-cheating work, and none of it is new:
 twenty seconds; points for speed, so a googled answer at 18s scores far below a
-known one at 4s; **phones never showing the question text** (rule 7), so it has
+known one at 4s; **phones never showing the question text** (rule 8), so it has
 to be retyped from memory off the projector; and the picture, intro and
 pick-them-all rounds being poor search targets.
 

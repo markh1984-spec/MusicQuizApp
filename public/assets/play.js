@@ -73,6 +73,45 @@ function saveMe(player) {
 
 // -------------------------------------------------------------------- join
 
+/**
+ * "Hang on, the host is letting people in."
+ *
+ * Deliberately not an error and deliberately not a number: telling somebody
+ * they are 47th in a queue makes them close the tab. It says what is happening
+ * and that it is being handled, and then it fixes itself.
+ */
+/**
+ * A scratch id for a phone that has not joined yet.
+ *
+ * Only ever used to count people at the door — see src/joins.js. A phone that
+ * has actually joined has a real id and a token and never queues at all.
+ */
+const TRY_KEY = 'musicquiz.tryId';
+function tryId() {
+  try {
+    let id = localStorage.getItem(TRY_KEY);
+    if (!id) {
+      id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem(TRY_KEY, id);
+    }
+    return id;
+  } catch {
+    return '';
+  }
+}
+
+function showWaiting() {
+  currentKey = 'waiting';
+  headEl.hidden = true;
+  bodyEl.replaceChildren(node(`
+    <div style="display:grid;gap:14px;justify-items:center;text-align:center;padding:28px 8px">
+      <div class="big" style="font-size:22px;font-weight:900">Just a moment</div>
+      <div class="muted" style="font-size:16px;line-height:1.5">
+        A lot of phones are joining at once.<br>The host is letting everybody in — this will go through on its own.
+      </div>
+    </div>`));
+}
+
 function showJoin(message = '') {
   currentKey = 'join';
   headEl.hidden = true;
@@ -95,7 +134,28 @@ function showJoin(message = '') {
     button.disabled = true;
     button.textContent = 'Joining…';
     try {
-      const player = await postJson('/api/join', { playerId: me && me.id, token: me && me.token, name, joinCode: roomCode() });
+      const player = await postJson('/api/join', {
+        playerId: me && me.id, token: me && me.token, name, joinCode: roomCode(),
+        // Something stable per phone, so ten retries while the door is held
+        // count as one person waiting rather than ten. The host reads that
+        // number to tell a room from mischief, and an inflated one would push
+        // them towards NOT letting a real room in.
+        tryId: tryId(),
+      });
+      /*
+       * Held at the door rather than refused.
+       *
+       * A lot of new phones are arriving at once and the host is being asked
+       * whether it is a room or somebody messing about. Nothing has gone
+       * wrong, so this does not read as an error — it keeps asking, quietly,
+       * and goes straight in the moment the host taps. See src/joins.js.
+       */
+      if (player.waiting) {
+        button.textContent = 'Waiting…';
+        showWaiting();
+        setTimeout(go, 3000);
+        return;
+      }
       rememberRoom(player.joinCode);
       saveMe(player);
       startLive();
@@ -129,6 +189,10 @@ async function silentRejoin() {
 
   try {
     const player = await postJson('/api/join', { playerId: me.id, token: me.token, name: me.name, joinCode: roomCode() });
+    // A phone that can prove who it is is never held, so this should not
+    // happen — but if the token has gone it is a new join, and waiting quietly
+    // beats showing somebody an error mid-quiz.
+    if (player.waiting) return;
     rememberRoom(player.joinCode);
     const changedId = player.id !== me.id;
     saveMe(player);

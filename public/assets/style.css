@@ -3562,6 +3562,20 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 }
 .panel.ask-pack .go:disabled { opacity: 0.45; cursor: default; }
 
+/*
+ * "18 phones waiting to join." Gold rather than red: nothing has gone wrong,
+ * the host is being asked a question. Above the player list, where they are
+ * already looking while a room fills up.
+ */
+.panel.joinq { border-color: #ffc85a; }
+.panel.joinq h3 { color: #ffc85a; }
+.panel.joinq .go {
+  margin-top: 10px; width: 100%; border: none; border-radius: 10px; padding: 13px;
+  background: linear-gradient(120deg, var(--hot), var(--hot-2)); color: #12000c;
+  font-weight: 900; font-size: 16px; cursor: pointer;
+}
+.plist + .tidy, button.tidy { margin-top: 10px; width: 100%; }
+
 .pack-card .fresh { color: #ffc85a; }
 .pack-card .fresh.gone { color: var(--muted); }
 .pack-card.stale { opacity: 0.72; }

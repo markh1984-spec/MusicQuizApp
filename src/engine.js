@@ -285,6 +285,25 @@ export class Engine {
       .map((p) => p.name);
   }
 
+  /**
+   * Everybody who has joined and then done nothing at all.
+   *
+   * Tidying a lobby is the everyday use — duplicates, somebody who joined
+   * twice, a phone that wandered off before the first question — and it is
+   * also how a room gets cleaned up if a flood ever gets past the door.
+   *
+   * "Done nothing" is deliberately answered NOTHING rather than "not connected
+   * recently": a phone that locks its screen is still somebody sitting at a
+   * table, and throwing them out would be the removal rule broken from the
+   * other side.
+   */
+  removeIdlePlayers() {
+    const idle = this.playerList().filter((p) => !p.answeredCount);
+    for (const p of idle) this.removePlayer(p.id);
+    if (idle.length) this.changed();
+    return { ok: true, removed: idle.length };
+  }
+
   removePlayer(playerId) {
     if (!this.state.players[playerId]) return false;
     delete this.state.players[playerId];
