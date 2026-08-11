@@ -71,6 +71,9 @@ export const paths = {
   // per room: a suggestion is about the APP, which everybody shares, and the
   // owner reads them as one list.
   suggestions: path.join(config.dataDir, 'suggestions.json'),
+  // What the AI has cost, written down as it happens — the number the whole
+  // tier structure is built on, and until now it existed nowhere.
+  spend: path.join(config.dataDir, 'spend.json'),
 };
 
 /**

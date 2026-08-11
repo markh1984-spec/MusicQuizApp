@@ -22,7 +22,7 @@ import { Photos, MAX_BYTES } from './src/photos.js';
 import { Session } from './src/session.js';
 import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked, ROUND_TYPES } from './src/quizzes.js';
 import { validateBingoPack, normaliseBingoPack, minimumTracks, CARD_SHAPES, shapeLabel, maxPrizes, stagePlan, stageLabel } from './src/bingo.js';
-import { fullLibrary, listArchive, loadArchived, saveBingoPack, loadBingoPack, deleteBingoPack } from './src/library.js';
+import { fullLibrary, listArchive, loadArchived, saveBingoPack, loadBingoPack, deleteBingoPack, readStats } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
 import { generateQuizPack, buildIntroPlaylists, roundPlan } from './src/generate-quiz.js';
 import { importBingoPack } from './src/import-bingo.js';
@@ -42,6 +42,10 @@ import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, canPlayPack } from './public/assets/plans.js';
 import { Suggestions, KINDS } from './src/suggestions.js';
+import { Spend, spendRecorder } from './src/spend.js';
+// The pack id a generation is going to produce, so a cost has a subject from
+// the moment it is spent rather than only once the pack lands.
+import { themeSlug } from './src/theme.js';
 import { draftReply, briefFor, mostlyMine } from './src/reply-draft.js';
 import { OWNER_ONLY, changesTheLibrary } from './src/gates.js';
 import { listOwn, readPack, saveOwn, deleteOwn, isOwnPack, countOwn, backupPath, MAX_OWN } from './src/own-packs.js';
@@ -58,6 +62,15 @@ const accounts = new Accounts(paths.accounts);
 // per-room: the packs are shared, so a fault Rob finds is a fault in the pack.
 const reports = new Reports(paths.reports);
 const suggestions = new Suggestions(paths.suggestions);
+/*
+ * What Claude and OpenAI have actually cost.
+ *
+ * Global rather than per room, because generating is the OWNER's — a
+ * quizmaster never spends this money, which is the whole arrangement. It is a
+ * business record like the invoice book, so it backs up to the private repo
+ * and comes back only into an empty ledger.
+ */
+const spend = new Spend(paths.spend);
 
 /*
  * One room per quizmaster.
@@ -907,6 +920,68 @@ async function handleGet(req, res, url, route) {
   }
 
   /*
+   * The three things the owner page could not answer before: what is on a
+   * projector right now, what the catalogue is actually worth, and what the AI
+   * has cost.
+   *
+   * One route rather than three, because the page draws them together and
+   * three fetches means three ways for the page to be half drawn. None of it
+   * is big — the rooms are already in memory, the play counts are one file,
+   * and the ledger is summarised rather than sent.
+   *
+   * Nothing here reveals a quizmaster's own packs. Their rooms say which
+   * CATALOGUE pack is loaded, which the owner wrote; a room playing one of
+   * their own says so and names nothing.
+   */
+  if (route === '/api/owner/overview') {
+    if (!allowed(req, res, url, FEATURES.SUBSCRIBERS)) return true;
+    /*
+     * Wake every room that has a saved game before answering.
+     *
+     * Rooms are made lazily, so after a restart only the house room is in
+     * memory — and "nothing is running, safe to deploy" would have been a
+     * confident lie told at exactly the moment it matters most, because a
+     * quizmaster's phones have not reconnected yet. Reading their state file
+     * is what happens the second they do; doing it here costs one file read
+     * per subscriber and makes the answer true.
+     *
+     * Only accounts that still exist, so a closed one does not come back as a
+     * room, and only ones with something saved — a subscriber who has never
+     * run a night has nothing to restore and should not appear as idle.
+     */
+    for (const account of accounts.all) {
+      if (account.role !== 'quizmaster') continue;
+      if (rooms.rooms.has(account.id)) continue;
+      try {
+        if (fs.existsSync(rooms.pathsFor(account.id).state)) rooms.get(account.id, account.name || '');
+      } catch { /* a room that will not boot is not worth taking this page down for */ }
+    }
+    const live = rooms.summaries().map((room) => {
+      const who = whoseRoom({ id: room.id });
+      const ownPack = room.id !== HOUSE
+        && isOwnPack(room.game, room.packId || '', rooms.get(room.id).paths);
+      return {
+        ...room,
+        who: (who && (who.name || who.email)) || '',
+        /*
+         * One of theirs is "one of their own" and nothing more.
+         *
+         * The ID goes as well as the title, and that is not fussiness: a pack
+         * id is the title slugged, so leaving it would put "robs-secret-quiz"
+         * on the owner's page under a line saying the owner cannot read it.
+         */
+        ...(ownPack ? { pack: 'One of their own', packId: '', own: true } : {}),
+      };
+    });
+    return sendJson(res, 200, {
+      rooms: live,
+      packs: cataloguePerformance(),
+      spend: spend.summary({ months: 12 }),
+      spendBackedUp: privateRepoConfigured(),
+    }), true;
+  }
+
+  /*
    * Are there accounts on this app at all?
    *
    * Open, and deliberately says nothing more than yes or no — it exists so the
@@ -1480,6 +1555,14 @@ async function restoreFromBackup() {
     }
   }
 
+  if (spend.isEmpty()) {
+    const saved = await getFile('spend.json', 'private');
+    if (saved) {
+      const result = spend.restore(saved.toString('utf8'));
+      if (result.ok) console.log(`[spend] restored ${result.rows} row(s) of what the AI has cost`);
+    }
+  }
+
   // The house invoice book. Every other room's is restored the first time that
   // quizmaster opens their Invoices tab, because rooms are created lazily and
   // this runs once at boot — see ensureInvoicesRestored below.
@@ -1556,6 +1639,25 @@ function backUpReports() {
 }
 
 /**
+ * The ledger, after a job that spent something.
+ *
+ * Once at the END of a generation rather than after every call. A quiz is
+ * twenty-odd calls and pushing a commit for each would be twenty commits for
+ * one press of one button — and the rows are already on disk, so the only
+ * thing at risk between the call and the push is a restart mid-generation,
+ * which loses the pack as well.
+ *
+ * Never awaited and never fatal: a host watching a generation finish does not
+ * care whether GitHub is having a good morning, and the whole point of the
+ * ledger is a number to look at later.
+ */
+function backUpSpend() {
+  if (!privateRepoConfigured()) return;
+  putFile('spend.json', spend.serialise(), 'Update what the AI has cost', 'private')
+    .catch((err) => console.warn('[spend] could not back up:', err.message));
+}
+
+/**
  * The suggestion box, same rules as the reports.
  *
  * Somebody took the trouble to tell you the app got in their way; losing that
@@ -1618,7 +1720,77 @@ function subscriberList() {
     .map((a) => ({
       ...accounts.view(a),
       supportOpen: accounts.supportOpen(a.id),
+      /*
+       * Their join code, so the owner page can answer "what do I tell them to
+       * put on the projector" without going into their account.
+       *
+       * `codeFor` rather than `rooms.get(id).code`, because getting the room
+       * would BOOT it — reading a state file and starting a session for
+       * somebody who may not have opened their console since the last deploy.
+       * A code is written down; a room is a running thing.
+       */
+      joinCode: rooms.codeFor(a.id),
     }));
+}
+
+/**
+ * The catalogue as a product rather than as a shelf.
+ *
+ * Three facts per pack, and each answers something the owner page could not
+ * answer at all before: how often it has been played across EVERY room (the
+ * play counts are per quizmaster, deliberately — see library.js — so this is
+ * the only place they are ever added up), how many different quizmasters have
+ * run it, and whether anybody has reported a question in it.
+ *
+ * "Never played by ANYBODY" is the useful one. A quizmaster's own console says
+ * "never played" meaning they have not played it, which is right for deciding
+ * what to run tonight; this one means nobody has, which is a fact about the
+ * pack and is what decides whether it was worth writing.
+ */
+function cataloguePerformance() {
+  const stats = readStats(config.dataDir);
+  const perRoom = (stats && stats.rooms) || {};
+  // Anything filed before rooms existed was the house's — the same reading
+  // statsFor() gives it, applied here so an old count is not simply lost.
+  const books = [...Object.values(perRoom)];
+  const flat = Object.fromEntries(Object.entries(stats || {}).filter(([k]) => k.includes(':')));
+  if (Object.keys(flat).length) books.push(flat);
+
+  const open = new Map();
+  for (const r of reports.all()) {
+    if (r.status === 'done') continue;
+    open.set(r.packId, (open.get(r.packId) || 0) + 1);
+  }
+
+  // The CATALOGUE only. A quizmaster's own packs are not the owner's product
+  // and the owner cannot read them — see own-packs.js.
+  const library = fullLibrary(config, HOUSE);
+  const all = [...library.quizzes, ...library.bingo];
+
+  return all.map((pack) => {
+    const key = `${pack.kind}:${pack.id}`;
+    let plays = 0;
+    let rooms = 0;
+    let last = 0;
+    for (const book of books) {
+      const seen = book[key];
+      if (!seen || !seen.playCount) continue;
+      plays += seen.playCount;
+      rooms++;
+      last = Math.max(last, seen.lastPlayedAt || 0);
+    }
+    return {
+      id: pack.id,
+      kind: pack.kind,
+      title: pack.title,
+      plays,
+      rooms,
+      lastPlayedAt: last || null,
+      openReports: open.get(pack.id) || 0,
+      problems: pack.problems || 0,
+      broken: Boolean(pack.broken),
+    };
+  }).sort((a, b) => b.plays - a.plays || a.title.localeCompare(b.title));
 }
 
 /** Everything the invoices tab draws itself from, for ONE quizmaster's book. */
@@ -1942,7 +2114,9 @@ async function handleWrite(req, res, url, route) {
         // 3. How the owner has answered before. The only part that gets better
         //    on its own: every reply sent is another example of their voice.
         past: suggestions.everyReply(),
+        onSpend: spendRecorder(spend, { packId: '' }),
       });
+      backUpSpend();
       return sendJson(res, 200, { ok: true, draft: text }), true;
     } catch (err) {
       return sendJson(res, 400, { error: err.message }), true;
@@ -2601,6 +2775,33 @@ async function handleWrite(req, res, url, route) {
     }
   }
 
+  /*
+   * Reset somebody's password.
+   *
+   * The owner cannot READ a password — only a scrypt hash is stored, which is
+   * the honest version of "your account is private from me" — so the only help
+   * possible is setting a new one and telling them what it is. It signs
+   * everything of theirs out, which `setPassword` already does and which is
+   * right: a reset is usually somebody worried, and half-logged-out is no use.
+   *
+   * Its own route rather than a field on `update()`, deliberately. That method
+   * is what a payment webhook talks to, and a webhook payload that could carry
+   * a password is a door nobody meant to leave open.
+   */
+  if (route.startsWith('/api/owner/accounts/') && route.endsWith('/password') && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.SUBSCRIBERS)) return true;
+    const id = decodeURIComponent(route.slice('/api/owner/accounts/'.length, -'/password'.length));
+    const body = await readJson(req);
+    try {
+      const changed = accounts.setPassword(id, String(body.password || ''));
+      if (!changed) return sendJson(res, 404, { error: 'No account with that id' }), true;
+      const backup = await backUpAccounts();
+      return sendJson(res, 200, { ok: true, backedUp: backup.ok, accounts: subscriberList() }), true;
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message }), true;
+    }
+  }
+
   if (route.startsWith('/api/owner/accounts/') && (req.method === 'PUT' || req.method === 'DELETE')) {
     if (!allowed(req, res, url, FEATURES.SUBSCRIBERS)) return true;
     const id = decodeURIComponent(route.slice('/api/owner/accounts/'.length));
@@ -2874,7 +3075,12 @@ async function handleWrite(req, res, url, route) {
         cardSize: [3, 4, 5].includes(Number(body.cardSize)) ? Number(body.cardSize) : 4,
         avoidMonths: Math.min(24, Math.max(0, Number(body.avoidMonths ?? 3))),
         log,
+        // Filed against the pack id it is going to have, so a cost always has
+        // a subject — "what did the Disco pack cost" is the question that
+        // decides what a pack is worth.
+        onSpend: spendRecorder(spend, { packId: body.id || themeSlug(String(body.theme || '')) }),
       });
+      backUpSpend();
       const backup = await backUp(
         `bingo/${result.pack.id}.json`,
         JSON.stringify(result.pack, null, 2) + '\n',
@@ -2932,7 +3138,9 @@ async function handleWrite(req, res, url, route) {
         // panel used in a hurry.
         check: true,
         log,
+        onSpend: spendRecorder(spend, { packId: body.id || themeSlug(String(body.theme || '')) }),
       });
+      backUpSpend();
       const backup = await backUp(
         `quizzes/${result.quiz.id}.json`,
         JSON.stringify(result.quiz, null, 2) + '\n',
@@ -2993,7 +3201,13 @@ async function handleWrite(req, res, url, route) {
         onFile: async (name, bytes) => {
           await backUp(`images/${name}`, bytes, `Round 2 picture: ${name}`, () => {});
         },
+        // Filed against the QUIZ that asked for the picture, even though the
+        // portrait itself is shared. That is the honest attribution: this is
+        // the pack that paid for it, and the next one to want that musician
+        // gets it free — which is exactly the saving the ledger should show.
+        onSpend: spendRecorder(spend, { packId: id }),
       });
+      backUpSpend();
 
       // Questions moved onto the shared portrait library have to be written
       // back, or the pack still points at its old per-quiz filename and the

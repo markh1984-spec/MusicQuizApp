@@ -116,6 +116,10 @@ export async function generateImages({
   quality = DEFAULT_QUALITY,
   log = () => {},
   onFile = null,
+  // What each picture cost — only ever called for a picture that was actually
+  // drawn by OpenAI, since a placeholder and a reuse cost nothing and a ledger
+  // full of £0 rows makes the real ones harder to see. See src/spend.js.
+  onSpend = () => {},
 }) {
   if (!PROVIDERS.includes(provider)) {
     throw new Error(`Unknown provider "${provider}". Use ${PROVIDERS.join(' or ')}.`);
@@ -170,6 +174,7 @@ export async function generateImages({
       const bytes = provider === 'placeholder'
         ? Buffer.from(placeholderSvg(q), 'utf8')
         : await openaiImage(q, { style: chosen, quality: grade });
+      if (provider === 'openai') onSpend({ kind: 'image', what: 'a portrait', quality: grade, images: 1 });
       fs.writeFileSync(target, bytes);
       log(`  ${provider === 'placeholder' ? 'drew' : 'made'}   ${musician || name}`);
       made.push(name);

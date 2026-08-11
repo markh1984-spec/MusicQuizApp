@@ -15,6 +15,18 @@ const whoEl = document.getElementById('whoami');
 
 let me = null;
 let subscribers = [];
+/*
+ * Who is running what, what the catalogue is worth, and what the AI has cost.
+ *
+ * One fetch, because the page draws all three and three fetches is three ways
+ * for it to be half drawn. Never fatal — the quizmaster list must still appear
+ * if this route has a bad moment, which is the same rule the reports and the
+ * suggestion box already follow.
+ */
+let overview = { rooms: [], packs: [], spend: null, spendBackedUp: false };
+/* Which tab. Module level so answering something does not send you back to
+ * the top of a different one. */
+let ownerTab = 'people';
 
 async function api(path, options) {
   const res = await fetch(path, {
@@ -86,6 +98,11 @@ async function load() {
     houseNotes = box.house || '';
   } catch {
     suggestions = [];
+  }
+  try {
+    overview = await api('/api/owner/overview');
+  } catch {
+    overview = { rooms: [], packs: [], spend: null, spendBackedUp: false };
   }
   draw(data);
 }
@@ -338,23 +355,489 @@ function suggestionsPanel() {
  * and nothing else: the owner's own linked account, its permissions, its room.
  */
 
-function draw(data) {
-  /*
-   * There used to be a "Become a quizmaster" panel here, with a button that did
-   * exactly what the Owner | Quizmaster switch in the topbar now does. Two ways
-   * to do one job is how you end up using the worse one out of habit — and the
-   * worse one was this, because it only existed on this page, so getting back
-   * meant finding a bar at the top of a different one.
-   */
-  const parts = [...reportsPanel(), ...suggestionsPanel()];
+
+// ====================================================================== money
+
+/**
+ * £ from pence, for a page that talks in both subscriptions and API calls.
+ *
+ * A subscription is whole pounds and a checker batch is a fraction of a penny,
+ * and one format cannot read well for both — "£0" next to a real cost is a
+ * number people stop trusting. So anything under a pound keeps its pence.
+ */
+function money(pence) {
+  const n = Number(pence) || 0;
+  if (n && Math.abs(n) < 100) return `${n < 10 ? n.toFixed(2).replace(/0$/, '') : Math.round(n)}p`;
+  return `£${(n / 100).toFixed(Math.abs(n) % 100 ? 2 : 0)}`;
+}
+
+function monthName(iso) {
+  const [y, m] = String(iso).split('-');
+  const names = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
+  return `${names[Number(m) - 1] || iso} ${y}`;
+}
+
+/**
+ * What is coming in, what has stopped, and what the AI is costing.
+ *
+ * These were three things you could only work out by opening the accounts file
+ * and the card statement side by side. The point of putting them on one panel
+ * is the comparison: the tier structure exists to cover the second number with
+ * the first, and until now neither was written down anywhere.
+ *
+ * **Everything here is what HAS happened, never a forecast.** Monthly recurring
+ * is what the tiers say the paying accounts are worth today — not what they
+ * might be worth if the lapsed ones came back, and not annualised. A number on
+ * this page that turned out to be a projection is one nobody would trust again.
+ */
+function moneyTab() {
+  const paying = subscribers.filter((a) => !a.comped && (a.status === 'active' || a.status === 'trialing'));
+  const comped = subscribers.filter((a) => a.comped);
+  const lapsed = subscribers.filter((a) => !a.comped && (a.status === 'past_due' || a.status === 'cancelled'));
+  const monthly = paying.reduce((n, a) => n + (findTier(tierFor(a)).pence || 0), 0);
+  /* What the lapsed ones were worth. Not added to the total — it is what is
+   * NOT arriving, which is the useful half of knowing about them. */
+  const lost = lapsed.reduce((n, a) => n + (findTier(tierFor(a)).pence || 0), 0);
+
+  const spend = overview.spend || { total: 0, claude: 0, image: 0, months: [], packs: [], perPack: 0, rows: 0 };
+  const thisMonth = spend.months[0];
+
+  const parts = [];
+
+  parts.push(node(`
+    <div class="game-section">
+      <div class="game-head"><div>
+        <h2>Money</h2>
+        <div class="tiny">What is coming in, and what the AI is costing you.</div>
+      </div></div>
+      <div class="own-figures">
+        <div class="own-fig">
+          <b>${esc(money(monthly))}</b>
+          <span>a month, from ${paying.length} paying account${paying.length === 1 ? '' : 's'}</span>
+        </div>
+        <div class="own-fig">
+          <b>${esc(money(spend.total))}</b>
+          <span>spent on AI in the last year</span>
+        </div>
+        <div class="own-fig ${thisMonth && thisMonth.pence > monthly ? 'bad' : ''}">
+          <b>${esc(money(thisMonth ? thisMonth.pence : 0))}</b>
+          <span>spent this month${thisMonth && thisMonth.pence > monthly ? ' — more than is coming in' : ''}</span>
+        </div>
+        <div class="own-fig">
+          <b>${esc(money(spend.perPack))}</b>
+          <span>the average pack, written and drawn</span>
+        </div>
+      </div>
+      ${lapsed.length ? `<div class="tiny warn" style="margin-top:10px">
+        <b>${lapsed.length} lapsed</b> — ${lapsed.map((a) => esc(a.name || a.email)).join(', ')}.
+        ${lost
+          // Only when there is money in it. On a free tier the honest thing to
+          // say is what they cannot do, not "£0 is not arriving", which reads
+          // as a bug in the sum.
+          ? `That is ${esc(money(lost))} a month not arriving.`
+          : 'Nothing is missing from the total, but they cannot start a new night until it is sorted.'}
+      </div>` : ''}
+      ${comped.length ? `<div class="tiny" style="margin-top:8px">${comped.length} comped
+        (${comped.map((a) => esc(a.name || a.email)).join(', ')}) — they cost you what they generate and pay nothing,
+        which is the arrangement, not a problem.</div>` : ''}
+      ${overview.spendBackedUp ? '' : `<div class="tiny warn" style="margin-top:8px">
+        <b>The ledger is not backed up.</b> Set <b>PHOTO_REPO</b> and it survives a deploy like the accounts do.</div>`}
+    </div>`));
+
+  // What each tier is bringing in. The lever the whole ladder is, as a number.
+  const byTier = TIERS.map((tier) => ({
+    tier,
+    on: paying.filter((a) => tierFor(a) === tier.id).length,
+  }));
+  parts.push(node(`
+    <div class="panel">
+      <h3>Where it comes from</h3>
+      <div class="own-rows">
+        ${byTier.map(({ tier, on }) => `
+          <div class="own-row">
+            <div class="own-row-main"><b>${esc(tier.label)}</b> <span class="tiny">${esc(tier.plan)} · ${esc(money(tier.pence))} each</span></div>
+            <div class="own-row-num">${on} × = <b>${esc(money(on * tier.pence))}</b></div>
+          </div>`).join('')}
+      </div>
+      <div class="tiny" style="margin-top:10px">Moving somebody's tier is on the People tab. The prices
+        are in <code>plans.js</code> and are still provisional.</div>
+    </div>`));
+
+  if (spend.months.length) {
+    parts.push(node(`
+      <div class="panel">
+        <h3>What the AI has cost, by month</h3>
+        <div class="tiny">${spend.rows} call${spend.rows === 1 ? '' : 's'} recorded ·
+          ${esc(money(spend.claude))} writing and checking · ${esc(money(spend.image))} drawing.</div>
+        <div class="own-rows" style="margin-top:10px">
+          ${spend.months.map((m) => `
+            <div class="own-row">
+              <div class="own-row-main">${esc(monthName(m.month))}</div>
+              <div class="own-row-num"><b>${esc(money(m.pence))}</b></div>
+            </div>`).join('')}
+        </div>
+      </div>`));
+  }
+
+  if (spend.packs.length) {
+    parts.push(node(`
+      <div class="panel">
+        <h3>What each pack cost to make</h3>
+        <div class="tiny">Dearest first. A picture round is filed against the quiz that paid for the portrait —
+          the next quiz wanting that musician gets it free, which is the saving the shared library exists for.</div>
+        <div class="own-rows" style="margin-top:10px">
+          ${spend.packs.slice(0, 20).map((p) => `
+            <div class="own-row">
+              <div class="own-row-main">${esc(p.packId)}</div>
+              <div class="own-row-num"><b>${esc(money(p.pence))}</b></div>
+            </div>`).join('')}
+        </div>
+      </div>`));
+  }
+
+  if (!spend.rows) {
+    parts.push(node(`
+      <div class="panel">
+        <h3>Nothing recorded yet</h3>
+        <div class="tiny">Every Claude call and every OpenAI picture is written down from now on,
+          with what it cost and which pack it was for. Generate something and it appears here.</div>
+      </div>`));
+  }
+
+  return parts;
+}
+
+// ==================================================================== tonight
+
+/**
+ * Every room with a game in it, and what is on its projector right now.
+ *
+ * The point is not to drive anything — you cannot, and deliberately: one place
+ * that moves a quiz, and it is the control view. The point is to be able to
+ * look before you deploy. "Is anybody mid-question" is a question the owner
+ * page could not answer at all, and the answer decides whether a push waits
+ * twenty minutes.
+ *
+ * It says nothing about a pack somebody wrote themselves beyond that it is one
+ * of theirs. The owner cannot read it, so the owner cannot be told its name.
+ */
+function tonightTab() {
+  const live = overview.rooms.filter((r) => r.live);
+  const idle = overview.rooms.filter((r) => !r.live);
+
+  const parts = [node(`
+    <div class="game-section">
+      <div class="game-head"><div>
+        <h2>Tonight</h2>
+        <div class="tiny">${live.length
+          ? `${live.length} game${live.length === 1 ? '' : 's'} actually running — do not deploy over them.`
+          : 'Nothing is mid-game. A deploy right now costs nobody anything.'}</div>
+      </div></div>
+      <div class="own-rows"></div>
+    </div>`)];
+
+  const list = parts[0].querySelector('.own-rows');
+  const rows = [...live, ...idle];
+  if (!rows.length) {
+    list.appendChild(node(`<div class="tiny">No rooms have been opened since the last restart.
+      A quizmaster's room appears here the first time they open their console.</div>`));
+  }
+  for (const room of rows) {
+    list.appendChild(node(`
+      <div class="own-row ${room.live ? 'live' : ''}">
+        <div class="own-row-main">
+          <b>${esc(room.who || room.label || room.id)}</b>
+          ${room.code ? `<span class="own-code">${esc(room.code)}</span>` : '<span class="tiny">no code — the house room</span>'}
+          <div class="tiny">${esc(room.pack || 'nothing loaded')}${room.own ? '' : ''} ·
+            ${esc(room.where || room.phase || '')} · ${room.players} in</div>
+        </div>
+        <div class="own-row-num">${room.live
+          ? '<span class="own-live">Running</span>'
+          : `<span class="tiny">${esc(room.phase === 'lobby' ? 'waiting in the lobby' : 'idle')}</span>`}</div>
+      </div>`));
+  }
+  return parts;
+}
+
+// ================================================================== catalogue
+
+/**
+ * The packs as a product: what gets played, what nobody has ever run, and what
+ * has a correction sitting against it.
+ *
+ * "Never played by ANYBODY" is the line that could not be drawn before. A
+ * quizmaster's own console says "never played" meaning THEY have not played it,
+ * which is the right question for deciding what to run tonight; this means
+ * nobody has, which is a fact about the pack and is what decides whether it was
+ * worth writing.
+ */
+function catalogueTab() {
+  const packs = overview.packs || [];
+  const played = packs.filter((p) => p.plays);
+  const never = packs.filter((p) => !p.plays);
+  const flagged = packs.filter((p) => p.openReports || p.problems || p.broken);
+
+  const row = (p) => `
+    <div class="own-row">
+      <div class="own-row-main">
+        <b>${esc(p.title)}</b>
+        <span class="tiny">${esc(p.kind === 'bingo' ? 'bingo' : 'quiz')}</span>
+        ${p.openReports ? `<span class="own-flag">${p.openReports} reported</span>` : ''}
+        ${p.broken ? '<span class="own-flag bad">broken</span>' : ''}
+        ${!p.broken && p.problems ? `<span class="own-flag bad">${p.problems} to fix</span>` : ''}
+        <div class="tiny">${p.plays
+          ? `${p.plays} night${p.plays === 1 ? '' : 's'} · ${p.rooms} quizmaster${p.rooms === 1 ? '' : 's'}`
+          : 'nobody has run this'}</div>
+      </div>
+      <div class="own-row-num"><a class="minor" href="/console?read=${esc(p.kind)}:${encodeURIComponent(p.id)}">Read</a></div>
+    </div>`;
+
+  const parts = [node(`
+    <div class="game-section">
+      <div class="game-head"><div>
+        <h2>The catalogue</h2>
+        <div class="tiny">${packs.length} pack${packs.length === 1 ? '' : 's'} ·
+          ${played.length} played by somebody · ${never.length} never run by anybody</div>
+      </div></div>
+    </div>`)];
+
+  if (flagged.length) {
+    parts.push(node(`
+      <div class="panel">
+        <h3>Worth looking at</h3>
+        <div class="tiny">A reported question, or something that does not validate. These are the
+          ones with somebody waiting on them.</div>
+        <div class="own-rows" style="margin-top:10px">${flagged.map(row).join('')}</div>
+      </div>`));
+  }
+
+  if (played.length) {
+    parts.push(node(`
+      <div class="panel">
+        <h3>What gets played</h3>
+        <div class="tiny">Across every quizmaster, most first. This is the only place the counts are
+          added up — on a console they are always just yours.</div>
+        <div class="own-rows" style="margin-top:10px">${played.map(row).join('')}</div>
+      </div>`));
+  }
+
+  if (never.length) {
+    parts.push(node(`
+      <div class="panel">
+        <h3>Never run by anybody</h3>
+        <div class="tiny">Written and not used. Worth knowing before writing another like it —
+          though a new pack nobody has got to yet belongs here too, so read the dates before drawing a conclusion.</div>
+        <div class="own-rows" style="margin-top:10px">${never.map(row).join('')}</div>
+      </div>`));
+  }
+
+  return parts;
+}
+
+// ===================================================================== people
+
+/**
+ * One quizmaster, opened up.
+ *
+ * Everything about one person in one place: what they pay, where their room is,
+ * what they have written in about, and the support door. It was spread over
+ * three panels and a tab, so answering "what is going on with Rob" meant
+ * reading the whole page and holding it in your head.
+ *
+ * **It says nothing about their own packs, not even how many.** The owner
+ * cannot read them; a count is not content, but a page that quietly reported
+ * on somebody's private work would undercut the promise the rest of that
+ * feature makes. If you need to see it, ask them to open the door.
+ */
+function personPanel(account) {
+  const theirs = suggestions.filter((s) => s.byId === account.id);
+  const openTheirs = theirs.filter((s) => s.status === 'open');
+  const tier = findTier(tierFor(account));
+  const log = (account.support && account.support.log) || [];
+  const joined = account.createdAt
+    ? new Date(account.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+    : 'unknown';
+
+  const el = node(`
+    <div class="panel person">
+      <h3>${esc(account.name || account.email)}</h3>
+      <div class="tiny">${esc(account.email)} · joined ${esc(joined)} ·
+        ${esc(tier.label)} (${esc(tier.plan)})${account.comped ? ', comped' : ''}</div>
+      <div class="own-rows" style="margin-top:12px">
+        <div class="own-row">
+          <div class="own-row-main"><b>Their room</b>
+            <div class="tiny">${account.joinCode
+              ? `Join code <b>${esc(account.joinCode)}</b> — their phones use <code>/play?g=${esc(account.joinCode)}</code>.
+                 It changes on a deploy until there is a permanent disk.`
+              : 'No code yet.'}</div>
+          </div>
+        </div>
+        <div class="own-row">
+          <div class="own-row-main"><b>What they have written in</b>
+            <div class="tiny">${theirs.length
+              ? `${theirs.length} message${theirs.length === 1 ? '' : 's'}, ${openTheirs.length} still open. On the Inbox tab.`
+              : 'Nothing yet.'}</div>
+          </div>
+        </div>
+        <div class="own-row">
+          <div class="own-row-main"><b>Support access</b>
+            <div class="tiny">${account.supportOpen
+              ? 'Open right now. Everything you do in there goes in the log below, which they can read.'
+              : 'Shut. Only they can open it, from My account on their console — you cannot open it for them.'}</div>
+          </div>
+          <div class="own-row-num">${account.supportOpen ? '<button class="minor go-in">Go in</button>' : ''}</div>
+        </div>
+      </div>
+      ${log.length ? `
+        <details class="support-log" style="margin-top:10px">
+          <summary class="tiny">What you have done in their account (${log.length})</summary>
+          ${log.slice(-30).reverse().map((e) => `<div class="tiny">${esc(new Date(e.at).toLocaleString('en-GB'))} — ${esc(e.what)}</div>`).join('')}
+        </details>` : ''}
+      <div class="acct-links" style="margin-top:12px">
+        <button class="minor reset-pw">Reset their password</button>
+      </div>
+    </div>`);
+
+  el.querySelector('.go-in')?.addEventListener('click', () => goIn(account));
+  el.querySelector('.reset-pw').addEventListener('click', () => resetPassword(account));
+  return el;
+}
+
+async function goIn(account) {
+  try {
+    const data = await api('/api/owner/act-as', {
+      method: 'POST', body: JSON.stringify({ accountId: account.id }),
+    });
+    if (!data.ok) throw new Error(data.error || 'Could not go in');
+    location.href = '/console';
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+/**
+ * A new password for somebody who is locked out.
+ *
+ * You cannot read theirs — only a hash is stored, which is the honest version
+ * of "your account is private from me" — so setting a new one and telling them
+ * is the only help there is. It signs them out everywhere, which is right: a
+ * reset is usually somebody worried, and half-logged-out is no use.
+ */
+async function resetPassword(account) {
+  const suggested = suggestPassword();
+  const password = prompt(`A new password for ${account.email}?\n\nThey are signed out everywhere and can change it once they are in.`, suggested);
+  if (!password) return;
+  try {
+    const data = await api(`/api/owner/accounts/${encodeURIComponent(account.id)}/password`, {
+      method: 'POST', body: JSON.stringify({ password }),
+    });
+    subscribers = data.accounts;
+    draw({ accounts: subscribers, backupReady: true });
+    alert(`Done.\n\nSend them:\n\n  ${location.origin}/login\n  ${account.email}\n  ${password}\n\nThis is not stored anywhere you can read it again, so copy it now.`);
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+/**
+ * The owner page, as tabs.
+ *
+ * It was one scroll: reports, then the suggestion box, then a link, then the
+ * quizmaster list. That was the minimum it needed to exist rather than what it
+ * should be, and four sections down one page is a page you scroll past rather
+ * than work through.
+ *
+ * The split is by QUESTION, which is the same principle that put the catalogue
+ * on the console and the business here:
+ *
+ *   Tonight   — can I deploy? is anybody mid-question?
+ *   People    — what is going on with one subscriber?
+ *   Money     — is this paying for itself?
+ *   Catalogue — is what I write worth writing?
+ *   Inbox     — who is waiting to hear back from me?
+ *
+ * Inbox wears a badge, because it is the only tab where somebody is waiting.
+ */
+const OWNER_TABS = [
+  { id: 'tonight', label: 'Tonight', body: () => tonightTab(), count: () => overview.rooms.filter((r) => r.live).length },
+  { id: 'people', label: 'People', body: () => peopleTab(), count: () => 0 },
+  { id: 'money', label: 'Money', body: () => moneyTab(), count: () => 0 },
+  { id: 'catalogue', label: 'Catalogue', body: () => catalogueTab(), count: () => 0 },
+  {
+    id: 'inbox',
+    label: 'Inbox',
+    body: () => [...reportsPanel(), ...suggestionsPanel()],
+    // Both piles, because both are somebody waiting — a reported question and
+    // a suggestion want different things doing about them, which is why they
+    // are two panels, but "how many people am I keeping waiting" is one number.
+    count: () => reports.filter((r) => r.status === 'open').length
+      + suggestions.filter((x) => x.status === 'open').length,
+  },
+];
+
+function ownerTabBar() {
+  const bar = node('<div class="tabbar" role="tablist"></div>');
+  for (const tab of OWNER_TABS) {
+    const count = tab.count();
+    const button = node(`
+      <button class="tab ${tab.id === ownerTab ? 'on' : ''}" role="tab" data-tab="${tab.id}">
+        ${esc(tab.label)}${count ? `<span class="tabcount">${count}</span>` : ''}
+      </button>`);
+    button.addEventListener('click', () => {
+      ownerTab = tab.id;
+      draw({ accounts: subscribers, backupReady: true });
+      window.scrollTo({ top: 0 });
+    });
+    bar.appendChild(button);
+  }
+  return bar;
+}
+
+/**
+ * The quizmaster list, and one of them opened up.
+ *
+ * The list is what it always was — name, tier, the three tier buttons, comp,
+ * close — because those are the things you change in one tap and should not
+ * have to open anything to reach. Tapping a name opens everything else about
+ * them underneath, which is where the join code, the support log and the
+ * password reset now live rather than being four more columns on a row.
+ */
+let openPerson = '';
+
+function peopleTab() {
+  const parts = [];
+
+  parts.push(node(`
+    <div class="game-section">
+      <div class="game-head">
+        <div>
+          <h2>Quizmasters</h2>
+          <div class="tiny">${subscribers.length} account${subscribers.length === 1 ? '' : 's'} ·
+            ${subscribers.filter((a) => a.status === 'active' || a.status === 'trialing').length} paying ·
+            ${subscribers.filter((a) => a.comped).length} comped ·
+            tap a name for their room, their messages and the support log</div>
+        </div>
+        <div class="row"><button class="go add">Add a quizmaster</button></div>
+      </div>
+      <div class="subs"></div>
+    </div>`));
+
+  const section = parts[0];
+  const list = section.querySelector('.subs');
+  if (!subscribers.length) {
+    list.appendChild(node('<div class="tiny">Nobody yet. Your own quizmaster account goes here too.</div>'));
+  }
+  for (const account of subscribers) {
+    list.appendChild(subscriberRow(account));
+    if (openPerson === account.id) list.appendChild(personPanel(account));
+  }
+  section.querySelector('.add').addEventListener('click', addSubscriber);
 
   /*
-   * The way to the catalogue.
-   *
-   * Writing and generating packs lives on the console, and an owner used to be
-   * bounced away from it — so there was nowhere to make a quiz except the host
-   * key. This page is the BUSINESS (who subscribes, what they reported); the
-   * console is the PRODUCT. Two pages, one link between them.
+   * The way to the catalogue, kept on this tab because it is the one somebody
+   * lands on. Writing and generating packs lives on the console — this page is
+   * the BUSINESS, that one is the PRODUCT, and there is one link between them.
    */
   parts.push(node(`
     <div class="panel">
@@ -363,11 +846,31 @@ function draw(data) {
         bingo game — all on the console. You cannot launch one from there; that is a
         quizmaster's job, and yours is on the switch above.</div>
       <div class="acct-links" style="margin-top:12px">
-        <a class="go" href="/console">Open the catalogue</a>
+        <a class="own-open" href="/console">Open the catalogue</a>
       </div>
     </div>`));
 
-  if (!data.backupReady) {
+  return parts;
+}
+
+function draw(data) {
+  /*
+   * There used to be a "Become a quizmaster" panel here, with a button that did
+   * exactly what the Owner | Quizmaster switch in the topbar now does. Two ways
+   * to do one job is how you end up using the worse one out of habit — and the
+   * worse one was this, because it only existed on this page, so getting back
+   * meant finding a bar at the top of a different one.
+   */
+  const parts = [];
+
+  /*
+   * The backup warning stays ABOVE the tabs.
+   *
+   * Every account and every password disappearing on the next redeploy is not
+   * a fact about one tab, and a warning you have to be on the right tab to see
+   * is one you find out about afterwards.
+   */
+  if (data && !data.backupReady) {
     parts.push(node(`
       <div class="pv-warn pv-broken" style="margin-bottom:14px">
         <b class="pv-warn-head">Accounts are not being backed up</b>
@@ -380,26 +883,15 @@ function draw(data) {
       </div>`));
   }
 
-  parts.push(node(`
-    <div class="game-section">
-      <div class="game-head">
-        <div>
-          <h2>Quizmasters</h2>
-          <div class="tiny">${subscribers.length} account${subscribers.length === 1 ? '' : 's'} ·
-            ${subscribers.filter((a) => a.status === 'active' || a.status === 'trialing').length} paying ·
-            ${subscribers.filter((a) => a.comped).length} comped</div>
-        </div>
-        <div class="row"><button class="go add">Add a quizmaster</button></div>
-      </div>
-      <div class="subs"></div>
-    </div>`));
+  parts.push(ownerTabBar());
 
-  const list = parts[parts.length - 1].querySelector('.subs');
-  if (!subscribers.length) {
-    list.appendChild(node('<div class="tiny">Nobody yet. Your own quizmaster account goes here too.</div>'));
+  const tab = OWNER_TABS.find((t) => t.id === ownerTab) || OWNER_TABS[0];
+  const body = tab.body();
+  if (!body.length) {
+    parts.push(node(`<div class="panel"><h3>Nothing here yet</h3>
+      <div class="tiny">Nobody has reported a question or sent a suggestion.</div></div>`));
   }
-  for (const account of subscribers) list.appendChild(subscriberRow(account));
-  parts[parts.length - 1].querySelector('.add').addEventListener('click', addSubscriber);
+  parts.push(...body);
 
   mainEl.replaceChildren(...parts);
 }
@@ -411,7 +903,7 @@ const STATUS_LABEL = {
 function subscriberRow(account) {
   const row = node(`
     <div class="inv-row status-${account.status === 'active' || account.status === 'trialing' ? 'paid' : ''}">
-      <div class="inv-main">
+      <div class="inv-main open-person" role="button" tabindex="0" title="Everything about them">
         <div class="inv-top">
           <b>${esc(account.name || account.email)}</b>
           <span class="inv-who">${esc(account.email)}</span>
@@ -423,7 +915,6 @@ function subscriberRow(account) {
         </div>
       </div>
       <div class="inv-actions">
-        ${account.supportOpen ? '<button class="minor go-in" title="They have opened their account to you">Go in</button>' : ''}
         <span class="tier-pick">
           ${TIERS.map((t) => `
             <button class="minor tierbtn ${tierFor(account) === t.id ? 'on' : ''}" data-tier="${t.id}"
@@ -452,24 +943,20 @@ function subscriberRow(account) {
     button.addEventListener('click', () => save({ tier: button.dataset.tier }));
   }
   /*
-   * Into their account, on their invitation.
+   * Tapping the name opens everything else about them underneath.
    *
-   * Only drawn when they have actually opened the door — a button that always
-   * showed and then 403'd would read as a broken feature rather than as a
-   * closed one. The server refuses regardless; this is just not offering
-   * something that cannot work.
+   * "Go in" used to sit on this row as well, which meant two ways into their
+   * account from one screen — and the one on the row had no log next to it, so
+   * it was the worse of the two. One place, in the panel, beside the log it
+   * writes to.
    */
-  row.querySelector('.go-in')?.addEventListener('click', async () => {
-    try {
-      const data = await api('/api/owner/act-as', {
-        method: 'POST', body: JSON.stringify({ accountId: account.id }),
-      });
-      if (!data.ok) throw new Error(data.error || 'Could not go in');
-      // Their console, as them. Everything from here is written into their log.
-      location.href = '/console';
-    } catch (err) {
-      alert(err.message);
-    }
+  const toggle = () => {
+    openPerson = openPerson === account.id ? '' : account.id;
+    draw({ accounts: subscribers, backupReady: true });
+  };
+  row.querySelector('.open-person').addEventListener('click', toggle);
+  row.querySelector('.open-person').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
   });
   row.querySelector('.comp').addEventListener('click', () => save({ comped: !account.comped }));
   row.querySelector('.close').addEventListener('click', async () => {

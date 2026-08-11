@@ -278,9 +278,9 @@ words for every rejection. Be specific about what is wrong.
  */
 const CHECK_BATCH = 6;
 
-async function checkQuestions({ questions, apiKey, model, log = () => {} }) {
+async function checkQuestions({ questions, apiKey, model, log = () => {}, onSpend = () => {} }) {
   if (questions.length <= CHECK_BATCH) {
-    return checkBatch({ questions, apiKey, model, log });
+    return checkBatch({ questions, apiKey, model, log, onSpend });
   }
   const batches = [];
   for (let i = 0; i < questions.length; i += CHECK_BATCH) {
@@ -288,12 +288,12 @@ async function checkQuestions({ questions, apiKey, model, log = () => {} }) {
   }
   log(`  (in ${batches.length} batches, at the same time)`);
   const done = await Promise.all(
-    batches.map((batch) => checkBatch({ questions: batch, apiKey, model, log })),
+    batches.map((batch) => checkBatch({ questions: batch, apiKey, model, log, onSpend })),
   );
   return done.flat();
 }
 
-async function checkBatch({ questions, apiKey, model, log = () => {} }) {
+async function checkBatch({ questions, apiKey, model, log = () => {}, onSpend = () => {} }) {
   const listing = questions.map((q, i) => {
     // An alphabet question has no options — what has to be checked is the
     // answer itself and, above all, that its first letter is not arguable.
@@ -316,6 +316,8 @@ async function checkBatch({ questions, apiKey, model, log = () => {} }) {
       apiKey,
       model: CHECKER_MODEL,
       think: true,
+      what: 'checked a batch',
+      onSpend,
     });
   } catch (err) {
     // Most likely the account cannot reach the stronger model. Check with the
@@ -328,6 +330,8 @@ async function checkBatch({ questions, apiKey, model, log = () => {} }) {
         apiKey,
         model,
         think: true,
+        what: 'checked a batch (fallback model)',
+        onSpend,
       });
     } catch (second) {
       /*
@@ -393,7 +397,13 @@ An "alphabet" round is the other exception: no options and no correctIndex at al
  * to a fixed shape does not need it and is turned off; the checking pass is a
  * judgement call, so it keeps thinking and gets the room to do it in.
  */
-async function askClaude({ system, prompt, apiKey, model, think = false }) {
+/**
+ * @param {function(object): void} [onSpend]  told what the call actually cost.
+ *   Threaded the same way `log` is, and defaulting to nothing, so every test
+ *   and every script that calls a generator carries on working with no
+ *   accounting attached. See src/spend.js.
+ */
+async function askClaude({ system, prompt, apiKey, model, think = false, what = '', onSpend = () => {} }) {
   const body = {
     model,
     max_tokens: think ? 16000 : 8000,
@@ -425,6 +435,22 @@ async function askClaude({ system, prompt, apiKey, model, think = false }) {
 
   if (!res.ok) throw new Error(`Claude said ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
+  /*
+   * Recorded BEFORE the reply is parsed, on purpose.
+   *
+   * Anthropic bills for the tokens it generated whether or not what came back
+   * was readable, and an unreadable reply is a thing this file expects and
+   * retries. Recording after the parse would quietly leave every retry out of
+   * the sums and flatter the cost of a difficult theme.
+   */
+  const usage = data.usage || {};
+  onSpend({
+    kind: 'claude',
+    what,
+    model,
+    tokensIn: usage.input_tokens || 0,
+    tokensOut: (usage.output_tokens || 0),
+  });
   const text = (data.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('');
   return parseJson(text);
 }
@@ -636,7 +662,7 @@ export function questionKey(q) {
   return prompt || what ? `${prompt}|${what}` : '';
 }
 
-async function buildRound({ brief, perRound, check, system, apiKey, model, log, onReject, onUnchecked = () => {}, onShort = () => {} }) {
+async function buildRound({ brief, perRound, check, system, apiKey, model, log, onReject, onUnchecked = () => {}, onShort = () => {}, onSpend = () => {} }) {
   const accepted = [];
   const failed = [];
   const seen = new Set();
@@ -669,6 +695,8 @@ async function buildRound({ brief, perRound, check, system, apiKey, model, log, 
         prompt: `Write ${ask} questions for a music quiz.\n\n${brief}${avoid}\n\n${SCHEMA_NOTE}`,
         apiKey,
         model,
+        what: 'wrote a round',
+        onSpend,
       });
     } catch (err) {
       // Only an unreadable REPLY is worth quietly having another go at. A
@@ -696,7 +724,7 @@ async function buildRound({ brief, perRound, check, system, apiKey, model, log, 
     }
 
     log(`  checking ${fresh.length} with ${CHECKER_MODEL}…`);
-    const verdicts = await checkQuestions({ questions: fresh, apiKey, model, log });
+    const verdicts = await checkQuestions({ questions: fresh, apiKey, model, log, onSpend });
     if (verdicts.some((v) => v.unchecked)) onUnchecked();
     for (const v of verdicts) {
       if (v.ok) {
@@ -753,6 +781,10 @@ export async function generateQuizPack({
   model = DEFAULT_MODEL,
   check = true,
   log = () => {},
+  // What each call cost, for the owner's own ledger. Defaults to nothing, so
+  // a test or a script gets a generator with no accounting attached rather
+  // than one that needs a file on disk. See src/spend.js.
+  onSpend = () => {},
   now = () => Date.now(),
 }) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -782,7 +814,7 @@ export async function generateQuizPack({
 
     log(`round ${i + 1} of ${plan.length} (${type}, ${count} question${count === 1 ? '' : 's'})`);
     const questions = await buildRound({
-      brief, perRound: count, check, system, apiKey, model, log,
+      brief, perRound: count, check, system, apiKey, model, log, onSpend,
       onReject: (q, reason) => rejected.push({ round: i + 1, prompt: q.prompt, reason }),
       onUnchecked: () => { if (!unchecked.includes(i + 1)) unchecked.push(i + 1); },
       onShort: (got, wanted) => short.push({ round: i + 1, type, got, wanted }),

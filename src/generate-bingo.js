@@ -36,7 +36,7 @@ const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
  * and some will not be findable on Spotify, and coming up short would mean
  * cards with blank squares.
  */
-async function askClaude({ theme, wanted, avoid, apiKey, model = MODEL }) {
+async function askClaude({ theme, wanted, avoid, apiKey, model = MODEL, onSpend = () => {} }) {
   const avoidList = avoid.length
     ? `\n\nDO NOT include any of these — they have been played recently:\n${avoid.map((t) => `- ${t.title} — ${t.artist}`).join('\n')}`
     : '';
@@ -79,6 +79,17 @@ Reply with JSON and nothing else, no markdown fence:
 
   if (!res.ok) throw new Error(`Claude said ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
+  // Before the reply is read, and for the reason readTracks() exists: a reply
+  // that was cut off mid-track is still a reply that was billed for. See
+  // src/spend.js.
+  const usage = data.usage || {};
+  onSpend({
+    kind: 'claude',
+    what: 'picked bingo tracks',
+    model: model || MODEL,
+    tokensIn: usage.input_tokens || 0,
+    tokensOut: usage.output_tokens || 0,
+  });
   const reply = (data.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('');
   const tracks = readTracks(reply);
 
@@ -149,6 +160,8 @@ export async function generateBingoPack({
   spotify,
   model,
   log = () => {},
+  // What the call cost, for the owner's own ledger — see src/spend.js.
+  onSpend = () => {},
   now = () => Date.now(),
 }) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -166,7 +179,7 @@ export async function generateBingoPack({
   // ---- 2. ask for more than we need, then filter
   const overAsk = Math.min(100, Math.round(trackCount * 1.6));
   log(`asking Claude for ${overAsk} candidates…`);
-  const candidates = await askClaude({ theme: subject, wanted: overAsk, avoid, apiKey, model });
+  const candidates = await askClaude({ theme: subject, wanted: overAsk, avoid, apiKey, model, onSpend });
   log(`  got ${candidates.length}`);
 
   const { kept, dropped } = filterRecent(config.dataDir, candidates, avoidMonths, now());

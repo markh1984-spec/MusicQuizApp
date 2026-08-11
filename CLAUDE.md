@@ -313,6 +313,132 @@ It keeps every score and clears the scoreboard and advert flags, and `back()`
 from FINAL returns to the round board — so a mis-tap on the host's phone is one
 press to undo. That is why it is not a reset.
 
+## The owner page — five questions, five tabs
+
+`/owner` was one scroll: reported questions, the suggestion box, a link, the
+quizmaster list. That was the minimum it needed to exist rather than what it
+should be, and four sections down one page is a page you scroll past rather
+than work through.
+
+**Split by QUESTION, not by data**, the same principle that put the catalogue
+on the console and the business here:
+
+| Tab | The question it answers |
+|---|---|
+| **Tonight** | can I deploy? is anybody mid-question? |
+| **People** | what is going on with one subscriber? |
+| **Money** | is this paying for itself? |
+| **Catalogue** | is what I write worth writing? |
+| **Inbox** | who is waiting to hear back from me? |
+
+Only Inbox wears a badge, because it is the only tab where somebody is waiting.
+The reports and the suggestions stay TWO panels on it — they want different
+things doing about them — but "how many people am I keeping waiting" is one
+number.
+
+**The accounts-not-backed-up warning stays ABOVE the tabs.** Every password
+disappearing on the next redeploy is not a fact about one tab, and a warning
+you have to be on the right tab to see is one you find out about afterwards.
+
+### Tonight wakes every room before it answers
+
+Rooms are made lazily, so after a restart only the house room is in memory —
+and "nothing is running, safe to deploy" would have been a confident lie told
+at exactly the moment it matters most, because a quizmaster's phones have not
+reconnected yet. So the route reads each subscriber's state file first, which
+is what happens the second they do reconnect. One file read per subscriber.
+
+Only accounts that still exist, and only ones with something saved: a closed
+account must not come back as a room, and somebody who has never run a night
+should not appear as idle.
+
+**It says NOTHING about a pack somebody wrote themselves beyond that it is one
+of theirs** — and the ID is masked as well as the title, which is not fussiness:
+a pack id is the title slugged, so leaving it would print `robs-secret-quiz` on
+the owner's page directly under a feature promising they cannot read it. Tested.
+
+**Nothing on this page drives a game**, and deliberately: one place that moves a
+quiz, and it is the control view. This is for looking before you deploy.
+
+### Money — and the ledger that did not exist
+
+`src/spend.js`. The rule that decides which tier a feature goes in is *anything
+that costs the owner money every time it is used is not in Bronze* — and it was
+being applied from memory, against a bill that arrives a month later with no
+idea which pack it was for.
+
+Every Claude call and every OpenAI picture is now written down as it happens:
+what it was, which pack, how many tokens, and **what it cost in pence**.
+
+Four things that are load-bearing:
+
+- **It records what was SPENT, never an estimate.** The console already
+  estimates before you press a button ("4 to draw — about 16p"); that is a
+  warning, this is a record. Same price table so the two cannot disagree.
+- **A failed call still costs.** Both suppliers bill for tokens they generated
+  whether or not the reply parsed, so the row is written from the reported
+  usage BEFORE the parse — which is why retries on a difficult theme show up.
+  A ledger that quietly left them out would flatter every sum on the page.
+- **The pence are STORED, not recomputed.** A price rise would otherwise
+  silently rewrite what last year cost, and "what did I actually pay" is the
+  one question this exists to answer. An unknown model is priced as the dearest
+  there is, so a new model name can only ever make the sums look worse than
+  they are — the other way round is a bill nobody saw coming.
+- **Never fatal.** A generation that died of a bookkeeping error would be the
+  tail wagging the dog: minutes and real money lost. Every write is wrapped and
+  the worst case is a missing row.
+
+Generators take an `onSpend` callback rather than the ledger itself, defaulting
+to nothing — so `src/generate-*.js` never learns that a ledger exists and every
+test and script that calls one carries on working. The server is the only place
+the two are joined up, and it pushes the backup **once at the end of a job**
+rather than per call: a quiz is twenty-odd calls and that would be twenty
+commits for one press of one button.
+
+Backed up to the PRIVATE repo, like the invoices — it is a business record.
+Restored only into an empty ledger, same rule as everything else.
+
+The tab puts monthly recurring next to it, because the comparison is the whole
+point: the ladder exists to cover the second number with the first. **Nothing
+on it is a forecast** — recurring is what the tiers say today's paying accounts
+are worth, not annualised and not what the lapsed ones would be worth back. A
+number on that page that turned out to be a projection is one nobody would
+trust again.
+
+### Catalogue — "never played by ANYBODY"
+
+The line that could not be drawn before. A quizmaster's console says "never
+played" meaning THEY have not played it, which is the right question for
+deciding what to run tonight; this means nobody has, which is a fact about the
+pack and is what decides whether it was worth writing. The play counts are
+deliberately per room (see `library.js`), so this is the only place they are
+ever added up. **Only the catalogue** — a quizmaster's own packs are not the
+owner's product and there is a test that they are not counted.
+
+### People — one subscriber, opened up
+
+Tapping a name opens everything else about them underneath: their join code,
+what they have written in, the support door and the log of what was done in
+there. It was spread over three panels, so "what is going on with Rob" meant
+reading the whole page and holding it in your head.
+
+**Go in moved off the row and into the panel.** It was in both places, and the
+one on the row had no log beside it — so it was the worse of two ways to do one
+job, which is the mistake this file already records for the "Become a
+quizmaster" panel.
+
+**Resetting a password is its own route**, not a field on `accounts.update()`.
+That method is what a payment webhook talks to, and a webhook payload that
+could carry a password is a door nobody meant to leave open. The owner cannot
+READ a password — only a scrypt hash is stored — so setting a new one and
+saying what it is is the only help there is.
+
+**It says nothing about their own packs, not even how many.** A count is not
+content, but a page that quietly reported on somebody's private work would
+undercut the promise the rest of that feature makes.
+
+---
+
 ### The console's running panel is the way in
 
 **Stopping and driving a game both live on that panel** — `runningPanel()` in
@@ -741,6 +867,7 @@ src/portraits.js       the shared portrait library: one picture per musician
 src/branding.js        "Mark's Quiztopia" — the app name and whose night it is
 src/gates.js           which routes are the owner's, as two testable lists
 src/own-packs.js       a quizmaster's own packs — theirs, and private from the owner
+src/spend.js           what Claude and OpenAI have actually cost, written down as it happens
 public/                the screens; *-bingo.js files hold the bingo variants
   assets/brandmark.js  the question-in-a-mic logo, shared with the server as the favicon
   assets/avatar.js     a drawn face per team, for anyone who sent no photo
@@ -2035,7 +2162,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 664 tests, no network, injected clocks — must stay green
+npm test        # 681 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -2137,6 +2264,12 @@ is `'all'` today, so nothing changed for anybody. The account page shows it —
 carries the same **On | Off** switch as the hat in the top right, with a `+`
 where a tier above yours would be.
 
+**The owner page is five tabs now** — Tonight, People, Money, Catalogue, Inbox
+— and two of them answer questions nothing in the app could answer before:
+whether anybody is mid-question right now (so a deploy waits), and what the AI
+has actually cost, from a ledger written as each call happens. That second one
+is the number the whole tier structure rests on and it existed nowhere.
+
 **A quizmaster now keeps their OWN packs**, and this is the one gate in the app
 that runs backwards: the owner cannot read them. Enforced structurally — no
 route takes a room parameter, so there is no id anybody can send that reaches
@@ -2148,7 +2281,7 @@ private repo (`PACKS_REPO`), never the one holding the owner's accounts and
 invoices; until that is set the console says so in red and every own pack has a
 Download button.
 
-All on **`MusicQuizApp`**. 664 tests green.
+All on **`MusicQuizApp`**. 681 tests green.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on

@@ -426,3 +426,34 @@ test('a paying quizmaster on the bottom rung has it', () => {
   const rob = { role: 'quizmaster', tier: 'bronze', status: 'active' };
   assert.equal(can(rob, FEATURES.OWN_PACKS), true);
 });
+
+/*
+ * The owner's overview says which room is running what — and for a pack THEY
+ * wrote, it must say nothing but "one of their own".
+ *
+ * The id goes as well as the title, and that is not fussiness: a pack id is
+ * the title slugged, so leaving it would print "robs-secret-quiz" on the
+ * owner's own page directly under a feature that promises they cannot read it.
+ */
+test('the owner overview names nothing about a pack somebody wrote', () => {
+  const source = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  const route = source.slice(source.indexOf("route === '/api/owner/overview'"));
+  const block = route.slice(0, route.indexOf('\n  }\n'));
+  assert.match(block, /isOwnPack/, 'the overview no longer asks whether a pack is theirs');
+  assert.match(block, /pack: 'One of their own'/, 'the title is no longer masked');
+  assert.match(block, /packId: ''/, "the pack id is no longer masked — an id is the title slugged");
+});
+
+/*
+ * The catalogue figures on the owner page are the CATALOGUE's. Reading the own
+ * libraries into them would put a count of somebody's private work on the
+ * owner's page, and a play count is a fact about a pack the owner cannot see.
+ */
+test("the owner's catalogue figures never read a quizmaster's own library", () => {
+  const source = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  const fn = source.match(/function cataloguePerformance\(\)[\s\S]*?\n}/);
+  assert.ok(fn, 'cataloguePerformance has gone');
+  assert.ok(!/listOwn/.test(fn[0]), "the owner's catalogue figures include somebody's own packs");
+  assert.match(fn[0], /fullLibrary\(config, HOUSE\)/,
+    'the catalogue figures are no longer read from the shared library alone');
+});

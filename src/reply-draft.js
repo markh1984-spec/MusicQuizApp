@@ -199,6 +199,10 @@ export async function draftReply({
   history = [],
   // Every reply the owner has written, for voice.
   past = [],
+  // What the call cost, for the owner's own ledger. Small next to a
+  // generation, and worth having in the same place: a drafting button pressed
+  // forty times a month is still a line on the bill. See src/spend.js.
+  onSpend = () => {},
   fetchImpl = fetch,
 } = {}) {
   if (!apiKey) throw new Error('No ANTHROPIC_API_KEY is set, so there is nothing to draft with.');
@@ -256,6 +260,14 @@ Draft the reply.`;
     throw new Error(`Claude said ${res.status}: ${(await res.text()).slice(0, 200)}`);
   }
   const data = await res.json();
+  const usage = data.usage || {};
+  onSpend({
+    kind: 'claude',
+    what: 'drafted a reply',
+    model,
+    tokensIn: usage.input_tokens || 0,
+    tokensOut: usage.output_tokens || 0,
+  });
   const text = (data.content || [])
     .filter((c) => c.type === 'text')
     .map((c) => c.text)

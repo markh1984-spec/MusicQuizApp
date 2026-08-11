@@ -129,6 +129,10 @@ export class Room {
       label: this.label,
       game: this.session.kind,
       pack: this.session.pack?.title || '',
+      // The id as well as the title, because the owner's overview has to be
+      // able to ask "is this one of THEIRS" — and it can only ask that with an
+      // id. See own-packs.js.
+      packId: this.session.pack?.id || '',
       phase: engine?.state?.phase || '',
       players: Object.keys(engine?.state?.players || {}).length,
       live: this.live,

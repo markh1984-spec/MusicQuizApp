@@ -508,13 +508,37 @@ no-repeats memory left out of it entirely, since that is your generator's record
 of what IT has used.
 
 
-### Build out the owner admin console
+### Build out the owner admin console — ✅ BUILT
 
-`/owner` is currently two things: reported questions, and the quizmaster list.
-That is the minimum it needed to exist, not what it should be. Wanted, but not
-yet pinned down — **needs a conversation before anything is built.**
+Five tabs, split by the question each answers: **Tonight** (can I deploy?),
+**People** (what is going on with one subscriber?), **Money** (is this paying
+for itself?), **Catalogue** (is what I write worth writing?) and **Inbox** (who
+is waiting to hear back?). Described properly in CLAUDE.md under
+"The owner page".
 
-Obvious candidates, in no order and none of them agreed:
+The one worth knowing about is **Money**, because it needed something that did
+not exist: a ledger. Every Claude call and every OpenAI picture is now written
+down as it happens, with what it cost and which pack it was for — so
+"what does a pack cost to make" is a number on a page rather than a guess
+against a card statement a month later. It backs up to the private repo like
+the invoices.
+
+Two things are deliberately NOT on it, and both were considered:
+
+- **No way to drive a game.** One place moves a quiz and it is the control
+  view. A second set of Next/Back buttons polling the library would eventually
+  double-advance a room.
+- **Nothing about a subscriber's own packs**, not even a count. A count is not
+  content, but a page that quietly reported on somebody's private work would
+  undercut the promise the rest of that feature makes.
+
+What was on the original list and is still not built:
+
+- **A calendar of who is booked where.** That is a quizmaster tool that exists
+  as a tier, not an owner view, and nobody has asked for the owner's version.
+- **Payments.** Still processor-agnostic and still unwired — see below.
+
+The original list, for reference:
 
 - **Who is running what, right now** — every room, what is on its projector,
   how many are in. `rooms.summaries()` already returns it and the console shows
