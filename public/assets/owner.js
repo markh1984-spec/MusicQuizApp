@@ -180,13 +180,26 @@ const SUGG_LABEL = {
   idea: 'Idea',
   annoying: 'Got in the way',
   broken: 'Broken',
+  // Gold only, and a different job from the rest of this list: the others need
+  // a decision, this one needs the generator pressing and twenty minutes of
+  // reading. It gets its own pile below for exactly that reason.
+  pack: 'Wants a pack',
 };
 
 function suggestionsPanel() {
   if (!suggestions.length) return [];
   const open = suggestions.filter((s) => s.status === 'open');
   const done = suggestions.filter((s) => s.status !== 'open');
-  const shown = inboxShow === 'open' ? open : done;
+  /*
+   * Pack requests get a pile of their own, because they are a different JOB.
+   *
+   * Everything else here needs a decision and a reply. A pack request needs
+   * the generator pressed and twenty minutes of reading — and the host does
+   * that on his admin day, all in one go. A list where those are scattered
+   * among the ideas is one you work through twice.
+   */
+  const packs = open.filter((s) => s.kind === 'pack');
+  const shown = inboxShow === 'packs' ? packs : inboxShow === 'open' ? open : done;
 
   const when = (at) => {
     const days = Math.floor((Date.now() - at) / 86400000);
@@ -198,10 +211,12 @@ function suggestionsPanel() {
       <div class="game-head">
         <div>
           <h2>Inbox</h2>
-          <div class="tiny">${open.length ? `${open.length} to deal with` : 'Nothing waiting — the list is clear.'}</div>
+          <div class="tiny">${open.length ? `${open.length} to deal with` : 'Nothing waiting — the list is clear.'}${
+            packs.length ? ` · <b>${packs.length} pack${packs.length === 1 ? '' : 's'} to write</b>` : ''}</div>
         </div>
         <div class="row">
           <button class="minor pile ${inboxShow === 'open' ? 'on' : ''}" data-show="open">To deal with (${open.length})</button>
+          ${packs.length ? `<button class="minor pile packs ${inboxShow === 'packs' ? 'on' : ''}" data-show="packs">Packs to write (${packs.length})</button>` : ''}
           <button class="minor pile ${inboxShow === 'done' ? 'on' : ''}" data-show="done">Cleared (${done.length})</button>
         </div>
       </div>
@@ -243,7 +258,7 @@ function suggestionsPanel() {
 
   const list = el.querySelector('.suggs');
   if (!shown.length) {
-    list.appendChild(node(`<div class="tiny">${inboxShow === 'open'
+    list.appendChild(node(`<div class="tiny">${inboxShow === 'packs' ? 'No packs waiting to be written.' : inboxShow === 'open'
       ? 'Nothing waiting. Anything they send lands here.'
       : 'Nothing cleared yet.'}</div>`));
   }

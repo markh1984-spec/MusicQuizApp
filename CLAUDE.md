@@ -2236,9 +2236,36 @@ one genuinely scarce thing in this business. And that is the same thing Gold
 already sells: **Silver buys the owner's BACK CATALOGUE, Gold buys the owner's
 TIME.** A weekly topical quiz, and now a pack written to order.
 
-**One open request at a time**, enforced in `suggestions.js`. Worse than not
-offering this is offering it and not delivering, and a subscriber who could
-queue ten would turn a promise into a backlog.
+**Two limits, and only one of them is about the subscriber.** One open request
+at a time AND one a month per account, both in `suggestions.js` — without the
+second, "one open at a time" means ask Monday, receive Monday, ask again
+Tuesday, and fifty-two packs a year from one person.
+
+**The constraint that actually binds is the OWNER'S MONDAY**, and that is
+handled by a QUEUE POSITION rather than a cap. A global weekly limit would
+refuse somebody who asked on Sunday night because three others got there first,
+which reads as "Gold, but be quick" — and a control that refuses is the mistake
+this file keeps recording. A queue never says no, it says when.
+
+**Saying WHICH DAY is worth more than the limit is.** The host does his admin
+on Mondays, so that is when the inbox is read and the generator pressed.
+`PACK_DAY` and `nextPackDay()`; the panel says *"Written on Mondays — ask
+before then and it is in your library on 17 August"*. A request with no stated
+turnaround is a promise broken by silence: the subscriber does not know whether
+it is coming on Thursday or at all, so they chase, or they quietly stop
+believing in the feature.
+
+**The whole state is sent BEFORE anybody types** (`packRequestStatus()`, on the
+library payload). Being refused after writing three sentences is the version
+that annoys; "that is this month's, the next is from the 1st" is a sentence
+somebody can plan around. Once asked, the panel becomes the queue position
+rather than an empty box.
+
+**The owner's inbox gives pack requests their own pile**, because they are a
+different JOB — everything else there needs a decision and a reply, this needs
+the generator pressed and twenty minutes of reading, and it all happens on one
+admin day. A list where those are scattered among the ideas is one you work
+through twice.
 
 **Gated on the SERVER**, where the kind is received — not left to the console
 not drawing the option. A kind is one word in a request body, which is exactly

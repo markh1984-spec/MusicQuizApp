@@ -726,7 +726,36 @@ function askForPackPanel(kind) {
       <div class="panel ask-pack locked">
         <h3>Nothing here for the night you have booked?</h3>
         <div class="tiny">On <b>Gold</b> you can ask for a ${esc(what)} that does not exist yet —
-          name the theme and it gets written into the catalogue. One at a time.</div>
+          name the theme and it gets written into the catalogue, on the Monday after you ask.
+          One a month.</div>
+      </div>`);
+  }
+
+  /*
+   * The deal, stated BEFORE anybody types.
+   *
+   * Being refused after writing three sentences is the version that annoys
+   * people. "You have had this month's, the next is from the 1st" is a
+   * sentence somebody can plan around — and naming the DAY is worth more than
+   * the limit is, because a request with no stated turnaround is a promise
+   * broken by silence.
+   */
+  const state = library.packRequest || { mayAsk: true, day: 'Monday' };
+  const day = (d) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+  const promise = `Written on <b>${esc(state.day || 'Monday')}s</b> — ask before then and it is in your library on
+    <b>${esc(day(state.writtenOn))}</b>.`;
+
+  if (!state.mayAsk) {
+    return node(`
+      <div class="panel ask-pack waiting">
+        <h3>Your ${esc(what)} is on the list</h3>
+        <div class="tiny">
+          ${state.open ? `“${esc(state.open.text.slice(0, 120))}”<br>` : ''}
+          ${state.position > 1
+            ? `<b>${state.position}${state.position === 2 ? 'nd' : state.position === 3 ? 'rd' : 'th'} in the queue.</b> `
+            : (state.open ? '<b>Next up.</b> ' : '')}
+          ${state.open ? promise : `That is this month's — you can ask for the next one from <b>${esc(day(state.nextAllowedAt))}</b>.`}
+        </div>
       </div>`);
   }
 
@@ -734,8 +763,8 @@ function askForPackPanel(kind) {
     <div class="panel ask-pack">
       <h3>Ask for a ${esc(what)}</h3>
       <div class="tiny">Nothing in the catalogue for the night you have booked? Say what you want and
-        it gets written — a theme, and anything about the room that would help.
-        <b>One at a time</b>, so the one you ask for is the one that gets done.</div>
+        it gets written into the catalogue — a theme, and anything about the room that would help.
+        <br>${promise} <b>One a month</b>, so the one you ask for is the one that gets done.</div>
       <textarea class="ask-text" rows="3" maxlength="1200"
         placeholder="A One Direction ${esc(what)} — it is a hen night at The Crown, mostly late twenties…"></textarea>
       <div class="row" style="margin-top:8px">
@@ -754,6 +783,9 @@ function askForPackPanel(kind) {
       await postJson('/api/suggestions', { text, kind: 'pack', where: `${kind} packs` }, { 'X-Host-Key': hostKey });
       el.querySelector('.ask-text').value = '';
       said.textContent = 'Asked. You will get a yes or a no — not silence.';
+      // Redraw, so the panel becomes the queue position rather than an empty
+      // box you could type into again.
+      await load();
     } catch (err) {
       // The one refusal worth wording properly: they already have one waiting,
       // which is not a failure, it is the queue working.

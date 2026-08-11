@@ -3330,6 +3330,10 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    that might be costing somebody a gig right now. */
 .sugg-kind-tag.broken { background: rgba(255, 77, 94, 0.18); color: var(--bad); }
 .sugg-kind-tag.idea { background: rgba(47, 224, 122, 0.16); color: var(--good); }
+/* A pack request wears Gold, because that is the rung it comes from and
+ * because it is the one entry in this list that costs money to answer. */
+.sugg-kind-tag.pack { background: rgba(255, 200, 90, 0.18); color: #ffc85a; }
+.pile.packs.on { border-color: #ffc85a; color: #ffc85a; }
 .sugg-reply {
   margin-top: 10px; padding: 9px 13px;
   border-left: 3px solid var(--hot);

@@ -314,13 +314,76 @@ test('the kind is gated where it is received, not where it is drawn', () => {
   const route = server.slice(at, at + 1800);
   assert.match(route, /PACK_REQUEST_KIND/, 'a pack request is no longer told apart on the server');
   assert.match(route, /FEATURES\.REQUEST_PACK/, 'the pack-request kind is not gated on the server');
-  assert.match(route, /openPackRequest/, 'nothing stops a subscriber queueing ten of them');
+  assert.match(route, /packRequestStatus/, 'nothing stops a subscriber queueing ten of them');
 });
 
 /*
  * One at a time, and that is what makes the offer deliverable rather than a
  * backlog. Worse than not having this feature is having it and not delivering.
  */
+/*
+ * Two limits, and only one of them is really about the subscriber.
+ *
+ * "One open at a time" plus "one a month" stops a single account asking every
+ * week for ever. But the constraint that actually binds is the OWNER'S MONDAY,
+ * and that is handled by a queue position rather than a cap: a global limit
+ * would refuse somebody who asked on Sunday night because three others got
+ * there first, which reads as "Gold, but be quick". A queue never says no, it
+ * says when.
+ */
+test('the deal is stated before anybody types, not refused afterwards', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sugg-'));
+  const wednesday = Date.parse('2026-08-12T10:00:00Z');
+  const box = new Suggestions(path.join(dir, 'suggestions.json'), () => wednesday);
+
+  const fresh = box.packRequestStatus('rob');
+  assert.equal(fresh.mayAsk, true);
+  assert.equal(fresh.position, 0, 'nothing waiting, so no position to report');
+  assert.equal(new Date(fresh.writtenOn).getUTCDay(), 1, 'packs are written on a Monday');
+  assert.ok(fresh.writtenOn > wednesday, 'the next writing day is in the past');
+
+  box.add({ text: 'A One Direction quiz', kind: PACK_REQUEST_KIND, byId: 'rob' });
+  const after = box.packRequestStatus('rob');
+  assert.equal(after.mayAsk, false);
+  assert.equal(after.usedThisMonth, 1);
+  assert.equal(after.position, 1);
+});
+
+test('the queue is the order people asked in, oldest first', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sugg-'));
+  const at = Date.parse('2026-08-12T10:00:00Z');
+  const box = new Suggestions(path.join(dir, 'suggestions.json'), () => at);
+
+  // Same millisecond, deliberately: the list is stored newest-first, so a
+  // stable sort on the timestamp alone put the SECOND person asked in front.
+  box.add({ text: 'Dave asked first', kind: PACK_REQUEST_KIND, byId: 'dave' });
+  box.add({ text: 'Rob asked second', kind: PACK_REQUEST_KIND, byId: 'rob' });
+
+  assert.equal(box.packRequestStatus('dave').position, 1, 'the queue runs backwards');
+  assert.equal(box.packRequestStatus('rob').position, 2);
+  assert.equal(box.packRequestStatus('rob').waiting, 2);
+});
+
+/*
+ * A month's allowance is a month's, even once the first has been delivered —
+ * otherwise "one open at a time" alone means ask Monday, receive Monday, ask
+ * again Tuesday, and fifty-two packs a year from one person.
+ */
+test('a delivered request still uses up the month', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sugg-'));
+  const at = Date.parse('2026-08-12T10:00:00Z');
+  const box = new Suggestions(path.join(dir, 'suggestions.json'), () => at);
+
+  box.add({ text: 'A One Direction quiz', kind: PACK_REQUEST_KIND, byId: 'rob' });
+  box.reply(box.openPackRequest('rob').id, 'Written — it is in your library.');
+  assert.equal(box.openPackRequest('rob'), null, 'it is still open after being answered');
+  assert.equal(box.packRequestStatus('rob').mayAsk, false, 'a delivered pack did not use the month');
+
+  // And it comes back next month.
+  const september = Date.parse('2026-09-02T10:00:00Z');
+  assert.equal(box.packRequestStatus('rob', september).mayAsk, true);
+});
+
 test('one open pack request at a time, per account', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sugg-'));
   const box = new Suggestions(path.join(dir, 'suggestions.json'), () => NOW);

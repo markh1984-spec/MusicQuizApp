@@ -1268,6 +1268,14 @@ async function handleGet(req, res, url, route) {
       // Just the totals, so the Invoices tab can wear a badge saying how many
       // are still unpaid. The invoices themselves are never in this payload.
       invoicing: roomForHost(req, url).invoices.summary(),
+      /*
+       * Enough to draw "Ask for a pack" BEFORE somebody types into it: whether
+       * they may, where they are in the queue, and which Monday it lands on.
+       * Being refused after writing three sentences is the version that
+       * annoys; being told the deal up front is the version somebody plans
+       * around.
+       */
+      packRequest: me ? suggestions.packRequestStatus(me.id || '') : null,
       // Only a count here. The reports themselves are owner-only and come from
       // their own route.
       reports: me && me.role === 'owner' ? reports.summary() : { open: 0, total: 0 },
@@ -2201,12 +2209,17 @@ async function handleWrite(req, res, url, route) {
      */
     if (kind === PACK_REQUEST_KIND) {
       if (!allowed(req, res, url, FEATURES.REQUEST_PACK)) return true;
-      const already = suggestions.openPackRequest(me.id || '');
-      if (already) {
+      const state = suggestions.packRequestStatus(me.id || '');
+      if (!state.mayAsk) {
+        const when = new Date(state.nextAllowedAt).toLocaleDateString('en-GB', {
+          day: 'numeric', month: 'long', timeZone: 'Europe/London',
+        });
         return sendJson(res, 409, {
-          error: 'You already have a pack on the list — "' + already.text.slice(0, 60)
-            + '". That one gets written first.',
+          error: state.open
+            ? `You already have one on the list — "${state.open.text.slice(0, 60)}". That one gets written first.`
+            : `That is this month's. You can ask for the next one from ${when}.`,
           waiting: true,
+          state,
         }), true;
       }
     }

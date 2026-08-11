@@ -52,6 +52,52 @@ export const KIND_LABEL = {
 
 export const STATUSES = ['open', 'done'];
 
+/**
+ * ================================================ WHEN A REQUESTED PACK GETS WRITTEN
+ *
+ * **Monday.** The host does his admin on Mondays, so that is when the inbox
+ * gets read and the generator gets pressed — and saying so is worth more than
+ * the limit below is.
+ *
+ * A request with no stated turnaround is a promise broken by silence: the
+ * subscriber does not know whether it is coming on Thursday or at all, so they
+ * chase, or they quietly stop believing in the feature. "Ask by Sunday and it
+ * is in your library on Monday" is a smaller promise and a keepable one, which
+ * makes it the better offer.
+ *
+ * 1 is Monday in `getDay()` terms. Asking ON a Monday means the Monday after,
+ * because by then the admin is done.
+ */
+export const PACK_DAY = 1;
+export const PACK_DAY_LABEL = 'Monday';
+
+/**
+ * **One a month, per account** — and note which of the two limits is doing the
+ * real work.
+ *
+ * This one stops a single subscriber asking every week for ever: with only the
+ * one-open-at-a-time rule, somebody could ask on Monday, get it on Monday, and
+ * ask again on Tuesday — fifty-two packs a year from one person.
+ *
+ * But the constraint that actually binds is the OWNER'S MONDAY, not any one
+ * subscriber's appetite, and that is handled by the queue rather than by a cap.
+ * A global limit would mean refusing somebody who asked on Sunday night
+ * because three other people got there first, which reads as "Gold, but be
+ * quick" — and a control that refuses is the mistake this codebase keeps
+ * recording. A queue position never says no, it says WHEN.
+ */
+export const PACK_PER_MONTH = 1;
+
+/** The next Monday after `now`. Asking on a Monday means the Monday after. */
+export function nextPackDay(now) {
+  const day = new Date(now);
+  const ahead = ((PACK_DAY - day.getUTCDay() + 7) % 7) || 7;
+  const when = new Date(now);
+  when.setUTCDate(when.getUTCDate() + ahead);
+  when.setUTCHours(0, 0, 0, 0);
+  return when.getTime();
+}
+
 /** Enough to be a proper thought, short enough that nobody writes an essay. */
 const MAX_TEXT = 1200;
 const MAX_ITEMS = 400;
@@ -170,6 +216,57 @@ export class Suggestions {
    * Worse than not having the feature is having it and not delivering, so the
    * limit is the honest half of the offer rather than a meanness.
    */
+  /**
+   * Everything the console needs to draw the panel BEFORE somebody types.
+   *
+   * The whole state up front rather than a refusal afterwards: being told you
+   * cannot after writing three sentences is the version that annoys people,
+   * and "you have had this month's, the next is from the 1st" is a sentence
+   * somebody can plan around.
+   */
+  packRequestStatus(accountId, now = this.now()) {
+    const id = String(accountId || '');
+    const open = this.openPackRequest(id);
+    const month = new Date(now).toISOString().slice(0, 7);
+    const usedThisMonth = this.data.suggestions.filter((s) => (
+      s.kind === PACK_REQUEST_KIND
+      && s.byId === id
+      && new Date(s.at || 0).toISOString().slice(0, 7) === month
+    )).length;
+
+    /*
+     * Oldest first — the queue is the order they were asked in, which is the
+     * only ordering nobody can argue with.
+     *
+     * `reverse()` before the sort, not decoration: the list is stored
+     * newest-first, and a stable sort leaves two requests with the same
+     * timestamp in the order it found them — which would have put the SECOND
+     * person asked in front of the first.
+     */
+    const queue = this.data.suggestions
+      .filter((s) => s.status === 'open' && s.kind === PACK_REQUEST_KIND)
+      .reverse()
+      .sort((a, b) => (a.at || 0) - (b.at || 0));
+
+    const nextMonth = new Date(now);
+    nextMonth.setUTCMonth(nextMonth.getUTCMonth() + 1, 1);
+    nextMonth.setUTCHours(0, 0, 0, 0);
+
+    return {
+      open: open ? { id: open.id, text: open.text, at: open.at } : null,
+      // 1-based, and 0 when they have nothing waiting.
+      position: open ? queue.findIndex((s) => s.id === open.id) + 1 : 0,
+      waiting: queue.length,
+      usedThisMonth,
+      perMonth: PACK_PER_MONTH,
+      mayAsk: !open && usedThisMonth < PACK_PER_MONTH,
+      // Only meaningful when they may not ask — when the allowance comes back.
+      nextAllowedAt: nextMonth.getTime(),
+      writtenOn: nextPackDay(now),
+      day: PACK_DAY_LABEL,
+    };
+  }
+
   openPackRequest(accountId) {
     const id = String(accountId || '');
     if (!id) return null;
