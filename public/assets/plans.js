@@ -55,6 +55,25 @@ export const FEATURES = {
    */
   OWN_PACKS: 'packs.own',
   LOOKS: 'looks',                // seasonal palettes and picture reveals
+  /*
+   * Venue slides between rounds — SILVER, and it is the one feature that is
+   * up a rung for a reason other than cost.
+   *
+   * A slide costs nothing to run, so the host's own rule does not force it out
+   * of Bronze. But that rule only says what CANNOT be in Bronze; it does not
+   * say everything cheap must be. This one earns its rung a different way: it
+   * makes the quizmaster more money. They sell the venue the pizza nobody is
+   * buying this week, and a QR to tickets they take a cut of — so it pays for
+   * the upgrade in the subscriber's own terms rather than in the owner's.
+   *
+   * The usual objection to withholding a capability does not apply here, and
+   * that is what makes it safe. "Every capability you withhold looks broken in
+   * front of a room" is about the GAME: a missing round type or a flat picture
+   * reveal is the product looking cheap while sixty people watch. An advert
+   * slide is not part of the game, and a room that never sees one does not
+   * know it was possible. Nothing is worse on a Bronze night; there is simply
+   * one fewer thing the quizmaster can sell.
+   */
   ADVERTS: 'adverts',            // venue slides
   PHOTOS: 'photos',              // photos from the room
 
@@ -247,7 +266,7 @@ export const FEATURE_TIER = {
   [FEATURES.BUY_PACKS]: 'bronze',
   [FEATURES.OWN_PACKS]: 'bronze',
   [FEATURES.LOOKS]: 'bronze',
-  [FEATURES.ADVERTS]: 'bronze',
+  [FEATURES.ADVERTS]: 'silver',
   [FEATURES.PHOTOS]: 'bronze',
 
   [FEATURES.INVOICES]: 'silver',
@@ -271,7 +290,7 @@ export const FEATURE_META = {
   [FEATURES.BUY_PACKS]: { label: 'Buying packs', blurb: 'Whole quizzes and whole bingo games from the catalogue.' },
   [FEATURES.OWN_PACKS]: { label: 'Your own packs', blurb: 'Quizzes and bingo games you write yourself. Nobody else can read them.' },
   [FEATURES.LOOKS]: { label: 'Seasonal looks', blurb: 'Halloween, Valentine’s, Christmas — a palette and some shapes.' },
-  [FEATURES.ADVERTS]: { label: 'Advert slides', blurb: 'Slides for between rounds. One set per venue.' },
+  [FEATURES.ADVERTS]: { label: 'Advert slides', blurb: 'Sell the venue a slide between rounds — their offer, or a QR to tickets. One set per venue, reused every week.' },
   [FEATURES.PHOTOS]: { label: 'Photos from the room', blurb: 'The room sends pictures straight to the big screen.' },
   [FEATURES.INVOICES]: { label: 'Invoicing', blurb: 'Bill for a night before you have left the car park.' },
   [FEATURES.CALENDAR]: { label: 'Your calendar', blurb: 'The nights you have booked in.' },

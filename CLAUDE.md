@@ -1093,11 +1093,49 @@ room, decades and genres, because a new subscriber has to be able to walk into
 any venue with them. The artist packs are held back: those are the ones you
 pick for a specific night, which is exactly when somebody will buy one.
 
+**But the eight THEMSELVES need rewriting before anybody pays for them.** The
+host's own assessment: the current library was thrown together to have
+something to test against, and a starter set is the first thing a paying
+subscriber sees — it is the whole impression of what the catalogue is worth. Do
+not treat the current ids as settled content. See TODO.md.
+
 It is a list of pack IDS, so a new pack does not join Bronze on its own — that
 is the point, because Silver's promise is "and every new one as it is written".
 The cost is that **renaming a starter pack silently drops it out of Bronze**, so
 change the list in the same breath as a rename. There is a test that every id in
 it is really in the catalogue.
+
+**GOLD IS NOT READY TO SELL.** It is settled that Gold is the online/streaming
+tier — that is the one thing on the ladder with a real per-use cost to the
+owner, so it belongs at the top under the host's own rule. But **streaming is
+not built**, so a Gold subscription today buys Silver at a £10 markup, which is
+the only thing on this ladder that would be a refund rather than an upsell.
+Nothing is buyable at all until a payment flow exists, so this is a gate on THAT
+work rather than a job now: when PayPal is wired, Gold must be marked as not yet
+available rather than offered.
+
+**Usage is deliberately NOT metered, and the reasoning matters because the
+obvious objection is a fair one.** A host running twelve nights a month earns
+several times what a fortnightly host earns and pays the same. Three reasons to
+leave it:
+
+- **Metering is what makes software hateful to run a business on.** A per-night
+  charge means a quizmaster doing sums before accepting a booking, which is the
+  opposite of this codebase's first rule.
+- **The heavy user is the advocate.** They are the reference customer and the
+  one who tells other quizmasters about it. Charging them more punishes exactly
+  the behaviour the business needs.
+- **Scale beats extraction at this size.** A hundred subscribers at £20 is
+  better business than thirty at £50 with a meter, and far easier to sell.
+
+Worth knowing what the pack lever does and does not capture: it tracks how much
+VARIETY somebody needs, not how many nights they run. A host with three pub
+residencies can run one pack at all three, so eight packs lasts them three
+months while a one-venue host burns through it in one — the busiest host hits
+the ceiling slowest, which is backwards. The play counts are per room and now
+survive a deploy, so the honest answer is to WATCH it: if somebody is genuinely
+running twenty nights a month, that is a conversation about a multi-venue
+arrangement (rooms already exist), not a metered tier.
 
 **There is NO FREE TIER, and that is a structural decision rather than a price
 one.** Bronze is £10, Silver £20, Gold £30 — the machine is identical at every
@@ -1137,6 +1175,57 @@ Two things it gets right, both found by looking at it rather than by reasoning:
 - **It is silent when the whole catalogue is in reach**, which is everybody
   today. A page that congratulates you on owning everything is one you learn to
   skip, and the line has to still be worth reading on the day it changes.
+
+### What a pack costs, and why the number is not about the pack
+
+**A pack is priced to make the UPGRADE obvious, not to make money.** The
+recurring subscription is the business; a pack sale is the on-ramp. So the only
+question the price has to answer is *at what point should somebody stop buying
+and move to Silver*, and that makes it arithmetic rather than a judgement call:
+
+| A pack at | A weekly host (4 a month) pays | vs Silver at £20 |
+|---|---|---|
+| £2 | £10 + £8 = £18 | Bronze wins — **the ladder does not work** |
+| £3 | £10 + £12 = £22 | Silver wins, clearly |
+| £5 | £10 + £20 = £30 | Silver wins by a mile, and the pack looks dear |
+
+The floor is £10 ÷ 4 = **£2.50**: below that a weekly host never has a reason
+to climb, and the whole Bronze-buys / Silver-includes structure quietly stops
+being a ladder. So £2 is the one number in that range that cannot be used.
+
+The ceiling is about how it READS rather than what it is worth. A quizmaster
+charges a venue well over £100 a night, so £5 is about 3% of one fee and
+objectively trivial — but it is half their monthly subscription for one night's
+content, and that ratio is what somebody reacts to. **£3 is the recommendation:
+the lowest price that still makes Silver right for a weekly host, and a fifth
+rather than a half of the subscription.**
+
+It also lands the fortnightly host in the right place — two packs is £6, so
+buying stays cheaper than upgrading, which is correct. They should not be
+pushed up a rung they would not use.
+
+**And the IP is not what is being sold.** The packs are AI-written and only run
+in this app, so a copied pack is worth nothing to anybody without a
+subscription. Two things follow and both save work: **do not build DRM,
+per-pack licensing checks or watermarking** — there is nothing to protect and
+the effort would be spent defending a thing that cannot be stolen usefully. And
+since convenience is the entire product, the price has to be a convenience
+price. That argues for the lower number too.
+
+### Rounds are still not sold, and the reason is the build rather than the principle
+
+`£1 for a single round` was raised and is worth holding rather than dropping —
+a quizmaster who writes their own packs now has a real use for "I want your
+picture round in my quiz".
+
+It is not built, and should not be first. Every pack card, play count, review
+flag and launch in this app is per PACK; rounds as products needs a second kind
+of object, a way to assemble a night out of bought rounds, and a library to keep
+them in. That is a bigger job than the shop itself, and it would be guessing
+twice — build the pack shop, then look at what people actually buy. The
+arithmetic is also awkward: four rounds at £1 is more than a whole pack at £3,
+so the à-la-carte price has to sit above the bundle to make sense, and a
+"cheaper" option that is dearer confuses the page.
 
 **Pay-per-pack is deliberately NOT built.** A shop needs a payment flow, a
 purchase record and a story for a card that fails mid-month — a week of work,
@@ -2306,6 +2395,13 @@ where a tier above yours would be.
 whether anybody is mid-question right now (so a deploy waits), and what the AI
 has actually cost, from a ledger written as each call happens. That second one
 is the number the whole tier structure rests on and it existed nowhere.
+
+**The ladder has its numbers now**: Bronze £10 with eight packs, Silver £20
+with the whole catalogue, Gold £30 for online — and **Gold must not be offered
+until streaming exists**, because today it is Silver at a £10 markup. Advert
+slides moved to Silver, the one feature up a rung for a reason other than cost:
+it makes the QUIZMASTER money, and withholding it cannot make a night look
+cheap because a slide is not part of the game.
 
 **A quizmaster now keeps their OWN packs**, and this is the one gate in the app
 that runs backwards: the owner cannot read them. Enforced structurally — no

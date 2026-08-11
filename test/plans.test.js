@@ -27,8 +27,27 @@ test('Basic runs a whole night, both games', () => {
   assert.equal(can(basic, FEATURES.LIBRARY), true);
   assert.equal(can(basic, FEATURES.BUY_PACKS), true);
   assert.equal(can(basic, FEATURES.LOOKS), true);
-  assert.equal(can(basic, FEATURES.ADVERTS), true);
   assert.equal(can(basic, FEATURES.PHOTOS), true);
+});
+
+/*
+ * Advert slides are the one thing up a rung for a reason other than cost.
+ *
+ * A slide costs nothing to run, so the host's rule does not push it out of
+ * Bronze — but that rule only says what cannot be in Bronze. This one is
+ * Silver because it makes the QUIZMASTER money: they sell the venue the
+ * product nobody is shifting this week, and a QR to tickets they take a cut
+ * of. It pays for the upgrade in their terms rather than the owner's.
+ *
+ * And the usual objection does not apply: withholding a capability normally
+ * means the GAME looking cheap in front of sixty people, which is the one
+ * thing Bronze must never do. A slide is not part of the game and a room that
+ * never sees one does not know it was possible.
+ */
+test('advert slides are Silver — they make the quizmaster money', () => {
+  assert.equal(can(basic, FEATURES.ADVERTS), false);
+  assert.equal(can(withAdmin, FEATURES.ADVERTS), true);
+  assert.equal(can(gold, FEATURES.ADVERTS), true);
 });
 
 test('nothing that costs the owner money per use is in Bronze', () => {

@@ -465,6 +465,54 @@ The Console says so in red if it is not set up.
 
 ## Asked for, not yet specced
 
+### Rewrite the eight starter packs — before anybody pays
+
+**The most important content job there is, and it is yours rather than mine.**
+
+Bronze now starts with four quizzes and four bingo games. Those eight are the
+first thing a paying subscriber ever sees, and they decide what somebody thinks
+the whole catalogue is worth — but the current library was put together to have
+something to test against, and you have said so yourself.
+
+What to aim at, since a starter pack has a different job from a normal one:
+
+- **They have to work in ANY room.** A new subscriber is walking into a venue
+  you have never seen. Decades and genres, not artists.
+- **They have to be the best in the catalogue, not the average.** Somebody
+  deciding whether to buy a ninth pack is deciding on the strength of these.
+- **Read every one through.** The review flags on the console catch the
+  mechanical faults; the taste is yours.
+
+The eight are listed in `TIER_PACKS.bronze` in `public/assets/plans.js`. Change
+the list in the same breath as renaming a pack — a rename silently drops a pack
+out of Bronze, and there is a test that fails if an id in that list is not in
+the catalogue.
+
+### The pack shop — PayPal, and the shape before the money
+
+Settled: **£3 a pack** is the recommendation and the reasoning is in CLAUDE.md
+under "What a pack costs" — below £2.50 a weekly host never has a reason to
+climb to Silver, so the ladder stops being one. Not final; it is one number.
+
+**Gold must be marked as not yet available when this goes in.** Gold is the
+online/streaming tier and streaming is not built, so a Gold subscription today
+buys Silver at a £10 markup.
+
+What it needs, none of it built:
+
+- A PayPal subscription plan per tier, and one for a pack purchase. Use
+  **separate plan ids** from the kids' party business so the two stay apart in
+  PayPal's own reporting rather than needing separating afterwards.
+- A webhook endpoint. The app already stores a customer reference and a status
+  and expects to be told — see "Payments stay processor-agnostic" below. Card
+  details must never reach this server.
+- A purchase writes the pack id into `packs` on the account, which already
+  beats the tier. That is the one-line part.
+
+Worth doing the SHAPE first, with no money in it: a pack card marked not-yours
+with a price on it and Launch greyed. Half a day, and it tells you whether the
+shop reads right before you commit to a processor.
+
 ### A quizmaster's OWN quizzes — and they are private from you — ✅ BUILT
 
 Described properly in CLAUDE.md under "A quizmaster's OWN packs". Left here
