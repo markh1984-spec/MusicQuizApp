@@ -295,6 +295,46 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 
 ---
 
+## House style for labels: say what it is, then one line
+
+The rule, and it applies to every blurb, panel note, tab description and
+feature row in the app:
+
+> **A title that names the thing, and one short line that finishes the sentence
+> "this gives me…" in a breath. Anything longer needs a reason.**
+
+It came from looking at the ladder: fourteen features, each with two or three
+sentences under it, is a wall — and a wall gets scrolled past, so the page
+whose entire job is to say what you get was saying nothing at all. The same
+had happened to the account page, the suggestion box and the own-packs panel,
+each of which had grown an explanation of itself.
+
+**"Invoicing — bill a venue before you leave the car park"** is the shape.
+Not *"Bill for a night before you have left the car park, with your own
+details and the venue's kept from last time, and a PDF you can send from your
+phone"*, which is three facts nobody asked for yet.
+
+Three things fall out of it, and they are what make it a rule rather than a
+preference:
+
+- **If the line will not fit, the NAME is wrong.** A feature needing two
+  sentences to be understood is usually one that has not been named properly —
+  "Your calendar" needs no explaining, "Marketing" needs a paragraph, which is
+  the tell.
+- **The detail goes in an FAQ, not on the control.** That is written up in
+  TODO.md and is the same content a sales page needs, so it gets written once
+  rather than scattered as helpful paragraphs next to switches.
+- **The exceptions are warnings and money.** "Your own packs are not being
+  backed up", the lapsed-subscription note, the launch-over-a-live-game
+  warning: these are read once, at a moment that matters, and being short
+  there costs somebody something real. Everything else is furniture.
+
+**A control that needs a paragraph is a design problem, not a copy problem.**
+When the urge to explain arrives, the first question is whether the thing
+itself is wrong.
+
+---
+
 ## The rules slide
 
 `PHASES.RULES` is the first slide of every quiz, between the lobby and round

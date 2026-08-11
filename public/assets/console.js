@@ -877,9 +877,7 @@ function askForPackPanel(kind) {
     return node(`
       <div class="panel ask-pack locked">
         <h3>Nothing here for the night you have booked?</h3>
-        <div class="tiny">On <b>Gold</b> you can ask for a ${esc(what)} that does not exist yet —
-          name the theme and it gets written into the catalogue, on the Monday after you ask.
-          One a month.</div>
+        <div class="tiny">On <b>Gold</b>: name a theme, get a ${esc(what)} written. One a month.</div>
       </div>`);
   }
 
@@ -914,9 +912,8 @@ function askForPackPanel(kind) {
   const el = node(`
     <div class="panel ask-pack">
       <h3>Ask for a ${esc(what)}</h3>
-      <div class="tiny">Nothing in the catalogue for the night you have booked? Say what you want and
-        it gets written into the catalogue — a theme, and anything about the room that would help.
-        <br>${promise} <b>One a month</b>, so the one you ask for is the one that gets done.</div>
+      <div class="tiny">Name a theme, and anything about the room that would help.
+        <br>${promise} <b>One a month.</b></div>
       <textarea class="ask-text" rows="3" maxlength="1200"
         placeholder="A One Direction ${esc(what)} — it is a hen night at The Crown, mostly late twenties…"></textarea>
       <div class="row" style="margin-top:8px">
@@ -952,8 +949,7 @@ function suggestionPanel() {
   const el = node(`
     <div class="panel">
       <h3>Suggestion box</h3>
-      <div class="tiny">Anything at all — an idea, something that got in your way, something broken.
-        It goes straight to Mark, who reads them in batches. No reply needed for it to be worth sending.</div>
+      <div class="tiny">Straight to Mark. No reply needed for it to be worth sending.</div>
       <div class="row sugg-kinds" style="margin-top:12px">
         <button class="minor sugg-kind on" data-kind="idea">An idea</button>
         <button class="minor sugg-kind" data-kind="annoying">Got in my way</button>

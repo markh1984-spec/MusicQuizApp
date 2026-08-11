@@ -309,3 +309,32 @@ test('a past-gigs photo is never labelled as unfiled', () => {
     assert.match(row, /\bfiled\b/, `past gigs draws ${row}, which the CSS marks NOT FILED`);
   }
 });
+
+/*
+ * ============================================================ house style
+ *
+ * "A title that names the thing, and one short line." Fourteen features with
+ * two or three sentences each is a wall, and a wall gets scrolled past — so
+ * the page whose whole job is to say what you get says nothing.
+ *
+ * Pinned as a test rather than a note in CLAUDE.md because copy is exactly the
+ * kind of thing that grows back one helpful sentence at a time, and nobody
+ * notices until it is a paragraph again.
+ */
+test('every feature and tier blurb is one short line', async () => {
+  const { FEATURE_META, TIERS } = await import('../public/assets/plans.js');
+  const LIMIT = 60;
+
+  for (const [id, meta] of Object.entries(FEATURE_META)) {
+    assert.ok(meta.blurb.length <= LIMIT,
+      `${id}: ${meta.blurb.length} chars — "${meta.blurb}"`);
+    // One sentence, or two very short ones. A semicolon or a third full stop
+    // is the tell that an explanation has crept back in.
+    assert.ok((meta.blurb.match(/\./g) || []).length <= 2, `${id} has too many sentences`);
+  }
+
+  for (const tier of TIERS) {
+    assert.ok(tier.blurb.length <= LIMIT, `${tier.id}: "${tier.blurb}"`);
+    assert.ok(tier.content.blurb.length <= LIMIT, `${tier.id} content: "${tier.content.blurb}"`);
+  }
+});
