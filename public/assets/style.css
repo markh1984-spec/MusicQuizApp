@@ -2756,7 +2756,10 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
    have to be on screen AT ONCE and a variable would make every one of them the
    colour you already have. Keep these in step with the [data-scheme] blocks
    below — there is a test that the ids match, though not the hexes. */
-.scheme-row { display: flex; flex-wrap: wrap; gap: 10px; }
+/* Breathing room under the explanation. The swatches sat straight on top of
+   it, so the words read as a label for the first swatch rather than for the
+   row. */
+.scheme-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
 .scheme-swatch {
   display: flex; align-items: center; gap: 9px;
   padding: 8px 14px 8px 9px;

@@ -609,17 +609,8 @@ function helpSection() {
   const wrap = document.createDocumentFragment();
   wrap.appendChild(roomPanel());
   wrap.appendChild(supportPanel());
+  wrap.appendChild(supportLogPanel());
   wrap.appendChild(suggestionPanel());
-  // A POINTER, not a second copy of the form. Asking for a pack belongs where
-  // the want arrives — under the shop, once the catalogue and the shelf have
-  // both failed you — but somebody on a help page should not have to already
-  // know that.
-  wrap.appendChild(node(`
-    <div class="panel">
-      <h3>Want a quiz that does not exist yet?</h3>
-      <div class="tiny">Ask for one at the bottom of the <b>Music Quiz</b> or <b>Music Bingo</b> tab,
-        under the catalogue — that is where the shop is, so you can see what is already there first.</div>
-    </div>`));
   return wrap;
 }
 
@@ -659,9 +650,11 @@ function roomPanel() {
 
 function accountSection() {
   const wrap = document.createDocumentFragment();
+  // Who you are and what you are on, in one card at the top. They were two,
+  // one under the other, both three short rows — which is two headings and two
+  // borders around what is plainly one answer to "what is my account".
   wrap.appendChild(youPanel());
   wrap.appendChild(schemePanel()[0] || node('<span></span>'));
-  wrap.appendChild(planPanel());
   wrap.appendChild(libraryPanel());
   // The support door and the suggestion box moved to Help. They were the
   // bottom two panels of a page about your name and your colours, which is
@@ -911,6 +904,13 @@ function suggestionPanel() {
         <span class="tiny sugg-said"></span>
       </div>
       <div class="sugg-mine"></div>
+      <!-- A POINTER, not a second copy of the form. Asking for a pack belongs
+           where the want arrives — under the shop, once the catalogue and the
+           shelf have both failed you — but somebody on a help page should not
+           have to already know that. -->
+      <div class="tiny acct-note">Want a whole quiz that does not exist yet? Ask at the bottom of the
+        <b>Music Quiz</b> or <b>Music Bingo</b> tab, under the catalogue, where you can see what is
+        already there first.</div>
     </div>`);
 
   /*
@@ -974,6 +974,36 @@ function suggestionPanel() {
 }
 
 /**
+ * What was done while the door was open.
+ *
+ * Its own panel rather than a tail on the switch: the switch is a thing you
+ * OPERATE and the log is a thing you READ, and a record of what somebody did
+ * in your account is not a footnote to a toggle.
+ *
+ * It shows READS as well as writes, because "did you look at my quizzes" is
+ * the question it exists to answer and a writes-only log would be silent about
+ * exactly that. It is what the OWNER did, never a diary of your own use.
+ */
+function supportLogPanel() {
+  const support = (me && me.support) || null;
+  const log = (support && support.log) || [];
+  return node(`
+    <div class="panel">
+      <h3>The support log</h3>
+      ${log.length ? `
+        <div class="tiny">Everything the owner has done in your account, most recent first.</div>
+        <div class="support-log">
+          ${log.slice(-40).reverse().map((row) => `
+            <div class="support-row">
+              <span class="tiny">${esc(new Date(row.at).toLocaleString('en-GB'))}</span>
+              <span>${esc(row.what)}</span>
+            </div>`).join('')}
+        </div>`
+        : '<div class="tiny">Nothing to show — nobody has been in.</div>'}
+    </div>`);
+}
+
+/**
  * Letting the owner into your account — your switch, and your log.
  *
  * A quizmaster's own material is their work, and "only when you let me in, it
@@ -1002,7 +1032,9 @@ function supportPanel() {
 
   const el = node(`
     <div class="panel">
-      <h3>Letting the owner in</h3>
+      <h3>Support</h3>
+      <div class="tiny">Your packs are yours. Nobody here and no other quizmaster can open them unless
+        you switch this on — and everything done while it is on is written down below.</div>
       <div class="acct-toggle" style="margin-top:10px">
         <span class="acct-toggle-what">
           <b>Support access</b><br>
@@ -1017,16 +1049,6 @@ function supportPanel() {
       </div>
       <div class="support-still" hidden></div>
       <div class="tiny acct-note support-note"></div>
-      ${log.length ? `
-        <div class="tiny" style="margin-top:14px"><b>Everything they have done, most recent first</b></div>
-        <div class="support-log">
-          ${log.slice(-40).reverse().map((row) => `
-            <div class="support-row">
-              <span class="tiny">${esc(new Date(row.at).toLocaleString('en-GB'))}</span>
-              <span>${esc(row.what)}</span>
-            </div>`).join('')}
-        </div>`
-        : '<div class="tiny acct-note">Nothing to show — nobody has been in.</div>'}
     </div>`);
 
   const set = async (want) => {
@@ -1149,16 +1171,35 @@ function libraryPanel() {
 /** Who you are, and what the room sees when you run a night. */
 function youPanel() {
   const name = (me && (me.name || me.email)) || 'the host key';
+
+  // Your plan, folded in. It was its own card directly underneath — two
+  // headings and two borders around what is plainly one answer to "what is my
+  // account".
+  const ent = (me && me.entitlements) || { features: [], missing: [] };
+  const tier = (ent.ladder || []).filter((t) => t.included).slice(-1)[0];
+  const tierName = ent.comped ? 'Everything, comped'
+    : ent.role === 'owner' ? 'Owner'
+    : tier ? `${tier.label} — ${tier.plan}` : 'None';
+  const status = ent.status || 'active';
+  const bad = status === 'past_due' || status === 'cancelled';
+
   const el = node(`
     <div class="panel">
-      <h3>You</h3>
+      <h3>Your account</h3>
       <div class="acct-grid">
         <div><div class="tiny">Name</div><div class="acct-val">${esc((me && me.name) || '—')}</div></div>
         <div><div class="tiny">Email</div><div class="acct-val">${esc((me && me.email) || '—')}</div></div>
         <div><div class="tiny">On your projector</div><div class="acct-val brand-preview">${esc(library.brand || '')}</div></div>
+        <div><div class="tiny">Tier</div><div class="acct-val">${esc(tierName)}</div></div>
+        <div><div class="tiny">Subscription</div>
+          <div class="acct-val ${bad ? 'bad' : 'good'}">${esc(status.replace('_', ' '))}</div></div>
       </div>
-      <div class="tiny acct-note">The big screen and every phone in your room say this. It is your
+      <div class="tiny acct-note">The big screen and every phone in your room say your name. It is your
         first name and the app's, so it matches how you introduce yourself.</div>
+      ${bad ? `<div class="tiny acct-note bad"><b>A lapsed subscription never interrupts a night.</b>
+        Everything a running game touches keeps working — it is starting a NEW one that stops.</div>` : ''}
+      <div class="tiny acct-note">Everything on your tier and below is yours. Switch off anything you
+        do not use and it goes away — nothing is cancelled and you can put it back any time.</div>
       ${me && !me.bootstrap ? '<div class="row acct-actions"><button class="minor" id="acctPw">Change your password</button></div>' : ''}
     </div>`);
 
@@ -1204,29 +1245,6 @@ function youPanel() {
  */
 const dedupe = (list) => [...new Set(list)];
 
-function planPanel() {
-  const ent = (me && me.entitlements) || { features: [], missing: [] };
-  const tier = (ent.ladder || []).filter((t) => t.included).slice(-1)[0];
-  const name = ent.comped ? 'Everything, comped'
-    : ent.role === 'owner' ? 'Owner'
-    : tier ? `${tier.label} — ${tier.plan}` : 'None';
-  const status = ent.status || 'active';
-  const bad = status === 'past_due' || status === 'cancelled';
-
-  return node(`
-    <div class="panel">
-      <h3>What you are on</h3>
-      <div class="acct-grid">
-        <div><div class="tiny">Tier</div><div class="acct-val">${esc(name)}</div></div>
-        <div><div class="tiny">Subscription</div>
-          <div class="acct-val ${bad ? 'bad' : 'good'}">${esc(status.replace('_', ' '))}</div></div>
-      </div>
-      ${bad ? `<div class="tiny acct-note bad"><b>A lapsed subscription never interrupts a night.</b>
-        Everything a running game touches keeps working — it is starting a NEW one that stops.</div>` : ''}
-      <div class="tiny acct-note">Everything on your tier and below is yours. Switch off anything you
-        do not use and it goes away — nothing is cancelled and you can put it back any time.</div>
-    </div>`);
-}
 
 /*
  * There was a "What you see" panel here that hid whole TABS. The tier sections
