@@ -90,6 +90,38 @@ Note what it is NOT: a manual. The app should not need one. It is the page
 somebody reads before they pay, and the page they are pointed at when a
 one-line blurb was not enough.
 
+### 5. Four things raised on the console, none of them built
+
+Parked together because each is a design decision rather than a tweak, and
+three of the four are really about what a NIGHT is — which is item 1 above.
+
+- **A "Launch" tab.** Everything needed to run a night in one place: pick the
+  pack, the look, the card shape, the prizes, the big screen, the control
+  view. Today those are spread across a pack card, a running panel and the
+  links panel. Worth doing — the case against is that a tab you use once an
+  evening sits in the bar all week, and the running panel already appears at
+  the top of every tab when something is live. Decide after a few real nights.
+
+- **Past gigs: what should a night actually record?** Today it is the date,
+  the packs played and the photos. Obvious additions, in order of value to a
+  quizmaster pitching for work: the VENUE, how many played, who won, and what
+  it was invoiced for. All of it exists somewhere in the app already — the
+  player count is in the archive, the invoice is in the invoice book — so
+  this is mostly a joining-up job once a night is a real object.
+
+- **Invoicing, two directions.** Today it is quizmaster → venue. The other
+  shape is a pub or a quiz company that has hired a quizmaster per gig, where
+  the sub-account invoices the main account. That is an AGENCY model and it
+  needs a relationship between accounts that does not exist — it is the same
+  object as the company folder sketched under Group accounts. Do not build the
+  invoicing half before the accounts half.
+
+- **"Got in my way" as a suggestion kind.** Questioned, and worth keeping:
+  friction is the most useful feedback there is and the least likely to be
+  sent, because nobody files a bug about something that merely annoyed them.
+  Naming it as a category is what gives somebody permission. Revisit if it
+  turns out nobody ever picks it.
+
 ### Where to start
 
 The words, then the night object, then the page and the FAQ together. In that

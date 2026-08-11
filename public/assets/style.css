@@ -3678,3 +3678,13 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
+
+/* Which tier a locked thing is on, in that tier's own colour. A bare gold plus
+   on everything says "there is more" and nothing else; these say which rung,
+   before the tooltip is read. */
+.tabcount.lock.lock-silver { background: rgba(203, 213, 225, 0.2); color: #cbd5e1; }
+.tabcount.lock.lock-gold   { background: rgba(255, 210, 63, 0.22); color: var(--gold); }
+.tabcount.lock.lock-bronze { background: rgba(205, 127, 50, 0.22); color: #e0a066; }
+
+/* Sign out belongs in the furniture, not four panels down a settings page. */
+.topbar-out { margin-left: 10px; }

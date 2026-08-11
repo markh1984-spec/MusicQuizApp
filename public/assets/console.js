@@ -10,7 +10,7 @@
 import { esc, node, postJson, brandLink, binIcon, hatSwitch } from './client.js';
 import { paintScheme } from './schemes.js';
 import { balanceAnswers } from './balance.js';
-import { FEATURES } from './plans.js';
+import { FEATURES, FEATURE_TIER, findTier } from './plans.js';
 
 const mainEl = document.getElementById('main');
 const runningEl = document.getElementById('runningNow');
@@ -121,6 +121,9 @@ let library = null;
  */
 let me = null;
 const can = (feature) => !me || !me.entitlements || me.entitlements.features.includes(feature);
+/** Which tier a feature first appears on, for the markers that name it. */
+const tierNeeded = (feature) => FEATURE_TIER[feature] || '';
+
 const whyNotHere = (feature) => {
   const missing = (me && me.entitlements ? me.entitlements.missing : []).find((m) => m.feature === feature);
   return missing ? missing.why : '';
@@ -132,6 +135,28 @@ const whyNotHere = (feature) => {
  * slot simply stays empty rather than the page having to know the rule.
  */
 function paintHatSwitch(who) {
+  /*
+   * Sign out, top right, next to the hat.
+   *
+   * It was the last button of "Everything else", four panels down a tab called
+   * My account — which is a fine place for it if you already know where it is
+   * and nowhere at all if you do not. Signing out is not an account SETTING,
+   * it is a thing you do to the window you are looking at, so it belongs in the
+   * furniture rather than in a page.
+   *
+   * Not shown on the host key: there is no session to end, so the button would
+   * do nothing and reading it would suggest otherwise.
+   */
+  const outSlot = document.getElementById('outSlot');
+  if (outSlot && me && !me.bootstrap) {
+    const out = node('<button class="minor topbar-out">Sign out</button>');
+    out.addEventListener('click', async () => {
+      await fetch('/api/sign-out', { method: 'POST' });
+      location.href = '/login';
+    });
+    outSlot.replaceChildren(out);
+  }
+
   const slot = document.getElementById('hatSlot');
   if (!slot) return;
   const el = hatSwitch(who, { forgetKey });
@@ -738,7 +763,7 @@ function ladderPanels() {
               ${tier.included ? '<span class="feat-said">included</span>' : '<span class="feat-plus" title="On a higher tier">+</span>'}
             </div>` : ''}
           ${tier.features.map((f) => `
-            <div class="acct-toggle ${tier.included ? '' : 'locked'}">
+            <div class="acct-toggle ${tier.included ? '' : 'locked'}" data-tier="${esc(tier.id)}">
               <span class="acct-toggle-what"><b>${esc(f.label)}</b><br><span class="tiny">${esc(f.blurb)}</span></span>
               ${tier.included ? `
                 <span class="hat-switch feat-switch" data-feature="${esc(f.id)}" data-on="${off.has(f.id) ? '0' : '1'}">
@@ -1070,8 +1095,7 @@ function supportPanel() {
   const el = node(`
     <div class="panel">
       <h3>Support</h3>
-      <div class="tiny">Your packs are yours. Nobody here and no other quizmaster can open them unless
-        you switch this on — and everything done while it is on is written down below.</div>
+      <div class="tiny">Off unless you need help. Everything done while it is on is in your support log.</div>
       <div class="acct-toggle" style="margin-top:10px">
         <span class="acct-toggle-what">
           <b>Support access</b><br>
@@ -1312,15 +1336,11 @@ function linksPanel() {
         ${canRun('quiz') ? `<a class="minor" href="${esc(play)}" target="_blank" rel="noopener">The join page${code ? ` (${esc(code)})` : ''}</a>` : ''}
         ${can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS) ? `<a class="minor" href="${esc(linkTo('/editor'))}">The pack editor</a>` : ''}
         ${me && me.role === 'owner' ? '<a class="minor" href="/owner">The owner console</a>' : ''}
-        ${me && !me.bootstrap ? '<button class="minor" id="acctOut">Sign out</button>' : ''}
+
       </div>
 
     </div>`);
 
-  el.querySelector('#acctOut')?.addEventListener('click', async () => {
-    await fetch('/api/sign-out', { method: 'POST' });
-    location.href = '/login';
-  });
   return el;
 }
 
@@ -1570,9 +1590,18 @@ function tabBar(active) {
   const bar = node('<div class="tabbar" role="tablist"></div>');
   for (const tab of visibleTabs()) {
     if (tab.needs && !can(tab.needs)) {
+      /*
+       * The badge says WHICH tier, in that tier's own colour.
+       *
+       * A bare gold "+" on everything says "there is more" and nothing else.
+       * Silver and Gold are the two rungs somebody is deciding between, so the
+       * marker may as well answer the question rather than raise it — and the
+       * colour does it before the words are read.
+       */
+      const needs = tierNeeded(tab.needs);
       const locked = node(`
         <button class="tab locked" role="tab" data-tab="${tab.id}" title="${esc(whyNotHere(tab.needs))}">
-          ${esc(tab.label)}<span class="tabcount lock">+</span>
+          ${esc(tab.label)}<span class="tabcount lock lock-${esc(needs || 'any')}">+</span>
         </button>`);
       locked.addEventListener('click', () => alert(whyNotHere(tab.needs)));
       bar.appendChild(locked);
