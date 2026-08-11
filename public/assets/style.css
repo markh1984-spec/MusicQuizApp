@@ -3523,6 +3523,20 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
  * last month's news round is a fine thing to run on purpose. It just stops
  * being the first thing you see, and it says which week it was for.
  */
+/*
+ * What a rung includes, as a STATEMENT rather than a switch.
+ *
+ * Content is not something you turn off — it is what you pay for — so it gets
+ * the word "included" where a capability gets an On | Off. Drawn quietly and
+ * without a border of its own, so it reads as the heading of the section
+ * rather than as the first item in a list of controls.
+ */
+.acct-toggle.content { background: rgba(255, 255, 255, 0.03); }
+.feat-said {
+  font-size: 11px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink-dim); white-space: nowrap; padding: 6px 10px;
+}
+
 .pack-card .fresh { color: #ffc85a; }
 .pack-card .fresh.gone { color: var(--muted); }
 .pack-card.stale { opacity: 0.72; }

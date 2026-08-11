@@ -6,9 +6,12 @@
  * arrives on its own when the room has heard them all. Nothing is greyed out,
  * so nothing looks broken in front of a paying room.
  *
- * Every tier is `'all'` today on purpose — this is the mechanism with nothing
- * switched on. These tests pin the mechanism so switching it on later is one
- * line rather than an afternoon of finding out what it broke.
+ * The ladder is built on CAPEX AND OPEX rather than on a pack count. An
+ * evergreen pack is written once and sells for ever, so how much of that
+ * library you get is the Bronze-to-Silver axis. A topical pack has to be
+ * written every week or it stops being topical — the only recurring cost in
+ * the product, and the one thing nobody can buy once and reuse — so it is what
+ * Gold IS.
  */
 
 import test from 'node:test';
@@ -41,16 +44,63 @@ function book() {
  * named them would fail every time somebody changed their mind rather than
  * every time something broke.
  */
-test('Bronze is a starter set, and every rung above it is the whole catalogue', () => {
+test('Bronze is a starter set, Silver is the evergreen catalogue, Gold is the lot', () => {
   assert.ok(Array.isArray(TIER_PACKS.bronze), 'Bronze is no longer a starter set — was that deliberate?');
   assert.ok(TIER_PACKS.bronze.length >= 4, 'the starter set is too thin to run a month on');
   assert.equal(new Set(TIER_PACKS.bronze).size, TIER_PACKS.bronze.length, 'a pack is listed twice');
 
-  for (const tier of ['silver', 'gold']) {
-    assert.equal(TIER_PACKS[tier], 'all', `${tier} no longer includes the whole catalogue`);
-    assert.equal(packsFor({ role: 'quizmaster', tier }), 'all');
-  }
+  assert.equal(TIER_PACKS.silver, 'evergreen', 'Silver no longer holds the evergreen catalogue');
+  assert.equal(TIER_PACKS.gold, 'all', 'Gold no longer includes everything');
   assert.deepEqual(packsFor({ role: 'quizmaster', tier: 'bronze' }), TIER_PACKS.bronze);
+});
+
+/*
+ * ============================================ CAPEX AND OPEX, AS A LADDER
+ *
+ * The split the whole ladder now rests on. An evergreen pack is written ONCE
+ * and sells for ever — an asset, and a fair thing to meter. A topical one has
+ * to be written every week or it stops being topical, which makes it the only
+ * recurring cost in the product and the one thing that cannot be bought once
+ * and reused. So it is what Gold IS.
+ */
+const EVERGREEN = { id: 'eighties', title: 'The Eighties Quiz' };
+const TOPICAL = { id: 'topical-2026-08-11', title: 'The Topical Quiz', freshUntil: '2026-08-25T00:00:00.000Z' };
+
+test('a dated pack is Gold, and it is told by its DATE rather than its name', () => {
+  const silver = { role: 'quizmaster', tier: 'silver', status: 'active' };
+  const gold = { role: 'quizmaster', tier: 'gold', status: 'active' };
+
+  assert.equal(canPlayPack(silver, EVERGREEN.id, EVERGREEN), true);
+  assert.equal(canPlayPack(silver, TOPICAL.id, TOPICAL), false, 'Silver got a topical pack for nothing');
+  assert.equal(canPlayPack(gold, TOPICAL.id, TOPICAL), true);
+
+  // Keyed on freshUntil, never on the id. A topical pack is named after the
+  // day it was written, so a gate reading the name would work today and open
+  // the moment somebody renamed one.
+  assert.equal(canPlayPack(silver, 'topical-2026-08-11', {}), true,
+    'the gate is reading the pack NAME — rename one and it is free');
+  assert.equal(canPlayPack(silver, 'perfectly-ordinary-name', { freshUntil: '2026-08-25T00:00:00.000Z' }), false);
+});
+
+test('an account-level list still beats the tier, dated or not', () => {
+  const bought = { role: 'quizmaster', tier: 'bronze', status: 'active', packs: [TOPICAL.id] };
+  assert.equal(canPlayPack(bought, TOPICAL.id, TOPICAL), true, 'a bought topical pack was refused');
+  assert.equal(canPlayPack(bought, EVERGREEN.id, EVERGREEN), false);
+});
+
+/*
+ * The gradient, which is the reason for the whole arrangement: a Silver
+ * subscriber buying topical weekly must spend MORE than Gold costs, or the
+ * rung above them is not worth climbing to.
+ */
+test('buying topical weekly on Silver costs more than Gold', () => {
+  const price = (id) => TIERS.find((t) => t.id === id).pence;
+  const monthOfTopical = 4 * PACK_PENCE;
+  assert.ok(price('silver') + monthOfTopical > price('gold'),
+    'a Silver subscriber can buy topical weekly for less than Gold — the ladder has stopped being one');
+  // And the step up from Bronze stays a step rather than a cliff.
+  assert.ok(price('bronze') + monthOfTopical < price('gold'),
+    'Bronze plus topical already costs more than Gold — nobody would ever buy a pack');
 });
 
 /*
@@ -176,8 +226,12 @@ function upsellLine(who, tierPacks) {
   const { TIERS, tierFor } = plans;
   const theirs = TIERS.find((t) => t.id === tierFor(who || {}));
   const rank = theirs ? theirs.rank : -1;
+  // The NEXT rung that widens the library, not the top one — since Silver
+  // holds the evergreen catalogue and Gold adds the weekly topical quizzes,
+  // "the lowest tier holding everything" would skip the step a Bronze
+  // subscriber should actually take.
   const up = TIERS
-    .filter((t) => t.rank > rank && tierPacks[t.id] === 'all')
+    .filter((t) => t.rank > rank && (tierPacks[t.id] === 'all' || tierPacks[t.id] === 'evergreen'))
     .sort((a, b) => a.rank - b.rank)[0];
   return up ? `${up.label} includes every pack` : 'Ask about the rest of the catalogue.';
 }
@@ -198,7 +252,7 @@ test('a Gold reader with a hand-set list is sold nothing, because there is nothi
 });
 
 test('once Bronze is a starter set, a Bronze reader is pointed at Silver', () => {
-  const starter = { bronze: ['one', 'two'], silver: 'all', gold: 'all' };
+  const starter = { bronze: ['one', 'two'], silver: 'evergreen', gold: 'all' };
   const line = upsellLine({ role: 'quizmaster', tier: 'bronze' }, starter);
   assert.match(line, /Silver includes every pack/);
 });
@@ -214,6 +268,37 @@ test('once Bronze is a starter set, a Bronze reader is pointed at Silver', () =>
  * other packs and copying them out. A content lever with a hole in it is not a
  * lever, and this one was invisible for as long as every tier was `'all'`.
  */
+/*
+ * **The gate that was open for an afternoon, and how.**
+ *
+ * Reading and launching take a bare pack ID, so they cannot tell a topical
+ * pack from an evergreen one without opening the file — which is what
+ * `packDating` is for. Its first version read `freshUntil` off the WRAPPER
+ * `readPack` returns (`{ pack, mine }`) rather than off the pack, so every
+ * dated pack came back looking evergreen and Silver could read and launch the
+ * lot.
+ *
+ * It was invisible from the console, which is the part worth remembering: the
+ * shop card is drawn from the library LISTING, which filters correctly, so the
+ * padlock was on the card while the API behind it said 200. Found by signing
+ * in as a Silver account against a running server, not by reading the code.
+ */
+test('the dated-pack gate opens the file, and reads the PACK rather than the wrapper', () => {
+  const server = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  const dating = server.match(/function packDating[\s\S]*?\n}/);
+  assert.ok(dating, 'packDating has gone — the read and launch gates cannot see a date any more');
+  assert.match(dating[0], /const \{ pack \}/,
+    'packDating is reading freshUntil off readPack\'s wrapper again — every topical pack is free');
+  assert.match(dating[0], /freshUntil/);
+
+  for (const gate of ['function mayReadPack', 'const ownPack = isOwnPack(launchKind']) {
+    const at = server.indexOf(gate);
+    assert.ok(at > 0, `${gate} has moved`);
+    assert.match(server.slice(at, at + 500), /packDating/,
+      `${gate} no longer tells a topical pack from an evergreen one`);
+  }
+});
+
 test('reading a pack you do not hold is refused, not just launching it', () => {
   const server = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
   const guard = server.match(/function mayReadPack[\s\S]*?\n}/);

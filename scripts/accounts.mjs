@@ -10,9 +10,9 @@
  * Usage:
  *   npm run accounts -- list
  *   npm run accounts -- add-owner --email you@example.com
- *   npm run accounts -- add --email dave@example.com --name "Dave" --comped
+ *   npm run accounts -- add --email dave@example.com --name "Dave" --tier silver
  *   npm run accounts -- password --email dave@example.com
- *   npm run accounts -- addon --email dave@example.com --add admin
+ *   npm run accounts -- tier --email dave@example.com --set gold
  *   npm run accounts -- status --email dave@example.com --set active
  *
  * A password is typed at the prompt rather than passed as an argument, so it
@@ -22,7 +22,7 @@
 import readline from 'node:readline';
 import { paths } from '../src/config.js';
 import { Accounts } from '../src/accounts.js';
-import { ADDONS, STATUSES, entitlements } from '../public/assets/plans.js';
+import { TIERS, STATUSES, entitlements, tierFor, findTier } from '../public/assets/plans.js';
 
 const args = process.argv.slice(2);
 const command = args[0] || 'list';
@@ -57,10 +57,12 @@ function find() {
   return account;
 }
 
+const TIER_IDS = TIERS.map((t) => t.id);
+
 function show(account) {
   const badge = account.role === 'owner'
     ? 'OWNER'
-    : `${account.comped ? 'comped' : account.status}${account.addons.length ? ' + ' + account.addons.join(' + ') : ''}`;
+    : `${findTier(tierFor(account)).label} · ${account.comped ? 'comped' : account.status}`;
   console.log(`  ${account.email.padEnd(32)} ${(account.name || '').padEnd(18)} ${badge}`);
   if (has('--verbose')) console.log(`      ${entitlements(account).features.join(', ') || 'nothing'}`);
 }
@@ -97,7 +99,7 @@ async function main() {
         password,
         name: argOf('--name', ''),
         comped: has('--comped'),
-        addons: argOf('--addons', '').split(',').map((a) => a.trim()).filter(Boolean),
+        tier: argOf('--tier', 'bronze'),
         status: argOf('--status', has('--comped') ? 'active' : 'trialing'),
       });
       console.log('\nQuizmaster account created.\n');
@@ -114,15 +116,19 @@ async function main() {
       return;
     }
 
-    case 'addon': {
+    /*
+     * Moving somebody up or down the ladder.
+     *
+     * This replaced an `addon` command, from before the tiers existed. The old
+     * plan-and-add-ons shape is still READ (see `tierFor`), because accounts
+     * written under it are on disk and in a backup — but nothing writes it any
+     * more, or an account would carry two answers to one question.
+     */
+    case 'tier': {
       const account = find();
-      const add = argOf('--add');
-      const drop = argOf('--remove');
-      if (add && !ADDONS[add]) throw new Error(`"${add}" is not an add-on. Use ${Object.keys(ADDONS).join(', ')}.`);
-      const addons = new Set(account.addons || []);
-      if (add) addons.add(add);
-      if (drop) addons.delete(drop);
-      show(book.update(account.id, { addons: [...addons] }));
+      const set = argOf('--set');
+      if (!TIER_IDS.includes(set)) throw new Error(`Use --set with one of ${TIER_IDS.join(', ')}`);
+      show(book.update(account.id, { tier: set }));
       return;
     }
 
@@ -141,7 +147,7 @@ async function main() {
     }
 
     default:
-      console.log(`Unknown command "${command}". Try: list, add-owner, add, password, addon, status, comp`);
+      console.log(`Unknown command "${command}". Try: list, add-owner, add, password, tier, status, comp`);
       process.exitCode = 1;
   }
 }

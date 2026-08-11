@@ -116,6 +116,7 @@ export const TIERS = [
     rank: 0,
     pence: 1000,
     blurb: 'The whole machine, and eight packs to start with. Buy more as you need them.',
+    content: { label: 'Eight packs to start', blurb: 'Four quizzes and four bingo games that work in any room. Buy any of the others at £3.' },
   },
   {
     id: 'silver',
@@ -123,7 +124,8 @@ export const TIERS = [
     plan: 'Elite',
     rank: 1,
     pence: 2000,
-    blurb: 'Every pack included, and every new one as it is written — plus invoicing and a calendar.',
+    blurb: 'The whole catalogue, plus the tools for running it as a business.',
+    content: { label: 'The whole catalogue', blurb: 'Every pack there is, and every new one as it is written. Nothing left to buy.' },
   },
   {
     id: 'gold',
@@ -131,7 +133,8 @@ export const TIERS = [
     plan: 'Pro',
     rank: 2,
     pence: 3000,
-    blurb: 'Everything in Silver, plus running a night for a room that is not in the room.',
+    blurb: 'Everything in Silver, plus the week that just went past.',
+    content: { label: 'A topical quiz every week', blurb: 'The month just gone, written up for a pub while it is still news — one of average difficulty and one pitched harder. The one thing nobody can buy once and reuse.' },
   },
 ];
 
@@ -168,12 +171,48 @@ export const DEFAULT_TIER = 'bronze';
  * be told what they are missing — they hit it while doing well, and it never
  * interrupts a night.
  *
- * `'all'` means the whole catalogue. An ARRAY means only those pack ids.
+ * Three scopes: `'all'` is the whole catalogue, `'evergreen'` is everything
+ * that is not tied to a date, and an ARRAY means only those pack ids.
+ */
+
+/**
+ * ================================================ CAPEX AND OPEX, AS A LADDER
  *
- * **Every tier is `'all'` today and that is deliberate**: this is the mechanism
- * with nothing switched on, so today's subscribers see exactly what they saw
- * before. Making Bronze a starter set is changing one line here — or setting
- * `packs` on one account, below, which beats it.
+ * **`'evergreen'` is the whole reason Gold is worth buying, and the
+ * distinction behind it is the host's own.**
+ *
+ * An evergreen pack is an ASSET. It costs about £1.90 of API to write, once,
+ * and then it sells to every subscriber for ever — the cost is behind you the
+ * day it exists. How much of that library somebody gets is a fair thing to
+ * meter, because there is a finite pile of it and writing more is optional.
+ *
+ * A topical pack is a SERVICE. "The month just gone" has to be written every
+ * week or it is not topical, which makes it the only recurring cost in the
+ * whole product — about £18 a month for the two of them, for as long as
+ * anybody holds the tier. It also cannot be bought once and reused, which is
+ * exactly what makes it the strongest subscription argument there is.
+ *
+ * So the ladder is built on that split rather than on how many files somebody
+ * can see: **the evergreen catalogue is the Bronze-to-Silver axis, and topical
+ * is what Gold is.** Two things follow and both matter:
+ *
+ * - **It is a FIXED cost, not a per-use one.** A topical pack costs the same
+ *   whether one subscriber runs it or a hundred do, so ONE Gold subscriber
+ *   pays for the entire weekly programme and every one after that is nearly
+ *   all margin. Note this is why the house rule about per-use costs does not
+ *   reach it: generating is per-WRITE, not per-play.
+ * - **The gradient works out.** Bronze at £10 plus four topical packs at £3 is
+ *   £22, and Gold at £30 hands them the whole catalogue too. Silver at £20
+ *   plus the same four is £32 — MORE than Gold — so a Silver subscriber who
+ *   wants topical weekly has an unambiguous reason to climb, and it arrives
+ *   every week rather than in month four.
+ *
+ * **What this commits the owner to is not money, it is a WEEKLY DEADLINE.**
+ * The writing is a button press and about £2; the read-through is twenty
+ * minutes, every week, for as long as one Gold subscription exists. Miss a
+ * week and a Gold subscriber notices immediately. That is the first rule in
+ * this codebase pointed at the business rather than at the app, and it is the
+ * one part of this that cannot be undone by editing a line here.
  */
 /**
  * **This is the Bronze-to-Silver delineation, and it is the whole ladder.**
@@ -214,9 +253,38 @@ export const TIER_PACKS = {
     'pub-floor-fillers',
     'motown-soul',
   ],
-  silver: 'all',
+  // Everything that is not tied to a date. See the note above: an evergreen
+  // pack is written once, a topical one has to be written every week.
+  silver: 'evergreen',
   gold: 'all',
 };
+
+/**
+ * Is this pack tied to a date?
+ *
+ * Read off the pack's own `freshUntil` rather than guessed from its id. A
+ * topical pack is named after the day it was written, so keying on the name
+ * would work today and open the moment somebody renames one — and a gate that
+ * depends on a naming convention is a gate that fails silently.
+ */
+export function isTopical(pack) {
+  return Boolean(pack && pack.freshUntil);
+}
+
+/**
+ * One question, asked of a pack SUMMARY rather than a bare id: may this
+ * account have it?
+ *
+ * Returns a function because every caller has a list to filter, and building
+ * the set once matters more than the shape being pretty.
+ */
+export function packFilter(account = {}) {
+  const allowed = packsFor(account);
+  if (allowed === 'all') return () => true;
+  if (allowed === 'evergreen') return (pack) => !isTopical(pack);
+  const set = new Set(allowed);
+  return (pack) => set.has(String(pack && pack.id));
+}
 
 /**
  * What one pack costs, in PENCE.
@@ -267,10 +335,17 @@ export function packsFor(account = {}) {
   return scope === 'all' ? 'all' : (scope || []).slice();
 }
 
-/** Is this one pack in reach? The single question every caller actually asks. */
-export function canPlayPack(account, packId) {
-  const allowed = packsFor(account);
-  return allowed === 'all' || allowed.includes(String(packId));
+/**
+ * Is this one pack in reach?
+ *
+ * @param {object} [pack]  the pack itself, or anything carrying its
+ *   `freshUntil`. Only needed to tell a topical pack from an evergreen one —
+ *   without it a dated pack looks evergreen, so a caller that CAN read the
+ *   pack should, and the two that cannot are the ones where it does not
+ *   matter (an id that is not in the catalogue at all).
+ */
+export function canPlayPack(account, packId, pack = null) {
+  return packFilter(account)({ ...(pack || {}), id: String(packId) });
 }
 
 /**
@@ -323,7 +398,7 @@ export const FEATURE_META = {
   [FEATURES.INVOICES]: { label: 'Invoicing', blurb: 'Bill for a night before you have left the car park.' },
   [FEATURES.CALENDAR]: { label: 'Your calendar', blurb: 'The nights you have booked in.' },
   [FEATURES.MARKETING]: { label: 'Marketing', blurb: 'Not built yet.' },
-  [FEATURES.STREAM]: { label: 'Online quizzes', blurb: 'Run a night for a room that is not in the room.' },
+  [FEATURES.STREAM]: { label: 'Online quizzes', blurb: 'Run a night for a room that is not in the room. Not built yet.' },
 };
 
 /** A tier by id, and its rank. An unknown one is the bottom of the ladder. */
@@ -371,6 +446,17 @@ export function ladderFor(account = {}) {
   return TIERS.map((tier) => ({
     ...tier,
     included: tier.rank <= mine,
+    /*
+     * What PACKS this rung holds, drawn as a statement rather than a switch.
+     *
+     * The rows under it are capabilities, and each one carries an On | Off —
+     * because what you have on is yours to decide. Content is not: it is what
+     * you pay for, and a switch beside it would read as an offer to turn your
+     * own library off. It also stops Gold's section listing one unbuilt
+     * feature and nothing else, when the whole reason to be on Gold is the
+     * weekly topical quiz.
+     */
+    content: tier.content || null,
     features: Object.keys(FEATURE_TIER)
       .filter((f) => FEATURE_TIER[f] === tier.id)
       .map((f) => ({ id: f, ...(FEATURE_META[f] || { label: f, blurb: '' }), held: held.has(f) })),

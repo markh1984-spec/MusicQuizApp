@@ -1064,6 +1064,51 @@ those were scattered — the colour picker sat at the bottom of every tab, and
 the join link, the big screen and the control view were on three different
 panels.
 
+### The ladder is CAPEX AND OPEX, not a pack count
+
+Settled after measuring what a pack actually costs, and it is the host's own
+observation: the one-off packs and the topical ones **are different animals**.
+
+- An **evergreen pack is an ASSET.** About £1.90 of API to write, once, and
+  then it sells to every subscriber for ever. How much of that library somebody
+  gets is a fair thing to meter, because the pile is finite and writing more is
+  optional.
+- A **topical pack is a SERVICE.** "The month just gone" has to be written every
+  week or it is not topical — the **only recurring cost in the whole product**,
+  about £18 a month for the two of them, for as long as anybody holds the tier.
+  It is also the one thing that cannot be bought once and reused, which is what
+  makes it the strongest subscription argument there is.
+
+So: **the evergreen catalogue is the Bronze-to-Silver axis, and topical is what
+Gold IS.** `TIER_PACKS.silver` is `'evergreen'`, `gold` is `'all'`.
+
+**The gradient is arithmetic rather than a judgement call**, and there is a test
+that it holds:
+
+| | | |
+|---|---|---|
+| Bronze £10 + four topical at £3 | £22 | Gold is £8 more and adds the whole catalogue — a step, not a cliff |
+| Silver £20 + four topical at £3 | **£32** | **more than Gold**, so a Silver subscriber who wants topical weekly has an unambiguous reason to climb |
+| Gold £30 | | covers the whole weekly programme on its own |
+
+**It is a FIXED cost, not a per-use one, and that is why the house rule does not
+reach it.** A topical pack costs the same whether one subscriber runs it or a
+hundred do, because generating is per-WRITE and not per-play. **One Gold
+subscriber pays for the entire weekly programme** and every one after that is
+nearly all margin.
+
+**What this commits the owner to is a WEEKLY DEADLINE, not money.** The writing
+is a button press and about £2; the read-through is twenty minutes, every week,
+for as long as one Gold subscription exists. Miss a week and a Gold subscriber
+notices immediately. That is this codebase's first rule pointed at the business
+rather than at the app, and it is the one part of the arrangement that cannot be
+undone by editing a line in `plans.js`.
+
+**A dated pack is told apart by its `freshUntil`, never by its id.** A topical
+pack is named after the day it was written, so a gate reading the name would
+work today and open the moment somebody renamed one. `isTopical()` and
+`packFilter()` in `plans.js`.
+
 ### The ladder: Bronze, Silver, Gold, and they STACK
 
 `TIERS` in `plans.js`. Gold includes Silver includes Bronze — one ordered list
@@ -1137,7 +1182,8 @@ NOT built" below. The data model is ready for it (`packs` on an account), so thi
 is a decision waiting on a processor rather than a redesign.
 
 **The lever is switched on now: Bronze is EIGHT PACKS, four quizzes and four
-bingo games.** Silver and Gold are the whole catalogue. A weekly host gets one
+bingo games.** Silver is the whole EVERGREEN catalogue; Gold adds the weekly
+topical quizzes on top — see **The ladder is CAPEX AND OPEX** above. A weekly host gets one
 to two months out of eight, which is the intended shape — the ceiling arrives
 while they are doing well and never mid-question.
 
@@ -1292,14 +1338,17 @@ Two topical quizzes on one day do not collide — the hard one is
 `topical-<date>-hard` — which is exactly what the host asked for: one of
 average difficulty and one pitched harder, every week.
 
-**GOLD IS NOT READY TO SELL.** It is settled that Gold is the online/streaming
-tier — that is the one thing on the ladder with a real per-use cost to the
-owner, so it belongs at the top under the host's own rule. But **streaming is
-not built**, so a Gold subscription today buys Silver at a £10 markup, which is
-the only thing on this ladder that would be a refund rather than an upsell.
-Nothing is buyable at all until a payment flow exists, so this is a gate on THAT
-work rather than a job now: when PayPal is wired, Gold must be marked as not yet
-available rather than offered.
+**GOLD IS SELLABLE NOW, and this is what changed.** It used to be the
+online/streaming tier and nothing else — so a Gold subscription bought Silver at
+a £10 markup, which would have been a refund rather than an upsell, and the note
+here said it must not be offered. **The weekly topical quiz is what Gold is
+now**, it is built and tested, and it is worth more than £10 a month to a weekly
+host by a wide margin. Streaming joins Gold when it exists rather than being
+what justifies it.
+
+The one honesty requirement: **`FEATURE_META` for streaming says "Not built
+yet"**, on the tier's own card, so nobody on Gold is waiting for something that
+is not coming this month.
 
 **Usage is deliberately NOT metered, and the reasoning matters because the
 obvious objection is a fair one.** A host running twelve nights a month earns
@@ -2597,6 +2646,26 @@ will hang off — and the owner can look at the console as a subscriber on any
 rung of it; **a question mark inside a microphone** with the name stacked under it —
 the mic is the host and the question is what every round actually is, which
 the vinyl record and the mic-and-note before it both failed to say.
+
+**What a topical pack costs, measured rather than guessed: about £2** (£1.20 to
+£3.90 depending on how much the checker thinks). Measured by running the real
+generator against a stub that records every request body and pricing it with the
+app's own table. Three things fall out of it and all three matter:
+
+- **The CHECKING is 86% of the bill** — eleven Opus batches with thinking, at 6p
+  per 1,000 output tokens. Not the web, not the writing.
+- **Being topical only adds about 26p.** The same forty questions with no web at
+  all are £1.87. Topicality is nearly free; correctness is what you pay for.
+- **The prompt caching saves 9p, not the £1.40 first claimed.** The digest is
+  only ~1,200 tokens and the checker's cost is output rather than input. The
+  warm-the-cache-first fix is still strictly better and costs nothing, so it
+  stays — but the saving that was actually worth having came from doing ONE
+  search instead of one per batch.
+
+There is a 5× lever nobody should pull: the checker on Sonnet 5 takes a pack to
+66p. That is the pass that stops a wrong answer reaching a paying room. The way
+to settle the range for good is to **press the button once and read the Money
+tab**, which is what the ledger was built for.
 
 Most recently: **the topical quiz** — one button that reads the last month off
 the web and writes forty questions from it, 20 news and 10 music from the

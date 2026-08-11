@@ -40,7 +40,7 @@ import { Accounts } from './src/accounts.js';
 import { Reports } from './src/reports.js';
 import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
-import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, canPlayPack, PACK_PENCE } from './public/assets/plans.js';
+import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, PACK_PENCE } from './public/assets/plans.js';
 import { Suggestions, KINDS } from './src/suggestions.js';
 import { Spend, spendRecorder } from './src/spend.js';
 // The pack id a generation is going to produce, so a cost has a subject from
@@ -491,18 +491,27 @@ function fullLibraryTier(who) {
    * list on the account rather than the ladder, and there is no tier to sell
    * them — so it says nothing about tiers at all.
    */
+  /*
+   * The NEXT rung that widens the library, not the top one.
+   *
+   * Since Silver holds the evergreen catalogue and Gold adds the weekly
+   * topical quizzes, "the lowest tier holding everything" is Gold — and
+   * telling a Bronze subscriber on eight packs to jump two rungs skips the
+   * step they should actually take. So it names the first rung that gives
+   * them more than they have, and says what that rung is FOR.
+   */
   const up = TIERS
-    .filter((t) => t.rank > rank && TIER_PACKS[t.id] === 'all')
+    .filter((t) => t.rank > rank && (TIER_PACKS[t.id] === 'all' || TIER_PACKS[t.id] === 'evergreen'))
     .sort((a, b) => a.rank - b.rank)[0];
-  return up
-    ? `${up.label} includes every pack in the catalogue, and each new one as it is written.`
-    : 'Ask about the rest of the catalogue.';
+  if (!up) return 'Ask about the rest of the catalogue.';
+  return TIER_PACKS[up.id] === 'all'
+    ? `${up.label} includes every pack in the catalogue, and a fresh topical quiz every week.`
+    : `${up.label} includes every pack in the catalogue, and each new one as it is written.`;
 }
 
 function onlyTheirPacks(library, who) {
-  const allowed = packsFor(who || {});
-  if (allowed === 'all') return library;
-  const mine = new Set(allowed);
+  if (packsFor(who || {}) === 'all') return library;
+  const may = packFilter(who || {});
   /*
    * A pack they WROTE is never filtered by a tier.
    *
@@ -511,7 +520,7 @@ function onlyTheirPacks(library, who) {
    * disappearing off their own console because of what they pay the owner,
    * which is not an upsell, it is taking their property away.
    */
-  const keep = (p) => p.mine || mine.has(p.id);
+  const keep = (p) => p.mine || may(p);
   return {
     ...library,
     quizzes: (library.quizzes || []).filter(keep),
@@ -548,7 +557,34 @@ function packCtx(req, url) {
 function mayReadPack(req, url, kind, id) {
   const room = roomForHost(req, url);
   if (isOwnPack(kind, id, room.paths)) return true;
-  return canPlayPack(whoIs(req, url), String(id));
+  return canPlayPack(whoIs(req, url), String(id), packDating(kind, id, room));
+}
+
+/**
+ * Enough of a pack to tell a topical one from an evergreen one.
+ *
+ * The two id-only gates — reading a pack and launching one — have to know,
+ * because Silver holds the whole evergreen catalogue and not the dated ones.
+ * Read off the pack itself rather than inferred from its id: a topical pack is
+ * named after the day it was written, so a gate keying on the name would work
+ * today and open the moment somebody renamed one.
+ *
+ * A pack that is not there comes back bare, and the route below says so
+ * properly — refusing here would turn "no such pack" into "not in your
+ * library", which sends somebody to the shop looking for something that does
+ * not exist.
+ */
+function packDating(kind, id, room) {
+  try {
+    // readPack hands back { pack, mine }, not the pack. Reading `freshUntil`
+    // off the wrapper leaves every dated pack looking evergreen, which opens
+    // this gate completely — and silently, because the shop card is drawn
+    // from the library listing and still shows the padlock.
+    const { pack } = readPack(kind, String(id), { config, paths: room.paths });
+    return pack && pack.freshUntil ? { freshUntil: pack.freshUntil } : {};
+  } catch {
+    return {};
+  }
 }
 
 /**
@@ -568,12 +604,11 @@ function mayReadPack(req, url, kind, id) {
  * drawing a padlock on it.
  */
 function withShop(library, who) {
-  const allowed = packsFor(who || {});
-  if (allowed === 'all') return library;
-  const mine = new Set(allowed);
+  if (packsFor(who || {}) === 'all') return library;
+  const may = packFilter(who || {});
 
   const shelf = (pack) => {
-    if (pack.mine || mine.has(pack.id)) return pack;
+    if (pack.mine || may(pack)) return pack;
     // Title, size and price. Nothing that is the thing itself.
     const { search, playlist, problems, broken, ...rest } = pack;
     return { ...rest, locked: true, pence: PACK_PENCE };
@@ -2932,7 +2967,7 @@ async function handleWrite(req, res, url, route) {
        */
       const launchKind = String(body.game || 'quiz') === 'bingo' ? 'bingo' : 'quiz';
       const ownPack = isOwnPack(launchKind, String(body.packId), room.paths);
-      if (!ownPack && !canPlayPack(whoIs(req, url), String(body.packId))) {
+      if (!ownPack && !canPlayPack(whoIs(req, url), String(body.packId), packDating(launchKind, body.packId, room))) {
         return sendJson(res, 403, {
           error: 'That pack is not in your library.',
           upgrade: true,

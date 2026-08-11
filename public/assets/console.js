@@ -605,6 +605,11 @@ function ladderPanels() {
             : `<span class="tier-price">${esc(priceLabel(tier.pence))}</span>`}</h3>
         <div class="tiny">${esc(tier.blurb)}</div>
         <div class="acct-toggles">
+          ${tier.content ? `
+            <div class="acct-toggle content ${tier.included ? '' : 'locked'}">
+              <span class="acct-toggle-what"><b>${esc(tier.content.label)}</b><br><span class="tiny">${esc(tier.content.blurb)}</span></span>
+              ${tier.included ? '<span class="feat-said">included</span>' : '<span class="feat-plus" title="On a higher tier">+</span>'}
+            </div>` : ''}
           ${tier.features.map((f) => `
             <div class="acct-toggle ${tier.included ? '' : 'locked'}">
               <span class="acct-toggle-what"><b>${esc(f.label)}</b><br><span class="tiny">${esc(f.blurb)}</span></span>
@@ -2780,10 +2785,22 @@ function shopCard(kind, pack) {
     ? `${pack.questionCount} question${pack.questionCount === 1 ? '' : 's'} · ${roundCount} round${roundCount === 1 ? '' : 's'}`
     : `${pack.trackCount} track${pack.trackCount === 1 ? '' : 's'}`;
 
+  /*
+   * A dated pack says so on the shelf, and that is the one thing the shop
+   * window genuinely needs to tell you.
+   *
+   * Every other locked card is worth the same in a month's time; a topical one
+   * is worth the most this week and nothing much after it. Leaving that off
+   * makes the strongest card in the shop look like the weakest — an unfamiliar
+   * title with no theme anybody recognises.
+   */
+  const { topical, expired } = freshness(pack);
+
   const el = node(`
     <div class="pack-card locked">
       <div class="pack-title">${esc(pack.title)}</div>
       <div class="tiny">${esc(detail)}</div>
+      ${topical ? `<div class="tiny fresh ${expired ? 'gone' : ''}">${esc(freshLabel(pack))}</div>` : ''}
       <div class="tiny shop-price">${esc(packPrice())}</div>
       <button class="go buy">Buy it</button>
     </div>`);
