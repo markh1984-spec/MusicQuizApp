@@ -1736,12 +1736,21 @@ Withholding the thing that helps a quizmaster get paid creates no upgrade
 pressure — it just makes the app less useful to the person you most want
 recommending it.
 
-Note what this cost: **the recorded reason for advert slides being Silver was
-"it makes the quizmaster money", and that argument is dead**, because it is
-precisely the case that was made and rejected for invoicing. Adverts stay at
-Silver on the new rule instead — a slide is a card on the projector between
-rounds, so it is part of the show in a way an invoice is not. That is a line
-that holds for the next feature as well, which the old one was not.
+**Advert slides stay at SILVER, and the reason had to be rewritten twice.** The
+original — "it makes the quizmaster money" — is dead, because that is precisely
+the argument that was made and rejected for invoicing. The second attempt, "a
+slide is part of the show", is wrong the other way: the host's own correction is
+that **the quiz app functions identically without it**, so it is not quiz
+functionality at all.
+
+What actually keeps it there is the test this whole section is built on:
+**does withholding it degrade the SHOW?** Every other capability held back is
+something a room can see is missing. An advert slide is not — a room that never
+sees one does not know it was possible. It is a lever for winning the BOOKING,
+which is a business outcome for the quizmaster rather than part of the night.
+That is what makes it safe to price. And Silver needs it: without it Silver is
+content and nothing else, and a rung with no capability of its own is a harder
+thing to sell.
 
 So a new round type, a new game, a new look and a new picture effect are Basic
 the day they are written. Generating with Claude and artwork with OpenAI are

@@ -58,18 +58,23 @@ export const FEATURES = {
   /*
    * Venue slides between rounds — SILVER, and the only capability above Bronze.
    *
-   * **The recorded reason for this used to be "it makes the quizmaster money",
-   * and that argument is dead** — it is exactly the case that was made and
-   * rejected for invoicing, which also makes them money and is now Bronze. You
-   * cannot hold both.
+   * **The test is whether withholding it degrades the SHOW, and this is the
+   * one thing that passes it.** Every other capability you hold back is
+   * something a room can see is missing — a round type, a picture reveal, a
+   * seasonal look — and a Bronze host running a venue's Christmas party is the
+   * shop window, so a thinner projector is the product looking cheap rather
+   * than the tier looking cheap. An advert slide is different in exactly the
+   * way that matters: **the quiz app functions identically without it, and a
+   * room that never sees one does not know it was possible.**
    *
-   * What keeps it at Silver is the rule that replaced it: **the tiers separate
-   * on quiz-app functionality, not on business tools.** An advert slide is a
-   * card on the projector between rounds — it is part of the show, in a way an
-   * invoice is not. That is a line you can hold for the next feature as well,
-   * which the old reason was not.
+   * So it is not quiz functionality at all — it is a lever for winning the
+   * BOOKING in the first place, which is a business outcome for the
+   * quizmaster rather than part of the night. That is what makes it safe to
+   * put a price on, and it is why Silver needs it: without this, Silver is
+   * content and nothing else, and a rung with no capability of its own is a
+   * harder thing to sell than one with a reason to exist.
    *
-   * It still costs nothing to run, so the host's own rule does not force it
+   * It costs nothing to run, so the host's own per-use rule does not force it
    * out of Bronze; that rule only says what CANNOT be in Bronze, never that
    * everything cheap must be in it.
    *
