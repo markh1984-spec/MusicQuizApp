@@ -95,9 +95,19 @@ function draw(next) {
   if (key !== currentKey) {
     currentKey = key;
     cardEl.replaceChildren(card.render(state, joinUrl));
-  } else if (card.update) {
-    card.update(state);
   }
+  /*
+   * And update even on the FIRST paint, not only on later pushes.
+   *
+   * It used to be an `else if`, which meant a card was rendered empty and
+   * filled in by whatever happened next. On the lobby that is the player strip:
+   * a projector opened after people have already joined — or one reconnecting
+   * after the laptop slept, which is the case that bites — showed an empty
+   * strip and kept showing it until the next person joined. Same shape as the
+   * join address never arriving on a rules slide, and the same fix: the card
+   * marks the slot, and filling it in is a separate step that always runs.
+   */
+  if (card.update) card.update(state);
 
   paintPhotos(state);
   paintJoinCorner(state);
