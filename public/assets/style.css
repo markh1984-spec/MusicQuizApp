@@ -1271,7 +1271,21 @@ body.console::after { display: none; }
   background: var(--panel); border: 1px solid var(--panel-line);
 }
 .pack-card.broken { border-color: var(--bad); }
+/*
+ * Two lines are RESERVED for a title, whether or not it needs them.
+ *
+ * "The Madonna Quiz" is one line and "The 2000s Pop Rnb and Chart Quiz" is two,
+ * so side by side every row below them — the count, the play line, the Look
+ * picker — sat at a different height on each card. The buttons already line up
+ * (`.pack-actions` has `margin-top: auto`), which made it worse rather than
+ * better: the tops were ragged and the bottoms were not, so the gap landed in
+ * the middle of the card where there is nothing to explain it.
+ *
+ * Not in Compact, where the whole point is to fit more on screen and a reserved
+ * empty line is the opposite of that.
+ */
 .pack-title { font-size: 17px; font-weight: 900; line-height: 1.2; }
+.pack-grid:not(.dense) .pack-title { min-height: 2.4em; }
 .pack-card .played { margin-bottom: 6px; }
 .pack-card .go {
   width: 100%; margin-top: 8px;
