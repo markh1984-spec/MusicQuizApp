@@ -95,7 +95,7 @@ function showJoin(message = '') {
     button.disabled = true;
     button.textContent = 'Joining…';
     try {
-      const player = await postJson('/api/join', { playerId: me && me.id, name, joinCode: roomCode() });
+      const player = await postJson('/api/join', { playerId: me && me.id, token: me && me.token, name, joinCode: roomCode() });
       rememberRoom(player.joinCode);
       saveMe(player);
       startLive();
@@ -128,7 +128,7 @@ async function silentRejoin() {
   rejoinTries++;
 
   try {
-    const player = await postJson('/api/join', { playerId: me.id, name: me.name, joinCode: roomCode() });
+    const player = await postJson('/api/join', { playerId: me.id, token: me.token, name: me.name, joinCode: roomCode() });
     rememberRoom(player.joinCode);
     const changedId = player.id !== me.id;
     saveMe(player);
@@ -693,7 +693,7 @@ async function lockIn(optionIndexes) {
   paintLocked(optionIndexes);
   if (navigator.vibrate) navigator.vibrate(24);
   try {
-    await postJson('/api/answer', { playerId: me.id, optionIndexes, joinCode: roomCode() });
+    await postJson('/api/answer', { playerId: me.id, token: me.token, optionIndexes, joinCode: roomCode() });
   } catch {
     pendingChoice = null;
   }
@@ -720,7 +720,7 @@ async function choose(optionIndex) {
   paintChoice(optionIndex);
   if (navigator.vibrate) navigator.vibrate(18);
   try {
-    await postJson('/api/answer', { playerId: me.id, optionIndex, joinCode: roomCode() });
+    await postJson('/api/answer', { playerId: me.id, token: me.token, optionIndex, joinCode: roomCode() });
   } catch {
     // The state push is the source of truth; if the answer did not land the
     // buttons come back live on the next update.
@@ -891,7 +891,7 @@ function watchForWandering() {
     if (!state || state.phase !== 'question') return;
     // Fire and forget. It must never delay or break anything a player is
     // doing, and it is only ever a note.
-    postJson('/api/wandered', { playerId: me.id, joinCode: roomCode() }).catch(() => {});
+    postJson('/api/wandered', { playerId: me.id, token: me.token, joinCode: roomCode() }).catch(() => {});
   });
 }
 
@@ -909,7 +909,7 @@ async function boot() {
 
   if (me && me.id) {
     try {
-      const player = await postJson('/api/join', { playerId: me.id, name: me.name, joinCode: roomCode() });
+      const player = await postJson('/api/join', { playerId: me.id, token: me.token, name: me.name, joinCode: roomCode() });
       rememberRoom(player.joinCode);
       saveMe(player);
       startLive();

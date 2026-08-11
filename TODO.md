@@ -629,6 +629,37 @@ the subscription being the business and the pack sale being the on-ramp, which
 is what the pricing already assumes — and if pack sales ever become common, it
 is an argument for selling three at once rather than one at a time.
 
+### Flooding a game with fake teams — known, not solved
+
+Found while sweeping what an anonymous phone can do. The join code is printed
+on the projector and read out on the mic, so anybody in the room has it — and
+**300 joins fired at once all landed, in half a second.** There is now a
+backstop at `MAX_PLAYERS` (600) so the state file cannot grow without limit,
+but that is a guard on the FILE, not on the mischief: somebody scripting joins
+in a browser console can still fill a scoreboard with junk teams.
+
+Two mitigations that already exist: the host can remove a player, and "Clear
+everything" empties the lobby. Neither is much use against three hundred.
+
+**Per-IP rate limiting is NOT the answer, and it is the obvious one.** A pub
+puts the whole room behind a single address, so anything counting joins per IP
+refuses the actual customers first. Same for a CAPTCHA — that is a step in
+front of a join that is meant to take ten seconds.
+
+What would probably work, in rough order of how much they cost:
+
+- **A join window the host controls.** Joining is open by default and one tap
+  shuts it. A latecomer needs the host to open it again, which is a sentence on
+  the mic rather than a lockout. This is the cheapest and fits how a night
+  actually runs.
+- **A per-code join rate**, e.g. no more than N a minute per game, generous
+  enough that a real room filling up never touches it.
+- **Bulk remove on the host's board** — "remove everybody who has not answered
+  anything", which is useful for tidying a lobby regardless.
+
+Not urgent: it needs somebody in the room to want to ruin the night, and the
+host can see it happening. Worth doing before the app is in strangers' hands.
+
 ### Group accounts — SEATS on a Gold, for a quizmaster company
 
 Your idea, and the interesting half of it is not the discount.

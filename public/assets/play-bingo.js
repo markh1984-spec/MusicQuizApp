@@ -132,7 +132,7 @@ async function toggle(cell, index, me) {
   if (navigator.vibrate) navigator.vibrate(12);
 
   try {
-    await postJson('/api/mark', { playerId: me.id, index, marked: !wasMarked, joinCode: roomCode() });
+    await postJson('/api/mark', { playerId: me.id, token: me.token, index, marked: !wasMarked, joinCode: roomCode() });
   } catch {
     // The next state push is the truth; put it back for now.
     cell.classList.toggle('marked', wasMarked);
@@ -146,7 +146,7 @@ async function claim(root) {
   const me = JSON.parse(localStorage.getItem('musicquiz.player') || '{}');
   button.disabled = true;
   try {
-    const result = await postJson('/api/claim', { playerId: me.id, joinCode: roomCode() });
+    const result = await postJson('/api/claim', { playerId: me.id, token: me.token, joinCode: roomCode() });
     if (result.valid) {
       flash(root, 'BINGO — that is a line', true);
     } else {

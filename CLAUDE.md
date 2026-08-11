@@ -117,7 +117,36 @@ sprang open.
 Every timestamp used for scoring comes from an injected `now()`. Phones send
 only which option they tapped. Never trust a client timestamp.
 
-### 3. Only a real removal throws a phone out
+### 3. A phone proves who it is with a TOKEN, never with its id
+
+`newToken()` / `ownsPlayer()` in `src/engine.js`. There is no login for a
+phone, so something has to be the proof — and it used to be the player id,
+which meant **anything that learned an id could act as that player**: answer as
+them (the wrong answer lands first, and their real one comes back "already
+answered", costing them the question) and rename them, which puts arbitrary
+words on the projector where there is deliberately no filter.
+
+It was fully reachable from the back table: the join code is on the big screen
+and read out on the mic, and `/api/state?role=screen&g=CODE` published the
+fastest finger's id. **The person WINNING was the person the room could
+sabotage.** Found by joining a game as two phones and playing one against the
+other.
+
+So: a token is issued at join, kept on the player, saved in the state file, and
+sent in exactly one place — that player's own join reply. Every player action
+carries it. `faceKey()` is what the projector gets instead, so a photo still
+finds its person.
+
+**A player with no token yet is trusted once and then bound.** Phones that
+joined before this existed hold an id and nothing else, and a redeploy
+mid-season must not lock a room out of its own game — the same reasoning as
+rule 4 below.
+
+**A request that cannot prove itself is not refused with an error — it gets a
+team of its own**, which is what an honest new phone gets anyway. The attacker
+gains nothing and nobody legitimate is ever turned away.
+
+### 4. Only a real removal throws a phone out
 
 A phone whose id the server does not recognise is asked to **rejoin silently**
 (`view.rejoin`). It is told it was removed (`view.kicked`) **only** if the host
@@ -136,14 +165,14 @@ close the stream and leave the keep-alive timer running, which reopened the
 old stream under the old id forty seconds later. Every rejoin left another one
 behind, all of them claiming to be someone the server no longer had.
 
-### 4. Bingo cards cannot be regenerated
+### 5. Bingo cards cannot be regenerated
 The card is built server-side on join and stored against the player. There is
 **no endpoint that issues a new card** and no card-generating code on the
 phone. Refresh, reopen, clear the browser, rejoin — same card. Do not add a
 "new card" feature; the host asked for this explicitly to stop cheating.
 `newRound()` is the only thing that reissues, and it does everyone at once.
 
-### 5. Crash recovery
+### 6. Crash recovery
 State is one JSON object written atomically. Anything that **moves a game
 forward** flushes to disk immediately (new question, reveal, round change, a
 team joining, a bingo track called, a bingo square marked). Only high-frequency
@@ -152,10 +181,10 @@ low-stakes things are debounced.
 Bingo marks are deliberately immediate: a lost quiz answer is recoverable with
 Redo, but nobody can re-tap ten songs they heard half an hour ago.
 
-### 6. Phones never show the question text
+### 7. Phones never show the question text
 Only the options. Keeps the room looking up, makes googling harder.
 
-### 7. The scoreboard and adverts are flags, never phases
+### 8. The scoreboard and adverts are flags, never phases
 `state.scoreboard` and `state.advert` put something over whatever the quiz is
 doing without moving it. A phase change would have to be undone to get back,
 which is the one mistake that loses everybody's place mid-round.
@@ -169,7 +198,7 @@ state, so correcting a price on a venue's slide changes the projector without
 taking it down and putting it back. The host's mic line (`say`) is host-view
 only, like a round 3 cue.
 
-### 8. "Pick them all" tells the room HOW MANY, never which
+### 9. "Pick them all" tells the room HOW MANY, never which
 A `multi` question shows six options with 2–3 correct. The screen and the phone
 get `pickCount`; `correctIndexes` is host-only, like every other answer key.
 
@@ -901,7 +930,7 @@ sees it on the next ordinary push, which during a question is the next answer.
 
 What already does most of the anti-cheating work, and none of it is new:
 twenty seconds; points for speed, so a googled answer at 18s scores far below a
-known one at 4s; **phones never showing the question text** (rule 6), so it has
+known one at 4s; **phones never showing the question text** (rule 7), so it has
 to be retyped from memory off the projector; and the picture, intro and
 pick-them-all rounds being poor search targets.
 

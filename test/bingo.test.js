@@ -62,16 +62,16 @@ test('ANTI-CHEAT: rejoining returns the identical card, never a new one', () => 
   const cardBefore = [...first.card];
 
   // Refresh, phone locks, reopens the link, rejoins with a different name.
-  const again = game.join({ playerId: first.id, name: 'Sofa King Good' });
+  const again = game.join({ playerId: first.id, token: first.token, name: 'Sofa King Good' });
   assert.deepEqual(again.card, cardBefore);
 
-  const renamed = game.join({ playerId: first.id, name: 'Changed Our Name' });
+  const renamed = game.join({ playerId: first.id, token: first.token, name: 'Changed Our Name' });
   assert.deepEqual(renamed.card, cardBefore, 'renaming does not reroll the card');
 
   // Even after tracks have been called and marks made.
   game.call('t1');
   game.mark({ playerId: first.id, index: 0, marked: true });
-  const midGame = game.join({ playerId: first.id, name: 'Sofa King Good' });
+  const midGame = game.join({ playerId: first.id, token: first.token, name: 'Sofa King Good' });
   assert.deepEqual(midGame.card, cardBefore);
   assert.equal(midGame.marks[0], true, 'and their marks are still there');
 });
@@ -364,7 +364,7 @@ test('a phone the server has forgotten is asked back, and gets its card back', (
 
   // Cards are derived from the player id and the pack, so rejoining rebuilds
   // the same one rather than handing out a fresh card mid-round.
-  const back = fresh.join({ playerId: p.id, name: 'X' });
+  const back = fresh.join({ playerId: p.id, token: p.token, name: 'X' });
   assert.deepEqual(back.card, cardBefore);
 });
 
@@ -374,7 +374,7 @@ test('a removed bingo team stays told, and can still come back', () => {
   game.removePlayer(p.id);
   assert.equal(game.playerView(p.id).kicked, true);
 
-  game.join({ playerId: p.id, name: 'X' });
+  game.join({ playerId: p.id, token: p.token, name: 'X' });
   assert.equal(game.playerView(p.id).kicked, undefined);
 });
 
@@ -394,7 +394,7 @@ test('a crash mid-game comes back with the same cards and the same marks', () =>
   assert.equal(revived.state.players[p.id].marks[0], true);
   assert.deepEqual(revived.state.called, [p.card[0], p.card[1]]);
   // And rejoining still does not reroll it.
-  assert.deepEqual(revived.join({ playerId: p.id, name: 'Sofa King Good' }).card, p.card);
+  assert.deepEqual(revived.join({ playerId: p.id, token: p.token, name: 'Sofa King Good' }).card, p.card);
 });
 
 // --------------------------------------------------------------- pack checks

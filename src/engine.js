@@ -171,14 +171,27 @@ export class Engine {
    * Join, or rejoin with an existing id. Rejoining keeps the score: phones
    * lock, people refresh, someone drops off wifi.
    */
-  join({ playerId, name }) {
+  join({ playerId, name, token = '' }) {
     const at = this.now();
     // Joining again clears a previous removal — the host removes a team to tidy
     // up a duplicate or a name they regret, not to bar a phone for the night.
     if (playerId) forgetRemoved(this.state, playerId);
-    const existing = playerId && this.state.players[playerId];
+    /*
+     * Rejoining as somebody needs their TOKEN, not just their id.
+     *
+     * Without this, knowing an id was enough to rename another team — and the
+     * name goes on the projector, where there is deliberately no filter. A
+     * request that cannot prove it falls through to the branch below and gets
+     * a team of its own, which is what an honest new phone gets anyway: the
+     * attacker gains nothing and nobody legitimate is ever refused.
+     */
+    const claimed = playerId && this.state.players[playerId];
+    const existing = claimed && ownsPlayer(claimed, token) ? claimed : null;
 
     if (existing) {
+      // Bind a phone that joined before tokens existed. First one wins, and
+      // from then on the id alone proves nothing.
+      if (!existing.token) existing.token = newToken();
       existing.connected = true;
       existing.lastSeenAt = at;
       const cleanName = cleanTeamName(name);
@@ -189,8 +202,14 @@ export class Engine {
       return existing;
     }
 
+    // The backstop. A room this size is not a real night — see MAX_PLAYERS.
+    if (Object.keys(this.state.players).length >= MAX_PLAYERS) {
+      return { id: '', name: '', full: true };
+    }
+
     const player = {
-      id: playerId && isSafeId(playerId) ? playerId : newId(),
+      id: playerId && isSafeId(playerId) && !this.state.players[playerId] ? playerId : newId(),
+      token: newToken(),
       name: cleanTeamName(name) || 'Team ' + (Object.keys(this.state.players).length + 1),
       score: 0,
       correctCount: 0,
@@ -1460,6 +1479,56 @@ export function newId() {
  * small mistake. So it gets a one-way derivation instead: the same player
  * always gives the same key, and the key gives nothing back.
  */
+/**
+ * The proof that this phone IS that player.
+ *
+ * **The id used to be the credential**, which meant anything that learned an
+ * id could answer as that player and rename them — see `faceKey` above for how
+ * one got published. `faceKey` stopped the leak; this stops the class, so the
+ * next thing that prints a player id somewhere is a tidiness problem rather
+ * than a way to sabotage the person winning.
+ *
+ * Issued at join, stored on the player, kept in the state file so it survives
+ * a crash, and never in any payload but that player's own join reply.
+ */
+export function newToken() {
+  const bytes = new Uint8Array(24);
+  globalThis.crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Is this request allowed to act as this player?
+ *
+ * **A player with no token yet is trusted once and then bound.** Phones that
+ * joined before this existed hold an id and nothing else, and a redeploy
+ * mid-season must not lock a room out of its own game — that is the same rule
+ * as "only a real removal throws a phone out". So the first request for a
+ * tokenless player is accepted and issues one; every request after that has to
+ * carry it.
+ */
+export function ownsPlayer(player, token) {
+  if (!player) return false;
+  if (!player.token) return true;
+  return typeof token === 'string' && token.length >= 16 && token === player.token;
+}
+
+/**
+ * How many phones one game will hold.
+ *
+ * Not a capacity claim — the documented number is 300 and the measured cost is
+ * linear well past that. This is a backstop on the STATE FILE, which is one
+ * JSON object rewritten as the night goes on: at a thousand players it is
+ * 4.3MB and 33ms to serialise, several times a second, which would be felt in
+ * the room. Set far enough above any real night that nobody honest meets it.
+ *
+ * It does NOT stop somebody in the room scripting joins with the code off the
+ * projector — see TODO.md. The honest mitigations for that are the host's own
+ * Remove and Clear everything, and per-IP limiting is not one of them, because
+ * a pub puts the whole room behind one address.
+ */
+export const MAX_PLAYERS = 600;
+
 export function faceKey(playerId) {
   const id = String(playerId || '');
   if (!id) return '';

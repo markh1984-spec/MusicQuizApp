@@ -15,7 +15,7 @@
 
 import path from 'node:path';
 
-import { Engine, PHASES, isSafeId } from './engine.js';
+import { Engine, PHASES, isSafeId, ownsPlayer, newToken } from './engine.js';
 import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFields, stagePlan, maxPrizes } from './bingo.js';
 import { listQuizzes } from './quizzes.js';
 import { listBingoPacks, recordLaunch, archiveResults, HOUSE_ROOM } from './library.js';
@@ -437,10 +437,10 @@ export class Session {
    * stays at zero and the control view keeps quiet. It only counts against
    * this boot — a game the host launched deliberately is not a lost one.
    */
-  joinPlayer({ playerId, name }) {
+  joinPlayer({ playerId, token = '', name }) {
     const known = playerId && this.engine.state.players[playerId];
     const stranded = Boolean(playerId && isSafeId(playerId) && !known && !this.restoredOnBoot);
-    const player = this.engine.join({ playerId, name });
+    const player = this.engine.join({ playerId, token, name });
     if (stranded) {
       this.strandedPhones++;
       if (this.strandedPhones === 1) {
@@ -452,6 +452,23 @@ export class Session {
 
   /** Actions a player's phone is allowed to trigger. */
   runPlayerAction(action, body = {}) {
+    /*
+     * **Prove it is your phone before anything else.**
+     *
+     * These four routes are open — a phone has no login — and the id used to
+     * be the whole proof. So anybody holding one could answer as that player:
+     * the wrong answer lands first and their real one comes back "already
+     * answered", which costs them the question. Found by joining a game as two
+     * phones and playing one against the other.
+     *
+     * `ownsPlayer` trusts a player who has no token yet and binds them, so a
+     * phone that joined before this existed is not thrown out of a night in
+     * progress — the same rule as "only a real removal throws a phone out".
+     */
+    const player = this.engine.state.players?.[String(body.playerId || '')];
+    if (!ownsPlayer(player, body.token)) return { ok: false, reason: 'not_yours' };
+    if (player && !player.token) player.token = newToken();
+
     if (this.kind === 'bingo') {
       if (action === 'mark') return this.engine.mark({ playerId: body.playerId, index: body.index, marked: body.marked });
       if (action === 'claim') return this.engine.claim(String(body.playerId));

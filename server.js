@@ -213,16 +213,39 @@ async function readBody(req, limitBytes) {
   return Buffer.concat(chunks);
 }
 
+/**
+ * A request body, and NOTHING here may throw its way to a 500.
+ *
+ * Every phone route is open by design — a phone has no login — so the bodies
+ * arriving at them are whatever the room, a flaky mobile connection or a venue
+ * proxy sends. A fuzz of 145 malformed bodies produced **26 unhandled 500s**:
+ * `JSON.parse` throwing on a truncated body, and — the sneakier half — bodies
+ * that are perfectly valid JSON but are not OBJECTS (`null`, `[]`, `42`), which
+ * parse fine and then blow up on the first property read.
+ *
+ * A 500 is not fatal here (the top-level catch keeps the server up) but it is
+ * the wrong answer: it tells a phone nothing, and it is indistinguishable in
+ * the log from a real fault on a night when something IS wrong.
+ */
 async function readJson(req, limitBytes = 1024 * 1024) {
   const chunks = [];
   let total = 0;
   for await (const chunk of req) {
     total += chunk.length;
-    if (total > limitBytes) throw new Error('Body too large');
+    if (total > limitBytes) throw Object.assign(new Error('That request was too big.'), { badRequest: true });
     chunks.push(chunk);
   }
   if (!total) return {};
-  return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+
+  let parsed;
+  try {
+    parsed = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  } catch {
+    throw Object.assign(new Error('That request was not valid JSON.'), { badRequest: true });
+  }
+  // Not an object means there are no fields to read, and every route here
+  // reads fields. An empty one behaves exactly like a missing body.
+  return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
 }
 
 /** The address the QR code should point at. */
@@ -754,6 +777,14 @@ const server = http.createServer(async (req, res) => {
     }
     send(res, 404, 'Not found');
   } catch (err) {
+    // A malformed body is the CALLER's fault, not a fault here — answering 500
+    // makes a phone on bad wifi look like a broken server, and buries a real
+    // fault among the noise on the one night something actually goes wrong.
+    if (err.badRequest) {
+      if (!res.headersSent) sendJson(res, 400, { error: err.message });
+      else res.end();
+      return;
+    }
     console.error('[http]', req.method, route, err.message);
     if (!res.headersSent) sendJson(res, 500, { error: err.message });
     else res.end();
@@ -2551,12 +2582,24 @@ async function handleWrite(req, res, url, route) {
   if (route === '/api/join' && req.method === 'POST') {
     const body = await readJson(req);
     const room = roomForPhone(req, url, body);
-    const player = room.session.joinPlayer({ playerId: body.playerId, name: body.name });
-    // The code goes back with the player so the phone can keep hold of it and
-    // reconnect to the same game after a lock, a refresh or a lost signal —
-    // the same reason it keeps the player id.
+    const player = room.session.joinPlayer({ playerId: body.playerId, token: body.token, name: body.name });
+    // A game that will not hold any more phones. Says so rather than handing
+    // back an empty team, which the phone would draw as a joined player with
+    // no name — see MAX_PLAYERS.
+    if (player.full) {
+      return sendJson(res, 503, { error: 'This game is full.', full: true }), true;
+    }
+    /*
+     * The code goes back with the player so the phone can keep hold of it and
+     * reconnect to the same game after a lock, a refresh or a lost signal —
+     * the same reason it keeps the player id.
+     *
+     * And the TOKEN, which is the only place it is ever sent. It is the proof
+     * this phone is that player: without it here the phone cannot answer at
+     * all, and with it anywhere else a player id becomes a credential again.
+     */
     return sendJson(res, 200, {
-      id: player.id, name: player.name, score: player.score ?? 0,
+      id: player.id, token: player.token || '', name: player.name, score: player.score ?? 0,
       game: room.session.kind, joinCode: room.code,
     }), true;
   }

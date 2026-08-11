@@ -7,8 +7,9 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 
-import { Engine, PHASES, cleanTeamName, faceKey } from '../src/engine.js';
+import { Engine, PHASES, cleanTeamName, faceKey, MAX_PLAYERS } from '../src/engine.js';
 import { POINTS_CORRECT, POINTS_PER_WHOLE_SECOND, POINTS_FIRST_CORRECT } from '../src/scoring.js';
 
 const START = 1_700_000_000_000;
@@ -380,8 +381,9 @@ test('rejoining with the same id keeps the score', () => {
   engine.answer({ playerId: a.id, optionIndex: 1 });
   const scoreBefore = engine.state.players[a.id].score;
 
-  // Phone locks, browser reloads, they come back with the stored id.
-  const back = engine.join({ playerId: a.id, name: 'Sofa King Good' });
+  // Phone locks, browser reloads, they come back with the stored id AND the
+  // token they were given at join — the phone keeps the whole join reply.
+  const back = engine.join({ playerId: a.id, token: a.token, name: 'Sofa King Good' });
   assert.equal(back.id, a.id);
   assert.equal(back.score, scoreBefore);
   assert.equal(engine.playerList().length, 3);
@@ -397,8 +399,63 @@ test('rejoining with a blank name keeps the name they had', () => {
 test('a team can rename itself by rejoining with a new name', () => {
   const { engine } = makeEngine();
   const [a] = joinThree(engine);
-  engine.join({ playerId: a.id, name: 'New Name' });
+  engine.join({ playerId: a.id, token: a.token, name: 'New Name' });
   assert.equal(engine.state.players[a.id].name, 'New Name');
+});
+
+/**
+ * **A PLAYER ID IS NOT A CREDENTIAL ANY MORE.**
+ *
+ * Knowing an id used to be enough to rename that team — and the name goes
+ * straight on the projector, where there is deliberately no filter — and to
+ * answer as them, which lands first and leaves their real answer coming back
+ * "already answered". Found by joining a game as two phones and playing one
+ * against the other.
+ *
+ * The token is issued at join and the phone keeps the whole reply, so nothing
+ * legitimate has to change. A request that cannot prove itself is not refused
+ * with an error either: it simply gets a team of its own, which is what an
+ * honest new phone gets anyway.
+ */
+test('somebody else\'s id, without their token, gets a team of its own', () => {
+  const { engine } = makeEngine();
+  const [victim] = joinThree(engine);
+  const before = engine.playerList().length;
+
+  const attacker = engine.join({ playerId: victim.id, name: 'RENAMED BY THE BACK TABLE' });
+  assert.notEqual(attacker.id, victim.id, 'a phone hijacked another team by id alone');
+  assert.equal(engine.state.players[victim.id].name, 'Sofa King Good', 'the victim was renamed on the projector');
+  assert.equal(engine.playerList().length, before + 1, 'the attacker did not become their own team');
+  // And a wrong token is no better than none.
+  const again = engine.join({ playerId: victim.id, token: 'not-the-right-token-at-all', name: 'Nice try' });
+  assert.notEqual(again.id, victim.id);
+});
+
+/*
+ * Phones that joined before tokens existed hold an id and nothing else, and a
+ * redeploy mid-season must not lock a room out of its own game — the same rule
+ * as "only a real removal throws a phone out". So a player with no token is
+ * trusted once and bound from then on.
+ */
+test('a player from before tokens existed is trusted once, then bound', () => {
+  const { engine } = makeEngine();
+  const [a] = joinThree(engine);
+  delete engine.state.players[a.id].token;          // an older state file
+
+  const back = engine.join({ playerId: a.id, name: 'Sofa King Good' });
+  assert.equal(back.id, a.id, 'a phone from before the upgrade lost its team');
+  assert.ok(back.token, 'it was not bound to a token on the way through');
+
+  // And now the id alone proves nothing.
+  const attacker = engine.join({ playerId: a.id, name: 'Too late' });
+  assert.notEqual(attacker.id, a.id);
+});
+
+test('a game will not hold an unbounded number of phones', () => {
+  const { engine } = makeEngine();
+  for (let i = 0; i < MAX_PLAYERS + 5; i++) engine.join({ name: `Team ${i}` });
+  assert.equal(engine.playerList().length, MAX_PLAYERS);
+  assert.equal(engine.join({ name: 'One more' }).full, true);
 });
 
 test('an unknown id is treated as a new team, not an error', () => {
@@ -1700,4 +1757,28 @@ test('faceKey is stable for a person and gives nothing back', () => {
   assert.notEqual(faceKey('abc123'), faceKey('abc124'));
   assert.ok(!faceKey('abc123').includes('abc123'), 'the id is recoverable from its own handle');
   assert.equal(faceKey(''), '');
+});
+
+/*
+ * A malformed body from a phone must be a 400, never a 500.
+ *
+ * Every phone route is open — a phone has no login — so what arrives is
+ * whatever the room, a flaky signal or a venue proxy sends. A fuzz of 145
+ * malformed bodies produced 26 unhandled 500s: `JSON.parse` throwing on a
+ * truncated body, and bodies that are valid JSON but not OBJECTS (`null`,
+ * `[]`, `42`), which parse fine and blow up on the first property read.
+ *
+ * Not fatal — the top-level catch keeps the server up — but it is the wrong
+ * answer, and a real fault on a real night would be buried in the noise.
+ */
+test('a malformed request body is answered 400, not 500', () => {
+  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const at = server.indexOf('async function readJson');
+  assert.ok(at > 0, 'readJson has gone');
+  const fn = server.slice(at, at + 1400);
+
+  assert.match(fn, /badRequest: true/, 'a bad body is no longer told apart from a server fault');
+  assert.match(fn, /Array\.isArray\(parsed\)/,
+    'a body that is valid JSON but not an object gets through again — every route reads fields off it');
+  assert.match(server, /err\.badRequest/, 'nothing turns a bad body into a 400 response');
 });

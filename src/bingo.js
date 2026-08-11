@@ -19,7 +19,7 @@
  * silently ignored, because a false alarm is half the fun in a room.
  */
 
-import { cleanTeamName, isSafeId, newId, rememberRemoved, wasRemoved, forgetRemoved } from './engine.js';
+import { cleanTeamName, isSafeId, newId, newToken, ownsPlayer, MAX_PLAYERS, rememberRemoved, wasRemoved, forgetRemoved } from './engine.js';
 
 export const BINGO_PHASES = {
   LOBBY: 'lobby',
@@ -231,13 +231,18 @@ export class BingoGame {
 
   // ----------------------------------------------------------------- players
 
-  join({ playerId, name }) {
+  join({ playerId, name, token = '' }) {
     const at = this.now();
     // Same reasoning as the quiz: joining again clears a previous removal.
     if (playerId) forgetRemoved(this.state, playerId);
-    const existing = playerId && this.state.players[playerId];
+    // And the same rule about proof: an id is not a credential. Here it also
+    // guards the CARD — somebody else's id would otherwise hand over which
+    // squares they have, which is the one thing bingo has to keep straight.
+    const claimed = playerId && this.state.players[playerId];
+    const existing = claimed && ownsPlayer(claimed, token) ? claimed : null;
 
     if (existing) {
+      if (!existing.token) existing.token = newToken();
       // Same phone, same card. There is no path here that issues a new one.
       existing.connected = true;
       existing.lastSeenAt = at;
@@ -247,9 +252,14 @@ export class BingoGame {
       return existing;
     }
 
-    const id = playerId && isSafeId(playerId) ? playerId : newId();
+    if (Object.keys(this.state.players).length >= MAX_PLAYERS) {
+      return { id: '', name: '', full: true };
+    }
+
+    const id = playerId && isSafeId(playerId) && !this.state.players[playerId] ? playerId : newId();
     const player = {
       id,
+      token: newToken(),
       name: cleanTeamName(name) || 'Team ' + (Object.keys(this.state.players).length + 1),
       card: this.uniqueCardFor(id),
       marks: new Array(this.squareCount).fill(false),
