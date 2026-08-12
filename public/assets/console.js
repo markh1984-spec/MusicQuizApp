@@ -539,6 +539,10 @@ function render() {
   runningEl.textContent = aNightIsOn(running)
     ? `Now: ${running.title} (${running.playerCount} in)`
     : '';
+  // Rebuilt on every render rather than once: the join code arrives with the
+  // library, and which links you get depends on the tier you are previewing.
+  const nav = document.getElementById('navSlot');
+  if (nav) nav.innerHTML = navBar();
 
   const active = currentTab();
   const live = Boolean(running && running.phase !== 'lobby' && running.phase !== 'finished');
@@ -706,7 +710,6 @@ function accountSection() {
   wrap.appendChild(youPanel());
   wrap.appendChild(roomPanel());
   wrap.appendChild(libraryPanel());
-  wrap.appendChild(linksPanel());
   return wrap;
 }
 
@@ -1306,28 +1309,45 @@ const dedupe = (list) => [...new Set(list)];
  * is worth having precisely because you do not want to remember which page
  * each of them was on five minutes before a gig.
  */
-function linksPanel() {
+/**
+ * The other screens, in the topbar, on every tab.
+ *
+ * This replaces an "Everything else" panel that did the same job at the bottom
+ * of My account — which is the right list in the wrong place: you want it five
+ * minutes before a gig, and it was four taps and a scroll away on the tab you
+ * visit least. One bar, next to the logo, present wherever you are.
+ *
+ * WHAT IT DELIBERATELY DOES NOT REPLACE is "Take control" on the running
+ * panel. That one is not navigation — it only exists when a night is on, it is
+ * the primary button, and it is the thing that was reported missing twice for
+ * being a small grey link. A chip in a bar is "go there"; that button is "your
+ * night is running, take it". Losing the second to tidy up the first would be
+ * the same mistake in a new place.
+ *
+ * `screenLink()` rather than `linkTo()` for the projector, because the key
+ * says who you are and says nothing about whose projector you want — see the
+ * note on that function. Both it and the join page open in a NEW TAB: they are
+ * the other windows of the same night, not somewhere you go instead.
+ */
+function navBar() {
   const running = library.running || {};
   // `library.joinCode` first: `running` is absent until something is launched,
   // and the join link is most wanted BEFORE a night rather than during one.
   const code = library.joinCode || running.joinCode || '';
   const play = code ? `/play?g=${encodeURIComponent(code)}` : '/play';
-
-  const el = node(`
-    <div class="panel">
-      <h3>Everything else</h3>
-      <div class="acct-links">
-        ${canRun('quiz') ? `<a class="minor" href="${esc(linkTo('/host'))}">Your control view</a>` : ''}
-        ${canRun('quiz') ? `<a class="minor" href="${esc(screenLink())}" target="_blank" rel="noopener">The big screen</a>` : ''}
-        ${canRun('quiz') ? `<a class="minor" href="${esc(play)}" target="_blank" rel="noopener">The join page${code ? ` (${esc(code)})` : ''}</a>` : ''}
-        ${can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS) ? `<a class="minor" href="${esc(linkTo('/editor'))}">My packs</a>` : ''}
-        ${me && me.role === 'owner' ? '<a class="minor" href="/owner">The owner console</a>' : ''}
-
-      </div>
-
-    </div>`);
-
-  return el;
+  const links = [];
+  // An owner runs no nights, so there is no control view or projector of
+  // theirs to open — the same test the running panel uses.
+  if (canRun('quiz') || canRun('bingo')) {
+    links.push(`<a href="${esc(linkTo('/host'))}">Control</a>`);
+    links.push(`<a href="${esc(screenLink())}" target="_blank" rel="noopener">Big screen</a>`);
+    links.push(`<a href="${esc(play)}" target="_blank" rel="noopener">Join page</a>`);
+  }
+  if (can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS)) {
+    links.push(`<a href="${esc(linkTo('/editor'))}">Packs</a>`);
+  }
+  if (me && me.role === 'owner') links.push('<a href="/owner">Owner</a>');
+  return links.join('');
 }
 
 /**

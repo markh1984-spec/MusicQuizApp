@@ -1375,8 +1375,11 @@ body.console::after { display: none; }
 /* ---- the one-button generator on the console */
 .panel.generate { border-color: rgba(255, 46, 136, 0.4); background: rgba(255, 46, 136, 0.07); }
 .gen-row { display: flex; gap: 10px; }
+/* `min-width: 0`, or the theme box refuses to go below the width of its own
+   placeholder and pushes Write it off the side of a 320px phone — the same
+   fault, in a second place, that made the control view scroll sideways. */
 .gen-row input {
-  flex: 1 1 auto; padding: 13px 14px; font-size: var(--fs-field); font-weight: 600;
+  flex: 1 1 auto; min-width: 0; padding: 13px 14px; font-size: var(--fs-field); font-weight: 600;
   border-radius: 10px; border: 1px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.08); color: var(--ink);
 }
@@ -1760,6 +1763,25 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
    with it, which is what the hat switch does. */
 .console .topbar #brandSlot { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
 
+/* The other screens, next to the logo, on every tab.
+   Quiet on purpose: these are the way OUT of the page, and the page's own
+   loud things — Launch, Take control, Write it — have to stay the loudest.
+   They wear the lit half's gradient only on hover, so the bar reads as a row
+   of doors rather than as five buttons competing with the one that matters. */
+.console .topnav { display: flex; align-items: center; gap: 6px; flex: 0 1 auto; min-width: 0; }
+.console .topnav a {
+  padding: 6px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--panel-line);
+  color: var(--ink-dim);
+  text-decoration: none;
+  font-size: var(--fs-mini);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.console .topnav a:hover { color: var(--ink); border-color: var(--hot); }
+.console .topnav a:active { transform: scale(0.96); }
+
 /* The control view's bar puts the brand above the "where am I" line, with the
    way back to the console on the end of that row — top of the screen, and a
    long way from the fixed action bar at the bottom that drives the night, so
@@ -1812,6 +1834,20 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
 
 @media (max-width: 430px) {
   .console .brand-name { font-size: var(--fs-field); }
+  /* On a phone the bar cannot hold the logo, five doors, the hat switch and a
+     sign-out on one line, so the doors take a line of their own underneath —
+     the same shape the control view's bar already uses. They SCROLL sideways
+     rather than wrapping to a third line: the topbar is sticky, so a bar that
+     grew a row would eat the top of the page on every tab all night. */
+  .console .topbar { flex-wrap: wrap; row-gap: 8px; }
+  .console .topnav {
+    order: 9;
+    flex: 1 1 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .console .topnav::-webkit-scrollbar { display: none; }
 }
 
 /* ---- renaming from the read sheet
