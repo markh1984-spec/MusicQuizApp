@@ -3688,3 +3688,48 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 
 /* Sign out belongs in the furniture, not four panels down a settings page. */
 .topbar-out { margin-left: 10px; }
+
+/* ---- The launch bar: the fast way to start a night.
+ *
+ * Deliberately the loudest thing on the page when nothing is running, and gone
+ * entirely when something is — the top of the console answers one question at
+ * a time, and mid-game that question is "what is on the projector".
+ */
+.launchbar { border-color: rgba(255, 46, 136, 0.35); }
+.lb-find { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+.lb-game { flex: 0 0 auto; }
+.lb-search { position: relative; flex: 1 1 260px; min-width: 200px; }
+.lb-text {
+  width: 100%; padding: 13px 14px; font: inherit; font-size: 17px;
+  color: inherit; background: var(--panel); border: 1px solid var(--panel-line);
+  border-radius: 10px;
+}
+.lb-text:focus { outline: none; border-color: var(--hot); }
+
+/* The matches, over the page rather than pushing it about — a list that shoved
+   everything down on every keystroke would move the button you are aiming for. */
+.lb-hits {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 40;
+  display: grid; gap: 2px; padding: 6px;
+  background: var(--bg-2, #14141f); border: 1px solid var(--panel-line);
+  border-radius: 10px; box-shadow: var(--shadow);
+}
+.lb-hit {
+  text-align: left; padding: 11px 12px; font: inherit; font-weight: 700;
+  color: inherit; background: none; border: none; border-radius: 8px; cursor: pointer;
+}
+.lb-hit:hover, .lb-hit:focus { background: rgba(255, 255, 255, 0.09); outline: none; }
+
+.lb-set { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0 10px; }
+/* Big, because it is pressed in a dark room by somebody who is late.
+ * The gradient is written out here rather than inherited: the app's `.go`
+ * fill is scoped to `.pack-card .go`, so a Launch button anywhere else came
+ * out grey — which on the loudest control on the page reads as disabled. */
+.lb-go {
+  width: 100%; padding: 18px; font-size: 19px; font-weight: 900;
+  border: none; border-radius: 12px; cursor: pointer;
+  font-family: inherit; letter-spacing: 0.01em; color: #12000c;
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
+}
+.lb-go:hover { filter: brightness(1.08); }
+.lb-go:disabled { opacity: 0.4; cursor: default; filter: none; }

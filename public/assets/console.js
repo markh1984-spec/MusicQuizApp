@@ -567,12 +567,27 @@ function render() {
     : '';
 
   const active = currentTab();
+  const live = Boolean(running && running.phase !== 'lobby' && running.phase !== 'finished');
 
   mainEl.replaceChildren(
     ...(backupWarning(library.generation || {}) || []),
     ...doneBanner(),
     ...firstOwnerPanel(),
     ...otherRoomsPanel(library.otherRooms || []),
+    /*
+     * The launch bar sits ABOVE the running panel, and only when nothing is
+     * live — because those two are the same slot answering opposite
+     * questions. Mid-game the top of the page is "what is on the projector
+     * and how do I drive it"; the rest of the time it is "get me started".
+     *
+     * This is also what fixes the complaint that Stop does not appear to do
+     * anything. It always did — every player and every score is cleared — but
+     * the same big panel stayed on screen with the pack's name on it, because
+     * a session ALWAYS has a pack loaded (`boot()` falls back to one so the
+     * projector is never blank). Nothing to unload; the panel was just
+     * describing a loaded pack as though it were a running night.
+     */
+    live ? node('<div></div>') : launchBar(),
     runningPanel(running),
     tabBar(active),
     tabBody(active),
@@ -2204,6 +2219,147 @@ async function generate(panel) {
  * because "a quiz is running" and "they are twelve seconds into round 2
  * question 4" are very different things to walk in on.
  */
+
+/**
+ * LAUNCH — the fast path, at the top of every tab.
+ *
+ * The pack cards are for browsing. This is for the other case, which is the
+ * one that happens under pressure: you know exactly what you are running, you
+ * are late, the room is filling, and you want it on the projector. Type "198",
+ * pick it, press the big button.
+ *
+ * **It carries the launch SETTINGS rather than skipping them**, and that is
+ * the whole design problem it had to solve. A launch is not one button: a quiz
+ * takes a look, and a bingo game takes a look, a card shape and how many
+ * prizes — and the card shape is explicitly a decision about tonight rather
+ * than a property of the pack. A big Launch that quietly used the pack's own
+ * defaults would be wrong for every bingo night. So the controls appear IN the
+ * bar for whichever pack is chosen, which is one copy in one place rather than
+ * a second set living somewhere else.
+ *
+ * Launching itself goes through `doLaunch()`, the same function the pack cards
+ * call, so the guard against launching over somebody's live game cannot be
+ * fixed in one place and left rotting in the other.
+ */
+function launchBar() {
+  // An owner runs no nights, so there is nothing here for them — same reason
+  // the running panel hides itself.
+  if (!can(FEATURES.QUIZ) && !can(FEATURES.BINGO)) return node('<div></div>');
+
+  // Only the games this account can actually run, so the dropdown never offers
+  // something that would be refused. It is a dropdown rather than two boxes
+  // because a third game is a matter of time — see LAUNCHERS in session.js.
+  const games = TABS
+    .filter((t) => t.packs && t.needs && can(t.needs))
+    .map((t) => ({ id: t.id, label: t.label, packs: (t.packs() || []).filter((p) => !p.locked && !p.broken) }))
+    .filter((g) => g.packs.length);
+  if (!games.length) return node('<div></div>');
+
+  const el = node(`
+    <div class="panel launchbar">
+      <h3>Launch</h3>
+      <div class="lb-find">
+        ${games.length > 1 ? `<select class="lb-game">
+          ${games.map((g) => `<option value="${esc(g.id)}">${esc(g.label)}</option>`).join('')}
+        </select>` : ''}
+        <div class="lb-search">
+          <input class="lb-text" type="search" autocomplete="off" placeholder="Start typing a pack name…">
+          <div class="lb-hits" hidden></div>
+        </div>
+      </div>
+      <div class="lb-chosen" hidden></div>
+    </div>`);
+
+  const gamePick = el.querySelector('.lb-game');
+  const text = el.querySelector('.lb-text');
+  const hits = el.querySelector('.lb-hits');
+  const chosen = el.querySelector('.lb-chosen');
+  const gameOf = () => games.find((g) => g.id === (gamePick ? gamePick.value : games[0].id)) || games[0];
+
+  /*
+   * Matches on the TITLE only, unlike the pack-tab search which looks inside
+   * the questions. Different job: that one is "find me a pack with Madonna in
+   * it", this one is "I know what it is called, get me there". Searching the
+   * contents here would put four packs under "198" because one of them has a
+   * question about 1984.
+   */
+  const paintHits = () => {
+    const q = text.value.trim().toLowerCase();
+    const list = q ? gameOf().packs.filter((p) => (p.title || '').toLowerCase().includes(q)).slice(0, 6) : [];
+    hits.hidden = !list.length;
+    hits.replaceChildren(...list.map((p) => {
+      const row = node(`<button class="lb-hit" type="button">${esc(p.title)}</button>`);
+      row.addEventListener('click', () => pick(p));
+      return row;
+    }));
+  };
+
+  function pick(pack) {
+    text.value = pack.title;
+    hits.hidden = true;
+    const kind = gameOf().id;
+    const bingo = kind === 'bingo';
+    chosen.hidden = false;
+    // ONE root element. `node()` returns the first child, so a template with a
+    // sibling after it silently loses the sibling — which here was the Launch
+    // button, the only thing on the panel that does anything.
+    chosen.replaceChildren(node(`
+      <div>
+      <div class="lb-set">
+        ${bingo ? `
+          <label class="pack-shape">Card
+            <select class="shape-pick">${shapeOptions(pack)}</select>
+          </label>
+          <label class="pack-shape">Prizes
+            <select class="prize-pick"></select>
+          </label>` : ''}
+        <label class="pack-shape">Look
+          <select class="look-pick">${lookOptions(pack)}</select>
+        </label>
+      </div>
+      <button class="go lb-go">Launch ${esc(pack.title)}</button>
+      </div>`));
+
+    // The same prize list the pack card builds, from the shape actually picked.
+    const shapePick = chosen.querySelector('.shape-pick');
+    const prizePick = chosen.querySelector('.prize-pick');
+    const paintPrizes = () => {
+      if (!shapePick || !prizePick) return;
+      const want = JSON.parse(shapePick.value);
+      const found = ((library && library.cardShapes) || [])
+        .find((sh) => sh.rows === want.rows && sh.cols === want.cols);
+      if (!found) return;
+      prizePick.innerHTML = found.plans
+        .map((plan, i) => `<option value="${i + 1}">${i + 1} — ${esc(plan.join(', then '))}</option>`).join('');
+    };
+    shapePick?.addEventListener('change', paintPrizes);
+    paintPrizes();
+
+    chosen.querySelector('.lb-go').addEventListener('click', async (ev) => {
+      const button = ev.currentTarget;
+      button.disabled = true;
+      button.textContent = 'Launching…';
+      await doLaunch(kind, pack.id, {
+        shape: shapePick ? JSON.parse(shapePick.value) : null,
+        prizes: Number(prizePick?.value) || 0,
+        look: chosen.querySelector('.look-pick')?.value || '',
+      }, button);
+    });
+  }
+
+  text.addEventListener('input', paintHits);
+  text.addEventListener('focus', paintHits);
+  // Enter takes the top match, because a keyboard is faster than a thumb and
+  // somebody in a hurry will press it.
+  text.addEventListener('keydown', (ev) => {
+    if (ev.key !== 'Enter') return;
+    const first = hits.querySelector('.lb-hit');
+    if (first) { ev.preventDefault(); first.click(); }
+  });
+  gamePick?.addEventListener('change', () => { chosen.hidden = true; paintHits(); });
+  return el;
+}
+
 function runningPanel(running) {
   if (!running) return node('<div></div>');
   // An owner runs no nights, so there is no night of theirs to show or stop.
@@ -2215,7 +2371,7 @@ function runningPanel(running) {
   const who = `${running.playerCount} playing`;
   const el = node(`
     <div class="panel running ${live ? 'live' : ''}">
-      <h3>${live ? 'Running now' : 'Loaded and waiting'}</h3>
+      <h3>${live ? 'Running now' : 'Loaded, nobody playing'}</h3>
       <div class="running-row">
         <div>
           <div class="running-title">${esc(running.title)}</div>
@@ -3038,9 +3194,22 @@ function packCard(kind, pack) {
     const shape = picked ? JSON.parse(picked.value) : null;
     const prizes = Number(el.querySelector('.prize-pick')?.value) || 0;
     const look = el.querySelector('.look-pick')?.value || '';
+    await doLaunch(kind, pack.id, { shape, prizes, look }, button);
+  });
+  return el;
+}
+
+/**
+ * Actually launch — the ONE path, whichever button was pressed.
+ *
+ * There are two ways in now (a pack card, and the launch bar at the top) and
+ * there must not be two ways OUT, or the 409-and-confirm dance gets fixed in
+ * one of them and quietly rots in the other.
+ */
+async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '' }, button) {
     const send = (replace) => postJson(
       '/api/host/launch',
-      { game: kind, packId: pack.id, shape, prizes, look, ...(replace ? { replace: true } : {}) },
+      { game: kind, packId, shape, prizes, look, ...(replace ? { replace: true } : {}) },
       { 'X-Host-Key': hostKey },
     );
     const back = () => {
@@ -3080,8 +3249,6 @@ function packCard(kind, pack) {
       back();
       alert('Could not launch: ' + err.message);
     }
-  });
-  return el;
 }
 
 /**
