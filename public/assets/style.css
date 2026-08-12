@@ -3335,7 +3335,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   font-weight: 700;
   cursor: pointer;
 }
-.cam-hint { text-align: center; opacity: 0.75; margin-bottom: 8px; }
+.cam-hint { text-align: center; opacity: 0.75; margin: 0 0 8px; }
 /* touch-action none so dragging a prop does not scroll the sheet under it —
    without this the picture slides away the moment a finger moves. */
 .cam-frame .cam-canvas { touch-action: none; }

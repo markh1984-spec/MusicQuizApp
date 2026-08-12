@@ -265,8 +265,13 @@ function openCamera() {
             <span>Stick something on</span>
             <button class="cam-undo" hidden>Take it off</button>
           </div>
+          <!-- ABOVE the tray, not below it. It was underneath, which meant
+               scrolling past three dozen tiles to find out what to do with
+               them. And it is one line: HOLD is the only gesture here that is
+               not already in somebody's fingers, the bin explains itself by
+               appearing mid-drag, and a wall of instructions gets skipped. -->
+          <div class="cam-hint tiny">Tap to add. Hold to drag it about, pinch to size it.</div>
           <div class="cam-props"></div>
-          <div class="cam-hint tiny">Tap one to add it, or hold to drag it where you want. Pinch to size it, drop it on the bin to take it off.</div>
           <button class="cam-send">Send it up</button>
         </div>
         <div class="tiny cam-status"></div>
