@@ -350,6 +350,43 @@ It promotes, in order:
 
 And it demotes anything that only makes the app cleverer.
 
+### The fifth constraint: MONDAY, and what a feature actually costs
+
+Stated by the host on 12 August 2026 and it is context every design decision
+here sits inside. **He runs three businesses and has one admin day a week.**
+Monday is when the inbox is read, the replies go out, the topical pack is
+generated and read through, and app changes get made.
+
+**It is a boundary that BUYS the turnaround rather than costing it**, and that
+is his own framing: *"it's actually not a function of laziness. It's a function
+of wanting to be as good as possible."* A week is fast for software — most
+companies take three — and a stated weekly cadence that is kept beats an
+unstated "when we get to it" by a distance. What makes it keepable is not
+working harder on Monday; it is Monday not being swamped.
+
+So the rule that falls out, and it is the one to apply when weighing anything
+new:
+
+> **A feature's real price is the ADMIN IT CREATES ON A MONDAY, not the code it
+> takes to write.**
+
+That is the thread running through a lot of what is already built, and it is
+worth seeing them as one system rather than as separate conveniences: the
+draft-reply button, the inbox that gets shorter when you answer something, the
+queue position on pack requests, the been-opened receipt, the "one open request
+at a time" limit, the refusal to add an email service. **Every one of them is a
+Monday-load reducer.**
+
+Two things follow:
+
+- **Anything needing DAILY attention is a bad fit for this business**, however
+  good the idea. The weekly topical pack fits because its cadence already IS
+  Monday's. An emergency support channel does not — see the suggestion-box
+  notes, where that was argued and turned down.
+- **A feature that generates a QUEUE somebody has to work is expensive; one
+  that serves itself is cheap.** When a new proposal creates a pile, the first
+  question is whether the pile can be made to shrink on its own.
+
 ---
 
 ## The two shelves have names now: **My packs** and **Quizporium packs**
