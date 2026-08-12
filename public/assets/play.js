@@ -13,9 +13,9 @@
  *    makes googling an answer that bit harder.
  */
 
-import { esc, node, ServerClock, Live, postJson, brandMark, brandWords, roomCode, roomParam, rememberRoom } from './client.js';
+import { esc, node, ServerClock, Live, postJson, brandMark, brandWords, roomCode, roomParam, rememberRoom, binIcon } from './client.js';
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
-import { FILTERS, drawFiltered, toJpeg } from './filters.js';
+import { drawFiltered, toJpeg } from './filters.js';
 import { STICKERS, stickerSvg, drawStickers, stickerAt, placed, preloadStickers } from './stickers.js';
 import { paintLook, DEFAULT_LOOK } from './looks.js';
 import { paintScheme } from './schemes.js';
@@ -239,17 +239,17 @@ function openCamera() {
         <div class="cam-stage" hidden>
           <div class="cam-frame">
             <canvas class="cam-canvas"></canvas>
+            <!-- Only ever on screen while something is being dragged, which is
+                 the only moment it means anything. Drawn, not an emoji — some
+                 phones render the bin as a cheerful basket. -->
+            <div class="cam-bin" hidden></div>
           </div>
           <div class="cam-looks-head">
             <span>Stick something on</span>
             <button class="cam-undo" hidden>Take it off</button>
           </div>
           <div class="cam-props"></div>
-          <div class="cam-hint tiny">Tap one, then drag it about. Pinch to make it bigger.</div>
-          <details class="cam-colour">
-            <summary>Change the colour instead</summary>
-            <div class="cam-filters"></div>
-          </details>
+          <div class="cam-hint tiny">Drag one onto the picture. Pinch to size it. Drag it to the bin to take it off.</div>
           <button class="cam-send">Send it up</button>
         </div>
         <div class="tiny cam-status"></div>
@@ -263,53 +263,36 @@ function openCamera() {
   const input = sheet.querySelector('input[type=file]');
   const stage = sheet.querySelector('.cam-stage');
   const canvas = sheet.querySelector('.cam-canvas');
-  const chips = sheet.querySelector('.cam-filters');
   const props = sheet.querySelector('.cam-props');
   const undoBtn = sheet.querySelector('.cam-undo');
+  const bin = sheet.querySelector('.cam-bin');
   const sendBtn = sheet.querySelector('.cam-send');
   const status = sheet.querySelector('.cam-status');
 
   let source = null;
-  let chosen = 'none';
+  /*
+   * The photo is drawn through `drawFiltered` with no look on it.
+   *
+   * The COLOUR GRADING IS GONE — see CLAUDE.md. It was folded away behind
+   * "change the colour instead" and it was still a second thing to find on a
+   * panel whose whole job is the funny props. `drawFiltered(..., 'none')` is
+   * kept as the draw path rather than replaced with a bare drawImage, because
+   * it is the one place the sizing is worked out and the preview and the
+   * upload go through the same function so they cannot drift.
+   */
+  const PLAIN = 'none';
   // The props on the photo, in the order they were added. Positions are
   // fractions of the picture, never pixels — see stickers.js.
   let stuckOn = [];
 
   const repaint = () => {
     if (!source) return;
-    drawFiltered(canvas, source, chosen);
+    drawFiltered(canvas, source, PLAIN);
     // Awaited nowhere: the props are cached images after the first draw, so
     // this settles within a frame and dragging stays smooth.
     drawStickers(canvas, stuckOn);
-    for (const chip of chips.children) chip.classList.toggle('on', chip.dataset.id === chosen);
     undoBtn.hidden = stuckOn.length === 0;
   };
-
-  /*
-   * Every look, as a thumbnail of their own photo.
-   *
-   * It was a scrolling row of grey pills, and the host went through the whole
-   * thing on his own phone without noticing it was there — three of the seven
-   * were off the right-hand edge with nothing to say so. Now they all fit, and
-   * each one shows what it does rather than naming it. Same maths as the big
-   * preview and the upload, just drawn small, so nothing can drift.
-   */
-  const paintThumbs = () => {
-    if (!source) return;
-    for (const chip of chips.children) {
-      drawFiltered(chip.querySelector('canvas'), source, chip.dataset.id, 120);
-    }
-  };
-
-  for (const f of FILTERS) {
-    const chip = node(`
-      <button class="cam-chip" data-id="${f.id}">
-        <canvas></canvas>
-        <span>${esc(f.label)}</span>
-      </button>`);
-    chip.addEventListener('click', () => { chosen = f.id; repaint(); });
-    chips.appendChild(chip);
-  }
 
   /*
    * The props.
@@ -324,10 +307,29 @@ function openCamera() {
   for (const s of STICKERS) {
     const chip = node(`
       <button class="cam-prop" data-id="${s.id}" title="${esc(s.label)}" aria-label="${esc(s.label)}">
-        ${stickerSvg(s.id)}
+        <span class="cam-prop-art">${stickerSvg(s.id)}</span>
+        <span class="cam-prop-name">${esc(s.label)}</span>
       </button>`);
-    chip.addEventListener('click', async () => {
-      stuckOn.push(placed(s.id));
+    /*
+     * ONE GESTURE, not two. It used to be tap-then-drag: the prop landed in the
+     * middle and you dragged it from there, which is two movements for one
+     * intention and reads as the tile having done nothing.
+     *
+     * `pointerdown` on a tile creates the prop and hands it straight to the
+     * drag code, so it follows the thumb out of the tray and onto the face in
+     * one go. A TAP still works and still centres it — see `fromTray` below:
+     * nothing moves until the thumb has travelled far enough to mean it, so a
+     * tap and a drag are told apart by the finger rather than by a mode.
+     */
+    chip.addEventListener('pointerdown', (e) => {
+      if (!source) return;
+      e.preventDefault();
+      const prop = placed(s.id);
+      stuckOn.push(prop);
+      dragging = prop;
+      fromTray = { x: e.clientX, y: e.clientY, moved: false };
+      pointers.set(e.pointerId, spotOf(e));
+      chip.setPointerCapture(e.pointerId);
       if (navigator.vibrate) navigator.vibrate(12);
       repaint();
     });
@@ -350,6 +352,9 @@ function openCamera() {
   let dragging = null;
   let pinchFrom = 0;
   let sizeFrom = 0;
+  // Set while a drag that STARTED on a tray tile is still deciding whether it
+  // is a drag at all. Cleared the moment the thumb has moved far enough.
+  let fromTray = null;
 
   const spotOf = (e) => {
     const box = canvas.getBoundingClientRect();
@@ -358,6 +363,22 @@ function openCamera() {
   const gap = () => {
     const [a, b] = [...pointers.values()];
     return Math.hypot(a.x - b.x, a.y - b.y);
+  };
+
+  /*
+   * The bin, and it only exists while something is in the air.
+   *
+   * `binIcon()` rather than a word or an emoji — the rule the host's photo grid
+   * taught: anything that deletes shows a bin, and every phone draws the emoji
+   * one differently. It is shown on the first MOVE rather than on pointerdown,
+   * so a tap to place a prop never flashes a bin at you.
+   */
+  bin.innerHTML = binIcon(26);
+  const overBin = (e) => {
+    if (bin.hidden) return false;
+    const box = bin.getBoundingClientRect();
+    return e.clientX >= box.left && e.clientX <= box.right
+      && e.clientY >= box.top && e.clientY <= box.bottom;
   };
 
   canvas.addEventListener('pointerdown', (e) => {
@@ -378,11 +399,29 @@ function openCamera() {
     }
   });
 
-  canvas.addEventListener('pointermove', (e) => {
+  /*
+   * Move and release are on the WINDOW, not the canvas.
+   *
+   * A drag that starts on a tray tile has to keep working as the thumb travels
+   * up onto the picture — two elements, one gesture. Listening on the window
+   * means the drag belongs to the pointer rather than to whatever it happens to
+   * be over, which is also what makes dragging off the edge of the canvas and
+   * onto the bin work at all.
+   */
+  window.addEventListener('pointermove', (e) => {
     if (!pointers.has(e.pointerId)) return;
     e.preventDefault();
     pointers.set(e.pointerId, spotOf(e));
     if (!dragging) return;
+
+    // Straight off a tile: leave it where it was dropped until the thumb has
+    // travelled far enough to be a drag rather than a tap. Below that, a tap
+    // still means "put it in the middle", exactly as it always did.
+    if (fromTray) {
+      if (Math.hypot(e.clientX - fromTray.x, e.clientY - fromTray.y) < 8) return;
+      fromTray = null;
+    }
+    if (bin.hidden) bin.hidden = false;
 
     if (pointers.size >= 2 && pinchFrom > 0) {
       const scale = gap() / pinchFrom;
@@ -394,16 +433,31 @@ function openCamera() {
       dragging.x = Math.max(-0.2, Math.min(1.2, spot.x));
       dragging.y = Math.max(-0.2, Math.min(1.2, spot.y));
     }
+    bin.classList.toggle('over', overBin(e));
     repaint();
   });
 
   const letGo = (e) => {
+    if (!pointers.has(e.pointerId)) return;
+    // Dropped on the bin: that prop goes, and only that one. `Take it off`
+    // still removes the last one added, which is the different job of undoing
+    // something you have only just done.
+    if (dragging && overBin(e)) {
+      stuckOn = stuckOn.filter((s) => s !== dragging);
+      if (navigator.vibrate) navigator.vibrate([8, 40, 8]);
+    }
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinchFrom = 0;
-    if (pointers.size === 0) dragging = null;
+    if (pointers.size === 0) {
+      dragging = null;
+      fromTray = null;
+      bin.hidden = true;
+      bin.classList.remove('over');
+    }
+    repaint();
   };
-  canvas.addEventListener('pointerup', letGo);
-  canvas.addEventListener('pointercancel', letGo);
+  window.addEventListener('pointerup', letGo);
+  window.addEventListener('pointercancel', letGo);
 
   input.addEventListener('change', () => {
     const file = input.files && input.files[0];
@@ -416,7 +470,6 @@ function openCamera() {
       stage.hidden = false;
       status.textContent = '';
       repaint();
-      paintThumbs();
     };
     img.onerror = () => { status.textContent = 'That did not look like a photo.'; };
     img.src = URL.createObjectURL(file);
@@ -431,10 +484,10 @@ function openCamera() {
       // Redrawn full size rather than sent as the preview: the preview canvas
       // is however big the phone is, and the projector deserves the real thing.
       // Same functions as the preview, so what they saw is what goes up.
-      drawFiltered(canvas, source, chosen, 1280);
+      drawFiltered(canvas, source, PLAIN, 1280);
       await drawStickers(canvas, stuckOn);
       const blob = await toJpeg(canvas);
-      const res = await fetch(`/api/photo?playerId=${encodeURIComponent(me.id)}&filter=${encodeURIComponent(chosen)}${roomParam()}`, {
+      const res = await fetch(`/api/photo?playerId=${encodeURIComponent(me.id)}&filter=${encodeURIComponent(PLAIN)}${roomParam()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'image/jpeg' },
         body: blob,

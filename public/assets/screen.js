@@ -152,7 +152,11 @@ function paintTheLook(s) {
  * moments in a row, not three pictures fighting over the middle of the screen,
  * so they queue.
  */
-const BIG_PHOTO_MS = 3600;
+// How long a photo HOLDS before it starts going. The 520ms it takes to arrive
+// is inside this, so it is a little over three seconds of sitting there being
+// looked at, then most of a second fading. Longer than it was: the host said
+// it was gone before the room had finished reacting to it.
+const BIG_PHOTO_MS = 4400;
 const bigQueue = [];
 let bigShowing = false;
 const seenPhotos = new Set();
@@ -175,6 +179,17 @@ function nextBigPhoto() {
         ${p.teamName ? `<figcaption>${esc(p.teamName)}</figcaption>` : ''}
       </figure>
     </div>`);
+  /*
+   * A different angle every time, so a run of them reads as a pile of prints
+   * dropped on a table rather than as a slideshow in a frame.
+   *
+   * Six degrees each way and no more: past that it stops looking casual and
+   * starts looking like the projector is broken, and the picture loses height
+   * on a screen where filling the height is the whole point. The tilt is a
+   * custom property because the entry and exit keyframes have to carry it
+   * through — animating `transform` without it would snap the photo straight.
+   */
+  el.style.setProperty('--tilt', (Math.random() * 12 - 6).toFixed(2) + 'deg');
   document.querySelector('.stage').appendChild(el);
 
   // Fade out on its own, then hand over to whoever is behind it in the queue.

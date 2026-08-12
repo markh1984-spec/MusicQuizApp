@@ -2004,27 +2004,6 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   font-size: 13px; font-weight: 800; letter-spacing: 0.06em;
   text-transform: uppercase; color: var(--gold);
 }
-.cam-filters {
-  display: grid; gap: 8px;
-  grid-template-columns: repeat(4, 1fr);
-}
-.cam-chip {
-  cursor: pointer; padding: 0; overflow: hidden;
-  border-radius: 12px; background: rgba(255, 255, 255, 0.06);
-  border: 2px solid transparent;
-  font: inherit; color: var(--ink-dim);
-  display: block; text-align: center;
-}
-.cam-chip canvas {
-  display: block; width: 100%; height: 54px;
-  object-fit: cover; background: #000;
-}
-.cam-chip span {
-  display: block; padding: 5px 2px;
-  font-size: 10px; font-weight: 700; line-height: 1.1;
-}
-.cam-chip.on { border-color: var(--hot-2); color: var(--ink); }
-.cam-chip.on span { background: linear-gradient(140deg, var(--hot), var(--hot-2)); color: #fff; }
 .cam-send {
   width: 100%; padding: 16px; cursor: pointer;
   font: inherit; font-size: 17px; font-weight: 900;
@@ -3066,39 +3045,59 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   pointer-events: none;
   z-index: 3;
   background: radial-gradient(60% 60% at 50% 50%, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.35));
-  animation: photo-big-in 520ms cubic-bezier(0.2, 1.1, 0.4, 1);
+  animation: photo-big-fade 420ms ease;
 }
+/* A POLAROID: white all round, deep at the bottom, and tilted a few degrees.
+   The frame is what makes a phone snap read as a keepsake from the night
+   rather than as a picture the projector happened to put up — and the tilt
+   makes a run of them look like prints dropped on a table.
+
+   The angle comes from JS as `--tilt`, and every transform here has to carry
+   it: leave it out of a keyframe and the photo snaps square halfway through. */
 .photo-big figure {
   margin: 0;
-  border-radius: 20px;
-  overflow: hidden;
-  background: var(--panel);
-  border: 3px solid var(--panel-line);
-  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.7);
+  padding: 1.6vh 1.6vh 0;
+  background: #f7f5ef;
+  border-radius: 4px;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.75), 0 2px 0 rgba(255, 255, 255, 0.6) inset;
+  transform: rotate(var(--tilt, 0deg));
+  animation: photo-big-in 520ms cubic-bezier(0.2, 1.1, 0.4, 1);
 }
 /* Tall rather than wide: a phone photo is portrait, and filling the height is
-   what makes it read from the back of a room. */
+   what makes it read from the back of a room. A touch shorter than it was, to
+   pay for the frame without the whole thing growing. */
 .photo-big img {
   display: block;
-  max-height: 66vh;
-  max-width: 78vw;
+  max-height: 60vh;
+  max-width: 74vw;
   object-fit: contain;
+  background: #241f1a;
 }
+/* The wide bottom lip is the half that says "polaroid". The name sits in it,
+   dark on white, because a caption in the app's own light-on-dark would read
+   as a label stuck over the print rather than written on it. */
 .photo-big figcaption {
-  padding: 1.4vh 2vw;
-  font-size: 3.4vh;
-  font-weight: 900;
+  padding: 1.1vh 0 1.9vh;
+  font-family: 'Segoe Print', 'Bradley Hand', 'Comic Sans MS', cursive;
+  font-size: 3.2vh;
+  font-weight: 700;
   text-align: center;
+  color: #241f1a;
 }
-.photo-big.going { animation: photo-big-out 900ms ease forwards; }
+.photo-big.going { animation: photo-big-fade 900ms ease reverse forwards; }
+.photo-big.going figure { animation: photo-big-out 900ms ease forwards; }
 
+@keyframes photo-big-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
 @keyframes photo-big-in {
-  from { opacity: 0; transform: scale(0.88); }
-  to   { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: rotate(var(--tilt, 0deg)) scale(0.86); }
+  to   { opacity: 1; transform: rotate(var(--tilt, 0deg)) scale(1); }
 }
 @keyframes photo-big-out {
-  from { opacity: 1; transform: scale(1); }
-  to   { opacity: 0; transform: scale(1.04); }
+  from { opacity: 1; transform: rotate(var(--tilt, 0deg)) scale(1); }
+  to   { opacity: 0; transform: rotate(var(--tilt, 0deg)) scale(1.05); }
 }
 
 /* The strip underneath, a size up. It was small enough that a face in it was
@@ -3109,10 +3108,14 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 
 /* Props to stick on a photo. The row people actually wanted — the colour looks
    are still there, folded away underneath. */
+/* As many across as fit, rather than a fixed count — there are two dozen props
+   now and a hard number is wrong on either a 320px phone or a wide one. All of
+   them stay on screen and the panel scrolls: a row that scrolls SIDEWAYS is how
+   the whole feature went unnoticed the first time. */
 .cam-props {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(66px, 1fr));
+  gap: 6px;
   margin-bottom: 6px;
 }
 /* A MID-GREY tile, not the page's own dark panel.
@@ -3121,18 +3124,61 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
    slab each is nine white blocks shouting on a dark phone, so it is a mid tone
    that both the black shapes and the yellow crown stand out against. */
 .cam-prop {
-  aspect-ratio: 1;
-  padding: 6px;
+  padding: 6px 3px 4px;
   border-radius: 12px;
   border: 1px solid var(--panel-line);
   background: #8b91a6;
   cursor: pointer;
   display: grid;
-  place-items: center;
+  gap: 2px;
+  justify-items: center;
   -webkit-tap-highlight-color: transparent;
 }
+/* NAMED as well as drawn, unlike the colour looks — those were replaced by a
+   thumbnail of your own photo because a name told you nothing. A prop is the
+   other way round: at this size a monobrow and a moustache are the same dark
+   smear, and a beard reads as a shield. */
+.cam-prop-art { display: block; width: 100%; aspect-ratio: 1; }
+.cam-prop-name {
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #1b1e28;
+  text-align: center;
+}
+/* A tile is DRAGGED off, so the browser must not claim the gesture for
+   scrolling the sheet — without this the prop never leaves the tray on a
+   phone, which is the whole change. */
+.cam-prop { touch-action: none; }
 .cam-prop:active { transform: scale(0.94); }
-.cam-prop svg { width: 100%; height: 100%; display: block; }
+.cam-prop-art svg { width: 100%; height: 100%; display: block; }
+
+/* The bin, over the picture, only while something is in the air. It sits
+   bottom-right because that is furthest from where a face usually is — a
+   target you have to drag TOWARDS cannot be hit by accident on the way
+   somewhere else. */
+.cam-frame { position: relative; }
+.cam-bin {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: rgba(10, 10, 18, 0.72);
+  border: 2px dashed rgba(255, 255, 255, 0.45);
+  color: var(--ink);
+  pointer-events: none;
+  z-index: 2;
+}
+.cam-bin.over {
+  background: var(--bad);
+  border-style: solid;
+  border-color: var(--bad);
+  transform: scale(1.12);
+}
 .cam-looks-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .cam-undo {
   padding: 4px 10px;
@@ -3149,15 +3195,6 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 /* touch-action none so dragging a prop does not scroll the sheet under it —
    without this the picture slides away the moment a finger moves. */
 .cam-frame .cam-canvas { touch-action: none; }
-.cam-colour { margin-bottom: 10px; }
-.cam-colour summary {
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink-dim);
-  padding: 6px 0;
-}
-.cam-colour .cam-filters { margin-top: 6px; }
 
 /* "Something wrong with this one?" on the control view.
    Deliberately quiet and full width at the bottom of the answer key, nowhere
