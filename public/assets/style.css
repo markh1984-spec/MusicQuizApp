@@ -3305,7 +3305,13 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .cam-prop-art svg { width: 100%; height: 100%; display: block; }
 
 .cam-frame { position: relative; }
-.cam-looks-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+/* CENTRED, and Undo lifted out of the flow to keep it that way.
+   It was `space-between`, so the heading sat left when Undo was showing and
+   jumped to the middle the moment the last prop came off — a heading that
+   moves when you press something else reads as a fault. Absolute puts the
+   button on the right without it having a vote on where the words sit. */
+.cam-looks-head { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.cam-looks-head .cam-undo { position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
 /* Tonight's look gets the top row and says which night it is, in the gold the
    rest of the panel's headings use. Only ever on screen when the game carries
    a look — an ordinary quiz sees the tray it always saw. */
@@ -3322,25 +3328,43 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   font-weight: 700;
   cursor: pointer;
 }
-/* Four gestures as a 2x2 BLOCK rather than a sentence.
+/* Four gestures as a 2x2 BLOCK of CHIPS rather than a sentence.
    Written as one line of prose it broke wherever the phone happened to run out
    of room — "pinch to size" on one line and "and turn" on the next, with a
-   short ragged line under it. Wrapped as chunks it was better but still landed
-   three-and-one on a 320px phone. Two fixed columns is even at every width,
-   and an instruction can never be split down the middle. */
-/* AND IT NEEDS ITS OWN SIZE. `.tiny` has a size on the console and on the
+   short ragged line under it. Wrapped as bare chunks it was even but looked
+   like four pieces of text floating over the tray with nothing holding them.
+
+   `1fr` columns rather than `auto`: with `auto` each column sizes to its own
+   longest chunk, so "Tap to add" got a chip half the width of the one beside
+   it and the block read as four different objects. Equal columns and equal
+   rows (`grid-auto-rows: 1fr`) make four identical cards, which is the whole
+   point of giving them a background.
+
+   AND IT NEEDS ITS OWN FONT SIZE. `.tiny` has a size on the console and on the
    control view and has never had one on the phone, so the hint was coming out
    at body size — as big as the question text, three lines of it, shouting
    above a tray of props. */
 .cam-hint {
   display: grid;
-  grid-template-columns: repeat(2, auto);
+  grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: 1fr;
+  gap: 6px;
+  max-width: 380px;
+  margin: 0 auto 10px;
+  font-size: 12px;
+  line-height: 1.3;
+}
+.cam-hint span {
+  display: flex;
+  align-items: center;
   justify-content: center;
-  font-size: 13px;
-  line-height: 1.4;
-  gap: 2px 18px;
-  opacity: 0.75;
-  margin: 0 0 8px;
+  padding: 7px 6px;
+  border-radius: 10px;
+  border: 1px solid var(--panel-line);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--ink-dim);
+  font-weight: 700;
+  text-align: center;
 }
 /* touch-action none so dragging a prop does not scroll the sheet under it —
    without this the picture slides away the moment a finger moves. */
