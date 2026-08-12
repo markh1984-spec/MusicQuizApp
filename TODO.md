@@ -886,6 +886,85 @@ One thing it quietly fixes later: if topical content is what sells Silver, other
 people writing topical rounds — for their own regions, their own crowds — is
 worth more than one person can produce.
 
+#### Revisited 12 August 2026 — the pricing, and the bug in it
+
+Raised again with a specific shape: **Bronze pays the full £3, Silver and Gold
+pay half, and the owner takes no cut on a discounted sale** — the reasoning
+being that a subscriber is already paying, so taking a second bite is
+double-dipping.
+
+**The tiered price is right and should be kept.** It is a reason to climb the
+ladder that does not rot as the shelf grows, and it answers the objection that
+a marketplace erodes Silver: Silver stops being "everything included" and
+becomes "my catalogue included, everything else half price", which is honest,
+sayable, and still worth £20.
+
+**But "no cut from subscribers" as stated means the WRITER funds the discount.**
+At a 50% share, Rob keeps £1.50 from a Bronze sale and £0.75 from a Silver one —
+so he earns half as much from the buyer the owner is working hardest to create,
+over a pricing decision he had no say in and cannot see. It degrades as the
+business succeeds: the better the upsell works, the less writers earn per sale.
+A good writer works that out, and the programme is then hard to defend.
+
+**Fix: fix the WRITER's amount per sale and let the owner's cut absorb the
+discount.** Rob gets the same whoever buys; Bronze leaves the owner a margin,
+Silver leaves none. That is exactly the intent — no second bite from a
+subscriber — with the arithmetic pointed the right way.
+
+| Buyer | Pays | Owner keeps | Writer keeps |
+|---|---|---|---|
+| Bronze | £3.00 | £1.50 | £1.50 |
+| Silver / Gold | £1.50 | £0.00 | £1.50 |
+
+**And note what per-sale accounting did within two messages of being proposed:
+it produced a fairness rule that had to be decided.** Next are co-authors,
+withdrawal, a Christmas discount, and a ledger that has to stay right for people
+who have left. **A flat fee per ACCEPTED PACK avoids all of it** — pricing stays
+entirely the owner's business, the writer has certainty on the day they press
+Release, and there is nothing to maintain. At this scale the difference is
+pocket change: a pack selling twenty copies is £30. Start flat; revisit per-sale
+only if a writer asks for the upside.
+
+**Credit versus cash is a SEPARATE axis from flat versus per-sale**, and the
+argument for credit above still stands — no payouts, no bank details, no
+self-assessment, no processor fees outbound. Its one limit is saturation: a
+prolific writer earns more credit than their subscription costs and it stops
+motivating. So: **credit first, cash only when somebody actually saturates**,
+which defers the finance function until there is evidence it is needed.
+
+**PRIVATE BY DEFAULT, RELEASED ONLY BY THE AUTHOR — and that framing is the
+best part of the proposal.** A quizmaster writes for themselves and keeps the
+lot; releasing a pack is a deliberate act by the person who wrote it. This does
+not weaken the structural privacy at all (no route takes a room parameter, so
+no id reaches another room's folder) — it adds a door the author opens from
+their own side, which is the same shape as support access.
+
+Two things to say at the button rather than in terms:
+
+- **Release is one-way, and it goes to competitors.** A released pack is sold to
+  every subscriber, including quizmasters working the same towns. That has to be
+  on screen at the moment of pressing, not buried.
+- **Once accepted it cannot be quietly withdrawn**, because by then it has been
+  read and possibly bought.
+
+**A company account is a DIFFERENT FEATURE and was bundled into the same
+sentence.** "£70 a month, two sub-accounts" is seats and shared billing — see
+**Group accounts** below, which already has the resolution order worked out. It
+touches billing and therefore the unbuilt payment processor. **The writer
+programme touches none of that**: the money flows OUT, which is a bank transfer
+against an invoice, and the invoicing already exists. So the writer programme is
+buildable first and independently. Rob can be a solo Gold subscriber and still
+write for the catalogue.
+
+On the £70 itself: two seats at £35 against two Golds at £60 charges £10 for the
+company layer. Arithmetically fine, thin as a pitch on its own — revisit once it
+is known what a two-person quiz company actually wants shared.
+
+**The ratio to keep an eye on.** Half price fixes most of the Silver erosion but
+not all of it. If quizmaster-written packs ever substantially outnumber the
+owner's own, a Silver subscriber is looking at a shelf where most things still
+cost money. Reword the Silver pitch before somebody notices, not after.
+
 ### PayPal — the half that is built, and the half that is blocked
 
 **Subscriptions rather than invoices**, on your own reasoning: chasing ten
