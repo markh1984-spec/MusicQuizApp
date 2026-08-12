@@ -262,12 +262,12 @@ function openCamera() {
           </div>
           <div class="cam-looks-head cam-season-head" hidden>
             <span class="cam-season-name"></span>
-            <button class="cam-undo cam-undo-top" hidden>Take it off</button>
+            <button class="cam-undo cam-undo-top" hidden>Undo</button>
           </div>
           <div class="cam-props cam-props-season" hidden></div>
           <div class="cam-looks-head">
             <span>Stick something on</span>
-            <button class="cam-undo" hidden>Take it off</button>
+            <button class="cam-undo" hidden>Undo</button>
           </div>
           <!-- ABOVE the tray, not below it. It was underneath, which meant
                scrolling past three dozen tiles to find out what to do with
@@ -538,10 +538,16 @@ function openCamera() {
       /*
        * DOUBLE-TAP A PROP TO TAKE IT OFF.
        *
-       * This is the only way to remove one, and it used to share the job with
-       * a bin you dragged onto. A drop target has to live somewhere, and
+       * This is how you remove a CHOSEN prop, and it used to share the job
+       * with a bin you dragged onto. A drop target has to live somewhere, and
        * anywhere on the picture is a corner you can no longer use — see the
        * note above the drag handlers.
+       *
+       * The button beside the heading is not the same job and no longer
+       * pretends to be. It said "Take it off", which reads as "remove that
+       * one" and actually removed the last one ADDED — so somebody wanting
+       * rid of the moustache reached for the obvious control and lost the
+       * crown instead. It says "Undo" now, which is what it does.
        *
        * A SINGLE tap deliberately does nothing. The host's photo grid used to
        * delete a picture on one tap with nothing on screen saying so, and that
