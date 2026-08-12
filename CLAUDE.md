@@ -1586,8 +1586,10 @@ correct it faster than he will answer a question about it.
 
 - **Minimum context.** No reasoning, no background, no options, no "worth
   knowing". He has the context; he wrote it.
-- **URLs, verbatim and clickable.** He is following them, not reading about
-  them.
+- **URLs, ALWAYS AS LINKS.** Never a bare path or a "go to Settings" when a URL
+  exists — he is clicking them, not reading about them. Deep-link as far in as
+  the site allows, and give the full `https://…` so it is clickable in a
+  terminal.
 - **Very succinct.** A step is a line. A list is a list.
 - **YES or NO where a yes or no is possible.** Do not soften it into a
   paragraph, and do not add the caveat unless acting on it would break
