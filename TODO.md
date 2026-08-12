@@ -139,6 +139,50 @@ the risk too.
 
 ---
 
+## MARKETING **MARK, THE JOBBING QUIZMASTER** — the third list
+
+Winning and keeping his OWN venue bookings. Set up on 12 August 2026 after an
+argument I lost: I said this was the same job the app does for any subscriber
+and should be served by the quizmaster list. It is not, for three reasons.
+
+**Most of it is not software.** Walking into pubs, the local Facebook groups,
+what he charges, his own socials, who he knows. A feature list cannot hold any
+of that, and filing it under one means it never gets done.
+
+**It runs on a different clock.** His own bookings pay the bills this month.
+The subscriber features are a longer game. Two things with different urgency
+in one list means the urgent one eats the important one, or the other way
+round — and either is bad.
+
+**And the real reason: it keeps the conflict of interest visible.** He is both
+the app's owner and its first customer, so anything built "for a quizmaster"
+can quietly turn out to be built for HIM. That has already happened once and he
+caught it himself — *"I only want the photos export feature on my account,
+perhaps in future if I want features that only I use put them in the owner
+console"*. A separate list is what makes that visible next time: if an item
+only ever appears here, it is not a product feature.
+
+### What belongs here
+
+- **Where his own bookings come from**, and which of them repeat. Nothing in
+  the app knows this today.
+- **What he charges**, and how that compares to what a venue makes on the
+  night. The advert-QR count feeds this argument directly.
+- **His own socials and word of mouth** — the parts no feature touches.
+- **Being the first user of everything on the quizmaster marketing list.** He
+  is the only person who can find out whether "The Crown went from 22 to 58"
+  actually wins a booking, before it is sold to anybody as a reason to
+  subscribe.
+
+### The test that keeps the lists apart
+
+**If it only ever helps Mark, it belongs here and probably not in the app. If
+it would help Rob, it belongs on the quizmaster list and should be built as a
+feature.** Anything that lands here twice and turns out to be general is a
+product feature that was wearing a disguise.
+
+---
+
 ## MARKETING **FOR THE APP** — the words, and the shop window
 
 **The other marketing list.** This one is about selling Quiztopia to
@@ -146,9 +190,7 @@ quizmasters: what the words mean, what a night is, and the page somebody reads
 before they pay. Not to be confused with **MARKETING FOR QUIZMASTERS** above,
 which is features that help a subscriber sell to venues.
 
-(A third list will eventually be needed — marketing for MARK, the quizmaster,
-selling his own nights. That is the same job the app does for any subscriber,
-so it should be served by the list above rather than by a special case.)
+(The third list is **MARKETING MARK, THE JOBBING QUIZMASTER**, below.)
 
 Raised on 11 August 2026 and parked deliberately, because it is a thinking job
 rather than a build and it was midnight. It is also the highest-value item on
