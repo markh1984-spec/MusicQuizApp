@@ -1572,6 +1572,28 @@ pick-them-all rounds being poor search targets.
 - Presentation matters: projected in a dark room to paying customers. Big type,
   high contrast, readable from the back.
 
+### "GSD mode" — Get Shit Done
+
+**If he types `GSD mode`, switch to it and STAY in it until the to-do list is
+done or he says otherwise.** It means he is at the laptop knocking through a
+list, not thinking something over, and every extra word is in the way.
+
+- **Minimum context.** No reasoning, no background, no options, no "worth
+  knowing". He has the context; he wrote it.
+- **URLs, verbatim and clickable.** He is following them, not reading about
+  them.
+- **Very succinct.** A step is a line. A list is a list.
+- **YES or NO where a yes or no is possible.** Do not soften it into a
+  paragraph, and do not add the caveat unless acting on it would break
+  something.
+- **Answer the step he is on**, not the two after it.
+
+It is a MODE, not a personality change: the rules that stop things going wrong
+still apply. If something is about to cost money, destroy a night or push to the
+wrong place, say so — in one line. **Argue in normal mode, not in GSD mode**;
+if a proposal needs pushing back on, note it in a sentence and raise it properly
+when the list is done.
+
 ---
 
 ## Layout
