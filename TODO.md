@@ -7,13 +7,212 @@ if a step does not go smoothly.
 
 ---
 
-## MARKETING **FOR QUIZMASTERS** — features that help THEM sell
+# The three marketing lists, in priority order
 
-**Two marketing lists, and they are not the same thing.** This one is features
-inside the app that help a subscriber win and keep venue bookings. The other —
-selling Quiztopia to quizmasters — is **MARKETING FOR THE APP**, further down.
-Keep them apart: they have different audiences, different deadlines, and
-mixing them is how a sales page ends up describing a feature nobody has.
+Set on 12 August 2026. **One, two, three — and the order is deliberate.**
+
+1. **Mark getting work as a quizmaster.** It pays the bills this month, and
+   everything else is downstream of it: a founder who is not running nights
+   cannot demo the product, cannot test a feature against a real room, and has
+   nothing to show a venue or a subscriber.
+2. **Selling the app to quizmasters.** No subscribers, no business.
+3. **Features that help quizmasters sell to venues.** The thing that keeps
+   subscribers once they are here, which is a problem you have to earn.
+
+**This does NOT contradict design rule 4** ("build what helps a quizmaster
+sell"). That rule orders FEATURES against each other inside the app. This
+orders where the effort goes. A feature from list 3 still beats a feature that
+only makes the app cleverer.
+
+**And the top item of list 3 serves list 1 anyway.** Headcount per venue —
+"The Crown went from 22 to 58" — is how MARK proves his own worth to a
+landlord, before it is ever a selling point for anybody else. So it stays near
+the front by a different route, and it gets built because he needs it rather
+than because a subscriber asked. That is the dogfooding argument working as
+intended.
+
+---
+
+## 1 · MARKETING **MARK, THE JOBBING QUIZMASTER**
+
+Winning and keeping his OWN venue bookings, and **the first of the three**.
+Set up on 12 August 2026 after an argument I lost: I said this was the same job
+the app does for any subscriber and should be served by the quizmaster list. It
+is not, for three reasons.
+
+**Most of it is not software.** Walking into pubs, the local Facebook groups,
+what he charges, his own socials, who he knows. A feature list cannot hold any
+of that, and filing it under one means it never gets done.
+
+**It runs on a different clock.** His own bookings pay the bills this month.
+The subscriber features are a longer game. Two things with different urgency
+in one list means the urgent one eats the important one, or the other way
+round — and either is bad.
+
+**And the real reason: it keeps the conflict of interest visible.** He is both
+the app's owner and its first customer, so anything built "for a quizmaster"
+can quietly turn out to be built for HIM. That has already happened once and he
+caught it himself — *"I only want the photos export feature on my account,
+perhaps in future if I want features that only I use put them in the owner
+console"*. A separate list is what makes that visible next time: if an item
+only ever appears here, it is not a product feature.
+
+### What belongs here
+
+- **Where his own bookings come from**, and which of them repeat. Nothing in
+  the app knows this today.
+- **What he charges**, and how that compares to what a venue makes on the
+  night. The advert-QR count feeds this argument directly.
+- **His own socials and word of mouth** — the parts no feature touches.
+- **Being the first user of everything on the quizmaster marketing list.** He
+  is the only person who can find out whether "The Crown went from 22 to 58"
+  actually wins a booking, before it is sold to anybody as a reason to
+  subscribe.
+
+### The test that keeps the lists apart
+
+**If it only ever helps Mark, it belongs here and probably not in the app. If
+it would help Rob, it belongs on the quizmaster list and should be built as a
+feature.** Anything that lands here twice and turns out to be general is a
+product feature that was wearing a disguise.
+
+---
+
+## 2 · MARKETING **FOR THE APP** — the words, and the shop window
+
+**Second of the three.** Selling Quiztopia to quizmasters: what the words
+mean, what a night is, and the page somebody reads before they pay. No
+subscribers, no business — but it comes after Mark has nights to point at,
+because a founder who is not running quizzes has nothing to show.
+
+(The third list is **MARKETING MARK, THE JOBBING QUIZMASTER**, below.)
+
+Raised on 11 August 2026 and parked deliberately, because it is a thinking job
+rather than a build and it was midnight. It is also the highest-value item on
+this list, because everything downstream of it — the pricing page, what an
+advertiser is sold, what a subscriber thinks they are buying — is decided by
+the words.
+
+### 1. The words are settled INSIDE the app and nowhere else
+
+CLAUDE.md already pins **pack**, **quiz**, **bingo game** and **round**, and
+those hold up in the code. What has no name at all is the thing being sold to
+a venue: **a night.**
+
+The app has no object called a night. It has games, and it has an archive
+entry per evening, and Past gigs merges them with a 6am roll-over — but
+nothing in the data model says "this was the Thursday at The Crown". So:
+
+- **An advertiser is buying a NIGHT, not a quiz.** "Your slide, every
+  Thursday at The Crown, in front of 60 people" is the sentence that sells.
+  The app cannot currently say any part of it.
+- **A quizmaster wants to name and edit a night afterwards** — which venue,
+  how many were in, how it went. Asked for explicitly. The invoice book
+  already holds customers with addresses, so the venue list EXISTS; a night
+  should pick from it rather than inventing a second list of venues.
+- That one change turns Past gigs from a list of dates into the thing a
+  quizmaster shows a venue they are pitching to, which is what it was built
+  for in the first place.
+
+**Do the data model before the marketing.** A night with a venue on it is
+what makes the advertising pitch true; writing the pitch first means writing
+a promise the app cannot keep.
+
+### 2. Advertising is a Silver/Gold economic argument, and it is under-sold
+
+The advert slides sit at Silver on the reasoning that they win the QUIZMASTER
+a booking rather than being part of the show. That still holds — but the
+commercial size of it has never been worked out, and the host thinks it is
+significant. Worth answering properly:
+
+- What does a venue pay for a slide, and who bills it — the quizmaster or the
+  owner? Today the quizmaster does, and the app is not in that transaction at
+  all.
+- Does the owner ever take a cut? The QR-to-ticket-sales idea in CLAUDE.md
+  says yes for some slides, which is a different arrangement from a venue
+  promoting its own pizza.
+- Is "reach" sellable? Nights × players is a number the app already has.
+
+### 3. A website that sells this AS A QUIZMASTER SOLUTION
+
+There is none. There is an app and a login, and the only way in is somebody
+being handed an account by hand. What a prospective subscriber needs to see
+before they will pay:
+
+- **What a night looks like** — projector, phones, the reveal. Screenshots or
+  a thirty-second video, not prose.
+- **What they get for the money**, in the ladder's own words: Bronze buys
+  packs, Silver includes them, Gold is a fresh topical quiz every week.
+- **Proof it is run by somebody who does this for a living**, which is the
+  differentiator against a generic quiz app. Past gigs is that proof.
+- **The honest limits**, because a quizmaster who buys and then finds out is
+  a refund and a bad review: they cannot generate their own packs, and the
+  starter set is eight.
+
+Note what this implies and is NOT built: a signup flow, a payment processor
+and a public marketing page. See "Pay-per-pack is deliberately NOT built" in
+CLAUDE.md — the data model is ready, the money is not.
+
+### 4. An FAQ, so the app can stay short
+
+Every blurb in the app is now one line — "Invoicing: bill a venue before you
+leave the car park" — because fourteen of them at two sentences each is a wall
+nobody reads, and a ladder nobody reads is a ladder that sells nothing.
+
+That only works if the detail lives somewhere. It does not yet. An FAQ is
+where "what happens to my packs if I cancel", "can you read my quizzes",
+"what does a pack cost and why" and "what is a night" get answered properly —
+and it is the same content the sales site needs, so write it once.
+
+Note what it is NOT: a manual. The app should not need one. It is the page
+somebody reads before they pay, and the page they are pointed at when a
+one-line blurb was not enough.
+
+### 5. Four things raised on the console, none of them built
+
+Parked together because each is a design decision rather than a tweak, and
+three of the four are really about what a NIGHT is — which is item 1 above.
+
+- **A "Launch" tab.** Everything needed to run a night in one place: pick the
+  pack, the look, the card shape, the prizes, the big screen, the control
+  view. Today those are spread across a pack card, a running panel and the
+  links panel. Worth doing — the case against is that a tab you use once an
+  evening sits in the bar all week, and the running panel already appears at
+  the top of every tab when something is live. Decide after a few real nights.
+
+- **Past gigs: what should a night actually record?** Today it is the date,
+  the packs played and the photos. Obvious additions, in order of value to a
+  quizmaster pitching for work: the VENUE, how many played, who won, and what
+  it was invoiced for. All of it exists somewhere in the app already — the
+  player count is in the archive, the invoice is in the invoice book — so
+  this is mostly a joining-up job once a night is a real object.
+
+- **Invoicing, two directions.** Today it is quizmaster → venue. The other
+  shape is a pub or a quiz company that has hired a quizmaster per gig, where
+  the sub-account invoices the main account. That is an AGENCY model and it
+  needs a relationship between accounts that does not exist — it is the same
+  object as the company folder sketched under Group accounts. Do not build the
+  invoicing half before the accounts half.
+
+- **"Got in my way" as a suggestion kind.** Questioned, and worth keeping:
+  friction is the most useful feedback there is and the least likely to be
+  sent, because nobody files a bug about something that merely annoyed them.
+  Naming it as a category is what gives somebody permission. Revisit if it
+  turns out nobody ever picks it.
+
+### Where to start
+
+The words, then the night object, then the page and the FAQ together. In that
+order, because each one is the input to the next and doing them the other way
+round means writing the page twice.
+
+---
+## 3 · MARKETING **FOR QUIZMASTERS** — features that help THEM sell
+
+**Third of the three, and that is not the same as unimportant.** This is what
+keeps subscribers once they are here — a problem you have to earn by getting
+some. Note that its top item, headcount per venue, serves list 1 as well, so it
+gets built early by a different route.
 
 Design rule 4 says build what helps a quizmaster win the next booking. This is
 that list, in the order it should be built, worked out on 12 August 2026.
@@ -139,179 +338,6 @@ the risk too.
 
 ---
 
-## MARKETING **MARK, THE JOBBING QUIZMASTER** — the third list
-
-Winning and keeping his OWN venue bookings. Set up on 12 August 2026 after an
-argument I lost: I said this was the same job the app does for any subscriber
-and should be served by the quizmaster list. It is not, for three reasons.
-
-**Most of it is not software.** Walking into pubs, the local Facebook groups,
-what he charges, his own socials, who he knows. A feature list cannot hold any
-of that, and filing it under one means it never gets done.
-
-**It runs on a different clock.** His own bookings pay the bills this month.
-The subscriber features are a longer game. Two things with different urgency
-in one list means the urgent one eats the important one, or the other way
-round — and either is bad.
-
-**And the real reason: it keeps the conflict of interest visible.** He is both
-the app's owner and its first customer, so anything built "for a quizmaster"
-can quietly turn out to be built for HIM. That has already happened once and he
-caught it himself — *"I only want the photos export feature on my account,
-perhaps in future if I want features that only I use put them in the owner
-console"*. A separate list is what makes that visible next time: if an item
-only ever appears here, it is not a product feature.
-
-### What belongs here
-
-- **Where his own bookings come from**, and which of them repeat. Nothing in
-  the app knows this today.
-- **What he charges**, and how that compares to what a venue makes on the
-  night. The advert-QR count feeds this argument directly.
-- **His own socials and word of mouth** — the parts no feature touches.
-- **Being the first user of everything on the quizmaster marketing list.** He
-  is the only person who can find out whether "The Crown went from 22 to 58"
-  actually wins a booking, before it is sold to anybody as a reason to
-  subscribe.
-
-### The test that keeps the lists apart
-
-**If it only ever helps Mark, it belongs here and probably not in the app. If
-it would help Rob, it belongs on the quizmaster list and should be built as a
-feature.** Anything that lands here twice and turns out to be general is a
-product feature that was wearing a disguise.
-
----
-
-## MARKETING **FOR THE APP** — the words, and the shop window
-
-**The other marketing list.** This one is about selling Quiztopia to
-quizmasters: what the words mean, what a night is, and the page somebody reads
-before they pay. Not to be confused with **MARKETING FOR QUIZMASTERS** above,
-which is features that help a subscriber sell to venues.
-
-(The third list is **MARKETING MARK, THE JOBBING QUIZMASTER**, below.)
-
-Raised on 11 August 2026 and parked deliberately, because it is a thinking job
-rather than a build and it was midnight. It is also the highest-value item on
-this list, because everything downstream of it — the pricing page, what an
-advertiser is sold, what a subscriber thinks they are buying — is decided by
-the words.
-
-### 1. The words are settled INSIDE the app and nowhere else
-
-CLAUDE.md already pins **pack**, **quiz**, **bingo game** and **round**, and
-those hold up in the code. What has no name at all is the thing being sold to
-a venue: **a night.**
-
-The app has no object called a night. It has games, and it has an archive
-entry per evening, and Past gigs merges them with a 6am roll-over — but
-nothing in the data model says "this was the Thursday at The Crown". So:
-
-- **An advertiser is buying a NIGHT, not a quiz.** "Your slide, every
-  Thursday at The Crown, in front of 60 people" is the sentence that sells.
-  The app cannot currently say any part of it.
-- **A quizmaster wants to name and edit a night afterwards** — which venue,
-  how many were in, how it went. Asked for explicitly. The invoice book
-  already holds customers with addresses, so the venue list EXISTS; a night
-  should pick from it rather than inventing a second list of venues.
-- That one change turns Past gigs from a list of dates into the thing a
-  quizmaster shows a venue they are pitching to, which is what it was built
-  for in the first place.
-
-**Do the data model before the marketing.** A night with a venue on it is
-what makes the advertising pitch true; writing the pitch first means writing
-a promise the app cannot keep.
-
-### 2. Advertising is a Silver/Gold economic argument, and it is under-sold
-
-The advert slides sit at Silver on the reasoning that they win the QUIZMASTER
-a booking rather than being part of the show. That still holds — but the
-commercial size of it has never been worked out, and the host thinks it is
-significant. Worth answering properly:
-
-- What does a venue pay for a slide, and who bills it — the quizmaster or the
-  owner? Today the quizmaster does, and the app is not in that transaction at
-  all.
-- Does the owner ever take a cut? The QR-to-ticket-sales idea in CLAUDE.md
-  says yes for some slides, which is a different arrangement from a venue
-  promoting its own pizza.
-- Is "reach" sellable? Nights × players is a number the app already has.
-
-### 3. A website that sells this AS A QUIZMASTER SOLUTION
-
-There is none. There is an app and a login, and the only way in is somebody
-being handed an account by hand. What a prospective subscriber needs to see
-before they will pay:
-
-- **What a night looks like** — projector, phones, the reveal. Screenshots or
-  a thirty-second video, not prose.
-- **What they get for the money**, in the ladder's own words: Bronze buys
-  packs, Silver includes them, Gold is a fresh topical quiz every week.
-- **Proof it is run by somebody who does this for a living**, which is the
-  differentiator against a generic quiz app. Past gigs is that proof.
-- **The honest limits**, because a quizmaster who buys and then finds out is
-  a refund and a bad review: they cannot generate their own packs, and the
-  starter set is eight.
-
-Note what this implies and is NOT built: a signup flow, a payment processor
-and a public marketing page. See "Pay-per-pack is deliberately NOT built" in
-CLAUDE.md — the data model is ready, the money is not.
-
-### 4. An FAQ, so the app can stay short
-
-Every blurb in the app is now one line — "Invoicing: bill a venue before you
-leave the car park" — because fourteen of them at two sentences each is a wall
-nobody reads, and a ladder nobody reads is a ladder that sells nothing.
-
-That only works if the detail lives somewhere. It does not yet. An FAQ is
-where "what happens to my packs if I cancel", "can you read my quizzes",
-"what does a pack cost and why" and "what is a night" get answered properly —
-and it is the same content the sales site needs, so write it once.
-
-Note what it is NOT: a manual. The app should not need one. It is the page
-somebody reads before they pay, and the page they are pointed at when a
-one-line blurb was not enough.
-
-### 5. Four things raised on the console, none of them built
-
-Parked together because each is a design decision rather than a tweak, and
-three of the four are really about what a NIGHT is — which is item 1 above.
-
-- **A "Launch" tab.** Everything needed to run a night in one place: pick the
-  pack, the look, the card shape, the prizes, the big screen, the control
-  view. Today those are spread across a pack card, a running panel and the
-  links panel. Worth doing — the case against is that a tab you use once an
-  evening sits in the bar all week, and the running panel already appears at
-  the top of every tab when something is live. Decide after a few real nights.
-
-- **Past gigs: what should a night actually record?** Today it is the date,
-  the packs played and the photos. Obvious additions, in order of value to a
-  quizmaster pitching for work: the VENUE, how many played, who won, and what
-  it was invoiced for. All of it exists somewhere in the app already — the
-  player count is in the archive, the invoice is in the invoice book — so
-  this is mostly a joining-up job once a night is a real object.
-
-- **Invoicing, two directions.** Today it is quizmaster → venue. The other
-  shape is a pub or a quiz company that has hired a quizmaster per gig, where
-  the sub-account invoices the main account. That is an AGENCY model and it
-  needs a relationship between accounts that does not exist — it is the same
-  object as the company folder sketched under Group accounts. Do not build the
-  invoicing half before the accounts half.
-
-- **"Got in my way" as a suggestion kind.** Questioned, and worth keeping:
-  friction is the most useful feedback there is and the least likely to be
-  sent, because nobody files a bug about something that merely annoyed them.
-  Naming it as a category is what gives somebody permission. Revisit if it
-  turns out nobody ever picks it.
-
-### Where to start
-
-The words, then the night object, then the page and the FAQ together. In that
-order, because each one is the input to the next and doing them the other way
-round means writing the page twice.
-
----
 
 ## WHEN YOU GET BACK — in order
 
