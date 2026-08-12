@@ -200,11 +200,56 @@ three of the four are really about what a NIGHT is — which is item 1 above.
   Naming it as a category is what gives somebody permission. Revisit if it
   turns out nobody ever picks it.
 
+### 6. Email — the one dependency several other things are waiting on
+
+**Raised 12 August 2026 while a password could not be reset.** CLAUDE.md says
+do not add an email service without asking; he asked, and the answer is that it
+belongs HERE rather than in the app's plumbing, because the reason to buy it is
+mostly commercial.
+
+**What it unblocks, and only the first is what prompted it:**
+
+- **Password reset by magic link.** Today the only route is the owner setting a
+  new one by hand and telling them — which is a Monday job, on the one thing
+  somebody needs at the moment they are locked out.
+- **Invoices sent from the app.** They currently go via the phone's share sheet
+  because there is nothing to send them with. That works and was the right call
+  without email; with it, "bill a venue before you leave the car park" gets
+  shorter still.
+- **A reply to a suggestion arriving where they will see it.** `reply-draft.js`
+  drafts and the console shows the thread, but somebody who has not opened the
+  console does not know they have been answered.
+- **Trial ending, card failed, receipt.** All of billing's polite half, which is
+  currently silent.
+- **Anything sent to a VENUE**, which is why it sits in this list — a post-night
+  report, a headcount summary, an invoice. Those are the things that win the
+  next booking, and none of them can be delivered today.
+
+**What it costs:** a transactional provider (Resend, Postmark, SES) at roughly
+£0–15 a month at this volume, plus SPF, DKIM and DMARC records on
+`quizporium.co.uk` — the same Namecheap panel the domain was wired up in.
+**Send from the app's own domain**: a free tier that sends from the provider's
+domain lands in spam, which is worse than no email because it fails silently.
+
+**About half a day.** The token half is nearly free — `newToken()` already
+exists, and a reset token wants the same treatment as a session token: stored
+as a hash, single use, short expiry.
+
+**And it does NOT change the "no email service" rule for AUTOMATIC sending.**
+`reply-draft.js` drafts and never sends, and that stays true — the reason was
+never that there was no transport, it was that a reply going out unread is the
+one that goes publicly wrong. Email gives a Send button somewhere to send TO;
+it does not earn the right to press it on the owner's behalf.
+
 ### Where to start
 
 The words, then the night object, then the page and the FAQ together. In that
 order, because each one is the input to the next and doing them the other way
 round means writing the page twice.
+
+Email is separate from that chain and can be done whenever a Monday has half a
+day in it — but it wants doing before the first venue-facing thing on list 3,
+because those all need something to arrive in an inbox.
 
 ---
 ## 3 · MARKETING **FOR QUIZMASTERS** — features that help THEM sell
