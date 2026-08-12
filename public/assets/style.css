@@ -2009,8 +2009,9 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   font-size: 13px; font-weight: 800; letter-spacing: 0.06em;
   text-transform: uppercase; color: var(--gold);
 }
+/* Directly under the photo, so the top of its own margin is the gap. */
 .cam-send {
-  width: 100%; padding: 16px; cursor: pointer;
+  width: 100%; margin-top: 12px; padding: 16px; cursor: pointer;
   font: inherit; font-size: 17px; font-weight: 900;
   border: 0; border-radius: 14px; color: #fff;
   background: linear-gradient(140deg, var(--hot), var(--hot-2));
@@ -3321,7 +3322,26 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   font-weight: 700;
   cursor: pointer;
 }
-.cam-hint { text-align: center; opacity: 0.75; margin: 0 0 8px; }
+/* Four gestures as a 2x2 BLOCK rather than a sentence.
+   Written as one line of prose it broke wherever the phone happened to run out
+   of room — "pinch to size" on one line and "and turn" on the next, with a
+   short ragged line under it. Wrapped as chunks it was better but still landed
+   three-and-one on a 320px phone. Two fixed columns is even at every width,
+   and an instruction can never be split down the middle. */
+/* AND IT NEEDS ITS OWN SIZE. `.tiny` has a size on the console and on the
+   control view and has never had one on the phone, so the hint was coming out
+   at body size — as big as the question text, three lines of it, shouting
+   above a tray of props. */
+.cam-hint {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  justify-content: center;
+  font-size: 13px;
+  line-height: 1.4;
+  gap: 2px 18px;
+  opacity: 0.75;
+  margin: 0 0 8px;
+}
 /* touch-action none so dragging a prop does not scroll the sheet under it —
    without this the picture slides away the moment a finger moves. */
 .cam-frame .cam-canvas { touch-action: none; }

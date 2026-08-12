@@ -183,13 +183,20 @@ function nextBigPhoto() {
    * A different angle every time, so a run of them reads as a pile of prints
    * dropped on a table rather than as a slideshow in a frame.
    *
-   * Six degrees each way and no more: past that it stops looking casual and
-   * starts looking like the projector is broken, and the picture loses height
-   * on a screen where filling the height is the whole point. The tilt is a
-   * custom property because the entry and exit keyframes have to carry it
-   * through — animating `transform` without it would snap the photo straight.
+   * IT NEVER LANDS NEAR STRAIGHT, which is the whole reason this is not one
+   * `Math.random() * 12 - 6`. A plain range like that gives a photo half a
+   * degree often enough, and half a degree does not read as scrapbook — it
+   * reads as a projector nobody levelled, which is the one impression a tilt
+   * must never give. So a side is picked and the angle is 2.5° to 7° off it:
+   * always obviously deliberate, and never so far that the picture starts
+   * losing height on a screen where filling the height is the point.
+   *
+   * The tilt is a custom property because the entry and exit keyframes have
+   * to carry it through — animating `transform` without it snaps the photo
+   * straight halfway through.
    */
-  el.style.setProperty('--tilt', (Math.random() * 12 - 6).toFixed(2) + 'deg');
+  const lean = (2.5 + Math.random() * 4.5) * (Math.random() < 0.5 ? -1 : 1);
+  el.style.setProperty('--tilt', lean.toFixed(2) + 'deg');
   document.querySelector('.stage').appendChild(el);
 
   // Fade out on its own, then hand over to whoever is behind it in the queue.

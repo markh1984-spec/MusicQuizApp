@@ -129,17 +129,28 @@ const ART = {
     <ellipse cx="50" cy="58" rx="30" ry="26" fill="#20202c"/>
     <ellipse cx="40" cy="48" rx="10" ry="6" fill="#4a4a5e" transform="rotate(-25 40 48)"/>
     <ellipse cx="50" cy="58" rx="30" ry="26" fill="none" stroke="#0b0b12" stroke-width="5"/>`,
+  /*
+   * THE CROWN IS DOMED AT THE TOP, not squared off, and that is the fix for
+   * "the top hat has a bit cut off the top".
+   *
+   * Nothing was ever outside the square — the crown was a plain rect from
+   * y=18, with the hat's top surface drawn as an ellipse centred on that same
+   * y. So the outline ran dead straight across the middle of the ellipse and
+   * sliced the top half of it off: a hat with its lid taken away. The crown
+   * now follows the back half of that ellipse, so the outline IS the top edge
+   * and the ellipse's near half is the opening you look into.
+   */
   'top-hat': `
     <ellipse cx="50" cy="80" rx="43" ry="10" fill="#fff" stroke="#fff" stroke-width="11"/>
-    <path d="M27 18h46v64H27z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M27 20a23 6 0 0 1 46 0v62H27z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
     <ellipse cx="50" cy="80" rx="43" ry="10" fill="#20202c"/>
-    <path d="M27 18h46v62H27z" fill="#20202c"/>
-    <path d="M27 18h13v62H27z" fill="#33334a"/>
+    <path d="M27 20a23 6 0 0 1 46 0v60H27z" fill="#20202c"/>
+    <path d="M27 20a23 6 0 0 1 13-5v65H27z" fill="#33334a"/>
     <path d="M27 56h46v13H27z" fill="#e8123c"/>
     <path d="M27 56h13v13H27z" fill="#ff5470"/>
-    <ellipse cx="50" cy="18" rx="23" ry="6" fill="#3d3d57"/>
+    <ellipse cx="50" cy="20" rx="23" ry="6" fill="#3d3d57"/>
     <ellipse cx="50" cy="80" rx="43" ry="10" fill="none" stroke="#0b0b12" stroke-width="5"/>
-    <path d="M27 18h46v62H27z" fill="none" stroke="#0b0b12" stroke-width="5" stroke-linejoin="round"/>`,
+    <path d="M27 20a23 6 0 0 1 46 0v60H27z" fill="none" stroke="#0b0b12" stroke-width="5" stroke-linejoin="round"/>`,
   'cowboy-hat': `
     <path d="M8 68c14-11 28-7 42-7s28-4 42 7c-11 12-27 17-42 17S19 80 8 68z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
     <path d="M31 64c-3-24 6-46 19-46s22 22 19 46c-11 5-27 5-38 0z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
@@ -454,6 +465,25 @@ const ART = {
     <path d="M15 35c14 7 56 7 70 0-2 7-6 12-10 17-15 6-35 6-50 0-4-5-8-10-10-17z" fill="#ff6b8a"/>
     <path d="M24 30c7-4 17-3 22 4-8-1-16-2-22-4z" fill="#ff96ab"/>
     <path d="M12 32c11-11 30-9 38 4 8-13 27-15 38-4-4 24-21 42-38 46C33 74 16 56 12 32z" fill="none" stroke="#7d0a20" stroke-width="5" stroke-linejoin="round"/>`,
+  /*
+   * Black lipstick, and NOT a darker `kiss-lips` — that one is a pucker blown
+   * at the camera and this is a closed mouth with a cupid's bow, so they read
+   * as two different jokes rather than one prop in two colours.
+   *
+   * The fill is a very dark PLUM rather than true black. Black lipstick on a
+   * black outline is one smear at 66px in a tray, and the whole point of a
+   * label under every tile is that the drawing should still be recognisable
+   * above it. The plum keeps the outline visible and still reads as black on
+   * somebody's face.
+   */
+  'goth-lips': `
+    <path d="M12 46c6-11 13-15 19-12 7 3 12 6 19 6s12-3 19-6c6-3 13 1 19 12-10 15-22 24-38 24S22 61 12 46z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M12 46c6-11 13-15 19-12 7 3 12 6 19 6s12-3 19-6c6-3 13 1 19 12-10 15-22 24-38 24S22 61 12 46z" fill="#1d1424"/>
+    <path d="M14 48c14 6 58 6 72 0-8 14-20 22-36 22S22 62 14 48z" fill="#2e2038"/>
+    <path d="M22 40c5-6 11-8 16-5-6 1-11 3-16 5z" fill="#6d5480"/>
+    <path d="M37 59c9 3 21 3 29-1-2 4-6 8-12 9-8 1-14-3-17-8z" fill="#543d62"/>
+    <path d="M12 46c14 6 62 6 76 0" fill="none" stroke="#080510" stroke-width="5" stroke-linecap="round"/>
+    <path d="M12 46c6-11 13-15 19-12 7 3 12 6 19 6s12-3 19-6c6-3 13 1 19 12-10 15-22 24-38 24S22 61 12 46z" fill="none" stroke="#080510" stroke-width="5" stroke-linejoin="round"/>`,
   'cupid-arrow': `
     <path d="M10 62 90 38" stroke="#fff" stroke-width="19" fill="none" stroke-linecap="round"/>
     <path d="M92 38 72 28l4 11-9 8z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
@@ -597,6 +627,7 @@ export const STICKERS = [
   { id: 'clown-nose', label: 'Clown nose' },
   { id: 'sunglasses', label: 'Shades' },
   { id: 'moustache', label: 'Moustache' },
+  { id: 'goth-lips', label: 'Goth lips' },
   { id: 'party-hat', label: 'Party hat' },
   { id: 'crown', label: 'Crown' },
   { id: 'devil-horns', label: 'Horns' },

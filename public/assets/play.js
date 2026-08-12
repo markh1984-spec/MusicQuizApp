@@ -260,6 +260,13 @@ function openCamera() {
           <div class="cam-frame">
             <canvas class="cam-canvas"></canvas>
           </div>
+          <!-- SEND SITS UNDER THE PHOTO, above everything else.
+               It was last on the sheet, so finishing a photo meant scrolling
+               back past three dozen tiles to find the button — the same fault
+               that put the hint above the tray rather than below it. Here it
+               is always next to the thing it sends, whatever you have just
+               added. -->
+          <button class="cam-send">Send it up</button>
           <div class="cam-looks-head cam-season-head" hidden>
             <span class="cam-season-name"></span>
             <button class="cam-undo cam-undo-top" hidden>Undo</button>
@@ -271,12 +278,21 @@ function openCamera() {
           </div>
           <!-- ABOVE the tray, not below it. It was underneath, which meant
                scrolling past three dozen tiles to find out what to do with
-               them. And it is one line: HOLD is the only gesture here that is
-               not already in somebody's fingers, the bin explains itself by
-               appearing mid-drag, and a wall of instructions gets skipped. -->
-          <div class="cam-hint tiny">Tap to add. Hold to drag, pinch to size and turn, double-tap to delete.</div>
+               them.
+
+               FOUR CHUNKS RATHER THAN A SENTENCE, and each one stays whole.
+               As one line of prose it broke wherever the phone happened to run
+               out of room — "pinch to size" on one line and "and turn" on the
+               next — which reads as a ragged paragraph rather than as a list of
+               gestures. Wrapped as pieces it is even at any width and an
+               instruction can never be split down the middle. -->
+          <div class="cam-hint tiny">
+            <span>Tap to add</span>
+            <span>Hold to drag</span>
+            <span>Pinch to size and turn</span>
+            <span>Double-tap to delete</span>
+          </div>
           <div class="cam-props"></div>
-          <button class="cam-send">Send it up</button>
         </div>
         <div class="tiny cam-status"></div>
       </div>
