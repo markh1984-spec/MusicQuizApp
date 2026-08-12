@@ -3734,6 +3734,18 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .lb-go:hover { filter: brightness(1.08); }
 .lb-go:disabled { opacity: 0.4; cursor: default; filter: none; }
 
+/* The two no-typing picks. Side by side where there is room and stacked on a
+   phone, because the choice is meant to be read in one glance rather than
+   scrolled. They sit BELOW the search box: somebody who knows the pack name
+   types it, and somebody who does not is the person these are for. */
+.lb-quick { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.lb-quick:not(:empty) { margin-top: 12px; }
+.lb-quick-go { display: grid; gap: 3px; padding: 15px 16px; font-size: 17px; }
+.lb-quick-title { font-weight: 900; }
+/* Why this one is being offered, in the button's own dark ink rather than the
+   page's grey — on a gradient fill a `.tiny` grey is close to invisible. */
+.lb-quick-why { font-size: 12px; font-weight: 700; opacity: 0.72; }
+
 /* Who is already in the shared portrait library. Names rather than pictures:
    the job is spotting "michael-jackson" next to "mj", which is a reading job. */
 .pic-lib { margin-top: 10px; }

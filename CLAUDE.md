@@ -797,6 +797,48 @@ all three came from the page being laid out for the person who WRITES packs:
   read their own big screen. It sits next to the player count. The house room
   has no code, so Mark's own control view is unchanged.
 
+### The launch bar's empty state is two packs, not an empty box
+
+`quickPicks()` in `console.js`. A search box does nothing until you type, and
+the whole point of that panel is the quizmaster who walked in with the room
+already sitting down — who does not want to type, they want to see the thing
+and hit it. So with the box empty it offers up to two packs ready to go, and
+they disappear the moment a key is pressed, because at that point you are
+browsing and they are in the way.
+
+**A PRIORITY LIST RATHER THAN TWO FIXED SLOTS, and that is the load-bearing
+bit.** The obvious design is "the latest topical one and an evergreen one" —
+but topical packs are what GOLD IS, so a Bronze or Silver subscriber has none
+at all and that slot would be permanently empty for most of the ladder. Filling
+two slots from an order degrades on its own: Gold gets the dated one and a
+fresh one, everybody else gets two fresh ones, and nobody is shown a gap where
+a feature they do not hold would be.
+
+The order, and each has a reason:
+
+1. **The dated pack, soonest to expire** — the only thing on the shelf that is
+   worth LESS tomorrow, so it is the one to spend first.
+2. **The one this room is least likely to have heard** — never played first,
+   then longest ago. The app cannot know which venue tonight is (a night does
+   not carry one yet), so "not played recently" is the closest honest answer to
+   "will not be a repeat".
+
+**An expired topical pack is never offered here.** Running a "week that just
+went past" quiz three months late is the exact hazard `freshUntil` exists to
+flag, and doing it by accident on the FAST path is the worst possible way to do
+it. It stays in the library, sorted to the bottom with its warning, where
+launching it is a deliberate act.
+
+**No settings on these two buttons.** Look, card shape and prizes are what the
+pack card is for; a dropdown on the panic control defeats the panic control. It
+launches on the pack's own defaults.
+
+**A tab called "Quick launch" was the other idea and it is slower.** The launch
+bar sits ABOVE the tab bar, so it is on screen from the moment the page loads
+with no taps at all; a tab is one tap plus finding it, and the tab bar scrolls
+sideways on a phone where the tabs on the end are off the right-hand edge. That
+would move the fastest control in the app behind a tap.
+
 **And the Advert button is drawn only where there are adverts.** `view.mayAdvert`
 in `viewFor()`, from `can(accounts.find(room.id), FEATURES.ADVERTS)` — worked
 out on the server, because a room id IS an account id and the browser should

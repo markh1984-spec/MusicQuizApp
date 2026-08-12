@@ -2251,14 +2251,86 @@ function launchBar() {
           <div class="lb-hits" hidden></div>
         </div>
       </div>
+      <div class="lb-quick"></div>
       <div class="lb-chosen" hidden></div>
     </div>`);
 
   const gamePick = el.querySelector('.lb-game');
   const text = el.querySelector('.lb-text');
   const hits = el.querySelector('.lb-hits');
+  const quick = el.querySelector('.lb-quick');
   const chosen = el.querySelector('.lb-chosen');
   const gameOf = () => games.find((g) => g.id === (gamePick ? gamePick.value : games[0].id)) || games[0];
+
+  /*
+   * TWO PACKS AND NO TYPING, for the quizmaster who is late.
+   *
+   * A search box does nothing until you type, and somebody walking in with the
+   * room already sitting down does not want to type — they want to see the
+   * thing and hit it. So the empty state of this panel is up to two packs
+   * ready to go, and it disappears the moment you start typing, because at
+   * that point you are browsing and they are in the way.
+   *
+   * A PRIORITY LIST RATHER THAN TWO FIXED SLOTS, and that is the bit that
+   * matters: topical packs are what GOLD is, so a Bronze or Silver quizmaster
+   * has none at all and a "this month's" slot would be permanently empty for
+   * most of the ladder. Filling two slots from an order degrades on its own —
+   * Gold gets the dated one and a fresh one, everybody else gets two fresh
+   * ones, and nobody sees a gap where a feature they do not hold would be.
+   *
+   * NO SETTINGS ON THESE BUTTONS. Look, card shape and prizes are what the
+   * pack card is for; a dropdown on the panic control defeats the panic
+   * control. It launches on the pack's own defaults.
+   */
+  function quickPicks(packs) {
+    const out = [];
+    /*
+     * 1. The dated one, soonest to expire — because it is the only pack on the
+     *    shelf that is worth LESS tomorrow. An expired one is never offered
+     *    here: a "week that just went past" quiz run three months late is the
+     *    exact hazard `freshUntil` exists to flag, and doing it by accident on
+     *    the fast path is the worst possible way to do it. It stays in the
+     *    library with its warning, where launching it is a decision.
+     */
+    const dated = packs
+      .filter((p) => { const f = freshness(p); return f.topical && !f.expired; })
+      .sort((a, b) => freshness(a).until - freshness(b).until);
+    if (dated[0]) out.push({ pack: dated[0], why: freshLabel(dated[0]) });
+
+    /*
+     * 2. The one this room is least likely to have heard — never played first,
+     *    then longest ago. The app cannot know which venue tonight is (a night
+     *    does not carry one yet), so "not played recently" is the closest
+     *    honest answer to "will not be a repeat".
+     */
+    const rest = packs
+      .filter((p) => !out.some((o) => o.pack.id === p.id))
+      .filter((p) => !freshness(p).expired)
+      .sort((a, b) => (Date.parse(a.lastPlayedAt || '') || 0) - (Date.parse(b.lastPlayedAt || '') || 0));
+    for (const p of rest) {
+      if (out.length >= 2) break;
+      out.push({ pack: p, why: p.lastPlayedAt ? `Last played ${whenShort(p.lastPlayedAt)}` : 'Never played' });
+    }
+    return out;
+  }
+
+  const paintQuick = () => {
+    const typing = Boolean(text.value.trim());
+    const picks = typing ? [] : quickPicks(gameOf().packs);
+    quick.replaceChildren(...picks.map(({ pack, why }) => {
+      const row = node(`
+        <button class="go lb-go lb-quick-go" type="button">
+          <span class="lb-quick-title">${esc(pack.title)}</span>
+          ${why ? `<span class="lb-quick-why">${esc(why)}</span>` : ''}
+        </button>`);
+      row.addEventListener('click', async () => {
+        row.disabled = true;
+        row.textContent = 'Launching…';
+        await doLaunch(gameOf().id, pack.id, {}, row);
+      });
+      return row;
+    }));
+  };
 
   /*
    * Matches on the TITLE only, unlike the pack-tab search which looks inside
@@ -2331,7 +2403,8 @@ function launchBar() {
     });
   }
 
-  text.addEventListener('input', paintHits);
+  const onType = () => { paintHits(); paintQuick(); };
+  text.addEventListener('input', onType);
   text.addEventListener('focus', paintHits);
   // Enter takes the top match, because a keyboard is faster than a thumb and
   // somebody in a hurry will press it.
@@ -2340,8 +2413,27 @@ function launchBar() {
     const first = hits.querySelector('.lb-hit');
     if (first) { ev.preventDefault(); first.click(); }
   });
-  gamePick?.addEventListener('change', () => { chosen.hidden = true; paintHits(); });
+  gamePick?.addEventListener('change', () => { chosen.hidden = true; paintHits(); paintQuick(); });
+  paintQuick();
   return el;
+}
+
+/**
+ * "March", "last year" — short enough to sit on a button.
+ *
+ * Deliberately vague past a few months: the question this answers is "have
+ * they heard it recently", and to a decimal place that is not a question
+ * anybody asks.
+ */
+function whenShort(at) {
+  const then = Date.parse(at || '');
+  if (!Number.isFinite(then)) return '';
+  const days = Math.floor((Date.now() - then) / 86400000);
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 14) return `${days} days ago`;
+  if (days < 365) return new Date(then).toLocaleDateString('en-GB', { month: 'long' });
+  return 'over a year ago';
 }
 
 /*
