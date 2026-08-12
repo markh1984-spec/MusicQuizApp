@@ -231,6 +231,37 @@ mostly commercial.
 **Send from the app's own domain**: a free tier that sends from the provider's
 domain lands in spam, which is worse than no email because it fails silently.
 
+#### TWO PROVIDERS, TWO JOBS — and both accounts already exist
+
+Settled 12 August 2026. **Resend and Kit are not alternatives to each other;
+they do different jobs and using either for the other's is the mistake.**
+
+| | Job | Tool |
+|---|---|---|
+| **Transactional** | password reset, invoice, receipt, trial ending, card failed | **Resend** |
+| **Marketing** | sales-site signups, quizmaster newsletter, new-pack announcements | **Kit** |
+
+**The split is not a preference.** Transactional is instant, per-event,
+one-to-one, sent to somebody who is not on a list and must NOT carry an
+unsubscribe footer — a password reset that waits in a broadcast queue is
+useless, and marketing platforms generally do not want that traffic on them at
+all. Marketing is the opposite: list-based, scheduled, and legally required to
+carry an unsubscribe.
+
+**Both accounts are already held** — Resend, and Kit for another project — so
+this costs nothing extra. Kit is free under 10k subscribers, which covers list 2
+entirely.
+
+**ONE domain setup serves both.** SPF, DKIM and DMARC go on `quizporium.co.uk`
+once, in the Namecheap Advanced DNS panel the domain was wired up in, and both
+providers authenticate against it. Do that first — sending from a provider's own
+domain lands in spam, and spam failure is SILENT, which is the worst kind.
+
+**Never send transactional through Kit or marketing through Resend.** The first
+is slow and may breach their terms; the second builds no list, has no
+unsubscribe handling and puts marketing complaints against the reputation of the
+domain your password resets depend on.
+
 **About half a day.** The token half is nearly free — `newToken()` already
 exists, and a reset token wants the same treatment as a session token: stored
 as a hash, single use, short expiry.
