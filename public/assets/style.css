@@ -3180,6 +3180,11 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   transform: scale(1.12);
 }
 .cam-looks-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+/* Tonight's look gets the top row and says which night it is, in the gold the
+   rest of the panel's headings use. Only ever on screen when the game carries
+   a look — an ordinary quiz sees the tray it always saw. */
+.cam-season-head .cam-season-name { color: var(--gold); }
+.cam-props-season { margin-bottom: 10px; }
 .cam-undo {
   padding: 4px 10px;
   border-radius: 999px;

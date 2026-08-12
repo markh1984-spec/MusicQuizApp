@@ -123,6 +123,97 @@ const ART = {
     <path d="M2 30h96v7H2z" fill="#ff2e88"/>
     <path d="M27 72S7 58 7 42a11 11 0 0 1 20-6 11 11 0 0 1 20 6c0 16-20 30-20 30z" fill="#ff2e88"/>
     <path d="M73 72S53 58 53 42a11 11 0 0 1 20-6 11 11 0 0 1 20 6c0 16-20 30-20 30z" fill="#ff2e88"/>`,
+  'traffic-cone': `
+    <path d="M50 6 78 84H22z" fill="#ff6a1a"/>
+    <path d="M34 50h32l5 14H29z" fill="#f2f2f7"/>
+    <path d="M12 84h76v10H12z" fill="#e05a10"/>`,
+  'lightning-bolt': `
+    <path d="M60 4 18 54h24l-8 42 44-58H54z" fill="#e8123c"/>
+    <path d="M60 4 18 54h24l-8 42 44-58H54z" fill="none" stroke="#2b6cff" stroke-width="5"/>`,
+  'headphones': `
+    <path d="M12 64V50a38 38 0 0 1 76 0v14" fill="none" stroke="#2a2a3a" stroke-width="11"/>
+    <rect x="2" y="56" width="24" height="36" rx="10" fill="#e8123c"/>
+    <rect x="74" y="56" width="24" height="36" rx="10" fill="#e8123c"/>`,
+  'elvis': `
+    <path d="M12 48C10 22 28 4 52 4c18 0 30 8 34 20-10-7-23-7-31 0-7-11-25-9-31 4-3 8-5 14-12 20z" fill="#1c1c2a"/>
+    <path d="M14 46c-2 15 0 27 4 35l11-3c-5-10-7-22-5-32z" fill="#1c1c2a"/>
+    <path d="M86 46c2 15 0 27-4 35l-11-3c5-10 7-22 5-32z" fill="#1c1c2a"/>`,
+  'judge-wig': `
+    <path d="M20 30C20 13 33 3 50 3s30 10 30 27c0 11-2 19-6 25H26c-4-6-6-14-6-25z" fill="#f2f2f7"/>
+    <path d="M18 54c-6 12-6 27-2 37l17-4c-5-10-5-23 0-33zM82 54c6 12 6 27 2 37l-17-4c5-10 5-23 0-33z" fill="#f2f2f7"/>
+    <path d="M30 21h40M27 34h46M31 46h38" stroke="#d3d3de" stroke-width="4"/>`,
+  'viking-helmet': `
+    <path d="M20 62c0-22 13-36 30-36s30 14 30 36z" fill="#8b91a6"/>
+    <path d="M14 62h72v11H14z" fill="#6b7186"/>
+    <path d="M46 32h8v41h-8z" fill="#6b7186"/>
+    <path d="M22 48C11 44 2 31 4 15c15 3 22 14 24 27z" fill="#f0e6d2"/>
+    <path d="M78 48c11-4 20-17 18-33-15 3-22 14-24 27z" fill="#f0e6d2"/>`,
+  'propeller-beanie': `
+    <path d="M20 64a30 30 0 0 1 60 0z" fill="#2b6cff"/>
+    <path d="M16 64h68v10H16z" fill="#1e4fbf"/>
+    <path d="M50 34V20" stroke="#e8123c" stroke-width="6"/>
+    <path d="M50 16 18 6v16zM50 16l32-10v16z" fill="#ffd23f"/>
+    <circle cx="50" cy="16" r="6" fill="#e8123c"/>`,
+  'flat-cap': `
+    <path d="M18 58c0-21 13-33 32-33s32 12 32 33z" fill="#6b6250"/>
+    <path d="M6 58h88c0 9-7 13-17 13H23c-10 0-17-4-17-13z" fill="#57503f"/>`,
+  'antlers': `
+    <path d="M42 92C36 68 27 49 14 39c-7-5-2-15 7-11 11 6 19 18 25 33" fill="none" stroke="#7a4a22" stroke-width="8" stroke-linecap="round"/>
+    <path d="M21 43 6 32M30 30 24 13" stroke="#7a4a22" stroke-width="7" stroke-linecap="round"/>
+    <path d="M58 92c6-24 15-43 28-53 7-5 2-15-7-11-11 6-19 18-25 33" fill="none" stroke="#7a4a22" stroke-width="8" stroke-linecap="round"/>
+    <path d="M79 43 94 32M70 30l6-17" stroke="#7a4a22" stroke-width="7" stroke-linecap="round"/>`,
+
+  // ---- seasonal. Shown only while that LOOK is on the game — see STICKERS.
+  'skull': `
+    <path d="M50 5c22 0 34 15 34 35 0 12-5 21-12 26v13c0 4-3 7-7 7H35c-4 0-7-3-7-7V66c-7-5-12-14-12-26C16 20 28 5 50 5z" fill="#f2f2f7"/>
+    <circle cx="35" cy="42" r="10" fill="#141420"/>
+    <circle cx="65" cy="42" r="10" fill="#141420"/>
+    <path d="M50 54 43 67h14z" fill="#141420"/>
+    <path d="M38 74v12M50 74v12M62 74v12" stroke="#141420" stroke-width="4"/>`,
+  'ghost': `
+    <path d="M20 94V44a30 30 0 0 1 60 0v50l-10-9-10 9-10-9-10 9z" fill="#f2f2f7"/>
+    <circle cx="39" cy="42" r="6" fill="#141420"/>
+    <circle cx="61" cy="42" r="6" fill="#141420"/>
+    <ellipse cx="50" cy="60" rx="7" ry="9" fill="#141420"/>`,
+  'bat': `
+    <ellipse cx="50" cy="50" rx="11" ry="13" fill="#141420"/>
+    <path d="M44 30l-5-14 11 8 11-8-5 14z" fill="#141420"/>
+    <path d="M40 44C29 29 15 25 3 30c7 4 9 11 7 17 9-2 16 2 20 9zM60 44c11-15 25-19 37-14-7 4-9 11-7 17-9-2-16 2-20 9z" fill="#141420"/>`,
+  'pumpkin': `
+    <ellipse cx="50" cy="60" rx="41" ry="34" fill="#ff6a1a"/>
+    <path d="M50 26V12c9-4 15-1 17 3" stroke="#4a7a2a" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M29 49 43 44 34 60z" fill="#3a1a00"/>
+    <path d="M71 49 57 44 66 60z" fill="#3a1a00"/>
+    <path d="M29 70c9 9 33 9 42 0-4 11-38 11-42 0z" fill="#3a1a00"/>`,
+  'santa-hat': `
+    <path d="M12 66C12 37 29 17 54 17c16 0 27 8 31 19l-9 30z" fill="#e8123c"/>
+    <path d="M8 66h74v15H8z" fill="#f2f2f7"/>
+    <circle cx="85" cy="35" r="12" fill="#f2f2f7"/>`,
+  'santa-beard': `
+    <path d="M13 15s12 11 37 11 37-11 37-11c4 29 0 55-12 69-8 10-16 12-25 12s-17-2-25-12C13 70 9 44 13 15z" fill="#f2f2f7"/>
+    <path d="M31 24c11 3 27 3 38 0-2 7-15 11-19 11s-17-4-19-11z" fill="#dfdfe9"/>`,
+  'elf-ears': `
+    <path d="M26 86C13 75 7 54 11 33c2-10 10-12 16-4 9 13 11 36 6 57z" fill="#f0c9a8"/>
+    <path d="M74 86c13-11 19-32 15-53-2-10-10-12-16-4-9 13-11 36-6 57z" fill="#f0c9a8"/>
+    <path d="M24 70c-6-9-8-23-6-33 1-6 5-7 8-2 5 9 5 25 1 35z" fill="#d9a97f"/>
+    <path d="M76 70c6-9 8-23 6-33-1-6-5-7-8-2-5 9-5 25-1 35z" fill="#d9a97f"/>`,
+  'kiss-lips': `
+    <path d="M8 30c11-11 32-9 42 4 10-13 31-15 42-4-4 26-23 45-42 49C31 75 12 56 8 30z" fill="#e8123c"/>
+    <path d="M11 33c15 7 63 7 78 0-2 7-6 13-11 18-17 6-39 6-56 0-5-5-9-11-11-18z" fill="#ff6b8a"/>`,
+  'cupid-arrow': `
+    <path d="M6 64 94 36" stroke="#8a5a2b" stroke-width="7" stroke-linecap="round"/>
+    <path d="M96 36 74 26l4 12-9 9z" fill="#c8c8d0"/>
+    <path d="M4 64 24 55l-2 14z" fill="#e8123c"/>`,
+  'snorkel': `
+    <path d="M16 34h56c6 0 10 4 10 10v14c0 8-6 14-14 14H30c-8 0-14-6-14-14z" fill="#2b6cff" opacity=".55"/>
+    <path d="M16 34h56c6 0 10 4 10 10v14c0 8-6 14-14 14H30c-8 0-14-6-14-14z" fill="none" stroke="#141420" stroke-width="5"/>
+    <path d="M82 46c9 0 11-7 11-15V8" fill="none" stroke="#ffd23f" stroke-width="9" stroke-linecap="round"/>`,
+  'flower-crown': `
+    <path d="M5 68c14-17 33-25 45-25s31 8 45 25z" fill="#4a7a2a"/>
+    <circle cx="17" cy="57" r="11" fill="#ff2e88"/><circle cx="17" cy="57" r="4" fill="#ffd23f"/>
+    <circle cx="41" cy="45" r="12" fill="#ffd23f"/><circle cx="41" cy="45" r="4" fill="#e8123c"/>
+    <circle cx="67" cy="47" r="11" fill="#ff6bd6"/><circle cx="67" cy="47" r="4" fill="#ffd23f"/>
+    <circle cx="88" cy="59" r="10" fill="#4bd8ff"/><circle cx="88" cy="59" r="4" fill="#ffd23f"/>`,
 };
 
 export const STICKERS = [
@@ -150,7 +241,51 @@ export const STICKERS = [
   { id: 'monobrow', label: 'Monobrow' },
   { id: 'tongue', label: 'Tongue' },
   { id: 'love-glasses', label: 'Love hearts' },
+  { id: 'traffic-cone', label: 'Traffic cone' },
+  { id: 'lightning-bolt', label: 'Lightning' },
+  { id: 'headphones', label: 'Headphones' },
+  { id: 'elvis', label: 'Quiff' },
+  { id: 'judge-wig', label: 'Judge wig' },
+  { id: 'viking-helmet', label: 'Viking' },
+  { id: 'propeller-beanie', label: 'Propeller' },
+  { id: 'flat-cap', label: 'Flat cap' },
+  { id: 'antlers', label: 'Antlers' },
+
+  /*
+   * SEASONAL, and tied to the LOOK rather than to the date.
+   *
+   * The look is already the app's answer to "what kind of night is this": it is
+   * chosen at launch, it lives in the game state, and it is what paints the
+   * projector and every phone. So the props come off the same switch and the
+   * three cannot disagree.
+   *
+   * A DATE would break that. An ordinary quiz on 30 October would put skulls in
+   * the tray while the projector was still pink and orange — two features with
+   * different opinions about what night it is — and a Halloween booking that
+   * landed on 2 November would get none at all. There is no case a date helps
+   * that the look does not already cover: if they picked Halloween they wanted
+   * a Halloween night, and if they did not, they did not.
+   */
+  { id: 'skull', label: 'Skull', look: 'halloween' },
+  { id: 'ghost', label: 'Ghost', look: 'halloween' },
+  { id: 'bat', label: 'Bat', look: 'halloween' },
+  { id: 'pumpkin', label: 'Pumpkin', look: 'halloween' },
+  { id: 'santa-hat', label: 'Santa hat', look: 'christmas' },
+  { id: 'santa-beard', label: 'Santa beard', look: 'christmas' },
+  { id: 'elf-ears', label: 'Elf ears', look: 'christmas' },
+  { id: 'kiss-lips', label: 'Big kiss', look: 'valentines' },
+  { id: 'cupid-arrow', label: 'Cupid', look: 'valentines' },
+  { id: 'snorkel', label: 'Snorkel', look: 'summer' },
+  { id: 'flower-crown', label: 'Flower crown', look: 'summer' },
 ];
+
+/** The props for tonight: this look's own, then the ones that always apply. */
+export function stickersFor(look) {
+  return {
+    seasonal: STICKERS.filter((s) => s.look && s.look === look),
+    always: STICKERS.filter((s) => !s.look),
+  };
+}
 
 export function stickerSvg(id) {
   const art = ART[id];

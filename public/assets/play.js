@@ -16,8 +16,8 @@
 import { esc, node, ServerClock, Live, postJson, brandMark, brandWords, roomCode, roomParam, rememberRoom, binIcon } from './client.js';
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
 import { drawFiltered, toJpeg } from './filters.js';
-import { STICKERS, stickerSvg, drawStickers, stickerAt, placed, preloadStickers } from './stickers.js';
-import { paintLook, DEFAULT_LOOK } from './looks.js';
+import { stickersFor, stickerSvg, drawStickers, stickerAt, placed, preloadStickers } from './stickers.js';
+import { paintLook, DEFAULT_LOOK, LOOKS } from './looks.js';
 import { paintScheme } from './schemes.js';
 
 const STORE_KEY = 'musicquiz.player';
@@ -224,6 +224,9 @@ async function silentRejoin() {
  * with a room watching.
  */
 function openCamera() {
+  // Tonight's look, from the game state — the same value that paints the
+  // projector and this page, so the props cannot disagree with either.
+  const look = (state && state.look) || DEFAULT_LOOK;
   const sheet = node(`
     <div class="cam-overlay">
       <div class="cam-sheet">
@@ -244,6 +247,11 @@ function openCamera() {
                  phones render the bin as a cheerful basket. -->
             <div class="cam-bin" hidden></div>
           </div>
+          <div class="cam-looks-head cam-season-head" hidden>
+            <span class="cam-season-name"></span>
+            <button class="cam-undo cam-undo-top" hidden>Take it off</button>
+          </div>
+          <div class="cam-props cam-props-season" hidden></div>
           <div class="cam-looks-head">
             <span>Stick something on</span>
             <button class="cam-undo" hidden>Take it off</button>
@@ -266,6 +274,9 @@ function openCamera() {
   const props = sheet.querySelector('.cam-props');
   const undoBtn = sheet.querySelector('.cam-undo');
   const bin = sheet.querySelector('.cam-bin');
+  const seasonHead = sheet.querySelector('.cam-season-head');
+  const seasonProps = sheet.querySelector('.cam-props-season');
+  const seasonName = sheet.querySelector('.cam-season-name');
   const sendBtn = sheet.querySelector('.cam-send');
   const status = sheet.querySelector('.cam-status');
 
@@ -304,7 +315,22 @@ function openCamera() {
    * an iPhone. See stickers.js.
    */
   preloadStickers();
-  for (const s of STICKERS) {
+  /*
+   * TONIGHT'S look gets its own row, above the rest.
+   *
+   * `stickersFor()` splits them; the look comes off the game state, which is
+   * the same switch that paints the projector and this phone, so a Halloween
+   * night has skulls in the tray and an ordinary one does not. Nothing here
+   * reads a date — see the note in stickers.js for why.
+   */
+  const { seasonal, always } = stickersFor(look);
+  if (seasonal.length) {
+    seasonHead.hidden = false;
+    seasonProps.hidden = false;
+    seasonName.textContent = (LOOKS.find((l) => l.id === look) || {}).label || 'Tonight';
+  }
+  for (const s of [...seasonal, ...always]) {
+    const tray = s.look ? seasonProps : props;
     const chip = node(`
       <button class="cam-prop" data-id="${s.id}" title="${esc(s.label)}" aria-label="${esc(s.label)}">
         <span class="cam-prop-art">${stickerSvg(s.id)}</span>
@@ -333,7 +359,7 @@ function openCamera() {
       if (navigator.vibrate) navigator.vibrate(12);
       repaint();
     });
-    props.appendChild(chip);
+    tray.appendChild(chip);
   }
 
   undoBtn.addEventListener('click', () => {
