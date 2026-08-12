@@ -11,7 +11,7 @@
  * is exactly what plays tonight.
  */
 
-import { esc, node, postJson, brandLink } from './client.js';
+import { esc, node, postJson, brandLink, navMenu } from './client.js';
 import { LOOKS } from './looks.js';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -125,9 +125,22 @@ async function loadQuizList(selectId) {
   }
   const library = await api('/api/library');
   const slot = document.getElementById('brandSlot');
+  const navKey = new URL(location.href).searchParams.get('key') || '';
   if (slot && library.brand) {
-    slot.innerHTML = brandLink(library.brand, { key: hostKey, size: 26, appName: library.appName || '' });
+    slot.innerHTML = brandLink(library.brand, { key: navKey, size: 26, appName: library.appName || '' });
     document.title = `Editor — ${library.brand}`;
+  }
+  /*
+   * The menu. `catalogue` above is the OWNER test — only an owner holds
+   * `owner.catalogue` — so it is what says whether the Owner door belongs
+   * here, and equally that this account runs no nights of its own.
+   */
+  const nav = document.getElementById('navSlot');
+  if (nav) {
+    nav.innerHTML = navMenu({
+      current: 'packs', key: navKey, joinCode: library.joinCode || '',
+      control: !catalogue, owner: catalogue,
+    });
   }
   const options = [];
 

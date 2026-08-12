@@ -1763,24 +1763,41 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
    with it, which is what the hat switch does. */
 .console .topbar #brandSlot { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
 
-/* The other screens, next to the logo, on every tab.
-   Quiet on purpose: these are the way OUT of the page, and the page's own
-   loud things — Launch, Take control, Write it — have to stay the loudest.
-   They wear the lit half's gradient only on hover, so the bar reads as a row
-   of doors rather than as five buttons competing with the one that matters. */
-.console .topnav { display: flex; align-items: center; gap: 6px; flex: 0 1 auto; min-width: 0; }
-.console .topnav a {
-  padding: 6px 11px;
+/* THE MENU, next to the logo, on every page a quizmaster drives — the console,
+   the control view, the editor and the owner page. Built by `navMenu()` in
+   `client.js` so four copies cannot drift; styled once here for the same
+   reason. Deliberately NOT on the projector or a player's phone: one is
+   pointed at a room and the other belongs to somebody in it.
+
+   Quiet on purpose: these are the way OUT of the page, and the page's own loud
+   things — Launch, Take control, Write it — have to stay the loudest. The page
+   you are on is lit rather than dropped, so the menu answers "where am I" as
+   well as "where can I go". */
+.topnav { display: flex; align-items: center; gap: 6px; flex: 0 1 auto; min-width: 0; }
+.topnav a {
+  padding: 8px 14px;
   border-radius: 999px;
   border: 1px solid var(--panel-line);
   color: var(--ink-dim);
   text-decoration: none;
-  font-size: var(--fs-mini);
+  font-size: var(--fs-note);
   font-weight: 700;
   white-space: nowrap;
 }
-.console .topnav a:hover { color: var(--ink); border-color: var(--hot); }
-.console .topnav a:active { transform: scale(0.96); }
+.topnav a:hover { color: var(--ink); border-color: var(--hot); }
+.topnav a:active { transform: scale(0.96); }
+/* Where you are: the chip INVERTED — filled gold, dark text — so it reads at a
+   glance rather than being a slightly different outline among five. The app's
+   own gold rather than the hot gradient, because that gradient means "press
+   this" and the page you are already on is the one thing in the row there is
+   no point pressing. `--gold` is a variable, so it follows every seasonal look
+   and the quizmaster's own scheme rather than being one fixed yellow. */
+.topnav a.here {
+  color: #12000c;
+  border-color: var(--gold);
+  background: var(--gold);
+}
+.topnav a.here:hover { color: #12000c; border-color: var(--gold); }
 
 /* The control view's bar puts the brand above the "where am I" line, with the
    way back to the console on the end of that row — top of the screen, and a
@@ -1789,20 +1806,28 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
 .host .bar { flex-wrap: wrap; }
 .host .bar .bar-top {
   flex: 1 1 100%;
+  /* And the ROW needs it as well as the menu inside it. A flex item's default
+     minimum is its content, so the row was sized to logo-plus-five-chips and
+     grew past the phone before the menu ever got the chance to scroll. */
+  min-width: 0;
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   margin-bottom: 2px;
 }
-.host .bar-nav {
-  flex: 0 0 auto;
-  padding: 5px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--panel-line);
-  color: var(--ink-dim);
-  text-decoration: none;
-  font-size: var(--fs-mini);
-  font-weight: 700;
-}
-.host .bar-nav:active { transform: scale(0.96); }
+/* On the control view the menu SCROLLS rather than wrapping, always and not
+   only on a phone: that bar is sticky, and a second row appearing mid-night
+   would push the question and the answer key down the screen.
+
+   `flex: 1 1 0` with `min-width: 0` is what makes `overflow-x` actually bite.
+   A flex item's default minimum is its content, so `overflow: auto` on its own
+   does nothing at all — the item simply grows to fit the chips and takes the
+   page sideways with it, which is the same min-content trap as the pack
+   dropdown and the generator's theme box. */
+.host .bar .topnav { flex: 1 1 0; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.host .bar .topnav::-webkit-scrollbar { display: none; }
+/* The editor's bar is already full of its own controls, so the menu takes
+   whatever is left and scrolls inside it. */
+.editor .topbar .topnav { flex: 1 1 0; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.editor .topbar .topnav::-webkit-scrollbar { display: none; }
 
 /* Big screen: brand in the corner all night, quiz title beside it. */
 .screen .titles { display: flex; align-items: center; gap: 1.1vw; min-width: 0; }
@@ -1839,15 +1864,15 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
      the same shape the control view's bar already uses. They SCROLL sideways
      rather than wrapping to a third line: the topbar is sticky, so a bar that
      grew a row would eat the top of the page on every tab all night. */
-  .console .topbar { flex-wrap: wrap; row-gap: 8px; }
-  .console .topnav {
+  .console .topbar, .editor .topbar { flex-wrap: wrap; row-gap: 8px; }
+  .topnav {
     order: 9;
     flex: 1 1 100%;
     overflow-x: auto;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
   }
-  .console .topnav::-webkit-scrollbar { display: none; }
+  .topnav::-webkit-scrollbar { display: none; }
 }
 
 /* ---- renaming from the read sheet

@@ -7,7 +7,7 @@
  * something typed in fresh each time.
  */
 
-import { esc, node, postJson, brandLink, binIcon, hatSwitch } from './client.js';
+import { esc, node, postJson, brandLink, binIcon, hatSwitch, navMenu } from './client.js';
 import { paintScheme } from './schemes.js';
 import { balanceAnswers } from './balance.js';
 import { FEATURES, FEATURE_TIER, findTier } from './plans.js';
@@ -1358,21 +1358,16 @@ function navBar() {
   const running = library.running || {};
   // `library.joinCode` first: `running` is absent until something is launched,
   // and the join link is most wanted BEFORE a night rather than during one.
-  const code = library.joinCode || running.joinCode || '';
-  const play = code ? `/play?g=${encodeURIComponent(code)}` : '/play';
-  const links = [];
-  // An owner runs no nights, so there is no control view or projector of
-  // theirs to open — the same test the running panel uses.
-  if (canRun('quiz') || canRun('bingo')) {
-    links.push(`<a href="${esc(linkTo('/host'))}">Control</a>`);
-    links.push(`<a href="${esc(screenLink())}" target="_blank" rel="noopener">Big screen</a>`);
-    links.push(`<a href="${esc(play)}" target="_blank" rel="noopener">Join page</a>`);
-  }
-  if (can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS)) {
-    links.push(`<a href="${esc(linkTo('/editor'))}">Packs</a>`);
-  }
-  if (me && me.role === 'owner') links.push('<a href="/owner">Owner</a>');
-  return links.join('');
+  return navMenu({
+    current: 'console',
+    key: keyInUrl,
+    joinCode: library.joinCode || running.joinCode || '',
+    // An owner runs no nights, so there is no control view or projector of
+    // theirs to open — the same test the running panel uses.
+    control: canRun('quiz') || canRun('bingo'),
+    packs: can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS),
+    owner: Boolean(me && me.role === 'owner'),
+  });
 }
 
 /**

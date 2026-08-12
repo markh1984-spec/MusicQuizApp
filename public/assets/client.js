@@ -30,6 +30,55 @@ export function brandLink(name, { key = '', size = 30, appName = '' } = {}) {
 }
 
 /**
+ * The menu — the same doors, in the same order, on every page that has one.
+ *
+ * It lives here rather than on any one page because four copies of a menu is
+ * four menus that disagree within a month, which is the reason `plans.js` and
+ * `looks.js` are shared too. Each page passes only what it can honestly know
+ * about itself; the ORDER and the labels are decided once, here.
+ *
+ * `current` lights the page you are on rather than dropping it. A menu with a
+ * hole where you are standing makes you count the items to work out where that
+ * is; lit, it answers "where am I" as well as "where can I go", which is half
+ * of what a menu is for.
+ *
+ * THE KEY IS PASSED IN, NEVER READ FROM HERE, and it is the URL key rather
+ * than the remembered one — see `linkTo` in `console.js`. A menu that quietly
+ * appended a remembered key would put it back in the address bar on every
+ * page at once, which is the thing that was just taken out.
+ *
+ * The projector and a player's phone deliberately have NO menu. One is
+ * pointed at a room and the other belongs to somebody in it; neither has any
+ * business carrying a door into the quizmaster's console.
+ */
+export function navMenu({
+  current = '', key = '', joinCode = '',
+  control = true, packs = true, owner = false,
+} = {}) {
+  const k = key ? `key=${encodeURIComponent(key)}` : '';
+  const at = (path, q = '') => {
+    const bits = [q, k].filter(Boolean).join('&');
+    return path + (bits ? `?${bits}` : '');
+  };
+  const g = joinCode ? `g=${encodeURIComponent(joinCode)}` : '';
+  const items = [{ id: 'console', label: 'Console', href: at('/console') }];
+  if (control) {
+    items.push({ id: 'control', label: 'Control', href: at('/host') });
+    // The projector and the join page are the other WINDOWS of the same night,
+    // not somewhere you go instead of this — so they open in a new tab. The
+    // projector also has to carry the room's own code, or a quizmaster lands
+    // on the house room's screen at their own gig.
+    items.push({ id: 'screen', label: 'Big screen', href: at('/screen', g), blank: true });
+    items.push({ id: 'play', label: 'Join page', href: at('/play', g), blank: true });
+  }
+  if (packs) items.push({ id: 'packs', label: 'Packs', href: at('/editor') });
+  if (owner) items.push({ id: 'owner', label: 'Owner', href: at('/owner') });
+  return items.map((i) => `<a class="${i.id === current ? 'here' : ''}" href="${esc(i.href)}"${
+    i.blank ? ' target="_blank" rel="noopener"' : ''}${
+    i.id === current ? ' aria-current="page"' : ''}>${esc(i.label)}</a>`).join('');
+}
+
+/**
  * "Mark's" on top, "Quizporium" underneath and doing the underlining.
  *
  * Two lines rather than one because the two halves are different things: whose

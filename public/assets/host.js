@@ -10,7 +10,7 @@
  * always does the obvious next thing, in the same place every time.
  */
 
-import { esc, node, ServerClock, Live, postJson, brandLink, binIcon, actingBar } from './client.js';
+import { esc, node, ServerClock, Live, postJson, brandLink, binIcon, actingBar, navMenu } from './client.js';
 import { paintScheme } from './schemes.js';
 import { bingoPanels, bingoActions } from './host-bingo.js';
 
@@ -104,12 +104,24 @@ function draw(next) {
   if (!brandPainted && state.brand) {
     const slot = document.getElementById('brandSlot');
     if (slot) slot.innerHTML = brandLink(state.brand, { key: navKey, size: 26, appName: state.appName || '' });
-    // `navKey`, not `hostKey` — see above. A remembered key still gets you in;
-    // it just does not get written into the address bar on the way.
-    const back = document.getElementById('toConsole');
-    if (back) back.href = withKey('/console');
     document.title = `Control — ${state.brand}`;
     brandPainted = true;
+  }
+  /*
+   * The menu. Rebuilt every push rather than once, because the projector and
+   * the join page have to carry this room's join code and that arrives with
+   * the state.
+   *
+   * `control` is simply true here: you are on the control view, so whatever
+   * else is true you can plainly run a night. `owner` is left false because
+   * this page never asks who you are — an owner runs no nights, so they are
+   * barely ever here, and a menu guessing wrong is worse than one item short.
+   */
+  const nav = document.getElementById('navSlot');
+  if (nav) {
+    nav.innerHTML = navMenu({
+      current: 'control', key: navKey, joinCode: state.joinCode || '',
+    });
   }
   // Your own two colours on your own control view, so the phone in your hand
   // matches the projector you are driving. Not gated on `brandPainted`: the
