@@ -478,6 +478,17 @@ body.phone {
 .phone h1 { font-size: 30px; line-height: 1.05; margin: 0; font-weight: 900; letter-spacing: -0.02em; }
 .phone h2 { font-size: 22px; margin: 0; font-weight: 800; }
 .phone p { font-size: 17px; line-height: 1.45; margin: 0; color: var(--ink-dim); }
+/* `.tiny` HAD NO SIZE ON THE PHONE AT ALL, and it is the one page where the
+   class is used and never defined — the control view says 12px, the console
+   12.5px, and here it fell through to body copy. So "spelling does not count"
+   under the alphabet keyboard, and the camera's own notes, were coming out as
+   big as the question. 13px rather than the console's 12.5: this is read in a
+   dark room on a phone held at arm's length, not at a laptop. */
+.phone .tiny { font-size: 13px; line-height: 1.45; color: var(--ink-dim); }
+/* Except the camera warning, which is the house exception — warnings and money
+   are read once, at a moment that matters, and being quiet there costs
+   somebody something real. */
+.phone .cam-warn { font-size: 14px; }
 
 .phone input[type="text"] {
   width: 100%;
@@ -3358,11 +3369,11 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
    rows (`grid-auto-rows: 1fr`) make four identical cards, which is the whole
    point of giving them a background.
 
-   AND IT NEEDS ITS OWN FONT SIZE. `.tiny` has a size on the console and on the
-   control view and has never had one on the phone, so the hint was coming out
-   at body size — as big as the question text, three lines of it, shouting
-   above a tray of props. */
-.cam-hint {
+   AND IT NEEDS ITS OWN FONT SIZE, a point below the phone's `.tiny`, because
+   this text is inside chips two to a row rather than running the full width.
+   Written as `.cam-hint.tiny` so it matches `.phone .tiny` for specificity and
+   wins on source order — the element carries both classes. */
+.cam-hint.tiny {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   grid-auto-rows: 1fr;
@@ -3437,25 +3448,14 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
     mask-composite: exclude;
   }
 }
-/* The heading FILLS THE CARD, justified out to both edges, so it reads as the
-   top rail of the block rather than a short label floating over it. Two
-   columns rather than the centred three: the heading takes everything Undo is
-   not using, so it spans the whole width when the button is away and re-spaces
-   itself when it appears — which is what justified text is for. Left centred
-   on the seasonal row above, where the name is one short word and justifying
-   it would print H A L L O W E E N. */
-.cam-guide .cam-looks-head { margin: 0 0 9px; grid-template-columns: 1fr auto; }
-.cam-guide .cam-looks-head > span {
-  grid-column: 1;
-  text-align: justify;
-  text-align-last: justify;
-  -moz-text-align-last: justify;
-  /* Wider tracking than the ordinary heading, because justification spends
-     whatever is left over on the two word gaps: at 0.06em the words stayed
-     their normal width and the card had to open two great holes in the middle
-     to reach both edges, which reads as three headings rather than one. */
-  letter-spacing: 0.16em;
-}
+/* CENTRED at the ordinary tracking. It was justified out to both edges for a
+   version — "fill the width" — and it was wrong: justification spends whatever
+   is left over on the two word gaps, so STICK · SOMETHING · ON came out as
+   three headings with holes between them, and widening the tracking to close
+   the holes only traded one kind of stretched for another. Do not re-propose
+   filling the width; the card's own line is what says these five belong
+   together. */
+.cam-guide .cam-looks-head { margin: 0 0 9px; }
 
 /* ALL FIVE TEXTS RUN THE SAME GRADIENT AS THE HAIRLINE, and the four chips
    take a QUADRANT of it each — `background-size: 200% 200%` with a corner
