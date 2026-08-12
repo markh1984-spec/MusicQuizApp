@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { LOOKS, DEFAULT_LOOK, findLook, motifSvg, inSeason, lookInSeason } from '../public/assets/looks.js';
+import { LOOKS, DEFAULT_LOOK, findLook, motifSvg, inSeason, lookInSeason, easterSunday } from '../public/assets/looks.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CSS = fs.readFileSync(path.join(ROOT, 'public/assets/style.css'), 'utf8');
@@ -220,9 +220,40 @@ test('a season knows its own dates, and Christmas wraps the year', () => {
   assert.equal(at(7, 4), 'summer');
 
   assert.equal(at(12, 20), 'christmas', 'December is in it');
-  assert.equal(at(1, 1), 'christmas', 'and so is New Year, on the far side of the wrap');
+  assert.equal(at(12, 26), 'christmas', 'up to and including Boxing Day');
+  // NEW YEAR TAKES OVER FROM THE 27th, and its range is the one that wraps.
+  // Two looks claiming the same evening would make the picker's answer depend
+  // on whichever happened to come first in LOOKS, which is not a rule.
+  assert.equal(at(12, 28), 'newyear');
+  assert.equal(at(1, 1), 'newyear', 'on the far side of the wrap');
   assert.equal(at(1, 20), null, 'but the middle of January is nobody\'s season');
-  assert.equal(at(4, 9), null);
+
+  // Bonfire Night starts the day after Halloween's range ends, same reason.
+  assert.equal(at(11, 2), 'halloween');
+  assert.equal(at(11, 5), 'bonfire');
+  assert.equal(at(3, 17), 'stpatricks');
+});
+
+/*
+ * Easter moves by more than a month — 22 March to 25 April — so a fixed range
+ * would be wrong most years. The dates below are the real ones.
+ */
+test('Easter is worked out, not guessed at', () => {
+  const iso = (y) => easterSunday(y).toISOString().slice(0, 10);
+  assert.equal(iso(2024), '2024-03-31');
+  assert.equal(iso(2025), '2025-04-20');
+  assert.equal(iso(2026), '2026-04-05');
+  assert.equal(iso(2027), '2027-03-28');
+
+  const on = (m, d, y = 2026) => new Date(Date.UTC(y, m - 1, d, 12));
+  const easter = LOOKS.find((l) => l.id === 'easter');
+  assert.equal(inSeason(easter, on(4, 5)), true, 'Easter Sunday itself');
+  assert.equal(inSeason(easter, on(3, 30)), true, 'the week before');
+  assert.equal(inSeason(easter, on(4, 6)), true, 'and Easter Monday');
+  assert.equal(inSeason(easter, on(4, 20)), false, 'a fortnight later is not');
+  // The window MOVES with the year rather than sitting on 2026's dates.
+  assert.equal(inSeason(easter, on(4, 20, 2025)), true, '2025 Easter Sunday');
+  assert.equal(inSeason(easter, on(4, 5, 2025)), false, "2026's date, in 2025");
 });
 
 test('a look with no season is never in one', () => {

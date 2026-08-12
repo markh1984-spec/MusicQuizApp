@@ -2832,6 +2832,96 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   --drift-2: rgba(255, 46, 214, 0.15);
 }
 
+/* New Year — gold on midnight, the one look that is about a CLOCK rather than
+   a season. Its range starts on the 27th because Christmas now ends on Boxing
+   Day; two looks claiming the same evening would make the picker's answer
+   depend on list order. */
+[data-look="newyear"] {
+  --glow-1: #0d1a3a;
+  --glow-2: #2e2410;
+  --drift-1: rgba(255, 209, 102, 0.20);
+  --drift-2: rgba(120, 170, 255, 0.16);
+  --panel: #121a2e;
+  --hot: #ffd166;
+  --hot-2: #ffa63a;
+  --cool: #78aaff;
+  --gold: #ffe08a;
+  --bg: #060a18;
+  --bg-2: #101a33;
+  --a: #ffd166;   /* champagne */
+  --b: #78aaff;   /* midnight */
+  --c: #ff6f91;   /* rocket */
+  --d: #6fe3c4;   /* sparkler */
+  --e: #c9a0ff;   /* confetti */
+  --f: #ff9f45;   /* ember */
+}
+
+/* Easter — the only PASTEL look, which is the point: it is the one time of
+   year a pub quiz is in the afternoon with families in. Kept dark behind, like
+   every other look, because the projector still has to read from the back. */
+[data-look="easter"] {
+  --glow-1: #1b2e1a;
+  --glow-2: #2e2a12;
+  --drift-1: rgba(167, 226, 148, 0.20);
+  --drift-2: rgba(255, 214, 235, 0.18);
+  --panel: #16211a;
+  --hot: #ffb3d1;
+  --hot-2: #ffd98a;
+  --cool: #a7e294;
+  --gold: #ffe9a3;
+  --bg: #070f0a;
+  --bg-2: #101c14;
+  --a: #ffb3d1;   /* blossom */
+  --b: #a7e294;   /* spring */
+  --c: #9ad4ff;   /* duck egg */
+  --d: #ffe07a;   /* daffodil */
+  --e: #d3b0ff;   /* crocus */
+  --f: #ff9a6c;   /* carrot */
+}
+
+/* St Patrick's — green and gold, and the most PUB of the looks. */
+[data-look="stpatricks"] {
+  --glow-1: #0b2a16;
+  --glow-2: #2c2708;
+  --drift-1: rgba(74, 214, 122, 0.20);
+  --drift-2: rgba(255, 209, 102, 0.16);
+  --panel: #10261a;
+  --hot: #4ad67a;
+  --hot-2: #ffd166;
+  --cool: #7ae0ff;
+  --gold: #ffdf7a;
+  --bg: #04120a;
+  --bg-2: #0c2114;
+  --a: #4ad67a;   /* shamrock */
+  --b: #ffd166;   /* gold */
+  --c: #ff8fa3;   /* rosy */
+  --d: #7ae0ff;   /* sky */
+  --e: #c8a0ff;   /* heather */
+  --f: #ff9f45;   /* stout head */
+}
+
+/* Bonfire Night — the darkest of them, because that is the whole look: a black
+   November sky with things going off in it. */
+[data-look="bonfire"] {
+  --glow-1: #24102e;
+  --glow-2: #3a1608;
+  --drift-1: rgba(255, 138, 61, 0.20);
+  --drift-2: rgba(120, 170, 255, 0.14);
+  --panel: #171224;
+  --hot: #ff8a3d;
+  --hot-2: #ffd166;
+  --cool: #78aaff;
+  --gold: #ffcf5c;
+  --bg: #05060f;
+  --bg-2: #120e1e;
+  --a: #ff8a3d;   /* ember */
+  --b: #78aaff;   /* smoke-blue */
+  --c: #6fe36f;   /* green rocket */
+  --d: #ffd166;   /* sparkler */
+  --e: #ff5470;   /* red burst */
+  --f: #c9a0ff;   /* violet burst */
+}
+
 [data-look="halloween"] {
   --glow-1: #2a1038;
   --glow-2: #3d1a05;
