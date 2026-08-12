@@ -142,10 +142,14 @@ const ART = {
     <path d="M20 30C20 13 33 3 50 3s30 10 30 27c0 11-2 19-6 25H26c-4-6-6-14-6-25z" fill="#f2f2f7"/>
     <path d="M18 54c-6 12-6 27-2 37l17-4c-5-10-5-23 0-33zM82 54c6 12 6 27 2 37l-17-4c5-10 5-23 0-33z" fill="#f2f2f7"/>
     <path d="M30 21h40M27 34h46M31 46h38" stroke="#d3d3de" stroke-width="4"/>`,
+  // NOT #8b91a6 — that was the tile's own fill, so the helmet vanished into it
+  // and the tile read as two horns and nothing else. A prop must not be the
+  // colour of the thing it is drawn on; the gradient behind them now makes
+  // that hard to do twice, but the fix is still to pick a different colour.
   'viking-helmet': `
-    <path d="M20 62c0-22 13-36 30-36s30 14 30 36z" fill="#8b91a6"/>
-    <path d="M14 62h72v11H14z" fill="#6b7186"/>
-    <path d="M46 32h8v41h-8z" fill="#6b7186"/>
+    <path d="M20 62c0-22 13-36 30-36s30 14 30 36z" fill="#c3ccdb"/>
+    <path d="M14 62h72v11H14z" fill="#8e99ae"/>
+    <path d="M46 32h8v41h-8z" fill="#8e99ae"/>
     <path d="M22 48C11 44 2 31 4 15c15 3 22 14 24 27z" fill="#f0e6d2"/>
     <path d="M78 48c11-4 20-17 18-33-15 3-22 14-24 27z" fill="#f0e6d2"/>`,
   'propeller-beanie': `

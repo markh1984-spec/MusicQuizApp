@@ -3254,16 +3254,22 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   gap: 6px;
   margin-bottom: 6px;
 }
-/* A MID-GREY tile, not the page's own dark panel.
+/* A mid-grey tile, not the page's own dark panel.
    Half these props are nearly black — the shades, the moustache, the disguise —
    and on a dark tile they read as an empty square you would never tap. A pale
-   slab each is nine white blocks shouting on a dark phone, so it is a mid tone
-   that both the black shapes and the yellow crown stand out against. */
+   slab each is three dozen white blocks shouting on a dark phone, so it is a
+   mid tone that both the black shapes and the yellow crown stand out against.
+
+   A GRADIENT rather than one flat fill, and that is not decoration. The props
+   are flat colour, so a tile of a single tone can be matched exactly by one of
+   them and that prop disappears — the viking helmet was drawn in the tile's
+   own grey and read as two horns floating in nothing. Against a tone that
+   changes down the tile, no flat colour can hide across the whole of it. */
 .cam-prop {
   padding: 6px 3px 4px;
   border-radius: 12px;
   border: 1px solid var(--panel-line);
-  background: #8b91a6;
+  background: linear-gradient(160deg, #b6bccb 0%, #8b91a6 55%, #6f7689 100%);
   cursor: pointer;
   display: grid;
   gap: 2px;
@@ -3301,8 +3307,8 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   position: absolute;
   right: 10px;
   bottom: 10px;
-  width: 52px;
-  height: 52px;
+  width: 64px;
+  height: 64px;
   display: grid;
   place-items: center;
   border-radius: 14px;

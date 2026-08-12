@@ -31,6 +31,14 @@ const STORE_KEY = 'musicquiz.player';
  */
 const HOLD_MS = 200;
 
+/*
+ * How close together two taps on the same prop have to be to mean "take it
+ * off". The same third of a second every phone uses, so it is already in
+ * people's hands, and far enough apart that two deliberate separate taps are
+ * never mistaken for it.
+ */
+const DOUBLE_TAP_MS = 320;
+
 
 const bodyEl = document.getElementById('body');
 const headEl = document.getElementById('head');
@@ -270,7 +278,7 @@ function openCamera() {
                them. And it is one line: HOLD is the only gesture here that is
                not already in somebody's fingers, the bin explains itself by
                appearing mid-drag, and a wall of instructions gets skipped. -->
-          <div class="cam-hint tiny">Tap to add. Hold to drag it about, pinch to size it.</div>
+          <div class="cam-hint tiny">Tap to add. Hold to drag, pinch to size, double-tap to take one off.</div>
           <div class="cam-props"></div>
           <button class="cam-send">Send it up</button>
         </div>
@@ -428,6 +436,10 @@ function openCamera() {
   let dragging = null;
   let pinchFrom = 0;
   let sizeFrom = 0;
+  // Whether the finger actually travelled — a press that never moved is a tap,
+  // and two of those on one prop takes it off.
+  let shifted = false;
+  let lastTap = { on: null, at: 0 };
 
   const spotOf = (e) => {
     const box = canvas.getBoundingClientRect();
@@ -456,11 +468,15 @@ function openCamera() {
 
   canvas.addEventListener('pointerdown', (e) => {
     if (!source) return;
-    canvas.setPointerCapture(e.pointerId);
+    // A pointer that has already ended — a stray synthetic event, or a touch
+    // the browser cancelled between down and here — cannot be captured, and an
+    // exception at this point would kill the whole handler.
+    try { canvas.setPointerCapture(e.pointerId); } catch { /* nothing to hold */ }
     const spot = spotOf(e);
     pointers.set(e.pointerId, spot);
     if (pointers.size === 1) {
       dragging = stickerAt(stuckOn, spot.x, spot.y, canvas);
+      shifted = false;
       // Whatever you grab comes to the front, so the next drag gets the same one.
       if (dragging) {
         stuckOn = [...stuckOn.filter((s) => s !== dragging), dragging];
@@ -488,6 +504,7 @@ function openCamera() {
     if (!dragging) return;
 
     if (bin.hidden) bin.hidden = false;
+    shifted = true;
 
     if (pointers.size >= 2 && pinchFrom > 0) {
       const scale = gap() / pinchFrom;
@@ -511,6 +528,28 @@ function openCamera() {
     if (dragging && overBin(e)) {
       stuckOn = stuckOn.filter((s) => s !== dragging);
       if (navigator.vibrate) navigator.vibrate([8, 40, 8]);
+    } else if (dragging && !shifted) {
+      /*
+       * DOUBLE-TAP A PROP TO TAKE IT OFF.
+       *
+       * The bin is right for a drag you are already doing — the thing is in
+       * your hand and you have changed your mind. It is the wrong tool for
+       * "that one is wrong", which is most of the time: you would have to pick
+       * the prop up and carry it to a corner to say so.
+       *
+       * A SINGLE tap deliberately does nothing. The host's photo grid used to
+       * delete a picture on one tap with nothing on screen saying so, and that
+       * is the fault this file already records. Two taps in a third of a
+       * second, on the same prop, is an act rather than an accident.
+       */
+      const now = Date.now();
+      if (lastTap.on === dragging && now - lastTap.at < DOUBLE_TAP_MS) {
+        stuckOn = stuckOn.filter((s) => s !== dragging);
+        if (navigator.vibrate) navigator.vibrate([8, 40, 8]);
+        lastTap = { on: null, at: 0 };
+      } else {
+        lastTap = { on: dragging, at: now };
+      }
     }
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinchFrom = 0;

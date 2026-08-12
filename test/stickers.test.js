@@ -113,3 +113,24 @@ test('the phone reads the everyday tray by a selector the seasonal one cannot ma
   assert.match(source, /querySelector\('\.cam-props:not\(\.cam-props-season\)'\)/,
     'the everyday tray is back on a bare .cam-props, which the seasonal row also matches');
 });
+
+/*
+ * A PROP MUST NOT BE THE COLOUR OF ITS OWN TILE.
+ *
+ * The viking helmet was drawn in #8b91a6, which was the tile's fill exactly —
+ * so it vanished and the tile read as two horns floating in nothing. The tiles
+ * carry a gradient now, which makes it much harder to disappear across the
+ * whole of one, but the honest fix is still not to use those tones.
+ */
+test('no prop is drawn in one of the tile greys', () => {
+  const source = fs.readFileSync(path.join(ROOT, 'public/assets/stickers.js'), 'utf8');
+  const css = fs.readFileSync(path.join(ROOT, 'public/assets/style.css'), 'utf8');
+  const tile = css.slice(css.indexOf('.cam-prop {'));
+  const stops = (tile.slice(0, tile.indexOf('}')).match(/#[0-9a-f]{6}/gi) || [])
+    .map((c) => c.toLowerCase());
+  assert.ok(stops.length >= 2, 'the tile no longer has a gradient to check against');
+  for (const stop of stops) {
+    assert.ok(!source.toLowerCase().includes(`fill="${stop}"`),
+      `a prop is filled with ${stop}, which is one of the tile's own tones`);
+  }
+});
