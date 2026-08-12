@@ -1207,6 +1207,34 @@ spell a word or be mistyped off a screen.
 floated here: a code, an attribution at signup, an automatic discount. No pile
 for anybody to work.
 
+### Photos will outgrow a git repo — move them to object storage
+
+> **Not urgent. The trigger is the REPO SIZE, not the subscriber count: act
+> around 2GB.**
+
+Photos are filed into the private repo (`photos/<roomId>/<night>/`). At 1080
+square and quality 0.85 a photo is roughly 200KB, so a busy night is ~6MB and
+a six-night month is ~36MB — **about 430MB a year for one quizmaster.**
+
+GitHub's soft limit is 1GB and it discourages anything past 5GB, and **git
+never shrinks**: deleting photos does not reclaim the space without rewriting
+history. So one quizmaster has roughly two years; ten have well under one.
+
+**IT IS NOT A COST PROBLEM AND WILL NEVER BECOME ONE.** Cloudflare R2 is free
+to about 10GB and pennies past it — at a hundred quizmasters it is a couple of
+pounds a month against four figures of revenue. It is a WRONG-TOOL problem: a
+code host used as a blob store, which fails on limits rather than on price.
+
+**The second reason is serving, and it bites sooner.** The repo is private, so
+a browser cannot fetch from it and every photo on a Past gigs page is proxied
+through this server. That is bandwidth and CPU on the smallest Render instance,
+for a page whose whole job is showing a venue a lot of pictures. Object storage
+serves them directly and takes that off the app entirely.
+
+**What NOT to do:** prune old photos (Past gigs is "here is my work" — deleting
+the evidence defeats it), or make a repo per room (it spreads the bytes and
+creates a repo to make per subscriber, which fails the Monday test).
+
 ### PayPal — the half that is built, and the half that is blocked
 
 **Subscriptions rather than invoices**, on your own reasoning: chasing ten
