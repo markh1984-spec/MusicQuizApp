@@ -1092,6 +1092,36 @@ pocket during the trial, which is a fair thing to want but is a revenue argument
 rather than a referral one, and it loses *free* — the strongest word the
 referrer has — to buy it.
 
+**THE TRIAL IS AT BRONZE, and it works because of a decision already made
+elsewhere: the tier lever is CONTENT, not capability.** Every control, every
+round type and every look is Bronze's, so a trial shows the whole machine with
+nothing greyed out and nothing looking broken. Had the lever been put on
+features, a trial would be a crippled demo and none of this would work.
+
+**But the upgrade will NOT come from running out, and it is worth being right
+about why.** Bronze is eight packs and a weekly host runs four nights a month,
+so the content ceiling is designed to bite around month four — never inside a
+trial. What actually drives an upgrade in week two is the SHOP: padlocked cards
+with titles and prices under their own library, and the topical packs visible as
+the thing Gold has. That is already built and is doing exactly this job.
+
+**Upgrading mid-trial ENDS the trial and starts billing.** They have chosen to
+buy, so taking the money then is honest, and it avoids inventing a
+free-Silver-trial state that nothing else in the app understands.
+
+Which closes the loop, and it is the reason the recurring model was chosen in
+the first place: they upgrade early → the owner is paid earlier → the referrer
+starts earning earlier → **and earns £4 rather than £2, because it is 20% of
+what they ACTUALLY pay.** So the referrer has a standing interest in their mate
+getting on well with the app and moving up the ladder.
+
+**Three lines are what the referrer has to be told, and no more** — house style,
+say what it is:
+
+> **You earn when they start paying** — not during their free month.
+> **20% of whatever they pay**, every month.
+> **It stops if they leave.**
+
 **Attribution is a CODE, not "who told you about us?"** on a signup form — that
 last one is unverifiable and generates disputes, which is a Monday job. The code
 alphabet in `rooms.js` already leaves out vowels and O/0/I/1/L so no code can
