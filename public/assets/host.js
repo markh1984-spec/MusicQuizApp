@@ -26,6 +26,23 @@ const clock = new ServerClock();
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 let hostKey = new URL(location.href).searchParams.get('key') || localStorage.getItem(KEY_STORE) || '';
+
+/**
+ * The key to put in a LINK, which is not the same as the key to send.
+ *
+ * `hostKey` is how this page proves who it is, and it is remembered from
+ * localStorage — but a key that was remembered rather than typed has no
+ * business going back into the address bar. Written into a link it appears on
+ * screen, in browser history and over anybody's shoulder, and on the console
+ * it is self-sustaining: a remembered key is only forgotten when there is
+ * NOT one in the URL, so following a keyed link is what stops it going.
+ *
+ * So: only if this visit genuinely arrived with `?key=`. Nothing is lost by
+ * dropping it — every page reads the remembered key out of localStorage on
+ * its way in — and a `?key=` bookmark still works exactly as it did.
+ */
+const navKey = new URL(location.href).searchParams.get('key') || '';
+const withKey = (path) => (navKey ? `${path}${path.includes('?') ? '&' : '?'}key=${encodeURIComponent(navKey)}` : path);
 let state = null;
 
 if (hostKey) localStorage.setItem(KEY_STORE, hostKey);
@@ -86,12 +103,11 @@ function draw(next) {
   clock.sync(state.serverNow);
   if (!brandPainted && state.brand) {
     const slot = document.getElementById('brandSlot');
-    if (slot) slot.innerHTML = brandLink(state.brand, { key: hostKey, size: 26, appName: state.appName || '' });
-    // The key goes on the way back too, or a browser on the host key lands on
-    // a console asking it who it is. A signed-in quizmaster has no key and
-    // needs none — their cookie already says which room is theirs.
+    if (slot) slot.innerHTML = brandLink(state.brand, { key: navKey, size: 26, appName: state.appName || '' });
+    // `navKey`, not `hostKey` — see above. A remembered key still gets you in;
+    // it just does not get written into the address bar on the way.
     const back = document.getElementById('toConsole');
-    if (back && hostKey) back.href = `/console?key=${encodeURIComponent(hostKey)}`;
+    if (back) back.href = withKey('/console');
     document.title = `Control — ${state.brand}`;
     brandPainted = true;
   }
@@ -635,7 +651,7 @@ function toolsPanel(s) {
       <div class="row">
         <select id="quizPick"><option>Loading quizzes…</option></select>
         <button class="minor" id="loadQuiz">Load</button>
-        <a class="minor" style="text-decoration:none;display:inline-block" href="/editor?key=${encodeURIComponent(hostKey)}">Edit questions</a>
+        <a class="minor" style="text-decoration:none;display:inline-block" href="${withKey('/editor')}">Edit questions</a>
       </div>
       <div class="row" style="margin-top:10px">
         <a class="minor" style="text-decoration:none;display:inline-block" href="${s.joinCode ? `/screen?g=${encodeURIComponent(s.joinCode)}` : '/screen'}" target="_blank" rel="noopener">Open big screen</a>
@@ -718,7 +734,7 @@ function buildActions(s) {
     // screenLink() in console.js for what that cost.
     out.push(minor('Big screen', () => window.open(
       s.joinCode ? `/screen?g=${encodeURIComponent(s.joinCode)}` : '/screen', '_blank')));
-    out.push(minor('Edit', () => { location.href = `/editor?key=${encodeURIComponent(hostKey)}`; }));
+    out.push(minor('Edit', () => { location.href = withKey('/editor'); }));
   }
 
   /*

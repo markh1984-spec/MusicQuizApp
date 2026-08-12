@@ -91,7 +91,28 @@ function askForKey(message = '') {
 }
 
 const keyed = (path) => path + (path.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(hostKey);
-const linkTo = (path) => keyed(path);
+
+/**
+ * A link to another PAGE. Carries the key only if THIS visit arrived with one.
+ *
+ * `keyed()` appends it unconditionally, which is right for an API call — the
+ * server has to be told who is asking — and wrong for the address bar. A
+ * browser that merely REMEMBERS a key was getting every link built as
+ * `?key=…`, so the moment you followed one the key was on screen, in your
+ * history and over anybody's shoulder. Worse, it is self-sustaining: `load()`
+ * only forgets a remembered key when there is NOT one in the URL, so following
+ * a keyed link is exactly what stops it being forgotten.
+ *
+ * Keyed on the URL rather than on "is anybody signed in", because `/api/me`
+ * answers as the BOOTSTRAP identity when a key is in play — so `me` is truthy
+ * on the key too and cannot tell the two apart. The URL can.
+ *
+ * Nothing is lost: every page here reads the remembered key out of
+ * localStorage on its way in, and a `?key=` bookmark still works exactly as it
+ * did — it just does not spread itself to every other link on the page.
+ */
+const keyInUrl = new URL(location.href).searchParams.get('key') || '';
+const linkTo = (path) => (keyInUrl ? keyed(path) : path);
 
 /**
  * The big screen — for THIS room.
@@ -209,7 +230,7 @@ async function load() {
     // NOT `me.role` — with a key in play the server answers as the bootstrap
     // identity, whose role is "quizmaster". `alsoSignedIn` is the cookie it
     // found underneath, which is the thing that says an owner is really here.
-    const keyInUrl = new URL(location.href).searchParams.has('key');
+    // `keyInUrl` is the module-level one — the same question, asked once.
     if (who.alsoSignedIn && who.alsoSignedIn.role === 'owner' && hostKey && !keyInUrl) {
       forgetKey();
       location.reload();
@@ -478,7 +499,11 @@ const TAB_STORE = 'musicquiz.consoletab';
 function paintBrand(name) {
   const slot = document.getElementById('brandSlot');
   if (!slot || !name) return;
-  slot.innerHTML = brandLink(name, { key: hostKey, size: 30, appName: (library && library.appName) || '' });
+  // The logo is a link home like any other, so it follows the same rule as
+  // `linkTo`: the key only if this visit arrived carrying one.
+  slot.innerHTML = brandLink(name, {
+    key: keyInUrl, size: 30, appName: (library && library.appName) || '',
+  });
   document.title = `Console — ${name}`;
 }
 
