@@ -7,6 +7,107 @@ if a step does not go smoothly.
 
 ---
 
+## HELPING A QUIZMASTER SELL — the build order
+
+Design rule 4 says build what helps a quizmaster win the next booking. This is
+that list, in the order it should be built, worked out on 12 August 2026.
+
+**Everything below except the last slide is blocked on the same thing: a NIGHT
+that knows which venue it was at.** The app can currently say 58 people played
+on 11 August and cannot say where. Build that first — see the terminology
+section above.
+
+### 0. A night with a venue on it — the prerequisite
+
+The invoice book already holds venues with addresses, so a night picks from
+that list rather than inventing a second one. Nothing else here works without
+it.
+
+### 1. Headcount per venue, over time — the strongest thing in the list
+
+The app already stores how many phones joined every night. Nobody has ever
+seen the number twice.
+
+**"The Crown went from 22 on a Thursday to 58"** is the most persuasive
+sentence a quizmaster owns. It wins a new venue (here is what happened at the
+last three places) and — worth more — it SAVES a residency in January, when a
+landlord is looking at costs and cannot remember what the room was like before.
+
+Free to build: the data exists, nothing new is collected, no consent question.
+Do this one first.
+
+### 2. The last slide of the night — cheap, and not blocked
+
+Everyone in the room has a phone out and is looking at the screen, and that
+moment is currently spent on a scoreboard. *"Back here Thursday 19th"* plus a
+QR to the venue's page.
+
+**Does NOT need the venue object** — it is a line of text and a link, typed at
+launch. It is the only thing on this list that could ship in an evening.
+
+### 3. An advert QR that COUNTS
+
+Advert slides already take a heading, an image and a QR, and `src/qrcode.js`
+encodes anything. What is missing is what the QR points at.
+
+Serve the offer page from this app — *"Show this at the bar: QUIZ40"* — and it
+can count how many people opened it. **The count is the feature, not the
+discount.** A slide is an act of faith today; with a number the morning after
+it is a media buy with a report, which is what gets it sold, renewed and
+priced. It is also the first thing that makes Silver's advert slides
+demonstrably worth money.
+
+Two rules attached to it, or it backfires:
+
+- **Opens are not sales.** That number must never be presented as conversion —
+  the landlord checks the till and the quizmaster loses the argument. "31
+  people looked" is strong and true.
+- **The redemption is a WORD, not a scan.** Staff can hear "QUIZ40". A phone
+  held up in a dark bar at 10pm is a slower transaction than the discount is
+  worth.
+
+**Do not build per-person unique codes.** That is a voucher system —
+issuance, uniqueness, fraud, staff training — and its failure mode is an
+argument at the bar during somebody's quiz, with the quizmaster's name on it.
+
+### 4. The post-night report for the venue
+
+The night ends and the landlord gets: how many played, how that compares, how
+often their slide was up, and the photos. Two things happen — the quizmaster
+looks like a supplier with data rather than somebody with a laptop, and **the
+venue posts the photos themselves**, which reaches their regulars rather than
+the quizmaster's followers.
+
+**Not an email.** That needs an account and a monthly bill, and this file says
+not to add one without asking. It is a PDF through the share sheet, reusing
+`src/pdf.js` — the same dependency-free writer the invoices use.
+
+### 5. A public page per quizmaster — and the consent line
+
+A shareable link, no login: nights, numbers, and "book me". The thing that goes
+in an Instagram bio or a cold email.
+
+**This is where photo consent actually starts to matter, and the line is
+narrower than it looks.** The projector is fine exactly as it is: the room can
+see the screen, they chose to send it, and it is gone in three seconds — which
+is why the no-approve-step rule is right and should not be touched. Publishing
+to the internet is a different act: permanent, indexable, and reaching people
+who were never in the room.
+
+So: **the consent question belongs at the PUBLISH boundary, not the send
+boundary.** A tick at the moment of sending adds friction to the common job
+for a page that does not exist yet. When the page exists: photos private by
+default, publishing is the quizmaster's deliberate act, and the sender's tick
+is one line — "happy for this to go on my page too?", off by default.
+
+**The bit no tick box solves: group shots.** The sender can consent for
+themselves, not for the four people in frame with them. What actually
+mitigates it is the quizmaster choosing which photos get published — which is
+the per-photo bin that already exists. Note that another app doing none of this
+is not a defence; it means they are carrying the risk too.
+
+---
+
 ## THE WORDS, AND THE SHOP WINDOW — the biggest thing not yet started
 
 Raised on 11 August 2026 and parked deliberately, because it is a thinking job
