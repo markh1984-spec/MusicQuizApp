@@ -20,7 +20,8 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { chromium } from 'playwright';
+// The repo has no dependencies; Playwright lives with the runtime.
+import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 import { STICKERS, stickerSvg } from '../public/assets/stickers.js';
 
 /** How close to the edge counts as trouble. The white border is ~5 units. */

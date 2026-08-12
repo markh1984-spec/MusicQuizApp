@@ -21,10 +21,14 @@
 /** 100x100 each, so one number scales them all. */
 const ART = {
   'dog-ears': `
-    <path d="M14 6C4 14 2 40 10 58c6 13 16 12 18 2C30 48 26 18 14 6z" fill="#7a4a22"/>
-    <path d="M17 16C11 22 10 40 15 52c3 7 8 7 9 1 1-8-1-28-7-37z" fill="#a8703c"/>
-    <path d="M86 6c10 8 12 34 4 52-6 13-16 12-18 2-2-12 2-42 14-54z" fill="#7a4a22"/>
-    <path d="M83 16c6 6 7 24 2 36-3 7-8 7-9 1-1-8 1-28 7-37z" fill="#a8703c"/>`,
+    <path d="M18 10C8 18 7 42 14 58c5 12 15 12 17 2C33 48 29 20 18 10z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M82 10c10 8 11 32 4 48-5 12-15 12-17 2-2-12 2-40 13-50z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M18 10C8 18 7 42 14 58c5 12 15 12 17 2C33 48 29 20 18 10z" fill="#7a4a22"/>
+    <path d="M21 20c-6 6-7 24-2 36 3 7 8 7 9 1 1-8-1-28-7-37z" fill="#c08a4e"/>
+    <path d="M82 10c10 8 11 32 4 48-5 12-15 12-17 2-2-12 2-40 13-50z" fill="#7a4a22"/>
+    <path d="M79 20c6 6 7 24 2 36-3 7-8 7-9 1-1-8 1-28 7-37z" fill="#c08a4e"/>
+    <path d="M18 10C8 18 7 42 14 58c5 12 15 12 17 2C33 48 29 20 18 10z" fill="none" stroke="#43260f" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M82 10c10 8 11 32 4 48-5 12-15 12-17 2-2-12 2-40 13-50z" fill="none" stroke="#43260f" stroke-width="5" stroke-linejoin="round"/>`,
   'clown-nose': `
     <circle cx="50" cy="50" r="38" fill="#fff" stroke="#fff" stroke-width="11"/>
     <circle cx="50" cy="50" r="38" fill="#e8123c"/>
@@ -32,10 +36,22 @@ const ART = {
     <ellipse cx="36" cy="34" rx="13" ry="9" fill="#fff" opacity=".9" transform="rotate(-30 36 34)"/>
     <circle cx="50" cy="50" r="38" fill="none" stroke="#7d0a20" stroke-width="5"/>`,
   'sunglasses': `
-    <path d="M4 30h92v10H88c0 18-9 28-22 28-11 0-17-7-19-18h-6c-2 11-8 18-19 18-13 0-22-10-22-28H4z" fill="#141420"/>
-    <path d="M14 40h26c0 12-5 18-13 18s-13-6-13-18zM60 40h26c0 12-5 18-13 18s-13-6-13-18z" fill="#2b6cff" opacity=".5"/>`,
+    <rect x="11" y="28" width="78" height="10" rx="4" fill="#fff" stroke="#fff" stroke-width="11"/>
+    <path d="M13 35h33c0 18-7 29-17 29s-16-11-16-29z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M54 35h33c0 18-6 29-16 29s-17-11-17-29z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M13 35h33c0 18-7 29-17 29s-16-11-16-29z" fill="#20202c"/>
+    <path d="M54 35h33c0 18-6 29-16 29s-17-11-17-29z" fill="#20202c"/>
+    <path d="M18 39h22c0 12-4 19-11 19s-11-7-11-19zM59 39h22c0 12-4 19-11 19s-11-7-11-19z" fill="#2b6cff" opacity=".5"/>
+    <path d="M21 40h8l-5 12h-5zM62 40h8l-5 12h-5z" fill="#fff" opacity=".55"/>
+    <path d="M13 35h33c0 18-7 29-17 29s-16-11-16-29z" fill="none" stroke="#0b0b12" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M54 35h33c0 18-6 29-16 29s-17-11-17-29z" fill="none" stroke="#0b0b12" stroke-width="5" stroke-linejoin="round"/>
+    <rect x="11" y="28" width="78" height="10" rx="4" fill="#20202c" stroke="#0b0b12" stroke-width="5"/>`,
   'moustache': `
-    <path d="M50 44c6-8 16-14 27-14 12 0 21 7 21 16 0 11-11 18-24 18-10 0-18-4-24-11-6 7-14 11-24 11C13 64 2 57 2 46c0-9 9-16 21-16 11 0 21 6 27 14z" fill="#2a1d12"/>`,
+    <path d="M50 46c6-8 14-13 23-13 10 0 18 6 18 15 0 10-9 17-20 17-9 0-17-4-21-10-4 6-12 10-21 10C18 65 9 58 9 48c0-9 8-15 18-15 9 0 17 5 23 13z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M50 46c6-8 14-13 23-13 10 0 18 6 18 15 0 10-9 17-20 17-9 0-17-4-21-10-4 6-12 10-21 10C18 65 9 58 9 48c0-9 8-15 18-15 9 0 17 5 23 13z" fill="#3a2716"/>
+    <path d="M50 46c-5-6-11-10-18-10-6 0-12 3-14 8 5-3 11-3 16 0 6 3 11 6 16 2z" fill="#5b3f24"/>
+    <path d="M50 46c5-6 11-10 18-10 6 0 12 3 14 8-5-3-11-3-16 0-6 3-11 6-16 2z" fill="#5b3f24"/>
+    <path d="M50 46c6-8 14-13 23-13 10 0 18 6 18 15 0 10-9 17-20 17-9 0-17-4-21-10-4 6-12 10-21 10C18 65 9 58 9 48c0-9 8-15 18-15 9 0 17 5 23 13z" fill="none" stroke="#1d1209" stroke-width="5" stroke-linejoin="round"/>`,
   // INSET FROM THE EDGE. The die-cut border adds about five units all round, so
   // a shape drawn to the viewBox edge loses its border to the crop — the
   // pompom was sitting at cy=11 with an 11-wide white stroke and came out
@@ -51,20 +67,42 @@ const ART = {
     <path d="M50 24 82 88H18z" fill="none" stroke="#1e1e28" stroke-width="5" stroke-linejoin="round"/>
     <circle cx="50" cy="16" r="9" fill="#ffd23f" stroke="#1e1e28" stroke-width="4"/>`,
   'crown': `
-    <path d="M8 74 4 26l24 18L50 14l22 30 24-18-4 48z" fill="#ffd23f"/>
-    <path d="M8 74h84v12H8z" fill="#e0a800"/>
-    <circle cx="50" cy="46" r="7" fill="#e8123c"/>
-    <circle cx="22" cy="54" r="5" fill="#2b6cff"/>
-    <circle cx="78" cy="54" r="5" fill="#2b6cff"/>`,
+    <path d="M13 72 9 28l22 17L50 17l19 28 22-17-4 44zM13 72h74v13H13z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M13 72 9 28l22 17L50 17l19 28 22-17-4 44z" fill="#ffd23f"/>
+    <path d="M13 72 9 28l22 17L50 17v55z" fill="#ffe382"/>
+    <path d="M13 72h74v13H13z" fill="#e0a800"/>
+    <circle cx="50" cy="46" r="6.5" fill="#e8123c"/>
+    <circle cx="25" cy="53" r="4.5" fill="#2b6cff"/>
+    <circle cx="75" cy="53" r="4.5" fill="#2b6cff"/>
+    <path d="M13 72 9 28l22 17L50 17l19 28 22-17-4 44zM13 72h74v13H13z" fill="none" stroke="#8a6200" stroke-width="5" stroke-linejoin="round"/>`,
   'devil-horns': `
-    <path d="M8 76C2 52 8 24 26 10c2 16-4 26-4 42 0 10 2 18 4 24z" fill="#e8123c"/>
-    <path d="M92 76c6-24 0-52-18-66-2 16 4 26 4 42 0 10-2 18-4 24z" fill="#e8123c"/>`,
+    <path d="M12 76C6 52 12 24 30 10c2 16-4 26-4 42 0 10 2 18 4 24z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M88 76c6-24 0-52-18-66-2 16 4 26 4 42 0 10-2 18-4 24z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M12 76C6 52 12 24 30 10c2 16-4 26-4 42 0 10 2 18 4 24z" fill="#e8123c"/>
+    <path d="M20 66c-4-18-1-36 9-48-1 12-4 22-4 34 0 6 1 11 2 15z" fill="#ff5470"/>
+    <path d="M88 76c6-24 0-52-18-66-2 16 4 26 4 42 0 10-2 18-4 24z" fill="#e8123c"/>
+    <path d="M80 66c4-18 1-36-9-48 1 12 4 22 4 34 0 6-1 11-2 15z" fill="#ff5470"/>
+    <path d="M12 76C6 52 12 24 30 10c2 16-4 26-4 42 0 10 2 18 4 24z" fill="none" stroke="#7d0a20" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M88 76c6-24 0-52-18-66-2 16 4 26 4 42 0 10-2 18-4 24z" fill="none" stroke="#7d0a20" stroke-width="5" stroke-linejoin="round"/>`,
   'hearts': `
-    <path d="M32 62S10 48 10 32a12 12 0 0 1 22-7 12 12 0 0 1 22 7c0 16-22 30-22 30z" fill="#ff2e88"/>
-    <path d="M72 88S56 78 56 66a9 9 0 0 1 16-5 9 9 0 0 1 16 5c0 12-16 22-16 22z" fill="#ff6bd6"/>`,
+    <path d="M34 64S12 50 12 34a12 12 0 0 1 22-7 12 12 0 0 1 22 7c0 16-22 30-22 30z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M72 90S56 80 56 68a9 9 0 0 1 16-5 9 9 0 0 1 16 5c0 12-16 22-16 22z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M34 64S12 50 12 34a12 12 0 0 1 22-7 12 12 0 0 1 22 7c0 16-22 30-22 30z" fill="#ff2e88"/>
+    <path d="M24 30c-5 0-9 4-9 9 0 7 5 14 11 20-3-8-4-16-2-22 1-4 1-7 0-7z" fill="#ff7ab8"/>
+    <path d="M34 64S12 50 12 34a12 12 0 0 1 22-7 12 12 0 0 1 22 7c0 16-22 30-22 30z" fill="none" stroke="#a80b53" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M72 90S56 80 56 68a9 9 0 0 1 16-5 9 9 0 0 1 16 5c0 12-16 22-16 22z" fill="#ff6bd6"/>
+    <path d="M72 90S56 80 56 68a9 9 0 0 1 16-5 9 9 0 0 1 16 5c0 12-16 22-16 22z" fill="none" stroke="#b0338f" stroke-width="5" stroke-linejoin="round"/>`,
   'tache-glasses': `
-    <path d="M6 22h88v8H86c0 14-7 22-17 22-9 0-14-6-15-14h-8c-1 8-6 14-15 14-10 0-17-8-17-22H6z" fill="#141420"/>
-    <path d="M50 74c5-6 13-11 21-11 9 0 16 5 16 12 0 8-8 13-18 13-8 0-14-3-19-8-5 5-11 8-19 8-10 0-18-5-18-13 0-7 7-12 16-12 8 0 16 5 21 11z" fill="#2a1d12"/>`,
+    <path d="M10 22h80v8h-7c0 13-7 21-16 21-8 0-13-6-14-13h-6c-1 7-6 13-14 13-9 0-16-8-16-21h-7z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M50 76c5-6 12-10 20-10 8 0 15 5 15 11 0 8-8 13-17 13-8 0-13-3-18-8-5 5-10 8-18 8-9 0-17-5-17-13 0-6 7-11 15-11 8 0 15 4 20 10z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M50 76c5-6 12-10 20-10 8 0 15 5 15 11 0 8-8 13-17 13-8 0-13-3-18-8-5 5-10 8-18 8-9 0-17-5-17-13 0-6 7-11 15-11 8 0 15 4 20 10z" fill="#3a2716"/>
+    <path d="M50 76c-4-5-10-8-16-8-6 0-11 2-13 6 4-2 10-2 15 1 5 2 10 4 14 1z" fill="#5b3f24"/>
+    <path d="M50 76c4-5 10-8 16-8 6 0 11 2 13 6-4-2-10-2-15 1-5 2-10 4-14 1z" fill="#5b3f24"/>
+    <path d="M50 76c5-6 12-10 20-10 8 0 15 5 15 11 0 8-8 13-17 13-8 0-13-3-18-8-5 5-10 8-18 8-9 0-17-5-17-13 0-6 7-11 15-11 8 0 15 4 20 10z" fill="none" stroke="#1d1209" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M10 22h80v8h-7c0 13-7 21-16 21-8 0-13-6-14-13h-6c-1 7-6 13-14 13-9 0-16-8-16-21h-7z" fill="#20202c"/>
+    <path d="M21 32h8l-4 10h-5z" fill="#fff" opacity=".5"/>
+    <path d="M61 32h8l-4 10h-5z" fill="#fff" opacity=".5"/>
+    <path d="M10 22h80v8h-7c0 13-7 21-16 21-8 0-13-6-14-13h-6c-1 7-6 13-14 13-9 0-16-8-16-21h-7z" fill="none" stroke="#0b0b12" stroke-width="5" stroke-linejoin="round"/>`,
   // The pupils point in DIFFERENT directions on purpose — two eyes agreeing
   // with each other is a face, and two that do not is the joke.
   // The pupils point in DIFFERENT directions on purpose — two eyes agreeing
@@ -85,9 +123,12 @@ const ART = {
     <circle cx="29" cy="50" r="22" fill="none" stroke="#1e1e28" stroke-width="5"/>
     <circle cx="71" cy="50" r="22" fill="none" stroke="#1e1e28" stroke-width="5"/>`,
   'eyepatch': `
-    <path d="M2 26 98 16" stroke="#141420" stroke-width="8" fill="none" stroke-linecap="round"/>
-    <ellipse cx="50" cy="58" rx="31" ry="27" fill="#141420"/>
-    <ellipse cx="40" cy="48" rx="9" ry="6" fill="#3a3a48" transform="rotate(-25 40 48)"/>`,
+    <path d="M12 26 88 17" stroke="#fff" stroke-width="17" fill="none" stroke-linecap="round"/>
+    <ellipse cx="50" cy="58" rx="30" ry="26" fill="#fff" stroke="#fff" stroke-width="11"/>
+    <path d="M12 26 88 17" stroke="#2b2b38" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <ellipse cx="50" cy="58" rx="30" ry="26" fill="#20202c"/>
+    <ellipse cx="40" cy="48" rx="10" ry="6" fill="#4a4a5e" transform="rotate(-25 40 48)"/>
+    <ellipse cx="50" cy="58" rx="30" ry="26" fill="none" stroke="#0b0b12" stroke-width="5"/>`,
   'top-hat': `
     <ellipse cx="50" cy="80" rx="47" ry="11" fill="#141420"/>
     <path d="M26 16h48v66H26z" fill="#1c1c2a"/>
