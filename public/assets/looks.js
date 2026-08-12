@@ -43,29 +43,65 @@ export const LOOKS = [
     label: 'Halloween',
     blurb: 'Skulls, ghosts and bats over pumpkin orange.',
     motifs: ['skull', 'ghost', 'bat', 'pumpkin'],
+    season: { from: [10, 1], to: [11, 2] },
   },
   {
     id: 'valentines',
     label: "Valentine's",
     blurb: 'Hearts, in red and a lot of pink.',
     motifs: ['heart', 'heart-open', 'heart'],
+    season: { from: [2, 1], to: [2, 15] },
   },
   {
     id: 'christmas',
     label: 'Christmas',
     blurb: 'Trees, snowflakes and baubles over green and red.',
     motifs: ['tree', 'snowflake', 'bauble', 'snowflake'],
+    // Crosses the year end, which `inSeason` has to cope with — a range whose
+    // start is after its end wraps rather than matching nothing.
+    season: { from: [11, 20], to: [1, 2] },
   },
   {
     id: 'summer',
     label: 'Summer',
     blurb: 'Sun and palms, for a garden or a beach bar.',
     motifs: ['sun', 'palm', 'shades'],
+    season: { from: [6, 1], to: [8, 31] },
   },
 ];
 
 export function findLook(id) {
   return LOOKS.find((l) => l.id === id) || LOOKS[0];
+}
+
+/**
+ * Is this look the one for the time of year?
+ *
+ * ONLY EVER A HINT. It marks the picker and moves that option to the top of
+ * the list; it never sets the look on its own. A corporate booking on the 30th
+ * of October getting skulls because the app decided is exactly the surprise in
+ * front of a room this codebase exists to avoid — so the date SUGGESTS and the
+ * quizmaster still chooses.
+ *
+ * The date comes from the BROWSER on purpose, unlike anything that scores: it
+ * is the quizmaster's own calendar that decides whether it is nearly Halloween,
+ * not the server's idea of UTC.
+ */
+export function inSeason(look, now = new Date()) {
+  const season = look && look.season;
+  if (!season) return false;
+  const [fromM, fromD] = season.from;
+  const [toM, toD] = season.to;
+  const at = (now.getMonth() + 1) * 100 + now.getDate();
+  const from = fromM * 100 + fromD;
+  const to = toM * 100 + toD;
+  // A range that ends before it starts has wrapped round the new year.
+  return from <= to ? at >= from && at <= to : at >= from || at <= to;
+}
+
+/** The look that suits today, or nothing. Used to mark the picker. */
+export function lookInSeason(now = new Date()) {
+  return LOOKS.find((l) => inSeason(l, now)) || null;
 }
 
 /**

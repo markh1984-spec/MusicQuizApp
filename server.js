@@ -1383,7 +1383,7 @@ async function handleGet(req, res, url, route) {
       archiveNights: mergeGigs(listArchive(roomForHost(req, url).paths.archive), []).length,
       // Offered on every pack card, so a night can be dressed up without
       // editing anything.
-      looks: LOOKS.map(({ id, label, blurb }) => ({ id, label, blurb })),
+      looks: LOOKS.map(({ id, label, blurb, season }) => ({ id, label, blurb, season })),
       // Just the totals, so the Invoices tab can wear a badge saying how many
       // are still unpaid. The invoices themselves are never in this payload.
       invoicing: roomForHost(req, url).invoices.summary(),

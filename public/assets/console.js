@@ -11,6 +11,7 @@ import { esc, node, postJson, brandLink, binIcon, hatSwitch } from './client.js'
 import { paintScheme } from './schemes.js';
 import { balanceAnswers } from './balance.js';
 import { FEATURES, FEATURE_TIER, findTier } from './plans.js';
+import { inSeason } from './looks.js';
 
 const mainEl = document.getElementById('main');
 const runningEl = document.getElementById('runningNow');
@@ -3056,11 +3057,30 @@ function shapeOptions(pack) {
  * card shape and the number of prizes. Nothing about how a round plays changes;
  * it is a palette and some drawn shapes down the sides.
  */
+/**
+ * The look picker, with the time of year marked.
+ *
+ * A quizmaster running a Halloween quiz on the 30th of October should not have
+ * to hunt down a list for the Halloween look — so the one that suits today is
+ * SAID ("in season now") and moved to the top, directly under "The usual".
+ *
+ * IT IS NEVER SELECTED FOR THEM. The pack's own look still wins, and a
+ * corporate booking in late October is not quietly given skulls because the
+ * calendar said so. The date suggests; the person who knows the room decides.
+ */
 function lookOptions(pack) {
   const looks = library.looks || [];
   const current = pack.look || 'default';
-  return looks
-    .map((l) => `<option value="${esc(l.id)}" ${l.id === current ? 'selected' : ''} title="${esc(l.blurb || '')}">${esc(l.label)}</option>`)
+  const now = new Date();
+  const timely = looks.find((l) => inSeason(l, now));
+  const order = timely
+    ? [...looks.filter((l) => l.id === 'default'), timely, ...looks.filter((l) => l.id !== 'default' && l.id !== timely.id)]
+    : looks;
+  return order
+    .map((l) => {
+      const mark = timely && l.id === timely.id ? ' — in season now' : '';
+      return `<option value="${esc(l.id)}" ${l.id === current ? 'selected' : ''} title="${esc(l.blurb || '')}">${esc(l.label)}${mark}</option>`;
+    })
     .join('');
 }
 

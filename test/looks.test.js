@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { LOOKS, DEFAULT_LOOK, findLook, motifSvg } from '../public/assets/looks.js';
+import { LOOKS, DEFAULT_LOOK, findLook, motifSvg, inSeason, lookInSeason } from '../public/assets/looks.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CSS = fs.readFileSync(path.join(ROOT, 'public/assets/style.css'), 'utf8');
@@ -203,4 +203,30 @@ test('a look nobody has heard of is a validation problem, not a silent shrug', a
   assert.deepEqual(validateQuiz(quiz), []);
   delete quiz.look;
   assert.deepEqual(validateQuiz(quiz), [], 'and no look at all is perfectly fine');
+});
+
+/*
+ * The date SUGGESTS a look and never sets one. These pin the arithmetic —
+ * particularly Christmas, whose range wraps round the new year and which a
+ * naive `from <= at && at <= to` would report as never in season at all.
+ */
+test('a season knows its own dates, and Christmas wraps the year', () => {
+  const on = (m, d) => new Date(Date.UTC(2026, m - 1, d, 12));
+  const at = (m, d) => (lookInSeason(on(m, d)) || {}).id || null;
+
+  assert.equal(at(10, 15), 'halloween');
+  assert.equal(at(11, 2), 'halloween', 'the day it ends is still in it');
+  assert.equal(at(2, 13), 'valentines');
+  assert.equal(at(7, 4), 'summer');
+
+  assert.equal(at(12, 20), 'christmas', 'December is in it');
+  assert.equal(at(1, 1), 'christmas', 'and so is New Year, on the far side of the wrap');
+  assert.equal(at(1, 20), null, 'but the middle of January is nobody\'s season');
+  assert.equal(at(4, 9), null);
+});
+
+test('a look with no season is never in one', () => {
+  assert.equal(inSeason(LOOKS.find((l) => l.id === 'default'), new Date()), false);
+  assert.equal(inSeason(null), false);
+  assert.equal(inSeason({}), false);
 });
