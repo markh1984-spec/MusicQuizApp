@@ -3371,17 +3371,29 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   font-size: 12px;
   line-height: 1.3;
 }
+/* THE CHIP'S OWN FILL AND BORDER MOVE TO A PSEUDO-ELEMENT, which looks like
+   fuss and is not: the text below is painted with `background-clip: text`, and
+   that clips EVERY background on the element — so a fill left on the span
+   itself would be cut to the shape of the words and the chip would vanish. */
 .cam-hint span {
+  position: relative;
+  z-index: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 7px 6px;
-  border-radius: 10px;
-  border: 1px solid var(--panel-line);
-  background: rgba(255, 255, 255, 0.06);
+  padding: 8px 7px;
   color: var(--ink-dim);
   font-weight: 700;
   text-align: center;
+}
+.cam-hint span::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 10px;
+  border: 1px solid var(--panel-line);
+  background: rgba(255, 255, 255, 0.06);
 }
 /* THE HEADING AND THE GESTURES ARE ONE CARD — a heading floating above a block
    of chips is a fifth loose object rather than a label on them.
@@ -3425,7 +3437,50 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
     mask-composite: exclude;
   }
 }
-.cam-guide .cam-looks-head { margin: 0 0 9px; }
+/* The heading FILLS THE CARD, justified out to both edges, so it reads as the
+   top rail of the block rather than a short label floating over it. Two
+   columns rather than the centred three: the heading takes everything Undo is
+   not using, so it spans the whole width when the button is away and re-spaces
+   itself when it appears — which is what justified text is for. Left centred
+   on the seasonal row above, where the name is one short word and justifying
+   it would print H A L L O W E E N. */
+.cam-guide .cam-looks-head { margin: 0 0 9px; grid-template-columns: 1fr auto; }
+.cam-guide .cam-looks-head > span {
+  grid-column: 1;
+  text-align: justify;
+  text-align-last: justify;
+  -moz-text-align-last: justify;
+  /* Wider tracking than the ordinary heading, because justification spends
+     whatever is left over on the two word gaps: at 0.06em the words stayed
+     their normal width and the card had to open two great holes in the middle
+     to reach both edges, which reads as three headings rather than one. */
+  letter-spacing: 0.16em;
+}
+
+/* ALL FIVE TEXTS RUN THE SAME GRADIENT AS THE HAIRLINE, and the four chips
+   take a QUADRANT of it each — `background-size: 200% 200%` with a corner
+   apiece — so the block reads as one sweep across the card rather than as
+   four small rainbows repeating the same two colours.
+
+   Behind an `@supports`, and this guard is not optional: painting text with a
+   gradient means setting the text itself to transparent, so a browser without
+   `background-clip: text` would render five INVISIBLE labels. The default is
+   the ordinary ink and the gradient is added only where it can be seen. */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .cam-guide .cam-looks-head > span,
+  .cam-hint span {
+    background-image: linear-gradient(120deg, var(--hot), var(--hot-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+  .cam-hint span { background-size: 200% 200%; }
+  .cam-hint span:nth-child(1) { background-position: 0% 0%; }
+  .cam-hint span:nth-child(2) { background-position: 100% 0%; }
+  .cam-hint span:nth-child(3) { background-position: 0% 100%; }
+  .cam-hint span:nth-child(4) { background-position: 100% 100%; }
+}
 /* touch-action none so dragging a prop does not scroll the sheet under it —
    without this the picture slides away the moment a finger moves. */
 .cam-frame .cam-canvas { touch-action: none; }
