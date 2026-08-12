@@ -8,12 +8,17 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
   FEATURES, TIERS, FEATURE_TIER, DEFAULT_TIER,
   can, featuresFor, activeFeatures, whyNot, entitlements,
   tierFor, tierRank, featuresAt, ladderFor, FEATURE_META,
 } from '../public/assets/plans.js';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const owner = { role: 'owner' };
 const basic = { role: 'quizmaster', tier: 'bronze', status: 'active' };
@@ -420,4 +425,34 @@ test('the owner can read their own past nights but a quizmaster cannot export ph
   // And it is owner-only, so no rung and no comp hands it out.
   assert.equal(can({ tier: 'gold', status: 'active' }, FEATURES.PHOTO_EXPORT), false);
   assert.equal(can({ tier: 'gold', status: 'active', comped: true }, FEATURES.PHOTO_EXPORT), false);
+});
+
+/*
+ * PHOTOS IS THE ONE SWITCH THAT REALLY REFUSES.
+ *
+ * Every other feature switch on My account is cosmetic by design — it tidies
+ * the console and the server still answers, because a switch that could 403
+ * somebody mid-gig is a reliability risk for no benefit. Photos cannot work
+ * that way: the whole meaning of turning them off is that nobody in the room
+ * can put a picture on the wall, and a switch that only hid the camera button
+ * would be a promise the app does not keep.
+ *
+ * The check lives in `photosWanted()` in server.js. This pins that it is
+ * WIRED — the route and the payload both go through it — because the failure
+ * mode is silent: photos would simply keep working.
+ */
+test('turning photos off is enforced, not just hidden', () => {
+  const source = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  assert.match(source, /function photosWanted\(/, 'the helper has gone');
+  assert.match(source, /switchedOn\(account, FEATURES\.PHOTOS\)/,
+    'photosWanted no longer reads the account preference');
+
+  // The upload route must refuse, not merely stop drawing the button.
+  const route = source.slice(source.indexOf("route === '/api/photo' && req.method === 'POST'"));
+  assert.match(route.slice(0, 400), /photosWanted\(room\)/,
+    'POST /api/photo does not ask whether this room takes photos');
+
+  // And nothing may go back to reading the bare kill switch for these two.
+  assert.doesNotMatch(source, /view\.photosOpen = photos\.enabled/,
+    'the player payload is back on the kill switch alone');
 });

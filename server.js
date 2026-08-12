@@ -44,7 +44,7 @@ import { Accounts } from './src/accounts.js';
 import { Reports } from './src/reports.js';
 import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
-import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, PACK_PENCE } from './public/assets/plans.js';
+import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, switchedOn, PACK_PENCE } from './public/assets/plans.js';
 import { Suggestions, KINDS, PACK_REQUEST_KIND } from './src/suggestions.js';
 import { Spend, spendRecorder, imagePrices } from './src/spend.js';
 // The pack id a generation is going to produce, so a cost has a subject from
@@ -117,6 +117,28 @@ async function backupStatus() {
 
 // ------------------------------------------------------------- broadcasting
 
+/**
+ * Does this room take photos at all?
+ *
+ * TWO SWITCHES, and they answer different questions. `photos.enabled` is the
+ * kill switch on the CONTROL VIEW — mid-gig, mic in hand, "stop that now", and
+ * it lives on the night. This is the quizmaster's standing preference on My
+ * account: "I do not run this feature." Both have to be on.
+ *
+ * It is deliberately NOT the usual `switchedOn` cosmetic toggle. Everywhere
+ * else a feature switch only tidies the console and the server still answers,
+ * because a switch that could 403 you mid-gig is a reliability risk for no
+ * benefit. Photos are the exception and have to be: the whole meaning of "off"
+ * here is that nobody in the room can put a picture on the wall, and a switch
+ * that only hid the button would be a promise the app does not keep.
+ */
+function photosWanted(room) {
+  if (!room.photos.enabled) return false;
+  const account = accounts.find(room.id);
+  // No account (the house room on a host key) keeps the old behaviour.
+  return account ? switchedOn(account, FEATURES.PHOTOS) : true;
+}
+
 function viewFor(client) {
   // A client that arrived before its room existed, or whose room was never
   // booted, is shown the house game rather than nothing — the same silent
@@ -130,7 +152,10 @@ function viewFor(client) {
   // survives every phase change and every game without each card knowing.
   if (client.role === 'screen') view.photos = photos.forScreen();
   else if (client.role === 'host') {
-    view.photos = { enabled: photos.enabled, count: photos.count(), items: photos.forHost() };
+    // `enabled` here is what the room ACTUALLY does, not just the kill switch —
+    // otherwise the control view shows photos on while the account preference
+    // has them off, and the host reports the camera button as broken.
+    view.photos = { enabled: photosWanted(room), count: photos.count(), items: photos.forHost() };
     // Who is knocking. Host only — the number is the whole point, because it
     // is what tells a room apart from somebody messing about.
     view.joinsWaiting = session.joins.waitingCount();
@@ -147,7 +172,7 @@ function viewFor(client) {
      */
     view.mayAdvert = can(accounts.find(room.id) || null, FEATURES.ADVERTS);
   }
-  else view.photosOpen = photos.enabled;
+  else view.photosOpen = photosWanted(room);
   // Whose night this is — the name AND the two colours — travels with every
   // payload, so a page never has to ask for it separately or flash the wrong
   // thing while it loads. Taken from the ROOM, never from whoever is looking:
@@ -2984,7 +3009,7 @@ async function handleWrite(req, res, url, route) {
   if (route === '/api/photo' && req.method === 'POST') {
     const room = roomForPhone(req, url);
     const { photos, session } = room;
-    if (!photos.enabled) return sendJson(res, 200, { ok: false, reason: 'off' }), true;
+    if (!photosWanted(room)) return sendJson(res, 200, { ok: false, reason: 'off' }), true;
 
     const playerId = String(url.searchParams.get('playerId') || '');
     const player = session.engine.state.players[playerId];
