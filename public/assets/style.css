@@ -677,7 +677,16 @@ body.phone {
 body.host { overflow: auto; background: #0a0a13; }
 body.host::after { display: none; }
 
-.host .wrap { max-width: 720px; margin: 0 auto; padding: 12px 12px 128px; display: grid; gap: 12px; }
+/* THE BAR IS FULL WIDTH; THE PANELS STAY A NARROW COLUMN.
+   The wrap used to be 720px and centred with the bar inside it, so on a laptop
+   the logo and the menu sat halfway across the screen while every other page
+   had them hard left — which is the "the top section changes every time"
+   complaint, and on the page you flip to most. The measure that mattered was
+   never the bar's: it is that a cue you read at a glance should not be a metre
+   wide, and that belongs to the panels. On a phone nothing moves at all. */
+.host .wrap { max-width: 1000px; margin: 0 auto; padding: 12px 16px 128px; display: grid; gap: 12px; }
+.host .wrap > main { max-width: 720px; width: 100%; margin: 0 auto; }
+.host.bingo .wrap > main { max-width: 1280px; }
 /* THE CONTROL VIEW SCROLLED SIDEWAYS ON A NARROW PHONE, and had done all along.
    A grid item's default minimum is its MIN-CONTENT, so one child that cannot
    shrink drags the whole column with it — here the Setup panel's pack dropdown,
@@ -692,12 +701,15 @@ body.host::after { display: none; }
 /* Bingo's call sheet is scanned, not read, so it gets the whole screen. The
    quiz's panels keep the narrower measure — a cue you read at a glance should
    not be a metre wide. */
-.host.bingo .wrap { max-width: 1280px; }
+
 
 .host .bar {
   position: sticky; top: 0; z-index: 20;
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  padding: 10px 12px; margin: -12px -12px 0;
+  /* The console's exact numbers, so the logo and the menu begin at the same
+     place on both — the row moving as you walk between pages is the whole
+     complaint a menu exists to answer. */
+  padding: 14px 22px; margin: -12px -16px 0;
   background: rgba(10, 10, 19, 0.94);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--panel-line);
@@ -1816,7 +1828,8 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
      different place here from every other page, so the chips appeared to jump
      as you walked between them — which is the whole complaint a menu exists to
      answer. Beside the logo, everywhere. */
-  display: flex; align-items: center; justify-content: flex-start; gap: 12px;
+  /* 14px, the console topbar's gap, so the menu begins at the same pixel. */
+  display: flex; align-items: center; justify-content: flex-start; gap: 14px;
   margin-bottom: 2px;
 }
 /* On the control view the menu SCROLLS rather than wrapping, always and not
@@ -4235,3 +4248,10 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   font: inherit; color: var(--hot-2); text-decoration: underline;
 }
 .sign-in .forgot { margin-top: 14px; display: grid; gap: 10px; text-align: left; }
+
+/* The topbar's right-hand end. `nowrap` because "Sign out" was breaking into
+   two lines the moment the bar got tight, and a button that changes height
+   drags the whole row with it. The "who am I" line gives way instead — it is
+   the one thing up there you can afford to lose the end of. */
+.topbar-out, .hat-switch { white-space: nowrap; }
+.console .topbar #whoami { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

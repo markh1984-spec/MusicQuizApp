@@ -10,7 +10,7 @@
  * always does the obvious next thing, in the same place every time.
  */
 
-import { esc, node, ServerClock, Live, postJson, brandLink, binIcon, actingBar, paintNav, menuRights } from './client.js';
+import { esc, node, ServerClock, Live, postJson, brandLink, binIcon, paintNav, paintIdentity, menuRights } from './client.js';
 import { paintScheme } from './schemes.js';
 import { bingoPanels, bingoActions } from './host-bingo.js';
 
@@ -71,7 +71,23 @@ function drawNav() {
 fetch(hostKey ? `/api/me?key=${encodeURIComponent(hostKey)}` : '/api/me',
   { headers: hostKey ? { 'X-Host-Key': hostKey } : {} })
   .then((r) => r.json())
-  .then((who) => { rights = menuRights(who); drawNav(); })
+  .then((who) => {
+    rights = menuRights(who);
+    drawNav();
+    /*
+     * The hat switch and Sign out, here as well — the host wants the same
+     * topbar on every page he drives. It replaces the yellow "wearing your
+     * quizmaster hat" bar this page used to carry: that bar was an INDICATOR
+     * beside a switch that was somewhere else, and now the switch is here the
+     * bar would be a second way to do one job.
+     *
+     * Taking the hat off from HERE lands on /owner, not on a reloaded /host:
+     * an owner holds no quiz features, so the control view is a page they
+     * cannot use, and sending somebody to one is the fault this file keeps
+     * recording.
+     */
+    paintIdentity(who, { onSwitch: (wanted) => { location.href = wanted ? '/host' : '/owner'; } });
+  })
   .catch(() => { /* the menu keeps the safe default */ });
 let state = null;
 
@@ -987,7 +1003,6 @@ function openStream() {
     openStream();
     // Which hat is on. Asked separately because the state payload is about the
     // game, not about who is looking at it.
-    fetch('/api/me').then((r) => r.json()).then((who) => actingBar(who)).catch(() => {});
   }).catch(() => {
     // The network had a moment. Opening the stream anyway is the right bet: it
     // reconnects on its own, and a control view that refuses to appear because

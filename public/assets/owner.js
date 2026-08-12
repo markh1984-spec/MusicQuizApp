@@ -7,7 +7,7 @@
  * from the Next button during somebody's gig.
  */
 
-import { esc, node, brandMark, brandWords, hatSwitch, paintNav, menuRights } from './client.js';
+import { esc, node, brandLink, paintNav, paintIdentity, menuRights } from './client.js';
 import { TIERS, tierFor, findTier } from './plans.js';
 import { photosSection } from './photos-tab.js';
 
@@ -57,21 +57,21 @@ async function boot() {
   me = who.account;
 
   const brand = await api('/api/brand');
+  // `brandLink`, like every other page — the bare mark-and-words came out ten
+  // pixels narrower, which moved the menu beside it.
   document.getElementById('brandSlot').innerHTML =
-    `${brandMark(26)}${brandWords(brand.name, brand.appName || '')}`;
+    brandLink(brand.name, { size: 26, appName: brand.appName || '' });
   paintNav(document.getElementById('navSlot'), { current: 'owner', ...menuRights(who) });
   whoEl.textContent = me.role === 'owner' ? `Owner — ${me.email}` : `Signed in as ${me.email}`;
 
   // The switch into your own quizmaster account, in the same corner it sits in
   // on the console — so it is one control in one place rather than a button
   // buried in a panel halfway down this page.
-  const slot = document.getElementById('hatSlot');
   // The owner page has no key of its own to forget, but pass one anyway so the
   // switch behaves identically wherever it is drawn.
-  const hat = hatSwitch(who, {
+  paintIdentity(who, {
     forgetKey: () => { try { localStorage.removeItem('musicquiz.hostkey'); } catch { /* private */ } },
   });
-  if (slot && hat) slot.replaceChildren(hat);
 
   if (me.role !== 'owner') {
     mainEl.replaceChildren(node(`

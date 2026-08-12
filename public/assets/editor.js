@@ -11,7 +11,7 @@
  * is exactly what plays tonight.
  */
 
-import { esc, node, postJson, brandLink, paintNav, menuRights } from './client.js';
+import { esc, node, postJson, brandLink, paintNav, paintIdentity, menuRights } from './client.js';
 import { LOOKS } from './looks.js';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -122,6 +122,7 @@ async function loadQuizList(selectId) {
     const features = (me && me.account && me.account.entitlements && me.account.entitlements.features) || null;
     if (features) catalogue = features.includes('owner.catalogue');
     rights = menuRights(me);
+    paintIdentity(me);
   } catch {
     catalogue = true;
   }

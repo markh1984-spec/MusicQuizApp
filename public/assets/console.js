@@ -7,7 +7,7 @@
  * something typed in fresh each time.
  */
 
-import { esc, node, postJson, brandLink, binIcon, hatSwitch, paintNav, menuRights } from './client.js';
+import { esc, node, postJson, brandLink, binIcon, paintNav, paintIdentity, menuRights } from './client.js';
 import { paintScheme } from './schemes.js';
 import { balanceAnswers } from './balance.js';
 import { FEATURES, FEATURE_TIER, findTier } from './plans.js';
@@ -172,24 +172,9 @@ function paintHatSwitch(who) {
    * Not shown on the host key: there is no session to end, so the button would
    * do nothing and reading it would suggest otherwise.
    */
-  const outSlot = document.getElementById('outSlot');
-  if (outSlot && me && !me.bootstrap) {
-    const out = node('<button class="minor topbar-out">Sign out</button>');
-    out.addEventListener('click', async () => {
-      await fetch('/api/sign-out', { method: 'POST' });
-      location.href = '/login';
-    });
-    outSlot.replaceChildren(out);
-  }
-
-  const slot = document.getElementById('hatSlot');
-  if (!slot) return;
-  const el = hatSwitch(who, { forgetKey });
-  slot.replaceChildren(...(el ? [el] : []));
-  // A gold hairline under the topbar while the hat is on, so even a screenshot
-  // of the middle of the page says which hat it was taken in.
-  document.body.classList.toggle('wearing-hat', Boolean(who && who.actingAs));
+  paintIdentity(who, { forgetKey });
 }
+
 
 /** Does this app have accounts set up, or is it still host-key only? */
 async function hasAccounts() {

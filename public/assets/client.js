@@ -56,7 +56,21 @@ export function navMenu({
 } = {}) {
   const at = (path) => path + (key ? `?key=${encodeURIComponent(key)}` : '');
   const items = [{ id: 'console', label: 'Console', href: at('/console') }];
-  if (control) items.push({ id: 'control', label: 'Control', href: at('/host') });
+  /*
+   * THE SAME FOUR DOORS IN THE SAME ORDER, WHICHEVER HAT IS ON.
+   *
+   * The owner holds no quiz features, so Control used to disappear on the
+   * owner page and the whole row shuffled left — which is the "it changes
+   * every time" complaint, and it is a fair one: a menu that reorders itself
+   * is not a menu, it is four bars that happen to look alike.
+   *
+   * So the door is always there, and it CHANGES HAT ON THE WAY THROUGH — the
+   * exact mirror of Owner doing it in the other direction. An owner pressing
+   * Control is asking for their control view, and they have one; it is behind
+   * the hat, and making them find the switch first is a step that exists only
+   * because of how the code is arranged. `data-hat-on` is that press.
+   */
+  if (control) items.push({ id: 'control', label: 'Control', href: at('/host'), hatOn: owner && !acting });
   if (packs) items.push({ id: 'packs', label: 'Packs', href: at('/editor') });
   /*
    * The Owner door, and while the QUIZMASTER HAT IS ON it has to take the hat
@@ -76,7 +90,7 @@ export function navMenu({
    */
   if (owner) items.push({ id: 'owner', label: 'Owner', href: at('/owner'), hatOff: acting });
   return items.map((i) => `<a class="${i.id === current ? 'here' : ''}" href="${esc(i.href)}"${
-    i.hatOff ? ' data-hat-off="1"' : ''}${
+    i.hatOff ? ' data-hat="off"' : ''}${i.hatOn ? ' data-hat="on"' : ''}${
     i.id === current ? ' aria-current="page"' : ''}>${esc(i.label)}</a>`).join('');
 }
 
@@ -88,22 +102,59 @@ export function navMenu({
 export function paintNav(slot, opts = {}) {
   if (!slot) return;
   slot.innerHTML = navMenu(opts);
-  const back = slot.querySelector('a[data-hat-off]');
-  if (!back) return;
-  back.addEventListener('click', async (e) => {
-    e.preventDefault();
-    // Take the hat off, then go. If the call fails, go anyway — the owner page
-    // says plainly what it wants, which beats a chip that silently does
-    // nothing when pressed.
-    try {
-      await fetch('/api/owner/act-as', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ on: false }),
-      });
-    } catch { /* go anyway */ }
-    location.href = back.getAttribute('href');
-  });
+  for (const chip of slot.querySelectorAll('a[data-hat]')) {
+    const wanted = chip.getAttribute('data-hat') === 'on';
+    chip.addEventListener('click', async (e) => {
+      e.preventDefault();
+      // Change hat, then go. If the call fails, go anyway — the page you land
+      // on says plainly what it wants, which beats a chip that silently does
+      // nothing when pressed.
+      try {
+        await fetch('/api/owner/act-as', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ on: wanted }),
+        });
+      } catch { /* go anyway */ }
+      location.href = chip.getAttribute('href');
+    });
+  }
+}
+
+/**
+ * The right-hand end of the topbar: which hat is on, and the way out.
+ *
+ * Shared for the same reason `navMenu` is. It was written once inside
+ * `console.js`, so the console had a hat switch and a Sign out and the control
+ * view, the editor and the owner page each had some subset of neither — which
+ * is the "the top section changes every time" complaint at the other end of
+ * the bar from the menu.
+ *
+ * `hatSwitch` decides for itself whether anybody may see it, and answers null
+ * for a real quizmaster — that refusal is tested, and this must not second
+ * guess it.
+ */
+export function paintIdentity(who, { forgetKey = null, onSwitch = null } = {}) {
+  const outSlot = document.getElementById('outSlot');
+  // No Sign out on the host key: there is no session to end, and a button that
+  // says there is would be a lie that lands you on a sign-in page you do not
+  // need. Same test the console has always used.
+  if (outSlot && who && who.signedIn && !who.bootstrap) {
+    const out = node('<button class="minor topbar-out">Sign out</button>');
+    out.addEventListener('click', async () => {
+      await fetch('/api/sign-out', { method: 'POST' });
+      location.href = '/login';
+    });
+    outSlot.replaceChildren(out);
+  }
+  const slot = document.getElementById('hatSlot');
+  if (slot) {
+    const el = hatSwitch(who, { forgetKey, onSwitch });
+    slot.replaceChildren(...(el ? [el] : []));
+  }
+  // A gold hairline under the topbar while the hat is on, so even a screenshot
+  // of the middle of a page says which hat it was taken in.
+  document.body.classList.toggle('wearing-hat', Boolean(who && who.actingAs));
 }
 
 /**
@@ -124,9 +175,15 @@ export function menuRights(who) {
   const features = (account && account.entitlements && account.entitlements.features) || [];
   const has = (id) => features.includes(id);
   return {
-    // An owner runs no nights, so `quiz.run` is exactly the right test — it
-    // says the control view is theirs to open rather than a door that 403s.
-    control: has('quiz.run') || has('bingo.run'),
+    /*
+     * An owner holds no quiz features — but they have a quizmaster hat, and
+     * behind it a control view of their own. Reading `quiz.run` alone made the
+     * door vanish on the owner page and the whole row shuffle left, which is
+     * the "the top section changes every time" complaint. `tiers` is what the
+     * server sends to anybody who can WEAR the hat, so it is the honest test
+     * for "is there a control view on the other side of this".
+     */
+    control: has('quiz.run') || has('bingo.run') || Boolean(who && who.tiers && who.tiers.length),
     packs: has('owner.catalogue') || has('packs.own'),
     /*
      * Three ways to be the owner, and only the first is obvious.
