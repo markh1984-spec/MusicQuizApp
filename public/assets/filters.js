@@ -132,13 +132,28 @@ export function drawFiltered(canvas, source, filterId, maxSide = 1280) {
   const w = Math.max(1, Math.round(sw * scale));
   const h = Math.max(1, Math.round(sh * scale));
 
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  ctx.drawImage(source, 0, 0, w, h);
-
   const filter = filterById(filterId);
-  if (filter.id === 'none') return canvas;
+  /*
+   * `willReadFrequently` ONLY when something is going to read the pixels.
+   *
+   * It asks the browser for a SOFTWARE canvas, which is right for a filter
+   * that walks every pixel and badly wrong for anything else — it takes the
+   * GPU out of `drawImage`. With the colour grading gone from the panel, the
+   * preview never reads back, and it was repainting a 1280px canvas in
+   * software on every frame of a drag.
+   */
+  const reads = filter.id !== 'none';
+  const ctx = canvas.getContext('2d', reads ? { willReadFrequently: true } : undefined);
+  // Only resize when it actually changed: assigning width or height clears the
+  // canvas and reallocates it, which is the expensive part of a repaint.
+  if (canvas.width !== w || canvas.height !== h) {
+    canvas.width = w;
+    canvas.height = h;
+  } else {
+    ctx.clearRect(0, 0, w, h);
+  }
+  ctx.drawImage(source, 0, 0, w, h);
+  if (!reads) return canvas;
 
   const image = ctx.getImageData(0, 0, w, h);
   filter.apply(image.data);

@@ -518,9 +518,17 @@ export function stickerAt(items, x, y, canvas) {
   for (let i = items.length - 1; i >= 0; i--) {
     const item = items[i];
     const side = item.size * Math.min(canvas.width, canvas.height) * 2;
-    const half = side / 2 / canvas.width;
-    const halfY = side / 2 / canvas.height;
-    if (Math.abs(x - item.x) <= half && Math.abs(y - item.y) <= halfY) return item;
+    // In PIXELS, not fractions — the box is square on the canvas, and a
+    // fraction of the width is not a fraction of the height on a portrait
+    // photo. Turned back by the prop's own angle so a rotated prop is still
+    // grabbed where it looks, rather than through an upright box it no longer
+    // fills.
+    const px = (x - item.x) * canvas.width;
+    const py = (y - item.y) * canvas.height;
+    const a = -(item.angle || 0);
+    const rx = px * Math.cos(a) - py * Math.sin(a);
+    const ry = px * Math.sin(a) + py * Math.cos(a);
+    if (Math.abs(rx) <= side / 2 && Math.abs(ry) <= side / 2) return item;
   }
   return null;
 }

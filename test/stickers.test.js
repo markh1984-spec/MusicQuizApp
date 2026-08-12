@@ -134,3 +134,48 @@ test('no prop is drawn in one of the tile greys', () => {
       `a prop is filled with ${stop}, which is one of the tile's own tones`);
   }
 });
+
+/*
+ * Grabbing a prop that has been turned.
+ *
+ * The hit box used to be worked out as a fraction of the width and a fraction
+ * of the HEIGHT, which are different numbers on a portrait photo — so the box
+ * was a rectangle where the prop is a square. Now that two fingers rotate as
+ * well as size, it also has to turn with the prop, or a prop at 45° is grabbed
+ * through an upright box it no longer fills.
+ */
+test('a turned prop is grabbed where it looks, not where it started', () => {
+  const canvas = { width: 900, height: 1200 };
+  const at = (x, y, items) => stickerAt(items, x, y, canvas);
+
+  const flat = [placed('crown', { x: 0.5, y: 0.5, size: 0.2 })];
+  assert.ok(at(0.5, 0.5, flat), 'dead centre');
+  assert.equal(at(0.5, 0.9, flat), null, 'well clear of it');
+
+  // Square in pixels: the box reaches further in FRACTIONS of the width than
+  // of the height, because the canvas is taller than it is wide.
+  const half = 0.2 * Math.min(900, 1200) * 2 / 2;   // 180px each way
+  assert.ok(at(0.5 + (half - 4) / 900, 0.5, flat), 'just inside, sideways');
+  assert.equal(at(0.5 + (half + 40) / 900, 0.5, flat), null, 'just outside, sideways');
+  assert.ok(at(0.5, 0.5 + (half - 4) / 1200, flat), 'just inside, vertically');
+  assert.equal(at(0.5, 0.5 + (half + 40) / 1200, flat), null, 'just outside, vertically');
+
+  /*
+   * Turned 45°, its CORNERS now point along the axes — so a point straight out
+   * to the side, further than the upright box ever reached, is inside it.
+   * That one point is the whole test: it is inside when turned and outside
+   * when it is not.
+   */
+  const turned = [placed('crown', { x: 0.5, y: 0.5, size: 0.2, angle: Math.PI / 4 })];
+  const reach = half * Math.SQRT2 - 8;
+  assert.ok(at(0.5 + reach / 900, 0.5, turned), 'out at the corner it now points');
+  assert.equal(at(0.5 + reach / 900, 0.5, flat), null,
+    'and the same point misses it when it is upright');
+});
+
+test('the topmost prop wins, whatever the angles', () => {
+  const canvas = { width: 800, height: 800 };
+  const under = placed('crown', { x: 0.5, y: 0.5, size: 0.2 });
+  const over = placed('halo', { x: 0.5, y: 0.5, size: 0.2, angle: 0.6 });
+  assert.equal(stickerAt([under, over], 0.5, 0.5, canvas), over, 'the one you can see');
+});

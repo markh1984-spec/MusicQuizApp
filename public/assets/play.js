@@ -278,7 +278,7 @@ function openCamera() {
                them. And it is one line: HOLD is the only gesture here that is
                not already in somebody's fingers, the bin explains itself by
                appearing mid-drag, and a wall of instructions gets skipped. -->
-          <div class="cam-hint tiny">Tap to add. Hold to drag, pinch to size, double-tap to delete.</div>
+          <div class="cam-hint tiny">Tap to add. Hold to drag, pinch to size and turn it, double-tap to delete.</div>
           <div class="cam-props"></div>
           <button class="cam-send">Send it up</button>
         </div>
@@ -324,7 +324,11 @@ function openCamera() {
 
   const repaint = () => {
     if (!source) return;
-    drawFiltered(canvas, source, PLAIN);
+    // A smaller canvas than the upload's. The preview is a few hundred CSS
+    // pixels wide, and every extra pixel here is redrawn on every frame of a
+    // drag. The upload renders again at 1280 from the same source, so nothing
+    // the room sees is lost.
+    drawFiltered(canvas, source, PLAIN, 900);
     // Awaited nowhere: the props are cached images after the first draw, so
     // this settles within a frame and dragging stays smooth.
     drawStickers(canvas, stuckOn);
@@ -436,6 +440,8 @@ function openCamera() {
   let dragging = null;
   let pinchFrom = 0;
   let sizeFrom = 0;
+  let twistFrom = 0;
+  let angleFrom = 0;
   // Whether the finger actually travelled — a press that never moved is a tap,
   // and two of those on one prop takes it off.
   let shifted = false;
@@ -445,10 +451,20 @@ function openCamera() {
     const box = canvas.getBoundingClientRect();
     return { x: (e.clientX - box.left) / box.width, y: (e.clientY - box.top) / box.height };
   };
-  const gap = () => {
+  /*
+   * Two fingers, in real pixels rather than in fractions of the canvas.
+   *
+   * The pointers are stored as a fraction of the width and the height, which
+   * are not the same number on a portrait photo — so an angle worked out from
+   * them is skewed, and a twist would rotate faster sideways than up. Both the
+   * distance and the angle are corrected back to the canvas's own aspect.
+   */
+  const pair = () => {
     const [a, b] = [...pointers.values()];
-    return Math.hypot(a.x - b.x, a.y - b.y);
+    return { dx: (b.x - a.x) * canvas.width, dy: (b.y - a.y) * canvas.height };
   };
+  const gap = () => { const { dx, dy } = pair(); return Math.hypot(dx, dy); };
+  const twist = () => { const { dx, dy } = pair(); return Math.atan2(dy, dx); };
 
   /*
    * The bin, and it only exists while something is in the air.
@@ -485,6 +501,8 @@ function openCamera() {
     } else if (pointers.size === 2 && dragging) {
       pinchFrom = gap();
       sizeFrom = dragging.size;
+      twistFrom = twist();
+      angleFrom = dragging.angle || 0;
     }
   });
 
@@ -507,8 +525,12 @@ function openCamera() {
     shifted = true;
 
     if (pointers.size >= 2 && pinchFrom > 0) {
+      // Size AND angle from the same two fingers, which is how every phone
+      // already works — a prop is scaled and turned in one movement rather
+      // than by finding a second control.
       const scale = gap() / pinchFrom;
       dragging.size = Math.max(0.06, Math.min(1.1, sizeFrom * scale));
+      dragging.angle = angleFrom + (twist() - twistFrom);
     } else {
       const spot = spotOf(e);
       // Allowed slightly off the edge: half a pair of ears hanging off the top
@@ -563,20 +585,55 @@ function openCamera() {
   window.addEventListener('pointerup', letGo);
   window.addEventListener('pointercancel', letGo);
 
-  input.addEventListener('change', () => {
+  /*
+   * Getting the photo on screen QUICKLY.
+   *
+   * A phone camera hands back a twelve-megapixel JPEG. Decoding that into an
+   * `Image` happens on the main thread and takes seconds on an older handset —
+   * which is the wait, not the camera. `createImageBitmap` decodes off-thread
+   * AND downscales during the decode, so the expensive part never happens at
+   * full size. It is the difference between a beat and a stare.
+   *
+   * `SOURCE_MAX` is a shade over the 1280 the upload sends, so nothing is lost
+   * at the far end — everything downstream then works on a small bitmap rather
+   * than on twelve megapixels.
+   *
+   * The old path is kept as a fallback for anything without it, and for a file
+   * `createImageBitmap` will not take.
+   */
+  const SOURCE_MAX = 1400;
+  const useIt = (bitmapOrImg) => {
+    source = bitmapOrImg;
+    stage.hidden = false;
+    status.textContent = '';
+    repaint();
+  };
+  const theSlowWay = (file) => {
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(img.src); useIt(img); };
+    img.onerror = () => { status.textContent = 'That did not look like a photo.'; };
+    img.src = URL.createObjectURL(file);
+  };
+  input.addEventListener('change', async () => {
     const file = input.files && input.files[0];
     if (!file) return;
     status.textContent = 'Loading…';
-    const img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(img.src);
-      source = img;
-      stage.hidden = false;
-      status.textContent = '';
-      repaint();
-    };
-    img.onerror = () => { status.textContent = 'That did not look like a photo.'; };
-    img.src = URL.createObjectURL(file);
+    if (!window.createImageBitmap) return theSlowWay(file);
+    try {
+      const probe = await createImageBitmap(file);
+      const big = Math.max(probe.width, probe.height);
+      if (big <= SOURCE_MAX) return useIt(probe);
+      const scale = SOURCE_MAX / big;
+      const small = await createImageBitmap(probe, {
+        resizeWidth: Math.round(probe.width * scale),
+        resizeHeight: Math.round(probe.height * scale),
+        resizeQuality: 'high',
+      });
+      probe.close();
+      useIt(small);
+    } catch {
+      theSlowWay(file);
+    }
   });
 
   sendBtn.addEventListener('click', async () => {
