@@ -51,31 +51,45 @@ export function brandLink(name, { key = '', size = 30, appName = '' } = {}) {
  * pointed at a room and the other belongs to somebody in it; neither has any
  * business carrying a door into the quizmaster's console.
  */
-export function navMenu({
-  current = '', key = '', joinCode = '',
-  control = true, packs = true, owner = false,
-} = {}) {
-  const k = key ? `key=${encodeURIComponent(key)}` : '';
-  const at = (path, q = '') => {
-    const bits = [q, k].filter(Boolean).join('&');
-    return path + (bits ? `?${bits}` : '');
-  };
-  const g = joinCode ? `g=${encodeURIComponent(joinCode)}` : '';
+export function navMenu({ current = '', key = '', control = true, packs = true, owner = false } = {}) {
+  const at = (path) => path + (key ? `?key=${encodeURIComponent(key)}` : '');
   const items = [{ id: 'console', label: 'Console', href: at('/console') }];
-  if (control) {
-    items.push({ id: 'control', label: 'Control', href: at('/host') });
-    // The projector and the join page are the other WINDOWS of the same night,
-    // not somewhere you go instead of this — so they open in a new tab. The
-    // projector also has to carry the room's own code, or a quizmaster lands
-    // on the house room's screen at their own gig.
-    items.push({ id: 'screen', label: 'Big screen', href: at('/screen', g), blank: true });
-    items.push({ id: 'play', label: 'Join page', href: at('/play', g), blank: true });
-  }
+  if (control) items.push({ id: 'control', label: 'Control', href: at('/host') });
   if (packs) items.push({ id: 'packs', label: 'Packs', href: at('/editor') });
   if (owner) items.push({ id: 'owner', label: 'Owner', href: at('/owner') });
   return items.map((i) => `<a class="${i.id === current ? 'here' : ''}" href="${esc(i.href)}"${
-    i.blank ? ' target="_blank" rel="noopener"' : ''}${
     i.id === current ? ' aria-current="page"' : ''}>${esc(i.label)}</a>`).join('');
+}
+
+/**
+ * What goes in the menu, worked out ONE way from `/api/me`.
+ *
+ * The chips were jumping about between pages, and the cause was every page
+ * deciding for itself: the console read its own feature list, the editor
+ * guessed from whether it held the catalogue, and the control view assumed.
+ * So the same account got Console·Control·Packs on one page and
+ * Console·Packs·Owner on the next — which is not a menu, it is four bars that
+ * happen to look alike. One function, one answer, every page.
+ *
+ * The order in `navMenu` never changes either, so a chip does not move when an
+ * item beside it is missing.
+ */
+export function menuRights(who) {
+  const account = (who && who.signedIn && who.account) || null;
+  const features = (account && account.entitlements && account.entitlements.features) || [];
+  const has = (id) => features.includes(id);
+  return {
+    // An owner runs no nights, so `quiz.run` is exactly the right test — it
+    // says the control view is theirs to open rather than a door that 403s.
+    control: has('quiz.run') || has('bingo.run'),
+    packs: has('owner.catalogue') || has('packs.own'),
+    // `alsoSignedIn` as well as `role`, because on the host key the server
+    // answers as the bootstrap identity — whose role is "quizmaster" — with
+    // the real cookie reported underneath. Without it the Owner chip vanished
+    // on exactly the laptop that is both the dev machine and the gig machine.
+    owner: Boolean((account && account.role === 'owner')
+      || (who && who.alsoSignedIn && who.alsoSignedIn.role === 'owner')),
+  };
 }
 
 /**

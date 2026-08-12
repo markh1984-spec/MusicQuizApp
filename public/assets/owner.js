@@ -7,7 +7,7 @@
  * from the Next button during somebody's gig.
  */
 
-import { esc, node, brandMark, brandWords, hatSwitch, navMenu } from './client.js';
+import { esc, node, brandMark, brandWords, hatSwitch, navMenu, menuRights } from './client.js';
 import { TIERS, tierFor, findTier } from './plans.js';
 import { photosSection } from './photos-tab.js';
 
@@ -59,14 +59,8 @@ async function boot() {
   const brand = await api('/api/brand');
   document.getElementById('brandSlot').innerHTML =
     `${brandMark(26)}${brandWords(brand.name, brand.appName || '')}`;
-  /*
-   * The menu. No Control or Big screen: an owner runs no nights, so those two
-   * would be doors into a room they have nothing in — and the hat switch
-   * beside this is how you get to the quizmaster side, which is the honest
-   * answer to "where is my control view".
-   */
   const nav = document.getElementById('navSlot');
-  if (nav) nav.innerHTML = navMenu({ current: 'owner', control: false, owner: true });
+  if (nav) nav.innerHTML = navMenu({ current: 'owner', ...menuRights(who) });
   whoEl.textContent = me.role === 'owner' ? `Owner — ${me.email}` : `Signed in as ${me.email}`;
 
   // The switch into your own quizmaster account, in the same corner it sits in

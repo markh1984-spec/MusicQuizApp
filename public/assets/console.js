@@ -7,7 +7,7 @@
  * something typed in fresh each time.
  */
 
-import { esc, node, postJson, brandLink, binIcon, hatSwitch, navMenu } from './client.js';
+import { esc, node, postJson, brandLink, binIcon, hatSwitch, navMenu, menuRights } from './client.js';
 import { paintScheme } from './schemes.js';
 import { balanceAnswers } from './balance.js';
 import { FEATURES, FEATURE_TIER, findTier } from './plans.js';
@@ -142,6 +142,9 @@ let library = null;
  * a browser gets a tab that answers 403.
  */
 let me = null;
+// What goes in the menu — worked out once, from /api/me, the same way on
+// every page. See `menuRights` in client.js.
+let rights = { control: false, packs: false, owner: false };
 const can = (feature) => !me || !me.entitlements || me.entitlements.features.includes(feature);
 /** Which tier a feature first appears on, for the markers that name it. */
 const tierNeeded = (feature) => FEATURE_TIER[feature] || '';
@@ -209,6 +212,7 @@ async function load() {
     // let the key launch perfectly well.
     const who = await (await fetch(keyed('/api/me'))).json();
     me = who.signedIn ? who.account : null;
+    rights = menuRights(who);
     /*
      * An owner used to be bounced straight to /owner from here, which left
      * NOWHERE to generate or import a pack: the generator lives on this page
@@ -502,7 +506,7 @@ function paintBrand(name) {
   // The logo is a link home like any other, so it follows the same rule as
   // `linkTo`: the key only if this visit arrived carrying one.
   slot.innerHTML = brandLink(name, {
-    key: keyInUrl, size: 30, appName: (library && library.appName) || '',
+    key: keyInUrl, size: 26, appName: (library && library.appName) || '',
   });
   document.title = `Console — ${name}`;
 }
@@ -1355,19 +1359,7 @@ const dedupe = (list) => [...new Set(list)];
  * the other windows of the same night, not somewhere you go instead.
  */
 function navBar() {
-  const running = library.running || {};
-  // `library.joinCode` first: `running` is absent until something is launched,
-  // and the join link is most wanted BEFORE a night rather than during one.
-  return navMenu({
-    current: 'console',
-    key: keyInUrl,
-    joinCode: library.joinCode || running.joinCode || '',
-    // An owner runs no nights, so there is no control view or projector of
-    // theirs to open — the same test the running panel uses.
-    control: canRun('quiz') || canRun('bingo'),
-    packs: can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS),
-    owner: Boolean(me && me.role === 'owner'),
-  });
+  return navMenu({ current: 'console', key: keyInUrl, ...rights });
 }
 
 /**

@@ -11,7 +11,7 @@
  * is exactly what plays tonight.
  */
 
-import { esc, node, postJson, brandLink, navMenu } from './client.js';
+import { esc, node, postJson, brandLink, navMenu, menuRights } from './client.js';
 import { LOOKS } from './looks.js';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -116,10 +116,12 @@ async function loadQuizList(selectId) {
   // Who is looking, so a save knows which library it is writing to. Failing
   // this must not take the editor down — it falls back to the catalogue, which
   // is what the page did before there were two.
+  let rights = { control: false, packs: true, owner: false };
   try {
     const me = await api('/api/me');
     const features = (me && me.account && me.account.entitlements && me.account.entitlements.features) || null;
     if (features) catalogue = features.includes('owner.catalogue');
+    rights = menuRights(me);
   } catch {
     catalogue = true;
   }
@@ -130,18 +132,8 @@ async function loadQuizList(selectId) {
     slot.innerHTML = brandLink(library.brand, { key: navKey, size: 26, appName: library.appName || '' });
     document.title = `Editor — ${library.brand}`;
   }
-  /*
-   * The menu. `catalogue` above is the OWNER test — only an owner holds
-   * `owner.catalogue` — so it is what says whether the Owner door belongs
-   * here, and equally that this account runs no nights of its own.
-   */
   const nav = document.getElementById('navSlot');
-  if (nav) {
-    nav.innerHTML = navMenu({
-      current: 'packs', key: navKey, joinCode: library.joinCode || '',
-      control: !catalogue, owner: catalogue,
-    });
-  }
+  if (nav) nav.innerHTML = navMenu({ current: 'packs', key: navKey, ...rights });
   const options = [];
 
   if (library.quizzes.length) {

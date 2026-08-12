@@ -1755,8 +1755,10 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
 /* On the projector the possessive is the quieter half but still has to carry
    to the back of a room, so it keeps more of the size than it does elsewhere. */
 .screen .brand-who { font-size: 0.66em; color: var(--ink); opacity: 0.82; }
-.console .brand-name { font-size: var(--fs-lead); }
-.host .brand-name, .editor .brand-name { font-size: var(--fs-ctl); }
+/* ONE size for the name on every page that carries the menu, so the block to
+   the left of the chips is the same width and the chips line up as you move
+   between pages rather than shifting a few pixels each time. */
+.console .brand-name, .host .brand-name, .editor .brand-name { font-size: var(--fs-ctl); }
 /* The owner page drops the logo and the name straight into the slot rather
    than wrapping them in a `.brand` link, so the slot has to be the flex row —
    otherwise the name falls under the mark the moment anything shares the bar
@@ -1807,10 +1809,14 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
 .host .bar .bar-top {
   flex: 1 1 100%;
   /* And the ROW needs it as well as the menu inside it. A flex item's default
-     minimum is its content, so the row was sized to logo-plus-five-chips and
+     minimum is its content, so the row was sized to logo-plus-the-chips and
      grew past the phone before the menu ever got the chance to scroll. */
   min-width: 0;
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  /* `flex-start`, NOT `space-between`. Pushed to the right the menu sat in a
+     different place here from every other page, so the chips appeared to jump
+     as you walked between them — which is the whole complaint a menu exists to
+     answer. Beside the logo, everywhere. */
+  display: flex; align-items: center; justify-content: flex-start; gap: 12px;
   margin-bottom: 2px;
 }
 /* On the control view the menu SCROLLS rather than wrapping, always and not
@@ -1824,10 +1830,12 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
    dropdown and the generator's theme box. */
 .host .bar .topnav { flex: 1 1 0; min-width: 0; overflow-x: auto; scrollbar-width: none; }
 .host .bar .topnav::-webkit-scrollbar { display: none; }
-/* The editor's bar is already full of its own controls, so the menu takes
-   whatever is left and scrolls inside it. */
-.editor .topbar .topnav { flex: 1 1 0; min-width: 0; overflow-x: auto; scrollbar-width: none; }
-.editor .topbar .topnav::-webkit-scrollbar { display: none; }
+/* The editor's bar is already full of its own controls — a pack picker and
+   five buttons — so the menu must NOT be the thing that gives way: as a
+   shrinkable item it was squeezed to nothing and the menu simply was not there
+   on that page. It keeps its size and the bar wraps instead. */
+.editor .topbar { flex-wrap: wrap; row-gap: 10px; }
+.editor .topbar .topnav { flex: 0 0 auto; }
 
 /* Big screen: brand in the corner all night, quiz title beside it. */
 .screen .titles { display: flex; align-items: center; gap: 1.1vw; min-width: 0; }

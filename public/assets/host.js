@@ -10,7 +10,7 @@
  * always does the obvious next thing, in the same place every time.
  */
 
-import { esc, node, ServerClock, Live, postJson, brandLink, binIcon, actingBar, navMenu } from './client.js';
+import { esc, node, ServerClock, Live, postJson, brandLink, binIcon, actingBar, navMenu, menuRights } from './client.js';
 import { paintScheme } from './schemes.js';
 import { bingoPanels, bingoActions } from './host-bingo.js';
 
@@ -43,6 +43,27 @@ let hostKey = new URL(location.href).searchParams.get('key') || localStorage.get
  */
 const navKey = new URL(location.href).searchParams.get('key') || '';
 const withKey = (path) => (navKey ? `${path}${path.includes('?') ? '&' : '?'}key=${encodeURIComponent(navKey)}` : path);
+
+/*
+ * The menu, worked out from `/api/me` like every other page rather than
+ * assumed here. This page used to guess — control true because you are
+ * obviously driving a night, owner false because it never asked — and that
+ * guess is exactly why the chips moved as you walked between pages: the same
+ * account got a different row on every one.
+ *
+ * `control: true` until the answer lands, because on the control view it is
+ * the safe way round: a chip that appears is better than the page you are
+ * standing on being missing from its own menu for a moment.
+ */
+let rights = { control: true, packs: true, owner: false };
+function paintNav() {
+  const nav = document.getElementById('navSlot');
+  if (nav) nav.innerHTML = navMenu({ current: 'control', key: navKey, ...rights });
+}
+fetch(withKey('/api/me'), { headers: navKey ? { 'X-Host-Key': navKey } : {} })
+  .then((r) => r.json())
+  .then((who) => { rights = menuRights(who); paintNav(); })
+  .catch(() => { /* the menu keeps the safe default */ });
 let state = null;
 
 if (hostKey) localStorage.setItem(KEY_STORE, hostKey);
@@ -107,22 +128,7 @@ function draw(next) {
     document.title = `Control — ${state.brand}`;
     brandPainted = true;
   }
-  /*
-   * The menu. Rebuilt every push rather than once, because the projector and
-   * the join page have to carry this room's join code and that arrives with
-   * the state.
-   *
-   * `control` is simply true here: you are on the control view, so whatever
-   * else is true you can plainly run a night. `owner` is left false because
-   * this page never asks who you are — an owner runs no nights, so they are
-   * barely ever here, and a menu guessing wrong is worse than one item short.
-   */
-  const nav = document.getElementById('navSlot');
-  if (nav) {
-    nav.innerHTML = navMenu({
-      current: 'control', key: navKey, joinCode: state.joinCode || '',
-    });
-  }
+  paintNav();
   // Your own two colours on your own control view, so the phone in your hand
   // matches the projector you are driving. Not gated on `brandPainted`: the
   // colours can change mid-night from the console, the name cannot.
