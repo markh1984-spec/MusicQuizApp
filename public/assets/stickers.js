@@ -130,44 +130,80 @@ const ART = {
     <ellipse cx="40" cy="48" rx="10" ry="6" fill="#4a4a5e" transform="rotate(-25 40 48)"/>
     <ellipse cx="50" cy="58" rx="30" ry="26" fill="none" stroke="#0b0b12" stroke-width="5"/>`,
   'top-hat': `
-    <ellipse cx="50" cy="80" rx="47" ry="11" fill="#141420"/>
-    <path d="M26 16h48v66H26z" fill="#1c1c2a"/>
-    <path d="M26 58h48v13H26z" fill="#e8123c"/>
-    <ellipse cx="50" cy="16" rx="24" ry="6" fill="#2c2c3e"/>`,
+    <ellipse cx="50" cy="80" rx="43" ry="10" fill="#fff" stroke="#fff" stroke-width="11"/>
+    <path d="M27 18h46v64H27z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <ellipse cx="50" cy="80" rx="43" ry="10" fill="#20202c"/>
+    <path d="M27 18h46v62H27z" fill="#20202c"/>
+    <path d="M27 18h13v62H27z" fill="#33334a"/>
+    <path d="M27 56h46v13H27z" fill="#e8123c"/>
+    <path d="M27 56h13v13H27z" fill="#ff5470"/>
+    <ellipse cx="50" cy="18" rx="23" ry="6" fill="#3d3d57"/>
+    <ellipse cx="50" cy="80" rx="43" ry="10" fill="none" stroke="#0b0b12" stroke-width="5"/>
+    <path d="M27 18h46v62H27z" fill="none" stroke="#0b0b12" stroke-width="5" stroke-linejoin="round"/>`,
   'cowboy-hat': `
-    <path d="M2 68c14-11 30-7 48-7s34-4 48 7c-11 12-30 17-48 17S13 80 2 68z" fill="#8a5a2b"/>
-    <path d="M30 64c-3-24 6-46 20-46s23 22 20 46c-12 5-28 5-40 0z" fill="#a06b33"/>
-    <path d="M28 56c13 6 31 6 44 0l2 9c-15 6-33 6-48 0z" fill="#5c3a1a"/>`,
+    <path d="M8 68c14-11 28-7 42-7s28-4 42 7c-11 12-27 17-42 17S19 80 8 68z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M31 64c-3-24 6-46 19-46s22 22 19 46c-11 5-27 5-38 0z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M31 64c-3-24 6-46 19-46s22 22 19 46c-11 5-27 5-38 0z" fill="#b07a3c"/>
+    <path d="M31 64c-3-24 6-46 19-46-8 8-12 26-11 47z" fill="#c99358"/>
+    <path d="M8 68c14-11 28-7 42-7s28-4 42 7c-11 12-27 17-42 17S19 80 8 68z" fill="#8a5a2b"/>
+    <path d="M8 68c14-11 28-7 42-7-14 3-25 9-30 19-5-3-9-7-12-12z" fill="#a06b33"/>
+    <path d="M29 56c13 6 29 6 42 0l2 9c-14 6-32 6-46 0z" fill="#5c3a1a"/>
+    <path d="M31 64c-3-24 6-46 19-46s22 22 19 46" fill="none" stroke="#4a2d10" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M8 68c14-11 28-7 42-7s28-4 42 7c-11 12-27 17-42 17S19 80 8 68z" fill="none" stroke="#4a2d10" stroke-width="5" stroke-linejoin="round"/>`,
   'bunny-ears': `
-    <path d="M33 94C23 71 17 40 23 18c3-12 13-12 16 0 5 23 5 54 2 76z" fill="#f2f2f7"/>
-    <path d="M32 81c-6-17-9-39-5-55 2-8 6-8 8 0 3 16 3 39 0 55z" fill="#ff9ec7"/>
-    <path d="M67 94c10-23 16-54 10-76-3-12-13-12-16 0-5 23-5 54-2 76z" fill="#f2f2f7"/>
-    <path d="M68 81c6-17 9-39 5-55-2-8-6-8-8 0-3 16-3 39 0 55z" fill="#ff9ec7"/>`,
+    <path d="M34 92C24 70 18 40 24 19c3-11 12-11 15 0 5 22 5 52 2 73z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M66 92c10-22 16-52 10-73-3-11-12-11-15 0-5 22-5 52-2 73z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M34 92C24 70 18 40 24 19c3-11 12-11 15 0 5 22 5 52 2 73z" fill="#f7f7fb"/>
+    <path d="M33 80c-6-17-9-38-5-53 2-8 6-8 8 0 3 16 3 38 0 53z" fill="#ff9ec7"/>
+    <path d="M66 92c10-22 16-52 10-73-3-11-12-11-15 0-5 22-5 52-2 73z" fill="#f7f7fb"/>
+    <path d="M67 80c6-17 9-38 5-53-2-8-6-8-8 0-3 16-3 38 0 53z" fill="#ff9ec7"/>
+    <path d="M34 92C24 70 18 40 24 19c3-11 12-11 15 0 5 22 5 52 2 73z" fill="none" stroke="#7a7a8c" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M66 92c10-22 16-52 10-73-3-11-12-11-15 0-5 22-5 52-2 73z" fill="none" stroke="#7a7a8c" stroke-width="5" stroke-linejoin="round"/>`,
   // A GAP DOWN THE MIDDLE. The first version had the two triangles meeting at
   // the centre, which reads as a bow tie rather than as ears.
   'cat-ears': `
-    <path d="M4 84 21 8l25 64z" fill="#3a3a48"/>
-    <path d="M16 70 23 30l14 36z" fill="#ff9ec7"/>
-    <path d="M96 84 79 8 54 72z" fill="#3a3a48"/>
-    <path d="M84 70 77 30 63 66z" fill="#ff9ec7"/>`,
+    <path d="M10 82 25 12l23 60z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M90 82 75 12 52 72z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M10 82 25 12l23 60z" fill="#3a3a48"/>
+    <path d="M10 82 25 12l6 16-11 54z" fill="#52526a"/>
+    <path d="M20 70 26 34l13 33z" fill="#ff9ec7"/>
+    <path d="M90 82 75 12 52 72z" fill="#3a3a48"/>
+    <path d="M90 82 75 12l-6 16 11 54z" fill="#2c2c38"/>
+    <path d="M80 70 74 34 61 67z" fill="#ff9ec7"/>
+    <path d="M10 82 25 12l23 60z" fill="none" stroke="#1b1b24" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M90 82 75 12 52 72z" fill="none" stroke="#1b1b24" stroke-width="5" stroke-linejoin="round"/>`,
   'unicorn-horn': `
-    <path d="M50 4 67 90H33z" fill="#ffd23f"/>
-    <path d="M39 72h22M42 55h16M45 38h10" stroke="#e0a800" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+    <path d="M50 8 66 88H34z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M50 8 66 88H34z" fill="#ffd23f"/>
+    <path d="M50 8 66 88H50z" fill="#e8a800"/>
+    <path d="M40 70h20M43 54h14M46 38h8" stroke="#c98d00" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M50 8 66 88H34z" fill="none" stroke="#96690a" stroke-width="5" stroke-linejoin="round"/>`,
   'beard': `
-    <path d="M13 16s11 9 37 9 37-9 37-9c4 27 0 52-12 66-8 10-17 13-25 13s-17-3-25-13C13 68 9 43 13 16z" fill="#5a3a1e"/>
-    <path d="M34 25c9 2 23 2 32 0 3 19 0 36-8 46-4 6-8 8-8 8s-4-2-8-8c-8-10-11-27-8-46z" fill="#6f4a28"/>`,
+    <path d="M14 14s11 9 36 9 36-9 36-9c4 24 0 44-11 56-8 8-16 11-25 11s-17-3-25-11C14 58 10 38 14 14z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M14 14s11 9 36 9 36-9 36-9c4 24 0 44-11 56-8 8-16 11-25 11s-17-3-25-11C14 58 10 38 14 14z" fill="#5a3a1e"/>
+    <path d="M14 14s11 9 36 9v67c-9 0-17-3-25-11C14 58 10 38 14 14z" fill="#6f4a28"/>
+    <path d="M34 23c10 2 22 2 32 0 2 16 0 30-8 38-4 4-8 6-8 6s-4-2-8-6c-8-8-10-22-8-38z" fill="#3f2712"/>
+    <path d="M14 14s11 9 36 9 36-9 36-9c4 24 0 44-11 56-8 8-16 11-25 11s-17-3-25-11C14 58 10 38 14 14z" fill="none" stroke="#2c1a08" stroke-width="5" stroke-linejoin="round"/>`,
   'halo': `
-    <ellipse cx="50" cy="50" rx="42" ry="16" fill="none" stroke="#ffd23f" stroke-width="11"/>
-    <ellipse cx="50" cy="50" rx="42" ry="16" fill="none" stroke="#fff3b0" stroke-width="4"/>`,
+    <ellipse cx="50" cy="50" rx="38" ry="15" fill="none" stroke="#fff" stroke-width="21"/>
+    <ellipse cx="50" cy="50" rx="38" ry="15" fill="none" stroke="#c98d00" stroke-width="13"/>
+    <ellipse cx="50" cy="50" rx="38" ry="15" fill="none" stroke="#ffd23f" stroke-width="9"/>
+    <path d="M18 44c6-7 18-11 32-11" fill="none" stroke="#fff6c9" stroke-width="4" stroke-linecap="round"/>`,
   'clown-hair': `
-    <circle cx="16" cy="34" r="15" fill="#e8123c"/>
-    <circle cx="28" cy="18" r="12" fill="#ff3d5a"/>
-    <circle cx="10" cy="56" r="13" fill="#ff3d5a"/>
-    <circle cx="24" cy="46" r="11" fill="#e8123c"/>
-    <circle cx="84" cy="34" r="15" fill="#e8123c"/>
-    <circle cx="72" cy="18" r="12" fill="#ff3d5a"/>
-    <circle cx="90" cy="56" r="13" fill="#ff3d5a"/>
-    <circle cx="76" cy="46" r="11" fill="#e8123c"/>`,
+    <circle cx="24" cy="37" r="14" fill="#fff" stroke="#fff" stroke-width="11"/>
+    <circle cx="33" cy="22" r="11" fill="#fff" stroke="#fff" stroke-width="11"/>
+    <circle cx="20" cy="56" r="12" fill="#fff" stroke="#fff" stroke-width="11"/>
+    <circle cx="76" cy="37" r="14" fill="#fff" stroke="#fff" stroke-width="11"/>
+    <circle cx="67" cy="22" r="11" fill="#fff" stroke="#fff" stroke-width="11"/>
+    <circle cx="80" cy="56" r="12" fill="#fff" stroke="#fff" stroke-width="11"/>
+    <circle cx="24" cy="37" r="14" fill="#e8123c" stroke="#8f0a24" stroke-width="4"/>
+    <circle cx="33" cy="22" r="11" fill="#ff3d5a" stroke="#8f0a24" stroke-width="4"/>
+    <circle cx="20" cy="56" r="12" fill="#ff3d5a" stroke="#8f0a24" stroke-width="4"/>
+    <circle cx="27" cy="46" r="11" fill="#e8123c" stroke="#8f0a24" stroke-width="4"/>
+    <circle cx="76" cy="37" r="14" fill="#e8123c" stroke="#8f0a24" stroke-width="4"/>
+    <circle cx="67" cy="22" r="11" fill="#ff3d5a" stroke="#8f0a24" stroke-width="4"/>
+    <circle cx="80" cy="56" r="12" fill="#ff3d5a" stroke="#8f0a24" stroke-width="4"/>
+    <circle cx="73" cy="46" r="11" fill="#e8123c" stroke="#8f0a24" stroke-width="4"/>`,
   'buck-teeth': `
     <path d="M18 8h64v12H18z" fill="#d4677f"/>
     <path d="M28 20h44v44a10 10 0 0 1-10 10H38a10 10 0 0 1-10-10z" fill="#fff"/>

@@ -3303,32 +3303,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .cam-prop:active { transform: scale(0.94); }
 .cam-prop-art svg { width: 100%; height: 100%; display: block; }
 
-/* The bin, over the picture, only while something is in the air. It sits
-   bottom-right because that is furthest from where a face usually is — a
-   target you have to drag TOWARDS cannot be hit by accident on the way
-   somewhere else. */
-.cam-frame { position: relative; display: grid; justify-items: center; }
-.cam-bin {
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
-  width: 64px;
-  height: 64px;
-  display: grid;
-  place-items: center;
-  border-radius: 14px;
-  background: rgba(10, 10, 18, 0.72);
-  border: 2px dashed rgba(255, 255, 255, 0.45);
-  color: var(--ink);
-  pointer-events: none;
-  z-index: 2;
-}
-.cam-bin.over {
-  background: var(--bad);
-  border-style: solid;
-  border-color: var(--bad);
-  transform: scale(1.12);
-}
+.cam-frame { position: relative; }
 .cam-looks-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 /* Tonight's look gets the top row and says which night it is, in the gold the
    rest of the panel's headings use. Only ever on screen when the game carries

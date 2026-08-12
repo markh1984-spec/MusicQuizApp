@@ -13,7 +13,7 @@
  *    makes googling an answer that bit harder.
  */
 
-import { esc, node, ServerClock, Live, postJson, brandMark, brandWords, roomCode, roomParam, rememberRoom, binIcon } from './client.js';
+import { esc, node, ServerClock, Live, postJson, brandMark, brandWords, roomCode, roomParam, rememberRoom } from './client.js';
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
 import { drawFiltered, toJpeg } from './filters.js';
 import { stickersFor, stickerSvg, drawStickers, stickerAt, placed, preloadStickers } from './stickers.js';
@@ -259,10 +259,6 @@ function openCamera() {
         <div class="cam-stage" hidden>
           <div class="cam-frame">
             <canvas class="cam-canvas"></canvas>
-            <!-- Only ever on screen while something is being dragged, which is
-                 the only moment it means anything. Drawn, not an emoji — some
-                 phones render the bin as a cheerful basket. -->
-            <div class="cam-bin" hidden></div>
           </div>
           <div class="cam-looks-head cam-season-head" hidden>
             <span class="cam-season-name"></span>
@@ -278,7 +274,7 @@ function openCamera() {
                them. And it is one line: HOLD is the only gesture here that is
                not already in somebody's fingers, the bin explains itself by
                appearing mid-drag, and a wall of instructions gets skipped. -->
-          <div class="cam-hint tiny">Tap to add. Hold to drag, pinch to size and turn it, double-tap to delete.</div>
+          <div class="cam-hint tiny">Tap to add. Hold to drag, pinch to size and turn, double-tap to delete.</div>
           <div class="cam-props"></div>
           <button class="cam-send">Send it up</button>
         </div>
@@ -299,7 +295,6 @@ function openCamera() {
   // came up empty and nothing threw.
   const props = sheet.querySelector('.cam-props:not(.cam-props-season)');
   const undoBtn = sheet.querySelector('.cam-undo');
-  const bin = sheet.querySelector('.cam-bin');
   const seasonHead = sheet.querySelector('.cam-season-head');
   const seasonProps = sheet.querySelector('.cam-props-season');
   const seasonName = sheet.querySelector('.cam-season-name');
@@ -395,7 +390,6 @@ function openCamera() {
       pointers.set(e.pointerId, spotOf(e));
       try { chip.setPointerCapture(e.pointerId); } catch { /* already gone */ }
       if (navigator.vibrate) navigator.vibrate(18);
-      bin.hidden = false;
       repaint();
     };
     const drop = () => { clearTimeout(hold); hold = 0; from = null; };
@@ -467,20 +461,18 @@ function openCamera() {
   const twist = () => { const { dx, dy } = pair(); return Math.atan2(dy, dx); };
 
   /*
-   * The bin, and it only exists while something is in the air.
+   * THERE IS NO BIN, and there was one.
    *
-   * `binIcon()` rather than a word or an emoji — the rule the host's photo grid
-   * taught: anything that deletes shows a bin, and every phone draws the emoji
-   * one differently. It is shown on the first MOVE rather than on pointerdown,
-   * so a tap to place a prop never flashes a bin at you.
+   * A drop target has to live somewhere, and anywhere on the picture is a
+   * corner of the picture you can no longer put a prop in. The square crop
+   * made that obvious: the photo got smaller and the bottom right stopped
+   * being spare, so props dragged down there were being thrown away.
+   *
+   * Double-tap does the same job from wherever the prop already is, costs no
+   * screen at all, and is the gesture people reach for. `Take it off` stays
+   * and is a different job: it removes the LAST one added, which is undoing
+   * something you have just done rather than picking one out.
    */
-  bin.innerHTML = binIcon(26);
-  const overBin = (e) => {
-    if (bin.hidden) return false;
-    const box = bin.getBoundingClientRect();
-    return e.clientX >= box.left && e.clientX <= box.right
-      && e.clientY >= box.top && e.clientY <= box.bottom;
-  };
 
   canvas.addEventListener('pointerdown', (e) => {
     if (!source) return;
@@ -512,8 +504,8 @@ function openCamera() {
    * A drag that starts on a tray tile has to keep working as the thumb travels
    * up onto the picture — two elements, one gesture. Listening on the window
    * means the drag belongs to the pointer rather than to whatever it happens to
-   * be over, which is also what makes dragging off the edge of the canvas and
-   * onto the bin work at all.
+   * be over, which is also what lets a prop be dragged off the edge of the
+   * picture and back without the drag being dropped.
    */
   window.addEventListener('pointermove', (e) => {
     if (!pointers.has(e.pointerId)) return;
@@ -521,7 +513,6 @@ function openCamera() {
     pointers.set(e.pointerId, spotOf(e));
     if (!dragging) return;
 
-    if (bin.hidden) bin.hidden = false;
     shifted = true;
 
     if (pointers.size >= 2 && pinchFrom > 0) {
@@ -538,26 +529,19 @@ function openCamera() {
       dragging.x = Math.max(-0.2, Math.min(1.2, spot.x));
       dragging.y = Math.max(-0.2, Math.min(1.2, spot.y));
     }
-    bin.classList.toggle('over', overBin(e));
     repaint();
   });
 
   const letGo = (e) => {
     if (!pointers.has(e.pointerId)) return;
-    // Dropped on the bin: that prop goes, and only that one. `Take it off`
-    // still removes the last one added, which is the different job of undoing
-    // something you have only just done.
-    if (dragging && overBin(e)) {
-      stuckOn = stuckOn.filter((s) => s !== dragging);
-      if (navigator.vibrate) navigator.vibrate([8, 40, 8]);
-    } else if (dragging && !shifted) {
+    if (dragging && !shifted) {
       /*
        * DOUBLE-TAP A PROP TO TAKE IT OFF.
        *
-       * The bin is right for a drag you are already doing — the thing is in
-       * your hand and you have changed your mind. It is the wrong tool for
-       * "that one is wrong", which is most of the time: you would have to pick
-       * the prop up and carry it to a corner to say so.
+       * This is the only way to remove one, and it used to share the job with
+       * a bin you dragged onto. A drop target has to live somewhere, and
+       * anywhere on the picture is a corner you can no longer use — see the
+       * note above the drag handlers.
        *
        * A SINGLE tap deliberately does nothing. The host's photo grid used to
        * delete a picture on one tap with nothing on screen saying so, and that
@@ -575,11 +559,7 @@ function openCamera() {
     }
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinchFrom = 0;
-    if (pointers.size === 0) {
-      dragging = null;
-      bin.hidden = true;
-      bin.classList.remove('over');
-    }
+    if (pointers.size === 0) dragging = null;
     repaint();
   };
   window.addEventListener('pointerup', letGo);
