@@ -822,6 +822,16 @@ the catalogue.
 
 ### A marketplace: quizmasters write, you resell, they earn credit
 
+> **PARKED, AND DELIBERATELY SO. Not structural, not foundational, and quite
+> possibly never built.** Nothing else in this app waits on it and nothing else
+> is shaped around it — the data model already supports it either way, because
+> whether a pack id lands in an account's `packs` because of a tier or because
+> somebody bought it is one line. It needs the payment processor first, and it
+> needs enough subscribers that a shop is not empty. **Do not build any of it
+> ahead of demand, and do not let it influence a decision about anything else.**
+> It is written up at this length because the thinking was done and thinking is
+> the expensive part — not because it is queued.
+
 Your idea, and a good one. A subscriber who enjoys writing submits a pack, you
 sell it in the catalogue, they get 50% as **credit against their account**
 rather than money. Written up here rather than built, because two of the
