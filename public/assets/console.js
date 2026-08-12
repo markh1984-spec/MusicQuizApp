@@ -932,7 +932,13 @@ function suggestionPanel() {
   const el = node(`
     <div class="panel">
       <h3>Suggestion box</h3>
-      <div class="tiny">Straight to Mark. No reply needed for it to be worth sending.</div>
+      <!-- The turnaround is stated, and it is the SAME line whichever kind is
+           picked. A request with no stated turnaround is a promise broken by
+           silence — the same reason the pack panel names its day. There is
+           deliberately no faster route for "something broken": see the
+           suggestion-box notes in CLAUDE.md, where that was argued and turned
+           down. -->
+      <div class="tiny">Straight to Mark, and changes get made on Mondays.</div>
       <div class="row sugg-kinds" style="margin-top:12px">
         <button class="minor sugg-kind on" data-kind="idea">An idea</button>
         <button class="minor sugg-kind" data-kind="annoying">Got in my way</button>

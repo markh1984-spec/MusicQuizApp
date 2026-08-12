@@ -2915,14 +2915,27 @@ said in the suggestion box too, which currently states no turnaround at all —
 so somebody reporting something on a Tuesday has no idea whether it is Thursday
 or never, which is the exact failure the paragraph above describes.
 
-**But it must NOT be said over "something broken".** The box has three kinds,
-and "Monday" is the right answer for an idea and for something that got in the
-way. It is the wrong answer for a quizmaster whose game will not launch at half
-past eight on a Thursday — a stated turnaround that would be wrong in the one
-case that matters is worse than none, because it is read at the moment it is
-least true. So the line changes with the kind: the rhythm for the first two,
-"as soon as I see it" for the third, and no promise of a FIX in either, because
-one person cannot honestly make one.
+**ONE LINE FOR ALL THREE KINDS. There is deliberately no emergency channel, and
+that was argued and settled rather than overlooked.** The obvious refinement is
+to say "Monday" over an idea and something faster over "something broken" —
+proposed, and turned down by the host for three reasons, each of which is
+sufficient on its own:
+
+- **It designs for a failure the app is committed to preventing.** The whole
+  codebase is organised around not breaking a Wednesday night, and it has to be
+  that stable before anybody is charged. An escape hatch for "the app ruined my
+  gig" is planning for the thing that must not happen.
+- **An emergency button gets pressed for non-emergencies**, not maliciously —
+  "urgent to me" is not the same as urgent. Then it means nothing, and the one
+  real emergency is buried among the ones about a confusing button. Exactly the
+  reasoning that keeps a second badge off the owner's tabs: a second badge costs
+  the first one its meaning.
+- **It advertises that the app breaks quiz nights.** A subscriber reading it
+  concludes this is expected, which is the opposite of what is being sold.
+
+And at two subscribers the emergency channel is a phone number. Building one
+into the app is premature and would need staffing behind it to be real. **If it
+ever comes back it is a support function with hours, not a button.**
 
 **The whole state is sent BEFORE anybody types** (`packRequestStatus()`, on the
 library payload). Being refused after writing three sentences is the version
