@@ -22,6 +22,15 @@ import { paintScheme } from './schemes.js';
 
 const STORE_KEY = 'musicquiz.player';
 
+/*
+ * How long a thumb has to rest on a prop before it lifts.
+ *
+ * Long enough that a flick to scroll the sheet is never mistaken for it, short
+ * enough that it does not feel like waiting. The phone's own drag-out-of-a-list
+ * gesture sits around here, which is why nobody has to be told about it.
+ */
+const HOLD_MS = 200;
+
 
 const bodyEl = document.getElementById('body');
 const headEl = document.getElementById('head');
@@ -257,7 +266,7 @@ function openCamera() {
             <button class="cam-undo" hidden>Take it off</button>
           </div>
           <div class="cam-props"></div>
-          <div class="cam-hint tiny">Drag one onto the picture. Pinch to size it. Drag it to the bin to take it off.</div>
+          <div class="cam-hint tiny">Tap one to add it, or hold to drag it where you want. Pinch to size it, drop it on the bin to take it off.</div>
           <button class="cam-send">Send it up</button>
         </div>
         <div class="tiny cam-status"></div>
@@ -341,27 +350,59 @@ function openCamera() {
         <span class="cam-prop-name">${esc(s.label)}</span>
       </button>`);
     /*
-     * ONE GESTURE, not two. It used to be tap-then-drag: the prop landed in the
-     * middle and you dragged it from there, which is two movements for one
-     * intention and reads as the tile having done nothing.
+     * TAP TO PLACE, HOLD TO DRAG — and the hold is not a flourish, it is the
+     * only way both gestures can exist.
      *
-     * `pointerdown` on a tile creates the prop and hands it straight to the
-     * drag code, so it follows the thumb out of the tray and onto the face in
-     * one go. A TAP still works and still centres it — see `fromTray` below:
-     * nothing moves until the thumb has travelled far enough to mean it, so a
-     * tap and a drag are told apart by the finger rather than by a mode.
+     * Dragging a prop UP onto the picture and scrolling the sheet DOWN to
+     * reach the tray are the same movement of the same thumb. The first
+     * version claimed the gesture outright (`touch-action: none`) and the tray
+     * became unreachable: with three dozen tiles most of that area is tiles,
+     * so there was nothing left to scroll with.
+     *
+     * So the tile does not claim anything until the thumb has been still for a
+     * moment. A flick scrolls, exactly as it always did. Hold, feel the buzz,
+     * and the prop lifts and follows you. It is what every phone already does
+     * for dragging something out of a list, so there is nothing to learn.
+     *
+     * `touch-action: pan-y` is the other half: the browser is allowed to start
+     * scrolling, and if it does we get a pointercancel and simply never lift.
+     * Movement before the timer cancels it for the same reason.
      */
-    chip.addEventListener('pointerdown', (e) => {
-      if (!source) return;
-      e.preventDefault();
+    let hold = 0;
+    let from = null;
+    const lift = (e) => {
+      hold = 0;
       const prop = placed(s.id);
       stuckOn.push(prop);
       dragging = prop;
-      fromTray = { x: e.clientX, y: e.clientY, moved: false };
       pointers.set(e.pointerId, spotOf(e));
-      chip.setPointerCapture(e.pointerId);
+      try { chip.setPointerCapture(e.pointerId); } catch { /* already gone */ }
+      if (navigator.vibrate) navigator.vibrate(18);
+      bin.hidden = false;
+      repaint();
+    };
+    const drop = () => { clearTimeout(hold); hold = 0; from = null; };
+
+    chip.addEventListener('pointerdown', (e) => {
+      if (!source) return;
+      from = { x: e.clientX, y: e.clientY, id: e.pointerId };
+      hold = setTimeout(() => lift(e), HOLD_MS);
+    });
+    chip.addEventListener('pointermove', (e) => {
+      // Moved before the hold landed: they are scrolling, so let go of it.
+      if (!hold || !from || e.pointerId !== from.id) return;
+      if (Math.hypot(e.clientX - from.x, e.clientY - from.y) > 10) drop();
+    });
+    chip.addEventListener('pointercancel', drop);
+    chip.addEventListener('pointerup', (e) => {
+      // Let go before the hold landed, without scrolling: that is a tap, and a
+      // tap still puts it in the middle exactly as it always has.
+      if (!hold) return;
+      drop();
+      stuckOn.push(placed(s.id));
       if (navigator.vibrate) navigator.vibrate(12);
       repaint();
+      e.preventDefault();
     });
     tray.appendChild(chip);
   }
@@ -382,9 +423,6 @@ function openCamera() {
   let dragging = null;
   let pinchFrom = 0;
   let sizeFrom = 0;
-  // Set while a drag that STARTED on a tray tile is still deciding whether it
-  // is a drag at all. Cleared the moment the thumb has moved far enough.
-  let fromTray = null;
 
   const spotOf = (e) => {
     const box = canvas.getBoundingClientRect();
@@ -444,13 +482,6 @@ function openCamera() {
     pointers.set(e.pointerId, spotOf(e));
     if (!dragging) return;
 
-    // Straight off a tile: leave it where it was dropped until the thumb has
-    // travelled far enough to be a drag rather than a tap. Below that, a tap
-    // still means "put it in the middle", exactly as it always did.
-    if (fromTray) {
-      if (Math.hypot(e.clientX - fromTray.x, e.clientY - fromTray.y) < 8) return;
-      fromTray = null;
-    }
     if (bin.hidden) bin.hidden = false;
 
     if (pointers.size >= 2 && pinchFrom > 0) {
@@ -480,7 +511,6 @@ function openCamera() {
     if (pointers.size < 2) pinchFrom = 0;
     if (pointers.size === 0) {
       dragging = null;
-      fromTray = null;
       bin.hidden = true;
       bin.classList.remove('over');
     }

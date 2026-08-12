@@ -3282,10 +3282,13 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   color: #1b1e28;
   text-align: center;
 }
-/* A tile is DRAGGED off, so the browser must not claim the gesture for
-   scrolling the sheet — without this the prop never leaves the tray on a
-   phone, which is the whole change. */
-.cam-prop { touch-action: none; }
+/* `pan-y`, NOT `none`.
+   A tile is dragged off, but scrolling the sheet to REACH the tray is the same
+   movement of the same thumb. `none` claimed the gesture outright and the tray
+   became unreachable — with three dozen tiles, most of that area is tiles, so
+   there was nothing left to scroll with. The browser keeps vertical scrolling;
+   the tile takes over only after a short hold. See HOLD_MS in play.js. */
+.cam-prop { touch-action: pan-y; }
 .cam-prop:active { transform: scale(0.94); }
 .cam-prop-art svg { width: 100%; height: 100%; display: block; }
 
