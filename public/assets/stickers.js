@@ -36,16 +36,20 @@ const ART = {
     <path d="M14 40h26c0 12-5 18-13 18s-13-6-13-18zM60 40h26c0 12-5 18-13 18s-13-6-13-18z" fill="#2b6cff" opacity=".5"/>`,
   'moustache': `
     <path d="M50 44c6-8 16-14 27-14 12 0 21 7 21 16 0 11-11 18-24 18-10 0-18-4-24-11-6 7-14 11-24 11C13 64 2 57 2 46c0-9 9-16 21-16 11 0 21 6 27 14z" fill="#2a1d12"/>`,
+  // INSET FROM THE EDGE. The die-cut border adds about five units all round, so
+  // a shape drawn to the viewBox edge loses its border to the crop — the
+  // pompom was sitting at cy=11 with an 11-wide white stroke and came out
+  // sliced flat. Every prop wants six units of headroom now.
   'party-hat': `
-    <path d="M50 8 82 82H18z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
-    <circle cx="50" cy="11" r="10" fill="#fff" stroke="#fff" stroke-width="11"/>
-    <path d="M50 8 82 82H18z" fill="#ff2e88"/>
-    <path d="M42.6 25h14.8l6.4 15H36.2z" fill="#ffd23f"/>
-    <path d="M33.1 47h33.8l6.5 15H26.6z" fill="#4bd8ff"/>
-    <path d="M23.2 70h53.6L82 82H18z" fill="#5fd35f"/>
-    <path d="M50 8 66 40 44 52z" fill="#fff" opacity=".25"/>
-    <path d="M50 8 82 82H18z" fill="none" stroke="#1e1e28" stroke-width="5" stroke-linejoin="round"/>
-    <circle cx="50" cy="11" r="10" fill="#ffd23f" stroke="#1e1e28" stroke-width="4"/>`,
+    <path d="M50 24 82 88H18z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <circle cx="50" cy="16" r="9" fill="#fff" stroke="#fff" stroke-width="10"/>
+    <path d="M50 24 82 88H18z" fill="#ff2e88"/>
+    <path d="M43.2 36h13.6l6.3 13H36.9z" fill="#ffd23f"/>
+    <path d="M34.5 54h31l6.3 13H28.2z" fill="#4bd8ff"/>
+    <path d="M23.8 76h52.4L82 88H18z" fill="#5fd35f"/>
+    <path d="M50 24 64 52 46 62z" fill="#fff" opacity=".25"/>
+    <path d="M50 24 82 88H18z" fill="none" stroke="#1e1e28" stroke-width="5" stroke-linejoin="round"/>
+    <circle cx="50" cy="16" r="9" fill="#ffd23f" stroke="#1e1e28" stroke-width="4"/>`,
   'crown': `
     <path d="M8 74 4 26l24 18L50 14l22 30 24-18-4 48z" fill="#ffd23f"/>
     <path d="M8 74h84v12H8z" fill="#e0a800"/>
@@ -68,18 +72,18 @@ const ART = {
   // the reference sheet added a pair, but they turn this from something you
   // can stick anywhere into a face of its own.
   'googly-eyes': `
-    <circle cx="27" cy="50" r="23" fill="#fff" stroke="#fff" stroke-width="11"/>
-    <circle cx="73" cy="50" r="23" fill="#fff" stroke="#fff" stroke-width="11"/>
-    <circle cx="27" cy="50" r="23" fill="#fff"/>
-    <circle cx="73" cy="50" r="23" fill="#fff"/>
-    <ellipse cx="32" cy="59" rx="17" ry="11" fill="#dfe3ec" opacity=".7"/>
-    <ellipse cx="78" cy="59" rx="17" ry="11" fill="#dfe3ec" opacity=".7"/>
-    <circle cx="21" cy="58" r="10.5" fill="#1e1e28"/>
-    <circle cx="79" cy="43" r="10.5" fill="#1e1e28"/>
-    <circle cx="17" cy="54" r="3.4" fill="#fff"/>
-    <circle cx="75" cy="39" r="3.4" fill="#fff"/>
-    <circle cx="27" cy="50" r="23" fill="none" stroke="#1e1e28" stroke-width="5"/>
-    <circle cx="73" cy="50" r="23" fill="none" stroke="#1e1e28" stroke-width="5"/>`,
+    <circle cx="29" cy="50" r="22" fill="#fff" stroke="#fff" stroke-width="11"/>
+    <circle cx="71" cy="50" r="22" fill="#fff" stroke="#fff" stroke-width="11"/>
+    <circle cx="29" cy="50" r="22" fill="#fff"/>
+    <circle cx="71" cy="50" r="22" fill="#fff"/>
+    <ellipse cx="34" cy="58" rx="16" ry="10" fill="#dfe3ec" opacity=".7"/>
+    <ellipse cx="76" cy="58" rx="16" ry="10" fill="#dfe3ec" opacity=".7"/>
+    <circle cx="23" cy="57" r="10" fill="#1e1e28"/>
+    <circle cx="77" cy="43" r="10" fill="#1e1e28"/>
+    <circle cx="19" cy="53" r="3.3" fill="#fff"/>
+    <circle cx="73" cy="39" r="3.3" fill="#fff"/>
+    <circle cx="29" cy="50" r="22" fill="none" stroke="#1e1e28" stroke-width="5"/>
+    <circle cx="71" cy="50" r="22" fill="none" stroke="#1e1e28" stroke-width="5"/>`,
   'eyepatch': `
     <path d="M2 26 98 16" stroke="#141420" stroke-width="8" fill="none" stroke-linecap="round"/>
     <ellipse cx="50" cy="58" rx="31" ry="27" fill="#141420"/>
@@ -172,15 +176,15 @@ const ART = {
   // colour of the thing it is drawn on; the gradient behind them now makes
   // that hard to do twice, but the fix is still to pick a different colour.
   'viking-helmet': `
-    <path d="M33 61C16 59 2 41 6 13c5 17 15 31 31 35z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
-    <path d="M67 61c17-2 31-20 27-48-5 17-15 31-31 35z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M34 61C19 59 7 41 11 14c5 17 15 30 30 34z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M66 61c15-2 29-20 25-47-5 17-15 30-30 34z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
     <path d="M20 64c0-23 13-38 30-38s30 15 30 38zM13 64h74v13H13z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
-    <path d="M33 61C16 59 2 41 6 13c5 17 15 31 31 35z" fill="#f3ead8"/>
-    <path d="M31 57C18 53 8 39 8 20c5 14 14 26 27 31z" fill="#d8c9ab"/>
-    <path d="M67 61c17-2 31-20 27-48-5 17-15 31-31 35z" fill="#f3ead8"/>
-    <path d="M69 57c13-4 23-18 23-37-5 14-14 26-27 31z" fill="#d8c9ab"/>
-    <path d="M33 61C16 59 2 41 6 13c5 17 15 31 31 35z" fill="none" stroke="#4a4438" stroke-width="5" stroke-linejoin="round"/>
-    <path d="M67 61c17-2 31-20 27-48-5 17-15 31-31 35z" fill="none" stroke="#4a4438" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M34 61C19 59 7 41 11 14c5 17 15 30 30 34z" fill="#f3ead8"/>
+    <path d="M32 57C20 53 11 39 12 21c5 14 14 25 26 30z" fill="#d8c9ab"/>
+    <path d="M66 61c15-2 29-20 25-47-5 17-15 30-30 34z" fill="#f3ead8"/>
+    <path d="M68 57c12-4 22-18 21-36-5 14-14 25-26 30z" fill="#d8c9ab"/>
+    <path d="M34 61C19 59 7 41 11 14c5 17 15 30 30 34z" fill="none" stroke="#4a4438" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M66 61c15-2 29-20 25-47-5 17-15 30-30 34z" fill="none" stroke="#4a4438" stroke-width="5" stroke-linejoin="round"/>
     <path d="M20 64c0-23 13-38 30-38s30 15 30 38z" fill="#c3ccdb"/>
     <path d="M50 26c-17 0-30 15-30 38h13c0-23 7-35 17-38z" fill="#dde3ec"/>
     <path d="M13 64h74v13H13z" fill="#98a3b8"/>
@@ -323,6 +327,13 @@ const ART = {
 };
 
 export const STICKERS = [
+  /*
+   * ORDER IS DELIBERATE at the front. The first row is what somebody sees
+   * before they scroll, so it holds the two that get the biggest laugh rather
+   * than whatever happened to be written first.
+   */
+  { id: 'googly-eyes', label: 'Googly eyes' },
+  { id: 'emo-fringe', label: 'Emo fringe' },
   { id: 'dog-ears', label: 'Dog ears' },
   { id: 'clown-nose', label: 'Clown nose' },
   { id: 'sunglasses', label: 'Shades' },
@@ -332,7 +343,6 @@ export const STICKERS = [
   { id: 'devil-horns', label: 'Horns' },
   { id: 'hearts', label: 'Hearts' },
   { id: 'tache-glasses', label: 'Disguise' },
-  { id: 'googly-eyes', label: 'Googly eyes' },
   { id: 'eyepatch', label: 'Eyepatch' },
   { id: 'top-hat', label: 'Top hat' },
   { id: 'cowboy-hat', label: 'Cowboy hat' },
@@ -347,7 +357,6 @@ export const STICKERS = [
   { id: 'monobrow', label: 'Monobrow' },
   { id: 'tongue', label: 'Tongue' },
   { id: 'love-glasses', label: 'Love hearts' },
-  { id: 'emo-fringe', label: 'Emo fringe' },
   { id: 'traffic-cone', label: 'Traffic cone' },
   { id: 'lightning-bolt', label: 'Lightning' },
   { id: 'headphones', label: 'Headphones' },

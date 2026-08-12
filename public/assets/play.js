@@ -278,7 +278,7 @@ function openCamera() {
                them. And it is one line: HOLD is the only gesture here that is
                not already in somebody's fingers, the bin explains itself by
                appearing mid-drag, and a wall of instructions gets skipped. -->
-          <div class="cam-hint tiny">Tap to add. Hold to drag, pinch to size, double-tap to take one off.</div>
+          <div class="cam-hint tiny">Tap to add. Hold to drag, pinch to size, double-tap to delete.</div>
           <div class="cam-props"></div>
           <button class="cam-send">Send it up</button>
         </div>
