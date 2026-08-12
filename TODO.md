@@ -1004,6 +1004,83 @@ seen from two ends: the bigger the pass-through to subscribers, the stronger the
 upgrade incentive. Anything that claws back a cut from a Silver sale weakens
 both at once.
 
+### Referrals: a quizmaster brings a quizmaster, and keeps 20% for as long as they stay
+
+> **PARKED like the marketplace. Blocked on the payment processor** — a
+> recurring discount needs billing. Nothing waits on it. Written up because the
+> thinking is done, not because it is queued.
+
+Raised 12 August 2026. A subscriber refers another; **20% of what the new member
+pays comes off the referrer's own bill every month, for as long as they stay.**
+Gold at £30 refers a Silver at £20 → £4 a month off. They cancel, it stops.
+
+**Recurring rather than a one-off bounty, and that is the load-bearing choice.**
+A bounty pays for the introduction; this pays for them STAYING, so the referrer
+keeps an interest in their mate being happy and supported. That is informal
+advocacy no signup fee ever buys.
+
+**The arithmetic is cheap.** Gold referring a Silver nets £46 instead of £50 —
+8% of combined revenue, for an acquisition that would otherwise cost advertising
+money whether it worked or not. And nothing is paid until somebody actually
+subscribes.
+
+**NO CAP, and somebody using the app free is a good outcome, not a leak.** The
+host's own call and it is right: a member who has referred eight people costs
+£30 a month and brings in £160. Most schemes get squeamish here and cap it,
+which kills the incentive exactly where it is working.
+
+**Four rules, and each closes a specific failure:**
+
+1. **It floors at ZERO and never goes negative.** The moment a balance can go
+   below zero it is a payout — bank details, thresholds, self-assessment, the
+   whole finance function avoided everywhere else. Overflow becomes CREDIT
+   instead (below).
+2. **SINGLE LEVEL.** A refers B, A earns from B, and that is the end of the
+   loop — A gets nothing from anybody B refers. Written down explicitly because
+   "20% of what the new member pays" can be misread as compounding, and a
+   multi-level scheme is a different and much uglier thing to be running.
+3. **A MONTH IN ARREARS.** 20% of a payment RECEIVED is credited against next
+   month's bill, so the discount is only ever backed by money already banked. A
+   failed card, a refund or a mate who cancels on the third can never leave the
+   owner having discounted against revenue that never arrived. It kills the
+   clawback case, which is what makes most referral schemes horrible to run —
+   same instinct as the invoice counter being rebuilt rather than trusted.
+   **The page has to SAY "next month"**, or somebody who signed a mate up on
+   the 2nd reads an unchanged bill as broken.
+4. **DERIVE the discount, never store it.** It is 20% of what that member pays
+   right now, so a Silver→Bronze downgrade takes £4 to £2 on its own. Stored, it
+   goes quietly stale.
+
+**Self-referral needs no rule at all**: 20% of X always costs X, so a fake
+second account is unprofitable by construction. It is the first objection
+anybody raises and the answer is arithmetic.
+
+**Overflow is ONE BALANCE against whatever the account owes — subscription
+first, then packs — not packs only.** Packs-only was the first shape and it is
+worth least to the person who earns most: overflow is only reachable by somebody
+who has zeroed a Gold bill, and Gold already includes the whole catalogue, so
+their credit could buy nothing but marketplace packs — which do not exist, may
+never, and are half price to them anyway. One balance is never worthless
+whatever tier they are on, and it **self-smooths across churn**: a referral drops
+off in March, the bill goes back up, and the balance covers the gap instead of a
+nasty month. It is also the SAME LEDGER as the writer credit — one balance, two
+ways to earn, one thing to build and one thing to explain.
+
+**Worth adding and not yet decided: make it two-sided.** Only the referrer
+benefits today, which makes the ask awkward — *"use this and I get a kickback"*
+is a harder sentence to say to a mate than *"use this, your first month is half
+price"*. It costs once, costs nothing until it works, and turns the pitch from
+self-interested into generous.
+
+**Attribution is a CODE, not "who told you about us?"** on a signup form — that
+last one is unverifiable and generates disputes, which is a Monday job. The code
+alphabet in `rooms.js` already leaves out vowels and O/0/I/1/L so no code can
+spell a word or be mistyped off a screen.
+
+**It passes the Monday test cleanly**, which is more than most of what has been
+floated here: a code, an attribution at signup, an automatic discount. No pile
+for anybody to work.
+
 ### PayPal — the half that is built, and the half that is blocked
 
 **Subscriptions rather than invoices**, on your own reasoning: chasing ten
