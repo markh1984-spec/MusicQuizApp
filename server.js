@@ -151,11 +151,11 @@ function viewFor(client) {
   // Whose night this is — the name AND the two colours — travels with every
   // payload, so a page never has to ask for it separately or flash the wrong
   // thing while it loads. Taken from the ROOM, never from whoever is looking:
-  // a phone at Rob's night says Rob's Quiztopia in Rob's colours even while
+  // a phone at Rob's night says Rob's Quizporium in Rob's colours even while
   // the owner has the console open in the next tab.
   view.brand = brandForRoom(room);
   // The product half of the name, so a page can stack "Mark's" over
-  // "Quiztopia" instead of splitting on the last word and getting it wrong the
+  // "Quizporium" instead of splitting on the last word and getting it wrong the
   // moment BRAND_NAME is set to something else. See `brandWords` in client.js.
   view.appName = config.appName;
   view.scheme = schemeForRoom(room);
@@ -508,7 +508,7 @@ function roomIdFor(account) {
  * `label`, and that is the load-bearing bit. A label is only set when somebody
  * who knows their own name touches the room — but the first thing to touch a
  * room after a restart is usually the PROJECTOR, which knows nothing. Branding
- * off the label would leave a big screen saying plain "Quiztopia" until the
+ * off the label would leave a big screen saying plain "Quizporium" until the
  * host happened to open a page, which is exactly the five minutes before a gig.
  *
  * A room id IS the account id (see `roomIdFor`), so the book always knows.

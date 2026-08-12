@@ -3,40 +3,40 @@ import assert from 'node:assert/strict';
 
 import { brandFor, firstName, APP_NAME } from '../src/branding.js';
 
-test('the app is Quiztopia, and a night is somebody\'s', () => {
-  assert.equal(APP_NAME, 'Quiztopia');
-  assert.equal(brandFor('Mark'), "Mark's Quiztopia");
-  assert.equal(brandFor('Rob'), "Rob's Quiztopia");
+test('the app is Quizporium, and a night is somebody\'s', () => {
+  assert.equal(APP_NAME, 'Quizporium');
+  assert.equal(brandFor('Mark'), "Mark's Quizporium");
+  assert.equal(brandFor('Rob'), "Rob's Quizporium");
 });
 
-// First names only. "Mark's Quiztopia" is how he introduces himself on the mic,
+// First names only. "Mark's Quizporium" is how he introduces himself on the mic,
 // and a surname on a projector reads like a letterhead.
 test('a surname never reaches the projector', () => {
-  assert.equal(brandFor('Mark Harrison'), "Mark's Quiztopia");
-  assert.equal(brandFor('  Rob   Smith  '), "Rob's Quiztopia");
+  assert.equal(brandFor('Mark Harrison'), "Mark's Quizporium");
+  assert.equal(brandFor('  Rob   Smith  '), "Rob's Quizporium");
 });
 
 /*
  * The owner's own linked quizmaster account is named "Mark (quizmaster)" by
  * `act-as`, and it is the account whose room he runs a night from with the hat
- * on. The projector must not say "Mark (quizmaster)'s Quiztopia".
+ * on. The projector must not say "Mark (quizmaster)'s Quizporium".
  */
 test('the quizmaster hat does not end up on the big screen', () => {
-  assert.equal(brandFor('Mark (quizmaster)'), "Mark's Quiztopia");
+  assert.equal(brandFor('Mark (quizmaster)'), "Mark's Quizporium");
 });
 
 // An account made in a hurry may have no name on it, and rob@example.com is
 // still somebody telling you they are Rob.
 test('an email address is better than nothing', () => {
-  assert.equal(brandFor('rob@example.com'), "Rob's Quiztopia");
-  assert.equal(brandFor('mark.harrison@example.com'), "Mark's Quiztopia");
-  assert.equal(brandFor('mark+quizmaster@example.com'), "Mark's Quiztopia");
+  assert.equal(brandFor('rob@example.com'), "Rob's Quizporium");
+  assert.equal(brandFor('mark.harrison@example.com'), "Mark's Quizporium");
+  assert.equal(brandFor('mark+quizmaster@example.com'), "Mark's Quizporium");
 });
 
 test('with nobody at all it is just the app', () => {
-  assert.equal(brandFor(''), 'Quiztopia');
-  assert.equal(brandFor(null), 'Quiztopia');
-  assert.equal(brandFor(undefined), 'Quiztopia');
+  assert.equal(brandFor(''), 'Quizporium');
+  assert.equal(brandFor(null), 'Quizporium');
+  assert.equal(brandFor(undefined), 'Quizporium');
 });
 
 // BRAND_NAME is the documented way to put a different name on the whole app,
@@ -53,7 +53,7 @@ test('a white-label deploy is one variable', () => {
 // Said out loud far more than it is written down, and "James's" is how it is
 // said. Not a style argument worth having twice, so it is pinned here.
 test("a name ending in s still gets an apostrophe s", () => {
-  assert.equal(brandFor('James'), "James's Quiztopia");
+  assert.equal(brandFor('James'), "James's Quizporium");
 });
 
 test('case is fixed up only when it was given flat', () => {

@@ -80,7 +80,7 @@ product feature that was wearing a disguise.
 
 ## 2 · MARKETING **FOR THE APP** — the words, and the shop window
 
-**Second of the three.** Selling Quiztopia to quizmasters: what the words
+**Second of the three.** Selling Quizporium to quizmasters: what the words
 mean, what a night is, and the page somebody reads before they pay. No
 subscribers, no business — but it comes after Mark has nights to point at,
 because a founder who is not running quizzes has nothing to show.
@@ -831,7 +831,7 @@ questions below have to be answered before a line of code.
 catalogue has to keep growing or Silver stops being worth paying for, and today
 that is your writing hours forever. This does not remove the editorial step and
 must not: a badly written pack in your catalogue reflects on YOUR app, because
-the buyer sees a Quiztopia pack, not Rob's pack. But **reading three packs
+the buyer sees a Quizporium pack, not Rob's pack. But **reading three packs
 through is far quicker than writing three**, and the read-through machinery
 already exists — the review flags, the tickable warnings, the answer-balance
 check. So the job becomes "read it, tick the flags, press Accept".
@@ -1446,9 +1446,9 @@ that cannot be undone by editing a line in `plans.js`.
   their own tier, which makes it disappear from their console. They cannot switch
   ON anything above it — that is yours to grant from the owner page, and it stays
   that way until payments are wired up.
-- **The app is called Quiztopia**, and each night is branded from whoever is
-  running it — your projector says **"Mark's Quiztopia"**, Rob's says **"Rob's
-  Quiztopia"**. First names only, the way you say it on the mic. ⚠️ If you have
+- **The app is called Quizporium**, and each night is branded from whoever is
+  running it — your projector says **"Mark's Quizporium"**, Rob's says **"Rob's
+  Quizporium"**. First names only, the way you say it on the mic. ⚠️ If you have
   `BRAND_NAME` set on Render from before, that still wins over all of it and you
   will see the old name — clear it to get this.
 - **Your own two colours.** Six of them (Sunset, Orchid, Lagoon, Ember, Citrus,

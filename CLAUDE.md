@@ -11,7 +11,7 @@ would need to know, add it here in the same turn.
 
 ## What this is
 
-**The app is called Quiztopia.** Live games for pub and club quiz nights, run
+**The app is called Quizporium.** Live games for pub and club quiz nights, run
 by a professional host (Mark). He is hired as the entertainer, never the
 organiser, so it runs on his kit in someone else's venue in front of a paying
 room.
@@ -286,7 +286,7 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 | **The tab icon and the logo are one drawing** | `public/assets/brandmark.js`, imported by `client.js` in the browser AND by `server.js` for `/favicon.svg`. Two copies of a logo is one that gets changed in one place and not the other and goes unnoticed for a month. SVG rather than `.ico` because there is no build step to make one; a browser too old for SVG favicons just shows its default, as it did before. The tab version has thicker strokes — at 16px a 1.6-wide stroke on a 40 viewBox is two thirds of a pixel and turns to mush. There are tests that the two agree. |
 | **A QUESTION MARK INSIDE A MICROPHONE** | `quizMark()`. It was a vinyl record, then a mic-and-note in a disc, and neither said what the app is: this runs general knowledge, first-letter, picture and bingo rounds as well as music, and every one of them is a QUESTION. The mic is the host. Three things were arrived at by getting them wrong first. **The question mark's tail sweeps INWARD to a stem centred under the hook** — the first version dropped it straight down off the arc, which reads as a hook with a leg rather than a "?". **The head needs a COLLAR**: a capsule floating above an arc reads as an egg in a bowl, and the short neck joining head to cradle is the one detail that makes the eye see a microphone. **The question FILLS the head rather than sitting in it** — when the mic was big and the glyph small, the question was the first thing to vanish as it shrank, which is backwards, because it is the half that says what the app does. |
 | **The sound arcs are built but OFF** | `waves` in `quizMark()`. Two arcs coming off the side, and they genuinely look better — at 64px and up. **The app never draws this mark above 30px**: 22 on a phone, 26 on the projector and the owner page, 30 on the console and login, 16 in the tab. At those sizes the arcs stop being character and become fuzz round the edge. So they are one word away for a flyer, a poster or a social avatar, and off everywhere the app itself draws. Checked by rendering at every size the code actually asks for rather than at the size it was designed at. |
-| **The name stacks — the possessive above, the app underlining it** | `brandWords()` in `client.js`. "Mark's" small and tilted 5° above **Quiztopia** in the account's own gradient, so the app name reads as the thing and whose night it is reads as the label on it. **It splits on the APP NAME, never on the last word** — so `BRAND_NAME="The Crown Quiz League"` stays one line instead of being guessed at and broken in the wrong place. A name that does not end in the app name is not stacked at all. |
+| **The name stacks — the possessive above, the app underlining it** | `brandWords()` in `client.js`. "Mark's" small and tilted 5° above **Quizporium** in the account's own gradient, so the app name reads as the thing and whose night it is reads as the label on it. **It splits on the APP NAME, never on the last word** — so `BRAND_NAME="The Crown Quiz League"` stays one line instead of being guessed at and broken in the wrong place. A name that does not end in the app name is not stacked at all. |
 | **Native controls are told the page is dark** | `color-scheme: dark` on `:root`. Without it the browser draws tickboxes, radios, scrollbars and the open list of a dropdown for a white page, and they arrive as white slabs — the console's dropdowns were the loudest thing on a pack card, louder than Launch. A `<select>` also gets `appearance: none`, the page's own fill, and a drawn chevron on a gradient block so it reads as part of the app without competing with the button underneath it. |
 | **A pack still says `cardSize`** | `cardShape()` reads `cardSize` OR `cardRows`/`cardCols`, so no pack on disk had to be rewritten and an older deploy still reads a newer pack. `shapeFields()` writes both when it is square. |
 | **The card is sized from the list, not from a default** | A round of 42 is a 5x5 round. Import always said 4x4, so 42 songs quietly became sixteen squares — a line lands early and most of the round never reaches a card. The dropdown moves itself to the biggest card the pasted list carries and says so, and stops the moment you touch it. `cardSizes` comes from `minimumTracks()` over the library payload so the console keeps no copy of the sum. |
@@ -352,7 +352,7 @@ And it demotes anything that only makes the app cleverer.
 
 ---
 
-## The two shelves have names now: **My packs** and **Quiztopia packs**
+## The two shelves have names now: **My packs** and **Quizporium packs**
 
 A quizmaster sees two libraries and they were called things that described
 where the code keeps them rather than whose they are: "Your saved quizzes"
@@ -362,12 +362,12 @@ want to write something.
 
 - **My packs** — the ones they write. The panel, the link into the editor and
   the button on every pack tab all say it, so the concept has one name.
-- **Quiztopia packs** — the ones written for them and sold. Says who wrote it
+- **Quizporium packs** — the ones written for them and sold. Says who wrote it
   and therefore why it costs money, which "the catalogue" never did.
 
 The grid at the top of a pack tab stays **Your quizzes** / **Your bingo
 games**, because it is neither of those two things: it is everything you can
-RUN tonight, which is your own packs and the Quiztopia ones you hold, mixed.
+RUN tonight, which is your own packs and the Quizporium ones you hold, mixed.
 That distinction is the reason the shop sits under its own heading rather than
 in the same grid — see the shop notes below.
 
@@ -1544,7 +1544,7 @@ src/reports.js         "that one's wrong" — corrections from a night
 src/adverts.js         venue advertising slides, per venue
 src/generate-images.js round 2 artwork (placeholder or OpenAI)
 src/portraits.js       the shared portrait library: one picture per musician
-src/branding.js        "Mark's Quiztopia" — the app name and whose night it is
+src/branding.js        "Mark's Quizporium" — the app name and whose night it is
 src/gates.js           which routes are the owner's, as two testable lists
 src/own-packs.js       a quizmaster's own packs — theirs, and private from the owner
 src/spend.js           what Claude and OpenAI have actually cost, written down as it happens
@@ -2198,9 +2198,65 @@ down to the tab bar on every render.
 `src/branding.js` and `public/assets/schemes.js`. Two settings, one idea: **a
 night belongs to one quizmaster, and every screen in that room says so.**
 
-### "Mark's Quiztopia", "Rob's Quiztopia"
+### It was Quiztopia until 12 August 2026, and the rename was about the NAME being crowded
 
-The product is **Quiztopia** (`APP_NAME`). What goes on a projector is the
+Not a whim and not a legal panic — the two are worth telling apart, because
+only one of them is why it moved.
+
+**The legal side was survivable.** `quiztopia.uk` turned out to be a venue in
+Liverpool, which is a different service in a different city, and the `.com` has
+been parked since 2008. A dormant YouTube channel of the same name has two
+subscribers and nothing posted in three years, which is not goodwill anybody
+could defend.
+
+**What actually decided it was that the name was CROWDED, and that cost is
+permanent.** The `.co.uk` was a £205 registry premium at two registrars, the
+`.com` was gone, and a quizmaster hearing the name at a gig and searching for
+it landed on somebody else's business — sharing every scrap of SEO, and their
+reviews, forever. That is not a risk that might happen; it is a standing tax
+for as long as the product exists.
+
+**And it was free exactly once.** Nothing was printed, no QR carried it, Rob
+had no login, there were no subscribers and there was no goodwill in the word.
+A month later it is reprinting, re-explaining to paying customers, and doing it
+under pressure. **If the name ever has to move again, that asymmetry is the
+argument — not whether the new name is nicer.**
+
+**Quizporium keeps the mark unchanged, and that was a criterion rather than a
+coincidence.** The logo is a question mark inside a microphone: the mic is the
+host, the question is what every round is. An *emporium* is a place stuffed
+with things — which is what a growing catalogue is, and the whole Silver and
+Gold argument — so the name says what is being SOLD while the mark says what
+happens on the NIGHT. Neither needed redrawing. A shopfront or an awning would
+have said "shop" on a projector, which is the wrong half of the product.
+
+Three rules came out of choosing it, and they are what to apply next time:
+
+- **A name that describes a PERSON puts a second character on the projector.**
+  "Mark's Quizzard", "Mark's Quizmaster" — now there are two stars and one of
+  them is not the paying customer. A PLACE or a SHOW is safe, because he owns
+  or hosts it. This is the test that killed most candidates.
+- **It has to spell itself from hearing.** *Quizine* was the most charming
+  thing on the shortlist — "Mark's Quizine" casts him as a chef with a craft —
+  and it is phonetically identical to "Mark's Cuisine". A name needing "with a
+  Q" in every sales call fails the fourth design rule, which is about helping a
+  quizmaster SELL.
+- **Pun on a WORD, never on a NAME.** A real person's name is a personality-
+  rights problem the day you charge for it, and it fails the first rule too.
+
+`APP_NAME` is one variable and `brandWords()` splits on it generically, so the
+rename was the constant, the page titles, the docs and the tests — nothing
+structural. `BRAND_NAME` still beats all of it, unchanged.
+
+**The domains are `quizporium.co.uk` (£5) and `quizporium.app` (£8).** The
+`.com` is parked and is worth buying if the app ever pays for itself, not
+before. `.app` is HSTS-preloaded, so browsers refuse plain HTTP on it at all —
+which on a QR-scanned join link over pub wifi is a small reliability win rather
+than only a badge.
+
+### "Mark's Quizporium", "Rob's Quizporium"
+
+The product is **Quizporium** (`APP_NAME`). What goes on a projector is the
 room's host possessive-plus-that — **first names only**, because that is how he
 introduces himself on the mic and a surname on a projector reads like a
 letterhead. `brandFor()` also copes with the account having no name on it, by
@@ -2208,14 +2264,14 @@ falling back to the local part of the email: `rob@…` is still somebody telling
 you they are Rob.
 
 **It is taken from the ROOM, never from whoever is looking at the page.** A
-phone that scanned Rob's projector says Rob's Quiztopia even while the owner has
+phone that scanned Rob's projector says Rob's Quizporium even while the owner has
 the console open in the next tab.
 
 **And the room's host is looked up in the ACCOUNTS BOOK by room id, not read off
 the room's `label`.** A label is only set when somebody who knows their own name
 touches the room, and the first thing to touch a room after a restart is usually
 the projector, which knows nothing. Branding off the label would leave a big
-screen saying plain "Quiztopia" for the five minutes before a gig. A room id IS
+screen saying plain "Quizporium" for the five minutes before a gig. A room id IS
 an account id (`roomIdFor`), so the book always knows.
 
 `BRAND_NAME` still beats all of it and is unchanged — it is the documented way
@@ -3403,7 +3459,7 @@ is now safe to hand out, and a permissions sweep run AS a quizmaster has
 closed five holes it found.
 
 Most recently, and all of it live: **the Owner | Quizmaster switch** in the top
-right of the console and the owner page; **Quiztopia**, with each night branded
+right of the console and the owner page; **Quizporium**, with each night branded
 from the quizmaster whose room it is; and **six colour schemes** on the account,
 so a subscriber does not have to put somebody else's pink-and-orange on a
 projector with their own name above it; and a **My account** tab, where all

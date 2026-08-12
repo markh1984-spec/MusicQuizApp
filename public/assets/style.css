@@ -1656,7 +1656,7 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
   white-space: nowrap;
 }
 
-/* ---- the stacked wordmark: "Mark's" over "Quiztopia".
+/* ---- the stacked wordmark: "Mark's" over "Quizporium".
 
    Whimsy without a font file, because there is no build step and a webfont is
    a request that can fail on pub wifi. So it comes from the ARRANGEMENT: the

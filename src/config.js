@@ -34,7 +34,7 @@ export const config = {
 
   /*
    * What the app is called. A night is branded from the QUIZMASTER whose room
-   * it is — "Mark's Quiztopia", "Rob's Quiztopia" — so this is the half of the
+   * it is — "Mark's Quizporium", "Rob's Quizporium" — so this is the half of the
    * name that does not change. See `src/branding.js`.
    */
   appName: APP_NAME,

@@ -122,8 +122,8 @@ test('restore only ever fills an empty box', () => {
  * publicly wrong, so the model fills a box and a human presses Send.
  */
 test('the brief tells the model what the app is and how to write', () => {
-  const brief = briefFor({ appName: 'Quiztopia', ownerName: 'Mark' });
-  assert.match(brief, /Quiztopia/);
+  const brief = briefFor({ appName: 'Quizporium', ownerName: 'Mark' });
+  assert.match(brief, /Quizporium/);
   assert.match(brief, /British English/);
   // The two that stop a draft doing damage.
   assert.match(brief, /NEVER promise/);

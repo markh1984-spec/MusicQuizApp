@@ -2620,7 +2620,7 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
       <div class="pack-grid ${dense ? 'dense' : ''}"></div>
       <div class="game-head shop-head" hidden>
         <div>
-          <h2>Quiztopia packs</h2>
+          <h2>Quizporium packs</h2>
           <div class="tiny"><span class="shop-count"></span> — ${esc(packPrice())} each.
             ${kind === 'bingo'
               ? 'Put together for you — every chorus lands on its own, no song twice in three months.'
@@ -4394,7 +4394,7 @@ function openSettings(refresh) {
   sheet('Your details', (form) => {
     form.innerHTML = `
       <div class="inv-group"><h4>Who the invoice is from</h4>
-        ${field('Trading name', 'name', s.business.name, { placeholder: 'Quiztopia' })}
+        ${field('Trading name', 'name', s.business.name, { placeholder: 'Quizporium' })}
         ${field('Your name', 'contact', s.business.contact)}
         ${field('Address', 'address', s.business.address, { type: 'textarea', wide: true })}
         ${field('Email', 'email', s.business.email)}

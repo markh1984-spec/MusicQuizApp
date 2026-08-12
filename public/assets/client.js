@@ -30,7 +30,7 @@ export function brandLink(name, { key = '', size = 30, appName = '' } = {}) {
 }
 
 /**
- * "Mark's" on top, "Quiztopia" underneath and doing the underlining.
+ * "Mark's" on top, "Quizporium" underneath and doing the underlining.
  *
  * Two lines rather than one because the two halves are different things: whose
  * night it is, and what the thing is called. Stacked, the longer product name

@@ -25,7 +25,7 @@ const MAX_TOKENS = 700;
  * brief that drifts with the code is a brief nobody trusts. It is only ever
  * used to draft a paragraph a human then reads.
  */
-export function briefFor({ appName = 'Quiztopia', ownerName = 'the owner', house = '' } = {}) {
+export function briefFor({ appName = 'Quizporium', ownerName = 'the owner', house = '' } = {}) {
   return `You are drafting a short reply on behalf of ${ownerName}, who runs
 ${appName} — an app for live pub and club quiz nights. Its users are
 professional quiz hosts ("quizmasters") who run nights on their own kit in
@@ -191,7 +191,7 @@ export async function draftReply({
   apiKey,
   model = 'claude-sonnet-5',
   ownerName = 'Mark',
-  appName = 'Quiztopia',
+  appName = 'Quizporium',
   // Notes the owner has written for themselves, from the owner page.
   house = '',
   // Who wrote in, and what else they have sent.
