@@ -272,6 +272,11 @@ function openCamera() {
             <button class="cam-undo cam-undo-top" hidden>Undo</button>
           </div>
           <div class="cam-props cam-props-season" hidden></div>
+          <!-- The heading and the four gestures are ONE CARD. Apart, the
+               heading was a fifth floating thing above a block of chips —
+               and a heading that does not sit on the thing it names is not
+               doing its job. -->
+          <div class="cam-guide">
           <div class="cam-looks-head">
             <span>Stick something on</span>
             <button class="cam-undo" hidden>Undo</button>
@@ -289,8 +294,12 @@ function openCamera() {
           <div class="cam-hint tiny">
             <span>Tap to add</span>
             <span>Hold to drag</span>
-            <span>Pinch to size and turn</span>
+            <!-- A hard space in "and turn": inside a chip on a 320px phone
+                 this is the one line that does not fit, and left to the
+                 browser it breaks after "and" and leaves "turn" on its own. -->
+            <span>Pinch to size and&nbsp;turn</span>
             <span>Double-tap to delete</span>
+          </div>
           </div>
           <div class="cam-props"></div>
         </div>
