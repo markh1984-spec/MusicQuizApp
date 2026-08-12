@@ -618,16 +618,23 @@ const ART = {
 export const STICKERS = [
   /*
    * ORDER IS DELIBERATE at the front. The first row is what somebody sees
-   * before they scroll, so it holds the two that get the biggest laugh rather
+   * before they scroll, so it holds the ones that get the biggest laugh rather
    * than whatever happened to be written first.
+   *
+   * The fringe and the lips are next to each other because they are ONE JOKE
+   * IN TWO PIECES and the host's room is full of the people it is about —
+   * *"I have a lot of emos and goths come to my current quiz"*. Third rather
+   * than second, so the tray still opens on the googly eyes: the top row is
+   * four across on a 320px phone and five on a 390px one, so anything in the
+   * first four is above the fold on every handset in the room.
    */
   { id: 'googly-eyes', label: 'Googly eyes' },
   { id: 'emo-fringe', label: 'Emo fringe' },
+  { id: 'goth-lips', label: 'Goth lips' },
   { id: 'dog-ears', label: 'Dog ears' },
   { id: 'clown-nose', label: 'Clown nose' },
   { id: 'sunglasses', label: 'Shades' },
   { id: 'moustache', label: 'Moustache' },
-  { id: 'goth-lips', label: 'Goth lips' },
   { id: 'party-hat', label: 'Party hat' },
   { id: 'crown', label: 'Crown' },
   { id: 'devil-horns', label: 'Horns' },
