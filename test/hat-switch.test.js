@@ -91,6 +91,27 @@ test('an owner runs no nights, so the Control door is not theirs', () => {
   assert.equal(rights.control, false, 'a door that 403s is worse than no door');
 });
 
+/*
+ * THE KEY TO PUT IN A LINK IS NOT THE KEY TO SEND, and getting those two the
+ * wrong way round is silent.
+ *
+ * Links carry the key only when this visit arrived with one, so a REMEMBERED
+ * key does not paint itself into the address bar. A REQUEST is the opposite:
+ * the server has to be told who is asking, so it takes the real key, remembered
+ * included. Sent with the link key, `/api/me` went out bare whenever the key
+ * had been remembered rather than typed — the server answered "nobody is
+ * signed in", and the menu collapsed to a single Console chip on the one page
+ * you drive a gig from. Nothing errored; it just quietly stopped being a menu.
+ */
+test('the control view asks /api/me with the REAL key, not the link key', async () => {
+  const fs = await import('node:fs');
+  const src = fs.readFileSync(new URL('../public/assets/host.js', import.meta.url), 'utf8');
+  const call = src.slice(src.indexOf("fetch(hostKey ? `/api/me"), src.indexOf('.catch(', src.indexOf('/api/me')));
+  assert.ok(call.includes('/api/me'), 'the control view still asks who it is');
+  assert.ok(call.includes('hostKey'), '/api/me must be asked with hostKey — the remembered key counts');
+  assert.ok(!call.includes('navKey'), 'navKey is for LINKS; sending it means asking as nobody');
+});
+
 test('a signed-out payload gets no doors at all', () => {
   assert.deepEqual(menuRights({ signedIn: false }), {
     control: false, packs: false, acting: false, owner: false,

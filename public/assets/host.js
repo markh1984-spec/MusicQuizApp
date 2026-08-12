@@ -59,7 +59,17 @@ let rights = { control: true, packs: true, owner: false };
 function drawNav() {
   paintNav(document.getElementById('navSlot'), { current: 'control', key: navKey, ...rights });
 }
-fetch(withKey('/api/me'), { headers: navKey ? { 'X-Host-Key': navKey } : {} })
+/*
+ * ASKED WITH `hostKey`, NOT `navKey`, and the difference is the whole of the
+ * comment above: the key to put in a LINK is not the key to SEND. This is a
+ * request — the server has to be told who is asking — so it takes the real
+ * key, remembered one included. Sent with the link key it went out bare
+ * whenever the key had been remembered rather than typed, `/api/me` answered
+ * "nobody is signed in", and the menu collapsed to a single Console chip on
+ * the one page you drive a gig from.
+ */
+fetch(hostKey ? `/api/me?key=${encodeURIComponent(hostKey)}` : '/api/me',
+  { headers: hostKey ? { 'X-Host-Key': hostKey } : {} })
   .then((r) => r.json())
   .then((who) => { rights = menuRights(who); drawNav(); })
   .catch(() => { /* the menu keeps the safe default */ });
