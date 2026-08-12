@@ -387,6 +387,23 @@ Two things follow:
   that serves itself is cheap.** When a new proposal creates a pile, the first
   question is whether the pile can be made to shrink on its own.
 
+**AND THE GUARD RAIL, which is what keeps the rule honest: every one of those
+is dual-purpose, and an admin reducer that makes the customer's experience
+worse is the WRONG reducer.** The host's own framing — they exist to make the
+admin burden as small as possible *and* to give the customer the most value,
+not one at the expense of the other. Each is genuinely two-ended: the draft
+reply means a thirty-second answer AND that they get an answer at all; the
+queue position means not being chased AND that they know when; the receipt
+means knowing it landed AND that they know it was seen; "one open at a time"
+protects the time AND replaces a silent refusal with a stated rule.
+
+The distinction matters because "reduce the admin" would otherwise justify the
+opposite of all of it — ignoring the inbox, sending replies unread, hiding the
+way to get in touch. **The load comes down by making the work FASTER AND MORE
+CERTAIN, never by doing less of it.** That is the line between this and a
+software company nobody can get hold of, and it is why `reply-draft.js` drafts
+and never sends.
+
 ---
 
 ## The two shelves have names now: **My packs** and **Quizporium packs**
