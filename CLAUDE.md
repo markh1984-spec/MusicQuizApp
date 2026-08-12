@@ -295,6 +295,25 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 
 ---
 
+## The two shelves have names now: **My packs** and **Quiztopia packs**
+
+A quizmaster sees two libraries and they were called things that described
+where the code keeps them rather than whose they are: "Your saved quizzes"
+above, "The rest of the catalogue" below, and the way into the editor was
+"The pack editor" — the name of a TOOL, on a link somebody presses when they
+want to write something.
+
+- **My packs** — the ones they write. The panel, the link into the editor and
+  the button on every pack tab all say it, so the concept has one name.
+- **Quiztopia packs** — the ones written for them and sold. Says who wrote it
+  and therefore why it costs money, which "the catalogue" never did.
+
+The grid at the top of a pack tab stays **Your quizzes** / **Your bingo
+games**, because it is neither of those two things: it is everything you can
+RUN tonight, which is your own packs and the Quiztopia ones you hold, mixed.
+That distinction is the reason the shop sits under its own heading rather than
+in the same grid — see the shop notes below.
+
 ## House style for labels: say what it is, then one line
 
 The rule, and it applies to every blurb, panel note, tab description and

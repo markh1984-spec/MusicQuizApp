@@ -337,14 +337,9 @@ function shopNote(kind = 'quiz') {
 function ownQuizPanel() {
   const el = node(`
     <div class="panel">
-      <h3>Write your own</h3>
-      <div class="tiny">
-        Quizzes you write yourself sit in this library alongside the ones written for you,
-        marked <b>Yours</b>. They are yours: nobody else's console lists them, and the app
-        will not let anybody in to read one unless you switch on support access under
-        <b>My account</b> — which expires on its own and writes down what was looked at.
-      </div>
-      <a class="own-open" href="${esc(linkTo('/editor'))}">Open the editor</a>
+      <h3>My packs</h3>
+      <div class="tiny">Quizzes you write yourself, marked <b>Yours</b>. Nobody else can read them.</div>
+      <a class="own-open" href="${esc(linkTo('/editor'))}">Write one</a>
     </div>`);
   const warning = ownPacksNote();
   if (warning) el.appendChild(warning);
@@ -400,7 +395,7 @@ const TABS = [
     needs: FEATURES.LIBRARY,
     label: 'Music Quiz',
     blurb: 'Three rounds, twenty seconds a question, fastest fingers win.',
-    editLabel: 'Edit questions',
+    editLabel: 'My packs',
     packs: () => library.quizzes,
     // Generating is the owner's, on the owner's bill. A quizmaster buys packs
     // — and writes their own, which is a different library and a different
@@ -417,7 +412,7 @@ const TABS = [
     needs: FEATURES.LIBRARY,
     label: 'Music Bingo',
     blurb: 'You play the tracks. Every phone gets its own card.',
-    editLabel: 'Edit track lists',
+    editLabel: 'My packs',
     packs: () => library.bingo,
     generator: () => {
       const wrap = document.createDocumentFragment();
@@ -1330,7 +1325,7 @@ function linksPanel() {
         ${canRun('quiz') ? `<a class="minor" href="${esc(linkTo('/host'))}">Your control view</a>` : ''}
         ${canRun('quiz') ? `<a class="minor" href="${esc(screenLink())}" target="_blank" rel="noopener">The big screen</a>` : ''}
         ${canRun('quiz') ? `<a class="minor" href="${esc(play)}" target="_blank" rel="noopener">The join page${code ? ` (${esc(code)})` : ''}</a>` : ''}
-        ${can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS) ? `<a class="minor" href="${esc(linkTo('/editor'))}">The pack editor</a>` : ''}
+        ${can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS) ? `<a class="minor" href="${esc(linkTo('/editor'))}">My packs</a>` : ''}
         ${me && me.role === 'owner' ? '<a class="minor" href="/owner">The owner console</a>' : ''}
 
       </div>
@@ -2361,7 +2356,7 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
     <div class="game-section">
       <div class="game-head">
         <div>
-          <h2>Your saved ${kind === 'quiz' ? 'quizzes' : 'bingo packs'}</h2>
+          <h2>${kind === 'quiz' ? 'Your quizzes' : 'Your bingo games'}</h2>
           <div class="tiny">${esc(blurb)}</div>
         </div>
         <div class="pack-tools">
@@ -2375,7 +2370,7 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
       <div class="pack-grid ${dense ? 'dense' : ''}"></div>
       <div class="game-head shop-head" hidden>
         <div>
-          <h2>The rest of the catalogue</h2>
+          <h2>Quiztopia packs</h2>
           <div class="tiny"><span class="shop-count"></span> —
             ${esc(packPrice())} each.
             ${esc((library.catalogue && library.catalogue.blurb) || '')}</div>
