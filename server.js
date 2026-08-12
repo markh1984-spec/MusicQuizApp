@@ -45,6 +45,7 @@ import { Reports } from './src/reports.js';
 import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, switchedOn, PACK_PENCE } from './public/assets/plans.js';
+import { sendEmail, emailConfigured } from './src/email.js';
 import { Suggestions, KINDS, PACK_REQUEST_KIND } from './src/suggestions.js';
 import { Spend, spendRecorder, imagePrices } from './src/spend.js';
 // The pack id a generation is going to produce, so a cost has a subject from
@@ -985,6 +986,9 @@ async function handleGet(req, res, url, route) {
   if (route === '/editor') return serveFile(res, config.publicDir, 'editor.html'), true;
   if (route === '/console') return serveFile(res, config.publicDir, 'console.html'), true;
   if (route === '/login') return serveFile(res, config.publicDir, 'login.html'), true;
+  // Open, like the sign-in page. It hands out nothing on its own — the token
+  // in the address is what has to be right, and the page asks the server.
+  if (route === '/reset') return serveFile(res, config.publicDir, 'reset.html'), true;
   if (route === '/owner') return serveFile(res, config.publicDir, 'owner.html'), true;
   /*
    * The tab icon: the same record that is in the top left of every screen,
@@ -2597,6 +2601,103 @@ async function handleWrite(req, res, url, route) {
     return sendJson(res, 200, {
       account: { ...session.account, entitlements: entitlements(session.account) },
     }), true;
+  }
+
+  /*
+   * ---- "I have forgotten my password"
+   *
+   * Built because there was NO WAY BACK IN. A password is only ever stored as
+   * a scrypt hash, so nobody can be told what theirs was; the reset route
+   * needs an account id; an owner's own account is deliberately not in the
+   * subscriber list, so even the host key cannot find the id; and Render's
+   * free tier has no shell. A forgotten password was a locked door with
+   * nothing behind it.
+   *
+   * IT ALWAYS ANSWERS THE SAME, whether or not that address has an account.
+   * Otherwise this becomes the thing the sign-in page carefully refuses to be:
+   * a way to ask who has a login here. The reply says what WILL happen if the
+   * address is known, and promises nothing about whether it is.
+   */
+  if (route === '/api/reset/request' && req.method === 'POST') {
+    const body = await readJson(req);
+    const email = String(body.email || '').trim();
+    const said = { ok: true, sent: 'If that address has an account, a link is on its way. It lasts 30 minutes.' };
+    // Said plainly rather than pretending: without a key nothing is going to
+    // arrive, and "check your inbox" for an email that will never come is the
+    // worst answer there is.
+    if (!emailConfigured()) {
+      return sendJson(res, 200, { ...said, ok: false, unconfigured: true,
+        error: 'Password reset by email is not set up on this server yet.' }), true;
+    }
+    const started = accounts.startReset(email);
+    // Throttled or unknown: same reply, no email. A held-down button must not
+    // post somebody a hundred emails at the owner's expense.
+    if (!started || started.throttled || !started.token) return sendJson(res, 200, said), true;
+
+    const base = (config.publicUrl || '').replace(/\/+$/, '')
+      || `${(req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim()}://${req.headers.host}`;
+    const link = `${base}/reset?t=${encodeURIComponent(started.token)}`;
+    const name = brandFor(rooms.house).name;
+    const out = await sendEmail({
+      to: email,
+      subject: `Set a new password for ${name}`,
+      text: [
+        `Somebody asked to reset the password for this address on ${name}.`,
+        '',
+        'Open this link to set a new one. It lasts 30 minutes and works once:',
+        link,
+        '',
+        'If it was not you, ignore this — nothing has changed and your password still works.',
+      ].join('\n'),
+    });
+    /*
+     * The failure is REPORTED rather than swallowed, and that is a weighed
+     * trade-off rather than an oversight.
+     *
+     * It costs a narrow leak: while the mail service is broken, a known
+     * address answers `ok: false` and an unknown one answers `ok: true`, so
+     * the two can be told apart — which is the thing the identical sign-in
+     * error goes to such trouble to prevent. The words never name the address;
+     * only the flag differs, and only while sending is down.
+     *
+     * Kept anyway, because the other way round is worse where it matters: the
+     * person asking is ALREADY LOCKED OUT, and "check your inbox" for an email
+     * that never left the building is how somebody spends an evening before a
+     * gig. A transient distinguisher on an app with a handful of accounts
+     * against a real operational failure is not a close call — and "failure
+     * messages have to name the cause" is the rule this codebase keeps
+     * relearning. If the account list ever gets big enough for enumeration to
+     * matter, the fix is to report send failures to the OWNER's console
+     * instead, not to hide them from everybody.
+     */
+    if (!out.ok) return sendJson(res, 200, { ...said, ok: false, error: out.reason }), true;
+    await backUpAccounts();
+    return sendJson(res, 200, said), true;
+  }
+
+  /** Is this link still good? Asked by the page before it offers a box. */
+  if (route === '/api/reset/check' && req.method === 'POST') {
+    const body = await readJson(req);
+    const who = accounts.whoseReset(String(body.token || ''));
+    return sendJson(res, 200, { ok: Boolean(who), email: who ? who.email : '' }), true;
+  }
+
+  /** Spend the link and set the new password. Single use — see `useReset`. */
+  if (route === '/api/reset/complete' && req.method === 'POST') {
+    const body = await readJson(req);
+    try {
+      const account = accounts.useReset(String(body.token || ''), String(body.password || ''));
+      if (!account) {
+        return sendJson(res, 400, {
+          error: 'That link has been used already or has run out. Ask for a new one.',
+        }), true;
+      }
+      await backUpAccounts();
+      return sendJson(res, 200, { ok: true, email: account.email }), true;
+    } catch (err) {
+      // A password that is too short, said in words rather than as a 500.
+      return sendJson(res, 400, { error: err.message }), true;
+    }
   }
 
   if (route === '/api/sign-out' && req.method === 'POST') {

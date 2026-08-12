@@ -4217,3 +4217,13 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 }
 /* A stand-in is not a drawing anybody paid for, so it reads quieter. */
 .lib-name.stand-in { opacity: 0.5; font-weight: 600; }
+
+/* ---- forgotten password
+   A BUTTON that looks like a link, not a link: it opens a form on this page
+   rather than going anywhere, and an <a href="#"> that does nothing is the
+   thing screen readers and a long-press both get wrong. */
+.linky {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  font: inherit; color: var(--hot-2); text-decoration: underline;
+}
+.sign-in .forgot { margin-top: 14px; display: grid; gap: 10px; text-align: left; }

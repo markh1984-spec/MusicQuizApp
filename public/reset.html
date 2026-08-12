@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a0a13">
+  <title>Set a new password — Quizporium</title>
+  <link rel="stylesheet" href="/assets/style.css">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <!-- The token is in the address, so keep it out of anybody's referrer log on
+       the way to a stylesheet or a logo. -->
+  <meta name="referrer" content="no-referrer">
+</head>
+<body class="console">
+  <div class="wrap">
+    <div class="sign-in">
+      <div class="sign-in-brand" id="brandSlot"></div>
+      <h1 class="grad-text">New password</h1>
+      <div class="tiny" id="who"></div>
+      <form id="setPw" autocomplete="on" hidden>
+        <label>New password
+          <input type="password" name="password" autocomplete="new-password" required
+                 minlength="10" enterkeyhint="go">
+        </label>
+        <label>And again
+          <input type="password" name="again" autocomplete="new-password" required
+                 minlength="10" enterkeyhint="go">
+        </label>
+        <button class="go" type="submit">Save it and sign in</button>
+        <div class="sign-in-problem" id="problem" role="alert"></div>
+      </form>
+      <p class="tiny" id="dud" hidden>
+        That link has been used already or has run out.
+        <a href="/login">Ask for a new one</a>.
+      </p>
+    </div>
+  </div>
+  <script type="module" src="/assets/reset.js"></script>
+</body>
+</html>

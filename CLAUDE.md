@@ -2656,6 +2656,62 @@ feature, so it hands out nothing that holding it did not already give you. The
 panel only appears when there are zero accounts and the door closes behind you —
 everything after that is owner-only.
 
+### A forgotten password has a way back now — one email, Resend
+
+`src/email.js`, `startReset()` / `whoseReset()` / `useReset()` in
+`src/accounts.js`, the three `/api/reset/*` routes and `/reset`.
+
+**It was built because there was NO WAY BACK IN**, and that is worth stating
+because it reads like a convenience and is not. A password is only ever a
+scrypt hash, so nobody can be told what theirs was. The owner's reset route
+takes an account ID — and an owner's own account is deliberately not in the
+subscriber list, so even the host key cannot find the id to use it. Render's
+free tier has no shell. So a forgotten owner password was a locked door with
+nothing behind it, which is exactly the shape of the problem the "make the
+first owner from the console" panel was built to solve.
+
+**Resend over plain `fetch`.** No SDK, for the reason nothing else here has
+one. `RESEND_API_KEY` plus a verified sending domain; `RESEND_FROM` overrides
+the address, otherwise it is built from `PUBLIC_URL`. **Without a key it is a
+STATE, not a failure** — the page says so plainly rather than offering a button
+that cannot work, because "check your inbox" for an email that will never
+arrive is the worst possible answer to somebody locked out.
+
+**This is for resetting a password and NOTHING ELSE.** Not notifications, not
+reminders, not marketing — those are parked in TODO.md, they want a different
+sending domain, and a surprise email from the app somebody runs their
+livelihood on is not a small thing.
+
+Six properties, all tested, and each is there because a reset link is a
+password sitting in an inbox:
+
+- **Only the HASH is stored**, exactly like a session token, so a copy of the
+  accounts file is not a bag of live links.
+- **A link works ONCE**, or it sits in an inbox for ever one forwarded email
+  away from being somebody else's way in. Thirty minutes, and asking again
+  replaces the last one rather than leaving a trail.
+- **THE PASSWORD IS CHECKED BEFORE THE LINK IS SPENT.** The obvious order —
+  clear the token, then set the password — burns the only way back into the
+  account on a typo. Found by its own test.
+- **An unknown address is never told it is unknown.** Same sentence either way,
+  the same care the sign-in error takes.
+- **A held-down button cannot post somebody a hundred emails** at the owner's
+  expense: one a minute per account.
+- **The token lives ON THE ACCOUNT**, so it survives a restart. Anywhere else
+  and it would die on precisely the deploy that is quite likely to be why
+  somebody is signing in again.
+
+**Setting a password does not sign you in.** Every session is dropped when it
+changes — which is what somebody worried enough to reset one wants — and a
+link in an inbox should not be a way to be signed in by clicking it.
+
+**One weighed trade-off, written up at the route:** while the mail service is
+broken, a known address answers `ok: false` and an unknown one `ok: true`, so
+the two can be told apart. Kept, because the person asking is already locked
+out and a silent failure costs them the evening. If the account list ever gets
+big enough for enumeration to matter, report send failures to the owner's
+console rather than hiding them from everybody.
+
 ### Passwords and sessions
 
 scrypt from node's own crypto, salted per account, compared timing-safe. **The
@@ -3745,7 +3801,9 @@ Confirmed by reading the environment list on the dashboard:
 
 `HOST_KEY`, `PHOTO_REPO`, `PHOTO_TOKEN`, `GITHUB_REPO`, `GITHUB_TOKEN`,
 `ANTHROPIC_API_KEY`, `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`,
-`SPOTIFY_REFRESH_TOKEN`. **No `PACKS_REPO`**, so a quizmaster's own packs are
+`SPOTIFY_REFRESH_TOKEN`. **No `RESEND_API_KEY` and no `PUBLIC_URL`**, so the
+forgotten-password email is built but not switched on — the sign-in page says
+so plainly rather than pretending to send. **No `PACKS_REPO`**, so a quizmaster's own packs are
 saved but not permanent — their console says so in red and offers Download. One
 more private repo and one variable fixes it; see TODO.md. **No `BRAND_NAME`** — checked deliberately, because it
 overrides the per-quizmaster naming and a leftover value would hide that whole

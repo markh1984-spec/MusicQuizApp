@@ -26,8 +26,19 @@
         <div class="sign-in-problem" id="problem" role="alert"></div>
       </form>
       <p class="tiny">
-        Forgotten it? There is no reset by email yet — ask Mark and he will set you a new one.
+        <button type="button" class="linky" id="forgot">Forgotten your password?</button>
       </p>
+      <!-- Its own form rather than a second page. Somebody who has just been
+           told their password is wrong is already here, already has the
+           address typed, and a page change would lose it. -->
+      <form id="forgotForm" class="forgot" hidden>
+        <label>Where shall the link go?
+          <input type="email" name="email" autocomplete="username"
+                 autocapitalize="none" spellcheck="false" enterkeyhint="go" required>
+        </label>
+        <button class="go" type="submit">Email me a link</button>
+        <div class="sign-in-problem" id="forgotSaid" role="status"></div>
+      </form>
     </div>
   </div>
   <script type="module" src="/assets/login.js"></script>

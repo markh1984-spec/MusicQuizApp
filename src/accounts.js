@@ -408,6 +408,79 @@ export class Accounts {
     return { token, account: safe(account) };
   }
 
+  /**
+   * Start a password reset. Returns the token to put in a link, or null.
+   *
+   * ONLY THE HASH IS STORED, exactly like a session token — a copy of the
+   * accounts file must not be a bag of live reset links. The token itself is
+   * returned once, goes into one email, and is never written down here.
+   *
+   * NULL IS NOT AN ERROR AND THE CALLER MUST NOT SAY SO. An address with no
+   * account gets the same reply as one with an account, or this becomes a way
+   * to ask "who has a login here" — the same reason `signIn` burns the same
+   * time on a missing address.
+   *
+   * It lives ON THE ACCOUNT rather than in a list of its own, and that is what
+   * makes it survive a deploy: accounts are backed up and restored, and on a
+   * host with no permanent disk a reset link that died the moment the app
+   * restarted would fail exactly when somebody was already locked out.
+   */
+  startReset(email, { minutes = 30 } = {}) {
+    const account = this.byEmail(email);
+    if (!account) return null;
+    const at = this.now();
+    // One live link at a time. Asking again replaces the last one rather than
+    // leaving a trail of working links behind, and the cooldown means a button
+    // held down cannot post somebody a hundred emails at the owner's expense.
+    const last = account.reset && Date.parse(account.reset.sentAt || 0);
+    if (last && at - last < 60_000) return { account: safe(account), throttled: true };
+    const token = newToken();
+    account.reset = {
+      token: hashToken(token),
+      sentAt: new Date(at).toISOString(),
+      expiresAt: new Date(at + minutes * 60_000).toISOString(),
+    };
+    this.save();
+    return { token, account: safe(account) };
+  }
+
+  /** Who a reset token belongs to, or null if it is unknown, used or stale. */
+  whoseReset(token) {
+    if (!token) return null;
+    const hashed = hashToken(token);
+    const account = this.all.find((a) => a.reset && a.reset.token === hashed);
+    if (!account) return null;
+    if (Date.parse(account.reset.expiresAt) < this.now()) return null;
+    return safe(account);
+  }
+
+  /**
+   * Spend a reset token and set the new password.
+   *
+   * SINGLE USE, and cleared BEFORE the password is written — a link that still
+   * worked after it had been used would sit in an inbox for ever being one
+   * forwarded email away from somebody else's account. `setPassword` also drops
+   * every session, so anybody already signed in as them is signed out, which is
+   * what somebody who has just had to reset a password wants.
+   */
+  useReset(token, password) {
+    const who = this.whoseReset(token);
+    if (!who) return null;
+    const account = this.find(who.id);
+    /*
+     * CHECKED BEFORE THE LINK IS SPENT.
+     *
+     * The obvious order — clear the token, then set the password — burns the
+     * link on a typo: too short, `setPassword` throws, and the only way back
+     * into the account has already gone. Somebody doing this is locked out
+     * already, so that is the one mistake here that cannot be recovered from.
+     * Caught by its own test.
+     */
+    checkPassword(password);
+    delete account.reset;
+    return this.setPassword(account.id, password);
+  }
+
   /** Who is this? `null` if the token is unknown, expired or forged. */
   fromToken(token) {
     if (!token) return null;
