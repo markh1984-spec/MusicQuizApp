@@ -1594,6 +1594,38 @@ wrong place, say so — in one line. **Argue in normal mode, not in GSD mode**;
 if a proposal needs pushing back on, note it in a sentence and raise it properly
 when the list is done.
 
+### "Sweep mode" — find everything, change nothing
+
+**If he types `Sweep mode`, run a full sweep and REPORT. Do not action any of
+it.** He decides what gets fixed; the output is a list he can work through and
+dismiss from.
+
+Three things at once, because they hide in each other:
+
+- **Contradictions** — the docs against the code, and the code against itself.
+  A rule stated in CLAUDE.md that the code no longer honours is the one that
+  costs a future session a day.
+- **Bugs** — including ones only reachable in a state nobody tests: mid-round, a
+  redeploy, a lapsed subscription, a second login.
+- **Vulnerabilities** — from BOTH sides. Signed in as a quizmaster reaching for
+  what is the owner's, and the owner reaching into what is a quizmaster's. The
+  second is the gate that runs backwards and is easy to forget.
+
+**Testing is allowed; leaving anything behind is not.** Start servers, seed
+throwaway data, sign in as a made-up account, probe every route — then kill it,
+delete the temp directories, and leave `git status` clean. **If a probe breaks
+something, fix it in the same turn and say so.**
+
+**VERIFY BEFORE REPORTING, because the last sweep produced four "findings" that
+were the sweep's own mistakes** — a route called with the wrong field name, a
+parameter that is correctly ignored, a tier limit working exactly as designed.
+A false finding costs him time and teaches him to skim the next report. When a
+thing looks wrong, reproduce it deliberately before it goes on the list.
+
+**Say what HELD as well as what failed.** "Rooms held against every attempt to
+reach another quizmaster's night" is worth as much as a bug, because it is the
+part he cannot check himself.
+
 ---
 
 ## Layout
