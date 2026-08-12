@@ -229,6 +229,46 @@ const ART = {
     <path d="M8 44C8 20 26 6 50 6s42 14 42 38v10c-4-10-10-16-18-19-6 14-20 24-38 26-10 1-18 6-22 14z" fill="#17161c"/>
     <path d="M12 66C6 52 8 30 20 18c-2 16 2 28 12 36 8 6 6 18-4 22-8 3-13-2-16-10z" fill="#221f2a"/>
     <path d="M30 22c-8 8-11 22-8 34l-9-3c-3-14 1-27 10-35z" fill="#7b2d63"/>`,
+  'stupid-up': `
+    <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="#f4f4f8"/>
+    <path d="M30 38v49h20V30c-7-1-13-4-16-8l-10 5-10 14 12 12z" fill="#fff"/>
+    <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="none" stroke="#20202c" stroke-width="5" stroke-linejoin="round"/>
+    <g fill="#20202c" font-family="Helvetica,Arial,sans-serif" font-weight="bold" text-anchor="middle">
+      <text x="50" y="66" font-size="11" textLength="34" lengthAdjust="spacingAndGlyphs">I'M WITH</text>
+      <text x="50" y="80" font-size="13" textLength="34" lengthAdjust="spacingAndGlyphs">STUPID</text>
+    </g>
+    <path d="M50 31 60 44h-6v7h-8v-7h-6z" fill="#e8123c" stroke="#8f0a24" stroke-width="3" stroke-linejoin="round"/>`,
+  'stupid-left': `
+    <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="#f4f4f8"/>
+    <path d="M30 38v49h20V30c-7-1-13-4-16-8l-10 5-10 14 12 12z" fill="#fff"/>
+    <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="none" stroke="#20202c" stroke-width="5" stroke-linejoin="round"/>
+    <g fill="#20202c" font-family="Helvetica,Arial,sans-serif" font-weight="bold" text-anchor="middle">
+      <text x="50" y="54" font-size="11" textLength="34" lengthAdjust="spacingAndGlyphs">I'M WITH</text>
+      <text x="50" y="68" font-size="13" textLength="34" lengthAdjust="spacingAndGlyphs">STUPID</text>
+    </g>
+    <path d="M31 79 43 71v5h13v6H43v5z" fill="#e8123c" stroke="#8f0a24" stroke-width="3" stroke-linejoin="round"/>`,
+  'stupid-right': `
+    <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="#f4f4f8"/>
+    <path d="M30 38v49h20V30c-7-1-13-4-16-8l-10 5-10 14 12 12z" fill="#fff"/>
+    <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="none" stroke="#20202c" stroke-width="5" stroke-linejoin="round"/>
+    <g fill="#20202c" font-family="Helvetica,Arial,sans-serif" font-weight="bold" text-anchor="middle">
+      <text x="50" y="54" font-size="11" textLength="34" lengthAdjust="spacingAndGlyphs">I'M WITH</text>
+      <text x="50" y="68" font-size="13" textLength="34" lengthAdjust="spacingAndGlyphs">STUPID</text>
+    </g>
+    <path d="M69 79 57 71v5H44v6h13v5z" fill="#e8123c" stroke="#8f0a24" stroke-width="3" stroke-linejoin="round"/>`,
+  'stupid-both': `
+    <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="#f4f4f8"/>
+    <path d="M30 38v49h20V30c-7-1-13-4-16-8l-10 5-10 14 12 12z" fill="#fff"/>
+    <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="none" stroke="#20202c" stroke-width="5" stroke-linejoin="round"/>
+    <g fill="#20202c" font-family="Helvetica,Arial,sans-serif" font-weight="bold" text-anchor="middle">
+      <text x="50" y="54" font-size="11" textLength="34" lengthAdjust="spacingAndGlyphs">I'M WITH</text>
+      <text x="50" y="68" font-size="13" textLength="34" lengthAdjust="spacingAndGlyphs">STUPID</text>
+    </g>
+    <path d="M28 79 38 72v4h24v-4l10 7-10 7v-4H38v4z" fill="#e8123c" stroke="#8f0a24" stroke-width="3" stroke-linejoin="round"/>`,
   'traffic-cone': `
     <path d="M50 6 78 84H22z" fill="#ff6a1a"/>
     <path d="M34 50h32l5 14H29z" fill="#f2f2f7"/>
@@ -434,6 +474,10 @@ export const STICKERS = [
   { id: 'monobrow', label: 'Monobrow' },
   { id: 'tongue', label: 'Tongue' },
   { id: 'love-glasses', label: 'Love hearts' },
+  { id: 'stupid-up', label: 'Stupid up' },
+  { id: 'stupid-left', label: 'Stupid left' },
+  { id: 'stupid-right', label: 'Stupid right' },
+  { id: 'stupid-both', label: 'Stupid both' },
   { id: 'traffic-cone', label: 'Traffic cone' },
   { id: 'lightning-bolt', label: 'Lightning' },
   { id: 'headphones', label: 'Headphones' },
