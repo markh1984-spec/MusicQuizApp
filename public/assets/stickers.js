@@ -123,6 +123,12 @@ const ART = {
     <path d="M2 30h96v7H2z" fill="#ff2e88"/>
     <path d="M27 72S7 58 7 42a11 11 0 0 1 20-6 11 11 0 0 1 20 6c0 16-20 30-20 30z" fill="#ff2e88"/>
     <path d="M73 72S53 58 53 42a11 11 0 0 1 20-6 11 11 0 0 1 20 6c0 16-20 30-20 30z" fill="#ff2e88"/>`,
+  // A side-swept fringe over one eye, which is the whole silhouette — the flat
+  // black is broken with a plum streak so it does not read as a dark blob.
+  'emo-fringe': `
+    <path d="M8 44C8 20 26 6 50 6s42 14 42 38v10c-4-10-10-16-18-19-6 14-20 24-38 26-10 1-18 6-22 14z" fill="#17161c"/>
+    <path d="M12 66C6 52 8 30 20 18c-2 16 2 28 12 36 8 6 6 18-4 22-8 3-13-2-16-10z" fill="#221f2a"/>
+    <path d="M30 22c-8 8-11 22-8 34l-9-3c-3-14 1-27 10-35z" fill="#7b2d63"/>`,
   'traffic-cone': `
     <path d="M50 6 78 84H22z" fill="#ff6a1a"/>
     <path d="M34 50h32l5 14H29z" fill="#f2f2f7"/>
@@ -310,6 +316,7 @@ export const STICKERS = [
   { id: 'monobrow', label: 'Monobrow' },
   { id: 'tongue', label: 'Tongue' },
   { id: 'love-glasses', label: 'Love hearts' },
+  { id: 'emo-fringe', label: 'Emo fringe' },
   { id: 'traffic-cone', label: 'Traffic cone' },
   { id: 'lightning-bolt', label: 'Lightning' },
   { id: 'headphones', label: 'Headphones' },
