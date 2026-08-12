@@ -4117,16 +4117,21 @@ function invoicesSection() {
      * history's: there is no permanent disk, so without the private repo an
      * invoice lives until the next deploy. An invoice you think you have a
      * record of and do not is worse than no record at all.
+     *
+     * It used to name PHOTO_REPO and GITHUB_TOKEN and tell the reader to set
+     * them on Render — which is the owner's dashboard, on the one tab that is
+     * a quizmaster's own business. Same fault as the "nothing here is being
+     * saved permanently" banner that was being shown to subscribers. It says
+     * what it means to them and what to do about it, like the own-packs one.
      */
     warn.replaceChildren(...(book.backupReady ? [] : [node(`
       <div class="pv-warn pv-broken" style="margin-bottom:12px">
         <b class="pv-warn-head">Invoices are not being backed up</b>
         <div class="tiny" style="margin-top:6px">
-          They are saved here, and this server has no permanent disk — so everything on
-          this page disappears the next time the app redeploys, including the invoice
-          numbering. Set <b>PHOTO_REPO</b> and <b>GITHUB_TOKEN</b> on Render to a
-          <b>private</b> repository and they become permanent. It must be private:
-          this file has your customers' addresses and your own bank details in it.
+          They are saved here, and this server has nowhere permanent to keep them — so
+          everything on this page disappears the next time the app restarts, including
+          the invoice numbering. Download anything you have sent out, and ask about
+          turning the backup on.
         </div>
       </div>`)]));
 
