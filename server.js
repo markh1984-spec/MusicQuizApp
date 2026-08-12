@@ -45,7 +45,7 @@ import { Reports } from './src/reports.js';
 import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, switchedOn, PACK_PENCE } from './public/assets/plans.js';
-import { sendEmail, emailConfigured } from './src/email.js';
+import { sendEmail, emailConfigured, emailProvider, keepKeyAlive } from './src/email.js';
 import { Suggestions, KINDS, PACK_REQUEST_KIND } from './src/suggestions.js';
 import { Spend, spendRecorder, imagePrices } from './src/spend.js';
 // The pack id a generation is going to produce, so a cost has a subject from
@@ -4291,6 +4291,25 @@ server.listen(config.port, () => {
     console.log('  one and every bookmark you have will stop working. Set HOST_KEY');
     console.log('  as an environment variable to any long phrase and it stops.');
   }
+  /*
+   * Keep the mail key alive.
+   *
+   * Brevo expires an API key after 90 days of INACTIVITY whatever expiry was
+   * set on it, and this app sends about five password resets a year — so the
+   * key would die quietly and be discovered on the evening somebody is locked
+   * out. One trivial authenticated call at boot and once a week after it is
+   * activity without sending anything.
+   *
+   * `unref()` so it can never hold the process open, and nothing is awaited or
+   * reported: a mail provider having a bad morning has nothing to do with
+   * whether a quiz can run tonight. The reset page still names the cause if
+   * the key has gone anyway, which is the backstop that actually matters.
+   */
+  if (emailProvider() === 'brevo') {
+    keepKeyAlive().catch(() => {});
+    setInterval(() => { keepKeyAlive().catch(() => {}); }, 7 * 86_400_000).unref();
+  }
+
   if (!accounts.all.length) {
     console.log('');
     console.log('  No accounts yet. The host key above is the way in, and it can');

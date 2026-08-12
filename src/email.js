@@ -134,6 +134,43 @@ export async function sendEmail({ to, subject, text, html = '' }, { fetchImpl = 
 }
 
 /**
+ * KEEP THE KEY ALIVE.
+ *
+ * Brevo expires an API key after 90 DAYS OF INACTIVITY, whatever expiry date
+ * was chosen when it was made. This app sends about five password resets a
+ * year, so the key WILL go ninety days idle — and it would die quietly, to be
+ * discovered on the one evening somebody is locked out and in a hurry. That is
+ * exactly the failure the host asked not to have.
+ *
+ * So the app makes one trivial authenticated call now and again, which is
+ * activity without sending anything. `GET /v3/account` is the cheapest thing
+ * the key can do: no email, no contact, nothing created.
+ *
+ * BE HONEST ABOUT WHAT THIS IS: Brevo does not document precisely which calls
+ * reset the idle clock, so this is the best available guess rather than a
+ * guarantee. It costs one request a week and cannot do any harm — and if the
+ * key does expire anyway, the reset page already says so by name rather than
+ * failing silently, which is the backstop that actually matters.
+ *
+ * Resend has no such rule, so there is nothing to do there.
+ */
+export async function keepKeyAlive({ fetchImpl = fetch } = {}) {
+  if (emailProvider() !== 'brevo') return { ok: false, skipped: true };
+  try {
+    const res = await fetchImpl('https://api.brevo.com/v3/account', {
+      headers: { 'api-key': process.env.BREVO_API_KEY, accept: 'application/json' },
+    });
+    if (res.ok) return { ok: true };
+    const body = await res.json().catch(() => ({}));
+    return { ok: false, reason: explain('brevo', res.status, body) };
+  } catch (err) {
+    // Never fatal, and never even noisy: a mail provider being unreachable at
+    // boot has nothing to do with whether a quiz can run tonight.
+    return { ok: false, reason: err.message };
+  }
+}
+
+/**
  * Turn a refusal into something somebody can act on.
  *
  * Same rule as the Spotify 403 and Imagen's `includeRaiReason`: a bare status

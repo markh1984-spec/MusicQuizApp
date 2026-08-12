@@ -2720,6 +2720,18 @@ password sitting in an inbox:
   and it would die on precisely the deploy that is quite likely to be why
   somebody is signing in again.
 
+**THE KEY IS KEPT ALIVE, and that is not fussiness.** Brevo expires an API key
+after **90 days of INACTIVITY** whatever expiry date was chosen for it — and
+this app sends about five password resets a year, so the key would go ninety
+days idle and die quietly, to be discovered on the one evening somebody is
+locked out and in a hurry. `keepKeyAlive()` makes one `GET /v3/account` at boot
+and weekly: authenticated activity, no email, nothing created. `unref()`'d so
+it can never hold the process open, never awaited and never reported, because a
+mail provider having a bad morning has nothing to do with whether a quiz runs
+tonight. Brevo does not document exactly which calls reset the idle clock, so
+this is the best available guess rather than a guarantee — the real backstop is
+that the reset page names the cause if the key has gone anyway.
+
 **Setting a password does not sign you in.** Every session is dropped when it
 changes — which is what somebody worried enough to reset one wants — and a
 link in an inbox should not be a way to be signed in by clicking it.

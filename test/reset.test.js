@@ -17,7 +17,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { Accounts } from '../src/accounts.js';
-import { sendEmail, emailConfigured, emailProvider, fromAddress } from '../src/email.js';
+import { sendEmail, emailConfigured, emailProvider, fromAddress, keepKeyAlive } from '../src/email.js';
 
 function book(now = () => Date.now()) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'reset-'));
@@ -254,4 +254,47 @@ test('the from address is split, and falls back to the app own domain', () => {
   assert.deepEqual(fromAddress(), { name: '', email: '' },
     'and with nothing to go on it says so rather than inventing a domain');
   Object.assign(process.env, before);
+});
+
+/*
+ * KEEPING THE KEY ALIVE.
+ *
+ * Brevo expires an API key after 90 DAYS OF INACTIVITY whatever expiry was set
+ * on it. This app sends about five password resets a year, so the key would go
+ * ninety days idle and die quietly — to be found on the one evening somebody is
+ * locked out and in a hurry, which is the exact failure this was built to
+ * prevent. One trivial authenticated call at boot and weekly is activity
+ * without sending anything.
+ */
+
+test('the keep-alive asks the cheapest thing the key can do', async () => {
+  process.env.BREVO_API_KEY = 'test-key';
+  let seen = null;
+  const fetchImpl = async (url, options) => { seen = { url, options }; return { ok: true, json: async () => ({}) }; };
+  assert.equal((await keepKeyAlive({ fetchImpl })).ok, true);
+  assert.equal(seen.url, 'https://api.brevo.com/v3/account', 'no email, no contact, nothing created');
+  assert.equal(seen.options.headers['api-key'], 'test-key');
+  assert.equal(seen.options.method, undefined, 'a GET');
+  delete process.env.BREVO_API_KEY;
+});
+
+test('the keep-alive does nothing at all on Resend, which has no idle rule', async () => {
+  delete process.env.BREVO_API_KEY;
+  process.env.RESEND_API_KEY = 'r';
+  let called = false;
+  const out = await keepKeyAlive({ fetchImpl: async () => { called = true; return { ok: true, json: async () => ({}) }; } });
+  assert.equal(called, false);
+  assert.equal(out.skipped, true);
+  delete process.env.RESEND_API_KEY;
+});
+
+test('and it NEVER throws, whatever the network does', async () => {
+  // A mail provider having a bad morning has nothing to do with whether a quiz
+  // can run tonight, and this runs at boot.
+  process.env.BREVO_API_KEY = 'test-key';
+  const out = await keepKeyAlive({ fetchImpl: async () => { throw new Error('ENOTFOUND'); } });
+  assert.equal(out.ok, false);
+  const refused = await keepKeyAlive({ fetchImpl: async () => ({ ok: false, status: 401, json: async () => ({ message: 'Key not found' }) }) });
+  assert.match(refused.reason, /BREVO_API_KEY/, 'and still names the cause');
+  delete process.env.BREVO_API_KEY;
 });
