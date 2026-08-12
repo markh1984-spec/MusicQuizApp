@@ -26,19 +26,26 @@ const ART = {
     <path d="M86 6c10 8 12 34 4 52-6 13-16 12-18 2-2-12 2-42 14-54z" fill="#7a4a22"/>
     <path d="M83 16c6 6 7 24 2 36-3 7-8 7-9 1-1-8 1-28 7-37z" fill="#a8703c"/>`,
   'clown-nose': `
+    <circle cx="50" cy="50" r="38" fill="#fff" stroke="#fff" stroke-width="11"/>
     <circle cx="50" cy="50" r="38" fill="#e8123c"/>
-    <circle cx="50" cy="50" r="38" fill="none" stroke="#a10c29" stroke-width="4"/>
-    <ellipse cx="37" cy="35" rx="12" ry="8" fill="#fff" opacity=".45" transform="rotate(-25 37 35)"/>`,
+    <ellipse cx="63" cy="66" rx="29" ry="21" fill="#a10c29" opacity=".5" transform="rotate(-30 63 66)"/>
+    <ellipse cx="36" cy="34" rx="13" ry="9" fill="#fff" opacity=".9" transform="rotate(-30 36 34)"/>
+    <circle cx="50" cy="50" r="38" fill="none" stroke="#7d0a20" stroke-width="5"/>`,
   'sunglasses': `
     <path d="M4 30h92v10H88c0 18-9 28-22 28-11 0-17-7-19-18h-6c-2 11-8 18-19 18-13 0-22-10-22-28H4z" fill="#141420"/>
     <path d="M14 40h26c0 12-5 18-13 18s-13-6-13-18zM60 40h26c0 12-5 18-13 18s-13-6-13-18z" fill="#2b6cff" opacity=".5"/>`,
   'moustache': `
     <path d="M50 44c6-8 16-14 27-14 12 0 21 7 21 16 0 11-11 18-24 18-10 0-18-4-24-11-6 7-14 11-24 11C13 64 2 57 2 46c0-9 9-16 21-16 11 0 21 6 27 14z" fill="#2a1d12"/>`,
   'party-hat': `
-    <path d="M50 4 84 84H16z" fill="#ff2e88"/>
-    <path d="M50 4 66 42 34 60z" fill="#ffd23f" opacity=".85"/>
-    <path d="M16 84h68v8H16z" fill="#4bd8ff"/>
-    <circle cx="50" cy="6" r="9" fill="#ffd23f"/>`,
+    <path d="M50 8 82 82H18z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <circle cx="50" cy="11" r="10" fill="#fff" stroke="#fff" stroke-width="11"/>
+    <path d="M50 8 82 82H18z" fill="#ff2e88"/>
+    <path d="M42.6 25h14.8l6.4 15H36.2z" fill="#ffd23f"/>
+    <path d="M33.1 47h33.8l6.5 15H26.6z" fill="#4bd8ff"/>
+    <path d="M23.2 70h53.6L82 82H18z" fill="#5fd35f"/>
+    <path d="M50 8 66 40 44 52z" fill="#fff" opacity=".25"/>
+    <path d="M50 8 82 82H18z" fill="none" stroke="#1e1e28" stroke-width="5" stroke-linejoin="round"/>
+    <circle cx="50" cy="11" r="10" fill="#ffd23f" stroke="#1e1e28" stroke-width="4"/>`,
   'crown': `
     <path d="M8 74 4 26l24 18L50 14l22 30 24-18-4 48z" fill="#ffd23f"/>
     <path d="M8 74h84v12H8z" fill="#e0a800"/>
@@ -56,11 +63,23 @@ const ART = {
     <path d="M50 74c5-6 13-11 21-11 9 0 16 5 16 12 0 8-8 13-18 13-8 0-14-3-19-8-5 5-11 8-19 8-10 0-18-5-18-13 0-7 7-12 16-12 8 0 16 5 21 11z" fill="#2a1d12"/>`,
   // The pupils point in DIFFERENT directions on purpose — two eyes agreeing
   // with each other is a face, and two that do not is the joke.
+  // The pupils point in DIFFERENT directions on purpose — two eyes agreeing
+  // with each other is a face, and two that do not is the joke. No eyebrows:
+  // the reference sheet added a pair, but they turn this from something you
+  // can stick anywhere into a face of its own.
   'googly-eyes': `
-    <circle cx="29" cy="50" r="25" fill="#fff" stroke="#141420" stroke-width="4"/>
-    <circle cx="71" cy="50" r="25" fill="#fff" stroke="#141420" stroke-width="4"/>
-    <circle cx="22" cy="59" r="11" fill="#141420"/>
-    <circle cx="78" cy="42" r="11" fill="#141420"/>`,
+    <circle cx="27" cy="50" r="23" fill="#fff" stroke="#fff" stroke-width="11"/>
+    <circle cx="73" cy="50" r="23" fill="#fff" stroke="#fff" stroke-width="11"/>
+    <circle cx="27" cy="50" r="23" fill="#fff"/>
+    <circle cx="73" cy="50" r="23" fill="#fff"/>
+    <ellipse cx="32" cy="59" rx="17" ry="11" fill="#dfe3ec" opacity=".7"/>
+    <ellipse cx="78" cy="59" rx="17" ry="11" fill="#dfe3ec" opacity=".7"/>
+    <circle cx="21" cy="58" r="10.5" fill="#1e1e28"/>
+    <circle cx="79" cy="43" r="10.5" fill="#1e1e28"/>
+    <circle cx="17" cy="54" r="3.4" fill="#fff"/>
+    <circle cx="75" cy="39" r="3.4" fill="#fff"/>
+    <circle cx="27" cy="50" r="23" fill="none" stroke="#1e1e28" stroke-width="5"/>
+    <circle cx="73" cy="50" r="23" fill="none" stroke="#1e1e28" stroke-width="5"/>`,
   'eyepatch': `
     <path d="M2 26 98 16" stroke="#141420" stroke-width="8" fill="none" stroke-linecap="round"/>
     <ellipse cx="50" cy="58" rx="31" ry="27" fill="#141420"/>
@@ -153,11 +172,23 @@ const ART = {
   // colour of the thing it is drawn on; the gradient behind them now makes
   // that hard to do twice, but the fix is still to pick a different colour.
   'viking-helmet': `
-    <path d="M20 62c0-22 13-36 30-36s30 14 30 36z" fill="#c3ccdb"/>
-    <path d="M14 62h72v11H14z" fill="#8e99ae"/>
-    <path d="M46 32h8v41h-8z" fill="#8e99ae"/>
-    <path d="M22 48C11 44 2 31 4 15c15 3 22 14 24 27z" fill="#f0e6d2"/>
-    <path d="M78 48c11-4 20-17 18-33-15 3-22 14-24 27z" fill="#f0e6d2"/>`,
+    <path d="M33 61C16 59 2 41 6 13c5 17 15 31 31 35z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M67 61c17-2 31-20 27-48-5 17-15 31-31 35z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M20 64c0-23 13-38 30-38s30 15 30 38zM13 64h74v13H13z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M33 61C16 59 2 41 6 13c5 17 15 31 31 35z" fill="#f3ead8"/>
+    <path d="M31 57C18 53 8 39 8 20c5 14 14 26 27 31z" fill="#d8c9ab"/>
+    <path d="M67 61c17-2 31-20 27-48-5 17-15 31-31 35z" fill="#f3ead8"/>
+    <path d="M69 57c13-4 23-18 23-37-5 14-14 26-27 31z" fill="#d8c9ab"/>
+    <path d="M33 61C16 59 2 41 6 13c5 17 15 31 31 35z" fill="none" stroke="#4a4438" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M67 61c17-2 31-20 27-48-5 17-15 31-31 35z" fill="none" stroke="#4a4438" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M20 64c0-23 13-38 30-38s30 15 30 38z" fill="#c3ccdb"/>
+    <path d="M50 26c-17 0-30 15-30 38h13c0-23 7-35 17-38z" fill="#dde3ec"/>
+    <path d="M13 64h74v13H13z" fill="#98a3b8"/>
+    <path d="M44 30h12v47H44z" fill="#98a3b8"/>
+    <circle cx="28" cy="57" r="3.2" fill="#6f7b90"/>
+    <circle cx="72" cy="57" r="3.2" fill="#6f7b90"/>
+    <circle cx="50" cy="38" r="3.2" fill="#6f7b90"/>
+    <path d="M20 64c0-23 13-38 30-38s30 15 30 38zM13 64h74v13H13zM44 30h12v47H44z" fill="none" stroke="#3f4653" stroke-width="5" stroke-linejoin="round"/>`,
   'propeller-beanie': `
     <path d="M20 64a30 30 0 0 1 60 0z" fill="#2b6cff"/>
     <path d="M16 64h68v10H16z" fill="#1e4fbf"/>
