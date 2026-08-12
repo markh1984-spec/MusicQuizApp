@@ -2922,6 +2922,52 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   --f: #c9a0ff;   /* violet burst */
 }
 
+/* Eurovision — the loudest palette in the app, and rightly so: it is one night
+   a year and the whole point is that it looks like a light rig. */
+[data-look="eurovision"] {
+  --glow-1: #2b0f3d;
+  --glow-2: #0d2a4a;
+  --drift-1: rgba(255, 90, 200, 0.20);
+  --drift-2: rgba(90, 200, 255, 0.18);
+  --panel: #1a1030;
+  --hot: #ff5ac8;
+  --hot-2: #ffc84a;
+  --cool: #5ac8ff;
+  --gold: #ffd76b;
+  --bg: #0a0518;
+  --bg-2: #180c2e;
+  --a: #ff5ac8;   /* stage pink */
+  --b: #5ac8ff;   /* stage blue */
+  --c: #6fe36f;   /* laser green */
+  --d: #ffc84a;   /* spotlight */
+  --e: #c07bff;   /* violet wash */
+  --f: #ff7a5a;   /* warm gel */
+}
+
+/* International — a tournament night. Deliberately NEUTRAL rather than any
+   country's colours: it goes up for a World Cup, a Euros and an Olympics, and
+   a palette that looked like one nation's flag would be wrong at two of them.
+   The flags come from the props, where the room chooses. */
+[data-look="international"] {
+  --glow-1: #0e2438;
+  --glow-2: #16321c;
+  --drift-1: rgba(90, 170, 255, 0.18);
+  --drift-2: rgba(110, 227, 140, 0.16);
+  --panel: #121e2a;
+  --hot: #4aa8ff;
+  --hot-2: #6fe38c;
+  --cool: #9ad4ff;
+  --gold: #ffd76b;
+  --bg: #060d16;
+  --bg-2: #0f1c28;
+  --a: #4aa8ff;   /* pitch blue */
+  --b: #6fe38c;   /* grass */
+  --c: #ff6f91;   /* rosette */
+  --d: #ffd76b;   /* medal */
+  --e: #c9a0ff;   /* floodlight */
+  --f: #ff9f45;   /* terrace orange */
+}
+
 [data-look="halloween"] {
   --glow-1: #2a1038;
   --glow-2: #3d1a05;

@@ -271,7 +271,11 @@ function openCamera() {
   const input = sheet.querySelector('input[type=file]');
   const stage = sheet.querySelector('.cam-stage');
   const canvas = sheet.querySelector('.cam-canvas');
-  const props = sheet.querySelector('.cam-props');
+  // NOT `.cam-props` — the seasonal tray carries that class too (it wants the
+  // same grid), so a bare selector matched the seasonal one and every prop was
+  // appended into a container that stays hidden on an ordinary night. The tray
+  // came up empty and nothing threw.
+  const props = sheet.querySelector('.cam-props:not(.cam-props-season)');
   const undoBtn = sheet.querySelector('.cam-undo');
   const bin = sheet.querySelector('.cam-bin');
   const seasonHead = sheet.querySelector('.cam-season-head');

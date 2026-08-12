@@ -95,6 +95,28 @@ export const LOOKS = [
     season: { from: [3, 14], to: [3, 18] },
   },
   {
+    id: 'eurovision',
+    label: 'Eurovision',
+    blurb: 'Hearts and disco lights, in every colour there is.',
+    motifs: ['heart', 'star', 'discoball', 'mic'],
+    // A ROUGH WINDOW, not a computed date. Eurovision is announced by the EBU
+    // rather than worked out — the final has landed between the 11th and the
+    // 17th of May these last four years — so the range covers the fortnight
+    // and the quizmaster picks the night. Precision here would buy nothing:
+    // the job is to have it near the top of the list in the right week.
+    season: { from: [5, 8], to: [5, 20] },
+  },
+  {
+    id: 'international',
+    label: 'International',
+    blurb: 'Flags and stadium colours, for a tournament night.',
+    motifs: ['flag', 'star', 'trophy', 'flag'],
+    // NO SEASON on purpose. A World Cup, a Euros and an Olympics all move, and
+    // some are in the summer where they would fight with the Summer look. It
+    // is picked deliberately, which for a tournament is what happens anyway —
+    // you know months ahead that Thursday is a football night.
+  },
+  {
     id: 'bonfire',
     label: 'Bonfire Night',
     blurb: 'Fireworks and sparklers over a dark November sky.',
@@ -268,6 +290,22 @@ const MOTIFS = {
     <path d="M6.4 8.6h9.2v12.2a1.4 1.4 0 0 1-1.4 1.4H7.8a1.4 1.4 0 0 1-1.4-1.4z"/>
     <path d="M15.6 10.4h1.8a2.6 2.6 0 0 1 0 5.2h-1.8z" fill="none" stroke="currentColor" stroke-width="1.6"/>
     <path d="M6 5.6c.6-1.6 2-2 2.8-1.2.6-1.6 2.6-1.8 3.4-.4.8-1.2 2.6-1 3 .6.8-.2 1.6.4 1.6 1.4v3H6z"/>`,
+  discoball: `
+    <circle cx="12" cy="13.6" r="7.6"/>
+    <path d="M11.2 1.4h1.6v4.6h-1.6z"/>
+    <path d="M4.4 13.6h15.2M12 6h0M6.6 8.2h10.8M6.6 19h10.8M12 6v15.2M8.4 6.6c-1.6 4.4-1.6 9.6 0 14M15.6 6.6c1.6 4.4 1.6 9.6 0 14"
+          fill="none" stroke="#000" stroke-opacity=".35" stroke-width="1"/>`,
+  mic: `
+    <rect x="9" y="1.8" width="6" height="11.4" rx="3"/>
+    <path d="M5.8 11.4a6.2 6.2 0 0 0 12.4 0" fill="none" stroke="currentColor" stroke-width="1.7"/>
+    <path d="M11.2 17.6h1.6v4.6h-1.6zM8.2 21.4h7.6v1.6H8.2z"/>`,
+  trophy: `
+    <path d="M7.4 2.6h9.2v6a4.6 4.6 0 0 1-9.2 0z"/>
+    <path d="M7.4 4.2H5a2.6 2.6 0 0 0 2.4 4M16.6 4.2H19a2.6 2.6 0 0 1-2.4 4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <path d="M11 13.2h2v4.4h-2zM7.6 17.6h8.8v1.8H7.6zM6.4 19.8h11.2v1.8H6.4z"/>`,
+  flag: `
+    <path d="M4.6 2.4h1.8v19.2H4.6z"/>
+    <path d="M6.4 3.4c4.4-2 9 2 13.4 0v9.4c-4.4 2-9-2-13.4 0z"/>`,
   horseshoe: `
     <path d="M12 2.6c4.6 0 7.6 3.6 7.6 8.4 0 4-1.8 7.2-4 9.6l-2.4-2c1.8-1.8 3.2-4.4 3.2-7.4 0-3-1.6-5.2-4.4-5.2S7.6 8.2 7.6 11.2c0 3 1.4 5.6 3.2 7.4l-2.4 2c-2.2-2.4-4-5.6-4-9.6 0-4.8 3-8.4 7.6-8.4z"/>`,
 };

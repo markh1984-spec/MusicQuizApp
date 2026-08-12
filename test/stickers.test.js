@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { STICKERS, stickerSvg, placed, stickerAt } from '../public/assets/stickers.js';
+import { STICKERS, stickerSvg, placed, stickerAt, stickersFor } from '../public/assets/stickers.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -68,4 +68,48 @@ test('a tap on bare photo picks nothing', () => {
   const canvas = { width: 400, height: 400 };
   const item = placed('crown', { x: 0.2, y: 0.2, size: 0.1 });
   assert.equal(stickerAt([item], 0.9, 0.9, canvas), null);
+});
+
+/*
+ * TONIGHT'S look decides which props are offered — and the split has to be
+ * exhaustive, because the way it broke was silent.
+ *
+ * The seasonal tray carries `.cam-props` too (it wants the same grid), so a
+ * bare `querySelector('.cam-props')` matched IT, and on an ordinary night all
+ * thirty-odd props were appended into a container that stays hidden. Nothing
+ * threw; the tray was simply empty. These pin the data half, and the selector
+ * in play.js is checked below.
+ */
+test('an ordinary night gets every prop that is not seasonal', () => {
+  const { seasonal, always } = stickersFor('default');
+  assert.equal(seasonal.length, 0, 'the ordinary look has no season of its own');
+  assert.ok(always.length > 20, 'the everyday tray should not be nearly empty');
+  assert.ok(always.every((s) => !s.look));
+});
+
+test('every prop lands in exactly one tray, whatever the look', () => {
+  for (const look of ['default', 'halloween', 'christmas', 'valentines', 'summer',
+    'newyear', 'easter', 'stpatricks', 'bonfire', 'eurovision', 'international']) {
+    const { seasonal, always } = stickersFor(look);
+    const ids = new Set([...seasonal, ...always].map((s) => s.id));
+    assert.equal(seasonal.length + always.length, ids.size, `${look} offers a prop twice`);
+    for (const s of seasonal) assert.ok([].concat(s.look).includes(look), `${s.id} is not a ${look} prop`);
+  }
+});
+
+test('a prop can belong to more than one look', () => {
+  // The flags are Eurovision AND a tournament night. A second copy of each
+  // under another id would be fourteen more drawings to keep in step.
+  const euro = stickersFor('eurovision').seasonal.map((s) => s.id);
+  const intl = stickersFor('international').seasonal.map((s) => s.id);
+  assert.ok(euro.includes('flag-england'));
+  assert.ok(intl.includes('flag-england'));
+  assert.ok(intl.includes('flag-brazil'));
+  assert.ok(!euro.includes('flag-brazil'), 'Brazil is not in the Eurovision set');
+});
+
+test('the phone reads the everyday tray by a selector the seasonal one cannot match', () => {
+  const source = fs.readFileSync(path.join(ROOT, 'public/assets/play.js'), 'utf8');
+  assert.match(source, /querySelector\('\.cam-props:not\(\.cam-props-season\)'\)/,
+    'the everyday tray is back on a bare .cam-props, which the seasonal row also matches');
 });

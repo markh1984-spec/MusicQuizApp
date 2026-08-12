@@ -208,6 +208,71 @@ const ART = {
     <path d="M16 34h56c6 0 10 4 10 10v14c0 8-6 14-14 14H30c-8 0-14-6-14-14z" fill="#2b6cff" opacity=".55"/>
     <path d="M16 34h56c6 0 10 4 10 10v14c0 8-6 14-14 14H30c-8 0-14-6-14-14z" fill="none" stroke="#141420" stroke-width="5"/>
     <path d="M82 46c9 0 11-7 11-15V8" fill="none" stroke="#ffd23f" stroke-width="9" stroke-linecap="round"/>`,
+  /*
+   * FLAGS, for a tournament night or Eurovision.
+   *
+   * Simplified on purpose and honestly so: these are drawn at about fifty
+   * pixels on a tile and then stuck on a face, so a faithful Portuguese
+   * armillary sphere or a Welsh dragon in full would come out as a smudge.
+   * What has to survive is the LAYOUT and the COLOURS, which is what anybody
+   * reads a flag by at that size.
+   */
+  'flag-england': `
+    <rect x="6" y="24" width="88" height="56" fill="#f2f2f7"/>
+    <path d="M44 24h12v56H44zM6 46h88v12H6z" fill="#e8123c"/>
+    <rect x="6" y="24" width="88" height="56" fill="none" stroke="#c8c8d0" stroke-width="2"/>`,
+  'flag-scotland': `
+    <rect x="6" y="24" width="88" height="56" fill="#1157a8"/>
+    <path d="M6 24 94 80M94 24 6 80" stroke="#f2f2f7" stroke-width="12"/>`,
+  'flag-wales': `
+    <rect x="6" y="24" width="88" height="28" fill="#f2f2f7"/>
+    <rect x="6" y="52" width="88" height="28" fill="#00963f"/>
+    <path d="M28 58c-4-4-2-10 3-11 3-1 5 1 7-2 3-4 9-4 13-1 4 3 9 2 12 0l4 5-6 3 5 3-7 2 3 5-9-1 1 6-7-4-3 5-4-5-6 3 1-6-7 1z" fill="#e8123c"/>`,
+  'flag-unionjack': `
+    <rect x="6" y="24" width="88" height="56" fill="#1157a8"/>
+    <path d="M6 24 94 80M94 24 6 80" stroke="#f2f2f7" stroke-width="14"/>
+    <path d="M6 24 94 80M94 24 6 80" stroke="#e8123c" stroke-width="6"/>
+    <path d="M50 24v56M6 52h88" stroke="#f2f2f7" stroke-width="20"/>
+    <path d="M50 24v56M6 52h88" stroke="#e8123c" stroke-width="11"/>`,
+  'flag-ireland': `
+    <rect x="6" y="24" width="30" height="56" fill="#169b62"/>
+    <rect x="36" y="24" width="29" height="56" fill="#f2f2f7"/>
+    <rect x="65" y="24" width="29" height="56" fill="#ff883e"/>`,
+  'flag-france': `
+    <rect x="6" y="24" width="30" height="56" fill="#0055a4"/>
+    <rect x="36" y="24" width="29" height="56" fill="#f2f2f7"/>
+    <rect x="65" y="24" width="29" height="56" fill="#ef4135"/>`,
+  'flag-germany': `
+    <rect x="6" y="24" width="88" height="19" fill="#141420"/>
+    <rect x="6" y="43" width="88" height="18" fill="#dd0000"/>
+    <rect x="6" y="61" width="88" height="19" fill="#ffce00"/>`,
+  'flag-italy': `
+    <rect x="6" y="24" width="30" height="56" fill="#009246"/>
+    <rect x="36" y="24" width="29" height="56" fill="#f2f2f7"/>
+    <rect x="65" y="24" width="29" height="56" fill="#ce2b37"/>`,
+  'flag-spain': `
+    <rect x="6" y="24" width="88" height="14" fill="#aa151b"/>
+    <rect x="6" y="38" width="88" height="28" fill="#f1bf00"/>
+    <rect x="6" y="66" width="88" height="14" fill="#aa151b"/>`,
+  'flag-portugal': `
+    <rect x="6" y="24" width="35" height="56" fill="#046a38"/>
+    <rect x="41" y="24" width="53" height="56" fill="#da291c"/>
+    <circle cx="41" cy="52" r="13" fill="#f1bf00"/>
+    <circle cx="41" cy="52" r="7" fill="#f2f2f7"/>`,
+  'flag-netherlands': `
+    <rect x="6" y="24" width="88" height="19" fill="#ae1c28"/>
+    <rect x="6" y="43" width="88" height="18" fill="#f2f2f7"/>
+    <rect x="6" y="61" width="88" height="19" fill="#21468b"/>`,
+  'flag-sweden': `
+    <rect x="6" y="24" width="88" height="56" fill="#006aa7"/>
+    <path d="M6 46h88v12H6zM32 24h12v56H32z" fill="#fecc00"/>`,
+  'flag-ukraine': `
+    <rect x="6" y="24" width="88" height="28" fill="#0057b7"/>
+    <rect x="6" y="52" width="88" height="28" fill="#ffd700"/>`,
+  'flag-brazil': `
+    <rect x="6" y="24" width="88" height="56" fill="#009b3a"/>
+    <path d="M50 28 90 52 50 76 10 52z" fill="#fedf00"/>
+    <circle cx="50" cy="52" r="14" fill="#002776"/>`,
   'flower-crown': `
     <path d="M5 68c14-17 33-25 45-25s31 8 45 25z" fill="#4a7a2a"/>
     <circle cx="17" cy="57" r="11" fill="#ff2e88"/><circle cx="17" cy="57" r="4" fill="#ffd23f"/>
@@ -277,12 +342,45 @@ export const STICKERS = [
   { id: 'cupid-arrow', label: 'Cupid', look: 'valentines' },
   { id: 'snorkel', label: 'Snorkel', look: 'summer' },
   { id: 'flower-crown', label: 'Flower crown', look: 'summer' },
+
+  /*
+   * The flags belong to TWO looks, which is why `look` may be a list. A
+   * tournament night and Eurovision want the same twelve; a second copy of
+   * each under another id would be twelve more drawings to keep in step.
+   *
+   * The set is chosen for a room in Essex rather than for completeness: the
+   * home nations first, then the countries a British crowd actually shouts
+   * for. Adding one is a drawing and a line — but every one added is another
+   * tile in a tray somebody has to scan, so add them when a night needs one.
+   */
+  { id: 'flag-england', label: 'England', look: ['international', 'eurovision'] },
+  { id: 'flag-scotland', label: 'Scotland', look: ['international', 'eurovision'] },
+  { id: 'flag-wales', label: 'Wales', look: ['international', 'eurovision'] },
+  { id: 'flag-unionjack', label: 'Union Jack', look: ['international', 'eurovision'] },
+  { id: 'flag-ireland', label: 'Ireland', look: ['international', 'eurovision'] },
+  { id: 'flag-france', label: 'France', look: ['international', 'eurovision'] },
+  { id: 'flag-germany', label: 'Germany', look: ['international', 'eurovision'] },
+  { id: 'flag-italy', label: 'Italy', look: ['international', 'eurovision'] },
+  { id: 'flag-spain', label: 'Spain', look: ['international', 'eurovision'] },
+  { id: 'flag-portugal', label: 'Portugal', look: ['international', 'eurovision'] },
+  { id: 'flag-netherlands', label: 'Netherlands', look: ['international', 'eurovision'] },
+  { id: 'flag-sweden', label: 'Sweden', look: ['international', 'eurovision'] },
+  { id: 'flag-ukraine', label: 'Ukraine', look: ['international', 'eurovision'] },
+  { id: 'flag-brazil', label: 'Brazil', look: 'international' },
 ];
 
-/** The props for tonight: this look's own, then the ones that always apply. */
+/**
+ * The props for tonight: this look's own, then the ones that always apply.
+ *
+ * `look` on a prop may be a LIST, because the flags belong to both Eurovision
+ * and a tournament night — the same twelve flags, two different evenings — and
+ * a second copy of each under another id is twelve more drawings to keep in
+ * step with these.
+ */
 export function stickersFor(look) {
+  const wants = (s) => s.look && [].concat(s.look).includes(look);
   return {
-    seasonal: STICKERS.filter((s) => s.look && s.look === look),
+    seasonal: STICKERS.filter(wants),
     always: STICKERS.filter((s) => !s.look),
   };
 }
