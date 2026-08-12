@@ -7,7 +7,13 @@ if a step does not go smoothly.
 
 ---
 
-## HELPING A QUIZMASTER SELL — the build order
+## MARKETING **FOR QUIZMASTERS** — features that help THEM sell
+
+**Two marketing lists, and they are not the same thing.** This one is features
+inside the app that help a subscriber win and keep venue bookings. The other —
+selling Quiztopia to quizmasters — is **MARKETING FOR THE APP**, further down.
+Keep them apart: they have different audiences, different deadlines, and
+mixing them is how a sales page ends up describing a feature nobody has.
 
 Design rule 4 says build what helps a quizmaster win the next booking. This is
 that list, in the order it should be built, worked out on 12 August 2026.
@@ -57,18 +63,33 @@ it is a media buy with a report, which is what gets it sold, renewed and
 priced. It is also the first thing that makes Silver's advert slides
 demonstrably worth money.
 
-Two rules attached to it, or it backfires:
+**Food is the obvious use and TICKETS are the better one.** "£5 off your NYE
+ticket" against "£2 off a pizza" — a ticket is £25 where a pizza is £8, and
+tickets are the case where the quizmaster can reasonably take a cut, which is
+the arrangement CLAUDE.md already sketches for a QR to ticket sales.
 
-- **Opens are not sales.** That number must never be presented as conversion —
-  the landlord checks the till and the quizmaster loses the argument. "31
-  people looked" is strong and true.
-- **The redemption is a WORD, not a scan.** Staff can hear "QUIZ40". A phone
-  held up in a dark bar at 10pm is a slower transaction than the discount is
-  worth.
+**How to know whether an open became a sale, without integrating with
+anything.** Do not try to track the money — no till, no EPOS, no per-venue
+plumbing. Put a tag on the end of the venue's own link (`?ref=quiz`) and their
+ordering system counts it. Then:
 
-**Do not build per-person unique codes.** That is a voucher system —
-issuance, uniqueness, fraud, staff training — and its failure mode is an
-argument at the bar during somebody's quiz, with the quizmaster's name on it.
+- **The quizmaster reports OPENS.** Honest, immediate, theirs.
+- **The venue reports ORDERS**, from their own analytics.
+
+That is better than tracking it here, because the number arrives from the
+person being convinced rather than from the person doing the convincing. Opens
+must still never be presented as conversion on their own — the landlord checks
+the till and the quizmaster loses the argument.
+
+**One shared code on the screen, not one per person.** Per-person codes are a
+voucher system — issuance, uniqueness, fraud, staff training — and the failure
+mode is an argument at the bar. With a shared code that argument is the
+venue's, not the quizmaster's, though the room will remember it was at the
+quiz, so the wording is worth agreeing with the landlord rather than inventing.
+
+**The redemption should be a WORD as well as a scan.** Staff can hear
+"QUIZ40". A phone held up in a dark bar at 10pm is a slower transaction than
+the discount is worth.
 
 ### 4. The post-night report for the venue
 
@@ -100,15 +121,34 @@ for a page that does not exist yet. When the page exists: photos private by
 default, publishing is the quizmaster's deliberate act, and the sender's tick
 is one line — "happy for this to go on my page too?", off by default.
 
-**The bit no tick box solves: group shots.** The sender can consent for
-themselves, not for the four people in frame with them. What actually
-mitigates it is the quizmaster choosing which photos get published — which is
-the per-photo bin that already exists. Note that another app doing none of this
-is not a defence; it means they are carrying the risk too.
+**The bit no tick box solves: group shots — and they are NOT to be avoided.**
+They are the good photos and they are most of them. The point is narrower than
+"selfies only": a tick from the sender does not cover the four people in frame
+with them, so the tick is not what protects anybody. What does is the
+quizmaster choosing what gets published and taking something down quickly if
+asked — the per-photo bin, which already exists.
+
+So do not build a consent flow that pretends to solve it. **One tick at the
+moment of sending, off by default, remembered for the night so nobody is asked
+twice.** That is about as light as real consent gets; less is not consent and
+more is a grind, and the host's constraint is explicit: tick the legal boxes
+without making the app a grind to use.
+
+Another app doing none of this is not a defence — it means they are carrying
+the risk too.
 
 ---
 
-## THE WORDS, AND THE SHOP WINDOW — the biggest thing not yet started
+## MARKETING **FOR THE APP** — the words, and the shop window
+
+**The other marketing list.** This one is about selling Quiztopia to
+quizmasters: what the words mean, what a night is, and the page somebody reads
+before they pay. Not to be confused with **MARKETING FOR QUIZMASTERS** above,
+which is features that help a subscriber sell to venues.
+
+(A third list will eventually be needed — marketing for MARK, the quizmaster,
+selling his own nights. That is the same job the app does for any subscriber,
+so it should be served by the list above rather than by a special case.)
 
 Raised on 11 August 2026 and parked deliberately, because it is a thinking job
 rather than a build and it was midnight. It is also the highest-value item on
