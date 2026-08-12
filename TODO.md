@@ -965,6 +965,35 @@ not all of it. If quizmaster-written packs ever substantially outnumber the
 owner's own, a Silver subscriber is looking at a shelf where most things still
 cost money. Reword the Silver pitch before somebody notices, not after.
 
+#### And that is what turns the marketplace from a THREAT to Silver into a LEVER
+
+The thing the tiered price actually buys, and it is worth more than the margin:
+**the dynamics reverse.** Priced flat, every pack added to the marketplace made
+Silver slightly worse — the shelf grew and the included share shrank, so the
+tier's pitch decayed on its own while the feature succeeded. Priced at half for
+subscribers, every pack added makes Silver slightly BETTER, because there is
+more on the shelf at half price. Marketplace growth and Silver's pitch now point
+the same way, which means the marketplace can get as big as it likes without the
+ladder having to be rewritten.
+
+**Be precise about the size of it, because it is easy to oversell.** Bronze is
+`10 + 3n`, Silver is `20 + 1.5n`, so the discount alone breaks even at **n ≈ 7
+packs a month** — which nobody buys. The upgrade case is still carried by the
+INCLUDED CATALOGUE; the marketplace discount is a top-up to it, never a
+replacement for it. Do not lean the sales page on the wrong half.
+
+**A structural side effect worth keeping.** At Silver the owner's own packs are
+free and marketplace packs are £1.50, so a subscriber's default is always the
+house catalogue and the marketplace is the long tail they reach for when it has
+not got the thing. The house style stays the centre of gravity and the margin
+stays on the packs the owner already owns.
+
+**And the two rules are one rule.** "No second bite from somebody already paying
+a subscription" and "make the marketplace a reason to climb" are the same lever
+seen from two ends: the bigger the pass-through to subscribers, the stronger the
+upgrade incentive. Anything that claws back a cut from a Silver sale weakens
+both at once.
+
 ### PayPal — the half that is built, and the half that is blocked
 
 **Subscriptions rather than invoices**, on your own reasoning: chasing ten
