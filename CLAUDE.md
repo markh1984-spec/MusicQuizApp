@@ -295,6 +295,63 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 
 ---
 
+## The design rules, in the host's own words
+
+Set deliberately on 12 August 2026, and they outrank preference — including
+his own. His framing: *"I have no ego whatsoever about this being my app, my
+rules — if I have to make changes to make the app as good as possible for the
+customers I will."*
+
+**That sentence is load-bearing.** It means a proposal of his that hurts
+clarity should be argued with rather than built, and that "the host asked for
+it" is not on its own a reason. He would rather be told.
+
+Four rules, in order:
+
+### 1. Clarity beats everything
+
+If a control needs explaining, the control is wrong. If two things on one
+screen use the same word for different sets, one of them is renamed. A
+quizmaster ten minutes before a gig, in a dark pub, on their phone, should
+never have to work anything out.
+
+### 2. As little clutter as possible
+
+**A control nobody uses is clutter, even a good one.** Every switch, filter,
+badge and note has to earn the pixels — and "it might be handy" is not
+earning them. When in doubt, leave it out and wait for somebody to miss it.
+
+This is the rule that decides most arguments about adding something, and it
+cuts against the instinct to be helpful: a page with an answer to every
+question is a page nobody can scan.
+
+### 3. Ease of use
+
+The common job is the fast one. On a pack tab that is *find tonight's pack and
+press Launch* — not browsing, not tidying, not comparing. Anything that makes
+the common job slower to make a rare job easier is the wrong way round.
+
+### 4. Build what helps a quizmaster SELL
+
+The one that sets priorities rather than settling arguments. This app has two
+kinds of feature: things that run a night, and things that win the next
+booking. The second kind is the differentiator against a generic quiz app, and
+it is what somebody is really buying.
+
+It promotes, in order:
+
+- **Past gigs** — the evidence somebody shows a venue. Already built and
+  currently thin: it should carry the venue, the numbers and the photos.
+- **A night as a real object, with a venue on it.** Nothing else on this list
+  works properly without it. See the terminology section in TODO.md.
+- **Advert slides** — the quizmaster's own revenue, and the reason a venue
+  books them over somebody cheaper.
+- **Invoicing** — getting paid without leaving the car park.
+
+And it demotes anything that only makes the app cleverer.
+
+---
+
 ## The two shelves have names now: **My packs** and **Quiztopia packs**
 
 A quizmaster sees two libraries and they were called things that described

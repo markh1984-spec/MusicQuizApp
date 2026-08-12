@@ -2356,7 +2356,7 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
     <div class="game-section">
       <div class="game-head">
         <div>
-          <h2>${kind === 'quiz' ? 'Your quizzes' : 'Your bingo games'}</h2>
+          <h2>Your library</h2>
           <div class="tiny">${esc(blurb)}</div>
         </div>
         <div class="pack-tools">
