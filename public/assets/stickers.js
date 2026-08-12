@@ -245,9 +245,14 @@ const ART = {
   // A side-swept fringe over one eye, which is the whole silhouette — the flat
   // black is broken with a plum streak so it does not read as a dark blob.
   'emo-fringe': `
-    <path d="M8 44C8 20 26 6 50 6s42 14 42 38v10c-4-10-10-16-18-19-6 14-20 24-38 26-10 1-18 6-22 14z" fill="#17161c"/>
-    <path d="M12 66C6 52 8 30 20 18c-2 16 2 28 12 36 8 6 6 18-4 22-8 3-13-2-16-10z" fill="#221f2a"/>
-    <path d="M30 22c-8 8-11 22-8 34l-9-3c-3-14 1-27 10-35z" fill="#7b2d63"/>`,
+    <path d="M11 46C11 22 28 8 50 8s39 14 39 38v10c-4-10-10-16-18-19-6 14-20 24-38 26-9 1-17 6-21 13z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M15 68C9 54 11 32 22 20c-2 16 2 28 12 36 8 6 6 18-4 22-8 3-12-2-15-10z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M11 46C11 22 28 8 50 8s39 14 39 38v10c-4-10-10-16-18-19-6 14-20 24-38 26-9 1-17 6-21 13z" fill="#17161c"/>
+    <path d="M15 68C9 54 11 32 22 20c-2 16 2 28 12 36 8 6 6 18-4 22-8 3-12-2-15-10z" fill="#221f2a"/>
+    <path d="M31 24c-8 8-11 21-8 32l-9-3c-3-13 1-25 10-33z" fill="#7b2d63"/>
+    <path d="M54 12c14 2 24 10 29 22-8-8-18-13-31-14z" fill="#33313d"/>
+    <path d="M11 46C11 22 28 8 50 8s39 14 39 38v10c-4-10-10-16-18-19-6 14-20 24-38 26-9 1-17 6-21 13z" fill="none" stroke="#0a090d" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M15 68C9 54 11 32 22 20c-2 16 2 28 12 36 8 6 6 18-4 22-8 3-12-2-15-10z" fill="none" stroke="#0a090d" stroke-width="5" stroke-linejoin="round"/>`,
   'stupid-up': `
     <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
     <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="#f4f4f8"/>
@@ -264,30 +269,30 @@ const ART = {
     <path d="M30 38v49h20V30c-7-1-13-4-16-8l-10 5-10 14 12 12z" fill="#fff"/>
     <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="none" stroke="#20202c" stroke-width="5" stroke-linejoin="round"/>
     <g fill="#20202c" font-family="Helvetica,Arial,sans-serif" font-weight="bold" text-anchor="middle">
-      <text x="50" y="54" font-size="11" textLength="34" lengthAdjust="spacingAndGlyphs">I'M WITH</text>
-      <text x="50" y="68" font-size="13" textLength="34" lengthAdjust="spacingAndGlyphs">STUPID</text>
+      <text x="50" y="52" font-size="10" textLength="34" lengthAdjust="spacingAndGlyphs">I'M WITH</text>
+      <text x="50" y="82" font-size="12" textLength="34" lengthAdjust="spacingAndGlyphs">STUPID</text>
     </g>
-    <path d="M36 79 46 73v4h16v4H46v4z" fill="#e8123c" stroke="#8f0a24" stroke-width="3" stroke-linejoin="round"/>`,
+    <path d="M36 63 45 58v3h17v4H45v3z" fill="#e8123c" stroke="#8f0a24" stroke-width="3" stroke-linejoin="round"/>`,
   'stupid-right': `
     <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
     <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="#f4f4f8"/>
     <path d="M30 38v49h20V30c-7-1-13-4-16-8l-10 5-10 14 12 12z" fill="#fff"/>
     <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="none" stroke="#20202c" stroke-width="5" stroke-linejoin="round"/>
     <g fill="#20202c" font-family="Helvetica,Arial,sans-serif" font-weight="bold" text-anchor="middle">
-      <text x="50" y="54" font-size="11" textLength="34" lengthAdjust="spacingAndGlyphs">I'M WITH</text>
-      <text x="50" y="68" font-size="13" textLength="34" lengthAdjust="spacingAndGlyphs">STUPID</text>
+      <text x="50" y="52" font-size="10" textLength="34" lengthAdjust="spacingAndGlyphs">I'M WITH</text>
+      <text x="50" y="82" font-size="12" textLength="34" lengthAdjust="spacingAndGlyphs">STUPID</text>
     </g>
-    <path d="M64 79 54 73v4H38v4h16v4z" fill="#e8123c" stroke="#8f0a24" stroke-width="3" stroke-linejoin="round"/>`,
+    <path d="M64 63 55 58v3H38v4h17v3z" fill="#e8123c" stroke="#8f0a24" stroke-width="3" stroke-linejoin="round"/>`,
   'stupid-both': `
     <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
     <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="#f4f4f8"/>
     <path d="M30 38v49h20V30c-7-1-13-4-16-8l-10 5-10 14 12 12z" fill="#fff"/>
     <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="none" stroke="#20202c" stroke-width="5" stroke-linejoin="round"/>
     <g fill="#20202c" font-family="Helvetica,Arial,sans-serif" font-weight="bold" text-anchor="middle">
-      <text x="50" y="54" font-size="11" textLength="34" lengthAdjust="spacingAndGlyphs">I'M WITH</text>
-      <text x="50" y="68" font-size="13" textLength="34" lengthAdjust="spacingAndGlyphs">STUPID</text>
+      <text x="50" y="52" font-size="10" textLength="34" lengthAdjust="spacingAndGlyphs">I'M WITH</text>
+      <text x="50" y="82" font-size="12" textLength="34" lengthAdjust="spacingAndGlyphs">STUPID</text>
     </g>
-    <path d="M35 79 44 73v4h12v-4l9 6-9 6v-4H44v4z" fill="#e8123c" stroke="#8f0a24" stroke-width="3" stroke-linejoin="round"/>`,
+    <path d="M35 63 43 58v3h14v-3l8 5-8 5v-3H43v3z" fill="#e8123c" stroke="#8f0a24" stroke-width="3" stroke-linejoin="round"/>`,
   'traffic-cone': `
     <path d="M50 10 76 80H24z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
     <path d="M14 80h72v12H14z" fill="#fff" stroke="#fff" stroke-width="11"/>
@@ -313,13 +318,26 @@ const ART = {
     <rect x="10" y="59" width="7" height="18" rx="3.5" fill="#ff5470"/>
     <rect x="76" y="59" width="7" height="18" rx="3.5" fill="#ff5470"/>`,
   'elvis': `
-    <path d="M12 48C10 22 28 4 52 4c18 0 30 8 34 20-10-7-23-7-31 0-7-11-25-9-31 4-3 8-5 14-12 20z" fill="#1c1c2a"/>
-    <path d="M14 46c-2 15 0 27 4 35l11-3c-5-10-7-22-5-32z" fill="#1c1c2a"/>
-    <path d="M86 46c2 15 0 27-4 35l-11-3c5-10 7-22 5-32z" fill="#1c1c2a"/>`,
+    <path d="M14 50C12 24 29 8 52 8c18 0 30 8 34 20-10-7-23-7-31 0-7-11-25-9-31 4-3 8-4 13-10 18z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M15 48c-2 15 0 27 4 35l11-3c-5-10-7-22-5-32z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M85 48c2 15 0 27-4 35l-11-3c5-10 7-22 5-32z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M15 48c-2 15 0 27 4 35l11-3c-5-10-7-22-5-32z" fill="#1c1c2a"/>
+    <path d="M85 48c2 15 0 27-4 35l-11-3c5-10 7-22 5-32z" fill="#1c1c2a"/>
+    <path d="M14 50C12 24 29 8 52 8c18 0 30 8 34 20-10-7-23-7-31 0-7-11-25-9-31 4-3 8-4 13-10 18z" fill="#1c1c2a"/>
+    <path d="M52 8c18 0 30 8 34 20-8-6-18-7-27-4-4-9-11-14-19-15 4-1 8-1 12-1z" fill="#3a3a52"/>
+    <path d="M14 50C12 24 29 8 52 8c18 0 30 8 34 20-10-7-23-7-31 0-7-11-25-9-31 4-3 8-4 13-10 18z" fill="none" stroke="#08080f" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M15 48c-2 15 0 27 4 35l11-3c-5-10-7-22-5-32z" fill="none" stroke="#08080f" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M85 48c2 15 0 27-4 35l-11-3c5-10 7-22 5-32z" fill="none" stroke="#08080f" stroke-width="5" stroke-linejoin="round"/>`,
   'judge-wig': `
-    <path d="M20 30C20 13 33 3 50 3s30 10 30 27c0 11-2 19-6 25H26c-4-6-6-14-6-25z" fill="#f2f2f7"/>
-    <path d="M18 54c-6 12-6 27-2 37l17-4c-5-10-5-23 0-33zM82 54c6 12 6 27 2 37l-17-4c5-10 5-23 0-33z" fill="#f2f2f7"/>
-    <path d="M30 21h40M27 34h46M31 46h38" stroke="#d3d3de" stroke-width="4"/>`,
+    <path d="M22 34C22 18 34 9 50 9s28 9 28 25c0 11-2 19-6 25H28c-4-6-6-14-6-25z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M21 56c-6 12-6 26-2 36l16-4c-5-10-5-22 0-32zM79 56c6 12 6 26 2 36l-16-4c5-10 5-22 0-32z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M22 34C22 18 34 9 50 9s28 9 28 25c0 11-2 19-6 25H28c-4-6-6-14-6-25z" fill="#f4f4f8"/>
+    <path d="M22 34C22 18 34 9 50 9c-11 4-17 13-17 25 0 11 1 19 4 25h-9c-4-6-6-14-6-25z" fill="#fff"/>
+    <path d="M21 56c-6 12-6 26-2 36l16-4c-5-10-5-22 0-32zM79 56c6 12 6 26 2 36l-16-4c5-10 5-22 0-32z" fill="#f4f4f8"/>
+    <path d="M31 22h38M28 34h44M32 47h36" stroke="#c9c9d8" stroke-width="4" stroke-linecap="round"/>
+    <path d="M24 66h10M66 66h10M24 78h10M66 78h10" stroke="#c9c9d8" stroke-width="4" stroke-linecap="round"/>
+    <path d="M22 34C22 18 34 9 50 9s28 9 28 25c0 11-2 19-6 25H28c-4-6-6-14-6-25z" fill="none" stroke="#8d8da0" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M21 56c-6 12-6 26-2 36l16-4c-5-10-5-22 0-32zM79 56c6 12 6 26 2 36l-16-4c5-10 5-22 0-32z" fill="none" stroke="#8d8da0" stroke-width="5" stroke-linejoin="round"/>`,
   // NOT #8b91a6 — that was the tile's own fill, so the helmet vanished into it
   // and the tile read as two horns and nothing else. A prop must not be the
   // colour of the thing it is drawn on; the gradient behind them now makes
@@ -343,65 +361,113 @@ const ART = {
     <circle cx="50" cy="38" r="3.2" fill="#6f7b90"/>
     <path d="M20 64c0-23 13-38 30-38s30 15 30 38zM13 64h74v13H13zM44 30h12v47H44z" fill="none" stroke="#3f4653" stroke-width="5" stroke-linejoin="round"/>`,
   'propeller-beanie': `
-    <path d="M20 64a30 30 0 0 1 60 0z" fill="#2b6cff"/>
-    <path d="M16 64h68v10H16z" fill="#1e4fbf"/>
-    <path d="M50 34V20" stroke="#e8123c" stroke-width="6"/>
-    <path d="M50 16 18 6v16zM50 16l32-10v16z" fill="#ffd23f"/>
-    <circle cx="50" cy="16" r="6" fill="#e8123c"/>`,
+    <path d="M22 66a28 28 0 0 1 56 0zM18 66h64v11H18z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M50 18 22 9v16zM50 18l28-9v16z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M50 18 22 9v16z" fill="#ffd23f"/>
+    <path d="M50 18l28-9v16z" fill="#e8a800"/>
+    <path d="M50 36V20" stroke="#8f0a24" stroke-width="7" stroke-linecap="round"/>
+    <path d="M22 66a28 28 0 0 1 56 0z" fill="#2b6cff"/>
+    <path d="M50 38a28 28 0 0 0-28 28h14c0-14 6-25 14-28z" fill="#5c93ff"/>
+    <path d="M18 66h64v11H18z" fill="#1e4fbf"/>
+    <path d="M22 66a28 28 0 0 1 56 0zM18 66h64v11H18z" fill="none" stroke="#12328c" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M50 18 22 9v16zM50 18l28-9v16z" fill="none" stroke="#96690a" stroke-width="4" stroke-linejoin="round"/>
+    <circle cx="50" cy="18" r="6" fill="#e8123c" stroke="#8f0a24" stroke-width="4"/>`,
   'flat-cap': `
-    <path d="M18 58c0-21 13-33 32-33s32 12 32 33z" fill="#6b6250"/>
-    <path d="M6 58h88c0 9-7 13-17 13H23c-10 0-17-4-17-13z" fill="#57503f"/>`,
+    <path d="M20 58c0-21 13-33 30-33s30 12 30 33zM10 58h80c0 9-7 13-17 13H27c-10 0-17-4-17-13z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M20 58c0-21 13-33 30-33s30 12 30 33z" fill="#6b6250"/>
+    <path d="M50 25c-17 0-30 12-30 33h16c0-19 5-30 14-33z" fill="#857b64"/>
+    <path d="M10 58h80c0 9-7 13-17 13H27c-10 0-17-4-17-13z" fill="#57503f"/>
+    <path d="M20 58c0-21 13-33 30-33s30 12 30 33zM10 58h80c0 9-7 13-17 13H27c-10 0-17-4-17-13z" fill="none" stroke="#33301f" stroke-width="5" stroke-linejoin="round"/>`,
   'antlers': `
-    <path d="M42 92C36 68 27 49 14 39c-7-5-2-15 7-11 11 6 19 18 25 33" fill="none" stroke="#7a4a22" stroke-width="8" stroke-linecap="round"/>
-    <path d="M21 43 6 32M30 30 24 13" stroke="#7a4a22" stroke-width="7" stroke-linecap="round"/>
-    <path d="M58 92c6-24 15-43 28-53 7-5 2-15-7-11-11 6-19 18-25 33" fill="none" stroke="#7a4a22" stroke-width="8" stroke-linecap="round"/>
-    <path d="M79 43 94 32M70 30l6-17" stroke="#7a4a22" stroke-width="7" stroke-linecap="round"/>`,
+    <path d="M42 90C36 68 28 51 17 41c-6-5-1-14 7-10 10 5 17 17 22 31M23 45 14 36M31 33 26 19" fill="none" stroke="#fff" stroke-width="19" stroke-linecap="round"/>
+    <path d="M58 90c6-22 14-39 25-49 6-5 1-14-7-10-10 5-17 17-22 31M77 45l9-9M69 33l5-14" fill="none" stroke="#fff" stroke-width="19" stroke-linecap="round"/>
+    <path d="M42 90C36 68 28 51 17 41c-6-5-1-14 7-10 10 5 17 17 22 31M23 45 14 36M31 33 26 19" fill="none" stroke="#5e3718" stroke-width="10" stroke-linecap="round"/>
+    <path d="M58 90c6-22 14-39 25-49 6-5 1-14-7-10-10 5-17 17-22 31M77 45l9-9M69 33l5-14" fill="none" stroke="#5e3718" stroke-width="10" stroke-linecap="round"/>
+    <path d="M42 90C36 68 28 51 17 41c-6-5-1-14 7-10 10 5 17 17 22 31" fill="none" stroke="#9a6535" stroke-width="4" stroke-linecap="round"/>
+    <path d="M58 90c6-22 14-39 25-49 6-5 1-14-7-10-10 5-17 17-22 31" fill="none" stroke="#9a6535" stroke-width="4" stroke-linecap="round"/>`,
 
   // ---- seasonal. Shown only while that LOOK is on the game — see STICKERS.
   'skull': `
-    <path d="M50 5c22 0 34 15 34 35 0 12-5 21-12 26v13c0 4-3 7-7 7H35c-4 0-7-3-7-7V66c-7-5-12-14-12-26C16 20 28 5 50 5z" fill="#f2f2f7"/>
-    <circle cx="35" cy="42" r="10" fill="#141420"/>
-    <circle cx="65" cy="42" r="10" fill="#141420"/>
-    <path d="M50 54 43 67h14z" fill="#141420"/>
-    <path d="M38 74v12M50 74v12M62 74v12" stroke="#141420" stroke-width="4"/>`,
+    <path d="M50 8c21 0 33 14 33 34 0 12-5 20-12 25v12c0 4-3 7-7 7H36c-4 0-7-3-7-7V67c-7-5-12-13-12-25C17 22 29 8 50 8z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M50 8c21 0 33 14 33 34 0 12-5 20-12 25v12c0 4-3 7-7 7H36c-4 0-7-3-7-7V67c-7-5-12-13-12-25C17 22 29 8 50 8z" fill="#f2f2f7"/>
+    <path d="M50 8c-21 0-33 14-33 34 0 12 5 20 12 25v12c0 4 3 7 7 7h9V8z" fill="#fff"/>
+    <circle cx="36" cy="42" r="10" fill="#20202c"/>
+    <circle cx="64" cy="42" r="10" fill="#20202c"/>
+    <path d="M50 54 44 66h12z" fill="#20202c"/>
+    <path d="M39 74v11M50 74v11M61 74v11" stroke="#20202c" stroke-width="4"/>
+    <path d="M50 8c21 0 33 14 33 34 0 12-5 20-12 25v12c0 4-3 7-7 7H36c-4 0-7-3-7-7V67c-7-5-12-13-12-25C17 22 29 8 50 8z" fill="none" stroke="#8d8da0" stroke-width="5" stroke-linejoin="round"/>`,
   'ghost': `
-    <path d="M20 94V44a30 30 0 0 1 60 0v50l-10-9-10 9-10-9-10 9z" fill="#f2f2f7"/>
-    <circle cx="39" cy="42" r="6" fill="#141420"/>
-    <circle cx="61" cy="42" r="6" fill="#141420"/>
-    <ellipse cx="50" cy="60" rx="7" ry="9" fill="#141420"/>`,
+    <path d="M22 90V44a28 28 0 0 1 56 0v46l-9-8-9 8-9-8-9 8z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M22 90V44a28 28 0 0 1 56 0v46l-9-8-9 8-9-8-9 8z" fill="#f2f2f7"/>
+    <path d="M22 90V44a28 28 0 0 1 28-28v72l-9-8-9 8-9 8z" fill="#fff"/>
+    <circle cx="39" cy="42" r="6" fill="#20202c"/>
+    <circle cx="61" cy="42" r="6" fill="#20202c"/>
+    <ellipse cx="50" cy="60" rx="7" ry="9" fill="#20202c"/>
+    <path d="M22 90V44a28 28 0 0 1 56 0v46l-9-8-9 8-9-8-9 8z" fill="none" stroke="#8d8da0" stroke-width="5" stroke-linejoin="round"/>`,
   'bat': `
-    <ellipse cx="50" cy="50" rx="11" ry="13" fill="#141420"/>
-    <path d="M44 30l-5-14 11 8 11-8-5 14z" fill="#141420"/>
-    <path d="M40 44C29 29 15 25 3 30c7 4 9 11 7 17 9-2 16 2 20 9zM60 44c11-15 25-19 37-14-7 4-9 11-7 17-9-2-16 2-20 9z" fill="#141420"/>`,
+    <path d="M40 44C29 30 16 26 8 30c5 4 6 10 4 15 8-2 15 2 19 8zM60 44c11-14 24-18 32-14-5 4-6 10-4 15-8-2-15 2-19 8z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <ellipse cx="50" cy="50" rx="11" ry="13" fill="#fff" stroke="#fff" stroke-width="11"/>
+    <path d="M44 32l-4-12 10 7 10-7-4 12z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M40 44C29 30 16 26 8 30c5 4 6 10 4 15 8-2 15 2 19 8zM60 44c11-14 24-18 32-14-5 4-6 10-4 15-8-2-15 2-19 8z" fill="#2b2b38"/>
+    <ellipse cx="50" cy="50" rx="11" ry="13" fill="#2b2b38"/>
+    <path d="M44 32l-4-12 10 7 10-7-4 12z" fill="#2b2b38"/>
+    <circle cx="45" cy="47" r="2.6" fill="#e8123c"/>
+    <circle cx="55" cy="47" r="2.6" fill="#e8123c"/>
+    <path d="M40 44C29 30 16 26 8 30c5 4 6 10 4 15 8-2 15 2 19 8zM60 44c11-14 24-18 32-14-5 4-6 10-4 15-8-2-15 2-19 8z" fill="none" stroke="#0b0b12" stroke-width="5" stroke-linejoin="round"/>
+    <ellipse cx="50" cy="50" rx="11" ry="13" fill="none" stroke="#0b0b12" stroke-width="5"/>`,
   'pumpkin': `
-    <ellipse cx="50" cy="60" rx="41" ry="34" fill="#ff6a1a"/>
-    <path d="M50 26V12c9-4 15-1 17 3" stroke="#4a7a2a" stroke-width="7" fill="none" stroke-linecap="round"/>
-    <path d="M29 49 43 44 34 60z" fill="#3a1a00"/>
-    <path d="M71 49 57 44 66 60z" fill="#3a1a00"/>
-    <path d="M29 70c9 9 33 9 42 0-4 11-38 11-42 0z" fill="#3a1a00"/>`,
+    <ellipse cx="50" cy="58" rx="38" ry="31" fill="#fff" stroke="#fff" stroke-width="12"/>
+    <path d="M50 27V14c8-4 14-1 16 3" fill="none" stroke="#fff" stroke-width="16" stroke-linecap="round"/>
+    <path d="M50 27V14c8-4 14-1 16 3" fill="none" stroke="#4a7a2a" stroke-width="8" stroke-linecap="round"/>
+    <ellipse cx="50" cy="58" rx="38" ry="31" fill="#ff6a1a"/>
+    <path d="M50 27c-21 0-38 14-38 31s17 31 38 31z" fill="#ff8442"/>
+    <path d="M30 48 43 43 34 58zM70 48 57 43 66 58z" fill="#5c2400"/>
+    <path d="M30 68c9 9 31 9 40 0-4 11-36 11-40 0z" fill="#5c2400"/>
+    <ellipse cx="50" cy="58" rx="38" ry="31" fill="none" stroke="#96400a" stroke-width="5"/>`,
   'santa-hat': `
-    <path d="M12 66C12 37 29 17 54 17c16 0 27 8 31 19l-9 30z" fill="#e8123c"/>
-    <path d="M8 66h74v15H8z" fill="#f2f2f7"/>
-    <circle cx="85" cy="35" r="12" fill="#f2f2f7"/>`,
+    <path d="M16 64C16 38 32 19 55 19c15 0 25 8 29 18l-8 27z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M12 64h72v15H12z" fill="#fff" stroke="#fff" stroke-width="11"/>
+    <circle cx="82" cy="36" r="11" fill="#fff" stroke="#fff" stroke-width="11"/>
+    <path d="M16 64C16 38 32 19 55 19c15 0 25 8 29 18l-8 27z" fill="#e8123c"/>
+    <path d="M16 64C16 38 32 19 55 19c-14 8-24 25-27 45z" fill="#ff5470"/>
+    <path d="M16 64C16 38 32 19 55 19c15 0 25 8 29 18l-8 27z" fill="none" stroke="#7d0a20" stroke-width="5" stroke-linejoin="round"/>
+    <circle cx="82" cy="36" r="11" fill="#f7f7fb" stroke="#b9b9c8" stroke-width="4"/>
+    <path d="M12 64h72v15H12z" fill="#f7f7fb" stroke="#b9b9c8" stroke-width="5" stroke-linejoin="round"/>`,
   'santa-beard': `
-    <path d="M13 15s12 11 37 11 37-11 37-11c4 29 0 55-12 69-8 10-16 12-25 12s-17-2-25-12C13 70 9 44 13 15z" fill="#f2f2f7"/>
-    <path d="M31 24c11 3 27 3 38 0-2 7-15 11-19 11s-17-4-19-11z" fill="#dfdfe9"/>`,
+    <path d="M14 14s11 9 36 9 36-9 36-9c4 24 0 44-11 56-8 8-16 11-25 11s-17-3-25-11C14 58 10 38 14 14z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M14 14s11 9 36 9 36-9 36-9c4 24 0 44-11 56-8 8-16 11-25 11s-17-3-25-11C14 58 10 38 14 14z" fill="#f4f4f8"/>
+    <path d="M14 14s11 9 36 9v67c-9 0-17-3-25-11C14 58 10 38 14 14z" fill="#fff"/>
+    <path d="M32 23c11 3 25 3 36 0-2 7-15 11-18 11s-16-4-18-11z" fill="#dcdce8"/>
+    <path d="M14 14s11 9 36 9 36-9 36-9c4 24 0 44-11 56-8 8-16 11-25 11s-17-3-25-11C14 58 10 38 14 14z" fill="none" stroke="#9d9db0" stroke-width="5" stroke-linejoin="round"/>`,
   'elf-ears': `
-    <path d="M26 86C13 75 7 54 11 33c2-10 10-12 16-4 9 13 11 36 6 57z" fill="#f0c9a8"/>
-    <path d="M74 86c13-11 19-32 15-53-2-10-10-12-16-4-9 13-11 36-6 57z" fill="#f0c9a8"/>
-    <path d="M24 70c-6-9-8-23-6-33 1-6 5-7 8-2 5 9 5 25 1 35z" fill="#d9a97f"/>
-    <path d="M76 70c6-9 8-23 6-33-1-6-5-7-8-2-5 9-5 25-1 35z" fill="#d9a97f"/>`,
+    <path d="M27 84C15 74 9 54 13 34c2-10 10-12 16-4 9 12 11 34 6 54z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M73 84c12-10 18-30 14-50-2-10-10-12-16-4-9 12-11 34-6 54z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M27 84C15 74 9 54 13 34c2-10 10-12 16-4 9 12 11 34 6 54z" fill="#f0c9a8"/>
+    <path d="M73 84c12-10 18-30 14-50-2-10-10-12-16-4-9 12-11 34-6 54z" fill="#f0c9a8"/>
+    <path d="M26 70c-6-8-8-22-6-32 1-6 5-7 8-2 5 9 5 25 1 34z" fill="#d9a97f"/>
+    <path d="M74 70c6-8 8-22 6-32-1-6-5-7-8-2-5 9-5 25-1 34z" fill="#d9a97f"/>
+    <path d="M27 84C15 74 9 54 13 34c2-10 10-12 16-4 9 12 11 34 6 54z" fill="none" stroke="#a3714a" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M73 84c12-10 18-30 14-50-2-10-10-12-16-4-9 12-11 34-6 54z" fill="none" stroke="#a3714a" stroke-width="5" stroke-linejoin="round"/>`,
   'kiss-lips': `
-    <path d="M8 30c11-11 32-9 42 4 10-13 31-15 42-4-4 26-23 45-42 49C31 75 12 56 8 30z" fill="#e8123c"/>
-    <path d="M11 33c15 7 63 7 78 0-2 7-6 13-11 18-17 6-39 6-56 0-5-5-9-11-11-18z" fill="#ff6b8a"/>`,
+    <path d="M12 32c11-11 30-9 38 4 8-13 27-15 38-4-4 24-21 42-38 46C33 74 16 56 12 32z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M12 32c11-11 30-9 38 4 8-13 27-15 38-4-4 24-21 42-38 46C33 74 16 56 12 32z" fill="#e8123c"/>
+    <path d="M15 35c14 7 56 7 70 0-2 7-6 12-10 17-15 6-35 6-50 0-4-5-8-10-10-17z" fill="#ff6b8a"/>
+    <path d="M24 30c7-4 17-3 22 4-8-1-16-2-22-4z" fill="#ff96ab"/>
+    <path d="M12 32c11-11 30-9 38 4 8-13 27-15 38-4-4 24-21 42-38 46C33 74 16 56 12 32z" fill="none" stroke="#7d0a20" stroke-width="5" stroke-linejoin="round"/>`,
   'cupid-arrow': `
-    <path d="M6 64 94 36" stroke="#8a5a2b" stroke-width="7" stroke-linecap="round"/>
-    <path d="M96 36 74 26l4 12-9 9z" fill="#c8c8d0"/>
-    <path d="M4 64 24 55l-2 14z" fill="#e8123c"/>`,
+    <path d="M10 62 90 38" stroke="#fff" stroke-width="19" fill="none" stroke-linecap="round"/>
+    <path d="M92 38 72 28l4 11-9 8z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M8 62 26 54l-2 14z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M10 62 90 38" stroke="#8a5a2b" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M92 38 72 28l4 11-9 8z" fill="#c8c8d0" stroke="#7c7c8e" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M8 62 26 54l-2 14z" fill="#e8123c" stroke="#7d0a20" stroke-width="4" stroke-linejoin="round"/>`,
   'snorkel': `
-    <path d="M16 34h56c6 0 10 4 10 10v14c0 8-6 14-14 14H30c-8 0-14-6-14-14z" fill="#2b6cff" opacity=".55"/>
-    <path d="M16 34h56c6 0 10 4 10 10v14c0 8-6 14-14 14H30c-8 0-14-6-14-14z" fill="none" stroke="#141420" stroke-width="5"/>
-    <path d="M82 46c9 0 11-7 11-15V8" fill="none" stroke="#ffd23f" stroke-width="9" stroke-linecap="round"/>`,
+    <path d="M18 34h54c6 0 10 4 10 10v14c0 8-6 14-14 14H32c-8 0-14-6-14-14z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M80 46c8 0 10-7 10-15V13" fill="none" stroke="#fff" stroke-width="19" stroke-linecap="round"/>
+    <path d="M80 46c8 0 10-7 10-15V13" fill="none" stroke="#ffd23f" stroke-width="9" stroke-linecap="round"/>
+    <path d="M18 34h54c6 0 10 4 10 10v14c0 8-6 14-14 14H32c-8 0-14-6-14-14z" fill="#7db8ff" opacity=".75"/>
+    <path d="M24 40h22l-10 26h-4c-8 0-14-6-14-14z" fill="#fff" opacity=".45"/>
+    <path d="M18 34h54c6 0 10 4 10 10v14c0 8-6 14-14 14H32c-8 0-14-6-14-14z" fill="none" stroke="#20202c" stroke-width="5" stroke-linejoin="round"/>`,
   /*
    * FLAGS, for a tournament night or Eurovision.
    *
@@ -412,67 +478,111 @@ const ART = {
    * reads a flag by at that size.
    */
   'flag-england': `
-    <rect x="6" y="24" width="88" height="56" fill="#f2f2f7"/>
-    <path d="M44 24h12v56H44zM6 46h88v12H6z" fill="#e8123c"/>
-    <rect x="6" y="24" width="88" height="56" fill="none" stroke="#c8c8d0" stroke-width="2"/>`,
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="#fff" stroke="#fff" stroke-width="12"/>
+    <rect x="7" y="25" width="86" height="54" fill="#f2f2f7"/>
+    <path d="M44 25h12v54H44zM7 47h86v11H7z" fill="#e8123c"/>
+    <path d="M7 25h28L17 79H7z" fill="#fff" opacity=".16"/>
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="none" stroke="#20202c" stroke-width="5"/>`,
   'flag-scotland': `
-    <rect x="6" y="24" width="88" height="56" fill="#1157a8"/>
-    <path d="M6 24 94 80M94 24 6 80" stroke="#f2f2f7" stroke-width="12"/>`,
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="#fff" stroke="#fff" stroke-width="12"/>
+    <rect x="7" y="25" width="86" height="54" fill="#1157a8"/>
+    <path d="M7 25 93 79M93 25 7 79" stroke="#f2f2f7" stroke-width="13"/>
+    <path d="M7 25h28L17 79H7z" fill="#fff" opacity=".16"/>
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="none" stroke="#20202c" stroke-width="5"/>`,
   'flag-wales': `
-    <rect x="6" y="24" width="88" height="28" fill="#f2f2f7"/>
-    <rect x="6" y="52" width="88" height="28" fill="#00963f"/>
-    <path d="M28 58c-4-4-2-10 3-11 3-1 5 1 7-2 3-4 9-4 13-1 4 3 9 2 12 0l4 5-6 3 5 3-7 2 3 5-9-1 1 6-7-4-3 5-4-5-6 3 1-6-7 1z" fill="#e8123c"/>`,
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="#fff" stroke="#fff" stroke-width="12"/>
+    <rect x="7" y="25" width="86" height="27" fill="#f2f2f7"/>
+    <rect x="7" y="52" width="86" height="27" fill="#00963f"/>
+    <path d="M30 57c-4-4-2-9 3-10 3-1 5 1 7-2 3-4 8-4 12-1 4 3 8 2 11 0l4 5-6 3 5 3-7 2 3 5-8-1 1 5-7-3-3 4-4-4-5 3 1-6-7 1z" fill="#e8123c"/>
+    <path d="M7 25h28L17 79H7z" fill="#fff" opacity=".16"/>
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="none" stroke="#20202c" stroke-width="5"/>`,
   'flag-unionjack': `
-    <rect x="6" y="24" width="88" height="56" fill="#1157a8"/>
-    <path d="M6 24 94 80M94 24 6 80" stroke="#f2f2f7" stroke-width="14"/>
-    <path d="M6 24 94 80M94 24 6 80" stroke="#e8123c" stroke-width="6"/>
-    <path d="M50 24v56M6 52h88" stroke="#f2f2f7" stroke-width="20"/>
-    <path d="M50 24v56M6 52h88" stroke="#e8123c" stroke-width="11"/>`,
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="#fff" stroke="#fff" stroke-width="12"/>
+    <rect x="7" y="25" width="86" height="54" fill="#1157a8"/>
+    <path d="M7 25 93 79M93 25 7 79" stroke="#f2f2f7" stroke-width="14"/>
+    <path d="M7 25 93 79M93 25 7 79" stroke="#e8123c" stroke-width="6"/>
+    <path d="M50 25v54M7 52h86" stroke="#f2f2f7" stroke-width="19"/>
+    <path d="M50 25v54M7 52h86" stroke="#e8123c" stroke-width="10"/>
+    <path d="M7 25h28L17 79H7z" fill="#fff" opacity=".16"/>
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="none" stroke="#20202c" stroke-width="5"/>`,
   'flag-ireland': `
-    <rect x="6" y="24" width="30" height="56" fill="#169b62"/>
-    <rect x="36" y="24" width="29" height="56" fill="#f2f2f7"/>
-    <rect x="65" y="24" width="29" height="56" fill="#ff883e"/>`,
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="#fff" stroke="#fff" stroke-width="12"/>
+    <rect x="7" y="25" width="29" height="54" fill="#169b62"/>
+    <rect x="36" y="25" width="29" height="54" fill="#f2f2f7"/>
+    <rect x="64" y="25" width="29" height="54" fill="#ff883e"/>
+    <path d="M7 25h28L17 79H7z" fill="#fff" opacity=".16"/>
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="none" stroke="#20202c" stroke-width="5"/>`,
   'flag-france': `
-    <rect x="6" y="24" width="30" height="56" fill="#0055a4"/>
-    <rect x="36" y="24" width="29" height="56" fill="#f2f2f7"/>
-    <rect x="65" y="24" width="29" height="56" fill="#ef4135"/>`,
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="#fff" stroke="#fff" stroke-width="12"/>
+    <rect x="7" y="25" width="29" height="54" fill="#0055a4"/>
+    <rect x="36" y="25" width="29" height="54" fill="#f2f2f7"/>
+    <rect x="64" y="25" width="29" height="54" fill="#ef4135"/>
+    <path d="M7 25h28L17 79H7z" fill="#fff" opacity=".16"/>
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="none" stroke="#20202c" stroke-width="5"/>`,
   'flag-germany': `
-    <rect x="6" y="24" width="88" height="19" fill="#141420"/>
-    <rect x="6" y="43" width="88" height="18" fill="#dd0000"/>
-    <rect x="6" y="61" width="88" height="19" fill="#ffce00"/>`,
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="#fff" stroke="#fff" stroke-width="12"/>
+    <rect x="7" y="25" width="86" height="18" fill="#20202c"/>
+    <rect x="7" y="43" width="86" height="18" fill="#dd0000"/>
+    <rect x="7" y="61" width="86" height="18" fill="#ffce00"/>
+    <path d="M7 25h28L17 79H7z" fill="#fff" opacity=".16"/>
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="none" stroke="#20202c" stroke-width="5"/>`,
   'flag-italy': `
-    <rect x="6" y="24" width="30" height="56" fill="#009246"/>
-    <rect x="36" y="24" width="29" height="56" fill="#f2f2f7"/>
-    <rect x="65" y="24" width="29" height="56" fill="#ce2b37"/>`,
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="#fff" stroke="#fff" stroke-width="12"/>
+    <rect x="7" y="25" width="29" height="54" fill="#009246"/>
+    <rect x="36" y="25" width="29" height="54" fill="#f2f2f7"/>
+    <rect x="64" y="25" width="29" height="54" fill="#ce2b37"/>
+    <path d="M7 25h28L17 79H7z" fill="#fff" opacity=".16"/>
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="none" stroke="#20202c" stroke-width="5"/>`,
   'flag-spain': `
-    <rect x="6" y="24" width="88" height="14" fill="#aa151b"/>
-    <rect x="6" y="38" width="88" height="28" fill="#f1bf00"/>
-    <rect x="6" y="66" width="88" height="14" fill="#aa151b"/>`,
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="#fff" stroke="#fff" stroke-width="12"/>
+    <rect x="7" y="25" width="86" height="14" fill="#aa151b"/>
+    <rect x="7" y="39" width="86" height="26" fill="#f1bf00"/>
+    <rect x="7" y="65" width="86" height="14" fill="#aa151b"/>
+    <path d="M7 25h28L17 79H7z" fill="#fff" opacity=".16"/>
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="none" stroke="#20202c" stroke-width="5"/>`,
   'flag-portugal': `
-    <rect x="6" y="24" width="35" height="56" fill="#046a38"/>
-    <rect x="41" y="24" width="53" height="56" fill="#da291c"/>
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="#fff" stroke="#fff" stroke-width="12"/>
+    <rect x="7" y="25" width="34" height="54" fill="#046a38"/>
+    <rect x="41" y="25" width="52" height="54" fill="#da291c"/>
     <circle cx="41" cy="52" r="13" fill="#f1bf00"/>
-    <circle cx="41" cy="52" r="7" fill="#f2f2f7"/>`,
+    <circle cx="41" cy="52" r="7" fill="#f2f2f7"/>
+    <path d="M7 25h28L17 79H7z" fill="#fff" opacity=".16"/>
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="none" stroke="#20202c" stroke-width="5"/>`,
   'flag-netherlands': `
-    <rect x="6" y="24" width="88" height="19" fill="#ae1c28"/>
-    <rect x="6" y="43" width="88" height="18" fill="#f2f2f7"/>
-    <rect x="6" y="61" width="88" height="19" fill="#21468b"/>`,
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="#fff" stroke="#fff" stroke-width="12"/>
+    <rect x="7" y="25" width="86" height="18" fill="#ae1c28"/>
+    <rect x="7" y="43" width="86" height="18" fill="#f2f2f7"/>
+    <rect x="7" y="61" width="86" height="18" fill="#21468b"/>
+    <path d="M7 25h28L17 79H7z" fill="#fff" opacity=".16"/>
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="none" stroke="#20202c" stroke-width="5"/>`,
   'flag-sweden': `
-    <rect x="6" y="24" width="88" height="56" fill="#006aa7"/>
-    <path d="M6 46h88v12H6zM32 24h12v56H32z" fill="#fecc00"/>`,
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="#fff" stroke="#fff" stroke-width="12"/>
+    <rect x="7" y="25" width="86" height="54" fill="#006aa7"/>
+    <path d="M7 47h86v11H7zM32 25h12v54H32z" fill="#fecc00"/>
+    <path d="M7 25h28L17 79H7z" fill="#fff" opacity=".16"/>
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="none" stroke="#20202c" stroke-width="5"/>`,
   'flag-ukraine': `
-    <rect x="6" y="24" width="88" height="28" fill="#0057b7"/>
-    <rect x="6" y="52" width="88" height="28" fill="#ffd700"/>`,
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="#fff" stroke="#fff" stroke-width="12"/>
+    <rect x="7" y="25" width="86" height="27" fill="#0057b7"/>
+    <rect x="7" y="52" width="86" height="27" fill="#ffd700"/>
+    <path d="M7 25h28L17 79H7z" fill="#fff" opacity=".16"/>
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="none" stroke="#20202c" stroke-width="5"/>`,
   'flag-brazil': `
-    <rect x="6" y="24" width="88" height="56" fill="#009b3a"/>
-    <path d="M50 28 90 52 50 76 10 52z" fill="#fedf00"/>
-    <circle cx="50" cy="52" r="14" fill="#002776"/>`,
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="#fff" stroke="#fff" stroke-width="12"/>
+    <rect x="7" y="25" width="86" height="54" fill="#009b3a"/>
+    <path d="M50 29 89 52 50 75 11 52z" fill="#fedf00"/>
+    <circle cx="50" cy="52" r="14" fill="#002776"/>
+    <path d="M7 25h28L17 79H7z" fill="#fff" opacity=".16"/>
+    <rect x="7" y="25" width="86" height="54" rx="3" fill="none" stroke="#20202c" stroke-width="5"/>`,
   'flower-crown': `
-    <path d="M5 68c14-17 33-25 45-25s31 8 45 25z" fill="#4a7a2a"/>
-    <circle cx="17" cy="57" r="11" fill="#ff2e88"/><circle cx="17" cy="57" r="4" fill="#ffd23f"/>
-    <circle cx="41" cy="45" r="12" fill="#ffd23f"/><circle cx="41" cy="45" r="4" fill="#e8123c"/>
-    <circle cx="67" cy="47" r="11" fill="#ff6bd6"/><circle cx="67" cy="47" r="4" fill="#ffd23f"/>
-    <circle cx="88" cy="59" r="10" fill="#4bd8ff"/><circle cx="88" cy="59" r="4" fill="#ffd23f"/>`,
+    <path d="M8 68c14-17 32-25 42-25s28 8 42 25z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M8 68c14-17 32-25 42-25s28 8 42 25z" fill="#4a7a2a"/>
+    <path d="M8 68c14-17 32-25 42-25-16 4-30 12-38 25z" fill="#69a83e"/>
+    <path d="M8 68c14-17 32-25 42-25s28 8 42 25z" fill="none" stroke="#2c4a17" stroke-width="5" stroke-linejoin="round"/>
+    <circle cx="19" cy="57" r="11" fill="#ff2e88" stroke="#a80b53" stroke-width="4"/><circle cx="19" cy="57" r="4" fill="#ffd23f"/>
+    <circle cx="41" cy="45" r="12" fill="#ffd23f" stroke="#a37000" stroke-width="4"/><circle cx="41" cy="45" r="4" fill="#e8123c"/>
+    <circle cx="65" cy="47" r="11" fill="#ff6bd6" stroke="#a02f83" stroke-width="4"/><circle cx="65" cy="47" r="4" fill="#ffd23f"/>
+    <circle cx="85" cy="59" r="10" fill="#4bd8ff" stroke="#1d7fa0" stroke-width="4"/><circle cx="85" cy="59" r="4" fill="#ffd23f"/>`,
 };
 
 export const STICKERS = [
