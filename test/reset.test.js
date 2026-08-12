@@ -17,7 +17,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { Accounts } from '../src/accounts.js';
-import { sendEmail, emailConfigured, fromAddress } from '../src/email.js';
+import { sendEmail, emailConfigured, emailProvider, fromAddress } from '../src/email.js';
 
 function book(now = () => Date.now()) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'reset-'));
@@ -137,20 +137,61 @@ test('a reset survives a restart, because it lives on the ACCOUNT', () => {
 /* ---- the mailer ------------------------------------------------------- */
 
 test('with no key configured, email is a STATE rather than a failure', async () => {
-  const before = process.env.RESEND_API_KEY;
+  const before = { ...process.env };
+  delete process.env.BREVO_API_KEY;
   delete process.env.RESEND_API_KEY;
+  assert.equal(emailProvider(), '');
   assert.equal(emailConfigured(), false);
   const out = await sendEmail({ to: 'a@b.c', subject: 'x', text: 'y' });
   assert.equal(out.ok, false);
   assert.equal(out.unconfigured, true, 'said plainly, so the page can say so rather than offering a dead button');
-  if (before) process.env.RESEND_API_KEY = before;
+  Object.assign(process.env, before);
 });
 
-test('the request Resend gets is the shape Resend wants', async () => {
-  // Pinned against a stub because this container's egress does not reach
-  // Resend — "it worked when I tried it" is not available here.
+test('NOBODY PICKS A PROVIDER ON A BUTTON — whichever key is set is used', () => {
+  // Same rule `artProvider()` follows for the picture round. Brevo wins when
+  // both are set, because it is the one that can hold this app own sending
+  // domain for nothing.
+  delete process.env.BREVO_API_KEY;
+  delete process.env.RESEND_API_KEY;
+  assert.equal(emailProvider(), '');
+  process.env.RESEND_API_KEY = 'r';
+  assert.equal(emailProvider(), 'resend');
+  process.env.BREVO_API_KEY = 'b';
+  assert.equal(emailProvider(), 'brevo');
+  delete process.env.BREVO_API_KEY;
+  delete process.env.RESEND_API_KEY;
+});
+
+test('the request BREVO gets is the shape Brevo wants', async () => {
+  // Pinned against a stub because this container egress reaches neither
+  // provider — "it worked when I tried it" is not available here.
+  delete process.env.RESEND_API_KEY;
+  process.env.BREVO_API_KEY = 'test-key';
+  process.env.EMAIL_FROM = 'Quizporium <no-reply@quizporium.co.uk>';
+  let seen = null;
+  const fetchImpl = async (url, options) => {
+    seen = { url, options };
+    return { ok: true, json: async () => ({ messageId: '<abc@brevo>' }) };
+  };
+  const out = await sendEmail({ to: 'rob@example.com', subject: 'Hello', text: 'A link' }, { fetchImpl });
+  assert.equal(out.ok, true);
+  assert.equal(out.provider, 'brevo');
+  assert.equal(seen.url, 'https://api.brevo.com/v3/smtp/email');
+  assert.equal(seen.options.headers['api-key'], 'test-key', 'a bare api-key header, NOT a bearer token');
+  const body = JSON.parse(seen.options.body);
+  assert.deepEqual(body.sender, { name: 'Quizporium', email: 'no-reply@quizporium.co.uk' },
+    'Brevo wants the name and the address apart');
+  assert.deepEqual(body.to, [{ email: 'rob@example.com' }], 'and recipients as objects');
+  assert.equal(body.textContent, 'A link', 'textContent, not text');
+  delete process.env.BREVO_API_KEY;
+  delete process.env.EMAIL_FROM;
+});
+
+test('the request RESEND gets is the shape Resend wants', async () => {
+  delete process.env.BREVO_API_KEY;
   process.env.RESEND_API_KEY = 'test-key';
-  process.env.RESEND_FROM = 'Quizporium <no-reply@quizporium.co.uk>';
+  process.env.EMAIL_FROM = 'Quizporium <no-reply@quizporium.co.uk>';
   let seen = null;
   const fetchImpl = async (url, options) => {
     seen = { url, options };
@@ -161,42 +202,56 @@ test('the request Resend gets is the shape Resend wants', async () => {
   assert.equal(seen.url, 'https://api.resend.com/emails');
   assert.equal(seen.options.headers.Authorization, 'Bearer test-key');
   const body = JSON.parse(seen.options.body);
-  assert.deepEqual(body.to, ['rob@example.com'], 'an ARRAY — Resend refuses a bare string');
-  assert.equal(body.from, 'Quizporium <no-reply@quizporium.co.uk>');
-  assert.equal(body.subject, 'Hello');
+  assert.deepEqual(body.to, ['rob@example.com'], 'an ARRAY of plain strings — the opposite of Brevo');
+  assert.equal(body.from, 'Quizporium <no-reply@quizporium.co.uk>', 'and the two halves back together');
   delete process.env.RESEND_API_KEY;
-  delete process.env.RESEND_FROM;
+  delete process.env.EMAIL_FROM;
 });
 
 test('A REFUSAL IS EXPLAINED, not swallowed', async () => {
   // The commonest failure setting this up by a mile is a sending domain that
-  // has not been verified, and a bare 403 sends you looking at the key.
-  process.env.RESEND_API_KEY = 'test-key';
-  process.env.RESEND_FROM = 'x@y.z';
+  // has not been authenticated, and a bare 403 sends you looking at the key.
+  process.env.BREVO_API_KEY = 'test-key';
+  process.env.EMAIL_FROM = 'x@y.z';
   const refuse = (status, payload) => async () => ({ ok: false, status, json: async () => payload });
 
-  const badKey = await sendEmail({ to: 'a@b.c', subject: 'x', text: 'y' }, { fetchImpl: refuse(401, { message: 'API key is invalid' }) });
-  assert.match(badKey.reason, /RESEND_API_KEY/, 'points at the key');
+  const badKey = await sendEmail({ to: 'a@b.c', subject: 'x', text: 'y' },
+    { fetchImpl: refuse(401, { message: 'Key not found' }) });
+  assert.match(badKey.reason, /BREVO_API_KEY/, 'points at the right key by name');
 
   const badDomain = await sendEmail({ to: 'a@b.c', subject: 'x', text: 'y' },
-    { fetchImpl: refuse(403, { message: 'The quizporium.co.uk domain is not verified' }) });
-  assert.match(badDomain.reason, /verified/i, 'names the real cause');
+    { fetchImpl: refuse(400, { message: 'Sender domain is not verified' }) });
+  assert.match(badDomain.reason, /authenticated with brevo/i, 'names the real cause');
 
   const dead = await sendEmail({ to: 'a@b.c', subject: 'x', text: 'y' },
     { fetchImpl: async () => { throw new Error('getaddrinfo ENOTFOUND'); } });
   assert.equal(dead.ok, false);
   assert.match(dead.reason, /Could not reach/, 'and a network failure never throws');
 
-  delete process.env.RESEND_API_KEY;
-  delete process.env.RESEND_FROM;
+  delete process.env.BREVO_API_KEY;
+  delete process.env.EMAIL_FROM;
 });
 
-test('the from address falls back to the app own domain', () => {
-  const before = process.env.PUBLIC_URL;
+test('the from address is split, and falls back to the app own domain', () => {
+  const before = { ...process.env };
+  delete process.env.EMAIL_FROM;
   delete process.env.RESEND_FROM;
   process.env.PUBLIC_URL = 'https://quizporium.co.uk';
-  assert.equal(fromAddress(), 'Quizporium <no-reply@quizporium.co.uk>');
+  assert.deepEqual(fromAddress(), { name: 'Quizporium', email: 'no-reply@quizporium.co.uk' });
+
+  process.env.EMAIL_FROM = 'bare@example.com';
+  assert.deepEqual(fromAddress(), { name: '', email: 'bare@example.com' }, 'a bare address is fine');
+
+  // RESEND_FROM was the name before there were two providers. A live server may
+  // still have it set, and quietly ignoring it would be a silent outage on the
+  // one feature whose whole job is getting somebody back in.
+  delete process.env.EMAIL_FROM;
+  process.env.RESEND_FROM = 'Old Name <old@example.com>';
+  assert.deepEqual(fromAddress(), { name: 'Old Name', email: 'old@example.com' });
+
+  delete process.env.RESEND_FROM;
   delete process.env.PUBLIC_URL;
-  assert.equal(fromAddress(), '', 'and with nothing to go on it says so rather than inventing a domain');
-  if (before) process.env.PUBLIC_URL = before;
+  assert.deepEqual(fromAddress(), { name: '', email: '' },
+    'and with nothing to go on it says so rather than inventing a domain');
+  Object.assign(process.env, before);
 });

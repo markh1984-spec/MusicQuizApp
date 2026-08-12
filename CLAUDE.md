@@ -2670,12 +2670,31 @@ free tier has no shell. So a forgotten owner password was a locked door with
 nothing behind it, which is exactly the shape of the problem the "make the
 first owner from the console" panel was built to solve.
 
-**Resend over plain `fetch`.** No SDK, for the reason nothing else here has
-one. `RESEND_API_KEY` plus a verified sending domain; `RESEND_FROM` overrides
-the address, otherwise it is built from `PUBLIC_URL`. **Without a key it is a
-STATE, not a failure** — the page says so plainly rather than offering a button
-that cannot work, because "check your inbox" for an email that will never
-arrive is the worst possible answer to somebody locked out.
+**BREVO or Resend, over plain `fetch`.** No SDK either way, for the reason
+nothing else here has one — it is one POST with one header. **Nobody picks a
+provider on a button**, the same rule `artProvider()` follows for the picture
+round: whichever key is set is the one used, and Brevo wins if both are.
+
+**Brevo is the default because of what a second domain COSTS.** Resend's free
+tier allows one sending domain and the host already spends it on another
+project; a second is $20 a month, which is a great deal of money for the five
+password resets a year this actually sends. Brevo is 300 a day free with
+unlimited domains, so `no-reply@quizporium.co.uk` costs nothing — and a reset
+link arriving from an unrelated domain is the one place a wrong-looking sender
+genuinely matters.
+
+The two APIs disagree about almost everything and that is why `fromAddress()`
+returns the name and the address APART: Brevo wants `sender: {name, email}`
+and recipients as objects, Resend wants one `"Name <addr>"` string and plain
+strings. Both shapes are pinned by tests. `EMAIL_FROM` is the one to set;
+`RESEND_FROM` is still read because a live server may have it and quietly
+ignoring it would be a silent outage on the one feature whose whole job is
+getting somebody back in.
+
+**Without a key it is a STATE, not a failure** — the page says so plainly
+rather than offering a button that cannot work, because "check your inbox" for
+an email that will never arrive is the worst possible answer to somebody
+locked out.
 
 **This is for resetting a password and NOTHING ELSE.** Not notifications, not
 reminders, not marketing — those are parked in TODO.md, they want a different
@@ -3801,7 +3820,7 @@ Confirmed by reading the environment list on the dashboard:
 
 `HOST_KEY`, `PHOTO_REPO`, `PHOTO_TOKEN`, `GITHUB_REPO`, `GITHUB_TOKEN`,
 `ANTHROPIC_API_KEY`, `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`,
-`SPOTIFY_REFRESH_TOKEN`. **No `RESEND_API_KEY` and no `PUBLIC_URL`**, so the
+`SPOTIFY_REFRESH_TOKEN`. **No `BREVO_API_KEY` and no `PUBLIC_URL`**, so the
 forgotten-password email is built but not switched on — the sign-in page says
 so plainly rather than pretending to send. **No `PACKS_REPO`**, so a quizmaster's own packs are
 saved but not permanent — their console says so in red and offers Download. One
