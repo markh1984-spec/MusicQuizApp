@@ -642,10 +642,21 @@ function openCamera() {
     sendBtn.textContent = 'Sending…';
     status.textContent = '';
     try {
-      // Redrawn full size rather than sent as the preview: the preview canvas
-      // is however big the phone is, and the projector deserves the real thing.
-      // Same functions as the preview, so what they saw is what goes up.
-      drawFiltered(canvas, source, PLAIN, 1280);
+      /*
+       * Redrawn at full size rather than sent as the preview: the preview
+       * canvas is however big the phone is, and the projector deserves the
+       * real thing. Same functions, so what they lined up is what goes up.
+       *
+       * 1080 SQUARE, which is the one number that satisfies all three things
+       * pulling on it. It has to leave a phone quickly on pub wifi; it is kept
+       * for ever, because the night archive is what Past gigs is; and it has
+       * to be worth posting to INSTAGRAM later as a promo — whose own native
+       * square is exactly 1080. Anything larger is downscaled by Instagram
+       * anyway, so it would be bytes stored for ever that nobody ever sees.
+       *
+       * It is also more than a projector resolves at the 60vh a polaroid gets.
+       */
+      drawFiltered(canvas, source, PLAIN, 1080);
       await drawStickers(canvas, stuckOn);
       const blob = await toJpeg(canvas);
       const res = await fetch(`/api/photo?playerId=${encodeURIComponent(me.id)}&filter=${encodeURIComponent(PLAIN)}${roomParam()}`, {

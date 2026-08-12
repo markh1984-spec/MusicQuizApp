@@ -1991,8 +1991,13 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   border: 2px dashed var(--panel-line); border-radius: 14px;
 }
 .cam-stage { margin-top: 12px; }
+/* SQUARE, because the photo is cropped square before it ever gets here — see
+   drawFiltered. It used to be `height: auto` over a black background, which on
+   a portrait phone photo meant two black bars down the sides of the preview
+   and a frame that changed shape with whatever was photographed. */
 .cam-canvas {
-  width: 100%; height: auto; max-height: 34vh;
+  width: 100%; aspect-ratio: 1; max-height: 44vh;
+  display: block; margin: 0 auto;
   object-fit: contain; border-radius: 14px; background: #000;
 }
 
@@ -3302,7 +3307,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
    bottom-right because that is furthest from where a face usually is — a
    target you have to drag TOWARDS cannot be hit by accident on the way
    somewhere else. */
-.cam-frame { position: relative; }
+.cam-frame { position: relative; display: grid; justify-items: center; }
 .cam-bin {
   position: absolute;
   right: 10px;

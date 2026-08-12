@@ -125,12 +125,36 @@ export function filterById(id) {
  * @param {string} filterId
  * @param {number} maxSide
  */
-export function drawFiltered(canvas, source, filterId, maxSide = 1280) {
+/**
+ * The photo onto a canvas, cropped SQUARE.
+ *
+ * A phone hands back a tall portrait frame, and a portrait photo is the WORSE
+ * shape on a projector: held to the same height it is far narrower, so it
+ * takes up less of the screen than a square does. A square also matches the
+ * polaroid it is shown in, and it makes the strip along the bottom of the big
+ * screen a tidy row rather than a ragged one.
+ *
+ * The crop is not centred on a portrait photo. Faces sit in the UPPER half of
+ * a phone photo almost every time, so a centred crop takes the tops of heads
+ * off; this keeps a fifth of the spare height at the bottom and the rest at
+ * the top. The preview and the upload both come through here, so what somebody
+ * lines up is what the room gets — the same reason this function is shared.
+ */
+export function drawFiltered(canvas, source, filterId, maxSide = 1280, { square = true } = {}) {
   const sw = source.naturalWidth || source.videoWidth || source.width;
   const sh = source.naturalHeight || source.videoHeight || source.height;
-  const scale = Math.min(1, maxSide / Math.max(sw, sh));
-  const w = Math.max(1, Math.round(sw * scale));
-  const h = Math.max(1, Math.round(sh * scale));
+  let sx = 0;
+  let sy = 0;
+  let cw = sw;
+  let ch = sh;
+  if (square) {
+    cw = ch = Math.min(sw, sh);
+    sx = (sw - cw) / 2;
+    sy = sh > sw ? (sh - ch) * 0.2 : (sh - ch) / 2;
+  }
+  const scale = Math.min(1, maxSide / Math.max(cw, ch));
+  const w = Math.max(1, Math.round(cw * scale));
+  const h = Math.max(1, Math.round(ch * scale));
 
   const filter = filterById(filterId);
   /*
@@ -152,7 +176,7 @@ export function drawFiltered(canvas, source, filterId, maxSide = 1280) {
   } else {
     ctx.clearRect(0, 0, w, h);
   }
-  ctx.drawImage(source, 0, 0, w, h);
+  ctx.drawImage(source, sx, sy, cw, ch, 0, 0, w, h);
   if (!reads) return canvas;
 
   const image = ctx.getImageData(0, 0, w, h);
@@ -161,8 +185,20 @@ export function drawFiltered(canvas, source, filterId, maxSide = 1280) {
   return canvas;
 }
 
-/** The canvas as a JPEG blob, which is what actually gets sent. */
-export function toJpeg(canvas, quality = 0.82) {
+/**
+ * The canvas as a JPEG blob, which is what actually gets sent.
+ *
+ * 0.85 is HIGHER than it was, and that is deliberate. Three things pull on
+ * this number and they turn out to agree: it has to send fast on pub wifi, it
+ * is stored for ever because Past gigs is the point, and it has to be worth
+ * posting to Instagram afterwards as a promo.
+ *
+ * The square 1080 crop already halves the pixels, so the saving can be spent
+ * on quality instead of pocketed — and quality is the one that matters for the
+ * third job, because INSTAGRAM RE-ENCODES EVERYTHING. Start it low and its own
+ * pass compounds on top, which on a dark pub photo is where mush comes from.
+ */
+export function toJpeg(canvas, quality = 0.85) {
   return new Promise((resolve) => {
     if (canvas.toBlob) canvas.toBlob((blob) => resolve(blob), 'image/jpeg', quality);
     else {
