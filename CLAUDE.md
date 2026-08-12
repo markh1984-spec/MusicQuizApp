@@ -1578,6 +1578,12 @@ pick-them-all rounds being poor search targets.
 done or he says otherwise.** It means he is at the laptop knocking through a
 list, not thinking something over, and every extra word is in the way.
 
+**ALWAYS OPEN WITH THE TO-DO LIST.** The first thing out of GSD mode is the
+list itself — numbered, in the order to do them, URLs verbatim. Not a question,
+not a preamble, not "shall I". If the list is not obvious from the conversation,
+work it out from TODO.md and the current state and give it anyway; he will
+correct it faster than he will answer a question about it.
+
 - **Minimum context.** No reasoning, no background, no options, no "worth
   knowing". He has the context; he wrote it.
 - **URLs, verbatim and clickable.** He is following them, not reading about
