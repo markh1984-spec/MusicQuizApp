@@ -3383,38 +3383,48 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   font-weight: 700;
   text-align: center;
 }
-/* THE HEADING AND THE GESTURES ARE ONE CARD, tinted in the same gold the
-   heading is written in — a heading floating above a block of chips is a
-   fifth loose object rather than a label on them.
+/* THE HEADING AND THE GESTURES ARE ONE CARD — a heading floating above a block
+   of chips is a fifth loose object rather than a label on them.
 
-   NOT the red-into-orange of the button above it. That gradient is the app's
-   one "press this" — Launch on the console, Send it up here — and the same
-   reasoning that keeps it off the shop's Buy button keeps it off a panel of
-   instructions. Two of them stacked, the lower one doing nothing when pressed,
-   costs the real button its meaning.
+   A HAIRLINE OF THE APP'S OWN GRADIENT, AND NOTHING INSIDE IT. It was a filled
+   gold wash first, and a filled block IS the objection: the red-into-orange is
+   the app's one "press this" — Launch on the console, Send it up directly above
+   this — so a second slab of it doing nothing when pressed would cost the real
+   button its meaning. One pixel of it cannot: a line draws the boundary round
+   the five things and leaves the weight to the button.
 
-   The tint is two pseudo-elements rather than a colour written out, because
-   `--gold` is redefined by every seasonal look — eleven times in this file —
-   so a hardcoded gold would be the one thing on a Halloween phone still
-   wearing the ordinary night's palette. `z-index: -1` behind the content,
-   with the card making its own stacking context so it cannot escape. */
+   `--hot`/`--hot-2` rather than a colour written out, so it follows both the
+   quizmaster's own scheme and every seasonal look. A gradient cannot go in
+   `border-color`, so the ring is a gradient box with its middle masked out.
+   THE FALLBACK IS THE POINT OF THE @supports: without mask compositing the
+   ::after would paint as a solid gradient slab — the exact thing this is not
+   meant to be — so the plain hairline is what a browser gets by default and
+   the gradient is added only where it can be drawn as a ring. */
 .cam-guide {
   position: relative;
-  z-index: 0;
   border-radius: 14px;
   padding: 10px;
   margin: 14px 0 10px;
 }
-.cam-guide::before,
 .cam-guide::after {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
+  border: 1px solid var(--panel-line);
   pointer-events: none;
 }
-.cam-guide::before { z-index: -2; background: var(--gold); opacity: 0.08; }
-.cam-guide::after { z-index: -1; border: 1px solid var(--gold); opacity: 0.3; }
+@supports ((mask-composite: exclude) or (-webkit-mask-composite: xor)) {
+  .cam-guide::after {
+    border: 0;
+    padding: 1px;
+    background: linear-gradient(120deg, var(--hot), var(--hot-2));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+}
 .cam-guide .cam-looks-head { margin: 0 0 9px; }
 /* touch-action none so dragging a prop does not scroll the sheet under it —
    without this the picture slides away the moment a finger moves. */
