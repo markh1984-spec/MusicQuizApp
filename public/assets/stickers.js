@@ -254,10 +254,10 @@ const ART = {
     <path d="M30 38v49h20V30c-7-1-13-4-16-8l-10 5-10 14 12 12z" fill="#fff"/>
     <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="none" stroke="#20202c" stroke-width="5" stroke-linejoin="round"/>
     <g fill="#20202c" font-family="Helvetica,Arial,sans-serif" font-weight="bold" text-anchor="middle">
-      <text x="50" y="66" font-size="11" textLength="34" lengthAdjust="spacingAndGlyphs">I'M WITH</text>
-      <text x="50" y="80" font-size="13" textLength="34" lengthAdjust="spacingAndGlyphs">STUPID</text>
+      <text x="50" y="70" font-size="11" textLength="34" lengthAdjust="spacingAndGlyphs">I'M WITH</text>
+      <text x="50" y="83" font-size="13" textLength="34" lengthAdjust="spacingAndGlyphs">STUPID</text>
     </g>
-    <path d="M50 31 60 44h-6v7h-8v-7h-6z" fill="#e8123c" stroke="#8f0a24" stroke-width="3" stroke-linejoin="round"/>`,
+    <path d="M50 40 59 51h-5v6h-8v-6h-5z" fill="#e8123c" stroke="#8f0a24" stroke-width="3" stroke-linejoin="round"/>`,
   'stupid-left': `
     <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
     <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="#f4f4f8"/>
@@ -267,7 +267,7 @@ const ART = {
       <text x="50" y="54" font-size="11" textLength="34" lengthAdjust="spacingAndGlyphs">I'M WITH</text>
       <text x="50" y="68" font-size="13" textLength="34" lengthAdjust="spacingAndGlyphs">STUPID</text>
     </g>
-    <path d="M31 79 43 71v5h13v6H43v5z" fill="#e8123c" stroke="#8f0a24" stroke-width="3" stroke-linejoin="round"/>`,
+    <path d="M36 79 46 73v4h16v4H46v4z" fill="#e8123c" stroke="#8f0a24" stroke-width="3" stroke-linejoin="round"/>`,
   'stupid-right': `
     <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
     <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="#f4f4f8"/>
@@ -277,7 +277,7 @@ const ART = {
       <text x="50" y="54" font-size="11" textLength="34" lengthAdjust="spacingAndGlyphs">I'M WITH</text>
       <text x="50" y="68" font-size="13" textLength="34" lengthAdjust="spacingAndGlyphs">STUPID</text>
     </g>
-    <path d="M69 79 57 71v5H44v6h13v5z" fill="#e8123c" stroke="#8f0a24" stroke-width="3" stroke-linejoin="round"/>`,
+    <path d="M64 79 54 73v4H38v4h16v4z" fill="#e8123c" stroke="#8f0a24" stroke-width="3" stroke-linejoin="round"/>`,
   'stupid-both': `
     <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
     <path d="M34 22 24 17 14 31l12 12 4-5v49h40V38l4 5 12-12-10-14-10 5c-3 5-9 8-16 8s-13-3-16-8z" fill="#f4f4f8"/>
@@ -287,7 +287,7 @@ const ART = {
       <text x="50" y="54" font-size="11" textLength="34" lengthAdjust="spacingAndGlyphs">I'M WITH</text>
       <text x="50" y="68" font-size="13" textLength="34" lengthAdjust="spacingAndGlyphs">STUPID</text>
     </g>
-    <path d="M28 79 38 72v4h24v-4l10 7-10 7v-4H38v4z" fill="#e8123c" stroke="#8f0a24" stroke-width="3" stroke-linejoin="round"/>`,
+    <path d="M35 79 44 73v4h12v-4l9 6-9 6v-4H44v4z" fill="#e8123c" stroke="#8f0a24" stroke-width="3" stroke-linejoin="round"/>`,
   'traffic-cone': `
     <path d="M50 10 76 80H24z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
     <path d="M14 80h72v12H14z" fill="#fff" stroke="#fff" stroke-width="11"/>
