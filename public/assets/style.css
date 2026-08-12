@@ -62,6 +62,42 @@
 
   --radius: 18px;
   --shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+
+  /* ---- The type ladder.
+   *
+   * Ten steps, and every size on a PAGE comes from one of them. It was
+   * twenty-eight different numbers, six of them halves — 12.5 next to 13, 13.5
+   * next to 14, 11.5 next to 11 — which is not a scale, it is the same
+   * decision taken separately twenty-eight times. The tell was the On|Off
+   * switch: the one in the top right was 11px and the identical one on each
+   * feature was 11.5px, on two controls this file says are meant to be the
+   * same shape so they are recognised rather than read.
+   *
+   * The names are the JOB, not the pixels, so moving a step is one edit here
+   * rather than a search for a number that also means something else.
+   *
+   * TWO THINGS ARE DELIBERATELY NOT ON IT, and both would be a bug to fold in:
+   *
+   * - The BINGO CELL ramp (`.bingo-cell .bt` / `.ba` down through cols-3, 4
+   *   and 5). Those halves are not drift — they are tuned so 25 squares still
+   *   fit a 320px phone with the words readable, checked by hand, and a square
+   *   you cannot read is somebody missing a full house. Same for
+   *   `.cam-prop-name`, which has to fit inside a 66px tile.
+   * - The PROJECTOR, which is sized in `vh` throughout. A big screen's type
+   *   has to grow with the screen; pinning it to pixels would make the
+   *   question small on a hall projector and huge on a laptop. */
+  --fs-tag: 11px;     /* over-line labels, badges, type tags */
+  --fs-mini: 12px;    /* dense UI — switches, chips, small buttons */
+  --fs-note: 13px;    /* secondary lines. This is what `.tiny` means */
+  --fs-body: 14px;    /* body copy in a panel, and a warning that must not go quiet */
+  --fs-ctl: 15px;     /* buttons and selects */
+  --fs-field: 16px;   /* text inputs — the floor that stops iOS zooming on focus */
+  --fs-lead: 17px;    /* a card's title, the lead line of a panel */
+  --fs-head: 19px;    /* a panel heading */
+  --fs-sub: 20px;
+  --fs-title: 22px;
+  /* Above 22 the sizes are display type — a result, a room code, a countdown —
+     one per surface and chosen for that surface. They stay written out. */
 }
 
 * { box-sizing: border-box; }
@@ -468,32 +504,32 @@ body.phone {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  font-size: 14px;
+  font-size: var(--fs-body);
 }
-.phone .head .team { font-weight: 800; font-size: 17px; }
-.phone .head .score { font-weight: 900; font-size: 20px; color: var(--gold); font-variant-numeric: tabular-nums; }
+.phone .head .team { font-weight: 800; font-size: var(--fs-lead); }
+.phone .head .score { font-weight: 900; font-size: var(--fs-sub); color: var(--gold); font-variant-numeric: tabular-nums; }
 
 .phone .body { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; gap: 16px; }
 
 .phone h1 { font-size: 30px; line-height: 1.05; margin: 0; font-weight: 900; letter-spacing: -0.02em; }
-.phone h2 { font-size: 22px; margin: 0; font-weight: 800; }
-.phone p { font-size: 17px; line-height: 1.45; margin: 0; color: var(--ink-dim); }
+.phone h2 { font-size: var(--fs-title); margin: 0; font-weight: 800; }
+.phone p { font-size: var(--fs-lead); line-height: 1.45; margin: 0; color: var(--ink-dim); }
 /* `.tiny` HAD NO SIZE ON THE PHONE AT ALL, and it is the one page where the
    class is used and never defined — the control view says 12px, the console
    12.5px, and here it fell through to body copy. So "spelling does not count"
    under the alphabet keyboard, and the camera's own notes, were coming out as
    big as the question. 13px rather than the console's 12.5: this is read in a
    dark room on a phone held at arm's length, not at a laptop. */
-.phone .tiny { font-size: 13px; line-height: 1.45; color: var(--ink-dim); }
+.phone .tiny { font-size: var(--fs-note); line-height: 1.45; color: var(--ink-dim); }
 /* Except the camera warning, which is the house exception — warnings and money
    are read once, at a moment that matters, and being quiet there costs
    somebody something real. */
-.phone .cam-warn { font-size: 14px; }
+.phone .cam-warn { font-size: var(--fs-body); }
 
 .phone input[type="text"] {
   width: 100%;
   padding: 18px 16px;
-  font-size: 20px;
+  font-size: var(--fs-sub);
   font-weight: 700;
   border-radius: 14px;
   border: 2px solid var(--panel-line);
@@ -506,7 +542,7 @@ body.phone {
   display: block;
   width: 100%;
   padding: 18px 16px;
-  font-size: 19px;
+  font-size: var(--fs-head);
   font-weight: 800;
   border-radius: 14px;
   border: none;
@@ -553,7 +589,7 @@ body.phone {
   /* Smaller than the single column was, because half the width has to hold
      "I Wish It Could Be Christmas Everyday" without turning it into a column
      of single words. Still the biggest thing on the phone. */
-  font-size: 16px;
+  font-size: var(--fs-field);
   font-weight: 800;
   text-align: left;
   cursor: pointer;
@@ -573,7 +609,7 @@ body.phone {
   border-radius: 10px;
   font-weight: 900;
   color: #0a0a12;
-  font-size: 16px;
+  font-size: var(--fs-field);
 }
 .answer-btn:nth-child(1) .letter { background: var(--a); }
 .answer-btn:nth-child(2) .letter { background: var(--b); }
@@ -612,21 +648,21 @@ body.phone {
 .result.bad { border-color: var(--bad); background: rgba(255, 77, 94, 0.14); }
 .result .big { font-size: 34px; font-weight: 900; margin-bottom: 6px; }
 .result .pts { font-size: 46px; font-weight: 900; color: var(--gold); font-variant-numeric: tabular-nums; }
-.result .sub { color: var(--ink-dim); font-size: 16px; margin-top: 6px; }
-.result .bonus { display: inline-block; margin-top: 10px; padding: 6px 14px; border-radius: 999px; background: var(--gold); color: #1a1200; font-weight: 900; font-size: 14px; }
+.result .sub { color: var(--ink-dim); font-size: var(--fs-field); margin-top: 6px; }
+.result .bonus { display: inline-block; margin-top: 10px; padding: 6px 14px; border-radius: 999px; background: var(--gold); color: #1a1200; font-weight: 900; font-size: var(--fs-body); }
 
 .mini-board { display: grid; gap: 8px; }
 .mini-row {
   display: flex; align-items: center; gap: 12px;
   padding: 12px 14px; border-radius: 12px;
   background: var(--panel); border: 1px solid var(--panel-line);
-  font-weight: 700; font-size: 16px;
+  font-weight: 700; font-size: var(--fs-field);
 }
 .mini-row.you { border-color: var(--gold); background: rgba(255, 210, 63, 0.16); }
 .mini-row .pos { width: 1.6em; color: var(--ink-dim); font-weight: 900; }
 .mini-row .score { margin-left: auto; font-weight: 900; font-variant-numeric: tabular-nums; }
 
-.phone .foot { flex: 0 0 auto; text-align: center; font-size: 13px; color: var(--ink-dim); padding-top: 8px; }
+.phone .foot { flex: 0 0 auto; text-align: center; font-size: var(--fs-note); color: var(--ink-dim); padding-top: 8px; }
 .phone .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--good); margin-right: 6px; }
 .phone .status-dot.off { background: var(--bad); }
 
@@ -654,10 +690,10 @@ body.host::after { display: none; }
   background: rgba(10, 10, 19, 0.94);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--panel-line);
-  font-size: 13px;
+  font-size: var(--fs-note);
 }
 .host .bar .where { font-weight: 800; }
-.host .bar .clock { font-weight: 900; font-size: 22px; font-variant-numeric: tabular-nums; }
+.host .bar .clock { font-weight: 900; font-size: var(--fs-title); font-variant-numeric: tabular-nums; }
 .host .bar .clock.urgent { color: var(--bad); }
 
 .panel {
@@ -668,13 +704,13 @@ body.host::after { display: none; }
 }
 .panel h3 {
   margin: 0 0 10px;
-  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim);
+  font-size: var(--fs-tag); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim);
   font-weight: 800;
 }
 .panel.secret { border-color: rgba(255, 210, 63, 0.5); background: rgba(255, 210, 63, 0.09); }
 .panel.secret h3 { color: var(--gold); }
 
-.host .prompt { font-size: 20px; font-weight: 800; line-height: 1.25; margin: 0 0 12px; }
+.host .prompt { font-size: var(--fs-sub); font-weight: 800; line-height: 1.25; margin: 0 0 12px; }
 
 .keylist { display: grid; gap: 7px; }
 /* A key row is a button now: tapping it shows who picked that answer. It still
@@ -687,39 +723,39 @@ body.host::after { display: none; }
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid transparent;
   color: var(--ink); font-family: inherit;
-  font-size: 15px; font-weight: 600;
+  font-size: var(--fs-ctl); font-weight: 600;
   cursor: default;
 }
 .keyrow.has-who { cursor: pointer; }
 .keyrow.has-who:hover { background: rgba(255, 255, 255, 0.09); }
 .keyrow .caret {
   flex: 0 0 auto; margin-left: 4px;
-  color: var(--ink-dim); font-size: 13px;
+  color: var(--ink-dim); font-size: var(--fs-note);
   transition: transform 140ms;
 }
 .keyrow .caret.open { transform: rotate(180deg); }
 .keyrow .letter {
   width: 26px; height: 26px; flex: 0 0 auto;
   display: grid; place-items: center; border-radius: 7px;
-  font-weight: 900; font-size: 13px; color: #0a0a12; background: rgba(255,255,255,0.5);
+  font-weight: 900; font-size: var(--fs-note); color: #0a0a12; background: rgba(255,255,255,0.5);
 }
 .keyrow.is-correct { background: rgba(47, 224, 122, 0.2); border-color: var(--good); font-weight: 800; }
 .keyrow.is-correct .letter { background: var(--good); }
-.keyrow .n { margin-left: auto; color: var(--ink-dim); font-weight: 800; font-size: 13px; }
+.keyrow .n { margin-left: auto; color: var(--ink-dim); font-weight: 800; font-size: var(--fs-note); }
 
 .cue { display: grid; gap: 4px; }
 .cue .track { font-size: 26px; font-weight: 900; line-height: 1.1; }
-.cue .artist { font-size: 19px; font-weight: 700; color: var(--gold); }
+.cue .artist { font-size: var(--fs-head); font-weight: 700; color: var(--gold); }
 /* Auto-play did not start it. Gold rather than red: the question is up, the
    night is fine, and all this means is "use your thumb". */
 .cue-failed {
   margin-top: 8px; padding: 8px 10px; border-radius: 10px;
   background: rgba(255, 210, 63, 0.14);
   border: 1px solid rgba(255, 210, 63, 0.4);
-  color: var(--gold); font-size: 13px; font-weight: 700;
+  color: var(--gold); font-size: var(--fs-note); font-weight: 700;
 }
 .cue-failed .tiny { display: block; color: var(--ink-dim); font-weight: 400; margin-top: 2px; }
-.cue .from { font-size: 14px; color: var(--ink-dim); }
+.cue .from { font-size: var(--fs-body); color: var(--ink-dim); }
 
 .actions {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
@@ -733,14 +769,14 @@ body.host::after { display: none; }
 }
 .actions .primary {
   grid-column: 1 / -1;
-  padding: 20px; font-size: 21px; font-weight: 900;
+  padding: 20px; font-size: var(--fs-sub); font-weight: 900;
   border: none; border-radius: 14px; cursor: pointer;
   color: #12000c; background: linear-gradient(120deg, var(--hot), var(--hot-2));
   -webkit-tap-highlight-color: transparent;
 }
 .actions .primary:disabled { opacity: 0.45; }
 .actions .minor {
-  padding: 13px 6px; font-size: 13px; font-weight: 800;
+  padding: 13px 6px; font-size: var(--fs-note); font-weight: 800;
   border-radius: 11px; cursor: pointer;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--panel-line);
@@ -753,40 +789,40 @@ body.host::after { display: none; }
   display: flex; align-items: center; gap: 8px;
   padding: 9px 10px; border-radius: 10px;
   background: rgba(255, 255, 255, 0.05);
-  font-size: 15px;
+  font-size: var(--fs-ctl);
 }
-.prow .pos { width: 1.8em; color: var(--ink-dim); font-weight: 900; font-size: 13px; }
+.prow .pos { width: 1.8em; color: var(--ink-dim); font-weight: 900; font-size: var(--fs-note); }
 .prow .nm { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .prow .sc { margin-left: auto; font-weight: 900; font-variant-numeric: tabular-nums; }
 .prow .tick { color: var(--good); font-weight: 900; }
-.prow .off { color: var(--bad); font-size: 11px; }
+.prow .off { color: var(--bad); font-size: var(--fs-tag); }
 /* A note, not an accusation — so it is gold rather than red. Red beside a name
    reads as "this one is cheating" and the app does not know that; it knows the
    phone went dark, which a call coming in also does. */
 .prow .wandered-count {
   color: var(--gold);
-  font-size: 11px;
+  font-size: var(--fs-tag);
   font-weight: 700;
   white-space: nowrap;
 }
 .keywho.wandered b { color: var(--gold); }
 .prow button {
   border: 1px solid var(--panel-line); background: rgba(255,255,255,0.06);
-  color: var(--ink); border-radius: 8px; padding: 5px 8px; font-size: 13px; font-weight: 800; cursor: pointer;
+  color: var(--ink); border-radius: 8px; padding: 5px 8px; font-size: var(--fs-note); font-weight: 800; cursor: pointer;
 }
 
 .host .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .host select, .host input[type="text"], .host input[type="number"] {
-  padding: 10px; border-radius: 10px; font-size: 15px;
+  padding: 10px; border-radius: 10px; font-size: var(--fs-ctl);
   background: rgba(255,255,255,0.08); color: var(--ink); border: 1px solid var(--panel-line);
 }
-.host .tiny { font-size: 12px; color: var(--ink-dim); }
+.host .tiny { font-size: var(--fs-mini); color: var(--ink-dim); }
 .host a { color: var(--cool); }
 
 .toast {
   position: fixed; left: 50%; bottom: 150px; transform: translateX(-50%);
   background: var(--ink); color: #0a0a12; font-weight: 800;
-  padding: 10px 18px; border-radius: 999px; z-index: 60; font-size: 14px;
+  padding: 10px 18px; border-radius: 999px; z-index: 60; font-size: var(--fs-body);
   box-shadow: var(--shadow);
 }
 
@@ -916,12 +952,12 @@ body.editor::after { display: none; }
   border-bottom: 1px solid var(--panel-line);
   display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
 }
-.editor .topbar h1 { font-size: 19px; margin: 0; font-weight: 900; }
+.editor .topbar h1 { font-size: var(--fs-head); margin: 0; font-weight: 900; }
 .editor .topbar .spacer { flex: 1 1 auto; }
 
 .editor button, .editor select, .editor input, .editor textarea {
   font-family: inherit;
-  font-size: 15px;
+  font-size: var(--fs-ctl);
   color: var(--ink);
   background: rgba(255, 255, 255, 0.07);
   border: 1px solid var(--panel-line);
@@ -938,7 +974,7 @@ body.editor::after { display: none; }
 }
 .editor button.go:disabled { opacity: 0.5; cursor: default; }
 .editor button.danger { color: var(--bad); border-color: rgba(255, 77, 94, 0.4); }
-.editor button.small { padding: 5px 9px; font-size: 13px; }
+.editor button.small { padding: 5px 9px; font-size: var(--fs-note); }
 
 .round-block { margin-bottom: 26px; }
 .round-head {
@@ -949,9 +985,9 @@ body.editor::after { display: none; }
   border: 1px solid var(--panel-line);
   border-bottom: none;
 }
-.round-head input.title { flex: 1 1 240px; font-weight: 800; font-size: 17px; }
+.round-head input.title { flex: 1 1 240px; font-weight: 800; font-size: var(--fs-lead); }
 .round-head .type-tag {
-  padding: 4px 11px; border-radius: 999px; font-size: 11px; font-weight: 900;
+  padding: 4px 11px; border-radius: 999px; font-size: var(--fs-tag); font-weight: 900;
   letter-spacing: 0.12em; text-transform: uppercase; background: rgba(0,0,0,0.35);
 }
 
@@ -965,7 +1001,7 @@ body.editor::after { display: none; }
 .qcard.flagged { background: rgba(255, 77, 94, 0.09); }
 
 .qcard .qtop { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.qcard .qnum { font-size: 12px; font-weight: 900; letter-spacing: 0.14em; color: var(--ink-dim); text-transform: uppercase; }
+.qcard .qnum { font-size: var(--fs-mini); font-weight: 900; letter-spacing: 0.14em; color: var(--ink-dim); text-transform: uppercase; }
 .qcard .qtools { margin-left: auto; display: flex; gap: 6px; }
 
 .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 11px; }
@@ -976,23 +1012,23 @@ body.editor::after { display: none; }
   padding: 8px 11px; border-radius: 9px; cursor: pointer;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--panel-line);
-  font-weight: 900; font-size: 13px;
+  font-weight: 900; font-size: var(--fs-note);
   white-space: nowrap;
 }
 .opt-row.is-correct label { background: rgba(47, 224, 122, 0.24); border-color: var(--good); }
 .opt-row.is-correct input[type="text"] { border-color: var(--good); }
 
 .extra-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 9px; margin-top: 11px; }
-.extra-fields label { display: grid; gap: 5px; font-size: 12px; color: var(--ink-dim); font-weight: 700; }
+.extra-fields label { display: grid; gap: 5px; font-size: var(--fs-mini); color: var(--ink-dim); font-weight: 700; }
 .extra-fields.cue { padding: 11px; border-radius: 10px; background: rgba(255, 210, 63, 0.08); border: 1px solid rgba(255, 210, 63, 0.3); }
-.extra-fields.cue > .note { grid-column: 1 / -1; font-size: 12px; color: var(--gold); font-weight: 700; }
+.extra-fields.cue > .note { grid-column: 1 / -1; font-size: var(--fs-mini); color: var(--gold); font-weight: 700; }
 
 .problems {
   border-radius: 12px; padding: 14px 16px; margin-bottom: 18px;
   background: rgba(255, 77, 94, 0.14); border: 1px solid var(--bad);
 }
 .problems ul { margin: 8px 0 0; padding-left: 20px; }
-.problems li { margin-bottom: 4px; font-size: 14px; }
+.problems li { margin-bottom: 4px; font-size: var(--fs-body); }
 .problems.ok { background: rgba(47, 224, 122, 0.14); border-color: var(--good); }
 
 .saved-flash {
@@ -1066,12 +1102,12 @@ body.editor::after { display: none; }
    nobody can tap and so a full house nobody can get. On a card it drops down
    beside the BINGO button, which is wide enough to lose its right-hand end and
    still be the easiest thing on the screen to hit. */
-body.bingo-card .camera-btn { bottom: 12px; right: 12px; width: 52px; height: 52px; font-size: 22px; }
+body.bingo-card .camera-btn { bottom: 12px; right: 12px; width: 52px; height: 52px; font-size: var(--fs-title); }
 body.bingo-card .bingo-call { margin-right: 72px; }
 
 .bingo-status {
   display: flex; justify-content: space-between; align-items: center;
-  font-size: 15px; font-weight: 700; color: var(--ink-dim);
+  font-size: var(--fs-ctl); font-weight: 700; color: var(--ink-dim);
 }
 .bingo-status .away { font-weight: 900; color: var(--ink); }
 .bingo-status .away.hot { color: var(--gold); }
@@ -1136,20 +1172,20 @@ body.bingo-card .bingo-call { margin-right: 72px; }
 .bingo-call {
   flex: 0 0 auto;
   background: linear-gradient(120deg, var(--good), var(--cool));
-  font-size: 22px; letter-spacing: 0.06em;
+  font-size: var(--fs-title); letter-spacing: 0.06em;
 }
-.bingo-call:disabled { background: var(--panel); color: var(--ink-dim); border: 2px solid var(--panel-line); font-size: 15px; letter-spacing: 0; }
+.bingo-call:disabled { background: var(--panel); color: var(--ink-dim); border: 2px solid var(--panel-line); font-size: var(--fs-ctl); letter-spacing: 0; }
 
 /* What this phone has already won, kept beside what is being played for now. */
 .bingo-status .yours {
   flex: 1 0 100%;
-  font-size: 12.5px; font-weight: 800; color: var(--good);
+  font-size: var(--fs-note); font-weight: 800; color: var(--good);
 }
 
 .bingo-flash {
   position: fixed; left: 16px; right: 16px; bottom: 84px; z-index: 50;
   padding: 16px; border-radius: 14px; text-align: center;
-  font-weight: 900; font-size: 17px;
+  font-weight: 900; font-size: var(--fs-lead);
   animation: popIn 300ms cubic-bezier(0.2, 1.2, 0.3, 1);
 }
 .bingo-flash.good { background: var(--good); color: #04240f; }
@@ -1180,15 +1216,15 @@ body.bingo-card .bingo-call { margin-right: 72px; }
   border: 1px solid transparent;
   color: var(--ink); text-align: left; cursor: pointer; width: 100%;
 }
-.trackbox .tick { grid-area: tick; color: var(--good); font-weight: 900; font-size: 14px; }
+.trackbox .tick { grid-area: tick; color: var(--good); font-weight: 900; font-size: var(--fs-body); }
 .trackbox .tt {
-  grid-area: title; font-weight: 700; font-size: 14.5px; line-height: 1.2;
+  grid-area: title; font-weight: 700; font-size: var(--fs-ctl); line-height: 1.2;
   /* Two lines at most, so no box is twice the height of its neighbours and the
      grid stays a grid. */
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .trackbox .ta {
-  grid-area: artist; color: var(--ink-dim); font-size: 12px; line-height: 1.2;
+  grid-area: artist; color: var(--ink-dim); font-size: var(--fs-mini); line-height: 1.2;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .trackbox.called { background: rgba(47, 224, 122, 0.16); border-color: var(--good); }
@@ -1210,14 +1246,14 @@ body.console::after { display: none; }
   border-bottom: 1px solid var(--panel-line);
   display: flex; align-items: center; gap: 14px;
 }
-.console .topbar h1 { font-size: 19px; margin: 0; font-weight: 900; }
+.console .topbar h1 { font-size: var(--fs-head); margin: 0; font-weight: 900; }
 .console .spacer { flex: 1 1 auto; }
-.console .tiny { font-size: 12.5px; color: var(--ink-dim); }
+.console .tiny { font-size: var(--fs-note); color: var(--ink-dim); }
 /* The console's small buttons. Links and <button>s both, because the running
    panel mixes them — two links out to the other screens and one real action. */
 .console a.minor, .console button.minor {
   text-decoration: none; display: inline-block;
-  padding: 9px 13px; border-radius: 10px; font-size: 13px; font-weight: 800;
+  padding: 9px 13px; border-radius: 10px; font-size: var(--fs-note); font-weight: 800;
   font-family: inherit; cursor: pointer;
   background: rgba(255, 255, 255, 0.08); border: 1px solid var(--panel-line); color: var(--ink);
 }
@@ -1225,25 +1261,25 @@ body.console::after { display: none; }
 .console button.minor.danger:hover { background: rgba(255, 77, 94, 0.12); }
 .console button.minor:disabled { opacity: 0.6; cursor: default; }
 .console .panel { border-radius: 14px; background: var(--panel); border: 1px solid var(--panel-line); padding: 16px; margin-bottom: 24px; }
-.console .panel h3 { margin: 0 0 12px; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim); font-weight: 800; }
+.console .panel h3 { margin: 0 0 12px; font-size: var(--fs-tag); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim); font-weight: 800; }
 .console .panel.running.live { border-color: var(--good); background: rgba(47, 224, 122, 0.1); }
 .running-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.running-title { font-size: 20px; font-weight: 900; }
+.running-title { font-size: var(--fs-sub); font-weight: 900; }
 .running-links { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 /* Where the game has got to. Same size as the line above it but not dimmed,
    because it is the line you came to this panel to read. */
-.running-at { margin-top: 3px; font-size: 13px; font-weight: 700; color: var(--good); }
+.running-at { margin-top: 3px; font-size: var(--fs-note); font-weight: 700; color: var(--good); }
 /* The way you actually run the night, so it is a button and not a footnote. */
 .running-links .control-link {
   border: none; border-radius: 10px; padding: 10px 16px;
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
-  color: #12000c; font-weight: 900; font-size: 14px;
+  color: #12000c; font-weight: 900; font-size: var(--fs-body);
   text-decoration: none; white-space: nowrap; cursor: pointer;
 }
 
 .game-section { margin-bottom: 34px; }
 .game-head { display: flex; align-items: flex-end; gap: 14px; margin-bottom: 14px; }
-.game-head h2 { margin: 0 0 3px; font-size: 24px; font-weight: 900; letter-spacing: -0.02em; }
+.game-head h2 { margin: 0 0 3px; font-size: var(--fs-title); font-weight: 900; letter-spacing: -0.02em; }
 .game-head a { margin-left: auto; }
 
 .pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
@@ -1260,22 +1296,22 @@ body.console::after { display: none; }
   padding: 8px 12px; border-radius: 10px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--panel-line);
-  color: var(--ink); font: inherit; font-size: 13px;
+  color: var(--ink); font: inherit; font-size: var(--fs-note);
 }
 .pack-search:focus { outline: none; border-color: var(--hot); background: rgba(255, 255, 255, 0.1); }
 .pack-search::placeholder { color: var(--ink-dim); }
 
 .pack-grid.dense { grid-template-columns: repeat(auto-fill, minmax(178px, 1fr)); gap: 8px; }
 .pack-grid.dense .pack-card { padding: 10px 12px; gap: 3px; }
-.pack-grid.dense .pack-title { font-size: 15px; }
+.pack-grid.dense .pack-title { font-size: var(--fs-ctl); }
 /* The blurb and "played 39 times" — read once, then noise. */
 .pack-grid.dense .pack-card > .tiny:not([style]) { display: none; }
 .pack-grid.dense .played { display: none; }
-.pack-grid.dense .pack-shape { font-size: 11px; }
-.pack-grid.dense .pack-shape select { padding: 5px 24px 5px 8px; font-size: 12px; }
+.pack-grid.dense .pack-shape { font-size: var(--fs-tag); }
+.pack-grid.dense .pack-shape select { padding: 5px 24px 5px 8px; font-size: var(--fs-mini); }
 .pack-grid.dense .pack-actions { gap: 4px; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); }
-.pack-grid.dense .pack-actions button, .pack-grid.dense .pack-actions a { padding: 5px 8px; font-size: 11.5px; }
-.pack-grid.dense .pack-card .go { padding: 8px; font-size: 14px; margin-top: 5px; }
+.pack-grid.dense .pack-actions button, .pack-grid.dense .pack-actions a { padding: 5px 8px; font-size: var(--fs-tag); }
+.pack-grid.dense .pack-card .go { padding: 8px; font-size: var(--fs-body); margin-top: 5px; }
 .pack-card {
   display: flex; flex-direction: column; gap: 5px;
   padding: 16px; border-radius: 14px;
@@ -1295,14 +1331,14 @@ body.console::after { display: none; }
  * Not in Compact, where the whole point is to fit more on screen and a reserved
  * empty line is the opposite of that.
  */
-.pack-title { font-size: 17px; font-weight: 900; line-height: 1.2; }
+.pack-title { font-size: var(--fs-lead); font-weight: 900; line-height: 1.2; }
 .pack-grid:not(.dense) .pack-title { min-height: 2.4em; }
 .pack-card .played { margin-bottom: 6px; }
 .pack-card .go {
   width: 100%; margin-top: 8px;
   border: none; border-radius: 10px; padding: 12px; cursor: pointer;
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
-  color: #12000c; font-family: inherit; font-weight: 900; font-size: 16px; letter-spacing: 0.01em;
+  color: #12000c; font-family: inherit; font-weight: 900; font-size: var(--fs-field); letter-spacing: 0.01em;
 }
 .pack-card .go:hover { filter: brightness(1.08); }
 .pack-card .go:disabled { opacity: 0.4; cursor: default; filter: none; }
@@ -1318,10 +1354,10 @@ body.console::after { display: none; }
   display: flex; align-items: center; gap: 14px; flex-wrap: wrap; width: 100%;
   padding: 12px 14px; border-radius: 10px; text-align: left; cursor: pointer;
   background: var(--panel); border: 1px solid var(--panel-line); color: var(--ink);
-  font-family: inherit; font-size: 13px;
+  font-family: inherit; font-size: var(--fs-note);
 }
 .gig-head:hover { border-color: var(--hot); }
-.gig-head .an { font-weight: 800; font-size: 15px; }
+.gig-head .an { font-weight: 800; font-size: var(--fs-ctl); }
 .gig-head .gig-more { margin-left: auto; color: var(--hot); font-weight: 700; }
 .gig-body { padding: 10px 14px 4px; display: grid; gap: 8px; }
 
@@ -1329,14 +1365,14 @@ body.console::after { display: none; }
 .panel.generate { border-color: rgba(255, 46, 136, 0.4); background: rgba(255, 46, 136, 0.07); }
 .gen-row { display: flex; gap: 10px; }
 .gen-row input {
-  flex: 1 1 auto; padding: 13px 14px; font-size: 16px; font-weight: 600;
+  flex: 1 1 auto; padding: 13px 14px; font-size: var(--fs-field); font-weight: 600;
   border-radius: 10px; border: 1px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.08); color: var(--ink);
 }
 .gen-row input:focus { outline: 2px solid var(--hot); outline-offset: 1px; }
 .gen-row .go {
   border: none; border-radius: 10px; padding: 13px 22px; cursor: pointer; white-space: nowrap;
-  background: linear-gradient(120deg, var(--hot), var(--hot-2)); color: #12000c; font-weight: 900; font-size: 15px;
+  background: linear-gradient(120deg, var(--hot), var(--hot-2)); color: #12000c; font-weight: 900; font-size: var(--fs-ctl);
 }
 .gen-row .go:disabled { opacity: 0.45; cursor: default; }
 
@@ -1350,15 +1386,15 @@ body.console::after { display: none; }
 .gen-topical { display: flex; gap: 14px; align-items: flex-start; margin-top: 12px; flex-wrap: wrap; }
 .gen-topical .go {
   border: 2px solid var(--hot); border-radius: 10px; padding: 11px 18px; cursor: pointer;
-  background: transparent; color: var(--ink); font-weight: 900; font-size: 14px; white-space: nowrap;
+  background: transparent; color: var(--ink); font-weight: 900; font-size: var(--fs-body); white-space: nowrap;
 }
 .gen-topical .go:disabled { opacity: 0.45; cursor: default; }
 .gen-topical .tiny { flex: 1 1 240px; line-height: 1.5; }
 
-.gen-opts { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-top: 12px; font-size: 13px; color: var(--ink-dim); }
+.gen-opts { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-top: 12px; font-size: var(--fs-note); color: var(--ink-dim); }
 .gen-opts label { display: flex; gap: 6px; align-items: center; font-weight: 700; }
 .gen-opts input, .gen-opts select {
-  padding: 6px 8px; border-radius: 8px; font-size: 13px;
+  padding: 6px 8px; border-radius: 8px; font-size: var(--fs-note);
   background: rgba(255, 255, 255, 0.08); color: var(--ink); border: 1px solid var(--panel-line);
 }
 .gen-opts a { color: var(--cool); }
@@ -1367,16 +1403,16 @@ body.console::after { display: none; }
 .gen-log {
   max-height: 220px; overflow-y: auto;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12.5px; line-height: 1.7; color: var(--ink-dim);
+  font-size: var(--fs-note); line-height: 1.7; color: var(--ink-dim);
   padding: 11px 13px; border-radius: 10px; background: rgba(0, 0, 0, 0.35);
 }
 .gen-good {
-  margin-top: 10px; padding: 13px 15px; border-radius: 10px; font-size: 15px;
+  margin-top: 10px; padding: 13px 15px; border-radius: 10px; font-size: var(--fs-ctl);
   background: rgba(47, 224, 122, 0.16); border: 1px solid var(--good);
 }
 .gen-good a { color: var(--good); font-weight: 800; }
 .gen-bad {
-  margin-top: 10px; padding: 13px 15px; border-radius: 10px; font-size: 15px;
+  margin-top: 10px; padding: 13px 15px; border-radius: 10px; font-size: var(--fs-ctl);
   background: rgba(255, 77, 94, 0.14); border: 1px solid var(--bad);
 }
 .tiny.warn { margin-top: 10px; color: var(--gold); }
@@ -1391,7 +1427,7 @@ body.console::after { display: none; }
 /* ---- bingo track list in the editor */
 .tracklist-edit { display: grid; gap: 6px; }
 .track-edit-row { display: flex; align-items: center; gap: 7px; }
-.track-edit-row .tnum { width: 2.2em; text-align: right; color: var(--ink-dim); font-size: 12px; font-weight: 800; }
+.track-edit-row .tnum { width: 2.2em; text-align: right; color: var(--ink-dim); font-size: var(--fs-mini); font-weight: 800; }
 .track-edit-row .ttitle { flex: 2 1 200px; }
 .track-edit-row .tartist { flex: 1 1 140px; }
 .editor .shortfall { color: var(--bad); }
@@ -1404,7 +1440,7 @@ body.screen { cursor: none; }
 .panel.quiz-generate { border-color: rgba(75, 216, 255, 0.4); background: rgba(75, 216, 255, 0.07); }
 .panel.quiz-generate .gen-row .go { background: linear-gradient(120deg, var(--cool), #7cf76b); color: #04222c; }
 .gen-opts input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--hot); }
-.gen-good ul, .gen-bad ul { font-size: 13px; }
+.gen-good ul, .gen-bad ul { font-size: var(--fs-note); }
 
 /* ---- console tabs
    One tab per thing you can run. Big enough to hit with a thumb, because the
@@ -1427,7 +1463,7 @@ body.screen { cursor: none; }
   background: none;
   color: var(--ink-dim);
   font-family: inherit;
-  font-size: 15px;
+  font-size: var(--fs-ctl);
   font-weight: 800;
   cursor: pointer;
   white-space: nowrap;
@@ -1448,7 +1484,7 @@ body.screen { cursor: none; }
   padding: 0 6px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.12);
-  font-size: 12px;
+  font-size: var(--fs-mini);
   font-weight: 900;
 }
 .tab.on .tabcount { background: var(--hot); color: #fff; }
@@ -1487,7 +1523,7 @@ body.screen { cursor: none; }
   display: grid; place-items: center;
   min-height: 36px; padding: 0 10px;
   border-radius: 10px;
-  font-family: inherit; font-size: 13px; font-weight: 800; line-height: 1;
+  font-family: inherit; font-size: var(--fs-note); font-weight: 800; line-height: 1;
   text-decoration: none; cursor: pointer;
   color: var(--ink);
   background: rgba(255, 255, 255, 0.08);
@@ -1511,7 +1547,7 @@ body.screen { cursor: none; }
    until the day it has gone. */
 .panel.backup-warn { border-color: var(--gold); background: rgba(255, 210, 63, 0.12); }
 .panel.backup-warn h3 { color: var(--gold); }
-.panel.backup-warn .tiny { font-size: 13.5px; line-height: 1.6; color: var(--ink); }
+.panel.backup-warn .tiny { font-size: var(--fs-body); line-height: 1.6; color: var(--ink); }
 
 /* ---- reading a pack without leaving the console */
 .overlay {
@@ -1539,7 +1575,7 @@ body.screen { cursor: none; }
   border-bottom: 1px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.03);
 }
-.sheet-title { font-size: 19px; font-weight: 900; margin-bottom: 3px; }
+.sheet-title { font-size: var(--fs-head); font-weight: 900; margin-bottom: 3px; }
 .sheet-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 .sheet-actions .minor { cursor: pointer; }
 .sheet-body { flex: 1 1 auto; overflow-y: auto; padding: 16px 18px 26px; }
@@ -1547,7 +1583,7 @@ body.screen { cursor: none; }
 .pv-round-head {
   display: flex; align-items: baseline; gap: 10px;
   margin: 18px 0 10px;
-  font-size: 16px; font-weight: 900;
+  font-size: var(--fs-field); font-weight: 900;
   padding-bottom: 7px;
   border-bottom: 1px solid var(--panel-line);
 }
@@ -1555,16 +1591,16 @@ body.screen { cursor: none; }
 .pv-round:first-child .pv-round-head { margin-top: 0; }
 
 .pv-q { padding: 11px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-.pv-prompt { display: flex; gap: 9px; font-size: 15px; font-weight: 700; line-height: 1.35; margin-bottom: 8px; }
+.pv-prompt { display: flex; gap: 9px; font-size: var(--fs-ctl); font-weight: 700; line-height: 1.35; margin-bottom: 8px; }
 .pv-num {
   flex: 0 0 auto; min-width: 1.7em;
-  color: var(--ink-dim); font-weight: 900; font-size: 13px;
+  color: var(--ink-dim); font-weight: 900; font-size: var(--fs-note);
 }
 .pv-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-left: calc(1.7em + 9px); }
 .pv-opt {
   display: flex; align-items: center; gap: 8px;
   padding: 6px 9px; border-radius: 7px;
-  font-size: 13.5px;
+  font-size: var(--fs-note);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid transparent;
   color: var(--ink-dim);
@@ -1575,17 +1611,17 @@ body.screen { cursor: none; }
   color: var(--ink);
   font-weight: 800;
 }
-.pv-letter { font-weight: 900; font-size: 11px; opacity: 0.7; }
+.pv-letter { font-weight: 900; font-size: var(--fs-tag); opacity: 0.7; }
 .pv-note, .pv-cue {
   margin: 7px 0 0 calc(1.7em + 9px);
-  font-size: 12.5px; color: var(--ink-dim); line-height: 1.5;
+  font-size: var(--fs-note); color: var(--ink-dim); line-height: 1.5;
 }
 .pv-cue { color: var(--gold); }
 
 .pv-tracks { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 4px; }
-.pv-track { display: flex; align-items: baseline; gap: 8px; padding: 6px 9px; border-radius: 7px; background: rgba(255,255,255,0.04); font-size: 13.5px; }
+.pv-track { display: flex; align-items: baseline; gap: 8px; padding: 6px 9px; border-radius: 7px; background: rgba(255,255,255,0.04); font-size: var(--fs-note); }
 .pv-track .pv-tt { font-weight: 700; }
-.pv-track .pv-ta { margin-left: auto; color: var(--ink-dim); font-size: 12px; }
+.pv-track .pv-ta { margin-left: auto; color: var(--ink-dim); font-size: var(--fs-mini); }
 
 /* The title doubles as the way in to reading it. */
 button.pack-title {
@@ -1603,7 +1639,7 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
 .pv-warn {
   margin-bottom: 16px; padding: 13px 15px; border-radius: 11px;
   background: rgba(255, 210, 63, 0.12); border: 1px solid rgba(255, 210, 63, 0.5);
-  font-size: 13.5px; line-height: 1.55;
+  font-size: var(--fs-body); line-height: 1.55;
 }
 .pv-warn ul { margin: 7px 0 0; padding-left: 0; list-style: none; }
 
@@ -1625,7 +1661,7 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
 .pv-flag-text { flex: 1 1 auto; }
 .pv-tick {
   flex: 0 0 auto; cursor: pointer;
-  font: inherit; font-size: 12px; font-weight: 700;
+  font: inherit; font-size: var(--fs-mini); font-weight: 700;
   padding: 4px 11px; border-radius: 999px;
   color: var(--ink); background: rgba(255, 255, 255, 0.09);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -1637,7 +1673,7 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
    undoable, and rewriting a question means wanting its flag back. */
 .pv-cleared { margin-top: 9px; }
 .pv-cleared-toggle {
-  cursor: pointer; font: inherit; font-size: 12px;
+  cursor: pointer; font: inherit; font-size: var(--fs-mini);
   padding: 0; border: 0; background: none; color: var(--dim);
   text-decoration: underline; text-underline-offset: 3px;
 }
@@ -1705,8 +1741,8 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
 /* On the projector the possessive is the quieter half but still has to carry
    to the back of a room, so it keeps more of the size than it does elsewhere. */
 .screen .brand-who { font-size: 0.66em; color: var(--ink); opacity: 0.82; }
-.console .brand-name { font-size: 18px; }
-.host .brand-name, .editor .brand-name { font-size: 15px; }
+.console .brand-name { font-size: var(--fs-lead); }
+.host .brand-name, .editor .brand-name { font-size: var(--fs-ctl); }
 /* The owner page drops the logo and the name straight into the slot rather
    than wrapping them in a `.brand` link, so the slot has to be the flex row —
    otherwise the name falls under the mark the moment anything shares the bar
@@ -1743,10 +1779,10 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
   padding-bottom: 4px;
   opacity: 0.85;
 }
-.phone-brand .brand-name { font-size: 14px; letter-spacing: 0.02em; }
+.phone-brand .brand-name { font-size: var(--fs-body); letter-spacing: 0.02em; }
 
 @media (max-width: 430px) {
-  .console .brand-name { font-size: 16px; }
+  .console .brand-name { font-size: var(--fs-field); }
 }
 
 /* ---- renaming from the read sheet
@@ -1754,7 +1790,7 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
    something to read rather than a form to fill in. */
 input.sheet-title {
   width: 100%;
-  font-size: 19px;
+  font-size: var(--fs-head);
   font-weight: 900;
   font-family: inherit;
   color: var(--ink);
@@ -1770,7 +1806,7 @@ input.sheet-title:focus { outline: none; border-color: var(--hot); background: r
 input.pv-round-name {
   flex: 1 1 auto;
   min-width: 0;
-  font-size: 16px;
+  font-size: var(--fs-field);
   font-weight: 900;
   font-family: inherit;
   color: var(--ink);
@@ -1786,7 +1822,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .sheet-actions .go {
   border: none; border-radius: 10px; padding: 9px 16px; cursor: pointer;
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
-  color: #12000c; font-weight: 900; font-size: 13px;
+  color: #12000c; font-weight: 900; font-size: var(--fs-note);
 }
 .sheet-actions .go:disabled { opacity: 0.6; cursor: default; }
 
@@ -1799,7 +1835,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   padding: 11px 12px;
   border-radius: 10px;
   text-decoration: none;
-  font-size: 14px;
+  font-size: var(--fs-body);
   font-weight: 900;
   background: #1db954;           /* Spotify green — instantly recognisable */
   color: #04240f;
@@ -1809,7 +1845,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .pv-playlist {
   display: inline-block;
   margin: 2px 0 8px;
-  font-size: 12.5px;
+  font-size: var(--fs-note);
   font-weight: 700;
   color: #1db954;
 }
@@ -1824,7 +1860,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   border-radius: 10px; border: 1px solid var(--panel-line);
   background: rgba(0, 0, 0, 0.3); color: var(--ink);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 13px; line-height: 1.6; resize: vertical;
+  font-size: var(--fs-note); line-height: 1.6; resize: vertical;
 }
 #impText:focus { outline: 2px solid #1db954; outline-offset: 1px; }
 
@@ -1846,7 +1882,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   color-scheme: dark;
   padding: 8px 34px 8px 11px;
   border-radius: 10px;
-  font-family: inherit; font-size: 13px; font-weight: 800;
+  font-family: inherit; font-size: var(--fs-note); font-weight: 800;
   color: var(--ink);
   background-color: rgba(255, 255, 255, 0.07);
   /* the chevron, then a gradient block behind it on the right-hand end */
@@ -1874,7 +1910,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
    shape is a decision about tonight, not about the pack. */
 .pack-shape {
   display: flex; align-items: center; gap: 8px; margin: 8px 0 2px;
-  font-size: 12px; color: var(--ink-dim); font-weight: 800;
+  font-size: var(--fs-mini); color: var(--ink-dim); font-weight: 800;
   text-transform: uppercase; letter-spacing: 0.06em;
 }
 .pack-shape select { flex: 1 1 auto; min-width: 0; }
@@ -1885,7 +1921,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   border-color: rgba(47, 224, 122, 0.5);
   background: rgba(47, 224, 122, 0.09);
 }
-.panel.done-banner .done-text { flex: 1 1 auto; font-size: 14px; line-height: 1.55; }
+.panel.done-banner .done-text { flex: 1 1 auto; font-size: var(--fs-body); line-height: 1.55; }
 .panel.done-banner .done-text a { color: var(--good); font-weight: 700; }
 .panel.done-banner .done-close { flex: 0 0 auto; }
 /* It worked, but something in it needs reading. A green box you have to read to
@@ -1954,13 +1990,13 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .keywho.shut { display: none; }
 .keywho span {
   padding: 3px 8px; border-radius: 999px;
-  font-size: 12px; font-weight: 700;
+  font-size: var(--fs-mini); font-weight: 700;
   background: rgba(255, 255, 255, 0.07); color: var(--ink-dim);
   border: 1px solid var(--panel-line);
 }
 .keywho span.right { color: var(--good); border-color: rgba(47, 224, 122, 0.45); background: rgba(47, 224, 122, 0.12); }
 .keywho.none { margin-left: 0; align-items: center; }
-.keywho.none b { font-size: 12px; color: var(--gold); margin-right: 2px; }
+.keywho.none b { font-size: var(--fs-mini); color: var(--gold); margin-right: 2px; }
 
 /* ---- the phone */
 .camera-btn {
@@ -1970,7 +2006,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   border-radius: 50%;
   border: 1px solid var(--panel-line);
   background: linear-gradient(140deg, var(--hot), var(--hot-2));
-  font-size: 25px; line-height: 1;
+  font-size: 26px; line-height: 1;
   cursor: pointer;
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5);
   z-index: 40;
@@ -1993,7 +2029,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .cam-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .cam-close {
   background: none; border: 0; color: var(--ink-dim);
-  font-size: 20px; cursor: pointer; padding: 4px 8px;
+  font-size: var(--fs-sub); cursor: pointer; padding: 4px 8px;
 }
 .cam-warn { color: var(--gold); }
 .cam-pick {
@@ -2017,13 +2053,13 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
    completely. */
 .cam-looks-head {
   margin: 14px 0 8px;
-  font-size: 13px; font-weight: 800; letter-spacing: 0.06em;
+  font-size: var(--fs-note); font-weight: 800; letter-spacing: 0.06em;
   text-transform: uppercase; color: var(--gold);
 }
 /* Directly under the photo, so the top of its own margin is the gap. */
 .cam-send {
   width: 100%; margin-top: 12px; padding: 16px; cursor: pointer;
-  font: inherit; font-size: 17px; font-weight: 900;
+  font: inherit; font-size: var(--fs-lead); font-weight: 900;
   border: 0; border-radius: 14px; color: #fff;
   background: linear-gradient(140deg, var(--hot), var(--hot-2));
 }
@@ -2045,7 +2081,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 }
 .host-photo img { display: block; width: 100%; height: 84px; object-fit: cover; }
 .host-photo .who {
-  display: block; font-size: 11px; font-weight: 700; color: var(--ink);
+  display: block; font-size: var(--fs-tag); font-weight: 700; color: var(--ink);
   padding: 4px 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 /* Says what a tap does before it does it. */
@@ -2092,7 +2128,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   display: grid; place-items: center;
   border-radius: 50%;
   background: var(--good); color: #06210f;
-  font-weight: 900; font-size: 15px;
+  font-weight: 900; font-size: var(--fs-ctl);
   opacity: 0; transition: opacity 140ms, transform 140ms;
 }
 .answer-btn.picked { border-color: var(--good); background: rgba(47, 224, 122, 0.14); }
@@ -2103,7 +2139,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   width: 100%;
   padding: 18px;
   cursor: pointer;
-  font: inherit; font-size: 19px; font-weight: 900;
+  font: inherit; font-size: var(--fs-head); font-weight: 900;
   color: #fff; border: 0; border-radius: 16px;
   background: linear-gradient(140deg, var(--hot), var(--hot-2));
 }
@@ -2226,7 +2262,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .ad-venue-in {
   display: block; width: 100%; margin-top: 6px;
   background: none; border: 0; color: var(--ink-dim);
-  font: inherit; font-size: 13px; padding: 0;
+  font: inherit; font-size: var(--fs-note); padding: 0;
 }
 .ad-slide {
   padding: 14px; margin-bottom: 12px;
@@ -2238,13 +2274,13 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .ad-slide input {
   width: 100%; padding: 10px 11px; border-radius: 9px;
   background: rgba(0, 0, 0, 0.3); color: var(--ink);
-  border: 1px solid var(--panel-line); font: inherit; font-size: 14px;
+  border: 1px solid var(--panel-line); font: inherit; font-size: var(--fs-body);
 }
 .ad-slide .ad-h { font-weight: 800; }
 
 /* ---- the picker on the control view */
 .ad-set {
-  margin: 14px 0 6px; font-size: 12px; font-weight: 800;
+  margin: 14px 0 6px; font-size: var(--fs-mini); font-weight: 800;
   letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim);
 }
 .ad-pick {
@@ -2254,9 +2290,9 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   background: rgba(255, 255, 255, 0.07); color: var(--ink);
   border: 1px solid var(--panel-line); font: inherit;
 }
-.ad-pick-head { font-weight: 700; font-size: 15px; }
+.ad-pick-head { font-weight: 700; font-size: var(--fs-ctl); }
 .ad-pick-tag {
-  flex: 0 0 auto; font-size: 11px; font-weight: 800; letter-spacing: 0.1em;
+  flex: 0 0 auto; font-size: var(--fs-tag); font-weight: 800; letter-spacing: 0.1em;
   padding: 3px 8px; border-radius: 999px;
   background: rgba(75, 216, 255, 0.2); color: var(--cool);
 }
@@ -2266,7 +2302,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 
 .night { margin-bottom: 26px; }
 .night-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px; }
-.night-head h3 { margin: 0; font-size: 18px; }
+.night-head h3 { margin: 0; font-size: var(--fs-lead); }
 .night-head .minor { margin-left: auto; }
 
 .night-grid {
@@ -2280,7 +2316,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 }
 .cphoto img { display: block; width: 100%; height: 150px; object-fit: cover; }
 .cphoto figcaption {
-  font-size: 12px; font-weight: 700; padding: 7px 9px 8px;
+  font-size: var(--fs-mini); font-weight: 700; padding: 7px 9px 8px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 /* A green edge means it is in the private repo and safe from a restart. */
@@ -2288,7 +2324,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .cphoto:not(.filed)::after {
   content: 'not filed';
   position: absolute; top: 8px; right: 8px;
-  font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+  font-size: var(--fs-tag); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
   padding: 3px 7px; border-radius: 999px;
   background: rgba(255, 210, 63, 0.9); color: #221a00;
 }
@@ -2299,7 +2335,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 }
 .cphoto:hover .cphoto-acts, .cphoto:focus-within .cphoto-acts { opacity: 1; }
 .cphoto-acts button {
-  cursor: pointer; font: inherit; font-size: 12px; font-weight: 700;
+  cursor: pointer; font: inherit; font-size: var(--fs-mini); font-weight: 700;
   padding: 6px 12px; border-radius: 999px;
   color: var(--ink); background: rgba(10, 10, 18, 0.86);
   border: 1px solid var(--panel-line);
@@ -2415,7 +2451,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 }
 .answer-said .answer-words { font-weight: 900; }
 .screen .answer-said { font-size: 4.6vh; }
-.host .answer-said { font-size: 20px; margin: 4px 0 10px; }
+.host .answer-said { font-size: var(--fs-sub); margin: 4px 0 10px; }
 .host .answer-said .answer-letter { border-radius: 10px; }
 
 /* The phone's keyboard. Five across, not nine like the projector: nine keys on
@@ -2472,7 +2508,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   transition: opacity 160ms, border-color 160ms;
 }
 .gen-round.off { opacity: 0.5; }
-.gen-round-name { flex: 1 1 auto; font-weight: 700; font-size: 13px; }
+.gen-round-name { flex: 1 1 auto; font-weight: 700; font-size: var(--fs-note); }
 .gen-round input[type="number"] { width: 52px; text-align: center; font-weight: 800; }
 
 /* ========================================================= picture reveals
@@ -2566,7 +2602,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .inv-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .inv-who { font-weight: 700; }
 .inv-status {
-  font-size: 11px;
+  font-size: var(--fs-tag);
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -2578,7 +2614,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .inv-row.status-paid .inv-status { background: rgba(47, 224, 122, 0.2); color: var(--good); }
 .inv-row.status-cancelled { opacity: 0.55; }
 .inv-row.status-cancelled .inv-amount { text-decoration: line-through; }
-.inv-amount { font-weight: 900; font-size: 19px; margin-left: auto; }
+.inv-amount { font-weight: 900; font-size: var(--fs-head); margin-left: auto; }
 .inv-actions { display: flex; gap: 6px; align-items: center; }
 .inv-actions a.minor { text-decoration: none; display: inline-flex; align-items: center; }
 
@@ -2597,14 +2633,14 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .inv-group h4 {
   grid-column: 1 / -1;
   margin: 0;
-  font-size: 12px;
+  font-size: var(--fs-mini);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-dim);
 }
-.inv-field { display: grid; gap: 4px; font-size: 13px; font-weight: 700; }
+.inv-field { display: grid; gap: 4px; font-size: var(--fs-note); font-weight: 700; }
 .inv-field.wide, .inv-group .wide, .inv-group.wide { grid-column: 1 / -1; }
-.inv-field span { color: var(--ink-dim); font-size: 12px; }
+.inv-field span { color: var(--ink-dim); font-size: var(--fs-mini); }
 .inv-field input[type="checkbox"] { justify-self: start; width: 20px; height: 20px; }
 
 .inv-lines { display: grid; gap: 6px; grid-column: 1 / -1; }
@@ -2612,7 +2648,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .inv-line [data-desc] { flex: 1 1 auto; min-width: 0; }
 /* Wide enough for "1,250.50" and no wider — it is a number, not a sentence. */
 .inv-line [data-amount] { flex: 0 0 110px; text-align: right; font-weight: 800; }
-.inv-total { grid-column: 1 / -1; font-size: 15px; text-align: right; }
+.inv-total { grid-column: 1 / -1; font-size: var(--fs-ctl); text-align: right; }
 
 .inv-customers { display: grid; gap: 6px; }
 .inv-cust {
@@ -2653,7 +2689,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   display: flex; flex-wrap: wrap; gap: 22px 40px;
   margin-bottom: 12px;
 }
-.acct-val { font-size: 17px; font-weight: 800; margin-top: 3px; }
+.acct-val { font-size: var(--fs-lead); font-weight: 800; margin-top: 3px; }
 .acct-val.good { color: var(--good); }
 .acct-val.bad { color: var(--bad); }
 .acct-val.brand-preview {
@@ -2663,7 +2699,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .acct-note { margin-top: 4px; }
 .acct-note.bad { color: var(--bad); }
 .acct-actions { margin-top: 14px; }
-.acct-missing { margin: 6px 0 0; padding-left: 20px; font-size: 12.5px; color: var(--ink-dim); }
+.acct-missing { margin: 6px 0 0; padding-left: 20px; font-size: var(--fs-note); color: var(--ink-dim); }
 .acct-missing li { margin-bottom: 4px; }
 
 /* The only real switches on the page, so they are the only things that look
@@ -2687,7 +2723,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .acct-toggle { align-items: center; justify-content: space-between; cursor: default; }
 .acct-toggle-what { flex: 1 1 auto; }
 .feat-switch { flex: 0 0 auto; }
-.feat-switch .hat-half { padding: 6px 13px; font-size: 11.5px; }
+.feat-switch .hat-half { padding: 6px 13px; font-size: var(--fs-tag); }
 /* A tier above yours gets the tab bar's "+" rather than a switch reading Off.
    You did not turn it off — you do not have it, and telling those two apart is
    the whole point of the three states. */
@@ -2698,7 +2734,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   border-radius: 999px;
   border: 1px dashed var(--panel-line);
   color: var(--ink-dim);
-  font-weight: 900; font-size: 15px; line-height: 1;
+  font-weight: 900; font-size: var(--fs-ctl); line-height: 1;
 }
 
 .acct-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
@@ -2726,7 +2762,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 }
 .tier-yours, .tier-price {
   margin-left: auto;
-  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 800;
+  font-size: var(--fs-tag); letter-spacing: 0.12em; text-transform: uppercase; font-weight: 800;
   padding: 3px 9px; border-radius: 999px;
 }
 .tier-yours { background: rgba(47, 224, 122, 0.18); color: var(--good); }
@@ -2763,7 +2799,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   border: 1px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.05);
   color: var(--ink-dim);
-  font: inherit; font-size: 13px; font-weight: 800;
+  font: inherit; font-size: var(--fs-note); font-weight: 800;
   cursor: pointer;
 }
 .scheme-swatch:hover:not(:disabled) { background: rgba(255, 255, 255, 0.09); color: var(--ink); }
@@ -3151,7 +3187,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .sign-in-brand { display: flex; align-items: center; gap: 10px; justify-content: center; }
 .sign-in h1 { margin: 0; text-align: center; font-size: 30px; }
 .sign-in form { display: grid; gap: 12px; }
-.sign-in label { display: grid; gap: 5px; font-size: 13px; font-weight: 700; color: var(--ink-dim); }
+.sign-in label { display: grid; gap: 5px; font-size: var(--fs-note); font-weight: 700; color: var(--ink-dim); }
 .sign-in input {
   padding: 13px;
   border-radius: 12px;
@@ -3159,7 +3195,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   background: rgba(255, 255, 255, 0.06);
   color: var(--ink);
   font: inherit;
-  font-size: 16px; /* iOS zooms the page in on anything smaller */
+  font-size: var(--fs-field); /* iOS zooms the page in on anything smaller */
 }
 .sign-in input:focus { outline: none; border-color: var(--hot); }
 .sign-in button.go {
@@ -3170,7 +3206,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   color: #12000c;
   font: inherit;
   font-weight: 900;
-  font-size: 16px;
+  font-size: var(--fs-field);
   cursor: pointer;
 }
 .sign-in button.go:disabled { opacity: 0.6; cursor: default; }
@@ -3180,7 +3216,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   background: rgba(255, 77, 94, 0.14);
   border: 1px solid rgba(255, 77, 94, 0.4);
   color: var(--ink);
-  font-size: 14px;
+  font-size: var(--fs-body);
 }
 .sign-in .tiny { text-align: center; }
 .subs { display: grid; gap: 8px; }
@@ -3353,7 +3389,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   background: none;
   color: var(--ink-dim);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--fs-mini);
   font-weight: 700;
   cursor: pointer;
 }
@@ -3379,7 +3415,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   grid-auto-rows: 1fr;
   gap: 6px;
   margin: 0;
-  font-size: 12px;
+  font-size: var(--fs-mini);
   line-height: 1.3;
 }
 /* THE CHIP'S OWN FILL AND BORDER MOVE TO A PSEUDO-ELEMENT, which looks like
@@ -3498,7 +3534,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   background: none;
   color: var(--ink-dim);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-note);
   cursor: pointer;
 }
 .report-q:hover:not(:disabled) { color: var(--ink); border-color: var(--gold); }
@@ -3533,7 +3569,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   background: rgba(255, 210, 63, 0.14);
   border-bottom: 1px solid rgba(255, 210, 63, 0.45);
   color: var(--ink);
-  font-size: 13px;
+  font-size: var(--fs-note);
 }
 .acting-bar button {
   padding: 5px 12px;
@@ -3542,7 +3578,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   background: none;
   color: var(--gold);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--fs-mini);
   font-weight: 800;
   cursor: pointer;
 }
@@ -3570,7 +3606,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   background: none;
   color: var(--ink-dim);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--fs-mini);
   font-weight: 800;
   letter-spacing: 0.04em;
   cursor: pointer;
@@ -3604,7 +3640,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   padding: 5px 6px;
   border: none; border-radius: 999px;
   background: none; color: var(--ink-dim);
-  font: inherit; font-size: 11px; font-weight: 800;
+  font: inherit; font-size: var(--fs-tag); font-weight: 800;
   cursor: pointer;
 }
 .tier-preview .tier-half:hover:not(.live) { background: rgba(255, 255, 255, 0.1); color: var(--ink); }
@@ -3622,7 +3658,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 /* On a phone the topbar is already tight, so the switch loses its padding
    before it loses its words — "Owner" and "Quizmaster" are the whole point. */
 @media (max-width: 560px) {
-  .hat-switch .hat-half { padding: 6px 10px; font-size: 11px; }
+  .hat-switch .hat-half { padding: 6px 10px; font-size: var(--fs-tag); }
 }
 
 /* The record of what the owner did while inside somebody's account. Small and
@@ -3632,7 +3668,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .support-row {
   display: flex; gap: 12px; align-items: baseline;
   padding: 6px 0; border-top: 1px solid var(--panel-line);
-  font-size: 12.5px;
+  font-size: var(--fs-note);
 }
 .support-row .tiny { flex: 0 0 auto; min-width: 132px; }
 
@@ -3645,7 +3681,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   border-radius: 12px;
   border: 1px solid rgba(255, 210, 63, 0.5);
   background: rgba(255, 210, 63, 0.1);
-  font-size: 13.5px;
+  font-size: var(--fs-note);
 }
 
 /* The suggestion box. Plain and quick: the point is that sending one costs
@@ -3659,7 +3695,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   width: 100%; margin-top: 10px; padding: 11px 13px;
   border-radius: 12px; border: 1px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.05); color: var(--ink);
-  font: inherit; font-size: 14px; resize: vertical;
+  font: inherit; font-size: var(--fs-body); resize: vertical;
 }
 .sugg-text:focus { outline: none; border-color: var(--hot); }
 /* Every `.go` in this stylesheet is scoped to the panel it sits in — there is
@@ -3668,7 +3704,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .sugg-send {
   border: none; border-radius: 10px; padding: 11px 20px; cursor: pointer;
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
-  color: #12000c; font-family: inherit; font-weight: 900; font-size: 14.5px;
+  color: #12000c; font-family: inherit; font-weight: 900; font-size: var(--fs-ctl);
 }
 .sugg-send:hover { filter: brightness(1.08); }
 
@@ -3684,9 +3720,9 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 }
 .sugg-item.done { opacity: 0.62; }
 .sugg-head { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
-.sugg-said { margin-top: 7px; font-size: 15px; line-height: 1.5; }
+.sugg-said { margin-top: 7px; font-size: var(--fs-ctl); line-height: 1.5; }
 .sugg-kind-tag {
-  font-size: 10.5px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase;
+  font-size: var(--fs-tag); font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase;
   padding: 3px 8px; border-radius: 999px;
   background: rgba(255, 255, 255, 0.1); color: var(--ink-dim);
 }
@@ -3702,7 +3738,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   margin-top: 10px; padding: 9px 13px;
   border-left: 3px solid var(--hot);
   background: rgba(255, 255, 255, 0.04); border-radius: 0 10px 10px 0;
-  font-size: 14px; line-height: 1.5;
+  font-size: var(--fs-body); line-height: 1.5;
 }
 .sugg-acts { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
 .sugg-compose { margin-top: 11px; }
@@ -3710,13 +3746,13 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   width: 100%; padding: 11px 13px;
   border-radius: 12px; border: 1px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.05); color: var(--ink);
-  font: inherit; font-size: 14px; resize: vertical;
+  font: inherit; font-size: var(--fs-body); resize: vertical;
 }
 .sugg-draft:focus { outline: none; border-color: var(--hot); }
 .sugg-compose .go {
   border: none; border-radius: 10px; padding: 10px 18px; cursor: pointer;
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
-  color: #12000c; font-family: inherit; font-weight: 900; font-size: 14px;
+  color: #12000c; font-family: inherit; font-weight: 900; font-size: var(--fs-body);
 }
 .pile.on {
   background: linear-gradient(120deg, var(--hot), var(--hot-2)) !important;
@@ -3726,7 +3762,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 /* What a quizmaster has sent, and what came back. */
 .sugg-mine-row {
   padding: 10px 0; border-top: 1px solid var(--panel-line);
-  font-size: 14px; line-height: 1.5;
+  font-size: var(--fs-body); line-height: 1.5;
 }
 
 /* Whether they have opened a reply. Deliberately "opened" rather than "read":
@@ -3745,7 +3781,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   width: 100%; padding: 11px 13px;
   border-radius: 12px; border: 1px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.05); color: var(--ink);
-  font: inherit; font-size: 13.5px; resize: vertical;
+  font: inherit; font-size: var(--fs-note); resize: vertical;
 }
 .house-text:focus { outline: none; border-color: var(--hot); }
 
@@ -3796,7 +3832,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
   color: #12000c;
   font-weight: 900;
-  font-size: 15px;
+  font-size: var(--fs-ctl);
   text-decoration: none;
 }
 .own-open:hover { filter: brightness(1.08); }
@@ -3825,7 +3861,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   padding: 14px;
 }
 .own-fig b { display: block; font-size: 26px; font-weight: 900; line-height: 1.1; }
-.own-fig span { display: block; margin-top: 4px; font-size: 12px; opacity: 0.72; }
+.own-fig span { display: block; margin-top: 4px; font-size: var(--fs-mini); opacity: 0.72; }
 /* Spending more than is arriving is the one figure that should catch the eye. */
 .own-fig.bad { border-color: var(--bad); }
 .own-fig.bad b { color: var(--bad); }
@@ -3894,13 +3930,13 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .own-row-num { flex: 0 0 auto; text-align: right; white-space: nowrap; }
 /* A room with a game actually in it — the reason this tab exists. */
 .own-row.live { border-color: rgba(255, 200, 90, 0.5); }
-.own-live { color: #ffc85a; font-weight: 900; font-size: 13px; }
+.own-live { color: #ffc85a; font-weight: 900; font-size: var(--fs-note); }
 .own-code {
   margin-left: 8px; padding: 1px 7px; border-radius: 6px;
-  background: rgba(255,255,255,0.08); font-weight: 900; letter-spacing: 0.08em; font-size: 12px;
+  background: rgba(255,255,255,0.08); font-weight: 900; letter-spacing: 0.08em; font-size: var(--fs-mini);
 }
 .own-flag {
-  margin-left: 8px; padding: 1px 7px; border-radius: 999px; font-size: 11px;
+  margin-left: 8px; padding: 1px 7px; border-radius: 999px; font-size: var(--fs-tag);
   background: rgba(255, 200, 90, 0.18); color: #ffc85a;
 }
 .own-flag.bad { background: rgba(255, 90, 90, 0.18); color: var(--bad); }
@@ -3924,14 +3960,14 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   opacity: 0.92;
 }
 .pack-card.locked .pack-title { opacity: 0.9; }
-.shop-price { font-size: 20px; font-weight: 900; opacity: 1; margin-top: 4px; }
+.shop-price { font-size: var(--fs-sub); font-weight: 900; opacity: 1; margin-top: 4px; }
 .pack-card.locked .go.buy {
   width: 100%; margin-top: 10px;
   border: none; border-radius: 10px; padding: 11px; cursor: pointer;
   /* Not the app's own red-into-orange: that gradient is Launch, and one shape
      and one colour for "start the night" is worth more than a loud shop. */
   background: rgba(255,255,255,0.1); color: var(--ink);
-  font-family: inherit; font-weight: 900; font-size: 15px;
+  font-family: inherit; font-weight: 900; font-size: var(--fs-ctl);
 }
 .pack-card.locked .go.buy:hover { background: rgba(255,255,255,0.16); }
 .game-section .shop-head { margin-top: 26px; }
@@ -3953,7 +3989,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
  */
 .acct-toggle.content { background: rgba(255, 255, 255, 0.03); }
 .feat-said {
-  font-size: 11px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase;
+  font-size: var(--fs-tag); font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--ink-dim); white-space: nowrap; padding: 6px 10px;
 }
 
@@ -3967,14 +4003,14 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .panel.ask-pack textarea {
   width: 100%; margin-top: 10px; padding: 10px; border-radius: 10px;
   background: var(--panel-2, rgba(255,255,255,0.04)); color: var(--ink);
-  border: 1px solid var(--panel-line); font: inherit; font-size: 14px; resize: vertical;
+  border: 1px solid var(--panel-line); font: inherit; font-size: var(--fs-body); resize: vertical;
 }
 .panel.ask-pack.locked { border-style: dashed; opacity: 0.85; }
 /* Every .go rule in this stylesheet is panel-scoped, so a new panel gets a
  * plain grey button unless it says otherwise. Same trap the own-packs link hit. */
 .panel.ask-pack .go {
   border: none; border-radius: 10px; padding: 11px 20px; cursor: pointer; white-space: nowrap;
-  background: linear-gradient(120deg, var(--hot), var(--hot-2)); color: #12000c; font-weight: 900; font-size: 14px;
+  background: linear-gradient(120deg, var(--hot), var(--hot-2)); color: #12000c; font-weight: 900; font-size: var(--fs-body);
 }
 .panel.ask-pack .go:disabled { opacity: 0.45; cursor: default; }
 
@@ -3988,7 +4024,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .panel.joinq .go {
   margin-top: 10px; width: 100%; border: none; border-radius: 10px; padding: 13px;
   background: linear-gradient(120deg, var(--hot), var(--hot-2)); color: #12000c;
-  font-weight: 900; font-size: 16px; cursor: pointer;
+  font-weight: 900; font-size: var(--fs-field); cursor: pointer;
 }
 .plist + .tidy, button.tidy { margin-top: 10px; width: 100%; }
 
@@ -4026,7 +4062,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .lb-game { flex: 0 0 auto; }
 .lb-search { position: relative; flex: 1 1 260px; min-width: 200px; }
 .lb-text {
-  width: 100%; padding: 13px 14px; font: inherit; font-size: 17px;
+  width: 100%; padding: 13px 14px; font: inherit; font-size: var(--fs-lead);
   color: inherit; background: var(--panel); border: 1px solid var(--panel-line);
   border-radius: 10px;
 }
@@ -4052,7 +4088,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
  * fill is scoped to `.pack-card .go`, so a Launch button anywhere else came
  * out grey — which on the loudest control on the page reads as disabled. */
 .lb-go {
-  width: 100%; padding: 18px; font-size: 19px; font-weight: 900;
+  width: 100%; padding: 18px; font-size: var(--fs-head); font-weight: 900;
   border: none; border-radius: 12px; cursor: pointer;
   font-family: inherit; letter-spacing: 0.01em; color: #12000c;
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
@@ -4066,11 +4102,11 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    types it, and somebody who does not is the person these are for. */
 .lb-quick { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
 .lb-quick:not(:empty) { margin-top: 12px; }
-.lb-quick-go { display: grid; gap: 3px; padding: 15px 16px; font-size: 17px; }
+.lb-quick-go { display: grid; gap: 3px; padding: 15px 16px; font-size: var(--fs-lead); }
 .lb-quick-title { font-weight: 900; }
 /* Why this one is being offered, in the button's own dark ink rather than the
    page's grey — on a gradient fill a `.tiny` grey is close to invisible. */
-.lb-quick-why { font-size: 12px; font-weight: 700; opacity: 0.72; }
+.lb-quick-why { font-size: var(--fs-mini); font-weight: 700; opacity: 0.72; }
 
 /* Who is already in the shared portrait library. Names rather than pictures:
    the job is spotting "michael-jackson" next to "mj", which is a reading job. */
@@ -4078,7 +4114,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .pic-lib summary { cursor: pointer; opacity: 0.8; }
 .lib-names { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .lib-name {
-  font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 999px;
+  font-size: var(--fs-mini); font-weight: 700; padding: 4px 9px; border-radius: 999px;
   background: var(--panel); border: 1px solid var(--panel-line);
 }
 /* A stand-in is not a drawing anybody paid for, so it reads quieter. */
