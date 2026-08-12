@@ -192,3 +192,33 @@ function explain(which, status, body) {
   if (status === 429) return `${which} is rate limiting; try again in a minute.`;
   return said || `${which} answered ${status}.`;
 }
+
+/**
+ * What the reset email says.
+ *
+ * Out here rather than inline in the route so it can be TESTED, which it is —
+ * the first version went out as "Set a new password for undefined", because
+ * the route read `.name` off a function that returns a string. An email with
+ * `undefined` in the subject line is a phishing email as far as anybody
+ * reading it is concerned, and it is the one message this app sends to
+ * somebody who is already locked out and already unsure.
+ *
+ * Plain text on purpose: it is four lines, it must survive every mail client
+ * there is, and an HTML password-reset email with a styled button is the exact
+ * shape people are told to distrust. The link is written out so it can be read
+ * before it is clicked.
+ */
+export function resetEmail({ name, link }) {
+  const app = String(name || '').trim() || 'Quizporium';
+  return {
+    subject: `Set a new password for ${app}`,
+    text: [
+      `Somebody asked to reset the password for this address on ${app}.`,
+      '',
+      'Open this link to set a new one. It lasts 30 minutes and works once:',
+      link,
+      '',
+      'If it was not you, ignore this — nothing has changed and your password still works.',
+    ].join('\n'),
+  };
+}

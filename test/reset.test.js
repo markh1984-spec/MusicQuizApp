@@ -17,7 +17,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { Accounts } from '../src/accounts.js';
-import { sendEmail, emailConfigured, emailProvider, fromAddress, keepKeyAlive } from '../src/email.js';
+import { sendEmail, emailConfigured, emailProvider, fromAddress, keepKeyAlive, resetEmail } from '../src/email.js';
 
 function book(now = () => Date.now()) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'reset-'));
@@ -297,4 +297,38 @@ test('and it NEVER throws, whatever the network does', async () => {
   const refused = await keepKeyAlive({ fetchImpl: async () => ({ ok: false, status: 401, json: async () => ({ message: 'Key not found' }) }) });
   assert.match(refused.reason, /BREVO_API_KEY/, 'and still names the cause');
   delete process.env.BREVO_API_KEY;
+});
+
+/*
+ * WHAT THE EMAIL SAYS.
+ *
+ * The first one that actually went out said "Set a new password for
+ * undefined", because the route read `.name` off a function that returns a
+ * string. An email with `undefined` in the subject is a phishing email as far
+ * as anybody reading it is concerned — and it is the one message this app
+ * sends to somebody already locked out and already unsure.
+ */
+
+test('the reset email never says undefined, whatever it is handed', () => {
+  for (const name of [undefined, null, '', '   ', 'Mark\'s Quizporium']) {
+    const mail = resetEmail({ name, link: 'https://quizporium.co.uk/reset?t=abc' });
+    assert.ok(!/undefined|null|\[object/.test(mail.subject), `subject: ${mail.subject}`);
+    assert.ok(!/undefined|null|\[object/.test(mail.text), `body: ${mail.text}`);
+    assert.match(mail.subject, /Set a new password for \S/);
+  }
+});
+
+test('it carries the quizmaster own brand, and the link, written out', () => {
+  const mail = resetEmail({ name: "Mark's Quizporium", link: 'https://quizporium.co.uk/reset?t=abc' });
+  assert.equal(mail.subject, "Set a new password for Mark's Quizporium");
+  assert.ok(mail.text.includes("Mark's Quizporium"));
+  // Written out rather than hidden behind a button: it is a password reset, and
+  // people are told to look at the address before they click one.
+  assert.ok(mail.text.includes('https://quizporium.co.uk/reset?t=abc'));
+  assert.match(mail.text, /works once/);
+  assert.match(mail.text, /If it was not you/);
+});
+
+test('with nothing to go on it falls back to the app name', () => {
+  assert.equal(resetEmail({ link: 'x' }).subject, 'Set a new password for Quizporium');
 });

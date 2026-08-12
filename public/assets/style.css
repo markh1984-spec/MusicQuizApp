@@ -3316,6 +3316,14 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   color: var(--ink);
   font-size: var(--fs-body);
 }
+/* THE SAME BOX ALSO CARRIES GOOD NEWS, and it must not be wearing red when it
+   does: "a link is on its way" inside a red-bordered slab reads as a failure,
+   and somebody who has just been locked out will believe it. The colour is
+   set by the STATE rather than by which box it is. */
+.sign-in-problem.said:not(:empty) {
+  background: rgba(47, 224, 122, 0.12);
+  border-color: rgba(47, 224, 122, 0.4);
+}
 .sign-in .tiny { text-align: center; }
 .subs { display: grid; gap: 8px; }
 .inv-actions .addon.on { border-color: var(--good); color: var(--good); }

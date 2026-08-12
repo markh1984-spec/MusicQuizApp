@@ -20,7 +20,7 @@ const came = new URL(location.href).searchParams.get('email');
 if (came) {
   form.elements.email.value = came;
   problem.textContent = 'Password saved. Sign in with the new one.';
-  problem.style.color = 'var(--good)';
+  problem.classList.add('said');
 }
 
 fetch('/api/brand')
@@ -85,11 +85,15 @@ forgotForm.addEventListener('submit', async (e) => {
       body: JSON.stringify({ email: forgotForm.elements.email.value.trim() }),
     });
     const data = await res.json().catch(() => ({}));
-    forgotSaid.textContent = data.ok === false ? (data.error || 'That did not send.') : data.sent;
-    forgotSaid.style.color = data.ok === false ? 'var(--bad)' : 'var(--ink-dim)';
+    const failed = data.ok === false;
+    forgotSaid.textContent = failed ? (data.error || 'That did not send.') : data.sent;
+    // `said` is the good-news look. The box is shared with the sign-in error,
+    // and "a link is on its way" inside a red slab reads as a failure to
+    // somebody who has just been locked out — which is who is reading it.
+    forgotSaid.classList.toggle('said', !failed);
   } catch {
     forgotSaid.textContent = 'Could not reach the server. Try again in a moment.';
-    forgotSaid.style.color = 'var(--bad)';
+    forgotSaid.classList.remove('said');
   }
   button.disabled = false;
   button.textContent = 'Email me a link';

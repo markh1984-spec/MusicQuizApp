@@ -45,7 +45,7 @@ import { Reports } from './src/reports.js';
 import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, switchedOn, PACK_PENCE } from './public/assets/plans.js';
-import { sendEmail, emailConfigured, emailProvider, keepKeyAlive } from './src/email.js';
+import { sendEmail, emailConfigured, emailProvider, keepKeyAlive, resetEmail } from './src/email.js';
 import { Suggestions, KINDS, PACK_REQUEST_KIND } from './src/suggestions.js';
 import { Spend, spendRecorder, imagePrices } from './src/spend.js';
 // The pack id a generation is going to produce, so a cost has a subject from
@@ -2637,19 +2637,13 @@ async function handleWrite(req, res, url, route) {
     const base = (config.publicUrl || '').replace(/\/+$/, '')
       || `${(req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim()}://${req.headers.host}`;
     const link = `${base}/reset?t=${encodeURIComponent(started.token)}`;
-    const name = brandFor(rooms.house).name;
-    const out = await sendEmail({
-      to: email,
-      subject: `Set a new password for ${name}`,
-      text: [
-        `Somebody asked to reset the password for this address on ${name}.`,
-        '',
-        'Open this link to set a new one. It lasts 30 minutes and works once:',
-        link,
-        '',
-        'If it was not you, ignore this — nothing has changed and your password still works.',
-      ].join('\n'),
-    });
+    // `brandForRoom`, not `brandFor` — the second takes a person's NAME and
+    // returns a string, so `brandFor(rooms.house).name` was a room passed as a
+    // name and then `.name` read off a string. It came out as "Set a new
+    // password for undefined", which is a phishing email as far as anybody
+    // reading it is concerned.
+    const name = brandForRoom(rooms.get(HOUSE));
+    const out = await sendEmail({ to: email, ...resetEmail({ name, link }) });
     /*
      * The failure is REPORTED rather than swallowed, and that is a weighed
      * trade-off rather than an oversight.
