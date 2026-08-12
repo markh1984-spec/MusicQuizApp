@@ -2685,6 +2685,10 @@ function picturePanel(pack) {
         <label class="tiny redo"><input type="checkbox" class="force"> replace ones already there</label>
       </div>
       <div class="tiny note"></div>
+      <details class="pic-lib" hidden>
+        <summary class="tiny"></summary>
+        <div class="lib-names"></div>
+      </details>
       <pre class="gen-log" hidden></pre>
     </div>`);
 
@@ -2752,6 +2756,31 @@ function picturePanel(pack) {
           : 'nothing left to draw');
         note.textContent = parts.join(' · ') + (toDraw ? '' : '. Tick the box to redo any.');
         note.style.color = '';
+      }
+
+      /*
+       * Everybody already drawn, folded away behind a caret.
+       *
+       * The filename IS the index — the key is the answer text — so "Michael
+       * Jackson" and "Michael Jackson (Jacko)" are two people as far as the app
+       * is concerned, and you pay for both. Nothing catches that and a fuzzy
+       * warning would be worse than the problem: it cannot tell "The Jacksons"
+       * from "Michael Jackson", and the remedy for a true positive is editing
+       * an answer a player sees rather than a filename.
+       *
+       * So it just shows the list, sorted, where two near-identical names end
+       * up next to each other and the eye does the rest. Shut by default,
+       * because on the common press this is not what you came for.
+       */
+      const lib = d.library || [];
+      const box = el.querySelector('.pic-lib');
+      box.hidden = !lib.length;
+      if (lib.length) {
+        const drawn = lib.filter((r) => r.real).length;
+        box.querySelector('summary').textContent =
+          `The library — ${drawn} ${drawn === 1 ? 'person' : 'people'} drawn, free to reuse`;
+        box.querySelector('.lib-names').replaceChildren(...lib.map((r) => node(
+          `<span class="lib-name ${r.real ? '' : 'stand-in'}" title="${esc(r.file)}">${esc(r.slug)}</span>`)));
       }
     } catch (err) {
       status.textContent = err.message;
@@ -2822,6 +2851,10 @@ function playlistPanel(pack) {
         <button class="go build">Build the playlist</button>
       </div>
       <div class="tiny note"></div>
+      <details class="pic-lib" hidden>
+        <summary class="tiny"></summary>
+        <div class="lib-names"></div>
+      </details>
       <pre class="gen-log" hidden></pre>
     </div>`);
 

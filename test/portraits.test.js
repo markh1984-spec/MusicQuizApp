@@ -17,7 +17,7 @@ import {
   portraitPath, readPortraitPath, slugName, findStyle, findQuality, musicianOf, isShared,
 } from '../src/portraits.js';
 import {
-  imageJobs, imagePlan, promptFor, generateImages, artProvider, PROVIDERS,
+  imageJobs, imagePlan, promptFor, generateImages, artProvider, PROVIDERS, portraitLibrary,
 } from '../src/generate-images.js';
 
 const picture = (answer, extra = {}) => ({
@@ -309,4 +309,44 @@ test('an old per-quiz picture is recognised as not shared', () => {
 test('the musician is the answer, not the first option', () => {
   assert.equal(musicianOf({ options: ['A', 'Kate Bush'], correctIndex: 1 }), 'Kate Bush');
   assert.equal(musicianOf({}), '');
+});
+
+/*
+ * The library, as a list you can look at.
+ *
+ * The filename IS the index, which is what makes reuse free — and also what
+ * makes it quietly duplicable, because the key is the ANSWER TEXT. "Michael
+ * Jackson" and "Michael Jackson (Jacko)" are two people as far as this app is
+ * concerned: two files, two drawings, two charges, and nothing catches it.
+ *
+ * A fuzzy warning was considered and rejected — it cannot tell "The Jacksons"
+ * from "Michael Jackson", and the remedy for a true positive is editing an
+ * answer a player sees rather than a filename. Sorting the names so the two
+ * land next to each other is the whole fix.
+ */
+test('the portrait library can be listed, sorted, with stand-ins marked', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'portraits-l-'));
+  try {
+    fs.mkdirSync(path.join(dir, 'portraits'), { recursive: true });
+    for (const f of ['michael-jackson.png', 'mj.png', 'abba.svg', 'beyonce.png', 'notes.txt']) {
+      fs.writeFileSync(path.join(dir, 'portraits', f), 'x');
+    }
+    const lib = portraitLibrary(dir);
+    assert.deepEqual(lib.map((r) => r.slug), ['abba', 'beyonce', 'michael-jackson', 'mj'],
+      'sorted, so two spellings of one person land together');
+    assert.equal(lib.find((r) => r.slug === 'abba').real, false, 'a stand-in reads as drawn');
+    assert.equal(lib.find((r) => r.slug === 'mj').real, true);
+    assert.ok(!lib.some((r) => /notes/.test(r.slug)), 'a stray file got in');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('no library yet is not an error', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'portraits-e-'));
+  try {
+    assert.deepEqual(portraitLibrary(dir), [], 'an empty first boot threw');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });

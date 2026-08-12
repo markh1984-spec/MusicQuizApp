@@ -3733,3 +3733,15 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 }
 .lb-go:hover { filter: brightness(1.08); }
 .lb-go:disabled { opacity: 0.4; cursor: default; filter: none; }
+
+/* Who is already in the shared portrait library. Names rather than pictures:
+   the job is spotting "michael-jackson" next to "mj", which is a reading job. */
+.pic-lib { margin-top: 10px; }
+.pic-lib summary { cursor: pointer; opacity: 0.8; }
+.lib-names { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.lib-name {
+  font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 999px;
+  background: var(--panel); border: 1px solid var(--panel-line);
+}
+/* A stand-in is not a drawing anybody paid for, so it reads quieter. */
+.lib-name.stand-in { opacity: 0.5; font-weight: 600; }

@@ -29,7 +29,7 @@ import { importBingoPack } from './src/import-bingo.js';
 import { listAdvertPacks, loadAdvertPack, saveAdvertPack, deleteAdvertPack, validateAdvertPack, normaliseAdvertPack, safeAdvertFile } from './src/adverts.js';
 import {
   generateImages, imageStatus, imageJobs, imagePlan,
-  openaiConfigured, googleConfigured, artProvider,
+  openaiConfigured, googleConfigured, artProvider, portraitLibrary,
 } from './src/generate-images.js';
 import { STYLES, findStyle, QUALITIES, DEFAULT_QUALITY } from './src/portraits.js';
 import { recentTracks, forgetAll } from './src/history.js';
@@ -1443,6 +1443,17 @@ async function handleGet(req, res, url, route) {
         // recorded one is the exact drift `src/spend.js` says it prevents.
         art: artProvider(),
         pence: imagePrices(artProvider()),
+        /*
+         * Everybody already drawn, so the shared library can be looked at.
+         *
+         * The filename is the whole index, which is what makes reuse free and
+         * also what makes it quietly duplicable — the key is the ANSWER TEXT,
+         * so "Michael Jackson" and "Michael Jackson (Jacko)" are two people as
+         * far as the app is concerned. Nothing catches that, and a fuzzy
+         * warning would be worse than the problem. Putting the two names next
+         * to each other is all anybody needs.
+         */
+        library: portraitLibrary(config.imageDir),
         openai: openaiConfigured(),
         google: googleConfigured(),
         // What pressing the button would actually cost, given what the shared

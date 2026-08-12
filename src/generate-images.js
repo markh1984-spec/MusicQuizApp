@@ -37,7 +37,7 @@ import path from 'node:path';
 
 import {
   STYLES, DEFAULT_STYLE, findStyle, findQuality, DEFAULT_QUALITY,
-  portraitPath, isShared, musicianOf,
+  portraitPath, isShared, musicianOf, readPortraitPath,
 } from './portraits.js';
 
 export const PROVIDERS = ['placeholder', 'openai', 'google'];
@@ -135,6 +135,39 @@ export function imagePlan(quiz, imageDir, { style = DEFAULT_STYLE } = {}) {
     (already ? have : need).push(job.musician || job.q.id);
   }
   return { style: findStyle(style), total: jobs.length, reused: have.length, toDraw: need.length, have, need };
+}
+
+/**
+ * Everybody already drawn, so the shared library can be LOOKED at.
+ *
+ * The library is a folder of files named after people, and the filename is the
+ * whole index — which is what makes it free to reuse and also what makes it
+ * quietly duplicable. The key is the ANSWER TEXT, so "Michael Jackson" and
+ * "Michael Jackson (Jacko)" are two people as far as the app is concerned, and
+ * nothing catches it: they are two files, two drawings and two charges.
+ *
+ * A fuzzy warning was the obvious fix and is the wrong one — it cannot tell
+ * "The Jacksons" from "Michael Jackson", or "Prince Buster" from "Prince", and
+ * the remedy for a true positive is editing the ANSWER a player sees rather
+ * than a filename. Showing the list costs nothing and puts the two names next
+ * to each other, which is all anybody needs to spot it.
+ */
+export function portraitLibrary(imageDir) {
+  let names = [];
+  try {
+    names = fs.readdirSync(path.join(imageDir, 'portraits'));
+  } catch {
+    return [];   // No library yet is the ordinary first case, not an error.
+  }
+  return names
+    .map((file) => {
+      const read = readPortraitPath(`portraits/${file}`);
+      if (!read) return null;
+      const { size } = fs.statSync(path.join(imageDir, 'portraits', file));
+      return { file, slug: read.slug, style: read.style, real: !file.endsWith('.svg'), bytes: size };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.slug.localeCompare(b.slug));
 }
 
 function svgNameFor(image) {
