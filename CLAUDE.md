@@ -1590,6 +1590,10 @@ correct it faster than he will answer a question about it.
   exists — he is clicking them, not reading about them. Deep-link as far in as
   the site allows, and give the full `https://…` so it is clickable in a
   terminal.
+- **A LINK BEATS A QUESTION.** If the next step depends on which service he
+  uses, do not ask — list the likely ones WITH their deep links and let him
+  click the right one. Asking costs a round trip; a five-line list costs him
+  one glance.
 - **Very succinct.** A step is a line. A list is a list.
 - **YES or NO where a yes or no is possible.** Do not soften it into a
   paragraph, and do not add the caveat unless acting on it would break
