@@ -678,6 +678,17 @@ body.host { overflow: auto; background: #0a0a13; }
 body.host::after { display: none; }
 
 .host .wrap { max-width: 720px; margin: 0 auto; padding: 12px 12px 128px; display: grid; gap: 12px; }
+/* THE CONTROL VIEW SCROLLED SIDEWAYS ON A NARROW PHONE, and had done all along.
+   A grid item's default minimum is its MIN-CONTENT, so one child that cannot
+   shrink drags the whole column with it — here the Setup panel's pack dropdown,
+   which sizes itself to its longest pack name. On a 320px iPhone SE that made
+   every panel 342px wide and the sticky bar 366px, so the right-hand edge of
+   the host's own screen was off the side of it: the clock, the end of each
+   answer row, and the "..." that opens a player. `min-width: 0` lets the column
+   be as narrow as the phone; the dropdown then has to be told it may shrink
+   too, because a select will not go below its longest option on its own. */
+.host .wrap > * { min-width: 0; }
+.host select { max-width: 100%; }
 /* Bingo's call sheet is scanned, not read, so it gets the whole screen. The
    quiz's panels keep the narrower measure — a cue you read at a glance should
    not be a metre wide. */
@@ -1749,9 +1760,27 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
    with it, which is what the hat switch does. */
 .console .topbar #brandSlot { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
 
-/* The control view's bar puts the brand above the "where am I" line. */
+/* The control view's bar puts the brand above the "where am I" line, with the
+   way back to the console on the end of that row — top of the screen, and a
+   long way from the fixed action bar at the bottom that drives the night, so
+   a thumb reaching for Next cannot land on it. */
 .host .bar { flex-wrap: wrap; }
-.host .bar #brandSlot { flex: 1 1 100%; margin-bottom: 2px; }
+.host .bar .bar-top {
+  flex: 1 1 100%;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-bottom: 2px;
+}
+.host .bar-nav {
+  flex: 0 0 auto;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--panel-line);
+  color: var(--ink-dim);
+  text-decoration: none;
+  font-size: var(--fs-mini);
+  font-weight: 700;
+}
+.host .bar-nav:active { transform: scale(0.96); }
 
 /* Big screen: brand in the corner all night, quiz title beside it. */
 .screen .titles { display: flex; align-items: center; gap: 1.1vw; min-width: 0; }

@@ -11,7 +11,16 @@
 <body class="host">
   <div class="wrap">
     <div class="bar">
-      <span id="brandSlot"></span>
+      <!-- The way back, SAID OUT LOUD. The logo has always linked to the
+           console, with the reason in a `title` — which is a tooltip, and
+           there are no tooltips on a phone. So on the one device this page is
+           actually used on, the way back was invisible and the answer was to
+           type the URL. Same fault as "Control view" being a small grey link
+           between two others: the control existed and the label did not. -->
+      <div class="bar-top">
+        <span id="brandSlot"></span>
+        <a class="bar-nav" id="toConsole" href="/console">Console</a>
+      </div>
       <div>
         <div class="where" id="where">Control</div>
         <div class="tiny" id="connText">Connecting…</div>

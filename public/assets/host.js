@@ -87,6 +87,11 @@ function draw(next) {
   if (!brandPainted && state.brand) {
     const slot = document.getElementById('brandSlot');
     if (slot) slot.innerHTML = brandLink(state.brand, { key: hostKey, size: 26, appName: state.appName || '' });
+    // The key goes on the way back too, or a browser on the host key lands on
+    // a console asking it who it is. A signed-in quizmaster has no key and
+    // needs none — their cookie already says which room is theirs.
+    const back = document.getElementById('toConsole');
+    if (back && hostKey) back.href = `/console?key=${encodeURIComponent(hostKey)}`;
     document.title = `Control — ${state.brand}`;
     brandPainted = true;
   }
