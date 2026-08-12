@@ -758,6 +758,53 @@ control view drives the game over SSE with the engine's version; a second set
 of Next/Back buttons polling the library would eventually double-advance a
 room. One place that moves a quiz, one tap away.
 
+**But a LOADED PACK IS NOT A NIGHT, and the panel used to think it was.**
+`aNightIsOn()` in `console.js`, asked by the topbar and by the panel. A session
+always has a pack — `boot()` falls back to one so the projector is never blank
+— so the very first thing a brand new quizmaster read on their very first
+sign-in was *"Now: The 1980s Pop Music Quiz (0 in)"* across the top and a panel
+underneath saying **Loaded, nobody playing** with a **Stop** button, about a
+quiz they had never launched. On the one page whose job is "find tonight's pack
+and press Launch", the top of it was a game that did not exist.
+
+A night is on once it is LIVE, or once anybody has joined — the same test the
+launch guard uses, for the same reason (forty people who have typed a name have
+something to lose). One function used in both places, because the topbar and
+the panel disagreeing about whether anything is happening is worse than either
+of them being wrong on its own.
+
+### What a quizmaster's console puts FIRST
+
+Found by walking the whole app signed in as a real Bronze subscriber rather
+than reasoning about it. Three things were in the way of the common job, and
+all three came from the page being laid out for the person who WRITES packs:
+
+- **The generator slot goes below the shelf for anybody who does not write.**
+  `tabBody()` asks `can(GENERATE) || can(CATALOGUE)`. For the owner the job of
+  that tab is writing, so the generator belongs above the library. For a
+  quizmaster the job is Launch, and everything between the tabs and the packs
+  is in front of it.
+- **`shopNote()` is gone.** It was a panel above the library explaining that
+  packs are written for them rather than generated here — a paragraph, at the
+  top of the page, saying what the app does NOT do. Its one useful claim
+  ("every question read through twice") moved into the shop heading, where it
+  is next to a price and is therefore doing some work. Different words on the
+  bingo tab, because a bingo pack is a track list and "read through twice" is
+  a promise about questions.
+- **The join code is on the CONTROL VIEW.** It was on the projector behind the
+  host and two taps away on My account, and nowhere on the one screen in their
+  hand — so "what's the code?" from the back of the room meant turning round to
+  read their own big screen. It sits next to the player count. The house room
+  has no code, so Mark's own control view is unchanged.
+
+**And the Advert button is drawn only where there are adverts.** `view.mayAdvert`
+in `viewFor()`, from `can(accounts.find(room.id), FEATURES.ADVERTS)` — worked
+out on the server, because a room id IS an account id and the browser should
+not be told something it can be lied about. Adverts are Silver; on Bronze that
+button's only outcome was a picker saying "make some on the Adverts tab" — a
+tab greyed out with a `+` on it. A control that can never do anything, pointing
+at a locked door.
+
 ---
 
 ## Generated questions are checked, not trusted

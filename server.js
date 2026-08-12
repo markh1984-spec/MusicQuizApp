@@ -44,7 +44,7 @@ import { Accounts } from './src/accounts.js';
 import { Reports } from './src/reports.js';
 import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
-import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, PACK_PENCE } from './public/assets/plans.js';
+import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, PACK_PENCE } from './public/assets/plans.js';
 import { Suggestions, KINDS, PACK_REQUEST_KIND } from './src/suggestions.js';
 import { Spend, spendRecorder, imagePrices } from './src/spend.js';
 // The pack id a generation is going to produce, so a cost has a subject from
@@ -134,6 +134,18 @@ function viewFor(client) {
     // Who is knocking. Host only — the number is the whole point, because it
     // is what tells a room apart from somebody messing about.
     view.joinsWaiting = session.joins.waitingCount();
+    /*
+     * Whether this account actually HAS advert slides.
+     *
+     * The control view drew an Advert button for everybody. On Bronze, where
+     * adverts are a Silver feature, pressing it said "make some on the Adverts
+     * tab" — a tab that is greyed out with a `+` on it. A control that can
+     * never do anything, pointing at a door that is locked.
+     *
+     * A room id IS an account id, so the answer is one lookup rather than
+     * anything the browser has to be told.
+     */
+    view.mayAdvert = can(accounts.find(room.id) || null, FEATURES.ADVERTS);
   }
   else view.photosOpen = photos.enabled;
   // Whose night this is — the name AND the two colours — travels with every

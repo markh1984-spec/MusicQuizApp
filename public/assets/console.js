@@ -295,32 +295,6 @@ function openRequestedRead() {
 }
 
 /**
- * What a quizmaster sees where the owner sees a generator.
- *
- * Not an empty space and not a locked button: the packs being written FOR them
- * is the arrangement, not a limitation, so it says so.
- */
-// What stands in for the generator on a quizmaster's console. It said "Quiz
-// packs — every question read through twice" on the BINGO tab too, where there
-// are no questions; a bingo pack is a track list, and what makes a good one is
-// a different promise. Same panel, the right words for the tab it is on.
-function shopNote(kind = 'quiz') {
-  const bingo = kind === 'bingo';
-  return node(`
-    <div class="panel">
-      <h3>${bingo ? 'Bingo games' : 'Quiz packs'}</h3>
-      <div class="tiny">
-        ${bingo
-          ? `Track lists are put together for you rather than generated here — every song
-             picked so the chorus lands on its own, and no song repeated inside three months.`
-          : `Packs are written and checked for you rather than generated here — every question
-             read through twice before it reaches a room.`}
-        Have a look in the shop for the newest ones.
-      </div>
-    </div>`);
-}
-
-/**
  * Their own packs — the half of the library that is theirs.
  *
  * It sits where the generator would be, because that is the honest shape of
@@ -402,7 +376,7 @@ const TABS = [
     // panel rather than a cheaper generator.
     generator: () => {
       const wrap = document.createDocumentFragment();
-      wrap.appendChild(can(FEATURES.GENERATE) ? quizGeneratePanel(library.generation || {}) : shopNote());
+      if (can(FEATURES.GENERATE)) wrap.appendChild(quizGeneratePanel(library.generation || {}));
       if (can(FEATURES.OWN_PACKS) && !can(FEATURES.CATALOGUE)) wrap.appendChild(ownQuizPanel());
       return wrap;
     },
@@ -417,7 +391,6 @@ const TABS = [
     generator: () => {
       const wrap = document.createDocumentFragment();
       if (can(FEATURES.GENERATE)) wrap.appendChild(generatePanel(library.generation || {}));
-      else wrap.appendChild(shopNote('bingo'));
       // Import writes a pack into the shared catalogue, so it is the owner's —
       // it was offered on LIBRARY, which every quizmaster has, and the server
       // now refuses it. A button that 403s is worse than no button.
@@ -562,7 +535,7 @@ function render() {
   // already wearing them.
   paintScheme(library.scheme);
   const running = library.running;
-  runningEl.textContent = running
+  runningEl.textContent = aNightIsOn(running)
     ? `Now: ${running.title} (${running.playerCount} in)`
     : '';
 
@@ -1663,8 +1636,19 @@ function tabBody(active) {
     return wrap;
   }
 
-  if (tab.generator) wrap.appendChild(tab.generator());
+  /*
+   * WHOSE JOB IS THIS TAB FOR?
+   *
+   * For the owner it is writing, so the generator goes above the shelf. For a
+   * quizmaster it is "find tonight's pack and press Launch", and everything
+   * between the tabs and the library is in the way of it — a panel explaining
+   * that packs are written for them, and a panel about writing their own, both
+   * sitting above the only thing they came for.
+   */
+  const writing = can(FEATURES.GENERATE) || can(FEATURES.CATALOGUE);
+  if (tab.generator && writing) wrap.appendChild(tab.generator());
   wrap.appendChild(gameSection(tab.id, tab.label, tab.blurb, tab.packs(), tab.editLabel));
+  if (tab.generator && !writing) wrap.appendChild(tab.generator());
   return wrap;
 }
 
@@ -2360,8 +2344,26 @@ function launchBar() {
   return el;
 }
 
+/*
+ * A LOADED PACK IS NOT A NIGHT.
+ *
+ * A session always has a pack — `boot()` falls back to one so the projector is
+ * never blank — so the console said "Now: The 1980s Pop Music Quiz (0 in)" in
+ * the topbar and drew a panel underneath saying "Loaded, nobody playing", with
+ * a Stop button, over a quiz the account had never launched. On a
+ * quizmaster's very first sign-in that is the first thing they read.
+ *
+ * A night is on once it is LIVE, or once somebody has joined. Before that the
+ * launch bar has the top of the page to itself, which is also what a first
+ * sign-in should be about. One test, used by the topbar and the panel, or the
+ * two of them disagree about whether anything is happening.
+ */
+function aNightIsOn(running) {
+  return Boolean(running) && (running.phase !== 'lobby' || running.playerCount > 0);
+}
+
 function runningPanel(running) {
-  if (!running) return node('<div></div>');
+  if (!aNightIsOn(running)) return node('<div></div>');
   // An owner runs no nights, so there is no night of theirs to show or stop.
   // Their room is the house one, and driving it from here would be a Stop
   // button over a game somebody else is in the middle of.
@@ -2527,8 +2529,10 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
       <div class="game-head shop-head" hidden>
         <div>
           <h2>Quiztopia packs</h2>
-          <div class="tiny"><span class="shop-count"></span> —
-            ${esc(packPrice())} each.
+          <div class="tiny"><span class="shop-count"></span> — ${esc(packPrice())} each.
+            ${kind === 'bingo'
+              ? 'Put together for you — every chorus lands on its own, no song twice in three months.'
+              : 'Written and checked for you — every question read through twice.'}
             ${esc((library.catalogue && library.catalogue.blurb) || '')}</div>
         </div>
       </div>

@@ -95,7 +95,17 @@ function draw(next) {
   // colours can change mid-night from the console, the name cannot.
   paintScheme(state.scheme);
   whereEl.textContent = whereLabel(state);
-  connEl.textContent = `${state.playerCount} playing`;
+  /*
+   * THE JOIN CODE, on the screen the host is actually holding.
+   *
+   * It was on the projector behind them and two taps away on My account, and
+   * nowhere on the one thing in their hand — so "what's the code?" from the
+   * back of the room meant turning round to read their own big screen. The
+   * house room has none, so it simply says the player count as before.
+   */
+  connEl.textContent = state.joinCode
+    ? `${state.playerCount} playing · code ${state.joinCode}`
+    : `${state.playerCount} playing`;
   mainEl.replaceChildren(...restartNotice(state), ...advertPanel(state), ...buildPanels(state), ...photoPanel(state));
   actionsEl.replaceChildren(...buildActions(state));
 }
@@ -743,7 +753,10 @@ function buildActions(s) {
     stop.classList.add('on');
     out.push(stop);
   } else if (ad.allowed) {
-    out.push(minor('Advert', () => showAdvertPicker()));
+    // Only where there are adverts to show. It used to be drawn for everybody,
+    // so a Bronze quizmaster got a button whose only outcome was "make some on
+    // the Adverts tab" — a tab greyed out with a `+` on it.
+    if (s.mayAdvert) out.push(minor('Advert', () => showAdvertPicker()));
   }
 
   /*
