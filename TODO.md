@@ -1066,11 +1066,31 @@ off in March, the bill goes back up, and the balance covers the gap instead of a
 nasty month. It is also the SAME LEDGER as the writer credit — one balance, two
 ways to earn, one thing to build and one thing to explain.
 
-**Worth adding and not yet decided: make it two-sided.** Only the referrer
-benefits today, which makes the ask awkward — *"use this and I get a kickback"*
-is a harder sentence to say to a mate than *"use this, your first month is half
-price"*. It costs once, costs nothing until it works, and turns the pitch from
-self-interested into generous.
+**ONE-SIDED, and that was decided rather than left out.** A two-sided version
+was proposed — give the new member a discount too, so the pitch reads generous
+rather than self-interested — and turned down, because **the free trial already
+does that job better**. Two overlapping offers is two things to explain doing
+one thing, and a signup discount anchors them low so the first full bill reads
+as a price rise. See the trial's shape in CLAUDE.md under "no free tier": one
+month, free, card up front.
+
+So the referrer's pitch is *"try it free for a month"*, which is a better
+sentence to say to a mate than *"use my code and we both save a fiver"* — and
+the referrer's 20% is the engine while the trial is what removes the newcomer's
+risk. Two mechanisms, two jobs, no overlap.
+
+**THE REFERRER'S CLOCK STARTS WHEN THE TRIAL CONVERTS**, and the page has to
+say so — *"you will start earning when Rob's trial ends"*. A trial pays nothing,
+so 20% of it is nothing, and a referrer watching £0 for a month with no
+explanation concludes the scheme is broken.
+
+**Making the trial half price to fix that was proposed and does not survive the
+arithmetic.** On a member who stays two years the referrer earns £92 with a free
+trial and £94 with a half-price one — £2 over a lifetime, which nobody notices
+and nobody calculates. What half price actually does is put £10 in the OWNER's
+pocket during the trial, which is a fair thing to want but is a revenue argument
+rather than a referral one, and it loses *free* — the strongest word the
+referrer has — to buy it.
 
 **Attribution is a CODE, not "who told you about us?"** on a signup form — that
 last one is unverifiable and generates disputes, which is a Monday job. The code

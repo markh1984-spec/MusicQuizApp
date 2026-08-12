@@ -2062,6 +2062,31 @@ paying. **Do not add a fourth tier at £0 to get a trial** — that is a permane
 hole in the ladder to solve a temporary problem. There is a test that no rung
 is free.
 
+**The trial's shape was settled on 12 August 2026: ONE MONTH, FREE, CARD UP
+FRONT.** Not built — it waits on the payment processor like everything else
+touching billing — but the mechanism is `status: 'trialing'`, which already
+exists, is the default on `accounts.create()` and is already treated as paying
+by `can()`. So it stays a STATUS and never becomes a tier.
+
+Three things decided with it, each against a specific alternative:
+
+- **A MONTH, not a week and not three.** The unit of value here is a GIG, not a
+  day — a quizmaster runs one or two nights a week, so a seven-day trial can
+  contain no night at all if their next booking is on day nine, and they would
+  cancel having seen nothing. A month is four nights for a weekly host and two
+  for a fortnightly one, which settles it either way. Three months gives away a
+  quarter of a year of the catalogue and the topical packs, and somebody not
+  convinced by night four will not be by night twelve.
+- **FREE with a card, rather than half price.** A card on file does most of what
+  a paid trial was for — it filters people who were never going to buy and it
+  converts on its own at the end — while keeping *free*, which is the strongest
+  word a referrer has when asking a mate for a favour. Half price also anchors
+  them low, so the first full bill reads as a price RISE rather than the normal
+  price, which is a self-inflicted churn moment.
+- **No signup discount on top, for referrals or anything else.** Two overlapping
+  offers is two things to explain doing one job, and the trial is the better of
+  the two: it proves the app rather than discounting it.
+
 An account-level `packs` list still beats the tier, which is what makes
 pay-per-pack a one-line change rather than a redesign.
 
