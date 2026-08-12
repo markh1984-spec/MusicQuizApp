@@ -2908,6 +2908,22 @@ turnaround is a promise broken by silence: the subscriber does not know whether
 it is coming on Thursday or at all, so they chase, or they quietly stop
 believing in the feature.
 
+**MONDAY IS THE ADMIN DAY FOR THE APP ITSELF, not only for packs.** Stated by
+the host on 12 August 2026: changes people ask for get made on Mondays and not
+before. That is the same promise the pack panel already makes and it should be
+said in the suggestion box too, which currently states no turnaround at all —
+so somebody reporting something on a Tuesday has no idea whether it is Thursday
+or never, which is the exact failure the paragraph above describes.
+
+**But it must NOT be said over "something broken".** The box has three kinds,
+and "Monday" is the right answer for an idea and for something that got in the
+way. It is the wrong answer for a quizmaster whose game will not launch at half
+past eight on a Thursday — a stated turnaround that would be wrong in the one
+case that matters is worse than none, because it is read at the moment it is
+least true. So the line changes with the kind: the rhythm for the first two,
+"as soon as I see it" for the third, and no promise of a FIX in either, because
+one person cannot honestly make one.
+
 **The whole state is sent BEFORE anybody types** (`packRequestStatus()`, on the
 library payload). Being refused after writing three sentences is the version
 that annoys; "that is this month's, the next is from the 1st" is a sentence
