@@ -51,14 +51,59 @@ export function brandLink(name, { key = '', size = 30, appName = '' } = {}) {
  * pointed at a room and the other belongs to somebody in it; neither has any
  * business carrying a door into the quizmaster's console.
  */
-export function navMenu({ current = '', key = '', control = true, packs = true, owner = false } = {}) {
+export function navMenu({
+  current = '', key = '', control = true, packs = true, owner = false, acting = false,
+} = {}) {
   const at = (path) => path + (key ? `?key=${encodeURIComponent(key)}` : '');
   const items = [{ id: 'console', label: 'Console', href: at('/console') }];
   if (control) items.push({ id: 'control', label: 'Control', href: at('/host') });
   if (packs) items.push({ id: 'packs', label: 'Packs', href: at('/editor') });
-  if (owner) items.push({ id: 'owner', label: 'Owner', href: at('/owner') });
+  /*
+   * The Owner door, and while the QUIZMASTER HAT IS ON it has to take the hat
+   * off on the way through.
+   *
+   * The owner page asks who you are and refuses anybody whose role is not
+   * owner — and wearing the hat your role IS quizmaster, because that is the
+   * whole point of it. So a plain link would land on "this is the owner
+   * console, your account runs quiz nights", which is a door that never opens:
+   * exactly the fault this codebase keeps recording. `data-hat-off` makes the
+   * chip mean "put me back on the owner side and take me there", which is what
+   * somebody pressing Owner is asking for.
+   *
+   * Safe mid-night, for the reason the hat switch already is: the two hats are
+   * two ROOMS, and a room keeps its own game, its own phones and its own state
+   * file. Nothing being played is touched.
+   */
+  if (owner) items.push({ id: 'owner', label: 'Owner', href: at('/owner'), hatOff: acting });
   return items.map((i) => `<a class="${i.id === current ? 'here' : ''}" href="${esc(i.href)}"${
+    i.hatOff ? ' data-hat-off="1"' : ''}${
     i.id === current ? ' aria-current="page"' : ''}>${esc(i.label)}</a>`).join('');
+}
+
+/**
+ * Draw the menu into a slot and wire it up. One call per page, so the
+ * hat-off handler cannot be remembered on three pages and forgotten on the
+ * fourth. Does nothing at all if the page has no menu slot.
+ */
+export function paintNav(slot, opts = {}) {
+  if (!slot) return;
+  slot.innerHTML = navMenu(opts);
+  const back = slot.querySelector('a[data-hat-off]');
+  if (!back) return;
+  back.addEventListener('click', async (e) => {
+    e.preventDefault();
+    // Take the hat off, then go. If the call fails, go anyway — the owner page
+    // says plainly what it wants, which beats a chip that silently does
+    // nothing when pressed.
+    try {
+      await fetch('/api/owner/act-as', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ on: false }),
+      });
+    } catch { /* go anyway */ }
+    location.href = back.getAttribute('href');
+  });
 }
 
 /**
@@ -83,11 +128,20 @@ export function menuRights(who) {
     // says the control view is theirs to open rather than a door that 403s.
     control: has('quiz.run') || has('bingo.run'),
     packs: has('owner.catalogue') || has('packs.own'),
-    // `alsoSignedIn` as well as `role`, because on the host key the server
-    // answers as the bootstrap identity — whose role is "quizmaster" — with
-    // the real cookie reported underneath. Without it the Owner chip vanished
-    // on exactly the laptop that is both the dev machine and the gig machine.
+    /*
+     * Three ways to be the owner, and only the first is obvious.
+     *
+     * `role` is the plain case. `alsoSignedIn` is the HOST KEY, where the
+     * server answers as the bootstrap identity — whose role is "quizmaster" —
+     * with the real cookie reported underneath. And `actingAs` is the owner
+     * WEARING THE QUIZMASTER HAT, which is the case that went missing: the
+     * whole point of the hat is that your role becomes quizmaster, so a check
+     * on `role` alone hides the way back on exactly the account that needs it
+     * most. Mark is one person with two hats and one laptop.
+     */
+    acting: Boolean(who && who.actingAs),
     owner: Boolean((account && account.role === 'owner')
+      || (who && who.actingAs)
       || (who && who.alsoSignedIn && who.alsoSignedIn.role === 'owner')),
   };
 }

@@ -7,7 +7,7 @@
  * something typed in fresh each time.
  */
 
-import { esc, node, postJson, brandLink, binIcon, hatSwitch, navMenu, menuRights } from './client.js';
+import { esc, node, postJson, brandLink, binIcon, hatSwitch, paintNav, menuRights } from './client.js';
 import { paintScheme } from './schemes.js';
 import { balanceAnswers } from './balance.js';
 import { FEATURES, FEATURE_TIER, findTier } from './plans.js';
@@ -570,8 +570,7 @@ function render() {
     : '';
   // Rebuilt on every render rather than once: the join code arrives with the
   // library, and which links you get depends on the tier you are previewing.
-  const nav = document.getElementById('navSlot');
-  if (nav) nav.innerHTML = navBar();
+  paintNav(document.getElementById('navSlot'), { current: 'console', key: keyInUrl, ...rights });
 
   const active = currentTab();
   const live = Boolean(running && running.phase !== 'lobby' && running.phase !== 'finished');
@@ -1358,9 +1357,7 @@ const dedupe = (list) => [...new Set(list)];
  * note on that function. Both it and the join page open in a NEW TAB: they are
  * the other windows of the same night, not somewhere you go instead.
  */
-function navBar() {
-  return navMenu({ current: 'console', key: keyInUrl, ...rights });
-}
+
 
 /**
  * Pick your two colours.

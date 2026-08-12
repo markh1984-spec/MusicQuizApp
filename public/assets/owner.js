@@ -7,7 +7,7 @@
  * from the Next button during somebody's gig.
  */
 
-import { esc, node, brandMark, brandWords, hatSwitch, navMenu, menuRights } from './client.js';
+import { esc, node, brandMark, brandWords, hatSwitch, paintNav, menuRights } from './client.js';
 import { TIERS, tierFor, findTier } from './plans.js';
 import { photosSection } from './photos-tab.js';
 
@@ -59,8 +59,7 @@ async function boot() {
   const brand = await api('/api/brand');
   document.getElementById('brandSlot').innerHTML =
     `${brandMark(26)}${brandWords(brand.name, brand.appName || '')}`;
-  const nav = document.getElementById('navSlot');
-  if (nav) nav.innerHTML = navMenu({ current: 'owner', ...menuRights(who) });
+  paintNav(document.getElementById('navSlot'), { current: 'owner', ...menuRights(who) });
   whoEl.textContent = me.role === 'owner' ? `Owner — ${me.email}` : `Signed in as ${me.email}`;
 
   // The switch into your own quizmaster account, in the same corner it sits in

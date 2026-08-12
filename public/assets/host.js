@@ -10,7 +10,7 @@
  * always does the obvious next thing, in the same place every time.
  */
 
-import { esc, node, ServerClock, Live, postJson, brandLink, binIcon, actingBar, navMenu, menuRights } from './client.js';
+import { esc, node, ServerClock, Live, postJson, brandLink, binIcon, actingBar, paintNav, menuRights } from './client.js';
 import { paintScheme } from './schemes.js';
 import { bingoPanels, bingoActions } from './host-bingo.js';
 
@@ -56,13 +56,12 @@ const withKey = (path) => (navKey ? `${path}${path.includes('?') ? '&' : '?'}key
  * standing on being missing from its own menu for a moment.
  */
 let rights = { control: true, packs: true, owner: false };
-function paintNav() {
-  const nav = document.getElementById('navSlot');
-  if (nav) nav.innerHTML = navMenu({ current: 'control', key: navKey, ...rights });
+function drawNav() {
+  paintNav(document.getElementById('navSlot'), { current: 'control', key: navKey, ...rights });
 }
 fetch(withKey('/api/me'), { headers: navKey ? { 'X-Host-Key': navKey } : {} })
   .then((r) => r.json())
-  .then((who) => { rights = menuRights(who); paintNav(); })
+  .then((who) => { rights = menuRights(who); drawNav(); })
   .catch(() => { /* the menu keeps the safe default */ });
 let state = null;
 
@@ -128,7 +127,7 @@ function draw(next) {
     document.title = `Control — ${state.brand}`;
     brandPainted = true;
   }
-  paintNav();
+  drawNav();
   // Your own two colours on your own control view, so the phone in your hand
   // matches the projector you are driving. Not gated on `brandPainted`: the
   // colours can change mid-night from the console, the name cannot.

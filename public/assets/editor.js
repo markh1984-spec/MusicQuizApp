@@ -11,7 +11,7 @@
  * is exactly what plays tonight.
  */
 
-import { esc, node, postJson, brandLink, navMenu, menuRights } from './client.js';
+import { esc, node, postJson, brandLink, paintNav, menuRights } from './client.js';
 import { LOOKS } from './looks.js';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -132,8 +132,7 @@ async function loadQuizList(selectId) {
     slot.innerHTML = brandLink(library.brand, { key: navKey, size: 26, appName: library.appName || '' });
     document.title = `Editor — ${library.brand}`;
   }
-  const nav = document.getElementById('navSlot');
-  if (nav) nav.innerHTML = navMenu({ current: 'packs', key: navKey, ...rights });
+  paintNav(document.getElementById('navSlot'), { current: 'packs', key: navKey, ...rights });
   const options = [];
 
   if (library.quizzes.length) {
