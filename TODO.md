@@ -1224,6 +1224,9 @@ See rule 4 in CLAUDE.md.
 
 ### Group accounts — SEATS on a Gold, for a quizmaster company
 
+> **It serves a SECOND market that was not designed for, and that is a feature
+> rather than a coincidence — see "What if venues run it themselves?" below.**
+
 Your idea, and the interesting half of it is not the discount.
 
 Rob runs a company (Interrupt the Routine) with more than one host. Today his
@@ -1405,6 +1408,52 @@ The order that actually matters:
    here is guesswork until then.
 4. The eight starter packs, so there is something worth paying for.
 5. Company accounts and shared packs.
+
+### "What if venues just run it themselves?" — raised, answered, do not re-litigate
+
+Put to the host by somebody outside the project on 12 August 2026: sell software
+to quizmasters and venues will notice it and cut the quizmaster out. **His
+answer was that he does not mind, and he is right — but the reasons are worth
+having written down, because it is the sort of objection that comes back.**
+
+**THE APP WAS NEVER THE MOAT.** This file's first section says it: he is hired
+as the ENTERTAINER, never the organiser. A venue that wanted to run its own quiz
+could always have done it with a printed sheet and a biro; they hire somebody
+because they do not want to be the one holding a room for two hours. Nothing
+shipped here changes that calculation.
+
+**The real version of the worry is much milder than the one put to him.** It is
+not "venues replace quizmasters" — it is "a venue already running its own quiz
+badly now runs it well", which raises the floor that a WEAK quizmaster competes
+against. That is pressure on the bottom of the market and none at all on people
+who are actually good, which pushes bookings toward the quizmasters worth
+booking. Those are the ones who pay for this.
+
+**And a chain is a BETTER customer than an individual on nearly every axis.**
+One sale, one relationship, one invoice, ten rooms — and **far lower churn**,
+because a pub chain does not quit the business the way somebody with a side
+hustle does. Ten venues at Bronze is £100 a month from one conversation.
+
+**It works structurally TODAY with no changes at all.** A room per account means
+each venue already gets its own join code, state file, photo wall, invoice book,
+archive and advert slides, and no route takes a room parameter, so one venue
+cannot reach another's night. The multi-tenancy built for a second quizmaster
+turns out to be exactly what a chain needs. The only gap is ONE BILL FOR TEN
+ACCOUNTS, which is Group accounts above — along with the company pack folder,
+so head office writes a quiz and all ten venues have it.
+
+**Two things to expect before a chain ever signs:**
+
+- **THEY WILL WANT THEIR OWN BRANDING, and a quizmaster does not.** Mark is
+  happy being "Mark's Quizporium" because he IS the brand; a pub chain wants
+  "Greene King Quiz Night" and may not want the app's name on their projector at
+  all. That is white-labelling, listed in CLAUDE.md as deliberately not built,
+  and it is a bigger job than seats. It will be the first thing they ask for.
+- **A chain is probably underpriced per room.** They get more from it than ten
+  individual quizmasters would — a business with a marketing budget rather than
+  one person with a laptop. Per-room stays simple and is not metering, so the
+  anti-metering rule holds; this is a fine problem to have and one to solve with
+  a chain actually on the phone, not in advance.
 
 ### ~~A shared login can end somebody else's night~~ — FIXED
 
