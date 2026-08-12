@@ -226,10 +226,10 @@ function roundBriefs({ theme, count, focus = '' }) {
 and asks "Whose face is this?". Pick ${perRound} musicians who fit "${about}" and whose
 faces a pub crowd would actually recognise. The four options are four musician names —
 the correct one plus three plausible contemporaries.
-Also give each question an "imagePrompt": a prompt for an image generator asking for a
-bold stylised digital illustration (explicitly a drawing, not a photograph) of that
-musician, head and shoulders, dramatic lighting, plain dark background, and no text
-anywhere in the image.
+Also give each question an "imagePrompt": a short description of WHO to draw and what
+makes them recognisable — the era, the hair, the clothes, the look they are known for.
+Describe the PERSON ONLY. Do not name an artistic style, a medium, or how the picture
+should be made: the host chooses that in the app, and naming one here fights with it.
 Set "prompt" to exactly "Whose face is this?" for every question in this round.`,
 
     intro: `Round type "intro": the host plays the opening seconds of a track from their own

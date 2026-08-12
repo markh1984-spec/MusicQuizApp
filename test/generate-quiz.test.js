@@ -768,3 +768,31 @@ test('an ordinary quiz never reads the web at all', async () => {
     assert.equal(result.searches, 0);
   });
 });
+
+/*
+ * ONE PLACE DECIDES HOW A PICTURE LOOKS, AND IT IS NOT THE QUESTION.
+ *
+ * The image round's brief used to ask Claude for "a bold stylised digital
+ * illustration" — word for word the `portrait` style that was deleted because
+ * Google refuses it. That sentence was written into every question's
+ * `imagePrompt` and then embedded verbatim in the prompt, so every picture was
+ * asked for as a cartoon caricature AND as a stylised digital illustration at
+ * the same time, with the refused word in the middle.
+ *
+ * It happened to draw anyway — the leading style won — which is exactly why
+ * this is a test rather than a note: it is one model update from refusing, and
+ * nothing on screen would say why.
+ *
+ * The split: the STYLE is the host's setting and says how it looks; the
+ * imagePrompt is Claude's job and says who is in it.
+ */
+test('the picture-round brief describes the person, never the style', () => {
+  const brief = roundBriefsFor('image');
+  assert.ok(brief, 'there is no image-round brief any more');
+
+  for (const word of ['illustration', 'photograph', 'painting', 'watercolour', 'oil painting']) {
+    assert.doesNotMatch(brief.replace(/illustrated portrait/g, ''), new RegExp(word, 'i'),
+      `the brief asks Claude for "${word}", which fights with the style the host picked`);
+  }
+  assert.match(brief, /PERSON ONLY|person only/i, 'the brief no longer says to describe the person only');
+});
