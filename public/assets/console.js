@@ -3955,6 +3955,7 @@ function renderQuizPreview(body, sub, quiz, markDirty = () => {}) {
       parts.push(node(`
         <div class="pv-q">
           <div class="pv-prompt"><span class="pv-num">${i + 1}</span>${esc(q.prompt)}</div>
+          ${pictureFor(round, q)}
           <div class="pv-opts">
             ${round.type === 'alphabet'
               // No options to read through — the whole answer key is the answer
@@ -3972,6 +3973,38 @@ function renderQuizPreview(body, sub, quiz, markDirty = () => {}) {
     });
   }
   body.replaceChildren(...parts);
+}
+
+/**
+ * THE PICTURE, on the read-through.
+ *
+ * A picture round cannot be checked by reading it. The whole question is
+ * "whose face is this", so four names with no face above them tells you
+ * nothing about the only part that can be wrong — and the drawing is the half
+ * made by a different supplier, costing money, that occasionally comes back as
+ * somebody else entirely.
+ *
+ * **It does not try to say whether the picture is real or a placeholder**, and
+ * that is deliberate rather than lazy: `/quiz-images/` falls back to an SVG of
+ * the same name when the artwork has not been made, so the URL is identical
+ * either way and any guess here would be a guess. The Pictures panel on the
+ * pack card is where that question is answered properly — it counts them — and
+ * a placeholder is obvious on sight anyway, being a lettered card rather than
+ * a face.
+ *
+ * Small, with a link to the full size: judging a likeness at 120px is not
+ * judging it.
+ */
+function pictureFor(round, q) {
+  if (round.type !== 'image' || !q.image) return '';
+  const src = `/quiz-images/${q.image}`;
+  return `
+    <div class="pv-pic">
+      <a href="${esc(src)}" target="_blank" rel="noopener" title="Open it full size">
+        <img class="pv-pic-img" src="${esc(src)}" alt="" loading="lazy"
+          onerror="this.closest('.pv-pic').innerHTML='&lt;div class=&quot;pv-pic-none&quot;&gt;No picture for this one yet.&lt;/div&gt;'">
+      </a>
+    </div>`;
 }
 
 /**

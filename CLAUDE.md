@@ -1235,6 +1235,27 @@ quiz, and all it said was "Quiz is not valid". The `/checked` route passes
 `{ allowProblems: true }`. The read-through also shows validation problems
 above the hunches, in red, so you can see *which* question is at fault.
 
+### The read-through shows the PICTURES
+
+A picture round cannot be checked by reading it. The whole question is "whose
+face is this", so four names with no face above them says nothing about the one
+part that can be wrong — and the drawing is the half made by a different
+supplier, costing money, that occasionally comes back as somebody else
+entirely. `pictureFor()` in `console.js` puts it above the options, small, with
+a link to the full size: judging a likeness at 120px is not judging it.
+
+**It does not try to say whether a picture is real or a placeholder**, and that
+is deliberate rather than lazy. `/quiz-images/` falls back to an SVG of the
+same name when the artwork has not been made — that is what makes a pack
+rehearsable before a penny is spent — so the URL is identical either way and
+any guess in the browser would be a guess. The Pictures panel on the pack card
+answers that properly, by counting them, and a placeholder is obvious on sight
+anyway: it is a lettered card rather than a face.
+
+A question whose file is missing entirely says "No picture for this one yet"
+rather than showing a broken image, which is an `onerror` on the tag because
+the browser cannot know until it has tried.
+
 ### Not asking the same thing twice, across the catalogue
 
 `src/question-history.js`. The bingo side has had this from the beginning —

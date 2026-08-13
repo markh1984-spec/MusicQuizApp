@@ -4781,3 +4781,18 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 }
 .demo-side { display: grid; gap: 8px; min-width: 0; }
 .demo-side .tiny { word-break: break-all; }
+
+/* The picture on a read-through. Small, because the page is a list you scan —
+   and a link to the full size, because judging a likeness at 120px is not
+   judging it. */
+.pv-pic { margin: 8px 0 10px; }
+.pv-pic-img {
+  width: 120px; height: 120px; object-fit: cover;
+  border-radius: 10px; border: 1px solid var(--panel-line); display: block;
+}
+.pv-pic-note { margin-top: 6px; color: var(--gold); }
+.pv-pic-none {
+  font-size: var(--fs-note); color: var(--ink-dim);
+  padding: 10px 12px; border-radius: 10px;
+  border: 1px dashed var(--panel-line);
+}
