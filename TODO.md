@@ -1526,7 +1526,39 @@ to build something this size around one admin day a week:
 4. **Teams — several phones, one team, averaged.** Wanted anyway, worth more
    online.
 5. **The media layer.** Cloudflare Realtime, host publishes, players receive,
-   gated to two accounts.
+   gated to two accounts. **NOT BUILT — it needs an account, and that is a
+   Monday job** (his own words). The checklist is below.
+
+**Steps 1 to 4 are BUILT, tested and live.** `state.online` and the Where
+picker; the question on the player's own phone; chat with a main room, a back
+channel and emoji-only while a question is live; and teams scored on the
+average. Every one of them is off unless it is asked for at launch, and
+`scripts/pub-unchanged.mjs` reports 2,150 identical payloads for a night that
+does not use them.
+
+###### Step 5, when there is a Monday for it
+
+Nothing here can be done without an account, so it is written out rather than
+half-built:
+
+1. **Sign up at [Cloudflare](https://dash.cloudflare.com/sign-up)** — free, no
+   card for the free tier. The product is **Realtime** (it was called Calls);
+   the SFU is the part that matters.
+2. **Take the App ID and the App Secret** from the Realtime dashboard. They go
+   on Render as `REALTIME_APP_ID` and `REALTIME_APP_SECRET`, alongside
+   everything else — never in the repo, which is public.
+3. **Check the free tier is still 1,000 GB a month** at
+   [the pricing page](https://developers.cloudflare.com/realtime/sfu/pricing).
+   That is roughly 330 hundred-person audio nights, so it wants checking once
+   rather than watching.
+4. Then the build: the host publishes one audio track and one small video
+   track, every player subscribes, and **nothing about the quiz depends on
+   either**. The fallback is the app with this switched off, which is what
+   steps 1–4 already are.
+
+**Do not start the build before the account exists.** A media layer written
+against a stub is a media layer that has never met a real ICE negotiation, and
+this is the first third-party service in the live path of a night.
 
 **The media layer is last because everything above it must work without it.**
 That is not a way of putting it off — it is the only version of *a mode, never
