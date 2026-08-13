@@ -976,8 +976,26 @@ function supportGuard(req, res, url, route) {
 
 async function handleGet(req, res, url, route) {
   // ---- pages
-  if (route === '/' ) {
-    send(res, 302, '', { Location: '/screen' });
+  /*
+   * THE BARE DOMAIN IS THE QUIZMASTER'S FRONT DOOR, not the projector.
+   *
+   * It used to redirect to `/screen`, which meant typing quizporium.co.uk got
+   * you a lobby slide with a QR on it — the one page that is opened once, on a
+   * laptop plugged into a projector, from a link on the console. Nobody
+   * arrives at the bare domain wanting that. The people who type it are the
+   * quizmaster, and what they want is in.
+   *
+   * PLAYERS ARE UNAFFECTED: every QR, every printed card and every join link
+   * says `/play`, never the bare domain — see `joinUrlFor`.
+   *
+   * `no-store`, because where this goes depends on WHO IS ASKING. A cached 302
+   * to /login would follow a signed-in quizmaster around for as long as the
+   * browser kept it, which is the kind of fault nobody thinks to look for.
+   */
+  if (route === '/') {
+    const who = whoIs(req, url);
+    const to = who ? (who.role === 'owner' ? '/owner' : '/console') : '/login';
+    send(res, 302, '', { Location: to, 'Cache-Control': 'no-store' });
     return true;
   }
   if (route === '/screen') return serveFile(res, config.publicDir, 'screen.html'), true;

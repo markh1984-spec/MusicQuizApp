@@ -338,3 +338,26 @@ test('every feature and tier blurb is one short line', async () => {
     assert.ok(tier.content.blurb.length <= LIMIT, `${tier.id} content: "${tier.content.blurb}"`);
   }
 });
+
+/*
+ * THE BARE DOMAIN IS THE QUIZMASTER'S FRONT DOOR.
+ *
+ * It redirected to `/screen`, so typing quizporium.co.uk got you a lobby slide
+ * with a QR on it — a page that is opened once, on a laptop plugged into a
+ * projector, from a link on the console. Players are unaffected either way:
+ * every QR and printed card says `/play`, never the bare domain.
+ *
+ * `no-store` is the part worth a test, because getting it wrong fails
+ * INVISIBLY: where `/` goes depends on who is asking, so a cached 302 to
+ * /login would follow a signed-in quizmaster around for as long as the browser
+ * kept it, and nobody would think to look at a redirect.
+ */
+test('the bare domain goes by WHO IS ASKING, and is never cached', () => {
+  const src = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const at = src.indexOf("if (route === '/') {");
+  assert.ok(at > 0, 'the root route still exists');
+  const block = src.slice(at, src.indexOf('\n  }', at));
+  assert.ok(block.includes('whoIs('), 'it asks who is asking');
+  assert.ok(/no-store/.test(block), 'and says not to cache the answer');
+  assert.ok(!/Location: '\/screen'/.test(block), 'and no longer sends everybody to the projector');
+});
