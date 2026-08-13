@@ -200,6 +200,29 @@ three of the four are really about what a NIGHT is — which is item 1 above.
   Naming it as a category is what gives somebody permission. Revisit if it
   turns out nobody ever picks it.
 
+### 5b. The console and the editor ON A PHONE, from a quizmaster's side
+
+**Parked deliberately on 14 August 2026.** The host runs from a LAPTOP, so
+nothing here is on a gig-night path for him — but a subscriber may well not,
+and the console is the page you open ten minutes before a room sits down.
+
+Three faults have already been fixed by measuring `scrollWidth` against
+`clientWidth` at 320px, which is the only thing that reveals them: the
+control view's menu ending up on the far right, the editor 313px off the
+side, and Duplicate/Delete hanging 8px over. Every page is inside 320px now.
+
+What has NOT been done is walking the console as a quizmaster on a phone and
+asking whether it is usable rather than merely unbroken. In particular:
+
+- the pack grid at three across on a 390px screen, where Launch is the only
+  thing that matters and is the smallest thing on the card;
+- the launch bar and the tab bar competing for the top of a sticky page;
+- the editor, which is a phone-sized job (fix one question) on a page laid
+  out for a desk.
+
+**Do this by wearing the hat on Bronze at 390px**, not by reasoning about it
+— the same method that found the other three.
+
 ### 6. Email — the one dependency several other things are waiting on
 
 **Raised 12 August 2026 while a password could not be reset.** CLAUDE.md says
