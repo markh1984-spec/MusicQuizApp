@@ -48,8 +48,18 @@ months later, in a route somebody wrote in a hurry.
 | Word | What it is | What it can see |
 |---|---|---|
 | **Owner** | the app owner. Exactly one, for ever | **everything** — every account, the catalogue, the ledger |
+| **On their own** | a quizmaster with no company: no parent, no children. **The default, and almost everybody** | **itself** |
 | **Parent** | an account that manages other accounts: a pub group's HQ, a quiz company | **its own children, and nothing outside them** |
 | **Child** (sub-account) | an account managed by a parent: a venue, a company's quizmaster | **itself** |
+
+**"ON THEIR OWN" IS A CASE, NOT A GROUP OF ONE, and getting that wrong is
+expensive.** A solo quizmaster is not a child of anything — Rob with no company
+has no parent and needs none. If the model requires a group, then every
+subscriber needs one invented for them at sign-up, every query goes through a
+join that is pointless for almost every account, and a concept that serves a
+handful of companies is paid for by everybody. **`parentId` is simply absent on
+an ordinary account**, exactly as `kind` defaults and `teams` is empty — the
+same rule this file follows everywhere: the common case costs nothing.
 
 **A PARENT MANAGES; A CHILD RUNS.** That is the host's "parent is the stats and
 the data, the child actually runs the quiz", and it is right as the common
