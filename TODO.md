@@ -2671,6 +2671,62 @@ immediately gives:
 **Do this one first.** It is the cheapest item on the list and the most blocked
 behind.
 
+#### LINKED ACCOUNTS — and "concurrently" is three things, one of them fatal
+
+The host: *"You could have a link accounts feature. If the venue has an account
+and the quizmaster has an account, you could have linked accounts that then run
+concurrently throughout the evening for that purpose."*
+
+Right, and the word doing the work is "concurrently". It can mean three things
+and they are not the same feature:
+
+**1. BOTH CREDITED — the attribution above.** The link is a label applied at
+launch; the outputs land on both pages afterwards. Safe, cheap, and already
+designed. This is the floor and it is most of the value.
+
+**2. THE VENUE WATCHES, LIVE.** Their console shows the night happening —
+"38 in", the photos arriving, which round it is — from behind the bar, without
+having to ask the person on the microphone. **This is the good version of
+"concurrently"** and it is genuinely useful: a landlord wanting to know whether
+tonight is busy currently has to walk over and interrupt. It is also cheap,
+because a read-only view of a live game is a thing this app already has three
+of.
+
+**3. BOTH DRIVE. DO NOT BUILD THIS.** Two accounts with a Next button on one
+game is precisely the failure this file already records under *"a shared login
+can end somebody else's night"* — except deliberate, and across two businesses
+who will blame each other. The rule stands and it is one of the oldest here:
+**ONE PLACE THAT MOVES A QUIZ, and it is the control view.** A linked venue
+account watches; it never drives. That has to be built in rather than agreed
+informally, because the whole point of linking is that both parties feel
+entitled to the night.
+
+So: **build 1, then 2, and refuse 3 by construction** — the venue's live view
+should have no host actions available to it at all, in the payload, not merely
+undrawn on the page.
+
+#### A LINK NEEDS BOTH SIDES TO AGREE, and that is easy to retrofit badly
+
+Dave must not be able to attach his night to the Dog and Duck's account on his
+own say-so, and the Dog and Duck must not be able to claim Dave hosted for
+them. Unchecked, both directions pollute two histories with something that did
+not happen — and once there is a directory, "I have hosted at forty venues" is
+a REPUTATION CLAIM rather than a note, which makes an unverified one worth
+something to somebody.
+
+The cheap shape: an invite from either side and an accept from the other,
+exactly like support access — theirs to grant, and visible. **Free-text venues
+need no consent at all**, because nothing lands on anybody else's page; consent
+is only the price of the link, which is what makes the honest version cheap and
+the false claim impossible.
+
+Two kinds of link, and they are not the same thing:
+
+- **A STANDING link** — "Dave is our regular quizmaster". A convenience that
+  pre-fills the per-night one, nothing more.
+- **A PER-NIGHT attribution** — "Dave did the 14th". This is the one that is
+  real, and the one Past gigs reads.
+
 #### One thing left open: who owns the PHOTOS of a shared night
 
 Both should see them — they are pictures of that room on that evening. Less
