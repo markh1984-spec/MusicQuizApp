@@ -3849,13 +3849,26 @@ async function handleWrite(req, res, url, route) {
         // Where tonight is — a name, so it works before venue accounts exist.
         const venue = String(body.venue || '');
         /*
-         * What first, second and third get, if anything. Empty on an ordinary
-         * night, and then no voucher is ever issued and no payload gains a
-         * field. A bare string is still accepted so a curl call written against
-         * the single-prize version keeps working.
+         * WHAT FIRST, SECOND AND THIRD GET — READ OFF THE VENUE, not sent.
+         *
+         * A prize is the VENUE'S standing arrangement rather than a decision
+         * about tonight: the same drink every week at one pub and something
+         * else entirely at another. So it is set once on the Venues tab and
+         * the launch form does not carry it at all — which is why there is no
+         * "What they win" box on a pack card. Look, Where and Playing are
+         * facts about the evening; this is not.
+         *
+         * Resolved HERE rather than in the browser so there is one source of
+         * truth and a stale console cannot launch a night playing for
+         * something the venue never agreed to. A body that carries `rewards`
+         * still wins, so a curl call and every test keep working.
          */
+        const named = String(body.venue || '').trim().toLowerCase();
+        const onFile = named
+          ? (room.invoices.customers.find((c) => String(c.name || '').trim().toLowerCase() === named) || {}).rewards
+          : null;
         const rewards = Array.isArray(body.rewards) ? body.rewards.map(String)
-          : (body.reward ? [String(body.reward)] : []);
+          : (body.reward ? [String(body.reward)] : (Array.isArray(onFile) ? onFile : []));
         const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online, teamPlay, venue, rewards });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.

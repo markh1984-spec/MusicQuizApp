@@ -2435,9 +2435,6 @@ function launchBar() {
         <label class="pack-shape venue-wrap">Venue
           ${venueBox()}
         </label>
-        <label class="pack-shape venue-wrap">What they win
-          ${rewardBox()}
-        </label>
       </div>
       <button class="go lb-go">Launch ${esc(pack.title)}</button>
       </div>`));
@@ -2456,7 +2453,7 @@ function launchBar() {
     };
     shapePick?.addEventListener('change', paintPrizes);
     paintPrizes();
-    wireRewards(chosen);
+    wireVenue(chosen);
 
     chosen.querySelector('.lb-go').addEventListener('click', async (ev) => {
       const button = ev.currentTarget;
@@ -2468,8 +2465,7 @@ function launchBar() {
         look: chosen.querySelector('.look-pick')?.value || '',
         online: chosen.querySelector('.where-pick')?.value === 'online',
         teamPlay: chosen.querySelector('.play-pick')?.value === 'teams',
-        venue: chosen.querySelector('.venue-pick')?.value || '',
-        rewards: rewardsFrom(chosen),
+        venue: venueFrom(chosen),
       }, button);
     });
   }
@@ -3148,170 +3144,72 @@ function lookOptions(pack) {
     .join('');
 }
 
-/**
- * In the room, or over a video call.
- *
- * It sits beside Look, Cards and Prizes because it is the same KIND of
- * decision as all three: a fact about tonight rather than about the pack. The
- * same quiz runs in a pub on Wednesday and for somebody's office on Thursday,
- * so it is never read off the pack and never written back to it.
- *
- * "Where" rather than "Online", and the options are places rather than a
- * switch, because a tickbox saying "Online" makes the ordinary night the
- * absence of a setting — and the ordinary night is almost every night. Two
- * named places read the same way round as the question a host is actually
- * answering: where is this lot sitting.
- *
- * What it changes is one thing and it is worth knowing before you pick it: the
- * question text goes ON the players' phones, because online there is no
- * projector to read it off.
- */
-/**
- * WHERE THE NIGHT IS — the venue, as a name.
- *
- * A text box with a datalist rather than a dropdown, because the first time
- * you play somewhere there is nothing to pick from and a dropdown with one
- * option saying "type it yourself" is worse than a box. After that the venue
- * is offered back, so it is typed once and tapped ever after — which is the
- * part that actually matters: a field you retype every week is blank by the
- * third week, and then the record it exists to build is full of holes.
- *
- * Optional on purpose. A one-off, a party, a night you cannot be bothered to
- * name — all fine, and the night still files. Nothing refuses to launch over
- * this, which is the rule for every control that stands between a quizmaster
- * and a room that is already sitting down.
- */
-/**
- * WHAT THE WINNER GETS — free text, and empty is the normal answer.
- *
- * "What they win" rather than "Prize", and the distinction is not fussiness: a
- * bingo card already has PRIZES on it, meaning how many lines pay out before
- * the full house. Two controls on one card both saying prize, meaning a count
- * and a thing, is the label collision this codebase keeps recording.
- *
- * Offered back per night like the venue, because most weeks at one pub have
- * the same prize and typing it every time is how a field ends up blank by the
- * third week.
- */
-function rewardBox() {
-  const seen = (library && library.rewards) || [];
-  /*
-   * ONE BOX, AND THE NEXT APPEARS WHEN YOU FILL IT.
-   *
-   * A pub quiz often pays three deep and the three are usually different
-   * things — but plenty of nights have one prize or none, and three empty
-   * boxes on every pack card is the clutter rule broken on the page whose job
-   * is "find tonight's pack and press Launch". So the second appears when the
-   * first has something in it, and the third when the second does. Nothing to
-   * learn, nothing to expand, and a one-prize night looks exactly as it did.
-   *
-   * NEVER "gold, silver and bronze". Those are the subscription tiers, and a
-   * quizmaster would read "Gold prize" on the same page that says they are on
-   * Gold.
-   */
-  const list = seen.length
-    ? `<datalist id="rewardsUsed">${seen.map((v) => `<option value="${esc(v)}"></option>`).join('')}</datalist>`
-    : '';
-  /*
-   * EVERY BOX CARRIES ITS PLACE, INCLUDING THE FIRST.
-   *
-   * It did not, and the host read the panel as "only a single field" — which
-   * is fair: a lone unlabelled box says nothing about there being places at
-   * all, so the second one appearing later is a surprise rather than an
-   * answer. With "1st" on it the row is obviously one of a set and the next
-   * arriving is what you expect. Same fault as a control whose meaning lives
-   * in a tooltip: the thing was there and the label was not.
-   */
-  const PLACES = { 1: '1st', 2: '2nd', 3: '3rd' };
-  const box = (i) => `
-    <div class="reward-row" data-place="${i}"${i > 1 ? ' hidden' : ''}>
-      <span class="reward-place">${PLACES[i]}</span>
-      <input class="reward-pick" type="text" list="rewardsUsed" maxlength="80"
-        placeholder="${i === 1 ? 'A free drink at the bar' : `Prize for ${i === 2 ? 'second' : 'third'}`}">
-    </div>`;
-  return `<div class="reward-stack">${box(1)}${box(2)}${box(3)}${list}</div>`;
-}
-
-/**
- * Show the next prize box once the one above it has something in it.
- *
- * Wired wherever a launch form is built, because there are two of them — the
- * launch bar and the pack card — and a control that works on one and not the
- * other is worse than one that works on neither.
- */
-function wireRewards(el) {
-  const stack = el.querySelector('.reward-stack');
-  if (!stack) return;
-  const rows = [...stack.querySelectorAll('.reward-row')];
-
-  /*
-   * THE PRIZE FOLLOWS THE VENUE, because the venue buys it.
-   *
-   * The same drink every week at one pub and something else entirely at
-   * another — so picking the venue fills in what that venue put up last time,
-   * and the job becomes confirming rather than typing. That is the shape this
-   * app uses everywhere: the app prepares, the human reads, the human presses.
-   *
-   * ONLY INTO EMPTY BOXES, and that is the whole safety of it. Overwriting
-   * something already typed would silently change what a room is playing for
-   * — and it would do it at the exact moment somebody had just corrected it.
-   */
-  const venueBoxEl = el.querySelector('.venue-pick');
-  if (venueBoxEl) {
-    venueBoxEl.addEventListener('change', () => {
-      const name = venueBoxEl.value.trim();
-      /*
-       * THE VENUE RECORD FIRST, the archive second.
-       *
-       * What somebody typed on the Venues tab is a STATED arrangement — "this
-       * pub puts up a free drink" — and what the archive holds is merely what
-       * happened last time. When they disagree the stated one is the answer,
-       * because the other is a guess made from history.
-       */
-      const record = (library.venueRecords || []).find((v) => v.name.toLowerCase() === name.toLowerCase());
-      const known = (record && (record.rewards || []).filter(Boolean).length)
-        ? record.rewards
-        : ((library && library.venueRewards) || {})[name];
-      if (!known || !known.length) return;
-      if (rows.some((r) => r.querySelector('input').value.trim())) return;
-      rows.forEach((row, i) => { row.querySelector('input').value = known[i] || ''; });
-      paint();
-    });
-  }
-  const paint = () => {
-    rows.forEach((row, i) => {
-      if (i === 0) return;
-      const above = rows[i - 1].querySelector('input').value.trim();
-      // Never hide one that has been typed into: somebody who clears second
-      // place while third is filled would otherwise lose what they wrote with
-      // nothing on screen saying so.
-      const mine = row.querySelector('input').value.trim();
-      row.hidden = !above && !mine;
-    });
-  };
-  for (const row of rows) row.querySelector('input').addEventListener('input', paint);
-  paint();
-}
-
-/** The three boxes as a list, first place first, blanks and all. */
-function rewardsFrom(el) {
-  return [...el.querySelectorAll('.reward-pick')].map((i) => i.value.trim());
-}
-
 function venueBox() {
   /*
-   * Both lists: venues you have SET UP and venues you have PLAYED. A venue
-   * added on the Venues tab has never hosted a night yet, so reading only the
+   * A REAL DROPDOWN once there are venues, and a plain box when there are not.
+   *
+   * It was an `<input list=…>`, which is both at once and therefore looks like
+   * neither: a datalist draws no chevron, so the field said "type something"
+   * while quietly holding a list nobody could see. The GUI rules already
+   * settle it — the chevron on its block of gradient is *the affordance that
+   * says this opens* — so a control that opens has to look like one.
+   *
+   * Both lists behind it: venues you have SET UP and venues you have PLAYED. A
+   * venue added on the Venues tab has hosted nothing yet, so reading only the
    * archive would offer back nothing on the one occasion somebody had just
    * gone to the trouble of adding it.
+   *
+   * "Somewhere else" is last and swaps in a text box, because a one-off venue
+   * must not need a record made for it first — that is the promise the night's
+   * free-text `venue` was built on and it has not changed.
    */
   const played = (library && library.venues) || [];
   const setUp = ((library && library.venueRecords) || []).map((v) => v.name);
   const seen = [...new Set([...setUp, ...played].filter(Boolean))];
+  if (!seen.length) {
+    return '<input class="venue-pick venue-free" type="text" maxlength="60" autocomplete="off" placeholder="The Dog and Duck">';
+  }
   return `
-    <input class="venue-pick" type="text" list="venuesUsed" maxlength="60"
-           autocomplete="off" placeholder="The Dog and Duck">
-    ${seen.length ? `<datalist id="venuesUsed">${seen.map((v) => `<option value="${esc(v)}"></option>`).join('')}</datalist>` : ''}`;
+    <select class="venue-select">
+      <option value="">Where is it?</option>
+      ${seen.map((v) => `<option value="${esc(v)}">${esc(v)}</option>`).join('')}
+      <option value="__other">Somewhere else…</option>
+    </select>
+    <input class="venue-pick venue-free" type="text" maxlength="60" autocomplete="off"
+           placeholder="The Dog and Duck" hidden>`;
+}
+
+/**
+ * Which venue was chosen, whichever control said so.
+ *
+ * One reader, because two call sites already ask and a launch that read the
+ * wrong control would file a night under nothing at all.
+ */
+function wireVenue(el) {
+  /*
+   * "Somewhere else" swaps the dropdown for a text box.
+   *
+   * A one-off venue must not need a record made for it first — that is the
+   * promise the night's free-text `venue` was built on. This lived inside the
+   * prize wiring until the prizes moved onto the venue itself, so it has a
+   * function of its own now rather than being a passenger in one.
+   */
+  const select = el.querySelector('.venue-select');
+  const free = el.querySelector('.venue-free');
+  if (!select || !free) return;
+  select.addEventListener('change', () => {
+    const other = select.value === '__other';
+    free.hidden = !other;
+    if (other) free.focus();
+  });
+}
+
+function venueFrom(el) {
+  const select = el.querySelector('.venue-select');
+  const free = el.querySelector('.venue-free');
+  if (!select) return (free && free.value.trim()) || '';
+  if (select.value === '__other') return (free && free.value.trim()) || '';
+  return select.value.trim();
 }
 
 function whereOptions() {
@@ -3412,9 +3310,7 @@ function packCard(kind, pack) {
         <label class="pack-shape venue-wrap">Venue
           ${venueBox()}
         </label>
-        <label class="pack-shape venue-wrap">What they win
-          ${rewardBox()}
-        </label>`}
+`}
       <div class="pack-actions">
         <button class="pack-read" title="Read it through">Read</button>
         ${mine ? `<button class="pack-rename" ${pack.broken ? 'disabled' : ''} title="Change what it is called">Rename</button>` : ''}
@@ -3512,7 +3408,7 @@ function packCard(kind, pack) {
   };
   shapePick?.addEventListener('change', paintPrizes);
   paintPrizes();
-  wireRewards(el);
+  wireVenue(el);
 
   /*
    * Rename without opening the pack.
@@ -3619,9 +3515,8 @@ function packCard(kind, pack) {
     const look = el.querySelector('.look-pick')?.value || '';
     const online = el.querySelector('.where-pick')?.value === 'online';
     const teamPlay = el.querySelector('.play-pick')?.value === 'teams';
-    const venue = el.querySelector('.venue-pick')?.value || '';
-    const rewards = rewardsFrom(el);
-    await doLaunch(kind, pack.id, { shape, prizes, look, online, teamPlay, venue, rewards }, button);
+    const venue = venueFrom(el);
+    await doLaunch(kind, pack.id, { shape, prizes, look, online, teamPlay, venue }, button);
   });
   return el;
 }
@@ -3633,10 +3528,10 @@ function packCard(kind, pack) {
  * there must not be two ways OUT, or the 409-and-confirm dance gets fixed in
  * one of them and quietly rots in the other.
  */
-async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '', rewards = [] }, button) {
+async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '' }, button) {
     const send = (replace) => postJson(
       '/api/host/launch',
-      { game: kind, packId, shape, prizes, look, online, teamPlay, venue, rewards, ...(replace ? { replace: true } : {}) },
+      { game: kind, packId, shape, prizes, look, online, teamPlay, venue, ...(replace ? { replace: true } : {}) },
       { 'X-Host-Key': hostKey },
     );
     const back = () => {

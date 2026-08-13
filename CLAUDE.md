@@ -1437,23 +1437,30 @@ launch form shows ONE box and the next appears when you fill it, so a one-prize
 night looks exactly as it did and nobody counts empty fields on the page whose
 job is "find tonight's pack and press Launch".
 
-**EVERY BOX CARRIES ITS PLACE, INCLUDING THE FIRST**, and it did not at first —
-the host read the panel as *"only a single field"*, which is fair: a lone
-unlabelled box says nothing about there being places at all, so the second one
-appearing later is a surprise rather than an answer. With **1st** on it the row
-is obviously one of a set. Same fault as a control whose meaning lives in a
-tooltip: the thing was there and the label was not.
+**THE PRIZE IS SET ON THE VENUE AND NOWHERE ELSE**, and there is no "What they
+win" box on a pack card at all. The host's own reasoning, and it is the right
+cut: *"the prizes sit in the venue tab and are revealed at the end, it's not
+relevant to the pack."* Look, Where and Playing are facts about the EVENING;
+a prize is the venue's standing arrangement — the same drink every week at one
+pub and something else entirely at another.
 
-**THE PRIZE FOLLOWS THE VENUE, because the venue buys it.** `rewardsByVenue()`
-in `library.js` — picking a venue fills in what that venue put up last time, so
-the job becomes confirming rather than typing. It is the shape used everywhere
-here: the app prepares, the human reads, the human presses. **Only into EMPTY
-boxes**, which is the whole safety of it — overwriting something already typed
-would silently change what a room is playing for, at the exact moment somebody
-had just corrected it. Read off the archive like `venuesUsed`, so there is no
-second list to keep in sync. Note `listArchive()` builds a SUBSET rather than
-passing the record through, so `rewards` had to be added to it — without that
-both functions returned nothing at all, quietly.
+It went through a launch-form version first (three boxes, the next appearing as
+you filled the one above) and that was wrong twice over: it asked at the moment
+you least want to be typing, and it put a fact about the venue on the card of a
+pack that could be played anywhere.
+
+**The SERVER reads them off the venue record**, not the browser — so one source
+of truth, and a stale console cannot launch a night playing for something the
+venue never agreed to. A request that carries `rewards` still wins, so a curl
+call and every test keep working.
+
+**The venue picker is a real `<select>` now**, with "Somewhere else" last,
+swapping in a text box. It was an `<input list=…>`, which is both a box and a
+list and therefore looks like neither: a datalist draws no chevron, so the
+field said "type something" while quietly holding a list nobody could see. The
+GUI rules already settled it — the chevron on its block of gradient is *the
+affordance that says this opens*. A one-off venue still needs no record made
+for it first, which is the promise the night's free-text `venue` was built on.
 
 **They are never called gold, silver and bronze on screen.** Those are the
 subscription tiers, and a quizmaster would be reading "Gold prize" on the same
