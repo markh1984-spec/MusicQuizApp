@@ -4796,3 +4796,19 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
   padding: 10px 12px; border-radius: 10px;
   border: 1px dashed var(--panel-line);
 }
+
+/* What tonight is playing for, said on the pack card before Launch is pressed.
+   The night that ended with no voucher ended that way because nothing here
+   said there were no prizes — and nothing on screen looks exactly like not
+   having looked. */
+.prize-line {
+  grid-column: 1 / -1;
+  font-size: var(--fs-note); color: var(--ink-dim);
+  padding: 8px 10px; border-radius: 10px;
+  background: rgba(255, 210, 63, 0.08);
+  border: 1px solid rgba(255, 210, 63, 0.3);
+}
+.prize-line.none { background: none; border-style: dashed; border-color: var(--panel-line); }
+.prize-line .prize-place { color: var(--gold); font-weight: 900; }
+.prize-line .prize-place.p2 { color: #c6cdd6; }
+.prize-line .prize-place.p3 { color: #cd895a; }

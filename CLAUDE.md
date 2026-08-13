@@ -1308,6 +1308,44 @@ Four details that are each there for a reason:
 A pick-them-all question counts EVERY right option, not just the first —
 otherwise a later question could reuse one of them unnoticed.
 
+### The same name in half the questions — *"I saw Adele far too many times"*
+
+`same-option` in `reviewWarnings()`, and a line in the writing brief. Reported
+by the host after the first real night, about a general knowledge round where
+one act was an option in four questions out of six.
+
+**It is the SAME SHAPE as the answer history above and it exists because that
+one cannot see this.** `question-history.js` keys on the ANSWER, deliberately —
+so a name that is never right and always on screen is invisible to it. The
+generation brief is the other half of the cause: *"the three wrong options must
+be plausible… same era, same genre, comparable fame"* is right for ONE question
+and pulls everything at the same handful of names across ten.
+
+So both ends are done, and the split is the one this file keeps recording:
+**the brief stops the over-ask being wasted, and the mechanical count is what
+actually holds**, because a model asked not to repeat itself does it anyway and
+the failure is silent. No API call, and it catches it every time.
+
+Four details, each there for a reason:
+
+- **One flag per NAME per round**, not one per question. The complaint is about
+  the round and the fix is to rewrite several questions; ten flags saying one
+  thing is a panel you stop reading.
+- **But it is hung on the first QUESTION carrying the name**, because a tick
+  lives in `question.checked` and `setWarningChecked()` finds the question by
+  id. A flag with no question is one the tick silently does nothing to — it
+  lights, the reload puts it back, and the host learns the panel lies. Every
+  other flag in that file is per question and this one had to be too.
+- **And the tick is read across the WHOLE round**, which was wrong first time
+  and was caught by its own test. Reorder the round and the first question
+  carrying the name is a different one, so a tick read off that one alone
+  springs back open on a flag somebody has already read. The id is
+  `same-option:<slug of the name>` for the same reason: never a position.
+- **A third of the round, and never fewer than three.** Two in ten is ordinary;
+  two in four is not worth saying either, which is what the floor is for. A
+  name repeated inside ONE question's options is a different fault and is
+  counted once.
+
 ### A question that goes out of date on its own
 
 `ages-out` in `reviewWarnings()`. "How old is Harry Styles" is right for a year
@@ -1486,6 +1524,26 @@ reappeared. Somebody's venues looking deleted is not a thing to leave to a
 lucky click. This is the same class of trap as a route being added without
 being put on `OWNER_ONLY`: the mechanism exists and the new caller did not know
 to ask for it.
+
+**AND THE PACK CARD SAYS WHAT TONIGHT IS PLAYING FOR, INCLUDING WHEN IT IS
+NOTHING.** `paintPrizes()` inside `wireVenue()` in `console.js`: pick a venue
+and the line under it reads *"Playing for: **1st** A free drink at the bar ·
+**2nd** …"*, read-only, at the only moment it can still be changed.
+
+**It exists because the first real night ended with no voucher at all and
+nothing anywhere said why.** The server reading the prizes off the venue record
+is right and stays — but it meant the only place the arrangement was ever
+stated was the venue record itself, on a different tab, and the night's venue
+had not matched one. **An app that says nothing looks exactly like an app that
+is working**, which is the same fault as the Spotify 403 coming back as an
+empty success.
+
+So the half that matters is the NONE case, and it is worded to say which of the
+two it is: *"this venue is not on your Venues tab"* when the name matches no
+record — which is what a free-text venue always gets, and worth saying rather
+than leaving somebody to find out at the final scores — and *"set them on the
+Venues tab"* when the record exists and is empty. It is a quiet dashed box, not
+a warning: a night with no prize is an ordinary night.
 
 **The venue picker is a real `<select>` now**, with "Somewhere else" last,
 swapping in a text box. It was an `<input list=…>`, which is both a box and a
@@ -2367,11 +2425,21 @@ nobody is typing a word.
 
 ### The picture round's four reveals
 
-`REVEAL_MODES` in `src/quizzes.js`: **zoom** (the original, still the default),
-**pixelate**, **blur**, **tiles**. A round names one, a question can override
-it, and `mix` rotates through all four **by position, not at random** — so a
-Redo mid-gig hands the room back the effect they were half way through
-watching rather than a fresh scramble. There is a test for exactly that.
+`REVEAL_MODES` in `src/quizzes.js`: **zoom** (the original, and still what a
+round naming nothing falls back to), **pixelate**, **blur**, **tiles**. A round
+names one, a question can override it, and `mix` rotates through all four **by
+position, not at random** — so a Redo mid-gig hands the room back the effect
+they were half way through watching rather than a fresh scramble. There is a
+test for exactly that.
+
+**A GENERATED picture round is `mix`, and for two years of packs it was not.**
+The mode existed, the four effects existed, and `generateQuizPack()` never set
+a reveal at all — so every generated round fell back to zoom and the first real
+night came back *"the image round was too samey"*. The fix is one word in an
+object literal, which is exactly why there is now a test on it: nothing else
+anywhere would notice it going missing. Safe by construction rather than a
+judgement call, because of the paragraph below — all four run on the same
+curve, so the round is worth the same points whichever it draws.
 
 **They all run on the same curve, and that is a SCORING decision, not a styling
 one.** You score more the earlier you answer, so how fast a picture becomes
@@ -4295,7 +4363,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 912 tests, no network, injected clocks — must stay green
+npm test        # 941 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -4474,7 +4542,34 @@ private repo (`PACKS_REPO`), never the one holding the owner's accounts and
 invoices; until that is set the console says so in red and every own pack has a
 Download button.
 
-All on **`MusicQuizApp`**. 912 tests green.
+All on **`MusicQuizApp`**. 941 tests green.
+
+### Three things the FIRST REAL NIGHT found, and all three are fixed
+
+The host ran the app in front of a paying room for the first time and came back
+with exactly three things. Each is written up in its own section above; what is
+worth seeing together is that **none of them was a crash, a 500 or a failing
+test** — two were the app saying nothing where it should have said something,
+and the third was a setting that existed and was never set.
+
+- **No prize QR at the end.** The prizes come off the venue record at launch,
+  the venue had not matched a record, so there were none — and nothing anywhere
+  said so. The pack card now states what tonight is playing for, and states it
+  when the answer is nothing.
+- **The picture round was ten zooms.** `mix` and its four effects have existed
+  since the round was written; the generator never set a reveal at all, so
+  every generated pack fell back to the default. One word, and now a test.
+- **The same act as a decoy over and over.** A `same-option` count on the
+  read-through and a line in the writing brief — the brief so the over-ask is
+  not wasted, the count because that is what actually holds.
+
+**The lesson they share is worth more than the fixes.** Two of the three were
+invisible from every check this repo has: `npm test` was green, the payloads
+were byte-identical, nothing 403'd and nothing looked broken. They were only
+findable by a human running a night and noticing the app had not told them
+something. That is the same class as *Scores on screen* vs *My scores* — which
+is why label collisions are now part of Sweep mode — and it is the argument for
+the host wearing a real quizmaster's hat rather than reasoning from the console.
 
 ### What landed on 14 August 2026
 

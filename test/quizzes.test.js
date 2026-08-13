@@ -806,3 +806,98 @@ test('the date survives a round trip through normaliseQuiz', () => {
   assert.ok(!('freshUntil' in normaliseQuiz({ title: 'x', rounds: [] })),
     'an evergreen pack grew a field it does not need');
 });
+
+/*
+ * THE SAME NAME IN HALF THE QUESTIONS — reported after the first real night:
+ * *"the GK answers were too similar, I saw Adele far too many times."*
+ *
+ * The generation brief tells the writer that wrong options must be from the
+ * same era or act, which is right for one question and pulls everything at the
+ * same handful of names across ten. This is the mechanical half, and it is the
+ * half that holds: a model asked not to repeat itself does it anyway, and the
+ * failure is silent. Same reasoning as `question-history.js`.
+ */
+test('a name in too many of a round’s questions is flagged once, for the ROUND', () => {
+  const q = (id, opts) => ({ id, prompt: `${id}?`, options: opts, correctIndex: 0 });
+  const quiz = { id: 'x', title: 'X', rounds: [{ id: 'r1', type: 'text', title: 'R1', questions: [
+    q('a', ['Coldplay', 'Adele', 'Keane', 'Travis']),
+    q('b', ['Amy Winehouse', 'Adele', 'Duffy', 'Joss Stone']),
+    q('c', ['Arctic Monkeys', 'Adele', 'Kasabian', 'Editors']),
+    q('d', ['Oasis', 'Blur', 'Pulp', 'Suede']),
+    q('e', ['Muse', 'Adele', 'Feeder', 'Ash']),
+    q('f', ['Kaiser Chiefs', 'Razorlight', 'Hard-Fi', 'Maximo Park']),
+  ] }] };
+  const flags = reviewWarnings(quiz).filter((w) => w.kind === 'same-option');
+  assert.equal(flags.length, 1, 'one flag per name per round, not one per question');
+  assert.match(flags[0].text, /"Adele" is an option in 4 of the 6/);
+  // Keyed on the NAME, so a tick survives the round being reordered — the same
+  // rule every other flag id follows.
+  assert.equal(flags[0].id, 'same-option:adele');
+});
+
+test('a round with no repeated names says nothing', () => {
+  const q = (id, opts) => ({ id, prompt: `${id}?`, options: opts, correctIndex: 0 });
+  const quiz = { id: 'y', title: 'Y', rounds: [{ id: 'r1', type: 'text', title: 'R1', questions: [
+    q('a', ['A1', 'A2', 'A3', 'A4']), q('b', ['B1', 'B2', 'B3', 'B4']),
+    q('c', ['C1', 'C2', 'C3', 'C4']), q('d', ['D1', 'D2', 'D3', 'D4']),
+    q('e', ['E1', 'E2', 'E3', 'E4']), q('f', ['F1', 'F2', 'F3', 'F4']),
+  ] }] };
+  assert.equal(reviewWarnings(quiz).filter((w) => w.kind === 'same-option').length, 0);
+});
+
+/*
+ * A SHORT ROUND MUST NOT TRIP IT. Two appearances out of four is ordinary, and
+ * a flag on every small round is a panel somebody stops reading — which costs
+ * the flags that matter on the rounds that are not.
+ */
+test('a short round needs three appearances before it is worth saying', () => {
+  const q = (id, opts) => ({ id, prompt: `${id}?`, options: opts, correctIndex: 0 });
+  const twice = { id: 'z', title: 'Z', rounds: [{ id: 'r1', type: 'text', title: 'R1', questions: [
+    q('a', ['Adele', 'A2', 'A3', 'A4']), q('b', ['Adele', 'B2', 'B3', 'B4']),
+    q('c', ['C1', 'C2', 'C3', 'C4']), q('d', ['D1', 'D2', 'D3', 'D4']),
+  ] }] };
+  assert.equal(reviewWarnings(twice).filter((w) => w.kind === 'same-option').length, 0);
+});
+
+/* A repeat inside ONE question's options is a different fault, not this one. */
+test('the same name twice in one question is not counted twice', () => {
+  const q = (id, opts) => ({ id, prompt: `${id}?`, options: opts, correctIndex: 0 });
+  const quiz = { id: 'w', title: 'W', rounds: [{ id: 'r1', type: 'text', title: 'R1', questions: [
+    q('a', ['Adele', 'Adele', 'A3', 'A4']), q('b', ['Adele', 'B2', 'B3', 'B4']),
+    q('c', ['C1', 'C2', 'C3', 'C4']), q('d', ['D1', 'D2', 'D3', 'D4']),
+    q('e', ['E1', 'E2', 'E3', 'E4']), q('f', ['F1', 'F2', 'F3', 'F4']),
+  ] }] };
+  assert.equal(reviewWarnings(quiz).filter((w) => w.kind === 'same-option').length, 0,
+    'a duplicate inside one question was counted as two questions');
+});
+
+/*
+ * AND IT CAN BE TICKED OFF, which is the half that was wrong first time.
+ *
+ * A tick lives in `question.checked` and `setWarningChecked()` finds the
+ * question by id — so a flag carrying no question id is one the tick silently
+ * does nothing to: it lights, the reload puts it back, and the host learns the
+ * panel lies. Hung on the FIRST question carrying the name, with the id still
+ * built from the name alone so a reorder cannot lose the tick.
+ */
+test('the repeated-name flag can be ticked off and stays ticked', () => {
+  const q = (id, opts) => ({ id, prompt: `${id}?`, options: opts, correctIndex: 0 });
+  const quiz = { id: 'v', title: 'V', rounds: [{ id: 'r1', type: 'text', title: 'R1', questions: [
+    q('a', ['Coldplay', 'Adele', 'Keane', 'Travis']),
+    q('b', ['Amy Winehouse', 'Adele', 'Duffy', 'Joss Stone']),
+    q('c', ['Arctic Monkeys', 'Adele', 'Kasabian', 'Editors']),
+    q('d', ['Oasis', 'Blur', 'Pulp', 'Suede']),
+    q('e', ['Muse', 'Adele', 'Feeder', 'Ash']),
+    q('f', ['Kaiser Chiefs', 'Razorlight', 'Hard-Fi', 'Maximo Park']),
+  ] }] };
+  const flag = reviewWarnings(quiz).find((w) => w.kind === 'same-option');
+  assert.equal(flag.questionId, 'a', 'it has to hang off a real question or the tick goes nowhere');
+  assert.equal(setWarningChecked(quiz, flag.questionId, flag.id, true), true);
+  assert.equal(reviewWarnings(quiz).find((w) => w.kind === 'same-option').cleared, true,
+    'the tick did not survive being read back');
+
+  // Reordering the round must not lose it: the id is the NAME, not a position.
+  quiz.rounds[0].questions.reverse();
+  assert.equal(reviewWarnings(quiz).find((w) => w.kind === 'same-option').cleared, true,
+    'reordering the round unticked a flag somebody had already read');
+});

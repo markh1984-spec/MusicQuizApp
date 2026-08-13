@@ -2473,6 +2473,7 @@ function launchBar() {
         <label class="pack-shape venue-wrap">Venue
           ${venueBox()}
         </label>
+        <div class="prize-line" hidden></div>
       </div>
       <button class="go lb-go">Launch ${esc(pack.title)}</button>
       </div>`));
@@ -3234,12 +3235,60 @@ function wireVenue(el) {
    */
   const select = el.querySelector('.venue-select');
   const free = el.querySelector('.venue-free');
-  if (!select || !free) return;
-  select.addEventListener('change', () => {
-    const other = select.value === '__other';
-    free.hidden = !other;
-    if (other) free.focus();
-  });
+  const line = el.querySelector('.prize-line');
+
+  /*
+   * WHAT TONIGHT IS PLAYING FOR, BEFORE THE PRESS.
+   *
+   * The prizes are read off the venue record by the SERVER at launch, which is
+   * right — one source of truth — but it meant nothing on this card said what
+   * they were, or that there were none. The first real night ended with no
+   * voucher and no explanation: the venue had not matched, so there were no
+   * prizes, and an app that says nothing looks exactly like an app that is
+   * working.
+   *
+   * So it is stated here, read-only, at the only moment it can still be
+   * changed. **And it says when there are NONE**, because nothing on screen is
+   * indistinguishable from not having looked.
+   */
+  const paintPrizes = () => {
+    if (!line) return;
+    const name = venueFrom(el);
+    if (!name) { line.hidden = true; return; }
+    line.hidden = false;
+    const record = (library.venueRecords || [])
+      .find((v) => v.name.toLowerCase() === name.toLowerCase());
+    const prizes = ((record && record.rewards) || []).map((r) => String(r || '').trim());
+    while (prizes.length && !prizes[prizes.length - 1]) prizes.pop();
+    if (!prizes.length) {
+      /*
+       * A venue typed as free text can never match a record, so it can never
+       * carry prizes — worth saying here rather than leaving somebody to find
+       * out at the final scores.
+       */
+      line.className = 'prize-line none';
+      line.innerHTML = record
+        ? 'No prizes tonight — set them on the Venues tab.'
+        : 'No prizes tonight — this venue is not on your Venues tab.';
+      return;
+    }
+    line.className = 'prize-line';
+    line.innerHTML = 'Playing for: '
+      + prizes.map((r, i) => `<b class="prize-place p${i + 1}">${['1st', '2nd', '3rd'][i]}</b> ${esc(r)}`).join(' · ');
+  };
+
+  if (select) {
+    select.addEventListener('change', () => {
+      const other = select.value === '__other';
+      if (free) {
+        free.hidden = !other;
+        if (other) free.focus();
+      }
+      paintPrizes();
+    });
+  }
+  if (free) free.addEventListener('input', paintPrizes);
+  paintPrizes();
 }
 
 function venueFrom(el) {
@@ -3348,6 +3397,7 @@ function packCard(kind, pack) {
         <label class="pack-shape venue-wrap">Venue
           ${venueBox()}
         </label>
+        <div class="prize-line" hidden></div>
 `}
       <div class="pack-actions">
         <button class="pack-read" title="Read it through">Read</button>

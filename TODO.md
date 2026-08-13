@@ -528,9 +528,29 @@ more than it did, not less.
 Defaulting ON every time is right for the owner writing picture rounds weekly;
 it would be wrong if anybody else ever generated, which today nobody does.
 
-### 1h. THREE THINGS FROM THE FIRST REAL NIGHT (14 August 2026)
+### 1h. THREE THINGS FROM THE FIRST REAL NIGHT (14 August 2026) — ✅ ALL THREE BUILT
 
 The quiz went well. Three faults, in the order they matter.
+
+**All three are done, tested and pushed.** Kept here because the diagnosis is
+worth more than the fix — and note the one thing they have in common, which is
+written up in CLAUDE.md as well: **none of them was a crash, a 500 or a failing
+test.** Two were the app saying nothing where it should have said something,
+and the third was a setting that existed and was never set. Only a human
+running a night in front of a room finds those.
+
+What was built, against each:
+
+- **(a)** `paintPrizes()` in `wireVenue()` — the pack card states what tonight
+  is playing for once a venue is picked, and states it when the answer is
+  nothing, saying which of the two cases it is.
+- **(b)** a generated image round now carries `reveal: 'mix'`, with a test,
+  because it is one word in an object literal and nothing else would notice it
+  going missing.
+- **(c)** a `same-option` flag in `reviewWarnings()` plus a line in the brief.
+  One flag per name per round, hung on the first question carrying it so it can
+  actually be ticked, and the tick read across the whole round so reordering
+  cannot spring it back open.
 
 #### a. No voucher at the end — because nothing says what the night is playing for
 

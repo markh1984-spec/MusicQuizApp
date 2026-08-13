@@ -796,3 +796,34 @@ test('the picture-round brief describes the person, never the style', () => {
   }
   assert.match(brief, /PERSON ONLY|person only/i, 'the brief no longer says to describe the person only');
 });
+
+/*
+ * A GENERATED PICTURE ROUND MIXES THE EFFECTS.
+ *
+ * Reported after the first real night: *"the image round was too samey."* It
+ * was ten zooms, because `mix` existed and nothing ever set it — `revealMode()`
+ * falls back to zoom when a round names nothing, so the four effects were only
+ * ever reachable by editing a pack by hand.
+ *
+ * Safe by construction rather than a judgement call: the four deliberately run
+ * on the SAME curve, so the round is worth the same points either way. Pinned
+ * because it is one word in an object literal and there is nothing else
+ * anywhere that would notice it going missing.
+ */
+test('a generated picture round rotates the four reveals', async () => {
+  process.env.ANTHROPIC_API_KEY = 'stub';
+  stubClaude();
+  await withTmpDir(async (config) => {
+    const { quiz } = await generateQuizPack({ config, theme: 'test', rounds: ['image', 'text'], perRound: 4 });
+    const [pics, words] = quiz.rounds;
+    assert.equal(pics.reveal, 'mix', 'a generated picture round came back as ten zooms');
+    // Every OTHER round type has no business carrying one — a reveal on a text
+    // round is a setting that does nothing, which is the fault this codebase
+    // keeps recording.
+    assert.ok(!('reveal' in words), 'a text round grew a picture setting');
+    // And it has to survive being written and read back, or the pack on disk
+    // is the one that plays.
+    const onDisk = JSON.parse(fs.readFileSync(path.join(config.quizDir, `${quiz.id}.json`), 'utf8'));
+    assert.equal(onDisk.rounds[0].reveal, 'mix');
+  });
+});

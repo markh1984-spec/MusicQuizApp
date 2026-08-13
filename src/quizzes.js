@@ -469,6 +469,77 @@ export function reviewWarnings(quiz, { now = Date.now() } = {}) {
           `the correct answer is a negative ("${correct}"), which often contradicts the question. Read it back.`);
       }
     });
+
+    /*
+     * THE SAME NAME IN HALF THE QUESTIONS — *"I saw Adele far too many times."*
+     *
+     * Reported after the first real night. The generation brief tells the
+     * writer that wrong options "must be as plausible as the right ones and
+     * from the same era or act", which is right for one question and pushes it
+     * at the same handful of names across ten — and nothing anywhere counted.
+     *
+     * **MECHANICAL, because a model asked not to repeat itself does it anyway
+     * and the failure is silent.** Exactly the reasoning `question-history.js`
+     * is built on: the brief stops the over-ask being wasted, and the count is
+     * what actually holds. Free, no API call, and it catches it every time.
+     *
+     * DECOYS ARE WHAT THIS IS FOR, and that is why it is not an extension of
+     * the answer history: that keys on the ANSWER deliberately, so a name that
+     * is never right and always on screen is invisible to it.
+     *
+     * ONE FLAG PER NAME PER ROUND rather than one per question. The complaint
+     * is about the round — ten flags saying the same thing is a panel you stop
+     * reading, and the fix is to rewrite several questions rather than one.
+     *
+     * **BUT IT IS HUNG ON THE FIRST QUESTION CARRYING THE NAME, not on the
+     * round, and that is what makes it tickable.** A tick is stored in
+     * `question.checked` and `setWarningChecked()` finds the question by id —
+     * so a flag with no question is one the tick silently does nothing to: it
+     * lights, the reload puts it back, and the host learns the panel is
+     * broken. Every other flag in this file is per question and this one has
+     * to be too.
+     *
+     * **AND THE TICK IS READ ACROSS THE WHOLE ROUND, not off that one
+     * question**, which is the half that was wrong first time and was caught
+     * by its own test. The flag is a fact about the ROUND; the question is
+     * only where the tick is kept. Reorder the round — which "Even out the
+     * answers" does not, but the editor does — and the first question carrying
+     * the name is a different one, so a tick read off it alone would spring
+     * back open on a flag somebody had already read. The id is built from the
+     * NAME alone for the same reason.
+     */
+    const roundQs = round.questions || [];
+    if (round.type !== 'alphabet' && roundQs.length >= 4) {
+      const seen = new Map();
+      roundQs.forEach((q, qi) => {
+        // Once per question, so a name repeated inside ONE question's options
+        // is a different fault and not this one.
+        for (const option of new Set((q.options || []).map((o) => String(o).trim()).filter(Boolean))) {
+          const at = seen.get(option);
+          if (at) at.count += 1;
+          else seen.set(option, { count: 1, qi, q });
+        }
+      });
+      // A third of the round, and never fewer than three. Two appearances in
+      // ten is ordinary; two in four is not worth saying either, which is what
+      // the floor is for.
+      const tooOften = Math.max(3, Math.ceil(roundQs.length / 3));
+      for (const [option, { count, qi, q }] of seen) {
+        if (count < tooOften) continue;
+        const id = `same-option:${slugFor(option)}`;
+        warnings.push({
+          id,
+          questionId: q.id || `r${ri + 1}q${qi + 1}`,
+          roundIndex: ri,
+          questionIndex: qi,
+          where: `Round ${ri + 1}`,
+          kind: 'same-option',
+          text: `Round ${ri + 1}: "${option}" is an option in ${count} of the ${roundQs.length} questions. `
+            + 'The room notices a name that keeps coming round.',
+          cleared: roundQs.some((other) => (other.checked || []).map(String).includes(id)),
+        });
+      }
+    }
   });
 
   return warnings;

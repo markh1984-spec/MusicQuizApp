@@ -86,6 +86,11 @@ Rules, all of them important:
 
 - The three wrong options must be plausible to somebody who half-knows the answer:
   same era, same genre, comparable fame. Never pad with something obviously silly.
+- SPREAD THE NAMES ACROSS THE ROUND. No artist, act or title should appear as an
+  option in more than two questions — as a wrong option or a right one. "Same era,
+  same genre" above is about ONE question; across ten it pulls everything towards
+  the same handful of names, and a room notices somebody who keeps coming round
+  long before it notices anything else about the writing.
 - Keep each question under about 110 characters so it reads from the back of a room.
 - Vary the shape: some artist questions, some song questions, some album questions,
   some chart trivia, some "which of these did NOT..." questions.
@@ -1078,7 +1083,24 @@ export async function generateQuizPack({
       // round of one saying "10 intros" on the projector is a lie the room can
       // see.
       blurb: roundBlurb(type, subject, questions.length, label),
-      ...(type === 'image' ? { imageCaption: 'AI-generated illustration — not a real photograph' } : {}),
+      /*
+       * A GENERATED PICTURE ROUND MIXES THE EFFECTS.
+       *
+       * `revealMode()` rotates zoom → pixelate → blur → tiles by question
+       * POSITION when a round says `mix`, and nothing was setting a reveal at
+       * all — so every generated round was ten zooms and the first real night
+       * came back "the image round was too samey".
+       *
+       * Safe by construction rather than a judgement call: the four effects
+       * deliberately run on the SAME curve, so the round is worth exactly the
+       * same points either way, and rotating by position rather than at random
+       * means a Redo hands the room back the effect they were half way through
+       * watching. The editor's dropdown still overrides it per round, and a
+       * question can still override that.
+       */
+      ...(type === 'image'
+        ? { imageCaption: 'AI-generated illustration — not a real photograph', reveal: 'mix' }
+        : {}),
       questions: questions.map((q, qi) => ({
         id: `r${i + 1}q${qi + 1}`,
         prompt: String(q.prompt || '').trim(),
