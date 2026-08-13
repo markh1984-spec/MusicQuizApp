@@ -412,6 +412,55 @@ landlord is looking at costs and cannot remember what the room was like before.
 Free to build: the data exists, nothing new is collected, no consent question.
 Do this one first.
 
+### 1b. The winner's prize, on their phone
+
+**Asked for on 14 August 2026**: the winner gets sent their prize — a free
+drink, a £50 bar tab — so they can take it to the bar rather than remembering
+they won something.
+
+**Small to build.** The engine already knows who won (`results()`, `FINAL`) and
+the winner's phone already has a live connection, so pushing it is nearly free.
+It needs `state.prize` set at launch, exactly like `state.venue` — a decision
+about tonight, in the game state so a restart cannot lose it.
+
+**THE ONE THING THAT DECIDES THE SHAPE: a phone screen can be screenshotted.**
+Two people show the bar the same "free drink" card and the venue is out a
+drink. There is no fix for that on a device you do not control, so do not build
+it as a secure token — build it as a RECORD OF WHAT WAS ANNOUNCED. The host
+said the winner's name into a microphone thirty seconds earlier and is standing
+in the room; that is the verification, and it is better than any code. Ship it
+as security and the first venue that gets burned blames the app.
+
+The shape:
+
+- **A "Prize" box at launch**, beside Venue, free text and optional. Offered
+  back per venue the same way venues are — most nights at one pub have the same
+  prize.
+- **At the final, the winner's phone shows a card**: the venue, what they won,
+  the date, and a short code.
+- **The same code on the control view** next to the winner, with one tap to
+  mark it **redeemed**, so the phone flips to "used" and the bar can be told it
+  has already gone.
+- **Teams: every member gets it, one code between them.** Averaged scoring
+  means a team wins as a team.
+
+**It is worth more to the VENUE than to the winner, and that is the reason to
+build it.** Redemption is the only mechanism in this app that could ever tell a
+venue *the quiz drove this much bar spend*, which is precisely what a
+quizmaster sells on. That makes it post-night-report and Past gigs material
+rather than a nicety — see item 4 below.
+
+**Probably SILVER rather than Bronze.** By the per-use cost rule it is free to
+run, so Bronze. By the test that put advert slides on Silver, a room that never
+sees a voucher does not know it was possible, so withholding it cannot make the
+show look cheap — it is a lever for winning the booking. Same category, same
+rung.
+
+**Never let the app appear to ISSUE the credit.** The wording on the card has
+to say what the quizmaster announced, not what the app promises. The moment it
+reads like the app is good for £50, the quizmaster is in the middle of a
+dispute they did not cause.
+
 ### 2. The last slide of the night — cheap, and not blocked
 
 Everyone in the room has a phone out and is looking at the screen, and that
