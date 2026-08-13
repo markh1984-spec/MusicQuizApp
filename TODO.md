@@ -254,6 +254,46 @@ The obvious next ones, if a room asks: a plain band tee with no name on it, a
 football shirt, and a hi-vis. Each is another tile in a tray somebody has to
 scan, so add them when a night needs one rather than for the sake of it.
 
+### 0b. A VENUE IS ONE OBJECT — and today it is three that do not know each other
+
+**Asked for on 14 August 2026** as "a venues tab where you add the prizes, and
+the launch loads them". The idea is right. What makes it worth more than a tab
+is what turned up while checking where to put it: **the app already holds three
+separate notions of a venue**, none of which is aware of the others.
+
+| Where | What it holds | Called |
+|---|---|---|
+| The invoice book | name, contact, address, email, usual fee | `customers` — the code's own comment says *"the venues you work for"* |
+| `adverts/` | a slide set per venue, reused every week | an advert set |
+| A night | a plain NAME, typed at launch | `state.venue` |
+
+**A venues tab holding only prizes would be a FOURTH.** That is the duplication
+this file warns about everywhere else — two lists of one real-world thing
+disagree within a month, and here it would be four.
+
+**The job is one venue record that the others hang off.** Then picking The
+Station Tap at launch brings its prizes, its advert slides and its invoice
+details in one go, and the invoice after the night fills itself in. Four
+things collapse into one object rather than one more being added.
+
+Order to do it in, and the first step is the only one that is awkward:
+
+1. **Decide the invoice customer IS the venue.** It already has the richest
+   record and it is already backed up per room. A separate venue store would
+   have to be reconciled with it forever.
+2. **A night keeps its plain NAME as well as a link.** `state.venue` is free
+   text on purpose — almost no venue is an account and the common case has to
+   stay cheap — so a link is an addition, never a replacement, and a night at a
+   venue that was later deleted must still say where it was.
+3. **Prizes and the advert set move onto that record**, which is what was
+   actually asked for.
+4. **Then the launch form reads them**, which is the part already half-built:
+   `rewardsByVenue()` does it today off the archive, and would simply read the
+   record instead.
+
+Until then the archive-based version is live and does the same job with no new
+tab: pick a venue, and what it put up last time fills in.
+
 ### 4b. "Add a past gig" — filing a night the app did not record
 
 **Asked for on 14 August 2026** and parked the same day, because it turned out
