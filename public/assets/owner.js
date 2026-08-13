@@ -1010,7 +1010,7 @@ function peopleTab() {
           <h2>Quizmasters</h2>
           <div class="tiny">${subscribers.length} account${subscribers.length === 1 ? '' : 's'} ·
             ${subscribers.filter((a) => a.status === 'active' || a.status === 'trialing').length} paying ·
-            ${subscribers.filter((a) => a.comped).length} comped ·
+            ${subscribers.filter((a) => a.comped).length} on the house ·
             tap a name for their room, their messages and the support log</div>
         </div>
         <div class="row"><button class="go add">Add a quizmaster</button></div>
@@ -1020,13 +1020,21 @@ function peopleTab() {
 
   const section = parts[0];
   const list = section.querySelector('.subs');
+  section.querySelector('.subs').before(peopleFilters());
+
+  const shown = visiblePeople();
   if (!subscribers.length) {
     list.appendChild(node('<div class="tiny">Nobody yet. Your own quizmaster account goes here too.</div>'));
+  } else if (!shown.length) {
+    list.appendChild(node('<div class="tiny">Nobody matches that. <button class="minor" id="clearFilters">Show everybody</button></div>'));
   }
-  for (const account of subscribers) {
+  for (const account of shown) {
     list.appendChild(subscriberRow(account));
     if (openPerson === account.id) list.appendChild(personPanel(account));
   }
+  section.querySelector('#clearFilters')?.addEventListener('click', () => {
+    peopleFind = ''; peopleTier = ''; peopleMoney = ''; redraw();
+  });
   section.querySelector('.add').addEventListener('click', addSubscriber);
 
   /*
@@ -1127,18 +1135,163 @@ const STATUS_LABEL = {
   trialing: 'Trial', active: 'Paying', past_due: 'Payment failed', cancelled: 'Closed',
 };
 
+/**
+ * WHERE AN ACCOUNT STANDS ON MONEY — a £ in a coloured box.
+ *
+ * It replaced two controls that between them said neither thing well: a badge
+ * reading **COMPED** and a button reading **Comp** / **Charge them**. Both
+ * failed the app's first rule the moment the host asked what they meant —
+ * "comp" is hospitality jargon, and "charge them" describes taking a payment,
+ * which this app cannot do because there is no processor wired up. It only
+ * ever stopped giving something away.
+ *
+ * Four states, and the colour is the whole point: you are looking down a list
+ * to find the one that needs doing something about, not reading each row.
+ *
+ *   GREEN   paying — and this is the state most accounts will be in
+ *   ORANGE  free right now: on the house, or inside a trial
+ *   RED     should be paying and is not
+ *   GREY    closed
+ *
+ * **Orange covers a comp AND a trial deliberately**, because from this page
+ * they are one fact — somebody is getting it for nothing today. What ends
+ * them differs (a switch here, or a date passing), and that is the tooltip's
+ * job rather than a fifth colour.
+ *
+ * **It goes orange → green ON ITS OWN once payments exist.** A trial ending is
+ * a status change from the processor's webhook, which `billing.js` already
+ * applies, so this needs nothing new when that lands. Until then nothing moves
+ * a status automatically and the honest thing is to say so, which the tooltip
+ * does — a badge implying an automatic transition that is not built yet would
+ * be a promise this page cannot keep.
+ *
+ * Tapping it toggles the free pass, which is the only part of this the owner
+ * sets by hand. Green or red → put them on the house; orange → take them off
+ * it.
+ */
+function moneyState(account) {
+  if (account.status === 'cancelled') return { kind: 'closed', word: 'Closed', why: 'This account is closed.' };
+  if (account.comped) {
+    return { kind: 'free', word: 'On the house', why: 'Free until you switch it off. Tap to start charging.' };
+  }
+  if (account.status === 'trialing') {
+    return { kind: 'free', word: 'Trial', why: 'Inside their free month. It turns green on its own once the first payment lands. Tap to put them on the house instead.' };
+  }
+  if (account.status === 'past_due') {
+    return { kind: 'owing', word: 'Payment failed', why: 'They should be paying and are not. Their night still runs — that rule does not bend. Tap to put them on the house.' };
+  }
+  return { kind: 'paying', word: 'Paying', why: 'Paying their subscription. Tap to put them on the house.' };
+}
+
+function moneyBadge(account) {
+  const state = moneyState(account);
+  return `<button class="money-badge ${state.kind}" title="${esc(state.word)} — ${esc(state.why)}"
+            aria-label="${esc(state.word)}">£</button>`;
+}
+
+/*
+ * FINDING ONE ACCOUNT AMONG MANY.
+ *
+ * Deliberately three controls and not a table of sortable columns. At the size
+ * this list will be for a long time — tens, not thousands — the questions
+ * somebody actually asks are "who is on Bronze", "who is not paying" and
+ * "where is Rob", and a column-sorting grid answers those slower than three
+ * chips do while costing far more screen. The sort is one dropdown for the
+ * same reason.
+ *
+ * Module level, like the tab and the open person, so working through the list
+ * does not throw the filter away every time something is saved.
+ */
+let peopleFind = '';
+let peopleTier = '';
+let peopleMoney = '';
+let peopleSort = 'name';
+
+/** The list as it should appear: filtered, then sorted. */
+function visiblePeople() {
+  const find = peopleFind.trim().toLowerCase();
+  const rows = subscribers.filter((a) => {
+    if (peopleTier && tierFor(a) !== peopleTier) return false;
+    if (peopleMoney && moneyState(a).kind !== peopleMoney) return false;
+    if (!find) return true;
+    return `${a.name || ''} ${a.email || ''}`.toLowerCase().includes(find);
+  });
+  const by = {
+    name: (a, b) => String(a.name || a.email).localeCompare(String(b.name || b.email)),
+    // Down the ladder, so the ones worth the most are at the top.
+    tier: (a, b) => TIERS.findIndex((t) => t.id === tierFor(b)) - TIERS.findIndex((t) => t.id === tierFor(a)),
+    // The ones needing something doing about them first, which is the whole
+    // point of ordering by money at all.
+    money: (a, b) => ORDER_MONEY.indexOf(moneyState(a).kind) - ORDER_MONEY.indexOf(moneyState(b).kind),
+    joined: (a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')),
+  };
+  return rows.sort(by[peopleSort] || by.name);
+}
+const ORDER_MONEY = ['owing', 'free', 'paying', 'closed'];
+
+function peopleFilters() {
+  const counts = (kind) => subscribers.filter((a) => moneyState(a).kind === kind).length;
+  const el = node(`
+    <div class="people-filters">
+      <input type="search" id="peopleFind" placeholder="Find a name or an email" value="${esc(peopleFind)}">
+      <select id="peopleTier" title="Which rung">
+        <option value="">Every tier</option>
+        ${TIERS.map((t) => `<option value="${esc(t.id)}" ${peopleTier === t.id ? 'selected' : ''}>${esc(t.label)}</option>`).join('')}
+      </select>
+      <select id="peopleMoney" title="Where they stand on money">
+        <option value="">Paying or not</option>
+        <option value="paying" ${peopleMoney === 'paying' ? 'selected' : ''}>Paying (${counts('paying')})</option>
+        <option value="free" ${peopleMoney === 'free' ? 'selected' : ''}>Free — comp or trial (${counts('free')})</option>
+        <option value="owing" ${peopleMoney === 'owing' ? 'selected' : ''}>Payment failed (${counts('owing')})</option>
+        <option value="closed" ${peopleMoney === 'closed' ? 'selected' : ''}>Closed (${counts('closed')})</option>
+      </select>
+      <select id="peopleSort" title="What order">
+        <option value="name" ${peopleSort === 'name' ? 'selected' : ''}>By name</option>
+        <option value="tier" ${peopleSort === 'tier' ? 'selected' : ''}>By tier</option>
+        <option value="money" ${peopleSort === 'money' ? 'selected' : ''}>Needing attention first</option>
+        <option value="joined" ${peopleSort === 'joined' ? 'selected' : ''}>Newest first</option>
+      </select>
+    </div>`);
+  /*
+   * The box does NOT redraw the page on every keystroke.
+   *
+   * `redraw()` rebuilds this input, which takes the focus and the cursor with
+   * it — so typing "rob" gave you "r", then a fight for the caret. It filters
+   * the rows in place instead and only rebuilds when a dropdown changes.
+   */
+  const find = el.querySelector('#peopleFind');
+  find.addEventListener('input', () => {
+    peopleFind = find.value;
+    const list = document.querySelector('.subs');
+    if (!list) return;
+    const shown = new Set(visiblePeople().map((a) => a.id));
+    for (const row of list.querySelectorAll('[data-account]')) {
+      row.hidden = !shown.has(row.dataset.account);
+    }
+  });
+  for (const id of ['peopleTier', 'peopleMoney', 'peopleSort']) {
+    el.querySelector('#' + id).addEventListener('change', (ev) => {
+      if (id === 'peopleTier') peopleTier = ev.target.value;
+      if (id === 'peopleMoney') peopleMoney = ev.target.value;
+      if (id === 'peopleSort') peopleSort = ev.target.value;
+      redraw();
+    });
+  }
+  return el;
+}
+
 function subscriberRow(account) {
   const row = node(`
-    <div class="inv-row status-${account.status === 'active' || account.status === 'trialing' ? 'paid' : ''}">
+    <div class="inv-row status-${account.status === 'active' || account.status === 'trialing' ? 'paid' : ''}" data-account="${esc(account.id)}">
       <div class="inv-main open-person" role="button" tabindex="0" title="Everything about them">
         <div class="inv-top">
           <b>${esc(account.name || account.email)}</b>
           <span class="inv-who">${esc(account.email)}</span>
-          <span class="inv-status">${esc(account.comped ? 'Comped' : STATUS_LABEL[account.status] || account.status)}</span>
           ${account.supportOpen ? '<span class="inv-status" style="background:rgba(255,210,63,.2);color:var(--gold)">Support open</span>' : ''}
         </div>
         <div class="tiny">
           ${esc(findTier(tierFor(account)).label)} — ${esc(findTier(tierFor(account)).plan)}
+          · ${esc(moneyState(account).word)}
         </div>
       </div>
       <div class="inv-actions">
@@ -1147,7 +1300,7 @@ function subscriberRow(account) {
             <button class="minor tierbtn ${tierFor(account) === t.id ? 'on' : ''}" data-tier="${t.id}"
                     title="${esc(t.blurb)}">${esc(t.label)}</button>`).join('')}
         </span>
-        <button class="minor comp">${account.comped ? 'Charge them' : 'Comp'}</button>
+        ${moneyBadge(account)}
         <button class="minor danger close">Close</button>
       </div>
     </div>`);
@@ -1185,7 +1338,7 @@ function subscriberRow(account) {
   row.querySelector('.open-person').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
   });
-  row.querySelector('.comp').addEventListener('click', () => save({ comped: !account.comped }));
+  row.querySelector('.money-badge').addEventListener('click', () => save({ comped: !account.comped }));
   row.querySelector('.close').addEventListener('click', async () => {
     if (!confirm(`Close ${account.email}?\n\nThey are signed out and cannot run a night. Nothing is deleted — their packs and invoices are kept in case they come back.`)) return;
     try {

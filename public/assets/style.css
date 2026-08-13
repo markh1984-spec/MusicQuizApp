@@ -4411,3 +4411,40 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   background: linear-gradient(120deg, var(--hot), var(--hot-2)); color: #12000c;
 }
 .team-leave { background: none; border: 0; color: var(--ink-dim); text-decoration: underline; cursor: pointer; padding: 2px; }
+
+/* ---- where an account stands on money, as a £ in a coloured box
+ *
+ * It replaced a COMPED badge and a Comp / Charge them button — two controls
+ * saying one thing, neither of them saying it in English. The colour is the
+ * whole point: you are scanning a list for the row that needs doing something
+ * about, not reading each one. Green is the state most accounts will be in, so
+ * green has to be the quiet one.
+ */
+.money-badge {
+  flex: 0 0 auto;
+  width: 34px; height: 34px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  font-size: var(--fs-lead); font-weight: 900; line-height: 1;
+  cursor: pointer;
+}
+.money-badge.paying { background: rgba(47, 224, 122, 0.16); border-color: rgba(47, 224, 122, 0.5); color: var(--good); }
+.money-badge.free   { background: rgba(255, 138, 61, 0.18); border-color: rgba(255, 138, 61, 0.55); color: var(--hot-2); }
+.money-badge.owing  { background: rgba(255, 92, 92, 0.18);  border-color: rgba(255, 92, 92, 0.6);  color: var(--bad); }
+.money-badge.closed { background: rgba(255, 255, 255, 0.06); border-color: var(--panel-line); color: var(--ink-dim); }
+.money-badge:active { transform: scale(0.94); }
+
+/* Finding one account among many. Wraps to one control per line on a phone
+   rather than squeezing four; a grid child's default minimum is its
+   min-content, which is what drags a page sideways, so every one gets
+   min-width: 0 and the selects a max-width as well. */
+.people-filters {
+  display: grid; gap: 8px; margin: 4px 0 14px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.people-filters > * { min-width: 0; max-width: 100%; }
+
+/* The line under "Quick launch" that says where the settings are. Above the
+   search box rather than under the two buttons, because it answers a question
+   somebody has BEFORE they press one. */
+.launchbar .lb-note { margin: -4px 0 12px; color: var(--ink-dim); }

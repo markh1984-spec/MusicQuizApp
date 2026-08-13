@@ -2262,7 +2262,16 @@ function launchBar() {
 
   const el = node(`
     <div class="panel launchbar">
-      <h3>Launch</h3>
+      <h3>Quick launch</h3>
+      <!--
+        It said "Launch", which was true and told you nothing about the half it
+        does NOT do. The two buttons below go on the pack's own defaults with
+        no settings at all — deliberately, because a dropdown on the panic
+        control defeats the panic control — so somebody wanting an online night
+        or a seasonal look had no way of knowing where those lived. The host
+        asked the question this line now answers.
+      -->
+      <div class="tiny lb-note">Two taps, on the pack's own settings. For the look, teams or an online night, use the pack below.</div>
       <div class="lb-find">
         ${games.length > 1 ? `<select class="lb-game">
           ${games.map((g) => `<option value="${esc(g.id)}">${esc(g.label)}</option>`).join('')}
