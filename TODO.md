@@ -467,6 +467,24 @@ Two wrinkles, both with an answer:
   redeemed by hand from the control view. Same rule as everywhere else here: a
   network problem must never be the end of it.
 
+**AND THE HOST CAN PUT IT BACK.** The host's own addition, and it is what makes
+burn-on-scan safe rather than clever: if the bar comes over and says it is not
+working, one tap on the control view reinstates the voucher. Nothing is a dead
+end and the override belongs to the person actually in the room — the same rule
+that makes `Back` undo a reveal and makes an expired topical pack warn rather
+than refuse.
+
+It does NOT remove the need for a Redeem button on the scan page, though, and
+keeping both is deliberate: prevention costs one tap at the bar, recovery costs
+the host being interrupted in the middle of round three. Same belt-and-braces
+as the double-tap guard existing alongside `Back`.
+
+**Give the voucher a line of history** — *"redeemed 22:47 · reinstated by the
+host 22:49"*. Not to police anybody: it is so a queried bar tab has an answer
+rather than the quizmaster's word against the venue's. Same reasoning as the
+support-access log — the record is what makes the power safe to hold, and it is
+the quizmaster it protects.
+
 **It is worth more to the VENUE than to the winner, and that is the reason to
 build it.** Redemption is the only mechanism in this app that could ever tell a
 venue *the quiz drove this much bar spend*, which is precisely what a
