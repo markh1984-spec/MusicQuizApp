@@ -7,7 +7,7 @@
  * from the Next button during somebody's gig.
  */
 
-import { esc, node, brandLink, paintNav, paintIdentity, menuRights } from './client.js';
+import { esc, node, brandLink, paintNav, paintIdentity, menuRights, postJson } from './client.js';
 import { TIERS, tierFor, findTier } from './plans.js';
 import { photosSection } from './photos-tab.js';
 
@@ -76,12 +76,49 @@ async function boot() {
     forgetKey: () => { try { localStorage.removeItem('musicquiz.hostkey'); } catch { /* private */ } },
   });
 
+  /*
+   * THE OWNER, WEARING THEIR OWN QUIZMASTER HAT, ON THIS PAGE.
+   *
+   * Wearing the hat your role IS quizmaster — that is the whole point of it —
+   * so this page refuses you, and it used to refuse you with a sentence
+   * written for somebody else entirely: *"your account runs quiz nights"*,
+   * said to the person who owns the app. Which is not a wrong permission, it
+   * is a wrong SENTENCE, and it reads as a fault in the account.
+   *
+   * It was unreachable until the menu's Owner chip was taken off. That chip
+   * carried `data-hat="off"` and took the hat off on the way through, so the
+   * only route here always arrived with it off. Now the only route is the hat
+   * switch — and any OTHER way in (a bookmark, the back button, typing the
+   * address) lands on a page that cannot open, with nothing on it that opens
+   * it. Found by the host doing exactly that.
+   *
+   * So: say which of the two it is, and put the way through ON the refusal
+   * rather than expecting somebody to notice a switch in the corner. One tap,
+   * and safe mid-night for the reason the switch already is — the two hats are
+   * two rooms, and nothing being played is touched.
+   */
   if (me.role !== 'owner') {
-    mainEl.replaceChildren(node(`
+    const acting = Boolean(who.actingAs);
+    const panel = node(`
       <div class="problems">
-        <strong>This is the owner console.</strong>
-        Your account runs quiz nights — <a href="/console">that way</a>.
-      </div>`));
+        ${acting ? `
+          <strong>Your quizmaster hat is on.</strong>
+          The owner console needs it off — that is what the hat does.
+          <button class="btn" id="hatOff" style="margin-left:10px">Take it off and show me</button>`
+        : `
+          <strong>This is the owner console.</strong>
+          Your account runs quiz nights — <a href="/console">that way</a>.`}
+      </div>`);
+    panel.querySelector('#hatOff')?.addEventListener('click', async (ev) => {
+      const button = ev.currentTarget;
+      button.disabled = true;
+      button.textContent = 'One moment…';
+      try {
+        await postJson('/api/owner/act-as', { on: false });
+      } catch { /* reload anyway — the page says plainly what it wants */ }
+      location.reload();
+    });
+    mainEl.replaceChildren(panel);
     return;
   }
   await load();
