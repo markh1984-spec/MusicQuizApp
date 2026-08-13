@@ -423,13 +423,23 @@ the winner's phone already has a live connection, so pushing it is nearly free.
 It needs `state.prize` set at launch, exactly like `state.venue` — a decision
 about tonight, in the game state so a restart cannot lose it.
 
-**THE ONE THING THAT DECIDES THE SHAPE: a phone screen can be screenshotted.**
-Two people show the bar the same "free drink" card and the venue is out a
-drink. There is no fix for that on a device you do not control, so do not build
-it as a secure token — build it as a RECORD OF WHAT WAS ANNOUNCED. The host
-said the winner's name into a microphone thirty seconds earlier and is standing
-in the room; that is the verification, and it is better than any code. Ship it
-as security and the first venue that gets burned blames the app.
+**A SCREENSHOT DOES NOT BREAK IT, AS LONG AS REDEMPTION IS SERVER-SIDE.** The
+first instinct here was that a phone screen can be copied, so a voucher can
+never be single-use — that is wrong, and the host corrected it. The copy only
+matters if the PHONE is what gets checked. Put the redemption on the server and
+the QR is a token that can be spent exactly once: whoever scans first burns it,
+and every later scan says "already redeemed at 22:47". The screenshot becomes
+worthless because it is not the thing being verified.
+
+`src/qrcode.js` already encodes anything and has no dependencies, so drawing it
+costs nothing.
+
+**AND THE NAME ON IT IS THE CHEAP HALF.** "Rob's free drink — first prize,
+music bingo, The Station Tap, 14 August" makes a forwarded screenshot a voucher
+with somebody else's name on it. It stops nothing technically and it is exactly
+how a paper voucher works: bar staff can say "you are not Rob" with no system at
+all. It will be the TEAM name, which in a pub is often a joke — fine, it is the
+same name the room watched win on the projector.
 
 The shape:
 
@@ -442,7 +452,20 @@ The shape:
   mark it **redeemed**, so the phone flips to "used" and the bar can be told it
   has already gone.
 - **Teams: every member gets it, one code between them.** Averaged scoring
-  means a team wins as a team.
+  means a team wins as a team — and one code is the point, or a team of six
+  redeems six drinks.
+
+Two wrinkles, both with an answer:
+
+- **WHOEVER SCANS IT BURNS IT, INCLUDING THE WINNER.** If Rob scans his own QR
+  out of curiosity it is spent. So the scan must land on a page that SAYS what
+  it is with a **Redeem** button, never auto-redeem, worded at bar staff rather
+  than at the winner. That costs curiosity one tap instead of zero, which is
+  what every voucher app settles on.
+- **PUB WIFI.** No connection at the bar means no redemption, so the short
+  human-readable code goes on the card as well and the host can mark it
+  redeemed by hand from the control view. Same rule as everywhere else here: a
+  network problem must never be the end of it.
 
 **It is worth more to the VENUE than to the winner, and that is the reason to
 build it.** Redemption is the only mechanism in this app that could ever tell a
