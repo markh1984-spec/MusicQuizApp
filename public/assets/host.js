@@ -783,23 +783,64 @@ function buildActions(s) {
 
   const out = [primary];
 
-  const minor = (text, handler, danger = false) => {
-    const b = node(`<button class="minor ${danger ? 'danger' : ''}">${esc(text)}</button>`);
+  /*
+   * A `title` on each, and it is a BONUS rather than the answer.
+   *
+   * There are no tooltips on a phone, and this page is driven from one — so
+   * the LABEL still has to say what the button does on its own. That is the
+   * fault this file already records for "Control view" being a small grey
+   * link with the reason hidden in a `title`. What a tooltip is genuinely
+   * worth is the second sentence: "Skip" says what it does, and hovering it
+   * on a laptop says what it COSTS.
+   */
+  const minor = (text, handler, danger = false, why = '') => {
+    const b = node(`<button class="minor ${danger ? 'danger' : ''}"${why ? ` title="${esc(why)}"` : ''}>${esc(text)}</button>`);
     b.addEventListener('click', handler);
     return b;
   };
 
-  out.push(minor('Back', () => act('back')));
+  /*
+   * BACK IS AN ARROW; NOTHING ELSE ON THIS PAGE IS.
+   *
+   * It earns one where the primary button never could: back is the SAME act
+   * at every phase — one move, scores kept — so an arrow is a complete
+   * description of it. The primary is a different act each time ("Reveal the
+   * answer" is not "Next question"), and an unlabelled arrow there is how you
+   * reveal an answer to a room that has not answered yet.
+   *
+   * Drawn rather than the character "←", for the reason `binIcon()` is drawn:
+   * phones and projectors render arrow glyphs at wildly different weights and
+   * some fall back to a box. `aria-label` and a `title` so it is still called
+   * Back to anything that reads the page out or hovers it.
+   */
+  const backIcon = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">'
+    + '<path d="M20 12H5M11 6l-6 6 6 6" stroke="currentColor" stroke-width="2.6"'
+    + ' stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const back = node('<button class="minor back-btn" aria-label="Back"'
+    + ' title="Back — one step back. Every score is kept, so this is the safe one.">'
+    + `${backIcon}</button>`);
+  back.addEventListener('click', () => act('back'));
+  out.push(back);
 
   if (s.phase === 'question' || s.phase === 'reveal') {
-    out.push(minor('Redo', () => act('redo')));
-    out.push(minor('Skip', () => act('skip'), true));
+    /*
+     * "Ask again", not "Redo" and not "Reload". Redo is ambiguous about which
+     * direction it goes, and Reload sits two inches under the browser's own
+     * reload button on a laptop — where it reads as refreshing the page
+     * rather than as running the question again and wiping its points.
+     */
+    out.push(minor('Ask again', () => act('redo'), false,
+      'Ask this question again from the top — the clock restarts and the points it has already awarded are wiped.'));
+    out.push(minor('Skip', () => act('skip'), true,
+      'Drop this question and move on — its points are wiped. For one that is wrong, or that the room has already had.'));
   } else {
     // ?g= or it opens the HOUSE room's projector rather than this one — see
     // screenLink() in console.js for what that cost.
     out.push(minor('Big screen', () => window.open(
-      s.joinCode ? `/screen?g=${encodeURIComponent(s.joinCode)}` : '/screen', '_blank')));
-    out.push(minor('Edit', () => { location.href = withKey('/editor'); }));
+      s.joinCode ? `/screen?g=${encodeURIComponent(s.joinCode)}` : '/screen', '_blank')),
+    );
+    out.push(minor('Edit', () => { location.href = withKey('/editor'); }, false,
+      'Open this pack in the editor. Saving reloads it in the running game.'));
   }
 
   /*
@@ -814,7 +855,10 @@ function buildActions(s) {
    */
   const board = s.scoreboard || {};
   const showing = Boolean(board.on);
-  const boardBtn = minor(showing ? 'Hide the scores' : 'Scores on screen', () => act('scoreboard', { on: !showing }));
+  const boardBtn = minor(showing ? 'Hide the scores' : 'Scores on screen', () => act('scoreboard', { on: !showing }),
+    false, showing
+      ? 'Take the scoreboard off the big screen. The quiz has not moved.'
+      : 'Put the scoreboard on the big screen for the room to see. It does not move the quiz, and pressing onwards takes it down.');
   boardBtn.classList.toggle('on', showing);
   if (!board.allowed && !showing) {
     boardBtn.disabled = true;
@@ -824,7 +868,8 @@ function buildActions(s) {
 
   // The host's own copy, on their phone, which is a different thing from
   // putting it on the projector.
-  out.push(minor('My scores', () => showScores()));
+  out.push(minor('My scores', () => showScores(), false,
+    'The scores on THIS screen, for you only \u2014 the room sees nothing.'));
 
   /*
    * The venue's advertising slides.
@@ -842,7 +887,10 @@ function buildActions(s) {
     // Only where there are adverts to show. It used to be drawn for everybody,
     // so a Bronze quizmaster got a button whose only outcome was "make some on
     // the Adverts tab" — a tab greyed out with a `+` on it.
-    if (s.mayAdvert) out.push(minor('Advert', () => showAdvertPicker()));
+    if (s.mayAdvert) {
+      out.push(minor('Advert', () => showAdvertPicker(), false,
+        'Put one of the venue\u2019s slides on the big screen. Like the scoreboard, it does not move the quiz.'));
+    }
   }
 
   /*
@@ -860,7 +908,7 @@ function buildActions(s) {
   if (s.phase !== 'lobby' && s.phase !== 'final') {
     out.push(minor('Stop the quiz', () => {
       if (confirm('Stop here and show the winner? The scores are kept, and Back undoes it.')) act('finish');
-    }, true));
+    }, true, 'End the night here and go straight to the winner. Every score is kept and Back undoes it.'));
   }
   return out;
 }

@@ -883,6 +883,11 @@ body.host::after { display: none; }
   color: var(--ink);
 }
 .actions .minor.danger { color: var(--bad); border-color: rgba(255, 77, 94, 0.4); }
+/* Back, as an arrow. It keeps a WHOLE CELL rather than being shrunk to fit
+   the glyph: this is the undo, pressed in the dark with a mic in the other
+   hand, and a small target is the wrong economy on the one control that
+   fixes a mis-tap. The icon is centred in it and nothing else changes. */
+.actions .back-btn { display: flex; align-items: center; justify-content: center; }
 
 .plist { display: grid; gap: 6px; }
 .prow {
