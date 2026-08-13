@@ -226,6 +226,14 @@ async function silentRejoin() {
   }
 }
 
+/*
+ * When the projector actually carries photos — the same set `PHOTO_PHASES` in
+ * screen.js uses. Written out rather than imported because the two files share
+ * nothing else, and a phone that guessed differently from the big screen would
+ * promise the room something it cannot see.
+ */
+const PHOTO_PHASES_PHONE = new Set(['lobby', 'round_board', 'final', 'won', 'finished']);
+
 /* ------------------------------------------------------------------ camera
  *
  * Pick or take a photo, choose a look, send it to the projector.
@@ -252,7 +260,7 @@ function openCamera() {
           <b>Put a photo on the big screen</b>
           <button class="cam-close" title="Close">✕</button>
         </div>
-        <p class="tiny cam-warn">It goes straight up, no approval. Keep it decent.</p>
+        <p class="tiny cam-warn">No approval — it goes up between questions. Keep it decent.</p>
         <label class="cam-pick">
           <input type="file" accept="image/*" hidden>
           <span>Take or choose a photo</span>
@@ -260,6 +268,20 @@ function openCamera() {
         <div class="cam-stage" hidden>
           <div class="cam-frame">
             <canvas class="cam-canvas"></canvas>
+          </div>
+          <!-- FLIP BELONGS TO THE PHOTO, NOT TO THE PROPS.
+               It spent a version in the props heading beside Undo, which reads
+               as a corner it was pushed into — because the two do different
+               jobs to different things: Undo takes off a prop, this mirrors the
+               picture underneath them. Directly under the photo it is next to
+               what it changes, and it is the only thing in its row so there is
+               nothing to mistake it for.
+
+               NOT overlaid on the photo itself, tempting as that is: the canvas
+               carries the drag handlers for the props, and a button sitting on
+               it would swallow the gesture. -->
+          <div class="cam-photo-tools">
+            <button class="cam-flip">Flip it</button>
           </div>
           <!-- SEND SITS UNDER THE PHOTO, above everything else.
                It was last on the sheet, so finishing a photo meant scrolling
@@ -280,7 +302,6 @@ function openCamera() {
           <div class="cam-guide">
           <div class="cam-looks-head">
             <span>Stick something on</span>
-            <button class="cam-flip">Flip</button>
             <button class="cam-undo" hidden>Undo</button>
           </div>
           <!-- ABOVE the tray, not below it. It was underneath, which meant
@@ -709,11 +730,23 @@ function openCamera() {
       });
       const data = await res.json().catch(() => ({}));
       if (!data.ok) throw new Error(reasonText(data.reason));
+      /*
+       * SAY WHICH IT IS, because "it is on the screen" was a flat lie during a
+       * question.
+       *
+       * The projector only carries photos in the lobby, at a round board and
+       * at the end — twenty seconds and four options wants the whole screen,
+       * the same reason the join code is never drawn over a question. A photo
+       * sent mid-round is kept and gets its full moment at the next break, so
+       * nothing is lost. The phone simply has to stop telling somebody to look
+       * up at a screen that is showing them a question.
+       */
+      const upNow = PHOTO_PHASES_PHONE.has(state && state.phase);
       sheet.querySelector('.cam-sheet').replaceChildren(node(`
         <div style="text-align:center;padding:22px 6px">
           <div style="font-size:44px">🎉</div>
-          <b>It is on the screen</b>
-          <p class="tiny">Have a look up.</p>
+          <b>${upNow ? 'It is on the screen' : 'Sent'}</b>
+          <p class="tiny">${upNow ? 'Have a look up.' : 'It goes up on the big screen at the next break.'}</p>
         </div>`));
       setTimeout(close, 1800);
     } catch (err) {

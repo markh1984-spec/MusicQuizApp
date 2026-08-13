@@ -3696,12 +3696,10 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 }
 .cam-looks-head > span { grid-column: 2; }
 .cam-looks-head .cam-undo { grid-column: 3; justify-self: end; }
-/* Flip takes the LEFT column, so the heading stays where the comment above
-   says it is. Both flanking columns are `1fr`, so a button on each side leaves
-   the middle dead centre — which is better than Undo alone managed. Same shape
-   as Undo because they are the same kind of thing: small, quiet, undoable, and
-   nothing to do with sending. */
-.cam-looks-head .cam-flip { grid-column: 1; justify-self: start; }
+/* Under the photo, centred, on a row of its own. It acts on the picture rather
+   than on the props, and grouping it with Undo made it read as a button shoved
+   into a corner — which is exactly how it was reported. */
+.cam-photo-tools { display: flex; justify-content: center; margin: 8px 0 2px; }
 .cam-flip {
   padding: 4px 10px;
   border-radius: 999px;
