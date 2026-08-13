@@ -143,6 +143,13 @@ input:focus, textarea:focus {
   border-color: var(--hot);
 }
 input::placeholder, textarea::placeholder { color: var(--ink-dim); font-weight: 600; }
+/*
+ * A NUMBER BOX IS NARROW BY NATURE, so it gets less padding than a box you
+ * type words into. The shared 11px each side left 30 of the 52 pixels those
+ * round-count fields have, which clipped "10" to "1" and a sliver — found by
+ * the host looking at the generator panel, not by any test.
+ */
+input[type="number"] { padding-left: 6px; padding-right: 6px; }
 
 
 html, body {
@@ -2792,7 +2799,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 }
 .gen-round.off { opacity: 0.5; }
 .gen-round-name { flex: 1 1 auto; font-weight: 700; font-size: var(--fs-note); }
-.gen-round input[type="number"] { width: 52px; text-align: center; font-weight: 800; }
+.gen-round input[type="number"] { width: 58px; text-align: center; font-weight: 800; }
 
 /* ========================================================= picture reveals
    Four ways for round 2 to give itself away. The zoom is the original and
