@@ -2613,12 +2613,72 @@ Neither can be assumed, and both change the shape:
    mechanism must be built so it can ONLY cross within a group, and never
    become a general "read another room" door. Get this wrong and the promise
    that the owner cannot read a quizmaster's packs goes with it.
-2. **When a hired quizmaster runs a night AT a venue account, whose room is
-   it?** The venue's, so the history stays with the pub — or the quizmaster's,
-   so it counts towards their portfolio? **Both want it**, which is the real
-   answer and also the design problem: a night that has to appear in two
-   histories is not the single-room model this app is built on. Worth deciding
-   deliberately rather than discovering.
+2. ~~**When a hired quizmaster runs a night AT a venue account, whose room is
+   it?**~~ **ANSWERED, and the answer is better than either option I put up.**
+
+#### A night has TWO ATTRIBUTIONS, and is stored once
+
+The host: *"You could have shared nights. Dave the quizmaster is running a
+night at the Dog and Duck — it could be through either account, it doesn't
+really matter. What you say is **Dave at the Dog and Duck**, and those outputs
+go to both accounts. In the Dog and Duck account it says Dave hosted this
+night; in the Dave account it says the Dog and Duck was the venue."*
+
+**That is not two copies of a night, it is ONE night with a host and a venue on
+it, read from either end.** Which dissolves the objection rather than trading
+against it — I had framed it as "a night must appear in two histories, and this
+app is single-room", and the answer is that the night stays single and the
+ATTRIBUTION is what is shared.
+
+So the archive entry gains two fields, and Past gigs becomes *"every night I am
+named on"*:
+
+| Whose page | What the same night reads as |
+|---|---|
+| **Dave's** | The Dog and Duck was the venue |
+| **The Dog and Duck's** | Dave hosted this night |
+
+**THE ATTRIBUTION IS ALSO THE PERMISSION, and that is the part worth keeping.**
+The read-across-rooms worry in question 1 mostly evaporates here: the Dog and
+Duck is not reaching into Dave's room, it is reading a night **it is named
+on**. So the rule is "you see a night you are on", which is structural in the
+way this codebase likes — there is no id anybody can send that reaches a night
+they are not named on, and it never becomes a general door into another room.
+It also generalises exactly right for the marketplace: a venue sees the nights
+a quizmaster ran AT THEIR VENUE, and nothing else of that quizmaster's.
+
+#### And it can ship BEFORE venue accounts exist — which is the useful part
+
+**A venue does not have to be an account.** Almost none of Mark's are, and
+almost none ever will be. So the field is a NAME, with an optional link to an
+account when there is one:
+
+- **Free text is the common case** — "The Dog and Duck", typed at launch, same
+  as the look and the card shape are chosen at launch.
+- **A linked venue account is the upgrade**, and it is what makes the night
+  appear on their page too.
+
+That means **"a night carries a venue" — the prerequisite sitting at the top of
+the SELL list, the one everything else there waits on — can be built this
+month, with no venue accounts, no groups and no payment processor.** It
+immediately gives:
+
+- **headcount per venue over time**, which is the strongest thing on that list;
+- a Past gigs page that says WHERE, which is most of what makes it evidence;
+- an invoice that already knows the venue;
+- and the object the directory needs, ready before the directory is.
+
+**Do this one first.** It is the cheapest item on the list and the most blocked
+behind.
+
+#### One thing left open: who owns the PHOTOS of a shared night
+
+Both should see them — they are pictures of that room on that evening. Less
+obvious is who may take one DOWN: the host has the kill switch and the
+per-photo bin because they are holding the microphone, and a venue might
+reasonably want one of their own customers removed afterwards. Not urgent —
+there is no venue account to ask yet — but decide it before one exists rather
+than after somebody asks.
 
 ### Group accounts — SEATS on a Gold, for a quizmaster company
 
