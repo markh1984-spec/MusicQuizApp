@@ -1787,7 +1787,13 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
    things — Launch, Take control, Write it — have to stay the loudest. The page
    you are on is lit rather than dropped, so the menu answers "where am I" as
    well as "where can I go". */
-.topnav { display: flex; align-items: center; gap: 6px; flex: 0 1 auto; min-width: 0; }
+/* `flex: 0 0 auto` — THE MENU NEVER GIVES WAY. As a shrinkable item it was
+   squeezed by whatever shared its row, and because the chips are `nowrap` they
+   did not shrink with it: they spilled straight over the top of the text
+   beside them. On the owner page that put the Owner chip on top of the email
+   address. Everything else on the bar gives way instead; on a phone the media
+   query below hands the menu a line of its own. */
+.topnav { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
 .topnav a {
   padding: 8px 14px;
   border-radius: 999px;
@@ -1848,7 +1854,6 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
    shrinkable item it was squeezed to nothing and the menu simply was not there
    on that page. It keeps its size and the bar wraps instead. */
 .editor .topbar { flex-wrap: wrap; row-gap: 10px; }
-.editor .topbar .topnav { flex: 0 0 auto; }
 
 /* Big screen: brand in the corner all night, quiz title beside it. */
 .screen .titles { display: flex; align-items: center; gap: 1.1vw; min-width: 0; }
@@ -4254,4 +4259,11 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    drags the whole row with it. The "who am I" line gives way instead — it is
    the one thing up there you can afford to lose the end of. */
 .topbar-out, .hat-switch { white-space: nowrap; }
-.console .topbar #whoami { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The two bits of prose in the bar are what give way — "Owner — you@…" and
+   "Now: The Madonna Quiz (6 in)". They are the only things up there you can
+   afford to lose the end of, and without `min-width: 0` a flex item will not
+   go below its own text however long that text is. */
+.console .topbar #whoami,
+.console .topbar #runningNow {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
