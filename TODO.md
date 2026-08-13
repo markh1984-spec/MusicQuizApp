@@ -454,6 +454,39 @@ times is either a bar that cannot reach us or somebody working it. That count
 already exists and already shows above zero — it just needs to reach the
 archive with everything else.
 
+### 1g. Making the pictures stopped at 7 of 10 and had to be pressed again
+
+**Seen on 14 August 2026, on the first real run against Google.** Ten portraits
+asked for, seven drawn, then it stopped. Pressing again finished the other
+three and cost nothing for the seven — which is the shared portrait library
+working exactly as intended, and the only reason this was an annoyance rather
+than money.
+
+**Not the keep-alive.** `progressStream` pings on a plain interval, so it talks
+through image calls as well as Claude ones. Ruled out by reading it.
+
+**Two candidates, in order of suspicion:**
+
+- **The GitHub commit per picture.** `onFile` pushes each image as it is drawn,
+  sequentially — so ten pictures is ten Google calls AND ten commits to the
+  repo. That is the slowest job in the app by a distance and the most likely
+  thing to be cut. If so the fix is to collect the files and push them in ONE
+  commit at the end, which is what the generators already do for the ledger:
+  "a quiz is twenty-odd calls and that would be twenty commits for one press of
+  one button" is already written down about `onSpend`, and this is the same
+  mistake in a different place.
+- **Google refusing or rate-limiting.** That would be reported per question and
+  the loop would carry on, so it does not fit "stopped at seven" — unless the
+  refusal was of a kind that throws rather than returning a reason.
+
+**How to tell them apart:** the console log. A per-question failure names the
+question; a cut stream ends mid-sentence and the console says "the connection
+dropped before it finished". Ask for the screenshot next time rather than
+guessing.
+
+**Worth fixing before item 1f**, because making the pictures automatic means
+this failure would silently truncate a round rather than being obvious.
+
 ### 1f. Draw the pictures as part of writing the quiz
 
 **Asked for on 14 August 2026.** Today `Write it` produces the pack and the
