@@ -928,6 +928,92 @@ The one thing worth doing NOW is not narrowing the door: the site should not
 say anything that implies "run it yourself" is the only alternative to booking
 Mark.
 
+#### Vetting: the ROOM rates the night, and that rating must not set anybody's pay
+
+The host's proposal: *"vetting could be taken care of via an in-app Uber-style
+rating system, and their pay is based on their rating"* — *"they host a job, the
+average rating comes to my owner console, then they get paid more if their
+average rating is higher."*
+
+**The rating half is a good idea and the app is unusually well placed to do
+it.** Sixty phones are already connected and already looking at a final
+scoreboard. One tap at `PHASES.FINAL`, no signup, no email — which is the one
+rating channel in this business with real volume. A venue rates you four times
+a year; a room rates you sixty times a night. Nothing else about a quizmaster
+can be measured that often.
+
+**The PAY half should not be built, and there are three reasons in order of
+severity.**
+
+**1. It probably makes Quizporium the quizmaster's employer.** Setting somebody
+else's rate, taking a cut, and controlling their quality with a score is the
+exact fact pattern the UK Supreme Court used to find Uber's drivers were
+workers rather than self-employed (*Uber BV v Aslam*, 2021) — control over pay
+plus control over performance. Today a quizmaster is a CUSTOMER who pays a
+subscription; the day their income is calculated by the owner's console they
+look a great deal like staff, with holiday pay and minimum wage attached. **Get
+an accountant's view before building any version of this**, whatever the
+mechanism. A directory where each quizmaster sets their OWN rate has none of
+this exposure.
+
+**2. It pays them for things they do not control, and one of those things is
+this app.** A room's rating is mostly the pack, the crowd, the venue's sound,
+how busy it is, and whether they won — the host's performance is a minority
+share of it. So a quizmaster handed a weak pack, or a night where pub wifi
+wobbles, earns less. That is the owner's risk and the venue's risk, priced onto
+the host's wages. It is also backwards for the business: the hardest rooms —
+the dead Tuesday that most needs a good host — would pay the least, so the best
+quizmasters would learn to avoid exactly the venues that need them.
+
+**3. It creates the one kind of admin that does not scale.** Money plus a
+disputed score means the owner adjudicating. "The pub was half empty", "a team
+that came last stuffed the ratings", "the projector bulb went" — every one of
+those lands on a Monday, and there are more of them every month as subscribers
+grow. That is the ceiling described in the section above, rebuilt out of
+arguments about wages.
+
+And a mechanical problem that has to be solved even for the harmless version:
+**a phone has no identity by design** (rule 3 — there is no login, and the join
+code is on the projector and read out on the mic). One person with three phones
+is three ratings, and a rejoin is another. That is survivable for a display
+figure and not survivable for a payment.
+
+**Anonymous is the right call and it is also the thing that closes the door on
+pay.** The host's own instruction — *"average rating from the quiz customers,
+made anonymously"* — is correct for the rating itself: a player who has to put
+their name to it rates the host they can see rather than the night they had,
+and half the room is drinking with the person on the mic in a small pub.
+**But anonymous and unverified are the same thing here**, because there is no
+account behind a phone to be anonymous FROM. So a disputed score can never be
+investigated: there is nobody to ask, no way to tell a stuffed ballot from a
+bad night, and nothing the quizmaster can appeal against. That is fine for a
+number on a profile and it is not a basis on which to pay somebody less.
+The honest version of this rule: **an anonymous rating may inform a decision a
+human makes; it may not BE the decision.**
+
+**What to build instead — and it gets the host what he actually wants.** The
+rating already pays a good quizmaster more, without anybody setting a wage:
+
+- **The room rates the NIGHT, one tap on the final screen**, and it is shown as
+  evidence on the directory profile beside Past gigs. Rated the night, labelled
+  as the night — not "how good is this host", which it cannot honestly measure.
+- **Each quizmaster sets their own fee.** The owner takes a flat cut or a
+  listing fee, which is the same money with none of the employment question.
+- **A high rating earns more through BOOKINGS, not through an algorithm.** A
+  4.9 with forty nights of photos gets picked more often and raises their own
+  price. Market, not payroll.
+- **The strongest signal is one nobody can stuff, and it costs no UI at all:
+  did the venue book them AGAIN?** "Booked back by 9 of 11 venues" beats any
+  star average, and it falls out for free once a night carries a venue — which
+  is already the prerequisite sitting at the top of the SELL list.
+- **Vetting itself stays a phone call for years.** At tens of quizmasters the
+  owner reads their Past gigs page and talks to them once. That is a Monday job
+  that stays the same size, because it happens once per quizmaster rather than
+  once per gig.
+
+Prerequisites either way, and neither exists: **a night has to carry a venue**,
+and there has to be a payment processor.
+
 ### And a £30 subscription beats a £150 gig, because of what it does NOT cost
 
 The host's own point, and it is the one that settles what this business
