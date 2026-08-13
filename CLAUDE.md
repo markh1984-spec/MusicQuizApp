@@ -3670,11 +3670,24 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 800 tests, no network, injected clocks — must stay green
+npm test        # 878 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
+node scripts/pub-unchanged.mjs HEAD~1 --ignore online   # did I break the pub night?
 ```
+
+**`pub-unchanged.mjs` is the one to run before a gig week.** `npm test` says
+the tests still pass; this says something stronger and far more useful — that
+the actual BYTES a projector and a phone receive, at every phase of every pack
+in the library, are identical to a commit you trust. It runs both versions of
+the engine side by side on one injected clock, with the same teams answering
+the same options at the same seconds. `--ignore` names top-level fields that
+are allowed to be NEW, so an additive change can be waved through by name:
+*"there is one new field and it is called `online`"* is a claim somebody can
+check, where "some things changed" is not. It was written to answer the host
+asking whether the online work would make his Wednesday awkward, and the
+answer it gave was 2,150 identical payloads across seven packs.
 
 Beyond the unit tests, these were run by hand and are worth repeating after
 anything structural:
