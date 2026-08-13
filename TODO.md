@@ -1121,6 +1121,64 @@ One risk to hold on to: the venue is paying full price for somebody they have
 not seen, on the owner's recommendation. If it goes badly it is the owner's
 name on it — which is the whole reason the vetting question below matters.
 
+##### Collecting it: the LISTING is the enforcement, not the card
+
+Asked: *"how would I enforce this? Just take it as a payment from the card they
+have on file upon completion?"*
+
+**At the scale this will be at for a good while, do not build a payment for it
+at all.** A handful of introductions a month is an INVOICE — and this app
+already raises invoices. Somebody who does not pay it comes off the directory,
+and that is the whole of the enforcement: they are a Gold subscriber precisely
+because they want to be listed, so the leverage is the listing rather than the
+card. Zero build, no dispute process, and it can start the day the first
+introduction happens.
+
+**Whenever it does become a card charge, charge at ACCEPTANCE and not on
+completion.** "On completion" sounds safer and is the harder of the two in
+every direction:
+
+- **The app would have to know the gig happened, and know it was THAT gig.**
+  That needs bookings as objects and a venue on every night — neither exists —
+  and even then a night run off-platform looks like a night that never
+  happened.
+- **It puts the money after the point where somebody would rather it did not
+  happen**, so it invites exactly the reporting problem the whole flat-fee
+  design was chosen to avoid.
+- **The introduction is the thing being SOLD.** It is a discrete event on the
+  site with a button on it, so charging there is un-evadable by construction —
+  no detection, no verification, nothing to argue about.
+
+So: the venue proposes a date, the quizmaster accepts, and **the acceptance
+carries the fee in words on the button** — "Accept this booking · £150
+introduction fee". If the venue then cancels before the date, refund it; that
+is rare and it is a Monday, where a monthly reconciliation of who really worked
+would be a Monday every week.
+
+Four mechanical things to know before building any of it, because they are the
+ones that bite:
+
+- **A stored card charged later is a merchant-initiated, off-session payment**,
+  and under SCA it only clears without the cardholder present if there was an
+  authentication when the card was stored AND an agreement on file that it can
+  be charged this way. That has to be set up at SIGN-UP, so it is a decision
+  about the subscription flow rather than something to bolt on afterwards.
+- **Keep it OFF the subscription's own billing.** A surprise £150 on a card
+  that has been quietly taking £30 is a chargeback and a lost customer. It is a
+  separate charge, separately agreed, separately shown.
+- **A timestamped in-app acceptance IS the evidence** if it is ever disputed.
+  Card networks side with the cardholder without one. So the acceptance record
+  — who, what, when, how much, and the wording they pressed — is not audit
+  furniture, it is the thing that decides a chargeback.
+- **Authorise-now-capture-later does not stretch far enough.** An
+  authorisation lapses in about a week; gigs are booked a month or more out.
+  Charge, and refund if it falls through.
+
+And do the first several **by hand, deliberately** — a phone call, an invoice,
+and a note of what actually got argued about. That is how the rules get written
+by the business rather than guessed at in advance, which is the same reason the
+shop was built as a window with no money in it.
+
 ##### Ranking on the rating cannot do the vetting, and it is the wrong shape
 
 Proposed: *"make it so the QMs are ranked by average rating and only the top
