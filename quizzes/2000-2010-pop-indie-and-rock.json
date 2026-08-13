@@ -1,0 +1,416 @@
+{
+  "id": "2000-2010-pop-indie-and-rock",
+  "title": "The 2000-2010 Pop, Indie and Rock Quiz",
+  "subtitle": "Two rounds. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-08-13T19:51:18.260Z",
+  "notes": "Written by claude-sonnet-5 for \"2000-2010 pop, indie and rock\". NOT YET REVIEWED — read every question in the editor before the gig.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "text",
+      "title": "Round One — 2000-2010 Pop, Indie and Rock",
+      "blurb": "20 questions on 2000-2010 pop, indie and rock",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which band released the 2003 album 'Elephant'?",
+          "options": [
+            "The Strokes",
+            "The Vines",
+            "Kings of Leon",
+            "The White Stripes"
+          ],
+          "correctIndex": 3,
+          "answerNote": "Elephant featured the hit single 'Seven Nation Army'."
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Coldplay's 'Viva la Vida' topped the UK singles chart in which year?",
+          "options": [
+            "2006",
+            "2009",
+            "2008",
+            "2007"
+          ],
+          "correctIndex": 2,
+          "answerNote": "It was also the title track of their fourth studio album."
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Franz Ferdinand's breakthrough hit 'Take Me Out' was released in which year?",
+          "options": [
+            "2006",
+            "2004",
+            "2005",
+            "2003"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The song became a defining indie anthem of the mid-2000s."
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which band released the album 'Silent Alarm' in 2005?",
+          "options": [
+            "Bloc Party",
+            "The Kooks",
+            "Franz Ferdinand",
+            "Editors"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Silent Alarm was Bloc Party's debut studio album."
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Amy Winehouse's album 'Back to Black' was released in which year?",
+          "options": [
+            "2005",
+            "2007",
+            "2006",
+            "2008"
+          ],
+          "correctIndex": 2,
+          "answerNote": "The album included the hit single 'Rehab'."
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which band sang 'Mr Brightside', released in 2003?",
+          "options": [
+            "The Killers",
+            "Kaiser Chiefs",
+            "Interpol",
+            "Editors"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It repeatedly re-charted in the UK for years after release."
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which artist released 'Chasing Pavements' in 2008?",
+          "options": [
+            "Duffy",
+            "Estelle",
+            "Corinne Bailey Rae",
+            "Adele"
+          ],
+          "correctIndex": 3,
+          "answerNote": "It was the lead single from Adele's debut album '19'."
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which artist released the 2006 hit 'Crazy' as one half of Gnarls Barkley?",
+          "options": [
+            "Kanye West",
+            "CeeLo Green",
+            "Andre 3000",
+            "Lupe Fiasco"
+          ],
+          "correctIndex": 1,
+          "answerNote": "CeeLo Green provided the vocals for the duo's breakout single."
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which band released the 2004 album 'Hopes and Fears'?",
+          "options": [
+            "Athlete",
+            "Snow Patrol",
+            "Keane",
+            "Travis"
+          ],
+          "correctIndex": 2,
+          "answerNote": "The album included the single 'Somewhere Only We Know'."
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which band's 2002 debut album was titled 'Up the Bracket'?",
+          "options": [
+            "The Cribs",
+            "The Libertines",
+            "Babyshambles",
+            "Arctic Monkeys"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It was produced by Mick Jones of The Clash."
+        },
+        {
+          "id": "r1q11",
+          "prompt": "Arctic Monkeys' debut single 'I Bet You Look Good on the Dancefloor' charted in which year?",
+          "options": [
+            "2005",
+            "2004",
+            "2006",
+            "2007"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It gave the band their first UK number one single."
+        },
+        {
+          "id": "r1q12",
+          "prompt": "Which band released the album 'Employment' in 2005?",
+          "options": [
+            "The Futureheads",
+            "Hard-Fi",
+            "Maximo Park",
+            "Kaiser Chiefs"
+          ],
+          "correctIndex": 3,
+          "answerNote": "The album featured the single 'I Predict a Riot'."
+        },
+        {
+          "id": "r1q13",
+          "prompt": "Which artist released 'Rehab' as a single in 2006?",
+          "options": [
+            "Duffy",
+            "Adele",
+            "Amy Winehouse",
+            "Joss Stone"
+          ],
+          "correctIndex": 2,
+          "answerNote": "The song was later awarded Grammys, including Record of the Year."
+        },
+        {
+          "id": "r1q14",
+          "prompt": "Which band released 'Dakota' as a single in 2005?",
+          "options": [
+            "Stereophonics",
+            "The Fratellis",
+            "Embrace",
+            "Feeder"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It gave Stereophonics their first UK number one single."
+        },
+        {
+          "id": "r1q15",
+          "prompt": "Which band released the 2004 single 'Dry Your Eyes'?",
+          "options": [
+            "Dizzee Rascal",
+            "Kano",
+            "Roll Deep",
+            "The Streets"
+          ],
+          "correctIndex": 3,
+          "answerNote": "The Streets is the stage name of Mike Skinner, and the track topped the UK chart."
+        },
+        {
+          "id": "r1q16",
+          "prompt": "Which artist's 2003 debut album was titled 'Boy in da Corner'?",
+          "options": [
+            "Wiley",
+            "Dizzee Rascal",
+            "Skepta",
+            "Kano"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The album won the Mercury Prize in 2003."
+        },
+        {
+          "id": "r1q17",
+          "prompt": "Which band released the 2005 album 'X&Y'?",
+          "options": [
+            "Keane",
+            "Snow Patrol",
+            "Travis",
+            "Coldplay"
+          ],
+          "correctIndex": 3,
+          "answerNote": "X&Y followed the huge success of 'A Rush of Blood to the Head'."
+        },
+        {
+          "id": "r1q18",
+          "prompt": "Which band's 2008 album was titled 'Only by the Night'?",
+          "options": [
+            "Editors",
+            "The Fratellis",
+            "Kings of Leon",
+            "The Killers"
+          ],
+          "correctIndex": 2,
+          "answerNote": "The album included the huge hit 'Sex on Fire'."
+        },
+        {
+          "id": "r1q19",
+          "prompt": "Which band released the 2001 album 'Is This It'?",
+          "options": [
+            "The Vines",
+            "The Strokes",
+            "The Hives",
+            "Interpol"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The album's cover famously featured a gloved hand on a woman's hip."
+        },
+        {
+          "id": "r1q20",
+          "prompt": "Which Scottish band had a 2006 UK number one album with 'Eyes Open'?",
+          "options": [
+            "Snow Patrol",
+            "Idlewild",
+            "Travis",
+            "Biffy Clyro"
+          ],
+          "correctIndex": 0,
+          "answerNote": "The album included the huge hit 'Chasing Cars'."
+        }
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "image",
+      "title": "Round Two — Whose Face Is This?",
+      "blurb": "The picture pulls back as the clock runs down. Guess early, score more.",
+      "imageCaption": "AI-generated illustration — not a real photograph",
+      "questions": [
+        {
+          "id": "r2q1",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Thom Yorke",
+            "Chris Martin",
+            "Tom Chaplin",
+            "Damon Albarn"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Chris Martin fronted Coldplay and married actress Gwyneth Paltrow in 2003.",
+          "image": "portraits/chris-martin.png",
+          "imagePrompt": "A slim British male singer in his late twenties, floppy brown hair, wearing a plain t-shirt, known for earnest expressions and stadium rock performances in the 2000s.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q2",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Amy Winehouse",
+            "Joss Stone",
+            "Adele",
+            "Duffy"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Amy Winehouse's beehive hairstyle and heavy eyeliner became instantly iconic in the mid-2000s.",
+          "image": "portraits/amy-winehouse.png",
+          "imagePrompt": "A British female soul singer with a tall dark beehive hairdo, thick winged eyeliner, tattoos on her arms, 1960s-style retro dresses.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q3",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Julian Casablancas",
+            "Carl Barat",
+            "Alex Turner",
+            "Pete Doherty"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Alex Turner rose to fame as the frontman of Arctic Monkeys in 2005.",
+          "image": "portraits/alex-turner.png",
+          "imagePrompt": "A young British indie musician in his early twenties, slicked back dark hair, sharp jawline, wearing a leather jacket, cool detached expression.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q4",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Miles Kane",
+            "Alex Turner",
+            "Carl Barat",
+            "Pete Doherty"
+          ],
+          "correctIndex": 3,
+          "answerNote": "Pete Doherty co-founded The Libertines and later fronted Babyshambles, often in the tabloids.",
+          "image": "portraits/pete-doherty.png",
+          "imagePrompt": "A dishevelled British indie musician with messy dark hair, a trilby hat, gaunt face, wearing a scruffy blazer, tabloid-famous look of the mid-2000s.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q5",
+          "prompt": "Whose face is this?",
+          "options": [
+            "James Blunt",
+            "Gareth Gates",
+            "Will Young",
+            "Robbie Williams"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Will Young won the first series of Pop Idol in 2002.",
+          "image": "portraits/will-young.png",
+          "imagePrompt": "A neat British male pop singer with short tidy brown hair, warm friendly smile, smart casual shirt, early 2000s talent show winner look.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q6",
+          "prompt": "Whose face is this?",
+          "options": [
+            "James Blunt",
+            "David Gray",
+            "Ed Sheeran",
+            "Damien Rice"
+          ],
+          "correctIndex": 0,
+          "answerNote": "James Blunt topped the charts in 2005 with the ballad You're Beautiful.",
+          "image": "portraits/james-blunt.png",
+          "imagePrompt": "A British male singer-songwriter with light brown wavy hair, boyish face, often photographed in a casual jacket, gentle earnest expression.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q7",
+          "prompt": "Whose face is this?",
+          "options": [
+            "KT Tunstall",
+            "Joss Stone",
+            "Duffy",
+            "Katie Melua"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Joss Stone became famous as a soulful teenage singer from Devon in the early 2000s.",
+          "image": "portraits/joss-stone.png",
+          "imagePrompt": "A young British female soul singer with long blonde wavy hair, bare feet often shown on stage, warm expressive face, early 2000s bohemian style.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q8",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Alex Kapranos",
+            "Chris Cornell",
+            "Julian Casablancas",
+            "Brandon Flowers"
+          ],
+          "correctIndex": 3,
+          "answerNote": "Brandon Flowers fronted The Killers, known for their glam-tinged indie rock sound.",
+          "image": "portraits/brandon-flowers.png",
+          "imagePrompt": "An American rock singer with slicked dark hair, sharp cheekbones, eyeliner, wearing a smart tailored jacket, glam-indie look of the mid-2000s.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q9",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Tom Chaplin",
+            "Matt Bellamy",
+            "Jarvis Cocker",
+            "Chris Martin"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Matt Bellamy fronted Muse, famed for his falsetto voice and dramatic guitar solos.",
+          "image": "portraits/matt-bellamy.png",
+          "imagePrompt": "A British rock singer with tousled dark hair, intense stare, often seen with a guitar, dramatic stage presence, 2000s alternative rock era.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q10",
+          "prompt": "Which band released the 2005 album 'Silent Alarm'?",
+          "options": [
+            "Franz Ferdinand",
+            "Editors",
+            "Bloc Party",
+            "The Kaiser Chiefs"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Silent Alarm was Bloc Party's acclaimed debut album, released in early 2005.",
+          "image": "portraits/bloc-party.png",
+          "zoomFrom": 6
+        }
+      ]
+    }
+  ]
+}
