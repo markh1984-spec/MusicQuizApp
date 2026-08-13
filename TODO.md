@@ -390,6 +390,48 @@ second tab), because if a launch opens it automatically the action-row button
 becomes the way BACK to a tab you already have, and the wording may want to
 change with it.
 
+### 1c. THE PHONE'S OWN SCORE GIVES THE ANSWER AWAY BEFORE THE REVEAL
+
+**Found by the host on 14 August 2026, mid-test.** Tap the right answer and the
+running total at the top of your phone goes from 0 to 360 immediately — so you
+know you were right several seconds before the projector says so, and before
+anybody who answered later has finished.
+
+**Everything else is already correct, which is what makes this worth writing
+down.** `playerView()` withholds `correct`, `points`, `isFirstCorrect` and the
+part-marks until `PHASES.REVEAL`, and has a comment saying exactly that. The
+leak is one line away in `answer()`:
+
+```
+player.score += points;   // engine.js, at ANSWER time
+```
+
+…and `view.you.score` reads that total. So the secret is kept in the field
+built to keep it and given away by the header beside it.
+
+**Why it matters beyond tidiness:** somebody who answers at three seconds knows
+the answer at three seconds. In a pub that is a table telling the next table;
+online it is a message in the chat. It also spoils the reveal for the person
+themselves, which is most of what the reveal is for.
+
+**The fix is NOT to score at reveal time.** Points are worked out from the
+clock at the moment of answering and the first-correct bonus depends on the
+order answers land — moving the arithmetic would change the scoring, which is
+the one thing that must not move. Instead the ENGINE keeps scoring exactly as
+it does and the PLAYER'S VIEW reports the total as it stood before this
+question, until the reveal.
+
+Roughly: hold `scoreBefore` on the answer record when it is written, and have
+`playerView` report that instead of `player.score` while the phase is
+`QUESTION`. The board, the projector and the host view are unaffected — the
+host is *supposed* to see it live, and the room cannot see a phone.
+
+**Check the round board and the mini-board too**: `view.leaderboard` is only
+sent at `ROUND_BOARD` and `FINAL`, so it is probably clean, but "probably" is
+not the standard for the thing that leaks an answer. And `pub-unchanged.mjs`
+will flag this as a payload change — it is a legitimate one, and the diff
+should be exactly the score field on a phone mid-question.
+
 ### 5a. Launch opens the big screen in a second tab
 
 **Asked for on 14 August 2026, mid-gig-day, and parked for that reason.** The
