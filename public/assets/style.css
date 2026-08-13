@@ -4771,3 +4771,13 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .venue-card .v-save { margin-top: 10px; }
 .venue-add { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 .venue-add .venue-new { flex: 1 1 220px; min-width: 0; }
+
+/* The demo prize code on My account. Big enough to be scanned off a laptop
+   screen across a pub table, which is the whole use. */
+.demo-prize { display: flex; gap: 16px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+.demo-qr {
+  width: 160px; height: 160px; flex: 0 0 auto;
+  background: #fff; border-radius: 12px; padding: 8px;
+}
+.demo-side { display: grid; gap: 8px; min-width: 0; }
+.demo-side .tiny { word-break: break-all; }

@@ -1550,6 +1550,21 @@ marking it used is what happens to every voucher, and putting it back undoes
 it. A red "Mark it used" would read as "you cannot undo this", which is the
 opposite of true, on the one control the bar is standing there waiting for.
 
+**THERE IS A DEMO ONE TO SHOW A VENUE**, on My account: a QR a landlord can
+scan across a table to see exactly what their bar staff would see. The feature
+is hard to describe and obvious once seen, which is the whole reason it is
+worth a panel.
+
+`/v?c=DEMO` is handled ENTIRELY in the browser — no request, nothing stored, a
+fresh one on every reload and a "Show it again" button after it is spent — so
+it can be shown to as many people as you like, with no game running, at four in
+the afternoon. It draws through the same `drawn()` the real one uses, so a
+venue is shown what they would GET rather than a mock-up that drifts from it.
+
+**`DEMO` can never collide with a real code**, and that is a property rather
+than a coincidence: the voucher alphabet has no vowels, so `E` and `O` cannot
+appear in one `newVoucherCode()` produces. No reserved-word check is needed.
+
 **Pub wifi is assumed to fail.** The short code is written under the QR, the
 `/v` page tells a failed fetch apart from a bad code in words, and the host can
 mark it used by hand. Same rule as everywhere else here: a network problem is

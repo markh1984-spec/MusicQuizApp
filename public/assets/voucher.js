@@ -27,6 +27,31 @@ const qs = `c=${encodeURIComponent(code)}${g ? `&g=${encodeURIComponent(g)}` : '
 const main = document.getElementById('main');
 const show = (html) => main.replaceChildren(node(html));
 
+/*
+ * THE DEMO ONE, for showing a venue what the bar sees.
+ *
+ * A quizmaster selling a night wants to hand somebody a phone and let them
+ * scan it — so it has to work over and over, for a different person each time,
+ * and it must never touch a real night. So it is handled ENTIRELY here: no
+ * request, nothing stored, and reloading gives a fresh one. Pressing the
+ * button shows the used state so the whole thing can be demonstrated, and then
+ * it is forgotten.
+ *
+ * `DEMO` cannot collide with a real code: the voucher alphabet has no vowels,
+ * so `E` and `O` can never appear in one. That is a property of `newVoucherCode`
+ * rather than a coincidence, and it is why this needs no reserved-word check.
+ */
+const DEMO = 'DEMO';
+const demoVoucher = () => ({
+  code: DEMO,
+  name: 'Quizteam Aguilera',
+  reward: 'A free drink at the bar',
+  venue: '',
+  issuedAt: Date.now(),
+  redeemedAt: null,
+  reinstated: 0,
+});
+
 /** A time as somebody behind a bar reads it: half ten, not an ISO string. */
 function clockTime(ms) {
   if (!ms) return '';
@@ -71,6 +96,13 @@ const footer = (v) => `
   · code ${esc(v.code)}</p>`;
 
 async function load() {
+  /*
+   * The demo never asks the server anything, so it works with no game running,
+   * no night on, and nothing to break — which is the point, because it gets
+   * shown across a table in a pub at four in the afternoon.
+   */
+  if (code === DEMO) return void demo(demoVoucher());
+
   let res;
   try {
     res = await fetch(`/api/voucher?${qs}`);
@@ -114,3 +146,29 @@ async function load() {
 }
 
 load();
+
+/**
+ * The demo, driven with no server behind it.
+ *
+ * Deliberately the SAME `drawn()` the real one uses, so what a venue is shown
+ * is what a venue gets rather than a mock-up that quietly drifts from it. The
+ * only difference is what the button does: it flips a local copy rather than
+ * spending anything.
+ */
+function demo(v) {
+  const paint = (state) => {
+    show(drawn(state));
+    const button = document.getElementById('spend');
+    if (button) {
+      button.addEventListener('click', () => paint({ ...state, redeemedAt: Date.now() }));
+    }
+    // A way back, so the demo can be given to the next person without the
+    // phone being handed back and the page reloaded by hand.
+    if (state.redeemedAt) {
+      const again = node('<button class="minor" style="margin-top:14px">Show it again</button>');
+      again.addEventListener('click', () => paint(demoVoucher()));
+      main.querySelector('.v-card').appendChild(again);
+    }
+  };
+  paint(v);
+}

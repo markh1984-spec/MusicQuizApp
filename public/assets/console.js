@@ -747,7 +747,45 @@ function accountSection() {
   wrap.appendChild(youPanel());
   wrap.appendChild(roomPanel());
   wrap.appendChild(libraryPanel());
+  wrap.appendChild(demoPrizePanel());
   return wrap;
+}
+
+/**
+ * A prize QR to SHOW somebody, across a table, when you are selling a night.
+ *
+ * The whole feature is hard to describe and obvious to see: hand a landlord
+ * your phone, they scan it, and they are looking at exactly what their bar
+ * staff would see. That is worth more than any sentence about it.
+ *
+ * **It cannot be spent**, which is the part that makes it usable more than
+ * once. `/v?c=DEMO` is handled entirely in the browser — no request, nothing
+ * stored, a fresh one on every reload — so it works with no game running, at
+ * four in the afternoon, in a pub with no wifi worth the name. And it draws
+ * through the same function the real one does, so what somebody is shown is
+ * what they would get rather than a mock-up that drifts from it.
+ *
+ * On My account rather than a tab of its own: it is a thing you have, like
+ * your room's join link, and it is used a few times a year.
+ */
+function demoPrizePanel() {
+  const target = `${location.origin}/v?c=DEMO`;
+  return node(`
+    <div class="panel">
+      <h3>Show somebody the prize</h3>
+      <div class="tiny">Selling a night to a venue? Let them scan this. They see
+        exactly what their bar staff would see when a winner shows up. It is a
+        demonstration — nothing is given away and it works as many times as you
+        like.</div>
+      <div class="demo-prize">
+        <img class="demo-qr" alt="A demonstration prize code"
+          src="/qr.svg?text=${encodeURIComponent(target)}&dark=%230b0b12&light=%23ffffff">
+        <div class="demo-side">
+          <a class="minor" href="/v?c=DEMO" target="_blank" rel="noopener">Open it yourself</a>
+          <div class="tiny">${esc(target)}</div>
+        </div>
+      </div>
+    </div>`);
 }
 
 /**
