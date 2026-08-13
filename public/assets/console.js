@@ -2835,6 +2835,26 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
    * above it — which is what somebody opening this page ten minutes before a
    * gig is looking for.
    */
+  /*
+   * ONE PACK IS OPEN AT A TIME, and the rest are just names.
+   *
+   * Asked for after the first weeks of real use: *"we don't need all the
+   * options for launch on every pack in the list — just the selected one, the
+   * rest can be compacted into a card with their name only."* He is right, and
+   * it is the third design rule doing the work: the common job on this tab is
+   * FIND TONIGHT'S PACK AND PRESS LAUNCH, and nine cards each carrying four
+   * dropdowns, a prize line, five buttons and a Launch is a wall you read
+   * rather than a shelf you scan.
+   *
+   * The settings are per-night decisions about ONE pack, so they belong to the
+   * one you have chosen and nowhere else. Closed, a card is its name and a line
+   * of what it is — which is what you choose BY.
+   *
+   * `repaint` is handed to each card so opening one can redraw the grid
+   * without the whole page reloading. `load()` would work and is far heavier:
+   * it refetches the library, and on a tab whose whole point is being quick
+   * that is a visible stutter for a purely local change.
+   */
   const paint = () => {
     const found = matchPacks(packs || [], packQuery[kind]);
     grid.replaceChildren();
@@ -2868,13 +2888,13 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
     if (!yours.length) {
       grid.appendChild(node(`<div class="tiny">None of the ones you have match “${esc(packQuery[kind])}”.</div>`));
     }
-    for (const pack of yours) grid.appendChild(packCard(kind, pack));
+    for (const pack of yours) grid.appendChild(packCard(kind, pack, paint));
 
     if (buyable.length) {
       shopHead.hidden = false;
       shopHead.querySelector('.shop-count').textContent =
         `${buyable.length} more ${kind === 'quiz' ? (buyable.length === 1 ? 'quiz' : 'quizzes') : (buyable.length === 1 ? 'bingo game' : 'bingo games')}`;
-      for (const pack of buyable) shop.appendChild(packCard(kind, pack));
+      for (const pack of buyable) shop.appendChild(packCard(kind, pack, paint));
     }
   };
 
@@ -3414,7 +3434,20 @@ function playingOptions() {
 /** Can this account actually RUN this game? An owner writes packs, never plays. */
 const canRun = (kind) => can(kind === 'bingo' ? FEATURES.BINGO : FEATURES.QUIZ);
 
-function packCard(kind, pack) {
+/**
+ * WHICH PACK IS OPEN, per tab, remembered outside the render.
+ *
+ * Module level for the same reason the control view keeps its open answer
+ * panels there: this grid is rebuilt whenever anything on the page changes —
+ * a save, a launch, a rename — and a selection stored inside the render would
+ * close itself the moment you touched the card you had just opened.
+ *
+ * Keyed by TAB, so opening a bingo pack does not close the quiz you were
+ * looking at, and each tab comes back where you left it.
+ */
+const openPack = new Map();
+
+function packCard(kind, pack, repaint = () => {}) {
   /*
    * A quizmaster READS a pack and LAUNCHES it, and that is the arrangement —
    * the packs are written to a house style and sold. Renaming, deleting,
@@ -3455,15 +3488,36 @@ function packCard(kind, pack) {
     ? `Played ${pack.playCount} time${pack.playCount === 1 ? '' : 's'}${pack.lastPlayedAt ? ` · last ${whenish(pack.lastPlayedAt)}` : ''}`
     : 'Never played';
 
+  const open = openPack.get(kind) === pack.id;
+
+  /*
+   * WHAT A CLOSED CARD KEEPS, and it is not quite "the name only".
+   *
+   * The ask was a card with the name on it. The size and when it was last
+   * played stay, in one small line, because they are what you CHOOSE by:
+   * "never played" and "last played 3 days ago" is how you avoid running the
+   * same quiz at the same venue two weeks running, and it is the exact signal
+   * the quick-launch priority is built out of. Dropping them would make the
+   * grid tidier and the choice harder, which is the wrong trade on the tab
+   * whose job is choosing.
+   *
+   * WARNINGS ALWAYS STAY, open or closed. A broken pack, a question to fix and
+   * an expired topical one are read once at a moment that matters, and the
+   * house style makes those the exception to being short. A pack that looked
+   * fine closed and turned out to be broken when opened would be the app
+   * saying nothing again.
+   */
   const el = node(`
-    <div class="pack-card ${pack.broken ? 'broken' : ''} ${ownPack ? 'own' : ''} ${freshness(pack).expired ? 'stale' : ''}">
-      <button class="pack-title" title="Read it">${esc(pack.title)}</button>
+    <div class="pack-card ${open ? 'open' : 'shut'} ${pack.broken ? 'broken' : ''} ${ownPack ? 'own' : ''} ${freshness(pack).expired ? 'stale' : ''}">
+      <button class="pack-title" title="${open ? 'Close it' : 'Open it to set tonight up and launch'}"
+        aria-expanded="${open ? 'true' : 'false'}">${esc(pack.title)}</button>
       ${ownPack ? '<div class="pack-yours" title="You wrote this one. Nobody else can read it.">Yours</div>' : ''}
-      <div class="tiny">${esc(detail)}</div>
-      <div class="tiny played">${esc(played)}</div>
+      <div class="tiny">${esc(detail)} · ${esc(played)}</div>
       ${freshLabel(pack) ? `<div class="tiny fresh ${freshness(pack).expired ? 'gone' : ''}">${esc(freshLabel(pack))}</div>` : ''}
       ${pack.broken ? `<div class="tiny" style="color:var(--bad)">Broken: ${esc(pack.broken)}</div>` : ''}
       ${pack.problems ? `<div class="tiny" style="color:var(--bad)">${pack.problems} thing${pack.problems === 1 ? '' : 's'} to fix</div>` : ''}
+      ${!open ? '' : `
+      <div class="pack-set">
       ${kind === 'bingo' && !pack.broken ? `
         <label class="pack-shape">Cards
           <select class="shape-pick">${shapeOptions(pack)}</select>
@@ -3484,8 +3538,9 @@ function packCard(kind, pack) {
         <label class="pack-shape venue-wrap">Venue
           ${venueBox()}
         </label>
-        <div class="prize-line" hidden></div>
 `}
+      </div>
+      ${pack.broken ? '' : '<div class="prize-line" hidden></div>'}
       <div class="pack-actions">
         <button class="pack-read" title="Read it through">Read</button>
         ${mine ? `<button class="pack-rename" ${pack.broken ? 'disabled' : ''} title="Change what it is called">Rename</button>` : ''}
@@ -3516,7 +3571,23 @@ function packCard(kind, pack) {
       </div>
       ${canRun(kind) ? `<button class="go launch" ${pack.broken ? 'disabled' : ''}>Launch</button>` : ''}
       <div class="pics-slot"></div>
+      `}
     </div>`);
+
+  /*
+   * The title OPENS the card; Read is in the row below.
+   *
+   * It used to open the read-through, which was the only thing it could
+   * sensibly do when every card was already fully open. Now the first thing
+   * you want from a pack is "set tonight up and launch it", so that is what
+   * the biggest target on the card does. Read is one tap further in, on the
+   * card you have already chosen, which is when you actually want to read it.
+   */
+  el.querySelector('.pack-title').addEventListener('click', () => {
+    if (open) openPack.delete(kind);
+    else openPack.set(kind, pack.id);
+    repaint();
+  });
 
   /*
    * How many actions this card ended up with, so the stylesheet can lay them
@@ -3540,7 +3611,9 @@ function packCard(kind, pack) {
   };
   el.querySelector('.pack-pics')?.addEventListener('click', () => toggle(picturePanel));
   el.querySelector('.pack-playlist')?.addEventListener('click', () => toggle(playlistPanel));
-  el.querySelector('.pack-title')?.addEventListener('click', openIt);
+  // NOT the title — that opens and closes the card now. Wiring both here is
+  // how you get a tap that opens the read-through AND collapses the card
+  // underneath it, which reads as the page jumping.
   el.querySelector('.pack-read')?.addEventListener('click', openIt);
 
   /*

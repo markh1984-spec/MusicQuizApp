@@ -1418,12 +1418,48 @@ body.console::after { display: none; }
 
 .pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
 
+/* ---- ONE PACK OPEN AT A TIME, and the rest are names.
+
+   The common job on this tab is find tonight's pack and press Launch. Nine
+   cards each carrying four dropdowns, a prize line, five buttons and a Launch
+   is a wall you read rather than a shelf you scan — and the settings are
+   per-night decisions about ONE pack, so they belong to the one you have
+   chosen and nowhere else.
+
+   The open card SPANS THE WHOLE ROW rather than growing inside its column: at
+   240px a row of dropdowns is a tall single file, and the grid would reflow
+   around a card three times the height of its neighbours. Full width it reads
+   as a panel about the pack you picked, which is what it is. */
+.pack-card.shut { gap: 2px; }
+.pack-card.shut .pack-title { font-size: var(--fs-ctl); }
+/* The caret says it opens — the same job the chevron does on a dropdown, and
+   drawn rather than a glyph for the reason binIcon() is drawn: phones render
+   arrow characters at wildly different weights and some fall back to a box. */
+.pack-card .pack-title::after {
+  content: ''; display: inline-block; margin-left: 8px;
+  border: 4px solid transparent; border-top-color: currentColor;
+  transform: translateY(2px); opacity: 0.5;
+}
+.pack-card.open .pack-title::after { transform: translateY(-2px) rotate(180deg); }
+.pack-card.open {
+  grid-column: 1 / -1;
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.07);
+}
+/* The settings side by side where there is room. `minmax(0, …)` rather than a
+   bare width, because a select will not go below its longest option and drags
+   the page sideways at 320px — the min-content trap this file has now recorded
+   six times. */
+.pack-set { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 8px; margin: 4px 0; }
+.pack-set > * { min-width: 0; }
+
 /* ---- finding a pack when there are eighty of them.
 
-   COMPACT keeps every control — it is about fitting more on screen, not about
-   taking anything away. What goes is the blurb and the play count, which are
-   the two lines you read once and never again; the launch-time pickers stay,
-   because choosing the card shape and the look IS the launch. */
+   COMPACT is about fitting more on screen. It always was, but it used to say
+   it kept "every control" and that the launch-time pickers stayed — which
+   stopped being true the day a card only carries them when it is open. What
+   it does now is tighten the grid and the closed cards; the open one is
+   unchanged, because that is the one you are actually working with. */
 .pack-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .pack-search {
   width: 190px; max-width: 42vw;
@@ -1438,9 +1474,9 @@ body.console::after { display: none; }
 .pack-grid.dense { grid-template-columns: repeat(auto-fill, minmax(178px, 1fr)); gap: 8px; }
 .pack-grid.dense .pack-card { padding: 10px 12px; gap: 3px; }
 .pack-grid.dense .pack-title { font-size: var(--fs-ctl); }
-/* The blurb and "played 39 times" — read once, then noise. */
-.pack-grid.dense .pack-card > .tiny:not([style]) { display: none; }
-.pack-grid.dense .played { display: none; }
+/* The size and the play count, on a shut card only — read once, then noise.
+   The OPEN card keeps them: you have chosen it, so they are what you check. */
+.pack-grid.dense .pack-card.shut > .tiny:not([style]) { display: none; }
 .pack-grid.dense .pack-shape { font-size: var(--fs-tag); }
 .pack-grid.dense .pack-shape select { padding: 5px 24px 5px 8px; font-size: var(--fs-mini); }
 .pack-grid.dense .pack-actions { gap: 4px; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); }
@@ -1760,12 +1796,19 @@ body.screen { cursor: none; }
 .pv-track .pv-tt { font-weight: 700; }
 .pv-track .pv-ta { margin-left: auto; color: var(--ink-dim); font-size: var(--fs-mini); }
 
-/* The title doubles as the way in to reading it. */
+/* The title OPENS THE CARD — it is a disclosure, not a link.
+   It used to open the read-through, so it was styled like one: coloured and
+   underlined on hover. That is link semantics on a control that expands
+   something in place, and after a click it left the heading of the open card
+   sitting there blue and underlined as though it were a URL. It brightens and
+   its caret comes up instead, which is what every other thing that opens on
+   this page does. */
 button.pack-title {
   background: none; border: none; padding: 0; text-align: left;
   color: var(--ink); font-family: inherit; cursor: pointer;
 }
-button.pack-title:hover { color: var(--cool); text-decoration: underline; }
+button.pack-title:hover { color: #fff; }
+button.pack-title:hover::after { opacity: 1; }
 
 
 @media (max-width: 560px) {

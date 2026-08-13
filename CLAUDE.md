@@ -1129,6 +1129,52 @@ all three came from the page being laid out for the person who WRITES packs:
   read their own big screen. It sits next to the player count. The house room
   has no code, so Mark's own control view is unchanged.
 
+### ONE PACK IS OPEN AT A TIME, and the rest are just names
+
+Asked for after the first weeks of real use: *"we don't need all the options
+for launch on every pack in the list — just the selected one, the rest can be
+compacted into a card with their name only."* Right, and it is the third design
+rule doing the work — the common job on this tab is **find tonight's pack and
+press Launch**, and nine cards each carrying four dropdowns, a prize line, five
+buttons and a Launch is a wall you read rather than a shelf you scan.
+
+**The settings are per-night decisions about ONE pack**, so they belong to the
+one you have chosen and nowhere else. Closed, a card is its name and one line
+of what it is.
+
+- **`openPack` is a module-level Map keyed by TAB**, outside the render, for
+  the same reason the control view keeps its open answer panels there: this
+  grid is rebuilt whenever anything on the page changes, and a selection stored
+  inside the render would close itself the moment you touched the card you had
+  just opened. Keyed by tab so a bingo pack and a quiz can each stay where you
+  left them.
+- **The open card SPANS THE WHOLE ROW** rather than growing inside its column.
+  At 240px a row of dropdowns is a tall single file and the grid reflows around
+  a card three times the height of its neighbours; full width it reads as a
+  panel about the pack you picked, which is what it is.
+- **It is not quite "the name only".** The size and when it was last played
+  stay, in one small line, because they are what you choose BY — "never played"
+  and "last played 3 days ago" is how you avoid running the same quiz at the
+  same venue two weeks running, and it is the exact signal the quick-launch
+  priority is built out of. Dropping them would make the grid tidier and the
+  choice harder, on the tab whose job is choosing.
+- **WARNINGS ALWAYS STAY, open or closed.** A broken pack, a question to fix
+  and an expired topical one are read once at a moment that matters, and the
+  house style makes those the exception to being short. A pack that looked fine
+  closed and turned out to be broken when opened would be the app saying
+  nothing again.
+- **The title opens the card; Read moved into the row below.** It used to open
+  the read-through, which was the only thing it could sensibly do when every
+  card was already fully open. The first thing you want from a pack is "set
+  tonight up and launch it", so that is what the biggest target does — and its
+  hover stopped being a link, which after a click had left the heading of the
+  open card sitting there blue and underlined.
+- **Compact still exists and its own note was rewritten.** It said it kept
+  "every control" and that the launch-time pickers stayed, which stopped being
+  true the day a card only carries them when open. It tightens the grid and the
+  closed cards; the open one is untouched, because that is the one you are
+  working with.
+
 ### The launch bar's empty state is two packs, not an empty box
 
 `quickPicks()` in `console.js`. A search box does nothing until you type, and
