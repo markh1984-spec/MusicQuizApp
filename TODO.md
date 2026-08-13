@@ -1232,6 +1232,63 @@ already written down and tested. So the decision can be made when there are
 real egress figures and somebody actually asking for it, which is the same rule
 the shop and the payment processor are following.
 
+##### THE CONCLUSION: sell ONLINE NIGHTS, by the night
+
+The shape above says what streaming is not. This is what it IS, because
+"an add-on, priced later" is not an offer anybody can be sold.
+
+> **Streaming is switched on for free on any tier, and charged PER ONLINE
+> NIGHT.** Nothing monthly, nothing to commit to, nothing to cancel.
+
+**The billing unit is the night because that is how the quizmaster SELLS it.**
+An online quiz is nearly always a corporate booking quoted as a fixed price for
+an event — £300 to £500 is normal — so a £12 or £15 cost per night is a
+rounding error inside a number they are already quoting. Matching your unit to
+theirs is the same insight that made "one night's fee" the right unit for an
+introduction: **price in the thing the customer is already counting.**
+
+**Yes, that is metering, and the rule against it does not reach here.** This
+file says plainly that metering is what makes software hateful to run a
+business on, because *"a per-night charge means a quizmaster doing sums before
+accepting a booking"*. That is about PUB nights — the core product, booked
+weekly, at a fee they cannot change. An online corporate night is a quote they
+write themselves, for a client with an events budget, where they are doing sums
+anyway. The rule holds exactly where it was written and does not apply to this.
+
+**Why not a monthly add-on**, which is the obvious alternative: most
+quizmasters will do two or three online nights a YEAR. Nobody pays £15 a month
+for that, so the add-on never sells and the feature earns nothing. Per night
+they pay £30 for the year without thinking about it, against £900 of their own
+revenue. **A per-use cost wants a per-use price**, and the ladder stays clean.
+
+It also has no unbounded exposure and no fair-use band to police: every night
+carries its own cost, so a quizmaster doing forty online nights is a good
+customer rather than a problem.
+
+**Audio is the product; video is a small tile.** Already decided, and it is a
+business decision as much as a design one — the host's picture costs about
+twenty times their voice, which is the difference between a night that costs
+pennies and one that eats the fee.
+
+**Recording it needs nothing new.** `src/spend.js` already exists to write down
+what a thing actually COST as it happens, in pence, per job — an online night
+is another row in it, and the invoice book raises the charge. Same pattern, no
+new subsystem.
+
+**Do not put a price on it until one real night has been measured.** The whole
+reason streaming is awkward is that the number is unknown, and an advertised
+price that turns out to be under cost is far worse than no price. Run the first
+few at cost, deliberately, and read the ledger — which is exactly what the
+ledger was built for.
+
+**And the one thing that has to be said out loud: THIS IS THE FIRST DEPENDENCY.**
+Live audio to a hundred phones cannot be written out the way `qrcode.js` was;
+it needs an SFU or a managed WebRTC provider, and that is a third-party service
+in the live path of a night for the first time in this codebase. Which is why
+this file already says **online mode must be a MODE and never a layer**: a
+media provider having a bad morning must not be able to touch a Wednesday in a
+pub. Any build starts there, not with the pricing.
+
 ##### The version that was proposed: ONE NIGHT'S FEE, taken as a fee not a free gig
 
 The host's idea, and the PRICE in it is the good part: *"the intro fee can be
