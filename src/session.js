@@ -144,6 +144,15 @@ export class Session {
     this.startedAt = this.now();
     this.restoredOnBoot = Boolean(state);
     this.strandedPhones = 0;
+    /*
+     * Has the host launched on purpose since this process came up?
+     *
+     * Set in `launch()` and NEVER here, because `build()` runs on boot as well
+     * — the session always has a pack loaded so the projector is never blank,
+     * and a loaded pack is not a night. Same distinction `aNightIsOn()` draws
+     * on the console.
+     */
+    this.launchedSinceBoot = false;
 
     if (state) {
       const players = Object.keys(state.players || {}).length;
@@ -378,7 +387,16 @@ export class Session {
      * count is what the sentence is BUILT from: "1 phone that was already
      * playing put itself back in" is a claim about a game that no longer
      * exists.
+     *
+     * AND THE FLAG IS THE HALF THAT ACTUALLY MATTERS. Clearing the count alone
+     * fixed nothing and was watched failing on a live server: the phones come
+     * back a few seconds AFTER the launch, not before, so the count was reset
+     * to zero and then immediately counted back up to one by the very rejoin
+     * the launch was supposed to account for. `launchedSinceBoot` is what
+     * `joinPlayer()` reads, so a phone returning to a night that was started
+     * on purpose is never stranded in the first place.
      */
+    this.launchedSinceBoot = true;
     this.strandedPhones = 0;
 
     recordLaunch(this.config.dataDir, kind, normalised.id, this.now(), this.roomId);
@@ -533,7 +551,15 @@ export class Session {
   joinPlayer({ playerId, token = '', name, tryId = '' }) {
     this.pendingWho = String(tryId || '').slice(0, 64);
     const known = playerId && this.engine.state.players[playerId];
-    const stranded = Boolean(playerId && isSafeId(playerId) && !known && !this.restoredOnBoot);
+    const stranded = Boolean(
+      playerId && isSafeId(playerId) && !known
+      && !this.restoredOnBoot
+      // …and only until the host launches on purpose. After that a phone
+      // carrying an id from before is just somebody rejoining a night that
+      // was deliberately started fresh — which is what a launch MEANS — and
+      // there are no scores to offer to put back.
+      && !this.launchedSinceBoot,
+    );
 
     /*
      * Hold the door if a lot of NEW phones are arriving at once.

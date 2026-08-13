@@ -825,9 +825,26 @@ one screen the host reads with a mic in the other hand.
 
 `joinPlayer()`'s own docstring already said it — *"a game the host launched
 deliberately is not a lost one"* — so this was a stated intention that was
-never written down in code. `launch()` sets `strandedPhones = 0`, and the
-count is cleared rather than the notice being made conditional, because the
-count is what the sentence is BUILT from. There are tests both ways round.
+never written down in code.
+
+**THE FIX IS A FLAG, NOT A RESET, and getting that wrong first is the lesson.**
+Clearing `strandedPhones` inside `launch()` looks right and does nothing: the
+phones come back a few SECONDS AFTER the launch, not before, so the count was
+zeroed and then immediately counted back to one by the very rejoin the launch
+was meant to account for. It was deployed, watched still failing on a live
+server, and fixed properly. `launch()` sets `launchedSinceBoot`, and
+`joinPlayer()` reads it — so a phone returning to a night that was started on
+purpose is never stranded in the first place.
+
+The flag is set in `launch()` and never in `build()`, because `build()` runs
+on boot too: a session always has a pack loaded so the projector is never
+blank, and **a loaded pack is not a night** — the same distinction
+`aNightIsOn()` draws on the console.
+
+Four tests, and the one that matters drives the events in the order they
+really happen rather than the tidy one. Both cases were also run against a
+live server: a crash with the host touching nothing still shows the notice; a
+deploy followed by a deliberate launch does not.
 
 ## Stopping a quiz early
 

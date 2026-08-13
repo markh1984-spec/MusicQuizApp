@@ -50,10 +50,8 @@ const open = ({ config, dataDir }) => new Session({
 test('a phone holding an id from a game this process never saw is counted as stranded', () => {
   withApp((app) => {
     const session = open(app);
-    session.launch('quiz', 'plain');
-    // A launch clears the count, so strand one AFTER it — which is the real
-    // order: the app comes back, the host does nothing, the phones return.
-    session.strandedPhones = 0;
+    // No launch: the app has come back on its own and the host has touched
+    // nothing, which is the case the notice was written for.
     session.joinPlayer({ playerId: 'a-phone-from-before', name: 'Rob' });
     assert.equal(session.hostView().server.strandedPhones, 1,
       'the control view has nothing to build the restart notice out of');
@@ -73,5 +71,51 @@ test('A DELIBERATE LAUNCH CLEARS THE RESTART NOTICE', () => {
     assert.equal(session.hostView().server.strandedPhones, 0,
       'the notice would sit across the control view for twenty minutes telling '
       + 'a working game it had lost scores it never had');
+  });
+});
+
+/*
+ * THE ORDER THAT ACTUALLY HAPPENS, and the one the first fix got wrong.
+ *
+ * A deploy lands. The host opens the console and launches a fresh night. Only
+ * THEN do the phones reconnect — they are on pub wifi and a few seconds
+ * behind. Clearing the count inside `launch()` therefore cleared nothing: it
+ * ran before the rejoin, and the rejoin counted it straight back up.
+ *
+ * Watched failing on a live server, which is why the flag exists and why this
+ * test drives the events in that order rather than the tidy one.
+ */
+test('a phone coming back AFTER a deliberate launch is not stranded', () => {
+  withApp((app) => {
+    const session = open(app);
+    // The restart: nothing restored, nobody back yet.
+    session.strandedPhones = 0;
+
+    // The host launches on purpose FIRST…
+    session.launch('quiz', 'plain');
+    // …and the room's phones turn up a few seconds later, holding ids from
+    // the game that died with the old process.
+    session.joinPlayer({ playerId: 'a-phone-from-before', name: 'Rob' });
+    session.joinPlayer({ playerId: 'another-old-phone', name: 'Jo' });
+
+    assert.equal(session.hostView().server.strandedPhones, 0,
+      'the notice comes back the moment a phone reconnects, which is exactly '
+      + 'when it did on the live server');
+  });
+});
+
+/*
+ * And the case the notice EXISTS for still has to work: a crash mid-gig, the
+ * host touching nothing, the phones putting themselves back. Nothing above is
+ * worth having if it silences that.
+ */
+test('a crash with no launch still tells the host', () => {
+  withApp((app) => {
+    const session = open(app);
+    session.strandedPhones = 0;
+    session.joinPlayer({ playerId: 'a-phone-from-before', name: 'Rob' });
+    session.joinPlayer({ playerId: 'another-old-phone', name: 'Jo' });
+    assert.equal(session.hostView().server.strandedPhones, 2,
+      'the host is left to work out from everyone being on zero that the app restarted');
   });
 });
