@@ -2848,6 +2848,72 @@ reasonably want one of their own customers removed afterwards. Not urgent —
 there is no venue account to ask yet — but decide it before one exists rather
 than after somebody asks.
 
+### The OWNER/QUIZMASTER shape is the group shape — and "owner" means two things
+
+The host, and it is the most structural thing said about accounts so far:
+*"I have an owner account and a quizmaster account. That's the same structure a
+venue company would need for its HQ, and the same structure a quiz company
+would need for its own QMs. I've got my owner account which tells me
+everything, and they'd need owner accounts which wouldn't tell them anything
+about my account, but would tell them everything about their quizmasters."*
+
+**Exactly right, and the reason it looks so close is that the app already has a
+parent-and-children tree. It just has one node hardcoded at the top.**
+
+**THE WORD "OWNER" IS DOING TWO JOBS, and they have been the same job because
+there has only ever been one of them:**
+
+| | What it means | Scope |
+|---|---|---|
+| **The app owner** | runs Quizporium: writes the catalogue, sees the ledger, sets tiers, reads the inbox | **global** |
+| **A group's admin** | runs a pub group or a quiz company: sees everything about THEIR accounts | **their group, and nothing else** |
+
+Today those are one `role: 'owner'`, of which `accounts.create()` allows
+exactly one. Splitting them is the actual work, and the split is what makes it
+safe: **a group admin must be scoped by construction, never by a check.**
+
+#### It is NOT a third role
+
+Same argument as `kind`: a third entry in `ROLES` gives every permission check
+in the app a case to get wrong, forever. A group admin is a QUIZMASTER who
+manages a group — the flag lives on the group membership, not on the person.
+
+- `ROLES` stays `['owner', 'quizmaster']`.
+- A group has members, and one or more of them is its admin.
+- **A group admin's request resolves to THEIR group and never takes a group id
+  from the request** — the identical rule to `/api/host/*` taking no room
+  parameter, which is what has kept one quizmaster out of another's night since
+  rooms were built. It is the only version of this that cannot leak.
+
+#### Most of the SCREEN already exists, and some of it deliberately does not
+
+The owner page is nearly the group-admin page: **People** (their accounts,
+tiers, support), **Tonight** (which of their venues is mid-question right now —
+which is exactly the head-office live view asked for above, and needs no
+camera). Those generalise as they stand, scoped.
+
+**What a group admin must NOT get, and this is where "wouldn't tell them
+anything about my account" is enforced:** the Catalogue tab (is what *I* write
+worth writing), the AI spend ledger and the budget — those are the app's
+business, not theirs — and the Inbox, which is people writing to the app owner.
+So it is an overlapping page rather than the same one, and the overlap is
+People and Tonight.
+
+#### The hat switch generalises too, and is already built
+
+A quiz company's manager who also hosts wants precisely what Mark has: an admin
+hat and a quizmaster hat on one login, with no second password. That is
+`ownedBy` plus `hatSwitch()`, both of which exist — what changes is that
+`ownedBy` becomes a group relationship rather than a single hardcoded link.
+**Do not build a second mechanism for it.**
+
+#### And it answers the head-office question without a camera
+
+"Tonight", scoped to a group, IS what a pub group wants: which venues are
+running, how many are in each, right now. See the section above on why the
+video version should not be built — this is the feature that request was
+reaching for.
+
 ### Group accounts — SEATS on a Gold, for a quizmaster company
 
 > **It serves a SECOND market that was not designed for, and that is a feature
