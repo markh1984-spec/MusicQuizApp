@@ -1454,6 +1454,17 @@ of truth, and a stale console cannot launch a night playing for something the
 venue never agreed to. A request that carries `rewards` still wins, so a curl
 call and every test keep working.
 
+**THE VENUES ARE READ OFF THE INVOICE BOOK, SO THE LIBRARY ROUTE HAS TO
+RESTORE IT.** Rooms are made lazily and `data/` is empty after every deploy, so
+the book only exists once it has come back from the private repo — and that was
+triggered by the invoice routes alone. The Venues tab reads `venueRecords` out
+of the LIBRARY payload, so a console opened after a deploy said *"no venues
+yet"* until somebody happened to visit the Invoices tab, at which point they
+reappeared. Somebody's venues looking deleted is not a thing to leave to a
+lucky click. This is the same class of trap as a route being added without
+being put on `OWNER_ONLY`: the mechanism exists and the new caller did not know
+to ask for it.
+
 **The venue picker is a real `<select>` now**, with "Somewhere else" last,
 swapping in a text box. It was an `<input list=…>`, which is both a box and a
 list and therefore looks like neither: a datalist draws no chevron, so the

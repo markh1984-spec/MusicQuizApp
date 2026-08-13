@@ -1355,6 +1355,18 @@ async function handleGet(req, res, url, route) {
   if (route === '/api/library') {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const libRoom = roomForHost(req, url);
+    /*
+     * THE INVOICE BOOK HAS TO BE BACK BEFORE THE VENUES ARE READ OFF IT.
+     *
+     * Rooms are made lazily and `data/` is empty after every deploy, so the
+     * book only exists once it has been restored from the private repo — and
+     * that used to be triggered by the invoice routes alone. The Venues tab
+     * reads `venueRecords` out of this payload, so a console opened after a
+     * deploy showed "no venues yet" until somebody happened to visit the
+     * Invoices tab, at which point they reappeared. Somebody's venues looking
+     * deleted is not a thing to leave to a lucky click.
+     */
+    await ensureInvoicesRestored(libRoom);
     // Their own packs come back from the backup the first time they look, on a
     // host that wipes its disk every deploy. Awaited, because a library drawn
     // without them looks exactly like a library that has lost them.
@@ -3146,6 +3158,9 @@ async function handleWrite(req, res, url, route) {
   if (route.startsWith('/api/invoices/customers/') && route.endsWith('/rewards') && req.method === 'PUT') {
     if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
     const room = roomForHost(req, url);
+    // Same reason as every other invoice route: without this a PUT lands on an
+    // empty book, finds no venue and 404s on one that plainly exists.
+    await ensureInvoicesRestored(room);
     const id = decodeURIComponent(route.slice('/api/invoices/customers/'.length, -'/rewards'.length));
     const body = await readJson(req);
     const saved = room.invoices.setRewards(id, body.rewards);
