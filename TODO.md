@@ -1322,18 +1322,52 @@ A small 360p video tile at ~600 kbps is **540 MB per viewer**, so the same
 night is **54 GB**. That is the "about twenty times" already recorded in this
 file, arrived at independently, which is a good sign it is right.
 
-###### The money, and note which half is an estimate
+###### The money — CHECKED against three providers, August 2026
 
-| | 100 people, 2 hours | Where the number comes from |
-|---|---|---|
-| **Managed WebRTC, audio** | **£5–10 a night** | ~$0.0005–0.001 per participant-minute × 12,000. **An estimate from published rate cards — CHECK IT**, providers move their prices |
-| **Managed WebRTC, small video tile** | **£40+ a night** | 4–8× the audio rate. This is what kills video inside a flat subscription |
-| **Self-hosted SFU on a VPS** | **pennies a night**, plus ~£10–15 a month | 3 GB of egress is a rounding error on any host; audio mixing is cheap on CPU |
+**The earlier estimate in this section was wrong, and wrong in a way worth
+recording: the PRICING MODEL matters three hundred times more than the rate.**
 
-**Take the managed one anyway, despite being ten times the price.** Self-hosting
-an SFU means the host IS the media service having a bad morning, on one admin
-day a week — which is worse than the thing this file is trying to avoid, not
-better. Ten pounds against a £400 corporate booking is not a decision.
+| Provider | Model | Free every month | 100 people, 2 hours of audio |
+|---|---|---|---|
+| **Cloudflare Realtime** (SFU) | **per GB** — $0.05 | **1,000 GB** | **about 15 CENTS** |
+| **Daily.co** | per participant-minute — $0.00099 audio-only | 10,000 participant-min | about **$12** |
+| **LiveKit Cloud** | per track-minute — $0.004 audio | 5,000 participant-min | about **$48** |
+
+Same night, same audio, **fifteen cents against forty-eight dollars.** The
+reason is what this app happens to be doing: **one host publishing 32 kbps of
+speech to a hundred silent listeners.** Per-GB pricing charges for what that
+actually is — 3 GB of a very thin stream. Per-participant-minute pricing
+charges nearly the same for a low-bitrate audio listener as for somebody on
+video, so a broadcast of speech is the worst possible shape to buy that way.
+
+> **Choose the MODEL, then the provider. For broadcast audio the per-GB model
+> wins by two orders of magnitude, and it is not close.**
+
+**The free tiers alone cover this business for years.** Cloudflare's 1,000 GB a
+month is roughly **330 hundred-person audio nights**; even Daily's 10,000
+participant-minutes is one 40-person night a month for nothing. At the volume
+in the sums below — a handful of online nights a year — **the data cost is
+zero**, and stays zero long after it stops being a hobby.
+
+**Which means the premise this file has repeated has to be corrected: streaming
+is NOT expensive.** The old note — *"egress is a real per-use cost"*, the
+reason streaming was ever a paid add-on — was written from the video figure and
+before anybody looked at a per-GB provider. Video is still ~19× audio, but on
+Cloudflare's model that is **$2.70 a night rather than $48**, and 18 video
+nights a month still fit inside the free tier.
+
+**So cost is not the constraint. The BUILD is, and so is the dependency.**
+Nothing above changes the fact that this is the first third-party service in
+the live path of a night.
+
+**Do not self-host an SFU** even though the egress is pennies either way: it
+means the host IS the media service having a bad morning, on one admin day a
+week — worse than the thing this file is trying to avoid.
+
+Sources, and they move — re-check before committing:
+[Cloudflare Realtime SFU pricing](https://developers.cloudflare.com/realtime/sfu/pricing),
+[Daily.co pricing](https://www.daily.co/pricing/video-sdk/),
+[LiveKit pricing](https://livekit.io/pricing).
 
 **And do NOT reach for the cheap broadcast option.** HLS and its low-latency
 variant are far cheaper per gigabyte and land 2–20 seconds behind, which on a
@@ -1370,6 +1404,51 @@ rate is the part that moves.
 to 50 players" — which is honest, quotable, and covers the shape almost every
 booking actually takes. Above that it is a conversation rather than a refusal,
 which is the rule everywhere else in this app.
+
+###### Build it for YOURSELF first, and gate it to two accounts
+
+The host's plan, and it is the right one: *"I wanted to add online quizzing to
+my own offering, and then sell it because I already have it"* — *"maybe build
+it and only allow myself and Rob to use it for now, until we've worked out the
+bugs."*
+
+**That is how this entire app was built** — for his own gigs, then sold — and
+it is the reason it is any good. It also changes the arithmetic that said
+online was not worth building: it is not £750 a year of subscriber revenue, it
+is **his own corporate bookings at £300–500 each**, which one of pays for the
+whole build.
+
+**The gate wants a per-account ENTITLEMENT, and one does not quite exist yet.**
+The shapes already here:
+
+- `FEATURE_TIER` puts a feature on a rung — wrong, this must not be for sale
+  yet;
+- `OWNER_FEATURES` is owner-only and deliberately off the ladder — right for
+  the owner, but Rob is not an owner;
+- `prefs.featuresOff` only ever SUBTRACTS, by design, and must stay that way;
+- **`packs` on an account is the pattern to copy** — an explicit list that
+  beats the tier, set by `accounts.update()` and never by `setPrefs()`.
+
+So: **an additive `features` list on the account**, owner-set, same wall as
+`packs`. Two accounts on it and nobody else, no tier involvement at all, and it
+is the mechanism every future beta wants rather than something built once for
+this. `activeFeatures()` unions it in; `setPrefs()` ignores it like every other
+entitlement, and there should be a test saying so.
+
+**And the one hard constraint, which falls straight out of rule one: THE QUIZ
+MUST NOT DEPEND ON THE AUDIO.** An online night has to run identically with the
+streaming layer switched off — because that is what "online is a MODE and never
+a LAYER" actually means when the media provider is having a bad evening. If the
+audio dies mid-round in front of a paying corporate client, the host says "join
+the Teams link in the invite" and the quiz carries on with every score intact.
+**Build the fallback first and the streaming second**, or the beta is a
+reliability risk on exactly the kind of booking that is worth the most.
+
+Which is also why **one online night should be run over the client's own Teams
+BEFORE any of it is built.** It is this week rather than a build, it wins a
+booking either way, and it is the only honest way to find out what is actually
+missing — which may turn out to be nothing more than a way for the room to hear
+the music.
 
 ###### And if it is priced as one flat number instead
 
