@@ -1588,6 +1588,28 @@ a corporate booking at £300–500 that they currently cannot serve at all, so
 £15 is trivial to them and the margin is the reward for building it. Pricing it
 at cost would be giving away the one capability that opens a new market.
 
+###### THE POINT OF ONLINE MODE, in the host's own words
+
+> *"You'd use two or three and be kind of forcing them together. **I want this
+> to be the opposite.**"*
+
+**That is the whole brief for this feature and it is worth putting above
+everything else in this section**, because it is a test that can be applied to
+any proposal without argument:
+
+> **Does this reduce the number of things being forced together, or add one?**
+
+Not "is it a good service", not "is it cheap", not "is it what everybody else
+uses". Every one of those questions can be answered yes about a thing that
+makes the night worse, and that is precisely how somebody ends up hosting a
+quiz out of four browser tabs. The opposite of a mish-mash is not a better
+mish-mash; it is ONE thing that was built for this.
+
+It also means the bar for online mode is not "as good as the alternatives". The
+alternatives are general-purpose tools bent into a shape they were not made
+for, so matching them is not the achievement — **being the only one that was
+designed for a quiz night is.**
+
 ###### The firefight was INTEGRATION, not any one thing breaking
 
 Asked what actually went wrong, and the answer reframes the whole feature:
