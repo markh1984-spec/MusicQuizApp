@@ -2623,6 +2623,29 @@ async function handleWrite(req, res, url, route) {
       `Max-Age=${30 * 86400}`,
       ...(secure ? ['Secure'] : []),
     ].join('; '));
+    /*
+     * A SIGN-IN IS A THING TO BACK UP, and it was the one write that was not.
+     *
+     * A session is the SHA-256 of a token sitting in somebody's cookie, and it
+     * lives in `data/accounts.json` — which on a host with no permanent disk is
+     * empty again after every deploy. The accounts came back from the private
+     * repo, but the backup was pushed the last time an ACCOUNT changed, which
+     * is weeks before anybody signed in. So the cookie in the browser pointed
+     * at a token the restored file had never heard of, and the whole app
+     * answered 401 with nothing on screen saying why.
+     *
+     * It cost a live test mid-gig-day: a deploy landed between Launch and the
+     * first press on the control view, and every button came back "wrong host
+     * key" on a night that was running perfectly. `restore()` already keeps
+     * sessions deliberately, for exactly this reason — the backup simply never
+     * contained one.
+     *
+     * Awaited, because the whole point is that it is on disk in the repository
+     * before the browser has the cookie. It can never throw: `backUpAccounts()`
+     * catches everything and reports, so a GitHub having a bad morning makes a
+     * sign-in slower and never refuses one.
+     */
+    await backUpAccounts();
     return sendJson(res, 200, {
       account: { ...session.account, entitlements: entitlements(session.account) },
     }), true;
@@ -2722,6 +2745,10 @@ async function handleWrite(req, res, url, route) {
   if (route === '/api/sign-out' && req.method === 'POST') {
     accounts.signOut(cookie(req, SESSION_COOKIE));
     res.setHeader('Set-Cookie', `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);
+    // The other half of backing a sign-in up: without this the next deploy
+    // restores a backup that still holds the session somebody just ended, so
+    // signing out would quietly un-sign-out on the following restart.
+    await backUpAccounts();
     return sendJson(res, 200, { ok: true }), true;
   }
 

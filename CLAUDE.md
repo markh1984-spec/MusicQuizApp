@@ -2973,6 +2973,42 @@ features to pass it with — so the owner got a 403 dealing with a report on the
 own pack. That trap has now bitten twice (generation was the first). Anything
 new that only an owner does belongs in that list.
 
+### A SIGN-IN IS A THING TO BACK UP, and it was the one write that was not
+
+Found on a gig day, live, by a deploy landing between Launch and the first
+press on the control view. Every button came back **"Wrong host key"** on a
+night that was running perfectly.
+
+A session is the SHA-256 of a token sitting in somebody's cookie, and it lives
+in `data/accounts.json` — which on a host with no permanent disk is empty
+again after every deploy. `restore()` keeps sessions on purpose, and its own
+comment says why: dropping them would sign the whole room out on every
+restart. **But nothing pushed a backup when somebody signed IN**, so the file
+in the private repo was the one written the last time an ACCOUNT changed —
+weeks earlier, with `"sessions": []` in it. The accounts came back and the
+logins did not, which is the same thing as not keeping them.
+
+So `/api/sign-in` and `/api/sign-out` now `await backUpAccounts()` before they
+reply, and the ORDER is the point: the session has to be in the repository
+before the browser has the cookie. It can never throw — `backUpAccounts()`
+catches everything and reports — so GitHub having a bad morning makes a
+sign-in slower and never refuses one. There are three tests: that a backup
+taken BEFORE a sign-in cannot carry it, that one taken after can, and a grep
+on both routes that fails if the backup ever moves below the reply.
+
+**The message was the second half of it, and it is why ten minutes went on the
+wrong thing.** `act()` in `host.js` said "Wrong host key" on every 401 — which
+is only ever right when there IS a key. A signed-in quizmaster has never been
+given one, so the one screen you drive a gig from sent the host looking for a
+credential that does not exist and had nothing to do with it. `whyRefused()`
+now tells the three cases apart, because they want three different things
+doing about them: retype the key, sign in again, or nothing at all.
+
+**The general rule, and it is worth applying to the next thing that stores
+state: on this host, "written to `data/`" means "gone at the next deploy".**
+Anything that has to outlive one has to be pushed at the moment it is created,
+not at the next unrelated write.
+
 ### The invoice book comes back too, and the counter is rebuilt not trusted
 
 `invoices.restore()`, the same shape as the accounts: only into an empty book,

@@ -118,8 +118,28 @@ async function act(action, body = {}) {
   try {
     await postJson(`/api/host/${action}`, body, { 'X-Host-Key': hostKey });
   } catch (err) {
-    toast(err.status === 401 ? 'Wrong host key' : `Failed: ${err.message}`);
+    toast(whyRefused(err));
   }
+}
+
+/*
+ * WHAT A REFUSAL ACTUALLY MEANS, said in words.
+ *
+ * This said "Wrong host key" on every 401, and that is only ever right when
+ * there IS a key. A signed-in quizmaster has never been given one — so on the
+ * night a deploy dropped the session, every button on the control view sent
+ * the host looking for a key that does not exist and has nothing to do with
+ * it. "Failure messages have to name the cause", on the one screen where the
+ * cause is being read with a mic in the other hand.
+ *
+ * The three cases want three different things doing about them, which is the
+ * whole reason to tell them apart: retype the key, sign in again, or nothing
+ * at all because the network had a moment.
+ */
+function whyRefused(err) {
+  if (err.status !== 401) return `Failed: ${err.message}`;
+  if (hostKey) return 'That host key is no longer right — check your host’s startup log.';
+  return 'You have been signed out. Open /login in another tab, sign in, then press again.';
 }
 
 /**

@@ -525,3 +525,72 @@ test('the owner can pick a colour even though they have no plan to change', () =
     assert.equal(book.setPrefs(owner.id, { hiddenTabs: ['past'] }).prefs.hiddenTabs[0], 'past');
   });
 });
+
+/*
+ * A SIGN-IN THAT IS NOT BACKED UP IS A SIGN-IN THAT DIES ON THE NEXT DEPLOY.
+ *
+ * `restore()` deliberately keeps sessions — the comment there says dropping
+ * them would sign the whole room out on every restart. But nothing pushed a
+ * backup when somebody signed IN, so the file in the private repo was the one
+ * written the last time an ACCOUNT changed, weeks earlier, with no sessions in
+ * it at all. On a host with no permanent disk that is the same as not keeping
+ * them: the cookie in the browser pointed at a token the restored file had
+ * never seen, and every route answered 401.
+ *
+ * It cost a live test on a gig day — a deploy landed between Launch and the
+ * first press on the control view. The route fix is one awaited
+ * `backUpAccounts()`; this pins the property it relies on.
+ */
+test('a backup taken BEFORE a sign-in cannot carry that session', () => {
+  withBook((book) => {
+    book.create({ email: 'rob@example.com', password: PASSWORD });
+    const stale = book.serialise();
+    const session = book.signIn('rob@example.com', PASSWORD);
+    assert.ok(session && session.token, 'signed in');
+    assert.ok(book.fromToken(session.token), 'the token works on the machine that issued it');
+
+    // The deploy: an empty disk, and the older backup read back into it.
+    withBook((after) => {
+      assert.equal(after.restore(stale).ok, true);
+      assert.equal(after.fromToken(session.token), null,
+        'this is the 401 — the cookie survived the deploy and the session did not');
+    });
+  });
+});
+
+test('a backup taken AFTER a sign-in carries it through a deploy', () => {
+  withBook((book) => {
+    book.create({ email: 'rob@example.com', password: PASSWORD });
+    const session = book.signIn('rob@example.com', PASSWORD);
+    // What the route now does: serialise AFTER the session exists.
+    const fresh = book.serialise();
+    assert.equal(JSON.parse(fresh).sessions.length, 1, 'the backup contains the session');
+
+    withBook((after) => {
+      assert.equal(after.restore(fresh).ok, true);
+      const who = after.fromToken(session.token);
+      assert.ok(who, 'the same cookie still works on the other side of a deploy');
+      assert.equal(who.email, 'rob@example.com');
+    });
+  });
+});
+
+/*
+ * And the ROUTE has to be the thing that does it, or the property above is
+ * true of a function nobody calls at the right moment. A grep, in the style of
+ * the invoice-gate test: it is the ORDER that matters — the backup has to be
+ * awaited before the reply goes out, so the session is in the repository
+ * before the browser has the cookie.
+ */
+test('the sign-in and sign-out routes back the accounts up', () => {
+  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  for (const route of ['/api/sign-in', '/api/sign-out']) {
+    const at = server.indexOf(`if (route === '${route}' && req.method === 'POST')`);
+    assert.ok(at > 0, `${route} has moved`);
+    const body = server.slice(at, at + 2600);
+    const backup = body.indexOf('await backUpAccounts()');
+    const reply = body.indexOf('sendJson(res, 200');
+    assert.ok(backup > 0, `${route} does not back the accounts up — a deploy will sign everybody out`);
+    assert.ok(backup < reply, `${route} replies before backing up, so the cookie can outlive the record of it`);
+  }
+});
