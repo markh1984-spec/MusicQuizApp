@@ -1044,6 +1044,43 @@ That reframing decides the pricing, and it argues against the obvious design:
   bills through a subscription that already exists, and needs no enforcement of
   any kind — the incentive does the work.
 
+**THE RECOMMENDATION, AND IT IS GOLD RATHER THAN SILVER.** There is a real
+tension to resolve first, because this file already contains a rule that points
+the other way: *the tiers separate on quiz-app functionality, never on business
+tools* — which is why invoicing and the calendar sit in Bronze. A directory
+listing is about as businessy as a business tool gets, so by that rule it
+belongs in Bronze too.
+
+**It does not, because a listing is not a FEATURE — it is the owner's time and
+the owner's name.** Somebody being in that directory means the owner has
+vetted them and is, in front of a venue, standing behind them. That is exactly
+what the other rule already says the top rung sells: **Silver buys the owner's
+BACK CATALOGUE, Gold buys the owner's TIME.** A pack written to order is on
+Gold for precisely this reason. A recommendation to a venue is the same
+purchase.
+
+It is also the tier that most needs another argument, and the price works:
+Bronze to Gold is £20 a month, and **one booking at £150 covers seven months of
+the difference.** Nobody who gets a single gig out of it has to think about it.
+
+The arithmetic against a per-gig fee is not close, once evasion is priced in:
+
+| | A month | What it costs to run |
+|---|---|---|
+| **£10 a gig**, 30 listed quizmasters, ~15 marketplace bookings | £150 | reporting, chasing, disputes, and an incentive to hide every booking |
+| **Listing on Gold**, of whom 10 climb from Bronze to be listed | £200 | nothing at all — it bills through a subscription that already exists |
+
+And the second number is RECURRING and does not care whether anybody booked
+anything that month, which is the whole point of the section above.
+
+**Later, and only if venues use it heavily: a one-off fee on the VENUE side.**
+Not per gig — **per INTRODUCTION**, charged when a venue asks for a
+quizmaster's contact details. It cannot be evaded, because the introduction
+happens on the site by definition; a venue that then books the same person for
+two years pays once, which is correct, because what was sold was the
+introduction. Do not build this until the directory has enough people in it to
+be worth paying for.
+
 **What actually retains people is switching cost, and it is already built.**
 None of it is a lock-in trick; it is all things they would genuinely miss:
 their pack library and the weekly topical quizzes, their invoice book, and
