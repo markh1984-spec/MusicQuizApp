@@ -486,7 +486,7 @@ function openCamera() {
    * than an oversight: they are drawn on afterwards, in canvas coordinates, so
    * a flip after placing a nose would otherwise move the nose to the other
    * cheek. Flipping the picture under them leaves everything where it was put
-   * — and the two shirt props have words on them, which a mirror would print
+   * — and the three shirt props have words on them, which a mirror would print
    * backwards.
    */
   const flipBtn = sheet.querySelector('.cam-flip');

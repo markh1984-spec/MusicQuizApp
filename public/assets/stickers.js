@@ -107,6 +107,18 @@ const ART = {
       <path d="M60.4 69v10M66.4 69v10M60.4 74h6"/>
     </g>
     <path d="M55 51c1.6-3.2 7.4-3.2 7.4 2.1 0 4.2-5.3 7.4-7.4 10.6-2.1-3.2-7.4-6.4-7.4-10.6 0-5.3 5.8-5.3 7.4-2.1z" fill="#e8123c" stroke="#8c0a24" stroke-width="2.5" stroke-linejoin="round"/>`,
+  'shirt-21p': `
+    <path d="M38 22 28 26 13 40l10 12 7-6v40h40V46l7 6 10-12-15-14-10-4c-4 7-20 7-24 0z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M38 22 28 26 13 40l10 12 7-6v40h40V46l7 6 10-12-15-14-10-4c-4 7-20 7-24 0z" fill="#7d1220"/>
+    <path d="M30 46v40h8V46l-7-6z" fill="#96202f"/>
+    <path d="M38 22 28 26 13 40l10 12 7-6v40h40V46l7 6 10-12-15-14-10-4c-4 7-20 7-24 0z" fill="none" stroke="#3d0710" stroke-width="5" stroke-linejoin="round"/>
+    <g stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="M41 51v12"/>
+      <path d="M38 71c0-4 7-4 7 0 0 3-7 5-7 8h7"/>
+      <path d="M49 70l3-2v11"/>
+      <path d="M57 79V68h4c4 0 4 6 0 6h-4"/>
+    </g>
+    <path d="M55 51c1.6-3.2 7.4-3.2 7.4 2.1 0 4.2-5.3 7.4-7.4 10.6-2.1-3.2-7.4-6.4-7.4-10.6 0-5.3 5.8-5.3 7.4-2.1z" fill="#ffd23f" stroke="#8a6c12" stroke-width="2.5" stroke-linejoin="round"/>`,
   'party-hat': `
     <path d="M50 24 82 88H18z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
     <circle cx="50" cy="16" r="9" fill="#fff" stroke="#fff" stroke-width="10"/>
@@ -679,6 +691,20 @@ export const STICKERS = [
    * four across on a 320px phone and five on a 390px one, so anything in the
    * first four is above the fold on every handset in the room.
    */
+  /*
+   * THE THREE BAND SHIRTS LEAD, asked for on 14 August 2026 for a room the
+   * host knows — *"I have a lot of emos and goths come to my current quiz"* —
+   * and they are one joke in three pieces, so they have to be seen together or
+   * the joke is a shirt. The tray is four across a 320px phone and five across
+   * a 390px one, so three plus the googly eyes is the first row on every
+   * handset in the room.
+   *
+   * This is an ORDER, not a rule: if a different crowd wants something else at
+   * the front, it is three lines moved.
+   */
+  { id: 'shirt-1d', label: '1D shirt' },
+  { id: 'shirt-bmth', label: 'BMTH shirt' },
+  { id: 'shirt-21p', label: '21P shirt' },
   { id: 'googly-eyes', label: 'Googly eyes' },
   { id: 'emo-fringe', label: 'Emo fringe' },
   { id: 'goth-lips', label: 'Goth lips' },
@@ -686,8 +712,6 @@ export const STICKERS = [
   { id: 'clown-nose', label: 'Clown nose' },
   { id: 'sunglasses', label: 'Shades' },
   { id: 'moustache', label: 'Moustache' },
-  { id: 'shirt-1d', label: '1D shirt' },
-  { id: 'shirt-bmth', label: 'BMTH shirt' },
   { id: 'party-hat', label: 'Party hat' },
   { id: 'crown', label: 'Crown' },
   { id: 'devil-horns', label: 'Horns' },
