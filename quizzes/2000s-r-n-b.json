@@ -1,0 +1,297 @@
+{
+  "id": "2000s-r-n-b",
+  "title": "The 2000s R'n'B Quiz",
+  "subtitle": "Two rounds. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-08-13T19:36:13.804Z",
+  "notes": "Written by claude-sonnet-5 for \"2000s R'n'B\". NOT YET REVIEWED — read every question in the editor before the gig.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "text",
+      "title": "Round One — 2000s R'n'B",
+      "blurb": "10 questions on 2000s R'n'B",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which group had a 2000s hit with 'Say My Name'?",
+          "options": [
+            "Destiny's Child",
+            "3LW",
+            "Blaque",
+            "TLC"
+          ],
+          "correctIndex": 0,
+          "answerNote": "'Say My Name' won Destiny's Child two Grammy Awards in 2001."
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Alicia Keys scored a huge hit in 2001 with which piano-led song?",
+          "options": [
+            "A Woman's Worth",
+            "Fallin'",
+            "No One",
+            "Karma"
+          ],
+          "correctIndex": 1,
+          "answerNote": "'Fallin'' won three Grammy Awards including Song of the Year."
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which duo had a 2004 hit with 'My Boo'?",
+          "options": [
+            "Jagged Edge & Nelly",
+            "Usher & Ludacris",
+            "112 & Faith Evans",
+            "Usher & Alicia Keys"
+          ],
+          "correctIndex": 3,
+          "answerNote": "'My Boo' topped the US chart and was a UK top ten hit too."
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Ciara's breakthrough 2004 hit, featuring Petey Pablo, was called what?",
+          "options": [
+            "Oh",
+            "1, 2 Step",
+            "Goodies",
+            "Promise"
+          ],
+          "correctIndex": 2,
+          "answerNote": "'Goodies' became a UK top five hit and launched Ciara's career."
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Chris Brown's 2005 debut single, which reached UK number one, was called what?",
+          "options": [
+            "Run It!",
+            "Say Goodbye",
+            "Yo (Excuse Me Miss)",
+            "Gimme That"
+          ],
+          "correctIndex": 0,
+          "answerNote": "'Run It!' topped the UK singles chart in early 2006."
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which singer had a 2007 hit with 'Buy U a Drank (Shawty Snappin')?",
+          "options": [
+            "Ne-Yo",
+            "Lloyd",
+            "T-Pain",
+            "Akon"
+          ],
+          "correctIndex": 2,
+          "answerNote": "T-Pain's heavy use of Auto-Tune became a defining sound of late-2000s R'n'B."
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Ne-Yo's 2006 debut album, which included 'So Sick', was titled what?",
+          "options": [
+            "Libra Scale",
+            "In My Own Words",
+            "Because of You",
+            "Year of the Gentleman"
+          ],
+          "correctIndex": 1,
+          "answerNote": "'So Sick' gave Ne-Yo his first UK number one as a lead artist."
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which singer had a 2008 hit with 'No Air', a duet with Jordin Sparks?",
+          "options": [
+            "Ne-Yo",
+            "Trey Songz",
+            "Jason Derulo",
+            "Chris Brown"
+          ],
+          "correctIndex": 3,
+          "answerNote": "'No Air' spent several weeks in the UK top ten during 2008."
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Usher's 2004 album featuring 'Yeah!' and 'Burn' was titled what?",
+          "options": [
+            "8701",
+            "Truth",
+            "My Way",
+            "Confessions"
+          ],
+          "correctIndex": 3,
+          "answerNote": "Confessions became one of the biggest-selling R'n'B albums of the decade."
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which male singer released the 2004 hit 'Slow Jamz' with Kanye West and Twista?",
+          "options": [
+            "Jamie Foxx",
+            "Musiq Soulchild",
+            "John Legend",
+            "Anthony Hamilton"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Jamie Foxx sang the hook, mixing his acting career with a chart hit."
+        }
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "image",
+      "title": "Round Two — Whose Face Is This?",
+      "blurb": "The picture pulls back as the clock runs down. Guess early, score more.",
+      "imageCaption": "AI-generated illustration — not a real photograph",
+      "questions": [
+        {
+          "id": "r2q1",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Mario",
+            "Usher",
+            "Omarion",
+            "Ne-Yo"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Omarion fronted the group B2K before launching a solo career with O.",
+          "image": "portraits/omarion.png",
+          "imagePrompt": "A young Black man with short neat hair, boyish smooth face, fitted casual streetwear, dance-pop R'n'B teen-idol charisma.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q2",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Fabolous",
+            "Akon",
+            "Chamillionaire",
+            "Sean Paul"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Akon had massive UK success with Lonely and later features on Snoop Dogg and Eminem tracks.",
+          "image": "portraits/akon.png",
+          "imagePrompt": "A Black man with a bandana or cap, thick beard, sleepy-eyed expression, casual hoodie, husky-voiced singer-rapper look from the mid-2000s.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q3",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Ashanti",
+            "Mya",
+            "Cassie",
+            "Amerie"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Ashanti's self-titled debut album made her one of the biggest R'n'B stars of 2002.",
+          "image": "portraits/ashanti.png",
+          "imagePrompt": "A young Black woman with long wavy caramel-highlighted hair, glossy lips, hoop earrings, sweet approachable early-2000s pop-R'n'B look.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q4",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Mya",
+            "Ashanti",
+            "Beyoncé",
+            "Alicia Keys"
+          ],
+          "correctIndex": 3,
+          "answerNote": "Alicia Keys broke through in 2001 with the album Songs in A Minor.",
+          "image": "portraits/alicia-keys.png",
+          "imagePrompt": "A young Black woman with long braided cornrows, warm brown skin, wearing simple gold hoop earrings, seated confidently at a piano, early-2000s soulful glamour look.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q5",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Nelly",
+            "Nas",
+            "Ja Rule",
+            "Ludacris"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Ja Rule scored huge UK hits duetting with Ashanti and Jennifer Lopez in the early 2000s.",
+          "image": "portraits/ja-rule.png",
+          "imagePrompt": "A muscular Black man with a shaved head, bandana tied over his hair, gruff expression, heavy gold chains and tattoos on his arms.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q6",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Brandy",
+            "Aaliyah",
+            "Monica",
+            "Ciara"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Aaliyah was known as the Princess of R'n'B before her death in 2001.",
+          "image": "portraits/aaliyah.png",
+          "imagePrompt": "A young Black woman with sleek straight dark hair swept over one eye, wearing tinted sunglasses and a crop top, cool late-90s/early-2000s streetwear style.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q7",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Chris Brown",
+            "Trey Songz",
+            "Omarion",
+            "Ne-Yo"
+          ],
+          "correctIndex": 3,
+          "answerNote": "Ne-Yo wrote hits for others before launching his own solo career with So Sick.",
+          "image": "portraits/ne-yo.png",
+          "imagePrompt": "A slim Black man wearing a flat cap or fedora tilted low, tinted sunglasses, sharp tailored suit, smooth polished R'n'B crooner look.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q8",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Missy Elliott",
+            "Eve",
+            "Lil' Kim",
+            "Foxy Brown"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Missy Elliott's Get Ur Freak On became a defining club anthem of the early 2000s.",
+          "image": "portraits/missy-elliott.png",
+          "imagePrompt": "A confident Black woman with bold short hairstyles that change often, oversized sunglasses, baggy tracksuits, playful futuristic streetwear style.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q9",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Nelly",
+            "Jay-Z",
+            "Diddy",
+            "Kanye West"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Jay-Z topped the UK charts multiple times in the 2000s including with Numb/Encore.",
+          "image": "portraits/jay-z.png",
+          "imagePrompt": "A Black man with a shaved head, sharp goatee beard, wearing a crisp button-down shirt or blazer, understated hip-hop mogul style, calm confident expression.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q10",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Cheetah Girls",
+            "3LW",
+            "TLC",
+            "Destiny's Child"
+          ],
+          "correctIndex": 2,
+          "answerNote": "TLC's Chris Lopes-Lee, Tionne Watkins and Rozonda Thomas scored a huge 2000s hit with No Scrubs.",
+          "image": "portraits/tlc.png",
+          "imagePrompt": "Three Black women in colourful matching baggy outfits with bold accessories, varied hairstyles from braids to short cropped cuts, playful 90s/2000s girl-group energy.",
+          "zoomFrom": 6
+        }
+      ]
+    }
+  ]
+}
