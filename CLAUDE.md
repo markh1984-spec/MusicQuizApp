@@ -1794,6 +1794,44 @@ wrong place, say so — in one line. **Argue in normal mode, not in GSD mode**;
 if a proposal needs pushing back on, note it in a sentence and raise it properly
 when the list is done.
 
+### THE PROTECTED SURFACE — what must not break, and what may
+
+Stated by the host on 14 August 2026, on a gig day: *"The thing that needs to
+be stable and definitely working is the quiz launch capability for pubs.
+Everything else that changes doesn't affect me tonight."*
+
+**This is as useful for what it FREES as for what it protects.** Without it
+every change gets treated as equally dangerous, which is slow and, worse,
+spreads the care thinly over things that cannot end a night.
+
+**PROTECTED — the path from "the room is sitting down" to "the quiz is
+running":**
+
+1. The console loads, the pack cards draw, **Launch works**
+2. The projector shows the game and the join code
+3. Phones join and answer
+4. Next / Reveal / Back on the control view
+5. Crash recovery brings the same question and every score back
+
+**Everything else may move**, and on a gig day that is most of the app: the
+owner page, the editor, Past gigs, invoices, adverts, the shop, chat, teams,
+online mode, the account work. None of them is reachable from a pub night, and
+breaking one costs a Monday rather than an evening.
+
+**THE TWO GUARDS COVER EXACTLY THAT PATH, and both should run before anything
+lands on a gig day:**
+
+- **`node scripts/pub-unchanged.mjs <commit> --ignore <new fields>`** — the
+  engine half. Every payload a projector and a phone receive, at every phase of
+  every pack, against a commit you trust.
+- **Press Launch in a real browser**, on the quick-launch bar AND a pack card,
+  and check a game is actually running afterwards. The engine is rarely the
+  hazard; **the console's launch form is**, and no unit test presses a button.
+
+The second one is the one that gets skipped, and it is the one that would stop
+a night. A `node --check` passing means the file parses, not that Launch still
+launches.
+
 ### "Sweep mode" — find everything, change nothing
 
 **If he types `Sweep mode`, run a full sweep and REPORT. Do not action any of
