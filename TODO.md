@@ -485,6 +485,22 @@ rather than the quizmaster's word against the venue's. Same reasoning as the
 support-access log — the record is what makes the power safe to hold, and it is
 the quizmaster it protects.
 
+**The reinstate COUNT goes on the control panel, but only above zero.** The
+host asked for it as cover against being accused of giving drinks away, and it
+is worth having — but be honest about what it is. A number in the quizmaster's
+own app is not a defence to somebody accusing the quizmaster, because they
+control the app. What makes it evidence is that **it lands in the ARCHIVED
+NIGHT** alongside the date, the venue, the headcount and the winner, and backs
+up to the private repo as the night ends — so it is part of the post-night
+report shown to a venue rather than a figure only one side can see.
+
+Its real value on the night is OPERATIONAL rather than defensive: "this one has
+been reinstated three times" means either the bar's phone cannot reach the
+server or somebody is working it, and both are worth knowing before tapping it
+a fourth time. Zero on every voucher all night is clutter, so it appears only
+when there is something to say — the same rule as the wander badge, which stays
+quiet until three.
+
 **It is worth more to the VENUE than to the winner, and that is the reason to
 build it.** Redemption is the only mechanism in this app that could ever tell a
 venue *the quiz drove this much bar spend*, which is precisely what a
