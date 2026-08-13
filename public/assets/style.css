@@ -59,6 +59,10 @@
      OS paints them for a white page and they arrive as white slabs on a dark
      one, which is exactly how the console's tickboxes and dropdowns looked. */
   color-scheme: dark;
+  /* Three radii and no more: a field, a card, a pill. See the GUI rules. */
+  --r-field: 6px;
+  --r-card: 12px;
+  --r-pill: 999px;
 
   --radius: 18px;
   --shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
@@ -101,6 +105,45 @@
 }
 
 * { box-sizing: border-box; }
+
+/* =====================================================================
+ * THE FIELD — one look for a text box and a dropdown.
+ *
+ * There was no rule for a plain input at all outside the phone and the
+ * control view, which is why the venue box on a pack card came out as a
+ * browser default sitting beside three carefully styled selects. A dropdown
+ * and a box you type in are the same KIND of control — "choose something" —
+ * and the GUI rules in CLAUDE.md say they look identical.
+ *
+ * Deliberately quiet, and deliberately NOT carrying the brand gradient. It is
+ * furniture around the decision rather than the decision, and the one filled
+ * gradient on a screen has to stay the thing you press.
+ *
+ * Placed high in the file on purpose: `.phone input[type="text"]` and the
+ * editor's own fields have the same specificity, so source order is what lets
+ * them keep winning where they have already been tuned.
+ * ===================================================================== */
+input[type="text"], input[type="search"], input[type="email"],
+input[type="password"], input[type="number"], input[type="url"], textarea {
+  font-family: inherit;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--panel-line);
+  border-radius: var(--r-field);
+  padding: 8px 11px;
+  min-width: 0;
+  max-width: 100%;
+}
+input:focus, textarea:focus {
+  outline: none;
+  /* Their own colour, because a focus ring is a highlight and highlights are
+     personality. See "a scheme changes personality, never meaning". */
+  border-color: var(--hot);
+}
+input::placeholder, textarea::placeholder { color: var(--ink-dim); font-weight: 600; }
+
 
 html, body {
   margin: 0;
@@ -168,7 +211,7 @@ body::after {
 .hidden { display: none !important; }
 
 .grad-text {
-  background: linear-gradient(100deg, var(--hot) 0%, var(--hot-2) 45%, var(--gold) 100%);
+  background: linear-gradient(120deg, var(--hot) 0%, var(--hot-2) 45%, var(--gold) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -228,7 +271,7 @@ body::after {
   width: 1.9em; height: 1.9em;
   display: grid; place-items: center;
   border-radius: 50%;
-  background: linear-gradient(140deg, var(--hot), var(--hot-2));
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
   color: #fff; font-weight: 900; font-size: 0.8em;
 }
 .lobby ol { list-style: none; padding: 0; margin: 0; }
@@ -949,7 +992,7 @@ body.host::after { display: none; }
   width: 1vw;
   height: 20%;
   border-radius: 999px;
-  background: linear-gradient(180deg, var(--hot), var(--cool));
+  background: linear-gradient(120deg, var(--hot), var(--cool));
   animation: eq 1.15s ease-in-out infinite alternate;
   animation-delay: calc(var(--i) * -70ms);
 }
@@ -1786,7 +1829,7 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
 .brand-app {
   font-weight: 900;
   letter-spacing: -0.015em;
-  background: linear-gradient(100deg, var(--hot), var(--hot-2) 60%, var(--mark-3));
+  background: linear-gradient(120deg, var(--hot), var(--hot-2) 60%, var(--mark-3));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -2148,7 +2191,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   width: 58px; height: 58px;
   border-radius: 50%;
   border: 1px solid var(--panel-line);
-  background: linear-gradient(140deg, var(--hot), var(--hot-2));
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
   font-size: 26px; line-height: 1;
   cursor: pointer;
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5);
@@ -2283,7 +2326,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   width: 100%; margin-top: 12px; padding: 16px; cursor: pointer;
   font: inherit; font-size: var(--fs-lead); font-weight: 900;
   border: 0; border-radius: 14px; color: #fff;
-  background: linear-gradient(140deg, var(--hot), var(--hot-2));
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
 }
 .cam-send:disabled { opacity: 0.6; }
 .cam-status { margin-top: 10px; color: var(--bad); }
@@ -2363,7 +2406,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   cursor: pointer;
   font: inherit; font-size: var(--fs-head); font-weight: 900;
   color: #fff; border: 0; border-radius: 16px;
-  background: linear-gradient(140deg, var(--hot), var(--hot-2));
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
 }
 .lock-btn:disabled {
   background: rgba(255, 255, 255, 0.09);
@@ -2436,7 +2479,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 /* The scoreboard toggle shows its own state — you should be able to tell what
    is on the projector without turning round to look at it. */
 .minor.on {
-  background: linear-gradient(140deg, var(--hot), var(--hot-2));
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
   border-color: transparent;
   color: #fff;
 }
@@ -2456,7 +2499,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .ad-words h1 {
   font-size: 9vh; line-height: 0.98; margin: 0; font-weight: 900;
   letter-spacing: -0.02em;
-  background: linear-gradient(100deg, var(--hot), var(--hot-2) 55%, var(--gold));
+  background: linear-gradient(120deg, var(--hot), var(--hot-2) 55%, var(--gold));
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .ad-words p { font-size: 3.4vh; color: var(--ink); margin: 2.4vh 0 0; line-height: 1.3; }
@@ -2915,7 +2958,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .acct-val.good { color: var(--good); }
 .acct-val.bad { color: var(--bad); }
 .acct-val.brand-preview {
-  background: linear-gradient(100deg, var(--hot), var(--hot-2) 70%);
+  background: linear-gradient(120deg, var(--hot), var(--hot-2) 70%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .acct-note { margin-top: 4px; }

@@ -414,6 +414,74 @@ menu and NO hat switch**, checked signed in as one.
 
 ---
 
+## The GUI rules — what a control looks like is decided by what it DOES
+
+Settled on 14 August 2026, because the host was about to design the interface
+once per feature: *"I want to make sure that when I build future features, I'm
+not designing the GUI after every feature."* Right to stop and do it once —
+measured before the conversation, the same primary gradient appeared **72
+times at four different angles**, and there were **eight different corner
+radii**. The system existed in his head and drifted on screen.
+
+### Five roles, and every control is exactly one of them
+
+| Role | What it looks like | Where |
+|---|---|---|
+| **The night** | filled, the account's own gradient, rounded | Launch, Take control. **One per screen, maximum** |
+| **Make something** | filled green | Write it, Import, Make the pictures |
+| **Ordinary** | outlined, no fill | Read, Rename, Save, Send |
+| **Destructive** | outlined **red**, never filled | Delete, Close, Stop |
+| **Choose** | a quiet field, no gradient at all | dropdowns, text boxes |
+
+**FILL MEANS COMMITMENT.** That is why destructive is outlined rather than
+filled: a filled red Delete is as loud as Launch, next to Launch, on a card
+somebody is tapping in a dark pub. It is also why there is only ever one filled
+gradient on a screen — the moment there are two, neither is the thing to press.
+
+**A hairline gradient on every dropdown was proposed and turned down.** It works
+on the photo card because that is ONE card framing an explanation; on furniture
+you use fifty times a night it is decoration that competes with Launch. **A text
+box and a dropdown must look identical** — same height, fill, border, radius —
+which is also why the venue box looked wrong beside three styled selects: it was
+a bare `<input>` with no rule at all.
+
+### A SCHEME CHANGES PERSONALITY, NEVER MEANING
+
+The line, and the host's own example is the test: *"a quizmaster who likes pink
+and purple wants the logo pink and purple, and the Launch button pink and
+purple. But when she deletes a quiz pack, she doesn't want that pink and
+purple. She wants red."*
+
+| Follows their colours | Fixed, for everybody |
+|---|---|
+| **The night** — Launch, Take control | **Gold** — points, winning, first place |
+| The logo and the wordmark | **Green** — good, paying, makes something |
+| The washes and glows behind everything | **Red** — wrong, destructive |
+| Highlights and focus | **`--a` to `--f`** — the option colours |
+
+**The most frequent colour is the one that follows them**, which is the host's
+own rule and is already true: `--hot`/`--hot-2` is used 72 times to gold's 55,
+so changing scheme genuinely changes the place rather than tinting two buttons.
+
+**GOLD IS THE TROPHY COLOUR, not a navigation one** — found by counting where
+its 55 uses are: the winner, the score, the points, the top row of the board,
+the bonus pill, "you" on the mini board, the reveal banner. First place is gold
+everywhere in the world, so an account setting that changed it would be like a
+scheme that made red mean go.
+
+**Which leaves one known oddity, deliberately not fixed yet:** the lit menu chip
+is the only navigational use of gold — it borrows the trophy colour for a job
+that is not winning, and on the **Citrus** scheme (lime into gold) it sits next
+to a gold-ish Launch button and muddles. The fix is to make "you are here"
+neutral rather than to move gold. Left alone for now because it is on a screen
+used on a gig day.
+
+### One angle, three radii
+
+`120deg` for every gradient, and **6px / 12px / 999px** — a field, a card, a
+pill. Nothing else. Purely mechanical, no judgement calls, and it is most of
+why things looked slightly off.
+
 ## The design rules, in the host's own words
 
 Set deliberately on 12 August 2026, and they outrank preference — including
