@@ -4570,16 +4570,26 @@ Confirmed by reading the environment list on the dashboard:
 
 `HOST_KEY`, `PHOTO_REPO`, `PHOTO_TOKEN`, `GITHUB_REPO`, `GITHUB_TOKEN`,
 `ANTHROPIC_API_KEY`, `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`,
-`SPOTIFY_REFRESH_TOKEN`. **No `BREVO_API_KEY` and no `PUBLIC_URL`**, so the
-forgotten-password email is built but not switched on — the sign-in page says
-so plainly rather than pretending to send. **No `PACKS_REPO`**, so a quizmaster's own packs are
-saved but not permanent — their console says so in red and offers Download. One
-more private repo and one variable fixes it; see TODO.md. **No `BRAND_NAME`** — checked deliberately, because it
+`SPOTIFY_REFRESH_TOKEN`, `GOOGLE_API_KEY`, `PACKS_REPO`.
+
+**READ IT OFF THE APP RATHER THAN OFF THIS PAGE.** `GET /api/library` reports
+`generation` — `claude`, `art`, `google`, `openai`, `spotify`,
+`spotifyMissing`, `backupConfigured` — and `ownPacks.repo`. That is the live
+answer; this list is a note that goes stale, and on 14 August 2026 it was wrong
+about three variables at once, every one of them in the "not set up yet"
+direction. If a feature looks unconfigured, check the payload before believing
+a document.
+
+As of 14 August 2026 the payload says `art: "google"` (the picture round draws
+real portraits), `spotify: true` with nothing missing (intro playlists build),
+and own packs backing up to `markh1984-spec/quiztopia-packs`.
+
+**Still absent: `BREVO_API_KEY` and `PUBLIC_URL`**, so the forgotten-password
+email is built but not switched on — the sign-in page says so plainly rather
+than pretending to send. **No `BRAND_NAME`** — checked deliberately, because it
 overrides the per-quizmaster naming and a leftover value would hide that whole
-feature while looking exactly like a failed deploy. **No `GOOGLE_API_KEY`**, so
-round 2 is still placeholder art — that is the one variable the picture round
-now waits on, and `OPENAI_API_KEY` is dead ground because the account behind it
-was deactivated.
+feature while looking exactly like a failed deploy. `OPENAI_API_KEY` is dead
+ground because the account behind it was deactivated.
 
 So the bookmark survives a deploy, and accounts, invoices, reported questions
 and play counts all back up to the private repo and come back at boot. The owner
