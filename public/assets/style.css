@@ -4448,3 +4448,9 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    search box rather than under the two buttons, because it answers a question
    somebody has BEFORE they press one. */
 .launchbar .lb-note { margin: -4px 0 12px; color: var(--ink-dim); }
+
+/* The venue box on a pack card. Wider than the dropdowns beside it — a pub
+   name is six words where "In the room" is three — and it must never be the
+   thing that drags the card sideways, so it may shrink to nothing. */
+.pack-shape.venue-wrap { grid-column: 1 / -1; min-width: 0; }
+.venue-pick { width: 100%; min-width: 0; }

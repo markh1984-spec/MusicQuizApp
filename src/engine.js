@@ -90,6 +90,22 @@ export class Engine {
       // roomId -> messages. Only ever written on an online night; see `say()`.
       chat: {},
       /*
+       * WHERE TONIGHT IS, as a name.
+       *
+       * A fact about this evening rather than about the pack, so it lives here
+       * beside the look and the card shape and is set at launch — and it
+       * survives a restart for the same reason they do: a night that came back
+       * without its venue would be filed under nothing, and the archive is the
+       * only record that it happened at all.
+       *
+       * Deliberately a plain NAME and not an id. Almost no venue is a
+       * Quizporium account and almost none ever will be, so free text is the
+       * common case and has to be the cheap one — "The Dog and Duck", typed
+       * once and offered back next time. A linked venue account is an upgrade
+       * that hangs off this later without changing what is stored today.
+       */
+      venue: '',
+      /*
        * TEAM PLAY — several phones, one team, and the score is the AVERAGE.
        *
        * Off unless the host asked for it at launch, exactly like the look and
@@ -1669,6 +1685,9 @@ export class Engine {
     return {
       quizId: this.quiz.id,
       quizTitle: this.quiz.title,
+      // Where it happened. The whole reason a night is worth filing: a Past
+      // gigs page that cannot say WHERE is a list of dates.
+      venue: this.state.venue || '',
       startedAt: this.state.startedAt,
       finishedAt: this.state.finishedAt,
       leaderboard: this.leaderboard().map((p) => ({

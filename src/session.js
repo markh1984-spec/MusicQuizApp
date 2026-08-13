@@ -300,7 +300,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '' } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     const pack = LAUNCHERS[kind].load(this.config, packId, this.paths);
     const normalised = kind === 'bingo' ? normaliseBingoPack(pack, packId) : pack;
@@ -351,6 +351,13 @@ export class Session {
      * bring the night back as individuals with every team gone.
      */
     this.engine.state.teamPlay = Boolean(teamPlay);
+    /*
+     * Where tonight is. Tidied exactly like a team name — control characters
+     * out, a length cap, and NO word filtering, which is the rule everywhere
+     * a human types something that ends up on a screen.
+     */
+    this.engine.state.venue = String(venue || '')
+      .replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
 
     recordLaunch(this.config.dataDir, kind, normalised.id, this.now(), this.roomId);
     this.engine.changed();

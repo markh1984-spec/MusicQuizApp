@@ -22,7 +22,7 @@ import { Photos, MAX_BYTES } from './src/photos.js';
 import { Session } from './src/session.js';
 import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked, ROUND_TYPES } from './src/quizzes.js';
 import { validateBingoPack, normaliseBingoPack, minimumTracks, CARD_SHAPES, shapeLabel, maxPrizes, stagePlan, stageLabel } from './src/bingo.js';
-import { fullLibrary, listArchive, loadArchived, serialiseArchive, restoreArchive, saveBingoPack, loadBingoPack, deleteBingoPack, readStats } from './src/library.js';
+import { fullLibrary, listArchive, venuesUsed, loadArchived, serialiseArchive, restoreArchive, saveBingoPack, loadBingoPack, deleteBingoPack, readStats } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
 import { generateQuizPack, buildIntroPlaylists, roundPlan, TOPICAL_ROUNDS, TOPICAL_DAYS, topicalNaming } from './src/generate-quiz.js';
 import { importBingoPack } from './src/import-bingo.js';
@@ -1455,6 +1455,13 @@ async function handleGet(req, res, url, route) {
        * from a list it would have to group a second way.
        */
       archiveNights: mergeGigs(listArchive(roomForHost(req, url).paths.archive), []).length,
+      /*
+       * Venues this room has played before, so the launch box offers them back
+       * rather than asking for the same six words every week. A field you
+       * retype gets left blank by the third week, and then the record is
+       * holes — which is the whole point of having it.
+       */
+      venues: venuesUsed(roomForHost(req, url).paths.archive),
       // Offered on every pack card, so a night can be dressed up without
       // editing anything.
       looks: LOOKS.map(({ id, label, blurb, season }) => ({ id, label, blurb, season })),
@@ -3721,7 +3728,9 @@ async function handleWrite(req, res, url, route) {
         const online = Boolean(body.online);
         // Several phones, one team, scores averaged. Also a fact about tonight.
         const teamPlay = Boolean(body.teamPlay);
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online, teamPlay });
+        // Where tonight is — a name, so it works before venue accounts exist.
+        const venue = String(body.venue || '');
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online, teamPlay, venue });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();

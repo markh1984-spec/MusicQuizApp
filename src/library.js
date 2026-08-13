@@ -314,6 +314,10 @@ export function listArchive(dir) {
           kind: r.kind || 'quiz',
           title: r.quizTitle || r.title || file,
           archivedAt: r.archivedAt || null,
+          // Where it happened. Absent on every night filed before venues
+          // existed, which is exactly right — those nights have no venue and
+          // saying "" is honest where guessing one would not be.
+          venue: r.venue || '',
           playerCount: (r.leaderboard || []).length,
           winner: (r.leaderboard || [])[0]?.name || null,
         };
@@ -327,4 +331,29 @@ export function listArchive(dir) {
 
 export function loadArchived(dir, id) {
   return JSON.parse(fs.readFileSync(path.join(dir, safePackFile(id)), 'utf8'));
+}
+
+
+/**
+ * Every venue this room has run a night at, most recent first.
+ *
+ * Offered back in the launch box so "The Dog and Duck" is typed once and
+ * tapped ever after — which is most of what makes a venue on a night worth
+ * having, because a field you retype every week gets left blank by the third
+ * week and then the whole record is holes.
+ *
+ * Read off the ARCHIVE rather than kept as a list, for the same reason
+ * `question-history.js` reads the packs: a second list is a second thing to
+ * keep in sync, and a night that is deleted should take its venue with it if
+ * nothing else was ever there.
+ */
+export function venuesUsed(dir) {
+  const seen = new Map();
+  for (const night of listArchive(dir)) {
+    const name = String(night.venue || '').trim();
+    if (!name) continue;
+    // Newest wins, so the list is ordered by when it was last used.
+    if (!seen.has(name.toLowerCase())) seen.set(name.toLowerCase(), name);
+  }
+  return [...seen.values()];
 }

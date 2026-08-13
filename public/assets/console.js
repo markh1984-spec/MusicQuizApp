@@ -2408,6 +2408,9 @@ function launchBar() {
         <label class="pack-shape">Playing
           <select class="play-pick">${playingOptions()}</select>
         </label>
+        <label class="pack-shape venue-wrap">Venue
+          ${venueBox()}
+        </label>
       </div>
       <button class="go lb-go">Launch ${esc(pack.title)}</button>
       </div>`));
@@ -2437,6 +2440,7 @@ function launchBar() {
         look: chosen.querySelector('.look-pick')?.value || '',
         online: chosen.querySelector('.where-pick')?.value === 'online',
         teamPlay: chosen.querySelector('.play-pick')?.value === 'teams',
+        venue: chosen.querySelector('.venue-pick')?.value || '',
       }, button);
     });
   }
@@ -3133,6 +3137,29 @@ function lookOptions(pack) {
  * question text goes ON the players' phones, because online there is no
  * projector to read it off.
  */
+/**
+ * WHERE THE NIGHT IS — the venue, as a name.
+ *
+ * A text box with a datalist rather than a dropdown, because the first time
+ * you play somewhere there is nothing to pick from and a dropdown with one
+ * option saying "type it yourself" is worse than a box. After that the venue
+ * is offered back, so it is typed once and tapped ever after — which is the
+ * part that actually matters: a field you retype every week is blank by the
+ * third week, and then the record it exists to build is full of holes.
+ *
+ * Optional on purpose. A one-off, a party, a night you cannot be bothered to
+ * name — all fine, and the night still files. Nothing refuses to launch over
+ * this, which is the rule for every control that stands between a quizmaster
+ * and a room that is already sitting down.
+ */
+function venueBox() {
+  const seen = (library && library.venues) || [];
+  return `
+    <input class="venue-pick" type="text" list="venuesUsed" maxlength="60"
+           autocomplete="off" placeholder="The Dog and Duck">
+    ${seen.length ? `<datalist id="venuesUsed">${seen.map((v) => `<option value="${esc(v)}"></option>`).join('')}</datalist>` : ''}`;
+}
+
 function whereOptions() {
   return `
     <option value="room" selected>In the room</option>
@@ -3227,6 +3254,9 @@ function packCard(kind, pack) {
         </label>
         <label class="pack-shape">Playing
           <select class="play-pick">${playingOptions()}</select>
+        </label>
+        <label class="pack-shape venue-wrap">Venue
+          ${venueBox()}
         </label>`}
       <div class="pack-actions">
         <button class="pack-read" title="Read it through">Read</button>
@@ -3431,7 +3461,8 @@ function packCard(kind, pack) {
     const look = el.querySelector('.look-pick')?.value || '';
     const online = el.querySelector('.where-pick')?.value === 'online';
     const teamPlay = el.querySelector('.play-pick')?.value === 'teams';
-    await doLaunch(kind, pack.id, { shape, prizes, look, online, teamPlay }, button);
+    const venue = el.querySelector('.venue-pick')?.value || '';
+    await doLaunch(kind, pack.id, { shape, prizes, look, online, teamPlay, venue }, button);
   });
   return el;
 }
@@ -3443,10 +3474,10 @@ function packCard(kind, pack) {
  * there must not be two ways OUT, or the 409-and-confirm dance gets fixed in
  * one of them and quietly rots in the other.
  */
-async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false }, button) {
+async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '' }, button) {
     const send = (replace) => postJson(
       '/api/host/launch',
-      { game: kind, packId, shape, prizes, look, online, teamPlay, ...(replace ? { replace: true } : {}) },
+      { game: kind, packId, shape, prizes, look, online, teamPlay, venue, ...(replace ? { replace: true } : {}) },
       { 'X-Host-Key': hostKey },
     );
     const back = () => {
