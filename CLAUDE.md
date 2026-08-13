@@ -1919,7 +1919,7 @@ launches.
 it.** He decides what gets fixed; the output is a list he can work through and
 dismiss from.
 
-Three things at once, because they hide in each other:
+Four things at once, because they hide in each other:
 
 - **Contradictions** — the docs against the code, and the code against itself.
   A rule stated in CLAUDE.md that the code no longer honours is the one that
@@ -1929,6 +1929,51 @@ Three things at once, because they hide in each other:
 - **Vulnerabilities** — from BOTH sides. Signed in as a quizmaster reaching for
   what is the owner's, and the owner reaching into what is a quizmaster's. The
   second is the gate that runs backwards and is easy to forget.
+- **LABEL COLLISIONS — two controls on one screen using one word for two
+  different things.** See below; added 14 August 2026 at the host's own
+  instruction, after finding one on the control view.
+
+#### The fourth kind: one word, two meanings, side by side
+
+**The exemplar is `Scores on screen` and `My scores`, next to each other on the
+control view.** One puts the scoreboard on the PROJECTOR for the room; the
+other shows them to the HOST alone. Both say "scores", neither says who sees
+it, and "My scores" reads like the host's own score in the quiz. The host's
+own test of it: *"if it's not obvious to me what it does, a fresh QM will have
+no idea."*
+
+**It is a CONTRADICTION rather than a wording preference**, which is why it
+belongs in this sweep rather than on a tidy-up list: the design rules already
+say *if two things on one screen use the same word for different sets, one of
+them is renamed*, and *if a control needs explaining, the control is wrong*.
+So a collision is the code disagreeing with a stated rule — exactly what the
+first bullet is for — it simply lives in a `<button>` rather than in a
+function.
+
+**It hides from every other check there is.** It has no failing test, no 500,
+no 403 and no visual defect; the page looks perfectly tidy. The only thing
+that finds it is reading every control on one screen TOGETHER and asking what
+a stranger would think each one did. That is the sweep's job and nothing
+else's.
+
+What to look for, and each has been seen in this app:
+
+- **the same noun for two different sets** — "scores" for the room's and for
+  yours; "packs" for the catalogue and for a quizmaster's own (solved by
+  naming them **My packs** and **Quizporium packs**);
+- **a label that describes the TOOL rather than the act** — "The pack editor"
+  on the link somebody presses to write something; "Redo" for a button that
+  wipes a question's points and asks it again;
+- **a verb with no object** — "Back", "Skip", "Advert": fine when the object
+  is obvious, a collision the moment two of them could take different objects;
+- **a control whose only explanation is a `title`.** There are no tooltips on
+  a phone, and half these screens are driven from one. A tooltip is a bonus;
+  if it is carrying the meaning, the label is wrong.
+
+**REPORT THE PAIR, NOT THE BUTTON.** A collision is a relationship between two
+controls, so "rename My scores" is half a finding — the fix might be to rename
+either one, or to say WHO SEES IT on both. Give the pair, what a stranger would
+guess each does, and what they actually do.
 
 **Testing is allowed; leaving anything behind is not.** Start servers, seed
 throwaway data, sign in as a made-up account, probe every route — then kill it,

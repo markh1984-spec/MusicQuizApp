@@ -200,6 +200,35 @@ three of the four are really about what a NIGHT is — which is item 1 above.
   Naming it as a category is what gives somebody permission. Revisit if it
   turns out nobody ever picks it.
 
+### 5c. The label collisions a sweep will now find — starting with one
+
+**Found on 14 August 2026 and deliberately not fixed on a gig day**, because
+it is on the control view and that is the protected surface. `Sweep mode` in
+CLAUDE.md has grown a fourth kind for exactly this; the first one is already
+on the list:
+
+- **`Scores on screen` vs `My scores`**, side by side in the control view's
+  action row. One puts the scoreboard on the projector for the room; the other
+  shows them to the host alone. Both say "scores", neither says who sees it,
+  and "My scores" reads like the host's own score in the quiz.
+
+**The fix is a decision rather than an edit, which is why it waits.** Renaming
+one of them is the cheap answer and probably the wrong one — the thing that
+distinguishes them is WHO SEES IT, so both labels are missing the same word.
+Candidates, and each has a cost worth weighing on a 4-column grid where a cell
+is about 85px on a phone:
+
+- **"Scores on the big screen" / "Scores just for me"** — says it, and both
+  wrap to three lines on a phone;
+- **"Show the room" / "Check the scores"** — fits, and drops the word "scores"
+  from the one that puts them up;
+- **leave the projector one and rename the private one** — smallest change,
+  and leaves the pair still both starting with the same word.
+
+**Do it with a screenshot at 390px, not in the abstract.** And run the rest of
+the sweep at the same time — a collision found alone is a collision the others
+are hiding behind.
+
 ### 5a. Launch opens the big screen in a second tab
 
 **Asked for on 14 August 2026, mid-gig-day, and parked for that reason.** The
