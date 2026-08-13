@@ -2943,6 +2943,69 @@ running, how many are in each, right now. See the section above on why the
 video version should not be built — this is the feature that request was
 reaching for.
 
+### PRICING A PARENT: don't. The seats are the product.
+
+The host, thinking it through out loud and arriving at a real tension: *"If Rob
+has a quiz company he's going to need a parent account AND a Gold account, and
+he's not going to want to pay £50 a month for essentially the same
+functionality… so the parent should probably be free, or a lower rate, because
+the quiz account is where the value is. Maybe Gold automatically has
+sub-accounts. But then it wouldn't make sense for two or three quizmasters to
+have Gold within a company, and I want to keep that upsell."*
+
+**The instinct is right and the tension dissolves, because the seat design
+below already answers it — as long as the PARENT is not a thing you sell.**
+
+#### 1. A parent is a container. Charging for it charges somebody for the privilege of paying you more.
+
+£50 for "Gold plus the right to have staff" reads as a penalty for growing,
+which is the opposite of what it is. **Make it free.** It costs nothing to run
+— it is a row in a file — and under the house rule that decides tiers, nothing
+that costs nothing per use has to be paid for.
+
+#### 2. But "the parent can't do anything" is not true, and the difference matters
+
+It has no quiz controls, which is what the host meant. What it DOES have is the
+thing that makes a company want one at all: **internal pack distribution** —
+the company writes a quiz once and every host can run it, which the Group
+accounts section below already calls "the real win". Plus one bill instead of
+six, and the stats across hosts.
+
+That is why the seat discount is affordable: **the parent is not being given
+away, it is being used to sell more seats.**
+
+#### 3. Nobody inside a company buys Gold. They buy SEATS — and that ends the confusion
+
+This is the part that dissolves the worry about "two or three quizmasters on
+Gold". **A seat gets EVERYTHING** (already settled below, and this is the
+second reason for it): there is no tier inside a company, so nobody has to
+decide which host is on which rung, and nobody has a worse night than the host
+next to them.
+
+| | | |
+|---|---|---|
+| Three hosts, three solo Golds | £90 | what they will not do |
+| Three hosts, three seats at £20 | **£60** | one bill, shared packs, everybody has everything |
+| **What actually happens without seats** | **£30** | one Gold, three people sharing a login — which this file already records as ending somebody's night mid-question |
+
+**The £30 "lost" against three Golds is not lost, because three Golds was never
+the alternative.** The real alternative is a shared login, which earns a third
+as much AND breaks nights.
+
+#### 4. So the upsell is not Bronze → Gold. It is SOLO → GROUP.
+
+That is the answer to "I want to keep that upsell": it still exists, it is just
+a different axis. It fires the day somebody hires a second host — which is
+exactly when they can afford it and exactly when a shared login would otherwise
+start costing them nights.
+
+#### 5. THE HOLE TO CLOSE: a company of one
+
+At £20 a seat with solo Gold at £30, a single quizmaster forms a "company" of
+one and buys Gold for £20. **Minimum two seats**, or price the seat at £25 and
+keep the discount smaller. The first is cleaner: a company of one is not a
+company, and saying so needs no arithmetic.
+
 ### Group accounts — SEATS on a Gold, for a quizmaster company
 
 > **It serves a SECOND market that was not designed for, and that is a feature
