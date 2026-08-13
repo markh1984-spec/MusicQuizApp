@@ -1588,13 +1588,70 @@ a corporate booking at £300–500 that they currently cannot serve at all, so
 £15 is trivial to them and the margin is the reward for building it. Pricing it
 at cost would be giving away the one capability that opens a new market.
 
-###### The firefight list — the host's own, and it is the SPEC
+###### The firefight was INTEGRATION, not any one thing breaking
 
-*"It's the sort of BS I've had to firefight when presenting my own online
-quizzes."* He has run these on a cobbled-together stack, so what actually went
-wrong is the specification for the fallback rather than something to guess at.
-**Ask him for his list before building this** — the one below is a starting
-guess for him to correct, not a plan.
+Asked what actually went wrong, and the answer reframes the whole feature:
+
+> *"It's usually just because there were a mish-mash of different softwares and
+> each one needed managing, crashed at different times, didn't have full
+> features, was being kind of shoehorned in for a use case it wasn't designed
+> for."*
+
+**That is a cause, where the table below is a list of symptoms.** The problem
+was never that a microphone failed — it is that a night was assembled out of
+four tools that did not know about each other, so every one of them had its own
+failure, its own settings, its own moment of needing attention, and none of
+them could cover for another. One person cannot host a room and operate four
+things at once, which is why it reads as firefighting rather than as a bug.
+
+**Three things follow, and the first is the important one.**
+
+**1. IT RETROSPECTIVELY SETTLES THE "SHOULD WE HOST THE MEDIA" ARGUMENT, and
+the host was right.** I argued for running online nights over the client's own
+Teams. Under this diagnosis that answer is the disease: it makes an online
+night *the app PLUS somebody else's video call* — two things to manage, two
+things that crash separately, and the quizmaster in the middle of both. *"We
+may as well not bother"* was exactly right and I had the wrong end of it.
+
+**2. So the measure to design against is THE NUMBER OF SEPARATE THINGS THAT
+HAVE TO WORK.** Today an online night is two (this app, plus their call). With
+the media layer it is one. That number is the feature — not the audio quality,
+not the video tile — and it is what a quizmaster is actually buying. **Any
+future proposal that adds a fifth service to a night is answering the wrong
+question**, however good the service is.
+
+**…and the examples make it sharper still: they were the WRONG tools, not just
+too many of them.** *"The chat rooms were designed for an office, not for a
+quiz. The software was for surveys, not for a quiz."* Each one arrives carrying
+the assumptions of its own trade, and those assumptions are not neutral — they
+are actively wrong here:
+
+- **Office chat assumes everyone should be able to talk at any time.** That is
+  the whole point of it, and it is exactly what must not happen for twenty
+  seconds while a question is up. No amount of configuration gets Teams to gag
+  a room at the moment a clock starts, because to Teams that is not a thing
+  that exists. It is the reason `mayPost()` refuses words mid-question in
+  fifteen lines, and the reason it could never have been bought in.
+- **Survey software has no concept of a RIGHT ANSWER**, let alone of being
+  right QUICKLY. A survey collects opinions: order does not matter, nothing is
+  scored, nothing is revealed, nobody is first. So the thing this whole app is
+  built around — ten points a second, the fastest finger, the reveal — is not a
+  missing feature in a survey tool, it is a category the tool does not have.
+
+> **One line for the sales page and for every future build decision: a survey
+> tool has no idea what a right answer is, and an office chat has no idea that
+> there are moments when nobody should speak. A quiz is made of both of those.**
+
+**3. "Didn't have full features" and "shoehorned in" are a warning about
+THIS app too.** A quiz app that does online badly is another tool being pushed
+into a use case it was not designed for — which is why online mode is a MODE
+with a branch budget written down, rather than a layer bolted on the side. The
+thing that stops this becoming part of somebody else's mish-mash is that the
+same engine runs both kinds of night.
+
+The symptom list below is still worth building, but as **what the ONE app owes
+somebody when a night wobbles** rather than as glue between tools. Ask him
+which of these he actually hit.
 
 | The firefight | What the app should do instead |
 |---|---|
