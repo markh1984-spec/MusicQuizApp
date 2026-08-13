@@ -873,6 +873,108 @@ The Console says so in red if it is not set up.
 
 ## Asked for, not yet specced
 
+### The software does not compete with the quizmaster — it CREATES work for one
+
+**Settled on 13 August 2026, and it corrects a wrong reading of mine.** I put it
+to the host that a pub seeing "£10 a month" next to "£150 a night" was channel
+conflict, and that a venue might run the software instead of hiring him.
+
+**It is not, and the reason is one sentence: a quiz night does not host
+itself.** The software writes the questions and does the marking, which was
+never the expensive half. What a venue still has to find is somebody to hold a
+microphone for two hours, work a room, bring the speakers and deal with the
+table that thinks question six was wrong. Every venue running Quizporium is a
+venue that needs a host, and the host is usually not the landlord — his own
+words: *"QMs still need to be paid and will often bring in their own audio gear
+etc."*
+
+So the four ways a night can happen, and every one of them wants this software
+underneath it:
+
+- **Mark hosts it.** Essex, Kent and Surrey, and the reason the venues page
+  exists.
+- **A quizmaster the venue already uses hosts it**, on their own subscription
+  or the venue's.
+- **Bar staff host it.** The realistic one for a small pub with no budget for
+  an entertainer, and the one the app's "clarity beats everything" rule was
+  written for.
+- **A quizmaster hired THROUGH Quizporium hosts it.** ← the interesting one.
+
+### A quizmaster directory — venues hire a host through the site
+
+The host's own idea and worth its own entry: *"or even if we have QMs on the
+site that they can hire through us…all possibilities."*
+
+**What makes it plausible rather than a nice thought is that the hard part is
+already built.** A subscribed quizmaster already has an account, a room, a
+history of nights they have run, the photos from them and an invoice book —
+which is exactly the profile a venue wants to see before booking somebody, and
+exactly what **Past gigs** was built to be. `FEATURES.PAST_GIGS` is already
+Bronze specifically because it is the evidence somebody shows a venue.
+
+**It also turns the out-of-area problem into revenue rather than a redirect.**
+A pub in Manchester cannot have Mark. Today the site tells them to run it
+themselves; with a directory it tells them to hire Dave, who subscribes.
+
+**Not built, not specced, and deliberately not on the site.** It needs a
+decision about money (a cut? a listing fee? free, to sell subscriptions?), a
+decision about vetting — the whole value is that a venue trusts the
+recommendation, which means the owner is putting their name to somebody else's
+night — and it wants the payment processor that does not exist yet. **Do not
+put it on the sales page before it exists**, for the same reason nothing else
+unbuilt is on there.
+
+The one thing worth doing NOW is not narrowing the door: the site should not
+say anything that implies "run it yourself" is the only alternative to booking
+Mark.
+
+### And a £30 subscription beats a £150 gig, because of what it does NOT cost
+
+The host's own point, and it is the one that settles what this business
+actually is: *"selling a pub a £30 sub is better for me anyway — it's £30 a
+month I don't have to give up a premium slot to earn, vs £150 where I have to
+give up a night… they're both a win, but the first is a bigger win"* — **"and
+scales indefinitely."**
+
+Be precise about it, because the headline numbers say the opposite: a weekly
+residency at £150 is £600 a month and a subscription is £30. **Per venue the
+gig wins by twenty to one. Per HOUR it loses, and per hour is the number that
+runs out.** A night is four hours plus the drive, the setup and the pack
+read-through, and there are only so many Thursdays, Fridays and Saturdays in a
+week — call it four or five sellable slots, ever, at any price. Gig income has
+a hard ceiling made of evenings. Subscription income has none.
+
+So the two are not competing offers, they are **a capped business and an
+uncapped one sharing a code base**, and the uncapped one is the reason any of
+this is worth building:
+
+- **The gigs are the proof and the R&D.** They are what makes the app good,
+  they are the Past gigs page, and they are what a venue is buying when they
+  book Mark rather than somebody cheaper. They also pay today, which the
+  subscriptions do not.
+- **The subscriptions are the business.** Twenty subscribers is £600 a month
+  for no evenings at all — one residency's income, with every Friday still
+  free to sell at £150.
+- **A venue can be BOTH**, which is the bit the "conflict" framing missed
+  entirely. A pub that books Mark monthly and runs its own quiz the other three
+  weeks pays a fee AND a subscription, and neither replaces the other.
+
+**The caveat is the one this codebase already knows about, and it is the whole
+of "scales indefinitely".** A subscription only scales if a new subscriber
+costs no time. Every feature that needs the owner to do something per
+subscriber — approving a thing, answering a thing, writing a thing to order —
+puts a ceiling back on it made of Mondays. That is why the draft-reply button,
+the queue position, the been-opened receipt and "one open request at a time"
+exist, and it is why the next feature that creates a pile has to be asked the
+same question: **does this get bigger as subscribers do?** See the fifth
+constraint in CLAUDE.md.
+
+What it changes NOW: nothing on the site, which already leads with the software
+for out-of-area venues and sends in-area ones to the booking page. What it
+changes LATER is the order of the roadmap — anything that removes owner admin
+per subscriber is worth more than a feature, because it is what makes the
+uncapped half actually uncapped.
+
 ### Rewrite the eight starter packs — before anybody pays
 
 **The most important content job there is, and it is yours rather than mine.**
