@@ -2956,22 +2956,46 @@ run it. Taken carelessly that means a company hoovering up whatever its hosts
 write, which is the exact thing `own-packs.js` exists to prevent, one level
 down.
 
-**They are TWO SHELVES, not one, and the resolution order already written down
-keeps them apart:**
+**IT ONLY APPLIES TO PACKS THEY WROTE THEMSELVES**, which the host narrowed
+correctly: *"If they buy packs from me then that should be shareable in the
+group, that's fine. It's only if the QM writes a quiz to their own account that
+they should be asked if they want to make it available to the group."*
 
-> **own → company → catalogue**
+**And CATALOGUE packs need no sharing mechanism at all** — which is simpler
+still than "shareable". A seat gets everything, so every host in a company
+already holds the whole catalogue **by entitlement**. There is nothing to pass
+around and no consent to ask for: the author is the owner, they have been paid,
+and each seat has its own licence.
 
-- **Their OWN packs stay their own**, private from the company exactly as they
-  are private from the owner. A host who leaves takes them, because they were
-  never the company's.
-- **The COMPANY shelf** is what every seat can run. That is the win, and it is
-  fed deliberately.
+So the three shelves resolve `own → company → catalogue`, and only the FIRST
+has a consent question on it:
 
-**NOTHING MOVES BETWEEN THEM WITHOUT THE AUTHOR DOING IT.** An explicit "share
-this with the company" on their own pack card — one action, theirs, and
+| Shelf | Who wrote it | How a seat gets it |
+|---|---|---|
+| **Their own** | the quizmaster | **theirs alone** unless they choose otherwise |
+| **The company's** | the company, or a host who shared one | every seat, by being in the company |
+| **The catalogue** | the owner | every seat already, by entitlement — nothing to share |
+
+**NOTHING MOVES OFF THE FIRST SHELF WITHOUT THE AUTHOR DOING IT.** An explicit
+"share this with the company" on their own pack card — one action, theirs, and
 reversible. No automatic promotion, no "packs written on a company seat belong
 to the company" rule, because that rule would be the app quietly taking a
 position on somebody's employment terms.
+
+#### The same action is what a MARKETPLACE needs — so build it once, later
+
+The host's own connection, and it is the reason not to build a company-only
+version: *"if we're going to have a marketplace where people can sell their own
+quiz packs, they're going to need to be able to share on their say-so anyway."*
+
+Quite — **"the author releases this pack" is one action with two
+destinations**: to their company, or to the shop. Same consent, same record of
+who released what and when, same undo. A company-only sharing button built now
+would be half of it and would have to be unpicked.
+
+**NOT NOW.** It needs neither the group nor the marketplace to exist yet, and
+building it before either would be guessing at both. When it lands it is one
+mechanism with a destination, never two buttons.
 
 **And the app must NOT try to answer who owns a pack written while employed.**
 That is a work-for-hire question between them and their employer, it varies by
