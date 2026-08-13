@@ -311,18 +311,22 @@ function advertPanel(s) {
  * before you tap it a fourth time.
  */
 function voucherPanel(s) {
-  const list = s.vouchers || [];
+  // Down the board, first place at the top — the order the room saw and the
+  // order the host will read them out in.
+  const list = [...(s.vouchers || [])].sort((a, b) => (a.place || 1) - (b.place || 1));
   if (!list.length) return [];
   const when = (ms) => new Date(ms).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   const el = node(`
     <div class="panel">
-      <h3>The prize</h3>
-      <div class="tiny">${esc(list[0].reward)} — they show a code at the bar, the bar scans it.</div>
+      <h3>The prizes</h3>
+      <div class="tiny">They show a code at the bar, the bar scans it on their own phone.</div>
       <div class="v-rows">
         ${list.map((v) => `
           <div class="v-row ${v.redeemedAt ? 'is-spent' : ''}">
             <div class="v-row-who">
+              <span class="v-place v-place-${v.place || 1}">${v.place === 2 ? '2nd' : v.place === 3 ? '3rd' : '1st'}</span>
               <b>${esc(v.name)}</b>
+              <span class="v-row-what">${esc(v.reward)}</span>
               <span class="v-row-code">${esc(v.code)}</span>
               ${v.reinstated ? `<span class="v-row-again" title="Put back by you ${v.reinstated} time${v.reinstated === 1 ? '' : 's'}">put back ×${v.reinstated}</span>` : ''}
             </div>

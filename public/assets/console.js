@@ -2432,6 +2432,7 @@ function launchBar() {
     };
     shapePick?.addEventListener('change', paintPrizes);
     paintPrizes();
+    wireRewards(chosen);
 
     chosen.querySelector('.lb-go').addEventListener('click', async (ev) => {
       const button = ev.currentTarget;
@@ -2444,7 +2445,7 @@ function launchBar() {
         online: chosen.querySelector('.where-pick')?.value === 'online',
         teamPlay: chosen.querySelector('.play-pick')?.value === 'teams',
         venue: chosen.querySelector('.venue-pick')?.value || '',
-        reward: chosen.querySelector('.reward-pick')?.value || '',
+        rewards: rewardsFrom(chosen),
       }, button);
     });
   }
@@ -3170,10 +3171,61 @@ function lookOptions(pack) {
  */
 function rewardBox() {
   const seen = (library && library.rewards) || [];
-  return `
-    <input class="reward-pick" type="text" list="rewardsUsed" maxlength="80"
-      placeholder="A free drink at the bar">
-    ${seen.length ? `<datalist id="rewardsUsed">${seen.map((v) => `<option value="${esc(v)}"></option>`).join('')}</datalist>` : ''}`;
+  /*
+   * ONE BOX, AND THE NEXT APPEARS WHEN YOU FILL IT.
+   *
+   * A pub quiz often pays three deep and the three are usually different
+   * things — but plenty of nights have one prize or none, and three empty
+   * boxes on every pack card is the clutter rule broken on the page whose job
+   * is "find tonight's pack and press Launch". So the second appears when the
+   * first has something in it, and the third when the second does. Nothing to
+   * learn, nothing to expand, and a one-prize night looks exactly as it did.
+   *
+   * NEVER "gold, silver and bronze". Those are the subscription tiers, and a
+   * quizmaster would read "Gold prize" on the same page that says they are on
+   * Gold.
+   */
+  const list = seen.length
+    ? `<datalist id="rewardsUsed">${seen.map((v) => `<option value="${esc(v)}"></option>`).join('')}</datalist>`
+    : '';
+  const box = (i) => `
+    <div class="reward-row" data-place="${i}"${i > 1 ? ' hidden' : ''}>
+      ${i > 1 ? `<span class="reward-place">${i === 2 ? '2nd' : '3rd'}</span>` : ''}
+      <input class="reward-pick" type="text" list="rewardsUsed" maxlength="80"
+        placeholder="${i === 1 ? 'A free drink at the bar' : `Prize for ${i === 2 ? 'second' : 'third'}`}">
+    </div>`;
+  return `<div class="reward-stack">${box(1)}${box(2)}${box(3)}${list}</div>`;
+}
+
+/**
+ * Show the next prize box once the one above it has something in it.
+ *
+ * Wired wherever a launch form is built, because there are two of them — the
+ * launch bar and the pack card — and a control that works on one and not the
+ * other is worse than one that works on neither.
+ */
+function wireRewards(el) {
+  const stack = el.querySelector('.reward-stack');
+  if (!stack) return;
+  const rows = [...stack.querySelectorAll('.reward-row')];
+  const paint = () => {
+    rows.forEach((row, i) => {
+      if (i === 0) return;
+      const above = rows[i - 1].querySelector('input').value.trim();
+      // Never hide one that has been typed into: somebody who clears second
+      // place while third is filled would otherwise lose what they wrote with
+      // nothing on screen saying so.
+      const mine = row.querySelector('input').value.trim();
+      row.hidden = !above && !mine;
+    });
+  };
+  for (const row of rows) row.querySelector('input').addEventListener('input', paint);
+  paint();
+}
+
+/** The three boxes as a list, first place first, blanks and all. */
+function rewardsFrom(el) {
+  return [...el.querySelectorAll('.reward-pick')].map((i) => i.value.trim());
 }
 
 function venueBox() {
@@ -3382,6 +3434,7 @@ function packCard(kind, pack) {
   };
   shapePick?.addEventListener('change', paintPrizes);
   paintPrizes();
+  wireRewards(el);
 
   /*
    * Rename without opening the pack.
@@ -3489,8 +3542,8 @@ function packCard(kind, pack) {
     const online = el.querySelector('.where-pick')?.value === 'online';
     const teamPlay = el.querySelector('.play-pick')?.value === 'teams';
     const venue = el.querySelector('.venue-pick')?.value || '';
-    const reward = el.querySelector('.reward-pick')?.value || '';
-    await doLaunch(kind, pack.id, { shape, prizes, look, online, teamPlay, venue, reward }, button);
+    const rewards = rewardsFrom(el);
+    await doLaunch(kind, pack.id, { shape, prizes, look, online, teamPlay, venue, rewards }, button);
   });
   return el;
 }
@@ -3502,10 +3555,10 @@ function packCard(kind, pack) {
  * there must not be two ways OUT, or the 409-and-confirm dance gets fixed in
  * one of them and quietly rots in the other.
  */
-async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '', reward = '' }, button) {
+async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '', rewards = [] }, button) {
     const send = (replace) => postJson(
       '/api/host/launch',
-      { game: kind, packId, shape, prizes, look, online, teamPlay, venue, reward, ...(replace ? { replace: true } : {}) },
+      { game: kind, packId, shape, prizes, look, online, teamPlay, venue, rewards, ...(replace ? { replace: true } : {}) },
       { 'X-Host-Key': hostKey },
     );
     const back = () => {

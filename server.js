@@ -3817,10 +3817,15 @@ async function handleWrite(req, res, url, route) {
         const teamPlay = Boolean(body.teamPlay);
         // Where tonight is — a name, so it works before venue accounts exist.
         const venue = String(body.venue || '');
-        // What the winner gets, if anything. Empty on an ordinary night, and
-        // then no voucher is ever issued and no payload gains a field.
-        const reward = String(body.reward || '');
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online, teamPlay, venue, reward });
+        /*
+         * What first, second and third get, if anything. Empty on an ordinary
+         * night, and then no voucher is ever issued and no payload gains a
+         * field. A bare string is still accepted so a curl call written against
+         * the single-prize version keeps working.
+         */
+        const rewards = Array.isArray(body.rewards) ? body.rewards.map(String)
+          : (body.reward ? [String(body.reward)] : []);
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online, teamPlay, venue, rewards });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();

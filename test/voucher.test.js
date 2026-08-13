@@ -163,3 +163,148 @@ test('a TIE gets one each, because the room watched it happen', () => {
   assert.equal(Object.keys(engine.state.vouchers).length, 2,
     'the app picked a winner the projector did not');
 });
+
+// ------------------------------------------------------- first, second, third
+
+test('three prizes go to three places, and each gets its own', () => {
+  const { engine } = withGame({ reward: '' });
+  engine.state.rewards = ['A free drink', 'A bag of crisps', 'A packet of nuts'];
+  const a = engine.join({ name: 'Rob' });
+  const b = engine.join({ name: 'Jo' });
+  const c = engine.join({ name: 'Sam' });
+  engine.state.players[a.id].score = 300;
+  engine.state.players[b.id].score = 200;
+  engine.state.players[c.id].score = 100;
+  engine.finish();
+
+  const by = (id) => engine.playerView(id).voucher;
+  assert.equal(by(a.id).reward, 'A free drink');
+  assert.equal(by(a.id).place, 1);
+  assert.equal(by(b.id).reward, 'A bag of crisps');
+  assert.equal(by(b.id).place, 2);
+  assert.equal(by(c.id).reward, 'A packet of nuts');
+  assert.equal(by(c.id).place, 3);
+});
+
+test('one prize still means one voucher — fourth place gets nothing either', () => {
+  const { engine } = withGame();
+  engine.state.rewards = ['A free drink'];
+  const a = engine.join({ name: 'Rob' });
+  const b = engine.join({ name: 'Jo' });
+  engine.state.players[a.id].score = 300;
+  engine.state.players[b.id].score = 200;
+  engine.finish();
+  assert.equal(Object.keys(engine.state.vouchers).length, 1);
+  assert.equal(engine.playerView(b.id).voucher, undefined, 'second place was given a prize nobody set');
+});
+
+/*
+ * `rankPlayers` gives 1, 2, 2, 4 so the projector never lies about a tie. The
+ * vouchers follow it exactly: two tied for first BOTH take the first prize and
+ * there is no second, because there is no second on the big screen either.
+ */
+test('A TIE FOR FIRST TAKES BOTH FIRST PRIZES, AND THERE IS NO SECOND', () => {
+  const { engine } = withGame();
+  engine.state.rewards = ['A free drink', 'A bag of crisps', 'A packet of nuts'];
+  const a = engine.join({ name: 'Rob' });
+  const b = engine.join({ name: 'Jo' });
+  const c = engine.join({ name: 'Sam' });
+  engine.state.players[a.id].score = 300;
+  engine.state.players[b.id].score = 300;
+  engine.state.players[c.id].score = 100;
+  engine.finish();
+
+  const issued = Object.values(engine.state.vouchers);
+  assert.equal(issued.filter((v) => v.place === 1).length, 2, 'the room watched a tie and one of them got nothing');
+  assert.equal(issued.filter((v) => v.place === 2).length, 0, 'a second prize was invented that the board does not show');
+  // Sam is third on the board, so Sam takes the third prize.
+  assert.equal(engine.playerView(c.id).voucher.place, 3);
+  assert.equal(engine.playerView(c.id).voucher.reward, 'A packet of nuts');
+});
+
+test('a gap in the middle cannot be expressed', () => {
+  const { engine } = withGame();
+  // "first and third but not second" is not a thing anybody means, and it
+  // would hand the third prize to whoever the board calls second.
+  engine.state.rewards = ['A free drink', '', 'A packet of nuts'];
+  const a = engine.join({ name: 'Rob' });
+  const b = engine.join({ name: 'Jo' });
+  const c = engine.join({ name: 'Sam' });
+  engine.state.players[a.id].score = 300;
+  engine.state.players[b.id].score = 200;
+  engine.state.players[c.id].score = 100;
+  engine.finish();
+  assert.equal(engine.playerView(b.id).voucher, undefined, 'second place was skipped over');
+  assert.equal(engine.playerView(c.id).voucher.reward, 'A packet of nuts',
+    'third place got second place’s blank');
+});
+
+/*
+ * A NIGHT LAUNCHED BEFORE THIS EXISTED IS SITTING IN A STATE FILE, and may be
+ * running in a room right now. Losing its prize on the next restart is exactly
+ * what putting it in the state was meant to prevent.
+ */
+test('an older game with a single `reward` still issues its voucher', () => {
+  const { engine } = withGame();
+  delete engine.state.rewards;
+  engine.state.reward = 'A free drink at the bar';
+  engine.join({ name: 'Rob' });
+  engine.finish();
+  const issued = Object.values(engine.state.vouchers);
+  assert.equal(issued.length, 1);
+  assert.equal(issued[0].reward, 'A free drink at the bar');
+});
+
+test('trailing blanks are not prizes', () => {
+  const { engine } = withGame();
+  engine.state.rewards = ['A free drink', '', ''];
+  engine.join({ name: 'Rob' });
+  engine.finish();
+  assert.equal(Object.keys(engine.state.vouchers).length, 1);
+  assert.deepEqual(engine.rewardList(), ['A free drink']);
+});
+
+/*
+ * THE END OF THE QUIZ, NEVER THE END OF A ROUND.
+ *
+ * The host's own night is one round of twenty questions, so the round board
+ * after round one is the last thing before the final — and a voucher that
+ * appeared on the board would be handing out drinks while the quiz was still
+ * technically running. Issuing happens on the way INTO `FINAL` and the card is
+ * only in a payload at `FINAL`, so both halves have to be wrong for this to
+ * leak. Pinned because it is the question the host asked before running it.
+ */
+test('a voucher is issued at the END OF THE QUIZ, not at a round board', () => {
+  const twoRounds = {
+    id: 'q2', title: 'Two rounds', questionSeconds: 20,
+    rounds: [
+      { id: 'r1', type: 'text', title: 'One', questions: [
+        { id: 'a', prompt: 'A?', options: ['a', 'b', 'c', 'd'], correctIndex: 0 }] },
+      { id: 'r2', type: 'text', title: 'Two', questions: [
+        { id: 'b', prompt: 'B?', options: ['a', 'b', 'c', 'd'], correctIndex: 0 }] },
+    ],
+  };
+  let at = Date.parse('2026-08-14T21:00:00.000Z');
+  const engine = new Engine({ quiz: twoRounds, now: () => at });
+  engine.state.rewards = ['A free drink'];
+  const rob = engine.join({ name: 'Rob' });
+
+  // Drive it: rules, round intro, question, reveal, round board…
+  for (let i = 0; i < 20 && engine.state.phase !== PHASES.ROUND_BOARD; i++) {
+    at += 21000;
+    engine.next();
+  }
+  assert.equal(engine.state.phase, PHASES.ROUND_BOARD, 'never reached a round board');
+  assert.deepEqual(engine.state.vouchers, {}, 'a prize was handed out between rounds');
+  assert.equal(engine.playerView(rob.id).voucher, undefined,
+    'the leader was shown a voucher while the quiz was still running');
+
+  // …and on to the end.
+  for (let i = 0; i < 30 && engine.state.phase !== PHASES.FINAL; i++) {
+    at += 21000;
+    engine.next();
+  }
+  assert.equal(engine.state.phase, PHASES.FINAL);
+  assert.equal(Object.keys(engine.state.vouchers).length, 1, 'nothing was issued at the end');
+  assert.ok(engine.playerView(rob.id).voucher, 'the winner was told nothing at the final');
+});

@@ -4703,3 +4703,20 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .v-row-state { font-size: var(--fs-note); color: var(--ink-dim); }
 .v-row.is-spent { opacity: 0.7; }
 .v-row.is-spent .v-row-code { color: var(--ink-dim); }
+
+/* First, second and third. The medal COLOURS, never the words — "gold",
+   "silver" and "bronze" are the subscription tiers, and a quizmaster reading
+   "Gold prize" on the page that says they are on Gold is the same collision
+   one level up. Gold already means first place everywhere in this app. */
+.win-card.place-2 { border-color: rgba(198, 205, 214, 0.55); }
+.win-card.place-2 .sub, .win-card.place-2 .win-code { color: #c6cdd6; }
+.win-card.place-3 { border-color: rgba(205, 137, 90, 0.55); }
+.win-card.place-3 .sub, .win-card.place-3 .win-code { color: #cd895a; }
+.v-place {
+  flex: 0 0 auto; min-width: 30px;
+  font-size: var(--fs-tag); font-weight: 900; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--gold);
+}
+.v-place-2 { color: #c6cdd6; }
+.v-place-3 { color: #cd895a; }
+.v-row-what { font-size: var(--fs-note); color: var(--ink-dim); }

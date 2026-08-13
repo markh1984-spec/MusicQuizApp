@@ -1251,6 +1251,16 @@ function voucherCard(s) {
   const code = roomCode();
   const target = `${location.origin}/v?c=${encodeURIComponent(v.code)}${
     code ? `&g=${encodeURIComponent(code)}` : ''}`;
+  /*
+   * WHICH PLACE, in words. Second and third have to say so or the card reads
+   * as "you won" to somebody who came third, which is the app misreporting the
+   * projector — and it is the sentence they will show the bar.
+   *
+   * Never "gold", "silver" or "bronze": those are the subscription tiers. The
+   * medal COLOUR is fine and is what the card is tinted with.
+   */
+  const place = v.place || 1;
+  const said = { 1: 'You won', 2: 'Second place', 3: 'Third place' }[place] || 'You won';
   if (v.redeemedAt) {
     return `
       <div class="win-card win-spent">
@@ -1260,8 +1270,8 @@ function voucherCard(s) {
       </div>`;
   }
   return `
-    <div class="win-card">
-      <div class="sub">You won</div>
+    <div class="win-card place-${place}">
+      <div class="sub">${esc(said)}</div>
       <div class="win-what">${esc(v.reward)}</div>
       <img class="win-qr" alt="Show this at the bar"
         src="/qr.svg?text=${encodeURIComponent(target)}&dark=%230b0b12&light=%23ffffff">

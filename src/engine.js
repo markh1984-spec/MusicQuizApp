@@ -106,19 +106,31 @@ export class Engine {
        */
       venue: '',
       /*
-       * WHAT THE WINNER GETS — free text, set at launch, and empty by default.
+       * WHAT THEY WIN — first, second and third, and all three empty by default.
        *
        * "A free drink at the bar", "£50 bar tab". A fact about tonight like the
        * venue, so it lives here and survives a restart: a voucher that came
        * back after a crash saying nothing is worse than no voucher at all.
        *
-       * `reward` and NOT `prize`, deliberately. Bingo already has PRIZES — how
-       * many lines pay out before the full house — and a second control called
-       * Prize next to that one is the label collision this codebase has just
-       * written a whole sweep category about. On the launch form it is "What
-       * they win", which cannot be mistaken for a count.
+       * A LIST, index 0 being first place, because a pub quiz usually pays
+       * three deep and the three are usually different things. A one-prize
+       * night is a list of one, which is the same shape rather than a special
+       * case — the same reason `rounds` is a list of `{type, count}` rather
+       * than a number.
+       *
+       * `rewards` and NOT `prizes`, deliberately. Bingo already has PRIZES —
+       * how many lines pay out before the full house — and a second control
+       * called Prize beside it is the label collision this codebase has a
+       * whole sweep category about. On the launch form they are "What they
+       * win", "2nd" and "3rd", which cannot be mistaken for a count.
+       *
+       * AND THEY ARE NEVER CALLED GOLD, SILVER AND BRONZE ANYWHERE ON SCREEN.
+       * Those are the subscription tiers. A quizmaster would be reading "Gold
+       * prize" on the same page that tells them they are on Gold, which is the
+       * same fault one level up. Medal COLOURS on the card are fine — gold
+       * already means first place everywhere in this app.
        */
-      reward: '',
+      rewards: [],
       /*
        * THE VOUCHERS THEMSELVES, code -> record. Empty on an ordinary night.
        *
@@ -828,11 +840,21 @@ export class Engine {
    */
   issueVouchers() {
     const s = this.state;
-    if (!s.reward) return;
+    const rewards = this.rewardList();
+    if (!rewards.length) return;
     if (!s.vouchers) s.vouchers = {};
     const already = new Set(Object.values(s.vouchers).map((v) => v.winnerId));
     for (const row of this.leaderboard()) {
-      if (row.position !== 1) continue;
+      /*
+       * POSITIONS, NOT THE TOP THREE ROWS. `rankPlayers` gives 1, 2, 2, 4 so
+       * the projector never lies about a tie — and this follows it exactly: two
+       * people tied for first BOTH get the first prize and there is no second,
+       * because there is no second on the big screen either. An app that
+       * quietly handed the runner-up's drink to somebody the room watched
+       * finish level would be inventing a result.
+       */
+      const reward = rewards[row.position - 1];
+      if (!reward) continue;
       if (already.has(row.id)) continue;
       let code = newVoucherCode();
       while (s.vouchers[code]) code = newVoucherCode();
@@ -840,7 +862,8 @@ export class Engine {
         code,
         winnerId: row.id,
         name: row.name,
-        reward: s.reward,
+        place: row.position,
+        reward,
         venue: s.venue || '',
         issuedAt: this.now(),
         redeemedAt: null,
@@ -848,6 +871,33 @@ export class Engine {
         history: [],
       };
     }
+  }
+
+  /**
+   * The prizes for tonight, first place first.
+   *
+   * **Reads the OLD single `reward` when there is no list**, which is not
+   * belt-and-braces: a game launched before this existed is sitting in a state
+   * file on disk and in a room somebody may still be running, and a night that
+   * came back from a restart having quietly lost its prize is the exact thing
+   * putting it in the state was meant to prevent. Same shape as `cardShape()`
+   * reading `cardSize` or `cardRows`.
+   *
+   * Trailing blanks are dropped so "first and third but not second" cannot be
+   * expressed — it is not a thing anybody means, and it would put a voucher
+   * for third place in the hands of somebody the board calls second.
+   */
+  rewardList() {
+    const s = this.state;
+    // EMPTY, not absent: `freshState()` sets `rewards: []`, so a check on the
+    // field existing would never reach the old single `reward` at all — which
+    // is the migration silently doing nothing, on a game that is running.
+    const list = (Array.isArray(s.rewards) && s.rewards.length)
+      ? s.rewards
+      : (s.reward ? [s.reward] : []);
+    const out = list.map((r) => String(r || '').trim());
+    while (out.length && !out[out.length - 1]) out.pop();
+    return out;
   }
 
   /**
@@ -1633,6 +1683,7 @@ export class Engine {
         view.voucher = {
           code: mine.code,
           name: mine.name,
+          place: mine.place || 1,
           reward: mine.reward,
           venue: mine.venue,
           issuedAt: mine.issuedAt,
@@ -1747,6 +1798,7 @@ export class Engine {
      * not exist rather than sitting there saying nothing.
      */
     view.vouchers = Object.values(s.vouchers || {});
+    view.rewards = this.rewardList();
 
     if (q && round) {
       view.question = {
@@ -1837,7 +1889,7 @@ export class Engine {
       venue: this.state.venue || '',
       // What was on offer and who has taken it. Part of the night's record, so
       // a queried bar tab has an answer rather than the quizmaster's word.
-      reward: this.state.reward || '',
+      rewards: this.rewardList(),
       vouchers: Object.values(this.state.vouchers || {}),
       startedAt: this.state.startedAt,
       finishedAt: this.state.finishedAt,

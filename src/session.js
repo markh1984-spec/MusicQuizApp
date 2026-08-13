@@ -309,7 +309,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '', reward = '' } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '', rewards = [] } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     const pack = LAUNCHERS[kind].load(this.config, packId, this.paths);
     const normalised = kind === 'bingo' ? normaliseBingoPack(pack, packId) : pack;
@@ -374,8 +374,16 @@ export class Session {
      * Longer than a venue because "£50 behind the bar, redeemable tonight" is
      * a real answer.
      */
-    this.engine.state.reward = String(reward || '')
-      .replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+    /*
+     * First, second and third — tidied exactly like the venue, and capped at
+     * three because that is what a pub quiz pays and a fourth box is a
+     * question nobody has asked. Trailing blanks are dropped by `rewardList()`
+     * rather than here, so what was typed survives a restart.
+     */
+    this.engine.state.rewards = (Array.isArray(rewards) ? rewards : [rewards])
+      .slice(0, 3)
+      .map((r) => String(r || '')
+        .replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80));
 
     /*
      * A DELIBERATE LAUNCH ANSWERS THE RESTART NOTICE.

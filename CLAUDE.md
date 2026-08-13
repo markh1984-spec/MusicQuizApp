@@ -1431,6 +1431,26 @@ winner's own phone shows a card with a QR on it. The bar scans it with their
 own phone, gets a page saying *"Give them a free drink at the bar"*, and presses
 one button.
 
+**FIRST, SECOND AND THIRD**, each with its own prize or the same one. The
+launch form shows ONE box and the next appears when you fill it, so a one-prize
+night looks exactly as it did and nobody counts empty fields on the page whose
+job is "find tonight's pack and press Launch".
+
+**They are never called gold, silver and bronze on screen.** Those are the
+subscription tiers, and a quizmaster would be reading "Gold prize" on the same
+page that tells them they are on Gold — the label collision the sweep looks
+for, one level up. It is **1st / 2nd / 3rd** everywhere. The medal COLOURS are
+fine and are what the cards are tinted with; gold already means first place
+everywhere in this app.
+
+**A TIE TAKES BOTH FIRST PRIZES AND THERE IS NO SECOND.** `rankPlayers` gives
+1, 2, 2, 4 so the projector never lies, and the vouchers follow the POSITION
+rather than the top three rows — so two people who finished level both get the
+first prize, and the runner-up's drink is not quietly handed to somebody the
+room watched finish equal. A gap in the middle cannot be expressed either:
+trailing blanks are dropped and a blank second place stops the list, or third
+place would collect what the board calls second.
+
 **A SCREENSHOT DOES NOT BREAK IT, because the phone is not what gets checked.**
 The first instinct is that a picture of a code can be forwarded, so a voucher
 can never be single-use — that is only true if the PHONE is the thing being
@@ -1472,6 +1492,15 @@ Six things that are load-bearing, all tested:
 - **The name is on the card**, which stops nothing technically and works the
   way a paper voucher does: the bar can say "you are not Quizteam Aguilera"
   with no system at all.
+- **It is the end of the QUIZ, never the end of a ROUND.** The host runs one
+  round of twenty, so the round board after round one is the last stop before
+  the final — and a prize appearing there would be handing out drinks with the
+  quiz still running. Two things would both have to break: issuing happens on
+  the way INTO `FINAL`, and the card is only in a payload at `FINAL`.
+- **A game launched before this existed still works.** `rewardList()` reads the
+  old single `reward` when the list is EMPTY — not when it is absent, which is
+  the version that silently did nothing, because `freshState()` sets
+  `rewards: []`. Same shape as `cardShape()` reading `cardSize` or `cardRows`.
 
 **The word is REWARD, never PRIZE**, and the launch field says **What they
 win**. Bingo already has PRIZES — how many lines pay out before the full house
