@@ -1677,6 +1677,42 @@ pick-them-all rounds being poor search targets.
 - Presentation matters: projected in a dark room to paying customers. Big type,
   high contrast, readable from the back.
 
+### Which accounts a change is FOR — the words to take literally
+
+Set by the host on 14 August 2026, so a request never has to say it twice.
+**Take these literally**, and note that the fourth is the one most changes
+actually mean:
+
+| He says | It applies to |
+|---|---|
+| **"the owner account"** | HIS account alone. One exists and one always will |
+| **"parent accounts"** | the management layer only — a quiz company, a pub group's HQ |
+| **"child accounts"** | accounts INSIDE a group, *because* they are in one |
+| **"quizmasters"** | **everybody who runs nights — on their own AND children.** The big population, and the default reading when a change is about running a quiz |
+| **"venues"** | accounts with `kind: 'venue'`, parent or child |
+
+**THE TRAP IS THAT "CHILD" AND "QUIZMASTER" ARE DIFFERENT AXES**, and mixing
+them silently builds the right feature for the wrong people:
+
+- **what you ARE** is the `kind` — quizmaster or venue;
+- **how you are ORGANISED** is on your own, a parent, or a child.
+
+So "change the child accounts" means *change something about being in a group*,
+which is rare — while "change what a quizmaster sees" is almost always solo
+accounts AND children together, because both run nights and both get the same
+app. Build the first when he means the second and the change lands on a handful
+of people; build the second when he means the first and it lands on everybody.
+
+**His own quizmaster account is ON ITS OWN, not a child.** It is linked to the
+owner account by `ownedBy` — one login, two hats — and it has no parent,
+because he is not a company. So "my child accounts" describes nothing that
+exists today, and a change described that way is worth one question before it
+is built.
+
+**When it is genuinely ambiguous, ASK WHICH POPULATION.** It is one line, and
+the alternative is a feature that appears for five per cent of accounts or for
+all of them when it should not.
+
 ### "GSD mode" — Get Shit Done
 
 **If he types `GSD mode`, switch to it and STAY in it until the to-do list is
