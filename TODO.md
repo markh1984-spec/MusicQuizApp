@@ -2720,6 +2720,35 @@ currently reads *"Not built yet"* — the same unbuilt-feature-on-a-tier problem
 noted for streaming. Saved venues with usual nights IS the calendar, so this
 chain closes that honestly rather than by deleting the line.
 
+#### The quizmaster's own DRAFT-READ-SEND list, in order of value
+
+The principle is now in CLAUDE.md ("the same rule points at the quizmaster's
+admin"). What it actually means to build, cheapest and most valuable first —
+and note that **the first three all wait on the same prerequisite**, which is a
+night knowing its venue:
+
+1. **The invoice, drafted when the night ends.** Venue, date and usual fee are
+   all known the moment the game finishes, so this is a draft that writes
+   itself and waits. Ninety per cent built already — `saveCustomer` holds the
+   fee, `invoices.js` holds the book. **Needs: venue on a night.**
+2. **The post-night report to the venue** — how many played, the photos, "same
+   time next month?". This is the item already at the top of the SELL list, and
+   it is the one that wins the REBOOKING rather than the one that gets you
+   paid. **Needs: venue on a night.**
+3. **The chase.** An invoice unpaid after N days, drafted as a polite nudge.
+   The most disliked admin job there is and the one most often not done.
+   **Needs: venue on a night** (and the invoice book, which exists).
+4. **A reply to a booking enquiry**, once enquiries arrive through the app at
+   all — which waits on the directory.
+5. **A caption for the night's photos**, for the Instagram direction. Drafted
+   and copied, never posted: posting needs a Business account and Meta review,
+   and the honest version is a caption in the clipboard.
+
+**One and two are the same job done twice**, so build them together: the night
+ends, and there is an invoice and a thank-you sitting there, each one press
+from going. That is "bill them before you leave the car park" and "get asked
+back" in one screen.
+
 #### LINKED ACCOUNTS — and "concurrently" is three things, one of them fatal
 
 The host: *"You could have a link accounts feature. If the venue has an account

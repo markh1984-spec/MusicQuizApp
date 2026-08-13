@@ -407,6 +407,39 @@ Two things follow:
   that serves itself is cheap.** When a new proposal creates a pile, the first
   question is whether the pile can be made to shrink on its own.
 
+### And the same rule points at the QUIZMASTER'S admin, not only the owner's
+
+Stated by the host on 14 August 2026, and it is the generalisation of
+everything above: *"semi-automated is always going to be better, because they
+could just read through, click send, read through, click send. It takes the
+admin burden off. It's essentially applying what I'm doing from within the app
+to them as a quizmaster on their side as well."*
+
+**Every Monday-load reducer in this file was built for the OWNER. A quizmaster
+has the identical problem and nobody has built it for them.** They finish at
+half eleven, drive home, and owe a venue an invoice, a thank-you and a nudge
+about next month — and none of that happens, because the blank page is the
+expensive part rather than the sending.
+
+**THE SHAPE IS ALWAYS THE SAME AND IT IS THE ONE `reply-draft.js` ALREADY
+USES: the app prepares, the human reads, the human sends.** Four reasons it is
+the right shape everywhere rather than a compromise:
+
+- **The blank page is where the time goes**, not the pressing of send. Removing
+  it is most of the saving available.
+- **The human stays accountable for what goes out**, so nothing goes publicly
+  wrong in their name — which is the whole reason `reply-draft.js` drafts and
+  never sends.
+- **It needs no email service**, because the share sheet and the clipboard are
+  already how invoices leave this app. So it is not blocked on anything.
+- **It is dual-purpose**, which is the guard rail below: the venue gets a
+  faster reply AND a better one, rather than the quizmaster simply doing less.
+
+**Do not build a send that skips the reading**, however much it looks like the
+obvious next step. An invoice or a thank-you that goes out unread is the
+version that names the wrong headcount, or bills a night that was cancelled —
+and it lands on the relationship the quizmaster is being paid to keep.
+
 **AND THE GUARD RAIL, which is what keeps the rule honest: every one of those
 is dual-purpose, and an admin reducer that makes the customer's experience
 worse is the WRONG reducer.** The host's own framing — they exist to make the
