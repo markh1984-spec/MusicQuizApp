@@ -454,6 +454,47 @@ times is either a bar that cannot reach us or somebody working it. That count
 already exists and already shows above zero — it just needs to reach the
 archive with everything else.
 
+### 1f. Draw the pictures as part of writing the quiz
+
+**Asked for on 14 August 2026.** Today `Write it` produces the pack and the
+portraits are a second, separate press on the pack card. For a picture round
+that is two jobs where the host wants one — and the read-through is useless
+until the second one has been done, so it is a step you cannot skip anyway.
+
+**Why it is separate today, and which half of that reasoning still holds.** It
+was split because drawing costs money per picture and the console prices the
+press before you make it ("6 already in the library, free · 4 to draw — about
+16p"). That estimate is worth keeping. What is NOT worth keeping is making it a
+second manual act: the same information can be shown before `Write it` — the
+round counts are known, so the generator can say "…and about 40p of pictures"
+in the same breath as everything else.
+
+**The shape:**
+
+- **A tick box on the generator, default ON** — "and draw the pictures". Still a
+  decision, still visible, but not a second trip.
+- **THE PACK IS SAVED BEFORE A SINGLE PICTURE IS ATTEMPTED.** This is the whole
+  design and it is the same rule the checker already follows: by the time the
+  images run, the generation is minutes and real money deep, so a failure there
+  must cost the pictures and never the quiz. Save, then draw, then save again
+  with the repointed paths.
+- **A failure is per-question and never fatal.** `generateImages` already
+  reports `failed` with a reason per question and carries on; the log should
+  name which ones and the pack keeps its placeholders, which are playable.
+- **It streams into the same progress panel.** The write already takes minutes
+  and talks as it goes; the pictures are just more of the same job. Watch the
+  PING — the stream has to keep talking through the image calls too, or a long
+  round of portraits looks exactly like the connection dropping.
+
+**The ledger and the budget need nothing new**: `onSpend` already records each
+picture and the ceiling already warns rather than refuses. But this makes it
+much easier to spend without noticing, so the estimate before the press matters
+more than it did, not less.
+
+**One thing to decide rather than assume:** whether the tick box remembers.
+Defaulting ON every time is right for the owner writing picture rounds weekly;
+it would be wrong if anybody else ever generated, which today nobody does.
+
 ### 1c. THE PHONE'S OWN SCORE GIVES THE ANSWER AWAY BEFORE THE REVEAL
 
 **Found by the host on 14 August 2026, mid-test.** Tap the right answer and the
