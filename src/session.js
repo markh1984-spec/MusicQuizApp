@@ -309,7 +309,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '' } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '', reward = '' } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     const pack = LAUNCHERS[kind].load(this.config, packId, this.paths);
     const normalised = kind === 'bingo' ? normaliseBingoPack(pack, packId) : pack;
@@ -367,6 +367,15 @@ export class Session {
      */
     this.engine.state.venue = String(venue || '')
       .replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+    /*
+     * What the winner gets, tidied exactly like the venue — and it goes on a
+     * voucher rather than on the projector, so the no-word-filtering rule
+     * applies for the same reason it does everywhere a human types something.
+     * Longer than a venue because "£50 behind the bar, redeemable tonight" is
+     * a real answer.
+     */
+    this.engine.state.reward = String(reward || '')
+      .replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
 
     /*
      * A DELIBERATE LAUNCH ANSWERS THE RESTART NOTICE.
@@ -525,6 +534,10 @@ export class Session {
       // did not, which left no way to end a night early except pressing
       // onwards through every remaining question.
       finish: () => this.engine.finish(),
+      // The bar's phone could not reach us, or it came over and said it was
+      // not working. Both are one tap, and neither is a dead end.
+      redeemVoucher: () => this.engine.redeemVoucher(body.code, { by: 'host' }),
+      reinstateVoucher: () => this.engine.reinstateVoucher(body.code),
     } : {
       start: () => this.engine.start(),
       call: () => this.engine.call(String(body.trackId)),

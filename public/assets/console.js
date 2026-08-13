@@ -2411,6 +2411,9 @@ function launchBar() {
         <label class="pack-shape venue-wrap">Venue
           ${venueBox()}
         </label>
+        <label class="pack-shape venue-wrap">What they win
+          ${rewardBox()}
+        </label>
       </div>
       <button class="go lb-go">Launch ${esc(pack.title)}</button>
       </div>`));
@@ -2441,6 +2444,7 @@ function launchBar() {
         online: chosen.querySelector('.where-pick')?.value === 'online',
         teamPlay: chosen.querySelector('.play-pick')?.value === 'teams',
         venue: chosen.querySelector('.venue-pick')?.value || '',
+        reward: chosen.querySelector('.reward-pick')?.value || '',
       }, button);
     });
   }
@@ -3152,6 +3156,26 @@ function lookOptions(pack) {
  * this, which is the rule for every control that stands between a quizmaster
  * and a room that is already sitting down.
  */
+/**
+ * WHAT THE WINNER GETS — free text, and empty is the normal answer.
+ *
+ * "What they win" rather than "Prize", and the distinction is not fussiness: a
+ * bingo card already has PRIZES on it, meaning how many lines pay out before
+ * the full house. Two controls on one card both saying prize, meaning a count
+ * and a thing, is the label collision this codebase keeps recording.
+ *
+ * Offered back per night like the venue, because most weeks at one pub have
+ * the same prize and typing it every time is how a field ends up blank by the
+ * third week.
+ */
+function rewardBox() {
+  const seen = (library && library.rewards) || [];
+  return `
+    <input class="reward-pick" type="text" list="rewardsUsed" maxlength="80"
+      placeholder="A free drink at the bar">
+    ${seen.length ? `<datalist id="rewardsUsed">${seen.map((v) => `<option value="${esc(v)}"></option>`).join('')}</datalist>` : ''}`;
+}
+
 function venueBox() {
   const seen = (library && library.venues) || [];
   return `
@@ -3257,6 +3281,9 @@ function packCard(kind, pack) {
         </label>
         <label class="pack-shape venue-wrap">Venue
           ${venueBox()}
+        </label>
+        <label class="pack-shape venue-wrap">What they win
+          ${rewardBox()}
         </label>`}
       <div class="pack-actions">
         <button class="pack-read" title="Read it through">Read</button>
@@ -3462,7 +3489,8 @@ function packCard(kind, pack) {
     const online = el.querySelector('.where-pick')?.value === 'online';
     const teamPlay = el.querySelector('.play-pick')?.value === 'teams';
     const venue = el.querySelector('.venue-pick')?.value || '';
-    await doLaunch(kind, pack.id, { shape, prizes, look, online, teamPlay, venue }, button);
+    const reward = el.querySelector('.reward-pick')?.value || '';
+    await doLaunch(kind, pack.id, { shape, prizes, look, online, teamPlay, venue, reward }, button);
   });
   return el;
 }
@@ -3474,10 +3502,10 @@ function packCard(kind, pack) {
  * there must not be two ways OUT, or the 409-and-confirm dance gets fixed in
  * one of them and quietly rots in the other.
  */
-async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '' }, button) {
+async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '', reward = '' }, button) {
     const send = (replace) => postJson(
       '/api/host/launch',
-      { game: kind, packId, shape, prizes, look, online, teamPlay, venue, ...(replace ? { replace: true } : {}) },
+      { game: kind, packId, shape, prizes, look, online, teamPlay, venue, reward, ...(replace ? { replace: true } : {}) },
       { 'X-Host-Key': hostKey },
     );
     const back = () => {

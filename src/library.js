@@ -347,6 +347,24 @@ export function loadArchived(dir, id) {
  * keep in sync, and a night that is deleted should take its venue with it if
  * nothing else was ever there.
  */
+/**
+ * What has been given away before, newest first.
+ *
+ * The same trick as `venuesUsed` and for the same reason: most weeks at one
+ * pub have the same prize, and a field you retype every week is a field that
+ * is blank by the third week. Read off the archive rather than kept as a list,
+ * so a deleted night takes its prize with it and there is nothing to sync.
+ */
+export function rewardsUsed(dir) {
+  const seen = new Map();
+  for (const night of listArchive(dir)) {
+    const name = String(night.reward || '').trim();
+    if (!name) continue;
+    if (!seen.has(name.toLowerCase())) seen.set(name.toLowerCase(), name);
+  }
+  return [...seen.values()];
+}
+
 export function venuesUsed(dir) {
   const seen = new Map();
   for (const night of listArchive(dir)) {

@@ -192,7 +192,7 @@ function draw(next) {
   connEl.textContent = state.joinCode
     ? `${state.playerCount} playing · code ${state.joinCode}`
     : `${state.playerCount} playing`;
-  mainEl.replaceChildren(...restartNotice(state), ...advertPanel(state), ...buildPanels(state), ...photoPanel(state));
+  mainEl.replaceChildren(...restartNotice(state), ...advertPanel(state), ...voucherPanel(state), ...buildPanels(state), ...photoPanel(state));
   actionsEl.replaceChildren(...buildActions(state));
 }
 
@@ -280,6 +280,65 @@ function advertPanel(s) {
  * The host keeps seeing them when it is off, because otherwise the offending
  * photo becomes invisible to the only person who can delete it.
  */
+/**
+ * THE PRIZE, AND WHO HAS TAKEN IT.
+ *
+ * Only ever drawn when a reward was set at launch and a voucher exists, which
+ * is the end of a night rather than most of one — so an ordinary quiz has no
+ * extra panel on the busiest screen in the app.
+ *
+ * Two controls, and neither is a dead end:
+ *
+ * NEITHER BUTTON IS RED. Red is destructive here and nothing on this panel
+ * is: marking it used is the ordinary thing that happens to every voucher, and
+ * putting it back undoes it. A red "Mark it used" would read as "careful, you
+ * cannot undo this" — which is the opposite of true, and would make a host
+ * hesitate over the one control the bar is standing there waiting for.
+ *
+ *   **Mark it used** — for when the bar's phone cannot reach us. Pub wifi is
+ *   exactly the thing this app assumes will fail, so the code is readable on
+ *   the winner's screen and the host can do it by hand.
+ *
+ *   **Put it back** — the host's override, and it is what makes burning it on
+ *   the first scan safe rather than clever. The bar comes over and says it is
+ *   not working; one tap. Same rule as `Back` undoing a reveal: the person in
+ *   the room decides.
+ *
+ * THE REINSTATE COUNT SHOWS ONLY ABOVE ZERO, like the wander badge staying
+ * quiet until three. Zero on every voucher all night is a number you learn to
+ * skip, and then you miss the one that says three — which means either the
+ * bar cannot reach us or somebody is working it, and both are worth knowing
+ * before you tap it a fourth time.
+ */
+function voucherPanel(s) {
+  const list = s.vouchers || [];
+  if (!list.length) return [];
+  const when = (ms) => new Date(ms).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const el = node(`
+    <div class="panel">
+      <h3>The prize</h3>
+      <div class="tiny">${esc(list[0].reward)} — they show a code at the bar, the bar scans it.</div>
+      <div class="v-rows">
+        ${list.map((v) => `
+          <div class="v-row ${v.redeemedAt ? 'is-spent' : ''}">
+            <div class="v-row-who">
+              <b>${esc(v.name)}</b>
+              <span class="v-row-code">${esc(v.code)}</span>
+              ${v.reinstated ? `<span class="v-row-again" title="Put back by you ${v.reinstated} time${v.reinstated === 1 ? '' : 's'}">put back ×${v.reinstated}</span>` : ''}
+            </div>
+            <div class="v-row-state">${v.redeemedAt ? `Used at ${esc(when(v.redeemedAt))}` : 'Not used yet'}</div>
+            <button class="minor" data-code="${esc(v.code)}" data-do="${v.redeemedAt ? 'reinstateVoucher' : 'redeemVoucher'}">
+              ${v.redeemedAt ? 'Put it back' : 'Mark it used'}
+            </button>
+          </div>`).join('')}
+      </div>
+    </div>`);
+  for (const button of el.querySelectorAll('button[data-code]')) {
+    button.addEventListener('click', () => act(button.dataset.do, { code: button.dataset.code }));
+  }
+  return [el];
+}
+
 function photoPanel(s) {
   const info = s.photos;
   if (!info) return [];

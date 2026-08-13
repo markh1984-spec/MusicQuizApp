@@ -22,7 +22,7 @@ import { Photos, MAX_BYTES } from './src/photos.js';
 import { Session } from './src/session.js';
 import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked, ROUND_TYPES } from './src/quizzes.js';
 import { validateBingoPack, normaliseBingoPack, minimumTracks, CARD_SHAPES, shapeLabel, maxPrizes, stagePlan, stageLabel } from './src/bingo.js';
-import { fullLibrary, listArchive, venuesUsed, loadArchived, serialiseArchive, restoreArchive, saveBingoPack, loadBingoPack, deleteBingoPack, readStats } from './src/library.js';
+import { fullLibrary, listArchive, venuesUsed, rewardsUsed, loadArchived, serialiseArchive, restoreArchive, saveBingoPack, loadBingoPack, deleteBingoPack, readStats } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
 import { generateQuizPack, buildIntroPlaylists, roundPlan, TOPICAL_ROUNDS, TOPICAL_DAYS, topicalNaming } from './src/generate-quiz.js';
 import { importBingoPack } from './src/import-bingo.js';
@@ -1000,6 +1000,9 @@ async function handleGet(req, res, url, route) {
   }
   if (route === '/screen') return serveFile(res, config.publicDir, 'screen.html'), true;
   if (route === '/play') return serveFile(res, config.publicDir, 'play.html'), true;
+  // Where a scanned voucher lands. Open, like /play and the sign-in page:
+  // it hands out nothing on its own, the code in the address has to be right.
+  if (route === '/v') return serveFile(res, config.publicDir, 'voucher.html'), true;
   if (route === '/host') return serveFile(res, config.publicDir, 'host.html'), true;
   if (route === '/editor') return serveFile(res, config.publicDir, 'editor.html'), true;
   if (route === '/console') return serveFile(res, config.publicDir, 'console.html'), true;
@@ -1109,6 +1112,25 @@ async function handleGet(req, res, url, route) {
   }
 
   // ---- the join QR
+  if (route === '/api/voucher' && req.method === 'GET') {
+    const room = roomForPhone(req, url);
+    const code = String(url.searchParams.get('c') || '').toUpperCase();
+    const found = (room.session.engine?.state?.vouchers || {})[code];
+    // Says nothing about the room, the night or any other voucher — a bad code
+    // is simply not a voucher here.
+    if (!found) return sendJson(res, 404, { error: 'That code is not a voucher here.' }), true;
+    return sendJson(res, 200, {
+      code: found.code,
+      name: found.name,
+      reward: found.reward,
+      venue: found.venue,
+      issuedAt: found.issuedAt,
+      redeemedAt: found.redeemedAt,
+      // So the bar can see it has been put back rather than wondering.
+      reinstated: found.reinstated || 0,
+    }), true;
+  }
+
   if (route === '/join-qr.svg') {
     // The code of the room asking for it, so a phone that scans Rob's
     // projector joins Rob's game. The house room has no code and its QR is the
@@ -1462,6 +1484,8 @@ async function handleGet(req, res, url, route) {
        * holes — which is the whole point of having it.
        */
       venues: venuesUsed(roomForHost(req, url).paths.archive),
+      // And what was given away, offered back the same way.
+      rewards: rewardsUsed(roomForHost(req, url).paths.archive),
       // Offered on every pack card, so a night can be dressed up without
       // editing anything.
       looks: LOOKS.map(({ id, label, blurb, season }) => ({ id, label, blurb, season })),
@@ -3130,6 +3154,42 @@ async function handleWrite(req, res, url, route) {
     }
   }
 
+  /*
+   * ---- THE WINNER'S VOUCHER, and the bar redeeming it
+   *
+   * Open, with NO login, because the person scanning it is bar staff who have
+   * never heard of this app. **The code IS the credential** — eight characters
+   * of the join-code alphabet, so no vowels, nothing that spells a word and
+   * none of the pairs people mistype. A wrong one finds nothing rather than a
+   * near miss, exactly like a join code.
+   *
+   * The room comes from `?g=` like every other phone route, so nothing here
+   * takes a room parameter it could be pointed at somebody else's night with.
+   *
+   * THE REDEMPTION IS THE WHOLE DESIGN. A phone screen can be screenshotted
+   * and there is no fixing that on a device nobody controls — so the phone is
+   * not what gets checked. The FIRST scan spends it here, on the server, and
+   * every later one is told when it went. A copy is worthless because a copy
+   * is not what is being verified.
+   */
+  if (route === '/api/voucher/redeem' && req.method === 'POST') {
+    const body = await readJson(req);
+    const room = roomForPhone(req, url, body);
+    const out = room.session.engine?.redeemVoucher
+      ? room.session.engine.redeemVoucher(String(body.code || ''), { by: 'scan' })
+      : { ok: false, reason: 'unknown' };
+    if (!out.ok && out.reason === 'unknown') {
+      return sendJson(res, 404, { error: 'That code is not a voucher here.' }), true;
+    }
+    if (!out.ok && out.reason === 'already') {
+      return sendJson(res, 409, {
+        error: 'Already redeemed.',
+        redeemedAt: out.voucher.redeemedAt,
+      }), true;
+    }
+    return sendJson(res, 200, { ok: true, redeemedAt: out.voucher.redeemedAt }), true;
+  }
+
   // ---- players (open to anyone with the join link)
   if (route === '/api/join' && req.method === 'POST') {
     const body = await readJson(req);
@@ -3757,7 +3817,10 @@ async function handleWrite(req, res, url, route) {
         const teamPlay = Boolean(body.teamPlay);
         // Where tonight is — a name, so it works before venue accounts exist.
         const venue = String(body.venue || '');
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online, teamPlay, venue });
+        // What the winner gets, if anything. Empty on an ordinary night, and
+        // then no voucher is ever issued and no payload gains a field.
+        const reward = String(body.reward || '');
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online, teamPlay, venue, reward });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();

@@ -1422,6 +1422,72 @@ Development-mode app look identical otherwise.
 
 ---
 
+## The winner's prize, on their phone
+
+`state.reward` and `state.vouchers` in `src/engine.js`, the `/v` page, and the
+**The prize** panel on the control view. Set **What they win** at launch — "A
+free drink at the bar", "£50 bar tab" — and when the final scores go up the
+winner's own phone shows a card with a QR on it. The bar scans it with their
+own phone, gets a page saying *"Give them a free drink at the bar"*, and presses
+one button.
+
+**A SCREENSHOT DOES NOT BREAK IT, because the phone is not what gets checked.**
+The first instinct is that a picture of a code can be forwarded, so a voucher
+can never be single-use — that is only true if the PHONE is the thing being
+verified. Redemption happens on the SERVER: the first scan spends it and every
+later one is told when it went. The copy is worthless because the copy is not
+what is being asked.
+
+**It does NOT redeem on load, and that is deliberate.** The winner will scan
+their own code out of curiosity — everybody does — and a page that burns it on
+sight costs them their drink for looking. So the page SHOWS it and the burning
+is a deliberate press, worded at the person behind the bar.
+
+**AND THE HOST CAN PUT IT BACK.** One tap on the control view, for when the bar
+comes over and says it is not working. That is what makes burn-on-first-scan
+safe rather than clever, and it is the same rule that makes `Back` undo a
+reveal: nothing is a dead end, and the override belongs to the person actually
+in the room. The reinstate COUNT shows only above zero, like the wander badge
+staying quiet until three — three means either the bar cannot reach us or
+somebody is working it, and both are worth knowing before a fourth tap.
+
+Six things that are load-bearing, all tested:
+
+- **The code is a CREDENTIAL, so it lives in one payload.** The bar has no
+  login; holding the code is the whole proof. That is the same class as the
+  answer key and it follows the same rule — never in `screenView()` (the
+  projector is pointed at a room), never in anybody else's `playerView()`.
+- **A TEAM gets one voucher between them.** It is issued to the BOARD ROW, not
+  to a player, which is what makes teams free: `leaderboard()` already returns
+  one row per team. Six members and six codes would be six drinks.
+- **A TIE gets one each.** The room watched two names finish level, and an app
+  that quietly picked whichever sorted first would be choosing a winner the
+  projector did not.
+- **Issuing is idempotent.** `Back` off the final and forward again is one
+  press each way and a host will do it; a second code would leave the first one
+  in somebody's hand looking perfectly valid.
+- **An ordinary night gains NOTHING.** No reward means no voucher, no panel and
+  not one new field in any payload. `pub-unchanged.mjs` reports 2,150 identical
+  comparisons with `--ignore reward,voucher,vouchers`.
+- **The name is on the card**, which stops nothing technically and works the
+  way a paper voucher does: the bar can say "you are not Quizteam Aguilera"
+  with no system at all.
+
+**The word is REWARD, never PRIZE**, and the launch field says **What they
+win**. Bingo already has PRIZES — how many lines pay out before the full house
+— and two controls on one card both saying prize, one meaning a count and one a
+thing, is exactly the label collision the sweep now looks for.
+
+**Neither button on the host panel is red.** Nothing there is destructive:
+marking it used is what happens to every voucher, and putting it back undoes
+it. A red "Mark it used" would read as "you cannot undo this", which is the
+opposite of true, on the one control the bar is standing there waiting for.
+
+**Pub wifi is assumed to fail.** The short code is written under the QR, the
+`/v` page tells a failed fetch apart from a bad code in words, and the host can
+mark it used by hand. Same rule as everywhere else here: a network problem is
+never the end of it.
+
 ## Past gigs — the record of somebody's work, and who may take it away
 
 `src/past-gigs.js`, the `/api/past-gigs` routes, and the **Past gigs** tab on

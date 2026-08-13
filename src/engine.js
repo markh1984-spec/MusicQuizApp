@@ -106,6 +106,29 @@ export class Engine {
        */
       venue: '',
       /*
+       * WHAT THE WINNER GETS — free text, set at launch, and empty by default.
+       *
+       * "A free drink at the bar", "£50 bar tab". A fact about tonight like the
+       * venue, so it lives here and survives a restart: a voucher that came
+       * back after a crash saying nothing is worse than no voucher at all.
+       *
+       * `reward` and NOT `prize`, deliberately. Bingo already has PRIZES — how
+       * many lines pay out before the full house — and a second control called
+       * Prize next to that one is the label collision this codebase has just
+       * written a whole sweep category about. On the launch form it is "What
+       * they win", which cannot be mistaken for a count.
+       */
+      reward: '',
+      /*
+       * THE VOUCHERS THEMSELVES, code -> record. Empty on an ordinary night.
+       *
+       * Issued once, when the final scores go up, and only if a reward was set.
+       * In the STATE rather than a file for the same reason the marks are: a
+       * `SIGKILL` at the end of a night must not lose the thing somebody is
+       * about to take to the bar.
+       */
+      vouchers: {},
+      /*
        * TEAM PLAY — several phones, one team, and the score is the AVERAGE.
        *
        * Off unless the host asked for it at launch, exactly like the look and
@@ -739,6 +762,7 @@ export class Engine {
           s.phase = PHASES.FINAL;
           s.finishedAt = this.now();
           s.question = null;
+          this.issueVouchers();
           this.changed();
           return true;
         }
@@ -777,8 +801,93 @@ export class Engine {
     this.state.question = null;
     this.state.scoreboard = false;
     this.state.advert = null;
+    // A night stopped early still has a winner, so it still has a voucher.
+    this.issueVouchers();
     this.changed();
     return true;
+  }
+
+  /**
+   * The winner's voucher, made once when the final scores go up.
+   *
+   * **Nothing happens at all unless a reward was set at launch**, which is the
+   * ordinary night: no reward, no vouchers, not one new field in any payload.
+   *
+   * It is issued to the BOARD ROW rather than to a player, which is what makes
+   * teams free — `leaderboard()` already returns one row per team on a team
+   * night and one per person otherwise, so a team of six gets ONE voucher
+   * between them rather than six drinks.
+   *
+   * A TIE GETS ONE EACH. Two rows can share position 1, the room watched it
+   * happen, and a voucher that silently went to whichever sorted first would
+   * be the app picking a winner the projector did not.
+   *
+   * Idempotent: `back()` off the final and forward again must not mint a
+   * second code for the same winner, which would leave the first one in
+   * somebody's hand looking valid.
+   */
+  issueVouchers() {
+    const s = this.state;
+    if (!s.reward) return;
+    if (!s.vouchers) s.vouchers = {};
+    const already = new Set(Object.values(s.vouchers).map((v) => v.winnerId));
+    for (const row of this.leaderboard()) {
+      if (row.position !== 1) continue;
+      if (already.has(row.id)) continue;
+      let code = newVoucherCode();
+      while (s.vouchers[code]) code = newVoucherCode();
+      s.vouchers[code] = {
+        code,
+        winnerId: row.id,
+        name: row.name,
+        reward: s.reward,
+        venue: s.venue || '',
+        issuedAt: this.now(),
+        redeemedAt: null,
+        reinstated: 0,
+        history: [],
+      };
+    }
+  }
+
+  /**
+   * Spend it. Returns the voucher, or why not.
+   *
+   * **The FIRST scan wins and every later one is told so**, which is the whole
+   * reason a screenshot does not break this: the phone is not what gets
+   * checked, the server is. `by` is who did it — the bar scanning, or the host
+   * doing it by hand when the bar's phone cannot reach us.
+   */
+  redeemVoucher(code, { by = 'scan' } = {}) {
+    const v = (this.state.vouchers || {})[String(code || '').toUpperCase()];
+    if (!v) return { ok: false, reason: 'unknown' };
+    if (v.redeemedAt) return { ok: false, reason: 'already', voucher: v };
+    v.redeemedAt = this.now();
+    v.history.push({ what: 'redeemed', by, at: v.redeemedAt });
+    this.changed();
+    return { ok: true, voucher: v };
+  }
+
+  /**
+   * Put it back, which only the HOST can do.
+   *
+   * The bar comes over and says it is not working; one tap and it is live
+   * again. Nothing in this app is a dead end, and the override belongs to the
+   * person actually in the room — the same rule that makes Back undo a reveal.
+   *
+   * The count is kept rather than the flag simply being cleared, because "this
+   * one has been reinstated three times" is the thing worth knowing before you
+   * do it a fourth time.
+   */
+  reinstateVoucher(code) {
+    const v = (this.state.vouchers || {})[String(code || '').toUpperCase()];
+    if (!v) return { ok: false, reason: 'unknown' };
+    if (!v.redeemedAt) return { ok: false, reason: 'not_redeemed', voucher: v };
+    v.history.push({ what: 'reinstated', by: 'host', at: this.now(), was: v.redeemedAt });
+    v.redeemedAt = null;
+    v.reinstated += 1;
+    this.changed();
+    return { ok: true, voucher: v };
   }
 
   /** Step backwards. Useful when the host overshoots in front of a room. */
@@ -1505,6 +1614,33 @@ export class Engine {
       view.leaderboard = this.leaderboard().slice(0, 10).map(publicPlayer);
     }
 
+    /*
+     * THE WINNER'S VOUCHER, AND ONLY THEIRS.
+     *
+     * The code is a CREDENTIAL — the bar has no login, so holding it is the
+     * whole proof — which makes this the same class of thing as the answer key
+     * and it follows the same rule: built field by field into ONE role's
+     * payload. It is never in `screenView()`, because the projector is pointed
+     * at a room and a code on it is a code sixty people have; and never in
+     * anybody else's `playerView()`.
+     *
+     * Matched on the BOARD ROW, so on a team night every member of the winning
+     * team sees the one code they share.
+     */
+    if (s.phase === PHASES.FINAL && s.vouchers) {
+      const mine = Object.values(s.vouchers).find((v) => v.winnerId === this.boardIdFor(playerId));
+      if (mine) {
+        view.voucher = {
+          code: mine.code,
+          name: mine.name,
+          reward: mine.reward,
+          venue: mine.venue,
+          issuedAt: mine.issuedAt,
+          redeemedAt: mine.redeemedAt,
+        };
+      }
+    }
+
     return view;
   }
 
@@ -1601,6 +1737,17 @@ export class Engine {
     }
     if (s.phase === PHASES.RULES) view.rules = this.rulesView();
 
+    /*
+     * THE VOUCHERS, host only, and the whole record of each — who won it, the
+     * code, whether it has been spent, and every redeem and reinstate with a
+     * time on it.
+     *
+     * Not on the projector and not on anybody else's phone: the code is the
+     * credential. Empty on every night that set no reward, so the panel does
+     * not exist rather than sitting there saying nothing.
+     */
+    view.vouchers = Object.values(s.vouchers || {});
+
     if (q && round) {
       view.question = {
         id: q.id,
@@ -1688,6 +1835,10 @@ export class Engine {
       // Where it happened. The whole reason a night is worth filing: a Past
       // gigs page that cannot say WHERE is a list of dates.
       venue: this.state.venue || '',
+      // What was on offer and who has taken it. Part of the night's record, so
+      // a queried bar tab has an answer rather than the quizmaster's word.
+      reward: this.state.reward || '',
+      vouchers: Object.values(this.state.vouchers || {}),
       startedAt: this.state.startedAt,
       finishedAt: this.state.finishedAt,
       leaderboard: this.leaderboard().map((p) => ({
@@ -1815,6 +1966,26 @@ export function newId() {
  * Issued at join, stored on the player, kept in the state file so it survives
  * a crash, and never in any payload but that player's own join reply.
  */
+/**
+ * A voucher code — short enough to read out, long enough not to be guessed.
+ *
+ * The same alphabet as a join code: no vowels, so it cannot spell a word, and
+ * none of O/0/I/1/L, which are the pairs people mistype off a screen. Eight
+ * characters of a 28-letter alphabet is about 3.8 x 10^11 — and unlike a join
+ * code this one is a CREDENTIAL, because the bar has no login and holding the
+ * code is the whole proof. A wrong code finds nothing rather than a near miss,
+ * exactly like a join code.
+ */
+const VOUCHER_ALPHABET = '23456789BCDFGHJKMNPQRSTVWXYZ';
+
+export function newVoucherCode(length = 8) {
+  const bytes = new Uint8Array(length);
+  globalThis.crypto.getRandomValues(bytes);
+  let out = '';
+  for (let i = 0; i < length; i++) out += VOUCHER_ALPHABET[bytes[i] % VOUCHER_ALPHABET.length];
+  return out;
+}
+
 export function newToken() {
   const bytes = new Uint8Array(24);
   globalThis.crypto.getRandomValues(bytes);

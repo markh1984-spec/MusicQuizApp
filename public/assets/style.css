@@ -4620,3 +4620,86 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   .mode-chip { padding: 6px 10px; font-size: var(--fs-tag); }
   .mode-chip .mc-how { display: none; }
 }
+
+/* ---- the prize, on the bar's phone
+ *
+ * A page a stranger opens once, standing up, in a dark pub, with somebody
+ * waiting in front of them. So it is one card, the reward is the biggest thing
+ * on it, and there is exactly one button. Nothing here is a navigation surface
+ * and there is deliberately no menu: this is not a page anybody comes back to.
+ */
+body.voucher { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 18px; }
+.v-wrap { width: 100%; max-width: 420px; }
+.v-card {
+  background: var(--panel); border: 1px solid var(--panel-line);
+  border-radius: var(--r-card); padding: 26px 22px; text-align: center;
+}
+.v-flag {
+  display: inline-block; margin-bottom: 16px;
+  padding: 6px 14px; border-radius: var(--r-pill);
+  font-size: var(--fs-tag); font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase;
+  border: 1px solid var(--panel-line); color: var(--ink-dim);
+}
+.v-flag.v-good { color: var(--good); border-color: rgba(47, 224, 122, 0.55); background: rgba(47, 224, 122, 0.12); }
+.v-lead { margin: 0 0 4px; font-size: var(--fs-body); color: var(--ink-dim); font-weight: 700; }
+/* Not on the type ladder on purpose: this is display type, one per surface,
+   like the countdown and the room code. It has to be readable at arm's length
+   by somebody who is not looking for it. */
+.v-big { margin: 0 0 10px; font-size: 30px; line-height: 1.15; font-weight: 900; }
+.v-who { margin: 0 0 20px; font-size: var(--fs-sub); font-weight: 800; color: var(--gold); }
+/* FILL MEANS COMMITMENT, and this is the only commitment on the page — so it
+   takes the app's own gradient, the way Launch does. There is nothing here for
+   it to compete with: the bar sees one screen with one button on it. `.go` is
+   scoped to the console, so it is written out rather than borrowed. */
+.v-go {
+  width: 100%; padding: 18px; font-size: var(--fs-sub); font-weight: 900;
+  border: none; border-radius: var(--r-card); cursor: pointer;
+  color: #12000c; background: linear-gradient(120deg, var(--hot), var(--hot-2));
+  font-family: inherit; -webkit-tap-highlight-color: transparent;
+}
+.v-go:disabled { opacity: 0.5; }
+.v-note { margin: 12px 0 0; font-size: var(--fs-note); color: var(--ink-dim); }
+.v-note.v-bad { color: var(--bad); }
+.v-foot { margin: 18px 0 0; font-size: var(--fs-mini); color: var(--ink-dim); opacity: 0.7; }
+/* Spent: the whole card goes quiet, so it cannot be mistaken at a glance for
+   one that is still good. */
+.v-spent .v-big { color: var(--ink-dim); text-decoration: line-through; }
+.v-spent .v-who { color: var(--ink-dim); }
+
+/* The winner's own card, on their own phone. The QR is the biggest thing on
+   it because the whole interaction is holding the phone up to be scanned. */
+.win-card {
+  background: var(--panel); border: 1px solid rgba(255, 210, 63, 0.5);
+  border-radius: var(--r-card); padding: 18px; text-align: center;
+}
+.win-card .sub {
+  font-size: var(--fs-tag); font-weight: 900; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--gold);
+}
+.win-what { font-size: var(--fs-sub); font-weight: 900; margin: 6px 0 14px; }
+.win-qr {
+  width: 100%; max-width: 220px; aspect-ratio: 1; display: block; margin: 0 auto;
+  border-radius: 10px; background: #fff; padding: 8px;
+}
+.win-code {
+  margin-top: 10px; font-size: var(--fs-sub); font-weight: 900;
+  letter-spacing: 0.22em; color: var(--gold);
+}
+.win-spent { border-color: var(--panel-line); }
+.win-spent .sub, .win-spent .win-what { color: var(--ink-dim); }
+.win-spent .win-what { text-decoration: line-through; }
+
+/* The prize panel on the control view. One row per voucher, and the row goes
+   quiet once it is spent so a glance tells you which are still out there. */
+.v-rows { display: grid; gap: 8px; margin-top: 10px; }
+.v-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 12px; border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05); border: 1px solid var(--panel-line);
+}
+.v-row-who { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.v-row-code { font-size: var(--fs-note); letter-spacing: 0.18em; color: var(--gold); font-weight: 800; }
+.v-row-again { font-size: var(--fs-tag); font-weight: 900; color: var(--gold); text-transform: uppercase; letter-spacing: 0.1em; }
+.v-row-state { font-size: var(--fs-note); color: var(--ink-dim); }
+.v-row.is-spent { opacity: 0.7; }
+.v-row.is-spent .v-row-code { color: var(--ink-dim); }
