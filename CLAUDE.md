@@ -438,12 +438,24 @@ filled: a filled red Delete is as loud as Launch, next to Launch, on a card
 somebody is tapping in a dark pub. It is also why there is only ever one filled
 gradient on a screen — the moment there are two, neither is the thing to press.
 
-**A hairline gradient on every dropdown was proposed and turned down.** It works
-on the photo card because that is ONE card framing an explanation; on furniture
-you use fifty times a night it is decoration that competes with Launch. **A text
-box and a dropdown must look identical** — same height, fill, border, radius —
-which is also why the venue box looked wrong beside three styled selects: it was
-a bare `<input>` with no rule at all.
+**A text box and a dropdown look identical** — same height, fill, border,
+radius — which is why the venue box looked wrong beside three styled selects:
+it was a bare `<input>` with no rule at all.
+
+**With ONE deliberate difference: the dropdown's chevron sits on a small block
+of the account's own gradient.** Taken off once, on the reasoning that three
+gradient tabs beside a Launch button compete with it, and the host looked at
+both and put it back — *"adds a splash of colour but is obviously different
+from the other button that has a full gradient"*. He is right, and the reason
+is SIZE: a 27px tab and a full-width filled button are not mistakable for each
+other, where two full-width filled buttons would be. **It is also not
+decoration — it is the affordance that says "this opens"**, which is exactly
+where the two controls should differ, because it is where they behave
+differently.
+
+**A hairline gradient on every dropdown was a separate proposal and was turned
+down.** That works on the photo card because it is ONE card framing an
+explanation; as an outline round every field it is decoration with no job.
 
 ### A SCHEME CHANGES PERSONALITY, NEVER MEANING
 

@@ -2066,27 +2066,36 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .editor select {
   appearance: none; -webkit-appearance: none;
   color-scheme: dark;
-  padding: 8px 30px 8px 11px;
+  padding: 8px 34px 8px 11px;
   border-radius: var(--r-field);
   font-family: inherit; font-size: var(--fs-note); font-weight: 800;
   color: var(--ink);
   background-color: rgba(255, 255, 255, 0.07);
   /* the chevron, then a gradient block behind it on the right-hand end */
   /*
-   * A DRAWN CHEVRON AND NOTHING ELSE.
+   * THE CHEVRON SITS ON A SMALL BLOCK OF THE ACCOUNT'S OWN GRADIENT — and it
+   * is the one deliberate difference between a dropdown and a text box.
    *
-   * This used to sit on a block of the app's own gradient, which read as
-   * "part of the app" when a select was the only styled thing on a card. It
-   * is not that any more: under the GUI rules a dropdown and a text box are
-   * the same control — "choose something" — and both are furniture around the
-   * decision rather than the decision. Three gradient tabs beside a Launch
-   * button is three things competing with the one thing to press.
+   * Taken off once, on the reasoning that a dropdown is furniture and three
+   * gradient tabs beside a Launch button compete with it. The host looked at
+   * both and put it back: *"the dropdowns with the small gradient where the
+   * arrow is is perfect — adds a splash of colour but is obviously different
+   * from the other button that has a full gradient."* He is right, and the
+   * reason it does not compete is SIZE: a 27px tab and a full-width filled
+   * button are not mistakable for one another, where two full-width filled
+   * buttons would be.
+   *
+   * It is also not decoration. **It is the affordance that says "this
+   * opens"** — which is exactly where a dropdown and a text box should differ,
+   * because it is where they behave differently. Everything else about them
+   * (height, fill, border, radius) stays identical.
    */
   background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23a6a8bb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 11px 8px;
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%2312000c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"),
+    linear-gradient(120deg, var(--hot), var(--hot-2));
+  background-repeat: no-repeat, no-repeat;
+  background-position: right 8px center, right center;
+  background-size: 11px 8px, 27px 100%;
   border: 1px solid var(--panel-line);
   /* Wide enough that a short option like "4×4" is not squeezed up against the
      chevron block. */
