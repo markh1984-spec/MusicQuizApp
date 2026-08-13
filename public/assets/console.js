@@ -1441,7 +1441,7 @@ function firstOwnerPanel() {
         <input class="ow-name" placeholder="Your name" autocomplete="off">
         <input class="ow-email" type="email" placeholder="you@example.com" autocomplete="off">
         <input class="ow-pass" type="password" placeholder="Password (10+ characters)" autocomplete="new-password">
-        <button class="go ow-make">Create the owner account</button>
+        <button class="role-make ow-make">Create the owner account</button>
       </div>
       <div class="tiny ow-said"></div>
     </div>`);
@@ -1686,7 +1686,7 @@ function quizGeneratePanel(gen) {
       <h3>New quiz</h3>
       <div class="gen-row">
         <input type="text" id="qTheme" placeholder="A theme — the 1990s, Motown, Christmas number ones, Britpop…" autocomplete="off">
-        <button class="make" id="qGo" ${gen.claude ? '' : 'disabled'}>Write it</button>
+        <button class="role-make" id="qGo" ${gen.claude ? '' : 'disabled'}>Write it</button>
       </div>
       <div class="gen-rounds">
         ${QUIZ_ROUNDS.map(([id, label, count, checked, hint]) => `
@@ -1941,7 +1941,7 @@ function importPanel(gen, { own = false } = {}) {
       <textarea id="impText" rows="7" placeholder="One per line — any of these work:&#10;&#10;Billie Jean — Michael Jackson&#10;1. Take On Me - a-ha&#10;Blue Monday by New Order"></textarea>
       <div class="gen-row">
         <input type="text" id="impUrl" placeholder="…or a Spotify playlist link instead" autocomplete="off">
-        <button class="make" id="impGo">Import</button>
+        <button class="role-make" id="impGo">Import</button>
       </div>
       <div class="gen-opts">
         <label>Card <select id="impSize"><option value="3">3×3</option><option value="4" selected>4×4</option><option value="5">5×5</option></select></label>
@@ -2092,7 +2092,7 @@ function generatePanel(gen) {
       <h3>New bingo game</h3>
       <div class="gen-row">
         <input type="text" id="theme" placeholder="A theme — 1990s indie, Motown, Christmas number ones…" autocomplete="off">
-        <button class="make" id="genGo" ${gen.claude ? '' : 'disabled'}>Build it</button>
+        <button class="role-make" id="genGo" ${gen.claude ? '' : 'disabled'}>Build it</button>
       </div>
       <div class="gen-opts">
         <label>Tracks <input type="number" id="genCount" value="40" min="16" max="90" style="width:64px"></label>
@@ -2819,7 +2819,7 @@ function picturePanel(pack) {
       <div class="tiny style-hint"></div>
       <div class="row" style="margin-top:8px">
         <button class="minor draw">Draw stand-ins</button>
-        <button class="go make">Make real portraits</button>
+        <button class="role-make make">Make real portraits</button>
         <label class="tiny redo"><input type="checkbox" class="force"> replace ones already there</label>
       </div>
       <div class="tiny note"></div>
@@ -2986,7 +2986,7 @@ function playlistPanel(pack) {
     <div class="panel pics">
       <div class="tiny status">Builds a Spotify playlist in question order — track one is question one.</div>
       <div class="row" style="margin-top:8px">
-        <button class="go build">Build the playlist</button>
+        <button class="role-make build">Build the playlist</button>
       </div>
       <div class="tiny note"></div>
       <details class="pic-lib" hidden>
@@ -3588,7 +3588,7 @@ async function preview(kind, pack) {
             <div class="tiny" id="sheetSub">Loading…</div>
           </div>
           <div class="sheet-actions">
-            <button class="make" id="sheetSave" hidden>Save</button>
+            <button class="role-make" id="sheetSave" hidden>Save</button>
             ${mine ? `<a class="minor" href="${linkTo('/editor')}">Edit questions</a>` : ''}
             <button class="minor" id="sheetClose">Close</button>
           </div>
@@ -4134,7 +4134,7 @@ function advertsSection(sets) {
           <h2>Advert slides</h2>
           <div class="tiny">One set per venue. Put one up from your control view, between rounds.</div>
         </div>
-        ${mine ? '<button class="go new-set">New set</button>' : ''}
+        ${mine ? '<button class="role-make new-set">New set</button>' : ''}
       </div>
       <div class="pack-grid"></div>
     </div>`);
@@ -4186,7 +4186,7 @@ function editAdvertSet(id) {
             <input class="tiny ad-venue-in" id="adVenue" placeholder="Venue — e.g. The Crown, Chelmsford">
           </div>
           <div class="row">
-            <button class="make" id="adSave">Save</button>
+            <button class="role-make" id="adSave">Save</button>
             <button class="minor" id="adClose">Close</button>
           </div>
         </div>
@@ -4319,7 +4319,7 @@ function invoicesSection() {
         <div class="row">
           <button class="minor who-to">Customers</button>
           <button class="minor my-details">Your details</button>
-          <button class="go new-invoice">New invoice</button>
+          <button class="role-make new-invoice">New invoice</button>
         </div>
       </div>
       <div class="inv-warn"></div>
@@ -4482,7 +4482,7 @@ function sheet(title, buildBody, onSave, { saveLabel = 'Save' } = {}) {
         <div class="sheet-head">
           <div style="min-width:0;flex:1 1 auto"><b>${esc(title)}</b><div class="tiny inv-sheet-note"></div></div>
           <div class="sheet-actions">
-            <button class="go inv-save">${esc(saveLabel)}</button>
+            <button class="role-make inv-save">${esc(saveLabel)}</button>
             <button class="minor inv-close">Close</button>
           </div>
         </div>

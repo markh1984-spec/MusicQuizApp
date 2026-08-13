@@ -1013,7 +1013,7 @@ function peopleTab() {
             ${subscribers.filter((a) => a.comped).length} on the house ·
             tap a name for their room, their messages and the support log</div>
         </div>
-        <div class="row"><button class="go add">Add a quizmaster</button></div>
+        <div class="row"><button class="role-make add">Add a quizmaster</button></div>
       </div>
       <div class="subs"></div>
     </div>`));

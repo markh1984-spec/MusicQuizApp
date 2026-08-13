@@ -4538,15 +4538,32 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .danger:hover, button.danger:hover, .minor.danger:hover,
 .pack-del:hover { background: rgba(255, 77, 94, 0.12); }
 
-/* MAKE SOMETHING — filled green. Writing, generating, importing: the actions
+/* MAKE SOMETHING — filled green.
+ *
+ * `role-make`, NOT `make`: `.make` was already taken as a JS hook for the
+ * "Make real portraits" button (`querySelector('.make')`), so a role class of
+ * that name would have styled a button by accident and, worse, put a second
+ * candidate under a selector that expects one. Role classes are prefixed for
+ * exactly that reason — found by grepping before trusting the name. Writing, generating, importing: the actions
  * that produce content rather than run a night. Green because it is NOT the
  * night, and the night owns the account's own gradient. */
-.make {
-  border: 0;
+.role-make {
   border-radius: var(--r-field);
-  background: linear-gradient(120deg, var(--good), var(--gold));
-  color: #04210f;
+  /*
+   * DEEPER THAN `--good` ITSELF, and that is the whole tuning.
+   *
+   * `--good` into `--gold` at full saturation is a highlighter: it came out
+   * LOUDER than Launch, which is the opposite of what this role is for. Green
+   * has to say "this makes something" while leaving the night the loudest
+   * thing on the screen, so the fill is darkened and the text is the bright
+   * green — the same trick the destructive button uses, and for the same
+   * reason.
+   */
+  background: linear-gradient(120deg, rgba(47, 224, 122, 0.18), rgba(255, 210, 63, 0.14));
+  border: 1px solid rgba(47, 224, 122, 0.55);
+  color: var(--good);
   font-weight: 900;
   cursor: pointer;
 }
-.make:disabled { opacity: 0.45; cursor: default; }
+.role-make:hover { background: linear-gradient(120deg, rgba(47, 224, 122, 0.28), rgba(255, 210, 63, 0.2)); }
+.role-make:disabled { opacity: 0.45; cursor: default; }
