@@ -300,7 +300,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, look = '', online = false } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     const pack = LAUNCHERS[kind].load(this.config, packId, this.paths);
     const normalised = kind === 'bingo' ? normaliseBingoPack(pack, packId) : pack;
@@ -345,6 +345,12 @@ export class Session {
      * read off the pack and never written back to it.
      */
     this.engine.state.online = Boolean(online);
+    /*
+     * Several phones, one team. Off unless asked for at launch, and in the
+     * state for the same reason everything else here is — a restart must not
+     * bring the night back as individuals with every team gone.
+     */
+    this.engine.state.teamPlay = Boolean(teamPlay);
 
     recordLaunch(this.config.dataDir, kind, normalised.id, this.now(), this.roomId);
     this.engine.changed();
@@ -462,6 +468,10 @@ export class Session {
        * whoever fancied it. One tap on the host's own player list.
        */
       organiser: () => this.engine.setOrganiser(String(body.playerId), body.on !== false),
+      // Putting somebody on a team from the host's own list — for the room
+      // that turns up already knowing who is sitting with whom.
+      setTeam: () => this.engine.joinTeam(String(body.playerId), body.teamId ? String(body.teamId) : null),
+      makeTeam: () => this.engine.makeTeam(String(body.name || '')),
       adjustScore: () => this.engine.adjustScore(String(body.playerId), Number(body.delta)),
       resetScores: () => this.engine.resetScores(),
       // Stop here and show the winner. Bingo has always had this; the quiz
@@ -569,6 +579,23 @@ export class Session {
      * a method that does not exist. It is the same shape of addition when it
      * wants one.
      */
+    /*
+     * Picking a team is a PLAYER action, unlike being made an organiser.
+     *
+     * A team is who you are sitting with and the person who knows that is the
+     * person holding the phone — asking the host to assign sixty people is the
+     * opposite of "the common job is the fast one". The engine refuses it
+     * mid-question so nobody can watch the tally and hop into whichever team
+     * is doing well.
+     */
+    if (this.kind === 'quiz' && action === 'team') {
+      if (body.name) {
+        const made = this.engine.makeTeam(String(body.name));
+        if (!made.ok) return made;
+        return this.engine.joinTeam(String(body.playerId || ''), made.id);
+      }
+      return this.engine.joinTeam(String(body.playerId || ''), body.teamId ? String(body.teamId) : null);
+    }
     if (this.kind === 'quiz' && action === 'say') {
       return this.engine.say(String(body.playerId || ''), String(body.room || ''), body.text);
     }

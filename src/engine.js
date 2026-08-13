@@ -22,7 +22,7 @@
  */
 
 import {
-  scoreAnswer, scoreMultiAnswer, responseSeconds, rankPlayers,
+  scoreAnswer, scoreMultiAnswer, responseSeconds, rankPlayers, teamScores,
   POINTS_CORRECT, POINTS_PER_WHOLE_SECOND, POINTS_FIRST_CORRECT,
 } from './scoring.js';
 import { ALPHABET, answerLetter, answerLetterIndex, revealMode } from './quizzes.js';
@@ -89,6 +89,17 @@ export class Engine {
       online: false,
       // roomId -> messages. Only ever written on an online night; see `say()`.
       chat: {},
+      /*
+       * TEAM PLAY — several phones, one team, and the score is the AVERAGE.
+       *
+       * Off unless the host asked for it at launch, exactly like the look and
+       * the card shape, so an ordinary night has an empty `teams` and takes
+       * every code path it always did. With no teams the leaderboard is the
+       * same function it has always been, which is what makes this safe to
+       * ship the night before a gig.
+       */
+      teamPlay: false,
+      teams: {},   // id -> { id, name, createdAt }
       players: {}, // id -> player
       answers: {}, // "roundIndex:questionIndex" -> { playerId -> answer }
       history: [], // one entry per completed question, for the recap
@@ -435,8 +446,94 @@ export class Engine {
    * so there is no way to leave a stale board behind by forgetting something.
    */
   leaderboard() {
-    if (!this._board) this._board = rankPlayers(this.playerList());
+    if (this._board) return this._board;
+    /*
+     * WITHOUT TEAM PLAY THIS IS THE FUNCTION IT HAS ALWAYS BEEN, character for
+     * character, and that is the point rather than a nicety: an ordinary pub
+     * night must not take a new code path because a feature it is not using
+     * exists. `scripts/pub-unchanged.mjs` is what proves it.
+     */
+    if (!this.state.teamPlay) {
+      this._board = rankPlayers(this.playerList());
+      return this._board;
+    }
+    // A player on no team is a team of one, so the board is one kind of row.
+    this._board = rankPlayers(teamScores(this.playerList(), this.state.teams || {}));
     return this._board;
+  }
+
+  /**
+   * Which row on the board is THIS player's — their team's, if they are on one.
+   *
+   * The phone says "3rd of 12", and on a team night the honest answer is where
+   * the TEAM is standing. A player's own position among individuals would be a
+   * different number from the one on the projector, which is the exact fault
+   * the two-screens rule exists to prevent.
+   */
+  boardIdFor(playerId) {
+    const player = this.state.players[playerId];
+    if (!player) return playerId;
+    return this.state.teamPlay && player.teamId && this.state.teams?.[player.teamId]
+      ? `team:${player.teamId}`
+      : playerId;
+  }
+
+  /**
+   * Make a team. Returns its id.
+   *
+   * Named by whoever starts it, tidied exactly like a team NAME already is —
+   * control characters out, 28 characters, no word filtering. It goes on the
+   * projector, and the rule about that has not changed.
+   */
+  makeTeam(name) {
+    // Not on a night that is not a team night. Without this a phone could
+    // write teams into the state of an ordinary quiz — harmless on the board,
+    // which ignores them, and still the kind of thing that turns up in an
+    // archive months later with nobody able to account for it.
+    if (!this.state.teamPlay) return { ok: false, reason: 'not_team_play' };
+    const clean = String(name || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 28);
+    if (!clean) return { ok: false, reason: 'no_name' };
+    this.state.teams = this.state.teams || {};
+    const existing = Object.values(this.state.teams).find((t) => t.name.toLowerCase() === clean.toLowerCase());
+    // Two teams with one name is the same problem two players with one name
+    // has, and here it is worse: you would not know which one to join.
+    if (existing) return { ok: true, id: existing.id, already: true };
+    const id = `t${Object.keys(this.state.teams).length + 1}-${this.now().toString(36)}`;
+    this.state.teams[id] = { id, name: clean, createdAt: this.now() };
+    this.changed();
+    return { ok: true, id };
+  }
+
+  /** Join a team, or leave one by passing nothing. */
+  joinTeam(playerId, teamId) {
+    if (!this.state.teamPlay) return { ok: false, reason: 'not_team_play' };
+    const player = this.state.players[playerId];
+    if (!player) return { ok: false, reason: 'no_player' };
+    if (teamId && !this.state.teams?.[teamId]) return { ok: false, reason: 'no_team' };
+    /*
+     * NOT MID-QUESTION.
+     *
+     * Otherwise somebody watches the tally, sees which team is doing well and
+     * hops into it before the reveal — or worse, leaves a team just before it
+     * scores badly. A team is who you were sitting with, so it is settled
+     * between questions.
+     */
+    if (this.state.phase === PHASES.QUESTION && !this.state.question?.closed) {
+      return { ok: false, reason: 'mid_question' };
+    }
+    player.teamId = teamId || null;
+    this.changed();
+    return { ok: true };
+  }
+
+  /** The teams, with how many are in each. For the phone's picker. */
+  teamList() {
+    const teams = Object.values(this.state.teams || {});
+    const counts = new Map();
+    for (const p of this.playerList()) {
+      if (p.teamId) counts.set(p.teamId, (counts.get(p.teamId) || 0) + 1);
+    }
+    return teams.map((t) => ({ id: t.id, name: t.name, size: counts.get(t.id) || 0 }));
   }
 
   /**
@@ -450,7 +547,9 @@ export class Engine {
     if (!this._positions) {
       this._positions = new Map(this.leaderboard().map((p) => [p.id, p.position]));
     }
-    return this._positions.get(playerId) ?? null;
+    // On a team night the row is the TEAM's, so the phone and the projector
+    // report the same standing. `boardIdFor` is the one place that maps it.
+    return this._positions.get(this.boardIdFor(playerId)) ?? null;
   }
 
   /** How many are playing. Free once the board is built. */
@@ -1269,6 +1368,14 @@ export class Engine {
        * twenty seconds anyway, and a team's messages are not.
        */
       chat: s.online ? chat.visibleTo(s.chat, player) : {},
+      /*
+       * Team play, and the list to pick from.
+       *
+       * Sent only when it is ON, so an ordinary night's payload does not grow
+       * two empty fields — and `teamList()` is a handful of names and counts,
+       * never anything about who answered what, which belongs to the host.
+       */
+      ...(s.teamPlay ? { teamPlay: true, teams: this.teamList(), yourTeam: player?.teamId || null } : {}),
       you: player
         ? {
             id: player.id,
@@ -1464,6 +1571,7 @@ export class Engine {
      * organisers' room and has to reach the person holding the microphone.
      */
     view.chat = s.online ? (s.chat || {}) : {};
+    if (s.teamPlay) view.teams = this.teamList();
     view.msRemaining = this.msRemaining();
     view.clock = s.question ? { ...s.question } : null;
     view.scoreboard = this.scoreboardState();

@@ -102,3 +102,52 @@ export function rankPlayers(players) {
   }
   return ranked;
 }
+
+/**
+ * Teams: several phones, one team, and the score is the AVERAGE.
+ *
+ * The host's own design and the averaging is the whole point of it: **a big
+ * team of chancers must not be able to beat a small team who know their
+ * stuff.** Add the scores up instead and six people guessing beats two people
+ * who are right, which is the opposite of a quiz. Averaging also makes a
+ * traditional pub team work with no pens and no marking — everybody answers on
+ * their own phone and the team is judged on how well it collectively knew.
+ *
+ * A member who answers nothing is a ZERO in the mean rather than being skipped,
+ * and that is deliberate for the same reason: otherwise a team could carry
+ * passengers for free, and the incentive would be to recruit rather than to
+ * know things. It also matches what a paper team does — one sheet, everybody's
+ * contribution folded into it.
+ *
+ * `totalResponseMs` is SUMMED rather than averaged, because it is only ever a
+ * tie-break: between two teams on the same average, the one that answered
+ * faster wins, and summing and averaging order identically for teams of the
+ * same size while summing is the kinder answer for a smaller team.
+ */
+export function teamScores(players, teams) {
+  const rows = [];
+  const byTeam = new Map();
+  for (const p of players) {
+    if (!p.teamId || !teams[p.teamId]) { rows.push({ ...p, size: 1 }); continue; }
+    const bucket = byTeam.get(p.teamId) || [];
+    bucket.push(p);
+    byTeam.set(p.teamId, bucket);
+  }
+  for (const [id, members] of byTeam) {
+    const total = members.reduce((n, p) => n + (p.score || 0), 0);
+    rows.push({
+      id: `team:${id}`,
+      teamId: id,
+      name: teams[id].name,
+      // Rounded, because a scoreboard showing 183.3333 in a hall is a
+      // scoreboard nobody trusts. Rounded HERE so every screen shows the one
+      // number rather than each rounding it its own way.
+      score: Math.round(total / members.length),
+      size: members.length,
+      totalResponseMs: members.reduce((n, p) => n + (p.totalResponseMs || 0), 0),
+      answeredCount: members.reduce((n, p) => n + (p.answeredCount || 0), 0),
+      members: members.map((p) => ({ key: p.faceKey, name: p.name, score: p.score || 0 })),
+    });
+  }
+  return rows;
+}

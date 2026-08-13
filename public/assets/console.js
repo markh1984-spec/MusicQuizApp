@@ -2396,6 +2396,9 @@ function launchBar() {
         <label class="pack-shape">Where
           <select class="where-pick">${whereOptions()}</select>
         </label>
+        <label class="pack-shape">Playing
+          <select class="play-pick">${playingOptions()}</select>
+        </label>
       </div>
       <button class="go lb-go">Launch ${esc(pack.title)}</button>
       </div>`));
@@ -2424,6 +2427,7 @@ function launchBar() {
         prizes: Number(prizePick?.value) || 0,
         look: chosen.querySelector('.look-pick')?.value || '',
         online: chosen.querySelector('.where-pick')?.value === 'online',
+        teamPlay: chosen.querySelector('.play-pick')?.value === 'teams',
       }, button);
     });
   }
@@ -3126,6 +3130,25 @@ function whereOptions() {
     <option value="online">Online — the question goes on their phones</option>`;
 }
 
+/**
+ * One phone each, or several phones to a team.
+ *
+ * Beside Where and Look, and the same kind of decision: the room that turns up
+ * tonight is either a set of individuals or a set of tables, and the pack has
+ * no idea which.
+ *
+ * **Teams are scored on the AVERAGE**, which is the whole reason it works
+ * without pens: six chancers cannot out-score two people who know their stuff,
+ * because a member who answers nothing is a zero in the mean. That is worth
+ * saying on the control itself rather than leaving to be discovered on a
+ * scoreboard in front of a room.
+ */
+function playingOptions() {
+  return `
+    <option value="solo" selected>One phone each</option>
+    <option value="teams">Teams — several phones, scores averaged</option>`;
+}
+
 /** Can this account actually RUN this game? An owner writes packs, never plays. */
 const canRun = (kind) => can(kind === 'bingo' ? FEATURES.BINGO : FEATURES.QUIZ);
 
@@ -3192,6 +3215,9 @@ function packCard(kind, pack) {
         </label>
         <label class="pack-shape">Where
           <select class="where-pick">${whereOptions()}</select>
+        </label>
+        <label class="pack-shape">Playing
+          <select class="play-pick">${playingOptions()}</select>
         </label>`}
       <div class="pack-actions">
         <button class="pack-read" title="Read it through">Read</button>
@@ -3395,7 +3421,8 @@ function packCard(kind, pack) {
     const prizes = Number(el.querySelector('.prize-pick')?.value) || 0;
     const look = el.querySelector('.look-pick')?.value || '';
     const online = el.querySelector('.where-pick')?.value === 'online';
-    await doLaunch(kind, pack.id, { shape, prizes, look, online }, button);
+    const teamPlay = el.querySelector('.play-pick')?.value === 'teams';
+    await doLaunch(kind, pack.id, { shape, prizes, look, online, teamPlay }, button);
   });
   return el;
 }
@@ -3407,10 +3434,10 @@ function packCard(kind, pack) {
  * there must not be two ways OUT, or the 409-and-confirm dance gets fixed in
  * one of them and quietly rots in the other.
  */
-async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', online = false }, button) {
+async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false }, button) {
     const send = (replace) => postJson(
       '/api/host/launch',
-      { game: kind, packId, shape, prizes, look, online, ...(replace ? { replace: true } : {}) },
+      { game: kind, packId, shape, prizes, look, online, teamPlay, ...(replace ? { replace: true } : {}) },
       { 'X-Host-Key': hostKey },
     );
     const back = () => {

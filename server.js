@@ -3184,7 +3184,7 @@ async function handleWrite(req, res, url, route) {
   // What a phone is allowed to do: answer a question, mark a bingo square and
   // call house, and — on an online night — say something in one of its own
   // rooms. Nothing else, and nothing that could hand out a new card.
-  if (['/api/answer', '/api/mark', '/api/claim', '/api/wandered', '/api/say'].includes(route) && req.method === 'POST') {
+  if (['/api/answer', '/api/mark', '/api/claim', '/api/wandered', '/api/say', '/api/team'].includes(route) && req.method === 'POST') {
     const body = await readJson(req);
     const action = route.slice('/api/'.length);
     const result = roomForPhone(req, url, body).session.runPlayerAction(action, body);
@@ -3719,7 +3719,9 @@ async function handleWrite(req, res, url, route) {
         // Whether anybody is in the room. Same shape of decision again: the
         // pack does not know, and tonight does.
         const online = Boolean(body.online);
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online });
+        // Several phones, one team, scores averaged. Also a fact about tonight.
+        const teamPlay = Boolean(body.teamPlay);
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online, teamPlay });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();

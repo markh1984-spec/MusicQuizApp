@@ -830,13 +830,70 @@ function buildScreen(s) {
 }
 
 function buildWaiting(s, kicker, title, sub) {
-  return node(`
+  const el = node(`
     <div style="display:grid;gap:14px;text-align:center">
-      <div class="pill" style="justify-self:center;font-size:13px">${esc(kicker)}</div>
+      <div class="pill" style="justify-self:center;font-size:var(--fs-note)">${esc(kicker)}</div>
       <h1 class="grad-text">${esc(title)}</h1>
       <p>${esc(sub)}</p>
+      ${teamPicker(s)}
     </div>
   `);
+  wireTeamPicker(el, s);
+  return el;
+}
+
+/**
+ * Who you are sitting with — between questions only.
+ *
+ * It goes on the WAITING screens (the lobby, and the gap between rounds)
+ * rather than anywhere near the answers, for the reason the engine refuses a
+ * mid-question switch: somebody watching the tally and hopping into whichever
+ * team is doing well. It also means the busiest screen in the app — four
+ * options and a clock — gains nothing at all.
+ *
+ * The list is names and sizes. There is no code to read out and nobody to ask:
+ * you tap the one your table is called, or you start it. On a night with
+ * nobody organised into anything yet, the box is the first thing you use.
+ */
+function teamPicker(s) {
+  if (!s.teamPlay) return '';
+  const teams = s.teams || [];
+  const mine = s.yourTeam || null;
+  const here = teams.find((t) => t.id === mine);
+  return `
+    <div class="team-pick">
+      <div class="tiny team-pick-head">${here ? 'You are playing for' : 'Who are you playing with?'}</div>
+      ${here ? `<div class="team-mine">${esc(here.name)}</div>` : ''}
+      <div class="team-list">
+        ${teams.map((t) => `
+          <button class="team-opt ${t.id === mine ? 'here' : ''}" data-team="${esc(t.id)}">
+            ${esc(t.name)}<span class="team-size">${t.size}</span>
+          </button>`).join('')}
+      </div>
+      <form class="team-new">
+        <input type="text" id="teamName" maxlength="28" autocomplete="off"
+               enterkeyhint="go" placeholder="${teams.length ? 'Or start a new one' : 'Name your team'}">
+        <button class="team-add" type="submit">Start</button>
+      </form>
+      ${here ? '<button class="team-leave tiny" data-team="">Play on my own instead</button>' : ''}
+    </div>`;
+}
+
+function wireTeamPicker(el, s) {
+  if (!s.teamPlay || !me) return;
+  const send = (body) => postJson('/api/team', { playerId: me.id, token: me.token, joinCode: roomCode(), ...body })
+    .catch(() => { /* the state push is the truth; a failed tap simply does nothing */ });
+  for (const b of el.querySelectorAll('[data-team]')) {
+    b.addEventListener('click', () => send({ teamId: b.dataset.team }));
+  }
+  el.querySelector('.team-new')?.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const input = el.querySelector('#teamName');
+    const name = input.value.trim();
+    if (!name) return;
+    input.value = '';
+    send({ name });
+  });
 }
 
 /**

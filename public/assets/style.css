@@ -4373,3 +4373,41 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .console .topbar #runningNow {
   min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+
+/* ---- picking a team, on the phone
+ *
+ * Only ever on a WAITING screen — the lobby and the gap between rounds — for
+ * the same reason the engine refuses a mid-question switch: somebody watching
+ * the tally and hopping into whichever team is doing well. The screen with
+ * four options and a clock on it gains nothing.
+ */
+.team-pick {
+  display: grid; gap: 10px; justify-items: stretch;
+  padding: 14px; margin-top: 6px;
+  border: 1px solid var(--panel-line); border-radius: 14px;
+  background: var(--panel);
+  min-width: 0;
+}
+.team-pick-head { text-align: center; text-transform: uppercase; letter-spacing: 0.08em; }
+.team-mine { font-size: var(--fs-sub); font-weight: 900; text-align: center; color: var(--gold); overflow-wrap: anywhere; }
+/* Wrapping into equal cells rather than a flex row: sized to their own text
+   the buttons came out four different widths and read as four objects. */
+.team-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.team-opt {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  min-width: 0; padding: 11px 12px;
+  border: 1px solid var(--panel-line); border-radius: 11px;
+  background: none; color: var(--ink);
+  font-size: var(--fs-body); font-weight: 800; text-align: left;
+  overflow-wrap: anywhere; cursor: pointer;
+}
+.team-opt.here { border-color: var(--gold); color: var(--gold); }
+.team-size { flex: 0 0 auto; font-size: var(--fs-tag); font-weight: 900; opacity: 0.7; }
+.team-new { display: flex; gap: 8px; min-width: 0; }
+.team-new input { flex: 1 1 auto; min-width: 0; }
+.team-add {
+  flex: 0 0 auto; padding: 0 16px; border: 0; border-radius: 10px;
+  font-weight: 900; cursor: pointer;
+  background: linear-gradient(120deg, var(--hot), var(--hot-2)); color: #12000c;
+}
+.team-leave { background: none; border: 0; color: var(--ink-dim); text-decoration: underline; cursor: pointer; padding: 2px; }
