@@ -2671,6 +2671,55 @@ immediately gives:
 **Do this one first.** It is the cheapest item on the list and the most blocked
 behind.
 
+#### THE VENUE ALREADY EXISTS — it is the invoice customer, and that shortens everything
+
+The host, following the chain: *"It makes the invoicing part much easier — you
+have a bunch of venues already saved to your account. I did the Dog and Duck on
+a Thursday and the Pig and Whistle on a Friday, they're already built into your
+calendar, which then automatically invoices them because the venue is already
+on your profile."*
+
+**The chain is right, and it is shorter than it looks, because that object is
+already built.** `saveCustomer()` in `src/invoices.js` already stores a name, a
+contact, an address, an email and **`usualFeePence` — "what you normally charge
+them, so the next invoice fills itself in"**. That is a venue. It has been one
+for months.
+
+So the whole of what is missing is:
+
+1. **A night pointing at one.** A `venueId` on the archive entry, chosen at
+   launch beside the look and the card shape, with free text still allowed for
+   a one-off.
+2. **A usual night**, optionally, on the customer — "Thursdays" — which is what
+   turns the list into a calendar.
+3. **The invoice draft reading the night** instead of being typed from memory.
+
+**DO NOT BUILD A SECOND LIST OF VENUES.** Two lists of the same pubs is two
+lists that drift, both of which the host maintains by hand, and it is the exact
+mistake this file keeps recording in other places. The invoice customer is the
+venue.
+
+**One wording question that follows, and it is a real one:** to a quizmaster
+that list is VENUES; on an invoice it is CUSTOMERS. Every venue is a customer,
+but a corporate Christmas booking is a customer that is arguably not a venue —
+so they are not quite the same word. Two words for one list is the fault this
+file warns about, so pick one deliberately rather than letting both appear.
+Leaning towards **Venues** everywhere, on the grounds that every customer a
+quizmaster has is somewhere they went; that is the host's call.
+
+**And "automatically invoices them" wants one line drawn: DRAFT, NEVER SEND.**
+An invoice raised the moment a night ends, pre-filled with the venue, the date
+and the usual fee, and sitting there waiting for one press — that is the whole
+value and it is safe. One that goes out on its own is the version that goes
+wrong in public: the night that was cancelled, the rate that changed last
+month, the headcount that was wrong. Same rule as `reply-draft.js`, which
+drafts and never sends, and for the same reason.
+
+**This is also what would build "Your calendar"**, which is on Bronze and
+currently reads *"Not built yet"* — the same unbuilt-feature-on-a-tier problem
+noted for streaming. Saved venues with usual nights IS the calendar, so this
+chain closes that honestly rather than by deleting the line.
+
 #### LINKED ACCOUNTS — and "concurrently" is three things, one of them fatal
 
 The host: *"You could have a link accounts feature. If the venue has an account
