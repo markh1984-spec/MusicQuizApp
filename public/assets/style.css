@@ -2066,18 +2066,27 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .editor select {
   appearance: none; -webkit-appearance: none;
   color-scheme: dark;
-  padding: 8px 34px 8px 11px;
-  border-radius: 10px;
+  padding: 8px 30px 8px 11px;
+  border-radius: var(--r-field);
   font-family: inherit; font-size: var(--fs-note); font-weight: 800;
   color: var(--ink);
   background-color: rgba(255, 255, 255, 0.07);
   /* the chevron, then a gradient block behind it on the right-hand end */
+  /*
+   * A DRAWN CHEVRON AND NOTHING ELSE.
+   *
+   * This used to sit on a block of the app's own gradient, which read as
+   * "part of the app" when a select was the only styled thing on a card. It
+   * is not that any more: under the GUI rules a dropdown and a text box are
+   * the same control — "choose something" — and both are furniture around the
+   * decision rather than the decision. Three gradient tabs beside a Launch
+   * button is three things competing with the one thing to press.
+   */
   background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%2312000c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"),
-    linear-gradient(120deg, var(--hot), var(--hot-2));
-  background-repeat: no-repeat, no-repeat;
-  background-position: right 8px center, right center;
-  background-size: 11px 8px, 27px 100%;
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23a6a8bb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 11px 8px;
   border: 1px solid var(--panel-line);
   /* Wide enough that a short option like "4×4" is not squeezed up against the
      chevron block. */
@@ -4497,3 +4506,38 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    thing that drags the card sideways, so it may shrink to nothing. */
 .pack-shape.venue-wrap { grid-column: 1 / -1; min-width: 0; }
 .venue-pick { width: 100%; min-width: 0; }
+
+
+/* =====================================================================
+ * THE FIVE ROLES, from the GUI rules in CLAUDE.md. What a control looks
+ * like is decided by WHAT IT DOES, not by which page it happens to be on.
+ * ===================================================================== */
+
+/* DESTRUCTIVE — outlined red, never filled.
+ *
+ * Filled, it is as loud as Launch and sits directly beside it on a pack card
+ * somebody is tapping in a dark pub. Fill means commitment, and the thing you
+ * are committing to here is losing something. It was written out four times
+ * in four places and had already drifted; this is the one rule. */
+.danger, button.danger, .minor.danger,
+.actions .minor.danger, .editor button.danger, .console button.minor.danger,
+.pack-del, .pack-actions .pack-del {
+  color: var(--bad);
+  border: 1px solid rgba(255, 77, 94, 0.45);
+  background: none;
+}
+.danger:hover, button.danger:hover, .minor.danger:hover,
+.pack-del:hover { background: rgba(255, 77, 94, 0.12); }
+
+/* MAKE SOMETHING — filled green. Writing, generating, importing: the actions
+ * that produce content rather than run a night. Green because it is NOT the
+ * night, and the night owns the account's own gradient. */
+.make {
+  border: 0;
+  border-radius: var(--r-field);
+  background: linear-gradient(120deg, var(--good), var(--gold));
+  color: #04210f;
+  font-weight: 900;
+  cursor: pointer;
+}
+.make:disabled { opacity: 0.45; cursor: default; }

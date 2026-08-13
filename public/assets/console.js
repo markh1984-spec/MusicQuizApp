@@ -1686,7 +1686,7 @@ function quizGeneratePanel(gen) {
       <h3>New quiz</h3>
       <div class="gen-row">
         <input type="text" id="qTheme" placeholder="A theme — the 1990s, Motown, Christmas number ones, Britpop…" autocomplete="off">
-        <button class="go" id="qGo" ${gen.claude ? '' : 'disabled'}>Write it</button>
+        <button class="make" id="qGo" ${gen.claude ? '' : 'disabled'}>Write it</button>
       </div>
       <div class="gen-rounds">
         ${QUIZ_ROUNDS.map(([id, label, count, checked, hint]) => `
@@ -1941,7 +1941,7 @@ function importPanel(gen, { own = false } = {}) {
       <textarea id="impText" rows="7" placeholder="One per line — any of these work:&#10;&#10;Billie Jean — Michael Jackson&#10;1. Take On Me - a-ha&#10;Blue Monday by New Order"></textarea>
       <div class="gen-row">
         <input type="text" id="impUrl" placeholder="…or a Spotify playlist link instead" autocomplete="off">
-        <button class="go" id="impGo">Import</button>
+        <button class="make" id="impGo">Import</button>
       </div>
       <div class="gen-opts">
         <label>Card <select id="impSize"><option value="3">3×3</option><option value="4" selected>4×4</option><option value="5">5×5</option></select></label>
@@ -2092,7 +2092,7 @@ function generatePanel(gen) {
       <h3>New bingo game</h3>
       <div class="gen-row">
         <input type="text" id="theme" placeholder="A theme — 1990s indie, Motown, Christmas number ones…" autocomplete="off">
-        <button class="go" id="genGo" ${gen.claude ? '' : 'disabled'}>Build it</button>
+        <button class="make" id="genGo" ${gen.claude ? '' : 'disabled'}>Build it</button>
       </div>
       <div class="gen-opts">
         <label>Tracks <input type="number" id="genCount" value="40" min="16" max="90" style="width:64px"></label>
@@ -3588,7 +3588,7 @@ async function preview(kind, pack) {
             <div class="tiny" id="sheetSub">Loading…</div>
           </div>
           <div class="sheet-actions">
-            <button class="go" id="sheetSave" hidden>Save</button>
+            <button class="make" id="sheetSave" hidden>Save</button>
             ${mine ? `<a class="minor" href="${linkTo('/editor')}">Edit questions</a>` : ''}
             <button class="minor" id="sheetClose">Close</button>
           </div>
@@ -4186,7 +4186,7 @@ function editAdvertSet(id) {
             <input class="tiny ad-venue-in" id="adVenue" placeholder="Venue — e.g. The Crown, Chelmsford">
           </div>
           <div class="row">
-            <button class="go" id="adSave">Save</button>
+            <button class="make" id="adSave">Save</button>
             <button class="minor" id="adClose">Close</button>
           </div>
         </div>
