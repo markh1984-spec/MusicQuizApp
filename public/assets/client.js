@@ -73,22 +73,25 @@ export function navMenu({
   if (control) items.push({ id: 'control', label: 'Control', href: at('/host'), hatOn: owner && !acting });
   if (packs) items.push({ id: 'packs', label: 'Packs', href: at('/editor') });
   /*
-   * The Owner door, and while the QUIZMASTER HAT IS ON it has to take the hat
-   * off on the way through.
+   * THERE IS NO OWNER DOOR ON THIS MENU, and taking it off was the host's
+   * call: *"only my account has two owner links now — defunct. The other QMs
+   * don't need any owner links, so I'll keep the top right one and lose the
+   * menu one."*
    *
-   * The owner page asks who you are and refuses anybody whose role is not
-   * owner — and wearing the hat your role IS quizmaster, because that is the
-   * whole point of it. So a plain link would land on "this is the owner
-   * console, your account runs quiz nights", which is a door that never opens:
-   * exactly the fault this codebase keeps recording. `data-hat-off` makes the
-   * chip mean "put me back on the owner side and take me there", which is what
-   * somebody pressing Owner is asking for.
+   * There was one, and it was correct at the time — but the hat switch's own
+   * Owner half sits four inches away on the same bar, and both said the word
+   * "Owner". Two controls with one word on them is the fault this file keeps
+   * recording: you end up using the worse one out of habit. The switch wins
+   * because it is the SIGN as well as the switch — it says which hat is on,
+   * which a chip in a row of pages cannot.
    *
-   * Safe mid-night, for the reason the hat switch already is: the two hats are
-   * two ROOMS, and a room keeps its own game, its own phones and its own state
-   * file. Nothing being played is touched.
+   * So this menu is now literally identical for every account: Console,
+   * Control, Packs, and nothing that depends on who is reading it. The doors
+   * between the two SIDES are the hat switch's job alone.
+   *
+   * `owner` and `acting` are still taken, because Control uses them to know
+   * whether to put the hat ON on the way through.
    */
-  if (owner) items.push({ id: 'owner', label: 'Owner', href: at('/owner'), hatOff: acting });
   return items.map((i) => `<a class="${i.id === current ? 'here' : ''}" href="${esc(i.href)}"${
     i.hatOff ? ' data-hat="off"' : ''}${i.hatOn ? ' data-hat="on"' : ''}${
     i.id === current ? ' aria-current="page"' : ''}>${esc(i.label)}</a>`).join('');
@@ -541,11 +544,25 @@ export function hatSwitch(me, { onSwitch = null, forgetKey = null } = {}) {
       if (keyed && forgetKey) forgetKey();
       await postJson('/api/owner/act-as', { on: wanted });
       if (onSwitch) return onSwitch(wanted);
-      // Stay where you are, so the toggle reads as "the same page with the
-      // other powers". The exception is the owner page itself, which a
-      // quizmaster may not open — going there would be a 403 on your own tap.
+      /*
+       * OWNER TAKES YOU TO THE OWNER PAGE. Quizmaster leaves you where you
+       * are.
+       *
+       * That looks lopsided and is not: the quizmaster side is three pages
+       * with no single home, so "the same page with the other powers" is the
+       * only sensible landing — while the owner side is exactly ONE page, so
+       * there is no other place for it to mean.
+       *
+       * It also has to be this way now the menu's Owner chip has gone (see
+       * `navMenu`): this is the only route to `/owner` in the app, and a
+       * switch that took the hat off and sat still would leave that page
+       * reachable only by typing the address. The cost is that pressing Owner
+       * while in the editor leaves the editor — one tap on Packs to come back,
+       * and the reverse has always behaved exactly like this.
+       */
       const here = location.pathname;
-      location.href = wanted && here === '/owner' ? '/console' : here;
+      if (!wanted) return void (location.href = '/owner');
+      location.href = here === '/owner' ? '/console' : here;
     } catch (err) {
       el.classList.remove('working');
       for (const b of el.querySelectorAll('button')) b.disabled = false;

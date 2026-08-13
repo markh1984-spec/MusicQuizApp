@@ -16,7 +16,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-const { hatSwitch, menuRights } = await import('../public/assets/client.js');
+const { hatSwitch, menuRights, navMenu } = await import('../public/assets/client.js');
 
 const quizmaster = (extra = {}) => ({
   signedIn: true,
@@ -72,10 +72,50 @@ test('a quizmaster gets the menu, without the Owner door', () => {
 test('THE OWNER KEEPS THE OWNER DOOR WHILE WEARING THE QUIZMASTER HAT', () => {
   // The whole point of the hat is that your role becomes quizmaster, so a
   // check on `role` alone hides the way back on the one account that needs it.
+  // The door is the hat switch rather than a menu chip (below), but this is
+  // what tells the rest of the topbar that there IS an owner underneath.
   const acting = quizmaster({ actingAs: true });
   assert.equal(menuRights(acting).owner, true);
-  assert.equal(menuRights(acting).acting, true, 'and it knows to take the hat off on the way through');
+  assert.equal(menuRights(acting).acting, true, 'and it knows the hat is already on');
   assert.equal(menuRights(acting).control, true, 'and can still run a night, because that is what the hat is for');
+});
+
+/*
+ * THE MENU IS THE SAME FOR EVERYBODY — the host's own call, after seeing his
+ * own console carry the word "Owner" twice on one bar: once as a menu chip and
+ * once as half the hat switch four inches away.
+ *
+ * Two controls with one word on them is how you end up using the worse one out
+ * of habit. The switch keeps it because it is the SIGN as well as the switch.
+ * So the menu is now three doors that do not depend on who is reading it, and
+ * this test fails if an Owner chip ever comes back for anybody.
+ */
+test('NO IDENTITY GETS AN OWNER DOOR ON THE MENU', () => {
+  const everybody = {
+    'a plain quizmaster': menuRights(quizmaster()),
+    'the owner wearing the hat': menuRights(quizmaster({ actingAs: true })),
+    'the owner as themselves': menuRights({ signedIn: true, account: { role: 'owner', entitlements: { features: ['owner.catalogue'] } } }),
+    'the host key with an owner underneath': menuRights({ signedIn: true, bootstrap: true, account: { role: 'quizmaster', entitlements: { features: [] } }, alsoSignedIn: { role: 'owner' } }),
+    'nobody at all': menuRights(null),
+  };
+  for (const [who, rights] of Object.entries(everybody)) {
+    const html = navMenu(rights);
+    assert.ok(!/>Owner</.test(html), `${who} must not be offered an Owner chip`);
+    assert.ok(!html.includes('/owner'), `${who} must not be linked to the owner page from the menu`);
+  }
+});
+
+test('and the three doors are in the same order whoever is reading', () => {
+  const labels = (rights) => (navMenu(rights).match(/>([^<]+)</g) || []).map((s) => s.slice(1, -1));
+  assert.deepEqual(labels(menuRights(quizmaster())), ['Console', 'Control', 'Packs']);
+  assert.deepEqual(labels(menuRights(quizmaster({ actingAs: true }))), ['Console', 'Control', 'Packs']);
+});
+
+test('an owner as themselves still gets Control, and it puts the hat on', () => {
+  // The door is always there or the row shuffles left, which is the "it
+  // changes every time" complaint. It changes hat on the way through.
+  const html = navMenu(menuRights({ signedIn: true, tiers: ['bronze'], account: { role: 'owner', entitlements: { features: ['owner.catalogue'] } } }));
+  assert.match(html, /href="\/host"[^>]*data-hat="on"/);
 });
 
 test('and on the host key, where the owner is the cookie underneath', () => {

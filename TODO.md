@@ -1073,13 +1073,98 @@ The arithmetic against a per-gig fee is not close, once evasion is priced in:
 And the second number is RECURRING and does not care whether anybody booked
 anything that month, which is the whole point of the section above.
 
-**Later, and only if venues use it heavily: a one-off fee on the VENUE side.**
-Not per gig — **per INTRODUCTION**, charged when a venue asks for a
-quizmaster's contact details. It cannot be evaded, because the introduction
-happens on the site by definition; a venue that then books the same person for
-two years pays once, which is correct, because what was sold was the
-introduction. Do not build this until the directory has enough people in it to
-be worth paying for.
+**Later, and only if venues use it heavily: a one-off INTRODUCTION fee.**
+Not per gig — charged once, when a venue and a quizmaster are actually put
+together. It cannot be evaded, because the introduction happens on the site by
+definition; a venue that then books the same person for two years pays once,
+which is correct, because what was sold was the introduction. Do not build this
+until the directory has enough people in it to be worth paying for.
+
+##### Priced at ONE NIGHT'S FEE — and taken as a fee, never as a free gig
+
+The host's idea, and the PRICE in it is the good part: *"the intro fee can be
+the cost of a gig. The QM does a freebie (I get paid), the venue gets an intro
+for the regular price and the QM potentially picks up a weekly gig forever."*
+
+**"One night's fee" is the right unit and it is better than a number.** It
+indexes itself — a quizmaster charging £250 in London pays £250 and one
+charging £120 pays £120 — so there is no percentage to calculate, no earnings
+to report, nothing to audit, and no price list to keep up to date. And the
+arithmetic is obviously fine for the person paying it: a weekly residency is
+about £7,800 a year, so one night's fee is **two per cent of the first year**.
+
+**Change the DIRECTION of the money, though, and keep everything else.** The
+version described — the venue pays Quizporium and the quizmaster works for
+nothing — should be turned round so that **the venue pays the QUIZMASTER as
+normal, and the quizmaster pays the introduction fee.** The money ends in the
+same two places and the quizmaster's first night still nets zero. Three reasons
+it has to be that way round:
+
+- **It is a finder's fee between two businesses rather than free labour
+  arranged by a platform.** The other shape is Quizporium supplying somebody's
+  work to a venue, taking the whole fee and paying the worker nothing, which is
+  a worse version of the employment-status question raised above.
+- **"Do a free gig and you might get regular work" is the one offer
+  entertainers are famously angry about**, and entertainers are the customer.
+  The economics are identical; only one of the two is sayable out loud on a
+  sales page.
+- **It uses the invoicing that already exists.** The quizmaster raises a normal
+  invoice to the venue on their own letterhead, which is what a real booking
+  looks like from the venue's side — and the venue never sees anything unusual
+  about the arrangement at all.
+
+The two prices then stack the way marketplace pricing normally does and neither
+can be dodged: **Gold gets you LISTED, an introduction costs a night.** Access
+and conversion.
+
+One risk to hold on to: the venue is paying full price for somebody they have
+not seen, on the owner's recommendation. If it goes badly it is the owner's
+name on it — which is the whole reason the vetting question below matters.
+
+##### Ranking on the rating cannot do the vetting, and it is the wrong shape
+
+Proposed: *"make it so the QMs are ranked by average rating and only the top
+ones rank — so the vetting process takes care of itself."*
+
+**It does not take care of itself, because a rating and a vet are different
+jobs.** A vet is a GATE — are they insured, will they turn up, do they own
+speakers, are they safe on a microphone in front of somebody's customers. A
+rating is a REAR-VIEW MIRROR: it can only tell you after a bad night at a venue
+the owner personally introduced them to. Public liability insurance is the
+clearest case — no average of anybody's scores will ever tell you whether they
+hold any, and a venue will ask.
+
+Four more things go wrong with ranking on it specifically:
+
+- **A new quizmaster has no ratings, so they never appear, so they never get a
+  booking, so they never get a rating.** Whoever is listed first stays listed
+  for ever. Every marketplace hits this and every one of them has to solve it
+  deliberately rather than letting it emerge.
+- **Small samples rank noise.** One night at 5.0 outranks forty nights at 4.8,
+  and the first of those tells you nothing. If there is ever a ranking it wants
+  a confidence-weighted average — pull every score towards the overall mean
+  until there is a real sample behind it — which is a few lines of arithmetic
+  and not a judgement call.
+- **Ratings compress.** Everybody lands between about 4.5 and 4.9, so sorting
+  on the average is sorting on the third decimal place of a number made mostly
+  of how busy the room was.
+- **It caps the owner's own revenue.** Every listed quizmaster is a Gold
+  subscription. Hiding the bottom half means half of them stop seeing what they
+  pay for and drop a rung.
+
+**What ratings ARE good for is a FLOOR.** Below a threshold, after enough rated
+nights to mean something, you come off the directory and it is a conversation.
+That is what Uber actually does with its number — it deactivates on it, and it
+does **not** dispatch on it. Delisting is a job a rating can do honestly;
+ordering is not.
+
+**So: vet at the door, sort on facts, show the rating.** The gate is a phone
+call, proof of insurance and a read of their Past gigs — once per quizmaster,
+not once per gig, so it stays the same size as the business grows. The order a
+venue sees is distance, whether they are free on the date, and how many nights
+they have run — all facts rather than opinions, and all of them what a venue
+actually needs. The rating sits on the card where the venue can see it and make
+up their own mind.
 
 **What actually retains people is switching cost, and it is already built.**
 None of it is a lock-in trick; it is all things they would genuinely miss:

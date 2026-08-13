@@ -61,6 +61,9 @@ async function boot() {
   // pixels narrower, which moved the menu beside it.
   document.getElementById('brandSlot').innerHTML =
     brandLink(brand.name, { size: 26, appName: brand.appName || '' });
+  // Nothing in the menu lights on this page, and that is right rather than a
+  // miss: the menu carries the three QUIZMASTER pages and this is not one of
+  // them. Which side you are on is the hat switch's job, and it says Owner.
   paintNav(document.getElementById('navSlot'), { current: 'owner', ...menuRights(who) });
   whoEl.textContent = me.role === 'owner' ? `Owner — ${me.email}` : `Signed in as ${me.email}`;
 

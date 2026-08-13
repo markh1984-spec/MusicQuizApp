@@ -84,9 +84,11 @@ fetch(hostKey ? `/api/me?key=${encodeURIComponent(hostKey)}` : '/api/me',
      * Taking the hat off from HERE lands on /owner, not on a reloaded /host:
      * an owner holds no quiz features, so the control view is a page they
      * cannot use, and sending somebody to one is the fault this file keeps
-     * recording.
+     * recording. That used to be an `onSwitch` written out on this page alone;
+     * it is what the switch does everywhere now, so the override is gone
+     * rather than being a second copy of one rule.
      */
-    paintIdentity(who, { onSwitch: (wanted) => { location.href = wanted ? '/host' : '/owner'; } });
+    paintIdentity(who);
   })
   .catch(() => { /* the menu keeps the safe default */ });
 let state = null;
