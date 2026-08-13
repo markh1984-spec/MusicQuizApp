@@ -368,6 +368,28 @@ of evidence, and quietly mixing them is how a page stops being trustworthy.
 It also keeps hand-filed nights out of anything that draws conclusions — the
 play counts and "never played by anybody" should ignore them.
 
+### 5e. Two ways to open the big screen, on one screen
+
+**Spotted by the host on 14 August 2026**, mid-test: the control view has
+**Big screen** in the action row AND **Open big screen** in the Setup panel.
+Same job, two labels, one page — the duplicate-control fault this file keeps
+recording, and the reason the "Become a quizmaster" panel and the menu's Owner
+chip were both taken out.
+
+Not urgent and not a bug: both work. But two controls for one job means using
+the worse one out of habit, and here the worse one is whichever is further from
+your thumb on the night.
+
+Keep the one in the ACTION ROW. It is where every other night-running control
+is, it is there at every phase, and the Setup panel only appears in the lobby
+and at the end — so the panel's copy is the one that is sometimes missing,
+which makes it the one nobody can rely on.
+
+Worth doing in the same pass as item 5a (Launch opening the big screen in a
+second tab), because if a launch opens it automatically the action-row button
+becomes the way BACK to a tab you already have, and the wording may want to
+change with it.
+
 ### 5a. Launch opens the big screen in a second tab
 
 **Asked for on 14 August 2026, mid-gig-day, and parked for that reason.** The
