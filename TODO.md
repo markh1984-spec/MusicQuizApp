@@ -1405,6 +1405,84 @@ to 50 players" — which is honest, quotable, and covers the shape almost every
 booking actually takes. Above that it is a conversation rather than a refusal,
 which is the rule everywhere else in this app.
 
+###### THE ANSWER: everything online EXCEPT audio and video
+
+The host, and this is the version to build: *"is there a way to API connect —
+remember how I was talking about chat rooms etc. — maybe provide all the online
+features EXCEPT audio and video?"*
+
+**Yes, and it is better than the streaming version in every direction.** The
+client's own Teams or Zoom carries the voice, the face and the music, which it
+already does well and has already been paid for. The app carries the QUIZ. No
+media provider, no egress, no first dependency in the live path, no beta risk
+on a corporate booking — and it can be sold before it is finished, because the
+scoring half already works from anywhere.
+
+**Do NOT build a Zoom or Teams integration either.** Both have app platforms
+that would embed this in their client, and both would cost an app review, a
+second build for the other one, and precisely the dependency being avoided —
+to save somebody opening a second tab, which is what everybody on an online
+quiz already does. **Two windows is the normal shape of this and needs no
+integration at all.**
+
+**And not YOUTUBE LIVE, which is the tempting one.** Asked, and the instinct is
+right — it is free, it is infinitely scalable, Google pays the egress and the
+Live Streaming API really would let the app create a broadcast and embed the
+player. Two things kill it, and the second is decisive:
+
+- **Latency.** YouTube Live is 30–60 seconds normally and 2–5 even on
+  ultra-low. The app's own clock is unaffected — questions arrive over SSE in
+  milliseconds — so scoring stays fair, but the HOST is then five to sixty
+  seconds behind the question everybody is already answering. That is a
+  different job on the microphone rather than an impossible one, but it is a
+  real cost.
+- **CONTENT ID, and this is the one that ends it.** This is a MUSIC quiz. A
+  live broadcast playing commercial recordings is exactly what YouTube's
+  automated matching exists to catch, and it can mute or terminate a stream
+  mid-broadcast. Running a paid corporate night on a platform that might cut
+  the host off in the middle of round three for playing eight seconds of
+  Madonna is precisely the Wednesday-night failure this codebase is organised
+  around — and it would be somebody else's automated decision, with no appeal
+  inside the hour.
+
+A private video call has neither problem: sub-second, and nobody is scanning
+it. The client's own Teams is free, scalable and already paid for, which is
+everything YouTube was attractive for and none of what makes it unusable.
+
+###### What online mode ACTUALLY needs, and none of it is media
+
+**1. The question on the player's own screen — and it inverts rule 8.** This is
+the big one and it is easy to miss. Rule 8 says *phones never show the question
+text, only the options* — which keeps a pub looking UP at the projector and
+makes googling harder. **Online there is nothing to look up at.** The host is
+sharing a screen in a video call at whatever size the client's laptop decided,
+possibly behind somebody's face. So an online player needs the question, the
+picture and the reveal on their own device.
+
+That is a MODE-SPECIFIC EXCEPTION and must never leak into a pub night — rule 8
+stays exactly as written for in-person, where it is load-bearing. Two
+consequences to design for, both honest: googling gets easier online (shorter
+clocks, or simply accept it, because a corporate Christmas quiz is not the
+world championship), and the projector view stops being the only place the
+question exists, which is a real change to how `screenView()` and
+`playerView()` divide up.
+
+**2. Something that makes it feel like a ROOM.** A pub supplies the atmosphere
+for nothing; online, silence is the product's problem. Chat, reactions, a
+"who's here" list — cheap to build, no dependency, and the thing that decides
+whether an online night is fun or a spreadsheet. This is what the host meant by
+chat rooms and it is the genuinely missing feature.
+
+**3. Teams — several phones, one team, scores averaged.** Already on the wanted
+list as item 2 and worth more online than in a pub: a household on one sofa is
+one team on three phones, and a corporate table is people in four different
+houses.
+
+**None of those need a media provider, and all of them are ordinary app work in
+this codebase.** Which makes online mode a much better project than streaming
+was: cheaper, no dependency, no per-use cost, and it is the part that is
+actually missing.
+
 ###### Build it for YOURSELF first, and gate it to two accounts
 
 The host's plan, and it is the right one: *"I wanted to add online quizzing to
