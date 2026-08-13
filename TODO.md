@@ -1170,6 +1170,68 @@ streaming ships it goes back on as an announcement — *"Gold now includes
 online quizzes"* — which is worth something, where paying off a debt is worth
 nothing.
 
+##### A PLATINUM rung for it? No — an ADD-ON, and the difference is not pedantry
+
+Asked: *"maybe we could have a platinum tier for streaming? Or perhaps Gold+?"*
+
+**The instinct is right — streaming does need its own price — but a rung is the
+wrong shape for it, and the reason is what the ladder is made of.** The host
+got there himself in the next breath, and it is the cleanest statement of the
+rule there is: *"streaming will be expensive and something only certain QMs
+need."*
+
+> **THE TEST, and it is worth applying to everything that comes after this: a
+> TIER is for what everybody on that rung uses. An ADD-ON is for what is
+> expensive and only some people want.** Put an expensive minority feature on a
+> rung and everybody on it pays for something most of them never open; put it
+> beside the ladder and the people who want it pay for it and nobody else is
+> taxed.
+
+That test also explains the ladder as it stands. Advert slides are on Silver
+because *every* Silver subscriber can use them and they cost nothing per use.
+Topical packs are on Gold because every Gold subscriber gets one every week.
+Streaming is neither: expensive per use, and wanted by a minority.
+
+Bronze, Silver and Gold are three amounts of the SAME thing: content, and the
+owner's time to make it. That is why they stack, why the gradient can be
+checked with arithmetic, and why each rung only has to earn its delta.
+**Streaming is not more of that. It is a different way of running a night**,
+and one with a per-use cost attached.
+
+Three things follow, and the middle one is the strongest:
+
+- **It cannot be priced yet, and the price is the whole question.** This file
+  already records the measurement that matters: sending the host's PICTURE
+  costs about twenty times sending their VOICE, and four 100-person video
+  nights a month is more egress than a £9.99 subscription covers. So the
+  difference between a rung that makes money and one that quietly loses it is a
+  number nobody has yet. Naming a tier before knowing it is guessing at the one
+  figure that decides whether it works.
+- **A fourth RUNG forces somebody to buy content they do not want.** Online
+  quizzing is a different USE, not a higher grade of the same use — a corporate
+  host who runs nights over video may have no interest at all in forty pub
+  packs. Stacked above Gold, streaming is only reachable by buying the entire
+  catalogue first, which is the wrong way round and would lose exactly the
+  customer the feature is for. **An add-on sits beside the ladder and is
+  available on any rung**, which is what streaming used to be before the ladder
+  was built (`addons: ['stream']`, still read by `tierFor()` for old accounts).
+- **A tier named after an unbuilt feature is worse than a line about one.** A
+  dead line on a card is clutter; a dead RUNG is a hole in the pricing page and
+  a thing to explain on every sales call.
+
+**And "Gold+" is the weaker of the two names anyway.** It reads as "the tier
+you already have, but the proper version" — which says the rung below it is
+incomplete, on the tier that is meant to be the best thing on offer. Platinum
+at least reads as its own thing. Neither is worth a fourth column on a pricing
+page for a product with no subscribers yet; **as little clutter as possible**
+applies to the price list as much as to a screen.
+
+**Nothing is lost by waiting.** `TIERS` takes a fourth entry with a `rank`
+between two existing ones and nothing else in the app has to change — that is
+already written down and tested. So the decision can be made when there are
+real egress figures and somebody actually asking for it, which is the same rule
+the shop and the payment processor are following.
+
 ##### The version that was proposed: ONE NIGHT'S FEE, taken as a fee not a free gig
 
 The host's idea, and the PRICE in it is the good part: *"the intro fee can be
