@@ -1455,6 +1455,14 @@ everything YouTube was attractive for and none of what makes it unusable.
 it, correctly:** *"the whole point of an online capability is that we host the
 video and audio, otherwise we may as well not bother."*
 
+**And it is settled by EXPERIENCE rather than by argument, which outranks
+everything above:** *"already run plenty of quizzes with Frankenstein's Quiz
+Ecosystem and it's a nightmare."* He has run these nights on a cobbled-together
+stack and knows what it costs; I was reasoning about a thing he has actually
+done. **That is the same rule as "if he says a control is missing, check what
+is deployed before building it again"** — when the host reports from a real
+night, the report wins.
+
 **He is right, and the reason is the one this file already gives about the
 packs: convenience IS the product.** A quizmaster who has to say *"set up a
 Teams call and send me a link and I will join it"* has not sold an online quiz
@@ -1496,6 +1504,35 @@ So the design, and the economics are no longer a constraint at all:
 the question on the player's own screen, chat and reactions for the room feel,
 and teams. Those are still the difference between an online night that is fun
 and one that is a spreadsheet, and none of them arrive with the audio.
+
+###### The build order, and why the media layer is LAST rather than least
+
+Every step below leaves a working product on the floor, which is the only way
+to build something this size around one admin day a week:
+
+1. **`state.online`, set at LAUNCH.** Same shape as the look, the card shape
+   and the prizes — a fact about tonight, copied into the game state so a
+   `SIGKILL` mid-round cannot bring the night back as the wrong kind. The
+   picker goes on the pack card next to the others.
+2. **The question on the player's own device while online.** The rule 8
+   inversion, and the single biggest unlock — it is what turns "the scoring
+   works from anywhere" into "you can actually play from anywhere". Touches
+   `playerView()` and `play.js` and needs no media at all. **At the end of this
+   step he can run a real online night** with the client's call carrying the
+   voice, which is not the product but IS strictly better than the
+   Frankenstein stack, and can be sold and learned from immediately.
+3. **Chat and reactions.** The room feel, and the thing that decides whether an
+   online night is fun. Ordinary work, no dependency.
+4. **Teams — several phones, one team, averaged.** Wanted anyway, worth more
+   online.
+5. **The media layer.** Cloudflare Realtime, host publishes, players receive,
+   gated to two accounts.
+
+**The media layer is last because everything above it must work without it.**
+That is not a way of putting it off — it is the only version of *a mode, never
+a layer* that survives contact with an evening where the provider is unwell.
+Built in this order the fallback is not a feature anybody has to remember to
+write: it is simply the app with step 5 switched off.
 
 ###### What online mode ACTUALLY needs, and none of it is media
 
