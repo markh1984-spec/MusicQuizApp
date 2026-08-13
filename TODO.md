@@ -1114,12 +1114,56 @@ there are four reasons, of which the last is his own.
 price, one thing to explain, nothing to enforce, and the whole section below on
 collecting a fee becomes moot.
 
+**AND THE ARGUMENT CLOSES ITSELF AT BOTH ENDS, which is what makes this a
+decision rather than a maybe.** The host: *"if I have 200 people paying me £30
+a month I don't need £150 occasionally anyway."* Quite — that is £72,000 a
+year, against which an occasional introduction is a rounding error. The obvious
+objection is that 200 is the destination and the first year is five to twenty,
+where £150 is proportionally worth far more.
+
+**But early is exactly when a fee does the most damage**, because a cold
+marketplace's entire problem is getting the first matches to happen at all, and
+those first matches are the only evidence that the directory works. So the fee
+is **harmful when it would be meaningful and meaningless when it would be
+harmless**. There is no size of business at which it is the right thing to
+charge, which is a stronger conclusion than "not yet".
+
 **Kept below rather than deleted**, because the reasoning is worth having if a
 venue-side charge ever makes sense — and note the one thing that gets harder by
 waiting: adding a fee to something that was free is a much worse conversation
 than having charged from the start. At a handful of quizmasters he knows
 personally that is a phone call rather than a policy change, which is what
 makes parking it cheap today and expensive at two hundred.
+
+##### Which means STREAMING can come off the Gold card until it is built
+
+Raised in the same breath: *"Gold also gets online streaming tbf, but it
+should offer way more value than Silver anyway."* Both halves are true and
+together they argue for taking it off.
+
+`FEATURE_META[FEATURES.STREAM]` currently reads **"Online quizzes — Run a night
+for a room that is not there. Not built yet."** That honesty note was the right
+call when it was written, because **streaming was the only thing making Gold
+worth £10 more than Silver** — this file used to say Gold was unsellable for
+exactly that reason.
+
+It is not carrying that weight any more. **Gold is now three real things:** the
+weekly topical quiz, a pack written to order, and being in the directory. The
+gradient holds on those alone — Silver at £20 plus four topical packs at £3 is
+£32, which is more than Gold — so the unbuilt line is no longer load-bearing.
+
+**And an unbuilt feature on a tier stops being free the moment somebody pays
+for it.** Today nobody does, so it costs nothing. The day the first Gold
+subscription is taken, "not built yet" on the card they just bought is a
+promise with a date attached in their head that nobody ever said out loud. It
+is also clutter by the app's own second rule — a control nobody uses has to
+earn its pixels, and a line nobody CAN use is worse than one nobody wants.
+
+So: **take it off before the first paying Gold subscriber**, not necessarily
+before Thursday. One line in `FEATURE_TIER` and one in `FEATURE_META`. When
+streaming ships it goes back on as an announcement — *"Gold now includes
+online quizzes"* — which is worth something, where paying off a debt is worth
+nothing.
 
 ##### The version that was proposed: ONE NIGHT'S FEE, taken as a fee not a free gig
 
