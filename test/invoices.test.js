@@ -628,3 +628,95 @@ test('a venue saved before usual nights existed has none', () => {
     assert.ok(!old.usualNight, 'an old record grew a night nobody set');
   });
 });
+
+// ------------------------------------------------------------------ diary
+
+/*
+ * THE DIARY LIVES IN THIS BOOK, and it is a list of DATES pointing at the
+ * venues already in here rather than a second list of venues — which is the
+ * thing TODO.md warns hardest against. Same file because it is already the
+ * quizmaster's business record, already per room, and already backed up.
+ */
+test('a booking is one entry per venue per date, replaced rather than stacked', () => {
+  withFile((file) => {
+    const book = new Invoices(file, { now });
+    book.setBooking({ date: '2026-08-18', venue: 'The Dog and Duck', note: 'Corporate' });
+    book.setBooking({ date: '2026-08-18', venue: 'The Dog and Duck', note: '40 in' });
+    assert.equal(book.bookings.length, 1, 'pressing the button twice left two contradictory rows');
+    assert.equal(book.bookings[0].note, '40 in');
+
+    // A different venue on the same night is a different booking — December.
+    book.setBooking({ date: '2026-08-18', venue: 'The Crown' });
+    assert.equal(book.bookings.length, 2);
+  });
+});
+
+test('cancelling then rebooking the same night just overwrites it', () => {
+  withFile((file) => {
+    const book = new Invoices(file, { now });
+    book.setBooking({ date: '2026-08-20', venue: 'The Station Tap', off: true });
+    assert.equal(book.bookings[0].off, true);
+    book.setBooking({ date: '2026-08-20', venue: 'The Station Tap' });
+    assert.equal(book.bookings.length, 1, 'changing your mind left the cancellation behind');
+    assert.equal(book.bookings[0].off, false);
+  });
+});
+
+test('a booking needs a real date and a venue', () => {
+  withFile((file) => {
+    const book = new Invoices(file, { now });
+    assert.throws(() => book.setBooking({ venue: 'The Crown' }), /needs a date/);
+    assert.throws(() => book.setBooking({ date: 'next thursday', venue: 'The Crown' }), /needs a date/);
+    assert.throws(() => book.setBooking({ date: '2026-08-18' }), /needs a venue/);
+    assert.equal(book.bookings.length, 0);
+  });
+});
+
+test('the diary survives being written and read back', () => {
+  withFile((file) => {
+    const book = new Invoices(file, { now });
+    book.setBooking({ date: '2026-08-18', venue: 'The Dog and Duck', note: 'Corporate' });
+    const reopened = new Invoices(file, { now });
+    assert.equal(reopened.bookings.length, 1);
+    assert.equal(reopened.bookings[0].venue, 'The Dog and Duck');
+  });
+});
+
+/* Removing is not the same as cancelling: it puts a residency back to normal. */
+test('removing a booking forgets it entirely', () => {
+  withFile((file) => {
+    const book = new Invoices(file, { now });
+    const entry = book.setBooking({ date: '2026-08-20', venue: 'The Station Tap', off: true });
+    assert.equal(book.removeBooking(entry.id), true);
+    assert.equal(book.bookings.length, 0);
+    assert.equal(book.removeBooking('nonsense'), false);
+  });
+});
+
+/* A book written before diaries existed reads as an empty one, not a crash. */
+test('a book saved before the diary existed has no bookings', () => {
+  withFile((file) => {
+    fs.writeFileSync(file, JSON.stringify({ settings: {}, invoices: [], customers: [] }));
+    const book = new Invoices(file, { now });
+    assert.deepEqual(book.bookings, []);
+    book.setBooking({ date: '2026-08-18', venue: 'The Crown' });
+    assert.equal(book.bookings.length, 1);
+  });
+});
+
+/* The backup carries it, or a deploy quietly empties somebody's diary. */
+test('the diary comes back from a backup', () => {
+  withFile((file) => {
+    const book = new Invoices(file, { now });
+    book.setBooking({ date: '2026-08-18', venue: 'The Dog and Duck', note: 'Corporate' });
+    const serialised = book.serialise ? book.serialise() : fs.readFileSync(file, 'utf8');
+
+    withFile((second) => {
+      const fresh = new Invoices(second, { now });
+      const res = fresh.restore(serialised);
+      assert.equal(res.ok, true);
+      assert.equal(fresh.bookings.length, 1, 'the diary was dropped on restore');
+      assert.equal(fresh.bookings[0].venue, 'The Dog and Duck');
+    });
+  });
+});

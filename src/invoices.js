@@ -65,7 +65,7 @@ export function blankSettings() {
 }
 
 function blankFile() {
-  return { settings: blankSettings(), customers: [], invoices: [] };
+  return { settings: blankSettings(), customers: [], invoices: [], bookings: [] };
 }
 
 // ------------------------------------------------------------------- money
@@ -147,6 +147,23 @@ export class Invoices {
         settings: { ...blankSettings(), ...(parsed.settings || {}) },
         customers: Array.isArray(parsed.customers) ? parsed.customers : [],
         invoices: Array.isArray(parsed.invoices) ? parsed.invoices : [],
+        /*
+         * THE DIARY LIVES IN THIS BOOK, and it is not a second list of venues.
+         *
+         * It is a list of DATES pointing at the venues already in here — which
+         * is the thing TODO.md warns hardest against getting wrong. Kept in the
+         * same file because that file is already the quizmaster's business
+         * record (their details, their venues, their invoices), it is already
+         * per room, and it is already backed up to the private repo and
+         * restored at boot. A file of its own would be four more integration
+         * points for the same data, and one of them would eventually be the
+         * one somebody forgot — which is how the play counts went a year with
+         * no backup at all.
+         *
+         * Absent on every book written before this, which reads as an empty
+         * diary. That is correct rather than lossy: nobody had one.
+         */
+        bookings: Array.isArray(parsed.bookings) ? parsed.bookings : [],
       };
     } catch (err) {
       if (err.code !== 'ENOENT') {
@@ -211,6 +228,7 @@ export class Invoices {
 
     const invoices = Array.isArray(parsed.invoices) ? parsed.invoices : [];
     const customers = Array.isArray(parsed.customers) ? parsed.customers : [];
+    const bookings = Array.isArray(parsed.bookings) ? parsed.bookings : [];
     const settings = { ...blankSettings(), ...(parsed.settings || {}) };
 
     // A number is `PREFIX-0007`; the digits on the end are what counts, and the
@@ -227,7 +245,7 @@ export class Invoices {
       highest + 1,
     );
 
-    this.data = { settings, customers, invoices };
+    this.data = { settings, customers, invoices, bookings };
     this.save();
     return { ok: true, invoices: invoices.length, customers: customers.length, nextNumber: settings.nextNumber };
   }
@@ -250,6 +268,70 @@ export class Invoices {
     };
     this.save();
     return this.data.settings;
+  }
+
+  // ---------------------------------------------------------------- diary
+
+  get bookings() {
+    return this.data.bookings || (this.data.bookings = []);
+  }
+
+  /**
+   * Put a night in the diary — or take one out.
+   *
+   * TWO KINDS AND ONE RECORD. `off: true` is a night you are NOT doing, which
+   * is how a residency gets a week out; anything else is a booking you are.
+   * One shape rather than two lists because they are the same fact about the
+   * same slot, and `upcoming()` has to consider both together anyway — a
+   * cancellation held somewhere else is a cancellation somebody eventually
+   * forgets to apply.
+   *
+   * ONE ENTRY PER VENUE PER DATE, replaced rather than appended, so pressing a
+   * button twice cannot leave the diary saying two contradictory things about
+   * one night. That also makes "cancel, then change your mind" work with no
+   * undo of its own: booking it again overwrites the cancellation.
+   *
+   * The venue is a NAME rather than an id, exactly like `state.venue` on a
+   * night — because a one-off is often somewhere with no record at all, which
+   * is the promise the free-text venue was built on. A name that does match a
+   * record picks up its prizes automatically, which is the whole reason the
+   * launch bar can read this.
+   */
+  setBooking({ date, venue, off = false, note = '' } = {}) {
+    const day = String(date || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error('A booking needs a date.');
+    const where = String(venue || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+    if (!where) throw new Error('A booking needs a venue.');
+    const entry = {
+      id: newId(),
+      date: day,
+      venue: where,
+      off: Boolean(off),
+      note: String(note || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120),
+    };
+    const same = (b) => b.date === day && String(b.venue || '').toLowerCase() === where.toLowerCase();
+    const at = this.bookings.findIndex(same);
+    if (at >= 0) entry.id = this.bookings[at].id;
+    if (at >= 0) this.bookings[at] = entry;
+    else this.bookings.push(entry);
+    this.save();
+    return entry;
+  }
+
+  /**
+   * Forget an entry entirely.
+   *
+   * Not the same as `off: true` — this REMOVES the note, so a cancelled
+   * residency goes back to being an ordinary one. That is what "put it back"
+   * means for a night you cancelled by mistake, and it is why the diary needs
+   * both a cancel and a delete rather than one doing both jobs.
+   */
+  removeBooking(id) {
+    const at = this.bookings.findIndex((b) => b.id === id);
+    if (at < 0) return false;
+    this.bookings.splice(at, 1);
+    this.save();
+    return true;
   }
 
   // -------------------------------------------------------------- customers

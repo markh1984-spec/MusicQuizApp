@@ -1709,6 +1709,104 @@ appear in one `newVoucherCode()` produces. No reserved-word check is needed.
 mark it used by hand. Same rule as everywhere else here: a network problem is
 never the end of it.
 
+## The diary — a calendar that maintains itself
+
+`public/assets/diary.js`, the **Coming up** half of the **Gigs** tab, and
+`bookings` in the invoice book. `FEATURES.CALENDAR` has been on Bronze saying
+*"Not built yet"* since the ladder was written; this is it, and the blurb has
+come off the not-built list along with its test.
+
+**ALMOST ALL OF IT IS DERIVED, AND THAT IS THE WHOLE DESIGN.** A diary of dates
+somebody has to keep up is a diary that starts lying the first week they are
+busy — and this codebase's fifth constraint is that a feature's real price is
+the admin it creates on a Monday. So the recurring nights come out of something
+the quizmaster already maintains for a different reason: `usualNight` on the
+venue record, which exists so the launch bar knows whose night tonight is. A
+host with their residencies set up has a working diary having typed nothing.
+
+What is left to type is only the part a pattern cannot express:
+
+- a **one-off** — a Christmas party, a corporate booking, a stand-in Tuesday;
+- a **night off** — the Thursday the pub has a darts match on.
+
+Both are exceptions rather than the thing itself, which is the right way round:
+the common case costs nothing and the rare one costs a tap.
+
+**A NIGHT OFF WINS OVER EVERYTHING**, applied before either source that could
+put a night on the page. The diary saying you are at The Crown on a Thursday
+you are not is the one failure that makes the whole feature untrustworthy,
+because it is believed. There is a test that a booking cannot beat a
+cancellation.
+
+**A booking on the usual night ANNOTATES it rather than duplicating it**, which
+is what lets somebody write "they want bingo after" on an ordinary Thursday
+without inventing a second entry for one night.
+
+**IT LIVES IN `public/assets/` BECAUSE THE DATES ARE THE READER'S.** Same
+arrangement as `plans.js`, `looks.js` and `balance.js` — the console imports it
+in the browser and the test imports it in node. Projecting on the SERVER would
+work the dates out in UTC, and the invoice code already records why that is
+wrong: a night that ends at half past midnight in August is 23:30 the previous
+day in UTC, so the server and the person who ran it would disagree about which
+day it was. The browser is on the quizmaster's own device.
+
+**FOUR WEEKS.** Six was built first and is a wall: two residencies print
+thirteen rows and three print twenty, which pushes Past gigs a screen and a
+half below its own heading. A booking further out is stored and appears as it
+approaches — the right way round, because the alternative costs every reader
+every day to serve the rarer case.
+
+**The storage is the INVOICE BOOK, and it is not a second list of venues.** It
+is a list of DATES pointing at venues already in there — the thing TODO.md
+warns hardest against getting wrong. Same file because that file is already the
+quizmaster's business record, already per room, already backed up to the
+private repo and restored at boot. A file of its own would be four more
+integration points for the same data, and one of them is the one somebody
+eventually forgets — which is how the play counts went a year with no backup.
+
+**`tonight()` is what the rest of the app asks it**, and a one-off beats a
+residency: the Tuesday you are standing in somewhere has to win over the
+Tuesday you normally do and are not doing this week. Two venues claiming
+tonight still means neither, unchanged.
+
+### Gigs — one tab, because it is one object
+
+The calendar and Past gigs are the same thing at two points in its life:
+booked, run, then billed. A tenth tab for "the same nights, earlier" would be
+splitting by TENSE rather than by question, which is the opposite of the rule
+that shaped the owner page — and the console's tab bar already scrolls sideways
+on a phone.
+
+**INVOICES DELIBERATELY DID NOT JOIN THEM**, and it was asked directly — *"so
+date stuff in one tab and money stuff in another?"* Nearly, and the sharper
+line is worth keeping because "dates versus money" would misfile the next
+feature (an invoice is full of dates):
+
+| Tab | What it is | The unit |
+|---|---|---|
+| **Gigs** | the WORK — what is on, what happened | a night |
+| **Invoices** | getting PAID | a document with a number that can never be reused |
+| **Venues** | the ARRANGEMENT — who they are, which night, what they put up | a place |
+
+Three more reasons Invoices stays its own: it has a tab's worth behind it (your
+details, the bank, VAT, statuses, the PDF); its badge counts what you are still
+owed, and a second badge on one tab costs the first its meaning; and on a
+Monday "send the invoices" is a destination you want to land on rather than
+scroll to.
+
+**What keeps the chain intact instead is `Invoice this` on every past night**,
+filled in from the night itself — the venue matched to a record so the address
+and the usual fee come with it. It existed only on the running panel, in the
+minutes after a game ends, so a night from a fortnight ago could only be billed
+by typing it back in from memory. That is exactly the blank page this file's
+own rule says is where the time goes.
+
+**And a past night finally says WHERE it was.** `listArchive()` has carried
+`venue` since a night learned one; `past-gigs.js` simply never passed it
+through, so the page whose whole job is showing somebody your work never said
+where any of it happened. On the NIGHT rather than on each game, like the badge
+that counts nights and not games.
+
 ## Past gigs — the record of somebody's work, and who may take it away
 
 `src/past-gigs.js`, the `/api/past-gigs` routes, and the **Past gigs** tab on
@@ -2363,6 +2461,7 @@ public/                the screens; *-bingo.js files hold the bingo variants
   assets/avatar.js     a drawn face per team, for anyone who sent no photo
   assets/stickers.js   props to drag onto a photo: dog ears, a clown nose
   assets/schemes.js    a quizmaster's own two colours, shared with the server
+  assets/diary.js      what is on and when — residencies projected, one-offs typed
   assets/chat.js       the chat sheet on a player's phone, online nights only
 quizzes/ bingo/        the library
 data/                  live state, history, archived nights (gitignored)
@@ -4430,7 +4529,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 945 tests, no network, injected clocks — must stay green
+npm test        # 967 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -4609,7 +4708,7 @@ private repo (`PACKS_REPO`), never the one holding the owner's accounts and
 invoices; until that is set the console says so in red and every own pack has a
 Download button.
 
-All on **`MusicQuizApp`**. 945 tests green.
+All on **`MusicQuizApp`**. 967 tests green.
 
 ### What a GUI SWEEP found — thirteen things, all fixed
 

@@ -1528,6 +1528,15 @@ async function handleGet(req, res, url, route) {
           usualNight: c.usualNight || '',
         })),
       /*
+       * The diary's exceptions: one-offs and nights off.
+       *
+       * The RECURRING half is not sent because it is not stored — it comes out
+       * of the usual nights above, projected forward in the browser. That is
+       * the whole point of the design: a residency needs nothing typed and
+       * nothing kept, so there is nothing here to go stale.
+       */
+      bookings: roomForHost(req, url).invoices.bookings,
+      /*
        * Enough to draw "Ask for a pack" BEFORE somebody types into it: whether
        * they may, where they are in the queue, and which Monday it lands on.
        * Being refused after writing three sentences is the version that
@@ -2466,6 +2475,9 @@ function invoiceState(books) {
     settings: books.settings,
     customers: books.customers,
     invoices: books.invoices.map(withTotals),
+    // The diary's exceptions, so a tab that just wrote one gets the new list
+    // back rather than having to reload the whole library.
+    bookings: books.bookings,
     summary: books.summary(),
     // Reported separately from anything else, because this is the one that
     // quietly loses a year of records on a redeploy.
@@ -3179,6 +3191,41 @@ async function handleWrite(req, res, url, route) {
      */
     const saved = room.invoices.setVenueDetails(id, body);
     if (!saved) return sendJson(res, 404, { error: 'No venue with that id.' }), true;
+    const backup = await backUpInvoices(room);
+    return sendJson(res, 200, { backedUp: backup.ok, ...invoiceState(room.invoices) }), true;
+  }
+
+  /*
+   * The diary — a night put in, or a night taken out.
+   *
+   * On the INVOICES feature like everything else that reads or writes this
+   * book, rather than on `FEATURES.CALENDAR`: the two are both Bronze and the
+   * data is the same file, so a second gate here would be a second thing to
+   * get wrong for no difference in who may do it. The console decides whether
+   * to DRAW the diary from `CALENDAR`, which is where that distinction is
+   * worth anything.
+   */
+  if (route === '/api/invoices/bookings' && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
+    const room = roomForHost(req, url);
+    await ensureInvoicesRestored(room);
+    const body = await readJson(req);
+    try {
+      room.invoices.setBooking(body);
+    } catch (err) {
+      // Said in words: a booking with no date or no venue is a mistake worth
+      // naming rather than a silent no-op.
+      return sendJson(res, 400, { error: err.message }), true;
+    }
+    const backup = await backUpInvoices(room);
+    return sendJson(res, 200, { backedUp: backup.ok, ...invoiceState(room.invoices) }), true;
+  }
+
+  if (route.startsWith('/api/invoices/bookings/') && req.method === 'DELETE') {
+    if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
+    const room = roomForHost(req, url);
+    await ensureInvoicesRestored(room);
+    room.invoices.removeBooking(decodeURIComponent(route.slice('/api/invoices/bookings/'.length)));
     const backup = await backUpInvoices(room);
     return sendJson(res, 200, { backedUp: backup.ok, ...invoiceState(room.invoices) }), true;
   }

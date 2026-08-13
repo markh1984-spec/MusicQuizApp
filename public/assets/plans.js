@@ -496,7 +496,7 @@ export const FEATURE_META = {
   // Not built. It is on the ladder and drawn on the account page, so it has to
   // say so — the same honesty rule streaming gets. A rung that lists something
   // which does not exist is one nobody trusts the rest of.
-  [FEATURES.CALENDAR]: { label: 'Your calendar', blurb: 'The nights you have booked. Not built yet.' },
+  [FEATURES.CALENDAR]: { label: 'Your calendar', blurb: 'What you have got coming, from your venues\u2019 usual nights.' },
   [FEATURES.MARKETING]: { label: 'Marketing', blurb: 'Not built yet.' },
   [FEATURES.REQUEST_PACK]: { label: 'Ask for a pack', blurb: 'Name a theme, get a quiz written. One a month.' },
   [FEATURES.STREAM]: { label: 'Online quizzes', blurb: 'Run a night for a room that is not there. Not built yet.' },

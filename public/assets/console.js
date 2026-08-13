@@ -12,6 +12,7 @@ import { paintScheme } from './schemes.js';
 import { balanceAnswers } from './balance.js';
 import { FEATURES, FEATURE_TIER, findTier } from './plans.js';
 import { inSeason } from './looks.js';
+import { upcoming, tonight, nightKey, WEEKDAY_LABELS } from './diary.js';
 
 const mainEl = document.getElementById('main');
 const runningEl = document.getElementById('runningNow');
@@ -457,17 +458,39 @@ const TABS = [
     render: () => invoicesSection(),
   },
   {
+    /*
+     * GIGS — what is on, and what has been. ONE TAB, because it is one object.
+     *
+     * A booked night and a night you have run are the same thing at two points
+     * in its life: booked, run, then billed. The console already carries nine
+     * tabs whose bar scrolls sideways on a phone, and a tenth for "the same
+     * nights, earlier" would be splitting by TENSE rather than by question —
+     * which is the opposite of the rule that shaped the owner page.
+     *
+     * **INVOICES DELIBERATELY DID NOT JOIN THEM**, and that was asked. It is a
+     * different question ("who owes me?") asked at a different moment, it has
+     * a whole tab's worth behind it — your details, the bank, VAT, statuses,
+     * the PDF — and its badge counts what you are still owed, which is a
+     * number worth seeing without opening anything. A second badge on one tab
+     * costs the first one its meaning. On a Monday "send the invoices" is a
+     * destination you want to land on rather than scroll to.
+     *
+     * What keeps the chain intact instead is a one-tap **Invoice this** on
+     * every past night, filled in from the night itself — so booked → run →
+     * billed is still one press at each step without one enormous tab.
+     *
+     * The tab needs PAST_GIGS; the diary half asks for CALENDAR separately, so
+     * an account holding one and not the other gets the half it holds rather
+     * than a tab that half works.
+     */
     id: 'past',
-    // Its own feature now. It asked for the invoicing add-on, which is where
-    // this tab used to live — a record of somebody's own nights has nothing to
-    // do with whether they bill for them, and the server gate has moved too.
     needs: FEATURES.PAST_GIGS,
-    label: 'Past gigs',
-    blurb: 'Every night you have run, what you played and the photos from it.',
+    label: 'Gigs',
+    blurb: 'What you have got coming, and every night you have run.',
     // NIGHTS, not games. A quiz and the bingo after it are one evening, and a
     // badge saying 5 above a list of four rows is a badge nobody trusts.
     count: () => library.archiveNights || 0,
-    render: () => pastGigsSection(),
+    render: () => gigsSection(),
   },
   {
     id: 'help',
@@ -4252,20 +4275,6 @@ function renderBingoPreview(body, sub, pack, markDirty = () => {}) {
  * invoice and has no business on a page opened ten minutes before a quiz.
  */
 /**
- * The weekdays a residency can fall on, as the picker draws them.
- *
- * Monday first, because that is how a quizmaster reads a week — and the ids
- * are names rather than numbers because `0` is Sunday in JavaScript and
- * Monday in a diary, which is exactly the off-by-one that would put the wrong
- * pub's prizes on a night. `WEEKDAYS` in `src/invoices.js` is the same list
- * and validates against it.
- */
-const WEEKDAY_LABELS = [
-  ['mon', 'Mondays'], ['tue', 'Tuesdays'], ['wed', 'Wednesdays'], ['thu', 'Thursdays'],
-  ['fri', 'Fridays'], ['sat', 'Saturdays'], ['sun', 'Sundays'],
-];
-
-/**
  * WHOSE NIGHT IS TONIGHT — the cheapest diary there is.
  *
  * Asked for as *"the quick launch should remember what you did the previous
@@ -4305,14 +4314,18 @@ const WEEKDAY_LABELS = [
  * night in front of the room.
  */
 function tonightsVenue() {
-  const at = new Date(Date.now() - 6 * 60 * 60 * 1000);
-  // getDay() is 0 for Sunday; WEEKDAY_LABELS is Monday-first.
-  const today = WEEKDAY_LABELS[(at.getDay() + 6) % 7][0];
-  const booked = (library.venueRecords || []).filter((v) => v.usualNight === today);
-  if (booked.length === 1) return { name: booked[0].name, why: 'your usual night here' };
-  if (booked.length > 1) return null;
-  const last = (library.venues || [])[0];
-  return last ? { name: last, why: 'where you played last' } : null;
+  /*
+   * The diary answers this now, which means a ONE-OFF beats a residency: the
+   * Tuesday you are standing in somewhere has to win over the Tuesday you
+   * normally do and are not doing this week. When this lived here it could
+   * only see usual nights, so a diary entry for tonight was invisible to the
+   * one control that most needed it.
+   */
+  return tonight({
+    venues: library.venueRecords || [],
+    bookings: library.bookings || [],
+    playedVenues: library.venues || [],
+  });
 }
 
 function venuesSection() {
@@ -4409,6 +4422,141 @@ function venuesSection() {
   return el;
 }
 
+/**
+ * GIGS — what is coming, then what has been.
+ *
+ * Coming up FIRST, because it is the one you act on: a night you have not run
+ * yet can still be moved, cancelled or prepared for, where a night you have
+ * run is a record. Past gigs is also the half somebody scrolls at length when
+ * they are showing a venue their work, and a long list belongs under a short
+ * one rather than over it.
+ */
+function gigsSection() {
+  const wrap = document.createDocumentFragment();
+  if (can(FEATURES.CALENDAR)) wrap.appendChild(diarySection());
+  wrap.appendChild(pastGigsSection());
+  return wrap;
+}
+
+/**
+ * The diary.
+ *
+ * **ALMOST ALL OF IT IS DERIVED AND THAT IS THE POINT.** The recurring nights
+ * come out of the usual nights already set on the Venues tab, projected six
+ * weeks forward by `upcoming()` — so a quizmaster with their residencies set
+ * up has a working diary having typed nothing, and it can never go stale
+ * because there is nothing to keep up. A feature's real price here is the
+ * admin it creates on a Monday, and a diary of dates somebody has to maintain
+ * is the most expensive shape this could have taken.
+ *
+ * So the only things typed are the two a pattern cannot express: a one-off
+ * somewhere, and a night off.
+ */
+function diarySection() {
+  const el = node(`
+    <div class="game-section">
+      <div class="game-head">
+        <div>
+          <h2>Coming up</h2>
+          <div class="tiny">The next four weeks, from the usual nights on your Venues tab.
+            Add anything that is not your usual.</div>
+        </div>
+      </div>
+      <div class="diary-list"></div>
+      <div class="diary-add">
+        <input class="d-date" type="date" aria-label="Date">
+        ${venueBox()}
+        <input class="d-note" type="text" maxlength="120" placeholder="Anything worth remembering (optional)">
+        <button class="role-make d-go">Add a night</button>
+      </div>
+    </div>`);
+
+  const list = el.querySelector('.diary-list');
+
+  const draw = () => {
+    const nights = upcoming({
+      venues: library.venueRecords || [],
+      bookings: library.bookings || [],
+    });
+    if (!nights.length) {
+      list.replaceChildren(node(`<div class="tiny">Nothing coming up.
+        ${(library.venueRecords || []).some((v) => v.usualNight)
+    ? 'Add a one-off below.'
+    : 'Give a venue its usual night on the Venues tab and its weeks fill themselves in.'}</div>`));
+      return;
+    }
+    list.replaceChildren(...nights.map(diaryRow));
+  };
+
+  /*
+   * A night, and the two things you can do to it.
+   *
+   * "Not this week" writes a night OFF rather than deleting anything, because
+   * a residency is not a row that can be removed — it is generated from the
+   * venue, so the only way to say "not that Thursday" is to record the
+   * exception. A one-off is a real row and is deleted outright.
+   */
+  function diaryRow(night) {
+    const when = new Date(night.date + 'T12:00:00');
+    const row = node(`
+      <div class="diary-row ${night.why === 'booked' ? 'is-booked' : ''}">
+        <div class="d-when">
+          <b>${esc(when.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }))}</b>
+          <span class="tiny">${esc(whenAway(night.date))}</span>
+        </div>
+        <div class="d-what">
+          <b>${esc(night.venue)}</b>
+          ${night.why === 'booked' ? '<span class="d-tag">one-off</span>' : ''}
+          ${night.note ? `<div class="tiny">${esc(night.note)}</div>` : ''}
+          ${night.rewards && night.rewards.filter(Boolean).length
+    ? `<div class="tiny">Playing for ${esc(night.rewards.filter(Boolean)[0])}</div>`
+    : '<div class="tiny">No prizes set</div>'}
+        </div>
+        <button class="minor danger d-off">Not on</button>
+      </div>`);
+    row.querySelector('.d-off').addEventListener('click', async () => {
+      if (!confirm(`Not doing ${night.venue} on ${when.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}?`)) return;
+      await save({ date: night.date, venue: night.venue, off: true });
+    });
+    return row;
+  }
+
+  async function save(body) {
+    try {
+      const book = await invoiceApi('/api/invoices/bookings', { method: 'POST', body: JSON.stringify(body) });
+      // The route hands the new list straight back, so the page does not have
+      // to reload the whole library to show what it just wrote.
+      library.bookings = book.bookings || [];
+      draw();
+    } catch (err) {
+      alert(err.message || 'Could not save that.');
+    }
+  }
+
+  const add = el.querySelector('.d-go');
+  add.addEventListener('click', async () => {
+    const date = el.querySelector('.d-date').value;
+    const venue = venueFrom(el);
+    if (!date || !venue) { alert('A night needs a date and a venue.'); return; }
+    add.disabled = true;
+    await save({ date, venue, note: el.querySelector('.d-note').value.trim() });
+    add.disabled = false;
+    el.querySelector('.d-note').value = '';
+  });
+  wireVenue(el);
+  draw();
+  return el;
+}
+
+/** "tonight", "in 3 days", "in 2 weeks" — how far off, not a second date. */
+function whenAway(date) {
+  const days = Math.round((new Date(date + 'T12:00:00') - new Date(nightKey() + 'T12:00:00')) / 86400000);
+  if (days <= 0) return 'tonight';
+  if (days === 1) return 'tomorrow';
+  if (days < 14) return `in ${days} days`;
+  return `in ${Math.round(days / 7)} weeks`;
+}
+
 function pastGigsSection() {
   const el = node(`
     <div class="game-section">
@@ -4467,7 +4615,7 @@ function gigRow(night) {
       <button class="gig-head" type="button">
         <span class="an">${esc(label)}</span>
         <span class="tiny">${played}</span>
-        <span class="tiny">${heads ? `${heads} playing` : ''}</span>
+        <span class="tiny">${[night.venue, heads ? `${heads} playing` : ''].filter(Boolean).join(' · ')}</span>
         <span class="tiny gig-more">${night.hasPhotos ? 'Photos ▸' : ''}</span>
       </button>
       <div class="gig-body" hidden></div>
@@ -4487,6 +4635,48 @@ function gigRow(night) {
       body.appendChild(node(`<div class="tiny">${esc(game.title || '')} —
         ${esc(game.winner ? 'won by ' + game.winner : 'no winner recorded')}</div>`));
     }
+
+    /*
+     * BILL FOR THIS ONE, from the night itself.
+     *
+     * This is what lets Invoices stay a tab of its own rather than being
+     * swallowed into this one. "Invoice this" already existed on the running
+     * panel — but only in the minutes after a game ends, so a night from a
+     * fortnight ago could only be billed by typing the venue and the date back
+     * in from memory. That is precisely the blank page this app's own rule
+     * says is where the time goes.
+     *
+     * The venue is matched to a record so the address and the usual fee come
+     * with it; an unmatched name still fills the night's own details in, which
+     * is the free-text venue keeping its promise. Only where they hold the
+     * feature — a quizmaster without invoicing gets no button rather than one
+     * that 403s.
+     */
+    if (can(FEATURES.INVOICES)) {
+      const bill = node('<button class="minor gig-bill">Invoice this</button>');
+      bill.addEventListener('click', async () => {
+        bill.disabled = true;
+        try {
+          book = await invoiceApi('/api/invoices');
+        } catch (err) {
+          bill.disabled = false;
+          alert('Could not open the invoices: ' + err.message);
+          return;
+        }
+        const match = book.customers.find(
+          (c) => (c.name || '').toLowerCase() === String(night.venue || '').toLowerCase());
+        const what = night.games.some((g) => g.kind === 'bingo') && night.games.every((g) => g.kind === 'bingo')
+          ? 'Music bingo night' : 'Music quiz night';
+        openInvoiceForm({
+          customerId: match ? match.id : '',
+          event: { title: what, venue: night.venue || '', date: night.night },
+          description: what,
+        }, () => load());
+        bill.disabled = false;
+      });
+      body.appendChild(bill);
+    }
+
     if (!night.hasPhotos) return;
 
     more.textContent = 'Loading…';

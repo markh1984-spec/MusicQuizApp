@@ -3334,12 +3334,14 @@ currently reads *"Not built yet"* — the same unbuilt-feature-on-a-tier problem
 noted for streaming. Saved venues with usual nights IS the calendar, so this
 chain closes that honestly rather than by deleting the line.
 
-**Half of it is now built and the blurb is deliberately NOT changed.** Venues
-carry a usual night and the launch bar reads it, so "what is on tonight" is
-answered — but a calendar is a PAGE showing the weeks ahead, and there is not
-one. Flipping the blurb on the strength of one field would be the unbuilt-
-feature-on-a-tier problem in a new form: a subscriber clicking Your calendar
-and finding nothing. What is left for it is a view, not a data model.
+**DONE.** The venues' usual nights are projected four weeks forward as
+**Coming up**, at the top of a **Gigs** tab that also holds Past gigs — one
+tab, because a booked night and a run night are the same object at two points
+in its life. One-offs and nights off are typed; everything else derives itself,
+so there is nothing to keep up. `FEATURES.CALENDAR` is off the not-built list
+and its blurb says what it does. Invoices deliberately stayed a tab of its own
+— see CLAUDE.md for the line, and note that `Invoice this` on a past night is
+what keeps the booked → run → billed chain one press at each step.
 
 #### The quizmaster's own DRAFT-READ-SEND list, in order of value
 

@@ -4841,6 +4841,37 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .venue-prizes { display: grid; gap: 6px; margin-top: 10px; }
 .venue-prizes .reward-row { margin: 0; }
 .venue-card .v-save { margin-top: 10px; }
+/* ---- the diary
+   Coming up sits ABOVE the past nights: one is a thing you can still act on,
+   the other is a record. A row is a date, a place and a way to say you are not
+   doing it — nothing else, because this is read at a glance rather than
+   worked through. */
+.diary-list { display: grid; gap: 8px; margin-top: 12px; }
+.diary-row {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center;
+  border: 1px solid var(--panel-line); border-radius: var(--r-card);
+  background: rgba(255, 255, 255, 0.04); padding: 10px 12px;
+}
+/* min-content is a grid child's default minimum, which is how one long venue
+   name drags a page sideways on a 320px phone. Bitten five times now. */
+.diary-row > * { min-width: 0; }
+.d-when { text-align: center; }
+.d-when b { display: block; }
+/* A one-off is worth marking BECAUSE the rest are automatic: everything else
+   on this list came out of a usual night, so the tag says "somebody typed
+   this" rather than "this one is special". */
+.diary-row.is-booked { border-color: rgba(255, 210, 63, 0.35); }
+.d-tag {
+  font-size: var(--fs-tag); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--gold); margin-left: 6px; white-space: nowrap;
+}
+.diary-add { display: grid; gap: 8px; margin-top: 14px; }
+.diary-add .venue-select, .diary-add .venue-free, .diary-add input { min-width: 0; max-width: 100%; }
+@media (min-width: 620px) {
+  .diary-add { grid-template-columns: auto 1fr 1fr auto; align-items: center; }
+}
+.gig-bill { margin-top: 10px; }
+
 .venue-add { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 .venue-add .venue-new { flex: 1 1 220px; min-width: 0; }
 

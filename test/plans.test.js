@@ -389,7 +389,11 @@ test('there is no tier above the top, so a preview can only subtract', () => {
  * yet" from its blurb in the same breath.
  */
 test('a feature that is not built says so on its own card', () => {
-  const NOT_BUILT = [FEATURES.CALENDAR, FEATURES.MARKETING, FEATURES.STREAM];
+  // CALENDAR came off this list the day the diary was built — the venues'
+  // usual nights projected forward, plus one-offs and nights off. That is
+  // exactly what the note above asks for: delete it from the list AND drop
+  // "Not built yet" from the blurb in the same breath.
+  const NOT_BUILT = [FEATURES.MARKETING, FEATURES.STREAM];
   for (const f of NOT_BUILT) {
     assert.match(FEATURE_META[f].blurb, /not built yet/i,
       `${f} is on the ladder as though it works`);

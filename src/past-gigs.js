@@ -79,14 +79,31 @@ export function mergeGigs(archived = [], photoNights = []) {
     // No photo COUNT here on purpose: knowing how many there are means listing
     // the folder, which is a request per night, and the page only ever needs
     // "is there anything to open". The count arrives with the pictures.
-    if (!nights.has(key)) nights.set(key, { night: key, games: [], hasPhotos: false });
+    if (!nights.has(key)) nights.set(key, { night: key, games: [], hasPhotos: false, venue: '' });
     return nights.get(key);
   };
 
   for (const record of archived) {
     const night = nightOfGig(record.archivedAt);
     if (!night) continue;
-    nightFor(night).games.push({
+    const entry = nightFor(night);
+    /*
+     * WHERE IT WAS, on the night rather than on each game.
+     *
+     * A quiz and the bingo after it are one evening at one venue, so it
+     * belongs to the night — the same reason the tab badge counts nights and
+     * not games. `listArchive` has carried it since a night learned where it
+     * was, and this function simply never passed it through, which is why the
+     * page that exists to show somebody your work never said where any of it
+     * happened.
+     *
+     * First one wins, and only if it is set: a night filed before venues
+     * existed has none, and the honest answer there is nothing rather than a
+     * guess. If two games somehow disagree the first is as good as either —
+     * a quizmaster who moved venue mid-evening has bigger problems.
+     */
+    if (!entry.venue && record.venue) entry.venue = record.venue;
+    entry.games.push({
       id: record.id,
       kind: record.kind || 'quiz',
       title: record.title || '',
