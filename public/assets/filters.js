@@ -140,7 +140,7 @@ export function filterById(id) {
  * the top. The preview and the upload both come through here, so what somebody
  * lines up is what the room gets — the same reason this function is shared.
  */
-export function drawFiltered(canvas, source, filterId, maxSide = 1280, { square = true } = {}) {
+export function drawFiltered(canvas, source, filterId, maxSide = 1280, { square = true, flip = false } = {}) {
   const sw = source.naturalWidth || source.videoWidth || source.width;
   const sh = source.naturalHeight || source.videoHeight || source.height;
   let sx = 0;
@@ -176,7 +176,28 @@ export function drawFiltered(canvas, source, filterId, maxSide = 1280, { square 
   } else {
     ctx.clearRect(0, 0, w, h);
   }
+  /*
+   * MIRRORED, IF ASKED.
+   *
+   * iOS shows a mirrored preview while you frame a selfie and then saves the
+   * photo un-mirrored, so what comes back through the file input is flipped
+   * relative to what the person was looking at. We never see which camera was
+   * used and there is no reliable way to find out, so this is a control rather
+   * than a detection — the same reasoning as dragging props by hand instead of
+   * face-detecting: no download, no guessing, works on every handset.
+   *
+   * It belongs INSIDE this function because the preview draws at 900 and the
+   * upload draws again at 1080 from the same source, and this file exists so
+   * those two cannot drift. A flip applied at one call site and not the other
+   * is a photo that looks right on the phone and wrong six feet wide.
+   */
+  if (flip) {
+    ctx.save();
+    ctx.translate(w, 0);
+    ctx.scale(-1, 1);
+  }
   ctx.drawImage(source, sx, sy, cw, ch, 0, 0, w, h);
+  if (flip) ctx.restore();
   if (!reads) return canvas;
 
   const image = ctx.getImageData(0, 0, w, h);

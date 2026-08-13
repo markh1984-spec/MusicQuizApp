@@ -280,6 +280,7 @@ function openCamera() {
           <div class="cam-guide">
           <div class="cam-looks-head">
             <span>Stick something on</span>
+            <button class="cam-flip">Flip</button>
             <button class="cam-undo" hidden>Undo</button>
           </div>
           <!-- ABOVE the tray, not below it. It was underneath, which meant
@@ -339,6 +340,21 @@ function openCamera() {
    * upload go through the same function so they cannot drift.
    */
   const PLAIN = 'none';
+  /*
+   * MIRRORED OR NOT, and it is a button rather than something worked out.
+   *
+   * iOS mirrors the live preview while you frame a selfie and then saves the
+   * photo the other way round, so the picture that arrives is flipped relative
+   * to what the person was looking at. A photo comes in through a plain file
+   * input — the phone's own camera app takes it — so we are never told which
+   * lens was used and cannot reliably find out.
+   *
+   * So: one control, no detection. Same reasoning as dragging the props by
+   * hand rather than face-detecting, and it fixes the other case too — a back
+   * camera pointed at a mirror, which is how half the group photos in a pub
+   * get taken.
+   */
+  let flipped = false;
   // The props on the photo, in the order they were added. Positions are
   // fractions of the picture, never pixels — see stickers.js.
   let stuckOn = [];
@@ -349,7 +365,7 @@ function openCamera() {
     // pixels wide, and every extra pixel here is redrawn on every frame of a
     // drag. The upload renders again at 1280 from the same source, so nothing
     // the room sees is lost.
-    drawFiltered(canvas, source, PLAIN, 900);
+    drawFiltered(canvas, source, PLAIN, 900, { flip: flipped });
     // Awaited nowhere: the props are cached images after the first draw, so
     // this settles within a frame and dragging stays smooth.
     drawStickers(canvas, stuckOn);
@@ -443,6 +459,21 @@ function openCamera() {
     });
     tray.appendChild(chip);
   }
+
+  /*
+   * The props are NOT mirrored with the photo, and that is deliberate rather
+   * than an oversight: they are drawn on afterwards, in canvas coordinates, so
+   * a flip after placing a nose would otherwise move the nose to the other
+   * cheek. Flipping the picture under them leaves everything where it was put
+   * — and the two shirt props have words on them, which a mirror would print
+   * backwards.
+   */
+  const flipBtn = sheet.querySelector('.cam-flip');
+  flipBtn.addEventListener('click', () => {
+    flipped = !flipped;
+    flipBtn.classList.toggle('on', flipped);
+    repaint();
+  });
 
   undoBtn.addEventListener('click', () => {
     stuckOn.pop();
@@ -668,7 +699,7 @@ function openCamera() {
        *
        * It is also more than a projector resolves at the 60vh a polaroid gets.
        */
-      drawFiltered(canvas, source, PLAIN, 1080);
+      drawFiltered(canvas, source, PLAIN, 1080, { flip: flipped });
       await drawStickers(canvas, stuckOn);
       const blob = await toJpeg(canvas);
       const res = await fetch(`/api/photo?playerId=${encodeURIComponent(me.id)}&filter=${encodeURIComponent(PLAIN)}${roomParam()}`, {

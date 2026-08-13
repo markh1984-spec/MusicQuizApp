@@ -3696,6 +3696,26 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 }
 .cam-looks-head > span { grid-column: 2; }
 .cam-looks-head .cam-undo { grid-column: 3; justify-self: end; }
+/* Flip takes the LEFT column, so the heading stays where the comment above
+   says it is. Both flanking columns are `1fr`, so a button on each side leaves
+   the middle dead centre — which is better than Undo alone managed. Same shape
+   as Undo because they are the same kind of thing: small, quiet, undoable, and
+   nothing to do with sending. */
+.cam-looks-head .cam-flip { grid-column: 1; justify-self: start; }
+.cam-flip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--panel-line);
+  background: none;
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: var(--fs-mini);
+  font-weight: 700;
+  cursor: pointer;
+}
+/* Lit while it is on, so it is a STATE rather than a thing you press and
+   wonder about. Gold is the only colour on this panel that means anything. */
+.cam-flip.on { color: var(--gold); border-color: rgba(255, 210, 63, 0.55); }
 /* Tonight's look gets the top row and says which night it is, in the gold the
    rest of the panel's headings use. Only ever on screen when the game carries
    a look — an ordinary quiz sees the tray it always saw. */
