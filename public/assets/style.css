@@ -883,6 +883,25 @@ body.host::after { display: none; }
   color: var(--ink);
 }
 .actions .minor.danger { color: var(--bad); border-color: rgba(255, 77, 94, 0.4); }
+/* …AND THE SAME SHAPE INSIDE THE CONTROL VIEW'S OWN PANELS.
+   `.minor` only ever had a rule under `.actions` (the button bar) and under
+   `.console`, so the Setup panel's Load, Download results and the two red
+   ones were drawn by the BROWSER: a default grey button and a blue underlined
+   link, on a page that is otherwise entirely this app's. Nothing was broken,
+   which is why it survived — it just looked like somebody else's page had
+   leaked in halfway down.
+   Padding is the console's rather than the bar's: these sit in a panel with
+   text around them, not in a row of thumb targets. */
+.host .panel a.minor, .host .panel button.minor {
+  text-decoration: none; display: inline-block;
+  padding: 9px 13px; border-radius: 10px; font-size: var(--fs-note); font-weight: 800;
+  font-family: inherit; cursor: pointer;
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--panel-line); color: var(--ink);
+}
+.host .panel button.minor.danger, .host .panel a.minor.danger {
+  color: var(--bad); border-color: rgba(255, 77, 94, 0.4);
+}
+.host .panel button.minor:disabled { opacity: 0.6; cursor: default; }
 /* Back, as an arrow. It keeps a WHOLE CELL rather than being shrunk to fit
    the glyph: this is the undo, pressed in the dark with a mic in the other
    hand, and a small target is the wrong economy on the one control that
@@ -1939,7 +1958,24 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
    does nothing at all — the item simply grows to fit the chips and takes the
    page sideways with it, which is the same min-content trap as the pack
    dropdown and the generator's theme box. */
-.host .bar .topnav { flex: 1 1 0; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+/* …AND A FLOOR, or "shrinkable" turns into "gone".
+
+   `flex: 1 1 0` hands the menu whatever is LEFT, and on a 320px iPhone SE the
+   logo (125px) and the hat slot (105px) plus the gaps come to more than the
+   bar, so what was left was **nothing**: the nav was allotted 0 pixels. A
+   scroll container with no width cannot be scrolled, so the menu was not
+   merely tight, it was unreachable — the first chip clipped mid-word as
+   "Consol" and the other two off the edge, on the one page driven from a phone
+   in a dark pub. Measured at 390 as well: 60px of a 237px menu.
+
+   96px is one whole chip and the edge of the next, which is the thing that
+   says "there is more, swipe" rather than looking like a chip that got cut.
+   Overflow still bites, because what matters for that is the used width being
+   under the content width (96 < 237) — `min-width: 0` was only ever needed to
+   let the item shrink below its own content, and a smaller floor does that
+   just as well. The logo and the hat slot give way instead, which is the right
+   way round: they are a label and an indicator, and this is a door. */
+.host .bar .topnav { flex: 1 1 0; min-width: 96px; overflow-x: auto; scrollbar-width: none; }
 .host .bar .topnav::-webkit-scrollbar { display: none; }
 /* The editor's bar is already full of its own controls — a pack picker and
    five buttons — so the menu must NOT be the thing that gives way: as a
@@ -1997,6 +2033,26 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
     -webkit-overflow-scrolling: touch;
   }
   .console .topnav::-webkit-scrollbar, .editor .topnav::-webkit-scrollbar { display: none; }
+
+  /* THE CONTROL VIEW CANNOT WRAP, SO SOMETHING ELSE HAS TO GIVE — and the
+     wordmark is the right thing to lose.
+
+     That bar is `nowrap` on purpose: it is sticky, and a second row appearing
+     mid-night would push the question and the answer key down the screen. But
+     at 320px the logo (125px) and the hat slot (105px) plus the gaps already
+     came to more than the bar HAD, before the menu was given a single pixel —
+     which is why the menu was allotted zero and clipped to "Consol". Giving it
+     a floor without finding the space just moved the overflow onto the page.
+
+     So on a phone the brand keeps its MARK and drops its WORDS. It is the same
+     link doing the same job in the same place — and the alternative is a menu
+     that is not there at all, which is a worse breach of "the same topbar on
+     every page" than a smaller logo. The name is on the projector six feet
+     wide and on every player's phone; this is the one screen where nobody
+     needs telling whose night it is. Console and editor are untouched: their
+     bars wrap, so they have the room. */
+  .host .bar .brand-name { display: none; }
+  .host .bar-top { gap: 10px; }
 }
 
 /* ---- renaming from the read sheet

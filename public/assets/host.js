@@ -772,22 +772,67 @@ function openPlayerMenu(playerId, name) {
   document.body.appendChild(el);
 }
 
+/**
+ * WHAT TONIGHT IS PLAYING FOR, said in the lobby — including when it is
+ * nothing.
+ *
+ * The prizes are resolved from the venue record at LAUNCH, so a night whose
+ * venue did not match one carries none — and until now the first anybody knew
+ * was the final scores going up with no QR on anybody's phone. That is exactly
+ * how the first real night ended, and an app that says nothing looks exactly
+ * like an app that is working.
+ *
+ * The pack card states it before the press, which is the right place and does
+ * not cover every route in: the two quick-launch buttons deliberately take no
+ * settings — a dropdown on the panic control defeats the panic control — so
+ * they always launch with no venue, and they are the fastest path in the app.
+ * This is the backstop for that: the lobby is the one moment where the host is
+ * waiting, looking at their phone, and a relaunch still costs nothing.
+ *
+ * Only in Setup, which draws at the lobby and at the end and nowhere else — so
+ * it is never a line sitting across the control view mid-round. And it is
+ * plain text rather than a warning: a night with no prize is an ordinary
+ * night, and most of them are.
+ */
+function prizeLine(s) {
+  const rewards = (s.rewards || []).map((r) => String(r || '').trim()).filter(Boolean);
+  if (!rewards.length) {
+    return '<div class="tiny" style="margin-top:4px">No prizes tonight'
+      + ' \u2014 they come from the venue you pick when you launch.</div>';
+  }
+  const places = ['1st', '2nd', '3rd'];
+  return `<div class="tiny" style="margin-top:4px">Playing for: ${rewards
+    .map((r, i) => `<b>${esc(places[i] || `${i + 1}th`)}</b> ${esc(r)}`).join(' \u00b7 ')}</div>`;
+}
+
 function toolsPanel(s) {
+  /*
+   * THE BIG SCREEN AND THE EDITOR ARE ON THE BUTTON BAR, so they are not here
+   * as well.
+   *
+   * This panel had "Open big screen" and "Edit questions" while the bar four
+   * inches below had "Big screen" and "Edit" — the same two acts, twice, on
+   * one screen, in two pairs of words. Two ways to do one job is how you end
+   * up using the worse one out of habit, and here the worse one is this: the
+   * bar carries them at every phase that has no question up, including the
+   * round boards, where this panel does not exist at all. So the bar keeps
+   * them and Setup keeps only what has no other home — which quiz is loaded,
+   * the results, and the two things that clear a night.
+   */
   const el = node(`
     <div class="panel">
       <h3>Setup</h3>
       <div class="row">
         <select id="quizPick"><option>Loading quizzes…</option></select>
         <button class="minor" id="loadQuiz">Load</button>
-        <a class="minor" style="text-decoration:none;display:inline-block" href="${withKey('/editor')}">Edit questions</a>
       </div>
       <div class="row" style="margin-top:10px">
-        <a class="minor" style="text-decoration:none;display:inline-block" href="${s.joinCode ? `/screen?g=${encodeURIComponent(s.joinCode)}` : '/screen'}" target="_blank" rel="noopener">Open big screen</a>
         <a class="minor" style="text-decoration:none;display:inline-block" href="/api/results.csv?key=${encodeURIComponent(hostKey)}">Download results</a>
         <button class="minor danger" id="resetScores">Reset scores</button>
         <button class="minor danger" id="resetAll">Clear everything</button>
       </div>
       <div class="tiny" style="margin-top:10px">Loaded: ${esc(s.quizTitle)}</div>
+      ${prizeLine(s)}
     </div>
   `);
 
@@ -879,9 +924,21 @@ function buildActions(s) {
   const backIcon = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">'
     + '<path d="M20 12H5M11 6l-6 6 6 6" stroke="currentColor" stroke-width="2.6"'
     + ' stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  const back = node('<button class="minor back-btn" aria-label="Back"'
-    + ' title="Back — one step back. Every score is kept, so this is the safe one.">'
-    + `${backIcon}</button>`);
+  /*
+   * DEAD IN THE LOBBY, so it is drawn dead.
+   *
+   * `Engine.back()` falls through to `default: return false` at the lobby —
+   * there is nothing before the lobby to go back to — so the arrow was a
+   * control that quietly did nothing, on the one page somebody presses in a
+   * dark pub to find out where they are. Disabled it says which it is, and
+   * the title says why rather than leaving somebody pressing it twice.
+   */
+  const atStart = s.phase === 'lobby';
+  const back = node(`<button class="minor back-btn" aria-label="Back" ${atStart ? 'disabled' : ''}`
+    + ` title="${atStart
+      ? 'Nothing to go back to yet \u2014 the quiz has not started.'
+      : 'Back \u2014 one step back. Every score is kept, so this is the safe one.'}"`
+    + `>${backIcon}</button>`);
   back.addEventListener('click', () => act('back'));
   out.push(back);
 
@@ -916,9 +973,23 @@ function buildActions(s) {
    * Disabled while a question is live: the room cannot answer what it cannot
    * see, and the clock would keep running behind it.
    */
+  /*
+   * BOTH BUTTONS SAY WHO SEES IT, which is the whole difference between them.
+   *
+   * They were "Scores on screen" and "My scores", side by side — one puts the
+   * board on the PROJECTOR for the room, the other shows it to the HOST alone.
+   * Both said "scores", neither said who was looking, and "My scores" reads
+   * like the host's own score in the quiz. It is the exemplar CLAUDE.md uses
+   * for a label collision and the host's own test of it was: *"if it's not
+   * obvious to me what it does, a fresh QM will have no idea."*
+   *
+   * So the noun stays and the AUDIENCE is what tells them apart: the room, or
+   * just you. Nothing else on this bar needs saying that way, because nothing
+   * else on it comes in two audiences.
+   */
   const board = s.scoreboard || {};
   const showing = Boolean(board.on);
-  const boardBtn = minor(showing ? 'Hide the scores' : 'Scores on screen', () => act('scoreboard', { on: !showing }),
+  const boardBtn = minor(showing ? 'Hide from the room' : 'Scores to the room', () => act('scoreboard', { on: !showing }),
     false, showing
       ? 'Take the scoreboard off the big screen. The quiz has not moved.'
       : 'Put the scoreboard on the big screen for the room to see. It does not move the quiz, and pressing onwards takes it down.');
@@ -930,8 +1001,9 @@ function buildActions(s) {
   out.push(boardBtn);
 
   // The host's own copy, on their phone, which is a different thing from
-  // putting it on the projector.
-  out.push(minor('My scores', () => showScores(), false,
+  // putting it on the projector — so it says so on the button rather than
+  // only in a tooltip nobody on a phone will ever see.
+  out.push(minor('Scores, just me', () => showScores(), false,
     'The scores on THIS screen, for you only \u2014 the room sees nothing.'));
 
   /*

@@ -105,6 +105,32 @@ export function navMenu({
 export function paintNav(slot, opts = {}) {
   if (!slot) return;
   slot.innerHTML = navMenu(opts);
+  /*
+   * SCROLL THE LIT CHIP INTO VIEW, the same as the console's own tab bar.
+   *
+   * On the control view the menu is a 96px window onto 237px of chips, so at
+   * 320px the chip saying where you are can easily be off the right-hand edge
+   * — and a menu you cannot find yourself in is the fault lighting the chip
+   * was meant to fix, moved along by two inches.
+   *
+   * `scrollLeft` on the bar itself and never `scrollIntoView`, which scrolls
+   * every ancestor and would jump the page down to the topbar — the same
+   * reason `showActiveTab()` does it this way.
+   *
+   * Measured off the RECTS rather than `offsetLeft`: that is relative to the
+   * nearest positioned ancestor, which is the bar rather than this nav, so
+   * the arithmetic was out by the logo's width and scrolled straight past the
+   * chip it was aiming at. And the chip is put at the LEFT of the window with
+   * a small peek behind it, not centred — centring a 76px chip in a 96px
+   * window has nowhere to put the other 20px, so it overshot and showed the
+   * tail of the lit chip with the next one whole beside it.
+   */
+  const here = slot.querySelector('a.here');
+  if (here && slot.scrollWidth > slot.clientWidth) {
+    const PEEK = 12;
+    const delta = here.getBoundingClientRect().left - slot.getBoundingClientRect().left;
+    slot.scrollLeft = Math.max(0, slot.scrollLeft + delta - PEEK);
+  }
   for (const chip of slot.querySelectorAll('a[data-hat]')) {
     const wanted = chip.getAttribute('data-hat') === 'on';
     chip.addEventListener('click', async (e) => {

@@ -290,9 +290,20 @@ function openCamera() {
                is always next to the thing it sends, whatever you have just
                added. -->
           <button class="cam-send">Send it up</button>
+          <!-- ONE UNDO, AND IT IS NOT HERE. It used to be in this row too,
+               which meant querySelector('.cam-undo') found this one first —
+               and this row is hidden on an ordinary night, so the only wired
+               Undo lived inside a hidden box while the one below was never
+               unhidden. There was NO UNDO AT ALL on a normal night, on the
+               feature the props exist for, and nothing threw.
+
+               Exactly the fault the .cam-props:not(.cam-props-season) selector
+               below records: the seasonal row carries the same classes as the
+               main one because it wants the same layout, so a bare selector
+               matches the wrong one. Undo takes off the last prop whichever
+               tray it came from, so one is all there was ever a job for. -->
           <div class="cam-looks-head cam-season-head" hidden>
             <span class="cam-season-name"></span>
-            <button class="cam-undo cam-undo-top" hidden>Undo</button>
           </div>
           <div class="cam-props cam-props-season" hidden></div>
           <!-- The heading and the four gestures are ONE CARD. Apart, the

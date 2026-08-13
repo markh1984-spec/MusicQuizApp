@@ -359,7 +359,7 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 | **Photo uploads auto-publish** | Host decided; he will handle the room with the mic. There is a kill switch and a per-photo bin in `src/photos.js` and **no approve step anywhere**. Do not add one. |
 | **Photos go in a SEPARATE PRIVATE repo** | `PHOTO_REPO`, filed as `photos/<night>/<file>` as they arrive. Never the main repo: it is public (checked), and git history is forever. `src/github.js` takes a `which` argument for this. |
 | **Filters are pixel maths, not `ctx.filter`** | `public/assets/filters.js`. Older iOS does not implement `ctx.filter`, and a filter that silently does nothing on a third of the room is worse than none. The preview and the upload go through the same function so they cannot drift. |
-| **"Filters" means PROPS, and the colour grading is GONE** | `public/assets/stickers.js` — sixty-odd of them now, drawn like the seasonal motifs and for the same reason. The host asked for "clown noses, dog ears etc." and found colour grading, which is what `filters.js` does; that was folded away behind "Change the colour instead" and is now **deleted from the panel entirely** — *"I want funny props to be the focus"*. `drawFiltered(…, 'none')` stays as the DRAW path, because it is the one place the sizing is worked out and the preview and the upload go through it so they cannot drift. **No face detection anywhere**: a model is megabytes on a stranger's phone over pub wifi and `FaceDetector` does not exist on iOS Safari — both break *no dependencies* and both fail on somebody's handset in a room. **A prop is dragged off its tile after a short HOLD** (`HOLD_MS`, 200ms), not immediately: dragging straight away was asked for and built, and it took the SCROLL with it — the tray is three dozen tiles, so almost everything under the thumb was a tile and there was nothing left to scroll the sheet with. `touch-action: pan-y` keeps vertical scrolling; a flick scrolls, a hold lifts, a tap centres. Move/up listen on the WINDOW so one gesture crosses two elements. **Double-tap a prop to delete it** (`DOUBLE_TAP_MS`), and **the bin is gone** — it lived bottom right, which the square 1:1 crop turned into a corner people want to put things in, and it only ever removed what was in the air. Undo still takes off the last one added; it used to say "Take it off", which was a lie the moment there were two. Positions are stored as a **fraction** of the canvas, never pixels. Tiles are mid-grey on a GRADIENT (half the props are nearly black, and a flat tile can be matched exactly by a flat prop — the viking helmet vanished into it) and **named as well as drawn** — unlike the colour looks, which were shown rather than named because a name told you nothing; at 50px a monobrow and a moustache are the same dark smear. **Send it up sits under the PHOTO**, above the tray: last on the sheet it meant scrolling back past three dozen tiles to send, which is the same fault that put the gesture hint above the tray rather than below it. That hint is a 2×2 block of four CHIPS rather than a sentence, so it cannot break "pinch to size and turn" in half — equal columns and equal rows, because sized to their own content the chips came out four different widths and read as four objects rather than one block. It carries its own font size too: `.tiny` has never had one on the phone, so it was coming out as big as the question text. **The heading and the chips are ONE CARD** (`.cam-guide`) — apart, the heading was a fifth loose object floating above them. It is a **HAIRLINE of the app's own red-into-orange and nothing inside it**, and the distinction between a line and a fill is the whole decision. A filled slab of that gradient was tried and is wrong for the reason Buy in the shop is not that colour: it is the app's one "press this", Send it up is directly above, and a second block of it doing nothing when pressed costs the real button its meaning. One pixel of it draws the boundary and leaves the weight to the button. `--hot`/`--hot-2` rather than a colour written out, so it follows the quizmaster's own scheme and every seasonal look — the same reason a hardcoded gold would have been wrong. A gradient cannot go in `border-color`, so it is a gradient box with its middle masked out, **behind an `@supports`**: without mask compositing that pseudo-element paints as a solid gradient slab, which is precisely the thing it must not be, so a plain hairline is the default and the gradient is added only where it can be drawn as a ring. **All five texts run that same gradient**, painted with `background-clip: text` — and the four chips take a QUADRANT of it each (`background-size: 200% 200%`, a corner apiece) so the block reads as one sweep across the card rather than four small rainbows repeating the same two colours. That `@supports` guard is not optional either: gradient text means transparent text, so a browser without it would draw five INVISIBLE labels. It also forced the chip's own fill and border onto a pseudo-element, because `background-clip: text` clips EVERY background on the element and the chip would otherwise be cut to the shape of its own words. **The heading fills the card**, justified out to both edges with wider tracking — at the ordinary tracking justification opened two great holes in the middle and it read as three headings. Two columns rather than the centred three, so the heading takes whatever Undo is not using; absolute positioning was tried and collided at 320px once the row lost the card's padding. The SEASONAL row above stays centred and gold: its name is one short word, and justifying it prints H A L L O W E E N. |
+| **"Filters" means PROPS, and the colour grading is GONE** | `public/assets/stickers.js` — sixty-odd of them now, drawn like the seasonal motifs and for the same reason. The host asked for "clown noses, dog ears etc." and found colour grading, which is what `filters.js` does; that was folded away behind "Change the colour instead" and is now **deleted from the panel entirely** — *"I want funny props to be the focus"*. `drawFiltered(…, 'none')` stays as the DRAW path, because it is the one place the sizing is worked out and the preview and the upload go through it so they cannot drift. **No face detection anywhere**: a model is megabytes on a stranger's phone over pub wifi and `FaceDetector` does not exist on iOS Safari — both break *no dependencies* and both fail on somebody's handset in a room. **A prop is dragged off its tile after a short HOLD** (`HOLD_MS`, 200ms), not immediately: dragging straight away was asked for and built, and it took the SCROLL with it — the tray is three dozen tiles, so almost everything under the thumb was a tile and there was nothing left to scroll the sheet with. `touch-action: pan-y` keeps vertical scrolling; a flick scrolls, a hold lifts, a tap centres. Move/up listen on the WINDOW so one gesture crosses two elements. **Double-tap a prop to delete it** (`DOUBLE_TAP_MS`), and **the bin is gone** — it lived bottom right, which the square 1:1 crop turned into a corner people want to put things in, and it only ever removed what was in the air. Undo still takes off the last one added; it used to say "Take it off", which was a lie the moment there were two. **THERE IS EXACTLY ONE UNDO AND IT IS IN THE "STICK SOMETHING ON" HEADING.** There were two — a second in the seasonal row — and that meant `sheet.querySelector('.cam-undo')` wired the seasonal one, which sits in a container that is `hidden` on an ordinary night. So the only working Undo lived inside a hidden box and the visible one was never unhidden: **there was no Undo at all on a normal night**, on the feature the props exist for, and nothing threw. Identical to the fault the `.cam-props:not(.cam-props-season)` selector already records — the seasonal row carries the same classes as the main one *because it wants the same layout*, so a bare selector matches the wrong one. **If a seasonal twin is ever added again, `querySelector` in this file is where it breaks.** Undo takes off the last prop whichever tray it came from, so there was only ever one job. Positions are stored as a **fraction** of the canvas, never pixels. Tiles are mid-grey on a GRADIENT (half the props are nearly black, and a flat tile can be matched exactly by a flat prop — the viking helmet vanished into it) and **named as well as drawn** — unlike the colour looks, which were shown rather than named because a name told you nothing; at 50px a monobrow and a moustache are the same dark smear. **Send it up sits under the PHOTO**, above the tray: last on the sheet it meant scrolling back past three dozen tiles to send, which is the same fault that put the gesture hint above the tray rather than below it. That hint is a 2×2 block of four CHIPS rather than a sentence, so it cannot break "pinch to size and turn" in half — equal columns and equal rows, because sized to their own content the chips came out four different widths and read as four objects rather than one block. It carries its own font size too: `.tiny` has never had one on the phone, so it was coming out as big as the question text. **The heading and the chips are ONE CARD** (`.cam-guide`) — apart, the heading was a fifth loose object floating above them. It is a **HAIRLINE of the app's own red-into-orange and nothing inside it**, and the distinction between a line and a fill is the whole decision. A filled slab of that gradient was tried and is wrong for the reason Buy in the shop is not that colour: it is the app's one "press this", Send it up is directly above, and a second block of it doing nothing when pressed costs the real button its meaning. One pixel of it draws the boundary and leaves the weight to the button. `--hot`/`--hot-2` rather than a colour written out, so it follows the quizmaster's own scheme and every seasonal look — the same reason a hardcoded gold would have been wrong. A gradient cannot go in `border-color`, so it is a gradient box with its middle masked out, **behind an `@supports`**: without mask compositing that pseudo-element paints as a solid gradient slab, which is precisely the thing it must not be, so a plain hairline is the default and the gradient is added only where it can be drawn as a ring. **All five texts run that same gradient**, painted with `background-clip: text` — and the four chips take a QUADRANT of it each (`background-size: 200% 200%`, a corner apiece) so the block reads as one sweep across the card rather than four small rainbows repeating the same two colours. That `@supports` guard is not optional either: gradient text means transparent text, so a browser without it would draw five INVISIBLE labels. It also forced the chip's own fill and border onto a pseudo-element, because `background-clip: text` clips EVERY background on the element and the chip would otherwise be cut to the shape of its own words. **The heading fills the card**, justified out to both edges with wider tracking — at the ordinary tracking justification opened two great holes in the middle and it read as three headings. Two columns rather than the centred three, so the heading takes whatever Undo is not using; absolute positioning was tried and collided at 320px once the row lost the card's padding. The SEASONAL row above stays centred and gold: its name is one short word, and justifying it prints H A L L O W E E N. |
 | **THE PHOTO CAN BE MIRRORED, and it is a BUTTON rather than a detection** | `flip` on `drawFiltered()` and the **Flip** control on the photo sheet. iOS mirrors the live preview while somebody frames a selfie and then saves the picture the other way round — so what arrives is flipped relative to what they were looking at, which is what the host reported. A photo comes in through a plain file input, so the phone's own camera app takes it and we are never told which lens was used. There is no reliable way to find out, and guessing wrong would mirror a picture that was already right. So it is one control: same reasoning as dragging the props by hand rather than face-detecting, and it fixes the other case too — a back camera pointed at a mirror, which is how half the group photos in a pub get taken. **It lives INSIDE `drawFiltered` because the preview draws at 900 and the upload draws again at 1080 from the same source**, and that function exists so the two cannot drift; a flip applied at one call site is a photo that looks right on the phone and wrong six feet wide. Checked by sending a deliberately lopsided picture through the whole path and reading the pixels of the file the PROJECTOR receives, not just the preview. **The props are not mirrored with it**, deliberately: they are drawn on afterwards in canvas coordinates, so flipping them would move a nose to the other cheek — and the three band shirts have words on them, which a mirror would print backwards. |
 | **THE PHONE MUST NOT SAY "look up" WHILE A QUESTION IS ON** | `PHOTO_PHASES` in `screen.js` — the projector only carries photos in the lobby, at a round board and at the end, because twenty seconds and four options wants the whole screen (the same reason the join code is never drawn over a question). A photo sent mid-round is kept and gets its full moment at the next break. **The phone said "It is on the screen — have a look up" regardless**, which is a flat lie told to somebody staring at a question, and the sheet's own warning said "It goes straight up" — which meant *no approval step* and reads as *immediately*. Both now say which it is: **"Sent — it goes up on the big screen at the next break"** when the projector cannot show it yet. `PHOTO_PHASES_PHONE` is written out in `play.js` rather than imported, because the two files share nothing else and a phone guessing differently from the big screen would promise the room something it cannot see. **Flip lives under the PHOTO, not in the props heading** — it was next to Undo, which reads as a corner it was pushed into, because the two do different jobs to different things: Undo takes a prop off, Flip mirrors the picture underneath them. Not overlaid on the photo either, tempting as that is: the canvas carries the drag handlers and a button on it would swallow the gesture. |
 | **A photo gets the MIDDLE of the screen, not a thumbnail** | `showBigPhoto()` in `screen.js` — a POLAROID: white all round, a deep lip at the bottom with the name written in it, and tilted. It fades in and away over about four and a half seconds, then joins the strip (18vh now, not 13). **The tilt never lands near straight**: a plain `random() * 12 - 6` gives half a degree often enough, and half a degree does not read as scrapbook, it reads as a projector nobody levelled. A side is picked and the angle is 2.5° to 7° off it — always obviously deliberate, never far enough to cost the picture height on the one screen where filling the height is the point. Every keyframe has to carry `--tilt` or the photo snaps square halfway through the animation. One at a time and queued: three people sending at once is three moments in a row, not three pictures fighting. **The first paint of a page shows none of them.** A projector opened an hour in, or reconnecting after the laptop slept, would otherwise replay the whole night one picture at a time — two minutes of slideshow over whatever the quiz was doing. `seenPhotos` is keyed by id rather than "the strip has not got one", because the strip is torn down whenever the phase has no room for it and a photo does not become new again because the scoreboard went up and came down. |
@@ -2205,12 +2205,19 @@ Four things at once, because they hide in each other:
 
 #### The fourth kind: one word, two meanings, side by side
 
-**The exemplar is `Scores on screen` and `My scores`, next to each other on the
-control view.** One puts the scoreboard on the PROJECTOR for the room; the
-other shows them to the HOST alone. Both say "scores", neither says who sees
-it, and "My scores" reads like the host's own score in the quiz. The host's
-own test of it: *"if it's not obvious to me what it does, a fresh QM will have
-no idea."*
+**The exemplar WAS `Scores on screen` and `My scores`, next to each other on
+the control view — and it is fixed, so the buttons now read `Scores to the
+room` and `Scores, just me`.** One puts the scoreboard on the PROJECTOR for
+the room; the other shows them to the HOST alone. Both said "scores", neither
+said who was looking, and "My scores" read like the host's own score in the
+quiz. The host's own test of it: *"if it's not obvious to me what it does, a
+fresh QM will have no idea."*
+
+**The fix is the shape to copy: keep the noun, add the AUDIENCE.** Renaming one
+of the two would have left the other still saying only "scores" and put the
+burden on remembering which was which; saying who sees it makes each label
+complete on its own. It is worth nothing else on that bar, because nothing else
+on it comes in two audiences.
 
 **It is a CONTRADICTION rather than a wording preference**, which is why it
 belongs in this sweep rather than on a tidy-up list: the design rules already
@@ -2241,8 +2248,8 @@ What to look for, and each has been seen in this app:
   if it is carrying the meaning, the label is wrong.
 
 **REPORT THE PAIR, NOT THE BUTTON.** A collision is a relationship between two
-controls, so "rename My scores" is half a finding — the fix might be to rename
-either one, or to say WHO SEES IT on both. Give the pair, what a stranger would
+controls, so "rename My scores" was half a finding — the fix turned out to be
+the third option, saying WHO SEES IT on both. Give the pair, what a stranger would
 guess each does, and what they actually do.
 
 **Testing is allowed; leaving anything behind is not.** Start servers, seed
@@ -4544,6 +4551,81 @@ Download button.
 
 All on **`MusicQuizApp`**. 941 tests green.
 
+### What a GUI SWEEP found — thirteen things, all fixed
+
+Run at the host's own asking after the first real night went smoothly:
+*"can you do a bug sweep for things like repeated buttons, unnecessary steps
+etc."* Every one was reproduced in a real browser before it went on the list
+and again after it was fixed. What they have in common is worth more than the
+list: **not one of them failed a test, returned a 403 or threw**, and the
+payload guard reported 3,210 identical comparisons before and after.
+
+**The one that mattered: THERE WAS NO UNDO ON THE PHOTO SHEET.** Two buttons
+carried `.cam-undo`, `querySelector` took the first, and the first lived in the
+seasonal row — which is `hidden` on an ordinary night. So the wired one was
+invisible and the visible one was never wired, on every night the host has ever
+run. Written up in the props row above, including where it will break next.
+
+Four more that were reachable on a gig night:
+
+- **The quick-launch priority did nothing.** `Date.parse()` was being used on
+  `lastPlayedAt`, which is epoch MILLISECONDS — `Date.parse(1786…)` is NaN, so
+  `|| 0` made every pack sort as 0 and "never played first, then longest ago"
+  never happened. The pack played last night could be the first thing offered.
+  It also printed **"Last played"** with no date after it. One reader,
+  `playedAt()`, now used by the sort and the label so they cannot disagree
+  again — and it takes a string too, because an old pack may carry one.
+- **The menu was crushed to nothing on the control view.** `flex: 1 1 0` hands
+  it whatever is LEFT, and at 320px the logo and the hat slot took the lot: the
+  nav was allotted **0 pixels** against 237px of chips, so the first was clipped
+  to "Consol" and the other two were gone. A scroll container with no width
+  cannot be scrolled. It has a 96px floor now, the brand drops its WORDS on a
+  phone so there is room, and `paintNav()` scrolls the lit chip into view like
+  the console's own tab bar. Measured at 320/390/430/768/1280 on all four pages.
+- **Cancelling a relaunch left a button that would not say what it launched.**
+  The restore wrote the literal string "Launch" over a quick pick's two spans.
+  Now the markup is captured and put back — and "Launching…" is set in
+  `doLaunch` alone, because the three call sites each setting it themselves is
+  what destroyed the label before the restore could see it.
+- **Deleting a venue asked on one screen and not on the other.** Same record,
+  same route; the Venues tab confirmed and the Invoices sheet did not.
+
+Then the repeated controls, which is what he actually asked about:
+
+- **`Big screen` / `Open big screen`** and **`Edit` / `Edit questions`** — both
+  pairs on the control view at once, the same act twice in two pairs of words.
+  The Setup panel's copies are gone; the BAR keeps them, because it carries
+  them at every phase with no question up, including the round boards, where
+  Setup does not exist.
+- **`Playlist` meant two opposite things** a week apart: a button that BUILDS
+  one before it exists, a green link that OPENS Spotify after. They are never
+  on screen together, which is what let it survive — a collision separated in
+  time is still a collision and is the worse kind. It is **Make playlist** now,
+  and the panel's own button matches it. **The two presses were left alone
+  deliberately**: that panel is where a missing Spotify login is explained
+  before anything is committed, and this writes to the host's real account.
+- **`Venue` and `Customer` were one record wearing two nouns.** The Venues tab,
+  the launch picker, the pack card and the archive all said venue; the invoice
+  sheet said customer, and the Venues tab carried a sentence explaining they
+  were the same list — which by the house rule is the tell that it is a design
+  problem rather than a copy one. The UI says **venue** throughout. The wire is
+  untouched (`/api/invoices/customers`), because a route is not a label.
+
+And three smaller ones: **Back was drawn live in the lobby** where
+`Engine.back()` returns false, so it is disabled there now; **`.minor` had no
+rule inside the control view's panels**, so Setup's Load and Download results
+were drawn by the browser as a grey button and a blue underlined link on a page
+that is otherwise entirely this app's; and the prize line the pack card gained
+last week is now **also in Setup**, because the two quick-launch buttons take
+no settings by design and therefore always launch with no venue — which is the
+fastest path in the app and the one that reproduces the missing voucher.
+
+**One finding was deliberately NOT actioned.** Skip and Stop the quiz are both
+outlined red on the question screen, which looks like two warnings of very
+different weight — but `skipQuestion()` genuinely wipes that question's points
+and its history, and Back cannot bring them back. Both are destructive, so both
+are red, and the rule holds.
+
 ### Three things the FIRST REAL NIGHT found, and all three are fixed
 
 The host ran the app in front of a paying room for the first time and came back
@@ -4567,7 +4649,8 @@ and the third was a setting that existed and was never set.
 invisible from every check this repo has: `npm test` was green, the payloads
 were byte-identical, nothing 403'd and nothing looked broken. They were only
 findable by a human running a night and noticing the app had not told them
-something. That is the same class as *Scores on screen* vs *My scores* — which
+something. That is the same class as *Scores on screen* vs *My scores* (since
+renamed — see the sweep notes) — which
 is why label collisions are now part of Sweep mode — and it is the argument for
 the host wearing a real quizmaster's hat rather than reasoning from the console.
 

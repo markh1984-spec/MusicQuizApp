@@ -212,22 +212,23 @@ on the list:
   shows them to the host alone. Both say "scores", neither says who sees it,
   and "My scores" reads like the host's own score in the quiz.
 
-**The fix is a decision rather than an edit, which is why it waits.** Renaming
-one of them is the cheap answer and probably the wrong one — the thing that
-distinguishes them is WHO SEES IT, so both labels are missing the same word.
-Candidates, and each has a cost worth weighing on a 4-column grid where a cell
-is about 85px on a phone:
+**DONE — they are `Scores to the room` and `Scores, just me`.** Kept here
+because the reasoning is the template for the next one. The three candidates
+weighed were "Scores on the big screen / Scores just for me" (says it, wraps to
+three lines on a phone), "Show the room / Check the scores" (fits, but drops
+the word "scores" from the one that puts them up), and renaming only the
+private one (smallest change, leaves both still starting with the same word).
 
-- **"Scores on the big screen" / "Scores just for me"** — says it, and both
-  wrap to three lines on a phone;
-- **"Show the room" / "Check the scores"** — fits, and drops the word "scores"
-  from the one that puts them up;
-- **leave the projector one and rename the private one** — smallest change,
-  and leaves the pair still both starting with the same word.
+**The one that won was none of them: keep the NOUN and add the AUDIENCE to
+both.** Renaming one leaves the other saying only "scores" and puts the burden
+on remembering which is which — the label has to be complete on its own.
+Checked at 390px: neither wraps past two lines in an 85px cell.
 
-**Do it with a screenshot at 390px, not in the abstract.** And run the rest of
-the sweep at the same time — a collision found alone is a collision the others
-are hiding behind.
+**And the instruction at the bottom of this entry was the right one.** "Run the
+rest of the sweep at the same time — a collision found alone is a collision the
+others are hiding behind" turned up twelve more, four of them reachable on a
+gig night and one (no Undo on the photo sheet, on every ordinary night) that
+nothing else would ever have found. See CLAUDE.md.
 
 ### 5d. Two band shirts went in — the pattern for adding more
 
@@ -368,7 +369,7 @@ of evidence, and quietly mixing them is how a page stops being trustworthy.
 It also keeps hand-filed nights out of anything that draws conclusions — the
 play counts and "never played by anybody" should ignore them.
 
-### 5e. Two ways to open the big screen, on one screen
+### 5e. Two ways to open the big screen, on one screen — ✅ DONE
 
 **Spotted by the host on 14 August 2026**, mid-test: the control view has
 **Big screen** in the action row AND **Open big screen** in the Setup panel.
@@ -389,6 +390,12 @@ Worth doing in the same pass as item 5a (Launch opening the big screen in a
 second tab), because if a launch opens it automatically the action-row button
 becomes the way BACK to a tab you already have, and the wording may want to
 change with it.
+
+**Done as part of the GUI sweep, and it was a PAIR rather than a single:** the
+same panel also had **Edit questions** against the bar's **Edit**, which nobody
+had spotted. Both of Setup's copies are gone and the action row keeps both, for
+exactly the reason written above. 5a is still open and the note about wording
+still applies to it.
 
 ### 1e. The demo prize card, personalised to the venue you are pitching to
 
@@ -4927,13 +4934,13 @@ you commit it.
 - **The rules** come up on their own as the first slide, right after you press
   *Start the quiz*. Read them out or let the room read them; press onwards when
   you are ready. **Back** returns to them if somebody walks in late and asks.
-- **Scores on screen** — put the leaderboard on the projector whenever you
+- **Scores to the room** — put the leaderboard on the projector whenever you
   like, roughly every five questions. Press it again to hide, or just press the
   big pink button and it goes away as the quiz carries on. Greyed out while a
   question is live, because the room cannot answer what it cannot see.
   Your control view header says *Scores on the big screen* so you never have to
   turn round to check what they are looking at.
-- **My scores** is different — that is your own copy, on your phone.
+- **Scores, just me** is different — that is your own copy, on your phone.
 
 ### 9b. Photos from the room
 

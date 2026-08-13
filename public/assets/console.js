@@ -2398,7 +2398,7 @@ function launchBar() {
     const rest = packs
       .filter((p) => !out.some((o) => o.pack.id === p.id))
       .filter((p) => !freshness(p).expired)
-      .sort((a, b) => (Date.parse(a.lastPlayedAt || '') || 0) - (Date.parse(b.lastPlayedAt || '') || 0));
+      .sort((a, b) => playedAt(a.lastPlayedAt) - playedAt(b.lastPlayedAt));
     for (const p of rest) {
       if (out.length >= 2) break;
       out.push({ pack: p, why: p.lastPlayedAt ? `Last played ${whenShort(p.lastPlayedAt)}` : 'Never played' });
@@ -2415,11 +2415,10 @@ function launchBar() {
           <span class="lb-quick-title">${esc(pack.title)}</span>
           ${why ? `<span class="lb-quick-why">${esc(why)}</span>` : ''}
         </button>`);
-      row.addEventListener('click', async () => {
-        row.disabled = true;
-        row.textContent = 'Launching…';
-        await doLaunch(gameOf().id, pack.id, {}, row);
-      });
+      // doLaunch says "Launching…" and puts the label back on its own — this
+      // used to do it here, which destroyed the two spans before doLaunch had
+      // seen them and left a bare "Launch" if the 409 was cancelled.
+      row.addEventListener('click', () => doLaunch(gameOf().id, pack.id, {}, row));
       return row;
     }));
   };
@@ -2496,8 +2495,6 @@ function launchBar() {
 
     chosen.querySelector('.lb-go').addEventListener('click', async (ev) => {
       const button = ev.currentTarget;
-      button.disabled = true;
-      button.textContent = 'Launching…';
       await doLaunch(kind, pack.id, {
         shape: shapePick ? JSON.parse(shapePick.value) : null,
         prizes: Number(prizePick?.value) || 0,
@@ -2531,9 +2528,35 @@ function launchBar() {
  * they heard it recently", and to a decimal place that is not a question
  * anybody asks.
  */
-function whenShort(at) {
+/**
+ * When a pack was last played, as a NUMBER, whatever was written down.
+ *
+ * `library.js` stores `lastPlayedAt` as epoch milliseconds and this file was
+ * reading it with `Date.parse`, which takes a STRING — `Date.parse(1786…)` is
+ * NaN. Two things fell out of that and neither showed up as an error:
+ *
+ * - the quick-launch chip read **"Last played"** with nothing after it, on
+ *   every pack that had actually been played;
+ * - and worse, the whole quick-pick PRIORITY was inert. `Date.parse(…) || 0`
+ *   made every pack sort as 0, so "never played first, then longest ago"
+ *   never happened and the pack you ran last night could be the first thing
+ *   offered. The list still looked perfectly plausible, which is why it
+ *   survived.
+ *
+ * One reader, used by both, so they cannot disagree again. It takes a string
+ * too, because a pack file written before the counts were numbers may still
+ * carry one and quietly dropping it would put an old pack at the front of a
+ * list that means "least likely to have been heard".
+ */
+function playedAt(at) {
+  if (typeof at === 'number') return Number.isFinite(at) ? at : 0;
   const then = Date.parse(at || '');
-  if (!Number.isFinite(then)) return '';
+  return Number.isFinite(then) ? then : 0;
+}
+
+function whenShort(at) {
+  const then = playedAt(at);
+  if (!then) return '';
   const days = Math.floor((Date.now() - then) / 86400000);
   if (days <= 0) return 'today';
   if (days === 1) return 'yesterday';
@@ -3050,7 +3073,7 @@ function playlistPanel(pack) {
     <div class="panel pics">
       <div class="tiny status">Builds a Spotify playlist in question order — track one is question one.</div>
       <div class="row" style="margin-top:8px">
-        <button class="role-make build">Build the playlist</button>
+        <button class="role-make build">Make the playlist</button>
       </div>
       <div class="tiny note"></div>
       <details class="pic-lib" hidden>
@@ -3118,7 +3141,7 @@ function playlistPanel(pack) {
       say('\n' + err.message);
     }
     button.disabled = false;
-    button.textContent = 'Build the playlist';
+    button.textContent = 'Make the playlist';
   });
 
   return el;
@@ -3412,7 +3435,19 @@ function packCard(kind, pack) {
           // its tooltip is honest that Spotify gets a second playlist rather
           // than an updated one.
           ? '<button class="pack-playlist" title="Build it again. Spotify gets a NEW playlist — the existing one is left alone.">Rebuild</button>'
-          : '<button class="pack-playlist" title="Build the Spotify playlist for the intro round">Playlist</button>') : ''}
+          // AND BEFORE ONE EXISTS IT SAYS "MAKE", NOT "PLAYLIST".
+          //
+          // The two never appear together — the green link only exists once
+          // there is something to open — so this read as one word meaning two
+          // opposite things a week apart: press Playlist on Monday and you
+          // build one, press it on Friday and you are in Spotify. A collision
+          // separated in time is still a collision, and it is the worse kind
+          // because nothing on screen shows you both at once.
+          //
+          // A verb also puts it in the same family as "Make real portraits"
+          // beside it, which is the other thing on this row that makes
+          // something rather than opening something.
+          : '<button class="pack-playlist" title="Build the Spotify playlist for the intro round">Make playlist</button>') : ''}
         ${mine ? '<button class="pack-del" title="Delete this pack">Delete</button>' : ''}
       </div>
       ${canRun(kind) ? `<button class="go launch" ${pack.broken ? 'disabled' : ''}>Launch</button>` : ''}
@@ -3594,8 +3629,6 @@ function packCard(kind, pack) {
     }
 
     const button = el.querySelector('.launch');
-    button.disabled = true;
-    button.textContent = 'Launching…';
 
     const picked = el.querySelector('.shape-pick');
     const shape = picked ? JSON.parse(picked.value) : null;
@@ -3622,9 +3655,35 @@ async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', onl
       { game: kind, packId, shape, prizes, look, online, teamPlay, venue, ...(replace ? { replace: true } : {}) },
       { 'X-Host-Key': hostKey },
     );
+    /*
+     * PUT THE BUTTON BACK AS IT WAS, not as the word "Launch".
+     *
+     * The three launch buttons do not say the same thing: a pack card's says
+     * "Launch", the launch bar's says "Launch <title>", and a quick pick is
+     * two spans — the pack's name and why it is being offered. Writing the
+     * literal string back turned a quick pick into a bare **Launch** with no
+     * indication of what it runs, sitting next to another one that still said.
+     *
+     * And it happens at the worst possible moment: the only way to get here
+     * is the 409 — two devices on one login, a night already running, which is
+     * exactly when somebody is under pressure and reading fast.
+     *
+     * So the markup is kept and restored. `innerHTML` rather than a clone
+     * because the click handler is bound to the button itself and only its
+     * contents are being replaced.
+     *
+     * **"Launching…" is set HERE and nowhere else**, which is the half that
+     * makes it work: the three call sites each used to write it themselves,
+     * so by the time this function ran the original label was already gone and
+     * there was nothing left to put back. One place that changes the button is
+     * also one place that can change it back.
+     */
+    const wasHtml = button.innerHTML;
+    button.disabled = true;
+    button.textContent = 'Launching…';
     const back = () => {
       button.disabled = false;
-      button.textContent = 'Launch';
+      button.innerHTML = wasHtml;
     };
 
     /*
@@ -4159,8 +4218,8 @@ function venuesSection() {
       <div class="panel">
         <h3>Venues</h3>
         <div class="tiny">Set the prizes here and they fill themselves in when you
-          launch a night at this venue. It is the same list as your invoice
-          customers — the billing details live on the Invoices tab.</div>
+          launch a night at this venue. The billing details for the same venues
+          are on the Invoices tab.</div>
         <div class="venue-list">
           ${venues.length ? venues.map((v) => `
             <div class="venue-card" data-id="${esc(v.id)}">
@@ -4589,7 +4648,7 @@ function invoicesSection() {
           <div class="tiny status">Loading…</div>
         </div>
         <div class="row">
-          <button class="minor who-to">Customers</button>
+          <button class="minor who-to">Venues</button>
           <button class="minor my-details">Your details</button>
           <button class="role-make new-invoice">New invoice</button>
         </div>
@@ -4662,8 +4721,8 @@ function drawList(body, refresh) {
   if (!book.invoices.length) {
     body.replaceChildren(node(`
       <div class="tiny" style="padding:18px 0">
-        Nothing yet. Fill in <b>Your details</b> once, add the venues you work for under
-        <b>Customers</b>, and an invoice is then two taps at the end of a night.
+        Nothing yet. Fill in <b>Your details</b> once, add the places you play under
+        <b>Venues</b>, and an invoice is then two taps at the end of a night.
       </div>`));
     return;
   }
@@ -4852,9 +4911,23 @@ function openSettings(refresh) {
   });
 }
 
-/** The venues you work for, so an invoice is a pick rather than a retype. */
+/**
+ * The venues you work for, so an invoice is a pick rather than a retype.
+ *
+ * IT SAYS "VENUE", not "customer", and that is the whole reason this comment
+ * is longer than it was. One record was wearing two nouns: the Venues tab
+ * called it a venue, this sheet called it a customer, the launch picker and
+ * the pack card and the archive all said venue — and the Venues tab had to
+ * carry a sentence explaining that they were the same list, which by the house
+ * rule is the tell that it is a design problem rather than a copy one.
+ *
+ * The wire is untouched (`/api/invoices/customers`, `book.customers`): a route
+ * is not a label, and renaming one to tidy a word is how you break a backup.
+ * Invoices already issued are untouched too — they carry their own copy of
+ * everything, which is the point of them.
+ */
 function openCustomers(refresh) {
-  sheet('Customers', (form) => {
+  sheet('Venues', (form) => {
     const draw = () => {
       form.innerHTML = `<div class="inv-customers">${book.customers.map((c) => `
         <div class="inv-cust" data-id="${esc(c.id)}">
@@ -4863,7 +4936,7 @@ function openCustomers(refresh) {
           </div>
           <button class="minor danger del">Remove</button>
         </div>`).join('') || '<div class="tiny">Nobody yet.</div>'}</div>
-        <div class="inv-group"><h4>Add a customer</h4>
+        <div class="inv-group"><h4>Add a venue</h4>
           ${field('Name', 'name', '', { placeholder: 'The Crown' })}
           ${field('Contact', 'contact', '', { placeholder: 'Dave' })}
           ${field('Address', 'address', '', { type: 'textarea', wide: true })}
@@ -4872,6 +4945,15 @@ function openCustomers(refresh) {
         </div>`;
       for (const row of form.querySelectorAll('.inv-cust')) {
         row.querySelector('.del').addEventListener('click', async () => {
+          /*
+           * The SAME confirm the Venues tab shows, because it is the same act
+           * on the same record — `DELETE /api/invoices/customers/:id`. This
+           * one had none at all: one tap and a venue's address, contact, usual
+           * fee and prizes were gone, with no undo. A destructive act that
+           * asks on one screen and not on the other teaches you that it does
+           * not ask, which is the worse of the two ways to be inconsistent.
+           */
+          if (!confirm('Remove this venue? Invoices already sent keep their own copy.')) return;
           await invoiceApi(`/api/invoices/customers/${encodeURIComponent(row.dataset.id)}`, { method: 'DELETE' });
           book = await invoiceApi('/api/invoices');
           draw();
@@ -4882,7 +4964,7 @@ function openCustomers(refresh) {
     draw();
   }, async (form, { close }) => {
     const v = valuesOf(form);
-    if (!v.name) throw new Error('A customer needs a name.');
+    if (!v.name) throw new Error('A venue needs a name.');
     await invoiceApi('/api/invoices/customers', { method: 'POST', body: JSON.stringify(v) });
     close();
     refresh();
@@ -4910,7 +4992,7 @@ function openInvoiceForm(prefill, refresh) {
 
     form.innerHTML = `
       <div class="inv-group"><h4>Who it is for</h4>
-        <label class="inv-field wide"><span>Customer</span>
+        <label class="inv-field wide"><span>Venue</span>
           <select name="customerId">
             <option value="">Someone not on the list…</option>
             ${book.customers.map((c) => `<option value="${esc(c.id)}" ${prefill.customerId === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
