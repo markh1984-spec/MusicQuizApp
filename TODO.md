@@ -254,6 +254,48 @@ The obvious next ones, if a room asks: a plain band tee with no name on it, a
 football shirt, and a hi-vis. Each is another tile in a tray somebody has to
 scan, so add them when a night needs one rather than for the sake of it.
 
+### 4b. "Add a past gig" — filing a night the app did not record
+
+**Asked for on 14 August 2026** and parked the same day, because it turned out
+to be a data-model decision rather than a form. The archive is only ever
+written by the engine when a game ends; `/api/archive` and `/api/past-gigs` are
+read-only, so there is no way to file a night run on paper, run before the app
+existed, or lost to a crash.
+
+**THE NIGHT WAITING TO BE FILED, in the host's own words** — do not re-ask him
+for this:
+
+> The Station Tap, Wokingham · Wednesday 6 August 2026 · 21:00–01:00 ·
+> around 20 players · 3 rounds, two won by **Caitlyn** and one by an account
+> named **Chica** · the One Direction Quiz pack, which may since have been
+> deleted.
+
+Two things have to be settled before a form is worth drawing, and both are
+about not writing down something untrue:
+
+- **THREE ROUND-WINNERS IS NOT ONE NIGHT'S RECORD.** A record holds one game
+  with one final leaderboard. Two wins for Caitlyn and one for Chica is either
+  three archived games or one night whose per-round winners the model has
+  nowhere to keep. Worth knowing which the host actually ran before choosing —
+  and worth noticing that per-round winners may be how he runs a night, in
+  which case the archive is missing something real rather than needing a
+  workaround.
+- **"AROUND 20" CANNOT BE STORED HONESTLY TODAY.** `listArchive()` derives the
+  headcount from `leaderboard.length`, so writing 20 means inventing eighteen
+  team names — on the one page whose whole job is being evidence shown to a
+  venue. A hand-filed night needs an explicit `playerCount` on the record and
+  `listArchive` taught to prefer it when it is there. That is the actual work.
+
+A deleted pack is NOT a problem: a record keeps the title it was played under,
+not a live reference, which is the same reason a report carries a copy of the
+question rather than a pointer to it.
+
+**Mark it as hand-filed** (`enteredByHand: true`) and say so on the row. A
+record somebody typed from memory and one the engine wrote are different kinds
+of evidence, and quietly mixing them is how a page stops being trustworthy.
+It also keeps hand-filed nights out of anything that draws conclusions — the
+play counts and "never played by anybody" should ignore them.
+
 ### 5a. Launch opens the big screen in a second tab
 
 **Asked for on 14 August 2026, mid-gig-day, and parked for that reason.** The
