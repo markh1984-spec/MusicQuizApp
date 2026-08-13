@@ -2943,6 +2943,49 @@ running, how many are in each, right now. See the section above on why the
 video version should not be built — this is the feature that request was
 reaching for.
 
+### A QUIZMASTER'S OWN PACKS STAY THEIRS INSIDE A COMPANY — and sharing is consented
+
+The host, closing the account design: *"Head office are going to want that
+sharing functionality, but also individual quizmasters need their IP guarded,
+and that needs to be consent-driven."*
+
+**This cuts against the group's main selling point, so it has to be resolved
+rather than assumed.** The Group accounts section calls internal pack
+distribution "the real win" — the company writes a quiz once and every host can
+run it. Taken carelessly that means a company hoovering up whatever its hosts
+write, which is the exact thing `own-packs.js` exists to prevent, one level
+down.
+
+**They are TWO SHELVES, not one, and the resolution order already written down
+keeps them apart:**
+
+> **own → company → catalogue**
+
+- **Their OWN packs stay their own**, private from the company exactly as they
+  are private from the owner. A host who leaves takes them, because they were
+  never the company's.
+- **The COMPANY shelf** is what every seat can run. That is the win, and it is
+  fed deliberately.
+
+**NOTHING MOVES BETWEEN THEM WITHOUT THE AUTHOR DOING IT.** An explicit "share
+this with the company" on their own pack card — one action, theirs, and
+reversible. No automatic promotion, no "packs written on a company seat belong
+to the company" rule, because that rule would be the app quietly taking a
+position on somebody's employment terms.
+
+**And the app must NOT try to answer who owns a pack written while employed.**
+That is a work-for-hire question between them and their employer, it varies by
+contract, and an app that decides it silently will be wrong for somebody in a
+way that costs them. What the app does instead is **record what was shared and
+by whom**, and let the two humans disagree with the facts in front of them.
+
+**A parent cannot read a child's own packs either.** The owner-cannot-read-your-
+packs guarantee applies one level down, unchanged and for the same reason: the
+only way in is the support door the CHILD opens, which expires and writes down
+what was looked at. A pub group reading its venues' data is fine — that is
+their own trading information. A quiz company reading its hosts' unshared
+quizzes is not.
+
 ### PRICING A PARENT: don't. The seats are the product.
 
 The host, thinking it through out loud and arriving at a real tension: *"If Rob
