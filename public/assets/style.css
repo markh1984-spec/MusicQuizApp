@@ -1100,13 +1100,23 @@ body.editor::after { display: none; }
 .qcard:last-child { border-radius: 0 0 14px 14px; }
 .qcard.flagged { background: rgba(255, 77, 94, 0.09); }
 
-.qcard .qtop { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+/* `flex-wrap` because the row is QUESTION 1 · a type · Duplicate · Delete, and
+   on a 320px phone the buttons on the end were 8px off the side rather than on
+   a line of their own. */
+.qcard .qtop { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
 .qcard .qnum { font-size: var(--fs-mini); font-weight: 900; letter-spacing: 0.14em; color: var(--ink-dim); text-transform: uppercase; }
 .qcard .qtools { margin-left: auto; display: flex; gap: 6px; }
 
 .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 11px; }
-.opt-row { display: flex; align-items: center; gap: 9px; }
-.opt-row input[type="text"] { flex: 1 1 auto; }
+/* `min-width: 0` for the third time — a flex child will not go below its own
+   MIN-CONTENT without it, so an option box refused to shrink and dragged the
+   whole editor 313px off the side of a 320px phone. Same fault as the pack
+   dropdown on the control view and the theme box on the console. */
+.opt-row { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.opt-row input[type="text"] { flex: 1 1 auto; min-width: 0; }
+/* And one column on a phone: two boxes plus a tickbox each is about 150px a
+   side, which is not an option anybody can read let alone type into. */
+@media (max-width: 560px) { .opts { grid-template-columns: 1fr; } }
 .opt-row label {
   display: flex; align-items: center; gap: 7px;
   padding: 8px 11px; border-radius: 9px; cursor: pointer;
@@ -1968,14 +1978,20 @@ button.pack-title:hover { color: var(--cool); text-decoration: underline; }
      rather than wrapping to a third line: the topbar is sticky, so a bar that
      grew a row would eat the top of the page on every tab all night. */
   .console .topbar, .editor .topbar { flex-wrap: wrap; row-gap: 8px; }
-  .topnav {
+  /* SCOPED to the two bars that WRAP. It was a bare `.topnav`, so it reached
+     the control view as well — whose bar is deliberately `nowrap` and already
+     has a scrolling rule of its own — and there `order: 9` sent the menu to
+     the far right, past the hat switch, squeezed to a sliver by
+     `flex: 1 1 100%` in a row with nowhere to put it. The one page where the
+     menu has to be beside the logo is the one where it was not. */
+  .console .topnav, .editor .topnav {
     order: 9;
     flex: 1 1 100%;
     overflow-x: auto;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
   }
-  .topnav::-webkit-scrollbar { display: none; }
+  .console .topnav::-webkit-scrollbar, .editor .topnav::-webkit-scrollbar { display: none; }
 }
 
 /* ---- renaming from the read sheet
@@ -4574,3 +4590,28 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 }
 .role-make:hover { background: linear-gradient(120deg, rgba(47, 224, 122, 0.28), rgba(255, 210, 63, 0.2)); }
 .role-make:disabled { opacity: 0.45; cursor: default; }
+
+/* WHERE YOU ARE, when the hat switch cannot say it.
+ *
+ * Only ever on the bare host key. Quiet and outlined rather than coloured:
+ * it is a statement of fact, not a warning and not something to press — and
+ * the one thing it must not do is look like the switch it stands in for. */
+.mode-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--r-pill);
+  color: var(--ink-dim);
+  font-size: var(--fs-mini); font-weight: 800;
+  white-space: nowrap;
+}
+.mode-chip b { color: var(--ink-dim); opacity: 0.5; font-weight: 400; }
+/* On a phone it loses the CREDENTIAL and keeps the ROOM, which is the half
+   that decides whether the people in front of you can join. Same shape as the
+   hat switch's own narrow rule — lose padding, then lose the least useful
+   words — and it is what keeps the control view inside 320px, where the bar
+   is already carrying a logo and three menu chips. */
+@media (max-width: 560px) {
+  .mode-chip { padding: 6px 10px; font-size: var(--fs-tag); }
+  .mode-chip .mc-how { display: none; }
+}

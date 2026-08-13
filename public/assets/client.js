@@ -153,7 +153,30 @@ export function paintIdentity(who, { forgetKey = null, onSwitch = null } = {}) {
   const slot = document.getElementById('hatSlot');
   if (slot) {
     const el = hatSwitch(who, { forgetKey, onSwitch });
-    slot.replaceChildren(...(el ? [el] : []));
+    /*
+     * ON THE HOST KEY WITH NOTHING SIGNED IN, SAY SO.
+     *
+     * The hat switch is the sign as well as the switch — but on the bare key
+     * it returns null, and Sign out is hidden too, so the topbar went silent
+     * on the one identity that looks least like the others. The host lost ten
+     * minutes to exactly that: *"where's my hat selector?"*, on a console that
+     * was working perfectly and was simply somewhere else.
+     *
+     * It names the ROOM rather than the credential, because the room is the
+     * part that actually matters — the house room is the plain `/play` one
+     * with no join code, and a night started in the room you did not mean is
+     * a room full of people who cannot join.
+     *
+     * Only when the switch drew nothing: with an owner signed in underneath,
+     * the switch grows a third position and says it better than a chip could.
+     */
+    if (el) slot.replaceChildren(el);
+    else if (who && who.bootstrap) {
+      slot.replaceChildren(node(
+        '<span class="mode-chip" title="Signed in with the host key rather than as an account, so this is the house room — the plain /play one with no join code. Sign in as your quizmaster account for your own room.">'
+        + '<span class="mc-how">Host key <b>·</b> </span>the house room</span>',
+      ));
+    } else slot.replaceChildren();
   }
   // A gold hairline under the topbar while the hat is on, so even a screenshot
   // of the middle of a page says which hat it was taken in.
