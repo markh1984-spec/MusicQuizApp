@@ -3188,9 +3188,20 @@ function rewardBox() {
   const list = seen.length
     ? `<datalist id="rewardsUsed">${seen.map((v) => `<option value="${esc(v)}"></option>`).join('')}</datalist>`
     : '';
+  /*
+   * EVERY BOX CARRIES ITS PLACE, INCLUDING THE FIRST.
+   *
+   * It did not, and the host read the panel as "only a single field" — which
+   * is fair: a lone unlabelled box says nothing about there being places at
+   * all, so the second one appearing later is a surprise rather than an
+   * answer. With "1st" on it the row is obviously one of a set and the next
+   * arriving is what you expect. Same fault as a control whose meaning lives
+   * in a tooltip: the thing was there and the label was not.
+   */
+  const PLACES = { 1: '1st', 2: '2nd', 3: '3rd' };
   const box = (i) => `
     <div class="reward-row" data-place="${i}"${i > 1 ? ' hidden' : ''}>
-      ${i > 1 ? `<span class="reward-place">${i === 2 ? '2nd' : '3rd'}</span>` : ''}
+      <span class="reward-place">${PLACES[i]}</span>
       <input class="reward-pick" type="text" list="rewardsUsed" maxlength="80"
         placeholder="${i === 1 ? 'A free drink at the bar' : `Prize for ${i === 2 ? 'second' : 'third'}`}">
     </div>`;
@@ -3208,6 +3219,29 @@ function wireRewards(el) {
   const stack = el.querySelector('.reward-stack');
   if (!stack) return;
   const rows = [...stack.querySelectorAll('.reward-row')];
+
+  /*
+   * THE PRIZE FOLLOWS THE VENUE, because the venue buys it.
+   *
+   * The same drink every week at one pub and something else entirely at
+   * another — so picking the venue fills in what that venue put up last time,
+   * and the job becomes confirming rather than typing. That is the shape this
+   * app uses everywhere: the app prepares, the human reads, the human presses.
+   *
+   * ONLY INTO EMPTY BOXES, and that is the whole safety of it. Overwriting
+   * something already typed would silently change what a room is playing for
+   * — and it would do it at the exact moment somebody had just corrected it.
+   */
+  const venueBoxEl = el.querySelector('.venue-pick');
+  if (venueBoxEl) {
+    venueBoxEl.addEventListener('change', () => {
+      const known = ((library && library.venueRewards) || {})[venueBoxEl.value.trim()];
+      if (!known || !known.length) return;
+      if (rows.some((r) => r.querySelector('input').value.trim())) return;
+      rows.forEach((row, i) => { row.querySelector('input').value = known[i] || ''; });
+      paint();
+    });
+  }
   const paint = () => {
     rows.forEach((row, i) => {
       if (i === 0) return;

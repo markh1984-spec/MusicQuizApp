@@ -4740,3 +4740,19 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .v-place-2 { color: #c6cdd6; }
 .v-place-3 { color: #cd895a; }
 .v-row-what { font-size: var(--fs-note); color: var(--ink-dim); }
+
+/* First, second and third at launch. One row each, the place on the left so
+   the first box is obviously one of a set — without it a lone unlabelled box
+   reads as the only field there is, which is exactly how it was reported. */
+.reward-stack { display: grid; gap: 6px; }
+.reward-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.reward-row .reward-place {
+  flex: 0 0 auto; min-width: 26px;
+  font-size: var(--fs-tag); font-weight: 900; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--gold);
+}
+.reward-row[data-place="2"] .reward-place { color: #c6cdd6; }
+.reward-row[data-place="3"] .reward-place { color: #cd895a; }
+/* `min-width: 0` or the input refuses to go below its own placeholder and
+   drags the pack card sideways — the same trap, for the fourth time. */
+.reward-row .reward-pick { flex: 1 1 auto; min-width: 0; }

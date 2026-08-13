@@ -22,7 +22,7 @@ import { Photos, MAX_BYTES } from './src/photos.js';
 import { Session } from './src/session.js';
 import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked, ROUND_TYPES } from './src/quizzes.js';
 import { validateBingoPack, normaliseBingoPack, minimumTracks, CARD_SHAPES, shapeLabel, maxPrizes, stagePlan, stageLabel } from './src/bingo.js';
-import { fullLibrary, listArchive, venuesUsed, rewardsUsed, loadArchived, serialiseArchive, restoreArchive, saveBingoPack, loadBingoPack, deleteBingoPack, readStats } from './src/library.js';
+import { fullLibrary, listArchive, venuesUsed, rewardsUsed, rewardsByVenue, loadArchived, serialiseArchive, restoreArchive, saveBingoPack, loadBingoPack, deleteBingoPack, readStats } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
 import { generateQuizPack, buildIntroPlaylists, roundPlan, TOPICAL_ROUNDS, TOPICAL_DAYS, topicalNaming } from './src/generate-quiz.js';
 import { importBingoPack } from './src/import-bingo.js';
@@ -1484,8 +1484,10 @@ async function handleGet(req, res, url, route) {
        * holes — which is the whole point of having it.
        */
       venues: venuesUsed(roomForHost(req, url).paths.archive),
-      // And what was given away, offered back the same way.
+      // And what was given away, offered back the same way — plus what each
+      // VENUE puts up, because the venue buys the prize.
       rewards: rewardsUsed(roomForHost(req, url).paths.archive),
+      venueRewards: rewardsByVenue(roomForHost(req, url).paths.archive),
       // Offered on every pack card, so a night can be dressed up without
       // editing anything.
       looks: LOOKS.map(({ id, label, blurb, season }) => ({ id, label, blurb, season })),

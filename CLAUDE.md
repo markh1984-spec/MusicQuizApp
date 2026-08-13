@@ -1437,6 +1437,24 @@ launch form shows ONE box and the next appears when you fill it, so a one-prize
 night looks exactly as it did and nobody counts empty fields on the page whose
 job is "find tonight's pack and press Launch".
 
+**EVERY BOX CARRIES ITS PLACE, INCLUDING THE FIRST**, and it did not at first —
+the host read the panel as *"only a single field"*, which is fair: a lone
+unlabelled box says nothing about there being places at all, so the second one
+appearing later is a surprise rather than an answer. With **1st** on it the row
+is obviously one of a set. Same fault as a control whose meaning lives in a
+tooltip: the thing was there and the label was not.
+
+**THE PRIZE FOLLOWS THE VENUE, because the venue buys it.** `rewardsByVenue()`
+in `library.js` — picking a venue fills in what that venue put up last time, so
+the job becomes confirming rather than typing. It is the shape used everywhere
+here: the app prepares, the human reads, the human presses. **Only into EMPTY
+boxes**, which is the whole safety of it — overwriting something already typed
+would silently change what a room is playing for, at the exact moment somebody
+had just corrected it. Read off the archive like `venuesUsed`, so there is no
+second list to keep in sync. Note `listArchive()` builds a SUBSET rather than
+passing the record through, so `rewards` had to be added to it — without that
+both functions returned nothing at all, quietly.
+
 **They are never called gold, silver and bronze on screen.** Those are the
 subscription tiers, and a quizmaster would be reading "Gold prize" on the same
 page that tells them they are on Gold — the label collision the sweep looks

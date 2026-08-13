@@ -318,6 +318,15 @@ export function listArchive(dir) {
           // existed, which is exactly right — those nights have no venue and
           // saying "" is honest where guessing one would not be.
           venue: r.venue || '',
+          // What was put up, first place first. Needed by `rewardsUsed` and
+          // `rewardsByVenue`, which read this list rather than every file —
+          // and both would have quietly returned nothing without it, because
+          // this function builds a SUBSET rather than passing the record
+          // through. The old single `reward` is read too, so a night filed
+          // before there were three places still offers its prize back.
+          rewards: Array.isArray(r.rewards) && r.rewards.length
+            ? r.rewards
+            : (r.reward ? [r.reward] : []),
           playerCount: (r.leaderboard || []).length,
           winner: (r.leaderboard || [])[0]?.name || null,
         };
@@ -358,11 +367,45 @@ export function loadArchived(dir, id) {
 export function rewardsUsed(dir) {
   const seen = new Map();
   for (const night of listArchive(dir)) {
-    const name = String(night.reward || '').trim();
-    if (!name) continue;
-    if (!seen.has(name.toLowerCase())) seen.set(name.toLowerCase(), name);
+    for (const name of nightRewards(night)) {
+      if (!seen.has(name.toLowerCase())) seen.set(name.toLowerCase(), name);
+    }
   }
   return [...seen.values()];
+}
+
+/** What a night paid out, first place first, whichever version wrote it. */
+function nightRewards(night) {
+  const list = Array.isArray(night.rewards) && night.rewards.length
+    ? night.rewards
+    : (night.reward ? [night.reward] : []);
+  return list.map((r) => String(r || '').trim()).filter(Boolean);
+}
+
+/**
+ * WHAT EACH VENUE PUTS UP, newest night first.
+ *
+ * The venue buys the prize, so it is their standing arrangement rather than a
+ * fact about the quiz — the same drink every week at one pub and something
+ * else entirely at another. Offering back "what this venue gave last time" is
+ * the difference between a field somebody fills in and a field somebody
+ * confirms, which is the whole shape this app uses everywhere: the app
+ * prepares, the human reads, the human presses.
+ *
+ * Read off the archive like `venuesUsed`, so there is no second list to keep
+ * in sync and a deleted night takes its arrangement with it.
+ */
+export function rewardsByVenue(dir) {
+  const out = {};
+  // `listArchive` is newest first, so the first time a venue is seen is the
+  // last thing it actually gave out.
+  for (const night of listArchive(dir)) {
+    const venue = String(night.venue || '').trim();
+    if (!venue || out[venue]) continue;
+    const rewards = nightRewards(night);
+    if (rewards.length) out[venue] = rewards;
+  }
+  return out;
 }
 
 export function venuesUsed(dir) {
