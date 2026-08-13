@@ -390,6 +390,47 @@ second tab), because if a launch opens it automatically the action-row button
 becomes the way BACK to a tab you already have, and the wording may want to
 change with it.
 
+### 1d. WHERE REDEMPTIONS ARE VISIBLE — and the snapshot that misses them
+
+**Asked for on 14 August 2026, for two reasons the host gave and both are
+right:** evidence if somebody is being cheeky, and evidence that the night is
+popular and people win things. The second is the one that earns money — *"we
+gave out eighteen drinks across six nights"* is the sentence a venue responds
+to, and it is the only mechanism in this app that could ever say it.
+
+**Today it is live-only.** The **The prizes** panel on the control view updates
+the instant the bar presses Given — the row goes from "Not used yet" to "Used
+at 22:47", the card goes quiet, the button flips to Put it back. Pushed over
+the same connection that drives the quiz, so nothing needs refreshing. But it
+is a panel that CHANGES, not a notification: you notice if you look.
+
+**THE ACTUAL BUG: the archive snapshots too early.** `results()` carries
+`vouchers` with their whole history, so the record is being kept — but
+`session.js` files the night the moment it reaches `FINAL`, and the drinks are
+redeemed at the bar several minutes later. So every archived night says
+`redeemedAt: null` for all of them, for ever. The live panel is right and the
+permanent record is wrong, which is the worst way round.
+
+The fix is to update the filed night when a voucher moves after the night has
+been archived. Note `archivedThisGame` deliberately guards against filing
+twice, so this is an UPDATE to an existing record rather than a second archive
+— and it has to survive the room being reloaded from disk, because the bar may
+scan after a restart.
+
+**Then show it in two places, and they answer different questions:**
+
+- **Past gigs, per night** — "3 prizes, 3 taken" against the date and the
+  venue. This is the venue-facing evidence and belongs next to the headcount
+  and the photos.
+- **The control view, during the night** — already there. Add nothing; a host
+  running a quiz does not want an alert every time somebody gets a drink.
+
+**For "somebody being cheeky", the reinstate count is the signal**, not the
+redemption. A voucher redeemed once is the system working; one put back three
+times is either a bar that cannot reach us or somebody working it. That count
+already exists and already shows above zero — it just needs to reach the
+archive with everything else.
+
 ### 1c. THE PHONE'S OWN SCORE GIVES THE ANSWER AWAY BEFORE THE REVEAL
 
 **Found by the host on 14 August 2026, mid-test.** Tap the right answer and the
