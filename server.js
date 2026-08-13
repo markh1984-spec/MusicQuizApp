@@ -3715,7 +3715,10 @@ async function handleWrite(req, res, url, route) {
         // carries a default, and "it is the fourteenth of February" is a fact
         // about this evening rather than about the pack.
         const look = String(body.look || '');
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look });
+        // Whether anybody is in the room. Same shape of decision again: the
+        // pack does not know, and tonight does.
+        const online = Boolean(body.online);
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();

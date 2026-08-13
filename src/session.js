@@ -300,7 +300,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, look = '' } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, look = '', online = false } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     const pack = LAUNCHERS[kind].load(this.config, packId, this.paths);
     const normalised = kind === 'bingo' ? normaliseBingoPack(pack, packId) : pack;
@@ -333,6 +333,18 @@ export class Session {
     this.engine.state.look = LOOKS.some((l) => l.id === look)
       ? look
       : (LOOKS.some((l) => l.id === normalised.look) ? normalised.look : DEFAULT_LOOK);
+
+    /*
+     * Whether anybody is in the room tonight.
+     *
+     * In the state for exactly the reason the look and the card shape are: a
+     * restart mid-round must not bring the night back as the other kind of
+     * night, with the question suddenly missing off every phone. And it is a
+     * decision about TONIGHT rather than about the pack — the same quiz runs
+     * in a pub on Wednesday and over a video call on Thursday — so it is never
+     * read off the pack and never written back to it.
+     */
+    this.engine.state.online = Boolean(online);
 
     recordLaunch(this.config.dataDir, kind, normalised.id, this.now(), this.roomId);
     this.engine.changed();

@@ -867,9 +867,7 @@ function buildAlphabetAnswers(s) {
         <div class="bar"><span id="pTimerBar"></span></div>
         <div class="num" id="pTimerNum">--</div>
       </div>
-      <div class="muted" id="pHint" style="font-size:15px;text-align:center">
-        Question ${s.questionIndex + 1} of ${s.questionCount} — tap the <b>first letter</b> of the answer
-      </div>
+      ${questionHead(s, 'tap the <b>first letter</b> of the answer')}
       <div class="keyboard" id="answers">
         ${KEYBOARD.map((row) => `
           <div class="keyboard-row">
@@ -887,6 +885,44 @@ function buildAlphabetAnswers(s) {
   return el;
 }
 
+/**
+ * The line above the options — and, ONLINE ONLY, the question itself.
+ *
+ * In a pub this is one small line saying which question you are on and telling
+ * you to read it off the projector, because rule 8 keeps the words off the
+ * phone deliberately. Online there is no projector: the host is sharing a
+ * window in a video call at whatever size somebody's laptop chose, so a player
+ * who cannot read the question here cannot play at all.
+ *
+ * `s.prompt` only arrives when the server says this is an online night (see
+ * `playerView`), so a pub night produces exactly the line it always did — the
+ * two modes are one branch rather than two renderers that can drift.
+ *
+ * `tail` is what the hint says after the question number, because the three
+ * round shapes each want a different thing there.
+ */
+function questionHead(s, tail) {
+  const counter = `Question ${s.questionIndex + 1} of ${s.questionCount}`;
+  if (!s.prompt) {
+    return `<div class="muted" id="pHint" style="font-size:var(--fs-ctl);text-align:center">${counter}${tail ? ` — ${tail}` : ' — read it on the big screen'}</div>`;
+  }
+  /*
+   * `pHint` stays on the SMALL line, never on the question.
+   *
+   * `paintChoice` and `paintPicks` both do `pHint.textContent = 'Locked in.'`
+   * when you answer — so putting that id on the question text would delete the
+   * question off the screen the moment somebody tapped an option, on the one
+   * mode where the phone is the only place it exists. Found by reading those
+   * two functions rather than by running it, which on a 20-second question is
+   * the only way anybody would have found it.
+   */
+  return `
+    <div class="online-q">
+      <div class="muted online-q-num" id="pHint">${counter}${tail ? ` — ${tail}` : ''}</div>
+      <div class="online-q-text">${esc(s.prompt)}</div>
+    </div>`;
+}
+
 function buildAnswers(s) {
   if (s.multi) return buildMultiAnswers(s);
   if (s.alphabet) return buildAlphabetAnswers(s);
@@ -897,7 +933,7 @@ function buildAnswers(s) {
         <div class="bar"><span id="pTimerBar"></span></div>
         <div class="num" id="pTimerNum">--</div>
       </div>
-      <div class="muted" id="pHint" style="font-size:15px;text-align:center">Question ${s.questionIndex + 1} of ${s.questionCount} — read it on the big screen</div>
+      ${questionHead(s, '')}
       <div class="answers" id="answers">
         ${options.map((opt, i) => `
           <button class="answer-btn" data-i="${i}">
@@ -939,9 +975,7 @@ function buildMultiAnswers(s) {
         <div class="bar"><span id="pTimerBar"></span></div>
         <div class="num" id="pTimerNum">--</div>
       </div>
-      <div class="muted" id="pHint" style="font-size:15px;text-align:center">
-        Question ${s.questionIndex + 1} of ${s.questionCount} — pick <b>${want}</b>
-      </div>
+      ${questionHead(s, `pick <b>${want}</b>`)}
       <div class="answers multi" id="answers">
         ${options.map((opt, i) => `
           <button class="answer-btn pickable" data-i="${i}">

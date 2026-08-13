@@ -636,6 +636,33 @@ body.phone {
 .phone .timer .num { font-size: 26px; font-weight: 900; font-variant-numeric: tabular-nums; min-width: 1.8em; text-align: right; }
 .phone .timer .num.urgent { color: var(--bad); }
 
+/* ---- the question, on the phone, ONLINE ONLY
+ *
+ * In a pub this does not exist: rule 8 keeps the words off the phone so the
+ * room looks up at the projector. Online there is no projector, so this is the
+ * only place the question is — which is why it is the biggest type on the
+ * screen after the clock, and why it is centred rather than tucked under a
+ * label like the counter it replaced.
+ *
+ * It is capped and scrollable rather than allowed to grow: a long question
+ * must never push the OPTIONS below the fold on a 320px phone, because a
+ * question you can read and cannot answer is worse than the other way round.
+ */
+.phone .online-q { flex: 0 0 auto; display: grid; gap: 4px; text-align: center; min-width: 0; }
+.phone .online-q-num { font-size: var(--fs-tag); letter-spacing: 0.06em; text-transform: uppercase; }
+.phone .online-q-text {
+  font-size: var(--fs-lead);
+  font-weight: 800;
+  line-height: 1.3;
+  max-height: 34vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Long words — a band name, a URL — must wrap rather than widen the page.
+     A grid child's default minimum is its min-content, which is how one long
+     word drags a whole phone sideways. */
+  overflow-wrap: anywhere;
+}
+
 /* ---- result panel */
 .result {
   border-radius: 18px;

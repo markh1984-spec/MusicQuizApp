@@ -2393,6 +2393,9 @@ function launchBar() {
         <label class="pack-shape">Look
           <select class="look-pick">${lookOptions(pack)}</select>
         </label>
+        <label class="pack-shape">Where
+          <select class="where-pick">${whereOptions()}</select>
+        </label>
       </div>
       <button class="go lb-go">Launch ${esc(pack.title)}</button>
       </div>`));
@@ -2420,6 +2423,7 @@ function launchBar() {
         shape: shapePick ? JSON.parse(shapePick.value) : null,
         prizes: Number(prizePick?.value) || 0,
         look: chosen.querySelector('.look-pick')?.value || '',
+        online: chosen.querySelector('.where-pick')?.value === 'online',
       }, button);
     });
   }
@@ -3098,6 +3102,30 @@ function lookOptions(pack) {
     .join('');
 }
 
+/**
+ * In the room, or over a video call.
+ *
+ * It sits beside Look, Cards and Prizes because it is the same KIND of
+ * decision as all three: a fact about tonight rather than about the pack. The
+ * same quiz runs in a pub on Wednesday and for somebody's office on Thursday,
+ * so it is never read off the pack and never written back to it.
+ *
+ * "Where" rather than "Online", and the options are places rather than a
+ * switch, because a tickbox saying "Online" makes the ordinary night the
+ * absence of a setting — and the ordinary night is almost every night. Two
+ * named places read the same way round as the question a host is actually
+ * answering: where is this lot sitting.
+ *
+ * What it changes is one thing and it is worth knowing before you pick it: the
+ * question text goes ON the players' phones, because online there is no
+ * projector to read it off.
+ */
+function whereOptions() {
+  return `
+    <option value="room" selected>In the room</option>
+    <option value="online">Online — the question goes on their phones</option>`;
+}
+
 /** Can this account actually RUN this game? An owner writes packs, never plays. */
 const canRun = (kind) => can(kind === 'bingo' ? FEATURES.BINGO : FEATURES.QUIZ);
 
@@ -3161,6 +3189,9 @@ function packCard(kind, pack) {
       ${pack.broken ? '' : `
         <label class="pack-shape">Look
           <select class="look-pick">${lookOptions(pack)}</select>
+        </label>
+        <label class="pack-shape">Where
+          <select class="where-pick">${whereOptions()}</select>
         </label>`}
       <div class="pack-actions">
         <button class="pack-read" title="Read it through">Read</button>
@@ -3363,7 +3394,8 @@ function packCard(kind, pack) {
     const shape = picked ? JSON.parse(picked.value) : null;
     const prizes = Number(el.querySelector('.prize-pick')?.value) || 0;
     const look = el.querySelector('.look-pick')?.value || '';
-    await doLaunch(kind, pack.id, { shape, prizes, look }, button);
+    const online = el.querySelector('.where-pick')?.value === 'online';
+    await doLaunch(kind, pack.id, { shape, prizes, look, online }, button);
   });
   return el;
 }
@@ -3375,10 +3407,10 @@ function packCard(kind, pack) {
  * there must not be two ways OUT, or the 409-and-confirm dance gets fixed in
  * one of them and quietly rots in the other.
  */
-async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '' }, button) {
+async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', online = false }, button) {
     const send = (replace) => postJson(
       '/api/host/launch',
-      { game: kind, packId, shape, prizes, look, ...(replace ? { replace: true } : {}) },
+      { game: kind, packId, shape, prizes, look, online, ...(replace ? { replace: true } : {}) },
       { 'X-Host-Key': hostKey },
     );
     const back = () => {

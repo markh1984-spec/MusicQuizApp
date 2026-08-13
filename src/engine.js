@@ -75,6 +75,17 @@ export class Engine {
       // missed update and the screen can re-key its animations.
       version: 0,
       question: null, // { startedAt, endsAt, seconds, closed }
+      /*
+       * ONLINE MODE — nobody is in the same room, so there is no projector to
+       * look up at.
+       *
+       * It lives in the STATE and is set at launch, exactly like the look, the
+       * card shape and the prizes, and for the reason those taught the hard
+       * way: a SIGKILL mid-round must not bring the night back as the other
+       * kind of night. What it actually changes is `playerView` — see rule 8
+       * and the exception to it there.
+       */
+      online: false,
       players: {}, // id -> player
       answers: {}, // "roundIndex:questionIndex" -> { playerId -> answer }
       history: [], // one entry per completed question, for the recap
@@ -1171,6 +1182,9 @@ export class Engine {
       questionIndex: s.questionIndex,
       questionCount: this.questions().length,
       roundTitle: round ? round.title : '',
+      // Not a secret — it is a fact about the night, and the phone has to lay
+      // itself out differently for it.
+      online: Boolean(s.online),
       you: player
         ? {
             id: player.id,
@@ -1197,6 +1211,49 @@ export class Engine {
       const q = this.question();
       if (q) {
         view.options = this.optionsFor(q, round); // options only, never the prompt
+        /*
+         * …EXCEPT ONLINE, WHERE THE PHONE IS THE ONLY SCREEN THERE IS.
+         *
+         * Rule 8 — phones never show the question text — is a PUB rule and it
+         * is load-bearing there: it keeps the room looking up at the projector
+         * and it makes googling harder. Online there is nothing to look up at.
+         * The host is sharing a window in a video call, at whatever size
+         * somebody's laptop decided, possibly behind a face, and a player who
+         * cannot read the question cannot play at all.
+         *
+         * So online, and only online, a player gets what the SCREEN gets: the
+         * prompt and the same per-type extras. It is deliberately
+         * `screenQuestionExtras` rather than a second list — a new sensitive
+         * field must not become visible here by being forgotten, so this can
+         * only ever show what the projector already shows in front of a room.
+         * The answer key is still nowhere near it.
+         *
+         * Known and accepted: googling is easier online. The clock is the same
+         * twenty seconds, a corporate Christmas quiz is not the world
+         * championship, and the alternative is a round nobody can read.
+         */
+        if (s.online) {
+          view.prompt = q.prompt || '';
+          const extras = this.screenQuestionExtras(q, round, s.questionIndex);
+          /*
+           * THE PICTURE IS HELD BACK, and this is a scoring decision rather
+           * than an oversight.
+           *
+           * A round 2 picture is zoomed, pixelated, blurred or behind tiles for
+           * most of its twenty seconds, and that reveal curve IS how many
+           * points the question is worth. Handing the phone the finished image
+           * would make the whole round a giveaway, and it would be worth
+           * quietly more than every other round in the pack.
+           *
+           * The fields that DRIVE the effect are sent (`reveal`, the zoom
+           * origin and range), so the day `play.js` can run the same animation
+           * the projector does, this is one line. Until then an online picture
+           * round wants the host's shared window, and that is worth saying out
+           * loud rather than shipping a round that scores wrongly.
+           */
+          delete extras.image;
+          Object.assign(view, extras);
+        }
         // How many to lock in. The count only; which ones is the answer key.
         view.pickCount = this.pickCount(q, round);
         view.multi = Boolean(round && round.type === 'multi');

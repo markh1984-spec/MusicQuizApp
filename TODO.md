@@ -1522,7 +1522,7 @@ to build something this size around one admin day a week:
    voice, which is not the product but IS strictly better than the
    Frankenstein stack, and can be sold and learned from immediately.
 3. **Chat and reactions.** The room feel, and the thing that decides whether an
-   online night is fun. Ordinary work, no dependency.
+   online night is fun. Ordinary work, no dependency. **Designed below.**
 4. **Teams — several phones, one team, averaged.** Wanted anyway, worth more
    online.
 5. **The media layer.** Cloudflare Realtime, host publishes, players receive,
@@ -1533,6 +1533,85 @@ That is not a way of putting it off — it is the only version of *a mode, never
 a layer* that survives contact with an evening where the provider is unwell.
 Built in this order the fallback is not a feature anybody has to remember to
 write: it is simply the app with step 5 switched off.
+
+###### Chat: one main room, and sub-rooms — the design
+
+The host's shape, and it is right: *"a main room and sub rooms — the first sub
+room would be quizmaster + IT support + the person who hired you, and the other
+sub rooms would be the teams, but everyone is in the main room as well. Just
+basic text and emoji, don't need more than that."*
+
+**A SUB-ROOM IS A TEAM. Do not build "rooms" as a second concept.** Step 4 puts
+teams in the engine anyway; a team's chat is simply its members, so the two
+features are one object and there is nothing to keep in sync. The only special
+case is the organisers' room, which is a team nobody scores.
+
+| Room | Who is in it | What it is for |
+|---|---|---|
+| **Main** | everybody | the pub. Banter, groans, the atmosphere a room supplies for free and a video call does not |
+| **Organisers** | host + whoever hired you + their IT person | "the projector has frozen", "we are two minutes late", "Dave cannot hear you" — the things you cannot say to 60 people |
+| **A team** | that team's phones | conferring, which is what a table in a pub is |
+
+**The organisers' room needs a person who is NOT a player**, and that role does
+not exist yet. The client's contact and their IT person do not want a team name
+or a score — they want the back channel. Simplest honest shape: they join like
+anybody else and the host marks them as organisers, which keeps one join path
+and needs no second door. **Their answers must then be kept off the
+scoreboard**, or the person who booked you wins their own quiz.
+
+**Two-screens applies to chat, and it is the whole risk.** A team's messages
+must never reach another team; the organisers' room must never reach a player.
+That is per-role payload building again, exactly like `whoPicked` — and it
+wants tests of the same shape, because a chat leak is worse than an answer key
+leak: it is somebody's private conversation.
+
+**THE MAIN ROOM MUST BE THROTTLED WHILE A QUESTION IS LIVE, and this is the
+part that is easy to miss.** In a pub a table confers quietly and nobody hears
+them. Online, a main room during a question is **a channel for broadcasting the
+answer to everybody** — far worse than googling, because it is instant and
+social. **Emoji only while the clock runs** is the answer: the atmosphere is
+kept, the answer-sharing is not, and nobody has to be told a rule. Team rooms
+stay fully open the whole time, because conferring is what a team is FOR.
+
+Four smaller decisions, each following a rule this file already holds:
+
+- **No word filtering**, same as team names — but the host can already remove
+  somebody, and every message is visible to the host. That is the control.
+- **Debounced to disk, and capped.** Chat is the definition of high-frequency
+  and low-stakes under rule 7, and the state file is the next scaling ceiling —
+  so keep the last N per room rather than the night's whole transcript.
+- **It rides the SSE stream that already exists.** No new transport, no
+  dependency, and it reconnects on its own like everything else.
+- **Text and emoji, nothing else.** No images (that is the photo wall, which
+  already has a kill switch), no files, no links worth previewing.
+
+###### And the pricing for it: "+" rather than Platinum
+
+Also asked: *"the Platinum model, or perhaps just a + model — could have
+Bronze+ or Silver+, which just adds online streaming, and comes at a later date
+when Rob and I are happy with the product."*
+
+**The "+" is the better of the two and it is the same thing as an add-on,
+better named.** Platinum would be a fourth RUNG, which forces somebody who only
+runs online nights to buy the whole pub catalogue first — the objection above.
+A suffix is a MODIFIER: it keeps "available at any rung", which was the entire
+point, and **"Silver+" reads better on an invoice than "Silver plus the online
+add-on"**.
+
+So: **one entitlement in the code, three display names in the shop.** Nothing
+goes into `TIERS`, so `rank` comparisons are untouched and the whole ladder is
+undisturbed — which is what makes this a naming decision rather than a
+restructure.
+
+**The price wants to avoid a COLLISION more than it wants to be exact.** At
++£10 a month, Bronze+ is £20 — which is Silver's price, and two different
+things at one number on a price list is the sort of thing somebody asks about
+on a sales call. **+£15 is the clean one:** Bronze+ £25, Silver+ £35, Gold+
+£45, and no figure appears twice. Provisional like every other price here, and
+easily worth it against a corporate booking at £300–500.
+
+**And it arrives when Rob and Mark are happy with it, not before** — which is
+what the two-account entitlement above is for.
 
 ###### What online mode ACTUALLY needs, and none of it is media
 
