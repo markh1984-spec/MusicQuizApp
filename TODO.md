@@ -1449,28 +1449,53 @@ A private video call has neither problem: sub-second, and nobody is scanning
 it. The client's own Teams is free, scalable and already paid for, which is
 everything YouTube was attractive for and none of what makes it unusable.
 
-**And on "so Cloudflare Realtime is the answer?" — it is the right PROVIDER
-for a thing that should still not be built yet.** Cheap enough to be free
-settles the pricing question and removes any need for a per-night charge; it
-does not make the build smaller, and cost was never what was stopping this.
+###### SETTLED: the app hosts the audio and video. Cloudflare Realtime.
 
-**The reason that survives the price being zero is iOS.** A quiz is two hours
-long and people put their phone down between questions — and a BROWSER TAB is
-a poor place to receive two hours of audio on an iPhone. Safari will not start
-audio without a user gesture, backgrounding the tab or locking the screen stops
-it, and the player has to notice and tap to get it going again. This file
-already records two features lost to exactly this kind of iOS gap
-(`ctx.filter` and `FaceDetector`), and both times the lesson was the same: a
-thing that silently fails on a third of the room is worse than not having it.
+**I argued for running it over the client's own Teams and the host overruled
+it, correctly:** *"the whole point of an online capability is that we host the
+video and audio, otherwise we may as well not bother."*
 
-**Teams and Zoom are native apps with background-audio entitlements**, built
-for precisely this, and the client already has one. So the client's own call is
-not merely the cheap option — on the phone in somebody's hand it is the BETTER
-one, which is the rare case where the free answer is also the good answer.
+**He is right, and the reason is the one this file already gives about the
+packs: convenience IS the product.** A quizmaster who has to say *"set up a
+Teams call and send me a link and I will join it"* has not sold an online quiz
+night, they have asked the client to do the hard half. And it cannot be sold to
+other quizmasters either — *"Quizporium runs online nights"* is a capability
+you can put on a page; *"Quizporium works if your client organises a video
+call"* is an instruction. One link that the host sends and everybody clicks is
+the whole thing being bought.
 
-So the order is: run one night over the client's Teams (this week, no build),
-then build the three things above, and only look at Cloudflare if a real client
-turns up who genuinely cannot host a call.
+**And my counter-argument was mostly aimed at the wrong device.** I raised iOS
+Safari — no audio without a user gesture, and backgrounding or locking the
+screen stopping it — which is real, and it is a PUB-mode worry applied to a
+room that is not in a pub. **A corporate online quiz is played on laptops**, at
+desks, by people who are already on video calls all day. What survives of it is
+small and has answers: one "join the audio" tap at the start (there is already
+a join and a team name to type), and on a phone the audio may drop when the
+screen locks — which costs the host's banter and never the question, because
+the question, the clock and the options are all in the app over SSE.
+
+So the design, and the economics are no longer a constraint at all:
+
+- **Cloudflare Realtime**, per GB, with the free tier covering years of this.
+- **The HOST publishes; players receive.** That is a broadcast, which is what a
+  quiz is — one person at the front and a room watching — and it is the cheap
+  shape. Players talking to each other is a video conference, which is a
+  different product and out of scope.
+- **Video of the host is IN**, not just audio. The old audio-first decision was
+  made on egress at £0.09/GB-ish; on this model a hundred people watching a
+  small tile for two hours is about **$2.70**, and a disembodied voice is a
+  worse night. Audio stays the thing that must never drop; video is allowed to
+  be the first thing sacrificed on a bad connection.
+- **The Teams fallback survives as a SAFETY NET, never as the product.** If the
+  media layer has a bad evening the host says "join the link in the invite" and
+  the quiz carries on with every score intact — which is what *a mode, never a
+  layer* actually means. **Build that fallback first.**
+- **Gated to two accounts** while the bugs come out, per the section below.
+
+**What has NOT changed** is everything in "what online mode actually needs":
+the question on the player's own screen, chat and reactions for the room feel,
+and teams. Those are still the difference between an online night that is fun
+and one that is a spreadsheet, and none of them arrive with the audio.
 
 ###### What online mode ACTUALLY needs, and none of it is media
 
