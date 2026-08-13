@@ -1289,6 +1289,102 @@ this file already says **online mode must be a MODE and never a layer**: a
 media provider having a bad morning must not be able to touch a Wednesday in a
 pub. Any build starts there, not with the pricing.
 
+##### What it would actually cost — and the answer that costs NOTHING
+
+###### The finding first: an online quiz works TODAY, with no streaming at all
+
+**The client already has Zoom or Teams, and that is the transport.** A remote
+player joins this app exactly as a pub player does — it is a URL and a code,
+and neither cares which room anybody is in. The host shares the projector view
+in the call, talks over it, and plays the music through "share computer audio".
+The quiz, the scoring, the clock, the fastest finger and the bingo cards all
+work unchanged, because none of them ever knew where anybody was sitting.
+
+So **the honest first answer to "how do I offer streaming" is that for a
+corporate booking you probably do not have to.** No egress, no provider, no
+dependency, no build, and it can be sold this Monday. Latency on a video call
+is a few hundred milliseconds, which is nothing against a twenty-second clock.
+
+What building it in would actually buy is **not having to ask the client to
+host a call** — real, but a convenience rather than a capability, and worth far
+less than it looks when every client already runs Teams. **Sell one online
+night over the client's own call before building anything**, and find out what
+is genuinely missing rather than guessing.
+
+###### The bandwidth arithmetic, which is firm
+
+Opus speech audio at 32 kbps over a two-hour night is **29 MB per listener**,
+so a hundred people is **about 3 GB a night**. It is one-way — a room listens
+to a host, nobody publishes back — which is broadcast rather than a conference
+and is the cheap shape.
+
+A small 360p video tile at ~600 kbps is **540 MB per viewer**, so the same
+night is **54 GB**. That is the "about twenty times" already recorded in this
+file, arrived at independently, which is a good sign it is right.
+
+###### The money, and note which half is an estimate
+
+| | 100 people, 2 hours | Where the number comes from |
+|---|---|---|
+| **Managed WebRTC, audio** | **£5–10 a night** | ~$0.0005–0.001 per participant-minute × 12,000. **An estimate from published rate cards — CHECK IT**, providers move their prices |
+| **Managed WebRTC, small video tile** | **£40+ a night** | 4–8× the audio rate. This is what kills video inside a flat subscription |
+| **Self-hosted SFU on a VPS** | **pennies a night**, plus ~£10–15 a month | 3 GB of egress is a rounding error on any host; audio mixing is cheap on CPU |
+
+**Take the managed one anyway, despite being ten times the price.** Self-hosting
+an SFU means the host IS the media service having a bad morning, on one admin
+day a week — which is worse than the thing this file is trying to avoid, not
+better. Ten pounds against a £400 corporate booking is not a decision.
+
+**And do NOT reach for the cheap broadcast option.** HLS and its low-latency
+variant are far cheaper per gigabyte and land 2–20 seconds behind, which on a
+twenty-second question is the entire round. Latency is why this has to be
+WebRTC, and therefore why it costs what it costs.
+
+###### "Would £10 per online quiz cover the data costs?"
+
+**For the size these things actually are, yes — comfortably. At a hundred-plus
+it gets thin, and with video it does not cover it at all.**
+
+The sum is small enough to do yourself with any provider's price list, and
+that is better than trusting the estimate above:
+
+> **participants × minutes × the per-participant-minute rate**
+
+A typical corporate online quiz is 20 to 50 people, not a hundred. So:
+
+| The night | Participant-minutes | Cost at $0.001/min | £10 leaves |
+|---|---|---|---|
+| 30 people, 2 hours | 3,600 | ~$3.60 | a good margin |
+| 50 people, 2 hours | 6,000 | ~$6 | fine |
+| 100 people, 2 hours | 12,000 | ~$12 | **under water** |
+| 100 people **with video** | 12,000 | ~$48 | nowhere near |
+
+**The one number that decides it is the provider's audio rate, and it spans
+about four to one** across the managed services ($0.0005 to $0.002 per
+participant-minute). At the cheap end £10 covers a hundred people twice over;
+at the dear end it stops paying at fifty. **So check two current price lists
+before committing to a number** — the bandwidth arithmetic above is solid, the
+rate is the part that moves.
+
+**The safe version of £10 is £10 WITH A SIZE ON IT** — "£10 an online night up
+to 50 players" — which is honest, quotable, and covers the shape almost every
+booking actually takes. Above that it is a conversation rather than a refusal,
+which is the rule everywhere else in this app.
+
+###### And if it is priced as one flat number instead
+
+Cost around £10 at a hundred people, so **£25 a night** — one price, any size up
+to a hundred, about 60% margin, and trivial inside a fee they are already
+quoting. A 300-person night is a conversation rather than a formula.
+
+But the honest sum: **ten quizmasters doing three online nights a year each is
+thirty nights — £750 of revenue and £300 of cost.** That is not a business
+line, and pretending otherwise would put a dependency into a live quiz night
+for £450 a year. **The reason to build it eventually is that it opens CORPORATE
+work for a quizmaster, which makes the subscription worth more** — not the
+margin on the night. Which is another argument for selling it over the client's
+own call first and building it only when somebody has actually hit the limit.
+
 ##### The version that was proposed: ONE NIGHT'S FEE, taken as a fee not a free gig
 
 The host's idea, and the PRICE in it is the good part: *"the intro fee can be
