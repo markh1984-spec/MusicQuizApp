@@ -52,6 +52,35 @@ months later, in a route somebody wrote in a hurry.
 | **Parent** | an account that manages other accounts: a pub group's HQ, a quiz company | **its own children, and nothing outside them** |
 | **Child** (sub-account) | an account managed by a parent: a venue, a company's quizmaster | **itself** |
 
+**THE STATS ARE A VIEW, NOT AN ACCOUNT — and that is what makes the uniformity
+free.** Proposed, reasonably: *"every entity has one parent and one child, and
+you add extra children — because even a solo quizmaster wants stats. Head
+office wants stats across five children, a solo wants his own."*
+
+**The goal is right and it should be one mechanism.** What does not follow is a
+second ACCOUNT per person. A solo quizmaster wanting headcounts needs a PAGE,
+and they already have one: Past gigs is their own history on their own account.
+Giving them a parent as well means a second login or a hat switch for one
+person, a bill question about an account that buys nothing, and an entity
+invented at every sign-up whose only job is to look at its owner's own data.
+
+So put the generalisation in the QUERY, where it costs nothing:
+
+> **One function takes a SET of accounts and returns the nights across them. A
+> solo's set is themselves; a parent's set is its children.** Same code, same
+> page, N of one or N of five.
+
+That is the uniformity being asked for, and it arrives without a phantom
+account. Build the aggregation that way FROM THE START — the real risk here is
+shipping "past gigs for one person" and later "stats across venues" as two
+features that then drift.
+
+**What a parent-for-everybody would actually cost, concretely:** the owner's
+People tab doubles in length with empty parents nobody signed up for, and every
+one of them raises a question with no good answer — what tier is it, does it
+have a login, does it count in "4 accounts · 3 paying", what happens when the
+quizmaster cancels. None of those questions exist if the stats are a view.
+
 **"ON THEIR OWN" IS A CASE, NOT A GROUP OF ONE, and getting that wrong is
 expensive.** A solo quizmaster is not a child of anything — Rob with no company
 has no parent and needs none. If the model requires a group, then every
