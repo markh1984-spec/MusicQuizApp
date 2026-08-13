@@ -81,6 +81,24 @@ one of them raises a question with no good answer — what tier is it, does it
 have a login, does it count in "4 accounts · 3 paying", what happens when the
 quizmaster cancels. None of those questions exist if the stats are a view.
 
+**AND THEREFORE THE HAT DOES NOT BECOME UNIVERSAL.** Asked directly, and the
+answer is no. **A hat switches between IDENTITIES, not between pages** — if the
+stats are a view, a solo quizmaster has one identity with an extra tab on it,
+and a switch offering nothing on the other side is the fault this file keeps
+recording. It would also break the host's own hard rule that the switch must
+never appear on anybody else's account.
+
+A hat is right when one login genuinely holds TWO identities with different
+powers and different rooms. That is:
+
+- **the owner**, who is the app owner and a quizmaster — built, and the reason
+  the switch exists;
+- **a quiz company's playing manager**, who manages the company and also hosts
+  on Fridays. Two identities, so the same mechanism, unchanged.
+
+And nobody else: not a solo quizmaster, not a pub group's head office that
+never hosts, not a venue running its own night. **One identity, no switch.**
+
 **"ON THEIR OWN" IS A CASE, NOT A GROUP OF ONE, and getting that wrong is
 expensive.** A solo quizmaster is not a child of anything — Rob with no company
 has no parent and needs none. If the model requires a group, then every
