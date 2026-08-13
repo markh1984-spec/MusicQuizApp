@@ -1147,10 +1147,15 @@ call when it was written, because **streaming was the only thing making Gold
 worth £10 more than Silver** — this file used to say Gold was unsellable for
 exactly that reason.
 
-It is not carrying that weight any more. **Gold is now three real things:** the
-weekly topical quiz, a pack written to order, and being in the directory. The
-gradient holds on those alone — Silver at £20 plus four topical packs at £3 is
-£32, which is more than Gold — so the unbuilt line is no longer load-bearing.
+It is not carrying that weight any more, and **the tiers STACK, which is the
+part to keep hold of**: Gold is everything Silver has — the whole evergreen
+catalogue and the advert slides — and then **three real things on top**: the
+weekly topical quiz, a pack written to order, and being in the directory.
+
+That is what makes the £10 step easy to justify: a rung only has to earn its
+DELTA, not its whole price. And the gradient already holds on those three
+alone — Silver at £20 plus four topical packs at £3 is £32, which is more than
+Gold — so the unbuilt line is not load-bearing any more.
 
 **And an unbuilt feature on a tier stops being free the moment somebody pays
 for it.** Today nobody does, so it costs nothing. The day the first Gold
