@@ -1014,6 +1014,62 @@ rating already pays a good quizmaster more, without anybody setting a wage:
 Prerequisites either way, and neither exists: **a night has to carry a venue**,
 and there has to be a payment processor.
 
+#### Being cut out: the answer is that it does not cost what it looks like it costs
+
+The host's question, and it is the right one to ask before building a
+marketplace: *"how do I stop them cutting me out and just using my software?"*
+
+**Start with what is actually lost, because it is much less than it feels.** In
+an ordinary marketplace the transaction fee IS the business, so a booking taken
+offline is the whole loss. Here it is not: the quizmaster pays a subscription
+whatever happens, and the venue may be paying one too. A quizmaster who meets a
+venue through the site and then books them direct for ever **is still a paying
+subscriber, gained at the cost of one introduction.** So:
+
+> **The marketplace is not a revenue line. It is customer acquisition that
+> happens to pay for itself.** Judged that way, going direct is not a leak — it
+> is a sale that only paid once.
+
+That reframing decides the pricing, and it argues against the obvious design:
+
+- **A per-booking cut creates the incentive to hide bookings**, and then a
+  policing problem, and then a Monday spent policing. A flat fee per gig is
+  better than a percentage and still has the same shape.
+- **A LISTING fee has nothing to evade.** You pay to be listed, you are listed,
+  and where the work came from is nobody's business. No reporting, no audit, no
+  argument.
+- **Best of all, put the listing on the LADDER.** Being in the directory is a
+  Silver or Gold feature, so "cutting the owner out" means dropping to Bronze
+  and losing the whole catalogue. That uses a mechanism that already exists,
+  bills through a subscription that already exists, and needs no enforcement of
+  any kind — the incentive does the work.
+
+**What actually retains people is switching cost, and it is already built.**
+None of it is a lock-in trick; it is all things they would genuinely miss:
+their pack library and the weekly topical quizzes, their invoice book, and
+above all **Past gigs — their portfolio, their photos and their numbers.** That
+is the evidence they show the next venue, and it lives here. Add the rating and
+the profile to it and the marketplace stays worth being on for the NEXT
+booking, however this one was arranged.
+
+**And the venue side keeps needing it after the first introduction.** A venue
+that books one quizmaster direct still needs cover when that person is ill, on
+holiday or double-booked. That recurring need is what makes a directory sticky
+without a contract doing it.
+
+**Do NOT build anti-circumvention into this.** Non-circumvention clauses are
+hard to enforce at all against small operators and absurd to pursue over a
+booking fee, and the marketplaces that leaned on them taught everybody to take
+the relationship offline on day one. The rule that works is the one this
+codebase already follows everywhere else: **make staying easier than leaving.**
+An invoice raised automatically, the venue paying by card, no chasing — that is
+worth a fee, and it is the invoicing feature that already exists pointed at a
+booking.
+
+The one measurement worth taking when it exists: not how many bookings went
+direct, but **how many subscribers the directory brought in and how long they
+stayed.** That is the number the whole thing is for.
+
 ### And a £30 subscription beats a £150 gig, because of what it does NOT cost
 
 The host's own point, and it is the one that settles what this business
