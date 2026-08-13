@@ -1688,11 +1688,13 @@ src/branding.js        "Mark's Quizporium" — the app name and whose night it i
 src/gates.js           which routes are the owner's, as two testable lists
 src/own-packs.js       a quizmaster's own packs — theirs, and private from the owner
 src/spend.js           what Claude and OpenAI have actually cost, written down as it happens
+src/chat.js            online chat: what a room is, who is in it, what may be said mid-question
 public/                the screens; *-bingo.js files hold the bingo variants
   assets/brandmark.js  the question-in-a-mic logo, shared with the server as the favicon
   assets/avatar.js     a drawn face per team, for anyone who sent no photo
   assets/stickers.js   props to drag onto a photo: dog ears, a clown nose
   assets/schemes.js    a quizmaster's own two colours, shared with the server
+  assets/chat.js       the chat sheet on a player's phone, online nights only
 quizzes/ bingo/        the library
 data/                  live state, history, archived nights (gitignored)
 ```
@@ -3892,7 +3894,77 @@ private repo (`PACKS_REPO`), never the one holding the owner's accounts and
 invoices; until that is set the console says so in red and every own pack has a
 Download button.
 
-All on **`MusicQuizApp`**. 800 tests green.
+All on **`MusicQuizApp`**. 907 tests green.
+
+### ONLINE MODE — built on 13 August 2026, steps 1 to 4 of 5
+
+**A night now knows where the room is.** `state.online`, set at launch from a
+**Where** picker beside Look ("In the room" / "Online — the question goes on
+their phones"), living in the game state like the look and the card shape.
+
+What is live:
+
+- **The question on the player's own device**, which is the one place rule 8 is
+  deliberately inverted — there is no projector to look up at. It sends
+  `screenQuestionExtras` rather than a list of its own, so it can only ever
+  show what the big screen already shows in front of a room. **The picture is
+  held back**: a round 2 image is zoomed or pixelated for most of its twenty
+  seconds and that curve IS the scoring, so the finished image on a phone would
+  make the round a giveaway. The fields that drive the effect are sent, so
+  porting the animation to `play.js` is one line and an online picture round
+  wants the shared window until then.
+- **Chat** (`src/chat.js`, `public/assets/chat.js`) — a main room, an
+  **organisers'** back channel for the client's contact and their IT person,
+  and a room per team. **A sub-room IS a team**, so there is no second concept.
+  **Emoji only in the main room while a question is live**, because otherwise
+  it is a channel for broadcasting the answer to sixty people at once — worse
+  than googling, being instant and social. The organisers' room and team rooms
+  are never gagged. **Chat does not exist in a pub at all**, deliberately: a
+  pub already has a room and the whole app keeps people looking up.
+- **Organisers** are in the back channel and in nobody's scoreboard —
+  `answer()` refuses them and `playerList()` filters them out, or the person
+  who booked the night wins it. Marking one is a HOST action, because "I am an
+  organiser" as a request field would be a way into the back channel chosen by
+  whoever fancied it.
+- **Teams** — a **Playing** picker at launch, and the score is the **AVERAGE**.
+  A member who answers nothing is a ZERO in the mean rather than skipped, or a
+  team carries passengers for free and the incentive becomes recruiting rather
+  than knowing things. Six chancers score 100 where two who know their stuff
+  score 300. Picking a team is a PLAYER action on the waiting screens only, and
+  the engine refuses a switch mid-question so nobody watches the tally and hops
+  into whichever team is winning.
+
+**Everything above is off unless it is asked for at launch**, and
+`scripts/pub-unchanged.mjs` reports **2,150 identical payloads across seven
+packs** for a night that uses none of it. See "Online mode is ONE BOOLEAN"
+above for the branch budget that keeps that true.
+
+**Step 5, the media layer, is NOT built and needs an account.** Cloudflare
+Realtime — per GB rather than per participant-minute, which for one host
+broadcasting speech to a room is two orders of magnitude cheaper (about 15
+cents a hundred-person night against $48 on a participant-minute provider),
+with 1,000 GB a month free. The checklist is in TODO.md. **Do not start it
+before the account exists**: a media layer written against a stub has never met
+a real ICE negotiation, and it is the first third-party service in the live
+path of a night.
+
+### The menu lost its Owner chip
+
+`Console · Control · Packs`, identical for every account including the owner's.
+The topbar carried the word "Owner" twice — a menu chip and half the hat switch
+four inches away — and the switch keeps it because it is the SIGN as well as
+the switch. **The hat switch's Owner half now GOES to `/owner`** rather than
+taking the hat off in place, because it is the only route to that page left.
+
+### `scripts/pub-unchanged.mjs` — the guard worth knowing about
+
+Written because the host asked whether a night's work would make his Wednesday
+awkward. It runs the engine from a commit you trust side by side with today's,
+on one injected clock, with the same teams answering the same options at the
+same seconds, through every phase of every pack — and compares the BYTES a
+projector and a phone receive. `--ignore` names fields allowed to be new, by
+name. Run it before a gig week; "the tests pass" is a weaker claim than the one
+anybody wants the night before a gig.
 
 **A second quizmaster CAN now be given a login.** They get their own running
 game, their own join code, their own photo wall, their own name and colours on

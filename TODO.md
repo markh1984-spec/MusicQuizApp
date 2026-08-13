@@ -1588,6 +1588,29 @@ a corporate booking at £300–500 that they currently cannot serve at all, so
 £15 is trivial to them and the margin is the reward for building it. Pricing it
 at cost would be giving away the one capability that opens a new market.
 
+###### The firefight list — the host's own, and it is the SPEC
+
+*"It's the sort of BS I've had to firefight when presenting my own online
+quizzes."* He has run these on a cobbled-together stack, so what actually went
+wrong is the specification for the fallback rather than something to guess at.
+**Ask him for his list before building this** — the one below is a starting
+guess for him to correct, not a plan.
+
+| The firefight | What the app should do instead |
+|---|---|
+| *"I can't read the question"* | **ALREADY FIXED** — it is on their own phone now |
+| *"We can't hear the music"* | share-computer-audio not ticked: a pre-flight check before going live |
+| *"I can't hear you at all"* | a **"can everyone hear me?"** tap that puts a yes/no on every phone and shows the count |
+| *"I've dropped out"* | the phone says *"rejoin the call — the quiz is still running and your score is safe"* rather than looking broken |
+| *"Nothing is happening"* | the host cannot tell who is connected: **38 in, 2 dropped** on the control view |
+| a corporate firewall | TURN handles most of it; the rest need a fallback that says so plainly |
+| somebody refreshes | already solved — the phone comes back with its score, same as in a pub |
+
+**The one to build FIRST is the connected/dropped count**, because it turns
+"is it me or is it them?" into a number — which is the question underneath most
+of the firefighting. It needs no media layer at all: the app already knows who
+is holding a live connection.
+
 **THE REAL COST OF ONLINE QUIZZING IS NOT DATA, IT IS SUPPORT.** An online
 night has more that can go wrong than a pub one and none of it is in the room:
 somebody's microphone, somebody's corporate firewall, somebody's laptop
