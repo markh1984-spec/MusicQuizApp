@@ -1560,6 +1560,44 @@ half-built:
 against a stub is a media layer that has never met a real ICE negotiation, and
 this is the first third-party service in the live path of a night.
 
+###### And at +£15 a month the margin is roughly 100%
+
+The host, on seeing the free tier: *"so that makes the pricing model of, say,
+£15 pcm for online quizzing very profitable for the product."* It does, and
+the number that settles it is this one:
+
+> **A subscriber would have to run SEVENTEEN online nights a month before £15
+> stopped covering the data.**
+
+A realistic corporate online quiz is 30–50 people for two hours. Audio is about
+1.5 GB of that and the host's video tile is the rest — call it **22 GB a
+night**. The free tier is 1,000 GB, so **about 45 nights a month cost nothing
+at all**, and past it the overage is $0.05/GB, which is **roughly 90p a
+night**. £15 buys about seventeen of those.
+
+**One thing to be exact about: the free tier is per CLOUDFLARE ACCOUNT, not per
+subscriber.** It is one pot of 1,000 GB shared by everybody using the feature,
+so it scales with total NIGHTS rather than with how many people are paying. At
+twenty subscribers running two online nights each that is 880 GB — just inside
+it — and the month it tips over, the whole overspend is under £20 against £300
+of revenue. There is no version of this that stops being profitable.
+
+**Which means the price is a VALUE decision and should stay one.** Costing
+pennies is not a reason to charge pennies: this is what lets a quizmaster take
+a corporate booking at £300–500 that they currently cannot serve at all, so
+£15 is trivial to them and the margin is the reward for building it. Pricing it
+at cost would be giving away the one capability that opens a new market.
+
+**THE REAL COST OF ONLINE QUIZZING IS NOT DATA, IT IS SUPPORT.** An online
+night has more that can go wrong than a pub one and none of it is in the room:
+somebody's microphone, somebody's corporate firewall, somebody's laptop
+muting itself. Those questions land on the owner, and they land during
+somebody's event rather than on a Monday. That is the fifth constraint pointed
+straight at this feature — **a feature's real price is the admin it creates**
+— and it is the thing to watch when this ships, not the gigabytes. Build the
+"if the audio dies, here is the fallback" path so well that it answers most of
+them without a message being sent.
+
 **The media layer is last because everything above it must work without it.**
 That is not a way of putting it off — it is the only version of *a mode, never
 a layer* that survives contact with an evening where the provider is unwell.
