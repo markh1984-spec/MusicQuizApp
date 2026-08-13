@@ -452,6 +452,16 @@ export class Session {
       skip: () => this.engine.skipQuestion(),
       redo: () => this.engine.redoQuestion(),
       goto: () => this.engine.goTo(Number(body.roundIndex), Number(body.questionIndex)),
+      /*
+       * Mark somebody as an organiser — the client's contact and their IT
+       * person, on an online night.
+       *
+       * A host action rather than something a phone claims about itself, for
+       * the obvious reason: "I am an organiser" as a request field would be a
+       * way into the back channel and out of the scoreboard, chosen by
+       * whoever fancied it. One tap on the host's own player list.
+       */
+      organiser: () => this.engine.setOrganiser(String(body.playerId), body.on !== false),
       adjustScore: () => this.engine.adjustScore(String(body.playerId), Number(body.delta)),
       resetScores: () => this.engine.resetScores(),
       // Stop here and show the winner. Bingo has always had this; the quiz
@@ -548,6 +558,19 @@ export class Session {
         optionIndex: body.optionIndex,
         optionIndexes: body.optionIndexes,
       });
+    }
+    /*
+     * Chat. Behind the same token check as everything else on this path — and
+     * that matters more here than for an answer, because an answer somebody
+     * forges costs a question while a MESSAGE somebody forges is words on
+     * another person's screen with your team's name on them.
+     *
+     * Quiz only for now: bingo's own engine has no chat and asking it would be
+     * a method that does not exist. It is the same shape of addition when it
+     * wants one.
+     */
+    if (this.kind === 'quiz' && action === 'say') {
+      return this.engine.say(String(body.playerId || ''), String(body.room || ''), body.text);
     }
     return { ok: false, reason: 'not_available' };
   }

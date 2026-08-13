@@ -19,6 +19,7 @@ import { drawFiltered, toJpeg } from './filters.js';
 import { stickersFor, stickerSvg, drawStickers, stickerAt, placed, preloadStickers } from './stickers.js';
 import { paintLook, DEFAULT_LOOK, LOOKS } from './looks.js';
 import { paintScheme } from './schemes.js';
+import { paintChatButton } from './chat.js';
 
 const STORE_KEY = 'musicquiz.player';
 
@@ -755,6 +756,9 @@ function draw(next) {
   }
 
   paintCameraButton(state);
+  // Online only, and it survives every redraw for the same reason the camera
+  // button does — it lives on the body rather than inside the page.
+  paintChatButton(state, me);
 
   /*
    * The same look as the projector, and this is not decoration on the phone —

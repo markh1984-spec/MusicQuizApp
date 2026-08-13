@@ -26,6 +26,7 @@ import {
   POINTS_CORRECT, POINTS_PER_WHOLE_SECOND, POINTS_FIRST_CORRECT,
 } from './scoring.js';
 import { ALPHABET, answerLetter, answerLetterIndex, revealMode } from './quizzes.js';
+import * as chat from './chat.js';
 // For faceKey — a player's public handle, derived one way from their id.
 import { createHash } from 'node:crypto';
 
@@ -86,6 +87,8 @@ export class Engine {
        * and the exception to it there.
        */
       online: false,
+      // roomId -> messages. Only ever written on an online night; see `say()`.
+      chat: {},
       players: {}, // id -> player
       answers: {}, // "roundIndex:questionIndex" -> { playerId -> answer }
       history: [], // one entry per completed question, for the recap
@@ -287,6 +290,57 @@ export class Engine {
     return { ok: true };
   }
 
+  /**
+   * Say something in one of your rooms.
+   *
+   * ONLINE ONLY, and that is a deliberate second branch on the mode rather
+   * than an accident of where it was written. A pub already has a room: sixty
+   * people are looking at each other, and the whole app is arranged to keep
+   * them looking UP. Putting a chat window on the phone in a pub is the one
+   * change that would make an in-person night worse rather than the same, so
+   * it does not exist there — which also means a Wednesday cannot be affected
+   * by a bug in any of it.
+   *
+   * The rules about WHO may say WHAT live in `chat.js`, so this stays the
+   * plumbing: check the mode, ask, stamp, keep.
+   */
+  say(playerId, room, text) {
+    if (!this.state.online) return { ok: false, reason: 'not_online' };
+    const player = this.state.players[playerId];
+    const questionLive = this.state.phase === PHASES.QUESTION && !this.state.question?.closed;
+    const verdict = chat.mayPost({ player, room, text, questionLive });
+    if (!verdict.ok) return verdict;
+
+    this.state.chat = this.state.chat || {};
+    const message = chat.append(this.state.chat, room, {
+      // Enough to key a list on and to sort by; never anything derived from
+      // the player id, which is a bearer credential (rule 3).
+      id: `${this.state.version}-${Object.keys(this.state.players).length}-${this.now()}`,
+      at: this.now(),
+      by: player.faceKey || faceKey(player.id),
+      name: player.name,
+      text: verdict.text,
+    });
+    this.changed();
+    return { ok: true, message };
+  }
+
+  /**
+   * Mark somebody as an organiser — the client's own contact, and their IT
+   * person.
+   *
+   * They are in the back channel and they are NOT in the quiz: `answer()`
+   * refuses them and `leaderboard()` leaves them out, or the person who booked
+   * you ends up winning their own event, which is a story that gets told.
+   */
+  setOrganiser(playerId, on = true) {
+    const player = this.state.players[playerId];
+    if (!player) return { ok: false, reason: 'no_player' };
+    player.organiser = Boolean(on);
+    this.changed();
+    return { ok: true };
+  }
+
   /** Who left the app during the question now on screen. Host view only. */
   wanderedNow() {
     const forQuestion = (this.state.wandered || {})[this.answerKey()] || {};
@@ -350,6 +404,15 @@ export class Engine {
   }
 
   playerList() {
+    // Organisers are in the game's player list because they hold a phone, a
+    // token and a chat room — and they are in nobody's scoreboard, nobody's
+    // tally and nobody's fastest finger. Filtered HERE, in the one function
+    // everything counting people goes through, rather than at each of them.
+    return Object.values(this.state.players).filter((p) => !p.organiser);
+  }
+
+  /** Everybody holding a phone, organisers included. For chat and removal. */
+  everyone() {
     return Object.values(this.state.players);
   }
 
@@ -757,6 +820,17 @@ export class Engine {
     const s = this.state;
     const player = s.players[playerId];
     if (!player) return { ok: false, reason: 'unknown_player' };
+    /*
+     * An ORGANISER is not a contestant.
+     *
+     * The client's contact and their IT person are in the back channel so the
+     * host can be told the sound has gone — they did not come to compete, and
+     * a room where the person who booked the night finishes second is a story
+     * that gets told afterwards. Refused here as well as left off the board,
+     * because a score that exists and is hidden is one that turns up later in
+     * the archive.
+     */
+    if (player.organiser) return { ok: false, reason: 'organiser' };
     if (s.phase !== PHASES.QUESTION || !s.question) return { ok: false, reason: 'not_open' };
 
     const at = this.now();
@@ -1185,6 +1259,16 @@ export class Engine {
       // Not a secret — it is a fact about the night, and the phone has to lay
       // itself out differently for it.
       online: Boolean(s.online),
+      /*
+       * ONLY THE ROOMS THIS PERSON IS IN.
+       *
+       * Built by picking from `roomsFor()`, never by sending the lot and
+       * hiding some of it — the same discipline as `whoPicked` being absent
+       * from here rather than hidden with CSS. A chat leak is worse than an
+       * answer-key leak: an answer is something they were going to be told in
+       * twenty seconds anyway, and a team's messages are not.
+       */
+      chat: s.online ? chat.visibleTo(s.chat, player) : {},
       you: player
         ? {
             id: player.id,
@@ -1367,6 +1451,19 @@ export class Engine {
     const q = this.question();
 
     view.canStart = s.phase === PHASES.LOBBY && this.rounds.length > 0;
+    /*
+     * THE HOST SEES EVERY ROOM, and that is the whole moderation story.
+     *
+     * There is deliberately no word filtering here, exactly as there is none
+     * on team names — the host asked for none and the reasoning is the same.
+     * What replaces it is that nothing is said out of their sight and they can
+     * already remove anybody, which is a person making a judgement rather than
+     * a list of banned words making one badly.
+     *
+     * It is also the back channel: "the sound has gone" is said in the
+     * organisers' room and has to reach the person holding the microphone.
+     */
+    view.chat = s.online ? (s.chat || {}) : {};
     view.msRemaining = this.msRemaining();
     view.clock = s.question ? { ...s.question } : null;
     view.scoreboard = this.scoreboardState();
