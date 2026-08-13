@@ -4001,7 +4001,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 878 tests, no network, injected clocks — must stay green
+npm test        # 912 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -4180,7 +4180,40 @@ private repo (`PACKS_REPO`), never the one holding the owner's accounts and
 invoices; until that is set the console says so in red and every own pack has a
 Download button.
 
-All on **`MusicQuizApp`**. 907 tests green.
+All on **`MusicQuizApp`**. 912 tests green.
+
+### What landed on 14 August 2026
+
+A long day, and most of it is written up in its own section above. The short
+version, in the order it matters:
+
+- **ONLINE MODE, steps 1 to 4** — `state.online`, the question on the player's
+  own device, chat with an organisers' back channel, and teams scored on the
+  average. All off unless asked for at launch. Step 5, the media layer, needs a
+  Cloudflare account.
+- **A NIGHT KNOWS WHERE IT WAS** — `state.venue`, a plain name chosen at launch
+  and carried into the archive, with previous venues offered back. **Four
+  features were stacked behind this one field**: Past gigs that say where,
+  headcount per venue, the calendar, and an invoice that fills itself in. None
+  of them is built; all of them are now unblocked.
+- **`scripts/pub-unchanged.mjs`** — the guard that answers "did I break the pub
+  night" with bytes rather than with "the tests pass". It reported 2,150
+  identical payloads after every change today.
+- **THE ACCOUNT MODEL, settled end to end** and written up above: owner / on
+  their own / parent / child; `kind` for what an account IS; stats as a view
+  over a set rather than a phantom account; hats only for genuine dual
+  identities; the parent free and seats the product; a night carrying two
+  attributions; and a quizmaster's own packs staying theirs inside a company.
+- **THE GUI RULES** — five roles, and a scheme changing personality but never
+  meaning. Wired in: one gradient angle, radius tokens, a field style, red
+  outlined Delete, green for the things that make something.
+- **The owner page** — the £ badge for where an account stands on money, a
+  filterable People list, and the refusal that used to tell the OWNER their
+  account runs quiz nights.
+
+**Two things deliberately NOT done**, both noted where they belong: the lit
+menu chip coming off gold, and the eight corner radii collapsing to three. Both
+cosmetic, both on screens used on a gig day.
 
 ### ONLINE MODE — built on 13 August 2026, steps 1 to 4 of 5
 

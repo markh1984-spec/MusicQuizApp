@@ -2727,6 +2727,12 @@ admin"). What it actually means to build, cheapest and most valuable first —
 and note that **the first three all wait on the same prerequisite**, which is a
 night knowing its venue:
 
+> **THE PREREQUISITE IS BUILT.** `state.venue` landed on 14 August 2026 — a
+> plain name chosen at launch, carried onto `results()` and into the archive,
+> with `venuesUsed()` offering back every venue this room has played. Free
+> text, so it needed no venue accounts, no groups and no payment processor.
+> **Everything below is now unblocked and none of it is built.**
+
 1. **The invoice, drafted when the night ends.** Venue, date and usual fee are
    all known the moment the game finishes, so this is a draft that writes
    itself and waits. Ninety per cent built already — `saveCustomer` holds the
