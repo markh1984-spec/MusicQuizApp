@@ -33,7 +33,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-import { ROLES, STATUSES, TIERS, DEFAULT_TIER, findTier, tierFor, can, featuresFor, entitlements, FEATURE_TIER } from '../public/assets/plans.js';
+import { ROLES, KINDS, DEFAULT_KIND, STATUSES, TIERS, DEFAULT_TIER, findTier, tierFor, can, featuresFor, entitlements, FEATURE_TIER } from '../public/assets/plans.js';
 import { findScheme, DEFAULT_SCHEME } from '../public/assets/schemes.js';
 
 /** Work factor for scrypt. Slow enough to matter, fast enough for a login. */
@@ -147,11 +147,13 @@ export class Accounts {
    * @param {boolean} [opts.comped]  everything, for nothing. The owner's own
    *                                 quizmaster account, and anybody he gifts it to.
    */
-  create({ email, password, name = '', role = 'quizmaster', tier = '', plan = '', addons = [], comped = false, status = 'trialing', ownedBy = '' }) {
+  create({ email, password, name = '', role = 'quizmaster', kind = DEFAULT_KIND, tier = '', plan = '', addons = [], comped = false, status = 'trialing', ownedBy = '' }) {
     const clean = normaliseEmail(email);
     if (!clean || !clean.includes('@')) throw new Error('That does not look like an email address.');
     if (this.byEmail(clean)) throw new Error('There is already an account with that email address.');
     if (!ROLES.includes(role)) throw new Error(`"${role}" is not a role.`);
+    // What they ARE, as opposed to what they may do — see KINDS in plans.js.
+    if (!KINDS.includes(kind)) throw new Error(`"${kind}" is not a kind of account.`);
     // One owner, and only one. A second would be a second person able to see
     // every subscriber, which is not something to create by accident.
     if (role === 'owner' && this.owner) throw new Error('There is already an owner account.');
@@ -181,6 +183,11 @@ export class Accounts {
       // a different feature from wearing your own second hat.
       ...(ownedBy ? { ownedBy } : {}),
       ...(role === 'owner' ? {} : {
+        // Written on at creation rather than left absent, so an account made
+        // before kinds existed and one made after read identically to
+        // everything downstream. `kindOf()` still tolerates it missing,
+        // because the accounts already on disk do not have it.
+        kind,
         tier: wanted,
         comped: Boolean(comped),
         status: comped ? 'active' : status,

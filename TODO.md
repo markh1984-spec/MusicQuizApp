@@ -2548,6 +2548,78 @@ which is worth having for tidying a lobby whether or not anybody floods you.
 
 See rule 4 in CLAUDE.md.
 
+### Venue accounts — the same skeleton, used the other way round
+
+**Asked for on 14 August 2026, and the host got the design right in the
+asking:** *"The venue accounts will probably act slightly differently to the QM
+accounts, because they're likely to need a main account and then a per-venue
+sub-account. So structurally it could function the same way as a QM company
+with multiple quizmasters. From my perspective it's probably no different, but
+the way they use the accounts would be different — so we'd probably have to
+treat them differently even if at this stage they'd be more or less the same."*
+
+**Both halves of that are right and they are worth separating**, because one is
+cheap and one is not:
+
+- **Structurally it IS the group account below**: a parent with children, one
+  bill, seats. A pub group with four venues and a quiz company with four hosts
+  are the same object. Build the group mechanism ONCE.
+- **A KIND is not the same as a role, and it has to exist first.** `role` says
+  what you may DO; `kind` says what you ARE. A venue and a quizmaster both hold
+  the quizmaster role because both run a quiz night, so folding this into
+  `role` would give every permission check in the app a third case to get
+  wrong, for a distinction that is about USE rather than access.
+
+**`account.kind` is BUILT** (`KINDS` in `plans.js`, defaulting to
+`quizmaster`, so nothing on disk had to change) and the owner's People tab
+filters on it. That is deliberately all it does: the distinction now exists, so
+everything below has something to hang off — and nobody has to guess later
+which of a hundred existing accounts was which.
+
+#### What actually differs, and two of them are load-bearing
+
+- **A quizmaster's room follows the PERSON. A venue's room belongs to the
+  BUILDING.** Mark's room goes with him to The Crown on Tuesday and The Bell on
+  Thursday; The Crown's room stays at The Crown while whoever is on the mic
+  changes with the rota. **Those are the same structure inverted**, and it is
+  the reason the join code, the photo wall and the night history hang off
+  different things in the two cases.
+- **Past gigs asks the opposite question.** For a quizmaster it is a PORTFOLIO
+  — evidence shown to a venue to win the next booking. For a venue it is *"is
+  our Wednesday growing?"* — the headcount-per-venue-over-time item already at
+  the top of the SELL list. Same data, opposite use, and the venue version is a
+  feature that already wanted building.
+- **Invoicing runs backwards.** A quizmaster invoices a venue. A venue invoices
+  nobody for the quiz — what they might want is a record of what they PAID a
+  hired host. The invoice book as it stands is the wrong shape for them, so it
+  is either inverted or absent.
+- **The projector's name.** A quizmaster's says "Mark's Quizporium". A venue's
+  says "The Crown Quiz" — and when a hired quizmaster runs a night at a venue
+  account, whose name goes up? Genuinely open.
+- **They are the two SIDES of the marketplace.** A venue account is the buyer,
+  a quizmaster account is the seller. "Show me quizmasters near The Crown"
+  needs The Crown to be an object, so this is the prerequisite for the
+  directory as much as for anything else.
+
+#### Two questions to answer before building the group half
+
+Neither can be assumed, and both change the shape:
+
+1. **Does head office see into each venue's nights?** Almost certainly yes for
+   the numbers — that is most of why a group would buy. But **it is a read
+   ACROSS ROOMS, which is the one thing the own-packs guarantee forbids in
+   general**, and that guarantee is structural rather than a check: no route
+   takes a room parameter. A group is a legitimate story for crossing it; the
+   mechanism must be built so it can ONLY cross within a group, and never
+   become a general "read another room" door. Get this wrong and the promise
+   that the owner cannot read a quizmaster's packs goes with it.
+2. **When a hired quizmaster runs a night AT a venue account, whose room is
+   it?** The venue's, so the history stays with the pub — or the quizmaster's,
+   so it counts towards their portfolio? **Both want it**, which is the real
+   answer and also the design problem: a night that has to appear in two
+   histories is not the single-room model this app is built on. Worth deciding
+   deliberately rather than discovering.
+
 ### Group accounts — SEATS on a Gold, for a quizmaster company
 
 > **It serves a SECOND market that was not designed for, and that is a feature

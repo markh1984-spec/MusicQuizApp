@@ -598,6 +598,50 @@ const OWNER_FEATURES = [
 export const ROLES = ['owner', 'quizmaster'];
 
 /**
+ * WHAT KIND OF SUBSCRIBER THIS IS — and it is deliberately NOT a role.
+ *
+ * A role says what you may DO (an owner writes packs and runs no nights; a
+ * quizmaster runs nights and cannot write to the catalogue). A kind says what
+ * you ARE, and the two are independent: a venue and a quizmaster both hold the
+ * quizmaster role, because both of them run a quiz night. Folding this into
+ * `role` would mean every permission check in the app suddenly having a third
+ * case to get wrong, for a distinction that is about USE rather than about
+ * access.
+ *
+ * The host's own framing, and it is why this exists at all: *"the venue
+ * accounts will probably act slightly differently to the QM accounts… from my
+ * perspective it's probably no different, but the way they use the accounts
+ * would be different. So we'd probably have to treat them differently even if
+ * at this stage they'd be more or less the same."* Exactly right — the
+ * distinction has to EXIST before the differences can be built, and making it
+ * later means guessing which of a hundred existing accounts was which.
+ *
+ * What actually differs is written up in TODO.md under "Venue accounts". The
+ * short version, and the two that are load-bearing:
+ *
+ *  - **A quizmaster's room follows the PERSON between venues. A venue's room
+ *    belongs to the BUILDING**, and whoever is on the microphone changes with
+ *    the rota. Those are the same structure inverted.
+ *  - **Past gigs asks the opposite question.** For a quizmaster it is a
+ *    portfolio shown to win the next booking; for a venue it is "is our
+ *    Wednesday growing". Same data, opposite use.
+ *
+ * `quizmaster` is the default, so every account that already exists is one and
+ * nothing has to be migrated.
+ */
+export const KINDS = ['quizmaster', 'venue'];
+export const DEFAULT_KIND = 'quizmaster';
+
+/** What to call one on screen. */
+export const KIND_LABEL = { quizmaster: 'Quizmaster', venue: 'Venue' };
+
+/** What kind an account is, tolerating everything written before kinds existed. */
+export function kindOf(account) {
+  const kind = account && account.kind;
+  return KINDS.includes(kind) ? kind : DEFAULT_KIND;
+}
+
+/**
  * A subscription that has lapsed loses features — but see `can()`. Nothing in
  * here is allowed to interrupt a night that is already running.
  */

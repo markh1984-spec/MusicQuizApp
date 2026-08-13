@@ -8,7 +8,7 @@
  */
 
 import { esc, node, brandLink, paintNav, paintIdentity, menuRights, postJson } from './client.js';
-import { TIERS, tierFor, findTier } from './plans.js';
+import { TIERS, tierFor, findTier, KINDS, KIND_LABEL, kindOf } from './plans.js';
 import { photosSection } from './photos-tab.js';
 
 const mainEl = document.getElementById('main');
@@ -1033,7 +1033,7 @@ function peopleTab() {
     if (openPerson === account.id) list.appendChild(personPanel(account));
   }
   section.querySelector('#clearFilters')?.addEventListener('click', () => {
-    peopleFind = ''; peopleTier = ''; peopleMoney = ''; redraw();
+    peopleFind = ''; peopleTier = ''; peopleMoney = ''; peopleKind = ''; redraw();
   });
   section.querySelector('.add').addEventListener('click', addSubscriber);
 
@@ -1205,12 +1205,14 @@ function moneyBadge(account) {
 let peopleFind = '';
 let peopleTier = '';
 let peopleMoney = '';
+let peopleKind = '';
 let peopleSort = 'name';
 
 /** The list as it should appear: filtered, then sorted. */
 function visiblePeople() {
   const find = peopleFind.trim().toLowerCase();
   const rows = subscribers.filter((a) => {
+    if (peopleKind && kindOf(a) !== peopleKind) return false;
     if (peopleTier && tierFor(a) !== peopleTier) return false;
     if (peopleMoney && moneyState(a).kind !== peopleMoney) return false;
     if (!find) return true;
@@ -1234,6 +1236,10 @@ function peopleFilters() {
   const el = node(`
     <div class="people-filters">
       <input type="search" id="peopleFind" placeholder="Find a name or an email" value="${esc(peopleFind)}">
+      <select id="peopleKind" title="Quizmasters or venues">
+        <option value="">Everybody</option>
+        ${KINDS.map((k) => `<option value="${esc(k)}" ${peopleKind === k ? 'selected' : ''}>${esc(KIND_LABEL[k])}s (${subscribers.filter((a) => kindOf(a) === k).length})</option>`).join('')}
+      </select>
       <select id="peopleTier" title="Which rung">
         <option value="">Every tier</option>
         ${TIERS.map((t) => `<option value="${esc(t.id)}" ${peopleTier === t.id ? 'selected' : ''}>${esc(t.label)}</option>`).join('')}
@@ -1269,8 +1275,9 @@ function peopleFilters() {
       row.hidden = !shown.has(row.dataset.account);
     }
   });
-  for (const id of ['peopleTier', 'peopleMoney', 'peopleSort']) {
+  for (const id of ['peopleKind', 'peopleTier', 'peopleMoney', 'peopleSort']) {
     el.querySelector('#' + id).addEventListener('change', (ev) => {
+      if (id === 'peopleKind') peopleKind = ev.target.value;
       if (id === 'peopleTier') peopleTier = ev.target.value;
       if (id === 'peopleMoney') peopleMoney = ev.target.value;
       if (id === 'peopleSort') peopleSort = ev.target.value;
@@ -1290,7 +1297,7 @@ function subscriberRow(account) {
           ${account.supportOpen ? '<span class="inv-status" style="background:rgba(255,210,63,.2);color:var(--gold)">Support open</span>' : ''}
         </div>
         <div class="tiny">
-          ${esc(findTier(tierFor(account)).label)} — ${esc(findTier(tierFor(account)).plan)}
+          ${kindOf(account) === 'venue' ? 'Venue · ' : ''}${esc(findTier(tierFor(account)).label)} — ${esc(findTier(tierFor(account)).plan)}
           · ${esc(moneyState(account).word)}
         </div>
       </div>
