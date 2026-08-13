@@ -1737,6 +1737,49 @@ now, against `ROUND_TYPES`, and a test generates one round of every type so a
 sixth one cannot repeat this. It has already earned its keep: adding
 `alphabet` failed that test before a line of the round was written.
 
+### Online mode is ONE BOOLEAN, and the branch count is a budget
+
+`state.online`, set at launch and living in the game state like the look and
+the card shape. The host's own summary of what it is meant to be — *"so is the
+idea that we just flick a tab and boom you're in online mode, but the core quiz
+engine is exactly the same?"* — is exactly right, and it is a promise that has
+to be actively defended rather than something that stays true on its own.
+
+**The way it stays true is that almost nothing reads it.** Every place that
+branches on the mode is a place a Wednesday in a pub can break, so the number
+of them is a budget rather than an incidental detail. As built:
+
+| Where | What it does |
+|---|---|
+| `freshState()` | declares it `false` |
+| `session.launch()` | sets it from tonight's picker |
+| the launch route | reads it off the body |
+| `playerView()` | reports it, and **the one real branch** — the prompt and the screen's own extras |
+| `play.js` | renders the question **if it was sent** |
+
+**ONE branch in the engine.** The scoring, the clock, the phases, the tally,
+the fastest finger, the reveal, crash recovery, the projector, the host's
+control view, bingo and every pack are untouched and cannot tell the
+difference — which is why the same pack runs in a pub on Wednesday and over a
+video call on Thursday with no second version of anything.
+
+**The phone deliberately branches on `s.prompt` rather than on `s.online`.** It
+renders what it was given instead of deciding for itself what kind of night it
+is, so the decision lives in exactly one place — and a payload that forgot to
+send the prompt degrades to the pub layout rather than to an empty box.
+
+**Anything added for online mode must not raise that count without a reason
+worth writing down here.** Chat, teams and the media layer all hang off the
+same flag; if one of them needs a second branch inside the engine, that is a
+design decision to argue about rather than a line to slip in.
+
+**And prove it with bytes, not with tests.** `node scripts/pub-unchanged.mjs
+HEAD~1 --ignore online` runs the old engine and the new one side by side over
+every pack and compares every payload. Adding online mode came out at 2,150
+identical comparisons with one new field. Run it after every step of this
+work; "the tests pass" is a weaker claim than the one anybody actually wants
+the night before a gig.
+
 ### The alphabet round — no options at all
 
 `type: 'alphabet'`. The question is asked on the projector, the phone shows a
