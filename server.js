@@ -1519,7 +1519,14 @@ async function handleGet(req, res, url, route) {
        * has no business carrying somebody's postal address.
        */
       venueRecords: roomForHost(req, url).invoices.customers
-        .map((c) => ({ id: c.id, name: c.name, rewards: Array.isArray(c.rewards) ? c.rewards : [] })),
+        .map((c) => ({
+          id: c.id,
+          name: c.name,
+          rewards: Array.isArray(c.rewards) ? c.rewards : [],
+          // Which night they have you, so the console can work out whose night
+          // tonight is without a second request — see `tonightsVenue()`.
+          usualNight: c.usualNight || '',
+        })),
       /*
        * Enough to draw "Ask for a pack" BEFORE somebody types into it: whether
        * they may, where they are in the queue, and which Monday it lands on.
@@ -3153,7 +3160,7 @@ async function handleWrite(req, res, url, route) {
 
   /*
    * What a venue puts up. A route of its own so it cannot touch anything else
-   * on the record — see `setRewards` for why that matters.
+   * on the record — see `setVenueDetails` for why that matters.
    */
   if (route.startsWith('/api/invoices/customers/') && route.endsWith('/rewards') && req.method === 'PUT') {
     if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
@@ -3163,7 +3170,14 @@ async function handleWrite(req, res, url, route) {
     await ensureInvoicesRestored(room);
     const id = decodeURIComponent(route.slice('/api/invoices/customers/'.length, -'/rewards'.length));
     const body = await readJson(req);
-    const saved = room.invoices.setRewards(id, body.rewards);
+    /*
+     * The body carries whichever of the two the Venues tab just changed, and
+     * `setVenueDetails` writes only what it was sent — so saving prizes cannot
+     * clear a usual night. The path still says `/rewards` because a route is
+     * not a label, and renaming it would 404 for any console still open in a
+     * tab when this deploys.
+     */
+    const saved = room.invoices.setVenueDetails(id, body);
     if (!saved) return sendJson(res, 404, { error: 'No venue with that id.' }), true;
     const backup = await backUpInvoices(room);
     return sendJson(res, 200, { backedUp: backup.ok, ...invoiceState(room.invoices) }), true;

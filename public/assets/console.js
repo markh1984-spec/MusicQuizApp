@@ -2409,16 +2409,41 @@ function launchBar() {
   const paintQuick = () => {
     const typing = Boolean(text.value.trim());
     const picks = typing ? [] : quickPicks(gameOf().packs);
+    /*
+     * TONIGHT'S VENUE COMES WITH IT, AND THE BUTTON SAYS SO.
+     *
+     * These two buttons take no settings by design — a dropdown on the panic
+     * control defeats the panic control — so they always launched with no
+     * venue at all, which means no prizes and therefore no QR at the end.
+     * That is the fastest path in the app and it is the one that reproduces
+     * the missing voucher from the first real night.
+     *
+     * `tonightsVenue()` is the fix and the LABEL is what makes it safe: this
+     * button now states the venue it will file the night under and play for,
+     * so a wrong guess is visible before the press rather than at the final
+     * scores. If it is wrong, the search box below is one tap away and has a
+     * picker on it.
+     *
+     * Nothing ELSE is remembered, and that is deliberate. Look, card shape and
+     * prizes are per-night decisions the pack card exists for — and online
+     * mode and team play change how the night is SCORED and what the phones
+     * show, so a remembered "online" from a corporate Thursday would quietly
+     * invert rule 8 in a pub on the Saturday. A venue cannot do that: it is a
+     * label on the night and a set of prizes, both of which are on screen.
+     */
+    const venue = picks.length ? tonightsVenue() : null;
     quick.replaceChildren(...picks.map(({ pack, why }) => {
       const row = node(`
         <button class="go lb-go lb-quick-go" type="button">
           <span class="lb-quick-title">${esc(pack.title)}</span>
           ${why ? `<span class="lb-quick-why">${esc(why)}</span>` : ''}
+          ${venue ? `<span class="lb-quick-where">at ${esc(venue.name)} · ${esc(venue.why)}</span>` : ''}
         </button>`);
       // doLaunch says "Launching…" and puts the label back on its own — this
       // used to do it here, which destroyed the two spans before doLaunch had
       // seen them and left a bare "Launch" if the 409 was cancelled.
-      row.addEventListener('click', () => doLaunch(gameOf().id, pack.id, {}, row));
+      row.addEventListener('click', () => doLaunch(
+        gameOf().id, pack.id, { venue: venue ? venue.name : '' }, row));
       return row;
     }));
   };
@@ -3231,10 +3256,26 @@ function venueBox() {
   if (!seen.length) {
     return '<input class="venue-pick venue-free" type="text" maxlength="60" autocomplete="off" placeholder="The Dog and Duck">';
   }
+  /*
+   * TONIGHT'S IS ALREADY CHOSEN, rather than the picker starting blank.
+   *
+   * The venue whose usual night is today, or the one you played last — see
+   * `tonightsVenue()`. This is the same answer the quick-launch buttons use,
+   * from the same function, so the fast path and the deliberate one cannot
+   * disagree about where you are.
+   *
+   * Safe to preselect precisely because it is VISIBLE: the dropdown shows the
+   * name and the prize line directly underneath says what that venue puts up,
+   * so a wrong one is one glance away rather than a surprise at the final
+   * scores. Changing it is what the picker was always for. And the fallback
+   * is unchanged — no venues, no history, nothing selected.
+   */
+  const tonight = tonightsVenue();
+  const pick = tonight && seen.find((v) => v.toLowerCase() === tonight.name.toLowerCase());
   return `
     <select class="venue-select">
-      <option value="">Where is it?</option>
-      ${seen.map((v) => `<option value="${esc(v)}">${esc(v)}</option>`).join('')}
+      <option value="" ${pick ? '' : 'selected'}>Where is it?</option>
+      ${seen.map((v) => `<option value="${esc(v)}" ${v === pick ? 'selected' : ''}>${esc(v)}</option>`).join('')}
       <option value="__other">Somewhere else…</option>
     </select>
     <input class="venue-pick venue-free" type="text" maxlength="60" autocomplete="off"
@@ -4210,6 +4251,70 @@ function renderBingoPreview(body, sub, pack, markDirty = () => {}) {
  * what they are putting behind the bar — the postal address belongs on an
  * invoice and has no business on a page opened ten minutes before a quiz.
  */
+/**
+ * The weekdays a residency can fall on, as the picker draws them.
+ *
+ * Monday first, because that is how a quizmaster reads a week — and the ids
+ * are names rather than numbers because `0` is Sunday in JavaScript and
+ * Monday in a diary, which is exactly the off-by-one that would put the wrong
+ * pub's prizes on a night. `WEEKDAYS` in `src/invoices.js` is the same list
+ * and validates against it.
+ */
+const WEEKDAY_LABELS = [
+  ['mon', 'Mondays'], ['tue', 'Tuesdays'], ['wed', 'Wednesdays'], ['thu', 'Thursdays'],
+  ['fri', 'Fridays'], ['sat', 'Saturdays'], ['sun', 'Sundays'],
+];
+
+/**
+ * WHOSE NIGHT IS TONIGHT — the cheapest diary there is.
+ *
+ * Asked for as *"the quick launch should remember what you did the previous
+ * week"*, and then better: *"or perhaps know which venue from the diary?"*
+ * The diary is the right source and is the one thing here that does not exist
+ * — `FEATURES.CALENDAR` is on Bronze and still says "Not built yet". But the
+ * useful half of a diary is not a list of dates, it is **which venue has you
+ * on a Thursday**, and that is one field on a record the quizmaster already
+ * keeps. TODO.md had already reasoned to the same place: *"a usual night,
+ * optionally, on the customer — which is what turns the list into a
+ * calendar"*.
+ *
+ * Two sources, in this order, and the order is the whole design:
+ *
+ * 1. **The venue whose usual night is tonight.** Stated by the quizmaster
+ *    rather than guessed from history, so it is right on the first week and
+ *    right for somebody with two residencies — where "last week" would be
+ *    wrong every other night.
+ * 2. **Otherwise the venue of your most recent night.** `library.venues` is
+ *    already ordered newest-first off the archive, so this is free and it is
+ *    the "remember last week" that was asked for. It carries a one-venue host
+ *    who has set nothing up at all.
+ *
+ * **TWO VENUES CLAIMING TONIGHT MEANS NEITHER GETS IT.** A double booking is
+ * a real thing on a Friday in December, and picking whichever sorted first
+ * would put one pub's prizes in front of another pub's room. Nothing is
+ * offered and the picker is left alone, which is exactly what happens today.
+ *
+ * **6AM ROLL-OVER**, the same as the photos and Past gigs. A quiz that runs
+ * past midnight is still Thursday's night, so a host launching a second game
+ * at half twelve must not suddenly be offered Friday's pub.
+ *
+ * Nothing here is silent: the launch bar prints the venue on the button and
+ * the pack card shows it in the picker with the prizes underneath. A guess
+ * nobody can see is worse than no guess, because the failure it produces —
+ * the wrong pub's prize on the winner's phone — surfaces at the end of the
+ * night in front of the room.
+ */
+function tonightsVenue() {
+  const at = new Date(Date.now() - 6 * 60 * 60 * 1000);
+  // getDay() is 0 for Sunday; WEEKDAY_LABELS is Monday-first.
+  const today = WEEKDAY_LABELS[(at.getDay() + 6) % 7][0];
+  const booked = (library.venueRecords || []).filter((v) => v.usualNight === today);
+  if (booked.length === 1) return { name: booked[0].name, why: 'your usual night here' };
+  if (booked.length > 1) return null;
+  const last = (library.venues || [])[0];
+  return last ? { name: last, why: 'where you played last' } : null;
+}
+
 function venuesSection() {
   const el = node('<div></div>');
   const draw = () => {
@@ -4218,8 +4323,9 @@ function venuesSection() {
       <div class="panel">
         <h3>Venues</h3>
         <div class="tiny">Set the prizes here and they fill themselves in when you
-          launch a night at this venue. The billing details for the same venues
-          are on the Invoices tab.</div>
+          launch a night at this venue. Give a venue its usual night and the
+          launch bar knows whose night tonight is. The billing details for the
+          same venues are on the Invoices tab.</div>
         <div class="venue-list">
           ${venues.length ? venues.map((v) => `
             <div class="venue-card" data-id="${esc(v.id)}">
@@ -4227,6 +4333,13 @@ function venuesSection() {
                 <b>${esc(v.name)}</b>
                 <button class="minor danger v-del">Remove</button>
               </div>
+              <label class="venue-night">Usual night
+                <select class="v-night">
+                  <option value="">No usual night</option>
+                  ${WEEKDAY_LABELS.map(([id, label]) => `
+                    <option value="${id}" ${v.usualNight === id ? 'selected' : ''}>${esc(label)}</option>`).join('')}
+                </select>
+              </label>
               <div class="venue-prizes">
                 ${[0, 1, 2].map((i) => `
                   <label class="reward-row" data-place="${i + 1}">
@@ -4236,7 +4349,7 @@ function venuesSection() {
                       placeholder="${i === 0 ? 'A free drink at the bar' : 'Nothing for this place'}">
                   </label>`).join('')}
               </div>
-              <button class="minor v-save" hidden>Save the prizes</button>
+              <button class="minor v-save" hidden>Save it</button>
             </div>`).join('') : '<div class="tiny">No venues yet. Add one below, or on the Invoices tab.</div>'}
         </div>
         <div class="venue-add">
@@ -4249,23 +4362,25 @@ function venuesSection() {
     // a page of buttons waiting to be pressed for no reason.
     for (const card of el.querySelectorAll('.venue-card')) {
       const save = card.querySelector('.v-save');
-      for (const box of card.querySelectorAll('.v-reward')) {
+      for (const box of card.querySelectorAll('.v-reward, .v-night')) {
         box.addEventListener('input', () => { save.hidden = false; });
+        box.addEventListener('change', () => { save.hidden = false; });
       }
       save.addEventListener('click', async () => {
         save.disabled = true;
         save.textContent = 'Saving…';
         const id = card.dataset.id;
         const rewards = [...card.querySelectorAll('.v-reward')].map((b) => b.value.trim());
+        const usualNight = card.querySelector('.v-night').value;
         try {
           await invoiceApi(`/api/invoices/customers/${encodeURIComponent(id)}/rewards`, {
             method: 'PUT',
-            body: JSON.stringify({ rewards }),
+            body: JSON.stringify({ rewards, usualNight }),
           });
           await load();
         } catch (err) {
           save.disabled = false;
-          save.textContent = 'Save the prizes';
+          save.textContent = 'Save it';
           alert(err.message || 'Could not save that.');
         }
       });

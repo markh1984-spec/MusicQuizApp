@@ -3296,8 +3296,14 @@ So the whole of what is missing is:
 1. **A night pointing at one.** A `venueId` on the archive entry, chosen at
    launch beside the look and the card shape, with free text still allowed for
    a one-off.
-2. **A usual night**, optionally, on the customer — "Thursdays" — which is what
-   turns the list into a calendar.
+2. ~~**A usual night**, optionally, on the customer — "Thursdays" — which is
+   what turns the list into a calendar.~~ **DONE.** `usualNight` on the venue
+   record, picked on the Venues tab. `tonightsVenue()` reads it, and the launch
+   bar, the search card and every pack card now start on tonight's venue —
+   which is what closed the missing-prize-QR path, because the two quick-launch
+   buttons take no settings and so always launched with none. Two venues on one
+   night means neither is offered, rather than guessing; falls back to the
+   venue of your last night when nothing is set.
 3. **The invoice draft reading the night** instead of being typed from memory.
 
 **DO NOT BUILD A SECOND LIST OF VENUES.** Two lists of the same pubs is two
@@ -3305,13 +3311,15 @@ lists that drift, both of which the host maintains by hand, and it is the exact
 mistake this file keeps recording in other places. The invoice customer is the
 venue.
 
-**One wording question that follows, and it is a real one:** to a quizmaster
-that list is VENUES; on an invoice it is CUSTOMERS. Every venue is a customer,
-but a corporate Christmas booking is a customer that is arguably not a venue —
-so they are not quite the same word. Two words for one list is the fault this
-file warns about, so pick one deliberately rather than letting both appear.
-Leaning towards **Venues** everywhere, on the grounds that every customer a
-quizmaster has is somewhere they went; that is the host's call.
+**One wording question that followed, and it is SETTLED: Venues, everywhere.**
+To a quizmaster that list was VENUES; on an invoice it was CUSTOMERS. Every
+venue is a customer, but a corporate Christmas booking is a customer that is
+arguably not a venue — so they were not quite the same word, and two words for
+one list is the fault this file warns about. Done in the GUI sweep: the invoice
+sheet, its heading, its add form and the invoice form's own field all say
+venue. The wire is untouched (`/api/invoices/customers`), because a route is
+not a label, and an issued invoice is untouched because it carries its own copy
+of everything.
 
 **And "automatically invoices them" wants one line drawn: DRAFT, NEVER SEND.**
 An invoice raised the moment a night ends, pre-filled with the venue, the date
@@ -3325,6 +3333,13 @@ drafts and never sends, and for the same reason.
 currently reads *"Not built yet"* — the same unbuilt-feature-on-a-tier problem
 noted for streaming. Saved venues with usual nights IS the calendar, so this
 chain closes that honestly rather than by deleting the line.
+
+**Half of it is now built and the blurb is deliberately NOT changed.** Venues
+carry a usual night and the launch bar reads it, so "what is on tonight" is
+answered — but a calendar is a PAGE showing the weeks ahead, and there is not
+one. Flipping the blurb on the strength of one field would be the unbuilt-
+feature-on-a-tier problem in a new form: a subscriber clicking Your calendar
+and finding nothing. What is left for it is a view, not a data model.
 
 #### The quizmaster's own DRAFT-READ-SEND list, in order of value
 

@@ -4500,6 +4500,14 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 /* Why this one is being offered, in the button's own dark ink rather than the
    page's grey — on a gradient fill a `.tiny` grey is close to invisible. */
 .lb-quick-why { font-size: var(--fs-mini); font-weight: 700; opacity: 0.72; }
+/* WHERE it thinks tonight is. Quieter than the reason above it and on a line
+   of its own, because it answers a different question — that one is "why this
+   pack", this is "and where". Fainter on purpose: it is a statement of what
+   the press will do rather than a second thing to weigh up, and the moment it
+   is wrong the search box underneath has a picker on it. It must never be
+   hidden, though: an unseen guess is how the wrong pub's prize ends up on the
+   winner's phone. */
+.lb-quick-where { font-size: var(--fs-mini); font-weight: 700; opacity: 0.6; }
 
 /* Who is already in the shared portrait library. Names rather than pictures:
    the job is spotting "michael-jackson" next to "mj", which is a reading job. */
@@ -4822,6 +4830,14 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
   background: rgba(255, 255, 255, 0.04); padding: 12px 14px;
 }
 .venue-top { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+/* WHICH NIGHT THEY HAVE YOU — the cheapest half of a diary, and the thing the
+   launch bar reads to know whose night tonight is. Above the prizes because it
+   is the more often true of the two: a residency outlives whatever they happen
+   to be putting behind the bar this month. `min-width: 0` on the select for
+   the reason every other one in this file has it — a dropdown will not go
+   below its longest option and drags the card sideways on a 320px phone. */
+.venue-night { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: var(--fs-note); color: var(--ink-dim); font-weight: 800; }
+.venue-night select { flex: 1 1 auto; min-width: 0; max-width: 100%; }
 .venue-prizes { display: grid; gap: 6px; margin-top: 10px; }
 .venue-prizes .reward-row { margin: 0; }
 .venue-card .v-save { margin-top: 10px; }

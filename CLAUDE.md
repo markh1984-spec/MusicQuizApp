@@ -1545,6 +1545,66 @@ than leaving somebody to find out at the final scores — and *"set them on the
 Venues tab"* when the record exists and is empty. It is a quiet dashed box, not
 a warning: a night with no prize is an ordinary night.
 
+**AND THE LAUNCH BAR KNOWS WHOSE NIGHT TONIGHT IS.** `usualNight` on the venue
+record, `tonightsVenue()` in `console.js`. Asked for as *"the quick launch
+should remember what you did the previous week"*, then sharpened by the host
+himself — *"or perhaps know which venue from the diary?"*
+
+**The diary is the right source and it is the one thing here that does not
+exist** — `FEATURES.CALENDAR` is on Bronze and still says "Not built yet". But
+the useful half of a diary is not a list of booked dates, it is WHICH VENUE HAS
+YOU ON A THURSDAY, and that is one field on a record the quizmaster already
+keeps. TODO.md had already reasoned to the same place: *"a usual night,
+optionally, on the customer — which is what turns the list into a calendar"*.
+So this is the cheapest possible diary and it needs no second list, which is
+the thing that section warns hardest against.
+
+Two sources, in order, and the order is the design:
+
+1. **The venue whose usual night is tonight.** STATED rather than guessed, so
+   it is right on the first week and right for somebody with two residencies —
+   where "what you did last week" is wrong every other night.
+2. **Otherwise the venue of your last night.** `venuesUsed()` is already
+   ordered newest-first off the archive, so this is free, and it is the
+   "remember last week" that was actually asked for. It carries a one-venue
+   host who has set nothing up.
+
+**A HABIT, NOT A BOOKING**, which is why it is one weekday rather than a date:
+a residency is "Thursdays" and stays true for months, where a diary of dates is
+a thing somebody has to keep up or it starts lying — and this app's fifth
+constraint is that a feature's real price is the admin it creates on a Monday.
+
+Four things that are load-bearing:
+
+- **TWO VENUES CLAIMING TONIGHT MEANS NEITHER GETS IT.** A double booking is a
+  real thing in December, and picking whichever sorted first would put one
+  pub's prizes in front of another pub's room. Nothing is offered and the
+  picker is left blank, which is exactly what happened before this existed.
+- **NOTHING IS SILENT.** The quick-launch button prints *"at The Station Tap ·
+  your usual night here"*, and the pack card's picker shows the name with the
+  prize line underneath saying what that venue puts up. A guess nobody can see
+  is worse than no guess, because the failure it produces — the wrong pub's
+  prize on the winner's phone — surfaces at the final scores in front of a room.
+- **6AM ROLL-OVER**, the same as the photos and Past gigs. A quiz running past
+  midnight is still Thursday's night, so a host launching a second game at half
+  twelve must not suddenly be handed Friday's pub. The weekday is stored as a
+  NAME rather than a number, because `0` is Sunday in JavaScript and Monday in
+  a diary.
+- **THE VENUE IS THE ONLY THING REMEMBERED, and that is deliberate.** Look,
+  card shape and prizes are per-night decisions the pack card exists for — and
+  **online mode and team play change how the night is SCORED and what the
+  phones show**, so a remembered "online" from a corporate Thursday would
+  quietly invert rule 8 in a pub on the Saturday. A venue cannot do that: it is
+  a label on the night and a set of prizes, and both are on screen before the
+  press.
+
+`setVenueDetails()` replaces `setRewards()` and writes only the fields it was
+SENT, so saving prizes cannot clear a usual night or the other way round — the
+same reason that method exists rather than being a call to `saveCustomer()`,
+which writes the whole record and would blank the address and the fee. The
+route is still `PUT …/rewards`: a route is not a label, and renaming it would
+404 for any console still open in a tab when this deploys.
+
 **The venue picker is a real `<select>` now**, with "Somewhere else" last,
 swapping in a text box. It was an `<input list=…>`, which is both a box and a
 list and therefore looks like neither: a datalist draws no chevron, so the
@@ -4370,7 +4430,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 941 tests, no network, injected clocks — must stay green
+npm test        # 945 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -4549,7 +4609,7 @@ private repo (`PACKS_REPO`), never the one holding the owner's accounts and
 invoices; until that is set the console says so in red and every own pack has a
 Download button.
 
-All on **`MusicQuizApp`**. 941 tests green.
+All on **`MusicQuizApp`**. 945 tests green.
 
 ### What a GUI SWEEP found — thirteen things, all fixed
 

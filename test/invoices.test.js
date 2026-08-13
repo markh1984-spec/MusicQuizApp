@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { Invoices, toPence, formatPence, money, totals, dueDate, describeEvent, shortDate, longDate } from '../src/invoices.js';
+import { Invoices, WEEKDAYS, toPence, formatPence, money, totals, dueDate, describeEvent, shortDate, longDate } from '../src/invoices.js';
 import { invoicePdf, invoiceFilename } from '../src/invoice-pdf.js';
 import { textWidth, fit } from '../src/pdf.js';
 
@@ -553,4 +553,78 @@ test('a corrupt backup is refused rather than believed', () => {
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
+});
+
+/*
+ * THE CHEAPEST DIARY: which night a venue has you.
+ *
+ * Asked for as "the quick launch should remember what you did the previous
+ * week", then better — "or perhaps know which venue from the diary?". The
+ * diary is not built; the useful half of one is a usual night on the venue
+ * record, which is what TODO.md had already reasoned to.
+ */
+test('a venue remembers which night it has you, and only a real weekday', () => {
+  withFile((file) => {
+    const book = new Invoices(file, { now });
+    const v = book.saveCustomer({ name: 'The Station Tap', usualNight: 'thu' });
+    assert.equal(v.usualNight, 'thu');
+    assert.equal(book.saveCustomer({ name: 'The Crown' }).usualNight, '',
+      'a venue with no usual night must not claim one');
+    assert.equal(book.saveCustomer({ name: 'Nonsense', usualNight: 'Thursday' }).usualNight, '',
+      'only the ids in WEEKDAYS are kept — a near miss must not be stored');
+    assert.equal(book.saveCustomer({ name: 'Number', usualNight: 4 }).usualNight, '',
+      'a weekday NUMBER is refused: 0 is Sunday in JS and Monday in a diary');
+    assert.deepEqual(WEEKDAYS, ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
+  });
+});
+
+/*
+ * THE WHOLE REASON THIS IS ITS OWN METHOD. `saveCustomer` writes the record
+ * every time, so the Venues tab — which knows nothing about addresses or fees
+ * — would blank them on every save. And the two fields it DOES own must not
+ * clear each other either.
+ */
+test('setting a venue’s prizes cannot blank its address, fee or usual night', () => {
+  withFile((file) => {
+    const book = new Invoices(file, { now });
+    const v = book.saveCustomer({
+      name: 'The Station Tap', address: '1 Station Road', email: 'a@b.example',
+      usualFee: '350', usualNight: 'thu',
+    });
+
+    book.setVenueDetails(v.id, { rewards: ['A free drink at the bar'] });
+    const after = book.customers.find((c) => c.id === v.id);
+    assert.deepEqual(after.rewards, ['A free drink at the bar']);
+    assert.equal(after.address, '1 Station Road', 'the address was blanked');
+    assert.equal(after.usualFeePence, 35000, 'the usual fee was blanked');
+    assert.equal(after.usualNight, 'thu', 'saving prizes cleared the usual night');
+
+    // …and the other way round.
+    book.setVenueDetails(v.id, { usualNight: 'fri' });
+    const later = book.customers.find((c) => c.id === v.id);
+    assert.equal(later.usualNight, 'fri');
+    assert.deepEqual(later.rewards, ['A free drink at the bar'],
+      'changing the usual night wiped the prizes');
+  });
+});
+
+test('a usual night survives being written and read back', () => {
+  withFile((file) => {
+    const book = new Invoices(file, { now });
+    const v = book.saveCustomer({ name: 'The Station Tap', usualNight: 'thu' });
+    const reopened = new Invoices(file, { now });
+    assert.equal(reopened.customers.find((c) => c.id === v.id).usualNight, 'thu');
+  });
+});
+
+/* A venue written before usual nights existed is not suddenly on a Monday. */
+test('a venue saved before usual nights existed has none', () => {
+  withFile((file) => {
+    fs.writeFileSync(file, JSON.stringify({
+      settings: {}, invoices: [], customers: [{ id: 'old', name: 'The Old Bell' }],
+    }));
+    const book = new Invoices(file, { now });
+    const old = book.customers.find((c) => c.id === 'old');
+    assert.ok(!old.usualNight, 'an old record grew a night nobody set');
+  });
 });

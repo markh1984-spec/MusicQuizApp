@@ -34,6 +34,18 @@ import path from 'node:path';
 
 export const STATUSES = ['draft', 'sent', 'paid', 'cancelled'];
 
+/**
+ * The days a residency can fall on, lower case, Monday first.
+ *
+ * Exported because the browser draws the picker from it and the server
+ * validates against it — one list, so a value the console can choose is
+ * always a value the server will keep. Stored as a NAME rather than a number
+ * because `0` is Sunday in JavaScript and Monday everywhere a quizmaster
+ * thinks about a week, and that is exactly the sort of off-by-one that puts
+ * the wrong pub's prizes on a night.
+ */
+export const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
 /** What a fresh install looks like, so the console has something to show. */
 export function blankSettings() {
   return {
@@ -271,6 +283,25 @@ export class Invoices {
       rewards: (Array.isArray(customer.rewards) ? customer.rewards : [])
         .slice(0, 3)
         .map((r) => String(r || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80)),
+      /*
+       * WHICH NIGHT THEY HAVE YOU, and it is the cheapest possible diary.
+       *
+       * The host's own chain: *"I did the Dog and Duck on a Thursday and the
+       * Pig and Whistle on a Friday, they're already built into your
+       * calendar."* One weekday on a record he already keeps is what turns a
+       * list of venues into "what is on tonight" — no second list, no booked
+       * dates to maintain, and nothing to keep in sync.
+       *
+       * It is a HABIT, not a booking. That is why it is one weekday and not a
+       * date: a residency is "Thursdays" and stays true for months, where a
+       * diary of dates is a thing somebody has to keep up or it starts lying.
+       * A one-off booking has no usual night and is picked by hand, which is
+       * what the venue dropdown has always been for.
+       *
+       * Empty is the default and means exactly "no usual night" rather than
+       * "unknown", so a venue with none never claims tonight.
+       */
+      usualNight: WEEKDAYS.includes(String(customer.usualNight || '')) ? String(customer.usualNight) : '',
     };
     if (!clean.name) throw new Error('A customer needs a name.');
     const at = this.data.customers.findIndex((c) => c.id === clean.id);
@@ -281,21 +312,31 @@ export class Invoices {
   }
 
   /**
-   * Set what a venue puts up, and NOTHING else.
+   * Set what the VENUES TAB owns — the prizes and the usual night — and
+   * NOTHING else.
    *
    * Its own method rather than a field on `saveCustomer`, for the same reason
    * `setPrefs()` is separate from `accounts.update()`: `saveCustomer` writes
    * the whole record every time, so a call that carried only a name and some
    * prizes would silently blank the address, the email and the usual fee — on
-   * the record every invoice is drafted from. This can only ever move the
-   * prizes.
+   * the record every invoice is drafted from. This can only ever move the two
+   * fields the gig-night side of the record owns, and it moves each one only
+   * if it was actually sent.
    */
-  setRewards(id, rewards) {
+  setVenueDetails(id, { rewards, usualNight } = {}) {
     const customer = this.data.customers.find((c) => c.id === id);
     if (!customer) return null;
-    customer.rewards = (Array.isArray(rewards) ? rewards : [])
-      .slice(0, 3)
-      .map((r) => String(r || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80));
+    if (rewards !== undefined) {
+      customer.rewards = (Array.isArray(rewards) ? rewards : [])
+        .slice(0, 3)
+        .map((r) => String(r || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80));
+    }
+    // Each field only if it was SENT, so the Venues tab saving prizes cannot
+    // clear a usual night and vice versa — the same reason this method exists
+    // at all rather than being a call to saveCustomer.
+    if (usualNight !== undefined) {
+      customer.usualNight = WEEKDAYS.includes(String(usualNight || '')) ? String(usualNight) : '';
+    }
     this.save();
     return customer;
   }
