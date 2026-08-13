@@ -2776,6 +2776,69 @@ Two kinds of link, and they are not the same thing:
 - **A PER-NIGHT attribution** — "Dave did the 14th". This is the one that is
   real, and the one Past gigs reads.
 
+#### CAN HEAD OFFICE WATCH A VENUE'S NIGHT LIVE ON VIDEO? Technically yes. Do not.
+
+Asked directly, and asked the right way — *"I don't know what the security
+implications of that would be, but we have the technology, so I'm asking the
+question."* The technology is not the constraint: a camera in the venue
+publishes, head office subscribes, and the free tier covers it many times over.
+
+**Four reasons not to, and the third is the one that would actually blow up.**
+
+- **It is filming customers who have not been asked.** A live feed of a pub
+  room is personal data — people's faces, and who they are out with. CCTV is
+  lawful in a pub with signage and a stated purpose; **a quiz app streaming the
+  room to head office is a different purpose that nobody in the room has been
+  told about.** It needs a lawful basis, notices, and almost certainly an
+  assessment, and it makes the venue a data controller for something they only
+  agreed to as a quiz.
+- **AUDIO IS WORSE THAN VIDEO, and a quiz feed would carry it.** Recording
+  conversation is treated far more strictly than images, for the obvious
+  reason: the table by the speaker is talking about their divorce, their
+  health, or their manager. Most pub CCTV deliberately has no microphone. This
+  would.
+- **It is a camera pointed at the bar staff, and they will read it that way.**
+  Head office watching a venue live is not really about the quiz — it is
+  employee monitoring, which carries its own transparency and proportionality
+  rules and is an industrial-relations problem before it is a legal one.
+  **This is the one that ends the relationship with a venue**, and it would be
+  the app's fault.
+- **And it makes Quizporium the processor for all of it** — a data-protection
+  agreement with every group, and the person who gets the complaint.
+
+Two practical points on top: **a quiz night has no camera** (the host's laptop
+faces the host, so this is a hardware install in somebody else's building), and
+what would be on screen is a dark room where very little happens.
+
+**WHAT HEAD OFFICE ACTUALLY WANTS IS NOT VIDEO.** The questions are "is it busy
+tonight", "is it growing" and "is the quiz working here" — and **the numbers
+answer those better than a picture does**, instantly, with no legal tail and no
+camera. "38 in, up from 24 last week" is the product. That is the live view
+already designed above, and it is a stronger feature than the video would be
+rather than a consolation for it.
+
+**The one video-shaped thing that is already safe is the PHOTO WALL**, because
+people opt into it by taking a picture — consent by construction. Head office
+seeing tonight's photos is fine and needs nothing new.
+
+**And if a group genuinely wants eyes on a room, that is CCTV and they already
+have it.** Nothing to do with a quiz app, and much better not to be the ones
+providing it.
+
+##### The version that IS worth building: a group NIGHT, announced
+
+There is a legitimate live-video product hiding behind the question, and the
+consent problem mostly disappears because it is an EVENT rather than
+monitoring: **several venues in a group playing the same quiz on the same
+night, seeing each other.** A group final, a Christmas league, four pubs on one
+scoreboard. Everybody is told because it is the point of the evening, the
+camera is aimed at a stage rather than at the room, and it is a reason for a
+group to buy rather than a reason for a venue to resent them.
+
+That is a real feature and it uses exactly the media layer already chosen. It
+is also a long way down the list — it needs venue accounts, groups, the media
+layer and a multi-room scoreboard, none of which exist.
+
 #### One thing left open: who owns the PHOTOS of a shared night
 
 Both should see them — they are pictures of that room on that evening. Less
