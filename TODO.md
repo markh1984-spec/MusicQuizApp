@@ -1449,6 +1449,29 @@ A private video call has neither problem: sub-second, and nobody is scanning
 it. The client's own Teams is free, scalable and already paid for, which is
 everything YouTube was attractive for and none of what makes it unusable.
 
+**And on "so Cloudflare Realtime is the answer?" — it is the right PROVIDER
+for a thing that should still not be built yet.** Cheap enough to be free
+settles the pricing question and removes any need for a per-night charge; it
+does not make the build smaller, and cost was never what was stopping this.
+
+**The reason that survives the price being zero is iOS.** A quiz is two hours
+long and people put their phone down between questions — and a BROWSER TAB is
+a poor place to receive two hours of audio on an iPhone. Safari will not start
+audio without a user gesture, backgrounding the tab or locking the screen stops
+it, and the player has to notice and tap to get it going again. This file
+already records two features lost to exactly this kind of iOS gap
+(`ctx.filter` and `FaceDetector`), and both times the lesson was the same: a
+thing that silently fails on a third of the room is worse than not having it.
+
+**Teams and Zoom are native apps with background-audio entitlements**, built
+for precisely this, and the client already has one. So the client's own call is
+not merely the cheap option — on the phone in somebody's hand it is the BETTER
+one, which is the rare case where the free answer is also the good answer.
+
+So the order is: run one night over the client's Teams (this week, no build),
+then build the three things above, and only look at Cloudflare if a real client
+turns up who genuinely cannot host a call.
+
 ###### What online mode ACTUALLY needs, and none of it is media
 
 **1. The question on the player's own screen — and it inverts rule 8.** This is
