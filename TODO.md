@@ -390,6 +390,29 @@ second tab), because if a launch opens it automatically the action-row button
 becomes the way BACK to a tab you already have, and the wording may want to
 change with it.
 
+### 1e. The demo prize card, personalised to the venue you are pitching to
+
+**Raised on 14 August 2026, parked deliberately.** `/v?c=DEMO` currently says
+"Give them A free drink at the bar" to "Quizteam Aguilera" — generic, which is
+right for a demo and means it is not obviously about the pub you are sitting
+in. Landing on their own name would sell it harder.
+
+Cheap to do: the demo is built from a literal in `voucher.js` and never touches
+the server, so it is a matter of reading a name off the URL —
+`/v?c=DEMO&at=The%20Crown` — and putting it in the card. The QR panel on My
+account would offer a venue picker beside it, filled from the Venues tab.
+
+**Two things to get right, or it stops being a demo:**
+
+- **It must still take no server state.** The whole value is that it works with
+  no game running, on bad wifi, an unlimited number of times. A personalised
+  one that needed a lookup would be a worse version of the real thing.
+- **It must not read as a real voucher.** Somebody's bar staff seeing their own
+  pub's name on a card saying "Give them a free drink" could act on it. The
+  demo already differs (the code is literally `DEMO`), but with a venue name on
+  it that is thinner cover — it probably wants a visible "demonstration" mark
+  on the card once it is personalised.
+
 ### 1d. WHERE REDEMPTIONS ARE VISIBLE — and the snapshot that misses them
 
 **Asked for on 14 August 2026, for two reasons the host gave and both are
