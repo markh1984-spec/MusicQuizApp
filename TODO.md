@@ -200,6 +200,24 @@ three of the four are really about what a NIGHT is — which is item 1 above.
   Naming it as a category is what gives somebody permission. Revisit if it
   turns out nobody ever picks it.
 
+### 5a. Launch opens the big screen in a second tab
+
+**Asked for on 14 August 2026, mid-gig-day, and parked for that reason.** The
+host presses Launch and then goes and finds the projector tab himself, every
+night. Two clicks that are always the same two clicks.
+
+Small, and worth doing. The wrinkle is the one thing that makes it a real job
+rather than a line: **a popup blocker only allows `window.open` inside the
+click itself**, so opening it after the launch request returns is blocked in
+Safari. Opening it synchronously before the request means a projector tab for
+a launch that then 409s over a live game — which is the guard working and a
+stray tab anyway.
+
+The likely answer is to open the tab in the click and CLOSE it if the launch
+comes back refused, but that is a thing to prove in a real browser rather
+than reason about. **It is on the protected surface** (console loads, pack
+cards draw, Launch works), so it does not go in on a gig day.
+
 ### 5b. The console and the editor ON A PHONE, from a quizmaster's side
 
 **Parked deliberately on 14 August 2026.** The host runs from a LAPTOP, so
