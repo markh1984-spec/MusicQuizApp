@@ -359,6 +359,28 @@ export class Session {
     this.engine.state.venue = String(venue || '')
       .replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
 
+    /*
+     * A DELIBERATE LAUNCH ANSWERS THE RESTART NOTICE.
+     *
+     * "The app restarted — scores from before are gone, tap a name to put
+     * their points back" is true and useful for the case it was written for: a
+     * crash mid-round, phones putting themselves back, and everybody suddenly
+     * on nothing. It is FALSE the moment the host launches on purpose — the
+     * new night started at zero because that is what launching means, there is
+     * nothing to put back, and the notice sits across the top of the control
+     * view for twenty minutes telling a working game it has lost something.
+     *
+     * Seen on a gig day, on a night that was running perfectly. The banner's
+     * own comment says it should only show "while it is still actionable" —
+     * this is the half of that which was only ever a timer.
+     *
+     * Cleared rather than made conditional in `restartNotice()`, because the
+     * count is what the sentence is BUILT from: "1 phone that was already
+     * playing put itself back in" is a claim about a game that no longer
+     * exists.
+     */
+    this.strandedPhones = 0;
+
     recordLaunch(this.config.dataDir, kind, normalised.id, this.now(), this.roomId);
     this.engine.changed();
     return { kind, id: normalised.id, title: normalised.title };

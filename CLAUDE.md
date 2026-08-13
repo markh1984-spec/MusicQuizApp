@@ -803,6 +803,32 @@ before the other device launched reported nothing running and went straight
 ahead. It is gone; the server's answer is the only one. Same lesson as the tier
 lever: a guard that only lives in the browser is decoration.
 
+## The restart notice, and the one state that made it a lie
+
+`restartNotice()` in `host.js`, fed by `server` in `hostView()`. After a
+restart the control view says so plainly — *"the app restarted 5 minutes ago,
+scores from before then are gone, 1 phone put itself back in, tap a name to
+put their points back"* — because on a host with no permanent disk the only
+clue from the front of the room is that everybody is suddenly on nothing,
+which looks like a scoring bug rather than what it is.
+
+**It only appears when a phone has turned up holding an id this process never
+issued**, which is proof a game was lost rather than a warning on every
+startup that you would learn to ignore.
+
+**And a DELIBERATE LAUNCH now clears it, which it did not.** The notice ran on
+a twenty-minute timer alone, so launching a fresh night after a restart left
+it sitting across the top of the control view telling a game that was running
+perfectly that it had lost scores it never had — and offering to put back
+points belonging to a game that no longer exists. Seen on a gig day, on the
+one screen the host reads with a mic in the other hand.
+
+`joinPlayer()`'s own docstring already said it — *"a game the host launched
+deliberately is not a lost one"* — so this was a stated intention that was
+never written down in code. `launch()` sets `strandedPhones = 0`, and the
+count is cleared rather than the notice being made conditional, because the
+count is what the sentence is BUILT from. There are tests both ways round.
+
 ## Stopping a quiz early
 
 `Engine.finish()` jumps to `PHASES.FINAL` from wherever the quiz is. The Setup
