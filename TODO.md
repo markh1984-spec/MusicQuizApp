@@ -528,6 +528,68 @@ more than it did, not less.
 Defaulting ON every time is right for the owner writing picture rounds weekly;
 it would be wrong if anybody else ever generated, which today nobody does.
 
+### 1h. THREE THINGS FROM THE FIRST REAL NIGHT (14 August 2026)
+
+The quiz went well. Three faults, in the order they matter.
+
+#### a. No voucher at the end — because nothing says what the night is playing for
+
+The QR never appeared. Prizes are resolved server-side from the venue record at
+launch, so **no venue match means no prizes, no prizes means no vouchers — and
+nothing anywhere says so.** The console was stale at the time, so the venue was
+probably blank or free text that did not match "The Station Tap, Wokingham"
+exactly.
+
+**The mistake is not his, it is that the app is silent.** Two fixes, and the
+first is the important one:
+
+- **SHOW THE PRIZES ON THE PACK CARD once a venue is picked**, read-only, from
+  the venue record. "1st: free drink · 2nd: free drink · 3rd: free drink" under
+  the Venue dropdown. Then what tonight is playing for is visible BEFORE the
+  press, which is the only moment it can still be changed.
+- **Say when there are none.** A venue with no prizes set, or "Somewhere else",
+  should say "No prizes tonight" rather than showing nothing — because nothing
+  looks identical to not having looked.
+
+Matching is exact and lowercased, which is fine while the venue comes from a
+dropdown — but "Somewhere else" is free text and will never match a record, so
+that path can never carry prizes. Worth saying on the card rather than leaving
+somebody to discover it at the final scores.
+
+#### b. The picture round was too samey — `mix` exists and nothing sets it
+
+`revealMode()` already rotates zoom → pixelate → blur → tiles by question
+position when a round's `reveal` is `mix`. **The generator never sets a reveal
+at all**, so every generated picture round is ten zooms.
+
+**Make `mix` the default for a generated image round.** It is safe by
+construction: all four effects run on the same curve deliberately, so the round
+is worth the same either way, and `mix` rotates by POSITION rather than at
+random so a Redo hands the room back the effect they were watching. One line in
+the generator, and the editor's dropdown still overrides it.
+
+#### c. The same artist as a decoy over and over — the brief causes it
+
+*"I saw Adele far too many times."* The brief tells the writer the wrong options
+**"must be as plausible as the right ones and from the same era or act"**, which
+actively pushes it toward the same handful of names, and nothing anywhere says
+an artist should not appear in half the questions.
+
+Both halves are needed and the second is the one that will actually hold:
+
+- **A line in the brief**: no artist to appear as an option in more than two
+  questions in a round.
+- **A MECHANICAL CHECK on the read-through**, because a model asked not to
+  repeat itself will do it anyway and the failure is silent — exactly the
+  reasoning already written down for `question-history.js`. Count how often each
+  option string appears across a round and flag anything over a threshold:
+  "Adele is an option in 7 of 10 questions". Free, no API call, and it catches
+  it every time. Same shape as `ages-out` in `reviewWarnings()`.
+
+Note this is about DECOYS, which `question-history.js` does not look at — it
+keys on the answer, deliberately. So this is a genuinely new check rather than
+an extension of that one.
+
 ### 1c. THE PHONE'S OWN SCORE GIVES THE ANSWER AWAY BEFORE THE REVEAL
 
 **Found by the host on 14 August 2026, mid-test.** Tap the right answer and the
