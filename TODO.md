@@ -1080,7 +1080,48 @@ definition; a venue that then books the same person for two years pays once,
 which is correct, because what was sold was the introduction. Do not build this
 until the directory has enough people in it to be worth paying for.
 
-##### Priced at ONE NIGHT'S FEE — and taken as a fee, never as a free gig
+##### …and on reflection, PARKED. Free introductions are the better business
+
+The host's own second look, and it is right: *"perhaps the intro fee is just me
+being greedy and risking a lot for not much benefit."* Not greedy — every
+marketplace on earth charges one, and 15% is normal where this was proposing
+about 4% of a first year. It is simply **the wrong fee for this business**, and
+there are four reasons, of which the last is his own.
+
+- **The subscription is worth more and costs nothing to collect.** A listed
+  quizmaster on Gold is £360 a year, recurring, billed by machinery that has to
+  exist anyway. An introduction is a one-off £150 with a payments build, a
+  refund policy and a dispute process behind it. **One listed subscriber for a
+  year beats two and a half introductions**, and arrives with no new code at
+  all.
+- **The fee taxes the exact thing the business needs to happen.** A cold
+  marketplace's whole problem is getting the first few matches to occur; a
+  charge at the moment of introduction suppresses introductions, which makes
+  the directory look thin, which is what sells Gold. It is a tax on its own
+  funnel.
+- **Free introductions are the best sales line the top rung could have.**
+  *"Get listed, get booked, and I take nothing out of the booking"* is
+  genuinely different from every marketplace a quizmaster has ever dealt with,
+  all of which take ten to twenty per cent. That is worth more as a pitch than
+  the fee is as revenue.
+- **And it drags the owner back INTO a contract he deliberately stayed out
+  of.** His own design was that the arrangement is between the venue and the
+  quizmaster: *"the contract is with them and not with me."* Taking money at
+  the point of booking makes him a party to it — which is the same thread as
+  the employment-status question, pulled tighter.
+
+**So: the directory is free to use, and being IN it is what Gold buys.** One
+price, one thing to explain, nothing to enforce, and the whole section below on
+collecting a fee becomes moot.
+
+**Kept below rather than deleted**, because the reasoning is worth having if a
+venue-side charge ever makes sense — and note the one thing that gets harder by
+waiting: adding a fee to something that was free is a much worse conversation
+than having charged from the start. At a handful of quizmasters he knows
+personally that is a phone call rather than a policy change, which is what
+makes parking it cheap today and expensive at two hundred.
+
+##### The version that was proposed: ONE NIGHT'S FEE, taken as a fee not a free gig
 
 The host's idea, and the PRICE in it is the good part: *"the intro fee can be
 the cost of a gig. The QM does a freebie (I get paid), the venue gets an intro
