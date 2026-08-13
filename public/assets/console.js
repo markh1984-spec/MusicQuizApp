@@ -423,6 +423,30 @@ const TABS = [
     render: () => advertsSection(library.adverts || []),
   },
   {
+    /*
+     * VENUES — one record, not a fourth list.
+     *
+     * A venue was three things that did not know about each other: the invoice
+     * book's customers (whose own comment calls them "the venues you work
+     * for"), an advert set per venue, and a plain name typed at launch. A tab
+     * holding only prizes would have been a fourth.
+     *
+     * So this edits the INVOICE BOOK's record — the one that already holds the
+     * name, the contact and the usual fee — and adds what they put up. The
+     * Invoices tab still has its own customer sheet for the billing details;
+     * this is the same list seen from the side that matters on a gig night.
+     *
+     * It sits ABOVE Invoices because a venue is something you set up once and
+     * an invoice is something you send afterwards.
+     */
+    id: 'venues',
+    needs: FEATURES.INVOICES,
+    label: 'Venues',
+    blurb: 'The places you play, and what they put up as prizes.',
+    count: () => (library.venueRecords || []).length,
+    render: () => venuesSection(),
+  },
+  {
     id: 'invoices',
     needs: FEATURES.INVOICES,
     label: 'Invoices',
@@ -3235,7 +3259,19 @@ function wireRewards(el) {
   const venueBoxEl = el.querySelector('.venue-pick');
   if (venueBoxEl) {
     venueBoxEl.addEventListener('change', () => {
-      const known = ((library && library.venueRewards) || {})[venueBoxEl.value.trim()];
+      const name = venueBoxEl.value.trim();
+      /*
+       * THE VENUE RECORD FIRST, the archive second.
+       *
+       * What somebody typed on the Venues tab is a STATED arrangement — "this
+       * pub puts up a free drink" — and what the archive holds is merely what
+       * happened last time. When they disagree the stated one is the answer,
+       * because the other is a guess made from history.
+       */
+      const record = (library.venueRecords || []).find((v) => v.name.toLowerCase() === name.toLowerCase());
+      const known = (record && (record.rewards || []).filter(Boolean).length)
+        ? record.rewards
+        : ((library && library.venueRewards) || {})[name];
       if (!known || !known.length) return;
       if (rows.some((r) => r.querySelector('input').value.trim())) return;
       rows.forEach((row, i) => { row.querySelector('input').value = known[i] || ''; });
@@ -3263,7 +3299,15 @@ function rewardsFrom(el) {
 }
 
 function venueBox() {
-  const seen = (library && library.venues) || [];
+  /*
+   * Both lists: venues you have SET UP and venues you have PLAYED. A venue
+   * added on the Venues tab has never hosted a night yet, so reading only the
+   * archive would offer back nothing on the one occasion somebody had just
+   * gone to the trouble of adding it.
+   */
+  const played = (library && library.venues) || [];
+  const setUp = ((library && library.venueRecords) || []).map((v) => v.name);
+  const seen = [...new Set([...setUp, ...played].filter(Boolean))];
   return `
     <input class="venue-pick" type="text" list="venuesUsed" maxlength="60"
            autocomplete="off" placeholder="The Dog and Duck">
@@ -4078,6 +4122,103 @@ function renderBingoPreview(body, sub, pack, markDirty = () => {}) {
  * a time and only when a night is opened — a page that fetched every picture of
  * every gig would be several hundred requests to draw a list of dates.
  */
+/**
+ * THE VENUES YOU PLAY, and what they put up.
+ *
+ * This is the invoice book's customer list seen from the gig-night side. One
+ * record, edited in two places for two jobs: here it is the name and the
+ * prizes, on the Invoices tab it is the address and the fee. Two lists of one
+ * real-world thing would disagree within a month, which is why this is not a
+ * store of its own.
+ *
+ * Deliberately small. Everything a venue needs for a NIGHT is the name and
+ * what they are putting behind the bar — the postal address belongs on an
+ * invoice and has no business on a page opened ten minutes before a quiz.
+ */
+function venuesSection() {
+  const el = node('<div></div>');
+  const draw = () => {
+    const venues = library.venueRecords || [];
+    el.replaceChildren(node(`
+      <div class="panel">
+        <h3>Venues</h3>
+        <div class="tiny">Set the prizes here and they fill themselves in when you
+          launch a night at this venue. It is the same list as your invoice
+          customers — the billing details live on the Invoices tab.</div>
+        <div class="venue-list">
+          ${venues.length ? venues.map((v) => `
+            <div class="venue-card" data-id="${esc(v.id)}">
+              <div class="venue-top">
+                <b>${esc(v.name)}</b>
+                <button class="minor danger v-del">Remove</button>
+              </div>
+              <div class="venue-prizes">
+                ${[0, 1, 2].map((i) => `
+                  <label class="reward-row" data-place="${i + 1}">
+                    <span class="reward-place">${['1st', '2nd', '3rd'][i]}</span>
+                    <input class="v-reward" data-i="${i}" type="text" maxlength="80"
+                      value="${esc((v.rewards || [])[i] || '')}"
+                      placeholder="${i === 0 ? 'A free drink at the bar' : 'Nothing for this place'}">
+                  </label>`).join('')}
+              </div>
+              <button class="minor v-save" hidden>Save the prizes</button>
+            </div>`).join('') : '<div class="tiny">No venues yet. Add one below, or on the Invoices tab.</div>'}
+        </div>
+        <div class="venue-add">
+          <input class="venue-new" type="text" maxlength="60" placeholder="The Station Tap, Wokingham">
+          <button class="role-make venue-add-go">Add a venue</button>
+        </div>
+      </div>`));
+
+    // Save only appears once something has changed, so a page of venues is not
+    // a page of buttons waiting to be pressed for no reason.
+    for (const card of el.querySelectorAll('.venue-card')) {
+      const save = card.querySelector('.v-save');
+      for (const box of card.querySelectorAll('.v-reward')) {
+        box.addEventListener('input', () => { save.hidden = false; });
+      }
+      save.addEventListener('click', async () => {
+        save.disabled = true;
+        save.textContent = 'Saving…';
+        const id = card.dataset.id;
+        const rewards = [...card.querySelectorAll('.v-reward')].map((b) => b.value.trim());
+        try {
+          await invoiceApi(`/api/invoices/customers/${encodeURIComponent(id)}/rewards`, {
+            method: 'PUT',
+            body: JSON.stringify({ rewards }),
+          });
+          await load();
+        } catch (err) {
+          save.disabled = false;
+          save.textContent = 'Save the prizes';
+          alert(err.message || 'Could not save that.');
+        }
+      });
+      card.querySelector('.v-del').addEventListener('click', async () => {
+        if (!confirm('Remove this venue? Invoices already sent keep their own copy.')) return;
+        await invoiceApi(`/api/invoices/customers/${encodeURIComponent(card.dataset.id)}`, { method: 'DELETE' });
+        await load();
+      });
+    }
+
+    const add = el.querySelector('.venue-add-go');
+    add.addEventListener('click', async () => {
+      const name = el.querySelector('.venue-new').value.trim();
+      if (!name) return;
+      add.disabled = true;
+      try {
+        await invoiceApi('/api/invoices/customers', { method: 'POST', body: JSON.stringify({ name, rewards: [] }) });
+        await load();
+      } catch (err) {
+        add.disabled = false;
+        alert(err.message || 'Could not add that.');
+      }
+    });
+  };
+  draw();
+  return el;
+}
+
 function pastGigsSection() {
   const el = node(`
     <div class="game-section">

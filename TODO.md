@@ -254,7 +254,39 @@ The obvious next ones, if a room asks: a plain band tee with no name on it, a
 football shirt, and a hi-vis. Each is another tile in a tray somebody has to
 scan, so add them when a night needs one rather than for the sake of it.
 
-### 0b. A VENUE IS ONE OBJECT — and today it is three that do not know each other
+### 0b. A VENUE IS ONE OBJECT — the tab is built; adverts are the piece left
+
+**Built on 14 August 2026.** A **Venues** tab on the console, editing the
+INVOICE BOOK's own customer record rather than a store of its own — that book's
+comment already calls them "the venues you work for" and it holds the name, the
+contact, the address and the usual fee. A separate venue list would have had to
+be reconciled with it forever, and there were already three notions of a venue
+before this one.
+
+What it does: name and three prizes per venue, and picking that venue at launch
+fills the prizes in. `setRewards()` is its own narrow method — `saveCustomer`
+writes the whole record every time, so a call carrying only a name and prizes
+would silently blank the address and the fee on the record every invoice is
+drafted from. Same reasoning as `setPrefs()` being separate from
+`accounts.update()`.
+
+**Order of preference when filling a launch**: the venue RECORD first, the
+archive second. What somebody typed on the Venues tab is a stated arrangement;
+what the archive holds is merely what happened last time, so the stated one
+wins when they disagree.
+
+**STILL TO DO — the advert set.** Slides are still a folder per venue name,
+unaware of the record. That is the third notion of a venue and the one left:
+moving it means moving files on disk, which is a bigger job than a field. Once
+it is done, picking a venue at launch brings its prizes AND its slides.
+
+**A duplicate-id fault worth fixing while nearby.** Every pack card renders its
+own `<datalist id="venuesUsed">` and `<datalist id="rewardsUsed">`, so a
+console with seven packs has seven of each. Duplicate ids are invalid and every
+input binds to the FIRST one — which works today only because all seven hold
+identical content. Render each list ONCE per page instead.
+
+### 0c. The venue notions that are NOT unified yet
 
 **Asked for on 14 August 2026** as "a venues tab where you add the prizes, and
 the launch loads them". The idea is right. What makes it worth more than a tab

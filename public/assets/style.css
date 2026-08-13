@@ -4756,3 +4756,20 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 /* `min-width: 0` or the input refuses to go below its own placeholder and
    drags the pack card sideways — the same trap, for the fourth time. */
 .reward-row .reward-pick { flex: 1 1 auto; min-width: 0; }
+
+/* ---- the Venues tab
+   One card per place you play, and deliberately small: everything a venue
+   needs for a NIGHT is its name and what is behind the bar. The address and
+   the fee stay on the Invoices tab, because a page opened ten minutes before
+   a quiz has no business carrying somebody's postal address. */
+.venue-list { display: grid; gap: 10px; margin-top: 12px; }
+.venue-card {
+  border: 1px solid var(--panel-line); border-radius: var(--r-card);
+  background: rgba(255, 255, 255, 0.04); padding: 12px 14px;
+}
+.venue-top { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+.venue-prizes { display: grid; gap: 6px; margin-top: 10px; }
+.venue-prizes .reward-row { margin: 0; }
+.venue-card .v-save { margin-top: 10px; }
+.venue-add { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.venue-add .venue-new { flex: 1 1 220px; min-width: 0; }

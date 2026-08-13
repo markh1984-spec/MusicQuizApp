@@ -1495,6 +1495,20 @@ async function handleGet(req, res, url, route) {
       // are still unpaid. The invoices themselves are never in this payload.
       invoicing: roomForHost(req, url).invoices.summary(),
       /*
+       * THE VENUES, which are the invoice book's customers.
+       *
+       * One record rather than a second list: that book's own comment already
+       * calls them "the venues you work for", and it holds the name, the
+       * contact, the address and the usual fee. A separate venue store would
+       * have to be reconciled with it forever.
+       *
+       * Only what a launch needs — the name and what they put up. The address,
+       * the email and the fee stay on the Invoices side, because a pack card
+       * has no business carrying somebody's postal address.
+       */
+      venueRecords: roomForHost(req, url).invoices.customers
+        .map((c) => ({ id: c.id, name: c.name, rewards: Array.isArray(c.rewards) ? c.rewards : [] })),
+      /*
        * Enough to draw "Ask for a pack" BEFORE somebody types into it: whether
        * they may, where they are in the queue, and which Monday it lands on.
        * Being refused after writing three sentences is the version that
@@ -3121,6 +3135,21 @@ async function handleWrite(req, res, url, route) {
     } catch (err) {
       return sendJson(res, 400, { error: err.message }), true;
     }
+    const backup = await backUpInvoices(room);
+    return sendJson(res, 200, { backedUp: backup.ok, ...invoiceState(room.invoices) }), true;
+  }
+
+  /*
+   * What a venue puts up. A route of its own so it cannot touch anything else
+   * on the record — see `setRewards` for why that matters.
+   */
+  if (route.startsWith('/api/invoices/customers/') && route.endsWith('/rewards') && req.method === 'PUT') {
+    if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
+    const room = roomForHost(req, url);
+    const id = decodeURIComponent(route.slice('/api/invoices/customers/'.length, -'/rewards'.length));
+    const body = await readJson(req);
+    const saved = room.invoices.setRewards(id, body.rewards);
+    if (!saved) return sendJson(res, 404, { error: 'No venue with that id.' }), true;
     const backup = await backUpInvoices(room);
     return sendJson(res, 200, { backedUp: backup.ok, ...invoiceState(room.invoices) }), true;
   }

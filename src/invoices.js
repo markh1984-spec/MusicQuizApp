@@ -255,6 +255,22 @@ export class Invoices {
       email: String(customer.email || '').trim(),
       // What you normally charge them, so the next invoice fills itself in.
       usualFeePence: toPence(customer.usualFee ?? customer.usualFeePence) ?? null,
+      /*
+       * WHAT THIS VENUE PUTS UP, first place first.
+       *
+       * On the CUSTOMER record rather than in a list of its own, because this
+       * record already IS the venue — the code's own comment calls these "the
+       * venues you work for". A second list of the same real-world thing is
+       * how two lists disagree within a month, and there were already three
+       * notions of a venue in this app before this one.
+       *
+       * The venue buys the prize, so it is their standing arrangement rather
+       * than a fact about the quiz: the same drink every week at one pub and
+       * something else entirely at another.
+       */
+      rewards: (Array.isArray(customer.rewards) ? customer.rewards : [])
+        .slice(0, 3)
+        .map((r) => String(r || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80)),
     };
     if (!clean.name) throw new Error('A customer needs a name.');
     const at = this.data.customers.findIndex((c) => c.id === clean.id);
@@ -262,6 +278,26 @@ export class Invoices {
     else this.data.customers.push(clean);
     this.save();
     return clean;
+  }
+
+  /**
+   * Set what a venue puts up, and NOTHING else.
+   *
+   * Its own method rather than a field on `saveCustomer`, for the same reason
+   * `setPrefs()` is separate from `accounts.update()`: `saveCustomer` writes
+   * the whole record every time, so a call that carried only a name and some
+   * prizes would silently blank the address, the email and the usual fee — on
+   * the record every invoice is drafted from. This can only ever move the
+   * prizes.
+   */
+  setRewards(id, rewards) {
+    const customer = this.data.customers.find((c) => c.id === id);
+    if (!customer) return null;
+    customer.rewards = (Array.isArray(rewards) ? rewards : [])
+      .slice(0, 3)
+      .map((r) => String(r || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80));
+    this.save();
+    return customer;
   }
 
   deleteCustomer(id) {
