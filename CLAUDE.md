@@ -32,6 +32,48 @@ Two games so far:
 
 ---
 
+## The words: OWNER, PARENT, CHILD — and owner is not a synonym for parent
+
+Settled on 14 August 2026, because the host proposed a shared vocabulary and
+one word in it would have undone the distinction drawn the message before:
+*"parent accounts are owner accounts and child accounts are sub-accounts."*
+
+**Parent and owner must stay different words, and this is the whole reason the
+group work is safe.** "Owner" already means the APP owner — one account,
+global, sees every subscriber, the catalogue and the AI ledger. A pub group's
+head office is not that and must never be able to become it. Calling both of
+them "owner" is how a scoped power quietly turns into an unscoped one, six
+months later, in a route somebody wrote in a hurry.
+
+| Word | What it is | What it can see |
+|---|---|---|
+| **Owner** | the app owner. Exactly one, for ever | **everything** — every account, the catalogue, the ledger |
+| **Parent** | an account that manages other accounts: a pub group's HQ, a quiz company | **its own children, and nothing outside them** |
+| **Child** (sub-account) | an account managed by a parent: a venue, a company's quizmaster | **itself** |
+
+**A PARENT MANAGES; A CHILD RUNS.** That is the host's "parent is the stats and
+the data, the child actually runs the quiz", and it is right as the common
+case — HQ reads numbers, venues run nights.
+
+**But it is a tendency rather than a rule, and building it as a rule would be
+wrong.** A small quiz company's manager hosts on Fridays; a landlord runs their
+own quiz on the weeks nobody is booked. **A person who does both has two hats,
+which is a thing this app already has** — `hatSwitch()`, one login, no second
+password. So a parent MAY run nights; it simply usually does not. Do not model
+"parent" as "cannot run a quiz", or the first company that promotes a host
+breaks.
+
+Two smaller notes, both worth having before anybody builds this:
+
+- **A child has exactly one parent.** A venue in two pub groups, or a
+  quizmaster employed by two companies, is a real thing in the world and a mess
+  in the data — resolve it as one parent plus an ordinary marketplace booking
+  for the second, which the attribution model already covers.
+- **Nesting is not needed and should not be built** until somebody asks. A pub
+  group with regions is a parent of parents; it is a fair thing to want and it
+  doubles every scoping question, so it waits for a customer rather than an
+  imagination.
+
 ## The words: a quiz is a product, a round is part of one
 
 Settled deliberately, because the two were used interchangeably for months and
