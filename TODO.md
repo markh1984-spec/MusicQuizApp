@@ -229,6 +229,31 @@ is about 85px on a phone:
 the sweep at the same time — a collision found alone is a collision the others
 are hiding behind.
 
+### 5d. Two band shirts went in — the pattern for adding more
+
+**Added 14 August 2026**: `shirt-1d` and `shirt-bmth` in `stickers.js`. Worth
+recording as a recipe, because more will be asked for and each one is about
+ten minutes:
+
+1. One `ART` entry, 100x100, with the die-cut white border every other prop
+   has (`fill="#fff" stroke="#fff" stroke-width="11"`), then the colour, then
+   the dark outline.
+2. **Letters as PATHS, never `<text>`.** A prop renders from a data: URL into
+   an `<img>`, which picks up whatever the handset calls "sans-serif" — so
+   spacing and weight would differ on every phone in the room, and this ends
+   up six feet wide on a projector.
+3. Keep everything inside the shirt body, which is **x 30–70, y 46–86**. Both
+   of these were drawn once with the `D` and the `H` hanging off the side, and
+   the only thing that showed it was rendering them.
+4. **No `♥` in the label** — U+2665 takes emoji presentation on some handsets,
+   and the no-emoji test catches it. "1D shirt" says what it is.
+5. Render at **66, 120 and 240** on a light AND a dark ground before believing
+   it: a prop lands on a photograph of unknown brightness, and 66 is the tile.
+
+The obvious next ones, if a room asks: a plain band tee with no name on it, a
+football shirt, and a hi-vis. Each is another tile in a tray somebody has to
+scan, so add them when a night needs one rather than for the sake of it.
+
 ### 5a. Launch opens the big screen in a second tab
 
 **Asked for on 14 August 2026, mid-gig-day, and parked for that reason.** The

@@ -56,6 +56,57 @@ const ART = {
   // a shape drawn to the viewBox edge loses its border to the crop — the
   // pompom was sitting at cy=11 with an 11-wide white stroke and came out
   // sliced flat. Every prop wants six units of headroom now.
+  /*
+   * BAND SHIRTS.
+   *
+   * Two of them, asked for by name: one for the pop end of the room and one
+   * for the metal end, which between them is most of a pub on a Wednesday.
+   * The joke only works because they are a PAIR — either alone is a shirt,
+   * both is the room having an argument.
+   *
+   * THE LETTERS ARE PATHS, NOT `<text>`. Every other prop here is drawn for
+   * the reason the bin icon and the seasonal motifs are, and text has the same
+   * fault one level down: a prop is rendered from a data: URL into an `<img>`,
+   * which picks up whatever the handset calls "sans-serif" — so the spacing
+   * and the weight would differ on every phone in the room, and this ends up
+   * six feet wide on a projector. Stroked letters look the same everywhere and
+   * cost nothing.
+   *
+   * The shirt is the same outline in both, with the fills swapped: white for
+   * the pop one, black for the metal one, which is what the shirts actually
+   * look like.
+   *
+   * THE LABELS SAY "1D shirt", not "I <heart> 1D", and the no-emoji test is
+   * what caught it. U+2665 takes EMOJI presentation on some handsets, so the
+   * one word in the tray that is meant to be typography would arrive as a
+   * fat red glyph on a third of the room's phones — the exact fault that
+   * rule exists for. The tile already shows the design; the label only has
+   * to name it.
+   */
+  'shirt-1d': `
+    <path d="M38 22 28 26 13 40l10 12 7-6v40h40V46l7 6 10-12-15-14-10-4c-4 7-20 7-24 0z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M38 22 28 26 13 40l10 12 7-6v40h40V46l7 6 10-12-15-14-10-4c-4 7-20 7-24 0z" fill="#f2f2f4"/>
+    <path d="M30 46v40h8V46l-7-6z" fill="#dcdce2"/>
+    <path d="M38 22 28 26 13 40l10 12 7-6v40h40V46l7 6 10-12-15-14-10-4c-4 7-20 7-24 0z" fill="none" stroke="#1e1e28" stroke-width="5" stroke-linejoin="round"/>
+    <g stroke="#1e1e28" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="M41 51v12"/>
+      <path d="M41 70l4-3v12M38 79h9"/>
+      <path d="M52 67v12M52 67h3c6.5 0 6.5 12 0 12h-3"/>
+    </g>
+    <path d="M55 51c1.6-3.2 7.4-3.2 7.4 2.1 0 4.2-5.3 7.4-7.4 10.6-2.1-3.2-7.4-6.4-7.4-10.6 0-5.3 5.8-5.3 7.4-2.1z" fill="#e8123c" stroke="#8c0a24" stroke-width="2.5" stroke-linejoin="round"/>`,
+  'shirt-bmth': `
+    <path d="M38 22 28 26 13 40l10 12 7-6v40h40V46l7 6 10-12-15-14-10-4c-4 7-20 7-24 0z" fill="#fff" stroke="#fff" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M38 22 28 26 13 40l10 12 7-6v40h40V46l7 6 10-12-15-14-10-4c-4 7-20 7-24 0z" fill="#17171d"/>
+    <path d="M30 46v40h8V46l-7-6z" fill="#26262f"/>
+    <path d="M38 22 28 26 13 40l10 12 7-6v40h40V46l7 6 10-12-15-14-10-4c-4 7-20 7-24 0z" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+    <g stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="M41 51v12"/>
+      <path d="M34 69v10M34 69h3.2c2.8 0 2.8 4.4 0 4.4H34M34 73.4h3.6c2.8 0 2.8 5.6 0 5.6H34"/>
+      <path d="M42.6 79V69l3.4 5.4L49.4 69v10"/>
+      <path d="M51.2 69h6.4M54.4 69v10"/>
+      <path d="M60.4 69v10M66.4 69v10M60.4 74h6"/>
+    </g>
+    <path d="M55 51c1.6-3.2 7.4-3.2 7.4 2.1 0 4.2-5.3 7.4-7.4 10.6-2.1-3.2-7.4-6.4-7.4-10.6 0-5.3 5.8-5.3 7.4-2.1z" fill="#e8123c" stroke="#8c0a24" stroke-width="2.5" stroke-linejoin="round"/>`,
   'party-hat': `
     <path d="M50 24 82 88H18z" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
     <circle cx="50" cy="16" r="9" fill="#fff" stroke="#fff" stroke-width="10"/>
@@ -635,6 +686,8 @@ export const STICKERS = [
   { id: 'clown-nose', label: 'Clown nose' },
   { id: 'sunglasses', label: 'Shades' },
   { id: 'moustache', label: 'Moustache' },
+  { id: 'shirt-1d', label: '1D shirt' },
+  { id: 'shirt-bmth', label: 'BMTH shirt' },
   { id: 'party-hat', label: 'Party hat' },
   { id: 'crown', label: 'Crown' },
   { id: 'devil-horns', label: 'Horns' },
