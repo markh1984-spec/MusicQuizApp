@@ -197,6 +197,19 @@ function nextBigPhoto() {
    */
   const lean = (2.5 + Math.random() * 4.5) * (Math.random() < 0.5 ? -1 : 1);
   el.style.setProperty('--tilt', lean.toFixed(2) + 'deg');
+  /*
+   * Move over for the join code if one is up.
+   *
+   * The photo used to be centred on the whole stage with a full-stage scrim
+   * over everything, so for its four and a half seconds it painted across the
+   * QR in the corner and the code could not be scanned — reported from a real
+   * night, on the lobby and the round boards, which is precisely where photos
+   * are allowed AND where somebody is still trying to get in.
+   *
+   * Asked at the moment the photo goes up rather than once at boot: the corner
+   * comes and goes with the phase and a photo can arrive at any of them.
+   */
+  if (document.getElementById('joinCorner')) el.classList.add('beside-join');
   document.querySelector('.stage').appendChild(el);
 
   // Fade out on its own, then hand over to whoever is behind it in the queue.
@@ -245,6 +258,16 @@ function paintJoinCorner(s) {
     && !(s.advert && s.advert.heading !== undefined);
 
   let el = document.getElementById('joinCorner');
+  /*
+   * A photo already on screen follows the corner in and out.
+   *
+   * It lasts four and a half seconds and the phase can change underneath it —
+   * a round board arriving puts the code up, the scoreboard takes it away. Set
+   * only when the photo goes up, a picture would either sit shifted with
+   * nothing beside it or slide back under a code that had just appeared.
+   */
+  const big = document.getElementById('photoBig');
+  if (big) big.classList.toggle('beside-join', wanted);
   if (!wanted) {
     if (el) el.remove();
     return;
