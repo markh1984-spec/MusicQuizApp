@@ -3873,6 +3873,18 @@ function launchBar() {
       currentPack = null;
       lbExtra = [];
       chosen.hidden = true;
+      /*
+       * AND SET IT UP GOES WITH IT. `pick()` unhides that button and nothing
+       * put it back, so clearing the night left a control offering to
+       * configure a night that no longer existed — it opened a panel with
+       * nothing in it to set. A fresh page load does not show it at all, so
+       * the two states of "nothing chosen" disagreed depending on how you got
+       * there, which is the leftover-state fault this file keeps recording in
+       * other forms.
+       */
+      moreBtn.hidden = true;
+      lbOpen = false;
+      moreBtn.setAttribute('aria-expanded', 'false');
       paintOrder();
       paintLive();
       return;
@@ -3948,6 +3960,72 @@ function launchBar() {
    */
   const PACK_SLOTS = 3;
 
+  /**
+   * PICK IT UP AND PUT IT DOWN — the pack seen to travel from the shelf into
+   * the night.
+   *
+   * Asked for in those words: *"I want the pack to look like it physically
+   * moved from the library to the night section on drag… like you're
+   * literally picking it up and putting it down."* Two halves, and both are
+   * needed for it to read as one movement rather than a card vanishing and a
+   * tile appearing:
+   *
+   * **THE FLIGHT.** A copy of the landed tile is drawn over the page at the
+   * size and place the library card was, then moved to where the tile
+   * actually is. It is a CLONE on top rather than the real thing animating,
+   * because the real one is inside a grid that has already re-laid itself —
+   * animating it would drag its neighbours about. `position: fixed` and
+   * viewport coordinates, so a mid-flight scroll cannot leave it stranded.
+   *
+   * **THE LIFT AND THE SET DOWN.** It rises and grows a little at the
+   * half-way point rather than sliding flat, which is the difference between
+   * something moving across a page and something being carried: a hand lifts
+   * a thing off a surface before it puts it down. The shadow deepens with it
+   * and is gone by the time it lands.
+   *
+   * Nothing waits for it. The strip is already correct before the animation
+   * starts, so an interrupted flight — another drop, a re-render, a tab
+   * change — costs nothing but the picture.
+   */
+  function flyIn(from, tile) {
+    if (!from || !tile) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const to = tile.getBoundingClientRect();
+    const ghost = tile.cloneNode(true);
+    ghost.classList.add('lb-fly');
+    ghost.style.left = `${from.x}px`;
+    ghost.style.top = `${from.y}px`;
+    ghost.style.width = `${from.w}px`;
+    ghost.style.height = `${from.h}px`;
+    document.body.appendChild(ghost);
+    // Two frames: one for the browser to accept the start position, one for
+    // the change to be a transition rather than a jump.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      ghost.style.left = `${to.left}px`;
+      ghost.style.top = `${to.top}px`;
+      ghost.style.width = `${to.width}px`;
+      ghost.style.height = `${to.height}px`;
+    }));
+    ghost.addEventListener('transitionend', () => ghost.remove(), { once: true });
+    // A belt-and-braces removal: a transition that never starts never ends,
+    // and a ghost left on the page would sit over the console for ever.
+    setTimeout(() => ghost.remove(), 900);
+  }
+
+  /**
+   * THE SHELF SHOWS THE GAP. A pack that is in tonight is drawn as an outline
+   * of itself in the library, so the card has visibly LEFT rather than been
+   * copied — which is what makes the flight read as a move. It is only a
+   * look: the pack is untouched on disk and taking it out of the night puts
+   * the card straight back.
+   */
+  function paintInTonight() {
+    const ids = new Set(lbPacks().map((p) => p.id));
+    for (const card of document.querySelectorAll('.pack-card[data-pack]')) {
+      card.classList.toggle('in-tonight', ids.has(card.dataset.pack));
+    }
+  }
+
   function paintOrder() {
     orderEl.hidden = false;
     const packs = lbPacks();
@@ -4009,10 +4087,27 @@ function launchBar() {
       ? Math.max(PACK_SLOTS - packs.length, packs.length ? 1 : PACK_SLOTS)
       : (packs.length ? 0 : 1);
     for (let i = 0; i < slots; i++) {
+      /*
+       * THE SLOTS ARE NUMBERED, asked for directly — "add pack 1 pack 2 pack
+       * 3". It matters more than it looks: the filled tiles already carry a
+       * position badge, so unnumbered slots made the row read 1, 2, then three
+       * identical boxes, and where the next one would land was a guess. Now
+       * the row counts straight across whether a square is full or empty.
+       *
+       * The FIRST slot of an empty night teaches the gesture instead —
+       * nothing else on the page suggests a pack card can be picked up, and
+       * that is the one moment somebody needs telling. Every other slot says
+       * what it is.
+       */
+      const n = packs.length + i + 1;
+      const label = !composes
+        ? 'Drag a bingo game here'
+        : (!packs.length && i === 0 ? 'Drag pack 1 here' : `Add pack ${n}`);
       const empty = node(`
         <button class="lb-tile lb-drop" type="button">
+          <span class="lb-tile-n is-empty">${n}</span>
           <span class="lb-drop-plus" aria-hidden="true">+</span>
-          <span class="tiny">${packs.length ? 'Add a pack' : 'Drag a pack here'}</span>
+          <span class="tiny">${esc(label)}</span>
         </button>`);
       empty.addEventListener('click', () => {
         /*
@@ -4030,6 +4125,30 @@ function launchBar() {
 
     orderEl.replaceChildren(node('<div class="lb-tiles"></div>'));
     orderEl.firstChild.append(...tiles, ...infoTiles());
+    paintGo(packs);
+    paintInTonight();
+  }
+
+  /**
+   * THE BUTTON HAS TO NAME WHAT IT WILL ACTUALLY LAUNCH.
+   *
+   * It says "Launch <title>", built from the pack `pick()` was given — which
+   * is right for a night that is one pack and a lie the moment a second one
+   * is dropped in: two packs in the row above and one pack's name on the
+   * button. That is the console-and-projector disagreement this bar exists to
+   * end, in miniature and one step earlier, and it is the version somebody
+   * would actually press without reading.
+   *
+   * Composed, it names the EVENING and how long it is, which is the honest
+   * summary and the same thing the projector will be filed under —
+   * `composeQuiz()` titles a mixed night for the evening too, so the button,
+   * the archive and the big screen all say one thing.
+   */
+  function paintGo(packs) {
+    const go = el.querySelector('.lb-go');
+    if (!go || packs.length < 2) return;
+    const rounds = packs.reduce((n, p) => n + (p.rounds || []).length, 0);
+    go.textContent = `Launch tonight — ${packs.length} packs, ${rounds} round${rounds === 1 ? '' : 's'}`;
   }
 
   /**
@@ -4118,7 +4237,11 @@ function launchBar() {
      * second one composes. That also means a night made of one pack is a
      * completely ordinary night, sending no running order at all.
      */
-    if (!currentPack) { pick(from); return; }
+    if (!currentPack) {
+      pick(from);
+      flyIn(dropped.from, orderEl.querySelector('.lb-tile.is-pack'));
+      return;
+    }
     // The same pack twice is a mis-drop rather than an intention — a night
     // does not play the same ten questions in rounds two and four.
     if (lbPacks().some((p) => p.id === from.id)) { paintOrder(); return; }
@@ -4130,6 +4253,7 @@ function launchBar() {
     }
     lbExtra.push(from.id);
     paintOrder();
+    flyIn(dropped.from, orderEl.querySelectorAll('.lb-tile.is-pack')[lbPacks().length - 1]);
   });
 
   el.addEventListener('dragover', (ev) => {
@@ -5243,7 +5367,13 @@ function packCard(kind, pack, repaint = () => {}) {
    */
   el.addEventListener('dragstart', (ev) => {
     if (pack.broken) return;
-    packDrag = { id: pack.id, kind, title: pack.title };
+    /*
+     * WHERE IT WAS PICKED UP FROM, kept so it can be seen to LAND somewhere.
+     * A rectangle taken now rather than looked up on drop: by then the shelf
+     * may have re-rendered and the card may not be where it was.
+     */
+    const box = el.getBoundingClientRect();
+    packDrag = { id: pack.id, kind, title: pack.title, from: { x: box.left, y: box.top, w: box.width, h: box.height } };
     ev.dataTransfer.effectAllowed = 'copy';
     ev.dataTransfer.setData('text/plain', pack.title);
     el.classList.add('is-dragging');

@@ -1879,7 +1879,12 @@ body.console::after { display: none; }
 }
 .game-head a { margin-left: auto; }
 
-.pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+/* The floor came down from 240px with the squares. At 240 the widened console
+   column gives four cards a row, which as SQUARES is 284px each — a shelf of
+   nine packs three rows deep, each one the size of a photograph. 176 puts six
+   on a row at about the size of a tile in Tonight, which is the point of
+   making them the same shape. */
+.pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 12px; }
 
 /* ---- ONE PACK OPEN AT A TIME, and the rest are names.
 
@@ -1893,7 +1898,22 @@ body.console::after { display: none; }
    240px a row of dropdowns is a tall single file, and the grid would reflow
    around a card three times the height of its neighbours. Full width it reads
    as a panel about the pack you picked, which is what it is. */
-.pack-card.shut { gap: 2px; }
+/* SQUARE, LIKE THE TILES IN TONIGHT — asked for as consistency, and it is
+   the honest kind: these are the same object seen twice. A pack in the
+   library and a pack dropped into tonight's row are one thing, so a square
+   you drag from and a square you drag into say that without a word.
+   ONLY WHEN SHUT. An open card carries a card-shape picker, a prize line and
+   five buttons; forcing that into a square would either crop it or make the
+   square the height of the page. Open is a panel about the pack you picked,
+   which is what it has always been.
+   Content sits at the BOTTOM, like the launch tiles, so a one-line title and
+   a three-line one start from the same place and the row of cards reads
+   along a line rather than as a ragged set of tops. */
+.pack-card.shut {
+  gap: 2px;
+  aspect-ratio: 1 / 1;
+  justify-content: flex-end;
+}
 .pack-card.shut .pack-title { font-size: var(--fs-ctl); }
 /* The caret says it opens — the same job the chevron does on a dropdown, and
    drawn rather than a glyph for the reason binIcon() is drawn: phones render
@@ -5366,11 +5386,19 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    The packs being played and the three facts a night is filed under, all the
    same shape. Twelve round-chips is a list you read; three squares is a night
    you see, which is what somebody wants five minutes before a gig.
-   `auto-fill` with a floor rather than a fixed count, so the row is six across
-   a laptop and two across a phone without a media query per width. */
+   `auto-FIT` with a floor rather than a fixed count, so the row is six across
+   a laptop and two across a phone without a media query per width.
+   **`auto-fit` and not `auto-fill`, and the difference is the whole reason
+   this looked wrong.** `auto-fill` makes as many tracks as would FIT — about
+   nine at this width — and leaves the ones with nothing in them standing
+   empty, so six tiles sat packed to the left with a hand's width of dead
+   space to the right of them and the full-width Launch button underneath
+   ending somewhere they did not. `auto-fit` collapses the empty tracks and
+   the tiles share the whole row, so the block lines up with the button below
+   it and reads as one object. */
 .lb-order { margin-top: 10px; border-radius: var(--r-card); }
 .lb-order.drop-here { outline: 2px dashed var(--hot); outline-offset: 4px; }
-.lb-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.lb-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; }
 .lb-tile {
   position: relative; display: flex; flex-direction: column; justify-content: flex-end;
   gap: 2px; min-width: 0; padding: 10px;
@@ -5412,6 +5440,9 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .lb-tile-off:hover { color: var(--bad); background: rgba(255, 77, 94, 0.12); }
 /* Which side a dragged tile will land. Without this a row can only ever be
    reordered one way and the last position is unreachable. */
+/* An empty slot's number is quiet: it says where the next pack would land,
+   not that something is there. */
+.lb-tile-n.is-empty { background: rgba(255, 255, 255, 0.10); color: var(--ink-dim); }
 .lb-tile.drop-before { box-shadow: inset 3px 0 0 var(--hot); }
 .lb-tile.drop-after { box-shadow: inset -3px 0 0 var(--hot); }
 
@@ -5428,6 +5459,47 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   border-color: var(--hot); color: var(--ink); outline: none;
 }
 .lb-drop-plus { font-size: var(--fs-title); line-height: 1; }
+
+/* THE PACK IN FLIGHT — a clone drawn over the page, moving from where the
+   library card was to where the tile now is.
+   `fixed` and viewport coordinates, so scrolling mid-flight cannot strand it.
+   `pointer-events: none` or it would swallow the next click for half a
+   second. The lift is a scale bump at the half-way point rather than a flat
+   slide: a hand lifts a thing off a surface before it sets it down, and that
+   one detail is the difference between carried and slid. */
+.lb-fly {
+  position: fixed; z-index: 60; margin: 0; pointer-events: none;
+  transition: left 420ms cubic-bezier(0.22, 1, 0.36, 1),
+              top 420ms cubic-bezier(0.22, 1, 0.36, 1),
+              width 420ms cubic-bezier(0.22, 1, 0.36, 1),
+              height 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lbCarry 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.6);
+}
+@keyframes lbCarry {
+  0%   { transform: scale(1);    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); }
+  45%  { transform: scale(1.06); box-shadow: 0 30px 60px rgba(0, 0, 0, 0.65); }
+  100% { transform: scale(1);    box-shadow: 0 0 0 rgba(0, 0, 0, 0); }
+}
+
+/* AND THE SHELF SHOWS THE GAP. A pack that is in tonight is drawn as an
+   outline of itself, so it has visibly LEFT rather than been copied — which
+   is what makes the flight read as a move rather than a duplicate appearing.
+   Only a look: the pack is untouched on disk, and taking it out of the night
+   puts the card straight back. */
+.pack-card.in-tonight {
+  background: none;
+  border-style: dashed;
+  border-color: var(--hot);
+  opacity: 0.5;
+}
+.pack-card.in-tonight::after {
+  content: 'In tonight';
+  position: absolute; top: 8px; right: 10px;
+  font-size: var(--fs-tag); font-weight: 900; letter-spacing: 0.06em;
+  color: var(--hot);
+}
+.pack-card { position: relative; }
 
 /* WHERE, WHEN AND WHAT FOR. Quieter than a pack square — they are read rather
    than pressed, and the night itself has to stay the loud half of the row. */
