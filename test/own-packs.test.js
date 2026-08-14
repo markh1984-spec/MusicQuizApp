@@ -218,6 +218,58 @@ test('their own pack cannot take a name the catalogue already uses', () => {
   }
 });
 
+/**
+ * RULE 11 — a correction to a distributed pack reaches every account, because
+ * there are no copies to miss it.
+ *
+ * The host's standing rule for everything he generates: *"if someone tells me
+ * a question is wrong or the answer is wrong it must update the library and
+ * all copies everywhere."* The natural way to build that is master-and-slave
+ * copies plus a sync, and it would be worse — a hundred copies is a hundred
+ * chances for one to be missed, silently, surfacing in front of a paying room
+ * months later.
+ *
+ * What actually satisfies it is FEWER copies: one file, read by everybody. So
+ * this pins down that two different rooms resolve a catalogue id to the same
+ * file, and that rewriting that file changes what both of them read — which is
+ * the whole mechanism, and the thing a refactor introducing a per-account copy
+ * would break without failing anything else.
+ */
+test('A FIX TO A CATALOGUE PACK IS A FIX FOR EVERY ACCOUNT — one file, no copies', () => {
+  const { config, rooms, cleanup } = sandbox();
+  try {
+    const rob = rooms.get('acct-rob');
+    const sue = rooms.get('acct-sue');
+    const file = path.join(config.quizDir, 'eighties.json');
+    const before = aQuiz('eighties');
+    before.rounds[0].questions[0].prompt = 'The stale question';
+    fs.writeFileSync(file, JSON.stringify(before), 'utf8');
+
+    // Neither of them holds a copy — both resolve to the catalogue itself.
+    for (const room of [rob, sue]) {
+      const where = packDir('quiz', 'eighties', { config, paths: room.paths });
+      assert.equal(where.mine, false, 'nobody is handed their own duplicate');
+      assert.equal(where.dir, config.quizDir);
+    }
+
+    const wrong = readPack('quiz', 'eighties', { config, paths: rob.paths });
+    assert.equal(wrong.pack.rounds[0].questions[0].prompt, 'The stale question');
+
+    // The owner corrects it, once, in the one place it lives.
+    const after = aQuiz('eighties');
+    after.rounds[0].questions[0].prompt = 'The corrected question';
+    fs.writeFileSync(file, JSON.stringify(after), 'utf8');
+
+    for (const room of [rob, sue]) {
+      const fixed = readPack('quiz', 'eighties', { config, paths: room.paths });
+      assert.equal(fixed.pack.rounds[0].questions[0].prompt, 'The corrected question',
+        'every account reads the fix, with nothing pushed to them');
+    }
+  } finally {
+    cleanup();
+  }
+});
+
 test('but replacing one of their own is an ordinary save', () => {
   const { config, rooms, cleanup } = sandbox();
   try {

@@ -365,6 +365,60 @@ so a fast mostly-wrong answer cannot out-earn a slower right one. The
 first-correct bonus needs the **whole** set. Exactly N picks is enforced server
 side and refused rather than trimmed, or somebody covers the board and scores.
 
+### 11. A CORRECTION TO A DISTRIBUTED PACK REACHES EVERY COPY — because there are no copies
+
+Stated by the host on 14 August 2026 as a standing rule for everything he
+generates: *"if someone tells me a question is wrong or the answer is wrong it
+must update the library and all copies everywhere"*, and *"I must maintain high
+standards for the things I am distributing to them."*
+
+**It already holds, and the reason it holds is that nothing is ever copied.**
+There is exactly ONE file per catalogue pack, in `quizzes/` or `bingo/`, and
+every quizmaster's console reads that same file. `packDir()` in `own-packs.js`
+resolves own-first and falls through to the catalogue, so a subscriber is not
+handed a duplicate at any point — there is no per-account copy to go stale.
+
+**Nothing is cached, so there is nothing to refresh.** `listQuizzes()` reads
+the directory and every file on each call and `loadQuiz()` reads the file — so
+a pack that is not being played is read off disk at the moment it is launched
+and is therefore always current.
+
+**WHICH LEAVES EXACTLY ONE COPY IN THE WHOLE SYSTEM: `session.pack`, held in
+memory by a game that is running**, because the engine needs it every second
+and re-reading a file per state push would be daft. That single copy is the
+only thing in the app that can go stale against a correction, and it is
+precisely what `reloadPackEverywhere()` in `server.js` exists to replace — it
+walks every room, re-reads the pack and pushes the new state, so a fix saved at
+nine o'clock reaches a quiz already on question four.
+
+Worth holding both halves at once, because stated separately they sound like a
+contradiction — *"read when it is loaded"* and *"corrected instantly"*. They
+are the same fact seen from either side of the one in-memory copy.
+
+**DO NOT REPLACE THIS WITH MASTER-AND-SLAVE COPIES, however natural the words
+are.** A hundred copies plus a sync is a hundred chances for one to miss an
+update, and the failure is silent and lands in front of a paying room months
+later. One file cannot miss it. The host's model is right; the implementation
+that satisfies it is fewer copies rather than better syncing.
+
+**Which means an own-pack must never be able to SHADOW a catalogue id**, or
+that quizmaster silently stops receiving corrections for ever. `saveOwn()`
+refuses it — *"There is already a pack called … in the catalogue. Give yours a
+different name."* That error is load-bearing, not a nicety: it is the only
+thing standing between this rule and a fork nobody knows exists.
+
+**And the rule is one-directional, deliberately.** The owner maintains what the
+owner distributes; a quizmaster's own packs are their IP and the owner cannot
+read or correct them — enforced by there being **no room parameter on any
+route**, so an owner's id resolves against the house room and finds nothing.
+See `own-packs.js`. High standards on what is sold, hands off what they wrote.
+
+**If mix-and-match packs are ever built** — pulling rounds from two catalogue
+packs into a quizmaster's own — that creates the first thing this rule does not
+cover, because the new pack is theirs rather than a copy of a master. Decide
+then whether a borrowed question stays linked to its source; do not let it be
+settled by accident in the first implementation.
+
 ---
 
 ## Decisions already made — do not relitigate
