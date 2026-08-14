@@ -1135,11 +1135,25 @@ body.host::after { display: none; }
 .actions .minor {
   padding: 13px 6px; font-size: var(--fs-note); font-weight: 800;
   border-radius: var(--r-field); cursor: pointer;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--panel-line);
+  /* NEVER A FLAT GREY BOX, and never a wall of colour either — the host's two
+     constraints, in his own words. So the face is DEPTH rather than a swatch:
+     a top-lit surface, so a button reads as an object you press. The account's
+     own colour arrives as the bottom EDGE only, which is enough to say the
+     control belongs to this quizmaster without six of them in a row shouting.
+
+     The underline is deliberately the bottom BORDER of a boxed control, not a
+     bar under a bare label — which is how the tab bar marks the tab you are
+     on. Same colour, different object: one has a box round it and one does
+     not. Worth watching if the two ever end up side by side. */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-bottom: 2px solid var(--hot);
   color: var(--ink);
 }
-.actions .minor.danger { color: var(--bad); border-color: rgba(255, 77, 94, 0.4); }
+/* Destructive keeps RED on the edge, in every scheme. A quizmaster's colours
+   change the personality of the app; they never change what red means. */
+.actions .minor.danger { color: var(--bad); border-color: rgba(255, 77, 94, 0.4);
+  border-bottom-color: var(--bad); }
 /* …AND THE SAME SHAPE INSIDE THE CONTROL VIEW'S OWN PANELS.
    `.minor` only ever had a rule under `.actions` (the button bar) and under
    `.console`, so the Setup panel's Load, Download results and the two red
@@ -1153,9 +1167,22 @@ body.host::after { display: none; }
   text-decoration: none; display: inline-block;
   padding: 9px 13px; border-radius: var(--r-field); font-size: var(--fs-note); font-weight: 800;
   font-family: inherit; cursor: pointer;
-  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--panel-line); color: var(--ink);
+  /* NEVER A FLAT GREY BOX, and never a wall of colour either — the host's two
+     constraints, in his own words. So the face is DEPTH rather than a swatch:
+     a top-lit surface, so a button reads as an object you press. The account's
+     own colour arrives as the bottom EDGE only, which is enough to say the
+     control belongs to this quizmaster without six of them in a row shouting.
+
+     The underline is deliberately the bottom BORDER of a boxed control, not a
+     bar under a bare label — which is how the tab bar marks the tab you are
+     on. Same colour, different object: one has a box round it and one does
+     not. Worth watching if the two ever end up side by side. */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-bottom: 2px solid var(--hot);
+  color: var(--ink);
 }
-.host .panel button.minor.danger, .host .panel a.minor.danger {
+.host .panel button.minor.danger, .host .panel a.minor.danger { border-bottom-color: var(--bad);
   color: var(--bad); border-color: rgba(255, 77, 94, 0.4);
 }
 .host .panel button.minor:disabled { opacity: 0.6; cursor: default; }
@@ -1683,9 +1710,23 @@ body.console::after { display: none; }
   text-decoration: none; display: inline-block;
   padding: 9px 13px; border-radius: var(--r-field); font-size: var(--fs-note); font-weight: 800;
   font-family: inherit; cursor: pointer;
-  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--panel-line); color: var(--ink);
+  /* NEVER A FLAT GREY BOX, and never a wall of colour either — the host's two
+     constraints, in his own words. So the face is DEPTH rather than a swatch:
+     a top-lit surface, so a button reads as an object you press. The account's
+     own colour arrives as the bottom EDGE only, which is enough to say the
+     control belongs to this quizmaster without six of them in a row shouting.
+
+     The underline is deliberately the bottom BORDER of a boxed control, not a
+     bar under a bare label — which is how the tab bar marks the tab you are
+     on. Same colour, different object: one has a box round it and one does
+     not. Worth watching if the two ever end up side by side. */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-bottom: 2px solid var(--hot);
+  color: var(--ink);
 }
-.console button.minor.danger { color: var(--bad); border-color: rgba(255, 77, 94, 0.4); }
+.console button.minor.danger { color: var(--bad); border-color: rgba(255, 77, 94, 0.4);
+  border-bottom-color: var(--bad); }
 .console button.minor.danger:hover { background: rgba(255, 77, 94, 0.12); }
 .console button.minor:disabled { opacity: 0.6; cursor: default; }
 .console .panel { border-radius: var(--r-card); background: var(--panel); border: 1px solid var(--panel-line); padding: 16px; margin-bottom: 24px; }
@@ -2300,11 +2341,18 @@ button.pack-title:hover::after { opacity: 1; }
    no point pressing. `--gold` is a variable, so it follows every seasonal look
    and the quizmaster's own scheme rather than being one fixed yellow. */
 .topnav a.here {
-  color: #12000c;
-  border-color: var(--gold);
-  background: var(--gold);
+  color: var(--ink);
+  border-color: var(--hot);
+  /* The fallback first, then the real thing. `color-mix` is recent, and a
+     projector browser too old for it would drop the declaration entirely and
+     leave the chip with no fill at all — readable, but no longer obviously
+     "you are here". The fallback is the default scheme's own pink, so an old
+     browser gets a sensible tint rather than nothing; a current one gets
+     whatever the quizmaster's colours actually are. */
+  background: rgba(255, 46, 136, 0.18);
+  background: color-mix(in srgb, var(--hot) 18%, transparent);
 }
-.topnav a.here:hover { color: #12000c; border-color: var(--gold); }
+.topnav a.here:hover { color: var(--ink); border-color: var(--hot); }
 
 /* The control view's bar puts the brand above the "where am I" line, with the
    way back to the console on the end of that row — top of the screen, and a

@@ -589,6 +589,48 @@ holding them, which is the wrong direction for an app whose stated brand is
 soft and friendly. Adopting 10/14 is also the smaller change, because it is
 already what most of the app is.
 
+### NOTHING CLICKABLE IS A FLAT GREY BOX, AND NOTHING IS SQUARE
+
+Two constraints, set by the host on 14 August 2026 in his own words: *"I
+absolutely hate square corners… reasonably rounded so it doesn't appear square
+or too sharp"*, and *"I never want anything that's being clicked to just be a
+boring grey box."*
+
+The corners are the radius rule above — 10 / 14 / 999, nothing sharp anywhere.
+
+**An ordinary button gets DEPTH plus an EDGE, and that pairing is the whole
+answer.** The face is a top-lit surface rather than a flat swatch, so it reads
+as an object you press; the account's own colour is the bottom border. Three
+tinted options were rendered first and all three were turned down with the
+second constraint that makes this work: ***"don't want a wall of red either"***
+— a row of six buttons filled with the account colour is as wrong as a row of
+six grey ones, in the other direction.
+
+So the colour is on the EDGE and never on the face. One button says whose app
+this is; six of them in a row still say it once.
+
+**The underline is a boxed control's bottom border, not a bar under a bare
+label** — which is how the tab bar marks the tab you are on. Same colour,
+different object. It was raised as a collision before he chose this and chosen
+anyway; if the two ever end up side by side, this is the note.
+
+**Destructive keeps RED on its edge in every scheme**, like everywhere else: a
+quizmaster's colours change the app's personality, never what red means.
+
+**AND THE LIT MENU CHIP FOLLOWS THE SCHEME NOW, so gold is the trophy colour
+and nothing else.** It was solid `--gold`, which this file already flagged as
+the one navigational use of a colour that means first place everywhere. It is
+a tint of `--hot` with its own outline — on-scheme, obviously "you are here",
+and deliberately NOT the full gradient, which means "press this" and would be
+the loudest thing in the app sitting on the one control there is no point
+pressing. A `rgba` fallback is declared before the `color-mix`, or a projector
+too old for it loses the fill entirely.
+
+**The hat switch already followed the scheme** and was left alone. The B/S/G
+rungs keep the metals, because there the colour IS the meaning — and they are
+only ever drawn for the owner: `/api/me` sends `tiers: []` to a real
+quizmaster, so the control does not exist on anybody else's account.
+
 ### CAPITALS ARE FOR EMPHASIS, NOT FOR LABELLING
 
 Set by the host on 14 August 2026, and it is a BRAND decision rather than a
