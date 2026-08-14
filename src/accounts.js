@@ -119,6 +119,54 @@ export class Accounts {
     return this.data.accounts.find((a) => a.id === id) || null;
   }
 
+  /**
+   * THE CALENDAR FEED'S OWN KEY — made once, on demand, and revocable.
+   *
+   * A calendar app cannot sign in. Google, Apple and Outlook subscribe to a
+   * plain URL and send no cookie, so the credential has to BE the URL — which
+   * is exactly the thing this codebase otherwise refuses to do (`linkTo()`
+   * keeps a remembered host key out of the address bar precisely because a
+   * link ends up on screen and in history).
+   *
+   * So it is a key of its own rather than a reuse of one that matters:
+   *
+   *  - **It reads the diary and NOTHING else.** Somebody who finds the URL
+   *    learns which pubs you are at on which nights. That is the whole blast
+   *    radius — no packs, no invoices, no account, no way to launch anything.
+   *  - **It is not the host key and not a session.** Putting either of those
+   *    in a URL a phone stores forever would be handing out the console.
+   *  - **Rolling it is one call**, which is the answer to a URL that has been
+   *    somewhere it should not: `rollCalendarKey` makes a new one and every
+   *    old subscription stops working.
+   *
+   * Made lazily so an account that never subscribes never carries one.
+   */
+  calendarKey(id, { make = true } = {}) {
+    const account = this.find(id);
+    if (!account) return '';
+    if (!account.calendarKey && make) {
+      account.calendarKey = newToken();
+      this.save();
+    }
+    return account.calendarKey || '';
+  }
+
+  rollCalendarKey(id) {
+    const account = this.find(id);
+    if (!account) return '';
+    account.calendarKey = newToken();
+    this.save();
+    return account.calendarKey;
+  }
+
+  /** Whose feed is this? Linear, because there are tens of accounts, not tens
+   *  of thousands — and a wrong answer here is somebody else's diary. */
+  byCalendarKey(key) {
+    const wanted = String(key || '');
+    if (!wanted) return null;
+    return this.data.accounts.find((a) => a.calendarKey && a.calendarKey === wanted) || null;
+  }
+
   byEmail(email) {
     const wanted = normaliseEmail(email);
     return this.data.accounts.find((a) => a.email === wanted) || null;

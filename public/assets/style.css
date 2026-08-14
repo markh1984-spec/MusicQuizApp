@@ -5970,3 +5970,11 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
   .cal-dot { font-size: 0; padding: 3px; margin-top: 4px; border-radius: var(--r-pill); }
   .cal-dot.more { display: none; }
 }
+
+/* The calendar subscription address. Under the month rather than above it: the
+   month is what you came for and this is set up once and then never again. */
+.cal-feed { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--panel-line); }
+.cal-feed-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+/* `min-width: 0` or the URL refuses to go below its own content and takes the
+   page sideways — the same trap, for the eighth time. */
+.cal-url { flex: 1 1 260px; min-width: 0; font-size: var(--fs-note); }

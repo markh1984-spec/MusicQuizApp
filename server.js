@@ -52,6 +52,8 @@ import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
 // The one proof a phone has. Same rule as answering: an id is not a
 // credential, the token is — see rule 3.
 import { ownsPlayer, PHASES } from './src/engine.js';
+import { upcoming } from './public/assets/diary.js';
+import { calendarIcs } from './src/ics.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, switchedOn, PACK_PENCE } from './public/assets/plans.js';
 import { sendEmail, emailConfigured, emailProvider, keepKeyAlive, resetEmail } from './src/email.js';
 import { Suggestions, KINDS, PACK_REQUEST_KIND } from './src/suggestions.js';
@@ -2012,6 +2014,61 @@ async function handleGet(req, res, url, route) {
       return sendJson(res, 404, { error: 'No quiz with that name.' }), true;
     }
   }
+  /*
+   * THE DIARY, FOR A REAL CALENDAR APP.
+   *
+   * Open by design and authenticated by the key IN THE URL, because that is
+   * the only credential a calendar client can carry — Google, Apple and
+   * Outlook subscribe to a plain address and send no cookie. See
+   * `calendarKey` in accounts.js for why that is a key of its own: it reads
+   * the diary and nothing else, and rolling it kills every old subscription.
+   *
+   * An unknown key is a 404 rather than a 401. A calendar client that gets a
+   * 401 will pop an authentication box at somebody forever; a 404 makes it
+   * stop, which is what a revoked feed should do.
+   */
+  /*
+   * The subscription URL, and a way to kill it. Behind the ordinary account
+   * gate, unlike the feed itself — knowing your own address is a signed-in
+   * question, reading the feed cannot be.
+   */
+  if (route === '/api/calendar/link' && (req.method === 'GET' || req.method === 'POST')) {
+    if (!allowed(req, res, url, FEATURES.CALENDAR)) return true;
+    const who = whoIs(req, url);
+    if (!who || !who.id) return sendJson(res, 403, { error: 'Sign in to get your calendar link.' }), true;
+    const key = req.method === 'POST'
+      ? accounts.rollCalendarKey(who.id)
+      : accounts.calendarKey(who.id);
+    await backUpAccounts();
+    return sendJson(res, 200, { path: `/api/calendar.ics?key=${encodeURIComponent(key)}` }), true;
+  }
+
+  if (route === '/api/calendar.ics') {
+    const account = accounts.byCalendarKey(url.searchParams.get('key') || '');
+    if (!account) return send(res, 404, 'No calendar here.', { 'Content-Type': 'text/plain' }), true;
+    const room = rooms.get(roomIdFor(account));
+    await ensureInvoicesRestored(room);
+    const nights = upcoming({
+      venues: room.invoices.customers,
+      bookings: room.invoices.bookings,
+      // A calendar wants further ahead than a console panel does: the console
+      // is answering "what is next", this is answering "what is my year".
+      weeks: 26,
+    });
+    const body = calendarIcs(nights, {
+      name: `${brandForRoom(room)} — quiz nights`,
+      host: 'quizporium',
+    });
+    // Subscriptions are re-read often; an hour is what the feed itself asks
+    // for in X-PUBLISHED-TTL and there is no reason to work harder. `send`
+    // defaults to no-store, so the header is set explicitly here.
+    return send(res, 200, body, {
+      'Content-Type': 'text/calendar; charset=utf-8',
+      'Cache-Control': 'private, max-age=3600',
+      'Content-Disposition': 'inline; filename="quiz-nights.ics"',
+    }), true;
+  }
+
   if (route === '/api/results.json') {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     return sendJson(res, 200, roomForHost(req, url).session.results()), true;

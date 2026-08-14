@@ -6432,6 +6432,19 @@ function diarySection() {
       <div class="cal-days"></div>
       <div class="cal-grid"></div>
       <div class="cal-menu" hidden></div>
+      <!-- YOUR NIGHTS IN YOUR OWN CALENDAR. A residency that exists only in
+           this app is a residency you double-book yourself over. -->
+      <div class="cal-feed">
+        <div class="tiny"><b>Put these in your own calendar.</b>
+          Subscribe once and every night keeps itself up to date \u2014 in Google,
+          Apple or Outlook, on your phone and your laptop.</div>
+        <div class="cal-feed-row">
+          <input class="cal-url" type="text" readonly aria-label="Your calendar address">
+          <button class="minor cal-copy" type="button">Copy</button>
+          <button class="minor danger cal-roll" type="button" title="Stop every calendar that has this address">New address</button>
+        </div>
+        <div class="tiny cal-feed-said"></div>
+      </div>
       <div class="diary-list"></div>
       <div class="diary-add">
         <input class="d-date" type="date" aria-label="Date">
@@ -6563,6 +6576,50 @@ function diarySection() {
       }),
     );
   }
+
+  /*
+   * THE SUBSCRIPTION ADDRESS.
+   *
+   * Fetched rather than built here, because the key lives on the account and
+   * this page must not invent one. Shown in full and copyable: pasting a URL
+   * into Google Calendar is the actual job, and a button that says "subscribe"
+   * cannot do it for you — every calendar app wants the address typed into its
+   * own box.
+   *
+   * NEW ADDRESS is destructive and says so: it stops every calendar already
+   * subscribed, which is exactly what you want if the old one went somewhere
+   * it should not, and exactly what you do not want by accident.
+   */
+  const urlBox = el.querySelector('.cal-url');
+  const feedSaid = el.querySelector('.cal-feed-said');
+  const showFeed = async (roll) => {
+    try {
+      const data = roll
+        ? await postJson('/api/calendar/link', {}, { 'X-Host-Key': hostKey })
+        : await (await fetch(keyed('/api/calendar/link'))).json();
+      if (data.error) throw new Error(data.error);
+      urlBox.value = location.origin + data.path;
+      if (roll) feedSaid.textContent = 'New address. Any calendar using the old one has stopped.';
+    } catch (err) {
+      feedSaid.textContent = err.message || 'Could not fetch your calendar address.';
+    }
+  };
+  el.querySelector('.cal-copy').addEventListener('click', async () => {
+    urlBox.select();
+    try {
+      await navigator.clipboard.writeText(urlBox.value);
+      feedSaid.textContent = 'Copied. Paste it into your calendar as a subscription.';
+    } catch {
+      // Clipboard is refused without a gesture on some phones; the text is
+      // already selected, so there is still a way through.
+      feedSaid.textContent = 'Selected \u2014 copy it and paste it into your calendar.';
+    }
+  });
+  el.querySelector('.cal-roll').addEventListener('click', () => {
+    if (!confirm('Make a new address?\n\nEvery calendar already subscribed to the old one stops updating.')) return;
+    showFeed(true);
+  });
+  showFeed(false);
 
   el.querySelector('.cal-prev').addEventListener('click', () => {
     shown = new Date(shown.getFullYear(), shown.getMonth() - 1, 1); picked = ''; drawMonth();
