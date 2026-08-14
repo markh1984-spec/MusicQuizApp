@@ -38,6 +38,40 @@ import { safeLink } from './comeback.js';
 export const STATUSES = ['draft', 'sent', 'paid', 'cancelled'];
 
 /**
+ * How big a venue logo may be, once the browser has shrunk it.
+ *
+ * 128px square is what a phone actually shows above a voucher, and a PNG that
+ * size is a few kilobytes as base64. The cap here is the backstop rather than
+ * the mechanism — the console resizes on a canvas before sending, using the
+ * same approach `filters.js` already uses for photos — but a cap on the SERVER
+ * is what stops somebody pasting a four-megabyte JPEG into a record that then
+ * rides in every console payload for ever.
+ */
+export const LOGO_PX = 128;
+export const MAX_LOGO_BYTES = 64 * 1024;
+
+/**
+ * A venue logo, or nothing. Never anything else.
+ *
+ * Data URLs only, and only the three image types every browser draws. The
+ * point is not that a remote URL would be dangerous to us — it is that a logo
+ * on somebody else's server is a logo that is a 404 on the one night it
+ * matters, in a pub, on a phone, with the winner standing at the bar. Stored
+ * with the record, it cannot go missing.
+ *
+ * Too big is DROPPED rather than rejected, because the voucher has never
+ * needed a picture: losing the logo costs decoration, and failing the save
+ * would cost somebody the prizes they were editing at the time.
+ */
+export function cleanLogo(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(raw)) return '';
+  if (raw.length > MAX_LOGO_BYTES) return '';
+  return raw;
+}
+
+/**
  * The days a residency can fall on, lower case, Monday first.
  *
  * Exported because the browser draws the picker from it and the server
@@ -402,6 +436,28 @@ export class Invoices {
        * this ends up as a QR code and nobody can see where one of those goes.
        */
       link: safeLink(customer.link),
+      /*
+       * THE VENUE'S OWN LOGO, for the winner's voucher.
+       *
+       * A winner's phone shows a CODE, which is a string a stranger behind the
+       * bar has to decide whether to trust. With the pub's own mark above it,
+       * it reads as a voucher the pub issued — which is the half that gets it
+       * honoured without a conversation, and the half a venue actually cares
+       * about.
+       *
+       * **THE WORDS STAY AUTHORITATIVE.** A prize is text and always has been;
+       * this is decoration on top of it. No logo, a logo that fails to load,
+       * or a logo nobody set, and the voucher reads exactly as it does today.
+       * Never an image with the prize written INSIDE it — that is a prize
+       * nobody can read when the picture does not arrive.
+       *
+       * A data URL, shrunk on the client before it is sent (`LOGO_PX`), so it
+       * needs no upload endpoint, no file store and no new backup path — it
+       * travels with the record that already backs itself up. That is only
+       * affordable BECAUSE it is small: a full-size logo as base64 would ride
+       * in every console payload.
+       */
+      logo: cleanLogo(customer.logo),
     };
     if (!clean.name) throw new Error('A customer needs a name.');
     const at = this.data.customers.findIndex((c) => c.id === clean.id);
@@ -423,7 +479,7 @@ export class Invoices {
    * fields the gig-night side of the record owns, and it moves each one only
    * if it was actually sent.
    */
-  setVenueDetails(id, { rewards, usualNight, link } = {}) {
+  setVenueDetails(id, { rewards, usualNight, link, logo } = {}) {
     const customer = this.data.customers.find((c) => c.id === id);
     if (!customer) return null;
     if (rewards !== undefined) {
@@ -440,6 +496,9 @@ export class Invoices {
     // Where the last slide sends the room. Same "only if it was sent" rule as
     // the two above, so saving a prize cannot quietly drop a venue's link.
     if (link !== undefined) customer.link = safeLink(link);
+    // Same "only if it was sent" rule, so saving a prize cannot drop a logo.
+    // An empty string is a deliberate REMOVAL and has to be allowed through.
+    if (logo !== undefined) customer.logo = cleanLogo(logo);
     this.save();
     return customer;
   }

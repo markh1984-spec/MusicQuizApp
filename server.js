@@ -1600,6 +1600,15 @@ async function handleGet(req, res, url, route) {
           // the projector. Here so the Venues tab can edit it; the launch
           // resolves it server-side and the browser never has to.
           link: c.link || '',
+          /*
+           * Their logo, so the Venues tab can show what is set and offer to
+           * change it. It is capped at 64KB by `cleanLogo` on the way in,
+           * which is what makes carrying it in this payload affordable — and
+           * why it goes no further than the console: the winner's phone gets
+           * it inside the voucher and the PROJECTOR never gets it at all, or
+           * it would ride in every state push at a lobby.
+           */
+          logo: c.logo || '',
         })),
       /*
        * The diary's exceptions: one-offs and nights off.
@@ -4440,11 +4449,20 @@ async function handleWrite(req, res, url, route) {
          * still wins, so a curl call and every test keep working.
          */
         const named = String(body.venue || '').trim().toLowerCase();
-        const onFile = named
-          ? (room.invoices.customers.find((c) => String(c.name || '').trim().toLowerCase() === named) || {}).rewards
-          : null;
+        const record = named
+          ? (room.invoices.customers.find((c) => String(c.name || '').trim().toLowerCase() === named) || {})
+          : {};
+        const onFile = record.rewards || null;
         const rewards = Array.isArray(body.rewards) ? body.rewards.map(String)
           : (body.reward ? [String(body.reward)] : (Array.isArray(onFile) ? onFile : []));
+        /*
+         * The venue's logo, read off the same record as the prizes and for the
+         * identical reason: it is the venue's standing arrangement rather than
+         * a decision about tonight, so it is never sent by the console. It
+         * ends up on the winner's phone above the code, so the voucher reads
+         * as something the pub issued rather than a string.
+         */
+        const venueLogo = String(record.logo || '');
         /*
          * WHEN THE NEXT ONE IS — WORKED OUT HERE, not sent, exactly like the
          * prizes above and for the same reason.
@@ -4489,7 +4507,7 @@ async function handleWrite(req, res, url, route) {
           ? pickIdeas((fullLibrary(config, room.id, listOwn(room.paths)).quizzes || [])
             .map((q) => q.title))
           : [];
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online, teamPlay, venue, rewards, comeBack, askForRounds, roundIdeas: askIdeas });
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online, teamPlay, venue, rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();

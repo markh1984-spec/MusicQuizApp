@@ -1472,13 +1472,33 @@ function voucherCard(s) {
   if (v.redeemedAt) {
     return `
       <div class="win-card win-spent">
+        ${v.logo ? `<img class="win-logo" alt="${esc(v.venue || '')}" src="${esc(v.logo)}" onerror="this.remove()">` : ''}
         <div class="sub">Collected</div>
         <div class="win-what">${esc(v.reward)}</div>
         <p class="tiny">Already redeemed. If that is wrong, ask the quizmaster.</p>
       </div>`;
   }
+  /*
+   * THE VENUE'S OWN LOGO, above everything.
+   *
+   * A voucher is a credential a stranger behind the bar has to decide whether
+   * to trust, and until now it was a code and some words in the quiz app's
+   * colours. The pub's own mark at the top is what makes it read as something
+   * the pub issued.
+   *
+   * DECORATION, and it has to stay decoration: the prize is `v.reward` in
+   * words directly underneath, so a logo that never loads, was never set, or
+   * is on a phone with no signal costs nothing at the bar. `onerror` removes
+   * it rather than leaving a broken-image icon on the one screen somebody is
+   * holding up to be served.
+   */
+  const logo = v.logo
+    ? `<img class="win-logo" alt="${esc(v.venue || '')}" src="${esc(v.logo)}"
+         onerror="this.remove()">`
+    : '';
   return `
     <div class="win-card place-${place}">
+      ${logo}
       <div class="sub">${esc(said)}</div>
       <div class="win-what">${esc(v.reward)}</div>
       <img class="win-qr" alt="Show this at the bar"

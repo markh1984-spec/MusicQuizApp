@@ -170,6 +170,25 @@ export class Engine {
        */
       rewards: [],
       /*
+       * THE VENUE'S LOGO, for the winner's voucher and nothing else.
+       *
+       * Resolved at LAUNCH into the state like the prizes it sits beside, and
+       * for the reason the look and the card shape taught: the winner is
+       * looking at this at half eleven, which is exactly when a free host
+       * restarts.
+       *
+       * ONE COPY, on the state rather than on each voucher — three prizes plus
+       * a draw would otherwise carry four copies of the same base64 around the
+       * night's record and into the archive for ever.
+       *
+       * **It is not in `screenView`, deliberately.** A logo on the projector
+       * would ride in every state push, and at a lobby that is every time
+       * somebody joins — sixty joins times the image, over pub wifi, on the
+       * one connection that must not stutter. If the big screen ever wants it,
+       * it wants a URL it can cache, not a payload.
+       */
+      venueLogo: '',
+      /*
        * THE VOUCHERS THEMSELVES, code -> record. Empty on an ordinary night.
        *
        * Issued once, when the final scores go up, and only if a reward was set.
@@ -2090,6 +2109,16 @@ export class Engine {
           ...(mine.draw ? { draw: true, place: null } : { place: mine.place || 1 }),
           reward: mine.reward,
           venue: mine.venue,
+          /*
+           * The pub's own mark, so this reads as a voucher the venue issued
+           * rather than a string somebody typed. Sent to the ONE phone that
+           * holds the voucher, at the final and nowhere else.
+           *
+           * The words are still the prize: `reward` above is what it is worth
+           * and this is decoration on it. A logo that never arrives costs
+           * nothing at the bar.
+           */
+          ...(s.venueLogo ? { logo: s.venueLogo } : {}),
           issuedAt: mine.issuedAt,
           redeemedAt: mine.redeemedAt,
         };

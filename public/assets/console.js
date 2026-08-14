@@ -5765,6 +5765,61 @@ function asksPanel() {
 let openVenue = '';
 let venueQuery = '';
 
+/**
+ * SHRINK A LOGO IN THE BROWSER, before it is ever sent.
+ *
+ * A venue's logo arrives as whatever they had — a 3MB PNG off their website is
+ * the normal case. It is stored as a data URL on the venue record, which is
+ * what makes it need no upload endpoint, no file store and no new backup path;
+ * and that is only affordable while it is SMALL, because the record travels in
+ * every console payload.
+ *
+ * So the browser does the work: draw it onto a canvas no bigger than 128px on
+ * its longest side and read it back. The same approach `filters.js` already
+ * uses for photos, and for the same reason — no dependency, and it works on
+ * the phones this app actually meets.
+ *
+ * PNG rather than JPEG: a logo is flat colour with hard edges, which JPEG
+ * turns to soup at small sizes, and transparency has to survive or a
+ * transparent PNG comes back with a black square behind it.
+ *
+ * It refuses rather than silently sending something too big — the server caps
+ * it too and would drop it, and a logo that vanishes without a word is worse
+ * than one that says why.
+ */
+const LOGO_PX = 128;
+const MAX_LOGO_BYTES = 64 * 1024;
+
+function shrinkLogo(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read that file.'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('That does not look like an image.'));
+      img.onload = () => {
+        const scale = Math.min(1, LOGO_PX / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        // No fill: a transparent logo stays transparent, and the voucher card
+        // gives it a white plate of its own so it is legible either way.
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const out = canvas.toDataURL('image/png');
+        if (out.length > MAX_LOGO_BYTES) {
+          reject(new Error('That logo is too detailed to store. A simpler or smaller one will work.'));
+          return;
+        }
+        resolve(out);
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function venuesSection() {
   const el = node('<div></div>');
   const draw = () => {
@@ -5829,6 +5884,25 @@ function venuesSection() {
                 <input class="v-link" type="url" inputmode="url" maxlength="300"
                   value="${esc(v.link || '')}" placeholder="thecrown.co.uk/whats-on">
               </label>
+              <!-- THE VENUE'S OWN LOGO, for the winner's voucher. Beside the
+                   prizes because it is the same kind of thing: the venue's
+                   standing arrangement rather than a decision about tonight.
+                   Its blurb says WHERE it appears, because a picture upload
+                   with no stated destination is a control nobody trusts. -->
+              <div class="venue-logo-row">
+                <span class="venue-logo-what">
+                  <b>Their logo</b><br>
+                  <span class="tiny">Goes on the winner&rsquo;s phone, above the code,
+                    so the voucher looks like the pub&rsquo;s own.</span>
+                </span>
+                <span class="venue-logo-side">
+                  ${v.logo ? `<img class="venue-logo-pic" alt="" src="${esc(v.logo)}">` : ''}
+                  <label class="minor venue-logo-pick">${v.logo ? 'Change' : 'Add one'}
+                    <input class="v-logo" type="file" accept="image/*" hidden>
+                  </label>
+                  ${v.logo ? '<button class="minor danger v-logo-off">Remove</button>' : ''}
+                </span>
+              </div>
               <div class="venue-prizes">
                 ${[0, 1, 2].map((i) => `
                   <label class="reward-row" data-place="${i + 1}">
@@ -5909,6 +5983,39 @@ function venuesSection() {
         box.addEventListener('input', () => { save.hidden = false; });
         box.addEventListener('change', () => { save.hidden = false; });
       }
+      /*
+       * The logo saves ON ITS OWN rather than waiting for "Save it".
+       *
+       * Picking a file is a finished act — there is nothing to type afterwards
+       * and nothing to get right — so making somebody press a second button
+       * for it is a step that only exists to be forgotten. The prizes and the
+       * usual night are different: those are typed, and a save button is what
+       * says the typing has landed.
+       */
+      const logoPick = card.querySelector('.v-logo');
+      const saveLogo = async (logo) => {
+        try {
+          await invoiceApi(`/api/invoices/customers/${encodeURIComponent(card.dataset.id)}/rewards`, {
+            method: 'PUT',
+            // ONLY the logo. `setVenueDetails` writes what it is sent, so this
+            // cannot touch prizes somebody is halfway through editing.
+            body: JSON.stringify({ logo }),
+          });
+          await load();
+        } catch (err) {
+          alert(err.message || 'Could not save that.');
+        }
+      };
+      logoPick?.addEventListener('change', async () => {
+        const file = logoPick.files && logoPick.files[0];
+        if (!file) return;
+        try {
+          await saveLogo(await shrinkLogo(file));
+        } catch (err) {
+          alert(err.message || 'Could not use that image.');
+        }
+      });
+      card.querySelector('.v-logo-off')?.addEventListener('click', () => saveLogo(''));
       save.addEventListener('click', async () => {
         save.disabled = true;
         save.textContent = 'Saving…';

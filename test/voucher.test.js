@@ -308,3 +308,51 @@ test('a voucher is issued at the END OF THE QUIZ, not at a round board', () => {
   assert.equal(Object.keys(engine.state.vouchers).length, 1, 'nothing was issued at the end');
   assert.ok(engine.playerView(rob.id).voucher, 'the winner was told nothing at the final');
 });
+/*
+ * THE VENUE'S LOGO ON THE VOUCHER — and the three things that keep it
+ * decoration rather than a dependency.
+ *
+ * A voucher is a credential a stranger behind the bar has to decide whether to
+ * honour, and the pub's own mark is what makes it read as the pub's rather
+ * than the quiz app's. But the prize is WORDS, and it must stay words.
+ */
+test('the winner\'s phone carries the venue logo, and the projector never does', () => {
+  const png = 'data:image/png;base64,iVBORw0KGgo=';
+  const { engine } = withGame({ reward: 'A £30 bar tab' });
+  engine.state.venue = 'The Dog & Duck';
+  engine.state.venueLogo = png;
+  const rob = engine.join({ name: 'Rob' });
+  engine.finish();
+
+  const view = engine.playerView(rob.id);
+  assert.equal(view.voucher.logo, png);
+  assert.equal(view.voucher.reward, 'A £30 bar tab', 'the words are still the prize');
+
+  /*
+   * NOT ON THE BIG SCREEN, and this is about bytes rather than secrecy. A logo
+   * in the projector's payload rides in every state push — which at a lobby is
+   * every time somebody joins, so sixty joins is sixty copies over pub wifi on
+   * the one connection that must not stutter. If the big screen ever wants it,
+   * it wants a URL it can cache.
+   */
+  const screen = JSON.stringify(engine.screenView());
+  assert.ok(!screen.includes('base64'), 'the logo reached the projector payload');
+});
+
+test('no logo means no field, so an ordinary venue gains nothing', () => {
+  const { engine } = withGame({ reward: 'A £30 bar tab' });
+  const rob = engine.join({ name: 'Rob' });
+  engine.finish();
+  assert.equal('logo' in engine.playerView(rob.id).voucher, false,
+    'a venue with no logo grew an empty field on every voucher');
+});
+
+test('a game restored from before logos existed simply has none', () => {
+  const { engine } = withGame({ reward: 'A £30 bar tab' });
+  const old = JSON.parse(JSON.stringify(engine.state));
+  delete old.venueLogo;
+  const back = new Engine({ quiz: QUIZ, state: old, now: () => Date.parse('2026-08-14T21:00:00.000Z') });
+  const rob = back.join({ name: 'Rob' });
+  back.finish();
+  assert.equal(back.playerView(rob.id).voucher.logo, undefined);
+});

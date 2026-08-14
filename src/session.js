@@ -358,7 +358,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '', rewards = [], comeBack = null, askForRounds = false, roundIdeas = [] } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '', rewards = [], venueLogo = '', comeBack = null, askForRounds = false, roundIdeas = [] } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     const pack = LAUNCHERS[kind].load(this.config, packId, this.paths);
     const normalised = kind === 'bingo' ? normaliseBingoPack(pack, packId) : pack;
@@ -433,6 +433,14 @@ export class Session {
       .slice(0, 3)
       .map((r) => String(r || '')
         .replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80));
+
+    /*
+     * The venue's own logo, for the winner's voucher. Beside the prizes
+     * because it is the same kind of thing — the venue's standing arrangement,
+     * read off their record at launch and copied into the night so a restart
+     * at half eleven brings it back.
+     */
+    this.engine.state.venueLogo = String(venueLogo || '');
 
     /*
      * WHEN THE NEXT ONE IS — the last slide of the night.

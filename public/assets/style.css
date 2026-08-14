@@ -1675,7 +1675,11 @@ body.console::after { display: none; }
 .console .tiny { font-size: var(--fs-note); color: var(--ink-dim); }
 /* The console's small buttons. Links and <button>s both, because the running
    panel mixes them — two links out to the other screens and one real action. */
-.console a.minor, .console button.minor {
+/* `label.minor` is here because a file picker HAS to be a label wrapping a
+   hidden `<input type=file>` — there is no way to style a file input itself,
+   and nothing else opens the picker. Without it in this list the venue's
+   "Change" came out as plain text sitting between two real buttons. */
+.console a.minor, .console button.minor, .console label.minor {
   text-decoration: none; display: inline-block;
   padding: 9px 13px; border-radius: 10px; font-size: var(--fs-note); font-weight: 800;
   font-family: inherit; cursor: pointer;
@@ -5346,6 +5350,23 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
   font-size: var(--fs-tag); font-weight: 900; letter-spacing: 0.14em;
   text-transform: uppercase; color: var(--gold);
 }
+/* THE VENUE'S OWN MARK, at the top of the voucher. A stranger behind the bar
+   has to decide whether to honour this, and the pub's own logo is what makes
+   it read as something the pub issued rather than something the quiz app made
+   up.
+
+   Capped in HEIGHT and `object-fit: contain`, because a venue's logo arrives
+   at whatever shape the venue has — a wide wordmark and a square badge both
+   have to sit in this card without pushing the prize off the screen. A white
+   background is common in logos and would be a bright slab on a dark card, so
+   it gets a rounded white plate of its own: deliberate rather than accidental,
+   and it makes a transparent PNG legible too. */
+.win-logo {
+  display: block; margin: 0 auto 12px;
+  max-height: 56px; max-width: 70%;
+  object-fit: contain;
+  background: #fff; border-radius: 8px; padding: 6px;
+}
 .win-what { font-size: var(--fs-sub); font-weight: 900; margin: 6px 0 14px; }
 .win-qr {
   width: 100%; max-width: 220px; aspect-ratio: 1; display: block; margin: 0 auto;
@@ -5736,3 +5757,24 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
   border-top: 1px solid var(--panel-line);
   color: var(--ink-dim); opacity: 0.75;
 }
+
+/* The venue's logo control, on its card. Laid out like a feature row rather
+   than like a field, because it is a thing you HAVE rather than a thing you
+   type — the same shape as the On/Off rows on My Account. */
+.venue-logo-row {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  justify-content: space-between;
+  margin: 12px 0; padding: 12px;
+  border: 1px solid var(--panel-line); border-radius: var(--r-card);
+}
+.venue-logo-what { min-width: 0; flex: 1 1 220px; }
+.venue-logo-side { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+/* The white plate is the same treatment the voucher gives it, so what you see
+   here is what the winner sees rather than a preview that flatters it. */
+.venue-logo-pic {
+  height: 40px; max-width: 120px; object-fit: contain;
+  background: #fff; border-radius: 6px; padding: 4px;
+}
+/* A `<label>` wrapping a hidden file input, so it needs the button's own
+   cursor — nothing else makes it look pressable. */
+.venue-logo-pick { cursor: pointer; }

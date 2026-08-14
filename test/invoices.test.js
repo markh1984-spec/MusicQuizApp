@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { Invoices, WEEKDAYS, toPence, formatPence, money, totals, dueDate, describeEvent, shortDate, longDate } from '../src/invoices.js';
+import { Invoices, WEEKDAYS, toPence, formatPence, money, totals, dueDate, describeEvent, shortDate, longDate, cleanLogo, MAX_LOGO_BYTES } from '../src/invoices.js';
 import { invoicePdf, invoiceFilename } from '../src/invoice-pdf.js';
 import { textWidth, fit } from '../src/pdf.js';
 
@@ -845,5 +845,59 @@ test('a draft, a paid one and a cancelled one are never late', () => {
       assert.equal(book.daysLate(book.find(inv.number), { now: at }), 0,
         `a ${status} invoice was reported as late`);
     }
+  });
+});
+
+/*
+ * THE VENUE'S LOGO — decoration on a credential, and the rules that keep it
+ * decoration.
+ *
+ * It goes on the winner's phone above the voucher code, so the card reads as
+ * something the pub issued rather than a string the quiz app made up. What
+ * must never happen is the picture becoming load-bearing: the prize is words,
+ * and a logo that is missing, broken or too big has to cost nothing at the
+ * bar.
+ */
+test('a venue logo is a small data URL, or it is nothing at all', () => {
+  const png = 'data:image/png;base64,iVBORw0KGgo=';
+  assert.equal(cleanLogo(png), png);
+  assert.equal(cleanLogo('data:image/webp;base64,UklGRg=='), 'data:image/webp;base64,UklGRg==');
+
+  // A logo on somebody else's server is a 404 on the one night it matters, in
+  // a pub, with the winner standing at the bar. Stored with the record, it
+  // cannot go missing — so a remote URL is refused rather than kept.
+  assert.equal(cleanLogo('https://thecrown.co.uk/logo.png'), '');
+  assert.equal(cleanLogo('data:text/html;base64,PHNjcmlwdD4='), '', 'only images');
+  assert.equal(cleanLogo('javascript:alert(1)'), '');
+  assert.equal(cleanLogo(''), '');
+  assert.equal(cleanLogo(undefined), '');
+
+  // Too big is DROPPED, never thrown: the voucher has never needed a picture,
+  // so losing it costs decoration — where failing the save would cost somebody
+  // the prizes they were editing at the time.
+  const huge = 'data:image/png;base64,' + 'A'.repeat(MAX_LOGO_BYTES);
+  assert.equal(cleanLogo(huge), '');
+});
+
+test('a logo saves without touching the prizes, and can be taken off again', () => {
+  withFile((file) => {
+    const book = new Invoices(file, { now });
+    const png = 'data:image/png;base64,iVBORw0KGgo=';
+    const v = book.saveCustomer({ name: 'The Dog & Duck', address: '2 High Street' });
+    book.setVenueDetails(v.id, { rewards: ['A £30 bar tab'], usualNight: 'thu' });
+
+    book.setVenueDetails(v.id, { logo: png });
+    const after = book.customers.find((c) => c.id === v.id);
+    assert.equal(after.logo, png);
+    assert.deepEqual(after.rewards, ['A £30 bar tab'], 'saving a logo wiped the prizes');
+    assert.equal(after.usualNight, 'thu', 'saving a logo wiped the usual night');
+    assert.equal(after.address, '2 High Street');
+
+    // An empty string is a deliberate removal and has to get through, where
+    // NOT sending the field at all must leave it alone.
+    book.setVenueDetails(v.id, { rewards: ['A £30 bar tab', 'A pint'] });
+    assert.equal(book.customers.find((c) => c.id === v.id).logo, png, 'a prize edit dropped the logo');
+    book.setVenueDetails(v.id, { logo: '' });
+    assert.equal(book.customers.find((c) => c.id === v.id).logo, '');
   });
 });
