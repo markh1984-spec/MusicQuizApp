@@ -482,6 +482,64 @@ export const FEATURE_TIER = {
  * Anything that genuinely needs explaining belongs in an FAQ, not here. If a
  * line will not fit, the feature needs a better name.
  */
+/**
+ * WHICH FEATURES ARE WORTH A SWITCH — and it is far fewer than all of them.
+ *
+ * Every held feature used to draw an On | Off. That was wrong in two separate
+ * ways and the host found both by looking at his own account page:
+ *
+ * > *"'asking for a pack' isn't a feature worth turning on or off since they
+ * > can just ask for a pack when they want one, but advert slides is — some
+ * > venues might be for and others against and you genuinely need the switch."*
+ *
+ * **THE RULE, and both halves have to hold:**
+ *
+ * 1. **Turning it off has to REMOVE SOMETHING FROM YOUR SCREEN.** A switch
+ *    only ever subtracts from what the console draws — it has never changed
+ *    what the server allows, deliberately, so nobody can 403 themselves
+ *    mid-gig. So a feature nothing on screen asks `can()` about has a switch
+ *    that does NOTHING when pressed, which is worse than no switch: it reads
+ *    as having lost the feature. Counted rather than guessed — `BUY_PACKS`,
+ *    `LOOKS` and `PHOTOS` had zero uses in the console and a live switch each.
+ * 2. **Somebody has to plausibly WANT it gone.** Adverts pass: a quizmaster
+ *    whose venues do not want slides does not want the tab. "Ask for a pack"
+ *    fails — you do not hide the thing that gets you a free pack, you simply
+ *    do not ask this month.
+ *
+ * **AND NOTHING UNBUILT GETS A SWITCH AT ALL.** Marketing and streaming each
+ * had a working On | Off on a feature that does not exist, which says it does.
+ * That is the same honesty rule their blurbs already follow, applied to the
+ * control beside them.
+ *
+ * What is left off the list on purpose beyond that: QUIZ, BINGO and LIBRARY
+ * are what the app IS. Switching LIBRARY off takes both pack tabs away, and
+ * switching QUIZ off leaves the tab with no Launch button on any card — a
+ * console that looks broken rather than tidy.
+ *
+ * Everything not here says **Included**, which is the word content already
+ * uses and means exactly what it says.
+ */
+export const SWITCHABLE = [
+  FEATURES.ADVERTS,
+  FEATURES.INVOICES,
+  FEATURES.PAST_GIGS,
+  FEATURES.CALENDAR,
+  FEATURES.OWN_PACKS,
+];
+
+/** Is this one drawn with a switch, or as a statement? */
+export function switchable(feature) {
+  return SWITCHABLE.includes(feature);
+}
+
+/**
+ * Features on the ladder that do not exist yet.
+ *
+ * They still appear — a rung that hides what it does not have is a rung you
+ * cannot judge — but they say so and they get no control beside them.
+ */
+export const NOT_BUILT = [FEATURES.MARKETING, FEATURES.STREAM];
+
 export const FEATURE_META = {
   [FEATURES.QUIZ]: { label: 'Music Quiz', blurb: 'Twenty seconds a question, fastest fingers win.' },
   [FEATURES.BINGO]: { label: 'Music Bingo', blurb: 'You play the tracks, every phone gets a card.' },
@@ -497,9 +555,12 @@ export const FEATURE_META = {
   // say so — the same honesty rule streaming gets. A rung that lists something
   // which does not exist is one nobody trusts the rest of.
   [FEATURES.CALENDAR]: { label: 'Your calendar', blurb: 'What you have got coming, from your venues\u2019 usual nights.' },
-  [FEATURES.MARKETING]: { label: 'Marketing', blurb: 'Not built yet.' },
+  // The blurbs no longer say "not built yet" — the chip beside them does, and
+  // saying it twice in one row is repetition rather than emphasis. `NOT_BUILT`
+  // is the list that decides, and it is checkable where prose is not.
+  [FEATURES.MARKETING]: { label: 'Marketing', blurb: 'Posts and flyers for your nights.' },
   [FEATURES.REQUEST_PACK]: { label: 'Ask for a pack', blurb: 'Name a theme, get a quiz written. One a month.' },
-  [FEATURES.STREAM]: { label: 'Online quizzes', blurb: 'Run a night for a room that is not there. Not built yet.' },
+  [FEATURES.STREAM]: { label: 'Online quizzes', blurb: 'Run a night for a room that is not there.' },
 };
 
 /** A tier by id, and its rank. An unknown one is the bottom of the ladder. */

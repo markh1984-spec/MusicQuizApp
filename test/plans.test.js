@@ -15,8 +15,7 @@ import { fileURLToPath } from 'node:url';
 import {
   FEATURES, TIERS, FEATURE_TIER, DEFAULT_TIER,
   can, featuresFor, activeFeatures, whyNot, entitlements,
-  tierFor, tierRank, featuresAt, ladderFor, FEATURE_META,
-} from '../public/assets/plans.js';
+  tierFor, tierRank, featuresAt, ladderFor, FEATURE_META, switchable, SWITCHABLE, NOT_BUILT } from '../public/assets/plans.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -389,18 +388,23 @@ test('there is no tier above the top, so a preview can only subtract', () => {
  * yet" from its blurb in the same breath.
  */
 test('a feature that is not built says so on its own card', () => {
-  // CALENDAR came off this list the day the diary was built — the venues'
-  // usual nights projected forward, plus one-offs and nights off. That is
-  // exactly what the note above asks for: delete it from the list AND drop
-  // "Not built yet" from the blurb in the same breath.
-  const NOT_BUILT = [FEATURES.MARKETING, FEATURES.STREAM];
+  /*
+   * CALENDAR came off this list the day the diary was built.
+   *
+   * And the SAYING moved: it used to be prose in the blurb, which is not
+   * checkable and was being repeated by the chip beside it. `NOT_BUILT` in
+   * plans.js is the list, the account page draws a "not yet" chip from it and
+   * offers no switch, and this is what fails if somebody adds a rung for
+   * something that does not exist.
+   */
+  assert.deepEqual(NOT_BUILT, [FEATURES.MARKETING, FEATURES.STREAM]);
   for (const f of NOT_BUILT) {
-    assert.match(FEATURE_META[f].blurb, /not built yet/i,
-      `${f} is on the ladder as though it works`);
+    assert.ok(FEATURE_META[f], `${f} is on the not-built list but has nothing to draw`);
+    assert.equal(switchable(f), false, `${f} offers a switch on something that does not exist`);
   }
-  // And the other way round: nothing that IS built should be claiming it is not.
+  // Nothing should be claiming in prose to be unbuilt — that is the chip's job
+  // now, and two places saying it is two places to forget to update.
   for (const [f, meta] of Object.entries(FEATURE_META)) {
-    if (NOT_BUILT.includes(f)) continue;
     assert.doesNotMatch(meta.blurb, /not built yet/i,
       `${f} says it is not built — if that is now true, add it to the list above`);
   }
@@ -459,4 +463,40 @@ test('turning photos off is enforced, not just hidden', () => {
   // And nothing may go back to reading the bare kill switch for these two.
   assert.doesNotMatch(source, /view\.photosOpen = photos\.enabled/,
     'the player payload is back on the kill switch alone');
+});
+
+/*
+ * WHICH FEATURES EARN A SWITCH — the host's own rule, from looking at his
+ * account page: *"'asking for a pack' isn't a feature worth turning on or off
+ * since they can just ask for a pack when they want one, but advert slides is
+ * — some venues might be for and others against and you genuinely need the
+ * switch."*
+ */
+test('nothing that is not built carries a switch', () => {
+  for (const f of NOT_BUILT) {
+    assert.equal(switchable(f), false, `${f} offers a switch on something that does not exist`);
+  }
+});
+
+test('the things the app IS are not switchable', () => {
+  // Turning LIBRARY off takes both pack tabs away; turning QUIZ off leaves the
+  // tab with no Launch on any card. Either is a console that looks broken.
+  for (const f of [FEATURES.QUIZ, FEATURES.BINGO, FEATURES.LIBRARY]) {
+    assert.equal(switchable(f), false, `${f} can be switched off, which breaks the console`);
+  }
+});
+
+test('advert slides ARE switchable — the case the rule was written from', () => {
+  assert.equal(switchable(FEATURES.ADVERTS), true);
+  assert.equal(switchable(FEATURES.REQUEST_PACK), false,
+    'you do not hide the thing that gets you a free pack, you just do not ask');
+});
+
+/* Every switchable feature must be a real one on the ladder, or the account
+ * page would offer a control for something nobody can hold. */
+test('every switchable feature is on the ladder', () => {
+  for (const f of SWITCHABLE) {
+    assert.ok(FEATURE_TIER[f], `${f} is switchable but on no tier`);
+    assert.ok(FEATURE_META[f], `${f} is switchable but has nothing to draw`);
+  }
 });

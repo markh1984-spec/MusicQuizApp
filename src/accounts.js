@@ -33,7 +33,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-import { ROLES, KINDS, DEFAULT_KIND, STATUSES, TIERS, DEFAULT_TIER, findTier, tierFor, can, featuresFor, entitlements, FEATURE_TIER } from '../public/assets/plans.js';
+import { ROLES, KINDS, DEFAULT_KIND, STATUSES, TIERS, DEFAULT_TIER, findTier, tierFor, can, featuresFor, entitlements, FEATURE_TIER, switchable } from '../public/assets/plans.js';
 import { findScheme, DEFAULT_SCHEME } from '../public/assets/schemes.js';
 
 /** Work factor for scrypt. Slow enough to matter, fast enough for a login. */
@@ -352,7 +352,13 @@ export class Accounts {
       prefs.featuresOff = [...new Set(
         (Array.isArray(patch.featuresOff) ? patch.featuresOff : [])
           .map((f) => String(f))
-          .filter((f) => held.has(f) && FEATURE_TIER[f]),
+          // …and only ones the page actually offers a switch for. Not
+          // security — this list can never grant anything, it only ever
+          // subtracts — but `quiz.library` in here takes both pack tabs off
+          // the console, which is a foot-gun with no obvious way back, and a
+          // stale page or a curl call should not be able to set it. See
+          // SWITCHABLE in plans.js for the rule about which earn a switch.
+          .filter((f) => held.has(f) && FEATURE_TIER[f] && switchable(f)),
       )];
     }
     if (patch.hiddenTabs !== undefined) {

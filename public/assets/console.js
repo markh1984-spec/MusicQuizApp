@@ -10,7 +10,7 @@
 import { esc, node, postJson, brandLink, binIcon, paintNav, paintIdentity, menuRights } from './client.js';
 import { paintScheme } from './schemes.js';
 import { balanceAnswers } from './balance.js';
-import { FEATURES, FEATURE_TIER, findTier } from './plans.js';
+import { FEATURES, FEATURE_TIER, FEATURE_META, SWITCHABLE, findTier, switchable, NOT_BUILT } from './plans.js';
 import { inSeason } from './looks.js';
 import { upcoming, tonight, nightKey, WEEKDAY_LABELS } from './diary.js';
 
@@ -744,25 +744,79 @@ function roomPanel() {
  * facts; what you have switched off is a preference, and preferences are a
  * different page.
  */
+/**
+ * SETTINGS IS WHAT YOU HAVE ON — and nothing else.
+ *
+ * It used to draw the whole ladder: three tier panels, prices, locked rows
+ * with a "+", and a switch against every held feature. That was two pages in
+ * one — the SELL and the switches — and it did neither well. The sell is now a
+ * comparison table on My account, where the other facts about your account
+ * live, and this is left with the one job its own tab blurb claims: your
+ * colours, and which tabs you want on screen.
+ *
+ * **No tier grouping, because grouping five switches by rung is noise** —
+ * four of them are Bronze and one is Silver, so it would draw a Gold panel
+ * with nothing in it. What you can turn off does not depend on what you pay,
+ * beyond holding the thing in the first place.
+ */
 function settingsSection() {
   const wrap = document.createDocumentFragment();
   wrap.appendChild(schemePanel()[0] || node('<span></span>'));
-  /*
-   * TOP RUNG FIRST — Gold, then Silver, then Bronze.
-   *
-   * Ladder order puts Bronze at the top, which is eleven rows of the basics
-   * before you reach the two or three things that are actually particular to
-   * what you pay for. Reversed, the rungs that distinguish a tier are the
-   * first thing on the page and the long list of fundamentals is where you
-   * scroll to, which is the right way round both for somebody managing their
-   * own switches and for somebody deciding whether to climb.
-   *
-   * `ladderFor()` still returns ladder order, because everything else that
-   * reads it — the arithmetic, the tests — depends on rank ascending. This is
-   * a display decision and it is made here.
-   */
-  for (const tier of ladderPanels().reverse()) wrap.appendChild(tier);
+  wrap.appendChild(switchPanel());
   return wrap;
+}
+
+/**
+ * The tabs you want on screen.
+ *
+ * Only the handful that earn a switch — see SWITCHABLE in plans.js for the
+ * rule, which is that turning it off has to REMOVE something and somebody has
+ * to plausibly want it gone. Held features only: this is a page about tidying
+ * your own console, not a shop, and a locked row with a price on it belongs on
+ * the comparison table.
+ */
+function switchPanel() {
+  const off = new Set(((library.prefs || {}).featuresOff) || []);
+  const rows = SWITCHABLE
+    .filter((f) => can(f))
+    .map((f) => ({ id: f, ...(FEATURE_META[f] || { label: f, blurb: '' }) }));
+
+  if (!rows.length) {
+    return node(`<div class="panel"><h3>What is on screen</h3>
+      <div class="tiny">Nothing to switch off on your tier.</div></div>`);
+  }
+
+  const el = node(`
+    <div class="panel">
+      <h3>What is on screen</h3>
+      <div class="tiny">Turn off anything you do not use and its tab goes away. Nothing is
+        lost — switch it back on whenever you like.</div>
+      <div class="acct-toggles">
+        ${rows.map((f) => `
+          <div class="acct-toggle">
+            <span class="acct-toggle-what"><b>${esc(f.label)}</b><br><span class="tiny">${esc(f.blurb)}</span></span>
+            <span class="hat-switch feat-switch" data-feature="${esc(f.id)}" data-on="${off.has(f.id) ? '0' : '1'}">
+              <button class="hat-half ${off.has(f.id) ? '' : 'live'}" data-want="1">On</button>
+              <button class="hat-half ${off.has(f.id) ? 'live' : ''}" data-want="0">Off</button>
+            </span>
+          </div>`).join('')}
+      </div>
+    </div>`);
+
+  // The same control as the hat switch in the top right, deliberately: one
+  // shape for "is this on" across the whole app is recognised rather than read.
+  for (const sw of el.querySelectorAll('.feat-switch')) {
+    for (const half of sw.querySelectorAll('.hat-half')) {
+      half.addEventListener('click', () => {
+        const want = half.dataset.want;
+        if (sw.dataset.on === want) return;
+        sw.dataset.on = want;
+        for (const h of sw.querySelectorAll('.hat-half')) h.classList.toggle('live', h.dataset.want === want);
+        saveFeaturesOff(el);
+      });
+    }
+  }
+  return el;
 }
 
 function accountSection() {
@@ -771,8 +825,16 @@ function accountSection() {
   // one under the other, both three short rows — which is two headings and two
   // borders around what is plainly one answer to "what is my account".
   wrap.appendChild(youPanel());
+  // What the rungs are, right under what you are on — the question "what would
+  // Silver actually get me" asked and answered in one glance, rather than by
+  // reading three panels of switches and holding them in your head.
+  const compare = comparePanel();
+  if (compare) wrap.appendChild(compare);
   wrap.appendChild(roomPanel());
-  wrap.appendChild(libraryPanel());
+  // Silent when the whole catalogue is in reach, which is everybody today —
+  // so it genuinely returns nothing rather than an empty panel.
+  const lib = libraryPanel();
+  if (lib) wrap.appendChild(lib);
   wrap.appendChild(demoPrizePanel());
   return wrap;
 }
@@ -832,64 +894,116 @@ function demoPrizePanel() {
  * The list of tiers and which feature is in which comes from `plans.js`, so
  * this page cannot invent a tier and moving a feature is a one-word edit there.
  */
-function ladderPanels() {
+/**
+ * WHAT YOU GET FOR GOING UP — a comparison table, not a settings page.
+ *
+ * The ladder used to do both jobs and did neither well: fourteen rows of
+ * switches, most of which changed nothing, arranged so you had to read three
+ * panels and hold them in your head to answer "what would Silver actually get
+ * me". The host's own reading: *"I wanted a section where it's very obvious
+ * what the value was in increasing your account, but I think a comparison
+ * table would do the job better than a settings section."*
+ *
+ * So the two questions are split the way the tabs already split them —
+ * **My account is what you HAVE and is read; Settings is what you have ON and
+ * is operated.** This is the first one.
+ *
+ * **IT SHOWS ONLY WHAT DIFFERS**, which turns out to be three rows. Everything
+ * else is Bronze — both games, every round type, your own packs, photos, past
+ * gigs, invoicing and the diary — so a table listing them would be eleven rows
+ * of three identical ticks, which is a table nobody reads and which makes
+ * Bronze look thin when the whole point is that it is the entire app. The line
+ * underneath says so instead, in one sentence.
+ *
+ * Built from `ladderFor()` rather than written out, so a tier moving in
+ * `FEATURE_TIER` moves here too and the page cannot quietly start lying about
+ * what is on which rung.
+ */
+function comparePanel() {
   const ladder = (me && me.entitlements && me.entitlements.ladder) || [];
-  if (!ladder.length) return [];
-  const off = new Set(((library.prefs || {}).featuresOff) || []);
+  if (ladder.length < 2) return null;
 
-  return ladder.map((tier) => {
-    const el = node(`
-      <div class="panel tier-panel tier-${esc(tier.id)} ${tier.included ? 'have' : 'locked'}">
-        <h3><span class="tier-dot"></span>${esc(tier.label)} — ${esc(tier.plan)}
-          ${tier.included ? '<span class="tier-yours">yours</span>'
-            : `<span class="tier-price">${esc(priceLabel(tier.pence))}</span>`}</h3>
-        <div class="tiny">${esc(tier.blurb)}</div>
-        <div class="acct-toggles">
-          ${tier.content ? `
-            <div class="acct-toggle content ${tier.included ? '' : 'locked'}">
-              <span class="acct-toggle-what"><b>${esc(tier.content.label)}</b><br><span class="tiny">${esc(tier.content.blurb)}</span></span>
-              ${tier.included ? '<span class="feat-said">included</span>' : '<span class="feat-plus" title="On a higher tier">+</span>'}
-            </div>` : ''}
-          ${tier.features.map((f) => `
-            <div class="acct-toggle ${tier.included ? '' : 'locked'}" data-tier="${esc(tier.id)}">
-              <span class="acct-toggle-what"><b>${esc(f.label)}</b><br><span class="tiny">${esc(f.blurb)}</span></span>
-              ${tier.included ? `
-                <span class="hat-switch feat-switch" data-feature="${esc(f.id)}" data-on="${off.has(f.id) ? '0' : '1'}">
-                  <button class="hat-half ${off.has(f.id) ? '' : 'live'}" data-want="1">On</button>
-                  <button class="hat-half ${off.has(f.id) ? 'live' : ''}" data-want="0">Off</button>
-                </span>`
-                // A tier ABOVE yours gets the same "+" the tab bar uses, never a
-                // switch showing Off — you did not turn it off, you do not have
-                // it, and those are different things worth telling apart.
-                : '<span class="feat-plus" title="On a higher tier">+</span>'}
-            </div>`).join('')}
-        </div>
-        ${tier.included ? '' : `<div class="tiny acct-note">Ask the owner to move you up — it goes
-          on the same login, and nothing you have set up changes.</div>`}
-      </div>`);
-
-    /*
-     * The same control as the hat switch in the top right, deliberately.
-     *
-     * A tick box reads as a form you fill in; this reads as something you
-     * switch, which is what it is. One control shape for "is this on" across
-     * the whole app means it is recognised rather than read.
-     */
-    for (const sw of el.querySelectorAll('.feat-switch')) {
-      for (const half of sw.querySelectorAll('.hat-half')) {
-        half.addEventListener('click', () => {
-          const want = half.dataset.want;
-          if (sw.dataset.on === want) return;   // already there; do not re-save
-          sw.dataset.on = want;
-          for (const h of sw.querySelectorAll('.hat-half')) {
-            h.classList.toggle('live', h.dataset.want === want);
-          }
-          saveFeaturesOff(el);
-        });
-      }
+  /*
+   * A capability is worth a ROW only if some rung has it and some rung does
+   * not. Anything on the bottom rung is on every rung above it, so it can
+   * never differ — that is what `rank` means.
+   */
+  const bottom = ladder[0];
+  const onBottom = new Set(bottom.features.map((f) => f.id));
+  const rows = [];
+  for (const tier of ladder) {
+    for (const f of tier.features) {
+      if (onBottom.has(f.id)) continue;
+      rows.push({ id: f.id, label: f.label, from: tier.rank, soon: NOT_BUILT.includes(f.id) });
     }
-    return el;
-  });
+  }
+
+  const cell = (tier, row) => {
+    if (tier.rank < row.from) return '<span class="cmp-no" aria-label="not included">—</span>';
+    if (row.soon) return '<span class="cmp-soon">not yet</span>';
+    return '<span class="cmp-yes" aria-label="included">&#10003;</span>';
+  };
+
+  /*
+   * "YOURS" GOES ON EXACTLY ONE COLUMN — the highest rung you hold.
+   *
+   * `included` is true of every rung at or below yours, so labelling all of
+   * them said "yours" three times and the word stopped meaning anything. It is
+   * worst on a comped or bootstrap account, which holds the lot: every column
+   * claimed to be the one you are on. The shading still marks everything you
+   * hold; the label says where you ARE.
+   */
+  const yours = ladder.reduce((best, t, i) => (t.included ? i : best), -1);
+
+  /*
+   * The packs row carries each rung's own label and nothing is spliced on.
+   *
+   * Stitching "the one below, plus this one" was tried and is wrong, because
+   * the rungs do not all ADD: Silver's whole catalogue SUPERSEDES Bronze's
+   * eight, where Gold's weekly quiz genuinely is extra. It printed "Eight
+   * packs to start, plus the whole catalogue", which is a sentence about a
+   * subset. `TIER_PACKS` says the same thing — a list, then `evergreen`, then
+   * `all`.
+   *
+   * So the cells say what each rung IS, and one line under the table carries
+   * the cumulative fact once. The capability rows already read cumulatively on
+   * their own, because the ticks repeat down the columns.
+   */
+  return node(`
+    <div class="panel">
+      <h3>The tiers</h3>
+      <div class="cmp-scroll">
+        <table class="cmp">
+          <thead>
+            <tr>
+              <th></th>
+              ${ladder.map((t, i) => `
+                <th class="${t.included ? 'mine' : ''}">
+                  <span class="cmp-tier tier-${esc(t.id)}">${esc(t.label)}</span>
+                  <span class="cmp-price">${esc(priceLabel(t.pence))}</span>
+                  ${i === yours ? '<span class="cmp-yours">yours</span>' : ''}
+                </th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Packs</th>
+              ${ladder.map((t) => `<td class="${t.included ? 'mine' : ''}">${
+  esc((t.content && t.content.label) || 'Every pack')}</td>`).join('')}
+            </tr>
+            ${rows.map((row) => `
+              <tr>
+                <th scope="row">${esc(row.label)}</th>
+                ${ladder.map((t) => `<td class="${t.included ? 'mine' : ''}">${cell(t, row)}</td>`).join('')}
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="tiny acct-note"><b>Each tier includes the one before it.</b>
+        Every tier is the whole app — both games, all five round types, your own packs,
+        photos from the room, past gigs, invoicing and your diary. What changes is how
+        much of the catalogue you get.</div>
+    </div>`);
 }
 
 /** £30 a month, £15 a month, or "included". Pence in, words out. */
@@ -907,7 +1021,16 @@ function priceLabel(pence) {
  * page the first time one of them failed.
  */
 async function saveFeaturesOff(inPanel) {
-  const switches = [...document.querySelectorAll('.tier-panel .feat-switch')];
+  /*
+   * EVERY switch on the page, not `.tier-panel .feat-switch`.
+   *
+   * That selector was written when the switches lived inside the ladder's tier
+   * panels. Settings draws one flat list now, so it matched NOTHING — and this
+   * function saves whatever it finds, so the first tap would have posted an
+   * empty list and quietly switched every feature back on. A save that undoes
+   * itself, with no error anywhere.
+   */
+  const switches = [...document.querySelectorAll('.feat-switch')];
   const featuresOff = switches.filter((s) => s.dataset.on === '0').map((s) => s.dataset.feature);
   try {
     const res = await fetch(keyed('/api/me/prefs'), {
@@ -1295,18 +1418,19 @@ function libraryPanel() {
   // Sent by /api/library, which is the side that can actually count the files.
   const total = library.catalogue || null;
 
+  /*
+   * NOTHING AT ALL WHEN THE WHOLE CATALOGUE IS IN REACH — which is everybody
+   * today, and which is what this file's own note has always said it should
+   * do: *"a page that congratulates you on owning everything is one you learn
+   * to skip, and the line has to still be worth reading on the day it
+   * changes."* It was drawing a panel saying "every pack is yours to run"
+   * above two numbers the tab badges already carry, so it said nothing twice.
+   *
+   * The panel exists for the day a tier holds three of nine. Until then it is
+   * quiet, and the first time it appears it will mean something.
+   */
   const restricted = total && (total.quizzes > mine || total.bingo > mineBingo);
-  if (!restricted) {
-    return node(`
-      <div class="panel">
-        <h3>Your library</h3>
-        <div class="acct-grid">
-          <div><div class="tiny">Quizzes</div><div class="acct-val">${mine}</div></div>
-          <div><div class="tiny">Bingo games</div><div class="acct-val">${mineBingo}</div></div>
-        </div>
-        <div class="tiny acct-note">Every pack in the catalogue is yours to run. New ones appear here as they are written.</div>
-      </div>`);
-  }
+  if (!restricted) return null;
 
   return node(`
     <div class="panel">
@@ -4417,10 +4541,34 @@ function tonightsVenue() {
   });
 }
 
+/**
+ * WHICH VENUE IS OPEN, remembered outside the render.
+ *
+ * Module level for the same reason `openPack` is: this list is redrawn after
+ * every save, and a selection stored inside `draw()` would close the card you
+ * had just opened the moment you typed a prize into it.
+ */
+let openVenue = '';
+let venueQuery = '';
+
 function venuesSection() {
   const el = node('<div></div>');
   const draw = () => {
-    const venues = library.venueRecords || [];
+    const all = library.venueRecords || [];
+    /*
+     * SEARCH AND COLLAPSE, for the same reason the pack grid got them: a
+     * quizmaster with fifteen residencies had fifteen cards each carrying a
+     * usual-night dropdown and three prize boxes, which is a wall you scroll
+     * rather than a list you use. Closed, a venue is its name and the two
+     * facts you scan for — which night it has you, and what it puts up.
+     *
+     * The search matches the NAME only. A venue list is short enough that
+     * matching anything else would only ever surprise somebody — unlike the
+     * pack search, which looks inside the questions because "the one with
+     * Madonna in it" is a real way to look for a quiz.
+     */
+    const q = venueQuery.trim().toLowerCase();
+    const venues = q ? all.filter((v) => (v.name || '').toLowerCase().includes(q)) : all;
     el.replaceChildren(node(`
       <div class="panel">
         <h3>Venues</h3>
@@ -4428,13 +4576,27 @@ function venuesSection() {
           launch a night at this venue. Give a venue its usual night and the
           launch bar knows whose night tonight is. The billing details for the
           same venues are on the Invoices tab.</div>
+        ${all.length > 4 ? `
+          <div class="venue-tools">
+            <input class="pack-search venue-search" type="search" placeholder="Search ${all.length}…"
+              value="${esc(venueQuery)}" aria-label="Search venues">
+          </div>` : ''}
         <div class="venue-list">
-          ${venues.length ? venues.map((v) => `
-            <div class="venue-card" data-id="${esc(v.id)}">
+          ${!all.length ? '<div class="tiny">No venues yet. Add one below, or on the Invoices tab.</div>'
+    : !venues.length ? `<div class="tiny">Nothing matches “${esc(venueQuery)}”.</div>`
+      : venues.map((v) => {
+        const open = openVenue === v.id;
+        const night = (WEEKDAY_LABELS.find(([id]) => id === v.usualNight) || [])[1] || '';
+        const prizes = (v.rewards || []).filter(Boolean);
+        return `
+            <div class="venue-card ${open ? 'open' : 'shut'}" data-id="${esc(v.id)}">
               <div class="venue-top">
-                <b>${esc(v.name)}</b>
-                <button class="minor danger v-del">Remove</button>
+                <button class="venue-name" aria-expanded="${open ? 'true' : 'false'}">${esc(v.name)}</button>
+                ${open ? '<button class="minor danger v-del">Remove</button>' : ''}
               </div>
+              ${open ? '' : `<div class="tiny venue-gist">${
+  esc([night || 'No usual night', prizes.length ? prizes[0] : 'No prizes set'].join(' · '))}</div>`}
+              ${!open ? '' : `
               <label class="venue-night">Usual night
                 <select class="v-night">
                   <option value="">No usual night</option>
@@ -4451,8 +4613,9 @@ function venuesSection() {
                       placeholder="${i === 0 ? 'A free drink at the bar' : 'Nothing for this place'}">
                   </label>`).join('')}
               </div>
-              <button class="minor v-save" hidden>Save it</button>
-            </div>`).join('') : '<div class="tiny">No venues yet. Add one below, or on the Invoices tab.</div>'}
+              <button class="minor v-save" hidden>Save it</button>`}
+            </div>`;
+      }).join('')}
         </div>
         <div class="venue-add">
           <input class="venue-new" type="text" maxlength="60" placeholder="The Station Tap, Wokingham">
@@ -4462,8 +4625,34 @@ function venuesSection() {
 
     // Save only appears once something has changed, so a page of venues is not
     // a page of buttons waiting to be pressed for no reason.
+    /*
+     * The search box, and the name that opens a card.
+     *
+     * `venueQuery` and `openVenue` are module-level, so both survive the
+     * redraw that every save triggers — the same reason the pack grid keeps
+     * its selection outside the render.
+     */
+    const search = el.querySelector('.venue-search');
+    if (search) {
+      search.addEventListener('input', () => {
+        venueQuery = search.value;
+        draw();
+        // Redrawn from scratch, so the box the thumb is in has to be found
+        // again and the caret put back at the end of what was typed.
+        const again = el.querySelector('.venue-search');
+        if (again) { again.focus(); again.setSelectionRange(again.value.length, again.value.length); }
+      });
+    }
+
     for (const card of el.querySelectorAll('.venue-card')) {
+      card.querySelector('.venue-name').addEventListener('click', () => {
+        openVenue = openVenue === card.dataset.id ? '' : card.dataset.id;
+        draw();
+      });
       const save = card.querySelector('.v-save');
+      // A shut card has no controls to wire — its name and its one line are
+      // the whole of it.
+      if (!save) continue;
       for (const box of card.querySelectorAll('.v-reward, .v-night')) {
         box.addEventListener('input', () => { save.hidden = false; });
         box.addEventListener('change', () => { save.hidden = false; });
@@ -4486,7 +4675,7 @@ function venuesSection() {
           alert(err.message || 'Could not save that.');
         }
       });
-      card.querySelector('.v-del').addEventListener('click', async () => {
+      card.querySelector('.v-del')?.addEventListener('click', async () => {
         if (!confirm('Remove this venue? Invoices already sent keep their own copy.')) return;
         await invoiceApi(`/api/invoices/customers/${encodeURIComponent(card.dataset.id)}`, { method: 'DELETE' });
         await load();

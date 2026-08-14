@@ -1450,7 +1450,18 @@ body.console::after { display: none; }
    bare width, because a select will not go below its longest option and drags
    the page sideways at 320px — the min-content trap this file has now recorded
    six times. */
-.pack-set { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 8px; margin: 4px 0; }
+/* The settings row, capped.
+   `auto-fit` with a `1fr` maximum STRETCHES whatever is left over, so with four
+   controls and room for three the fourth — Venue — took a whole row to itself
+   and became a 900px dropdown holding "The Station Tap". A track cannot exceed
+   280px now and the row packs from the left, so a lone control is the same size
+   as the ones above it instead of a slab. */
+.pack-set {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 280px));
+  justify-content: start;
+  gap: 8px; margin: 4px 0;
+}
 .pack-set > * { min-width: 0; }
 
 /* ---- finding a pack when there are eighty of them.
@@ -4449,6 +4460,14 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   font-size: var(--fs-tag); font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--ink-dim); white-space: nowrap; padding: 6px 10px;
 }
+/* NOT BUILT YET is a different state from "included" and has to look it —
+   side by side in the same grey they read as two ways of saying yes. Gold,
+   which is what this app uses for "worth knowing", and outlined so it is
+   plainly not something to press. */
+.feat-soon {
+  color: var(--gold); opacity: 0.75;
+  border: 1px dashed rgba(255, 210, 63, 0.35); border-radius: var(--r-pill);
+}
 
 /*
  * "Nothing here for the night you have booked?" — under the shop, because that
@@ -4687,7 +4706,11 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 /* The venue box on a pack card. Wider than the dropdowns beside it — a pub
    name is six words where "In the room" is three — and it must never be the
    thing that drags the card sideways, so it may shrink to nothing. */
-.pack-shape.venue-wrap { grid-column: 1 / -1; min-width: 0; }
+/* Venue is an ordinary column now, not a full-width row.
+   It spanned because it used to be a free-text box that wanted the room. As a
+   dropdown holding "The Station Tap" it just became an 800px select on a wide
+   screen, which is what the host reported as odd. */
+.pack-shape.venue-wrap { min-width: 0; }
 .venue-pick { width: 100%; min-width: 0; }
 
 
@@ -5043,3 +5066,71 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
    the money AND the booking next month. */
 .inv-row.is-late { border-color: rgba(255, 77, 94, 0.3); }
 .inv-late { color: var(--bad); font-weight: 700; }
+
+
+/* ---- the tiers, side by side
+   A comparison table rather than three panels of switches. The question it
+   answers is "what would Silver actually get me", and that is a question you
+   answer by looking ACROSS rather than by reading three sections and holding
+   them in your head.
+
+   Only what DIFFERS gets a row. Everything else is Bronze — both games, every
+   round type, your own packs, photos, past gigs, invoicing, the diary — so
+   listing them would be eleven rows of three identical ticks, which reads as
+   Bronze being thin when the whole point is that it is the entire app. One
+   sentence underneath says so instead. */
+.cmp-scroll { overflow-x: auto; margin-top: 12px; scrollbar-width: thin; }
+.cmp { width: 100%; border-collapse: collapse; font-size: var(--fs-note); }
+.cmp th, .cmp td { padding: 10px 12px; text-align: center; vertical-align: middle; }
+.cmp thead th { border-bottom: 1px solid var(--panel-line); }
+/* The row labels stay left — they are words, not values, and centring them
+   makes the table read as a grid of equals rather than as rows of a thing. */
+.cmp tbody th { text-align: left; font-weight: 800; color: var(--ink); white-space: nowrap; }
+.cmp tbody tr + tr th, .cmp tbody tr + tr td { border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.cmp-tier { display: block; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; font-size: var(--fs-tag); }
+.cmp-price { display: block; font-weight: 900; font-size: var(--fs-ctl); color: var(--ink); }
+/* YOURS in green, the app's own "you have this" colour — the same word and the
+   same green the tier panels used, so nothing had to be relearned. */
+.cmp-yours {
+  display: inline-block; margin-top: 4px;
+  font-size: var(--fs-tag); font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--good);
+}
+/* The column you are on is lifted, so "where am I" is answered before any of
+   the rows are read. */
+.cmp th.mine, .cmp td.mine { background: rgba(255, 255, 255, 0.045); }
+.cmp-yes { color: var(--good); font-weight: 900; font-size: 1.15em; }
+.cmp-no { color: var(--ink-dim); opacity: 0.5; }
+.cmp-soon { color: var(--gold); opacity: 0.8; font-size: var(--fs-tag); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
+.cmp-tier.tier-bronze { color: #cd895a; }
+.cmp-tier.tier-silver { color: #c6cdd6; }
+.cmp-tier.tier-gold { color: var(--gold); }
+
+
+/* ---- venues, collapsed
+   Same problem as the pack grid and the same shape solves it: fifteen
+   residencies each carrying a dropdown and three prize boxes is a wall you
+   scroll rather than a list you use. Closed, a venue is its name and the two
+   facts you scan for — which night it has you, and what it puts up. */
+.venue-tools { margin-top: 12px; }
+.venue-search { width: 100%; max-width: 280px; }
+.venue-card.shut { padding: 10px 14px; }
+.venue-name {
+  background: none; border: none; padding: 0; text-align: left;
+  color: var(--ink); font-family: inherit; font-size: var(--fs-ctl); font-weight: 800;
+  cursor: pointer; min-width: 0;
+}
+/* The caret says it opens — drawn from a border rather than a glyph, the same
+   reason the pack titles' is. */
+.venue-name::after {
+  content: ''; display: inline-block; margin-left: 8px;
+  border: 4px solid transparent; border-top-color: currentColor;
+  transform: translateY(2px); opacity: 0.5;
+}
+.venue-card.open .venue-name::after { transform: translateY(-2px) rotate(180deg); }
+.venue-name:hover { color: #fff; }
+.venue-name:hover::after { opacity: 1; }
+.venue-card.open { border-color: rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.07); }
+/* The one line a shut card keeps. Dim, because it is what you scan past on
+   the way to the one you want rather than something to read. */
+.venue-gist { margin-top: 2px; }
