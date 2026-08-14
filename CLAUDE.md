@@ -1528,6 +1528,29 @@ pack is what the button would launch. **The whole row is the target when it is
 shut**, not just the chevron: one small control on the end of a bar is a thing
 you miss with a thumb in a dark pub.
 
+**THE CONSOLE AND THE BIG SCREEN MUST AGREE, ALWAYS — reported from a real
+night.** *"The quiz in the launch bit after I pressed launch didn't say what
+the big screen said."* Two separate causes, both fixed:
+
+- **The bar re-picked itself on every render**, and `render()` runs on every
+  state push. Worse, launching a pack gives it a play time, so `quickPicks()`
+  sorts it away and the box starts offering a DIFFERENT quiz from the one the
+  room is looking at. A choice now STICKS: the auto-pick is the empty state and
+  nothing else.
+- **With nothing chosen, it now starts on WHAT IS RUNNING** (`running.packId`)
+  rather than on `quickPicks[0]`. That is what a page reload produced — come
+  back to the console after launching and the panel named a pack nobody had
+  chosen, one press away from replacing a live night with it.
+
+**And where they still differ, the bar SAYS SO.** `paintLive()` prints *"On
+the big screen now: The 2000s Pop Rnb and Chart Quiz"* off `library.running` —
+the server's own view of the session, so it cannot drift — in gold when it is
+not what the box says, which is exactly the moment somebody is about to be
+surprised. When they match it says *"On the big screen now — this one"*. A
+chooser answers "what would the next press start"; that is a different
+question from "what is on the projector", and they are only ever the same by
+luck.
+
 **THE VENUE IS A CONTROL AT THE TOP, not a caption and not a dropdown buried
 in Set it up.** It decides the prizes, the voucher and what the night is filed
 under, so it is read nine times out of ten and changed on the tenth — covering

@@ -4798,6 +4798,12 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .lb-venue-foot { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .lb-venue-add { text-decoration: none; }
 .lb-prize { margin-top: 8px; }
+/* What is on the projector right now. Gold when it is NOT what the box says,
+   because that is the moment somebody is about to be surprised — the same
+   treatment "not invoiced" and a venue clash get, for the same reason: not a
+   fault, but a thing you want to have noticed. */
+.lb-live { margin-top: 6px; color: var(--ink-dim); }
+.lb-live.lb-warn { color: var(--gold); font-weight: 800; }
 /* A DOUBLE BOOKING, named. Gold rather than red: it is not a fault and nothing
    is broken — it is a decision only the human can make, and it is the same
    treatment "not invoiced" gets for the same reason. */

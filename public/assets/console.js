@@ -2721,6 +2721,10 @@ function launchBar() {
         </div>
       </div>
       <div class="tiny prize-line lb-prize" hidden></div>
+      <!-- WHAT IS ACTUALLY ON THE PROJECTOR, which is a different question
+           from what the box is set to. Reported from a real night: the two
+           disagreed and nothing said which was which. -->
+      <div class="tiny lb-live" hidden></div>
       <div class="lb-find">
         ${games.length > 1 ? `<select class="lb-game">
           ${games.map((g) => `<option value="${esc(g.id)}">${esc(g.label)}</option>`).join('')}
@@ -2752,6 +2756,7 @@ function launchBar() {
   const venueList = el.querySelector('.lb-venue-list');
   const venueSearch = el.querySelector('.lb-venue-search');
   const prizeEl = el.querySelector('.lb-prize');
+  const liveEl = el.querySelector('.lb-live');
   // Called through an arrow rather than passed directly: both of these are
   // `const`s declared further down, so handing the function over here reads
   // them before they exist. By the time anybody clicks, they do.
@@ -3018,6 +3023,7 @@ function launchBar() {
      * without it the box just asserts a title and you have to go and check
      * whether the room heard it a fortnight ago.
      */
+    if (liveEl) paintLive();
     const why = (quickPicks(gameOf().packs).find((q) => q.pack.id === pack.id) || {}).why
       || (pack.lastPlayedAt ? `Last played ${whenShort(pack.lastPlayedAt)}` : 'Never played');
     whyEl.textContent = why;
@@ -3133,10 +3139,74 @@ function launchBar() {
    */
   function startOn() {
     paintWhere();
-    const first = quickPicks(gameOf().packs)[0];
-    if (first) pick(first.pack);
+    /*
+     * A CHOICE STICKS. THE APP ONLY CHOOSES WHEN NOBODY HAS.
+     *
+     * This used to re-pick on every render, and `render()` runs on every state
+     * push — so the bar quietly changed its mind whenever anything happened.
+     * The worst version of that was reported from a real night: **launch a
+     * pack, and the launched pack now has a play time, so `quickPicks` sorts
+     * it away and the bar starts offering a DIFFERENT quiz from the one on the
+     * big screen.** The console and the projector disagreed, with nothing
+     * saying which was right.
+     *
+     * So the auto-pick is the empty state and nothing else: it fills the box
+     * when there is no choice yet, or when the choice is not on this game's
+     * shelf (changing game, or a pack that has since been deleted).
+     */
+    const shelf = gameOf().packs;
+    const stillThere = currentPack && shelf.some((p) => p.id === currentPack.id);
+    if (stillThere) { pick(currentPack); }
+    else {
+      /*
+       * WITH NOTHING CHOSEN, IT STARTS ON WHAT IS ON THE BIG SCREEN.
+       *
+       * This is the other half of the same report, and it is the half a page
+       * reload produced: the box was filled from `quickPicks`, whose order
+       * changes the moment a pack is launched (it now has a play time and
+       * sorts away) — so coming back to the console after launching showed a
+       * DIFFERENT quiz from the one the room was looking at. Panel said one
+       * thing, projector said another, and pressing the big button would have
+       * replaced a running night with a pack nobody chose.
+       *
+       * The running pack is the honest default: it is what the screen says,
+       * it is almost always what you want to relaunch or carry on with, and
+       * anything else is one tap away in the box.
+       */
+      const running = (library && library.running) || {};
+      const onScreen = running.packId && shelf.find((p) => p.id === running.packId);
+      const first = onScreen || (quickPicks(shelf)[0] || {}).pack;
+      if (first) pick(first);
+    }
     paintAlt();
+    paintLive();
     paintFold();
+  }
+
+  /*
+   * WHAT THE BIG SCREEN IS SHOWING, said on the console — always.
+   *
+   * The host's report, after a night: *"the quiz in the launch bit after I
+   * pressed launch didn't say what the big screen said — they need to be
+   * consistent, always."* The chooser is a chooser: it says what the NEXT
+   * press would start, which is not the same question as what is on the
+   * projector right now, and the two are only ever the same by luck.
+   *
+   * So the running pack is stated in its own line, off `library.running` —
+   * the server's own view of the loaded session, so it cannot drift — and it
+   * goes GOLD when it differs from what is in the box, which is the moment
+   * somebody is about to be surprised.
+   */
+  function paintLive() {
+    const running = (library && library.running) || {};
+    const title = String(running.title || '');
+    if (!title) { liveEl.hidden = true; return; }
+    liveEl.hidden = false;
+    const differs = !currentPack || currentPack.title !== title;
+    liveEl.classList.toggle('lb-warn', differs);
+    liveEl.textContent = differs
+      ? `On the big screen now: ${title}`
+      : `On the big screen now — this one`;
   }
 
   /*
@@ -3163,7 +3233,7 @@ function launchBar() {
      */
     el.querySelector('.lb-fold-word').textContent = tonightOpen ? 'Hide' : 'Show';
     for (const part of [el.querySelector('.lb-find'), whyEl, el.querySelector('.lb-row'),
-      chosen, venues, prizeEl]) {
+      chosen, venues, prizeEl, liveEl]) {
       if (part) part.classList.toggle('lb-tucked', !tonightOpen);
     }
     shutWhat.hidden = tonightOpen;
