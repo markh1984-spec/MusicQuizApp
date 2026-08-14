@@ -321,12 +321,79 @@ function openRequestedRead() {
  * feature.
  */
 function ownQuizPanel() {
+  /*
+   * THE SAME QUESTIONS THE GENERATOR ASKS, ANSWERED BY HAND.
+   *
+   * "Write one" used to be a link straight into the editor with nothing
+   * chosen, so the first job was building the shape of a quiz — add a round,
+   * set its type, name it, add ten questions — before writing a single one.
+   * The host's own framing: *"they need to be prompted on opening this with
+   * the same options that I get when I generate one with AI — what is the
+   * round type, how many questions. Essentially the same process but
+   * manually."*
+   *
+   * So it is the same picker, off the same `QUIZ_ROUNDS`, and what changes is
+   * only what happens when you press it: instead of asking Claude, it writes
+   * the empty shape and drops you into the editor with the questions already
+   * laid out to fill in. Their own packs then come out with the same house
+   * structure as the written ones, which is most of what makes a pack feel
+   * like one.
+   */
   const el = node(`
-    <div class="panel">
+    <div class="panel own-write">
       <h3>My packs</h3>
       <div class="tiny">Quizzes you write yourself, marked <b>Yours</b>. Nobody else can read them.</div>
-      <a class="own-open" href="${esc(linkTo('/editor'))}">Write one</a>
+      <div class="gen-row" style="margin-top:10px">
+        <input type="text" class="own-title" maxlength="60" autocomplete="off"
+          placeholder="What is it called — The Crown, Christmas 2026…">
+        <button class="role-make own-go">Start writing</button>
+      </div>
+      <div class="gen-rounds">
+        ${QUIZ_ROUNDS.map(([id, label, count, checked, hint]) => `
+          <label class="gen-round ${checked ? '' : 'off'}" ${hint ? `title="${esc(hint)}"` : ''}>
+            <input type="checkbox" data-round="${id}" ${checked ? 'checked' : ''}>
+            <span class="gen-round-name">${esc(label)}</span>
+            <input type="number" data-count="${id}" value="${count}" min="1" max="30" ${checked ? '' : 'disabled'}>
+          </label>`).join('')}
+      </div>
+      <div class="tiny own-said">Pick the rounds and how many questions each. It lays them out
+        empty and opens the editor — you fill in the words.</div>
     </div>`);
+
+  // The count greys out with its tickbox rather than vanishing, so a number
+  // you typed is still there when you tick it back on — same as the generator.
+  for (const box of el.querySelectorAll('[data-round]')) {
+    box.addEventListener('change', () => {
+      const count = el.querySelector(`[data-count="${box.dataset.round}"]`);
+      count.disabled = !box.checked;
+      box.closest('.gen-round').classList.toggle('off', !box.checked);
+    });
+  }
+
+  const said = el.querySelector('.own-said');
+  el.querySelector('.own-go').addEventListener('click', async () => {
+    const title = el.querySelector('.own-title').value.trim();
+    if (!title) { said.textContent = 'Give it a name first.'; return; }
+    const rounds = [...el.querySelectorAll('[data-round]')]
+      .filter((b) => b.checked)
+      .map((b) => ({
+        type: b.dataset.round,
+        count: Math.max(1, Math.min(30, Number(el.querySelector(`[data-count="${b.dataset.round}"]`).value) || 10)),
+      }));
+    if (!rounds.length) { said.textContent = 'Pick at least one round.'; return; }
+
+    const button = el.querySelector('.own-go');
+    button.disabled = true;
+    said.textContent = 'Laying it out…';
+    try {
+      const made = await postJson('/api/mine/quiz/scaffold', { title, rounds }, { 'X-Host-Key': hostKey });
+      location.href = linkTo('/editor') + (linkTo('/editor').includes('?') ? '&' : '?') + 'quiz=' + encodeURIComponent(made.id);
+    } catch (err) {
+      button.disabled = false;
+      said.textContent = err.message || 'Could not start it.';
+    }
+  });
+
   const warning = ownPacksNote();
   if (warning) el.appendChild(warning);
   return el;
@@ -419,7 +486,7 @@ const TABS = [
     id: 'adverts',
     needs: FEATURES.ADVERTS,
     label: 'Adverts',
-    blurb: 'Slides for between rounds. One set per venue, reused every week.',
+    blurb: 'A set of slides per venue. Put any of them up between rounds.',
     count: () => (library.adverts || []).length,
     render: () => advertsSection(library.adverts || []),
   },
@@ -509,23 +576,29 @@ const TABS = [
     render: () => helpSection(),
   },
   {
-    id: 'settings',
-    label: 'Settings',
-    blurb: 'Your colours, and which tabs you want on screen.',
     /*
-     * Split from My account, because they answer different questions.
+     * MY ACCOUNT AND SETTINGS ARE ONE TAB AGAIN.
      *
-     * My account is what you HAVE — your tier, your room, your library, and
-     * it is a page you read. Settings is what you have switched ON, and it is
-     * a page you operate. One tab holding both meant scrolling past six rungs
-     * of a ladder to change a colour.
+     * They were split because they answer different questions — what you HAVE
+     * and what you have ON, one read and one operated — and that was sound
+     * while Settings carried the whole ladder: three tier panels, prices,
+     * locked rows and a switch against every held feature. Scrolling past six
+     * rungs to change a colour is what forced the split.
+     *
+     * Both halves have since shrunk to almost nothing. The sell became a
+     * comparison table, and the switches collapsed to five once a rule decided
+     * which were worth having at all. What is left is two short pages about
+     * one subject, on a tab bar that scrolls sideways on a phone.
+     *
+     * **HELP DELIBERATELY STAYS ITS OWN TAB.** It is where somebody goes when
+     * something is wrong — including when the thing that is wrong is their
+     * subscription — and burying it inside a page called My account makes it
+     * hardest to find at the moment it matters most. Same reason it carries no
+     * `needs` at all.
      */
-    render: () => settingsSection(),
-  },
-  {
     id: 'account',
     label: 'My account',
-    blurb: 'Who you are, what you are on, and your room.',
+    blurb: 'Who you are, what you are on, your colours and your room.',
     // Always here, whatever is switched off — it is where things are switched
     // back on, so it can never be one of the things that goes away.
     render: () => accountSection(),
@@ -745,28 +818,6 @@ function roomPanel() {
  * different page.
  */
 /**
- * SETTINGS IS WHAT YOU HAVE ON — and nothing else.
- *
- * It used to draw the whole ladder: three tier panels, prices, locked rows
- * with a "+", and a switch against every held feature. That was two pages in
- * one — the SELL and the switches — and it did neither well. The sell is now a
- * comparison table on My account, where the other facts about your account
- * live, and this is left with the one job its own tab blurb claims: your
- * colours, and which tabs you want on screen.
- *
- * **No tier grouping, because grouping five switches by rung is noise** —
- * four of them are Bronze and one is Silver, so it would draw a Gold panel
- * with nothing in it. What you can turn off does not depend on what you pay,
- * beyond holding the thing in the first place.
- */
-function settingsSection() {
-  const wrap = document.createDocumentFragment();
-  wrap.appendChild(schemePanel()[0] || node('<span></span>'));
-  wrap.appendChild(switchPanel());
-  return wrap;
-}
-
-/**
  * The tabs you want on screen.
  *
  * Only the handful that earn a switch — see SWITCHABLE in plans.js for the
@@ -835,6 +886,13 @@ function accountSection() {
   // so it genuinely returns nothing rather than an empty panel.
   const lib = libraryPanel();
   if (lib) wrap.appendChild(lib);
+  /*
+   * The two things you OPERATE, below the facts — because this page is read
+   * far more often than anything on it is changed. Settings used to be a tab
+   * of its own; see the note on the tab entry for why it is not any more.
+   */
+  wrap.appendChild(schemePanel()[0] || node('<span></span>'));
+  wrap.appendChild(switchPanel());
   wrap.appendChild(demoPrizePanel());
   return wrap;
 }
@@ -1120,9 +1178,27 @@ function askForPackPanel(kind) {
       </div>`);
   }
 
+  /*
+   * THE ANSWER SITS ABOVE THE BOX YOU ASKED FROM.
+   *
+   * The request is made here because this is where the want arrives — you
+   * have scrolled the catalogue and the shelf and neither has the thing. But
+   * the reply only ever showed on the Help tab, so you asked in one place and
+   * heard back in another, and this panel reverted to an empty box as though
+   * nothing had happened. Moving the whole thing to Help would have been the
+   * wrong fix: then you would have to remember it exists.
+   */
+  const answered = state.lastAnswered;
+  const heard = answered ? `
+    <div class="ask-heard">
+      <div class="tiny ask-heard-q">You asked: “${esc(answered.text.slice(0, 120))}”</div>
+      <div class="ask-heard-a">${esc(answered.reply)}</div>
+    </div>` : '';
+
   const el = node(`
     <div class="panel ask-pack">
       <h3>Ask for a ${esc(what)}</h3>
+      ${heard}
       <div class="tiny">Name a theme, and anything about the room that would help.
         <br>${promise} <b>One a month.</b></div>
       <textarea class="ask-text" rows="3" maxlength="1200"
@@ -5061,7 +5137,14 @@ function advertsSection(sets) {
       <div class="game-head">
         <div>
           <h2>Advert slides</h2>
-          <div class="tiny">One set per venue. Put one up from your control view, between rounds.</div>
+          <!-- "One set per venue" read as ONE ADVERT per venue, and the host
+               asked what happens if a pub wants to advertise twice across
+               three rounds. They already can — a set holds as many slides as
+               you like and the picker on the control view chooses which goes
+               up, as often as you like. The words were describing the STORAGE
+               rather than what you can do with it. -->
+          <div class="tiny">A set of slides per venue — as many as you like. Put any of them up
+            between rounds from your control view, as often as the night needs.</div>
         </div>
         ${mine ? '<button class="role-make new-set">New set</button>' : ''}
       </div>

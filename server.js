@@ -25,6 +25,7 @@ import { validateBingoPack, normaliseBingoPack, minimumTracks, CARD_SHAPES, shap
 import { fullLibrary, listArchive, venuesUsed, rewardsUsed, rewardsByVenue, loadArchived, serialiseArchive, restoreArchive, saveBingoPack, loadBingoPack, deleteBingoPack, readStats } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
 import { generateQuizPack, buildIntroPlaylists, roundPlan, TOPICAL_ROUNDS, TOPICAL_DAYS, topicalNaming } from './src/generate-quiz.js';
+import { portraitPath } from './src/portraits.js';
 import { importBingoPack } from './src/import-bingo.js';
 import { listAdvertPacks, loadAdvertPack, saveAdvertPack, deleteAdvertPack, validateAdvertPack, normaliseAdvertPack, safeAdvertFile } from './src/adverts.js';
 import {
@@ -3528,6 +3529,93 @@ async function handleWrite(req, res, url, route) {
    * They still do not GENERATE. There is no Claude call anywhere under here;
    * that is the owner's bill and the owner's house style.
    */
+  /*
+   * LAY OUT AN EMPTY QUIZ, in the shape they picked.
+   *
+   * The same rounds and counts the generator asks for, answered by hand — so a
+   * quizmaster writing their own starts with the structure already right and
+   * only has the words left to do. Building that shape in the editor by hand
+   * is add-a-round, set-its-type, name-it, add-ten-questions before writing a
+   * single question.
+   *
+   * **The placeholders are REAL TEXT, not blanks**, because `validateQuiz`
+   * refuses a question with no prompt, a blank option or two identical ones —
+   * and rightly, since those are the faults that reach a room. A quiz that
+   * cannot be saved until it is finished could not be saved at all, so the
+   * scaffold is valid from the first press and every line of it is meant to be
+   * overwritten. An alphabet round takes no options at all, which is why it is
+   * built from `answer` instead.
+   */
+  if (route === '/api/mine/quiz/scaffold' && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.OWN_PACKS)) return true;
+    const room = roomForHost(req, url);
+    const body = await readJson(req, 64 * 1024);
+    const title = String(body.title || '').trim().slice(0, 60);
+    if (!title) return sendJson(res, 400, { error: 'A quiz needs a name.' }), true;
+
+    // `roundPlan` is the whitelist and the clamp, in one place — the same one
+    // the generator uses, so a typo cannot quietly become a round of general
+    // knowledge here and not there.
+    const plan = roundPlan(body.rounds);
+    if (!plan.length) return sendJson(res, 400, { error: 'Pick at least one round.' }), true;
+
+    const quiz = {
+      /*
+       * The id is the title slugged, the same as every generated pack — so a
+       * quiz called "The Crown, Christmas 2026" files itself sensibly and
+       * `saveOwn` refuses anything that would not make a filename.
+       */
+      id: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'my-quiz',
+      title,
+      mine: true,
+      rounds: plan.map((r, ri) => ({
+        id: `r${ri + 1}`,
+        type: r.type,
+        title: {
+          image: 'Whose face is this?',
+          intro: 'Name that intro',
+          multi: 'Pick them all',
+          alphabet: 'First letter',
+        }[r.type] || `Round ${ri + 1}`,
+        ...(r.type === 'image' ? { reveal: 'mix' } : {}),
+        questions: Array.from({ length: r.count }, (_, qi) => ({
+          id: `r${ri + 1}q${qi + 1}`,
+          prompt: `Question ${qi + 1} — write it here`,
+          ...(r.type === 'alphabet'
+            ? { answer: `Answer ${qi + 1}` }
+            : {
+              // Six for a pick-them-all round, four for everything else —
+              // that is the round type, not a preference. See optionsFor().
+              options: Array.from({ length: r.type === 'multi' ? 6 : 4 },
+                (_, oi) => `Option ${'ABCDEF'[oi]}`),
+              ...(r.type === 'multi' ? { correctIndexes: [0, 1] } : { correctIndex: 0 }),
+              /*
+               * A picture question is invalid without an image, so the
+               * scaffold names one the same way the generator does — off the
+               * right answer. It resolves to a lettered placeholder card
+               * today, and once the real name is written in, "Make the
+               * pictures" repoints the pack as it draws. Same path either way,
+               * which is what makes a pack rehearsable before a penny is
+               * spent.
+               */
+              ...(r.type === 'image' ? { image: portraitPath(`Option A ${ri + 1}-${qi + 1}`) } : {}),
+            }),
+        })),
+      })),
+    };
+
+    const clean = normaliseQuiz(quiz, quiz.id);
+    const problems = validateQuiz(clean);
+    if (problems.length) return sendJson(res, 400, { error: 'Could not lay that out', problems }), true;
+    try {
+      saveOwn('quiz', clean.id, clean, { config, paths: room.paths });
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message }), true;
+    }
+    await backUpOwnPack(room, 'quiz', clean.id, clean);
+    return sendJson(res, 200, { ok: true, id: clean.id }), true;
+  }
+
   if (route === '/api/mine/quiz' && req.method === 'POST') {
     if (!allowed(req, res, url, FEATURES.OWN_PACKS)) return true;
     const room = roomForHost(req, url);

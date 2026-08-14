@@ -5134,3 +5134,17 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 /* The one line a shut card keeps. Dim, because it is what you scan past on
    the way to the one you want rather than something to read. */
 .venue-gist { margin-top: 2px; }
+
+
+/* ---- what you heard back, where you asked
+   The request is made under the shop because that is where the want arrives;
+   the reply used to appear only on the Help tab, so you asked in one place and
+   heard back in another. Green, because it is an answer rather than a warning
+   — and above the box, because it is about the thing you already asked. */
+.ask-heard {
+  margin: 10px 0 12px; padding: 10px 12px;
+  border: 1px solid rgba(47, 224, 122, 0.3); border-radius: var(--r-card);
+  background: rgba(47, 224, 122, 0.07);
+}
+.ask-heard-q { margin-bottom: 4px; }
+.ask-heard-a { font-size: var(--fs-note); color: var(--ink); white-space: pre-wrap; }

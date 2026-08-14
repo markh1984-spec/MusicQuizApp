@@ -264,7 +264,43 @@ export class Suggestions {
       nextAllowedAt: nextMonth.getTime(),
       writtenOn: nextPackDay(now),
       day: PACK_DAY_LABEL,
+      /*
+       * THE ANSWER, WHERE THEY ASKED.
+       *
+       * A pack request is made under the shop on the pack tabs, because that
+       * is where the want arrives — you have scrolled the catalogue and the
+       * shelf and neither has the thing. But the REPLY only ever appeared on
+       * the Help tab, so somebody asked in one place and heard back in
+       * another, and the panel they asked from quietly reverted to an empty
+       * box as though nothing had happened.
+       *
+       * So the most recent answered request comes back with the status. A
+       * MONTH of it, and no longer: this is "what happened to the thing I
+       * asked for", not a history, and a reply from the spring sitting on the
+       * pack tab for ever is the clutter rule broken by something that was
+       * useful once.
+       */
+      lastAnswered: this.lastAnsweredPackRequest(id, now),
     };
+  }
+
+  /**
+   * The most recent pack request of theirs that has been replied to, if it was
+   * recent enough to still be the answer to a question they remember asking.
+   */
+  lastAnsweredPackRequest(accountId, now = this.now(), days = 30) {
+    const id = String(accountId || '');
+    if (!id) return null;
+    const since = now - days * 86_400_000;
+    for (const s of this.data.suggestions) {
+      if (s.kind !== PACK_REQUEST_KIND || s.byId !== id) continue;
+      const last = (s.replies || [])[(s.replies || []).length - 1];
+      if (!last) continue;
+      // The list is newest-first, so the first match is the latest.
+      if (Date.parse(last.at || 0) < since) return null;
+      return { text: s.text, reply: last.text, at: last.at };
+    }
+    return null;
   }
 
   openPackRequest(accountId) {
