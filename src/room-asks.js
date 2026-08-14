@@ -133,6 +133,53 @@ export class RoomAsks {
   }
 
   /**
+   * A VOTE for one of the three the app offered.
+   *
+   * There is no text from a phone anywhere in this: the label comes from the
+   * server's own list and the phone sends an id. That is what removes the
+   * moderation question entirely rather than managing it — nothing a stranger
+   * types ever reaches the quizmaster.
+   *
+   * One vote each, and voting again REPLACES it rather than being refused: a
+   * room reading three options out loud to each other changes its mind, and a
+   * button that stops working is a button somebody taps four times.
+   */
+  vote({ ideaId, label, by = '', name = '', night = '', venue = '' } = {}) {
+    const id = String(ideaId || '');
+    const text = cleanAsk(label);
+    if (!id || !text) return { ok: false, reason: 'unknown' };
+    const mine = this.data.asks.findIndex((a) => a.by === by && a.night === night && a.ideaId);
+    const row = {
+      id: `a${this.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+      ideaId: id,
+      text,
+      by,
+      name: String(name || '').slice(0, 28),
+      night: String(night || '').slice(0, 10),
+      venue: String(venue || '').slice(0, 60),
+      at: this.now(),
+      kept: false,
+    };
+    if (mine >= 0) {
+      // Their previous vote, replaced — keeping both would count one person
+      // twice and make the numbers a lie.
+      row.id = this.data.asks[mine].id;
+      row.kept = this.data.asks[mine].kept;
+      this.data.asks[mine] = row;
+    } else {
+      this.data.asks.push(row);
+    }
+    this.save();
+    return { ok: true, ask: row };
+  }
+
+  /** What this phone voted for tonight, so the buttons can show it back. */
+  voteBy(by, night) {
+    const found = this.data.asks.find((a) => a.by === by && a.night === night && a.ideaId);
+    return found ? found.ideaId : '';
+  }
+
+  /**
    * Somebody in the room asks for something.
    *
    * @param {object} ask

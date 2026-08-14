@@ -136,6 +136,14 @@ export class Engine {
        */
       askForRounds: false,
       /*
+       * THE THREE ON OFFER — `[{ id, label }]`, chosen at launch from what the
+       * library has NOT got (see `src/round-ideas.js`). In the state so every
+       * phone in the room votes on the same three, which is the whole reason
+       * the numbers mean anything, and so a restart brings back the same
+       * question rather than a fresh one.
+       */
+      roundIdeas: [],
+      /*
        * WHAT THEY WIN — first, second and third, and all three empty by default.
        *
        * "A free drink at the bar", "£50 bar tab". A fact about tonight like the
@@ -2061,7 +2069,11 @@ export class Engine {
      * store through its own route, never through the game state — a quiz
      * engine has no business holding somebody's shopping list.
      */
-    if (s.phase === PHASES.FINAL && s.askForRounds) view.canAsk = true;
+    if (s.phase === PHASES.FINAL && s.askForRounds && (s.roundIdeas || []).length) {
+      // The three, and nothing else — a phone is told what it may vote for and
+      // sends back an id. No free text goes either way.
+      view.roundIdeas = s.roundIdeas.map(({ id, label }) => ({ id, label }));
+    }
 
     if (s.phase === PHASES.FINAL && s.vouchers) {
       const mine = Object.values(s.vouchers).find((v) => v.winnerId === this.boardIdFor(playerId));

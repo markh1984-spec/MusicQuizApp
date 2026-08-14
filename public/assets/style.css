@@ -696,10 +696,23 @@ body::after {
   background: rgba(255, 255, 255, 0.04);
 }
 .ask-card .sub { font-size: var(--fs-note); font-weight: 800; color: var(--ink-dim); }
-.ask-card .ask-text { width: 100%; min-width: 0; }
-.ask-card .ask-send {
-  padding: 12px; font: inherit; font-weight: 900; cursor: pointer;
-  border: none; border-radius: 10px; color: #12000c;
+/* THREE BUTTONS RATHER THAN A BOX. Nobody types on a phone in a pub, and a
+   tap is a vote that can be counted — where a text box collects opinions of
+   wildly varying use from whoever could be bothered. It also means nothing a
+   stranger writes ever reaches the quizmaster, which is what removes the
+   moderation question rather than managing it. */
+.ask-ideas { display: grid; gap: 8px; }
+.ask-idea {
+  padding: 14px; font: inherit; font-size: var(--fs-field); font-weight: 800;
+  text-align: left; cursor: pointer; color: var(--ink);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--panel-line); border-radius: 10px;
+}
+.ask-idea:hover { border-color: var(--hot); }
+/* The one they chose, in the account's own colours — this is a highlight,
+   which is the half of the scheme that follows the quizmaster. */
+.ask-idea.on {
+  color: #12000c; border-color: transparent;
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
 }
 .ask-card.ask-done { border-color: rgba(63, 219, 133, 0.4); }

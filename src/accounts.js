@@ -361,6 +361,16 @@ export class Accounts {
           .filter((f) => held.has(f) && FEATURE_TIER[f] && switchable(f)),
       )];
     }
+    /*
+     * ASK THE ROOM WHAT THEY WANT NEXT TIME — a switch rather than a gate.
+     *
+     * A plain boolean, off unless somebody turns it on. It grants nothing and
+     * costs nothing: it decides whether three buttons appear on a phone at the
+     * end of a night, which is a preference about how you run a room rather
+     * than something a tier should hold.
+     */
+    if (patch.askRounds !== undefined) prefs.askRounds = Boolean(patch.askRounds);
+
     if (patch.hiddenTabs !== undefined) {
       prefs.hiddenTabs = [...new Set(
         (Array.isArray(patch.hiddenTabs) ? patch.hiddenTabs : [])

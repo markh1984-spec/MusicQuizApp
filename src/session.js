@@ -358,7 +358,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '', rewards = [], comeBack = null, askForRounds = false } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '', rewards = [], comeBack = null, askForRounds = false, roundIdeas = [] } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     const pack = LAUNCHERS[kind].load(this.config, packId, this.paths);
     const normalised = kind === 'bingo' ? normaliseBingoPack(pack, packId) : pack;
@@ -455,6 +455,12 @@ export class Session {
      * night that was not meant to have it.
      */
     this.engine.state.askForRounds = Boolean(askForRounds);
+    // The three on offer, chosen once here — see round-ideas.js for why they
+    // are the same all night and where they come from.
+    this.engine.state.roundIdeas = (Array.isArray(roundIdeas) ? roundIdeas : [])
+      .slice(0, 3)
+      .map(({ id, label }) => ({ id: String(id || ''), label: String(label || '') }))
+      .filter((i) => i.id && i.label);
 
     /*
      * A DELIBERATE LAUNCH ANSWERS THE RESTART NOTICE.

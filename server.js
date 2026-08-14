@@ -38,6 +38,7 @@ import { spotifyConfigured, missingSpotifyConfig, playTrack } from './src/spotif
 import { photoFolder, mergeGigs, safePhotoName, isNightFolder, nightOfGig } from './src/past-gigs.js';
 import { venueHeadcounts } from './src/headcounts.js';
 import { comeBackFor } from './src/comeback.js';
+import { pickIdeas, ideaLabel } from './src/round-ideas.js';
 import { getFile, listDir, listDirs, githubConfigured, missingGithubConfig, putFile, putFiles, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem, privateRepoConfigured, packsRepoConfigured, packsRepoName } from './src/github.js';
 import { Invoices, totals, toPence, money } from './src/invoices.js';
 import { invoicePdf, invoiceFilename } from './src/invoice-pdf.js';
@@ -3639,8 +3640,17 @@ async function handleWrite(req, res, url, route) {
     if (!ownsPlayer(player, body.token)) {
       return sendJson(res, 200, { ok: false, reason: 'unknown' }), true;
     }
-    const saved = room.asks.add({
-      text: body.text,
+    /*
+     * AN ID, NEVER WORDS. The label is looked up from the server's own list,
+     * so nothing a stranger types can reach the quizmaster — which is what
+     * removes the moderation question rather than managing it.
+     */
+    const offered = (state.roundIdeas || []).some((i) => i.id === String(body.ideaId || ''));
+    const label = offered ? ideaLabel(String(body.ideaId || '')) : '';
+    if (!label) return sendJson(res, 200, { ok: false, reason: 'unknown' }), true;
+    const saved = room.asks.vote({
+      ideaId: String(body.ideaId),
+      label,
       by: player.id,
       name: player.name,
       night: nightOfGig(Date.now()) || '',
@@ -4309,19 +4319,30 @@ async function handleWrite(req, res, url, route) {
           now: Date.now(),
         });
         /*
-         * MAY THE ROOM ASK FOR A ROUND at the end of this one?
+         * DOES THIS ROOM ASK WHAT THEY WANT NEXT TIME?
          *
-         * The owner's accounts only, at his own request — *"perhaps have that
-         * for my QM account only"* — which covers the bootstrap key, the owner
-         * and the owner's own linked quizmaster (`ownedBy`). It is worked out
-         * here and written into the state at launch, exactly like the prizes:
-         * a phone must never be able to ask for it on a night that did not
-         * turn it on.
+         * A SWITCH on My account rather than a gate on a tier, at the host's
+         * own reading: it decides whether three buttons appear on a phone at
+         * the end of a night, which is a preference about how somebody runs a
+         * room. Off unless turned on — a quizmaster who has never heard of it
+         * should not have their room asked anything.
+         *
+         * Resolved here and written into the state at launch, exactly like the
+         * prizes: a phone must never be able to ask on a night that did not
+         * turn it on, whatever the setting says by the time it taps.
          */
         const asker = whoIs(req, url);
-        const askForRounds = Boolean(asker
-          && (asker.bootstrap || asker.role === 'owner' || asker.ownedBy));
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online, teamPlay, venue, rewards, comeBack, askForRounds });
+        const askForRounds = Boolean(asker && asker.prefs && asker.prefs.askRounds);
+        /*
+         * The three on offer — from what this room's library has NOT got, so
+         * a Madonna round is never suggested to somebody who owns the Madonna
+         * quiz. Picked once, here, so every phone votes on the same three.
+         */
+        const askIdeas = askForRounds
+          ? pickIdeas((fullLibrary(config, room.id, listOwn(room.paths)).quizzes || [])
+            .map((q) => q.title))
+          : [];
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online, teamPlay, venue, rewards, comeBack, askForRounds, roundIdeas: askIdeas });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();

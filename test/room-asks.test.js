@@ -13,6 +13,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { RoomAsks, cleanAsk, askKey, MAX_ASK, MAX_PER_PLAYER } from '../src/room-asks.js';
 import { Engine, PHASES } from '../src/engine.js';
+import { pickIdeas, ideaLabel, ROUND_IDEAS } from '../src/round-ideas.js';
 
 const box = () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'asks-'));
@@ -101,31 +102,92 @@ const quiz = () => ({
   ] }],
 });
 
-test('THE BOX IS OFF UNLESS THE NIGHT TURNED IT ON', () => {
+const IDEAS = [{ id: 'reggae', label: 'A reggae round' }, { id: 'disco', label: 'A disco round' }];
+
+test('THE THREE ARE OFF UNLESS THE NIGHT TURNED THEM ON', () => {
   const engine = new Engine({ quiz: quiz(), now: () => 1_000_000 });
   const id = engine.join({ name: 'Rob' }).id;
   engine.state.phase = PHASES.FINAL;
-  assert.equal(engine.playerView(id).canAsk, undefined);
+  engine.state.roundIdeas = IDEAS;
+  assert.equal(engine.playerView(id).roundIdeas, undefined);
 
   engine.state.askForRounds = true;
-  assert.equal(engine.playerView(id).canAsk, true);
+  assert.deepEqual(engine.playerView(id).roundIdeas, IDEAS);
 });
 
 test('and only at the END — never mid-quiz', () => {
   const engine = new Engine({ quiz: quiz(), now: () => 1_000_000 });
   engine.state.askForRounds = true;
+  engine.state.roundIdeas = IDEAS;
   const id = engine.join({ name: 'Rob' }).id;
   engine.start();
   engine.next();
-  assert.equal(engine.playerView(id).canAsk, undefined, 'a comment box mid-question is not what this is');
+  assert.equal(engine.playerView(id).roundIdeas, undefined, 'a vote mid-question is not what this is');
+});
+
+test('nothing to offer means nothing is asked', () => {
+  // A library that already has everything: the buttons do not appear at all
+  // rather than appearing empty.
+  const engine = new Engine({ quiz: quiz(), now: () => 1_000_000 });
+  engine.state.askForRounds = true;
+  engine.state.roundIdeas = [];
+  const id = engine.join({ name: 'Rob' }).id;
+  engine.state.phase = PHASES.FINAL;
+  assert.equal(engine.playerView(id).roundIdeas, undefined);
 });
 
 test('a game restored from before this existed simply has no box', () => {
   const engine = new Engine({ quiz: quiz(), now: () => 1_000_000 });
   const old = JSON.parse(JSON.stringify(engine.state));
   delete old.askForRounds;
+  delete old.roundIdeas;
   const back = new Engine({ quiz: quiz(), state: old, now: () => 1_000_000 });
   const id = back.join({ name: 'Rob' }).id;
   back.state.phase = PHASES.FINAL;
-  assert.equal(back.playerView(id).canAsk, undefined);
+  assert.equal(back.playerView(id).roundIdeas, undefined);
+});
+
+// --------------------------------------------------------------- the three
+
+test('THE THREE ARE ONES THE LIBRARY HAS NOT GOT', () => {
+  // Offering a Motown round to somebody who owns the Motown quiz wastes one of
+  // three slots and makes the app look like it has not read its own shelf.
+  const titles = ['The Motown Quiz', 'Reggae and Ska Classics', 'The 1980s Pop Music Quiz'];
+  const ideas = pickIdeas(titles, { count: 30, random: () => 0 });
+  const ids = ideas.map((i) => i.id);
+  assert.ok(!ids.includes('motown'));
+  assert.ok(!ids.includes('reggae'));
+  assert.ok(!ids.includes('eighties'), 'an 80s pack covers the 80s round');
+  assert.ok(ids.includes('disco'), 'and everything else is still on offer');
+});
+
+test('it offers three, and the same three for one injected clock', () => {
+  const ideas = pickIdeas([], { random: () => 0.5 });
+  assert.equal(ideas.length, 3);
+  assert.deepEqual(ideas, pickIdeas([], { random: () => 0.5 }));
+  // Shape only: an id and a label, because that is all a phone is ever told.
+  assert.deepEqual(Object.keys(ideas[0]).sort(), ['id', 'label']);
+});
+
+test('a library with everything asks nothing rather than repeating itself', () => {
+  const everything = ROUND_IDEAS.flatMap((i) => i.words);
+  assert.deepEqual(pickIdeas(everything), []);
+});
+
+test('A VOTE CARRIES AN ID, AND THE WORDS COME FROM OUR OWN LIST', () => {
+  // Which is the whole reason there is nothing to moderate.
+  assert.equal(ideaLabel('reggae'), 'A reggae round');
+  assert.equal(ideaLabel('not-a-thing'), '');
+});
+
+test('one vote each, and voting again replaces it', () => {
+  const asks = box();
+  asks.vote({ ideaId: 'reggae', label: 'A reggae round', by: 'p1', night: '2026-08-14' });
+  asks.vote({ ideaId: 'disco', label: 'A disco round', by: 'p1', night: '2026-08-14' });
+  assert.equal(asks.all.length, 1, 'a change of mind is not a second voice');
+  assert.equal(asks.all[0].text, 'A disco round');
+  assert.equal(asks.voteBy('p1', '2026-08-14'), 'disco');
+  // Somebody else is a second voice.
+  asks.vote({ ideaId: 'reggae', label: 'A reggae round', by: 'p2', night: '2026-08-14' });
+  assert.equal(asks.grouped().length, 2);
 });

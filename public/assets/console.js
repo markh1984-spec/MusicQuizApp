@@ -461,8 +461,18 @@ const TABS = [
        * It is the answer to "what should I write next", so it belongs where
        * that is decided — and on ONE tab, because a queue drawn in two places
        * is two lists that disagree about what has been triaged.
+       *
+       * UNGATED, and it was gated on `owner.generate` for a day — which meant
+       * a quizmaster could turn the switch on in My account, have their room
+       * vote all night, and never be shown a single number. A switch whose
+       * answer is invisible to the person who pressed it is worse than no
+       * switch. Generating is the owner's; wanting to know what the room asked
+       * for is everybody's, and what they do about it — write their own, buy
+       * one, request one — is their business rather than this panel's.
+       * `asksPanel()` draws nothing at all when there is nothing to say, so an
+       * account that never turns it on never sees it.
        */
-      if (can(FEATURES.GENERATE)) wrap.appendChild(asksPanel());
+      wrap.appendChild(asksPanel());
       if (can(FEATURES.GENERATE)) wrap.appendChild(quizGeneratePanel(library.generation || {}));
       if (can(FEATURES.OWN_PACKS) && !can(FEATURES.CATALOGUE)) wrap.appendChild(ownQuizPanel());
       return wrap;
@@ -921,6 +931,70 @@ function switchPanel() {
   return el;
 }
 
+/**
+ * ASK THE ROOM WHAT THEY WANT NEXT TIME — one switch, off by default.
+ *
+ * The host's own call: *"this is the sort of feature that should have an
+ * on/off button in the QM's settings tab."* It is not a tier thing — it grants
+ * nothing and costs nothing — it is a decision about how you run a room, and
+ * a quizmaster who has never heard of it should not have their customers
+ * asked anything.
+ *
+ * The same switch shape as everything else on this page and as the hat in the
+ * top right, deliberately: one shape for "is this on" across the app is
+ * recognised rather than read.
+ */
+function askRoundsPanel() {
+  const on = Boolean((library.prefs || {}).askRounds);
+  const el = node(`
+    <div class="panel">
+      <h3>Ask the room what they want next</h3>
+      <div class="tiny">At the final scores, every phone that played is offered three
+        rounds your library has not got. They tap one; you get the count. Nothing is
+        typed, so there is nothing to read but the numbers.</div>
+      <div class="acct-toggles">
+        <div class="acct-toggle">
+          <span class="acct-toggle-what"><b>Ask for a round</b><br>
+            <span class="tiny">Off unless you turn it on.</span></span>
+          <span class="hat-switch ask-switch" data-on="${on ? '1' : '0'}">
+            <button class="hat-half ${on ? 'live' : ''}" data-want="1">On</button>
+            <button class="hat-half ${on ? '' : 'live'}" data-want="0">Off</button>
+          </span>
+        </div>
+      </div>
+      <div class="tiny ask-switch-said"></div>
+    </div>`);
+
+  const sw = el.querySelector('.ask-switch');
+  const said = el.querySelector('.ask-switch-said');
+  for (const half of sw.querySelectorAll('.hat-half')) {
+    half.addEventListener('click', async () => {
+      const want = half.dataset.want;
+      if (sw.dataset.on === want) return;
+      sw.dataset.on = want;
+      for (const h of sw.querySelectorAll('.hat-half')) h.classList.toggle('live', h.dataset.want === want);
+      try {
+        const res = await fetch(keyed('/api/me/prefs'), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
+          body: JSON.stringify({ askRounds: want === '1' }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Could not save that');
+        library.prefs = data.prefs;
+        // It is read at LAUNCH, so a night already running keeps what it was
+        // launched with — worth saying, because a switch that appears to do
+        // nothing tonight looks broken.
+        said.textContent = 'Saved. It takes effect on the next night you launch.';
+      } catch (err) {
+        said.style.color = 'var(--bad)';
+        said.textContent = err.message;
+      }
+    });
+  }
+  return el;
+}
+
 function accountSection() {
   const wrap = document.createDocumentFragment();
   // Who you are and what you are on, in one card at the top. They were two,
@@ -942,6 +1016,7 @@ function accountSection() {
    * far more often than anything on it is changed. Settings used to be a tab
    * of its own; see the note on the tab entry for why it is not any more.
    */
+  wrap.appendChild(askRoundsPanel());
   wrap.appendChild(schemePanel()[0] || node('<span></span>'));
   wrap.appendChild(switchPanel());
   wrap.appendChild(demoPrizePanel());

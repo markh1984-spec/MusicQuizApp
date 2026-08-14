@@ -1373,12 +1373,15 @@ function buildBoard(s) {
  * conversation, and a box that reappears is an invitation to keep typing.
  */
 function askCard(s) {
-  if (!s.canAsk) return '';
+  const ideas = s.roundIdeas || [];
+  if (!ideas.length) return '';
   return `
     <div class="ask-card">
-      <div class="sub">Ask for a round next time</div>
-      <input class="ask-text" type="text" maxlength="60" placeholder="A reggae round">
-      <button class="ask-send">Send it</button>
+      <div class="sub">What should we do next time?</div>
+      <div class="ask-ideas">
+        ${ideas.map((i) => `
+          <button class="ask-idea" data-idea="${esc(i.id)}">${esc(i.label)}</button>`).join('')}
+      </div>
       <div class="tiny ask-said" hidden></div>
     </div>`;
 }
@@ -1395,34 +1398,35 @@ function askCard(s) {
 function wireAsk() {
   const card = document.querySelector('.ask-card');
   if (!card) return;
-  const box = card.querySelector('.ask-text');
-  const send = card.querySelector('.ask-send');
   const said = card.querySelector('.ask-said');
-  send.addEventListener('click', async () => {
-    const text = box.value.trim();
-    if (!text) { box.focus(); return; }
-    send.disabled = true;
-    try {
-      const out = await postJson('/api/ask', { playerId: me.id, token: me.token, text, joinCode: roomCode() });
-      if (out.ok) {
-        card.classList.add('ask-done');
-        box.hidden = true;
-        send.hidden = true;
-        said.hidden = false;
-        said.textContent = 'Asked for — thanks.';
-        return;
+  for (const button of card.querySelectorAll('.ask-idea')) {
+    button.addEventListener('click', async () => {
+      /*
+       * The chosen one lights up and the others stay pressable, because a room
+       * reading three options out loud to each other changes its mind — and a
+       * vote that cannot be changed is a button somebody taps four times.
+       */
+      const wasOn = card.querySelector('.ask-idea.on');
+      if (wasOn) wasOn.classList.remove('on');
+      button.classList.add('on');
+      said.hidden = false;
+      said.textContent = 'Thanks — noted.';
+      try {
+        const out = await postJson('/api/ask', {
+          playerId: me.id, token: me.token, ideaId: button.dataset.idea, joinCode: roomCode(),
+        });
+        if (!out.ok) {
+          button.classList.remove('on');
+          if (wasOn) wasOn.classList.add('on');
+          said.textContent = 'Too late for tonight.';
+        }
+      } catch {
+        button.classList.remove('on');
+        if (wasOn) wasOn.classList.add('on');
+        said.textContent = 'Could not send that. Try again in a moment.';
       }
-      said.hidden = false;
-      said.textContent = out.reason === 'enough'
-        ? 'That is enough for tonight — the quizmaster has your ideas.'
-        : 'Too late for tonight.';
-      send.disabled = false;
-    } catch {
-      said.hidden = false;
-      said.textContent = 'Could not send that. Try again in a moment.';
-      send.disabled = false;
-    }
-  });
+    });
+  }
 }
 
 /**
