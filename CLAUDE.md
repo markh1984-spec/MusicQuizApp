@@ -7,6 +7,26 @@ not undo work by accident or re-ask settled questions.
 **Keep this file current.** When you make a decision that a future session
 would need to know, add it here in the same turn.
 
+## THE OUTSTANDING WORK IS IN `TODO.md`. READ IT FIRST.
+
+**Only this file loads on its own, so `TODO.md` has to be opened
+deliberately** — and it is the live list of what is actually left to build,
+with the decisions already taken written into each entry.
+
+So when the host names a feature and nothing else — *"headcount per venue"* —
+**that is not a thin brief, it is a pointer.** Find the entry, read the
+decisions recorded under it, and build what it says. Asking him to re-explain
+something already written down there is the failure this arrangement exists to
+prevent.
+
+**A finished item is DELETED from `TODO.md`, never ticked.** Its reasoning
+lives here instead. A build plan left behind for a thing that already exists
+is a trap, and it has caught a session once: the picture-drawing step was
+nearly rebuilt because the plan for it was still sitting in the list.
+
+**And the reasoning behind everything here is in `docs/`** — see *Where the
+reasoning lives* below. Open the one you are touching; do not read them all.
+
 ---
 
 ## What this is
