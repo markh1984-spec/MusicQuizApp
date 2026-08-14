@@ -4761,8 +4761,15 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    that decides whether the people in front of you can join. Same shape as the
    hat switch's own narrow rule — lose padding, then lose the least useful
    words — and it is what keeps the control view inside 320px, where the bar
-   is already carrying a logo and three menu chips. */
-@media (max-width: 560px) {
+   is already carrying a logo and three menu chips.
+
+   700 rather than 560, because between the two the console's topbar had
+   nowhere left to put it: its own wrap rule is 430 and this was 560, so at
+   620px the full chip pushed the page 4px sideways with nothing on screen
+   explaining why. Only ever visible on the host key, which is why it survived
+   — and dropping the credential earlier costs nothing, because the ROOM is
+   the half worth keeping at any width. */
+@media (max-width: 700px) {
   .mode-chip { padding: 6px 10px; font-size: var(--fs-tag); }
   .mode-chip .mc-how { display: none; }
 }
@@ -4931,6 +4938,9 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 }
 .diary-add { display: grid; gap: 8px; margin-top: 14px; }
 .diary-add .venue-select, .diary-add .venue-free, .diary-add input { min-width: 0; max-width: 100%; }
+/* The venue box is a select AND a free-text input; one cell holds both, and
+   only one of them is ever visible. */
+.d-venue { display: grid; min-width: 0; }
 @media (min-width: 620px) {
   .diary-add { grid-template-columns: auto 1fr 1fr auto; align-items: center; }
 }

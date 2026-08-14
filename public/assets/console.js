@@ -4554,7 +4554,13 @@ function diarySection() {
       <div class="diary-list"></div>
       <div class="diary-add">
         <input class="d-date" type="date" aria-label="Date">
-        ${venueBox()}
+        <!-- WRAPPED, because venueBox() is TWO elements — a select and the
+             free-text box that replaces it for a one-off. Left as siblings
+             they are two grid items, so picking "Somewhere else" grew a fifth
+             column in a four-column grid and took the page sideways at 620px.
+             wireVenue and venueFrom both use querySelector, which searches
+             descendants, so nesting costs nothing. -->
+        <div class="d-venue">${venueBox()}</div>
         <input class="d-note" type="text" maxlength="120" placeholder="Anything worth remembering (optional)">
         <button class="role-make d-go">Add a night</button>
       </div>
