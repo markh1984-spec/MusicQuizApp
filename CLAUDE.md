@@ -1209,7 +1209,7 @@ of them is a budget rather than an incidental detail. As built:
 | Where | What it does |
 |---|---|
 | `freshState()` | declares it `false` |
-| `session.launch()` | sets it from tonight's picker |
+| `session.launch()` | sets it from Tonight's own switch |
 | the launch route | reads it off the body |
 | `playerView()` | reports it, and **the one real branch** — the prompt and the screen's own extras |
 | `play.js` | renders the question **if it was sent** |
@@ -1229,6 +1229,27 @@ send the prompt degrades to the pub layout rather than to an empty box.
 worth writing down here.** Chat, teams and the media layer all hang off the
 same flag; if one of them needs a second branch inside the engine, that is a
 design decision to argue about rather than a line to slip in.
+
+**THE VIDEO IS MEANT TO BE NATIVE, ON CLOUDFLARE — not Zoom, not Teams.** The
+host's own words on 14 August 2026: *"no online mode needs to have Cloudflare
+wired in"*, *"not using Teams or Zoom, it needs to be native to the app"*.
+Written down here because it was settled in a chat and existed nowhere in the
+repository, so a fresh session reading the code would have concluded the
+opposite — as one did, out loud, the same afternoon. **NONE OF IT IS BUILT
+YET**: there is no `getUserMedia`, no WebRTC, no Cloudflare call anywhere, and
+the media layer is the honest gap rather than a thing that half exists. What
+online mode does today is the two rows above — the prompt goes to the phone
+and chat turns on — and that is all it does.
+
+It is worth being precise about which half is which, because the pricing
+already depends on it: `FEATURES.STREAM` is sold as the thing that pays for
+itself per use, and the per-use cost IS the video. The boolean is free; the
+faces are not.
+
+**The SWITCH is built and the transport is not**, and that is deliberate
+rather than an oversight — the flag decides what a phone is told, which is
+engine work and testable today, and it will not change shape when the video
+arrives underneath it.
 
 **And prove it with bytes, not with tests.** `node scripts/pub-unchanged.mjs
 HEAD~1 --ignore online` runs the old engine and the new one side by side over
@@ -1703,6 +1724,37 @@ surprised. When they match it says *"On the big screen now — this one"*. A
 chooser answers "what would the next press start"; that is a different
 question from "what is on the projector", and they are only ever the same by
 luck.
+
+**IN THE ROOM / ONLINE IS A SWITCH IN THE HEAD, beside the venue** — `lbOnline`
+and `.lb-mode`. It was a `<select>` behind Set it up, filed with the look and
+the card shape, and it is not that kind of decision: getting the look wrong
+costs a night some colours, and getting THIS wrong puts the question on sixty
+phones in a pub, which breaks rule 8 in front of a paying room and cannot be
+undone mid-question. **A setting whose wrong value ruins the night belongs
+where it is read, not where it is hunted for.** It is also the one control here
+with exactly two answers, and a dropdown for two answers hides one of them.
+
+Four things, all measured at 1280, 390 and 320:
+
+- **The venue says which room; this says whether there is one.** They are the
+  two facts that place a night, so they sit together.
+- **Only the ONLINE half wears the gradient.** "In the room" is very nearly
+  every night, and a permanently filled gradient sitting directly above Launch
+  would be a second "press this" on the one section allowed exactly one. Off is
+  silent, on is unmissable — the same argument that keeps Delete outlined.
+- **SHUT, THE LINE STILL SAYS "Online"**, and that is most of why it was worth
+  moving: folded away is exactly the state somebody launches from without
+  opening the panel. "In the room" adds nothing to that line, because a label
+  that is always there is a label nobody reads. At 320 the pack title
+  ellipsises hard behind it — accepted, because it was already truncated to
+  "The 198…" at that width and the dangerous fact is the one worth the pixels.
+- **It is gone from Set it up rather than kept as a second way in**, exactly
+  like the venue picker before it. Two controls for one field is how a night
+  gets launched with the setting the other one was showing.
+
+**Not remembered on the device**, unlike the fold: online is a fact about one
+evening, and a remembered one would put a pub's question on sixty phones
+because of a Zoom quiz three weeks ago.
 
 **THE VENUE IS A CONTROL AT THE TOP, not a caption and not a dropdown buried
 in Set it up.** It decides the prizes, the voucher and what the night is filed

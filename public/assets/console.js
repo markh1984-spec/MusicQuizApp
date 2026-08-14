@@ -2750,6 +2750,28 @@ let lbVenue = null;
 let lbVenueOpen = false;
 
 /*
+ * IN THE ROOM, OR ONLINE — up in the head, beside the venue.
+ *
+ * It was a dropdown behind Set it up, filed with the look and the card shape,
+ * and it is not the same kind of decision as those. Getting the look wrong
+ * costs a night some colours; getting THIS wrong sends the question to sixty
+ * phones in a pub, which breaks rule 8 in front of a paying room and cannot be
+ * undone mid-question. A setting whose wrong value ruins the night belongs
+ * where it is READ, not where it is hunted for.
+ *
+ * A two-state switch rather than a `<select>`, and that is the app's own shape
+ * for "is this on" — the hat in the top right and every feature row use it, so
+ * it is recognised rather than read. It is also the one control here with
+ * exactly two answers; a dropdown for two answers hides one of them.
+ *
+ * NOT remembered on the device, the same reasoning as the venue: online is a
+ * fact about one evening, and a remembered one would put a pub's question on
+ * sixty phones because of a Zoom quiz three weeks ago. Off is the default and
+ * off is almost every night.
+ */
+let lbOnline = false;
+
+/*
  * The pack being dragged, if any. Module level because a drag crosses two
  * elements and `dataTransfer` cannot be read during `dragover` — the one
  * moment the bar needs to know whether what is over it is a pack.
@@ -2811,6 +2833,16 @@ function launchBar() {
           <button class="minor lb-venue-other" type="button">Somewhere else…</button>
           <a class="minor lb-venue-add" href="?tab=venues">Add a venue</a>
         </div>
+      </div>
+      <!-- WHERE THEY ARE. Beside the venue rather than behind Set it up: the
+           venue says which room, this says whether there is one. The reasoning
+           is on the lbOnline declaration above. -->
+      <div class="lb-mode">
+        <span class="hat-switch lb-mode-switch" data-on="0">
+          <button class="hat-half live" type="button" data-online="0">In the room</button>
+          <button class="hat-half" type="button" data-online="1">Online</button>
+        </span>
+        <span class="tiny lb-mode-said"></span>
       </div>
       <div class="tiny prize-line lb-prize" hidden></div>
       <!-- WHAT IS ACTUALLY ON THE PROJECTOR, which is a different question
@@ -2874,6 +2906,33 @@ function launchBar() {
     moreBtn.setAttribute('aria-expanded', lbOpen ? 'true' : 'false');
   });
   const shutWhat = el.querySelector('.lb-shut-what');
+  const modeRow = el.querySelector('.lb-mode');
+  const modeSwitch = modeRow.querySelector('.lb-mode-switch');
+  const modeSaid = modeRow.querySelector('.lb-mode-said');
+  /*
+   * ONLINE SAYS WHAT IT WILL DO; the room says nothing.
+   *
+   * The whole risk here is switching it on by accident and putting the
+   * question on sixty phones in a pub, so the ON side states the consequence
+   * in the words that matter — and the OFF side, which is almost every night,
+   * stays silent rather than explaining the normal case back to somebody.
+   */
+  function paintMode() {
+    modeSwitch.dataset.on = lbOnline ? '1' : '0';
+    for (const half of modeSwitch.querySelectorAll('.hat-half')) {
+      half.classList.toggle('live', (half.dataset.online === '1') === lbOnline);
+    }
+    modeSaid.textContent = lbOnline ? 'The question goes on their phones, and chat is on.' : '';
+  }
+  for (const half of modeSwitch.querySelectorAll('.hat-half')) {
+    half.addEventListener('click', () => {
+      const want = half.dataset.online === '1';
+      if (want === lbOnline) return;
+      lbOnline = want;
+      paintMode();
+      paintFold();
+    });
+  }
   const chosen = el.querySelector('.lb-chosen');
   const gameOf = () => games.find((g) => g.id === (gamePick ? gamePick.value : games[0].id)) || games[0];
 
@@ -3139,9 +3198,11 @@ function launchBar() {
         <label class="pack-shape">Look
           <select class="look-pick">${lookOptions(pack)}</select>
         </label>
-        <label class="pack-shape">Where
-          <select class="where-pick">${whereOptions()}</select>
-        </label>
+        <!-- WHERE IS NOT IN HERE ANY MORE. It is the switch up in the head,
+             beside the venue, and it is deliberately not in two places: two
+             controls for one field is how a night gets launched with the
+             setting the other one was showing. Same reasoning that took the
+             venue picker out of here. -->
         <label class="pack-shape">Playing
           <select class="play-pick">${playingOptions()}</select>
         </label>
@@ -3183,7 +3244,9 @@ function launchBar() {
         shape: shapePick ? JSON.parse(shapePick.value) : null,
         prizes: Number(prizePick?.value) || 0,
         look: chosen.querySelector('.look-pick')?.value || '',
-        online: chosen.querySelector('.where-pick')?.value === 'online',
+        // ONE source for whether tonight is online — the switch in the head,
+        // which is the only place it can be set now.
+        online: lbOnline,
         teamPlay: chosen.querySelector('.play-pick')?.value === 'teams',
         // ONE source for where tonight is — the picker at the top, which is
         // the only place it can be set now. Two controls for one field is how
@@ -3325,11 +3388,22 @@ function launchBar() {
      */
     el.querySelector('.lb-fold-word').textContent = tonightOpen ? 'Hide' : 'Show';
     for (const part of [el.querySelector('.lb-find'), whyEl, el.querySelector('.lb-row'),
-      chosen, venues, prizeEl, liveEl]) {
+      chosen, venues, prizeEl, liveEl, modeRow]) {
       if (part) part.classList.toggle('lb-tucked', !tonightOpen);
     }
     shutWhat.hidden = tonightOpen;
-    shutWhat.textContent = currentPack ? currentPack.title : '';
+    /*
+     * SHUT, THE LINE STILL SAYS IT IS ONLINE — and that is most of why the
+     * switch was worth moving. Folded away is exactly the state somebody
+     * launches from without opening the panel, so the one setting that can put
+     * a question on sixty phones in a pub has to survive the fold.
+     *
+     * Only when it is ON. Adding "In the room" to every shut line would print
+     * the normal case on a row that has to stay one row, and a label that is
+     * always there is a label nobody reads.
+     */
+    shutWhat.textContent = [lbOnline ? 'Online' : '', currentPack ? currentPack.title : '']
+      .filter(Boolean).join(' · ');
   }
 
   /*
@@ -3407,6 +3481,7 @@ function launchBar() {
   fold.addEventListener('click', (ev) => { ev.stopPropagation(); toggleFold(); });
   el.querySelector('.lb-head').addEventListener('click', () => { if (!tonightOpen) toggleFold(); });
 
+  paintMode();
   startOn();
   return el;
 }

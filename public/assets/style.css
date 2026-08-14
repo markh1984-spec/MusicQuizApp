@@ -4885,6 +4885,24 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .lb-venue-hit:hover, .lb-venue-hit:focus { background: rgba(255, 255, 255, 0.09); outline: none; }
 .lb-venue-foot { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .lb-venue-add { text-decoration: none; }
+/* IN THE ROOM, OR ONLINE. The app's own On/Off shape, so it is recognised
+   rather than read — with ONE deliberate difference, and it is the same
+   argument that keeps Delete outlined rather than filled.
+
+   Only the ONLINE half wears the gradient. "In the room" is the state of very
+   nearly every night, and a permanently filled gradient block sitting directly
+   above Launch would be a second "press this" on the one section that is
+   allowed exactly one — which costs the real button its meaning. So the
+   ordinary night shows no extra fill at all, and the colour arrives precisely
+   when the setting is the one that can put a question on sixty phones in a
+   pub. Off is silent; on is unmissable. */
+.lb-mode { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.lb-mode-switch .hat-half.live { background: rgba(255, 255, 255, 0.14); color: var(--ink); }
+.lb-mode-switch .hat-half[data-online="1"].live {
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
+  color: #12000c;
+}
+.lb-mode-said { color: var(--ink-dim); min-width: 0; }
 .lb-prize { margin-top: 8px; }
 /* What is on the projector right now. Gold when it is NOT what the box says,
    because that is the moment somebody is about to be surprised — the same
