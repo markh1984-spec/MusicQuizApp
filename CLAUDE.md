@@ -883,6 +883,35 @@ to save context was classified as a 1 — genuine benefit both ways — when
 Category 4 is worth its own line: **inventing a small job to round a session
 off is a 4.** Doing nothing and saying so is correct.
 
+### Prefer the MECHANICAL transform to the model-mediated one
+
+Learned on 14 August 2026, splitting this file, and it generalises well past
+documentation.
+
+The split was called impossible in one session and then done in one session.
+The wrong assumption was not about SIZE — it was that every section had to be
+read and written out again, which would have been ~50,000 tokens of output.
+What actually did it was a script moving whole sections **by line number**,
+never touching the prose. **A 4,000-line move costs the same as a 40-line one
+when nothing reads the content.**
+
+So when a job looks too big, the question to ask first is not "can I do half
+of it" but **"is there a version of this that a script does and I only
+supervise?"** Moving, renaming, reordering, extracting, counting and checking
+are all in that category. Judgement — which rule matters, what a control
+should be called — is not, and should stay slow.
+
+It has a safety side too, which is the better argument: a script cannot
+quietly reword something on the way through. The hand-written half of that
+split was both the expensive part AND the only part that could have lost a
+rule.
+
+**And a cleanup frees nothing in the session that performs it.** This file was
+already loaded before the split began; that cost was spent and unrecoverable.
+The saving lands on the NEXT session. Tidying compounds across sessions, never
+within one — so "clean up a bit to make room" does not work, and the reason to
+do it is the sessions after this one.
+
 ### "GSD mode" — Get Shit Done
 
 **If he types `GSD mode`, switch to it and STAY in it until the to-do list is
