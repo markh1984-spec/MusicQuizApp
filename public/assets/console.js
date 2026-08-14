@@ -3997,8 +3997,17 @@ function launchBar() {
      * The empty slots. Always drawn up to three, and one extra beyond that so
      * a fourth pack is still possible without the row implying a limit that
      * is really twelve ROUNDS rather than three packs.
+     *
+     * **A BINGO NIGHT GETS EXACTLY ONE**, and none once it is filled. A bingo
+     * pack is a track list with no rounds in it on disk, so there is nothing
+     * to compose — three slots would be three invitations to do a thing that
+     * cannot be done, which is the clutter rule wearing its worst face: a
+     * control that looks available and is not.
      */
-    const slots = Math.max(PACK_SLOTS - packs.length, packs.length ? 1 : PACK_SLOTS);
+    const composes = gameOf().id === 'quiz';
+    const slots = composes
+      ? Math.max(PACK_SLOTS - packs.length, packs.length ? 1 : PACK_SLOTS)
+      : (packs.length ? 0 : 1);
     for (let i = 0; i < slots; i++) {
       const empty = node(`
         <button class="lb-tile lb-drop" type="button">
