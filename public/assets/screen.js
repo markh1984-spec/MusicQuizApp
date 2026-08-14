@@ -907,7 +907,12 @@ function renderWinner(s) {
       <div class="kicker">${alsoFirst.length > 1 ? 'It is a tie' : 'Tonight&rsquo;s winner'}</div>
       <h1 class="grad-text">${alsoFirst.map((p) => esc(p.name)).join(' &amp; ')}</h1>
       <div class="score">${winner.score.toLocaleString('en-GB')} points</div>
-      ${runners.length ? `<div class="runners">${runners.map((p) => `<span>${p.position}. ${esc(p.name)} — ${p.score.toLocaleString('en-GB')}</span>`).join('')}</div>` : ''}
+      ${runners.length ? `<div class="runners">${runners.map((p) => `
+        <div class="runner place-${p.position}">
+          <span class="rplace">${p.position}</span>
+          <span class="rname">${esc(p.name)}</span>
+          <span class="rscore">${p.score.toLocaleString('en-GB')}</span>
+        </div>`).join('')}</div>` : ''}
     </div>
   `);
 }

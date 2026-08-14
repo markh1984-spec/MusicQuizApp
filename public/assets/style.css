@@ -504,7 +504,40 @@ body::after {
 .winner .kicker { font-size: 3vh; letter-spacing: 0.5em; text-transform: uppercase; color: var(--gold); }
 .winner h1 { font-size: 13vh; margin: 0; font-weight: 900; letter-spacing: -0.04em; line-height: 0.95; }
 .winner .score { font-size: 7vh; font-weight: 900; }
-.winner .runners { display: flex; gap: 2vw; justify-content: center; font-size: 2.6vh; margin-top: 3vh; color: var(--ink-dim); }
+/* SECOND AND THIRD ARE A PODIUM, not a caption under the winner.
+   They were one dim 2.6vh line of "2. Name — 1,240", which from the back of a
+   pub is unreadable — so the only result the room could actually see was
+   first place, and everybody who came second went unnamed. Being on the
+   podium is most of what a quiz night gives the people who did not win it.
+
+   Gold stays first place's alone (it is the trophy colour everywhere in this
+   app); the medal tints below are what tells 2nd from 3rd, which is the one
+   place a metal genuinely carries the meaning. A fourth row, if the board has
+   one, keeps the plain treatment — it is context, not a placing. */
+.winner .runners {
+  display: flex; gap: 1.6vw; justify-content: center;
+  margin-top: 4vh; flex-wrap: wrap;
+}
+.winner .runner {
+  display: grid; gap: 0.4vh; justify-items: center;
+  padding: 1.8vh 2.4vw;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.winner .rplace {
+  font-size: 2.4vh; font-weight: 900; line-height: 1;
+  width: 4.4vh; height: 4.4vh; border-radius: 999px;
+  display: grid; place-items: center;
+  color: #17131b; background: rgba(255, 255, 255, 0.55);
+}
+.winner .rname { font-size: 4vh; font-weight: 800; color: var(--ink); line-height: 1.15; }
+.winner .rscore { font-size: 2.8vh; font-weight: 700; color: var(--ink-dim); }
+/* Silver and bronze. Only these two — a fourth place has no medal. */
+.winner .place-2 { border-color: rgba(214, 218, 226, 0.5); background: rgba(214, 218, 226, 0.09); }
+.winner .place-2 .rplace { background: #d6dae2; }
+.winner .place-3 { border-color: rgba(205, 140, 88, 0.5); background: rgba(205, 140, 88, 0.09); }
+.winner .place-3 .rplace { background: #cd8c58; }
 
 /* ---- connection warning */
 .conn-warn {
