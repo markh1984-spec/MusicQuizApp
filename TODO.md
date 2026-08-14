@@ -659,6 +659,77 @@ not the standard for the thing that leaks an answer. And `pub-unchanged.mjs`
 will flag this as a payload change — it is a legitimate one, and the diff
 should be exactly the score field on a phone mid-question.
 
+### 5f. THE INTRO ROUND'S CUE IS HALF-WIRED — and one half is a scoring bug
+
+Two faults in one place, found by the host on 14 August 2026 while asking
+whether a wrong track is easy to fix. Both live in `cue` on an intro question,
+and they want doing as one job.
+
+#### a. Editing a track does NOT repoint what actually plays
+
+The editor offers **Title, Artist, From and Hint** and writes them straight
+onto `q.cue`. It does not touch `cue.spotifyUri`, which is what
+`startIntroTrack()` hands to Spotify.
+
+So correcting a wrong track leaves the control view saying the RIGHT thing and
+the speakers playing the WRONG one — and you would reasonably believe it was
+fixed. **That is worse than not editing it**, and it is only discoverable with
+a room listening. A cue added by hand is the same fault from the other end:
+`q.cue = { title, artist, from, hint }` has no URI at all, so a question you
+wrote yourself silently never autoplays.
+
+The fix: **re-resolve on edit, and SHOW the match.** Change the title or the
+artist and the app looks it up and repoints, printing what it matched — a
+wrong match then reads as wrong instead of being invisible. Never silent
+either way: no match found has to say so, because a cue with no URI is a
+question that will not play.
+
+#### b. Dead air at the front of a track is a SCORING bug
+
+The host's own point, and it is the sharper of the two: *"for a music intro
+round I would want a more consistent timing as each answer is also timed."*
+
+The clock starts when the question goes up and the track starts at the same
+moment. **A track with two seconds of silence or fade-in before the audio
+arrives costs everybody two seconds of score on that question, for reasons
+that have nothing to do with whether they knew it.** Ten questions, ten
+different amounts of dead air, and the round scores inconsistently with
+nothing on screen to blame.
+
+**This is exactly the argument this repo already makes about the picture
+round's four reveals** — they run on one curve because how fast a picture
+becomes guessable IS how many points the question is worth, and a mode with
+its own curve makes a round quietly worth more with nobody able to attribute
+it. Same fault, different round, and it went unnoticed because the cause is in
+the audio rather than in the code.
+
+Two things that look alike and must be told apart:
+
+- **Dead air before the audio starts** — pure noise. Penalises nobody's
+  knowledge, and should be trimmed so every track starts at the same point in
+  the clock. THIS is the bug.
+- **How quickly a track becomes recognisable** — that IS the question's
+  difficulty and must stay. A famous four-note opening should be worth
+  answering faster than a track that takes a bar to declare itself.
+
+**The fix is small and the field already exists.** `cue.from` is on every intro
+cue with a `0:00` placeholder and is currently only a note the host reads.
+Wire it to `position_ms` on the `PUT /me/player/play` call, surface it as a
+seconds box in the editor, and the audio and the clock start together on all
+ten.
+
+**DO NOT "fix" this by giving the intro round a longer clock.**
+`questionSeconds` is overridable per round, and 25 seconds would look like it
+absorbs the dead air. It does not: scoring is base plus seconds-remaining times
+ten, so a longer round is a round worth MORE points. That is the reveal-curve
+fault again, introduced deliberately.
+
+**The offsets have to be set by ear, and that is the honest cost.** Spotify's
+Audio Analysis gives exactly this (`track.end_of_fade_in`) and is **deprecated
+for apps created after November 2024** — this app's is new, so expect a 403.
+Confirm against the real app before designing around it, but do not count on
+it. Ten quick listens per pack, once, stored in the pack for ever.
+
 ### 5a. Launch opens the big screen in a second tab
 
 **Asked for on 14 August 2026, mid-gig-day, and parked for that reason.** The
