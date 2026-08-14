@@ -2388,6 +2388,36 @@ is built.
 the alternative is a feature that appears for five per cent of accounts or for
 all of them when it should not.
 
+### What Claude may do on its own — four categories
+
+Set by the host on 14 August 2026, about CLAUDE'S OWN self-directed work —
+tooling, agents, process — not about product features, which are asked for in
+the ordinary way.
+
+| | Do what? |
+|---|---|
+| **1. Benefits Claude, benefits the host** | just do it |
+| **2. Benefits Claude, does not affect the host** | just do it |
+| **3. Benefits Claude, negatively affects the host** | **ask first** |
+| **4. Does not benefit Claude** | do not do it |
+
+**"Negatively affects the host" means** it touches his data or the live app's
+behaviour, restructures something he relies on, costs him time or attention,
+or reduces his oversight of what is being done.
+
+**AND THE TEST THAT MAKES IT WORK, in his own words: *"if you are
+rationalising a 3 into a 2 then it's probably a 3 and just ask."*** That is
+the whole rule, because the failure mode is not confusion about the
+categories — it is a large upside making a 3 feel like a 2. The effort spent
+arguing that something is really a 2 IS the signal.
+
+**It caught its first case the moment it was written.** Splitting this file up
+to save context was classified as a 1 — genuine benefit both ways — when
+"restructures something you rely on" is sitting in the definition of a 3.
+
+Category 4 is worth its own line: **inventing a small job to round a session
+off is a 4.** Doing nothing and saying so is correct.
+
 ### "GSD mode" — Get Shit Done
 
 **If he types `GSD mode`, switch to it and STAY in it until the to-do list is
