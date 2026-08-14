@@ -5892,12 +5892,24 @@ function venuesSection() {
               <div class="venue-logo-row">
                 <span class="venue-logo-what">
                   <b>Their logo</b><br>
+                  <!-- IT SAYS YOU CAN PHOTOGRAPH IT, because you always could
+                       and nothing said so: accept=image/* offers Take
+                       Photo alongside the library on every phone. The host's
+                       own case is the one worth naming — a new venue that
+                       cannot be bothered to send artwork, and a picture of the
+                       front of the pub does the job until they do. It is also
+                       TRUE in a way a generated wordmark would not be, which
+                       is why there is no auto-filled placeholder: a logo the
+                       pub never approved, printed on a credential, is worse
+                       than a clean card with no picture on it. -->
                   <span class="tiny">Goes on the winner&rsquo;s phone, above the code,
-                    so the voucher looks like the pub&rsquo;s own.</span>
+                    so the voucher looks like the pub&rsquo;s own. No artwork yet?
+                    Photograph the front of the pub &mdash; it does the job until
+                    they send you something better.</span>
                 </span>
                 <span class="venue-logo-side">
                   ${v.logo ? `<img class="venue-logo-pic" alt="" src="${esc(v.logo)}">` : ''}
-                  <label class="minor venue-logo-pick">${v.logo ? 'Change' : 'Add one'}
+                  <label class="minor venue-logo-pick">${v.logo ? 'Change' : 'Add or take one'}
                     <input class="v-logo" type="file" accept="image/*" hidden>
                   </label>
                   ${v.logo ? '<button class="minor danger v-logo-off">Remove</button>' : ''}
@@ -6418,14 +6430,25 @@ load().catch((err) => {
  */
 function advertsSection(sets) {
   /*
-   * Advert sets are still SHARED between quizmasters — one folder, not one per
-   * room — so until they are scoped, writing to them is the owner's. A second
-   * quizmaster tidying up what looks like their own venue list would delete the
-   * set for The Crown an hour before somebody else's night there, and it lands
-   * on their projector. Everybody can still PUT ONE UP from their control view;
-   * it is only writing the slides that is shut.
+   * WHOEVER IS ON THIS TAB MAY WRITE ON IT — and for a while nobody could.
+   *
+   * This was `can(FEATURES.CATALOGUE)`, which is the OWNER, under a comment
+   * saying advert sets were shared between quizmasters and therefore unsafe to
+   * let anybody else edit. **That stopped being true and the gate never
+   * moved.** The server writes to `advertRoom.paths.adverts` — the room's own
+   * folder — with no owner check on the route, and restores them per room on
+   * boot. So the sets were scoped and the button was not.
+   *
+   * What that added up to is the fault this codebase keeps recording in other
+   * forms: **a tab with no way in.** Adverts is a Silver feature, it appears on
+   * the tab bar for exactly the people it is sold to, and every one of them
+   * saw a page they could read and not write — with nothing on screen saying
+   * why, because the reason had stopped existing.
+   *
+   * The tab itself needs `FEATURES.ADVERTS` to render at all, so anybody who
+   * can see this holds it. There is no second question to ask.
    */
-  const mine = can(FEATURES.CATALOGUE);
+  const mine = true;
   const el = node(`
     <div class="game-section">
       <div class="game-head">
@@ -6463,7 +6486,12 @@ function advertsSection(sets) {
         <div class="tiny played">${set.slideCount} slide${set.slideCount === 1 ? '' : 's'}</div>
         ${set.broken ? `<div class="tiny" style="color:var(--bad)">Broken: ${esc(set.broken)}</div>` : ''}
         <div class="pack-actions">
-          <button class="go edit">${mine ? 'Edit' : 'Read'}</button>
+          <!-- ORDINARY, not the night. It wore the "go" class — the account's gradient —
+               which by the five roles means Launch and Take control, and
+               editing a slide set is not that. Delete beside it is already
+               outlined and "New set" above is green for "makes something", so
+               this was the only one borrowing a meaning it does not have. -->
+          <button class="minor edit">Edit</button>
           ${mine ? '<button class="pack-del">Delete</button>' : ''}
         </div>
       </div>`);
