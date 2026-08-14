@@ -5332,7 +5332,89 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   display: inline-block; margin-left: 7px; vertical-align: 1px;
   border: 5px solid transparent; border-top-color: currentColor; border-bottom: 0;
 }
-.lb-fold[aria-expanded="false"]::after { transform: rotate(180deg); }
+/* THE ARROW POINTS THE WAY THE PANEL IS ABOUT TO GO, and this one was the
+   wrong way round — reported directly.
+   The other two arrows in this bar are pickers: shut they point DOWN because
+   the list opens downwards, and they flip up to say "press again to close".
+   This is not a picker, it is a FOLD, and the panel folds UPWARDS out of the
+   way. So open beside "Hide" it points up, and shut beside "Show" it points
+   down at the thing it will bring back. Written as the true state rather than
+   the false one, so the rule reads as the behaviour. */
+.lb-fold[aria-expanded="true"]::after { transform: rotate(180deg); }
+
+/* ---- TONIGHT'S RUNNING ORDER
+   The place packs are dropped and where their rounds appear. Along the bottom
+   of the bar, directly above Launch, because it is what Launch is about to
+   run. A dashed edge while something is over it and a plain one otherwise: a
+   permanent dashed box would read as an empty slot somebody has failed to
+   fill, on a bar that is usually complete. */
+.lb-order { margin-top: 10px; border-radius: var(--r-field); }
+.lb-order.drop-here {
+  outline: 2px dashed var(--hot); outline-offset: 3px;
+  background: rgba(255, 46, 136, 0.06);
+}
+.lb-order-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.lb-order-head b { color: var(--ink); }
+.lb-order-said { color: var(--ink-dim); }
+.lb-order-head .minor { margin-left: auto; }
+/* WRAPS rather than scrolls sideways. Twelve is the most a night can be and
+   they are short chips — a sideways scroll would hide the end of the evening
+   behind a gesture, on the one control that says what the evening IS. */
+.lb-order-strip { display: flex; flex-wrap: wrap; gap: 6px; }
+.lb-round {
+  display: flex; align-items: center; gap: 8px; min-width: 0;
+  padding: 6px 8px 6px 6px; border-radius: var(--r-field);
+  background: var(--panel); border: 1px solid var(--panel-line);
+  font-size: var(--fs-note); cursor: grab;
+}
+.lb-round.is-lifting { opacity: 0.45; }
+/* The position, which is the thing you are actually reading when you scan a
+   running order — "what is round three". */
+.lb-round-n {
+  flex: 0 0 auto; display: inline-grid; place-items: center;
+  min-width: 20px; height: 20px; border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.12); color: var(--ink-dim);
+  font-size: var(--fs-tag); font-weight: 900;
+}
+.lb-round-what { display: grid; min-width: 0; }
+.lb-round-what b, .lb-round-what .tiny {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Only once rounds come from more than one pack is the source worth saying —
+   on a night built from one quiz it would be the same words twelve times. */
+.lb-round.is-mixed .lb-round-n { background: rgba(255, 46, 136, 0.22); color: var(--ink); }
+.lb-round-off {
+  flex: 0 0 auto; border: none; background: none; cursor: pointer;
+  color: var(--ink-dim); font-size: var(--fs-ctl); line-height: 1; padding: 2px 4px;
+  border-radius: var(--r-field);
+}
+.lb-round-off:hover { color: var(--bad); background: rgba(255, 77, 94, 0.12); }
+/* Which side of the chip a dragged round will land. Without this a list can
+   only ever be reordered one way and the last position is unreachable. */
+.lb-round.drop-before { box-shadow: inset 3px 0 0 var(--hot); }
+.lb-round.drop-after { box-shadow: inset -3px 0 0 var(--hot); }
+
+/* THE DOTTED CUTOUT — the empty state IS the control.
+   Asked for in those words: the bar starts empty and fills up as packs are
+   dragged in. It is a real button as well as a drop target, because HTML5
+   drag events are never delivered on touch and a drag-only bar would be a
+   dead panel on a phone.
+   Dashed rather than solid so it reads as a SLOT rather than as a button that
+   does something on its own — and it is the one place in this app a dashed
+   edge is right, because here the thing genuinely is waiting to be filled. */
+.lb-drop {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; min-height: 74px; padding: 12px;
+  border: 2px dashed var(--panel-line); border-radius: var(--r-card);
+  background: none; color: var(--ink-dim);
+  font: inherit; font-size: var(--fs-note); font-weight: 800; cursor: pointer;
+}
+.lb-drop:hover, .lb-drop:focus-visible { border-color: var(--hot); color: var(--ink); outline: none; }
+.lb-drop-plus { font-size: var(--fs-sub); line-height: 1; }
+/* Once rounds are in, it shrinks to a tile beside them — adding a second pack
+   is the same act as adding the first, so it stays the same target rather
+   than becoming a different control somewhere else. */
+.lb-drop.is-tile { width: auto; min-height: 0; padding: 8px 12px; border-radius: var(--r-field); }
 
 /* The runner-up pack, as a chip rather than a second gradient button — there
    is one "press this" on a screen, and it is Launch. */

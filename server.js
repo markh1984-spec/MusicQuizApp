@@ -38,6 +38,7 @@ import { spotifyConfigured, missingSpotifyConfig, playTrack } from './src/spotif
 import { photoFolder, mergeGigs, safePhotoName, isNightFolder, nightOfGig } from './src/past-gigs.js';
 import { venueHeadcounts } from './src/headcounts.js';
 import { comeBackFor } from './src/comeback.js';
+import { isComposed, MAX_ROUNDS } from './src/running-order.js';
 import { pickIdeas, ideaLabel } from './src/round-ideas.js';
 import { getFile, listDir, listDirs, githubConfigured, missingGithubConfig, putFile, putFiles, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem, privateRepoConfigured, packsRepoConfigured, packsRepoName } from './src/github.js';
 import { Invoices, totals, toPence, money } from './src/invoices.js';
@@ -2884,7 +2885,16 @@ function reloadPackEverywhere(id, { clamp = true } = {}) {
   let touched = 0;
   for (const room of rooms.all()) {
     const { session } = room;
-    if (session.kind !== 'quiz' || session.pack?.id !== id) continue;
+    /*
+     * A COMPOSED NIGHT HAS NO FILE BEHIND IT, so it is skipped explicitly
+     * rather than relying on its id not matching. It cannot match — `safeId()`
+     * strips the character `COMPOSED_ID` starts with, so no pack on disk can
+     * be called it, and there is a test that says so. The check is here
+     * anyway because the cost of being wrong is the worst in the app: this
+     * function REPLACES a running game's pack from disk, so a collision would
+     * swap a room's quiz for something else at question four.
+     */
+    if (session.kind !== 'quiz' || isComposed(session.pack?.id) || session.pack?.id !== id) continue;
     // Resolved against THIS room, so a quizmaster editing one of their own
     // reloads theirs rather than blowing up looking for it in the catalogue.
     session.pack = readPack('quiz', id, { config, paths: room.paths }).pack;
@@ -4509,10 +4519,29 @@ async function handleWrite(req, res, url, route) {
        * launch is the worst possible moment for one.
        */
       const launchKind = String(body.game || 'quiz') === 'bingo' ? 'bingo' : 'quiz';
-      const ownPack = isOwnPack(launchKind, String(body.packId), room.paths);
-      if (!ownPack && !canPlayPack(whoIs(req, url), String(body.packId), packDating(launchKind, body.packId, room))) {
+      /*
+       * EVERY PACK IN THE RUNNING ORDER IS CHECKED, not just the one in
+       * `packId` — and getting this wrong would be a gate that runs backwards.
+       * A night composed of rounds is still a night made of packs, so a Bronze
+       * account could otherwise borrow one round from a Gold quiz and play it,
+       * which is the whole subscription walked round in a drag.
+       *
+       * `order` is only honoured for a quiz: a bingo game is a track list with
+       * no rounds in it on disk, so there is nothing to take one of.
+       */
+      const wantedOrder = (launchKind === 'quiz' && Array.isArray(body.order))
+        ? body.order.slice(0, MAX_ROUNDS)
+        : null;
+      const needed = wantedOrder && wantedOrder.length
+        ? [...new Set(wantedOrder.map((r) => String((r && r.packId) || '')))]
+        : [String(body.packId)];
+      for (const id of needed) {
+        if (isOwnPack(launchKind, id, room.paths)) continue;
+        if (canPlayPack(whoIs(req, url), id, packDating(launchKind, id, room))) continue;
         return sendJson(res, 403, {
-          error: 'That pack is not in your library.',
+          error: needed.length > 1
+            ? `${id} is not in your library, so it cannot be part of tonight.`
+            : 'That pack is not in your library.',
           upgrade: true,
         }), true;
       }
@@ -4635,7 +4664,7 @@ async function handleWrite(req, res, url, route) {
           ? pickIdeas((fullLibrary(config, room.id, listOwn(room.paths)).quizzes || [])
             .map((q) => q.title))
           : [];
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online, teamPlay, venue, rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas });
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online, teamPlay, venue, rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas, order: wantedOrder });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();

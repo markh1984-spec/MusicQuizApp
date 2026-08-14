@@ -291,12 +291,39 @@ test('the dated-pack gate opens the file, and reads the PACK rather than the wra
     'packDating is reading freshUntil off readPack\'s wrapper again — every topical pack is free');
   assert.match(dating[0], /freshUntil/);
 
-  for (const gate of ['function mayReadPack', 'const ownPack = isOwnPack(launchKind']) {
+  for (const gate of ['function mayReadPack', 'const launchKind =']) {
     const at = server.indexOf(gate);
     assert.ok(at > 0, `${gate} has moved`);
-    assert.match(server.slice(at, at + 500), /packDating/,
+    assert.match(server.slice(at, at + 1400), /packDating/,
       `${gate} no longer tells a topical pack from an evergreen one`);
   }
+});
+
+/*
+ * AND THE LAUNCH GATE HAS TO CHECK EVERY PACK IN A RUNNING ORDER.
+ *
+ * Tonight can be composed of rounds taken from several packs. The gate used
+ * to read one `body.packId`, which is exactly right for one pack and a hole
+ * the moment there are several: a Bronze account borrowing one round out of a
+ * Gold quiz would walk round the whole subscription in a drag, and the failure
+ * is silent — the night simply plays.
+ *
+ * Read off the source rather than driven, for the reason the test above gives:
+ * the gate needs a real signed-in account and a dated pack to exercise
+ * properly, and the thing most likely to break it is somebody simplifying the
+ * loop back to a single id.
+ */
+test('the launch gate checks EVERY pack in a running order, not just the first', () => {
+  const server = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  const at = server.indexOf('const launchKind =');
+  assert.ok(at > 0, 'the launch gate has moved');
+  const gate = server.slice(at, at + 1400);
+
+  assert.match(gate, /body\.order/, 'the launch gate no longer looks at the running order at all');
+  assert.match(gate, /for \(const id of needed\)/,
+    'the launch gate is back to checking a single pack id — a composed night bypasses the tier');
+  assert.match(gate, /canPlayPack/);
+  assert.match(gate, /isOwnPack/);
 });
 
 test('reading a pack you do not hold is refused, not just launching it', () => {

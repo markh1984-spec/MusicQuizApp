@@ -258,7 +258,9 @@ test('the launch route asks the session what is live, and offers a second press'
   const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
   const at = server.indexOf("if (action === 'launch')");
   assert.ok(at > 0, 'the launch route has moved');
-  const route = server.slice(at, at + 3000);
+  // Wide enough to still contain the in-progress check after the gate above it
+  // grew — the running-order check put another ~900 characters between the two.
+  const route = server.slice(at, at + 4200);
 
   assert.match(route, /session\.inProgress\(\)/, 'the launch route no longer checks for a night in progress');
   assert.match(route, /409/, 'a collision is not reported as a conflict');

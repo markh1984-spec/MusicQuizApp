@@ -27,6 +27,7 @@ import { listBingoPacks, recordLaunch, archiveResults, updateArchivedNight, HOUS
 import { findSlide } from './adverts.js';
 import { readPack, listOwn } from './own-packs.js';
 import { cleanComeBack } from './comeback.js';
+import { composeQuiz } from './running-order.js';
 // Shared with the browser, so the list of looks cannot drift between the server
 // deciding one and the screens drawing it.
 import { LOOKS, DEFAULT_LOOK } from '../public/assets/looks.js';
@@ -362,9 +363,21 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '', rewards = [], venueLogo = '', comeBack = null, askForRounds = false, roundIdeas = [] } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '', rewards = [], venueLogo = '', comeBack = null, askForRounds = false, roundIdeas = [], order = null } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
-    const pack = LAUNCHERS[kind].load(this.config, packId, this.paths);
+    /*
+     * TONIGHT'S RUNNING ORDER, when one was built — rounds from more than one
+     * pack, composed in memory and never written anywhere. See
+     * `running-order.js` for why that is the whole of it.
+     *
+     * It goes through the SAME loader, so an own-pack still resolves
+     * own-first and a catalogue pack still resolves to the one file everybody
+     * reads. Quiz only: a bingo game is a track list with no rounds in it on
+     * disk, so there is nothing to take one of.
+     */
+    const pack = (order && order.length && kind === 'quiz')
+      ? composeQuiz(order, (id) => LAUNCHERS.quiz.load(this.config, id, this.paths))
+      : LAUNCHERS[kind].load(this.config, packId, this.paths);
     const normalised = kind === 'bingo' ? normaliseBingoPack(pack, packId) : pack;
     if (kind === 'bingo' && shape) {
       const problems = validateBingoPack({ ...normalised, ...shapeFields(shape) });
