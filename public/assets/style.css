@@ -1745,7 +1745,20 @@ body.console {
   --panel-line: var(--surf-line);
 }
 body.console::after { display: none; }
-.console .wrap { max-width: 1000px; margin: 0 auto; padding: 0 16px 60px; }
+/* 1180 RATHER THAN 1000, AND THE TAB BAR IS WHY.
+   Nine tabs come to a bit over 1000px, so in a 968px column one of them
+   always wrapped — and a wrapped bar that is also STICKY costs a hundred and
+   ten pixels of every screen instead of fifty, on a laptop that is 900 tall.
+   Tightening the tabs enough to fit would have taken their side padding to
+   8px, which is a cramped target for the one control you press most.
+   The column was the cheaper thing to change and it was overdue anyway: on
+   the 1440 screen this is driven from, 1000px left 440px of unused desk, the
+   pack grid ran three across where four fit, and every panel was narrower
+   than it needed to be. Nothing else in the app depends on the number. */
+.console .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px 60px; }
+/* Its height, written down because the sticky tab bar has to sit exactly
+   under it and CSS cannot measure. Changed here and there together. */
+.console { --topbar-h: 63px; }
 .console .topbar {
   position: sticky; top: 0; z-index: 20;
   margin: 0 -16px 20px; padding: 14px 22px;
@@ -1815,8 +1828,25 @@ body.console::after { display: none; }
    Behind an `@supports`, and that guard is not optional: gradient text means
    TRANSPARENT text, so a browser without `background-clip` would draw every
    section heading on the console invisible. */
+/* THREE STEPS AND NO MORE — the tab, a section in it, a panel in that.
+   The tab's own heading is the biggest thing on the page and the only one
+   that carries the account's colours; a section under it drops a rung and
+   stays white, so it reads as part of the tab rather than as a rival to it;
+   a panel keeps its small bold line (`.panel h3`). Without the demotion the
+   Gigs tab printed "Gigs", "Headcount" and "Past gigs" at one size, which is
+   three tabs as far as the eye is concerned. */
+.console .tab-head { margin-bottom: 18px; }
+.console .game-section .game-head h2 { font-size: var(--fs-head); }
+/* A SECTION HEADING CARRIES THE ACCOUNT'S OWN COLOURS.
+   The one thing that makes a page look designed rather than assembled, and it
+   is safe where a button would not be: a heading is not something you press,
+   so the gradient cannot be mistaken for "press this" — which is the reason
+   that fill is otherwise rationed to one control a screen.
+   Behind an `@supports`, and that guard is not optional: gradient text means
+   TRANSPARENT text, so a browser without `background-clip` would draw the
+   heading on every tab invisible. */
 @supports (background-clip: text) or (-webkit-background-clip: text) {
-  .console .game-head h2 {
+  .console .tab-head h2 {
     background: linear-gradient(120deg, var(--hot), var(--hot-2));
     -webkit-background-clip: text;
     background-clip: text;
@@ -2073,7 +2103,34 @@ body.screen { cursor: none; }
   overflow-x: auto;
 }
 @media (min-width: 860px) {
-  .tabbar { flex-wrap: wrap; overflow-x: visible; row-gap: 0; }
+  /* WRAPS RATHER THAN CLIPS, AND STAYS AT THE TOP OF THE SCREEN.
+     Sticky is what removes the reserved height `.tabbody` used to carry: the
+     bar no longer has to be SCROLLED to the top, it is simply there — so a
+     short tab is a short page again instead of most of a screen of nothing
+     below it. Tonight is one flick up from it, in the same place on every
+     tab, which is the whole reason that panel sits above the bar.
+     `top` is the sticky topbar's own height. It is a number rather than a
+     measurement because CSS cannot ask, and it is declared beside the rule
+     that sets that height so the two are changed together.
+     The fill and the blur are the topbar's, or content scrolls through a
+     transparent bar and the tab labels sit on top of a pack card. */
+  .tabbar {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    row-gap: 0;
+    position: sticky;
+    top: var(--topbar-h);
+    z-index: 10;
+    background: rgba(11, 11, 20, 0.95);
+    backdrop-filter: blur(10px);
+    margin: 0 -16px 22px;
+    padding: 0 16px 2px;
+  }
+  /* A little tighter, so the nine sit comfortably in the widened column
+     rather than exactly filling it — the bar still WRAPS rather than clips if
+     a tenth tab ever arrives, which is the safe way round. */
+  .tab { padding-left: 14px; padding-right: 14px; }
+  .tabbar { gap: 4px; }
 }
 .tab {
   display: flex;
@@ -2117,19 +2174,13 @@ body.screen { cursor: none; }
 .tabcount.late { background: rgba(255, 77, 94, 0.22); color: var(--bad); }
 .tab.on .tabcount.late { background: var(--bad); color: #fff; }
 
-/* TALL ENOUGH THAT THE TAB BAR CAN ALWAYS REACH THE TOP.
-   Pressing a tab scrolls the bar up under the topbar so Tonight is one flick
-   away — and on a SHORT tab (Adverts with no sets, Help, an empty Invoices)
-   the page simply had nowhere left to scroll, so the bar stopped half way and
-   the feature looked like it worked on some tabs and not others. Worse on the
-   tabs that fetch: Gigs, Invoices and Calendar are a heading and "Loading…"
-   at the moment of the scroll and grow a second later, so the scroll was
-   clamped against a page that did not exist yet.
-   A minimum height fixes both without a second scroll after the fetch, which
-   would be the page moving under somebody who had started reading. 78vh is
-   the viewport less the topbar and the bar itself, so a short tab reserves
-   exactly what the gesture needs and no more. */
-.tabbody { animation: cardIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1); min-height: 78vh; }
+/* NO RESERVED HEIGHT. It briefly carried `min-height: 78vh` so that pressing
+   a tab could always scroll the bar to the top — which worked, and left most
+   of a screen of black under a nearly-empty Adverts or Invoices tab. The bar
+   is sticky from 860px instead, so there is nothing to scroll TO and nothing
+   to reserve; below that the page is one column on a phone and the bar is a
+   flick away regardless. */
+.tabbody { animation: cardIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1); }
 
 /* The card's buttons, in the order you actually use them: the small ones you
    might press first sit in a row, and LAUNCH is the full width of the card at

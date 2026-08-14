@@ -864,11 +864,22 @@ function showActiveTab() {
  * element measured has to be the new one.
  */
 function showTabBar() {
+  /*
+   * MEASURED OFF THE TAB BODY, NOT OFF THE BAR — because the bar is sticky
+   * from 860px and a sticky element lies about where it is. Once pinned its
+   * `top` is the pin position rather than its place in the document, so
+   * scrolling "until the bar is at the top" is a no-op the second time and
+   * jitters by the gap the first. The body underneath it is never sticky, so
+   * its rectangle is the honest one: put ITS top just below the topbar plus
+   * the bar's own height and the bar lands exactly where it pins.
+   */
+  const body = mainEl.querySelector('.tabbody');
   const bar = mainEl.querySelector('.tabbar');
-  if (!bar) { window.scrollTo({ top: 0 }); return; }
+  if (!body || !bar) { window.scrollTo({ top: 0 }); return; }
   const sticky = document.querySelector('.console .topbar');
-  const under = sticky ? sticky.getBoundingClientRect().height : 0;
-  window.scrollTo({ top: Math.max(0, window.scrollY + bar.getBoundingClientRect().top - under - 8) });
+  const under = (sticky ? sticky.getBoundingClientRect().height : 0)
+    + bar.getBoundingClientRect().height;
+  window.scrollTo({ top: Math.max(0, window.scrollY + body.getBoundingClientRect().top - under - 8) });
 }
 
 /* ========================================================== MY ACCOUNT
@@ -2176,6 +2187,30 @@ function tabBody(active) {
       </div>`);
   }
   const wrap = node('<div class="tabbody"></div>');
+
+  /*
+   * EVERY TAB OPENS WITH ONE BIG HEADING, AND IT IS DRAWN HERE.
+   *
+   * The top of the page used to change shape as you moved along the bar:
+   * Music Quiz gave you one 22px heading and two small ones inside cards,
+   * Calendar and Gigs opened with a 22px heading, and Venues, Adverts, Help
+   * and My account had none at all — a bare stack of panels. That is most of
+   * what "everything is all over the place" was, and it is the one fault a
+   * tab bar exists to prevent.
+   *
+   * IN ONE PLACE rather than in nine render functions, which is the whole
+   * point: a heading each was exactly the arrangement that let four of them
+   * go missing. It takes the tab's own label, so the heading and the lit chip
+   * cannot disagree and a renamed tab renames its heading for free.
+   *
+   * It repeats the lit tab, and that is deliberate rather than an oversight.
+   * A chip in a row of nine says which is on; a heading says what the page
+   * you have landed on IS, at the size everything below it is measured
+   * against — and without one the first thing on four tabs was a small bold
+   * word inside a card, which reads as a subheading of nothing.
+   */
+  wrap.appendChild(node(`
+    <div class="game-head tab-head"><div><h2>${esc(tab.label)}</h2></div></div>`));
 
   // A tab is either a game (generator + its saved packs) or a one-off panel.
   if (tab.render) {

@@ -827,6 +827,108 @@ Say plainly what is stored and where.
 is not needed.** A venue needs a name, an address and one email. It does not
 need a phone number nobody dials.
 
+### THE CONSOLE'S THEME — one surface, one heading ladder, a bar that stays
+
+Settled on 14 August 2026, after the host looked at the tabs together and
+said: *"we REALLY need to look at UI, stuff is all over the place and the
+colours are not singing at all"*, then *"there's tons of different colours,
+fonts, font sizes etc. — we need a general theme that everything sticks to"*
+and *"the menu should wrap to the screen on a laptop"*. Four options were
+rendered against the real page before he chose; the pictures were the
+argument, not the paragraphs.
+
+**THE CONSOLE WAS THE ONE SURFACE IN THIS APP WITH ITS AMBIENCE SWITCHED
+OFF.** `body.console` painted a flat `#0b0b14` and `body.console::after {
+display: none }` killed the drift — so the corner washes and the two blobs
+that set the mood on the projector, the phone and the join page were off on
+the page a quizmaster spends the most time in. Flat near-black, grey cards,
+the account's colours reaching **one button a screen**, and the most
+saturated thing on the page the destructive red. That inversion is what "the
+colours are not singing" was: the loudest colour belonged to the control you
+least want pressed.
+
+**ONE SURFACE, TINTED WITH THE ACCOUNT'S OWN COLOUR** — `--surf-1`,
+`--surf-2`, `--surf-line`, applied by overriding `--panel` and `--panel-line`
+**for `body.console` alone**. That last part is the point: twenty-nine rules
+said `background: var(--panel)` and four more had written their own grey out
+by hand, which is how four slightly different greys existed with nobody
+having chosen any of them. One override is one decision; twenty-nine edits
+are twenty-nine chances to drift again.
+
+**AND THE SURFACES ARE OPAQUE, WHICH IS LOAD-BEARING RATHER THAN
+INCIDENTAL.** Turning the washes on with the cards left translucent was
+rendered as its own option and is WRONG: a card sitting over the pink blob
+comes out pink and one over black comes out grey, so the same pack card is a
+different colour depending on where it lands in the grid. That is the "all
+over the place" complaint wearing a coat, and it is only visible in a render
+— which is why the options are rendered. Opaque, the background can be as
+alive as it likes.
+
+**THREE HEADING STEPS, AND THE TAB'S OWN IS DRAWN IN ONE PLACE.** The top of
+the page used to change shape as you moved along the bar: Music Quiz gave one
+22px heading and two small ones inside cards, Calendar and Gigs opened with a
+22px heading, and **Venues, Adverts, Help and My account had none at all**.
+So `tabBody()` now prints the tab's own label as the heading — in the account
+gradient, at `--fs-title` — and a section under it drops to `--fs-head` and
+stays white.
+
+- **In `tabBody()` rather than in nine render functions**, because a heading
+  each is exactly the arrangement that let four of them go missing. It reads
+  the tab's own label, so the heading and the lit chip cannot disagree.
+- **It repeats the lit tab deliberately.** A chip in a row of nine says which
+  is on; a heading says what the page IS, at the size everything below it is
+  measured against. Without one, the first thing on four tabs was a small
+  bold word inside a card — a subheading of nothing.
+- **The demotion is not optional**: left at one size, Gigs printed "Gigs",
+  "Headcount" and "Past gigs" identically, which is three tabs as far as the
+  eye is concerned.
+- **The gradient is safe on a heading where it would not be on a button**,
+  because a heading is not something you press — which is the whole reason
+  that fill is otherwise rationed to one control a screen. Behind an
+  `@supports`: gradient text is TRANSPARENT text, so a browser without
+  `background-clip` would draw the heading on every tab invisible.
+
+**THE TAB BAR WRAPS, THEN STOPPED NEEDING TO.** Nine tabs came to about 993px
+against the console column's 968, and `overflow-x: auto` **cut "My account"
+in half at the right-hand edge with no scrollbar drawn to say it could be
+reached** — a tab you cannot see is a tab that does not exist. Wrapping fixed
+it and cost a second row; tightening the tabs' side padding from 18px to 14px
+fits all nine on one, which matters because of the next paragraph.
+
+**AND IT IS STICKY FROM 860px, WHICH IS WHAT REMOVED THE RESERVED HEIGHT.**
+The host asked for a tab press to leave the bar at the top of the screen so
+Tonight is one flick up. The first answer was `min-height: 78vh` on
+`.tabbody`, because a short tab had nowhere left to scroll — and that is why
+it *"worked on some tabs and not others"*: Adverts, Gigs, Invoices and Venues
+were simply too short, and the ones that FETCH are a heading and "Loading…"
+at the instant of the scroll. It worked and it left most of a screen of black
+under a nearly-empty tab. Sticky, there is nothing to scroll TO and nothing
+to reserve. Below 860px it scrolls sideways as before, because nine tabs
+would be three rows on a phone and a sticky three-row bar would eat the top
+of every tab all night.
+
+**`showTabBar()` MEASURES THE TAB BODY, NOT THE BAR.** A sticky element lies
+about where it is: once pinned its `top` is the pin position rather than its
+place in the document, so "scroll until the bar is at the top" is a no-op the
+second time and jitters by the gap the first. The body underneath is never
+sticky, so its rectangle is the honest one.
+
+**A HEADING'S BUTTONS ARE A ROW, AND `.game-head .row` WAS NEVER TOLD TO BE
+ONE.** `.host .row` and `.panel.pics .row` are both `display: flex` with a gap
+and wrapping; this one had `margin-left: auto` and nothing else — so its
+children were loose inline-blocks that broke onto a second line at whatever
+width each happened to be. That is Adverts' "New set" hanging under the end of
+"Bring in a picture", and Invoices' three buttons at three heights.
+`align-items: stretch` rather than `center`, because two of them are a
+`<label>` and a `<button>` with different padding: centred they share a
+midline and still read as two different sizes.
+
+**THE ACCOUNT-COLOURED UNDERLINE ON ORDINARY BUTTONS STAYS**, put to the host
+with the alternatives and kept. It is the decision this file already records —
+colour on the EDGE, never the face, so one button says whose app this is and
+six in a row still say it once — and now that the surfaces carry the same
+colour it reads as of a piece rather than as a stray line.
+
 ### CAPITALS ARE FOR EMPHASIS, NOT FOR LABELLING
 
 Set by the host on 14 August 2026, and it is a BRAND decision rather than a
