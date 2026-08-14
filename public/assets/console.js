@@ -3165,7 +3165,61 @@ function launchBar() {
    * every state push, and a choice stored inside the function would be thrown
    * away the moment a phone joined.
    */
-  function pick(pack) {
+  /*
+   * PICKING A PACK PUTS IT ON THE BIG SCREEN — when nothing would be lost.
+   *
+   * The host's own complaint, from a real night: *"the quiz in the launch bit
+   * after I pressed launch didn't say what the big screen said"*, and then the
+   * conclusion — *"changing quiz packs should change the console and the big
+   * screen."* He is right that the two disagreeing is the fault. The console
+   * and the projector should agree every time it is possible for them to.
+   *
+   * **BUT PICKING IS NOT LAUNCHING WHEN THERE IS A NIGHT TO LOSE.** A tap on
+   * a search result that silently ends a running quiz and wipes every score
+   * would be the most dangerous control in the app, on the protected path, in
+   * a dark pub. So the rule is: switch instantly when it costs nothing, stage
+   * it when it would cost somebody their night.
+   *
+   * **THE SERVER DECIDES WHICH, NOT THIS PAGE.** It is the ordinary launch
+   * call without `replace` — which already answers 409 when a night is in
+   * progress, with the game and the player count in it, and that guard is the
+   * one this codebase has already learned cannot live in the browser. So
+   * there is no new rule here and no second definition of "in progress" to
+   * drift: a 200 means it was free to switch, a 409 means it was not.
+   *
+   * **A 409 is SILENT here** — no dialog. Pressing Launch is what asks that
+   * question, and it still does, with the same warning it always gave. All a
+   * 409 means at this point is that the choice stays staged and the red line
+   * under the box tells you the projector is showing something else, which is
+   * exactly the state that line exists for.
+   *
+   * Nothing is set up on a quiet switch — no look, no card shape, no prizes,
+   * no venue. It is the pack going up on an idle projector, and everything
+   * else is what Set it up and Launch are for.
+   */
+  async function switchIfFree(pack, kind) {
+    try {
+      await postJson('/api/host/launch',
+        { game: kind, packId: pack.id, venue: venueNow(), online: lbOnline },
+        { 'X-Host-Key': hostKey });
+      /*
+       * It went up. Ask the SERVER what is running rather than assuming it
+       * worked — the line under this box exists precisely because the console
+       * and the projector can disagree, so filling it in from our own
+       * optimism would be the original fault wearing a new hat.
+       */
+      const res = await fetch(keyed('/api/library'));
+      if (res.ok) library = await res.json();
+      paintLive();
+    } catch {
+      // 409 (a night is running) or anything else: the choice stays staged and
+      // paintLive says so. Never a dialog — Launch is where that is asked.
+      paintLive();
+    }
+  }
+
+  function pick(pack, { quiet = false } = {}) {
+    const switching = !quiet && currentPack?.id !== pack.id;
     currentPack = pack;
     text.value = pack.title;
     /*
@@ -3254,6 +3308,11 @@ function launchBar() {
         venue: venueNow(),
       }, button);
     });
+
+    // A DELIBERATE CHOICE puts it up; a re-render does not. `startOn()` calls
+    // `pick` on every state push to keep the box filled, and that must never
+    // launch anything — hence both the `quiet` flag and the id comparison.
+    if (switching) switchIfFree(pack, kind);
   }
 
   const onType = () => { paintHits(); paintAlt(); };
@@ -3311,7 +3370,10 @@ function launchBar() {
      */
     const shelf = gameOf().packs;
     const stillThere = currentPack && shelf.some((p) => p.id === currentPack.id);
-    if (stillThere) { pick(currentPack); }
+    // QUIET: this runs on every state push, and a re-render is not somebody
+    // choosing a pack. Without it the bar would relaunch the projector every
+    // time a phone joined.
+    if (stillThere) { pick(currentPack, { quiet: true }); }
     else {
       /*
        * WITH NOTHING CHOSEN, IT STARTS ON WHAT IS ON THE BIG SCREEN.
