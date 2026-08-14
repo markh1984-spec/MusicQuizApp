@@ -836,6 +836,15 @@ Full reasoning: **[`docs/artwork.md`](docs/artwork.md)**. The rules:
   copy button and broke the rule above. **He wanted the button, not the
   page.** Only build an artifact when he asks for one, or when the thing
   genuinely needs to be a page. Never hide a prompt behind a URL.
+- **OFFER UI CHOICES AS OPTIONS HE CAN TAP, never as prose.** Set on 14 August
+  2026 in his own words: *"I love the fact that you give me four different
+  options based on a UI change — I'm on my phone, and being able to make quick
+  decisions on UI increases my productivity massively."* So when a UI decision
+  has real forks, put them up as options with a small mock-up of each rather
+  than describing them in a paragraph and asking what he thinks. He is usually
+  on a phone; a paragraph costs him a round trip and a tap costs him nothing.
+  Recommend one and say why — this is not a way of avoiding a view, it is a way
+  of making his answer cheap.
 - **SHOW A SCREENSHOT FOR EVERY UI CHANGE. This is a rule, not a nicety** —
   set by the host on 14 August 2026: *"whenever you change the UI of anything
   in this app you MUST show me, since the UI of this app is extremely
@@ -1401,6 +1410,53 @@ paying for a full room on a dead night, not selling tickets — so a free-entry
 draw is exempt and there is nothing to work around. **If a venue ever charges
 per team, this needs looking at again before the prize gets big**, because a
 paid-entry draw is a different thing in law.
+
+### TONIGHT — one launch section, at the top of every tab
+
+`launchBar()` in `console.js`, drawn above the running panel on every tab.
+
+**It was called "Quick launch", which said how FAST it is rather than what it
+is for** — and it behaved that way: two shortcut buttons that deliberately took
+no settings, with the look, the card shape, the prizes and the venue living
+somewhere else entirely, on a pack card, in a grid, further down whichever tab
+you happened to be on. The fast path and the fully-featured path were two
+different controls in two different places and you had to know which one you
+were in.
+
+The host's brief, on 14 August 2026: *"the second he gets to his console it
+should be very obvious that the top of every page is a launch section —
+wherever he is, he can launch from there, and it needs to be fully featured.
+Sometimes you just don't want to think, you want to get in and go and know it
+will work."*
+
+- **Tonight's pack is already chosen** — the same `quickPicks()` the two
+  shortcut buttons used, in a box you can type over. Nothing to find, no
+  typing, one press. The runner-up is a CHIP beside it rather than a second
+  gradient button.
+- **Tonight's venue is printed at the top**, because it decides the prizes, the
+  voucher and what the night is filed under. It was previously visible only as
+  small print on a shortcut button.
+- **Set it up** opens the rest — look, card shape, prizes, teams, online,
+  venue. **Shut by default**, because a dropdown on the panic control defeats
+  the panic control; **one tap away**, because "it is somewhere else" is
+  exactly what was wrong before. Its open state is remembered outside the
+  render, like every other panel here: this one is rebuilt every time a phone
+  joins.
+- **ONE gradient button on the section.** There were two shortcut cards and a
+  pack card's Launch, all wearing the account's gradient on one screen, which
+  is the GUI rule broken three ways.
+
+**The pack cards keep their own Launch for now**, deliberately: this is the
+protected surface, and swapping a working control for "loads it into the bar"
+on the same day as the redesign is two changes to one path. That is the next
+step, not this one.
+
+**And it found the seventh instance of the min-content fault.** `.lb-set` was a
+wrapping flex row, and a `<select>` will not go below the width of its longest
+option — "Online — the question goes on their phones" dragged the whole console
+90px off the side of a 320px phone. Grid, `min-width: 0` on the children,
+`max-width: 100%` on the selects. **Measure `scrollWidth` against
+`clientWidth` after anything structural**; nothing else finds it.
 
 ### The last slide of the night — "Back here Thursday 20th"
 

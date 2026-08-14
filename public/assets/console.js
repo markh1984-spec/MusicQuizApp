@@ -2538,12 +2538,37 @@ async function generate(panel) {
  */
 
 /**
- * LAUNCH — the fast path, at the top of every tab.
+ * TONIGHT — the launch section, at the top of every tab.
  *
- * The pack cards are for browsing. This is for the other case, which is the
- * one that happens under pressure: you know exactly what you are running, you
- * are late, the room is filling, and you want it on the projector. Type "198",
- * pick it, press the big button.
+ * **It was called "Quick launch", which said how FAST it is rather than what
+ * it is for**, and it behaved that way: two shortcut buttons that took no
+ * settings, with the look, the card shape and the venue living somewhere else
+ * entirely — on a pack card, in a grid, further down whichever tab you
+ * happened to be on. So the fast path and the fully-featured path were two
+ * different controls in two different places, and you had to know which one
+ * you were in.
+ *
+ * The host's own framing, and it is the whole brief: *"the second he gets to
+ * his console it should be very obvious that the top of every page is a launch
+ * section — wherever he is, he can launch from there, and it needs to be fully
+ * featured. Sometimes you just don't want to think, you want to get in and go
+ * and know it will work."*
+ *
+ * So: one section, one name, everything a night needs.
+ *
+ *  - **Tonight's pack is already chosen** — the same pick the two shortcut
+ *    buttons used to offer, in a box you can type over. Nothing to find.
+ *  - **Tonight's venue is already chosen**, and is printed at the top, so what
+ *    the night will be filed as and play for is visible before the press
+ *    rather than at the final scores.
+ *  - **Set it up** opens the rest — look, card shape, prizes, teams, online.
+ *    Shut by default, because a dropdown on the panic control defeats the
+ *    panic control; one tap away, because "it is somewhere else" is what was
+ *    wrong before.
+ *
+ * ONE gradient button on the section, which is the GUI rule: there were two
+ * shortcut cards and a pack card's Launch, all of them the account's own
+ * gradient, on one screen.
  *
  * **It carries the launch SETTINGS rather than skipping them**, and that is
  * the whole design problem it had to solve. A launch is not one button: a quiz
@@ -2558,6 +2583,15 @@ async function generate(panel) {
  * call, so the guard against launching over somebody's live game cannot be
  * fixed in one place and left rotting in the other.
  */
+/*
+ * Remembered OUTSIDE the render, both of them, because this panel is rebuilt
+ * on every state push — which during a lobby is every time a phone joins. A
+ * pack chosen inside the function, or a Set it up opened inside it, would be
+ * thrown away by the next person to type their team name.
+ */
+let lbOpen = false;
+let currentPack = null;
+
 function launchBar() {
   // An owner runs no nights, so there is nothing here for them — same reason
   // the running panel hides itself.
@@ -2574,16 +2608,13 @@ function launchBar() {
 
   const el = node(`
     <div class="panel launchbar">
-      <h3>Quick launch</h3>
-      <!--
-        It said "Launch", which was true and told you nothing about the half it
-        does NOT do. The two buttons below go on the pack's own defaults with
-        no settings at all — deliberately, because a dropdown on the panic
-        control defeats the panic control — so somebody wanting an online night
-        or a seasonal look had no way of knowing where those lived. The host
-        asked the question this line now answers.
-      -->
-      <div class="tiny lb-note">Two taps, on the pack's own settings. For the look, teams or an online night, use the pack below.</div>
+      <div class="lb-head">
+        <h3>Tonight</h3>
+        <!-- WHERE, at the top, because it decides the prizes, the voucher and
+             what the night is filed under — and it used to be visible only on
+             a button label. -->
+        <div class="tiny lb-where"></div>
+      </div>
       <div class="lb-find">
         ${games.length > 1 ? `<select class="lb-game">
           ${games.map((g) => `<option value="${esc(g.id)}">${esc(g.label)}</option>`).join('')}
@@ -2593,14 +2624,17 @@ function launchBar() {
           <div class="lb-hits" hidden></div>
         </div>
       </div>
-      <div class="lb-quick"></div>
+      <div class="tiny lb-why"></div>
+      <div class="lb-alt"></div>
       <div class="lb-chosen" hidden></div>
     </div>`);
 
   const gamePick = el.querySelector('.lb-game');
   const text = el.querySelector('.lb-text');
   const hits = el.querySelector('.lb-hits');
-  const quick = el.querySelector('.lb-quick');
+  const alt = el.querySelector('.lb-alt');
+  const whyEl = el.querySelector('.lb-why');
+  const where = el.querySelector('.lb-where');
   const chosen = el.querySelector('.lb-chosen');
   const gameOf = () => games.find((g) => g.id === (gamePick ? gamePick.value : games[0].id)) || games[0];
 
@@ -2656,46 +2690,50 @@ function launchBar() {
     return out;
   }
 
-  const paintQuick = () => {
-    const typing = Boolean(text.value.trim());
-    const picks = typing ? [] : quickPicks(gameOf().packs);
+  /*
+   * WHOSE NIGHT IT IS, said at the top of the section.
+   *
+   * `tonightsVenue()` is the same answer the venue picker inside the settings
+   * starts on, from the same function — so the line at the top and the box
+   * that decides it can never disagree. It says when there is NO answer as
+   * well, because a night filed under nothing plays for no prizes and hands
+   * out no vouchers, and an app that says nothing looks exactly like an app
+   * that is working.
+   */
+  const paintWhere = () => {
+    const v = tonightsVenue();
+    where.textContent = v
+      ? `${v.name} — ${v.why}`
+      : 'No venue tonight — pick one under Set it up, or it is filed under nothing.';
+  };
+
+  /*
+   * THE OTHER PACK WORTH OFFERING, as a chip rather than a second big button.
+   *
+   * There used to be two shortcut cards, both wearing the account's gradient,
+   * which is two "press this" buttons on one screen — and the second one was
+   * never the one you wanted more than half the time. The first pick is
+   * already in the box; this is the runner-up, one tap away, and it looks like
+   * what it is.
+   */
+  const paintAlt = () => {
     /*
-     * TONIGHT'S VENUE COMES WITH IT, AND THE BUTTON SAYS SO.
-     *
-     * These two buttons take no settings by design — a dropdown on the panic
-     * control defeats the panic control — so they always launched with no
-     * venue at all, which means no prizes and therefore no QR at the end.
-     * That is the fastest path in the app and it is the one that reproduces
-     * the missing voucher from the first real night.
-     *
-     * `tonightsVenue()` is the fix and the LABEL is what makes it safe: this
-     * button now states the venue it will file the night under and play for,
-     * so a wrong guess is visible before the press rather than at the final
-     * scores. If it is wrong, the search box below is one tap away and has a
-     * picker on it.
-     *
-     * Nothing ELSE is remembered, and that is deliberate. Look, card shape and
-     * prizes are per-night decisions the pack card exists for — and online
-     * mode and team play change how the night is SCORED and what the phones
-     * show, so a remembered "online" from a corporate Thursday would quietly
-     * invert rule 8 in a pub on the Saturday. A venue cannot do that: it is a
-     * label on the night and a set of prizes, both of which are on screen.
+     * "Typing" cannot be "the box has something in it" any more — the box
+     * ARRIVES holding tonight's pack. It means the box no longer says what is
+     * chosen, which is the moment somebody is browsing and a suggestion is in
+     * the way.
      */
-    const venue = picks.length ? tonightsVenue() : null;
-    quick.replaceChildren(...picks.map(({ pack, why }) => {
-      const row = node(`
-        <button class="go lb-go lb-quick-go" type="button">
-          <span class="lb-quick-title">${esc(pack.title)}</span>
-          ${why ? `<span class="lb-quick-why">${esc(why)}</span>` : ''}
-          ${venue ? `<span class="lb-quick-where">at ${esc(venue.name)} · ${esc(venue.why)}</span>` : ''}
-        </button>`);
-      // doLaunch says "Launching…" and puts the label back on its own — this
-      // used to do it here, which destroyed the two spans before doLaunch had
-      // seen them and left a bare "Launch" if the 409 was cancelled.
-      row.addEventListener('click', () => doLaunch(
-        gameOf().id, pack.id, { venue: venue ? venue.name : '' }, row));
-      return row;
-    }));
+    const typed = text.value.trim();
+    const browsing = Boolean(typed) && typed !== (currentPack && currentPack.title);
+    const picks = quickPicks(gameOf().packs);
+    const second = picks[1];
+    const showing = !browsing && second && second.pack.id !== (currentPack && currentPack.id);
+    alt.hidden = !showing;
+    alt.replaceChildren(...(showing ? [(() => {
+      const chip = node(`<button class="minor lb-alt-go" type="button">or ${esc(second.pack.title)}</button>`);
+      chip.addEventListener('click', () => pick(second.pack));
+      return chip;
+    })()] : []));
   };
 
   /*
@@ -2716,8 +2754,25 @@ function launchBar() {
     }));
   };
 
+  /*
+   * WHICH PACK IS CHOSEN, remembered outside the render.
+   *
+   * Module-level for the same reason `openPack` is: this panel is rebuilt on
+   * every state push, and a choice stored inside the function would be thrown
+   * away the moment a phone joined.
+   */
   function pick(pack) {
+    currentPack = pack;
     text.value = pack.title;
+    /*
+     * WHY THIS ONE, kept from the shortcut buttons it replaces. "Never played"
+     * and "Last played in March" are what make an offered pack trustworthy —
+     * without it the box just asserts a title and you have to go and check
+     * whether the room heard it a fortnight ago.
+     */
+    const why = (quickPicks(gameOf().packs).find((q) => q.pack.id === pack.id) || {}).why
+      || (pack.lastPlayedAt ? `Last played ${whenShort(pack.lastPlayedAt)}` : 'Never played');
+    whyEl.textContent = why;
     hits.hidden = true;
     const kind = gameOf().id;
     const bingo = kind === 'bingo';
@@ -2727,7 +2782,8 @@ function launchBar() {
     // button, the only thing on the panel that does anything.
     chosen.replaceChildren(node(`
       <div>
-      <div class="lb-set">
+      <button class="minor lb-more" type="button" aria-expanded="${lbOpen ? 'true' : 'false'}">Set it up</button>
+      <div class="lb-set" ${lbOpen ? '' : 'hidden'}>
         ${bingo ? `
           <label class="pack-shape">Card
             <select class="shape-pick">${shapeOptions(pack)}</select>
@@ -2751,6 +2807,22 @@ function launchBar() {
       </div>
       <button class="go lb-go">Launch ${esc(pack.title)}</button>
       </div>`));
+
+    /*
+     * SET IT UP is shut by default and REMEMBERED once opened.
+     *
+     * Shut, because the common job is "this pack, this pub, go" and a wall of
+     * dropdowns in front of it is the panic control defeating itself. Open, it
+     * stays open — a quizmaster setting up a bingo night touches three of
+     * these in a row, and this panel is rebuilt every time somebody joins.
+     */
+    const more = chosen.querySelector('.lb-more');
+    const set = chosen.querySelector('.lb-set');
+    more.addEventListener('click', () => {
+      lbOpen = !lbOpen;
+      set.hidden = !lbOpen;
+      more.setAttribute('aria-expanded', lbOpen ? 'true' : 'false');
+    });
 
     // The same prize list the pack card builds, from the shape actually picked.
     const shapePick = chosen.querySelector('.shape-pick');
@@ -2781,9 +2853,15 @@ function launchBar() {
     });
   }
 
-  const onType = () => { paintHits(); paintQuick(); };
+  const onType = () => { paintHits(); paintAlt(); };
   text.addEventListener('input', onType);
-  text.addEventListener('focus', paintHits);
+  /*
+   * The box arrives holding tonight's pack, so tapping it to search would
+   * otherwise mean deleting a title first. Selecting it means the first thing
+   * typed replaces it, which is what somebody expects of a box that is already
+   * full.
+   */
+  text.addEventListener('focus', () => { text.select(); paintHits(); });
   // Enter takes the top match, because a keyboard is faster than a thumb and
   // somebody in a hurry will press it.
   text.addEventListener('keydown', (ev) => {
@@ -2791,8 +2869,33 @@ function launchBar() {
     const first = hits.querySelector('.lb-hit');
     if (first) { ev.preventDefault(); first.click(); }
   });
-  gamePick?.addEventListener('change', () => { chosen.hidden = true; paintHits(); paintQuick(); });
-  paintQuick();
+  gamePick?.addEventListener('change', () => {
+    // A different game means a different shelf, so whatever was chosen is not
+    // on it any more. Start again on that game's own best pick.
+    currentPack = null;
+    chosen.hidden = true;
+    text.value = '';
+    startOn();
+  });
+
+  /*
+   * ARRIVE READY, which is the whole point of the section.
+   *
+   * The panel used to open on an empty search box and two shortcut buttons —
+   * so the fully-featured path began with typing. It now starts on the pack
+   * this room is least likely to have heard (`quickPicks`, unchanged), with
+   * the venue and the settings already filled in behind it. One press.
+   *
+   * A room with no packs at all falls through to the empty box, which is what
+   * it always was.
+   */
+  function startOn() {
+    paintWhere();
+    const first = quickPicks(gameOf().packs)[0];
+    if (first) pick(first.pack);
+    paintAlt();
+  }
+  startOn();
   return el;
 }
 

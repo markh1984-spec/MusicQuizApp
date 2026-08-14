@@ -4702,7 +4702,20 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 }
 .lb-hit:hover, .lb-hit:focus { background: rgba(255, 255, 255, 0.09); outline: none; }
 
-.lb-set { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0 10px; }
+/* SET IT UP — the settings, once it is open.
+   A GRID rather than a wrapping flex row, and every child is allowed to
+   shrink: a `<select>` will not go below the width of its longest option on
+   its own, so "Online — the question goes on their phones" dragged the whole
+   console 90px off the side of a 320px phone. That is the seventh time this
+   file has recorded that fault; `min-width: 0` on the child and
+   `max-width: 100%` on the select are both needed. */
+.lb-set {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 10px; margin: 12px 0 10px;
+}
+.lb-set > * { min-width: 0; }
+.lb-set .pack-shape { margin: 0; min-width: 0; }
+.lb-set select, .lb-set input { min-width: 0; max-width: 100%; }
 /* Big, because it is pressed in a dark room by somebody who is late.
  * The gradient is written out here rather than inherited: the app's `.go`
  * fill is scoped to `.pack-card .go`, so a Launch button anywhere else came
@@ -4716,25 +4729,32 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .lb-go:hover { filter: brightness(1.08); }
 .lb-go:disabled { opacity: 0.4; cursor: default; filter: none; }
 
-/* The two no-typing picks. Side by side where there is room and stacked on a
-   phone, because the choice is meant to be read in one glance rather than
-   scrolled. They sit BELOW the search box: somebody who knows the pack name
-   types it, and somebody who does not is the person these are for. */
-.lb-quick { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
-.lb-quick:not(:empty) { margin-top: 12px; }
-.lb-quick-go { display: grid; gap: 3px; padding: 15px 16px; font-size: var(--fs-lead); }
-.lb-quick-title { font-weight: 900; }
-/* Why this one is being offered, in the button's own dark ink rather than the
-   page's grey — on a gradient fill a `.tiny` grey is close to invisible. */
-.lb-quick-why { font-size: var(--fs-mini); font-weight: 700; opacity: 0.72; }
-/* WHERE it thinks tonight is. Quieter than the reason above it and on a line
-   of its own, because it answers a different question — that one is "why this
-   pack", this is "and where". Fainter on purpose: it is a statement of what
-   the press will do rather than a second thing to weigh up, and the moment it
-   is wrong the search box underneath has a picker on it. It must never be
-   hidden, though: an unseen guess is how the wrong pub's prize ends up on the
-   winner's phone. */
-.lb-quick-where { font-size: var(--fs-mini); font-weight: 700; opacity: 0.6; }
+/* TONIGHT'S HEADING, and where it thinks tonight is.
+   The venue is at the TOP of the section rather than buried on a button,
+   because it decides the prizes, the voucher and what the night is filed
+   under — an unseen guess is how the wrong pub's prize ends up on the
+   winner's phone. It is stated rather than shouted: it is what the press will
+   do, not a second thing to weigh up, and the picker for it is one tap away
+   under Set it up. */
+.lb-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.lb-where { color: var(--ink-dim); }
+
+/* The runner-up pack, as a chip rather than a second gradient button — there
+   is one "press this" on a screen, and it is Launch. */
+.lb-why { margin-top: 6px; }
+.lb-alt { margin-top: 10px; }
+.lb-alt[hidden] { display: none; }
+
+/* SET IT UP — everything a night needs that is not the pack itself. Shut by
+   default: the common job is this pack, this pub, go, and a wall of dropdowns
+   in front of that is the panic control defeating itself. */
+.lb-more { margin-top: 12px; }
+.lb-more::after {
+  content: '';
+  display: inline-block; margin-left: 8px; vertical-align: 1px;
+  border: 5px solid transparent; border-top-color: currentColor; border-bottom: 0;
+}
+.lb-more[aria-expanded="true"]::after { transform: rotate(180deg); }
 
 /* Who is already in the shared portrait library. Names rather than pictures:
    the job is spotting "michael-jackson" next to "mj", which is a reading job. */
