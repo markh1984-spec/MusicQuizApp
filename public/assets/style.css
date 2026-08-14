@@ -1335,6 +1335,39 @@ body.editor::after { display: none; }
 .qcard:last-child { border-radius: 0 0 14px 14px; }
 .qcard.flagged { background: rgba(255, 77, 94, 0.09); }
 
+/* SOMEBODY IS PLAYING THIS PACK. Gold, not red: nothing is wrong and nothing
+   is being destroyed. It is a fact you need before deciding — the same
+   treatment "not invoiced" and a venue clash already get. Red is kept for the
+   one question actually on a screen, so that when red appears it means
+   something. */
+.in-play {
+  border: 1px solid var(--gold);
+  border-radius: var(--r-card);
+  background: rgba(255, 199, 61, 0.10);
+  color: var(--ink);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  font-size: var(--fs-note);
+}
+.in-play strong { display: block; margin-bottom: 2px; }
+
+/* AND THE ONE QUESTION A ROOM IS LOOKING AT. Changing this changes it
+   mid-clock in front of people, with the answer key. A left bar rather than a
+   full wash, because the card is full of text boxes that still have to be
+   readable — and because `.flagged` already owns the red background, and two
+   red fills would say the same thing twice for different reasons. */
+.qcard.on-screen-now {
+  border-left: 3px solid var(--bad);
+  background: rgba(255, 77, 94, 0.06);
+}
+.on-screen-flag {
+  color: var(--bad);
+  font-size: var(--fs-mini);
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  margin-bottom: 8px;
+}
+
 /* `flex-wrap` because the row is QUESTION 1 · a type · Duplicate · Delete, and
    on a 320px phone the buttons on the end were 8px off the side rather than on
    a line of their own. */

@@ -51,7 +51,7 @@ import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
 // The one proof a phone has. Same rule as answering: an id is not a
 // credential, the token is — see rule 3.
-import { ownsPlayer } from './src/engine.js';
+import { ownsPlayer, PHASES } from './src/engine.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, switchedOn, PACK_PENCE } from './public/assets/plans.js';
 import { sendEmail, emailConfigured, emailProvider, keepKeyAlive, resetEmail } from './src/email.js';
 import { Suggestions, KINDS, PACK_REQUEST_KIND } from './src/suggestions.js';
@@ -1946,6 +1946,29 @@ async function handleGet(req, res, url, route) {
     });
     return res.end(bytes), true;
   }
+  /*
+   * IS ANYBODY PLAYING THIS RIGHT NOW, AND WHERE HAVE THEY GOT TO?
+   *
+   * What the editor polls so its banner cannot be two hours old. It is only
+   * the banner — the guard that actually matters runs inside the save, where
+   * it cannot be stale. See `changesTheLiveQuestion`.
+   *
+   * A COUNT, NEVER A NAME. The owner has no business learning which
+   * quizmaster is working tonight, and the number is what changes the
+   * decision. A quizmaster asking about one of their own is scoped to their
+   * own room by `packCtx`, so this can never leak across accounts either.
+   */
+  if (route.startsWith('/api/playing/')) {
+    if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
+    const rest = route.slice('/api/playing/'.length);
+    const kind = rest.startsWith('bingo/') ? 'bingo' : 'quiz';
+    const id = decodeURIComponent(rest.slice(kind.length + 1));
+    if (!mayReadPack(req, url, kind, id)) return sendJson(res, 200, { playing: 0, live: null }), true;
+    // Own packs are one room's; the catalogue is shared by everybody.
+    const mine = isOwnPack(kind, id, roomForHost(req, url).paths);
+    return sendJson(res, 200, packPlayState(kind, id, mine ? roomForHost(req, url) : null)), true;
+  }
+
   if (route.startsWith('/api/quiz/')) {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const id = decodeURIComponent(route.slice('/api/quiz/'.length));
@@ -2804,6 +2827,110 @@ function reloadPackEverywhere(id, { clamp = true } = {}) {
 function packInUse(kind, id, onlyRoom = null) {
   const where = onlyRoom ? [onlyRoom] : rooms.all();
   return where.some((r) => r.session.kind === kind && r.session.pack?.id === id);
+}
+
+/**
+ * WHO IS PLAYING THIS PACK, AND WHICH QUESTION IS ON THE SCREEN.
+ *
+ * `packInUse` above answers "may I delete this" with a yes or a no. This
+ * answers the editor's question, which is a different one: *which question
+ * must I not touch right now.*
+ *
+ * **A save reaches a running night immediately** — `reloadPackEverywhere()`
+ * swaps the pack under every room playing it, which is rule 11 and is the
+ * whole point. Everything the room has done lives in `state` rather than in
+ * the pack, so scores, the clock and the pointer are untouched and the room
+ * sees nothing until the host presses Next. That makes correcting a question
+ * they have not reached completely safe, and it makes correcting the one
+ * they are LOOKING AT a change in front of sixty people mid-clock — the
+ * answer key with it.
+ *
+ * So it reports two different facts and the editor treats them differently:
+ * that somebody is playing it at all, and the exact round and question index
+ * that is live.
+ *
+ * **It says how many rooms, never which quizmaster.** The owner has no
+ * business learning that Rob is working tonight, and the count is what
+ * actually changes the decision. A quizmaster asking about their own pack is
+ * scoped to their own room anyway — `onlyRoom` — so one subscriber can never
+ * learn anything about another's night from this.
+ *
+ * **`live` is deliberately only the QUESTION phase.** At a reveal, a round
+ * board or the lobby nothing on screen comes out of a question, so an edit
+ * costs nobody anything — and marking a card red when it is safe is how a
+ * warning stops being read.
+ */
+/**
+ * Has this save changed the question a room is LOOKING AT?
+ *
+ * The check runs at the moment of writing rather than when the editor was
+ * opened, and that is the whole point: somebody opens the editor at seven and
+ * types at nine, and a warning that was true two hours ago is worse than no
+ * warning because it gets trusted. The banner on the page is a convenience;
+ * this is the thing that cannot be stale.
+ *
+ * Compared against what is ON DISK rather than against what the editor loaded,
+ * so it answers "is this write a change" rather than "did somebody type in a
+ * box". Retyping the same words is not a change and must not be stopped.
+ *
+ * Everything else in the pack saves straight through — correcting question 6
+ * while the room is on question 5 is exactly what this feature exists to
+ * allow, and is safe: the pointer, the clock and every score live in `state`,
+ * not in the pack.
+ */
+function changesTheLiveQuestion(kind, id, incoming, onlyRoom = null) {
+  const state = packPlayState(kind, id, onlyRoom);
+  if (!state.live) return null;
+  const { roundIndex, questionIndex } = state.live;
+  let onDisk;
+  try {
+    onDisk = onlyRoom
+      ? readPack(kind, id, { config, paths: onlyRoom.paths }).pack
+      : loadQuiz(config.quizDir, id);
+  } catch {
+    return null;  // Cannot read it, so cannot claim it changed.
+  }
+  const at = (pack) => (((pack || {}).rounds || [])[roundIndex] || {}).questions?.[questionIndex] || null;
+  const before = at(onDisk);
+  const after = at(incoming);
+  if (!before && !after) return null;
+  if (JSON.stringify(before) === JSON.stringify(after)) return null;
+  return {
+    roundIndex,
+    questionIndex,
+    playing: state.playing,
+    prompt: String((before && before.prompt) || '').slice(0, 120),
+  };
+}
+
+function packPlayState(kind, id, onlyRoom = null) {
+  const where = onlyRoom ? [onlyRoom] : rooms.all();
+  /*
+   * `busy`, NOT merely "has this pack loaded" — which is what `packInUse`
+   * above asks, correctly, for deleting. A server boots with a pack sitting in
+   * the house room's session and nobody within a mile of it, so counting that
+   * as "being played right now" puts a warning on the editor permanently. A
+   * warning that is always on is a warning nobody reads, which would cost the
+   * one below it its meaning too.
+   *
+   * `busy` is the standard the launch guard already uses: a game in progress,
+   * OR a lobby with teams sitting in it who have typed their names.
+   */
+  const rooms_ = where.filter((r) => r.session.kind === kind && r.session.pack?.id === id && r.busy);
+  if (!rooms_.length) return { playing: 0, live: null, phase: '' };
+  // The first one is enough to point at a question. Two rooms on the same
+  // pack at the same second is possible and vanishingly rare, and naming one
+  // question is more useful than naming none.
+  const first = rooms_.find((r) => r.session.engine?.state?.phase === PHASES.QUESTION) || rooms_[0];
+  const state = first.session.engine?.state || {};
+  const onQuestion = state.phase === PHASES.QUESTION;
+  return {
+    playing: rooms_.length,
+    phase: state.phase || '',
+    live: onQuestion
+      ? { roundIndex: Number(state.roundIndex) || 0, questionIndex: Number(state.questionIndex) || 0 }
+      : null,
+  };
 }
 
 /*
@@ -3818,6 +3945,14 @@ async function handleWrite(req, res, url, route) {
     const quiz = normaliseQuiz(body, body.id);
     const problems = validateQuiz(quiz);
     if (problems.length) return sendJson(res, 400, { error: 'Quiz is not valid', problems }), true;
+    /*
+     * The same question a quizmaster's own pack deserves — and MORE likely
+     * here, because the person editing it is the person holding the phone
+     * that is running it. Scoped to their own room, so it can never report
+     * anything about somebody else's night.
+     */
+    const clash = body.confirmLive ? null : changesTheLiveQuestion('quiz', quiz.id, quiz, room);
+    if (clash) return sendJson(res, 409, { error: 'onScreenNow', live: clash }), true;
     try {
       saveOwn('quiz', quiz.id, quiz, { config, paths: room.paths });
     } catch (err) {
@@ -4498,6 +4633,16 @@ async function handleWrite(req, res, url, route) {
       const body = await readJson(req, 4 * 1024 * 1024);
       const problems = validateQuiz(body);
       if (problems.length) return sendJson(res, 400, { error: 'Quiz is not valid', problems }), true;
+      /*
+       * NOT A REFUSAL — a question asked once. Somebody telling the host a
+       * question is wrong DURING a night is the case this whole feature
+       * exists for, so blocking would break the thing it is meant to serve.
+       * It asks only about the question on the screen at this exact second,
+       * and only when the save actually changes it.
+       */
+      const clash = body.confirmLive ? null : changesTheLiveQuestion('quiz', id, body);
+      if (clash) return sendJson(res, 409, { error: 'onScreenNow', live: clash }), true;
+      delete body.confirmLive;
       saveQuiz(config.quizDir, id, body);
       // If a running quiz was the one just edited, pick up the changes live —
       // in every room playing it, not just the editor's own.

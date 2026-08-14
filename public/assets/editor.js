@@ -185,8 +185,12 @@ async function openPack(value) {
   ownPack = Boolean(quiz.mine);
   delete quiz.mine;
   problems = [];
+  playState = { playing: 0, live: null, phase: '' };
   setDirty(false);
   render();
+  // Ask about THIS pack now, and keep asking — a page open since seven
+  // o'clock must not still be describing seven o'clock.
+  watchPlaying();
 }
 
 function setDirty(value) {
@@ -203,9 +207,77 @@ function change(fn) {
 
 // ----------------------------------------------------------------- rendering
 
+/*
+ * WHO IS PLAYING THIS RIGHT NOW — polled, because a page can sit open for
+ * hours and a warning that was true at seven o'clock is worse than none at
+ * nine: it gets trusted. `{ playing, phase, live }`, refreshed on a timer and
+ * again the moment the tab is looked at.
+ *
+ * It is only the SIGN. The guard that decides whether a save goes through
+ * runs on the server at the moment of writing, where it cannot be stale.
+ */
+let playState = { playing: 0, live: null, phase: '' };
+let playTimer = null;
+
+async function pollPlaying() {
+  if (!quiz || !quiz.id) return;
+  try {
+    const was = JSON.stringify(playState);
+    // Its own fetch rather than `api()`: a poll that fails must leave the last
+    // answer on screen, not sign somebody out of the page they are typing in.
+    const path = `/api/playing/${kind}/` + encodeURIComponent(quiz.id);
+    const res = await fetch(hostKey ? `${path}?key=${encodeURIComponent(hostKey)}` : path,
+      { headers: hostKey ? { 'X-Host-Key': hostKey } : {} });
+    if (!res.ok) return;
+    playState = await res.json();
+    // Only redraw when something actually changed — this runs every few
+    // seconds and the page is full of text boxes somebody may be typing in.
+    if (JSON.stringify(playState) !== was) render();
+  } catch { /* a poll that fails simply leaves the last answer up */ }
+}
+
+function watchPlaying() {
+  if (playTimer) clearInterval(playTimer);
+  pollPlaying();
+  playTimer = setInterval(pollPlaying, 8000);
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) pollPlaying(); });
+
+/**
+ * The gold banner: somebody is playing this pack.
+ *
+ * Gold rather than red, deliberately — nothing is wrong and nothing is being
+ * destroyed. It is the same treatment "not invoiced" and a venue clash get:
+ * a fact you need before you decide, not a fault. The red is saved for the
+ * one question that is actually on a screen, so that when red appears it
+ * means something.
+ */
+function playingBanner() {
+  if (!playState.playing) return null;
+  const n = playState.playing;
+  const live = playState.live;
+  const where = live
+    ? `They are on round ${live.roundIndex + 1}, question ${live.questionIndex + 1}.`
+    : 'No question is on screen at the moment.';
+  return node(`
+    <div class="in-play">
+      <strong>Being played right now${n > 1 ? ` by ${n} quizmasters` : ''}.</strong>
+      ${esc(where)} Anything you save reaches them the moment you save it.
+    </div>`);
+}
+
+/** Is this the question a room is looking at this second? */
+function isLive(ri, qi) {
+  const live = playState.live;
+  return Boolean(live && live.roundIndex === ri && live.questionIndex === qi);
+}
+
 function render() {
   if (!quiz) return;
   const parts = [];
+
+  const banner = playingBanner();
+  if (banner) parts.push(banner);
 
   if (problems.length) {
     parts.push(node(`
@@ -544,8 +616,16 @@ function roundBlock(round, ri) {
 
 function questionCard(round, q, ri, qi) {
   const flagged = problems.some((p) => p.startsWith(`Round ${ri + 1} question ${qi + 1}:`));
+  /*
+   * ON A SCREEN, RIGHT NOW. The one place red is right here: changing this
+   * question changes it in front of a room mid-clock, and the answer key with
+   * it. Every other question in the pack is safe to correct — which is what
+   * the marker is really saying, by only ever being on one card.
+   */
+  const onScreen = isLive(ri, qi);
   const el = node(`
-    <div class="qcard ${flagged ? 'flagged' : ''}">
+    <div class="qcard ${flagged ? 'flagged' : ''} ${onScreen ? 'on-screen-now' : ''}">
+      ${onScreen ? '<div class="on-screen-flag">On a screen right now — a room is looking at this</div>' : ''}
       <div class="qtop">
         <span class="drag-grip" draggable="true" title="Drag to move this question">${gripIcon()}</span>
         <span class="qnum">Question ${qi + 1}</span>
@@ -834,9 +914,10 @@ function swap(list, a, b) {
 
 // -------------------------------------------------------------------- saving
 
-async function save() {
+async function save(confirmLive = false) {
   try {
-    const result = await api(saveTo(), { method: saveMethod(), body: JSON.stringify(quiz) });
+    const body = confirmLive ? { ...quiz, confirmLive: true } : quiz;
+    const result = await api(saveTo(), { method: saveMethod(), body: JSON.stringify(body) });
     problems = [];
     problems.checked = true;
     setDirty(false);
@@ -845,6 +926,25 @@ async function save() {
     // when the server's filesystem is temporary.
     flash(result.backedUp ? 'Saved and backed up' : 'Saved here only — not backed up');
   } catch (err) {
+    /*
+     * THE QUESTION IS ON A SCREEN RIGHT NOW, and the save changes it.
+     *
+     * Asked rather than refused: somebody telling the host a question is
+     * wrong DURING a night is precisely why editing mid-night is allowed at
+     * all. Everything else in the pack has already saved straight through —
+     * this only fires for the question a room is looking at this second.
+     *
+     * The check ran on the SERVER at the moment of writing, so it cannot be
+     * stale the way the banner at the top of this page can.
+     */
+    if (err.data && err.data.error === 'onScreenNow' && !confirmLive) {
+      const live = err.data.live || {};
+      const where = `round ${(live.roundIndex || 0) + 1}, question ${(live.questionIndex || 0) + 1}`;
+      const asking = `That is the question on screen RIGHT NOW — ${where}, in front of a room that is playing it.\n\n`
+        + `Saving changes it mid-question, and the answer key with it.\n\nSave anyway?`;
+      if (confirm(asking)) return save(true);
+      return;
+    }
     // The server validates too, and refuses to write a broken quiz to disk.
     problems = err.data && err.data.problems ? err.data.problems : [err.message];
     render();
