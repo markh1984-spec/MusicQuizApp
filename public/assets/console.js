@@ -6419,6 +6419,19 @@ function diarySection() {
             Add anything that is not your usual.</div>
         </div>
       </div>
+      <!-- THE MONTH, because "book a quiz on the 23rd" needs a 23rd to click.
+           The list under it answers a different question — what is next — and
+           both were rendered side by side before choosing: a list can only
+           ever offer actions on nights that ALREADY exist. -->
+      <div class="cal-head">
+        <button class="minor cal-prev" type="button" aria-label="The month before">&larr;</button>
+        <b class="cal-month"></b>
+        <button class="minor cal-next" type="button" aria-label="The month after">&rarr;</button>
+        <button class="minor cal-today" type="button">Today</button>
+      </div>
+      <div class="cal-days"></div>
+      <div class="cal-grid"></div>
+      <div class="cal-menu" hidden></div>
       <div class="diary-list"></div>
       <div class="diary-add">
         <input class="d-date" type="date" aria-label="Date">
@@ -6436,7 +6449,133 @@ function diarySection() {
 
   const list = el.querySelector('.diary-list');
 
+  /*
+   * THE MONTH GRID.
+   *
+   * `upcoming()` already knows how to turn residencies plus one-offs minus
+   * nights off into a list of nights — it simply starts from today. Asked for
+   * an arbitrary month it does the same job: hand it the first of the month
+   * and six weeks, then keep what falls inside. One source, so the grid, the
+   * list under it and Tonight can never disagree about whose night a Thursday
+   * is.
+   */
+  const gridEl = el.querySelector('.cal-grid');
+  const daysEl = el.querySelector('.cal-days');
+  const menuEl = el.querySelector('.cal-menu');
+  const monthEl = el.querySelector('.cal-month');
+  const today = new Date();
+  let shown = new Date(today.getFullYear(), today.getMonth(), 1);
+  let picked = '';
+
+  const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  const drawMonth = () => {
+    const first = new Date(shown.getFullYear(), shown.getMonth(), 1);
+    const last = new Date(shown.getFullYear(), shown.getMonth() + 1, 0);
+    monthEl.textContent = first.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+
+    // Monday first, which is how a week reads to anybody working in a pub.
+    daysEl.replaceChildren(...['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+      .map((d) => node(`<span class="cal-day">${d}</span>`)));
+
+    const nights = upcoming({
+      venues: library.venueRecords || [],
+      bookings: library.bookings || [],
+      now: first.getTime(),
+      weeks: 6,
+    });
+    const byDate = new Map();
+    for (const n of nights) {
+      if (!byDate.has(n.date)) byDate.set(n.date, []);
+      byDate.get(n.date).push(n);
+    }
+
+    const cells = [];
+    // getDay() is 0 for Sunday; Monday-first means Sunday sits at the end.
+    const lead = (first.getDay() + 6) % 7;
+    for (let i = 0; i < lead; i++) cells.push(node('<div class="cal-cell is-blank"></div>'));
+    for (let d = 1; d <= last.getDate(); d++) {
+      const date = iso(new Date(shown.getFullYear(), shown.getMonth(), d));
+      const on = byDate.get(date) || [];
+      const cell = node(`
+        <button class="cal-cell ${on.length ? 'has' : ''} ${date === iso(today) ? 'is-today' : ''} ${date === picked ? 'open' : ''}"
+          type="button" data-date="${date}">
+          <span class="cal-num">${d}</span>
+          ${on.slice(0, 2).map((n) => `<span class="cal-dot ${n.why === 'booked' ? 'one' : ''}">${esc(n.venue)}</span>`).join('')}
+          ${on.length > 2 ? `<span class="cal-dot more">and ${on.length - 2} more</span>` : ''}
+        </button>`);
+      cell.addEventListener('click', () => { picked = picked === date ? '' : date; drawMonth(); });
+      cells.push(cell);
+    }
+    gridEl.replaceChildren(...cells);
+    drawMenu(byDate.get(picked) || []);
+  };
+
+  /*
+   * WHAT YOU CAN DO WITH A DATE — one row, and deliberately a LIST rather than
+   * a fixed set. The host's own framing: *"maybe just build that in at the
+   * start so we can add to it later"*. So an action is an entry here, and a
+   * new one is a line rather than a redesign.
+   */
+  function drawMenu(on) {
+    if (!picked) { menuEl.hidden = true; menuEl.replaceChildren(); return; }
+    const when = new Date(picked + 'T12:00:00');
+    const said = when.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+    const acts = [];
+
+    acts.push(['minor', 'Book a quiz here', () => {
+      el.querySelector('.d-date').value = picked;
+      el.querySelector('.diary-add').scrollIntoView({ block: 'center' });
+      el.querySelector('.d-venue select, .d-venue input')?.focus();
+    }]);
+
+    if (can(FEATURES.INVOICES)) {
+      acts.push(['minor', 'Invoice for this date', async () => {
+        try { book = await invoiceApi('/api/invoices'); } catch (err) {
+          alert('Could not open the invoices: ' + err.message); return;
+        }
+        const first = on[0];
+        const named = String((first && first.venue) || '').trim().toLowerCase();
+        const customer = (book.customers || []).find(
+          (c) => String(c.name || '').trim().toLowerCase() === named);
+        openInvoiceForm({
+          customerId: customer ? customer.id : '',
+          event: { title: 'Music quiz night', venue: (first && first.venue) || '', date: picked },
+          description: 'Music quiz night',
+        }, draw);
+      }]);
+    }
+
+    for (const night of on) {
+      acts.push(['minor danger', `Not on at ${night.venue}`, async () => {
+        if (!confirm(`Not doing ${night.venue} on ${said}?`)) return;
+        await save({ date: night.date, venue: night.venue, off: true });
+      }]);
+    }
+
+    menuEl.hidden = false;
+    menuEl.replaceChildren(
+      node(`<span class="tiny cal-when">${esc(said)}</span>`),
+      ...acts.map(([cls, label, go]) => {
+        const b = node(`<button class="${cls}" type="button">${esc(label)}</button>`);
+        b.addEventListener('click', go);
+        return b;
+      }),
+    );
+  }
+
+  el.querySelector('.cal-prev').addEventListener('click', () => {
+    shown = new Date(shown.getFullYear(), shown.getMonth() - 1, 1); picked = ''; drawMonth();
+  });
+  el.querySelector('.cal-next').addEventListener('click', () => {
+    shown = new Date(shown.getFullYear(), shown.getMonth() + 1, 1); picked = ''; drawMonth();
+  });
+  el.querySelector('.cal-today').addEventListener('click', () => {
+    shown = new Date(today.getFullYear(), today.getMonth(), 1); picked = ''; drawMonth();
+  });
+
   const draw = () => {
+    drawMonth();
     const nights = upcoming({
       venues: library.venueRecords || [],
       bookings: library.bookings || [],

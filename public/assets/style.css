@@ -5919,3 +5919,54 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 /* A diary row's two buttons share a cell, so "Invoice it" and "Not on" cannot
    push the row's layout about as one appears and the other does not. */
 .d-acts { display: flex; gap: 8px; flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; }
+
+/* THE MONTH. A grid you click into, because "book a quiz on the 23rd" needs a
+   23rd to click — which a list of nights that already exist cannot offer. */
+.cal-head { display: flex; align-items: center; gap: 8px; margin: 12px 0 8px; }
+.cal-month { flex: 1 1 auto; min-width: 0; font-size: var(--fs-lead); }
+.cal-days, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.cal-day {
+  font-size: var(--fs-tag); font-weight: 800; color: var(--ink-dim);
+  text-align: center; padding-bottom: 2px;
+}
+.cal-cell {
+  min-height: 68px; padding: 6px; text-align: left; cursor: pointer;
+  border: 1px solid var(--panel-line); border-radius: var(--r-field);
+  background: rgba(255, 255, 255, 0.03); color: var(--ink);
+  font: inherit; display: block; overflow: hidden;
+}
+/* A day with a night on it is raised, so the month reads at a glance as "where
+   the work is" rather than as a wall of identical boxes. */
+.cal-cell.has { background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03)); }
+.cal-cell.is-today { border-color: var(--ink-dim); }
+.cal-cell.open { border-color: var(--hot); background: rgba(255, 46, 136, 0.10); }
+/* An empty leading cell is not a button and must not look like one. */
+.cal-cell.is-blank { background: none; border-color: transparent; cursor: default; }
+.cal-num { display: block; font-size: var(--fs-tag); font-weight: 900; color: var(--ink-dim); }
+.cal-dot {
+  display: block; margin-top: 3px; padding: 2px 6px; border-radius: var(--r-pill);
+  font-size: var(--fs-tag); font-weight: 800;
+  background: rgba(255, 46, 136, 0.18);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* A one-off is a different colour from a residency, because one is a habit and
+   the other is a decision somebody made. */
+.cal-dot.one { background: rgba(75, 216, 255, 0.18); }
+.cal-dot.more { background: none; color: var(--ink-dim); }
+/* WHAT YOU CAN DO WITH THE DATE — a list rather than a fixed set, so another
+   action later is a line rather than a redesign. */
+.cal-menu {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 10px; padding: 10px 12px;
+  border: 1px solid var(--hot); border-radius: var(--r-field);
+  background: rgba(255, 46, 136, 0.06);
+}
+.cal-when { flex: 0 0 auto; color: var(--ink); font-weight: 800; }
+@media (max-width: 560px) {
+  /* Below this the seven columns give each day about 38px, which is a tap
+     target but not a place for a venue name — so the pills go and the number
+     carries a dot instead. */
+  .cal-cell { min-height: 44px; }
+  .cal-dot { font-size: 0; padding: 3px; margin-top: 4px; border-radius: var(--r-pill); }
+  .cal-dot.more { display: none; }
+}

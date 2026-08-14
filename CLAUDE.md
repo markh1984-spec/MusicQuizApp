@@ -1887,6 +1887,25 @@ trackpad. **It also accepts a drop while SHUT and springs open on the way**,
 because collapsed is exactly the state somebody is in when they arrive at a
 venue and start setting up.
 
+**MIXING ROUNDS FROM TWO PACKS BELONGS TO THE NIGHT, NOT TO THE EDITOR — and
+that is why it is not built.** It was asked for as *"mix and match 1980s A and
+1980s B without affecting the master copies"*, and two editor layouts were
+rendered for it. The host then reframed it and the reframing is better than
+either: *"the only reason you would drag a round out of one quiz into another
+is so that you can launch the night — so I think that happens in the night
+section."*
+
+He is right, and it changes what the feature IS. In the editor it is
+pack-authoring, which needs copy-on-write, a naming decision and an answer to
+whether a borrowed question stays linked to its source (see rule 11). In
+Tonight it is **building this evening's running order out of pieces**, which
+touches no master at all and may not need to be saved as a pack in the first
+place.
+
+**Left unbuilt deliberately**, at his own call — *"if people want that advanced
+functionality later on we can add it later"*. If it is picked up, start from
+the night rather than from the editor.
+
 **A question changing rounds is reshaped on arrival**, exactly as when a
 round's own type is changed: a text question dropped into a pick-them-all
 round needs six options rather than four, and nothing typed is thrown away.
