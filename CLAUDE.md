@@ -1133,6 +1133,7 @@ src/photos.js          photos from the room: store, kill switch, bin
 src/past-gigs.js       the nights already run, and where their photos are filed
 src/headcounts.js      how many played, per venue — "22 → 58", out of the archive
 src/comeback.js        the last slide: "Back here Thursday 20th", derived at launch
+src/room-asks.js       what the ROOM asked for next time — yes keeps it, no bins it
 src/reports.js         "that one's wrong" — corrections from a night
 src/adverts.js         venue advertising slides, per venue
 src/generate-images.js round 2 artwork (placeholder or OpenAI)
@@ -1451,6 +1452,50 @@ what the thing IS.
 silently** — nothing fails, a tab simply stops being where somebody's thumb
 expects it. Every tab was opened in a browser afterwards at 390 and 1280, and
 the page measured for overflow after visiting all eight.
+
+### What the room asked for — a suggestion box for the people who played
+
+`src/room-asks.js`, the box on the phone's final screen, the panel above the
+quiz generator. **Owner's accounts only for now**, at the host's own request.
+
+*"A customer finishes a quiz and thinks 'wouldn't it be great if there was a
+reggae round' — they can just drop it into the suggestion box."* It is the
+cheapest market research a quizmaster will ever get: from the people who were
+there, on the night, answering the one question that decides what to write
+next.
+
+**A SEPARATE BOX FROM THE QUIZMASTERS' ONE.** `suggestions.js` is subscribers
+writing to the owner, read on a Monday as a work queue with somebody waiting
+for a reply. Strangers' one-liners from a pub would bury it.
+
+**IT COMES OFF THE PHONE, NOT A QR** — and the QR was what was asked for, so
+the reason matters: the projector's one QR belongs to the VENUE (the
+come-back slide), and a second one competes with it for the same cameras.
+Everybody who played already has the app open on the results screen, so a box
+there costs no scanning and no screen. The token does three jobs at once —
+it proves they played, it makes anonymous flooding impossible without joining
+first, and it tags every ask with the NIGHT and the VENUE for free.
+
+**YES OR NO, AND NO IS A DELETE.** The host's own shape, and it is this
+file's Monday rule: a queue that shrinks as you work it costs a fraction of
+one that only grows. There is deliberately no "rejected" state — a list of
+things you have already said no to is a list you read twice.
+
+**AND IT IS A ROUND IDEA BOX, NOT FEEDBACK BY THE BACKDOOR**, which was the
+host's own worry: *"'durrr I was bored' is not useful or relevant."* Four
+things keep it that way, and none of them is a filter:
+
+- **The field is sixty characters.** A theme fits; a grievance does not.
+- **It asks for a ROUND**, in those words, with an example in the box.
+- **It only exists at the END**, on a phone that played, twice per person.
+  There is no comment box open all evening.
+- **No costs one tap.** The real answer is not prevention: it is that the
+  worst case is a second of somebody's Monday rather than a moderation queue.
+
+**Grouped by idea, most-asked first** — four people wanting reggae is a
+different fact from one person asking four times, and it is the number that
+decides whether it is worth a pack. The kept list is grouped too, or one idea
+four people asked for looks like four jobs.
 
 ### DRAG AND DROP — the console is the laptop with the HDMI in it
 

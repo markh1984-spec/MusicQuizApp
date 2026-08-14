@@ -129,6 +129,13 @@ export class Engine {
        */
       comeBack: null,
       /*
+       * MAY THE ROOM ASK FOR A ROUND at the end? Set at launch like the look
+       * and the card shape, and off unless the account holds it — so a night
+       * run by somebody who has not got the feature shows no box at all, and a
+       * restart brings the same night back rather than the other kind.
+       */
+      askForRounds: false,
+      /*
        * WHAT THEY WIN — first, second and third, and all three empty by default.
        *
        * "A free drink at the bar", "£50 bar tab". A fact about tonight like the
@@ -2041,6 +2048,21 @@ export class Engine {
      * Matched on the BOARD ROW, so on a team night every member of the winning
      * team sees the one code they share.
      */
+    /*
+     * ASK FOR A ROUND NEXT TIME — at the FINAL, on the phone of somebody who
+     * played, and nowhere else.
+     *
+     * The end of the night is when they have an opinion and their phone is
+     * already in their hand, which is why this is not a QR: the projector's
+     * one QR belongs to the venue, and scanning a second one competes with it.
+     *
+     * It is a flag rather than the box itself: the engine says whether asking
+     * is on, and the phone draws it. What they type goes to the room's own
+     * store through its own route, never through the game state — a quiz
+     * engine has no business holding somebody's shopping list.
+     */
+    if (s.phase === PHASES.FINAL && s.askForRounds) view.canAsk = true;
+
     if (s.phase === PHASES.FINAL && s.vouchers) {
       const mine = Object.values(s.vouchers).find((v) => v.winnerId === this.boardIdFor(playerId));
       if (mine) {

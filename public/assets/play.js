@@ -826,6 +826,7 @@ function draw(next) {
     currentKey = key;
     pendingChoice = null;
     bodyEl.replaceChildren(buildScreen(state));
+    wireAsk();
   } else {
     updateScreen(state);
   }
@@ -1339,6 +1340,7 @@ function buildBoard(s) {
       <h2>${isFinal ? 'Final scores' : `After round ${s.roundIndex + 1}`}</h2>
       ${isFinal && winner ? `<div class="result good"><div class="sub">Winner</div><div class="big">${esc(winner.name)}</div><div class="pts">${winner.score.toLocaleString('en-GB')}</div></div>` : ''}
       ${voucherCard(s)}
+      ${askCard(s)}
       <div class="mini-board">
         ${rows.map((p) => `
           <div class="mini-row ${p.key === youKey ? 'you' : ''}">
@@ -1352,6 +1354,75 @@ function buildBoard(s) {
         : ''}
     </div>
   `);
+}
+
+/**
+ * ASK FOR A ROUND NEXT TIME.
+ *
+ * The end of the night is the one moment somebody has an opinion about what
+ * they would like next, and their phone is already in their hand — so this
+ * costs no scanning and no screen. The projector's one QR belongs to the
+ * venue; a second one would compete with it.
+ *
+ * **IT ASKS FOR A ROUND, NOT FOR FEEDBACK**, and the shape of the field is
+ * what keeps it that way: one line, sixty characters, with an example in it.
+ * A theme fits and a grievance does not — "durrr I was bored" is not what this
+ * is for, and a box that will not hold it is worth more than a rule saying so.
+ *
+ * It says thank you and stays gone once used: it is a thing you do once, not a
+ * conversation, and a box that reappears is an invitation to keep typing.
+ */
+function askCard(s) {
+  if (!s.canAsk) return '';
+  return `
+    <div class="ask-card">
+      <div class="sub">Ask for a round next time</div>
+      <input class="ask-text" type="text" maxlength="60" placeholder="A reggae round">
+      <button class="ask-send">Send it</button>
+      <div class="tiny ask-said" hidden></div>
+    </div>`;
+}
+
+/**
+ * Sending it. One line, one press, then it says thank you and gets out of the
+ * way — a box that comes back is an invitation to keep typing, and this is a
+ * thing you do once.
+ *
+ * A refusal is said in plain words rather than swallowed: "that is enough for
+ * tonight" is a rule somebody can understand, where a button that silently
+ * does nothing reads as an app that is broken.
+ */
+function wireAsk() {
+  const card = document.querySelector('.ask-card');
+  if (!card) return;
+  const box = card.querySelector('.ask-text');
+  const send = card.querySelector('.ask-send');
+  const said = card.querySelector('.ask-said');
+  send.addEventListener('click', async () => {
+    const text = box.value.trim();
+    if (!text) { box.focus(); return; }
+    send.disabled = true;
+    try {
+      const out = await postJson('/api/ask', { playerId: me.id, token: me.token, text, joinCode: roomCode() });
+      if (out.ok) {
+        card.classList.add('ask-done');
+        box.hidden = true;
+        send.hidden = true;
+        said.hidden = false;
+        said.textContent = 'Asked for — thanks.';
+        return;
+      }
+      said.hidden = false;
+      said.textContent = out.reason === 'enough'
+        ? 'That is enough for tonight — the quizmaster has your ideas.'
+        : 'Too late for tonight.';
+      send.disabled = false;
+    } catch {
+      said.hidden = false;
+      said.textContent = 'Could not send that. Try again in a moment.';
+      send.disabled = false;
+    }
+  });
 }
 
 /**

@@ -358,7 +358,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '', rewards = [], comeBack = null } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '', rewards = [], comeBack = null, askForRounds = false } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     const pack = LAUNCHERS[kind].load(this.config, packId, this.paths);
     const normalised = kind === 'bingo' ? normaliseBingoPack(pack, packId) : pack;
@@ -449,6 +449,12 @@ export class Session {
      * at it is the one place to be strict.
      */
     this.engine.state.comeBack = cleanComeBack(comeBack);
+    /*
+     * Whether the room may ask for a round at the end. In the state like
+     * everything else decided at launch, so a restart cannot turn it on for a
+     * night that was not meant to have it.
+     */
+    this.engine.state.askForRounds = Boolean(askForRounds);
 
     /*
      * A DELIBERATE LAUNCH ANSWERS THE RESTART NOTICE.

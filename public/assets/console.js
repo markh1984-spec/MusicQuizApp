@@ -455,6 +455,14 @@ const TABS = [
     // panel rather than a cheaper generator.
     generator: () => {
       const wrap = document.createDocumentFragment();
+      /*
+       * WHAT THE ROOM ASKED FOR, above the generator and on this tab only.
+       *
+       * It is the answer to "what should I write next", so it belongs where
+       * that is decided — and on ONE tab, because a queue drawn in two places
+       * is two lists that disagree about what has been triaged.
+       */
+      if (can(FEATURES.GENERATE)) wrap.appendChild(asksPanel());
       if (can(FEATURES.GENERATE)) wrap.appendChild(quizGeneratePanel(library.generation || {}));
       if (can(FEATURES.OWN_PACKS) && !can(FEATURES.CATALOGUE)) wrap.appendChild(ownQuizPanel());
       return wrap;
@@ -5318,6 +5326,93 @@ function headcountsSection() {
         night${heads.unplaced === 1 ? ' is' : 's are'} not filed under a venue.
         Type one at launch and ${heads.unplaced === 1 ? 'it counts' : 'they count'} here.</div>`}
     </div>`);
+}
+
+/**
+ * WHAT THE ROOM ASKED FOR — yes or no, and no is a delete.
+ *
+ * The people who played, asking for what they want next time, from their own
+ * phones at the end of the night. A separate box from the quizmasters' one:
+ * that is subscribers writing to the owner and is read as a work queue with
+ * somebody waiting for a reply, and strangers' one-liners from a pub would
+ * bury it.
+ *
+ * **THE TRIAGE IS THE FEATURE.** The host's own shape: a bad idea is one tap
+ * and gone for ever, a good one moves to the list of things worth writing.
+ * That is this file's Monday rule applied — a queue that shrinks as you work
+ * it costs a fraction of one that only grows — and it is why there is no
+ * "rejected" state to browse.
+ *
+ * Grouped by idea, most-asked first, because four people wanting reggae is a
+ * different fact from one person asking four times, and it is the number that
+ * decides whether it is worth a pack.
+ */
+function asksPanel() {
+  const el = node('<div></div>');
+  const draw = (data) => {
+    const asked = data.asked || [];
+    const kept = data.kept || [];
+    if (!asked.length && !kept.length) { el.replaceChildren(); return; }
+    el.replaceChildren(node(`
+      <div class="panel asks">
+        <h3>What the room asked for</h3>
+        <div class="tiny">From the phones that played. Yes keeps it on the list; No bins it.</div>
+        ${!asked.length ? '' : `<div class="ask-rows">
+          ${asked.map((a) => `
+            <div class="ask-row" data-ids="${esc(a.ids.join(','))}">
+              <div class="ask-what">
+                <b>${esc(a.text)}</b>
+                ${a.count > 1 ? `<span class="ask-count">×${a.count}</span>` : ''}
+                ${a.venues.length ? `<div class="tiny">${esc(a.venues.join(' · '))}</div>` : ''}
+              </div>
+              <div class="ask-do">
+                <button class="minor ask-yes">Yes</button>
+                <button class="minor danger ask-no">No</button>
+              </div>
+            </div>`).join('')}
+        </div>`}
+        ${!kept.length ? '' : `
+          <div class="tiny asks-kept-head">Worth doing</div>
+          <div class="ask-rows kept">
+            ${kept.map((k) => `
+              <div class="ask-row" data-ids="${esc(k.ids.join(','))}">
+                <div class="ask-what"><b>${esc(k.text)}</b>${
+  k.count > 1 ? `<span class="ask-count">×${k.count}</span>` : ''}</div>
+                <div class="ask-do"><button class="minor ask-done" title="Written — take it off the list">Done</button></div>
+              </div>`).join('')}
+          </div>`}
+      </div>`));
+
+    for (const row of el.querySelectorAll('.ask-row')) {
+      const ids = (row.dataset.ids || '').split(',').filter(Boolean);
+      const send = async (method, path) => {
+        // A grouped row is several rows underneath — all of them move together,
+        // because saying yes to "a reggae round" twice is not two decisions.
+        let latest = data;
+        for (const id of ids) {
+          const res = await fetch(keyed(`/api/asks/${encodeURIComponent(id)}${path}`), { method });
+          if (res.ok) latest = await res.json();
+        }
+        draw(latest);
+      };
+      row.querySelector('.ask-yes')?.addEventListener('click', () => send('POST', '/keep'));
+      row.querySelector('.ask-no')?.addEventListener('click', () => send('DELETE', ''));
+      row.querySelector('.ask-done')?.addEventListener('click', () => send('DELETE', ''));
+    }
+  };
+
+  (async () => {
+    try {
+      const res = await fetch(keyed('/api/asks'));
+      if (res.ok) draw(await res.json());
+    } catch (err) {
+      // Say why. A swallowed error here is a panel that silently is not there,
+      // which is exactly the fault this file records about the console's own
+      // loader: failure messages have to name the cause.
+      console.error('[asks] could not load them:', err);
+    }
+  })();
+  return el;
 }
 
 /**

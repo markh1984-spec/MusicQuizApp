@@ -665,6 +665,45 @@ body::after {
 }
 .lobby-prize .lp-one { white-space: nowrap; }
 
+/* WHAT THE ROOM ASKED FOR, on the console. Yes and No on every row, because
+   the triage IS the feature: a queue that shrinks as you work it costs a
+   fraction of one that only grows. */
+.ask-rows { display: grid; gap: 8px; margin-top: 12px; }
+.ask-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  border: 1px solid var(--panel-line); border-radius: var(--r-card);
+  background: rgba(255, 255, 255, 0.04); padding: 10px 12px;
+}
+.ask-row > * { min-width: 0; }
+.ask-what { flex: 1 1 200px; }
+.ask-do { display: flex; gap: 8px; flex: 0 0 auto; }
+.ask-count {
+  margin-left: 8px; padding: 2px 8px; border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.1); font-size: var(--fs-tag); font-weight: 800;
+}
+.asks-kept-head {
+  margin-top: 14px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.ask-rows.kept .ask-row { border-color: rgba(63, 219, 133, 0.35); }
+
+/* ASK FOR A ROUND, on the phone at the end of the night. One line and one
+   button: it is a theme, not a comment box, and the field is the guard rail —
+   sixty characters holds "a reggae round" and will not hold a grievance. */
+.ask-card {
+  display: grid; gap: 8px; padding: 14px;
+  border: 1px solid var(--panel-line); border-radius: var(--r-card);
+  background: rgba(255, 255, 255, 0.04);
+}
+.ask-card .sub { font-size: var(--fs-note); font-weight: 800; color: var(--ink-dim); }
+.ask-card .ask-text { width: 100%; min-width: 0; }
+.ask-card .ask-send {
+  padding: 12px; font: inherit; font-weight: 900; cursor: pointer;
+  border: none; border-radius: 10px; color: #12000c;
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
+}
+.ask-card.ask-done { border-color: rgba(63, 219, 133, 0.4); }
+
 /* ---- connection warning */
 .conn-warn {
   position: fixed;

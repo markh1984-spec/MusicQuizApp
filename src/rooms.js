@@ -43,6 +43,7 @@ import { Session } from './session.js';
 import { Store } from './store.js';
 import { Photos } from './photos.js';
 import { Invoices } from './invoices.js';
+import { RoomAsks } from './room-asks.js';
 import { HOUSE_ROOM } from './library.js';
 
 /**
@@ -101,6 +102,9 @@ export class Room {
      */
     this.paths = paths;
     this.invoices = new Invoices(paths.invoices);
+    // What the ROOM asked for, per quizmaster — a different box from the
+    // suggestion one, which is quizmasters writing to the owner.
+    this.asks = new RoomAsks(paths.asks);
     this.session = new Session({
       config,
       store: this.store,
@@ -281,6 +285,7 @@ export class Rooms {
         state: this.paths.state || path.join(this.config.dataDir, 'state.json'),
         photos: this.paths.photos || path.join(this.config.dataDir, 'photos'),
         invoices: this.paths.invoices || path.join(this.config.dataDir, 'invoicing.json'),
+        asks: this.paths.asks || path.join(this.config.dataDir, 'room-asks.json'),
         archive: this.paths.archive || path.join(this.config.dataDir, 'archive'),
         adverts: this.paths.adverts || this.config.advertDir,
         /*
@@ -311,6 +316,7 @@ export class Rooms {
        * have deleted The Crown's slides off Mark's projector.
        */
       invoices: path.join(dir, 'invoicing.json'),
+      asks: path.join(dir, 'room-asks.json'),
       archive: path.join(dir, 'archive'),
       adverts: path.join(dir, 'adverts'),
       /*

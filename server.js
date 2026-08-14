@@ -35,7 +35,7 @@ import {
 import { STYLES, findStyle, QUALITIES, DEFAULT_QUALITY } from './src/portraits.js';
 import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig, playTrack } from './src/spotify.js';
-import { photoFolder, mergeGigs, safePhotoName, isNightFolder } from './src/past-gigs.js';
+import { photoFolder, mergeGigs, safePhotoName, isNightFolder, nightOfGig } from './src/past-gigs.js';
 import { venueHeadcounts } from './src/headcounts.js';
 import { comeBackFor } from './src/comeback.js';
 import { getFile, listDir, listDirs, githubConfigured, missingGithubConfig, putFile, putFiles, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem, privateRepoConfigured, packsRepoConfigured, packsRepoName } from './src/github.js';
@@ -48,6 +48,9 @@ import { Accounts } from './src/accounts.js';
 import { Reports } from './src/reports.js';
 import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
+// The one proof a phone has. Same rule as answering: an id is not a
+// credential, the token is — see rule 3.
+import { ownsPlayer } from './src/engine.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, switchedOn, PACK_PENCE } from './public/assets/plans.js';
 import { sendEmail, emailConfigured, emailProvider, keepKeyAlive, resetEmail } from './src/email.js';
 import { Suggestions, KINDS, PACK_REQUEST_KIND } from './src/suggestions.js';
@@ -1767,6 +1770,28 @@ async function handleGet(req, res, url, route) {
    * the dark and never learn whether it landed, which is how a feedback route
    * stops being used after the second time.
    */
+  /*
+   * WHAT THE ROOM ASKED FOR — read, kept or binned.
+   *
+   * Behind the same owner check the launch uses, because the feature is his
+   * alone for now. It is a quizmaster's own customers' words either way, so it
+   * is read out of THEIR room and never pooled.
+   */
+  if (route === '/api/asks' && req.method === 'GET') {
+    const me = whoIs(req, url);
+    if (!me) return sendJson(res, 401, { error: 'Sign in first' }), true;
+    const room = roomForHost(req, url);
+    return sendJson(res, 200, {
+      // Grouped: four people asking for reggae is one row with a 4 on it, not
+      // four rows. That is what makes a Monday's worth of these one pass.
+      asked: room.asks.grouped(),
+      // Grouped as well, or one idea four people asked for turns into four
+      // identical rows on the list of things worth writing — and then it looks
+      // like four jobs.
+      kept: room.asks.grouped(room.asks.kept),
+    }), true;
+  }
+
   if (route === '/api/suggestions/mine' && req.method === 'GET') {
     const me = whoIs(req, url);
     if (!me) return sendJson(res, 401, { error: 'Sign in first' }), true;
@@ -2456,6 +2481,20 @@ function firstNameOf(account) {
   const name = String(account.name || '').trim();
   if (name) return name.split(/\s+/)[0];
   return String(account.email || '').split('@')[0];
+}
+
+/**
+ * What a room asked for, backed up per quizmaster.
+ *
+ * Their own private repo path like the archive and the invoice book — these
+ * are their customers' words about their nights, and they are no business of
+ * the public repository.
+ */
+function backUpAsks(room) {
+  if (!privateRepoConfigured()) return;
+  const name = room.id === HOUSE ? 'room-asks.json' : `rooms/${room.id}/room-asks.json`;
+  putFile(name, room.asks.serialise(), 'Update what the room asked for', 'private')
+    .catch((err) => console.warn('[asks] could not back up:', err.message));
 }
 
 function backUpSuggestions() {
@@ -3336,6 +3375,25 @@ async function handleWrite(req, res, url, route) {
    * What a venue puts up. A route of its own so it cannot touch anything else
    * on the record — see `setVenueDetails` for why that matters.
    */
+  if (route.startsWith('/api/asks/') && (req.method === 'POST' || req.method === 'DELETE')) {
+    const me = whoIs(req, url);
+    if (!me) return sendJson(res, 401, { error: 'Sign in first' }), true;
+    const room = roomForHost(req, url);
+    const id = decodeURIComponent(route.slice('/api/asks/'.length).replace(/\/keep$/, ''));
+    /*
+     * YES KEEPS IT, NO DELETES IT — and there is deliberately no third state.
+     * A list of things you have already said no to is a list you read twice,
+     * which is the opposite of what this is for.
+     */
+    const done = req.method === 'DELETE' ? room.asks.drop(id) : room.asks.keep(id);
+    if (!done) return sendJson(res, 404, { error: 'No such request.' }), true;
+    backUpAsks(room);
+    return sendJson(res, 200, {
+      asked: room.asks.grouped(),
+      kept: room.asks.grouped(room.asks.kept),
+    }), true;
+  }
+
   if (route.startsWith('/api/invoices/customers/') && route.endsWith('/rewards') && req.method === 'PUT') {
     if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
     const room = roomForHost(req, url);
@@ -3554,6 +3612,42 @@ async function handleWrite(req, res, url, route) {
     // 200 either way: the phone shows its own feedback, and a rejected action
     // is a normal thing (too late, already answered), not an error.
     return sendJson(res, 200, result), true;
+  }
+
+  /*
+   * ASK FOR A ROUND — from a phone that played, at the end of the night.
+   *
+   * Its own route rather than a player action, because what is typed goes to
+   * the ROOM'S box on disk and never into the game state: a quiz engine has no
+   * business holding somebody's shopping list, and a state file that grew with
+   * every request would be rewritten on every save all night.
+   *
+   * The TOKEN is the whole gate. It proves the sender was in this game, which
+   * is what makes an open text endpoint safe to have at all — and it is the
+   * same proof rule 3 uses for answering, so nothing new is trusted here.
+   */
+  if (route === '/api/ask' && req.method === 'POST') {
+    const body = await readJson(req);
+    const room = roomForPhone(req, url, body);
+    const engine = room.session.engine;
+    const state = engine && engine.state;
+    // Off unless the night turned it on, and only once the night is over.
+    if (!state || !state.askForRounds || state.phase !== 'final') {
+      return sendJson(res, 200, { ok: false, reason: 'closed' }), true;
+    }
+    const player = state.players && state.players[String(body.playerId || '')];
+    if (!ownsPlayer(player, body.token)) {
+      return sendJson(res, 200, { ok: false, reason: 'unknown' }), true;
+    }
+    const saved = room.asks.add({
+      text: body.text,
+      by: player.id,
+      name: player.name,
+      night: nightOfGig(Date.now()) || '',
+      venue: state.venue || '',
+    });
+    if (saved.ok) backUpAsks(room);
+    return sendJson(res, 200, saved.ok ? { ok: true } : saved), true;
   }
 
   /*
@@ -4214,7 +4308,20 @@ async function handleWrite(req, res, url, route) {
           bookings: room.invoices.bookings,
           now: Date.now(),
         });
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online, teamPlay, venue, rewards, comeBack });
+        /*
+         * MAY THE ROOM ASK FOR A ROUND at the end of this one?
+         *
+         * The owner's accounts only, at his own request — *"perhaps have that
+         * for my QM account only"* — which covers the bootstrap key, the owner
+         * and the owner's own linked quizmaster (`ownedBy`). It is worked out
+         * here and written into the state at launch, exactly like the prizes:
+         * a phone must never be able to ask for it on a night that did not
+         * turn it on.
+         */
+        const asker = whoIs(req, url);
+        const askForRounds = Boolean(asker
+          && (asker.bootstrap || asker.role === 'owner' || asker.ownedBy));
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online, teamPlay, venue, rewards, comeBack, askForRounds });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();
