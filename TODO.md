@@ -916,8 +916,46 @@ viewer of everyone else: 20 people is ~102 GB a night (~$5 once past free), and
 publisher cap is a hard requirement rather than a warning — a dozen or so on
 camera, everyone else audio and chat.
 
-**IT ADAPTS TO THE HEADCOUNT, NOT TO THE NETWORK — and it says which rung it is
-on.** WebRTC already adapts to each viewer's connection, silently and
+**AND IT ADAPTS WITHIN THE NIGHT, PER PHASE — which is DERIVED, not clever.**
+The host's own framing and it is the better half of the idea: *"pre round I'd
+need my face to take up the entire screen, while I'm describing a round I'd
+need to be in the corner, and during the round I'd need to be audio only."*
+Three moments, all inside one two-hour night.
+
+**The app already knows which one it is in.** `state.phase` drives every screen
+in the room and is pushed to every device on every change, so the video profile
+is a lookup table on the phase — the same shape as `PHOTO_PHASES` in
+`screen.js`, which is how the projector already decides when a photo may go up.
+Nothing to configure, nothing to guess, and it cannot fall out of step with the
+quiz because it IS the quiz's own state.
+
+| Phase | The host is | What goes out |
+|---|---|---|
+| `lobby`, `rules`, `final` | welcoming, explaining, celebrating | **full screen**, ~1000 kbps |
+| `round_intro`, `round_board`, `reveal` | describing a round, reading the board | **corner**, ~200 kbps |
+| `question` | quiet, the clock is running | **audio only**, ~32 kbps |
+
+**The bottom row is the two-screens rule, not a saving.** While a question is up
+the room must be looking at the question — that is rule 8 and it is why the
+phone does not carry the question text in a pub, and why a photo sent
+mid-round waits for the next break. A talking head next to a 20-second clock is
+the same mistake in a new place. It being the cheapest rung as well is a
+coincidence worth enjoying rather than the reason.
+
+**What it costs, on a realistic split of a 2-hour night** (20 min full, 40 min
+corner, 60 min question): **~224 MB per viewer**, so 30 players is **~6.7 GB a
+night** — against ~27 GB for a full-screen face throughout. **Four times
+cheaper AND the better product**, which is the test every admin reducer in this
+codebase has to pass.
+
+**Do not tear the stream down between rungs.** On the SFU, stopping and
+restarting the video track is cheap. On a broadcast it is not — so "audio only"
+there means **audio plus a frozen branded still**, which H.264 encodes at
+almost nothing because the frame never changes. Same bill, no reconnect, and
+the room sees the quizmaster's own logo rather than a black hole.
+
+**IT ADAPTS TO THE HEADCOUNT AS WELL, NOT TO THE NETWORK — and it says which
+rung it is on.** WebRTC already adapts to each viewer's connection, silently and
 per-person; leave that alone. What it cannot know is that there are two hundred
 people and a bill, so that is the rung this app picks. **But on a stated
 ladder, visible to the host**, for the same reason the join flood shows a number
