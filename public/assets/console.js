@@ -6760,12 +6760,50 @@ function advertsSection(sets) {
           <div class="tiny">A set of slides per venue — as many as you like. Put any of them up
             between rounds from your control view, as often as the night needs.</div>
         </div>
-        ${mine ? '<button class="role-make new-set">New set</button>' : ''}
+        <div class="row">
+          <!-- WHAT A VENUE ACTUALLY SENDS is a picture of their offer — a
+               poster, a photo of the specials board, the flyer for a band.
+               Asked for as "import from a file… they might get emailed it
+               over". So the file IS the slide: pick one and it arrives as a
+               slide with the picture already on it, waiting for a heading.
+               Not a JSON importer: nobody is emailed one of those. -->
+          ${mine ? '<label class="minor import-ad">Bring in a picture<input class="ad-file" type="file" accept="image/*" multiple hidden></label>' : ''}
+          ${mine ? '<button class="role-make new-set">New set</button>' : ''}
+        </div>
       </div>
       <div class="pack-grid"></div>
     </div>`);
 
   el.querySelector('.new-set')?.addEventListener('click', () => editAdvertSet(null));
+
+  /*
+   * A picture, or several, becoming slides.
+   *
+   * It opens the editor on a NEW set rather than saving one behind your back:
+   * a slide with a picture and no words is refused by the validator anyway
+   * (`validateAdvertPack` — a slide has to say something), and more to the
+   * point the words are the half a venue is paying for. So the file gets you
+   * past the fiddly part and leaves you at the keyboard.
+   *
+   * Shrunk on the way in like every other picture here, so a 4MB photo off
+   * somebody's phone does not end up in the screen payload.
+   */
+  const filePick = el.querySelector('.ad-file');
+  filePick?.addEventListener('change', async () => {
+    const files = [...(filePick.files || [])];
+    if (!files.length) return;
+    const slides = [];
+    for (const file of files) {
+      try {
+        slides.push({ id: 's' + (slides.length + 1), heading: '', body: '', say: '',
+          image: await shrinkAdvertImage(file) });
+      } catch (err) {
+        alert(`${file.name}: ${err.message || 'could not be used'}`);
+      }
+    }
+    filePick.value = '';
+    if (slides.length) editAdvertSet(null, { slides });
+  });
 
   const grid = el.querySelector('.pack-grid');
   if (!sets.length) {
@@ -6807,7 +6845,7 @@ function advertsSection(sets) {
   return el;
 }
 
-function editAdvertSet(id) {
+function editAdvertSet(id, seed = null) {
   const overlay = node(`
     <div class="sheet-overlay">
       <div class="sheet">
@@ -6830,7 +6868,10 @@ function editAdvertSet(id) {
   const close = () => overlay.remove();
   overlay.querySelector('#adClose').addEventListener('click', close);
 
-  let pack = { id: '', title: '', venue: '', slides: [] };
+  // Seeded when the set is being started FROM files — see the picture import
+  // on the adverts tab. Everything else about the sheet is identical, so there
+  // is one editor rather than a second one for imports.
+  let pack = { id: '', title: '', venue: '', slides: [], ...(seed || {}) };
 
   const draw = () => {
     overlay.querySelector('#adTitle').value = pack.title;
