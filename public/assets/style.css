@@ -4960,7 +4960,15 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   text-align: center;
   padding: 6px 12px; border-radius: var(--r-pill);
   background: none; border: 1px solid var(--panel-line); color: var(--ink-dim);
-  font: inherit; font-size: var(--fs-mini); font-weight: 800; cursor: pointer;
+  /* TWO RUNGS IN THIS ROW, NOT THREE. It was `--fs-mini` (12) beside a
+     `--fs-note` (13) venue line and an `--fs-tag` (11) heading — three sizes
+     inside two pixels of each other, which is not a hierarchy, it is the same
+     decision taken three times. Exactly the fault CLAUDE.md already records
+     about the two On/Off switches that came out 11 and 11.5.
+     The heading is the LABEL and keeps `--fs-tag`; the venue and this button
+     are both CONTENT and are both `--fs-note`, so the one size difference in
+     the row means something. */
+  font: inherit; font-size: var(--fs-note); font-weight: 800; cursor: pointer;
 }
 /* A FIXED WIDTH, and it has to out-specify `.lb-head > * { min-width: 0 }`
    two rules above — which is why it is written as a descendant. "Hide" and
