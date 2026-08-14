@@ -2796,6 +2796,38 @@ let packDrag = null;
 /** True while the CHOSEN pack is being dragged out of the section. */
 let offDrag = false;
 
+/**
+ * A VENUE being dragged up to Tonight, from the Venues tab.
+ *
+ * Same gesture as a pack and the same target, because they are the two facts
+ * that place a night: which room, and what is being played in it. The venue
+ * picker in the head stays exactly as it was — drag is the mouse's way and
+ * that is the thumb's, and HTML5 drag events do not fire on touch at all.
+ *
+ * ADVERTS ARE DELIBERATELY NOT DRAGGABLE. Slides belong to a VENUE by design
+ * (`src/adverts.js` — *"your Tuesday pizza deal goes up between every round,
+ * every week"*), so dropping the venue in brings its adverts with it and
+ * there is nothing left to drag. And a slide is chosen LIVE on the control
+ * view between rounds, not at launch, so there is no "tonight's advert" to
+ * drop into without inventing one. What was actually awkward — the picker
+ * offering every venue's slides mid-gig — is fixed where it happens, in
+ * `host.js`, by putting tonight's venue first.
+ */
+let venueDrag = null;
+
+/**
+ * TONIGHT GOES STICKY WHILE SOMETHING IS BEING DRAGGED.
+ *
+ * The section lives at the top of the tab and a venue card can be most of a
+ * page below it. HTML5 drag has no dependable auto-scroll, so without this the
+ * gesture is "pick the card up, discover the target is off-screen, give up" —
+ * which on a trackpad is worse again. Pinned to the top for the length of the
+ * drag, the target is always where the cursor can reach it.
+ */
+function dragging(on) {
+  document.body.classList.toggle('is-dragging-card', Boolean(on));
+}
+
 function launchBar() {
   // An owner runs no nights, so there is nothing here for them — same reason
   // the running panel hides itself.
@@ -3112,12 +3144,38 @@ function launchBar() {
       : 'No venues yet — add one on the Venues tab.'}</div>`)]));
   };
 
+  /*
+   * CHANGING THE VENUE RE-RESOLVES A NIGHT THAT IS UP BUT EMPTY.
+   *
+   * The fault this closes was introduced the moment picking a pack started
+   * launching it, and it is silent — which is what makes it worth the code.
+   * The prizes, the voucher and the come-back slide are read off the venue AT
+   * LAUNCH and copied into the game state, exactly like the look and the card
+   * shape. So the sequence somebody would actually use — drag the pack in,
+   * notice the venue is last week's, drag the right one in — launched the
+   * night under the wrong pub and then left it there. The bar said The Dog &
+   * Duck; the winner's phone would have shown the Sheep & Hound's voucher.
+   *
+   * Fixing it forwards rather than blocking the launch: relaunch quietly, so
+   * the running night picks the venue's own prizes up. Safe for exactly the
+   * same reason the auto-launch is — `switchIfFree` goes through the server's
+   * ordinary guard, so the instant a single team has joined this does nothing
+   * at all and the choice simply applies to the next launch.
+   *
+   * Only when the pack is unchanged and already up. If nothing is running
+   * there is nothing to re-resolve, and Launch will read the new venue anyway.
+   */
   function chooseVenue(name) {
     lbVenue = String(name || '');
     lbVenueOpen = false;
     venues.hidden = true;
     where.setAttribute('aria-expanded', 'false');
     paintWhere();
+    paintPrize();
+    const running = (library && library.running) || {};
+    if (currentPack && running.packId === currentPack.id) {
+      switchIfFree(currentPack, gameOf().id);
+    }
   }
 
   const toggleVenues = () => {
@@ -3435,11 +3493,30 @@ function launchBar() {
     const title = String(running.title || '');
     if (!title) { liveEl.hidden = true; return; }
     liveEl.hidden = false;
-    const differs = !currentPack || currentPack.title !== title;
-    liveEl.classList.toggle('lb-warn', differs);
-    liveEl.textContent = differs
+    const packDiffers = !currentPack || currentPack.title !== title;
+    /*
+     * THE VENUE CAN DRIFT TOO, and it is the more dangerous of the two.
+     *
+     * Once a team has joined, the bar can no longer re-resolve the running
+     * night — that is the guard doing its job. But the bar would then show the
+     * new venue's PRIZES while the room is being shown the old venue's, which
+     * is precisely the console-and-projector disagreement this section exists
+     * to end, wearing a different hat. A wrong pack name is embarrassing; a
+     * wrong prize is somebody at the bar being refused a drink.
+     *
+     * So it is named. Only when a venue has actually been chosen — with none
+     * picked the bar is showing the night's own answer and there is nothing to
+     * disagree about.
+     */
+    const runVenue = String(running.venue || '').trim();
+    const barVenue = String(lbVenue == null ? runVenue : lbVenue).trim();
+    const venueDiffers = Boolean(lbVenue != null && barVenue.toLowerCase() !== runVenue.toLowerCase());
+    liveEl.classList.toggle('lb-warn', packDiffers || venueDiffers);
+    liveEl.textContent = packDiffers
       ? `On the big screen now: ${title}`
-      : `On the big screen now — this one`;
+      : venueDiffers
+        ? `On the big screen now — this one, but filed under ${runVenue || 'nowhere'}. Launch again to move it.`
+        : 'On the big screen now — this one';
   }
 
   /*
@@ -3498,11 +3575,27 @@ function launchBar() {
    * the bar simply falls back to offering what is on the big screen, which is
    * the same empty state it arrives in.
    */
+  /*
+   * IT ACCEPTS A DROP WHILE SHUT, and springs open on the way.
+   *
+   * Collapsed, this is one thin row — which is exactly the state somebody is
+   * in when they arrive at a venue and start setting the night up, so a target
+   * that only worked when open would be missing at the moment it is wanted.
+   * Opening on hover also gives the drop somewhere to land that is big enough
+   * to aim at.
+   */
+  const openForDrop = () => {
+    if (tonightOpen) return;
+    tonightOpen = true;
+    localStorage.setItem(TONIGHT_STORE, '1');
+    paintFold();
+  };
   el.addEventListener('dragover', (ev) => {
-    if (!packDrag) return;
+    if (!packDrag && !venueDrag) return;
     ev.preventDefault();
     ev.dataTransfer.dropEffect = 'copy';
     el.classList.add('drop-here');
+    openForDrop();
   });
   el.addEventListener('dragleave', (ev) => {
     // Only when the cursor has actually left the section, not when it crosses
@@ -3510,11 +3603,27 @@ function launchBar() {
     if (!el.contains(ev.relatedTarget)) el.classList.remove('drop-here');
   });
   el.addEventListener('drop', (ev) => {
-    if (!packDrag) return;
+    if (!packDrag && !venueDrag) return;
     ev.preventDefault();
     el.classList.remove('drop-here');
+    openForDrop();
+
+    /*
+     * A VENUE DROPPED IN GOES THROUGH `chooseVenue`, which is the same path
+     * the picker in the head uses — one way for a venue to be set, so the two
+     * cannot end up meaning different things.
+     */
+    if (venueDrag) {
+      const name = venueDrag.name;
+      venueDrag = null;
+      dragging(false);
+      if (name) chooseVenue(name);
+      return;
+    }
+
     const dropped = packDrag;
     packDrag = null;
+    dragging(false);
     // A pack from the other game switches the picker first, or `pick()` would
     // look for it on the wrong shelf and find nothing.
     if (gamePick && dropped.kind && gamePick.value !== dropped.kind) {
@@ -3522,7 +3631,7 @@ function launchBar() {
       currentPack = null;
     }
     const found = gameOf().packs.find((p) => p.id === dropped.id);
-    if (found) { tonightOpen = true; localStorage.setItem(TONIGHT_STORE, '1'); paintFold(); pick(found); }
+    if (found) { pick(found); }
   });
 
   /*
@@ -4590,9 +4699,12 @@ function packCard(kind, pack, repaint = () => {}) {
     ev.dataTransfer.effectAllowed = 'copy';
     ev.dataTransfer.setData('text/plain', pack.title);
     el.classList.add('is-dragging');
+    // Pin Tonight to the top for the length of the drag — see `dragging()`.
+    dragging(true);
   });
   el.addEventListener('dragend', () => {
     packDrag = null;
+    dragging(false);
     el.classList.remove('is-dragging');
     document.querySelector('.launchbar')?.classList.remove('drop-here');
   });
@@ -5763,6 +5875,32 @@ function venuesSection() {
         openVenue = openVenue === card.dataset.id ? '' : card.dataset.id;
         draw();
       });
+      /*
+       * DRAG A VENUE UP TO TONIGHT. Same gesture as a pack card, same target.
+       *
+       * Only a SHUT card is draggable: an open one is full of prize boxes and
+       * a usual-night dropdown, and `draggable` on their container stops you
+       * selecting a word to retype it — the same reason a pack card is dragged
+       * by a grip rather than by the whole card.
+       */
+      const shut = card.classList.contains('shut');
+      card.draggable = shut;
+      if (shut) {
+        const record = venues.find((v) => v.id === card.dataset.id) || {};
+        card.addEventListener('dragstart', (ev) => {
+          venueDrag = { id: card.dataset.id, name: record.name || '' };
+          ev.dataTransfer.effectAllowed = 'copy';
+          ev.dataTransfer.setData('text/plain', record.name || '');
+          card.classList.add('is-dragging');
+          dragging(true);
+        });
+        card.addEventListener('dragend', () => {
+          venueDrag = null;
+          card.classList.remove('is-dragging');
+          dragging(false);
+          document.querySelector('.launchbar')?.classList.remove('drop-here');
+        });
+      }
       const save = card.querySelector('.v-save');
       // A shut card has no controls to wire — its name and its one line are
       // the whole of it.

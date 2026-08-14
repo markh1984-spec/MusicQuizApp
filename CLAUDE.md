@@ -1688,9 +1688,62 @@ What can be dragged:
 - **A pack card up to Tonight.** It carries the game as well as the id, so a
   bingo pack dropped on a bar set to Music Quiz switches the bar over rather
   than being silently refused.
+- **A VENUE card up to Tonight**, from the Venues tab — the same gesture and
+  the same target, because those are the two facts that place a night: which
+  room, and what is being played in it. Only a SHUT card is draggable; an open
+  one is full of prize boxes, and `draggable` on their container stops you
+  selecting a word to retype it, which is why a pack is dragged by a grip.
 - **And the chosen pack back OFF Tonight**, which un-chooses it and NOTHING
   else — the pack is untouched on disk and still on its shelf. *"Say you drag
   the wrong quiz pack, you can just drag it off again."*
+
+**ADVERTS ARE DELIBERATELY NOT DRAGGABLE, and it was asked for directly.** The
+scenario was: the pack is wrong, the venue is wrong, and the advert is wrong,
+so drag all three in. The first two are right; the third dissolves on contact
+with how adverts already work, for three reasons:
+
+- **A slide belongs to a VENUE, not to a night** (`src/adverts.js`), and that
+  is a sales decision — *"your Tuesday pizza deal goes up between every round,
+  every week."* So dropping the venue in brings its adverts with it and there
+  is nothing left to drag.
+- **There is no "tonight's advert" to drop into.** A slide is chosen LIVE on
+  the control view between rounds (`state.advert`), not at launch. Building
+  the drag would mean inventing the concept first.
+- **Dragging one venue's advert onto another venue's night is a mistake with a
+  room in front of it** — the Sheep & Hound's offer in front of the Dog &
+  Duck's customers.
+
+**What was actually awkward is fixed where it happens.** The control view's
+picker loaded every set, so standing in one pub you scrolled past seven others'
+offers mid-gig. It now puts tonight's venue first under its own name, with
+**Everything else** below — sorted rather than FILTERED, because a slide with
+no venue on it ("follow me on Facebook", a sponsor, a charity night) is a real
+thing somebody wants anywhere, and a filter would hide it.
+
+**CHANGING THE VENUE RE-RESOLVES A NIGHT THAT IS UP BUT EMPTY — and not doing
+so was a silent fault the auto-launch introduced.** The prizes, the voucher and
+the come-back slide are read off the venue AT LAUNCH and copied into the state.
+So the sequence somebody would actually use — drag the pack in, notice the
+venue is last week's, drag the right one in — launched the night under the
+wrong pub and left it there: the bar said The Dog & Duck and the winner's phone
+would have shown the Sheep & Hound's voucher. `chooseVenue()` now relaunches
+quietly through the same `switchIfFree` guard, so it fixes itself while nobody
+has joined and does nothing at all the instant somebody has.
+
+**And once it CANNOT re-resolve, the bar says so** — *"On the big screen now —
+this one, but filed under The Dog & Duck. Launch again to move it."* Without
+it the bar would show the new venue's prizes while the room was being shown the
+old venue's, which is the console-and-projector disagreement this section
+exists to end wearing a different hat. A wrong pack name is embarrassing; a
+wrong prize is somebody being refused a drink at the bar.
+
+**TONIGHT PINS ITSELF WHILE ANYTHING IS BEING DRAGGED** (`body.is-dragging-card`).
+The section is at the top of the tab and a venue card can be most of a page
+below it; HTML5 drag has no dependable auto-scroll, so without this the gesture
+is "pick the card up, find the target off-screen, give up" — worse again on a
+trackpad. **It also accepts a drop while SHUT and springs open on the way**,
+because collapsed is exactly the state somebody is in when they arrive at a
+venue and start setting up.
 
 **A question changing rounds is reshaped on arrival**, exactly as when a
 round's own type is changed: a text question dropped into a pick-them-all

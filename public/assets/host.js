@@ -1132,9 +1132,12 @@ function buildActions(s) {
  */
 async function showAdvertPicker() {
   let sets = [];
+  let here = '';
   try {
     const res = await fetch(`/api/library?key=${encodeURIComponent(hostKey)}`);
-    sets = (await res.json()).adverts || [];
+    const lib = await res.json();
+    sets = lib.adverts || [];
+    here = String((lib.running || {}).venue || '').trim().toLowerCase();
   } catch {
     alert('Could not load the adverts.');
     return;
@@ -1157,7 +1160,31 @@ async function showAdvertPicker() {
   sheet.addEventListener('click', (e) => { if (e.target === sheet) close(); });
 
   const list = sheet.querySelector('.ad-picks');
-  for (const set of usable) {
+  /*
+   * TONIGHT'S VENUE FIRST, and said out loud.
+   *
+   * A slide belongs to a venue (`src/adverts.js`), and a quizmaster with eight
+   * pubs on the books has eight sets in here — so standing in the Dog & Duck,
+   * between rounds, in the dark, with a room waiting, the list was a scroll
+   * past seven other pubs' offers to reach the one that matters.
+   *
+   * Sorted rather than filtered, deliberately. A generic slide with no venue
+   * on it — "follow me on Facebook", a sponsor, a charity night — is a real
+   * thing somebody wants to put up anywhere, and a filter would hide it. The
+   * order carries the answer and nothing is taken away.
+   *
+   * Silent when it would say nothing: with no venue on the night, or only one
+   * set, the divider is a heading over the whole list explaining nothing.
+   */
+  const mine = (set) => here && String(set.venue || '').trim().toLowerCase() === here;
+  const ordered = here ? [...usable.filter(mine), ...usable.filter((s) => !mine(s))] : usable;
+  const split = here && ordered.some(mine) && ordered.some((s) => !mine(s));
+  let saidRest = false;
+  for (const set of ordered) {
+    if (split && !mine(set) && !saidRest) {
+      saidRest = true;
+      list.appendChild(node('<div class="ad-set ad-set-rest">Everything else</div>'));
+    }
     list.appendChild(node(`<div class="ad-set">${esc(set.venue || set.title)}</div>`));
     for (const slide of set.slides) {
       const row = node(`

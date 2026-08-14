@@ -649,6 +649,29 @@ body::after {
 .launchbar.drop-here { border-color: var(--hot); background: rgba(255, 46, 136, 0.08); }
 .pack-card[draggable="true"] { cursor: grab; }
 .pack-card.is-dragging { opacity: 0.45; }
+/* A venue dragged up to the same place, from the Venues tab. Only a SHUT card
+   is draggable — an open one is full of prize boxes, and `draggable` on their
+   container stops you selecting a word to retype it. */
+.venue-card[draggable="true"] { cursor: grab; }
+.venue-card.is-dragging { opacity: 0.45; }
+
+/* TONIGHT PINS ITSELF WHILE SOMETHING IS BEING DRAGGED.
+
+   The section is at the top of the tab and a venue card can be most of a page
+   below it. HTML5 drag has no dependable auto-scroll, so without this the
+   gesture is "pick the card up, find the target off-screen, give up" — worse
+   again on a trackpad. Pinned for the length of the drag, the target is always
+   under the cursor's reach.
+
+   Only while dragging: sticky the rest of the time would cost the top of every
+   tab all night, which is the same reason the tab bar scrolls sideways on a
+   phone rather than growing a second row. */
+body.is-dragging-card .launchbar {
+  position: sticky;
+  top: 8px;
+  z-index: 6;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+}
 .drop-above { box-shadow: inset 0 3px 0 0 var(--hot); }
 .drop-below { box-shadow: inset 0 -3px 0 0 var(--hot); }
 
@@ -5704,3 +5727,12 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 }
 .ask-heard-q { margin-bottom: 4px; }
 .ask-heard-a { font-size: var(--fs-note); color: var(--ink); white-space: pre-wrap; }
+
+/* The divider under tonight's venue's slides in the advert picker. Dimmer than
+   a venue name, because it is a boundary rather than a thing you are choosing
+   — the same reason a fourth place is a line and not a card on the podium. */
+.ad-set-rest {
+  margin-top: 18px; padding-top: 12px;
+  border-top: 1px solid var(--panel-line);
+  color: var(--ink-dim); opacity: 0.75;
+}

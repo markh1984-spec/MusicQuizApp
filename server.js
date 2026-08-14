@@ -1490,6 +1490,18 @@ async function handleGet(req, res, url, route) {
         game: session.kind,
         packId: session.pack.id,
         title: session.pack.title,
+        /*
+         * WHERE tonight is, as the running night itself understands it.
+         *
+         * Read off the game state rather than off the console's own picker,
+         * because those are two different questions — the picker says what the
+         * next launch would use and this says what the night that is actually
+         * up was launched with. The control view's advert picker uses it to
+         * put this venue's slides at the top: standing in the Dog & Duck,
+         * scrolling past the Sheep & Hound's pizza deal to find yours, mid-gig
+         * and in the dark, is the friction it removes.
+         */
+        venue: session.engine.state?.venue || '',
         phase: session.engine.state.phase,
         // Optional on an engine — a new game that has not written one still
         // shows up in the console, it just says less about itself.
