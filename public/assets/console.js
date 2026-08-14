@@ -4628,6 +4628,137 @@ function tonightsVenue() {
   });
 }
 
+/* ==================================================== HEADCOUNT PER VENUE
+ *
+ * *"The Crown went from 22 on a Thursday to 58"* — the most persuasive
+ * sentence a quizmaster owns, and until now the app knew it and never said it.
+ * Every night's headcount has been in the archive since the app was written;
+ * nobody had ever seen the number twice.
+ *
+ * **ONE RECORD, DRAWN TWO WAYS, and the summary line is the same function on
+ * both.** `library.headcounts` is worked out once on the server (see
+ * `venueHeadcounts`), so the Venues tab and the Gigs tab cannot arrive at two
+ * different answers about a number somebody is showing a landlord.
+ *
+ *  - **A venue card** opens on its own whole history — every night, its
+ *    number, and the bar that shows the shape of it.
+ *  - **The Gigs tab** puts every venue side by side, because that is where the
+ *    work lives and comparing places is what you do there.
+ *
+ * The bars are `aria-hidden` on purpose: every number they draw is written out
+ * next to them, so nothing is carried by a shape alone.
+ */
+
+/** This venue's numbers, out of the one record. */
+function headsFor(venue) {
+  const want = String(venue || '').trim().toLowerCase();
+  if (!want) return null;
+  return ((library.headcounts || {}).venues || [])
+    .find((v) => (v.venue || '').toLowerCase() === want) || null;
+}
+
+/**
+ * The sentence, and it is deliberately the whole of what the numbers say.
+ *
+ * "22 → 58" first and loudest, because the growth is the argument. The rest is
+ * the supporting detail somebody quotes when a landlord pushes back — and it
+ * is left off a venue with one night, where "best" and "on average" are three
+ * ways of printing the same number.
+ */
+function headcountLine(entry) {
+  if (entry.nights < 2) {
+    return `<div class="heads-line"><b class="heads-big">${entry.latest.players} playing</b>
+      <span class="tiny">one night so far</span></div>`;
+  }
+  return `<div class="heads-line">
+    <b class="heads-big">${entry.first.players} <span class="heads-arrow">→</span> ${entry.latest.players}</b>
+    <span class="tiny">across ${entry.nights} nights · best ${entry.best} · ${entry.average} on average</span>
+  </div>`;
+}
+
+/** The last dozen nights as a shape, newest on the right, for the Gigs tab. */
+function headcountSpark(entry) {
+  if (entry.nights < 2) return '';
+  const shown = entry.series.slice(-12);
+  return `<div class="heads-spark" aria-hidden="true">${shown.map((n) => `
+    <span style="height:${Math.max(8, Math.round((n.players / entry.best) * 100))}%"></span>`).join('')}</div>`;
+}
+
+/**
+ * EVERY NIGHT AT ONE VENUE, newest first.
+ *
+ * Newest first like every other list of nights in this app, and the bar is
+ * what makes it a trend rather than a column of numbers. It scrolls past a
+ * dozen rather than being cut off at one: a residency of two years is a
+ * hundred nights, and "and 88 earlier" on the page whose whole job is showing
+ * somebody your work is the wrong half to keep.
+ */
+function headcountHistory(entry) {
+  const rows = [...entry.series].reverse();
+  return `<div class="heads-nights">${rows.map((n) => `
+    <div class="heads-night">
+      <span class="hn-when">${esc(shortNight(n.night))}</span>
+      <span class="hn-bar" aria-hidden="true"><i style="width:${Math.max(4, Math.round((n.players / entry.best) * 100))}%"></i></span>
+      <span class="hn-num">${n.players}</span>
+    </div>`).join('')}</div>`;
+}
+
+/** "Thu 13 Aug", and the year only when it is not this one. */
+function shortNight(date) {
+  const when = new Date(date + 'T12:00:00');
+  const opts = { weekday: 'short', day: 'numeric', month: 'short' };
+  if (when.getFullYear() !== new Date().getFullYear()) opts.year = 'numeric';
+  return when.toLocaleDateString('en-GB', opts);
+}
+
+/** What a venue card shows about how many have played there. */
+function headcountBlock(venue) {
+  const entry = headsFor(venue);
+  if (!entry) {
+    return `<div class="heads">
+      <div class="heads-tag">Headcount</div>
+      <div class="tiny">No nights recorded here yet.</div>
+    </div>`;
+  }
+  return `<div class="heads">
+    <div class="heads-tag">Headcount</div>
+    ${headcountLine(entry)}
+    ${headcountHistory(entry)}
+  </div>`;
+}
+
+/**
+ * THE GIGS TAB'S PANEL — every venue, and which way each is going.
+ *
+ * Between the diary and Past gigs: what is coming is the thing you act on,
+ * this is the thing you show somebody, and the long list of nights sits under
+ * both. Not drawn at all when there is nothing to say, because an empty panel
+ * on a tab is the clutter this app's own rules argue against.
+ */
+function headcountsSection() {
+  const heads = library.headcounts || { venues: [], unplaced: 0 };
+  if (!heads.venues.length && !heads.unplaced) return document.createDocumentFragment();
+  return node(`
+    <div class="game-section">
+      <div class="game-head">
+        <div>
+          <h2>Headcount</h2>
+          <div class="tiny">How many played at each venue, and which way it is going.</div>
+        </div>
+      </div>
+      <div class="heads-list">
+        ${heads.venues.map((v) => `
+          <div class="heads-venue">
+            <div class="heads-who"><b>${esc(v.venue)}</b>${headcountLine(v)}</div>
+            ${headcountSpark(v)}
+          </div>`).join('')}
+      </div>
+      ${!heads.unplaced ? '' : `<div class="tiny heads-unplaced">${heads.unplaced}
+        night${heads.unplaced === 1 ? ' is' : 's are'} not filed under a venue.
+        Type one at launch and ${heads.unplaced === 1 ? 'it counts' : 'they count'} here.</div>`}
+    </div>`);
+}
+
 /**
  * WHICH VENUE IS OPEN, remembered outside the render.
  *
@@ -4700,7 +4831,8 @@ function venuesSection() {
                       placeholder="${i === 0 ? 'A free drink at the bar' : 'Nothing for this place'}">
                   </label>`).join('')}
               </div>
-              <button class="minor v-save" hidden>Save it</button>`}
+              <button class="minor v-save" hidden>Save it</button>
+              ${can(FEATURES.PAST_GIGS) ? headcountBlock(v.name) : ''}`}
             </div>`;
       }).join('')}
         </div>
@@ -4799,6 +4931,13 @@ function venuesSection() {
 function gigsSection() {
   const wrap = document.createDocumentFragment();
   if (can(FEATURES.CALENDAR)) wrap.appendChild(diarySection());
+  /*
+   * The numbers sit BETWEEN the two, and the order is the same argument the
+   * rest of this tab is built on: what is coming is what you act on, the
+   * headcounts are what you show a landlord, and the night-by-night list is
+   * the long thing you scroll — so it goes under both.
+   */
+  wrap.appendChild(headcountsSection());
   wrap.appendChild(pastGigsSection());
   return wrap;
 }

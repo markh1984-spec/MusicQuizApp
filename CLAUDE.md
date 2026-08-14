@@ -1110,6 +1110,7 @@ src/spotify.js         playlist building
 src/qrcode.js          dependency-free QR encoder
 src/photos.js          photos from the room: store, kill switch, bin
 src/past-gigs.js       the nights already run, and where their photos are filed
+src/headcounts.js      how many played, per venue — "22 → 58", out of the archive
 src/reports.js         "that one's wrong" — corrections from a night
 src/adverts.js         venue advertising slides, per venue
 src/generate-images.js round 2 artwork (placeholder or OpenAI)
@@ -1388,6 +1389,64 @@ paying for a full room on a dead night, not selling tickets — so a free-entry
 draw is exempt and there is nothing to work around. **If a venue ever charges
 per team, this needs looking at again before the prize gets big**, because a
 paid-entry draw is a different thing in law.
+
+### Headcount per venue — the app finally says a number it always knew
+
+`src/headcounts.js`, `library.headcounts` in the console payload, and the
+`heads-*` block drawn on a venue card and on the Gigs tab.
+
+**"The Crown went from 22 on a Thursday to 58" is the most persuasive sentence
+a quizmaster owns**, and every one of those numbers has been on disk since the
+app was written. The archive files a headcount every night; Past gigs printed
+it once on the night's own row and **nobody had ever seen it twice.** Nothing
+new is collected here, nothing is asked of anybody, and there is no consent
+question — this is arithmetic over a record that already existed.
+
+**ONE FUNCTION TAKES A SET OF NIGHTS AND RETURNS THE NUMBERS ACROSS THEM.**
+`venueHeadcounts()` is worked out once on the server and sent once; Venues
+opens one place and Gigs shows all of them, out of the same record. That is
+this file's own rule about stats across a group of accounts, applied to
+venues, and it is here for the identical reason: shipping "the trend for one
+venue" and later "across all venues" as two features is how the card and the
+panel end up disagreeing about a number somebody is showing a landlord.
+
+It takes what `mergeGigs()` returns rather than the raw archive, which buys
+the **6am roll-over** and the quiz-plus-bingo grouping for nothing — so the
+summary can never think a night was a different day from Past gigs.
+
+Five decisions that are load-bearing, all tested:
+
+- **A night's headcount is the MAX across its games, never the sum.** A quiz
+  and the bingo after it are the same room and mostly the same phones, so
+  adding them reports a 58-person night as 116 — on the one page whose whole
+  job is being evidence. Past gigs already printed the max; this is that rule
+  in a function so the two cannot drift.
+- **A night nobody played is left out.** A launch that was tested and
+  abandoned files an empty leaderboard, and counted it puts a 0 in the middle
+  of somebody's trend for a night that never happened.
+- **A night with no venue is COUNTED AND SAID**, in a line under the panel.
+  Every night filed before venues existed has none; dropping them in silence
+  means somebody with forty nights sees twelve and believes the app lost the
+  rest.
+- **One venue typed in two cases is one venue**, keyed lowercase and spelt as
+  it was typed most recently — the same rule `venuesUsed` already follows.
+- **No red for a night that went down.** Red means wrong or destructive
+  everywhere in this app, and a quieter Tuesday in February is neither. The
+  numbers are stated plainly and the app does not editorialise about
+  somebody's own work.
+
+**The bars are a picture of numbers that are all written out anyway**, so they
+are `aria-hidden` and nothing is carried by a shape alone — the same reasoning
+as a control whose only explanation is a `title`. They are the account's own
+colour at half strength with the LATEST night at full, and deliberately **not
+a filled gradient**: that is what "press this" looks like here, and a block of
+it that does nothing when pressed costs the real buttons their meaning.
+
+**And the library payload now reads the archive ONCE.** Three things in it are
+worked out from those files — the nights badge, the unbilled count and these —
+and each used to walk the whole folder for itself. They have to agree with each
+other anyway: a badge saying 40 above a panel that summarises 39 is a page
+nobody trusts.
 
 ### A prize taken at the bar has to reach the filed night
 

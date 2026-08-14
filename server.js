@@ -36,6 +36,7 @@ import { STYLES, findStyle, QUALITIES, DEFAULT_QUALITY } from './src/portraits.j
 import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig, playTrack } from './src/spotify.js';
 import { photoFolder, mergeGigs, safePhotoName, isNightFolder } from './src/past-gigs.js';
+import { venueHeadcounts } from './src/headcounts.js';
 import { getFile, listDir, listDirs, githubConfigured, missingGithubConfig, putFile, putFiles, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem, privateRepoConfigured, packsRepoConfigured, packsRepoName } from './src/github.js';
 import { Invoices, totals, toPence, money } from './src/invoices.js';
 import { invoicePdf, invoiceFilename } from './src/invoice-pdf.js';
@@ -1407,6 +1408,18 @@ async function handleGet(req, res, url, route) {
     const backup = await backupStatus();
     const { session } = roomForHost(req, url);
     const me = whoIs(req, url);
+    /*
+     * THE NIGHTS, READ ONCE.
+     *
+     * Three things in this payload are worked out from the archive — how many
+     * nights there are, how many are unbilled, and the headcounts — and each
+     * used to walk the whole folder and parse every night for itself. On a
+     * quizmaster with two years of Thursdays that is three full reads of the
+     * archive for one console load, and they must agree with each other
+     * anyway, because a badge saying 40 above a panel that summarises 39 is a
+     * page nobody trusts.
+     */
+    const gigNights = mergeGigs(listArchive(libRoom.paths.archive), []);
     return sendJson(res, 200, {
       brand: brandForRoom(roomForHost(req, url)),
       appName: config.appName,
@@ -1496,7 +1509,7 @@ async function handleGet(req, res, url, route) {
        * the same roll-over the page itself uses, rather than in the browser
        * from a list it would have to group a second way.
        */
-      archiveNights: mergeGigs(listArchive(roomForHost(req, url).paths.archive), []).length,
+      archiveNights: gigNights.length,
       /*
        * NIGHTS YOU HAVE RUN AND NOT BILLED — money left on the table.
        *
@@ -1509,7 +1522,26 @@ async function handleGet(req, res, url, route) {
        * Only when they actually hold invoicing — a quizmaster who does not
        * bill through the app has no unbilled nights, only nights.
        */
-      unbilled: unbilledFor(roomForHost(req, url), req, url),
+      unbilled: unbilledFor(libRoom, req, url, gigNights),
+      /*
+       * HOW MANY PLAYED AT EACH VENUE, and which way it is going.
+       *
+       * *"The Crown went from 22 to 58"* — the evidence that wins the next
+       * booking and saves a residency in January. Nothing new is collected:
+       * this is the count the archive has written down since the app was
+       * written, added up per venue for the first time.
+       *
+       * ONE record, read by BOTH tabs. The Venues tab opens a place and shows
+       * its own history; the Gigs tab shows every venue at once. Sent rather
+       * than fetched separately so the two cannot disagree, and so a venue
+       * card draws its numbers with no second request.
+       *
+       * Only for somebody who holds Past gigs — this is their record of what
+       * they have run, read from the same archive that page is built from.
+       */
+      headcounts: seesTheirNights(req, url)
+        ? venueHeadcounts(gigNights)
+        : { venues: [], unplaced: 0 },
       /*
        * Venues this room has played before, so the launch box offers them back
        * rather than asking for the same six words every week. A field you
@@ -2544,11 +2576,14 @@ function cataloguePerformance() {
  * as zero rather than taking the library payload down with them — this is a
  * nice-to-know number on the page whose job is launching a quiz.
  */
-function unbilledFor(room, req, url) {
+function unbilledFor(room, req, url, nights) {
   try {
     if (!billsThroughTheApp(req, url)) return 0;
-    const nights = mergeGigs(listArchive(room.paths.archive), []);
-    return room.invoices.unbilledNights(nights).length;
+    // The caller passes the nights when it has already read them — one console
+    // load asks the archive three questions and there is no reason to walk the
+    // folder three times to answer them.
+    const all = nights || mergeGigs(listArchive(room.paths.archive), []);
+    return room.invoices.unbilledNights(all).length;
   } catch {
     return 0;
   }
@@ -2572,6 +2607,24 @@ function billsThroughTheApp(req, url) {
   const account = whoIs(req, url);
   if (!account) return false;
   return account.bootstrap ? true : can(account, FEATURES.INVOICES);
+}
+
+/**
+ * May whoever is asking see their own record of what they have run?
+ *
+ * The same shape as `billsThroughTheApp` above and asked of the REQUEST for
+ * the same reason: on the bare host key there is no account against the house
+ * room, so a lookup by room id comes back null and the owner's own console
+ * would quietly show no history at all.
+ *
+ * It decides whether the headcounts ride along in the library payload. A
+ * quizmaster without Past gigs has no page to put them on, and a payload
+ * carrying numbers for nobody is a payload that grows for nobody.
+ */
+function seesTheirNights(req, url) {
+  const account = whoIs(req, url);
+  if (!account) return false;
+  return account.bootstrap ? true : can(account, FEATURES.PAST_GIGS);
 }
 
 function invoiceState(books) {

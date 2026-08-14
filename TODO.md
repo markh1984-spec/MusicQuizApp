@@ -24,12 +24,13 @@ sell"). That rule orders FEATURES against each other inside the app. This
 orders where the effort goes. A feature from list 3 still beats a feature that
 only makes the app cleverer.
 
-**And the top item of list 3 serves list 1 anyway.** Headcount per venue —
-"The Crown went from 22 to 58" — is how MARK proves his own worth to a
-landlord, before it is ever a selling point for anybody else. So it stays near
-the front by a different route, and it gets built because he needs it rather
-than because a subscriber asked. That is the dogfooding argument working as
-intended.
+**And the top item of list 3 served list 1 anyway, which is why it is already
+built.** Headcount per venue — "The Crown went from 22 to 58" — is how MARK
+proves his own worth to a landlord, before it is ever a selling point for
+anybody else. It got built because he needed it rather than because a
+subscriber asked, which is the dogfooding argument working as intended, and
+the same route is the one to use on anything else from list 3 that he needs
+himself.
 
 ---
 
@@ -745,54 +746,19 @@ because those all need something to arrive in an inbox.
 
 **Third of the three, and that is not the same as unimportant.** This is what
 keeps subscribers once they are here — a problem you have to earn by getting
-some. Note that its top item, headcount per venue, serves list 1 as well, so it
-gets built early by a different route.
+some.
 
 Design rule 4 says build what helps a quizmaster win the next booking. This is
 that list, in the order it should be built, worked out on 12 August 2026.
 
-**Everything below except the last slide is blocked on the same thing: a NIGHT
-that knows which venue it was at.** The app can currently say 58 people played
-on 11 August and cannot say where. Build that first — see the terminology
-section above.
+**What was the top item — headcount per venue — is BUILT** (14 August 2026):
+"The Crown went from 22 to 58" is on the venue's own card and on the Gigs tab,
+out of one record. Its reasoning is in CLAUDE.md. It also settles what the rest
+of this list was blocked on, which was **a night that knows which venue it was
+at** — a night has carried its venue since then, and the aggregation over
+those nights now exists for anything else that wants it.
 
-### 1. Headcount per venue, over time — the strongest thing in the list
-
-The app already stores how many phones joined every night. Nobody has ever
-seen the number twice.
-
-**"The Crown went from 22 on a Thursday to 58"** is the most persuasive
-sentence a quizmaster owns. It wins a new venue (here is what happened at the
-last three places) and — worth more — it SAVES a residency in January, when a
-landlord is looking at costs and cannot remember what the room was like before.
-
-Free to build: the data exists, nothing new is collected, no consent question.
-Do this one first.
-
-**DECIDED on 14 August 2026 — do not re-ask:**
-
-- **ONE record, read from BOTH Venues and Gigs.** Asked directly and the
-  answer was *"I think Venues, but also perhaps gigs as well? Maybe both point
-  to the same record?"* — which is this file's own rule already: **one
-  function takes a SET of nights and returns the numbers across them.** Venues
-  asks it for one place, Gigs asks it for all of them. Same code, same panel,
-  N of one or N of five. Shipping "the trend for one venue" and later "across
-  all venues" as two features is how they drift.
-- **On the VENUE in Venues**: open The Station Tap and see its whole history —
-  every night, the numbers, the trend — next to its usual night and its
-  prizes, so when you are pitching that pub everything about them is on one
-  card.
-- **And surfaced on Gigs**, because that is where the work lives.
-
-**The data is already there and nothing joins it up**: the archive carries
-`venue` and the player count per night (`listArchive` in `src/library.js`,
-`src/past-gigs.js`), and `venuesUsed()` returns venue NAMES only. Verified by
-audit on 14 August — there is no aggregation anywhere in the repo.
-
-**The 6am roll-over applies**, like Past gigs and the photos: a night that
-finished at half past midnight belongs to the evening it started.
-
-### 2. The last slide of the night — cheap, and not blocked
+### 1. The last slide of the night — cheap, and not blocked
 
 Everyone in the room has a phone out and is looking at the screen, and that
 moment is currently spent on a scoreboard. *"Back here Thursday 19th"* plus a
@@ -801,7 +767,7 @@ QR to the venue's page.
 **Does NOT need the venue object** — it is a line of text and a link, typed at
 launch. It is the only thing on this list that could ship in an evening.
 
-### 3. An advert QR that COUNTS
+### 2. An advert QR that COUNTS
 
 Advert slides already take a heading, an image and a QR, and `src/qrcode.js`
 encodes anything. What is missing is what the QR points at.
@@ -841,7 +807,7 @@ quiz, so the wording is worth agreeing with the landlord rather than inventing.
 "QUIZ40". A phone held up in a dark bar at 10pm is a slower transaction than
 the discount is worth.
 
-### 4. The post-night report for the venue
+### 3. The post-night report for the venue
 
 The night ends and the landlord gets: how many played, how that compares, how
 often their slide was up, and the photos. Two things happen — the quizmaster
@@ -853,7 +819,7 @@ the quizmaster's followers.
 not to add one without asking. It is a PDF through the share sheet, reusing
 `src/pdf.js` — the same dependency-free writer the invoices use.
 
-### 5. A public page per quizmaster — and the consent line
+### 4. A public page per quizmaster — and the consent line
 
 A shareable link, no login: nights, numbers, and "book me". The thing that goes
 in an Instagram bio or a cold email.
