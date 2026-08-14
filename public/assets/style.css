@@ -36,6 +36,37 @@
 
   --hot: #ff2e88;
   --hot-2: #ff8a3d;
+
+  /* ---- ONE SURFACE, and it carries the account's own colour.
+   *
+   * Every card and panel on the console was some shade of
+   * `rgba(255,255,255,0.04–0.06)` on near-black — four slightly different
+   * greys that nobody decided, plus the generator panel's blue tint. Grey on
+   * black is also the one combination that cannot pick up a scheme, so an
+   * account's colours reached exactly one button a screen and the loudest
+   * thing on most pages was the destructive red.
+   *
+   * These are the fill's two stops and its edge, tinted with `--hot` at low
+   * strength so a pink-and-orange account and a lime one are different rooms
+   * rather than the same grey room with different buttons. It is a TINT and
+   * not a wash: at this strength it reads as depth, and the scheme still
+   * means personality rather than meaning, exactly as the GUI rules say.
+   *
+   * OPAQUE, and that is load-bearing rather than incidental. Translucent
+   * cards over the page's washes render a different colour depending on where
+   * they happen to sit — the same pack card pink in the middle of the grid and
+   * grey at the edge of it, which is the "all over the place" fault wearing a
+   * coat. Opaque, the background can be as alive as it likes.
+   *
+   * The rgba fallbacks come FIRST, because a browser too old for `color-mix`
+   * would otherwise drop the declaration and leave a transparent card. */
+  --surf-1: rgba(28, 24, 48, 1);
+  --surf-1: color-mix(in srgb, var(--hot) 9%, #15152b);
+  --surf-2: rgba(18, 16, 32, 1);
+  --surf-2: color-mix(in srgb, var(--hot) 3%, #0e0e1c);
+  --surf-line: rgba(255, 255, 255, 0.16);
+  --surf-line: color-mix(in srgb, var(--hot) 20%, rgba(255, 255, 255, 0.12));
+  --surface: linear-gradient(180deg, var(--surf-1), var(--surf-2));
   /* The far end of the logo's gradient. Its own variable rather than reusing
      --gold, because gold is the right third colour for a pink-and-orange
      record and quite wrong for a turquoise one. */
@@ -1687,7 +1718,32 @@ body.bingo-card .bingo-call { margin-right: 72px; }
 
 /* ================================================================ CONSOLE */
 
-body.console { overflow: auto; background: #0b0b14; }
+/* THE CONSOLE WAS THE ONE SURFACE IN THIS APP WITH ITS AMBIENCE SWITCHED OFF.
+   `background: #0b0b14` and `::after { display: none }` — so the corner washes
+   and the two drifting blobs that set the mood on the projector, the phone and
+   the join page were turned off on the page a quizmaster spends the most time
+   in. Flat near-black with grey cards, the account's colours reaching one
+   button a screen, and the most saturated thing on the page the destructive
+   red. That is what "the colours are not singing" was.
+   Fixed rather than attached, so it does not slide about behind the content
+   while you scroll a long tab — the drifting blobs are for a screen somebody
+   is looking AT, and a console is a page you work in. */
+body.console {
+  overflow: auto;
+  background:
+    radial-gradient(1100px 720px at 8% -8%, var(--glow-1), transparent 62%),
+    radial-gradient(900px 620px at 100% 2%, var(--glow-2), transparent 58%),
+    radial-gradient(700px 500px at 70% 100%, var(--drift-1), transparent 60%),
+    #07070e;
+  background-attachment: fixed;
+  /* ONE SURFACE FOR EVERY CARD ON THIS PAGE, in the account's own colour —
+     see the note on `--surf-1`. Overriding the two tokens rather than editing
+     twenty-nine rules is what makes this one decision instead of twenty-nine
+     chances to disagree, and it is why the four greys existed in the first
+     place. */
+  --panel: var(--surface);
+  --panel-line: var(--surf-line);
+}
 body.console::after { display: none; }
 .console .wrap { max-width: 1000px; margin: 0 auto; padding: 0 16px 60px; }
 .console .topbar {
@@ -1751,6 +1807,22 @@ body.console::after { display: none; }
 .game-section { margin-bottom: 34px; }
 .game-head { display: flex; align-items: flex-end; gap: 14px; margin-bottom: 14px; }
 .game-head h2 { margin: 0 0 3px; font-size: var(--fs-title); font-weight: 900; letter-spacing: -0.02em; }
+/* A SECTION HEADING CARRIES THE ACCOUNT'S OWN COLOURS.
+   The one thing that makes a page look designed rather than assembled, and it
+   is safe where a button would not be: a heading is not something you press,
+   so the gradient cannot be mistaken for "press this" — which is the reason
+   that fill is otherwise rationed to one control a screen.
+   Behind an `@supports`, and that guard is not optional: gradient text means
+   TRANSPARENT text, so a browser without `background-clip` would draw every
+   section heading on the console invisible. */
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .console .game-head h2 {
+    background: linear-gradient(120deg, var(--hot), var(--hot-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
 .game-head a { margin-left: auto; }
 
 .pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
@@ -1981,6 +2053,17 @@ body.screen { cursor: none; }
 /* ---- console tabs
    One tab per thing you can run. Big enough to hit with a thumb, because the
    console gets used on a phone as often as a laptop. */
+/* THE BAR WRAPS ON A LAPTOP AND SCROLLS ON A PHONE.
+   Asked for directly — *"the menu should wrap to the screen on a laptop"* —
+   and it was a real defect rather than a preference: nine tabs at this size
+   are wider than the console's 1000px column, so `overflow-x: auto` cut "My
+   account" in half at the right-hand edge with no scrollbar drawn to say it
+   could be reached. A tab you cannot see is a tab that does not exist, which
+   is the fault this whole bar exists to prevent.
+   It cannot simply wrap everywhere: at 320px nine tabs would take three rows
+   and push the page's first line most of a screen down. So it wraps from
+   860px, where two rows is the worst case, and keeps the sideways scroll
+   below that — the same split the topbar's own rule already uses. */
 .tabbar {
   display: flex;
   gap: 6px;
@@ -1988,6 +2071,9 @@ body.screen { cursor: none; }
   padding-bottom: 2px;
   border-bottom: 1px solid var(--panel-line);
   overflow-x: auto;
+}
+@media (min-width: 860px) {
+  .tabbar { flex-wrap: wrap; overflow-x: visible; row-gap: 0; }
 }
 .tab {
   display: flex;
@@ -3385,7 +3471,24 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
    pack card and the editor, so a button using it anywhere else came out looking
    like the secondary ones next to it — which on this panel is the wrong way
    round: New invoice is the thing you came here to press. */
-.game-head .row { margin-left: auto; }
+/* A HEADING'S BUTTONS ARE A ROW, and this one was never told to be.
+   `.host .row` and `.panel.pics .row` are both `display: flex` with a gap and
+   wrapping; this one had `margin-left: auto` and nothing else — so its
+   children were loose inline-blocks that broke onto a second line whenever
+   they did not fit, at whatever width each happened to be. That is the
+   Adverts tab's "Bring in a picture" with "New set" hanging under its
+   right-hand end, and the Invoices tab's three buttons at three heights.
+   `stretch` rather than `center`, because two of these are a <label> and a
+   <button> with different padding — centred they line up on the middle and
+   still read as two different sizes. */
+.game-head .row {
+  margin-left: auto;
+  display: flex; gap: 8px; align-items: stretch; flex-wrap: wrap;
+  justify-content: flex-end;
+}
+/* A <label> acting as a button has no button box, so it needs telling how to
+   sit inside a stretched row. */
+.game-head .row > label { display: inline-flex; align-items: center; }
 .game-head .go, .sheet-actions .go, .inv-actions .go {
   border: none;
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
@@ -5517,7 +5620,7 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .venue-list { display: grid; gap: 10px; margin-top: 12px; }
 .venue-card {
   border: 1px solid var(--panel-line); border-radius: var(--r-card);
-  background: rgba(255, 255, 255, 0.04); padding: 12px 14px;
+  background: var(--panel); padding: 12px 14px;
 }
 .venue-top { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
 /* WHICH NIGHT THEY HAVE YOU — the cheapest half of a diary, and the thing the
@@ -5625,7 +5728,7 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .diary-row {
   display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center;
   border: 1px solid var(--panel-line); border-radius: var(--r-card);
-  background: rgba(255, 255, 255, 0.04); padding: 10px 12px;
+  background: var(--panel); padding: 10px 12px;
 }
 /* min-content is a grid child's default minimum, which is how one long venue
    name drags a page sideways on a 320px phone. Bitten five times now. */
@@ -5976,7 +6079,7 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .cal-side {
   display: grid; gap: 10px; align-content: start;
   border: 1px solid var(--panel-line); border-radius: var(--r-card);
-  background: rgba(255, 255, 255, 0.03); padding: 12px;
+  background: var(--panel); padding: 12px;
 }
 .cal-side > * { min-width: 0; }
 .cal-side-head {
