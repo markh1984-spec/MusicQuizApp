@@ -853,6 +853,86 @@ the risk too.
 ---
 
 
+### 7. ONLINE MODE'S VIDEO — native, on Cloudflare. **Parked, not started**
+
+The switch is built (`state.online`, the In the room / Online control in
+Tonight). **The video underneath it is not, and nothing about it exists in the
+code** — no `getUserMedia`, no WebRTC, no Cloudflare call. Parked deliberately
+on 14 August 2026; this entry exists so the decisions taken that day are not
+taken again.
+
+**NATIVE, NEVER ZOOM OR TEAMS.** The host's own words: *"not using Teams or
+Zoom, it needs to be native to the app."* A quizmaster running a night inside
+somebody else's meeting app is not selling this app, and half the features —
+the join code, the reveal, the podium, the come-back slide — have nowhere to
+live in it.
+
+**THE BIG SCREEN IS NOT VIDEO, and this is the decision that pays for
+everything else.** Questions, the QR, the scoreboard, the podium and the
+come-back slide already render natively on every device from the SSE payload.
+Keep that. Streaming the screen as pixels would be the expensive mistake AND
+the worse product: a QR re-encoded as video at 200 kbps is a QR that will not
+scan, on the one control that lets somebody into the game. **Only the FACE is
+video.**
+
+**TWO SHAPES, AND THEY ARE TWO DIFFERENT CLOUDFLARE PRODUCTS** — not two
+settings of one:
+
+| Room | Shape | What runs it |
+|---|---|---|
+| up to ~16 | **meeting** — everyone on camera | Cloudflare Realtime, the SFU (WebRTC, sub-second) |
+| 16 and up | **broadcast** — the host out, chat back | Cloudflare Stream Live (one-way HLS, seconds behind) |
+
+**Sixteen, not fifty.** The host's first instinct was *"200+ is a broadcast,
+under 50 is a meeting"* — right in kind, and the boundary is much lower than
+it looks, because it is set by **what a screen can show, not by cost**. A
+meeting is only meaningful while everybody can actually be seen: about 12–16
+tiles on a laptop and about six on a phone. At fifty people nobody can see
+anybody, so you have paid the expensive price for a wall of thumbnails and got
+the broadcast experience anyway. There is no 50–200 middle to build.
+
+**BROADCAST IS ONLY ALLOWED BECAUSE THE CLOCK IS SERVER-SIDE.** Rule 2 — a
+phone sends which option it tapped and the server timestamps it — so several
+seconds of video latency costs nobody a point. If scoring lived on the phone,
+HLS would be ruled out entirely and the cheap shape would not exist. Worth
+knowing before anybody "optimises" the clock.
+
+**The money, so it is not guessed at again.** Cloudflare gives **1,000 GB
+egress free a month, then $0.05/GB**. Egress is per viewer, per stream
+received — so the bill is **viewers × bitrate**, and the room size is the
+variable that drives it.
+
+| What goes out | 30 players, 2-hour night | Nights inside the free tier |
+|---|---|---|
+| the host's face, corner-sized (~200 kbps) | 5.4 GB | ~185 |
+| the host's face, 480p (~500 kbps) | 13.5 GB | ~74 |
+| **audio only** (~32 kbps) | 0.8 GB | ~1,190 |
+| 20 people all on camera (~300 kbps each) | 102 GB | ~9 |
+
+**The everyone-on-camera row is QUADRATIC, and that is the one thing here that
+can actually hurt.** Every extra person is another publisher *and* another
+viewer of everyone else: 20 people is ~102 GB a night (~$5 once past free), and
+**100 people all on camera is ~1.3 TB an hour, about $67 an hour**. So a
+publisher cap is a hard requirement rather than a warning — a dozen or so on
+camera, everyone else audio and chat.
+
+**IT ADAPTS TO THE HEADCOUNT, NOT TO THE NETWORK — and it says which rung it is
+on.** WebRTC already adapts to each viewer's connection, silently and
+per-person; leave that alone. What it cannot know is that there are two hundred
+people and a bill, so that is the rung this app picks. **But on a stated
+ladder, visible to the host**, for the same reason the join flood shows a number
+instead of deciding on its own: a stream that quietly degrades mid-night is
+indistinguishable from an app that is breaking, and a host on a mic cannot tell
+which. Note that audio-only is CHEAPER than the smallest video, so the ladder
+saves most exactly where the cost would otherwise run away.
+
+**Before any of this is built:** it needs a Cloudflare account and an API
+token, and it is the first thing in this app with a per-use bill that is not
+Claude or OpenAI — so it wants the same treatment `spend.js` gives those,
+written down as it happens rather than discovered on an invoice.
+
+---
+
 ## Where the rest of this went
 
 **This file is the LIVE list. Everything else moved on 14 August 2026**, so
