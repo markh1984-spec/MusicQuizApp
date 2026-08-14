@@ -154,8 +154,19 @@
  * editor's own fields have the same specificity, so source order is what lets
  * them keep winning where they have already been tuned.
  * ===================================================================== */
+/* `input:not([type])` IS IN THIS LIST BECAUSE AN INPUT WITHOUT A `type`
+ * ATTRIBUTE IS A TEXT BOX AND `input[type="text"]` DOES NOT MATCH IT.
+ * The attribute selector reads the ATTRIBUTE, not the behaviour — so
+ * `<input class="ow-name" placeholder="Your name">` behaved as a text field
+ * and was styled as a browser default: square corners, the wrong font, a
+ * white slab. It sat in the first-run "Create the owner account" panel next
+ * to `.ow-email` and `.ow-pass`, which DO carry a type and were styled
+ * properly — three boxes in one row, one of them visibly not part of the
+ * app, on the very first screen anybody sees. Matching bare inputs here
+ * fixes every one of them, including the next one somebody writes. */
 input[type="text"], input[type="search"], input[type="email"],
-input[type="password"], input[type="number"], input[type="url"], textarea {
+input[type="password"], input[type="number"], input[type="url"],
+input:not([type]), textarea {
   font-family: inherit;
   font-size: var(--fs-note);
   font-weight: 700;
@@ -1977,7 +1988,10 @@ body.console::after { display: none; }
 .gig-list { display: grid; gap: 7px; }
 .gig-head {
   display: flex; align-items: center; gap: 14px; flex-wrap: wrap; width: 100%;
-  padding: 12px 14px; border-radius: var(--r-field); text-align: left; cursor: pointer;
+  /* `--r-card`, not `--r-field`: this is a card in a list of nights, the same
+     object as `.diary-row`, `.venue-card` and `.inv-row`, and it was the only
+     one of the four wearing a field's corner. */
+  padding: 12px 14px; border-radius: var(--r-card); text-align: left; cursor: pointer;
   background: var(--panel); border: 1px solid var(--panel-line); color: var(--ink);
   font-family: inherit; font-size: var(--fs-note);
 }
@@ -3545,11 +3559,25 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 /* A <label> acting as a button has no button box, so it needs telling how to
    sit inside a stretched row. */
 .game-head .row > label { display: inline-flex; align-items: center; }
+/* THE SAME HOLE `.role-make` ALREADY HAD, in a rule nobody thought to check.
+   This set a border, a background, a colour and a weight and NOTHING ELSE —
+   so "Mark paid" on an invoice row inherited the browser's own button box:
+   13.33px in a system face (off the ten-step ladder), `1px 6px` of padding,
+   and SQUARE CORNERS. Beside "Open" and "Send" at 36px tall with 10px
+   corners, in the same row. Found by measuring rather than by looking, which
+   is the only way this kind of fault is ever found — it is invisible in a
+   diff and obvious once you know, exactly as the note on `.role-make` says.
+   Sized to match `.minor`, because these buttons sit in rows with them. */
 .game-head .go, .sheet-actions .go, .inv-actions .go {
   border: none;
+  border-radius: var(--r-field);
+  padding: 9px 13px;
+  font-family: inherit;
+  font-size: var(--fs-note);
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
   color: #12000c;
   font-weight: 900;
+  cursor: pointer;
 }
 .game-head .go:hover, .sheet-actions .go:hover, .inv-actions .go:hover { filter: brightness(1.08); }
 .game-head .go:disabled, .sheet-actions .go:disabled { opacity: 0.5; cursor: default; filter: none; }
@@ -3566,7 +3594,10 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   padding: 12px 14px;
   border-radius: var(--r-card);
   border: 1px solid var(--panel-line);
-  background: rgba(255, 255, 255, 0.04);
+  /* The one card class the surface sweep missed — it wrote its own grey out
+     by hand instead of taking `--panel`, so an invoice row read visibly
+     flatter than the summary panel directly above it. */
+  background: var(--panel);
   margin-bottom: 8px;
 }
 .inv-main { flex: 1 1 220px; min-width: 0; }
@@ -5471,6 +5502,13 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   font: inherit;
   font-size: var(--fs-ctl);
   border-radius: var(--r-field);
+  /* IT HAD NO PADDING EITHER, which is the same fault as the font one above
+     and hid behind it. Every "makes something" button fell back to the
+     browser's `1px 6px`, so a bare one came out 21px tall — half the height
+     of the `.minor` beside it. It was invisible wherever one happened to sit
+     in a flex row that stretched it, and plain to see the moment Adverts'
+     "New set" wrapped onto a line of its own. */
+  padding: 9px 14px;
   /*
    * DEEPER THAN `--good` ITSELF, and that is the whole tuning.
    *
@@ -5955,7 +5993,10 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 /* The column you are on is lifted, so "where am I" is answered before any of
    the rows are read. */
 .cmp th.mine, .cmp td.mine { background: rgba(255, 255, 255, 0.045); }
-.cmp-yes { color: var(--good); font-weight: 900; font-size: 1.15em; }
+/* `1.15em` of a 13px parent is 14.95px, which is on no ladder step and is
+   the same decision-taken-by-accident the ladder exists to stop. One rung
+   up, stated. */
+.cmp-yes { color: var(--good); font-weight: 900; font-size: var(--fs-body); }
 .cmp-no { color: var(--ink-dim); opacity: 0.5; }
 .cmp-soon { color: var(--gold); opacity: 0.8; font-size: var(--fs-tag); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
 .cmp-tier.tier-bronze { color: #cd895a; }
