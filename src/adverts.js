@@ -24,6 +24,33 @@ const MAX_HEADING = 60;
 const MAX_BODY = 160;
 const MAX_LABEL = 40;
 
+/**
+ * A slide's picture, and the cap that keeps it affordable.
+ *
+ * The console shrinks to 900px before sending — this is the backstop, not the
+ * mechanism. It matters because a slide's image travels in the SCREEN payload
+ * for as long as the advert is up, and an unbounded one pasted straight into
+ * the JSON would sit on the pub's wifi. 300KB of base64 is a generous 900px
+ * photograph.
+ *
+ * Data URLs only, for the reason the venue logo has: a picture hosted on the
+ * venue's own server is a 404 on the one night it matters, six feet wide, in
+ * front of a room.
+ *
+ * Too big or the wrong shape is DROPPED rather than thrown — the slide still
+ * has its words, and refusing the whole save would cost somebody the offer
+ * they were typing.
+ */
+export const MAX_SLIDE_IMAGE_BYTES = 300 * 1024;
+
+export function cleanSlideImage(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(raw)) return '';
+  if (raw.length > MAX_SLIDE_IMAGE_BYTES) return '';
+  return raw;
+}
+
 export function listAdvertPacks(dir) {
   let files = [];
   try {
@@ -99,7 +126,7 @@ export function normaliseAdvertPack(pack, fallbackId = 'adverts') {
       // A note for the host to say over the mic — never on the screen, same
       // rule as a quiz question's host note.
       say: String(s.say || '').slice(0, MAX_BODY),
-      ...(s.image ? { image: String(s.image) } : {}),
+      ...(cleanSlideImage(s.image) ? { image: cleanSlideImage(s.image) } : {}),
       ...(s.link ? { link: String(s.link) } : {}),
       ...(s.linkLabel ? { linkLabel: String(s.linkLabel).slice(0, MAX_LABEL) } : {}),
     })),

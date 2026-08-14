@@ -5778,3 +5778,25 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 /* A `<label>` wrapping a hidden file input, so it needs the button's own
    cursor — nothing else makes it look pressable. */
 .venue-logo-pick { cursor: pointer; }
+
+/* THEIR ADVERTS, on a venue's card. A summary and a door — never a second
+   editor, because two places that edit one thing is how they end up
+   disagreeing. Dimmer than the prizes above it: this is a fact about the
+   venue, where the prize boxes are a thing you are filling in. */
+.venue-ads {
+  margin: 12px 0; padding: 12px;
+  border: 1px solid var(--panel-line); border-radius: var(--r-card);
+}
+.venue-ads-tag { font-size: var(--fs-tag); font-weight: 800; color: var(--ink-dim); }
+.venue-ads-line { margin-top: 3px; }
+.venue-ads .minor { margin-top: 10px; }
+
+/* A slide's picture in the advert editor. The same white plate the venue logo
+   gets, for the same reason — half of what a venue sends is a transparent PNG
+   and half is a photo, and one of those is invisible on a dark sheet. */
+.ad-pic-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.ad-pic {
+  height: 56px; max-width: 160px; object-fit: contain;
+  background: #fff; border-radius: 6px; padding: 4px;
+}
+.ad-pic-pick { cursor: pointer; }

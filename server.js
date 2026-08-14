@@ -4052,7 +4052,13 @@ async function handleWrite(req, res, url, route) {
   if (route === '/api/mine/import' && req.method === 'POST') {
     if (!allowed(req, res, url, FEATURES.OWN_PACKS)) return true;
     const room = roomForHost(req, url);
-    const body = await readJson(req, 512 * 1024);
+    /*
+     * Bigger than it was, because a set can now carry a picture per slide.
+     * Each is capped at 300KB by `cleanSlideImage`, so this is the envelope
+     * for several of them plus the words rather than a licence for one huge
+     * one.
+     */
+    const body = await readJson(req, 4 * 1024 * 1024);
     const stream = progressStream(res);
     const log = stream.log;
     try {

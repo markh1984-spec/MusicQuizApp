@@ -258,6 +258,7 @@ async function load() {
   library = await res.json();
   render();
   openRequestedRead();
+  openRequestedSet();
 }
 
 /**
@@ -279,6 +280,26 @@ async function load() {
  * and landing on the console is the right outcome — not a page saying no.
  */
 let readOpened = false;
+/**
+ * `?set=dogduck` — open an advert set's editor straight from a link.
+ *
+ * What the venue card's "Edit their slides" points at, so there is ONE editor
+ * with two doors into it rather than two editors that can disagree. Same
+ * shape and same rules as the read-through link above: once per page load
+ * (`load()` runs again after every save and would otherwise trap you in the
+ * sheet), and an id that is no longer there is ignored rather than an error.
+ */
+let setOpened = false;
+
+function openRequestedSet() {
+  if (setOpened) return;
+  const wanted = new URL(location.href).searchParams.get('set');
+  if (!wanted) return;
+  setOpened = true;
+  const found = (library.adverts || []).find((a) => a.id === wanted);
+  if (found) editAdvertSet(found.id);
+}
+
 function openRequestedRead() {
   if (readOpened) return;
   const wanted = new URL(location.href).searchParams.get('read');
@@ -5789,8 +5810,25 @@ let venueQuery = '';
  */
 const LOGO_PX = 128;
 const MAX_LOGO_BYTES = 64 * 1024;
+/*
+ * An advert picture is going on a PROJECTOR rather than a phone, so it gets a
+ * bigger allowance — but still a capped one, because the slide's image travels
+ * in the screen payload for as long as the advert is up. It is only ever shown
+ * between rounds, when nothing is pushing state every second, which is what
+ * makes a few hundred kilobytes affordable here and not on a question.
+ */
+const ADVERT_PX = 900;
+const MAX_ADVERT_BYTES = 300 * 1024;
 
-function shrinkLogo(file) {
+/**
+ * One shrink, two sizes.
+ *
+ * PNG when the source is a PNG, JPEG otherwise, and that is not fussiness: an
+ * advert slide sits on a DARK background, so a graphic with transparency
+ * flattened onto white would arrive as a white box six feet wide. Photographs
+ * are the common case for a venue's slide and JPEG is right for those.
+ */
+function shrinkImage(file, { px, maxBytes, tooBig }) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error('Could not read that file.'));
@@ -5798,20 +5836,17 @@ function shrinkLogo(file) {
       const img = new Image();
       img.onerror = () => reject(new Error('That does not look like an image.'));
       img.onload = () => {
-        const scale = Math.min(1, LOGO_PX / Math.max(img.width, img.height));
+        const scale = Math.min(1, px / Math.max(img.width, img.height));
         const w = Math.max(1, Math.round(img.width * scale));
         const h = Math.max(1, Math.round(img.height * scale));
         const canvas = document.createElement('canvas');
         canvas.width = w;
         canvas.height = h;
-        // No fill: a transparent logo stays transparent, and the voucher card
-        // gives it a white plate of its own so it is legible either way.
+        // No fill, so transparency survives where the format keeps it.
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        const out = canvas.toDataURL('image/png');
-        if (out.length > MAX_LOGO_BYTES) {
-          reject(new Error('That logo is too detailed to store. A simpler or smaller one will work.'));
-          return;
-        }
+        const png = String(file.type || '').includes('png');
+        const out = png ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.82);
+        if (out.length > maxBytes) { reject(new Error(tooBig)); return; }
         resolve(out);
       };
       img.src = reader.result;
@@ -5820,6 +5855,52 @@ function shrinkLogo(file) {
   });
 }
 
+const shrinkLogo = (file) => shrinkImage(file, {
+  px: LOGO_PX, maxBytes: MAX_LOGO_BYTES,
+  tooBig: 'That logo is too detailed to store. A simpler or smaller one will work.',
+});
+
+const shrinkAdvertImage = (file) => shrinkImage(file, {
+  px: ADVERT_PX, maxBytes: MAX_ADVERT_BYTES,
+  tooBig: 'That picture is too big to put on the screen. A smaller one will work.',
+});
+
+
+
+/**
+ * THEIR ADVERTS, on the venue's own card — as a DOOR, never a second editor.
+ *
+ * Asked for directly: *"the venues need to have adverts in the venues tab as
+ * well because those adverts are gonna be venue specific."* Right, and the
+ * shape matters — two places that EDIT one thing is how they end up
+ * disagreeing, which is the same fault that took the venue picker out of Set
+ * it up. So this says what the venue has and takes you to the one editor.
+ *
+ * Silent when the venue has none rather than showing an empty box with an
+ * invitation in it: most venues have no slides, and a permanent "no adverts
+ * yet" on every card is a wall you scroll past.
+ *
+ * Matched on the venue NAME, lowercased, which is how a slide set records
+ * which venue it belongs to — the same key `venuesUsed` and the headcounts
+ * already use, so a venue typed in two cases is still one venue.
+ */
+function advertsForVenue(name) {
+  if (!can(FEATURES.ADVERTS)) return '';
+  const key = String(name || '').trim().toLowerCase();
+  if (!key) return '';
+  const sets = (library.adverts || []).filter(
+    (a) => String(a.venue || '').trim().toLowerCase() === key);
+  if (!sets.length) return '';
+  const slides = sets.flatMap((a) => a.slides || []);
+  return `
+    <div class="venue-ads">
+      <div class="venue-ads-tag">Their adverts</div>
+      ${slides.slice(0, 4).map((sl) => `
+        <div class="tiny venue-ads-line">${esc(sl.heading || '(no heading)')}</div>`).join('')}
+      ${slides.length > 4 ? `<div class="tiny venue-ads-line">and ${slides.length - 4} more</div>` : ''}
+      <a class="minor" href="?tab=adverts&amp;set=${encodeURIComponent(sets[0].id)}">Edit their slides</a>
+    </div>`;
+}
 function venuesSection() {
   const el = node('<div></div>');
   const draw = () => {
@@ -5915,6 +5996,7 @@ function venuesSection() {
                   ${v.logo ? '<button class="minor danger v-logo-off">Remove</button>' : ''}
                 </span>
               </div>
+              ${advertsForVenue(v.name)}
               <div class="venue-prizes">
                 ${[0, 1, 2].map((i) => `
                   <label class="reward-row" data-place="${i + 1}">
@@ -6594,6 +6676,20 @@ function slideEditor(slide, i, pack, redraw) {
       <input class="ad-h" maxlength="60" placeholder="PIZZA — 2 FOR 1 TONIGHT" value="${esc(slide.heading || '')}">
       <label class="tiny">Underneath, smaller</label>
       <input class="ad-b" maxlength="160" placeholder="Kitchen open till 10. Ask at the bar." value="${esc(slide.body || '')}">
+      <!-- A PICTURE FOR THE SLIDE. The projector has always been able to draw
+           one — screen.js has an advert has-image layout — and there has
+           never been a way to add one, so the only route was hand-editing the
+           JSON. This is finishing a half-built path rather than adding one.
+           Shrunk in the browser to 900px, like the venue logo, because it
+           rides in the screen payload while the slide is up. -->
+      <label class="tiny">A picture for the slide — a photo of the food, the band, the offer</label>
+      <div class="ad-pic-row">
+        ${slide.image ? `<img class="ad-pic" alt="" src="${esc(slide.image)}">` : ''}
+        <label class="minor ad-pic-pick">${slide.image ? 'Change' : 'Add or take one'}
+          <input class="ad-img" type="file" accept="image/*" hidden>
+        </label>
+        ${slide.image ? '<button class="minor danger ad-pic-off">Remove</button>' : ''}
+      </div>
       <label class="tiny">A link to put a QR code on the slide — tickets, a booking page</label>
       <input class="ad-l" placeholder="https://..." value="${esc(slide.link || '')}">
       <input class="ad-ll" maxlength="40" placeholder="What the QR is for — e.g. Tickets for the 28th" value="${esc(slide.linkLabel || '')}">
@@ -6602,6 +6698,27 @@ function slideEditor(slide, i, pack, redraw) {
     </div>`);
 
   const bind = (sel, key) => el.querySelector(sel).addEventListener('input', (e) => { slide[key] = e.target.value; });
+  /*
+   * The picture saves onto the slide OBJECT, like every other field here — the
+   * set is written as a whole when you press Save, so there is nothing to
+   * upload separately and nothing to leave half-done.
+   */
+  const pick = el.querySelector('.ad-img');
+  pick?.addEventListener('change', async () => {
+    const file = pick.files && pick.files[0];
+    if (!file) return;
+    try {
+      slide.image = await shrinkAdvertImage(file);
+      redraw();
+    } catch (err) {
+      alert(err.message || 'Could not use that image.');
+    }
+  });
+  el.querySelector('.ad-pic-off')?.addEventListener('click', () => {
+    delete slide.image;
+    redraw();
+  });
+
   bind('.ad-h', 'heading');
   bind('.ad-b', 'body');
   bind('.ad-l', 'link');
