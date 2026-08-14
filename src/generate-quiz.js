@@ -243,8 +243,11 @@ Choose ${perRound} tracks fitting "${about}" with intros a pub crowd would recog
 a few seconds. The four options are four track titles by the SAME artist where possible,
 or by very similar artists, so it is not a giveaway.
 Set "prompt" to exactly "Which track is this?" for every question in this round.
-Give each question a "cue" object with "title", "artist", "from" (a timestamp like "0:00")
-and "hint" (a short instruction to the host, e.g. "let the riff run about 6 seconds").
+Give each question a "cue" object with "title", "artist", "from" and "hint" (a short
+instruction to the host, e.g. "let the riff run about 6 seconds").
+Set "from" to exactly "0:00" on every question. It is how far into the track playback
+starts, and only somebody who has LISTENED to the track knows where its audio begins —
+a plausible-looking guess would skip real seconds of a real song in front of a room.
 The cue is shown ONLY on the host's private phone and never on the big screen.`,
 
     multi: `Round type "multi": several answers are right and the room has to lock in ALL of

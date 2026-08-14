@@ -13,6 +13,7 @@
 import { esc, node, ServerClock, Live, postJson, brandLink, binIcon, paintNav, paintIdentity, menuRights } from './client.js';
 import { paintScheme } from './schemes.js';
 import { bingoPanels, bingoActions } from './host-bingo.js';
+import { cueOffsetMs, formatOffset } from './cue.js';
 
 const KEY_STORE = 'musicquiz.hostkey';
 
@@ -425,13 +426,22 @@ function buildPanels(s) {
  *                           question is already up either way.
  */
 function cuePanel(cue, title, playlist, failed = null) {
+  // The offset rather than the raw text, and only when there IS one: every
+  // pack on disk says "0:00", so the old line printed "From 0:00" on every
+  // intro question in the app and told the host nothing.
+  //
+  // It is still worth printing when it is set, and the reason is the failure
+  // case directly below it: auto-play starts at the offset, but "Open this
+  // track" opens at the top of the file, so this line is the instruction for
+  // the night Spotify is asleep.
+  const skip = cueOffsetMs(cue.from);
   return node(`
     <div class="panel secret">
       <h3>${esc(title)}</h3>
       <div class="cue">
         <div class="track">${esc(cue.title || '')}</div>
         <div class="artist">${esc(cue.artist || '')}</div>
-        ${cue.from ? `<div class="from">From ${esc(cue.from)}</div>` : ''}
+        ${skip ? `<div class="from">Skip the first ${esc(formatOffset(skip))}</div>` : ''}
         ${cue.hint ? `<div class="from">${esc(cue.hint)}</div>` : ''}
         ${failed ? `<div class="cue-failed">Did not start on its own — tap below. <span class="tiny">${esc(failed.why)}</span></div>` : ''}
       </div>

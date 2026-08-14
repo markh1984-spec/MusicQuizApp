@@ -684,7 +684,14 @@ wrong match then reads as wrong instead of being invisible. Never silent
 either way: no match found has to say so, because a cue with no URI is a
 question that will not play.
 
-#### b. Dead air at the front of a track is a SCORING bug
+#### b. Dead air at the front of a track is a SCORING bug — **BUILT**
+
+**Done on 14 August 2026** — `public/assets/cue.js`, `position_ms` on the play
+call, **Skip the dead air** in the editor, and the generator told to write
+exactly `0:00` because only somebody who has listened knows where the audio
+starts. Written up properly in CLAUDE.md. The reasoning below is kept because
+it is what stops somebody "simplifying" it later; **(a) above is still open.**
+
 
 The host's own point, and it is the sharper of the two: *"for a music intro
 round I would want a more consistent timing as each answer is also timed."*

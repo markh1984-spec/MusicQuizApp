@@ -63,8 +63,16 @@ export const SCOPES = [
  *
  * Each one is reported in words rather than as a bare status, because
  * "Spotify said 404" tells a host nothing they can act on at 9pm.
+ *
+ * @param {string} uri
+ * @param {object} [opts]
+ * @param {string} [opts.deviceId]
+ * @param {number} [opts.positionMs]  where the AUDIO starts, so the track and
+ *   the twenty-second clock start together — see `public/assets/cue.js`. Left
+ *   off the body entirely when it is zero or unreadable, so a question with no
+ *   offset sends byte-for-byte what it sent before this existed.
  */
-export async function playTrack(uri, { deviceId = '' } = {}) {
+export async function playTrack(uri, { deviceId = '', positionMs = 0 } = {}) {
   if (!spotifyConfigured()) return { ok: false, why: 'Spotify is not set up.' };
   if (!uri) return { ok: false, why: 'That question has no Spotify track on it.' };
   try {
@@ -73,10 +81,14 @@ export async function playTrack(uri, { deviceId = '' } = {}) {
     // different things to fix, and the host needs to be told which.
     const query = deviceId ? `?device_id=${encodeURIComponent(deviceId)}` : '';
     const token = await accessToken();
+    const at = Number(positionMs);
     const res = await fetch(`${API}/me/player/play${query}`, {
       method: 'PUT',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uris: [uri] }),
+      body: JSON.stringify({
+        uris: [uri],
+        ...(Number.isFinite(at) && at > 0 ? { position_ms: Math.round(at) } : {}),
+      }),
     });
     if (res.ok || res.status === 204) return { ok: true };
     if (res.status === 404) {

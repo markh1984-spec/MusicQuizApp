@@ -41,6 +41,7 @@ import { Invoices, totals, toPence, money } from './src/invoices.js';
 import { invoicePdf, invoiceFilename } from './src/invoice-pdf.js';
 import { toSvg } from './src/qrcode.js';
 import { LOOKS } from './public/assets/looks.js';
+import { cueOffsetMs } from './public/assets/cue.js';
 import { Accounts } from './src/accounts.js';
 import { Reports } from './src/reports.js';
 import { randomBytes } from 'node:crypto';
@@ -208,11 +209,17 @@ function viewFor(client) {
  * Only ever on the way IN to a question. Not on a reveal, not on Back, not on
  * a re-render: restarting the track because somebody pressed Back to check
  * something would be worse than not playing it at all.
+ *
+ * **It starts where the AUDIO starts, not where the file starts.** The clock
+ * goes with the question, so dead air at the front of a track costs the whole
+ * room score on that question for reasons unrelated to knowing the answer —
+ * see `cueOffsetMs`. An unreadable or absent offset sends no `position_ms` at
+ * all, which is what every pack on disk does today.
  */
 const introPlayed = new Map();
 function startIntroTrack(room, view) {
-  const uri = view && view.phase === 'question' && view.question
-    && view.question.cue && view.question.cue.spotifyUri;
+  const cue = view && view.phase === 'question' && view.question && view.question.cue;
+  const uri = cue && cue.spotifyUri;
   if (!uri || !spotifyConfigured()) return;
 
   // Once per question. `run` is called for every host action, and a Back and a
@@ -221,7 +228,7 @@ function startIntroTrack(room, view) {
   if (introPlayed.get(room.id) === at) return;
   introPlayed.set(room.id, at);
 
-  playTrack(uri).then((result) => {
+  playTrack(uri, { positionMs: cueOffsetMs(cue.from) || 0 }).then((result) => {
     // Remembered on the ROOM so the control view can say what happened, rather
     // than the host wondering whether they mis-tapped. Cleared by the next one.
     room.introPlay = result.ok ? null : { why: result.why, at: Date.now() };

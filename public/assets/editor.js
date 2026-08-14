@@ -13,6 +13,7 @@
 
 import { esc, node, postJson, brandLink, paintNav, paintIdentity, menuRights } from './client.js';
 import { LOOKS } from './looks.js';
+import { cueOffsetSays } from './cue.js';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 const ROUND_TYPES = [
@@ -589,6 +590,20 @@ function imageFields(q, round) {
   return el;
 }
 
+/*
+ * "Skip the dead air" is a SCORING control, which is why it is worded as one.
+ *
+ * It was "Start from" with a `0:00` placeholder and it was only a note the
+ * host read. Now it drives playback — and the reason to set it is not tidiness
+ * but that the clock starts with the question: two seconds of fade-in costs
+ * the whole room two seconds of score on a question they may well have known.
+ * See `cue.js`.
+ *
+ * The echo under the box is not decoration either. An offset that was typed
+ * wrong and quietly ignored is a track playing from the top while the field
+ * looks accepted — so it says what it understood, every keystroke, and says
+ * "not a time" rather than nothing.
+ */
 function cueFields(q) {
   if (!q.cue) q.cue = { title: '', artist: '', from: '', hint: '' };
   const el = node(`
@@ -600,8 +615,9 @@ function cueFields(q) {
       <label>Artist
         <input type="text" class="cartist" value="${esc(q.cue.artist || '')}">
       </label>
-      <label>Start from
+      <label>Skip the dead air
         <input type="text" class="cfrom" value="${esc(q.cue.from || '')}" placeholder="0:00">
+        <span class="tiny cfrom-says">${esc(cueOffsetSays(q.cue.from))}</span>
       </label>
       <label>How to play it
         <input type="text" class="chint" value="${esc(q.cue.hint || '')}" placeholder="Let the intro run about 8 seconds">
@@ -609,7 +625,12 @@ function cueFields(q) {
     </div>`);
   el.querySelector('.ctitle').addEventListener('input', (e) => change(() => { q.cue.title = e.target.value; }));
   el.querySelector('.cartist').addEventListener('input', (e) => change(() => { q.cue.artist = e.target.value; }));
-  el.querySelector('.cfrom').addEventListener('input', (e) => change(() => { q.cue.from = e.target.value; }));
+  el.querySelector('.cfrom').addEventListener('input', (e) => change(() => {
+    q.cue.from = e.target.value;
+    // Repainted in place rather than by re-rendering the question: this fires
+    // on every keystroke, and a render would take the focus out of the box.
+    el.querySelector('.cfrom-says').textContent = cueOffsetSays(q.cue.from);
+  }));
   el.querySelector('.chint').addEventListener('input', (e) => change(() => { q.cue.hint = e.target.value; }));
   return el;
 }

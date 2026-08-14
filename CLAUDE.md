@@ -2698,6 +2698,83 @@ the big screen, they already know which letter they want. A to Z rather than
 QWERTY for the same reason: QWERTY is muscle memory for typing words, and
 nobody is typing a word.
 
+### The intro round skips the dead air, and that is a SCORING fix
+
+`public/assets/cue.js`, `cue.from` on an intro question, `position_ms` on the
+Spotify play call, and **Skip the dead air** in the editor.
+
+`from` has existed on every intro cue since the round was written, with a
+`0:00` placeholder, and it was only ever **a note the host read**. It plays
+now.
+
+**IT IS SCORING, NOT POLISH, and that is the whole reason it was worth
+building.** The twenty-second clock starts when the question goes up and the
+track starts at the same moment — so a track with two seconds of silence or
+fade-in at the front takes two seconds of score off **everybody**, for a
+reason that has nothing to do with whether they knew it. Ten questions, ten
+different amounts of dead air, and the round scores inconsistently with
+nothing on screen to blame it on.
+
+**That is the same argument this file already makes about the picture round's
+four reveals running on ONE curve** — how fast a question becomes answerable
+IS how many points it is worth, so anything varying it per question quietly
+changes the scoring and nobody can attribute it. Same fault, different round,
+and it went unnoticed for as long as it did because the cause is in the AUDIO
+rather than in any code.
+
+**What is trimmed is silence; what must NEVER be trimmed is how quickly a
+track becomes recognisable.** That is the question's difficulty and it is the
+round. A famous four-note opening should be answerable faster than a track
+that takes a bar to declare itself.
+
+**DO NOT "fix" this by giving the intro round a longer clock.**
+`questionSeconds` is overridable per round and 25 seconds looks like it
+absorbs the dead air. It does not: scoring is the base plus seconds-remaining
+times ten, so a longer round is a round worth MORE points — the reveal-curve
+fault again, introduced deliberately this time.
+
+Five things that are load-bearing:
+
+- **An unreadable offset plays from the START, which is what happened before
+  this existed.** `cueOffsetMs()` returns `null` for prose, a negative, `1:75`
+  (sixty-plus in the seconds half is a slip rather than an intention) and
+  anything past ten minutes — and the server then sends no `position_ms` at
+  all. So the cost of a typo is the old behaviour, never a silent jump into
+  the middle of a song in front of a room.
+- **EVERY PACK ON DISK SAYS `0:00`**, so nothing already written moves and
+  this was safe to deploy mid-season. There is a test that walks `quizzes/`
+  and fails if a cue ever arrives with an offset on it — which is also what
+  would catch a generated pack inventing one.
+- **The generator is now told to write exactly `0:00`**, because only somebody
+  who has LISTENED knows where a track's audio begins. The brief used to say
+  "a timestamp like 0:00", which was an example rather than an instruction —
+  fine while the field was a note, and a plausible-looking guess the moment it
+  drives playback.
+- **The editor ECHOES what it understood, on every keystroke.** An offset
+  typed wrong and quietly ignored is a track playing from the top while the
+  box looks accepted — the same fault as a cue whose title was corrected and
+  whose URI was not. So it says "Skips the first 2.5 seconds", or "Not a time
+  — it will play from the very start", and says nothing at all for an empty
+  box because nobody is being nagged for leaving the default. Repainted in
+  place rather than by re-rendering, or the focus leaves the box mid-number.
+- **The control view prints it only when there IS one.** It used to print
+  "From 0:00" on every intro question in the app, which is a line that says
+  nothing. It is still worth printing when set, and the reason is the failure
+  case directly under it: auto-play starts at the offset, but **Open this
+  track** opens at the top of the file, so that line is the instruction for
+  the night Spotify is asleep.
+
+**The offsets have to be set by ear, and that is the honest cost** — ten quick
+listens per pack, once, stored in the pack for ever. Spotify's Audio Analysis
+gives exactly this (`track.end_of_fade_in`) and is **deprecated for apps
+created after November 2024**; this app's is new, so expect a 403. Do not
+design around it without confirming against the real app first.
+
+**The other half of `cue` is still not built** and is filed in TODO.md as 5f:
+editing a track's title or artist does not repoint `cue.spotifyUri`, so a
+corrected cue reads right on the control view and plays the wrong track
+through the speakers.
+
 ### The picture round's four reveals
 
 `REVEAL_MODES` in `src/quizzes.js`: **zoom** (the original, and still what a
