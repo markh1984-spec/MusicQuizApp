@@ -5915,3 +5915,7 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 }
 .nn-what { min-width: 0; font-size: var(--fs-note); }
 .nn-row + .nn-row { opacity: 0.72; }
+
+/* A diary row's two buttons share a cell, so "Invoice it" and "Not on" cannot
+   push the row's layout about as one appears and the other does not. */
+.d-acts { display: flex; gap: 8px; flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; }

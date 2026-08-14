@@ -6475,8 +6475,46 @@ function diarySection() {
     ? `<div class="tiny">Playing for ${esc(night.rewards.filter(Boolean)[0])}</div>`
     : '<div class="tiny">No prizes set</div>'}
         </div>
-        <button class="minor danger d-off">Not on</button>
+        <div class="d-acts">
+          ${can(FEATURES.INVOICES) ? '<button class="minor d-bill">Invoice it</button>' : ''}
+          <button class="minor danger d-off">Not on</button>
+        </div>
       </div>`);
+    /*
+     * INVOICE A NIGHT BEFORE IT HAPPENS.
+     *
+     * "Past and future" — the past half already worked, from Invoice this on a
+     * finished night and from the unbilled list. The future half did not exist
+     * at all: a booking you have taken could only be billed after you had run
+     * it, which is the wrong way round for anybody who invoices on booking
+     * rather than on delivery. Some venues pay a deposit; some want the
+     * paperwork before their month end.
+     *
+     * It fills in from the SAME places the past version does — the venue's
+     * usual fee, the date, the description — so the two cannot drift into
+     * being different invoices for the same kind of night. All that differs is
+     * which date it carries.
+     *
+     * It opens a DRAFT rather than issuing: a number is handed out at issue,
+     * and handing one out for a night that might get cancelled is the sort of
+     * hole in a sequence HMRC asks about.
+     */
+    row.querySelector('.d-bill')?.addEventListener('click', async () => {
+      try {
+        book = await invoiceApi('/api/invoices');
+      } catch (err) {
+        alert('Could not open the invoices: ' + err.message);
+        return;
+      }
+      const named = String(night.venue || '').trim().toLowerCase();
+      const customer = (book.customers || []).find(
+        (c) => String(c.name || '').trim().toLowerCase() === named);
+      openInvoiceForm({
+        customerId: customer ? customer.id : '',
+        event: { title: 'Music quiz night', venue: night.venue, date: night.date },
+        description: 'Music quiz night',
+      }, draw);
+    });
     row.querySelector('.d-off').addEventListener('click', async () => {
       if (!confirm(`Not doing ${night.venue} on ${when.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}?`)) return;
       await save({ date: night.date, venue: night.venue, off: true });
@@ -7549,7 +7587,22 @@ function openInvoiceForm(prefill, refresh) {
     const picker = form.querySelector('[name=customerId]');
     const oneOff = form.querySelector('.inv-oneoff');
     const togglePicker = () => { oneOff.hidden = Boolean(picker.value); };
-    picker.addEventListener('change', () => {
+    /*
+     * THE VENUE'S USUAL FEE IS THE TEMPLATE — and it was only ever applied
+     * when you CHANGED the venue by hand.
+     *
+     * This lived inside the picker's `change` listener, which does not fire
+     * when the form opens with a venue already chosen. So every invoice raised
+     * the way the app actually offers — "Invoice this" on a finished night,
+     * "Invoice it" on a booking, anything arriving with a customer — came up
+     * with an empty amount and "Amount due £0.00", next to a box whose grey
+     * PLACEHOLDER says 350. That reads as a filled-in figure at a glance,
+     * which is the worst version of the fault: it looks done and is not.
+     *
+     * The venue's usual fee is exactly the per-venue template — it is what
+     * `draft()` on the server has always used. The form simply never asked.
+     */
+    const fillFromCustomer = () => {
       togglePicker();
       const customer = book.customers.find((c) => c.id === picker.value);
       const first = linesEl.querySelector('[data-amount]');
@@ -7563,7 +7616,11 @@ function openInvoiceForm(prefill, refresh) {
         venue.value = customer.name;
         describe();
       }
-    });
+    };
+    picker.addEventListener('change', fillFromCustomer);
+    // …and once on the way in, for a form that arrives already knowing whose
+    // night it is.
+    if (picker.value) fillFromCustomer();
     togglePicker();
     picker.dispatchEvent(new Event('change'));
   }, async (form, { close }) => {
