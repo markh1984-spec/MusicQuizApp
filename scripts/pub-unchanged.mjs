@@ -32,7 +32,17 @@ import { join } from 'node:path';
 const args = process.argv.slice(2);
 const ignoreAt = args.indexOf('--ignore');
 const ignore = new Set(ignoreAt === -1 ? [] : (args[ignoreAt + 1] || '').split(',').map((s) => s.trim()).filter(Boolean));
-const ref = args.filter((a, i) => a !== '--ignore' && i !== ignoreAt + 1)[0] || 'HEAD~1';
+/*
+ * Drop `--ignore` and the value after it; whatever is left is the ref.
+ *
+ * **This silently ignored the ref unless `--ignore` was also passed.** With no
+ * `--ignore`, `ignoreAt` is -1, so `i !== ignoreAt + 1` reads as `i !== 0` and
+ * threw away argument zero — the commit you named. Every
+ * `pub-unchanged.mjs <commit>` run in this repo's history compared against
+ * HEAD~1 instead, and said so in a line nobody reads twice because it looks
+ * like a confirmation.
+ */
+const ref = args.filter((a, i) => (ignoreAt === -1 ? true : i !== ignoreAt && i !== ignoreAt + 1))[0] || 'HEAD~1';
 
 const here = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
 const git = (...a) => execFileSync('git', a, { cwd: here, encoding: 'utf8' }).trim();

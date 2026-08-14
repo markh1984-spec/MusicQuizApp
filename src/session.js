@@ -19,7 +19,7 @@ import { Engine, PHASES, isSafeId, ownsPlayer, newToken } from './engine.js';
 import { JoinGate } from './joins.js';
 import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFields, stagePlan, maxPrizes } from './bingo.js';
 import { listQuizzes } from './quizzes.js';
-import { listBingoPacks, recordLaunch, archiveResults, HOUSE_ROOM } from './library.js';
+import { listBingoPacks, recordLaunch, archiveResults, updateArchivedNight, HOUSE_ROOM } from './library.js';
 import { findSlide } from './adverts.js';
 import { readPack, listOwn } from './own-packs.js';
 // Shared with the browser, so the list of looks cannot drift between the server
@@ -111,7 +111,11 @@ export class Session {
     this.engine = null;
     this.lastMilestone = '';
     this.autoTimer = null;
-    this.archivedThisGame = false;
+    // The vouchers as they were when the night was last written to the
+    // archive, so a prize redeemed at the bar afterwards updates the filed
+    // record and nothing else does. WHICH night was filed lives in the state
+    // (`archivedAs`), so a restart cannot file the same evening twice.
+    this.filedVouchers = null;
   }
 
   get launcher() {
@@ -187,7 +191,7 @@ export class Session {
     this.pack = pack;
     const launcher = LAUNCHERS[kind];
     this.lastMilestone = state ? launcher.milestone(state) : '';
-    this.archivedThisGame = false;
+    this.filedVouchers = null;
 
     this.engine = launcher.make(pack, {
       state,
@@ -239,10 +243,23 @@ export class Session {
 
     // Keep a copy of the night the moment it finishes, before anything else
     // can clear it.
-    if (this.launcher.isOver(state) && !this.archivedThisGame) {
-      this.archivedThisGame = true;
+    if (this.launcher.isOver(state) && !state.archivedAs) {
       try {
         const record = archiveResults(this.archiveDir, this.engine.results(), this.now());
+        /*
+         * IN THE STATE, not on a flag on this object — and it fixes a second
+         * fault as well as enabling the first.
+         *
+         * `archivedThisGame` was set here and cleared by `build()`, which runs
+         * on BOOT with the restored state. So a restart while a game sat on
+         * the final scores filed the whole night AGAIN on the next push, and
+         * two copies of one evening turned up on the Past gigs page — on a
+         * host whose disk is wiped every deploy, which is when a restart is
+         * most likely. The state is the record of the night, so the fact that
+         * it has been filed belongs in it.
+         */
+        state.archivedAs = record.id;
+        this.filedVouchers = JSON.stringify(state.vouchers || {});
         // Never awaited. The night has ended and the room is looking at a
         // scoreboard; whether GitHub is having a good evening is not their
         // problem, and a backup that held up the final slide would be.
@@ -253,6 +270,37 @@ export class Session {
         }
       } catch (err) {
         console.error('[session] could not archive results:', err.message);
+      }
+    } else if (state.archivedAs) {
+      /*
+       * A VOUCHER MOVED AFTER THE NIGHT WAS FILED, which is the ordinary case
+       * rather than an edge one: the night is archived at the final scores and
+       * the bar scans the winner's QR several minutes later. Without this every
+       * archived night said "not used" for every prize, for ever.
+       *
+       * Reached with no new hook because `redeemVoucher` and
+       * `reinstateVoucher` both call `changed()`, which is what runs this.
+       * Compared rather than written on every push, or a game left sitting on
+       * the final scores would rewrite the file for nothing.
+       */
+      const now = JSON.stringify(state.vouchers || {});
+      if (now !== this.filedVouchers) {
+        this.filedVouchers = now;
+        try {
+          const record = updateArchivedNight(this.archiveDir, state.archivedAs, {
+            vouchers: this.engine.results().vouchers,
+          });
+          // The permanent record is the whole point, so it goes back up too.
+          if (record) {
+            try {
+              this.onArchive(record);
+            } catch (err) {
+              console.error('[session] could not back up the archive:', err.message);
+            }
+          }
+        } catch (err) {
+          console.error('[session] could not update the filed night:', err.message);
+        }
       }
     }
 

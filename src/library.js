@@ -227,6 +227,42 @@ export function archiveResults(dir, results, at = Date.now()) {
 }
 
 /**
+ * Change part of a night that has already been filed.
+ *
+ * **It exists because the drinks are handed over AFTER the night is over.**
+ * A night is archived the moment it reaches the final scores, and the bar
+ * scans the winner's QR several minutes later — so every night in the record
+ * said `redeemedAt: null` for every voucher, for ever. The live panel on the
+ * control view was right and the permanent record was wrong, which is the
+ * worst way round: one of them is a screen you glance at and the other is the
+ * evidence a quizmaster shows a venue.
+ *
+ * An UPDATE rather than a second archive, deliberately — `archivedAs` guards
+ * against filing a night twice, and two copies of one evening on the Past
+ * gigs page is a worse bug than the one being fixed.
+ *
+ * Returns null rather than throwing if there is nothing there. A night can be
+ * deleted, and a voucher moving must never be the thing that takes the app
+ * down in front of a room.
+ */
+export function updateArchivedNight(dir, id, patch) {
+  const safe = String(id || '');
+  // Same rule as the restore: a name that is not plain letters, digits and
+  // hyphens is refused rather than scrubbed, because stripping the bad
+  // characters out invents a filename instead of saying no.
+  if (!/^[a-z0-9-]+$/i.test(safe)) return null;
+  const file = path.join(dir, safe + '.json');
+  try {
+    const record = JSON.parse(fs.readFileSync(file, 'utf8'));
+    const updated = { ...record, ...patch };
+    fs.writeFileSync(file, JSON.stringify(updated, null, 2) + '\n', 'utf8');
+    return updated;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * The whole archive as one file, for the backup.
  *
  * **A night archive that does not survive a deploy is not a record of

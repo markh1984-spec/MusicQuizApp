@@ -422,6 +422,12 @@ account would offer a venue picker beside it, filled from the Venues tab.
 
 ### 1d. WHERE REDEMPTIONS ARE VISIBLE — and the snapshot that misses them
 
+**THE BUG HALF IS FIXED (14 August 2026)** — a voucher moving after the
+night is filed now updates the filed record, and the backup with it. Building
+it found and fixed a duplicate night after a restart on the final scores.
+**What is left is a DECISION: showing it on Past gigs**, which is the
+venue-facing half — see below.
+
 **Asked for on 14 August 2026, for two reasons the host gave and both are
 right:** evidence if somebody is being cheeky, and evidence that the night is
 popular and people win things. The second is the one that earns money — *"we

@@ -2775,6 +2775,33 @@ editing a track's title or artist does not repoint `cue.spotifyUri`, so a
 corrected cue reads right on the control view and plays the wrong track
 through the speakers.
 
+### A prize taken at the bar has to reach the filed night
+
+`updateArchivedNight()` in `src/library.js`, and `state.archivedAs`.
+
+A night is archived the instant it reaches the final scores — and the bar
+scans the winner's QR several minutes later. So **every night in the record
+said the prize was never taken, for ever.** The live panel on the control view
+was right and the permanent record was wrong, which is the worst way round:
+one is a screen you glance at, the other is the evidence a quizmaster shows a
+venue.
+
+An UPDATE rather than a second archive, and it needs no new hook —
+`redeemVoucher()` and `reinstateVoucher()` both call `changed()`, which is
+what the session watches. Compared against what was last filed before writing,
+or a game left sitting on the final scores would rewrite the file on every
+push. The updated record is pushed to the backup again, or the fix reaches
+this disk and nothing else.
+
+**IT ALSO FIXED A DUPLICATE NIGHT NOBODY HAD NOTICED.** The flag that stops an
+evening being filed twice was `archivedThisGame` on the Session — set when the
+night was archived and cleared by `build()`, **which runs on boot**. So a
+restart while a game sat on the final scores filed the whole evening again,
+and two copies turned up on Past gigs. On a host whose disk is wiped every
+deploy that is not the unusual case. It is `state.archivedAs` now: the state
+is the record of the night, so the fact that it has been filed belongs in it —
+the same lesson as the bingo card shape and the look.
+
 ### A phone must not say you were right before the projector does
 
 `scoreBefore` on an answer, `positionsAtStart` on the question, and
@@ -4868,6 +4895,14 @@ nothing is worse than no guard, because it is believed. The picks are worked
 out per round type as well — "option 0" is not answerable on a pick-them-all
 question (refused unless it gets exactly the number asked for) or an alphabet
 one, which is the second reason it was doing nothing.
+
+**And a THIRD fault in the same file: it ignored the commit you named.**
+`--ignore` is parsed by finding its index, and with no `--ignore` that index
+is -1 — so `i !== ignoreAt + 1` read as `i !== 0` and threw away argument
+zero, the ref. Every `pub-unchanged.mjs <commit>` ever run in this repo
+compared against `HEAD~1` instead, and announced it in a line that looks
+exactly like a confirmation. Three faults in one script, none of which made it
+fail: **a tool that cannot fail is a tool nobody checks.**
 
 **It also says WHICH FIELD now.** It used to print the first 300 characters of
 both payloads — and a payload's first 300 characters are nearly always
