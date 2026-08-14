@@ -60,3 +60,43 @@ test('IT IS NOT IN ANY PLAYER OR SCREEN PAYLOAD', () => {
   assert.ok(!JSON.stringify(engine.playerView(id)).includes('Dog and Duck'));
   assert.ok(!JSON.stringify(engine.screenView()).includes('Dog and Duck'));
 });
+
+/*
+ * WHAT THEY ARE PLAYING FOR, on the opening screen — and nowhere else.
+ *
+ * The prize is not a secret: the host says it on the mic and it is the reason
+ * half the room bothers. The voucher CODE is a different thing entirely, and
+ * that must never reach a screen the whole pub can see.
+ */
+test('the lobby tells the room what it is playing for', () => {
+  const engine = new Engine({ quiz: quiz(), now: () => 1_000_000 });
+  engine.state.rewards = ['A free drink at the bar', 'A packet of crisps'];
+  assert.deepEqual(engine.screenView().rewards, ['A free drink at the bar', 'A packet of crisps']);
+});
+
+test('but a question never carries it — one thing on a projector', () => {
+  const engine = new Engine({ quiz: quiz(), now: () => 1_000_000 });
+  engine.state.rewards = ['A free drink at the bar'];
+  engine.start();
+  engine.next();
+  assert.equal(engine.screenView().rewards, undefined);
+});
+
+test('a night with no prizes gains no field at all', () => {
+  const engine = new Engine({ quiz: quiz(), now: () => 1_000_000 });
+  assert.equal(engine.screenView().rewards, undefined);
+});
+
+test('AND THE VOUCHER CODE IS NEVER ON THE BIG SCREEN', () => {
+  const engine = new Engine({ quiz: quiz(), now: () => 1_000_000 });
+  engine.state.rewards = ['A free drink at the bar'];
+  const id = engine.join({ name: 'Rob' }).id;
+  engine.start();
+  engine.next();
+  engine.answer({ playerId: id, optionIndex: 0 });
+  engine.reveal();
+  engine.finish();
+  const codes = Object.values(engine.state.vouchers || {}).map((v) => v.code);
+  const payload = JSON.stringify(engine.screenView());
+  for (const code of codes) assert.ok(!payload.includes(code), 'a voucher code reached the projector');
+});

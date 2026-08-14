@@ -484,6 +484,17 @@ function renderLobby(s) {
                stray line, and it is the thing somebody points at when they
                turn round and tell the next table. -->
           <div class="lobby-count" hidden></div>
+          <!-- WHAT THEY ARE PLAYING FOR. The prize is why half the room
+               bothers, and it used to be said once on the mic and then not
+               seen again until the winner's phone lit up. Under the countdown
+               because joining comes first — this is what makes somebody stay
+               once they are in. -->
+          ${(s.rewards || []).length ? `
+            <div class="lobby-prize">
+              <span class="lp-label">Playing for</span>
+              ${s.rewards.map((r, i) => `
+                <span class="lp-one"><b class="prize-place p${i + 1}">${['1st', '2nd', '3rd'][i] || `${i + 1}th`}</b> ${esc(r)}</span>`).join('')}
+            </div>` : ''}
         </div>
         <div class="qr-panel">
           <img src="${joinQr}" alt="Scan to join the quiz">

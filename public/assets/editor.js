@@ -369,10 +369,107 @@ function quizHeader() {
   return el;
 }
 
+/**
+ * DRAG AND DROP, on the console's own terms.
+ *
+ * The host drives this from the laptop that is plugged into the projector, so
+ * a mouse is the input this has to serve — his own call, and it is right for
+ * the editor especially: reordering twenty questions with arrow buttons is
+ * twenty presses per move.
+ *
+ * The arrow buttons STAY. Drag is the faster way, not the only way — the
+ * editor is measured at 320px like every other page here, HTML5 drag events
+ * do not fire on touch at all, and a control that simply does not exist on a
+ * phone is worse than one that is merely slower.
+ *
+ * A GRIP, drawn, rather than making the whole card draggable: a card is full
+ * of text boxes, and `draggable` on their container stops you selecting a word
+ * to retype it.
+ */
+function gripIcon() {
+  return `<svg class="grip-icon" width="14" height="18" viewBox="0 0 14 18" aria-hidden="true">
+    ${[3, 9, 15].map((y) => `<circle cx="4" cy="${y}" r="1.6" fill="currentColor"/>
+      <circle cx="10" cy="${y}" r="1.6" fill="currentColor"/>`).join('')}
+  </svg>`;
+}
+
+/**
+ * What is being dragged right now: `{ kind, ri, qi }`.
+ *
+ * Module level because a drag crosses two elements and outlives any one
+ * handler, and `dataTransfer` cannot be read during `dragover` — the one
+ * moment you need to know whether the thing under the cursor is a valid
+ * target. Cleared on `dragend` whatever happened, so an abandoned drag cannot
+ * leave the next click thinking it is a drop.
+ */
+let dragging = null;
+
+/**
+ * Wire one element as a drag source and a drop target.
+ *
+ * `onDrop(from, to)` gets the two descriptors and does the move; everything
+ * else here is the plumbing and the line that shows where it would land.
+ */
+function dragRow(el, me, canTake, onDrop) {
+  const grip = el.querySelector('.drag-grip');
+  if (grip) {
+    grip.addEventListener('dragstart', (ev) => {
+      dragging = me;
+      ev.dataTransfer.effectAllowed = 'move';
+      // Firefox refuses to start a drag at all without data on the transfer.
+      ev.dataTransfer.setData('text/plain', JSON.stringify(me));
+      ev.dataTransfer.setDragImage(el, 20, 20);
+      el.classList.add('is-dragging');
+    });
+    grip.addEventListener('dragend', () => {
+      dragging = null;
+      el.classList.remove('is-dragging');
+      for (const n of document.querySelectorAll('.drop-above, .drop-below')) {
+        n.classList.remove('drop-above', 'drop-below');
+      }
+    });
+  }
+  el.addEventListener('dragover', (ev) => {
+    if (!dragging || !canTake(dragging)) return;
+    ev.preventDefault();
+    ev.dataTransfer.dropEffect = 'move';
+    // Above or below, decided by which half of the row the cursor is in —
+    // without it a list can only ever be reordered in one direction and the
+    // last position is unreachable.
+    const box = el.getBoundingClientRect();
+    const above = ev.clientY < box.top + box.height / 2;
+    el.classList.toggle('drop-above', above);
+    el.classList.toggle('drop-below', !above);
+  });
+  el.addEventListener('dragleave', () => el.classList.remove('drop-above', 'drop-below'));
+  el.addEventListener('drop', (ev) => {
+    if (!dragging || !canTake(dragging)) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    const box = el.getBoundingClientRect();
+    const above = ev.clientY < box.top + box.height / 2;
+    const from = dragging;
+    dragging = null;
+    el.classList.remove('drop-above', 'drop-below');
+    onDrop(from, me, above);
+  });
+}
+
+/** Move one item of a list to sit before or after another. */
+function moveWithin(list, from, to, above) {
+  const [item] = list.splice(from, 1);
+  // Taking it out shifts everything after it down one, so a target that was
+  // after the source is now one index lower. Getting this wrong is the classic
+  // off-by-one that makes a drag "not move" when you drop it one place down.
+  const at = to - (from < to ? 1 : 0) + (above ? 0 : 1);
+  list.splice(Math.max(0, Math.min(list.length, at)), 0, item);
+}
+
 function roundBlock(round, ri) {
   const el = node(`
     <div class="round-block">
       <div class="round-head">
+        <span class="drag-grip" draggable="true" title="Drag to move this round">${gripIcon()}</span>
         <span class="type-tag">Round ${ri + 1}</span>
         <input class="title" value="${esc(round.title)}" placeholder="Round title">
         <select class="rtype">
@@ -406,6 +503,34 @@ function roundBlock(round, ri) {
     }
   });
 
+  /*
+   * A ROUND takes another ROUND. A question dropped on a round's head lands at
+   * the END of it, which is what makes moving a question between rounds
+   * possible at all — an empty round has no question to aim at.
+   */
+  /*
+   * THE HEAD IS THE TARGET, not the whole block — a round block is mostly
+   * question cards, and those reject a round being dropped on them, so a drag
+   * aimed at the middle of a round quietly did nothing. The head is also the
+   * thing you grabbed, which makes the gesture symmetrical: pick a round up by
+   * its bar, drop it on another round's bar.
+   */
+  dragRow(el.querySelector('.round-head'), { kind: 'round', ri },
+    (from) => from.kind === 'round' || from.kind === 'question',
+    (from, to, above) => change(() => {
+      if (from.kind === 'round') {
+        if (from.ri === to.ri) return;
+        moveWithin(quiz.rounds, from.ri, to.ri, above);
+      } else {
+        const source = quiz.rounds[from.ri];
+        const [q] = source.questions.splice(from.qi, 1);
+        const target = quiz.rounds[to.ri];
+        reshapeForType(q, target.type);
+        target.questions.push(q);
+      }
+      render();
+    }));
+
   round.questions.forEach((q, qi) => el.appendChild(questionCard(round, q, ri, qi)));
 
   const add = node('<div class="qcard" style="border-radius:0 0 14px 14px"><button class="small">Add a question to this round</button></div>');
@@ -422,6 +547,7 @@ function questionCard(round, q, ri, qi) {
   const el = node(`
     <div class="qcard ${flagged ? 'flagged' : ''}">
       <div class="qtop">
+        <span class="drag-grip" draggable="true" title="Drag to move this question">${gripIcon()}</span>
         <span class="qnum">Question ${qi + 1}</span>
         <div class="qtools">
           <button class="small up" ${qi === 0 ? 'disabled' : ''}>↑</button>
@@ -446,6 +572,27 @@ function questionCard(round, q, ri, qi) {
   el.querySelector('.prompt').addEventListener('input', (e) => change(() => { q.prompt = e.target.value; }));
   el.querySelector('.answerNote').addEventListener('input', (e) => change(() => { q.answerNote = e.target.value; }));
   el.querySelector('.note').addEventListener('input', (e) => change(() => { q.note = e.target.value; }));
+
+  /*
+   * A QUESTION takes another QUESTION, in this round or any other. Across
+   * rounds it is reshaped on arrival, exactly as it is when a round's own type
+   * is changed — a text question dropped into a pick-them-all round needs six
+   * options rather than four, and nothing typed is thrown away.
+   */
+  dragRow(el, { kind: 'question', ri, qi }, (from) => from.kind === 'question',
+    (from, to, above) => change(() => {
+      const source = quiz.rounds[from.ri];
+      const target = quiz.rounds[to.ri];
+      if (from.ri === to.ri) {
+        if (from.qi === to.qi) return;
+        moveWithin(source.questions, from.qi, to.qi, above);
+      } else {
+        const [q] = source.questions.splice(from.qi, 1);
+        reshapeForType(q, target.type);
+        target.questions.splice(to.qi + (above ? 0 : 1), 0, q);
+      }
+      render();
+    }));
 
   el.querySelector('.up').addEventListener('click', () => change(() => { swap(round.questions, qi, qi - 1); render(); }));
   el.querySelector('.down').addEventListener('click', () => change(() => { swap(round.questions, qi, qi + 1); render(); }));

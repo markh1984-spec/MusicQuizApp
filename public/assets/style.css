@@ -629,6 +629,42 @@ body::after {
 .winner .place-3 { border-color: rgba(205, 140, 88, 0.5); background: rgba(205, 140, 88, 0.09); }
 .winner .place-3 .rplace { background: #cd8c58; }
 
+/* ---- DRAG AND DROP in the editor: rounds and questions.
+   A grip rather than a draggable card, because a card is full of text boxes
+   and `draggable` on their container stops you selecting a word to retype it.
+   The arrow buttons stay: drag is the faster way, not the only way, and HTML5
+   drag events do not fire on touch at all. */
+.drag-grip {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; flex: 0 0 auto;
+  color: var(--ink-dim); cursor: grab; border-radius: 6px;
+}
+.drag-grip:hover { color: var(--ink); background: rgba(255, 255, 255, 0.08); }
+.drag-grip:active { cursor: grabbing; }
+.is-dragging { opacity: 0.45; }
+/* WHERE IT WOULD LAND, drawn on the row under the cursor — above or below,
+   decided by which half of it you are over. Without the two, a list can only
+   be reordered in one direction and the last position is unreachable. */
+/* A pack being dragged up to Tonight: the section says it will take it. */
+.launchbar.drop-here { border-color: var(--hot); background: rgba(255, 46, 136, 0.08); }
+.pack-card[draggable="true"] { cursor: grab; }
+.pack-card.is-dragging { opacity: 0.45; }
+.drop-above { box-shadow: inset 0 3px 0 0 var(--hot); }
+.drop-below { box-shadow: inset 0 -3px 0 0 var(--hot); }
+
+/* WHAT THEY ARE PLAYING FOR, on the lobby. Big enough to read from the back
+   while people are still finding a table, and quieter than the join steps —
+   the prize is the reason to stay, joining is the thing to do first. */
+.lobby-prize {
+  margin-top: 2.4vh; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.6em;
+  font-size: 2.6vh; font-weight: 700;
+}
+.lobby-prize .lp-label {
+  font-size: 2vh; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.lobby-prize .lp-one { white-space: nowrap; }
+
 /* ---- connection warning */
 .conn-warn {
   position: fixed;
@@ -4803,7 +4839,12 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    treatment "not invoiced" and a venue clash get, for the same reason: not a
    fault, but a thing you want to have noticed. */
 .lb-live { margin-top: 6px; color: var(--ink-dim); }
-.lb-live.lb-warn { color: var(--gold); font-weight: 800; }
+/* RED, not gold, and at the host's own instruction: "these should never be
+   allowed to drift, but if they do it needs to be a red warning". The rest of
+   this app keeps red for wrong and destructive, and that is exactly what this
+   is — the panel and the projector disagreeing about what the room is playing
+   is a fault, not a note. */
+.lb-live.lb-warn { color: var(--bad, #ff5470); font-weight: 800; }
 /* A DOUBLE BOOKING, named. Gold rather than red: it is not a fault and nothing
    is broken — it is a decision only the human can make, and it is the same
    treatment "not invoiced" gets for the same reason. */

@@ -1773,6 +1773,28 @@ export class Engine {
      */
     if (s.phase === PHASES.FINAL && s.comeBack) view.comeBack = comeBackView(s.comeBack);
 
+    /*
+     * WHAT THEY ARE PLAYING FOR, on the opening screen.
+     *
+     * The prize is the reason half the room bothers, and until now it was
+     * announced on the mic and then never seen again until the winner's phone
+     * lit up at the end. It is not a secret — the host says it out loud — so
+     * it belongs on the one screen everybody is already looking at while they
+     * settle down.
+     *
+     * The WORDS only. The voucher CODE is the credential and goes to one
+     * phone, exactly like the draw's, and this payload is public to anybody
+     * holding the join code.
+     *
+     * Lobby and the rules slide, and nowhere else: mid-quiz the projector has
+     * a question on it, and a standing advert for the prize under a question
+     * is the two-things-on-one-screen fault this app refuses everywhere.
+     */
+    if (s.phase === PHASES.LOBBY || s.phase === PHASES.RULES) {
+      const rewards = this.rewardList();
+      if (rewards.length) view.rewards = rewards;
+    }
+
     if (s.phase === PHASES.LOBBY) {
       view.lobby = {
         // The derived handle, for the same reason as the leaderboard: this

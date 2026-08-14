@@ -2666,6 +2666,15 @@ let tonightOpen = localStorage.getItem(TONIGHT_STORE) !== '0';
 let lbVenue = null;
 let lbVenueOpen = false;
 
+/*
+ * The pack being dragged, if any. Module level because a drag crosses two
+ * elements and `dataTransfer` cannot be read during `dragover` — the one
+ * moment the bar needs to know whether what is over it is a pack.
+ */
+let packDrag = null;
+/** True while the CHOSEN pack is being dragged out of the section. */
+let offDrag = false;
+
 function launchBar() {
   // An owner runs no nights, so there is nothing here for them — same reason
   // the running panel hides itself.
@@ -3239,6 +3248,73 @@ function launchBar() {
     shutWhat.hidden = tonightOpen;
     shutWhat.textContent = currentPack ? currentPack.title : '';
   }
+
+  /*
+   * THE SECTION TAKES A PACK, and gives it back.
+   *
+   * Drop one on Tonight and it becomes tonight's pack, whichever game it
+   * belongs to — a bingo pack dropped on a bar set to Music Quiz switches the
+   * bar over rather than being quietly refused.
+   *
+   * AND DRAGGING THE CHOSEN PACK OFF TAKES IT OUT OF THE SECTION AND NOWHERE
+   * ELSE. The host's own words: *"say you drag the wrong quiz pack, you can
+   * just drag it off again quickly and easily."* It is a CHOICE being undone,
+   * not a delete — the pack is untouched on disk and still on its shelf — so
+   * the bar simply falls back to offering what is on the big screen, which is
+   * the same empty state it arrives in.
+   */
+  el.addEventListener('dragover', (ev) => {
+    if (!packDrag) return;
+    ev.preventDefault();
+    ev.dataTransfer.dropEffect = 'copy';
+    el.classList.add('drop-here');
+  });
+  el.addEventListener('dragleave', (ev) => {
+    // Only when the cursor has actually left the section, not when it crosses
+    // from one child of it to another — which fires dragleave on the way.
+    if (!el.contains(ev.relatedTarget)) el.classList.remove('drop-here');
+  });
+  el.addEventListener('drop', (ev) => {
+    if (!packDrag) return;
+    ev.preventDefault();
+    el.classList.remove('drop-here');
+    const dropped = packDrag;
+    packDrag = null;
+    // A pack from the other game switches the picker first, or `pick()` would
+    // look for it on the wrong shelf and find nothing.
+    if (gamePick && dropped.kind && gamePick.value !== dropped.kind) {
+      gamePick.value = dropped.kind;
+      currentPack = null;
+    }
+    const found = gameOf().packs.find((p) => p.id === dropped.id);
+    if (found) { tonightOpen = true; localStorage.setItem(TONIGHT_STORE, '1'); paintFold(); pick(found); }
+  });
+
+  /*
+   * TAKING IT BACK OUT. The chosen pack is itself draggable, and a drag that
+   * ends anywhere outside the section clears the choice. Nothing is deleted:
+   * `currentPack = null` is the state the bar arrives in, so it goes straight
+   * back to offering what is on the big screen.
+   */
+  text.setAttribute('draggable', 'true');
+  text.addEventListener('dragstart', (ev) => {
+    if (!currentPack) { ev.preventDefault(); return; }
+    offDrag = true;
+    ev.dataTransfer.effectAllowed = 'move';
+    ev.dataTransfer.setData('text/plain', currentPack.title);
+  });
+  text.addEventListener('dragend', (ev) => {
+    if (!offDrag) return;
+    offDrag = false;
+    // Dropped back on the section itself? Then nothing was asked for.
+    if (el.contains(document.elementFromPoint(ev.clientX, ev.clientY))) return;
+    currentPack = null;
+    text.value = '';
+    chosen.hidden = true;
+    whyEl.textContent = '';
+    paintLive();
+    paintAlt();
+  });
 
   const toggleFold = () => {
     tonightOpen = !tonightOpen;
@@ -4191,7 +4267,8 @@ function packCard(kind, pack, repaint = () => {}) {
    * saying nothing again.
    */
   const el = node(`
-    <div class="pack-card ${open ? 'open' : 'shut'} ${pack.broken ? 'broken' : ''} ${ownPack ? 'own' : ''} ${freshness(pack).expired ? 'stale' : ''}">
+    <div class="pack-card ${open ? 'open' : 'shut'} ${pack.broken ? 'broken' : ''} ${ownPack ? 'own' : ''} ${freshness(pack).expired ? 'stale' : ''}"
+      draggable="${pack.broken ? 'false' : 'true'}" data-pack="${esc(pack.id)}" data-kind="${esc(kind)}">
       <button class="pack-title" title="${open ? 'Close it' : 'Open it to set tonight up and launch'}"
         aria-expanded="${open ? 'true' : 'false'}">${esc(pack.title)}</button>
       ${ownPack ? '<div class="pack-yours" title="You wrote this one. Nobody else can read it.">Yours</div>' : ''}
@@ -4256,6 +4333,33 @@ function packCard(kind, pack, repaint = () => {}) {
       <div class="pics-slot"></div>
       `}
     </div>`);
+
+  /*
+   * DRAG IT UP TO TONIGHT.
+   *
+   * The console is driven from the laptop that is plugged into the projector,
+   * so a mouse is the input this serves — and dragging a pack onto the launch
+   * section is the gesture somebody reaches for once the section is a place
+   * rather than a button. The card's own Launch stays exactly as it was: this
+   * is a second way to choose, not a replacement for the way that works on a
+   * phone, where drag events do not fire at all.
+   *
+   * It carries the pack ID and the GAME, because a bingo pack dropped on a bar
+   * that is set to Music Quiz has to switch the bar over rather than be
+   * silently ignored.
+   */
+  el.addEventListener('dragstart', (ev) => {
+    if (pack.broken) return;
+    packDrag = { id: pack.id, kind, title: pack.title };
+    ev.dataTransfer.effectAllowed = 'copy';
+    ev.dataTransfer.setData('text/plain', pack.title);
+    el.classList.add('is-dragging');
+  });
+  el.addEventListener('dragend', () => {
+    packDrag = null;
+    el.classList.remove('is-dragging');
+    document.querySelector('.launchbar')?.classList.remove('drop-here');
+  });
 
   /*
    * The title OPENS the card; Read is in the row below.
