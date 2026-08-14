@@ -2201,21 +2201,12 @@ body.screen { cursor: none; }
 .tabcount.late { background: rgba(255, 77, 94, 0.22); color: var(--bad); }
 .tab.on .tabcount.late { background: var(--bad); color: #fff; }
 
-/* TALL ENOUGH TO SCROLL THE BAR TO THE TOP — and this is the arithmetic, not
-   a guess.
-   Making the bar sticky removed the need for it to be scrolled INTO view, and
-   on that reasoning the reserve was taken out. That was wrong, and it is the
-   second time this has been reported as "tab clicks aren't going to the right
-   place": sticky decides where the bar sits ONCE THE PAGE HAS SCROLLED THERE,
-   and a page shorter than the viewport never scrolls at all. So a tall tab
-   jumped and a short one did not, which is the inconsistency, not the height.
-   The number: to put the bar at the topbar's height, the page must be able to
-   scroll `docTop(bar) - topbar` — which needs the tab body to be at least the
-   viewport less the topbar (63), the bar (54), its margin (22) and the wrap's
-   bottom padding (60). 199, rounded up. Reserving exactly that is why the
-   ~700px of black under a nearly-empty Adverts tab does not come back: the
-   old 78vh reserved most of a screen whatever the screen was. */
-.tabbody { animation: cardIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1); min-height: calc(100vh - 200px); }
+/* NO RESERVED HEIGHT. It carried a minimum for a while so that pressing a tab
+   could scroll the bar to the top of the screen — which worked, and left most
+   of a screen of black under a nearly-empty Adverts or Invoices tab. A tab
+   press goes straight to `top: 0` now that the launch bar is small enough to
+   want on screen, so there is nothing to scroll to and nothing to reserve. */
+.tabbody { animation: cardIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1); }
 
 /* The card's buttons, in the order you actually use them: the small ones you
    might press first sit in a row, and LAUNCH is the full width of the card at
@@ -5167,7 +5158,30 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   width: 100%; padding: 18px; font-size: var(--fs-head); font-weight: 900;
   border: none; border-radius: var(--r-card); cursor: pointer;
   font-family: inherit; letter-spacing: 0.01em; color: #12000c;
-  background: linear-gradient(120deg, var(--hot), var(--hot-2));
+  /* THE GRADIENT DRIFTS, VERY SLOWLY — asked for as "like very slow water".
+     Three stops rather than two and a background twice the button's width, so
+     what moves is the gradient THROUGH the button rather than the button
+     itself: nothing reflows, nothing shifts, and the type stays exactly where
+     it was. The middle stop is what makes it read as movement at all — with
+     two stops sliding a symmetric ramp back and forth looks like a brightness
+     wobble.
+     Eighteen seconds, which is slow enough that you notice it only if you
+     look. This is the one control on the section and it has to invite a press
+     without becoming the thing that distracts a quizmaster mid-setup. */
+  background: linear-gradient(120deg, var(--hot), var(--hot-2), var(--hot));
+  background-size: 200% 200%;
+  animation: lbDrift 18s ease-in-out infinite;
+}
+@keyframes lbDrift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+/* SOMEBODY WHO HAS ASKED FOR LESS MOTION GETS NONE. A slow drift is decoration
+   and this app runs in front of a room; the setting exists because for some
+   people movement is not decoration at all. */
+@media (prefers-reduced-motion: reduce) {
+  .lb-go { animation: none; }
 }
 .lb-go:hover { filter: brightness(1.08); }
 .lb-go:disabled { opacity: 0.4; cursor: default; filter: none; }
@@ -5348,79 +5362,81 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    the false one, so the rule reads as the behaviour. */
 .lb-fold[aria-expanded="true"]::after { transform: rotate(180deg); }
 
-/* ---- TONIGHT'S RUNNING ORDER
-   The place packs are dropped and where their rounds appear. Along the bottom
-   of the bar, directly above Launch, because it is what Launch is about to
-   run. A dashed edge while something is over it and a plain one otherwise: a
-   permanent dashed box would read as an empty slot somebody has failed to
-   fill, on a bar that is usually complete. */
-.lb-order { margin-top: 10px; border-radius: var(--r-field); }
-.lb-order.drop-here {
-  outline: 2px dashed var(--hot); outline-offset: 3px;
-  background: rgba(255, 46, 136, 0.06);
+/* ---- TONIGHT, AS A ROW OF SQUARES
+   The packs being played and the three facts a night is filed under, all the
+   same shape. Twelve round-chips is a list you read; three squares is a night
+   you see, which is what somebody wants five minutes before a gig.
+   `auto-fill` with a floor rather than a fixed count, so the row is six across
+   a laptop and two across a phone without a media query per width. */
+.lb-order { margin-top: 10px; border-radius: var(--r-card); }
+.lb-order.drop-here { outline: 2px dashed var(--hot); outline-offset: 4px; }
+.lb-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.lb-tile {
+  position: relative; display: flex; flex-direction: column; justify-content: flex-end;
+  gap: 2px; min-width: 0; padding: 10px;
+  /* Square, which is the whole ask. `aspect-ratio` rather than a height, so a
+     tile stays square at every column width the grid produces. */
+  aspect-ratio: 1 / 1;
+  border-radius: var(--r-card); text-align: left;
+  font: inherit; color: var(--ink);
 }
-.lb-order-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
-.lb-order-head b { color: var(--ink); }
-.lb-order-said { color: var(--ink-dim); }
-.lb-order-head .minor { margin-left: auto; }
-/* WRAPS rather than scrolls sideways. Twelve is the most a night can be and
-   they are short chips — a sideways scroll would hide the end of the evening
-   behind a gesture, on the one control that says what the evening IS. */
-.lb-order-strip { display: flex; flex-wrap: wrap; gap: 6px; }
-.lb-round {
-  display: flex; align-items: center; gap: 8px; min-width: 0;
-  padding: 6px 8px 6px 6px; border-radius: var(--r-field);
-  background: var(--panel); border: 1px solid var(--panel-line);
-  font-size: var(--fs-note); cursor: grab;
+.lb-tile > * { min-width: 0; }
+.lb-tile-name {
+  font-size: var(--fs-note); line-height: 1.2;
+  /* Two lines of a title and then an ellipsis: a pack name is the thing you
+     are identifying the square by, and one line loses most of them. */
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.lb-round.is-lifting { opacity: 0.45; }
-/* The position, which is the thing you are actually reading when you scan a
-   running order — "what is round three". */
-.lb-round-n {
-  flex: 0 0 auto; display: inline-grid; place-items: center;
-  min-width: 20px; height: 20px; border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.12); color: var(--ink-dim);
+.lb-tile-sub, .lb-tile-cap { color: var(--ink-dim); }
+.lb-tile-cap { text-transform: none; letter-spacing: 0; }
+
+/* A PACK IN THE NIGHT. Filled, in the account's own surface, so it reads as
+   something that is there rather than something waiting. */
+.lb-tile.is-pack {
+  background: var(--panel); border: 1px solid var(--panel-line); cursor: grab;
+}
+.lb-tile.is-pack.is-lifting { opacity: 0.45; }
+/* Which round it is — the thing you are actually reading when you scan a
+   running order. Top left, out of the way of the title. */
+.lb-tile-n {
+  position: absolute; top: 8px; left: 8px;
+  display: inline-grid; place-items: center; min-width: 20px; height: 20px;
+  border-radius: var(--r-pill); background: rgba(255, 46, 136, 0.22);
   font-size: var(--fs-tag); font-weight: 900;
 }
-.lb-round-what { display: grid; min-width: 0; }
-.lb-round-what b, .lb-round-what .tiny {
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+.lb-tile-off {
+  position: absolute; top: 4px; right: 4px;
+  border: none; background: none; cursor: pointer; color: var(--ink-dim);
+  font-size: var(--fs-ctl); line-height: 1; padding: 4px 6px; border-radius: var(--r-field);
 }
-/* Only once rounds come from more than one pack is the source worth saying —
-   on a night built from one quiz it would be the same words twelve times. */
-.lb-round.is-mixed .lb-round-n { background: rgba(255, 46, 136, 0.22); color: var(--ink); }
-.lb-round-off {
-  flex: 0 0 auto; border: none; background: none; cursor: pointer;
-  color: var(--ink-dim); font-size: var(--fs-ctl); line-height: 1; padding: 2px 4px;
-  border-radius: var(--r-field);
-}
-.lb-round-off:hover { color: var(--bad); background: rgba(255, 77, 94, 0.12); }
-/* Which side of the chip a dragged round will land. Without this a list can
-   only ever be reordered one way and the last position is unreachable. */
-.lb-round.drop-before { box-shadow: inset 3px 0 0 var(--hot); }
-.lb-round.drop-after { box-shadow: inset -3px 0 0 var(--hot); }
+.lb-tile-off:hover { color: var(--bad); background: rgba(255, 77, 94, 0.12); }
+/* Which side a dragged tile will land. Without this a row can only ever be
+   reordered one way and the last position is unreachable. */
+.lb-tile.drop-before { box-shadow: inset 3px 0 0 var(--hot); }
+.lb-tile.drop-after { box-shadow: inset -3px 0 0 var(--hot); }
 
-/* THE DOTTED CUTOUT — the empty state IS the control.
-   Asked for in those words: the bar starts empty and fills up as packs are
-   dragged in. It is a real button as well as a drop target, because HTML5
-   drag events are never delivered on touch and a drag-only bar would be a
-   dead panel on a phone.
-   Dashed rather than solid so it reads as a SLOT rather than as a button that
-   does something on its own — and it is the one place in this app a dashed
-   edge is right, because here the thing genuinely is waiting to be filled. */
-.lb-drop {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  width: 100%; min-height: 74px; padding: 12px;
-  border: 2px dashed var(--panel-line); border-radius: var(--r-card);
-  background: none; color: var(--ink-dim);
-  font: inherit; font-size: var(--fs-note); font-weight: 800; cursor: pointer;
+/* AN EMPTY SLOT. Dashed, because here the thing genuinely is waiting to be
+   filled — which is the one place in this app a dashed edge is right. It is a
+   real button as well as a drop target: HTML5 drag events are never delivered
+   on touch, so a drag-only bar would be a dead panel on a phone. */
+.lb-tile.lb-drop {
+  align-items: center; justify-content: center; text-align: center;
+  border: 2px dashed var(--panel-line); background: none; color: var(--ink-dim);
+  font-weight: 800; cursor: pointer;
 }
-.lb-drop:hover, .lb-drop:focus-visible { border-color: var(--hot); color: var(--ink); outline: none; }
-.lb-drop-plus { font-size: var(--fs-sub); line-height: 1; }
-/* Once rounds are in, it shrinks to a tile beside them — adding a second pack
-   is the same act as adding the first, so it stays the same target rather
-   than becoming a different control somewhere else. */
-.lb-drop.is-tile { width: auto; min-height: 0; padding: 8px 12px; border-radius: var(--r-field); }
+.lb-tile.lb-drop:hover, .lb-tile.lb-drop:focus-visible {
+  border-color: var(--hot); color: var(--ink); outline: none;
+}
+.lb-drop-plus { font-size: var(--fs-title); line-height: 1; }
+
+/* WHERE, WHEN AND WHAT FOR. Quieter than a pack square — they are read rather
+   than pressed, and the night itself has to stay the loud half of the row. */
+.lb-tile.is-info {
+  background: rgba(255, 255, 255, 0.03); border: 1px solid var(--panel-line);
+}
+.lb-tile.is-venue { cursor: pointer; }
+.lb-tile.is-venue:hover { border-color: var(--hot); }
+.lb-tile.is-info.is-none .lb-tile-name { color: var(--ink-dim); }
 
 /* The runner-up pack, as a chip rather than a second gradient button — there
    is one "press this" on a screen, and it is Launch. */

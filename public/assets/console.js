@@ -863,49 +863,29 @@ function showActiveTab() {
  * After `render()`, deliberately — the bar is rebuilt on every one, so the
  * element measured has to be the new one.
  */
-/**
- * Where an element sits in the DOCUMENT, in pixels from the top.
- *
- * `offsetTop` up the `offsetParent` chain rather than
- * `getBoundingClientRect() + scrollY`, and the difference is the whole reason
- * this exists: **a rectangle is where a thing is DRAWN and `offsetTop` is
- * where it BELONGS.** For anything ordinary they agree. For a sticky element
- * they do not — once pinned, its rectangle says "63px from the top of the
- * window" no matter how far the page has scrolled, so measuring it and then
- * scrolling by the difference lands somewhere new every time you press.
- */
-function docTop(el) {
-  let top = 0;
-  for (let at = el; at; at = at.offsetParent) top += at.offsetTop;
-  return top;
-}
 
 function showTabBar() {
   /*
-   * SCROLL SO THE BAR SITS EXACTLY WHERE IT PINS.
+   * STRAIGHT BACK TO THE TOP, at the host's own reversal once the launch bar
+   * was cut down: *"I change my mind, make every tab click go back to the top
+   * — the problem was the launch bit was too big, now its fine even at full
+   * size."*
    *
-   * Two things were wrong and they compounded, which is why this came back
-   * after being fixed once.
+   * **That is the right call and it is worth recording WHY the clever version
+   * existed**, because the instinct to rebuild it will come back. Scrolling
+   * the tab bar to the top of the screen was a way of hiding a panel that was
+   * too tall to want on screen — three rows, a guessed pack, a game dropdown
+   * and a search box. The panel is now a line and a drop zone, so there is
+   * nothing to hide from, and `top: 0` is honest: every tab starts in the same
+   * place, on every device, with no arithmetic and no reserved height under a
+   * short tab.
    *
-   * **It measured a sticky element's rectangle** — first the bar's, then the
-   * tab body's as a way round it. The body is honest, but it is separated
-   * from the bar by that bar's own bottom margin, so the sum had to guess a
-   * gap; guess it wrong and every press over-scrolls by the difference. Asking
-   * the BAR where it belongs in the document removes both the guess and the
-   * indirection: the answer is one subtraction and it cannot drift when the
-   * margin changes.
-   *
-   * **And a short tab could not scroll that far at all**, which is the half
-   * that made it look intermittent — see the note on `.tabbody`'s minimum
-   * height. Fixed there rather than here, because a page that cannot reach
-   * the position is not something the scroll can talk its way out of.
+   * The whole measured apparatus below went with it — a page that scrolls to
+   * zero cannot land in nine different places.
    */
-  const bar = mainEl.querySelector('.tabbar');
-  if (!bar) { window.scrollTo({ top: 0 }); return; }
-  const sticky = document.querySelector('.console .topbar');
-  const under = sticky ? sticky.getBoundingClientRect().height : 0;
-  window.scrollTo({ top: Math.max(0, docTop(bar) - under) });
+  window.scrollTo({ top: 0 });
 }
+
 
 /* ========================================================== MY ACCOUNT
  *
@@ -2963,23 +2943,21 @@ let lbOnline = false;
 let packDrag = null;
 
 /**
- * TONIGHT'S RUNNING ORDER — `[{ packId, round }]`, or **null** meaning
- * "nobody has rearranged anything".
+ * THE EXTRA PACKS IN TONIGHT — pack ids beyond the first, or an empty list.
  *
- * Null is not an empty list and the difference is the whole safety of this
- * feature. Null means the night is one pack played as written, which is what
- * almost every night is and what the protected launch path has always done —
- * `doLaunch` sends no `order` field at all, so the server takes exactly the
- * route it took last week. A real array only exists once somebody has dropped
- * a second pack in or taken a round out, which is a deliberate act.
+ * The night is `currentPack` followed by these. Holding only the EXTRAS is
+ * what keeps an ordinary night ordinary: one pack means this is empty, which
+ * means `doLaunch` sends no running order at all and the server takes exactly
+ * the route it took last week. A composed night only exists once somebody has
+ * deliberately dropped a second pack in.
  *
- * Rounds are held as `{ packId, round }` and NOTHING else — no titles, no
- * questions. What gets played is read off the packs on disk at launch, so a
- * question corrected at nine o'clock is in the night that starts at nine
- * fifteen. Copying the rounds in here would be the one thing rule 11 exists
- * to prevent: a second copy, in a browser tab, going quietly stale.
+ * Pack IDS and nothing else — no titles, no rounds, no questions. What gets
+ * played is read off the packs on disk at launch, so a question corrected at
+ * nine o'clock is in the night that starts at nine fifteen. Copying rounds in
+ * here would be the one thing rule 11 exists to prevent: a second copy, in a
+ * browser tab, going quietly stale.
  */
-let lbOrder = null;
+let lbExtra = [];
 
 /** Which round chip is being dragged within the strip, if any. */
 let roundDrag = null;
@@ -3509,7 +3487,7 @@ function launchBar() {
      * rounds are mostly another. Adding to an order is the strip's job and it
      * is a different gesture, which is the whole reason the two are split.
      */
-    if (currentPack && currentPack.id !== pack.id) lbOrder = null;
+    if (currentPack && currentPack.id !== pack.id) lbExtra = [];
     currentPack = pack;
     text.value = pack.title;
     /*
@@ -3596,9 +3574,10 @@ function launchBar() {
         // the only place it can be set now. Two controls for one field is how
         // a night gets filed under the pub you were at last week.
         venue: venueNow(),
-        // Null unless somebody has actually built one — see `lbOrder`. An
-        // ordinary night sends nothing and takes the route it always did.
-        order: lbOrder,
+        // Empty unless a second pack has actually been dropped in — see
+        // `lbExtra`. An ordinary night sends nothing at all and takes exactly
+        // the route it always did.
+        order: nightOrder(),
       }, button);
     });
 
@@ -3631,7 +3610,7 @@ function launchBar() {
     // on it any more. Start again on that game's own best pick — and a running
     // order built out of quiz rounds means nothing on the bingo shelf.
     currentPack = null;
-    lbOrder = null;
+    lbExtra = [];
     chosen.hidden = true;
     text.value = '';
     startOn();
@@ -3729,7 +3708,21 @@ function launchBar() {
     const title = String(running.title || '');
     if (!title) { liveEl.hidden = true; return; }
     liveEl.hidden = false;
-    const packDiffers = !currentPack || currentPack.title !== title;
+    /*
+     * NOTHING CHOSEN IS NOT A DISAGREEMENT.
+     *
+     * This was `!currentPack || currentPack.title !== title`, which was right
+     * while the bar auto-picked a pack — there was always something in the box
+     * to compare. Now the bar starts EMPTY, so `currentPack` is null on every
+     * arrival and the red drift warning fired on a console that had not been
+     * touched, about a difference that did not exist. A warning that is on by
+     * default is a warning nobody reads by the second week, which would cost
+     * exactly the fault it was added to catch.
+     *
+     * Chosen nothing, the line still SAYS what is on the projector — that is
+     * information somebody wants — it simply says it quietly.
+     */
+    const packDiffers = Boolean(currentPack) && currentPack.title !== title;
     /*
      * THE VENUE CAN DRIFT TOO, and it is the more dangerous of the two.
      *
@@ -3748,8 +3741,10 @@ function launchBar() {
     const barVenue = String(lbVenue == null ? runVenue : lbVenue).trim();
     const venueDiffers = Boolean(lbVenue != null && barVenue.toLowerCase() !== runVenue.toLowerCase());
     liveEl.classList.toggle('lb-warn', packDiffers || venueDiffers);
-    liveEl.textContent = packDiffers
+    liveEl.textContent = !currentPack
       ? `On the big screen now: ${title}`
+      : packDiffers
+        ? `On the big screen now: ${title}`
       : venueDiffers
         ? `On the big screen now — this one, but filed under ${runVenue || 'nowhere'}. Launch again to move it.`
         : 'On the big screen now — this one';
@@ -3852,21 +3847,53 @@ function launchBar() {
   const roundsOf = (pack) => (pack && pack.rounds ? pack.rounds : [])
     .map((_, i) => ({ packId: pack.id, round: i }));
 
-  /**
-   * What the strip is showing: the built order if there is one, otherwise the
-   * chosen pack read as itself. Deriving the second rather than filling it in
-   * is what keeps `lbOrder === null` meaning "untouched" — see its own note.
-   */
-  const orderNow = () => (lbOrder || roundsOf(currentPack));
-
-  /** The pack a chip came from, for its name. Off the shelf, never stored. */
+  /** A pack off the shelf by id. Never stored — see `lbExtra`. */
   const packOf = (id) => (gameOf().packs || []).find((p) => p.id === id);
 
-  /** Start editing: the derived order becomes a real one, once. */
-  const takeOver = () => {
-    if (!lbOrder) lbOrder = roundsOf(currentPack);
-    return lbOrder;
-  };
+  /** Tonight, in order: the chosen pack and anything dropped in after it. */
+  const lbPacks = () => [currentPack, ...lbExtra.map(packOf)].filter(Boolean);
+
+  /**
+   * The running order to send, or null for an ordinary night.
+   *
+   * Null on one pack, deliberately: a night that is one pack played as
+   * written is the night this app has always run, and spelling its own rounds
+   * out would be the same evening by a longer road, through code that did not
+   * exist last week, on the protected path.
+   */
+  function nightOrder() {
+    const packs = lbPacks();
+    if (packs.length < 2) return null;
+    return packs.flatMap(roundsOf);
+  }
+
+  /** Take a pack out. Taking the FIRST one out clears the night. */
+  function dropPack(at) {
+    if (at === 0) {
+      currentPack = null;
+      lbExtra = [];
+      chosen.hidden = true;
+      paintOrder();
+      paintLive();
+      return;
+    }
+    lbExtra.splice(at - 1, 1);
+    paintOrder();
+  }
+
+  /** Reorder. Moving something into first place makes it the night's pack. */
+  function movePack(from, to) {
+    const ids = lbPacks().map((p) => p.id);
+    const [moved] = ids.splice(from, 1);
+    // The source is already out of the list, so an index after it has shifted
+    // down by one — the off-by-one that makes a drag "not move" when you drop
+    // it one place along.
+    ids.splice(from < to ? to - 1 : to, 0, moved);
+    const first = packOf(ids[0]);
+    lbExtra = ids.slice(1);
+    if (first && (!currentPack || currentPack.id !== first.id)) pick(first);
+    else paintOrder();
+  }
 
   /**
    * THE BAR STARTS EMPTY AND FILLS UP.
@@ -3892,123 +3919,162 @@ function launchBar() {
    * a drop target for a mouse and, because HTML5 drag does not fire on touch
    * at all, the way in on a phone.
    */
+  /**
+   * TONIGHT AS A ROW OF SQUARES.
+   *
+   * Asked for once the drag existed: *"can we make the packs square shaped so
+   * they drop in the console and there's like 3 cut out squares to drop them
+   * into? perhaps a couple of other squares that give other info like venue,
+   * time, prizes or whatever."*
+   *
+   * **The unit is a PACK, not a round**, and that is the change this made.
+   * The first build listed every round as a chip, which is the truthful view
+   * of what gets played and the wrong one to hand somebody five minutes
+   * before a gig: twelve chips is a list you read, three squares is a night
+   * you see. Rounds are still what the server composes — a square simply
+   * stands for all of its pack's.
+   *
+   * **THE EMPTY SLOTS ARE PART OF THE PICTURE.** Three squares are always
+   * drawn, filled or not, so the bar has the same shape whether the night is
+   * set up or not — and an empty one is a dotted cutout that says what to do
+   * with it. A row that grows a box each time you drop something reflows the
+   * whole bar under your hand.
+   *
+   * **THE INFO SQUARES ARE READ, NOT PRESSED** (except the venue, which was
+   * already a control). They restate the three facts a night is filed under —
+   * where, when, what it plays for — at a glance, in the place the decision is
+   * made. Nothing is duplicated: each one is a view of something set
+   * elsewhere, and the venue tile drives the same `chooseVenue` the head does.
+   */
+  const PACK_SLOTS = 3;
+
   function paintOrder() {
-    const rows = orderNow();
     orderEl.hidden = false;
-    const kids = [];
+    const packs = lbPacks();
+    const tiles = [];
 
-    const mixed = new Set(rows.map((r) => r.packId)).size > 1;
-    if (rows.length) {
-      const head = node(`<div class="lb-order-head">
-        <b class="tiny">Tonight&rsquo;s rounds</b>
-        <span class="tiny lb-order-said">${esc(mixed
-    ? 'From more than one pack \u2014 nothing on disk is changed.'
-    : 'Drag another pack in to add its rounds.')}</span>
-        ${lbOrder ? '<button class="minor lb-order-reset" type="button">Start again</button>' : ''}
-      </div>`);
-      head.querySelector('.lb-order-reset')?.addEventListener('click', () => {
-        lbOrder = null;
-        paintOrder();
-      });
-      kids.push(head);
-    }
-
-    const strip = node('<div class="lb-order-strip"></div>');
-    rows.forEach((row, at) => {
-      const from = packOf(row.packId);
-      const round = from && from.rounds ? from.rounds[row.round] : null;
-      const chip = node(`
-        <div class="lb-round ${mixed ? 'is-mixed' : ''}" draggable="true" title="${esc((from && from.title) || row.packId)}">
-          <span class="lb-round-n">${at + 1}</span>
-          <span class="lb-round-what">
-            <b>${esc((round && round.title) || `Round ${row.round + 1}`)}</b>
-            ${mixed ? `<span class="tiny">${esc((from && from.title) || row.packId)}</span>` : ''}
-          </span>
-          <button class="lb-round-off" type="button" aria-label="Take this round out">&times;</button>
+    packs.forEach((pack, at) => {
+      const rounds = (pack.rounds || []).length;
+      const tile = node(`
+        <div class="lb-tile is-pack" draggable="true" title="${esc(pack.title)}">
+          <button class="lb-tile-off" type="button" aria-label="Take this pack out">&times;</button>
+          <span class="lb-tile-n">${at + 1}</span>
+          <b class="lb-tile-name">${esc(pack.title)}</b>
+          <span class="tiny lb-tile-sub">${rounds ? `${rounds} round${rounds === 1 ? '' : 's'}` : 'bingo'}</span>
         </div>`);
-
-      chip.querySelector('.lb-round-off').addEventListener('click', () => {
-        const list = takeOver();
-        list.splice(at, 1);
-        /*
-         * THE LAST ROUND CANNOT BE TAKEN OUT. A night with no rounds is not a
-         * night, and the server refuses it — but being refused at Launch, in
-         * a venue, is the wrong place to find out. So it goes back to being
-         * the pack as written rather than becoming empty.
-         */
-        if (!list.length) lbOrder = null;
-        paintOrder();
-      });
-
-      // Reordering, same shape as the editor's: pick a chip up, drop it on
-      // another, and which HALF of that other one the cursor is in decides
-      // whether it lands before or after. Without that, a list can only ever
-      // be reordered one way and the last position is unreachable.
-      chip.addEventListener('dragstart', (ev) => {
+      tile.querySelector('.lb-tile-off').addEventListener('click', () => dropPack(at));
+      // Reordering, same shape as the editor's: which HALF of the target the
+      // cursor is in decides before or after, or a list can only ever be
+      // reordered one way and the last position is unreachable.
+      tile.addEventListener('dragstart', (ev) => {
         roundDrag = at;
         ev.dataTransfer.effectAllowed = 'move';
-        // Some browsers refuse to start a drag with nothing on the transfer.
         ev.dataTransfer.setData('text/plain', String(at));
-        chip.classList.add('is-lifting');
+        tile.classList.add('is-lifting');
       });
-      chip.addEventListener('dragend', () => { roundDrag = null; chip.classList.remove('is-lifting'); });
-      chip.addEventListener('dragover', (ev) => {
+      tile.addEventListener('dragend', () => { roundDrag = null; tile.classList.remove('is-lifting'); });
+      tile.addEventListener('dragover', (ev) => {
         if (roundDrag === null) return;
-        ev.preventDefault();
-        ev.stopPropagation();
-        const box = chip.getBoundingClientRect();
-        chip.classList.toggle('drop-after', ev.clientX > box.left + box.width / 2);
-        chip.classList.toggle('drop-before', ev.clientX <= box.left + box.width / 2);
+        ev.preventDefault(); ev.stopPropagation();
+        const box = tile.getBoundingClientRect();
+        const after = ev.clientX > box.left + box.width / 2;
+        tile.classList.toggle('drop-after', after);
+        tile.classList.toggle('drop-before', !after);
       });
-      chip.addEventListener('dragleave', () => chip.classList.remove('drop-before', 'drop-after'));
-      chip.addEventListener('drop', (ev) => {
+      tile.addEventListener('dragleave', () => tile.classList.remove('drop-before', 'drop-after'));
+      tile.addEventListener('drop', (ev) => {
         if (roundDrag === null) return;
-        ev.preventDefault();
-        ev.stopPropagation();
-        const after = chip.classList.contains('drop-after');
-        chip.classList.remove('drop-before', 'drop-after');
-        const list = takeOver();
-        const [moved] = list.splice(roundDrag, 1);
-        // The source is already out of the list, so an index after it has
-        // shifted down by one — the off-by-one that makes a drag "not move"
-        // when you drop it one place along.
-        let to = at + (after ? 1 : 0);
-        if (roundDrag < to) to -= 1;
-        list.splice(to, 0, moved);
+        ev.preventDefault(); ev.stopPropagation();
+        const after = tile.classList.contains('drop-after');
+        tile.classList.remove('drop-before', 'drop-after');
+        movePack(roundDrag, at + (after ? 1 : 0));
         roundDrag = null;
-        paintOrder();
       });
-      strip.appendChild(chip);
+      tiles.push(tile);
     });
 
     /*
-     * THE DOTTED CUTOUT, and it is always the last thing in the strip rather
-     * than only the empty state — because adding a second pack is the same
-     * act as adding the first and should be the same target. Empty it fills
-     * the bar and says what to do; once rounds are in it shrinks to a tile
-     * beside them, which is the "fills the space" that was asked for.
+     * The empty slots. Always drawn up to three, and one extra beyond that so
+     * a fourth pack is still possible without the row implying a limit that
+     * is really twelve ROUNDS rather than three packs.
      */
-    const drop = node(`
-      <button class="lb-drop ${rows.length ? 'is-tile' : ''}" type="button">
-        <span class="lb-drop-plus" aria-hidden="true">+</span>
-        <span>${rows.length ? 'Add a pack' : 'Drag a pack here'}</span>
-      </button>`);
-    drop.addEventListener('click', () => {
-      /*
-       * TAPPING IT OPENS THE PICKER. The drag is the fast path on the laptop
-       * this console is driven from; this is the one that exists on a phone,
-       * where a drag event is never delivered at all. Same list, same
-       * `pick()` — one way for a pack to be chosen, so the two cannot drift.
-       */
-      const find = el.querySelector('.lb-find');
-      find.hidden = !find.hidden;
-      if (!find.hidden) text.focus();
-    });
-    strip.appendChild(drop);
+    const slots = Math.max(PACK_SLOTS - packs.length, packs.length ? 1 : PACK_SLOTS);
+    for (let i = 0; i < slots; i++) {
+      const empty = node(`
+        <button class="lb-tile lb-drop" type="button">
+          <span class="lb-drop-plus" aria-hidden="true">+</span>
+          <span class="tiny">${packs.length ? 'Add a pack' : 'Drag a pack here'}</span>
+        </button>`);
+      empty.addEventListener('click', () => {
+        /*
+         * TAPPING OPENS THE PICKER. The drag is the fast path on the laptop
+         * this console is driven from; this is the one that exists on a phone,
+         * where a drag event is never delivered at all. Same list, same
+         * `pick()`, so the two cannot drift.
+         */
+        const find = el.querySelector('.lb-find');
+        find.hidden = !find.hidden;
+        if (!find.hidden) text.focus();
+      });
+      tiles.push(empty);
+    }
 
-    kids.push(strip);
-    orderEl.replaceChildren(...kids);
+    orderEl.replaceChildren(node('<div class="lb-tiles"></div>'));
+    orderEl.firstChild.append(...tiles, ...infoTiles());
   }
+
+  /**
+   * WHERE, WHEN AND WHAT FOR — the three facts a night is filed under, as
+   * squares beside the packs.
+   *
+   * Each is a VIEW of something set elsewhere rather than a second place to
+   * set it, which is the rule this bar already follows for the venue: two
+   * controls for one field is how a night gets launched with the setting the
+   * other one was showing. The venue square opens the same picker the head
+   * does; the other two are read.
+   */
+  function infoTiles() {
+    const name = venueNow();
+    const record = (library.venueRecords || [])
+      .find((v) => (v.name || '').toLowerCase() === String(name).toLowerCase());
+    const prizes = ((record && record.rewards) || []).map((r) => String(r || '').trim()).filter(Boolean);
+
+    // What time tonight starts, if the diary says. A residency carries none —
+    // the venue's arrangement lives in no record here — so this is silent
+    // rather than inventing one.
+    const on = upcoming({
+      venues: library.venueRecords || [],
+      bookings: library.bookings || [],
+      weeks: 1,
+    }).find((n) => n.date === nightKey() && (!name || n.venue.toLowerCase() === String(name).toLowerCase()));
+
+    const where = node(`
+      <button class="lb-tile is-info is-venue" type="button">
+        <span class="tiny lb-tile-cap">Where</span>
+        <b class="lb-tile-name">${esc(name || 'Pick a venue')}</b>
+        <span class="tiny lb-tile-sub">${esc(record && record.usualNight ? 'your usual night' : (name ? 'one-off' : 'decides the prizes'))}</span>
+      </button>`);
+    where.addEventListener('click', () => toggleVenues());
+
+    const when = node(`
+      <div class="lb-tile is-info">
+        <span class="tiny lb-tile-cap">Starts</span>
+        <b class="lb-tile-name">${esc(on && on.time ? saidTime(on.time) : 'When you like')}</b>
+        <span class="tiny lb-tile-sub">${esc(on && on.time ? 'from your calendar' : 'no time set')}</span>
+      </div>`);
+
+    const forWhat = node(`
+      <div class="lb-tile is-info ${prizes.length ? '' : 'is-none'}">
+        <span class="tiny lb-tile-cap">Playing for</span>
+        <b class="lb-tile-name">${esc(prizes[0] || 'No prizes')}</b>
+        <span class="tiny lb-tile-sub">${esc(prizes.length > 1
+    ? `and ${prizes.length - 1} more`
+    : (record ? 'set them on Venues' : 'venue not on your list'))}</span>
+      </div>`);
+
+    return [where, when, forWhat];
+  }
+
 
   /*
    * A PACK DROPPED ON THE STRIP JOINS THE NIGHT.
@@ -4044,14 +4110,16 @@ function launchBar() {
      * completely ordinary night, sending no running order at all.
      */
     if (!currentPack) { pick(from); return; }
-    const list = takeOver();
-    const adding = roundsOf(from);
-    if (!adding.length) { paintOrder(); return; }
-    if (list.length + adding.length > MAX_NIGHT_ROUNDS) {
-      alert(`A night can have at most ${MAX_NIGHT_ROUNDS} rounds.`);
+    // The same pack twice is a mis-drop rather than an intention — a night
+    // does not play the same ten questions in rounds two and four.
+    if (lbPacks().some((p) => p.id === from.id)) { paintOrder(); return; }
+    const rounds = lbPacks().reduce((n, p) => n + (p.rounds || []).length, 0)
+      + (from.rounds || []).length;
+    if (rounds > MAX_NIGHT_ROUNDS) {
+      alert(`A night can have at most ${MAX_NIGHT_ROUNDS} rounds — that would make ${rounds}.`);
       return;
     }
-    list.push(...adding);
+    lbExtra.push(from.id);
     paintOrder();
   });
 
