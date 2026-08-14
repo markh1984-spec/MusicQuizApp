@@ -682,8 +682,8 @@ body::after {
   background: rgba(255, 255, 255, 0.1); font-size: var(--fs-tag); font-weight: 800;
 }
 .asks-kept-head {
-  margin-top: 14px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--ink-dim);
+  margin-top: 14px; font-weight: 800; letter-spacing: 0.02em;
+  color: var(--ink);
 }
 .ask-rows.kept .ask-row { border-color: rgba(63, 219, 133, 0.35); }
 
@@ -1013,9 +1013,32 @@ body.host::after { display: none; }
   border: 1px solid var(--panel-line);
   padding: 14px;
 }
+/* HEADINGS ARE NOT SHOUTED — a heading is told apart by BRIGHTNESS, not by
+   being in capitals.
+
+   The host's own line, and it is a brand decision rather than a taste one:
+   *"the way I'm building this app, it needs to be as soft and friendly as
+   possible… some people interpret capital letters as shouting."* He is right,
+   and the tell is what these headings actually SAY: "Nothing here is being
+   saved permanently" and "Nothing here for the night you have booked?" are
+   whole sentences, and a sentence in capitals is somebody raising their voice
+   at you about your own backups.
+
+   So the differentiator moves from CASE to COLOUR, which is what he asked
+   for and is the stronger signal anyway: the heading is full `--ink` against
+   `--ink-dim` body text, one rung up the ladder, and heavy. Capitals plus dim
+   grey was doing the job with the two weakest tools available.
+
+   WHAT KEEPS ITS CAPITALS, deliberately, so this is a rule rather than a
+   sweep: the PROJECTOR (every `vh`-sized rule — "WINNER" across a dark room
+   is a title card, and at that size and tracking nobody reads it as a raised
+   voice), the option letters A–F, the alphabet keyboard, and the small
+   one-word BADGES — GOLD, PAID, NEW. A four-letter pill is a shape you
+   recognise rather than a word you read, and those already carry their
+   meaning in colour. */
 .panel h3 {
   margin: 0 0 10px;
-  font-size: var(--fs-tag); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim);
+  font-size: var(--fs-note); letter-spacing: 0; color: var(--ink);
   font-weight: 800;
 }
 .panel.secret { border-color: rgba(255, 210, 63, 0.5); background: rgba(255, 210, 63, 0.09); }
@@ -1372,7 +1395,7 @@ body.editor::after { display: none; }
    on a 320px phone the buttons on the end were 8px off the side rather than on
    a line of their own. */
 .qcard .qtop { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
-.qcard .qnum { font-size: var(--fs-mini); font-weight: 900; letter-spacing: 0.14em; color: var(--ink-dim); text-transform: uppercase; }
+.qcard .qnum { font-size: var(--fs-mini); font-weight: 900; letter-spacing: 0.02em; color: var(--ink-dim); }
 .qcard .qtools { margin-left: auto; display: flex; gap: 6px; }
 
 .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 11px; }
@@ -1639,7 +1662,9 @@ body.console::after { display: none; }
 .console button.minor.danger:hover { background: rgba(255, 77, 94, 0.12); }
 .console button.minor:disabled { opacity: 0.6; cursor: default; }
 .console .panel { border-radius: 14px; background: var(--panel); border: 1px solid var(--panel-line); padding: 16px; margin-bottom: 24px; }
-.console .panel h3 { margin: 0 0 12px; font-size: var(--fs-tag); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim); font-weight: 800; }
+/* The console's own override of the rule above — same change, same reason.
+   See the note on `.panel h3`. */
+.console .panel h3 { margin: 0 0 12px; font-size: var(--fs-note); letter-spacing: 0; color: var(--ink); font-weight: 800; }
 .console .panel.running.live { border-color: var(--good); background: rgba(47, 224, 122, 0.1); }
 .running-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .running-title { font-size: var(--fs-sub); font-weight: 900; }
@@ -2972,7 +2997,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 /* ---- the picker on the control view */
 .ad-set {
   margin: 14px 0 6px; font-size: var(--fs-mini); font-weight: 800;
-  letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim);
+  letter-spacing: 0.02em; color: var(--ink);
 }
 .ad-pick {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -5407,8 +5432,8 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
    about somebody's own work. */
 .heads { margin-top: 14px; border-top: 1px solid var(--panel-line); padding-top: 12px; }
 .heads-tag {
-  font-size: var(--fs-tag); font-weight: 800; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--ink-dim);
+  font-size: var(--fs-tag); font-weight: 800; letter-spacing: 0.02em;
+  color: var(--ink-dim);
 }
 .heads-line { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-top: 3px; }
 .heads-big { font-size: var(--fs-sub); font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; }
