@@ -825,6 +825,15 @@ Full reasoning: **[`docs/artwork.md`](docs/artwork.md)**. The rules:
 - Ask before assuming, especially anything costing money or needing an account.
 - Explain deployment like he is doing it for the first time, because he is.
 - Keep the code readable — he will be editing it between gigs.
+- **ANY PROMPT HE HAS TO PASTE SOMEWHERE GETS A COPY BUTTON. Always.** Set on
+  14 August 2026 and it is a rule, not a preference: *"the prompt must ALWAYS
+  have a copy button."* A prompt printed into a terminal has to be selected by
+  hand, and selecting twenty lines of text out of a scrollback without
+  catching the line above it is a fiddle that goes wrong — on something whose
+  whole job is being pasted somewhere else verbatim. So publish it as an
+  ARTIFACT with a copy button on the block, not as a fenced code block in the
+  reply. This covers handovers to another session, kickoff prompts, anything
+  he is meant to paste into a second chat or another tool.
 - **SHOW A SCREENSHOT FOR EVERY UI CHANGE. This is a rule, not a nicety** —
   set by the host on 14 August 2026: *"whenever you change the UI of anything
   in this app you MUST show me, since the UI of this app is extremely
