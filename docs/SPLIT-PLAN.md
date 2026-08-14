@@ -1,4 +1,21 @@
-# Splitting CLAUDE.md — the plan, to be executed in a fresh session
+# Splitting CLAUDE.md — DONE on 14 August 2026
+
+**Executed. CLAUDE.md went from 5,620 lines (~90,000 tokens) to ~1,600
+(~30,000).** Kept as the record of how and why, and as the pattern for
+`TODO.md`, which is still ~73,000 tokens and wants the same treatment.
+
+**The plan changed once during execution, for the better.** It originally had
+every moved section leaving a hand-written summary of its rules behind — which
+is where both the cost and the risk live, because a summary can be lossy and
+nothing would ever tell you. Instead **the rule-bearing sections never moved
+at all**: the ten numbered rules, the decisions table, the vocabulary, the
+design and GUI rules, the working style and the layout are all still in
+CLAUDE.md in full. Only long per-feature narrative moved, verbatim, by line
+range — so nothing was retyped and nothing could be quietly reworded.
+
+---
+
+## The original plan
 
 **Why:** `CLAUDE.md` is 5,674 lines and about **90,000 tokens**, and it loads
 in full at the start of every session. `TODO.md` is another ~73,000. Together
