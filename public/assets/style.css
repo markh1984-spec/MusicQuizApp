@@ -5800,3 +5800,22 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
   background: #fff; border-radius: 6px; padding: 4px;
 }
 .ad-pic-pick { cursor: pointer; }
+
+/* THE PRICE IS GREEN, because money is green everywhere in this app — the same
+   language as "paying" on an account and "makes something" on a button. A pill
+   rather than a line so it reads at a glance on a grid of nine cards, and it
+   is deliberately NOT a control: the card already has Buy underneath it, and
+   two things to press for one job is the fault this file keeps recording. */
+.shop-price {
+  /* `align-self` as well as `inline-block`: the card is a flex column, which
+     stretches its children — so the pill came out full width and read as a
+     button rather than a tag. */
+  display: inline-block; align-self: flex-start; margin-top: 6px;
+  padding: 3px 10px; border-radius: var(--r-pill);
+  font-size: var(--fs-note); font-weight: 900;
+  color: var(--good); border: 1px solid rgba(63, 219, 133, 0.45);
+  background: rgba(63, 219, 133, 0.12);
+}
+/* The way to the tiers, beside the shop heading. Quiet: it is the alternative,
+   not the offer, and the packs below are what the section is for. */
+.shop-up { align-self: center; white-space: nowrap; }

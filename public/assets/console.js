@@ -3929,6 +3929,11 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
               : 'Written and checked for you — every question read through twice.'}
             ${esc((library.catalogue && library.catalogue.blurb) || '')}</div>
         </div>
+        <!-- THE OTHER WAY TO GET THEM, which the blurb has always mentioned and
+             never linked to. One per SECTION rather than one per card: a
+             second money control on every pack would be the same offer printed
+             nine times, and the card already carries its own price. -->
+        <a class="minor shop-up" href="?tab=account">See the tiers</a>
       </div>
       <div class="pack-grid shop-grid ${dense ? 'dense' : ''}"></div>
       <div class="ask-slot"></div>
@@ -5051,12 +5056,17 @@ function shopCard(kind, pack) {
       <div class="pack-title">${esc(pack.title)}</div>
       <div class="tiny">${esc(detail)}</div>
       ${topical ? `<div class="tiny fresh ${expired ? 'gone' : ''}">${esc(freshLabel(pack))}</div>` : ''}
-      <div class="tiny shop-price">${esc(packPrice())}</div>
+      <!-- GREEN, because money is green everywhere in this app — the same
+           language as "paying" on an account and "makes something" on a
+           button. It is a marker rather than a control: the whole card is
+           already about buying, and a price you can press as well as a Buy
+           button underneath it is two controls for one job. -->
+      <div class="shop-price">${esc(packPrice())}</div>
       <button class="go buy">Buy it</button>
     </div>`);
 
   el.querySelector('.buy').addEventListener('click', () => {
-    alert(`There is no way to pay yet.\n\n"${pack.title}" would be ${packPrice()}, and it would be in your library straight away — same as the ones you already have.\n\nThis is here so the shop can be looked at before the payments are wired up.`);
+    alert(`There is no way to pay yet.\n\n"${pack.title}" would be ${packPrice()}, and it would be in your library straight away — same as the ones you already have.\n\nOr Silver includes every pack in the catalogue and each new one as it is written — the tiers are on My Account.\n\nThis is here so the shop can be looked at before the payments are wired up.`);
   });
   return el;
 }
