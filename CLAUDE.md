@@ -1605,6 +1605,15 @@ check, where "some things changed" is not. It was written to answer the host
 asking whether the online work would make his Wednesday awkward, and the
 answer it gave was 2,150 identical payloads across seven packs.
 
+**COMPARE AGAINST THE BRANCH YOU ARE MERGING INTO, NOT `HEAD`.** On a
+committed, clean checkout `HEAD` IS the working tree, so the script runs the
+same code against itself and can only ever print IDENTICAL. It is not wrong,
+it is empty — and it has now been quoted as a pass twice in one day, once by
+a session reporting its own finished branch. Use
+`node scripts/pub-unchanged.mjs origin/MusicQuizApp` when checking work that
+is already committed; `HEAD` is only meaningful while the change is still
+uncommitted in the working tree.
+
 **AND IT WAS ANSWERING WITHOUT ANSWERING — every "identical" this file quotes
 above was measured with a hole in it.** `Engine.answer()` takes an OBJECT and
 the script called it positionally, `a.answer(id, 0)`, so every answer came
