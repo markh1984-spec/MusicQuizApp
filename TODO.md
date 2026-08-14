@@ -769,6 +769,29 @@ landlord is looking at costs and cannot remember what the room was like before.
 Free to build: the data exists, nothing new is collected, no consent question.
 Do this one first.
 
+**DECIDED on 14 August 2026 — do not re-ask:**
+
+- **ONE record, read from BOTH Venues and Gigs.** Asked directly and the
+  answer was *"I think Venues, but also perhaps gigs as well? Maybe both point
+  to the same record?"* — which is this file's own rule already: **one
+  function takes a SET of nights and returns the numbers across them.** Venues
+  asks it for one place, Gigs asks it for all of them. Same code, same panel,
+  N of one or N of five. Shipping "the trend for one venue" and later "across
+  all venues" as two features is how they drift.
+- **On the VENUE in Venues**: open The Station Tap and see its whole history —
+  every night, the numbers, the trend — next to its usual night and its
+  prizes, so when you are pitching that pub everything about them is on one
+  card.
+- **And surfaced on Gigs**, because that is where the work lives.
+
+**The data is already there and nothing joins it up**: the archive carries
+`venue` and the player count per night (`listArchive` in `src/library.js`,
+`src/past-gigs.js`), and `venuesUsed()` returns venue NAMES only. Verified by
+audit on 14 August — there is no aggregation anywhere in the repo.
+
+**The 6am roll-over applies**, like Past gigs and the photos: a night that
+finished at half past midnight belongs to the evening it started.
+
 ### 2. The last slide of the night — cheap, and not blocked
 
 Everyone in the room has a phone out and is looking at the screen, and that
