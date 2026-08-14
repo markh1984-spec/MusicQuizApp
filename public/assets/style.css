@@ -60,8 +60,8 @@
      one, which is exactly how the console's tickboxes and dropdowns looked. */
   color-scheme: dark;
   /* Three radii and no more: a field, a card, a pill. See the GUI rules. */
-  --r-field: 6px;
-  --r-card: 12px;
+  --r-field: 10px;
+  --r-card: 14px;
   --r-pill: 999px;
 
   --radius: 18px;
@@ -206,7 +206,7 @@ body::after {
   align-items: center;
   gap: 0.5em;
   padding: 0.35em 0.9em;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--panel);
   border: 1px solid var(--panel-line);
   font-weight: 700;
@@ -285,7 +285,7 @@ body::after {
 
 .qr-panel {
   background: #fff;
-  border-radius: 26px;
+  border-radius: var(--r-card);
   padding: 2.2vh;
   box-shadow: var(--shadow);
   display: grid;
@@ -313,7 +313,7 @@ body::after {
 }
 .player-chip {
   padding: 0.6vh 1.1vw;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--panel);
   border: 1px solid var(--panel-line);
   font-size: 2.1vh;
@@ -378,7 +378,7 @@ body::after {
   flex: 0 0 auto;
   width: 2em; height: 2em;
   display: grid; place-items: center;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   font-weight: 900;
   color: #0a0a12;
   font-size: 0.78em;
@@ -409,7 +409,7 @@ body::after {
 .timer-bar {
   flex: 1 1 auto;
   height: 1.8vh;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: rgba(255, 255, 255, 0.1);
   overflow: hidden;
 }
@@ -417,7 +417,7 @@ body::after {
   display: block;
   height: 100%;
   width: 100%;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: linear-gradient(90deg, var(--good), var(--gold) 55%, var(--hot));
   transform-origin: left center;
 }
@@ -460,7 +460,7 @@ body::after {
   flex: 0 0 auto;
   width: 11vh;
   height: 11vh;
-  border-radius: 14px;
+  border-radius: var(--r-card);
   object-fit: cover;
   background: var(--panel);
   border: 2px solid rgba(255, 210, 63, 0.55);
@@ -478,7 +478,7 @@ body::after {
   align-items: center;
   gap: 1.6vw;
   padding: 1.5vh 1.8vw;
-  border-radius: 14px;
+  border-radius: var(--r-card);
   background: var(--panel);
   border: 1px solid var(--panel-line);
   font-size: 3.2vh;
@@ -538,14 +538,14 @@ body::after {
 .winner .runner {
   display: grid; gap: 0.5vh; justify-items: center; align-content: center;
   padding: 2.2vh 1.6vw;
-  border-radius: 14px;
+  border-radius: var(--r-card);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   min-width: 0;
 }
 .winner .rplace {
   font-size: 2.8vh; font-weight: 900; line-height: 1;
-  width: 5.2vh; height: 5.2vh; border-radius: 999px;
+  width: 5.2vh; height: 5.2vh; border-radius: var(--r-pill);
   display: grid; place-items: center;
   color: #17131b; background: rgba(255, 255, 255, 0.55);
 }
@@ -571,7 +571,7 @@ body::after {
 .winner .dip {
   margin-top: 4.5vh;
   padding: 2vh 3vw;
-  border-radius: 14px;
+  border-radius: var(--r-card);
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.04);
   display: inline-grid; gap: 0.5vh; justify-items: center;
@@ -600,7 +600,7 @@ body::after {
 .winner .comeback {
   margin-top: 4.5vh;
   padding: 2vh 3vw;
-  border-radius: 14px;
+  border-radius: var(--r-card);
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.04);
   /* Centred as a PAIR. The winner's own name sets how wide this column is, so
@@ -618,7 +618,7 @@ body::after {
 }
 .winner .cb-qr {
   flex: 0 0 auto;
-  background: #fff; border-radius: 10px; padding: 1vh;
+  background: #fff; border-radius: var(--r-field); padding: 1vh;
   width: 14vh; height: 14vh;
 }
 .winner .cb-qr img { display: block; width: 100%; height: 100%; }
@@ -637,7 +637,7 @@ body::after {
 .drag-grip {
   display: inline-flex; align-items: center; justify-content: center;
   width: 22px; height: 22px; flex: 0 0 auto;
-  color: var(--ink-dim); cursor: grab; border-radius: 6px;
+  color: var(--ink-dim); cursor: grab; border-radius: var(--r-field);
 }
 .drag-grip:hover { color: var(--ink); background: rgba(255, 255, 255, 0.08); }
 .drag-grip:active { cursor: grabbing; }
@@ -729,7 +729,7 @@ body.is-dragging-card .launchbar {
   padding: 14px; font: inherit; font-size: var(--fs-field); font-weight: 800;
   text-align: left; cursor: pointer; color: var(--ink);
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--panel-line); border-radius: 10px;
+  border: 1px solid var(--panel-line); border-radius: var(--r-field);
 }
 .ask-idea:hover { border-color: var(--hot); }
 /* The one they chose, in the account's own colours — this is a highlight,
@@ -747,7 +747,7 @@ body.is-dragging-card .launchbar {
   transform: translateX(-50%);
   z-index: 50;
   padding: 1vh 2vw;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--bad);
   color: #fff;
   font-weight: 800;
@@ -815,7 +815,7 @@ body.phone {
   padding: 18px 16px;
   font-size: var(--fs-sub);
   font-weight: 700;
-  border-radius: 14px;
+  border-radius: var(--r-card);
   border: 2px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.08);
   color: var(--ink);
@@ -828,7 +828,7 @@ body.phone {
   padding: 18px 16px;
   font-size: var(--fs-head);
   font-weight: 800;
-  border-radius: 14px;
+  border-radius: var(--r-card);
   border: none;
   color: #12000c;
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
@@ -866,7 +866,7 @@ body.phone {
   gap: 8px;
   width: 100%;
   padding: 12px;
-  border-radius: 16px;
+  border-radius: var(--r-card);
   border: 2px solid var(--panel-line);
   background: var(--panel);
   color: var(--ink);
@@ -890,7 +890,7 @@ body.phone {
   flex: 0 0 auto;
   width: 32px; height: 32px;
   display: grid; place-items: center;
-  border-radius: 10px;
+  border-radius: var(--r-field);
   font-weight: 900;
   color: #0a0a12;
   font-size: var(--fs-field);
@@ -915,7 +915,7 @@ body.phone {
   align-items: center;
   gap: 12px;
 }
-.phone .timer .bar { flex: 1 1 auto; height: 10px; border-radius: 999px; background: rgba(255,255,255,0.12); overflow: hidden; }
+.phone .timer .bar { flex: 1 1 auto; height: 10px; border-radius: var(--r-pill); background: rgba(255,255,255,0.12); overflow: hidden; }
 .phone .timer .bar span { display: block; height: 100%; width: 100%; transform-origin: left center; background: linear-gradient(90deg, var(--good), var(--gold) 55%, var(--hot)); }
 .phone .timer .num { font-size: 26px; font-weight: 900; font-variant-numeric: tabular-nums; min-width: 1.8em; text-align: right; }
 .phone .timer .num.urgent { color: var(--bad); }
@@ -949,7 +949,7 @@ body.phone {
 
 /* ---- result panel */
 .result {
-  border-radius: 18px;
+  border-radius: var(--r-card);
   padding: 22px 18px;
   text-align: center;
   border: 2px solid var(--panel-line);
@@ -960,12 +960,12 @@ body.phone {
 .result .big { font-size: 34px; font-weight: 900; margin-bottom: 6px; }
 .result .pts { font-size: 46px; font-weight: 900; color: var(--gold); font-variant-numeric: tabular-nums; }
 .result .sub { color: var(--ink-dim); font-size: var(--fs-field); margin-top: 6px; }
-.result .bonus { display: inline-block; margin-top: 10px; padding: 6px 14px; border-radius: 999px; background: var(--gold); color: #1a1200; font-weight: 900; font-size: var(--fs-body); }
+.result .bonus { display: inline-block; margin-top: 10px; padding: 6px 14px; border-radius: var(--r-pill); background: var(--gold); color: #1a1200; font-weight: 900; font-size: var(--fs-body); }
 
 .mini-board { display: grid; gap: 8px; }
 .mini-row {
   display: flex; align-items: center; gap: 12px;
-  padding: 12px 14px; border-radius: 12px;
+  padding: 12px 14px; border-radius: var(--r-card);
   background: var(--panel); border: 1px solid var(--panel-line);
   font-weight: 700; font-size: var(--fs-field);
 }
@@ -1031,7 +1031,7 @@ body.host::after { display: none; }
 .host .bar .clock.urgent { color: var(--bad); }
 
 .panel {
-  border-radius: 14px;
+  border-radius: var(--r-card);
   background: var(--panel);
   border: 1px solid var(--panel-line);
   padding: 14px;
@@ -1076,7 +1076,7 @@ body.host::after { display: none; }
 .keyrow {
   display: flex; align-items: center; gap: 10px;
   width: 100%; text-align: left;
-  padding: 10px 12px; border-radius: 10px;
+  padding: 10px 12px; border-radius: var(--r-field);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid transparent;
   color: var(--ink); font-family: inherit;
@@ -1093,7 +1093,7 @@ body.host::after { display: none; }
 .keyrow .caret.open { transform: rotate(180deg); }
 .keyrow .letter {
   width: 26px; height: 26px; flex: 0 0 auto;
-  display: grid; place-items: center; border-radius: 7px;
+  display: grid; place-items: center; border-radius: var(--r-field);
   font-weight: 900; font-size: var(--fs-note); color: #0a0a12; background: rgba(255,255,255,0.5);
 }
 .keyrow.is-correct { background: rgba(47, 224, 122, 0.2); border-color: var(--good); font-weight: 800; }
@@ -1106,7 +1106,7 @@ body.host::after { display: none; }
 /* Auto-play did not start it. Gold rather than red: the question is up, the
    night is fine, and all this means is "use your thumb". */
 .cue-failed {
-  margin-top: 8px; padding: 8px 10px; border-radius: 10px;
+  margin-top: 8px; padding: 8px 10px; border-radius: var(--r-field);
   background: rgba(255, 210, 63, 0.14);
   border: 1px solid rgba(255, 210, 63, 0.4);
   color: var(--gold); font-size: var(--fs-note); font-weight: 700;
@@ -1127,14 +1127,14 @@ body.host::after { display: none; }
 .actions .primary {
   grid-column: 1 / -1;
   padding: 20px; font-size: var(--fs-sub); font-weight: 900;
-  border: none; border-radius: 14px; cursor: pointer;
+  border: none; border-radius: var(--r-card); cursor: pointer;
   color: #12000c; background: linear-gradient(120deg, var(--hot), var(--hot-2));
   -webkit-tap-highlight-color: transparent;
 }
 .actions .primary:disabled { opacity: 0.45; }
 .actions .minor {
   padding: 13px 6px; font-size: var(--fs-note); font-weight: 800;
-  border-radius: 11px; cursor: pointer;
+  border-radius: var(--r-field); cursor: pointer;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--panel-line);
   color: var(--ink);
@@ -1151,7 +1151,7 @@ body.host::after { display: none; }
    text around them, not in a row of thumb targets. */
 .host .panel a.minor, .host .panel button.minor {
   text-decoration: none; display: inline-block;
-  padding: 9px 13px; border-radius: 10px; font-size: var(--fs-note); font-weight: 800;
+  padding: 9px 13px; border-radius: var(--r-field); font-size: var(--fs-note); font-weight: 800;
   font-family: inherit; cursor: pointer;
   background: rgba(255, 255, 255, 0.08); border: 1px solid var(--panel-line); color: var(--ink);
 }
@@ -1168,7 +1168,7 @@ body.host::after { display: none; }
 .plist { display: grid; gap: 6px; }
 .prow {
   display: flex; align-items: center; gap: 8px;
-  padding: 9px 10px; border-radius: 10px;
+  padding: 9px 10px; border-radius: var(--r-field);
   background: rgba(255, 255, 255, 0.05);
   font-size: var(--fs-ctl);
 }
@@ -1189,12 +1189,12 @@ body.host::after { display: none; }
 .keywho.wandered b { color: var(--gold); }
 .prow button {
   border: 1px solid var(--panel-line); background: rgba(255,255,255,0.06);
-  color: var(--ink); border-radius: 8px; padding: 5px 8px; font-size: var(--fs-note); font-weight: 800; cursor: pointer;
+  color: var(--ink); border-radius: var(--r-field); padding: 5px 8px; font-size: var(--fs-note); font-weight: 800; cursor: pointer;
 }
 
 .host .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .host select, .host input[type="text"], .host input[type="number"] {
-  padding: 10px; border-radius: 10px; font-size: var(--fs-ctl);
+  padding: 10px; border-radius: var(--r-field); font-size: var(--fs-ctl);
   background: rgba(255,255,255,0.08); color: var(--ink); border: 1px solid var(--panel-line);
 }
 .host .tiny { font-size: var(--fs-mini); color: var(--ink-dim); }
@@ -1203,7 +1203,7 @@ body.host::after { display: none; }
 .toast {
   position: fixed; left: 50%; bottom: 150px; transform: translateX(-50%);
   background: var(--ink); color: #0a0a12; font-weight: 800;
-  padding: 10px 18px; border-radius: 999px; z-index: 60; font-size: var(--fs-body);
+  padding: 10px 18px; border-radius: var(--r-pill); z-index: 60; font-size: var(--fs-body);
   box-shadow: var(--shadow);
 }
 
@@ -1250,7 +1250,7 @@ body.host::after { display: none; }
   left: 1vw;
   bottom: 1.2vh;
   padding: 0.6vh 1.1vw;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: rgba(0, 0, 0, 0.66);
   border: 1px solid rgba(255, 255, 255, 0.28);
   font-size: 1.7vh;
@@ -1279,7 +1279,7 @@ body.host::after { display: none; }
   display: block;
   width: 1vw;
   height: 20%;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: linear-gradient(120deg, var(--hot), var(--cool));
   animation: eq 1.15s ease-in-out infinite alternate;
   animation-delay: calc(var(--i) * -70ms);
@@ -1342,7 +1342,7 @@ body.editor::after { display: none; }
   color: var(--ink);
   background: rgba(255, 255, 255, 0.07);
   border: 1px solid var(--panel-line);
-  border-radius: 9px;
+  border-radius: var(--r-field);
   padding: 9px 11px;
 }
 .editor textarea { width: 100%; resize: vertical; line-height: 1.45; }
@@ -1361,14 +1361,14 @@ body.editor::after { display: none; }
 .round-head {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   padding: 14px 16px;
-  border-radius: 14px 14px 0 0;
+  border-radius: var(--r-card) 14px 0 0;
   background: linear-gradient(120deg, rgba(255, 46, 136, 0.2), rgba(75, 216, 255, 0.1));
   border: 1px solid var(--panel-line);
   border-bottom: none;
 }
 .round-head input.title { flex: 1 1 240px; font-weight: 800; font-size: var(--fs-lead); }
 .round-head .type-tag {
-  padding: 4px 11px; border-radius: 999px; font-size: var(--fs-tag); font-weight: 900;
+  padding: 4px 11px; border-radius: var(--r-pill); font-size: var(--fs-tag); font-weight: 900;
   letter-spacing: 0.12em; text-transform: uppercase; background: rgba(0,0,0,0.35);
 }
 
@@ -1433,7 +1433,7 @@ body.editor::after { display: none; }
 @media (max-width: 560px) { .opts { grid-template-columns: 1fr; } }
 .opt-row label {
   display: flex; align-items: center; gap: 7px;
-  padding: 8px 11px; border-radius: 9px; cursor: pointer;
+  padding: 8px 11px; border-radius: var(--r-field); cursor: pointer;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--panel-line);
   font-weight: 900; font-size: var(--fs-note);
@@ -1444,11 +1444,11 @@ body.editor::after { display: none; }
 
 .extra-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 9px; margin-top: 11px; }
 .extra-fields label { display: grid; gap: 5px; font-size: var(--fs-mini); color: var(--ink-dim); font-weight: 700; }
-.extra-fields.cue { padding: 11px; border-radius: 10px; background: rgba(255, 210, 63, 0.08); border: 1px solid rgba(255, 210, 63, 0.3); }
+.extra-fields.cue { padding: 11px; border-radius: var(--r-field); background: rgba(255, 210, 63, 0.08); border: 1px solid rgba(255, 210, 63, 0.3); }
 .extra-fields.cue > .note { grid-column: 1 / -1; font-size: var(--fs-mini); color: var(--gold); font-weight: 700; }
 
 .problems {
-  border-radius: 12px; padding: 14px 16px; margin-bottom: 18px;
+  border-radius: var(--r-card); padding: 14px 16px; margin-bottom: 18px;
   background: rgba(255, 77, 94, 0.14); border: 1px solid var(--bad);
 }
 .problems ul { margin: 8px 0 0; padding-left: 20px; }
@@ -1457,7 +1457,7 @@ body.editor::after { display: none; }
 
 .saved-flash {
   position: fixed; right: 20px; bottom: 20px; z-index: 60;
-  padding: 12px 20px; border-radius: 999px; font-weight: 900;
+  padding: 12px 20px; border-radius: var(--r-pill); font-weight: 900;
   background: var(--good); color: #04240f; box-shadow: var(--shadow);
 }
 
@@ -1511,7 +1511,7 @@ body.editor::after { display: none; }
   display: flex; flex-wrap: wrap; gap: 1vh 1vw; align-content: flex-start;
 }
 .called-chip {
-  padding: 1vh 1.3vw; border-radius: 12px;
+  padding: 1vh 1.3vw; border-radius: var(--r-card);
   background: var(--panel); border: 1px solid var(--panel-line);
   display: flex; flex-direction: column; gap: 0.2vh;
 }
@@ -1542,7 +1542,7 @@ body.bingo-card .bingo-call { margin-right: 72px; }
   position: relative;
   display: flex; flex-direction: column; justify-content: center; align-items: center;
   gap: 2px; padding: 6px 4px;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   border: 2px solid var(--panel-line);
   background: var(--panel);
   color: var(--ink);
@@ -1577,7 +1577,7 @@ body.bingo-card .bingo-call { margin-right: 72px; }
    lines rather than three, because the words are what matter here, not the
    tidiness of the grid. */
 .bingo-grid.cols-5 { gap: 4px; }
-.bingo-grid.cols-5 .bingo-cell { padding: 4px 2px; gap: 1px; border-radius: 9px; border-width: 1.5px; }
+.bingo-grid.cols-5 .bingo-cell { padding: 4px 2px; gap: 1px; border-radius: var(--r-field); border-width: 1.5px; }
 .bingo-grid.cols-5 .bingo-cell .bt { font-size: 10.5px; line-height: 1.1; -webkit-line-clamp: 4; }
 .bingo-grid.cols-5 .bingo-cell .ba { font-size: 8.5px; }
 .bingo-grid.cols-5 .bingo-cell .btick { font-size: 30px; }
@@ -1608,7 +1608,7 @@ body.bingo-card .bingo-call { margin-right: 72px; }
 
 .bingo-flash {
   position: fixed; left: 16px; right: 16px; bottom: 84px; z-index: 50;
-  padding: 16px; border-radius: 14px; text-align: center;
+  padding: 16px; border-radius: var(--r-card); text-align: center;
   font-weight: 900; font-size: var(--fs-lead);
   animation: popIn 300ms cubic-bezier(0.2, 1.2, 0.3, 1);
 }
@@ -1635,7 +1635,7 @@ body.bingo-card .bingo-call { margin-right: 72px; }
   gap: 0 6px;
   min-height: 52px;
   padding: 8px 10px;
-  border-radius: 10px;
+  border-radius: var(--r-field);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid transparent;
   color: var(--ink); text-align: left; cursor: pointer; width: 100%;
@@ -1681,14 +1681,14 @@ body.console::after { display: none; }
    "Change" came out as plain text sitting between two real buttons. */
 .console a.minor, .console button.minor, .console label.minor {
   text-decoration: none; display: inline-block;
-  padding: 9px 13px; border-radius: 10px; font-size: var(--fs-note); font-weight: 800;
+  padding: 9px 13px; border-radius: var(--r-field); font-size: var(--fs-note); font-weight: 800;
   font-family: inherit; cursor: pointer;
   background: rgba(255, 255, 255, 0.08); border: 1px solid var(--panel-line); color: var(--ink);
 }
 .console button.minor.danger { color: var(--bad); border-color: rgba(255, 77, 94, 0.4); }
 .console button.minor.danger:hover { background: rgba(255, 77, 94, 0.12); }
 .console button.minor:disabled { opacity: 0.6; cursor: default; }
-.console .panel { border-radius: 14px; background: var(--panel); border: 1px solid var(--panel-line); padding: 16px; margin-bottom: 24px; }
+.console .panel { border-radius: var(--r-card); background: var(--panel); border: 1px solid var(--panel-line); padding: 16px; margin-bottom: 24px; }
 /* The console's own override of the rule above — same change, same reason.
    See the note on `.panel h3`. */
 .console .panel h3 { margin: 0 0 12px; font-size: var(--fs-note); letter-spacing: 0; color: var(--ink); font-weight: 800; }
@@ -1701,7 +1701,7 @@ body.console::after { display: none; }
 .running-at { margin-top: 3px; font-size: var(--fs-note); font-weight: 700; color: var(--good); }
 /* The way you actually run the night, so it is a button and not a footnote. */
 .running-links .control-link {
-  border: none; border-radius: 10px; padding: 10px 16px;
+  border: none; border-radius: var(--r-field); padding: 10px 16px;
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
   color: #12000c; font-weight: 900; font-size: var(--fs-body);
   text-decoration: none; white-space: nowrap; cursor: pointer;
@@ -1770,7 +1770,7 @@ body.console::after { display: none; }
 .pack-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .pack-search {
   width: 190px; max-width: 42vw;
-  padding: 8px 12px; border-radius: 10px;
+  padding: 8px 12px; border-radius: var(--r-field);
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--panel-line);
   color: var(--ink); font: inherit; font-size: var(--fs-note);
@@ -1791,7 +1791,7 @@ body.console::after { display: none; }
 .pack-grid.dense .pack-card .go { padding: 8px; font-size: var(--fs-body); margin-top: 5px; }
 .pack-card {
   display: flex; flex-direction: column; gap: 5px;
-  padding: 16px; border-radius: 14px;
+  padding: 16px; border-radius: var(--r-card);
   background: var(--panel); border: 1px solid var(--panel-line);
 }
 .pack-card.broken { border-color: var(--bad); }
@@ -1813,7 +1813,7 @@ body.console::after { display: none; }
 .pack-card .played { margin-bottom: 6px; }
 .pack-card .go {
   width: 100%; margin-top: 8px;
-  border: none; border-radius: 10px; padding: 12px; cursor: pointer;
+  border: none; border-radius: var(--r-field); padding: 12px; cursor: pointer;
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
   color: #12000c; font-family: inherit; font-weight: 900; font-size: var(--fs-field); letter-spacing: 0.01em;
 }
@@ -1829,7 +1829,7 @@ body.console::after { display: none; }
 .gig-list { display: grid; gap: 7px; }
 .gig-head {
   display: flex; align-items: center; gap: 14px; flex-wrap: wrap; width: 100%;
-  padding: 12px 14px; border-radius: 10px; text-align: left; cursor: pointer;
+  padding: 12px 14px; border-radius: var(--r-field); text-align: left; cursor: pointer;
   background: var(--panel); border: 1px solid var(--panel-line); color: var(--ink);
   font-family: inherit; font-size: var(--fs-note);
 }
@@ -1861,12 +1861,12 @@ body.console::after { display: none; }
    fault, in a second place, that made the control view scroll sideways. */
 .gen-row input {
   flex: 1 1 auto; min-width: 0; padding: 13px 14px; font-size: var(--fs-field); font-weight: 600;
-  border-radius: 10px; border: 1px solid var(--panel-line);
+  border-radius: var(--r-field); border: 1px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.08); color: var(--ink);
 }
 .gen-row input:focus { outline: 2px solid var(--hot); outline-offset: 1px; }
 .gen-row .go {
-  border: none; border-radius: 10px; padding: 13px 22px; cursor: pointer; white-space: nowrap;
+  border: none; border-radius: var(--r-field); padding: 13px 22px; cursor: pointer; white-space: nowrap;
   background: linear-gradient(120deg, var(--hot), var(--hot-2)); color: #12000c; font-weight: 900; font-size: var(--fs-ctl);
 }
 .gen-row .go:disabled { opacity: 0.45; cursor: default; }
@@ -1880,7 +1880,7 @@ body.console::after { display: none; }
  */
 .gen-topical { display: flex; gap: 14px; align-items: flex-start; margin-top: 12px; flex-wrap: wrap; }
 .gen-topical .go {
-  border: 2px solid var(--hot); border-radius: 10px; padding: 11px 18px; cursor: pointer;
+  border: 2px solid var(--hot); border-radius: var(--r-field); padding: 11px 18px; cursor: pointer;
   background: transparent; color: var(--ink); font-weight: 900; font-size: var(--fs-body); white-space: nowrap;
 }
 .gen-topical .go:disabled { opacity: 0.45; cursor: default; }
@@ -1889,7 +1889,7 @@ body.console::after { display: none; }
 .gen-opts { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-top: 12px; font-size: var(--fs-note); color: var(--ink-dim); }
 .gen-opts label { display: flex; gap: 6px; align-items: center; font-weight: 700; }
 .gen-opts input, .gen-opts select {
-  padding: 6px 8px; border-radius: 8px; font-size: var(--fs-note);
+  padding: 6px 8px; border-radius: var(--r-field); font-size: var(--fs-note);
   background: rgba(255, 255, 255, 0.08); color: var(--ink); border: 1px solid var(--panel-line);
 }
 .gen-opts a { color: var(--cool); }
@@ -1899,15 +1899,15 @@ body.console::after { display: none; }
   max-height: 220px; overflow-y: auto;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: var(--fs-note); line-height: 1.7; color: var(--ink-dim);
-  padding: 11px 13px; border-radius: 10px; background: rgba(0, 0, 0, 0.35);
+  padding: 11px 13px; border-radius: var(--r-field); background: rgba(0, 0, 0, 0.35);
 }
 .gen-good {
-  margin-top: 10px; padding: 13px 15px; border-radius: 10px; font-size: var(--fs-ctl);
+  margin-top: 10px; padding: 13px 15px; border-radius: var(--r-field); font-size: var(--fs-ctl);
   background: rgba(47, 224, 122, 0.16); border: 1px solid var(--good);
 }
 .gen-good a { color: var(--good); font-weight: 800; }
 .gen-bad {
-  margin-top: 10px; padding: 13px 15px; border-radius: 10px; font-size: var(--fs-ctl);
+  margin-top: 10px; padding: 13px 15px; border-radius: var(--r-field); font-size: var(--fs-ctl);
   background: rgba(255, 77, 94, 0.14); border: 1px solid var(--bad);
 }
 .tiny.warn { margin-top: 10px; color: var(--gold); }
@@ -1962,7 +1962,7 @@ body.screen { cursor: none; }
   font-weight: 800;
   cursor: pointer;
   white-space: nowrap;
-  border-radius: 10px 10px 0 0;
+  border-radius: var(--r-field) 10px 0 0;
   transition: color 160ms, background 160ms, border-color 160ms;
 }
 .tab:hover { color: var(--ink); background: rgba(255, 255, 255, 0.04); }
@@ -1977,7 +1977,7 @@ body.screen { cursor: none; }
   min-width: 22px;
   height: 22px;
   padding: 0 6px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: rgba(255, 255, 255, 0.12);
   font-size: var(--fs-mini);
   font-weight: 900;
@@ -2023,7 +2023,7 @@ body.screen { cursor: none; }
 .pack-actions > * {
   display: grid; place-items: center;
   min-height: 36px; padding: 0 10px;
-  border-radius: 10px;
+  border-radius: var(--r-field);
   font-family: inherit; font-size: var(--fs-note); font-weight: 800; line-height: 1;
   text-decoration: none; cursor: pointer;
   color: var(--ink);
@@ -2063,7 +2063,7 @@ body.screen { cursor: none; }
   width: min(860px, 100%);
   max-height: 88vh;
   display: flex; flex-direction: column;
-  border-radius: 16px;
+  border-radius: var(--r-card);
   background: #12121e;
   border: 1px solid var(--panel-line);
   box-shadow: var(--shadow);
@@ -2100,7 +2100,7 @@ body.screen { cursor: none; }
 .pv-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-left: calc(1.7em + 9px); }
 .pv-opt {
   display: flex; align-items: center; gap: 8px;
-  padding: 6px 9px; border-radius: 7px;
+  padding: 6px 9px; border-radius: var(--r-field);
   font-size: var(--fs-note);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid transparent;
@@ -2120,7 +2120,7 @@ body.screen { cursor: none; }
 .pv-cue { color: var(--gold); }
 
 .pv-tracks { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 4px; }
-.pv-track { display: flex; align-items: baseline; gap: 8px; padding: 6px 9px; border-radius: 7px; background: rgba(255,255,255,0.04); font-size: var(--fs-note); }
+.pv-track { display: flex; align-items: baseline; gap: 8px; padding: 6px 9px; border-radius: var(--r-field); background: rgba(255,255,255,0.04); font-size: var(--fs-note); }
 .pv-track .pv-tt { font-weight: 700; }
 .pv-track .pv-ta { margin-left: auto; color: var(--ink-dim); font-size: var(--fs-mini); }
 
@@ -2145,7 +2145,7 @@ button.pack-title:hover::after { opacity: 1; }
 }
 
 .pv-warn {
-  margin-bottom: 16px; padding: 13px 15px; border-radius: 11px;
+  margin-bottom: 16px; padding: 13px 15px; border-radius: var(--r-field);
   background: rgba(255, 210, 63, 0.12); border: 1px solid rgba(255, 210, 63, 0.5);
   font-size: var(--fs-body); line-height: 1.55;
 }
@@ -2170,7 +2170,7 @@ button.pack-title:hover::after { opacity: 1; }
 .pv-tick {
   flex: 0 0 auto; cursor: pointer;
   font: inherit; font-size: var(--fs-mini); font-weight: 700;
-  padding: 4px 11px; border-radius: 999px;
+  padding: 4px 11px; border-radius: var(--r-pill);
   color: var(--ink); background: rgba(255, 255, 255, 0.09);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
@@ -2198,7 +2198,7 @@ button.pack-title:hover::after { opacity: 1; }
   gap: 10px;
   text-decoration: none;
   color: var(--ink);
-  border-radius: 10px;
+  border-radius: var(--r-field);
   padding: 4px 8px 4px 4px;
   margin-left: -4px;
   transition: background 160ms;
@@ -2283,7 +2283,7 @@ button.pack-title:hover::after { opacity: 1; }
 .topnav { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
 .topnav a {
   padding: 8px 14px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   border: 1px solid var(--panel-line);
   color: var(--ink-dim);
   text-decoration: none;
@@ -2442,7 +2442,7 @@ input.sheet-title {
   color: var(--ink);
   background: none;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--r-field);
   padding: 3px 7px;
   margin: 0 0 3px -7px;
 }
@@ -2458,7 +2458,7 @@ input.pv-round-name {
   color: var(--ink);
   background: none;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: var(--r-field);
   padding: 3px 7px;
   margin-left: -7px;
 }
@@ -2466,7 +2466,7 @@ input.pv-round-name:hover { background: rgba(255, 255, 255, 0.06); }
 input.pv-round-name:focus { outline: none; border-color: var(--hot); background: rgba(255, 255, 255, 0.08); }
 
 .sheet-actions .go {
-  border: none; border-radius: 10px; padding: 9px 16px; cursor: pointer;
+  border: none; border-radius: var(--r-field); padding: 9px 16px; cursor: pointer;
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
   color: #12000c; font-weight: 900; font-size: var(--fs-note);
 }
@@ -2479,7 +2479,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   flex: 1 1 auto;
   text-align: center;
   padding: 11px 12px;
-  border-radius: 10px;
+  border-radius: var(--r-field);
   text-decoration: none;
   font-size: var(--fs-body);
   font-weight: 900;
@@ -2503,7 +2503,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
    open and sized to show a round's worth of tracks without scrolling. */
 #impText {
   width: 100%; margin: 10px 0; padding: 11px 13px;
-  border-radius: 10px; border: 1px solid var(--panel-line);
+  border-radius: var(--r-field); border: 1px solid var(--panel-line);
   background: rgba(0, 0, 0, 0.3); color: var(--ink);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: var(--fs-note); line-height: 1.6; resize: vertical;
@@ -2632,7 +2632,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   margin: 0;
   flex: 0 0 auto;
   width: 13vh;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   overflow: hidden;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--panel-line);
@@ -2653,7 +2653,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 }
 .keywho.shut { display: none; }
 .keywho span {
-  padding: 3px 8px; border-radius: 999px;
+  padding: 3px 8px; border-radius: var(--r-pill);
   font-size: var(--fs-mini); font-weight: 700;
   background: rgba(255, 255, 255, 0.07); color: var(--ink-dim);
   border: 1px solid var(--panel-line);
@@ -2702,7 +2702,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .chat-badge {
   position: absolute; top: -4px; right: -4px;
   min-width: 20px; height: 20px; padding: 0 5px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--hot); color: #fff;
   font-size: var(--fs-tag); font-weight: 900; line-height: 20px;
 }
@@ -2718,7 +2718,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   max-height: 62vh;
   background: var(--panel-solid, rgba(16, 16, 26, 0.98));
   border-top: 1px solid var(--panel-line);
-  border-radius: 16px 16px 0 0;
+  border-radius: var(--r-card) 16px 0 0;
   box-shadow: 0 -14px 40px rgba(0, 0, 0, 0.6);
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
@@ -2726,13 +2726,13 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .chat-tabs { display: flex; gap: 6px; flex: 1 1 auto; min-width: 0; overflow-x: auto; }
 .chat-tab {
   flex: 0 0 auto;
-  padding: 6px 11px; border-radius: 999px;
+  padding: 6px 11px; border-radius: var(--r-pill);
   border: 1px solid var(--panel-line); background: none;
   color: var(--ink-dim); font-size: var(--fs-mini); font-weight: 800;
   cursor: pointer; white-space: nowrap;
 }
 .chat-tab.here { background: var(--gold); border-color: var(--gold); color: #12000c; }
-.chat-dot { background: var(--hot); color: #fff; border-radius: 999px; padding: 0 5px; font-size: var(--fs-tag); }
+.chat-dot { background: var(--hot); color: #fff; border-radius: var(--r-pill); padding: 0 5px; font-size: var(--fs-tag); }
 .chat-x { flex: 0 0 auto; background: none; border: 0; color: var(--ink-dim); font-size: var(--fs-head); cursor: pointer; padding: 4px 6px; }
 
 .chat-list { flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; padding: 10px; display: grid; gap: 7px; align-content: start; }
@@ -2744,7 +2744,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .chat-quick { display: flex; gap: 6px; padding: 8px 10px 0; overflow-x: auto; }
 .chat-emoji {
   flex: 0 0 auto; width: 40px; height: 40px;
-  border-radius: 10px; border: 1px solid var(--panel-line);
+  border-radius: var(--r-field); border: 1px solid var(--panel-line);
   background: none; font-size: 20px; line-height: 1; cursor: pointer;
 }
 .chat-emoji:active { transform: scale(0.92); }
@@ -2752,7 +2752,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .chat-say { display: flex; gap: 8px; padding: 8px 10px 10px; min-width: 0; }
 .chat-say input { flex: 1 1 auto; min-width: 0; }
 .chat-say.off input { opacity: 0.45; }
-.chat-send { flex: 0 0 auto; padding: 0 16px; border-radius: 10px; border: 0; font-weight: 900; background: linear-gradient(120deg, var(--hot), var(--hot-2)); color: #12000c; cursor: pointer; }
+.chat-send { flex: 0 0 auto; padding: 0 16px; border-radius: var(--r-field); border: 0; font-weight: 900; background: linear-gradient(120deg, var(--hot), var(--hot-2)); color: #12000c; cursor: pointer; }
 .chat-send:disabled { opacity: 0.4; }
 .chat-why { padding: 0 12px 10px; text-align: center; }
 
@@ -2766,7 +2766,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   max-height: 92vh; overflow-y: auto;
   background: var(--bg-2);
   border: 1px solid var(--panel-line);
-  border-radius: 20px 20px 0 0;
+  border-radius: var(--r-card) 20px 0 0;
   padding: 16px;
 }
 .cam-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -2778,7 +2778,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .cam-pick {
   display: block; margin-top: 12px; padding: 18px;
   text-align: center; font-weight: 800; cursor: pointer;
-  border: 2px dashed var(--panel-line); border-radius: 14px;
+  border: 2px dashed var(--panel-line); border-radius: var(--r-card);
 }
 .cam-stage { margin-top: 12px; }
 /* SQUARE, because the photo is cropped square before it ever gets here — see
@@ -2788,7 +2788,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .cam-canvas {
   width: 100%; aspect-ratio: 1; max-height: 44vh;
   display: block; margin: 0 auto;
-  object-fit: contain; border-radius: 14px; background: #000;
+  object-fit: contain; border-radius: var(--r-card); background: #000;
 }
 
 /* The looks. All of them on screen at once, each showing what it does to
@@ -2803,7 +2803,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .cam-send {
   width: 100%; margin-top: 12px; padding: 16px; cursor: pointer;
   font: inherit; font-size: var(--fs-lead); font-weight: 900;
-  border: 0; border-radius: 14px; color: #fff;
+  border: 0; border-radius: var(--r-card); color: #fff;
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
 }
 .cam-send:disabled { opacity: 0.6; }
@@ -2819,7 +2819,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 }
 .host-photo {
   position: relative; padding: 0; cursor: pointer;
-  border: 1px solid var(--panel-line); border-radius: 10px;
+  border: 1px solid var(--panel-line); border-radius: var(--r-field);
   overflow: hidden; background: none;
 }
 .host-photo img { display: block; width: 100%; height: 84px; object-fit: cover; }
@@ -2831,7 +2831,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .host-photo .bin-badge {
   position: absolute; top: 5px; right: 5px;
   display: grid; place-items: center;
-  width: 26px; height: 26px; border-radius: 8px;
+  width: 26px; height: 26px; border-radius: var(--r-field);
   color: #fff; background: rgba(214, 42, 62, 0.92);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
@@ -2852,7 +2852,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   align-self: flex-start;
   margin-bottom: 1.6vh;
   padding: 0.6vh 1.4vw;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   font-size: 2.4vh;
   font-weight: 800;
   background: rgba(75, 216, 255, 0.16);
@@ -2883,7 +2883,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   padding: 18px;
   cursor: pointer;
   font: inherit; font-size: var(--fs-head); font-weight: 900;
-  color: #fff; border: 0; border-radius: 16px;
+  color: #fff; border: 0; border-radius: var(--r-card);
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
 }
 .lock-btn:disabled {
@@ -2991,7 +2991,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 /* Big enough to scan from a table at the back with a phone held badly. */
 .ad-qr {
   flex: 0 0 auto;
-  background: #fff; border-radius: 20px; padding: 1.8vh;
+  background: #fff; border-radius: var(--r-card); padding: 1.8vh;
   display: grid; justify-items: center; gap: 1vh;
   box-shadow: var(--shadow);
 }
@@ -3009,13 +3009,13 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 }
 .ad-slide {
   padding: 14px; margin-bottom: 12px;
-  border-radius: 12px; background: var(--panel);
+  border-radius: var(--r-card); background: var(--panel);
   border: 1px solid var(--panel-line);
 }
 .ad-slide-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .ad-slide label { display: block; margin: 10px 0 4px; color: var(--ink-dim); }
 .ad-slide input {
-  width: 100%; padding: 10px 11px; border-radius: 9px;
+  width: 100%; padding: 10px 11px; border-radius: var(--r-field);
   background: rgba(0, 0, 0, 0.3); color: var(--ink);
   border: 1px solid var(--panel-line); font: inherit; font-size: var(--fs-body);
 }
@@ -3029,14 +3029,14 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .ad-pick {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   width: 100%; margin-bottom: 8px; padding: 14px;
-  border-radius: 12px; cursor: pointer; text-align: left;
+  border-radius: var(--r-card); cursor: pointer; text-align: left;
   background: rgba(255, 255, 255, 0.07); color: var(--ink);
   border: 1px solid var(--panel-line); font: inherit;
 }
 .ad-pick-head { font-weight: 700; font-size: var(--fs-ctl); }
 .ad-pick-tag {
   flex: 0 0 auto; font-size: var(--fs-tag); font-weight: 800; letter-spacing: 0.1em;
-  padding: 3px 8px; border-radius: 999px;
+  padding: 3px 8px; border-radius: var(--r-pill);
   background: rgba(75, 216, 255, 0.2); color: var(--cool);
 }
 
@@ -3054,7 +3054,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 }
 .cphoto {
   margin: 0; position: relative; overflow: hidden;
-  border-radius: 12px; background: var(--panel);
+  border-radius: var(--r-card); background: var(--panel);
   border: 1px solid var(--panel-line);
 }
 .cphoto img { display: block; width: 100%; height: 150px; object-fit: cover; }
@@ -3068,7 +3068,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   content: 'not filed';
   position: absolute; top: 8px; right: 8px;
   font-size: var(--fs-tag); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
-  padding: 3px 7px; border-radius: 999px;
+  padding: 3px 7px; border-radius: var(--r-pill);
   background: rgba(255, 210, 63, 0.9); color: #221a00;
 }
 .cphoto-acts {
@@ -3079,7 +3079,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .cphoto:hover .cphoto-acts, .cphoto:focus-within .cphoto-acts { opacity: 1; }
 .cphoto-acts button {
   cursor: pointer; font: inherit; font-size: var(--fs-mini); font-weight: 700;
-  padding: 6px 12px; border-radius: 999px;
+  padding: 6px 12px; border-radius: var(--r-pill);
   color: var(--ink); background: rgba(10, 10, 18, 0.86);
   border: 1px solid var(--panel-line);
 }
@@ -3102,7 +3102,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   top: 8.5vh; right: 2.2vw;
   display: flex; align-items: center; gap: 1vw;
   padding: 1.1vh 1.2vw;
-  border-radius: 16px;
+  border-radius: var(--r-card);
   background: rgba(255, 255, 255, 0.94);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
   animation: pop 400ms cubic-bezier(0.2, 1.4, 0.4, 1);
@@ -3136,7 +3136,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   margin-left: 8px;
   padding: 3px 10px;
   border: 1px solid var(--panel-line);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: rgba(255, 255, 255, 0.06);
   color: var(--ink);
   font: inherit;
@@ -3196,7 +3196,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   flex: 0 0 auto;
   display: grid; place-items: center;
   width: 2em; height: 2em;
-  border-radius: 14px;
+  border-radius: var(--r-card);
   background: var(--good);
   color: #06110a;
   font-weight: 900;
@@ -3204,7 +3204,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .answer-said .answer-words { font-weight: 900; }
 .screen .answer-said { font-size: 4.6vh; }
 .host .answer-said { font-size: var(--fs-sub); margin: 4px 0 10px; }
-.host .answer-said .answer-letter { border-radius: 10px; }
+.host .answer-said .answer-letter { border-radius: var(--r-field); }
 
 /* The phone's keyboard. Five across, not nine like the projector: nine keys on
    a 320px phone is 28 pixels each, which nobody hits in a dark pub against a
@@ -3234,7 +3234,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   text-align: center;
   font-size: clamp(20px, 7vw, 34px);
   font-weight: 900;
-  border-radius: 12px;
+  border-radius: var(--r-card);
 }
 /* Z sits on its own on the last row. Left where the A above it is rather than
    stretched across five columns — a key five times the width of every other
@@ -3253,7 +3253,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   border: 1px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.04);
   cursor: pointer;
@@ -3312,7 +3312,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
      picture through is a tile that is not covering anything. */
   background: #14131f;
   border: 1px solid var(--panel-line);
-  border-radius: 6px;
+  border-radius: var(--r-field);
   transition: opacity 420ms ease, transform 420ms ease;
 }
 .tile-grid i.gone { opacity: 0; transform: scale(0.82); }
@@ -3345,7 +3345,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   gap: 12px;
   flex-wrap: wrap;
   padding: 12px 14px;
-  border-radius: 14px;
+  border-radius: var(--r-card);
   border: 1px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.04);
   margin-bottom: 8px;
@@ -3359,7 +3359,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: rgba(255, 255, 255, 0.09);
   color: var(--ink-dim);
 }
@@ -3378,7 +3378,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 10px 14px;
   padding: 14px;
-  border-radius: 14px;
+  border-radius: var(--r-card);
   border: 1px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.03);
 }
@@ -3408,7 +3408,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   border: 1px solid var(--panel-line);
 }
 .inv-cust > div { flex: 1 1 auto; min-width: 0; }
@@ -3461,7 +3461,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .acct-toggle {
   display: flex; align-items: flex-start; gap: 12px;
   padding: 11px 14px;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   border: 1px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.04);
   cursor: pointer;
@@ -3483,7 +3483,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   flex: 0 0 auto;
   display: grid; place-items: center;
   width: 30px; height: 30px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   border: 1px dashed var(--panel-line);
   color: var(--ink-dim);
   font-weight: 900; font-size: var(--fs-ctl); line-height: 1;
@@ -3515,7 +3515,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .tier-yours, .tier-price {
   margin-left: auto;
   font-size: var(--fs-tag); letter-spacing: 0.12em; text-transform: uppercase; font-weight: 800;
-  padding: 3px 9px; border-radius: 999px;
+  padding: 3px 9px; border-radius: var(--r-pill);
 }
 .tier-yours { background: rgba(47, 224, 122, 0.18); color: var(--good); }
 .tier-price { background: rgba(255, 255, 255, 0.08); color: var(--ink-dim); letter-spacing: 0.04em; text-transform: none; }
@@ -3547,7 +3547,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .scheme-swatch {
   display: flex; align-items: center; gap: 9px;
   padding: 8px 14px 8px 9px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   border: 1px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.05);
   color: var(--ink-dim);
@@ -3942,7 +3942,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .sign-in label { display: grid; gap: 5px; font-size: var(--fs-note); font-weight: 700; color: var(--ink-dim); }
 .sign-in input {
   padding: 13px;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   border: 1px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.06);
   color: var(--ink);
@@ -3953,7 +3953,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .sign-in button.go {
   padding: 13px;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
   color: #12000c;
   font: inherit;
@@ -3964,7 +3964,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .sign-in button.go:disabled { opacity: 0.6; cursor: default; }
 .sign-in-problem:not(:empty) {
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--r-field);
   background: rgba(255, 77, 94, 0.14);
   border: 1px solid rgba(255, 77, 94, 0.4);
   color: var(--ink);
@@ -4019,7 +4019,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   margin: 0;
   padding: 1.6vh 1.6vh 0;
   background: #f7f5ef;
-  border-radius: 4px;
+  border-radius: var(--r-field);
   box-shadow: 0 30px 90px rgba(0, 0, 0, 0.75), 0 2px 0 rgba(255, 255, 255, 0.6) inset;
   transform: rotate(var(--tilt, 0deg));
   animation: photo-big-in 520ms cubic-bezier(0.2, 1.1, 0.4, 1);
@@ -4092,7 +4092,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
    changes down the tile, no flat colour can hide across the whole of it. */
 .cam-prop {
   padding: 6px 3px 4px;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   border: 1px solid var(--panel-line);
   background: linear-gradient(160deg, #b6bccb 0%, #8b91a6 55%, #6f7689 100%);
   cursor: pointer;
@@ -4155,7 +4155,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .cam-photo-tools { display: flex; justify-content: center; margin: 8px 0 2px; }
 .cam-flip {
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   border: 1px solid var(--panel-line);
   background: none;
   color: var(--ink-dim);
@@ -4174,7 +4174,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .cam-props-season { margin-bottom: 10px; }
 .cam-undo {
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   border: 1px solid var(--panel-line);
   background: none;
   color: var(--ink-dim);
@@ -4228,7 +4228,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   position: absolute;
   inset: 0;
   z-index: -1;
-  border-radius: 10px;
+  border-radius: var(--r-field);
   border: 1px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.06);
 }
@@ -4251,7 +4251,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
    the gradient is added only where it can be drawn as a ring. */
 .cam-guide {
   position: relative;
-  border-radius: 14px;
+  border-radius: var(--r-card);
   padding: 10px;
   margin: 14px 0 10px;
 }
@@ -4319,7 +4319,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   margin-top: 12px;
   width: 100%;
   padding: 9px 12px;
-  border-radius: 10px;
+  border-radius: var(--r-field);
   border: 1px dashed var(--panel-line);
   background: none;
   color: var(--ink-dim);
@@ -4363,7 +4363,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 }
 .acting-bar button {
   padding: 5px 12px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   border: 1px solid rgba(255, 210, 63, 0.6);
   background: none;
   color: var(--gold);
@@ -4384,7 +4384,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   align-items: center;
   gap: 3px;
   padding: 3px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--panel-line);
   flex: 0 0 auto;
@@ -4392,7 +4392,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .hat-switch .hat-half {
   padding: 7px 14px;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: none;
   color: var(--ink-dim);
   font: inherit;
@@ -4428,7 +4428,7 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .tier-preview .tier-half {
   min-width: 24px;
   padding: 5px 6px;
-  border: none; border-radius: 999px;
+  border: none; border-radius: var(--r-pill);
   background: none; color: var(--ink-dim);
   font: inherit; font-size: var(--fs-tag); font-weight: 800;
   cursor: pointer;
@@ -4468,7 +4468,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .support-still {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   margin-top: 10px; padding: 10px 14px;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   border: 1px solid rgba(255, 210, 63, 0.5);
   background: rgba(255, 210, 63, 0.1);
   font-size: var(--fs-note);
@@ -4483,7 +4483,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 }
 .sugg-text {
   width: 100%; margin-top: 10px; padding: 11px 13px;
-  border-radius: 12px; border: 1px solid var(--panel-line);
+  border-radius: var(--r-card); border: 1px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.05); color: var(--ink);
   font: inherit; font-size: var(--fs-body); resize: vertical;
 }
@@ -4492,7 +4492,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    no generic rule — so this button needs its own or it draws as the browser's
    default grey, which reads as disabled next to the lit kind chips. */
 .sugg-send {
-  border: none; border-radius: 10px; padding: 11px 20px; cursor: pointer;
+  border: none; border-radius: var(--r-field); padding: 11px 20px; cursor: pointer;
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
   color: #12000c; font-family: inherit; font-weight: 900; font-size: var(--fs-ctl);
 }
@@ -4504,7 +4504,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    disappear, so the list still shows the shape of what has been dealt with. */
 .sugg-item {
   padding: 14px 16px; margin-bottom: 10px;
-  border-radius: 14px;
+  border-radius: var(--r-card);
   border: 1px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.04);
 }
@@ -4513,7 +4513,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .sugg-said { margin-top: 7px; font-size: var(--fs-ctl); line-height: 1.5; }
 .sugg-kind-tag {
   font-size: var(--fs-tag); font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase;
-  padding: 3px 8px; border-radius: 999px;
+  padding: 3px 8px; border-radius: var(--r-pill);
   background: rgba(255, 255, 255, 0.1); color: var(--ink-dim);
 }
 /* Broken is the one worth spotting from across the page — it is the only kind
@@ -4534,13 +4534,13 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .sugg-compose { margin-top: 11px; }
 .sugg-draft {
   width: 100%; padding: 11px 13px;
-  border-radius: 12px; border: 1px solid var(--panel-line);
+  border-radius: var(--r-card); border: 1px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.05); color: var(--ink);
   font: inherit; font-size: var(--fs-body); resize: vertical;
 }
 .sugg-draft:focus { outline: none; border-color: var(--hot); }
 .sugg-compose .go {
-  border: none; border-radius: 10px; padding: 10px 18px; cursor: pointer;
+  border: none; border-radius: var(--r-field); padding: 10px 18px; cursor: pointer;
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
   color: #12000c; font-family: inherit; font-weight: 900; font-size: var(--fs-body);
 }
@@ -4569,7 +4569,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .house-note { margin: 8px 0; max-width: 720px; line-height: 1.55; }
 .house-text {
   width: 100%; padding: 11px 13px;
-  border-radius: 12px; border: 1px solid var(--panel-line);
+  border-radius: var(--r-card); border: 1px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.05); color: var(--ink);
   font: inherit; font-size: var(--fs-note); resize: vertical;
 }
@@ -4597,7 +4597,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   text-transform: uppercase;
   color: #ffc85a;
   border: 1px solid rgba(255, 200, 90, 0.45);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   padding: 1px 7px;
   pointer-events: none;
 }
@@ -4617,7 +4617,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   display: inline-block;
   align-self: flex-start;
   margin: 12px 0 4px;
-  border-radius: 10px;
+  border-radius: var(--r-field);
   padding: 11px 20px;
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
   color: #12000c;
@@ -4647,7 +4647,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .own-fig {
   background: var(--panel);
   border: 1px solid var(--panel-line);
-  border-radius: 12px;
+  border-radius: var(--r-card);
   padding: 14px;
 }
 .own-fig b { display: block; font-size: 26px; font-weight: 900; line-height: 1.1; }
@@ -4666,7 +4666,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .budget-bar {
   margin-top: 12px;
   height: 12px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--panel);
   border: 1px solid var(--panel-line);
   overflow: hidden;
@@ -4674,7 +4674,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .budget-bar span {
   display: block;
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: linear-gradient(90deg, var(--hot, #ff2e88), var(--hot-2, #ff8a3d));
 }
 .budget-bar.close span { background: var(--gold); }
@@ -4689,7 +4689,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   color: inherit;
   background: var(--panel);
   border: 1px solid var(--panel-line);
-  border-radius: 8px;
+  border-radius: var(--r-field);
 }
 
 /* One job's share of the bill, under its name. Thin on purpose — it is a sense
@@ -4698,12 +4698,12 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   margin-top: 6px;
   height: 5px;
   max-width: 380px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--panel-line);
   overflow: hidden;
 }
 .job-bar span {
-  display: block; height: 100%; border-radius: 999px;
+  display: block; height: 100%; border-radius: var(--r-pill);
   background: linear-gradient(90deg, var(--hot, #ff2e88), var(--hot-2, #ff8a3d));
 }
 .own-row-num .tiny { display: block; opacity: 0.7; font-weight: 600; }
@@ -4714,7 +4714,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   padding: 10px 12px;
   background: var(--panel);
   border: 1px solid var(--panel-line);
-  border-radius: 10px;
+  border-radius: var(--r-field);
 }
 .own-row-main { min-width: 0; }
 .own-row-num { flex: 0 0 auto; text-align: right; white-space: nowrap; }
@@ -4722,11 +4722,11 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .own-row.live { border-color: rgba(255, 200, 90, 0.5); }
 .own-live { color: #ffc85a; font-weight: 900; font-size: var(--fs-note); }
 .own-code {
-  margin-left: 8px; padding: 1px 7px; border-radius: 6px;
+  margin-left: 8px; padding: 1px 7px; border-radius: var(--r-field);
   background: rgba(255,255,255,0.08); font-weight: 900; letter-spacing: 0.08em; font-size: var(--fs-mini);
 }
 .own-flag {
-  margin-left: 8px; padding: 1px 7px; border-radius: 999px; font-size: var(--fs-tag);
+  margin-left: 8px; padding: 1px 7px; border-radius: var(--r-pill); font-size: var(--fs-tag);
   background: rgba(255, 200, 90, 0.18); color: #ffc85a;
 }
 .own-flag.bad { background: rgba(255, 90, 90, 0.18); color: var(--bad); }
@@ -4753,7 +4753,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .shop-price { font-size: var(--fs-sub); font-weight: 900; opacity: 1; margin-top: 4px; }
 .pack-card.locked .go.buy {
   width: 100%; margin-top: 10px;
-  border: none; border-radius: 10px; padding: 11px; cursor: pointer;
+  border: none; border-radius: var(--r-field); padding: 11px; cursor: pointer;
   /* Not the app's own red-into-orange: that gradient is Launch, and one shape
      and one colour for "start the night" is worth more than a loud shop. */
   background: rgba(255,255,255,0.1); color: var(--ink);
@@ -4799,7 +4799,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .panel.ask-pack { margin-top: 18px; }
 .panel.ask-pack h3 { margin-bottom: 4px; }
 .panel.ask-pack textarea {
-  width: 100%; margin-top: 10px; padding: 10px; border-radius: 10px;
+  width: 100%; margin-top: 10px; padding: 10px; border-radius: var(--r-field);
   background: var(--panel-2, rgba(255,255,255,0.04)); color: var(--ink);
   border: 1px solid var(--panel-line); font: inherit; font-size: var(--fs-body); resize: vertical;
 }
@@ -4807,7 +4807,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 /* Every .go rule in this stylesheet is panel-scoped, so a new panel gets a
  * plain grey button unless it says otherwise. Same trap the own-packs link hit. */
 .panel.ask-pack .go {
-  border: none; border-radius: 10px; padding: 11px 20px; cursor: pointer; white-space: nowrap;
+  border: none; border-radius: var(--r-field); padding: 11px 20px; cursor: pointer; white-space: nowrap;
   background: linear-gradient(120deg, var(--hot), var(--hot-2)); color: #12000c; font-weight: 900; font-size: var(--fs-body);
 }
 .panel.ask-pack .go:disabled { opacity: 0.45; cursor: default; }
@@ -4820,7 +4820,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .panel.joinq { border-color: #ffc85a; }
 .panel.joinq h3 { color: #ffc85a; }
 .panel.joinq .go {
-  margin-top: 10px; width: 100%; border: none; border-radius: 10px; padding: 13px;
+  margin-top: 10px; width: 100%; border: none; border-radius: var(--r-field); padding: 13px;
   background: linear-gradient(120deg, var(--hot), var(--hot-2)); color: #12000c;
   font-weight: 900; font-size: var(--fs-field); cursor: pointer;
 }
@@ -4862,7 +4862,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .lb-text {
   width: 100%; padding: 13px 14px; font: inherit; font-size: var(--fs-lead);
   color: inherit; background: var(--panel); border: 1px solid var(--panel-line);
-  border-radius: 10px;
+  border-radius: var(--r-field);
 }
 .lb-text:focus { outline: none; border-color: var(--hot); }
 
@@ -4872,11 +4872,11 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 40;
   display: grid; gap: 2px; padding: 6px;
   background: var(--bg-2, #14141f); border: 1px solid var(--panel-line);
-  border-radius: 10px; box-shadow: var(--shadow);
+  border-radius: var(--r-field); box-shadow: var(--shadow);
 }
 .lb-hit {
   text-align: left; padding: 11px 12px; font: inherit; font-weight: 700;
-  color: inherit; background: none; border: none; border-radius: 8px; cursor: pointer;
+  color: inherit; background: none; border: none; border-radius: var(--r-field); cursor: pointer;
 }
 .lb-hit:hover, .lb-hit:focus { background: rgba(255, 255, 255, 0.09); outline: none; }
 
@@ -4900,7 +4900,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
  * out grey — which on the loudest control on the page reads as disabled. */
 .lb-go {
   width: 100%; padding: 18px; font-size: var(--fs-head); font-weight: 900;
-  border: none; border-radius: 12px; cursor: pointer;
+  border: none; border-radius: var(--r-card); cursor: pointer;
   font-family: inherit; letter-spacing: 0.01em; color: #12000c;
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
 }
@@ -4965,7 +4965,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .lb-venue-list { display: grid; gap: 2px; max-height: 220px; overflow-y: auto; }
 .lb-venue-hit {
   text-align: left; padding: 10px 12px; font: inherit; font-weight: 700;
-  color: inherit; background: none; border: none; border-radius: 8px; cursor: pointer;
+  color: inherit; background: none; border: none; border-radius: var(--r-field); cursor: pointer;
 }
 .lb-venue-hit:hover, .lb-venue-hit:focus { background: rgba(255, 255, 255, 0.09); outline: none; }
 .lb-venue-foot { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -5096,7 +5096,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .pic-lib summary { cursor: pointer; opacity: 0.8; }
 .lib-names { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .lib-name {
-  font-size: var(--fs-mini); font-weight: 700; padding: 4px 9px; border-radius: 999px;
+  font-size: var(--fs-mini); font-weight: 700; padding: 4px 9px; border-radius: var(--r-pill);
   background: var(--panel); border: 1px solid var(--panel-line);
 }
 /* A stand-in is not a drawing anybody paid for, so it reads quieter. */
@@ -5136,7 +5136,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .team-pick {
   display: grid; gap: 10px; justify-items: stretch;
   padding: 14px; margin-top: 6px;
-  border: 1px solid var(--panel-line); border-radius: 14px;
+  border: 1px solid var(--panel-line); border-radius: var(--r-card);
   background: var(--panel);
   min-width: 0;
 }
@@ -5148,7 +5148,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .team-opt {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   min-width: 0; padding: 11px 12px;
-  border: 1px solid var(--panel-line); border-radius: 11px;
+  border: 1px solid var(--panel-line); border-radius: var(--r-field);
   background: none; color: var(--ink);
   font-size: var(--fs-body); font-weight: 800; text-align: left;
   overflow-wrap: anywhere; cursor: pointer;
@@ -5158,7 +5158,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .team-new { display: flex; gap: 8px; min-width: 0; }
 .team-new input { flex: 1 1 auto; min-width: 0; }
 .team-add {
-  flex: 0 0 auto; padding: 0 16px; border: 0; border-radius: 10px;
+  flex: 0 0 auto; padding: 0 16px; border: 0; border-radius: var(--r-field);
   font-weight: 900; cursor: pointer;
   background: linear-gradient(120deg, var(--hot), var(--hot-2)); color: #12000c;
 }
@@ -5175,7 +5175,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .money-badge {
   flex: 0 0 auto;
   width: 34px; height: 34px;
-  border-radius: 9px;
+  border-radius: var(--r-field);
   border: 1px solid transparent;
   font-size: var(--fs-lead); font-weight: 900; line-height: 1;
   cursor: pointer;
@@ -5374,12 +5374,12 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
   display: block; margin: 0 auto 12px;
   max-height: 56px; max-width: 70%;
   object-fit: contain;
-  background: #fff; border-radius: 8px; padding: 6px;
+  background: #fff; border-radius: var(--r-field); padding: 6px;
 }
 .win-what { font-size: var(--fs-sub); font-weight: 900; margin: 6px 0 14px; }
 .win-qr {
   width: 100%; max-width: 220px; aspect-ratio: 1; display: block; margin: 0 auto;
-  border-radius: 10px; background: #fff; padding: 8px;
+  border-radius: var(--r-field); background: #fff; padding: 8px;
 }
 .win-code {
   margin-top: 10px; font-size: var(--fs-sub); font-weight: 900;
@@ -5394,7 +5394,7 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .v-rows { display: grid; gap: 8px; margin-top: 10px; }
 .v-row {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  padding: 10px 12px; border-radius: 10px;
+  padding: 10px 12px; border-radius: var(--r-field);
   background: rgba(255, 255, 255, 0.05); border: 1px solid var(--panel-line);
 }
 .v-row-who { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
@@ -5547,7 +5547,7 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
    a short history simply takes less room. */
 .heads-spark span {
   flex: 1 1 0; min-width: 0; max-width: 11px;
-  border-radius: 2px 2px 0 0; background: var(--hot); opacity: 0.45;
+  border-radius: var(--r-field) 2px 0 0; background: var(--hot); opacity: 0.45;
 }
 .heads-spark span:last-child { opacity: 1; }
 /* On a phone the row wraps, and a 132px block sitting on a line of its own
@@ -5599,7 +5599,7 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .demo-prize { display: flex; gap: 16px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
 .demo-qr {
   width: 160px; height: 160px; flex: 0 0 auto;
-  background: #fff; border-radius: 12px; padding: 8px;
+  background: #fff; border-radius: var(--r-card); padding: 8px;
 }
 .demo-side { display: grid; gap: 8px; min-width: 0; }
 .demo-side .tiny { word-break: break-all; }
@@ -5610,12 +5610,12 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .pv-pic { margin: 8px 0 10px; }
 .pv-pic-img {
   width: 120px; height: 120px; object-fit: cover;
-  border-radius: 10px; border: 1px solid var(--panel-line); display: block;
+  border-radius: var(--r-field); border: 1px solid var(--panel-line); display: block;
 }
 .pv-pic-note { margin-top: 6px; color: var(--gold); }
 .pv-pic-none {
   font-size: var(--fs-note); color: var(--ink-dim);
-  padding: 10px 12px; border-radius: 10px;
+  padding: 10px 12px; border-radius: var(--r-field);
   border: 1px dashed var(--panel-line);
 }
 
@@ -5626,7 +5626,7 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .prize-line {
   grid-column: 1 / -1;
   font-size: var(--fs-note); color: var(--ink-dim);
-  padding: 8px 10px; border-radius: 10px;
+  padding: 8px 10px; border-radius: var(--r-field);
   background: rgba(255, 210, 63, 0.08);
   border: 1px solid rgba(255, 210, 63, 0.3);
 }
@@ -5795,7 +5795,7 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
    here is what the winner sees rather than a preview that flatters it. */
 .venue-logo-pic {
   height: 40px; max-width: 120px; object-fit: contain;
-  background: #fff; border-radius: 6px; padding: 4px;
+  background: #fff; border-radius: var(--r-field); padding: 4px;
 }
 /* A `<label>` wrapping a hidden file input, so it needs the button's own
    cursor — nothing else makes it look pressable. */
@@ -5819,7 +5819,7 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .ad-pic-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
 .ad-pic {
   height: 56px; max-width: 160px; object-fit: contain;
-  background: #fff; border-radius: 6px; padding: 4px;
+  background: #fff; border-radius: var(--r-field); padding: 4px;
 }
 .ad-pic-pick { cursor: pointer; }
 
@@ -5847,7 +5847,7 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
    typing in, and a permanently loud red on every row would read as a warning
    about the prize rather than a way to remove it. */
 .reward-off {
-  flex: 0 0 auto; width: 30px; height: 30px; border-radius: 8px;
+  flex: 0 0 auto; width: 30px; height: 30px; border-radius: var(--r-field);
   background: none; border: 1px solid var(--panel-line); color: var(--ink-dim);
   font: inherit; font-size: var(--fs-note); cursor: pointer;
 }

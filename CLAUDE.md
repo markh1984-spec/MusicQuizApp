@@ -571,9 +571,23 @@ used on a gig day.
 
 ### One angle, three radii
 
-`120deg` for every gradient, and **6px / 12px / 999px** — a field, a card, a
+`120deg` for every gradient, and **10px / 14px / 999px** — a field, a card, a
 pill. Nothing else. Purely mechanical, no judgement calls, and it is most of
 why things looked slightly off.
+
+**THE NUMBERS MOVED TO MATCH THE APP, not the other way round.** They were
+written as 6/12/999 and the app never followed it — measured on 14 August
+2026, the sheet used **10px fifty times, 14px twenty-two, 12px twenty-three,
+6px five**, plus twenty-three strays at 2, 4, 7, 8, 9, 11, 16, 18, 20 and 26.
+So `--r-field: 6px` was a token almost nothing used and cards were split
+between two values. That is not a system with exceptions; it is a rule nobody
+was applying.
+
+Both fixes were rendered side by side on the real controls before choosing —
+tightening every field to 6px makes the buttons visibly harder than the cards
+holding them, which is the wrong direction for an app whose stated brand is
+soft and friendly. Adopting 10/14 is also the smaller change, because it is
+already what most of the app is.
 
 ### CAPITALS ARE FOR EMPHASIS, NOT FOR LABELLING
 
@@ -929,6 +943,14 @@ Full reasoning: **[`docs/artwork.md`](docs/artwork.md)**. The rules:
   on a phone; a paragraph costs him a round trip and a tap costs him nothing.
   Recommend one and say why — this is not a way of avoiding a view, it is a way
   of making his answer cheap.
+- **RENDER THE OPTIONS BEFORE ASKING HIM TO CHOOSE.** Set on 14 August 2026 in
+  his own words: *"before asking me to make general decisions about UI, can
+  you render examples to make my choice more informed"*. So a UI question
+  arrives WITH a picture of each option built from the app's own stylesheet —
+  not an ASCII sketch and not a description. It cost a few minutes on the
+  corner-radius decision and turned an argument about which numbers are
+  "correct" into a glance at four blocks. Build the mock from the real
+  `style.css` and the real markup, or the comparison is of something else.
 - **SHOW A SCREENSHOT FOR EVERY UI CHANGE. This is a rule, not a nicety** —
   set by the host on 14 August 2026: *"whenever you change the UI of anything
   in this app you MUST show me, since the UI of this app is extremely
