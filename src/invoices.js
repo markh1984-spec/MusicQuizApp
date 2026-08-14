@@ -38,6 +38,25 @@ import { safeLink } from './comeback.js';
 export const STATUSES = ['draft', 'sent', 'paid', 'cancelled'];
 
 /**
+ * HOW MANY PRIZES A VENUE MAY PUT UP.
+ *
+ * It was three, hard-coded in four places, because a pub quiz pays first,
+ * second and third. That is the common case and not the rule: the host's own
+ * correction is that a venue *"may have one, five, twenty, or whatever"* — a
+ * charity night hands out a table of raffle prizes, and a quiet Tuesday puts
+ * up one bar tab.
+ *
+ * So the list is whatever length the venue says, up to a backstop that exists
+ * only because every one of these is copied into the game state and then into
+ * the night's permanent archive. Twenty is past any real prize table and still
+ * nothing to store.
+ *
+ * The engine never knew about three: `issueVouchers` reads
+ * `rewards[position - 1]`, so it generalised the moment the caps moved.
+ */
+export const MAX_REWARDS = 20;
+
+/**
  * How big a venue logo may be, once the browser has shrunk it.
  *
  * 128px square is what a phone actually shows above a voucher, and a PNG that
@@ -400,7 +419,7 @@ export class Invoices {
        * something else entirely at another.
        */
       rewards: (Array.isArray(customer.rewards) ? customer.rewards : [])
-        .slice(0, 3)
+        .slice(0, MAX_REWARDS)
         .map((r) => String(r || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80)),
       /*
        * WHICH NIGHT THEY HAVE YOU, and it is the cheapest possible diary.
@@ -484,7 +503,7 @@ export class Invoices {
     if (!customer) return null;
     if (rewards !== undefined) {
       customer.rewards = (Array.isArray(rewards) ? rewards : [])
-        .slice(0, 3)
+        .slice(0, MAX_REWARDS)
         .map((r) => String(r || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80));
     }
     // Each field only if it was SENT, so the Venues tab saving prizes cannot

@@ -1108,7 +1108,28 @@ export class Engine {
   drawLuckyDip() {
     const s = this.state;
     if (s.luckyDip) return;
-    const reward = this.rewardList()[2];
+    /*
+     * THE LAST PRIZE ON THE TABLE, and only where there are at least three.
+     *
+     * It was `[2]` — third place — because the host's instruction was "the same
+     * prize as third", and while every venue put up exactly three those are the
+     * same sentence. They stopped being the same when a venue could list one,
+     * five or twenty: with five prizes, third is a middling one and handing it
+     * to a draw from the BOTTOM half reads as a mistake, while the last is the
+     * smallest and is what a raffle prize actually is.
+     *
+     * The floor of three is the half that must not move. It is what keeps the
+     * host's own rule — a venue putting up three prizes runs a draw and one
+     * putting up fewer does not — and it stops a one-prize night handing the
+     * TOP prize to somebody in the bottom half, which would be the app
+     * inventing a result in front of a room.
+     *
+     * Behaviour on today's data is unchanged: with three prizes the last IS
+     * the third.
+     */
+    const prizes = this.rewardList();
+    if (prizes.length < 3) return;
+    const reward = prizes[prizes.length - 1];
     if (!reward) return;
 
     const board = this.leaderboard();

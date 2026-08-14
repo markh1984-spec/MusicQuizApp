@@ -18,6 +18,10 @@ import path from 'node:path';
 import { Engine, PHASES, isSafeId, ownsPlayer, newToken } from './engine.js';
 import { JoinGate } from './joins.js';
 import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFields, stagePlan, maxPrizes } from './bingo.js';
+// ONE cap on how many prizes a night can carry, shared with the venue record
+// that authors them — two copies of a number like this drift, and the one that
+// drifts is the one nobody is looking at.
+import { MAX_REWARDS } from './invoices.js';
 import { listQuizzes } from './quizzes.js';
 import { listBingoPacks, recordLaunch, archiveResults, updateArchivedNight, HOUSE_ROOM } from './library.js';
 import { findSlide } from './adverts.js';
@@ -430,7 +434,7 @@ export class Session {
      * rather than here, so what was typed survives a restart.
      */
     this.engine.state.rewards = (Array.isArray(rewards) ? rewards : [rewards])
-      .slice(0, 3)
+      .slice(0, MAX_REWARDS)
       .map((r) => String(r || '')
         .replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80));
 

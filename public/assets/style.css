@@ -5417,11 +5417,24 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
    reads as the only field there is, which is exactly how it was reported. */
 .reward-stack { display: grid; gap: 6px; }
 .reward-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+/* NEUTRAL BY DEFAULT, medals only for the first three.
+
+   Gold was the default here, which was harmless while there were exactly three
+   rows and became a lie the moment a venue could list five: 4th and 5th came
+   out in the trophy colour, which in this app means FIRST PLACE everywhere —
+   the winner, the top of the board, the reveal banner. A prize table where
+   three different places are gold says nothing at all.
+
+   So the medals are stated, not defaulted: gold, silver and bronze belong to
+   the three that are actually podium places, and everything after them is
+   ordinary text. That is also why 4th place on the projector is a LINE and not
+   a card — see the podium note in CLAUDE.md. */
 .reward-row .reward-place {
   flex: 0 0 auto; min-width: 26px;
   font-size: var(--fs-tag); font-weight: 900; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--gold);
+  text-transform: uppercase; color: var(--ink-dim);
 }
+.reward-row[data-place="1"] .reward-place { color: var(--gold); }
 .reward-row[data-place="2"] .reward-place { color: #c6cdd6; }
 .reward-row[data-place="3"] .reward-place { color: #cd895a; }
 /* `min-width: 0` or the input refuses to go below its own placeholder and
@@ -5819,3 +5832,15 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 /* The way to the tiers, beside the shop heading. Quiet: it is the alternative,
    not the offer, and the packs below are what the section is for. */
 .shop-up { align-self: center; white-space: nowrap; }
+
+/* A prize row can be taken away now that there is no fixed three. The cross is
+   quiet and only earns attention on hover: it sits beside a box somebody is
+   typing in, and a permanently loud red on every row would read as a warning
+   about the prize rather than a way to remove it. */
+.reward-off {
+  flex: 0 0 auto; width: 30px; height: 30px; border-radius: 8px;
+  background: none; border: 1px solid var(--panel-line); color: var(--ink-dim);
+  font: inherit; font-size: var(--fs-note); cursor: pointer;
+}
+.reward-off:hover { color: var(--bad); border-color: rgba(255, 77, 94, 0.4); }
+.v-reward-add { margin-top: 4px; }

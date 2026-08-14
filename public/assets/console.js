@@ -5818,6 +5818,9 @@ let venueQuery = '';
  * it too and would drop it, and a logo that vanishes without a word is worse
  * than one that says why.
  */
+/* Shared with src/invoices.js, which caps it on the way in. */
+const MAX_REWARDS = 20;
+
 const LOGO_PX = 128;
 const MAX_LOGO_BYTES = 64 * 1024;
 /*
@@ -5911,6 +5914,20 @@ function advertsForVenue(name) {
       <a class="minor" href="?tab=adverts&amp;set=${encodeURIComponent(sets[0].id)}">Edit their slides</a>
     </div>`;
 }
+
+/**
+ * "1st", "2nd", "3rd", "11th", "21st" — for a prize list of any length.
+ *
+ * Written out rather than a lookup because a venue may put up twenty, and the
+ * three that used to be hard-coded were a lookup table with exactly three
+ * entries in it.
+ */
+function placeLabel(n) {
+  const v = n % 100;
+  const suffix = (v >= 11 && v <= 13) ? 'th' : (['th', 'st', 'nd', 'rd'][n % 10] || 'th');
+  return `${n}${suffix}`;
+}
+
 function venuesSection() {
   const el = node('<div></div>');
   const draw = () => {
@@ -6007,15 +6024,26 @@ function venuesSection() {
                 </span>
               </div>
               ${advertsForVenue(v.name)}
+              <!-- AS MANY PRIZES AS THE VENUE ACTUALLY PUTS UP.
+                   It was three fixed boxes, because a pub quiz pays first,
+                   second and third — the common case mistaken for the rule.
+                   A charity night hands out a table of them and a quiet
+                   Tuesday puts up one, so the list is whatever length it needs
+                   with a row added and taken away by hand.
+                   A venue with none still shows ONE empty box: nought boxes
+                   and an "Add a prize" button makes you press something before
+                   you can type, on the field this card exists for. -->
               <div class="venue-prizes">
-                ${[0, 1, 2].map((i) => `
+                ${(((v.rewards || []).length ? v.rewards : ['']).map((prize, i) => `
                   <label class="reward-row" data-place="${i + 1}">
-                    <span class="reward-place">${['1st', '2nd', '3rd'][i]}</span>
+                    <span class="reward-place">${esc(placeLabel(i + 1))}</span>
                     <input class="v-reward" data-i="${i}" type="text" maxlength="80"
-                      value="${esc((v.rewards || [])[i] || '')}"
+                      value="${esc(prize || '')}"
                       placeholder="${i === 0 ? 'A free drink at the bar' : 'Nothing for this place'}">
-                  </label>`).join('')}
+                    <button class="reward-off" type="button" aria-label="Remove this prize">&times;</button>
+                  </label>`)).join('')}
               </div>
+              <button class="minor v-reward-add" type="button">Add a prize</button>
               <button class="minor v-save" hidden>Save it</button>
               ${can(FEATURES.PAST_GIGS) ? headcountBlock(v.name) : ''}`}
             </div>`;
@@ -6088,6 +6116,53 @@ function venuesSection() {
         box.addEventListener('change', () => { save.hidden = false; });
       }
       /*
+       * ADDING AND REMOVING A PRIZE, in the page rather than by re-rendering.
+       *
+       * The card is redrawn from the RECORD, so a redraw here would throw away
+       * everything typed since the last save — and adding a fourth prize is
+       * exactly the moment somebody has three unsaved boxes in front of them.
+       * The rows are renumbered afterwards, or removing the second leaves a
+       * list reading 1st, 3rd, 4th.
+       */
+      const prizes = card.querySelector('.venue-prizes');
+      const renumber = () => {
+        [...prizes.querySelectorAll('.reward-row')].forEach((row, i) => {
+          row.dataset.place = String(i + 1);
+          row.querySelector('.reward-place').textContent = placeLabel(i + 1);
+          row.querySelector('.v-reward').dataset.i = String(i);
+        });
+      };
+      prizes.addEventListener('click', (ev) => {
+        const off = ev.target.closest('.reward-off');
+        if (!off) return;
+        // Never nought rows: the last one empties rather than disappearing, so
+        // the card cannot end up with nothing to type in.
+        if (prizes.querySelectorAll('.reward-row').length <= 1) {
+          prizes.querySelector('.v-reward').value = '';
+        } else {
+          off.closest('.reward-row').remove();
+          renumber();
+        }
+        save.hidden = false;
+      });
+      card.querySelector('.v-reward-add')?.addEventListener('click', () => {
+        const rows = prizes.querySelectorAll('.reward-row').length;
+        if (rows >= MAX_REWARDS) return;
+        const at = rows + 1;
+        const row = node(`
+          <label class="reward-row" data-place="${at}">
+            <span class="reward-place">${esc(placeLabel(at))}</span>
+            <input class="v-reward" data-i="${at - 1}" type="text" maxlength="80"
+              placeholder="Nothing for this place">
+            <button class="reward-off" type="button" aria-label="Remove this prize">&times;</button>
+          </label>`);
+        prizes.appendChild(row);
+        const box = row.querySelector('.v-reward');
+        box.addEventListener('input', () => { save.hidden = false; });
+        box.focus();
+        save.hidden = false;
+      });
+      /*
        * The logo saves ON ITS OWN rather than waiting for "Save it".
        *
        * Picking a file is a finished act — there is nothing to type afterwards
@@ -6124,7 +6199,15 @@ function venuesSection() {
         save.disabled = true;
         save.textContent = 'Saving…';
         const id = card.dataset.id;
+        /*
+         * Trailing blanks are dropped: an empty row somebody added and did not
+         * fill in is not a prize, and storing it would put a nameless 4th place
+         * on the lobby slide. A blank in the MIDDLE is kept, because "nothing
+         * for second, something for third" is a real arrangement — the same
+         * rule `rewardList()` in the engine already follows.
+         */
         const rewards = [...card.querySelectorAll('.v-reward')].map((b) => b.value.trim());
+        while (rewards.length && !rewards[rewards.length - 1]) rewards.pop();
         const usualNight = card.querySelector('.v-night').value;
         const link = card.querySelector('.v-link').value.trim();
         try {
