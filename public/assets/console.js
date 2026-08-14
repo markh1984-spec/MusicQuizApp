@@ -1421,7 +1421,15 @@ function askForPackPanel(kind) {
       <textarea class="ask-text" rows="3" maxlength="1200"
         placeholder="A One Direction ${esc(what)} — it is a hen night at The Crown, mostly late twenties…"></textarea>
       <div class="row" style="margin-top:8px">
-        <button class="go ask-send">Ask for it</button>
+        <!-- ROLE-MAKE, NOT THE GRADIENT. It wore the full account gradient,
+             which put TWO "press this" fills on the Music Quiz tab — Launch in
+             Tonight and this, a section below it — and the GUI rules allow
+             exactly one a screen, because the moment there are two neither is
+             the thing to press. Green is right rather than merely quieter: for
+             a quizmaster this button ends with a pack in their library, which
+             is what "makes something" means here, and it is the same green as
+             Write it, which is the owner's version of this exact panel. -->
+        <button class="role-make ask-send">Ask for it</button>
         <span class="tiny ask-said"></span>
       </div>
     </div>`);

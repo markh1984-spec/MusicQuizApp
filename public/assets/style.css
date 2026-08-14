@@ -4864,13 +4864,12 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   border: 1px solid var(--panel-line); font: inherit; font-size: var(--fs-body); resize: vertical;
 }
 .panel.ask-pack.locked { border-style: dashed; opacity: 0.85; }
-/* Every .go rule in this stylesheet is panel-scoped, so a new panel gets a
- * plain grey button unless it says otherwise. Same trap the own-packs link hit. */
-.panel.ask-pack .go {
-  border: none; border-radius: var(--r-field); padding: 11px 20px; cursor: pointer; white-space: nowrap;
-  background: linear-gradient(120deg, var(--hot), var(--hot-2)); color: #12000c; font-weight: 900; font-size: var(--fs-body);
-}
-.panel.ask-pack .go:disabled { opacity: 0.45; cursor: default; }
+/* Ask for it is a role-make now, not a .go — it wore the full account gradient
+ * and put a SECOND "press this" fill on the Music Quiz tab, a section below
+ * Launch. Only the sizing is left here; the colour comes from `.role-make`,
+ * which every other "this makes something" button on the console already
+ * uses. */
+.panel.ask-pack .role-make { padding: 11px 20px; white-space: nowrap; }
 
 /*
  * "18 phones waiting to join." Gold rather than red: nothing has gone wrong,
