@@ -631,6 +631,35 @@ rungs keep the metals, because there the colour IS the meaning — and they are
 only ever drawn for the owner: `/api/me` sends `tiers: []` to a real
 quizmaster, so the control does not exist on anybody else's account.
 
+### GIGS IS EVIDENCE. CALENDAR IS ORGANISATION.
+
+The host's own framing, reasoned aloud on 14 August 2026 while working out
+whether the two tabs should be one: *"Gigs is where you would store
+information on what happened in the past… it's gonna store statistics and
+photographs and all this other stuff you can send. So Gigs is all about
+EVIDENCE, and Calendar is all about ORGANISATION. They're actually
+fundamentally different."*
+
+**Keep this as the test, because it decides where a new thing goes without
+re-arguing it.** Anything that is proof of work belongs to Gigs — headcounts,
+photos, who won, the post-night report, what a landlord is shown. Anything
+that is a plan belongs to Calendar — residencies, one-offs, nights off, what
+is on next Thursday.
+
+It also explains why merging them felt wrong the moment he tried it: **one is
+a record you SHOW somebody, the other is a list you ACT on.** Those are read
+at different moments, by a different half of the brain, and a tab that does
+both is a tab you scroll past looking for the half you wanted.
+
+**This replaced a weaker reason of mine** — "the evening runs left to right,
+so booked comes before run" — which is true and orders the tabs correctly but
+predicts nothing. His version is a rule; mine was an observation.
+
+**Invoices stays its own tab and is the honest edge case**: billing is
+past-facing like evidence, chasing is organisation. It is separate for a third
+reason already recorded above — on a Monday it is a destination you want to
+land on rather than scroll to, and its badge counts what you are still owed.
+
 ### THE INVOICE BOOK IS NOT ENCRYPTED, AND THAT IS THE DECISION
 
 Settled on 14 August 2026 after the host asked whether personal details in the
