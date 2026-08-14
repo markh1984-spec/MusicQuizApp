@@ -867,7 +867,7 @@ function personPanel(account) {
           <div class="own-row-main"><b>Support access</b>
             <div class="tiny">${account.supportOpen
               ? 'Open right now. Everything you do in there goes in the log below, which they can read.'
-              : 'Shut. Only they can open it, from My account on their console — you cannot open it for them.'}</div>
+              : 'Shut. Only they can open it, from My Account on their console — you cannot open it for them.'}</div>
           </div>
           <div class="own-row-num">${account.supportOpen ? '<button class="minor go-in">Go in</button>' : ''}</div>
         </div>

@@ -810,7 +810,7 @@ export function whyNot(account, feature) {
   // On your tier, but you have switched it off yourself. Worth telling apart
   // from not having bought it — one is a shop and one is a switch you flicked.
   if (needs && !switchedOn(account, feature)) {
-    return `${(FEATURE_META[feature] || {}).label || 'That'} is turned off on your account. Turn it back on under My account.`;
+    return `${(FEATURE_META[feature] || {}).label || 'That'} is turned off on your account. Turn it back on under My Account.`;
   }
   if (OWNER_FEATURES.includes(feature)) {
     // The generator is the one people ask about, so it says why rather than

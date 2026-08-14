@@ -441,6 +441,22 @@ const QUIZ_ROUNDS = [
  * One entry per thing you can run. Adding a third game means adding one entry
  * here and nothing else on this page — the tab bar, the panel and the pack
  * grid are all built from this list.
+ *
+ * **EVERY `label` IS TITLE CASE — every word capitalised, no exceptions.**
+ * Set by the host on 14 August 2026, on spotting the one that was not: *"Music
+ * Bingo has a capital M and a capital B, so My Account should have a capital M
+ * and a capital A, and I want that to be a rule across the tabs."*
+ *
+ * He is right, and the reason it is worth a rule rather than a fix is that
+ * these eight words sit in a row a few pixels apart. A row is read as ONE
+ * object, so a single lower-case word in it does not read as a different
+ * style — it reads as a mistake, and it is the sort that survives for months
+ * because each label was written on a different day. Same fault as the three
+ * font sizes within two pixels of each other in the Tonight head.
+ *
+ * It does not contradict the capitals rule in CLAUDE.md: that one is about
+ * ALL CAPS being read as shouting. Title Case is a name, which is what a tab
+ * is.
  */
 const TABS = [
   {
@@ -648,7 +664,7 @@ const TABS = [
      * `needs` at all.
      */
     id: 'account',
-    label: 'My account',
+    label: 'My Account',
     blurb: 'Who you are, what you are on, your colours and your room.',
     // Always here, whatever is switched off — it is where things are switched
     // back on, so it can never be one of the things that goes away.
