@@ -825,15 +825,17 @@ Full reasoning: **[`docs/artwork.md`](docs/artwork.md)**. The rules:
 - Ask before assuming, especially anything costing money or needing an account.
 - Explain deployment like he is doing it for the first time, because he is.
 - Keep the code readable — he will be editing it between gigs.
-- **ANY PROMPT HE HAS TO PASTE SOMEWHERE GETS A COPY BUTTON. Always.** Set on
-  14 August 2026 and it is a rule, not a preference: *"the prompt must ALWAYS
-  have a copy button."* A prompt printed into a terminal has to be selected by
-  hand, and selecting twenty lines of text out of a scrollback without
-  catching the line above it is a fiddle that goes wrong — on something whose
-  whole job is being pasted somewhere else verbatim. So publish it as an
-  ARTIFACT with a copy button on the block, not as a fenced code block in the
-  reply. This covers handovers to another session, kickoff prompts, anything
-  he is meant to paste into a second chat or another tool.
+- **KEEP EVERYTHING IN THE CHAT. Do not send him somewhere else to read
+  something.** Set on 14 August 2026, on a phone, and stated plainly: *"I want
+  everything where possible to take place in this chat, so I don't have to go
+  elsewhere."* A link is a context switch, and on a phone it is a bad one.
+- **A prompt he has to paste gets a COPY BUTTON**, which in practice means a
+  fenced code block in the reply — most clients put one on automatically. The
+  rule came from *"the prompt must ALWAYS have a copy button"*, and the first
+  version of it was wrong: it said publish an artifact, which satisfied the
+  copy button and broke the rule above. **He wanted the button, not the
+  page.** Only build an artifact when he asks for one, or when the thing
+  genuinely needs to be a page. Never hide a prompt behind a URL.
 - **SHOW A SCREENSHOT FOR EVERY UI CHANGE. This is a rule, not a nicety** —
   set by the host on 14 August 2026: *"whenever you change the UI of anything
   in this app you MUST show me, since the UI of this app is extremely
