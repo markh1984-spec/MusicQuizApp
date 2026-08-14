@@ -699,7 +699,12 @@ body::after {
    phone rather than growing a second row. */
 body.is-dragging-card .launchbar {
   position: sticky;
-  top: 8px;
+  /* Under the topbar, not under the top of the window. At `8px` it pinned
+     behind the topbar — which is sticky too and sits at a higher z-index — so
+     the panel you are dragging a pack INTO spent the drag half hidden behind
+     the logo. Tonight sits above the tab bar in the document, so it only has
+     the topbar to clear. */
+  top: var(--topbar-h);
   z-index: 6;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
 }
@@ -6122,8 +6127,11 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
      column ran out a long way above the right one and the bottom half of the
      section was a black void with a list floating in it. Sticky, the calendar
      is still there to click when you reach the end of the list, which is
-     precisely when you want it. 68px clears the sticky topbar. */
-  .cal-left { position: sticky; top: 68px; }
+     precisely when you want it.
+     It has to clear BOTH pinned things — the topbar and the tab bar under it
+     — or the top row of the month slides underneath the tabs. Written off the
+     same token, so the day the topbar changes height this follows. */
+  .cal-left { position: sticky; top: calc(var(--topbar-h) + 58px); }
 }
 /* The panel is a card so it reads as the answer to the month beside it rather
    than as more page. */
