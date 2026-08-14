@@ -23,16 +23,41 @@ test('it is a calendar a real client will parse', () => {
   assert.equal(out.includes('\n') && !out.includes('\r\n') ? 'bare LF' : 'ok', 'ok');
 });
 
-test('EVERY NIGHT IS ALL-DAY, because the app does not know what time it starts', () => {
-  // A guessed 8pm would be a made-up fact in somebody's real calendar. The app
-  // knows the DATE; the start time is the venue's arrangement and lives in no
-  // record here.
+test('A NIGHT WITH NO TIME IS ALL-DAY, because the app must not invent one', () => {
+  // A guessed 8pm would be a made-up fact in somebody's real calendar. A
+  // residency carries no time — the venue's arrangement lives in no record
+  // here — so the app knows the DATE and says only that.
   const out = one([{ date: '2026-08-20', venue: 'The Crown' }]);
   assert.match(out, /DTSTART;VALUE=DATE:20260820/);
   // An all-day event's end is EXCLUSIVE, so a one-night booking ends on the
   // 21st. Getting this wrong shows the quiz as two days long.
   assert.match(out, /DTEND;VALUE=DATE:20260821/);
   assert.ok(!/DTSTART:\d{8}T/.test(out), 'it invented a start time');
+});
+
+test('…and a night somebody gave a time to is a real appointment', () => {
+  const out = one([{ date: '2026-08-20', venue: 'The Crown', time: '20:00' }]);
+  assert.match(out, /DTSTART:20260820T200000/);
+  // Two hours is a stated DEFAULT rather than a known fact: every client needs
+  // an end, and an event with no length is not an appointment.
+  assert.match(out, /DTEND:20260820T220000/);
+  assert.ok(!out.includes('VALUE=DATE'), 'it was still written as all-day');
+  /*
+   * FLOATING — no Z and no TZID. "8pm" means 8pm where the quizmaster is,
+   * which is what they meant when they typed it; pinning it to a zone the
+   * server guessed is how a night moves an hour in March.
+   */
+  assert.ok(!/DTSTART:\d{8}T\d{6}Z/.test(out), 'it pinned the time to UTC');
+  assert.ok(!out.includes('TZID'), 'it pinned the time to a guessed zone');
+});
+
+test('a time near midnight does not roll the end onto the wrong day', () => {
+  // 23:30 plus two hours is half past one, and the naive version wrote
+  // "T013000" against the SAME date — an event that ends 22 hours before it
+  // starts, which a calendar either refuses or draws across the whole day.
+  const out = one([{ date: '2026-08-20', venue: 'The Crown', time: '23:30' }]);
+  assert.match(out, /DTSTART:20260820T233000/);
+  assert.match(out, /DTEND:20260821T013000/);
 });
 
 test('THE UID IS DERIVED FROM THE NIGHT, so a refresh updates rather than re-adds', () => {

@@ -672,6 +672,28 @@ test('a booking needs a real date and a venue', () => {
   });
 });
 
+/*
+ * A START TIME IS OPTIONAL, AND ANYTHING THAT IS NOT ONE IS DROPPED.
+ *
+ * A residency has no time in this app — the venue's arrangement lives in
+ * nobody's record — so a diary that DEMANDED one would make somebody invent a
+ * fact in order to save a booking. And dropped rather than thrown, for the
+ * reason the venue logo already follows: losing an optional detail costs
+ * nothing, where refusing the save costs somebody the booking they were
+ * taking.
+ */
+test('a booking may carry a start time, and nonsense is dropped rather than kept', () => {
+  withFile((file) => {
+    const book = new Invoices(file, { now });
+    assert.equal(book.setBooking({ date: '2026-08-18', venue: 'The Crown', time: '20:00' }).time, '20:00');
+    assert.equal(book.setBooking({ date: '2026-08-19', venue: 'The Crown' }).time, '');
+    for (const bad of ['8pm', '20:00:00', '2000', 'half eight', '20-00']) {
+      assert.equal(book.setBooking({ date: '2026-08-20', venue: 'The Crown', time: bad }).time, '',
+        `it kept ${bad} as a time`);
+    }
+  });
+});
+
 test('the diary survives being written and read back', () => {
   withFile((file) => {
     const book = new Invoices(file, { now });

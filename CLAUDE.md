@@ -660,6 +660,98 @@ past-facing like evidence, chasing is organisation. It is separate for a third
 reason already recorded above — on a Monday it is a destination you want to
 land on rather than scroll to, and its badge counts what you are still owed.
 
+### THE MONTH IS ON THE LEFT AND WHAT YOU DO ABOUT A DATE IS ON THE RIGHT
+
+`diarySection()` in `console.js`, `.cal-wrap` / `.cal-side` in `style.css`.
+Asked for directly: *"perhaps the calendar needs to sit off to the left in the
+section to allow room for the right to populate?"*
+
+**It fixes a real fault rather than only looking tidier.** Full width, the
+month was seven columns of mostly-empty boxes, and what answered a date was a
+thin strip UNDER it — so picking the 23rd pushed the answer below the fold and
+the form it sent you to was below that again. Beside it, a date and what you
+can do about it are one glance. Two columns from 900px only: below that the
+month is the tight thing — seven columns of a 320px phone is 38px a day — so
+the panel goes underneath and **the picker scrolls it into view**, because
+that is the same below-the-fold fault arriving on the device this is most
+often held on.
+
+**The panel is the diary when no date is picked and that date when one is.**
+Two jobs in one column rather than two columns of their own: what is coming up
+is what you READ and a date is what you ACT on, and they are never both
+wanted.
+
+**THERE IS ONE PLACE A NIGHT IS ADDED, AND IT IS THE DATE YOU PICKED.** The
+bottom of the tab used to carry its own date box, venue and *Add a night* —
+a second control for a job the month already does, which is exactly how a
+booking lands on the date the other one happened to be showing. **Book a
+quiz** now opens the whole form against the date in the heading, at the host's
+own instruction: *"perhaps when you click 'book a quiz' it just asks for all
+quiz info like venue, time etc."* The date is the heading rather than a field,
+because it is the thing you clicked to get here and a box repeating it is a
+second place for it to be wrong.
+
+**A NIGHT CAN CARRY A START TIME NOW, and it is optional on purpose.** A
+residency has none — the venue's arrangement lives in no record here — so
+demanding one would make somebody invent a fact in order to save a booking.
+Given, `src/ics.js` writes a real timed appointment instead of a day-long
+block, **floating**: no `Z` and no `TZID`, so "8pm" means 8pm where the
+quizmaster is rather than wherever the server guessed. The two-hour length is
+a stated DEFAULT, because every calendar client needs an end and an event with
+no length is not an appointment. **The end date moves with the clock** — half
+eleven ends at half one the NEXT day, and writing that against the same date
+is an event ending twenty-two hours before it starts, which a calendar either
+refuses or draws across the whole day. Tested.
+
+**"NOT ON" IS NOW TWO LABELS, AND THE OLD ONE WAS INVISIBLE RATHER THAN
+WRONG.** Asked directly — *"not sure what 'not on' would be useful for"* —
+and the honest answer is that the button did the right thing and nothing on
+screen could teach it: it writes one week of a residency off, the night then
+vanishes from the diary and from the calendar feed, and nothing said so or
+offered a way back. **A control whose entire effect is something disappearing
+is a control nobody can learn.** Three changes, and none of them is the
+behaviour:
+
+- **"Not on this week"** on a residency, which is what it always did. It was
+  *"Not on"* — a verb with no object, which is the label collision this file's
+  sweep already looks for.
+- **"Delete this booking"** on a one-off, because that is a real row somebody
+  typed and the thing you want is for it to be gone. One label used to cover
+  both acts on both objects.
+- **A written-off night is SHOWN on its own date**, named, with **Put it
+  back** on it — `removeBooking`, because forgetting the exception is what
+  returns a residency to being an ordinary one.
+
+**AND "INVOICE FOR THIS DATE" GOES TO THE INVOICES TAB** rather than opening a
+form over the calendar, at the host's own reading: *"'invoice for this date'
+goes to the invoice section with that date pre-filled"*. He is right, and the
+reason is what happens AFTER you press send — over the calendar you are left
+standing on a month with no sight of the invoice you just raised, its number
+or whether it is still a draft. Landing on the tab that owns them means the
+thing you made is on the page behind the form. The date crosses as a
+`pendingInvoice`, consumed once by `invoicesSection()` after its own book has
+loaded — which is also what turns the venue NAME into a customer id, so the
+calendar raises an invoice without fetching the invoice book at all.
+
+### PRESSING A TAB PUTS THE TAB BAR AT THE TOP OF THE SCREEN
+
+`showTabBar()` in `console.js`. The host's own words: *"would be good if a
+click on a tab made the tabs appear to be the top of the page, so you can
+always just scroll up from there to get to the launch bit."*
+
+It jumped to `top: 0`, which puts **Tonight** back on screen every time you
+change tab — so the thing you actually pressed for starts a section and a half
+down, and you scroll past the launch panel to reach it. The other way round,
+every tab opens at its own first line and Tonight is exactly one flick UP, **in
+the same place on every tab**, which is the whole reason that panel sits above
+the bar rather than inside one.
+
+**Measured off the sticky topbar rather than a written-out number**: that bar
+WRAPS on a phone, so it is 54px on a laptop and a good deal more with the doors
+on a line of their own — a constant would hide the tabs underneath it on the
+device this is most often held on. Measured after `render()`, because the bar
+is rebuilt on every one.
+
 ### THE INVOICE BOOK IS NOT ENCRYPTED, AND THAT IS THE DECISION
 
 Settled on 14 August 2026 after the host asked whether personal details in the

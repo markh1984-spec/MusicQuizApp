@@ -22,11 +22,15 @@
  *
  * ---
  *
- * **EVERY NIGHT IS AN ALL-DAY EVENT, and that is deliberate rather than lazy.**
- * The app knows which DATE a quiz is on and does not know what time it starts
- * — that is the venue's arrangement and lives in nobody's record. An event at
- * a guessed 8pm would be a made-up fact in somebody's real calendar, sat next
- * to their dentist appointment. A day-long entry says exactly what is known.
+ * **A NIGHT IS ALL-DAY UNLESS SOMEBODY TYPED A TIME, and the app never
+ * guesses one.** A residency carries no start time — that is the venue's
+ * arrangement and lives in no record here — so most nights are day-long
+ * entries, which say exactly what is known. An event at a guessed 8pm would be
+ * a made-up fact in somebody's real calendar, sat next to their dentist
+ * appointment. A night booked through the diary CAN carry a time, because
+ * somebody typed it, and then it is worth being a real appointment: that is
+ * the difference between a phone that knows when to remind you and one that
+ * does not.
  *
  * **A NIGHT OFF IS ABSENT, NOT CANCELLED.** `upcoming()` has already dropped
  * it, and this only ever writes what that returns — so the one failure that
@@ -112,15 +116,49 @@ export function calendarIcs(nights = [], { name = 'Quiz nights', host = 'quizpor
 
   for (const night of nights) {
     if (!night || !night.date) continue;
-    lines.push(
-      'BEGIN:VEVENT',
-      `UID:${uid(night, host)}`,
-      `DTSTAMP:${stamp}`,
+    lines.push('BEGIN:VEVENT', `UID:${uid(night, host)}`, `DTSTAMP:${stamp}`);
+    /*
+     * A TIME IF SOMEBODY GAVE ONE, and an all-day entry if not.
+     *
+     * A residency carries no time — the venue's arrangement lives in no record
+     * here — so most nights are all-day, which says exactly what is known. A
+     * night typed into the diary can carry one, and then it is worth being a
+     * real appointment: that is the difference between a phone that knows when
+     * to remind you and a phone that does not.
+     *
+     * FLOATING, with no Z and no TZID: "8pm" means 8pm where the quizmaster
+     * is, which is what they meant when they typed it. Pinning it to a zone
+     * the server guessed is how a night moves an hour in March.
+     *
+     * The two hours is a stated DEFAULT rather than a known fact, and it is
+     * here because a calendar entry with no length is not an appointment —
+     * every client needs an end. If a quizmaster ever wants to set it, that is
+     * a field on the booking and one line here.
+     */
+    if (night.time) {
+      const [h, m] = night.time.split(':').map(Number);
+      /*
+       * The DATE has to move with the clock, not only the hours. A quiz at
+       * half eleven ends at half one THE NEXT DAY, and the first version wrote
+       * that against the same date — an event ending twenty-two hours before
+       * it starts, which a calendar either refuses or draws across the whole
+       * day. Built as a real date so the month end and the year end come free.
+       */
+      const [y, mo, d] = String(night.date).split('-').map(Number);
+      const end = new Date(y, mo - 1, d, h + 2, m);
+      const two = (n) => String(n).padStart(2, '0');
+      lines.push(
+        `DTSTART:${compact(night.date)}T${two(h)}${two(m)}00`,
+        `DTEND:${end.getFullYear()}${two(end.getMonth() + 1)}${two(end.getDate())}T${two(end.getHours())}${two(end.getMinutes())}00`,
+      );
+    } else {
       // VALUE=DATE is what makes it an all-day entry rather than midnight.
-      `DTSTART;VALUE=DATE:${compact(night.date)}`,
-      `DTEND;VALUE=DATE:${dayAfter(night.date)}`,
-      `SUMMARY:${esc(night.venue ? `Quiz — ${night.venue}` : 'Quiz night')}`,
-    );
+      lines.push(
+        `DTSTART;VALUE=DATE:${compact(night.date)}`,
+        `DTEND;VALUE=DATE:${dayAfter(night.date)}`,
+      );
+    }
+    lines.push(`SUMMARY:${esc(night.venue ? `Quiz — ${night.venue}` : 'Quiz night')}`);
     if (night.venue) lines.push(`LOCATION:${esc(night.venue)}`);
     const notes = [];
     if (night.note) notes.push(night.note);

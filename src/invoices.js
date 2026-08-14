@@ -353,7 +353,7 @@ export class Invoices {
    * record picks up its prizes automatically, which is the whole reason the
    * launch bar can read this.
    */
-  setBooking({ date, venue, off = false, note = '' } = {}) {
+  setBooking({ date, venue, off = false, note = '', time = '' } = {}) {
     const day = String(date || '').trim();
     if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error('A booking needs a date.');
     const where = String(venue || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
@@ -364,6 +364,19 @@ export class Invoices {
       venue: where,
       off: Boolean(off),
       note: String(note || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120),
+      /*
+       * WHAT TIME IT STARTS, and it is optional on purpose.
+       *
+       * A residency has no time in this app — the venue's own arrangement
+       * lives in nobody's record — so a diary entry that DEMANDED one would
+       * make you invent a fact to save a booking. Given, it is used; missing,
+       * everything downstream behaves exactly as it did.
+       *
+       * It matters most outside the app: the calendar feed can write a real
+       * timed event instead of an all-day one, which is the difference between
+       * a phone that knows when to remind you and a phone that does not.
+       */
+      time: /^\d{2}:\d{2}$/.test(String(time || '')) ? String(time) : '',
     };
     const same = (b) => b.date === day && String(b.venue || '').toLowerCase() === where.toLowerCase();
     const at = this.bookings.findIndex(same);

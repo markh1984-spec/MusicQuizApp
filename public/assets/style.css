@@ -5629,14 +5629,21 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
   font-size: var(--fs-tag); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--gold); margin-left: 6px; white-space: nowrap;
 }
-.diary-add { display: grid; gap: 8px; margin-top: 14px; }
-.diary-add .venue-select, .diary-add .venue-free, .diary-add input { min-width: 0; max-width: 100%; }
+/* A written-off night: shown on its own date so "Not on this week" is a thing
+   somebody can see they did, and undo. Quiet rather than red — nothing is
+   wrong, it is a night you are not doing. */
+.diary-row.is-off { opacity: 0.8; }
+.d-tag.off { color: var(--ink-dim); }
+/* What time it starts, when somebody typed one. A residency has none, so this
+   is only ever on a night that was booked in. */
+.d-time {
+  font-size: var(--fs-tag); font-weight: 800; margin-left: 6px; white-space: nowrap;
+  padding: 2px 7px; border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.08); color: var(--ink);
+}
 /* The venue box is a select AND a free-text input; one cell holds both, and
    only one of them is ever visible. */
 .d-venue { display: grid; min-width: 0; }
-@media (min-width: 620px) {
-  .diary-add { grid-template-columns: auto 1fr 1fr auto; align-items: center; }
-}
 .gig-bill { margin-top: 10px; }
 
 .venue-add { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
@@ -5920,9 +5927,49 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
    push the row's layout about as one appears and the other does not. */
 .d-acts { display: flex; gap: 8px; flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; }
 
+/* THE MONTH ON THE LEFT, WHAT YOU DO ABOUT A DATE ON THE RIGHT.
+   Asked for directly — "perhaps the calendar needs to sit off to the left in
+   the section to allow room for the right to populate?" — and it fixes a real
+   fault as well as looking better: full width, the month was seven columns of
+   mostly-empty boxes, and the panel answering a date sat UNDER it, so picking
+   the 23rd pushed the answer below the fold.
+   Two columns only from 900px. Below that the month itself is the tight thing
+   — seven columns of a 320px phone is 38px a day — so the panel goes under it
+   and the picker scrolls it into view. */
+.cal-wrap { display: grid; gap: 14px; margin-top: 12px; }
+/* min-content is a grid child's default minimum: the month's seven columns and
+   a long venue name would otherwise drag the console sideways. Bitten eight
+   times now, so it goes on with the layout rather than after it. */
+.cal-wrap > * { min-width: 0; }
+@media (min-width: 900px) {
+  .cal-wrap { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; gap: 18px; }
+}
+/* The panel is a card so it reads as the answer to the month beside it rather
+   than as more page. */
+.cal-side {
+  display: grid; gap: 10px; align-content: start;
+  border: 1px solid var(--panel-line); border-radius: var(--r-card);
+  background: rgba(255, 255, 255, 0.03); padding: 12px;
+}
+.cal-side > * { min-width: 0; }
+.cal-side-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  flex-wrap: wrap;
+}
+.cal-side-head b { font-size: var(--fs-lead); }
+/* Book a quiz is the one thing this panel is FOR, so it takes the width. The
+   invoice button under it is an ordinary control and stays one. */
+.cal-add { width: 100%; }
+.cal-book { display: grid; gap: 10px; }
+.cal-f { display: grid; gap: 4px; }
+.cal-f > span { font-size: var(--fs-tag); font-weight: 800; color: var(--ink-dim); }
+.cal-f input, .cal-f select { min-width: 0; max-width: 100%; }
+.cal-book-acts { display: flex; gap: 8px; }
+.cal-book-acts .d-go { flex: 1 1 auto; }
+
 /* THE MONTH. A grid you click into, because "book a quiz on the 23rd" needs a
    23rd to click — which a list of nights that already exist cannot offer. */
-.cal-head { display: flex; align-items: center; gap: 8px; margin: 12px 0 8px; }
+.cal-head { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; }
 .cal-month { flex: 1 1 auto; min-width: 0; font-size: var(--fs-lead); }
 .cal-days, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
 .cal-day {
@@ -5953,15 +6000,14 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
    the other is a decision somebody made. */
 .cal-dot.one { background: rgba(75, 216, 255, 0.18); }
 .cal-dot.more { background: none; color: var(--ink-dim); }
-/* WHAT YOU CAN DO WITH THE DATE — a list rather than a fixed set, so another
-   action later is a line rather than a redesign. */
-.cal-menu {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  margin-top: 10px; padding: 10px 12px;
-  border: 1px solid var(--hot); border-radius: var(--r-field);
-  background: rgba(255, 46, 136, 0.06);
-}
-.cal-when { flex: 0 0 auto; color: var(--ink); font-weight: 800; }
+/* A diary row inside the right-hand panel has about a third of the width it
+   has full-page, so the date stops being a column and sits above the venue.
+   Scoped to the panel rather than to a screen width: the same row is wide on
+   a phone, where the panel takes the whole page. */
+.cal-side .diary-row { grid-template-columns: 1fr; gap: 4px; }
+.cal-side .d-when { display: flex; gap: 6px; align-items: baseline; text-align: left; }
+.cal-side .d-when b { display: inline; }
+.cal-side .d-acts { justify-content: flex-start; }
 @media (max-width: 560px) {
   /* Below this the seven columns give each day about 38px, which is a tap
      target but not a place for a venue name — so the pills go and the number

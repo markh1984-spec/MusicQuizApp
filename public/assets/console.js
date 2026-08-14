@@ -842,6 +842,35 @@ function showActiveTab() {
   bar.scrollLeft += (tabBox.left - barBox.left) - (barBox.width - tabBox.width) / 2;
 }
 
+/**
+ * PRESSING A TAB PUTS THE TAB BAR AT THE TOP OF THE SCREEN.
+ *
+ * Asked for directly: *"would be good if a click on a tab made the tabs appear
+ * to be the top of the page, so you can always just scroll up from there to
+ * get to the launch bit"* — and it is the better of the two answers. It used
+ * to jump to `top: 0`, which puts Tonight back on screen every time you change
+ * tab, so the thing you actually pressed for starts a section and a half down
+ * and you scroll past the launch panel to reach it. The other way round, every
+ * tab opens at its own first line and Tonight is exactly one flick UP, in the
+ * same place on every tab — which is the whole reason that panel sits above
+ * the bar rather than inside a tab.
+ *
+ * Measured off the sticky topbar rather than a written-out number: the bar
+ * WRAPS on a phone, so its height is 54px on a laptop and a good deal more
+ * with the doors on a line of their own. A constant would hide the tabs
+ * underneath it on the device this is most often held on.
+ *
+ * After `render()`, deliberately — the bar is rebuilt on every one, so the
+ * element measured has to be the new one.
+ */
+function showTabBar() {
+  const bar = mainEl.querySelector('.tabbar');
+  if (!bar) { window.scrollTo({ top: 0 }); return; }
+  const sticky = document.querySelector('.console .topbar');
+  const under = sticky ? sticky.getBoundingClientRect().height : 0;
+  window.scrollTo({ top: Math.max(0, window.scrollY + bar.getBoundingClientRect().top - under - 8) });
+}
+
 /* ========================================================== MY ACCOUNT
  *
  * Everything about YOU, rather than about a pack or a night: your name, your
@@ -2119,7 +2148,7 @@ function tabBar(active) {
     button.addEventListener('click', () => {
       localStorage.setItem(TAB_STORE, tab.id);
       render();
-      window.scrollTo({ top: 0 });
+      showTabBar();
     });
     bar.appendChild(button);
   }
@@ -6408,6 +6437,25 @@ function gigsSection() {
  *
  * So the only things typed are the two a pattern cannot express: a one-off
  * somewhere, and a night off.
+ *
+ * ---
+ *
+ * **THE MONTH SITS LEFT AND EVERYTHING ELSE HAPPENS ON THE RIGHT**, asked for
+ * directly: *"perhaps the calendar needs to sit off to the left in the section
+ * to allow room for the right to populate?"* It is the right shape, and it
+ * fixes a real fault rather than only looking tidier. Full width, the month
+ * was seven columns of mostly-empty boxes across a laptop, and what answered a
+ * date was a thin strip UNDER it — so picking the 23rd pushed the thing you
+ * wanted below the fold, and the form it sent you to was below that again.
+ * Beside it, a date and what you can do about it are one glance.
+ *
+ * **THERE IS ONE PLACE A NIGHT IS ADDED, AND IT IS THE DATE YOU PICKED.** The
+ * bottom of this tab used to carry its own date box, venue and Add a night —
+ * a second control for a job the month already does, which is exactly how a
+ * booking lands on the date the other one happened to be showing. **Book a
+ * quiz** now opens the whole form against the date in the heading: *"perhaps
+ * when you click 'book a quiz' it just asks for all quiz info like venue, time
+ * etc."*
  */
 function diarySection() {
   const el = node(`
@@ -6416,27 +6464,31 @@ function diarySection() {
         <div>
           <h2>Coming up</h2>
           <div class="tiny">The next four weeks, from the usual nights on your Venues tab.
-            Add anything that is not your usual.</div>
+            Pick a date to book anything that is not your usual.</div>
         </div>
       </div>
       <!-- THE MONTH, because "book a quiz on the 23rd" needs a 23rd to click.
-           The list under it answers a different question — what is next — and
+           The panel beside it answers a different question — what is next — and
            both were rendered side by side before choosing: a list can only
            ever offer actions on nights that ALREADY exist. -->
-      <div class="cal-head">
-        <button class="minor cal-prev" type="button" aria-label="The month before">&larr;</button>
-        <b class="cal-month"></b>
-        <button class="minor cal-next" type="button" aria-label="The month after">&rarr;</button>
-        <button class="minor cal-today" type="button">Today</button>
+      <div class="cal-wrap">
+        <div class="cal-left">
+          <div class="cal-head">
+            <button class="minor cal-prev" type="button" aria-label="The month before">&larr;</button>
+            <b class="cal-month"></b>
+            <button class="minor cal-next" type="button" aria-label="The month after">&rarr;</button>
+            <button class="minor cal-today" type="button">Today</button>
+          </div>
+          <div class="cal-days"></div>
+          <div class="cal-grid"></div>
+        </div>
+        <div class="cal-side"></div>
       </div>
-      <div class="cal-days"></div>
-      <div class="cal-grid"></div>
-      <div class="cal-menu" hidden></div>
       <!-- YOUR NIGHTS IN YOUR OWN CALENDAR. A residency that exists only in
            this app is a residency you double-book yourself over. -->
       <div class="cal-feed">
         <div class="tiny"><b>Put these in your own calendar.</b>
-          Subscribe once and every night keeps itself up to date \u2014 in Google,
+          Subscribe once and every night keeps itself up to date — in Google,
           Apple or Outlook, on your phone and your laptop.</div>
         <div class="cal-feed-row">
           <input class="cal-url" type="text" readonly aria-label="Your calendar address">
@@ -6445,22 +6497,7 @@ function diarySection() {
         </div>
         <div class="tiny cal-feed-said"></div>
       </div>
-      <div class="diary-list"></div>
-      <div class="diary-add">
-        <input class="d-date" type="date" aria-label="Date">
-        <!-- WRAPPED, because venueBox() is TWO elements — a select and the
-             free-text box that replaces it for a one-off. Left as siblings
-             they are two grid items, so picking "Somewhere else" grew a fifth
-             column in a four-column grid and took the page sideways at 620px.
-             wireVenue and venueFrom both use querySelector, which searches
-             descendants, so nesting costs nothing. -->
-        <div class="d-venue">${venueBox()}</div>
-        <input class="d-note" type="text" maxlength="120" placeholder="Anything worth remembering (optional)">
-        <button class="role-make d-go">Add a night</button>
-      </div>
     </div>`);
-
-  const list = el.querySelector('.diary-list');
 
   /*
    * THE MONTH GRID.
@@ -6469,16 +6506,27 @@ function diarySection() {
    * nights off into a list of nights — it simply starts from today. Asked for
    * an arbitrary month it does the same job: hand it the first of the month
    * and six weeks, then keep what falls inside. One source, so the grid, the
-   * list under it and Tonight can never disagree about whose night a Thursday
-   * is.
+   * panel beside it and Tonight can never disagree about whose night a
+   * Thursday is.
    */
   const gridEl = el.querySelector('.cal-grid');
   const daysEl = el.querySelector('.cal-days');
-  const menuEl = el.querySelector('.cal-menu');
+  const sideEl = el.querySelector('.cal-side');
   const monthEl = el.querySelector('.cal-month');
   const today = new Date();
   let shown = new Date(today.getFullYear(), today.getMonth(), 1);
   let picked = '';
+  /*
+   * Whether the booking form is open in the right-hand panel. Held out here
+   * rather than read off the DOM because the panel is rebuilt every time
+   * anything is saved — a form that shut itself the moment you added a night
+   * would make adding a second one a hunt for the button again.
+   */
+  let booking = false;
+  // What the month grid worked out, so the panel beside it reads the SAME
+  // answer rather than asking `upcoming()` a second question with a second
+  // clock in it.
+  let onByDate = new Map();
 
   const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
@@ -6497,10 +6545,10 @@ function diarySection() {
       now: first.getTime(),
       weeks: 6,
     });
-    const byDate = new Map();
+    onByDate = new Map();
     for (const n of nights) {
-      if (!byDate.has(n.date)) byDate.set(n.date, []);
-      byDate.get(n.date).push(n);
+      if (!onByDate.has(n.date)) onByDate.set(n.date, []);
+      onByDate.get(n.date).push(n);
     }
 
     const cells = [];
@@ -6509,7 +6557,7 @@ function diarySection() {
     for (let i = 0; i < lead; i++) cells.push(node('<div class="cal-cell is-blank"></div>'));
     for (let d = 1; d <= last.getDate(); d++) {
       const date = iso(new Date(shown.getFullYear(), shown.getMonth(), d));
-      const on = byDate.get(date) || [];
+      const on = onByDate.get(date) || [];
       const cell = node(`
         <button class="cal-cell ${on.length ? 'has' : ''} ${date === iso(today) ? 'is-today' : ''} ${date === picked ? 'open' : ''}"
           type="button" data-date="${date}">
@@ -6517,64 +6565,213 @@ function diarySection() {
           ${on.slice(0, 2).map((n) => `<span class="cal-dot ${n.why === 'booked' ? 'one' : ''}">${esc(n.venue)}</span>`).join('')}
           ${on.length > 2 ? `<span class="cal-dot more">and ${on.length - 2} more</span>` : ''}
         </button>`);
-      cell.addEventListener('click', () => { picked = picked === date ? '' : date; drawMonth(); });
+      cell.addEventListener('click', () => {
+        picked = picked === date ? '' : date;
+        // A different date is a different question, so a half-filled form for
+        // the 23rd must not be handed to the 24th with a venue still in it.
+        booking = false;
+        drawMonth();
+        /*
+         * ON A PHONE THE PANEL IS UNDER THE MONTH, so picking a date puts the
+         * answer off the bottom of the screen — the exact fault the two
+         * columns fix on a laptop, arriving on the device this is most often
+         * held on. Only while it is stacked: side by side it is already next
+         * to your thumb, and scrolling would be the page moving for nothing.
+         */
+        if (picked && window.matchMedia('(max-width: 899px)').matches) {
+          sideEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+      });
       cells.push(cell);
     }
     gridEl.replaceChildren(...cells);
-    drawMenu(byDate.get(picked) || []);
+    drawSide();
   };
 
   /*
-   * WHAT YOU CAN DO WITH A DATE — one row, and deliberately a LIST rather than
-   * a fixed set. The host's own framing: *"maybe just build that in at the
-   * start so we can add to it later"*. So an action is an entry here, and a
-   * new one is a line rather than a redesign.
+   * THE RIGHT-HAND PANEL — the diary when no date is picked, and that date
+   * when one is.
+   *
+   * Two things in one column rather than two columns of their own, because
+   * they are never both wanted: what is coming up is what you READ, and a date
+   * is what you ACT on. Nothing picked is the resting state and shows the
+   * list, which is what this tab was before the month existed.
    */
-  function drawMenu(on) {
-    if (!picked) { menuEl.hidden = true; menuEl.replaceChildren(); return; }
+  function drawSide() {
+    sideEl.replaceChildren(...(picked ? dayPanel() : comingUp()));
+  }
+
+  function comingUp() {
+    const head = node(`
+      <div class="cal-side-head">
+        <b>The next four weeks</b>
+        <span class="tiny">Pick a date to book one.</span>
+      </div>`);
+    const nights = upcoming({
+      venues: library.venueRecords || [],
+      bookings: library.bookings || [],
+    });
+    if (!nights.length) {
+      return [head, node(`<div class="tiny">Nothing coming up.
+        ${(library.venueRecords || []).some((v) => v.usualNight)
+    ? 'Pick a date on the left to add a one-off.'
+    : 'Give a venue its usual night on the Venues tab and its weeks fill themselves in.'}</div>`)];
+    }
+    const list = node('<div class="diary-list"></div>');
+    list.replaceChildren(...nights.map(diaryRow));
+    return [head, list];
+  }
+
+  /*
+   * ONE DATE, AND EVERYTHING THAT CAN BE DONE TO IT — deliberately a LIST
+   * pushed onto rather than a fixed set. The host's own framing: *"maybe just
+   * build that in at the start so we can add to it later"*. So another action
+   * is a line here rather than a redesign.
+   */
+  function dayPanel() {
     const when = new Date(picked + 'T12:00:00');
     const said = when.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
-    const acts = [];
+    const out = [];
 
-    acts.push(['minor', 'Book a quiz here', () => {
-      el.querySelector('.d-date').value = picked;
-      el.querySelector('.diary-add').scrollIntoView({ block: 'center' });
-      el.querySelector('.d-venue select, .d-venue input')?.focus();
-    }]);
+    const head = node(`
+      <div class="cal-side-head">
+        <b>${esc(said)}</b>
+        <button class="minor cal-shut" type="button">Back to the list</button>
+      </div>`);
+    head.querySelector('.cal-shut').addEventListener('click', () => {
+      picked = ''; booking = false; drawMonth();
+    });
+    out.push(head);
 
-    if (can(FEATURES.INVOICES)) {
-      acts.push(['minor', 'Invoice for this date', async () => {
-        try { book = await invoiceApi('/api/invoices'); } catch (err) {
-          alert('Could not open the invoices: ' + err.message); return;
-        }
-        const first = on[0];
-        const named = String((first && first.venue) || '').trim().toLowerCase();
-        const customer = (book.customers || []).find(
-          (c) => String(c.name || '').trim().toLowerCase() === named);
-        openInvoiceForm({
-          customerId: customer ? customer.id : '',
-          event: { title: 'Music quiz night', venue: (first && first.venue) || '', date: picked },
-          description: 'Music quiz night',
-        }, draw);
-      }]);
+    const on = onByDate.get(picked) || [];
+    if (on.length) {
+      const list = node('<div class="diary-list"></div>');
+      list.replaceChildren(...on.map(diaryRow));
+      out.push(list);
+    } else {
+      out.push(node('<div class="tiny">Nothing on this night.</div>'));
     }
 
-    for (const night of on) {
-      acts.push(['minor danger', `Not on at ${night.venue}`, async () => {
-        if (!confirm(`Not doing ${night.venue} on ${said}?`)) return;
-        await save({ date: night.date, venue: night.venue, off: true });
-      }]);
+    /*
+     * WHAT "NOT ON THIS WEEK" ACTUALLY DID, and the way back from it.
+     *
+     * Asked directly — *"not sure what 'not on' would be useful for"* — and
+     * the honest answer is that the button was right and INVISIBLE. It writes
+     * one week of a residency off; the night then vanishes from the diary and
+     * from the calendar feed, and nothing anywhere said so or offered to undo
+     * it. A control whose entire effect is something disappearing is a control
+     * nobody can learn. So a written-off night is now shown on its own date,
+     * named, with **Put it back** on it.
+     */
+    for (const b of (library.bookings || []).filter((x) => x.off && x.date === picked)) {
+      out.push(offRow(b));
     }
 
-    menuEl.hidden = false;
-    menuEl.replaceChildren(
-      node(`<span class="tiny cal-when">${esc(said)}</span>`),
-      ...acts.map(([cls, label, go]) => {
-        const b = node(`<button class="${cls}" type="button">${esc(label)}</button>`);
-        b.addEventListener('click', go);
-        return b;
-      }),
-    );
+    if (booking) {
+      out.push(bookForm(said));
+    } else {
+      const go = node('<button class="role-make cal-add" type="button">Book a quiz</button>');
+      go.addEventListener('click', () => { booking = true; drawSide(); });
+      out.push(go);
+    }
+
+    /*
+     * NOT WHILE THE FORM IS OPEN. Under a half-filled booking it reads as one
+     * more field in it, and pressing it would leave the tab for the invoices
+     * with what you had typed still on screen behind you.
+     */
+    if (!booking && can(FEATURES.INVOICES)) {
+      const bill = node('<button class="minor cal-bill" type="button">Invoice for this date</button>');
+      bill.addEventListener('click', () => billFor((on[0] && on[0].venue) || '', picked));
+      out.push(bill);
+    }
+    return out;
+  }
+
+  /**
+   * A night written off, and the way to put it back.
+   *
+   * `removeBooking` rather than another `setBooking` — FORGETTING the
+   * exception is what returns a residency to being an ordinary one, which is
+   * exactly what "I cancelled that by mistake" means. Writing a second record
+   * over it would leave the app holding two opinions about one Thursday.
+   */
+  function offRow(b) {
+    const row = node(`
+      <div class="diary-row is-off">
+        <div class="d-what">
+          <b>${esc(b.venue)}</b>
+          <span class="d-tag off">not on</span>
+          <div class="tiny">Written off, so it is not in your diary or your calendar feed.</div>
+        </div>
+        <div class="d-acts"><button class="minor d-back" type="button">Put it back</button></div>
+      </div>`);
+    row.querySelector('.d-back').addEventListener('click', async () => {
+      try {
+        const data = await invoiceApi(`/api/invoices/bookings/${encodeURIComponent(b.id)}`, { method: 'DELETE' });
+        library.bookings = data.bookings || [];
+        drawMonth();
+      } catch (err) {
+        alert(err.message || 'Could not put it back.');
+      }
+    });
+    return row;
+  }
+
+  /**
+   * BOOK A QUIZ — the whole night, against the date already picked.
+   *
+   * *"perhaps when you click 'book a quiz' it just asks for all quiz info like
+   * venue, time etc."* The date is the HEADING rather than a field, because it
+   * is the thing you clicked to get here and a box repeating it is a second
+   * place for it to be wrong.
+   *
+   * Only the venue is required. A time is genuinely optional — a residency has
+   * none, and demanding one would make somebody invent a fact in order to save
+   * a booking — but given, it reaches their real calendar as an appointment
+   * rather than a day-long block. See `src/ics.js`.
+   */
+  function bookForm(said) {
+    const form = node(`
+      <div class="cal-book">
+        <b>Book a quiz — ${esc(said)}</b>
+        <label class="cal-f"><span>Where</span>
+          <!-- WRAPPED, because venueBox() is TWO elements: a select and the
+               free-text box that replaces it for a one-off. wireVenue and
+               venueFrom both use querySelector, which searches descendants,
+               so nesting costs nothing. -->
+          <div class="d-venue">${venueBox()}</div>
+        </label>
+        <label class="cal-f"><span>Starts at</span>
+          <input class="d-time" type="time">
+        </label>
+        <label class="cal-f"><span>Note</span>
+          <input class="d-note" type="text" maxlength="120" placeholder="Anything worth remembering">
+        </label>
+        <div class="tiny">Only the venue is needed. A start time goes into your own calendar as a real appointment.</div>
+        <div class="cal-book-acts">
+          <button class="minor cal-book-off" type="button">Cancel</button>
+          <button class="role-make d-go" type="button">Add it</button>
+        </div>
+      </div>`);
+
+    form.querySelector('.cal-book-off').addEventListener('click', () => { booking = false; drawSide(); });
+
+    const add = form.querySelector('.d-go');
+    add.addEventListener('click', async () => {
+      const venue = venueFrom(form);
+      if (!venue) { alert('A night needs a venue.'); return; }
+      add.disabled = true;
+      await save({
+        date: picked,
+        venue,
+        time: form.querySelector('.d-time').value,
+        note: form.querySelector('.d-note').value.trim(),
+      });
+      add.disabled = false;
+    });
+    wireVenue(form);
+    return form;
   }
 
   /*
@@ -6612,7 +6809,7 @@ function diarySection() {
     } catch {
       // Clipboard is refused without a gesture on some phones; the text is
       // already selected, so there is still a way through.
-      feedSaid.textContent = 'Selected \u2014 copy it and paste it into your calendar.';
+      feedSaid.textContent = 'Selected — copy it and paste it into your calendar.';
     }
   });
   el.querySelector('.cal-roll').addEventListener('click', () => {
@@ -6622,50 +6819,43 @@ function diarySection() {
   showFeed(false);
 
   el.querySelector('.cal-prev').addEventListener('click', () => {
-    shown = new Date(shown.getFullYear(), shown.getMonth() - 1, 1); picked = ''; drawMonth();
+    shown = new Date(shown.getFullYear(), shown.getMonth() - 1, 1); picked = ''; booking = false; drawMonth();
   });
   el.querySelector('.cal-next').addEventListener('click', () => {
-    shown = new Date(shown.getFullYear(), shown.getMonth() + 1, 1); picked = ''; drawMonth();
+    shown = new Date(shown.getFullYear(), shown.getMonth() + 1, 1); picked = ''; booking = false; drawMonth();
   });
   el.querySelector('.cal-today').addEventListener('click', () => {
-    shown = new Date(today.getFullYear(), today.getMonth(), 1); picked = ''; drawMonth();
+    shown = new Date(today.getFullYear(), today.getMonth(), 1); picked = ''; booking = false; drawMonth();
   });
 
-  const draw = () => {
-    drawMonth();
-    const nights = upcoming({
-      venues: library.venueRecords || [],
-      bookings: library.bookings || [],
-    });
-    if (!nights.length) {
-      list.replaceChildren(node(`<div class="tiny">Nothing coming up.
-        ${(library.venueRecords || []).some((v) => v.usualNight)
-    ? 'Add a one-off below.'
-    : 'Give a venue its usual night on the Venues tab and its weeks fill themselves in.'}</div>`));
-      return;
-    }
-    list.replaceChildren(...nights.map(diaryRow));
-  };
-
   /*
-   * A night, and the two things you can do to it.
+   * A night, and the three things you can do to it.
    *
-   * "Not this week" writes a night OFF rather than deleting anything, because
-   * a residency is not a row that can be removed — it is generated from the
-   * venue, so the only way to say "not that Thursday" is to record the
-   * exception. A one-off is a real row and is deleted outright.
+   * **"NOT ON THIS WEEK" AND "DELETE THIS BOOKING" ARE DIFFERENT ACTS ON
+   * DIFFERENT OBJECTS, and one label used to cover both.** It said "Not on",
+   * which is a verb with no object — the collision this project's sweep
+   * already looks for. A residency is not a row that can be removed: it is
+   * generated from the venue's usual night, so the only way to say "not that
+   * Thursday" is to RECORD the exception. A one-off is a real row somebody
+   * typed, and the thing you want is for it to be gone.
    */
   function diaryRow(night) {
     const when = new Date(night.date + 'T12:00:00');
+    const said = when.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+    const oneOff = night.why === 'booked';
+    // The typed row behind this night, if there is one. A residency has none.
+    const typed = (library.bookings || []).find((b) => !b.off && b.date === night.date
+      && String(b.venue || '').toLowerCase() === String(night.venue || '').toLowerCase());
     const row = node(`
-      <div class="diary-row ${night.why === 'booked' ? 'is-booked' : ''}">
+      <div class="diary-row ${oneOff ? 'is-booked' : ''}">
         <div class="d-when">
           <b>${esc(when.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }))}</b>
           <span class="tiny">${esc(whenAway(night.date))}</span>
         </div>
         <div class="d-what">
           <b>${esc(night.venue)}</b>
-          ${night.why === 'booked' ? '<span class="d-tag">one-off</span>' : ''}
+          ${oneOff ? '<span class="d-tag">one-off</span>' : ''}
+          ${night.time ? `<span class="d-time">${esc(saidTime(night.time))}</span>` : ''}
           ${night.note ? `<div class="tiny">${esc(night.note)}</div>` : ''}
           ${night.rewards && night.rewards.filter(Boolean).length
     ? `<div class="tiny">Playing for ${esc(night.rewards.filter(Boolean)[0])}</div>`
@@ -6673,7 +6863,7 @@ function diarySection() {
         </div>
         <div class="d-acts">
           ${can(FEATURES.INVOICES) ? '<button class="minor d-bill">Invoice it</button>' : ''}
-          <button class="minor danger d-off">Not on</button>
+          <button class="minor danger d-off">${oneOff ? 'Delete this booking' : 'Not on this week'}</button>
         </div>
       </div>`);
     /*
@@ -6681,38 +6871,37 @@ function diarySection() {
      *
      * "Past and future" — the past half already worked, from Invoice this on a
      * finished night and from the unbilled list. The future half did not exist
-     * at all: a booking you have taken could only be billed after you had run
+     * at all: a booking you had taken could only be billed after you had run
      * it, which is the wrong way round for anybody who invoices on booking
      * rather than on delivery. Some venues pay a deposit; some want the
      * paperwork before their month end.
      *
-     * It fills in from the SAME places the past version does — the venue's
-     * usual fee, the date, the description — so the two cannot drift into
-     * being different invoices for the same kind of night. All that differs is
-     * which date it carries.
+     * **IT GOES TO THE INVOICES TAB rather than opening a form over the
+     * diary**, at the host's own reading: *"'invoice for this date' goes to
+     * the invoice section with that date pre-filled"*. He is right, and the
+     * reason is what happens AFTER you press Send — you are left standing on
+     * the calendar with no sight of the invoice you just raised, its number or
+     * whether it is a draft. Landing on the tab that owns them means the thing
+     * you made is on the page behind the form.
      *
      * It opens a DRAFT rather than issuing: a number is handed out at issue,
      * and handing one out for a night that might get cancelled is the sort of
      * hole in a sequence HMRC asks about.
      */
-    row.querySelector('.d-bill')?.addEventListener('click', async () => {
-      try {
-        book = await invoiceApi('/api/invoices');
-      } catch (err) {
-        alert('Could not open the invoices: ' + err.message);
+    row.querySelector('.d-bill')?.addEventListener('click', () => billFor(night.venue, night.date));
+    row.querySelector('.d-off').addEventListener('click', async () => {
+      if (oneOff && typed) {
+        if (!confirm(`Delete the booking at ${night.venue} on ${said}?`)) return;
+        try {
+          const data = await invoiceApi(`/api/invoices/bookings/${encodeURIComponent(typed.id)}`, { method: 'DELETE' });
+          library.bookings = data.bookings || [];
+          drawMonth();
+        } catch (err) {
+          alert(err.message || 'Could not delete that.');
+        }
         return;
       }
-      const named = String(night.venue || '').trim().toLowerCase();
-      const customer = (book.customers || []).find(
-        (c) => String(c.name || '').trim().toLowerCase() === named);
-      openInvoiceForm({
-        customerId: customer ? customer.id : '',
-        event: { title: 'Music quiz night', venue: night.venue, date: night.date },
-        description: 'Music quiz night',
-      }, draw);
-    });
-    row.querySelector('.d-off').addEventListener('click', async () => {
-      if (!confirm(`Not doing ${night.venue} on ${when.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}?`)) return;
+      if (!confirm(`Not doing ${night.venue} on ${said}?\n\nIt comes off your diary and your calendar feed. Pick the date and book it again to put it back.`)) return;
       await save({ date: night.date, venue: night.venue, off: true });
     });
     return row;
@@ -6720,29 +6909,68 @@ function diarySection() {
 
   async function save(body) {
     try {
-      const book = await invoiceApi('/api/invoices/bookings', { method: 'POST', body: JSON.stringify(body) });
+      const data = await invoiceApi('/api/invoices/bookings', { method: 'POST', body: JSON.stringify(body) });
       // The route hands the new list straight back, so the page does not have
       // to reload the whole library to show what it just wrote.
-      library.bookings = book.bookings || [];
-      draw();
+      library.bookings = data.bookings || [];
+      drawMonth();
     } catch (err) {
       alert(err.message || 'Could not save that.');
     }
   }
 
-  const add = el.querySelector('.d-go');
-  add.addEventListener('click', async () => {
-    const date = el.querySelector('.d-date').value;
-    const venue = venueFrom(el);
-    if (!date || !venue) { alert('A night needs a date and a venue.'); return; }
-    add.disabled = true;
-    await save({ date, venue, note: el.querySelector('.d-note').value.trim() });
-    add.disabled = false;
-    el.querySelector('.d-note').value = '';
-  });
-  wireVenue(el);
-  draw();
+  drawMonth();
   return el;
+}
+
+/**
+ * A DATE HANDED FROM THE CALENDAR TO THE INVOICES TAB.
+ *
+ * Held here rather than passed, because the two are different tabs and the
+ * only thing between them is `render()`. The invoices tab consumes it once,
+ * after its own book has loaded — which is also what resolves the venue NAME
+ * to a customer id, so the calendar never has to fetch the invoice book to
+ * offer the button.
+ */
+let pendingInvoice = null;
+
+function billFor(venue, date) {
+  pendingInvoice = {
+    venueName: venue || '',
+    event: { title: 'Music quiz night', venue: venue || '', date },
+    description: 'Music quiz night',
+  };
+  goToTab('invoices');
+}
+
+/**
+ * Move to another tab from inside a panel.
+ *
+ * The remembered tab is what `currentTab()` reads — **unless there is a
+ * `?tab=` in the address bar, which wins**. A link that landed somebody here
+ * would otherwise drag them straight back the moment the page redrew, so the
+ * URL is moved along with the memory when it is carrying one.
+ */
+function goToTab(id) {
+  localStorage.setItem(TAB_STORE, id);
+  const url = new URL(location.href);
+  if (url.searchParams.get('tab')) {
+    url.searchParams.set('tab', id);
+    history.replaceState(null, '', url.toString());
+  }
+  render();
+  // The same landing as pressing the tab yourself, because that is what this
+  // is — arriving somewhere different depending on how you got there is how a
+  // page stops feeling like one place.
+  showTabBar();
+}
+
+/** "20:00" as somebody says it out loud. */
+function saidTime(time) {
+  const [h, m] = String(time || '').split(':').map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return '';
+  const hour = h % 12 || 12;
+  return `${hour}${m ? ':' + String(m).padStart(2, '0') : ''}${h < 12 ? 'am' : 'pm'}`;
 }
 
 /** "tonight", "in 3 days", "in 2 weeks" — how far off, not a second date. */
@@ -7308,6 +7536,28 @@ function invoicesSection() {
       </div>`)]));
 
     drawList(body, refresh);
+
+    /*
+     * A DATE THE CALENDAR SENT OVER — see `billFor()`.
+     *
+     * Consumed HERE rather than acted on there, because this is the first
+     * moment the invoice book exists: the venue arrives as a NAME, and turning
+     * it into a customer id needs `book.customers`. Doing it this way round
+     * also means the calendar raises an invoice without fetching the book at
+     * all.
+     *
+     * Taken once and cleared, or the form would reopen on every refresh — and
+     * `refresh()` runs after every save, which would trap somebody inside it.
+     */
+    if (pendingInvoice) {
+      const want = pendingInvoice;
+      pendingInvoice = null;
+      const named = String(want.venueName || '').trim().toLowerCase();
+      const customer = named
+        ? (book.customers || []).find((c) => String(c.name || '').trim().toLowerCase() === named)
+        : null;
+      openInvoiceForm({ ...want, customerId: customer ? customer.id : '' }, refresh);
+    }
   };
 
   el.querySelector('.new-invoice').addEventListener('click', () => openInvoiceForm({}, refresh));

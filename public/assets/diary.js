@@ -130,7 +130,7 @@ export function upcoming({ venues = [], bookings = [], now = Date.now(), weeks =
       if (weekdayOf(date) !== venue.usualNight) continue;
       const key = slotKey(date, venue.name);
       if (off.has(key)) continue;
-      nights.set(key, { date, venue: venue.name, why: 'usual', note: '', rewards: venue.rewards || [] });
+      nights.set(key, { date, venue: venue.name, why: 'usual', note: '', time: '', rewards: venue.rewards || [] });
     }
   }
 
@@ -155,6 +155,11 @@ export function upcoming({ venues = [], bookings = [], now = Date.now(), weeks =
       // is somewhere you do not normally play that day.
       why: venue && venue.usualNight === weekdayOf(date) ? 'usual' : 'booked',
       note: String(booking.note || '').trim(),
+      // What time it starts, when somebody said. A residency has none — the
+      // venue's arrangement lives in no record here — so this is only ever
+      // present on a night that was typed in, and everything downstream treats
+      // its absence as "we do not know" rather than as midnight.
+      time: /^\d{2}:\d{2}$/.test(String(booking.time || '')) ? String(booking.time) : '',
       rewards: (venue && venue.rewards) || [],
     });
   }
