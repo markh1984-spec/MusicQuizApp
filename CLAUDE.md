@@ -1446,6 +1446,29 @@ will work."*
   pack card's Launch, all wearing the account's gradient on one screen, which
   is the GUI rule broken three ways.
 
+**WHOSE NIGHT IT IS, RANKED — and the ranking was wrong.** `tonight()` in
+`diary.js` merged the diary and the residencies into one list of claims and
+treated them as EQUALS, so a one-off typed for tonight at The Anchor and a
+live Thursday at The Crown cancelled each other out and the bar went blank.
+That threw away the one answer somebody had actually stated. The order is: **a
+date you typed, then whose usual night it is, then where you played last** —
+which is the rule `upcoming()` already followed when a booking landed on the
+residency's own venue, and it simply never applied across venues. Ranked by
+asking `bookings` rather than by the `why` label, because a booking on the
+venue's own usual night is deliberately reported as `usual` so the line reads
+"your usual night here" rather than announcing a diary entry for a Thursday you
+always do.
+
+**A GENUINE DOUBLE BOOKING IS NAMED, not left blank.** Two typed dates, or two
+residencies on one weekday, cannot be told apart by anything the app knows —
+picking whichever sorted first would put one pub's prizes in front of another
+pub's room. So nothing is chosen, and `clashTonight()` says which two: *"The
+Anchor and The Crown both claim tonight — pick one under Set it up."* In gold
+rather than red, like "not invoiced": nothing is broken, it is a decision only
+the human can make. A silent blank on the field that decides the prizes, the
+voucher and what the night is filed under looks exactly like an app that is
+working.
+
 **IT FOLDS TO A THIN LINE, AND THE LINE STILL SAYS WHAT IT IS SET TO.** The
 host's own sequence is the spec: *"I get to the venue and it is right there. I
 don't need it yet — the venue wants the prizes changed, so I collapse it, go to

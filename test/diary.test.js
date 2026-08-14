@@ -14,7 +14,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { upcoming, tonight, nightKey, weekdayOf, WEEKDAYS } from '../public/assets/diary.js';
+import { upcoming, tonight, clashTonight, nightKey, weekdayOf, WEEKDAYS } from '../public/assets/diary.js';
 
 // A Thursday, deliberately: it is the host's own residency night.
 const THU = new Date(2026, 7, 13, 20, 0).getTime();
@@ -169,6 +169,52 @@ test('two venues claiming tonight means neither is offered', () => {
   // …and it does not quietly fall through to "where you played last" either,
   // which would be a third venue nobody asked for.
   assert.equal(tonight({ venues: clash, playedVenues: ['Somewhere else'], now: THU }), null);
+});
+
+/*
+ * A TYPED DATE BEATS A LIVE RESIDENCY AT ANOTHER VENUE, which is the ranking
+ * this used to get wrong: both were treated as equal claims, so the bar went
+ * blank and threw away the one answer somebody had actually stated.
+ */
+test('a one-off tonight beats a residency somewhere else', () => {
+  const answer = tonight({
+    venues: [STATION, { name: 'The Crown', usualNight: 'thu' }],
+    bookings: [{ date: '2026-08-13', venue: 'The Dog and Duck' }],
+    now: THU,
+  });
+  assert.deepEqual(answer, { name: 'The Dog and Duck', why: 'in your diary tonight' });
+});
+
+test('and it still beats it when the one-off is at a venue with a usual night of its own', () => {
+  // `why` says "usual" for a booking that lands on the venue's own night, so
+  // the ranking has to ask the BOOKINGS rather than the label.
+  const answer = tonight({
+    venues: [{ name: 'The Anchor', usualNight: 'thu' }, { name: 'The Crown', usualNight: 'thu' }],
+    bookings: [{ date: '2026-08-13', venue: 'The Anchor' }],
+    now: THU,
+  });
+  assert.equal(answer.name, 'The Anchor');
+});
+
+test('TWO TYPED DATES ARE A REAL DOUBLE BOOKING, and neither is offered', () => {
+  const both = {
+    venues: [],
+    bookings: [
+      { date: '2026-08-13', venue: 'The Anchor' },
+      { date: '2026-08-13', venue: 'The Crown' },
+    ],
+    now: THU,
+  };
+  assert.equal(tonight(both), null);
+  assert.deepEqual(clashTonight(both).sort(), ['The Anchor', 'The Crown']);
+});
+
+test('a clash is NAMED so the bar can say which two', () => {
+  const clash = { venues: [STATION, { name: 'The Crown', usualNight: 'thu' }], now: THU };
+  assert.deepEqual(clashTonight(clash).sort(), ['The Crown', 'The Station Tap']);
+  // And an ordinary night has nothing to say.
+  assert.deepEqual(clashTonight({ venues: [CROWN], now: THU }), []);
+  assert.deepEqual(clashTonight({ venues: [STATION], now: THU }), []);
 });
 
 test('with nothing set it falls back to where you played last', () => {

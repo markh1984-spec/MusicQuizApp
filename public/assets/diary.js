@@ -189,10 +189,59 @@ export function upcoming({ venues = [], bookings = [], now = Date.now(), weeks =
 export function tonight({ venues = [], bookings = [], playedVenues = [], now = Date.now() } = {}) {
   const today = nightKey(now);
   const on = upcoming({ venues, bookings, now, weeks: 1 }).filter((n) => n.date === today);
-  if (on.length === 1) {
-    return { name: on[0].venue, why: on[0].why === 'booked' ? 'in your diary tonight' : 'your usual night here' };
+  const one = theOne(on, bookings, today);
+  if (one) {
+    // The LABEL still comes from `why`, which is what makes a booking that
+    // lands on your usual night read as "your usual night here" rather than
+    // announcing a diary entry for a Thursday you always do.
+    return { name: one.venue, why: one.why === 'booked' ? 'in your diary tonight' : 'your usual night here' };
   }
-  if (on.length > 1) return null;
+  // Two of the same kind is a real clash and nothing is offered — see below.
+  // It does NOT fall through to where you played last: a third venue nobody
+  // mentioned is a worse answer than no answer.
+  if (on.length) return null;
   const last = playedVenues[0];
   return last ? { name: last, why: 'where you played last' } : null;
+}
+
+/**
+ * WHICH OF TONIGHT'S CLAIMS WINS — and the ranking is the whole of it.
+ *
+ * **A DATE SOMEBODY TYPED BEATS A PATTERN**, which is the rule `upcoming()`
+ * already follows when a booking lands on the residency's own venue. It did
+ * NOT apply across venues: a one-off at The Anchor and a live Thursday at The
+ * Crown were treated as equals and the launch bar went blank, so the correct
+ * answer — the pub you are actually standing in, which you typed in — was
+ * thrown away because the app also knew about a pattern.
+ *
+ * Ranked, not resolved by sorting: an explicit booking wins. Two bookings, or
+ * two residencies, are a genuine double booking and there is nothing here that
+ * could tell them apart — picking whichever sorted first would put one pub's
+ * prizes in front of another pub's room, and that surfaces at the final scores
+ * in front of sixty people.
+ *
+ * Asked of `bookings` rather than of `why`, because a booking that falls on
+ * the venue's own usual night is reported as `usual` — deliberately, for the
+ * label — so `why` cannot tell you whether somebody typed it.
+ */
+function theOne(on, bookings, today) {
+  if (on.length <= 1) return on[0] || null;
+  const typed = on.filter((n) => bookings.some(
+    (b) => b && !b.off && b.date === today
+      && String(b.venue || '').trim().toLowerCase() === String(n.venue || '').trim().toLowerCase()));
+  return typed.length === 1 ? typed[0] : null;
+}
+
+/**
+ * The venues that BOTH claim tonight, when there is no way to choose.
+ *
+ * Asked only when `tonight()` has come back with nothing, so the launch bar
+ * can say which two rather than going quietly blank — a silent gap on the one
+ * field that decides the prizes, the voucher and what the night is filed under
+ * reads exactly like an app that is working.
+ */
+export function clashTonight({ venues = [], bookings = [], now = Date.now() } = {}) {
+  const today = nightKey(now);
+  const on = upcoming({ venues, bookings, now, weeks: 1 }).filter((n) => n.date === today);
+  return theOne(on, bookings, today) ? [] : on.map((n) => n.venue);
 }

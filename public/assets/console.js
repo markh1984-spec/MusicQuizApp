@@ -12,7 +12,7 @@ import { paintScheme } from './schemes.js';
 import { balanceAnswers } from './balance.js';
 import { FEATURES, FEATURE_TIER, FEATURE_META, SWITCHABLE, findTier, switchable, NOT_BUILT } from './plans.js';
 import { inSeason } from './looks.js';
-import { upcoming, tonight, nightKey, WEEKDAY_LABELS } from './diary.js';
+import { upcoming, tonight, clashTonight, nightKey, WEEKDAY_LABELS } from './diary.js';
 
 const mainEl = document.getElementById('main');
 const runningEl = document.getElementById('runningNow');
@@ -2729,8 +2729,29 @@ function launchBar() {
    */
   const paintWhere = () => {
     const v = tonightsVenue();
-    where.textContent = v
-      ? `${v.name} — ${v.why}`
+    if (v) {
+      where.textContent = `${v.name} — ${v.why}`;
+      where.classList.remove('lb-warn');
+      return;
+    }
+    /*
+     * A DOUBLE BOOKING IS SAID OUT LOUD, not left as a blank.
+     *
+     * Two venues can both claim tonight — two residencies on a Thursday, or
+     * two dates typed into the diary — and there is nothing here that could
+     * tell them apart, so nothing is chosen. That much is right. What was
+     * wrong is that it looked identical to having no venues at all, on the one
+     * field that decides the prizes, the voucher and what the night is filed
+     * under. Naming both is what turns it into a decision somebody can make in
+     * one tap.
+     */
+    const clash = clashTonight({
+      venues: library.venueRecords || [],
+      bookings: library.bookings || [],
+    });
+    where.classList.toggle('lb-warn', clash.length > 1);
+    where.textContent = clash.length > 1
+      ? `${clash.join(' and ')} both claim tonight — pick one under Set it up.`
       : 'No venue tonight — pick one under Set it up, or it is filed under nothing.';
   };
 

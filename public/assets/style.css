@@ -4738,6 +4738,10 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    under Set it up. */
 .lb-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .lb-where { color: var(--ink-dim); }
+/* A DOUBLE BOOKING, named. Gold rather than red: it is not a fault and nothing
+   is broken — it is a decision only the human can make, and it is the same
+   treatment "not invoiced" gets for the same reason. */
+.lb-where.lb-warn { color: var(--gold); font-weight: 800; }
 
 /* COLLAPSED, IT IS A THIN LINE — and the line still says what it is set to,
    because a shut panel saying only "Tonight" makes you open it to find out
