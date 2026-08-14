@@ -2768,7 +2768,7 @@ function launchBar() {
       return;
     }
     /*
-     * A DOUBLE BOOKING IS SAID OUT LOUD, not left as a blank.
+     * TWO ANSWERS FOR ONE NIGHT ARE SAID OUT LOUD, not left as a blank.
      *
      * Two venues can both claim tonight — two residencies on a Thursday, or
      * two dates typed into the diary — and there is nothing here that could
@@ -4815,8 +4815,9 @@ function renderBingoPreview(body, sub, pack, markDirty = () => {}) {
  *    the "remember last week" that was asked for. It carries a one-venue host
  *    who has set nothing up at all.
  *
- * **TWO VENUES CLAIMING TONIGHT MEANS NEITHER GETS IT.** A double booking is
- * a real thing on a Friday in December, and picking whichever sorted first
+ * **TWO VENUES CLAIMING TONIGHT MEANS NEITHER GETS IT.** Not a double booking
+ * — one quizmaster is in one room, so at most one of them is real. It is the
+ * APP holding two answers for one night, and picking whichever sorted first
  * would put one pub's prizes in front of another pub's room. Nothing is
  * offered and the picker is left alone, which is exactly what happens today.
  *

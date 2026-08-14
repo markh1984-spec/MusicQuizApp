@@ -101,10 +101,13 @@ constraint is that a feature's real price is the admin it creates on a Monday.
 
 Four things that are load-bearing:
 
-- **TWO VENUES CLAIMING TONIGHT MEANS NEITHER GETS IT.** A double booking is a
-  real thing in December, and picking whichever sorted first would put one
-  pub's prizes in front of another pub's room. Nothing is offered and the
-  picker is left blank, which is exactly what happened before this existed.
+- **TWO VENUES CLAIMING TONIGHT MEANS NEITHER GETS IT.** Not a double booking,
+  and the words matter: one quizmaster is in one room, so at most one of the
+  two is where they actually are. It is the APP holding two answers for one
+  night — two residencies on a Friday in December, say — and picking whichever
+  sorted first would put one pub's prizes in front of another pub's room.
+  Nothing is offered and the picker is left blank, which is exactly what
+  happened before this existed.
 - **NOTHING IS SILENT.** The quick-launch button prints *"at The Station Tap ·
   your usual night here"*, and the pack card's picker shows the name with the
   prize line underneath saying what that venue puts up. A guess nobody can see

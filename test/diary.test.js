@@ -159,9 +159,10 @@ test('a booking for tonight beats the usual night', () => {
 });
 
 /*
- * A DOUBLE BOOKING MEANS NEITHER. Picking whichever sorted first would put one
- * pub's prizes in front of another pub's room, which surfaces at the final
- * scores in front of sixty people.
+ * TWO ANSWERS FOR ONE NIGHT MEANS NEITHER. Nobody is in two rooms at once, so
+ * this is the app not knowing rather than a diary clash — and picking
+ * whichever sorted first would put one pub's prizes in front of another pub's
+ * room, which surfaces at the final scores in front of sixty people.
  */
 test('two venues claiming tonight means neither is offered', () => {
   const clash = [STATION, { name: 'The Crown', usualNight: 'thu' }];
@@ -196,7 +197,7 @@ test('and it still beats it when the one-off is at a venue with a usual night of
   assert.equal(answer.name, 'The Anchor');
 });
 
-test('TWO TYPED DATES ARE A REAL DOUBLE BOOKING, and neither is offered', () => {
+test('TWO TYPED DATES LEAVE THE APP GUESSING, so neither is offered', () => {
   const both = {
     venues: [],
     bookings: [

@@ -1499,8 +1499,11 @@ venue's own usual night is deliberately reported as `usual` so the line reads
 "your usual night here" rather than announcing a diary entry for a Thursday you
 always do.
 
-**A GENUINE DOUBLE BOOKING IS NAMED, not left blank.** Two typed dates, or two
-residencies on one weekday, cannot be told apart by anything the app knows —
+**TWO ANSWERS FOR ONE NIGHT ARE NAMED, not left blank — and the words matter
+here.** It is NOT a double booking: one quizmaster is in one room, so at most
+one of the two is where they actually are. What has gone wrong is the APP's
+understanding, not the diary. Two typed dates, or two residencies on one
+weekday, cannot be told apart by anything the app knows —
 picking whichever sorted first would put one pub's prizes in front of another
 pub's room. So nothing is chosen, and `clashTonight()` says which two: *"The
 Anchor and The Crown both claim tonight — pick one under Set it up."* In gold

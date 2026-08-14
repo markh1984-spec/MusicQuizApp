@@ -181,10 +181,11 @@ export function upcoming({ venues = [], bookings = [], now = Date.now(), weeks =
  *    gives newest-first — the "remember what you did last week" that was
  *    originally asked for.
  *
- * **TWO VENUES CLAIMING TONIGHT MEANS NEITHER GETS IT.** A double booking is
- * a real thing in December, and picking whichever sorted first would put one
- * pub's prizes in front of another pub's room. Nothing is returned and the
- * picker is left blank, which is exactly what happened before any of this.
+ * **TWO VENUES CLAIMING TONIGHT MEANS NEITHER GETS IT.** This is not a double
+ * booking — one quizmaster is in one room, so at most one of the two is where
+ * they actually are. It is the APP holding two answers for one night, and
+ * picking whichever sorted first would put one pub's prizes in front of
+ * another pub's room. Nothing is returned and the picker is left blank.
  */
 export function tonight({ venues = [], bookings = [], playedVenues = [], now = Date.now() } = {}) {
   const today = nightKey(now);
@@ -215,10 +216,11 @@ export function tonight({ venues = [], bookings = [], playedVenues = [], now = D
  * thrown away because the app also knew about a pattern.
  *
  * Ranked, not resolved by sorting: an explicit booking wins. Two bookings, or
- * two residencies, are a genuine double booking and there is nothing here that
- * could tell them apart — picking whichever sorted first would put one pub's
- * prizes in front of another pub's room, and that surfaces at the final scores
- * in front of sixty people.
+ * two residencies, leave the app with two answers for ONE night — nobody is
+ * doing two rooms at once, and nothing here can tell which is the real one.
+ * Picking whichever sorted first would put one pub's prizes in front of
+ * another pub's room, and that surfaces at the final scores in front of sixty
+ * people.
  *
  * Asked of `bookings` rather than of `why`, because a booking that falls on
  * the venue's own usual night is reported as `usual` — deliberately, for the
