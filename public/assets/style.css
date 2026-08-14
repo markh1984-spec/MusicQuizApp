@@ -4739,6 +4739,41 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .lb-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .lb-where { color: var(--ink-dim); }
 
+/* COLLAPSED, IT IS A THIN LINE — and the line still says what it is set to,
+   because a shut panel saying only "Tonight" makes you open it to find out
+   what it would do, which is the tap this exists to save. Shut, the whole row
+   is the target: one small chevron on the end of a bar is a thing you miss
+   with a thumb in a dark pub. */
+.launchbar.shut { padding-top: 12px; padding-bottom: 12px; cursor: pointer; }
+/* ONE ROW, and it has to stay one row — "collapsed" that takes three lines on
+   a phone is not collapsed, it is smaller. So it does not wrap, the middle
+   truncates, and the way back in keeps its full width. */
+.launchbar.shut .lb-head { align-items: center; flex-wrap: nowrap; }
+.launchbar.shut .lb-head > * { min-width: 0; }
+.launchbar.shut .lb-where,
+.lb-shut-what { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-shut-what { font-weight: 800; color: var(--ink); }
+/* On a phone there is room for the heading, ONE fact and the way back in. The
+   pack is the more useful of the two — it is what the button would launch —
+   and the venue is one tap away inside. */
+@media (max-width: 560px) {
+  .launchbar.shut .lb-where { display: none; }
+}
+.lb-tucked { display: none !important; }
+.lb-fold {
+  margin-left: auto; flex: 0 0 auto;
+  padding: 6px 12px; border-radius: var(--r-pill);
+  background: none; border: 1px solid var(--panel-line); color: var(--ink-dim);
+  font: inherit; font-size: var(--fs-mini); font-weight: 800; cursor: pointer;
+}
+.lb-fold:hover { border-color: var(--hot); color: var(--ink); }
+.lb-fold::after {
+  content: '';
+  display: inline-block; margin-left: 7px; vertical-align: 1px;
+  border: 5px solid transparent; border-top-color: currentColor; border-bottom: 0;
+}
+.lb-fold[aria-expanded="false"]::after { transform: rotate(180deg); }
+
 /* The runner-up pack, as a chip rather than a second gradient button — there
    is one "press this" on a screen, and it is Launch. */
 .lb-why { margin-top: 6px; }

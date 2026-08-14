@@ -2592,6 +2592,24 @@ async function generate(panel) {
 let lbOpen = false;
 let currentPack = null;
 
+/*
+ * IS THE WHOLE SECTION OPEN, and it is remembered on the DEVICE rather than in
+ * a variable.
+ *
+ * The host's own sequence, and it is the reason this is not just a toggle:
+ * *"I get to the venue, the launch thing is right there. I don't need it yet —
+ * the venue wants me to change the prizes, so I collapse it, go to the Venues
+ * tab and do my thing. Then when I am ready to launch I open it again."* So
+ * the state has to survive changing TAB, which re-renders the whole page, and
+ * it has to survive coming back to the console later.
+ *
+ * `localStorage` for the same reason the compact pack grid uses it: this is a
+ * preference about how somebody works, not about this visit. Open is the
+ * default, because the section exists to be the first thing you see.
+ */
+const TONIGHT_STORE = 'musicquiz.tonightopen';
+let tonightOpen = localStorage.getItem(TONIGHT_STORE) !== '0';
+
 function launchBar() {
   // An owner runs no nights, so there is nothing here for them — same reason
   // the running panel hides itself.
@@ -2614,6 +2632,13 @@ function launchBar() {
              what the night is filed under — and it used to be visible only on
              a button label. -->
         <div class="tiny lb-where"></div>
+        <!-- SHUT, IT IS STILL A SENTENCE. A collapsed panel that says only
+             "Tonight" makes you open it to find out what it is set to, which
+             is the tap this is meant to save. -->
+        <div class="tiny lb-shut-what" hidden></div>
+        <button class="lb-fold" type="button" aria-expanded="true">
+          <span class="lb-fold-word"></span>
+        </button>
       </div>
       <div class="lb-find">
         ${games.length > 1 ? `<select class="lb-game">
@@ -2634,6 +2659,8 @@ function launchBar() {
   const hits = el.querySelector('.lb-hits');
   const alt = el.querySelector('.lb-alt');
   const whyEl = el.querySelector('.lb-why');
+  const fold = el.querySelector('.lb-fold');
+  const shutWhat = el.querySelector('.lb-shut-what');
   const where = el.querySelector('.lb-where');
   const chosen = el.querySelector('.lb-chosen');
   const gameOf = () => games.find((g) => g.id === (gamePick ? gamePick.value : games[0].id)) || games[0];
@@ -2894,7 +2921,40 @@ function launchBar() {
     const first = quickPicks(gameOf().packs)[0];
     if (first) pick(first.pack);
     paintAlt();
+    paintFold();
   }
+
+  /*
+   * OPEN OR A THIN LINE, and the line still says what it is set to.
+   *
+   * Collapsed it is one row — "Tonight · The Crown · The 1980s Pop Quiz" and a
+   * chevron — which is findable from anywhere on the page and one tap from
+   * launching. Everything below the head is hidden rather than removed, so
+   * reopening it is instant and nothing has to be rebuilt or re-chosen.
+   *
+   * THE WHOLE HEAD IS THE TARGET when it is shut. A thin bar with one small
+   * chevron on the end of it is a thing you miss with a thumb in a dark pub;
+   * shut, the entire row opens it.
+   */
+  function paintFold() {
+    el.classList.toggle('shut', !tonightOpen);
+    fold.setAttribute('aria-expanded', tonightOpen ? 'true' : 'false');
+    el.querySelector('.lb-fold-word').textContent = tonightOpen ? 'Hide' : 'Launch a night';
+    for (const part of [el.querySelector('.lb-find'), whyEl, alt, chosen]) {
+      if (part) part.classList.toggle('lb-tucked', !tonightOpen);
+    }
+    shutWhat.hidden = tonightOpen;
+    shutWhat.textContent = currentPack ? currentPack.title : '';
+  }
+
+  const toggleFold = () => {
+    tonightOpen = !tonightOpen;
+    localStorage.setItem(TONIGHT_STORE, tonightOpen ? '1' : '0');
+    paintFold();
+  };
+  fold.addEventListener('click', (ev) => { ev.stopPropagation(); toggleFold(); });
+  el.querySelector('.lb-head').addEventListener('click', () => { if (!tonightOpen) toggleFold(); });
+
   startOn();
   return el;
 }

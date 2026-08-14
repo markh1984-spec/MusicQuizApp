@@ -1446,6 +1446,22 @@ will work."*
   pack card's Launch, all wearing the account's gradient on one screen, which
   is the GUI rule broken three ways.
 
+**IT FOLDS TO A THIN LINE, AND THE LINE STILL SAYS WHAT IT IS SET TO.** The
+host's own sequence is the spec: *"I get to the venue and it is right there. I
+don't need it yet — the venue wants the prizes changed, so I collapse it, go to
+the Venues tab and do my thing, then open it again when I am ready."* So the
+state is kept in `localStorage` rather than a variable: changing tab re-renders
+the whole page, and the point is that it survives that AND the next visit. Open
+is the default, because being the first thing you see is what it is for.
+
+Shut it is ONE ROW — *"Tonight · The Crown · The 1980s Pop Quiz"* and a way
+back in — and it has to stay one row: collapsed that takes three lines on a
+phone is not collapsed, it is smaller. It does not wrap, the middle
+ellipsises, and below 560px the venue drops rather than the pack, because the
+pack is what the button would launch. **The whole row is the target when it is
+shut**, not just the chevron: one small control on the end of a bar is a thing
+you miss with a thumb in a dark pub.
+
 **The pack cards keep their own Launch for now**, deliberately: this is the
 protected surface, and swapping a working control for "loads it into the bar"
 on the same day as the redesign is two changes to one path. That is the next
