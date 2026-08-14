@@ -444,7 +444,7 @@ body::after {
   gap: 1.6vw;
   padding: 2vh 2vw;
   border-radius: var(--radius);
-  background: linear-gradient(100deg, rgba(255, 46, 136, 0.22), rgba(255, 210, 63, 0.14));
+  background: linear-gradient(120deg, rgba(255, 46, 136, 0.22), rgba(255, 210, 63, 0.14));
   border: 2px solid rgba(255, 210, 63, 0.4);
   font-size: 3vh;
   animation: cardIn 340ms cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -494,7 +494,7 @@ body::after {
   font-weight: 900; color: var(--ink-dim); font-variant-numeric: tabular-nums;
 }
 .board-row .score { margin-left: auto; font-weight: 900; font-variant-numeric: tabular-nums; }
-.board-row.top1 { background: linear-gradient(100deg, rgba(255, 210, 63, 0.26), rgba(255, 138, 61, 0.12)); border-color: var(--gold); }
+.board-row.top1 { background: linear-gradient(120deg, rgba(255, 210, 63, 0.26), rgba(255, 138, 61, 0.12)); border-color: var(--gold); }
 .board-row.top1 .pos, .board-row.top1 .score { color: var(--gold); }
 .board-row.top2 { border-color: rgba(255, 255, 255, 0.4); }
 .board-row.top3 { border-color: rgba(255, 138, 61, 0.5); }
@@ -1362,7 +1362,7 @@ body.editor::after { display: none; }
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   padding: 14px 16px;
   border-radius: 14px 14px 0 0;
-  background: linear-gradient(100deg, rgba(255, 46, 136, 0.2), rgba(75, 216, 255, 0.1));
+  background: linear-gradient(120deg, rgba(255, 46, 136, 0.2), rgba(75, 216, 255, 0.1));
   border: 1px solid var(--panel-line);
   border-bottom: none;
 }
@@ -1486,7 +1486,7 @@ body.editor::after { display: none; }
   text-align: center;
   padding: 3vh 2vw;
   border-radius: var(--radius);
-  background: linear-gradient(100deg, rgba(255, 46, 136, 0.2), rgba(75, 216, 255, 0.12));
+  background: linear-gradient(120deg, rgba(255, 46, 136, 0.2), rgba(75, 216, 255, 0.12));
   border: 2px solid var(--panel-line);
 }
 .now-playing .np-label {
@@ -5243,6 +5243,15 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
  * that produce content rather than run a night. Green because it is NOT the
  * night, and the night owns the account's own gradient. */
 .role-make {
+  /* THE PAGE'S OWN TYPE, not the browser's.
+     This had no `font` at all, so every "makes something" button — Write it,
+     Import, Add a venue, New set, Save — inherited the browser's default
+     button font: 13.333px in a system UI face, which is both off the type
+     ladder and a different TYPEFACE from every other control on the page.
+     Measured across four console tabs before it was spotted; it is invisible
+     in a diff and obvious once you know. */
+  font: inherit;
+  font-size: var(--fs-ctl);
   border-radius: var(--r-field);
   /*
    * DEEPER THAN `--good` ITSELF, and that is the whole tuning.
