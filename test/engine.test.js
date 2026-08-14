@@ -1816,3 +1816,73 @@ test('a malformed request body is answered 400, not 500', () => {
     'a body that is valid JSON but not an object gets through again — every route reads fields off it');
   assert.match(server, /err\.badRequest/, 'nothing turns a bad body into a 400 response');
 });
+
+/*
+ * THE COUNTDOWN BEFORE KICK-OFF.
+ *
+ * The code goes up at ten to and the quiz starts at nine. Advisory only —
+ * nothing reads it to begin a quiz, because a quiz that started on a timer
+ * would start while the host was at the bar.
+ */
+test('a countdown is minutes from now, and an ordinary night has none', () => {
+  const { engine } = makeEngine();
+  assert.equal(engine.state.startsAt, null);
+  assert.ok(!('startsAt' in engine.screenView()), 'a night with no countdown grew a field');
+  assert.ok(!('startsAt' in engine.playerView('nobody')), 'a night with no countdown grew a field');
+
+  assert.equal(engine.setStartsIn(10), true);
+  assert.equal(engine.state.startsAt, START + 10 * 60000);
+  assert.equal(engine.screenView().startsAt, START + 10 * 60000);
+});
+
+test('a silly countdown is refused rather than believed', () => {
+  const { engine } = makeEngine();
+  assert.equal(engine.setStartsIn(0), false);
+  assert.equal(engine.setStartsIn(-5), false);
+  assert.equal(engine.setStartsIn(999), false, 'a countdown running for a day is a mistype, not a plan');
+  assert.equal(engine.setStartsIn('nonsense'), false);
+  assert.equal(engine.state.startsAt, null);
+});
+
+test('a countdown can be taken off again', () => {
+  const { engine } = makeEngine();
+  engine.setStartsIn(10);
+  assert.equal(engine.setStartsIn(null), true);
+  assert.equal(engine.state.startsAt, null);
+  assert.ok(!('startsAt' in engine.screenView()));
+});
+
+/*
+ * IT NEVER STARTS ANYTHING, and it never survives the start. A clock still
+ * promising a start that has already happened is worse than no clock.
+ */
+test('starting the quiz clears the countdown and nothing starts on its own', () => {
+  const { engine, advance } = makeEngine();
+  engine.setStartsIn(5);
+  // Well past zero, and the quiz has not moved on its own.
+  advance(60 * 60000);
+  assert.equal(engine.state.phase, 'lobby', 'a countdown started the quiz by itself');
+
+  engine.start();
+  assert.equal(engine.state.startsAt, null, 'the countdown outlived the start');
+});
+
+/* Lobby only — a countdown over a question is a countdown to the past. */
+test('the countdown is never in a payload once the quiz is running', () => {
+  const { engine } = makeEngine();
+  engine.setStartsIn(10);
+  assert.equal(engine.screenView().startsAt, START + 600000);
+  engine.start();
+  engine.setStartsIn(10);
+  assert.ok(!('startsAt' in engine.screenView()), 'a countdown appeared once the quiz was running');
+  assert.ok(!('startsAt' in engine.playerView('nobody')), 'a countdown appeared once the quiz was running');
+});
+
+/* The room and the projector must read the SAME number off the same clock. */
+test('the phone and the big screen carry the same countdown', () => {
+  const { engine } = makeEngine();
+  engine.setStartsIn(7);
+  const id = engine.join('Someone').id;
+  assert.equal(engine.playerView(id).startsAt, engine.screenView().startsAt);
+  assert.equal(engine.hostView().startsAt, engine.screenView().startsAt);
+});

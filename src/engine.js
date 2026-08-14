@@ -141,6 +141,31 @@ export class Engine {
        */
       vouchers: {},
       /*
+       * WHEN THE ROOM IS BEING TOLD IT STARTS — a timestamp, or null.
+       *
+       * The QR goes up at ten to and the quiz kicks off at nine, and until
+       * this the phone said "hang tight, the quiz starts shortly" and gave
+       * somebody nothing to look at. So they switch to Instagram, the tab goes
+       * to the background, and you get a reconnect when the quiz starts.
+       *
+       * **IT IS ADVISORY AND NOTHING READS IT TO ACT.** The host still presses
+       * Start the quiz — the same rule as the budget ceiling that warns and
+       * never refuses, and for a stronger reason here: a quiz that began on a
+       * timer would begin while the host was at the bar getting a drink in.
+       *
+       * A countdown is also a PROMISE, so at zero it says "any moment now"
+       * rather than counting up — the app must never be the thing that tells
+       * sixty people the host is late.
+       *
+       * **AND THE REACH IS NOT THE POINT, which is what settled the design.**
+       * It cannot alert a locked phone — Web Push on iOS needs the site added
+       * to a home screen, which nobody in a pub is doing — but it does not
+       * need to. Five people out of thirty seeing it is a room that tells
+       * itself, which is how a pub has always worked. So it is built to be
+       * unmissable when somebody looks, and never as a notification.
+       */
+      startsAt: null,
+      /*
        * TEAM PLAY — several phones, one team, and the score is the AVERAGE.
        *
        * Off unless the host asked for it at launch, exactly like the look and
@@ -623,6 +648,37 @@ export class Engine {
     this.state.questionIndex = 0;
     this.state.startedAt = this.now();
     this.state.finishedAt = null;
+    // The countdown was about getting to here. Cleared rather than left to run
+    // out, or a quiz started early would carry a clock still promising a
+    // start that has already happened.
+    this.state.startsAt = null;
+    this.changed();
+    return true;
+  }
+
+  /**
+   * Tell the room roughly when it starts — or stop telling them.
+   *
+   * Minutes from NOW rather than a wall-clock time, and that is the whole
+   * design. The host thinks "we kick off at nine", but a clock that says 9:00
+   * is a commitment the app has made on their behalf: run four minutes late
+   * and the projector has told sixty people so. Set as a duration it is an
+   * intention, it is one tap to push back, and nothing on screen ever names a
+   * time that can be missed.
+   *
+   * `null` takes it off. Anything past a couple of hours is refused rather
+   * than believed — a mistyped countdown that sits there for a day is the sort
+   * of thing nobody notices until a room is reading it.
+   */
+  setStartsIn(minutes) {
+    if (minutes === null || minutes === undefined || minutes === '') {
+      this.state.startsAt = null;
+      this.changed();
+      return true;
+    }
+    const mins = Number(minutes);
+    if (!Number.isFinite(mins) || mins <= 0 || mins > 120) return false;
+    this.state.startsAt = this.now() + Math.round(mins * 60000);
     this.changed();
     return true;
   }
@@ -1274,7 +1330,26 @@ export class Engine {
       roundTitle: round ? round.title : '',
       roundType: round ? round.type : null,
       playerCount: this.playerCount(),
+      ...this.startsExtra(),
     };
+  }
+
+  /**
+   * The countdown, and ONLY when there is one.
+   *
+   * Spread in rather than sent as `startsAt: null`, so a night that never uses
+   * it produces the payload it always did — `pub-unchanged.mjs` reports zero
+   * new fields on an ordinary Wednesday, which is the same discipline the
+   * vouchers follow.
+   *
+   * Lobby only, as well as being cleared by `start()`. Belt and braces on
+   * purpose: a stale timestamp appearing over a question would be a countdown
+   * to something that has already happened, on the one screen that must never
+   * carry anything but the question.
+   */
+  startsExtra() {
+    const s = this.state;
+    return s.phase === PHASES.LOBBY && s.startsAt ? { startsAt: s.startsAt } : {};
   }
 
   /**
@@ -1533,6 +1608,10 @@ export class Engine {
       // Not a secret — it is a fact about the night, and the phone has to lay
       // itself out differently for it.
       online: Boolean(s.online),
+      // The same countdown the projector is showing. Deliberately the SAME
+      // number from the SAME clock: a room where one phone says 40 seconds and
+      // the big screen says 30 is a room that stops believing either.
+      ...this.startsExtra(),
       /*
        * ONLY THE ROOMS THIS PERSON IS IN.
        *

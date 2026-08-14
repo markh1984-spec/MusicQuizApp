@@ -752,6 +752,69 @@ phase change.
 
 ---
 
+## The countdown before kick-off
+
+`state.startsAt`, `setStartsIn()` in `src/engine.js`, and the **Tell the room**
+row in the control view's Setup panel. The code goes up at ten to and the quiz
+kicks off at nine; this is what fills that gap. The projector and every phone
+carry the same number off the same server clock.
+
+**IT CANNOT ALERT A LOCKED PHONE AND DELIBERATELY DOES NOT TRY.** A real
+notification needs Web Push, and on iOS Safari that only works once somebody
+has added the site to their home screen — which nobody in a pub is doing, so it
+would reach about half a room at best. Sound is blocked without a gesture and
+dies on the silent switch; `navigator.vibrate()` has never existed on iOS.
+
+**And it does not need to, which is the host's own point and it changed the
+design rather than excusing it:** *"some people will tell other people, and
+so they'll be like, oh, the quiz is starting soon, and then they'll all come
+together."* Five phones out of thirty is a room that tells itself. So this is
+built to be **unmissable when somebody looks** and to give the room something
+to point at — never as a notification, and no effort is spent chasing one.
+
+**MINUTES FROM NOW, NEVER A WALL-CLOCK TIME.** "Nine o'clock" on a projector is
+a commitment the app has made on the host's behalf: run four minutes late and
+the big screen has told sixty people so. A duration is an intention, and
+pressing 10 again pushes it back with one tap. Nothing on screen ever names a
+time that can be missed.
+
+**AT ZERO IT SAYS "ANY MOMENT NOW" AND STOPS.** It never counts up. A countdown
+is a promise, and the app must not be the thing that tells a room the host is
+behind.
+
+**IT NEVER STARTS THE QUIZ.** The host presses the button, exactly as before —
+a quiz that began on a timer would begin while they were at the bar getting a
+drink in. Same shape as the budget ceiling that warns and never refuses. There
+is a test that the phase is still `lobby` long after the countdown expired.
+
+Four smaller things, each with a reason:
+
+- **An ordinary night gains NOTHING.** `startsExtra()` spreads the field in
+  only when there is one, so `pub-unchanged.mjs` reports 3,210 identical
+  payloads with no `--ignore` at all. Same discipline as the vouchers.
+- **Lobby only, as well as cleared by `start()`.** Belt and braces: a stale
+  timestamp over a question would be a countdown to something that has already
+  happened, on the one screen that must carry nothing but the question.
+- **It ticks in the animation loop, not on a state push.** Nothing pushes while
+  a lobby sits there with nobody joining, so a countdown painted only on
+  `updateLobby` would freeze and then jump when the next person arrived.
+  Recomputed from the server's timestamp every frame like the question clock,
+  so a phone and the projector can never drift apart.
+- **The countdown REPLACES "hang tight" on the phone**, and that had to be done
+  in the painter rather than when the card is built — the card is only rebuilt
+  when the PHASE changes, and a countdown set while everybody is already in the
+  lobby changes nothing about the phase. Both lines were on screen at once the
+  first time it ran.
+
+**The quiet second value is that a phone with something ticking on it stays in
+the FOREGROUND.** "Hang tight" gave nobody a reason to stay on the page, so
+they switched away, the tab backgrounded and the stream had to reconnect when
+the quiz began. That is arguably worth more than the countdown itself.
+
+Three presets and Off rather than a number to type: this is set with one thumb
+while holding a microphone, and five, ten or fifteen minutes covers every
+version of "we are nearly ready".
+
 ## A mis-tap must not reveal an answer
 
 He revealed one early at a gig — not a disaster, but the room saw it. Two
@@ -4575,7 +4638,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 967 tests, no network, injected clocks — must stay green
+npm test        # 973 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -4754,7 +4817,7 @@ private repo (`PACKS_REPO`), never the one holding the owner's accounts and
 invoices; until that is set the console says so in red and every own pack has a
 Download button.
 
-All on **`MusicQuizApp`**. 967 tests green.
+All on **`MusicQuizApp`**. 973 tests green.
 
 ### What a GUI SWEEP found — thirteen things, all fixed
 

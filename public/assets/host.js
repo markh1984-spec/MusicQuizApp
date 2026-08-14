@@ -805,6 +805,38 @@ function prizeLine(s) {
     .map((r, i) => `<b>${esc(places[i] || `${i + 1}th`)}</b> ${esc(r)}`).join(' \u00b7 ')}</div>`;
 }
 
+/**
+ * TELL THE ROOM ROUGHLY WHEN IT STARTS.
+ *
+ * The code goes up at ten to and the quiz kicks off at nine, and until this
+ * the phone said "hang tight" and gave anybody who had just joined nothing to
+ * look at. Now the projector and every phone carry the same countdown off the
+ * same server clock.
+ *
+ * **MINUTES FROM NOW, NEVER A WALL-CLOCK TIME.** "Nine o'clock" on a projector
+ * is a commitment the app has made on the host's behalf — run four minutes
+ * late and the big screen has told sixty people so. A duration is an
+ * intention, and pressing 10 again pushes it back with one tap.
+ *
+ * **IT NEVER STARTS THE QUIZ.** The host presses the button, exactly as
+ * before. A quiz that began on a timer would begin while they were at the bar
+ * getting a drink in, which is the sort of thing this codebase exists to
+ * prevent. At zero the countdown says "any moment now" and stops.
+ *
+ * Three presets and Off, rather than a number to type: this is set with one
+ * thumb while carrying a microphone, and five, ten or fifteen minutes covers
+ * every version of "we are nearly ready".
+ */
+function startsRow(s) {
+  const mins = [5, 10, 15];
+  return `
+    <div class="starts-row">
+      <span class="tiny">Tell the room</span>
+      ${mins.map((m) => `<button class="minor starts-set" data-mins="${m}">${m} min</button>`).join('')}
+      ${s.startsAt ? '<button class="minor starts-off">Off</button>' : ''}
+    </div>`;
+}
+
 function toolsPanel(s) {
   /*
    * THE BIG SCREEN AND THE EDITOR ARE ON THE BUTTON BAR, so they are not here
@@ -833,6 +865,7 @@ function toolsPanel(s) {
       </div>
       <div class="tiny" style="margin-top:10px">Loaded: ${esc(s.quizTitle)}</div>
       ${prizeLine(s)}
+      ${startsRow(s)}
     </div>
   `);
 
@@ -855,6 +888,12 @@ function toolsPanel(s) {
   el.querySelector('#resetAll').addEventListener('click', async () => {
     if (confirm('Clear everything and go back to an empty lobby?')) await act('resetAll');
   });
+  // No confirm on any of these: setting a countdown starts nothing and takes
+  // nothing away, and pressing another one just moves it.
+  for (const b of el.querySelectorAll('.starts-set')) {
+    b.addEventListener('click', () => act('startsIn', { minutes: Number(b.dataset.mins) }));
+  }
+  el.querySelector('.starts-off')?.addEventListener('click', () => act('startsIn', { minutes: null }));
   return el;
 }
 

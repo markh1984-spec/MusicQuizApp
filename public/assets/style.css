@@ -4958,3 +4958,48 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .prize-line .prize-place { color: var(--gold); font-weight: 900; }
 .prize-line .prize-place.p2 { color: #c6cdd6; }
 .prize-line .prize-place.p3 { color: #cd895a; }
+
+
+/* ---- the countdown before kick-off
+   The code goes up at ten to and the quiz starts at nine. This fills the gap:
+   it gives a room something to settle to, and it is the thing somebody points
+   at when they turn round and tell the next table. That word-of-mouth IS the
+   mechanism — it never has to reach every phone, only enough of them.
+
+   NEVER a wall-clock time and it never counts UP. At zero it says "any moment
+   now" and stops, because a countdown is a promise and the app must not be the
+   thing that tells sixty people the host is late. */
+.lobby-count {
+  margin-top: 3.2vh;
+  display: inline-block;
+  padding: 1.4vh 2.4vh;
+  border: 1px solid var(--panel-line); border-radius: var(--r-pill);
+  background: var(--panel);
+  font-size: 3.4vh; font-weight: 800; color: var(--ink-dim);
+  letter-spacing: 0.01em;
+}
+.lobby-count b { color: var(--ink); font-size: 1.35em; font-weight: 900; }
+/* Under a minute is when it is worth watching, so that is when it takes the
+   account's own colour. Not before — a number that shouted for ten solid
+   minutes would be the loudest thing on a screen whose job is the join code. */
+.lobby-count.soon b, .lobby-count.now {
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.lobby-count.now { font-size: 4.2vh; font-weight: 900; }
+
+/* The phone's copy of the same number. Quieter, because it is six inches from
+   somebody's face rather than across a room — but it is the whole reason the
+   tab stays in the foreground, so it is not tucked away either. */
+.wait-count { font-size: var(--fs-lead); font-weight: 800; color: var(--ink-dim); }
+.wait-count b { color: var(--ink); font-size: 1.3em; font-weight: 900; }
+.wait-count.soon b, .wait-count.now {
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+/* Setting it: three presets and Off, pressed with one thumb while holding a
+   microphone. No number to type — five, ten or fifteen minutes covers every
+   version of "we are nearly ready", and pressing one again pushes it back. */
+.starts-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.starts-row .tiny { margin-right: 2px; }

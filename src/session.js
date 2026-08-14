@@ -521,6 +521,12 @@ export class Session {
       ),
       skip: () => this.engine.skipQuestion(),
       redo: () => this.engine.redoQuestion(),
+      /*
+       * Tell the room roughly when it starts. Advisory only — nothing reads it
+       * to begin a quiz, because a quiz that started on a timer would start
+       * while the host was at the bar.
+       */
+      startsIn: () => this.engine.setStartsIn(body.minutes),
       goto: () => this.engine.goTo(Number(body.roundIndex), Number(body.questionIndex)),
       /*
        * Mark somebody as an organiser — the client's contact and their IT

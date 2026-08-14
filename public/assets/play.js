@@ -900,7 +900,8 @@ function buildScreen(s) {
     case 'round_board':
     case 'final': return buildBoard(s);
     case 'round_intro': return buildWaiting(s, `Round ${s.roundIndex + 1}`, s.roundTitle, 'Eyes on the big screen.');
-    default: return buildWaiting(s, "You're in", s.you ? s.you.name : '', 'Hang tight — the quiz starts shortly.');
+    default: return buildWaiting(s, "You're in", s.you ? s.you.name : '',
+      'Hang tight — the quiz starts shortly.');
   }
 }
 
@@ -909,12 +910,69 @@ function buildWaiting(s, kicker, title, sub) {
     <div style="display:grid;gap:14px;text-align:center">
       <div class="pill" style="justify-self:center;font-size:var(--fs-note)">${esc(kicker)}</div>
       <h1 class="grad-text">${esc(title)}</h1>
-      <p>${esc(sub)}</p>
+      ${sub ? `<p class="wait-sub">${esc(sub)}</p>` : ''}
+      <div class="wait-count" hidden></div>
       ${teamPicker(s)}
     </div>
   `);
   wireTeamPicker(el, s);
+  paintStartsIn(s);
   return el;
+}
+
+/**
+ * HOW LONG UNTIL IT STARTS, on the phone.
+ *
+ * The same number off the same server clock as the projector, because a room
+ * where one phone says 40 seconds and the big screen says 30 is a room that
+ * believes neither.
+ *
+ * **IT CANNOT REACH A LOCKED PHONE AND DOES NOT TRY.** A real alert would need
+ * Web Push, which on iOS Safari only works once somebody has added the site to
+ * their home screen — nobody in a pub is doing that, so it would reach about
+ * half a room at best. It does not need to: five people out of thirty seeing
+ * it is a room that tells itself, which is how a pub has always worked. So
+ * this is built to be unmissable when somebody looks, and never as a
+ * notification.
+ *
+ * The quiet second value of it is that a phone with something ticking on it
+ * stays in the FOREGROUND. "Hang tight" gave nobody a reason to stay on the
+ * page, so they switched away, the tab went to the background and the stream
+ * had to reconnect when the quiz began.
+ */
+function paintStartsIn(s) {
+  const box = document.querySelector('.wait-count');
+  if (!box) return;
+  /*
+   * The countdown REPLACES "hang tight", it does not sit under it.
+   *
+   * Both were on screen at once the first time this ran, and it had to be done
+   * here rather than when the card is built: the card is only rebuilt when the
+   * PHASE changes, and a countdown set while everybody is already in the lobby
+   * changes nothing about the phase. So the line that was right a moment ago
+   * has to be taken down by whatever replaces it.
+   *
+   * "Hang tight" is what to say when there is nothing better to say. A number
+   * is better.
+   */
+  const sub = document.querySelector('.wait-sub');
+  if (sub) sub.hidden = Boolean(s && s.startsAt);
+  if (!s || !s.startsAt) { box.hidden = true; return; }
+  box.hidden = false;
+  const left = Math.max(0, s.startsAt - clock.now());
+  if (left <= 0) {
+    // Never counts UP. The app must not be the thing that tells a room the
+    // host is running late.
+    box.className = 'wait-count now';
+    box.textContent = 'Any moment now…';
+    return;
+  }
+  const secs = Math.ceil(left / 1000);
+  const mins = Math.floor(secs / 60);
+  box.className = `wait-count ${secs <= 60 ? 'soon' : ''}`;
+  box.innerHTML = secs <= 60
+    ? `Starting in <b>${secs}</b> second${secs === 1 ? '' : 's'}`
+    : `Starting in <b>${mins + 1}</b> minute${mins + 1 === 1 ? '' : 's'}`;
 }
 
 /**
@@ -1365,6 +1423,11 @@ function ordinal(n) {
 
 function tick() {
   requestAnimationFrame(tick);
+  // The lobby countdown, redrawn from the server's timestamp every frame like
+  // the question clock beside it. Nothing pushes while a lobby waits, so one
+  // painted only on a state push would sit frozen until the next person
+  // joined and then jump.
+  if (state && state.phase === 'lobby') paintStartsIn(state);
   if (!state || !state.clock || state.phase !== 'question') return;
   const bar = document.getElementById('pTimerBar');
   const num = document.getElementById('pTimerNum');

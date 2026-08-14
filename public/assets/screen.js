@@ -454,6 +454,13 @@ function renderLobby(s) {
             <li><span class="n">2</span><span>Type in a name</span></li>
             <li><span class="n">3</span><span>Wait for the first question</span></li>
           </ol>
+          <!-- BELOW the steps, not among them. Wedged between the subtitle and
+               the list it read as a fourth instruction — and the order is the
+               order of the jobs: joining comes first, settling down comes
+               after. It gets a box of its own so it is an object rather than a
+               stray line, and it is the thing somebody points at when they
+               turn round and tell the next table. -->
+          <div class="lobby-count" hidden></div>
         </div>
         <div class="qr-panel">
           <img src="${joinQr}" alt="Scan to join the quiz">
@@ -466,7 +473,45 @@ function renderLobby(s) {
   return el;
 }
 
+/**
+ * THE COUNTDOWN, on the one screen the whole room can already see.
+ *
+ * The host puts the code up at ten to and kicks off at nine, and this is what
+ * fills that gap — it gives the room something to settle to, and it is the
+ * thing somebody points at when they tell the next table.
+ *
+ * **AT ZERO IT SAYS "ANY MOMENT NOW" AND STOPS.** A countdown is a promise, so
+ * one that ran on into "4 minutes late" would be the app telling sixty people
+ * the host is behind — which is the opposite of what this app is for. It never
+ * names a wall-clock time either, for the same reason: 9:00 on a projector is
+ * a commitment nobody agreed to.
+ *
+ * Drawn off the SERVER clock like every other timer here, so a phone and the
+ * big screen can never disagree about how long is left.
+ */
+function paintStartsIn(s) {
+  const box = document.querySelector('.lobby-count');
+  if (!box) return;
+  if (!s.startsAt) { box.hidden = true; return; }
+  box.hidden = false;
+  const left = Math.max(0, s.startsAt - clock.now());
+  if (left <= 0) {
+    box.className = 'lobby-count now';
+    box.textContent = 'Any moment now…';
+    return;
+  }
+  const secs = Math.ceil(left / 1000);
+  const mins = Math.floor(secs / 60);
+  box.className = `lobby-count ${secs <= 60 ? 'soon' : ''}`;
+  box.innerHTML = secs <= 60
+    // Under a minute it counts in seconds, because that is when it is worth
+    // watching and when somebody turns round and says "it's starting".
+    ? `Starting in <b>${secs}</b> second${secs === 1 ? '' : 's'}`
+    : `Starting in <b>${mins + 1}</b> minute${mins + 1 === 1 ? '' : 's'}`;
+}
+
 function updateLobby(s) {
+  paintStartsIn(s);
   const strip = document.getElementById('playerStrip');
   if (!strip) return;
   const wanted = (s.lobby && s.lobby.players) || [];
@@ -852,6 +897,16 @@ function renderWinner(s) {
  */
 function tick() {
   requestAnimationFrame(tick);
+  /*
+   * The lobby countdown ticks HERE, not on a state push.
+   *
+   * Nothing pushes while a lobby sits there with nobody joining, so a
+   * countdown redrawn only on `updateLobby` would freeze at whatever it said
+   * when the last person arrived — and then jump. Same loop as the question
+   * timer and, like it, recomputed from the server's timestamp every frame
+   * rather than counted down locally, so it cannot drift.
+   */
+  if (state && state.phase === 'lobby') paintStartsIn(state);
   if (!state || !state.clock) return;
   const bar = document.getElementById('timerBar');
   const num = document.getElementById('timerNum');
