@@ -901,7 +901,29 @@ function renderWinner(s) {
     return node('<div class="winner"><h1>No scores</h1></div>');
   }
   const alsoFirst = board.filter((p) => p.position === 1);
-  const runners = board.filter((p) => p.position !== 1).slice(0, 3);
+  /*
+   * THE PODIUM IS SECOND AND THIRD, and they SHARE the row — half each.
+   *
+   * They used to be three equal cards in a line, 2nd, 3rd and 4th, all the
+   * same size — so the podium read as three also-rans of equal weight and
+   * being second looked like being fourth. Second and third are placings
+   * people tell their mates about; fourth is context.
+   *
+   * So the two of them take the whole width between them, which makes them
+   * big enough to read from the back without touching the winner's own size:
+   * first place stays 13vh and alone, because that is the result the night is
+   * about.
+   *
+   * Capped at three cells for the tie case (two teams on 2nd and one on 3rd);
+   * beyond that a column would be too thin to read, which is the one thing
+   * this screen must not be.
+   */
+  const rest = board.filter((p) => p.position !== 1);
+  const runners = rest.filter((p) => p.position <= 3).slice(0, 3);
+  // Fourth, if the board has one. A LINE rather than a card: it is context,
+  // not a placing, and giving it the podium's treatment is what cost second
+  // and third theirs in the first place.
+  const alsoRan = rest.filter((p) => p.position > 3).slice(0, 1);
   return node(`
     <div class="winner">
       <div class="kicker">${alsoFirst.length > 1 ? 'It is a tie' : 'Tonight&rsquo;s winner'}</div>
@@ -913,6 +935,8 @@ function renderWinner(s) {
           <span class="rname">${esc(p.name)}</span>
           <span class="rscore">${p.score.toLocaleString('en-GB')}</span>
         </div>`).join('')}</div>` : ''}
+      ${alsoRan.length ? `<div class="alsoran">${alsoRan.map((p) => `
+        <span>${p.position}. ${esc(p.name)} — ${p.score.toLocaleString('en-GB')}</span>`).join('')}</div>` : ''}
       ${s.luckyDip ? `
         <div class="dip">
           <div class="dip-label">And the draw goes to</div>

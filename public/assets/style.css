@@ -502,7 +502,15 @@ body::after {
 /* ---- winner */
 .winner { text-align: center; display: grid; place-content: center; gap: 2vh; height: 100%; }
 .winner .kicker { font-size: 3vh; letter-spacing: 0.5em; text-transform: uppercase; color: var(--gold); }
-.winner h1 { font-size: 13vh; margin: 0; font-weight: 900; letter-spacing: -0.04em; line-height: 0.95; }
+/* `overflow-wrap: anywhere` on both the winner and the podium, because a team
+   name has no spaces in it if somebody decides it does not — there is
+   deliberately no filtering on what gets typed, and the 28-character cap is
+   the only limit. Without this a solid 28-character name runs straight out of
+   its card and across the one beside it. Seen at exactly that width. */
+.winner h1 {
+  font-size: 13vh; margin: 0; font-weight: 900; letter-spacing: -0.04em; line-height: 0.95;
+  overflow-wrap: anywhere;
+}
 .winner .score { font-size: 7vh; font-weight: 900; }
 /* SECOND AND THIRD ARE A PODIUM, not a caption under the winner.
    They were one dim 2.6vh line of "2. Name — 1,240", which from the back of a
@@ -514,25 +522,43 @@ body::after {
    app); the medal tints below are what tells 2nd from 3rd, which is the one
    place a metal genuinely carries the meaning. A fourth row, if the board has
    one, keeps the plain treatment — it is context, not a placing. */
+/* SECOND AND THIRD SHARE THE ROW — half each, and that is the point.
+   They were three equal cards in a line, 2nd, 3rd and 4th, so the podium read
+   as three also-rans of the same weight and coming second looked like coming
+   fourth. Given the width between them they are big enough to read from the
+   back of a pub, and the winner is untouched at 13vh — first place stays the
+   result the night is about.
+
+   `grid-auto-flow: column` rather than a fixed pair, so a tie for second gets
+   three equal cells instead of one wrapping onto a line of its own. */
 .winner .runners {
-  display: flex; gap: 1.6vw; justify-content: center;
-  margin-top: 4vh; flex-wrap: wrap;
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  gap: 1.6vw; margin-top: 3.5vh;
 }
 .winner .runner {
-  display: grid; gap: 0.4vh; justify-items: center;
-  padding: 1.8vh 2.4vw;
-  border-radius: 12px;
+  display: grid; gap: 0.5vh; justify-items: center; align-content: center;
+  padding: 2.2vh 1.6vw;
+  border-radius: 14px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  min-width: 0;
 }
 .winner .rplace {
-  font-size: 2.4vh; font-weight: 900; line-height: 1;
-  width: 4.4vh; height: 4.4vh; border-radius: 999px;
+  font-size: 2.8vh; font-weight: 900; line-height: 1;
+  width: 5.2vh; height: 5.2vh; border-radius: 999px;
   display: grid; place-items: center;
   color: #17131b; background: rgba(255, 255, 255, 0.55);
 }
-.winner .rname { font-size: 4vh; font-weight: 800; color: var(--ink); line-height: 1.15; }
-.winner .rscore { font-size: 2.8vh; font-weight: 700; color: var(--ink-dim); }
+.winner .rname {
+  font-size: 5.4vh; font-weight: 800; color: var(--ink); line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+.winner .rscore { font-size: 3.2vh; font-weight: 700; color: var(--ink-dim); }
+/* FOURTH IS A LINE, NOT A CARD. It is context rather than a placing, and
+   dressing it like one is exactly what cost second and third their meaning. */
+.winner .alsoran {
+  margin-top: 1.8vh; font-size: 2.6vh; font-weight: 700; color: var(--ink-dim);
+}
 /* THE DRAW, under the podium and deliberately not on it.
    It is a real prize and a real moment, but it is not a placing — somebody
    who came eleventh has not beaten anybody, and putting them in the medal row
