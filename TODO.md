@@ -461,7 +461,13 @@ times is either a bar that cannot reach us or somebody working it. That count
 already exists and already shows above zero — it just needs to reach the
 archive with everything else.
 
-### 1g. Making the pictures stopped at 7 of 10 and had to be pressed again
+### 1g. Making the pictures stopped at 7 of 10 and had to be pressed again — ✅ FIXED
+
+**Done on 14 August 2026.** It was the commit per picture, as suspected:
+`putFile` is TWO sequential round trips, so ten portraits was twenty GitHub
+calls threaded in between ten Google ones. `putFiles()` in `src/github.js`
+sends the blobs in parallel and lands ONE commit, and the files are collected
+during the draw rather than pushed inside it.
 
 **Seen on 14 August 2026, on the first real run against Google.** Ten portraits
 asked for, seven drawn, then it stopped. Pressing again finished the other
@@ -494,7 +500,11 @@ guessing.
 **Worth fixing before item 1f**, because making the pictures automatic means
 this failure would silently truncate a round rather than being obvious.
 
-### 1f. Draw the pictures as part of writing the quiz
+### 1f. Draw the pictures as part of writing the quiz — ✅ BUILT
+
+**Shipped earlier on 14 August 2026** — the pack is saved before a single
+picture is attempted, exactly as specced below. Left here because the
+reasoning is what stops it being unpicked.
 
 **Asked for on 14 August 2026.** Today `Write it` produces the pack and the
 portraits are a second, separate press on the pack card. For a picture round
@@ -617,7 +627,11 @@ Note this is about DECOYS, which `question-history.js` does not look at — it
 keys on the answer, deliberately. So this is a genuinely new check rather than
 an extension of that one.
 
-### 1c. THE PHONE'S OWN SCORE GIVES THE ANSWER AWAY BEFORE THE REVEAL
+### 1c. THE PHONE'S OWN SCORE GIVES THE ANSWER AWAY BEFORE THE REVEAL — ✅ BUILT
+
+**Done on 14 August 2026**, and it turned out to be TWO fields: the score
+and the position. Written up in CLAUDE.md. Building it also found that
+`pub-unchanged.mjs` had never recorded a single answer — see below.
 
 **Found by the host on 14 August 2026, mid-test.** Tap the right answer and the
 running total at the top of your phone goes from 0 to 360 immediately — so you

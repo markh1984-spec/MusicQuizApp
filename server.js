@@ -36,7 +36,7 @@ import { STYLES, findStyle, QUALITIES, DEFAULT_QUALITY } from './src/portraits.j
 import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig, playTrack } from './src/spotify.js';
 import { photoFolder, mergeGigs, safePhotoName, isNightFolder } from './src/past-gigs.js';
-import { getFile, listDir, listDirs, githubConfigured, missingGithubConfig, putFile, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem, privateRepoConfigured, packsRepoConfigured, packsRepoName } from './src/github.js';
+import { getFile, listDir, listDirs, githubConfigured, missingGithubConfig, putFile, putFiles, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem, privateRepoConfigured, packsRepoConfigured, packsRepoName } from './src/github.js';
 import { Invoices, totals, toPence, money } from './src/invoices.js';
 import { invoicePdf, invoiceFilename } from './src/invoice-pdf.js';
 import { toSvg } from './src/qrcode.js';
@@ -1966,6 +1966,32 @@ async function backUp(relPath, contents, message, log = () => {}) {
   const result = await putFile(relPath, contents, message);
   log(result.ok
     ? `backed up to GitHub — this one is permanent`
+    : `saved here, but NOT backed up: ${result.error}`);
+  return result;
+}
+
+/**
+ * Back a whole batch up as one commit.
+ *
+ * **The point is what it is NOT: a commit per file inside the loop that made
+ * them.** That is what stopped a picture round at seven of ten — every
+ * portrait was two sequential GitHub round trips wedged in between the Google
+ * calls, so the backup took longer than the drawing and the whole job ran long
+ * enough for something in between to hang up.
+ *
+ * Nothing to file is silent rather than reassuring: "backed up 0 pictures" is
+ * a line that means nothing on a quiz with no picture round.
+ */
+async function backUpMany(files, message, log = () => {}) {
+  const list = (files || []).filter(Boolean);
+  if (!list.length) return { ok: true, count: 0 };
+  if (!githubConfigured()) {
+    log('NOT backed up — GitHub backup is not set up, so these are lost when the app restarts');
+    return { ok: false };
+  }
+  const result = await putFiles(list, message);
+  log(result.ok
+    ? `${result.count} backed up to GitHub — they will survive a restart`
     : `saved here, but NOT backed up: ${result.error}`);
   return result;
 }
@@ -4429,16 +4455,22 @@ async function handleWrite(req, res, url, route) {
         try {
           log('Drawing the pictures…');
           const saved = loadQuiz(config.quizDir, result.quiz.id);
+          /*
+           * COLLECTED HERE, PUSHED ONCE BELOW — never a commit per picture.
+           * Ten portraits used to be ten commits threaded in between the ten
+           * Google calls, at two round trips each, which is what stopped a
+           * round at seven of ten. See `putFiles`.
+           */
+          const drawn = [];
           const art = await generateImages({
             quiz: saved,
             imageDir: config.imageDir,
             provider: artProvider(),
             log,
-            onFile: async (name, bytes) => {
-              await backUp(`images/${name}`, bytes, `Round 2 picture: ${name}`, () => {});
-            },
+            onFile: (name, bytes) => { drawn.push({ path: `images/${name}`, contents: bytes }); },
             onSpend: spendRecorder(spend, { packId: saved.id }),
           });
+          await backUpMany(drawn, `Round 2 pictures: ${saved.title}`, log);
           /*
            * `generateImages` REPOINTS the pack as it goes — a pack written
            * before the shared portrait library moves onto it here — so the
@@ -4522,6 +4554,7 @@ async function handleWrite(req, res, url, route) {
       const asked = String(body.provider || '');
       const provider = asked === 'placeholder' || !asked ? 'placeholder' : (artProvider() || 'placeholder');
 
+      const drawn = [];
       const result = await generateImages({
         quiz,
         imageDir: config.imageDir,
@@ -4531,15 +4564,16 @@ async function handleWrite(req, res, url, route) {
         style: String(body.style || ''),
         quality: String(body.quality || ''),
         log,
-        onFile: async (name, bytes) => {
-          await backUp(`images/${name}`, bytes, `Round 2 picture: ${name}`, () => {});
-        },
+        // Collected, then pushed as ONE commit below — see the note at the
+        // other call site and `putFiles`.
+        onFile: (name, bytes) => { drawn.push({ path: `images/${name}`, contents: bytes }); },
         // Filed against the QUIZ that asked for the picture, even though the
         // portrait itself is shared. That is the honest attribution: this is
         // the pack that paid for it, and the next one to want that musician
         // gets it free — which is exactly the saving the ledger should show.
         onSpend: spendRecorder(spend, { packId: id }),
       });
+      await backUpMany(drawn, `Round 2 pictures: ${quiz.title || id}`, log);
       backUpSpend();
 
       // Questions moved onto the shared portrait library have to be written

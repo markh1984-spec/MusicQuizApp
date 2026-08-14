@@ -225,6 +225,94 @@ export async function putFile(filePath, contents, message, which = 'app') {
 }
 
 /**
+ * Put a whole batch of files up as ONE commit.
+ *
+ * **This exists because `putFile` in a loop is what truncated a picture
+ * round.** Ten portraits were asked for, seven arrived, and pressing again
+ * finished the rest — because every picture was a separate commit, and a
+ * commit through the Contents API is TWO sequential round trips (read the
+ * sha, then write). Ten pictures is twenty GitHub calls threaded in between
+ * ten Google calls, which makes the job several times longer than the drawing
+ * and puts the whole thing well inside the range where something between the
+ * app and the browser hangs up. The ledger already had this written down —
+ * *"a quiz is twenty-odd calls and that would be twenty commits for one press
+ * of one button"* — and the artwork was doing exactly that.
+ *
+ * The Git Data API instead: **blobs go up in parallel**, then one tree, one
+ * commit, one ref move. Five round trips plus the blobs, and the history gets
+ * "Round 2 pictures: 10 of them" rather than ten lines saying the same thing.
+ *
+ * **Nothing here is allowed to throw**, same as `putFile` — every caller
+ * treats a failed backup as a line in the log rather than as a reason to lose
+ * what was just made. An empty list is an `ok` no-op rather than an empty
+ * commit, because "nothing to file" is the ordinary case for a quiz with no
+ * picture round.
+ *
+ * @param {Array<{path: string, contents: Buffer|string}>} files
+ * @param {string} message
+ * @param {'app'|'photos'|'private'|'packs'} [which]
+ * @returns {Promise<{ok: boolean, count?: number, error?: string}>}
+ */
+export async function putFiles(files, message, which = 'app') {
+  const list = (files || []).filter((f) => f && f.path);
+  if (!list.length) return { ok: true, count: 0 };
+  if (!readyFor(which)) {
+    const named = which === 'packs' ? 'The packs repository'
+      : (which === 'photos' || which === 'private') ? 'The private repository'
+        : 'GitHub backup';
+    return { ok: false, error: `${named} is not set up` };
+  }
+  try {
+    const { owner, name, branch } = settings(which);
+    const repo = `/repos/${owner}/${name}`;
+    const ask = async (path, options) => {
+      const res = await api(path, options, which);
+      if (!res.ok) throw new Error(`GitHub ${res.status}: ${(await res.text()).slice(0, 160)}`);
+      return res.json();
+    };
+
+    // Where the branch is now. Everything below is built on top of this, so a
+    // push landing in between is the one thing that would make the commit drop
+    // somebody else's work — hence the ref update at the end is NOT forced.
+    const ref = await ask(`${repo}/git/ref/heads/${encodeURIComponent(branch)}`);
+    const head = ref.object.sha;
+
+    // In parallel: this is the whole reason for the change. A picture is a
+    // few hundred KB and the requests are independent.
+    const blobs = await Promise.all(list.map(async (file) => {
+      const bytes = Buffer.isBuffer(file.contents) ? file.contents : Buffer.from(file.contents, 'utf8');
+      const blob = await ask(`${repo}/git/blobs`, {
+        method: 'POST',
+        body: JSON.stringify({ content: bytes.toString('base64'), encoding: 'base64' }),
+      });
+      // 100644 is an ordinary file. A tree entry with a sha REPLACES whatever
+      // is at that path, so this updates and creates with one shape and needs
+      // no per-file read of the existing sha — which is the other round trip
+      // `putFile` has to make.
+      return { path: file.path, mode: '100644', type: 'blob', sha: blob.sha };
+    }));
+
+    const tree = await ask(`${repo}/git/trees`, {
+      method: 'POST',
+      body: JSON.stringify({ base_tree: head, tree: blobs }),
+    });
+    const commit = await ask(`${repo}/git/commits`, {
+      method: 'POST',
+      // [skip render] for the same reason `putFile` carries it: filing what a
+      // generation made must never redeploy the app while a night is on.
+      body: JSON.stringify({ message: `${message} [skip render]`, tree: tree.sha, parents: [head] }),
+    });
+    await ask(`${repo}/git/refs/heads/${encodeURIComponent(branch)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ sha: commit.sha }),
+    });
+    return { ok: true, count: list.length };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+/**
  * Read a file back out of a repository.
  *
  * The other half of `putFile`, and it was missing — which meant the accounts

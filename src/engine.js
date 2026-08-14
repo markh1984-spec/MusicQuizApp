@@ -628,6 +628,59 @@ export class Engine {
     return this._positions.get(this.boardIdFor(playerId)) ?? null;
   }
 
+  /**
+   * The total a PHONE is allowed to see right now.
+   *
+   * Their real score everywhere except mid-question, where it is what it was
+   * before this question — because a total that jumps the instant you tap
+   * tells you that you were right, several seconds before the projector does
+   * and before anybody slower has finished answering. The rest of
+   * `playerView` already withholds `correct`, `points` and the part marks
+   * until the reveal; this is the one field that was giving it away anyway.
+   *
+   * **Only ever the PLAYER's own view.** The host is supposed to see the live
+   * total — that is what their board is for — and the projector cannot leak to
+   * a phone, so `leaderboard()`, `hostView()` and `screenView()` all read
+   * `player.score` unchanged. There are tests for each.
+   *
+   * A player who has NOT answered sees their real total, which is the same
+   * number either way and means the field cannot be read as "have they
+   * answered yet".
+   */
+  scoreToShow(player) {
+    const s = this.state;
+    if (s.phase !== PHASES.QUESTION || !s.question) return player.score;
+    const mine = this.answersFor()[player.id];
+    // `scoreBefore` is absent on an answer recorded before this existed — a
+    // game already running through a redeploy. Their own total is what they
+    // were seeing a second ago, so falling back to it changes nothing for
+    // them and cannot throw mid-question.
+    return mine && typeof mine.scoreBefore === 'number' ? mine.scoreBefore : player.score;
+  }
+
+  /**
+   * Where a PHONE is told it stands right now.
+   *
+   * The pair of `scoreToShow`, and for the same reason — see `positionsAtStart`
+   * on the question. Frozen for the length of a question and live everywhere
+   * else, so nothing about your own answer reaches you before the reveal does.
+   *
+   * Falls back to the live position when there is no snapshot: a game already
+   * running through a redeploy has a question object written before this
+   * existed, and a phone showing the position it was showing a second ago is
+   * the right way to degrade.
+   */
+  positionToShow(player) {
+    const s = this.state;
+    if (s.phase !== PHASES.QUESTION || !s.question || !s.question.positionsAtStart) {
+      return this.positionOf(player.id);
+    }
+    const at = s.question.positionsAtStart[this.boardIdFor(player.id)];
+    // Somebody who JOINED mid-question is not in the snapshot at all, and has
+    // no standing to give away — the live board is the honest answer for them.
+    return at ?? this.positionOf(player.id);
+  }
+
   /** How many are playing. Free once the board is built. */
   playerCount() {
     return this.leaderboard().length;
@@ -749,6 +802,24 @@ export class Engine {
       endsAt: startedAt + seconds * 1000,
       seconds,
       closed: false,
+      /*
+       * WHERE EVERYBODY STOOD BEFORE THIS QUESTION — the other half of the
+       * fix `scoreBefore` makes, because standing gives the answer away too.
+       *
+       * Hold the total and not the position and a phone still says "0 points,
+       * 2nd of 12" the instant you tap something right. Noisier than the score
+       * jumping — the board moves when other people answer as well — but on
+       * question one, from nothing, it is unmistakable.
+       *
+       * Snapshotted HERE rather than worked out on every push: the board is
+       * rebuilt whenever anything changes, which during a question is every
+       * time somebody answers, and a second board per push is exactly the
+       * quadratic shape `leaderboard()` was rewritten to remove. Once per
+       * question, in the state, so it survives a crash like everything else.
+       */
+      positionsAtStart: Object.fromEntries(
+        this.leaderboard().map((row) => [row.id, row.position]),
+      ),
     };
     this.changed();
     return true;
@@ -1219,6 +1290,24 @@ export class Engine {
       optionIndexes: picks,
       gotRight,
       outOf: right.size,
+      /*
+       * WHAT THEIR TOTAL WAS BEFORE THIS QUESTION, and it is the whole of the
+       * fix for the phone giving the answer away.
+       *
+       * `playerView` withholds `correct`, `points` and the part marks until
+       * the reveal — and then the header beside them showed the running total
+       * jumping from 0 to 360 the instant somebody tapped, so they knew they
+       * were right several seconds early. In a pub that is one table telling
+       * the next; online it is a message in the chat. It also spoils the
+       * reveal for the person themselves, which is most of what a reveal is.
+       *
+       * Recorded here rather than scored at reveal time ON PURPOSE. Points
+       * come off the clock at the moment of answering and the first-correct
+       * bonus depends on the order answers land, so moving the arithmetic
+       * would move the SCORING — the one thing that must not move. The engine
+       * keeps scoring exactly as it did; only what a phone is told changes.
+       */
+      scoreBefore: player.score,
       answeredAt: at,
       responseMs,
       responseSeconds: responseSeconds(at, s.question.startedAt),
@@ -1654,9 +1743,12 @@ export class Engine {
             // board that now carries keys rather than ids.
             key: faceKey(player.id),
             name: player.name,
-            score: player.score,
+            // Their total as it stood BEFORE this question, while the clock is
+            // running — see `scoreBefore` in `answer()`. Their real total
+            // everywhere else, including the moment the reveal lands.
+            score: this.scoreToShow(player),
             correctCount: player.correctCount,
-            position: this.positionOf(player.id),
+            position: this.positionToShow(player),
             playerCount: this.playerCount(),
           }
         : null,
@@ -1872,7 +1964,25 @@ export class Engine {
     view.chat = s.online ? (s.chat || {}) : {};
     if (s.teamPlay) view.teams = this.teamList();
     view.msRemaining = this.msRemaining();
-    view.clock = s.question ? { ...s.question } : null;
+    /*
+     * FIELD BY FIELD, like the other two views — this was `{ ...s.question }`.
+     *
+     * A blanket spread means anything ever added to the question object joins
+     * every host payload without anybody deciding it should, which is the
+     * exact shape the two-screens rule exists to prevent: the whitelist is
+     * supposed to be the decision. It was harmless while the object held four
+     * clock fields, and stopped being harmless the moment `positionsAtStart`
+     * went on it — a map of every player id, on every push, for nothing.
+     */
+    view.clock = s.question
+      ? {
+          startedAt: s.question.startedAt,
+          endsAt: s.question.endsAt,
+          seconds: s.question.seconds,
+          closed: s.question.closed,
+          ...(s.question.revealedAt ? { revealedAt: s.question.revealedAt } : {}),
+        }
+      : null;
     view.scoreboard = this.scoreboardState();
     view.advert = this.advertState();
     if (s.advert && this.advertLookup) {

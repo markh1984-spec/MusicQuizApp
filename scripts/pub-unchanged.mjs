@@ -97,11 +97,58 @@ try {
       b.next();
       compare(`${a.state.phase} r${a.state.roundIndex}q${a.state.questionIndex}`);
       if (a.state.phase !== 'question') continue;
-      // Somebody fast, somebody slow, somebody who never answers — so the
-      // tally, the fastest finger and the scoring are all exercised.
-      t += 4000; a.answer(ids[0], 0); b.answer(ids[0], 0);
+      /*
+       * Somebody fast, somebody slow, somebody who never answers — so the
+       * tally, the fastest finger and the scoring are all exercised.
+       *
+       * **THAT WAS A LIE FOR AS LONG AS THIS SCRIPT HAS EXISTED.** `answer()`
+       * takes an OBJECT and this called it positionally — `a.answer(id, 0)` —
+       * so every answer was refused as `unknown_player` and dropped in
+       * silence. Every "after the fast answer" comparison was a question with
+       * nobody having answered it, which put the tally, the fastest finger,
+       * who-picked-what and the whole of the scoring outside the one check
+       * this repo runs before a gig week. Found by making a deliberate change
+       * to a player's mid-question payload and being told it was identical.
+       *
+       * So the result is ASSERTED rather than ignored. A guard that quietly
+       * tests nothing is worse than no guard, because it is believed.
+       *
+       * The picks are worked out from the OLD engine and given to both, so
+       * the two answer identically rather than each choosing for itself. They
+       * have to be worked out at all because "option 0" is not a thing that
+       * works on every round: a pick-them-all question is refused unless it
+       * gets exactly the number it asked for, and an alphabet question has
+       * twenty-six options put back by `optionsFor`.
+       */
+      const picksFor = (wantCorrect) => {
+        const q = a.question();
+        const round = a.round();
+        const right = [...a.correctSet(q, round)];
+        const count = a.optionsFor(q, round).length;
+        const wrong = [];
+        for (let i = 0; i < count && wrong.length < right.length; i++) {
+          if (!right.includes(i)) wrong.push(i);
+        }
+        // A question where everything is correct has no wrong answer to give;
+        // being right twice is better than not answering at all.
+        const chosen = wantCorrect || wrong.length < right.length ? right : wrong;
+        return round.type === 'multi' ? { optionIndexes: chosen } : { optionIndex: chosen[0] };
+      };
+      const answered = (id, pick) => {
+        for (const engine of [a, b]) {
+          const result = engine.answer({ playerId: id, ...pick });
+          if (!result.ok && result.reason !== 'already_answered') {
+            throw new Error(`the guard could not answer (${result.reason}) — it is testing nothing`);
+          }
+        }
+      };
+      // One right and one wrong, so the bonus, the fastest finger, the tally
+      // and the part marks are all on the compared payloads.
+      t += 4000;
+      answered(ids[0], picksFor(true));
       compare('after the fast answer');
-      t += 7000; a.answer(ids[1], 1); b.answer(ids[1], 1);
+      t += 7000;
+      answered(ids[1], picksFor(false));
       compare('after the slow answer');
       t += 3000;
     }
@@ -112,10 +159,38 @@ try {
     console.log('IDENTICAL — a pub night is byte-for-byte what it was.');
   } else {
     failed = 1;
-    for (const d of diffs.slice(0, 5)) {
+    /*
+     * WHICH FIELD, not the first 300 characters of two long payloads.
+     *
+     * The old output printed both JSON strings truncated — and a payload's
+     * first 300 characters are almost always identical, so a real difference
+     * showed as two lines that looked the same. On the one tool you run the
+     * night before a gig, "something changed, work out what" is most of the
+     * job left undone. Naming the paths turns the answer into a claim
+     * somebody can check: "you.score and you.position, on a phone,
+     * mid-question" is what an additive change is supposed to look like.
+     */
+    const paths = new Map();
+    for (const d of diffs) {
+      for (const path of wherever(JSON.parse(d.was), JSON.parse(d.now))) {
+        if (!paths.has(path)) paths.set(path, { count: 0, roles: new Set(), example: null });
+        const seen = paths.get(path);
+        seen.count += 1;
+        seen.roles.add(d.role.split(':')[0]);
+        if (!seen.example) seen.example = d;
+      }
+    }
+    console.log('\nWHAT CHANGED');
+    for (const [path, seen] of [...paths].sort((x, y) => y[1].count - x[1].count).slice(0, 12)) {
+      console.log(`  ${path} — ${seen.count} payload${seen.count === 1 ? '' : 's'}, seen by: ${[...seen.roles].join(', ')}`);
+    }
+    for (const d of diffs.slice(0, 3)) {
       console.log(`\nDIFF  ${d.file} @ ${d.where} [${d.role}]`);
-      console.log(`  was: ${d.was.slice(0, 300)}`);
-      console.log(`  now: ${d.now.slice(0, 300)}`);
+      for (const path of wherever(JSON.parse(d.was), JSON.parse(d.now)).slice(0, 6)) {
+        console.log(`  ${path}`);
+        console.log(`    was ${short(at(JSON.parse(d.was), path))}`);
+        console.log(`    now ${short(at(JSON.parse(d.now), path))}`);
+      }
     }
     console.log(`\n${diffs.length} differing payloads. A pub night has CHANGED.`);
   }
@@ -124,3 +199,44 @@ try {
   rmSync(work, { recursive: true, force: true });
 }
 process.exit(failed);
+
+/**
+ * Every path at which two payloads disagree.
+ *
+ * Deliberately stops DESCENDING once it finds a difference — "you.score
+ * changed" is the finding, and listing every leaf underneath a rearranged
+ * object buries it. A missing field and a changed one read differently
+ * because they want different things doing about them: one is a payload that
+ * lost something a phone may be reading, the other is a value.
+ */
+function wherever(was, now, path = '') {
+  if (JSON.stringify(was) === JSON.stringify(now)) return [];
+  const both = was && now && typeof was === 'object' && typeof now === 'object'
+    && Array.isArray(was) === Array.isArray(now);
+  if (!both) return [path || '(the whole payload)'];
+  const found = [];
+  for (const key of new Set([...Object.keys(was), ...Object.keys(now)])) {
+    const at = path ? `${path}.${key}` : key;
+    if (!(key in was)) found.push(`${at}  (NEW)`);
+    else if (!(key in now)) found.push(`${at}  (GONE)`);
+    else found.push(...wherever(was[key], now[key], at));
+  }
+  return found;
+}
+
+/** Read a dotted path back out, for showing the two values. */
+function at(payload, path) {
+  const clean = path.replace(/\s+\(NEW\)|\s+\(GONE\)/, '');
+  let here = payload;
+  for (const key of clean.split('.')) {
+    if (here == null || typeof here !== 'object') return undefined;
+    here = here[key];
+  }
+  return here;
+}
+
+/** A value, short enough to sit on one line. */
+function short(v) {
+  const said = JSON.stringify(v);
+  return said === undefined ? '(absent)' : said.length > 120 ? said.slice(0, 120) + '…' : said;
+}

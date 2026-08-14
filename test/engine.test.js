@@ -1694,11 +1694,23 @@ test('positions and the player count are the same as walking the board by hand',
   const board = engine.leaderboard();
   for (const p of players) {
     assert.equal(engine.positionOf(p.id), board.find((b) => b.id === p.id).position);
-    assert.equal(engine.playerView(p.id).you.position, engine.positionOf(p.id));
     assert.equal(engine.playerView(p.id).you.playerCount, 3);
   }
   assert.equal(engine.positionOf('nobody'), null);
   assert.equal(engine.playerCount(), 3);
+
+  // A PHONE is a different question from the board, and only mid-question:
+  // this used to assert they agreed, which is the leak — answering correctly
+  // moved you up the board on your own screen before the projector said so.
+  // Everybody stood equal at the start, so that is what a phone still reports.
+  for (const p of players) {
+    assert.equal(engine.playerView(p.id).you.position, 1, 'frozen for the question');
+  }
+  engine.reveal();
+  for (const p of players) {
+    assert.equal(engine.playerView(p.id).you.position, engine.positionOf(p.id),
+      'live again the moment the answer is out');
+  }
 });
 
 test('a removed player leaves the board immediately', () => {
@@ -1902,4 +1914,104 @@ test('the phone and the big screen carry the same countdown', () => {
   const id = engine.join('Someone').id;
   assert.equal(engine.playerView(id).startsAt, engine.screenView().startsAt);
   assert.equal(engine.hostView().startsAt, engine.screenView().startsAt);
+});
+
+/*
+ * THE PHONE MUST NOT SAY YOU WERE RIGHT BEFORE THE PROJECTOR DOES.
+ *
+ * Found by the host mid-test on 14 August 2026: tap the right answer and the
+ * running total at the top of your own phone went from 0 to 360 instantly, so
+ * you knew several seconds before the reveal and before anybody slower had
+ * finished. In a pub that is one table telling the next; online it is a
+ * message in the chat. It also spoils the reveal for the person themselves,
+ * which is most of what a reveal is for.
+ *
+ * Everything else was already right — `playerView` withholds `correct`,
+ * `points` and the part marks until REVEAL — and the header beside them gave
+ * it away anyway. That is why these tests are about the two fields nobody
+ * thought of as secret rather than about the answer key.
+ */
+
+test('YOUR OWN SCORE DOES NOT MOVE UNTIL THE REVEAL', () => {
+  const { engine, at } = makeEngine();
+  const players = joinThree(engine);
+  toFirstQuestion(engine);
+
+  at(1_000);
+  const scored = engine.answer({ playerId: players[0].id, optionIndex: 1 });
+  assert.ok(scored.points > 0, 'this question is worth something, or the test proves nothing');
+
+  const mine = engine.playerView(players[0].id);
+  assert.equal(mine.you.score, 0, 'a total that jumps IS the answer');
+  // The rest of the secret is still kept, which is what it was already doing.
+  assert.equal(mine.yourAnswer.correct, undefined);
+  assert.equal(mine.yourAnswer.points, undefined);
+
+  engine.reveal();
+  assert.equal(engine.playerView(players[0].id).you.score, scored.points);
+});
+
+test('the ENGINE still scores at answer time — only the phone is told later', () => {
+  // The fix must not move the arithmetic: points come off the clock at the
+  // moment of answering and the first-correct bonus depends on the order
+  // answers land. Scoring at reveal time would change what a question is
+  // worth, which is the one thing that must never move.
+  const { engine, at } = makeEngine();
+  const players = joinThree(engine);
+  toFirstQuestion(engine);
+  at(1_000);
+  engine.answer({ playerId: players[0].id, optionIndex: 1 });
+
+  const real = engine.state.players[players[0].id].score;
+  assert.ok(real > 0, 'the player object carries the points immediately');
+  assert.equal(engine.leaderboard()[0].score, real, 'and so does the board');
+});
+
+test('the HOST sees it live, because that is what their board is for', () => {
+  const { engine, at } = makeEngine();
+  const players = joinThree(engine);
+  toFirstQuestion(engine);
+  at(1_000);
+  engine.answer({ playerId: players[0].id, optionIndex: 1 });
+
+  const host = engine.hostView();
+  const row = (host.players || []).find((p) => p.id === players[0].id);
+  assert.ok(row, 'the host has a row for them');
+  assert.ok(row.score > 0, 'and it is their real, live total');
+});
+
+test('SOMEBODY WHO HAS NOT ANSWERED SEES THEIR REAL TOTAL', () => {
+  // Or the field itself becomes a tell: "my number went stale, so my answer
+  // must have registered" is the same leak wearing a different hat.
+  const { engine, at } = makeEngine();
+  const players = joinThree(engine);
+  toFirstQuestion(engine);
+  at(1_000);
+  engine.answer({ playerId: players[0].id, optionIndex: 1 });
+  engine.reveal();
+  engine.next();                                   // question two
+  const before = engine.playerView(players[0].id).you.score;
+  assert.ok(before > 0, 'they are carrying points into this question');
+
+  const notYet = engine.playerView(players[1].id);
+  assert.equal(notYet.you.score, 0);
+  assert.equal(engine.playerView(players[0].id).you.score, before,
+    'and somebody who answered LAST question still sees that total');
+});
+
+test('a game already running through a redeploy does not throw', () => {
+  // An answer recorded before `scoreBefore` existed, and a question object
+  // written before `positionsAtStart` did. Their own total is what they were
+  // already looking at, so falling back to it is the right way to degrade.
+  const { engine, at } = makeEngine();
+  const players = joinThree(engine);
+  toFirstQuestion(engine);
+  at(1_000);
+  engine.answer({ playerId: players[0].id, optionIndex: 1 });
+
+  delete engine.answersFor()[players[0].id].scoreBefore;
+  delete engine.state.question.positionsAtStart;
+  const mine = engine.playerView(players[0].id);
+  assert.equal(typeof mine.you.score, 'number');
+  assert.equal(typeof mine.you.position, 'number');
 });

@@ -2775,6 +2775,57 @@ editing a track's title or artist does not repoint `cue.spotifyUri`, so a
 corrected cue reads right on the control view and plays the wrong track
 through the speakers.
 
+### A phone must not say you were right before the projector does
+
+`scoreBefore` on an answer, `positionsAtStart` on the question, and
+`scoreToShow()` / `positionToShow()` in `src/engine.js`.
+
+Found by the host mid-test: tap the right answer and the running total at the
+top of your own phone went from 0 to 360 **instantly** — so you knew several
+seconds before the reveal and before anybody slower had finished. In a pub
+that is one table telling the next; online it is a message in the chat. It
+also spoils the reveal for the person themselves, which is most of what a
+reveal is for.
+
+**Everything built to keep that secret was already correct, which is what
+makes it worth writing down.** `playerView()` withholds `correct`, `points`,
+`isFirstCorrect` and the part marks until the reveal, with a comment saying
+exactly that — and the header beside them gave it away anyway. The two fields
+nobody thought of as secret were the leak.
+
+**THE FIX IS NOT TO SCORE AT REVEAL TIME.** Points come off the clock at the
+moment of answering and the first-correct bonus depends on the order answers
+land, so moving the arithmetic would move the SCORING — the one thing that
+must not move. The engine scores exactly as it did; only what a PHONE is told
+changes. There is a test that the player object and the board carry the points
+immediately.
+
+- **The score** is held at what it was before this question, read off
+  `scoreBefore` on their own answer record.
+- **The position too, or it is the same leak wearing a different hat** — hold
+  the total alone and a phone still says "0 points, 2nd of 12" the instant you
+  tap something right. Snapshotted once at `askQuestion()` rather than worked
+  out per push: the board is rebuilt whenever anything changes, which during a
+  question is every time somebody answers, and a second board per push is the
+  quadratic shape `leaderboard()` was rewritten to remove.
+- **Somebody who has NOT answered sees their real total**, which is the same
+  number either way — otherwise the field becomes a tell in the other
+  direction: *"my number went stale, so my answer must have registered"*.
+- **The host sees it live**, because that is what their board is for, and the
+  projector cannot leak to a phone. `leaderboard()`, `hostView()` and
+  `screenView()` read `player.score` unchanged, with a test each.
+- **A game running through a redeploy degrades to the live figure** rather
+  than throwing: an answer recorded before this existed has no `scoreBefore`,
+  and their own total is what they were looking at a second ago.
+
+**It also found a blanket spread that should never have been there.**
+`hostView()` built its clock as `{ ...s.question }`, so `positionsAtStart`
+joined every host payload the moment it was added — a map of every player id,
+on every push, because nobody decided it should be there. The other two views
+already listed the four clock fields by name; this one does now. **A whitelist
+is supposed to BE the decision**, which is the whole of rule 1, and a spread
+quietly opts every future field in.
+
 ### The picture round's four reveals
 
 `REVEAL_MODES` in `src/quizzes.js`: **zoom** (the original, and still what a
@@ -4799,6 +4850,31 @@ are allowed to be NEW, so an additive change can be waved through by name:
 check, where "some things changed" is not. It was written to answer the host
 asking whether the online work would make his Wednesday awkward, and the
 answer it gave was 2,150 identical payloads across seven packs.
+
+**AND IT WAS ANSWERING WITHOUT ANSWERING — every "identical" this file quotes
+above was measured with a hole in it.** `Engine.answer()` takes an OBJECT and
+the script called it positionally, `a.answer(id, 0)`, so every answer came
+back `unknown_player` and was dropped in silence. Every *"after the fast
+answer"* comparison was a question with nobody having answered it, which put
+**the scoring, the tally, the fastest finger and who-picked-what outside the
+one check this repo runs before a gig week** — on a script whose own comment
+said those were exactly what it was exercising.
+
+Found on 14 August 2026 by making a deliberate change to a player's
+mid-question payload and being told the payloads were identical. Fixed, and
+the fix is the lesson: **the answer is now asserted**, so the script throws
+rather than reporting a clean run it did not earn. A guard that quietly tests
+nothing is worse than no guard, because it is believed. The picks are worked
+out per round type as well — "option 0" is not answerable on a pick-them-all
+question (refused unless it gets exactly the number asked for) or an alphabet
+one, which is the second reason it was doing nothing.
+
+**It also says WHICH FIELD now.** It used to print the first 300 characters of
+both payloads — and a payload's first 300 characters are nearly always
+identical, so a real difference showed as two lines that looked the same. It
+lists the differing paths, how many payloads carry each, and which roles saw
+them, so the output is the claim: *"`you.score` and `you.position`, on a
+phone, mid-question, and nothing on the projector or the host's screen."*
 
 Beyond the unit tests, these were run by hand and are worth repeating after
 anything structural:
