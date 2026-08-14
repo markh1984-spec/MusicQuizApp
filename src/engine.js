@@ -1363,7 +1363,24 @@ export class Engine {
         return {
           image: q.image ? `/quiz-images/${q.image}` : null,
           // The caption that makes clear these are illustrations, not photos.
-          imageCaption: q.imageCaption || round.imageCaption || 'AI-generated illustration — not a real photograph',
+          /*
+           * NO CAPTION UNLESS A PACK ASKS FOR ONE.
+           *
+           * It used to default to "AI-generated illustration — not a real
+           * photograph", and that was doing real work while a PHOTOREAL style
+           * existed and was the default: a convincing fake photograph of a
+           * living musician in a pack that is SOLD is the version worth not
+           * having. That style is gone — Google refuses to draw it, so every
+           * portrait is a cartoon caricature, and a caricature cannot be
+           * mistaken for a photograph by anybody. The host's own reading:
+           * *"it's crazy obvious that they're AI."*
+           *
+           * **IF A REALISTIC STYLE IS EVER ADDED, THE CAPTION COMES BACK WITH
+           * IT** — that is the condition, not the calendar. The field is still
+           * honoured, so a pack or a round can carry one and it goes straight
+           * to the projector.
+           */
+          imageCaption: q.imageCaption || round.imageCaption || '',
           // How it gives itself away. Worked out here rather than on the screen
           // so `mix` rotates by the question's real position and the projector
           // is not left guessing where in the round it is.

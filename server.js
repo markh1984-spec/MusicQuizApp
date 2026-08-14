@@ -4394,12 +4394,75 @@ async function handleWrite(req, res, url, route) {
         `Add quiz: ${result.quiz.title}`,
         log,
       );
+      /*
+       * THE PICTURES ARE DRAWN AS PART OF WRITING THE QUIZ.
+       *
+       * *"When I make an image round I want to click one button and have 10
+       * images generated with varied effects without having to faff or find
+       * another button. It just needs to work."* Right — a picture round is
+       * not finished until it has pictures, and leaving them behind a second
+       * press on a second panel is the app knowing what you want and making
+       * you ask for it.
+       *
+       * **IT CAN NEVER LOSE THE QUIZ.** By the time this runs the generation
+       * is minutes and real money deep, and the pack is already saved and
+       * backed up above. So the whole thing is wrapped: a supplier having a
+       * bad morning, a missing key or a refusal leaves the pack exactly as it
+       * was, with placeholder art and a line in the log saying so. Same rule
+       * as the Spotify playlist, which is the last and least important step of
+       * a bingo pack and used to throw away sixty resolved tracks when it
+       * failed.
+       *
+       * The effects are already varied without anything here: a generated
+       * picture round carries `reveal: 'mix'`, so the four rotate by question
+       * position. That is a separate fix and this does not touch it.
+       */
+      let drew = null;
+      if (result.needsImages && artProvider()) {
+        try {
+          log('Drawing the pictures…');
+          const saved = loadQuiz(config.quizDir, result.quiz.id);
+          const art = await generateImages({
+            quiz: saved,
+            imageDir: config.imageDir,
+            provider: artProvider(),
+            log,
+            onFile: async (name, bytes) => {
+              await backUp(`images/${name}`, bytes, `Round 2 picture: ${name}`, () => {});
+            },
+            onSpend: spendRecorder(spend, { packId: saved.id }),
+          });
+          /*
+           * `generateImages` REPOINTS the pack as it goes — a pack written
+           * before the shared portrait library moves onto it here — so the
+           * quiz has to be saved again when it does. `allowProblems`, the same
+           * as ticking a review flag: one bad question elsewhere must not stop
+           * the artwork being recorded.
+           */
+          if ((art.repointed || []).length) {
+            saveQuiz(config.quizDir, saved.id, saved, { allowProblems: true });
+            await backUp(`quizzes/${saved.id}.json`, JSON.stringify(saved, null, 2) + '\n',
+              `Pictures: ${saved.title}`, () => {});
+          }
+          backUpSpend();
+          drew = { made: (art.made || []).length, reused: (art.reused || []).length, failed: art.failed || [] };
+        } catch (err) {
+          // Said out loud rather than swallowed: a round of placeholders that
+          // nobody mentioned is the app looking like it worked.
+          log('The pictures could not be drawn: ' + err.message);
+          drew = { made: 0, reused: 0, failed: [], error: err.message };
+        }
+      }
+
       log('DONE ' + JSON.stringify({
         id: result.quiz.id,
         title: result.quiz.title,
         rounds: result.quiz.rounds.length,
         questionCount: result.quiz.rounds.reduce((n, r) => n + r.questions.length, 0),
         problems: result.problems,
+        // What was drawn, if anything. `needsImages` stays as it was so a pack
+        // whose artwork failed still says it wants some.
+        drew,
         needsImages: result.needsImages,
         backedUp: backup.ok,
         checked: result.checked,

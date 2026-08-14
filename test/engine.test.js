@@ -704,13 +704,30 @@ test('the removed list cannot grow without bound over a long night', () => {
   assert.equal(engine.playerView(last.id).kicked, true);
 });
 
-test('the picture round tells the screen how to zoom, and captions itself', () => {
+test('the picture round tells the screen how to zoom, and carries no caption by default', () => {
   const { engine } = makeEngine();
   engine.goTo(1, 0);
   const view = engine.screenView();
   assert.equal(view.question.image, '/quiz-images/face.png');
-  assert.match(view.question.imageCaption, /illustration/i);
   assert.ok(view.question.zoomFrom > view.question.zoomTo);
+  /*
+   * NO CAPTION UNLESS THE PACK ASKS FOR ONE.
+   *
+   * It used to default to "AI-generated illustration — not a real
+   * photograph", which was doing real work while a PHOTOREAL style existed
+   * and was the default. Google refuses to draw that style, so every portrait
+   * is a cartoon caricature and cannot be mistaken for a photograph. If a
+   * realistic style is ever added the caption comes back with it — that is
+   * the condition rather than the calendar.
+   */
+  assert.equal(view.question.imageCaption, '');
+});
+
+test('a pack that DOES set a caption still gets it on the screen', () => {
+  const { engine } = makeEngine();
+  engine.quiz.rounds[1].imageCaption = 'A drawing, not a photograph';
+  engine.goTo(1, 0);
+  assert.equal(engine.screenView().question.imageCaption, 'A drawing, not a photograph');
 });
 
 test('the reveal tally shows how the room voted', () => {

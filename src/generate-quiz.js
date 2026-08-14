@@ -1099,7 +1099,7 @@ export async function generateQuizPack({
        * question can still override that.
        */
       ...(type === 'image'
-        ? { imageCaption: 'AI-generated illustration — not a real photograph', reveal: 'mix' }
+        ? { reveal: 'mix' }
         : {}),
       questions: questions.map((q, qi) => ({
         id: `r${i + 1}q${qi + 1}`,

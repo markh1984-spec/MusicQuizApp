@@ -2134,7 +2134,18 @@ async function runQuizJob(panel, buttonSel, buttonWords, payload) {
           ? `<br>This one is <b>topical</b> — ${done.searches} web search${done.searches === 1 ? '' : 'es'}${(done.sources || []).length ? ` across ${done.sources.length} site${done.sources.length === 1 ? '' : 's'}` : ''}.
              Worth running until <b>${esc(new Date(done.freshUntil).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }))}</b>, after which the room has stopped talking about it.`
           : ''}
-        ${done.needsImages ? '<br><span class="tiny">The face round has no pictures yet — it will use placeholders until you generate them. See TODO.md part 6.</span>' : ''}`;
+        ${!done.needsImages ? '' : done.drew && !done.drew.error
+    /*
+     * The pictures are drawn as part of writing now, so this says what
+     * happened rather than telling you to go and do it. The reused count is
+     * worth showing: it is the shared portrait library paying for itself, and
+     * "6 already drawn" is the difference between a free round and a paid one.
+     */
+    ? `<br><span class="tiny">Pictures: <b>${done.drew.made}</b> drawn${
+  done.drew.reused ? `, ${done.drew.reused} already in your library` : ''}${
+  (done.drew.failed || []).length ? ` — <b>${done.drew.failed.length} could not be drawn</b>, those keep a placeholder` : ''}.</span>`
+    : `<br><span class="tiny"><b>The pictures could not be drawn${done.drew && done.drew.error ? ': ' + esc(done.drew.error) : ''}</b>
+        — the round works on placeholders. Open the pack and press Pictures to try again.</span>`}`;
     status.appendChild(node(`<div class="gen-good">${said}</div>`));
     // A quiz has no song history, so backup is the only thing that can be amiss.
     showDone(done.backedUp && !(done.unchecked || []).length && !(done.short || []).length ? 'good' : 'warn', said);
