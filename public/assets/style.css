@@ -1529,6 +1529,21 @@ body.console::after { display: none; }
 .gig-head:hover { border-color: var(--hot); }
 .gig-head .an { font-weight: 800; font-size: var(--fs-ctl); }
 .gig-head .gig-more { margin-left: auto; color: var(--hot); font-weight: 700; }
+/* A NIGHT YOU HAVE RUN AND NOT BILLED — money left on the table, and until now
+   nobody was counting it. GOLD rather than red: it is not a fault and it is
+   not urgent, it is a job you have not done yet, and half the nights in a
+   history are ones somebody deliberately did not bill. Pushed right so a
+   column of them reads down the page, and it takes the `auto` margin from
+   .gig-more when both are there — which is right, because "not invoiced" is
+   the one worth reading first. */
+.gig-head .gig-unbilled {
+  margin-left: auto;
+  padding: 2px 9px; border-radius: var(--r-pill);
+  border: 1px solid rgba(255, 210, 63, 0.4);
+  color: var(--gold); font-size: var(--fs-tag); font-weight: 800;
+  letter-spacing: 0.04em; white-space: nowrap;
+}
+.gig-head .gig-unbilled + .gig-more { margin-left: 0; }
 .gig-body { padding: 10px 14px 4px; display: grid; gap: 8px; }
 
 /* ---- the one-button generator on the console */
@@ -1661,6 +1676,12 @@ body.screen { cursor: none; }
   font-weight: 900;
 }
 .tab.on .tabcount { background: var(--hot); color: #fff; }
+/* SOMEBODY IS LATE PAYING. The same badge, in red — not a second one beside
+   it, which would cost the first its meaning. Red is the app's "wrong" colour
+   and it is the honest one here: an invoice past its terms is not a job you
+   have not got to, it is one somebody else has not done. */
+.tabcount.late { background: rgba(255, 77, 94, 0.22); color: var(--bad); }
+.tab.on .tabcount.late { background: var(--bad); color: #fff; }
 
 .tabbody { animation: cardIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1); }
 
@@ -5003,3 +5024,12 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
    version of "we are nearly ready", and pressing one again pushes it back. */
 .starts-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .starts-row .tiny { margin-right: 2px; }
+
+
+/* ---- an invoice somebody has not paid
+   The row says how late it is and grows a Chase it, and neither is loud: an
+   unpaid invoice is usually somebody forgetting rather than somebody refusing,
+   and the words in the draft are mild for the same reason. A quizmaster wants
+   the money AND the booking next month. */
+.inv-row.is-late { border-color: rgba(255, 77, 94, 0.3); }
+.inv-late { color: var(--bad); font-weight: 700; }

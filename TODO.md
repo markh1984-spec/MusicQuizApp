@@ -3364,9 +3364,20 @@ night knowing its venue:
    time next month?". This is the item already at the top of the SELL list, and
    it is the one that wins the REBOOKING rather than the one that gets you
    paid. **Needs: venue on a night.**
-3. **The chase.** An invoice unpaid after N days, drafted as a polite nudge.
-   The most disliked admin job there is and the one most often not done.
-   **Needs: venue on a night** (and the invoice book, which exists).
+3. ~~**The chase.**~~ **DONE.** An invoice past its terms grows a **Chase it**
+   that drafts a polite nudge with the PDF attached, and the Invoices badge
+   turns red rather than gaining a second badge beside it. The words threaten
+   nothing and give them the out, because the usual reason an invoice is unpaid
+   is that somebody forgot — and a stiff letter costs next month's booking to
+   get the money a week earlier.
+
+   **Built alongside it, and not on this list because nobody had thought of
+   it: NIGHTS YOU HAVE NOT BILLED.** The archive knew every night and the
+   invoice book knew every invoice and the two never spoke, so the nights that
+   were played and never invoiced were uncounted — money left on the table. A
+   past night now carries "Not invoiced" and the count rides on the library
+   payload. That is item 1 below approached from the other end: instead of
+   drafting an invoice nobody asked for, it says which ones are missing.
 4. **A reply to a booking enquiry**, once enquiries arrive through the app at
    all — which waits on the directory.
 5. **A caption for the night's photos**, for the Instagram direction. Drafted

@@ -455,6 +455,9 @@ const TABS = [
     // The badge is what you are still owed, not how many you have ever sent —
     // the number worth seeing without opening anything.
     count: () => (library.invoicing || {}).unpaidCount || 0,
+    // Red when any of what you are owed is past its terms — see the note where
+    // the badge is drawn for why this is not a second badge.
+    urgent: () => Boolean((library.invoicing || {}).overdueCount),
     render: () => invoicesSection(),
   },
   {
@@ -1708,9 +1711,22 @@ function tabBar(active) {
     const count = tab.count
       ? tab.count()
       : (tab.packs ? (tab.packs() || []).filter((p) => !p.locked).length : 0);
+    /*
+     * ONE BADGE, TWO STATES — never a second badge.
+     *
+     * Invoices already counts what you are still owed. Somebody being LATE is
+     * a different fact and a more urgent one, and the obvious move is a second
+     * badge beside the first — which is exactly what this file's own rule
+     * refuses, because a second badge costs the first one its meaning.
+     *
+     * So the badge stays the same number and turns red when any of it is
+     * overdue. Nothing new to read, and the one thing worth acting on is
+     * visible without opening the tab.
+     */
+    const urgent = tab.urgent ? tab.urgent() : false;
     const button = node(`
       <button class="tab ${tab.id === active ? 'on' : ''}" role="tab" data-tab="${tab.id}">
-        ${esc(tab.label)}${count ? `<span class="tabcount">${count}</span>` : ''}
+        ${esc(tab.label)}${count ? `<span class="tabcount ${urgent ? 'late' : ''}">${count}</span>` : ''}
       </button>`);
     button.addEventListener('click', () => {
       localStorage.setItem(TAB_STORE, tab.id);
@@ -4689,6 +4705,10 @@ function gigRow(night) {
         <span class="an">${esc(label)}</span>
         <span class="tiny">${played}</span>
         <span class="tiny">${[night.venue, heads ? `${heads} playing` : ''].filter(Boolean).join(' · ')}</span>
+        <!-- Its OWN span, not inside .gig-more: that one is rewritten with
+             "Loading…" and then the photo count the moment the night is
+             opened, which would wipe this. -->
+        ${night.unbilled ? '<span class="gig-unbilled">Not invoiced</span>' : ''}
         <span class="tiny gig-more">${night.hasPhotos ? 'Photos ▸' : ''}</span>
       </button>
       <div class="gig-body" hidden></div>
@@ -4742,7 +4762,12 @@ function gigRow(night) {
           ? 'Music bingo night' : 'Music quiz night';
         openInvoiceForm({
           customerId: match ? match.id : '',
-          event: { title: what, venue: night.venue || '', date: night.night },
+          // `nightId` has been a field on every invoice since invoicing was
+          // written and was never once set. It is the stable handle back to
+          // the night — what tells the two apart for "have I billed this" is
+          // the venue and the date together, but the id is what anything
+          // later will want and it costs nothing to record now.
+          event: { title: what, venue: night.venue || '', date: night.night, nightId: night.night },
           description: what,
         }, () => load());
         bill.disabled = false;
@@ -5106,8 +5131,17 @@ function drawList(body, refresh) {
   }
 
   const rows = book.invoices.map((invoice) => {
+    /*
+     * HOW LATE, in whole days past the terms — 0 when it is not.
+     *
+     * Worked out here rather than sent, because the browser has the issue date
+     * and the terms already and a number computed on a page that reloads is
+     * one that cannot go stale. It decides both the chase button and the line
+     * under the row.
+     */
+    const late = daysLate(invoice, book.settings);
     const row = node(`
-      <div class="inv-row status-${esc(invoice.status)}">
+      <div class="inv-row status-${esc(invoice.status)} ${late ? 'is-late' : ''}">
         <div class="inv-main">
           <div class="inv-top">
             <b>${esc(invoice.number)}</b>
@@ -5115,11 +5149,13 @@ function drawList(body, refresh) {
             <span class="inv-status">${esc(STATUS_LABEL[invoice.status] || invoice.status)}</span>
           </div>
           <div class="tiny">${esc(invoice.lines.map((l) => l.description).join(' · '))}</div>
+          ${late ? `<div class="tiny inv-late">${late} day${late === 1 ? '' : 's'} past its terms</div>` : ''}
         </div>
         <div class="inv-amount">${esc(money(invoice.totals.due))}</div>
         <div class="inv-actions">
           <a class="minor" href="${esc(keyed('/api/invoices/' + encodeURIComponent(invoice.number) + '.pdf'))}" target="_blank" rel="noopener">Open</a>
           <button class="minor send">Send</button>
+          ${late ? '<button class="minor chase">Chase it</button>' : ''}
           ${invoice.status === 'paid'
             ? '<button class="minor unpaid">Not paid</button>'
             : invoice.status === 'cancelled' ? '' : '<button class="go paid">Mark paid</button>'}
@@ -5127,6 +5163,7 @@ function drawList(body, refresh) {
       </div>`);
 
     row.querySelector('.send').addEventListener('click', () => share(invoice));
+    row.querySelector('.chase')?.addEventListener('click', () => chase(invoice, late));
     row.querySelector('.paid')?.addEventListener('click', async () => {
       await invoiceApi(`/api/invoices/${encodeURIComponent(invoice.number)}`, { method: 'POST', body: JSON.stringify({ status: 'paid' }) });
       refresh();
@@ -5138,6 +5175,87 @@ function drawList(body, refresh) {
     return row;
   });
   body.replaceChildren(...rows);
+}
+
+/**
+ * HOW LATE AN INVOICE IS, in whole days past its terms.
+ *
+ * Mirrors `daysLate` in `src/invoices.js` — same rule, so the browser and the
+ * server can never disagree about whether somebody is late. Only ever true of
+ * a SENT one: a draft is not late, and a paid or cancelled one is finished.
+ */
+function daysLate(invoice, settings = {}) {
+  if (!invoice || invoice.status !== 'sent') return 0;
+  const issued = Date.parse(invoice.issuedAt);
+  if (!Number.isFinite(issued)) return 0;
+  const terms = Number(settings.termDays) || 14;
+  return Math.max(0, Math.floor((Date.now() - (issued + terms * 86400000)) / 86400000));
+}
+
+/**
+ * CHASE IT — the most disliked admin job there is, drafted.
+ *
+ * The blank page is where the time goes, not the pressing of send. So this
+ * writes the awkward sentence and hands it to the share sheet; the quizmaster
+ * reads it and presses send, exactly like `reply-draft.js` and for the same
+ * reason. **It never sends on its own.** A chase that went out unread is the
+ * one that nags somebody who paid last Tuesday, on the relationship they are
+ * being paid to keep.
+ *
+ * The words are deliberately mild and they do NOT threaten anything — no
+ * interest, no late fees, no "final notice". A quizmaster wants the money AND
+ * the booking next month, and a stiff letter costs the second to get the
+ * first a week earlier. It also gives them the out ("if it has already gone,
+ * ignore this"), because the usual reason an invoice is unpaid is that
+ * somebody forgot.
+ *
+ * The PDF goes with it. Chasing an invoice somebody has to go and find is
+ * half a chase.
+ */
+async function chase(invoice, late) {
+  const url = keyed(`/api/invoices/${encodeURIComponent(invoice.number)}.pdf`);
+  const subject = `Invoice ${invoice.number} — a gentle reminder`;
+  const signOff = invoice.from.contact || invoice.from.name || '';
+  const lines = [
+    `Hi${invoice.to.contact ? ' ' + invoice.to.contact : ''},`,
+    '',
+    `Hope all is well. Just a nudge on invoice ${invoice.number} for ${money(invoice.totals.due)}`
+      + `${invoice.event && invoice.event.venue ? ` — ${invoice.event.venue}` : ''}`
+      + `${invoice.event && invoice.event.date
+        // Noon, so no timezone can pull the date back a day — the same trap
+        // the invoice code itself records for a night that ends after midnight.
+        ? `, ${new Date(invoice.event.date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}`
+        : ''}.`,
+    // "It IS now N days past", not "it went out N days past" — the first
+    // version said the invoice was sent late, which is the opposite of the
+    // point and would read as an apology.
+    `It is now ${late} day${late === 1 ? '' : 's'} past its terms, so I thought I would check it reached the right person.`,
+    '',
+    'If it has already gone through, please ignore this — and thanks again for having us.',
+    '',
+    // A dangling "Best," with nothing under it is worse than no sign-off, and
+    // it happens on any book where the business details are not filled in yet.
+    ...(signOff ? ['Best,', signOff] : ['Thanks!']),
+  ].join('\n');
+
+  try {
+    const res = await fetch(url, { headers: { 'X-Host-Key': hostKey } });
+    const blob = await res.blob();
+    const file = new File([blob], invoice.number + '.pdf', { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: subject, text: lines });
+      return;
+    }
+  } catch (err) {
+    // A cancelled share sheet throws too — the same trap `share()` records.
+    if (err && err.name === 'AbortError') return;
+  }
+
+  window.open(url, '_blank', 'noopener');
+  if (invoice.to.email) {
+    location.href = `mailto:${encodeURIComponent(invoice.to.email)}`
+      + `?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines)}`;
+  }
 }
 
 /**

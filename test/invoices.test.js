@@ -720,3 +720,130 @@ test('the diary comes back from a backup', () => {
     });
   });
 });
+
+// ------------------------------------------------- what you have not billed
+
+/*
+ * NIGHTS YOU HAVE RUN AND NOT INVOICED — money left on the table, and until
+ * this nobody was counting it. The archive knows the nights, this book knows
+ * the invoices, and the two never spoke.
+ */
+const AUG = Date.parse('2026-08-14T12:00:00.000Z');
+const nightsFrom = (...rows) => rows.map(([night, venue]) => ({ night, venue, games: [] }));
+
+test('a night with an invoice is not chased, one without it is', () => {
+  withFile((file) => {
+    const book = new Invoices(file, { now });
+    const c = book.saveCustomer({ name: 'The Crown' });
+    const inv = book.issue(book.draft({
+      customerId: c.id,
+      event: { title: 'Quiz', venue: 'The Crown', date: '2026-08-13', nightId: '2026-08-13' },
+      lines: [{ description: 'Quiz night', amountPence: 15000 }],
+    }), { now });
+    assert.ok(inv.number);
+
+    const out = book.unbilledNights(nightsFrom(
+      ['2026-08-13', 'The Crown'],      // billed
+      ['2026-08-12', 'The Station Tap'], // not
+    ), { now: () => AUG });
+    assert.deepEqual(out.map((n) => n.venue), ['The Station Tap']);
+  });
+});
+
+/*
+ * A NIGHT IS A DATE AND A VENUE. Matching on the archive's own key — which is
+ * only the date — would mark a second venue done because the first was billed.
+ * December is exactly when that happens.
+ */
+test('billing one venue on a date does not mark another venue that night', () => {
+  withFile((file) => {
+    const book = new Invoices(file, { now });
+    const c = book.saveCustomer({ name: 'The Crown' });
+    book.issue(book.draft({
+      customerId: c.id,
+      event: { title: 'Quiz', venue: 'The Crown', date: '2026-08-13', nightId: '2026-08-13' },
+      lines: [{ description: 'Quiz night', amountPence: 15000 }],
+    }), { now });
+    const out = book.unbilledNights(nightsFrom(['2026-08-13', 'The Dog and Duck']), { now: () => AUG });
+    assert.equal(out.length, 1, 'a different venue on the same date was marked billed');
+  });
+});
+
+test('a night with no venue is never chased — there is nobody to bill', () => {
+  withFile((file) => {
+    const book = new Invoices(file, { now });
+    assert.equal(book.unbilledNights(nightsFrom(['2026-08-13', '']), { now: () => AUG }).length, 0);
+  });
+});
+
+/* Old nights are history, not a job. A list you stop reading costs the row
+ * that mattered. */
+test('nothing older than the window is chased', () => {
+  withFile((file) => {
+    const book = new Invoices(file, { now });
+    const out = book.unbilledNights(nightsFrom(
+      ['2026-08-13', 'The Crown'],
+      ['2026-01-02', 'The Crown'],
+    ), { now: () => AUG });
+    assert.deepEqual(out.map((n) => n.night), ['2026-08-13']);
+  });
+});
+
+/* A cancelled invoice keeps its number and its record, but the night it was
+ * for is still unpaid work. */
+test('a cancelled invoice does not count as billed', () => {
+  withFile((file) => {
+    const book = new Invoices(file, { now });
+    const c = book.saveCustomer({ name: 'The Crown' });
+    const inv = book.issue(book.draft({
+      customerId: c.id,
+      event: { title: 'Quiz', venue: 'The Crown', date: '2026-08-13' },
+      lines: [{ description: 'Quiz night', amountPence: 15000 }],
+    }), { now });
+    book.setStatus(inv.number, 'cancelled');
+    assert.equal(book.unbilledNights(nightsFrom(['2026-08-13', 'The Crown']), { now: () => AUG }).length, 1);
+  });
+});
+
+// ------------------------------------------------------------- the chase
+
+/*
+ * HOW LATE, in whole days past the terms. Only ever true of a SENT invoice: a
+ * draft is not late, and a paid or cancelled one is finished.
+ */
+test('lateness is counted past the terms, not from the issue date', () => {
+  withFile((file) => {
+    const book = new Invoices(file, { now });
+    const c = book.saveCustomer({ name: 'The Crown' });
+    const inv = book.issue(book.draft({
+      customerId: c.id,
+      event: { title: 'Quiz', venue: 'The Crown', date: '2026-08-07' },
+      lines: [{ description: 'Quiz night', amountPence: 15000 }],
+    }), { now: () => Date.parse('2026-08-07T12:00:00.000Z') });
+    book.setStatus(inv.number, 'sent');
+    const sent = book.find(inv.number);
+
+    // Issued 7 Aug, 14-day terms, so due 21 Aug. On the 20th it is not late.
+    assert.equal(book.daysLate(sent, { now: () => Date.parse('2026-08-20T12:00:00Z') }), 0);
+    // On the 25th it is four days past.
+    assert.equal(book.daysLate(sent, { now: () => Date.parse('2026-08-25T12:00:00Z') }), 4);
+  });
+});
+
+test('a draft, a paid one and a cancelled one are never late', () => {
+  withFile((file) => {
+    const book = new Invoices(file, { now });
+    const c = book.saveCustomer({ name: 'The Crown' });
+    const inv = book.issue(book.draft({
+      customerId: c.id,
+      event: { title: 'Quiz', venue: 'The Crown', date: '2026-08-07' },
+      lines: [{ description: 'Quiz night', amountPence: 15000 }],
+    }), { now });
+    const at = () => Date.parse('2026-12-25T12:00:00Z');
+    for (const status of ['draft', 'paid', 'cancelled']) {
+      book.setStatus(inv.number, status);
+      assert.equal(book.daysLate(book.find(inv.number), { now: at }), 0,
+        `a ${status} invoice was reported as late`);
+    }
+  });
+});

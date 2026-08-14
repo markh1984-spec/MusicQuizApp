@@ -570,6 +570,61 @@ export class Invoices {
     }
     return { outstanding, overdue, overdueCount, unpaidCount, count: this.data.invoices.length };
   }
+
+  /**
+   * HOW LATE ONE INVOICE IS, in whole days past its terms.
+   *
+   * Its own reader because the chase needs the number and `summary()` only
+   * counts — and because "9 days" in a nudge is the difference between a
+   * sentence somebody acts on and one they skim. Zero or less means it is not
+   * late, so a caller can treat the number as the whole answer.
+   */
+  daysLate(invoice, { now = () => Date.now(), termDays = 14 } = {}) {
+    if (!invoice || invoice.status !== 'sent') return 0;
+    const issued = Date.parse(invoice.issuedAt);
+    if (!Number.isFinite(issued)) return 0;
+    const due = issued + termDays * 86_400_000;
+    return Math.max(0, Math.floor((now() - due) / 86_400_000));
+  }
+
+  /**
+   * WHICH NIGHTS HAVE NOT BEEN BILLED.
+   *
+   * Nobody was tracking this and it is money left on the table: the archive
+   * knows every night that was run and this book knows every invoice, and
+   * until now the two never spoke. Answering it is the whole of "bill them
+   * before you leave the car park" actually kept, rather than offered.
+   *
+   * **A NIGHT IS A DATE AND A VENUE, so that pair is the match.** The archive's
+   * own key is only the date, which is why matching on `event.nightId` alone
+   * would be WEAKER rather than stronger: two venues on one date in December
+   * and billing the first would mark the second done. `nightId` is still
+   * written when an invoice is raised from a night, because it is the stable
+   * handle anything later will want — but it is not what this asks.
+   *
+   * A CANCELLED invoice does not count as billed. It keeps its number and its
+   * record deliberately, but the night it was for is still unpaid work.
+   *
+   * A night with NO VENUE is never counted: there is nobody to bill. And
+   * nothing older than the window, because "you did not invoice a night in
+   * March" is not a job, it is history — a list that includes it is one
+   * somebody stops reading, which costs them the row that mattered.
+   */
+  unbilledNights(nights = [], { now = () => Date.now(), days = 56 } = {}) {
+    const since = now() - days * 86_400_000;
+    const billed = new Set();
+    for (const invoice of this.data.invoices) {
+      if (invoice.status === 'cancelled') continue;
+      const ev = invoice.event || {};
+      if (ev.venue && ev.date) billed.add(`${ev.date}|${String(ev.venue).trim().toLowerCase()}`);
+    }
+    return nights.filter((night) => {
+      const venue = String(night.venue || '').trim();
+      if (!venue) return false;
+      if (Date.parse(`${night.night}T12:00:00Z`) < since) return false;
+      return !billed.has(`${night.night}|${venue.toLowerCase()}`);
+    });
+  }
 }
 
 /** "Music quiz night — The Crown, Thursday 7 August 2026" */

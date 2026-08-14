@@ -1490,6 +1490,19 @@ async function handleGet(req, res, url, route) {
        */
       archiveNights: mergeGigs(listArchive(roomForHost(req, url).paths.archive), []).length,
       /*
+       * NIGHTS YOU HAVE RUN AND NOT BILLED — money left on the table.
+       *
+       * Worked out on the SERVER because it is the only side holding both
+       * halves: the archive knows the nights and the invoice book knows the
+       * invoices, and until now the two never spoke. Sent as a count rather
+       * than a list, because the Gigs tab marks the rows itself and a number
+       * is all anything else needs.
+       *
+       * Only when they actually hold invoicing — a quizmaster who does not
+       * bill through the app has no unbilled nights, only nights.
+       */
+      unbilled: unbilledFor(roomForHost(req, url), req, url),
+      /*
        * Venues this room has played before, so the launch box offers them back
        * rather than asking for the same six words every week. A field you
        * retype gets left blank by the third week, and then the record is
@@ -1787,8 +1800,27 @@ async function handleGet(req, res, url, route) {
     const folders = photosRepoConfigured()
       ? await listDirs(photoFolder(gigRoom.id), 'photos')
       : [];
+    const nights = mergeGigs(listArchive(gigRoom.paths.archive), folders.map((f) => f.name));
+    /*
+     * WHICH OF THEM HAVE NOT BEEN BILLED.
+     *
+     * Marked here rather than worked out in the browser, because the answer
+     * needs the invoice book and the page holds only the nights — and because
+     * a room that has not opened the Invoices tab this boot has no book in
+     * memory until `ensureInvoicesRestored` has run. Doing it in the browser
+     * would mean shipping every invoice to a page that has no other use for
+     * them.
+     *
+     * Only for somebody who actually bills through the app. A quizmaster
+     * without invoicing has no unbilled nights, only nights.
+     */
+    let unbilled = new Set();
+    if (billsThroughTheApp(req, url)) {
+      await ensureInvoicesRestored(gigRoom);
+      unbilled = new Set(gigRoom.invoices.unbilledNights(nights).map((n) => n.night));
+    }
     return sendJson(res, 200, {
-      nights: mergeGigs(listArchive(gigRoom.paths.archive), folders.map((f) => f.name)),
+      nights: nights.map((n) => (unbilled.has(n.night) ? { ...n, unbilled: true } : n)),
       // So the page can say why there are no pictures against an old night,
       // rather than implying nobody took any.
       photosKept: photosRepoConfigured(),
@@ -2470,6 +2502,44 @@ function cataloguePerformance() {
 }
 
 /** Everything the invoices tab draws itself from, for ONE quizmaster's book. */
+/**
+ * How many nights have been run and not invoiced.
+ *
+ * Defensive on every side: a room whose invoice book has not been restored
+ * yet, an account without the feature, or a broken archive must all come back
+ * as zero rather than taking the library payload down with them — this is a
+ * nice-to-know number on the page whose job is launching a quiz.
+ */
+function unbilledFor(room, req, url) {
+  try {
+    if (!billsThroughTheApp(req, url)) return 0;
+    const nights = mergeGigs(listArchive(room.paths.archive), []);
+    return room.invoices.unbilledNights(nights).length;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Does whoever is asking actually invoice through the app?
+ *
+ * **ASKED OF THE REQUEST, not of `accounts.find(room.id)`** — which is the
+ * trap this file has recorded before. On the bare HOST KEY there is no account
+ * against the house room at all, so a lookup by room id comes back null and
+ * `can(null, …)` is false: the feature would have been silently off on the one
+ * console its author uses most. `whoIs()` is what every gate in this file
+ * already asks, and it answers the bootstrap key as the owner with every hat
+ * on.
+ *
+ * It exists so a quizmaster who does not bill through the app is never told
+ * about "unbilled nights" — to them those are just nights.
+ */
+function billsThroughTheApp(req, url) {
+  const account = whoIs(req, url);
+  if (!account) return false;
+  return account.bootstrap ? true : can(account, FEATURES.INVOICES);
+}
+
 function invoiceState(books) {
   return {
     settings: books.settings,

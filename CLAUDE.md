@@ -4599,6 +4599,72 @@ invoice queried. A £0 line that explains itself ("Prizes — included") is fine
 
 ---
 
+## Getting paid: what you have not billed, and who has not paid
+
+Two small features that share a shape — the app already held both halves of
+each answer and never put them together. Both are **draft, read, send**: the
+blank page is where the time goes, not the pressing of send.
+
+### "Not invoiced" on a past night
+
+`unbilledNights()` in `src/invoices.js`, marked onto `/api/past-gigs` and
+counted on the library payload. The archive knows every night that was run and
+the invoice book knows every invoice, and until this they never spoke — so
+nobody was counting the nights that were played and never billed. It is money
+left on the table, and it is the whole of "bill them before you leave the car
+park" actually kept rather than offered.
+
+- **A NIGHT IS A DATE AND A VENUE, so that pair is the match.** The archive's
+  own key is only the date, so matching on `event.nightId` alone would be
+  WEAKER rather than stronger — two venues on one date in December, and billing
+  the first would mark the second done. `nightId` is written now when an
+  invoice is raised from a night, because it is the stable handle anything
+  later will want, but it is not what the question asks.
+- **A night with no venue is never counted** — there is nobody to bill — and
+  neither is anything older than eight weeks. *"You did not invoice a night in
+  March"* is not a job, it is history, and a list carrying it is one somebody
+  stops reading, which costs them the row that mattered.
+- **A CANCELLED invoice does not count as billed.** It keeps its number and its
+  record deliberately, but the night is still unpaid work.
+- **Gold, not red.** It is not a fault and it is not urgent — half the nights in
+  a history are ones somebody deliberately did not bill.
+- **Its own span, not inside `.gig-more`** — that one is rewritten with
+  "Loading…" and then the photo count the moment a night is opened, which would
+  have wiped the marker.
+
+**`billsThroughTheApp()` asks the REQUEST, not `accounts.find(room.id)`**, and
+that is the trap this file keeps recording. On the bare host key there is no
+account against the house room, so a lookup by room id comes back null and
+`can(null, …)` is false — the feature would have been silently off on the one
+console its author uses most. Found by looking at the payload rather than by a
+test.
+
+### "Chase it" on an invoice past its terms
+
+`daysLate()` on both sides, and the button on the Invoices tab. The most
+disliked admin job there is and the one most often not done.
+
+**ONE BADGE, TWO STATES — never a second badge.** Invoices already counts what
+you are still owed; somebody being LATE is a different and more urgent fact,
+and the obvious move is a second badge beside the first. That is exactly what
+this file's own rule refuses, because a second badge costs the first its
+meaning. So the badge keeps its number and turns red.
+
+**The words are mild and they threaten nothing** — no interest, no late fees,
+no "final notice". A quizmaster wants the money AND the booking next month, and
+a stiff letter costs the second to get the first a week earlier. It gives them
+the out as well ("if it has already gone, please ignore this"), because the
+usual reason an invoice is unpaid is that somebody forgot. The PDF goes with
+it: chasing an invoice somebody has to go and find is half a chase.
+
+**It never sends on its own**, same as `reply-draft.js`. A chase that went out
+unread is the one that nags somebody who paid last Tuesday.
+
+Two wording faults caught by reading the actual draft rather than the code:
+it said *"it went out N days past its terms"*, which says the INVOICE was sent
+late and reads as an apology; and an unfilled business name left a dangling
+"Best," with nothing under it.
+
 ## How many people can play
 
 **Say 300. That is the documented number and it is deliberately below what the
@@ -4638,7 +4704,7 @@ venue's own network days before, never on the night.
 ## Checks
 
 ```bash
-npm test        # 973 tests, no network, injected clocks — must stay green
+npm test        # 980 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
@@ -4817,7 +4883,7 @@ private repo (`PACKS_REPO`), never the one holding the owner's accounts and
 invoices; until that is set the console says so in red and every own pack has a
 Download button.
 
-All on **`MusicQuizApp`**. 973 tests green.
+All on **`MusicQuizApp`**. 980 tests green.
 
 ### What a GUI SWEEP found — thirteen things, all fixed
 
