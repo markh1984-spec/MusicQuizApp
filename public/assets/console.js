@@ -525,6 +525,8 @@ const TABS = [
     generator: () => {
       const wrap = document.createDocumentFragment();
       if (can(FEATURES.GENERATE)) wrap.appendChild(generatePanel(library.generation || {}));
+      // What the generator refuses to repeat, and the only way to clear it.
+      if (can(FEATURES.GENERATE)) wrap.appendChild(forgetPanel());
       // Import writes a pack into the shared catalogue, so it is the owner's —
       // it was offered on LIBRARY, which every quizmaster has, and the server
       // now refuses it. A button that 403s is worse than no button.
@@ -571,6 +573,24 @@ const TABS = [
      * an account holding one and not the other gets the half it holds rather
      * than a tab that half works.
      */
+    /*
+     * THE DIARY, ITS OWN TAB — left of Gigs, because the evening runs left to
+     * right and what is BOOKED comes before what has been RUN.
+     */
+    id: 'diary',
+    needs: FEATURES.CALENDAR,
+    label: 'Calendar',
+    blurb: 'What you have got coming, from your venues\u2019 usual nights.',
+    // The same source the panel draws from, so the badge and the list can never
+    // disagree — `upcoming()` projects the venues' usual nights forward and
+    // folds in the one-offs.
+    count: () => upcoming({
+      venues: library.venueRecords || [],
+      bookings: library.bookings || [],
+    }).length,
+    render: () => diarySection(),
+  },
+  {
     id: 'past',
     needs: FEATURES.PAST_GIGS,
     label: 'Gigs',
@@ -931,13 +951,18 @@ function switchPanel() {
     .map((f) => ({ id: f, ...(FEATURE_META[f] || { label: f, blurb: '' }) }));
 
   if (!rows.length) {
-    return node(`<div class="panel"><h3>What is on screen</h3>
+    return node(`<div class="panel"><h3>What you use</h3>
       <div class="tiny">Nothing to switch off on your tier.</div></div>`);
   }
 
   const el = node(`
     <div class="panel">
-      <h3>What is on screen</h3>
+      <!-- "What is on screen" was a LABEL COLLISION and a bad one: this panel
+           decides which TABS appear in your console, and the words say the
+           projector. Tonight now says "On the big screen now", so the app had
+           two screen phrasings meaning different things — and a quizmaster
+           reading this one mid-gig would think it was about the room. -->
+      <h3>What you use</h3>
       <div class="tiny">Turn off anything you do not use and its tab goes away. Nothing is
         lost — switch it back on whenever you like.</div>
       <div class="acct-toggles">
@@ -3773,6 +3798,7 @@ function runningPanel(running) {
           <div class="running-title">${esc(running.title)}</div>
           <div class="tiny">${esc(what)} — ${who}</div>
           ${running.at ? `<div class="running-at">${esc(running.at)}</div>` : ''}
+          ${nowNextRows(running)}
         </div>
         <div class="running-links">
           <a class="go control-link" href="${linkTo('/host')}">${live ? 'Take control' : 'Open the controls'}</a>
@@ -6259,9 +6285,105 @@ function venuesSection() {
  * they are showing a venue their work, and a long list belongs under a short
  * one rather than over it.
  */
+
+/**
+ * WHAT THE GENERATOR REFUSES TO REPEAT — and the only way to clear it.
+ *
+ * `src/history.js` remembers every track the bingo generator has ever used, so
+ * a room never gets the same song twice in three months. `/api/history/forget`
+ * empties it and has existed since that was written **with no button anywhere
+ * in the app** — found by walking every route against every caller in the
+ * browser code. A function nothing can reach is a function that does not
+ * exist.
+ *
+ * It matters after a year or two rather than on day one: the list grows, the
+ * generator starts dropping more and more as "played recently", and eventually
+ * a fresh venue or a new season wants a clean slate. Until now the only way
+ * was to delete a file on the server.
+ *
+ * **THE OWNER'S ONLY, because the memory is GLOBAL** — one file for the whole
+ * app, not one per room, since the generator is the owner's and runs on the
+ * owner's bill. A quizmaster clearing it would be clearing everybody's.
+ *
+ * Behind a confirm that says what is lost, because the cost is real and
+ * invisible: nothing looks different afterwards, and the next few packs
+ * quietly start repeating songs a room heard last month.
+ */
+
+/**
+ * WHAT IS ON THE SCREEN, AND WHAT IS NEXT.
+ *
+ * The running panel already said where the night had got to. This says what
+ * the room is looking at and what pressing onwards would put in front of them
+ * — a different question, and the one you want answered before you walk back
+ * to the laptop.
+ *
+ * Quiz only: bingo's next track is picked off a call sheet by hand, so there
+ * is nothing to predict and a guess would be worse than silence. The server
+ * sends `null` for it and this draws nothing.
+ *
+ * The question and the answer are here because this is the HOST'S own page —
+ * the same reason the control view carries them. Rule 1 is about the projector
+ * and a player's phone.
+ */
+function nowNextRows(running) {
+  const at = running.onScreen;
+  if (!at || !at.now) return '';
+  const row = (tag, label, text) => `
+    <div class="nn-row">
+      <span class="nn-tag">${tag}</span>
+      <span class="nn-what"><b>${esc(label)}</b>${text ? `<br><span class="tiny">${esc(text)}</span>` : ''}</span>
+    </div>`;
+  return `<div class="now-next">
+    ${row('Now', at.now, at.nowText)}
+    ${at.next ? row('Next', at.next, at.nextText) : ''}
+  </div>`;
+}
+
+function forgetPanel() {
+  const el = node(`
+    <div class="panel">
+      <h3>Songs it will not repeat</h3>
+      <div class="tiny">Every track the generator has used is remembered, so no room
+        hears the same song twice in three months. Clearing it starts that memory
+        again \u2014 useful for a new venue or a new year, and nothing else changes.</div>
+      <button class="minor danger forget-go">Clear the memory</button>
+      <div class="tiny forget-said"></div>
+    </div>`);
+  const said = el.querySelector('.forget-said');
+  el.querySelector('.forget-go').addEventListener('click', async (ev) => {
+    if (!confirm('Clear what the generator remembers?\n\nEvery track becomes fair game again, '
+      + 'so a room could hear a song it heard last month. This cannot be undone.')) return;
+    const btn = ev.currentTarget;
+    btn.disabled = true;
+    try {
+      await postJson('/api/history/forget', {}, { 'X-Host-Key': hostKey });
+      said.textContent = 'Cleared. The next pack can use anything.';
+    } catch (err) {
+      said.style.color = 'var(--bad)';
+      said.textContent = err.message || 'Could not clear it.';
+    }
+    btn.disabled = false;
+  });
+  return el;
+}
+
 function gigsSection() {
   const wrap = document.createDocumentFragment();
-  if (can(FEATURES.CALENDAR)) wrap.appendChild(diarySection());
+  /*
+   * THE DIARY MOVED OUT, and the reason is the host not being able to find it.
+   *
+   * This file used to record a deliberate decision to keep Gigs whole — it
+   * sits at both ends of the journey, holding what is coming and what has
+   * been, and splitting it added a tenth tab to a bar that already scrolls on
+   * a phone. That reasoning was sound and the outcome was still wrong: *"we
+   * need to have a calendar added because I don't know where to find the
+   * calendar right now."* It was built, it worked, and it was invisible.
+   *
+   * A tab bar is a list of places somebody looks for things. Being tidy is
+   * worth less than being findable, and the person who wrote the tidy version
+   * could not find his own diary.
+   */
   /*
    * The numbers sit BETWEEN the two, and the order is the same argument the
    * rest of this tab is built on: what is coming is what you act on, the

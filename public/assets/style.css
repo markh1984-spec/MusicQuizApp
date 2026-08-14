@@ -5901,3 +5901,17 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 }
 .reward-off:hover { color: var(--bad); border-color: rgba(255, 77, 94, 0.4); }
 .v-reward-add { margin-top: 4px; }
+
+/* WHAT IS ON THE SCREEN, AND WHAT IS NEXT — on the console's running panel.
+   Two rows, tagged rather than headed: the tag is the same width on both so
+   the two labels line up and the pair reads as one thing you scan, not two
+   facts you read. Next is dimmer than Now, because one of them is true and the
+   other is a prediction. */
+.now-next { margin-top: 10px; display: grid; gap: 6px; }
+.nn-row { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.nn-tag {
+  flex: 0 0 auto; min-width: 38px;
+  font-size: var(--fs-tag); font-weight: 900; color: var(--ink-dim);
+}
+.nn-what { min-width: 0; font-size: var(--fs-note); }
+.nn-row + .nn-row { opacity: 0.72; }

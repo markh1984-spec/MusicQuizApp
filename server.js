@@ -1502,6 +1502,8 @@ async function handleGet(req, res, url, route) {
          * and in the dark, is the friction it removes.
          */
         venue: session.engine.state?.venue || '',
+        // What is on the projector and what is next — see `nowNext` above.
+        onScreen: nowNext(session),
         phase: session.engine.state.phase,
         // Optional on an engine — a new game that has not written one still
         // shows up in the console, it just says less about itself.
@@ -2845,6 +2847,69 @@ function reloadPackEverywhere(id, { clamp = true } = {}) {
  * called `christmas`, and one of them playing theirs is no reason to stop the
  * other deleting theirs.
  */
+/**
+ * WHAT IS ON THE PROJECTOR, AND WHAT PRESSING ONWARDS WOULD PUT THERE.
+ *
+ * Asked for directly: *"would be useful to see a panel that shows what's on
+ * the screen and the next screen in the console while the quiz is running."*
+ * The running panel already said WHERE the night had got to — "Round 1,
+ * question 3" — which answers a different question from "what am I about to
+ * walk into".
+ *
+ * It is the console, which is the host's own page, so the question text and
+ * the answer are allowed here for the same reason they are allowed on the
+ * control view. Rule 1 is about the PROJECTOR and a PLAYER'S PHONE, and
+ * neither of those is this.
+ *
+ * QUIZ ONLY. Bingo has no "next": the host picks the next track off a call
+ * sheet, so there is nothing to predict and a panel guessing at one would be
+ * worse than none.
+ */
+function nowNext(session) {
+  const engine = session.engine;
+  if (!engine || session.kind !== 'quiz') return null;
+  const s = engine.state;
+  const round = engine.round();
+  const qs = engine.questions();
+  const q = engine.question();
+  const roundName = round ? (round.title || `Round ${s.roundIndex + 1}`) : '';
+  const nextRound = engine.rounds[s.roundIndex + 1];
+  const nextRoundName = nextRound ? (nextRound.title || `Round ${s.roundIndex + 2}`) : '';
+  const nextQ = qs[s.questionIndex + 1];
+  const asked = (item) => String((item && item.prompt) || '').slice(0, 120);
+
+  switch (s.phase) {
+    case 'lobby':
+      return { now: 'The lobby — teams joining', next: 'The rules slide' };
+    case 'rules':
+      return { now: 'The rules slide', next: roundName ? `${roundName} — the round board` : 'The first round' };
+    case 'round_intro':
+      return { now: `${roundName} — the round board`, next: 'Question 1', nextText: asked(qs[0]) };
+    case 'question':
+      return {
+        now: `Question ${s.questionIndex + 1} of ${qs.length}`, nowText: asked(q),
+        next: 'The answer',
+        nextText: q ? engine.answerText(q, round) : '',
+      };
+    case 'reveal':
+      return {
+        now: 'The answer is up', nowText: q ? engine.answerText(q, round) : '',
+        next: nextQ ? `Question ${s.questionIndex + 2} of ${qs.length}` : (nextRound ? `${nextRoundName} — the round board` : 'The final scores'),
+        nextText: asked(nextQ),
+      };
+    case 'round_board':
+      return {
+        now: `Scores after ${roundName}`,
+        next: nextRound ? `${nextRoundName} — question 1` : 'The final scores',
+        nextText: nextRound ? asked((nextRound.questions || [])[0]) : '',
+      };
+    case 'final':
+      return { now: 'The final scores and the winner', next: '' };
+    default:
+      return null;
+  }
+}
+
 function packInUse(kind, id, onlyRoom = null) {
   const where = onlyRoom ? [onlyRoom] : rooms.all();
   return where.some((r) => r.session.kind === kind && r.session.pack?.id === id);
