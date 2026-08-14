@@ -803,9 +803,19 @@ function showActiveTab() {
  */
 function helpSection() {
   const wrap = document.createDocumentFragment();
+  /*
+   * THE SUGGESTION BOX GOES FIRST, above the support door and the log.
+   *
+   * Asked for on 14 August 2026, and it is the right way round: an idea is
+   * offered when somebody is in a good mood and will not be chased if it is
+   * awkward to find, where a problem gets reported however far down the page
+   * the box is — somebody with a broken night will scroll. Putting the
+   * cheap-to-lose one first is the same reasoning as "friction is the feedback
+   * least likely to be sent".
+   */
+  wrap.appendChild(suggestionPanel());
   wrap.appendChild(supportPanel());
   wrap.appendChild(supportLogPanel());
-  wrap.appendChild(suggestionPanel());
   return wrap;
 }
 

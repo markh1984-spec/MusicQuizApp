@@ -2055,7 +2055,12 @@ button.pack-title:hover::after { opacity: 1; }
   white-space: nowrap;
 }
 .brand-who {
-  font-size: 0.58em;
+  /* WHOSE NIGHT IT IS, 20% up on where it started (0.58em). It is the half a
+     quizmaster is actually selling — the app name is the product, their name
+     is the act — and at 0.58 it read as a superscript on somebody else's
+     brand. Still clearly the smaller of the two, because the stack only works
+     if one of them is the label. */
+  font-size: 0.70em;
   font-weight: 800;
   letter-spacing: 0.03em;
   color: var(--ink-dim);
@@ -2075,7 +2080,7 @@ button.pack-title:hover::after { opacity: 1; }
 }
 /* On the projector the possessive is the quieter half but still has to carry
    to the back of a room, so it keeps more of the size than it does elsewhere. */
-.screen .brand-who { font-size: 0.66em; color: var(--ink); opacity: 0.82; }
+.screen .brand-who { font-size: 0.79em; color: var(--ink); opacity: 0.82; }
 /* ONE size for the name on every page that carries the menu, so the block to
    the left of the chips is the same width and the chips line up as you move
    between pages rather than shifting a few pixels each time. */
