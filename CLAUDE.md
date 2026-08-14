@@ -2815,6 +2815,66 @@ editing a track's title or artist does not repoint `cue.spotifyUri`, so a
 corrected cue reads right on the control view and plays the wrong track
 through the speakers.
 
+### The draw from the bottom half — a retention feature, not a raffle
+
+`drawLuckyDip()` and `state.luckyDip` in `src/engine.js`, the band under the
+podium in `screen.js`.
+
+Asked for by the host on 14 August 2026 and his reasoning is the design: **a
+table that works out by round three that it cannot win has nothing left to
+stay for**, and a room that thins out at nine is worth less to the pub than
+one that stays till eleven. This is the reason to keep answering after the
+scoreboard has stopped being interesting.
+
+**STILL PLAYING AT THE END IS THE POINT.** Eligibility is answering the LAST
+QUESTION THE NIGHT ENDED ON — exactly the behaviour being paid for, and also
+what stops the failure it would otherwise have: drawing somebody who left at
+half nine, calling their name on the mic, and getting silence from a room
+that then watches the prize go nowhere.
+
+**"Answered in the final ROUND" was the first version and it was far too
+loose** — most nights this app runs are one round, so it collapsed to
+"answered anything at all", which every phone that ever joined satisfies.
+Caught by its own test drawing a table that had stopped after question one.
+The last QUESTION is the only definition that means the same thing on a
+one-round night and a five-round one, and it is sayable on a microphone:
+**you had to still be in it at the last question.**
+
+**The same prize as third place**, at the host's own instruction — so a venue
+putting up three prizes runs a draw and one putting up fewer does not, with
+nothing extra to set up and nothing extra for the pub to agree to.
+
+Six things that are load-bearing, all tested:
+
+- **Nobody wins twice.** With five players the bottom half reaches third
+  place, who is already holding a voucher, so anybody with one is out of the
+  hat. A second code in one hand is one of them looking valid and not being.
+- **TWO IN THE HAT MINIMUM.** One eligible person is a gift, not a draw, and
+  calling it a draw is a lie the room can see.
+- **Decided ONCE, in the state**, exactly like the vouchers. `Back` off the
+  final and forward again is one press each way and a host will do it; a
+  second roll would name a different person to a room that heard the first.
+- **The ENGINE draws, never a phone**, and `random` is injected like `now()`
+  so the draw is testable at all — "it picked the right person" is not
+  something you can assert against `Math.random`.
+- **The projector gets the NAME and never the code.** The name is the moment;
+  the code is the credential and goes to one phone, like every other voucher.
+- **A draw voucher has NO PLACE.** `place: mine.place || 1` would have given
+  it first — telling somebody who finished eleventh that they had won the
+  quiz, in a room that had just watched somebody else win it.
+
+**On screen it is a band BELOW the podium and deliberately not on it.**
+Somebody who came eleventh has not beaten anybody, and a medal would say they
+had. The count is printed — *"drawn from 9 still playing at the last
+question"* — because that is what makes it obviously fair to the eight who
+did not win, and it is the sentence that gets people to stay in next week.
+
+**The legal question was asked and answered: entry is FREE.** The pubs are
+paying for a full room on a dead night, not selling tickets — so a free-entry
+draw is exempt and there is nothing to work around. **If a venue ever charges
+per team, this needs looking at again before the prize gets big**, because a
+paid-entry draw is a different thing in law.
+
 ### A prize taken at the bar has to reach the filed night
 
 `updateArchivedNight()` in `src/library.js`, and `state.archivedAs`.

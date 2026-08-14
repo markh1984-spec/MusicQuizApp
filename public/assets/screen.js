@@ -913,6 +913,12 @@ function renderWinner(s) {
           <span class="rname">${esc(p.name)}</span>
           <span class="rscore">${p.score.toLocaleString('en-GB')}</span>
         </div>`).join('')}</div>` : ''}
+      ${s.luckyDip ? `
+        <div class="dip">
+          <div class="dip-label">And the draw goes to</div>
+          <div class="dip-name">${esc(s.luckyDip.name)}</div>
+          <div class="dip-note">drawn from ${s.luckyDip.outOf} still playing at the last question</div>
+        </div>` : ''}
     </div>
   `);
 }

@@ -533,6 +533,34 @@ body::after {
 }
 .winner .rname { font-size: 4vh; font-weight: 800; color: var(--ink); line-height: 1.15; }
 .winner .rscore { font-size: 2.8vh; font-weight: 700; color: var(--ink-dim); }
+/* THE DRAW, under the podium and deliberately not on it.
+   It is a real prize and a real moment, but it is not a placing — somebody
+   who came eleventh has not beaten anybody, and putting them in the medal row
+   would say they had. So: its own band, below, in the account's own colours
+   rather than a metal, because the metals mean position and this does not.
+
+   The count is on screen for a reason the host says on the mic — "drawn from
+   nine still playing" is what makes it obviously fair to the eight who did
+   not win it, and it is the sentence that gets people to stay in next week. */
+.winner .dip {
+  margin-top: 4.5vh;
+  padding: 2vh 3vw;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  display: inline-grid; gap: 0.5vh; justify-items: center;
+}
+.winner .dip-label {
+  font-size: 2.2vh; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.winner .dip-name {
+  font-size: 5vh; font-weight: 900; line-height: 1.1;
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.winner .dip-note { font-size: 1.9vh; font-weight: 600; color: var(--ink-dim); }
+
 /* Silver and bronze. Only these two — a fourth place has no medal. */
 .winner .place-2 { border-color: rgba(214, 218, 226, 0.5); background: rgba(214, 218, 226, 0.09); }
 .winner .place-2 .rplace { background: #d6dae2; }
