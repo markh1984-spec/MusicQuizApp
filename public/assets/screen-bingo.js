@@ -9,7 +9,7 @@
  * instead of listening.
  */
 
-import { esc, node, roomParam } from './client.js';
+import { comeBackBand, esc, node, roomParam } from './client.js';
 
 const cards = {
   lobby: { key: () => 'bingo:lobby', render: renderLobby, update: updateLobby },
@@ -180,6 +180,7 @@ function renderFinished(s) {
         ${rows.map((p) => `<span>${esc(p.label.replace(/^a /, '').replace(/^./, (c) => c.toUpperCase()))}: ${esc(p.winner)}</span>`).join('')}
         ${rows.length ? '' : '<span>Nobody got there</span>'}
       </div>
+      ${comeBackBand(s)}
     </div>
   `);
 }

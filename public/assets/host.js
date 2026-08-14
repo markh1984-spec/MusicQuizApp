@@ -816,6 +816,30 @@ function prizeLine(s) {
 }
 
 /**
+ * WHAT THE LAST SLIDE WILL SAY, in the same panel as the prizes and for the
+ * same reason.
+ *
+ * The date is derived from the venue's usual night and the diary, which is
+ * what makes it free — and it is also why the host has to see it BEFORE the
+ * end. They are the only person who knows they are not doing the 20th, and a
+ * wrong date is the one thing on that slide worse than no slide at all. Seen
+ * in the lobby there is still time to fix the diary or say something else over
+ * the top of it.
+ *
+ * It is also the line they say into the microphone while it is up, which is
+ * the shape this app uses everywhere: the app prepares, the human reads it out.
+ *
+ * Silent when there is none. "No last slide tonight" is a sentence about a
+ * thing most nights never had, and the panel already carries one line about
+ * what is missing.
+ */
+function comeBackLine(s) {
+  if (!s.comeBack || !s.comeBack.text) return '';
+  return `<div class="tiny" style="margin-top:4px">Ends on: <b>${esc(s.comeBack.text)}</b>${
+    s.comeBack.link ? ' \u00b7 with a QR to their page' : ''}</div>`;
+}
+
+/**
  * TELL THE ROOM ROUGHLY WHEN IT STARTS.
  *
  * The code goes up at ten to and the quiz kicks off at nine, and until this
@@ -875,6 +899,7 @@ function toolsPanel(s) {
       </div>
       <div class="tiny" style="margin-top:10px">Loaded: ${esc(s.quizTitle)}</div>
       ${prizeLine(s)}
+      ${comeBackLine(s)}
       ${startsRow(s)}
     </div>
   `);

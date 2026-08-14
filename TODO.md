@@ -751,23 +751,20 @@ some.
 Design rule 4 says build what helps a quizmaster win the next booking. This is
 that list, in the order it should be built, worked out on 12 August 2026.
 
-**What was the top item — headcount per venue — is BUILT** (14 August 2026):
-"The Crown went from 22 to 58" is on the venue's own card and on the Gigs tab,
-out of one record. Its reasoning is in CLAUDE.md. It also settles what the rest
-of this list was blocked on, which was **a night that knows which venue it was
-at** — a night has carried its venue since then, and the aggregation over
-those nights now exists for anything else that wants it.
+**The first two items are BUILT** (14 August 2026), both written up in
+CLAUDE.md:
 
-### 1. The last slide of the night — cheap, and not blocked
+- **Headcount per venue** — "The Crown went from 22 to 58", on the venue's own
+  card and on the Gigs tab, out of one record. It also settles what the rest of
+  this list was blocked on, which was a night that knows which venue it was at.
+- **The last slide of the night** — "Back here Thursday 20th" with a QR to the
+  venue's page, on the big screen at the final scores. It is DERIVED from the
+  venue's usual night and the diary rather than typed at launch, which is the
+  one part of the plan below that changed: the Venues tab did not exist when
+  that entry was written, and a box typed weekly is a box that is blank by the
+  third week.
 
-Everyone in the room has a phone out and is looking at the screen, and that
-moment is currently spent on a scoreboard. *"Back here Thursday 19th"* plus a
-QR to the venue's page.
-
-**Does NOT need the venue object** — it is a line of text and a link, typed at
-launch. It is the only thing on this list that could ship in an evening.
-
-### 2. An advert QR that COUNTS
+### 1. An advert QR that COUNTS
 
 Advert slides already take a heading, an image and a QR, and `src/qrcode.js`
 encodes anything. What is missing is what the QR points at.
@@ -807,7 +804,7 @@ quiz, so the wording is worth agreeing with the landlord rather than inventing.
 "QUIZ40". A phone held up in a dark bar at 10pm is a slower transaction than
 the discount is worth.
 
-### 3. The post-night report for the venue
+### 2. The post-night report for the venue
 
 The night ends and the landlord gets: how many played, how that compares, how
 often their slide was up, and the photos. Two things happen — the quizmaster
@@ -819,7 +816,7 @@ the quizmaster's followers.
 not to add one without asking. It is a PDF through the share sheet, reusing
 `src/pdf.js` — the same dependency-free writer the invoices use.
 
-### 4. A public page per quizmaster — and the consent line
+### 3. A public page per quizmaster — and the consent line
 
 A shareable link, no login: nights, numbers, and "book me". The thing that goes
 in an Instagram bio or a cold email.

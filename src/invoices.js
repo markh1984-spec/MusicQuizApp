@@ -31,6 +31,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+// One checker for the venue's link, shared with the slide that draws it as a
+// QR code, so the rule about what may go in one lives in a single place.
+import { safeLink } from './comeback.js';
 
 export const STATUSES = ['draft', 'sent', 'paid', 'cancelled'];
 
@@ -384,6 +387,21 @@ export class Invoices {
        * "unknown", so a venue with none never claims tonight.
        */
       usualNight: WEEKDAYS.includes(String(customer.usualNight || '')) ? String(customer.usualNight) : '',
+      /*
+       * WHERE TO SEND THE ROOM — the venue's own page, on the last slide of
+       * the night as a QR code.
+       *
+       * On this record rather than in a list of its own, for the identical
+       * reason the prizes are: this record already IS the venue, and a second
+       * list of one real-world thing disagrees with the first within a month.
+       * It is the venue's page and not the quizmaster's, deliberately — the
+       * room is being sent back to the pub, which is what the pub is paying
+       * for.
+       *
+       * Checked rather than trusted: `safeLink` keeps http(s) only, because
+       * this ends up as a QR code and nobody can see where one of those goes.
+       */
+      link: safeLink(customer.link),
     };
     if (!clean.name) throw new Error('A customer needs a name.');
     const at = this.data.customers.findIndex((c) => c.id === clean.id);
@@ -394,8 +412,8 @@ export class Invoices {
   }
 
   /**
-   * Set what the VENUES TAB owns — the prizes and the usual night — and
-   * NOTHING else.
+   * Set what the VENUES TAB owns — the prizes, the usual night and the link
+   * the last slide sends the room to — and NOTHING else.
    *
    * Its own method rather than a field on `saveCustomer`, for the same reason
    * `setPrefs()` is separate from `accounts.update()`: `saveCustomer` writes
@@ -405,7 +423,7 @@ export class Invoices {
    * fields the gig-night side of the record owns, and it moves each one only
    * if it was actually sent.
    */
-  setVenueDetails(id, { rewards, usualNight } = {}) {
+  setVenueDetails(id, { rewards, usualNight, link } = {}) {
     const customer = this.data.customers.find((c) => c.id === id);
     if (!customer) return null;
     if (rewards !== undefined) {
@@ -419,6 +437,9 @@ export class Invoices {
     if (usualNight !== undefined) {
       customer.usualNight = WEEKDAYS.includes(String(usualNight || '')) ? String(usualNight) : '';
     }
+    // Where the last slide sends the room. Same "only if it was sent" rule as
+    // the two above, so saving a prize cannot quietly drop a venue's link.
+    if (link !== undefined) customer.link = safeLink(link);
     this.save();
     return customer;
   }

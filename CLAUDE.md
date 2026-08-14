@@ -1122,6 +1122,7 @@ src/qrcode.js          dependency-free QR encoder
 src/photos.js          photos from the room: store, kill switch, bin
 src/past-gigs.js       the nights already run, and where their photos are filed
 src/headcounts.js      how many played, per venue — "22 → 58", out of the archive
+src/comeback.js        the last slide: "Back here Thursday 20th", derived at launch
 src/reports.js         "that one's wrong" — corrections from a night
 src/adverts.js         venue advertising slides, per venue
 src/generate-images.js round 2 artwork (placeholder or OpenAI)
@@ -1400,6 +1401,71 @@ paying for a full room on a dead night, not selling tickets — so a free-entry
 draw is exempt and there is nothing to work around. **If a venue ever charges
 per team, this needs looking at again before the prize gets big**, because a
 paid-entry draw is a different thing in law.
+
+### The last slide of the night — "Back here Thursday 20th"
+
+`src/comeback.js`, `state.comeBack`, the band in `comeBackBand()` in
+`client.js`, and **Where to send them** on the Venues tab.
+
+The winner is up, the room has a drink and every phone in the place is out.
+**That moment used to be spent on a scoreboard nobody needs any more** — it is
+the one point in the evening when the whole room is looking at the screen with
+nothing to do, and telling them when the next one is costs nothing. It is the
+cheapest thing this app can do for the venue's takings, which is what gets the
+quizmaster booked again.
+
+**IT WRITES ITSELF, and that is the decision worth keeping.** TODO.md said "a
+line of text and a link, typed at launch", and that was right before the Venues
+tab existed. It does now: a venue carries its USUAL NIGHT and the diary already
+projects those forward. So the date is derived, there is nothing to type at the
+moment the host is most rushed, and it cannot go stale — the same reasoning
+that shaped the diary itself. A "what to say at the end" box on the launch form
+is a box that is blank by the third week and then puts a wrong date in front of
+sixty people.
+
+**A NIGHT WRITTEN OFF AND A ONE-OFF BOTH WIN, for free**, because it asks
+`upcoming()` rather than doing weekday arithmetic of its own. Saying "back here
+Thursday" on the Thursday you are not coming is the one failure that would make
+the slide untrustworthy for good, and the diary had already solved it.
+
+Six things that are load-bearing, all tested:
+
+- **Resolved at LAUNCH, on the server, into the game state** — like the prizes
+  it sits beside, and for the reason the look and the card shape taught: the
+  room is looking at this slide at half eleven, which is exactly when a free
+  host restarts. A stale console also cannot promise a room a date that was
+  cancelled this morning.
+- **UNDER the winner and the podium, never over them.** Somebody has just won
+  a quiz in front of a room; next week's date has no business being the biggest
+  thing on that screen. It is a band, in the same place and shape as the draw.
+- **At the FINAL and nowhere else** — never over a round board, and in bingo
+  never over a call sheet somebody is marking. Two things on one projector is
+  the fault this app refuses everywhere else.
+- **The host sees it from the LOBBY on.** They are the only person who knows
+  they are not doing the 20th, and a wrong date is worse than no slide — seen
+  early there is still time to fix the diary. It is also the line they say into
+  the mic, which is this app's shape everywhere: the app prepares, the human
+  reads it out.
+- **A QR may only ever carry http(s)** (`safeLink`, shared with the venue
+  record). Everything else on that slide can be read from the back of the room
+  and checked; a QR is the one thing sixty strangers point a camera at without
+  being able to see where it goes. A link with no scheme typed is assumed
+  https rather than thrown away, because that is how somebody copies one off a
+  card.
+- **Silence when there is nothing true to say.** No usual night and no link
+  means no band at all, rather than a slide with a hole in it. A link with no
+  usual night still gets one — that is a pub with an events page and an
+  irregular quiz, which is a real arrangement.
+
+**It is NOT on anybody's phone**, deliberately. The room is looking up for
+this, the QR is scanned off the big screen, and rule 8 keeps a phone to the
+job it has.
+
+**The link lives on the VENUE record** — the invoice book's customer, the same
+one that holds the prizes and the usual night — because a second list of one
+real-world thing disagrees with the first within a month. It is the VENUE's
+page rather than the quizmaster's: the room is being sent back to the pub,
+which is what the pub is paying for.
 
 ### Headcount per venue — the app finally says a number it always knew
 

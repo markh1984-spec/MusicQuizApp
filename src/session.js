@@ -22,6 +22,7 @@ import { listQuizzes } from './quizzes.js';
 import { listBingoPacks, recordLaunch, archiveResults, updateArchivedNight, HOUSE_ROOM } from './library.js';
 import { findSlide } from './adverts.js';
 import { readPack, listOwn } from './own-packs.js';
+import { cleanComeBack } from './comeback.js';
 // Shared with the browser, so the list of looks cannot drift between the server
 // deciding one and the screens drawing it.
 import { LOOKS, DEFAULT_LOOK } from '../public/assets/looks.js';
@@ -357,7 +358,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '', rewards = [] } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '', rewards = [], comeBack = null } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     const pack = LAUNCHERS[kind].load(this.config, packId, this.paths);
     const normalised = kind === 'bingo' ? normaliseBingoPack(pack, packId) : pack;
@@ -432,6 +433,22 @@ export class Session {
       .slice(0, 3)
       .map((r) => String(r || '')
         .replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80));
+
+    /*
+     * WHEN THE NEXT ONE IS — the last slide of the night.
+     *
+     * Handed in already worked out (see `src/comeback.js`), so the session and
+     * the engine keep knowing nothing about diaries or venue records. It lives
+     * in the state like the look and the prizes: the room is looking at this
+     * slide at half eleven, which is exactly when a free host gets restarted.
+     *
+     * Tidied like the venue — control characters out and a cap — because the
+     * link half is typed by a human and ends up on a projector as a QR code.
+     * A link that is not http(s) is DROPPED rather than shown: `javascript:`
+     * in a QR is somebody else's phone, and a QR nobody can check by looking
+     * at it is the one place to be strict.
+     */
+    this.engine.state.comeBack = cleanComeBack(comeBack);
 
     /*
      * A DELIBERATE LAUNCH ANSWERS THE RESTART NOTICE.

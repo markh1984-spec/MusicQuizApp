@@ -4792,8 +4792,9 @@ function venuesSection() {
         <h3>Venues</h3>
         <div class="tiny">Set the prizes here and they fill themselves in when you
           launch a night at this venue. Give a venue its usual night and the
-          launch bar knows whose night tonight is. The billing details for the
-          same venues are on the Invoices tab.</div>
+          launch bar knows whose night tonight is — and the big screen ends the
+          night with “Back here Thursday 20th”, worked out from it. The billing
+          details for the same venues are on the Invoices tab.</div>
         ${all.length > 4 ? `
           <div class="venue-tools">
             <input class="pack-search venue-search" type="search" placeholder="Search ${all.length}…"
@@ -4821,6 +4822,16 @@ function venuesSection() {
                   ${WEEKDAY_LABELS.map(([id, label]) => `
                     <option value="${id}" ${v.usualNight === id ? 'selected' : ''}>${esc(label)}</option>`).join('')}
                 </select>
+              </label>
+              <!--
+                WHERE TO SEND THE ROOM at the end of the night, as a QR on the
+                last slide. Labelled by the JOB rather than by the field —
+                "Link" would need a sentence under it explaining what it is
+                for, and a control that needs explaining is the wrong control.
+              -->
+              <label class="venue-night venue-link">Where to send them
+                <input class="v-link" type="url" inputmode="url" maxlength="300"
+                  value="${esc(v.link || '')}" placeholder="thecrown.co.uk/whats-on">
               </label>
               <div class="venue-prizes">
                 ${[0, 1, 2].map((i) => `
@@ -4872,7 +4883,7 @@ function venuesSection() {
       // A shut card has no controls to wire — its name and its one line are
       // the whole of it.
       if (!save) continue;
-      for (const box of card.querySelectorAll('.v-reward, .v-night')) {
+      for (const box of card.querySelectorAll('.v-reward, .v-night, .v-link')) {
         box.addEventListener('input', () => { save.hidden = false; });
         box.addEventListener('change', () => { save.hidden = false; });
       }
@@ -4882,10 +4893,14 @@ function venuesSection() {
         const id = card.dataset.id;
         const rewards = [...card.querySelectorAll('.v-reward')].map((b) => b.value.trim());
         const usualNight = card.querySelector('.v-night').value;
+        const link = card.querySelector('.v-link').value.trim();
         try {
           await invoiceApi(`/api/invoices/customers/${encodeURIComponent(id)}/rewards`, {
             method: 'PUT',
-            body: JSON.stringify({ rewards, usualNight }),
+            // All three every time from THIS card, which is safe because the
+            // card was drawn from the record — `setVenueDetails` only writes
+            // what it is sent, and what it is sent here is what is on screen.
+            body: JSON.stringify({ rewards, usualNight, link }),
           });
           await load();
         } catch (err) {

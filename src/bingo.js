@@ -20,6 +20,7 @@
  */
 
 import { cleanTeamName, isSafeId, newId, newToken, ownsPlayer, MAX_PLAYERS, rememberRemoved, wasRemoved, forgetRemoved } from './engine.js';
+import { comeBackView } from './comeback.js';
 
 export const BINGO_PHASES = {
   LOBBY: 'lobby',
@@ -127,6 +128,15 @@ export class BingoGame {
       calledAt: {}, // trackId -> timestamp
       claims: [], // every BINGO press, right or wrong
       winners: { line: [], full: [] },
+      /*
+       * WHEN THE NEXT ONE IS — the last slide of the night, same field and
+       * same shape as the quiz's, because a night is a night whichever game
+       * happened to end it. Set at launch from the venue's usual night and
+       * the diary (`src/comeback.js`), null when there is nothing true to
+       * say, and here rather than on the pack for the reason the card shape
+       * is: a restart must bring the night back as it was.
+       */
+      comeBack: null,
       startedAt: null,
       finishedAt: null,
     };
@@ -604,6 +614,18 @@ export class BingoGame {
       full: this.state.winners.full.map((id) => this.state.players[id]?.name).filter(Boolean),
     };
 
+    /*
+     * WHEN THE NEXT ONE IS, once the game is OVER and not before.
+     *
+     * Mid-game the projector is a call sheet somebody is scanning against a
+     * card in their hand, and "back here Thursday" over the top of it is the
+     * two-things-on-one-screen fault this app refuses everywhere else. At the
+     * end it is the only thing on there.
+     */
+    if (this.state.phase === BINGO_PHASES.FINISHED && this.state.comeBack) {
+      view.comeBack = comeBackView(this.state.comeBack);
+    }
+
     return view;
   }
 
@@ -684,6 +706,10 @@ export class BingoGame {
   /** Your caller's view: the full track list and who is close. */
   hostView() {
     const view = this.baseView();
+    // What the last slide will say, from the lobby on — the host says it into
+    // a microphone, and the date is the half you cannot bluff. Same reasoning
+    // as the quiz's, and the same field.
+    if (this.state.comeBack) view.comeBack = comeBackView(this.state.comeBack);
     view.tracks = this.tracks.map((t) => ({
       id: t.id,
       title: t.title,

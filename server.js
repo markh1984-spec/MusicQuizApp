@@ -37,6 +37,7 @@ import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig, playTrack } from './src/spotify.js';
 import { photoFolder, mergeGigs, safePhotoName, isNightFolder } from './src/past-gigs.js';
 import { venueHeadcounts } from './src/headcounts.js';
+import { comeBackFor } from './src/comeback.js';
 import { getFile, listDir, listDirs, githubConfigured, missingGithubConfig, putFile, putFiles, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem, privateRepoConfigured, packsRepoConfigured, packsRepoName } from './src/github.js';
 import { Invoices, totals, toPence, money } from './src/invoices.js';
 import { invoicePdf, invoiceFilename } from './src/invoice-pdf.js';
@@ -1579,6 +1580,10 @@ async function handleGet(req, res, url, route) {
           // Which night they have you, so the console can work out whose night
           // tonight is without a second request — see `tonightsVenue()`.
           usualNight: c.usualNight || '',
+          // Where the last slide of the night sends the room, drawn as a QR on
+          // the projector. Here so the Venues tab can edit it; the launch
+          // resolves it server-side and the browser never has to.
+          link: c.link || '',
         })),
       /*
        * The diary's exceptions: one-offs and nights off.
@@ -4189,7 +4194,27 @@ async function handleWrite(req, res, url, route) {
           : null;
         const rewards = Array.isArray(body.rewards) ? body.rewards.map(String)
           : (body.reward ? [String(body.reward)] : (Array.isArray(onFile) ? onFile : []));
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online, teamPlay, venue, rewards });
+        /*
+         * WHEN THE NEXT ONE IS — WORKED OUT HERE, not sent, exactly like the
+         * prizes above and for the same reason.
+         *
+         * The last slide of the night says "Back here Thursday 20th", and the
+         * date comes from the venue's usual night and the diary rather than
+         * from a box somebody types at the moment they are most rushed. A
+         * night written off in the diary is skipped and a one-off wins over a
+         * residency, because `upcoming()` already decides all of that — see
+         * src/comeback.js.
+         *
+         * Resolved on the SERVER so a stale console cannot promise a room a
+         * date that was cancelled this morning.
+         */
+        const comeBack = comeBackFor({
+          venue,
+          venues: room.invoices.customers,
+          bookings: room.invoices.bookings,
+          now: Date.now(),
+        });
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online, teamPlay, venue, rewards, comeBack });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();

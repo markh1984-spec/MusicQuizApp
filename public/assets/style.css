@@ -561,6 +561,42 @@ body::after {
 }
 .winner .dip-note { font-size: 1.9vh; font-weight: 600; color: var(--ink-dim); }
 
+/* ---- THE LAST SLIDE OF THE NIGHT — "Back here Thursday 20th"
+   Under the winner and the draw, never over them: somebody has just won a quiz
+   in front of a room, and next week's date has no business being the biggest
+   thing on that screen. Sized in vh like everything else on the projector, so
+   it grows with the hall rather than being pinned to a laptop's pixels.
+
+   The QR is white-on-white with a real quiet zone, because the one thing that
+   must work here is a camera pointed at it from six feet away in a dark pub —
+   the same reasoning as the join corner, which is the other scannable thing
+   this app puts on a projector. */
+.winner .comeback {
+  margin-top: 4.5vh;
+  padding: 2vh 3vw;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  /* Centred as a PAIR. The winner's own name sets how wide this column is, so
+     the box stretches like the draw above it — but packed left the words and
+     the QR ended up in the corner of a very wide band with nothing beside
+     them. */
+  display: flex; align-items: center; justify-content: center; gap: 3vw;
+}
+.winner .cb-words { display: grid; gap: 0.6vh; justify-items: center; }
+.winner .comeback.has-qr .cb-words { justify-items: start; text-align: left; }
+.winner .cb-line { font-size: 4.4vh; font-weight: 900; line-height: 1.1; }
+.winner .cb-note {
+  font-size: 2vh; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.winner .cb-qr {
+  flex: 0 0 auto;
+  background: #fff; border-radius: 10px; padding: 1vh;
+  width: 14vh; height: 14vh;
+}
+.winner .cb-qr img { display: block; width: 100%; height: 100%; }
+
 /* Silver and bronze. Only these two — a fourth place has no medal. */
 .winner .place-2 { border-color: rgba(214, 218, 226, 0.5); background: rgba(214, 218, 226, 0.09); }
 .winner .place-2 .rplace { background: #d6dae2; }
@@ -5014,6 +5050,13 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
    below its longest option and drags the card sideways on a 320px phone. */
 .venue-night { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: var(--fs-note); color: var(--ink-dim); font-weight: 800; }
 .venue-night select { flex: 1 1 auto; min-width: 0; max-width: 100%; }
+/* WHERE TO SEND THEM at the end of the night. Labelled by the job rather than
+   by the field, which makes the label long — so on a phone it goes above the
+   box instead of squeezing it to a third of the row. */
+.venue-link input { flex: 1 1 auto; min-width: 0; }
+@media (max-width: 560px) {
+  .venue-link { flex-direction: column; align-items: stretch; gap: 4px; }
+}
 .venue-prizes { display: grid; gap: 6px; margin-top: 10px; }
 .venue-prizes .reward-row { margin: 0; }
 .venue-card .v-save { margin-top: 10px; }

@@ -692,3 +692,35 @@ function tierPreview(me, { hatIsOn = true, forgetKey = null } = {}) {
   }
   return el;
 }
+
+/**
+ * THE LAST SLIDE OF THE NIGHT — "Back here Thursday 20th", with a QR.
+ *
+ * The winner is up, everyone has a drink and every phone in the room is out.
+ * That moment used to be spent on a scoreboard nobody needs any more, and it
+ * is the one moment all evening when the whole room is looking up with nothing
+ * to do — so it is the cheapest thing this app can do for the venue's takings,
+ * which is what gets the quizmaster booked again.
+ *
+ * **UNDER the winner and the podium, never over them.** Somebody has just won
+ * a quiz in front of a room; an advert for next week has no business being the
+ * biggest thing on that screen. It is a band, in the same place and the same
+ * shape as the draw.
+ *
+ * The QR is drawn by the server's own encoder at `/qr.svg`, so this needs no
+ * library and works with the venue's own link — the same route the advert
+ * slides already use. No link means no QR and the line stands on its own: the
+ * date is the half that matters and the scan is a bonus.
+ */
+export function comeBackBand(s) {
+  if (!s.comeBack || !s.comeBack.text) return '';
+  const { text, link } = s.comeBack;
+  return `
+    <div class="comeback ${link ? 'has-qr' : ''}">
+      <div class="cb-words">
+        <div class="cb-line">${esc(text)}</div>
+        ${link ? '<div class="cb-note">Scan for what else is on</div>' : ''}
+      </div>
+      ${link ? `<div class="cb-qr"><img src="/qr.svg?text=${encodeURIComponent(link)}" alt=""></div>` : ''}
+    </div>`;
+}

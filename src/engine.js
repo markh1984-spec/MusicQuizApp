@@ -27,6 +27,7 @@ import {
 } from './scoring.js';
 import { ALPHABET, answerLetter, answerLetterIndex, revealMode } from './quizzes.js';
 import * as chat from './chat.js';
+import { comeBackView } from './comeback.js';
 // For faceKey — a player's public handle, derived one way from their id.
 import { createHash } from 'node:crypto';
 
@@ -112,6 +113,21 @@ export class Engine {
        * that hangs off this later without changing what is stored today.
        */
       venue: '',
+      /*
+       * WHEN THE NEXT ONE IS — the last slide of the night.
+       *
+       * `{ text, date, link }`, or null when there is nothing true to say.
+       * Worked out at LAUNCH from the venue's usual night and the diary (see
+       * `src/comeback.js`) and written here for the same reason the look and
+       * the card shape are: the state is the record of the night, and a
+       * restart at half eleven must not lose the one slide the room is
+       * actually looking at.
+       *
+       * The engine deliberately does no working out of its own — it is handed
+       * a finished line, so it keeps knowing nothing about venue records,
+       * diaries or the filesystem.
+       */
+      comeBack: null,
       /*
        * WHAT THEY WIN — first, second and third, and all three empty by default.
        *
@@ -1744,6 +1760,19 @@ export class Engine {
       view.luckyDip = { name: s.luckyDip.name, outOf: s.luckyDip.outOf };
     }
 
+    /*
+     * WHEN THE NEXT ONE IS, at the FINAL and nowhere else.
+     *
+     * The one moment the whole room is looking up with a drink in front of
+     * them and nothing to do. It is not on the round boards on purpose: mid
+     * quiz, "back here Thursday" is an advert competing with the game, and
+     * this app already refuses to put two things on one projector.
+     *
+     * Spread in only when there is one, like the draw and the countdown, so a
+     * night with no next date gains no field at all.
+     */
+    if (s.phase === PHASES.FINAL && s.comeBack) view.comeBack = comeBackView(s.comeBack);
+
     if (s.phase === PHASES.LOBBY) {
       view.lobby = {
         // The derived handle, for the same reason as the leaderboard: this
@@ -2136,6 +2165,18 @@ export class Engine {
      */
     view.vouchers = Object.values(s.vouchers || {});
     view.rewards = this.rewardList();
+
+    /*
+     * WHAT THE LAST SLIDE WILL SAY — and the host gets it from the LOBBY on,
+     * not only at the end.
+     *
+     * The projector shows it at the final; the host needs it earlier, because
+     * this is a line said into a microphone and the date is the half you
+     * cannot bluff. It is also how a wrong one gets noticed while there is
+     * still time to say something else — the slide is derived from the diary,
+     * and the host is the only person who knows they are not doing the 20th.
+     */
+    if (s.comeBack) view.comeBack = comeBackView(s.comeBack);
 
     if (q && round) {
       view.question = {

@@ -10,7 +10,7 @@
  * simply does not put it in this payload.
  */
 
-import { esc, node, ServerClock, Live, brandMark, brandWords, roomCode, roomParam } from './client.js';
+import { comeBackBand, esc, node, ServerClock, Live, brandMark, brandWords, roomCode, roomParam } from './client.js';
 import { bingoCard, bingoTopbar } from './screen-bingo.js';
 import { paintLook, DEFAULT_LOOK } from './looks.js';
 import { paintScheme } from './schemes.js';
@@ -919,6 +919,7 @@ function renderWinner(s) {
           <div class="dip-name">${esc(s.luckyDip.name)}</div>
           <div class="dip-note">drawn from ${s.luckyDip.outOf} still playing at the last question</div>
         </div>` : ''}
+      ${comeBackBand(s)}
     </div>
   `);
 }
