@@ -492,43 +492,6 @@ const TABS = [
   },
   {
     /*
-     * VENUES — one record, not a fourth list.
-     *
-     * A venue was three things that did not know about each other: the invoice
-     * book's customers (whose own comment calls them "the venues you work
-     * for"), an advert set per venue, and a plain name typed at launch. A tab
-     * holding only prizes would have been a fourth.
-     *
-     * So this edits the INVOICE BOOK's record — the one that already holds the
-     * name, the contact and the usual fee — and adds what they put up. The
-     * Invoices tab still has its own customer sheet for the billing details;
-     * this is the same list seen from the side that matters on a gig night.
-     *
-     * It sits ABOVE Invoices because a venue is something you set up once and
-     * an invoice is something you send afterwards.
-     */
-    id: 'venues',
-    needs: FEATURES.INVOICES,
-    label: 'Venues',
-    blurb: 'The places you play, and what they put up as prizes.',
-    count: () => (library.venueRecords || []).length,
-    render: () => venuesSection(),
-  },
-  {
-    id: 'invoices',
-    needs: FEATURES.INVOICES,
-    label: 'Invoices',
-    blurb: 'Bill for a night before you have left the car park.',
-    // The badge is what you are still owed, not how many you have ever sent —
-    // the number worth seeing without opening anything.
-    count: () => (library.invoicing || {}).unpaidCount || 0,
-    // Red when any of what you are owed is past its terms — see the note where
-    // the badge is drawn for why this is not a second badge.
-    urgent: () => Boolean((library.invoicing || {}).overdueCount),
-    render: () => invoicesSection(),
-  },
-  {
-    /*
      * GIGS — what is on, and what has been. ONE TAB, because it is one object.
      *
      * A booked night and a night you have run are the same thing at two points
@@ -561,6 +524,76 @@ const TABS = [
     // badge saying 5 above a list of four rows is a badge nobody trusts.
     count: () => library.archiveNights || 0,
     render: () => gigsSection(),
+  },
+  {
+    id: 'invoices',
+    needs: FEATURES.INVOICES,
+    label: 'Invoices',
+    blurb: 'Bill for a night before you have left the car park.',
+    // The badge is what you are still owed, not how many you have ever sent —
+    // the number worth seeing without opening anything.
+    count: () => (library.invoicing || {}).unpaidCount || 0,
+    // Red when any of what you are owed is past its terms — see the note where
+    // the badge is drawn for why this is not a second badge.
+    urgent: () => Boolean((library.invoicing || {}).overdueCount),
+    render: () => invoicesSection(),
+  },
+  /*
+   * THE TABS RUN LEFT TO RIGHT ALONG A QUIZMASTER'S EVENING, and that is what
+   * decides this order rather than how often each is used.
+   *
+   * The host's own framing (14 August 2026): *"I want the flow to go from left
+   * to right within the app, because there are some sections that hand over to
+   * each other. When a quizmaster has done a job, that job goes into his past
+   * gigs — and from past gigs he goes to invoices, because you don't have an
+   * invoice for a gig you haven't done yet."*
+   *
+   * So: what you will PLAY (the two pack shelves), what goes between the
+   * rounds, the NIGHT itself — coming up and already run — then getting PAID
+   * for it, then the standing arrangements behind all of it, and finally the
+   * two you touch twice a year.
+   *
+   * **VENUES MOVED RIGHT, past Invoices, and that is the one that looks
+   * wrong.** Everything downstream depends on it, which makes it feel early —
+   * but dependency is not sequence: a venue is set up ONCE, and after that you
+   * do not open the tab again for months. What made it feel like a starting
+   * point was that you used to need it to launch, and **Tonight** removed
+   * that: the venue, its prizes and its usual night now arrive in the launch
+   * bar without going anywhere.
+   *
+   * GIGS SITS AT BOTH ENDS OF THE JOURNEY and is the one tab a timeline cannot
+   * place — it holds Coming up as well as Past gigs. Splitting it would make
+   * the order honest and add a tenth tab to a bar that already scrolls
+   * sideways on a phone, so it stays whole and sits where the NIGHT is.
+   */
+  {
+    /*
+     * VENUES — one record, not a fourth list.
+     *
+     * A venue was three things that did not know about each other: the invoice
+     * book's customers (whose own comment calls them "the venues you work
+     * for"), an advert set per venue, and a plain name typed at launch. A tab
+     * holding only prizes would have been a fourth.
+     *
+     * So this edits the INVOICE BOOK's record — the one that already holds the
+     * name, the contact and the usual fee — and adds what they put up. The
+     * Invoices tab still has its own customer sheet for the billing details;
+     * this is the same list seen from the side that matters on a gig night.
+     *
+     * IT SITS TO THE RIGHT OF INVOICES, which reads wrong until you notice
+     * that dependency is not sequence. Everything else hangs off this record,
+     * so it feels like a starting point — but a venue is set up ONCE and then
+     * not opened for months, which is what the right-hand end of this bar is
+     * for. It used to be the thing you had to visit before launching; the
+     * Tonight bar now brings the venue, its prizes and its usual night with
+     * it, so there is nothing on a gig night that sends you here.
+     */
+    id: 'venues',
+    needs: FEATURES.INVOICES,
+    label: 'Venues',
+    blurb: 'The places you play, and what they put up as prizes.',
+    count: () => (library.venueRecords || []).length,
+    render: () => venuesSection(),
   },
   {
     id: 'help',

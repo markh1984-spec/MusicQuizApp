@@ -1411,6 +1411,46 @@ draw is exempt and there is nothing to work around. **If a venue ever charges
 per team, this needs looking at again before the prize gets big**, because a
 paid-entry draw is a different thing in law.
 
+### The tabs run LEFT TO RIGHT along a quizmaster's evening
+
+`TABS` in `console.js`. **Music Quiz · Music Bingo · Adverts · Gigs ·
+Invoices · Venues · Help · My account**, with **Tonight** above all of them.
+
+The host's framing, on 14 August 2026: *"I want the flow to go from left to
+right, because some sections hand over to each other. When a quizmaster has
+done a job, that job goes into his past gigs — and from past gigs he goes to
+invoices, because you don't have an invoice for a gig you haven't done yet."*
+
+So the bar reads as an evening: what you will PLAY, what goes between the
+rounds, the NIGHT itself, getting PAID for it, the standing arrangements
+behind all of it, then the two you touch twice a year.
+
+**VENUES MOVED RIGHT, past Invoices, and it is the one that looks wrong.**
+Everything downstream depends on that record, which makes it feel like a
+starting point — but **dependency is not sequence**: a venue is set up once and
+then not opened for months, which is exactly what the right-hand end is for.
+What made it feel early is that you used to have to go there before launching,
+and Tonight removed that — the venue, its prizes and its usual night now arrive
+in the launch bar without going anywhere. **This is the one to move back if a
+real week says otherwise; it is a line in an array.**
+
+**GIGS SITS AT BOTH ENDS OF THE JOURNEY** and is the one tab a timeline cannot
+place: it holds Coming up as well as Past gigs. Splitting it would make the
+order honest and add a tenth tab to a bar that already scrolls sideways on a
+phone, so it stays whole and sits where the night is.
+
+**Rarely-touched goes right, and that is the host's own rule** — "the farthest
+right needs to be settings, because it is something he would rarely touch but
+needs to know where it is". My account keeps its name rather than becoming
+Settings: it holds the subscription, the tier and the brand, which is whose
+account rather than the app's options, and this file's naming rule is to say
+what the thing IS.
+
+**A reorder is the cheapest change in the app and the easiest to get wrong
+silently** — nothing fails, a tab simply stops being where somebody's thumb
+expects it. Every tab was opened in a browser afterwards at 390 and 1280, and
+the page measured for overflow after visiting all eight.
+
 ### TONIGHT — one launch section, at the top of every tab
 
 `launchBar()` in `console.js`, drawn above the running panel on every tab.
