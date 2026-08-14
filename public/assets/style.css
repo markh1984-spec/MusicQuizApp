@@ -4763,7 +4763,41 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .lb-head > h3 { grid-column: 1; grid-row: 1; }
 .lb-head > .lb-what { grid-column: 2; grid-row: 1; }
 .lb-head > .lb-fold { grid-column: 3; grid-row: 1; }
-.lb-where { color: var(--ink-dim); }
+/* THE VENUE IS A BUTTON, and it has to look like one without shouting: it is
+   a fact you read nine times out of ten and change on the tenth. Underlined on
+   hover and focus rather than boxed, because a box here would be a third
+   control competing with the pack and Launch. */
+.lb-where {
+  padding: 0; background: none; border: none; cursor: pointer;
+  font: inherit; font-size: var(--fs-note); color: var(--ink-dim);
+  text-align: left; max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.lb-where::after {
+  content: '';
+  display: inline-block; margin-left: 7px; vertical-align: 2px;
+  border: 4px solid transparent; border-top-color: currentColor; border-bottom: 0;
+}
+.lb-where:hover, .lb-where:focus-visible { color: var(--ink); text-decoration: underline; outline: none; }
+.lb-where[aria-expanded="true"]::after { transform: rotate(180deg); }
+
+/* The picker itself. A list you search rather than a dropdown you scroll:
+   fifteen residencies in a native select, in a dark pub, is the thing this
+   replaces. */
+.lb-venues {
+  display: grid; gap: 8px; margin-top: 10px; padding: 10px;
+  border: 1px solid var(--panel-line); border-radius: var(--r-card);
+  background: rgba(255, 255, 255, 0.04);
+}
+.lb-venue-list { display: grid; gap: 2px; max-height: 220px; overflow-y: auto; }
+.lb-venue-hit {
+  text-align: left; padding: 10px 12px; font: inherit; font-weight: 700;
+  color: inherit; background: none; border: none; border-radius: 8px; cursor: pointer;
+}
+.lb-venue-hit:hover, .lb-venue-hit:focus { background: rgba(255, 255, 255, 0.09); outline: none; }
+.lb-venue-foot { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.lb-venue-add { text-decoration: none; }
+.lb-prize { margin-top: 8px; }
 /* A DOUBLE BOOKING, named. Gold rather than red: it is not a fault and nothing
    is broken — it is a decision only the human can make, and it is the same
    treatment "not invoiced" gets for the same reason. */

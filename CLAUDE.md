@@ -1528,6 +1528,27 @@ pack is what the button would launch. **The whole row is the target when it is
 shut**, not just the chevron: one small control on the end of a bar is a thing
 you miss with a thumb in a dark pub.
 
+**THE VENUE IS A CONTROL AT THE TOP, not a caption and not a dropdown buried
+in Set it up.** It decides the prizes, the voucher and what the night is filed
+under, so it is read nine times out of ten and changed on the tenth — covering
+somebody else's Tuesday, or a monthly somewhere different. Tapping the line
+opens a SEARCHABLE list drawn from the Venues tab and from where you have
+actually played (either list alone leaves somebody hunting a pub they know is
+there), with **Somewhere else…** for a one-off — which must never need a
+record made for it first, the promise the night's free-text venue was built on
+— and a link to the Venues tab for a pub worth keeping.
+
+**It is the ONLY place a venue is chosen now.** The picker inside Set it up is
+gone rather than kept as a second way in: two controls for one field is how a
+night ends up filed under the pub you were at last week. The prize line moved
+up with it, because a statement of what tonight plays for, three taps away
+from the name it belongs to, is a line nobody reads.
+
+**Not remembered on the device**, unlike the fold state: `lbVenue` starts
+`null`, meaning "nobody has said", which is what lets the app keep offering
+tonight's own answer until somebody overrides it. A remembered venue would
+file next Tuesday under last Thursday's pub.
+
 **THE HEADING DOES NOT MOVE WHEN IT FOLDS, and getting that right took a
 grid.** The head row was a wrapping flex row, so on a phone the venue pushed
 the fold button onto a second line when the section was open and onto the

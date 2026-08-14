@@ -2653,6 +2653,19 @@ let currentPack = null;
 const TONIGHT_STORE = 'musicquiz.tonightopen';
 let tonightOpen = localStorage.getItem(TONIGHT_STORE) !== '0';
 
+/*
+ * WHICH VENUE, once somebody has said.
+ *
+ * `null` means "nobody has chosen", which is not the same as "nowhere" — it is
+ * what lets the app keep offering tonight's own answer (`tonightsVenue()`)
+ * while a pick, once made, sticks through every re-render. It is deliberately
+ * NOT remembered on the device like the fold state: the venue is a fact about
+ * one evening, and a remembered one would file next Tuesday's night under last
+ * Thursday's pub.
+ */
+let lbVenue = null;
+let lbVenueOpen = false;
+
 function launchBar() {
   // An owner runs no nights, so there is nothing here for them — same reason
   // the running panel hides itself.
@@ -2679,7 +2692,12 @@ function launchBar() {
              columns the moment the shut line appears and the way back in
              drops onto a row of its own. -->
         <div class="lb-what">
-          <span class="tiny lb-where"></span>
+          <!-- THE VENUE IS THE CONTROL, not a caption. It decides the prizes,
+               the voucher and what the night is filed under, so it belongs at
+               the top where it is read — and it has to be changeable there,
+               because covering somebody else's night is a thirty-second job
+               that used to mean opening Set it up and hunting a dropdown. -->
+          <button class="lb-where" type="button" aria-expanded="false"></button>
           <!-- SHUT, IT IS STILL A SENTENCE. A collapsed panel that says only
                "Tonight" makes you open it to find out what it is set to,
                which is the tap this is meant to save. -->
@@ -2689,6 +2707,20 @@ function launchBar() {
           <span class="lb-fold-word"></span>
         </button>
       </div>
+      <!-- SEARCHABLE, because a quizmaster with fifteen residencies scrolling a
+           dropdown in a dark pub is the thing this replaces. It draws from the
+           Venues tab and from where you have actually played, and it keeps the
+           way out for a pub that is not on either list — that is the promise a
+           night's free-text venue was built on. -->
+      <div class="lb-venues" hidden>
+        <input class="lb-venue-search" type="search" autocomplete="off" placeholder="Search your venues…">
+        <div class="lb-venue-list"></div>
+        <div class="lb-venue-foot">
+          <button class="minor lb-venue-other" type="button">Somewhere else…</button>
+          <a class="minor lb-venue-add" href="?tab=venues">Add a venue</a>
+        </div>
+      </div>
+      <div class="tiny prize-line lb-prize" hidden></div>
       <div class="lb-find">
         ${games.length > 1 ? `<select class="lb-game">
           ${games.map((g) => `<option value="${esc(g.id)}">${esc(g.label)}</option>`).join('')}
@@ -2715,6 +2747,27 @@ function launchBar() {
   const hits = el.querySelector('.lb-hits');
   const alt = el.querySelector('.lb-alt');
   const whyEl = el.querySelector('.lb-why');
+  const where = el.querySelector('.lb-where');
+  const venues = el.querySelector('.lb-venues');
+  const venueList = el.querySelector('.lb-venue-list');
+  const venueSearch = el.querySelector('.lb-venue-search');
+  const prizeEl = el.querySelector('.lb-prize');
+  // Called through an arrow rather than passed directly: both of these are
+  // `const`s declared further down, so handing the function over here reads
+  // them before they exist. By the time anybody clicks, they do.
+  where.addEventListener('click', () => toggleVenues());
+  venueSearch.addEventListener('input', () => paintVenueList());
+  /*
+   * SOMEWHERE ELSE, kept — a one-off venue must not need a record made for it
+   * first, which is the promise the night's free-text venue was built on. It
+   * asks rather than swapping in a box, because this picker is a sheet you are
+   * already inside and a prompt is one tap where a fourth control is furniture.
+   */
+  el.querySelector('.lb-venue-other').addEventListener('click', () => {
+    const typed = prompt('Where are you tonight?', venueNow() || '');
+    if (typed === null) return;
+    chooseVenue(typed.trim());
+  });
   const fold = el.querySelector('.lb-fold');
   const moreBtn = el.querySelector('.lb-more');
   moreBtn.addEventListener('click', () => {
@@ -2724,7 +2777,6 @@ function launchBar() {
     moreBtn.setAttribute('aria-expanded', lbOpen ? 'true' : 'false');
   });
   const shutWhat = el.querySelector('.lb-shut-what');
-  const where = el.querySelector('.lb-where');
   const chosen = el.querySelector('.lb-chosen');
   const gameOf = () => games.find((g) => g.id === (gamePick ? gamePick.value : games[0].id)) || games[0];
 
@@ -2790,7 +2842,51 @@ function launchBar() {
    * out no vouchers, and an app that says nothing looks exactly like an app
    * that is working.
    */
+  /** Where tonight is: what somebody chose, or the app's own best answer. */
+  const venueNow = () => (lbVenue !== null ? lbVenue : ((tonightsVenue() || {}).name || ''));
+
+  /*
+   * WHAT THIS VENUE PUTS UP, under the picker and not inside Set it up.
+   *
+   * It moved with the venue it describes: a prize line three taps away from
+   * the name it belongs to is a line nobody reads, and the whole reason it
+   * exists is that the first real night ended with no voucher and nothing on
+   * screen having said so.
+   */
+  const paintPrize = () => {
+    const name = venueNow();
+    if (!name) { prizeEl.hidden = true; return; }
+    const record = (library.venueRecords || [])
+      .find((v) => (v.name || '').toLowerCase() === name.toLowerCase());
+    const prizes = ((record && record.rewards) || []).map((r) => String(r || '').trim());
+    while (prizes.length && !prizes[prizes.length - 1]) prizes.pop();
+    prizeEl.hidden = false;
+    if (!prizes.length) {
+      prizeEl.className = 'tiny prize-line lb-prize none';
+      prizeEl.textContent = record
+        ? 'No prizes tonight — set them on the Venues tab.'
+        : 'No prizes tonight — this venue is not on your Venues tab.';
+      return;
+    }
+    prizeEl.className = 'tiny prize-line lb-prize';
+    prizeEl.innerHTML = 'Playing for: '
+      + prizes.map((r, i) => `<b class="prize-place p${i + 1}">${['1st', '2nd', '3rd'][i]}</b> ${esc(r)}`).join(' · ');
+  };
+
   const paintWhere = () => {
+    paintPrize();
+    const chosenName = lbVenue !== null ? lbVenue : '';
+    if (chosenName) {
+      // Somebody has said where they are, so the app stops explaining itself.
+      where.textContent = chosenName;
+      where.classList.remove('lb-warn');
+      return;
+    }
+    if (lbVenue === '') {
+      where.textContent = 'Nowhere in particular';
+      where.classList.remove('lb-warn');
+      return;
+    }
     const v = tonightsVenue();
     if (v) {
       where.textContent = `${v.name} — ${v.why}`;
@@ -2814,8 +2910,49 @@ function launchBar() {
     });
     where.classList.toggle('lb-warn', clash.length > 1);
     where.textContent = clash.length > 1
-      ? `${clash.join(' and ')} both claim tonight — pick one under Set it up.`
-      : 'No venue tonight — pick one under Set it up, or it is filed under nothing.';
+      ? `${clash.join(' and ')} both claim tonight — pick one`
+      : 'No venue — pick one';
+  };
+
+  /*
+   * THE PICKER. Venues you have SET UP and venues you have PLAYED, in one
+   * list — a venue added on the Venues tab has hosted nothing yet, and one
+   * played before venues existed was never added, so either list alone leaves
+   * somebody hunting for a pub they know is there.
+   */
+  const paintVenueList = () => {
+    const q = (venueSearch.value || '').trim().toLowerCase();
+    const setUp = (library.venueRecords || []).map((v) => v.name);
+    const played = library.venues || [];
+    const seen = [];
+    for (const name of [...setUp, ...played]) {
+      const clean = String(name || '').trim();
+      if (!clean || seen.some((n) => n.toLowerCase() === clean.toLowerCase())) continue;
+      seen.push(clean);
+    }
+    const list = q ? seen.filter((n) => n.toLowerCase().includes(q)) : seen;
+    venueList.replaceChildren(...(list.length ? list.map((name) => {
+      const row = node(`<button class="lb-venue-hit" type="button">${esc(name)}</button>`);
+      row.addEventListener('click', () => chooseVenue(name));
+      return row;
+    }) : [node(`<div class="tiny">${seen.length
+      ? `Nothing matches “${esc(venueSearch.value.trim())}”.`
+      : 'No venues yet — add one on the Venues tab.'}</div>`)]));
+  };
+
+  function chooseVenue(name) {
+    lbVenue = String(name || '');
+    lbVenueOpen = false;
+    venues.hidden = true;
+    where.setAttribute('aria-expanded', 'false');
+    paintWhere();
+  }
+
+  const toggleVenues = () => {
+    lbVenueOpen = !lbVenueOpen;
+    venues.hidden = !lbVenueOpen;
+    where.setAttribute('aria-expanded', lbVenueOpen ? 'true' : 'false');
+    if (lbVenueOpen) { paintVenueList(); venueSearch.focus(); }
   };
 
   /*
@@ -2910,10 +3047,6 @@ function launchBar() {
         <label class="pack-shape">Playing
           <select class="play-pick">${playingOptions()}</select>
         </label>
-        <label class="pack-shape venue-wrap">Venue
-          ${venueBox()}
-        </label>
-        <div class="prize-line" hidden></div>
       </div>
       <button class="go lb-go">Launch ${esc(pack.title)}</button>
       </div>`));
@@ -2945,7 +3078,6 @@ function launchBar() {
     };
     shapePick?.addEventListener('change', paintPrizes);
     paintPrizes();
-    wireVenue(chosen);
 
     chosen.querySelector('.lb-go').addEventListener('click', async (ev) => {
       const button = ev.currentTarget;
@@ -2955,7 +3087,10 @@ function launchBar() {
         look: chosen.querySelector('.look-pick')?.value || '',
         online: chosen.querySelector('.where-pick')?.value === 'online',
         teamPlay: chosen.querySelector('.play-pick')?.value === 'teams',
-        venue: venueFrom(chosen),
+        // ONE source for where tonight is — the picker at the top, which is
+        // the only place it can be set now. Two controls for one field is how
+        // a night gets filed under the pub you were at last week.
+        venue: venueNow(),
       }, button);
     });
   }
@@ -3027,7 +3162,8 @@ function launchBar() {
      * pressed is a control you have to read twice.
      */
     el.querySelector('.lb-fold-word').textContent = tonightOpen ? 'Hide' : 'Show';
-    for (const part of [el.querySelector('.lb-find'), whyEl, el.querySelector('.lb-row'), chosen]) {
+    for (const part of [el.querySelector('.lb-find'), whyEl, el.querySelector('.lb-row'),
+      chosen, venues, prizeEl]) {
       if (part) part.classList.toggle('lb-tucked', !tonightOpen);
     }
     shutWhat.hidden = tonightOpen;
