@@ -574,7 +574,35 @@ used on a gig day.
 pill. Nothing else. Purely mechanical, no judgement calls, and it is most of
 why things looked slightly off.
 
-## The design rules, in the host's own words
+### CAPITALS ARE FOR EMPHASIS, NOT FOR LABELLING
+
+Set by the host on 14 August 2026, and it is a BRAND decision rather than a
+taste one: *"the way I'm building this app, it needs to be as soft and
+friendly as possible… some people interpret capital letters as shouting."*
+
+**A heading is told apart by BRIGHTNESS, not by being shouted.** Full `--ink`
+against `--ink-dim` body text, one rung up the ladder, heavy. Capitals plus
+dim grey was doing that job with the two weakest tools available — and the
+tell was what the headings actually said: *"Nothing here is being saved
+permanently"* is a sentence, and a sentence in capitals is somebody raising
+their voice at you about your own backups.
+
+**Where something genuinely IS the emphasis, capitals are right and stay** —
+his own example, and he is correct: *"tonight's winner, I think, is all
+capitals, and that's totally fine."* The three that keep them:
+
+- **the PROJECTOR**, where every rule is sized in `vh`. "WINNER" in gold at
+  3vh with half an em of tracking, read from the back of a dark pub, is a
+  title card and nobody experiences it as a raised voice;
+- **the option letters A–F and the alphabet keyboard**, which have no choice;
+- **small one-word BADGES** — BRONZE, GOLD, PAID, YOURS. A four-letter pill
+  is a shape you recognise rather than a word you read, and those already
+  carry their meaning in colour, which is the substitute being asked for.
+
+**The test is whether the capitals are doing the emphasising or the
+labelling.** "Tonight" at the top of a panel is a label and does not need
+them; the name of the team that just won a quiz in front of a room is the
+emphasis and does.
 
 Set deliberately on 12 August 2026, and they outrank preference — including
 his own. His framing: *"I have no ego whatsoever about this being my app, my
