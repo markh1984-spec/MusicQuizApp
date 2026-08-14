@@ -7,7 +7,7 @@
  * something typed in fresh each time.
  */
 
-import { esc, node, postJson, brandLink, binIcon, paintNav, paintIdentity, menuRights } from './client.js';
+import { esc, node, postJson, brandLink, brandMark, binIcon, paintNav, paintIdentity, menuRights } from './client.js';
 import { paintScheme } from './schemes.js';
 import { balanceAnswers } from './balance.js';
 import { FEATURES, FEATURE_TIER, FEATURE_META, SWITCHABLE, findTier, switchable, NOT_BUILT } from './plans.js';
@@ -863,23 +863,48 @@ function showActiveTab() {
  * After `render()`, deliberately — the bar is rebuilt on every one, so the
  * element measured has to be the new one.
  */
+/**
+ * Where an element sits in the DOCUMENT, in pixels from the top.
+ *
+ * `offsetTop` up the `offsetParent` chain rather than
+ * `getBoundingClientRect() + scrollY`, and the difference is the whole reason
+ * this exists: **a rectangle is where a thing is DRAWN and `offsetTop` is
+ * where it BELONGS.** For anything ordinary they agree. For a sticky element
+ * they do not — once pinned, its rectangle says "63px from the top of the
+ * window" no matter how far the page has scrolled, so measuring it and then
+ * scrolling by the difference lands somewhere new every time you press.
+ */
+function docTop(el) {
+  let top = 0;
+  for (let at = el; at; at = at.offsetParent) top += at.offsetTop;
+  return top;
+}
+
 function showTabBar() {
   /*
-   * MEASURED OFF THE TAB BODY, NOT OFF THE BAR — because the bar is sticky
-   * from 860px and a sticky element lies about where it is. Once pinned its
-   * `top` is the pin position rather than its place in the document, so
-   * scrolling "until the bar is at the top" is a no-op the second time and
-   * jitters by the gap the first. The body underneath it is never sticky, so
-   * its rectangle is the honest one: put ITS top just below the topbar plus
-   * the bar's own height and the bar lands exactly where it pins.
+   * SCROLL SO THE BAR SITS EXACTLY WHERE IT PINS.
+   *
+   * Two things were wrong and they compounded, which is why this came back
+   * after being fixed once.
+   *
+   * **It measured a sticky element's rectangle** — first the bar's, then the
+   * tab body's as a way round it. The body is honest, but it is separated
+   * from the bar by that bar's own bottom margin, so the sum had to guess a
+   * gap; guess it wrong and every press over-scrolls by the difference. Asking
+   * the BAR where it belongs in the document removes both the guess and the
+   * indirection: the answer is one subtraction and it cannot drift when the
+   * margin changes.
+   *
+   * **And a short tab could not scroll that far at all**, which is the half
+   * that made it look intermittent — see the note on `.tabbody`'s minimum
+   * height. Fixed there rather than here, because a page that cannot reach
+   * the position is not something the scroll can talk its way out of.
    */
-  const body = mainEl.querySelector('.tabbody');
   const bar = mainEl.querySelector('.tabbar');
-  if (!body || !bar) { window.scrollTo({ top: 0 }); return; }
+  if (!bar) { window.scrollTo({ top: 0 }); return; }
   const sticky = document.querySelector('.console .topbar');
-  const under = (sticky ? sticky.getBoundingClientRect().height : 0)
-    + bar.getBoundingClientRect().height;
-  window.scrollTo({ top: Math.max(0, window.scrollY + body.getBoundingClientRect().top - under - 8) });
+  const under = sticky ? sticky.getBoundingClientRect().height : 0;
+  window.scrollTo({ top: Math.max(0, docTop(bar) - under) });
 }
 
 /* ========================================================== MY ACCOUNT
@@ -2209,8 +2234,33 @@ function tabBody(active) {
    * against — and without one the first thing on four tabs was a small bold
    * word inside a card, which reads as a subheading of nothing.
    */
+  /*
+   * THE MARK SITS BESIDE IT — asked for as *"a sub logo in every tab"*.
+   *
+   * The SAME drawing as the topbar logo and the favicon, out of
+   * `brandmark.js`, because this file's oldest rule about the logo is that
+   * there is exactly one of it: two copies is one that gets changed in one
+   * place and not the other and goes unnoticed for a month. `brandMark()`
+   * hands each one its own gradient id, which matters here more than
+   * anywhere — nine of them on a page sharing one id would fight, and the
+   * loser draws in the wrong colours.
+   *
+   * 26px, which is inside the range this mark is drawn at everywhere else
+   * (22 on a phone, 26 on the projector, 30 on the console's own topbar) and
+   * therefore inside the range the sound arcs stay off for. It follows the
+   * account's scheme for free: the gradient stops are CSS custom properties.
+   *
+   * `aria-hidden`, because the heading beside it already says the word. A
+   * screen reader announcing "Quizporium, Music Bingo" on every tab is the
+   * same fault as a control whose only explanation is a `title`.
+   */
   wrap.appendChild(node(`
-    <div class="game-head tab-head"><div><h2>${esc(tab.label)}</h2></div></div>`));
+    <div class="game-head tab-head">
+      <div class="tab-head-name">
+        <span class="tab-head-mark" aria-hidden="true">${brandMark(26)}</span>
+        <h2>${esc(tab.label)}</h2>
+      </div>
+    </div>`));
 
   // A tab is either a game (generator + its saved packs) or a one-off panel.
   if (tab.render) {

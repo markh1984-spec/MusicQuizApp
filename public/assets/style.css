@@ -1852,6 +1852,14 @@ body.console::after { display: none; }
    Gigs tab printed "Gigs", "Headcount" and "Past gigs" at one size, which is
    three tabs as far as the eye is concerned. */
 .console .tab-head { margin-bottom: 18px; }
+/* The mark and the name are ONE object, so the mark cannot drift away from
+   the word it belongs to when the head row grows a button. Baseline rather
+   than centre: the mark is a square and the heading has a descender, so
+   centring the boxes leaves the glyph sitting visibly low against the cap
+   height it is meant to line up with. */
+.console .tab-head-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.console .tab-head-mark { display: inline-flex; flex: 0 0 auto; }
+.console .tab-head h2 { margin: 0; }
 .console .game-section .game-head h2 { font-size: var(--fs-head); }
 /* A SECTION HEADING CARRIES THE ACCOUNT'S OWN COLOURS.
    The one thing that makes a page look designed rather than assembled, and it
@@ -2193,13 +2201,21 @@ body.screen { cursor: none; }
 .tabcount.late { background: rgba(255, 77, 94, 0.22); color: var(--bad); }
 .tab.on .tabcount.late { background: var(--bad); color: #fff; }
 
-/* NO RESERVED HEIGHT. It briefly carried `min-height: 78vh` so that pressing
-   a tab could always scroll the bar to the top — which worked, and left most
-   of a screen of black under a nearly-empty Adverts or Invoices tab. The bar
-   is sticky from 860px instead, so there is nothing to scroll TO and nothing
-   to reserve; below that the page is one column on a phone and the bar is a
-   flick away regardless. */
-.tabbody { animation: cardIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+/* TALL ENOUGH TO SCROLL THE BAR TO THE TOP — and this is the arithmetic, not
+   a guess.
+   Making the bar sticky removed the need for it to be scrolled INTO view, and
+   on that reasoning the reserve was taken out. That was wrong, and it is the
+   second time this has been reported as "tab clicks aren't going to the right
+   place": sticky decides where the bar sits ONCE THE PAGE HAS SCROLLED THERE,
+   and a page shorter than the viewport never scrolls at all. So a tall tab
+   jumped and a short one did not, which is the inconsistency, not the height.
+   The number: to put the bar at the topbar's height, the page must be able to
+   scroll `docTop(bar) - topbar` — which needs the tab body to be at least the
+   viewport less the topbar (63), the bar (54), its margin (22) and the wrap's
+   bottom padding (60). 199, rounded up. Reserving exactly that is why the
+   ~700px of black under a nearly-empty Adverts tab does not come back: the
+   old 78vh reserved most of a screen whatever the screen was. */
+.tabbody { animation: cardIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1); min-height: calc(100vh - 200px); }
 
 /* The card's buttons, in the order you actually use them: the small ones you
    might press first sit in a row, and LAUNCH is the full width of the card at
