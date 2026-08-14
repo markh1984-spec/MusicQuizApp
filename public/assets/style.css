@@ -2031,7 +2031,19 @@ body.screen { cursor: none; }
 .tabcount.late { background: rgba(255, 77, 94, 0.22); color: var(--bad); }
 .tab.on .tabcount.late { background: var(--bad); color: #fff; }
 
-.tabbody { animation: cardIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+/* TALL ENOUGH THAT THE TAB BAR CAN ALWAYS REACH THE TOP.
+   Pressing a tab scrolls the bar up under the topbar so Tonight is one flick
+   away — and on a SHORT tab (Adverts with no sets, Help, an empty Invoices)
+   the page simply had nowhere left to scroll, so the bar stopped half way and
+   the feature looked like it worked on some tabs and not others. Worse on the
+   tabs that fetch: Gigs, Invoices and Calendar are a heading and "Loading…"
+   at the moment of the scroll and grow a second later, so the scroll was
+   clamped against a page that did not exist yet.
+   A minimum height fixes both without a second scroll after the fetch, which
+   would be the page moving under somebody who had started reading. 78vh is
+   the viewport less the topbar and the bar itself, so a short tab reserves
+   exactly what the gesture needs and no more. */
+.tabbody { animation: cardIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1); min-height: 78vh; }
 
 /* The card's buttons, in the order you actually use them: the small ones you
    might press first sit in a row, and LAUNCH is the full width of the card at
@@ -5629,6 +5641,15 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
   font-size: var(--fs-tag); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--gold); margin-left: 6px; white-space: nowrap;
 }
+/* A night in the "coming up" list is a thing you READ, and the whole row picks
+   its date — which lands you in the day panel, where the actions are. It was
+   the same card with an Invoice it and a Not on this week on every one of ten
+   rows: a wall of red, which is the one thing the host asked for explicitly to
+   be avoided, on a list where nothing is wrong. */
+.diary-row.is-pick {
+  width: 100%; font: inherit; color: var(--ink); text-align: left; cursor: pointer;
+}
+.diary-row.is-pick:hover { border-color: var(--ink-dim); background: rgba(255, 255, 255, 0.07); }
 /* A written-off night: shown on its own date so "Not on this week" is a thing
    somebody can see they did, and undo. Quiet rather than red — nothing is
    wrong, it is a night you are not doing. */
@@ -5943,6 +5964,13 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .cal-wrap > * { min-width: 0; }
 @media (min-width: 900px) {
   .cal-wrap { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; gap: 18px; }
+  /* The month STAYS while the panel beside it scrolls. A month is five rows
+     and the list beside it is however many nights you have — so the left
+     column ran out a long way above the right one and the bottom half of the
+     section was a black void with a list floating in it. Sticky, the calendar
+     is still there to click when you reach the end of the list, which is
+     precisely when you want it. 68px clears the sticky topbar. */
+  .cal-left { position: sticky; top: 68px; }
 }
 /* The panel is a card so it reads as the answer to the month beside it rather
    than as more page. */

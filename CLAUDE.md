@@ -722,6 +722,33 @@ behaviour:
   back** on it — `removeBooking`, because forgetting the exception is what
   returns a residency to being an ordinary one.
 
+**A NIGHT IN THE LIST IS SOMETHING YOU READ, NOT TEN THINGS YOU DO — and the
+first build of this got it wrong in a way the host spotted immediately.** The
+"coming up" list used the same card as the day panel, buttons and all, so
+**Invoice it** and **Not on this week** appeared on every one of ten rows. Two
+faults, and the second is already a rule in this file:
+
+- **A WALL OF RED.** *"Don't want a wall of red either"* — his own line, set
+  when three tinted button options were turned down. Ten outlined-red buttons
+  in a column is louder than one filled one, and it made an ordinary diary
+  read as ten things that had gone wrong, on a page whose only other colour
+  was a pink underline on the button beside it.
+- **It contradicted the panel's own split.** What is coming up is what you
+  READ; a date is what you ACT on. Actions in both halves meant the day panel
+  was not *the* place a night is dealt with, it was one of two.
+
+So a list row is the date, the place and what it plays for, and **the whole row
+picks that date** — landing you in the day panel where the actions are, with
+the month moved to the right month on the way. *"No prizes set"* went with
+them: printed ten times it is noise, and it is still said in the day panel,
+which is where it can be acted on.
+
+**And the month is STICKY beside it** at 900px and up. A month is five rows and
+the list is however many nights you have, so the left column ran out a long way
+above the right one and the bottom half of the section was a black void with a
+list floating in it. Sticky, the calendar is still there to click when you
+reach the end of the list — which is exactly when you want it.
+
 **AND "INVOICE FOR THIS DATE" GOES TO THE INVOICES TAB** rather than opening a
 form over the calendar, at the host's own reading: *"'invoice for this date'
 goes to the invoice section with that date pre-filled"*. He is right, and the

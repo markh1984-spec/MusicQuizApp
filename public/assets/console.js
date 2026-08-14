@@ -6618,8 +6618,59 @@ function diarySection() {
     : 'Give a venue its usual night on the Venues tab and its weeks fill themselves in.'}</div>`)];
     }
     const list = node('<div class="diary-list"></div>');
-    list.replaceChildren(...nights.map(diaryRow));
+    list.replaceChildren(...nights.map(comingRow));
     return [head, list];
+  }
+
+  /**
+   * A NIGHT IN THE LIST IS SOMETHING YOU READ, NOT TEN THINGS YOU DO.
+   *
+   * It was `diaryRow()` — the same card as the day panel, buttons and all —
+   * which put **Invoice it** and **Not on this week** on every one of ten
+   * rows. Two faults, and the second is a rule this project already has in
+   * writing:
+   *
+   * - **A WALL OF RED.** *"Don't want a wall of red either"* is the host's
+   *   own line, set when three tinted button options were turned down. Ten
+   *   outlined-red buttons in a column is louder than one filled one, and it
+   *   made a perfectly ordinary diary read as ten things that had gone wrong
+   *   — on a page whose only other colour was a pink underline on the button
+   *   beside it.
+   * - **It contradicted the panel's own split.** What is coming up is what you
+   *   READ; a date is what you ACT on. Putting the actions in both halves
+   *   meant the day panel was not the place a night is dealt with, it was one
+   *   of two.
+   *
+   * So the row is the date, the place and what it plays for — and **the whole
+   * row picks that date**, which lands you in the day panel where the actions
+   * live. One tap, no buttons, and the month moves to the right month on the
+   * way so you can see where you are.
+   */
+  function comingRow(night) {
+    const when = new Date(night.date + 'T12:00:00');
+    const prizes = (night.rewards || []).filter(Boolean);
+    const row = node(`
+      <button class="diary-row is-pick ${night.why === 'booked' ? 'is-booked' : ''}" type="button">
+        <div class="d-when">
+          <b>${esc(when.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }))}</b>
+          <span class="tiny">${esc(whenAway(night.date))}</span>
+        </div>
+        <div class="d-what">
+          <b>${esc(night.venue)}</b>
+          ${night.why === 'booked' ? '<span class="d-tag">one-off</span>' : ''}
+          ${night.time ? `<span class="d-time">${esc(saidTime(night.time))}</span>` : ''}
+          ${night.note ? `<div class="tiny">${esc(night.note)}</div>` : ''}
+          ${prizes.length ? `<div class="tiny">Playing for ${esc(prizes[0])}</div>` : ''}
+        </div>
+      </button>`);
+    row.addEventListener('click', () => {
+      const [y, m] = night.date.split('-').map(Number);
+      shown = new Date(y, m - 1, 1);
+      picked = night.date;
+      booking = false;
+      drawMonth();
+    });
+    return row;
   }
 
   /*
