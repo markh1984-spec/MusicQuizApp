@@ -4736,7 +4736,28 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    winner's phone. It is stated rather than shouted: it is what the press will
    do, not a second thing to weigh up, and the picker for it is one tap away
    under Set it up. */
-.lb-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+/* A GRID, THREE CELLS: the heading, what tonight is, and the way in and out.
+   Flex wrapped on a phone — the venue pushed the fold button onto a second
+   line when the section was open and onto the first when it was shut, so the
+   heading sat 6px lower open than shut. A grid's first row is sized by the
+   heading and the button, which are in both states, so "Tonight" is at the
+   same pixel whatever is going on underneath it. */
+.lb-head {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center; gap: 10px;
+}
+.lb-head > * { min-width: 0; }
+/* What tonight is: the venue when it is open, the pack as well when it is
+   shut. One cell, so the row always has exactly three items in it. */
+.lb-what { display: flex; align-items: baseline; gap: 10px; min-width: 0; overflow: hidden; }
+/* PLACED EXPLICITLY, all three. Left to auto-placement, moving the middle cell
+   to a second line on a phone let the fold button fall into column 2 — the
+   third column collapsed to nothing and the button sat 10px shy of the right
+   edge when open and flush when shut. Pinned, row one cannot move whatever
+   happens underneath it. */
+.lb-head > h3 { grid-column: 1; grid-row: 1; }
+.lb-head > .lb-what { grid-column: 2; grid-row: 1; }
+.lb-head > .lb-fold { grid-column: 3; grid-row: 1; }
 .lb-where { color: var(--ink-dim); }
 /* A DOUBLE BOOKING, named. Gold rather than red: it is not a fault and nothing
    is broken — it is a decision only the human can make, and it is the same
@@ -4748,12 +4769,19 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    what it would do, which is the tap this exists to save. Shut, the whole row
    is the target: one small chevron on the end of a bar is a thing you miss
    with a thumb in a dark pub. */
-.launchbar.shut { padding-top: 12px; padding-bottom: 12px; cursor: pointer; }
+/* THE HEADING MUST NOT MOVE WHEN IT FOLDS. Same padding and the same
+   alignment in both states, so "Tonight" is at the same pixel open and shut —
+   a heading that jumps as you collapse a panel makes the whole page feel like
+   it re-laid itself, and it is the thing your eye is using to find the
+   section again. Only what is BELOW the head appears and disappears. */
+.launchbar.shut { cursor: pointer; }
 /* ONE ROW, and it has to stay one row — "collapsed" that takes three lines on
    a phone is not collapsed, it is smaller. So it does not wrap, the middle
    truncates, and the way back in keeps its full width. */
-.launchbar.shut .lb-head { align-items: center; flex-wrap: nowrap; }
-.launchbar.shut .lb-head > * { min-width: 0; }
+/* Both of these were flex-era leftovers: the head is a grid now, its children
+   already carry `min-width: 0`, and the blanket child rule here was beating
+   the fold button's fixed width — which is why the button was 96px wide open
+   and 78px shut, and shuffled sideways as you pressed it. */
 .launchbar.shut .lb-where,
 .lb-shut-what { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lb-shut-what { font-weight: 800; color: var(--ink); }
@@ -4761,15 +4789,29 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    pack is the more useful of the two — it is what the button would launch —
    and the venue is one tap away inside. */
 @media (max-width: 560px) {
+  /* Shut, there is room for the heading, ONE fact and the way back in — and
+     the pack is the more useful of the two, because it is what the button
+     would launch. Open, the venue takes a line of its own UNDER the head
+     rather than squeezing into it: a truncated pub name is the one thing on
+     this bar you cannot check at a glance. Row one is unaffected either way,
+     which is what keeps the heading still. */
   .launchbar.shut .lb-where { display: none; }
+  .launchbar:not(.shut) .lb-what { grid-column: 1 / -1; grid-row: 2; }
 }
 .lb-tucked { display: none !important; }
 .lb-fold {
   margin-left: auto; flex: 0 0 auto;
+  text-align: center;
   padding: 6px 12px; border-radius: var(--r-pill);
   background: none; border: 1px solid var(--panel-line); color: var(--ink-dim);
   font: inherit; font-size: var(--fs-mini); font-weight: 800; cursor: pointer;
 }
+/* A FIXED WIDTH, and it has to out-specify `.lb-head > * { min-width: 0 }`
+   two rules above — which is why it is written as a descendant. "Hide" and
+   "Show" are not the same number of pixels, so without this the button
+   shuffles sideways every time it is pressed: the same complaint as the
+   heading moving, eighteen pixels smaller. */
+.lb-head .lb-fold { min-width: 96px; }
 .lb-fold:hover { border-color: var(--hot); color: var(--ink); }
 .lb-fold::after {
   content: '';
@@ -4781,13 +4823,17 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 /* The runner-up pack, as a chip rather than a second gradient button — there
    is one "press this" on a screen, and it is Launch. */
 .lb-why { margin-top: 6px; }
-.lb-alt { margin-top: 10px; }
+/* The runner-up pack and Set it up, on one row — both are minor controls
+   answering "not this one" and "not like this", and stacked they read as two
+   separate steps. */
+.lb-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.lb-row:empty { display: none; }
 .lb-alt[hidden] { display: none; }
 
 /* SET IT UP — everything a night needs that is not the pack itself. Shut by
    default: the common job is this pack, this pub, go, and a wall of dropdowns
    in front of that is the panic control defeating itself. */
-.lb-more { margin-top: 12px; }
+.lb-more[hidden] { display: none; }
 .lb-more::after {
   content: '';
   display: inline-block; margin-left: 8px; vertical-align: 1px;

@@ -2664,11 +2664,17 @@ function launchBar() {
         <!-- WHERE, at the top, because it decides the prizes, the voucher and
              what the night is filed under — and it used to be visible only on
              a button label. -->
-        <div class="tiny lb-where"></div>
-        <!-- SHUT, IT IS STILL A SENTENCE. A collapsed panel that says only
-             "Tonight" makes you open it to find out what it is set to, which
-             is the tap this is meant to save. -->
-        <div class="tiny lb-shut-what" hidden></div>
+        <!-- ONE CELL, both facts. They are two spans in a single grid child
+             rather than two children, or the grid has four items in three
+             columns the moment the shut line appears and the way back in
+             drops onto a row of its own. -->
+        <div class="lb-what">
+          <span class="tiny lb-where"></span>
+          <!-- SHUT, IT IS STILL A SENTENCE. A collapsed panel that says only
+               "Tonight" makes you open it to find out what it is set to,
+               which is the tap this is meant to save. -->
+          <span class="tiny lb-shut-what" hidden></span>
+        </div>
         <button class="lb-fold" type="button" aria-expanded="true">
           <span class="lb-fold-word"></span>
         </button>
@@ -2683,7 +2689,14 @@ function launchBar() {
         </div>
       </div>
       <div class="tiny lb-why"></div>
-      <div class="lb-alt"></div>
+      <!-- THE TWO SMALL BUTTONS SHARE A ROW. Launch keeps the full width
+           under them: it is the one "press this" on the section, and a
+           primary button squeezed in beside two minor ones stops looking
+           like one. -->
+      <div class="lb-row">
+        <div class="lb-alt"></div>
+        <button class="minor lb-more" type="button" aria-expanded="false" hidden>Set it up</button>
+      </div>
       <div class="lb-chosen" hidden></div>
     </div>`);
 
@@ -2693,6 +2706,13 @@ function launchBar() {
   const alt = el.querySelector('.lb-alt');
   const whyEl = el.querySelector('.lb-why');
   const fold = el.querySelector('.lb-fold');
+  const moreBtn = el.querySelector('.lb-more');
+  moreBtn.addEventListener('click', () => {
+    lbOpen = !lbOpen;
+    const set = el.querySelector('.lb-set');
+    if (set) set.hidden = !lbOpen;
+    moreBtn.setAttribute('aria-expanded', lbOpen ? 'true' : 'false');
+  });
   const shutWhat = el.querySelector('.lb-shut-what');
   const where = el.querySelector('.lb-where');
   const chosen = el.querySelector('.lb-chosen');
@@ -2863,7 +2883,6 @@ function launchBar() {
     // button, the only thing on the panel that does anything.
     chosen.replaceChildren(node(`
       <div>
-      <button class="minor lb-more" type="button" aria-expanded="${lbOpen ? 'true' : 'false'}">Set it up</button>
       <div class="lb-set" ${lbOpen ? '' : 'hidden'}>
         ${bingo ? `
           <label class="pack-shape">Card
@@ -2897,13 +2916,10 @@ function launchBar() {
      * stays open — a quizmaster setting up a bingo night touches three of
      * these in a row, and this panel is rebuilt every time somebody joins.
      */
-    const more = chosen.querySelector('.lb-more');
-    const set = chosen.querySelector('.lb-set');
-    more.addEventListener('click', () => {
-      lbOpen = !lbOpen;
-      set.hidden = !lbOpen;
-      more.setAttribute('aria-expanded', lbOpen ? 'true' : 'false');
-    });
+    // The toggle lives in the row above and outlives this render; only the
+    // panel it opens is rebuilt here, so it is re-pointed rather than rewired.
+    moreBtn.hidden = false;
+    moreBtn.setAttribute('aria-expanded', lbOpen ? 'true' : 'false');
 
     // The same prize list the pack card builds, from the shape actually picked.
     const shapePick = chosen.querySelector('.shape-pick');
@@ -2993,8 +3009,15 @@ function launchBar() {
   function paintFold() {
     el.classList.toggle('shut', !tonightOpen);
     fold.setAttribute('aria-expanded', tonightOpen ? 'true' : 'false');
-    el.querySelector('.lb-fold-word').textContent = tonightOpen ? 'Hide' : 'Launch a night';
-    for (const part of [el.querySelector('.lb-find'), whyEl, alt, chosen]) {
+    /*
+     * HIDE / SHOW — one pair, both describing the same act on the same thing.
+     * It said "Hide" open and "Launch a night" shut, which are answers to two
+     * different questions: one is what the button does to the panel, the other
+     * is what the panel is for. A control that changes its own meaning when
+     * pressed is a control you have to read twice.
+     */
+    el.querySelector('.lb-fold-word').textContent = tonightOpen ? 'Hide' : 'Show';
+    for (const part of [el.querySelector('.lb-find'), whyEl, el.querySelector('.lb-row'), chosen]) {
       if (part) part.classList.toggle('lb-tucked', !tonightOpen);
     }
     shutWhat.hidden = tonightOpen;

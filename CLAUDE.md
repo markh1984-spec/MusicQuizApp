@@ -1528,6 +1528,30 @@ pack is what the button would launch. **The whole row is the target when it is
 shut**, not just the chevron: one small control on the end of a bar is a thing
 you miss with a thumb in a dark pub.
 
+**THE HEADING DOES NOT MOVE WHEN IT FOLDS, and getting that right took a
+grid.** The head row was a wrapping flex row, so on a phone the venue pushed
+the fold button onto a second line when the section was open and onto the
+first when it was shut — "Tonight" sat six pixels lower in one state than the
+other, which reads as the whole page re-laying itself around the control you
+just pressed. It is a three-cell grid now with **all three children placed
+explicitly**: left to auto-placement, moving the middle cell to a second line
+on a phone let the button fall into column 2, the third column collapsed to
+nothing, and the button sat 10px shy of the right edge. Measured rather than
+eyeballed — the heading's and the button's bounding boxes are compared open
+against shut, at 390 and 1280.
+
+**And the fold control says HIDE and SHOW.** It said "Hide" open and "Launch a
+night" shut, which answer two different questions — what the button does to the
+panel, and what the panel is for. It also needs a fixed width, or the two words
+shuffle it sideways as you press it; that rule has to out-specify the head's
+own `min-width: 0`, which was quietly winning and is what made the button 96px
+open and 78px shut.
+
+**The two small buttons share a row** — the runner-up pack and Set it up, which
+are both "not this one" and "not like this". Launch keeps the full width under
+them: it is the one press-this on the section, and a primary button squeezed in
+beside two minor ones stops looking like one.
+
 **The pack cards keep their own Launch for now**, deliberately: this is the
 protected surface, and swapping a working control for "loads it into the bar"
 on the same day as the redesign is two changes to one path. That is the next
