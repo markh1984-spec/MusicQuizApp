@@ -1798,6 +1798,38 @@ the big screen said."* Two separate causes, both fixed:
   back to the console after launching and the panel named a pack nobody had
   chosen, one press away from replacing a live night with it.
 
+**AND PICKING A PACK NOW PUTS IT ON THE BIG SCREEN — when nothing would be
+lost.** The host's own conclusion after the two disagreed on a real night:
+*"changing quiz packs should change the console and the big screen."* Right,
+and the two should agree every time it is possible for them to.
+
+**But picking is not launching when there is a night to lose.** A tap on a
+search result that silently ended a running quiz and wiped every score would
+be the most dangerous control in the app, on the protected path, in a dark
+pub. So: switch instantly when it costs nothing, stage it when it would cost
+somebody their night.
+
+**THE SERVER DECIDES WHICH, and there is no new rule.** It is the ordinary
+launch call without `replace`, which already answers 409 when
+`session.inProgress()` — a guard this file already records as one that cannot
+live in the browser. A 200 means it was free to switch; a 409 means it was
+not. No second definition of "in progress" exists to drift.
+
+**A 409 is SILENT here — no dialog.** Pressing Launch is what asks that
+question and still does, with the warning it always gave. All a 409 means at
+this point is that the choice stays staged and the red line says the
+projector is showing something else.
+
+Two things the build had to get right, both of which would have been silent
+faults:
+
+- **A re-render is not somebody choosing a pack.** `startOn()` calls `pick()`
+  on every state push to keep the box filled, so it passes `quiet` — without
+  it the bar would relaunch the projector every time a phone joined.
+- **What is running afterwards is READ BACK from the server**, never assumed.
+  Filling that line in from our own optimism would be the original fault
+  wearing a new hat.
+
 **And where they still differ, the bar SAYS SO.** `paintLive()` prints *"On
 the big screen now: The 2000s Pop Rnb and Chart Quiz"* off `library.running` —
 the server's own view of the session, so it cannot drift — in gold when it is
