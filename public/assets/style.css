@@ -5200,7 +5200,13 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    happens underneath it. */
 .lb-head > h3 { grid-column: 1; grid-row: 1; }
 .lb-head > .lb-what { grid-column: 2; grid-row: 1; }
-.lb-head > .lb-fold { grid-column: 3; grid-row: 1; }
+/* THE TWO PILLS SHARE THE RIGHT-HAND END — what kind of night it is, and
+   whether the panel is open. The mode switch was a row of its own under the
+   head, which made a bar meant to be glanceable three rows deep; beside the
+   fold it is one of two chips at the end of a line, and it survives the fold
+   because it is no longer inside the part that folds. */
+.lb-head > .lb-right { grid-column: 3; grid-row: 1; display: flex; align-items: center; gap: 8px; }
+.lb-head .lb-mode { margin: 0; }
 /* THE VENUE IS A BUTTON, and it has to look like one without shouting: it is
    a fact you read nine times out of ten and change on the tenth. Underlined on
    hover and focus rather than boxed, because a box here would be a third

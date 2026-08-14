@@ -3049,7 +3049,6 @@ function launchBar() {
   const el = node(`
     <div class="panel launchbar">
       <div class="lb-head">
-        <h3>Tonight</h3>
         <!-- WHERE, at the top, because it decides the prizes, the voucher and
              what the night is filed under — and it used to be visible only on
              a button label. -->
@@ -3069,9 +3068,26 @@ function launchBar() {
                which is the tap this is meant to save. -->
           <span class="tiny lb-shut-what" hidden></span>
         </div>
-        <button class="lb-fold" type="button" aria-expanded="true">
-          <span class="lb-fold-word"></span>
-        </button>
+        <!-- WHERE THEY ARE, beside the fold rather than on a row of its own.
+             Two pills at the right-hand end: what kind of night it is, and
+             whether the panel is open. Moved there on the host's own reading
+             — on its own line it was a third row in a bar that is meant to be
+             glanceable, and it is one of the two facts that place a night, so
+             it belongs beside the other one rather than under it.
+             "Venue" rather than "In the room": the word matches the control
+             directly to its left, which names the venue, so the pair reads as
+             one question with two answers. -->
+        <div class="lb-right">
+          <div class="lb-mode">
+            <span class="hat-switch lb-mode-switch" data-on="0">
+              <button class="hat-half live" type="button" data-online="0">Venue</button>
+              <button class="hat-half" type="button" data-online="1">Online</button>
+            </span>
+          </div>
+          <button class="lb-fold" type="button" aria-expanded="true">
+            <span class="lb-fold-word"></span>
+          </button>
+        </div>
       </div>
       <!-- SEARCHABLE, because a quizmaster with fifteen residencies scrolling a
            dropdown in a dark pub is the thing this replaces. It draws from the
@@ -3086,17 +3102,6 @@ function launchBar() {
           <a class="minor lb-venue-add" href="?tab=venues">Add a venue</a>
         </div>
       </div>
-      <!-- WHERE THEY ARE. Beside the venue rather than behind Set it up: the
-           venue says which room, this says whether there is one. The reasoning
-           is on the lbOnline declaration above. -->
-      <div class="lb-mode">
-        <span class="hat-switch lb-mode-switch" data-on="0">
-          <button class="hat-half live" type="button" data-online="0">In the room</button>
-          <button class="hat-half" type="button" data-online="1">Online</button>
-        </span>
-        <span class="tiny lb-mode-said"></span>
-      </div>
-      <div class="tiny prize-line lb-prize" hidden></div>
       <!-- WHAT IS ACTUALLY ON THE PROJECTOR, which is a different question
            from what the box is set to. Reported from a real night: the two
            disagreed and nothing said which was which. -->
@@ -3144,7 +3149,6 @@ function launchBar() {
   const venues = el.querySelector('.lb-venues');
   const venueList = el.querySelector('.lb-venue-list');
   const venueSearch = el.querySelector('.lb-venue-search');
-  const prizeEl = el.querySelector('.lb-prize');
   const liveEl = el.querySelector('.lb-live');
   // Called through an arrow rather than passed directly: both of these are
   // `const`s declared further down, so handing the function over here reads
@@ -3173,7 +3177,6 @@ function launchBar() {
   const shutWhat = el.querySelector('.lb-shut-what');
   const modeRow = el.querySelector('.lb-mode');
   const modeSwitch = modeRow.querySelector('.lb-mode-switch');
-  const modeSaid = modeRow.querySelector('.lb-mode-said');
   /*
    * ONLINE SAYS WHAT IT WILL DO; the room says nothing.
    *
@@ -3187,7 +3190,6 @@ function launchBar() {
     for (const half of modeSwitch.querySelectorAll('.hat-half')) {
       half.classList.toggle('live', (half.dataset.online === '1') === lbOnline);
     }
-    modeSaid.textContent = lbOnline ? 'The question goes on their phones, and chat is on.' : '';
   }
   for (const half of modeSwitch.querySelectorAll('.hat-half')) {
     half.addEventListener('click', () => {
@@ -3274,28 +3276,8 @@ function launchBar() {
    * exists is that the first real night ended with no voucher and nothing on
    * screen having said so.
    */
-  const paintPrize = () => {
-    const name = venueNow();
-    if (!name) { prizeEl.hidden = true; return; }
-    const record = (library.venueRecords || [])
-      .find((v) => (v.name || '').toLowerCase() === name.toLowerCase());
-    const prizes = ((record && record.rewards) || []).map((r) => String(r || '').trim());
-    while (prizes.length && !prizes[prizes.length - 1]) prizes.pop();
-    prizeEl.hidden = false;
-    if (!prizes.length) {
-      prizeEl.className = 'tiny prize-line lb-prize none';
-      prizeEl.textContent = record
-        ? 'No prizes tonight — set them on the Venues tab.'
-        : 'No prizes tonight — this venue is not on your Venues tab.';
-      return;
-    }
-    prizeEl.className = 'tiny prize-line lb-prize';
-    prizeEl.innerHTML = 'Playing for: '
-      + prizes.map((r, i) => `<b class="prize-place p${i + 1}">${['1st', '2nd', '3rd'][i]}</b> ${esc(r)}`).join(' · ');
-  };
 
   const paintWhere = () => {
-    paintPrize();
     const chosenName = lbVenue !== null ? lbVenue : '';
     if (chosenName) {
       // Somebody has said where they are, so the app stops explaining itself.
@@ -3310,7 +3292,15 @@ function launchBar() {
     }
     const v = tonightsVenue();
     if (v) {
-      where.textContent = `${v.name} — ${v.why}`;
+      /*
+       * THE NAME, WITHOUT THE REASON. It read "The Station Tap, Wokingham —
+       * where you played last", which is the app explaining its own working
+       * on the line somebody is trying to read a venue off. The reason
+       * mattered when this was a guess you had to audit; it is a starting
+       * point you change in one tap, and the tail made a long pub name longer
+       * than the bar.
+       */
+      where.textContent = v.name;
       where.classList.remove('lb-warn');
       return;
     }
@@ -3388,7 +3378,6 @@ function launchBar() {
     venues.hidden = true;
     where.setAttribute('aria-expanded', 'false');
     paintWhere();
-    paintPrize();
     const running = (library && library.running) || {};
     if (currentPack && running.packId === currentPack.id) {
       switchIfFree(currentPack, gameOf().id);
@@ -3789,8 +3778,15 @@ function launchBar() {
      * pressed is a control you have to read twice.
      */
     el.querySelector('.lb-fold-word').textContent = tonightOpen ? 'Hide' : 'Show';
+    /*
+     * The mode switch is NOT in this list any more: it lives in the head row
+     * now, beside the fold, so folding the panel must not take it with it —
+     * which is the whole reason it was worth moving. Shut, the one setting
+     * that can put a question on sixty phones in a pub is still on screen and
+     * still changeable.
+     */
     for (const part of [el.querySelector('.lb-find'), whyEl, el.querySelector('.lb-row'),
-      chosen, venues, prizeEl, liveEl, modeRow]) {
+      chosen, venues, liveEl, orderEl]) {
       if (part) part.classList.toggle('lb-tucked', !tonightOpen);
     }
     shutWhat.hidden = tonightOpen;
