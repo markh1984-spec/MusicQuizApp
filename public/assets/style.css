@@ -5460,29 +5460,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 }
 .lb-drop-plus { font-size: var(--fs-title); line-height: 1; }
 
-/* THE PACK IN FLIGHT — a clone drawn over the page, moving from where the
-   library card was to where the tile now is.
-   `fixed` and viewport coordinates, so scrolling mid-flight cannot strand it.
-   `pointer-events: none` or it would swallow the next click for half a
-   second. The lift is a scale bump at the half-way point rather than a flat
-   slide: a hand lifts a thing off a surface before it sets it down, and that
-   one detail is the difference between carried and slid. */
-.lb-fly {
-  position: fixed; z-index: 60; margin: 0; pointer-events: none;
-  transition: left 420ms cubic-bezier(0.22, 1, 0.36, 1),
-              top 420ms cubic-bezier(0.22, 1, 0.36, 1),
-              width 420ms cubic-bezier(0.22, 1, 0.36, 1),
-              height 420ms cubic-bezier(0.22, 1, 0.36, 1);
-  animation: lbCarry 420ms cubic-bezier(0.22, 1, 0.36, 1);
-  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.6);
-}
-@keyframes lbCarry {
-  0%   { transform: scale(1);    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); }
-  45%  { transform: scale(1.06); box-shadow: 0 30px 60px rgba(0, 0, 0, 0.65); }
-  100% { transform: scale(1);    box-shadow: 0 0 0 rgba(0, 0, 0, 0); }
-}
-
-/* AND THE SHELF SHOWS THE GAP. A pack that is in tonight is drawn as an
+/* THE SHELF SHOWS THE GAP. A pack that is in tonight is drawn as an
    outline of itself, so it has visibly LEFT rather than been copied — which
    is what makes the flight read as a move rather than a duplicate appearing.
    Only a look: the pack is untouched on disk, and taking it out of the night
@@ -6446,3 +6424,22 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 /* `min-width: 0` or the URL refuses to go below its own content and takes the
    page sideways — the same trap, for the eighth time. */
 .cal-url { flex: 1 1 260px; min-width: 0; font-size: var(--fs-note); }
+
+/* ---- THE LOBBY GAME, on a phone.
+   `touch-action: none` is the line that matters and it is not cosmetic: this
+   game is played by TAPPING the maze, and rapid tapping on a canvas in mobile
+   Safari triggers double-tap-to-zoom — so a frantic player would zoom the page
+   instead of moving. It also stops the page scrolling under a dragged finger.
+   `user-select` for the same reason: a fast double tap selects text otherwise
+   and the phone offers to copy it mid-game. */
+.arcade { display: grid; gap: 8px; justify-items: center; }
+.arcade-box { width: 100%; display: grid; gap: 6px; justify-items: center; }
+.arcade-canvas {
+  width: 100%; max-width: 420px; aspect-ratio: 1 / 1;
+  touch-action: none;
+  -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  border-radius: var(--r-card);
+  background: rgba(0, 0, 0, 0.35);
+}
+.arcade-said { color: var(--ink-dim); }

@@ -144,6 +144,26 @@ export class Engine {
        */
       roundIdeas: [],
       /*
+       * THE LOBBY GAME — the seed every phone plays, and what the room scored.
+       *
+       * **THE SEED IS IN THE STATE, AND THAT IS WHAT MAKES THE SCOREBOARD
+       * MEAN ANYTHING.** The host's own catch: *"the game has to be consistent
+       * or else the scoreboard makes no sense."* The chasers wobble, so two
+       * people who faced different wobbles are not comparable — one seed, set
+       * at launch, and every phone in the room plays the identical game all
+       * night. Exactly the arrangement `roundIdeas` and the prize draw already
+       * use, and for the same reason: a thing you want to count has to be the
+       * same thing for everybody. It survives a restart for free by living
+       * here, so a crash at half nine does not hand the second half of the
+       * room a different game from the first.
+       *
+       * `arcade` is `{ playerId: score }` — the BEST each phone has managed,
+       * not every attempt. A leaderboard of one person's forty goes is not a
+       * leaderboard.
+       */
+      gameSeed: 1,
+      arcade: {},
+      /*
        * WHAT THEY WIN — first, second and third, and all three empty by default.
        *
        * "A free drink at the bar", "£50 bar tab". A fact about tonight like the
@@ -397,6 +417,65 @@ export class Engine {
     this.forgetBoard();
     return p;
   }
+
+  /**
+   * A SCORE FROM THE LOBBY GAME.
+   *
+   * The ONLY thing that feature ever sends, and it is sent once, when a game
+   * ends. Not a stream of positions: the lobby is precisely when the
+   * connection is busiest, because it is when sixty people are joining, and
+   * that is the one path in this app that must not stutter.
+   *
+   * **THE LOBBY AND NOWHERE ELSE.** A score arriving mid-question means a
+   * phone still playing while the room is being read a question, which is the
+   * one way this could make a night worse rather than better. Refused rather
+   * than ignored, so a phone that has somehow kept a game alive finds out.
+   *
+   * **THE BEST, NOT THE LATEST.** A board that took whatever came last would
+   * show somebody's worst attempt because they had one more go while the host
+   * was talking.
+   *
+   * The number is clamped rather than trusted. Nothing here is worth cheating
+   * for and there is no prize on it — but it goes on a projector in front of a
+   * room, and a phone can send whatever it likes.
+   */
+  arcadeScore(playerId, score) {
+    const player = this.state.players[String(playerId || '')];
+    if (!player) return { ok: false, reason: 'unknown_player' };
+    if (this.state.phase !== PHASES.LOBBY) return { ok: false, reason: 'not_waiting' };
+    /*
+     * A NIGHT RESTORED FROM BEFORE THIS EXISTED HAS NO `arcade` AT ALL, and
+     * this threw on it — found by a test rather than by a room. A redeploy
+     * mid-season brings back a state file written by the old code, which is
+     * the ordinary case on a host with no permanent disk, and a phone posting
+     * a score into it would have taken the request down. Degrade, never throw:
+     * the same rule the score-before-reveal field already follows.
+     */
+    if (!this.state.arcade) this.state.arcade = {};
+    const got = Math.max(0, Math.min(99999, Math.floor(Number(score) || 0)));
+    const best = this.state.arcade[player.id] || 0;
+    if (got <= best) return { ok: true, best };
+    this.state.arcade[player.id] = got;
+    this.changed();
+    return { ok: true, best: got };
+  }
+
+  /**
+   * WHO IS WINNING AT IT — names and scores, best first.
+   *
+   * Built here rather than on the projector, so the big screen and the host
+   * cannot disagree about it. Five, because it is a band beside a join code
+   * rather than a leaderboard anybody is studying — and a score whose player
+   * has left is dropped, because a number with nobody attached is a puzzle.
+   */
+  arcadeBoard(top = 5) {
+    return Object.entries(this.state.arcade || {})
+      .map(([id, score]) => ({ name: (this.state.players[id] || {}).name || '', score }))
+      .filter((row) => row.name)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, top);
+  }
+
 
   /**
    * This phone left the app while a question was up.
@@ -1717,6 +1796,24 @@ export class Engine {
     const view = this.baseView();
     const round = this.round();
 
+    /*
+     * WHO IS WINNING AT THE LOBBY GAME — names and scores, at the lobby only.
+     *
+     * Safe on the projector where an answer key never is, and the reason is
+     * the two-screens rule read properly rather than waved at: this is not
+     * secret, it is the point. It is also the one moment in an evening when
+     * the big screen has nothing on it but a join code, so it costs the night
+     * nothing to put something there.
+     *
+     * NEVER at any other phase. A leaderboard for a phone game on screen while
+     * a question is up is two things on one projector, which this app refuses
+     * everywhere else, and it would be telling a room to look down.
+     */
+    if (s.phase === PHASES.LOBBY) {
+      const board = this.arcadeBoard();
+      if (board.length) view.arcade = board;
+    }
+
     if (s.phase === PHASES.QUESTION || s.phase === PHASES.REVEAL) {
       const q = this.question();
       if (q && round) {
@@ -2113,6 +2210,23 @@ export class Engine {
       // The three, and nothing else — a phone is told what it may vote for and
       // sends back an id. No free text goes either way.
       view.roundIdeas = s.roundIdeas.map(({ id, label }) => ({ id, label }));
+    }
+
+    /*
+     * THE LOBBY GAME — only in the lobby, and only ever these two numbers.
+     *
+     * The SEED is what makes every phone play the same game, which is the only
+     * thing that makes a scoreboard of it fair. `arcadeBest` is their own top
+     * score so the phone can say "your best: 70" without keeping its own tally
+     * that a rejoin would lose.
+     *
+     * Sent nowhere else on purpose. A phone that still has a seed at question
+     * one is a phone that could still be playing, and the whole design of this
+     * app is a room looking UP.
+     */
+    if (s.phase === PHASES.LOBBY) {
+      view.gameSeed = s.gameSeed || 1;
+      view.arcadeBest = (s.arcade || {})[player.id] || 0;
     }
 
     if (s.phase === PHASES.FINAL && s.vouchers) {

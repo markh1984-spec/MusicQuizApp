@@ -3961,58 +3961,6 @@ function launchBar() {
   const PACK_SLOTS = 3;
 
   /**
-   * PICK IT UP AND PUT IT DOWN — the pack seen to travel from the shelf into
-   * the night.
-   *
-   * Asked for in those words: *"I want the pack to look like it physically
-   * moved from the library to the night section on drag… like you're
-   * literally picking it up and putting it down."* Two halves, and both are
-   * needed for it to read as one movement rather than a card vanishing and a
-   * tile appearing:
-   *
-   * **THE FLIGHT.** A copy of the landed tile is drawn over the page at the
-   * size and place the library card was, then moved to where the tile
-   * actually is. It is a CLONE on top rather than the real thing animating,
-   * because the real one is inside a grid that has already re-laid itself —
-   * animating it would drag its neighbours about. `position: fixed` and
-   * viewport coordinates, so a mid-flight scroll cannot leave it stranded.
-   *
-   * **THE LIFT AND THE SET DOWN.** It rises and grows a little at the
-   * half-way point rather than sliding flat, which is the difference between
-   * something moving across a page and something being carried: a hand lifts
-   * a thing off a surface before it puts it down. The shadow deepens with it
-   * and is gone by the time it lands.
-   *
-   * Nothing waits for it. The strip is already correct before the animation
-   * starts, so an interrupted flight — another drop, a re-render, a tab
-   * change — costs nothing but the picture.
-   */
-  function flyIn(from, tile) {
-    if (!from || !tile) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const to = tile.getBoundingClientRect();
-    const ghost = tile.cloneNode(true);
-    ghost.classList.add('lb-fly');
-    ghost.style.left = `${from.x}px`;
-    ghost.style.top = `${from.y}px`;
-    ghost.style.width = `${from.w}px`;
-    ghost.style.height = `${from.h}px`;
-    document.body.appendChild(ghost);
-    // Two frames: one for the browser to accept the start position, one for
-    // the change to be a transition rather than a jump.
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      ghost.style.left = `${to.left}px`;
-      ghost.style.top = `${to.top}px`;
-      ghost.style.width = `${to.width}px`;
-      ghost.style.height = `${to.height}px`;
-    }));
-    ghost.addEventListener('transitionend', () => ghost.remove(), { once: true });
-    // A belt-and-braces removal: a transition that never starts never ends,
-    // and a ghost left on the page would sit over the console for ever.
-    setTimeout(() => ghost.remove(), 900);
-  }
-
-  /**
    * THE SHELF SHOWS THE GAP. A pack that is in tonight is drawn as an outline
    * of itself in the library, so the card has visibly LEFT rather than been
    * copied — which is what makes the flight read as a move. It is only a
@@ -4050,7 +3998,24 @@ function launchBar() {
         ev.dataTransfer.setData('text/plain', String(at));
         tile.classList.add('is-lifting');
       });
-      tile.addEventListener('dragend', () => { roundDrag = null; tile.classList.remove('is-lifting'); });
+      tile.addEventListener('dragend', (ev) => {
+        tile.classList.remove('is-lifting');
+        /*
+         * DRAGGED BACK OUT. A pack lifted off the row and let go anywhere
+         * outside the section leaves the night — the same gesture the chosen
+         * pack box has always had, now on the object it belongs to. It reads
+         * as putting it back on the shelf, which is exactly what the library
+         * card does at the same moment: the dashed "In tonight" outline goes
+         * and the card is solid again.
+         *
+         * `elementFromPoint` rather than `dropEffect`, which browsers disagree
+         * about — this is the same check the box already uses, so the two
+         * cannot behave differently.
+         */
+        const inside = el.contains(document.elementFromPoint(ev.clientX, ev.clientY));
+        roundDrag = null;
+        if (!inside) dropPack(at);
+      });
       tile.addEventListener('dragover', (ev) => {
         if (roundDrag === null) return;
         ev.preventDefault(); ev.stopPropagation();
@@ -4239,7 +4204,6 @@ function launchBar() {
      */
     if (!currentPack) {
       pick(from);
-      flyIn(dropped.from, orderEl.querySelector('.lb-tile.is-pack'));
       return;
     }
     // The same pack twice is a mis-drop rather than an intention — a night
@@ -4253,7 +4217,6 @@ function launchBar() {
     }
     lbExtra.push(from.id);
     paintOrder();
-    flyIn(dropped.from, orderEl.querySelectorAll('.lb-tile.is-pack')[lbPacks().length - 1]);
   });
 
   el.addEventListener('dragover', (ev) => {

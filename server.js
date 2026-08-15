@@ -3886,7 +3886,7 @@ async function handleWrite(req, res, url, route) {
   // What a phone is allowed to do: answer a question, mark a bingo square and
   // call house, and — on an online night — say something in one of its own
   // rooms. Nothing else, and nothing that could hand out a new card.
-  if (['/api/answer', '/api/mark', '/api/claim', '/api/wandered', '/api/say', '/api/team'].includes(route) && req.method === 'POST') {
+  if (['/api/answer', '/api/mark', '/api/claim', '/api/wandered', '/api/say', '/api/team', '/api/arcade'].includes(route) && req.method === 'POST') {
     const body = await readJson(req);
     const action = route.slice('/api/'.length);
     const result = roomForPhone(req, url, body).session.runPlayerAction(action, body);

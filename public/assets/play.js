@@ -914,11 +914,83 @@ function buildWaiting(s, kicker, title, sub) {
       ${sub ? `<p class="wait-sub">${esc(sub)}</p>` : ''}
       <div class="wait-count" hidden></div>
       ${teamPicker(s)}
+      <!-- SOMETHING TO DO WHILE THEY WAIT. Behind a button and BELOW the photo
+           card, deliberately: the photos are what reach the projector and what
+           the night is remembered by, and a game that opened over them would
+           quietly cost the quizmaster the thing this app is actually for. -->
+      <div class="arcade" ${s.gameSeed ? '' : 'hidden'}>
+        <button class="btn ghost arcade-open" type="button">Play while you wait</button>
+        <div class="arcade-box" hidden>
+          <canvas class="arcade-canvas" width="600" height="600"></canvas>
+          <div class="tiny arcade-said">Tap where you want to go</div>
+        </div>
+      </div>
     </div>
   `);
   wireTeamPicker(el, s);
+  wireArcade(el, s);
   paintStartsIn(s);
   return el;
+}
+
+/**
+ * THE LOBBY GAME, on the phone.
+ *
+ * **BEHIND A BUTTON, NOT AUTOMATIC.** The host's own worry — *"don't want to
+ * disincentivise photo uploads"* — and he is right: the photo card is the
+ * thing that reaches the projector, and a game that opened on top of it would
+ * cost him the feature this app is actually for. So the waiting screen is
+ * unchanged until somebody asks for a game.
+ *
+ * **AND IT IS TORN DOWN ON EVERY STATE PUSH THAT IS NOT THE LOBBY.** The
+ * whole design of this app is a room looking UP; a game still running while
+ * question one is being read is the one way this could make a night worse
+ * rather than better. `render()` rebuilds the waiting screen, so a phase
+ * change destroys the canvas — and `stopArcade()` cancels the loop as well,
+ * because a `requestAnimationFrame` holding a removed canvas would carry on
+ * running for the rest of the night.
+ */
+let arcade = null;
+function stopArcade() {
+  if (!arcade) return;
+  arcade.stop();
+  arcade = null;
+}
+
+function wireArcade(el, s) {
+  stopArcade();
+  const box = el.querySelector('.arcade-box');
+  const open = el.querySelector('.arcade-open');
+  if (!box || !open || !s.gameSeed) return;
+  const said = el.querySelector('.arcade-said');
+  open.addEventListener('click', async () => {
+    if (!box.hidden) { box.hidden = true; stopArcade(); open.textContent = 'Play while you wait'; return; }
+    box.hidden = false;
+    open.textContent = 'Put it away';
+    /*
+     * LOADED ONLY WHEN ASKED FOR. Nobody who never presses the button pays for
+     * the game at all — which matters on pub wifi, on the one page sixty
+     * people are opening at the same moment.
+     */
+    const { startGame } = await import('./lobby-game.js');
+    const play = () => {
+      arcade = startGame(box.querySelector('.arcade-canvas'), {
+        // EVERY PHONE IN THE ROOM PLAYS THE SAME GAME — the seed comes off the
+        // game state, which is what makes the scoreboard mean anything.
+        seed: s.gameSeed,
+        onEnd: ({ score, won }) => {
+          said.textContent = won ? `Cleared it — ${score}. Tap to play again.` : `${score}. Tap to play again.`;
+          // ONE post, at game over. Not a stream of positions: the lobby is
+          // exactly when the connection is busiest.
+          postJson('/api/arcade', {
+            playerId: me.id, token: me.token, joinCode: roomCode(), score,
+          }).catch(() => {});
+          box.querySelector('.arcade-canvas').addEventListener('click', play, { once: true });
+        },
+      });
+    };
+    play();
+  });
 }
 
 /**

@@ -405,6 +405,22 @@ export class Session {
      * being asked) and the launch can override it, because "it is the fourteenth
      * of February" is a fact about tonight rather than about the pack.
      */
+    /*
+     * THE LOBBY GAME'S SEED, decided once, here, and written into the state.
+     *
+     * Every phone in the room reads it and plays the identical game, which is
+     * the only thing that makes a scoreboard of it mean anything — the host's
+     * own catch. In the state rather than generated per phone so a restart at
+     * half nine does not hand the second half of the room a different game
+     * from the first, exactly like the look, the card shape and the three
+     * round ideas beside it.
+     *
+     * Off the injected clock, so a test gets a stated seed rather than a
+     * surprise — the same reason `random` is injected for the prize draw.
+     */
+    this.engine.state.gameSeed = (this.now() % 1000000) + 1;
+    this.engine.state.arcade = {};
+
     this.engine.state.look = LOOKS.some((l) => l.id === look)
       ? look
       : (LOOKS.some((l) => l.id === normalised.look) ? normalised.look : DEFAULT_LOOK);
@@ -741,6 +757,15 @@ export class Session {
     }
     // "This phone went to the background while a question was up." A note for
     // the host and nothing else — see Engine.wandered().
+    /*
+     * A SCORE FROM THE LOBBY GAME. Behind the same token check as everything
+     * else on this path — it goes on a projector with a name beside it, so a
+     * phone that could post as somebody else could put another team's name
+     * against a score they did not get.
+     */
+    if (this.kind === 'quiz' && action === 'arcade') {
+      return this.engine.arcadeScore(String(body.playerId || ''), body.score);
+    }
     if (this.kind === 'quiz' && action === 'wandered') {
       return this.engine.wandered(String(body.playerId || ''));
     }
