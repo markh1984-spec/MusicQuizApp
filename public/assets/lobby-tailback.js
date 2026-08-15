@@ -44,13 +44,35 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
    * Getting this sum wrong sends the head to the wrong end of the field on
    * exactly the phones the game is for.
    */
+  /**
+   * WHERE THE FIELD SITS, worked out ONCE and used by both the drawing and the
+   * thumb.
+   *
+   * It was computed separately in each, which is how the two drift — and the
+   * bug that found it was worse than drift: the field filled the canvas edge to
+   * edge, so `offY` was zero, and **the lives, the score and the "Tap to go"
+   * prompt were all drawn outside the canvas buffer and never appeared at
+   * all.** Nothing threw, the game played perfectly, and the only sign was that
+   * a player had no idea how many lives they had.
+   *
+   * So the bands are reserved FIRST and the cells are sized into what is left.
+   */
+  const layout = () => {
+    const top = canvas.height * 0.085;
+    const bottom = canvas.height * 0.085;
+    const size = Math.min(canvas.width / COLS, (canvas.height - top - bottom) / ROWS);
+    return {
+      size,
+      offX: (canvas.width - size * COLS) / 2,
+      offY: top + ((canvas.height - top - bottom) - size * ROWS) / 2,
+    };
+  };
+
   const point = (ev) => {
     const t = ev.touches ? ev.touches[0] : ev;
     if (!t) return;
     const box = canvas.getBoundingClientRect();
-    const size = Math.min(canvas.width / COLS, canvas.height / ROWS);
-    const offX = (canvas.width - size * COLS) / 2;
-    const offY = (canvas.height - size * ROWS) / 2;
+    const { size, offX, offY } = layout();
     const px = (t.clientX - box.left) * (canvas.width / box.width);
     const py = (t.clientY - box.top) * (canvas.height / box.height);
     aim(g, Math.floor((px - offX) / size), Math.floor((py - offY) / size));
@@ -76,9 +98,7 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
 
   /* ------------------------------------------------------------ the drawing */
   function draw(now) {
-    const size = Math.min(canvas.width / COLS, canvas.height / ROWS);
-    const offX = (canvas.width - size * COLS) / 2;
-    const offY = (canvas.height - size * ROWS) / 2;
+    const { size, offX, offY } = layout();
     const X = (c) => offX + c * size;
     const Y = (r) => offY + r * size;
     ctx.clearRect(0, 0, canvas.width, canvas.height);

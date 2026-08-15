@@ -56,6 +56,7 @@ import { ownsPlayer, PHASES } from './src/engine.js';
 import { upcoming } from './public/assets/diary.js';
 import { calendarIcs } from './src/ics.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, switchedOn, PACK_PENCE } from './public/assets/plans.js';
+import { lobbyGameFor } from './public/assets/lobby-games.js';
 import { sendEmail, emailConfigured, emailProvider, keepKeyAlive, resetEmail } from './src/email.js';
 import { Suggestions, KINDS, PACK_REQUEST_KIND } from './src/suggestions.js';
 import { Spend, spendRecorder, imagePrices } from './src/spend.js';

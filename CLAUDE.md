@@ -1433,6 +1433,28 @@ The second one is the one that gets skipped, and it is the one that would stop
 a night. A `node --check` passing means the file parses, not that Launch still
 launches.
 
+**AND ON 15 AUGUST 2026 IT WAS SKIPPED, AND LAUNCH WENT TO THE LIVE APP
+BROKEN FOR EVERY GAME.** A function was called in `server.js` and never
+imported. `node --check` was happy, because a missing import is a
+ReferenceError at the moment the line runs rather than a syntax error. **1,150
+tests passed**, because every one of them either calls `session.launch()`
+directly or reads `server.js` as TEXT — **nothing in this repo had ever
+executed the file.** It was found by a browser agent clicking the button, which
+is precisely what the paragraph above says to do and what had not been done.
+
+`test/launch-route.test.js` is that advice with an assertion on it: it starts
+the real server on its own port and its own `DATA_DIR`, posts a real launch,
+and checks the projector has a quiz on it afterwards. It was verified by
+removing the import again and watching all three of its cases fail. **Keep it
+shallow** — it guards the protected surface, not the feature, and a slow suite
+is one people stop running before a gig.
+
+**The general lesson is bigger than the import: A TEST THAT NEVER RUNS THE
+ARTEFACT PROVES NOTHING ABOUT IT.** Reading `server.js` as a string to check a
+route exists is the same class of mistake as `screenView()` computing a board
+no projector ever drew — both were tested, both were wrong, and in both cases
+the test was measuring something adjacent to the thing that mattered.
+
 ### "Sweep mode" — find everything, change nothing
 
 **If he types `Sweep mode`, run a full sweep and REPORT. Do not action any of
