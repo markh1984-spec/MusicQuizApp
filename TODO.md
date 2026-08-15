@@ -1424,3 +1424,49 @@ feature anything:
 
 **And a removal path.** Somebody will want their photo down, and "email the
 quizmaster" is not one on a page with no contact on it.
+
+#### Badging the winners in the gallery — half of it joins exactly, half of it does not
+
+Asked for on 15 August 2026: highlight the photos from teams that won or did
+well.
+
+**It is the TEAM we know, not the device.** A photo carries `playerId` and
+`teamName` (`src/photos.js:147`) — the app's own handle for whoever uploaded
+it. There is no device identity anywhere in this app and there must not be:
+fingerprinting a stranger's phone in a pub is not something to add for a badge.
+The team is the better key anyway, because it is the thing worth printing.
+
+**THE WINNER JOINS EXACTLY. "DID WELL" DOES NOT.**
+
+- `vouchers[]` is in the archived night and carries `winnerId`, so the winning
+  photo can be identified by id — no guessing.
+- **The archived `leaderboard[]` has `position`, `name`, `score` and no ID**
+  (`src/engine.js:2474`). So anything below first place would have to join on
+  the TEAM NAME, and that is fuzzy in two ways that both end badly: **nothing
+  makes a team name unique** (28 characters and no filter is the whole rule),
+  and **a team can rename mid-game**, which leaves the photo holding the old
+  name while the leaderboard holds the new one.
+
+Either would badge **the wrong table's photo, in public, on a page they can
+order a mug from**. The fix is one field: **put the player id on the archived
+leaderboard.** Additive, invisible to every payload — the archive is not a
+view — and it makes the join exact instead of hopeful.
+
+#### BADGE, DO NOT RANK — and this follows from a rule already in CLAUDE.md
+
+A small gold mark on the winners is worth having. **Ordering the gallery by
+score is not**, and the reason is already written down twice:
+
+- *"Being on the podium is most of what a quiz night gives the people who did
+  not win it"* — recognition is the point, and a grid where the winners are
+  bigger takes it away from everybody else.
+- *"No red for a night that went down. The app does not editorialise about
+  somebody's own work."*
+
+A gallery is a scrapbook of the night, not a second leaderboard — and in a
+leaderboard most of the room loses. **Same size, same grid, same order; the
+winners get a mark and nobody gets demoted.**
+
+**And it is the strongest thing on a mug.** *"We won the quiz at The Crown"*
+is a far better product than a photograph, which is a real point in favour of
+the print idea rather than a decoration on it.
