@@ -1470,3 +1470,57 @@ winners get a mark and nobody gets demoted.**
 **And it is the strongest thing on a mug.** *"We won the quiz at The Crown"*
 is a far better product than a photograph, which is a real point in favour of
 the print idea rather than a decoration on it.
+
+### TWO NIGHTS, AND THEY ARE NOT THE SAME NIGHT
+
+Settled on 15 August 2026, and it corrects the section above rather than adding
+to it. The host runs *"a quiz, music bingo and karaoke combo night on a
+Thursday — and the karaoke isn't part of the quiz."*
+
+| | What it is | What it knows |
+|---|---|---|
+| **The booking** | the PUB's night — The Station Tap, Thursday, 9 till 1, quiz + bingo + karaoke | everything, including what the app never runs |
+| **The games** | the APP's night — a quiz, then the bingo | only itself |
+
+**DO NOT INVENT A THIRD CONCEPT. BOTH ALREADY EXIST.** A booking is
+`{ date, venue, off, note }` (`public/assets/diary.js:106`) and the games are
+the archived records `mergeGigs()` already groups by date. What is missing is
+the JOIN between them and the words to tell them apart.
+
+**And the app already gets this wrong in a place anybody can see:**
+`src/ics.js:161` writes `SUMMARY: Quiz — <venue>` into the calendar export, so
+a combo night appears in the host's own diary as "Quiz". That is the same
+mistake in miniature and it is already shipped.
+
+#### THE GALLERY HEADING COMES FROM THE BOOKING, NEVER FROM THE GAMES
+
+*"Quiz, Music Bingo & Karaoke at The Station Tap, 9 till 1"* is the line a
+customer reads. **Derived from what the app ran it would say "Quiz & Music
+Bingo" and silently drop the karaoke** — wrong, on the one line the page is
+judged by, and wrong in a way nobody would notice because it looks complete.
+
+So the heading is written by the host, not computed. **`note` already exists on
+a booking** and is the cheapest home for it; whether it deserves a field of its
+own is a question for when somebody fills one in.
+
+**The app never learns what karaoke is**, and must not. It records that the
+night contained something it did not run, in the host's own words, and stops
+there. Anything more is a karaoke module nobody asked for.
+
+#### AND THIS BREAKS THE PUBLISH TRIGGER I PROPOSED — usefully
+
+The section above says publish *"once the last game has ended, or at the booked
+end time."* **On a combo night the last GAME ends at eleven and the room is
+still there until one.** Publishing then puts the gallery out while the pub is
+full of the people in it, which is exactly what the publish gate existed to
+prevent.
+
+**So the booked END TIME is the trigger, and "the last game finished" is only a
+floor — never a trigger on its own.** Never before the games are done, and not
+until the booking says the night is over.
+
+**Which makes the booking's end time load-bearing, and today it is a guess.**
+CLAUDE.md records a *stated two-hour default*: a 9pm start becomes 11pm, so a
+combo night would publish two hours early, mid-karaoke. **A night whose gallery
+publishes on it needs a real end time**, not a default — and that is a small
+change to the booking form with a real consequence behind it.
