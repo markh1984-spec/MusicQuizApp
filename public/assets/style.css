@@ -6443,3 +6443,13 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
   background: rgba(0, 0, 0, 0.35);
 }
 .arcade-said { color: var(--ink-dim); }
+
+/* The countdown over the game. `pointer-events: none` or it would swallow the
+   taps that steer, in the ten seconds somebody is trying hardest. */
+.arcade-stage { position: relative; width: 100%; display: grid; justify-items: center; }
+.arcade-going {
+  position: absolute; inset: auto 0 8px; pointer-events: none;
+  text-align: center; font-weight: 900; font-size: var(--fs-lead);
+  color: #12000c; background: linear-gradient(120deg, var(--hot), var(--hot-2));
+  padding: 6px 0; border-radius: 0 0 var(--r-card) var(--r-card);
+}

@@ -921,7 +921,13 @@ function buildWaiting(s, kicker, title, sub) {
       <div class="arcade" ${s.gameSeed ? '' : 'hidden'}>
         <button class="btn ghost arcade-open" type="button">Play while you wait</button>
         <div class="arcade-box" hidden>
-          <canvas class="arcade-canvas" width="600" height="600"></canvas>
+          <div class="arcade-stage">
+            <canvas class="arcade-canvas" width="600" height="600"></canvas>
+            <!-- The countdown, over the game, for the last ten seconds. See
+                 paintStartsIn: somebody head-down in a maze is not reading a
+                 number above the maze. -->
+            <div class="arcade-going" hidden></div>
+          </div>
           <div class="tiny arcade-said">Tap where you want to go</div>
         </div>
       </div>
@@ -963,6 +969,11 @@ function wireArcade(el, s) {
   const open = el.querySelector('.arcade-open');
   if (!box || !open || !s.gameSeed) return;
   const said = el.querySelector('.arcade-said');
+  // ONE post, small, and never a stream of positions — the lobby is precisely
+  // when sixty people are joining, which is the path that must not stutter.
+  const postScore = (score) => postJson('/api/arcade', {
+    playerId: me.id, token: me.token, joinCode: roomCode(), score,
+  }).catch(() => {});
   open.addEventListener('click', async () => {
     if (!box.hidden) { box.hidden = true; stopArcade(); open.textContent = 'Play while you wait'; return; }
     box.hidden = false;
@@ -978,13 +989,15 @@ function wireArcade(el, s) {
         // EVERY PHONE IN THE ROOM PLAYS THE SAME GAME — the seed comes off the
         // game state, which is what makes the scoreboard mean anything.
         seed: s.gameSeed,
+        // Banked at each life lost as well as at the end — a game interrupted
+        // by the quiz starting never reaches game over, and by then the phase
+        // has moved and a score is rightly refused. See `onBank`.
+        onBank: (score) => { postScore(score); },
         onEnd: ({ score, won }) => {
           said.textContent = won ? `Cleared it — ${score}. Tap to play again.` : `${score}. Tap to play again.`;
           // ONE post, at game over. Not a stream of positions: the lobby is
           // exactly when the connection is busiest.
-          postJson('/api/arcade', {
-            playerId: me.id, token: me.token, joinCode: roomCode(), score,
-          }).catch(() => {});
+          postScore(score);
           box.querySelector('.arcade-canvas').addEventListener('click', play, { once: true });
         },
       });
@@ -1030,6 +1043,27 @@ function paintStartsIn(s) {
    */
   const sub = document.querySelector('.wait-sub');
   if (sub) sub.hidden = Boolean(s && s.startsAt);
+  /*
+   * AND IT REACHES SOMEBODY WHO IS PLAYING THE GAME.
+   *
+   * The host's own description of the flow: *"once the countdown is over it
+   * closes their game and it's time to start the quiz."* That is what happens
+   * — a phase change rebuilds the waiting screen and the game goes with it —
+   * but somebody head-down in a maze is not reading a countdown ABOVE the
+   * maze, so the last few seconds arrive as their game being snatched away.
+   *
+   * The same number, over the canvas, for the last ten seconds only. Not for
+   * the whole countdown: a number sitting on the game for two minutes is
+   * furniture, and the one moment it has to be unmissable is the moment it is
+   * about to matter.
+   */
+  const over = document.querySelector('.arcade-going');
+  if (over) {
+    const left = s && s.startsAt ? Math.ceil((s.startsAt - clock.now()) / 1000) : 0;
+    const soon = left > 0 && left <= 10;
+    over.hidden = !soon;
+    if (soon) over.textContent = left === 1 ? 'Starting…' : `Starting in ${left}`;
+  }
   if (!s || !s.startsAt) { box.hidden = true; return; }
   box.hidden = false;
   const left = Math.max(0, s.startsAt - clock.now());

@@ -64,7 +64,7 @@ const SCARED_MS = 6000;       // how long a big pellet lasts.
 
 const COLOURS = ['#ff2e88', '#4bd8ff', '#ff8a3d'];
 
-export function startGame(canvas, { onEnd = () => {}, seed = 1 } = {}) {
+export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 1 } = {}) {
   const ctx = canvas.getContext('2d');
   // Seeded, not random — see `seeded()`. Every phone in the room gets the
   // same one from the game state, so the scoreboard compares like with like.
@@ -214,6 +214,22 @@ export function startGame(canvas, { onEnd = () => {}, seed = 1 } = {}) {
         continue;
       }
       lives -= 1;
+      /*
+       * BANK THE SCORE AT EVERY LIFE LOST, not only at game over.
+       *
+       * The whole value of this game is that people are still playing when the
+       * quiz starts — a phone in the foreground is an SSE connection that does
+       * not have to reconnect at the exact moment sixty of them would. But a
+       * game interrupted by the start of the quiz never reaches game over, and
+       * the score cannot be sent afterwards either: the phase has moved and the
+       * server rightly refuses a score outside the lobby.
+       *
+       * So the people who played longest — precisely the ones this feature is
+       * for — were the ones missing from the leaderboard. Banking at each life
+       * lost fixes it and stays cheap: at most four small posts per game, not a
+       * stream, and the engine keeps the best of them anyway.
+       */
+      onBank(score);
       if (lives <= 0) { end(false); return; }
       // Everybody back to their corner, so a lost life is not immediately a
       // second one on the same square.
