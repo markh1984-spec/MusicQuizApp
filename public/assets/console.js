@@ -14,6 +14,29 @@ import { FEATURES, FEATURE_TIER, FEATURE_META, SWITCHABLE, findTier, switchable,
 import { lobbyGameChoices, lobbyGameFor } from './lobby-games.js';
 import { inSeason } from './looks.js';
 import { packLookAttrs } from './pack-look.js';
+
+/**
+ * THE ERA IN BIG LETTERS, BEHIND EVERYTHING ELSE ON THE CARD.
+ *
+ * Asked for on 15 August 2026 after cartoon figures were tried and did not
+ * read: *"the backgrounds can just have the decades in big letters as a
+ * background, so 80s just has a big colourful 80s in the background so its
+ * readable but not competing with the information on the quiet pack itself"*.
+ *
+ * **It is the answer the figures were reaching for.** A drawing has to survive
+ * being 90 pixels tall behind a title, and six of them did not — a whole
+ * person came out as a blob. Type does not have that problem: it is designed
+ * to be read at any size, it is already in the app, it needs no asset, and
+ * "80s" is unambiguous in a way a cartoon of somebody in flares never quite is.
+ *
+ * `aria-hidden`, because it is the decade the title already names — a screen
+ * reader announcing "80s" before "The 1980s Pop Music Quiz" is noise.
+ */
+function packWord(look) {
+  if (!look.word) return '';
+  return `<span class="pack-word" aria-hidden="true"
+    style="--pk-word-size: ${look.wordSize}px">${esc(look.word)}</span>`;
+}
 import { upcoming, tonight, clashTonight, nightKey, WEEKDAY_LABELS } from './diary.js';
 
 const mainEl = document.getElementById('main');
@@ -4236,9 +4259,13 @@ function launchBar() {
        * With three slots filled it also says what is in each one without
        * reading three titles.
        */
-      const look = packLookAttrs(pack);
+      // The KIND comes from the pack itself rather than from the tab you are
+      // on: Tonight can hold a quiz and a bingo game at once, so the tab would
+      // paint the wrong edge on one of them.
+      const look = packLookAttrs(pack, rounds ? 'quiz' : 'bingo');
       const tile = node(`
         <div class="lb-tile is-pack ${look.cls} ${rounds && (pack.rounds || []).every((_, i) => isOff(pack.id, i)) ? 'is-spent' : ''}" style="${look.style}" draggable="true" title="${esc(pack.title)}">
+          ${packWord(look)}
           <button class="lb-tile-off" type="button" aria-label="Take this pack out">&times;</button>
           <span class="lb-tile-n">${at + 1}</span>
           <b class="lb-tile-name">${esc(pack.title)}</b>
@@ -5603,11 +5630,12 @@ function packCard(kind, pack, repaint = () => {}) {
    * the card, never a fill: `broken` is still the only red on this shelf that
    * means anything, and it is still on the border where it always was.
    */
-  const look = packLookAttrs(pack);
+  const look = packLookAttrs(pack, kind);
   const el = node(`
     <div class="pack-card ${open ? 'open' : 'shut'} ${look.cls} ${pack.broken ? 'broken' : ''} ${ownPack ? 'own' : ''} ${freshness(pack).expired ? 'stale' : ''}"
       style="${look.style}"
       draggable="${pack.broken ? 'false' : 'true'}" data-pack="${esc(pack.id)}" data-kind="${esc(kind)}">
+      ${packWord(look)}
       <button class="pack-title" title="${open ? 'Close it' : 'Open it to set tonight up and launch'}"
         aria-expanded="${open ? 'true' : 'false'}">${esc(pack.title)}</button>
       ${ownPack ? '<div class="pack-yours" title="You wrote this one. Nobody else can read it.">Yours</div>' : ''}

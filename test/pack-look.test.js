@@ -17,7 +17,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { packLook, packLookAttrs, PACK_SUBJECTS } from '../public/assets/pack-look.js';
+import { packLook, packLookAttrs, kindEdge, PACK_SUBJECTS } from '../public/assets/pack-look.js';
+
+/* The decade table is not exported — it is an implementation detail — so the
+ * length rule is checked against what `packLook` actually returns for each. */
+const DECADES_FOR_TEST = ['50s', '60s', '70s', '80s', '90s', '00s', '10s', '20s']
+  .map((d) => ({ word: packLook({ title: `The ${d} Quiz` }).word }));
 
 test('a pack is the same colour every time it is asked', () => {
   // The entire value is recognising a card you have seen before, so a shelf
@@ -102,27 +107,56 @@ test('IT NEVER SPEAKS THE APP\'S OWN COLOUR LANGUAGE — every tint is a wash', 
   }
 });
 
-test('THE EDGE IS NEARLY SOLID WHERE THE WASH IS FAINT', () => {
+test('THE EDGE IS THE KIND OF PACK, NOT ITS SUBJECT', () => {
   /*
-   * The two do different jobs and the difference in strength IS the job: the
-   * wash sits under the title so it has to stay faint, which makes the hue
-   * hard to name; the edge has nothing written over it, so it can say the
-   * colour outright. If the edge ever drifted down to the wash's strength the
-   * feature would quietly lose half its point and nothing would look broken.
+   * The two channels say two different things and that is the whole design:
+   * the edge answers "what kind of night is this", the background answers
+   * "what era". If the edge ever went back to being derived from the subject
+   * it would be a louder copy of the wash and the shelf would answer one
+   * question twice.
    */
-  for (const title of ['The 1980s Quiz', 'The Madonna Quiz', 'The Christmas Quiz']) {
-    const look = packLook({ title });
-    const alphaOf = (c) => Number(c.match(/([\d.]+)\s*\)$/)[1]);
-    assert.ok(alphaOf(look.edge) > alphaOf(look.a) * 2, `${title}: the edge is no stronger than the wash`);
-  }
+  const quiz = packLookAttrs({ title: 'The 1980s Pop Music Quiz' }, 'quiz');
+  const bingo = packLookAttrs({ title: 'The 1980s Pop Music Quiz' }, 'bingo');
+  const edgeOf = (a) => a.style.match(/--pk-edge: ([^;]+)/)[1];
+  assert.notEqual(edgeOf(quiz), edgeOf(bingo), 'the same pack got the same edge for two kinds');
+  // ...and the SUBJECT half is identical, because that is not what changed.
+  assert.equal(quiz.style.match(/--pk-a: ([^;]+)/)[1], bingo.style.match(/--pk-a: ([^;]+)/)[1]);
 });
 
-test('the edge is the SAME hue as the wash, not a second colour', () => {
-  // Two colours on one card would be two things to remember. The edge is the
-  // wash said loudly, which is why it can be matched against a Tonight slot.
-  const look = packLook({ title: 'The 1980s Pop Music Quiz' });
-  const hue = (c) => c.replace(/[\d.]+\)$/, '');
-  assert.equal(hue(look.edge), hue(look.a));
+test('two packs of one kind share an edge however different their subjects', () => {
+  const a = packLookAttrs({ title: 'The 1980s Pop Music Quiz' }, 'quiz');
+  const b = packLookAttrs({ title: 'The 2000s Metal Quiz' }, 'quiz');
+  const edgeOf = (x) => x.style.match(/--pk-edge: ([^;]+)/)[1];
+  assert.equal(edgeOf(a), edgeOf(b));
+  // The subject half still differs, or nothing tells them apart at all.
+  assert.notEqual(a.style.match(/--pk-a: ([^;]+)/)[1], b.style.match(/--pk-a: ([^;]+)/)[1]);
+});
+
+test('A NEW GAME KIND STILL GETS AN EDGE rather than losing one', () => {
+  // "When I add further round types they can have new highlights" — until
+  // somebody does, a karaoke pack must not ship with a card that looks broken.
+  const next = packLookAttrs({ title: 'The Karaoke Pack' }, 'karaoke');
+  assert.match(next.style, /--pk-edge: [^;]+/);
+  assert.ok(kindEdge('karaoke'), 'an unknown kind produced no edge at all');
+});
+
+test('THE ERA IS PRINTED, AND ONLY WHEN IT IS SHORT ENOUGH TO READ', () => {
+  assert.equal(packLook({ title: 'The 1980s Pop Music Quiz' }).word, '80s');
+  assert.equal(packLook({ title: 'An 80s Night' }).word, '80s');
+  assert.equal(packLook({ title: 'The 2000s Metal Quiz' }).word, 'METAL');
+  // Nothing short and true to say — printing the whole title big is not the
+  // feature, and a nine-letter word across a 200px card is either unreadable
+  // or off the edge.
+  assert.equal(packLook({ title: 'The Christmas Number Ones Quiz' }).word, '');
+  assert.equal(packLook({ title: 'The Madonna Quiz' }).word, '');
+});
+
+test('nothing printed big is ever longer than five characters', () => {
+  // The size steps in `packLookAttrs` only go down to five. A longer word
+  // would be rendered at the five-character size and run off the card.
+  for (const s of [...PACK_SUBJECTS, ...DECADES_FOR_TEST]) {
+    if (s.word) assert.ok(s.word.length <= 5, `"${s.word}" is too long to print big`);
+  }
 });
 
 test('a pack with no title at all is still given something', () => {

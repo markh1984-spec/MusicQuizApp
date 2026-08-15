@@ -1925,11 +1925,30 @@ that a reading task.
   two are the same shape.
 - **The same pack is the same colour on every device and every reload.** A
   shelf that reshuffles its colours is worse than one with none.
-- **A WASH PLUS AN EDGE ALONG THE BOTTOM, and the difference in strength is
-  the job.** The wash sits under the title so it must stay faint, which makes
-  the hue hard to name; three pixels with nothing written over them says it
-  outright. **On the bottom because an ordinary button already carries the
-  account colour there** and the tab bar underlines the tab you are on — a
+- **THE EDGE IS THE KIND OF PACK; THE BACKGROUND IS THE ERA.** Two channels
+  saying two different things, so the shelf answers *what kind of night is
+  this* and *what era is it from* at one glance rather than one question twice.
+  Quiz is green, bingo purple, **adding a kind is one line** in `KIND_EDGE` and
+  an unknown kind still gets an edge rather than losing one. **The Tonight tile
+  takes its kind from the PACK, not the tab** — Tonight can hold both at once.
+  **One collision, accepted knowingly**: green already means good/paying/makes
+  something. Raised before building and taken — *"if they compete I'll change
+  it, but purple and green are my favourite colours."* Teal is a one-line
+  change if it ever reads muddy.
+- **THE ERA IS PRINTED BIG, bottom right and clipped** — the answer the cartoon
+  figures were reaching for, because type is legible at any size where a
+  drawing is not. **Only when it is short enough to read**: a decade is three
+  characters, a short genre five, "CHRISTMAS" is nine and gets nothing (its
+  colours already say it). There is a test that nothing longer than five is
+  printed. Gradient text behind an `@supports` with a SOLID colour declared
+  first, or a browser without `background-clip` prints nothing at all. It also
+  needed `position: relative` on `.pack-card`, which was missing — so the
+  **Yours** badge had been positioning against the wrong ancestor.
+- **A WASH ALONG THE BOTTOM AND THE EDGE ABOVE IT, and the difference in
+  strength is the job.** The wash sits under the title so it must stay faint,
+  which makes the hue hard to name; three pixels with nothing written over them
+  says it outright. **On the bottom because an ordinary button already carries
+  the account colour there** and the tab bar underlines the tab you are on — a
   stripe down the LEFT was rendered beside it and turned down, because nothing
   else in the app does that. **`:not(.broken)` is load-bearing**: the tint rule
   comes later in the sheet and would otherwise overwrite the red on the one

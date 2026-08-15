@@ -52,20 +52,55 @@
 const TINT = { top: 0.30, bottom: 0.16 };
 
 /**
- * THE EDGE IS NEARLY SOLID, AND THAT IS THE POINT OF HAVING BOTH.
+ * THE EDGE SAYS WHAT KIND OF PACK IT IS. THE BACKGROUND SAYS WHAT ERA.
  *
- * The wash has to stay faint or it fights the words on top of it — which means
- * on a dark card the actual HUE is hard to name, and two packs whose colours
- * are close read as the same colour. Three pixels of the same colour at full
- * strength says it outright, in a place with no text over it.
+ * Changed on 15 August 2026: *"the accent colour at the bottom should be
+ * defined by the type of pack it is, so quiz packs have a green highlight,
+ * bingo has a purple highlight etc."*
+ *
+ * **That split is better than what it replaces, and worth naming so it is not
+ * quietly merged again.** The edge was the pack's SUBJECT at full strength,
+ * which made it a louder copy of the wash — two channels saying one thing.
+ * Now they say two different things, and the shelf answers two questions at a
+ * glance rather than one twice: *what kind of night is this* and *what era is
+ * it from*.
  *
  * **On the BOTTOM, because that is the shape this app already uses** — an
  * ordinary button carries the account's colour on its bottom border and the
  * tab bar underlines the tab you are on. A stripe down the left was rendered
  * beside it and turned down for exactly that reason: nothing else in the app
  * does it, so it would be a second visual language for the same job.
+ *
+ * **ONE NOTED COLLISION, deliberately accepted rather than missed.** Green
+ * already means *good, paying, makes something* in this app — it is on Write
+ * it, on Import, and on the Playlist button that sits on a bingo pack card. A
+ * green edge meaning "this is a quiz" gives green a second job. It is mild,
+ * because a 3px edge is not a filled control and the two never appear on the
+ * same element; if it ever reads muddy, teal is a one-line change here.
+ *
+ * **ADDING A KIND IS ONE LINE**, which is the point — *"when I add further
+ * round types they can have new highlights"*. Keyed on the game kind, the same
+ * string `LAUNCHERS` and the console's `TABS` already use.
  */
+const KIND_EDGE = {
+  quiz: '#2fe07a',
+  bingo: '#a855f7',
+};
+
+/**
+ * A pack whose kind is not on the list still gets an edge rather than losing
+ * one — a new game type would otherwise ship with a card that looks broken
+ * until somebody remembers this file.
+ */
+const KIND_EDGE_FALLBACK = 'rgba(255, 255, 255, 0.35)';
+
 const EDGE_ALPHA = 0.85;
+
+/** The bottom edge for a game kind — 'quiz', 'bingo', or whatever comes next. */
+export function kindEdge(kind) {
+  const hex = KIND_EDGE[String(kind || '').toLowerCase()];
+  return hex ? rgba(hex, EDGE_ALPHA) : KIND_EDGE_FALLBACK;
+}
 
 function rgba(hex, alpha) {
   const n = parseInt(hex.slice(1), 16);
@@ -96,17 +131,17 @@ export const PACK_SUBJECTS = [
   { id: 'valentines', words: ['valentine', 'valentines', 'love songs'], a: '#ff4d7d', b: '#8a1450' },
 
   // ---- genre: what separates two packs from the same decade
-  { id: 'metal', words: ['metal', 'thrash'], a: '#8e99ad', b: '#0c0c12', pattern: 'slash' },
-  { id: 'rock', words: ['rock', 'grunge'], a: '#c33b2e', b: '#241016', pattern: 'slash' },
-  { id: 'punk', words: ['punk', 'ska'], a: '#e11d74', b: '#111014' },
-  { id: 'indie', words: ['indie', 'britpop', 'alternative'], a: '#2f9fb5', b: '#1b2f66' },
+  { id: 'metal', words: ['metal', 'thrash'], word: 'METAL', a: '#8e99ad', b: '#0c0c12', pattern: 'slash' },
+  { id: 'rock', words: ['rock', 'grunge'], word: 'ROCK', a: '#c33b2e', b: '#241016', pattern: 'slash' },
+  { id: 'punk', words: ['punk', 'ska'], word: 'PUNK', a: '#e11d74', b: '#111014' },
+  { id: 'indie', words: ['indie', 'britpop', 'alternative'], word: 'INDIE', a: '#2f9fb5', b: '#1b2f66' },
   // "R'n'B" comes out of `words()` as three separate letters, so the spaced
   // forms have to be listed too — the punctuation is stripped, which is what
   // makes "RnB" and "R'n'B" the same pack, and it is also what splits them.
-  { id: 'soul', words: ['soul', 'motown', 'rnb', 'r n b', 'r and b', 'funk'], a: '#c9862b', b: '#5a2352' },
-  { id: 'disco', words: ['disco', 'boogie'], a: '#b552d8', b: '#5a1f7a', pattern: 'lines' },
-  { id: 'dance', words: ['dance', 'house', 'rave', 'club', 'garage', 'techno'], a: '#7a4dff', b: '#0f4f78' },
-  { id: 'hiphop', words: ['hip hop', 'hiphop', 'rap', 'grime'], a: '#d1701f', b: '#2c1550' },
+  { id: 'soul', words: ['soul', 'motown', 'rnb', 'r n b', 'r and b', 'funk'], word: 'SOUL', a: '#c9862b', b: '#5a2352' },
+  { id: 'disco', words: ['disco', 'boogie'], word: 'DISCO', a: '#b552d8', b: '#5a1f7a', pattern: 'lines' },
+  { id: 'dance', words: ['dance', 'house', 'rave', 'club', 'garage', 'techno'], word: 'DANCE', a: '#7a4dff', b: '#0f4f78' },
+  { id: 'hiphop', words: ['hip hop', 'hiphop', 'rap', 'grime'], word: 'RAP', a: '#d1701f', b: '#2c1550' },
   { id: 'country', words: ['country', 'western', 'folk'], a: '#b58a4a', b: '#274031' },
   { id: 'reggae', words: ['reggae', 'ska', 'dub'], a: '#3f9c4a', b: '#7a5c15' },
   { id: 'musicals', words: ['musical', 'musicals', 'showtunes', 'broadway', 'disney'], a: '#d94f9e', b: '#3b2d8f' },
@@ -118,14 +153,14 @@ export const PACK_SUBJECTS = [
  * of every decade.
  */
 const DECADES = [
-  { id: '1950s', test: /\b(1950s?|50s|fifties)\b/, a: '#d9603f', b: '#4a2a1c' },
-  { id: '1960s', test: /\b(1960s?|60s|sixties)\b/, a: '#e08a2a', b: '#16665f' },
-  { id: '1970s', test: /\b(1970s?|70s|seventies)\b/, a: '#c9932b', b: '#5c3018', pattern: 'lines' },
-  { id: '1980s', test: /\b(1980s?|80s|eighties)\b/, a: '#f0369a', b: '#4b23b0', pattern: 'lines' },
-  { id: '1990s', test: /\b(1990s?|90s|nineties)\b/, a: '#2ec7d9', b: '#3a2596' },
-  { id: '2000s', test: /\b(2000s?|00s|noughties|2000\s*2010)\b/, a: '#2f7de0', b: '#16205a' },
-  { id: '2010s', test: /\b(2010s?|10s|twenty tens)\b/, a: '#17b39c', b: '#1d3f66' },
-  { id: '2020s', test: /\b(2020s?|20s)\b/, a: '#e0417f', b: '#20134f' },
+  { id: '1950s', test: /\b(1950s?|50s|fifties)\b/, word: '50s', a: '#d9603f', b: '#4a2a1c' },
+  { id: '1960s', test: /\b(1960s?|60s|sixties)\b/, word: '60s', a: '#e08a2a', b: '#16665f' },
+  { id: '1970s', test: /\b(1970s?|70s|seventies)\b/, word: '70s', a: '#c9932b', b: '#5c3018', pattern: 'lines' },
+  { id: '1980s', test: /\b(1980s?|80s|eighties)\b/, word: '80s', a: '#f0369a', b: '#4b23b0', pattern: 'lines' },
+  { id: '1990s', test: /\b(1990s?|90s|nineties)\b/, word: '90s', a: '#2ec7d9', b: '#3a2596' },
+  { id: '2000s', test: /\b(2000s?|00s|noughties|2000\s*2010)\b/, word: '00s', a: '#2f7de0', b: '#16205a' },
+  { id: '2010s', test: /\b(2010s?|10s|twenty tens)\b/, word: '10s', a: '#17b39c', b: '#1d3f66' },
+  { id: '2020s', test: /\b(2020s?|20s)\b/, word: '20s', a: '#e0417f', b: '#20134f' },
 ];
 
 /**
@@ -152,12 +187,13 @@ function hueOf(title) {
 }
 
 /**
- * The two colours and the pattern for one pack.
+ * WHAT A PACK SAYS ABOUT ITSELF: an era in big letters, and a wash behind it.
  *
  * @param {{title?: string, id?: string}} pack
- * @returns {{subject: string, a: string, b: string, pattern: string}}
+ * @returns {{subject: string, word: string, a: string, b: string, pattern: string}}
  *   `subject` is '' when nothing was recognised — which is not a failure, it is
- *   the ordinary case for "The Madonna Quiz".
+ *   the ordinary case for "The Madonna Quiz". `word` is what gets printed big:
+ *   '80s', 'METAL', or '' when there is nothing short and true to say.
  */
 export function packLook(pack) {
   const title = (pack && (pack.title || pack.id)) || '';
@@ -169,9 +205,19 @@ export function packLook(pack) {
   if (subject) {
     return {
       subject: subject.id,
+      /*
+       * NOT EVERY SUBJECT GETS A WORD, and the missing ones are deliberate.
+       * Asked for as *"80s just has a big colourful 80s in the background"* —
+       * and a decade is perfect for that because it is three characters. So is
+       * a short genre. "CHRISTMAS" is nine and would either be unreadably
+       * small or run off the card, and Christmas is the one subject whose
+       * colours already say it outright. A word only earns the space if it is
+       * short enough to be read at a glance, which is the whole point of
+       * printing it big.
+       */
+      word: subject.word || '',
       a: rgba(subject.a, TINT.top),
       b: rgba(subject.b, TINT.bottom + 0.1),
-      edge: rgba(subject.a, EDGE_ALPHA),
       pattern: subject.pattern || 'none',
     };
   }
@@ -180,9 +226,9 @@ export function packLook(pack) {
   const h = hueOf(title);
   return {
     subject: '',
+    word: '',
     a: `hsla(${h}, 55%, 45%, ${TINT.top})`,
     b: `hsla(${(h + 34) % 360}, 50%, 26%, ${TINT.bottom + 0.1})`,
-    edge: `hsla(${h}, 62%, 58%, ${EDGE_ALPHA})`,
     pattern: 'none',
   };
 }
@@ -201,10 +247,21 @@ export function packLook(pack) {
  * @returns {{cls: string, style: string}} both already escaped-safe: every
  *   value is generated here from numbers, never from anything a human typed.
  */
-export function packLookAttrs(pack) {
+export function packLookAttrs(pack, kind) {
   const look = packLook(pack);
   return {
     cls: `tinted${look.pattern === 'none' ? '' : ` pk-${look.pattern}`}`,
-    style: `--pk-a: ${look.a}; --pk-b: ${look.b}; --pk-edge: ${look.edge}`,
+    // The edge is the KIND, the wash is the subject — see the note on
+    // KIND_EDGE. They are on one element and mean two different things, which
+    // is exactly why they must not be generated in two different places.
+    style: `--pk-a: ${look.a}; --pk-b: ${look.b}; --pk-edge: ${kindEdge(kind)}`,
+    word: look.word,
+    /*
+     * Sized here rather than in the sheet, because the length varies and the
+     * card does not: '80s' is three characters and 'DISCO' is five, and one
+     * font size for both either wastes the card or runs off it. Three steps is
+     * enough — nothing longer than five characters ever gets a word.
+     */
+    wordSize: look.word.length <= 3 ? 46 : (look.word.length === 4 ? 34 : 27),
   };
 }

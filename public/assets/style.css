@@ -2133,6 +2133,60 @@ body.console::after { display: none; }
  * wrong with it. Red keeps its meaning everywhere; that is the rule.
  */
 .pack-card.tinted:not(.broken) { border-bottom: 3px solid var(--pk-edge); }
+
+/* ---- THE ERA, PRINTED BIG BEHIND THE CARD.
+ *
+ * Cartoon figures were tried first and do not read at this size — see
+ * docs/console.md. Type does: it is drawn to be legible at any size, it needs
+ * no asset, and "80s" is unambiguous in a way a drawing of somebody in flares
+ * is not.
+ *
+ * BOTTOM RIGHT AND CLIPPED, deliberately. The title is top left and wraps to
+ * two lines, the count sits under it — so the free corner is the far one, and
+ * letting the word run off the edge is what stops it reading as a label with
+ * a value in it. It is scenery the card is cut out of.
+ *
+ * `pointer-events: none` because the whole card is a drop source and a drag
+ * that started on the word would otherwise be a drag of the word.
+ *
+ * The card needs `position: relative` for this, and it did NOT have it — which
+ * means `.pack-yours` (absolute, top right) was positioning against whatever
+ * ancestor happened to be positioned instead of against its own card. Adding
+ * it here fixes that at the same time.
+ */
+.pack-card { position: relative; overflow: hidden; }
+.pack-word, .lb-tile .pack-word {
+  position: absolute; right: -2px; bottom: -10px; z-index: 0;
+  pointer-events: none; user-select: none;
+  font-size: var(--pk-word-size); font-weight: 900; line-height: 1;
+  letter-spacing: -0.03em; font-style: italic;
+  /* The subject's own two colours, so the word and the wash agree — and a
+     SOLID fallback first, because `background-clip: text` means transparent
+     text and a browser without it would print nothing at all. */
+  color: var(--pk-a);
+}
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .pack-word {
+    background: linear-gradient(120deg, var(--pk-a), var(--pk-b));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    /* The wash colours are capped low so they can sit under a title; as TEXT
+       there is nothing on top of them, so they need lifting back up or the
+       word is invisible. */
+    filter: brightness(2.6) saturate(1.4);
+  }
+}
+/* Everything real on the card sits above it. Only these two, rather than
+   `> *` — that would un-pin the absolutely positioned children, which is the
+   trap recorded on the tint rule above. */
+.pack-card > .pack-title, .pack-card > .tiny,
+.pack-card > .pack-set, .pack-card > .pack-actions, .pack-card > .go { position: relative; z-index: 1; }
+.lb-tile > .lb-tile-name, .lb-tile > .lb-rounds, .lb-tile > .lb-tile-sub { position: relative; z-index: 1; }
+/* Smaller in a Tonight slot, which is the same width but carries a number
+   badge, a remove button and a row of round ticks — there is less free corner
+   to run into. */
+.lb-tile .pack-word { font-size: calc(var(--pk-word-size) * 0.72); bottom: -6px; }
 /*
  * THE TILE NEEDS ITS OWN, MORE SPECIFIC RULE — and it was written without one,
  * which cost the feature its whole point on the half that matters most.
