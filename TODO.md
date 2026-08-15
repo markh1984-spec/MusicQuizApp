@@ -1541,6 +1541,44 @@ combo night would publish two hours early, mid-karaoke. **A night whose gallery
 publishes on it needs a real end time**, not a default — and that is a small
 change to the booking form with a real consequence behind it.
 
+### FLAG A RUDE PHOTO FOR REVIEW — and only then, maybe, cover it
+
+**FLAGGING IS THE FEATURE. CENSORING IS THE GARNISH**, settled on 15 August
+2026 when the host asked *"perhaps any potential nudity is flagged to me?"*
+right after calling the censored card a nice-to-have and the bin a
+need-to-have. He is right, and the reason is worth keeping because it inverts
+the difficulty:
+
+**A FALSE POSITIVE COSTS NOTHING IF IT IS ONLY FLAGGED.** He glances, sees an
+ordinary face, moves on. That was the ONE real failure mode of the censoring
+version — a CENSORED card over somebody's face on the projector, live, in front
+of a paying room — and flagging removes it completely. A miss costs nothing new
+either: it is exactly today, and nothing reaches the gallery unpublished.
+
+So every hard requirement disappears with it: **no bounding boxes** (the
+expensive part), **nothing baked into an image**, and **no latency in the live
+path** — score in the background after `fileAway`, the way the photo already
+reaches the repository after the phone has had its answer.
+
+#### What to build
+
+- **A score per photo, taken when it is filed.** A likelihood-only check is
+  enough — the `GOOGLE_API_KEY` that draws round-2 artwork already exists, but
+  **SafeSearch is a separate API that has to be enabled on the project**, which
+  is a setup step for the host rather than a code change.
+- **Kept in a sidecar beside the photos**, `photos/<room>/<night>/flags.json`,
+  exactly like `published.json` — the disk is wiped on deploy, the repo is not,
+  and the list of which pictures are questionable belongs with them.
+- **FLAGGED PHOTOS SORT TO THE FRONT OF THE NIGHT, marked.** That is the whole
+  value: a review of 102 photographs becomes a look at the three worth looking
+  at. It composes with what already exists — flag, then the bin, then the
+  publish button, which is a flow the host already has.
+- **BUILD IT SO IT WORKS WITH NO KEY AT ALL**: unscored is simply unflagged,
+  the column stays empty, and nothing about the night changes. Then enabling
+  the API switches it on without a deploy.
+
+#### And only after that, the joke
+
 ### "NICE TRY" — catching a rude photo and covering it, as a JOKE
 
 Asked for on 15 August 2026, and then reframed by the host in a way that
