@@ -1655,6 +1655,36 @@ feel calm — the tab was carrying four panels it should never have had.
 **So this is a MOVE, not a new section**, which makes it far smaller than it
 sounds and means no second navigation system to learn.
 
+#### CHOOSING THE SIX, from the workshop
+
+Added on 15 August 2026: *"even in the workshop you can drag and drop which 6
+items appear in the quick pick section for the console, for each game type — or
+if they leave it, it just defaults to pinned + recommended. In fact, call it a
+Recommended section!"*
+
+**The name is done and it is the honest one.** The shelf says **Recommended**
+at rest and **Your library** the moment it stops being a shortlist — when See
+all is pressed or a search is typed. A row of six labelled "your library" when
+somebody owns twenty-three is the app quietly lying about what it is showing.
+
+**The drag-to-choose is the PIN with an order on it, and it needs no new
+storage.** `prefs.pinnedPacks` already holds an ordered list per account;
+dragging six tiles into an arrangement in the workshop is simply a nicer way to
+write that list than tapping six pins on six cards. Which means the two cannot
+disagree — there is one piece of state and two ways in.
+
+- **PER GAME TYPE.** Quiz and bingo have their own shelves and their own six.
+  A list that mixed them would be wrong on every night.
+- **EMPTY IS THE DEFAULT AND MUST STAY MEANINGFUL** — pinned first, then the
+  ranking. Somebody who never opens the workshop still gets a sensible six,
+  which is what makes this an enhancement rather than a setup step.
+- **A PARTIAL ARRANGEMENT FILLS FROM THE RANKING.** Two dragged in means two
+  fixed and four suggested, not two and four holes. Same rule the pin already
+  follows.
+- **IT BELONGS IN THE WORKSHOP, NOT THE CONSOLE.** Choosing what is on the
+  shelf is preparation; the console is for the night. Putting the arranger on
+  the launch tab would be the fifth panel to creep onto it.
+
 #### What stays on the Console
 
 Tonight, the six packs, the search, and nothing else. **Not even the shop** —

@@ -2095,6 +2095,11 @@ body.console::after { display: none; }
   display: block; width: 100%; margin-top: 10px;
   padding: 9px 12px; font-size: var(--fs-note);
 }
+/* The signpost to the workshop. Quiet on purpose — it is a way OUT of the
+   launch page, not a thing to press before a gig. */
+.pack-way { margin: 10px 0 0; }
+.pack-way a { color: var(--ink-dim); text-decoration: none; border-bottom: 1px solid var(--panel-line); }
+.pack-way a:hover { color: var(--ink); border-bottom-color: var(--hot); }
 
 /* ---- THE PIN, top left.
  *

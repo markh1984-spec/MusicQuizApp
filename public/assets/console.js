@@ -5025,7 +5025,17 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
     <div class="game-section">
       <div class="game-head">
         <div>
-          <h2>Your library</h2>
+          <!-- "RECOMMENDED", NOT "YOUR LIBRARY" — asked for, and it is the
+               honest name: it explains WHY there are only six, which "your
+               library" does not. A shelf of six labelled "your library" when
+               you own twenty-three is the app quietly lying about what it is
+               showing you.
+
+               It goes back to naming the whole shelf the moment the shelf IS
+               the whole thing — pressing See all, or searching. Two states,
+               both true, and the heading is the thing that says which one you
+               are looking at. -->
+          <h2 class="pack-head">Recommended</h2>
           <div class="tiny">${esc(blurb)}</div>
         </div>
         <div class="pack-tools">
@@ -5178,6 +5188,13 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
      */
     const showAll = packAll[kind];
     const shown = showAll ? yours : yours.slice(0, PACK_SHELF);
+    // The heading follows the state — see the note where it is drawn. Set here
+    // rather than in the template because `paint()` runs again on every search
+    // keystroke and every See all, and the head is not rebuilt with the grid.
+    const headEl = el.querySelector('.pack-head');
+    if (headEl) {
+      headEl.textContent = (showAll || query) ? 'Your library' : 'Recommended';
+    }
     for (const pack of shown) grid.appendChild(packCard(kind, pack, paint));
 
     if (yours.length > PACK_SHELF) {
@@ -5186,6 +5203,24 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
         : `See all ${yours.length}`}</button>`);
       more.addEventListener('click', () => { packAll[kind] = !showAll; paint(); });
       grid.after(more);
+    }
+
+    /*
+     * THE WAY TO THE WORKSHOP — ONE LINE, AND IT MUST STAY ONE LINE.
+     *
+     * The Console is for launching; writing, buying and editing belong on the
+     * Packs door, which already exists in the menu. Somebody looking for
+     * "write a quiz" will come to this tab first, because that is where it has
+     * always been — so there has to be a signpost.
+     *
+     * **A LINK, NEVER A PANEL.** Four workshop panels crept onto this tab one
+     * at a time, each perfectly reasonable on its own, and together they
+     * buried the only thing this page is for. If this line ever grows into a
+     * box with controls in it, that has happened again.
+     */
+    if (can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS) || can(FEATURES.GENERATE)) {
+      const way = node(`<p class="tiny pack-way"><a href="${linkTo('/editor')}">Write, buy or edit packs →</a></p>`);
+      (grid.nextElementSibling || grid).after(way);
     }
 
     if (buyable.length) {
