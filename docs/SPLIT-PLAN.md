@@ -1,4 +1,26 @@
-# Splitting CLAUDE.md — DONE on 14 August 2026
+# Splitting CLAUDE.md — DONE on 14 August 2026, and again on 15 August
+
+**Done a second time on 15 August 2026, and the pattern held.** CLAUDE.md had
+grown back to 2,868 lines (~50,000 tokens) as the console theme, the calendar
+layout, Maze Mouth, Tonight and the drag-and-drop work each landed with their
+full reasoning inline. **17 sections moved, 200,618 bytes → 146,514 (−27%).**
+
+The script is the whole of it: a spec of `{start, end, dest, stub}`, ranges
+validated against their expected heading before anything is touched, blocks
+spliced out bottom-up so the line numbers stay valid, and **an assertion that
+every moved prose line comes out byte-identical in its destination** — 1,091
+of them — before a single file is written. The only edit made to a moved line
+is demoting its heading level, and only on heading lines outside a code fence.
+The hand-written half was the 17 stubs, which is the judgement part and the
+only part that could have lost a rule; the survival check below caught two
+lines and both were accounted for. **Expect to do this again**: the file grows
+back at roughly the rate features land, and the mechanical version costs an
+hour rather than a session.
+
+---
+
+## The first one
+
 
 **Executed. CLAUDE.md went from 5,620 lines (~90,000 tokens) to ~1,600
 (~30,000).** Kept as the record of how and why, and as the pattern for

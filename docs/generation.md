@@ -309,3 +309,110 @@ scopes it was actually granted (`grantedScopes()` / `explain403()` in
 Development-mode app look identical otherwise.
 
 ---
+
+---
+
+## What the room asked for — THREE BUTTONS, not a box
+
+`src/round-ideas.js`, `src/room-asks.js`, the card on the phone's final
+screen, the panel above the quiz generator, and the switch on My account.
+
+*"A customer finishes a quiz and thinks 'wouldn't it be great if there was a
+reggae round' — they can just drop it into the suggestion box."* It is the
+cheapest market research a quizmaster will ever get: from the people who were
+there, on the night, answering the one question that decides what to write
+next.
+
+**IT WAS A TEXT BOX FOR A DAY AND THE HOST REPLACED IT, correctly:** *"maybe
+instead of an open text box, can it have three randomly generated ideas based
+on rounds I don't have in the library?"* Everything below about sixty
+characters and grievances was the OLD design defending itself against typing;
+the new one removes the typing.
+
+**NOTHING A STRANGER TYPES EVER REACHES THE QUIZMASTER.** The three come from
+`ROUND_IDEAS` on the SERVER; a phone sends back an `ideaId` and the label is
+looked up here. So there is no moderation question to manage, no word filter
+to argue about, no "durrr I was bored", and nobody has to read anything to
+find out whether it was worth reading. That is a stronger guarantee than any
+length cap, and it is why the cap stopped being the interesting part.
+
+**It is also better DATA.** A box collects opinions of wildly varying quality
+from whoever could be bothered to type; three buttons collect a VOTE, and a
+vote can be counted — *"fourteen of the twenty who answered wanted reggae"* is
+a sentence that decides what to write next. Typing on a phone in a pub is a
+wall most people will not climb; tapping one of three is not.
+
+**ONLY WHAT IS NOT ALREADY ON THE SHELF.** Each idea carries the `words` that
+would give it away in a pack title, and any idea matching one is dropped
+before the three are picked — offering a Motown round to somebody who owns the
+Motown quiz wastes one of three slots and makes the app look like it has not
+read its own library. A library holding everything asks NOTHING rather than
+repeating itself: `roundIdeas` comes back empty and the card does not appear.
+
+**THE SAME THREE ALL NIGHT, and that is what makes it countable.** Chosen once
+at LAUNCH and written into the game state like the look, the card shape and
+the prizes — so every phone in the room votes on the same three, the numbers
+add up to something, and a restart at half eleven brings back the same
+question rather than a fresh one. `random` is injected exactly like the prize
+draw's, because "it offered three the library has not got" is not a thing you
+can assert against `Math.random`.
+
+**One vote each, and voting again REPLACES it.** A room reading three options
+out loud to each other changes its mind, and a button that stops working is a
+button somebody taps four times. Keeping both would count one person twice and
+make the number a lie.
+
+**A SWITCH ON MY ACCOUNT, OFF UNLESS TURNED ON** — the host's own call: *"this
+is the sort of feature that should have an on/off button in the QM's settings
+tab."* `prefs.askRounds`, read at LAUNCH, which is why the panel says *"it
+takes effect on the next night you launch"* — a switch that appears to do
+nothing tonight looks broken. It is a PREFERENCE and not a tier gate: it
+grants nothing, it decides whether three buttons appear on a phone.
+
+**AND THE PANEL THAT ANSWERS IT IS UNGATED.** It was gated on
+`owner.generate` for a day, which meant a quizmaster could turn the switch on,
+have their room vote all night, and never be shown a single number — **a
+switch whose answer is invisible to the person who pressed it is worse than no
+switch.** Generating is the owner's; wanting to know what the room asked for
+is everybody's, and what they do about it — write their own, buy one, request
+one — is not this panel's business. It draws nothing when there is nothing to
+say, so an account that never turns it on never sees it.
+
+**A SEPARATE BOX FROM THE QUIZMASTERS' ONE.** `suggestions.js` is subscribers
+writing to the owner, read on a Monday as a work queue with somebody waiting
+for a reply. Strangers' one-liners from a pub would bury it.
+
+**IT COMES OFF THE PHONE, NOT A QR** — and the QR was what was asked for, so
+the reason matters: the projector's one QR belongs to the VENUE (the
+come-back slide), and a second one competes with it for the same cameras.
+Everybody who played already has the app open on the results screen, so a box
+there costs no scanning and no screen. The token does three jobs at once —
+it proves they played, it makes anonymous flooding impossible without joining
+first, and it tags every ask with the NIGHT and the VENUE for free.
+
+**YES OR NO, AND NO IS A DELETE.** The host's own shape, and it is this
+file's Monday rule: a queue that shrinks as you work it costs a fraction of
+one that only grows. There is deliberately no "rejected" state — a list of
+things you have already said no to is a list you read twice.
+
+**AND IT IS A ROUND IDEA VOTE, NOT FEEDBACK BY THE BACKDOOR**, which was the
+host's own worry: *"'durrr I was bored' is not useful or relevant."* Three
+things keep it that way, and none of them is a filter:
+
+- **There is nowhere to type.** The strongest of the three, and the reason the
+  other two matter less than they did.
+- **It only exists at the END**, on a phone that played. There is no comment
+  box open all evening and there never was.
+- **No still costs one tap.** The worst case is a second of somebody's Monday
+  rather than a moderation queue.
+
+**The free-text path is still in `room-asks.js` (`add()`, `MAX_ASK`,
+`cleanAsk()`) and nothing calls it from the app.** Left deliberately: it is
+what reads a night filed before the vote existed, and `cleanAsk()` is what
+tidies the label on the way in. **Do not wire a text box back onto it** without
+reopening the paragraph above.
+
+**Grouped by idea, most-asked first** — four people wanting reggae is a
+different fact from one person asking four times, and it is the number that
+decides whether it is worth a pack. The kept list is grouped too, or one idea
+four people asked for looks like four jobs.

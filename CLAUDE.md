@@ -663,121 +663,32 @@ land on rather than scroll to, and its badge counts what you are still owed.
 ### THE MONTH IS ON THE LEFT AND WHAT YOU DO ABOUT A DATE IS ON THE RIGHT
 
 `diarySection()` in `console.js`, `.cal-wrap` / `.cal-side` in `style.css`.
-Asked for directly: *"perhaps the calendar needs to sit off to the left in the
-section to allow room for the right to populate?"*
+Two columns from 900px, the month left and what you do about a date right;
+below that the panel goes underneath and the picker scrolls it into view. The
+panel is **the diary when no date is picked and that date when one is**. There
+is **one place a night is added and it is the date you picked** — *Book a quiz*
+opens the whole form against the date in the heading, which is never a field. A
+start time is **optional** and written **floating** (no `Z`, no `TZID`), with a
+stated two-hour default and an end date that moves with the clock. **"Not on
+this week"** writes one week of a residency off and **"Delete this booking"**
+removes a one-off — two labels, never one; a written-off night is **shown on its
+own date with Put it back**. A row in the coming-up list is something you READ:
+no buttons on it, and the whole row picks that date. The month is **sticky** at
+900px and up. **Invoice for this date goes to the Invoices tab**, not to a form
+over the calendar.
 
-**It fixes a real fault rather than only looking tidier.** Full width, the
-month was seven columns of mostly-empty boxes, and what answered a date was a
-thin strip UNDER it — so picking the 23rd pushed the answer below the fold and
-the form it sent you to was below that again. Beside it, a date and what you
-can do about it are one glance. Two columns from 900px only: below that the
-month is the tight thing — seven columns of a 320px phone is 38px a day — so
-the panel goes underneath and **the picker scrolls it into view**, because
-that is the same below-the-fold fault arriving on the device this is most
-often held on.
-
-**The panel is the diary when no date is picked and that date when one is.**
-Two jobs in one column rather than two columns of their own: what is coming up
-is what you READ and a date is what you ACT on, and they are never both
-wanted.
-
-**THERE IS ONE PLACE A NIGHT IS ADDED, AND IT IS THE DATE YOU PICKED.** The
-bottom of the tab used to carry its own date box, venue and *Add a night* —
-a second control for a job the month already does, which is exactly how a
-booking lands on the date the other one happened to be showing. **Book a
-quiz** now opens the whole form against the date in the heading, at the host's
-own instruction: *"perhaps when you click 'book a quiz' it just asks for all
-quiz info like venue, time etc."* The date is the heading rather than a field,
-because it is the thing you clicked to get here and a box repeating it is a
-second place for it to be wrong.
-
-**A NIGHT CAN CARRY A START TIME NOW, and it is optional on purpose.** A
-residency has none — the venue's arrangement lives in no record here — so
-demanding one would make somebody invent a fact in order to save a booking.
-Given, `src/ics.js` writes a real timed appointment instead of a day-long
-block, **floating**: no `Z` and no `TZID`, so "8pm" means 8pm where the
-quizmaster is rather than wherever the server guessed. The two-hour length is
-a stated DEFAULT, because every calendar client needs an end and an event with
-no length is not an appointment. **The end date moves with the clock** — half
-eleven ends at half one the NEXT day, and writing that against the same date
-is an event ending twenty-two hours before it starts, which a calendar either
-refuses or draws across the whole day. Tested.
-
-**"NOT ON" IS NOW TWO LABELS, AND THE OLD ONE WAS INVISIBLE RATHER THAN
-WRONG.** Asked directly — *"not sure what 'not on' would be useful for"* —
-and the honest answer is that the button did the right thing and nothing on
-screen could teach it: it writes one week of a residency off, the night then
-vanishes from the diary and from the calendar feed, and nothing said so or
-offered a way back. **A control whose entire effect is something disappearing
-is a control nobody can learn.** Three changes, and none of them is the
-behaviour:
-
-- **"Not on this week"** on a residency, which is what it always did. It was
-  *"Not on"* — a verb with no object, which is the label collision this file's
-  sweep already looks for.
-- **"Delete this booking"** on a one-off, because that is a real row somebody
-  typed and the thing you want is for it to be gone. One label used to cover
-  both acts on both objects.
-- **A written-off night is SHOWN on its own date**, named, with **Put it
-  back** on it — `removeBooking`, because forgetting the exception is what
-  returns a residency to being an ordinary one.
-
-**A NIGHT IN THE LIST IS SOMETHING YOU READ, NOT TEN THINGS YOU DO — and the
-first build of this got it wrong in a way the host spotted immediately.** The
-"coming up" list used the same card as the day panel, buttons and all, so
-**Invoice it** and **Not on this week** appeared on every one of ten rows. Two
-faults, and the second is already a rule in this file:
-
-- **A WALL OF RED.** *"Don't want a wall of red either"* — his own line, set
-  when three tinted button options were turned down. Ten outlined-red buttons
-  in a column is louder than one filled one, and it made an ordinary diary
-  read as ten things that had gone wrong, on a page whose only other colour
-  was a pink underline on the button beside it.
-- **It contradicted the panel's own split.** What is coming up is what you
-  READ; a date is what you ACT on. Actions in both halves meant the day panel
-  was not *the* place a night is dealt with, it was one of two.
-
-So a list row is the date, the place and what it plays for, and **the whole row
-picks that date** — landing you in the day panel where the actions are, with
-the month moved to the right month on the way. *"No prizes set"* went with
-them: printed ten times it is noise, and it is still said in the day panel,
-which is where it can be acted on.
-
-**And the month is STICKY beside it** at 900px and up. A month is five rows and
-the list is however many nights you have, so the left column ran out a long way
-above the right one and the bottom half of the section was a black void with a
-list floating in it. Sticky, the calendar is still there to click when you
-reach the end of the list — which is exactly when you want it.
-
-**AND "INVOICE FOR THIS DATE" GOES TO THE INVOICES TAB** rather than opening a
-form over the calendar, at the host's own reading: *"'invoice for this date'
-goes to the invoice section with that date pre-filled"*. He is right, and the
-reason is what happens AFTER you press send — over the calendar you are left
-standing on a month with no sight of the invoice you just raised, its number
-or whether it is still a draft. Landing on the tab that owns them means the
-thing you made is on the page behind the form. The date crosses as a
-`pendingInvoice`, consumed once by `invoicesSection()` after its own book has
-loaded — which is also what turns the venue NAME into a customer id, so the
-calendar raises an invoice without fetching the invoice book at all.
+Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 
 ### PRESSING A TAB PUTS THE TAB BAR AT THE TOP OF THE SCREEN
 
-`showTabBar()` in `console.js`. The host's own words: *"would be good if a
-click on a tab made the tabs appear to be the top of the page, so you can
-always just scroll up from there to get to the launch bit."*
+`showTabBar()` in `console.js`. Not `top: 0` — that puts **Tonight** back on
+screen every time you change tab, so the thing you pressed for starts a section
+and a half down. Every tab opens at its own first line and Tonight is exactly
+one flick UP, in the same place on every tab. **Measured off the sticky topbar
+rather than a written-out number**, because that bar wraps on a phone — and
+measured after `render()`, since the bar is rebuilt on every one.
 
-It jumped to `top: 0`, which puts **Tonight** back on screen every time you
-change tab — so the thing you actually pressed for starts a section and a half
-down, and you scroll past the launch panel to reach it. The other way round,
-every tab opens at its own first line and Tonight is exactly one flick UP, **in
-the same place on every tab**, which is the whole reason that panel sits above
-the bar rather than inside one.
-
-**Measured off the sticky topbar rather than a written-out number**: that bar
-WRAPS on a phone, so it is 54px on a laptop and a good deal more with the doors
-on a line of their own — a constant would hide the tabs underneath it on the
-device this is most often held on. Measured after `render()`, because the bar
-is rebuilt on every one.
+Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
 ### THE INVOICE BOOK IS NOT ENCRYPTED, AND THAT IS THE DECISION
 
@@ -829,182 +740,55 @@ need a phone number nobody dials.
 
 ### THE CONSOLE'S THEME — one surface, one heading ladder, a bar that stays
 
-Settled on 14 August 2026, after the host looked at the tabs together and
-said: *"we REALLY need to look at UI, stuff is all over the place and the
-colours are not singing at all"*, then *"there's tons of different colours,
-fonts, font sizes etc. — we need a general theme that everything sticks to"*
-and *"the menu should wrap to the screen on a laptop"*. Four options were
-rendered against the real page before he chose; the pictures were the
-argument, not the paragraphs.
+**ONE SURFACE, TINTED WITH THE ACCOUNT'S OWN COLOUR** — `--surf-1`, `--surf-2`,
+`--surf-line`, applied by overriding `--panel` and `--panel-line` **for
+`body.console` alone**. One override is one decision; editing the twenty-nine
+rules that say `var(--panel)` is twenty-nine chances to drift again. **The
+surfaces are OPAQUE**, which is load-bearing: translucent, the same pack card
+comes out a different colour depending on which wash it lands over. The console
+keeps the corner washes and the drift every other surface has — it was the one
+page in the app with its ambience switched off.
 
-**THE CONSOLE WAS THE ONE SURFACE IN THIS APP WITH ITS AMBIENCE SWITCHED
-OFF.** `body.console` painted a flat `#0b0b14` and `body.console::after {
-display: none }` killed the drift — so the corner washes and the two blobs
-that set the mood on the projector, the phone and the join page were off on
-the page a quizmaster spends the most time in. Flat near-black, grey cards,
-the account's colours reaching **one button a screen**, and the most
-saturated thing on the page the destructive red. That inversion is what "the
-colours are not singing" was: the loudest colour belonged to the control you
-least want pressed.
+**THREE HEADING STEPS, AND THE TAB'S OWN IS DRAWN IN ONE PLACE.** `tabBody()`
+prints the tab's own label as the heading, in the account gradient at
+`--fs-title`, and a section under it drops to `--fs-head` and stays white. In
+`tabBody()` rather than in nine render functions, because a heading each is
+exactly the arrangement that let four of them go missing. **Behind an
+`@supports`**: gradient text is transparent text.
 
-**ONE SURFACE, TINTED WITH THE ACCOUNT'S OWN COLOUR** — `--surf-1`,
-`--surf-2`, `--surf-line`, applied by overriding `--panel` and `--panel-line`
-**for `body.console` alone**. That last part is the point: twenty-nine rules
-said `background: var(--panel)` and four more had written their own grey out
-by hand, which is how four slightly different greys existed with nobody
-having chosen any of them. One override is one decision; twenty-nine edits
-are twenty-nine chances to drift again.
+**The tab bar wraps rather than scrolling on a laptop** — a tab cut in half at
+the edge with no scrollbar is a tab that does not exist — and is **sticky from
+860px**, which is what removed the reserved `min-height` under short tabs.
+`showTabBar()` **measures the tab BODY, not the bar**: a sticky element lies
+about where it is. **`.game-head .row` is a flex row** with a gap, wrapping,
+`align-items: stretch`. The account-coloured underline on ordinary buttons
+stays.
 
-**AND THE SURFACES ARE OPAQUE, WHICH IS LOAD-BEARING RATHER THAN
-INCIDENTAL.** Turning the washes on with the cards left translucent was
-rendered as its own option and is WRONG: a card sitting over the pink blob
-comes out pink and one over black comes out grey, so the same pack card is a
-different colour depending on where it lands in the grid. That is the "all
-over the place" complaint wearing a coat, and it is only visible in a render
-— which is why the options are rendered. Opaque, the background can be as
-alive as it likes.
+Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
-**THREE HEADING STEPS, AND THE TAB'S OWN IS DRAWN IN ONE PLACE.** The top of
-the page used to change shape as you moved along the bar: Music Quiz gave one
-22px heading and two small ones inside cards, Calendar and Gigs opened with a
-22px heading, and **Venues, Adverts, Help and My account had none at all**.
-So `tabBody()` now prints the tab's own label as the heading — in the account
-gradient, at `--fs-title` — and a section under it drops to `--fs-head` and
-stays white.
-
-- **In `tabBody()` rather than in nine render functions**, because a heading
-  each is exactly the arrangement that let four of them go missing. It reads
-  the tab's own label, so the heading and the lit chip cannot disagree.
-- **It repeats the lit tab deliberately.** A chip in a row of nine says which
-  is on; a heading says what the page IS, at the size everything below it is
-  measured against. Without one, the first thing on four tabs was a small
-  bold word inside a card — a subheading of nothing.
-- **The demotion is not optional**: left at one size, Gigs printed "Gigs",
-  "Headcount" and "Past gigs" identically, which is three tabs as far as the
-  eye is concerned.
-- **The gradient is safe on a heading where it would not be on a button**,
-  because a heading is not something you press — which is the whole reason
-  that fill is otherwise rationed to one control a screen. Behind an
-  `@supports`: gradient text is TRANSPARENT text, so a browser without
-  `background-clip` would draw the heading on every tab invisible.
-
-**THE TAB BAR WRAPS, THEN STOPPED NEEDING TO.** Nine tabs came to about 993px
-against the console column's 968, and `overflow-x: auto` **cut "My account"
-in half at the right-hand edge with no scrollbar drawn to say it could be
-reached** — a tab you cannot see is a tab that does not exist. Wrapping fixed
-it and cost a second row; tightening the tabs' side padding from 18px to 14px
-fits all nine on one, which matters because of the next paragraph.
-
-**AND IT IS STICKY FROM 860px, WHICH IS WHAT REMOVED THE RESERVED HEIGHT.**
-The host asked for a tab press to leave the bar at the top of the screen so
-Tonight is one flick up. The first answer was `min-height: 78vh` on
-`.tabbody`, because a short tab had nowhere left to scroll — and that is why
-it *"worked on some tabs and not others"*: Adverts, Gigs, Invoices and Venues
-were simply too short, and the ones that FETCH are a heading and "Loading…"
-at the instant of the scroll. It worked and it left most of a screen of black
-under a nearly-empty tab. Sticky, there is nothing to scroll TO and nothing
-to reserve. Below 860px it scrolls sideways as before, because nine tabs
-would be three rows on a phone and a sticky three-row bar would eat the top
-of every tab all night.
-
-**`showTabBar()` MEASURES THE TAB BODY, NOT THE BAR.** A sticky element lies
-about where it is: once pinned its `top` is the pin position rather than its
-place in the document, so "scroll until the bar is at the top" is a no-op the
-second time and jitters by the gap the first. The body underneath is never
-sticky, so its rectangle is the honest one.
-
-**A HEADING'S BUTTONS ARE A ROW, AND `.game-head .row` WAS NEVER TOLD TO BE
-ONE.** `.host .row` and `.panel.pics .row` are both `display: flex` with a gap
-and wrapping; this one had `margin-left: auto` and nothing else — so its
-children were loose inline-blocks that broke onto a second line at whatever
-width each happened to be. That is Adverts' "New set" hanging under the end of
-"Bring in a picture", and Invoices' three buttons at three heights.
-`align-items: stretch` rather than `center`, because two of them are a
-`<label>` and a `<button>` with different padding: centred they share a
-midline and still read as two different sizes.
-
-**THE ACCOUNT-COLOURED UNDERLINE ON ORDINARY BUTTONS STAYS**, put to the host
-with the alternatives and kept. It is the decision this file already records —
-colour on the EDGE, never the face, so one button says whose app this is and
-six in a row still say it once — and now that the surfaces carry the same
-colour it reads as of a piece rather than as a stray line.
-
-### MAZE MOUTH — THE LOBBY GAME, AND IT IS NEVER CALLED PAC-MAN
+### THE LOBBY GAMES — MAZE MOUTH, AND IT IS NEVER CALLED PAC-MAN
 
 `public/assets/maze.js`, `lobby-game.js`, `state.gameSeed`, `state.arcade`.
-Asked for as *"a little game to play on their phones while they're waiting…
-like an old school video game like tennis or pac-man"*, and the host's own
-line once it was built: *"I'm going to call it Pac Man but obviously the app
-won't do that."* That is exactly the right split and it is worth writing down,
-because **the app currently gives the game no name at all — and an empty name
-is an invitation.** The strings are "Play while you wait", "Put it away" and
-"Tap where you want to go"; the next session to touch this will feel the gap
-and the obvious word to fill it with is the one that cannot be used.
 
-**IT IS A LEGAL LINE, NOT A TASTE ONE.** The name, the maze, the characters
-and the sounds are Namco's, and this app is SOLD — the same reasoning already
-recorded for photoreal pictures of living musicians, where UK fair dealing
-does not cover commercial entertainment. Our maze, our chasers, our words.
-Say it on a mic all you like; do not print it.
+- **IT IS CALLED MAZE MOUTH.** The name, the maze, the characters and the
+  sounds of the other thing are Namco's and this app is SOLD — a legal line,
+  not a taste one. Say it on a mic all you like; do not print it.
+- **EVERY PHONE PLAYS THE SAME GAME**, seeded from `state.gameSeed`, set at
+  launch and living in the state — or the scoreboard compares two different
+  games and means nothing.
+- **IT CANNOT REACH A QUIZ**, and there are tests for each half: the seed is in
+  the phone's payload at the LOBBY only, a score is refused at any other phase,
+  and the board is on the projector at the lobby only.
+- **Behind a button, below the photo card** — *"don't want to disincentivise
+  photo uploads"*. The module is imported only when the button is pressed.
+- **No control panel: you tap and it walks there.** A swipe has to be READ and a
+  misread one costs a life. `touch-action: none` on the canvas is load-bearing.
+- **ONE POST LEAVES A PHONE, at game over.** Never a stream of positions — the
+  lobby is exactly when sixty people are joining.
+- **Each moment has a primary: the game before the quiz, photos between the
+  rounds.** The floating camera button stands down in the lobby.
 
-**EVERY PHONE PLAYS THE SAME GAME, and that is what makes the scoreboard mean
-anything.** The host's catch: *"the game has to be consistent or else the
-scoreboard makes no sense."* The chasers wobble one turn in four, so two
-people who faced different wobbles were not comparable and the higher score
-might only have been the luckier one. `gameSeed` is set at launch and lives in
-the state, so it is the same for everybody and survives a restart — the
-arrangement `roundIdeas` and the prize draw already use, for the same reason.
-
-**IT CANNOT REACH A QUIZ, and there are tests for each half.** The seed is in
-the phone's payload at the LOBBY only, a score is refused at any other phase,
-and the board is on the projector at the lobby only. A game still running
-while question one is read is the single way this could make a night worse
-rather than better.
-
-**BEHIND A BUTTON, BELOW THE PHOTO CARD** — *"don't want to disincentivise
-photo uploads"*. The photos are what reach the projector and what a night is
-remembered by; a game opening over them would quietly cost the quizmaster the
-feature this app is actually for. The module is imported only when the button
-is pressed, so nobody who never plays pays for it on pub wifi.
-
-**NO CONTROL PANEL: you tap the maze and it walks there**, shortest route,
-recomputed every step. A swipe has to be READ — was that up, or
-left-and-a-bit-up — and a misread swipe costs a life; a destination cannot be
-misread. Frantic tapping replaces the target rather than queueing it, so there
-is no backlog. **`touch-action: none` on the canvas is load-bearing**: rapid
-tapping fires mobile Safari's double-tap zoom, so without it the keenest
-players are the ones who zoom the page instead of moving.
-
-**ONE POST LEAVES A PHONE, at game over.** Never a stream of positions — the
-lobby is precisely when sixty people are joining, which is the one path in
-this app that must not stutter.
-
-**IT IS CALLED MAZE MOUTH**, named by the host, and that closes the gap this
-section was written to flag: an unnamed thing keeps inviting the wrong name.
-It is on the button a player presses and in the file headers, so there is a
-right answer to hand.
-
-**EACH MOMENT HAS A PRIMARY: MAZE MOUTH BEFORE THE QUIZ, PHOTOS BETWEEN THE
-ROUNDS.** The host's own split, and it is better than offering both equally
-everywhere. The lobby is dead time with nothing on the projector, which is
-exactly what a game is for; a round board is when the room is already looking
-up and a photo can have its moment on the big screen. So the waiting screen
-leads with the game and carries the photo underneath it, and everywhere else
-the game does not exist at all.
-
-**The photo is not REMOVED from the lobby, only quietened.** Somebody
-arriving with their mates takes the group photo as they sit down, and that is
-the upload this app most wants — *"don't want to disincentivise photo
-uploads"*. It simply stops being the loud one for those few minutes. **And
-the floating camera button stands down in the lobby** while the menu offers
-the same thing, because two controls for one job is how somebody uses the
-worse one out of habit — and the floating one is the worse one here, an icon
-with no words against a row that says what it does and what happens next.
-
-**Between rounds was asked about and left at the lobby.** At a round board the
-host is talking and the scores are up, and somebody mid-game is somebody not
-looking up at the moment the room is wanted; in the lobby there is nothing to
-compete with. It is one constant to change if a real night says otherwise.
+Full reasoning: **[`docs/lobby-games.md`](docs/lobby-games.md)**.
 
 ### CAPITALS ARE FOR EMPHASIS, NOT FOR LABELLING
 
@@ -1241,16 +1025,27 @@ itself is wrong.
 
 **Every RULE is in this file. The WHY is in `docs/`.** Split on 14 August
 2026 because this file had reached ~90,000 tokens and loaded in full at the
-start of every session, which left little room to do any work in.
+start of every session, which left little room to do any work in. **Split
+again on 15 August 2026**, the same way and for the same reason — it had
+grown back to ~50,000 as the console theme, the calendar layout, the lobby
+game, Tonight and the drag work each landed with their full reasoning inline.
 
 Nothing was deleted and nothing was summarised — whole sections moved
-verbatim. Open the one you are touching; do not read them all.
+verbatim, by line number, so nothing was retyped and nothing could be quietly
+reworded on the way through. **Each one left its RULE behind, plus a link.**
+Open the one you are touching; do not read them all.
 
 **[`docs/engine.md`](docs/engine.md)** — phases, scoring, and what each screen is told
 
 - Stopping a quiz early
 - Leaving the app mid-question
 - How many people can play
+- Online mode is ONE BOOLEAN, and the branch count is a budget
+- The alphabet round — no options at all
+- The intro round skips the dead air, and that is a SCORING fix
+- The draw from the bottom half — a retention feature, not a raffle
+- A phone must not say you were right before the projector does
+- The picture round's four reveals
 
 **[`docs/screens.md`](docs/screens.md)** — the projector, the phone, the moments on them
 
@@ -1266,6 +1061,11 @@ verbatim. Open the one you are touching; do not read them all.
 
 - A launch must say what it is about to destroy
 - The restart notice, and the one state that made it a lie
+- PRESSING A TAB PUTS THE TAB BAR AT THE TOP OF THE SCREEN
+- THE CONSOLE'S THEME — one surface, one heading ladder, a bar that stays
+- The tabs run LEFT TO RIGHT along a quizmaster's evening
+- DRAG AND DROP — the console is the laptop with the HDMI in it
+- TONIGHT — one launch section, at the top of every tab
 
 **[`docs/gigs.md`](docs/gigs.md)** — venues, prizes, the diary, past nights, getting paid
 
@@ -1274,6 +1074,14 @@ verbatim. Open the one you are touching; do not read them all.
 - Past gigs — the record of somebody's work, and who may take it away
 - Invoicing
 - Getting paid: what you have not billed, and who has not paid
+- THE MONTH IS ON THE LEFT AND WHAT YOU DO ABOUT A DATE IS ON THE RIGHT
+- The last slide of the night — "Back here Thursday 20th"
+- Headcount per venue — the app finally says a number it always knew
+- A prize taken at the bar has to reach the filed night
+
+**[`docs/lobby-games.md`](docs/lobby-games.md)** — what a phone does while the room fills up
+
+- MAZE MOUTH — THE LOBBY GAME, AND IT IS NEVER CALLED PAC-MAN
 
 **[`docs/accounts.md`](docs/accounts.md)** — hats, tiers, rooms, gates, own packs
 
@@ -1284,6 +1092,7 @@ verbatim. Open the one you are touching; do not read them all.
 **[`docs/generation.md`](docs/generation.md)** — writing quizzes, checking them, what they cost
 
 - Generated questions are checked, not trusted
+- What the room asked for — THREE BUTTONS, not a box
 
 **[`docs/owner.md`](docs/owner.md)** — the business — five tabs
 
@@ -1298,7 +1107,13 @@ verbatim. Open the one you are touching; do not read them all.
 - Things the host does not have, and what that blocks
 
 Also: **[`docs/artwork.md`](docs/artwork.md)** — the shared portrait library
-(its rules are kept in full below, under *Artwork*), and
+(its rules are kept in full below, under *Artwork*);
+**[`docs/business.md`](docs/business.md)** — pricing, the ladder, the shop,
+the marketplace, referrals, group accounts;
+**[`docs/setup.md`](docs/setup.md)** — the step-by-step deployment and account
+setup, which is the one to open with the host rather than to read;
+**[`docs/history.md`](docs/history.md)** — what each real night found, the
+sweeps, and the live deployment state; and
 **[`docs/SPLIT-PLAN.md`](docs/SPLIT-PLAN.md)**, which is how this was done.
 
 ---
@@ -1718,1009 +1533,294 @@ sixth one cannot repeat this. It has already earned its keep: adding
 
 ### Online mode is ONE BOOLEAN, and the branch count is a budget
 
-`state.online`, set at launch and living in the game state like the look and
-the card shape. The host's own summary of what it is meant to be — *"so is the
-idea that we just flick a tab and boom you're in online mode, but the core quiz
-engine is exactly the same?"* — is exactly right, and it is a promise that has
-to be actively defended rather than something that stays true on its own.
+`state.online`, set at launch and living in the game state like the look and the
+card shape. **Almost nothing reads it, and that is what keeps the promise that
+the core engine is the same.** Five places: `freshState()` declares it,
+`session.launch()` sets it, the launch route reads it off the body,
+`playerView()` reports it and holds **the one real branch** in the engine, and
+`play.js` renders the question **if it was sent**. The phone deliberately
+branches on `s.prompt` rather than on `s.online`, so a payload that forgot the
+prompt degrades to the pub layout rather than to an empty box.
 
-**The way it stays true is that almost nothing reads it.** Every place that
-branches on the mode is a place a Wednesday in a pub can break, so the number
-of them is a budget rather than an incidental detail. As built:
+**Anything added for online mode must not raise that count** without a reason
+worth writing down. **The video is meant to be NATIVE, on Cloudflare — not Zoom,
+not Teams — and NONE of it is built**: no `getUserMedia`, no WebRTC, no
+Cloudflare call anywhere. The switch is built and the transport is not.
+**Prove it with bytes**: `node scripts/pub-unchanged.mjs <base> --ignore online`.
 
-| Where | What it does |
-|---|---|
-| `freshState()` | declares it `false` |
-| `session.launch()` | sets it from Tonight's own switch |
-| the launch route | reads it off the body |
-| `playerView()` | reports it, and **the one real branch** — the prompt and the screen's own extras |
-| `play.js` | renders the question **if it was sent** |
-
-**ONE branch in the engine.** The scoring, the clock, the phases, the tally,
-the fastest finger, the reveal, crash recovery, the projector, the host's
-control view, bingo and every pack are untouched and cannot tell the
-difference — which is why the same pack runs in a pub on Wednesday and over a
-video call on Thursday with no second version of anything.
-
-**The phone deliberately branches on `s.prompt` rather than on `s.online`.** It
-renders what it was given instead of deciding for itself what kind of night it
-is, so the decision lives in exactly one place — and a payload that forgot to
-send the prompt degrades to the pub layout rather than to an empty box.
-
-**Anything added for online mode must not raise that count without a reason
-worth writing down here.** Chat, teams and the media layer all hang off the
-same flag; if one of them needs a second branch inside the engine, that is a
-design decision to argue about rather than a line to slip in.
-
-**THE VIDEO IS MEANT TO BE NATIVE, ON CLOUDFLARE — not Zoom, not Teams.** The
-host's own words on 14 August 2026: *"no online mode needs to have Cloudflare
-wired in"*, *"not using Teams or Zoom, it needs to be native to the app"*.
-Written down here because it was settled in a chat and existed nowhere in the
-repository, so a fresh session reading the code would have concluded the
-opposite — as one did, out loud, the same afternoon. **NONE OF IT IS BUILT
-YET**: there is no `getUserMedia`, no WebRTC, no Cloudflare call anywhere, and
-the media layer is the honest gap rather than a thing that half exists. What
-online mode does today is the two rows above — the prompt goes to the phone
-and chat turns on — and that is all it does.
-
-It is worth being precise about which half is which, because the pricing
-already depends on it: `FEATURES.STREAM` is sold as the thing that pays for
-itself per use, and the per-use cost IS the video. The boolean is free; the
-faces are not.
-
-**The SWITCH is built and the transport is not**, and that is deliberate
-rather than an oversight — the flag decides what a phone is told, which is
-engine work and testable today, and it will not change shape when the video
-arrives underneath it.
-
-**And prove it with bytes, not with tests.** `node scripts/pub-unchanged.mjs
-HEAD~1 --ignore online` runs the old engine and the new one side by side over
-every pack and compares every payload. Adding online mode came out at 2,150
-identical comparisons with one new field. Run it after every step of this
-work; "the tests pass" is a weaker claim than the one anybody actually wants
-the night before a gig.
+Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
 ### The alphabet round — no options at all
 
-`type: 'alphabet'`. The question is asked on the projector, the phone shows a
-keyboard, and **only the first letter of the answer has to be right**. Spelling
-is irrelevant, which is the whole point — nobody types an answer on a phone in
-a dark pub against a clock.
+`type: 'alphabet'`. A question is `{ prompt, answer }` and nothing else — the
+twenty-six letters are **not written into the pack**, `optionsFor()` puts them
+back, so everything downstream treats a letter as an ordinary option index.
+**Only the first letter has to be right**; spelling is irrelevant, which is the
+whole point. **An answer beginning with "The", "A" or "An" is a hard validation
+error** — see the decisions table. `answerText()` is why the reveal says
+"Fleetwood Mac" and not "F", in its own slot under the question. The host's key
+shows the answer in full and **only the letters somebody actually pressed**. The
+phone is **five across where the projector is nine** — a thumb problem, not a
+matching one — same order, A to Z rather than QWERTY.
 
-A question is `{ prompt, answer }` and nothing else. The twenty-six letters are
-**not written into the pack** — `optionsFor()` puts them back, so the file stays
-readable and a question is two lines rather than twenty-eight. Everything
-downstream then treats a letter as an option index like any other: `answer()`,
-the tally, `whoPicked()`, the fastest finger and the scoring are all untouched.
-
-**"The Beatles" is B to half a room and T to the other half, and both halves are
-right.** That is the one way this round breaks in front of people, and there is
-no clever fix — so an answer beginning with "The", "A" or "An" is a **hard
-validation error**, not a hunch. The editor says so as you type, the generator's
-brief forbids it, and the checking pass has a rule about it. Do not soften this
-into a warning; a round that produces an argument the host loses in public is
-worse than no round.
-
-`answerText()` is why the reveal says "Fleetwood Mac" and not "F". A lit-up
-letter is not an answer, and on this round the words are the single most
-important thing on the screen — they go **under the question**, in their own
-slot, not in with the fastest finger at the bottom, where they landed on top of
-the last row of letters.
-
-The host's answer key shows the answer in full and then **only the letters
-somebody actually pressed**, plus the right one. Twenty-six rows on a phone,
-most of them empty, is not a thing anyone reads on a mic.
-
-**The phone is five letters across where the projector is nine.** This is the
-one place the two screens are deliberately a different shape, and it is a thumb
-problem: nine across a 320px phone is 28 pixels a key. The ORDER is the same,
-and that is what matters — a player looking for F is not matching a position on
-the big screen, they already know which letter they want. A to Z rather than
-QWERTY for the same reason: QWERTY is muscle memory for typing words, and
-nobody is typing a word.
+Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
 ### The intro round skips the dead air, and that is a SCORING fix
 
-`public/assets/cue.js`, `cue.from` on an intro question, `position_ms` on the
-Spotify play call, and **Skip the dead air** in the editor.
+`public/assets/cue.js`, `cue.from`, `position_ms` on the Spotify play call, and
+**Skip the dead air** in the editor. **It is SCORING, not polish**: the clock
+starts when the question goes up, so two seconds of silence at the front of a
+track takes two seconds of score off everybody for a reason that has nothing to
+do with whether they knew it — the same argument as the picture round's four
+reveals running on one curve. **What is trimmed is silence; how quickly a track
+becomes recognisable is the question's difficulty and must never be trimmed.**
 
-`from` has existed on every intro cue since the round was written, with a
-`0:00` placeholder, and it was only ever **a note the host read**. It plays
-now.
+- **An unreadable offset plays from the START** — `cueOffsetMs()` returns `null`
+  for prose, a negative, `1:75` or anything past ten minutes, and the server
+  then sends no `position_ms` at all. A typo costs the old behaviour, never a
+  silent jump into the middle of a song in front of a room.
+- **Every pack on disk says `0:00`**, and a test walks `quizzes/` and fails if a
+  cue ever arrives with an offset on it. The generator is told to write exactly
+  `0:00`, because only somebody who has LISTENED knows where the audio begins.
+- **The editor echoes what it understood on every keystroke**, repainted in
+  place. The control view prints the offset only when there IS one.
+- **DO NOT "fix" this by giving the intro round a longer clock** — a longer
+  round is a round worth MORE points, which is the same fault deliberately.
 
-**IT IS SCORING, NOT POLISH, and that is the whole reason it was worth
-building.** The twenty-second clock starts when the question goes up and the
-track starts at the same moment — so a track with two seconds of silence or
-fade-in at the front takes two seconds of score off **everybody**, for a
-reason that has nothing to do with whether they knew it. Ten questions, ten
-different amounts of dead air, and the round scores inconsistently with
-nothing on screen to blame it on.
-
-**That is the same argument this file already makes about the picture round's
-four reveals running on ONE curve** — how fast a question becomes answerable
-IS how many points it is worth, so anything varying it per question quietly
-changes the scoring and nobody can attribute it. Same fault, different round,
-and it went unnoticed for as long as it did because the cause is in the AUDIO
-rather than in any code.
-
-**What is trimmed is silence; what must NEVER be trimmed is how quickly a
-track becomes recognisable.** That is the question's difficulty and it is the
-round. A famous four-note opening should be answerable faster than a track
-that takes a bar to declare itself.
-
-**DO NOT "fix" this by giving the intro round a longer clock.**
-`questionSeconds` is overridable per round and 25 seconds looks like it
-absorbs the dead air. It does not: scoring is the base plus seconds-remaining
-times ten, so a longer round is a round worth MORE points — the reveal-curve
-fault again, introduced deliberately this time.
-
-Five things that are load-bearing:
-
-- **An unreadable offset plays from the START, which is what happened before
-  this existed.** `cueOffsetMs()` returns `null` for prose, a negative, `1:75`
-  (sixty-plus in the seconds half is a slip rather than an intention) and
-  anything past ten minutes — and the server then sends no `position_ms` at
-  all. So the cost of a typo is the old behaviour, never a silent jump into
-  the middle of a song in front of a room.
-- **EVERY PACK ON DISK SAYS `0:00`**, so nothing already written moves and
-  this was safe to deploy mid-season. There is a test that walks `quizzes/`
-  and fails if a cue ever arrives with an offset on it — which is also what
-  would catch a generated pack inventing one.
-- **The generator is now told to write exactly `0:00`**, because only somebody
-  who has LISTENED knows where a track's audio begins. The brief used to say
-  "a timestamp like 0:00", which was an example rather than an instruction —
-  fine while the field was a note, and a plausible-looking guess the moment it
-  drives playback.
-- **The editor ECHOES what it understood, on every keystroke.** An offset
-  typed wrong and quietly ignored is a track playing from the top while the
-  box looks accepted — the same fault as a cue whose title was corrected and
-  whose URI was not. So it says "Skips the first 2.5 seconds", or "Not a time
-  — it will play from the very start", and says nothing at all for an empty
-  box because nobody is being nagged for leaving the default. Repainted in
-  place rather than by re-rendering, or the focus leaves the box mid-number.
-- **The control view prints it only when there IS one.** It used to print
-  "From 0:00" on every intro question in the app, which is a line that says
-  nothing. It is still worth printing when set, and the reason is the failure
-  case directly under it: auto-play starts at the offset, but **Open this
-  track** opens at the top of the file, so that line is the instruction for
-  the night Spotify is asleep.
-
-**The offsets have to be set by ear, and that is the honest cost** — ten quick
-listens per pack, once, stored in the pack for ever. Spotify's Audio Analysis
-gives exactly this (`track.end_of_fade_in`) and is **deprecated for apps
-created after November 2024**; this app's is new, so expect a 403. Do not
-design around it without confirming against the real app first.
-
-**The other half of `cue` is still not built** and is filed in TODO.md as 5f:
-editing a track's title or artist does not repoint `cue.spotifyUri`, so a
-corrected cue reads right on the control view and plays the wrong track
-through the speakers.
+Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
 ### The draw from the bottom half — a retention feature, not a raffle
 
 `drawLuckyDip()` and `state.luckyDip` in `src/engine.js`, the band under the
-podium in `screen.js`.
+podium in `screen.js`. A table that works out by round three that it cannot win
+has nothing left to stay for, and a room that thins out at nine is worth less to
+the pub. **Eligibility is answering the LAST QUESTION THE NIGHT ENDED ON** —
+not "the final round", which on a one-round night collapses to "answered
+anything at all". **The same prize as third place.** All tested:
 
-Asked for by the host on 14 August 2026 and his reasoning is the design: **a
-table that works out by round three that it cannot win has nothing left to
-stay for**, and a room that thins out at nine is worth less to the pub than
-one that stays till eleven. This is the reason to keep answering after the
-scoreboard has stopped being interesting.
+- **Nobody wins twice** — anybody already holding a voucher is out of the hat.
+- **Two in the hat minimum.** One eligible person is a gift, not a draw.
+- **Decided ONCE, in the state**, like the vouchers: `Back` and forward again
+  must not name a different person to a room that heard the first.
+- **The ENGINE draws, never a phone**, and `random` is injected like `now()`.
+- **The projector gets the NAME and never the code.**
+- **A draw voucher has NO PLACE** — `place: mine.place || 1` would tell somebody
+  who finished eleventh they had won the quiz.
 
-**STILL PLAYING AT THE END IS THE POINT.** Eligibility is answering the LAST
-QUESTION THE NIGHT ENDED ON — exactly the behaviour being paid for, and also
-what stops the failure it would otherwise have: drawing somebody who left at
-half nine, calling their name on the mic, and getting silence from a room
-that then watches the prize go nowhere.
+A band BELOW the podium, never on it, with the count printed. Entry is FREE, so
+there is nothing to work around; **if a venue ever charges per team this needs
+looking at again.**
 
-**"Answered in the final ROUND" was the first version and it was far too
-loose** — most nights this app runs are one round, so it collapsed to
-"answered anything at all", which every phone that ever joined satisfies.
-Caught by its own test drawing a table that had stopped after question one.
-The last QUESTION is the only definition that means the same thing on a
-one-round night and a five-round one, and it is sayable on a microphone:
-**you had to still be in it at the last question.**
-
-**The same prize as third place**, at the host's own instruction — so a venue
-putting up three prizes runs a draw and one putting up fewer does not, with
-nothing extra to set up and nothing extra for the pub to agree to.
-
-Six things that are load-bearing, all tested:
-
-- **Nobody wins twice.** With five players the bottom half reaches third
-  place, who is already holding a voucher, so anybody with one is out of the
-  hat. A second code in one hand is one of them looking valid and not being.
-- **TWO IN THE HAT MINIMUM.** One eligible person is a gift, not a draw, and
-  calling it a draw is a lie the room can see.
-- **Decided ONCE, in the state**, exactly like the vouchers. `Back` off the
-  final and forward again is one press each way and a host will do it; a
-  second roll would name a different person to a room that heard the first.
-- **The ENGINE draws, never a phone**, and `random` is injected like `now()`
-  so the draw is testable at all — "it picked the right person" is not
-  something you can assert against `Math.random`.
-- **The projector gets the NAME and never the code.** The name is the moment;
-  the code is the credential and goes to one phone, like every other voucher.
-- **A draw voucher has NO PLACE.** `place: mine.place || 1` would have given
-  it first — telling somebody who finished eleventh that they had won the
-  quiz, in a room that had just watched somebody else win it.
-
-**On screen it is a band BELOW the podium and deliberately not on it.**
-Somebody who came eleventh has not beaten anybody, and a medal would say they
-had. The count is printed — *"drawn from 9 still playing at the last
-question"* — because that is what makes it obviously fair to the eight who
-did not win, and it is the sentence that gets people to stay in next week.
-
-**The legal question was asked and answered: entry is FREE.** The pubs are
-paying for a full room on a dead night, not selling tickets — so a free-entry
-draw is exempt and there is nothing to work around. **If a venue ever charges
-per team, this needs looking at again before the prize gets big**, because a
-paid-entry draw is a different thing in law.
+Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
 ### The tabs run LEFT TO RIGHT along a quizmaster's evening
 
-`TABS` in `console.js`. **Music Quiz · Music Bingo · Adverts · Gigs ·
-Invoices · Venues · Help · My account**, with **Tonight** above all of them.
-
-The host's framing, on 14 August 2026: *"I want the flow to go from left to
-right, because some sections hand over to each other. When a quizmaster has
-done a job, that job goes into his past gigs — and from past gigs he goes to
-invoices, because you don't have an invoice for a gig you haven't done yet."*
-
-So the bar reads as an evening: what you will PLAY, what goes between the
-rounds, the NIGHT itself, getting PAID for it, the standing arrangements
-behind all of it, then the two you touch twice a year.
-
-**VENUES MOVED RIGHT, past Invoices, and it is the one that looks wrong.**
-Everything downstream depends on that record, which makes it feel like a
-starting point — but **dependency is not sequence**: a venue is set up once and
-then not opened for months, which is exactly what the right-hand end is for.
-What made it feel early is that you used to have to go there before launching,
-and Tonight removed that — the venue, its prizes and its usual night now arrive
-in the launch bar without going anywhere. **This is the one to move back if a
-real week says otherwise; it is a line in an array.**
-
-**GIGS SITS AT BOTH ENDS OF THE JOURNEY** and is the one tab a timeline cannot
-place: it holds Coming up as well as Past gigs. Splitting it would make the
-order honest and add a tenth tab to a bar that already scrolls sideways on a
-phone, so it stays whole and sits where the night is.
-
-**Rarely-touched goes right, and that is the host's own rule** — "the farthest
-right needs to be settings, because it is something he would rarely touch but
-needs to know where it is". My account keeps its name rather than becoming
-Settings: it holds the subscription, the tier and the brand, which is whose
-account rather than the app's options, and this file's naming rule is to say
-what the thing IS.
+`TABS` in `console.js`. **Music Quiz · Music Bingo · Adverts · Gigs · Invoices ·
+Venues · Help · My account**, with **Tonight** above all of them. The bar reads
+as an evening: what you will PLAY, what goes between the rounds, the NIGHT
+itself, getting PAID for it, the standing arrangements behind all of it, then
+the two you touch twice a year. **Rarely-touched goes right** — My account keeps
+its name rather than becoming Settings. Gigs sits at both ends of the journey
+and stays whole rather than becoming a tenth tab.
 
 **A reorder is the cheapest change in the app and the easiest to get wrong
 silently** — nothing fails, a tab simply stops being where somebody's thumb
-expects it. Every tab was opened in a browser afterwards at 390 and 1280, and
-the page measured for overflow after visiting all eight.
+expects it. Open every tab in a browser at 390 and 1280 afterwards and measure
+the page for overflow.
+
+Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
 ### What the room asked for — THREE BUTTONS, not a box
 
-`src/round-ideas.js`, `src/room-asks.js`, the card on the phone's final
-screen, the panel above the quiz generator, and the switch on My account.
+`src/round-ideas.js`, `src/room-asks.js`, the card on the phone's final screen,
+the panel above the quiz generator, and the switch on My account.
 
-*"A customer finishes a quiz and thinks 'wouldn't it be great if there was a
-reggae round' — they can just drop it into the suggestion box."* It is the
-cheapest market research a quizmaster will ever get: from the people who were
-there, on the night, answering the one question that decides what to write
-next.
+- **THREE BUTTONS, NEVER A TEXT BOX.** The ideas come from `ROUND_IDEAS` on the
+  SERVER and a phone sends back an `ideaId` — so **nothing a stranger types ever
+  reaches the quizmaster**, there is no moderation question, and what comes back
+  is a VOTE, which can be counted.
+- **Only what is not already on the shelf.** An idea whose `words` match a pack
+  title is dropped; a library holding everything asks NOTHING rather than
+  repeating itself.
+- **The same three all night**, chosen at LAUNCH into the game state with an
+  injected `random`, so the numbers add up and a restart brings back the same
+  question. **One vote each, and voting again REPLACES it.**
+- **A switch on My account, OFF unless turned on** (`prefs.askRounds`), read at
+  launch — **but the panel that answers it is UNGATED.** A switch whose answer
+  is invisible to the person who pressed it is worse than no switch.
+- **YES or NO, and NO is a delete.** There is deliberately no "rejected" state.
+- **Grouped by idea, most-asked first**, kept list included.
+- **The free-text path in `room-asks.js` is left deliberately** — it reads nights
+  filed before the vote existed. **Do not wire a text box back onto it.**
 
-**IT WAS A TEXT BOX FOR A DAY AND THE HOST REPLACED IT, correctly:** *"maybe
-instead of an open text box, can it have three randomly generated ideas based
-on rounds I don't have in the library?"* Everything below about sixty
-characters and grievances was the OLD design defending itself against typing;
-the new one removes the typing.
-
-**NOTHING A STRANGER TYPES EVER REACHES THE QUIZMASTER.** The three come from
-`ROUND_IDEAS` on the SERVER; a phone sends back an `ideaId` and the label is
-looked up here. So there is no moderation question to manage, no word filter
-to argue about, no "durrr I was bored", and nobody has to read anything to
-find out whether it was worth reading. That is a stronger guarantee than any
-length cap, and it is why the cap stopped being the interesting part.
-
-**It is also better DATA.** A box collects opinions of wildly varying quality
-from whoever could be bothered to type; three buttons collect a VOTE, and a
-vote can be counted — *"fourteen of the twenty who answered wanted reggae"* is
-a sentence that decides what to write next. Typing on a phone in a pub is a
-wall most people will not climb; tapping one of three is not.
-
-**ONLY WHAT IS NOT ALREADY ON THE SHELF.** Each idea carries the `words` that
-would give it away in a pack title, and any idea matching one is dropped
-before the three are picked — offering a Motown round to somebody who owns the
-Motown quiz wastes one of three slots and makes the app look like it has not
-read its own library. A library holding everything asks NOTHING rather than
-repeating itself: `roundIdeas` comes back empty and the card does not appear.
-
-**THE SAME THREE ALL NIGHT, and that is what makes it countable.** Chosen once
-at LAUNCH and written into the game state like the look, the card shape and
-the prizes — so every phone in the room votes on the same three, the numbers
-add up to something, and a restart at half eleven brings back the same
-question rather than a fresh one. `random` is injected exactly like the prize
-draw's, because "it offered three the library has not got" is not a thing you
-can assert against `Math.random`.
-
-**One vote each, and voting again REPLACES it.** A room reading three options
-out loud to each other changes its mind, and a button that stops working is a
-button somebody taps four times. Keeping both would count one person twice and
-make the number a lie.
-
-**A SWITCH ON MY ACCOUNT, OFF UNLESS TURNED ON** — the host's own call: *"this
-is the sort of feature that should have an on/off button in the QM's settings
-tab."* `prefs.askRounds`, read at LAUNCH, which is why the panel says *"it
-takes effect on the next night you launch"* — a switch that appears to do
-nothing tonight looks broken. It is a PREFERENCE and not a tier gate: it
-grants nothing, it decides whether three buttons appear on a phone.
-
-**AND THE PANEL THAT ANSWERS IT IS UNGATED.** It was gated on
-`owner.generate` for a day, which meant a quizmaster could turn the switch on,
-have their room vote all night, and never be shown a single number — **a
-switch whose answer is invisible to the person who pressed it is worse than no
-switch.** Generating is the owner's; wanting to know what the room asked for
-is everybody's, and what they do about it — write their own, buy one, request
-one — is not this panel's business. It draws nothing when there is nothing to
-say, so an account that never turns it on never sees it.
-
-**A SEPARATE BOX FROM THE QUIZMASTERS' ONE.** `suggestions.js` is subscribers
-writing to the owner, read on a Monday as a work queue with somebody waiting
-for a reply. Strangers' one-liners from a pub would bury it.
-
-**IT COMES OFF THE PHONE, NOT A QR** — and the QR was what was asked for, so
-the reason matters: the projector's one QR belongs to the VENUE (the
-come-back slide), and a second one competes with it for the same cameras.
-Everybody who played already has the app open on the results screen, so a box
-there costs no scanning and no screen. The token does three jobs at once —
-it proves they played, it makes anonymous flooding impossible without joining
-first, and it tags every ask with the NIGHT and the VENUE for free.
-
-**YES OR NO, AND NO IS A DELETE.** The host's own shape, and it is this
-file's Monday rule: a queue that shrinks as you work it costs a fraction of
-one that only grows. There is deliberately no "rejected" state — a list of
-things you have already said no to is a list you read twice.
-
-**AND IT IS A ROUND IDEA VOTE, NOT FEEDBACK BY THE BACKDOOR**, which was the
-host's own worry: *"'durrr I was bored' is not useful or relevant."* Three
-things keep it that way, and none of them is a filter:
-
-- **There is nowhere to type.** The strongest of the three, and the reason the
-  other two matter less than they did.
-- **It only exists at the END**, on a phone that played. There is no comment
-  box open all evening and there never was.
-- **No still costs one tap.** The worst case is a second of somebody's Monday
-  rather than a moderation queue.
-
-**The free-text path is still in `room-asks.js` (`add()`, `MAX_ASK`,
-`cleanAsk()`) and nothing calls it from the app.** Left deliberately: it is
-what reads a night filed before the vote existed, and `cleanAsk()` is what
-tidies the label on the way in. **Do not wire a text box back onto it** without
-reopening the paragraph above.
-
-**Grouped by idea, most-asked first** — four people wanting reggae is a
-different fact from one person asking four times, and it is the number that
-decides whether it is worth a pack. The kept list is grouped too, or one idea
-four people asked for looks like four jobs.
+Full reasoning: **[`docs/generation.md`](docs/generation.md)**.
 
 ### DRAG AND DROP — the console is the laptop with the HDMI in it
 
-`gripIcon()` / `dragRow()` in `editor.js`, `packDrag` in `console.js`.
+`gripIcon()` / `dragRow()` in `editor.js`, `packDrag` in `console.js`. The
+console IS the laptop with the HDMI in it, so a mouse is an input it has to
+serve. **HTML5 drag events never fire on touch, so the taps and the arrow
+buttons STAY** — drag is the fast way and every drag has a way round it.
 
-**Argued against and then overruled, correctly.** The case against drag is
-touch: this codebase already learned it once, when the props tray's
-drag-to-move ate the scroll and had to grow a 200ms hold. The host's answer
-settles it — *"this app needs to function from a laptop really, otherwise how
-are you going to HDMI into a large screen?"* The console IS the laptop. A
-mouse is the input it has to serve.
+- **What can be dragged:** a round by its HEAD onto another round's head; a
+  question onto another question or onto a round's head; a **pack card up to
+  Tonight** (carrying the game, so a bingo pack switches the bar over); a
+  **shut venue card up to Tonight**; and the chosen pack back OFF Tonight,
+  which un-chooses it and nothing else.
+- **ADVERTS ARE DELIBERATELY NOT DRAGGABLE.** A slide belongs to a VENUE, not to
+  a night, so dropping the venue in brings its adverts with it.
+- **Changing the venue re-resolves a night that is up but EMPTY** —
+  `chooseVenue()` relaunches through the same `switchIfFree` guard, and once it
+  cannot, the bar says so. The prizes and the voucher are read at launch.
+- **A ROUND IS SWITCHED OFF WITH A TICK, NOT DRAGGED OUT** — a tap works on both
+  a laptop and a phone. **ANY round can be switched off, including the last**; a
+  pack with all of them off is simply an empty pack, and Launch is hollow.
+  Switching one off makes it a COMPOSED night even with one pack, and the Launch
+  button names what will be PLAYED. Keyed by pack AND index, never by title.
+- **`stopPropagation` on the tick's mousedown as well as its click**, or a press
+  on a tick drags the pack.
+- **Mixing rounds from two packs belongs to the NIGHT, not the editor, and is
+  deliberately NOT BUILT.** If it is picked up, start from Tonight.
+- **`moveWithin()` must allow for the source already being removed**, and the
+  drop marker is ABOVE or BELOW depending on which half of the row you are in.
 
-**The taps and the arrow buttons STAY, and that is not hedging.** HTML5 drag
-events do not fire on touch at all, and this file's own rule has the console
-measured at 320px — so a control that exists only as a drag is a control that
-does not exist on a phone. Drag is the fast way; every drag has a way round it.
-
-What can be dragged:
-
-- **A round, by its head, onto another round's head.** The head rather than
-  the block, because a round block is mostly question cards and those refuse a
-  round — so a drag aimed at the middle of a round quietly did nothing.
-- **A question onto another question**, in the same round or a different one,
-  and onto a ROUND'S HEAD to land at the end of it — which is the only way to
-  reach an empty round.
-- **A pack card up to Tonight.** It carries the game as well as the id, so a
-  bingo pack dropped on a bar set to Music Quiz switches the bar over rather
-  than being silently refused.
-- **A VENUE card up to Tonight**, from the Venues tab — the same gesture and
-  the same target, because those are the two facts that place a night: which
-  room, and what is being played in it. Only a SHUT card is draggable; an open
-  one is full of prize boxes, and `draggable` on their container stops you
-  selecting a word to retype it, which is why a pack is dragged by a grip.
-- **And the chosen pack back OFF Tonight**, which un-chooses it and NOTHING
-  else — the pack is untouched on disk and still on its shelf. *"Say you drag
-  the wrong quiz pack, you can just drag it off again."*
-
-**ADVERTS ARE DELIBERATELY NOT DRAGGABLE, and it was asked for directly.** The
-scenario was: the pack is wrong, the venue is wrong, and the advert is wrong,
-so drag all three in. The first two are right; the third dissolves on contact
-with how adverts already work, for three reasons:
-
-- **A slide belongs to a VENUE, not to a night** (`src/adverts.js`), and that
-  is a sales decision — *"your Tuesday pizza deal goes up between every round,
-  every week."* So dropping the venue in brings its adverts with it and there
-  is nothing left to drag.
-- **There is no "tonight's advert" to drop into.** A slide is chosen LIVE on
-  the control view between rounds (`state.advert`), not at launch. Building
-  the drag would mean inventing the concept first.
-- **Dragging one venue's advert onto another venue's night is a mistake with a
-  room in front of it** — the Sheep & Hound's offer in front of the Dog &
-  Duck's customers.
-
-**What was actually awkward is fixed where it happens.** The control view's
-picker loaded every set, so standing in one pub you scrolled past seven others'
-offers mid-gig. It now puts tonight's venue first under its own name, with
-**Everything else** below — sorted rather than FILTERED, because a slide with
-no venue on it ("follow me on Facebook", a sponsor, a charity night) is a real
-thing somebody wants anywhere, and a filter would hide it.
-
-**CHANGING THE VENUE RE-RESOLVES A NIGHT THAT IS UP BUT EMPTY — and not doing
-so was a silent fault the auto-launch introduced.** The prizes, the voucher and
-the come-back slide are read off the venue AT LAUNCH and copied into the state.
-So the sequence somebody would actually use — drag the pack in, notice the
-venue is last week's, drag the right one in — launched the night under the
-wrong pub and left it there: the bar said The Dog & Duck and the winner's phone
-would have shown the Sheep & Hound's voucher. `chooseVenue()` now relaunches
-quietly through the same `switchIfFree` guard, so it fixes itself while nobody
-has joined and does nothing at all the instant somebody has.
-
-**And once it CANNOT re-resolve, the bar says so** — *"On the big screen now —
-this one, but filed under The Dog & Duck. Launch again to move it."* Without
-it the bar would show the new venue's prizes while the room was being shown the
-old venue's, which is the console-and-projector disagreement this section
-exists to end wearing a different hat. A wrong pack name is embarrassing; a
-wrong prize is somebody being refused a drink at the bar.
-
-**TONIGHT PINS ITSELF WHILE ANYTHING IS BEING DRAGGED** (`body.is-dragging-card`).
-The section is at the top of the tab and a venue card can be most of a page
-below it; HTML5 drag has no dependable auto-scroll, so without this the gesture
-is "pick the card up, find the target off-screen, give up" — worse again on a
-trackpad. **It also accepts a drop while SHUT and springs open on the way**,
-because collapsed is exactly the state somebody is in when they arrive at a
-venue and start setting up.
-
-**A ROUND IS SWITCHED OFF WITH A TICK, NOT DRAGGED OUT.** The host's own
-design once the pack tiles existed: *"have the rounds in the quiz pack with a
-green tick each, and to turn one off you click the green tick and it turns
-into a cross — removes the need to drag and drop sections of a quiz pack."*
-
-**It is better than the round-level drag it replaced, and the reason is
-bigger than tidiness: a drag is a LAPTOP-ONLY gesture.** HTML5 drag events are
-never delivered on touch, so round-dragging did not exist on a phone at all —
-on a console this file has measured at 320px. A tick is a tap, so the same job
-now works on both, with no second way of doing it to keep in step.
-
-Four things that are load-bearing:
-
-- **ANY round can be switched off, including the last** — and a pack with all
-  of them off is simply an empty pack. It was built refusing the last tick,
-  which guarded something real (the server will not launch a night with no
-  rounds) in the wrong place; the host's own fix was *"the launch console
-  should just treat a pack with all red crosses as an empty pack."* Better for
-  two reasons: **a tick that will not toggle is a control that ignores you**,
-  and the constraint already had a home — Launch is hollow when there is
-  nothing to launch, so "every round is off" is another way of having nothing,
-  said in the one place built to say it. The spent pack stays in the row,
-  dimmed and dashed like the empty slots beside it, because it is one tap from
-  being back and making somebody find it on the shelf again would be the app
-  punishing a change of mind.
-- **Switching one off makes it a COMPOSED night even with one pack**, so
-  `nightOrder()` asks whether anything is off rather than only counting packs.
-  Miss that and the ticks look like they work and change nothing.
-- **The Launch button names what will be PLAYED.** "Launch The 1980s Pop Music
-  Quiz" over a pack with two of its three rounds off is the console and the
-  projector disagreeing before the night has started, which is the fault this
-  bar exists to end.
-- **`stopPropagation` on the tick's mousedown as well as its click**, because
-  the tile itself is draggable — without it a press on a tick starts dragging
-  the pack instead of switching a round off.
-
-Keyed by pack AND index rather than by round title: two packs can both have a
-round called "Round one", and a title is a thing somebody renames.
-
-**MIXING ROUNDS FROM TWO PACKS BELONGS TO THE NIGHT, NOT TO THE EDITOR — and
-that is why it is not built.** It was asked for as *"mix and match 1980s A and
-1980s B without affecting the master copies"*, and two editor layouts were
-rendered for it. The host then reframed it and the reframing is better than
-either: *"the only reason you would drag a round out of one quiz into another
-is so that you can launch the night — so I think that happens in the night
-section."*
-
-He is right, and it changes what the feature IS. In the editor it is
-pack-authoring, which needs copy-on-write, a naming decision and an answer to
-whether a borrowed question stays linked to its source (see rule 11). In
-Tonight it is **building this evening's running order out of pieces**, which
-touches no master at all and may not need to be saved as a pack in the first
-place.
-
-**Left unbuilt deliberately**, at his own call — *"if people want that advanced
-functionality later on we can add it later"*. If it is picked up, start from
-the night rather than from the editor.
-
-**A question changing rounds is reshaped on arrival**, exactly as when a
-round's own type is changed: a text question dropped into a pick-them-all
-round needs six options rather than four, and nothing typed is thrown away.
-
-**Two bugs worth remembering.** `moveWithin()` has to allow for the source
-already being removed from the list — the classic off-by-one that makes a drag
-"not move" when you drop it one place down. And the drop marker has to be
-ABOVE or BELOW depending on which half of the row the cursor is in, or a list
-can only ever be reordered in one direction and the last position is
-unreachable.
-
-**The grip is drawn and the card is not draggable as a whole**, because a card
-is full of text boxes and `draggable` on their container stops you selecting a
-word to retype it.
+Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
 ### TONIGHT — one launch section, at the top of every tab
 
 `launchBar()` in `console.js`, drawn above the running panel on every tab.
-
-**It was called "Quick launch", which said how FAST it is rather than what it
-is for** — and it behaved that way: two shortcut buttons that deliberately took
-no settings, with the look, the card shape, the prizes and the venue living
-somewhere else entirely, on a pack card, in a grid, further down whichever tab
-you happened to be on. The fast path and the fully-featured path were two
-different controls in two different places and you had to know which one you
-were in.
-
-The host's brief, on 14 August 2026: *"the second he gets to his console it
-should be very obvious that the top of every page is a launch section —
-wherever he is, he can launch from there, and it needs to be fully featured.
+*"Wherever he is, he can launch from there, and it needs to be fully featured.
 Sometimes you just don't want to think, you want to get in and go and know it
 will work."*
 
-- **Tonight's pack is already chosen** — the same `quickPicks()` the two
-  shortcut buttons used, in a box you can type over. Nothing to find, no
-  typing, one press. The runner-up is a CHIP beside it rather than a second
-  gradient button.
-- **Tonight's venue is printed at the top**, because it decides the prizes, the
-  voucher and what the night is filed under. It was previously visible only as
-  small print on a shortcut button.
-- **Set it up** opens the rest — look, card shape, prizes, teams, online,
-  venue. **Shut by default**, because a dropdown on the panic control defeats
-  the panic control; **one tap away**, because "it is somewhere else" is
-  exactly what was wrong before. Its open state is remembered outside the
-  render, like every other panel here: this one is rebuilt every time a phone
-  joins.
-- **ONE gradient button on the section.** There were two shortcut cards and a
-  pack card's Launch, all wearing the account's gradient on one screen, which
-  is the GUI rule broken three ways.
+- **Tonight's pack is already chosen** (`quickPicks()`), the venue is printed at
+  the top, and **Set it up** holds the rest — shut by default, one tap away.
+- **ONE gradient button on the section.** There were three.
+- **THE CONSOLE AND THE BIG SCREEN MUST AGREE, ALWAYS.** A choice STICKS — the
+  auto-pick is the empty state and nothing else — and with nothing chosen the
+  bar starts on **what is running** (`running.packId`). `paintLive()` prints
+  what is on the projector off `library.running`, in gold when it differs.
+- **Picking a pack puts it on the big screen when nothing would be lost.** THE
+  SERVER decides which: the ordinary launch call without `replace` already
+  answers 409 when `session.inProgress()`. A 409 is SILENT here. A re-render is
+  not somebody choosing a pack (`quiet`), and what is running is READ BACK.
+- **IN THE ROOM / ONLINE is a switch in the head, beside the venue** — a setting
+  whose wrong value ruins the night belongs where it is read. Only the ONLINE
+  half wears the gradient, and shut, the line still says "Online". **Not
+  remembered on the device.**
+- **The venue is chosen HERE and nowhere else** — searchable, drawn from the
+  Venues tab and from where you have played, with **Somewhere else…** for a
+  one-off. Not remembered on the device either.
+- **Whose night it is, RANKED**: a date you typed, then whose usual night it is,
+  then where you played last. **Two claims for one night are NAMED, never left
+  blank** (`clashTonight()`), in gold — nothing is broken, it is a decision only
+  the human can make.
+- **It folds to a thin line that still says what it is set to**, kept in
+  `localStorage`; one row, no wrap, the middle ellipsised, and the whole row is
+  the target. **The heading does not move when it folds** — a three-cell grid
+  with all three children placed explicitly, and the fold control says HIDE and
+  SHOW at a fixed width.
+- The pack cards keep their own Launch for now: this is the protected surface.
 
-**WHOSE NIGHT IT IS, RANKED — and the ranking was wrong.** `tonight()` in
-`diary.js` merged the diary and the residencies into one list of claims and
-treated them as EQUALS, so a one-off typed for tonight at The Anchor and a
-live Thursday at The Crown cancelled each other out and the bar went blank.
-That threw away the one answer somebody had actually stated. The order is: **a
-date you typed, then whose usual night it is, then where you played last** —
-which is the rule `upcoming()` already followed when a booking landed on the
-residency's own venue, and it simply never applied across venues. Ranked by
-asking `bookings` rather than by the `why` label, because a booking on the
-venue's own usual night is deliberately reported as `usual` so the line reads
-"your usual night here" rather than announcing a diary entry for a Thursday you
-always do.
-
-**TWO ANSWERS FOR ONE NIGHT ARE NAMED, not left blank — and the words matter
-here.** It is NOT a double booking: one quizmaster is in one room, so at most
-one of the two is where they actually are. What has gone wrong is the APP's
-understanding, not the diary. Two typed dates, or two residencies on one
-weekday, cannot be told apart by anything the app knows —
-picking whichever sorted first would put one pub's prizes in front of another
-pub's room. So nothing is chosen, and `clashTonight()` says which two: *"The
-Anchor and The Crown both claim tonight — pick one under Set it up."* In gold
-rather than red, like "not invoiced": nothing is broken, it is a decision only
-the human can make. A silent blank on the field that decides the prizes, the
-voucher and what the night is filed under looks exactly like an app that is
-working.
-
-**IT FOLDS TO A THIN LINE, AND THE LINE STILL SAYS WHAT IT IS SET TO.** The
-host's own sequence is the spec: *"I get to the venue and it is right there. I
-don't need it yet — the venue wants the prizes changed, so I collapse it, go to
-the Venues tab and do my thing, then open it again when I am ready."* So the
-state is kept in `localStorage` rather than a variable: changing tab re-renders
-the whole page, and the point is that it survives that AND the next visit. Open
-is the default, because being the first thing you see is what it is for.
-
-Shut it is ONE ROW — *"Tonight · The Crown · The 1980s Pop Quiz"* and a way
-back in — and it has to stay one row: collapsed that takes three lines on a
-phone is not collapsed, it is smaller. It does not wrap, the middle
-ellipsises, and below 560px the venue drops rather than the pack, because the
-pack is what the button would launch. **The whole row is the target when it is
-shut**, not just the chevron: one small control on the end of a bar is a thing
-you miss with a thumb in a dark pub.
-
-**THE CONSOLE AND THE BIG SCREEN MUST AGREE, ALWAYS — reported from a real
-night.** *"The quiz in the launch bit after I pressed launch didn't say what
-the big screen said."* Two separate causes, both fixed:
-
-- **The bar re-picked itself on every render**, and `render()` runs on every
-  state push. Worse, launching a pack gives it a play time, so `quickPicks()`
-  sorts it away and the box starts offering a DIFFERENT quiz from the one the
-  room is looking at. A choice now STICKS: the auto-pick is the empty state and
-  nothing else.
-- **With nothing chosen, it now starts on WHAT IS RUNNING** (`running.packId`)
-  rather than on `quickPicks[0]`. That is what a page reload produced — come
-  back to the console after launching and the panel named a pack nobody had
-  chosen, one press away from replacing a live night with it.
-
-**AND PICKING A PACK NOW PUTS IT ON THE BIG SCREEN — when nothing would be
-lost.** The host's own conclusion after the two disagreed on a real night:
-*"changing quiz packs should change the console and the big screen."* Right,
-and the two should agree every time it is possible for them to.
-
-**But picking is not launching when there is a night to lose.** A tap on a
-search result that silently ended a running quiz and wiped every score would
-be the most dangerous control in the app, on the protected path, in a dark
-pub. So: switch instantly when it costs nothing, stage it when it would cost
-somebody their night.
-
-**THE SERVER DECIDES WHICH, and there is no new rule.** It is the ordinary
-launch call without `replace`, which already answers 409 when
-`session.inProgress()` — a guard this file already records as one that cannot
-live in the browser. A 200 means it was free to switch; a 409 means it was
-not. No second definition of "in progress" exists to drift.
-
-**A 409 is SILENT here — no dialog.** Pressing Launch is what asks that
-question and still does, with the warning it always gave. All a 409 means at
-this point is that the choice stays staged and the red line says the
-projector is showing something else.
-
-Two things the build had to get right, both of which would have been silent
-faults:
-
-- **A re-render is not somebody choosing a pack.** `startOn()` calls `pick()`
-  on every state push to keep the box filled, so it passes `quiet` — without
-  it the bar would relaunch the projector every time a phone joined.
-- **What is running afterwards is READ BACK from the server**, never assumed.
-  Filling that line in from our own optimism would be the original fault
-  wearing a new hat.
-
-**And where they still differ, the bar SAYS SO.** `paintLive()` prints *"On
-the big screen now: The 2000s Pop Rnb and Chart Quiz"* off `library.running` —
-the server's own view of the session, so it cannot drift — in gold when it is
-not what the box says, which is exactly the moment somebody is about to be
-surprised. When they match it says *"On the big screen now — this one"*. A
-chooser answers "what would the next press start"; that is a different
-question from "what is on the projector", and they are only ever the same by
-luck.
-
-**IN THE ROOM / ONLINE IS A SWITCH IN THE HEAD, beside the venue** — `lbOnline`
-and `.lb-mode`. It was a `<select>` behind Set it up, filed with the look and
-the card shape, and it is not that kind of decision: getting the look wrong
-costs a night some colours, and getting THIS wrong puts the question on sixty
-phones in a pub, which breaks rule 8 in front of a paying room and cannot be
-undone mid-question. **A setting whose wrong value ruins the night belongs
-where it is read, not where it is hunted for.** It is also the one control here
-with exactly two answers, and a dropdown for two answers hides one of them.
-
-Four things, all measured at 1280, 390 and 320:
-
-- **The venue says which room; this says whether there is one.** They are the
-  two facts that place a night, so they sit together.
-- **Only the ONLINE half wears the gradient.** "In the room" is very nearly
-  every night, and a permanently filled gradient sitting directly above Launch
-  would be a second "press this" on the one section allowed exactly one. Off is
-  silent, on is unmissable — the same argument that keeps Delete outlined.
-- **SHUT, THE LINE STILL SAYS "Online"**, and that is most of why it was worth
-  moving: folded away is exactly the state somebody launches from without
-  opening the panel. "In the room" adds nothing to that line, because a label
-  that is always there is a label nobody reads. At 320 the pack title
-  ellipsises hard behind it — accepted, because it was already truncated to
-  "The 198…" at that width and the dangerous fact is the one worth the pixels.
-- **It is gone from Set it up rather than kept as a second way in**, exactly
-  like the venue picker before it. Two controls for one field is how a night
-  gets launched with the setting the other one was showing.
-
-**Not remembered on the device**, unlike the fold: online is a fact about one
-evening, and a remembered one would put a pub's question on sixty phones
-because of a Zoom quiz three weeks ago.
-
-**THE VENUE IS A CONTROL AT THE TOP, not a caption and not a dropdown buried
-in Set it up.** It decides the prizes, the voucher and what the night is filed
-under, so it is read nine times out of ten and changed on the tenth — covering
-somebody else's Tuesday, or a monthly somewhere different. Tapping the line
-opens a SEARCHABLE list drawn from the Venues tab and from where you have
-actually played (either list alone leaves somebody hunting a pub they know is
-there), with **Somewhere else…** for a one-off — which must never need a
-record made for it first, the promise the night's free-text venue was built on
-— and a link to the Venues tab for a pub worth keeping.
-
-**It is the ONLY place a venue is chosen now.** The picker inside Set it up is
-gone rather than kept as a second way in: two controls for one field is how a
-night ends up filed under the pub you were at last week. The prize line moved
-up with it, because a statement of what tonight plays for, three taps away
-from the name it belongs to, is a line nobody reads.
-
-**Not remembered on the device**, unlike the fold state: `lbVenue` starts
-`null`, meaning "nobody has said", which is what lets the app keep offering
-tonight's own answer until somebody overrides it. A remembered venue would
-file next Tuesday under last Thursday's pub.
-
-**THE HEADING DOES NOT MOVE WHEN IT FOLDS, and getting that right took a
-grid.** The head row was a wrapping flex row, so on a phone the venue pushed
-the fold button onto a second line when the section was open and onto the
-first when it was shut — "Tonight" sat six pixels lower in one state than the
-other, which reads as the whole page re-laying itself around the control you
-just pressed. It is a three-cell grid now with **all three children placed
-explicitly**: left to auto-placement, moving the middle cell to a second line
-on a phone let the button fall into column 2, the third column collapsed to
-nothing, and the button sat 10px shy of the right edge. Measured rather than
-eyeballed — the heading's and the button's bounding boxes are compared open
-against shut, at 390 and 1280.
-
-**And the fold control says HIDE and SHOW.** It said "Hide" open and "Launch a
-night" shut, which answer two different questions — what the button does to the
-panel, and what the panel is for. It also needs a fixed width, or the two words
-shuffle it sideways as you press it; that rule has to out-specify the head's
-own `min-width: 0`, which was quietly winning and is what made the button 96px
-open and 78px shut.
-
-**The two small buttons share a row** — the runner-up pack and Set it up, which
-are both "not this one" and "not like this". Launch keeps the full width under
-them: it is the one press-this on the section, and a primary button squeezed in
-beside two minor ones stops looking like one.
-
-**The pack cards keep their own Launch for now**, deliberately: this is the
-protected surface, and swapping a working control for "loads it into the bar"
-on the same day as the redesign is two changes to one path. That is the next
-step, not this one.
-
-**And it found the seventh instance of the min-content fault.** `.lb-set` was a
-wrapping flex row, and a `<select>` will not go below the width of its longest
-option — "Online — the question goes on their phones" dragged the whole console
-90px off the side of a 320px phone. Grid, `min-width: 0` on the children,
-`max-width: 100%` on the selects. **Measure `scrollWidth` against
-`clientWidth` after anything structural**; nothing else finds it.
+Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
 ### The last slide of the night — "Back here Thursday 20th"
 
-`src/comeback.js`, `state.comeBack`, the band in `comeBackBand()` in
-`client.js`, and **Where to send them** on the Venues tab.
+`src/comeback.js`, `state.comeBack`, `comeBackBand()` in `client.js`, and **Where
+to send them** on the Venues tab. **IT WRITES ITSELF** — the date is derived from
+the venue's usual night through `upcoming()`, so there is nothing to type at the
+moment the host is most rushed and it cannot go stale; a night written off and a
+one-off both win for free. Load-bearing, all tested:
 
-The winner is up, the room has a drink and every phone in the place is out.
-**That moment used to be spent on a scoreboard nobody needs any more** — it is
-the one point in the evening when the whole room is looking at the screen with
-nothing to do, and telling them when the next one is costs nothing. It is the
-cheapest thing this app can do for the venue's takings, which is what gets the
-quizmaster booked again.
+- **Resolved at LAUNCH, on the server, into the game state**, like the prizes.
+- **UNDER the winner and the podium, never over them**, and **at the FINAL and
+  nowhere else** — never over a round board or a bingo call sheet.
+- **The host sees it from the LOBBY on**, because a wrong date is worse than no
+  slide and they are the only person who knows.
+- **A QR may only ever carry http(s)** (`safeLink`); a missing scheme is assumed
+  https rather than thrown away.
+- **Silence when there is nothing true to say.**
+- **It is NOT on anybody's phone.** The link lives on the VENUE record.
 
-**IT WRITES ITSELF, and that is the decision worth keeping.** TODO.md said "a
-line of text and a link, typed at launch", and that was right before the Venues
-tab existed. It does now: a venue carries its USUAL NIGHT and the diary already
-projects those forward. So the date is derived, there is nothing to type at the
-moment the host is most rushed, and it cannot go stale — the same reasoning
-that shaped the diary itself. A "what to say at the end" box on the launch form
-is a box that is blank by the third week and then puts a wrong date in front of
-sixty people.
-
-**A NIGHT WRITTEN OFF AND A ONE-OFF BOTH WIN, for free**, because it asks
-`upcoming()` rather than doing weekday arithmetic of its own. Saying "back here
-Thursday" on the Thursday you are not coming is the one failure that would make
-the slide untrustworthy for good, and the diary had already solved it.
-
-Six things that are load-bearing, all tested:
-
-- **Resolved at LAUNCH, on the server, into the game state** — like the prizes
-  it sits beside, and for the reason the look and the card shape taught: the
-  room is looking at this slide at half eleven, which is exactly when a free
-  host restarts. A stale console also cannot promise a room a date that was
-  cancelled this morning.
-- **UNDER the winner and the podium, never over them.** Somebody has just won
-  a quiz in front of a room; next week's date has no business being the biggest
-  thing on that screen. It is a band, in the same place and shape as the draw.
-- **At the FINAL and nowhere else** — never over a round board, and in bingo
-  never over a call sheet somebody is marking. Two things on one projector is
-  the fault this app refuses everywhere else.
-- **The host sees it from the LOBBY on.** They are the only person who knows
-  they are not doing the 20th, and a wrong date is worse than no slide — seen
-  early there is still time to fix the diary. It is also the line they say into
-  the mic, which is this app's shape everywhere: the app prepares, the human
-  reads it out.
-- **A QR may only ever carry http(s)** (`safeLink`, shared with the venue
-  record). Everything else on that slide can be read from the back of the room
-  and checked; a QR is the one thing sixty strangers point a camera at without
-  being able to see where it goes. A link with no scheme typed is assumed
-  https rather than thrown away, because that is how somebody copies one off a
-  card.
-- **Silence when there is nothing true to say.** No usual night and no link
-  means no band at all, rather than a slide with a hole in it. A link with no
-  usual night still gets one — that is a pub with an events page and an
-  irregular quiz, which is a real arrangement.
-
-**It is NOT on anybody's phone**, deliberately. The room is looking up for
-this, the QR is scanned off the big screen, and rule 8 keeps a phone to the
-job it has.
-
-**The link lives on the VENUE record** — the invoice book's customer, the same
-one that holds the prizes and the usual night — because a second list of one
-real-world thing disagrees with the first within a month. It is the VENUE's
-page rather than the quizmaster's: the room is being sent back to the pub,
-which is what the pub is paying for.
+Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 
 ### Headcount per venue — the app finally says a number it always knew
 
-`src/headcounts.js`, `library.headcounts` in the console payload, and the
-`heads-*` block drawn on a venue card and on the Gigs tab.
+`src/headcounts.js`, `library.headcounts`, the `heads-*` block on a venue card
+and on Gigs. Nothing new is collected — this is arithmetic over the archive.
+**ONE FUNCTION TAKES A SET OF NIGHTS AND RETURNS THE NUMBERS ACROSS THEM**, so
+one venue and all of them cannot disagree; it takes what `mergeGigs()` returns,
+which buys the 6am roll-over for nothing. Tested:
 
-**"The Crown went from 22 on a Thursday to 58" is the most persuasive sentence
-a quizmaster owns**, and every one of those numbers has been on disk since the
-app was written. The archive files a headcount every night; Past gigs printed
-it once on the night's own row and **nobody had ever seen it twice.** Nothing
-new is collected here, nothing is asked of anybody, and there is no consent
-question — this is arithmetic over a record that already existed.
-
-**ONE FUNCTION TAKES A SET OF NIGHTS AND RETURNS THE NUMBERS ACROSS THEM.**
-`venueHeadcounts()` is worked out once on the server and sent once; Venues
-opens one place and Gigs shows all of them, out of the same record. That is
-this file's own rule about stats across a group of accounts, applied to
-venues, and it is here for the identical reason: shipping "the trend for one
-venue" and later "across all venues" as two features is how the card and the
-panel end up disagreeing about a number somebody is showing a landlord.
-
-It takes what `mergeGigs()` returns rather than the raw archive, which buys
-the **6am roll-over** and the quiz-plus-bingo grouping for nothing — so the
-summary can never think a night was a different day from Past gigs.
-
-Five decisions that are load-bearing, all tested:
-
-- **A night's headcount is the MAX across its games, never the sum.** A quiz
-  and the bingo after it are the same room and mostly the same phones, so
-  adding them reports a 58-person night as 116 — on the one page whose whole
-  job is being evidence. Past gigs already printed the max; this is that rule
-  in a function so the two cannot drift.
-- **A night nobody played is left out.** A launch that was tested and
-  abandoned files an empty leaderboard, and counted it puts a 0 in the middle
-  of somebody's trend for a night that never happened.
+- **A night's headcount is the MAX across its games, never the sum** — a quiz
+  and the bingo after it are the same room.
+- **A night nobody played is left out**, or an abandoned launch puts a 0 in the
+  middle of somebody's trend.
 - **A night with no venue is COUNTED AND SAID**, in a line under the panel.
-  Every night filed before venues existed has none; dropping them in silence
-  means somebody with forty nights sees twelve and believes the app lost the
-  rest.
-- **One venue typed in two cases is one venue**, keyed lowercase and spelt as
-  it was typed most recently — the same rule `venuesUsed` already follows.
-- **No red for a night that went down.** Red means wrong or destructive
-  everywhere in this app, and a quieter Tuesday in February is neither. The
-  numbers are stated plainly and the app does not editorialise about
+- **One venue typed in two cases is one venue**, keyed lowercase.
+- **No red for a night that went down.** The app does not editorialise about
   somebody's own work.
+- The bars are `aria-hidden` and not a gradient; the library payload reads the
+  archive ONCE for the badge, the unbilled count and these.
 
-**The bars are a picture of numbers that are all written out anyway**, so they
-are `aria-hidden` and nothing is carried by a shape alone — the same reasoning
-as a control whose only explanation is a `title`. They are the account's own
-colour at half strength with the LATEST night at full, and deliberately **not
-a filled gradient**: that is what "press this" looks like here, and a block of
-it that does nothing when pressed costs the real buttons their meaning.
-
-**And the library payload now reads the archive ONCE.** Three things in it are
-worked out from those files — the nights badge, the unbilled count and these —
-and each used to walk the whole folder for itself. They have to agree with each
-other anyway: a badge saying 40 above a panel that summarises 39 is a page
-nobody trusts.
+Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 
 ### A prize taken at the bar has to reach the filed night
 
-`updateArchivedNight()` in `src/library.js`, and `state.archivedAs`.
+`updateArchivedNight()` in `src/library.js`, and `state.archivedAs`. A night is
+archived the instant it reaches the final scores and the bar scans the winner's
+QR minutes later — so every filed night said the prize was never taken. An
+UPDATE rather than a second archive, compared against what was last filed before
+writing (or a game sitting on the final scores rewrites the file on every push),
+and **pushed to the backup again**, or the fix reaches this disk and nothing
+else. **The flag that stops a night being filed twice is `state.archivedAs`, not
+a field on the Session** — the old one was cleared by `build()`, which runs on
+boot, so a restart on the final scores filed the whole evening a second time.
 
-A night is archived the instant it reaches the final scores — and the bar
-scans the winner's QR several minutes later. So **every night in the record
-said the prize was never taken, for ever.** The live panel on the control view
-was right and the permanent record was wrong, which is the worst way round:
-one is a screen you glance at, the other is the evidence a quizmaster shows a
-venue.
-
-An UPDATE rather than a second archive, and it needs no new hook —
-`redeemVoucher()` and `reinstateVoucher()` both call `changed()`, which is
-what the session watches. Compared against what was last filed before writing,
-or a game left sitting on the final scores would rewrite the file on every
-push. The updated record is pushed to the backup again, or the fix reaches
-this disk and nothing else.
-
-**IT ALSO FIXED A DUPLICATE NIGHT NOBODY HAD NOTICED.** The flag that stops an
-evening being filed twice was `archivedThisGame` on the Session — set when the
-night was archived and cleared by `build()`, **which runs on boot**. So a
-restart while a game sat on the final scores filed the whole evening again,
-and two copies turned up on Past gigs. On a host whose disk is wiped every
-deploy that is not the unusual case. It is `state.archivedAs` now: the state
-is the record of the night, so the fact that it has been filed belongs in it —
-the same lesson as the bingo card shape and the look.
+Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 
 ### A phone must not say you were right before the projector does
 
 `scoreBefore` on an answer, `positionsAtStart` on the question, and
-`scoreToShow()` / `positionToShow()` in `src/engine.js`.
-
-Found by the host mid-test: tap the right answer and the running total at the
-top of your own phone went from 0 to 360 **instantly** — so you knew several
-seconds before the reveal and before anybody slower had finished. In a pub
-that is one table telling the next; online it is a message in the chat. It
-also spoils the reveal for the person themselves, which is most of what a
-reveal is for.
-
-**Everything built to keep that secret was already correct, which is what
-makes it worth writing down.** `playerView()` withholds `correct`, `points`,
-`isFirstCorrect` and the part marks until the reveal, with a comment saying
-exactly that — and the header beside them gave it away anyway. The two fields
-nobody thought of as secret were the leak.
+`scoreToShow()` / `positionToShow()` in `src/engine.js`. Tap the right answer and
+the running total at the top of your own phone used to jump instantly — so you
+knew several seconds before the reveal, and so did the next table.
 
 **THE FIX IS NOT TO SCORE AT REVEAL TIME.** Points come off the clock at the
 moment of answering and the first-correct bonus depends on the order answers
-land, so moving the arithmetic would move the SCORING — the one thing that
-must not move. The engine scores exactly as it did; only what a PHONE is told
-changes. There is a test that the player object and the board carry the points
-immediately.
+land; the engine scores exactly as it did, and only what a PHONE is told changes.
 
-- **The score** is held at what it was before this question, read off
-  `scoreBefore` on their own answer record.
-- **The position too, or it is the same leak wearing a different hat** — hold
-  the total alone and a phone still says "0 points, 2nd of 12" the instant you
-  tap something right. Snapshotted once at `askQuestion()` rather than worked
-  out per push: the board is rebuilt whenever anything changes, which during a
-  question is every time somebody answers, and a second board per push is the
-  quadratic shape `leaderboard()` was rewritten to remove.
-- **Somebody who has NOT answered sees their real total**, which is the same
-  number either way — otherwise the field becomes a tell in the other
-  direction: *"my number went stale, so my answer must have registered"*.
-- **The host sees it live**, because that is what their board is for, and the
-  projector cannot leak to a phone. `leaderboard()`, `hostView()` and
-  `screenView()` read `player.score` unchanged, with a test each.
-- **A game running through a redeploy degrades to the live figure** rather
-  than throwing: an answer recorded before this existed has no `scoreBefore`,
-  and their own total is what they were looking at a second ago.
+- **The score** is held at `scoreBefore`, and **the position too**, or it is the
+  same leak wearing a different hat. `positionsAtStart` is snapshotted once at
+  `askQuestion()`, never worked out per push.
+- **Somebody who has NOT answered sees their real total**, or a stale number
+  becomes a tell in the other direction.
+- **The host sees it live** and the projector cannot leak to a phone; both read
+  `player.score` unchanged, with a test each.
+- An answer recorded before this existed degrades to the live figure.
+- **`hostView()` lists its clock fields by name rather than spreading
+  `s.question`** — a whitelist is supposed to BE the decision (rule 1), and a
+  spread quietly opts every future field in.
 
-**It also found a blanket spread that should never have been there.**
-`hostView()` built its clock as `{ ...s.question }`, so `positionsAtStart`
-joined every host payload the moment it was added — a map of every player id,
-on every push, because nobody decided it should be there. The other two views
-already listed the four clock fields by name; this one does now. **A whitelist
-is supposed to BE the decision**, which is the whole of rule 1, and a spread
-quietly opts every future field in.
+Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
 ### The picture round's four reveals
 
-`REVEAL_MODES` in `src/quizzes.js`: **zoom** (the original, and still what a
-round naming nothing falls back to), **pixelate**, **blur**, **tiles**. A round
-names one, a question can override it, and `mix` rotates through all four **by
-position, not at random** — so a Redo mid-gig hands the room back the effect
-they were half way through watching rather than a fresh scramble. There is a
-test for exactly that.
+`REVEAL_MODES` in `src/quizzes.js`: **zoom** (the fallback), **pixelate**,
+**blur**, **tiles**. A round names one, a question can override it, and `mix`
+rotates through all four **by position, not at random**, so a Redo mid-gig hands
+the room back the effect they were half way through. **A GENERATED picture round
+is `mix`** — it was not for two years of packs, and there is a test on it now,
+because nothing else would notice it going missing.
 
-**A GENERATED picture round is `mix`, and for two years of packs it was not.**
-The mode existed, the four effects existed, and `generateQuizPack()` never set
-a reveal at all — so every generated round fell back to zoom and the first real
-night came back *"the image round was too samey"*. The fix is one word in an
-object literal, which is exactly why there is now a test on it: nothing else
-anywhere would notice it going missing. Safe by construction rather than a
-judgement call, because of the paragraph below — all four run on the same
-curve, so the round is worth the same points whichever it draws.
+**They all run on the same curve, and that is a SCORING decision** — see the
+decisions table. Which is why **pixelate ramps its resolution GEOMETRICALLY**:
+`PIX_FROM * (PIX_TO/PIX_FROM) ** shown`. Ramped linearly it solved about two
+seconds in. **No `ctx.filter`** — the old-iOS trap `filters.js` exists to avoid —
+and the `image-rendering` fallbacks are ordered least-known-last on purpose. **A
+misspelt mode is a validation error**, never a silent fall back to zoom.
 
-**They all run on the same curve, and that is a SCORING decision, not a styling
-one.** You score more the earlier you answer, so how fast a picture becomes
-guessable is how many points are on offer. Give one mode a curve of its own and
-that round is quietly worth more or less than the others, for the same crowd and
-the same question — which nobody will ever attribute to the animation.
-
-This bit is the whole lesson, and it was wrong first time: **pixelate ramps its
-resolution GEOMETRICALLY, not in equal steps.** 11 pixels across to 22 gives
-away half the face; 260 to 520 gives away nothing anybody can see. Ramped
-linearly on the same `easeOut`, the picture was solved about two seconds in and
-that round was a giveaway next to a zoom round. `PIX_FROM * (PIX_TO/PIX_FROM) **
-shown` in `public/assets/screen.js`. Same curve does not mean same arithmetic.
-
-None of it needs a library: pixelate is one `drawImage` a frame into a canvas of
-at most a few hundred pixels, blown up by the browser with
-`image-rendering: pixelated`; blur is one CSS filter; tiles is a grid of opaque
-panels. **No `ctx.filter`** — the same old-iOS trap `filters.js` exists to
-avoid. The `image-rendering` fallbacks are ordered least-known-last on purpose;
-the other way round and the projector smooths the blocks into mush.
-
-A misspelt mode is a **validation problem**, not a silent fall back to zoom —
-otherwise you find out by watching the wrong effect in front of a room. The
-editor hides "Starting zoom" on a question that does not zoom, because a knob
-that does nothing reads as a knob you have to set.
+Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
 ### How many questions of each type
 

@@ -567,3 +567,261 @@ Two wording faults caught by reading the actual draft rather than the code:
 it said *"it went out N days past its terms"*, which says the INVOICE was sent
 late and reads as an apology; and an unfilled business name left a dangling
 "Best," with nothing under it.
+
+---
+
+## THE MONTH IS ON THE LEFT AND WHAT YOU DO ABOUT A DATE IS ON THE RIGHT
+
+`diarySection()` in `console.js`, `.cal-wrap` / `.cal-side` in `style.css`.
+Asked for directly: *"perhaps the calendar needs to sit off to the left in the
+section to allow room for the right to populate?"*
+
+**It fixes a real fault rather than only looking tidier.** Full width, the
+month was seven columns of mostly-empty boxes, and what answered a date was a
+thin strip UNDER it — so picking the 23rd pushed the answer below the fold and
+the form it sent you to was below that again. Beside it, a date and what you
+can do about it are one glance. Two columns from 900px only: below that the
+month is the tight thing — seven columns of a 320px phone is 38px a day — so
+the panel goes underneath and **the picker scrolls it into view**, because
+that is the same below-the-fold fault arriving on the device this is most
+often held on.
+
+**The panel is the diary when no date is picked and that date when one is.**
+Two jobs in one column rather than two columns of their own: what is coming up
+is what you READ and a date is what you ACT on, and they are never both
+wanted.
+
+**THERE IS ONE PLACE A NIGHT IS ADDED, AND IT IS THE DATE YOU PICKED.** The
+bottom of the tab used to carry its own date box, venue and *Add a night* —
+a second control for a job the month already does, which is exactly how a
+booking lands on the date the other one happened to be showing. **Book a
+quiz** now opens the whole form against the date in the heading, at the host's
+own instruction: *"perhaps when you click 'book a quiz' it just asks for all
+quiz info like venue, time etc."* The date is the heading rather than a field,
+because it is the thing you clicked to get here and a box repeating it is a
+second place for it to be wrong.
+
+**A NIGHT CAN CARRY A START TIME NOW, and it is optional on purpose.** A
+residency has none — the venue's arrangement lives in no record here — so
+demanding one would make somebody invent a fact in order to save a booking.
+Given, `src/ics.js` writes a real timed appointment instead of a day-long
+block, **floating**: no `Z` and no `TZID`, so "8pm" means 8pm where the
+quizmaster is rather than wherever the server guessed. The two-hour length is
+a stated DEFAULT, because every calendar client needs an end and an event with
+no length is not an appointment. **The end date moves with the clock** — half
+eleven ends at half one the NEXT day, and writing that against the same date
+is an event ending twenty-two hours before it starts, which a calendar either
+refuses or draws across the whole day. Tested.
+
+**"NOT ON" IS NOW TWO LABELS, AND THE OLD ONE WAS INVISIBLE RATHER THAN
+WRONG.** Asked directly — *"not sure what 'not on' would be useful for"* —
+and the honest answer is that the button did the right thing and nothing on
+screen could teach it: it writes one week of a residency off, the night then
+vanishes from the diary and from the calendar feed, and nothing said so or
+offered a way back. **A control whose entire effect is something disappearing
+is a control nobody can learn.** Three changes, and none of them is the
+behaviour:
+
+- **"Not on this week"** on a residency, which is what it always did. It was
+  *"Not on"* — a verb with no object, which is the label collision this file's
+  sweep already looks for.
+- **"Delete this booking"** on a one-off, because that is a real row somebody
+  typed and the thing you want is for it to be gone. One label used to cover
+  both acts on both objects.
+- **A written-off night is SHOWN on its own date**, named, with **Put it
+  back** on it — `removeBooking`, because forgetting the exception is what
+  returns a residency to being an ordinary one.
+
+**A NIGHT IN THE LIST IS SOMETHING YOU READ, NOT TEN THINGS YOU DO — and the
+first build of this got it wrong in a way the host spotted immediately.** The
+"coming up" list used the same card as the day panel, buttons and all, so
+**Invoice it** and **Not on this week** appeared on every one of ten rows. Two
+faults, and the second is already a rule in this file:
+
+- **A WALL OF RED.** *"Don't want a wall of red either"* — his own line, set
+  when three tinted button options were turned down. Ten outlined-red buttons
+  in a column is louder than one filled one, and it made an ordinary diary
+  read as ten things that had gone wrong, on a page whose only other colour
+  was a pink underline on the button beside it.
+- **It contradicted the panel's own split.** What is coming up is what you
+  READ; a date is what you ACT on. Actions in both halves meant the day panel
+  was not *the* place a night is dealt with, it was one of two.
+
+So a list row is the date, the place and what it plays for, and **the whole row
+picks that date** — landing you in the day panel where the actions are, with
+the month moved to the right month on the way. *"No prizes set"* went with
+them: printed ten times it is noise, and it is still said in the day panel,
+which is where it can be acted on.
+
+**And the month is STICKY beside it** at 900px and up. A month is five rows and
+the list is however many nights you have, so the left column ran out a long way
+above the right one and the bottom half of the section was a black void with a
+list floating in it. Sticky, the calendar is still there to click when you
+reach the end of the list — which is exactly when you want it.
+
+**AND "INVOICE FOR THIS DATE" GOES TO THE INVOICES TAB** rather than opening a
+form over the calendar, at the host's own reading: *"'invoice for this date'
+goes to the invoice section with that date pre-filled"*. He is right, and the
+reason is what happens AFTER you press send — over the calendar you are left
+standing on a month with no sight of the invoice you just raised, its number
+or whether it is still a draft. Landing on the tab that owns them means the
+thing you made is on the page behind the form. The date crosses as a
+`pendingInvoice`, consumed once by `invoicesSection()` after its own book has
+loaded — which is also what turns the venue NAME into a customer id, so the
+calendar raises an invoice without fetching the invoice book at all.
+
+---
+
+## The last slide of the night — "Back here Thursday 20th"
+
+`src/comeback.js`, `state.comeBack`, the band in `comeBackBand()` in
+`client.js`, and **Where to send them** on the Venues tab.
+
+The winner is up, the room has a drink and every phone in the place is out.
+**That moment used to be spent on a scoreboard nobody needs any more** — it is
+the one point in the evening when the whole room is looking at the screen with
+nothing to do, and telling them when the next one is costs nothing. It is the
+cheapest thing this app can do for the venue's takings, which is what gets the
+quizmaster booked again.
+
+**IT WRITES ITSELF, and that is the decision worth keeping.** TODO.md said "a
+line of text and a link, typed at launch", and that was right before the Venues
+tab existed. It does now: a venue carries its USUAL NIGHT and the diary already
+projects those forward. So the date is derived, there is nothing to type at the
+moment the host is most rushed, and it cannot go stale — the same reasoning
+that shaped the diary itself. A "what to say at the end" box on the launch form
+is a box that is blank by the third week and then puts a wrong date in front of
+sixty people.
+
+**A NIGHT WRITTEN OFF AND A ONE-OFF BOTH WIN, for free**, because it asks
+`upcoming()` rather than doing weekday arithmetic of its own. Saying "back here
+Thursday" on the Thursday you are not coming is the one failure that would make
+the slide untrustworthy for good, and the diary had already solved it.
+
+Six things that are load-bearing, all tested:
+
+- **Resolved at LAUNCH, on the server, into the game state** — like the prizes
+  it sits beside, and for the reason the look and the card shape taught: the
+  room is looking at this slide at half eleven, which is exactly when a free
+  host restarts. A stale console also cannot promise a room a date that was
+  cancelled this morning.
+- **UNDER the winner and the podium, never over them.** Somebody has just won
+  a quiz in front of a room; next week's date has no business being the biggest
+  thing on that screen. It is a band, in the same place and shape as the draw.
+- **At the FINAL and nowhere else** — never over a round board, and in bingo
+  never over a call sheet somebody is marking. Two things on one projector is
+  the fault this app refuses everywhere else.
+- **The host sees it from the LOBBY on.** They are the only person who knows
+  they are not doing the 20th, and a wrong date is worse than no slide — seen
+  early there is still time to fix the diary. It is also the line they say into
+  the mic, which is this app's shape everywhere: the app prepares, the human
+  reads it out.
+- **A QR may only ever carry http(s)** (`safeLink`, shared with the venue
+  record). Everything else on that slide can be read from the back of the room
+  and checked; a QR is the one thing sixty strangers point a camera at without
+  being able to see where it goes. A link with no scheme typed is assumed
+  https rather than thrown away, because that is how somebody copies one off a
+  card.
+- **Silence when there is nothing true to say.** No usual night and no link
+  means no band at all, rather than a slide with a hole in it. A link with no
+  usual night still gets one — that is a pub with an events page and an
+  irregular quiz, which is a real arrangement.
+
+**It is NOT on anybody's phone**, deliberately. The room is looking up for
+this, the QR is scanned off the big screen, and rule 8 keeps a phone to the
+job it has.
+
+**The link lives on the VENUE record** — the invoice book's customer, the same
+one that holds the prizes and the usual night — because a second list of one
+real-world thing disagrees with the first within a month. It is the VENUE's
+page rather than the quizmaster's: the room is being sent back to the pub,
+which is what the pub is paying for.
+
+---
+
+## Headcount per venue — the app finally says a number it always knew
+
+`src/headcounts.js`, `library.headcounts` in the console payload, and the
+`heads-*` block drawn on a venue card and on the Gigs tab.
+
+**"The Crown went from 22 on a Thursday to 58" is the most persuasive sentence
+a quizmaster owns**, and every one of those numbers has been on disk since the
+app was written. The archive files a headcount every night; Past gigs printed
+it once on the night's own row and **nobody had ever seen it twice.** Nothing
+new is collected here, nothing is asked of anybody, and there is no consent
+question — this is arithmetic over a record that already existed.
+
+**ONE FUNCTION TAKES A SET OF NIGHTS AND RETURNS THE NUMBERS ACROSS THEM.**
+`venueHeadcounts()` is worked out once on the server and sent once; Venues
+opens one place and Gigs shows all of them, out of the same record. That is
+this file's own rule about stats across a group of accounts, applied to
+venues, and it is here for the identical reason: shipping "the trend for one
+venue" and later "across all venues" as two features is how the card and the
+panel end up disagreeing about a number somebody is showing a landlord.
+
+It takes what `mergeGigs()` returns rather than the raw archive, which buys
+the **6am roll-over** and the quiz-plus-bingo grouping for nothing — so the
+summary can never think a night was a different day from Past gigs.
+
+Five decisions that are load-bearing, all tested:
+
+- **A night's headcount is the MAX across its games, never the sum.** A quiz
+  and the bingo after it are the same room and mostly the same phones, so
+  adding them reports a 58-person night as 116 — on the one page whose whole
+  job is being evidence. Past gigs already printed the max; this is that rule
+  in a function so the two cannot drift.
+- **A night nobody played is left out.** A launch that was tested and
+  abandoned files an empty leaderboard, and counted it puts a 0 in the middle
+  of somebody's trend for a night that never happened.
+- **A night with no venue is COUNTED AND SAID**, in a line under the panel.
+  Every night filed before venues existed has none; dropping them in silence
+  means somebody with forty nights sees twelve and believes the app lost the
+  rest.
+- **One venue typed in two cases is one venue**, keyed lowercase and spelt as
+  it was typed most recently — the same rule `venuesUsed` already follows.
+- **No red for a night that went down.** Red means wrong or destructive
+  everywhere in this app, and a quieter Tuesday in February is neither. The
+  numbers are stated plainly and the app does not editorialise about
+  somebody's own work.
+
+**The bars are a picture of numbers that are all written out anyway**, so they
+are `aria-hidden` and nothing is carried by a shape alone — the same reasoning
+as a control whose only explanation is a `title`. They are the account's own
+colour at half strength with the LATEST night at full, and deliberately **not
+a filled gradient**: that is what "press this" looks like here, and a block of
+it that does nothing when pressed costs the real buttons their meaning.
+
+**And the library payload now reads the archive ONCE.** Three things in it are
+worked out from those files — the nights badge, the unbilled count and these —
+and each used to walk the whole folder for itself. They have to agree with each
+other anyway: a badge saying 40 above a panel that summarises 39 is a page
+nobody trusts.
+
+---
+
+## A prize taken at the bar has to reach the filed night
+
+`updateArchivedNight()` in `src/library.js`, and `state.archivedAs`.
+
+A night is archived the instant it reaches the final scores — and the bar
+scans the winner's QR several minutes later. So **every night in the record
+said the prize was never taken, for ever.** The live panel on the control view
+was right and the permanent record was wrong, which is the worst way round:
+one is a screen you glance at, the other is the evidence a quizmaster shows a
+venue.
+
+An UPDATE rather than a second archive, and it needs no new hook —
+`redeemVoucher()` and `reinstateVoucher()` both call `changed()`, which is
+what the session watches. Compared against what was last filed before writing,
+or a game left sitting on the final scores would rewrite the file on every
+push. The updated record is pushed to the backup again, or the fix reaches
+this disk and nothing else.
+
+**IT ALSO FIXED A DUPLICATE NIGHT NOBODY HAD NOTICED.** The flag that stops an
+evening being filed twice was `archivedThisGame` on the Session — set when the
+night was archived and cleared by `build()`, **which runs on boot**. So a
+restart while a game sat on the final scores filed the whole evening again,
+and two copies turned up on Past gigs. On a host whose disk is wiped every
+deploy that is not the unusual case. It is `state.archivedAs` now: the state
+is the record of the night, so the fact that it has been filed belongs in it —
+the same lesson as the bingo card shape and the look.
