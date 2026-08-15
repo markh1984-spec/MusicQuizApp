@@ -708,6 +708,15 @@ body::after {
    Only while dragging: sticky the rest of the time would cost the top of every
    tab all night, which is the same reason the tab bar scrolls sideways on a
    phone rather than growing a second row. */
+/* AND THE TAB BAR STANDS DOWN WHILE SOMETHING IS BEING DRAGGED.
+   Two sticky things pinned to the same place is what produced the mess in the
+   post-drag screenshot: the tab bar is sticky at z-index 10 and Tonight pins
+   at 6 for the length of a drag, so the bar painted straight through the
+   middle of the panel somebody was dragging INTO — over the tiles and over
+   the Launch button. Un-pinning it for the drag is better than out-ranking
+   it: during a drag the tabs are not the thing being used, and one pinned
+   object cannot fight another that is not there. */
+body.is-dragging-card .tabbar { position: static; }
 body.is-dragging-card .launchbar {
   position: sticky;
   /* Under the topbar, not under the top of the window. At `8px` it pinned
@@ -716,7 +725,10 @@ body.is-dragging-card .launchbar {
      the logo. Tonight sits above the tab bar in the document, so it only has
      the topbar to clear. */
   top: var(--topbar-h);
-  z-index: 6;
+  /* Above the tab bar as well as above the page. Belt and braces: the rule
+     above takes the bar out of the way, and this makes the drop target win
+     even if something is pinned that we did not think of. */
+  z-index: 12;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
 }
 .drop-above { box-shadow: inset 0 3px 0 0 var(--hot); }

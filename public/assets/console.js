@@ -3029,6 +3029,26 @@ function dragging(on) {
   document.body.classList.toggle('is-dragging-card', Boolean(on));
 }
 
+/*
+ * A DRAG THAT ENDS ANYWHERE AT ALL UN-PINS TONIGHT.
+ *
+ * `dragging(false)` is called by each drop handler, which is right when a drop
+ * lands somewhere we own — and does nothing for a drag abandoned over the
+ * page, dropped on the browser chrome, or cancelled with Escape. The panel
+ * then stayed pinned and overlapping the page underneath it, which is half of
+ * what the post-drag screenshot showed.
+ *
+ * `dragend` always fires on the source, whatever happened to the drop, so it
+ * is the one event that can promise this. Once, on the window, rather than per
+ * card: the cards are rebuilt on every render and a listener each would be a
+ * new one every time anybody joined.
+ */
+window.addEventListener('dragend', () => {
+  dragging(false);
+  packDrag = null;
+  venueDrag = null;
+});
+
 function launchBar() {
   // An owner runs no nights, so there is nothing here for them — same reason
   // the running panel hides itself.
