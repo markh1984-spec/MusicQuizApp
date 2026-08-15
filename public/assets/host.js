@@ -14,12 +14,14 @@ import { esc, node, ServerClock, Live, postJson, brandLink, binIcon, paintNav, p
 import { paintScheme } from './schemes.js';
 import { bingoPanels, bingoActions } from './host-bingo.js';
 import { cueOffsetMs, formatOffset } from './cue.js';
+import { phonesAre } from './phones.js';
 
 const KEY_STORE = 'musicquiz.hostkey';
 
 const mainEl = document.getElementById('main');
 const actionsEl = document.getElementById('actions');
 const whereEl = document.getElementById('where');
+const phonesEl = document.getElementById('phonesAre');
 const clockEl = document.getElementById('clock');
 const connEl = document.getElementById('connText');
 
@@ -182,6 +184,17 @@ function draw(next) {
   // colours can change mid-night from the console, the name cannot.
   paintScheme(state.scheme);
   whereEl.textContent = whereLabel(state);
+  /*
+   * Painted here rather than in a card, because it has to follow every state
+   * push — the phones change with the phase, and a line that only refreshed
+   * when something was rebuilt would tell the host the wrong thing at exactly
+   * the moment they were about to say it out loud.
+   */
+  if (phonesEl) {
+    const doing = phonesAre(state);
+    phonesEl.hidden = !doing;
+    phonesEl.textContent = doing ? `On their phones: ${doing}` : '';
+  }
   /*
    * THE JOIN CODE, on the screen the host is actually holding.
    *

@@ -766,6 +766,31 @@ stays.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
+### THE HOST'S SCREEN SAYS WHAT THE ROOM IS LOOKING AT
+
+`phonesAre()` in `public/assets/phones.js`, drawn under the status line on the
+control view. **A performer's prompt, not a status readout** — a quizmaster
+behind a microphone cannot see sixty phones, and what is on them decides what
+they say next: *"there's a game on there while we set up"*, *"get your photos
+in now"*.
+
+- **IT NAMES ITS SUBJECT.** `whereLabel()` an inch above says where the GAME
+  has got to; this says what the PHONES have got. Two bare one-line statuses
+  side by side is the label collision this file keeps recording, and the fix it
+  already prescribes is to keep the noun and add the audience — so it always
+  reads *"On their phones: …"* and never stands alone.
+- **ONE FUNCTION, and every phase must answer.** A host who says something the
+  phones are not offering has said it OUT LOUD to sixty people who then go
+  looking for a button that is not there. There is a test walking `PHASES` and
+  `BINGO_PHASES` themselves rather than a typed list, so a new phase cannot
+  silently leave the line blank.
+- **WHAT IS OVER THE TOP WINS**, exactly as on the projector: a scoreboard or
+  an advert is a flag rather than a phase, so the quiz underneath carries on —
+  but it is not what anybody is holding.
+- **Derived on the CLIENT from state the host already has**, so no payload
+  changed and the guard stayed byte-identical. It is host-only by construction:
+  a note to one person about everybody else.
+
 ### THE LOBBY GAMES — AND NONE OF THEM IS NAMED AFTER THE ONE YOU ARE THINKING OF
 
 `public/assets/maze.js` + `lobby-game.js` (Maze Mouth), `rally.js` +

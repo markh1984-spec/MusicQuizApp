@@ -6629,6 +6629,22 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
  * which on Quick Draw is a shot, and the shot could be the sheriff. Small and
  * quiet, because it is a preference rather than a thing to press.
  */
+/*
+ * WHAT THE ROOM IS LOOKING AT, on the host's own screen.
+ *
+ * Deliberately the quietest thing in the bar — it is a glance, not a control,
+ * and it sits directly under a status line that is already doing the loud job.
+ * Dim, and it wraps rather than pushing the clock off a 320px phone, which is
+ * the one width this bar has been broken at before.
+ */
+.phones-are {
+  color: var(--ink-dim);
+  opacity: 0.85;
+  line-height: 1.3;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .arcade-under {
   width: 100%;
   display: flex;
