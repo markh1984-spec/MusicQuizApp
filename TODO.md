@@ -1059,3 +1059,66 @@ Nothing to do. 🔗 https://github.com/markh1984-spec/MusicQuizApp/branches
 # PART 2 — Render ✅ mostly done
 
 Service is created, in Frankfurt, on the free tier.
+
+## A choice of lobby games, and Gold picks which
+
+**Asked for on 15 August 2026:** *"perhaps even have a selection of games that
+the QM can select before the rounds in the gold subscription only"*, and
+before that *"we can add tennis as well — tennis before the music bingo games
+and maze mouth before the quiz?"*
+
+**Maze Mouth is built and is the default for everybody. What Gold buys is the
+CHOICE.** That split matters and it is the one thing to get right before any
+of this is written:
+
+**Do not sell the game itself away from Bronze and Silver.** Its biggest value
+is not entertainment — it is that a phone with a game on it stays in the
+FOREGROUND, so sixty connections do not all have to come back at the moment
+the quiz starts, which is the moment the join gate is busiest. That is a
+RELIABILITY feature dressed as a toy, and selling reliability to the top tier
+only is how a Wednesday in a pub gets worse for the people paying least.
+Everybody gets a game; Gold gets to pick which.
+
+**It is a decision about TONIGHT, so it goes where the look and the card shape
+go** — chosen at launch, written into the game state, restored after a crash.
+Not a per-account preference: a bingo night and a quiz night want different
+things, which is the host's own point.
+
+**The default follows the GAME, not the account:** Maze Mouth before a quiz,
+tennis before the bingo. It gives a bingo night its own character rather than
+being the quiz with different content, and the phone already knows which it is
+(`s.game`), so it costs one branch.
+
+### What has to be true of any game added here
+
+- **SEEDED, from `state.gameSeed`.** The host's own catch about Maze Mouth —
+  *"the game has to be consistent or else the scoreboard makes no sense"* —
+  applies to every one of them. A tennis ball that serves differently for two
+  people is a leaderboard comparing luck. `gameSeed` already exists and is
+  already in the state; a new game reads the same one.
+- **NO SERVER WHILE IT IS PLAYED.** One small post at game over and at each
+  life lost, never a stream of positions. The lobby is when the connection is
+  busiest.
+- **LOBBY ONLY.** The seed is in the phone's payload at the lobby and nowhere
+  else, and a score is refused at any other phase. There are tests for both;
+  they should pass unchanged for a second game.
+- **A CONTROL WITH NO PRECISION IN IT.** Maze Mouth is tap-where-you-want-to-go
+  because a swipe has to be READ and a misread swipe costs a life. Tennis is
+  the bat tracking a thumb along one edge — one axis, nothing to misread, and
+  it does not cover the ball the way a finger covers a maze.
+- **NOT PAC-MAN, NOT PONG, NOT BREAKOUT BY NAME.** See CLAUDE.md: the names and
+  the artwork are somebody's, and this app is sold.
+
+### The picker
+
+Beside the look and the card shape under **Set it up**, and **visible but
+locked below Gold** — the subtle upsell this file already uses for the Adverts
+tab, which is worth more than hiding it: somebody who cannot have it should
+still know it exists.
+
+### Left undone deliberately
+
+Nothing is built for this yet beyond Maze Mouth itself. **Tennis is the next
+one** and is perhaps 120 lines on the same shape as `lobby-game.js` — start
+there rather than with the picker, because one game and no choice is already
+useful and a picker with one entry is not.
