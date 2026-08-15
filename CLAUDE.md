@@ -2198,9 +2198,18 @@ now works on both, with no second way of doing it to keep in step.
 
 Four things that are load-bearing:
 
-- **The last round cannot be switched off.** A night with no rounds is not a
-  night, the server refuses it, and being refused at Launch — in a venue, with
-  a room in front of you — is the wrong place to find out.
+- **ANY round can be switched off, including the last** — and a pack with all
+  of them off is simply an empty pack. It was built refusing the last tick,
+  which guarded something real (the server will not launch a night with no
+  rounds) in the wrong place; the host's own fix was *"the launch console
+  should just treat a pack with all red crosses as an empty pack."* Better for
+  two reasons: **a tick that will not toggle is a control that ignores you**,
+  and the constraint already had a home — Launch is hollow when there is
+  nothing to launch, so "every round is off" is another way of having nothing,
+  said in the one place built to say it. The spent pack stays in the row,
+  dimmed and dashed like the empty slots beside it, because it is one tap from
+  being back and making somebody find it on the shelf again would be the app
+  punishing a change of mind.
 - **Switching one off makes it a COMPOSED night even with one pack**, so
   `nightOrder()` asks whether anything is off rather than only counting packs.
   Miss that and the ticks look like they work and change nothing.

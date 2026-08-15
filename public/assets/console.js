@@ -3938,10 +3938,28 @@ function launchBar() {
    * with a room in front of you — is the wrong place to find out.
    */
   function toggleRound(packId, round) {
+    /*
+     * ANY ROUND CAN BE SWITCHED OFF, INCLUDING THE LAST ONE.
+     *
+     * This used to refuse the last tick, which was a special case guarding
+     * something real — the server will not launch a night with no rounds — in
+     * the wrong place. The host's own fix: *"the launch console should just
+     * treat a pack with all red crosses as an empty pack."*
+     *
+     * That is better for two reasons. A tick that will not toggle is a control
+     * that ignores you, and this file's rule is that nothing on screen should
+     * need explaining. And the constraint already had a home: Launch is hollow
+     * when there is nothing to launch, so "every round is off" is simply
+     * another way of having nothing — said in the one place that was built to
+     * say it, rather than by a tap that does nothing.
+     *
+     * A pack with every round crossed off is an empty pack: it sits there
+     * dimmed, contributes nothing, and one tap brings it back. Nobody has to
+     * drag it out and find it again.
+     */
     const key = offKey(packId, round);
-    if (lbOff.has(key)) { lbOff.delete(key); paintOrder(); return; }
-    if (activeRounds().length <= 1) return;
-    lbOff.add(key);
+    if (lbOff.has(key)) lbOff.delete(key);
+    else lbOff.add(key);
     paintOrder();
   }
 
@@ -4061,7 +4079,7 @@ function launchBar() {
     packs.forEach((pack, at) => {
       const rounds = (pack.rounds || []).length;
       const tile = node(`
-        <div class="lb-tile is-pack" draggable="true" title="${esc(pack.title)}">
+        <div class="lb-tile is-pack ${rounds && (pack.rounds || []).every((_, i) => isOff(pack.id, i)) ? 'is-spent' : ''}" draggable="true" title="${esc(pack.title)}">
           <button class="lb-tile-off" type="button" aria-label="Take this pack out">&times;</button>
           <span class="lb-tile-n">${at + 1}</span>
           <b class="lb-tile-name">${esc(pack.title)}</b>
@@ -4221,12 +4239,23 @@ function launchBar() {
      * Disabled AND saying what it wants, rather than merely greyed: a control
      * that is off without saying why is the thing this file keeps recording.
      */
-    goBtn.disabled = !packs.length;
+    const rounds = activeRounds().length;
+    /*
+     * HOLLOW WHEN THERE IS NOTHING TO LAUNCH, and that now covers two ways of
+     * having nothing: no pack at all, and a pack with every round switched
+     * off. Both are said here rather than by a control that refuses to move,
+     * and each says WHICH it is — a button that is off without saying why is
+     * the fault this file keeps recording.
+     */
+    goBtn.disabled = !packs.length || !rounds;
     if (!packs.length) {
       goBtn.textContent = 'Drag a pack in to launch';
       return;
     }
-    const rounds = activeRounds().length;
+    if (!rounds) {
+      goBtn.textContent = 'Every round is switched off';
+      return;
+    }
     if (packs.length < 2) {
       // It has to name what will actually be PLAYED — "Launch The 1980s Pop
       // Music Quiz" over a pack with two of its three rounds switched off is

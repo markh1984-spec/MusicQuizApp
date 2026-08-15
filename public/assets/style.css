@@ -5474,6 +5474,12 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   background: var(--panel); border: 1px solid var(--panel-line); cursor: grab;
 }
 .lb-tile.is-pack.is-lifting { opacity: 0.45; }
+/* EVERY ROUND SWITCHED OFF — an empty pack. It stays in the row rather than
+   vanishing, because it is one tap from being back and making somebody find
+   it on the shelf again would be the app punishing a change of mind. Dimmed
+   and dashed, which is the same language the empty slots beside it use. */
+.lb-tile.is-pack.is-spent { opacity: 0.5; border-style: dashed; }
+.lb-tile.is-pack.is-spent .lb-tile-n { background: rgba(255, 255, 255, 0.10); color: var(--ink-dim); }
 /* Which round it is — the thing you are actually reading when you scan a
    running order. Top left, out of the way of the title. */
 .lb-tile-n {
