@@ -1659,7 +1659,7 @@ the input, and let the bar clip inside itself instead of pushing the page.
 **Measure `scrollWidth` against `clientWidth` at 320 after anything
 structural**; nothing else finds it.
 
-### BEFORE, DURING, AFTER — the three doors, ordered by the gig
+### CONSOLE · WORKSHOP · POST GIG — the three doors, ordered by the gig
 
 Proposed on 15 August 2026, and it supersedes the smaller console/workshop
 split below it: *"perhaps a better order is three sections, one dedicated to
@@ -1679,11 +1679,37 @@ to scan**, and three sections of three or four is not.
 **The allocation, given by the host on 15 August 2026 and not to be
 re-derived:**
 
+**THE NAMES ARE THE HOST'S AND THEY ARE BETTER THAN "BEFORE / DURING /
+AFTER"** — given on 15 August 2026: *"this section needs to say Console,
+Workshop and Post gig and function like that."* **Console keeps its name and
+means the night**, which is what makes the launch guarantee survive: everybody
+already knows Console is where you go to start a quiz, so nothing has to be
+re-learned.
+
 | Door | What it is for | Tabs under it |
 |---|---|---|
-| **Prepare** | organisation, before the night | the workshop (Music Quiz and Music Bingo, each with its own writing, buying and asking panels), **Adverts**, **Calendar**, Venues |
-| **Tonight** | the gig itself | the launch bar, the Recommended six, the control view |
-| **After** | evidence and admin | **Past gigs**, **Invoices**, photos & the gallery |
+| **Console** | the gig itself | the launch bar, the Recommended six, the control view |
+| **Workshop** | preparing, before the night | Music Quiz and Music Bingo (each with its writing, buying and asking panels), **Adverts**, **Calendar**, Venues |
+| **Post gig** | evidence and admin | **Past gigs**, **Invoices**, photos & the gallery |
+
+**CONTROL STOPS BEING A DOOR** and lives inside Console. The route back to it
+must stay short from anywhere — two predictable taps (Console → Take control)
+is acceptable; hunting is not, and relaunching is catastrophic.
+
+#### How to build it: a `door` on each tab, one page, a filtered bar
+
+`TABS` in `console.js` already drives the whole tab system. Give each entry a
+`door` and filter the bar by the door in the address — `/console?door=workshop`
+— and the three sections fall out of the structure that already exists rather
+than needing three pages.
+
+**That also solves the panel move for free.** Music Quiz appears under Console
+as the shelf and under Workshop as the writing panels: same tab id, different
+door, different body. Nothing has to be extracted into a shared module, which
+was the expensive part of the earlier plan.
+
+**The Tonight bar renders on the Console door only.** It is furniture in the
+wrong room everywhere else, and that is the whole reason for doing this.
 
 **WHICH PANELS MOVE, NAMED — so nobody has to guess from a screenshot:**
 
