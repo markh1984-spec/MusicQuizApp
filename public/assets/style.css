@@ -2923,7 +2923,11 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   font-size: var(--fs-mini); color: var(--ink-dim); font-weight: 800;
   text-transform: uppercase; letter-spacing: 0.06em;
 }
-.pack-shape select { flex: 1 1 auto; min-width: 0; }
+/* `max-width` as well as `min-width: 0`, because a <select> will not go below
+   the width of its LONGEST OPTION on its own — the trap this codebase has now
+   hit eight times. `.lb-set` already had it; this one did not, and the lobby
+   game picker put the longest option labels in the app on both. */
+.pack-shape select { flex: 1 1 auto; min-width: 0; max-width: 100%; }
 
 /* What the last job said, kept where the panel rebuild cannot take it. */
 .panel.done-banner {

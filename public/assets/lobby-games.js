@@ -30,6 +30,11 @@
 import { tierRank } from './plans.js';
 
 /**
+ * `blurb` is deliberately three or four words. It is read inside a `<select>`
+ * on a console that is measured at 320px, and a sentence there is a sentence
+ * nobody sees the end of — the picker says what a game IS, and how to play it
+ * is on the game itself.
+ *
  * `defaultFor` is the game type this one is handed to when nobody has chosen —
  * `quiz`, `bingo`, or absent for the extras. Every game type must have exactly
  * one default, or a night falls through to a card with no game behind it.
@@ -39,7 +44,7 @@ export const LOBBY_GAMES = [
     id: 'maze',
     name: 'Maze Mouth',
     how: 'Tap where you want to go',
-    blurb: 'Eat the lot, keep away from the chasers',
+    blurb: 'a maze chase',
     tier: 'bronze',
     defaultFor: 'quiz',
     canvas: { w: 600, h: 600, klass: '' },
@@ -48,7 +53,7 @@ export const LOBBY_GAMES = [
     id: 'rally',
     name: 'Rally',
     how: 'Slide your thumb along the bottom',
-    blurb: 'Bat and ball. Get it past them',
+    blurb: 'bat and ball',
     tier: 'bronze',
     defaultFor: 'bingo',
     // 2:3, the court's own proportions and roughly a phone held upright.
@@ -59,7 +64,7 @@ export const LOBBY_GAMES = [
     id: 'tailback',
     name: 'Tailback',
     how: 'Tap where you want to go',
-    blurb: 'A tail that grows. Do not run into it',
+    blurb: 'a growing tail',
     tier: 'silver',
     canvas: { w: 600, h: 600, klass: '' },
   },
