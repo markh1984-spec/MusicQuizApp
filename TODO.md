@@ -1221,3 +1221,74 @@ is that the revenue is probably not worth the Monday.
 - Serving: photos are in a **separate private repo**, so the app proxies them
   (`/photos/<file>`). A public gallery makes the server a media server, on a
   free tier that sleeps. Worth measuring before it is promised to anybody.
+
+### Checking photos for nudity — and where the check belongs
+
+Asked for on 15 August 2026: *"sometimes people just post silly photos, and
+some of them show nakedness… we're not a porn site, we're a quiz company."*
+Right, and the timing is right too: the risk changes completely the moment
+photos stop being four seconds on a projector and become a public page and a
+printed t-shirt.
+
+#### IT DOES NOT CONTRADICT "no approve step", because it goes somewhere else
+
+CLAUDE.md says photo uploads **auto-publish**, with a kill switch and a bin and
+**no approve step anywhere**. That decision was made about a PROJECTOR, in a
+room the host is standing in with a microphone — and on those terms it is still
+right. A gallery is not those terms:
+
+| | Projector | Gallery and merchandise |
+|---|---|---|
+| Who sees it | the room, for 4.5 seconds | anyone with the link, indefinitely |
+| The remedy | the host, on the mic, plus the kill switch | there is none once it is out |
+
+**So the check gates the GALLERY, not the room.** The projector path is
+untouched — no latency added on a gig night, no approve step, nothing about
+tonight changes. Nothing reaches the outward-facing gallery or a print master
+until it has been looked at. That honours both rules rather than trading one
+for the other.
+
+#### NO MODEL SHIPS TO A PHONE, AND NONE RUNS ON THE SERVER
+
+The obvious build is a browser NSFW classifier and it is out on rules this file
+already applies to face detection: *a model is megabytes on a stranger's phone
+over pub wifi*, and it breaks **no dependencies**. Server-side is no better —
+same dependency problem, on a free tier that sleeps with 512MB.
+
+**A hosted moderation API is the fit**, and it is the shape this codebase
+already uses for Claude, OpenAI and Imagen: a plain HTTPS POST, no package.
+Google Cloud Vision **SafeSearch** returns adult/racy/violence likelihoods and
+costs about **£1.20 per thousand images** — a busy night is fifty photos, so
+roughly 6p. **It goes in `src/spend.js` like every other supplier**, or the
+Money tab quietly stops being the whole picture.
+
+**A skin-tone pixel heuristic is the tempting no-API answer and it is worse
+than nothing** — it fires on close-ups of faces, and its error rate varies with
+skin colour, which is a bias this app should not ship.
+
+#### The rules for it
+
+- **FLAG, NEVER DELETE.** A machine silently destroying somebody's photo is
+  wrong, and the host has to be able to see what was caught and why.
+- **ERR TOWARDS FLAGGING.** The two mistakes are not equal: a false positive
+  costs a holiday snap sitting in a review list for a day; a false negative is
+  explicit material on a public URL with the quiz's name on it.
+- **THE QUEUE ONLY FILLS WHEN SOMETHING IS WRONG**, so it does not break the
+  Monday rule — most nights it is empty, and an empty queue costs nothing.
+- **A failed check is not a pass.** If the API is down or the key is missing,
+  the photo is held rather than published — the gallery is the conservative
+  side by design.
+- **It protects the gallery and the merchandise, not the room.** Only the kill
+  switch does that, and it is already built. Say so plainly rather than letting
+  anybody think the projector is now safe.
+
+#### Still open
+
+- **Whether it should also gate the PROJECTOR.** It may be nearly free:
+  photos already queue for a break (`PHOTO_PHASES`), so a sub-second check
+  could fit inside a wait that happens anyway. Worth measuring — if it fits, a
+  nude never reaches the big screen either, which is the thing the mic
+  currently has to handle.
+- **The provider.** Vision is a different API from the Imagen one already in
+  use, so `GOOGLE_API_KEY` may or may not cover it — needs a Cloud project with
+  the Vision API enabled. Check before promising it.
