@@ -1067,8 +1067,22 @@ the QM can select before the rounds in the gold subscription only"*, and
 before that *"we can add tennis as well — tennis before the music bingo games
 and maze mouth before the quiz?"*
 
-**Maze Mouth is built and is the default for everybody. What Gold buys is the
-CHOICE.** That split matters and it is the one thing to get right before any
+**THE TIER GATES HOW MANY GAMES, NOT WHETHER THERE IS ONE.** Settled on 15
+August 2026: *"bronze just gets 2 games and silver/gold get more"*. So Bronze
+holds the two that ship — Maze Mouth and tennis, which are also the two
+defaults, one per game type — and the higher tiers hold whatever is added
+after them.
+
+**That is a better ladder than an on/off gate for a reason worth keeping:
+every tier still gets a game that suits the night they are running.** A Bronze
+bingo night gets tennis rather than a maze, so nobody is handed the wrong
+game as a consolation — they simply have no third or fourth to choose from.
+It also means a new game is a reason for an existing subscriber to move up
+rather than a thing the bottom tier loses, which is the direction a ladder
+should push.
+
+**Maze Mouth is built and is the default for everybody. What the higher tiers
+buy is the CHOICE.** That split matters and it is the one thing to get right before any
 of this is written:
 
 **Do not sell the game itself away from Bronze and Silver.** Its biggest value
@@ -1111,10 +1125,16 @@ being the quiz with different content, and the phone already knows which it is
 
 ### The picker
 
-Beside the look and the card shape under **Set it up**, and **visible but
-locked below Gold** — the subtle upsell this file already uses for the Adverts
-tab, which is worth more than hiding it: somebody who cannot have it should
-still know it exists.
+Beside the look and the card shape under **Set it up** — a list of the games
+that account holds, with **the ones above their tier shown and locked** rather
+than missing. That is the subtle upsell this file already uses for the Adverts
+tab, and it is worth more than hiding them: somebody who cannot have a game
+should still know it exists, and on this ladder the locked ones are the whole
+argument for moving up.
+
+**On Bronze the picker still has two entries and is still worth drawing** —
+it is a real choice between a maze and a bat-and-ball, not a disabled control
+with one option in it.
 
 ### Left undone deliberately
 
