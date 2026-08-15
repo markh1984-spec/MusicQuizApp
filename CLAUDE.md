@@ -1910,7 +1910,13 @@ that a reading task.
   stripe down the LEFT was rendered beside it and turned down, because nothing
   else in the app does that. **`:not(.broken)` is load-bearing**: the tint rule
   comes later in the sheet and would otherwise overwrite the red on the one
-  card with something wrong with it.
+  card with something wrong with it. **And the TILE needs `.lb-tile.is-pack`
+  named in its rule** — `.is-pack` sets the SHORTHAND `border` three thousand
+  lines further down at equal specificity, so it won and reset all four sides:
+  the slot showed a hairline while the card showed a bold edge, which is the
+  pack changing appearance on being dragged into the hole. **A shorthand
+  `border` lower in the sheet beats a longhand `border-bottom` higher up at
+  equal specificity — that is the trap, and nothing throws.**
 - **CARTOON FIGURES WERE TRIED AND DO NOT READ — do not re-propose them
   without new evidence.** Six were drawn and rendered at the real card size: at
   200×102 with a title over it a whole person is a blob. **A single OBJECT

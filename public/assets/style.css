@@ -2126,7 +2126,23 @@ body.console::after { display: none; }
  * colour would quietly overwrite the red on the one card that has something
  * wrong with it. Red keeps its meaning everywhere; that is the rule.
  */
-.pack-card.tinted:not(.broken), .lb-tile.tinted { border-bottom: 3px solid var(--pk-edge); }
+.pack-card.tinted:not(.broken) { border-bottom: 3px solid var(--pk-edge); }
+/*
+ * THE TILE NEEDS ITS OWN, MORE SPECIFIC RULE — and it was written without one,
+ * which cost the feature its whole point on the half that matters most.
+ *
+ * `.lb-tile.is-pack` sets the SHORTHAND `border: 1px solid var(--panel-line)`,
+ * it has the same specificity as `.lb-tile.tinted`, and it appears three
+ * thousand lines further down — so it won, and the shorthand reset all four
+ * sides. The slot showed a hairline in the account colour while the card below
+ * it showed a bold subject-coloured edge: **the pack changed appearance on
+ * being dragged into the hole**, which is the exact thing the shared function
+ * exists to prevent. Nothing threw, nothing failed, and the card looked right.
+ *
+ * Naming `.is-pack` here out-specifies it wherever either rule sits in the
+ * file, rather than relying on source order — which is what let this happen.
+ */
+.lb-tile.is-pack.tinted { border-bottom: 3px solid var(--pk-edge); }
 /* Two patterns, shared by every subject that wants one — scan lines for the
    decades that had them and a diagonal for the heavy ones. Deliberately only
    two: a texture per subject would be a stylesheet that grows every time a
