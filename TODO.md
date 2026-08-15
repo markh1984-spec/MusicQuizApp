@@ -1659,6 +1659,34 @@ the input, and let the bar clip inside itself instead of pushing the page.
 **Measure `scrollWidth` against `clientWidth` at 320 after anything
 structural**; nothing else finds it.
 
+### A FEATURE THAT MOVES UP A TIER DOES NOT LEAVE THE PEOPLE WHO HAD IT
+
+Settled on 15 August 2026, and it is the decision that unblocks the tier
+buckets — the drag-features-into-bronze/silver/gold arranger the host asked
+for. **It is a business rule rather than a UI one, which is why it had to be
+answered before the drag exists rather than after.**
+
+**Anybody who already holds a feature keeps it for as long as they stay
+subscribed. The new tier applies to new sign-ups.** Nobody loses something they
+were already using.
+
+The alternative — losing it at renewal — is cleaner data, because a tier then
+means exactly what it says. It was turned down for a better reason than
+kindness: **a quizmaster finds out on a gig night**, not when they read the
+email. Something they used last Thursday is missing this Thursday, in a pub,
+with a room in. That is the app breaking its own first rule, and no amount of
+tidy data is worth it.
+
+**What this means for the build**: entitlement cannot be computed from the tier
+table alone. An account needs to carry what it was GRANTED, and the tier table
+decides only what a NEW account gets. That is a real difference and it is
+cheaper to build in from the start than to retrofit — `entitlements` already
+distinguishes `entitled` from `features`, which is most of the shape.
+
+**And the arranger has to say so on screen.** Dragging a feature from bronze to
+gold must not silently imply that bronze accounts lose it — the panel should
+state that existing holders keep it, at the moment of the drag.
+
 ### CONSOLE · WORKSHOP · POST GIG — the three doors, ordered by the gig
 
 Proposed on 15 August 2026, and it supersedes the smaller console/workshop
@@ -1722,10 +1750,13 @@ wrong room everywhere else, and that is the whole reason for doing this.
 
 #### One thing left to settle BEFORE building it
 
-- **HELP AND MY ACCOUNT ARE NOT ON THE TIMELINE.** They are not before, during
-  or after — they are always. Jamming them into Prepare would be the first
-  thing that makes the rule a lie. They probably belong beside the account and
-  hat controls instead.
+- ~~Help and My Account are not on the timeline~~ — **SETTLED: they go behind
+  the ACCOUNT CHIP, top right**, beside the hat switch and Sign out, which is
+  where settings and help live on every other website. They are not before,
+  during or after a gig — they are always — and leaving them under Workshop
+  made that door a lie, since nobody prepares for a gig by reading Help. **This
+  keeps the three doors honestly about the gig and nothing else**, which is the
+  whole reason they exist.
 - ~~It reverses "Tonight at the top of every tab"~~ — **SETTLED, and it is not
   a reversal.** The host's own resolution: *"as long as people know they can
   click Console they know they can launch quickly from there — it's the same
@@ -2090,7 +2121,11 @@ typed answer needs the same class of work:
   sure the tally, the fastest finger and the first-correct bonus all sit this
   round out rather than dividing by nothing;
 - **a HOST screen that lists every answer by team**, because reading them out
-  is the entire feature. This is the only new screen;
+  is the entire feature. This is the only new screen. **SETTLED on 15 August
+  2026: the host's screen ONLY, never the projector.** A person reading the
+  good ones out beats a wall of text the room has to look up at — and it means
+  nothing a stranger types ever reaches the big screen unread, which is the
+  moderation question answered by the design rather than by a filter;
 - a 28-character-ish cap and control characters stripped, exactly as team names
   are — anti-breakage, not censorship;
 - the editor needs a prompt-and-nothing-else round, like `alphabet`.
