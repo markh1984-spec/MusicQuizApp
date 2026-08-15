@@ -27,7 +27,27 @@ const body = document.getElementById('galBody');
 const title = document.getElementById('galTitle');
 const sub = document.getElementById('galSub');
 
-document.getElementById('brand')?.append(brandMark(26), brandWords());
+/*
+ * `innerHTML`, NOT `append()` — and this shipped wrong once.
+ *
+ * `brandMark()` and `brandWords()` return HTML STRINGS, and `Node.append()`
+ * treats a string argument as literal text, so the whole SVG source printed
+ * across the top of the page as garbled characters. Every other page in the
+ * app sets `innerHTML`; this one invented a third way and got it wrong.
+ *
+ * The name comes from `/api/brand`, the same public endpoint the sign-in page
+ * uses — a customer reaching this page has no account, so nothing that needs
+ * one can be asked for. And it fails quietly: the page is the photographs, and
+ * a missing logo is not a reason to show somebody an error.
+ */
+fetch('/api/brand')
+  .then((r) => r.json())
+  .then((d) => {
+    const slot = document.getElementById('brand');
+    if (slot) slot.innerHTML = `${brandMark(26)}${brandWords(d.name, d.appName || '')}`;
+    if (d.name) document.title = `Photos — ${d.name}`;
+  })
+  .catch(() => { /* the gallery works perfectly well without a logo on it */ });
 
 const nightIn = () => {
   const n = new URLSearchParams(location.search).get('n') || '';
