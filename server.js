@@ -4597,6 +4597,9 @@ async function handleWrite(req, res, url, route) {
           String(body.lobbyGame || ''),
           (entitlements(whoIs(req, url) || {}) || {}).tier || '',
         ).id;
+        // Whether the phones may make a noise. Defaults to yes, so a console
+        // that has not been reloaded since this landed does not mute the room.
+        const lobbySound = body.lobbySound !== false;
         // Whether anybody is in the room. Same shape of decision again: the
         // pack does not know, and tonight does.
         const online = Boolean(body.online);
@@ -4678,7 +4681,7 @@ async function handleWrite(req, res, url, route) {
           ? pickIdeas((fullLibrary(config, room.id, listOwn(room.paths)).quizzes || [])
             .map((q) => q.title))
           : [];
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, lobbyGame, online, teamPlay, venue, rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas, order: wantedOrder });
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, lobbyGame, lobbySound, online, teamPlay, venue, rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas, order: wantedOrder });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();

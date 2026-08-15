@@ -3577,6 +3577,17 @@ function launchBar() {
         <label class="pack-shape">While they wait
           <select class="game-pick">${lobbyGameOptions(bingo ? 'bingo' : 'quiz')}</select>
         </label>
+        <!-- WHETHER THE PHONES MAY MAKE A NOISE. On by default: the game only
+             exists in the lobby, so it cannot interrupt a question — and a
+             garnish behind a toggle nobody finds is a garnish nobody hears.
+             It is here because a quiet gastropub and a rowdy Friday are not
+             the same room, which makes it a decision about TONIGHT. -->
+        <label class="pack-shape">Game sound
+          <select class="sound-pick">
+            <option value="on">On</option>
+            <option value="off">Off</option>
+          </select>
+        </label>
         <!-- WHERE IS NOT IN HERE ANY MORE. It is the switch up in the head,
              beside the venue, and it is deliberately not in two places: two
              controls for one field is how a night gets launched with the
@@ -3623,6 +3634,7 @@ function launchBar() {
         prizes: Number(prizePick?.value) || 0,
         look: chosen.querySelector('.look-pick')?.value || '',
         lobbyGame: chosen.querySelector('.game-pick')?.value || '',
+        lobbySound: chosen.querySelector('.sound-pick')?.value !== 'off',
         // ONE source for whether tonight is online — the switch in the head,
         // which is the only place it can be set now.
         online: lbOnline,
@@ -5474,6 +5486,12 @@ function packCard(kind, pack, repaint = () => {}) {
         <label class="pack-shape">While they wait
           <select class="game-pick">${lobbyGameOptions(kind)}</select>
         </label>
+        <label class="pack-shape">Game sound
+          <select class="sound-pick">
+            <option value="on">On</option>
+            <option value="off">Off</option>
+          </select>
+        </label>
         <label class="pack-shape">Where
           <select class="where-pick">${whereOptions()}</select>
         </label>
@@ -5753,10 +5771,11 @@ function packCard(kind, pack, repaint = () => {}) {
     const prizes = Number(el.querySelector('.prize-pick')?.value) || 0;
     const look = el.querySelector('.look-pick')?.value || '';
     const lobbyGame = el.querySelector('.game-pick')?.value || '';
+    const lobbySound = el.querySelector('.sound-pick')?.value !== 'off';
     const online = el.querySelector('.where-pick')?.value === 'online';
     const teamPlay = el.querySelector('.play-pick')?.value === 'teams';
     const venue = venueFrom(el);
-    await doLaunch(kind, pack.id, { shape, prizes, look, lobbyGame, online, teamPlay, venue }, button);
+    await doLaunch(kind, pack.id, { shape, prizes, look, lobbyGame, lobbySound, online, teamPlay, venue }, button);
   });
   return el;
 }
@@ -5768,11 +5787,11 @@ function packCard(kind, pack, repaint = () => {}) {
  * there must not be two ways OUT, or the 409-and-confirm dance gets fixed in
  * one of them and quietly rots in the other.
  */
-async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', lobbyGame = '', online = false, teamPlay = false, venue = '', order = null }, button) {
+async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', lobbyGame = '', lobbySound = true, online = false, teamPlay = false, venue = '', order = null }, button) {
     const send = (replace) => postJson(
       '/api/host/launch',
       {
-        game: kind, packId, shape, prizes, look, lobbyGame, online, teamPlay, venue,
+        game: kind, packId, shape, prizes, look, lobbyGame, lobbySound, online, teamPlay, venue,
         /*
          * TONIGHT'S RUNNING ORDER, and only when there IS one.
          *

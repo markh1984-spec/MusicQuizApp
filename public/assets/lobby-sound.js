@@ -1,5 +1,6 @@
 /**
- * SOUND FOR THE LOBBY GAMES — synthesised, never shipped, and off by default.
+ * SOUND FOR THE LOBBY GAMES — synthesised, never shipped, and the host's to
+ * switch off.
  *
  * Asked for on 15 August 2026 for Quick Draw: *"when you shoot an outlaw
  * there's, like, a sound, and then, like, random yeehaws and that kind of
@@ -23,17 +24,31 @@
  * actually pictures when they think of a western, and it is a pure sweep.
  * Better a real ricochet than a bad yeehaw.
  *
- * **OFF BY DEFAULT, AND THAT IS NOT TIMIDITY.** Sixty phones making noises in
- * a pub while the host is on a microphone is this app talking over its own
- * quizmaster's show, in front of a paying room. The two failure modes are not
- * symmetrical — the same argument the join-flood threshold is set by:
+ * **ON BY DEFAULT, and the first version had that wrong.** It shipped off, on
+ * the argument that sixty phones making noises while the host is on a
+ * microphone is this app talking over its own quizmaster's show. The host
+ * corrected it and he is right: **the game only exists in the LOBBY.** It is
+ * torn down on every phase change, the seed is sent at the lobby and nowhere
+ * else, and a score is refused at any other phase — so a noise during a
+ * question is not unlikely, it is impossible. The blast radius is the dead
+ * time before kick-off, which is the one stretch of an evening where a bit of
+ * noise off sixty phones is atmosphere rather than interruption.
  *
- * | Default | What goes wrong |
- * |---|---|
- * | **On** | the show is disrupted, in the room, and the host cannot fix it from the stage |
- * | **Off** | somebody does not notice there is sound |
+ * Off by default also had a cost that was easy to miss: a garnish behind a
+ * small speaker icon is a garnish almost nobody ever finds, so the work is
+ * spent and never heard.
  *
- * One of those is a gig going wrong and the other is a missed garnish.
+ * **WHAT MAKES ON-BY-DEFAULT SAFE IS THAT THE HOST CAN TURN IT OFF** — under
+ * Set it up, beside the game picker, written into the game state at launch
+ * like the look and the card shape. A quiet gastropub and a rowdy Friday are
+ * not the same room, and that is a decision about TONIGHT. Without it the only
+ * remedy would be asking sixty people to mute their phones from the stage,
+ * which is not a remedy.
+ *
+ * **THE HOST'S SWITCH WINS.** Off from the console means silent whatever a
+ * phone thinks; on means the phone's own preference decides. A quizmaster
+ * saying "not tonight" must not be overridden by a setting somebody left on
+ * last week.
  *
  * **REMEMBERED ON THE DEVICE, unlike almost everything else here.** The look,
  * the card shape and which game tonight are all facts about the EVENING and
@@ -58,18 +73,38 @@ const KEY = 'qp.lobbySound';
 
 let ctx = null;
 let on = null;
+/*
+ * Whether the NIGHT allows it at all — the host's switch, off the game state.
+ * Defaults to allowed so a night launched before this existed, or by an older
+ * deploy, behaves as it always did rather than going silent.
+ */
+let allowed = true;
 
-/** Is the sound on, on this device? Off until somebody says otherwise. */
+/**
+ * Told what tonight says, on every rebuild of the card. Separate from the
+ * phone's own preference on purpose: turning it off for the room must not wipe
+ * what somebody chose for themselves, or they have to set it again next week.
+ */
+export function allowSound(yes) {
+  allowed = yes !== false;
+}
+
+/** Is the sound on, here, tonight? On unless this phone has said otherwise. */
 export function soundOn() {
   if (on === null) {
-    try { on = localStorage.getItem(KEY) === '1'; } catch { on = false; }
+    // Default ON — anything but an explicit '0' counts as yes, so a phone that
+    // has never been asked gets sound and one that opted out stays out.
+    try { on = localStorage.getItem(KEY) !== '0'; } catch { on = true; }
   }
-  return on;
+  return allowed && on;
 }
 
 /** Flip it, and remember. Returns the new state, for the button's label. */
 export function toggleSound() {
-  on = !soundOn();
+  // Flips THIS PHONE's preference, which is not the same as `soundOn()` — that
+  // also answers to the host's switch, and a player pressing the button while
+  // the room is muted should not be told they have turned it on.
+  on = !(on === null ? true : on);
   try { localStorage.setItem(KEY, on ? '1' : '0'); } catch { /* private mode */ }
   if (on) resume();
   return on;

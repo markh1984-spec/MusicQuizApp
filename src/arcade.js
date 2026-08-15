@@ -102,5 +102,11 @@ export function arcadeFields(state, playerId) {
      * it is — which is exactly what it used to do.
      */
     lobbyGame: state.lobbyGame || '',
+    /*
+     * Whether the phones may make a noise tonight — the host's switch. A night
+     * saved before this existed has no field, and `!== false` means it plays,
+     * which is what such a night did.
+     */
+    lobbySound: state.lobbySound !== false,
   };
 }

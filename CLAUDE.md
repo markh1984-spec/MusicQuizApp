@@ -846,12 +846,16 @@ board), `src/arcade.js` (the scores, shared by both engines),
   thing being torn down is built.**
 - **Each moment has a primary: the game before the quiz, photos between the
   rounds.** The floating camera button stands down in the lobby.
-- **SOUND IS SYNTHESISED, OFF BY DEFAULT, AND NEVER ON A TIMER.**
+- **SOUND IS SYNTHESISED, ON BY DEFAULT, AND NEVER ON A TIMER.**
   `lobby-sound.js` — Web Audio, no files, like everything else here is drawn.
-  **Off by default because sixty phones making noises while the host is on a
-  mic is this app talking over its own quizmaster's show**, and that failure is
-  far worse than somebody not noticing there is sound. Remembered on the
-  DEVICE, not in the night. **Every noise is tied to something the player DID**
+  **It shipped OFF and that was wrong**, on a worry about phones making noises
+  over the host's mic: the game only exists in the LOBBY, so a noise during a
+  question is not unlikely but impossible, by three mechanisms that each have
+  tests. **What makes on-by-default safe is that the HOST can switch it off** —
+  *Game sound* under Set it up, into `state.lobbySound` at launch, because a
+  quiet gastropub and a rowdy Friday are not the same room. **The host's switch
+  wins and does not wipe the phone's own**; both default to on wherever the
+  field could be absent. **Every noise is tied to something the player DID**
   — nothing on a timer, or it is sixty phones chirping at nobody. It never
   carries information: a phone on a pub table is on silent and iOS mutes Web
   Audio outright, so every game stays playable in silence. **There is no yeehaw
@@ -1165,7 +1169,7 @@ Open the one you are touching; do not read them all.
 - RALLY — the bingo night's game, and it is not called Pong
 - TAILBACK — a tail that grows, and the first game behind the picker
 - QUICK DRAW — a shooting gallery, and the third answer to one fairness problem
-- SOUND — synthesised, off by default, and never on a timer
+- SOUND — synthesised, the host's to switch off, and never on a timer
 - THE PICKER, AND WHAT A TIER ACTUALLY BUYS
 
 **[`docs/accounts.md`](docs/accounts.md)** — hats, tiers, rooms, gates, own packs

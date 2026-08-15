@@ -26,7 +26,7 @@
  */
 
 import { lobbyGameFor } from './lobby-games.js';
-import { soundButton, wireSoundButton } from './lobby-sound.js';
+import { soundButton, wireSoundButton, allowSound } from './lobby-sound.js';
 
 /**
  * WHICH MODULE DRAWS WHICH GAME.
@@ -68,6 +68,9 @@ export function lobbyGame(s) {
  */
 export function arcadeCard(s) {
   const game = lobbyGame(s);
+  // What tonight says, before the button draws itself — or a muted room shows
+  // a speaker icon that is on.
+  allowSound(s.lobbySound !== false);
   return `
     <div class="arcade" ${s.gameSeed ? '' : 'hidden'}>
       <button class="wait-item arcade-open" type="button">

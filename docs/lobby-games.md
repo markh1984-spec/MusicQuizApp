@@ -452,7 +452,7 @@ words.
 
 ---
 
-## SOUND — synthesised, off by default, and never on a timer
+## SOUND — synthesised, the host's to switch off, and never on a timer
 
 `public/assets/lobby-sound.js`. Asked for on 15 August 2026 for Quick Draw:
 *"when you shoot an outlaw there's, like, a sound, and then, like, random
@@ -488,25 +488,53 @@ If a real yeehaw is ever wanted it is a deliberate decision to ship an audio
 asset, and it should be taken as that — one small file, one place, and a note
 here saying the no-assets rule was broken on purpose.
 
-### OFF BY DEFAULT, and that is not timidity
+### ON BY DEFAULT — and the first version had that wrong
 
-**Sixty phones making noises in a pub while the host is on a microphone is this
-app talking over its own quizmaster's show**, in front of a paying room, with
-no way for him to fix it from the stage. The two failure modes are not
-symmetrical — the same asymmetry the join-flood threshold is set by:
+It shipped OFF, on the argument that sixty phones making noises while the host
+is on a microphone is this app talking over its own quizmaster's show. **The
+host corrected it and he is right, and the correction is worth keeping because
+the mistake was a reasoning one rather than a taste one:**
 
-| Default | What goes wrong |
-|---|---|
-| **On** | the show is disrupted, in the room, and the host cannot stop it |
-| **Off** | somebody does not notice there is sound |
+> *"The random noises aren't going to be during my quiz, because the game is
+> designed to play before the quiz, not during."*
 
-One of those is a gig going wrong and the other is a missed garnish.
+**The game only exists in the LOBBY.** It is torn down in `buildScreen()` on
+every phase change, the seed is sent at the lobby and nowhere else, and a score
+is refused at any other phase. So a noise during a question is not unlikely —
+it is impossible, and it is impossible by three separate mechanisms that all
+have tests. The worry was about a state the architecture already forbids, which
+is exactly the kind of caution that costs a feature and buys nothing.
 
-**Remembered on the DEVICE, not in the night.** The look, the card shape and
-which game tonight are facts about the evening and live in the game state.
-Whether this particular phone makes a noise is a fact about the phone and the
-person holding it, so it is `localStorage` — the same split the fold state
-already sits on the other side of.
+The blast radius is the dead time before kick-off, which is the one stretch of
+an evening where a bit of noise off sixty phones is atmosphere rather than
+interruption — and the same stretch a game is there to fill in the first place.
+
+**Off by default also had a cost that was easy to miss**: a garnish behind a
+small speaker icon is a garnish almost nobody ever finds. Built, paid for,
+never heard.
+
+### WHAT MAKES ON-BY-DEFAULT SAFE IS THE HOST'S SWITCH
+
+**Game sound** under Set it up, beside the game picker, on both launch routes.
+Written into `state.lobbySound` at launch like the look and the card shape,
+because a quiet gastropub and a rowdy Friday are not the same room — a decision
+about TONIGHT. Without it the only remedy would be asking sixty people to mute
+their phones from the stage, which is not a remedy.
+
+**THE HOST'S SWITCH WINS, and it does not wipe the phone's own.** Off from the
+console means silent whatever a phone thinks; on means the phone's preference
+decides. `allowSound()` and the per-device flag are kept separate on purpose:
+muting the room for one night must not clear what somebody chose for
+themselves, or they have to set it again next week.
+
+**Defaults to true everywhere it could be absent** — a night launched by an
+older console, or restored from a state file written before this existed, plays
+sound rather than going mysteriously silent.
+
+**And the per-phone preference is remembered on the DEVICE.** The look, the
+card shape and which game tonight are facts about the evening and live in the
+game state; whether this particular phone makes a noise is a fact about the
+phone and the person holding it, so it is `localStorage`.
 
 ### NOTHING IS EVER ON A TIMER
 

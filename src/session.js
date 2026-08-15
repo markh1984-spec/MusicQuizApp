@@ -364,7 +364,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, look = '', lobbyGame = '', online = false, teamPlay = false, venue = '', rewards = [], venueLogo = '', comeBack = null, askForRounds = false, roundIdeas = [], order = null } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, look = '', lobbyGame = '', lobbySound = true, online = false, teamPlay = false, venue = '', rewards = [], venueLogo = '', comeBack = null, askForRounds = false, roundIdeas = [], order = null } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     /*
      * TONIGHT'S RUNNING ORDER, when one was built — rounds from more than one
@@ -442,6 +442,15 @@ export class Session {
      * the account is known; by the time it reaches here the decision is made.
      */
     this.engine.state.lobbyGame = lobbyGameFor(kind, lobbyGame).id;
+    /*
+     * WHETHER THE PHONES MAY MAKE A NOISE TONIGHT.
+     *
+     * A decision about the ROOM rather than about the app: a quiet gastropub
+     * and a rowdy Friday are not the same place. In the state beside the game
+     * itself, so a restart brings the night back as it was — and defaulting to
+     * true, so a night launched by an older console is not silently muted.
+     */
+    this.engine.state.lobbySound = lobbySound !== false;
 
     /*
      * Whether anybody is in the room tonight.
