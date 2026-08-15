@@ -5770,6 +5770,12 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .lb-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 160px)); gap: 8px; }
 @media (max-width: 560px) {
   /* Shorter still on a phone, where they are a summary rather than a target. */
+  /* TWO ACROSS ON A PHONE, not one. `auto-fit` at 160px only fits a single
+     column in a 358px viewport, which turned six slots into six rows — about
+     400px of mostly-empty bar, on the panel that sits at the top of EVERY tab.
+     Six was fine at three slots and is not at six. Two columns puts it back to
+     three rows, and a half-width tile is still a target you cannot miss. */
+  .lb-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lb-tiles .lb-tile { min-height: 58px; padding: 8px; }
 }
 /* THE THREE FACTS GET THEIR OWN ROW. Three columns always, because there are
