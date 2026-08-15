@@ -1552,22 +1552,36 @@ gallery's publish trigger and the two-nights distinction. Three separate roads
 now end at the same piece, which is about as strong a signal as this list gives
 that it is the right thing to build next.
 
-#### WHAT IT REPLACES, and this is the decision to take first
+#### AN ITEM IS A PACK, OR THE PART OF ONE YOU PICKED
 
-Today, dragging two QUIZ packs into Tonight **composes them into one quiz** —
-`composeQuiz()` merges their rounds into a single game with one title, and the
-Launch button names the evening rather than a pack. That is built, documented
-in CLAUDE.md and works.
+Asked, and the answer was better than the three options offered: *"can't we
+have it so the QM decides what he does with each pack and sub pack? So if he
+wants a whole quiz pack and then half a second one followed by music bingo he
+should be able to."*
 
-A running order means something different with the same gesture:
+**That dissolves the question rather than answering it.** Composition is not a
+rule about types that the app applies — it is the quizmaster deciding, per pack
+and per round, and the app doing what the row says:
 
-| Two quiz packs in Tonight | |
+| In the row | What plays |
 |---|---|
-| **Today** | ONE quiz, both packs' rounds merged, played straight through |
-| **Running order** | TWO quizzes, played one after the other |
+| Quiz pack A, whole | its rounds |
+| Quiz pack B, three rounds ticked off | the rounds left on |
+| A bingo pack | a bingo game |
 
-**Both are reasonable and they cannot both be the default**, so it has to be
-chosen rather than discovered when somebody launches the wrong one in a pub.
+**A run of quiz items is ONE quiz.** `composeQuiz()` already does exactly this
+— merges chosen rounds from several packs into one game and titles it for the
+evening — so "a whole pack then half of another" is built and working today.
+**A bingo item is its own game**, because bingo is not rounds and cannot be
+merged into a quiz.
+
+So the running order is really about **where one GAME ends and the next
+begins**, and the answer falls out with nothing to decide: a game ends where
+the kind changes. Everything else is the round ticks, which already exist.
+
+**Which makes this smaller than it looked.** No new composition, no merge
+control, no behaviour taken away — what is new is that the row may hold more
+than one KIND, and that the app remembers what comes after the one playing.
 
 #### What has to be built
 
