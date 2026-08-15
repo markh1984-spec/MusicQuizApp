@@ -489,10 +489,12 @@ function ownQuizPanel() {
              It was "Start writing", which is exactly what the owner's AI panel
              does, so the host read this as an AI feature on a quizmaster's
              tab. Then "Lay it out empty", which describes the MECHANISM rather
-             than the act and reads like a chore. This names the act and, next
-             to the owner's "Write it", the contrast does the explaining: one
-             writes it for you, one is you. -->
-        <button class="role-make own-go">Write it myself</button>
+             than the act and reads like a chore. **"Compose"** is the host's
+             own word and it is the best of the three: it is what a person does
+             rather than what the software does, it carries no suggestion that
+             anything is written FOR you, and it is one word on a button beside
+             a text box, which is what this app's house style asks for. -->
+        <button class="role-make own-go">Compose</button>
       </div>
       <div class="gen-rounds">
         ${QUIZ_ROUNDS.map(([id, label, count, checked, hint]) => `
@@ -5066,7 +5068,6 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
            only thing the page is for. If this line ever grows controls, that
            has happened again. -->
       <div class="row pack-way-row">
-      </div>
         ${can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS) || can(FEATURES.GENERATE)
     ? `<p class="tiny pack-way"><a href="${linkTo('/editor')}">Write, buy or edit packs →</a></p>` : ''}
       </div>
