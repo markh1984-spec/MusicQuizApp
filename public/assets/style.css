@@ -5535,18 +5535,28 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    its last row, and a consistent tile size across states is worth more than a
    row that always reaches the edge. */
 /*
- * THREE ACROSS, ON EVERY WIDTH — and 118px was too wide to manage it.
+ * THREE ACROSS, ON EVERY WIDTH — and `auto-fit` could never deliver it.
  *
- * Measured at 390px: three 118px slots plus gaps plus the panel's own padding
- * came to more than the screen, so they STACKED, and Tonight came out 493px
- * tall on a phone — worse than the laptop it had just been fixed for.
+ * The slots are a FIXED SET of three, numbered 1, 2, 3. `auto-fit` is for a
+ * flowing list whose length nobody knows, and using it here cost two goes to
+ * work out:
  *
- * They also stack for nothing. HTML5 drag events never fire on touch (see
- * CLAUDE.md), so on a phone these are not drop targets at all; the taps and
- * the arrows are the touch path. Three short slots that say what the night is
- * are the right thing there, not three tall ones nobody can drag onto.
+ * **`auto-fit` counts columns off the MAX of `minmax()`, not the min**, when
+ * that max is a definite length. So `minmax(118px, 200px)` sized for 200px
+ * tracks, only one of which fits a phone — and lowering the min to 92px, which
+ * looks like exactly the fix, changed nothing whatsoever. Measured twice:
+ * three stacked rows both times, 493px then 442px, when the target was one row.
+ *
+ * `repeat(3, …)` says what is actually true. `minmax(0, 200px)` keeps the
+ * 200px ceiling on a laptop and lets them shrink to a third of a phone, and
+ * the `0` floor is the min-content trap this file has now hit nine times.
+ *
+ * They also must not stack: HTML5 drag events never fire on touch (CLAUDE.md),
+ * so on a phone these are not drop targets at all — the taps and the arrows
+ * are the touch path. Three short slots saying what the night is are right
+ * there; three tall ones nobody can drag onto are not.
  */
-.lb-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 200px)); gap: 8px; }
+.lb-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 200px)); gap: 8px; }
 @media (max-width: 560px) {
   /* Shorter still on a phone, where they are a summary rather than a target. */
   .lb-tiles .lb-tile { min-height: 58px; padding: 8px; }
