@@ -4563,15 +4563,24 @@ function launchBar() {
   orderEl.addEventListener('dragleave', (ev) => {
     if (!orderEl.contains(ev.relatedTarget)) orderEl.classList.remove('drop-here');
   });
-  orderEl.addEventListener('drop', (ev) => {
-    if (!packDrag || packDrag.kind === 'bingo') return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    orderEl.classList.remove('drop-here');
-    const dropped = packDrag;
-    packDrag = null;
-    dragging(false);
-    const from = packOf(dropped.id);
+  /**
+   * A PACK JOINS THE NIGHT IN THE NEXT FREE SLOT — from wherever it was dropped.
+   *
+   * **This is one function because it used to be two, and they disagreed.**
+   * Dropping ON the slots appended to the running order; dropping anywhere ELSE
+   * on the section — a drag that stopped an inch short, which is most of them —
+   * went through `pick()`, and `pick()` starts a new night: it clears `lbExtra`
+   * and `lbOff`, so a mis-aimed drop silently threw away every other pack the
+   * host had lined up and replaced the evening with the one card they were
+   * holding. Reported as *"it clears the console and just applies the new
+   * one"*, and it is the worst class of bug this bar can have — the damage is
+   * invisible until Launch, and the thing destroyed is the setup work.
+   *
+   * **A drop on the section is a drop on the night.** There is no part of this
+   * panel where letting go should mean something different, which is exactly
+   * why the two paths were never going to stay in step.
+   */
+  function addPackToNight(from) {
     if (!from) return;
     /*
      * THE FIRST PACK IS THE NIGHT; the rest are added to it. With nothing
@@ -4587,6 +4596,10 @@ function launchBar() {
     // The same pack twice is a mis-drop rather than an intention — a night
     // does not play the same ten questions in rounds two and four.
     if (lbPacks().some((p) => p.id === from.id)) { paintOrder(); return; }
+    if (lbPacks().length >= PACK_SLOTS) {
+      alert(`There are only ${PACK_SLOTS} slots. Take one out to add another.`);
+      return;
+    }
     const rounds = activeRounds().length + (from.rounds || []).length;
     if (rounds > MAX_NIGHT_ROUNDS) {
       alert(`A night can have at most ${MAX_NIGHT_ROUNDS} rounds — that would make ${rounds}.`);
@@ -4594,6 +4607,17 @@ function launchBar() {
     }
     lbExtra.push(from.id);
     paintOrder();
+  }
+
+  orderEl.addEventListener('drop', (ev) => {
+    if (!packDrag || packDrag.kind === 'bingo') return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    orderEl.classList.remove('drop-here');
+    const dropped = packDrag;
+    packDrag = null;
+    dragging(false);
+    addPackToNight(packOf(dropped.id));
   });
 
   el.addEventListener('dragover', (ev) => {
@@ -4636,8 +4660,19 @@ function launchBar() {
       gamePick.value = dropped.kind;
       currentPack = null;
     }
+    /*
+     * THE SAME PATH AS A DROP ON THE SLOTS — see `addPackToNight`. This used to
+     * call `pick()` directly, which is what made a drag that stopped short wipe
+     * the running order.
+     *
+     * A pack of the OTHER kind still replaces the night rather than joining it,
+     * because a night that changes game partway is not built yet: `composeQuiz`
+     * merges quiz rounds and bingo is not rounds. `currentPack` was cleared
+     * just above, so `addPackToNight` takes the first-pack path and starts the
+     * evening on the new shelf, which is what switching game means.
+     */
     const found = gameOf().packs.find((p) => p.id === dropped.id);
-    if (found) { pick(found); }
+    addPackToNight(found);
   });
 
   /*

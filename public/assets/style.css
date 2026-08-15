@@ -1969,10 +1969,8 @@ body.console::after { display: none; }
    empty cells. It reorders the shelf visually rather than in the DOM, which is
    the right trade here: this grid is a thing you SCAN, and a hole in it reads
    as something failing to load. */
-.pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 160px)); gap: 12px; grid-auto-flow: dense; }
-@media (max-width: 560px) {
-  .pack-grid { grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); }
-}
+.pack-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; grid-auto-flow: dense; }
+
 
 /* ---- ONE PACK OPEN AT A TIME, and the rest are names.
 
@@ -5767,7 +5765,14 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    three. `auto-fit` rather than a fixed six, so the row WRAPS on a narrow
    window instead of squeezing six tiles to nothing: at 160 the ticks stay on
    one line, and that is the whole reason the width came down from 200. */
-.lb-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 160px)); gap: 8px; }
+/* SIX COLUMNS THAT FILL THE WIDTH — no gap on the right.
+   `auto-fit` at a fixed 160px left whatever the container did not divide by
+   168 as dead space down the right-hand edge, which on a 1148px console is
+   about 140px of nothing beside the last slot. Six equal fractions instead:
+   the row is always flush, and the tile is ~180px rather than exactly 160,
+   which is the same direction the width came down for. THE LIBRARY USES THE
+   SAME SIX so a pack is still the shape of the hole it goes in. */
+.lb-tiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
 @media (max-width: 560px) {
   /* Shorter still on a phone, where they are a summary rather than a target. */
   /* TWO ACROSS ON A PHONE, not one. `auto-fit` at 160px only fits a single
@@ -5775,7 +5780,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
      400px of mostly-empty bar, on the panel that sits at the top of EVERY tab.
      Six was fine at three slots and is not at six. Two columns puts it back to
      three rows, and a half-width tile is still a target you cannot miss. */
-  .lb-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lb-tiles, .pack-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lb-tiles .lb-tile { min-height: 58px; padding: 8px; }
 }
 /* THE THREE FACTS GET THEIR OWN ROW. Three columns always, because there are
