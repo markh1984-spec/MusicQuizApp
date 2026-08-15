@@ -1943,8 +1943,19 @@ body.console::after { display: none; }
  * at — stretched to fill, a card on a wide screen came out half as wide again
  * as the slot it was being dragged into, and the two read as different kinds
  * of object.
+ *
+ * **BUT NOT ON A PHONE, where the cap makes it look broken instead.** Below
+ * 560px only one column fits, so a 200px card sat in a 358px row with 158px of
+ * nothing beside it — which does not read as "the same size as the hole", it
+ * reads as a card that failed to load. And there is nothing to match down
+ * there anyway: the three Tonight slots still share one row on a phone, so a
+ * slot is about 100px and no library card is ever going to be that. Matching
+ * is a wide-screen job; filling the width is the phone's.
  */
 .pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 200px)); gap: 12px; }
+@media (max-width: 560px) {
+  .pack-grid { grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); }
+}
 
 /* ---- ONE PACK OPEN AT A TIME, and the rest are names.
 
