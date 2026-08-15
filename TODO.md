@@ -1600,10 +1600,15 @@ than one KIND, and that the app remembers what comes after the one playing.
 
 #### What NOT to do
 
-- **Do not make it four or five slots.** Three is a quiz, a bingo and one
-  spare, which is the shape of the host's own Thursday. A list that grows is a
-  list that needs reordering, deleting and scrolling, on the bar that sits at
-  the top of every tab.
+- ~~**Do not make it four or five slots.**~~ **SUPERSEDED on 15 August 2026 —
+  it is SIX** (*"need 6 pack slots imo"*). The original reasoning was about
+  PACKS — three being a quiz, a bingo and one spare — and the night has since
+  stopped being made of packs: it is a running order of ELEMENTS, and a quiz
+  split either side of a breakout is three items before a bingo game is
+  anywhere near it. **The worry behind the old rule still stands and is
+  answered by the WIDTH instead of the count**: a row that needs reordering and
+  scrolling is the thing to avoid, so the tiles came down to 160px, which puts
+  six on one laptop row inside the space three took at 200.
 - **Do not auto-launch the next one.** The gap between games is the host on a
   microphone, and software deciding when that ends is the one thing guaranteed
   to be wrong in a real room.

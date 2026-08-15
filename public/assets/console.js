@@ -4217,7 +4217,7 @@ function launchBar() {
    * you see. Rounds are still what the server composes — a square simply
    * stands for all of its pack's.
    *
-   * **THE EMPTY SLOTS ARE PART OF THE PICTURE.** Three squares are always
+   * **THE EMPTY SLOTS ARE PART OF THE PICTURE.** Every square is always
    * drawn, filled or not, so the bar has the same shape whether the night is
    * set up or not — and an empty one is a dotted cutout that says what to do
    * with it. A row that grows a box each time you drop something reflows the
@@ -4229,7 +4229,22 @@ function launchBar() {
    * made. Nothing is duplicated: each one is a view of something set
    * elsewhere, and the venue tile drives the same `chooseVenue` the head does.
    */
-  const PACK_SLOTS = 3;
+  /**
+   * SIX, ASKED FOR ON 15 AUGUST 2026 — *"need 6 pack slots imo"*.
+   *
+   * It was three, with a note in TODO.md saying not to make it four or five:
+   * *"three is a quiz, a bingo and one spare, which is the shape of the host's
+   * own Thursday."* **That reasoning was about PACKS and the night has since
+   * stopped being made of packs** — it is a running order of elements, and a
+   * quiz split either side of a breakout is three items on its own before a
+   * bingo game is anywhere near it. Six is two of those nights.
+   *
+   * The old worry still stands and is answered by the WIDTH rather than the
+   * count: a row that needs reordering and scrolling is the thing to avoid, so
+   * the tiles came down to 160px, which puts six on one row of a laptop inside
+   * the same space three used to take at 200.
+   */
+  const PACK_SLOTS = 6;
 
   /**
    * THE SHELF SHOWS THE GAP. A pack that is in tonight is drawn as an outline
