@@ -1569,8 +1569,19 @@ So it is not a curation feature and should not be built as one:
   cost this app measures features by.
 - **EXCLUDE WHAT IS ALREADY IN TONIGHT'S SLOTS**, or the six things you are
   most likely to want are partly things you have already picked.
-- **SEARCH IGNORES THE SHORTLIST ENTIRELY** — three letters searches the whole
-  library, as it does now. The shortlist is the resting state, not a filter.
+- **SEARCH SCANS EVERYTHING AND SHOWS SIX — into the same six positions.**
+  Corrected by the host immediately after the above was written: *"that's also
+  why search needs to discard packs from the 6 so they're easily drag and
+  droppable."* **The six are a fixed WINDOW onto the library and only their
+  CONTENTS change** — at rest the automatic picks, while searching the top six
+  matches. A pack you searched for is then exactly as reachable as one the app
+  suggested, which is the whole point; results appearing in a list somewhere
+  further down the page would put the thing you were looking for out of reach
+  of the slot you want it in.
+  **It also keeps the row a constant piece of furniture**, which is the rule
+  this bar already follows: Launch is always there and goes hollow, Set it up
+  is always there and goes disabled. A results list that appears out of nothing
+  somewhere else is the exact fault those two exist to avoid.
 - **PINNING IS THE EASY ADDITION LATER, and only if it is missed.** Automatic
   first then manual on top is the cheap direction; manual first is not.
 
