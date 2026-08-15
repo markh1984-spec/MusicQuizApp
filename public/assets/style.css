@@ -2180,10 +2180,24 @@ body.screen { cursor: none; }
     position: sticky;
     top: var(--topbar-h);
     z-index: 10;
-    background: rgba(11, 11, 20, 0.95);
+    /* THE SAME DARK AS THE CARDS, NOT NEAR-BLACK — and fully opaque.
+       It was `rgba(11,11,20,0.95)`, which was two faults at once now that the
+       page carries a wash. At 95% the search row underneath showed through
+       its bottom edge as it scrolled past, which reads as a rendering fault
+       rather than as depth. And a flat near-black rectangle across a purple
+       page is a slab: the one horizontal band that does not belong to the
+       scheme, sitting exactly where the eye lands on every tab change.
+       `--surf-2` is the bottom of the card surface, so the bar reads as part
+       of the same room — and opaque means content genuinely disappears under
+       it rather than half-appearing. The blur stays for the fraction of a
+       second before it pins. */
+    background: var(--surf-2);
     backdrop-filter: blur(10px);
     margin: 0 -16px 22px;
-    padding: 0 16px 2px;
+    /* A little room under the tabs, so a line of text scrolling past stops
+       being hidden a few pixels before it touches them rather than at the
+       exact moment it does. */
+    padding: 0 16px 6px;
   }
   /* A little tighter, so the nine sit comfortably in the widened column
      rather than exactly filling it — the bar still WRAPS rather than clips if
