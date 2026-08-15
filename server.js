@@ -3351,6 +3351,50 @@ async function handleWrite(req, res, url, route) {
    * this repo that something adjacent to the artefact was tested and the
    * artefact itself never was.
    */
+  /*
+   * TAKE ONE PHOTOGRAPH OUT OF A FILED NIGHT.
+   *
+   * Asked for before publishing anything: *"I need to remove some photos from
+   * that section… a little bin icon so I can delete photos that shouldn't go
+   * to the main gallery."* Which is the right order to want it in — the
+   * gallery control publishes a whole night, so the only way to keep one
+   * picture off it was to keep the night off it.
+   *
+   * **SCOPED BY THE ROOM, exactly like the route that serves them.** The path
+   * is built from `roomForHost`, so a quizmaster can only ever delete out of
+   * their own nights; there is no room parameter to tamper with, which is the
+   * same shape `own-packs.js` relies on.
+   *
+   * **AND IT IS HONEST ABOUT WHAT DELETING MEANS.** This removes the file from
+   * the repository, so it stops being served, stops appearing in Gigs and can
+   * never reach the gallery. It does NOT rewrite git history — the blob is
+   * still in the repo's past, as everything committed to git always is. That
+   * matters if somebody ever asks for their photograph to be destroyed rather
+   * than taken down, and the app must not imply otherwise.
+   */
+  if (route.startsWith('/api/past-photo/') && req.method === 'DELETE') {
+    if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
+    const parts = route.slice('/api/past-photo/'.length).split('/');
+    const night = decodeURIComponent(parts[0] || '');
+    const name = safePhotoName(decodeURIComponent(parts[1] || ''));
+    if (!isNightFolder(night) || !name || parts.length !== 2) {
+      return sendJson(res, 404, { error: 'No photo there.' }), true;
+    }
+    if (!photosRepoConfigured()) {
+      // Say which thing is missing. "Could not delete that" would send
+      // somebody hunting through the app for a fault in an env var.
+      return sendJson(res, 400, { error: 'The private photo repository is not set up, so there is nothing to delete from.' }), true;
+    }
+    const room = roomForHost(req, url);
+    const done = await deleteFile(
+      `${photoFolder(room.id)}/${night}/${name}`,
+      `Remove a photo from ${night}`,
+      'photos',
+    );
+    if (done && done.ok === false) return sendJson(res, 502, { error: done.error || 'Could not delete that.' }), true;
+    return sendJson(res, 200, { ok: true, night, name }), true;
+  }
+
   if (route === '/api/past-gigs/publish' && req.method === 'POST') {
     if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
     const body = await readJson(req);

@@ -303,7 +303,12 @@ test('the room code is on the library payload, not only on a running game', () =
  */
 test('a past-gigs photo is never labelled as unfiled', () => {
   const src = fs.readFileSync(new URL('../public/assets/console.js', import.meta.url), 'utf8');
-  const rows = src.match(/class="cphoto[^"]*"/g) || [];
+  /*
+   * The FIGURE only. `cphoto-bin` is the delete button inside it and has
+   * nothing to do with filing — matching it here made this fail the moment a
+   * bin was added, which is a test complaining about the wrong thing.
+   */
+  const rows = (src.match(/class="cphoto[^"]*"/g) || []).filter((c) => !/cphoto-/.test(c));
   assert.ok(rows.length, 'the past-gigs photo grid has gone');
   for (const row of rows) {
     assert.match(row, /\bfiled\b/, `past gigs draws ${row}, which the CSS marks NOT FILED`);

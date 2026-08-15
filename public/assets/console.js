@@ -8315,7 +8315,46 @@ function gigRow(night) {
        * all of them — telling a quizmaster their night's pictures were about
        * to be lost, on the one page whose whole job is "here is my work".
        */
-      grid.appendChild(node(`<figure class="cphoto filed"><img src="${esc(p.url)}" alt="" loading="lazy"></figure>`));
+      /*
+       * A BIN ON EVERY PHOTO, bottom right — asked for in those words, and
+       * asked for BEFORE publishing anything, which is the right order: the
+       * gallery control publishes a whole night, so without this the only way
+       * to keep one picture off it was to keep the night off it.
+       *
+       * Bottom right because the top of a photo is where faces are. It is the
+       * drawn `binIcon()`, like everything else in this app that deletes.
+       */
+      const shot = node(`<figure class="cphoto filed">
+        <img src="${esc(p.url)}" alt="" loading="lazy">
+        <button class="cphoto-bin" type="button" aria-label="Delete this photo">${binIcon(15)}</button>
+      </figure>`);
+      shot.querySelector('.cphoto-bin').addEventListener('click', async (ev) => {
+        const btn = ev.currentTarget;
+        /*
+         * ASKED FIRST, and it names what it is deleting rather than saying
+         * "are you sure". This is somebody's photograph and the night is
+         * already filed — there is no undo, and the confirm is the only thing
+         * standing between a mis-tap on a phone and a picture being gone.
+         */
+        if (!confirm('Delete this photo? It will be taken out of this night and can never reach the gallery.')) return;
+        btn.disabled = true;
+        try {
+          const res = await fetch(keyed(`/api/past-photo/${encodeURIComponent(night.night)}/${encodeURIComponent(p.name)}`), {
+            method: 'DELETE',
+            headers: { 'X-Host-Key': hostKey },
+          });
+          const out = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(out.error || 'Could not delete that.');
+          // Gone from the page as well as the repository, or the next tap
+          // deletes something that is not there any more.
+          shot.remove();
+          more.textContent = `${grid.querySelectorAll('.cphoto').length} photos`;
+        } catch (err) {
+          btn.disabled = false;
+          alert(err.message);
+        }
+      });
+      grid.appendChild(shot);
     }
     body.appendChild(grid);
     body.appendChild(galleryToggle(night.night, data.published));
