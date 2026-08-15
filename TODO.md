@@ -1339,3 +1339,88 @@ is worse than not making it.
   stored against the archived night (`updateArchivedNight`) or derived from a
   stable secret — and NOT from `HOST_KEY`, which rotates on deploy and would
   break every gallery link ever handed out.
+
+### THE GALLERY PUBLISHES WHEN THE NIGHT ENDS — and that is what finally forces a NIGHT to exist
+
+Decided on 15 August 2026, and it is a better answer than the unlisted link I
+proposed: *"the gallery link doesn't get published until the quizmaster
+publishes it, or on a date basis… you've got a quiz that'll take in all the
+photos, and then you might do a music bingo after that. Once the quiz and the
+music bingo are done, then the night is done, and then the gallery page gets
+published."*
+
+**It beats an unlisted link on three counts at once**, which is why it wins:
+
+- **Nothing is ever public while the room is still in it.** The window a
+  half-cut photo could embarrass somebody in is closed by construction rather
+  than by a rule.
+- **It makes the moderation check FREE.** There is now a gap between the last
+  game ending and the page appearing, so SafeSearch runs in it — no latency on
+  a gig night, no queue anybody waits on, and nothing unchecked is ever
+  reachable. The thing I had proposed to bolt on becomes a consequence.
+- **It is a deliberate act**, which is what consent for an outward-facing page
+  actually needs. Auto-publish is right for a projector and wrong for a
+  website, and this is the line between them.
+
+#### AND IT IS THE SAME "NIGHT" THIS FILE HAS BEEN ASKING FOR
+
+Section 2 above already says the app has no object called a **night** — *"an
+advertiser is buying a NIGHT, not a quiz… the app cannot currently say any part
+of it."* The host has arrived at the identical conclusion from the other end,
+and that is the strongest signal there is that it is the right object:
+
+> **A quiz, then the bingo after it, are ONE night. The night ends when the
+> last of them does, and that is when the gallery publishes.**
+
+**What partly exists already:** `nightOf()` and `nightOfGig()` group by date
+with a 6am roll-over, and `mergeGigs()` already joins archived games to photo
+folders per night. So a night is DERIVED today. What is missing is an explicit
+END and a published flag.
+
+**And the end is already a real moment** — the host's own point: *"the end of
+the quiz is defined anyway because it gives out who is the winner."* `FINAL`
+for a quiz, `FINISHED` for bingo.
+
+#### How "done" should be decided — belt and braces, because forgetting is normal
+
+**Publish at the BOOKED END TIME from the calendar, and let the host publish
+early with one tap once every game that night has finished.** Neither alone is
+enough:
+
+- **Time alone** publishes at 10pm whether or not the bingo overran, and
+  whether or not anybody pressed anything. That is the safety net, and it is
+  the one that works when the host has packed up and driven home.
+- **The last game finishing alone** is wrong on a night with two games — a
+  quiz reaching its winner at half nine would publish before the bingo had
+  started.
+
+So: **never before the last game of that night has ended; automatically once
+the booked end time has passed; immediately if the host taps Publish.** A night
+with no booking falls back to the tap, or to a fixed delay after the last game.
+
+#### The address
+
+**`quizporium.co.uk/gallery`**, broken down by quizmaster and by date.
+
+**Not connected yet** — the app answers on `musicquizapp.onrender.com`. A
+custom domain on Render is DNS plus a setting, and it is worth doing before any
+QR is printed on a slide, because the URL on that slide is permanent in a way
+the app is not.
+
+#### WHAT I WOULD STILL PUSH ON, having lost the unlisted argument fairly
+
+**The publish gate fixes WHEN, not WHETHER, and the consent still does not
+cover it.** The phone says a photo *"goes on the big screen"*. A browsable page
+at a clean domain, listed by quizmaster and date, is a different thing, and a
+pub quiz has families in it. Two cheap mitigations, neither of which costs the
+feature anything:
+
+- **Say it at upload**, in one line, per the house style. This is not optional
+  and it should ship with the gallery.
+- **`noindex` at least to begin with.** Being findable on Google is speculative
+  marketing value; a stranger's face and team name turning up in a search is a
+  concrete cost, and it lands on the player rather than on the business. One
+  header to change later if it turns out to matter.
+
+**And a removal path.** Somebody will want their photo down, and "email the
+quizmaster" is not one on a page with no contact on it.
