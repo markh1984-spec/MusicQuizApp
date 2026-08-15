@@ -132,6 +132,16 @@ export const PACK_SUBJECTS = [
 
   // ---- genre: what separates two packs from the same decade
   { id: 'metal', words: ['metal', 'thrash'], word: 'METAL', a: '#8e99ad', b: '#0c0c12', pattern: 'slash' },
+  /*
+   * ROCK BEATS INDIE, and it was checked rather than assumed: *"The 2000-2010
+   * Pop, Indie and Rock Quiz"* reads ROCK even though the title says Indie
+   * first. Asked on 15 August 2026 and left as it is — a fixed order is
+   * predictable, and matching whichever word appears earliest in the title
+   * costs more code for a case that comes up on one pack.
+   *
+   * If it is ever revisited: the argument for indie is that it is the more
+   * specific of the two, since nearly everything here is rock in some sense.
+   */
   { id: 'rock', words: ['rock', 'grunge'], word: 'ROCK', a: '#c33b2e', b: '#241016', pattern: 'slash' },
   { id: 'punk', words: ['punk', 'ska'], word: 'PUNK', a: '#e11d74', b: '#111014' },
   { id: 'indie', words: ['indie', 'britpop', 'alternative'], word: 'INDIE', a: '#2f9fb5', b: '#1b2f66' },

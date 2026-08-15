@@ -2051,13 +2051,13 @@ Two consequences, both of which make the build smaller:
   question instead of each carrying a list of types that do and do not count.
   Every future element is then free — a fun "guess the year", a picture round
   played for laughs.
-- **A DECISION IS WAITING IN THE ROUND NUMBERING.** The projector says "Round 2
-  of 5", counted off the list. Put a breakout in it and the room hears a number
-  that includes a round nobody scored. Either the count stays honest to the
-  EVENING (five elements, one for fun) or it counts only what SCORES (four
-  rounds, the breakout unnumbered). **Lean to the second** — the number is a
-  scoring promise, and a team working out "two rounds left to catch up" is
-  doing arithmetic the numbering should not lie about. Ask before building.
+- ~~A decision is waiting in the round numbering~~ — **SETTLED on 15 August
+  2026: THE COUNT IS WHAT SCORES.** Quiz, breakout, quiz reads "Round 2 of 2"
+  and the breakout is played but unnumbered. **The number is a scoring
+  promise**: a team working out "one round left to catch up" is doing
+  arithmetic the count must not lie about, and a round that cannot change the
+  scores is not one of the rounds they are counting. The breakout still
+  announces itself — it simply is not numbered.
 
 #### IT IS A ROUND TYPE, NOT A GAME KIND, AND THAT IS THE WHOLE DESIGN
 
