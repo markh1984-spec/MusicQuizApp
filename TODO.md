@@ -1292,3 +1292,50 @@ skin colour, which is a bias this app should not ship.
 - **The provider.** Vision is a different API from the Imagen one already in
   use, so `GOOGLE_API_KEY` may or may not cover it — needs a Cloud project with
   the Vision API enabled. Check before promising it.
+
+#### THE BLOCKER, found before building: THERE MAY BE NO PREVIOUS NIGHTS TO SHOW
+
+Checked on 15 August 2026 before writing a line of the gallery, and it stops
+the feature until it is fixed.
+
+**`/photos/<file>` reads the LOCAL DISK** (`server.js:1073`, via
+`room.photos.fileFor`). On Render's free tier **the disk is wiped on every
+deploy** — this file already says so about the invoice book, and it applies
+identically here. So a gallery served through that route shows nothing older
+than the last deploy, which on a day like today is a few hours.
+
+**The photos survive in the PRIVATE REPO, and only there.** `photoFolder()`
+files them as `photos/<roomId>/<night>/`, and the owner's export tab already
+reads them back (`server.js:1899`, `:1934`, `:1964`). **So the gallery must
+read from the repo, not from `/photos/`** — the pattern exists and it is
+`getFile(..., 'photos')`.
+
+**AND `PHOTO_REPO` IS NOT SET.** Measured. Which means today, on this
+deployment, photos exist **only** on a disk that is wiped on deploy —
+`markFiled()` and `unfiled()` are a batch, and the batch has nowhere to go.
+AUDIT.md already flagged the photo round trip as the one shipped feature whose
+happy path is unproven; this is what that costs.
+
+**Nothing about the gallery is worth building until that is set**, because the
+feature is a promise to a customer that they can come back and see their
+photos. Making that promise against storage that evaporates on the next deploy
+is worse than not making it.
+
+##### What has to happen first
+
+1. A **private** GitHub repo for photos — never the main one, which is public
+   and whose history is forever.
+2. `PHOTO_REPO` and `PHOTO_TOKEN` set on the Render service.
+3. Confirm a photo taken on a phone actually lands in that repo — the round
+   trip AUDIT.md says has never been proven end to end.
+
+##### And then two design consequences that follow from reading the repo
+
+- **The server becomes an image proxy.** Every gallery view is authenticated
+  GitHub fetches on a free tier that sleeps. It needs caching and it needs
+  measuring before anybody is told to scan a QR at the end of a night.
+- **The night id is a plain `YYYY-MM-DD`**, so a link keyed on it is
+  guessable and "unlisted" would be a fiction. An opaque token has to be
+  stored against the archived night (`updateArchivedNight`) or derived from a
+  stable secret — and NOT from `HOST_KEY`, which rotates on deploy and would
+  break every gallery link ever handed out.
