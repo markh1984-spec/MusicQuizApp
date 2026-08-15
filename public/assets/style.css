@@ -5175,6 +5175,13 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
  * fill is scoped to `.pack-card .go`, so a Launch button anywhere else came
  * out grey — which on the loudest control on the page reads as disabled. */
 .lb-go {
+  /* IT NEEDS ITS OWN GAP NOW. This margin did not exist because the button
+     used to be built inside `.lb-chosen`, which carried the spacing — pulling
+     it out into the bar so it could stay put left it sitting hard against the
+     bottom of the tile row. A little more than the gap BETWEEN the tiles, so
+     the row reads as one object and the button as the thing under it rather
+     than as a fourth item in the grid. */
+  margin-top: 14px;
   width: 100%; padding: 18px; font-size: var(--fs-head); font-weight: 900;
   border: none; border-radius: var(--r-card); cursor: pointer;
   font-family: inherit; letter-spacing: 0.01em; color: #12000c;
