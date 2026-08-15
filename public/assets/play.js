@@ -20,6 +20,7 @@ import { stickersFor, stickerSvg, drawStickers, stickerAt, placed, preloadSticke
 import { paintLook, DEFAULT_LOOK, LOOKS } from './looks.js';
 import { paintScheme } from './schemes.js';
 import { paintChatButton } from './chat.js';
+import { arcadeCard, wireArcade, stopArcade } from './lobby-menu.js';
 
 const STORE_KEY = 'musicquiz.player';
 
@@ -896,6 +897,19 @@ function screenKey(s) {
 }
 
 function buildScreen(s) {
+  /*
+   * THE LOBBY GAME STOPS HERE, ON EVERY REBUILD, WHATEVER IS BEING BUILT.
+   *
+   * This is the one place that sees every phase change, which is exactly why
+   * it has to be here: the teardown used to live inside `wireArcade`, and
+   * `wireArcade` only runs while the WAITING screen is being built. So a game
+   * left open when the quiz started had its canvas replaced and its loop left
+   * running — for the rest of the night, on a detached canvas, holding a
+   * window `keydown` listener that swallowed the arrow keys and posting a
+   * score at every life lost into a server that rightly refused it. Invisible,
+   * and therefore survived a long time.
+   */
+  stopArcade();
   // The camera button floats over the bottom right of the phone. On a bingo
   // card that put 58 pixels of button on top of a square — one nobody can tap,
   // and therefore a full house nobody can get. This tells the stylesheet to
@@ -934,26 +948,7 @@ function buildWaiting(s, kicker, title, sub) {
            two controls for one job is how somebody ends up using the worse
            one out of habit. -->
       <div class="wait-menu">
-      <div class="arcade" ${s.gameSeed ? '' : 'hidden'}>
-        <button class="wait-item arcade-open" type="button">
-          <span class="wait-item-icon" aria-hidden="true">🕹️</span>
-          <span class="wait-item-what">
-            <b>Play Maze Mouth</b>
-            <span class="tiny">Top scores go on the big screen</span>
-          </span>
-        </button>
-        <div class="arcade-box" hidden>
-          <div class="arcade-stage">
-            <canvas class="arcade-canvas" width="600" height="600"></canvas>
-            <!-- The countdown, in the corner of the game. See paintStartsIn:
-                 somebody head-down in a maze is not reading a number above the
-                 maze, and a clock lets them play to it rather than merely be
-                 told when it is over. -->
-            <div class="arcade-going" hidden></div>
-          </div>
-          <div class="tiny arcade-said">Tap where you want to go</div>
-        </div>
-      </div>
+      ${arcadeCard(s)}
       <!-- AND THE PHOTO, SECOND HERE AND FIRST EVERYWHERE ELSE.
            The host's own split: *"between rounds it should be photos and
            before the start of the quiz it's Maze Mouth"*. Each moment gets a
@@ -976,10 +971,22 @@ function buildWaiting(s, kicker, title, sub) {
   `);
   wireTeamPicker(el, s);
   el.querySelector('.wait-photo')?.addEventListener('click', openCamera);
-  wireArcade(el, s);
+  wireArcade(el, s, postArcadeScore);
   paintStartsIn(s);
   return el;
 }
+
+/**
+ * ONE post, small, and never a stream of positions — the lobby is precisely
+ * when sixty people are joining, which is the path that must not stutter.
+ *
+ * Passed INTO the shared card rather than built inside it: `lobby-menu.js`
+ * serves two screens which hold their own identity, and it has no business
+ * knowing about either.
+ */
+const postArcadeScore = (score) => postJson('/api/arcade', {
+  playerId: me.id, token: me.token, joinCode: roomCode(), score,
+}).catch(() => {});
 
 /**
  * THE LOBBY GAME, on the phone.
@@ -990,64 +997,16 @@ function buildWaiting(s, kicker, title, sub) {
  * cost him the feature this app is actually for. So the waiting screen is
  * unchanged until somebody asks for a game.
  *
- * **AND IT IS TORN DOWN ON EVERY STATE PUSH THAT IS NOT THE LOBBY.** The
- * whole design of this app is a room looking UP; a game still running while
- * question one is being read is the one way this could make a night worse
- * rather than better. `render()` rebuilds the waiting screen, so a phase
- * change destroys the canvas — and `stopArcade()` cancels the loop as well,
- * because a `requestAnimationFrame` holding a removed canvas would carry on
- * running for the rest of the night.
+ * **WHICH GAME, THE CARD AND THE WIRING ARE ALL IN `lobby-menu.js`**, because
+ * the bingo lobby wants the identical card and a second copy of it would say
+ * two different things about one feature within a month.
+ *
+ * **AND IT IS TORN DOWN ON EVERY REBUILD — see `buildScreen`, which is where
+ * that now actually happens.** It used to be claimed here and done only inside
+ * `wireArcade`, which is reached only while the WAITING screen is being built:
+ * so a phase change threw the canvas away and left the loop running for the
+ * rest of the night. Nothing showed on screen, which is why it survived.
  */
-let arcade = null;
-function stopArcade() {
-  if (!arcade) return;
-  arcade.stop();
-  arcade = null;
-}
-
-function wireArcade(el, s) {
-  stopArcade();
-  const box = el.querySelector('.arcade-box');
-  const open = el.querySelector('.arcade-open');
-  if (!box || !open || !s.gameSeed) return;
-  const said = el.querySelector('.arcade-said');
-  // ONE post, small, and never a stream of positions — the lobby is precisely
-  // when sixty people are joining, which is the path that must not stutter.
-  const postScore = (score) => postJson('/api/arcade', {
-    playerId: me.id, token: me.token, joinCode: roomCode(), score,
-  }).catch(() => {});
-  open.addEventListener('click', async () => {
-    const label = open.querySelector('b');
-    if (!box.hidden) { box.hidden = true; stopArcade(); label.textContent = 'Play Maze Mouth'; return; }
-    box.hidden = false;
-    label.textContent = 'Put it away';
-    /*
-     * LOADED ONLY WHEN ASKED FOR. Nobody who never presses the button pays for
-     * the game at all — which matters on pub wifi, on the one page sixty
-     * people are opening at the same moment.
-     */
-    const { startGame } = await import('./lobby-game.js');
-    const play = () => {
-      arcade = startGame(box.querySelector('.arcade-canvas'), {
-        // EVERY PHONE IN THE ROOM PLAYS THE SAME GAME — the seed comes off the
-        // game state, which is what makes the scoreboard mean anything.
-        seed: s.gameSeed,
-        // Banked at each life lost as well as at the end — a game interrupted
-        // by the quiz starting never reaches game over, and by then the phase
-        // has moved and a score is rightly refused. See `onBank`.
-        onBank: (score) => { postScore(score); },
-        onEnd: ({ score, won }) => {
-          said.textContent = won ? `Cleared it — ${score}. Tap to play again.` : `${score}. Tap to play again.`;
-          // ONE post, at game over. Not a stream of positions: the lobby is
-          // exactly when the connection is busiest.
-          postScore(score);
-          box.querySelector('.arcade-canvas').addEventListener('click', play, { once: true });
-        },
-      });
-    };
-    play();
-  });
-}
 
 /**
  * HOW LONG UNTIL IT STARTS, on the phone.

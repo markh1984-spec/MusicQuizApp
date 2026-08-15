@@ -28,6 +28,7 @@ import {
 import { ALPHABET, answerLetter, answerLetterIndex, revealMode } from './quizzes.js';
 import * as chat from './chat.js';
 import { comeBackView } from './comeback.js';
+import { recordArcadeScore, arcadeBoard, arcadeFields } from './arcade.js';
 // For faceKey — a player's public handle, derived one way from their id.
 import { createHash } from 'node:crypto';
 
@@ -440,40 +441,22 @@ export class Engine {
    * room, and a phone can send whatever it likes.
    */
   arcadeScore(playerId, score) {
-    const player = this.state.players[String(playerId || '')];
-    if (!player) return { ok: false, reason: 'unknown_player' };
-    if (this.state.phase !== PHASES.LOBBY) return { ok: false, reason: 'not_waiting' };
     /*
-     * A NIGHT RESTORED FROM BEFORE THIS EXISTED HAS NO `arcade` AT ALL, and
-     * this threw on it — found by a test rather than by a room. A redeploy
-     * mid-season brings back a state file written by the old code, which is
-     * the ordinary case on a host with no permanent disk, and a phone posting
-     * a score into it would have taken the request down. Degrade, never throw:
-     * the same rule the score-before-reveal field already follows.
+     * The rules moved to `src/arcade.js` when the second lobby game arrived —
+     * a bingo night runs Rally and needs the identical clamp, the identical
+     * best-not-latest rule and the identical refusal outside the lobby. See
+     * the note there about why there must not be two copies of this.
      */
-    if (!this.state.arcade) this.state.arcade = {};
-    const got = Math.max(0, Math.min(99999, Math.floor(Number(score) || 0)));
-    const best = this.state.arcade[player.id] || 0;
-    if (got <= best) return { ok: true, best };
-    this.state.arcade[player.id] = got;
-    this.changed();
-    return { ok: true, best: got };
+    const res = recordArcadeScore(this.state, playerId, score, {
+      waiting: this.state.phase === PHASES.LOBBY,
+    });
+    if (res.changed) this.changed();
+    return res.ok ? { ok: true, best: res.best } : res;
   }
 
-  /**
-   * WHO IS WINNING AT IT — names and scores, best first.
-   *
-   * Built here rather than on the projector, so the big screen and the host
-   * cannot disagree about it. Five, because it is a band beside a join code
-   * rather than a leaderboard anybody is studying — and a score whose player
-   * has left is dropped, because a number with nobody attached is a puzzle.
-   */
+  /** Who is winning at it — see `arcadeBoard()` in `src/arcade.js`. */
   arcadeBoard(top = 5) {
-    return Object.entries(this.state.arcade || {})
-      .map(([id, score]) => ({ name: (this.state.players[id] || {}).name || '', score }))
-      .filter((row) => row.name)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, top);
+    return arcadeBoard(this.state, top);
   }
 
 
@@ -2224,10 +2207,7 @@ export class Engine {
      * one is a phone that could still be playing, and the whole design of this
      * app is a room looking UP.
      */
-    if (s.phase === PHASES.LOBBY) {
-      view.gameSeed = s.gameSeed || 1;
-      view.arcadeBest = (s.arcade || {})[player.id] || 0;
-    }
+    if (s.phase === PHASES.LOBBY) Object.assign(view, arcadeFields(s, player.id));
 
     if (s.phase === PHASES.FINAL && s.vouchers) {
       const mine = Object.values(s.vouchers).find((v) => v.winnerId === this.boardIdFor(playerId));

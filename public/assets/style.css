@@ -343,6 +343,46 @@ body::after {
   text-align: center;
 }
 
+/*
+ * THE LOBBY GAME'S TOP SCORES, inside the white QR panel and under the code.
+ *
+ * Dark on white, because it is a child of `.qr-panel` and that panel is white
+ * so a phone camera can read the code off it — a board in the app's own dark
+ * colours would be invisible in there.
+ *
+ * Sized in `vh` like everything else on the projector: a big screen's type has
+ * to grow with the screen, and pinning this to pixels would make it a squint
+ * in a hall and enormous on a laptop.
+ */
+.arcade-board {
+  width: 100%;
+  border-top: 1px solid rgba(18, 18, 28, 0.14);
+  padding-top: 1.2vh;
+}
+.arcade-board .ab-head {
+  color: #4a4a5e;
+  font-size: 1.6vh;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.6vh;
+}
+.arcade-board .ab-row {
+  display: grid;
+  grid-template-columns: 2.4vh 1fr auto;
+  align-items: baseline;
+  gap: 0.8vh;
+  color: #12121c;
+  font-size: 1.9vh;
+  line-height: 1.35;
+}
+.arcade-board .ab-pos { color: #7a7a92; font-weight: 800; }
+/* A team name has no spaces in it if somebody decides it does not — there is
+   deliberately no filtering and 28 characters is the only limit, so a solid
+   one has to break rather than push the score off the panel. */
+.arcade-board .ab-name { font-weight: 700; overflow-wrap: anywhere; min-width: 0; }
+.arcade-board .ab-score { font-weight: 800; font-variant-numeric: tabular-nums; }
+
 .player-strip {
   flex: 0 0 auto;
   padding: 1.4vh 2.2vw 2.4vh;
@@ -6566,6 +6606,16 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
   border-radius: var(--r-card);
   background: rgba(0, 0, 0, 0.35);
 }
+/*
+ * RALLY'S COURT IS 2:3, NOT SQUARE — and the height is what has to be bounded
+ * rather than the width. `aspect-ratio` alone with `width: 100%` makes the
+ * canvas one and a half screens tall on a phone, which puts "Send a photo" and
+ * the rest of the waiting screen below the fold on the one screen this app
+ * most wants used. Capping `max-width` bounds the height through the ratio,
+ * which is the only way round that keeps the court its real shape — letterbox
+ * it instead and every bat, ball and pip shrinks with it.
+ */
+.arcade-canvas.tall { aspect-ratio: 2 / 3; max-width: min(420px, 42vh); }
 .arcade-said { color: var(--ink-dim); }
 
 /* The countdown over the game. `pointer-events: none` or it would swallow the

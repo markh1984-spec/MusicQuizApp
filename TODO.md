@@ -1081,7 +1081,17 @@ It also means a new game is a reason for an existing subscriber to move up
 rather than a thing the bottom tier loses, which is the direction a ladder
 should push.
 
-**Maze Mouth is built and is the default for everybody. What the higher tiers
+**BOTH GAMES ARE BUILT NOW — Maze Mouth before a quiz and RALLY before the
+bingo, one per game type, the default following the GAME rather than the
+account.** That half is done and its reasoning has moved to
+[`docs/lobby-games.md`](docs/lobby-games.md); what is left in this entry is
+**the picker and the tier ladder**, and nothing below has been built.
+
+The tennis game is called **Rally** — named before it was written, because
+CLAUDE.md's own note is that an unnamed game keeps inviting the name that
+cannot be used.
+
+**Maze Mouth and Rally are the default for everybody. What the higher tiers
 buy is the CHOICE.** That split matters and it is the one thing to get right before any
 of this is written:
 
@@ -1138,7 +1148,18 @@ with one option in it.
 
 ### Left undone deliberately
 
-Nothing is built for this yet beyond Maze Mouth itself. **Tennis is the next
-one** and is perhaps 120 lines on the same shape as `lobby-game.js` — start
-there rather than with the picker, because one game and no choice is already
-useful and a picker with one entry is not.
+**The picker itself, and the tier ladder above it.** The two games exist and
+each night gets the right one automatically, which was the half worth having
+first — one game per game type with no choice is already useful and a picker
+with one entry is not.
+
+What a third game now costs, having built the second: one rules file, one
+canvas file, and **one line in `GAMES` in `lobby-menu.js`**. Everything else —
+the seed, the score, the board on the projector, the refusal outside the lobby,
+the teardown — is shared and needs no change. The picker is therefore a
+console job (a control under **Set it up**, written into the game state at
+launch beside the look and the card shape) rather than a games job.
+
+**Read [`docs/lobby-games.md`](docs/lobby-games.md) before adding a third**,
+particularly the fixed-timestep note: anything with continuous motion in it has
+a fairness problem Maze Mouth did not have, and it is invisible.

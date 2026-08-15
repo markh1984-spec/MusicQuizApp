@@ -15,6 +15,7 @@ import { bingoCard, bingoTopbar } from './screen-bingo.js';
 import { paintLook, DEFAULT_LOOK } from './looks.js';
 import { paintScheme } from './schemes.js';
 import { faceFor } from './avatar.js';
+import { arcadeSlot, paintArcadeBoard } from './lobby-board.js';
 
 const cardEl = document.getElementById('card');
 const quizTitleEl = document.getElementById('quizTitle');
@@ -499,6 +500,11 @@ function renderLobby(s) {
         <div class="qr-panel">
           <img src="${joinQr}" alt="Scan to join the quiz">
           <div class="url" data-join-url>${esc(joinUrl)}</div>
+          <!-- WHO IS WINNING AT MAZE MOUTH. Under the code and never over it:
+               the QR is the one control that lets somebody into the game, and
+               nothing in this app may dim it. Draws nothing until somebody
+               has played. -->
+          ${arcadeSlot()}
         </div>
       </div>
       <div class="player-strip" id="playerStrip"></div>
@@ -546,6 +552,7 @@ function paintStartsIn(s) {
 
 function updateLobby(s) {
   paintStartsIn(s);
+  paintArcadeBoard(s);
   const strip = document.getElementById('playerStrip');
   if (!strip) return;
   const wanted = (s.lobby && s.lobby.players) || [];

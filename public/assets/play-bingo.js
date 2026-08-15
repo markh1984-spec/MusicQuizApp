@@ -7,6 +7,7 @@
  */
 
 import { esc, node, postJson, roomCode } from './client.js';
+import { arcadeCard, wireArcade } from './lobby-menu.js';
 
 let marking = new Set(); // squares tapped but not yet confirmed by the server
 
@@ -34,13 +35,35 @@ function lineWording(s) {
 
 export function renderBingo(s, me) {
   if (s.phase === 'lobby') {
-    return node(`
+    /*
+     * SOMETHING TO DO WHILE THEY WAIT — Rally, on a bingo night.
+     *
+     * The host's own split: Maze Mouth before a quiz, tennis before the bingo,
+     * so a bingo night has a character of its own rather than being the quiz
+     * with different content. The card and the wiring are shared with the
+     * quiz's waiting screen (`lobby-menu.js`); all that differs is which
+     * module gets imported when the button is pressed, and the phone works
+     * that out from `s.game`.
+     *
+     * **AND IT IS THE ONLY THING ON THIS SCREEN THAT MOVES.** The bingo lobby
+     * is three lines of reassurance about a card that has not appeared yet,
+     * which is the emptiest screen in the app and the one people leave — and a
+     * phone that leaves is an SSE connection that has to come back at the
+     * moment sixty of them would. The game is the reliability half of this
+     * feature, not the toy half.
+     */
+    const el = node(`
       <div style="display:grid;gap:14px;text-align:center">
         <div class="pill" style="justify-self:center;font-size:13px">You're in</div>
         <h1 class="grad-text">${esc(s.you ? s.you.name : '')}</h1>
         <p>Your card is ready. It appears the moment the first song plays.</p>
         <p class="muted" style="font-size:14px">This card is yours for the whole round — it will not change.</p>
+        <div class="wait-menu">${arcadeCard(s)}</div>
       </div>`);
+    wireArcade(el, s, (score) => postJson('/api/arcade', {
+      playerId: me.id, token: me.token, joinCode: roomCode(), score,
+    }).catch(() => {}));
+    return el;
   }
 
   // Columns, not "size": a card can be a strip — 3 across and 8 down, the

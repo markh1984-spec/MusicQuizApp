@@ -21,6 +21,7 @@
 
 import { cleanTeamName, isSafeId, newId, newToken, ownsPlayer, MAX_PLAYERS, rememberRemoved, wasRemoved, forgetRemoved } from './engine.js';
 import { comeBackView } from './comeback.js';
+import { recordArcadeScore, arcadeBoard, arcadeFields } from './arcade.js';
 
 export const BINGO_PHASES = {
   LOBBY: 'lobby',
@@ -137,6 +138,18 @@ export class BingoGame {
        * is: a restart must bring the night back as it was.
        */
       comeBack: null,
+      /*
+       * THE LOBBY GAME — a bingo night gets Rally, a quiz night gets Maze
+       * Mouth, and both read the same two fields.
+       *
+       * `gameSeed` is overwritten by `session.launch()`, which is what makes
+       * every phone in the room play the identical game — the host's own catch
+       * that a scoreboard of different games means nothing. It is declared
+       * here so a state saved before this existed still comes back with
+       * something rather than `undefined`, exactly as the quiz's does.
+       */
+      gameSeed: 1,
+      arcade: {},
       startedAt: null,
       finishedAt: null,
     };
@@ -298,6 +311,26 @@ export class BingoGame {
     rememberRemoved(this.state, playerId);
     this.changed();
     return true;
+  }
+
+  /**
+   * A SCORE FROM RALLY, the lobby game a bingo night gets.
+   *
+   * The rules are `src/arcade.js` and are shared with the quiz engine, on
+   * purpose: a bingo lobby must not accept a score a quiz lobby refuses. All
+   * this adds is which phase counts as waiting.
+   */
+  arcadeScore(playerId, score) {
+    const res = recordArcadeScore(this.state, playerId, score, {
+      waiting: this.state.phase === BINGO_PHASES.LOBBY,
+    });
+    if (res.changed) this.changed();
+    return res.ok ? { ok: true, best: res.best } : res;
+  }
+
+  /** Who is winning at it — see `arcadeBoard()` in `src/arcade.js`. */
+  arcadeBoard(top = 5) {
+    return arcadeBoard(this.state, top);
   }
 
   renamePlayer(playerId, name) {
@@ -593,6 +626,18 @@ export class BingoGame {
       view.lobby = {
         players: this.playerList().sort((a, b) => b.joinedAt - a.joinedAt).map((p) => ({ id: p.id, name: p.name })),
       };
+      /*
+       * WHO IS WINNING AT RALLY — at the lobby only.
+       *
+       * Safe on the projector where an answer key never is, and the reason is
+       * the two-screens rule read properly rather than waved at: this is not
+       * secret, it is the point. NEVER at any other phase — a leaderboard for
+       * a phone game on screen while a track is playing is two things on one
+       * projector, and it would be telling a room to look down at the exact
+       * moment they are meant to be listening.
+       */
+      const board = this.arcadeBoard();
+      if (board.length) view.arcade = board;
     }
 
     if (this.state.lastWin) {
@@ -679,6 +724,12 @@ export class BingoGame {
       .filter((w) => w.playerId === playerId)
       .map((w) => stageLabel(w.stage));
     if (this.state.lastWin) view.win = { name: this.state.lastWin.name, pattern: this.state.lastWin.pattern, label: this.state.lastWin.label };
+    /*
+     * THE LOBBY GAME — only in the lobby, and only ever these two numbers.
+     * Same fields, same rule and the same one function as the quiz's, so a
+     * phone cannot be handed a seed at a moment the other game would not.
+     */
+    if (this.state.phase === BINGO_PHASES.LOBBY) Object.assign(view, arcadeFields(this.state, playerId));
     return view;
   }
 

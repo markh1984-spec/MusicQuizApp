@@ -763,7 +763,14 @@ export class Session {
      * phone that could post as somebody else could put another team's name
      * against a score they did not get.
      */
-    if (this.kind === 'quiz' && action === 'arcade') {
+    /*
+     * BOTH GAMES, because both have a lobby and both now have something to do
+     * in it — Maze Mouth before a quiz, Rally before the bingo. It was quiz
+     * only, which is why this is a `kind`-free line rather than a second one
+     * beside it: each engine decides for itself which phase counts as waiting
+     * (`src/arcade.js`), so there is nothing here to keep in step.
+     */
+    if (action === 'arcade') {
       return this.engine.arcadeScore(String(body.playerId || ''), body.score);
     }
     if (this.kind === 'quiz' && action === 'wandered') {

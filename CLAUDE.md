@@ -766,13 +766,37 @@ stays.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
-### THE LOBBY GAMES — MAZE MOUTH, AND IT IS NEVER CALLED PAC-MAN
+### THE LOBBY GAMES — MAZE MOUTH AND RALLY, AND NEITHER IS NAMED AFTER THE ONE YOU ARE THINKING OF
 
-`public/assets/maze.js`, `lobby-game.js`, `state.gameSeed`, `state.arcade`.
+`public/assets/maze.js` + `lobby-game.js` (Maze Mouth), `rally.js` +
+`lobby-rally.js` (Rally), `lobby-menu.js` (which one, and the card),
+`lobby-board.js` (the projector's board), `src/arcade.js` (the scores, shared
+by both engines), `state.gameSeed`, `state.arcade`.
 
-- **IT IS CALLED MAZE MOUTH.** The name, the maze, the characters and the
-  sounds of the other thing are Namco's and this app is SOLD — a legal line,
-  not a taste one. Say it on a mic all you like; do not print it.
+- **THERE ARE TWO, AND THE DEFAULT FOLLOWS THE GAME RATHER THAN THE ACCOUNT:
+  Maze Mouth before a quiz, Rally before the bingo.** A bingo night should have
+  a character of its own rather than being the quiz with different content in
+  it, and a remembered per-account preference would be wrong on half the nights
+  of anybody who runs both. The phone knows which night it is on (`s.game`), so
+  it costs one branch and nothing is chosen or stored. **The picker is NOT
+  built** — see TODO.md; one game per game type with no choice is already
+  useful and a picker with one entry is not.
+- **THEY ARE CALLED MAZE MOUTH AND RALLY.** The names, mazes, characters and
+  sounds of the two things they resemble are Namco's and Atari's, and this app
+  is SOLD — a legal line, not a taste one. Say whatever you like on a mic; do
+  not print it. **An unnamed game keeps inviting the wrong name**, which is why
+  the second one was named before it was written rather than after.
+- **ONE SCOREBOARD FOR BOTH, in `src/arcade.js`** — the same clamp, the same
+  best-not-latest rule and the same refusal outside the lobby, called by both
+  engines. Two copies is two rules, and the day one is fixed is the day a bingo
+  lobby accepts a score a quiz lobby refuses.
+- **RALLY RUNS ON A FIXED TIMESTEP, NEVER A FRAME DELTA**, and that is the same
+  fairness argument as the seed rather than a performance one: advanced by
+  `dt`, a 120Hz phone and a tired 30Hz one play measurably different games, so
+  two people on one board would be comparing handsets. `tick()` advances
+  exactly one `TICK_MS` and the canvas accumulates real time into whole ticks —
+  **capped**, or a phone that was face down on a table for two minutes wakes up
+  and spends the whole gap at once, losing every life before it repaints.
 - **EVERY PHONE PLAYS THE SAME GAME**, seeded from `state.gameSeed`, set at
   launch and living in the state — or the scoreboard compares two different
   games and means nothing.
@@ -783,10 +807,29 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
   photo uploads"*. The module is imported only when the button is pressed.
 - **No control panel: you tap and it walks there.** A swipe has to be READ and a
   misread one costs a life. `touch-action: none` on the canvas is load-bearing.
-- **ONE POST LEAVES A PHONE, at game over.** Never a stream of positions — the
-  lobby is exactly when sixty people are joining.
+- **ONE POST LEAVES A PHONE, at game over and at each life lost.** Never a
+  stream of positions — the lobby is exactly when sixty people are joining.
+  Banking at each life is what puts the people who played LONGEST on the board:
+  a game interrupted by the night starting never reaches game over, and by then
+  the phase has moved and a score is rightly refused.
+- **THE GAME IS STOPPED IN `buildScreen()`, ON EVERY REBUILD.** It used to be
+  torn down only inside `wireArcade`, which runs only while the WAITING screen
+  is being built — so a game open when the quiz started had its canvas thrown
+  away and its loop left running for the rest of the night, on a detached
+  canvas, holding a window `keydown` listener that swallowed the arrow keys.
+  Nothing showed on screen, and the comment above it claimed it could not
+  happen. **A teardown belongs where every phase change passes, not where the
+  thing being torn down is built.**
 - **Each moment has a primary: the game before the quiz, photos between the
   rounds.** The floating camera button stands down in the lobby.
+- **THE BOARD IS ON THE PROJECTOR AT THE LOBBY ONLY** — `lobby-board.js`, one
+  file for both projectors, inside the white QR panel and UNDER the code, which
+  nothing in this app may dim. **It was computed and never drawn for as long as
+  the feature existed**: both engines put it in the payload, there was a test
+  asserting the payload had it, this file said it was on screen, and no
+  projector ever read the field — while the phone's own button promised *"Top
+  scores go on the big screen"*. **A test that the payload is right proves
+  nothing about whether anybody drew it.**
 
 Full reasoning: **[`docs/lobby-games.md`](docs/lobby-games.md)**.
 
@@ -1082,6 +1125,7 @@ Open the one you are touching; do not read them all.
 **[`docs/lobby-games.md`](docs/lobby-games.md)** — what a phone does while the room fills up
 
 - MAZE MOUTH — THE LOBBY GAME, AND IT IS NEVER CALLED PAC-MAN
+- RALLY — the bingo night's game, and it is not called Pong
 
 **[`docs/accounts.md`](docs/accounts.md)** — hats, tiers, rooms, gates, own packs
 

@@ -29,7 +29,6 @@
  */
 
 import { MAZE, COLS, ROWS, open, startPoints, pellets, stepToward } from './maze.js';
-
 /**
  * EVERY PHONE IN THE ROOM PLAYS THE SAME GAME, and that is what makes a
  * scoreboard mean anything.
@@ -41,22 +40,11 @@ import { MAZE, COLS, ROWS, open, startPoints, pellets, stepToward } from './maze
  * score might only have been the luckier one.
  *
  * So the wobble is SEEDED, from a number the server puts in the game state at
- * launch. Same seed, same turns, same game, all night — which is exactly the
- * arrangement `roundIdeas` and the prize draw already use, and for the same
- * reason: a thing you want to count has to be the same thing for everybody.
- *
- * Mulberry32 — eight lines, no dependency, and far better than good enough
- * for deciding which way a chaser turns.
+ * launch. The generator itself moved to `seeded.js` when Rally arrived and
+ * needed the identical one — see the note there about why there must only ever
+ * be one copy of it.
  */
-function seeded(seed) {
-  let a = (Number(seed) || 1) >>> 0;
-  return () => {
-    a = (a + 0x6D2B79F5) >>> 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+import { seeded } from './seeded.js';
 
 const STEP_MS = 150;          // how often anything moves. Slow enough to steer.
 const CHASE_MS = 260;         // the chasers are slower than you, or it is grim.

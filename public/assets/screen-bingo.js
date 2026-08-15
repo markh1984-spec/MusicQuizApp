@@ -10,6 +10,7 @@
  */
 
 import { comeBackBand, esc, node, roomParam } from './client.js';
+import { arcadeSlot, paintArcadeBoard } from './lobby-board.js';
 
 const cards = {
   lobby: { key: () => 'bingo:lobby', render: renderLobby, update: updateLobby },
@@ -64,6 +65,8 @@ function renderLobby(s, joinUrl) {
         <div class="qr-panel">
           <img src="${joinQr()}" alt="Scan to get your bingo card">
           <div class="url" id="joinUrl">${esc(joinUrl || '')}</div>
+          <!-- WHO IS WINNING AT RALLY — see the note in lobby-board.js. -->
+          ${arcadeSlot()}
         </div>
       </div>
       <div class="player-strip" id="playerStrip"></div>
@@ -72,6 +75,7 @@ function renderLobby(s, joinUrl) {
 }
 
 function updateLobby(s) {
+  paintArcadeBoard(s);
   const strip = document.getElementById('playerStrip');
   if (!strip) return;
   const wanted = (s.lobby && s.lobby.players) || [];
