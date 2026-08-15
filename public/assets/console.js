@@ -5193,7 +5193,19 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
     // keystroke and every See all, and the head is not rebuilt with the grid.
     const headEl = el.querySelector('.pack-head');
     if (headEl) {
-      headEl.textContent = (showAll || query) ? 'Your library' : 'Recommended';
+      /*
+       * READ THE QUERY AGAIN HERE, do not use the one from the closure.
+       *
+       * `gameSection()` captures `query` once when the section is built;
+       * `paint()` runs again on every keystroke. So the captured value is
+       * always the query the section was BUILT with — an empty string on
+       * arrival — and the heading only ever changed for See all. Typing
+       * "metal" filtered the cards to two and left the heading saying
+       * "Recommended" over them, which is the exact lie the rename existed to
+       * stop.
+       */
+      const typing = (packQuery[kind] || '').trim();
+      headEl.textContent = (showAll || typing) ? 'Your library' : 'Recommended';
     }
     for (const pack of shown) grid.appendChild(packCard(kind, pack, paint));
 
