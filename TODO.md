@@ -1635,6 +1635,52 @@ the input that makes skin-tone heuristics useless.
   the score takes. Auto-publish is a settled decision; this is a filter on the
   way past, not a queue.
 
+### THE CONSOLE IS FOR LAUNCHING. THE PACKS PAGE IS THE WORKSHOP.
+
+Proposed on 15 August 2026: *"perhaps the console menu item itself needs to be
+geared towards this (so you click Console and are ONLY given sections that help
+you launch a quiz ASAP) and then you click the next bit and it's more geared to
+in depth stuff like writing, buying packs etc."*
+
+**THE SPLIT ALREADY EXISTS AND NOTHING NEW HAS TO BE INVENTED.** `navMenu()`
+gives every quizmaster three doors — **Console · Control · Packs** — and Packs
+already points at `/editor`. Run tonight, drive the game, work on packs.
+
+**What went wrong is that the workshop crept onto the Console's pack tabs.**
+Four jobs that are not launching now sit under the thing that is used ten
+minutes before a gig: the AI generator, *Lay it out empty*, the Quizporium
+shop, and *Ask for a quiz*. That is also why the shelf needed capping at six to
+feel calm — the tab was carrying four panels it should never have had.
+
+**So this is a MOVE, not a new section**, which makes it far smaller than it
+sounds and means no second navigation system to learn.
+
+#### What stays on the Console
+
+Tonight, the six packs, the search, and nothing else. **Not even the shop** —
+a shop on the launch screen is the plainest possible breach of *the common job
+is the fast one*.
+
+#### What moves to Packs
+
+The generator, the scaffold, the shop and the ask-for-a-quiz panel. None of
+them changes behaviour or gating on the way; the owner-only generator stays
+owner-only.
+
+#### The one thing to get right
+
+**Somebody looking for "write a quiz" will go to the Music Quiz tab first**,
+because that is where it has always been. The answer is ONE QUIET LINE under
+the shelf — *"Write, buy or edit packs →"* — a link, not a panel. **If it grows
+into a panel the whole move has been undone**, which is exactly how the four
+panels got there in the first place.
+
+#### Do it as its own piece of work
+
+It touches the tab every gig starts from, so it wants its own screenshots at
+1280 and 390, and a real Launch pressed in a browser afterwards — the protected
+surface, not a diff review.
+
 ### SIX PACKS IN REACH — a shortlist, because a drag needs to SEE both ends
 
 Raised on 15 August 2026 as a crowding problem — *"if the packs section gets

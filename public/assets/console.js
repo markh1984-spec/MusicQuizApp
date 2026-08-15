@@ -55,6 +55,21 @@ import { packLookAttrs } from './pack-look.js';
  */
 const canPin = () => Boolean(me && !me.bootstrap);
 
+/**
+ * How many packs the shelf shows before you have to search or press See all.
+ *
+ * SIX, and it is one row on a laptop by construction — the grid is six columns
+ * — which is the whole point: a drag needs the card and the Tonight slot on
+ * screen at once, and a second row is a scroll away from the thing you are
+ * dragging into.
+ */
+const PACK_SHELF = 6;
+
+/** Which tabs have been expanded past the six. Per kind, and not remembered:
+ *  the shelf should be back to six the next time the console is opened, since
+ *  the whole reason for the cap is the state you arrive in before a gig. */
+const packAll = {};
+
 const isPinned = (id) => ((library && library.prefs && library.prefs.pinnedPacks) || []).includes(id);
 
 /** The drawn pin. Never an emoji — the same rule `binIcon()` follows. */
@@ -5114,21 +5129,64 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
      */
     const shelf = (p) => (freshness(p).expired ? 2 : freshness(p).topical ? 0 : 1);
     /*
-     * PINNED FIRST, ahead of even a fresh topical pack.
+     * PINNED FIRST, then the pack this room is least likely to have heard.
      *
      * A pin is somebody saying "this one, keep it where I can reach it", and
      * the app's own ordering guessing better than that would make the pin a
-     * suggestion rather than a decision. Everything below it is unchanged, so
-     * unpinning puts the shelf back exactly as it was.
+     * suggestion rather than a decision. Under the pins it is the same rule
+     * `quickPicks()` uses on the launch bar — a dated pack first because it is
+     * the only thing on the shelf worth less tomorrow, expired ones last, and
+     * never-played before long-ago. That ranking is not decoration once only
+     * SIX are shown: it decides what you can reach.
      */
-    const inOrder = [...found].sort((a, b) => (isPinned(b.id) - isPinned(a.id)) || (shelf(a) - shelf(b)));
+    const inOrder = [...found].sort((a, b) => (isPinned(b.id) - isPinned(a.id))
+      || (shelf(a) - shelf(b))
+      || (playedAt(a.lastPlayedAt) - playedAt(b.lastPlayedAt)));
     const yours = inOrder.filter((p) => !p.locked);
     const buyable = inOrder.filter((p) => p.locked);
 
     if (!yours.length) {
       grid.appendChild(node(`<div class="tiny">None of the ones you have match “${esc(packQuery[kind])}”.</div>`));
     }
-    for (const pack of yours) grid.appendChild(packCard(kind, pack, paint));
+
+    /*
+     * SIX ON DISPLAY, AND THE REST BEHIND THE SEARCH BOX.
+     *
+     * Asked for in these words: *"the section needs 6 on display in total and
+     * to hide the other packs behind a search function… these sections are
+     * designed to quick launch a night as quickly as possible."*
+     *
+     * **AND THE REASON IS THE DRAG, not tidiness** — the host's own earlier
+     * framing, which is what makes six the right number rather than an
+     * arbitrary one: *"6 is perfect because it's not just about crowding but
+     * also what can be seen to be dragged and dropped."* A drag needs the card
+     * AND the slot on screen together. One row directly under the Tonight bar
+     * is what makes that possible; a second row is already a scroll away from
+     * the thing you are dragging into.
+     *
+     * **THE SIX ARE A WINDOW, AND ONLY THEIR CONTENTS CHANGE.** At rest they
+     * are the ranking above; while searching they are the top six matches.
+     * Search scans everything and shows six — so a pack you searched for is
+     * exactly as reachable as one the app suggested, which is the entire
+     * point. Results appearing in a longer list further down the page would
+     * put the thing you were looking for out of reach of the slot you want it
+     * in.
+     *
+     * **See all** is the way to everything, and it is a plain outlined button
+     * rather than a second gradient: the one "press this" on this tab is
+     * Launch.
+     */
+    const showAll = packAll[kind];
+    const shown = showAll ? yours : yours.slice(0, PACK_SHELF);
+    for (const pack of shown) grid.appendChild(packCard(kind, pack, paint));
+
+    if (yours.length > PACK_SHELF) {
+      const more = node(`<button class="minor pack-more" type="button">${showAll
+        ? 'Show fewer'
+        : `See all ${yours.length}`}</button>`);
+      more.addEventListener('click', () => { packAll[kind] = !showAll; paint(); });
+      grid.after(more);
+    }
 
     if (buyable.length) {
       shopHead.hidden = false;

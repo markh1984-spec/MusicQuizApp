@@ -2088,6 +2088,14 @@ body.console::after { display: none; }
 }
 .pack-card.broken { border-color: var(--bad); }
 
+/* SEE ALL — the way past the six. Outlined, never a second gradient: the one
+   "press this" on a pack tab is Launch. Full width under the row so it reads
+   as "there is more below this line" rather than as a seventh card. */
+.pack-more {
+  display: block; width: 100%; margin-top: 10px;
+  padding: 9px 12px; font-size: var(--fs-note);
+}
+
 /* ---- THE PIN, top left.
  *
  * Every other corner of this card is spoken for: the "Yours" badge is top
