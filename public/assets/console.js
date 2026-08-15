@@ -5354,7 +5354,21 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
   // the caret does not jump to the end after every letter.
   search.addEventListener('input', () => { packQuery[kind] = search.value; paint(); });
 
-  el.querySelector('.pack-dense').addEventListener('click', () => {
+  /*
+   * GUARDED, because the button is not drawn on the Console door.
+   *
+   * It was not, and that took the console down — the markup was made
+   * conditional and the wiring left unconditional, so `querySelector` returned
+   * null, `addEventListener` threw, and the whole page rendered as "could not
+   * load" for every quizmaster on the one door a night is launched from.
+   *
+   * **THE CLASS OF FAULT: a template that varies and wiring that does not.**
+   * Every `querySelector` in a function whose markup differs by door has to
+   * assume the element may be absent — there is no test that can see this,
+   * because it is valid JavaScript operating on markup that is only decided at
+   * render time. A browser opening the page is the only thing that finds it.
+   */
+  el.querySelector('.pack-dense')?.addEventListener('click', () => {
     localStorage.setItem(DENSE_STORE, dense ? '0' : '1');
     render();
   });
