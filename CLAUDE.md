@@ -929,7 +929,7 @@ colour on the EDGE, never the face, so one button says whose app this is and
 six in a row still say it once — and now that the surfaces carry the same
 colour it reads as of a piece rather than as a stray line.
 
-### THE LOBBY GAME IS NEVER CALLED PAC-MAN IN THE APP
+### MAZE MOUTH — THE LOBBY GAME, AND IT IS NEVER CALLED PAC-MAN
 
 `public/assets/maze.js`, `lobby-game.js`, `state.gameSeed`, `state.arcade`.
 Asked for as *"a little game to play on their phones while they're waiting…
@@ -978,6 +978,28 @@ players are the ones who zoom the page instead of moving.
 **ONE POST LEAVES A PHONE, at game over.** Never a stream of positions — the
 lobby is precisely when sixty people are joining, which is the one path in
 this app that must not stutter.
+
+**IT IS CALLED MAZE MOUTH**, named by the host, and that closes the gap this
+section was written to flag: an unnamed thing keeps inviting the wrong name.
+It is on the button a player presses and in the file headers, so there is a
+right answer to hand.
+
+**EACH MOMENT HAS A PRIMARY: MAZE MOUTH BEFORE THE QUIZ, PHOTOS BETWEEN THE
+ROUNDS.** The host's own split, and it is better than offering both equally
+everywhere. The lobby is dead time with nothing on the projector, which is
+exactly what a game is for; a round board is when the room is already looking
+up and a photo can have its moment on the big screen. So the waiting screen
+leads with the game and carries the photo underneath it, and everywhere else
+the game does not exist at all.
+
+**The photo is not REMOVED from the lobby, only quietened.** Somebody
+arriving with their mates takes the group photo as they sit down, and that is
+the upload this app most wants — *"don't want to disincentivise photo
+uploads"*. It simply stops being the loud one for those few minutes. **And
+the floating camera button stands down in the lobby** while the menu offers
+the same thing, because two controls for one job is how somebody uses the
+worse one out of habit — and the floating one is the worse one here, an icon
+with no words against a row that says what it does and what happens next.
 
 **Between rounds was asked about and left at the lobby.** At a round board the
 host is talking and the scores are up, and somebody mid-game is somebody not

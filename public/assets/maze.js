@@ -1,5 +1,5 @@
 /**
- * THE LOBBY GAME — a maze chase, for the five minutes before a quiz starts.
+ * MAZE MOUTH — a maze chase, for the five minutes before a quiz starts.
  *
  * Asked for as *"a little game to play on their phones while they're waiting…
  * like an old school video game like tennis or pac-man"*. The lobby is the one

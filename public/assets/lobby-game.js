@@ -1,5 +1,5 @@
 /**
- * THE LOBBY GAME, running.
+ * MAZE MOUTH — the lobby game, running.
  *
  * The maze and its rules are in `maze.js` so a test can walk them without a
  * browser; this file is the part that needs a canvas — drawing, the clock, the

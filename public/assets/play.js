@@ -868,7 +868,14 @@ function draw(next) {
  * losing the points they came for.
  */
 function paintCameraButton(s) {
-  const wanted = Boolean(s.photosOpen && s.you && s.phase !== 'question');
+  /*
+   * NOT IN THE LOBBY, because the waiting screen's menu offers the same thing
+   * on a line of its own. Two controls for one job is how somebody uses the
+   * worse one out of habit — and the floating one is the worse one here,
+   * because it is an icon with no words while the menu row says what it does
+   * and what happens next.
+   */
+  const wanted = Boolean(s.photosOpen && s.you && s.phase !== 'question' && s.phase !== 'lobby');
   let btn = document.getElementById('cameraBtn');
   if (!wanted) {
     if (btn) btn.remove();
@@ -918,8 +925,23 @@ function buildWaiting(s, kicker, title, sub) {
            card, deliberately: the photos are what reach the projector and what
            the night is remembered by, and a game that opened over them would
            quietly cost the quizmaster the thing this app is actually for. -->
+      <!-- WHILE YOU WAIT — the two things there are to do, as a menu.
+           The photo is second and NOT hidden behind the game: it is the one
+           that reaches the projector and the one the night is remembered by,
+           so it keeps a line of its own rather than becoming a thing you find
+           after putting a game away. The floating camera button stands down
+           in the lobby while this is up — see paintCameraButton — because
+           two controls for one job is how somebody ends up using the worse
+           one out of habit. -->
+      <div class="wait-menu">
       <div class="arcade" ${s.gameSeed ? '' : 'hidden'}>
-        <button class="btn ghost arcade-open" type="button">Play while you wait</button>
+        <button class="wait-item arcade-open" type="button">
+          <span class="wait-item-icon" aria-hidden="true">🕹️</span>
+          <span class="wait-item-what">
+            <b>Play Maze Mouth</b>
+            <span class="tiny">Top scores go on the big screen</span>
+          </span>
+        </button>
         <div class="arcade-box" hidden>
           <div class="arcade-stage">
             <canvas class="arcade-canvas" width="600" height="600"></canvas>
@@ -932,9 +954,28 @@ function buildWaiting(s, kicker, title, sub) {
           <div class="tiny arcade-said">Tap where you want to go</div>
         </div>
       </div>
+      <!-- AND THE PHOTO, SECOND HERE AND FIRST EVERYWHERE ELSE.
+           The host's own split: *"between rounds it should be photos and
+           before the start of the quiz it's Maze Mouth"*. Each moment gets a
+           primary rather than the two competing — the lobby is dead time with
+           nothing on the projector, which is what a game is for, and a round
+           board is when the room is already looking up and a photo can have
+           its moment on the big screen.
+           Not REMOVED from the lobby though: somebody arriving with their
+           mates takes the group photo as they sit down, and that is the
+           upload this app most wants. It simply stops being the loud one. -->
+      <button class="wait-item wait-photo" type="button">
+        <span class="wait-item-icon" aria-hidden="true">📷</span>
+        <span class="wait-item-what">
+          <b>Send a photo</b>
+          <span class="tiny">It goes on the big screen</span>
+        </span>
+      </button>
+      </div>
     </div>
   `);
   wireTeamPicker(el, s);
+  el.querySelector('.wait-photo')?.addEventListener('click', openCamera);
   wireArcade(el, s);
   paintStartsIn(s);
   return el;
@@ -976,9 +1017,10 @@ function wireArcade(el, s) {
     playerId: me.id, token: me.token, joinCode: roomCode(), score,
   }).catch(() => {});
   open.addEventListener('click', async () => {
-    if (!box.hidden) { box.hidden = true; stopArcade(); open.textContent = 'Play while you wait'; return; }
+    const label = open.querySelector('b');
+    if (!box.hidden) { box.hidden = true; stopArcade(); label.textContent = 'Play Maze Mouth'; return; }
     box.hidden = false;
-    open.textContent = 'Put it away';
+    label.textContent = 'Put it away';
     /*
      * LOADED ONLY WHEN ASKED FOR. Nobody who never presses the button pays for
      * the game at all — which matters on pub wifi, on the one page sixty

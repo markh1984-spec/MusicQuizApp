@@ -6497,3 +6497,23 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 @media (prefers-reduced-motion: reduce) {
   .arcade-going.soon { animation: none; transform: scale(1.15); }
 }
+
+/* ---- WHILE YOU WAIT — the two things there are to do, as a menu.
+   Rows rather than a row of buttons: each one has a name and a line saying
+   what happens next, which is the house style everywhere else and is worth
+   more here than anywhere, because both of these end up on the big screen and
+   nobody would guess that from an icon. */
+.wait-menu { display: grid; gap: 8px; }
+.wait-item {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 12px 14px; border-radius: var(--r-card);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-bottom: 2px solid var(--hot);
+  color: var(--ink); font: inherit; text-align: left; cursor: pointer;
+}
+.wait-item:active { transform: translateY(1px); }
+.wait-item-icon { font-size: var(--fs-sub); line-height: 1; flex: 0 0 auto; }
+.wait-item-what { display: grid; min-width: 0; }
+.wait-item-what .tiny { color: var(--ink-dim); }
+.arcade .wait-item { width: 100%; }
