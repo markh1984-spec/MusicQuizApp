@@ -1979,6 +1979,11 @@ gate was perfect and had no handle, which is the arcade-board fault again: a
 test that the route works proves nothing about whether anybody can reach it.
 `test/gallery.test.js` now asserts a caller exists.
 
+- **AND WHEN A CALLER WAS WIRED UP, THE ROUTE 404ED.** It was defined inside
+  `handleGet`, which only ever runs for GET and HEAD, so every POST fell through
+  to the generic 404. **A route in the wrong handler is dead code that reads as
+  a feature.** The test POSTs over real HTTP and asserts against the 404 rather
+  than for the 400 — that difference is the bug.
 - **The control sits UNDER the photographs, inside a night you have opened** —
   so nobody publishes a night without having just looked at what is in it. A
   button on the collapsed row would be one tap from a stranger's face going

@@ -846,6 +846,20 @@ asserts that something under `public/` calls it. A text search is a weak check
 and is the right weight, because the fault was not a broken caller — it was the
 total absence of one.
 
+**AND WHEN A CALLER WAS FINALLY WIRED UP, THE ROUTE 404ED.** It was defined
+inside `handleGet`, which is only ever called for GET and HEAD — every POST
+goes to `handleWrite` — so a POST to it fell through to the generic 404 and had
+done since the day it was written. **Dead code that read as a working
+feature**: the gate was tested, the page was built, this file described it, and
+the one call that puts a night up could never have been answered.
+
+Found by a browser agent posting to it and getting *"Not found"* where the
+honest answer is *"there is nowhere to record this"*. The test now POSTs over
+real HTTP and **asserts against the 404 rather than for the 400** — that
+difference IS the bug, and it is invisible to anything that does not make the
+request. Verified by putting the handler back in `handleGet` and watching it
+fail.
+
 **IT SITS UNDER THE PHOTOGRAPHS, AND THAT PLACEMENT IS THE SAFEGUARD.** It is
 inside a night that has to be opened, below the pictures it would publish — so
 nobody can put a night in front of the world without having just looked at

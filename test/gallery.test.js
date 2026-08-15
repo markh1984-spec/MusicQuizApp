@@ -159,6 +159,32 @@ test('SOMETHING ACTUALLY CALLS THE PUBLISH ROUTE', async () => {
   assert.ok(callers.length, 'nothing in the browser can put a night on the gallery');
 });
 
+test('AND THE PUBLISH ROUTE ANSWERS A POST AT ALL', async () => {
+  /*
+   * It was defined inside `handleGet`, which is only ever called for GET and
+   * HEAD — so every POST fell through to the generic 404, and had done since
+   * the day the gallery was written. Dead code that read as a working feature:
+   * the gate was tested, the page was built, and the one call that puts a
+   * night up could never have been answered.
+   *
+   * **A 404 is the thing being asserted against**, not the 400. In a test
+   * environment there is no photo repository, so the honest answer is a
+   * refusal that NAMES that — where "Not found" means the route does not
+   * exist. The difference between those two is the whole bug, and it is
+   * invisible to anything that does not make the request.
+   */
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/api/past-gigs/publish?key=gallery-test-key`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ night: '2026-08-13', on: true }),
+    });
+    assert.notEqual(res.status, 404, 'the publish route is not reachable by POST');
+    const out = await res.json();
+    assert.match(out.error || '', /repository/i, `expected an honest refusal, got ${JSON.stringify(out)}`);
+  });
+});
+
 test('EVERY REFUSAL LOOKS THE SAME, so nobody can map which nights exist', async () => {
   /*
    * The same shape `/api/voucher` already uses. Three different messages —

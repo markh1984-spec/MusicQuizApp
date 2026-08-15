@@ -1951,14 +1951,6 @@ async function handleGet(req, res, url, route) {
    * under it and would answer "that is not a night" to the word `publish` —
    * a 404 that looks exactly like a working route refusing a bad date.
    */
-  if (route === '/api/past-gigs/publish' && req.method === 'POST') {
-    if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
-    const body = await readJson(req);
-    const gigRoom = roomForHost(req, url);
-    const done = await setPublished(gigRoom.id, String(body.night || ''), body.on !== false);
-    return sendJson(res, done.ok ? 200 : 400, done), true;
-  }
-
   if (route.startsWith('/api/past-gigs/')) {
     if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
     const night = decodeURIComponent(route.slice('/api/past-gigs/'.length));
@@ -3301,6 +3293,29 @@ function csvCell(value) {
 }
 
 async function handleWrite(req, res, url, route) {
+  /*
+   * PUT A NIGHT ON THE PUBLIC GALLERY, or take it back down.
+   *
+   * IT LIVED IN `handleGet` AND WAS THEREFORE UNREACHABLE. That function is
+   * only ever called for GET and HEAD — every POST comes here — so a POST to
+   * this route fell through to the generic 404 and had done since the day the
+   * gallery was written. It was dead code that read as a working feature: the
+   * gate was tested, the page was built, and the one call that puts a night up
+   * could never have been answered.
+   *
+   * Found by a browser agent posting to it and getting "Not found" instead of
+   * the honest "there is nowhere to record this" — which is the third time in
+   * this repo that something adjacent to the artefact was tested and the
+   * artefact itself never was.
+   */
+  if (route === '/api/past-gigs/publish' && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
+    const body = await readJson(req);
+    const gigRoom = roomForHost(req, url);
+    const done = await setPublished(gigRoom.id, String(body.night || ''), body.on !== false);
+    return sendJson(res, done.ok ? 200 : 400, done), true;
+  }
+
   if (route === '/api/sign-in' && req.method === 'POST') {
     const body = await readJson(req);
     const session = accounts.signIn(body.email, body.password);
