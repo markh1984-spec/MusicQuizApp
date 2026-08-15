@@ -2105,6 +2105,28 @@ body.console::after { display: none; }
 .pack-card.tinted, .lb-tile.tinted {
   background: linear-gradient(120deg, var(--pk-a), var(--pk-b)), var(--panel);
 }
+/*
+ * AND AN EDGE ALONG THE BOTTOM, in the same colour at full strength.
+ *
+ * The wash has to stay faint or it fights the title, which means the HUE is
+ * hard to name on a dark card and two close colours read as one. Three pixels
+ * with nothing written over them says it outright — so the two together do a
+ * job neither does alone: the wash gives the card a mood, the edge gives it an
+ * identity you can match against the Tonight slot from across the page.
+ *
+ * ON THE BOTTOM, at the host's own reading, and he is right: an ordinary button
+ * already carries the account's colour on its bottom border and the tab bar
+ * underlines the tab you are on, so this is a shape the eye has already learned
+ * here. A stripe down the LEFT was rendered beside it and turned down for that
+ * reason — nothing else in the app does it, so it would be a second visual
+ * language invented for a job the first one already covers.
+ *
+ * `:not(.broken)` is load-bearing. A broken pack is bordered in `--bad`, and
+ * this rule comes later in the sheet, so without the guard a pack's subject
+ * colour would quietly overwrite the red on the one card that has something
+ * wrong with it. Red keeps its meaning everywhere; that is the rule.
+ */
+.pack-card.tinted:not(.broken), .lb-tile.tinted { border-bottom: 3px solid var(--pk-edge); }
 /* Two patterns, shared by every subject that wants one — scan lines for the
    decades that had them and a diagonal for the heavy ones. Deliberately only
    two: a texture per subject would be a stylesheet that grows every time a

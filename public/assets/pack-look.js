@@ -51,6 +51,22 @@
  */
 const TINT = { top: 0.30, bottom: 0.16 };
 
+/**
+ * THE EDGE IS NEARLY SOLID, AND THAT IS THE POINT OF HAVING BOTH.
+ *
+ * The wash has to stay faint or it fights the words on top of it — which means
+ * on a dark card the actual HUE is hard to name, and two packs whose colours
+ * are close read as the same colour. Three pixels of the same colour at full
+ * strength says it outright, in a place with no text over it.
+ *
+ * **On the BOTTOM, because that is the shape this app already uses** — an
+ * ordinary button carries the account's colour on its bottom border and the
+ * tab bar underlines the tab you are on. A stripe down the left was rendered
+ * beside it and turned down for exactly that reason: nothing else in the app
+ * does it, so it would be a second visual language for the same job.
+ */
+const EDGE_ALPHA = 0.85;
+
 function rgba(hex, alpha) {
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
@@ -155,6 +171,7 @@ export function packLook(pack) {
       subject: subject.id,
       a: rgba(subject.a, TINT.top),
       b: rgba(subject.b, TINT.bottom + 0.1),
+      edge: rgba(subject.a, EDGE_ALPHA),
       pattern: subject.pattern || 'none',
     };
   }
@@ -165,6 +182,7 @@ export function packLook(pack) {
     subject: '',
     a: `hsla(${h}, 55%, 45%, ${TINT.top})`,
     b: `hsla(${(h + 34) % 360}, 50%, 26%, ${TINT.bottom + 0.1})`,
+    edge: `hsla(${h}, 62%, 58%, ${EDGE_ALPHA})`,
     pattern: 'none',
   };
 }
@@ -187,6 +205,6 @@ export function packLookAttrs(pack) {
   const look = packLook(pack);
   return {
     cls: `tinted${look.pattern === 'none' ? '' : ` pk-${look.pattern}`}`,
-    style: `--pk-a: ${look.a}; --pk-b: ${look.b}`,
+    style: `--pk-a: ${look.a}; --pk-b: ${look.b}; --pk-edge: ${look.edge}`,
   };
 }

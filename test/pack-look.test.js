@@ -102,6 +102,29 @@ test('IT NEVER SPEAKS THE APP\'S OWN COLOUR LANGUAGE — every tint is a wash', 
   }
 });
 
+test('THE EDGE IS NEARLY SOLID WHERE THE WASH IS FAINT', () => {
+  /*
+   * The two do different jobs and the difference in strength IS the job: the
+   * wash sits under the title so it has to stay faint, which makes the hue
+   * hard to name; the edge has nothing written over it, so it can say the
+   * colour outright. If the edge ever drifted down to the wash's strength the
+   * feature would quietly lose half its point and nothing would look broken.
+   */
+  for (const title of ['The 1980s Quiz', 'The Madonna Quiz', 'The Christmas Quiz']) {
+    const look = packLook({ title });
+    const alphaOf = (c) => Number(c.match(/([\d.]+)\s*\)$/)[1]);
+    assert.ok(alphaOf(look.edge) > alphaOf(look.a) * 2, `${title}: the edge is no stronger than the wash`);
+  }
+});
+
+test('the edge is the SAME hue as the wash, not a second colour', () => {
+  // Two colours on one card would be two things to remember. The edge is the
+  // wash said loudly, which is why it can be matched against a Tonight slot.
+  const look = packLook({ title: 'The 1980s Pop Music Quiz' });
+  const hue = (c) => c.replace(/[\d.]+\)$/, '');
+  assert.equal(hue(look.edge), hue(look.a));
+});
+
 test('a pack with no title at all is still given something', () => {
   // The generator, Import and the editor can all produce a pack mid-save, and
   // a card that throws is a shelf that does not draw.
@@ -137,5 +160,5 @@ test('nothing a human typed reaches the style attribute', () => {
   const attrs = packLookAttrs({ title: '"><script>alert(1)</script>' });
   assert.ok(!attrs.style.includes('<'), attrs.style);
   assert.ok(!attrs.style.includes('"'), attrs.style);
-  assert.match(attrs.style, /^--pk-a: [^;]+; --pk-b: [^;]+$/);
+  assert.match(attrs.style, /^--pk-a: [^;]+; --pk-b: [^;]+; --pk-edge: [^;]+$/);
 });

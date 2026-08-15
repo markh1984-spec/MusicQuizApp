@@ -1902,6 +1902,23 @@ that a reading task.
   two are the same shape.
 - **The same pack is the same colour on every device and every reload.** A
   shelf that reshuffles its colours is worse than one with none.
+- **A WASH PLUS AN EDGE ALONG THE BOTTOM, and the difference in strength is
+  the job.** The wash sits under the title so it must stay faint, which makes
+  the hue hard to name; three pixels with nothing written over them says it
+  outright. **On the bottom because an ordinary button already carries the
+  account colour there** and the tab bar underlines the tab you are on — a
+  stripe down the LEFT was rendered beside it and turned down, because nothing
+  else in the app does that. **`:not(.broken)` is load-bearing**: the tint rule
+  comes later in the sheet and would otherwise overwrite the red on the one
+  card with something wrong with it.
+- **CARTOON FIGURES WERE TRIED AND DO NOT READ — do not re-propose them
+  without new evidence.** Six were drawn and rendered at the real card size: at
+  200×102 with a title over it a whole person is a blob. **A single OBJECT
+  reads where a FIGURE does not** (the Christmas tree worked; the bucket hat
+  came out as a mushroom). A second pass with emblems got three of six, because
+  two hats at 52px are the same hat. **And never a named person** — this app is
+  sold, and a decorative background is a far weaker case for a likeness than a
+  picture round, where the musician IS the question.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
