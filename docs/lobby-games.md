@@ -349,3 +349,103 @@ teardown and the picker are all shared.
 
 **Read the fixed-timestep note above first**: anything with continuous motion
 has a fairness problem the grid games do not, and it is invisible.
+
+---
+
+## QUICK DRAW — a shooting gallery, and the third answer to one fairness problem
+
+The fourth game, built on 15 August 2026 at the host's own suggestion: *"a
+western where you, you know, there's, like, bad guys, and they pop up from
+behind a wall to shoot you, and then you have to shoot them first"*.
+
+**The name is free, which is a first here.** Maze Mouth, Rally and Tailback all
+had to be named around somebody's trademark. A shooting gallery is a fairground
+stall a century older than video games and "quick draw" is an ordinary English
+phrase, so for once the honest name is also the safe one.
+
+**The control is the one already proven.** Tapping the thing you want to shoot
+IS the maze's tap-a-destination with the destination made obvious — no reticle
+to drag, no aim to hold, nothing that can be misread. Of the four games it is
+the best fit to the rule, which is why the idea was worth taking.
+
+### THE SHERIFF IS WHAT MAKES IT A GAME
+
+An outlaw pops up and you shoot it; the sheriff and the barmaid pop up too and
+shooting one costs a life. That single addition does two jobs, and both matter
+more than they look:
+
+- **It turns "how fast can you tap" into "did you look before you fired"**,
+  which is a far better thing to put a leaderboard under. Pure reaction speed
+  is a stopwatch.
+- **IT IS THE ANTI-CHEAT, AND IT IS THE GAME RATHER THAN A RULE.** The obvious
+  exploit is tapping all six holes as fast as you can. Nobody had to forbid it
+  and no penalty had to be invented for shooting an empty hole: roughly a
+  quarter of everyone who appears is somebody you must not shoot, so a masher
+  loses in seconds and scores a tenth of what a player does. There is a test
+  that says so rather than a paragraph asking you to believe it.
+
+**A shot at an empty hole therefore costs nothing**, deliberately. Punishing it
+was considered and is unnecessary, and a penalty a player cannot see the reason
+for is worse than none.
+
+### A SCHEDULE, NOT AN ACCUMULATOR
+
+This is the third answer this codebase has given to the same fairness problem
+and it is the cleanest of the three:
+
+| Game | How every phone plays the same one |
+|---|---|
+| Maze Mouth, Tailback | a grid and a fixed step — nothing continuous to drift |
+| Rally | an accumulator: whole ticks only, remainder carried, catch-up capped |
+| Quick Draw | **a schedule** — the state at time T is a pure function of the seed and T |
+
+Nothing accumulates, so there is nothing to drift. A phone sampling the clock
+every 8ms and one managing 120ms land in **exactly** the same state — tested at
+five frame rates, and the death times match to the fractional millisecond
+rather than approximately.
+
+**And a phone that froze does not get an easier game.** `runTo()` walks the
+schedule one event at a time rather than jumping to `t`: a handset that lost a
+second to the browser really did have three outlaws draw on it, and skipping
+them would mean a stuttering phone quietly played an easier round.
+
+### THE LIMIT THAT CANNOT BE ENGINEERED AWAY, and it is worth stating plainly
+
+**A reaction game makes input latency part of the score.** A tired handset with
+a slow touch digitiser genuinely is at a disadvantage, in a way it is not on a
+grid, and no amount of scheduling fixes it — the schedule is identical, but the
+tap lands later.
+
+What can be done is make the windows generous enough that the difference is
+noise: about **1.1 seconds** to react at the start, tightening as the game goes
+on but **never below `MIN_UP_MS` (620ms)**. Past about half a second the game
+stops being reaction and starts being whose phone reports a touch soonest,
+which is not a thing anybody earned. Eighty milliseconds of handset should not
+decide a pub leaderboard.
+
+There is a test for the half that CAN hold: the same shots at the same moments
+give the same score at any sampling rate.
+
+### Two smaller things
+
+- **Quicker is worth more, measured against the window you actually had** —
+  never against a fixed number of milliseconds. The window tightens as the game
+  goes on, so a flat scale would quietly make the late hard shots worth less
+  than the early easy ones, which is the reveal-curve fault this app already
+  records against the picture round.
+- **Two figures never share a hole.** A tap that could mean either is the app
+  taking the life rather than the player losing it — and one of the two costs a
+  life.
+
+### What it looks like, and what it deliberately is not
+
+Silhouettes: a wide-brim hat, a body, and then **colour and shape doing the
+work** — red with a dark bandana across the face, or gold with a star on the
+chest. You have eight-tenths of a second to decide, in a dark pub, at arm's
+length, so the two must never differ by one small detail. **Telling them apart
+is not meant to be the hard part; deciding fast enough is.**
+
+It stays a fairground stall: no brand of firearm, nobody real, nothing that
+reads as anything but the Wild West — the same instinct that keeps photoreal
+pictures of living musicians out of `portraits.js`. There is a test on the
+words.

@@ -35,6 +35,11 @@ import { tierRank } from './plans.js';
  * nobody sees the end of — the picker says what a game IS, and how to play it
  * is on the game itself.
  *
+ * THE ORDER IS THE LADDER — Bronze's two, then Silver's, then Gold's. The
+ * picker draws them in this order and the locked ones stay in place, so what
+ * a tier buys reads down the list rather than having to be worked out from
+ * the labels.
+ *
  * `defaultFor` is the game type this one is handed to when nobody has chosen —
  * `quiz`, `bingo`, or absent for the extras. Every game type must have exactly
  * one default, or a night falls through to a card with no game behind it.
@@ -67,6 +72,15 @@ export const LOBBY_GAMES = [
     blurb: 'a growing tail',
     tier: 'silver',
     canvas: { w: 600, h: 600, klass: '' },
+  },
+  {
+    id: 'quickdraw',
+    name: 'Quick Draw',
+    how: 'Shoot the outlaws, never the sheriff',
+    blurb: 'a western shoot-out',
+    tier: 'gold',
+    // 2:3 — two holes across and three down, which is a phone held upright.
+    canvas: { w: 600, h: 900, klass: 'tall' },
   },
 ];
 

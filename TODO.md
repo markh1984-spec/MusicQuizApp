@@ -1062,8 +1062,9 @@ Service is created, in Frankfurt, on the free tier.
 
 ## Lobby games — what is left
 
-**BUILT, AND DELETED FROM THIS LIST: the three games, the picker and the tier
-ladder.** Maze Mouth, Rally and Tailback; the picker sits under **Set it up**
+**BUILT, AND DELETED FROM THIS LIST: the four games, the picker and the tier
+ladder.** Maze Mouth and Rally on Bronze (and the two defaults), Tailback on
+Silver, Quick Draw on Gold; the picker sits under **Set it up**
 on both launch routes; the tier is checked at the route rather than in the
 console; locked games are shown rather than hidden. The reasoning has moved to
 [`docs/lobby-games.md`](docs/lobby-games.md) — **read the fixed-timestep note
@@ -1079,14 +1080,14 @@ outside the lobby, the teardown and the picker are all shared.
 - **Nothing on the projector says WHICH game is on.** The board says "Top
   scores" whichever it is. Fine with one game a night; confusing the moment
   somebody asks what the numbers are for.
-- **A fourth and fifth game**, if the ladder wants more to sell. The two worth
+- **A FIFTH GAME**, if the ladder wants more to sell. The two still worth
   having, in the order they were argued on 15 August 2026: **Pile Up** — drop
   sliding blocks, overhang trimmed, tower narrows; one tap, no chasing, and the
-  most genuinely different feel left, since a third variation on chasing
-  something is worth much less than a third different thing to do. And a
-  **letter game** — the same rack for the whole room, longest words in ninety
-  seconds, which is the best leaderboard available here and the only idea that
-  looks like it belongs in a QUIZ app rather than an arcade.
+  most genuinely different feel left, since another variation on chasing
+  something is worth much less than a different thing to do. And a **letter
+  game** — the same rack for the whole room, longest words in ninety seconds,
+  which is the best leaderboard available here and the only idea that looks
+  like it belongs in a QUIZ app rather than an arcade.
 - **The letter game needs a dictionary, and that is its real cost.** A decent
   UK word list is 200KB–1MB downloading at the exact moment sixty people are
   joining, which is the one path that must not stutter; a curated 5,000-word

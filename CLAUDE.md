@@ -793,11 +793,23 @@ board), `src/arcade.js` (the scores, shared by both engines),
   phone with a game on it stays in the FOREGROUND, so sixty connections do not
   all come back at the moment the join gate is busiest. That is a RELIABILITY
   feature dressed as a toy. **Locked games are SHOWN, not filtered out.**
-- **THEY ARE CALLED MAZE MOUTH, RALLY AND TAILBACK.** The names, mazes and
-  characters of the three things they resemble are Namco's and Atari's, and
-  this app is SOLD — a legal line, not a taste one. Say whatever you like on a
-  mic; do not print it. **An unnamed game keeps inviting the wrong name**,
-  which is why the later ones were named before they were written.
+- **THEY ARE CALLED MAZE MOUTH, RALLY, TAILBACK AND QUICK DRAW.** The names,
+  mazes and characters of the things the first three resemble are Namco's and
+  Atari's, and this app is SOLD — a legal line, not a taste one. Say whatever
+  you like on a mic; do not print it. **An unnamed game keeps inviting the
+  wrong name**, which is why the later ones were named before they were
+  written. (Quick Draw is the exception that proves it: a shooting gallery is
+  a fairground stall older than video games, so the honest name was also the
+  safe one.)
+- **THERE ARE THREE WAYS A GAME IS MADE THE SAME ON EVERY PHONE, and a new one
+  must use one of them:** a GRID with a fixed step (Maze Mouth, Tailback),
+  an ACCUMULATOR of whole ticks with the catch-up capped (Rally), or a
+  SCHEDULE where the state at time T is a pure function of the seed and T
+  (Quick Draw — the cleanest, because nothing accumulates so nothing drifts).
+  **A frame delta is none of them and is always wrong here.** And note the one
+  limit that cannot be engineered away: a REACTION game makes input latency
+  part of the score, so its windows have to stay generous enough that eighty
+  milliseconds of handset is noise.
 - **ONE SCOREBOARD FOR BOTH, in `src/arcade.js`** — the same clamp, the same
   best-not-latest rule and the same refusal outside the lobby, called by both
   engines. Two copies is two rules, and the day one is fixed is the day a bingo
@@ -1139,6 +1151,7 @@ Open the one you are touching; do not read them all.
 - MAZE MOUTH — THE LOBBY GAME, AND IT IS NEVER CALLED PAC-MAN
 - RALLY — the bingo night's game, and it is not called Pong
 - TAILBACK — a tail that grows, and the first game behind the picker
+- QUICK DRAW — a shooting gallery, and the third answer to one fairness problem
 - THE PICKER, AND WHAT A TIER ACTUALLY BUYS
 
 **[`docs/accounts.md`](docs/accounts.md)** — hats, tiers, rooms, gates, own packs

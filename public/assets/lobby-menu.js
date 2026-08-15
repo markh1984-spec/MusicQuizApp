@@ -42,6 +42,7 @@ const LOADERS = {
   maze: () => import('./lobby-game.js'),
   rally: () => import('./lobby-rally.js'),
   tailback: () => import('./lobby-tailback.js'),
+  quickdraw: () => import('./lobby-quickdraw.js'),
 };
 
 /**
