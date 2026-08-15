@@ -1105,3 +1105,119 @@ outside the lobby, the teardown and the picker are all shared.
   into either a tie at the same optimum or a coin flip nobody earned. **The
   skill has to be in execution or in knowledge, never in decisions under
   uncertainty.**
+
+---
+
+## The photo gallery, and print on demand
+
+**Decided on 15 August 2026: Instagram posting is OFF the list.** Two better
+reasons than the API pain that was already blocking it — *"I think it would be
+better for the app itself to have a gallery section containing previous
+nights"*, and the photos should reach the people in them.
+
+**Dropping it costs almost nothing, which is worth knowing before anybody
+reconsiders.** Posting was never built: it needed an Instagram Business
+account, a linked Facebook Page and Meta app review (see `docs/history.md`).
+What exists today is a share sheet, and that can stay.
+
+### Two galleries, not one
+
+- **The quizmaster's**, inside the console, hanging off **Past gigs** — the
+  evidence half of Gigs, which is where photos already belong by the rule in
+  CLAUDE.md.
+- **The room's**, outward-facing, so the people who took the photos can see
+  them. The host's own argument and it is the strong one: *"if we're asking
+  for their permission to store their photos, they should actually be able to
+  see them once they're up."* That is close to a legal expectation as well as
+  a fair one — a right of access is not satisfied by "it was on a projector
+  for four seconds".
+
+### Print on demand — mugs, t-shirts, from a specific photo
+
+The pitch is real and it is unique: **the props only exist inside this app**,
+so a photo taken at one of these nights cannot be recreated anywhere else.
+The host wants a cut, which is what decides most of the design below.
+
+### WHAT CANNOT WORK AS ASKED, and what to do instead
+
+**"Stop them downloading it" is not achievable and must not be claimed.** The
+photo has to be decoded by the browser to be looked at; a right-click can be
+blocked and a screenshot cannot, and on a phone that is two buttons. Any claim
+otherwise is the same lie CLAUDE.md already forbids about the invoice book —
+*never claim it cannot be read*.
+
+**The version that works is not DRM, it is not publishing the valuable copy.**
+A screenshot yields a phone-sized, recompressed image that is useless for
+print. So:
+
+- **the DISPLAY copy** — modest resolution, discreet watermark, that is what
+  the gallery serves and what a screenshot can ever capture;
+- **the PRINT MASTER** — full resolution, unwatermarked, never served to a
+  browser at all, and handed straight to the print provider on an order.
+
+Nobody is prevented from keeping a souvenir, and nobody can print a t-shirt
+from what they kept. That is the honest shape of it.
+
+### AND 1080 PIXELS WILL NOT PRINT A T-SHIRT — measure this before selling one
+
+`filters.js` uploads a **square 1080 JPEG at quality 0.85**. In print terms:
+
+| At | Usable size |
+|---|---|
+| 300 dpi (proper) | **3.6 inches** |
+| 150 dpi (the usual floor) | **7.2 inches** |
+
+**A mug panel is fine. A t-shirt front wants ten to twelve inches and would be
+printed at about 90 dpi — visibly soft, on a thing somebody paid for.** So the
+upload has to go up, probably to 1600–2048 square, and that costs bytes on pub
+wifi. It is a real tension with the rule that the join path must not stutter,
+and it is cheaper to settle now than after somebody has been sold a blurry
+shirt. **A print master could be sent as a SECOND upload** so the display path
+keeps its current size and the big one goes straight to the private repo.
+
+### THE CONSENT WE HAVE DOES NOT COVER THIS
+
+Today the phone says the photo **"goes on the big screen"**. That is not
+permission to put it on a public web page, and it is certainly not permission
+to sell merchandise made from it. Three separate things, and the gap matters
+more here than usual because a pub quiz has families in it.
+
+- **The gallery should be a PER-NIGHT UNLISTED LINK, not a browsable public
+  index** — reached by a QR on the last slide, `noindex`, no directory of
+  strangers' faces for anybody to walk. It satisfies "they can see their
+  photos" completely and avoids the category change.
+- **The wording at upload has to say what actually happens**, including that
+  prints can be ordered. It stays one short line — see the house style.
+
+### THE MONDAY PROBLEM, and it is the one that decides whether this is worth it
+
+**Print orders create customer service: wrong size, never arrived, "it came
+out blurry", refunds.** That is DAILY-cadence work, and CLAUDE.md is explicit
+that anything needing daily attention is a bad fit for a business with one
+admin day a week.
+
+**So the provider must be the merchant of record.** They take the order, the
+money, the support and the refunds; the app hands over a print master and a
+product choice and takes a margin or a referral fee. **The app never becomes a
+shop.** If the only available deal makes the host the seller, the honest answer
+is that the revenue is probably not worth the Monday.
+
+### What to build, in order — each step useful on its own
+
+1. **The per-night gallery**, unlisted link, display copies only. This is the
+   fair thing and it owes nothing to the rest.
+2. **The consent wording**, shipped with or before it. Not after.
+3. **Past gigs links to it**, which is one line once the gallery exists.
+4. **Raise the resolution / add the print master.** Needed before any print
+   offer is credible, and pointless before there is one.
+5. **Print on demand**, once a provider and a merchant model are chosen.
+
+### Still open
+
+- Which provider, and **who is the merchant of record** — the whole Monday
+  question above hangs on it.
+- Whether the gallery lives per night only, or a venue ever gets a standing
+  page of its own.
+- Serving: photos are in a **separate private repo**, so the app proxies them
+  (`/photos/<file>`). A public gallery makes the server a media server, on a
+  free tier that sleeps. Worth measuring before it is promised to anybody.
