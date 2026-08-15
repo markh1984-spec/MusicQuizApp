@@ -679,14 +679,23 @@ over the calendar.
 
 Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 
-### PRESSING A TAB PUTS THE TAB BAR AT THE TOP OF THE SCREEN
+### CHANGING TAB DOES NOT MOVE THE PAGE
 
-`showTabBar()` in `console.js`. Not `top: 0` — that puts **Tonight** back on
-screen every time you change tab, so the thing you pressed for starts a section
-and a half down. Every tab opens at its own first line and Tonight is exactly
-one flick UP, in the same place on every tab. **Measured off the sticky topbar
-rather than a written-out number**, because that bar wraps on a phone — and
-measured after `render()`, since the bar is rebuilt on every one.
+`renderKeepingPlace()` in `console.js`. **This is the third arrangement of one
+behaviour and each was right about the console it was written for**: first the
+tab BAR was scrolled to the top of the screen, which was a way of hiding a
+launch panel too tall to want on screen; then that panel became a line and a
+drop zone, so `top: 0` was honest. Both MOVE THE PAGE, and moving the page is
+only worth it if there is something to get away from — there is not any more.
+Tabs are one page with the middle swapped, and jumping to the top on every
+press makes them feel like nine separate pages.
+
+**It must HOLD the scroll, not merely decline to change it**, which is the part
+that looks like a one-line deletion and is not: `render()` replaces the whole
+of `mainEl`, so for an instant the document is short, the browser clamps
+`scrollY`, and putting the content back does not put the scroll back. Read the
+offset before, write it after. **A shorter tab still clamps and that is
+correct** — there is nowhere else to go.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
@@ -759,8 +768,9 @@ exactly the arrangement that let four of them go missing. **Behind an
 **The tab bar wraps rather than scrolling on a laptop** — a tab cut in half at
 the edge with no scrollbar is a tab that does not exist — and is **sticky from
 860px**, which is what removed the reserved `min-height` under short tabs.
-`showTabBar()` **measures the tab BODY, not the bar**: a sticky element lies
-about where it is. **`.game-head .row` is a flex row** with a gap, wrapping,
+(It once **measured the tab BODY rather than the bar**, because a sticky
+element lies about where it is — that apparatus went when tab clicks stopped
+moving the page at all.) **`.game-head .row` is a flex row** with a gap, wrapping,
 `align-items: stretch`. The account-coloured underline on ordinary buttons
 stays.
 
@@ -1170,7 +1180,7 @@ Open the one you are touching; do not read them all.
 
 - A launch must say what it is about to destroy
 - The restart notice, and the one state that made it a lie
-- PRESSING A TAB PUTS THE TAB BAR AT THE TOP OF THE SCREEN
+- CHANGING TAB DOES NOT MOVE THE PAGE
 - THE CONSOLE'S THEME — one surface, one heading ladder, a bar that stays
 - The tabs run LEFT TO RIGHT along a quizmaster's evening
 - DRAG AND DROP — the console is the laptop with the HDMI in it

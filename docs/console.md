@@ -83,11 +83,33 @@ deploy followed by a deliberate launch does not.
 
 ---
 
-## PRESSING A TAB PUTS THE TAB BAR AT THE TOP OF THE SCREEN
+## CHANGING TAB DOES NOT MOVE THE PAGE
 
-`showTabBar()` in `console.js`. The host's own words: *"would be good if a
-click on a tab made the tabs appear to be the top of the page, so you can
-always just scroll up from there to get to the launch bit."*
+`renderKeepingPlace()` in `console.js`. Asked for on 15 August 2026: *"can
+clicking across the tabs keep the page in place? So if I'm scrolled 100 pixels
+down on one tab I click into another tab and it loads scrolled 100 pixels
+down."*
+
+**This is the third arrangement of one behaviour, and the two below are kept
+because each was right about the console it was written for.** What retires
+both is that they MOVE THE PAGE, and moving the page is only worth it if there
+is something to get away from — there is not any more. Tabs are one page with
+the middle swapped, and jumping to the top on every press makes them feel like
+nine separate pages.
+
+**It has to HOLD the scroll rather than merely decline to change it**, which is
+the part that looks like a one-line deletion and would not work. `render()`
+replaces the whole of `mainEl`, so for an instant the document is short, the
+browser clamps `scrollY` to the new maximum, and putting the content back does
+NOT put the scroll back. Read the offset before, write it after. A shorter tab
+still clamps, and that is correct rather than a case to handle: there is
+nowhere else for it to go.
+
+### What it replaced, and why each was right at the time
+
+The host's own words the first time: *"would be good if a click on a tab made
+the tabs appear to be the top of the page, so you can always just scroll up
+from there to get to the launch bit."*
 
 It jumped to `top: 0`, which puts **Tonight** back on screen every time you
 change tab — so the thing you actually pressed for starts a section and a half
@@ -184,11 +206,13 @@ to reserve. Below 860px it scrolls sideways as before, because nine tabs
 would be three rows on a phone and a sticky three-row bar would eat the top
 of every tab all night.
 
-**`showTabBar()` MEASURES THE TAB BODY, NOT THE BAR.** A sticky element lies
-about where it is: once pinned its `top` is the pin position rather than its
-place in the document, so "scroll until the bar is at the top" is a no-op the
-second time and jitters by the gap the first. The body underneath is never
-sticky, so its rectangle is the honest one.
+**THE OLD SCROLLING MEASURED THE TAB BODY, NOT THE BAR** — kept here because
+it is a trap rather than a rule about tabs. A sticky element lies about where
+it is: once pinned its `top` is the pin position rather than its place in the
+document, so "scroll until the bar is at the top" is a no-op the second time
+and jitters by the gap the first. The body underneath is never sticky, so its
+rectangle is the honest one. Nothing measures anything here now, because
+changing tab no longer moves the page.
 
 **A HEADING'S BUTTONS ARE A ROW, AND `.game-head .row` WAS NEVER TOLD TO BE
 ONE.** `.host .row` and `.panel.pics .row` are both `display: flex` with a gap

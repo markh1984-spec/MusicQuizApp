@@ -866,26 +866,42 @@ function showActiveTab() {
  * element measured has to be the new one.
  */
 
-function showTabBar() {
-  /*
-   * STRAIGHT BACK TO THE TOP, at the host's own reversal once the launch bar
-   * was cut down: *"I change my mind, make every tab click go back to the top
-   * — the problem was the launch bit was too big, now its fine even at full
-   * size."*
-   *
-   * **That is the right call and it is worth recording WHY the clever version
-   * existed**, because the instinct to rebuild it will come back. Scrolling
-   * the tab bar to the top of the screen was a way of hiding a panel that was
-   * too tall to want on screen — three rows, a guessed pack, a game dropdown
-   * and a search box. The panel is now a line and a drop zone, so there is
-   * nothing to hide from, and `top: 0` is honest: every tab starts in the same
-   * place, on every device, with no arithmetic and no reserved height under a
-   * short tab.
-   *
-   * The whole measured apparatus below went with it — a page that scrolls to
-   * zero cannot land in nine different places.
-   */
-  window.scrollTo({ top: 0 });
+/**
+ * CHANGING TAB DOES NOT MOVE THE PAGE. YOU STAY WHERE YOU WERE.
+ *
+ * Asked for in those words: *"can clicking across the tabs keep the page in
+ * place? So if I'm scrolled 100 pixels down on one tab I click into another
+ * tab and it loads scrolled 100 pixels down."*
+ *
+ * **This is the third arrangement of one behaviour, and the previous two are
+ * worth recording, because each was right about the console it was written
+ * for.** First it scrolled the TAB BAR to the top of the screen, which was a
+ * way of hiding a launch panel too tall to want on screen — three rows, a
+ * guessed pack, a dropdown and a search box. Then that panel became a line and
+ * a drop zone, so there was nothing left to hide from and `top: 0` was the
+ * honest version: every tab starts in the same place, no arithmetic.
+ *
+ * What changes it again is that BOTH of those move the page, and moving the
+ * page is only ever worth it if there is something to get away from. There is
+ * not any more. Standing still is what a set of tabs is supposed to do — they
+ * are one page with the middle swapped, and a page that jumps to the top every
+ * time you press one makes them feel like nine separate pages instead.
+ *
+ * **IT HAS TO HOLD THE SCROLL, NOT MERELY DECLINE TO CHANGE IT**, which is the
+ * part that would look like a one-line deletion and would not work.
+ * `render()` replaces the whole of `mainEl` — so for an instant the document
+ * is short, the browser clamps `scrollY` to the new maximum, and putting the
+ * content back does NOT put the scroll back. Reading the offset before and
+ * writing it after is the whole job.
+ *
+ * A shorter tab still clamps, and that is correct rather than a case to
+ * handle: there is nowhere else for it to go, and the browser lands on the
+ * bottom of the new tab, which is a real place.
+ */
+function renderKeepingPlace() {
+  const y = window.scrollY;
+  render();
+  window.scrollTo({ top: y });
 }
 
 
@@ -2173,8 +2189,7 @@ function tabBar(active) {
       </button>`);
     button.addEventListener('click', () => {
       localStorage.setItem(TAB_STORE, tab.id);
-      render();
-      showTabBar();
+      renderKeepingPlace();
     });
     bar.appendChild(button);
   }
@@ -7942,11 +7957,10 @@ function goToTab(id) {
     url.searchParams.set('tab', id);
     history.replaceState(null, '', url.toString());
   }
-  render();
   // The same landing as pressing the tab yourself, because that is what this
   // is — arriving somewhere different depending on how you got there is how a
   // page stops feeling like one place.
-  showTabBar();
+  renderKeepingPlace();
 }
 
 /** "20:00" as somebody says it out loud. */
