@@ -4208,8 +4208,25 @@ function launchBar() {
       tiles.push(empty);
     }
 
-    orderEl.replaceChildren(node('<div class="lb-tiles"></div>'));
-    orderEl.firstChild.append(...tiles, ...infoTiles());
+    /*
+     * TWO ROWS, NOT ONE GRID.
+     *
+     * The packs and the three facts were one `auto-fit` grid, so they wrapped
+     * INTO each other: "Where" ended up sitting on the end of the pack row and
+     * "Playing for" dropped to a line of its own underneath pack 1. They are
+     * different kinds of thing — the packs are the night, the facts are what
+     * is true about it — and a row that mixes them at one width and separates
+     * them at another is the layout deciding something the content should.
+     *
+     * Their own grids also let each be sized for what it holds: three facts
+     * always fit one row, and the packs wrap among themselves when there are
+     * four.
+     */
+    const row = node('<div class="lb-tiles"></div>');
+    row.append(...tiles);
+    const facts = node('<div class="lb-tiles lb-facts"></div>');
+    facts.append(...infoTiles());
+    orderEl.replaceChildren(row, facts);
     paintGo(packs);
     paintInTonight();
   }

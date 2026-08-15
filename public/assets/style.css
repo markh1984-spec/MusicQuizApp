@@ -2490,20 +2490,51 @@ button.pack-title:hover::after { opacity: 1; }
   white-space: nowrap;
 }
 .brand-who {
-  /* WHOSE NIGHT IT IS, 20% up on where it started (0.58em). It is the half a
-     quizmaster is actually selling — the app name is the product, their name
-     is the act — and at 0.58 it read as a superscript on somebody else's
-     brand. Still clearly the smaller of the two, because the stack only works
-     if one of them is the label. */
-  font-size: 0.70em;
+  /* WHOSE NIGHT IT IS — 0.82em now, up again from 0.70 and from 0.58 before
+     that. It is the half a quizmaster is actually selling: the app name is
+     the product, their name is the act. Still the smaller of the two, because
+     the stack only works while one of them is the label — but no longer a
+     superscript on somebody else's brand.
+
+     AND IT IS A SIGNATURE RATHER THAN A SMALL LABEL, which is the "more
+     interesting" half. Whimsy without a font file, because there is no build
+     step and a webfont is a request that can fail on pub wifi — so it comes
+     from the arrangement instead:
+
+     - ITALIC, which is what a hand does and a label does not;
+     - the LIGHTER end of the account's own gradient rather than grey, so it
+       belongs to the quizmaster's colours like everything else that is
+       theirs. Grey said "caption"; this says "whose";
+     - wider TRACKING, because a signature is written across a space rather
+       than packed into one;
+     - and the tilt stays 5 degrees. It is the difference between playful and
+       broken, and this is read from the back of a room.
+
+     Behind an `@supports` for the same reason every other gradient text in
+     this app is: gradient text is TRANSPARENT text, and a browser without
+     `background-clip` would draw the quizmaster's own name invisible on every
+     screen in the app. */
+  font-size: 0.82em;
   font-weight: 800;
-  letter-spacing: 0.03em;
+  font-style: italic;
+  letter-spacing: 0.06em;
   color: var(--ink-dim);
   transform: rotate(-5deg);
   transform-origin: 0 100%;
   /* Nudged in so the tilt does not put it left of the product name's stem. */
   margin-left: 0.14em;
-  margin-bottom: 0.06em;
+  margin-bottom: 0.10em;
+}
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .brand-who {
+    background: linear-gradient(120deg, var(--hot-2), var(--mark-3));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    /* Italic overhangs its box, and a clipped background clips to the box —
+       so the tail of a "k" or a "y" loses its colour without this. */
+    padding-right: 0.12em;
+  }
 }
 .brand-app {
   font-weight: 900;
@@ -2515,7 +2546,13 @@ button.pack-title:hover::after { opacity: 1; }
 }
 /* On the projector the possessive is the quieter half but still has to carry
    to the back of a room, so it keeps more of the size than it does elsewhere. */
-.screen .brand-who { font-size: 0.79em; color: var(--ink); opacity: 0.82; }
+/* On the projector it is read from the back of a room, so it keeps more of
+   the size again — and drops the gradient for solid ink, because at 26px on a
+   screen six feet wide a two-colour ramp across six letters is mud. */
+.screen .brand-who { font-size: 0.86em; opacity: 0.9; }
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .screen .brand-who { background: none; color: var(--ink); }
+}
 /* ONE size for the name on every page that carries the menu, so the block to
    the left of the chips is the same width and the chips line up as you move
    between pages rather than shifting a few pixels each time. */
@@ -5454,6 +5491,13 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    its last row, and a consistent tile size across states is worth more than a
    row that always reaches the edge. */
 .lb-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 200px)); gap: 8px; }
+/* THE THREE FACTS GET THEIR OWN ROW. Three columns always, because there are
+   always exactly three of them — where, when and what for — and an auto grid
+   would wrap one of them under the others the moment the packs beside them
+   changed count. Below 560px they go to two and then the third drops, which
+   is the only place wrapping is honest: a 320px phone cannot hold three. */
+.lb-facts { margin-top: 8px; grid-template-columns: repeat(3, minmax(0, 200px)); }
+@media (max-width: 560px) { .lb-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .lb-tile {
   position: relative; display: flex; flex-direction: column; justify-content: flex-end;
   gap: 2px; min-width: 0; padding: 10px;
