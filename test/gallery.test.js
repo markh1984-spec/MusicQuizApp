@@ -209,6 +209,58 @@ test('THE GALLERY AND THE GIGS TAB READ THE SAME ROOM', async () => {
   assert.ok(gallery.includes('galleryRoomId()'), 'the gallery routes no longer resolve a room at all');
 });
 
+test('NOBODY OFF THE STREET CAN DELETE A PHOTOGRAPH', async () => {
+  /*
+   * The host's own question, and it is the right one to ask before a page goes
+   * public: *"I don't want people going on to my gallery and deleting it from
+   * the website."*
+   *
+   * Two independent things have to hold, and this asserts both rather than
+   * trusting either — a missing button is not a permission.
+   */
+  await withServer(async (base) => {
+    // 1. THE ROUTE REFUSES ANYBODY NOT SIGNED IN. `allowed()` answers 401
+    //    before the path is even built, so there is nothing to aim at.
+    for (const path of [
+      '/api/past-photo/2026-08-13/abc.jpg',
+      '/api/past-photo/2026-08-13/..%2F..%2Fserver.js',
+    ]) {
+      const res = await fetch(base + path, { method: 'DELETE' });
+      assert.equal(res.status, 401, `${path} was not refused to an anonymous caller`);
+    }
+
+    // 2. AND THE PUBLIC PAGE HAS NO WAY TO ASK. The bin lives on the console's
+    //    Gigs tab; the gallery a stranger sees is photographs and nothing else.
+    const { readFileSync } = await import('node:fs');
+    const page = readFileSync(join(ROOT, 'public', 'assets', 'gallery.js'), 'utf8');
+    assert.ok(!/past-photo/.test(page), 'the public gallery page can reach the delete route');
+    assert.ok(!/method:\s*'DELETE'/.test(page), 'the public gallery page issues a DELETE');
+  });
+});
+
+test('A QUIZMASTER CAN ONLY EVER DELETE OUT OF THEIR OWN NIGHTS', () => {
+  /*
+   * There is NO ROOM PARAMETER on the route — the folder is built from
+   * `roomForHost`, which reads the signed-in account. That is the same shape
+   * `own-packs.js` relies on, and it is structural rather than a check
+   * somebody has to remember to write: there is nothing in the URL to tamper
+   * with, so a quizmaster cannot name another quizmaster's room, and the owner
+   * resolves to the house room and finds nothing of theirs.
+   *
+   * A text check, deliberately: what is being asserted is the ABSENCE of a
+   * parameter, and absence is the one thing an HTTP test cannot demonstrate.
+   */
+  const src = readFileSync(join(ROOT, 'server.js'), 'utf8');
+  const at = src.indexOf("route.startsWith('/api/past-photo/') && req.method === 'DELETE'");
+  assert.ok(at > 0, 'the delete route has gone');
+  const body = src.slice(at, at + 1400);
+  assert.ok(body.includes('roomForHost(req, url)'), 'the delete route no longer derives the room from the caller');
+  assert.ok(!/body\.room|searchParams\.get\('room'\)|params\.room/.test(body),
+    'the delete route takes a room from the request — a quizmaster could name somebody else\'s');
+  assert.ok(body.includes('safePhotoName'), 'the filename is no longer filtered');
+  assert.ok(body.includes('isNightFolder'), 'the night is no longer validated');
+});
+
 test('EVERY REFUSAL LOOKS THE SAME, so nobody can map which nights exist', async () => {
   /*
    * The same shape `/api/voucher` already uses. Three different messages —
