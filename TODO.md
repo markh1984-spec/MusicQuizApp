@@ -1582,8 +1582,24 @@ So it is not a curation feature and should not be built as one:
   this bar already follows: Launch is always there and goes hollow, Set it up
   is always there and goes disabled. A results list that appears out of nothing
   somewhere else is the exact fault those two exist to avoid.
-- **PINNING IS THE EASY ADDITION LATER, and only if it is missed.** Automatic
-  first then manual on top is the cheap direction; manual first is not.
+- **A PIN ON TOP OF THE AUTOMATIC SIX** — *"a pin feature could be cool, just
+  a little pin in the corner that comes on and off."* It composes cleanly and
+  that is the whole reason to build it this way round: **pinned packs take the
+  first positions and the automation fills what is left**, so one pin still
+  leaves five suggestions and the ranking is only lost if somebody pins all
+  six, which is then their choice rather than a side effect. Automatic first
+  then manual on top is the cheap direction; manual first is not.
+  - **TOP LEFT, because the other corners are taken.** An own-pack carries its
+    *Yours* badge top right and the era word sits bottom right. Top left is
+    also where the eye starts, so a pin there reads as a status rather than a
+    decoration.
+  - **THE STATE IS THE WORK, not the icon.** A pin is per-account, like
+    `prefs.askRounds` — it has to be stored, restored and scoped to the room,
+    and it must survive a deploy. The drawing is an afternoon; the persistence
+    is the feature.
+  - **A pin is not a launch.** It changes what is in reach, nothing else — it
+    must not put a pack in a slot, or the two gestures start competing on the
+    one screen where a mis-tap costs setup work.
 
 **Not urgent at seventeen packs** — nine quiz and eight bingo is two rows, and
 building a curation layer against a shelf neither of us has seen is designing
