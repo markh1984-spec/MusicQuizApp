@@ -3116,6 +3116,13 @@ function launchBar() {
            what Launch is about to run. -->
       <div class="lb-order" hidden></div>
       <div class="lb-chosen" hidden></div>
+      <!-- LAUNCH IS ALWAYS HERE, hollow until there is something to launch.
+           It used to be created and destroyed with the chosen pack, so the
+           bar changed height the moment anything was dragged in or out and
+           everything below it jumped — reported as clunky, and it is the same
+           fault as a row that reflows under your hand. Hollow it also says
+           what it is waiting for, which an absent button cannot. -->
+      <button class="go lb-go" type="button" disabled>Drag a pack in to launch</button>
     </div>`);
 
   const gamePick = el.querySelector('.lb-game');
@@ -3529,7 +3536,6 @@ function launchBar() {
           <select class="play-pick">${playingOptions()}</select>
         </label>
       </div>
-      <button class="go lb-go">Launch ${esc(pack.title)}</button>
       </div>`));
 
     /*
@@ -3560,7 +3566,7 @@ function launchBar() {
     shapePick?.addEventListener('change', paintPrizes);
     paintPrizes();
 
-    chosen.querySelector('.lb-go').addEventListener('click', async (ev) => {
+    goBtn.onclick = async (ev) => {
       const button = ev.currentTarget;
       await doLaunch(kind, pack.id, {
         shape: shapePick ? JSON.parse(shapePick.value) : null,
@@ -3579,7 +3585,7 @@ function launchBar() {
         // the route it always did.
         order: nightOrder(),
       }, button);
-    });
+    };
 
     paintOrder();
 
@@ -3842,6 +3848,7 @@ function launchBar() {
    * been built, which is the more common mistake of the two.
    */
   const orderEl = el.querySelector('.lb-order');
+  const goBtn = el.querySelector('.lb-go');
 
   /** The rounds a pack contributes, as the strip stores them. */
   const roundsOf = (pack) => (pack && pack.rounds ? pack.rounds : [])
@@ -4110,10 +4117,26 @@ function launchBar() {
    * the archive and the big screen all say one thing.
    */
   function paintGo(packs) {
-    const go = el.querySelector('.lb-go');
-    if (!go || packs.length < 2) return;
+    /*
+     * HOLLOW UNTIL IT CAN LAUNCH — asked for directly after the appearing and
+     * disappearing button was reported as clunky. It is the same fault as a
+     * grid that reflows under your hand: the bar changed height the instant
+     * anything was dragged in or out, and everything below it jumped.
+     *
+     * Disabled AND saying what it wants, rather than merely greyed: a control
+     * that is off without saying why is the thing this file keeps recording.
+     */
+    goBtn.disabled = !packs.length;
+    if (!packs.length) {
+      goBtn.textContent = 'Drag a pack in to launch';
+      return;
+    }
+    if (packs.length < 2) {
+      goBtn.textContent = `Launch ${packs[0].title}`;
+      return;
+    }
     const rounds = packs.reduce((n, p) => n + (p.rounds || []).length, 0);
-    go.textContent = `Launch tonight — ${packs.length} packs, ${rounds} round${rounds === 1 ? '' : 's'}`;
+    goBtn.textContent = `Launch tonight — ${packs.length} packs, ${rounds} round${rounds === 1 ? '' : 's'}`;
   }
 
   /**

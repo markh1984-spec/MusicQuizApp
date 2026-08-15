@@ -5204,7 +5204,19 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   .lb-go { animation: none; }
 }
 .lb-go:hover { filter: brightness(1.08); }
-.lb-go:disabled { opacity: 0.4; cursor: default; filter: none; }
+/* HOLLOW UNTIL THERE IS SOMETHING TO LAUNCH. Outlined rather than a greyed
+   slab: the button keeps its place in the bar so nothing below it jumps, and
+   an outline reads as "not yet" where a dimmed fill reads as broken. The drift
+   stops too — a gradient sliding about on a control that cannot be pressed is
+   the app inviting a press it will refuse. */
+.lb-go:disabled {
+  cursor: default;
+  background: none;
+  animation: none;
+  border: 2px dashed var(--panel-line);
+  color: var(--ink-dim);
+  filter: none;
+}
 
 /* TONIGHT'S HEADING, and where it thinks tonight is.
    The venue is at the TOP of the section rather than buried on a button,
