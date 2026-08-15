@@ -6447,9 +6447,22 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 /* The countdown over the game. `pointer-events: none` or it would swallow the
    taps that steer, in the ten seconds somebody is trying hardest. */
 .arcade-stage { position: relative; width: 100%; display: grid; justify-items: center; }
+/* A CLOCK IN THE CORNER, not a banner across the game. Quiet while there is
+   time — it is information you glance at, and a loud one for two minutes is
+   the furniture this app keeps refusing. Top RIGHT: a thumb tapping the maze
+   comes from below, so the one corner a hand is never over is that one. */
 .arcade-going {
-  position: absolute; inset: auto 0 8px; pointer-events: none;
-  text-align: center; font-weight: 900; font-size: var(--fs-lead);
+  position: absolute; top: 8px; right: 8px; pointer-events: none;
+  min-width: 34px; text-align: center;
+  font-weight: 900; font-size: var(--fs-note); font-variant-numeric: tabular-nums;
+  color: var(--ink-dim); background: rgba(0, 0, 0, 0.55);
+  padding: 4px 8px; border-radius: var(--r-pill);
+  transition: transform 200ms, background 200ms, color 200ms;
+}
+/* Under ten seconds it goes loud — the same element rather than a second
+   thing appearing, so there is nothing new to notice at the moment somebody
+   is least able to notice anything. */
+.arcade-going.soon {
   color: #12000c; background: linear-gradient(120deg, var(--hot), var(--hot-2));
-  padding: 6px 0; border-radius: 0 0 var(--r-card) var(--r-card);
+  font-size: var(--fs-lead); transform: scale(1.1);
 }

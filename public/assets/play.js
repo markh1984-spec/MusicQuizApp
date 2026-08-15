@@ -923,9 +923,10 @@ function buildWaiting(s, kicker, title, sub) {
         <div class="arcade-box" hidden>
           <div class="arcade-stage">
             <canvas class="arcade-canvas" width="600" height="600"></canvas>
-            <!-- The countdown, over the game, for the last ten seconds. See
-                 paintStartsIn: somebody head-down in a maze is not reading a
-                 number above the maze. -->
+            <!-- The countdown, in the corner of the game. See paintStartsIn:
+                 somebody head-down in a maze is not reading a number above the
+                 maze, and a clock lets them play to it rather than merely be
+                 told when it is over. -->
             <div class="arcade-going" hidden></div>
           </div>
           <div class="tiny arcade-said">Tap where you want to go</div>
@@ -1060,9 +1061,27 @@ function paintStartsIn(s) {
   const over = document.querySelector('.arcade-going');
   if (over) {
     const left = s && s.startsAt ? Math.ceil((s.startsAt - clock.now()) / 1000) : 0;
-    const soon = left > 0 && left <= 10;
-    over.hidden = !soon;
-    if (soon) over.textContent = left === 1 ? 'Starting…' : `Starting in ${left}`;
+    /*
+     * IT IS A CLOCK THE WHOLE TIME, not just a warning at the end.
+     *
+     * Asked for as *"a little countdown timer in the corner of the game so
+     * they know it's over soon"*, and it is the better call: a warning at ten
+     * seconds only tells you it is finished, where a clock lets somebody PLAY
+     * to it — go for the big pellet with ninety seconds left, or bank what
+     * they have with fifteen. That is information that makes the game better
+     * rather than furniture sitting on it.
+     *
+     * Quiet in the corner while there is time, and it goes loud under ten
+     * seconds — same element, so it cannot be missed at the moment it matters
+     * without needing a second thing on screen for it.
+     */
+    over.hidden = !(left > 0);
+    if (left > 0) {
+      over.classList.toggle('soon', left <= 10);
+      over.textContent = left >= 60
+        ? `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`
+        : String(left);
+    }
   }
   if (!s || !s.startsAt) { box.hidden = true; return; }
   box.hidden = false;
