@@ -1541,6 +1541,62 @@ combo night would publish two hours early, mid-karaoke. **A night whose gallery
 publishes on it needs a real end time**, not a default — and that is a small
 change to the booking form with a real consequence behind it.
 
+### "NICE TRY" — catching a rude photo and covering it, as a JOKE
+
+Asked for on 15 August 2026, and then reframed by the host in a way that
+changes the whole build: *"this isn't really about protecting me as I can just
+delete them from the gallery after, it's more of a 'lol you tried to be rude
+and got caught' type thing."*
+
+**THAT REFRAME IS THE DESIGN.** As a safeguard this is expensive and can never
+be trusted; as a gag it is cheap and does not have to be. Three things fall out
+of it and every one of them makes the job smaller:
+
+- **IT FAILS OPEN.** If the check times out, the photo goes up as it does
+  today. That cannot be a regression, because today there is no check at all —
+  where holding photos back on a bad-wifi night would be a NEW way for the
+  photo wall to break, in the lobby, which is the busiest moment there is.
+- **IT DOES NOT NEED TO KNOW WHERE.** Bounding boxes are the expensive
+  requirement — a specialist service, a separate account, several times the
+  price. **Covering the WHOLE photo with a comedy card is funnier anyway** and
+  works with a likelihood-only check on the `GOOGLE_API_KEY` that already
+  exists for round-2 artwork.
+- **ACCURACY BARELY MATTERS IN ONE DIRECTION.** A miss is fine — the host
+  deletes it later, and nothing reaches the public gallery without him
+  publishing that night. **A FALSE POSITIVE IS THE REAL COST**: covering
+  somebody's ordinary face on the projector in front of a room is the failure
+  worth tuning against.
+
+#### It must be baked in, not drawn over
+
+A CSS overlay is peeled off with the inspector in four seconds, and both the
+projector and the phone would have to draw it. **The card goes into the stored
+image on the server**; the original never leaves it. That is also what makes
+the joke land everywhere at once.
+
+#### A DRY RUN FIRST, because a threshold cannot be guessed
+
+The host asked to see it working before choosing, and he is right to. **Score
+every photo, record the score, censor nothing.** Point it at a real night — the
+102 photographs from 13 August are the obvious set — and look at what scored
+high and what scored low. Only then pick the line.
+
+**Stock test images prove nothing here.** The question is how a detector
+behaves on phone photos taken at arm's length in a dark pub, which is exactly
+the input that makes skin-tone heuristics useless.
+
+#### What NOT to do
+
+- **NO SKIN-TONE HEURISTIC IN PLAIN JS**, however tempting the no-dependency
+  version is. A night is a hundred close-up faces; that is precisely what such
+  a check false-positives on. It would flag half the wall and miss the thing it
+  was built for.
+- **NO BUNDLED MODEL.** Tens of megabytes of asset, against a codebase whose
+  logo, avatars and props are all drawn rather than shipped.
+- **DO NOT PUT IT IN THE WAY OF THE PHOTO REACHING THE WALL** any longer than
+  the score takes. Auto-publish is a settled decision; this is a filter on the
+  way past, not a queue.
+
 ### SIX PACKS IN REACH — a shortlist, because a drag needs to SEE both ends
 
 Raised on 15 August 2026 as a crowding problem — *"if the packs section gets
