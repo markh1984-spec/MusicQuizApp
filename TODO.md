@@ -1682,6 +1682,31 @@ composition already works, so a breakout round could ship before a bingo pack
 can be dropped into a slot. Worth re-checking with the host before starting the
 harder thing first.
 
+#### A BREAKOUT PACK IN A SLOT, AND A BREAKOUT ROUND, ARE THE SAME THING
+
+The host's model, stated on 15 August 2026: *"pack 1 will load first and pack 2
+will load second, but if pack 2 is a breakout game it doesn't contribute to the
+score on the main quiz."*
+
+**That and "it is a round type" are the same design from either end, and saying
+so is what stops the next session building two of them.** You drop a breakout
+PACK into slot 2; `composeQuiz()` merges its rounds into the same composed
+quiz, in slot order. The night is pack 1's rounds, then the breakout round,
+then pack 3's rounds — one continuous quiz.
+
+**Which is exactly why the scores survive: nothing LOADS, because nothing
+ends.** The night carries on into the breakout and out the other side with
+every total untouched. That is the whole difference between this and dropping a
+BINGO pack into slot 2, which genuinely does end the quiz and start another
+game — the expensive case, and still the unbuilt one.
+
+**A PACK IS A BREAKOUT PACK IF EVERY ROUND IN IT SCORES NOTHING.** Derived, not
+declared, for the reason every other look in this app is derived: one source of
+truth that cannot disagree with itself, and nothing to set. It matters
+immediately for the orange edge — the Tonight tile works its kind out from
+`rounds ? 'quiz' : 'bingo'`, and a breakout pack HAS rounds, so it would come
+out quiz green without this.
+
 #### The phones TYPE, and that is a new mechanic
 
 Chosen over multiple choice and over nothing-at-all: *"type an answer"*. **The
