@@ -2774,7 +2774,9 @@ button.pack-title:hover::after { opacity: 1; }
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
-  line-height: 0.92;
+  /* Tight, so the possessive nests into the wordmark rather than sitting on a
+     line above it — see the note on `.brand-who`. */
+  line-height: 0.78;
   white-space: nowrap;
 }
 .brand-who {
@@ -2805,13 +2807,32 @@ button.pack-title:hover::after { opacity: 1; }
   font-size: 0.82em;
   font-weight: 800;
   font-style: italic;
-  letter-spacing: 0.06em;
+  /* ---- E3, chosen from five variations on 15 August 2026.
+   *
+   * The old arrangement stacked FIVE devices on two words — italic, a 5°
+   * tilt, wide tracking, a size drop and a different colour — and that is
+   * what read as janky rather than any one of them. The tilt was the worst
+   * offender at small sizes: five degrees on a 12px word is about a pixel of
+   * drift, which the eye takes as misalignment rather than as handwriting.
+   *
+   * E3 keeps the signature and stops it wobbling:
+   *
+   *  - **2° instead of 5°** — still hand-placed, no longer crooked;
+   *  - **NESTED rather than stacked.** A negative bottom margin sits the
+   *    possessive INTO the wordmark instead of above it, so the two read as
+   *    one object. That is the whole difference between this and the others,
+   *    and it is why it wanted checking at 15px as well as 26 — nesting has
+   *    the most to gain at large sizes and the least room to survive small;
+   *  - **tracking back to normal**, because letters spread apart is a fifth
+   *    signal saying the same thing the italic already said.
+   */
+  letter-spacing: 0;
   color: var(--ink-dim);
-  transform: rotate(-5deg);
+  transform: rotate(-2deg);
   transform-origin: 0 100%;
   /* Nudged in so the tilt does not put it left of the product name's stem. */
-  margin-left: 0.14em;
-  margin-bottom: 0.10em;
+  margin-left: 0.04em;
+  margin-bottom: -0.04em;
 }
 @supports (background-clip: text) or (-webkit-background-clip: text) {
   .brand-who {

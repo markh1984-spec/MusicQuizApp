@@ -797,7 +797,22 @@ const TABS = [
      * it, so there is nothing on a gig night that sends you here.
      */
     id: 'venues',
-    doors: ['workshop'],
+    /*
+     * BEHIND BOTH DOORS, because a venue is two different things.
+     *
+     * In the Workshop it is a record you maintain — the address, the usual
+     * fee, where to send them, the advert slides. On the Console it is a
+     * DRAG SOURCE: pulling a venue card up to Tonight is what loads that
+     * pub's prizes, its voucher and what the night gets filed under, and
+     * `venueDrag` has done exactly that since the drop zones were built. The
+     * cards were simply behind a door you would not be standing at ten
+     * minutes before a gig.
+     *
+     * Asked for in those words: *"need to add venues to the console so you
+     * can drag which venue you're at, as that will load up the venue
+     * settings."*
+     */
+    doors: ['console', 'workshop'],
     needs: FEATURES.INVOICES,
     label: 'Venues',
     blurb: 'The places you play, and what they put up as prizes.',
