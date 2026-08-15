@@ -1175,6 +1175,8 @@ Open the one you are touching; do not read them all.
 - The tabs run LEFT TO RIGHT along a quizmaster's evening
 - DRAG AND DROP — the console is the laptop with the HDMI in it
 - TONIGHT — one launch section, at the top of every tab
+- A PACK WEARS ITS OWN SUBJECT
+- SET IT UP IS ALWAYS THERE, DISABLED UNTIL THERE IS A NIGHT TO SET UP
 
 **[`docs/gigs.md`](docs/gigs.md)** — venues, prizes, the diary, past nights, getting paid
 
@@ -1862,6 +1864,44 @@ will work."*
   with all three children placed explicitly, and the fold control says HIDE and
   SHOW at a fixed width.
 - The pack cards keep their own Launch for now: this is the protected surface.
+- **A CONTROL ON THIS BAR NEVER APPEARS OUT OF NOTHING.** Launch is always
+  there and goes hollow; **Set it up** is always there and goes disabled. Both
+  were built appearing and disappearing, both were reported as clunky in the
+  same words, and the reason is the same: a control that comes and goes is one
+  you cannot learn the position of, on a bar driven with a thumb in a dark pub.
+  **Build the next one present-and-inert, not absent.**
+
+Full reasoning: **[`docs/console.md`](docs/console.md)**.
+
+### A PACK WEARS ITS OWN SUBJECT
+
+`public/assets/pack-look.js`, `.pack-card.tinted` / `.lb-tile.tinted`. A pack's
+background is derived from its title — a decade, a genre, Christmas — and
+anything unrecognised gets a quiet colour of its own, so no card looks
+half-built beside a dressed one. **The job is SCANNING**: the common job on
+this tab is find tonight's pack and press Launch, and nine identical cards make
+that a reading task.
+
+- **It DERIVES, it never stores** — nothing in a pack file, nothing to set, no
+  Monday job per pack.
+- **Genre beats decade beats nothing; seasonal beats both.** A decade-first
+  order would give every 2000s pack one colour, which is the failure the
+  feature exists to avoid. **"Pop" is deliberately not a subject** — nearly
+  every pack here is one. **A word only earns a place on that list if it tells
+  two packs APART.**
+- **Whole words only** — "rock" must not match "Rocky". Punctuation is stripped
+  so "R'n'B" and "RnB" are one thing, **which is also what splits them**, so
+  the spaced forms are listed too.
+- **A WASH BEHIND THE CARD, NEVER A FILL AND NEVER A BORDER**, capped well
+  below full strength. That is the whole reason it can coexist with gold/green/
+  red meaning winning/good/destructive: a Christmas pack IS red and green, and
+  `broken` is a BORDER, so the two never speak in the same place. There is a
+  test on the alpha.
+- **The same colours on the card and in the Tonight slot**, from one function —
+  a pack that changed appearance on being dragged in would undo the reason the
+  two are the same shape.
+- **The same pack is the same colour on every device and every reload.** A
+  shelf that reshuffles its colours is worse than one with none.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
@@ -1980,12 +2020,34 @@ typo is dropped rather than quietly becoming a round of general knowledge.
 ## Checks
 
 ```bash
-npm test        # 980 tests, no network, injected clocks — must stay green
+npm test        # 1,209 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
 node scripts/pub-unchanged.mjs HEAD~1 --ignore online   # did I break the pub night?
 ```
+
+**NOTHING IN THIS REPO HAD EVER PARSED THE BROWSER FILES, and on 15 August
+2026 a stray backtick took the whole console down.** It was inside an HTML
+comment in the template literal `launchBar()` builds its markup from, so it
+ended the string early and `console.js` became a syntax error — meaning
+`/console` did not load AT ALL, for every quizmaster, on the page a night is
+launched from. **The full suite passed.** It always would: every file under
+`public/` is a DOM module that no test imports, so the browser half of this app
+was never executed by anything in here.
+
+`test/browser-parses.test.js` closes it, and is deliberately the WEAKEST
+possible guard: it runs `node --check` over every script under `public/` and
+names any HTML comment carrying a backtick. **Parsing is not working** — a file
+that parses can still be nonsense. What it catches is the class of fault where
+the page cannot load at all, which is the class that ends a night rather than
+annoying somebody. Verified by reintroducing the backtick and watching both
+cases fail.
+
+**It is the same lesson as the launch route and as the projector's arcade
+board, for the third time: a test that never runs the artefact proves nothing
+about it.** `node --check` on a file you edited is seven seconds; finding this
+in a browser cost a round trip, and finding it in a pub would cost the night.
 
 **`pub-unchanged.mjs` is the one to run before a gig week.** `npm test` says
 the tests still pass; this says something stronger and far more useful — that

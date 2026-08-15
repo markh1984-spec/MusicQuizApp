@@ -13,6 +13,7 @@ import { balanceAnswers } from './balance.js';
 import { FEATURES, FEATURE_TIER, FEATURE_META, SWITCHABLE, findTier, switchable, NOT_BUILT } from './plans.js';
 import { lobbyGameChoices, lobbyGameFor } from './lobby-games.js';
 import { inSeason } from './looks.js';
+import { packLookAttrs } from './pack-look.js';
 import { upcoming, tonight, clashTonight, nightKey, WEEKDAY_LABELS } from './diary.js';
 
 const mainEl = document.getElementById('main');
@@ -3144,9 +3145,29 @@ function launchBar() {
            under them: it is the one "press this" on the section, and a
            primary button squeezed in beside two minor ones stops looking
            like one. -->
+      <!--
+           SET IT UP IS ALWAYS HERE, DISABLED UNTIL THERE IS A NIGHT TO SET UP.
+
+           It used to be created hidden and unhidden by pick(), so dragging a
+           pack in made a button appear out of nothing and everything below it
+           jumped — reported as clunky, and it is the SAME FAULT as the one
+           three comments down that Launch was already fixed for. A control
+           that comes and goes is a control you cannot learn the position of,
+           and this bar is driven with a thumb in a dark pub.
+
+           NO BACKTICKS IN THIS COMMENT, and that is not a style note: it is
+           inside the template literal this whole panel is built from, so one
+           stray backtick ends the string early and the console does not load
+           AT ALL. Which is how this very comment was written the first time.
+
+           Disabled rather than working-with-nothing, because the panel behind
+           it is genuinely about a pack: the card shape and the look are read
+           off the one you chose. Launch directly underneath is the thing
+           saying what the bar is waiting for, so this does not have to.
+      -->
       <div class="lb-row">
         <div class="lb-alt" hidden></div>
-        <button class="minor lb-more" type="button" aria-expanded="false" hidden>Set it up</button>
+        <button class="minor lb-more" type="button" aria-expanded="false" disabled>Set it up</button>
       </div>
       <!-- TONIGHT'S RUNNING ORDER — the place packs are dropped and where
            they appear, asked for in those words. Along the bottom rather than
@@ -3609,7 +3630,8 @@ function launchBar() {
      */
     // The toggle lives in the row above and outlives this render; only the
     // panel it opens is rebuilt here, so it is re-pointed rather than rewired.
-    moreBtn.hidden = false;
+    // It is never hidden — see the comment on `.lb-row` — only switched on.
+    moreBtn.disabled = false;
     moreBtn.setAttribute('aria-expanded', lbOpen ? 'true' : 'false');
 
     // The same prize list the pack card builds, from the shape actually picked.
@@ -4011,15 +4033,18 @@ function launchBar() {
       lbOff = new Set();
       chosen.hidden = true;
       /*
-       * AND SET IT UP GOES WITH IT. `pick()` unhides that button and nothing
-       * put it back, so clearing the night left a control offering to
-       * configure a night that no longer existed — it opened a panel with
-       * nothing in it to set. A fresh page load does not show it at all, so
-       * the two states of "nothing chosen" disagreed depending on how you got
-       * there, which is the leftover-state fault this file keeps recording in
-       * other forms.
+       * AND SET IT UP GOES BACK TO SLEEP WITH IT. `pick()` switches that
+       * button on and nothing switched it off, so clearing the night left a
+       * control offering to configure a night that no longer existed — it
+       * opened a panel with nothing in it to set. A fresh page load has it
+       * disabled, so the two states of "nothing chosen" disagreed depending on
+       * how you got there, which is the leftover-state fault this file keeps
+       * recording in other forms.
+       *
+       * Disabled rather than hidden, so the row does not change height on the
+       * way out any more than it does on the way in.
        */
-      moreBtn.hidden = true;
+      moreBtn.disabled = true;
       lbOpen = false;
       moreBtn.setAttribute('aria-expanded', 'false');
       paintOrder();
@@ -4118,8 +4143,16 @@ function launchBar() {
 
     packs.forEach((pack, at) => {
       const rounds = (pack.rounds || []).length;
+      /*
+       * THE PACK CARRIES ITS COLOUR INTO THE HOLE. Same function as the shelf,
+       * so a pack cannot look like one thing on the card and another in the
+       * slot — which is the whole payoff for making the two the same shape.
+       * With three slots filled it also says what is in each one without
+       * reading three titles.
+       */
+      const look = packLookAttrs(pack);
       const tile = node(`
-        <div class="lb-tile is-pack ${rounds && (pack.rounds || []).every((_, i) => isOff(pack.id, i)) ? 'is-spent' : ''}" draggable="true" title="${esc(pack.title)}">
+        <div class="lb-tile is-pack ${look.cls} ${rounds && (pack.rounds || []).every((_, i) => isOff(pack.id, i)) ? 'is-spent' : ''}" style="${look.style}" draggable="true" title="${esc(pack.title)}">
           <button class="lb-tile-off" type="button" aria-label="Take this pack out">&times;</button>
           <span class="lb-tile-n">${at + 1}</span>
           <b class="lb-tile-name">${esc(pack.title)}</b>
@@ -5479,8 +5512,15 @@ function packCard(kind, pack, repaint = () => {}) {
    * fine closed and turned out to be broken when opened would be the app
    * saying nothing again.
    */
+  /*
+   * ITS OWN COLOUR, FROM ITS OWN SUBJECT — see `pack-look.js`. A wash behind
+   * the card, never a fill: `broken` is still the only red on this shelf that
+   * means anything, and it is still on the border where it always was.
+   */
+  const look = packLookAttrs(pack);
   const el = node(`
-    <div class="pack-card ${open ? 'open' : 'shut'} ${pack.broken ? 'broken' : ''} ${ownPack ? 'own' : ''} ${freshness(pack).expired ? 'stale' : ''}"
+    <div class="pack-card ${open ? 'open' : 'shut'} ${look.cls} ${pack.broken ? 'broken' : ''} ${ownPack ? 'own' : ''} ${freshness(pack).expired ? 'stale' : ''}"
+      style="${look.style}"
       draggable="${pack.broken ? 'false' : 'true'}" data-pack="${esc(pack.id)}" data-kind="${esc(kind)}">
       <button class="pack-title" title="${open ? 'Close it' : 'Open it to set tonight up and launch'}"
         aria-expanded="${open ? 'true' : 'false'}">${esc(pack.title)}</button>

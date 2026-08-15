@@ -2072,6 +2072,66 @@ body.console::after { display: none; }
   background: var(--panel); border: 1px solid var(--panel-line);
 }
 .pack-card.broken { border-color: var(--bad); }
+
+/* ---- A PACK WEARS ITS OWN SUBJECT.
+ *
+ * The colours come from `pack-look.js`, per pack, inline — see that file for
+ * why they are derived rather than stored and why "pop" is not a subject. This
+ * is only the paint.
+ *
+ * A WASH BEHIND THE CARD, NEVER A FILL, and that is the whole reason this can
+ * exist alongside the app's colour language: gold means winning, green means
+ * good and red means destructive, so a Christmas pack tinted red and green must
+ * not be mistakable for a broken one. It is not, because `broken` is a BORDER
+ * and this never touches the border — the two say their piece in different
+ * places. The strength is capped in the JS for the same reason: a saturated
+ * card reads as a control that has been pressed.
+ *
+ * EXTRA BACKGROUND LAYERS, NOT A PSEUDO-ELEMENT, and that is not a style
+ * preference — it was written the other way first. A `::after` covering the
+ * card has to be pushed behind the card's contents, and the only way to do
+ * that is `> * { position: relative }`, which silently un-pins EVERY
+ * absolutely positioned child. There are three across these two elements: the
+ * "Yours" badge on an own-pack, the round number on a Tonight tile, and the ×
+ * that takes a pack out. All three would have dropped into the flow, none of
+ * them would have thrown, and no test would have noticed.
+ *
+ * A background LIST cannot do that. The tint goes on as a layer above
+ * `--panel` — which on the console is the quizmaster's own scheme-tinted
+ * surface — so their colours still come through underneath, which is what
+ * stops nine packs turning the shelf into somebody else's palette. Nothing
+ * about positioning, stacking or overflow changes at all.
+ */
+.pack-card.tinted, .lb-tile.tinted {
+  background: linear-gradient(120deg, var(--pk-a), var(--pk-b)), var(--panel);
+}
+/* Two patterns, shared by every subject that wants one — scan lines for the
+   decades that had them and a diagonal for the heavy ones. Deliberately only
+   two: a texture per subject would be a stylesheet that grows every time a
+   word is added to a list, and at 200px wide nobody can tell fifteen textures
+   apart anyway. They are white at very low alpha rather than a colour, so one
+   rule works over every tint. */
+.pack-card.tinted.pk-lines, .lb-tile.tinted.pk-lines {
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.07) 0 3px, transparent 3px 9px),
+    linear-gradient(120deg, var(--pk-a), var(--pk-b)),
+    var(--panel);
+}
+.pack-card.tinted.pk-slash, .lb-tile.tinted.pk-slash {
+  background:
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 14px),
+    linear-gradient(120deg, var(--pk-a), var(--pk-b)),
+    var(--panel);
+}
+/* THE OPEN CARD DROPS THE PATTERN AND KEEPS THE COLOUR. It is a panel of
+   dropdowns rather than a tile, and scan lines behind a Look picker and a
+   Launch button compete with the one thing on the card that is meant to be
+   pressed. The colour stays, so a pack does not change identity on being
+   opened — which would be the shelf's own recognition trick working against
+   itself. */
+.pack-card.open.tinted, .pack-card.open.tinted.pk-lines, .pack-card.open.tinted.pk-slash {
+  background: linear-gradient(120deg, var(--pk-a), var(--pk-b)), var(--panel);
+}
 /*
  * Two lines are RESERVED for a title, whether or not it needs them.
  *

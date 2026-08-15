@@ -628,3 +628,129 @@ option — "Online — the question goes on their phones" dragged the whole cons
 90px off the side of a 320px phone. Grid, `min-width: 0` on the children,
 `max-width: 100%` on the selects. **Measure `scrollWidth` against
 `clientWidth` after anything structural**; nothing else finds it.
+
+---
+
+## A PACK WEARS ITS OWN SUBJECT
+
+`public/assets/pack-look.js`, `.pack-card.tinted` / `.lb-tile.tinted` in
+`style.css`. Asked for on 15 August 2026 in one line: *"can the packs have
+backgrounds that are relative to the contents?"*
+
+**The job is scanning, not decoration**, and that is what decides every detail
+below. The common job on a pack tab is *find tonight's pack and press Launch*
+— and a shelf of nine identical cards makes that a reading task: you check nine
+titles to find the one whose shape you already know. A colour you recognise
+turns it into a glance. If it did not make the shelf faster to read it would be
+clutter, which this app's own rules say to leave out.
+
+**Four arrangements were rendered from the real stylesheet before choosing**,
+per the standing rule about UI decisions, and the choice between them turned on
+one thing:
+
+- **the whole card coloured** — most distinct, but nine strong colours on one
+  shelf fights the quizmaster's own scheme and makes the grid loud. It is the
+  *"wall of red"* fault this file already records, in nine directions at once;
+- **a spine down the edge** — quietest, still scannable, but the colour comes
+  from the NAME rather than the contents, which is not what was asked for;
+- **recognised subjects only** — honest, but a shelf where four packs are
+  dressed and five are plain reads as half-built;
+- **recognised subjects, everything else a colour of its own** — chosen. The
+  shelf stays even, and a pack the list does not know still belongs on it.
+
+### What it derives from, and what it refuses to
+
+**It derives, it never stores.** Nothing is written into a pack file and there
+is nothing to set. A pack from the generator, from Import or from a
+quizmaster's own editor is coloured the moment it appears — where a field
+somebody fills in would be a Monday job per pack, which is the cost this app
+measures features by.
+
+**Genre beats decade, and that ordering is doing real work.** This library is
+decade-heavy, so if the decade won, *The 2000s Metal Quiz* and *The 2000s Pop
+R'n'B and Chart Quiz* would be the same colour and the shelf would be no faster
+to read than it was. Genre is the axis that separates packs WITHIN a decade.
+Seasonal beats both, being the least ambiguous thing a title can say.
+
+**"Pop" is deliberately not a subject.** Nearly every pack here is a pop quiz
+of some kind, so matching it would colour most of the shelf one colour — the
+exact failure the feature exists to avoid. **A word only earns a place on that
+list if it tells two packs APART**, which is the test to apply when adding one.
+
+**A word is matched whole, never inside a longer one** — "rock" inside "Rocky",
+"rap" inside "rapture". A substring match would colour a film quiz as a rock
+quiz and nobody would ever work out why. Punctuation is stripped first, so
+"R'n'B", "RnB" and "R n B" are one thing — **which is also what splits them**,
+so the spaced forms have to be listed as well. Found by a test, not by reading.
+
+**The same pack is the same colour on every device and every reload** (FNV-1a
+over the title). The entire value is recognising a card you have seen before,
+so a shelf that reshuffles its colours is worse than one with no colours at all.
+
+### Why it can coexist with the app's colour language
+
+Gold means winning, green means good, red means destructive — everywhere, in
+every scheme. **A Christmas pack is red and green.** Two things keep that from
+colliding, and both are load-bearing:
+
+- **it is a WASH BEHIND the card, never a fill and never a border.** `broken`
+  is a border, so the two say their piece in different places and the only red
+  that means anything is still the only red on the border;
+- **every colour is capped well below full strength** (`TINT` in the module,
+  with a test asserting the alpha), because a saturated card reads as a control
+  that has already been pressed.
+
+It is a pseudo-element rather than a background on the card, so it layers OVER
+`--panel` — the console's scheme-tinted surface — rather than replacing it. The
+quizmaster's own colours still come through underneath, which is what stops
+nine packs turning the shelf into somebody else's palette.
+
+**The open card takes half the strength.** It is a panel of dropdowns rather
+than a tile, and at full strength the wash sits behind a Look picker and a
+Launch button and starts competing with the one thing on the card meant to be
+pressed. It keeps some, so a pack does not change colour when you open it.
+
+**Two patterns only** — scan lines and a diagonal, shared by every subject that
+wants one. A texture per subject would be a stylesheet that grows every time a
+word is added to a list, and at 200px wide nobody can tell fifteen textures
+apart. They are white at very low alpha, so one rule works over every tint.
+
+### The pack carries its colour into the hole
+
+`packLookAttrs()` is called by the shelf card AND by the Tonight tile, so a
+pack cannot look like one thing on the card and another in the slot — which
+would undo the reason the two were made the same shape in the first place. With
+three slots filled it also says what is in each one without reading three
+titles. There is a test that the two get identical colours.
+
+**Nothing a human typed reaches the style attribute.** Every value is built
+from numbers, so a pack titled `"><script>` cannot put anything into the
+markup — worth a test rather than a comment, because this is generated markup
+dropped into an inline style, which is exactly where an injection goes
+unnoticed.
+
+---
+
+## SET IT UP IS ALWAYS THERE, DISABLED UNTIL THERE IS A NIGHT TO SET UP
+
+Reported on 15 August 2026: *"slightly clunky how the Set it up appears only
+after the drag"*.
+
+It was created `hidden` and unhidden by `pick()`, so dragging a pack in made a
+button appear out of nothing and everything below it moved. **That is the same
+fault Launch was already fixed for, three lines further down the same
+template** — where the comment reads *"it used to be created and destroyed with
+the chosen pack, so the bar changed height the moment anything was dragged in
+or out and everything below it jumped — reported as clunky"*. The fix that
+worked there is the fix here: **the control stays and changes state.**
+
+A control that comes and goes is a control you cannot learn the position of,
+and this bar is driven with a thumb in a dark pub.
+
+**Disabled rather than working-with-nothing**, because the panel behind it is
+genuinely about a pack — the card shape and the look are read off the one you
+chose. Launch directly underneath is the thing that says what the bar is
+waiting for, so this does not have to say it twice.
+
+**And clearing the night puts it back to disabled rather than hidden**, so the
+row does not change height on the way out any more than on the way in.
