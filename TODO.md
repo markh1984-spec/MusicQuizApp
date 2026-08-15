@@ -1540,3 +1540,56 @@ CLAUDE.md records a *stated two-hour default*: a 9pm start becomes 11pm, so a
 combo night would publish two hours early, mid-karaoke. **A night whose gallery
 publishes on it needs a real end time**, not a default — and that is a small
 change to the booking form with a real consequence behind it.
+
+### TONIGHT IS A RUNNING ORDER — slot 1 is the first thing the app plays
+
+Decided on 15 August 2026: *"I think it should be running order so the first
+drop zone is the first thing the app plays, that makes sense."* Three slots,
+each taking ANY pack type, played in the order they sit in.
+
+**This is the NIGHT object again, arriving from a third direction** — after the
+gallery's publish trigger and the two-nights distinction. Three separate roads
+now end at the same piece, which is about as strong a signal as this list gives
+that it is the right thing to build next.
+
+#### WHAT IT REPLACES, and this is the decision to take first
+
+Today, dragging two QUIZ packs into Tonight **composes them into one quiz** —
+`composeQuiz()` merges their rounds into a single game with one title, and the
+Launch button names the evening rather than a pack. That is built, documented
+in CLAUDE.md and works.
+
+A running order means something different with the same gesture:
+
+| Two quiz packs in Tonight | |
+|---|---|
+| **Today** | ONE quiz, both packs' rounds merged, played straight through |
+| **Running order** | TWO quizzes, played one after the other |
+
+**Both are reasonable and they cannot both be the default**, so it has to be
+chosen rather than discovered when somebody launches the wrong one in a pub.
+
+#### What has to be built
+
+- **The order lives on the ROOM, not in the game state.** `state` belongs to
+  one game and is replaced when the next launches, so a list that has to
+  survive game one ending cannot live there. Per-room, persisted, restored on
+  boot like everything else that must survive a crash.
+- **Each slot is `{ kind, packId }`** — the game-type dropdown at the top of
+  the bar stops being a mode and becomes, at most, a filter on the search box.
+  Dropping a bingo pack must no longer switch the whole bar over.
+- **Launch fires slot 1** and marks it played. **"Next: <pack 2>"** then has to
+  appear somewhere the host will see it at eleven o'clock with a room in front
+  of them — the running panel, not a tab they would have to go and find.
+- **A played slot is not deleted.** The order is the record of the evening
+  while it is happening, and it is what the night object will be filed from.
+
+#### What NOT to do
+
+- **Do not make it four or five slots.** Three is a quiz, a bingo and one
+  spare, which is the shape of the host's own Thursday. A list that grows is a
+  list that needs reordering, deleting and scrolling, on the bar that sits at
+  the top of every tab.
+- **Do not auto-launch the next one.** The gap between games is the host on a
+  microphone, and software deciding when that ends is the one thing guaranteed
+  to be wrong in a real room.
