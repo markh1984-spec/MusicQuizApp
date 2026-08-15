@@ -1195,6 +1195,14 @@ Open the one you are touching; do not read them all.
 - The last slide of the night — "Back here Thursday 20th"
 - Headcount per venue — the app finally says a number it always knew
 - A prize taken at the bar has to reach the filed night
+- **THE GALLERY READS THE OWNER'S OWN QUIZMASTER ROOM, not the house room** —
+  and reading `HOUSE` cost a real night its page. Photos are filed per room
+  (`photos/` for the house, `photos/<room>/` for everyone else), the Gigs tab
+  reads `roomForHost`, and the gallery read `HOUSE`: so 102 photographs sat in
+  one folder while the public page said *"No photos are up yet"* and the Gigs
+  tab three tabs away showed them. **Nothing threw and both halves were
+  individually correct — the bug was that nothing made them agree**, which is
+  why the test compares the two rather than asserting about either.
 - PUTTING A NIGHT ON THE PUBLIC GALLERY
 - AND THE PREVIEW DID NOT WORK ON THE HOST KEY
 

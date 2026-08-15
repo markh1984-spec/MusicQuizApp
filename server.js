@@ -2009,21 +2009,64 @@ async function handleGet(req, res, url, route) {
    * `whoIs` must be truthy as well as the room matching: an anonymous request
    * resolves to the house room anyway, so the room alone is not a check.
    */
+  /**
+   * WHOSE NIGHTS `/gallery` SHOWS.
+   *
+   * **It was the HOUSE room, and that was wrong in the only way that mattered:
+   * the owner does not run nights in the house room.** Photos are filed per
+   * room — the house keeps the flat `photos/` path, every other account gets
+   * `photos/<room>/` — and Mark runs his gigs on his linked QUIZMASTER hat, so
+   * every photograph he has ever taken is in the second kind of folder while
+   * this page looked only in the first. The page said *"No photos are up yet"*
+   * over a repository with a full night in it, and the Gigs tab three tabs
+   * away was showing the same photographs quite happily.
+   *
+   * **The two halves disagreeing is the actual bug**: `/api/past-gigs` reads
+   * `roomForHost`, this read `HOUSE`, and nothing made them agree. Publishing
+   * would have failed the same way — the publish route writes to the caller's
+   * room, so a night could have been published into a folder this page never
+   * looked at, with no error anywhere.
+   *
+   * So it resolves to **the owner's own quizmaster room**, which is where the
+   * app owner's nights actually happen, falling back to the house room when
+   * there is no such account (a fresh install, or the host key before anybody
+   * has signed up).
+   *
+   * **A gallery for OTHER quizmasters still needs a slug of its own** and is
+   * still a separate job — this fixes whose nights the one public page shows,
+   * not how a second person would get one.
+   */
+  const galleryRoomId = () => {
+    const owner = accounts.owner;
+    const mine = owner ? accounts.ownQuizmasterFor(owner.id) : null;
+    return mine ? mine.id : HOUSE;
+  };
+
+  /*
+   * THE OWNER SEES IT FIRST, ON EITHER HAT.
+   *
+   * One login holds two identities, and which one is worn should not decide
+   * whether the preview works — checking the room alone would hide it the
+   * moment he switched to the owner hat, on the page he is checking BECAUSE he
+   * is the owner. The host key counts for the same reason.
+   */
   const galleryPreview = () => {
     const who = whoIs(req, url);
-    return Boolean(who) && roomForHost(req, url).id === HOUSE;
+    if (!who) return false;
+    if (who.role === 'owner' || who.bootstrap) return true;
+    return roomForHost(req, url).id === galleryRoomId();
   };
 
   if (route === '/api/gallery') {
     const preview = galleryPreview();
-    const live = await publishedNights(HOUSE);
+    const live = await publishedNights(galleryRoomId());
     const nights = preview
-      ? [...new Set([...live, ...(await listDirs(photoFolder(HOUSE), 'photos')).map((f) => f.name).filter(isNightFolder)])]
+      ? [...new Set([...live, ...(await listDirs(photoFolder(galleryRoomId()), 'photos')).map((f) => f.name).filter(isNightFolder)])]
         .sort().reverse()
       : live;
     const out = [];
     for (const night of nights) {
-      const files = await listDir(`${photoFolder(HOUSE)}/${night}`, 'photos');
+      const files = await listDir(`${photoFolder(galleryRoomId())}/${night}`, 'photos');
       const count = (files || []).filter((f) => safePhotoName(f.name)).length;
       // A published night with nothing in it is a heading over a blank space.
       if (count) out.push({ night, when: readableNight(night), count, live: live.includes(night) });
@@ -2039,14 +2082,14 @@ async function handleGet(req, res, url, route) {
      * different messages would let anybody map which dates exist.
      */
     const preview = galleryPreview();
-    if (!isNightFolder(night) || !(preview || await isPublished(HOUSE, night))) {
+    if (!isNightFolder(night) || !(preview || await isPublished(galleryRoomId(), night))) {
       return sendJson(res, 404, { error: 'Nothing here.' }), true;
     }
-    const files = await listDir(`${photoFolder(HOUSE)}/${night}`, 'photos');
+    const files = await listDir(`${photoFolder(galleryRoomId())}/${night}`, 'photos');
     return sendJson(res, 200, {
       night,
       when: readableNight(night),
-      live: await isPublished(HOUSE, night),
+      live: await isPublished(galleryRoomId(), night),
       preview,
       photos: (files || [])
         .map((f) => safePhotoName(f.name))
@@ -2064,10 +2107,10 @@ async function handleGet(req, res, url, route) {
     const parts = route.slice('/gallery-photo/'.length).split('/');
     const night = decodeURIComponent(parts[0] || '');
     const name = safePhotoName(decodeURIComponent(parts[1] || ''));
-    if (parts.length !== 2 || !name || !(galleryPreview() || await isPublished(HOUSE, night))) {
+    if (parts.length !== 2 || !name || !(galleryPreview() || await isPublished(galleryRoomId(), night))) {
       return sendJson(res, 404, { error: 'Nothing here.' }), true;
     }
-    const bytes = await getFile(`${photoFolder(HOUSE)}/${night}/${name}`, 'photos');
+    const bytes = await getFile(`${photoFolder(galleryRoomId())}/${night}/${name}`, 'photos');
     if (!bytes) return sendJson(res, 404, { error: 'Nothing here.' }), true;
     res.writeHead(200, {
       'Content-Type': name.endsWith('.png') ? 'image/png' : name.endsWith('.webp') ? 'image/webp' : 'image/jpeg',

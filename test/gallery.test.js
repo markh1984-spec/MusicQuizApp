@@ -22,7 +22,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -183,6 +183,30 @@ test('AND THE PUBLISH ROUTE ANSWERS A POST AT ALL', async () => {
     const out = await res.json();
     assert.match(out.error || '', /repository/i, `expected an honest refusal, got ${JSON.stringify(out)}`);
   });
+});
+
+test('THE GALLERY AND THE GIGS TAB READ THE SAME ROOM', async () => {
+  /*
+   * They did not, and it cost a real night's photographs their page.
+   *
+   * Photos are filed per room — the house keeps the flat `photos/` path and
+   * every other account gets `photos/<room>/`. The Gigs tab reads
+   * `roomForHost`; the gallery read `HOUSE`. The app owner runs his nights on
+   * his linked QUIZMASTER hat, so 102 photographs sat in the second kind of
+   * folder while the public page said "No photos are up yet" and the Gigs tab
+   * three tabs away showed them quite happily.
+   *
+   * Nothing threw. Both halves were individually correct. **The bug was that
+   * nothing made them agree**, which is why the guard is a comparison rather
+   * than an assertion about either one.
+   */
+  const src = readFileSync(join(ROOT, 'server.js'), 'utf8');
+  const gallery = src.slice(src.indexOf('const galleryRoomId'), src.indexOf('/gallery-photo/') + 4000);
+  assert.ok(
+    !/isPublished\(HOUSE|photoFolder\(HOUSE\)|publishedNights\(HOUSE\)/.test(gallery),
+    'a gallery route is still hardcoded to the house room — it will not find the owner\'s own nights',
+  );
+  assert.ok(gallery.includes('galleryRoomId()'), 'the gallery routes no longer resolve a room at all');
 });
 
 test('EVERY REFUSAL LOOKS THE SAME, so nobody can map which nights exist', async () => {

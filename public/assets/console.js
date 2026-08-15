@@ -38,6 +38,23 @@ import { packLookAttrs } from './pack-look.js';
  * destroy a whole running order, so a second gesture in the corner of the same
  * card must not be able to start a night.
  */
+/**
+ * **NOT ON THE HOST KEY**, because there is nowhere to keep it.
+ *
+ * `whoIs()` prefers the key over any signed-in session, so `/api/me/prefs`
+ * answers *"the host key is not an account, so there is nothing to remember
+ * this against"* — correctly. Drawn anyway, the pin would alert on every
+ * single press and never save, which is the one thing this file's rules
+ * forbid outright: a control that ignores you.
+ *
+ * Hidden rather than disabled, unlike Launch and Set it up: those go inert
+ * because they will work again in a moment, once a pack is chosen. This one
+ * cannot work at all on this identity — the same reason `/api/me` sends
+ * `tiers: []` to a real quizmaster rather than showing them a hat switch they
+ * can never use.
+ */
+const canPin = () => Boolean(me && !me.bootstrap);
+
 const isPinned = (id) => ((library && library.prefs && library.prefs.pinnedPacks) || []).includes(id);
 
 /** The drawn pin. Never an emoji — the same rule `binIcon()` follows. */
@@ -5747,7 +5764,7 @@ function packCard(kind, pack, repaint = () => {}) {
       style="${look.style}"
       draggable="${pack.broken ? 'false' : 'true'}" data-pack="${esc(pack.id)}" data-kind="${esc(kind)}">
       ${packWord(look)}
-      ${pack.broken ? '' : `<button class="pack-pin ${isPinned(pack.id) ? 'on' : ''}" type="button"
+      ${pack.broken || !canPin() ? '' : `<button class="pack-pin ${isPinned(pack.id) ? 'on' : ''}" type="button"
         aria-pressed="${isPinned(pack.id) ? 'true' : 'false'}"
         aria-label="${isPinned(pack.id) ? 'Unpin' : 'Pin'} ${esc(pack.title)}">${pinIcon()}</button>`}
       <button class="pack-title" title="${open ? 'Close it' : 'Open it to set tonight up and launch'}"
@@ -8194,7 +8211,14 @@ function gigRow(night) {
       <button class="gig-head" type="button">
         <span class="an">${esc(label)}</span>
         <span class="tiny">${played}</span>
-        <span class="tiny">${[night.venue, heads ? `${heads} playing` : ''].filter(Boolean).join(' · ')}</span>
+        <!-- PLAYED, not "playing". This row is a night that has already
+             happened, and the present tense read as a live count on a page
+             whose entire job is the record of finished work — reported in
+             exactly those words: "there shouldn't be 19 playing though,
+             presumably that's 19 played". The running panel is where a live
+             count belongs, and it says "playing" there quite correctly, which
+             is what made this one easy to miss. -->
+        <span class="tiny">${[night.venue, heads ? `${heads} played` : ''].filter(Boolean).join(' · ')}</span>
         <!-- Its OWN span, not inside .gig-more: that one is rewritten with
              "Loading…" and then the photo count the moment the night is
              opened, which would wipe this. -->
