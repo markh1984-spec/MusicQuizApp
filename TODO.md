@@ -991,15 +991,23 @@ step because the plan for it was still sitting here.
 
 ## Waiting on a decision from you — no rush, nothing is blocked
 
-**Which features sit on which tier, and what the middle two cost.** The ladder
-is built and works; where each feature sits is a first guess I made so there was
-something to look at. Moving one is a one-line change.
+**THE PRICES ARE SETTLED AND THIS TABLE WAS STALE.** It said Silver was £15
+until 15 August 2026, which contradicted both the code (`TIERS` in `plans.js`:
+`pence` 1000 / 2000 / 3000) and the reasoning in `docs/business.md`, which
+argues the Bronze-to-Gold step is **£20 a month** and that Gold is worth **£10
+more than Silver**. The code and business.md agreed with each other; only this
+list was wrong, and it got quoted back at the host as an open question.
+
+**Read the price off `plans.js`, never off here.**
 
 | | Plan | Price | What is on it today |
 |---|---|---|---|
-| 🥉 **Bronze** | Basic | included | Music Quiz, Music Bingo, the pack library, buying packs, seasonal looks, advert slides, photos from the room |
-| 🥈 **Silver** | Elite | £15/mo | Invoicing, your calendar, marketing |
-| 🥇 **Gold** | Pro | £30/mo | Online quizzes (streaming) |
+| 🥉 **Bronze** | Basic | **£10/mo** | Music Quiz, Music Bingo, the pack library, buying packs, seasonal looks, advert slides, photos from the room, two lobby games |
+| 🥈 **Silver** | Elite | **£20/mo** | Invoicing, your calendar, marketing, Tailback |
+| 🥇 **Gold** | Pro | **£30/mo** | Online quizzes (streaming), Quick Draw |
+
+**What is still open is WHICH FEATURE SITS WHERE**, not what a tier costs.
+Moving one is a one-line change.
 
 The one rule I did NOT guess at, because it is yours: *anything that costs the
 owner money every time it is used is not in Bronze.* That is why streaming is at
@@ -1310,24 +1318,32 @@ reads them back (`server.js:1899`, `:1934`, `:1964`). **So the gallery must
 read from the repo, not from `/photos/`** — the pattern exists and it is
 `getFile(..., 'photos')`.
 
-**AND `PHOTO_REPO` IS NOT SET.** Measured. Which means today, on this
-deployment, photos exist **only** on a disk that is wiped on deploy —
-`markFiled()` and `unfiled()` are a batch, and the batch has nowhere to go.
-AUDIT.md already flagged the photo round trip as the one shipped feature whose
-happy path is unproven; this is what that costs.
+##### AND THE "PHOTO_REPO IS NOT SET" CLAIM WAS WRONG — read this before repeating it
 
-**Nothing about the gallery is worth building until that is set**, because the
-feature is a promise to a customer that they can come back and see their
-photos. Making that promise against storage that evaporates on the next deploy
-is worse than not making it.
+**It IS set on Render.** `docs/history.md` lists it under *"The live app is set
+up now — this is what is actually on Render"*, alongside `PHOTO_TOKEN`,
+`HOST_KEY` and the rest.
 
-##### What has to happen first
+**The mistake was measuring the wrong machine.** `process.env.PHOTO_REPO` was
+read inside the development container, which has no relationship to the live
+service's environment at all — and that was then used to tell the host the
+whole gallery was blocked. It was not.
 
-1. A **private** GitHub repo for photos — never the main one, which is public
-   and whose history is forever.
-2. `PHOTO_REPO` and `PHOTO_TOKEN` set on the Render service.
-3. Confirm a photo taken on a phone actually lands in that repo — the round
-   trip AUDIT.md says has never been proven end to end.
+**And the page that lists it says exactly how not to make this mistake:**
+*"READ IT OFF THE APP RATHER THAN OFF THIS PAGE. `GET /api/library` reports
+`generation` … If a feature looks unconfigured, check the payload before
+believing a document."* Neither the document nor the payload was consulted; a
+local environment variable was.
+
+**So the storage is there and the gallery is NOT blocked on it.** What is still
+genuinely unproven is the ROUND TRIP — AUDIT.md lists the photo path as the one
+shipped feature whose happy path has never been confirmed end to end. That is a
+thing to verify, not a blocker to assume:
+
+1. Take one photo on a phone at a real night.
+2. Confirm it appears in the private repo under `photos/<room>/<night>/`.
+3. Check `GET /api/library` reports `backupConfigured` — the live answer, which
+   beats both this list and `history.md`.
 
 ##### And then two design consequences that follow from reading the repo
 
