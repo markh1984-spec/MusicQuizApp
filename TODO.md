@@ -1682,18 +1682,27 @@ to scan**, and three sections of three or four is not.
 | **Tonight** | the gig itself | the launch bar, the Recommended shelf, the control view |
 | **After** | evidence and admin | Gigs, Invoices, photos & the gallery |
 
-#### Two things to settle BEFORE building it
+#### One thing left to settle BEFORE building it
 
 - **HELP AND MY ACCOUNT ARE NOT ON THE TIMELINE.** They are not before, during
   or after — they are always. Jamming them into Prepare would be the first
   thing that makes the rule a lie. They probably belong beside the account and
   hat controls instead.
-- **IT REVERSES "TONIGHT AT THE TOP OF EVERY TAB"**, which was deliberate:
-  *"wherever he is, he can launch from there — sometimes you just don't want
-  to think."* Under three doors it naturally lives only in Tonight. That is
-  probably right now — the reason it was everywhere is that the tabs were a
-  jumble, and once the night has its own door launching is one tap away — but
-  **it must be decided rather than happen as a side effect.**
+- ~~It reverses "Tonight at the top of every tab"~~ — **SETTLED, and it is not
+  a reversal.** The host's own resolution: *"as long as people know they can
+  click Console they know they can launch quickly from there — it's the same
+  decision, tidied up into a single console area."*
+
+  **The decision was never "a launch panel on every tab".** It was *launching
+  is always one predictable move away, and you never have to think about where
+  it is* — and Tonight-everywhere was how that was achieved while nine tabs
+  were a jumble and you might be sat on Venues when you decided to go. Once the
+  night has a door of its own, **one tap IS that guarantee**, and it costs a
+  launch bar that was furniture in the wrong room on Invoices and Venues.
+
+  So the property to preserve is the GUARANTEE, not the panel. Whatever the
+  night door ends up being called, pressing it must land on the launch bar with
+  nothing in front of it.
 
 #### What it settles for free
 
