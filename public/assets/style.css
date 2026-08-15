@@ -6464,5 +6464,24 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
    is least able to notice anything. */
 .arcade-going.soon {
   color: #12000c; background: linear-gradient(120deg, var(--hot), var(--hot-2));
-  font-size: var(--fs-lead); transform: scale(1.1);
+  font-size: var(--fs-sub);
+  padding: 6px 12px;
+  /* A BEAT A SECOND, which is what makes it obvious without making it big.
+     Growing it further would start covering the maze — the one thing a clock
+     over a game must not do — where a pulse is caught by the corner of the eye
+     from a thing that has not moved for two minutes. It is tied to no
+     JavaScript: a one-second animation beside a one-second countdown reads as
+     the clock ticking whether or not the two are exactly in step. */
+  animation: arcadeTick 1s ease-in-out infinite;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25), 0 8px 22px rgba(255, 46, 136, 0.5);
+}
+@keyframes arcadeTick {
+  0%, 100% { transform: scale(1.08); }
+  18%      { transform: scale(1.3); }
+  40%      { transform: scale(1.08); }
+}
+/* Somebody who has asked for less motion still gets the size, the colour and
+   the glow — everything except the beat. */
+@media (prefers-reduced-motion: reduce) {
+  .arcade-going.soon { animation: none; transform: scale(1.15); }
 }
