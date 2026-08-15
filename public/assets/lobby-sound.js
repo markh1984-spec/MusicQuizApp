@@ -101,9 +101,9 @@ export function soundOn() {
 
 /** Flip it, and remember. Returns the new state, for the button's label. */
 export function toggleSound() {
-  // Flips THIS PHONE's preference, which is not the same as `soundOn()` — that
-  // also answers to the host's switch, and a player pressing the button while
-  // the room is muted should not be told they have turned it on.
+  // Flips THIS PHONE's preference. Not `!soundOn()`, which also answers to the
+  // host's switch — with the room muted that would read as off and one press
+  // would silently flip the phone's own setting to something nobody asked for.
   on = !(on === null ? true : on);
   try { localStorage.setItem(KEY, on ? '1' : '0'); } catch { /* private mode */ }
   if (on) resume();
@@ -253,6 +253,16 @@ export function playLost() {
  * looking at the game.
  */
 export function soundButton() {
+  /*
+   * NOTHING AT ALL WHEN THE ROOM IS MUTED.
+   *
+   * The first version drew the button anyway, which meant a player could press
+   * it, watch it turn to 🔊, and hear nothing — a control that lies about what
+   * it did. The host's switch is not this phone's business to argue with, so
+   * when tonight says no there is simply no button, which is also the rule
+   * about controls that do nothing.
+   */
+  if (!allowed) return '';
   return `<button class="arcade-sound" type="button" aria-pressed="${soundOn()}"
     title="Sound on this phone">${soundOn() ? '🔊' : '🔇'}</button>`;
 }
