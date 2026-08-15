@@ -20,6 +20,7 @@
  */
 
 import { COLS, ROWS, STEP_MS, newGame, step, aim, inField } from './tailback.js';
+import { wakeSound, playPlink, playLost } from './lobby-sound.js';
 
 const HEAD = '#ffd23f';           // gold, like everything that is yours here
 const TAIL = 'rgba(255,210,63,0.55)';
@@ -71,6 +72,8 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
   const point = (ev) => {
     const t = ev.touches ? ev.touches[0] : ev;
     if (!t) return;
+    // Woken inside a real tap — a browser will not make a sound before one.
+    wakeSound();
     const box = canvas.getBoundingClientRect();
     const { size, offX, offY } = layout();
     const px = (t.clientX - box.left) * (canvas.width / box.width);
@@ -188,8 +191,10 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
     if (now - last >= STEP_MS) {
       last = now;
       const event = step(g);
-      if (event === 'eat') flash = now;
-      if (event === 'life') { flash = now; onBank(g.score); }
+      // The plink walks up a pentatonic run as the tail grows, which is the
+      // oldest trick there is for making a repeated noise feel like progress.
+      if (event === 'eat') { flash = now; playPlink(Math.floor(g.eaten / 4)); }
+      if (event === 'life') { flash = now; playLost(); onBank(g.score); }
       if (event === 'over' || event === 'won') { onBank(g.score); end(event === 'won'); return; }
     }
     draw(now);

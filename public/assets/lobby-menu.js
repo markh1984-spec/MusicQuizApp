@@ -26,6 +26,7 @@
  */
 
 import { lobbyGameFor } from './lobby-games.js';
+import { soundButton, wireSoundButton } from './lobby-sound.js';
 
 /**
  * WHICH MODULE DRAWS WHICH GAME.
@@ -85,7 +86,19 @@ export function arcadeCard(s) {
                when it is over. -->
           <div class="arcade-going" hidden></div>
         </div>
-        <div class="tiny arcade-said">${game.how}</div>
+        <!-- SOUND sits in the hint row UNDER the game, not on it.
+             On the stage it would land on the score, which every one of these
+             games draws in a top corner — and worse, a tap meant for the
+             button that missed by a few pixels is a tap on the canvas, which
+             on Quick Draw is a shot, and the shot could be the sheriff. Under
+             the canvas it cannot overlap a HUD and cannot steal a gesture,
+             and it is still ON the game rather than in a settings page
+             somewhere: the moment somebody wants sound is the moment they are
+             looking at this. -->
+        <div class="arcade-under">
+          <div class="tiny arcade-said">${game.how}</div>
+          ${soundButton()}
+        </div>
       </div>
     </div>`;
 }
@@ -135,6 +148,7 @@ export function wireArcade(el, s, postScore) {
     if (!box.hidden) { box.hidden = true; stopArcade(); label.textContent = `Play ${game.name}`; return; }
     box.hidden = false;
     label.textContent = 'Put it away';
+    wireSoundButton(box);
     const { startGame } = await LOADERS[game.id]();
     const play = () => {
       running = startGame(box.querySelector('.arcade-canvas'), {

@@ -36,6 +36,7 @@
  */
 
 import { COURT, BAT, BALL, TICK_MS, newGame, tick, moveBat } from './rally.js';
+import { wakeSound, playPlink, playRicochet, playLost } from './lobby-sound.js';
 
 /**
  * HOW MUCH TIME ONE FRAME MAY SPEND, and it is a correctness rule.
@@ -82,7 +83,7 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
     const px = (t.clientX - box.left) * (canvas.width / box.width);
     moveBat(g, (px - offX) / size);
   };
-  const onDown = (ev) => aim(ev);
+  const onDown = (ev) => { wakeSound(); aim(ev); };
   const onMove = (ev) => { if (ev.buttons || ev.touches) aim(ev); };
   const onKey = (ev) => {
     /*
@@ -196,8 +197,13 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
       carry -= TICK_MS;
       const event = tick(g);
       if (event === 'hit' || event === 'point') flash = now;
+      // A tock off the bat, climbing with the rally, and the ricochet when you
+      // actually get one past them — the noise marks the thing worth marking.
+      if (event === 'hit') playPlink(Math.floor(g.rallies / 3));
+      if (event === 'point') playRicochet();
       if (event === 'life') {
         flash = now;
+        playLost();
         // Banked at each life, not only at the end — see the note at the top.
         onBank(g.score);
       }

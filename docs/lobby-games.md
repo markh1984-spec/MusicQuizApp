@@ -449,3 +449,93 @@ It stays a fairground stall: no brand of firearm, nobody real, nothing that
 reads as anything but the Wild West — the same instinct that keeps photoreal
 pictures of living musicians out of `portraits.js`. There is a test on the
 words.
+
+---
+
+## SOUND — synthesised, off by default, and never on a timer
+
+`public/assets/lobby-sound.js`. Asked for on 15 August 2026 for Quick Draw:
+*"when you shoot an outlaw there's, like, a sound, and then, like, random
+yeehaws and that kind of stuff."*
+
+### It is synthesised, exactly as everything else here is drawn
+
+No `.mp3`, no `.wav`, no audio library — the same reasoning as `qrcode.js`,
+`brandmark.js`, `avatar.js` and `stickers.js`, and for the same three reasons:
+nothing to 404 on a venue's wifi, no bytes over the one connection that must
+not stutter, and no dependency that can break on a gig night. A gunshot is a
+burst of noise through a low-pass that shuts as it decays; a ricochet is a
+frequency sweep. Both are a dozen lines of Web Audio, which every browser this
+app supports already has.
+
+### AND THAT IS WHY THERE IS NO YEEHAW
+
+The one thing asked for that is not built, and it is worth being straight about
+rather than quietly dropping.
+
+**A convincing human whoop cannot be synthesised** — what comes out of an
+oscillator is a kazoo, and a bad one is worse than none. **A recorded one is an
+asset**, which is the thing this file exists to avoid: a file to ship, to
+cache, to 404, and to pay for over pub wifi at the exact moment sixty people
+are joining.
+
+So the western noises here are the ones that ARE a waveform: the ricochet
+*pee-yow*, a jaw-harp twang for the wrong one, and a saloon-piano plink. **The
+ricochet is the sound people actually picture when they think of a western**
+and it is a pure downward sweep, so it is the one that synthesises best.
+
+If a real yeehaw is ever wanted it is a deliberate decision to ship an audio
+asset, and it should be taken as that — one small file, one place, and a note
+here saying the no-assets rule was broken on purpose.
+
+### OFF BY DEFAULT, and that is not timidity
+
+**Sixty phones making noises in a pub while the host is on a microphone is this
+app talking over its own quizmaster's show**, in front of a paying room, with
+no way for him to fix it from the stage. The two failure modes are not
+symmetrical — the same asymmetry the join-flood threshold is set by:
+
+| Default | What goes wrong |
+|---|---|
+| **On** | the show is disrupted, in the room, and the host cannot stop it |
+| **Off** | somebody does not notice there is sound |
+
+One of those is a gig going wrong and the other is a missed garnish.
+
+**Remembered on the DEVICE, not in the night.** The look, the card shape and
+which game tonight are facts about the evening and live in the game state.
+Whether this particular phone makes a noise is a fact about the phone and the
+person holding it, so it is `localStorage` — the same split the fold state
+already sits on the other side of.
+
+### NOTHING IS EVER ON A TIMER
+
+*"Random yeehaws"* is the version that annoys: sixty phones chirping at nobody,
+forever, whether or not anyone is playing. **Every noise is tied to something
+the player DID**, which self-limits beautifully — only somebody actually
+playing makes any, a phone in a pocket is silent, and a phone left on a table
+goes quiet on its own.
+
+The ricochet in particular is kept for a STREAK rather than for every hit: a
+noise that happens every single time is wallpaper within twenty seconds, and
+one that means *"you are on a run"* is a reward.
+
+### It never carries information, because most of the room is muted
+
+A phone on a pub table is usually on silent, and on iOS the hardware switch
+mutes Web Audio in Safari outright. So every game here stays completely
+playable in silence: a sound may confirm something the screen already said and
+may never be the only way to know it.
+
+**The context is woken inside a real tap**, never on load — a browser will not
+make a sound before a gesture and on iOS will not even build the context.
+
+### The button is UNDER the canvas, not on it
+
+Two reasons, and the second is the one that decided it. Every one of these
+games draws its score in a top corner, so a button on the stage lands on a HUD.
+And **a tap that missed the button by a few pixels would land on the game —
+which on Quick Draw is a shot, and the shot could be the sheriff.** Under the
+canvas it can overlap nothing and steal no gesture, and it is still on the game
+rather than in a settings page: the moment somebody wants sound is the moment
+they are looking at this.

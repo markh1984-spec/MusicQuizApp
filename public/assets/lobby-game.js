@@ -45,6 +45,7 @@ import { MAZE, COLS, ROWS, open, startPoints, pellets, stepToward } from './maze
  * be one copy of it.
  */
 import { seeded } from './seeded.js';
+import { wakeSound, playPlink, playRicochet, playLost } from './lobby-sound.js';
 
 const STEP_MS = 150;          // how often anything moves. Slow enough to steer.
 const CHASE_MS = 260;         // the chasers are slower than you, or it is grim.
@@ -108,7 +109,7 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
     if (!open(col, row)) return;
     target = { col, row };
   };
-  const onDown = (ev) => { aim(ev); };
+  const onDown = (ev) => { wakeSound(); aim(ev); };
   const onMove = (ev) => { if (ev.buttons || ev.touches) aim(ev); };
   const onKey = (ev) => {
     /*
@@ -155,7 +156,8 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
     if (pellet && !eaten.has(here)) {
       eaten.add(here);
       score += pellet.big ? 50 : 10;
-      if (pellet.big) scaredUntil = now + SCARED_MS;
+      if (pellet.big) { scaredUntil = now + SCARED_MS; playRicochet(); }
+      else playPlink(Math.floor(eaten.size / 12));
     }
     if (eaten.size === all.length) end(true);
   }
@@ -202,6 +204,7 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
         continue;
       }
       lives -= 1;
+      playLost();
       /*
        * BANK THE SCORE AT EVERY LIFE LOST, not only at game over.
        *

@@ -21,6 +21,7 @@
 import {
   COLS, ROWS, SLOTS, OUTLAW, newGame, runTo, shoot, showing,
 } from './quickdraw.js';
+import { wakeSound, playShot, playRicochet, playOops, playLost } from './lobby-sound.js';
 
 /** How long somebody takes to rise, so it reads as popping up. */
 const RISE_MS = 130;
@@ -40,6 +41,14 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
   let flash = 0;
   let flashBad = false;
   let lives = g.lives;
+  /*
+   * A STREAK, and it exists for the ricochet rather than for the score.
+   *
+   * A noise on every single hit is wallpaper within twenty seconds. A noise
+   * that means "you are on a run" is a reward, and it self-limits — which
+   * matters when the room has sixty phones in it.
+   */
+  let streak = 0;
 
   const gameTime = (now) => (started ? now - started : 0);
 
@@ -68,11 +77,14 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
     // The tap's own moment, so a shot is judged against what was on screen
     // when the thumb landed rather than when the next frame happened to run.
     const now = performance.now();
-    if (!started) started = now;
+    // A browser will not make a sound until somebody has touched the page, and
+    // on iOS will not even build the context — so it is woken here, inside a
+    // real tap, and never on load.
+    if (!started) { started = now; wakeSound(); }
     runTo(g, gameTime(now));
     const what = shoot(g, slot);
-    if (what === 'hit') { flash = now; flashBad = false; }
-    if (what === 'sheriff') { flash = now; flashBad = true; }
+    if (what === 'hit') { flash = now; flashBad = false; hit(); }
+    if (what === 'sheriff') { flash = now; flashBad = true; streak = 0; playOops(); }
     check(now);
   };
   canvas.addEventListener('touchstart', fire, { passive: true });
@@ -83,10 +95,12 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
     if (!n || n < 1 || n > SLOTS) return;
     ev.preventDefault();
     const now = performance.now();
-    if (!started) started = now;
+    if (!started) { started = now; wakeSound(); }
     runTo(g, gameTime(now));
     const what = shoot(g, n - 1);
     if (what === 'hit' || what === 'sheriff') { flash = now; flashBad = what === 'sheriff'; }
+    if (what === 'hit') hit();
+    if (what === 'sheriff') { streak = 0; playOops(); }
     check(now);
   };
   window.addEventListener('keydown', onKey);
@@ -219,9 +233,26 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
     }
   }
 
+  /** A shot that landed, and every fifth one in a row gets the ricochet. */
+  function hit() {
+    playShot();
+    streak += 1;
+    if (streak % 5 === 0) playRicochet();
+  }
+
   /** Banked at each life, for the reason every game here banks at each life. */
   function check(now) {
-    if (g.lives < lives) { lives = g.lives; flash = now; flashBad = true; onBank(g.score); }
+    if (g.lives < lives) {
+      lives = g.lives;
+      flash = now;
+      flashBad = true;
+      // A life can also go by an outlaw drawing on you, which never passes
+      // through `fire()` — so the noise for it belongs here, where BOTH ways
+      // of losing one arrive.
+      streak = 0;
+      playLost();
+      onBank(g.score);
+    }
     if (g.over) { onBank(g.score); end(); }
   }
 

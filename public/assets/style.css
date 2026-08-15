@@ -6620,6 +6620,43 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
  * it instead and every bat, ball and pip shrinks with it.
  */
 .arcade-canvas.tall { aspect-ratio: 2 / 3; max-width: min(420px, 42vh); }
+
+/*
+ * THE SOUND TOGGLE, in the hint row UNDER the game.
+ *
+ * Not on the canvas: every one of these games draws its score in a top corner,
+ * and a tap that missed the button by a few pixels would land on the game —
+ * which on Quick Draw is a shot, and the shot could be the sheriff. Small and
+ * quiet, because it is a preference rather than a thing to press.
+ */
+.arcade-under {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  /* The hint must be allowed to shrink, or on a 320px phone it pushes the
+     button off the side — the min-content trap, for the ninth time. */
+  min-width: 0;
+}
+.arcade-under .arcade-said { min-width: 0; }
+.arcade-sound {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: rgba(0, 0, 0, 0.45);
+  color: var(--ink);
+  font-size: var(--fs-note);
+  line-height: 1;
+  cursor: pointer;
+  /* Or a tap meant for the button steers the game underneath it — which on
+     Quick Draw is a shot, and a shot could be the sheriff. */
+  touch-action: manipulation;
+}
+.arcade-sound:hover { background: rgba(0, 0, 0, 0.62); }
 .arcade-said { color: var(--ink-dim); }
 
 /* The countdown over the game. `pointer-events: none` or it would swallow the

@@ -846,6 +846,19 @@ board), `src/arcade.js` (the scores, shared by both engines),
   thing being torn down is built.**
 - **Each moment has a primary: the game before the quiz, photos between the
   rounds.** The floating camera button stands down in the lobby.
+- **SOUND IS SYNTHESISED, OFF BY DEFAULT, AND NEVER ON A TIMER.**
+  `lobby-sound.js` — Web Audio, no files, like everything else here is drawn.
+  **Off by default because sixty phones making noises while the host is on a
+  mic is this app talking over its own quizmaster's show**, and that failure is
+  far worse than somebody not noticing there is sound. Remembered on the
+  DEVICE, not in the night. **Every noise is tied to something the player DID**
+  — nothing on a timer, or it is sixty phones chirping at nobody. It never
+  carries information: a phone on a pub table is on silent and iOS mutes Web
+  Audio outright, so every game stays playable in silence. **There is no yeehaw
+  and that is deliberate** — a synthesised whoop is a kazoo and a recorded one
+  is an asset; shipping one is a decision to break the no-assets rule on
+  purpose. The toggle is UNDER the canvas: on it, a tap that missed by a few
+  pixels is a shot, and the shot could be the sheriff.
 - **THE BOARD IS ON THE PROJECTOR AT THE LOBBY ONLY** — `lobby-board.js`, one
   file for both projectors, inside the white QR panel and UNDER the code, which
   nothing in this app may dim. **It was computed and never drawn for as long as
@@ -1152,6 +1165,7 @@ Open the one you are touching; do not read them all.
 - RALLY — the bingo night's game, and it is not called Pong
 - TAILBACK — a tail that grows, and the first game behind the picker
 - QUICK DRAW — a shooting gallery, and the third answer to one fairness problem
+- SOUND — synthesised, off by default, and never on a timer
 - THE PICKER, AND WHAT A TIER ACTUALLY BUYS
 
 **[`docs/accounts.md`](docs/accounts.md)** — hats, tiers, rooms, gates, own packs
