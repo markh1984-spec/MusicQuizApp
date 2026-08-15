@@ -2088,6 +2088,42 @@ body.console::after { display: none; }
 }
 .pack-card.broken { border-color: var(--bad); }
 
+/* ---- THE PIN, top left.
+ *
+ * Every other corner of this card is spoken for: the "Yours" badge is top
+ * right and the era word runs off the bottom right. Top left is also where the
+ * eye starts, which is right for something that says "this one stays in
+ * reach".
+ *
+ * OFF IS AN OUTLINE, ON IS FILLED — the app's own language, where fill means
+ * commitment. It is deliberately quiet when off: nine cards each shouting an
+ * unpressed control is the "wall of red" fault, and a pin nobody has set
+ * should be almost invisible until looked for. It comes up on hover and on
+ * focus so it can still be found.
+ */
+.pack-pin {
+  position: absolute; top: 6px; left: 6px; z-index: 2;
+  width: 26px; height: 26px; padding: 0;
+  display: inline-grid; place-items: center;
+  border: 1px solid transparent; border-radius: var(--r-pill);
+  background: none; color: var(--ink-dim); cursor: pointer;
+  opacity: 0.28; transition: opacity 120ms ease, background 120ms ease;
+}
+.pack-pin svg { width: 15px; height: 15px; display: block; transform: rotate(-20deg); }
+.pack-card:hover .pack-pin, .pack-pin:focus-visible { opacity: 0.75; }
+.pack-pin:hover { opacity: 1; background: rgba(255, 255, 255, 0.10); }
+/* ON follows the account's own colours, like everything that means "this is
+   mine and it is set" — never gold, which is the trophy colour. */
+.pack-pin.on {
+  opacity: 1; color: var(--ink);
+  background: rgba(255, 46, 136, 0.20);
+  background: color-mix(in srgb, var(--hot) 22%, transparent);
+  border-color: color-mix(in srgb, var(--hot) 55%, transparent);
+}
+.pack-pin.on svg { transform: none; }
+/* The title has to clear it, or a two-line pack name runs under the pin. */
+.pack-card.shut .pack-title, .pack-card.open .pack-title { padding-left: 26px; }
+
 /* ---- A PACK WEARS ITS OWN SUBJECT.
  *
  * The colours come from `pack-look.js`, per pack, inline — see that file for

@@ -419,6 +419,28 @@ export class Accounts {
      */
     if (patch.askRounds !== undefined) prefs.askRounds = Boolean(patch.askRounds);
 
+    /*
+     * PINNED PACKS — which packs stay in reach on the shelf.
+     *
+     * An array of ids, like `hiddenTabs`, and per ACCOUNT rather than per
+     * device: a pin is a statement about how somebody runs their nights, and
+     * losing it because they opened the console on the laptop instead of the
+     * phone would make it a setting nobody trusts.
+     *
+     * Capped, and the ids are length-limited on the way in. Nothing here
+     * checks that a pack EXISTS — a pinned pack that has since been deleted is
+     * simply a pin that matches nothing, which the shelf ignores. Validating
+     * it here would mean this file knowing about the pack library, and it
+     * would still go stale the moment a pack was removed.
+     */
+    if (patch.pinnedPacks !== undefined) {
+      prefs.pinnedPacks = [...new Set(
+        (Array.isArray(patch.pinnedPacks) ? patch.pinnedPacks : [])
+          .map((t) => String(t).slice(0, 80))
+          .filter(Boolean),
+      )].slice(0, 24);
+    }
+
     if (patch.hiddenTabs !== undefined) {
       prefs.hiddenTabs = [...new Set(
         (Array.isArray(patch.hiddenTabs) ? patch.hiddenTabs : [])

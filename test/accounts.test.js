@@ -594,3 +594,60 @@ test('the sign-in and sign-out routes back the accounts up', () => {
     assert.ok(backup < reply, `${route} replies before backing up, so the cookie can outlive the record of it`);
   }
 });
+
+/* ------------------------------------------------------- pinned packs */
+
+/**
+ * A PIN IS PER ACCOUNT, AND IT IS THE STATE RATHER THAN THE ICON THAT MATTERS.
+ *
+ * Somebody pins a pack on the laptop before a gig and reaches for it on the
+ * phone in the pub. A pin that lived on the device would be missing at exactly
+ * that moment, which is why this is on the account beside `hiddenTabs` rather
+ * than in `localStorage` with the fold state.
+ */
+test('PINNED PACKS ARE KEPT ON THE ACCOUNT, deduplicated and capped', () => {
+  withBook((book) => {
+    const made = book.create({ email: 'pin@example.com', password: PASSWORD, name: 'Pin', tier: 'bronze', status: 'active' });
+
+    book.setPrefs(made.id, { pinnedPacks: ['eighties', 'eighties', 'motown'] });
+    assert.deepEqual(book.find(made.id).prefs.pinnedPacks, ['eighties', 'motown'],
+      'the same pack pinned twice should be one pin');
+
+    // A runaway client must not write an unbounded list into the account file.
+    book.setPrefs(made.id, { pinnedPacks: Array.from({ length: 200 }, (_, i) => `p${i}`) });
+    assert.ok(book.find(made.id).prefs.pinnedPacks.length <= 24,
+      'the pin list is not capped');
+
+    // Unpinning everything is a real state, not a no-op.
+    book.setPrefs(made.id, { pinnedPacks: [] });
+    assert.deepEqual(book.find(made.id).prefs.pinnedPacks, []);
+  });
+});
+
+test('a pin does not grant anything, and nothing else moves with it', () => {
+  // The same guarantee every other pref carries: it decides what is in reach
+  // on a shelf, never what somebody may run.
+  withBook((book) => {
+    const made = book.create({ email: 'pin2@example.com', password: PASSWORD, name: 'Pin', tier: 'bronze', status: 'active' });
+    const before = book.find(made.id);
+    book.setPrefs(made.id, { pinnedPacks: ['anything-at-all'] });
+    const after = book.find(made.id);
+    assert.equal(after.tier, before.tier);
+    assert.equal(after.status, before.status);
+    assert.equal(after.role, before.role);
+  });
+});
+
+test('a pin for a pack that no longer exists is simply ignored', () => {
+  /*
+   * Deliberately NOT validated against the library — that would mean the
+   * accounts file knowing about packs, and it would go stale the moment one
+   * was deleted anyway. A pin that matches nothing is a pin that matches
+   * nothing; the shelf sorts by it and finds no card.
+   */
+  withBook((book) => {
+    const made = book.create({ email: 'pin3@example.com', password: PASSWORD, name: 'Pin', tier: 'bronze', status: 'active' });
+    book.setPrefs(made.id, { pinnedPacks: ['a-pack-that-was-deleted'] });
+    assert.deepEqual(book.find(made.id).prefs.pinnedPacks, ['a-pack-that-was-deleted']);
+  });
+});

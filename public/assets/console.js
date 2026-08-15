@@ -16,6 +16,59 @@ import { inSeason } from './looks.js';
 import { packLookAttrs } from './pack-look.js';
 
 /**
+ * PINNING A PACK — "keep this one where I can reach it".
+ *
+ * Asked for on 15 August 2026: *"a pin feature could be cool, just a little pin
+ * in the corner that comes on and off"*, and the reason it earns its place is
+ * the one the host gave for the six-pack shelf: **drag and drop only works
+ * while the card and the slot are both on screen.** A pin is not decoration or
+ * a favourite — it is the control that decides what is in REACH.
+ *
+ * **TOP LEFT, because every other corner is taken.** An own-pack carries its
+ * *Yours* badge top right and the era word runs off the bottom right. Top left
+ * is also where the eye starts, so it reads as a status rather than an
+ * ornament.
+ *
+ * **PER ACCOUNT, NOT PER DEVICE** — `prefs.pinnedPacks`, saved through the
+ * same `/api/me/prefs` the ask-the-room switch uses. A pin lost by opening the
+ * console on the laptop instead of the phone is a setting nobody would trust.
+ *
+ * **AND A PIN IS NOT A LAUNCH.** It changes what is in reach and nothing else.
+ * That matters on this screen specifically: a mis-aimed drop here used to
+ * destroy a whole running order, so a second gesture in the corner of the same
+ * card must not be able to start a night.
+ */
+const isPinned = (id) => ((library && library.prefs && library.prefs.pinnedPacks) || []).includes(id);
+
+/** The drawn pin. Never an emoji — the same rule `binIcon()` follows. */
+function pinIcon() {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor"
+    d="M14.5 2.6a1.4 1.4 0 0 1 2 0l4.9 4.9a1.4 1.4 0 0 1 0 2l-.5.5a3.4 3.4 0 0 1-3.6.8l-2.6 2.6.2 3.4a1.4 1.4 0 0 1-2.4 1.1l-3.3-3.3-4.3 4.3a1 1 0 0 1-1.4-1.4l4.3-4.3-3.3-3.3a1.4 1.4 0 0 1 1.1-2.4l3.4.2 2.6-2.6a3.4 3.4 0 0 1 .8-3.6z"/></svg>`;
+}
+
+async function togglePin(id, btn) {
+  const have = ((library.prefs || {}).pinnedPacks) || [];
+  const want = have.includes(id) ? have.filter((p) => p !== id) : [...have, id];
+  btn.disabled = true;
+  try {
+    const res = await fetch(keyed('/api/me/prefs'), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
+      body: JSON.stringify({ pinnedPacks: want }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Could not save that');
+    library.prefs = data.prefs;
+    render();
+  } catch (err) {
+    btn.disabled = false;
+    // SAY SO. A pin that silently did not save is one somebody relies on
+    // being there next week.
+    alert('Could not pin that: ' + err.message);
+  }
+}
+
+/**
  * THE ERA IN BIG LETTERS, BEHIND EVERYTHING ELSE ON THE CARD.
  *
  * Asked for on 15 August 2026 after cartoon figures were tried and did not
@@ -5032,7 +5085,15 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
      * run on purpose.
      */
     const shelf = (p) => (freshness(p).expired ? 2 : freshness(p).topical ? 0 : 1);
-    const inOrder = [...found].sort((a, b) => shelf(a) - shelf(b));
+    /*
+     * PINNED FIRST, ahead of even a fresh topical pack.
+     *
+     * A pin is somebody saying "this one, keep it where I can reach it", and
+     * the app's own ordering guessing better than that would make the pin a
+     * suggestion rather than a decision. Everything below it is unchanged, so
+     * unpinning puts the shelf back exactly as it was.
+     */
+    const inOrder = [...found].sort((a, b) => (isPinned(b.id) - isPinned(a.id)) || (shelf(a) - shelf(b)));
     const yours = inOrder.filter((p) => !p.locked);
     const buyable = inOrder.filter((p) => p.locked);
 
@@ -5686,6 +5747,9 @@ function packCard(kind, pack, repaint = () => {}) {
       style="${look.style}"
       draggable="${pack.broken ? 'false' : 'true'}" data-pack="${esc(pack.id)}" data-kind="${esc(kind)}">
       ${packWord(look)}
+      ${pack.broken ? '' : `<button class="pack-pin ${isPinned(pack.id) ? 'on' : ''}" type="button"
+        aria-pressed="${isPinned(pack.id) ? 'true' : 'false'}"
+        aria-label="${isPinned(pack.id) ? 'Unpin' : 'Pin'} ${esc(pack.title)}">${pinIcon()}</button>`}
       <button class="pack-title" title="${open ? 'Close it' : 'Open it to set tonight up and launch'}"
         aria-expanded="${open ? 'true' : 'false'}">${esc(pack.title)}</button>
       ${ownPack ? '<div class="pack-yours" title="You wrote this one. Nobody else can read it.">Yours</div>' : ''}
@@ -5809,6 +5873,20 @@ function packCard(kind, pack, repaint = () => {}) {
    * the biggest target on the card does. Read is one tap further in, on the
    * card you have already chosen, which is when you actually want to read it.
    */
+  /*
+   * `stopPropagation` on the CLICK and the MOUSEDOWN both — the card is a drag
+   * source, so without the second one a press on the pin starts dragging the
+   * pack instead of pinning it. That is the same trap the round ticks hit in
+   * Tonight, recorded there for the same reason.
+   */
+  const pinBtn = el.querySelector('.pack-pin');
+  if (pinBtn) {
+    pinBtn.addEventListener('mousedown', (ev) => ev.stopPropagation());
+    pinBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      togglePin(pack.id, pinBtn);
+    });
+  }
   el.querySelector('.pack-title').addEventListener('click', () => {
     if (open) openPack.delete(kind);
     else openPack.set(kind, pack.id);
