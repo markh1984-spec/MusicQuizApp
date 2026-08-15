@@ -1936,7 +1936,15 @@ body.console::after { display: none; }
    nine packs three rows deep, each one the size of a photograph. 176 puts six
    on a row at about the size of a tile in Tonight, which is the point of
    making them the same shape. */
-.pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 12px; }
+/*
+ * A PACK IS THE SHAPE OF THE HOLE IT GOES IN.
+ *
+ * Capped at 200px rather than `1fr`, because that is what a Tonight slot caps
+ * at — stretched to fill, a card on a wide screen came out half as wide again
+ * as the slot it was being dragged into, and the two read as different kinds
+ * of object.
+ */
+.pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 200px)); gap: 12px; }
 
 /* ---- ONE PACK OPEN AT A TIME, and the rest are names.
 
@@ -1961,10 +1969,29 @@ body.console::after { display: none; }
    Content sits at the BOTTOM, like the launch tiles, so a one-line title and
    a three-line one start from the same place and the row of cards reads
    along a line rather than as a ragged set of tops. */
+/*
+ * THE SAME SIZE AS THE SLOT IT IS DRAGGED INTO — asked for directly, and it is
+ * a real affordance rather than tidiness: something the shape of the hole
+ * reads as belonging in it, and the drag explains itself before anybody has
+ * tried it.
+ *
+ * It was `aspect-ratio: 1 / 1`, which matched while the Tonight slots were
+ * square too. They stopped being square when Tonight was measured at 600px
+ * tall and had to lose the height — so this is the other half of that change,
+ * and leaving it undone is what made a square card go into a letterbox hole.
+ *
+ * `min-height` rather than `height`, because a long pack title is allowed to
+ * take a third line rather than being clipped. The slot has the same floor for
+ * the same reason.
+ */
 .pack-card.shut {
   gap: 2px;
-  aspect-ratio: 1 / 1;
+  min-height: 76px;
   justify-content: flex-end;
+}
+@media (max-width: 560px) {
+  /* Matching the slots' own phone height — see `.lb-tiles .lb-tile`. */
+  .pack-card.shut { min-height: 58px; }
 }
 .pack-card.shut .pack-title { font-size: var(--fs-ctl); }
 /* The caret says it opens — the same job the chevron does on a dropdown, and
