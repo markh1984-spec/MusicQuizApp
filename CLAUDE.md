@@ -2185,6 +2185,36 @@ trackpad. **It also accepts a drop while SHUT and springs open on the way**,
 because collapsed is exactly the state somebody is in when they arrive at a
 venue and start setting up.
 
+**A ROUND IS SWITCHED OFF WITH A TICK, NOT DRAGGED OUT.** The host's own
+design once the pack tiles existed: *"have the rounds in the quiz pack with a
+green tick each, and to turn one off you click the green tick and it turns
+into a cross — removes the need to drag and drop sections of a quiz pack."*
+
+**It is better than the round-level drag it replaced, and the reason is
+bigger than tidiness: a drag is a LAPTOP-ONLY gesture.** HTML5 drag events are
+never delivered on touch, so round-dragging did not exist on a phone at all —
+on a console this file has measured at 320px. A tick is a tap, so the same job
+now works on both, with no second way of doing it to keep in step.
+
+Four things that are load-bearing:
+
+- **The last round cannot be switched off.** A night with no rounds is not a
+  night, the server refuses it, and being refused at Launch — in a venue, with
+  a room in front of you — is the wrong place to find out.
+- **Switching one off makes it a COMPOSED night even with one pack**, so
+  `nightOrder()` asks whether anything is off rather than only counting packs.
+  Miss that and the ticks look like they work and change nothing.
+- **The Launch button names what will be PLAYED.** "Launch The 1980s Pop Music
+  Quiz" over a pack with two of its three rounds off is the console and the
+  projector disagreeing before the night has started, which is the fault this
+  bar exists to end.
+- **`stopPropagation` on the tick's mousedown as well as its click**, because
+  the tile itself is draggable — without it a press on a tick starts dragging
+  the pack instead of switching a round off.
+
+Keyed by pack AND index rather than by round title: two packs can both have a
+round called "Round one", and a title is a thing somebody renames.
+
 **MIXING ROUNDS FROM TWO PACKS BELONGS TO THE NIGHT, NOT TO THE EDITOR — and
 that is why it is not built.** It was asked for as *"mix and match 1980s A and
 1980s B without affecting the master copies"*, and two editor layouts were

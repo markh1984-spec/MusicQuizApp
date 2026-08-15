@@ -5435,6 +5435,25 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .lb-tile-sub, .lb-tile-cap { color: var(--ink-dim); }
+/* A TICK PER ROUND, and a tap turns it into a cross. It replaces the line
+   that said "3 rounds" — the same information with nothing you can do about
+   it, where these say which three and let you drop one.
+   Wraps, because a pack can carry five and a tile is 123px wide on a 320px
+   phone; small enough that five fit, big enough to hit with a thumb. */
+.lb-rounds { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.lb-rd {
+  display: inline-grid; place-items: center;
+  width: 22px; height: 22px; padding: 0;
+  border-radius: var(--r-pill); cursor: pointer;
+  font: inherit; font-size: var(--fs-mini); font-weight: 900; line-height: 1;
+}
+/* Green for on and red for off, which is the one place in this app those two
+   mean exactly what they mean everywhere else: this round is in, this one is
+   out. Outlined rather than filled, or a pack with five rounds is five bright
+   dots shouting from a tile whose job is to name a quiz. */
+.lb-rd.on { background: rgba(47, 224, 122, 0.16); border: 1px solid rgba(47, 224, 122, 0.55); color: var(--good); }
+.lb-rd.off { background: rgba(255, 77, 94, 0.12); border: 1px solid rgba(255, 77, 94, 0.5); color: var(--bad); }
+.lb-rd:hover { filter: brightness(1.25); }
 .lb-tile-cap { text-transform: none; letter-spacing: 0; }
 
 /* A PACK IN THE NIGHT. Filled, in the account's own surface, so it reads as

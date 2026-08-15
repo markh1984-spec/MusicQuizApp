@@ -2959,6 +2959,25 @@ let packDrag = null;
  */
 let lbExtra = [];
 
+/**
+ * ROUNDS SWITCHED OFF — a Set of `packId:roundIndex`.
+ *
+ * The host's own design, and it replaced dragging rounds between packs:
+ * *"have the rounds in the quiz pack with a green tick each, and to turn one
+ * off you click the green tick and it turns into a cross — removes the need
+ * to drag and drop sections of a quiz pack."*
+ *
+ * He is right, and the reason is bigger than tidiness. **A round-level drag is
+ * a laptop-only gesture**: HTML5 drag events are never delivered on touch, so
+ * that half of the feature did not exist on a phone at all — and this file's
+ * own rule has the console measured at 320px. A tick is a tap, so the same
+ * job now works on both, with no second way of doing it to keep in step.
+ *
+ * Keyed by pack AND index rather than by round title: two packs can have a
+ * round called "Round one", and a title is a thing somebody renames.
+ */
+let lbOff = new Set();
+
 /** Which round chip is being dragged within the strip, if any. */
 let roundDrag = null;
 
@@ -3494,7 +3513,7 @@ function launchBar() {
      * rounds are mostly another. Adding to an order is the strip's job and it
      * is a different gesture, which is the whole reason the two are split.
      */
-    if (currentPack && currentPack.id !== pack.id) lbExtra = [];
+    if (currentPack && currentPack.id !== pack.id) { lbExtra = []; lbOff = new Set(); }
     currentPack = pack;
     text.value = pack.title;
     /*
@@ -3868,10 +3887,42 @@ function launchBar() {
    * out would be the same evening by a longer road, through code that did not
    * exist last week, on the protected path.
    */
+  const offKey = (packId, round) => `${packId}:${round}`;
+  const isOff = (packId, round) => lbOff.has(offKey(packId, round));
+
+  /** Tonight's rounds, in order, with the switched-off ones left out. */
+  const activeRounds = () => lbPacks().flatMap(roundsOf).filter((r) => !isOff(r.packId, r.round));
+
   function nightOrder() {
     const packs = lbPacks();
-    if (packs.length < 2) return null;
-    return packs.flatMap(roundsOf);
+    const rounds = activeRounds();
+    /*
+     * NULL FOR AN ORDINARY NIGHT — one pack, played as written. That is the
+     * night this app has always run, and spelling its own rounds out would be
+     * the same evening by a longer road, through code that did not exist last
+     * week, on the protected path.
+     *
+     * The moment a round is switched OFF it stops being that night, even with
+     * one pack — which is why this asks whether anything is off rather than
+     * only counting packs.
+     */
+    if (packs.length < 2 && rounds.length === roundsOf(packs[0]).length) return null;
+    return rounds;
+  }
+
+  /**
+   * Switch a round off, or back on.
+   *
+   * **THE LAST ONE CANNOT BE SWITCHED OFF.** A night with no rounds is not a
+   * night, the server refuses it, and being refused at Launch — in a venue,
+   * with a room in front of you — is the wrong place to find out.
+   */
+  function toggleRound(packId, round) {
+    const key = offKey(packId, round);
+    if (lbOff.has(key)) { lbOff.delete(key); paintOrder(); return; }
+    if (activeRounds().length <= 1) return;
+    lbOff.add(key);
+    paintOrder();
   }
 
   /** Take a pack out. Taking the FIRST one out clears the night. */
@@ -3879,6 +3930,7 @@ function launchBar() {
     if (at === 0) {
       currentPack = null;
       lbExtra = [];
+      lbOff = new Set();
       chosen.hidden = true;
       /*
        * AND SET IT UP GOES WITH IT. `pick()` unhides that button and nothing
@@ -3993,8 +4045,31 @@ function launchBar() {
           <button class="lb-tile-off" type="button" aria-label="Take this pack out">&times;</button>
           <span class="lb-tile-n">${at + 1}</span>
           <b class="lb-tile-name">${esc(pack.title)}</b>
-          <span class="tiny lb-tile-sub">${rounds ? `${rounds} round${rounds === 1 ? '' : 's'}` : 'bingo'}</span>
+          ${rounds
+    ? `<div class="lb-rounds">${(pack.rounds || []).map((r, i) => `
+          <button class="lb-rd ${isOff(pack.id, i) ? 'off' : 'on'}" type="button"
+            data-round="${i}" title="${esc(r.title || `Round ${i + 1}`)}"
+            aria-label="${esc(r.title || `Round ${i + 1}`)} — ${isOff(pack.id, i) ? 'off' : 'on'}">
+            ${isOff(pack.id, i) ? '&times;' : '&check;'}
+          </button>`).join('')}</div>`
+    : '<span class="tiny lb-tile-sub">bingo</span>'}
         </div>`);
+      /*
+       * A TICK PER ROUND, and turning one off is a tap on it. The count it
+       * replaces said "3 rounds", which is the same information with nothing
+       * you can do about it — these say which three and let you drop one.
+       *
+       * `stopPropagation` on the mousedown as well as the click: the tile
+       * itself is draggable, and without it a press on a tick starts dragging
+       * the pack instead of switching a round off.
+       */
+      for (const dot of tile.querySelectorAll('.lb-rd')) {
+        dot.addEventListener('mousedown', (ev) => ev.stopPropagation());
+        dot.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          toggleRound(pack.id, Number(dot.dataset.round));
+        });
+      }
       tile.querySelector('.lb-tile-off').addEventListener('click', () => dropPack(at));
       // Reordering, same shape as the editor's: which HALF of the target the
       // cursor is in decides before or after, or a list can only ever be
@@ -4131,11 +4206,17 @@ function launchBar() {
       goBtn.textContent = 'Drag a pack in to launch';
       return;
     }
+    const rounds = activeRounds().length;
     if (packs.length < 2) {
-      goBtn.textContent = `Launch ${packs[0].title}`;
+      // It has to name what will actually be PLAYED — "Launch The 1980s Pop
+      // Music Quiz" over a pack with two of its three rounds switched off is
+      // the console and the projector disagreeing before the night has even
+      // started.
+      goBtn.textContent = rounds === roundsOf(packs[0]).length
+        ? `Launch ${packs[0].title}`
+        : `Launch ${packs[0].title} — ${rounds} round${rounds === 1 ? '' : 's'}`;
       return;
     }
-    const rounds = packs.reduce((n, p) => n + (p.rounds || []).length, 0);
     goBtn.textContent = `Launch tonight — ${packs.length} packs, ${rounds} round${rounds === 1 ? '' : 's'}`;
   }
 
@@ -4232,8 +4313,7 @@ function launchBar() {
     // The same pack twice is a mis-drop rather than an intention — a night
     // does not play the same ten questions in rounds two and four.
     if (lbPacks().some((p) => p.id === from.id)) { paintOrder(); return; }
-    const rounds = lbPacks().reduce((n, p) => n + (p.rounds || []).length, 0)
-      + (from.rounds || []).length;
+    const rounds = activeRounds().length + (from.rounds || []).length;
     if (rounds > MAX_NIGHT_ROUNDS) {
       alert(`A night can have at most ${MAX_NIGHT_ROUNDS} rounds — that would make ${rounds}.`);
       return;
