@@ -57,6 +57,7 @@ import { upcoming } from './public/assets/diary.js';
 import { calendarIcs } from './src/ics.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, switchedOn, PACK_PENCE } from './public/assets/plans.js';
 import { lobbyGameFor } from './public/assets/lobby-games.js';
+import { publishedNights, isPublished, setPublished, readableNight } from './src/gallery.js';
 import { sendEmail, emailConfigured, emailProvider, keepKeyAlive, resetEmail } from './src/email.js';
 import { Suggestions, KINDS, PACK_REQUEST_KIND } from './src/suggestions.js';
 import { Spend, spendRecorder, imagePrices } from './src/spend.js';
@@ -1021,6 +1022,16 @@ async function handleGet(req, res, url, route) {
   // Where a scanned voucher lands. Open, like /play and the sign-in page:
   // it hands out nothing on its own, the code in the address has to be right.
   if (route === '/v') return serveFile(res, config.publicDir, 'voucher.html'), true;
+  // The photo gallery. Open, like /play and /v — it is for the people who were
+  // in the room, who have no account and never will. It shows only nights the
+  // quizmaster has published; see src/gallery.js.
+  if (route === '/gallery') {
+    // NOT in a search result, published or not. Being findable is speculative
+    // marketing value; a stranger's face in a search result is a concrete cost
+    // that lands on the player. One header to change later if it earns it.
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow, noimageindex');
+    return serveFile(res, config.publicDir, 'gallery.html'), true;
+  }
   if (route === '/host') return serveFile(res, config.publicDir, 'host.html'), true;
   if (route === '/editor') return serveFile(res, config.publicDir, 'editor.html'), true;
   if (route === '/console') return serveFile(res, config.publicDir, 'console.html'), true;
@@ -1925,6 +1936,29 @@ async function handleGet(req, res, url, route) {
     }), true;
   }
 
+  /*
+   * PUBLISH A NIGHT, or take it back down.
+   *
+   * Behind the same gate as the rest of Past gigs, and the room comes from WHO
+   * YOU ARE — there is no room parameter, so this can only ever publish the
+   * asker's own nights.
+   *
+   * **Taking it down matters as much as putting it up.** Somebody will ask for
+   * their photo to be removed, and on a page with no contact details the only
+   * honest answer is a quizmaster who can unpublish in one tap.
+   *
+   * **IT HAS TO SIT ABOVE `/api/past-gigs/<night>`**, which matches any path
+   * under it and would answer "that is not a night" to the word `publish` —
+   * a 404 that looks exactly like a working route refusing a bad date.
+   */
+  if (route === '/api/past-gigs/publish' && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
+    const body = await readJson(req);
+    const gigRoom = roomForHost(req, url);
+    const done = await setPublished(gigRoom.id, String(body.night || ''), body.on !== false);
+    return sendJson(res, done.ok ? 200 : 400, done), true;
+  }
+
   if (route.startsWith('/api/past-gigs/')) {
     if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
     const night = decodeURIComponent(route.slice('/api/past-gigs/'.length));
@@ -1952,6 +1986,105 @@ async function handleGet(req, res, url, route) {
    * in account, so this can only ever hand back pictures from the asker's own
    * nights.
    */
+  /*
+   * THE PUBLIC GALLERY — open, like `/play` and `/v`, and for the same reason:
+   * it is for the people who were in the room, who have no account and never
+   * will. It hands out nothing on its own — only nights the quizmaster has
+   * PUBLISHED, and `src/gallery.js` fails closed on any doubt.
+   *
+   * It reads the PRIVATE REPO rather than `/photos/`, which reads the local
+   * disk — and that disk is wiped on every deploy, so a gallery built on it
+   * would show nothing older than the last thing that shipped.
+   *
+   * The house room, because this is the app owner's own page. A per-quizmaster
+   * gallery wants a slug of its own and is a separate job.
+   */
+  /*
+   * THE OWNER SEES IT BEFORE ANYBODY ELSE DOES.
+   *
+   * Asked for directly: *"I want to be able to see it live myself to know it
+   * works, but won't advertise it until I know every photo has gone through
+   * the flow properly."* So signed in, the page shows UNPUBLISHED nights too,
+   * marked as such — which means the whole path can be proved end to end
+   * without a single photograph becoming public.
+   *
+   * `whoIs` must be truthy as well as the room matching: an anonymous request
+   * resolves to the house room anyway, so the room alone is not a check.
+   */
+  const galleryPreview = () => {
+    const who = whoIs(req, url);
+    return Boolean(who) && roomForHost(req, url).id === HOUSE;
+  };
+
+  if (route === '/api/gallery') {
+    const preview = galleryPreview();
+    const live = await publishedNights(HOUSE);
+    const nights = preview
+      ? [...new Set([...live, ...(await listDirs(photoFolder(HOUSE), 'photos')).map((f) => f.name).filter(isNightFolder)])]
+        .sort().reverse()
+      : live;
+    const out = [];
+    for (const night of nights) {
+      const files = await listDir(`${photoFolder(HOUSE)}/${night}`, 'photos');
+      const count = (files || []).filter((f) => safePhotoName(f.name)).length;
+      // A published night with nothing in it is a heading over a blank space.
+      if (count) out.push({ night, when: readableNight(night), count, live: live.includes(night) });
+    }
+    return sendJson(res, 200, { nights: out, preview }), true;
+  }
+
+  if (route.startsWith('/api/gallery/')) {
+    const night = decodeURIComponent(route.slice('/api/gallery/'.length));
+    /*
+     * ONE 404 FOR EVERY REFUSAL — not a night, not published, or nothing
+     * there all answer the same way, exactly as `/api/voucher` does. Three
+     * different messages would let anybody map which dates exist.
+     */
+    const preview = galleryPreview();
+    if (!isNightFolder(night) || !(preview || await isPublished(HOUSE, night))) {
+      return sendJson(res, 404, { error: 'Nothing here.' }), true;
+    }
+    const files = await listDir(`${photoFolder(HOUSE)}/${night}`, 'photos');
+    return sendJson(res, 200, {
+      night,
+      when: readableNight(night),
+      live: await isPublished(HOUSE, night),
+      preview,
+      photos: (files || [])
+        .map((f) => safePhotoName(f.name))
+        .filter(Boolean)
+        .map((name) => ({ name, url: `/gallery-photo/${night}/${encodeURIComponent(name)}` })),
+    }), true;
+  }
+
+  /*
+   * One photo, proxied. The repo is private, so a direct link is a 404 in
+   * anybody's browser — and the published check is repeated HERE rather than
+   * trusted from the listing, because a URL can be typed.
+   */
+  if (route.startsWith('/gallery-photo/')) {
+    const parts = route.slice('/gallery-photo/'.length).split('/');
+    const night = decodeURIComponent(parts[0] || '');
+    const name = safePhotoName(decodeURIComponent(parts[1] || ''));
+    if (parts.length !== 2 || !name || !(galleryPreview() || await isPublished(HOUSE, night))) {
+      return sendJson(res, 404, { error: 'Nothing here.' }), true;
+    }
+    const bytes = await getFile(`${photoFolder(HOUSE)}/${night}/${name}`, 'photos');
+    if (!bytes) return sendJson(res, 404, { error: 'Nothing here.' }), true;
+    res.writeHead(200, {
+      'Content-Type': name.endsWith('.png') ? 'image/png' : name.endsWith('.webp') ? 'image/webp' : 'image/jpeg',
+      'Content-Length': bytes.length,
+      // A filed photo is written once and never rewritten, so a page of forty
+      // should not fetch forty every time somebody opens it.
+      'Cache-Control': 'public, max-age=86400',
+      // NOT in a search result. Being findable on Google is speculative
+      // marketing value; a stranger's face turning up in a search is a
+      // concrete cost, and it lands on the player rather than the business.
+      'X-Robots-Tag': 'noindex, noimageindex',
+    });
+    return res.end(bytes), true;
+  }
+
   if (route.startsWith('/past-photo/')) {
     if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
     const parts = route.slice('/past-photo/'.length).split('/');
