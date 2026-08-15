@@ -1635,6 +1635,30 @@ the input that makes skin-tone heuristics useless.
   the score takes. Auto-publish is a settled decision; this is a filter on the
   way past, not a queue.
 
+### THE CONSOLE SCROLLS SIDEWAYS AT 320px — small, real, and old
+
+Measured on 15 August 2026 and confirmed **pre-existing**: identical 32px of
+horizontal overflow on that day's work and on the commit before it, so nothing
+recent caused it. Everything at 390px and up measures clean.
+
+Eleven offenders, all the same shape — **things that neither wrap nor shrink**:
+
+- **eight `.tab` buttons**, running to x=999 in a 320px viewport. The bar is
+  meant to scroll sideways below 860px, but it is pushing the DOCUMENT rather
+  than scrolling inside itself, which is the actual fault;
+- **`.pack-tools` / `.pack-search`**, right edge at 352 against a 320 viewport —
+  the search box has a floor it will not go under;
+- one `a.minor` link in the same row.
+
+**It is a tidy-up rather than a fire**: 320px is the narrowest phone anybody
+still carries, and the console is driven at 390 and up in practice. But it is
+the seventh instance of the min-content fault this file records, and the fix is
+the same each time — `min-width: 0` on the flex children, `max-width: 100%` on
+the input, and let the bar clip inside itself instead of pushing the page.
+
+**Measure `scrollWidth` against `clientWidth` at 320 after anything
+structural**; nothing else finds it.
+
 ### THE CONSOLE IS FOR LAUNCHING. THE PACKS PAGE IS THE WORKSHOP.
 
 Proposed on 15 August 2026: *"perhaps the console menu item itself needs to be
