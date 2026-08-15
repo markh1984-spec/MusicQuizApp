@@ -1,0 +1,86 @@
+/**
+ * CLAUDE.md HAS A BYTE BUDGET, AND THIS IS WHY IT IS A TEST RATHER THAN A RULE.
+ *
+ * That file loads IN FULL at the start of every session, before a line of code
+ * is read — so every byte in it is paid for by every future session, whether or
+ * not the work touches what it says. It has been split twice for that reason,
+ * and **both times it grew back**: 200,618 bytes on 14 August, split to
+ * ~150,000, and 167,474 the next day. A written rule to keep it short is
+ * exactly what was in place while that happened.
+ *
+ * So the rule has an assertion on it now. The number is not sacred — raise it
+ * deliberately when something genuinely belongs in the always-loaded file, and
+ * the diff will say that is what you did. What it stops is the quiet accretion
+ * of one more paragraph per session, which is how both of the last two splits
+ * became necessary.
+ *
+ * **WHERE THE PROSE GOES INSTEAD is already settled**: `docs/`, one file per
+ * area, opened only by the session that needs it. `CLAUDE.md` keeps the RULE
+ * and a link. See *Where the reasoning lives*.
+ */
+
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { statSync, readFileSync } from 'node:fs';
+
+const ROOT = new URL('..', import.meta.url).pathname;
+
+/**
+ * The ceiling, in bytes.
+ *
+ * Set at 132,000 on 15 August 2026, just above the 130,362 the third split
+ * left — deliberately tight, because a budget with room in it is a budget
+ * nobody notices until it is spent.
+ */
+const BUDGET = 132_000;
+
+test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
+  const bytes = statSync(`${ROOT}CLAUDE.md`).size;
+  assert.ok(
+    bytes <= BUDGET,
+    `CLAUDE.md is ${bytes} bytes, over the ${BUDGET} budget by ${bytes - BUDGET}.\n`
+    + 'It loads in full at the start of EVERY session. Move the reasoning to a\n'
+    + 'file in docs/ and leave the rule plus a link behind — see "Where the\n'
+    + 'reasoning lives". Raise the budget only if the new text genuinely has to\n'
+    + 'be read by every session before any work starts.',
+  );
+});
+
+test('every docs/ link in CLAUDE.md resolves', () => {
+  /*
+   * The split only works while the links do. A rule whose reasoning has moved
+   * to a file that is not there any more is worse than one that never moved:
+   * it reads as though the detail exists and can be checked.
+   */
+  const src = readFileSync(`${ROOT}CLAUDE.md`, 'utf8');
+  const broken = [...src.matchAll(/\]\((docs\/[\w.-]+\.md)\)/g)]
+    .map((m) => m[1])
+    .filter((rel, i, all) => all.indexOf(rel) === i)
+    .filter((rel) => {
+      try { return !statSync(ROOT + rel).isFile(); } catch { return true; }
+    });
+  assert.deepEqual(broken, [], `CLAUDE.md links to files that are not there: ${broken.join(', ')}`);
+});
+
+test('EVERY DECISION IS STILL NAMED IN THE ALWAYS-LOADED FILE', () => {
+  /*
+   * The third split moved the decisions table to `docs/decisions.md` and left
+   * an index: every decision NAME, plus every sentence that forbids something,
+   * verbatim. That index is the half that has to survive — a decision nobody
+   * can see is a decision that gets relitigated, which is the exact thing the
+   * table is titled after.
+   *
+   * So this checks the two files against each other rather than trusting that
+   * whoever edits one remembers the other.
+   */
+  const claude = readFileSync(`${ROOT}CLAUDE.md`, 'utf8');
+  const doc = readFileSync(`${ROOT}docs/decisions.md`, 'utf8');
+  const names = doc.split('\n')
+    .filter((l) => l.startsWith('|') && !l.startsWith('|---') && !l.startsWith('| Decision |'))
+    .map((l) => l.slice(1).split('|')[0].trim())
+    .filter(Boolean);
+
+  assert.ok(names.length > 30, `only found ${names.length} decisions — has the table moved again?`);
+  const missing = names.filter((n) => !claude.includes(n));
+  assert.deepEqual(missing, [], `these decisions are in docs/decisions.md but named nowhere in CLAUDE.md:\n${missing.join('\n')}`);
+});
