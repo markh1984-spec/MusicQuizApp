@@ -5534,7 +5534,23 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    the correct trade — it is exactly what the pack grid below already does on
    its last row, and a consistent tile size across states is worth more than a
    row that always reaches the edge. */
-.lb-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 200px)); gap: 8px; }
+/*
+ * THREE ACROSS, ON EVERY WIDTH — and 118px was too wide to manage it.
+ *
+ * Measured at 390px: three 118px slots plus gaps plus the panel's own padding
+ * came to more than the screen, so they STACKED, and Tonight came out 493px
+ * tall on a phone — worse than the laptop it had just been fixed for.
+ *
+ * They also stack for nothing. HTML5 drag events never fire on touch (see
+ * CLAUDE.md), so on a phone these are not drop targets at all; the taps and
+ * the arrows are the touch path. Three short slots that say what the night is
+ * are the right thing there, not three tall ones nobody can drag onto.
+ */
+.lb-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 200px)); gap: 8px; }
+@media (max-width: 560px) {
+  /* Shorter still on a phone, where they are a summary rather than a target. */
+  .lb-tiles .lb-tile { min-height: 58px; padding: 8px; }
+}
 /* THE THREE FACTS GET THEIR OWN ROW. Three columns always, because there are
    always exactly three of them — where, when and what for — and an auto grid
    would wrap one of them under the others the moment the packs beside them
@@ -5574,7 +5590,6 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   border-bottom: 1px dashed var(--panel-line);
 }
 .lb-say-venue:hover { color: var(--hot); border-bottom-color: var(--hot); }
-@media (max-width: 560px) { .lb-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .lb-tile {
   position: relative; display: flex; flex-direction: column; justify-content: flex-end;
   gap: 2px; min-width: 0; padding: 10px;
