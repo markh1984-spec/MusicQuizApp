@@ -138,8 +138,12 @@ export const PACK_SUBJECTS = [
   // "R'n'B" comes out of `words()` as three separate letters, so the spaced
   // forms have to be listed too — the punctuation is stripped, which is what
   // makes "RnB" and "R'n'B" the same pack, and it is also what splits them.
-  { id: 'soul', words: ['soul', 'motown', 'rnb', 'r n b', 'r and b', 'funk'], word: 'SOUL', a: '#c9862b', b: '#5a2352' },
+  // DISCO BEFORE SOUL, because 'funk' is in the soul list and "Disco & Funk
+  // Bingo" was coming out as SOUL — printing a word the title does not lead
+  // with. Where two are both true, the more specific one should win, and a
+  // pack that says Disco is a disco pack.
   { id: 'disco', words: ['disco', 'boogie'], word: 'DISCO', a: '#b552d8', b: '#5a1f7a', pattern: 'lines' },
+  { id: 'soul', words: ['soul', 'motown', 'rnb', 'r n b', 'r and b', 'funk'], word: 'SOUL', a: '#c9862b', b: '#5a2352' },
   { id: 'dance', words: ['dance', 'house', 'rave', 'club', 'garage', 'techno'], word: 'DANCE', a: '#7a4dff', b: '#0f4f78' },
   { id: 'hiphop', words: ['hip hop', 'hiphop', 'rap', 'grime'], word: 'RAP', a: '#d1701f', b: '#2c1550' },
   { id: 'country', words: ['country', 'western', 'folk'], a: '#b58a4a', b: '#274031' },

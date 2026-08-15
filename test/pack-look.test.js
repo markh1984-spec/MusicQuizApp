@@ -196,3 +196,14 @@ test('nothing a human typed reaches the style attribute', () => {
   assert.ok(!attrs.style.includes('"'), attrs.style);
   assert.match(attrs.style, /^--pk-a: [^;]+; --pk-b: [^;]+; --pk-edge: [^;]+$/);
 });
+
+test('a pack that says Disco is a disco pack, not a soul one', () => {
+  /*
+   * "Disco & Funk Bingo" came out as SOUL, because `funk` is in the soul list
+   * and soul was checked first — so the card printed a word the title does not
+   * lead with. Where two entries are both true, the more specific wins.
+   */
+  assert.equal(packLook({ title: 'Disco & Funk Bingo' }).word, 'DISCO');
+  // ...and the plain case is untouched.
+  assert.equal(packLook({ title: 'Motown & Soul Bingo' }).word, 'SOUL');
+});
