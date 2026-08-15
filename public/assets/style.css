@@ -2059,7 +2059,28 @@ body.console::after { display: none; }
    stopped being true the day a card only carries them when it is open. What
    it does now is tighten the grid and the closed cards; the open one is
    unchanged, because that is the one you are actually working with. */
-.pack-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+/* `min-width: 0`, AND IT IS THE WHOLE FIX — the eighth instance of the
+   min-content fault in this app, diagnosed rather than guessed at.
+ *
+ * A flex child defaults to `min-width: auto`, which means it will not shrink
+ * below the min-content width of what is inside it. Inside here is the search
+ * box at a hardcoded `width: 190px`, and its own `max-width: 42vw` never got
+ * to help: the global `input[type="search"]` rule is MORE SPECIFIC (0,1,1
+ * against 0,1,0) and resets `max-width` to 100%. So the box asked for 190px,
+ * this row refused to go below it, and the console scrolled sideways by 32px
+ * at 320.
+ *
+ * Three plausible fixes were tried live in a browser before this one was
+ * written — on `.tabbar`, on `.pack-search` and on `.game-section` — and none
+ * of them moved the number. **The parent refusing to shrink was the
+ * constraint, not the child asking to be wide**, which is the part that is
+ * counter-intuitive every time this recurs.
+ *
+ * It only ever showed on the Workshop door, where the row has a heading beside
+ * it and carries Compact and the edit link as well; the Console door has the
+ * search box alone and measured clean, which is why it survived today's
+ * checks. */
+.pack-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
 .pack-search {
   width: 190px; max-width: 42vw;
   padding: 8px 12px; border-radius: var(--r-field);
