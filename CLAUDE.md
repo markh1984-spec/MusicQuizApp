@@ -1786,6 +1786,11 @@ buttons STAY** — drag is the fast way and every drag has a way round it.
 - **A ROUND IS SWITCHED OFF WITH A TICK, NOT DRAGGED OUT** — a tap works on both
   a laptop and a phone. **ANY round can be switched off, including the last**; a
   pack with all of them off is simply an empty pack, and Launch is hollow.
+  **BUT A BINGO PACK HAS NO ROUNDS AT ALL, and reading that as "all of them are
+  off" disabled Launch for ever the moment one was dragged in** — `hasRounds()`
+  is the distinction, and the two states are not the same thing. It survived
+  because nothing threw and the pack card's own Launch still worked, so it only
+  ever showed on the drag path.
   Switching one off makes it a COMPOSED night even with one pack, and the Launch
   button names what will be PLAYED. Keyed by pack AND index, never by title.
 - **`stopPropagation` on the tick's mousedown as well as its click**, or a press

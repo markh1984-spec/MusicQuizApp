@@ -3937,6 +3937,22 @@ function launchBar() {
   /** Tonight's rounds, in order, with the switched-off ones left out. */
   const activeRounds = () => lbPacks().flatMap(roundsOf).filter((r) => !isOff(r.packId, r.round));
 
+  /**
+   * DOES TONIGHT EVEN HAVE ROUNDS TO SWITCH OFF?
+   *
+   * **A BINGO PACK HAS NO ROUNDS ON DISK, and that is by design** — it is a
+   * title and a track list, and the rounds are a thing that happens while it
+   * is being played. So `roundsOf()` rightly returns nothing for one, and the
+   * round count is not a measure of whether there is anything to launch.
+   *
+   * Read as one, it was: dragging any bingo pack onto Tonight disabled Launch
+   * for ever, saying *"Every round is switched off"* about a pack that has
+   * none to switch. Nothing threw and the pack card's own Launch still worked,
+   * so it only showed up on the drag path — which is the one CLAUDE.md added
+   * most recently and the one nobody had pressed in a browser.
+   */
+  const hasRounds = () => lbPacks().some((p) => p && p.rounds && p.rounds.length);
+
   function nightOrder() {
     const packs = lbPacks();
     const rounds = activeRounds();
@@ -4288,12 +4304,15 @@ function launchBar() {
      * and each says WHICH it is — a button that is off without saying why is
      * the fault this file keeps recording.
      */
-    goBtn.disabled = !packs.length || !rounds;
+    // "Nothing to launch" is two different things, and a pack with no rounds
+    // AT ALL is neither of them — see `hasRounds()`.
+    const emptied = hasRounds() && !rounds;
+    goBtn.disabled = !packs.length || emptied;
     if (!packs.length) {
       goBtn.textContent = 'Drag a pack in to launch';
       return;
     }
-    if (!rounds) {
+    if (emptied) {
       goBtn.textContent = 'Every round is switched off';
       return;
     }
