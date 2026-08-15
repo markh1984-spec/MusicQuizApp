@@ -4222,10 +4222,37 @@ function launchBar() {
    * Opening on hover also gives the drop somewhere to land that is big enough
    * to aim at.
    */
+  /**
+   * OPEN FOR THE DRAG, THEN GIVE THE FOLD BACK.
+   *
+   * Asked for on 15 August 2026: *"we should be able to drag a pack to the
+   * launch console collapsed and it keeps its collapse."* It used to unfold
+   * the bar and LEAVE it unfolded, writing that into `localStorage` as though
+   * the host had pressed Show — so a bar you had deliberately folded down to
+   * one line was open again after every drop, and stayed open next time you
+   * came back.
+   *
+   * The opening itself is still right and has to stay: collapsed, this is one
+   * thin row, and a drop target that small is missing at exactly the moment it
+   * is wanted. **What was wrong was keeping it.** So the fold is remembered
+   * before the drag and restored when the drag ends — the target is big while
+   * you are aiming at it, and the bar is however you left it afterwards.
+   *
+   * **THE REMEMBERED SETTING IS NOT TOUCHED WHILE DRAGGING**, only the live
+   * one. A drag is not somebody pressing Show, and it should not be able to
+   * change what the console looks like tomorrow.
+   */
+  let foldBeforeDrag = null;
   const openForDrop = () => {
     if (tonightOpen) return;
+    if (foldBeforeDrag === null) foldBeforeDrag = tonightOpen;
     tonightOpen = true;
-    localStorage.setItem(TONIGHT_STORE, '1');
+    paintFold();
+  };
+  const giveTheFoldBack = () => {
+    if (foldBeforeDrag === null) return;
+    tonightOpen = foldBeforeDrag;
+    foldBeforeDrag = null;
     paintFold();
   };
   /*
@@ -4818,6 +4845,9 @@ function launchBar() {
     packDrag = null;
     dragging(false);
     addPackToNight(packOf(dropped.id));
+    // However you left it — see `openForDrop`. The bar opened to be aimed at,
+    // not to stay open.
+    giveTheFoldBack();
   });
 
   el.addEventListener('dragover', (ev) => {
@@ -4830,7 +4860,12 @@ function launchBar() {
   el.addEventListener('dragleave', (ev) => {
     // Only when the cursor has actually left the section, not when it crosses
     // from one child of it to another — which fires dragleave on the way.
-    if (!el.contains(ev.relatedTarget)) el.classList.remove('drop-here');
+    if (!el.contains(ev.relatedTarget)) {
+      el.classList.remove('drop-here');
+      // Carried the card away again — put the fold back. Coming back re-opens
+      // it through `dragover`, so this cannot strand a folded bar mid-gesture.
+      giveTheFoldBack();
+    }
   });
   el.addEventListener('drop', (ev) => {
     if (!packDrag && !venueDrag) return;
@@ -4847,6 +4882,7 @@ function launchBar() {
       const name = venueDrag.name;
       venueDrag = null;
       dragging(false);
+      giveTheFoldBack();
       if (name) chooseVenue(name);
       return;
     }
@@ -4873,6 +4909,7 @@ function launchBar() {
      */
     const found = gameOf().packs.find((p) => p.id === dropped.id);
     addPackToNight(found);
+    giveTheFoldBack();
   });
 
   /*
@@ -5189,7 +5226,15 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
    * would mean remembering it later, which is exactly what that box exists to
    * avoid needing.
    */
-  el.querySelector('.ask-slot').appendChild(askForPackPanel(kind));
+  /*
+   * ASK FOR A PACK IS WORKSHOP FURNITURE, like everything else that makes or
+   * requests one. It was appended here rather than through `tab.generator()`,
+   * so the gate that moved the writing panels off the Console door missed it
+   * entirely — and it went on rendering there, under the packs, after the
+   * change that was supposed to remove it. Found by a browser listing what was
+   * actually on the page, not by reading the diff.
+   */
+  if (door !== 'console') el.querySelector('.ask-slot').appendChild(askForPackPanel(kind));
 
   const grid = el.querySelector('.pack-grid');
   const shop = el.querySelector('.shop-grid');
