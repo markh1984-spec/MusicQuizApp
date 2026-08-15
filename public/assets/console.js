@@ -462,7 +462,18 @@ function ownQuizPanel() {
       <div class="gen-row" style="margin-top:10px">
         <input type="text" class="own-title" maxlength="60" autocomplete="off"
           placeholder="What is it called — The Crown, Christmas 2026…">
-        <button class="role-make own-go">Start writing</button>
+        <!-- "LAY IT OUT EMPTY", NOT "START WRITING" — and the rename is a
+             collision fix rather than a wording preference. This panel is the
+             visual twin of the owner's AI generator: same theme box, same
+             round tickboxes with counts, same green button. "Start writing" is
+             precisely what the AI one does, so the host read this as an AI
+             feature on a quizmaster's tab and said so. If it reads that way to
+             the person who built it, a subscriber will press it expecting a
+             written quiz and get twenty blank questions.
+
+             The button now says what actually happens. The blurb underneath
+             already did, but a blurb under a button is read after the press. -->
+        <button class="role-make own-go">Lay it out empty</button>
       </div>
       <div class="gen-rounds">
         ${QUIZ_ROUNDS.map(([id, label, count, checked, hint]) => `
