@@ -1607,3 +1607,94 @@ than one KIND, and that the app remembers what comes after the one playing.
 - **Do not auto-launch the next one.** The gap between games is the host on a
   microphone, and software deciding when that ends is the one thing guaranteed
   to be wrong in a real room.
+
+#### WHAT IS ACTUALLY LEFT, measured on 15 August 2026
+
+Worth writing down, because the entry above reads as though none of it exists
+and most of it does:
+
+- **A multi-pack QUIZ night is BUILT AND WORKING.** `composeQuiz()` merges
+  chosen rounds from several packs into one game, the three slots draw, the
+  round ticks work, packs reorder by drag, and Launch says *"Launch tonight —
+  2 packs, 3 rounds"*.
+- **What is NOT built is a night that CHANGES KIND partway.** One line does it:
+  `if (!packDrag || packDrag.kind === 'bingo') return;` on the running order's
+  drop handler — a bingo pack cannot be dropped in at all today.
+
+**So the expensive half of this entry is the mixed-kind night**, and it is
+expensive for a reason worth naming: the session runs ONE game, so quiz → bingo
+→ quiz means ending a game and starting another while the room, its teams and
+its scores carry on. That is the piece to cost carefully, not the slots.
+
+---
+
+### BREAKOUT GAMES — a round that plays for laughs and scores nothing
+
+Asked on 15 August 2026: *"the third thing to add to a night will be breakout
+games that aren't part of the quiz points — for e.g. Blankety Blank style
+stuff, so pack 1 — quiz round that contributes to the score, breakout game,
+quiz round 2 that contributes to the score etc… the breakout games would be
+orange."*
+
+#### IT IS A ROUND TYPE, NOT A GAME KIND, AND THAT IS THE WHOLE DESIGN
+
+**The scores have to survive it, and that decides everything else.** A night is
+already ONE quiz — `composeQuiz()` builds it in memory from rounds across
+several packs — so a breakout sitting between round one and round two is
+naturally another round in that list. Teams, scores, tokens and phones carry
+through by construction, with nothing to suspend and nothing to hand back.
+
+**Built as a separate GAME it would end the quiz.** Launching one replaces the
+session, the scores go with it, and round two would start from zero in front of
+a room. That is the expensive wrong turn, and it is the obvious-looking one,
+because a breakout FEELS like a different game.
+
+**And therefore it does not depend on the mixed-kind running order** — which is
+the opposite of how it was sequenced when it was asked for. Multi-pack quiz
+composition already works, so a breakout round could ship before a bingo pack
+can be dropped into a slot. Worth re-checking with the host before starting the
+harder thing first.
+
+#### The phones TYPE, and that is a new mechanic
+
+Chosen over multiple choice and over nothing-at-all: *"type an answer"*. **The
+laugh is in what people write**, and offering six pre-written options takes away
+the entire reason for the round.
+
+Which makes it the second round type to change the ANSWERING mechanic rather
+than just the media — `multi` was the first, and that one needed `answer()` to
+take a set, `session.runPlayerAction` to forward the new field (it silently
+dropped it at first), a scoring function, and the editor to switch controls. A
+typed answer needs the same class of work:
+
+- `answer()` accepting a STRING, and `runPlayerAction` forwarding it — check
+  that field is not dropped, because it was last time and nothing threw;
+- **no scoring at all** — the round contributes zero, which is the point. Make
+  sure the tally, the fastest finger and the first-correct bonus all sit this
+  round out rather than dividing by nothing;
+- **a HOST screen that lists every answer by team**, because reading them out
+  is the entire feature. This is the only new screen;
+- a 28-character-ish cap and control characters stripped, exactly as team names
+  are — anti-breakage, not censorship;
+- the editor needs a prompt-and-nothing-else round, like `alphabet`.
+
+#### THE ANSWERS ARE FREE TEXT FROM STRANGERS, AND THE RULE ALREADY EXISTS
+
+**Do not add a profanity filter, and do not add an approve step.** This app has
+already settled both, for team names and for photographs: rude things go up as
+typed and the host handles the room with the mic. A breakout round is the same
+decision arriving a third time, and answering it differently here would be the
+inconsistency rather than the safety.
+
+**But it is worth deciding whether typed answers go on the PROJECTOR at all.**
+Team names are 28 characters chosen once; breakout answers are a fresh sentence
+from sixty phones every question. The safe default is the host's screen only —
+they read the good ones out — and that is also the funnier version, because a
+person reading it beats a wall of text nobody looks up at. **Start there.**
+
+#### Orange, and one line
+
+`KIND_EDGE` in `pack-look.js` takes a new entry. The mechanism was built for
+exactly this: *"when I add further round types they can have new highlights."*
+An unknown kind already falls back to an edge rather than none, so nothing
+looks broken in between.
