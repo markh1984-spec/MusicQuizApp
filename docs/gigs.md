@@ -825,3 +825,66 @@ and two copies turned up on Past gigs. On a host whose disk is wiped every
 deploy that is not the unusual case. It is `state.archivedAs` now: the state
 is the record of the night, so the fact that it has been filed belongs in it —
 the same lesson as the bingo card shape and the look.
+
+
+---
+
+## PUTTING A NIGHT ON THE PUBLIC GALLERY
+
+`galleryToggle()` in `console.js`, `/api/past-gigs/publish`, `src/gallery.js`.
+
+**THE ROUTE EXISTED FROM THE DAY THE GALLERY WAS BUILT AND NOTHING EVER CALLED
+IT.** A night could be published only by hand, which in practice means not at
+all — on the feature whose entire purpose is putting a night up. The gate was
+perfect and the gate had no handle.
+
+That is the same class of miss as the projector's arcade board and the launch
+route: the server was ready, the page was ready, the tests passed, and no
+control joined them together. **A test that the route works proves nothing
+about whether anybody can reach it**, so `test/gallery.test.js` now also
+asserts that something under `public/` calls it. A text search is a weak check
+and is the right weight, because the fault was not a broken caller — it was the
+total absence of one.
+
+**IT SITS UNDER THE PHOTOGRAPHS, AND THAT PLACEMENT IS THE SAFEGUARD.** It is
+inside a night that has to be opened, below the pictures it would publish — so
+nobody can put a night in front of the world without having just looked at
+what is in it. A button on the collapsed row would be one tap from a stranger's
+face going public, taken on a phone whose only promise was that it *"goes on
+the big screen"*.
+
+**IT SAYS WHAT PUBLISHING MEANS, in one line** — *"Anyone with the link can see
+these."* The house style says a control gets a title and one short line, and
+that warnings are the exception because they are read once at a moment that
+matters. This is one, and it costs somebody something real if it is not said.
+Not styled as a warning and not red: it is a plain statement read BEFORE
+pressing, and red would say a mistake had already been made.
+
+**TAKING IT DOWN IS AS PROMINENT AS PUTTING IT UP.** Somebody will ask for
+their photograph to be removed, and the only honest answer on a page with no
+contact details is a quizmaster who can do it in one tap while they are stood
+there. Destructive-styled — outlined red, never filled.
+
+**The published state rides on the call that is already made.** `/api/past-gigs/
+<night>` carries `published`, rather than a second request: a button that has
+to fetch before it knows its own label is a button that flickers.
+
+## AND THE PREVIEW DID NOT WORK ON THE HOST KEY
+
+The owner sees unpublished nights on `/gallery`, marked — asked for directly,
+so the whole path can be proved before a single photograph becomes public. It
+hangs on the server knowing who is asking, and **the page never sent the host
+key with its own requests**. A signed-in account sends a cookie and needs
+nothing; somebody arriving on a `?key=` link sent nothing at all, so the
+preview silently did not work and the page looked empty — on the identity most
+likely to be checking it.
+
+The key is read **from the URL, never from localStorage**, which is the rule
+this app already follows for links: a remembered key must not spread itself
+onto new pages and into browser history. This one is already in the address bar
+of the visit that is happening, so nothing new is exposed. A customer's link
+carries no key and it is a no-op for them.
+
+**It goes on the IMAGES as well as the listing**, because the photo route
+re-checks for itself rather than trusting that the listing let you through —
+without it a preview would be a page of broken pictures.

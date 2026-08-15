@@ -54,8 +54,28 @@ const nightIn = () => {
   return /^\d{4}-\d{2}-\d{2}$/.test(n) ? n : '';
 };
 
+/*
+ * THE HOST KEY WORKS HERE TOO, AND ONLY IF IT IS IN THIS VISIT'S ADDRESS.
+ *
+ * The owner preview is the whole point of this page existing before anything
+ * is published — *"I want to be able to see it live myself to know it works"* —
+ * and it hangs on the server knowing who is asking. A signed-in account sends
+ * a cookie and needs nothing; somebody arriving on a `?key=` link sends
+ * nothing at all, so the preview silently did not work for them and the page
+ * looked empty on the one identity most likely to be checking it.
+ *
+ * **Read from the URL, never from localStorage**, which is the rule this app
+ * already follows for links: a REMEMBERED key must not spread itself onto new
+ * pages and into browser history. This one is already in the address bar of
+ * the visit that is happening, so nothing new is exposed.
+ *
+ * A customer's link has no key on it and this is a no-op for them.
+ */
+const KEY = new URLSearchParams(location.search).get('key') || '';
+const keyed = (path) => (KEY ? path + (path.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(KEY) : path);
+
 async function get(path) {
-  const res = await fetch(path, { headers: { Accept: 'application/json' } });
+  const res = await fetch(keyed(path), { headers: { Accept: 'application/json' } });
   if (!res.ok) return null;
   return res.json().catch(() => null);
 }
@@ -85,7 +105,7 @@ async function showNights() {
   body.replaceChildren(node(`
     <div class="gal-nights">
       ${nights.map((n) => `
-        <a class="gal-night ${n.live === false ? 'is-draft' : ''}" href="/gallery?n=${encodeURIComponent(n.night)}">
+        <a class="gal-night ${n.live === false ? 'is-draft' : ''}" href="${esc(keyed('/gallery?n=' + encodeURIComponent(n.night)))}">
           <b>${esc(n.when || n.night)}</b>
           <span class="tiny">${n.count} photo${n.count === 1 ? '' : 's'}</span>
         </a>`).join('')}
@@ -106,7 +126,7 @@ async function showNight(night) {
     sub.textContent = '';
     body.replaceChildren(node(`
       <p class="muted gal-empty">This night is not up.
-      <a href="/gallery">See what is.</a></p>`));
+      <a href="${esc(keyed('/gallery'))}">See what is.</a></p>`));
     return;
   }
   title.textContent = data.when || night;
@@ -115,10 +135,14 @@ async function showNight(night) {
     <div class="gal-grid">
       ${data.photos.map((p) => `
         <figure class="gal-shot">
-          <img src="${esc(p.url)}" alt="A photo from the night" loading="lazy" decoding="async">
+          <!-- The KEY goes on the picture too, not only on the listing: the
+               photo route re-checks for itself rather than trusting that the
+               listing let you through, so on an unpublished night a preview
+               without it would be a page of broken images. -->
+          <img src="${esc(keyed(p.url))}" alt="A photo from the night" loading="lazy" decoding="async">
         </figure>`).join('')}
     </div>
-    <p class="gal-back"><a href="/gallery">All nights</a></p>`));
+    <p class="gal-back"><a href="${esc(keyed('/gallery'))}">All nights</a></p>`));
   if (data.preview && data.live === false) sub.append(' · ', notLive());
 }
 

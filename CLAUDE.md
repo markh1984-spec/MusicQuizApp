@@ -1189,6 +1189,8 @@ Open the one you are touching; do not read them all.
 - The last slide of the night — "Back here Thursday 20th"
 - Headcount per venue — the app finally says a number it always knew
 - A prize taken at the bar has to reach the filed night
+- PUTTING A NIGHT ON THE PUBLIC GALLERY
+- AND THE PREVIEW DID NOT WORK ON THE HOST KEY
 
 **[`docs/lobby-games.md`](docs/lobby-games.md)** — what a phone does while the room fills up
 
@@ -1966,6 +1968,33 @@ which buys the 6am roll-over for nothing. Tested:
   somebody's own work.
 - The bars are `aria-hidden` and not a gradient; the library payload reads the
   archive ONCE for the badge, the unbilled count and these.
+
+Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
+
+### A NIGHT GOES ON THE PUBLIC GALLERY FROM UNDER ITS OWN PHOTOS
+
+`galleryToggle()` in `console.js`, `/api/past-gigs/publish`. **The route
+existed from the day the gallery was built and nothing ever called it** — the
+gate was perfect and had no handle, which is the arcade-board fault again: a
+test that the route works proves nothing about whether anybody can reach it.
+`test/gallery.test.js` now asserts a caller exists.
+
+- **The control sits UNDER the photographs, inside a night you have opened** —
+  so nobody publishes a night without having just looked at what is in it. A
+  button on the collapsed row would be one tap from a stranger's face going
+  public.
+- **It says what publishing means in one line** — *"Anyone with the link can
+  see these."* A warning is the exception to the short-label rule. Not red: it
+  is read BEFORE pressing, and red would say a mistake had been made.
+- **Taking it down is as prominent as putting it up**, outlined red. Somebody
+  will ask, and the honest answer is a quizmaster who can do it while stood
+  there.
+- **THE OWNER PREVIEW NEEDS THE KEY AND WAS NOT SENDING IT.** `/gallery` shows
+  unpublished nights to whoever is signed in — but the page sent nothing on a
+  `?key=` link, so the preview silently failed on the identity most likely to
+  be checking. Read **from the URL, never from localStorage** (the remembered-key
+  rule), and put on the IMAGES too, because the photo route re-checks for
+  itself.
 
 Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 

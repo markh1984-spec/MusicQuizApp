@@ -1969,6 +1969,12 @@ async function handleGet(req, res, url, route) {
       : [];
     return sendJson(res, 200, {
       night,
+      // Whether this night is on the public gallery, so the control that puts
+      // it there can say which way round it is. On THIS call rather than a
+      // second one: it is already made the moment a night is opened, and a
+      // button that has to fetch before it knows its own label is a button
+      // that flickers.
+      published: await isPublished(gigRoom.id, night),
       photos: files
         .map((f) => safePhotoName(f.name))
         .filter(Boolean)

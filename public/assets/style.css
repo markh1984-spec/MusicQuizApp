@@ -6404,6 +6404,21 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
    only one of them is ever visible. */
 .d-venue { display: grid; min-width: 0; }
 .gig-bill { margin-top: 10px; }
+/* PUTTING A NIGHT ON THE PUBLIC GALLERY — under the photographs it would
+   publish, separated by a rule, because it is a different kind of act from
+   everything above it: the rest of this panel is about your own record of the
+   night, and this one puts other people's faces on the open web. */
+.gig-gallery {
+  margin-top: 14px; padding-top: 12px;
+  border-top: 1px solid var(--panel-line);
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+}
+.gig-gal-note { color: var(--ink-dim); }
+/* Green, like everything else in this app that means live and good — and the
+   link is the proof, so it goes with it rather than being announced somewhere
+   else. */
+.gig-gal-live { color: var(--good); }
+.gig-gal-live a { color: inherit; }
 
 .venue-add { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 .venue-add .venue-new { flex: 1 1 220px; min-width: 0; }

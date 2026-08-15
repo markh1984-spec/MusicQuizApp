@@ -136,6 +136,29 @@ test('the photo route re-checks for itself rather than trusting the listing', as
   });
 });
 
+test('SOMETHING ACTUALLY CALLS THE PUBLISH ROUTE', async () => {
+  /*
+   * The route existed from the day the gallery was built and nothing ever
+   * called it — so a night could be published only by hand, which in practice
+   * means not at all, on the feature whose entire purpose is putting a night
+   * up. The gate was perfect and the gate had no handle.
+   *
+   * It is the same class of miss as the projector's arcade board: the server
+   * computed it, this file tested it, the docs described it, and no page ever
+   * drew the control. **A test that the route works proves nothing about
+   * whether anybody can reach it.**
+   *
+   * A text search is a weak check and is the right weight here: the fault was
+   * not a broken caller, it was the total absence of one.
+   */
+  const { readFileSync, readdirSync } = await import('node:fs');
+  const dir = join(ROOT, 'public', 'assets');
+  const callers = readdirSync(dir)
+    .filter((f) => f.endsWith('.js'))
+    .filter((f) => readFileSync(join(dir, f), 'utf8').includes('/api/past-gigs/publish'));
+  assert.ok(callers.length, 'nothing in the browser can put a night on the gallery');
+});
+
 test('EVERY REFUSAL LOOKS THE SAME, so nobody can map which nights exist', async () => {
   /*
    * The same shape `/api/voucher` already uses. Three different messages —

@@ -8053,9 +8053,84 @@ function gigRow(night) {
       grid.appendChild(node(`<figure class="cphoto filed"><img src="${esc(p.url)}" alt="" loading="lazy"></figure>`));
     }
     body.appendChild(grid);
+    body.appendChild(galleryToggle(night.night, data.published));
   });
 
   return el;
+}
+
+/**
+ * PUT THIS NIGHT ON THE PUBLIC GALLERY, or take it back down.
+ *
+ * The route for this has existed since the gallery was built and **nothing
+ * ever called it** — so a night could be published only by hand, which means
+ * in practice not at all. Same class of miss as the projector's arcade board:
+ * the server was ready, the page was ready, and no control joined them up.
+ *
+ * ---
+ *
+ * **IT SITS UNDER THE PHOTOGRAPHS, and that placement is the safeguard.** It
+ * is inside a night that has to be opened, below the pictures it would publish
+ * — so nobody can put a night in front of the world without having just looked
+ * at what is in it. A button on the collapsed row would be one tap from a
+ * stranger's face going public, taken on a phone whose only promise was that
+ * it *"goes on the big screen"*.
+ *
+ * **IT SAYS WHAT PUBLISHING MEANS, in a sentence.** The house style says a
+ * control gets a title and one short line — and that warnings are the
+ * exception, because they are read once at a moment that matters. This is one:
+ * *anyone with the link* is the whole fact, and it costs somebody something
+ * real if it is not said.
+ *
+ * **TAKING IT DOWN IS AS PROMINENT AS PUTTING IT UP.** Somebody will ask for
+ * their photograph to be removed, and the only honest answer on a page with no
+ * contact details is a quizmaster who can do it in one tap while they are
+ * stood there. It is destructive-styled — outlined red, never filled — like
+ * everything else that takes something away.
+ *
+ * @param {string} night `YYYY-MM-DD`
+ * @param {boolean} on   whether it is already published
+ */
+function galleryToggle(night, on) {
+  const wrap = node('<div class="gig-gallery"></div>');
+
+  const paint = (live) => {
+    wrap.replaceChildren(node(live
+      ? `<div class="tiny gig-gal-live">On the gallery —
+           <a href="/gallery?n=${encodeURIComponent(night)}" target="_blank" rel="noopener">see it</a></div>`
+      // Not a warning wrapper and not red: it is a plain statement of what the
+      // button does, read before pressing rather than after something went
+      // wrong. Red here would say a mistake had been made.
+      : '<div class="tiny gig-gal-note">Anyone with the link can see these.</div>'));
+
+    const btn = node(live
+      ? '<button class="minor danger gig-gal-off" type="button">Take it off the gallery</button>'
+      : '<button class="minor gig-gal-on" type="button">Put these on the gallery</button>');
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      try {
+        const res = await fetch(keyed('/api/past-gigs/publish'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ night, on: !live }),
+        });
+        const out = await res.json();
+        // SAY WHAT WENT WRONG. The likeliest failure by far is that the
+        // private photo repository is not configured, and "could not save
+        // that" would send somebody hunting through the app for a fault that
+        // is in an environment variable.
+        if (!res.ok) throw new Error(out.error || 'Could not change that.');
+        paint(!live);
+      } catch (err) {
+        btn.disabled = false;
+        wrap.appendChild(node(`<div class="tiny" style="color:var(--bad)">${esc(err.message)}</div>`));
+      }
+    });
+    wrap.appendChild(btn);
+  };
+
+  paint(Boolean(on));
+  return wrap;
 }
 
 /** "3 days ago" reads better than a timestamp when you are scanning a list. */
