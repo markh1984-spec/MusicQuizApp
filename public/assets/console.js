@@ -65,11 +65,6 @@ const canPin = () => Boolean(me && !me.bootstrap);
  */
 const PACK_SHELF = 6;
 
-/** Which tabs have been expanded past the six. Per kind, and not remembered:
- *  the shelf should be back to six the next time the console is opened, since
- *  the whole reason for the cap is the state you arrive in before a gig. */
-const packAll = {};
-
 const isPinned = (id) => ((library && library.prefs && library.prefs.pinnedPacks) || []).includes(id);
 
 /** The drawn pin. Never an emoji — the same rule `binIcon()` follows. */
@@ -488,7 +483,16 @@ function ownQuizPanel() {
 
              The button now says what actually happens. The blurb underneath
              already did, but a blurb under a button is read after the press. -->
-        <button class="role-make own-go">Lay it out empty</button>
+        <!-- "WRITE IT MYSELF" — third name, and this one says WHO DOES THE
+             WRITING, which is the only thing anybody needs to know here.
+
+             It was "Start writing", which is exactly what the owner's AI panel
+             does, so the host read this as an AI feature on a quizmaster's
+             tab. Then "Lay it out empty", which describes the MECHANISM rather
+             than the act and reads like a chore. This names the act and, next
+             to the owner's "Write it", the contrast does the explaining: one
+             writes it for you, one is you. -->
+        <button class="role-make own-go">Write it myself</button>
       </div>
       <div class="gen-rounds">
         ${QUIZ_ROUNDS.map(([id, label, count, checked, hint]) => `
@@ -5046,6 +5050,26 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
           ${can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS) ? `<a class="minor" href="${linkTo('/editor')}">${esc(editLabel)}</a>` : ''}
         </div>
       </div>
+      <!-- THE WAY TO THE WORKSHOP — ONE LINE, DRAWN ONCE.
+           The Console is for launching; writing, buying and editing belong on
+           the Packs door, which already exists in the menu. Somebody looking
+           for "write a quiz" will come to this tab first, because that is
+           where it has always been, so there has to be a signpost.
+
+           IN THE TEMPLATE, not appended by paint(). It was appended, and
+           paint() runs again on every search keystroke and every re-render —
+           so the link and the See all button piled up three deep on screen.
+           A thing built once cannot be built twice.
+
+           A LINK, NEVER A PANEL. Four workshop panels crept onto this tab one
+           at a time, each reasonable on its own, and together they buried the
+           only thing the page is for. If this line ever grows controls, that
+           has happened again. -->
+      <div class="row pack-way-row">
+      </div>
+        ${can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS) || can(FEATURES.GENERATE)
+    ? `<p class="tiny pack-way"><a href="${linkTo('/editor')}">Write, buy or edit packs →</a></p>` : ''}
+      </div>
       <div class="pack-grid ${dense ? 'dense' : ''}"></div>
       <div class="game-head shop-head" hidden>
         <div>
@@ -5186,8 +5210,17 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
      * rather than a second gradient: the one "press this" on this tab is
      * Launch.
      */
-    const showAll = packAll[kind];
-    const shown = showAll ? yours : yours.slice(0, PACK_SHELF);
+    /*
+     * SIX, AND NOTHING THAT EXPANDS. Asked for directly: *"only show 6 and no
+     * options to expand or see more — the link is fine but only one link."*
+     *
+     * The See all button is gone rather than hidden. **The way to the other
+     * seventeen is the search box**, which is the same answer as before minus
+     * a control that put a second row back on the one page whose whole job is
+     * to stay one row. A shelf with an expander is a shelf that is sometimes
+     * two rows, and "sometimes" is what makes a drag target unlearnable.
+     */
+    const shown = yours.slice(0, PACK_SHELF);
     // The heading follows the state — see the note where it is drawn. Set here
     // rather than in the template because `paint()` runs again on every search
     // keystroke and every See all, and the head is not rebuilt with the grid.
@@ -5205,35 +5238,11 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
        * stop.
        */
       const typing = (packQuery[kind] || '').trim();
-      headEl.textContent = (showAll || typing) ? 'Your library' : 'Recommended';
+      headEl.textContent = typing ? 'Your library' : 'Recommended';
     }
     for (const pack of shown) grid.appendChild(packCard(kind, pack, paint));
 
-    if (yours.length > PACK_SHELF) {
-      const more = node(`<button class="minor pack-more" type="button">${showAll
-        ? 'Show fewer'
-        : `See all ${yours.length}`}</button>`);
-      more.addEventListener('click', () => { packAll[kind] = !showAll; paint(); });
-      grid.after(more);
-    }
 
-    /*
-     * THE WAY TO THE WORKSHOP — ONE LINE, AND IT MUST STAY ONE LINE.
-     *
-     * The Console is for launching; writing, buying and editing belong on the
-     * Packs door, which already exists in the menu. Somebody looking for
-     * "write a quiz" will come to this tab first, because that is where it has
-     * always been — so there has to be a signpost.
-     *
-     * **A LINK, NEVER A PANEL.** Four workshop panels crept onto this tab one
-     * at a time, each perfectly reasonable on its own, and together they
-     * buried the only thing this page is for. If this line ever grows into a
-     * box with controls in it, that has happened again.
-     */
-    if (can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS) || can(FEATURES.GENERATE)) {
-      const way = node(`<p class="tiny pack-way"><a href="${linkTo('/editor')}">Write, buy or edit packs →</a></p>`);
-      (grid.nextElementSibling || grid).after(way);
-    }
 
     if (buyable.length) {
       shopHead.hidden = false;

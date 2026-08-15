@@ -1676,11 +1676,23 @@ does this live" without re-arguing it.
 It also fixes a real problem rather than only tidying: **nine tabs is too many
 to scan**, and three sections of three or four is not.
 
+**The allocation, given by the host on 15 August 2026 and not to be
+re-derived:**
+
 | Door | What it is for | Tabs under it |
 |---|---|---|
-| **Prepare** | organisation, before the night | packs & the workshop, Calendar, Venues, Adverts |
-| **Tonight** | the gig itself | the launch bar, the Recommended shelf, the control view |
-| **After** | evidence and admin | Gigs, Invoices, photos & the gallery |
+| **Prepare** | organisation, before the night | the workshop (Music Quiz and Music Bingo, each with its own writing, buying and asking panels), **Adverts**, **Calendar**, Venues |
+| **Tonight** | the gig itself | the launch bar, the Recommended six, the control view |
+| **After** | evidence and admin | **Past gigs**, **Invoices**, photos & the gallery |
+
+**WHICH PANELS MOVE, NAMED — so nobody has to guess from a screenshot:**
+
+- **To the workshop, under Music Bingo:** *Ask for a bingo game*, and *Make a
+  bingo game of your own* (the paste-a-track-list panel).
+- **To the workshop, under Music Quiz:** *Ask for a quiz*, and *My packs* (the
+  scaffold panel, whose button is now **Write it myself**).
+- The Quizporium shop goes with them. **Nothing that writes, buys or asks for a
+  pack stays on the launch page.**
 
 #### One thing left to settle BEFORE building it
 

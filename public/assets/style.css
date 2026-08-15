@@ -2088,16 +2088,10 @@ body.console::after { display: none; }
 }
 .pack-card.broken { border-color: var(--bad); }
 
-/* SEE ALL — the way past the six. Outlined, never a second gradient: the one
-   "press this" on a pack tab is Launch. Full width under the row so it reads
-   as "there is more below this line" rather than as a seventh card. */
-.pack-more {
-  display: block; width: 100%; margin-top: 10px;
-  padding: 9px 12px; font-size: var(--fs-note);
-}
 /* The signpost to the workshop. Quiet on purpose — it is a way OUT of the
    launch page, not a thing to press before a gig. */
-.pack-way { margin: 10px 0 0; }
+.pack-way-row { margin-top: 2px; }
+.pack-way { margin: 0; }
 .pack-way a { color: var(--ink-dim); text-decoration: none; border-bottom: 1px solid var(--panel-line); }
 .pack-way a:hover { color: var(--ink); border-bottom-color: var(--hot); }
 
