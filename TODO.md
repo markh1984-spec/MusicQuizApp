@@ -1060,106 +1060,47 @@ Nothing to do. 🔗 https://github.com/markh1984-spec/MusicQuizApp/branches
 
 Service is created, in Frankfurt, on the free tier.
 
-## A choice of lobby games, and Gold picks which
+## Lobby games — what is left
 
-**Asked for on 15 August 2026:** *"perhaps even have a selection of games that
-the QM can select before the rounds in the gold subscription only"*, and
-before that *"we can add tennis as well — tennis before the music bingo games
-and maze mouth before the quiz?"*
+**BUILT, AND DELETED FROM THIS LIST: the three games, the picker and the tier
+ladder.** Maze Mouth, Rally and Tailback; the picker sits under **Set it up**
+on both launch routes; the tier is checked at the route rather than in the
+console; locked games are shown rather than hidden. The reasoning has moved to
+[`docs/lobby-games.md`](docs/lobby-games.md) — **read the fixed-timestep note
+there before adding a fourth**, because anything with continuous motion in it
+has a fairness problem the grid games do not, and it is invisible.
 
-**THE TIER GATES HOW MANY GAMES, NOT WHETHER THERE IS ONE.** Settled on 15
-August 2026: *"bronze just gets 2 games and silver/gold get more"*. So Bronze
-holds the two that ship — Maze Mouth and tennis, which are also the two
-defaults, one per game type — and the higher tiers hold whatever is added
-after them.
+What a fourth game costs now: one rules file, one canvas file, one line in
+`LOBBY_GAMES` and one in `LOADERS`. The seed, the score, the board, the refusal
+outside the lobby, the teardown and the picker are all shared.
 
-**That is a better ladder than an on/off gate for a reason worth keeping:
-every tier still gets a game that suits the night they are running.** A Bronze
-bingo night gets tennis rather than a maze, so nobody is handed the wrong
-game as a consolation — they simply have no third or fourth to choose from.
-It also means a new game is a reason for an existing subscriber to move up
-rather than a thing the bottom tier loses, which is the direction a ladder
-should push.
+### Still open
 
-**BOTH GAMES ARE BUILT NOW — Maze Mouth before a quiz and RALLY before the
-bingo, one per game type, the default following the GAME rather than the
-account.** That half is done and its reasoning has moved to
-[`docs/lobby-games.md`](docs/lobby-games.md); what is left in this entry is
-**the picker and the tier ladder**, and nothing below has been built.
-
-The tennis game is called **Rally** — named before it was written, because
-CLAUDE.md's own note is that an unnamed game keeps inviting the name that
-cannot be used.
-
-**Maze Mouth and Rally are the default for everybody. What the higher tiers
-buy is the CHOICE.** That split matters and it is the one thing to get right before any
-of this is written:
-
-**Do not sell the game itself away from Bronze and Silver.** Its biggest value
-is not entertainment — it is that a phone with a game on it stays in the
-FOREGROUND, so sixty connections do not all have to come back at the moment
-the quiz starts, which is the moment the join gate is busiest. That is a
-RELIABILITY feature dressed as a toy, and selling reliability to the top tier
-only is how a Wednesday in a pub gets worse for the people paying least.
-Everybody gets a game; Gold gets to pick which.
-
-**It is a decision about TONIGHT, so it goes where the look and the card shape
-go** — chosen at launch, written into the game state, restored after a crash.
-Not a per-account preference: a bingo night and a quiz night want different
-things, which is the host's own point.
-
-**The default follows the GAME, not the account:** Maze Mouth before a quiz,
-tennis before the bingo. It gives a bingo night its own character rather than
-being the quiz with different content, and the phone already knows which it is
-(`s.game`), so it costs one branch.
-
-### What has to be true of any game added here
-
-- **SEEDED, from `state.gameSeed`.** The host's own catch about Maze Mouth —
-  *"the game has to be consistent or else the scoreboard makes no sense"* —
-  applies to every one of them. A tennis ball that serves differently for two
-  people is a leaderboard comparing luck. `gameSeed` already exists and is
-  already in the state; a new game reads the same one.
-- **NO SERVER WHILE IT IS PLAYED.** One small post at game over and at each
-  life lost, never a stream of positions. The lobby is when the connection is
-  busiest.
-- **LOBBY ONLY.** The seed is in the phone's payload at the lobby and nowhere
-  else, and a score is refused at any other phase. There are tests for both;
-  they should pass unchanged for a second game.
-- **A CONTROL WITH NO PRECISION IN IT.** Maze Mouth is tap-where-you-want-to-go
-  because a swipe has to be READ and a misread swipe costs a life. Tennis is
-  the bat tracking a thumb along one edge — one axis, nothing to misread, and
-  it does not cover the ball the way a finger covers a maze.
-- **NOT PAC-MAN, NOT PONG, NOT BREAKOUT BY NAME.** See CLAUDE.md: the names and
-  the artwork are somebody's, and this app is sold.
-
-### The picker
-
-Beside the look and the card shape under **Set it up** — a list of the games
-that account holds, with **the ones above their tier shown and locked** rather
-than missing. That is the subtle upsell this file already uses for the Adverts
-tab, and it is worth more than hiding them: somebody who cannot have a game
-should still know it exists, and on this ladder the locked ones are the whole
-argument for moving up.
-
-**On Bronze the picker still has two entries and is still worth drawing** —
-it is a real choice between a maze and a bat-and-ball, not a disabled control
-with one option in it.
-
-### Left undone deliberately
-
-**The picker itself, and the tier ladder above it.** The two games exist and
-each night gets the right one automatically, which was the half worth having
-first — one game per game type with no choice is already useful and a picker
-with one entry is not.
-
-What a third game now costs, having built the second: one rules file, one
-canvas file, and **one line in `GAMES` in `lobby-menu.js`**. Everything else —
-the seed, the score, the board on the projector, the refusal outside the lobby,
-the teardown — is shared and needs no change. The picker is therefore a
-console job (a control under **Set it up**, written into the game state at
-launch beside the look and the card shape) rather than a games job.
-
-**Read [`docs/lobby-games.md`](docs/lobby-games.md) before adding a third**,
-particularly the fixed-timestep note: anything with continuous motion in it has
-a fairness problem Maze Mouth did not have, and it is invisible.
+- **Nothing on the projector says WHICH game is on.** The board says "Top
+  scores" whichever it is. Fine with one game a night; confusing the moment
+  somebody asks what the numbers are for.
+- **A fourth and fifth game**, if the ladder wants more to sell. The two worth
+  having, in the order they were argued on 15 August 2026: **Pile Up** — drop
+  sliding blocks, overhang trimmed, tower narrows; one tap, no chasing, and the
+  most genuinely different feel left, since a third variation on chasing
+  something is worth much less than a third different thing to do. And a
+  **letter game** — the same rack for the whole room, longest words in ninety
+  seconds, which is the best leaderboard available here and the only idea that
+  looks like it belongs in a QUIZ app rather than an arcade.
+- **The letter game needs a dictionary, and that is its real cost.** A decent
+  UK word list is 200KB–1MB downloading at the exact moment sixty people are
+  joining, which is the one path that must not stutter; a curated 5,000-word
+  list gets it to ~40KB but then rejects words people know are real, in public,
+  which is an argument the host loses on the mic. **Its own decision, not a
+  third game smuggled in.**
+- **Rhythm and memory games were considered and turned down.** A lane-tapping
+  rhythm game wants SOUND, in a room where the host is talking over it; a
+  Simon-style memory game is thirty seconds long, so it does not keep a phone
+  in the foreground, which is the whole reliability argument for the feature.
+  Both fail on the job rather than on taste.
+- **A luck-based game cannot work here at all**, and it is worth writing down
+  so it is not re-proposed: the seed means everybody gets the identical game,
+  so anything push-your-luck — cards, dice, cash-out-or-keep-going — collapses
+  into either a tie at the same optimum or a coin flip nobody earned. **The
+  skill has to be in execution or in knowledge, never in decisions under
+  uncertainty.**

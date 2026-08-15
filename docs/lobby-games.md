@@ -221,3 +221,131 @@ life lost into a server that rightly refused it. Nothing showed on screen,
 which is why it survived, and the comment above it stated plainly that it could
 not happen. It is stopped in `buildScreen()` now: **a teardown belongs where
 every phase change passes, not where the thing being torn down is built.**
+
+---
+
+## TAILBACK — a tail that grows, and the first game behind the picker
+
+The third, built on 15 August 2026, and the first that could not simply be
+handed to a night: with two games each night type had a natural default, and a
+third needs somebody to choose it or it is dead code — which is exactly the
+fault the projector board had been sitting in for months.
+
+**It is not called the one-word name everybody will say out loud**, for the
+reason `rally.js` sets out. Tailback is the British word for a traffic jam and
+is also literally what the game is.
+
+### An open field, not the maze
+
+Reusing Maze Mouth's walls was the obvious saving and is the wrong game: a maze
+plus a body that grows is boxed in inside thirty seconds, and the tension is
+meant to be **the tail you have made** rather than the walls somebody else
+drew. The only walls are the edges.
+
+**And what is actually shared with the maze is the idea rather than the code.**
+Its `stepToward()` walks a static map; this one routes around a body that moves
+every step, which is a different function with the same shape. Worth saying
+plainly rather than claiming a reuse that is not there.
+
+### THE STEERING MUST NEVER BE WHAT KILLS YOU
+
+The one way this game can be badly broken. The head is routed to where you
+tapped, and if that route goes through the tail then the game has taken a life
+for something the player did not do — the difference between a control and a
+passenger, which is the same line Maze Mouth's tap-to-walk is drawn along.
+
+**The tail END is not blocked, except while it is growing.** By the time the
+head arrives that cell has normally moved on, so treating it as a wall makes
+the tail refuse gaps it can plainly fit through — which reads as the steering
+being broken. While it is growing the end stays put and is as solid as the
+rest. Getting that one case wrong is a life lost to a gap that was not there.
+
+It is checked over tens of thousands of simulated steps rather than by playing
+it, because it is rare enough that five minutes with a thumb would not find it.
+
+### The walls do not kill you, and that was measured before it was allowed
+
+Dying at a wall is what a snake normally does, and it is **wrong for this
+control**. Tapping a destination is not holding a direction: the natural way to
+play is tap, watch, tap again, and the moment the head reaches the target there
+is no target left — so a wall killed you for the gap between two taps rather
+than for a mistake. Measured, a human-paced player got **eight to thirty
+seconds for three lives**, which is not a game, it is a punishment for blinking.
+
+So the tail follows the edge round instead, and the only danger is itself. The
+obvious objection — that a phone nobody is touching then survives for ever — is
+real and does not matter, and it was **measured rather than assumed**: an
+abandoned game wanders, eats the odd pellet by accident and takes **forty-three
+minutes to reach a score a real player passes in under two**. It cannot reach
+the board, so it does not need killing. There is a test that says so.
+
+What it buys is the shape the game is supposed to have: forgiving while you are
+short, and tightening entirely because of what you have made.
+
+### Two smaller things the tests forced
+
+- **It waits for the first tap**, on every life. Moving the instant a life is
+  lost means somebody who has just been caught out loses the next one before
+  they have looked up. Same fix as Rally's serve pause, arrived at the same
+  way. It also teaches the control without a word of instruction.
+- **Growth is "do not trim for a few steps", never "stack copies of the end
+  cell".** Stacking works, but it puts two cells in one square for a step or
+  two — so the body stops being a set of occupied squares, "the tail never
+  crosses itself" cannot be asserted at all, and every routing question has to
+  allow for it. The weaker test was the tell that the model was wrong.
+
+**Beelining at every pellet is NOT the ceiling**, which the first version of
+the balance test wrongly assumed. Going straight at the food is a known way to
+trap yourself, so a bot doing it sometimes loses to a slower player — a point
+in the game's favour: the score rewards thinking about the tail rather than
+reaction speed.
+
+---
+
+## THE PICKER, AND WHAT A TIER ACTUALLY BUYS
+
+`public/assets/lobby-games.js` — the list, read by the SERVER and the browser,
+one copy for the same reason `LOOKS` is one copy: two would be a console
+offering a game the server then refused, silently, as somebody pressed Launch.
+
+**THE TIER GATES HOW MANY GAMES, NOT WHETHER THERE IS ONE.** The host's line:
+*"bronze just gets 2 games and silver/gold get more"*. The two that shipped are
+Bronze's and are also the two defaults, one per game type; anything added
+afterwards is what a higher tier buys.
+
+**Do not sell the game itself away from the bottom tier.** Its biggest value is
+not entertainment — a phone with a game on it stays in the FOREGROUND, so sixty
+connections do not all have to come back at the moment the join gate is
+busiest. That is a reliability feature dressed as a toy, and selling
+reliability to the top tier only makes a Wednesday worse for the people paying
+least.
+
+**The locked ones are SHOWN, not filtered out** — the same subtle upsell the
+Adverts tab uses. Somebody who cannot have a game should still know it exists,
+and on this ladder the locked entries are the whole argument for moving up.
+
+### Where the decision lives, and where it is checked
+
+- **It is a decision about TONIGHT**, so it goes where the look and the card
+  shape go: chosen at launch, written into the game state, restored after a
+  crash. Not a per-account preference — a quiz night and a bingo night want
+  different games, which is the host's own point.
+- **THE TIER IS CHECKED AT THE ROUTE, never in the console.** The console is
+  the thing somebody would edit. A game above the tier is **dropped and
+  replaced by the default rather than refused**: losing a choice costs a game
+  nobody has seen yet, where refusing the launch costs the night.
+- **The phone honours `s.lobbyGame` and does not re-check anything.** A phone
+  second-guessing the tier would mean the console saying one game is on and the
+  room being handed another.
+- **Both launch routes carry it** — the Tonight bar and a pack card's own
+  Launch. A setting that exists on one route and not the other is a night that
+  comes out different depending on which button was nearer.
+
+### What a fourth game costs
+
+One rules file, one canvas file, one line in `LOBBY_GAMES` and one in
+`LOADERS`. The seed, the score, the board, the refusal outside the lobby, the
+teardown and the picker are all shared.
+
+**Read the fixed-timestep note above first**: anything with continuous motion
+has a fairness problem the grid games do not, and it is invisible.

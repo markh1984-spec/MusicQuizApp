@@ -99,6 +99,21 @@ try {
       }
     };
 
+    /*
+     * THE LOBBY, BEFORE ANYTHING STARTS — and it was missing entirely.
+     *
+     * `compare()` was first called AFTER `a.start()`, so every payload this
+     * script has ever checked was from a game already under way: the join
+     * code, the QR, the prize line, the player strip, the countdown and the
+     * lobby game were all outside the one guard this repo runs before a gig
+     * week. That is the screen a room looks at while sixty people are joining,
+     * which is the busiest moment of the night.
+     *
+     * Found by adding a field to the lobby player payload and being told the
+     * payloads were identical — the fourth time this script has answered
+     * confidently about something it was not looking at.
+     */
+    compare('lobby');
     a.start();
     b.start();
     compare('start');

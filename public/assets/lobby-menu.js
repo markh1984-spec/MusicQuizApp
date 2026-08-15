@@ -1,18 +1,18 @@
 /**
  * THE LOBBY GAME ON A PHONE — which one, and the card it sits behind.
  *
- * There are two now: **Maze Mouth** before a quiz and **Rally** before the
- * bingo. The host's own split, and the reason is that a bingo night should
- * have a character of its own rather than being the quiz with different
- * content in it.
+ * **Maze Mouth** before a quiz and **Rally** before the bingo by default, and
+ * whatever the quizmaster picked at launch if their tier lets them pick. The
+ * host's own split, and the reason is that a bingo night should have a
+ * character of its own rather than being the quiz with different content.
  *
  * ---
  *
  * **THE DEFAULT FOLLOWS THE GAME, NOT THE ACCOUNT.** A quizmaster who runs a
  * quiz on Tuesday and bingo on Thursday wants a different game on each, so a
- * remembered preference would be wrong on half their nights. The phone already
- * knows which night it is on (`s.game`), so it costs exactly one branch and
- * nothing has to be chosen or stored.
+ * remembered per-account preference would be wrong on half their nights. What
+ * they choose is a decision about TONIGHT, so it goes where the look and the
+ * card shape go — into the game state at launch, and restored after a crash.
  *
  * **IT LIVES HERE RATHER THAN IN `play.js`, because two screens want it.** The
  * quiz's waiting card and the bingo lobby are different files that share
@@ -25,53 +25,36 @@
  * wifi, on the one page sixty people are opening at the same moment.
  */
 
+import { lobbyGameFor } from './lobby-games.js';
+
 /**
- * The two games, and everything that differs between them.
+ * WHICH MODULE DRAWS WHICH GAME.
  *
- * `load` is a function rather than a path so the bundler-free import is still
- * a plain dynamic `import()` of a literal — the same shape `play.js` used when
- * there was only one game.
+ * The list itself — names, hints, canvas shapes and which tier holds each —
+ * is in `lobby-games.js`, because the SERVER reads it too. All that is left
+ * here is the one thing a server can have no opinion about: the dynamic
+ * `import()` that pulls the game in when somebody presses the button.
+ *
+ * A loader is a function rather than a path so the import stays a literal,
+ * which is what keeps this working with no build step.
  */
-const GAMES = {
-  maze: {
-    name: 'Maze Mouth',
-    /*
-     * THE CANVAS IS THE SHAPE OF THE GAME, not one shape for both.
-     *
-     * The maze is square because the maze is square. Rally's court is 2:3, and
-     * drawn into a square canvas it letterboxes — a third of the width left
-     * empty down both sides and every bat, ball and pip a third smaller for
-     * it, on a phone. The drawing scales to whatever it is given, so this is
-     * the one number that decides how big the game is.
-     */
-    canvas: { w: 600, h: 600, klass: '' },
-    /*
-     * WHAT TO DO, said in the fewest words that are still true. Not a
-     * paragraph: this is the house rule about labels — a title that names the
-     * thing and one line that finishes "this gives me…" in a breath.
-     */
-    how: 'Tap where you want to go',
-    load: () => import('./lobby-game.js'),
-  },
-  rally: {
-    name: 'Rally',
-    how: 'Slide your thumb along the bottom',
-    // 2:3, the court's own proportions and roughly a phone held upright.
-    // `.tall` is where the height is bounded — see the note in style.css.
-    canvas: { w: 600, h: 900, klass: 'tall' },
-    load: () => import('./lobby-rally.js'),
-  },
+const LOADERS = {
+  maze: () => import('./lobby-game.js'),
+  rally: () => import('./lobby-rally.js'),
+  tailback: () => import('./lobby-tailback.js'),
 };
 
 /**
- * WHICH GAME THIS NIGHT GETS. Bingo gets Rally, everything else gets the maze.
+ * WHICH GAME THIS NIGHT GETS — what the quizmaster chose at launch if they
+ * chose one, otherwise the default for the kind of night it is.
  *
- * Written as "bingo or not" rather than a lookup by `s.game`, so a third game
- * type added to `LAUNCHERS` gets a lobby game rather than an empty card — the
- * failure that would otherwise be silent, on a screen nobody tests.
+ * The phone honours `s.lobbyGame` rather than deciding for itself, and it does
+ * NOT re-check the tier: what a night gets was settled at launch by the
+ * server, and a phone second-guessing it would mean a room being handed a
+ * different game from the one the console says is on.
  */
 export function lobbyGame(s) {
-  return s && s.game === 'bingo' ? GAMES.rally : GAMES.maze;
+  return lobbyGameFor(s && s.game, s && s.lobbyGame);
 }
 
 /**
@@ -151,7 +134,7 @@ export function wireArcade(el, s, postScore) {
     if (!box.hidden) { box.hidden = true; stopArcade(); label.textContent = `Play ${game.name}`; return; }
     box.hidden = false;
     label.textContent = 'Put it away';
-    const { startGame } = await game.load();
+    const { startGame } = await LOADERS[game.id]();
     const play = () => {
       running = startGame(box.querySelector('.arcade-canvas'), {
         // EVERY PHONE IN THE ROOM PLAYS THE SAME GAME — the seed comes off the

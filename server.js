@@ -4583,6 +4583,19 @@ async function handleWrite(req, res, url, route) {
         // carries a default, and "it is the fourteenth of February" is a fact
         // about this evening rather than about the pack.
         const look = String(body.look || '');
+        /*
+         * WHICH LOBBY GAME, and the TIER IS CHECKED HERE because this is where
+         * the account is known. A console cannot be the gate — it is the thing
+         * somebody would edit — so a game above this tier is dropped and the
+         * night falls back to the default for its kind rather than being
+         * refused. Losing a choice costs a game nobody has seen yet; refusing
+         * the launch costs the night.
+         */
+        const lobbyGame = lobbyGameFor(
+          String(body.game || 'quiz'),
+          String(body.lobbyGame || ''),
+          (entitlements(whoIs(req, url) || {}) || {}).tier || '',
+        ).id;
         // Whether anybody is in the room. Same shape of decision again: the
         // pack does not know, and tonight does.
         const online = Boolean(body.online);
@@ -4664,7 +4677,7 @@ async function handleWrite(req, res, url, route) {
           ? pickIdeas((fullLibrary(config, room.id, listOwn(room.paths)).quizzes || [])
             .map((q) => q.title))
           : [];
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, online, teamPlay, venue, rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas, order: wantedOrder });
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, lobbyGame, online, teamPlay, venue, rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas, order: wantedOrder });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();

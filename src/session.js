@@ -31,6 +31,7 @@ import { composeQuiz } from './running-order.js';
 // Shared with the browser, so the list of looks cannot drift between the server
 // deciding one and the screens drawing it.
 import { LOOKS, DEFAULT_LOOK } from '../public/assets/looks.js';
+import { lobbyGameFor } from '../public/assets/lobby-games.js';
 
 /*
  * `load` and `list` take the ROOM'S PATHS as well as the config, because a
@@ -363,7 +364,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '', rewards = [], venueLogo = '', comeBack = null, askForRounds = false, roundIdeas = [], order = null } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, look = '', lobbyGame = '', online = false, teamPlay = false, venue = '', rewards = [], venueLogo = '', comeBack = null, askForRounds = false, roundIdeas = [], order = null } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     /*
      * TONIGHT'S RUNNING ORDER, when one was built — rounds from more than one
@@ -424,6 +425,23 @@ export class Session {
     this.engine.state.look = LOOKS.some((l) => l.id === look)
       ? look
       : (LOOKS.some((l) => l.id === normalised.look) ? normalised.look : DEFAULT_LOOK);
+
+    /*
+     * WHICH LOBBY GAME TONIGHT.
+     *
+     * In the game state for exactly the reason the look and the card shape
+     * are: a restart at half nine must bring the night back as it was, and a
+     * room handed one game before the crash and another after it is the
+     * scoreboard comparing two different games — the fault the seed beside it
+     * exists to prevent.
+     *
+     * **RESOLVED HERE RATHER THAN TRUSTED.** `lobbyGameFor` falls back to the
+     * default for this kind of night, so a console that sent nothing, sent
+     * rubbish, or sent a game above its tier gets the right one rather than a
+     * card with nothing behind it. The tier check is done at the ROUTE, where
+     * the account is known; by the time it reaches here the decision is made.
+     */
+    this.engine.state.lobbyGame = lobbyGameFor(kind, lobbyGame).id;
 
     /*
      * Whether anybody is in the room tonight.

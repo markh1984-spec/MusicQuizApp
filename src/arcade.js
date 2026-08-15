@@ -87,5 +87,20 @@ export function arcadeFields(state, playerId) {
   return {
     gameSeed: state.gameSeed || 1,
     arcadeBest: (state.arcade || {})[playerId] || 0,
+    /*
+     * WHICH GAME TONIGHT, resolved at launch and read from the state — never
+     * worked out on the phone.
+     *
+     * The tier was checked at the launch route, where the account is known, so
+     * by the time it reaches a phone the decision is made and the phone's job
+     * is only to honour it. A phone deciding for itself would mean the console
+     * saying one game is on and the room being handed another, which is the
+     * console-and-projector disagreement this app refuses everywhere else.
+     *
+     * A night launched before this existed has no `lobbyGame`, and the phone's
+     * own `lobbyGameFor` then falls back to the default for the kind of night
+     * it is — which is exactly what it used to do.
+     */
+    lobbyGame: state.lobbyGame || '',
   };
 }

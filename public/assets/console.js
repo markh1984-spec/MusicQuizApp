@@ -11,6 +11,7 @@ import { esc, node, postJson, brandLink, brandMark, binIcon, paintNav, paintIden
 import { paintScheme } from './schemes.js';
 import { balanceAnswers } from './balance.js';
 import { FEATURES, FEATURE_TIER, FEATURE_META, SWITCHABLE, findTier, switchable, NOT_BUILT } from './plans.js';
+import { lobbyGameChoices, lobbyGameFor } from './lobby-games.js';
 import { inSeason } from './looks.js';
 import { upcoming, tonight, clashTonight, nightKey, WEEKDAY_LABELS } from './diary.js';
 
@@ -3566,6 +3567,16 @@ function launchBar() {
         <label class="pack-shape">Look
           <select class="look-pick">${lookOptions(pack)}</select>
         </label>
+        <!-- WHILE THEY WAIT. A decision about TONIGHT, so it sits with the
+             look and the card shape rather than being an account setting: a
+             quiz night and a bingo night want different games, which is the
+             whole reason the default follows the game type. The ones above
+             this tier are SHOWN AND LOCKED rather than missing — somebody who
+             cannot have a game should still know it exists, and on this ladder
+             the locked ones are the argument for moving up. -->
+        <label class="pack-shape">While they wait
+          <select class="game-pick">${lobbyGameOptions(bingo ? 'bingo' : 'quiz')}</select>
+        </label>
         <!-- WHERE IS NOT IN HERE ANY MORE. It is the switch up in the head,
              beside the venue, and it is deliberately not in two places: two
              controls for one field is how a night gets launched with the
@@ -3611,6 +3622,7 @@ function launchBar() {
         shape: shapePick ? JSON.parse(shapePick.value) : null,
         prizes: Number(prizePick?.value) || 0,
         look: chosen.querySelector('.look-pick')?.value || '',
+        lobbyGame: chosen.querySelector('.game-pick')?.value || '',
         // ONE source for whether tonight is online — the switch in the head,
         // which is the only place it can be set now.
         online: lbOnline,
@@ -5166,6 +5178,23 @@ function shapeOptions(pack) {
  * corporate booking in late October is not quietly given skulls because the
  * calendar said so. The date suggests; the person who knows the room decides.
  */
+/**
+ * The lobby games, for the picker under Set it up.
+ *
+ * Locked ones are `disabled` and say which tier they are on, rather than being
+ * filtered out — the subtle upsell the Adverts tab already uses. The default
+ * for THIS kind of night is the one selected, so somebody who never opens this
+ * gets exactly what they got before the picker existed.
+ */
+function lobbyGameOptions(kind) {
+  const tier = (me && me.entitlements && me.entitlements.tier) || '';
+  const fallback = lobbyGameFor(kind, '').id;
+  return lobbyGameChoices(tier).map((g) => {
+    const label = g.held ? `${g.name} — ${g.blurb}` : `${g.name} — ${(findTier(g.tier) || {}).label || g.tier} and up`;
+    return `<option value="${esc(g.id)}" ${g.held ? '' : 'disabled'} ${g.id === fallback ? 'selected' : ''}>${esc(label)}</option>`;
+  }).join('');
+}
+
 function lookOptions(pack) {
   const looks = library.looks || [];
   const current = pack.look || 'default';
@@ -5437,6 +5466,13 @@ function packCard(kind, pack, repaint = () => {}) {
       ${pack.broken ? '' : `
         <label class="pack-shape">Look
           <select class="look-pick">${lookOptions(pack)}</select>
+        </label>
+        <!-- The same picker as the launch bar's, because a pack card can still
+             launch a night — and a setting that exists on one route and not the
+             other is a night that comes out different depending on which button
+             was nearer. -->
+        <label class="pack-shape">While they wait
+          <select class="game-pick">${lobbyGameOptions(kind)}</select>
         </label>
         <label class="pack-shape">Where
           <select class="where-pick">${whereOptions()}</select>
@@ -5716,10 +5752,11 @@ function packCard(kind, pack, repaint = () => {}) {
     const shape = picked ? JSON.parse(picked.value) : null;
     const prizes = Number(el.querySelector('.prize-pick')?.value) || 0;
     const look = el.querySelector('.look-pick')?.value || '';
+    const lobbyGame = el.querySelector('.game-pick')?.value || '';
     const online = el.querySelector('.where-pick')?.value === 'online';
     const teamPlay = el.querySelector('.play-pick')?.value === 'teams';
     const venue = venueFrom(el);
-    await doLaunch(kind, pack.id, { shape, prizes, look, online, teamPlay, venue }, button);
+    await doLaunch(kind, pack.id, { shape, prizes, look, lobbyGame, online, teamPlay, venue }, button);
   });
   return el;
 }
@@ -5731,11 +5768,11 @@ function packCard(kind, pack, repaint = () => {}) {
  * there must not be two ways OUT, or the 409-and-confirm dance gets fixed in
  * one of them and quietly rots in the other.
  */
-async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', online = false, teamPlay = false, venue = '', order = null }, button) {
+async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', lobbyGame = '', online = false, teamPlay = false, venue = '', order = null }, button) {
     const send = (replace) => postJson(
       '/api/host/launch',
       {
-        game: kind, packId, shape, prizes, look, online, teamPlay, venue,
+        game: kind, packId, shape, prizes, look, lobbyGame, online, teamPlay, venue,
         /*
          * TONIGHT'S RUNNING ORDER, and only when there IS one.
          *

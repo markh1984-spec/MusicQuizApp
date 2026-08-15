@@ -766,26 +766,38 @@ stays.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
-### THE LOBBY GAMES — MAZE MOUTH AND RALLY, AND NEITHER IS NAMED AFTER THE ONE YOU ARE THINKING OF
+### THE LOBBY GAMES — AND NONE OF THEM IS NAMED AFTER THE ONE YOU ARE THINKING OF
 
 `public/assets/maze.js` + `lobby-game.js` (Maze Mouth), `rally.js` +
-`lobby-rally.js` (Rally), `lobby-menu.js` (which one, and the card),
-`lobby-board.js` (the projector's board), `src/arcade.js` (the scores, shared
-by both engines), `state.gameSeed`, `state.arcade`.
+`lobby-rally.js` (Rally), `tailback.js` + `lobby-tailback.js` (Tailback),
+`lobby-games.js` (the list and the tiers, read by the SERVER and the browser),
+`lobby-menu.js` (the card and the loaders), `lobby-board.js` (the projector's
+board), `src/arcade.js` (the scores, shared by both engines),
+`state.gameSeed`, `state.arcade`, `state.lobbyGame`.
 
-- **THERE ARE TWO, AND THE DEFAULT FOLLOWS THE GAME RATHER THAN THE ACCOUNT:
-  Maze Mouth before a quiz, Rally before the bingo.** A bingo night should have
-  a character of its own rather than being the quiz with different content in
-  it, and a remembered per-account preference would be wrong on half the nights
-  of anybody who runs both. The phone knows which night it is on (`s.game`), so
-  it costs one branch and nothing is chosen or stored. **The picker is NOT
-  built** — see TODO.md; one game per game type with no choice is already
-  useful and a picker with one entry is not.
-- **THEY ARE CALLED MAZE MOUTH AND RALLY.** The names, mazes, characters and
-  sounds of the two things they resemble are Namco's and Atari's, and this app
-  is SOLD — a legal line, not a taste one. Say whatever you like on a mic; do
-  not print it. **An unnamed game keeps inviting the wrong name**, which is why
-  the second one was named before it was written rather than after.
+- **THE DEFAULT FOLLOWS THE GAME RATHER THAN THE ACCOUNT: Maze Mouth before a
+  quiz, Rally before the bingo.** A bingo night should have a character of its
+  own rather than being the quiz with different content in it, and a remembered
+  per-account preference would be wrong on half the nights of anybody who runs
+  both.
+- **WHICH GAME IS A DECISION ABOUT TONIGHT**, so it goes where the look and the
+  card shape go — chosen under **Set it up**, written into `state.lobbyGame` at
+  launch, restored after a crash. **THE TIER IS CHECKED AT THE ROUTE, never in
+  the console**, and a game above the tier is **dropped in favour of the
+  default rather than refused**: losing a choice costs a game nobody has seen
+  yet, where refusing the launch costs the night. **The phone honours
+  `s.lobbyGame` and re-checks nothing**, or the console and the room disagree.
+- **THE TIER GATES HOW MANY GAMES, NOT WHETHER THERE IS ONE.** Bronze holds the
+  two that ship and they are also the two defaults; higher tiers hold what is
+  added after. **Do not sell the game itself away from the bottom tier** — a
+  phone with a game on it stays in the FOREGROUND, so sixty connections do not
+  all come back at the moment the join gate is busiest. That is a RELIABILITY
+  feature dressed as a toy. **Locked games are SHOWN, not filtered out.**
+- **THEY ARE CALLED MAZE MOUTH, RALLY AND TAILBACK.** The names, mazes and
+  characters of the three things they resemble are Namco's and Atari's, and
+  this app is SOLD — a legal line, not a taste one. Say whatever you like on a
+  mic; do not print it. **An unnamed game keeps inviting the wrong name**,
+  which is why the later ones were named before they were written.
 - **ONE SCOREBOARD FOR BOTH, in `src/arcade.js`** — the same clamp, the same
   best-not-latest rule and the same refusal outside the lobby, called by both
   engines. Two copies is two rules, and the day one is fixed is the day a bingo
@@ -1126,6 +1138,8 @@ Open the one you are touching; do not read them all.
 
 - MAZE MOUTH — THE LOBBY GAME, AND IT IS NEVER CALLED PAC-MAN
 - RALLY — the bingo night's game, and it is not called Pong
+- TAILBACK — a tail that grows, and the first game behind the picker
+- THE PICKER, AND WHAT A TIER ACTUALLY BUYS
 
 **[`docs/accounts.md`](docs/accounts.md)** — hats, tiers, rooms, gates, own packs
 
@@ -1936,6 +1950,19 @@ zero, the ref. Every `pub-unchanged.mjs <commit>` ever run in this repo
 compared against `HEAD~1` instead, and announced it in a line that looks
 exactly like a confirmation. Three faults in one script, none of which made it
 fail: **a tool that cannot fail is a tool nobody checks.**
+
+**AND A FOURTH, on 15 August 2026: IT HAD NEVER LOOKED AT THE LOBBY.** The
+first `compare()` came AFTER `a.start()`, so every payload this script has ever
+checked was from a game already under way — **the join code, the QR, the prize
+line, the player strip, the countdown and the lobby game were all outside the
+one guard this repo runs before a gig week.** That is the screen a room looks
+at while sixty people are joining, which is the busiest moment of the night and
+the one path this file says must not stutter. Found the same way as the
+answering fault: a field was added to the lobby player payload and the script
+said the payloads were identical. There is a `compare('lobby')` before
+`start()` now. **Four faults in one script, and every one of them was the tool
+answering confidently about something it was not looking at** — when it says
+IDENTICAL, the useful question is what it did not compare.
 
 **It also says WHICH FIELD now.** It used to print the first 300 characters of
 both payloads — and a payload's first 300 characters are nearly always
