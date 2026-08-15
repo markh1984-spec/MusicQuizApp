@@ -1541,6 +1541,44 @@ combo night would publish two hours early, mid-karaoke. **A night whose gallery
 publishes on it needs a real end time**, not a default — and that is a small
 change to the booking form with a real consequence behind it.
 
+### SIX PACKS IN REACH — a shortlist, because a drag needs to SEE both ends
+
+Raised on 15 August 2026 as a crowding problem — *"if the packs section gets
+too many packs it will start to look crowded, can we just have a 'highlighted
+packs' section"* — and then reframed by the host into something better:
+***"6 is perfect because it's not just about crowding but also what can be seen
+to be dragged and dropped."***
+
+**That is the real justification and it changes what the feature is.** Drag and
+drop only works while the card AND the slot are both on screen. It is why
+`pinTonightWhereItIs()` had to be written at all: the drop target kept
+scrolling away from the hand. Six packs is ONE ROW sitting directly under the
+Tonight bar, which means the common gesture needs no scrolling at either end.
+**The shortlist is not tidying. It is what makes the gesture possible.**
+
+So it is not a curation feature and should not be built as one:
+
+- **THE SIX SIT AT THE TOP OF THE LIBRARY, nearest the bar**, and *See all N*
+  expands underneath. The packs you can reach without scrolling are the ones
+  the app thinks you want.
+- **CHOSEN AUTOMATICALLY, NEVER STARRED BY HAND.** `quickPicks()` already ranks
+  by what the room is least likely to have heard — never played first, then
+  longest since — and that is not a proxy for *what should I play tonight*, it
+  IS that question. A hand-picked six is a preference that goes stale (starred
+  in March, still showing in October) and a Monday job per pack, which is the
+  cost this app measures features by.
+- **EXCLUDE WHAT IS ALREADY IN TONIGHT'S SLOTS**, or the six things you are
+  most likely to want are partly things you have already picked.
+- **SEARCH IGNORES THE SHORTLIST ENTIRELY** — three letters searches the whole
+  library, as it does now. The shortlist is the resting state, not a filter.
+- **PINNING IS THE EASY ADDITION LATER, and only if it is missed.** Automatic
+  first then manual on top is the cheap direction; manual first is not.
+
+**Not urgent at seventeen packs** — nine quiz and eight bingo is two rows, and
+building a curation layer against a shelf neither of us has seen is designing
+blind. It earns its place when the library is long, or sooner if the reaching
+turns out to be the annoying part rather than the scrolling.
+
 ### TONIGHT IS A RUNNING ORDER — slot 1 is the first thing the app plays
 
 Decided on 15 August 2026: *"I think it should be running order so the first
