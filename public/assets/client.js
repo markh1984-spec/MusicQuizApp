@@ -54,8 +54,19 @@ export function brandLink(name, { key = '', size = 30, appName = '' } = {}) {
 export function navMenu({
   current = '', key = '', control = true, packs = true, owner = false, acting = false,
 } = {}) {
-  const at = (path) => path + (key ? `?key=${encodeURIComponent(key)}` : '');
-  const items = [{ id: 'console', label: 'Console', href: at('/console') }];
+  // `?` OR `&`, because two of the doors already carry a `door=` — appending a
+  // second `?` makes the key part of the door's value and the page loses it.
+  const at = (path) => path + (key ? `${path.includes('?') ? '&' : '?'}key=${encodeURIComponent(key)}` : '');
+  /*
+   * CONSOLE CARRIES THE HAT NOW, because Control used to and Control is no
+   * longer a door.
+   *
+   * An owner pressing the night door is asking for their own console, and they
+   * have one — it is behind the quizmaster hat. Making them find the switch
+   * first is a step that exists only because of how the code is arranged,
+   * which is the exact reason Control carried `hatOn` before this.
+   */
+  const items = [{ id: 'console', label: 'Console', href: at('/console'), hatOn: owner && !acting }];
   /*
    * THE SAME FOUR DOORS IN THE SAME ORDER, WHICHEVER HAT IS ON.
    *
@@ -70,8 +81,30 @@ export function navMenu({
    * the hat, and making them find the switch first is a step that exists only
    * because of how the code is arranged. `data-hat-on` is that press.
    */
-  if (control) items.push({ id: 'control', label: 'Control', href: at('/host'), hatOn: owner && !acting });
-  if (packs) items.push({ id: 'packs', label: 'Packs', href: at('/editor') });
+  /*
+   * CONSOLE · WORKSHOP · POST GIG — the three doors, ordered by the gig.
+   *
+   * Named by the host on 15 August 2026: *"this section needs to say Console,
+   * Workshop and Post gig and function like that."* They replace Console ·
+   * Control · Packs, which named TOOLS; these name MOMENTS, which is how
+   * somebody actually thinks about a night — before it, during it, after it.
+   *
+   * **Console keeps its name and means the night itself**, which is what makes
+   * the launch guarantee survive the change: the one thing everybody already
+   * knows is that Console is where you go to start a quiz, and it still is.
+   *
+   * **CONTROL IS NO LONGER A DOOR.** Driving the quiz is something you do
+   * DURING, not a different kind of tool, so it belongs inside Console — where
+   * "Take control" already sits on the running panel. The route back must stay
+   * short: two predictable taps is fine, hunting is not, and relaunching to
+   * get back would destroy a running game in front of a room.
+   *
+   * They are all `/console` with a `door` on it rather than three pages: the
+   * tab bar filters itself by the door, which means Music Quiz can be the
+   * shelf behind Console and the writing panels behind Workshop.
+   */
+  if (packs) items.push({ id: 'workshop', label: 'Workshop', href: at('/console?door=workshop') });
+  items.push({ id: 'post', label: 'Post gig', href: at('/console?door=post') });
   /*
    * THERE IS NO OWNER DOOR ON THIS MENU, and taking it off was the host's
    * call: *"only my account has two owner links now — defunct. The other QMs

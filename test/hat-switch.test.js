@@ -106,16 +106,35 @@ test('NO IDENTITY GETS AN OWNER DOOR ON THE MENU', () => {
 });
 
 test('and the three doors are in the same order whoever is reading', () => {
+  /*
+   * THE DOORS ARE MOMENTS NOW, NOT TOOLS — Console · Workshop · Post gig,
+   * ordered by the gig: during it, before it, after it. They replaced Console
+   * · Control · Packs, which named the software's parts rather than the
+   * quizmaster's evening.
+   *
+   * The RULE being guarded is unchanged and is the one that matters: the same
+   * doors in the same order whoever is reading, because a menu that reorders
+   * itself is not a menu.
+   */
   const labels = (rights) => (navMenu(rights).match(/>([^<]+)</g) || []).map((s) => s.slice(1, -1));
-  assert.deepEqual(labels(menuRights(quizmaster())), ['Console', 'Control', 'Packs']);
-  assert.deepEqual(labels(menuRights(quizmaster({ actingAs: true }))), ['Console', 'Control', 'Packs']);
+  assert.deepEqual(labels(menuRights(quizmaster())), ['Console', 'Workshop', 'Post gig']);
+  assert.deepEqual(labels(menuRights(quizmaster({ actingAs: true }))), ['Console', 'Workshop', 'Post gig']);
 });
 
-test('an owner as themselves still gets Control, and it puts the hat on', () => {
-  // The door is always there or the row shuffles left, which is the "it
-  // changes every time" complaint. It changes hat on the way through.
+test('AN OWNER PRESSING CONSOLE PUTS THE QUIZMASTER HAT ON', () => {
+  /*
+   * Control used to carry this and Control is no longer a door — driving a
+   * quiz is something you do DURING, so it lives inside Console now. The
+   * behaviour had to move with it: an owner pressing the night door is asking
+   * for their own console, and they have one, behind the hat. Making them find
+   * the switch first is a step that exists only because of how the code is
+   * arranged.
+   *
+   * If this ever stops holding, an owner presses Console and lands on a page
+   * with nothing of theirs on it.
+   */
   const html = navMenu(menuRights({ signedIn: true, tiers: ['bronze'], account: { role: 'owner', entitlements: { features: ['owner.catalogue'] } } }));
-  assert.match(html, /href="\/host"[^>]*data-hat="on"/);
+  assert.match(html, /href="\/console"[^>]*data-hat="on"/);
 });
 
 test('and on the host key, where the owner is the cookie underneath', () => {

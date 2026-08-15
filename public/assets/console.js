@@ -609,6 +609,7 @@ const QUIZ_ROUNDS = [
 const TABS = [
   {
     id: 'quiz',
+    doors: ['console', 'workshop'],
     needs: FEATURES.LIBRARY,
     label: 'Music Quiz',
     blurb: 'Three rounds, twenty seconds a question, fastest fingers win.',
@@ -644,6 +645,7 @@ const TABS = [
   },
   {
     id: 'bingo',
+    doors: ['console', 'workshop'],
     needs: FEATURES.LIBRARY,
     label: 'Music Bingo',
     blurb: 'You play the tracks. Every phone gets its own card.',
@@ -668,6 +670,7 @@ const TABS = [
   },
   {
     id: 'adverts',
+    doors: ['workshop'],
     needs: FEATURES.ADVERTS,
     label: 'Adverts',
     blurb: 'A set of slides per venue. Put any of them up between rounds.',
@@ -705,6 +708,7 @@ const TABS = [
      * right and what is BOOKED comes before what has been RUN.
      */
     id: 'diary',
+    doors: ['workshop'],
     needs: FEATURES.CALENDAR,
     label: 'Calendar',
     blurb: 'What you have got coming, from your venues\u2019 usual nights.',
@@ -719,6 +723,7 @@ const TABS = [
   },
   {
     id: 'past',
+    doors: ['post'],
     needs: FEATURES.PAST_GIGS,
     label: 'Gigs',
     blurb: 'What you have got coming, and every night you have run.',
@@ -729,6 +734,7 @@ const TABS = [
   },
   {
     id: 'invoices',
+    doors: ['post'],
     needs: FEATURES.INVOICES,
     label: 'Invoices',
     blurb: 'Bill for a night before you have left the car park.',
@@ -791,6 +797,7 @@ const TABS = [
      * it, so there is nothing on a gig night that sends you here.
      */
     id: 'venues',
+    doors: ['workshop'],
     needs: FEATURES.INVOICES,
     label: 'Venues',
     blurb: 'The places you play, and what they put up as prizes.',
@@ -799,6 +806,7 @@ const TABS = [
   },
   {
     id: 'help',
+    doors: ['workshop'],
     label: 'Help',
     blurb: 'The support door, the suggestion box, and what you have heard back.',
     /*
@@ -832,6 +840,7 @@ const TABS = [
      * `needs` at all.
      */
     id: 'account',
+    doors: ['workshop'],
     label: 'My Account',
     blurb: 'Who you are, what you are on, your colours and your room.',
     // Always here, whatever is switched off — it is where things are switched
@@ -839,6 +848,37 @@ const TABS = [
     render: () => accountSection(),
   },
 ];
+
+/**
+ * THE THREE DOORS — Console, Workshop, Post gig.
+ *
+ * Asked for on 15 August 2026: *"this section needs to say Console, Workshop
+ * and Post gig and function like that"*, and the names are better than the
+ * before/during/after they replace — **Console keeps its name and means the
+ * night**, so the one thing everybody already knows (Console is where you
+ * start a quiz) does not have to be re-learned.
+ *
+ * **It is one page with a filtered tab bar, not three pages.** `TABS` already
+ * drives the whole tab system, so a `doors` list on each entry is the entire
+ * mechanism. That also solves the panel move for nothing: **Music Quiz appears
+ * behind BOTH doors** — the shelf on the Console, the writing and buying
+ * panels in the Workshop — same tab, different door, different body. Nothing
+ * had to be extracted into a shared module, which was the expensive part of
+ * the plan this replaces.
+ *
+ * **Console is the default**, so every existing link, bookmark and `?tab=`
+ * still lands where it always did.
+ */
+const DOORS = ['console', 'workshop', 'post'];
+
+function doorNow() {
+  const d = new URL(location.href).searchParams.get('door') || '';
+  return DOORS.includes(d) ? d : 'console';
+}
+
+/** Which doors a tab is behind. Absent means the Workshop — a new tab is
+ *  preparation until somebody says otherwise, never the launch page. */
+const doorsOf = (tab) => (Array.isArray(tab.doors) && tab.doors.length ? tab.doors : ['workshop']);
 
 const TAB_STORE = 'musicquiz.consoletab';
 
@@ -913,7 +953,9 @@ function render() {
     : '';
   // Rebuilt on every render rather than once: the join code arrives with the
   // library, and which links you get depends on the tier you are previewing.
-  paintNav(document.getElementById('navSlot'), { current: 'console', key: keyInUrl, ...rights });
+  // The lit door is the one you are behind, not always "console" — all three
+  // are this same page, so the menu cannot work it out from the address alone.
+  paintNav(document.getElementById('navSlot'), { current: doorNow(), key: keyInUrl, ...rights });
 
   const active = currentTab();
   const live = Boolean(running && running.phase !== 'lobby' && running.phase !== 'finished');
@@ -936,8 +978,19 @@ function render() {
      * projector is never blank). Nothing to unload; the panel was just
      * describing a loaded pack as though it were a running night.
      */
-    live ? node('<div></div>') : launchBar(),
-    runningPanel(running),
+    /*
+     * TONIGHT AND THE RUNNING PANEL ARE ON THE CONSOLE DOOR ONLY.
+     *
+     * Tonight used to sit at the top of every tab so a night could be launched
+     * from wherever you were. **That guarantee survives the doors and is
+     * better served by them**: the promise was never "a launch panel on every
+     * tab", it was *launching is always one predictable move away* — and
+     * pressing Console is that move. What it buys back is a launch bar that is
+     * no longer furniture on Invoices, Venues and Calendar, which is most of
+     * the reason for the doors at all.
+     */
+    (doorNow() !== 'console' ? node('<div></div>') : (live ? node('<div></div>') : launchBar())),
+    doorNow() === 'console' ? runningPanel(running) : node('<div></div>'),
     tabBar(active),
     tabBody(active),
   );
@@ -2241,7 +2294,8 @@ function visibleTabs() {
    *    trying to sell somebody the thing they just put away, which is both
    *    wrong and annoying.
    */
-  return TABS.filter((tab) => {
+  const door = doorNow();
+  return TABS.filter((tab) => doorsOf(tab).includes(door)).filter((tab) => {
     if (!tab.needs) return true;
     if (can(tab.needs)) return true;
     if (switchedOff(tab.needs)) return false;
