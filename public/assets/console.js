@@ -2445,13 +2445,28 @@ function tabBody(active) {
    * screen reader announcing "Quizporium, Music Bingo" on every tab is the
    * same fault as a control whose only explanation is a `title`.
    */
-  wrap.appendChild(node(`
-    <div class="game-head tab-head">
-      <div class="tab-head-name">
-        <span class="tab-head-mark" aria-hidden="true">${brandMark(26)}</span>
-        <h2>${esc(tab.label)}</h2>
-      </div>
-    </div>`));
+  /*
+   * NOTHING COMES BETWEEN THE LAUNCH BAR AND THE PACKS.
+   *
+   * The rule, set on 15 August 2026: *"on the console view the rule has to be
+   * that nothing is between the console and the packs — remove everything
+   * else."* The tab already says which game it is, an inch above, in a lit
+   * chip; repeating it as a heading with the logo beside it is a second label
+   * for the same fact, standing between the thing you launch from and the
+   * thing you launch.
+   *
+   * It stays on the Workshop and Post gig doors, where a page has more than
+   * one section on it and the heading is doing real work.
+   */
+  if (doorNow() !== 'console') {
+    wrap.appendChild(node(`
+      <div class="game-head tab-head">
+        <div class="tab-head-name">
+          <span class="tab-head-mark" aria-hidden="true">${brandMark(26)}</span>
+          <h2>${esc(tab.label)}</h2>
+        </div>
+      </div>`));
+  }
 
   // A tab is either a game (generator + its saved packs) or a one-off panel.
   if (tab.render) {
@@ -2468,10 +2483,24 @@ function tabBody(active) {
    * that packs are written for them, and a panel about writing their own, both
    * sitting above the only thing they came for.
    */
+  /*
+   * THE WRITING PANELS ARE WORKSHOP FURNITURE AND ONLY APPEAR THERE.
+   *
+   * *"These need to be removed from console view, they're workshop
+   * features."* — Ask for a quiz, My packs, the bingo track-list paster, the
+   * forget list. Every one of them makes or requests a pack, which is
+   * preparation; none of them has any business between a quizmaster and the
+   * thing they are about to launch.
+   *
+   * This is the whole point of the doors. The tab keeps its id and its packs,
+   * and the BODY differs by which door you came through: the shelf on the
+   * Console, the workbench in the Workshop.
+   */
+  const workshop = doorNow() !== 'console';
   const writing = can(FEATURES.GENERATE) || can(FEATURES.CATALOGUE);
-  if (tab.generator && writing) wrap.appendChild(tab.generator());
+  if (workshop && tab.generator && writing) wrap.appendChild(tab.generator());
   wrap.appendChild(gameSection(tab.id, tab.label, tab.blurb, tab.packs(), tab.editLabel));
-  if (tab.generator && !writing) wrap.appendChild(tab.generator());
+  if (workshop && tab.generator && !writing) wrap.appendChild(tab.generator());
   return wrap;
 }
 
@@ -5093,53 +5122,44 @@ function packPrice() {
 }
 
 function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
+  const door = doorNow();
   const dense = localStorage.getItem(DENSE_STORE) === '1';
   const query = packQuery[kind] || '';
 
   const el = node(`
     <div class="game-section">
-      <div class="game-head">
-        <div>
-          <!-- "RECOMMENDED", NOT "YOUR LIBRARY" — asked for, and it is the
-               honest name: it explains WHY there are only six, which "your
-               library" does not. A shelf of six labelled "your library" when
-               you own twenty-three is the app quietly lying about what it is
-               showing you.
+      <!--
+           ON THE CONSOLE DOOR THERE IS NOTHING HERE BUT THE SEARCH BOX.
 
-               It goes back to naming the whole shelf the moment the shelf IS
-               the whole thing — pressing See all, or searching. Two states,
-               both true, and the heading is the thing that says which one you
-               are looking at. -->
+           *"Nothing is between the console and the packs — remove everything
+           else."* So the heading, the blurb, Compact, My packs and the way to
+           the workshop are all Workshop-door furniture now. Between the launch
+           bar and the cards there is one control, and it is the one that
+           reaches the packs the six do not show.
+
+           **SEARCH STAYS AND HAS TO.** See all was removed at the same
+           instruction, so typing is now the ONLY way to reach the seventh pack
+           onwards. Taking the box away as well would strand every pack outside
+           the recommended six.
+      -->
+      <div class="game-head ${door === 'console' ? 'head-bare' : ''}">
+        ${door === 'console' ? '' : `<div>
           <h2 class="pack-head">Recommended</h2>
           <div class="tiny">${esc(blurb)}</div>
-        </div>
+        </div>`}
         <div class="pack-tools">
           <input class="pack-search" type="search" placeholder="Search ${(packs || []).filter((p) => !p.locked).length}…"
                  value="${esc(query)}" aria-label="Search packs">
+          ${door === 'console' ? '' : `
           <button class="minor pack-dense" title="${dense ? 'Show the full cards' : 'Squeeze more on screen'}"
                   aria-pressed="${dense}">${dense ? 'Cards' : 'Compact'}</button>
-          ${can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS) ? `<a class="minor" href="${linkTo('/editor')}">${esc(editLabel)}</a>` : ''}
+          ${can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS) ? `<a class="minor" href="${linkTo('/editor')}">${esc(editLabel)}</a>` : ''}`}
         </div>
       </div>
-      <!-- THE WAY TO THE WORKSHOP — ONE LINE, DRAWN ONCE.
-           The Console is for launching; writing, buying and editing belong on
-           the Packs door, which already exists in the menu. Somebody looking
-           for "write a quiz" will come to this tab first, because that is
-           where it has always been, so there has to be a signpost.
-
-           IN THE TEMPLATE, not appended by paint(). It was appended, and
-           paint() runs again on every search keystroke and every re-render —
-           so the link and the See all button piled up three deep on screen.
-           A thing built once cannot be built twice.
-
-           A LINK, NEVER A PANEL. Four workshop panels crept onto this tab one
-           at a time, each reasonable on its own, and together they buried the
-           only thing the page is for. If this line ever grows controls, that
-           has happened again. -->
-      <div class="row pack-way-row">
+      ${door === 'console' ? '' : `<div class="row pack-way-row">
         ${can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS) || can(FEATURES.GENERATE)
     ? `<p class="tiny pack-way"><a href="${linkTo('/editor')}">Write, buy or edit packs →</a></p>` : ''}
-      </div>
+      </div>`}
       <div class="pack-grid ${dense ? 'dense' : ''}"></div>
       <div class="game-head shop-head" hidden>
         <div>
@@ -5314,7 +5334,15 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
 
 
 
-    if (buyable.length) {
+    /*
+     * THE SHOP IS WORKSHOP FURNITURE TOO, and the loudest of it.
+     *
+     * Buying a pack is preparation, and a shop on the launch page is the
+     * plainest possible breach of *the common job is the fast one* — it puts
+     * something to spend money on between a quizmaster and the button they
+     * came to press. It sells perfectly well one door away.
+     */
+    if (buyable.length && door !== 'console') {
       shopHead.hidden = false;
       shopHead.querySelector('.shop-count').textContent =
         `${buyable.length} more ${kind === 'quiz' ? (buyable.length === 1 ? 'quiz' : 'quizzes') : (buyable.length === 1 ? 'bingo game' : 'bingo games')}`;
