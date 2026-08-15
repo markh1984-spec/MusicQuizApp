@@ -5443,7 +5443,17 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    it and reads as one object. */
 .lb-order { margin-top: 10px; border-radius: var(--r-card); }
 .lb-order.drop-here { outline: 2px dashed var(--hot); outline-offset: 4px; }
-.lb-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; }
+/* CAPPED AT 200px, and the cap is the whole point of this line.
+   `auto-fit` with `minmax(118px, 1fr)` stretches its tracks to fill the row,
+   which is right at six tiles and absurd at four: a bingo night draws ONE
+   pack slot and three info squares, so each one grew to nearly 290px and the
+   bar became six hundred pixels of enormous boxes. An upper bound keeps a
+   tile a tile whatever else is on the row.
+   The cost is dead space to the right when there are only a few, and that is
+   the correct trade — it is exactly what the pack grid below already does on
+   its last row, and a consistent tile size across states is worth more than a
+   row that always reaches the edge. */
+.lb-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 200px)); gap: 8px; }
 .lb-tile {
   position: relative; display: flex; flex-direction: column; justify-content: flex-end;
   gap: 2px; min-width: 0; padding: 10px;
