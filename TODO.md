@@ -1659,6 +1659,60 @@ the input, and let the bar clip inside itself instead of pushing the page.
 **Measure `scrollWidth` against `clientWidth` at 320 after anything
 structural**; nothing else finds it.
 
+### BEFORE, DURING, AFTER — the three doors, ordered by the gig
+
+Proposed on 15 August 2026, and it supersedes the smaller console/workshop
+split below it: *"perhaps a better order is three sections, one dedicated to
+preparing for gigs, one dedicated to the gig night, and one dedicated to what
+happens after, and then each one gets tabs below."*
+
+**IT IS THE AXIS THIS APP ALREADY USES, PROMOTED TO THE TOP LEVEL.** The tab
+bar is already ordered *left to right along a quizmaster's evening*, and
+*"Gigs is EVIDENCE, Calendar is ORGANISATION"* is already recorded as the test
+for where a new thing goes. Both are the same before/after distinction, decided
+locally, twice. Three doors make it one rule that answers every future "where
+does this live" without re-arguing it.
+
+It also fixes a real problem rather than only tidying: **nine tabs is too many
+to scan**, and three sections of three or four is not.
+
+| Door | What it is for | Tabs under it |
+|---|---|---|
+| **Prepare** | organisation, before the night | packs & the workshop, Calendar, Venues, Adverts |
+| **Tonight** | the gig itself | the launch bar, the Recommended shelf, the control view |
+| **After** | evidence and admin | Gigs, Invoices, photos & the gallery |
+
+#### Two things to settle BEFORE building it
+
+- **HELP AND MY ACCOUNT ARE NOT ON THE TIMELINE.** They are not before, during
+  or after — they are always. Jamming them into Prepare would be the first
+  thing that makes the rule a lie. They probably belong beside the account and
+  hat controls instead.
+- **IT REVERSES "TONIGHT AT THE TOP OF EVERY TAB"**, which was deliberate:
+  *"wherever he is, he can launch from there — sometimes you just don't want
+  to think."* Under three doors it naturally lives only in Tonight. That is
+  probably right now — the reason it was everywhere is that the tabs were a
+  jumble, and once the night has its own door launching is one tap away — but
+  **it must be decided rather than happen as a side effect.**
+
+#### What it settles for free
+
+**CONTROL STOPS BEING ITS OWN DOOR** and becomes part of the night. That is
+more honest than a top-level item: driving the quiz is something done DURING,
+not a different kind of tool. It also answers the *"is the Control menu item
+pointless"* question — the door is not pointless, it is in the wrong place.
+
+**But keep a route back to the controls from everywhere**, whatever the shape.
+Mid-quiz, going to another section and needing to return has to be one tap; the
+only alternative is relaunching, which destroys a running game in front of a
+room.
+
+#### This replaces the smaller split below
+
+The console/workshop entry that follows is the same idea at half the size. If
+the three doors are built, that entry is done by definition — do not build
+both.
+
 ### THE CONSOLE IS FOR LAUNCHING. THE PACKS PAGE IS THE WORKSHOP.
 
 Proposed on 15 August 2026: *"perhaps the console menu item itself needs to be
