@@ -1636,6 +1636,33 @@ stuff, so pack 1 — quiz round that contributes to the score, breakout game,
 quiz round 2 that contributes to the score etc… the breakout games would be
 orange."*
 
+#### THE RUNNING ORDER IS DELIVERY ORDER. SCORING IS A PROPERTY OF THE ELEMENT.
+
+The host's own framing, and it is better than the entry above it: *"the running
+order of the night is the order in which the elements are delivered to the
+crowd, but not all of them will contribute to the quiz score."*
+
+**Take it literally, because it separates two axes this list had tangled.** The
+row is what the ROOM experiences, in order. Whether a thing feeds the quiz
+total is a property of that thing, not of what KIND it is — and bingo already
+proves the point, since it is delivered and does not contribute to quiz points
+either.
+
+Two consequences, both of which make the build smaller:
+
+- **`scores: true/false` is a flag on a round, never inferred from its type.**
+  The tally, the fastest finger and the first-correct bonus ask that one
+  question instead of each carrying a list of types that do and do not count.
+  Every future element is then free — a fun "guess the year", a picture round
+  played for laughs.
+- **A DECISION IS WAITING IN THE ROUND NUMBERING.** The projector says "Round 2
+  of 5", counted off the list. Put a breakout in it and the room hears a number
+  that includes a round nobody scored. Either the count stays honest to the
+  EVENING (five elements, one for fun) or it counts only what SCORES (four
+  rounds, the breakout unnumbered). **Lean to the second** — the number is a
+  scoring promise, and a team working out "two rounds left to catch up" is
+  doing arithmetic the numbering should not lie about. Ask before building.
+
 #### IT IS A ROUND TYPE, NOT A GAME KIND, AND THAT IS THE WHOLE DESIGN
 
 **The scores have to survive it, and that decides everything else.** A night is
