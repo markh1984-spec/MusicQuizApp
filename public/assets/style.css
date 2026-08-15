@@ -5540,14 +5540,57 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    would wrap one of them under the others the moment the packs beside them
    changed count. Below 560px they go to two and then the third drops, which
    is the only place wrapping is honest: a 320px phone cannot hold three. */
-.lb-facts { margin-top: 8px; grid-template-columns: repeat(3, minmax(0, 200px)); }
+/*
+ * ONE LINE OF DESCRIPTION, not three cards.
+ *
+ * Where, when and what for are facts somebody READS. As squares they were the
+ * same size as the pack slots above, which said they were the same kind of
+ * thing — something you drag onto — and they took as much of the screen while
+ * doing none of the work. Tonight is at the top of every tab, so its height is
+ * charged to every page in the console.
+ *
+ * It WRAPS rather than scrolling or ellipsising: a venue name is as long as
+ * the venue is, and on a phone this is allowed to become two lines. Two lines
+ * of text is still a fraction of three squares.
+ */
+.lb-say {
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  gap: 2px 10px; margin-top: 8px; min-width: 0;
+  font-size: var(--fs-note); color: var(--ink-dim);
+}
+.lb-say-bit { min-width: 0; overflow-wrap: anywhere; }
+/* Middots between, drawn rather than typed so the last one never trails. */
+.lb-say-bit + .lb-say-bit::before,
+.lb-say-venue + .lb-say-bit::before { content: '·'; margin-right: 10px; opacity: 0.55; }
+/*
+ * THE VENUE IS STILL A BUTTON, because it is the only way into the venue
+ * picker from here and the venue is chosen in one place and nowhere else.
+ * Underlined rather than boxed: a box would make it a control competing with
+ * Launch, and this is a fact you can correct rather than an action.
+ */
+.lb-say-venue {
+  padding: 0; border: 0; background: none; font: inherit; cursor: pointer;
+  color: var(--ink); font-weight: 700; min-width: 0; overflow-wrap: anywhere;
+  border-bottom: 1px dashed var(--panel-line);
+}
+.lb-say-venue:hover { color: var(--hot); border-bottom-color: var(--hot); }
 @media (max-width: 560px) { .lb-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .lb-tile {
   position: relative; display: flex; flex-direction: column; justify-content: flex-end;
   gap: 2px; min-width: 0; padding: 10px;
-  /* Square, which is the whole ask. `aspect-ratio` rather than a height, so a
-     tile stays square at every column width the grid produces. */
-  aspect-ratio: 1 / 1;
+  /*
+   * SHORT, NOT SQUARE — and square was measured as the fault.
+   *
+   * `aspect-ratio: 1/1` sounds harmless until the grid gives a tile 200px of
+   * width: it then takes 200px of HEIGHT, and two rows of them plus the launch
+   * button pushed Tonight past 600px on a laptop. Tonight sits at the top of
+   * EVERY tab, so every pixel it takes is a pixel off the tab somebody
+   * actually came to use.
+   *
+   * A drop target has to be big enough to hit with a mouse dragging a card,
+   * and that is all — which is a height, not a proportion.
+   */
+  min-height: 76px;
   border-radius: var(--r-card); text-align: left;
   font: inherit; color: var(--ink);
 }

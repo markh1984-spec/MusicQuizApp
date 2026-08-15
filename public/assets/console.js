@@ -4264,9 +4264,7 @@ function launchBar() {
      */
     const row = node('<div class="lb-tiles"></div>');
     row.append(...tiles);
-    const facts = node('<div class="lb-tiles lb-facts"></div>');
-    facts.append(...infoTiles());
-    orderEl.replaceChildren(row, facts);
+    orderEl.replaceChildren(row, infoLine());
     paintGo(packs);
     paintInTonight();
   }
@@ -4339,7 +4337,23 @@ function launchBar() {
    * other one was showing. The venue square opens the same picker the head
    * does; the other two are read.
    */
-  function infoTiles() {
+  /**
+   * ONE LINE THAT SAYS EVERYTHING ELSE — where, when, and what for.
+   *
+   * It was three squares the same size as the pack slots above, which said
+   * they were the same KIND of thing: something you drag onto. They are not —
+   * they are three short facts somebody READS, and dressed as targets they
+   * took as much room as the targets while doing none of the work.
+   *
+   * Tonight sits at the top of EVERY tab, so its height is charged to every
+   * page in the console. Slots, a line, a button — that is the whole section,
+   * and it now fits in a glance rather than a scroll.
+   *
+   * **THE VENUE STAYS A BUTTON.** It is the only way into the venue picker
+   * from here, and CLAUDE.md is explicit that the venue is chosen in one place
+   * and nowhere else. Losing it to a tidy-up would take the choice with it.
+   */
+  function infoLine() {
     const name = venueNow();
     const record = (library.venueRecords || [])
       .find((v) => (v.name || '').toLowerCase() === String(name).toLowerCase());
@@ -4354,31 +4368,21 @@ function launchBar() {
       weeks: 1,
     }).find((n) => n.date === nightKey() && (!name || n.venue.toLowerCase() === String(name).toLowerCase()));
 
-    const where = node(`
-      <button class="lb-tile is-info is-venue" type="button">
-        <span class="tiny lb-tile-cap">Where</span>
-        <b class="lb-tile-name">${esc(name || 'Pick a venue')}</b>
-        <span class="tiny lb-tile-sub">${esc(record && record.usualNight ? 'your usual night' : (name ? 'one-off' : 'decides the prizes'))}</span>
-      </button>`);
-    where.addEventListener('click', () => toggleVenues());
+    const prizeSaid = prizes.length
+      ? `${prizes[0]}${prizes.length > 1 ? ` +${prizes.length - 1}` : ''}`
+      : 'no prizes';
 
-    const when = node(`
-      <div class="lb-tile is-info">
-        <span class="tiny lb-tile-cap">Starts</span>
-        <b class="lb-tile-name">${esc(on && on.time ? saidTime(on.time) : 'When you like')}</b>
-        <span class="tiny lb-tile-sub">${esc(on && on.time ? 'from your calendar' : 'no time set')}</span>
+    const el = node(`
+      <div class="lb-say">
+        <button class="lb-say-venue" type="button" title="Pick where tonight is">
+          ${esc(name || 'Pick a venue')}
+        </button>
+        <span class="lb-say-bit">${esc(record && record.usualNight ? 'your usual night' : (name ? 'one-off' : 'sets the prizes'))}</span>
+        <span class="lb-say-bit">${esc(on && on.time ? `starts ${saidTime(on.time)}` : 'start when you like')}</span>
+        <span class="lb-say-bit">${esc(`for ${prizeSaid}`)}</span>
       </div>`);
-
-    const forWhat = node(`
-      <div class="lb-tile is-info ${prizes.length ? '' : 'is-none'}">
-        <span class="tiny lb-tile-cap">Playing for</span>
-        <b class="lb-tile-name">${esc(prizes[0] || 'No prizes')}</b>
-        <span class="tiny lb-tile-sub">${esc(prizes.length > 1
-    ? `and ${prizes.length - 1} more`
-    : (record ? 'set them on Venues' : 'venue not on your list'))}</span>
-      </div>`);
-
-    return [where, when, forWhat];
+    el.querySelector('.lb-say-venue').addEventListener('click', () => toggleVenues());
+    return el;
   }
 
 
