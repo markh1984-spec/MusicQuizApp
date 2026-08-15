@@ -759,12 +759,18 @@ body::after {
 body.is-dragging-card .tabbar { position: static; }
 body.is-dragging-card .launchbar {
   position: sticky;
-  /* Under the topbar, not under the top of the window. At `8px` it pinned
-     behind the topbar — which is sticky too and sits at a higher z-index — so
-     the panel you are dragging a pack INTO spent the drag half hidden behind
-     the logo. Tonight sits above the tab bar in the document, so it only has
-     the topbar to clear. */
-  top: var(--topbar-h);
+  /* WHERE IT ALREADY IS, worked out at the moment the drag starts — see
+     `pinTonightWhereItIs()`. Pinning at `--topbar-h` flat only ever moves a
+     panel that has scrolled past that line, and it always has, because you
+     scroll DOWN to reach the library you are dragging from. So the panel
+     lurched ninety pixels the instant a card was picked up and the drop tiles
+     slid out from under the cursor. A sticky top may be NEGATIVE: pinning at
+     the current offset freezes it exactly where the eye last saw it, which is
+     all the pinning was ever for.
+
+     `--topbar-h` is the fallback and stays correct on its own — it is the old
+     behaviour, for a drag that somehow starts before the measurement runs. */
+  top: var(--lb-pin, var(--topbar-h));
   /* Above the tab bar as well as above the page. Belt and braces: the rule
      above takes the bar out of the way, and this makes the drop target win
      even if something is pinned that we did not think of. */

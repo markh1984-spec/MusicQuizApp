@@ -3028,8 +3028,79 @@ let venueDrag = null;
  * drag, the target is always where the cursor can reach it.
  */
 function dragging(on) {
+  if (on) pinTonightWhereItIs();
   document.body.classList.toggle('is-dragging-card', Boolean(on));
 }
+
+/**
+ * AND IT PINS WHERE IT ALREADY IS, RATHER THAN JUMPING TO THE TOP.
+ *
+ * Reported from a real console with a screenshot either side of the gesture:
+ * *"still acting weird when you grab a pack"* — the whole Tonight panel moved
+ * about ninety pixels down the instant a card was picked up.
+ *
+ * The cause is what the pinning is for. Going sticky at `--topbar-h` only
+ * moves an element that has ALREADY scrolled past that line — and it always
+ * has, because you scroll DOWN to reach the library you are dragging from. So
+ * the fix for "the target is off-screen" created "the target moves the moment
+ * you aim at it", which is worse: the drop tiles slide out from under the
+ * cursor at the one moment the cursor is committed to them.
+ *
+ * **A sticky top can be NEGATIVE, which is the whole trick.** Pinning at the
+ * panel's current offset freezes it exactly where the eye last saw it — it
+ * still cannot scroll away for the rest of the drag, which is all the pinning
+ * was ever for, and it does not move a pixel to do it.
+ *
+ * Three cases and all of them fall out of one clamp:
+ *
+ *  - **partly scrolled under the topbar** (the common one): pin at the current
+ *    offset, so nothing moves;
+ *  - **fully below the topbar**: `--topbar-h` is already the smaller number, so
+ *    it pins there and does not move either — sticky does nothing until you
+ *    scroll;
+ *  - **scrolled so far up that the drop tiles are gone**: pinning where it is
+ *    would leave nothing to aim at, so it comes down just far enough to put the
+ *    tiles under the topbar. That is the one case where moving is the point,
+ *    and it is the case the original rule was written for.
+ *
+ * Measured rather than assumed, because the topbar WRAPS on a phone — a written
+ * out number is a panel pinned behind the logo at 390px.
+ */
+function pinTonightWhereItIs() {
+  const bar = document.querySelector('.launchbar');
+  if (!bar) return;
+  const topbar = document.querySelector('.topbar');
+  const topbarH = topbar ? topbar.getBoundingClientRect().height : 56;
+  const barTop = bar.getBoundingClientRect().top;
+
+  /*
+   * The drop tiles are the thing that has to stay reachable; the venue row and
+   * the describer line above them are worth losing to keep them.
+   *
+   * **ENOUGH OF THE ROW, NOT ALL OF IT** — and the first version asked for all
+   * of it, which measured as a 13px shift at 1280 and 33px at 390. Insisting
+   * the tiles be fully clear of the topbar makes the safe zone narrower than
+   * the scroll somebody actually does to reach their library, so the panel
+   * still twitched on the common gesture. A tile is 76px tall and 44 of them
+   * is a target nobody misses, so the top of the row is allowed to slide under
+   * the bar and the panel holds still across the whole range that matters.
+   */
+  const tiles = bar.querySelector('.lb-tiles');
+  let floor = topbarH;
+  if (tiles) {
+    const box = tiles.getBoundingClientRect();
+    // Never more than the row is tall — on a phone a tile is 58px, and an
+    // allowance bigger than the thing it is measuring would let the whole row
+    // disappear.
+    const mayHide = Math.max(0, box.height - Math.min(KEEP_OF_DROP_ROW, box.height));
+    floor = topbarH - (box.top - barTop) - mayHide;
+  }
+
+  bar.style.setProperty('--lb-pin', `${Math.max(Math.min(barTop, topbarH), floor)}px`);
+}
+
+/** How much of the drop row has to stay under the topbar — see above. */
+const KEEP_OF_DROP_ROW = 44;
 
 /*
  * A DRAG THAT ENDS ANYWHERE AT ALL UN-PINS TONIGHT.

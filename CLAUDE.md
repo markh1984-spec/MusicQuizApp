@@ -1174,6 +1174,7 @@ Open the one you are touching; do not read them all.
 - THE CONSOLE'S THEME — one surface, one heading ladder, a bar that stays
 - The tabs run LEFT TO RIGHT along a quizmaster's evening
 - DRAG AND DROP — the console is the laptop with the HDMI in it
+- AND TONIGHT PINS WHERE IT ALREADY IS, RATHER THAN JUMPING TO THE TOP
 - TONIGHT — one launch section, at the top of every tab
 - A PACK WEARS ITS OWN SUBJECT
 - SET IT UP IS ALWAYS THERE, DISABLED UNTIL THERE IS A NIGHT TO SET UP
@@ -1826,6 +1827,16 @@ buttons STAY** — drag is the fast way and every drag has a way round it.
   on a tick drags the pack.
 - **Mixing rounds from two packs belongs to the NIGHT, not the editor, and is
   deliberately NOT BUILT.** If it is picked up, start from Tonight.
+- **TONIGHT PINS WHERE IT ALREADY IS WHEN A DRAG STARTS, never at a fixed
+  line.** It goes sticky so the drop target cannot scroll away — but pinning at
+  `--topbar-h` only ever MOVES a panel that has already scrolled past it, and it
+  always has, because you scroll DOWN to reach the library. So the panel lurched
+  90px the instant a card was picked up and the tiles slid out from under the
+  cursor. **A sticky top may be NEGATIVE**: `pinTonightWhereItIs()` measures at
+  `dragstart` and freezes it where the eye last saw it. The floor asks for
+  ENOUGH of the drop row (`KEEP_OF_DROP_ROW`), not all of it — demanding all of
+  it left a safe zone narrower than the scroll people actually do. **The topbar
+  is measured, never written out**: it wraps on a phone.
 - **`moveWithin()` must allow for the source already being removed**, and the
   drop marker is ABOVE or BELOW depending on which half of the row you are in.
 
