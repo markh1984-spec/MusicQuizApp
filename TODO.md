@@ -1687,6 +1687,44 @@ distinguishes `entitled` from `features`, which is most of the shape.
 gold must not silently imply that bronze accounts lose it — the panel should
 state that existing holders keep it, at the moment of the drag.
 
+### TONIGHT'S SETTINGS IS A TAB, NOT A PANEL ON THE BAR
+
+Asked on 15 August 2026: *"not sure what the point of the Set it up bit on the
+console is, can this be done in the workshop?"* — and then answered better by
+the host himself: ***"perhaps a fourth tab that says Tonight's settings?"***
+
+**That is the right shape, and it beats both options that were put up.** The
+settings ARE about tonight, and the Console door IS about tonight, so they
+belong on a tab inside it. What was wrong was never the settings — it was them
+hanging off the launch bar as a fold, which is furniture between the bar and
+the packs and breaks the rule that nothing comes between those two.
+
+So the Console door becomes: **Music Quiz · Music Bingo · Venues · Tonight's
+settings**, and `Set it up` disappears from the bar.
+
+#### What is in it
+
+Look, While they wait (the lobby game), Game sound, Playing (teams or one phone
+each), and for bingo the Card shape and how many Prizes.
+
+#### THE WORK IS THE STATE, NOT THE MARKUP
+
+**The panel is built inside `launchBar()` and reads that function's own
+`currentPack`** — bingo's card shape and prize list come off whichever pack is
+in slot 1, and the options are generated from it. A tab cannot see any of that,
+so the chosen pack has to be lifted out of the launch bar's closure to
+somewhere both can read. That is the whole job; the markup moves for nothing
+once it is done.
+
+#### It composes with per-venue defaults, later
+
+Four of the six are really VENUE decisions rather than night ones — The Crown is
+always rowdy, the gastropub is always quiet, and you would give the same answer
+every time you played there. A venue record could supply the starting values the
+way it already supplies the prizes and the voucher, with the tab as the place to
+override them for one night. **Not decided, and it does not need to be**: the
+tab is where you set it either way, so building the tab first cannot be wrong.
+
 ### CONSOLE · WORKSHOP · POST GIG — the three doors, ordered by the gig
 
 Proposed on 15 August 2026, and it supersedes the smaller console/workshop
