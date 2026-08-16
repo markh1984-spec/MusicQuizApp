@@ -279,3 +279,52 @@ export function packLookAttrs(pack, kind) {
     wordSize: look.word.length <= 3 ? 46 : (look.word.length === 4 ? 34 : 27),
   };
 }
+
+/**
+ * WHAT THE CARD ALREADY SAYS, TAKEN BACK OFF THE TITLE.
+ *
+ * Asked for as *"is it possible to make it so the title doesn't go to two
+ * lines half the time"* — and the answer turned out not to be smaller type.
+ * Measured across twelve realistic packs, three fitted on one line before this
+ * and twelve after, with the type getting BIGGER rather than smaller.
+ *
+ * **The card says what kind of pack it is three times over**: the bottom edge
+ * is green for a quiz and purple for the bingo, the shelf is under a heading
+ * that says which, and you are stood on the Music Quiz tab. So the word "Quiz"
+ * in the title is the card telling you something it has already told you
+ * twice, and it is what pushes half the shelf onto a second line.
+ *
+ * Off the front: a leading "The". Off the back: Quiz, Bingo, Music Quiz, Music
+ * Bingo. *"The 1980s Pop Music Quiz"* becomes *"1980s Pop"*.
+ *
+ * **THIS IS WHAT IS DRAWN, NEVER WHAT IS STORED.** The pack file keeps its
+ * real name, and so do the editor, the archive, the projector and — the one
+ * that would actually bite — the SEARCH box, which looks inside titles. A pack
+ * you could no longer find by typing "quiz" would be a worse fault than a
+ * wrapped line. Nothing here writes anything.
+ *
+ * **It falls back to the full title when the trim empties it**, or a pack
+ * somebody called "The Quiz" would draw a card with no name on it.
+ */
+export function shortTitle(title) {
+  const full = String(title || '');
+  const cut = full
+    .replace(/^the\s+/i, '')
+    .replace(/\s*(music\s+)?(quiz|bingo)\s*$/i, '')
+    .trim();
+  return cut || full;
+}
+
+/**
+ * Which of three type sizes a title gets, by length.
+ *
+ * Three steps rather than measuring each card and fitting it exactly: a
+ * per-card fit gives nine slightly different type sizes on one shelf, which
+ * reads as sloppy rather than tidy. The same reasoning as `wordSize` above,
+ * and the classes are in the sheet so the numbers live with the rest of the
+ * type ladder.
+ */
+export function titleSize(text) {
+  const n = String(text || '').length;
+  return n <= 12 ? 't-s' : (n <= 18 ? 't-m' : 't-l');
+}

@@ -1959,72 +1959,71 @@ having a nights section."*
 `public/assets/pack-look.js`, `.pack-card.tinted` / `.lb-tile.tinted`. A pack's
 background is derived from its title — a decade, a genre, Christmas — and
 anything unrecognised gets a quiet colour of its own, so no card looks
-half-built beside a dressed one. **The job is SCANNING**: the common job on
-this tab is find tonight's pack and press Launch, and nine identical cards make
-that a reading task.
+half-built beside a dressed one. **The job is SCANNING**: find tonight's pack and press
+Launch, and nine identical cards make that a reading task.
 
-- **It DERIVES, it never stores** — nothing in a pack file, nothing to set, no
-  Monday job per pack.
+- **It DERIVES, it never stores** — nothing in a pack file, no Monday job.
 - **Genre beats decade beats nothing; seasonal beats both.** A decade-first
-  order would give every 2000s pack one colour, which is the failure the
-  feature exists to avoid. **"Pop" is deliberately not a subject** — nearly
-  every pack here is one. **A word only earns a place on that list if it tells
-  two packs APART.**
+  order gives every 2000s pack one colour, the failure this exists to avoid.
+  **"Pop" is deliberately not a subject** — nearly every pack here is one. **A
+  word only earns a place if it tells two packs APART.**
 - **Whole words only** — "rock" must not match "Rocky". Punctuation is stripped
   so "R'n'B" and "RnB" are one thing, **which is also what splits them**, so
   the spaced forms are listed too.
-- **A WASH BEHIND THE CARD, NEVER A FILL AND NEVER A BORDER**, capped well
-  below full strength. That is the whole reason it can coexist with gold/green/
-  red meaning winning/good/destructive: a Christmas pack IS red and green, and
-  `broken` is a BORDER, so the two never speak in the same place. There is a
-  test on the alpha.
-- **The same colours on the card and in the Tonight slot**, from one function —
-  a pack that changed appearance on being dragged in would undo the reason the
-  two are the same shape.
-- **The same pack is the same colour on every device and every reload.** A
-  shelf that reshuffles its colours is worse than one with none.
-- **THE EDGE IS THE KIND OF PACK; THE BACKGROUND IS THE ERA.** Two channels
-  saying two different things, so the shelf answers *what kind of night is
-  this* and *what era is it from* at one glance rather than one question twice.
-  Quiz is green, bingo purple, **adding a kind is one line** in `KIND_EDGE` and
-  an unknown kind still gets an edge rather than losing one. **The Tonight tile
-  takes its kind from the PACK, not the tab** — Tonight can hold both at once.
-  **One collision, accepted knowingly**: green already means good/paying/makes
-  something. Raised before building and taken — *"if they compete I'll change
-  it, but purple and green are my favourite colours."* Teal is a one-line
-  change if it ever reads muddy.
-- **THE ERA IS PRINTED BIG, bottom right and clipped** — the answer the cartoon
-  figures were reaching for, because type is legible at any size where a
-  drawing is not. **Only when it is short enough to read**: a decade is three
-  characters, a short genre five, "CHRISTMAS" is nine and gets nothing (its
-  colours already say it). There is a test that nothing longer than five is
-  printed. Gradient text behind an `@supports` with a SOLID colour declared
-  first, or a browser without `background-clip` prints nothing at all. It also
-  needed `position: relative` on `.pack-card`, which was missing — so the
-  **Yours** badge had been positioning against the wrong ancestor.
-- **A WASH ALONG THE BOTTOM AND THE EDGE ABOVE IT, and the difference in
-  strength is the job.** The wash sits under the title so it must stay faint,
-  which makes the hue hard to name; three pixels with nothing written over them
-  says it outright. **On the bottom because an ordinary button already carries
-  the account colour there** and the tab bar underlines the tab you are on — a
-  stripe down the LEFT was rendered beside it and turned down, because nothing
-  else in the app does that. **`:not(.broken)` is load-bearing**: the tint rule
-  comes later in the sheet and would otherwise overwrite the red on the one
-  card with something wrong with it. **And the TILE needs `.lb-tile.is-pack`
-  named in its rule** — `.is-pack` sets the SHORTHAND `border` three thousand
-  lines further down at equal specificity, so it won and reset all four sides:
-  the slot showed a hairline while the card showed a bold edge, which is the
-  pack changing appearance on being dragged into the hole. **A shorthand
-  `border` lower in the sheet beats a longhand `border-bottom` higher up at
-  equal specificity — that is the trap, and nothing throws.**
+- **A WASH, NEVER A FILL AND NEVER A BORDER**, capped well below full strength
+  — which is why it can coexist with gold/green/red meaning winning/good/
+  destructive: a Christmas pack IS red and green, and `broken` is a BORDER, so
+  the two never speak in the same place. There is a test on the alpha.
+- **The same colours and the same trimmed name on the card and in the Tonight
+  slot**, from one function — a pack that changed appearance on being dragged
+  in would undo the reason the two are the same shape.
+- **The same pack is the same colour on every device and reload.** A shelf that
+  reshuffles is worse than one with no colour at all.
+- **THE EDGE IS THE KIND OF PACK; THE BACKGROUND IS THE ERA.** Two channels,
+  two questions, one glance. Quiz green, bingo purple, **adding a kind is one
+  line** in `KIND_EDGE` and an unknown kind still gets an edge. **The Tonight
+  tile takes its kind from the PACK, not the tab** — Tonight holds both at
+  once. **One collision, accepted knowingly**: green already means good/paying.
+  Raised before building and taken — *"purple and green are my favourite
+  colours."* Teal is a one-line change if it ever reads muddy.
+- **A SHUT CARD IS A SQUARE POSTER — the era fills it, the name on a dark fade
+  at the bottom.** Chosen from four rendered at the real shelf width.
+  **`aspect-ratio` is on `.shut` ALONE**: an open card carries four dropdowns,
+  the ticks and Launch, and squaring those is the shape deciding what the
+  controls may be. **The fade is a `::before`, never a wrapper**, so no markup
+  differs between open and shut.
+- **THE DRAWN TITLE IS TRIMMED AND THE STORED ONE IS NOT** (`shortTitle()`) —
+  a leading "The", a trailing Quiz/Bingo, because the card says the kind three
+  times already (edge, heading, tab). Measured: 3 of 12 on one line before, 12
+  after, type BIGGER. **Nothing writes anything — SEARCH LOOKS INSIDE
+  TITLES.** **Falls back to the full title when the trim empties it.** Three
+  sizes by length, never a per-card fit.
+- **THE ERA IN THE CORNER RAN THROUGH THE TITLES** — a corner has no room, so
+  the word tucked under the text. Centred under a fade there is nowhere to
+  collide; the Tonight tile keeps the corner. **Only printed when short enough
+  to read**: a decade is three characters, a genre five, "CHRISTMAS" gets
+  nothing, and there is a test on the length. Gradient text behind an
+  `@supports` with a SOLID colour first, or a browser without `background-clip`
+  prints nothing. It needed `position: relative` on `.pack-card`, missing until
+  then — the **Yours** badge had been positioning against the wrong ancestor.
+- **THE EDGE IS THE KIND AND THE WASH IS THE ERA; the difference in strength is
+  the job.** The wash must stay faint, which makes the hue hard to name; three
+  pixels with nothing over them says it outright. **On the bottom because an
+  ordinary button already carries the account colour there** — a stripe down
+  the LEFT was rendered beside it and turned down. **`:not(.broken)` is
+  load-bearing**: the tint rule comes later in the sheet and would overwrite
+  the red on a card with something wrong with it. **And the TILE needs
+  `.lb-tile.is-pack` named in its rule** — `.is-pack` sets the SHORTHAND
+  `border` three thousand lines further down at equal specificity, so it won
+  and reset all four sides. **A shorthand `border` lower in the sheet beats a
+  longhand `border-bottom` higher up at equal specificity — that is the trap,
+  and nothing throws.**
 - **CARTOON FIGURES WERE TRIED AND DO NOT READ — do not re-propose them
-  without new evidence.** Six were drawn and rendered at the real card size: at
-  200×102 with a title over it a whole person is a blob. **A single OBJECT
-  reads where a FIGURE does not** (the Christmas tree worked; the bucket hat
-  came out as a mushroom). A second pass with emblems got three of six, because
-  two hats at 52px are the same hat. **And never a named person** — this app is
-  sold, and a decorative background is a far weaker case for a likeness than a
-  picture round, where the musician IS the question.
+  without new evidence.** Six were drawn at the real card size: with a title
+  over it a whole person is a blob. **A single OBJECT reads where a FIGURE does
+  not**, and two hats at 52px are the same hat. **And never a named person** —
+  this app is sold, and a decorative background is a far weaker case for a
+  likeness than a picture round, where the musician IS the question.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 

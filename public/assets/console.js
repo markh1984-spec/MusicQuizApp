@@ -14,7 +14,7 @@ import { balanceAnswers } from './balance.js';
 import { FEATURES, FEATURE_TIER, FEATURE_META, SWITCHABLE, findTier, switchable, NOT_BUILT } from './plans.js';
 import { lobbyGameChoices, lobbyGameFor } from './lobby-games.js';
 import { inSeason } from './looks.js';
-import { packLookAttrs } from './pack-look.js';
+import { packLookAttrs, shortTitle, titleSize } from './pack-look.js';
 
 /**
  * PINNING A PACK — "keep this one where I can reach it".
@@ -4828,7 +4828,11 @@ function launchBar() {
           ${packWord(look)}
           <button class="lb-tile-off" type="button" aria-label="Take this pack out">&times;</button>
           <span class="lb-tile-n">${at + 1}</span>
-          <b class="lb-tile-name">${esc(pack.title)}</b>
+          <!-- Trimmed here too, or the same pack reads differently on the shelf
+               and in the hole it is dragged into - which is the one thing the
+               shared look function exists to prevent. The tooltip above still
+               carries the full name. -->
+          <b class="lb-tile-name">${esc(shortTitle(pack.title))}</b>
           ${rounds
     ? `<div class="lb-rounds">${(pack.rounds || []).map((r, i) => `
           <button class="lb-rd ${isOff(pack.id, i) ? 'off' : 'on'}" type="button"
@@ -6478,8 +6482,13 @@ function packCard(kind, pack, repaint = () => {}) {
       ${pack.broken || !canPin() ? '' : `<button class="pack-pin ${isPinned(pack.id) ? 'on' : ''}" type="button"
         aria-pressed="${isPinned(pack.id) ? 'true' : 'false'}"
         aria-label="${isPinned(pack.id) ? 'Unpin' : 'Pin'} ${esc(pack.title)}">${pinIcon()}</button>`}
-      <button class="pack-title" title="${open ? 'Close it' : 'Open it to set tonight up and launch'}"
-        aria-expanded="${open ? 'true' : 'false'}">${esc(pack.title)}</button>
+      <!-- THE DRAWN TITLE IS TRIMMED; the tooltip carries the real one, so the
+           full name is always one hover away and nothing is lost. Search,
+           the editor and the archive all still see the stored title - see
+           shortTitle() in pack-look.js. -->
+      <button class="pack-title ${titleSize(shortTitle(pack.title))}"
+        title="${open ? 'Close it' : esc(pack.title)}"
+        aria-expanded="${open ? 'true' : 'false'}">${esc(shortTitle(pack.title))}</button>
       ${ownPack ? '<div class="pack-yours" title="You wrote this one. Nobody else can read it.">Yours</div>' : ''}
       <div class="tiny">${esc(detail)} · ${esc(played)}</div>
       ${freshLabel(pack) ? `<div class="tiny fresh ${freshness(pack).expired ? 'gone' : ''}">${esc(freshLabel(pack))}</div>` : ''}

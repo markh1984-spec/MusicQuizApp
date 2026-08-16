@@ -17,7 +17,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { packLook, packLookAttrs, kindEdge, PACK_SUBJECTS } from '../public/assets/pack-look.js';
+import { packLook, packLookAttrs, kindEdge, PACK_SUBJECTS, shortTitle, titleSize } from '../public/assets/pack-look.js';
 
 /* The decade table is not exported — it is an implementation detail — so the
  * length rule is checked against what `packLook` actually returns for each. */
@@ -206,4 +206,58 @@ test('a pack that says Disco is a disco pack, not a soul one', () => {
   assert.equal(packLook({ title: 'Disco & Funk Bingo' }).word, 'DISCO');
   // ...and the plain case is untouched.
   assert.equal(packLook({ title: 'Motown & Soul Bingo' }).word, 'SOUL');
+});
+
+/* ---- THE DRAWN TITLE IS TRIMMED; THE STORED ONE IS NOT
+ *
+ * Asked for as *"is it possible to make it so the title doesn't go to two
+ * lines half the time"*, and the answer was not smaller type: the card says
+ * what kind of pack it is three times over — the edge colour, the shelf
+ * heading and the tab you are stood on — so the word "Quiz" in the title is
+ * the card repeating itself, and it is what wraps the line.
+ *
+ * The property worth defending is the second half. Nothing here writes
+ * anything, and SEARCH looks inside titles — a pack you could no longer find
+ * by typing "quiz" would be a worse fault than a wrapped line.
+ */
+test('a trailing Quiz or Bingo comes off the drawn title', () => {
+  assert.equal(shortTitle('The 1980s Pop Music Quiz'), '1980s Pop');
+  assert.equal(shortTitle('Disco & Funk Bingo'), 'Disco & Funk');
+  assert.equal(shortTitle('90s Bangers Music Bingo'), '90s Bangers');
+  assert.equal(shortTitle('Rock Anthems Quiz'), 'Rock Anthems');
+  assert.equal(shortTitle('The Motown & Soul Quiz'), 'Motown & Soul');
+});
+
+test('a title with nothing to trim is left exactly as it is', () => {
+  assert.equal(shortTitle('Christmas Cracker'), 'Christmas Cracker');
+  assert.equal(shortTitle('Guilty Pleasures'), 'Guilty Pleasures');
+  // "The" only comes off the FRONT — it is a leading article, not a word ban.
+  assert.equal(shortTitle('Songs About The Weather'), 'Songs About The Weather');
+});
+
+test('IT NEVER RETURNS AN EMPTY NAME, whatever it is handed', () => {
+  // A pack somebody called "The Quiz" would otherwise draw a card with no name
+  // on it, which is worse than the two lines this exists to avoid.
+  assert.equal(shortTitle('The Quiz'), 'The Quiz');
+  assert.equal(shortTitle('Bingo'), 'Bingo');
+  assert.equal(shortTitle('Quiz'), 'Quiz');
+  assert.equal(shortTitle(''), '');
+  assert.equal(shortTitle(undefined), '');
+});
+
+test('the word QUIZ INSIDE a title is left alone', () => {
+  // Only a TRAILING one is furniture. "Quiz Night Classics" is a name.
+  assert.equal(shortTitle('Quiz Night Classics'), 'Quiz Night Classics');
+  assert.equal(shortTitle('The Quiz Night Quiz'), 'Quiz Night');
+});
+
+test('the type size steps with the length, and only three ways', () => {
+  assert.equal(titleSize('Disco Fever'), 't-s');
+  assert.equal(titleSize('Motown & Soul'), 't-m');
+  assert.equal(titleSize('Guilty Pleasures'), 't-m');
+  assert.equal(titleSize('Pub Floor-Fillers Bingo'), 't-l');
+  assert.equal(titleSize(''), 't-s');
+  for (const t of ['a', 'a'.repeat(13), 'a'.repeat(40)]) {
+    assert.ok(['t-s', 't-m', 't-l'].includes(titleSize(t)), 'never a fourth size');
+  }
 });

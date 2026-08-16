@@ -2013,16 +2013,66 @@ body.console::after { display: none; }
  * take a third line rather than being clipped. The slot has the same floor for
  * the same reason.
  */
+/* ---- A SHUT PACK CARD IS A SQUARE POSTER.
+
+   Chosen from four designs rendered side by side at the real shelf width. The
+   era fills the card, the name and the meta sit on a dark fade at the bottom.
+   It won on the job rather than the looks: the common task on this shelf is
+   find tonight's pack and press Launch, and a poster is what you pick out of
+   six at a glance.
+
+   ONLY WHEN SHUT. An open card carries four dropdowns, a prize line, the round
+   ticks and Launch — nothing about that fits a square, and forcing it would be
+   the shape deciding what the controls may be. `aspect-ratio` is on `.shut`
+   alone, so opening one simply lets it grow. */
 .pack-card.shut {
   gap: 2px;
-  min-height: 76px;
+  aspect-ratio: 1 / 1;
+  /* A floor as well, because a very narrow column (a phone at 320, two across)
+     would otherwise square down to something too short to read. */
+  min-height: 118px;
   justify-content: flex-end;
+  overflow: hidden;
 }
+/* THE FADE THE WORDS SIT ON, and it is what makes the era safe to print big.
+   Before this the word was tucked into the bottom-right corner and ran
+   straight through the title — visible in the host's own screenshot, SOUL and
+   ROCK printed across the names. A scrim means the two can overlap by design.
+   A pseudo-element rather than a wrapper, so no markup differs between the
+   open and shut states — the trap this file has already recorded is a template
+   that varies while its wiring does not. The real children are lifted above it
+   below; without that they would be painted under the fade. */
+.pack-card.shut::before {
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: 0; height: 62%;
+  background: linear-gradient(to top, rgba(8, 7, 14, 0.92) 42%, transparent);
+  z-index: 1;
+  pointer-events: none;
+}
+.pack-card.shut > .pack-title,
+.pack-card.shut > .tiny,
+.pack-card.shut > .pack-yours { position: relative; z-index: 2; }
 @media (max-width: 560px) {
-  /* Matching the slots' own phone height — see `.lb-tiles .lb-tile`. */
-  .pack-card.shut { min-height: 58px; }
+  .pack-card.shut { min-height: 104px; }
 }
-.pack-card.shut .pack-title { font-size: var(--fs-ctl); }
+/* THREE SIZES BY LENGTH — see `titleSize()`. The type gets BIGGER on a short
+   name rather than smaller on a long one, which is the opposite of what fitting
+   a title usually means and is only possible because the name is trimmed
+   first. Three steps rather than a per-card fit: nine slightly different sizes
+   on one shelf reads as sloppy. */
+.pack-card.shut .pack-title.t-s { font-size: 16px; }
+.pack-card.shut .pack-title.t-m { font-size: 13.5px; }
+.pack-card.shut .pack-title.t-l { font-size: 12px; }
+/* Two lines at the very most, whatever arrives. A trimmed title fits on one in
+   every case measured, but a pack called something nobody predicted must clip
+   rather than push the square open. */
+.pack-card.shut .pack-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
 /* The caret says it opens — the same job the chevron does on a dropdown, and
    drawn rather than a glyph for the reason binIcon() is drawn: phones render
    arrow characters at wildly different weights and some fall back to a box. */
@@ -2258,6 +2308,27 @@ body.console::after { display: none; }
    trap recorded on the tint rule above. */
 .pack-card > .pack-title, .pack-card > .tiny,
 .pack-card > .pack-set, .pack-card > .pack-actions, .pack-card > .go { position: relative; z-index: 1; }
+
+/* ---- ON A SHUT CARD THE ERA IS THE POSTER, not a mark in the corner.
+
+   The corner version is the one in the host's own screenshot with SOUL and
+   ROCK printed through the titles, and the cause is that a corner has no room:
+   the word had to be tucked under the text to fit, so the two were always
+   going to collide on a long name. Centred and given the whole card, it has
+   nowhere to collide — the fade above carries the words instead.
+
+   Capped in `em` off its own size so it scales with the three word sizes
+   `packLookAttrs` already sets, rather than being a fourth number to keep in
+   step with them. */
+.pack-card.shut .pack-word {
+  inset: 0; right: auto; bottom: auto;
+  display: grid; place-items: center;
+  font-size: calc(var(--pk-word-size) * 1.45);
+  /* Below the fade, so a long title is read against the dark rather than
+     against the middle of a giant letter. */
+  z-index: 0;
+  opacity: 0.5;
+}
 .lb-tile > .lb-tile-name, .lb-tile > .lb-rounds, .lb-tile > .lb-tile-sub { position: relative; z-index: 1; }
 /* Smaller in a Tonight slot, which is the same width but carries a number
    badge, a remove button and a row of round ticks — there is less free corner
