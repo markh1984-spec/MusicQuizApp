@@ -7580,3 +7580,31 @@ body.gallery { padding: 0; }
 .tier-soon { color: var(--gold); }
 .tier-row .tier-move { flex: 0 0 auto; max-width: 42%; }
 .tier-said { margin-top: 12px; color: var(--good); min-height: 1.2em; }
+
+/* ---- THE WORKSHOP BENCH — the door's own section, mirroring Tonight.
+
+   Same place, same weight, same classes underneath (`.lb-tile`, `.lb-drop`),
+   because two doors that behave the same way are one thing to learn. What
+   differs is what it holds: Tonight composes an evening out of several packs,
+   the bench works on ONE, so it has one slot rather than six. */
+.bench .bench-where { font-size: var(--fs-ctl); font-weight: 900; color: var(--ink); }
+/* One slot, and it keeps the shelf's own tile width rather than stretching
+   across the panel — a full-width tile would read as a banner rather than as
+   the same object you dragged off the grid. */
+.bench-tiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.bench-tiles > * { grid-column: span 2; }
+@media (max-width: 700px) { .bench-tiles > * { grid-column: 1 / -1; } }
+.bench-tools { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+/* GREEN, NOT THE ACCOUNT GRADIENT. One filled gradient per screen means "the
+   night", and there is no night behind this door — making something new is the
+   green role. So the Console has exactly one Launch and the Workshop exactly
+   one Write a new one, and neither can be mistaken for the other. */
+.bench .bench-new {
+  display: block; text-align: center; text-decoration: none;
+  margin-top: 14px;
+  background: rgba(47, 224, 122, 0.14);
+  border: 1px solid rgba(47, 224, 122, 0.5);
+  color: var(--good);
+}
+.bench .bench-new:hover { background: rgba(47, 224, 122, 0.22); }
+.bench.drop-here { border-color: var(--good); }

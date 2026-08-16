@@ -1152,6 +1152,7 @@ function render() {
     doorHead(
       (doorNow() !== 'console' ? node('<div></div>') : (live ? node('<div></div>') : launchBar())),
       doorNow() === 'console' ? runningPanel(running) : node('<div></div>'),
+      doorNow() === 'workshop' ? workBench() : node('<div></div>'),
     ),
     consoleColumns(tabBar(active), tabBody(active)),
   );
@@ -1175,6 +1176,99 @@ function render() {
  * It is one wrapper rather than a rule per panel, so a door that grows a panel
  * later inherits the behaviour instead of having to remember it.
  */
+/**
+ * THE WORKSHOP BENCH — the door's own section at the top, in the same place
+ * and of the same weight as Tonight.
+ *
+ * *"I can then drag quiz packs there to edit them as a QM, or start a fresh
+ * one — that's what that section is there to do."*
+ *
+ * **IT MIRRORS TONIGHT DELIBERATELY**: the same head line, the same dashed
+ * drop area, the same one primary button at the bottom. Two doors that behave
+ * the same way are one thing to learn rather than two, which is the whole
+ * reason the shell exists — and it is why the drop zone is built from
+ * `.lb-tile` and `.lb-drop`, the classes Tonight already uses, rather than a
+ * second set that would drift.
+ *
+ * **THE PRIMARY IS GREEN, NOT THE ACCOUNT GRADIENT.** One filled gradient per
+ * screen means "the night", and there is no night behind this door; making
+ * something new is the green role. So the Console has exactly one Launch and
+ * the Workshop has exactly one Write a new one, and neither can be mistaken
+ * for the other in a dark pub.
+ *
+ * **A pack on the bench is NOT opened automatically.** Dropping is choosing,
+ * pressing is doing — the same promise every other drop in this app makes.
+ */
+function workBench() {
+  const on = bench ? shelfFor(bench.kind).find((p) => p.id === bench.id) : null;
+  // A pack that has been deleted since it was put on the bench leaves quietly
+  // rather than drawing a tile for something that is not there.
+  if (bench && !on) { bench = null; localStorage.removeItem(BENCH_STORE); }
+
+  const look = on ? packLookAttrs(on, bench.kind) : null;
+  const editHref = on
+    ? `${linkTo('/editor')}${linkTo('/editor').includes('?') ? '&' : '?'}${bench.kind}=${encodeURIComponent(on.id)}`
+    : '';
+
+  const el = node(`
+    <div class="panel launchbar bench">
+      <div class="lb-head">
+        <div class="lb-what">
+          <span class="bench-where">On the bench</span>
+          <span class="tiny lb-shut-what">${on ? esc(shortTitle(on.title)) : 'Nothing yet'}</span>
+        </div>
+      </div>
+      <div class="lb-tiles bench-tiles">
+        ${on ? `
+          <div class="lb-tile is-pack ${look.cls}" style="${look.style}" title="${esc(on.title)}">
+            ${packWord(look)}
+            <button class="lb-tile-off bench-off" type="button" aria-label="Take it off the bench">&times;</button>
+            <b class="lb-tile-name">${esc(shortTitle(on.title))}</b>
+            <span class="tiny lb-tile-sub">${esc(bench.kind === 'bingo' ? 'bingo' : 'quiz')}</span>
+          </div>` : `
+          <div class="lb-drop bench-drop">
+            <span class="lb-drop-plus">+</span>
+            <span>Drag a pack here to work on it</span>
+          </div>`}
+      </div>
+      ${!on ? '' : `
+      <div class="row bench-tools">
+        <a class="minor" href="${esc(editHref)}">Edit the questions</a>
+        <button class="minor bench-read" type="button">Read it</button>
+      </div>`}
+      <!-- START A FRESH ONE. The green role, and the only filled button behind
+           this door - see the note above on why it is not the gradient. -->
+      <a class="go bench-new role-make" href="${esc(linkTo('/editor'))}">Write a new one</a>
+    </div>`);
+
+  el.querySelector('.bench-off')?.addEventListener('click', () => putOnBench(null));
+  el.querySelector('.bench-read')?.addEventListener('click', () => preview(bench.kind, on));
+
+  /*
+   * THE SAME DROP GESTURE AS TONIGHT, on the same kind of target — and it
+   * takes a BINGO pack as readily as a quiz, because the editor does.
+   */
+  el.addEventListener('dragover', (ev) => {
+    if (!packDrag) return;
+    ev.preventDefault();
+    ev.dataTransfer.dropEffect = 'copy';
+    el.classList.add('drop-here');
+  });
+  el.addEventListener('dragleave', (ev) => {
+    if (!el.contains(ev.relatedTarget)) el.classList.remove('drop-here');
+  });
+  el.addEventListener('drop', (ev) => {
+    if (!packDrag) return;
+    ev.preventDefault();
+    el.classList.remove('drop-here');
+    const dropped = packDrag;
+    packDrag = null;
+    dragging(false);
+    putOnBench(shelfFor(dropped.kind).find((p) => p.id === dropped.id), dropped.kind);
+  });
+  return el;
+}
+
 function doorHead(...parts) {
   const el = node('<div class="doorhead"></div>');
   el.append(...parts);
@@ -3645,6 +3739,36 @@ function addToTonight(pack, kind) {
   packWanted = { id: pack.id, kind };
   tonightOpen = true;
   localStorage.setItem(TONIGHT_STORE, '1');
+  renderKeepingPlace();
+}
+
+/**
+ * WHAT IS ON THE WORKSHOP BENCH — a pack id and its kind, or null.
+ *
+ * The Console's half of this is Tonight; this is the Workshop's, asked for in
+ * the same breath: *"the workshop needs a section at the top identical in size
+ * to the launch section in the console — I can then drag quiz packs there to
+ * edit them as a QM, or start a fresh one."*
+ *
+ * **ONE pack, not a list, and that is the difference between the two doors.**
+ * Tonight composes an evening out of several packs, so it holds a running
+ * order; the bench is for working on ONE thing, and a bench with six slots
+ * would be inviting a job nobody does. `TODO.md` called this before either
+ * was built: a list where the job is composition, one where it is editing.
+ *
+ * On the device, because the thing you were half way through editing is still
+ * the thing you were half way through editing after a reload — which is the
+ * whole reason a bench beats a button.
+ */
+const BENCH_STORE = 'musicquiz.bench';
+let bench = (() => {
+  try { return JSON.parse(localStorage.getItem(BENCH_STORE) || 'null'); } catch { return null; }
+})();
+
+function putOnBench(pack, kind) {
+  bench = pack ? { id: pack.id, kind } : null;
+  if (bench) localStorage.setItem(BENCH_STORE, JSON.stringify(bench));
+  else localStorage.removeItem(BENCH_STORE);
   renderKeepingPlace();
 }
 
