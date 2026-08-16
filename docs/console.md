@@ -755,7 +755,7 @@ unnoticed.
 
 ---
 
-## SET IT UP IS ALWAYS THERE, DISABLED UNTIL THERE IS A NIGHT TO SET UP
+## A CONTROL IS PRESENT AND INERT, NEVER ABSENT
 
 Reported on 15 August 2026: *"slightly clunky how the Set it up appears only
 after the drag"*.

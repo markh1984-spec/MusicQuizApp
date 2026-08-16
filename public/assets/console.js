@@ -1093,6 +1093,16 @@ function render() {
   paintNav(document.getElementById('navSlot'), { current: doorNow(), key: keyInUrl, ...rights });
 
   const active = currentTab();
+  /*
+   * WHICH DOOR, ON THE BODY, so the stylesheet can answer it too.
+   *
+   * A handful of controls read differently behind different doors — the pack
+   * card's caret says "this opens" and on the Console it puts the pack in
+   * Tonight instead. Doing that in CSS off one attribute beats threading a
+   * flag through every template, and it means a rule that gets it wrong is one
+   * selector rather than a branch in a builder.
+   */
+  document.body.dataset.door = doorNow();
   const live = Boolean(running && running.phase !== 'lobby' && running.phase !== 'finished');
 
   mainEl.replaceChildren(
@@ -3534,6 +3544,26 @@ let showRunning = null;
  */
 let venueWanted = null;
 
+/**
+ * A PACK CHOSEN FROM A CARD, applied on the next render.
+ *
+ * Third of the same kind after `showWanted` and `venueWanted`, and the reason
+ * is unchanged: `addPackToNight()` lives inside `launchBar()`'s closure, where
+ * the shelf, the game dropdown and the repaints are. Handing the intention
+ * over means a tap goes down exactly the road a drop goes down, rather than a
+ * second implementation that can drift from it.
+ */
+let packWanted = null;
+
+/** Put a pack into Tonight from anywhere on the page. */
+function addToTonight(pack, kind) {
+  if (!pack) return;
+  packWanted = { id: pack.id, kind };
+  tonightOpen = true;
+  localStorage.setItem(TONIGHT_STORE, '1');
+  renderKeepingPlace();
+}
+
 /** Choose tonight's venue from anywhere on the page. */
 function chooseVenueFromTab(name) {
   if (!name) return;
@@ -5368,6 +5398,20 @@ function launchBar() {
     night.prizes = Math.max(0, Math.min(5, Number(show.prizes) || 0));
   }
   if (showWanted) applyShow(showWanted);
+  if (packWanted) {
+    const want = packWanted;
+    packWanted = null;
+    /*
+     * A pack from the other game switches the picker FIRST, or `packOf()`
+     * looks on the wrong shelf and finds nothing — the same two lines the drop
+     * handler has always had, for the same reason.
+     */
+    if (gamePick && want.kind && gamePick.value !== want.kind) {
+      gamePick.value = want.kind;
+      currentPack = null;
+    }
+    addPackToNight(packOf(want.id));
+  }
   if (venueWanted) { const name = venueWanted; venueWanted = null; chooseVenue(name); }
 
   paintMode();
@@ -6495,43 +6539,24 @@ function packCard(kind, pack, repaint = () => {}) {
       ${pack.broken ? `<div class="tiny" style="color:var(--bad)">Broken: ${esc(pack.broken)}</div>` : ''}
       ${pack.problems ? `<div class="tiny" style="color:var(--bad)">${pack.problems} thing${pack.problems === 1 ? '' : 's'} to fix</div>` : ''}
       ${!open ? '' : `
-      <div class="pack-set">
-      ${kind === 'bingo' && !pack.broken ? `
-        <label class="pack-shape">Cards
-          <select class="shape-pick">${shapeOptions(pack)}</select>
-        </label>
-        <label class="pack-shape">Prizes
-          <select class="prize-pick"></select>
-        </label>` : ''}
-      ${pack.broken ? '' : `
-        <label class="pack-shape">Look
-          <select class="look-pick">${lookOptions(pack)}</select>
-        </label>
-        <!-- The same picker as the launch bar's, because a pack card can still
-             launch a night — and a setting that exists on one route and not the
-             other is a night that comes out different depending on which button
-             was nearer. -->
-        <label class="pack-shape">While they wait
-          <select class="game-pick">${lobbyGameOptions(kind)}</select>
-        </label>
-        <label class="pack-shape">Game sound
-          <select class="sound-pick">
-            <option value="on">On</option>
-            <option value="off">Off</option>
-          </select>
-        </label>
-        <label class="pack-shape">Where
-          <select class="where-pick">${whereOptions()}</select>
-        </label>
-        <label class="pack-shape">Playing
-          <select class="play-pick">${playingOptions()}</select>
-        </label>
-        <label class="pack-shape venue-wrap">Venue
-          ${venueBox()}
-        </label>
-`}
-      </div>
-      ${pack.broken ? '' : '<div class="prize-line" hidden></div>'}
+      <!--
+        TONIGHT'S SETTINGS ARE NOT ON A PACK CARD ANY MORE, AND NEITHER IS
+        LAUNCH.
+
+        Reported in five words - *"this whole expandable section is pointless
+        now"* - and it is the plainest case of the rule this file keeps
+        recording. Every field that was here (cards, prizes, look, while they
+        wait, game sound, where, playing, venue) is a decision about TONIGHT,
+        and Tonight now owns all of them: the bar carries the venue and the
+        in-the-room switch, and Tonight's settings is its own tab. Two controls
+        for one field is how a night gets launched with the setting the other
+        one was showing.
+
+        What is left is what a card is actually FOR: reading the pack,
+        renaming it, deleting it, drawing its portraits, building its playlist.
+        Those are facts about the PACK rather than about an evening, which is
+        the same test that decides Account against Settings.
+      -->
       <div class="pack-actions">
         <button class="pack-read" title="Read it through">Read</button>
         ${mine ? `<button class="pack-rename" ${pack.broken ? 'disabled' : ''} title="Change what it is called">Rename</button>` : ''}
@@ -6560,7 +6585,6 @@ function packCard(kind, pack, repaint = () => {}) {
           : '<button class="pack-playlist" title="Build the Spotify playlist for the intro round">Make playlist</button>') : ''}
         ${mine ? '<button class="pack-del" title="Delete this pack">Delete</button>' : ''}
       </div>
-      ${canRun(kind) ? `<button class="go launch" ${pack.broken ? 'disabled' : ''}>Launch</button>` : ''}
       <div class="pics-slot"></div>
       `}
     </div>`);
@@ -6624,7 +6648,23 @@ function packCard(kind, pack, repaint = () => {}) {
       togglePin(pack.id, pinBtn);
     });
   }
+  /*
+   * ON THE CONSOLE DOOR A TAP PUTS THE PACK IN TONIGHT; in the Workshop it
+   * opens the card.
+   *
+   * Once the settings and Launch came off, a Console card had nothing left to
+   * open — the actions behind it (Read, Rename, Delete, Pictures, Playlist)
+   * are all Workshop work. A caret that expands to an empty panel is the
+   * "control that needs explaining" fault, so the tap does the thing you
+   * came to do instead.
+   *
+   * Through the SAME path a drop uses, so a tap and a drag cannot come to mean
+   * different things — and it is the way round for touch, where drag events
+   * are never delivered at all. The same arrangement the Shows tab and the
+   * Venues shelf already use.
+   */
   el.querySelector('.pack-title').addEventListener('click', () => {
+    if (doorNow() === 'console') { addToTonight(pack, kind); return; }
     if (open) openPack.delete(kind);
     else openPack.set(kind, pack.id);
     repaint();
@@ -6693,23 +6733,15 @@ function packCard(kind, pack, repaint = () => {}) {
    * offering one nobody could win. So the list is rebuilt whenever the shape
    * changes rather than written out once.
    */
-  const shapePick = el.querySelector('.shape-pick');
-  const prizePick = el.querySelector('.prize-pick');
-  const paintPrizes = () => {
-    if (!shapePick || !prizePick) return;
-    const chosen = JSON.parse(shapePick.value);
-    const shapes = (library && library.cardShapes) || [];
-    const found = shapes.find((s) => s.rows === chosen.rows && s.cols === chosen.cols);
-    if (!found) return;
-    const wanted = Number(prizePick.value) || 2;
-    prizePick.innerHTML = found.plans.map((plan, i) => {
-      const n = i + 1;
-      return `<option value="${n}" ${n === Math.min(wanted, found.maxPrizes) ? 'selected' : ''}>${n} — ${esc(plan.join(', then '))}</option>`;
-    }).join('');
-  };
-  shapePick?.addEventListener('change', paintPrizes);
-  paintPrizes();
-  wireVenue(el);
+  /*
+   * NOTHING TO WIRE FOR THE SETTINGS ANY MORE — the card no longer draws them.
+   *
+   * The whole `shapePick` / `prizePick` / `wireVenue` block went with the
+   * markup rather than being left behind guarded, which is the point: a
+   * `querySelector` whose element is gone is the exact fault that took this
+   * console down twice, and the fix is to delete the pair together. Tonight's
+   * settings tab owns these now and has its own copy of the prize painting.
+   */
 
   /*
    * Rename without opening the pack.
@@ -6785,41 +6817,19 @@ function packCard(kind, pack, repaint = () => {}) {
     }
   });
 
-  el.querySelector('.launch')?.addEventListener('click', async () => {
-    // Warn whenever anybody has joined — including in the lobby, which used to
-    // be treated as safe. The lobby is exactly when a room full of people has
-    // just scanned the code, so it is the worst moment to wipe them, not the
-    // best. Launching over the top throws every one of them out.
-    /*
-     * An expired topical pack WARNS and does not refuse.
-     *
-     * A control that refuses in front of a room is the mistake this codebase
-     * keeps recording, and there are good reasons to run last month's news
-     * round on purpose. But running one by accident is a quizmaster reading
-     * out "who won on Saturday" about a Saturday three months ago, which is
-     * exactly the thing the ages-out flags exist to prevent — so it has to be
-     * said once, plainly, before it goes on a projector.
-     */
-    const off = freshness(pack);
-    if (off.expired) {
-      const when = new Date(off.until).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-      if (!confirm(`"${pack.title}" was written to be current to ${when}.\n\nSome of the answers will have moved on. Run it anyway?`)) return;
-    }
-
-    const button = el.querySelector('.launch');
-
-    const picked = el.querySelector('.shape-pick');
-    const shape = picked ? JSON.parse(picked.value) : null;
-    const prizes = Number(el.querySelector('.prize-pick')?.value) || 0;
-    const look = el.querySelector('.look-pick')?.value || '';
-    const lobbyGame = el.querySelector('.game-pick')?.value || '';
-    const lobbySound = el.querySelector('.sound-pick')?.value !== 'off';
-    const online = el.querySelector('.where-pick')?.value === 'online';
-    const teamPlay = el.querySelector('.play-pick')?.value === 'teams';
-    const venue = venueFrom(el);
-    await doLaunch(kind, pack.id, { shape, prizes, look, lobbyGame, lobbySound, online, teamPlay, venue }, button);
-  });
-  return el;
+  /*
+   * AND NO LAUNCH HANDLER, because there is no Launch on a pack card.
+   *
+   * Tonight is the one place a night starts now. That is a change to the
+   * PROTECTED SURFACE and was made deliberately rather than as a tidy-up: the
+   * guarantee was never "a Launch button on every card", it was that launching
+   * is one predictable move away — and dragging or tapping a pack into Tonight
+   * and pressing the one big button is that move, on the one bar this file
+   * says must never change shape under a thumb.
+   *
+   * The expired-topical warning went with it and is not lost: `doLaunch` is
+   * still the single way out, and the launch bar asks the same question.
+   */  return el;
 }
 
 /**

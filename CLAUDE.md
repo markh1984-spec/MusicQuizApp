@@ -461,7 +461,7 @@ opening a second file.
 - **How many prizes is chosen at launch too**
 - **"You got it" means the prize ON THE TABLE**
 - **A strip wins the long way only**
-- **Launch is the last thing on a pack card, and full width** — Launch is the biggest thing on the card and nothing sits under it, so it cannot be hit on the way to something else.
+- **Launch is the last thing on a pack card, and full width** — superseded; a pack card has no Launch. The rule moved to TONIGHT: biggest thing, nothing under it, so it cannot be hit on the way elsewhere.
 - **The tab icon and the logo are one drawing**
 - **A QUESTION MARK INSIDE A MICROPHONE**
 - **The sound arcs are built but OFF** — **The app never draws this mark above 30px**: 22 on a phone, 26 on the projector and the owner page, 30 on the console and login, 16 in the tab.
@@ -1490,7 +1490,7 @@ spreads the care thinly over things that cannot end a night.
 **PROTECTED — the path from "the room is sitting down" to "the quiz is
 running":**
 
-1. The console loads, the pack cards draw, **Launch works**
+1. The console loads, the pack cards draw, **Tonight's Launch works**
 2. The projector shows the game and the join code
 3. Phones join and answer
 4. Next / Reveal / Back on the control view
@@ -1507,9 +1507,10 @@ lands on a gig day:**
 - **`node scripts/pub-unchanged.mjs <commit> --ignore <new fields>`** — the
   engine half. Every payload a projector and a phone receive, at every phase of
   every pack, against a commit you trust.
-- **Press Launch in a real browser**, on the quick-launch bar AND a pack card,
-  and check a game is actually running afterwards. The engine is rarely the
-  hazard; **the console's launch form is**, and no unit test presses a button.
+- **Press Launch in a real browser** and check a game is actually running
+  afterwards — for a quiz AND for a bingo pack, which take different fields.
+  The engine is rarely the hazard; **the console's launch form is**, and no
+  unit test presses a button.
 
 The second one is the one that gets skipped, and it is the one that would stop
 a night. A `node --check` passing means the file parses, not that Launch still
@@ -1875,43 +1876,47 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
 ### TONIGHT — one launch section, on the Console door
 
-`launchBar()` in `console.js`, above the running panel on the Console door.
-*"Wherever he is, he can launch from there, and it needs to be fully featured.
-Sometimes you just don't want to think, you want to get in and go and know it
-will work."*
+`launchBar()`, above the running panel on the Console door. *"Sometimes you
+just don't want to think, you want to get in and go and know it will work."*
 
 - **NOTHING IS CHOSEN FOR YOU** — a bar that guesses guesses wrongly the moment
-  a pack is launched, and the console and the projector then name different
-  quizzes. The venue is printed at the top; the settings are their own TAB.
-- **ONE gradient button on the section.** There were three.
-- **THE CONSOLE AND THE BIG SCREEN MUST AGREE, ALWAYS.** A choice STICKS.
-  `paintLive()` prints what is on the projector off `library.running`, in gold
-  when it differs from what the bar is set to.
+  a pack is launched, and then the console and the projector name different
+  quizzes. The settings are their own TAB.
+- **ONE gradient button on the whole console.** There were three on this bar
+  alone, and a Launch on every pack card besides.
+- **THE CONSOLE AND THE BIG SCREEN MUST AGREE, ALWAYS.** A choice STICKS, and
+  `paintLive()` prints what is actually on the projector in gold when it
+  differs from what the bar is set to.
 - **Picking a pack puts it on the big screen when nothing would be lost.** THE
-  SERVER decides which — the launch call without `replace` already answers 409
-  when `session.inProgress()`. A 409 is SILENT here. A re-render is not
-  somebody choosing a pack (`quiet`), and what is running is READ BACK.
-- **IN THE ROOM / ONLINE is a switch in the head, beside the venue** — a setting
-  whose wrong value ruins the night belongs where it is read. Only the ONLINE
-  half wears the gradient, and shut, the line still says "Online".
-- **The venue is chosen HERE and nowhere else** — searchable, from the Venues
-  tab and where you have played, with **Somewhere else…** for a one-off.
-  **Neither is remembered on the device**: both are facts about one evening,
-  and a remembered one files next Tuesday under last Thursday's pub.
+  SERVER decides which — the launch call without `replace` answers 409 when
+  `session.inProgress()`. A 409 is SILENT here. A re-render is not somebody
+  choosing a pack (`quiet`), and what is running is READ BACK.
+- **IN THE ROOM / ONLINE is a switch in the head** — a setting whose wrong
+  value ruins the night belongs where it is read. Only the ONLINE half wears
+  the gradient, and shut, the line still says "Online".
+- **The venue is chosen HERE and on the Venues shelf, nowhere else** — both go
+  through `chooseVenue()`. **Neither the venue nor online is remembered on the
+  device**: both are facts about one evening, and a remembered one files next
+  Tuesday under last Thursday's pub.
 - **Whose night it is, RANKED**: a date you typed, then whose usual night, then
-  where you played last. **Two claims for one night are NAMED, never left
-  blank** (`clashTonight()`), in gold — a decision only the human can make.
+  where you played last. **Two claims are NAMED, never left blank**
+  (`clashTonight()`), in gold — a decision only the human can make.
 - **It folds to a thin line that still says what it is set to**, in
   `localStorage`; one row, no wrap, the middle ellipsised, the whole row the
-  target. **The heading does not move when it folds** — a three-cell grid, all
-  three children placed, and the fold says HIDE and SHOW at a fixed width.
-- The pack cards keep their own Launch: this is the protected surface.
-- **A CONTROL NEVER APPEARS OUT OF NOTHING.** Launch is always there and goes
-  hollow, saying what it wants; *Keep this as a show* is always there and goes
-  disabled. Both were built appearing and disappearing and both were reported
-  as clunky in the same words: a control that comes and goes is one you cannot
-  learn the position of, driven with a thumb in a dark pub. **Build the next
-  one present-and-inert, not absent.**
+  target. **The heading does not move when it folds** — a three-cell grid and a
+  fold that says HIDE and SHOW at a fixed width.
+- **THE PACK CARDS NO LONGER LAUNCH; TONIGHT IS THE ONLY WAY IN** — *"this
+  whole expandable section is pointless now."* Every field on it was a decision
+  about TONIGHT, which Tonight owns. **The guarantee was never a Launch on
+  every card, it was that launching is one predictable move away.** A card
+  keeps what is true of the PACK — Read, Rename, Delete, Pictures — behind the
+  Workshop door, and **on the Console a tap puts it in Tonight**, same path as
+  a drop, no caret, because there is nothing to open.
+- **A CONTROL NEVER APPEARS OUT OF NOTHING.** Launch goes hollow saying what it
+  wants; *Keep this as a show* goes disabled. Both were built appearing and
+  disappearing and both were reported as clunky in the same words: a control
+  that comes and goes is one you cannot learn the position of, driven with a
+  thumb in a dark pub. **Build the next one present-and-inert, not absent.**
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
@@ -1962,7 +1967,7 @@ anything unrecognised gets a quiet colour of its own, so no card looks
 half-built beside a dressed one. **The job is SCANNING**: find tonight's pack and press
 Launch, and nine identical cards make that a reading task.
 
-- **It DERIVES, it never stores** — nothing in a pack file, no Monday job.
+- **It DERIVES, never stores** — nothing in a pack file.
 - **Genre beats decade beats nothing; seasonal beats both.** A decade-first
   order gives every 2000s pack one colour, the failure this exists to avoid.
   **"Pop" is deliberately not a subject** — nearly every pack here is one. **A
@@ -1970,38 +1975,37 @@ Launch, and nine identical cards make that a reading task.
 - **Whole words only** — "rock" must not match "Rocky". Punctuation is stripped
   so "R'n'B" and "RnB" are one thing, **which is also what splits them**, so
   the spaced forms are listed too.
-- **A WASH, NEVER A FILL AND NEVER A BORDER**, capped well below full strength
-  — which is why it can coexist with gold/green/red meaning winning/good/
-  destructive: a Christmas pack IS red and green, and `broken` is a BORDER, so
-  the two never speak in the same place. There is a test on the alpha.
+
+- **A WASH, NEVER A FILL AND NEVER A BORDER**, capped low — which is why it can
+  coexist with gold/green/red meaning winning/good/destructive: a Christmas
+  pack IS red and green, and `broken` is a BORDER, so the two never speak in
+  the same place. There is a test on the alpha.
 - **The same colours and the same trimmed name on the card and in the Tonight
   slot**, from one function — a pack that changed appearance on being dragged
-  in would undo the reason the two are the same shape.
+  in undoes the reason the two match.
 - **The same pack is the same colour on every device and reload.** A shelf that
-  reshuffles is worse than one with no colour at all.
+  reshuffles is worse than one with no colour.
 - **THE EDGE IS THE KIND OF PACK; THE BACKGROUND IS THE ERA.** Two channels,
   two questions, one glance. Quiz green, bingo purple, **adding a kind is one
-  line** in `KIND_EDGE` and an unknown kind still gets an edge. **The Tonight
-  tile takes its kind from the PACK, not the tab** — Tonight holds both at
-  once. **One collision, accepted knowingly**: green already means good/paying.
-  Raised before building and taken — *"purple and green are my favourite
-  colours."* Teal is a one-line change if it ever reads muddy.
+  line** in `KIND_EDGE`. **The Tonight tile takes its kind from the PACK, not
+  the tab** — Tonight holds both at once. **One collision, accepted
+  knowingly**: green already means good/paying. Teal is a one-line change if it
+  ever reads muddy.
 - **A SHUT CARD IS A SQUARE POSTER — the era fills it, the name on a dark fade
   at the bottom.** Chosen from four rendered at the real shelf width.
-  **`aspect-ratio` is on `.shut` ALONE**: an open card carries four dropdowns,
-  the ticks and Launch, and squaring those is the shape deciding what the
-  controls may be. **The fade is a `::before`, never a wrapper**, so no markup
+  **`aspect-ratio` is on `.shut` ALONE**, or the shape decides what an open
+  card may carry. **The fade is a `::before`, never a wrapper**, so no markup
   differs between open and shut.
 - **THE DRAWN TITLE IS TRIMMED AND THE STORED ONE IS NOT** (`shortTitle()`) —
   a leading "The", a trailing Quiz/Bingo, because the card says the kind three
-  times already (edge, heading, tab). Measured: 3 of 12 on one line before, 12
-  after, type BIGGER. **Nothing writes anything — SEARCH LOOKS INSIDE
-  TITLES.** **Falls back to the full title when the trim empties it.** Three
-  sizes by length, never a per-card fit.
+  times already. **Nothing writes anything — SEARCH LOOKS INSIDE TITLES.**
+  **Falls back to the full title when the trim empties it.** Three sizes by
+  length, calibrated to the REAL 146px card: **a design measured against
+  invented content is measured against nothing**, and the first ones were —
+  they clipped two real names with an ellipsis.
 - **THE ERA IN THE CORNER RAN THROUGH THE TITLES** — a corner has no room, so
-  the word tucked under the text. Centred under a fade there is nowhere to
-  collide; the Tonight tile keeps the corner. **Only printed when short enough
-  to read**: a decade is three characters, a genre five, "CHRISTMAS" gets
+  the word tucked under the text. Centred under a fade it cannot; the Tonight
+  tile keeps the corner. **Only printed when short enough to read**: a decade is three characters, a genre five, "CHRISTMAS" gets
   nothing, and there is a test on the length. Gradient text behind an
   `@supports` with a SOLID colour first, or a browser without `background-clip`
   prints nothing. It needed `position: relative` on `.pack-card`, missing until
@@ -2019,11 +2023,10 @@ Launch, and nine identical cards make that a reading task.
   longhand `border-bottom` higher up at equal specificity — that is the trap,
   and nothing throws.**
 - **CARTOON FIGURES WERE TRIED AND DO NOT READ — do not re-propose them
-  without new evidence.** Six were drawn at the real card size: with a title
-  over it a whole person is a blob. **A single OBJECT reads where a FIGURE does
-  not**, and two hats at 52px are the same hat. **And never a named person** —
-  this app is sold, and a decorative background is a far weaker case for a
-  likeness than a picture round, where the musician IS the question.
+  without new evidence.** At the real card size a whole person is a blob, and
+  two hats at 52px are the same hat. **And never a named person** — this app is
+  sold, and a decoration is a far weaker case for a likeness than a picture
+  round, where the musician IS the question.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
