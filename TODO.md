@@ -1939,6 +1939,16 @@ Worth doing properly rather than at the end of a session: the editor is a whole
 page (`editor.js`) today, and a popover version that half-works on the one door
 somebody would use it from is worse than the link that is there now.
 
+**WHERE IT PLUGS IN**, so a fresh session does not have to find it: the two
+buttons are `.bench-go` (Edit the questions) and `.bench-read` (Read it
+through) in `workBench()` in `console.js`, which today link to
+`/editor?quiz=<id>` and call `preview()`. The pack itself is read and written
+through the same routes `editor.js` uses. **Read `editor.js` before deciding
+whether the popover reuses it or is a smaller thing beside it** — it already
+has a `dirty` flag and a confirm-on-leave, which is most of the draft
+behaviour, and reusing it would keep one definition of what saving a pack
+means.
+
 ### EVERY DOOR GETS A BENCH — the same drop zone, doing that door's job
 
 Proposed on 16 August 2026: *"I think perhaps the workshop and post gig should
