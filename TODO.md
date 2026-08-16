@@ -7,6 +7,88 @@ if a step does not go smoothly.
 
 ---
 
+## DO THESE IN THIS ORDER — smallest job first
+
+Set on 16 August 2026, after verifying every entry in this list against the
+code. **The order is by SIZE, deliberately** — the point is to strike things
+off and keep the list shrinking. **Delete an item from here the moment it is
+built**; `test/todo-budget.test.js` fails if anything left in the list claims
+to be finished.
+
+Each line names the file, so nothing has to be worked out twice.
+
+**One-liners — minutes each:**
+
+1. **The arcade board does not name the game.** `lobby-board.js:54` prints a
+   bare *"Top scores"* though the board already receives which game it is.
+2. **The calendar export calls every night a quiz.** `src/ics.js:161` writes
+   `SUMMARY:Quiz — <venue>`, so a bingo night and a combined night both export
+   as "Quiz".
+3. **No player id on the archived leaderboard.** `src/engine.js:2474` files
+   `{position, name, score, correctCount, answeredCount}`. One added field is
+   invisible to every payload and permanently unblocks badging a winner.
+4. **The Console shelf has no route to the Workshop.** The quiet
+   *"Write, buy or edit packs →"* line exists at `console-packs.js:117` and is
+   drawn on every door EXCEPT the one that needs it.
+5. **Gigs never says a prize was taken.** `session.js:281-311` already files
+   it; `console-gigs.js` has no line showing *"3 prizes, 3 taken"* beside the
+   headcount.
+6. **A pin's ORDER is thrown away.** `console-packs.js:214` sorts by
+   `isPinned(b) - isPinned(a)`, a boolean, so `prefs.pinnedPacks` keeps its
+   membership and loses its arrangement.
+
+**Small — an hour or two:**
+
+7. **The upload wording does not mention the public gallery.**
+   `public/assets/play.js:966` and `:140` still say only *"It goes on the big
+   screen"*, and the gallery is already live. Consent should lead the feature,
+   not trail it.
+8. **A bingo pack cannot join the running order.** One line, twice:
+   `if (!packDrag || packDrag.kind === 'bingo') return;` at
+   `console-tonight.js:1834` and `:1890`.
+9. **Launch does not open the big screen.** One `window.open` inside the click
+   handler, closed again on a 409. `screenLink()` already exists. **Press it in
+   a real browser** — popup blockers only allow it synchronously.
+10. **The demo prize card is hardcoded.** `voucher.js:44-53` has a literal team
+    and prize; read `at=` off the URL, name the venue you are pitching to, and
+    mark it a demonstration. Client-side only.
+
+**The unblocker — do this before anything below it:**
+
+11. **A NIGHT AND A BOOKING ARE STILL TWO THINGS.** A booking is
+    `{date, venue, off, note}` in `diary.js`; a played night comes out of
+    `mergeGigs()` carrying a venue STRING. **There is no `venueId` anywhere in
+    the repo.** Write one at launch beside the name already stored, keep the
+    name as the fallback for every night already filed, and give a night a real
+    end time instead of `ics.js`'s `+2 hours` default. **The post-night report,
+    the automatic gallery publish and winner badging are all waiting on this.**
+
+**Then, in size order:**
+
+12. **Editing an intro track does not repoint what plays.** `editor.js:853-854`
+    writes `q.cue.title`/`artist` and never touches `cue.spotifyUri`, so a
+    corrected track reads right and plays the wrong song. Needs a lookup on
+    edit and a visible *"matched X"*.
+13. **Email has one caller.** The transport is built and has two providers;
+    invoices still leave by share sheet. Each new use is a template and a
+    trigger — start with the invoice.
+14. **"Add a past gig"** — filing a night the app did not record. Needs a write
+    route, an explicit `playerCount`, an `enteredByHand` flag, and every reader
+    taught to respect it.
+15. **The automatic gallery publish** — the gate, route and caller are built;
+    the trigger is not. Needs 11 first, for a real end time.
+16. **An advert QR that COUNTS** — the offer page served from this app. The
+    count is the feature, not the discount.
+17. **The post-night report for the venue** — every number it needs already
+    exists. Needs 11.
+
+Everything else — the website, the FAQ, print on demand, the nudity check,
+breakout rounds, the fifth lobby game, online video, splitting `launchBar()` —
+is either bigger, blocked on a decision only you can make, or parked. It is in
+the three lists below and in `todo/`.
+
+---
+
 # The three marketing lists, in priority order
 
 Set on 12 August 2026. **One, two, three — and the order is deliberate.**
