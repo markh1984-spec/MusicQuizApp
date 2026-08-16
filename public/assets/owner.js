@@ -8,7 +8,8 @@
  */
 
 import { esc, node, brandLink, paintNav, paintIdentity, menuRights, postJson } from './client.js';
-import { TIERS, tierFor, findTier, KINDS, KIND_LABEL, kindOf } from './plans.js';
+import { TIERS, tierFor, findTier, KINDS, KIND_LABEL, kindOf,
+  FEATURE_TIER, FEATURE_META, tierOf, setTierOverrides, NOT_BUILT } from './plans.js';
 import { photosSection } from './photos-tab.js';
 
 const mainEl = document.getElementById('main');
@@ -471,6 +472,103 @@ function monthName(iso) {
  * might be worth if the lapsed ones came back, and not annualised. A number on
  * this page that turned out to be a projection is one nobody would trust again.
  */
+/**
+ * THE TIER BUCKETS — which rung each feature is sold on.
+ *
+ * Asked for as *"assign gold, silver and bronze features to the bronze, silver
+ * and gold buckets."* Until this existed, moving one was a one-word edit in
+ * `plans.js` and a deploy — so the ladder, which is the pricing of the whole
+ * business, was the one thing the owner could not change from the app.
+ *
+ * **THREE COLUMNS, ONE SELECT PER FEATURE — not a drag.** A drag reads better
+ * in a mock-up and is worse here for two reasons this file already knows:
+ * HTML5 drag never fires on touch, and the owner page is read on a phone; and
+ * a mis-aimed drop would move a feature nobody meant to move, which on this
+ * page changes what every subscriber is entitled to. A select cannot be
+ * mis-aimed.
+ *
+ * **IT SAYS WHAT THE MOVE DID, EVERY TIME.** Dragging a feature from Bronze to
+ * Gold must not silently imply that Bronze accounts lose it — they do not, and
+ * the panel says so at the moment of the change, with the number of accounts
+ * that kept it. That was written into the decision before the control existed,
+ * precisely because a control that quietly does the kind thing is one nobody
+ * trusts the second time.
+ *
+ * **`NOT_BUILT` features are shown and marked.** They are on the ladder, so
+ * they are part of what a tier is worth; hiding them would make Gold look
+ * thinner than it is sold as.
+ */
+function tiersPanel() {
+  const el = node('<div class="panel"></div>');
+
+  const draw = () => {
+    const rows = Object.keys(FEATURE_TIER);
+    el.replaceChildren(node(`
+      <div>
+        <h3>What each tier includes</h3>
+        <div class="tiny">Move a feature and it applies to NEW sign-ups.
+          Anybody already using it keeps it for as long as they stay
+          subscribed &mdash; nobody loses something mid-season.</div>
+        <div class="tier-buckets">
+          ${TIERS.map((tier) => {
+    const mine = rows.filter((f) => tierOf(f) === tier.id);
+    return `
+            <div class="tier-bucket" data-tier="${esc(tier.id)}">
+              <div class="tier-bucket-head">
+                <b class="tier-name tier-${esc(tier.id)}">${esc(tier.label || tier.id)}</b>
+                <span class="tiny">${mine.length} feature${mine.length === 1 ? '' : 's'}</span>
+              </div>
+              ${!mine.length ? '<div class="tiny">Nothing on this rung.</div>' : mine.map((f) => {
+      const meta = FEATURE_META[f] || { label: f, blurb: '' };
+      return `
+                <div class="tier-row">
+                  <span class="tier-row-what">
+                    <b>${esc(meta.label || f)}</b>
+                    ${NOT_BUILT.includes(f) ? '<span class="tiny tier-soon">not built yet</span>' : ''}
+                    <span class="tiny">${esc(meta.blurb || '')}</span>
+                  </span>
+                  <select class="tier-move" data-feature="${esc(f)}" aria-label="Which tier ${esc(meta.label || f)} is on">
+                    ${TIERS.map((t) => `<option value="${esc(t.id)}" ${
+        t.id === tier.id ? 'selected' : ''}>${esc(t.label || t.id)}</option>`).join('')}
+                  </select>
+                </div>`;
+    }).join('')}
+            </div>`;
+  }).join('')}
+        </div>
+        <div class="tiny tier-said"></div>
+      </div>`));
+
+    for (const pick of el.querySelectorAll('.tier-move')) {
+      pick.addEventListener('change', async () => {
+        const feature = pick.dataset.feature;
+        pick.disabled = true;
+        try {
+          const done = await postJson('/api/owner/tiers', { feature, tier: pick.value });
+          /*
+           * The live ladder is updated from what the SERVER stored rather than
+           * from what was asked for — the two can differ (a move back to the
+           * default stores no override at all), and a page working off its own
+           * optimism is the console-and-projector fault in another room.
+           */
+          setTierOverrides(done.tiers || {});
+          const label = (FEATURE_META[feature] || {}).label || feature;
+          const to = findTier(done.to).label || done.to;
+          el.querySelector('.tier-said').textContent = done.kept
+            ? `${label} is on ${to} for new sign-ups. ${done.kept} account${done.kept === 1 ? '' : 's'} already using it kept it.`
+            : `${label} is on ${to}.`;
+          draw();
+        } catch (err) {
+          pick.disabled = false;
+          alert(err.message || 'Could not move that.');
+        }
+      });
+    }
+  };
+  draw();
+  return el;
+}
+
 function moneyTab() {
   const paying = subscribers.filter((a) => !a.comped && (a.status === 'active' || a.status === 'trialing'));
   const comped = subscribers.filter((a) => a.comped);
@@ -946,6 +1044,14 @@ const OWNER_TABS = [
   { id: 'tonight', label: 'Tonight', body: () => tonightTab(), count: () => overview.rooms.filter((r) => r.live).length },
   { id: 'people', label: 'People', body: () => peopleTab(), count: () => 0 },
   { id: 'money', label: 'Money', body: () => moneyTab(), count: () => 0 },
+  /*
+   * TIERS — what each rung includes, and the one place it can be changed.
+   *
+   * Beside Money rather than inside it, and that is the same test the console
+   * uses for Account against Settings: Money is what HAS come in, this is what
+   * a tier is WORTH. One is read, one is operated.
+   */
+  { id: 'tiers', label: 'Tiers', body: () => tiersPanel(), count: () => 0 },
   { id: 'catalogue', label: 'Catalogue', body: () => catalogueTab(), count: () => 0 },
   /*
    * Getting a night's photos out and onto social media.

@@ -7453,3 +7453,47 @@ body.gallery { padding: 0; }
   border-radius: var(--r-card); background: var(--panel);
 }
 .gal-back { text-align: center; margin-top: 24px; }
+
+/* ---- THE TIER BUCKETS on the owner page — what each rung includes.
+
+   Three columns from 860px and a stack below it. A column per tier rather than
+   one long list, because the question being asked is "what does Silver get
+   you" and a list answers that only by being read end to end. */
+.tier-buckets {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin-top: 14px;
+}
+@media (min-width: 860px) {
+  .tier-buckets { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
+}
+.tier-bucket {
+  border: 1px solid var(--panel-line);
+  border-radius: var(--r-card);
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  min-width: 0;
+}
+.tier-bucket-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 8px; margin-bottom: 8px;
+}
+/* THE METALS STAY THE METALS. A quizmaster's own colours change the app's
+   personality, never what a rung MEANS — and here the colour is the meaning,
+   the same reason the B/S/G rungs on the hat switch keep theirs. */
+.tier-name { font-size: var(--fs-ctl); font-weight: 900; }
+.tier-name.tier-bronze { color: #e0a066; }
+.tier-name.tier-silver { color: #cbd5e1; }
+.tier-name.tier-gold { color: var(--gold); }
+.tier-row {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 0; border-top: 1px solid var(--panel-line);
+}
+.tier-row-what { flex: 1 1 auto; min-width: 0; display: grid; gap: 1px; }
+/* Not red: an unbuilt feature is not a fault, it is a thing that is coming —
+   and it is still part of what the rung is sold as, which is why it is shown
+   at all rather than filtered out. */
+.tier-soon { color: var(--gold); }
+.tier-row .tier-move { flex: 0 0 auto; max-width: 42%; }
+.tier-said { margin-top: 12px; color: var(--good); min-height: 1.2em; }

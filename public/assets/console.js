@@ -11,7 +11,7 @@ import { esc, node, postJson, brandLink, brandMark, binIcon, paintNav, paintIden
 import { itemsOf } from './show-parts.js';
 import { paintScheme } from './schemes.js';
 import { balanceAnswers } from './balance.js';
-import { FEATURES, FEATURE_TIER, FEATURE_META, SWITCHABLE, findTier, switchable, NOT_BUILT } from './plans.js';
+import { FEATURES, FEATURE_TIER, FEATURE_META, SWITCHABLE, findTier, switchable, tierOf, setTierOverrides, NOT_BUILT } from './plans.js';
 import { lobbyGameChoices, lobbyGameFor } from './lobby-games.js';
 import { inSeason } from './looks.js';
 import { packLookAttrs, shortTitle, titleSize } from './pack-look.js';
@@ -254,7 +254,11 @@ let me = null;
 let rights = { control: false, packs: false, owner: false };
 const can = (feature) => !me || !me.entitlements || me.entitlements.features.includes(feature);
 /** Which tier a feature first appears on, for the markers that name it. */
-const tierNeeded = (feature) => FEATURE_TIER[feature] || '';
+// `tierOf`, not the shipped default — the lock badge on a tab says WHICH tier
+// buys it, and the owner can move a feature between them. A badge reading
+// SILVER on something that is now Gold is the app quoting a price that is not
+// the price.
+const tierNeeded = (feature) => tierOf(feature) || '';
 
 const whyNotHere = (feature) => {
   const missing = (me && me.entitlements ? me.entitlements.missing : []).find((m) => m.feature === feature);
@@ -305,6 +309,17 @@ async function load() {
     const who = await (await fetch(keyed('/api/me'))).json();
     me = who.signedIn ? who.account : null;
     rights = menuRights(who);
+    /*
+     * THE LIVE LADDER, BEFORE ANYTHING DRAWS A LOCK BADGE.
+     *
+     * `plans.js` runs in this page too and its overrides start empty, so
+     * without this the console would work off the tiers the app SHIPS with
+     * rather than the ones the owner has arranged — a Silver badge on a
+     * feature that is now Gold, which is the app quoting a price that is not
+     * the price. Here rather than lower down because `visibleTabs()` and
+     * `tierNeeded()` both read it on the very first render.
+     */
+    setTierOverrides(who.tiers || {});
     /*
      * An owner used to be bounced straight to /owner from here, which left
      * NOWHERE to generate or import a pack: the generator lives on this page

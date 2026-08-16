@@ -33,7 +33,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-import { ROLES, KINDS, DEFAULT_KIND, STATUSES, TIERS, DEFAULT_TIER, findTier, tierFor, can, featuresFor, entitlements, FEATURE_TIER, switchable } from '../public/assets/plans.js';
+import { ROLES, KINDS, DEFAULT_KIND, STATUSES, TIERS, DEFAULT_TIER, findTier, tierFor, can, featuresFor, entitlements, FEATURE_TIER, switchable, setTierOverrides, tierOf, tierOverridesNow } from '../public/assets/plans.js';
 import { findScheme, DEFAULT_SCHEME } from '../public/assets/schemes.js';
 
 /** Work factor for scrypt. Slow enough to matter, fast enough for a login. */
@@ -47,6 +47,17 @@ export class Accounts {
     this.now = now;
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     this.data = this.load();
+    /*
+     * APPLIED AT BOOT, not only when something changes.
+     *
+     * `plans.js` holds the live ladder in a module-level value, and it starts
+     * empty — so without this the whole app would run on the SHIPPED tiers
+     * until the owner happened to move something, and every restart would
+     * quietly undo their arrangement. That is the same class of fault as the
+     * disk being wiped on a deploy: nothing looks broken, and the ladder is
+     * simply not the one they set.
+     */
+    setTierOverrides(this.data.tiers || {});
   }
 
   load() {
@@ -55,6 +66,19 @@ export class Accounts {
       return {
         accounts: Array.isArray(parsed.accounts) ? parsed.accounts : [],
         sessions: Array.isArray(parsed.sessions) ? parsed.sessions : [],
+        /*
+         * WHERE THE OWNER HAS MOVED A FEATURE TO — see `setTierOverrides` in
+         * plans.js. Only the DIFFERENCES from the shipped ladder.
+         *
+         * In this file rather than one of its own, and that is the safety
+         * property rather than tidiness: `accounts.json` is written atomically
+         * and backed up to the private repo on every change. On a host whose
+         * disk is wiped by every deploy, a tiers file that was not backed up
+         * would silently revert the whole ladder while every login survived —
+         * which is the worst version of this going wrong, because nothing
+         * about it looks broken.
+         */
+        tiers: (parsed.tiers && typeof parsed.tiers === 'object') ? parsed.tiers : {},
       };
     } catch (err) {
       if (err.code !== 'ENOENT') {
@@ -380,6 +404,73 @@ export class Accounts {
     };
     this.save();
     return account.billing;
+  }
+
+  /* ---- THE TIER BUCKETS — which rung each feature is sold on.
+   *
+   * Asked for as *"assign gold, silver and bronze features to the bronze,
+   * silver and gold buckets"*, and until now moving one was a one-word edit in
+   * `plans.js` and a deploy.
+   */
+
+  /** What the owner has moved, as stored. Empty on a fresh install. */
+  featureTiers() {
+    return { ...(this.data.tiers || {}) };
+  }
+
+  /**
+   * Move a feature to a tier — and GRANDFATHER everybody already using it.
+   *
+   * **The grandfathering is the whole of this method and the reason it is not
+   * a one-line setter.** The rule was settled before the control existed:
+   * *anybody who already holds a feature keeps it for as long as they stay
+   * subscribed; the new tier applies to new sign-ups.* Losing it at renewal is
+   * cleaner data and was turned down for a better reason than kindness — a
+   * quizmaster finds out on a GIG NIGHT, in a pub, with a room in.
+   *
+   * So the holders are worked out BEFORE the move and written onto their own
+   * accounts as `kept`. After that the tier table decides only what a NEW
+   * account gets, which is exactly what the rule says it should.
+   *
+   * **Only when the feature moves UP.** Moving one DOWN gives it to more
+   * people, so there is nobody to protect and nothing to write — and writing
+   * `kept` anyway would slowly fill every account with a list of things its
+   * tier already includes, which is a lie waiting to be believed the next time
+   * something moves.
+   *
+   * @returns {{feature: string, from: string, to: string, kept: number}}
+   */
+  setFeatureTier(feature, tier) {
+    if (!FEATURE_TIER[feature]) throw new Error(`There is no feature called ${feature}.`);
+    if (!TIERS.some((t) => t.id === tier)) throw new Error(`There is no tier called ${tier}.`);
+
+    const from = tierOf(feature);
+    if (from === tier) return { feature, from, to: tier, kept: 0 };
+
+    const goingUp = TIERS.findIndex((t) => t.id === tier) > TIERS.findIndex((t) => t.id === from);
+    // Worked out BEFORE the table changes, or the answer is the one after the
+    // move and protects nobody.
+    const holders = goingUp
+      ? this.data.accounts.filter((a) => a.role !== 'owner' && featuresFor(a).includes(feature))
+      : [];
+
+    const tiers = { ...(this.data.tiers || {}) };
+    // A move back to where the code says it belongs REMOVES the override
+    // rather than storing it — see the note on overrides in plans.js. A stored
+    // entry saying "bronze, same as the default" is a difference that is not
+    // a difference, and it is what makes the file grow to a full table.
+    if (tier === FEATURE_TIER[feature]) delete tiers[feature];
+    else tiers[feature] = tier;
+    this.data.tiers = tiers;
+    setTierOverrides(tiers);
+
+    for (const account of holders) {
+      const kept = new Set(Array.isArray(account.kept) ? account.kept : []);
+      kept.add(feature);
+      account.kept = [...kept];
+    }
+    this.save();
+    return { feature, from, to: tier, kept: holders.length };
   }
 
   setPrefs(id, patch = {}) {

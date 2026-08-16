@@ -1340,6 +1340,19 @@ async function handleGet(req, res, url, route) {
     return sendJson(res, 200, {
       signedIn: true,
       account: { ...account, entitlements: entitlements(account) },
+      /*
+       * THE LIVE LADDER, so the browser stops working off the shipped one.
+       *
+       * `plans.js` runs in both places and its overrides start empty in a
+       * fresh page. Without this the console would draw a Silver lock badge on
+       * something the owner moved to Gold — the app quoting a price that is
+       * not the price — and the shop would offer a tier that does not include
+       * what its row says.
+       *
+       * Only the DIFFERENCES, like the store: a few bytes on a payload every
+       * page already fetches, rather than a route of its own.
+       */
+      tiers: accounts.featureTiers(),
       // Said out loud, because a bootstrap session looks exactly like a real
       // one until something it cannot do goes wrong.
       bootstrap: Boolean(account.bootstrap),
@@ -4675,6 +4688,37 @@ async function handleWrite(req, res, url, route) {
     }
     res.setHeader('Set-Cookie', cookieFor(req, ACTING_COOKIE, hat.id));
     return sendJson(res, 200, { ok: true, acting: true, account: accounts.view(hat) }), true;
+  }
+
+  /*
+   * MOVE A FEATURE BETWEEN THE TIERS — the owner's buckets.
+   *
+   * Owner-only twice over: the `/api/owner/` prefix is in `OWNER_ONLY`, and
+   * `FEATURES.SUBSCRIBERS` is checked here as well. This decides what every
+   * account in the app is entitled to, so it is the one route where belt and
+   * braces is proportionate.
+   *
+   * **The grandfathering is `setFeatureTier`'s job, not this route's**, so
+   * there is one place that knows the rule and it is the place with the
+   * accounts in it. What comes back is what it DID — which feature, from
+   * where, to where, and how many people it protected — because "moved
+   * Adverts to Gold, 3 accounts keep it" is the sentence the owner needs and
+   * a bare ok is not.
+   *
+   * **Backed up like any account change**, and for the same reason: on a host
+   * whose disk is wiped by every deploy, an unbacked ladder reverts silently
+   * while every login survives.
+   */
+  if (route === '/api/owner/tiers' && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.SUBSCRIBERS)) return true;
+    const body = await readJson(req);
+    try {
+      const done = accounts.setFeatureTier(String(body.feature || ''), String(body.tier || ''));
+      await backUpAccounts();
+      return sendJson(res, 200, { ok: true, ...done, tiers: accounts.featureTiers() }), true;
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message }), true;
+    }
   }
 
   if (route === '/api/owner/accounts' && req.method === 'POST') {

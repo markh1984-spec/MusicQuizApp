@@ -589,9 +589,51 @@ export function tierFor(account = {}) {
 }
 
 /** Everything at or below a tier, in ladder order. */
+/**
+ * WHERE THE OWNER HAS MOVED A FEATURE TO, when they have moved one.
+ *
+ * `FEATURE_TIER` above is the DEFAULT ladder — what this app ships with, and
+ * what a feature falls back to. This holds only the DIFFERENCES, set from the
+ * owner page's tier buckets and stored beside the accounts.
+ *
+ * **Overrides rather than a stored full map, and that is the load-bearing
+ * choice.** A stored copy of the whole table would freeze the ladder at
+ * whatever the day it was first saved: a feature written next month would be
+ * absent from it and would silently belong to nobody. Holding only what has
+ * been deliberately moved means a new feature always arrives at the tier its
+ * code says, and the owner moves it if they want it elsewhere.
+ *
+ * **It is installation-wide, not per account**, so a module-level value is the
+ * honest shape rather than a shortcut — there is one ladder, and the server
+ * has one process serving everybody on it.
+ */
+let tierOverrides = {};
+
+/**
+ * Set them. Called once on the server at boot and again on every change, and
+ * in the browser from what `/api/me` reports — because the console draws the
+ * lock badges and the shop from this, and a browser working off the shipped
+ * defaults would offer somebody a tab their account does not have.
+ */
+export function setTierOverrides(map = {}) {
+  tierOverrides = {};
+  for (const [feature, tier] of Object.entries(map || {})) {
+    // Only ever a feature that exists and a tier that exists. Anything else is
+    // a stale entry from a feature that has since been deleted, and honouring
+    // it would put a name nobody recognises into the ladder.
+    if (FEATURE_TIER[feature] && TIERS.some((t) => t.id === tier)) tierOverrides[feature] = tier;
+  }
+}
+
+/** The overrides as stored, for the owner page to draw and the server to save. */
+export const tierOverridesNow = () => ({ ...tierOverrides });
+
+/** Which tier a feature is on TODAY — the override if there is one, else the default. */
+export const tierOf = (feature) => tierOverrides[feature] || FEATURE_TIER[feature] || '';
+
 export function featuresAt(tierId) {
   const rank = tierRank(tierId);
-  return Object.keys(FEATURE_TIER).filter((f) => tierRank(FEATURE_TIER[f]) <= rank);
+  return Object.keys(FEATURE_TIER).filter((f) => tierRank(tierOf(f)) <= rank);
 }
 
 /**
@@ -637,8 +679,11 @@ export function ladderFor(account = {}) {
      * weekly topical quiz.
      */
     content: tier.content || null,
+    // `tierOf`, not `FEATURE_TIER` — the ladder somebody is SHOWN has to be
+    // the ladder they are sold, or a feature the owner moved to Gold still
+    // reads as Bronze on the page that exists to explain what a tier gets you.
     features: Object.keys(FEATURE_TIER)
-      .filter((f) => FEATURE_TIER[f] === tier.id)
+      .filter((f) => tierOf(f) === tier.id)
       .map((f) => ({ id: f, ...(FEATURE_META[f] || { label: f, blurb: '' }), held: held.has(f) })),
   }));
 }
@@ -757,7 +802,25 @@ export function featuresFor(account = {}) {
   // The owner's own quizmaster account: everything on the ladder, for nothing.
   if (account.comped) return featuresAt(TIERS[TIERS.length - 1].id);
   if (!PAYING.has(account.status)) return [];
-  return featuresAt(tierFor(account));
+  /*
+   * WHAT THE TIER GIVES, PLUS WHAT THIS ACCOUNT WAS ALREADY USING.
+   *
+   * `kept` is the grandfathering, and it is the whole reason entitlement
+   * cannot be computed from the tier table alone: *"anybody who already holds
+   * a feature keeps it for as long as they stay subscribed. The new tier
+   * applies to new sign-ups."*
+   *
+   * The alternative — losing it at renewal — is cleaner data and was turned
+   * down for a better reason than kindness: **a quizmaster finds out on a gig
+   * night.** Something they used last Thursday is missing this Thursday, in a
+   * pub, with a room in. No amount of tidy data is worth that.
+   *
+   * It is only ever written when the owner MOVES a feature up (see
+   * `setFeatureTier` in accounts.js), so an ordinary account carries nothing
+   * and this is an empty union.
+   */
+  const kept = Array.isArray(account.kept) ? account.kept.filter((f) => FEATURE_TIER[f]) : [];
+  return [...new Set([...featuresAt(tierFor(account)), ...kept])];
 }
 
 /**
