@@ -6500,6 +6500,25 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
   border: 1px solid var(--panel-line); color: var(--ink-dim);
 }
 .v-flag.v-good { color: var(--good); border-color: rgba(47, 224, 122, 0.55); background: rgba(47, 224, 122, 0.12); }
+/* THE DEMONSTRATION MARK. Never on a real voucher — see `demoMark()`.
+
+   A full-width band rather than another pill, because it is a statement about
+   the whole card, and a second pill beside "Winner" would read as a second
+   status.
+
+   NEUTRAL, AND THAT IS A DELIBERATE REFUSAL OF THE OBVIOUS COLOURS. Gold was
+   written first and is wrong: gold means winning everywhere in this app, and
+   this band sits directly under a flag that says WINNER — it would borrow the
+   one meaning it must not have. Red is wrong too, for the opposite reason:
+   red means something has GONE wrong, and this is read before anything
+   happens rather than after a mistake. So it carries no meaning-colour at
+   all, and does its job with a dashed edge and weight instead. */
+.v-demo {
+  margin: -8px 0 16px; padding: 8px 12px; border-radius: var(--r-field);
+  font-size: var(--fs-tag); font-weight: 800; letter-spacing: 0.04em;
+  color: var(--ink-dim); border: 1px dashed var(--panel-line);
+  background: rgba(255, 255, 255, 0.04);
+}
 .v-lead { margin: 0 0 4px; font-size: var(--fs-body); color: var(--ink-dim); font-weight: 700; }
 /* Not on the type ladder on purpose: this is display type, one per surface,
    like the countdown and the room code. It has to be readable at arm's length
@@ -6851,6 +6870,10 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 
 /* The demo prize code on My account. Big enough to be scanned off a laptop
    screen across a pub table, which is the whole use. */
+/* The venue picker above the demo QR. A label wrapping its own select, so the
+   words are the target too — this is read once a year and pressed with a thumb
+   in whatever room the pitch is happening in. */
+.demo-at { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; max-width: 320px; }
 .demo-prize { display: flex; gap: 16px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
 .demo-qr {
   width: 160px; height: 160px; flex: 0 0 auto;

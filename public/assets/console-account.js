@@ -357,23 +357,55 @@ export function shopSection() {
  * your room's join link, and it is used a few times a year.
  */
 function demoPrizePanel() {
-  const target = `${location.origin}/v?c=DEMO`;
-  return node(`
+  /*
+   * PUT THEIR OWN PUB'S NAME ON IT.
+   *
+   * The demo's whole job is getting a landlord to picture this happening in
+   * THEIR room, and a card footed with somebody else's venue — or with none —
+   * leaves them doing that work themselves. `?at=` is read by `voucher.js` and
+   * drawn straight onto the card. Nothing is stored and nothing is asked of
+   * the server, so it still works at four in the afternoon on pub wifi.
+   *
+   * The venues they already have, because that is who they are pitching to
+   * next; a free-text box would be a second way to spell a pub they have
+   * already spelled once. Empty means the card simply has no venue on it,
+   * exactly as before.
+   */
+  const venues = (library.venueRecords || []).map((v) => v.name).filter(Boolean);
+  const linkFor = (venue) => `${location.origin}/v?c=DEMO${venue ? `&at=${encodeURIComponent(venue)}` : ''}`;
+
+  const el = node(`
     <div class="panel">
       <h3>Show somebody the prize</h3>
       <div class="tiny">Selling a night to a venue? Let them scan this. They see
         exactly what their bar staff would see when a winner shows up. It is a
         demonstration — nothing is given away and it works as many times as you
         like.</div>
+      ${venues.length ? `<label class="tiny demo-at">Put a venue on it
+        <select class="demo-venue">
+          <option value="">No venue</option>
+          ${venues.map((v) => `<option value="${esc(v)}">${esc(v)}</option>`).join('')}
+        </select></label>` : ''}
       <div class="demo-prize">
         <img class="demo-qr" alt="A demonstration prize code"
-          src="/qr.svg?text=${encodeURIComponent(target)}&dark=%230b0b12&light=%23ffffff">
+          src="/qr.svg?text=${encodeURIComponent(linkFor(''))}&dark=%230b0b12&light=%23ffffff">
         <div class="demo-side">
-          <a class="minor" href="/v?c=DEMO" target="_blank" rel="noopener">Open it yourself</a>
-          <div class="tiny">${esc(target)}</div>
+          <a class="minor demo-open" href="${linkFor('')}" target="_blank" rel="noopener">Open it yourself</a>
+          <div class="tiny demo-link">${esc(linkFor(''))}</div>
         </div>
       </div>
     </div>`);
+
+  // Repointed in place rather than re-rendered: the panel is on a tab somebody
+  // is reading, and swapping the whole card under them to change one word in a
+  // QR is a redraw they would notice for nothing.
+  el.querySelector('.demo-venue')?.addEventListener('change', (ev) => {
+    const link = linkFor(ev.target.value);
+    el.querySelector('.demo-qr').src = `/qr.svg?text=${encodeURIComponent(link)}&dark=%230b0b12&light=%23ffffff`;
+    el.querySelector('.demo-open').href = link;
+    el.querySelector('.demo-link').textContent = link;
+  });
+  return el;
 }
 
 /**

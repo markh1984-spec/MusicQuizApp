@@ -42,14 +42,47 @@ const show = (html) => main.replaceChildren(node(html));
  * rather than a coincidence, and it is why this needs no reserved-word check.
  */
 const DEMO = 'DEMO';
+
+/*
+ * WHOSE BAR IT IS, off the link — `?at=The+Crown`.
+ *
+ * A demo is shown to ONE landlord at a time, and the whole job it does is
+ * getting them to picture it happening in THEIR pub. Their own name on the
+ * card does that; a blank footer leaves them imagining somebody else's.
+ *
+ * Off the URL rather than out of an account, because the link is the product
+ * here — the quizmaster builds one per venue from My account and can send it
+ * ahead of the meeting. Nothing is stored and nothing is asked of the server,
+ * which is what keeps the demo working in a pub at four in the afternoon with
+ * no game running.
+ *
+ * Trimmed and capped: it is drawn straight onto the card, so a pasted essay
+ * would push the reward off a phone. `esc()` still does the escaping — this is
+ * only about length.
+ */
+const demoVenue = String(url.searchParams.get('at') || '').trim().slice(0, 60);
+
 const demoVoucher = () => ({
   code: DEMO,
   name: 'Quizteam Aguilera',
   reward: 'A free drink at the bar',
-  venue: '',
+  venue: demoVenue,
   issuedAt: Date.now(),
   redeemedAt: null,
   reinstated: 0,
+  /*
+   * IT SAYS IT IS A DEMONSTRATION, ON THE CARD.
+   *
+   * The demo exists to be handed across a table on a stranger's phone, and it
+   * is pixel-identical to the real thing by design — which is exactly why it
+   * has to say so. Bar staff are shown these; one left open on a phone at the
+   * end of an evening is otherwise a free drink somebody can ask for, and the
+   * quizmaster is not there to explain.
+   *
+   * The `code DEMO` in the footer was doing that job and doing it too quietly:
+   * it is the smallest text on the page, next to a date, where nobody reads.
+   */
+  demo: true,
 });
 
 /** A time as somebody behind a bar reads it: half ten, not an ISO string. */
@@ -70,6 +103,7 @@ function drawn(v) {
     return `
       <div class="v-card v-spent">
         <div class="v-flag">Already used</div>
+        ${demoMark(v)}
         <p class="v-big">${esc(v.reward)}</p>
         <p class="v-who">${esc(v.name)}</p>
         <p class="v-note">Redeemed at ${esc(clockTime(v.redeemedAt))}${
@@ -81,6 +115,7 @@ function drawn(v) {
   return `
     <div class="v-card">
       <div class="v-flag v-good">Winner</div>
+      ${demoMark(v)}
       <p class="v-lead">Give them</p>
       <p class="v-big">${esc(v.reward)}</p>
       <p class="v-who">${esc(v.name)}</p>
@@ -89,6 +124,15 @@ function drawn(v) {
       ${footer(v)}
     </div>`;
 }
+
+/**
+ * The demonstration mark. Never on a real voucher, always on the demo.
+ *
+ * Under the flag rather than over the reward: it has to be unmissable to
+ * somebody READING the card and must not get between the bar and the thing
+ * they are giving away, which is the one job the card has.
+ */
+const demoMark = (v) => (v.demo ? '<div class="v-demo">Demonstration — not a real prize</div>' : '');
 
 const footer = (v) => `
   <p class="v-foot">${v.venue ? `${esc(v.venue)} · ` : ''}${
