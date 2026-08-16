@@ -1990,8 +1990,30 @@ async function handleGet(req, res, url, route) {
       await ensureInvoicesRestored(gigRoom);
       unbilled = new Set(gigRoom.invoices.unbilledNights(nights).map((n) => n.night));
     }
+    /*
+     * WHICH NIGHTS ARE ON THE PUBLIC GALLERY — in the LIST, not only per night.
+     *
+     * The per-night route has carried `published` since the gallery was built,
+     * and the Post gig bench reads `night.published` off a record that came
+     * from THIS route, which never had it. So the bench's control was
+     * permanently labelled *"Put it on the gallery"* and permanently posted
+     * `on: true` — **a night could be published and never taken down**, on the
+     * one control this app promises a quizmaster can undo while stood there.
+     *
+     * It read as an environment limit, because in a sandbox with no photo repo
+     * the route 400s first and the label is never reached. Two faults on one
+     * button, and the loud one was hiding the real one.
+     *
+     * ONE call for the whole list — `publishedNights()` reads a single file, so
+     * this is not a fetch per night.
+     */
+    const published = new Set(await publishedNights(gigRoom.id));
     return sendJson(res, 200, {
-      nights: nights.map((n) => (unbilled.has(n.night) ? { ...n, unbilled: true } : n)),
+      nights: nights.map((n) => ({
+        ...n,
+        ...(unbilled.has(n.night) ? { unbilled: true } : {}),
+        ...(published.has(n.night) ? { published: true } : {}),
+      })),
       // So the page can say why there are no pictures against an old night,
       // rather than implying nobody took any.
       photosKept: photosRepoConfigured(),

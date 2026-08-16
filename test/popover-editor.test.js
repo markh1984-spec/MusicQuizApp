@@ -23,6 +23,17 @@ import { readFileSync } from 'node:fs';
 const CONSOLE = readFileSync(new URL('../public/assets/console.js', import.meta.url), 'utf8');
 const EDITOR = readFileSync(new URL('../public/assets/editor.js', import.meta.url), 'utf8');
 
+/** A function's source: from its definition to the next top-level one after it.
+ *  (Bounding on an arbitrary later string is how the first version of this
+ *  silently sliced backwards and asserted against an empty string.) */
+function bodyOf(src, marker) {
+  const at = src.indexOf(marker);
+  if (at < 0) return '';
+  const next = src.indexOf('\nfunction ', at + marker.length);
+  return src.slice(at, next < 0 ? src.length : next);
+}
+
+
 test('the editor is mountable, so there is one of it rather than two', () => {
   assert.match(EDITOR, /export function mountEditor\(/,
     'editor.js must export a mount, or the popover has to reimplement saving');
@@ -46,7 +57,7 @@ test('the bench opens the popover instead of leaving the page', () => {
   assert.match(CONSOLE, /class="go bench-go role-make bench-edit"/, 'the bench has no edit button');
   assert.match(CONSOLE, /\.bench-edit'\)\?\.addEventListener\('click', \(\) => editSheet\(/,
     'the edit button is not wired to the popover');
-  const bench = CONSOLE.slice(CONSOLE.indexOf('function workBench('), CONSOLE.indexOf('function nightBenchPanel('));
+  const bench = bodyOf(CONSOLE, 'function workBench(');
   assert.doesNotMatch(bench, /href="\$\{esc\(editHref\)\}"/,
     'the bench is still linking out to /editor to edit');
 });
@@ -115,7 +126,7 @@ test('both benches clear through one named action, and only one', () => {
     'the Post gig bench does not clear');
   // The unnamed × did the same job in a corner. Two controls for one job on a
   // panel with three buttons is the clutter rule, and the × was the weaker one.
-  const benches = CONSOLE.slice(CONSOLE.indexOf('function workBench('), CONSOLE.indexOf('const found ='));
+  const benches = bodyOf(CONSOLE, 'function workBench(') + bodyOf(CONSOLE, 'function nightBenchPanel(');
   assert.doesNotMatch(benches, /lb-tile-off/, 'a bench tile has grown its × back');
 });
 

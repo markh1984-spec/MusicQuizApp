@@ -1916,12 +1916,17 @@ thing, and the Workshop's two buttons now open popovers rather than navigating
 Two things are genuinely outstanding — the clear-on-done is built (*Done with
 it* on both benches; see CLAUDE.md):
 
-- **The Post gig bench's *Put it on the gallery* has never been seen working**,
-  and that is an ENVIRONMENT limit rather than a bug. `setPublished()` refuses
-  with *"The private photo repository is not set up"* whenever no photo repo is
-  configured, which is every sandbox and every fresh deploy. Verified by
-  reading the route, not by watching it work. It wants one check on the live
-  app, where the repo exists.
+- **The Post gig bench's *Put it on the gallery* still wants one check on the
+  live app.** The 400 in a sandbox is an environment limit — `setPublished()`
+  refuses when no photo repo is configured — but **that diagnosis was recorded
+  here as the whole story and it was not.** There was a real bug underneath it:
+  the LIST payload never carried `published`, only the per-night route did, so
+  the button was permanently labelled *Put it on the gallery* and permanently
+  posted `on: true`. **A night could be published and never taken down.**
+  Fixed, with `test/bench-fields.test.js` on it. The publish round trip itself
+  still cannot be exercised without a repo, which is the part that needs a live
+  check — and the lesson is the one this file keeps recording: **the loud
+  failure was hiding the real one.**
 - **The Post gig bench is still the least worked out**, as this entry predicted.
 
 Proposed on 16 August 2026: *"I think perhaps the workshop and post gig should

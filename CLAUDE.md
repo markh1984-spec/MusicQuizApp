@@ -2211,7 +2211,7 @@ typo is dropped rather than quietly becoming a round of general knowledge.
 ## Checks
 
 ```bash
-npm test        # 1,292 tests, no network, injected clocks — must stay green
+npm test        # 1,295 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check

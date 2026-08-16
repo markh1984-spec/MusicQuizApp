@@ -1356,7 +1356,11 @@ function nightBenchPanel() {
 
   const draw = (night) => {
     const when = night ? new Date(night.night + 'T12:00:00') : null;
-    const heads = night ? Math.max(0, ...(night.games || []).map((g) => g.playerCount || 0)) : 0;
+    // `players`, not `playerCount` — that is what `mergeGigs()` emits, and the
+    // gig row below has always read it correctly. The bench read the archive
+    // record's own field name instead, so `${heads} played` never once drew:
+    // every night on the bench looked like a night nobody came to.
+    const heads = night ? Math.max(0, ...(night.games || []).map((g) => g.players || 0)) : 0;
     el.replaceChildren(node(`
       <div>
         <div class="lb-head">
