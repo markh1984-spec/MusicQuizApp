@@ -61,6 +61,58 @@ test('no todo/ area has become a bucket', () => {
 });
 
 /**
+ * NOTHING IN THE LIST MAY CLAIM TO BE DONE. A FINISHED ITEM IS DELETED.
+ *
+ * That rule is already written in `TODO.md` and in `CLAUDE.md`, and it has now
+ * failed three times: four entries sat in `todo/marketing-app.md` marked
+ * `✅ BUILT` or struck through, and `docs/business.md` was carrying three
+ * finished sections when it was split. **A written rule that has failed three
+ * times is a test that has not been written yet** — the same conclusion this
+ * repo reached about the size of `CLAUDE.md`.
+ *
+ * The cost is not tidiness. A build plan left behind for a thing that already
+ * exists is a TRAP: CLAUDE.md records one nearly causing the picture-drawing
+ * step to be rebuilt, because the plan for it was still sitting in the list.
+ *
+ * **And the marker itself cannot be trusted, which is why the fix is deletion
+ * rather than a tidier marker.** `business.md` had a section titled
+ * *"The pack shop — ✅ THE WINDOW IS BUILT, the money is not"* whose body was
+ * mostly unbuilt work: the PayPal plan ids, the webhook, and a live instruction
+ * that Gold must be marked unavailable when it ships. A heading that says BUILT
+ * describes the heading, not the section.
+ *
+ * So there are exactly two honest states, and this forces the choice:
+ * **it is done, and the entry is gone — or it is not done, and the marker comes
+ * off.** Naming what IS built inside the prose is fine; claiming it in the
+ * heading is not.
+ */
+test('no entry in the list claims to be finished', () => {
+  const files = ['TODO.md', ...fs.readdirSync(new URL('todo/', root))
+    .filter((f) => f.endsWith('.md')).map((f) => `todo/${f}`)];
+
+  const claims = [];
+  for (const f of files) {
+    fs.readFileSync(new URL(f, root), 'utf8').split('\n').forEach((line, i) => {
+      if (!/^#{2,4} /.test(line)) return;
+      // ✅ anywhere, a struck-through heading, or a trailing BUILT/FIXED/DONE.
+      // Lower-case "the tab is built" inside a live entry is a description of
+      // one part and stays — it is the CLAIM about the whole entry that goes.
+      if (/✅|~~.+~~|[—-]\s*\*{0,2}(BUILT|FIXED|DONE)\*{0,2}\s*$/.test(line)) {
+        claims.push(`${f}:${i + 1}  ${line.trim()}`);
+      }
+    });
+  }
+
+  assert.deepEqual(claims, [],
+    'these entries say they are finished and are still in the list:\n'
+    + `${claims.join('\n')}\n\n`
+    + 'A finished item is DELETED, never ticked — its reasoning belongs in CLAUDE.md, and\n'
+    + 'git history keeps the text. If it is NOT finished, take the marker off instead: a\n'
+    + 'heading that says BUILT describes the heading, not the section, and one of those in\n'
+    + 'docs/business.md was hiding the entire unbuilt money half of the pack shop.');
+});
+
+/**
  * Every area named in TODO.md exists, and every area file is named in TODO.md.
  * A pointer to a file that is not there is worse than no pointer, and a file
  * nothing points at is work nobody will find.
