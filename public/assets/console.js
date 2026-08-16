@@ -222,6 +222,29 @@ const keyInUrl = new URL(location.href).searchParams.get('key') || '';
 const linkTo = (path) => (keyInUrl ? keyed(path) : path);
 
 /**
+ * A LINK TO ANOTHER DOOR AND TAB — because a message that says "do it over
+ * there" has to be able to take you there.
+ *
+ * Set as a standing rule: *"whenever a part of the site says 'you can't do X
+ * here, you can do it there instead' it MUST link to that other place."*
+ *
+ * It is the *clarity beats everything* rule applied to prose rather than to a
+ * control. Telling somebody the answer is on another tab and leaving them to
+ * find it is a control that needs explaining, split across two screens — and
+ * the empty states are exactly where it happens, because an empty state is
+ * written by whoever built the panel and read by somebody who has never seen
+ * it before.
+ *
+ * One helper rather than an anchor typed out per message, so the key rides
+ * along every time (`linkTo`) and a renamed door is one edit.
+ */
+function goTo(door, tab, words) {
+  const q = [door && door !== 'console' ? `door=${door}` : '', tab ? `tab=${tab}` : ''].filter(Boolean);
+  const path = `/console${q.length ? `?${q.join('&')}` : ''}`;
+  return `<a href="${esc(linkTo(path))}">${esc(words)}</a>`;
+}
+
+/**
  * The big screen — for THIS room.
  *
  * `linkTo` adds the host KEY, which says who you are; it says nothing about
@@ -4474,7 +4497,7 @@ function launchBar() {
       return row;
     }) : [node(`<div class="tiny">${seen.length
       ? `Nothing matches “${esc(venueSearch.value.trim())}”.`
-      : 'No venues yet — add one on the Venues tab.'}</div>`)]));
+      : `No venues yet — add one on ${goTo('workshop', 'venues', 'the Venues tab')}.`}</div>`)]));
   };
 
   /*
@@ -6775,7 +6798,7 @@ function wireVenue(el) {
        */
       line.className = 'prize-line none';
       line.innerHTML = record
-        ? 'No prizes tonight — set them on the Venues tab.'
+        ? `No prizes tonight — set them on ${goTo('workshop', 'venues', 'the Venues tab')}.`
         : 'No prizes tonight — this venue is not on your Venues tab.';
       return;
     }
@@ -8271,7 +8294,7 @@ function venuesSection() {
           launch a night at this venue. Give a venue its usual night and the
           launch bar knows whose night tonight is — and the big screen ends the
           night with “Back here Thursday 20th”, worked out from it. The billing
-          details for the same venues are on the Invoices tab.</div>`}
+          details for the same venues are on ${goTo('post', 'invoices', 'the Invoices tab')}.</div>`}
         ${all.length > 4 ? `
           <div class="venue-tools">
             <input class="pack-search venue-search" type="search" placeholder="Search ${all.length}…"
@@ -8279,7 +8302,8 @@ function venuesSection() {
           </div>` : ''}
         <div class="venue-list">
           ${!all.length ? `<div class="tiny">No venues yet. ${
-  findOnly ? 'Add one in the Workshop.' : 'Add one below, or on the Invoices tab.'}</div>`
+  findOnly ? `Add one in ${goTo('workshop', 'venues', 'the Workshop')}.`
+    : `Add one below, or on ${goTo('post', 'invoices', 'the Invoices tab')}.`}</div>`
     : !venues.length ? `<div class="tiny">Nothing matches “${esc(venueQuery)}”.</div>`
       : venues.map((v) => {
         // Never open behind the Console door: a card there is a thing to pick
@@ -9657,8 +9681,9 @@ function showsSection() {
           </div>
         </div>
         <div class="show-list">
-          ${!shows.length ? `<div class="tiny">No shows yet. Set a night up in Tonight,
-            then press <b>Keep this as a show</b> under Tonight’s settings.</div>`
+          ${!shows.length ? `<div class="tiny">No shows yet. Set a night up in
+            ${goTo('console', 'quiz', 'Tonight')}, then press <b>Keep this as a show</b>
+            under ${goTo('console', 'setup', 'Tonight’s settings')}.</div>`
     : shows.map((show) => {
       const broken = (show.problems || []).length;
       const items = itemsOf(show);

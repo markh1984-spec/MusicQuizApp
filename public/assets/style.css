@@ -7617,6 +7617,14 @@ body.gallery { padding: 0; }
 .bench-do {
   display: flex; flex-direction: column; align-items: flex-start;
   gap: 8px; min-width: 0;
+  /* THE ACTIONS COLUMN RESERVES ITS FULL HEIGHT, or the panel grows when
+     something lands on it. Measured: the empty state came out 18px shorter
+     than the loaded one, because loading adds a second button and drops the
+     explanation to one line — so dropping a pack nudged everything below the
+     bench down. Small, and exactly the reflow this file refuses on the pack
+     shelf: a panel that changes height under your hand is one you cannot aim
+     at twice. The slot beside it already matches at 92px for the same reason. */
+  min-height: 106px;
 }
 .bench-do p { margin: 2px 0 0; max-width: 46ch; }
 /* GREEN, NOT THE ACCOUNT GRADIENT, and sized to its words. One filled gradient

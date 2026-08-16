@@ -892,12 +892,12 @@ MOMENTS of a night; **the fourth names the one thing that is not a night**, so
 it goes on the end rather than in the sequence.
 
 - **A fact is on ACCOUNT, a switch is on SETTINGS, a price is in the SHOP** —
-  the test for where a new panel goes, or Settings becomes a bin.
+  or Settings becomes a bin.
 - **THE SHOP SELLS PACKS AND TIERS IN ONE ROOM**, both games in one grid,
   because there you are shopping rather than launching. **It left the pack
-  shelf**, where it put a till at the bottom of a working page.
+  shelf**, which put a till at the bottom of a working page.
 - **HELP KEEPS ITS OWN TAB, NO `needs`, LAST**, and the door is ungated: it is
-  where somebody goes when what is wrong is their subscription.
+  where you go when what is wrong is your subscription.
 
 ### CAPITALS ARE FOR EMPHASIS, NOT FOR LABELLING
 
@@ -1122,6 +1122,10 @@ preference:
   backed up", the lapsed-subscription note, the launch-over-a-live-game
   warning: these are read once, at a moment that matters, and being short
   there costs somebody something real. Everything else is furniture.
+
+**"DO IT OVER THERE" MUST BE A LINK TO THERE** — `goTo()`. Naming another tab
+and leaving somebody to find it is a control that needs explaining, split over
+two screens. **EMPTY STATES ARE WHERE IT HAPPENS.**
 
 **A control that needs a paragraph is a design problem, not a copy problem.**
 When the urge to explain arrives, the first question is whether the thing
@@ -1944,17 +1948,14 @@ having a nights section."*
   hand clears `showRunning`**, or the bar describes a night nobody is running.
 - **IT STORES REFERENCES AND NEVER COPIES** — rule 11. Tested.
 - **IT IS NOT A GATE AND MUST NEVER BECOME ONE.** The launch re-checks the
-  tier, every pack and the lobby game. *"It was allowed when they saved it"* is
-  a gate running backwards.
+  tier, every pack and the lobby game.
 - **CALLED A SHOW BECAUSE "NIGHT" IS TAKEN TWICE** — Calendar's are bookings,
   Gigs' are the archive. *Set list* and *running order* name the activity and
   carry neither the venue nor the prizes.
 - **THE ORDER IS REBUILT INTO `lbExtra` AND `lbOff`, never held a third way.**
-  **A BROKEN SHOW IS NAMED ON THE CARD, DAYS EARLY** — every part, not just the
-  one it opens with.
+  **A BROKEN SHOW IS NAMED ON THE CARD, DAYS EARLY** — every part.
 - **KEEPING A NIGHT IS ON TONIGHT'S SETTINGS; WHAT IT PLAYS IS EDITED ON THE
-  CARD, WORKSHOP ONLY.** No second composer — it could disagree with the
-  launch. A select per part rather than a drag.
+  CARD, WORKSHOP ONLY** — no second composer to disagree with the launch.
 - **DROPPING ONE IN NEVER LAUNCHES**, and there is a TAP as well as a drag,
   because HTML5 drag never fires on touch. Reasoning:
   **[`docs/console.md`](docs/console.md)**.
@@ -1992,13 +1993,13 @@ Launch, and nine identical cards make that a reading task.
   knowingly**: green already means good/paying. Teal is a one-line change if it
   ever reads muddy.
 - **A SHUT CARD IS A SQUARE POSTER — the era fills it, the name on a dark fade
-  at the bottom.** Chosen from four rendered at the real shelf width.
+  at the bottom.** Chosen from four rendered at the real width.
   **`aspect-ratio` is on `.shut` ALONE**, or the shape decides what an open
   card may carry. **The fade is a `::before`, never a wrapper**, so no markup
   differs between open and shut.
 - **THE DRAWN TITLE IS TRIMMED AND THE STORED ONE IS NOT** (`shortTitle()`) —
-  a leading "The", a trailing Quiz/Bingo, because the card says the kind three
-  times already. **Nothing writes anything — SEARCH LOOKS INSIDE TITLES.**
+  a leading "The", a trailing Quiz/Bingo; the card says the kind three times
+  already. **Nothing writes anything — SEARCH LOOKS INSIDE TITLES.**
   **Falls back to the full title when the trim empties it.** Three sizes by
   length, calibrated to the REAL 146px card: **a design measured against
   invented content is measured against nothing**, and the first ones were —
