@@ -1020,58 +1020,37 @@ function render() {
      */
     (doorNow() !== 'console' ? node('<div></div>') : (live ? node('<div></div>') : launchBar())),
     doorNow() === 'console' ? runningPanel(running) : node('<div></div>'),
-    tabBar(active),
-    tabBody(active),
+    consoleColumns(tabBar(active), tabBody(active)),
   );
-  showActiveTab();
 }
 
 /**
- * Bring the lit tab into view on a phone.
+ * THE TABS RUN DOWN THE LEFT AND THE TAB'S CONTENT SITS BESIDE THEM.
  *
- * The tab bar scrolls sideways on a narrow screen, and the tabs on the end —
- * Past nights, My account — are off the right of it. Tapping one changed the
- * page underneath while the tab you had just pressed stayed out of sight, so
- * the bar still looked like it was showing Music Bingo. On a phone that reads
- * as "did that work?" and gets tapped again.
+ * Asked for as *"would it make sense to have the main menu at the top and the
+ * submenu (the tabs) run down the left hand side?"* — three arrangements were
+ * rendered from the real stylesheet before choosing, and this is B: **Tonight
+ * keeps the full width above, and the column starts below it.** The launch bar
+ * is the one panel that genuinely wants the whole page, and it is the reason
+ * the sidebar does not simply run the full height.
  *
- * The bar's own `scrollLeft` rather than `scrollIntoView`, which would also
- * scroll the PAGE — and jumping the whole console down to the tab bar on every
- * render is a worse fault than the one being fixed.
+ * **THE SIDEBAR IS THE SAME SHAPE AT EVERY WIDTH — it goes full width on a
+ * phone rather than turning back into a scrolling row.** Three collapses were
+ * rendered at 390 and this is the one that was picked. It is also the one with
+ * no mechanism in it: the horizontal bar needed `overflow-x`, a wrap rule at
+ * 860, and a `showActiveTab()` that scrolled the lit chip back into view
+ * because the tabs on the end were off the right-hand edge. A vertical list has
+ * every tab visible, so all of that is gone rather than ported.
+ *
+ * It is one element wrapping the two that already existed, so nothing about a
+ * tab's own markup changed and the doors, the badges and the locked chips are
+ * untouched.
  */
-function showActiveTab() {
-  const bar = mainEl.querySelector('.tabbar');
-  const on = bar && bar.querySelector('.tab.on');
-  if (!bar || !on) return;
-  const barBox = bar.getBoundingClientRect();
-  const tabBox = on.getBoundingClientRect();
-  if (tabBox.left >= barBox.left && tabBox.right <= barBox.right) return;   // already there
-  // Centred when there is room, so the tabs either side of it are visible too
-  // and it is obvious the bar scrolls at all.
-  bar.scrollLeft += (tabBox.left - barBox.left) - (barBox.width - tabBox.width) / 2;
+function consoleColumns(bar, body) {
+  const wrap = node('<div class="consolecols"></div>');
+  wrap.append(bar, body);
+  return wrap;
 }
-
-/**
- * PRESSING A TAB PUTS THE TAB BAR AT THE TOP OF THE SCREEN.
- *
- * Asked for directly: *"would be good if a click on a tab made the tabs appear
- * to be the top of the page, so you can always just scroll up from there to
- * get to the launch bit"* — and it is the better of the two answers. It used
- * to jump to `top: 0`, which puts Tonight back on screen every time you change
- * tab, so the thing you actually pressed for starts a section and a half down
- * and you scroll past the launch panel to reach it. The other way round, every
- * tab opens at its own first line and Tonight is exactly one flick UP, in the
- * same place on every tab — which is the whole reason that panel sits above
- * the bar rather than inside a tab.
- *
- * Measured off the sticky topbar rather than a written-out number: the bar
- * WRAPS on a phone, so its height is 54px on a laptop and a good deal more
- * with the doors on a line of their own. A constant would hide the tabs
- * underneath it on the device this is most often held on.
- *
- * After `render()`, deliberately — the bar is rebuilt on every one, so the
- * element measured has to be the new one.
- */
 
 /**
  * CHANGING TAB DOES NOT MOVE THE PAGE. YOU STAY WHERE YOU WERE.

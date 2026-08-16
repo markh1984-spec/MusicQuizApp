@@ -748,14 +748,17 @@ body::after {
    Only while dragging: sticky the rest of the time would cost the top of every
    tab all night, which is the same reason the tab bar scrolls sideways on a
    phone rather than growing a second row. */
-/* AND THE TAB BAR STANDS DOWN WHILE SOMETHING IS BEING DRAGGED.
+/* AND THE TAB COLUMN STANDS DOWN WHILE SOMETHING IS BEING DRAGGED.
    Two sticky things pinned to the same place is what produced the mess in the
-   post-drag screenshot: the tab bar is sticky at z-index 10 and Tonight pins
-   at 6 for the length of a drag, so the bar painted straight through the
-   middle of the panel somebody was dragging INTO — over the tiles and over
-   the Launch button. Un-pinning it for the drag is better than out-ranking
-   it: during a drag the tabs are not the thing being used, and one pinned
-   object cannot fight another that is not there. */
+   post-drag screenshot: the tabs painted straight through the middle of the
+   panel somebody was dragging INTO — over the tiles and over the Launch
+   button. Un-pinning for the drag is better than out-ranking it: during a
+   drag the tabs are not the thing being used, and one pinned object cannot
+   fight another that is not there.
+   Still true with the tabs in a left-hand COLUMN, which is why this survived
+   the change rather than being deleted with the rest of the bar: Tonight
+   spans the full width, the sidebar's lane included, so a pinned sidebar and
+   a pinned Tonight are still two things claiming the same top-left. */
 body.is-dragging-card .tabbar { position: static; }
 body.is-dragging-card .launchbar {
   position: sticky;
@@ -2462,79 +2465,80 @@ body.screen { cursor: none; }
    and push the page's first line most of a screen down. So it wraps from
    860px, where two rows is the worst case, and keeps the sideways scroll
    below that — the same split the topbar's own rule already uses. */
+/* THE TABS ARE A COLUMN DOWN THE LEFT, AND THE SAME COLUMN ON A PHONE.
+   Two rules do the whole thing: the bar stacks, and from 900px the bar and the
+   body become two grid columns. Below that they are simply blocks, so the list
+   runs full width with the tab you pressed underneath it — which is the
+   collapse that was chosen out of three rendered at 390.
+   `minmax(0, 1fr)` on the content column is load-bearing rather than tidy: a
+   grid child defaults to `min-width: auto`, so the pack grid's own minimum
+   would push the column wider than the page and the whole console would scroll
+   sideways. That is the same trap `.pack-tools` fell into. */
+.consolecols { display: block; }
+@media (min-width: 900px) {
+  .consolecols {
+    display: grid;
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 8px 24px;
+    align-items: start;
+  }
+}
 .tabbar {
   display: flex;
-  gap: 6px;
+  flex-direction: column;
+  gap: 2px;
   margin-bottom: 22px;
   padding-bottom: 2px;
-  border-bottom: 1px solid var(--panel-line);
-  overflow-x: auto;
 }
-@media (min-width: 860px) {
-  /* WRAPS RATHER THAN CLIPS, AND STAYS AT THE TOP OF THE SCREEN.
-     Sticky is what removes the reserved height `.tabbody` used to carry: the
-     bar no longer has to be SCROLLED to the top, it is simply there — so a
-     short tab is a short page again instead of most of a screen of nothing
-     below it. Tonight is one flick up from it, in the same place on every
-     tab, which is the whole reason that panel sits above the bar.
-     `top` is the sticky topbar's own height. It is a number rather than a
-     measurement because CSS cannot ask, and it is declared beside the rule
-     that sets that height so the two are changed together.
-     The fill and the blur are the topbar's, or content scrolls through a
-     transparent bar and the tab labels sit on top of a pack card. */
+@media (min-width: 900px) {
+  /* IT STAYS WHERE IT IS WHILE THE TAB SCROLLS, which is most of what a
+     sidebar buys over a bar: nine tabs pinned beside a long Gigs list rather
+     than a strip you have to scroll back up to. `top` is the sticky topbar's
+     own height, declared beside the rule that sets it so the two move
+     together. No fill and no blur — a column that content passes UNDER needed
+     an opaque background; a column with its own lane does not. */
   .tabbar {
-    flex-wrap: wrap;
-    overflow-x: visible;
-    row-gap: 0;
     position: sticky;
-    top: var(--topbar-h);
-    z-index: 10;
-    /* THE SAME DARK AS THE CARDS, NOT NEAR-BLACK — and fully opaque.
-       It was `rgba(11,11,20,0.95)`, which was two faults at once now that the
-       page carries a wash. At 95% the search row underneath showed through
-       its bottom edge as it scrolled past, which reads as a rendering fault
-       rather than as depth. And a flat near-black rectangle across a purple
-       page is a slab: the one horizontal band that does not belong to the
-       scheme, sitting exactly where the eye lands on every tab change.
-       `--surf-2` is the bottom of the card surface, so the bar reads as part
-       of the same room — and opaque means content genuinely disappears under
-       it rather than half-appearing. The blur stays for the fraction of a
-       second before it pins. */
-    background: var(--surf-2);
-    backdrop-filter: blur(10px);
-    margin: 0 -16px 22px;
-    /* A little room under the tabs, so a line of text scrolling past stops
-       being hidden a few pixels before it touches them rather than at the
-       exact moment it does. */
-    padding: 0 16px 6px;
+    top: calc(var(--topbar-h) + 12px);
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-right: 1px solid var(--panel-line);
+    padding-right: 8px;
   }
-  /* A little tighter, so the nine sit comfortably in the widened column
-     rather than exactly filling it — the bar still WRAPS rather than clips if
-     a tenth tab ever arrives, which is the safe way round. */
-  .tab { padding-left: 14px; padding-right: 14px; }
-  .tabbar { gap: 4px; }
 }
+/* A TAB IS A FULL-WIDTH ROW, and the badge sits at the far end of it.
+   `space-between` is what makes a column of nine read as a list rather than as
+   nine differently-shaped buttons: the labels line up on the left and every
+   count lines up on the right, so "3 invoices" is found by running down one
+   edge instead of by reading. */
 .tab {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  padding: 13px 18px;
+  width: 100%;
+  padding: 11px 14px;
   border: none;
-  border-bottom: 3px solid transparent;
+  /* THE MARKER IS THE LEFT EDGE NOW, because the bar turned ninety degrees.
+     It was a bottom border, which under a stacked list stops reading as "you
+     are here" and starts reading as a rule between two tabs. Same colour, same
+     3px, same job — rotated with everything else. */
+  border-left: 3px solid transparent;
   background: none;
   color: var(--ink-dim);
   font-family: inherit;
   font-size: var(--fs-ctl);
   font-weight: 800;
   cursor: pointer;
+  text-align: left;
   white-space: nowrap;
-  border-radius: var(--r-field) 10px 0 0;
+  border-radius: 0 var(--r-field) var(--r-field) 0;
   transition: color 160ms, background 160ms, border-color 160ms;
 }
 .tab:hover { color: var(--ink); background: rgba(255, 255, 255, 0.04); }
 .tab.on {
   color: var(--ink);
-  border-bottom-color: var(--hot);
+  border-left-color: var(--hot);
   background: rgba(255, 255, 255, 0.06);
 }
 .tabcount {
