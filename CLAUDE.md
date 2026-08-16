@@ -1264,9 +1264,12 @@ So, in order of what actually buys a longer session:
    you just started** before believing what it says.
 4. **SEND SCREENSHOTS, DO NOT OPEN THEM** — already a rule, and it was
    under-applied on the day this was written.
-5. **COMMIT AND PUSH AS SOON AS A PIECE IS DONE AND VERIFIED**, so a session
-   ending costs nothing but the unwritten middle. Write decisions down in the
-   same turn — that is what makes the next session cheap rather than lost.
+5. **COMMIT AND PUSH AS SOON AS A PIECE IS DONE AND VERIFIED.** **This does
+   NOT free context — nothing does; the window only grows.** It makes the
+   context DISPOSABLE: when the session ends the work is on the branch rather
+   than in the window. Insurance against loss, not against exhaustion. Write
+   decisions down in the same turn for the same reason — a summary keeps
+   decisions and drops the texture, so the unwritten middle is what is lost.
 
 **AND SAY WHEN THE BUDGET IS THE REASON.** Stopping a big job and handing it on
 with a written plan is a decision worth stating out loud; quietly doing half of
