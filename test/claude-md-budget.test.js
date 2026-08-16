@@ -70,7 +70,19 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * `showsSection()`, `galleryToggle()`, `packDrag` and the tab recipe. A pointer
  * to the wrong file is worse than no pointer, because it is followed.
  */
-const BUDGET = 138_000;
+/*
+ * TIGHTENED TO 132,000 ON 16 AUGUST 2026, in the same pass that raised it —
+ * which is the point. The raise bought room for the console-split entry; the
+ * diet then took 9,497 bytes back out by moving what is READ ON DEMAND rather
+ * than always: the two modes (GSD and Sweep, ~5.5KB that matter only in the
+ * sessions where he types them) and the four-faults account behind the checks.
+ * Each left its rule and a link behind, so nothing has to be looked up to
+ * avoid a bad change.
+ *
+ * **A budget that only ever goes up is not a budget.** If a raise is genuinely
+ * needed, look first for what has become reasoning rather than rule.
+ */
+const BUDGET = 132_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

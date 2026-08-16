@@ -24,8 +24,26 @@ lives here instead. A build plan left behind for a thing that already exists
 is a trap, and it has caught a session once: the picture-drawing step was
 nearly rebuilt because the plan for it was still sitting in the list.
 
+**`TODO.md` IS THE LIVE LIST AND THREE AREAS SIT BESIDE IT IN `todo/`** —
+marketing, the gallery, the console's UI work. Each is named with one line in
+`TODO.md`, so **reading `TODO.md` still tells you everything that is
+outstanding**; it is 31KB rather than 124KB, and you open the one area your
+job is in. That is the same rule as `docs/`, applied to the list.
+
 **And the reasoning behind everything here is in `docs/`** — see *Where the
 reasoning lives* below. Open the one you are touching; do not read them all.
+
+**THE CONTEXT BUDGET, and it is why all of this is split.** `CLAUDE.md` loads
+in full every session and `TODO.md` is opened by every session, so those two
+are what a session pays before it does anything. They are held near 138KB and
+40KB by `test/claude-md-budget.test.js` and `test/todo-budget.test.js` —
+raise a budget deliberately, and expect the diff to say so. Everything else is
+**read on demand**: open the `docs/` page you are touching, the `todo/` area
+your job is in, and the console module named for the tab. **Use the agents in
+`.claude/agents/` for anything that means reading widely** — `locator` to find
+where something lives, `sweeper` to audit, `gig-guard` to run the checks,
+`screenshotter` to measure a screen. An agent's context is not yours, so a
+question answered by an agent costs a paragraph instead of a file.
 
 ---
 
@@ -1281,6 +1299,12 @@ Open the one you are touching; do not read them all.
 
 **[`docs/deployment.md`](docs/deployment.md)** — what the host has, and what that blocks
 
+**[`docs/modes.md`](docs/modes.md)** — GSD mode and Sweep mode in full. **Open
+it when he types one of them**, not before.
+
+**[`docs/checks.md`](docs/checks.md)** — what the checks are for, and the four
+separate faults that let one guard report a clean run it had not earned.
+
 - Things the host does not have, and what that blocks
 
 Also: **[`docs/artwork.md`](docs/artwork.md)** — the shared portrait library
@@ -1481,36 +1505,16 @@ do it is the sessions after this one.
 ### "GSD mode" — Get Shit Done
 
 **If he types `GSD mode`, switch to it and STAY in it until the to-do list is
-done or he says otherwise.** It means he is at the laptop knocking through a
-list, not thinking something over, and every extra word is in the way.
+done or he says otherwise.** He is at the laptop knocking through a list, not
+thinking something over, and every extra word is in the way: **open with the
+numbered to-do list itself**, minimum context, **URLs always as clickable
+links**, a link rather than a question, YES or NO where possible, one line per
+step. **Argue in normal mode, not in GSD mode** — but the rules that stop things
+going wrong still apply, in one line.
 
-**ALWAYS OPEN WITH THE TO-DO LIST.** The first thing out of GSD mode is the
-list itself — numbered, in the order to do them, URLs verbatim. Not a question,
-not a preamble, not "shall I". If the list is not obvious from the conversation,
-work it out from TODO.md and the current state and give it anyway; he will
-correct it faster than he will answer a question about it.
-
-- **Minimum context.** No reasoning, no background, no options, no "worth
-  knowing". He has the context; he wrote it.
-- **URLs, ALWAYS AS LINKS.** Never a bare path or a "go to Settings" when a URL
-  exists — he is clicking them, not reading about them. Deep-link as far in as
-  the site allows, and give the full `https://…` so it is clickable in a
-  terminal.
-- **A LINK BEATS A QUESTION.** If the next step depends on which service he
-  uses, do not ask — list the likely ones WITH their deep links and let him
-  click the right one. Asking costs a round trip; a five-line list costs him
-  one glance.
-- **Very succinct.** A step is a line. A list is a list.
-- **YES or NO where a yes or no is possible.** Do not soften it into a
-  paragraph, and do not add the caveat unless acting on it would break
-  something.
-- **Answer the step he is on**, not the two after it.
-
-It is a MODE, not a personality change: the rules that stop things going wrong
-still apply. If something is about to cost money, destroy a night or push to the
-wrong place, say so — in one line. **Argue in normal mode, not in GSD mode**;
-if a proposal needs pushing back on, note it in a sentence and raise it properly
-when the list is done.
+**The full mode is in [`docs/modes.md`](docs/modes.md) — open it when he types
+it.** It is there rather than here because it governs a minority of sessions
+and every session was paying for it.
 
 ### THE PROTECTED SURFACE — what must not break, and what may
 
@@ -1576,88 +1580,20 @@ the test was measuring something adjacent to the thing that mattered.
 ### "Sweep mode" — find everything, change nothing
 
 **If he types `Sweep mode`, run a full sweep and REPORT. Do not action any of
-it.** He decides what gets fixed; the output is a list he can work through and
-dismiss from.
+it.** He decides what gets fixed. Four kinds at once, because they hide in each
+other: **contradictions** (the docs against the code), **bugs**,
+**vulnerabilities from BOTH sides** (a quizmaster reaching for the owner's, and
+the owner reaching into a quizmaster's), and **label collisions** — two controls
+on one screen using one word for two different things, which no test, no 500 and
+no visual defect will ever show you. **REPORT THE PAIR, NOT THE BUTTON.**
 
-Four things at once, because they hide in each other:
+**Testing is allowed; leaving anything behind is not.** And **verify before
+reporting** — a false finding costs him time and teaches him to skim the next
+report. **Say what HELD as well as what failed.**
 
-- **Contradictions** — the docs against the code, and the code against itself.
-  A rule stated in CLAUDE.md that the code no longer honours is the one that
-  costs a future session a day.
-- **Bugs** — including ones only reachable in a state nobody tests: mid-round, a
-  redeploy, a lapsed subscription, a second login.
-- **Vulnerabilities** — from BOTH sides. Signed in as a quizmaster reaching for
-  what is the owner's, and the owner reaching into what is a quizmaster's. The
-  second is the gate that runs backwards and is easy to forget.
-- **LABEL COLLISIONS — two controls on one screen using one word for two
-  different things.** See below; added 14 August 2026 at the host's own
-  instruction, after finding one on the control view.
-
-#### The fourth kind: one word, two meanings, side by side
-
-**The exemplar WAS `Scores on screen` and `My scores`, next to each other on
-the control view — and it is fixed, so the buttons now read `Scores to the
-room` and `Scores, just me`.** One puts the scoreboard on the PROJECTOR for
-the room; the other shows them to the HOST alone. Both said "scores", neither
-said who was looking, and "My scores" read like the host's own score in the
-quiz. The host's own test of it: *"if it's not obvious to me what it does, a
-fresh QM will have no idea."*
-
-**The fix is the shape to copy: keep the noun, add the AUDIENCE.** Renaming one
-of the two would have left the other still saying only "scores" and put the
-burden on remembering which was which; saying who sees it makes each label
-complete on its own. It is worth nothing else on that bar, because nothing else
-on it comes in two audiences.
-
-**It is a CONTRADICTION rather than a wording preference**, which is why it
-belongs in this sweep rather than on a tidy-up list: the design rules already
-say *if two things on one screen use the same word for different sets, one of
-them is renamed*, and *if a control needs explaining, the control is wrong*.
-So a collision is the code disagreeing with a stated rule — exactly what the
-first bullet is for — it simply lives in a `<button>` rather than in a
-function.
-
-**It hides from every other check there is.** It has no failing test, no 500,
-no 403 and no visual defect; the page looks perfectly tidy. The only thing
-that finds it is reading every control on one screen TOGETHER and asking what
-a stranger would think each one did. That is the sweep's job and nothing
-else's.
-
-What to look for, and each has been seen in this app:
-
-- **the same noun for two different sets** — "scores" for the room's and for
-  yours; "packs" for the catalogue and for a quizmaster's own (solved by
-  naming them **My packs** and **Quizporium packs**);
-- **a label that describes the TOOL rather than the act** — "The pack editor"
-  on the link somebody presses to write something; "Redo" for a button that
-  wipes a question's points and asks it again;
-- **a verb with no object** — "Back", "Skip", "Advert": fine when the object
-  is obvious, a collision the moment two of them could take different objects;
-- **a control whose only explanation is a `title`.** There are no tooltips on
-  a phone, and half these screens are driven from one. A tooltip is a bonus;
-  if it is carrying the meaning, the label is wrong.
-
-**REPORT THE PAIR, NOT THE BUTTON.** A collision is a relationship between two
-controls, so "rename My scores" was half a finding — the fix turned out to be
-the third option, saying WHO SEES IT on both. Give the pair, what a stranger would
-guess each does, and what they actually do.
-
-**Testing is allowed; leaving anything behind is not.** Start servers, seed
-throwaway data, sign in as a made-up account, probe every route — then kill it,
-delete the temp directories, and leave `git status` clean. **If a probe breaks
-something, fix it in the same turn and say so.**
-
-**VERIFY BEFORE REPORTING, because the last sweep produced four "findings" that
-were the sweep's own mistakes** — a route called with the wrong field name, a
-parameter that is correctly ignored, a tier limit working exactly as designed.
-A false finding costs him time and teaches him to skim the next report. When a
-thing looks wrong, reproduce it deliberately before it goes on the list.
-
-**Say what HELD as well as what failed.** "Rooms held against every attempt to
-reach another quizmaster's night" is worth as much as a bug, because it is the
-part he cannot check himself.
-
----
+**The full mode is in [`docs/modes.md`](docs/modes.md) — open it when he types
+it.** `.claude/agents/sweeper.md` runs it in its own context, which is where a
+read-heavy job belongs.
 
 ## Layout
 
@@ -2211,118 +2147,43 @@ typo is dropped rather than quietly becoming a round of general knowledge.
 ## Checks
 
 ```bash
-npm test        # 1,209 tests, no network, injected clocks — must stay green
+npm test        # 1,279 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
 node scripts/pub-unchanged.mjs HEAD~1 --ignore online   # did I break the pub night?
 ```
 
-**NOTHING IN THIS REPO HAD EVER PARSED THE BROWSER FILES, and on 15 August
-2026 a stray backtick took the whole console down.** It was inside an HTML
-comment in the template literal `launchBar()` builds its markup from, so it
-ended the string early and `console.js` became a syntax error — meaning
-`/console` did not load AT ALL, for every quizmaster, on the page a night is
-launched from. **The full suite passed.** It always would: every file under
-`public/` is a DOM module that no test imports, so the browser half of this app
-was never executed by anything in here.
+**The rules these commands run on, and each was learned expensively — the full
+account is in [`docs/checks.md`](docs/checks.md):**
 
-`test/browser-parses.test.js` closes it, and is deliberately the WEAKEST
-possible guard: it runs `node --check` over every script under `public/` and
-names any HTML comment carrying a backtick. **Parsing is not working** — a file
-that parses can still be nonsense. What it catches is the class of fault where
-the page cannot load at all, which is the class that ends a night rather than
-annoying somebody. Verified by reintroducing the backtick and watching both
-cases fail.
-
-**It is the same lesson as the launch route and as the projector's arcade
-board, for the third time: a test that never runs the artefact proves nothing
-about it.** `node --check` on a file you edited is seven seconds; finding this
-in a browser cost a round trip, and finding it in a pub would cost the night.
-
-**`pub-unchanged.mjs` is the one to run before a gig week.** `npm test` says
-the tests still pass; this says something stronger and far more useful — that
-the actual BYTES a projector and a phone receive, at every phase of every pack
-in the library, are identical to a commit you trust. It runs both versions of
-the engine side by side on one injected clock, with the same teams answering
-the same options at the same seconds. `--ignore` names top-level fields that
-are allowed to be NEW, so an additive change can be waved through by name:
-*"there is one new field and it is called `online`"* is a claim somebody can
-check, where "some things changed" is not. It was written to answer the host
-asking whether the online work would make his Wednesday awkward, and the
-answer it gave was 2,150 identical payloads across seven packs.
-
-**COMPARE AGAINST THE BRANCH YOU ARE MERGING INTO, NOT `HEAD`.** On a
-committed, clean checkout `HEAD` IS the working tree, so the script runs the
-same code against itself and can only ever print IDENTICAL. It is not wrong,
-it is empty — and it has now been quoted as a pass twice in one day, once by
-a session reporting its own finished branch. Use
-`node scripts/pub-unchanged.mjs origin/MusicQuizApp` when checking work that
-is already committed; `HEAD` is only meaningful while the change is still
-uncommitted in the working tree.
-
-**AND IT WAS ANSWERING WITHOUT ANSWERING — every "identical" this file quotes
-above was measured with a hole in it.** `Engine.answer()` takes an OBJECT and
-the script called it positionally, `a.answer(id, 0)`, so every answer came
-back `unknown_player` and was dropped in silence. Every *"after the fast
-answer"* comparison was a question with nobody having answered it, which put
-**the scoring, the tally, the fastest finger and who-picked-what outside the
-one check this repo runs before a gig week** — on a script whose own comment
-said those were exactly what it was exercising.
-
-Found on 14 August 2026 by making a deliberate change to a player's
-mid-question payload and being told the payloads were identical. Fixed, and
-the fix is the lesson: **the answer is now asserted**, so the script throws
-rather than reporting a clean run it did not earn. A guard that quietly tests
-nothing is worse than no guard, because it is believed. The picks are worked
-out per round type as well — "option 0" is not answerable on a pick-them-all
-question (refused unless it gets exactly the number asked for) or an alphabet
-one, which is the second reason it was doing nothing.
-
-**And a THIRD fault in the same file: it ignored the commit you named.**
-`--ignore` is parsed by finding its index, and with no `--ignore` that index
-is -1 — so `i !== ignoreAt + 1` read as `i !== 0` and threw away argument
-zero, the ref. Every `pub-unchanged.mjs <commit>` ever run in this repo
-compared against `HEAD~1` instead, and announced it in a line that looks
-exactly like a confirmation. Three faults in one script, none of which made it
-fail: **a tool that cannot fail is a tool nobody checks.**
-
-**AND A FOURTH, on 15 August 2026: IT HAD NEVER LOOKED AT THE LOBBY.** The
-first `compare()` came AFTER `a.start()`, so every payload this script has ever
-checked was from a game already under way — **the join code, the QR, the prize
-line, the player strip, the countdown and the lobby game were all outside the
-one guard this repo runs before a gig week.** That is the screen a room looks
-at while sixty people are joining, which is the busiest moment of the night and
-the one path this file says must not stutter. Found the same way as the
-answering fault: a field was added to the lobby player payload and the script
-said the payloads were identical. There is a `compare('lobby')` before
-`start()` now. **Four faults in one script, and every one of them was the tool
-answering confidently about something it was not looking at** — when it says
-IDENTICAL, the useful question is what it did not compare.
-
-**It also says WHICH FIELD now.** It used to print the first 300 characters of
-both payloads — and a payload's first 300 characters are nearly always
-identical, so a real difference showed as two lines that looked the same. It
-lists the differing paths, how many payloads carry each, and which roles saw
-them, so the output is the claim: *"`you.score` and `you.position`, on a
-phone, mid-question, and nothing on the projector or the host's screen."*
+- **`node --check` every browser file you edit.** Nothing in this repo executed
+  `public/` for two years; a stray backtick in an HTML comment made
+  `console.js` a syntax error and `/console` did not load AT ALL, for every
+  quizmaster, with the full suite green. `browser-parses.test.js` closes it.
+- **`pub-unchanged.mjs` is the one to run before a gig week**, and **compare
+  against the branch you are merging into, not `HEAD`** — on a committed clean
+  checkout `HEAD` IS the working tree, so it can only ever print IDENTICAL. It
+  has been quoted as a pass twice while proving nothing.
+- **When it says IDENTICAL, ask what it did not compare.** Four separate faults
+  in that one script each made it answer confidently about something it was not
+  looking at: it never sent a valid answer, it ignored the commit you named, it
+  never looked at the lobby, and it printed the first 300 characters of two
+  payloads that are nearly always identical. **A guard that quietly tests
+  nothing is worse than no guard, because it is believed.**
+- **A TEST THAT NEVER RUNS THE ARTEFACT PROVES NOTHING ABOUT IT.** Reading
+  `server.js` as a string to check a route exists is how a broken Launch
+  reached the live app with 1,150 tests passing.
 
 Beyond the unit tests, these were run by hand and are worth repeating after
-anything structural:
-
-- 60 phones with live SSE connections all answering at once
-- `SIGKILL` mid-quiz and mid-bingo, checking the right question/track and all
-  scores, cards and marks come back
-- QR output decoded with a real scanner (OpenCV) across versions 1–10
+anything structural: 60 phones with live SSE connections all answering at once;
+`SIGKILL` mid-quiz and mid-bingo, checking the right question and every score,
+card and mark comes back; and QR output decoded with a real scanner across
+versions 1–10.
 
 **A full software audit was run before handing out a second login — see
-`AUDIT.md`.** It is the record of what was checked, what it found, what held,
-and — the part worth reading before promising anything — **what an audit from a
-container cannot tell you**: real iOS Safari, pub wifi, a projector, a phone
-camera, and the photo round trip, which has no repository configured here and is
-the one shipped feature whose happy path is still unproven.
-
----
+`AUDIT.md`**, which also records what an audit from a container CANNOT tell
+you: real iOS Safari, pub wifi, a projector, and the photo round trip.
 
 ## The host key rotates on every deploy unless HOST_KEY is set
 
