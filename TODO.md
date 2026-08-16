@@ -1913,12 +1913,9 @@ Settled by building them: each survives a reload on the device, each holds ONE
 thing, and the Workshop's two buttons now open popovers rather than navigating
 (see *Editing is a popover* in CLAUDE.md).
 
-Three things are genuinely outstanding:
+Two things are genuinely outstanding — the clear-on-done is built (*Done with
+it* on both benches; see CLAUDE.md):
 
-- **THE CLEAR-ON-DONE IS NOT BUILT.** *"When it's done it's saved and removed
-  from the section"* — the mechanic the entry below calls the whole point.
-  Today a pack is taken off by hand with the ×. The shape already decided: Save
-  keeps it on the bench, a separate *Done* clears it.
 - **The Post gig bench's *Put it on the gallery* has never been seen working**,
   and that is an ENVIRONMENT limit rather than a bug. `setPublished()` refuses
   with *"The private photo repository is not set up"* whenever no photo repo is

@@ -831,3 +831,57 @@ that cannot be undone by editing a line in `plans.js`.
   slides, the rules slide, scores on the big screen, pick-them-all rounds.
 
 ---
+
+
+---
+
+## The four faults in `pub-unchanged.mjs`
+
+The rule these produced is in CLAUDE.md under *Checks*: when the script says
+IDENTICAL, ask what it did not compare. This is what each one was.
+
+**AND IT WAS ANSWERING WITHOUT ANSWERING — every "identical" this file quotes
+above was measured with a hole in it.** `Engine.answer()` takes an OBJECT and
+the script called it positionally, `a.answer(id, 0)`, so every answer came
+back `unknown_player` and was dropped in silence. Every *"after the fast
+answer"* comparison was a question with nobody having answered it, which put
+**the scoring, the tally, the fastest finger and who-picked-what outside the
+one check this repo runs before a gig week** — on a script whose own comment
+said those were exactly what it was exercising.
+
+Found on 14 August 2026 by making a deliberate change to a player's
+mid-question payload and being told the payloads were identical. Fixed, and
+the fix is the lesson: **the answer is now asserted**, so the script throws
+rather than reporting a clean run it did not earn. A guard that quietly tests
+nothing is worse than no guard, because it is believed. The picks are worked
+out per round type as well — "option 0" is not answerable on a pick-them-all
+question (refused unless it gets exactly the number asked for) or an alphabet
+one, which is the second reason it was doing nothing.
+
+**And a THIRD fault in the same file: it ignored the commit you named.**
+`--ignore` is parsed by finding its index, and with no `--ignore` that index
+is -1 — so `i !== ignoreAt + 1` read as `i !== 0` and threw away argument
+zero, the ref. Every `pub-unchanged.mjs <commit>` ever run in this repo
+compared against `HEAD~1` instead, and announced it in a line that looks
+exactly like a confirmation. Three faults in one script, none of which made it
+fail: **a tool that cannot fail is a tool nobody checks.**
+
+**AND A FOURTH, on 15 August 2026: IT HAD NEVER LOOKED AT THE LOBBY.** The
+first `compare()` came AFTER `a.start()`, so every payload this script has ever
+checked was from a game already under way — **the join code, the QR, the prize
+line, the player strip, the countdown and the lobby game were all outside the
+one guard this repo runs before a gig week.** That is the screen a room looks
+at while sixty people are joining, which is the busiest moment of the night and
+the one path this file says must not stutter. Found the same way as the
+answering fault: a field was added to the lobby player payload and the script
+said the payloads were identical. There is a `compare('lobby')` before
+`start()` now. **Four faults in one script, and every one of them was the tool
+answering confidently about something it was not looking at** — when it says
+IDENTICAL, the useful question is what it did not compare.
+
+**It also says WHICH FIELD now.** It used to print the first 300 characters of
+both payloads — and a payload's first 300 characters are nearly always
+identical, so a real difference showed as two lines that looked the same. It
+lists the differing paths, how many payloads carry each, and which roles saw
+them, so the output is the claim: *"`you.score` and `you.position`, on a
+phone, mid-question, and nothing on the projector or the host's screen."*

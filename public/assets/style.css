@@ -5529,6 +5529,16 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   pointer-events: none;
 }
 
+/* UNSAVED WORK ON THIS PACK.
+   Gold and in the flow of the card's own small lines, rather than a corner
+   badge: `.pack-yours` is already top right, the era word runs off the bottom
+   right and the pin holds top left — and this is a sentence about state rather
+   than a label on the pack, so it belongs with "3 things to fix" underneath.
+   Not red. Nothing is wrong and nothing is being destroyed; it is a fact you
+   need before you pick tonight's pack, which is what gold means everywhere
+   else in this app. */
+.pack-card .pack-draft { color: var(--gold); font-weight: 800; }
+
 /*
  * "Open the editor" on the own-packs panel.
  *

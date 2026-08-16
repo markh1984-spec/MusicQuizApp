@@ -70,13 +70,20 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * fault this always-loaded file exists to prevent. Four of its six lines are
  * prohibitions.
  *
- * **What was paid, honestly.** The section was written long and cut back
- * before this raise; the stale test count was corrected in the same pass. No
- * genuinely superseded passage was found to remove — the last two raises had
- * already taken the obvious ones — so this is real growth and this comment is
- * the diff saying so.
+ * **AND THEN BACK DOWN TO 135,000 THE SAME DAY, WHICH IS THE PART WORTH
+ * COPYING.** The raise was taken, and then the bill was actually paid: the
+ * four-fault history of `pub-unchanged.mjs` — 46 lines of *what went wrong and
+ * how it was found* — moved to `docs/history.md`, leaving the rule it produced
+ * ("when it says IDENTICAL, ask what it did not compare") in place with a
+ * link. That is the split's own arrangement applied rather than quoted.
+ *
+ * The file came out at 134,516: **two features' worth of new rules added and
+ * the always-loaded cost still LOWER than it started the day.** Which is the
+ * answer to "the budget only ever goes up" — it does not have to. When the
+ * ceiling is a few bytes away, the move is to find the prose that should never
+ * have been in an always-loaded file, not to shave words off a rule.
  */
-const BUDGET = 137_000;
+const BUDGET = 135_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

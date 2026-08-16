@@ -101,3 +101,35 @@ test('the bench says when there is unsaved work waiting on it', () => {
   assert.match(CONSOLE, /readDraft\(bench\.kind, on\.id\)/, 'the bench does not ask about drafts');
   assert.match(CONSOLE, /part way through this/, 'and it does not say so');
 });
+
+/*
+ * THE CLEAR-ON-DONE — "when it's done it's saved and removed from the section".
+ * Without it the bench becomes a third shelf of stale things, which is the one
+ * thing it exists to prevent.
+ */
+test('both benches clear through one named action, and only one', () => {
+  assert.match(CONSOLE, /class="minor bench-done"/, 'no Done on the bench');
+  assert.match(CONSOLE, /\.bench-done'\)\?\.addEventListener\('click', \(\) => putOnBench\(null\)\)/,
+    'the Workshop bench does not clear');
+  assert.match(CONSOLE, /\.bench-done'\)\?\.addEventListener\('click', \(\) => putNightOnBench\(''\)\)/,
+    'the Post gig bench does not clear');
+  // The unnamed × did the same job in a corner. Two controls for one job on a
+  // panel with three buttons is the clutter rule, and the × was the weaker one.
+  const benches = CONSOLE.slice(CONSOLE.indexOf('function workBench('), CONSOLE.indexOf('const found ='));
+  assert.doesNotMatch(benches, /lb-tile-off/, 'a bench tile has grown its × back');
+});
+
+/*
+ * AND THE THING THAT KEEPS "AN EMPTY BENCH MEANS NOTHING IS HALF-FINISHED"
+ * FROM BEING A SLOGAN.
+ *
+ * Done clears the bench without destroying anything — a draft is keyed to the
+ * PACK, so it outlives the bench. Which means that without a marker on the
+ * shelf, pressing Done strands somebody's half-written round on the device
+ * with nothing anywhere pointing at it: exactly the hidden stale state the
+ * bench abolishes, reintroduced by the button that abolishes it.
+ */
+test('unsaved work stays visible on the shelf after the bench is cleared', () => {
+  assert.match(CONSOLE, /readDraft\(kind, pack\.id\) \? '<div class="tiny pack-draft">Unsaved changes<\/div>'/,
+    'a pack card does not say when it has unsaved work on it');
+});

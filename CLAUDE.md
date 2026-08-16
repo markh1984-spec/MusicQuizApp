@@ -1965,8 +1965,8 @@ having a nights section."*
 ### EDITING IS A POPOVER, AND A DRAFT NEVER TOUCHES THE PACK
 
 `mountEditor()` in `editor.js`, `pack-draft.js`, `editSheet()` in `console.js`.
-*Edit the questions* and *Read it through* on the Workshop bench both open in
-place; nothing navigates to `/editor` any more.
+*Edit the questions* and *Read it through* on the Workshop bench open in place;
+nothing navigates to `/editor`.
 
 - **A DRAFT IS KEPT ON THE DEVICE AS YOU TYPE; ONLY AN EXPLICIT SAVE WRITES THE
   PACK.** `reloadPackEverywhere()` pushes a saved pack into every game running
@@ -1974,17 +1974,22 @@ place; nothing navigates to `/editor` any more.
   projector mid-quiz. Never make the editor write on a timer.**
 - **KEYED PER PACK, NEVER ONE SCRATCH SLOT.** The wrong unsaved changes under
   another pack's name is WORSE than losing them: it looks like your work and you
-  would save it over the real thing.
+  would save it over the real one.
 - **THE POPOVER MOUNTS `editor.js` RATHER THAN REIMPLEMENTING IT** — one
   definition of what saving means (own-library routing, the on-screen-now
   question, the validator's list). **Do not write a second editor.** The page's
-  wiring is behind `if (document.getElementById('quizPick'))`, or importing it
-  takes the console down.
+  own wiring is behind `if (document.getElementById('quizPick'))`, or the
+  console dies on import.
 - **REOPENING LOADS THE DRAFT AND OFFERS CARRY ON / THROW AWAY** — showing the
   saved pack instead lets somebody type over their own work unseen.
+- **DONE WITH IT CLEARS THE BENCH; SAVE KEEPS IT**, never one button doing both.
+  Not destructive and not dressed as it — a draft is keyed to the PACK, so
+  putting the pack back brings the work back. **The marker on the pack card is
+  what keeps that honest**: unsaved work stays visible on the shelf, or *an
+  empty bench means nothing is half-finished* is a slogan. No × on a tile.
 - **CLOSING COSTS NOTHING, so a click off just closes it**; `destroy()` flushes.
   **The unload warning fires only when the device REFUSED to keep a draft**, or
-  it is a warning that lies. The bench says when a pack has unsaved work on it.
+  it is a warning that lies.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
@@ -2206,11 +2211,11 @@ typo is dropped rather than quietly becoming a round of general knowledge.
 ## Checks
 
 ```bash
-npm test        # 1,290 tests, no network, injected clocks — must stay green
+npm test        # 1,292 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
-node scripts/pub-unchanged.mjs HEAD~1 --ignore online   # did I break the pub night?
+node scripts/pub-unchanged.mjs origin/MusicQuizApp     # did I break the pub night?
 ```
 
 **NOTHING IN THIS REPO HAD EVER PARSED THE BROWSER FILES, and on 15 August
@@ -2256,51 +2261,15 @@ a session reporting its own finished branch. Use
 is already committed; `HEAD` is only meaningful while the change is still
 uncommitted in the working tree.
 
-**AND IT WAS ANSWERING WITHOUT ANSWERING — every "identical" this file quotes
-above was measured with a hole in it.** `Engine.answer()` takes an OBJECT and
-the script called it positionally, `a.answer(id, 0)`, so every answer came
-back `unknown_player` and was dropped in silence. Every *"after the fast
-answer"* comparison was a question with nobody having answered it, which put
-**the scoring, the tally, the fastest finger and who-picked-what outside the
-one check this repo runs before a gig week** — on a script whose own comment
-said those were exactly what it was exercising.
+**FOUR FAULTS HAVE BEEN FOUND IN THIS SCRIPT AND NONE OF THEM MADE IT FAIL** —
+it answered without ever answering a question, ignored the commit you named,
+never looked at the lobby, and printed a diff nobody could read. Every one was
+the tool answering confidently about something it was not looking at, so:
+**when it says IDENTICAL, the useful question is what it did not compare.** A
+guard that quietly tests nothing is worse than no guard, because it is
+believed. The four, and how each was found, are in
+**[`docs/history.md`](docs/history.md)**.
 
-Found on 14 August 2026 by making a deliberate change to a player's
-mid-question payload and being told the payloads were identical. Fixed, and
-the fix is the lesson: **the answer is now asserted**, so the script throws
-rather than reporting a clean run it did not earn. A guard that quietly tests
-nothing is worse than no guard, because it is believed. The picks are worked
-out per round type as well — "option 0" is not answerable on a pick-them-all
-question (refused unless it gets exactly the number asked for) or an alphabet
-one, which is the second reason it was doing nothing.
-
-**And a THIRD fault in the same file: it ignored the commit you named.**
-`--ignore` is parsed by finding its index, and with no `--ignore` that index
-is -1 — so `i !== ignoreAt + 1` read as `i !== 0` and threw away argument
-zero, the ref. Every `pub-unchanged.mjs <commit>` ever run in this repo
-compared against `HEAD~1` instead, and announced it in a line that looks
-exactly like a confirmation. Three faults in one script, none of which made it
-fail: **a tool that cannot fail is a tool nobody checks.**
-
-**AND A FOURTH, on 15 August 2026: IT HAD NEVER LOOKED AT THE LOBBY.** The
-first `compare()` came AFTER `a.start()`, so every payload this script has ever
-checked was from a game already under way — **the join code, the QR, the prize
-line, the player strip, the countdown and the lobby game were all outside the
-one guard this repo runs before a gig week.** That is the screen a room looks
-at while sixty people are joining, which is the busiest moment of the night and
-the one path this file says must not stutter. Found the same way as the
-answering fault: a field was added to the lobby player payload and the script
-said the payloads were identical. There is a `compare('lobby')` before
-`start()` now. **Four faults in one script, and every one of them was the tool
-answering confidently about something it was not looking at** — when it says
-IDENTICAL, the useful question is what it did not compare.
-
-**It also says WHICH FIELD now.** It used to print the first 300 characters of
-both payloads — and a payload's first 300 characters are nearly always
-identical, so a real difference showed as two lines that looked the same. It
-lists the differing paths, how many payloads carry each, and which roles saw
-them, so the output is the claim: *"`you.score` and `you.position`, on a
-phone, mid-question, and nothing on the projector or the host's screen."*
 
 Beyond the unit tests, these were run by hand and are worth repeating after
 anything structural:

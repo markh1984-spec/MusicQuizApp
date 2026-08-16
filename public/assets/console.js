@@ -1257,7 +1257,6 @@ function workBench() {
           ${on ? `
             <div class="lb-tile is-pack ${look.cls}" style="${look.style}" title="${esc(on.title)}">
               ${packWord(look)}
-              <button class="lb-tile-off bench-off" type="button" aria-label="Take it off the bench">&times;</button>
               <b class="lb-tile-name">${esc(shortTitle(on.title))}</b>
               <span class="tiny lb-tile-sub">${esc(bench.kind === 'bingo' ? 'bingo' : 'quiz')}</span>
             </div>` : `
@@ -1270,9 +1269,10 @@ function workBench() {
           ${on ? `
             <button class="go bench-go role-make bench-edit" type="button">Edit the questions</button>
             <button class="minor bench-read" type="button">Read it through</button>
+            <button class="minor bench-done" type="button">Done with it</button>
             <p class="tiny">${held
     ? 'You were part way through this &mdash; what you typed is still here.'
-    : 'The bench remembers it. Take it off when you are done.'}</p>`
+    : 'An empty bench means nothing is half-finished.'}</p>`
     : `
             <a class="go bench-go role-make" href="${esc(linkTo('/editor'))}">Write a new one</a>
             <p class="tiny">Or drag a pack in from below to edit, rename or read
@@ -1281,7 +1281,33 @@ function workBench() {
       </div>
     </div>`);
 
-  el.querySelector('.bench-off')?.addEventListener('click', () => putOnBench(null));
+  /*
+   * DONE WITH IT — the clear-on-done, and it is the whole mechanic rather than
+   * a tidy-up button.
+   *
+   * *"When it's done it's saved and removed from the section."* An empty bench
+   * means nothing is half-finished; a bench with something on it is a to-do you
+   * cannot miss, in the one place you look first. Without this the bench slowly
+   * becomes a third shelf of stale things, which is the failure it exists to
+   * prevent.
+   *
+   * **SAVE KEEPS IT, DONE CLEARS IT — never one button doing both silently.**
+   * Saving is inside the popover and happens many times; finishing happens
+   * once, and only the human knows when.
+   *
+   * **IT IS NOT DESTRUCTIVE AND IS NOT DRESSED AS IT.** Ordinary, outlined, no
+   * confirm — the draft is keyed to the PACK rather than to the bench, so
+   * putting the pack back brings what you typed back with it. Nothing is lost,
+   * so nothing is asked. What keeps that honest is the marker on the pack card:
+   * unsaved work stays visible on the shelf after the bench is cleared, or
+   * "an empty bench means nothing is half-finished" becomes a lie.
+   *
+   * The tile's own × is GONE. It did exactly this, unnamed, in a corner — two
+   * controls for one job on a panel with three buttons on it. Tonight needs a
+   * per-tile × because it holds a running order of several; a bench holds one
+   * thing, so the panel-level action is the whole of it.
+   */
+  el.querySelector('.bench-done')?.addEventListener('click', () => putOnBench(null));
   el.querySelector('.bench-edit')?.addEventListener('click', () => editSheet(bench.kind, on));
   el.querySelector('.bench-read')?.addEventListener('click', () => preview(bench.kind, on));
 
@@ -1345,7 +1371,6 @@ function nightBenchPanel() {
           <div class="bench-slot">
             ${night ? `
               <div class="lb-tile night-tile">
-                <button class="lb-tile-off bench-off" type="button" aria-label="Take it off the bench">&times;</button>
                 <b class="lb-tile-name">${esc(when.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }))}</b>
                 <span class="tiny lb-tile-sub">${esc(night.venue || 'No venue')}</span>
                 ${heads ? `<span class="tiny">${heads} played</span>` : ''}
@@ -1360,7 +1385,10 @@ function nightBenchPanel() {
               ${can(FEATURES.INVOICES) ? '<button class="go bench-go role-make night-bill" type="button">Invoice this night</button>' : ''}
               <button class="minor night-open" type="button">Open its photos</button>
               ${can(FEATURES.PAST_GIGS) ? `<button class="minor night-gallery" type="button">${
-    night.published ? 'Take it off the gallery' : 'Put it on the gallery'}</button>` : ''}`
+    night.published ? 'Take it off the gallery' : 'Put it on the gallery'}</button>` : ''}
+              <!-- The same named action as the Workshop's, because two doors
+                   behaving the same way is one thing to learn rather than two. -->
+              <button class="minor bench-done" type="button">Done with it</button>`
     : `
               <p class="tiny">Drag a night up from the list below and the things
                 you do after a gig are all in one place &mdash; the invoice, the
@@ -1369,7 +1397,7 @@ function nightBenchPanel() {
         </div>
       </div>`));
 
-    el.querySelector('.bench-off')?.addEventListener('click', () => putNightOnBench(''));
+    el.querySelector('.bench-done')?.addEventListener('click', () => putNightOnBench(''));
     /*
      * OPEN ITS PHOTOS means open that night's own row, rather than a second
      * gallery drawn up here. One place a night's photographs are shown, and
@@ -6960,6 +6988,16 @@ function packCard(kind, pack, repaint = () => {}) {
       ${freshLabel(pack) ? `<div class="tiny fresh ${freshness(pack).expired ? 'gone' : ''}">${esc(freshLabel(pack))}</div>` : ''}
       ${pack.broken ? `<div class="tiny" style="color:var(--bad)">Broken: ${esc(pack.broken)}</div>` : ''}
       ${pack.problems ? `<div class="tiny" style="color:var(--bad)">${pack.problems} thing${pack.problems === 1 ? '' : 's'} to fix</div>` : ''}
+      <!-- UNSAVED WORK FOLLOWS THE PACK, not the bench.
+           *Done with it* clears the bench without destroying anything, because
+           a draft is keyed to the PACK — so without this line, pressing Done
+           would leave somebody's half-written round on the device with nothing
+           on any screen pointing at it. That is exactly the stale hidden state
+           the bench exists to abolish, so the marker is what makes "an empty
+           bench means nothing is half-finished" true rather than a slogan.
+           GOLD, like every other "a fact you need before you decide" in this
+           app — nothing is wrong and nothing is being destroyed. -->
+      ${readDraft(kind, pack.id) ? '<div class="tiny pack-draft">Unsaved changes</div>' : ''}
       ${!open ? '' : `
       <!--
         TONIGHT'S SETTINGS ARE NOT ON A PACK CARD ANY MORE, AND NEITHER IS
