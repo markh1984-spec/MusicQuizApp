@@ -6605,6 +6605,54 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 /* The venue box is a select AND a free-text input; one cell holds both, and
    only one of them is ever visible. */
 .d-venue { display: grid; min-width: 0; }
+/* ---- A NIGHT IS A DIARY ROW: the date as a block, the venue as the headline.
+ *
+ * Chosen from four layouts on 15 August 2026. The old row was five spans in a
+ * flat sequence, which wrapped into a ragged block at any narrow width and
+ * buried the venue third in a run of dim text. A grid puts the date where the
+ * eye can run down it, gives the venue a line of its own, and pins the badges
+ * right so they line up between rows instead of floating wherever the text
+ * happened to end.
+ *
+ * `min-width: 0` on the middle cell, because a long pack list is one
+ * unbreakable run of text and a grid child will not shrink below its content
+ * without it — the eighth instance of that fault in this app, fixed here
+ * before it could be the ninth. */
+.gig-head {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0 14px; align-items: center; width: 100%; text-align: left;
+  padding: 10px 14px; cursor: pointer; color: inherit; font: inherit;
+  background: var(--panel); border: 1px solid var(--panel-line);
+  border-radius: var(--r-card);
+}
+.gig-head:hover { border-color: rgba(255, 255, 255, 0.22); }
+.gig-cal {
+  display: grid; place-items: center; width: 54px; padding: 6px 0; line-height: 1;
+  border-radius: var(--r-field); background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--panel-line);
+}
+.gig-cal b { font-size: 1.25rem; font-weight: 900; color: var(--ink); }
+.gig-cal span { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-dim); }
+.gig-mid { min-width: 0; }
+/* The venue, and it may be long — one line with an ellipsis rather than a wrap
+   that pushes the row taller than its neighbours. */
+.gig-mid b {
+  display: block; font-weight: 800; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.gig-mid .tiny { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gig-badges { display: flex; align-items: center; gap: 8px; }
+/* On a phone the badges drop under the text rather than squeezing the venue
+   into nothing — the date block stays, because it is what you are scanning. */
+@media (max-width: 560px) {
+  .gig-head { grid-template-columns: auto minmax(0, 1fr); }
+  .gig-badges { grid-column: 2; margin-top: 4px; }
+}
+/* Said for a screen reader only: the date block is two fragments visually. */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
 .gig-bill { margin-top: 10px; }
 /* PUTTING A NIGHT ON THE PUBLIC GALLERY — under the photographs it would
    publish, separated by a rule, because it is a different kind of act from

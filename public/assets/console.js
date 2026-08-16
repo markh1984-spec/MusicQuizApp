@@ -8552,30 +8552,51 @@ function pastGigsSection() {
 
 function gigRow(night) {
   const when = new Date(night.night + 'T12:00:00');
-  const label = when.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const day = when.toLocaleDateString('en-GB', { day: 'numeric' });
+  const month = when.toLocaleDateString('en-GB', { month: 'short' });
+  const weekday = when.toLocaleDateString('en-GB', { weekday: 'long' });
+  // The year only when it is not this one. Every row carrying "2026" is four
+  // characters of noise on a list where almost everything is this year — and
+  // the moment one says 2025 it is the thing you actually needed to see.
+  const year = when.getFullYear() === new Date().getFullYear()
+    ? '' : String(when.getFullYear()).slice(2);
   const played = night.games.length
     ? night.games.map((g) => esc(g.title || (g.kind === 'bingo' ? 'Music bingo' : 'Music quiz'))).join(' · ')
     : 'No results saved';
   const heads = night.games.reduce((n, g) => Math.max(n, g.players || 0), 0);
+  // The venue is the headline, because it is what you are looking for when you
+  // scan this list — "what did I play at The Crown". With no venue on the
+  // night, what was played is the next most useful thing to lead with rather
+  // than an empty line.
+  const lead = night.venue ? esc(night.venue) : played;
 
   const el = node(`
     <div class="gig">
       <button class="gig-head" type="button">
-        <span class="an">${esc(label)}</span>
-        <span class="tiny">${played}</span>
-        <!-- PLAYED, not "playing". This row is a night that has already
-             happened, and the present tense read as a live count on a page
-             whose entire job is the record of finished work — reported in
-             exactly those words: "there shouldn't be 19 playing though,
-             presumably that's 19 played". The running panel is where a live
-             count belongs, and it says "playing" there quite correctly, which
-             is what made this one easy to miss. -->
-        <span class="tiny">${[night.venue, heads ? `${heads} played` : ''].filter(Boolean).join(' · ')}</span>
-        <!-- Its OWN span, not inside .gig-more: that one is rewritten with
-             "Loading…" and then the photo count the moment the night is
-             opened, which would wipe this. -->
-        ${night.unbilled ? '<span class="gig-unbilled">Not invoiced</span>' : ''}
-        <span class="tiny gig-more">${night.hasPhotos ? 'Photos ▸' : ''}</span>
+        <!-- THE DATE AS A BLOCK, chosen from four layouts on 15 August 2026.
+             The old row was five spans in a flat sequence, which wrapped into
+             a ragged block at any narrow width. This scans DOWN the dates like
+             a diary, which is how somebody looks for a particular night — and
+             it gives the venue a line of its own instead of burying it third
+             in a run of dim text. -->
+        <span class="gig-cal" aria-hidden="true">
+          <b>${esc(day)}</b><span>${esc(month)}${year ? ` ${esc(year)}` : ''}</span>
+        </span>
+        <span class="gig-mid">
+          <b>${lead}</b>
+          <span class="tiny">${esc(weekday)}${night.venue ? ` · ${played}` : ''}${heads ? ` · ${heads} played` : ''}</span>
+        </span>
+        <span class="gig-badges">
+          ${night.unbilled ? '<span class="gig-unbilled">Not invoiced</span>' : ''}
+          <!-- Its OWN span: this one is rewritten with "Loading…" and then the
+               photo count the moment the night is opened. -->
+          <span class="tiny gig-more">${night.hasPhotos ? 'Photos ▸' : ''}</span>
+        </span>
+        <!-- The full date for anybody not looking at it. The block above is
+             hidden from screen readers, because "13 Aug" read out as two
+             fragments is worse than the whole date said once.
+             (No backticks in here: it is inside a template literal.) -->
+        <span class="sr-only">${esc(when.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }))}</span>
       </button>
       <div class="gig-body" hidden></div>
     </div>`);
