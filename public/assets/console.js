@@ -670,20 +670,6 @@ const TABS = [
     },
   },
   {
-    id: 'setup',
-    doors: ['console'],
-    needs: FEATURES.LIBRARY,
-    label: 'Tonight’s settings',
-    /*
-     * ITS OWN TAB ON THE CONSOLE DOOR — the host's answer to *"not sure what
-     * the point of the Set it up bit is."* The point was never the settings;
-     * it was them hanging off the launch bar as a fold, which is furniture
-     * between the bar and the packs. On a tab they are one predictable tap
-     * away and the bar carries nothing but the night.
-     */
-    render: () => tonightSettingsPanel(),
-  },
-  {
     /*
      * SHOWS — a whole evening, built in advance and dragged onto Tonight.
      *
@@ -862,6 +848,32 @@ const TABS = [
     blurb: 'The places you play, and what they put up as prizes.',
     count: () => (library.venueRecords || []).length,
     render: () => venuesSection(),
+  },
+  {
+    id: 'setup',
+    doors: ['console'],
+    needs: FEATURES.LIBRARY,
+    label: 'Tonight’s settings',
+    /*
+     * ITS OWN TAB ON THE CONSOLE DOOR — the host's answer to *"not sure what
+     * the point of the Set it up bit is."* The point was never the settings;
+     * it was them hanging off the launch bar as a fold, which is furniture
+     * between the bar and the packs. On a tab they are one predictable tap
+     * away and the bar carries nothing but the night.
+     *
+     * **LAST IN THE LIST, and that is why this entry sits down here between
+     * Venues and Help rather than up with the games.** Asked for directly:
+     * *"tonight's settings needs to be at the bottom of the tab list and then
+     * the other four sections above."* It is the same rule the bar already
+     * follows left to right — the tabs run along the evening, and the settings
+     * are the last thing you touch before pressing Launch, after you have
+     * chosen what you are playing and where. It is also the only tab on this
+     * door you can skip entirely: every field on it has a working default.
+     *
+     * It is CONSOLE-ONLY, so moving it here reorders that door and leaves the
+     * Workshop and Post gig exactly as they were.
+     */
+    render: () => tonightSettingsPanel(),
   },
   {
     id: 'help',
@@ -3345,6 +3357,24 @@ let showWanted = null;
 let showRunning = null;
 
 /**
+ * A VENUE CHOSEN FROM SOMEWHERE THAT IS NOT THE BAR, applied on the next
+ * render — the same arrangement `showWanted` uses, and for the same reason.
+ *
+ * `chooseVenue()` lives inside `launchBar()`'s closure because it needs the
+ * picker, the repaints and `switchIfFree`. The Venues tab is a different
+ * function, so it hands the name over as an intention rather than reaching in.
+ * One way a venue is set, whichever control set it.
+ */
+let venueWanted = null;
+
+/** Choose tonight's venue from anywhere on the page. */
+function chooseVenueFromTab(name) {
+  if (!name) return;
+  venueWanted = String(name);
+  renderKeepingPlace();
+}
+
+/**
  * Put a whole evening back into Tonight.
  *
  * Deliberately not a launch: it fills the bar in and leaves the finger on the
@@ -5167,6 +5197,7 @@ function launchBar() {
     night.prizes = Math.max(0, Math.min(5, Number(show.prizes) || 0));
   }
   if (showWanted) applyShow(showWanted);
+  if (venueWanted) { const name = venueWanted; venueWanted = null; chooseVenue(name); }
 
   paintMode();
   startOn();
@@ -7832,6 +7863,30 @@ function venuesSection() {
         openVenue = openVenue === card.dataset.id ? '' : card.dataset.id;
         draw();
       });
+      /*
+       * AND ON THE CONSOLE DOOR, TAPPING THE CARD IS WHAT PICKS THE VENUE.
+       *
+       * Reported in four words — *"don't think I'll be drag and dropping from
+       * that section"* — and the honest reading is that the card did NOTHING
+       * when it was tapped. It was made drag-only when this became a shelf,
+       * which is a laptop-only gesture: **HTML5 drag events are never
+       * delivered on touch**, so on the device this console is most often
+       * driven from, the Venues tab had no way to choose a venue at all.
+       *
+       * That is this file's oldest rule about drag arriving in a new place —
+       * the round ticks replaced dragging rounds between packs for exactly the
+       * same reason, and every other drag in the app already has a way round
+       * it. Drag is the fast way; the tap is the way.
+       *
+       * Through `chooseVenue()`, which is the same path the drop and the
+       * picker in the head both use, so there is one way a venue is set.
+       */
+      if (findOnly) {
+        card.addEventListener('click', () => {
+          const record = venues.find((v) => v.id === card.dataset.id);
+          if (record) chooseVenueFromTab(record.name);
+        });
+      }
       /*
        * DRAG A VENUE UP TO TONIGHT. Same gesture as a pack card, same target.
        *

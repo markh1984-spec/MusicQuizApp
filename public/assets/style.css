@@ -6841,6 +6841,11 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
    the drag source, which is what `cursor: grab` above already says. */
 .venue-name.flat { cursor: inherit; }
 .venue-name.flat::after { content: none; }
+/* ON THE CONSOLE DOOR THE WHOLE CARD IS THE CONTROL — tapping it picks the
+   venue for tonight. `grab` above says it can be dragged, which is true and is
+   the fast way on a laptop; this says it can also just be pressed, which is
+   the only way on a phone. */
+.venue-card.shut:hover { border-color: rgba(255, 255, 255, 0.24); background: rgba(255, 255, 255, 0.06); }
 .venue-name:hover { color: #fff; }
 .venue-name:hover::after { opacity: 1; }
 .venue-card.open { border-color: rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.07); }
