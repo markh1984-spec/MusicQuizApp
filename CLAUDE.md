@@ -1871,71 +1871,79 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
 Sometimes you just don't want to think, you want to get in and go and know it
 will work."*
 
-- **Tonight's pack is already chosen** (`quickPicks()`), the venue is printed at
-  the top, and **Set it up** holds the rest — shut by default, one tap away.
+- **NOTHING IS CHOSEN FOR YOU** — a bar that guesses guesses wrongly the moment
+  a pack is launched, and the console and the projector then name different
+  quizzes. The venue is printed at the top; the settings are their own TAB.
 - **ONE gradient button on the section.** There were three.
-- **THE CONSOLE AND THE BIG SCREEN MUST AGREE, ALWAYS.** A choice STICKS — the
-  auto-pick is the empty state and nothing else — and with nothing chosen the
-  bar starts on **what is running** (`running.packId`). `paintLive()` prints
-  what is on the projector off `library.running`, in gold when it differs.
+- **THE CONSOLE AND THE BIG SCREEN MUST AGREE, ALWAYS.** A choice STICKS.
+  `paintLive()` prints what is on the projector off `library.running`, in gold
+  when it differs from what the bar is set to.
 - **Picking a pack puts it on the big screen when nothing would be lost.** THE
-  SERVER decides which: the ordinary launch call without `replace` already
-  answers 409 when `session.inProgress()`. A 409 is SILENT here. A re-render is
-  not somebody choosing a pack (`quiet`), and what is running is READ BACK.
+  SERVER decides which — the launch call without `replace` already answers 409
+  when `session.inProgress()`. A 409 is SILENT here. A re-render is not
+  somebody choosing a pack (`quiet`), and what is running is READ BACK.
 - **IN THE ROOM / ONLINE is a switch in the head, beside the venue** — a setting
   whose wrong value ruins the night belongs where it is read. Only the ONLINE
-  half wears the gradient, and shut, the line still says "Online". **Not
-  remembered on the device.**
-- **The venue is chosen HERE and nowhere else** — searchable, drawn from the
-  Venues tab and from where you have played, with **Somewhere else…** for a
-  one-off. Not remembered on the device either.
-- **Whose night it is, RANKED**: a date you typed, then whose usual night it is,
-  then where you played last. **Two claims for one night are NAMED, never left
-  blank** (`clashTonight()`), in gold — nothing is broken, it is a decision only
-  the human can make.
-- **It folds to a thin line that still says what it is set to**, kept in
-  `localStorage`; one row, no wrap, the middle ellipsised, and the whole row is
-  the target. **The heading does not move when it folds** — a three-cell grid
-  with all three children placed explicitly, and the fold control says HIDE and
-  SHOW at a fixed width.
-- The pack cards keep their own Launch for now: this is the protected surface.
-- **A CONTROL ON THIS BAR NEVER APPEARS OUT OF NOTHING.** Launch is always
-  there and goes hollow; **Set it up** is always there and goes disabled. Both
-  were built appearing and disappearing, both were reported as clunky in the
-  same words, and the reason is the same: a control that comes and goes is one
-  you cannot learn the position of, on a bar driven with a thumb in a dark pub.
-  **Build the next one present-and-inert, not absent.**
+  half wears the gradient, and shut, the line still says "Online".
+- **The venue is chosen HERE and nowhere else** — searchable, from the Venues
+  tab and where you have played, with **Somewhere else…** for a one-off.
+  **Neither is remembered on the device**: both are facts about one evening,
+  and a remembered one files next Tuesday under last Thursday's pub.
+- **Whose night it is, RANKED**: a date you typed, then whose usual night, then
+  where you played last. **Two claims for one night are NAMED, never left
+  blank** (`clashTonight()`), in gold — a decision only the human can make.
+- **It folds to a thin line that still says what it is set to**, in
+  `localStorage`; one row, no wrap, the middle ellipsised, the whole row the
+  target. **The heading does not move when it folds** — a three-cell grid, all
+  three children placed, and the fold says HIDE and SHOW at a fixed width.
+- The pack cards keep their own Launch: this is the protected surface.
+- **A CONTROL NEVER APPEARS OUT OF NOTHING.** Launch is always there and goes
+  hollow, saying what it wants; *Keep this as a show* is always there and goes
+  disabled. Both were built appearing and disappearing and both were reported
+  as clunky in the same words: a control that comes and goes is one you cannot
+  learn the position of, driven with a thumb in a dark pub. **Build the next
+  one present-and-inert, not absent.**
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
-### A SHOW IS A SAVED LAUNCH — the whole evening, built in advance
+### A SHOW IS AN EVENING, SAVED — built in advance, dragged onto Tonight
 
-`src/shows.js`, `tonightAsShow()` / `loadShow()` / `showsSection()` in
-`console.js`, the Shows tab on both doors, *Keep this as a show* under
-Tonight's settings. *"We're frankensteining nights instead of having a nights
-section."* The bar composed a night at the moment of launching it.
+`src/shows.js`, `public/assets/show-parts.js`, `tonightAsShow()` / `loadShow()`
+/ `showsSection()` in `console.js`. *"We're frankensteining nights instead of
+having a nights section."*
 
-- **A SHOW IS THE LAUNCH PAYLOAD WITH A NAME ON IT** — `tonightAsShow()` reads
-  the SAME state the launch reads, or a show plays something other than what
-  was on the bar when it was saved.
+- **A SHOW IS `items` — A LIST of what is played, in order.** It held one game
+  for one commit and that was wrong: *"say you want to swap out the music bingo
+  after, you need to be able to do that independent of removing the venue or
+  other rounds."* **The venue, prizes, look and lobby game stay on the SHOW**,
+  which is what makes a swap unable to touch them.
+- **`itemsOf()` IN `show-parts.js` IS THE ONE READER**, server and browser. The
+  one-game shape reads as a list of one: **there is no migration step and there
+  must not be one** — a rewrite over everybody's file is a one-shot script on a
+  disk wiped every deploy.
+- **IT IS THE LAUNCH PAYLOAD WITH A NAME ON IT** — `tonightAsShow()` reads the
+  SAME state the launch reads, or a show plays something other than what was on
+  the bar when it was saved.
+- **THE BAR PLAYS ONE PART AND SAYS WHAT FOLLOWS** (`paintThen()`), because
+  `session.launch()` builds one game. **The next part LOADS, never launches** —
+  only the person on the mic knows when the quiz is done. **Picking a pack by
+  hand clears `showRunning`**, or the bar describes a night nobody is running.
 - **IT STORES REFERENCES AND NEVER COPIES** — rule 11. Tested.
-- **IT IS NOT A GATE AND MUST NEVER BECOME ONE.** The launch route re-checks
-  the tier, every pack and the lobby game. *"It was allowed when they saved
-  it"* is a gate running backwards.
+- **IT IS NOT A GATE AND MUST NEVER BECOME ONE.** The launch re-checks the
+  tier, every pack and the lobby game. *"It was allowed when they saved it"* is
+  a gate running backwards.
 - **CALLED A SHOW BECAUSE "NIGHT" IS TAKEN TWICE** — Calendar's are bookings,
   Gigs' are the archive. *Set list* and *running order* name the activity and
   carry neither the venue nor the prizes.
-- **THE ORDER IS REBUILT INTO `lbExtra` AND `lbOff`, never held a third way**,
-  so there is no "a show is loaded" mode to escape.
-- **A BROKEN SHOW IS NAMED ON THE CARD, DAYS EARLY**, by the same existence
-  check the launch will make.
-- **BUILDING HAPPENS ON TONIGHT'S SETTINGS, NOT IN A SECOND COMPOSER** — a
-  Workshop builder could disagree with the launch, on the one thing that must
-  not.
+- **THE ORDER IS REBUILT INTO `lbExtra` AND `lbOff`, never held a third way.**
+  **A BROKEN SHOW IS NAMED ON THE CARD, DAYS EARLY** — every part, not just the
+  one it opens with.
+- **KEEPING A NIGHT IS ON TONIGHT'S SETTINGS; WHAT IT PLAYS IS EDITED ON THE
+  CARD, WORKSHOP ONLY.** No second composer — it could disagree with the
+  launch. A select per part rather than a drag.
 - **DROPPING ONE IN NEVER LAUNCHES**, and there is a TAP as well as a drag,
-  because HTML5 drag never fires on touch.
-
-Full reasoning: **[`docs/console.md`](docs/console.md)**.
+  because HTML5 drag never fires on touch. Reasoning:
+  **[`docs/console.md`](docs/console.md)**.
 
 ### A PACK WEARS ITS OWN SUBJECT
 

@@ -6885,7 +6885,56 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 }
 .show-kind.is-quiz { background: rgba(47, 224, 122, 0.16); color: #2fe07a; }
 .show-kind.is-bingo { background: rgba(168, 85, 247, 0.18); color: #c084fc; }
-.show-gist { margin-top: 4px; }
+/* MORE THAN ONE PART — a quiz and the bingo after it. Neither colour, because
+   claiming either would be naming half the evening; the parts below say which
+   is which, in the same two colours. */
+.show-kind.is-both { background: rgba(255, 255, 255, 0.12); color: var(--ink); }
+
+/* WHAT IT PLAYS, IN ORDER. A numbered list, because the order is the point —
+   a show is an evening, and the room gets these one after another. */
+.show-parts { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; }
+.show-part { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.show-part-name {
+  font-size: var(--fs-note);
+  color: var(--ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.show-part-n { flex: 0 0 auto; color: var(--ink-dim); }
+/* The kind, as a dot rather than a second pill. Six pills on one card is a
+   wall; a dot in the same two colours says the same thing at a glance. */
+.show-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: var(--r-pill); }
+.show-dot.is-quiz { background: #2fe07a; }
+.show-dot.is-bingo { background: #a855f7; }
+.show-gist { margin-top: 8px; }
+
+/* THE PARTS EDITOR — Workshop only. A select per part rather than a drag,
+   because HTML5 drag never fires on touch and half this console is driven
+   from a phone. */
+.parts-edit { margin-top: 12px; border-top: 1px solid var(--panel-line); padding-top: 12px; }
+.parts-list { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 8px; }
+.parts-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.parts-row .parts-pick { flex: 1 1 160px; min-width: 0; }
+.parts-moves { display: flex; gap: 4px; flex: 0 0 auto; }
+.parts-moves .minor { padding: 6px 10px; }
+.parts-note { flex: 1 1 100%; color: var(--ink-dim); }
+.parts-add { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+
+/* THEN — the next part of tonight's show, under the Launch button. It LOADS
+   rather than launches: the bingo starts when the quiz has finished and the
+   prizes are handed out, and only the person on the mic knows when that is. */
+.lb-then {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--panel-line);
+}
+.lb-then-what { color: var(--ink); font-weight: 700; }
 /* SOMETHING IN IT HAS GONE. Red on the border, like a broken pack — the one
    place red is right here, because it is the app saying this will not run
    rather than editorialising about somebody's work. */

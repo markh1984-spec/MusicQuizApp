@@ -62,6 +62,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { MAX_ROUNDS } from './running-order.js';
+import { itemsOf } from '../public/assets/show-parts.js';
 
 /**
  * How many a room may keep.
@@ -74,7 +75,7 @@ import { MAX_ROUNDS } from './running-order.js';
  */
 export const MAX_SHOWS = 40;
 
-/** The two games a show can be. A show is ONE kind — see `normalise`. */
+/** The two games one PART of a show can be — see `normaliseItem`. */
 export const SHOW_KINDS = ['quiz', 'bingo'];
 
 /**
@@ -120,26 +121,16 @@ function writeAll(paths, shows) {
 }
 
 /**
- * What a show is allowed to contain — a WHITELIST, field by field.
+ * ONE THING THE APP PLAYS — a quiz, or a bingo game.
  *
- * The same shape as the two-screens rule's payload builders and for the same
- * reason: this object is written by a browser and read back into a launch, so
- * anything not named here is somebody adding a field to a request body and
- * hoping the launch route reads it. Spreading the input would opt every
- * future field in silently.
+ * **The running order is QUIZ-ONLY WITHIN AN ITEM**, exactly as at launch: a
+ * bingo pack has no rounds inside it on disk — it is a title and a track list
+ * — so an order against one is a field that could only ever confuse the thing
+ * reading it. That is a fact about bingo packs, not a limit on the evening,
+ * which is why it lives down here on the item rather than on the show.
  */
-export function normalise(raw = {}, now = Date.now()) {
-  const name = String(raw.name || '').trim().slice(0, 60);
-  if (!name) throw new Error('A show needs a name.');
-  const id = String(raw.id || '').trim() || showId(name);
-  if (!id) throw new Error('That name has no letters or numbers in it.');
-
+function normaliseItem(raw = {}) {
   const kind = SHOW_KINDS.includes(raw.kind) ? raw.kind : 'quiz';
-  /*
-   * THE RUNNING ORDER IS QUIZ-ONLY, exactly as at launch. A bingo pack has no
-   * rounds inside it on disk — it is a title and a track list — so an order
-   * against one is a field that could only ever confuse the thing reading it.
-   */
   const order = (kind === 'quiz' && Array.isArray(raw.order))
     ? raw.order
       .map((r) => ({ packId: String((r && r.packId) || ''), round: Number(r && r.round) }))
@@ -154,9 +145,59 @@ export function normalise(raw = {}, now = Date.now()) {
        */
       .slice(0, MAX_ROUNDS)
     : [];
-
   const packId = String(raw.packId || (order[0] && order[0].packId) || '').trim();
-  if (!packId) throw new Error('A show needs something to play.');
+  if (!packId) return null;
+  return { kind, packId, ...(order.length ? { order } : {}) };
+}
+
+/**
+ * How many things one evening may be built from.
+ *
+ * A quiz, a bingo game, and room to change your mind. Not a technical limit —
+ * a guard against a stuck drag, exactly like `MAX_ROUNDS`.
+ */
+export const MAX_ITEMS = 6;
+
+/**
+ * What a show is allowed to contain — a WHITELIST, field by field.
+ *
+ * The same shape as the two-screens rule's payload builders and for the same
+ * reason: this object is written by a browser and read back into a launch, so
+ * anything not named here is somebody adding a field to a request body and
+ * hoping the launch route reads it. Spreading the input would opt every
+ * future field in silently.
+ */
+export function normalise(raw = {}, now = Date.now()) {
+  const name = String(raw.name || '').trim().slice(0, 60);
+  if (!name) throw new Error('A show needs a name.');
+  const id = String(raw.id || '').trim() || showId(name);
+  if (!id) throw new Error('That name has no letters or numbers in it.');
+
+  /*
+   * A SHOW IS A LIST OF THINGS TO PLAY, AND THAT IS WHAT MAKES IT AN EVENING.
+   *
+   * It held ONE game to begin with, and the host killed that in a sentence:
+   * *"defeats the point — you need to be able to save a show with all of the
+   * rounds, venue info, and drop it onto the launch. Say you want to swap out
+   * the music bingo after, you need to be able to do that independent of
+   * removing the venue or other rounds."* He is right, and the failure is
+   * exact: a "whole evening" that cannot hold the bingo that follows the quiz
+   * is not the whole evening, it is the first half of one.
+   *
+   * **The venue and the settings stay on the SHOW; only what is played is a
+   * list.** That is the whole of his second sentence — swapping the bingo must
+   * not disturb the venue, the prizes or the quiz rounds, and it cannot,
+   * because those are not in the item being swapped.
+   *
+   * **THE OLD ONE-GAME SHAPE STILL READS**, as a list of one. There is no
+   * migration step and nothing to run: a show saved this morning has `kind`
+   * and `packId` at the top level and arrives here as a single item.
+   */
+  const items = (Array.isArray(raw.items) && raw.items.length ? raw.items : [raw])
+    .map(normaliseItem)
+    .filter(Boolean)
+    .slice(0, MAX_ITEMS);
+  if (!items.length) throw new Error('A show needs something to play.');
 
   const shape = raw.shape && Number(raw.shape.rows) && Number(raw.shape.cols)
     ? { rows: Number(raw.shape.rows), cols: Number(raw.shape.cols) }
@@ -165,11 +206,19 @@ export function normalise(raw = {}, now = Date.now()) {
   return {
     id,
     name,
-    kind,
-    packId,
-    // Never stored when it says nothing: a one-pack show carries no order, so
-    // it launches down the same road it always did. See `doLaunch`.
-    ...(order.length ? { order } : {}),
+    /*
+     * THE FIRST ITEM IS ALSO WRITTEN AT THE TOP LEVEL, deliberately.
+     *
+     * Not a duplicate to keep in step — it is DERIVED here, on every save, so
+     * it cannot drift. What it buys is that everything written against the
+     * one-game shape keeps working unchanged, including a console that has not
+     * been reloaded since the last deploy. The evening is `items`; `kind` and
+     * `packId` are what it opens with.
+     */
+    kind: items[0].kind,
+    packId: items[0].packId,
+    ...(items[0].order ? { order: items[0].order } : {}),
+    items,
     venue: String(raw.venue || '').trim().slice(0, 80),
     look: String(raw.look || '').slice(0, 40),
     lobbyGame: String(raw.lobbyGame || '').slice(0, 40),
@@ -232,12 +281,23 @@ export function deleteShow(paths, id) {
  * @returns {string[]} plain sentences, empty when it is fine
  */
 export function showProblems(show, has) {
-  const ids = (show.order && show.order.length)
-    ? [...new Set(show.order.map((r) => r.packId))]
-    : [show.packId];
-  const gone = ids.filter((id) => !has(show.kind, id));
+  // EVERY ITEM, not just the one it opens with — a show whose bingo has been
+  // deleted is broken even though its quiz is fine, and finding that out at
+  // half ten is exactly what building a night in advance is meant to prevent.
+  const gone = [];
+  for (const item of itemsOf(show)) {
+    const ids = (item.order && item.order.length)
+      ? [...new Set(item.order.map((r) => r.packId))]
+      : [item.packId];
+    for (const id of ids) if (!has(item.kind, id) && !gone.includes(id)) gone.push(id);
+  }
   if (!gone.length) return [];
   return gone.length === 1
     ? [`There is no pack called ${gone[0]} any more.`]
     : [`These packs are gone: ${gone.join(', ')}.`];
 }
+
+// Re-exported so the one reader has one import path per runtime — the
+// server asks shows.js, the browser asks show-parts.js, and there is still
+// only one function.
+export { itemsOf };

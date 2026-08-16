@@ -44,8 +44,22 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * sidebar and the old text was describing something that no longer exists.
  * The remaining 1,760 bytes are genuine growth, and this comment is the diff
  * saying so.
+ *
+ * **AND TO 135,000 THE SAME DAY, when a show stopped being one game and became
+ * an EVENING** — a quiz and the bingo after it. That added the rules that
+ * matter most in the whole feature: `itemsOf()` is the one reader, the
+ * one-game shape still reads, and **there is no migration step**. A session
+ * that does not know the last of those is a session that writes one.
+ *
+ * Paid for again first, and this is the part worth copying rather than the
+ * raise: two stale claims in the Tonight block were fixed in the same pass —
+ * *"Tonight's pack is already chosen"*, which the file itself contradicts
+ * eighty lines later, and *"Set it up is always there and goes disabled"*,
+ * which stopped being true when the settings became a tab. **Look for what
+ * has gone stale before asking for more room; a budget that is only ever
+ * raised is a budget nobody is applying.**
  */
-const BUDGET = 134_000;
+const BUDGET = 135_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

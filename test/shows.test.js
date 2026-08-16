@@ -19,7 +19,8 @@ import os from 'node:os';
 import path from 'node:path';
 
 import {
-  listShows, saveShow, deleteShow, readShow, normalise, showId, showProblems, MAX_SHOWS,
+  listShows, saveShow, deleteShow, readShow, normalise, showId, showProblems, itemsOf,
+  MAX_SHOWS, MAX_ITEMS,
 } from '../src/shows.js';
 
 function scratch() {
@@ -81,9 +82,12 @@ test('THE FIELDS ARE A WHITELIST — anything else is dropped', () => {
     assert.equal(show[key], undefined, `${key} should not survive`);
   }
   assert.deepEqual(Object.keys(show).sort(), [
-    'id', 'kind', 'lobbyGame', 'lobbySound', 'look', 'name', 'online',
+    'id', 'items', 'kind', 'lobbyGame', 'lobbySound', 'look', 'name', 'online',
     'packId', 'prizes', 'shape', 'teamPlay', 'updated', 'venue',
   ]);
+  // And the items are a whitelist of their own, or the same hole reopens one
+  // level down.
+  assert.deepEqual(Object.keys(show.items[0]).sort(), ['kind', 'packId']);
 });
 
 test('A SHOW CANNOT CARRY AN ENTITLEMENT — there is no allowed flag on it', () => {
@@ -206,4 +210,114 @@ test('A SHOW CANNOT HOLD MORE ROUNDS THAN A NIGHT CAN PLAY', async () => {
   const { MAX_ROUNDS } = await import('../src/running-order.js');
   const order = Array.from({ length: MAX_ROUNDS + 5 }, (_, i) => ({ packId: 'eighties', round: i }));
   assert.equal(normalise(basic({ order })).order.length, MAX_ROUNDS);
+});
+
+/* ---- A SHOW IS AN EVENING, NOT ONE GAME
+ *
+ * It held one game for exactly one commit, and the host killed it in a
+ * sentence: *"defeats the point — you need to be able to save a show with all
+ * of the rounds, venue info, and drop it onto the launch. Say you want to swap
+ * out the music bingo after, you need to be able to do that independent of
+ * removing the venue or other rounds."*
+ *
+ * Both halves of that are tested here: the evening HOLDS both games, and
+ * swapping one of them touches nothing else.
+ */
+
+test('A SHOW HOLDS THE QUIZ AND THE BINGO AFTER IT', () => {
+  const show = normalise(basic({
+    packId: undefined,
+    items: [
+      { kind: 'quiz', packId: 'eighties', order: [{ packId: 'eighties', round: 0 }, { packId: 'eighties', round: 1 }] },
+      { kind: 'bingo', packId: 'disco-funk' },
+    ],
+    venue: 'The Crown, Wokingham',
+  }));
+  assert.equal(show.items.length, 2);
+  assert.equal(show.items[0].kind, 'quiz');
+  assert.equal(show.items[1].kind, 'bingo');
+  assert.equal(show.items[1].packId, 'disco-funk');
+  // The bingo half carries no running order — a bingo pack has no rounds on
+  // disk, which is a fact about the pack rather than a limit on the evening.
+  assert.equal(show.items[1].order, undefined);
+  assert.equal(show.venue, 'The Crown, Wokingham');
+});
+
+test('SWAPPING THE BINGO LEAVES THE VENUE AND THE QUIZ ROUNDS ALONE', () => {
+  /*
+   * The host's own requirement, stated as the reason the one-game shape was
+   * wrong. The venue, the prizes and the look live on the SHOW, so an item can
+   * be replaced without any of them being in the same object.
+   */
+  const paths = scratch();
+  const before = saveShow(paths, basic({
+    packId: undefined,
+    venue: 'The Crown, Wokingham',
+    look: 'halloween',
+    prizes: 3,
+    items: [
+      { kind: 'quiz', packId: 'eighties', order: [{ packId: 'eighties', round: 0 }] },
+      { kind: 'bingo', packId: 'disco-funk' },
+    ],
+  }));
+
+  const after = saveShow(paths, {
+    ...before,
+    items: [before.items[0], { kind: 'bingo', packId: 'motown-bingo' }],
+  });
+
+  assert.equal(after.items[1].packId, 'motown-bingo');
+  assert.deepEqual(after.items[0], before.items[0], 'the quiz half must be untouched');
+  assert.equal(after.venue, 'The Crown, Wokingham');
+  assert.equal(after.look, 'halloween');
+  assert.equal(after.prizes, 3);
+  assert.equal(listShows(paths).length, 1, 'a swap edits the show rather than adding one');
+});
+
+test('THE FIRST ITEM IS DERIVED AT THE TOP LEVEL, so it cannot drift', () => {
+  const show = normalise(basic({
+    packId: undefined,
+    items: [
+      { kind: 'bingo', packId: 'disco-funk' },
+      { kind: 'quiz', packId: 'eighties' },
+    ],
+  }));
+  assert.equal(show.kind, 'bingo');
+  assert.equal(show.packId, 'disco-funk');
+});
+
+test('A SHOW SAVED IN THE ONE-GAME SHAPE STILL READS, as a list of one', () => {
+  // No migration step and nothing to run — a record written before the evening
+  // existed simply arrives as an evening with one thing in it.
+  const old = { name: 'Old one', kind: 'bingo', packId: 'disco-funk' };
+  const show = normalise(old);
+  assert.equal(show.items.length, 1);
+  assert.deepEqual(show.items[0], { kind: 'bingo', packId: 'disco-funk' });
+  // And `itemsOf` reads a raw old record without normalising it first, because
+  // the console and the launch both ask this of whatever is on disk.
+  assert.deepEqual(itemsOf(old), [{ kind: 'bingo', packId: 'disco-funk' }]);
+  assert.deepEqual(itemsOf({}), []);
+});
+
+test('A BROKEN PACK IN THE SECOND HALF BREAKS THE SHOW', () => {
+  // The whole point of building in advance: a deleted bingo pack must be found
+  // on the card, not at half ten with the quiz already finished.
+  const show = normalise(basic({
+    packId: undefined,
+    items: [{ kind: 'quiz', packId: 'eighties' }, { kind: 'bingo', packId: 'gone' }],
+  }));
+  assert.deepEqual(showProblems(show, (kind, id) => id !== 'gone'),
+    ['There is no pack called gone any more.']);
+});
+
+test('an evening is capped, and the cap is a guard rather than a rule about nights', () => {
+  const items = Array.from({ length: MAX_ITEMS + 4 }, () => ({ kind: 'quiz', packId: 'eighties' }));
+  assert.equal(normalise(basic({ packId: undefined, items })).items.length, MAX_ITEMS);
+});
+
+test('an items list with nothing playable in it is refused, not silently emptied', () => {
+  assert.throws(
+    () => normalise(basic({ packId: undefined, items: [{ kind: 'quiz' }, { kind: 'bingo' }] })),
+    /needs something to play/,
+  );
 });

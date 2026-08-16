@@ -924,3 +924,84 @@ projector from one imprecise gesture.
 The card is also clickable, because **HTML5 drag events are never delivered on
 touch** and half of this console is driven from a phone. Every drag in this app
 has a way round it for the same reason.
+
+### A show is an EVENING, not one game
+
+The first version held ONE game, and the host killed it in a sentence:
+*"defeats the point — you need to be able to save a show with all of the
+rounds, venue info and drop it onto the launch. Say you want to swap out the
+music bingo after, you need to be able to do that independent of removing the
+venue or other rounds."*
+
+He is right and the failure is exact: **a "whole evening" that cannot hold the
+bingo that follows the quiz is not the whole evening, it is the first half of
+one.** His own Thursday is a quiz, then bingo, then karaoke — it is the shape
+of his actual work, and the model did not fit it.
+
+**The fix is one field: `items`, a list of what is played, in order.** And the
+half that answers his second sentence is what is NOT in that list — the venue,
+the prizes, the look, the lobby game and whether it is online all stay on the
+SHOW. Swapping the bingo cannot disturb them, because they are not in the
+object being swapped. There is no arrangement of the editor that could lose
+them.
+
+#### One reader, in a file both runtimes import
+
+`itemsOf()` lives in `public/assets/show-parts.js`, imported by `src/shows.js`
+and by `console.js` — the same arrangement `plans.js`, `schemes.js` and
+`diary.js` already use.
+
+It is there rather than copied because there are five callers across two
+runtimes: the server validates and stores, and the console draws the parts on
+a card, in the editor, and when a show is dropped onto Tonight. A private copy
+in each is five chances for the console to disagree with the launch about what
+a night contains — which is the console-and-projector disagreement this
+codebase keeps recording, one step earlier.
+
+#### No migration step, deliberately
+
+Shows written before this exist, including on the host's live disk, with
+`kind` and `packId` at the top level and no list at all. `itemsOf()` reads
+both shapes and `normalise()` accepts both.
+
+**A rewrite over everybody's shows file would be a one-shot script that either
+runs or does not** — on a free tier whose disk is wiped on every deploy, where
+"did the migration run on this instance" is a question with no good way to
+answer it. Reading both shapes is a function, and a function cannot half-run.
+The old shape stops appearing on its own as shows are re-saved.
+
+The first item is also written at the top level on every save, derived rather
+than duplicated, so everything written against the one-game shape keeps working
+— including a console that has not been reloaded since the last deploy.
+
+#### The bar plays one part and says what follows
+
+`session.launch()` builds one game and the projector shows one game. So the
+launch bar opens on the part you are about to play, and `paintThen()` names the
+next one with a button that loads it.
+
+**That is the honest shape rather than a compromise.** A combo night's bingo
+starts when the quiz has finished, the scores are up and the prizes are handed
+out — a moment only the person on the mic can identify. Auto-advancing would
+take that decision off them, in front of a room, on the protected path.
+
+The button LOADS rather than launches, for the same reason dropping a show in
+does not launch: it fills the bar and leaves the finger on the button.
+
+`showRunning` is cleared the moment somebody picks a pack by hand. A *"Then:
+the bingo"* line left over from a show nobody is running is the console
+describing a night that is not happening.
+
+#### Swapping a part drops its running order
+
+Changing the pack in a row clears that part's `order` rather than carrying the
+round indexes across. Round 3 of the quiz you just swapped out is not round 3
+of this one, and keeping the numbers would play a night nobody chose —
+silently, because the indexes still fit.
+
+#### A select per part, not a drag
+
+Swapping one is choosing a different pack, which is what a select is for. And
+HTML5 drag events are never delivered on touch, so a drag-only editor would not
+exist on the device half this console is driven from — the same reason the
+round ticks replaced dragging rounds between packs. The arrows do the ordering.

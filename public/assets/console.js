@@ -8,6 +8,7 @@
  */
 
 import { esc, node, postJson, brandLink, brandMark, binIcon, paintNav, paintIdentity, menuRights } from './client.js';
+import { itemsOf } from './show-parts.js';
 import { paintScheme } from './schemes.js';
 import { balanceAnswers } from './balance.js';
 import { FEATURES, FEATURE_TIER, FEATURE_META, SWITCHABLE, findTier, switchable, NOT_BUILT } from './plans.js';
@@ -3329,6 +3330,21 @@ let showDrag = null;
 let showWanted = null;
 
 /**
+ * WHICH SHOW IS UP, AND WHICH PART OF IT — `{ show, at }`, or null.
+ *
+ * A show is an EVENING and the launch bar plays one part of it, so something
+ * has to remember that the bingo follows the quiz. Held here rather than in
+ * the bar's closure for the same reason `showWanted` is: it has to survive the
+ * re-render that every state push causes.
+ *
+ * **Cleared by choosing a pack by hand**, in `pick()` — the moment somebody
+ * drags a different pack in, this is not that show's evening any more, and a
+ * "Then: the bingo" line left over from a show nobody is running is the
+ * console describing a night that is not happening.
+ */
+let showRunning = null;
+
+/**
  * Put a whole evening back into Tonight.
  *
  * Deliberately not a launch: it fills the bar in and leaves the finger on the
@@ -3344,11 +3360,21 @@ function loadShow(show) {
    * this side of the render regardless: this is the moment somebody asked for
    * the night, so it is the moment to tell them a pack has gone.
    */
-  const shelf = (show.kind === 'bingo' ? library.bingo : library.quizzes) || [];
-  const ids = (show.order && show.order.length)
-    ? [...new Set(show.order.map((r) => r.packId))]
-    : [String(show.packId || '')];
-  const gone = ids.filter((id) => !shelf.some((p) => p.id === id));
+  /*
+   * EVERY PART IS CHECKED, not just the one the bar will open with — a show
+   * whose bingo has been deleted is broken even though its quiz is fine, and
+   * finding that out at half ten with the quiz already finished is exactly
+   * what building a night in advance is meant to prevent.
+   */
+  const gone = [];
+  for (const item of itemsOf(show)) {
+    const shelf = shelfFor(item.kind);
+    const ids = (item.order && item.order.length)
+      ? [...new Set(item.order.map((r) => r.packId))]
+      : [String(item.packId || '')];
+    for (const id of ids) if (!shelf.some((p) => p.id === id) && !gone.includes(id)) gone.push(id);
+  }
+  const ids = itemsOf(show).map((i) => i.packId);
   if (gone.length && gone.length === ids.length) {
     // Nothing of it is left, so the bar is not touched — emptying what was
     // already set up would be a second fault on top of the first.
@@ -3552,6 +3578,17 @@ function launchBar() {
            from what the box is set to. Reported from a real night: the two
            disagreed and nothing said which was which. -->
       <div class="tiny lb-live" hidden></div>
+      <!-- WHAT COMES AFTER THIS, when a show with more than one part is up.
+           A show is an EVENING and the bar plays one part of it, so without
+           this line the second half exists only in somebody's memory — which
+           is the thing building a night in advance is meant to replace.
+           A button that LOADS rather than launches: the bingo starts when the
+           quiz has finished and the prizes are handed out, and only the person
+           on the mic knows when that is. -->
+      <div class="lb-then" hidden>
+        <span class="tiny lb-then-what"></span>
+        <button class="minor lb-then-go" type="button">Load it</button>
+      </div>
       <!-- THE PICKER IS BEHIND THE DROP ZONE NOW, not standing in front of it.
            The bar used to open with a game dropdown, a search box and a pack
            already chosen for you — three controls answering a question that
@@ -3605,6 +3642,29 @@ function launchBar() {
   const venueList = el.querySelector('.lb-venue-list');
   const venueSearch = el.querySelector('.lb-venue-search');
   const liveEl = el.querySelector('.lb-live');
+  const thenEl = el.querySelector('.lb-then');
+  /**
+   * THEN: the next part of tonight's show.
+   *
+   * Hidden whenever there is nothing after this one, which is every ordinary
+   * night — a pack dragged in by hand has no show behind it, so the line does
+   * not exist rather than saying "nothing next".
+   */
+  function paintThen() {
+    const items = showRunning ? itemsOf(showRunning.show) : [];
+    const next = items[(showRunning ? showRunning.at : 0) + 1];
+    thenEl.hidden = !next;
+    if (!next) return;
+    thenEl.querySelector('.lb-then-what').textContent
+      = `Then: ${packTitle(next.kind, next.packId)}`;
+  }
+  el.querySelector('.lb-then-go').addEventListener('click', () => {
+    if (!showRunning) return;
+    applyShow(showRunning.show, showRunning.at + 1);
+    paintThen();
+    paintOrder();
+    startOn();
+  });
   // Called through an arrow rather than passed directly: both of these are
   // `const`s declared further down, so handing the function over here reads
   // them before they exist. By the time anybody clicks, they do.
@@ -3957,7 +4017,18 @@ function launchBar() {
      * rounds are mostly another. Adding to an order is the strip's job and it
      * is a different gesture, which is the whole reason the two are split.
      */
-    if (currentPack && currentPack.id !== pack.id) { lbExtra = []; lbOff = new Set(); }
+    if (currentPack && currentPack.id !== pack.id) {
+      lbExtra = [];
+      lbOff = new Set();
+      /*
+       * AND IT IS NOT THAT SHOW'S EVENING ANY MORE. Choosing a different pack
+       * by hand is somebody saying "we are playing THIS", so a "Then: the
+       * bingo" line left over from a show nobody is running would be the
+       * console describing a night that is not happening — the same fault as
+       * the bar naming a different quiz from the projector.
+       */
+      showRunning = null;
+    }
     currentPack = pack;
     text.value = pack.title;
     /*
@@ -5036,13 +5107,31 @@ function launchBar() {
    * `composeQuiz()` already refuses to commit at the server; saying so here is
    * the same refusal, days earlier, where it can still be fixed.
    */
-  function applyShow(show) {
+  function applyShow(show, at = 0) {
     showWanted = null;
-    if (gamePick && show.kind && gamePick.value !== show.kind) gamePick.value = show.kind;
+    /*
+     * ONE PART AT A TIME, and the bar SAYS what follows.
+     *
+     * A show is an evening — a quiz, then the bingo — but the launch bar runs
+     * one game, because the engine does: `session.launch()` builds one game
+     * and the projector shows one game. So the bar opens on the part you are
+     * about to play and `paintThen()` names the next one, with a button that
+     * loads it when the first is done.
+     *
+     * **THAT IS THE HONEST SHAPE RATHER THAN A COMPROMISE.** A combo night's
+     * bingo starts when the quiz has finished, the scores are up and the
+     * prizes are handed out — which is a moment only the person on the mic
+     * can identify. Auto-advancing would take that decision off them, in
+     * front of a room, on the protected path.
+     */
+    const item = itemsOf(show)[at];
+    if (!item) return;
+    showRunning = { show, at };
+    if (gamePick && item.kind && gamePick.value !== item.kind) gamePick.value = item.kind;
     const shelf = gameOf().packs;
-    const ids = (show.order && show.order.length)
-      ? [...new Set(show.order.map((r) => r.packId))]
-      : [String(show.packId || '')];
+    const ids = (item.order && item.order.length)
+      ? [...new Set(item.order.map((r) => r.packId))]
+      : [String(item.packId || '')];
     /*
      * A PACK THAT HAS GONE IS DROPPED SILENTLY HERE, because `loadShow()` has
      * already said so in a banner above the bar. It has to be said on that
@@ -5054,8 +5143,8 @@ function launchBar() {
     currentPack = shelf.find((p) => p.id === here[0]);
     lbExtra = here.slice(1);
     lbOff = new Set();
-    if (show.order && show.order.length) {
-      const on = new Set(show.order.map((r) => offKey(r.packId, r.round)));
+    if (item.order && item.order.length) {
+      const on = new Set(item.order.map((r) => offKey(r.packId, r.round)));
       for (const pack of lbPacks()) {
         for (const r of roundsOf(pack)) {
           if (!on.has(offKey(r.packId, r.round))) lbOff.add(offKey(r.packId, r.round));
@@ -5081,6 +5170,7 @@ function launchBar() {
 
   paintMode();
   startOn();
+  paintThen();
   return el;
 }
 
@@ -8806,6 +8896,137 @@ function dayName(date) {
   return date.toLocaleDateString('en-GB', { weekday: 'long' });
 }
 
+/** The shelf for one kind of game, whichever tab it is drawn on. */
+const shelfFor = (kind) => ((kind === 'bingo' ? library.bingo : library.quizzes) || []);
+
+/**
+ * What a pack is CALLED, from its id.
+ *
+ * A show stores ids and never titles — see `shows.js` — so every screen that
+ * names one has to look it up, and a pack that has gone has to be named as an
+ * id rather than as a blank. That last part is the point: "there is no pack
+ * called eighties any more" is a sentence somebody can act on, and an empty
+ * space is not.
+ */
+function packTitle(kind, id) {
+  const pack = shelfFor(kind).find((p) => p.id === id);
+  return pack ? (pack.title || id) : id;
+}
+
+/**
+ * WHAT A SHOW PLAYS, AND IN WHAT ORDER — the editor, in the Workshop only.
+ *
+ * Built because the first version of a show held ONE game, and the host killed
+ * that in a sentence: *"you need to be able to save a show with all of the
+ * rounds, venue info… say you want to swap out the music bingo after, you need
+ * to be able to do that independent of removing the venue or other rounds."*
+ *
+ * **THE VENUE, THE PRIZES AND THE LOOK ARE NOT IN HERE, and that is the whole
+ * requirement rather than an omission.** They live on the show, so swapping
+ * the bingo cannot touch them — there is no arrangement of this panel that
+ * could lose them, because they are not in the object being edited.
+ *
+ * **A DROPDOWN PER PART RATHER THAN A DRAG.** Swapping one is choosing a
+ * different pack, which is what a select is for; and this app's own rule is
+ * that HTML5 drag never fires on touch, so a drag-only editor would not exist
+ * on the device half this console is driven from. The arrows do the ordering
+ * for the same reason.
+ */
+function showPartsEditor(show, onSaved) {
+  const el = node('<div class="parts-edit"></div>');
+  let items = itemsOf(show).map((i) => ({ ...i }));
+
+  const save = async (next) => {
+    items = next;
+    try {
+      /*
+       * THE WHOLE SHOW GOES BACK, with only `items` changed. Sending just the
+       * parts would make this route two shapes — one that replaces a show and
+       * one that patches it — and the second is where a field quietly gets
+       * dropped. The venue and the settings ride along untouched.
+       */
+      await postJson('/api/shows', { ...show, items }, { 'X-Host-Key': hostKey });
+      await load();
+      onSaved();
+    } catch (err) {
+      alert(err.message || 'Could not save that.');
+    }
+  };
+
+  const draw = () => {
+    el.replaceChildren(node(`
+      <div>
+        <ol class="parts-list">
+          ${items.map((item, i) => {
+    const shelf = shelfFor(item.kind).filter((p) => !p.locked);
+    const missing = !shelf.some((p) => p.id === item.packId);
+    return `
+            <li class="parts-row" data-at="${i}">
+              <span class="show-dot ${item.kind === 'bingo' ? 'is-bingo' : 'is-quiz'}"></span>
+              <select class="parts-pick" aria-label="Which ${item.kind === 'bingo' ? 'bingo game' : 'quiz'}">
+                ${missing ? `<option value="" selected>${esc(item.packId)} — gone</option>` : ''}
+                ${shelf.map((p) => `<option value="${esc(p.id)}" ${
+      p.id === item.packId ? 'selected' : ''}>${esc(p.title || p.id)}</option>`).join('')}
+              </select>
+              <span class="parts-moves">
+                <button class="minor parts-up" type="button" ${i === 0 ? 'disabled' : ''}
+                  aria-label="Play this earlier">&uarr;</button>
+                <button class="minor parts-down" type="button" ${i === items.length - 1 ? 'disabled' : ''}
+                  aria-label="Play this later">&darr;</button>
+                <button class="minor danger parts-off" type="button" ${items.length < 2 ? 'disabled' : ''}
+                  aria-label="Take this out of the show">&times;</button>
+              </span>
+              ${item.order ? `<span class="tiny parts-note">${item.order.length} round${
+      item.order.length === 1 ? '' : 's'}, as you set it up</span>` : ''}
+            </li>`;
+  }).join('')}
+        </ol>
+        <div class="parts-add">
+          ${['quiz', 'bingo'].map((kind) => (shelfFor(kind).filter((p) => !p.locked).length
+    ? `<button class="minor parts-new" type="button" data-kind="${kind}">Add ${
+      kind === 'bingo' ? 'a bingo game' : 'a quiz'}</button>` : '')).join('')}
+        </div>
+        <p class="tiny">The venue, the prizes and the look belong to the show, so
+          changing what it plays leaves them alone.</p>
+      </div>`));
+
+    for (const row of el.querySelectorAll('.parts-row')) {
+      const at = Number(row.dataset.at);
+      row.querySelector('.parts-pick').addEventListener('change', (ev) => {
+        if (!ev.target.value) return;
+        /*
+         * A NEW PACK MEANS A NEW RUNNING ORDER, so the old one is dropped
+         * rather than carried over. Round 3 of the quiz you just swapped out
+         * is not round 3 of this one, and keeping the indexes would play a
+         * night nobody chose — silently, because the numbers still fit.
+         */
+        const next = items.map((it, i) => (i === at ? { kind: it.kind, packId: ev.target.value } : it));
+        save(next);
+      });
+      const swap = (with_) => {
+        const next = items.slice();
+        [next[at], next[with_]] = [next[with_], next[at]];
+        save(next);
+      };
+      row.querySelector('.parts-up').addEventListener('click', () => swap(at - 1));
+      row.querySelector('.parts-down').addEventListener('click', () => swap(at + 1));
+      row.querySelector('.parts-off').addEventListener('click', () => {
+        save(items.filter((_, i) => i !== at));
+      });
+    }
+    for (const add of el.querySelectorAll('.parts-new')) {
+      add.addEventListener('click', () => {
+        const kind = add.dataset.kind;
+        const first = shelfFor(kind).filter((p) => !p.locked)[0];
+        if (!first) return;
+        save([...items, { kind, packId: first.id }]);
+      });
+    }
+  };
+  draw();
+  return el;
+}
+
 /**
  * SHOWS — the shelf of evenings built in advance.
  *
@@ -8836,26 +9057,40 @@ function showsSection() {
             then press <b>Keep this as a show</b> under Tonight’s settings.</div>`
     : shows.map((show) => {
       const broken = (show.problems || []).length;
-      const rounds = (show.order || []).length;
+      const items = itemsOf(show);
       const bits = [
         show.venue || 'No venue',
-        rounds ? `${rounds} round${rounds === 1 ? '' : 's'}` : (show.kind === 'bingo' ? 'Bingo' : 'As written'),
         show.online ? 'Online' : 'In the room',
       ];
       return `
             <div class="show-card ${broken ? 'broken' : ''}" data-id="${esc(show.id)}" draggable="true">
               <div class="show-top">
                 <span class="show-name">${esc(show.name)}</span>
-                <span class="show-kind ${show.kind === 'bingo' ? 'is-bingo' : 'is-quiz'}">${
-  show.kind === 'bingo' ? 'Bingo' : 'Quiz'}</span>
+                ${items.length > 1 ? `<span class="show-kind is-both">${items.length} parts</span>`
+    : `<span class="show-kind ${items[0].kind === 'bingo' ? 'is-bingo' : 'is-quiz'}">${
+      items[0].kind === 'bingo' ? 'Bingo' : 'Quiz'}</span>`}
               </div>
+              <!-- WHAT IT PLAYS, IN ORDER, ON THE CARD ITSELF. A show is an
+                   EVENING — a quiz and then the bingo — so a card that named
+                   only the first thing would be describing half of it. The
+                   numbers are the order the room gets them in. -->
+              <ol class="show-parts">
+                ${items.map((item) => `
+                  <li class="show-part">
+                    <span class="show-dot ${item.kind === 'bingo' ? 'is-bingo' : 'is-quiz'}"></span>
+                    <span class="show-part-name">${esc(packTitle(item.kind, item.packId))}</span>
+                    ${item.order ? `<span class="tiny show-part-n">${item.order.length}</span>` : ''}
+                  </li>`).join('')}
+              </ol>
               <div class="tiny show-gist">${esc(bits.join(' · '))}</div>
               ${broken ? `<div class="tiny show-wrong">${esc(show.problems.join(' '))}</div>` : ''}
               ${findOnly ? '' : `
                 <div class="show-tools">
+                  <button class="minor show-edit" type="button">What it plays</button>
                   <button class="minor show-rename" type="button">Rename</button>
                   <button class="minor danger show-del" type="button">${binIcon()} Delete</button>
-                </div>`}
+                </div>
+                <div class="show-parts-edit" hidden></div>`}
             </div>`;
     }).join('')}
         </div>
@@ -8887,6 +9122,23 @@ function showsSection() {
         if (ev.target.closest('button')) return;
         loadShow(show);
       });
+
+      /*
+       * WHAT IT PLAYS, opened in place under the card. In the Workshop only —
+       * on the Console door a show is a thing to pick up, and an editor there
+       * would be the workshop creeping back onto the launch page, which is
+       * the exact fault the doors were built to fix.
+       */
+      const partsSlot = card.querySelector('.show-parts-edit');
+      card.querySelector('.show-edit')?.addEventListener('click', () => {
+        if (!partsSlot.hidden) { partsSlot.hidden = true; partsSlot.replaceChildren(); return; }
+        partsSlot.hidden = false;
+        partsSlot.replaceChildren(showPartsEditor(show, () => render()));
+      });
+      // A card being edited must not also be a drag source: a select and a
+      // pair of arrows inside a draggable box means every attempt to open the
+      // dropdown picks the card up instead.
+      partsSlot?.addEventListener('mousedown', (ev) => ev.stopPropagation());
 
       card.querySelector('.show-rename')?.addEventListener('click', async () => {
         const name = prompt('What is this show called?', show.name);
