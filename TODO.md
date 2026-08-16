@@ -1920,6 +1920,56 @@ It touches the tab every gig starts from, so it wants its own screenshots at
 1280 and 390, and a real Launch pressed in a browser afterwards — the protected
 surface, not a diff review.
 
+### BINGO PAYS OUT TOO — prizes per STAGE, defined by the venue
+
+Asked for on 16 August 2026: *"bingo should get prizes as well — as defined by
+the venue. My 5x5 rounds usually give a prize for 1, 3 and 5 lines but this
+should be customisable."*
+
+**THE ENGINE ALREADY DOES THE HARD PART, and that was checked rather than
+assumed.** `state.stages` is an arbitrary LIST — `stagePlan(n)` is only the
+DEFAULT generator, and it is the thing that produces consecutive stages
+(`stagePlan(3)` is 1, **2**, full house). Set `state.stages = [1, 3, 5]`
+directly and everything downstream is already correct: `evaluate()` tests
+`done.length < stage`, `squaresAway()` searches combinations for N lines,
+`stageLabel()` says *"3 lines"*, `syncTarget()` keeps the old `line`/`full`
+field honest. Verified by running a 5x5 game with `[1, 3, 5]` on it — 12 lines
+available, right labels, right targets, `onLastStage` right.
+
+**So this is plumbing, not a rewrite of the bingo loop.** What is missing:
+
+1. **The venue record carries bingo prizes as PAIRS** — `{ stage, reward }`,
+   e.g. `1 → a bottle of wine`, `3 → two pints`, `5 → a £20 tab`. Its own field
+   beside `rewards` (which is the quiz's 1st/2nd/3rd), because the SHAPE is
+   different: a quiz pays by PLACE, bingo pays by STAGE. **Do not try to reuse
+   one list for both.** The stage and its prize are one decision, so they are
+   stored together — that is why the stages live on the venue rather than at
+   launch.
+2. **The launch reads them off the venue** exactly as the quiz's do, in the
+   same place in `server.js`, and writes `state.stages` plus the prizes.
+   **`prizes` as a COUNT stops being the input** — it stays readable for games
+   saved before this, the same way `state.reward` still reads.
+3. **Bingo issues real vouchers** — the same card, the same QR, the same
+   scan-at-the-bar, the same landing in the filed night. `src/bingo.js` has the
+   word "voucher" in it zero times today. Reuse the quiz's: a voucher is minted
+   per stage win, to the winning player, carrying `stageLabel()` as its place.
+4. **A switch at launch: every round pays the full set, or the set is for the
+   whole night.** His answer, and it belongs under *Set it up* with the card
+   shape and the lobby game — a decision about tonight. `newRound()` reissues
+   everything, so per-round is the natural default; per-night means a table
+   that wins in round one has nothing left to play for, which is the same
+   argument the lucky dip is built on.
+5. **The cap** — `maxPrizes(shape)` is how many STAGES a shape can carry and it
+   is capped at 5 and at the number of lines. A 4x4 cannot pay at 5 lines, so
+   the venue's pairs have to be filtered against tonight's shape at launch
+   rather than refused: **losing a stage costs one prize, refusing the launch
+   costs the night** — the same rule the lobby game tier check follows.
+
+**AND IT INHERITS THE THURSDAY LESSON.** A bingo night whose venue has no
+prizes must say so on Tonight and on the control view, and must be fixable
+mid-night, exactly as the quiz now is — see *A night that cannot pay out says
+so* in CLAUDE.md. `prizePanel()` in `host.js` returns `[]` for bingo today.
+
 ### EVERY DOOR GETS A BENCH — the same drop zone, doing that door's job
 
 **BOTH BENCHES ARE BUILT — `workBench()` and `nightBenchPanel()` in
