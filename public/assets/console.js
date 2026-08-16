@@ -3555,6 +3555,31 @@ let venueWanted = null;
  */
 let packWanted = null;
 
+/**
+ * WHICH GAME THE BAR IS ON, remembered across renders.
+ *
+ * **This is a bug fix and the bug was a silent broken Launch.** The game kind
+ * lived only as the value of the `<select class="lb-game">` inside the bar —
+ * and `render()` rebuilds that select from scratch, so it came back on its
+ * first option, which is always the quiz. Anything that re-rendered (changing
+ * tab, a phone joining, any state push) therefore reset the bar to "quiz"
+ * while a BINGO pack was still chosen.
+ *
+ * What that did is the worst shape a fault can take on this bar: `startOn()`
+ * asks whether the chosen pack is still on the current shelf, the bingo pack
+ * was not on the quiz shelf, so Launch was never re-bound — and the button sat
+ * there enabled, gradient-filled, correctly reading **"Launch MBC 3"**, doing
+ * absolutely nothing when pressed. No error, no console message, nothing to
+ * see. Found by a browser agent walking the exact steps a host takes before a
+ * bingo night: pick the pack, open Tonight's settings, press Launch.
+ *
+ * **The rule it breaks is one this file already states**: a setting that lives
+ * only in the DOM is lost by a re-render. That is why `night` was moved out of
+ * the launch bar's `<select>`s; this was the same fault in the one control
+ * that decides which shelf everything else reads from.
+ */
+let lbGame = '';
+
 /** Put a pack into Tonight from anywhere on the page. */
 function addToTonight(pack, kind) {
   if (!pack) return;
@@ -3936,6 +3961,12 @@ function launchBar() {
     });
   }
   const chosen = el.querySelector('.lb-chosen');
+  /*
+   * RESTORE THE REMEMBERED GAME BEFORE ANYTHING READS THE SHELF — see
+   * `lbGame`. Without this the select comes back on its first option after
+   * every render and a bingo night quietly loses its Launch.
+   */
+  if (gamePick && lbGame && games.some((g) => g.id === lbGame)) gamePick.value = lbGame;
   const gameOf = () => games.find((g) => g.id === (gamePick ? gamePick.value : games[0].id)) || games[0];
 
   /*
@@ -4360,6 +4391,7 @@ function launchBar() {
     // A different game means a different shelf, so whatever was chosen is not
     // on it any more. Start again on that game's own best pick — and a running
     // order built out of quiz rounds means nothing on the bingo shelf.
+    lbGame = gamePick.value;
     currentPack = null;
     lbExtra = [];
     chosen.hidden = true;
@@ -5261,6 +5293,7 @@ function launchBar() {
     // look for it on the wrong shelf and find nothing.
     if (gamePick && dropped.kind && gamePick.value !== dropped.kind) {
       gamePick.value = dropped.kind;
+      lbGame = dropped.kind;
       currentPack = null;
     }
     /*
@@ -5359,6 +5392,7 @@ function launchBar() {
     if (!item) return;
     showRunning = { show, at };
     if (gamePick && item.kind && gamePick.value !== item.kind) gamePick.value = item.kind;
+    if (item.kind) lbGame = item.kind;
     const shelf = gameOf().packs;
     const ids = (item.order && item.order.length)
       ? [...new Set(item.order.map((r) => r.packId))]
@@ -5408,6 +5442,7 @@ function launchBar() {
      */
     if (gamePick && want.kind && gamePick.value !== want.kind) {
       gamePick.value = want.kind;
+      lbGame = want.kind;
       currentPack = null;
     }
     addPackToNight(packOf(want.id));
