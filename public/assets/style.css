@@ -6836,6 +6836,11 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
   transform: translateY(2px); opacity: 0.5;
 }
 .venue-card.open .venue-name::after { transform: translateY(-2px) rotate(180deg); }
+/* BEHIND THE CONSOLE DOOR IT IS A LABEL, NOT A CONTROL — there is nothing to
+   open there, so the caret and the pointer both go. The card itself is still
+   the drag source, which is what `cursor: grab` above already says. */
+.venue-name.flat { cursor: inherit; }
+.venue-name.flat::after { content: none; }
 .venue-name:hover { color: #fff; }
 .venue-name:hover::after { opacity: 1; }
 .venue-card.open { border-color: rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.07); }

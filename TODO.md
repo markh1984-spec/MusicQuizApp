@@ -1905,6 +1905,63 @@ It touches the tab every gig starts from, so it wants its own screenshots at
 1280 and 390, and a real Launch pressed in a browser afterwards — the protected
 surface, not a diff review.
 
+### EVERY DOOR GETS A BENCH — the same drop zone, doing that door's job
+
+Proposed on 16 August 2026: *"I think perhaps the workshop and post gig should
+have the same launch area but for their own respective functions — so you drag
+and drop whatever you need into the workshop to fix it (writing a quiz, music
+bingo etc.), then when it's done it's saved and removed from the section. Post
+gig works as well for other reasons. The GUI will be unusual but work imo."*
+
+**It is right, and the reason it is right is that the doors already ARE this
+shape and only one of them has the panel.** Tonight is not a launch widget —
+it is *the thing this door is currently working on*, pinned above the tabs,
+fed by dragging, with the door's one big button at the bottom of it. Console's
+happens to end in Launch. There is no reason Workshop's cannot end in Save and
+Post gig's in Send.
+
+**The unusual GUI he flags is the honest part: this is a WORKBENCH, and a
+workbench holds what you are in the middle of.** That is a different idea from
+a form, and it earns its space for the same reason Tonight does — you can see
+both ends of the drag.
+
+| Door | What goes on the bench | What the button at the bottom says |
+|---|---|---|
+| **Console** | tonight's packs, tonight's venue | **Launch** — built |
+| **Workshop** | a pack you are writing or fixing, a round pulled out of another pack, a venue you are setting up | **Save it**, and the bench clears |
+| **Post gig** | the night just run, the photos worth keeping, the venue to bill | **File it** / **Invoice** — one night at a time |
+
+**THE CLEAR-ON-DONE IS THE WHOLE MECHANIC AND IT MUST BE BUILT IN FROM THE
+START.** *"When it's done it's saved and removed from the section"* is what
+stops the bench becoming a third shelf of stale things. An empty bench means
+nothing is half-finished; a bench with something on it is a to-do you cannot
+miss, in the one place you look first. That is a Monday-load reducer wearing a
+drop zone.
+
+Four things to settle before building, none of them blocking:
+
+- **DOES THE BENCH SURVIVE A RELOAD?** Tonight's does — it is game state. A
+  workshop bench holding an unsaved pack is a draft, and a draft that
+  disappears on a refresh is worse than no bench. Likely `prefs`, per door, per
+  account. Decide before writing, not after.
+- **ONE ITEM OR SEVERAL?** Console holds a running order of several. Writing
+  a quiz is one pack at a time; post gig is one night at a time. Probably: the
+  bench holds a LIST where the job is composition and ONE where the job is
+  editing. Do not force uniformity on this.
+- **WHAT DOES "SAVED AND REMOVED" DO TO A HALF-FINISHED PACK?** Save has to be
+  allowed to leave it on the bench — the natural move is *Save* keeps it and
+  *Done* clears it, rather than one button doing both silently.
+- **THE POST GIG CASE IS THE LEAST WORKED OUT and should probably be built
+  last.** Console and Workshop have obvious cargo; Post gig's is a night, and a
+  night is only just becoming a real object. Build the two that are clear and
+  let the third follow the night.
+
+**AND ONE THING THIS MUST NOT DO: put a second gradient button on a screen.**
+The GUI rules allow exactly one *"the night"* control per screen, and the bench
+is the place it lives. On Workshop that button is green (*make something*), on
+Console it is the account gradient (*the night*) — which is the existing rule
+working, not an exception to it.
+
 ### SIX PACKS IN REACH — a shortlist, because a drag needs to SEE both ends
 
 Raised on 15 August 2026 as a crowding problem — *"if the packs section gets

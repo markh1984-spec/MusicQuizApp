@@ -3447,7 +3447,11 @@ function launchBar() {
         <div class="lb-venue-list"></div>
         <div class="lb-venue-foot">
           <button class="minor lb-venue-other" type="button">Somewhere else…</button>
-          <a class="minor lb-venue-add" href="?tab=venues">Add a venue</a>
+          <!-- THROUGH THE WORKSHOP DOOR, because that is where the add form
+               is now: the Console's Venues tab is a shelf you drag off, and
+               a link to a form that is not there is worse than no link. -->
+          <a class="minor lb-venue-add" href="?door=workshop&amp;tab=venues${
+  keyInUrl ? `&amp;key=${encodeURIComponent(keyInUrl)}` : ''}">Add a venue</a>
         </div>
       </div>
       <!-- WHAT IS ACTUALLY ON THE PROJECTOR, which is a different question
@@ -7356,30 +7360,56 @@ function venuesSection() {
      */
     const q = venueQuery.trim().toLowerCase();
     const venues = q ? all.filter((v) => (v.name || '').toLowerCase().includes(q)) : all;
+    /*
+     * THE SAME TAB IS TWO DIFFERENT THINGS BEHIND THE TWO DOORS, and on the
+     * Console it is ONE thing: find tonight's pub and drag it up to Tonight.
+     *
+     * Asked for in those words — *"this is now just a section for finding the
+     * right venue and dragging it to the launch, the rest is done in
+     * workshop"* — and it is the door rule doing its job rather than a new
+     * idea. A venue's prizes, its usual night, its logo, where to send the
+     * room and its advert slides are all things you set up once and then do
+     * not touch for months; none of them is a thing to be doing ten minutes
+     * before a gig, which is the only moment this door is open.
+     *
+     * So the Console gets the NAME, the one line you scan for, and the drag.
+     * The explainer goes with them: it explains the editing, and there is no
+     * editing here to explain.
+     */
+    const findOnly = doorNow() === 'console';
     el.replaceChildren(node(`
       <div class="panel">
         <h3>Venues</h3>
-        <div class="tiny">Set the prizes here and they fill themselves in when you
+        ${findOnly ? '' : `<div class="tiny">Set the prizes here and they fill themselves in when you
           launch a night at this venue. Give a venue its usual night and the
           launch bar knows whose night tonight is — and the big screen ends the
           night with “Back here Thursday 20th”, worked out from it. The billing
-          details for the same venues are on the Invoices tab.</div>
+          details for the same venues are on the Invoices tab.</div>`}
         ${all.length > 4 ? `
           <div class="venue-tools">
             <input class="pack-search venue-search" type="search" placeholder="Search ${all.length}…"
               value="${esc(venueQuery)}" aria-label="Search venues">
           </div>` : ''}
         <div class="venue-list">
-          ${!all.length ? '<div class="tiny">No venues yet. Add one below, or on the Invoices tab.</div>'
+          ${!all.length ? `<div class="tiny">No venues yet. ${
+  findOnly ? 'Add one in the Workshop.' : 'Add one below, or on the Invoices tab.'}</div>`
     : !venues.length ? `<div class="tiny">Nothing matches “${esc(venueQuery)}”.</div>`
       : venues.map((v) => {
-        const open = openVenue === v.id;
+        // Never open behind the Console door: a card there is a thing to pick
+        // up, and only a shut card is draggable.
+        const open = !findOnly && openVenue === v.id;
         const night = (WEEKDAY_LABELS.find(([id]) => id === v.usualNight) || [])[1] || '';
         const prizes = (v.rewards || []).filter(Boolean);
         return `
             <div class="venue-card ${open ? 'open' : 'shut'}" data-id="${esc(v.id)}">
               <div class="venue-top">
-                <button class="venue-name" aria-expanded="${open ? 'true' : 'false'}">${esc(v.name)}</button>
+                ${findOnly
+    // A SPAN RATHER THAN A BUTTON, and the caret goes with it. A control that
+    // looks pressable and does nothing is worse than no control — and the
+    // caret was the thing saying "this opens", on the one door where it does
+    // not.
+    ? `<span class="venue-name flat">${esc(v.name)}</span>`
+    : `<button class="venue-name" aria-expanded="${open ? 'true' : 'false'}">${esc(v.name)}</button>`}
                 ${open ? '<button class="minor danger v-del">Remove</button>' : ''}
               </div>
               ${open ? '' : `<div class="tiny venue-gist">${
@@ -7459,10 +7489,11 @@ function venuesSection() {
             </div>`;
       }).join('')}
         </div>
+        ${findOnly ? '' : `
         <div class="venue-add">
           <input class="venue-new" type="text" maxlength="60" placeholder="The Station Tap, Wokingham">
           <button class="role-make venue-add-go">Add a venue</button>
-        </div>
+        </div>`}
       </div>`));
 
     // Save only appears once something has changed, so a page of venues is not
@@ -7487,7 +7518,10 @@ function venuesSection() {
     }
 
     for (const card of el.querySelectorAll('.venue-card')) {
-      card.querySelector('.venue-name').addEventListener('click', () => {
+      // `?.` because behind the Console door the name is a span with nothing to
+      // open — the same class of null this file has been caught by twice, where
+      // markup goes and the lookup for it stays.
+      card.querySelector('button.venue-name')?.addEventListener('click', () => {
         openVenue = openVenue === card.dataset.id ? '' : card.dataset.id;
         draw();
       });
@@ -7642,8 +7676,9 @@ function venuesSection() {
       });
     }
 
+    // Absent behind the Console door — adding a venue is Workshop work.
     const add = el.querySelector('.venue-add-go');
-    add.addEventListener('click', async () => {
+    add?.addEventListener('click', async () => {
       const name = el.querySelector('.venue-new').value.trim();
       if (!name) return;
       add.disabled = true;
