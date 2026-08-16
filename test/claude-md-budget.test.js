@@ -58,8 +58,25 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * which stopped being true when the settings became a tab. **Look for what
  * has gone stale before asking for more room; a budget that is only ever
  * raised is a budget nobody is applying.**
+ *
+ * **AND TO 137,000 ON 16 AUGUST 2026, for THE POPOVER EDITOR'S ONE
+ * PROHIBITION.** The bought text is a rule that a session cannot afford to
+ * work out for itself: **a draft is kept on the device and only an explicit
+ * Save writes the pack**, because `reloadPackEverywhere()` pushes a saved pack
+ * into every game currently running it. Autosaving — which is what "keep my
+ * work" plainly seems to ask for, and what a session would reach for first —
+ * puts a half-typed question on a projector mid-quiz. That is a live night
+ * ruined by a change that looks like a kindness, which is exactly the shape of
+ * fault this always-loaded file exists to prevent. Four of its six lines are
+ * prohibitions.
+ *
+ * **What was paid, honestly.** The section was written long and cut back
+ * before this raise; the stale test count was corrected in the same pass. No
+ * genuinely superseded passage was found to remove — the last two raises had
+ * already taken the obvious ones — so this is real growth and this comment is
+ * the diff saying so.
  */
-const BUDGET = 135_000;
+const BUDGET = 137_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

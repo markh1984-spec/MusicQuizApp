@@ -15,6 +15,7 @@ import { FEATURES, FEATURE_TIER, FEATURE_META, SWITCHABLE, findTier, switchable,
 import { lobbyGameChoices, lobbyGameFor } from './lobby-games.js';
 import { inSeason } from './looks.js';
 import { packLookAttrs, shortTitle, titleSize } from './pack-look.js';
+import { readDraft } from './pack-draft.js';
 
 /**
  * PINNING A PACK — "keep this one where I can reach it".
@@ -1230,9 +1231,11 @@ function workBench() {
   if (bench && !on) { bench = null; localStorage.removeItem(BENCH_STORE); }
 
   const look = on ? packLookAttrs(on, bench.kind) : null;
-  const editHref = on
-    ? `${linkTo('/editor')}${linkTo('/editor').includes('?') ? '&' : '?'}${bench.kind}=${encodeURIComponent(on.id)}`
-    : '';
+  // A DRAFT ON THE BENCH IS SAID ON THE BENCH, not only once you are inside.
+  // The reason the draft exists is that somebody closed the popover and went
+  // to do something else; the bench is where they come back to, so it is where
+  // "you were in the middle of this" belongs.
+  const held = on ? readDraft(bench.kind, on.id) : null;
 
   const el = node(`
     <div class="panel launchbar bench">
@@ -1265,9 +1268,11 @@ function workBench() {
         </div>
         <div class="bench-do">
           ${on ? `
-            <a class="go bench-go role-make" href="${esc(editHref)}">Edit the questions</a>
+            <button class="go bench-go role-make bench-edit" type="button">Edit the questions</button>
             <button class="minor bench-read" type="button">Read it through</button>
-            <p class="tiny">Saved as you go. Take it off when you are done with it.</p>`
+            <p class="tiny">${held
+    ? 'You were part way through this &mdash; what you typed is still here.'
+    : 'The bench remembers it. Take it off when you are done.'}</p>`
     : `
             <a class="go bench-go role-make" href="${esc(linkTo('/editor'))}">Write a new one</a>
             <p class="tiny">Or drag a pack in from below to edit, rename or read
@@ -1277,6 +1282,7 @@ function workBench() {
     </div>`);
 
   el.querySelector('.bench-off')?.addEventListener('click', () => putOnBench(null));
+  el.querySelector('.bench-edit')?.addEventListener('click', () => editSheet(bench.kind, on));
   el.querySelector('.bench-read')?.addEventListener('click', () => preview(bench.kind, on));
 
   /*
@@ -7394,6 +7400,105 @@ function shopCard(kind, pack) {
 }
 
 /**
+ * EDIT THE QUESTIONS, IN PLACE — the bench's popover.
+ *
+ * Asked for on 16 August 2026 against the Workshop bench: *"both of these
+ * functions should open a popover where you can edit this — if you accidentally
+ * click off or if there is a crash it should keep your work saved to the latest
+ * version."*
+ *
+ * **IT MOUNTS `editor.js` RATHER THAN REIMPLEMENTING IT.** The whole of what
+ * saving a pack means — the catalogue-or-your-own routing, the question about
+ * a question a room is looking at, the validator's list coming back — is one
+ * definition in one file, and this is a second surface for it. The reasoning
+ * is written up at the top of `editor.js`.
+ *
+ * **IMPORTED WHEN THE BUTTON IS PRESSED, not at the top of the console.** Same
+ * rule the lobby games follow: the console loads on a gig day and the editor is
+ * a Workshop thing, so it is not in the bytes a launch waits for.
+ *
+ * **CLOSING COSTS NOTHING, so Escape and the backdrop simply close it.** The
+ * draft is already on this device — a confirm on every stray click is the
+ * control that trains people to dismiss confirms. `destroy()` flushes on the
+ * way out, which is what makes that true rather than hopeful.
+ *
+ * **THE BODY WEARS `editor`**, which is how it gets the editor's own form
+ * styling. Those rules are all `.editor <thing>` descendants, so a div wearing
+ * the class inside the console is the whole of the port — there is no second
+ * stylesheet for the popover and therefore nothing that can drift from the
+ * page.
+ */
+async function editSheet(kind, pack) {
+  const overlay = node(`
+    <div class="overlay">
+      <div class="sheet sheet-edit">
+        <div class="sheet-head">
+          <div style="min-width:0;flex:1 1 auto">
+            <div class="sheet-title ed-title">${esc(pack.title)}</div>
+            <div class="tiny ed-sub">Opening&hellip;</div>
+          </div>
+          <div class="sheet-actions">
+            <button class="role-make ed-save" type="button" disabled>Save</button>
+            <button class="minor ed-check" type="button">Check</button>
+            <button class="minor ed-close" type="button">Close</button>
+          </div>
+        </div>
+        <div class="sheet-body editor ed-body"></div>
+      </div>
+    </div>`);
+  document.body.appendChild(overlay);
+
+  const titleEl = overlay.querySelector('.ed-title');
+  const subEl = overlay.querySelector('.ed-sub');
+  const saveEl = overlay.querySelector('.ed-save');
+  const bodyEl = overlay.querySelector('.ed-body');
+
+  let editor = null;
+  const close = () => {
+    editor?.destroy();
+    overlay.remove();
+    document.removeEventListener('keydown', onKey);
+    // The shelf and the bench both print a pack's title, so a rename made in
+    // here has to reach them — and a save may have happened without a close.
+    renderKeepingPlace();
+  };
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+  overlay.querySelector('.ed-close').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+  const say = () => {
+    const held = editor && editor.pack();
+    if (held && held.title) titleEl.textContent = held.title;
+    if (!editor) return;
+    subEl.textContent = editor.isDirty()
+      // NAMED, because "unsaved" alone is the thing that would make somebody
+      // sit on a popover afraid to close it. It says where the work IS.
+      ? 'Unsaved — kept on this device until you press Save'
+      : 'Everything here is saved to the pack';
+    saveEl.disabled = !editor.isDirty();
+  };
+
+  try {
+    const { mountEditor } = await import('./editor.js');
+    editor = mountEditor({
+      root: bodyEl,
+      key: hostKey,
+      catalogue: can(FEATURES.CATALOGUE),
+      onDirty: say,
+      onSaved: () => { load(); say(); },
+    });
+    saveEl.addEventListener('click', () => editor.save());
+    overlay.querySelector('.ed-check').addEventListener('click', () => editor.check());
+    await editor.open(kind, pack.id);
+    say();
+  } catch (err) {
+    subEl.textContent = '';
+    bodyEl.replaceChildren(node(`<div class="problems"><strong>Could not open it:</strong> ${esc(err.message)}</div>`));
+  }
+}
+
+/**
  * Read a pack through without leaving the console.
  *
  * The point is answering "is this any good?" in the thirty seconds before you
@@ -7415,7 +7520,7 @@ async function preview(kind, pack) {
           </div>
           <div class="sheet-actions">
             <button class="role-make" id="sheetSave" hidden>Save</button>
-            ${mine ? `<a class="minor" href="${linkTo('/editor')}">Edit questions</a>` : ''}
+            ${mine ? '<button class="minor" id="sheetEdit" type="button">Edit the questions</button>' : ''}
             <button class="minor" id="sheetClose">Close</button>
           </div>
         </div>
@@ -7459,6 +7564,23 @@ async function preview(kind, pack) {
 
   titleInput.addEventListener('input', () => {
     if (loaded) { loaded.title = titleInput.value; markDirty(); }
+  });
+
+  /*
+   * READING A PACK THROUGH IS WHEN YOU NOTICE SOMETHING IS WRONG WITH IT, so
+   * this is a SWAP rather than a link out. It used to be an anchor to /editor,
+   * which threw away the popover, the page you were on and the scroll position
+   * — and now that editing is itself a popover, leaving the console to do it
+   * would be the only navigation left on the door.
+   *
+   * It closes through the same guard as everything else, so a rename typed up
+   * here is not quietly lost on the way into the editor.
+   */
+  overlay.querySelector('#sheetEdit')?.addEventListener('click', () => {
+    if (dirty && !confirm('You have renamed this and not saved it. Go on to the questions anyway?')) return;
+    close();
+    document.removeEventListener('keydown', onKey);
+    editSheet(kind, pack);
   });
 
   saveBtn.addEventListener('click', async () => {

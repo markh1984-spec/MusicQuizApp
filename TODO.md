@@ -1905,51 +1905,27 @@ It touches the tab every gig starts from, so it wants its own screenshots at
 1280 and 390, and a real Launch pressed in a browser afterwards — the protected
 surface, not a diff review.
 
-### EDITING HAPPENS IN A POPOVER, AND THE DRAFT IS NEVER LOST
-
-Asked for on 16 August 2026 against the Workshop bench: *"both of these
-functions should open a popover where you can edit this — if you accidentally
-click off or if there is a crash it should keep your work saved to the latest
-version."*
-
-**THE ONE DECISION IN IT IS WHAT "SAVED" MEANS, and only one answer is safe.**
-
-Saving to the PACK as you type is the obvious reading and it is dangerous:
-`reloadPackEverywhere()` pushes a saved pack into any game currently running
-it, on purpose, because that is how a correction reaches a quiz already on
-question four. So autosaving a half-typed question would put it on a projector
-between rounds — rule 11 working exactly as designed, aimed at the wrong thing.
-
-**So: a DRAFT kept locally as you type, written to the pack only on an explicit
-Save.** Crash-proof, survives clicking off, survives a reload, and nothing
-reaches a room until somebody says so. Reopening offers to carry on or throw it
-away, which is the same shape the editor's `dirty` flag already has.
-
-**THE DRAFT IS KEYED PER PACK, not one scratch slot.** Otherwise editing the
-80s quiz, switching to Motown and coming back hands you the wrong unsaved
-changes — which is a worse failure than losing them, because it looks like your
-work and you would save it.
-
-That also settles the click-off behaviour without a "are you sure" dialog:
-**closing costs nothing when the draft is already on disk**, so clicking off
-simply closes it. A confirm on every stray click is the control that trains
-people to dismiss confirms.
-
-Worth doing properly rather than at the end of a session: the editor is a whole
-page (`editor.js`) today, and a popover version that half-works on the one door
-somebody would use it from is worse than the link that is there now.
-
-**WHERE IT PLUGS IN**, so a fresh session does not have to find it: the two
-buttons are `.bench-go` (Edit the questions) and `.bench-read` (Read it
-through) in `workBench()` in `console.js`, which today link to
-`/editor?quiz=<id>` and call `preview()`. The pack itself is read and written
-through the same routes `editor.js` uses. **Read `editor.js` before deciding
-whether the popover reuses it or is a smaller thing beside it** — it already
-has a `dirty` flag and a confirm-on-leave, which is most of the draft
-behaviour, and reusing it would keep one definition of what saving a pack
-means.
-
 ### EVERY DOOR GETS A BENCH — the same drop zone, doing that door's job
+
+**BOTH BENCHES ARE BUILT — `workBench()` and `nightBenchPanel()` in
+`console.js` — so read the rest of this as what is LEFT, not as a build plan.**
+Settled by building them: each survives a reload on the device, each holds ONE
+thing, and the Workshop's two buttons now open popovers rather than navigating
+(see *Editing is a popover* in CLAUDE.md).
+
+Three things are genuinely outstanding:
+
+- **THE CLEAR-ON-DONE IS NOT BUILT.** *"When it's done it's saved and removed
+  from the section"* — the mechanic the entry below calls the whole point.
+  Today a pack is taken off by hand with the ×. The shape already decided: Save
+  keeps it on the bench, a separate *Done* clears it.
+- **The Post gig bench's *Put it on the gallery* has never been seen working**,
+  and that is an ENVIRONMENT limit rather than a bug. `setPublished()` refuses
+  with *"The private photo repository is not set up"* whenever no photo repo is
+  configured, which is every sandbox and every fresh deploy. Verified by
+  reading the route, not by watching it work. It wants one check on the live
+  app, where the repo exists.
+- **The Post gig bench is still the least worked out**, as this entry predicted.
 
 Proposed on 16 August 2026: *"I think perhaps the workshop and post gig should
 have the same launch area but for their own respective functions — so you drag

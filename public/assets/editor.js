@@ -9,11 +9,38 @@
  * It reads and writes the same plain JSON files in /quizzes that the app runs
  * from — there is no separate database and no import step. What you save here
  * is exactly what plays tonight.
+ *
+ * ------------------------------------------------------------------------
+ * IT IS MOUNTED, NOT A PAGE — /editor AND THE WORKSHOP BENCH'S POPOVER.
+ *
+ * Asked for on 16 August 2026: *"both of these functions should open a popover
+ * where you can edit this."* The question that had to be answered before a line
+ * was written was whether the popover reuses this file or is a smaller thing
+ * beside it, and the answer is REUSE, for one reason that outranks the rest:
+ *
+ * **THERE MUST BE EXACTLY ONE DEFINITION OF WHAT SAVING A PACK MEANS.** That
+ * definition is not "PUT the JSON" — it is `saveTo()` and `saveMethod()`
+ * choosing between the catalogue and a quizmaster's own library, the
+ * `onScreenNow` question when the room is looking at the question being
+ * changed, and the server's list of `problems` coming back onto the page. A
+ * second editor would start as a subset of those and end as a different set,
+ * and the day the two disagree is a night in a pub. It is the same argument
+ * `src/arcade.js` records for having one scoreboard for both engines.
+ *
+ * So the page-specific parts — the picker, the topbar, the nav — are wired in
+ * `bootPage()`, which runs only where those elements exist, and everything
+ * else takes its surface from `mountEditor()`.
+ *
+ * **ONE MOUNT AT A TIME, deliberately.** The module state below is a single
+ * pack being edited, which is true of both surfaces: /editor has one picker
+ * and the bench holds one pack. `destroy()` gives it back.
+ * ------------------------------------------------------------------------
  */
 
 import { esc, node, postJson, brandLink, paintNav, paintIdentity, menuRights } from './client.js';
 import { LOOKS } from './looks.js';
 import { cueOffsetSays } from './cue.js';
+import { readDraft, writeDraft, forgetDraft, pruneDrafts } from './pack-draft.js';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 const ROUND_TYPES = [
@@ -40,15 +67,40 @@ const REVEALS = [
   ['mix', 'Mix — a different one each question'],
 ];
 
-const mainEl = document.getElementById('main');
-const pickEl = document.getElementById('quizPick');
-const saveEl = document.getElementById('save');
-const checkEl = document.getElementById('check');
-const dirtyEl = document.getElementById('dirtyFlag');
+/*
+ * THE SURFACE, filled in by `mountEditor()`.
+ *
+ * `mainEl` is the /editor page's <main> or the popover's body; the rest are
+ * the hooks the two surfaces answer differently. They are `let` rather than
+ * elements looked up at module load, because this file is now imported by
+ * `console.js` — where none of the page's ids exist and looking them up at the
+ * top would have thrown before anything could be mounted.
+ */
+let mainEl = null;
+let hostKey = '';
+/** Told every time the unsaved state changes: the topbar's flag, the sheet's Save. */
+let onDirtyChange = () => {};
+/** Told after a save landed, so a shelf behind a popover can redraw. */
+let onSaved = () => {};
+/** Put the surface back to the top — the window on a page, the body in a sheet. */
+let scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+/** Where a lost sign-in should send somebody back to afterwards. */
+let signInNext = '/editor';
 
-const hostKey = new URL(location.href).searchParams.get('key')
+const defaultKey = () => new URL(location.href).searchParams.get('key')
   || localStorage.getItem('musicquiz.hostkey')
   || '';
+
+/*
+ * THE PAGE'S PICKER, and only the page has one.
+ *
+ * `loadQuizList()` fills it, so it cannot live inside `bootPage()` — that was
+ * the first thing this refactor got wrong, and it broke /editor while
+ * `node --check` was perfectly happy and no unit test in this repo touched the
+ * file. Found by loading the page in a browser, which is the lesson this
+ * codebase has now recorded four times.
+ */
+let pickEl = null;
 
 let quiz = null;      // the pack being edited, quiz or bingo
 let kind = 'quiz';    // which of the two
@@ -68,6 +120,118 @@ let problems = [];
  */
 let ownPack = false;
 let catalogue = true;
+
+// ------------------------------------------------------------------- drafts
+
+/**
+ * WHAT YOU HAVE TYPED, KEPT ON THIS DEVICE, WRITTEN TO THE PACK ONLY ON SAVE.
+ *
+ * The storage itself is in `pack-draft.js`, because the console reads it too.
+ * What lives here is the POLICY: when a draft is written, when it is offered
+ * back, and when it stops being one.
+ *
+ * **A DRAFT THAT MATCHES THE PACK IS NOT A DRAFT** and is deleted rather than
+ * written: otherwise typing a word and typing it back would leave a banner
+ * offering to carry on from nothing.
+ */
+/*
+ * A SHORT DEBOUNCE, NOT A KEYSTROKE.
+ *
+ * A pack is tens of kilobytes of JSON and this fires on every letter typed
+ * into every box, so writing on each one would serialise the whole pack
+ * hundreds of times a minute. A third of a second is below what anybody
+ * notices and above the cost — and every way OUT of the editor flushes it
+ * first, so the debounce can only ever lose the third of a second before a
+ * hard browser crash, never the click-off or the close this exists for.
+ */
+const DRAFT_DEBOUNCE_MS = 300;
+
+let draftTimer = null;
+/** The pack exactly as the server last gave it or last took it. */
+let savedJson = '';
+/** Set while a draft has been loaded and not yet accepted or thrown away. */
+let draftFrom = 0;
+/** localStorage refused — said out loud rather than failing silently. */
+let draftBroke = false;
+
+function keepDraft() {
+  if (!quiz || !quiz.id) return;
+  if (JSON.stringify(quiz) === savedJson) { forgetThisDraft(); return; }
+  if (writeDraft(kind, quiz)) { draftBroke = false; return; }
+  // A full or blocked localStorage means the promise this feature makes is not
+  // being kept, and the one thing that must not happen is somebody finding
+  // that out by losing an evening's writing. The banner says so.
+  if (!draftBroke) { draftBroke = true; render(); }
+}
+
+function scheduleDraft() {
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(keepDraft, DRAFT_DEBOUNCE_MS);
+}
+
+/** Write it NOW. Every way out of the editor goes through here first. */
+function flushDraft() {
+  if (!draftTimer) return;
+  clearTimeout(draftTimer);
+  draftTimer = null;
+  keepDraft();
+}
+
+function forgetThisDraft() {
+  draftFrom = 0;
+  if (quiz && quiz.id) forgetDraft(kind, quiz.id);
+}
+
+/**
+ * The banner: you are looking at unsaved work, and here is the way out of it.
+ *
+ * **GOLD, following `.in-play`** — it is a fact you need before you decide, not
+ * a fault and not something being destroyed. Red is kept for the one question
+ * a room is actually looking at, so that when red appears here it means
+ * something.
+ *
+ * **THE DRAFT IS ALREADY LOADED WHEN THIS DRAWS, and that is the safe way
+ * round.** Showing the saved pack and offering to fetch the draft means
+ * somebody who does not read the banner types over the top of their own work
+ * and never sees it again. Showing the work and offering to throw it away
+ * cannot lose anything: the pack on disk is untouched either way.
+ */
+function draftBanner() {
+  if (!draftFrom) return null;
+  const el = node(`
+    <div class="in-play draft-note">
+      <strong>Carrying on from your unsaved changes.</strong>
+      Kept on this device ${esc(agoWords(draftFrom))} and not written to the pack —
+      nobody playing it has seen any of this.
+      <div class="draft-do">
+        <button class="small draft-keep">Carry on</button>
+        <button class="small danger draft-bin">Throw them away</button>
+      </div>
+    </div>`);
+  el.querySelector('.draft-keep').addEventListener('click', () => { draftFrom = 0; render(); });
+  el.querySelector('.draft-bin').addEventListener('click', () => {
+    clearTimeout(draftTimer);
+    draftTimer = null;
+    forgetThisDraft();
+    quiz = JSON.parse(savedJson);
+    problems = [];
+    setDirty(false);
+    render();
+  });
+  return el;
+}
+
+function agoWords(at) {
+  const mins = Math.round((Date.now() - at) / 60000);
+  if (mins < 1) return 'moments ago';
+  if (mins === 1) return 'a minute ago';
+  if (mins < 60) return `${mins} minutes ago`;
+  const hours = Math.round(mins / 60);
+  if (hours === 1) return 'an hour ago';
+  if (hours < 24) return `${hours} hours ago`;
+  const days = Math.round(hours / 24);
+  return days === 1 ? 'yesterday' : `${days} days ago`;
+}
 
 const isBingo = () => kind === 'bingo';
 const apiBase = () => (isBingo() ? '/api/bingo' : '/api/quiz');
@@ -96,7 +260,7 @@ async function api(path, options = {}) {
     // working should send you somewhere you can fix it rather than leaving you
     // on an error.
     localStorage.removeItem('musicquiz.hostkey');
-    location.href = hostKey ? '/console' : '/login?next=/editor';
+    location.href = hostKey ? '/console' : `/login?next=${encodeURIComponent(signInNext)}`;
     throw new Error('Not signed in');
   }
   if (res.status === 403) {
@@ -169,24 +333,47 @@ async function loadQuizList(selectId) {
   // Only if it is really in the list. A stale link should open the editor on
   // something rather than on nothing at all.
   if (wanted && [...pickEl.options].some((o) => o.value === wanted)) pickEl.value = wanted;
-  if (pickEl.value) await openPack(pickEl.value);
+  if (pickEl.value) await openPack(...pickEl.value.split(':'));
 }
 
-async function openPack(value) {
-  if (dirty && !confirm('You have unsaved changes. Throw them away?')) {
-    pickEl.value = `${kind}:${quiz.id}`;
-    return;
-  }
-  const [nextKind, id] = value.split(':');
+/**
+ * Open a pack — and its draft, if there is one.
+ *
+ * **THERE IS NO "throw them away?" ON THE WAY OUT ANY MORE, and that is the
+ * draft doing its job rather than a confirm being dropped.** Switching packs
+ * used to ask, because leaving really did lose the afternoon. Now the pack you
+ * are leaving keeps its own draft and offers it back the moment you return, so
+ * the question has no true answer to give — pressing "throw them away" would
+ * not have thrown anything away. A confirm that lies is worse than none, and
+ * this app's own rule is that a confirm on every stray move trains people to
+ * dismiss confirms.
+ */
+async function openPack(nextKind, id) {
+  // The pack being LEFT keeps what was typed into it, which is the whole
+  // reason the key has the pack id in it.
+  flushDraft();
   kind = nextKind;
   quiz = await api(`${apiBase()}/` + encodeURIComponent(id));
   // The server says which library it came out of, so an edit goes back where
   // it came from rather than wherever this page last guessed.
   ownPack = Boolean(quiz.mine);
   delete quiz.mine;
+  savedJson = JSON.stringify(quiz);
   problems = [];
   playState = { playing: 0, live: null, phase: '' };
   setDirty(false);
+
+  const held = readDraft(kind, id);
+  if (held && JSON.stringify(held.pack) !== savedJson) {
+    quiz = held.pack;
+    draftFrom = held.at || Date.now();
+    setDirty(true);
+  } else {
+    // Identical, or nothing there. Either way there is nothing to offer.
+    draftFrom = 0;
+    if (held) forgetThisDraft();
+  }
+
   render();
   // Ask about THIS pack now, and keep asking — a page open since seven
   // o'clock must not still be describing seven o'clock.
@@ -195,14 +382,17 @@ async function openPack(value) {
 
 function setDirty(value) {
   dirty = value;
-  saveEl.disabled = !value;
-  dirtyEl.textContent = value ? 'Unsaved changes' : '';
+  onDirtyChange(value);
 }
 
 /** Any edit runs through here, so nothing can change without marking dirty. */
 function change(fn) {
   fn();
   setDirty(true);
+  // AND WITHOUT BEING KEPT. One funnel for every edit in the file is what makes
+  // "it survives a crash" true of the whole editor rather than of the boxes
+  // somebody remembered to wire up.
+  scheduleDraft();
 }
 
 // ----------------------------------------------------------------- rendering
@@ -273,8 +463,16 @@ function isLive(ri, qi) {
 }
 
 function render() {
-  if (!quiz) return;
+  if (!quiz || !mainEl) return;
   const parts = [];
+
+  const draft = draftBanner();
+  if (draft) parts.push(draft);
+  if (draftBroke) {
+    parts.push(node(`<div class="problems"><strong>This device will not keep a draft.</strong>
+      Its storage is full or switched off, so what you type here is not being kept —
+      save before you close this.</div>`));
+  }
 
   const banner = playingBanner();
   if (banner) parts.push(banner);
@@ -916,12 +1114,22 @@ function swap(list, a, b) {
 
 async function save(confirmLive = false) {
   try {
+    // A save in flight must not be undone by a debounced write landing behind
+    // it and leaving a draft of what was just saved.
+    clearTimeout(draftTimer);
+    draftTimer = null;
     const body = confirmLive ? { ...quiz, confirmLive: true } : quiz;
     const result = await api(saveTo(), { method: saveMethod(), body: JSON.stringify(body) });
     problems = [];
     problems.checked = true;
+    // THE PACK IS NOW WHAT THE DRAFT SAID, so there is no draft. This is the
+    // only place in the file that is true, which is the point of the whole
+    // arrangement: one explicit press, one write, one clean slate.
+    savedJson = JSON.stringify(quiz);
+    forgetThisDraft();
     setDirty(false);
     render();
+    onSaved(quiz, kind);
     // Say whether it is permanent, because "Saved" on its own is misleading
     // when the server's filesystem is temporary.
     flash(result.backedUp ? 'Saved and backed up' : 'Saved here only — not backed up');
@@ -948,7 +1156,7 @@ async function save(confirmLive = false) {
     // The server validates too, and refuses to write a broken quiz to disk.
     problems = err.data && err.data.problems ? err.data.problems : [err.message];
     render();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToTop();
   }
 }
 
@@ -965,7 +1173,7 @@ async function check() {
     problems.checked = true;
     render();
     if (!problems.length) flash('All good');
-    else window.scrollTo({ top: 0, behavior: 'smooth' });
+    else scrollToTop();
   } catch (err) {
     flash('Could not check: ' + err.message);
   }
@@ -977,98 +1185,205 @@ function flash(message) {
   setTimeout(() => el.remove(), 1800);
 }
 
-// --------------------------------------------------------------------- boot
-
-pickEl.addEventListener('change', () => openPack(pickEl.value));
-saveEl.addEventListener('click', save);
-checkEl.addEventListener('click', check);
-
-document.getElementById('newQuiz').addEventListener('click', async () => {
-  const title = prompt('What is this quiz called?', 'The 1990s Music Quiz');
-  if (!title) return;
-  const id = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'quiz';
-  const fresh = {
-    id, title, subtitle: '', questionSeconds: 20,
-    rounds: [{ id: 'r1', type: 'text', title: 'Round One', blurb: '', questions: [blankQuestion('text', 'r1q1')] }],
-  };
-  try {
-    kind = 'quiz';
-    ownPack = !catalogue;
-    await api(catalogue ? '/api/quiz' : '/api/mine/quiz', { method: 'POST', body: JSON.stringify(fresh) });
-    await loadQuizList(id);
-  } catch (err) {
-    // A brand new quiz has empty questions, which the validator rightly
-    // objects to — so hold it in the browser until it is worth saving.
-    quiz = fresh;
-    problems = (err.data && err.data.problems) || [];
-    setDirty(true);
-    render();
-  }
-});
+// ------------------------------------------------------------------- mounting
 
 /**
- * Download and upload.
+ * Put the editor on a surface and hand back the handful of things a surface
+ * has to be able to do to it.
  *
- * These matter more than they look. On a host like Render the filesystem is
- * wiped on every redeploy, so a quiz you tidied up on the live app would
- * vanish next time you push. Download it, drop it in /quizzes, commit it, and
- * it is safe. Upload is the same trip in reverse.
+ * Everything the popover needs is here and nothing else is: it never touches
+ * the topbar, the picker, download or upload, because those belong to the
+ * page. What it DOES share is the only part that matters — `save()`, which is
+ * the one definition of what writing a pack means.
  */
-document.getElementById('download').addEventListener('click', () => {
-  if (!quiz) return;
-  const blob = new Blob([JSON.stringify(quiz, null, 2) + '\n'], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `${quiz.id}.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-  flash(`Saved ${quiz.id}.json — put it in your /quizzes folder`);
-});
+export function mountEditor({
+  root,
+  key = null,
+  catalogue: isCatalogue = null,
+  onDirty = () => {},
+  onSaved: saved = () => {},
+  onScrollTop = null,
+  next = '',
+} = {}) {
+  mainEl = root;
+  hostKey = key === null ? defaultKey() : key;
+  onDirtyChange = onDirty;
+  onSaved = saved;
+  scrollToTop = onScrollTop || (() => { root.scrollTop = 0; });
+  signInNext = next || location.pathname + location.search;
+  if (isCatalogue !== null) catalogue = Boolean(isCatalogue);
+  quiz = null;
+  problems = [];
+  draftFrom = 0;
+  draftBroke = false;
+  savedJson = '';
+  setDirty(false);
+  pruneDrafts();
 
-document.getElementById('upload').addEventListener('click', () => {
-  document.getElementById('uploadInput').click();
-});
+  /*
+   * A CLOSING TAB WRITES THE DRAFT, AND ONLY WARNS WHEN IT COULD NOT.
+   *
+   * It used to warn whenever there were unsaved changes, which was right when
+   * closing the tab really did lose the afternoon. It no longer does — so the
+   * browser's "changes you made may not be saved" is now a lie, and a warning
+   * that is not true is the one this file's own rules say trains people to
+   * dismiss warnings. What survives is the case where it IS true: a browser
+   * whose storage is full or switched off, where nothing is being kept.
+   */
+  const onUnload = (e) => {
+    flushDraft();
+    if (dirty && draftBroke) { e.preventDefault(); e.returnValue = ''; }
+  };
+  // Ctrl/Cmd-S saves, because everybody tries it. In the popover too.
+  const onKey = (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); if (dirty) save(); }
+  };
+  window.addEventListener('beforeunload', onUnload);
+  document.addEventListener('keydown', onKey);
 
-document.getElementById('uploadInput').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  try {
-    const incoming = JSON.parse(await file.text());
-    if (!incoming.rounds) throw new Error('That file is not a quiz pack.');
-    quiz = incoming;
-    quiz.id = quiz.id || file.name.replace(/\.json$/i, '');
-    delete quiz.mine;
-    // A file off somebody's laptop goes into THEIR library, not the catalogue.
-    ownPack = !catalogue;
-    problems = [];
-    setDirty(true);
-    render();
-    flash('Loaded. Press Save to keep it.');
-  } catch (err) {
-    flash('Could not read that file: ' + err.message);
-  }
-  e.target.value = '';
-});
+  return {
+    open: (packKind, id) => openPack(packKind, id),
+    save: () => save(),
+    check: () => check(),
+    /** What is being edited right now — a renamed pack retitles the sheet. */
+    pack: () => quiz,
+    isDirty: () => dirty,
+    /**
+     * Give the surface back — and write the draft on the way out.
+     *
+     * A close, an Escape and a click on the backdrop all land here, which is
+     * what makes "clicking off costs nothing" true rather than hopeful.
+     */
+    destroy() {
+      flushDraft();
+      if (playTimer) clearInterval(playTimer);
+      playTimer = null;
+      window.removeEventListener('beforeunload', onUnload);
+      document.removeEventListener('keydown', onKey);
+      mainEl = null;
+      quiz = null;
+      onDirtyChange = () => {};
+      onSaved = () => {};
+    },
+  };
+}
 
-// Do not let a closing tab quietly lose an afternoon of edits.
-window.addEventListener('beforeunload', (e) => {
-  if (dirty) { e.preventDefault(); e.returnValue = ''; }
-});
+// --------------------------------------------------------------------- boot
 
-// Ctrl/Cmd-S saves, because everybody tries it.
-document.addEventListener('keydown', (e) => {
-  if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); if (dirty) save(); }
-});
+/**
+ * THE /editor PAGE'S OWN WIRING, and it runs only where the page is.
+ *
+ * `console.js` imports this module for the bench popover, and none of the ids
+ * below exist there — so this has to be a function behind a test for the page
+ * rather than statements at the top level, which is exactly the fault
+ * `test/browser-parses.test.js` was written after: a module that throws on
+ * load takes the whole page down and no unit test in this repo would notice.
+ */
+function bootPage() {
+  pickEl = document.getElementById('quizPick');
+  const saveEl = document.getElementById('save');
+  const checkEl = document.getElementById('check');
+  const dirtyEl = document.getElementById('dirtyFlag');
+
+  mountEditor({
+    root: document.getElementById('main'),
+    onDirty: (value) => {
+      saveEl.disabled = !value;
+      dirtyEl.textContent = value ? 'Unsaved changes' : '';
+    },
+    onScrollTop: () => window.scrollTo({ top: 0, behavior: 'smooth' }),
+    next: '/editor',
+  });
+
+  pickEl.addEventListener('change', () => openPack(...pickEl.value.split(':')));
+  saveEl.addEventListener('click', () => save());
+  checkEl.addEventListener('click', () => check());
+
+  document.getElementById('newQuiz').addEventListener('click', async () => {
+    const title = prompt('What is this quiz called?', 'The 1990s Music Quiz');
+    if (!title) return;
+    const id = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'quiz';
+    const fresh = {
+      id, title, subtitle: '', questionSeconds: 20,
+      rounds: [{ id: 'r1', type: 'text', title: 'Round One', blurb: '', questions: [blankQuestion('text', 'r1q1')] }],
+    };
+    try {
+      kind = 'quiz';
+      ownPack = !catalogue;
+      await api(catalogue ? '/api/quiz' : '/api/mine/quiz', { method: 'POST', body: JSON.stringify(fresh) });
+      await loadQuizList(id);
+    } catch (err) {
+      // A brand new quiz has empty questions, which the validator rightly
+      // objects to — so hold it in the browser until it is worth saving.
+      quiz = fresh;
+      problems = (err.data && err.data.problems) || [];
+      setDirty(true);
+      render();
+    }
+  });
+
+  /**
+   * Download and upload.
+   *
+   * These matter more than they look. On a host like Render the filesystem is
+   * wiped on every redeploy, so a quiz you tidied up on the live app would
+   * vanish next time you push. Download it, drop it in /quizzes, commit it, and
+   * it is safe. Upload is the same trip in reverse.
+   */
+  document.getElementById('download').addEventListener('click', () => {
+    if (!quiz) return;
+    const blob = new Blob([JSON.stringify(quiz, null, 2) + '\n'], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${quiz.id}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    flash(`Saved ${quiz.id}.json — put it in your /quizzes folder`);
+  });
+
+  document.getElementById('upload').addEventListener('click', () => {
+    document.getElementById('uploadInput').click();
+  });
+
+  document.getElementById('uploadInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const incoming = JSON.parse(await file.text());
+      if (!incoming.rounds) throw new Error('That file is not a quiz pack.');
+      quiz = incoming;
+      quiz.id = quiz.id || file.name.replace(/\.json$/i, '');
+      delete quiz.mine;
+      // A file off somebody's laptop goes into THEIR library, not the catalogue.
+      ownPack = !catalogue;
+      problems = [];
+      setDirty(true);
+      render();
+      flash('Loaded. Press Save to keep it.');
+    } catch (err) {
+      flash('Could not read that file: ' + err.message);
+    }
+    e.target.value = '';
+  });
+
+  /*
+   * No key needed any more.
+   *
+   * The editor used to refuse outright without one, which was right when the key
+   * was the only identity there was — and wrong the moment an owner could sign
+   * in, because writing packs is the OWNER's job and they have no key. Same fix
+   * the control view needed: ask the server and let it decide, rather than
+   * deciding here on the strength of a string in the address bar.
+   */
+  loadQuizList().catch((err) => {
+    mainEl.replaceChildren(node(`<div class="problems"><strong>Could not load the quizzes:</strong> ${esc(err.message)}</div>`));
+  });
+}
 
 /*
- * No key needed any more.
- *
- * The editor used to refuse outright without one, which was right when the key
- * was the only identity there was — and wrong the moment an owner could sign
- * in, because writing packs is the OWNER's job and they have no key. Same fix
- * the control view needed: ask the server and let it decide, rather than
- * deciding here on the strength of a string in the address bar.
+ * ONLY ON THE PAGE. On the console this module is imported for the bench's
+ * popover, where the picker does not exist and `bootPage()` would throw on the
+ * first line — taking the console down with it, which is the one failure this
+ * app cannot afford on a gig day.
  */
-loadQuizList().catch((err) => {
-  mainEl.replaceChildren(node(`<div class="problems"><strong>Could not load the quizzes:</strong> ${esc(err.message)}</div>`));
-});
+if (document.getElementById('quizPick')) bootPage();

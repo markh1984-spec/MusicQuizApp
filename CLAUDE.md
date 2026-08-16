@@ -1198,6 +1198,7 @@ Open the one you are touching; do not read them all.
 - THE CONSOLE'S THEME — one surface, one heading ladder, a bar that stays
 - The tabs run ALONG a quizmaster's evening, behind their door
 - DRAG AND DROP — the console is the laptop with the HDMI in it
+- EDITING IS A POPOVER, AND A DRAFT NEVER TOUCHES THE PACK
 - TONIGHT — one launch section, and it PINS WHERE IT ALREADY IS on a drag
 - A PACK WEARS ITS OWN SUBJECT
 - A CONTROL IS PRESENT AND INERT, NEVER ABSENT
@@ -1666,6 +1667,7 @@ public/                the screens; *-bingo.js files hold the bingo variants
   assets/stickers.js   props to drag onto a photo: dog ears, a clown nose
   assets/schemes.js    a quizmaster's own two colours, shared with the server
   assets/diary.js      what is on and when — residencies projected, one-offs typed
+  assets/pack-draft.js what is typed and not saved yet — per pack, on the device
   assets/chat.js       the chat sheet on a player's phone, online nights only
 quizzes/ bingo/        the library
 data/                  live state, history, archived nights (gitignored)
@@ -1960,6 +1962,32 @@ having a nights section."*
   because HTML5 drag never fires on touch. Reasoning:
   **[`docs/console.md`](docs/console.md)**.
 
+### EDITING IS A POPOVER, AND A DRAFT NEVER TOUCHES THE PACK
+
+`mountEditor()` in `editor.js`, `pack-draft.js`, `editSheet()` in `console.js`.
+*Edit the questions* and *Read it through* on the Workshop bench both open in
+place; nothing navigates to `/editor` any more.
+
+- **A DRAFT IS KEPT ON THE DEVICE AS YOU TYPE; ONLY AN EXPLICIT SAVE WRITES THE
+  PACK.** `reloadPackEverywhere()` pushes a saved pack into every game running
+  it — rule 11 working — so **autosaving would put a half-typed question on a
+  projector mid-quiz. Never make the editor write on a timer.**
+- **KEYED PER PACK, NEVER ONE SCRATCH SLOT.** The wrong unsaved changes under
+  another pack's name is WORSE than losing them: it looks like your work and you
+  would save it over the real thing.
+- **THE POPOVER MOUNTS `editor.js` RATHER THAN REIMPLEMENTING IT** — one
+  definition of what saving means (own-library routing, the on-screen-now
+  question, the validator's list). **Do not write a second editor.** The page's
+  wiring is behind `if (document.getElementById('quizPick'))`, or importing it
+  takes the console down.
+- **REOPENING LOADS THE DRAFT AND OFFERS CARRY ON / THROW AWAY** — showing the
+  saved pack instead lets somebody type over their own work unseen.
+- **CLOSING COSTS NOTHING, so a click off just closes it**; `destroy()` flushes.
+  **The unload warning fires only when the device REFUSED to keep a draft**, or
+  it is a warning that lies. The bench says when a pack has unsaved work on it.
+
+Full reasoning: **[`docs/console.md`](docs/console.md)**.
+
 ### A PACK WEARS ITS OWN SUBJECT
 
 `public/assets/pack-look.js`, `.pack-card.tinted` / `.lb-tile.tinted`. A pack's
@@ -2178,7 +2206,7 @@ typo is dropped rather than quietly becoming a round of general knowledge.
 ## Checks
 
 ```bash
-npm test        # 1,209 tests, no network, injected clocks — must stay green
+npm test        # 1,290 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check

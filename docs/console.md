@@ -1005,3 +1005,117 @@ Swapping one is choosing a different pack, which is what a select is for. And
 HTML5 drag events are never delivered on touch, so a drag-only editor would not
 exist on the device half this console is driven from — the same reason the
 round ticks replaced dragging rounds between packs. The arrows do the ordering.
+
+---
+
+## Editing is a popover, and a draft never touches the pack
+
+`mountEditor()` in `editor.js`, `pack-draft.js`, `editSheet()` in `console.js`.
+
+Asked for on 16 August 2026 against the Workshop bench: *"both of these
+functions should open a popover where you can edit this — if you accidentally
+click off or if there is a crash it should keep your work saved to the latest
+version."*
+
+### The one decision in it is what "saved" means
+
+Saving to the PACK as you type is the obvious reading of that sentence, and it
+is the dangerous one. `reloadPackEverywhere()` in `server.js` pushes a saved
+pack into every game currently running it — deliberately, because that is how
+a correction reaches a quiz already on question four. So an autosaving editor
+would put a half-typed question, and a half-moved answer key, on a projector
+between rounds. **Rule 11 working exactly as designed, aimed at the wrong
+thing.**
+
+So the work goes to the DEVICE as it is typed, and to the pack only when
+somebody presses Save. Crash-proof, survives clicking off, survives a reload,
+and nothing reaches a room until a human says so.
+
+It also settles the click-off behaviour without a dialog: **closing costs
+nothing when the draft is already on disk**, so a click on the backdrop simply
+closes it. A confirm on every stray click is the control that trains people to
+dismiss confirms — the same argument this file makes about a 409 being silent.
+
+### Keyed per pack, and that is not tidiness
+
+One scratch slot would mean editing the 80s quiz, switching to Motown and
+coming back to the wrong unsaved changes. **That is a worse failure than losing
+them**, because it looks like your work: you would read it, not recognise
+anything wrong, and press Save over the top of a pack that was fine.
+
+### Reuse or a second editor — the question, and the answer
+
+`editor.js` was a page. The choice was to mount it on a second surface or write
+a smaller editor beside it, and the second is how two definitions of "save a
+pack" get born. That definition is not "PUT the JSON":
+
+- `saveTo()` and `saveMethod()`, choosing between the catalogue and a
+  quizmaster's own library — a path test, and the only thing keeping
+  subscribers out of the catalogue;
+- the `onScreenNow` question, asked when the room is looking at the question
+  being changed;
+- the validator's `problems` coming back onto the page rather than a pack going
+  to disk broken.
+
+A second editor starts as a subset of those and ends as a different set. It is
+the same argument `src/arcade.js` records for one scoreboard across two
+engines: **two copies is two rules, and the day one is fixed is the day they
+disagree.**
+
+So the page's own wiring — the picker, the topbar, download, upload — moved
+into `bootPage()`, and everything else takes its surface from `mountEditor()`.
+
+**And that refactor broke `/editor` immediately, in the way this repo keeps
+being broken.** `loadQuizList()` fills the picker, so making `pickEl` a local
+inside `bootPage()` left it referencing a name that was no longer there. The
+page rendered *"Could not load the quizzes: pickEl is not defined"*.
+`node --check` passed. The whole suite passed. **It was found by loading the
+page in a browser**, which is the fourth time this file's advice has been
+earned the same way — after the launch route, the arcade board and the stray
+backtick.
+
+`bootPage()` is also behind `if (document.getElementById('quizPick'))`. Without
+it, `console.js` importing this module would throw on load and take the console
+down — the exact fault the backtick caused, on the exact same page.
+
+### The draft is loaded, and the offer is to throw it away
+
+Reopening with a draft present could show either version. Showing the SAVED
+pack and offering to fetch the draft means somebody who does not read the
+banner types over their own work and never sees it again. Showing the DRAFT and
+offering to throw it away cannot lose anything — the pack on disk is untouched
+either way, and *Throw them away* puts the saved version back.
+
+Gold, following `.in-play`: a fact you need before you decide, not a fault and
+not something being destroyed. Red stays for the one question a room is
+actually looking at, so that when red appears in this editor it means
+something.
+
+### The warning that would have been a lie
+
+The page used to warn on `beforeunload` whenever there were unsaved changes.
+That was true when closing the tab really did lose the afternoon; it is not
+true now. So the unload handler FLUSHES the draft, and warns only when the
+device refused to keep one — a full or blocked `localStorage`, which is also
+said in the editor itself. **A warning that is not true is the one this app's
+own rules say trains people to ignore warnings.**
+
+### What is tested, and what a test cannot say
+
+`pack-draft.js` imports nothing and touches nothing but `localStorage`, so
+`test/pack-draft.test.js` runs the real module against a Map — per-pack keying,
+a corrupt draft not stopping the pack opening, a refusing browser saying so.
+That is unusual for a browser file here and worth it: this is the one surface
+where a mistake eats somebody's writing.
+
+`test/popover-editor.test.js` reads source and says so in its own header. It
+guards the class of fault this repo keeps hitting — **the wiring going missing
+while the feature still looks built** — and each of its assertions was checked
+by breaking the thing and watching it fail.
+
+Neither can say "the draft survived a reload". That was checked by driving a
+real browser through the whole round trip: type, click off, reload the page,
+find the work still there, confirm the pack on disk had NOT moved, then Save
+and confirm it had. Along with a Launch pressed for a quiz and for a bingo
+pack, because the console is the protected surface and no unit test presses a
+button.
