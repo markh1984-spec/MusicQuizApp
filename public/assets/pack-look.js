@@ -325,6 +325,20 @@ export function shortTitle(title) {
  * type ladder.
  */
 export function titleSize(text) {
+  /*
+   * THE THRESHOLDS ARE CALIBRATED TO THE REAL CARD, NOT A MOCK-UP — and the
+   * first version was not, which is worth recording because the mistake looked
+   * like success.
+   *
+   * They were set from a mock at 1100px with invented pack names, where twelve
+   * of twelve fitted on one line. On the actual shelf the sidebar takes 190px,
+   * so a card is 146px rather than 173 — and the host's real titles are longer
+   * than the ones I made up ("2000-2010 Pop, Indie and Rock"). Measured in a
+   * browser against his own library, four of six still wrapped and two were
+   * being clipped with an ellipsis, which loses a word off the end of the name.
+   *
+   * **A design measured against invented content is measured against nothing.**
+   */
   const n = String(text || '').length;
-  return n <= 12 ? 't-s' : (n <= 18 ? 't-m' : 't-l');
+  return n <= 11 ? 't-s' : (n <= 17 ? 't-m' : 't-l');
 }

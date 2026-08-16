@@ -252,9 +252,15 @@ test('the word QUIZ INSIDE a title is left alone', () => {
 });
 
 test('the type size steps with the length, and only three ways', () => {
+  /*
+   * The thresholds are calibrated to the REAL card — 146px wide once the
+   * sidebar has taken its 190 — rather than to the 173px mock they were first
+   * set from. See the note in `titleSize`.
+   */
   assert.equal(titleSize('Disco Fever'), 't-s');
   assert.equal(titleSize('Motown & Soul'), 't-m');
   assert.equal(titleSize('Guilty Pleasures'), 't-m');
+  assert.equal(titleSize('2000-2010 Pop, Indie and Rock'), 't-l');
   assert.equal(titleSize('Pub Floor-Fillers Bingo'), 't-l');
   assert.equal(titleSize(''), 't-s');
   for (const t of ['a', 'a'.repeat(13), 'a'.repeat(40)]) {

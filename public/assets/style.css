@@ -2060,19 +2060,28 @@ body.console::after { display: none; }
    a title usually means and is only possible because the name is trimmed
    first. Three steps rather than a per-card fit: nine slightly different sizes
    on one shelf reads as sloppy. */
-.pack-card.shut .pack-title.t-s { font-size: 16px; }
-.pack-card.shut .pack-title.t-m { font-size: 13.5px; }
-.pack-card.shut .pack-title.t-l { font-size: 12px; }
-/* Two lines at the very most, whatever arrives. A trimmed title fits on one in
-   every case measured, but a pack called something nobody predicted must clip
-   rather than push the square open. */
+.pack-card.shut .pack-title.t-s { font-size: 15px; }
+.pack-card.shut .pack-title.t-m { font-size: 12.5px; }
+.pack-card.shut .pack-title.t-l { font-size: 11px; }
+/* THREE LINES, NOT TWO — and that change came from measuring the host's own
+   library rather than the mock-up. "2000-2010 Pop, Indie and Rock" naturally
+   takes three, and clamping it at two printed "2000-2010 Pop, Indie and…",
+   which drops a word off the end of a pack's name. A wrapped line is untidy; a
+   truncated name is wrong, and on a shelf whose whole job is choosing between
+   names it is the worse of the two by a distance.
+   The clamp stays, because a square card cannot grow — it is a last resort for
+   a name nobody predicted, not the normal case. */
 .pack-card.shut .pack-title {
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   white-space: normal;
 }
+/* The reserved two-line height is wrong on a square card: it pushes a
+   one-line name up off the fade and leaves a gap under it. The card is a fixed
+   height now, so nothing below needs the space held open. */
+.pack-grid:not(.dense) .pack-card.shut .pack-title { min-height: 0; }
 /* The caret says it opens — the same job the chevron does on a dropdown, and
    drawn rather than a glyph for the reason binIcon() is drawn: phones render
    arrow characters at wildly different weights and some fall back to a box. */
