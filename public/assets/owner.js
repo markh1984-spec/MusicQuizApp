@@ -56,6 +56,16 @@ async function boot() {
   const who = await api('/api/me');
   if (!who.signedIn) { location.href = '/login?next=/owner'; return; }
   me = who.account;
+  /*
+   * THE LIVE LADDER, BEFORE THE TIERS TAB DRAWS ITSELF.
+   *
+   * `plans.js` runs in this page too and its overrides start empty, so without
+   * this the buckets would open showing the tiers the app SHIPS with — the
+   * owner would move something, see it move, reload, and find it back where it
+   * started. The server had stored it correctly the whole time; this page was
+   * simply never told.
+   */
+  setTierOverrides(who.featureTiers || {});
 
   const brand = await api('/api/brand');
   // `brandLink`, like every other page — the bare mark-and-words came out ten
@@ -499,7 +509,33 @@ function monthName(iso) {
  * thinner than it is sold as.
  */
 function tiersPanel() {
+  /*
+   * RETURNS AN ARRAY, because `renderTab()` spreads what a body gives it.
+   *
+   * The first version returned the element itself and the whole tab threw
+   * *"Spread syntax requires ...iterable[Symbol.iterator] to be a function"* —
+   * so clicking Tiers did nothing at all and left you looking at People, with
+   * the failure only visible in a console nobody has open. Every other tab
+   * body returns a list; this is the contract, and it is not written down
+   * anywhere except in the shape of the others.
+   */
   const el = node('<div class="panel"></div>');
+
+  /*
+   * WHAT THE LAST MOVE DID, HELD OUTSIDE THE RENDER.
+   *
+   * The first version wrote the sentence into `.tier-said` and then called
+   * `draw()`, which rebuilds the panel synchronously — so the message was
+   * replaced by a fresh empty element before the browser painted once, and
+   * the confirmation was never seen at all.
+   *
+   * That matters more here than a missing message usually would: the whole
+   * point of saying it is that moving a feature to Gold must not silently
+   * imply Bronze accounts lose it. A control that quietly does the kind thing
+   * is one nobody trusts the second time. So the text lives outside the thing
+   * being redrawn, exactly like `lastDone` on the console.
+   */
+  let said = '';
 
   const draw = () => {
     const rows = Object.keys(FEATURE_TIER);
@@ -536,7 +572,7 @@ function tiersPanel() {
             </div>`;
   }).join('')}
         </div>
-        <div class="tiny tier-said"></div>
+        <div class="tiny tier-said">${esc(said)}</div>
       </div>`));
 
     for (const pick of el.querySelectorAll('.tier-move')) {
@@ -551,10 +587,10 @@ function tiersPanel() {
            * default stores no override at all), and a page working off its own
            * optimism is the console-and-projector fault in another room.
            */
-          setTierOverrides(done.tiers || {});
+          setTierOverrides(done.featureTiers || {});
           const label = (FEATURE_META[feature] || {}).label || feature;
           const to = findTier(done.to).label || done.to;
-          el.querySelector('.tier-said').textContent = done.kept
+          said = done.kept
             ? `${label} is on ${to} for new sign-ups. ${done.kept} account${done.kept === 1 ? '' : 's'} already using it kept it.`
             : `${label} is on ${to}.`;
           draw();
@@ -566,7 +602,7 @@ function tiersPanel() {
     }
   };
   draw();
-  return el;
+  return [el];
 }
 
 function moneyTab() {

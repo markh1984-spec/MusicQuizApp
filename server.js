@@ -1346,13 +1346,21 @@ async function handleGet(req, res, url, route) {
        * `plans.js` runs in both places and its overrides start empty in a
        * fresh page. Without this the console would draw a Silver lock badge on
        * something the owner moved to Gold — the app quoting a price that is
-       * not the price — and the shop would offer a tier that does not include
-       * what its row says.
+       * not the price.
        *
-       * Only the DIFFERENCES, like the store: a few bytes on a payload every
-       * page already fetches, rather than a route of its own.
+       * **CALLED `featureTiers`, NOT `tiers`, AND THAT IS A BUG FIX.** This
+       * object literal ALREADY has a `tiers` key forty lines down — the rungs
+       * the hat switch draws — so the first version of this silently lost to
+       * it: a later duplicate key in an object literal simply wins, with no
+       * error anywhere. The browser was handed an array of rungs where it
+       * expected a feature map, `setTierOverrides` quietly ignored all of it,
+       * and every page carried on drawing the SHIPPED ladder while the server
+       * had stored the owner's. Nothing looked broken on either side.
+       *
+       * Only the DIFFERENCES: a few bytes on a payload every page fetches
+       * anyway, rather than a route of its own.
        */
-      tiers: accounts.featureTiers(),
+      featureTiers: accounts.featureTiers(),
       // Said out loud, because a bootstrap session looks exactly like a real
       // one until something it cannot do goes wrong.
       bootstrap: Boolean(account.bootstrap),
@@ -4715,7 +4723,7 @@ async function handleWrite(req, res, url, route) {
     try {
       const done = accounts.setFeatureTier(String(body.feature || ''), String(body.tier || ''));
       await backUpAccounts();
-      return sendJson(res, 200, { ok: true, ...done, tiers: accounts.featureTiers() }), true;
+      return sendJson(res, 200, { ok: true, ...done, featureTiers: accounts.featureTiers() }), true;
     } catch (err) {
       return sendJson(res, 400, { error: err.message }), true;
     }

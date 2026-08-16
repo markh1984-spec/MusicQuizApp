@@ -176,3 +176,72 @@ test('a LAPSED account keeps nothing, grandfathered or not', () => {
   accounts.update(rob.id, { status: 'cancelled' });
   assert.deepEqual(entitlements(accounts.find(rob.id)).features, []);
 });
+
+/* ---- AND THE PAYLOAD ACTUALLY CARRIES IT
+ *
+ * Everything above tests the STORE. None of it could see the fault that made
+ * the whole feature invisible in a browser: `/api/me`'s response literal
+ * already had a `tiers` key — the rungs the hat switch draws — so the feature
+ * map was added under the same name and the later one silently won. JavaScript
+ * does not warn about a duplicate key in an object literal. The server stored
+ * the owner's ladder correctly, said it was sending it, and sent an array of
+ * rungs instead; every page carried on drawing the shipped tiers.
+ *
+ * Nothing that reads source could catch that, and nothing that tests the store
+ * goes near it. **A test that never runs the artefact proves nothing about
+ * it** — so this one boots the real server and reads the real payload.
+ */
+
+import { spawn } from 'node:child_process';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+const ROOT = new URL('..', import.meta.url).pathname;
+const KEY = 'tier-payload-test-key';
+
+async function withServer(run) {
+  const dir = mkdtempSync(join(tmpdir(), 'tier-route-'));
+  // Off the pid like the launch-route test, so two suites cannot collide.
+  const port = 4900 + (process.pid % 800);
+  const child = spawn(process.execPath, ['server.js'], {
+    cwd: ROOT,
+    env: { ...process.env, PORT: String(port), DATA_DIR: dir, HOST_KEY: KEY },
+    stdio: 'ignore',
+  });
+  const base = `http://127.0.0.1:${port}`;
+  try {
+    let up = false;
+    for (let i = 0; i < 100 && !up; i++) {
+      try { await fetch(`${base}/api/state?role=screen`); up = true; } catch {
+        await new Promise((r) => setTimeout(r, 100));
+      }
+    }
+    assert.ok(up, 'the server never came up');
+    await run(base);
+  } finally {
+    child.kill('SIGKILL');
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+test('THE LADDER REACHES THE BROWSER — /api/me carries a feature map, not rungs', async () => {
+  await withServer(async (base) => {
+    const move = await fetch(`${base}/api/owner/tiers`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Host-Key': KEY },
+      body: JSON.stringify({ feature: FEATURES.PHOTOS, tier: 'gold' }),
+    });
+    assert.equal(move.status, 200, `the move answered ${move.status}`);
+
+    const me = await (await fetch(`${base}/api/me?key=${KEY}`)).json();
+    /*
+     * A MAP OF FEATURE TO TIER, and specifically NOT an array. That single
+     * assertion is the one the duplicate key would have failed: `tiers` there
+     * is a list of rungs, and this has to be something else entirely.
+     */
+    assert.ok(me.featureTiers && typeof me.featureTiers === 'object', 'no featureTiers on /api/me');
+    assert.ok(!Array.isArray(me.featureTiers), 'featureTiers must be a map, not the hat switch rungs');
+    assert.equal(me.featureTiers[FEATURES.PHOTOS], 'gold', 'the move never reached the payload');
+  });
+});

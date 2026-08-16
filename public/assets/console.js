@@ -319,7 +319,7 @@ async function load() {
      * the price. Here rather than lower down because `visibleTabs()` and
      * `tierNeeded()` both read it on the very first render.
      */
-    setTierOverrides(who.tiers || {});
+    setTierOverrides(who.featureTiers || {});
     /*
      * An owner used to be bounced straight to /owner from here, which left
      * NOWHERE to generate or import a pack: the generator lives on this page
