@@ -7623,8 +7623,13 @@ body.gallery { padding: 0; }
      explanation to one line — so dropping a pack nudged everything below the
      bench down. Small, and exactly the reflow this file refuses on the pack
      shelf: a panel that changes height under your hand is one you cannot aim
-     at twice. The slot beside it already matches at 92px for the same reason. */
-  min-height: 106px;
+     at twice. The slot beside it already matches at 92px for the same reason.
+
+     THE NUMBER IS MEASURED, NOT GUESSED. It was 106 first, which was a guess
+     at what two buttons and a line of text come to, and the loaded state came
+     out 110 — so the panel still moved, by 4px instead of 18. A reserved
+     height that is nearly right is still a panel that moves. */
+  min-height: 110px;
 }
 .bench-do p { margin: 2px 0 0; max-width: 46ch; }
 /* GREEN, NOT THE ACCOUNT GRADIENT, and sized to its words. One filled gradient
