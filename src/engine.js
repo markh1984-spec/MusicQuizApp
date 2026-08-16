@@ -1795,6 +1795,16 @@ export class Engine {
     if (s.phase === PHASES.LOBBY) {
       const board = this.arcadeBoard();
       if (board.length) view.arcade = board;
+      /*
+       * WHICH GAME THOSE SCORES ARE AT, so the board can say so.
+       *
+       * Only alongside the board, and only at the lobby: a field nobody draws
+       * is the fault this whole file exists to remember, and the board is the
+       * only thing that reads it. It is the resolved id from the launch, never
+       * worked out again here — the projector and the phones must name the
+       * same game, and the phone already reads `lobbyGame` off its own payload.
+       */
+      if (board.length && s.lobbyGame) view.lobbyGame = s.lobbyGame;
     }
 
     if (s.phase === PHASES.QUESTION || s.phase === PHASES.REVEAL) {

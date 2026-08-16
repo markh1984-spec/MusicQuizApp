@@ -30,6 +30,7 @@
  */
 
 import { esc, node } from './client.js';
+import { lobbyGameById } from './lobby-games.js';
 
 /** The slot, empty. Put it in the lobby's right-hand column, under the QR. */
 export function arcadeSlot() {
@@ -49,9 +50,26 @@ export function paintArcadeBoard(s) {
   const rows = (s && s.arcade) || [];
   box.hidden = rows.length === 0;
   if (!rows.length) { box.replaceChildren(); return; }
+  /*
+   * IT NAMES THE GAME, because a bare "Top scores" is a scoreboard for
+   * something the room has to guess at.
+   *
+   * The projector is the one screen everybody can see and the only place the
+   * game is ever named out loud — a phone shows the game itself and needs no
+   * label, and the host says whatever they like on the mic. Naming it here is
+   * also what makes the board readable to somebody who has not opened it yet:
+   * *"Top scores · Maze Mouth"* tells them there is a game and what it is, in
+   * the ten minutes when the alternative is looking at a join code.
+   *
+   * **Falls back to the bare heading rather than guessing.** A night launched
+   * before `lobbyGame` was stored sends no id, and the resolver that would
+   * fill one in lives on the phone, where the tier is known. Naming the wrong
+   * game on the big screen is worse than naming none.
+   */
+  const game = lobbyGameById(s && s.lobbyGame);
   box.replaceChildren(node(`
     <div>
-      <div class="ab-head">Top scores</div>
+      <div class="ab-head">Top scores${game ? ` · ${esc(game.name)}` : ''}</div>
       ${rows.map((r, i) => `
         <div class="ab-row">
           <span class="ab-pos">${i + 1}</span>

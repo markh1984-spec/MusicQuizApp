@@ -638,6 +638,10 @@ export class BingoGame {
        */
       const board = this.arcadeBoard();
       if (board.length) view.arcade = board;
+      // Which game those scores are at — see the same block in `engine.js`.
+      // One field, alongside the board, so the two projectors say the same
+      // thing about the same night.
+      if (board.length && this.state.lobbyGame) view.lobbyGame = this.state.lobbyGame;
     }
 
     if (this.state.lastWin) {

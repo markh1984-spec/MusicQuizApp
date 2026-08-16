@@ -97,6 +97,54 @@ test('A SCORE IS REFUSED ANYWHERE BUT THE LOBBY', () => {
   assert.equal(e.state.arcade[join.id], 120);
 });
 
+/**
+ * THE BOARD NAMES THE GAME, and both halves are checked here for the reason
+ * this file already records: `arcade` was in the payload, tested, documented as
+ * being on screen — and no projector file ever read it, for as long as the
+ * feature existed. **Asserting a field is present proves nothing about whether
+ * anybody draws it.**
+ *
+ * So: the payload carries the id, and the one file that draws the board reads
+ * it. The second half is a source check and is deliberately weak — the real
+ * proof is pressing it in a browser, which is how this was verified
+ * ("Top scores · Tailback" at 1280x720 with four teams on it).
+ */
+test('the board is told WHICH GAME the scores are at, and only with a board', () => {
+  const { e } = game();
+  e.state.lobbyGame = 'tailback';
+
+  // No board, no field — a name for an empty scoreboard is a hole on screen.
+  assert.equal(e.screenView().lobbyGame, undefined, 'named a game with no scores under it');
+
+  const join = e.join({ name: 'Quizteama Aguilera' });
+  e.arcadeScore(join.id, 70);
+  assert.equal(e.screenView().lobbyGame, 'tailback');
+
+  // Never outside the lobby, exactly like the board it labels.
+  e.start();
+  assert.equal(e.screenView().lobbyGame, undefined);
+});
+
+test('a night launched before lobbyGame existed names no game rather than the wrong one', () => {
+  const { e } = game();
+  delete e.state.lobbyGame;
+  const join = e.join({ name: 'Quizteama Aguilera' });
+  e.arcadeScore(join.id, 70);
+  const view = e.screenView();
+  assert.ok(view.arcade.length, 'the board itself must still be there');
+  assert.equal(view.lobbyGame, undefined,
+    'a missing id must degrade to a bare "Top scores" — the resolver that would guess one lives '
+    + 'on the phone, where the tier is known, and naming the wrong game on the big screen is '
+    + 'worse than naming none');
+});
+
+test('the projector actually READS it — the fault this whole file remembers', async () => {
+  const fs = await import('node:fs');
+  const src = fs.readFileSync(new URL('../public/assets/lobby-board.js', import.meta.url), 'utf8');
+  assert.match(src, /lobbyGameById/, 'lobby-board.js no longer resolves the game name');
+  assert.match(src, /s\.lobbyGame/, 'lobby-board.js no longer reads the field the payload sends');
+});
+
 test('the projector is told about it in the lobby and NOWHERE else', () => {
   const { e } = game();
   const join = e.join({ name: 'Quizteama Aguilera' });

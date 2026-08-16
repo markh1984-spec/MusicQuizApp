@@ -19,41 +19,36 @@ decision from the host first.
 
 ### Nothing needed from the host — these can just be built
 
-1. **The arcade board does not name the game.**
-   *Fix:* `lobby-board.js:54` prints a bare *"Top scores"*. The board is already
-   told which game it is — print it: *"Top scores · Maze Mouth"*. One line, plus
-   a screenshot at 1280 because it is on the projector.
-
-2. **No player id on the archived leaderboard.**
+1. **No player id on the archived leaderboard.**
    *Fix:* `src/engine.js:2474` files `{position, name, score, correctCount,
    answeredCount}`. Add **`faceKey`, not the player id** — rule 3 says an id is
    a credential and the gallery is public, where `faceKey()` is what the
    projector already uses to find somebody's photo. Additive, changes no
    payload, and it is the whole of what winner-badging is waiting on.
 
-3. **The Console shelf has no route to the Workshop.**
+2. **The Console shelf has no route to the Workshop.**
    *Fix:* the line *"Write, buy or edit packs →"* exists at
    `console-packs.js:117` and is drawn on every door EXCEPT the Console. Drop
    the door condition. One line.
 
-4. **Gigs never says a prize was taken.**
+3. **Gigs never says a prize was taken.**
    *Fix:* `session.js:281-311` already files the vouchers into the night.
    `console-gigs.js` draws the headcount and nothing else — add
    *"3 prizes · 2 taken"* beside it, reading the record that is already there.
 
-5. **A pin's ORDER is thrown away.**
+4. **A pin's ORDER is thrown away.**
    *Fix:* `console-packs.js:214` sorts with `isPinned(b) - isPinned(a)`, a
    boolean, so `prefs.pinnedPacks` keeps its membership and loses its order.
    Sort by index within that array instead.
 
-6. **Launch does not open the big screen.**
+5. **Launch does not open the big screen.**
    *Fix:* `window.open(screenLink(), 'quizscreen')` **synchronously inside the
    click handler**, before any await — a popup blocker refuses it after one —
    and close it again if the launch comes back 409. The named target means a
    second launch reuses the tab rather than stacking them. Must be pressed in a
    real browser; no unit test can prove it.
 
-7. **The demo prize card is hardcoded.**
+6. **The demo prize card is hardcoded.**
    *Fix:* `voucher.js:44-53` holds a literal team and prize and `:104`
    short-circuits before any fetch. Read `at=` off the URL, put that venue on
    the card, and mark it a demonstration so it can never be mistaken for a real
