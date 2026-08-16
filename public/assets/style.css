@@ -7588,23 +7588,60 @@ body.gallery { padding: 0; }
    differs is what it holds: Tonight composes an evening out of several packs,
    the bench works on ONE, so it has one slot rather than six. */
 .bench .bench-where { font-size: var(--fs-ctl); font-weight: 900; color: var(--ink); }
-/* One slot, and it keeps the shelf's own tile width rather than stretching
-   across the panel — a full-width tile would read as a banner rather than as
-   the same object you dragged off the grid. */
-.bench-tiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
-.bench-tiles > * { grid-column: span 2; }
-@media (max-width: 700px) { .bench-tiles > * { grid-column: 1 / -1; } }
-.bench-tools { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-/* GREEN, NOT THE ACCOUNT GRADIENT. One filled gradient per screen means "the
-   night", and there is no night behind this door — making something new is the
-   green role. So the Console has exactly one Launch and the Workshop exactly
-   one Write a new one, and neither can be mistaken for the other. */
-.bench .bench-new {
-  display: block; text-align: center; text-decoration: none;
-  margin-top: 14px;
+/* THE SLOT ON THE LEFT, WHAT YOU DO WITH IT ON THE RIGHT.
+
+   Reported as *"I don't want a tiny button taking up a whole row"*, and that
+   was exactly the fault: one small green button stretched the width of a panel,
+   under a drop zone half its width, with the rest of the row empty. **A
+   button's width should say how big the action is** — Launch is full width
+   because it is THE decision on that screen; "write a new one" is not.
+
+   So the panel is two columns: the thing on the bench, and the things you can
+   do to it, side by side. Each button is its own width, and the row is full
+   because there is something in all of it. */
+.bench-body {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 14px 18px;
+  align-items: start;
+}
+@media (max-width: 700px) {
+  /* One column on a phone, slot first — the same order, stacked. */
+  .bench-body { grid-template-columns: 1fr; }
+}
+.bench-slot { min-width: 0; }
+/* The drop zone matches the tile it will be replaced by, so nothing moves when
+   a pack lands on it — a panel that changes height on a drop is the reflow
+   this file already refuses on the pack shelf. */
+.bench-slot .lb-drop, .bench-slot .lb-tile { min-height: 92px; }
+.bench-do {
+  display: flex; flex-direction: column; align-items: flex-start;
+  gap: 8px; min-width: 0;
+}
+.bench-do p { margin: 2px 0 0; max-width: 46ch; }
+/* GREEN, NOT THE ACCOUNT GRADIENT, and sized to its words. One filled gradient
+   per screen means "the night", and there is no night behind these doors —
+   making something is the green role. So the Console has exactly one Launch and
+   the Workshop exactly one green primary, and neither can be mistaken for the
+   other in a dark pub. */
+.bench .bench-go {
+  width: auto;
+  display: inline-block;
+  text-decoration: none;
+  margin-top: 0;
+  padding: 11px 18px;
   background: rgba(47, 224, 122, 0.14);
   border: 1px solid rgba(47, 224, 122, 0.5);
   color: var(--good);
 }
-.bench .bench-new:hover { background: rgba(47, 224, 122, 0.22); }
+.bench .bench-go:hover { background: rgba(47, 224, 122, 0.22); filter: none; }
 .bench.drop-here { border-color: var(--good); }
+
+/* A night dragged up to the Post gig bench. Same affordance as a pack card. */
+.gig[draggable="true"] { cursor: grab; }
+.gig.is-dragging { opacity: 0.45; }
+/* The night tile has no subject colour to wear — a night is not a pack — so it
+   takes the plain surface and says its date, venue and headcount instead. */
+.night-tile { background: rgba(255, 255, 255, 0.05); }
+/* Two small buttons that belong together, on one line rather than one each. */
+.bench-row { display: flex; gap: 8px; flex-wrap: wrap; }

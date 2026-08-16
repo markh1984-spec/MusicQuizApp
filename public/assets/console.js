@@ -1153,6 +1153,7 @@ function render() {
       (doorNow() !== 'console' ? node('<div></div>') : (live ? node('<div></div>') : launchBar())),
       doorNow() === 'console' ? runningPanel(running) : node('<div></div>'),
       doorNow() === 'workshop' ? workBench() : node('<div></div>'),
+      doorNow() === 'post' ? nightBenchPanel() : node('<div></div>'),
     ),
     consoleColumns(tabBar(active), tabBody(active)),
   );
@@ -1218,27 +1219,38 @@ function workBench() {
           <span class="tiny lb-shut-what">${on ? esc(shortTitle(on.title)) : 'Nothing yet'}</span>
         </div>
       </div>
-      <div class="lb-tiles bench-tiles">
-        ${on ? `
-          <div class="lb-tile is-pack ${look.cls}" style="${look.style}" title="${esc(on.title)}">
-            ${packWord(look)}
-            <button class="lb-tile-off bench-off" type="button" aria-label="Take it off the bench">&times;</button>
-            <b class="lb-tile-name">${esc(shortTitle(on.title))}</b>
-            <span class="tiny lb-tile-sub">${esc(bench.kind === 'bingo' ? 'bingo' : 'quiz')}</span>
-          </div>` : `
-          <div class="lb-drop bench-drop">
-            <span class="lb-drop-plus">+</span>
-            <span>Drag a pack here to work on it</span>
-          </div>`}
+      <!-- THE SLOT ON THE LEFT, WHAT YOU DO WITH IT ON THE RIGHT.
+           Reported as *"I don't want a tiny button taking up a whole row"* -
+           and that was the fault: one small green button stretched across a
+           panel, under a drop zone half its width. A button's width should say
+           how big the action is, and "write a new one" is not a full-width
+           decision the way Launch is. Two columns put the buttons beside the
+           thing they act on and let each one be its own size. -->
+      <div class="bench-body">
+        <div class="bench-slot">
+          ${on ? `
+            <div class="lb-tile is-pack ${look.cls}" style="${look.style}" title="${esc(on.title)}">
+              ${packWord(look)}
+              <button class="lb-tile-off bench-off" type="button" aria-label="Take it off the bench">&times;</button>
+              <b class="lb-tile-name">${esc(shortTitle(on.title))}</b>
+              <span class="tiny lb-tile-sub">${esc(bench.kind === 'bingo' ? 'bingo' : 'quiz')}</span>
+            </div>` : `
+            <div class="lb-drop bench-drop">
+              <span class="lb-drop-plus">+</span>
+              <span>Drag a pack here</span>
+            </div>`}
+        </div>
+        <div class="bench-do">
+          ${on ? `
+            <a class="go bench-go role-make" href="${esc(editHref)}">Edit the questions</a>
+            <button class="minor bench-read" type="button">Read it through</button>
+            <p class="tiny">Saved as you go. Take it off when you are done with it.</p>`
+    : `
+            <a class="go bench-go role-make" href="${esc(linkTo('/editor'))}">Write a new one</a>
+            <p class="tiny">Or drag a pack in from below to edit, rename or read
+              one you already have.</p>`}
+        </div>
       </div>
-      ${!on ? '' : `
-      <div class="row bench-tools">
-        <a class="minor" href="${esc(editHref)}">Edit the questions</a>
-        <button class="minor bench-read" type="button">Read it</button>
-      </div>`}
-      <!-- START A FRESH ONE. The green role, and the only filled button behind
-           this door - see the note above on why it is not the gradient. -->
-      <a class="go bench-new role-make" href="${esc(linkTo('/editor'))}">Write a new one</a>
     </div>`);
 
   el.querySelector('.bench-off')?.addEventListener('click', () => putOnBench(null));
@@ -1265,6 +1277,142 @@ function workBench() {
     packDrag = null;
     dragging(false);
     putOnBench(shelfFor(dropped.kind).find((p) => p.id === dropped.id), dropped.kind);
+  });
+  return el;
+}
+
+/**
+ * THE POST GIG BENCH — one night, and the three things you do about it.
+ *
+ * *"I think I need a bench in the post gig bit as well."* Its cargo is a NIGHT,
+ * which is what every job behind that door is about: bill it, show the venue,
+ * put it on the gallery. Those three are currently spread across two tabs and
+ * an expanded row you have to find first.
+ *
+ * **IT FETCHES ITS OWN NIGHT RATHER THAN WAITING FOR THE LIST.** The Gigs panel
+ * below reads the archive when it renders, and this panel is built before that
+ * finishes — so on a fresh load the bench would have nothing to look its
+ * remembered night up in. Redrawing the whole page when the list arrives was
+ * the obvious fix and is a LOOP: the render rebuilds Gigs, which fetches, which
+ * renders. It refills itself in place instead, which touches nothing else.
+ */
+function nightBenchPanel() {
+  const el = node('<div class="panel launchbar bench night-bench"></div>');
+
+  const draw = (night) => {
+    const when = night ? new Date(night.night + 'T12:00:00') : null;
+    const heads = night ? Math.max(0, ...(night.games || []).map((g) => g.playerCount || 0)) : 0;
+    el.replaceChildren(node(`
+      <div>
+        <div class="lb-head">
+          <div class="lb-what">
+            <span class="bench-where">On the bench</span>
+            <span class="tiny lb-shut-what">${night
+    ? esc(`${when.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}${night.venue ? ` · ${night.venue}` : ''}`)
+    : 'Nothing yet'}</span>
+          </div>
+        </div>
+        <div class="bench-body">
+          <div class="bench-slot">
+            ${night ? `
+              <div class="lb-tile night-tile">
+                <button class="lb-tile-off bench-off" type="button" aria-label="Take it off the bench">&times;</button>
+                <b class="lb-tile-name">${esc(when.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }))}</b>
+                <span class="tiny lb-tile-sub">${esc(night.venue || 'No venue')}</span>
+                ${heads ? `<span class="tiny">${heads} played</span>` : ''}
+              </div>` : `
+              <div class="lb-drop bench-drop">
+                <span class="lb-drop-plus">+</span>
+                <span>Drag a night here</span>
+              </div>`}
+          </div>
+          <div class="bench-do">
+            ${night ? `
+              ${can(FEATURES.INVOICES) ? '<button class="go bench-go role-make night-bill" type="button">Invoice this night</button>' : ''}
+              <span class="row bench-row">
+                <button class="minor night-open" type="button">Open its photos</button>
+                ${can(FEATURES.PAST_GIGS) ? `<button class="minor night-gallery" type="button">${
+    night.published ? 'Take it off the gallery' : 'Put it on the gallery'}</button>` : ''}
+              </span>`
+    : `
+              <p class="tiny">Drag a night up from the list below and the things
+                you do after a gig are all in one place &mdash; the invoice, the
+                photographs, and whether the venue can show it off.</p>`}
+          </div>
+        </div>
+      </div>`));
+
+    el.querySelector('.bench-off')?.addEventListener('click', () => putNightOnBench(''));
+    /*
+     * OPEN ITS PHOTOS means open that night's own row, rather than a second
+     * gallery drawn up here. One place a night's photographs are shown, and
+     * it is the one with the bin on each picture.
+     */
+    el.querySelector('.night-open')?.addEventListener('click', () => {
+      const row = document.querySelector(`.gig[data-night="${CSS.escape(night.night)}"] .gig-head`);
+      if (row) { row.click(); row.scrollIntoView({ block: 'nearest' }); }
+    });
+    el.querySelector('.night-gallery')?.addEventListener('click', async (ev) => {
+      const button = ev.currentTarget;
+      button.disabled = true;
+      try {
+        await postJson('/api/past-gigs/publish',
+          { night: night.night, on: !night.published }, { 'X-Host-Key': hostKey });
+        night.published = !night.published;
+        draw(night);
+      } catch (err) {
+        button.disabled = false;
+        alert(err.message || 'Could not change that.');
+      }
+    });
+    el.querySelector('.night-bill')?.addEventListener('click', () => {
+      // Through the night's OWN Invoice button, so there is one implementation
+      // of "bill this night" rather than a second that drifts from it.
+      const row = document.querySelector(`.gig[data-night="${CSS.escape(night.night)}"]`);
+      const head = row && row.querySelector('.gig-head');
+      if (!head) return;
+      if (row.querySelector('.gig-body').hidden) head.click();
+      const go = () => row.querySelector('.gig-bill')?.click();
+      // The body loads its contents on first open, so the button may not be
+      // there yet on the very first press.
+      if (row.querySelector('.gig-bill')) go();
+      else setTimeout(go, 400);
+    });
+  };
+
+  const found = () => gigsSeen.find((n) => n.night === nightBench) || null;
+  draw(nightBench ? found() : null);
+  if (nightBench && !found()) {
+    (async () => {
+      try {
+        const data = await (await fetch(keyed('/api/past-gigs'))).json();
+        gigsSeen = data.nights || [];
+        const mine = found();
+        // Filed under a night that is no longer there — it leaves quietly
+        // rather than drawing a tile for something that has gone.
+        if (!mine) { nightBench = ''; localStorage.removeItem(NIGHT_BENCH_STORE); }
+        draw(mine);
+      } catch { /* the list below will say so; the bench stays empty */ }
+    })();
+  }
+
+  el.addEventListener('dragover', (ev) => {
+    if (!nightDrag) return;
+    ev.preventDefault();
+    ev.dataTransfer.dropEffect = 'copy';
+    el.classList.add('drop-here');
+  });
+  el.addEventListener('dragleave', (ev) => {
+    if (!el.contains(ev.relatedTarget)) el.classList.remove('drop-here');
+  });
+  el.addEventListener('drop', (ev) => {
+    if (!nightDrag) return;
+    ev.preventDefault();
+    el.classList.remove('drop-here');
+    const key = nightDrag;
+    nightDrag = null;
+    dragging(false);
+    putNightOnBench(key);
   });
   return el;
 }
@@ -3764,6 +3912,35 @@ const BENCH_STORE = 'musicquiz.bench';
 let bench = (() => {
   try { return JSON.parse(localStorage.getItem(BENCH_STORE) || 'null'); } catch { return null; }
 })();
+
+/**
+ * THE NIGHT ON THE POST GIG BENCH — a night key, or null.
+ *
+ * Same shape as the Workshop's, because it is the same idea behind a different
+ * door: *"I think I need a bench in the post gig bit as well."* Its cargo is a
+ * NIGHT rather than a pack, which is the thing every job on that door is about
+ * — bill it, show it to the venue, put it on the gallery.
+ *
+ * **A key rather than the night object.** The archive is re-read on every
+ * visit to that tab, so holding the record would mean holding a copy that goes
+ * stale the moment a prize is claimed or a photo is deleted. The key is looked
+ * up against what was just fetched, exactly like the Workshop bench looks its
+ * pack up against the shelf.
+ */
+const NIGHT_BENCH_STORE = 'musicquiz.nightbench';
+let nightBench = localStorage.getItem(NIGHT_BENCH_STORE) || '';
+/** Every night the Gigs tab last fetched, so the bench can find its one. */
+let gigsSeen = [];
+
+function putNightOnBench(key) {
+  nightBench = key || '';
+  if (nightBench) localStorage.setItem(NIGHT_BENCH_STORE, nightBench);
+  else localStorage.removeItem(NIGHT_BENCH_STORE);
+  renderKeepingPlace();
+}
+
+/** A night being dragged up to the Post gig bench, if any. */
+let nightDrag = null;
 
 function putOnBench(pack, kind) {
   bench = pack ? { id: pack.id, kind } : null;
@@ -9645,6 +9822,13 @@ function pastGigsSection() {
       note.innerHTML = '<b style="color:var(--gold)">Photos are not being kept permanently yet.</b> '
         + 'Nights still appear here; the pictures from them will not survive a restart.';
     }
+    /*
+     * REMEMBERED FOR THE BENCH, which is on a different panel entirely and
+     * cannot fetch this again — see `nightBench`. Held as what was just
+     * fetched rather than as a copy on the bench, so a prize claimed or a
+     * photo deleted since is reflected the next time this tab is opened.
+     */
+    gigsSeen = data.nights || [];
     list.replaceChildren(...data.nights.map(gigRow));
   })();
 
@@ -9672,7 +9856,7 @@ function gigRow(night) {
   const lead = night.venue ? esc(night.venue) : played;
 
   const el = node(`
-    <div class="gig">
+    <div class="gig" data-night="${esc(night.night)}" draggable="true">
       <button class="gig-head" type="button">
         <!-- THE DATE AS A BLOCK, chosen from four layouts on 15 August 2026.
              The old row was five spans in a flat sequence, which wrapped into
@@ -9701,6 +9885,25 @@ function gigRow(night) {
       </button>
       <div class="gig-body" hidden></div>
     </div>`);
+
+  /*
+   * DRAG A NIGHT UP TO THE BENCH. Same gesture as a pack onto Tonight, and the
+   * row stays a button as well — a tap opens its photos, which is what it has
+   * always done, so the drag adds a way and takes none away.
+   */
+  el.addEventListener('dragstart', (ev) => {
+    nightDrag = night.night;
+    ev.dataTransfer.effectAllowed = 'copy';
+    ev.dataTransfer.setData('text/plain', night.night);
+    el.classList.add('is-dragging');
+    dragging(true);
+  });
+  el.addEventListener('dragend', () => {
+    nightDrag = null;
+    el.classList.remove('is-dragging');
+    dragging(false);
+    document.querySelector('.night-bench')?.classList.remove('drop-here');
+  });
 
   const body = el.querySelector('.gig-body');
   const more = el.querySelector('.gig-more');
