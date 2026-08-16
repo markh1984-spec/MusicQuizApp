@@ -37,19 +37,19 @@ decision from the host first.
 
 ### Needs one decision first — the fix is known, the wording or the shape is not
 
-8. **The calendar export calls every night a quiz.**
+3. **The calendar export calls every night a quiz.**
    *Fix:* `src/ics.js:161` writes `SUMMARY:Quiz — <venue>` for everything.
    Build it from what was actually played. **Decision: what does a combined
    night say** — *"Quiz + Bingo — The Crown"*, or the show's own name when one
    was used?
 
-9. **The upload wording does not mention the public gallery.**
+4. **The upload wording does not mention the public gallery.**
    *Fix:* `public/assets/play.js:966` and `:140` still say only *"It goes on
    the big screen"*. The gallery is live, so that is now incomplete at the
    moment consent is given. **Decision: the host's own words.** One sentence,
    and it should be his voice rather than mine.
 
-10. **A bingo pack cannot join the running order.**
+5. **A bingo pack cannot join the running order.**
     *Fix:* the guard is one line, twice — `console-tonight.js:1834` and `:1890`
     — but **removing it is not the job**: a slot is a bare pack id, and
     `composeQuiz()` builds a QUIZ, so a bingo pack in slot 2 has nothing to
@@ -59,7 +59,7 @@ decision from the host first.
 
 ### The unblocker
 
-11. **A NIGHT AND A BOOKING ARE STILL TWO THINGS.**
+6. **A NIGHT AND A BOOKING ARE STILL TWO THINGS.**
     A booking is `{date, venue, off, note}` in `diary.js`; a played night comes
     out of `mergeGigs()` carrying a venue STRING. **There is no `venueId`
     anywhere in the repo.**
@@ -71,23 +71,23 @@ decision from the host first.
     smaller change; it breaks the day a pub is renamed. **The post-night report,
     the automatic gallery publish and winner badging all wait on this.**
 
-### After 11
+### After 6
 
-12. **Editing an intro track does not repoint what plays.** `editor.js:853-854`
+7. **Editing an intro track does not repoint what plays.** `editor.js:853-854`
     writes `cue.title`/`artist` and never touches `cue.spotifyUri`, so a
     corrected track reads right and plays the old song in front of a room.
     *Fix:* look the edited track up on save, write the URI, and echo
     *"matched X"* so a wrong match is visible before the gig.
-13. **Email has one caller.** Transport is built, two providers, reset wired.
+8. **Email has one caller.** Transport is built, two providers, reset wired.
     *Fix:* invoices next. **Decision: does it SEND, or draft for him to send?**
     CLAUDE.md's rule is the app prepares and the human sends.
-14. **"Add a past gig"** — a write route, an explicit `playerCount`, an
+9. **"Add a past gig"** — a write route, an explicit `playerCount`, an
     `enteredByHand` flag, and every reader taught to respect it.
-15. **The automatic gallery publish** — gate, route and caller are built; the
-    trigger is not. Needs 11 for a real end time.
-16. **An advert QR that COUNTS** — the offer page served from this app, so
+10. **The automatic gallery publish** — gate, route and caller are built; the
+    trigger is not. Needs 6 for a real end time.
+11. **An advert QR that COUNTS** — the offer page served from this app, so
     opens can be counted. The count is the feature, not the discount.
-17. **The post-night report** — every number it needs already exists. Needs 11.
+12. **The post-night report** — every number it needs already exists. Needs 6.
 
 Everything else — the website, the FAQ, print on demand, the nudity check,
 breakout rounds, online video, splitting `launchBar()` — is bigger, parked, or
