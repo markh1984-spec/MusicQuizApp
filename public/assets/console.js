@@ -1352,11 +1352,9 @@ function nightBenchPanel() {
           <div class="bench-do">
             ${night ? `
               ${can(FEATURES.INVOICES) ? '<button class="go bench-go role-make night-bill" type="button">Invoice this night</button>' : ''}
-              <span class="row bench-row">
-                <button class="minor night-open" type="button">Open its photos</button>
-                ${can(FEATURES.PAST_GIGS) ? `<button class="minor night-gallery" type="button">${
-    night.published ? 'Take it off the gallery' : 'Put it on the gallery'}</button>` : ''}
-              </span>`
+              <button class="minor night-open" type="button">Open its photos</button>
+              ${can(FEATURES.PAST_GIGS) ? `<button class="minor night-gallery" type="button">${
+    night.published ? 'Take it off the gallery' : 'Put it on the gallery'}</button>` : ''}`
     : `
               <p class="tiny">Drag a night up from the list below and the things
                 you do after a gig are all in one place &mdash; the invoice, the

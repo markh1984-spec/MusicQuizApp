@@ -7614,8 +7614,21 @@ body.gallery { padding: 0; }
    a pack lands on it — a panel that changes height on a drop is the reflow
    this file already refuses on the pack shelf. */
 .bench-slot .lb-drop, .bench-slot .lb-tile { min-height: 92px; }
+/* ---- A ROW OF BUTTONS SHARES A HEIGHT AND A TYPE SIZE; THE ROLE SHOWS IN
+   THE FILL, NEVER IN THE SIZE.
+
+   Reported as *"this UI is ugly, we need standards across buttons, fonts"* —
+   and the bench was the clearest case of it: three buttons, three heights,
+   three type sizes and three treatments, sitting inches apart. A big green
+   one, then two smaller ones with a pink underline.
+
+   **The size was doing the job the fill is supposed to do.** The GUI rules
+   already say what a control looks like is decided by what it DOES: filled
+   green means *make something*, outlined means *ordinary*. Nothing in them
+   says a primary is TALLER — so making it taller as well says the same thing
+   twice, and says it in the one channel that also has to keep a row tidy. */
 .bench-do {
-  display: flex; flex-direction: column; align-items: flex-start;
+  display: flex; flex-wrap: wrap; align-items: center;
   gap: 8px; min-width: 0;
   /* THE ACTIONS COLUMN RESERVES ITS FULL HEIGHT, or the panel grows when
      something lands on it. Measured: the empty state came out 18px shorter
@@ -7625,11 +7638,12 @@ body.gallery { padding: 0; }
      shelf: a panel that changes height under your hand is one you cannot aim
      at twice. The slot beside it already matches at 92px for the same reason.
 
-     THE NUMBER IS MEASURED, NOT GUESSED. It was 106 first, which was a guess
-     at what two buttons and a line of text come to, and the loaded state came
-     out 110 — so the panel still moved, by 4px instead of 18. A reserved
-     height that is nearly right is still a panel that moves. */
-  min-height: 110px;
+     THE NUMBER IS MEASURED, NOT GUESSED. It was 106 first — a guess at what
+     two buttons and a line of text come to — and the loaded state measured
+     110, so the panel still moved, by 4px instead of 18. A reserved height
+     that is nearly right is still a panel that moves. Re-measured after the
+     buttons became one wrapping row of equal height. */
+  min-height: 92px;
 }
 .bench-do p { margin: 2px 0 0; max-width: 46ch; }
 /* GREEN, NOT THE ACCOUNT GRADIENT, and sized to its words. One filled gradient
@@ -7637,17 +7651,45 @@ body.gallery { padding: 0; }
    making something is the green role. So the Console has exactly one Launch and
    the Workshop exactly one green primary, and neither can be mistaken for the
    other in a dark pub. */
-.bench .bench-go {
-  width: auto;
-  display: inline-block;
+/* EVERY BUTTON ON A BENCH, whatever its role: one height, one type size, one
+   radius. Written once for both `.go` and `.minor` so the two cannot drift —
+   which is exactly how they came to differ in the first place. */
+/* `.console` IS ON THE FRONT DELIBERATELY. Without it this loses to
+   `.console a.minor` — same class count, but that one also names an element,
+   which outranks it — so the ordinary buttons kept their own padding and
+   font-size and the row stayed ragged. The third time this trap has been
+   recorded here, after the shorthand `border` on `.lb-tile` and
+   `input[type="search"]` beating `.pack-search`. */
+.console .bench-do .go, .console .bench-do .minor {
+  height: 38px;
+  padding: 0 16px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: inherit;
+  font-size: var(--fs-ctl);
+  font-weight: 800;
+  border-radius: var(--r-field);
   text-decoration: none;
-  margin-top: 0;
-  padding: 11px 18px;
-  background: rgba(47, 224, 122, 0.14);
-  border: 1px solid rgba(47, 224, 122, 0.5);
-  color: var(--good);
+  white-space: nowrap;
+  margin: 0;
+  width: auto;
 }
-.bench .bench-go:hover { background: rgba(47, 224, 122, 0.22); filter: none; }
+/* MAKE SOMETHING IS FILLED GREEN — the role as the GUI rules define it. It was
+   outlined, which is the *ordinary* treatment, so the one button that commits
+   to something looked like the two that do not. Fill means commitment. */
+.console .bench .bench-go {
+  background: linear-gradient(120deg, #2fe07a, #17b45c);
+  border: none;
+  color: #05210f;
+}
+.console .bench .bench-go:hover { filter: brightness(1.06); }
+/* The date beside the heading is the same size as it, a rung dimmer — two
+   different type sizes on one line is what made the head read as a caption
+   stuck onto a title. */
+.bench .lb-shut-what { font-size: var(--fs-ctl); font-weight: 700; }
+/* The tile's own words sit at the TOP, against the date. They were bottom
+   aligned, which left most of the box empty and the text floating away from
+   the label it belongs to. */
+.night-tile { display: flex; flex-direction: column; justify-content: flex-start; gap: 2px; }
 .bench.drop-here { border-color: var(--good); }
 
 /* A night dragged up to the Post gig bench. Same affordance as a pack card. */
@@ -7656,5 +7698,3 @@ body.gallery { padding: 0; }
 /* The night tile has no subject colour to wear — a night is not a pack — so it
    takes the plain surface and says its date, venue and headcount instead. */
 .night-tile { background: rgba(255, 255, 255, 0.05); }
-/* Two small buttons that belong together, on one line rather than one each. */
-.bench-row { display: flex; gap: 8px; flex-wrap: wrap; }

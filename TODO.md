@@ -1905,6 +1905,35 @@ It touches the tab every gig starts from, so it wants its own screenshots at
 1280 and 390, and a real Launch pressed in a browser afterwards — the protected
 surface, not a diff review.
 
+### EDITING HAPPENS IN A POPOVER, AND THE DRAFT IS NEVER LOST
+
+Asked for on 16 August 2026 against the Workshop bench: *"both of these
+functions should open a popover where you can edit this — if you accidentally
+click off or if there is a crash it should keep your work saved to the latest
+version."*
+
+**THE ONE DECISION IN IT IS WHAT "SAVED" MEANS, and only one answer is safe.**
+
+Saving to the PACK as you type is the obvious reading and it is dangerous:
+`reloadPackEverywhere()` pushes a saved pack into any game currently running
+it, on purpose, because that is how a correction reaches a quiz already on
+question four. So autosaving a half-typed question would put it on a projector
+between rounds — rule 11 working exactly as designed, aimed at the wrong thing.
+
+**So: a DRAFT kept locally as you type, written to the pack only on an explicit
+Save.** Crash-proof, survives clicking off, survives a reload, and nothing
+reaches a room until somebody says so. Reopening offers to carry on or throw it
+away, which is the same shape the editor's `dirty` flag already has.
+
+That also settles the click-off behaviour without a "are you sure" dialog:
+**closing costs nothing when the draft is already on disk**, so clicking off
+simply closes it. A confirm on every stray click is the control that trains
+people to dismiss confirms.
+
+Worth doing properly rather than at the end of a session: the editor is a whole
+page (`editor.js`) today, and a popover version that half-works on the one door
+somebody would use it from is worse than the link that is there now.
+
 ### EVERY DOOR GETS A BENCH — the same drop zone, doing that door's job
 
 Proposed on 16 August 2026: *"I think perhaps the workshop and post gig should
