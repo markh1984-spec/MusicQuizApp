@@ -82,8 +82,16 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * answer to "the budget only ever goes up" — it does not have to. When the
  * ceiling is a few bytes away, the move is to find the prose that should never
  * have been in an always-loaded file, not to shave words off a rule.
+ *
+ * **AND DOWN TO 133,000 ON 16 AUGUST 2026, WITH THE CONTEXT BUDGET RULE ITSELF
+ * ADDED.** The host asked for the budget to be a thing the next session
+ * inherits, and a long rule about saving context defeats itself — so it was
+ * paid for before it was written. The lobby-games section went from 7,599
+ * bytes to 2,500, every prohibition kept verbatim and the reasoning moved to
+ * `docs/lobby-games.md`. Net: a new always-loaded section AND 2,600 bytes off
+ * the ceiling.
  */
-const BUDGET = 135_000;
+const BUDGET = 133_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

@@ -567,3 +567,113 @@ which on Quick Draw is a shot, and the shot could be the sheriff.** Under the
 canvas it can overlap nothing and steal no gesture, and it is still on the game
 rather than in a settings page: the moment somebody wants sound is the moment
 they are looking at this.
+
+
+---
+
+## The lobby games — the full note as it stood in CLAUDE.md
+
+
+`public/assets/maze.js` + `lobby-game.js` (Maze Mouth), `rally.js` +
+`lobby-rally.js` (Rally), `tailback.js` + `lobby-tailback.js` (Tailback),
+`lobby-games.js` (the list and the tiers, read by the SERVER and the browser),
+`lobby-menu.js` (the card and the loaders), `lobby-board.js` (the projector's
+board), `src/arcade.js` (the scores, shared by both engines),
+`state.gameSeed`, `state.arcade`, `state.lobbyGame`.
+
+- **THE DEFAULT FOLLOWS THE GAME RATHER THAN THE ACCOUNT: Maze Mouth before a
+  quiz, Rally before the bingo.** A bingo night should have a character of its
+  own rather than being the quiz with different content in it, and a remembered
+  per-account preference would be wrong on half the nights of anybody who runs
+  both.
+- **WHICH GAME IS A DECISION ABOUT TONIGHT**, so it goes where the look and the
+  card shape go — chosen under **Set it up**, written into `state.lobbyGame` at
+  launch, restored after a crash. **THE TIER IS CHECKED AT THE ROUTE, never in
+  the console**, and a game above the tier is **dropped in favour of the
+  default rather than refused**: losing a choice costs a game nobody has seen
+  yet, where refusing the launch costs the night. **The phone honours
+  `s.lobbyGame` and re-checks nothing**, or the console and the room disagree.
+- **THE TIER GATES HOW MANY GAMES, NOT WHETHER THERE IS ONE.** Bronze holds the
+  two that ship and they are also the two defaults; higher tiers hold what is
+  added after. **Do not sell the game itself away from the bottom tier** — a
+  phone with a game on it stays in the FOREGROUND, so sixty connections do not
+  all come back at the moment the join gate is busiest. That is a RELIABILITY
+  feature dressed as a toy. **Locked games are SHOWN, not filtered out.**
+- **THEY ARE CALLED MAZE MOUTH, RALLY, TAILBACK AND QUICK DRAW.** The names,
+  mazes and characters of the things the first three resemble are Namco's and
+  Atari's, and this app is SOLD — a legal line, not a taste one. Say whatever
+  you like on a mic; do not print it. **An unnamed game keeps inviting the
+  wrong name**, which is why the later ones were named before they were
+  written. (Quick Draw is the exception that proves it: a shooting gallery is
+  a fairground stall older than video games, so the honest name was also the
+  safe one.)
+- **THERE ARE THREE WAYS A GAME IS MADE THE SAME ON EVERY PHONE, and a new one
+  must use one of them:** a GRID with a fixed step (Maze Mouth, Tailback),
+  an ACCUMULATOR of whole ticks with the catch-up capped (Rally), or a
+  SCHEDULE where the state at time T is a pure function of the seed and T
+  (Quick Draw — the cleanest, because nothing accumulates so nothing drifts).
+  **A frame delta is none of them and is always wrong here.** And note the one
+  limit that cannot be engineered away: a REACTION game makes input latency
+  part of the score, so its windows have to stay generous enough that eighty
+  milliseconds of handset is noise.
+- **ONE SCOREBOARD FOR BOTH, in `src/arcade.js`** — the same clamp, the same
+  best-not-latest rule and the same refusal outside the lobby, called by both
+  engines. Two copies is two rules, and the day one is fixed is the day a bingo
+  lobby accepts a score a quiz lobby refuses.
+- **RALLY RUNS ON A FIXED TIMESTEP, NEVER A FRAME DELTA**, and that is the same
+  fairness argument as the seed rather than a performance one: advanced by
+  `dt`, a 120Hz phone and a tired 30Hz one play measurably different games, so
+  two people on one board would be comparing handsets. `tick()` advances
+  exactly one `TICK_MS` and the canvas accumulates real time into whole ticks —
+  **capped**, or a phone that was face down on a table for two minutes wakes up
+  and spends the whole gap at once, losing every life before it repaints.
+- **EVERY PHONE PLAYS THE SAME GAME**, seeded from `state.gameSeed`, set at
+  launch and living in the state — or the scoreboard compares two different
+  games and means nothing.
+- **IT CANNOT REACH A QUIZ**, and there are tests for each half: the seed is in
+  the phone's payload at the LOBBY only, a score is refused at any other phase,
+  and the board is on the projector at the lobby only.
+- **Behind a button, below the photo card** — *"don't want to disincentivise
+  photo uploads"*. The module is imported only when the button is pressed.
+- **No control panel: you tap and it walks there.** A swipe has to be READ and a
+  misread one costs a life. `touch-action: none` on the canvas is load-bearing.
+- **ONE POST LEAVES A PHONE, at game over and at each life lost.** Never a
+  stream of positions — the lobby is exactly when sixty people are joining.
+  Banking at each life is what puts the people who played LONGEST on the board:
+  a game interrupted by the night starting never reaches game over, and by then
+  the phase has moved and a score is rightly refused.
+- **THE GAME IS STOPPED IN `buildScreen()`, ON EVERY REBUILD.** It used to be
+  torn down only inside `wireArcade`, which runs only while the WAITING screen
+  is being built — so a game open when the quiz started had its canvas thrown
+  away and its loop left running for the rest of the night, on a detached
+  canvas, holding a window `keydown` listener that swallowed the arrow keys.
+  Nothing showed on screen, and the comment above it claimed it could not
+  happen. **A teardown belongs where every phase change passes, not where the
+  thing being torn down is built.**
+- **Each moment has a primary: the game before the quiz, photos between the
+  rounds.** The floating camera button stands down in the lobby.
+- **SOUND IS SYNTHESISED, ON BY DEFAULT, AND NEVER ON A TIMER.**
+  `lobby-sound.js` — Web Audio, no files, like everything else here is drawn.
+  **It shipped OFF and that was wrong**, on a worry about phones making noises
+  over the host's mic: the game only exists in the LOBBY, so a noise during a
+  question is not unlikely but impossible, by three mechanisms that each have
+  tests. **What makes on-by-default safe is that the HOST can switch it off** —
+  *Game sound* under Set it up, into `state.lobbySound` at launch, because a
+  quiet gastropub and a rowdy Friday are not the same room. **The host's switch
+  wins and does not wipe the phone's own**; both default to on wherever the
+  field could be absent. **Every noise is tied to something the player DID**
+  — nothing on a timer, or it is sixty phones chirping at nobody. It never
+  carries information: a phone on a pub table is on silent and iOS mutes Web
+  Audio outright, so every game stays playable in silence. **There is no yeehaw
+  and that is deliberate** — a synthesised whoop is a kazoo and a recorded one
+  is an asset; shipping one is a decision to break the no-assets rule on
+  purpose. The toggle is UNDER the canvas: on it, a tap that missed by a few
+  pixels is a shot, and the shot could be the sheriff.
+- **THE BOARD IS ON THE PROJECTOR AT THE LOBBY ONLY** — `lobby-board.js`, one
+  file for both projectors, inside the white QR panel and UNDER the code, which
+  nothing in this app may dim. **It was computed and never drawn for as long as
+  the feature existed**: both engines put it in the payload, there was a test
+  asserting the payload had it, this file said it was on screen, and no
+  projector ever read the field — while the phone's own button promised *"Top
+  scores go on the big screen"*. **A test that the payload is right proves
+  nothing about whether anybody drew it.**
