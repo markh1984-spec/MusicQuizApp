@@ -21,7 +21,7 @@ import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFi
 // ONE cap on how many prizes a night can carry, shared with the venue record
 // that authors them — two copies of a number like this drift, and the one that
 // drifts is the one nobody is looking at.
-import { MAX_REWARDS } from './invoices.js';
+import { MAX_REWARDS, tidyBingoRewards } from './invoices.js';
 import { listQuizzes } from './quizzes.js';
 import { listBingoPacks, recordLaunch, archiveResults, updateArchivedNight, HOUSE_ROOM } from './library.js';
 import { findSlide } from './adverts.js';
@@ -391,7 +391,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, look = '', lobbyGame = '', lobbySound = true, online = false, teamPlay = false, venue = '', rewards = [], venueLogo = '', comeBack = null, askForRounds = false, roundIdeas = [], order = null } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, look = '', lobbyGame = '', lobbySound = true, online = false, teamPlay = false, venue = '', rewards = [], bingoRewards = [], prizeEveryRound = true, venueLogo = '', comeBack = null, askForRounds = false, roundIdeas = [], order = null } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     /*
      * TONIGHT'S RUNNING ORDER, when one was built — rounds from more than one
@@ -413,13 +413,50 @@ export class Session {
       Object.assign(normalised, shapeFields(shape));
     }
     this.build(kind, normalised, null);
-    // How many prizes tonight, decided alongside the card shape and for the
-    // same reason: it is a decision about this evening, not about the pack.
-    if (kind === 'bingo' && prizes) {
-      const wanted = Math.max(1, Math.min(maxPrizes(this.engine.shape), Math.floor(prizes)));
-      this.engine.state.stages = stagePlan(wanted);
-      this.engine.state.stageIndex = 0;
-      this.engine.syncTarget();
+    /*
+     * WHAT BINGO IS PLAYING FOR, AND WHAT EACH STAGE PAYS.
+     *
+     * The venue's pairs win when there are any: *"my 5x5 rounds usually give a
+     * prize for 1, 3 and 5 lines."* `stagePlan()` only ever produced
+     * CONSECUTIVE stages — 1, 2, 3 — which is exactly why that could not be
+     * expressed before. **The engine never needed changing**: `state.stages`
+     * has always been an arbitrary list, and `evaluate()` tests
+     * `done.length < stage`.
+     *
+     * **A STAGE THIS CARD CANNOT REACH IS DROPPED, NEVER REFUSED.** A 4x4 has
+     * no fifth line, so a venue whose arrangement pays at five lines simply
+     * does not pay that one tonight. Losing a stage costs one prize; refusing
+     * the launch costs the night — the same rule the lobby game's tier check
+     * follows, and for the same reason.
+     *
+     * The old `prizes` COUNT still works and is the fallback, so a launch from
+     * anything that has not been updated behaves exactly as it did.
+     */
+    if (kind === 'bingo') {
+      const cap = maxPrizes(this.engine.shape);
+      const paid = tidyBingoRewards(bingoRewards)
+        .filter((r) => r.stage === 'full' || r.stage <= cap);
+      if (paid.length) {
+        this.engine.state.stages = paid.map((r) => r.stage);
+        this.engine.state.stagePrizes = paid.map((r) => r.reward);
+        this.engine.state.stageIndex = 0;
+        this.engine.syncTarget();
+      } else if (prizes) {
+        const wanted = Math.max(1, Math.min(cap, Math.floor(prizes)));
+        this.engine.state.stages = stagePlan(wanted);
+        this.engine.state.stagePrizes = [];
+        this.engine.state.stageIndex = 0;
+        this.engine.syncTarget();
+      }
+      /*
+       * Does every round pay the full set, or is the set for the whole night?
+       * His call, and it goes in the state like the shape and the lobby game
+       * because it is a decision about TONIGHT. Per round is the default:
+       * `newRound()` reissues every card, and a table that won in round one
+       * having nothing left to play for is the retention fault the lucky dip
+       * exists to fix.
+       */
+      this.engine.state.prizeEveryRound = prizeEveryRound !== false;
     }
     /*
      * How it looks tonight.

@@ -1662,6 +1662,14 @@ async function handleGet(req, res, url, route) {
           id: c.id,
           name: c.name,
           rewards: Array.isArray(c.rewards) ? c.rewards : [],
+          /*
+           * And what bingo pays, at which stage. In the SAME payload as the
+           * quiz's prizes, or the Venues tab can edit one and not the other —
+           * which is the fault this file found twice in one day: computed on
+           * one side, never sent, and the screen reading a field that is not
+           * there.
+           */
+          bingoRewards: Array.isArray(c.bingoRewards) ? c.bingoRewards : [],
           // Which night they have you, so the console can work out whose night
           // tonight is without a second request — see `tonightsVenue()`.
           usualNight: c.usualNight || '',
@@ -5039,6 +5047,16 @@ async function handleWrite(req, res, url, route) {
          * ends up on the winner's phone above the code, so the voucher reads
          * as something the pub issued rather than a string.
          */
+        /*
+         * And what BINGO pays, at which stage — off the same record and for
+         * the identical reason. Pairs rather than a flat list, because a quiz
+         * pays by PLACE and bingo pays by STAGE: *"my 5x5 rounds usually give
+         * a prize for 1, 3 and 5 lines."* A body that carries them still wins,
+         * exactly as `rewards` does, so a curl call and every test keep
+         * working.
+         */
+        const bingoRewards = Array.isArray(body.bingoRewards) ? body.bingoRewards
+          : (Array.isArray(record.bingoRewards) ? record.bingoRewards : []);
         const venueLogo = String(record.logo || '');
         /*
          * WHEN THE NEXT ONE IS — WORKED OUT HERE, not sent, exactly like the
@@ -5084,7 +5102,7 @@ async function handleWrite(req, res, url, route) {
           ? pickIdeas((fullLibrary(config, room.id, listOwn(room.paths)).quizzes || [])
             .map((q) => q.title))
           : [];
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, lobbyGame, lobbySound, online, teamPlay, venue, rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas, order: wantedOrder });
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, lobbyGame, lobbySound, online, teamPlay, venue, rewards, bingoRewards, prizeEveryRound: body.prizeEveryRound !== false, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas, order: wantedOrder });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();

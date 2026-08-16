@@ -57,6 +57,55 @@ export const STATUSES = ['draft', 'sent', 'paid', 'cancelled'];
 export const MAX_REWARDS = 20;
 
 /**
+ * WHAT BINGO PAYS, AND AT WHICH STAGE — the venue's own arrangement.
+ *
+ * Asked for on 16 August 2026: *"my 5x5 rounds usually give a prize for 1, 3
+ * and 5 lines but this should be customisable."*
+ *
+ * **PAIRS, because a quiz pays by PLACE and bingo pays by STAGE.** `rewards`
+ * above is 1st, 2nd, 3rd — a flat list indexed by position. This is
+ * `{ stage, reward }`, where a stage is a NUMBER OF LINES or `'full'` for a
+ * full house. One list could not serve both without one of them being read
+ * wrongly, and the stage and its prize are a single decision anyway.
+ *
+ * **NOT CONSECUTIVE, and that is the whole request.** `stagePlan(n)` in
+ * bingo.js generates 1, 2, 3… which is why the app could not express 1, 3, 5
+ * until now. The engine never needed changing — `state.stages` has always been
+ * an arbitrary list.
+ *
+ * Sorted and de-duplicated, with the full house last wherever it was typed: a
+ * full house cannot be won before three lines, so a plan that asked for it
+ * first would be a stage nobody could reach in order.
+ */
+export const MAX_BINGO_STAGES = 5;
+/** The most lines any card in this app can be asked for. See `maxPrizes()`. */
+const MAX_STAGE_LINES = 5;
+
+export function tidyBingoRewards(list) {
+  const seen = new Set();
+  const out = [];
+  for (const row of Array.isArray(list) ? list : []) {
+    if (!row) continue;
+    const raw = row.stage;
+    const stage = raw === 'full' ? 'full'
+      : Math.min(MAX_STAGE_LINES, Math.max(1, Math.floor(Number(raw) || 0)));
+    if (!stage || seen.has(stage)) continue;
+    const reward = String(row.reward || '')
+      .replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+    seen.add(stage);
+    out.push({ stage, reward });
+  }
+  // A full house is the hardest thing on the card, so it is always last
+  // whatever order somebody typed the rows in.
+  out.sort((a, b) => {
+    if (a.stage === 'full') return 1;
+    if (b.stage === 'full') return -1;
+    return a.stage - b.stage;
+  });
+  return out.slice(0, MAX_BINGO_STAGES);
+}
+
+/**
  * How big a venue logo may be, once the browser has shrunk it.
  *
  * 128px square is what a phone actually shows above a voucher, and a PNG that
@@ -435,6 +484,12 @@ export class Invoices {
         .slice(0, MAX_REWARDS)
         .map((r) => String(r || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80)),
       /*
+       * And what BINGO pays, at which stage. Its own field beside the quiz's
+       * for the reason written at `tidyBingoRewards()`: a quiz pays by place
+       * and bingo pays by stage, so one list cannot serve both.
+       */
+      bingoRewards: tidyBingoRewards(customer.bingoRewards),
+      /*
        * WHICH NIGHT THEY HAVE YOU, and it is the cheapest possible diary.
        *
        * The host's own chain: *"I did the Dog and Duck on a Thursday and the
@@ -511,7 +566,7 @@ export class Invoices {
    * fields the gig-night side of the record owns, and it moves each one only
    * if it was actually sent.
    */
-  setVenueDetails(id, { rewards, usualNight, link, logo } = {}) {
+  setVenueDetails(id, { rewards, bingoRewards, usualNight, link, logo } = {}) {
     const customer = this.data.customers.find((c) => c.id === id);
     if (!customer) return null;
     if (rewards !== undefined) {
@@ -522,6 +577,9 @@ export class Invoices {
     // Each field only if it was SENT, so the Venues tab saving prizes cannot
     // clear a usual night and vice versa — the same reason this method exists
     // at all rather than being a call to saveCustomer.
+    // Same rule again: bingo's prizes move only when they were sent, so saving
+    // the quiz's cannot blank them.
+    if (bingoRewards !== undefined) customer.bingoRewards = tidyBingoRewards(bingoRewards);
     if (usualNight !== undefined) {
       customer.usualNight = WEEKDAYS.includes(String(usualNight || '')) ? String(usualNight) : '';
     }

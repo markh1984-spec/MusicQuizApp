@@ -1936,7 +1936,39 @@ directly and everything downstream is already correct: `evaluate()` tests
 field honest. Verified by running a 5x5 game with `[1, 3, 5]` on it — 12 lines
 available, right labels, right targets, `onLastStage` right.
 
-**So this is plumbing, not a rewrite of the bingo loop.** What is missing:
+**HALF OF IT IS BUILT — 16 August 2026 — and the built half is verified end to
+end:** the venue record carries the pairs (`tidyBingoRewards()` in
+`invoices.js`, sorted, de-duplicated, full house always last), the library
+payload sends them, `setVenueDetails` moves them under the same only-if-sent
+rule as the quiz's, and a launch at that venue puts `stages: [1, 3, 'full']`
+with the right labels on a 5x5 night. Proved over real HTTP, not by reading.
+
+**WHAT IS LEFT, in the order to do it:**
+
+1. **BINGO VOUCHERS — the biggest piece and the one the host said yes to.**
+   `src/bingo.js` has the word "voucher" in it zero times. It needs
+   `state.vouchers`, a mint at each stage win (to the winning player, carrying
+   `stageLabel()` as its place and `state.stagePrizes[stageIndex]` as its
+   reward), `redeemVoucher`/`reinstateVoucher` to match the Engine's — the `/v`
+   page and the redeem route both call `session.engine.redeemVoucher` and do
+   not care which game it is — and `voucher` in `playerView()`. **Reuse the
+   quiz's shapes exactly**, or the bar scans one kind of code on a quiz night
+   and something else on a bingo night.
+2. **`state.prizeEveryRound` IS SET AT LAUNCH AND NOTHING READS IT YET.**
+   `newRound()` has to reset `stageIndex` and let the set pay again when it is
+   true, and stop paying when it is false. **This is a control that exists and
+   does nothing until that is written** — the exact fault this file keeps
+   recording, so it is second on the list rather than last.
+3. **THE UI, three places.** The venue card needs stage/prize rows (the quiz's
+   three boxes are `.v-reward`; these are pairs, so a stage picker beside each
+   box). Tonight's `.lb-noprize` and `prizePanel()` on the control view both
+   need to know about bingo — `prizePanel()` returns `[]` for bingo today, and
+   Tonight reads `record.rewards` only, so **a bingo night at a venue with
+   bingo prizes currently says "no prizes tonight" and is wrong.**
+4. **A launch switch for per-round/per-night**, under Set it up with the card
+   shape.
+
+**The original plan, for the parts not yet done:**
 
 1. **The venue record carries bingo prizes as PAIRS** — `{ stage, reward }`,
    e.g. `1 → a bottle of wine`, `3 → two pints`, `5 → a £20 tab`. Its own field
