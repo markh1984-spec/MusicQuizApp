@@ -683,6 +683,35 @@ const TABS = [
     render: () => tonightSettingsPanel(),
   },
   {
+    /*
+     * SHOWS — a whole evening, built in advance and dragged onto Tonight.
+     *
+     * The host's own diagnosis: *"the launch bar is launching nights, but
+     * we're frankensteining nights instead of having a nights section. You
+     * build a night in advance and then just drag it in onto the launch
+     * console."* The bar composes a night AT THE MOMENT OF LAUNCHING IT,
+     * which is the worst time in the week to be composing anything.
+     *
+     * **CALLED A SHOW BECAUSE "NIGHT" IS ALREADY TAKEN TWICE.** Calendar's
+     * things are bookings — the pub's night — and Gigs' are the archived
+     * record of a night that happened. A third "Nights" would be one word for
+     * three sets on adjacent doors, which is exactly the collision the sweep
+     * rules exist to catch. A show is the performer's word for the whole
+     * evening at a venue, and this app's user is hired as the entertainer.
+     *
+     * **BEHIND BOTH DOORS, like Venues, and for the same reason.** In the
+     * Workshop it is a thing you build and tidy; on the Console it is a shelf
+     * you drag off, ten minutes before a gig, with nothing else on it.
+     */
+    id: 'shows',
+    doors: ['console', 'workshop'],
+    needs: FEATURES.LIBRARY,
+    label: 'Shows',
+    blurb: 'A whole evening, built in advance — packs, venue, prizes and settings.',
+    count: () => (library.shows || []).length,
+    render: () => showsSection(),
+  },
+  {
     id: 'adverts',
     doors: ['workshop'],
     needs: FEATURES.ADVERTS,
@@ -3277,6 +3306,71 @@ let offDrag = false;
 let venueDrag = null;
 
 /**
+ * A SHOW being dragged up to Tonight — the whole evening at once.
+ *
+ * The third thing that can be dropped on the bar, after a pack and a venue,
+ * and it is the one that makes the other two optional: *"we're frankensteining
+ * nights instead of having a nights section — you build a night in advance and
+ * then just drag it in onto the launch console."*
+ */
+let showDrag = null;
+
+/**
+ * A SHOW WAITING TO BE PUT INTO THE BAR, applied on the next render.
+ *
+ * It cannot be applied where it is picked up. Everything the bar is made of —
+ * the game dropdown, the pack shelf, `pick()`, the repaints — lives inside the
+ * closure `launchBar()` builds, and the Shows tab is a different function
+ * entirely. Handing the show over as a module-level intention and letting the
+ * bar apply it while it builds itself is the same arrangement `lbExtra` and
+ * `lbOff` already use, and it means there is exactly one place that knows how
+ * to turn a saved night back into a bar.
+ */
+let showWanted = null;
+
+/**
+ * Put a whole evening back into Tonight.
+ *
+ * Deliberately not a launch: it fills the bar in and leaves the finger on the
+ * button, which is the same promise every other route into Tonight makes.
+ */
+function loadShow(show) {
+  /*
+   * WHAT IS MISSING IS SAID HERE, NOT INSIDE THE BAR.
+   *
+   * `applyShow()` runs while `launchBar()` is building itself — and `render()`
+   * evaluates `doneBanner()` BEFORE `launchBar()`, so a message raised in
+   * there would not appear until the render after next. The check belongs on
+   * this side of the render regardless: this is the moment somebody asked for
+   * the night, so it is the moment to tell them a pack has gone.
+   */
+  const shelf = (show.kind === 'bingo' ? library.bingo : library.quizzes) || [];
+  const ids = (show.order && show.order.length)
+    ? [...new Set(show.order.map((r) => r.packId))]
+    : [String(show.packId || '')];
+  const gone = ids.filter((id) => !shelf.some((p) => p.id === id));
+  if (gone.length && gone.length === ids.length) {
+    // Nothing of it is left, so the bar is not touched — emptying what was
+    // already set up would be a second fault on top of the first.
+    showDone('bad', `<strong>${esc(show.name)}</strong> cannot be loaded: ${
+      gone.length === 1 ? `there is no pack called ${esc(gone[0])} any more`
+        : 'none of its packs are on your shelf any more'}.`);
+    render();
+    return;
+  }
+  if (gone.length) {
+    showDone('bad', `<strong>${esc(show.name)}</strong> is missing ${
+      gone.length === 1 ? `one pack (${esc(gone[0])})` : `${gone.length} packs`
+    }, so it has loaded without ${gone.length === 1 ? 'it' : 'them'}. `
+      + 'Check the running order before you launch.');
+  }
+  showWanted = show;
+  tonightOpen = true;
+  localStorage.setItem(TONIGHT_STORE, '1');
+  renderKeepingPlace();
+}
+
+/**
  * TONIGHT GOES STICKY WHILE SOMETHING IS BEING DRAGGED.
  *
  * The section lives at the top of the tab and a venue card can be most of a
@@ -4807,7 +4901,7 @@ function launchBar() {
   });
 
   el.addEventListener('dragover', (ev) => {
-    if (!packDrag && !venueDrag) return;
+    if (!packDrag && !venueDrag && !showDrag) return;
     ev.preventDefault();
     ev.dataTransfer.dropEffect = 'copy';
     el.classList.add('drop-here');
@@ -4824,10 +4918,25 @@ function launchBar() {
     }
   });
   el.addEventListener('drop', (ev) => {
-    if (!packDrag && !venueDrag) return;
+    if (!packDrag && !venueDrag && !showDrag) return;
     ev.preventDefault();
     el.classList.remove('drop-here');
     openForDrop();
+
+    /*
+     * A WHOLE EVENING DROPPED IN. It goes through `loadShow`, which is the
+     * same path the Shows tab's own tap uses — one way for a show to reach the
+     * bar, so a drag and a tap cannot come to mean different things. It
+     * re-renders, so nothing below here may run afterwards.
+     */
+    if (showDrag) {
+      const show = showDrag;
+      showDrag = null;
+      dragging(false);
+      giveTheFoldBack();
+      loadShow(show);
+      return;
+    }
 
     /*
      * A VENUE DROPPED IN GOES THROUGH `chooseVenue`, which is the same path
@@ -4902,9 +5011,117 @@ function launchBar() {
   fold.addEventListener('click', (ev) => { ev.stopPropagation(); toggleFold(); });
   el.querySelector('.lb-head').addEventListener('click', () => { if (!tonightOpen) toggleFold(); });
 
+  /**
+   * A SAVED NIGHT GOES BACK INTO THE BAR — every field of it, in one move.
+   *
+   * **A show is a saved launch**, so this is the exact inverse of the object
+   * `doLaunch` sends: the packs, which rounds are on, where, in the room or
+   * online, and every setting. Nothing is left for somebody to remember, which
+   * is the whole reason to build a night in advance.
+   *
+   * **THE RUNNING ORDER IS REBUILT INTO THE TWO THINGS THE BAR ACTUALLY
+   * HOLDS**, rather than stored a third way: the packs become `lbExtra` and
+   * everything the order leaves out becomes `lbOff`. That mapping is exact,
+   * because `nightOrder()` derives the order from those two and nothing else —
+   * and it means a loaded show can be edited with the same ticks and drags as
+   * a night built by hand, which a separate "a show is loaded" mode would not.
+   *
+   * **IT NEVER LAUNCHES.** `startOn()` runs immediately after this and calls
+   * `pick(currentPack, { quiet: true })`, and quiet is what stops a re-render
+   * putting something on the projector. Dropping a show in fills the bar and
+   * leaves the finger on the button — the same promise dragging a pack makes.
+   *
+   * **A PACK THAT HAS GONE IS SAID, NOT SKIPPED.** Silently launching four
+   * rounds of a five-round night you built last week is the fault
+   * `composeQuiz()` already refuses to commit at the server; saying so here is
+   * the same refusal, days earlier, where it can still be fixed.
+   */
+  function applyShow(show) {
+    showWanted = null;
+    if (gamePick && show.kind && gamePick.value !== show.kind) gamePick.value = show.kind;
+    const shelf = gameOf().packs;
+    const ids = (show.order && show.order.length)
+      ? [...new Set(show.order.map((r) => r.packId))]
+      : [String(show.packId || '')];
+    /*
+     * A PACK THAT HAS GONE IS DROPPED SILENTLY HERE, because `loadShow()` has
+     * already said so in a banner above the bar. It has to be said on that
+     * side of the render — `render()` builds `doneBanner()` before it builds
+     * this — and saying it twice would be worse than saying it once.
+     */
+    const here = ids.filter((id) => shelf.some((p) => p.id === id));
+    if (!here.length) return;
+    currentPack = shelf.find((p) => p.id === here[0]);
+    lbExtra = here.slice(1);
+    lbOff = new Set();
+    if (show.order && show.order.length) {
+      const on = new Set(show.order.map((r) => offKey(r.packId, r.round)));
+      for (const pack of lbPacks()) {
+        for (const r of roundsOf(pack)) {
+          if (!on.has(offKey(r.packId, r.round))) lbOff.add(offKey(r.packId, r.round));
+        }
+      }
+    }
+    // `null` rather than an empty string when the show names no venue, or a
+    // show saved before a venue was set would override tonight's own answer
+    // with "nowhere" — see `venueNow()`.
+    lbVenue = show.venue || null;
+    lbOnline = Boolean(show.online);
+    night.look = String(show.look || '');
+    night.lobbyGame = String(show.lobbyGame || '');
+    // Both halves default to ON wherever the field could be absent — the same
+    // rule the lobby sound follows everywhere else.
+    night.lobbySound = show.lobbySound !== false;
+    night.teamPlay = Boolean(show.teamPlay);
+    night.shape = (show.shape && show.shape.rows && show.shape.cols)
+      ? { rows: Number(show.shape.rows), cols: Number(show.shape.cols) } : null;
+    night.prizes = Math.max(0, Math.min(5, Number(show.prizes) || 0));
+  }
+  if (showWanted) applyShow(showWanted);
+
   paintMode();
   startOn();
   return el;
+}
+
+/**
+ * TONIGHT AS A SHOW — the object that would be saved if you pressed Save now.
+ *
+ * Read off the SAME module-level state the launch reads, deliberately, so a
+ * saved show and the night that would have been launched cannot differ. It is
+ * the one thing that would make this feature worse than useless: a show that
+ * plays something other than what was on the bar when you saved it.
+ *
+ * `order` is null for an ordinary one-pack night, exactly as at launch, and
+ * `normalise()` on the server drops it — so a plain night saved as a show
+ * launches down the road it always did rather than through the composer.
+ */
+function tonightAsShow(name) {
+  if (!currentPack) return null;
+  const packs = [currentPack.id, ...lbExtra];
+  const kind = (library.bingo || []).some((p) => p.id === currentPack.id) ? 'bingo' : 'quiz';
+  const rounds = [];
+  for (const id of packs) {
+    const pack = [...(library.quizzes || []), ...(library.bingo || [])].find((p) => p.id === id);
+    (pack && pack.rounds ? pack.rounds : []).forEach((_, i) => {
+      if (!lbOff.has(`${id}:${i}`)) rounds.push({ packId: id, round: i });
+    });
+  }
+  const plain = packs.length < 2 && !lbOff.size;
+  return {
+    name,
+    kind,
+    packId: currentPack.id,
+    ...(plain || kind === 'bingo' ? {} : { order: rounds }),
+    venue: lbVenue !== null ? lbVenue : ((tonightsVenue() || {}).name || ''),
+    online: lbOnline,
+    look: night.look,
+    lobbyGame: night.lobbyGame,
+    lobbySound: night.lobbySound,
+    teamPlay: night.teamPlay,
+    shape: night.shape,
+    prizes: night.prizes,
+  };
 }
 
 /**
@@ -8478,6 +8695,26 @@ function tonightSettingsPanel() {
       </div>
       ${pack ? '' : `<p class="tiny set-none">Drag a pack into Tonight and the
         card shape and prizes appear here too.</p>`}
+      <!--
+        KEEP THE WHOLE EVENING — the way a show is built, and it is deliberately
+        not a second composer.
+
+        Everything a show holds is already on the bar and on this tab: the
+        packs, which rounds are on, the venue, the look, the lobby game, the
+        prizes. Building it again in the Workshop would be a second surface
+        that could disagree with the launch, on the one thing that must not —
+        so a show is made by setting a night up here and keeping it, and the
+        Shows tab is where you take one back off the shelf.
+
+        At the BOTTOM of the settings, because it is the last thing you do:
+        set it up, then keep it. Ordinary rather than green — "make something"
+        is a whole new pack, and this is a note of what is already in front of
+        you.
+      -->
+      <div class="set-keep">
+        <button class="minor set-save" type="button">Keep this as a show</button>
+        <span class="tiny set-keep-why"></span>
+      </div>
     </div>`);
 
   /* Start on whatever the night already holds, so coming back to the tab shows
@@ -8516,6 +8753,177 @@ function tonightSettingsPanel() {
   el.querySelector('.sound-pick')?.addEventListener('change', (ev) => { night.lobbySound = ev.target.value !== 'off'; });
   el.querySelector('.play-pick')?.addEventListener('change', (ev) => { night.teamPlay = ev.target.value === 'teams'; });
 
+  /*
+   * KEEPING TONIGHT AS A SHOW.
+   *
+   * Present and inert rather than absent when there is nothing to keep — the
+   * rule this bar already follows for Launch and Set it up, and for the same
+   * reason: a control that comes and goes is one you cannot learn the position
+   * of. It says WHY it is off rather than merely being grey.
+   */
+  const save = el.querySelector('.set-save');
+  const why = el.querySelector('.set-keep-why');
+  if (!pack) {
+    save.disabled = true;
+    why.textContent = 'Nothing in Tonight to keep yet.';
+  }
+  save.addEventListener('click', async () => {
+    const draft = tonightAsShow('');
+    if (!draft) return;
+    /*
+     * THE NAME IS SUGGESTED, NEVER IMPOSED. "Thursday at The Crown" is what
+     * somebody would have typed, and a prompt pre-filled with it is one tap
+     * for the common case and still a free field for the rest. A show named
+     * after its pack would collide the moment a second night used it.
+     */
+    const suggestion = draft.venue
+      ? `${dayName(new Date())} at ${draft.venue}`
+      : (currentPack.title || 'Tonight');
+    const name = prompt('What is this show called?', suggestion);
+    if (name === null) return;
+    if (!name.trim()) return;
+    save.disabled = true;
+    const wasHtml = save.innerHTML;
+    save.textContent = 'Keeping…';
+    try {
+      const res = await postJson('/api/shows', tonightAsShow(name.trim()), { 'X-Host-Key': hostKey });
+      await load();
+      showDone('good', `<strong>${esc(res.show.name)}</strong> is on your Shows tab. `
+        + 'Drag it onto Tonight whenever you want this evening back.');
+      render();
+    } catch (err) {
+      save.disabled = false;
+      save.innerHTML = wasHtml;
+      alert(err.message || 'Could not keep that.');
+    }
+  });
+
+  return el;
+}
+
+/** "Thursday". Only ever used to suggest a name — nothing is filed by it. */
+function dayName(date) {
+  return date.toLocaleDateString('en-GB', { weekday: 'long' });
+}
+
+/**
+ * SHOWS — the shelf of evenings built in advance.
+ *
+ * Two doors, one function, exactly like Venues: on the Console it is a shelf
+ * you drag off and nothing else, and in the Workshop it is where you rename
+ * and throw away. Building happens on Tonight's settings — see *Keep this as
+ * a show* — because everything a show holds is already set up there, and a
+ * second composer is a second thing that could disagree with the launch.
+ */
+function showsSection() {
+  const el = node('<div></div>');
+  const draw = () => {
+    const shows = library.shows || [];
+    const findOnly = doorNow() === 'console';
+    el.replaceChildren(node(`
+      <div class="game-section">
+        <div class="game-head">
+          <div>
+            <h2>Shows</h2>
+            ${findOnly ? '' : `<div class="tiny">A whole evening kept as one thing —
+              the packs, which rounds are on, the venue and its prizes, the look and
+              the lobby game. Set a night up under Tonight’s settings and press
+              <b>Keep this as a show</b>.</div>`}
+          </div>
+        </div>
+        <div class="show-list">
+          ${!shows.length ? `<div class="tiny">No shows yet. Set a night up in Tonight,
+            then press <b>Keep this as a show</b> under Tonight’s settings.</div>`
+    : shows.map((show) => {
+      const broken = (show.problems || []).length;
+      const rounds = (show.order || []).length;
+      const bits = [
+        show.venue || 'No venue',
+        rounds ? `${rounds} round${rounds === 1 ? '' : 's'}` : (show.kind === 'bingo' ? 'Bingo' : 'As written'),
+        show.online ? 'Online' : 'In the room',
+      ];
+      return `
+            <div class="show-card ${broken ? 'broken' : ''}" data-id="${esc(show.id)}" draggable="true">
+              <div class="show-top">
+                <span class="show-name">${esc(show.name)}</span>
+                <span class="show-kind ${show.kind === 'bingo' ? 'is-bingo' : 'is-quiz'}">${
+  show.kind === 'bingo' ? 'Bingo' : 'Quiz'}</span>
+              </div>
+              <div class="tiny show-gist">${esc(bits.join(' · '))}</div>
+              ${broken ? `<div class="tiny show-wrong">${esc(show.problems.join(' '))}</div>` : ''}
+              ${findOnly ? '' : `
+                <div class="show-tools">
+                  <button class="minor show-rename" type="button">Rename</button>
+                  <button class="minor danger show-del" type="button">${binIcon()} Delete</button>
+                </div>`}
+            </div>`;
+    }).join('')}
+        </div>
+      </div>`));
+
+    for (const card of el.querySelectorAll('.show-card')) {
+      const show = shows.find((s) => s.id === card.dataset.id);
+      if (!show) continue;
+      /*
+       * DRAG THE WHOLE EVENING UP TO TONIGHT. Same gesture as a pack and a
+       * venue, same target — and the tap below is the way round it, because
+       * HTML5 drag events are never delivered on touch and half this app is
+       * driven from a phone.
+       */
+      card.addEventListener('dragstart', (ev) => {
+        showDrag = show;
+        ev.dataTransfer.effectAllowed = 'copy';
+        ev.dataTransfer.setData('text/plain', show.name);
+        card.classList.add('is-dragging');
+        dragging(true);
+      });
+      card.addEventListener('dragend', () => {
+        showDrag = null;
+        card.classList.remove('is-dragging');
+        dragging(false);
+        document.querySelector('.launchbar')?.classList.remove('drop-here');
+      });
+      card.addEventListener('click', (ev) => {
+        if (ev.target.closest('button')) return;
+        loadShow(show);
+      });
+
+      card.querySelector('.show-rename')?.addEventListener('click', async () => {
+        const name = prompt('What is this show called?', show.name);
+        if (name === null || !name.trim() || name.trim() === show.name) return;
+        try {
+          /*
+           * A rename is a save under a NEW id, so the old one has to go — the
+           * id comes from the name, which is what keeps a show findable by
+           * what it is called rather than by when it was made.
+           */
+          await postJson('/api/shows', { ...show, id: undefined, name: name.trim() }, { 'X-Host-Key': hostKey });
+          await fetch(keyed(`/api/shows/${encodeURIComponent(show.id)}`), {
+            method: 'DELETE', headers: { 'X-Host-Key': hostKey },
+          });
+          await load();
+          render();
+        } catch (err) {
+          alert(err.message || 'Could not rename that.');
+        }
+      });
+
+      card.querySelector('.show-del')?.addEventListener('click', async () => {
+        if (!confirm(`Delete "${show.name}"?\n\nThe packs stay where they are — this only throws away the arrangement.`)) return;
+        try {
+          const res = await fetch(keyed(`/api/shows/${encodeURIComponent(show.id)}`), {
+            method: 'DELETE', headers: { 'X-Host-Key': hostKey },
+          });
+          if (!res.ok) throw new Error((await res.json()).error || 'Could not delete that.');
+          await load();
+          render();
+        } catch (err) {
+          alert(err.message || 'Could not delete that.');
+        }
+      });
+    }
+  };
+  draw();
   return el;
 }
 

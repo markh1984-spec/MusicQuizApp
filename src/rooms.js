@@ -299,6 +299,9 @@ export class Rooms {
          */
         ownQuizzes: this.paths.ownQuizzes || path.join(this.config.dataDir, 'own', 'quizzes'),
         ownBingo: this.paths.ownBingo || path.join(this.config.dataDir, 'own', 'bingo'),
+        // The nights they have built in advance — see shows.js. One file, not
+        // a folder: a show is a few hundred bytes of references.
+        shows: this.paths.shows || path.join(this.config.dataDir, 'shows.json'),
       };
     }
     const dir = path.join(this.config.dataDir, 'rooms', roomId);
@@ -330,6 +333,11 @@ export class Rooms {
        */
       ownQuizzes: path.join(dir, 'quizzes'),
       ownBingo: path.join(dir, 'bingo'),
+      // The nights they have built in advance. Under the room like everything
+      // else, which is the enforcement rather than the filing: no route takes
+      // a room parameter, so one quizmaster's shows are unreachable from
+      // another's login. See shows.js.
+      shows: path.join(dir, 'shows.json'),
     };
   }
 

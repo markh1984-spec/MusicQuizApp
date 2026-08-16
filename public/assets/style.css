@@ -6848,6 +6848,56 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
    the way to the one you want rather than something to read. */
 .venue-gist { margin-top: 2px; }
 
+/* ---- SHOWS — a whole evening, built in advance.
+
+   A GRID RATHER THAN A LIST, and the same six-across shape as the pack shelf:
+   a show is dragged onto Tonight, and a drag needs to SEE both ends. The
+   minimum is wider than a pack card because a show carries a sentence — the
+   venue, the round count and whether it is online — where a pack carries a
+   title. */
+.show-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+}
+.show-card {
+  position: relative;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--r-card);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 12px 14px;
+  cursor: grab;
+  transition: border-color 160ms, background 160ms;
+}
+.show-card:hover { border-color: rgba(255, 255, 255, 0.24); background: rgba(255, 255, 255, 0.07); }
+.show-card.is-dragging { opacity: 0.45; }
+.show-top { display: flex; align-items: baseline; gap: 8px; justify-content: space-between; }
+.show-name { font-weight: 800; font-size: var(--fs-ctl); color: var(--ink); min-width: 0; }
+/* WHICH GAME, in the same two colours the pack shelf uses for the same fact —
+   quiz green, bingo purple. A pill rather than a word in the sentence below,
+   because it is the one thing you filter by at a glance. */
+.show-kind {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-mini);
+  font-weight: 900;
+}
+.show-kind.is-quiz { background: rgba(47, 224, 122, 0.16); color: #2fe07a; }
+.show-kind.is-bingo { background: rgba(168, 85, 247, 0.18); color: #c084fc; }
+.show-gist { margin-top: 4px; }
+/* SOMETHING IN IT HAS GONE. Red on the border, like a broken pack — the one
+   place red is right here, because it is the app saying this will not run
+   rather than editorialising about somebody's work. */
+.show-card.broken { border-color: rgba(255, 77, 94, 0.5); }
+.show-wrong { margin-top: 6px; color: var(--bad); }
+.show-tools { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+/* KEEPING TONIGHT AS A SHOW, at the bottom of the settings. A row rather than
+   a lone button so the reason it is off can sit beside it — present and
+   inert, never absent. */
+.set-keep { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
 
 /* ---- what you heard back, where you asked
    The request is made under the shop because that is where the want arrives;

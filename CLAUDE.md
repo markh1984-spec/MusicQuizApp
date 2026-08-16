@@ -739,14 +739,16 @@ prints the tab's own label as the heading, in the account gradient at
 exactly the arrangement that let four of them go missing. **Behind an
 `@supports`**: gradient text is transparent text.
 
-**The tab bar wraps rather than scrolling on a laptop** — a tab cut in half at
-the edge with no scrollbar is a tab that does not exist — and is **sticky from
-860px**, which is what removed the reserved `min-height` under short tabs.
-(It once **measured the tab BODY rather than the bar**, because a sticky
-element lies about where it is — that apparatus went when tab clicks stopped
-moving the page at all.) **`.game-head .row` is a flex row** with a gap, wrapping,
-`align-items: stretch`. The account-coloured underline on ordinary buttons
-stays.
+**THE TABS ARE A COLUMN DOWN THE LEFT, AND THE SAME COLUMN ON A PHONE** —
+`.consolecols`, 190px and sticky from 900px, full width below it. The
+horizontal bar needed `overflow-x`, a wrap rule and a `showActiveTab()` that
+scrolled the lit chip back into view; **a vertical list has every tab visible,
+so all of that is deleted rather than ported.** The lit marker is the LEFT
+edge, because under a stacked list a bottom border reads as a rule between two
+tabs. `minmax(0, 1fr)` on the content column is load-bearing — a grid child
+defaults to `min-width: auto` and the pack grid would push the page sideways.
+**`.game-head .row` is a flex row** with a gap, wrapping, `align-items:
+stretch`. The account-coloured underline on ordinary buttons stays.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
@@ -1903,6 +1905,35 @@ will work."*
   same words, and the reason is the same: a control that comes and goes is one
   you cannot learn the position of, on a bar driven with a thumb in a dark pub.
   **Build the next one present-and-inert, not absent.**
+
+Full reasoning: **[`docs/console.md`](docs/console.md)**.
+
+### A SHOW IS A SAVED LAUNCH — the whole evening, built in advance
+
+`src/shows.js`, `tonightAsShow()` / `loadShow()` / `showsSection()` in
+`console.js`, the Shows tab on both doors, *Keep this as a show* under
+Tonight's settings. *"We're frankensteining nights instead of having a nights
+section."* The bar composed a night at the moment of launching it.
+
+- **A SHOW IS THE LAUNCH PAYLOAD WITH A NAME ON IT** — `tonightAsShow()` reads
+  the SAME state the launch reads, or a show plays something other than what
+  was on the bar when it was saved.
+- **IT STORES REFERENCES AND NEVER COPIES** — rule 11. Tested.
+- **IT IS NOT A GATE AND MUST NEVER BECOME ONE.** The launch route re-checks
+  the tier, every pack and the lobby game. *"It was allowed when they saved
+  it"* is a gate running backwards.
+- **CALLED A SHOW BECAUSE "NIGHT" IS TAKEN TWICE** — Calendar's are bookings,
+  Gigs' are the archive. *Set list* and *running order* name the activity and
+  carry neither the venue nor the prizes.
+- **THE ORDER IS REBUILT INTO `lbExtra` AND `lbOff`, never held a third way**,
+  so there is no "a show is loaded" mode to escape.
+- **A BROKEN SHOW IS NAMED ON THE CARD, DAYS EARLY**, by the same existence
+  check the launch will make.
+- **BUILDING HAPPENS ON TONIGHT'S SETTINGS, NOT IN A SECOND COMPOSER** — a
+  Workshop builder could disagree with the launch, on the one thing that must
+  not.
+- **DROPPING ONE IN NEVER LAUNCHES**, and there is a TAP as well as a drag,
+  because HTML5 drag never fires on touch.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 

@@ -31,8 +31,21 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * Set at 132,000 on 15 August 2026, just above the 130,362 the third split
  * left — deliberately tight, because a budget with room in it is a budget
  * nobody notices until it is spent.
+ *
+ * **RAISED TO 134,000 ON 16 AUGUST 2026, deliberately, for SHOWS** — a whole
+ * evening saved in advance and dragged onto Tonight. It earns always-loaded
+ * space on one point rather than on being new: **a show is not a gate**, and
+ * a session that does not know that is a session that might cache an
+ * entitlement into it. Two of the eight lines are prohibitions, which is the
+ * test this file's own rule sets.
+ *
+ * It was paid for as far as it could be first — the console theme's tab-bar
+ * paragraph was rewritten in the same commit, because that bar became a
+ * sidebar and the old text was describing something that no longer exists.
+ * The remaining 1,760 bytes are genuine growth, and this comment is the diff
+ * saying so.
  */
-const BUDGET = 132_000;
+const BUDGET = 134_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

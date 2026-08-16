@@ -778,3 +778,149 @@ waiting for, so this does not have to say it twice.
 
 **And clearing the night puts it back to disabled rather than hidden**, so the
 row does not change height on the way out any more than on the way in.
+
+## A SHOW IS A SAVED LAUNCH — the whole evening, built in advance
+
+The rules are in `CLAUDE.md`. This is the reasoning behind them.
+
+### What was actually wrong
+
+Raised by the host on 16 August 2026, and the diagnosis is his: *"maybe I'm
+being silly — the launch bar is launching nights, but we're frankensteining
+nights instead of having a nights section. You build a night in advance and
+then just drag it in onto the launch console."*
+
+He is not being silly, and the word *frankensteining* is exact. Tonight is a
+composer: you drag a pack in, drag a second one in, switch rounds off with the
+ticks, choose the venue, open Tonight's settings and pick the look, the lobby
+game, the card shape and the prizes. **Every one of those is a decision made
+at the moment of launching**, which is ten minutes before a gig, in a pub, on a
+phone, with a room sitting down. It is the worst time in the week to be
+composing anything, and it is the one time the app forces it.
+
+Worse, none of it survives. The composition exists only as module state in one
+browser tab — so the same six drags happen again next Thursday, at the same
+venue, for the same night.
+
+### Why it was small: the payload already was the night
+
+`doLaunch()` has always sent ONE object:
+
+```
+{ game, packId, order, venue, look, lobbyGame, lobbySound, teamPlay,
+  online, shape, prizes }
+```
+
+That is the whole evening. What is played, in what order, where, what it looks
+like, what the phones do while the room fills up, what the winner gets. Nothing
+about "a show" had to be invented at the data layer — a show is that object
+with a name on it, and `tonightAsShow()` builds it by reading the same
+module-level state `doLaunch` reads.
+
+**That last point is the one worth defending.** Reading the settings off the
+DOM, or keeping a second copy for shows, would allow a saved show and the night
+that would have been launched to differ — which is the only way this feature
+could be worse than not existing. One source, read twice.
+
+### References, never copies — and why that is rule 11 again
+
+A show holds pack IDS and round INDEXES. It does not hold a question, an
+answer, a prompt or a track, and there is a test that reads the file off disk
+and fails if a question ever appears in it.
+
+This is the same argument `running-order.js` is built on and the same argument
+rule 11 makes about the catalogue: **a hundred copies plus a sync is a hundred
+chances for one to miss an update, and the failure is silent and lands in front
+of a paying room months later.** A show built in March and launched in August
+reads today's packs, so a correction saved in between is simply in it.
+
+The cost is that a show can go broken — the pack it names gets deleted — and
+the answer is the answer this codebase always gives: **say so, by name, in
+advance.** `composeQuiz()` already refuses to launch a night whose pack has
+gone, which is correct but arrives in the venue. `showProblems()` asks the same
+question on the card, days earlier, using the same existence check the launch
+will use. Two different checks would be a card that says a night is ready and a
+launch that then says it is not.
+
+### It is not a gate, and that is the security point
+
+Nothing in a show records that saving it was permitted. There is no `tier`, no
+`entitled`, no `allowed`, and a test asserts that no field with any of those
+words ever appears.
+
+The launch route re-checks everything it always did: the feature for the game,
+**every pack in the running order** (not just the one in `packId` — a Bronze
+account could otherwise borrow one round from a Gold quiz and play it), the
+lobby game against the tier, and the 409 that stops a running night being
+wiped. A show built on Gold and launched after a downgrade is refused exactly
+as a fresh launch would be.
+
+**The opposite is the obvious shortcut and it is a gate running backwards.**
+*"It was allowed when they saved it"* is how a subscription gets walked round
+by a file somebody wrote last month, and it is the same shape as every other
+cached-permission fault: a check that was true once, written down, and believed
+later.
+
+### The name, and the collision it was chosen to avoid
+
+Three candidates were rendered as cards before choosing, because the host's own
+objection killed the first two: *"set list and running order only imply the
+activity and not the venue and prizes — I need a word that encapsulates all
+four."* He is right; both name what is played and neither carries where, or
+what the winner gets.
+
+**"Night" was his own word and it was turned down for a collision.** The app
+already has two nights: the BOOKING (the pub's night — Calendar) and the
+archived record (the night that happened — Gigs). `TODO.md` says in as many
+words *"do not invent a third concept"*, and a third **Nights** tab would be
+one word for three sets on three adjacent doors — precisely the label collision
+the sweep rules exist to find.
+
+**Show** is the performer's word for the whole evening at a venue, it collides
+with nothing in the app, and this app's user is hired as the entertainer rather
+than the organiser. It is already the language.
+
+### Why the order is rebuilt rather than stored a third way
+
+The bar holds a night as two things: `lbExtra` (the packs after the first) and
+`lbOff` (a Set of `packId:roundIndex` that are switched off). `nightOrder()`
+derives the running order from those and nothing else.
+
+So loading a show turns its `order` back into exactly those two — the packs in
+first-appearance order, and every round the order leaves out marked off. The
+mapping is lossless because rounds always play in their pack's own order.
+
+**The alternative was a third piece of state saying "a show is loaded", and it
+would have been a trap.** A loaded show has to be editable — you dropped last
+Thursday in and tonight you want the picture round off — and a separate mode
+means either the ticks stop working or there are two ways to express one night
+that can drift apart. Rebuilt into the bar's own state, a loaded show is
+indistinguishable from a night built by hand, which is what makes it safe to
+edit.
+
+### Where it is built, and why not in the Workshop
+
+The natural reading of *"a nights section in the workshop"* is a builder over
+there. It was not built, and the reason is the one above: **a second composer
+is a second surface that could disagree with the launch.**
+
+Everything a show holds is already on the bar and on Tonight's settings. So a
+show is made by setting a night up and pressing *Keep this as a show* at the
+bottom of the settings — the last thing you do, after the look and the prizes,
+which is where it belongs in the sequence anyway. The Shows tab is where you
+take one back off the shelf.
+
+That also keeps the door rule honest. On the Console door the Shows tab is a
+shelf you drag off and nothing else; in the Workshop it grows Rename and
+Delete. Same function, same cards, exactly the split the Venues tab uses.
+
+### It never launches, and there is a tap as well as a drag
+
+Dropping a show onto Tonight fills the bar and stops. That is the same promise
+dragging a pack makes, and it matters more here because a show carries a venue
+and a set of prizes — a drop that launched would put a whole evening on the
+projector from one imprecise gesture.
+
+The card is also clickable, because **HTML5 drag events are never delivered on
+touch** and half of this console is driven from a phone. Every drag in this app
+has a way round it for the same reason.

@@ -1925,9 +1925,16 @@ workbench holds what you are in the middle of.** That is a different idea from
 a form, and it earns its space for the same reason Tonight does — you can see
 both ends of the drag.
 
+**AND THE CONSOLE'S HALF OF THIS IS NOW BUILT, as SHOWS** — a whole evening
+kept as one thing and dragged back onto Tonight, which is the bench's
+clear-and-reload mechanic arriving from the other direction. Read the Shows
+section in CLAUDE.md before building the Workshop's, because two of its
+decisions apply unchanged: **the thing on the bench stores references and never
+copies**, and **it is not a gate**.
+
 | Door | What goes on the bench | What the button at the bottom says |
 |---|---|---|
-| **Console** | tonight's packs, tonight's venue | **Launch** — built |
+| **Console** | tonight's packs, tonight's venue — or a whole **show** | **Launch** — built |
 | **Workshop** | a pack you are writing or fixing, a round pulled out of another pack, a venue you are setting up | **Save it**, and the bench clears |
 | **Post gig** | the night just run, the photos worth keeping, the venue to bill | **File it** / **Invoice** — one night at a time |
 

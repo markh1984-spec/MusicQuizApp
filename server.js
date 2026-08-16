@@ -39,6 +39,7 @@ import { photoFolder, mergeGigs, safePhotoName, isNightFolder, nightOfGig } from
 import { venueHeadcounts } from './src/headcounts.js';
 import { comeBackFor } from './src/comeback.js';
 import { isComposed, MAX_ROUNDS } from './src/running-order.js';
+import { listShows, saveShow, deleteShow, showProblems } from './src/shows.js';
 import { pickIdeas, ideaLabel } from './src/round-ideas.js';
 import { getFile, listDir, listDirs, githubConfigured, missingGithubConfig, putFile, putFiles, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem, privateRepoConfigured, packsRepoConfigured, packsRepoName } from './src/github.js';
 import { Invoices, totals, toPence, money } from './src/invoices.js';
@@ -66,7 +67,7 @@ import { Spend, spendRecorder, imagePrices } from './src/spend.js';
 import { themeSlug } from './src/theme.js';
 import { draftReply, briefFor, mostlyMine } from './src/reply-draft.js';
 import { OWNER_ONLY, changesTheLibrary } from './src/gates.js';
-import { listOwn, readPack, saveOwn, deleteOwn, isOwnPack, countOwn, backupPath, MAX_OWN } from './src/own-packs.js';
+import { listOwn, readPack, saveOwn, deleteOwn, isOwnPack, inCatalogue, countOwn, backupPath, MAX_OWN } from './src/own-packs.js';
 import { brandFor } from './src/branding.js';
 import { findScheme, DEFAULT_SCHEME, SCHEMES } from './public/assets/schemes.js';
 // The logo, shared with the browser so the tab icon and the on-screen mark are
@@ -797,6 +798,36 @@ function allowed(req, res, url, feature, { live = false } = {}) {
     return null;
   }
   return account;
+}
+
+/**
+ * Is this pack still there for this room — theirs, or the catalogue's?
+ *
+ * Deliberately the same two questions `packDir()` asks and in the same order,
+ * because a show's card must not say a pack is fine that the launch will then
+ * refuse to find. It answers EXISTENCE only, never entitlement: whether they
+ * are allowed to play it is the launch route's business and this file already
+ * has one definition of that, which is where it stays.
+ */
+function packStillThere(kind, id, room) {
+  return isOwnPack(kind, id, room.paths) || inCatalogue(kind, id, config);
+}
+
+const problemsWith = (show, room) => showProblems(show, (kind, id) => packStillThere(kind, id, room));
+
+/**
+ * Their shows, each carrying what is wrong with it TODAY.
+ *
+ * Worked out here rather than in the browser because this is the check the
+ * launch itself will make — the console knowing the answer to a slightly
+ * different question is exactly how a card comes to say a night is ready and
+ * the launch then says it is not.
+ */
+function showsFor(room) {
+  return listShows(room.paths).map((show) => {
+    const problems = problemsWith(show, room);
+    return problems.length ? { ...show, problems } : show;
+  });
 }
 
 function timingSafeEqual(a, b) {
@@ -1636,6 +1667,16 @@ async function handleGet(req, res, url, route) {
        * nothing kept, so there is nothing here to go stale.
        */
       bookings: roomForHost(req, url).invoices.bookings,
+      /*
+       * THE NIGHTS THEY HAVE BUILT IN ADVANCE — see `src/shows.js`.
+       *
+       * In the library payload rather than behind a route of its own because
+       * the console draws them on the same page as everything else here, and a
+       * second fetch on the tab a gig starts from is a second thing that can
+       * be slow on pub wifi. They are small: a show is references and
+       * settings, never a question or a track.
+       */
+      shows: showsFor(roomForHost(req, url)),
       /*
        * Enough to draw "Ask for a pack" BEFORE somebody types into it: whether
        * they may, where they are in the queue, and which Monday it lands on.
@@ -3393,6 +3434,53 @@ async function handleWrite(req, res, url, route) {
     );
     if (done && done.ok === false) return sendJson(res, 502, { error: done.error || 'Could not delete that.' }), true;
     return sendJson(res, 200, { ok: true, night, name }), true;
+  }
+
+  /*
+   * BUILD A NIGHT IN ADVANCE, AND THROW ONE AWAY — see `src/shows.js`.
+   *
+   * IN `handleWrite`, which is worth saying out loud because this repo has
+   * already shipped a route defined in `handleGet` that could never answer a
+   * POST and read as a working feature for months. The list comes back in
+   * `/api/library` rather than from a GET here, so there is nothing of this
+   * feature in the other function at all.
+   *
+   * **GATED ON THE GAME IT PLAYS, exactly as the launch is.** Saving a show is
+   * not a way round a tier: a bingo show wants the bingo feature to save and
+   * will want it again to launch, where every pack in it is re-checked. This
+   * route deliberately does NOT verify the packs — that is the launch route's
+   * job and duplicating it here would be a second definition of "in your
+   * library" to drift. What it does instead is answer with what is WRONG with
+   * the show, so the console can say so on the card days before the gig.
+   */
+  if (route === '/api/shows' && req.method === 'POST') {
+    const body = await readJson(req);
+    const kind = String(body.kind || 'quiz') === 'bingo' ? 'bingo' : 'quiz';
+    if (!allowed(req, res, url, kind === 'bingo' ? FEATURES.BINGO : FEATURES.QUIZ)) return true;
+    const room = roomForHost(req, url);
+    try {
+      const show = saveShow(room.paths, { ...body, kind });
+      return sendJson(res, 200, { ok: true, show, problems: problemsWith(show, room) }), true;
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message }), true;
+    }
+  }
+
+  if (route.startsWith('/api/shows/') && req.method === 'DELETE') {
+    /*
+     * `live: true` rather than `mayStartSomething`: throwing away a show you
+     * are not going to run is tidying up, and an account whose payment has
+     * bounced should still be able to tidy up. The same reasoning as every
+     * other mid-night action being asked with `live` set.
+     */
+    if (!allowed(req, res, url, FEATURES.QUIZ, { live: true })) return true;
+    const room = roomForHost(req, url);
+    try {
+      deleteShow(room.paths, decodeURIComponent(route.slice('/api/shows/'.length)));
+      return sendJson(res, 200, { ok: true }), true;
+    } catch (err) {
+      return sendJson(res, 404, { error: err.message }), true;
+    }
   }
 
   if (route === '/api/past-gigs/publish' && req.method === 'POST') {
