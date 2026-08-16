@@ -8,11 +8,23 @@
 
 import { esc, node, postJson, roomCode } from './client.js';
 import { arcadeCard, wireArcade } from './lobby-menu.js';
+import { voucherCard } from './voucher-card.js';
 
 let marking = new Set(); // squares tapped but not yet confirmed by the server
 
 export function bingoKey(s) {
-  return `bingo:${s.phase}:${s.round}:${s.target}:${s.stage ? s.stage.index : 0}`;
+  /*
+   * THE VOUCHER IS IN THE KEY, or it never draws.
+   *
+   * `paintCard()` updates a screen that is already built; only a changed key
+   * rebuilds it. A code is minted at the instant somebody wins, which also
+   * moves the phase — but the phase moves back on `playOn()` while the voucher
+   * stays, and a code redeemed at the bar changes nothing else at all. The
+   * quiz side had exactly this bug: the server had the voucher, a reload
+   * showed the QR, and a live push did not.
+   */
+  const won = s.voucher ? `:v${s.voucher.code}${s.voucher.redeemedAt ? ':spent' : ''}` : '';
+  return `bingo:${s.phase}:${s.round}:${s.target}:${s.stage ? s.stage.index : 0}${won}`;
 }
 
 /**
@@ -77,6 +89,15 @@ export function renderBingo(s, me) {
       <div class="bingo-status" id="bingoStatus"></div>
       <div class="bingo-grid cols-${cols}${strip}" style="grid-template-columns:repeat(${cols}, 1fr)" id="bingoGrid"></div>
       <button class="btn bingo-call" id="bingoCall" disabled>BINGO!</button>
+      <!-- THE CODE THEY SHOW AT THE BAR, drawn by the QUIZ'S OWN function.
+           Not a second card: a bingo voucher and a quiz voucher are the same
+           thing, so the same markup, the same QR and the same wording — a bar
+           that has learned to scan one has learned to scan both. The payload
+           uses the same field name for exactly this reason.
+           ABOVE nothing and BELOW the button, because the card is what the
+           player is using while the round runs; the voucher only exists once
+           they have won something, and then it is the thing they get up with. -->
+      ${voucherCard(s)}
     </div>`);
 
   el.querySelector('#bingoCall').addEventListener('click', () => claim(el));

@@ -31,6 +31,7 @@ import { comeBackView } from './comeback.js';
 import { recordArcadeScore, arcadeBoard, arcadeFields } from './arcade.js';
 // For faceKey — a player's public handle, derived one way from their id.
 import { createHash } from 'node:crypto';
+import { redeemVoucher as redeem, reinstateVoucher as reinstate } from './vouchers.js';
 
 export const PHASES = {
   LOBBY: 'lobby',
@@ -1278,13 +1279,10 @@ export class Engine {
    * doing it by hand when the bar's phone cannot reach us.
    */
   redeemVoucher(code, { by = 'scan' } = {}) {
-    const v = (this.state.vouchers || {})[String(code || '').toUpperCase()];
-    if (!v) return { ok: false, reason: 'unknown' };
-    if (v.redeemedAt) return { ok: false, reason: 'already', voucher: v };
-    v.redeemedAt = this.now();
-    v.history.push({ what: 'redeemed', by, at: v.redeemedAt });
-    this.changed();
-    return { ok: true, voucher: v };
+    // Shared with bingo — see src/vouchers.js. The bar scans one kind of code.
+    const out = redeem(this.state, code, { by, at: this.now() });
+    if (out.ok) this.changed();
+    return out;
   }
 
   /**
@@ -1299,14 +1297,9 @@ export class Engine {
    * do it a fourth time.
    */
   reinstateVoucher(code) {
-    const v = (this.state.vouchers || {})[String(code || '').toUpperCase()];
-    if (!v) return { ok: false, reason: 'unknown' };
-    if (!v.redeemedAt) return { ok: false, reason: 'not_redeemed', voucher: v };
-    v.history.push({ what: 'reinstated', by: 'host', at: this.now(), was: v.redeemedAt });
-    v.redeemedAt = null;
-    v.reinstated += 1;
-    this.changed();
-    return { ok: true, voucher: v };
+    const out = reinstate(this.state, code, { at: this.now() });
+    if (out.ok) this.changed();
+    return out;
   }
 
   /** Step backwards. Useful when the host overshoots in front of a room. */

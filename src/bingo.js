@@ -22,6 +22,7 @@
 import { cleanTeamName, isSafeId, newId, newToken, ownsPlayer, MAX_PLAYERS, rememberRemoved, wasRemoved, forgetRemoved } from './engine.js';
 import { comeBackView } from './comeback.js';
 import { recordArcadeScore, arcadeBoard, arcadeFields } from './arcade.js';
+import { mintVoucher, redeemVoucher as redeem, reinstateVoucher as reinstate, voucherFor } from './vouchers.js';
 
 export const BINGO_PHASES = {
   LOBBY: 'lobby',
@@ -477,8 +478,62 @@ export class BingoGame {
       playerId, name: p.name, pattern: result.pattern, squares: result.squares, at,
       stage: this.stage, stageIndex, label: stageLabel(this.stage),
     };
+    this.issueVoucher(playerId, p.name, stageIndex, at);
     this.changed();
     return { ok: true, valid: true, pattern: result.pattern, stage: this.stage };
+  }
+
+  /**
+   * The code the winner shows at the bar.
+   *
+   * **Nothing happens at all unless the venue set a prize for this stage**,
+   * which is the ordinary night: no prize, no voucher, not one new field in
+   * any payload — exactly the rule the quiz's `issueVouchers()` follows.
+   *
+   * **KEYED BY ROUND AND STAGE, not by player**, and that is the difference
+   * from the quiz. A quiz issues to a board row, so a team of six gets one
+   * drink between them. Bingo issues per STAGE: winning a line early and the
+   * full house later is TWO prizes to the same person, by design, and keying
+   * on the player would silently swallow the second. The round is in the key
+   * because `newRound()` deals fresh cards and plays the whole set again.
+   *
+   * Idempotent through that key, so a restart on a won round cannot mint a
+   * second code for a prize somebody is already holding.
+   */
+  issueVoucher(playerId, name, stageIndex, at) {
+    const prizes = Array.isArray(this.state.stagePrizes) ? this.state.stagePrizes : [];
+    const reward = String(prizes[stageIndex] || '').trim();
+    if (!reward) return null;
+    return mintVoucher(this.state, {
+      key: `r${this.state.round}:s${stageIndex}`,
+      winnerId: playerId,
+      name,
+      // The PLACE on a bingo voucher is what they did, not a number: "a line",
+      // "3 lines", "a full house". The phone prints it above the prize, and
+      // "1st" would be a lie on a full house won after two other prizes.
+      place: stageLabel(this.stages[stageIndex]),
+      reward,
+      venue: this.state.venue || '',
+      at,
+      extra: { round: this.state.round, stageIndex },
+    });
+  }
+
+  /*
+   * THE SAME TWO CALLS THE QUIZ MAKES, so the bar scans one kind of code.
+   * `session.engine.redeemVoucher()` is what the redeem route and the `/v`
+   * page call, and neither has ever asked which game is running.
+   */
+  redeemVoucher(code, { by = 'scan' } = {}) {
+    const out = redeem(this.state, code, { by, at: this.now() });
+    if (out.ok) this.changed();
+    return out;
+  }
+
+  reinstateVoucher(code) {
+    const out = reinstate(this.state, code, { at: this.now() });
+    if (out.ok) this.changed();
+    return out;
   }
 
   /**
@@ -723,6 +778,39 @@ export class BingoGame {
     view.yourPrizes = (this.state.prizeWinners || [])
       .filter((w) => w.playerId === playerId)
       .map((w) => stageLabel(w.stage));
+    /*
+     * THE CODE THEY SHOW AT THE BAR — this phone only, and only if they won a
+     * stage the venue put a prize on.
+     *
+     * The MOST RECENT one they hold, because bingo pays several times in a
+     * night: a line early and the full house later is two prizes to the same
+     * person, and the card on the phone is a thing you hold up NOW. The others
+     * are already in their hand as `yourPrizes` and in the archive.
+     *
+     * The same field name and the same shape the quiz sends, so `voucherCard()`
+     * in play.js draws it with no branch — the phone has never needed to know
+     * which game minted a code, and this keeps it that way. **The CODE is
+     * never in the screen or host payload**, exactly as on a quiz night.
+     */
+    const mine = Object.values(this.state.vouchers || {})
+      .filter((v) => v.winnerId === playerId)
+      // BY ROUND AND STAGE, not by the clock. Two prizes won in the same
+      // second is not a hypothetical — it is what an injected clock does in
+      // every test, and the tie made "the most recent" mean "the first".
+      // Round and stage are the order they were actually won in.
+      .sort((a, b) => (b.round || 0) - (a.round || 0) || (b.stageIndex || 0) - (a.stageIndex || 0))[0];
+    if (mine) {
+      view.voucher = {
+        code: mine.code,
+        name: mine.name,
+        place: mine.place,
+        reward: mine.reward,
+        venue: mine.venue,
+        ...(this.state.venueLogo ? { logo: this.state.venueLogo } : {}),
+        issuedAt: mine.issuedAt,
+        redeemedAt: mine.redeemedAt,
+      };
+    }
     if (this.state.lastWin) view.win = { name: this.state.lastWin.name, pattern: this.state.lastWin.pattern, label: this.state.lastWin.label };
     /*
      * THE LOBBY GAME — only in the lobby, and only ever these two numbers.
@@ -761,6 +849,14 @@ export class BingoGame {
     // a microphone, and the date is the half you cannot bluff. Same reasoning
     // as the quiz's, and the same field.
     if (this.state.comeBack) view.comeBack = comeBackView(this.state.comeBack);
+    /*
+     * THE CODES, so the host can redeem one by hand when the bar's phone
+     * cannot reach us — the same field and the same shape as the quiz's, which
+     * is what lets `voucherPanel()` on the control view work on a bingo night
+     * without a branch. Host only: the code is a credential and never goes on
+     * the projector or on anybody else's phone.
+     */
+    view.vouchers = Object.values(this.state.vouchers || {});
     view.tracks = this.tracks.map((t) => ({
       id: t.id,
       title: t.title,

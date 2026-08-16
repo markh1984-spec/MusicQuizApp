@@ -1945,7 +1945,12 @@ with the right labels on a 5x5 night. Proved over real HTTP, not by reading.
 
 **WHAT IS LEFT, in the order to do it:**
 
-1. **BINGO VOUCHERS — the biggest piece and the one the host said yes to.**
+1. ~~**BINGO VOUCHERS**~~ — **BUILT on 16 August 2026 and driven in a browser:
+   a 5x5 night at a venue paying 1/3/full, played to a win, mints the code and
+   the winner's phone draws the QR. `src/vouchers.js` is now the ONE definition
+   both engines use, for the same reason `src/arcade.js` is one scoreboard.
+   `public/assets/voucher-card.js` is the one card both phones draw.** What was
+   the original note:
    `src/bingo.js` has the word "voucher" in it zero times. It needs
    `state.vouchers`, a mint at each stage win (to the winning player, carrying
    `stageLabel()` as its place and `state.stagePrizes[stageIndex]` as its
