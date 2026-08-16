@@ -902,3 +902,88 @@ carries no key and it is a no-op for them.
 **It goes on the IMAGES as well as the listing**, because the photo route
 re-checks for itself rather than trusting that the listing let you through —
 without it a preview would be a page of broken pictures.
+
+---
+
+## A night that cannot pay out says so, and can still be rescued
+
+`setPrizes` in `src/session.js`, `prizePanel()` in `public/assets/host.js`,
+`.lb-noprize` on Tonight, `screenKey()` in `public/assets/play.js`.
+
+### What actually happened
+
+A real gig on 13 August 2026. The winners told the host at the bar that no QR
+code had arrived. **Nothing was broken.**
+
+A prize is the VENUE'S standing arrangement rather than a decision about
+tonight — the same drink every week at one pub and something else at another —
+so it is set once on the Venues tab and the launch form does not carry it at
+all. The launch route resolves it by matching `body.venue` against the room's
+customer records. Which means three ways to end up with nothing, and all three
+were silent:
+
+- **no venue picked at launch.** The venue is deliberately not remembered
+  between nights, because a remembered one files next Tuesday under last
+  Thursday's pub. So it is one easy thing to skip;
+- **a venue typed as free text** that is not on the Venues tab — it can never
+  match a record, so it can never carry prizes;
+- **a venue on the tab with no prizes filled in.**
+
+`issueVouchers()` returns immediately on an empty `rewards`, so no codes are
+minted and no phone is offered one.
+
+**The app had said so — once.** *"for no prizes"*, the last of four small dim
+phrases on one run-on line, at the moment somebody is looking at the Launch
+button. That is the app technically having mentioned it, which is not the same
+as having said it. And then it went quiet: `voucherPanel()` on the control view
+is only drawn once vouchers EXIST, so a prizeless night looked identical to a
+normal one right up to the moment somebody asked where their drink was.
+
+### The fix is three things, and the third is the one that matters
+
+**It is said on Tonight, on its own line.** Out of the run-on phrase and into a
+gold panel above Launch, carrying the WHY (prizes come off the venue) and the
+way to fix it — a warning that does not say what to do about it is one you read
+twice and act on never.
+
+**It is said on the control view all night**, from the lobby on, so a glance at
+the phone at any point answers "is this night going to pay out".
+
+**And prizes can now be SET from there.** This is the half that turns a warning
+into a fix. Frozen at launch, finding out was unrecoverable: by the time
+anybody notices, the final scores are up and the only remedy is running the
+night again. Now three boxes and a Save, and **at the final the codes mint
+where the host is standing** — `issueVouchers()` is idempotent and skips
+anybody already holding one, so pressing it twice cannot give a winner two
+codes, and a voucher already on somebody's phone keeps the words it was issued
+with rather than being re-pointed at something cheaper.
+
+**Gold, not red, and it never blocks Launch.** A night with no prizes is
+perfectly legitimate and most pub quizzes are one. It is also deliberately not
+a confirm: the path from a room sitting down to a quiz running is the protected
+surface and never gets slower.
+
+### Both halves that a unit test cannot reach were broken
+
+Worth recording, because they are the same fault this codebase keeps finding
+and they were found the same way — by driving it in a browser rather than by a
+green suite.
+
+**The codes minted and no phone was ever told.** Every other action in the
+session's table goes through an engine method ending in `changed()`; this one
+edits the state directly, so nothing pushed. The server had the voucher and the
+winner's screen sat empty.
+
+**Then the phone was told and kept the board it already had.** `screenKey()`
+decides rebuild against update, and at the final it was `phase:roundIndex` —
+which does not move when a voucher arrives. On an ordinary night the code is
+minted at the instant the phase becomes `final`, so the key changes anyway and
+the card is built with it; the rescue path is the only one where a voucher
+appears with no phase change behind it. A reload showed the QR and a live push
+did not.
+
+There is a third, quieter one: **`flush()` is explicit.** The quiz milestone is
+`phase:round:question:players`, none of which moves when a voucher is minted at
+the final, so the write would have been debounced — and a restart in those few
+seconds leaves somebody holding a QR code for a voucher the server has no
+record of, which is worse than never having issued one.

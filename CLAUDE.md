@@ -2084,6 +2084,26 @@ one-off both win for free. Load-bearing, all tested:
 
 Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 
+### A NIGHT THAT CANNOT PAY OUT SAYS SO, AND CAN STILL BE RESCUED
+
+`setPrizes` in `session.js`, `prizePanel()` in `host.js`, `.lb-noprize` on
+Tonight. **Prizes are read off the VENUE'S record at launch**, so no venue, a
+venue typed as free text, or a venue with none set give `rewards: []` and
+nobody gets a voucher.
+
+- **SAID IN TWO PLACES, GOLD, AND NEITHER BLOCKS LAUNCH** — a prizeless night
+  is legitimate. Its own line on Tonight, a panel on the control view from the
+  lobby on. **Never a confirm**: the path from a room sitting down to a quiz
+  running never gets slower.
+- **PRIZES CAN BE SET MID-NIGHT, and at the final they MINT IMMEDIATELY** —
+  frozen at launch, finding out was unrecoverable. `issueVouchers()` is
+  idempotent, and **a voucher keeps the words it was issued with**.
+- Two wiring traps — the push and flush on the action, and the voucher in
+  `screenKey()` — have **tests on them** in `test/prizes-midnight.test.js`, so
+  they are written up there rather than here.
+
+Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
+
 ### Headcount per venue — the app finally says a number it always knew
 
 `src/headcounts.js`, `library.headcounts`, the `heads-*` block on a venue card
@@ -2211,34 +2231,25 @@ typo is dropped rather than quietly becoming a round of general knowledge.
 ## Checks
 
 ```bash
-npm test        # 1,295 tests, no network, injected clocks — must stay green
+npm test        # 1,303 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
 node scripts/pub-unchanged.mjs origin/MusicQuizApp     # did I break the pub night?
 ```
 
-**NOTHING IN THIS REPO HAD EVER PARSED THE BROWSER FILES, and on 15 August
-2026 a stray backtick took the whole console down.** It was inside an HTML
-comment in the template literal `launchBar()` builds its markup from, so it
-ended the string early and `console.js` became a syntax error — meaning
-`/console` did not load AT ALL, for every quizmaster, on the page a night is
-launched from. **The full suite passed.** It always would: every file under
-`public/` is a DOM module that no test imports, so the browser half of this app
-was never executed by anything in here.
+**NOTHING IN THIS REPO HAD EVER PARSED THE BROWSER FILES**, and on 15 August
+2026 a stray backtick inside an HTML comment took `/console` down completely
+for every quizmaster while the full suite passed — every file under `public/`
+is a DOM module no test imports. `test/browser-parses.test.js` closes it and is
+deliberately the WEAKEST possible guard: `node --check` over every script under
+`public/`, plus any HTML comment carrying a backtick. **Parsing is not
+working**; what it catches is the class of fault that takes a page down
+entirely. **It is the same lesson as the launch route and the projector's
+arcade board, for the third time: A TEST THAT NEVER RUNS THE ARTEFACT PROVES
+NOTHING ABOUT IT.** The full story is in
+**[`docs/history.md`](docs/history.md)**.
 
-`test/browser-parses.test.js` closes it, and is deliberately the WEAKEST
-possible guard: it runs `node --check` over every script under `public/` and
-names any HTML comment carrying a backtick. **Parsing is not working** — a file
-that parses can still be nonsense. What it catches is the class of fault where
-the page cannot load at all, which is the class that ends a night rather than
-annoying somebody. Verified by reintroducing the backtick and watching both
-cases fail.
-
-**It is the same lesson as the launch route and as the projector's arcade
-board, for the third time: a test that never runs the artefact proves nothing
-about it.** `node --check` on a file you edited is seven seconds; finding this
-in a browser cost a round trip, and finding it in a pub would cost the night.
 
 **`pub-unchanged.mjs` is the one to run before a gig week.** `npm test` says
 the tests still pass; this says something stronger and far more useful — that

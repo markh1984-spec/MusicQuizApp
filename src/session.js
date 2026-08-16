@@ -33,6 +33,33 @@ import { composeQuiz } from './running-order.js';
 import { LOOKS, DEFAULT_LOOK } from '../public/assets/looks.js';
 import { lobbyGameFor } from '../public/assets/lobby-games.js';
 
+/**
+ * First, second and third, tidied.
+ *
+ * Control characters out, a length cap, and NO word filtering — the rule
+ * everywhere a human types something that ends up on a screen. Trailing blanks
+ * are dropped by `rewardList()` rather than here, so what was typed survives a
+ * restart.
+ *
+ * The cap is `MAX_REWARDS`, shared with the venue record that authors them.
+ * **The comment this replaced said "capped at three" and had done for a while,
+ * which was never what the code did** — `MAX_REWARDS` is 20. Three is what the
+ * UI OFFERS (first, second, third), which is a different statement and the one
+ * worth making: a pub quiz pays three, and a fourth box is a question nobody
+ * has asked.
+ *
+ * ONE definition, because prizes now arrive by two doors — at launch off the
+ * venue's record, and from the control view mid-night. Two tidies is two rules,
+ * and the day they differ is the day a prize that was fine at eight o'clock is
+ * refused at eleven.
+ */
+export function tidyRewards(rewards) {
+  return (Array.isArray(rewards) ? rewards : [rewards])
+    .slice(0, MAX_REWARDS)
+    .map((r) => String(r || '')
+      .replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80));
+}
+
 /*
  * `load` and `list` take the ROOM'S PATHS as well as the config, because a
  * quizmaster's own packs are not in the catalogue folder — see own-packs.js.
@@ -489,10 +516,7 @@ export class Session {
      * question nobody has asked. Trailing blanks are dropped by `rewardList()`
      * rather than here, so what was typed survives a restart.
      */
-    this.engine.state.rewards = (Array.isArray(rewards) ? rewards : [rewards])
-      .slice(0, MAX_REWARDS)
-      .map((r) => String(r || '')
-        .replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80));
+    this.engine.state.rewards = tidyRewards(rewards);
 
     /*
      * The venue's own logo, for the winner's voucher. Beside the prizes
@@ -697,6 +721,56 @@ export class Session {
       // not working. Both are one tap, and neither is a dead end.
       redeemVoucher: () => this.engine.redeemVoucher(body.code, { by: 'host' }),
       reinstateVoucher: () => this.engine.reinstateVoucher(body.code),
+      /*
+       * SETTING THE PRIZES MID-NIGHT — and it exists because of a real gig.
+       *
+       * On 13 August 2026 a night ran with no prizes and the winners told the
+       * host at the bar that no QR code had arrived. Nothing was broken: the
+       * prize is read off the VENUE'S record at launch, and a night launched
+       * without a venue, with a venue typed as free text, or with a venue
+       * whose record has no prizes on it, gets `rewards: []` — so
+       * `issueVouchers()` returns immediately and nobody gets anything.
+       *
+       * Frozen at launch, that was unrecoverable: by the time you find out,
+       * the final scores are up and the only fix is running the night again.
+       * **This is the whole reason it is a route rather than a warning** — a
+       * warning tells you it has gone wrong, and the host is stood in front of
+       * a room that has just been told they won something.
+       *
+       * **AT THE FINAL IT MINTS IMMEDIATELY.** `issueVouchers()` is idempotent
+       * and skips anybody already holding one, so setting prizes after the
+       * scores are up hands the winner their code where they are standing, and
+       * setting them again cannot mint a second for the same person.
+       *
+       * **WHAT IS ALREADY ISSUED KEEPS ITS OWN WORDS**, because a voucher
+       * copies its `reward` at the moment it is made. Somebody holding a phone
+       * that says "a bottle of wine" is not quietly re-pointed at a packet of
+       * crisps.
+       */
+      setPrizes: () => {
+        this.engine.state.rewards = tidyRewards(body.rewards);
+        if (this.engine.state.phase === PHASES.FINAL) this.engine.issueVouchers();
+        /*
+         * TOLD, AND WRITTEN DOWN — and neither happens on its own here.
+         *
+         * Every other action in this table goes through an engine method that
+         * ends in `changed()`; this one edits the state directly, so without
+         * the call the codes minted and **no phone was ever told.** Caught by
+         * driving it in a browser: the voucher existed on the server and the
+         * winner's screen sat there empty, which is the same symptom the whole
+         * fix exists to remove.
+         *
+         * And `flush()` explicitly, because the quiz milestone is
+         * phase:round:question:players — none of which moves when a voucher is
+         * minted at the final. Debounced, a restart in the next few seconds
+         * would leave somebody holding a QR code for a voucher the server has
+         * no record of, which is WORSE than never having issued one. Rule 7:
+         * anything that moves a night forward goes to disk this instant.
+         */
+        this.engine.changed();
+        this.store.flush();
+        return { rewards: this.engine.state.rewards };
+      },
     } : {
       start: () => this.engine.start(),
       call: () => this.engine.call(String(body.trackId)),

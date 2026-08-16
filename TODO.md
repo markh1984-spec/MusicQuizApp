@@ -365,6 +365,21 @@ account would offer a venue picker beside it, filled from the Venues tab.
 
 ### 1d. WHERE REDEMPTIONS ARE VISIBLE — and the snapshot that misses them
 
+**A SEPARATE FAULT ON THE SAME FEATURE WAS FIXED ON 16 AUGUST 2026, after a
+real gig.** The winners of the 13 August night said no QR code had arrived —
+and nothing was broken: the night had no prizes, because prizes are read off
+the VENUE'S record at launch and none was picked. The app said so once, quietly,
+on Tonight, and nowhere at all after that. Now it is a gold line on Tonight, a
+panel on the control view all night, and **prizes can be set mid-night, minting
+the codes at the final where the host is standing.** See CLAUDE.md and
+`docs/gigs.md`.
+
+**THIS ENTRY IS STILL OPEN.** It is about the RECORD afterwards — showing on
+Past gigs which prizes were actually taken — not about the codes going out.
+`GET /api/archive/<id>` is the only source of a filed night's vouchers with
+`redeemedAt`, and nothing in any browser calls it.
+
+
 **THE BUG HALF IS FIXED (14 August 2026)** — a voucher moving after the
 night is filed now updates the filed record, and the backup with it. Building
 it found and fixed a duplicate night after a restart on the final scores.

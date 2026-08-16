@@ -885,3 +885,32 @@ identical, so a real difference showed as two lines that looked the same. It
 lists the differing paths, how many payloads carry each, and which roles saw
 them, so the output is the claim: *"`you.score` and `you.position`, on a
 phone, mid-question, and nothing on the projector or the host's screen."*
+
+
+---
+
+## The stray backtick that took the console down
+
+The rule is in CLAUDE.md under *Checks*. This is what happened.
+
+**NOTHING IN THIS REPO HAD EVER PARSED THE BROWSER FILES, and on 15 August
+2026 a stray backtick took the whole console down.** It was inside an HTML
+comment in the template literal `launchBar()` builds its markup from, so it
+ended the string early and `console.js` became a syntax error — meaning
+`/console` did not load AT ALL, for every quizmaster, on the page a night is
+launched from. **The full suite passed.** It always would: every file under
+`public/` is a DOM module that no test imports, so the browser half of this app
+was never executed by anything in here.
+
+`test/browser-parses.test.js` closes it, and is deliberately the WEAKEST
+possible guard: it runs `node --check` over every script under `public/` and
+names any HTML comment carrying a backtick. **Parsing is not working** — a file
+that parses can still be nonsense. What it catches is the class of fault where
+the page cannot load at all, which is the class that ends a night rather than
+annoying somebody. Verified by reintroducing the backtick and watching both
+cases fail.
+
+**It is the same lesson as the launch route and as the projector's arcade
+board, for the third time: a test that never runs the artefact proves nothing
+about it.** `node --check` on a file you edited is seven seconds; finding this
+in a browser cost a round trip, and finding it in a pub would cost the night.

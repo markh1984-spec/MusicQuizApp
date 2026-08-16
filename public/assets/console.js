@@ -5563,14 +5563,45 @@ function launchBar() {
       ? `${prizes[0]}${prizes.length > 1 ? ` +${prizes.length - 1}` : ''}`
       : 'no prizes';
 
+    /*
+     * NO PRIZES IS ITS OWN LINE, NOT THREE GREY WORDS ON THE END OF ANOTHER.
+     *
+     * On 13 August 2026 a night ran with none and the winners told the host at
+     * the bar that no QR code had arrived. The app had said so — *"for no
+     * prizes"*, last of four small dim phrases on one line, at the moment
+     * somebody is looking at the Launch button. That is the app technically
+     * having mentioned it, which is not the same as having said it.
+     *
+     * So it comes out of the run-on line and goes underneath in gold, with the
+     * WHY (prizes come off the venue) and the way to fix it, because a warning
+     * that does not say what to do about it is a warning you read twice and
+     * act on never. Gold rather than red: a night with no prizes is legitimate
+     * and most pub quizzes are one — this is a fact you need before you press
+     * Launch, not a fault.
+     *
+     * It is deliberately NOT a block on Launch and NOT a confirm. The one
+     * thing that must never get slower is the path from a room sitting down to
+     * a quiz running.
+     */
     const el = node(`
-      <div class="lb-say">
-        <button class="lb-say-venue" type="button" title="Pick where tonight is">
-          ${esc(name || 'Pick a venue')}
-        </button>
-        <span class="lb-say-bit">${esc(record && record.usualNight ? 'your usual night' : (name ? 'one-off' : 'sets the prizes'))}</span>
-        <span class="lb-say-bit">${esc(on && on.time ? `starts ${saidTime(on.time)}` : 'start when you like')}</span>
-        <span class="lb-say-bit">${esc(`for ${prizeSaid}`)}</span>
+      <div>
+        <div class="lb-say">
+          <button class="lb-say-venue" type="button" title="Pick where tonight is">
+            ${esc(name || 'Pick a venue')}
+          </button>
+          <span class="lb-say-bit">${esc(record && record.usualNight ? 'your usual night' : (name ? 'one-off' : 'sets the prizes'))}</span>
+          <span class="lb-say-bit">${esc(on && on.time ? `starts ${saidTime(on.time)}` : 'start when you like')}</span>
+          ${prizes.length ? `<span class="lb-say-bit">${esc(`for ${prizeSaid}`)}</span>` : ''}
+        </div>
+        ${prizes.length ? '' : `
+          <div class="lb-noprize">
+            <b>No prizes tonight &mdash; nobody gets a voucher.</b>
+            ${name
+    ? (record
+      ? `Prizes come off the venue. Set them on ${goTo('workshop', 'venues', 'the Venues tab')}.`
+      : `&ldquo;${esc(name)}&rdquo; is not on your Venues tab, so it carries no prizes. ${goTo('workshop', 'venues', 'Add it')}.`)
+    : `Pick a venue above &mdash; that is what sets them. Or set them from your control view once the night is running.`}
+          </div>`}
       </div>`);
     el.querySelector('.lb-say-venue').addEventListener('click', () => toggleVenues());
     return el;

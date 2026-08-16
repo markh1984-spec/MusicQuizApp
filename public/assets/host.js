@@ -206,7 +206,7 @@ function draw(next) {
   connEl.textContent = state.joinCode
     ? `${state.playerCount} playing · code ${state.joinCode}`
     : `${state.playerCount} playing`;
-  mainEl.replaceChildren(...restartNotice(state), ...advertPanel(state), ...voucherPanel(state), ...buildPanels(state), ...photoPanel(state));
+  mainEl.replaceChildren(...restartNotice(state), ...advertPanel(state), ...prizePanel(state), ...voucherPanel(state), ...buildPanels(state), ...photoPanel(state));
   actionsEl.replaceChildren(...buildActions(state));
 }
 
@@ -324,6 +324,76 @@ function advertPanel(s) {
  * bar cannot reach us or somebody is working it, and both are worth knowing
  * before you tap it a fourth time.
  */
+/**
+ * WHAT TONIGHT IS PLAYING FOR — said from the lobby on, and fixable.
+ *
+ * Written after a real gig on 13 August 2026 where the winners told the host at
+ * the bar that no QR code had arrived. Nothing was broken. The prize is read
+ * off the VENUE'S record at launch, so a night launched with no venue, with a
+ * venue typed as free text, or with a venue whose record has no prizes on it
+ * gets nothing — and **the app said so exactly once, in three grey words at the
+ * end of a line on the Tonight bar**, then went quiet for the rest of the
+ * evening. `voucherPanel()` below is only drawn once vouchers EXIST, so a
+ * prizeless night looked identical to a normal one right up to the moment
+ * somebody asked where their drink was.
+ *
+ * So this is the other half of that panel: it is drawn when there are NO
+ * vouchers yet, and it is the one thing on the control view that answers "is
+ * this night going to pay out". Quiz only — bingo has no vouchers.
+ *
+ * **IT IS NOT JUST A WARNING.** Prizes used to be frozen at launch, which meant
+ * finding out at the final scores was unrecoverable. Three boxes and a Save
+ * makes it a thing the host fixes while stood there — and at the final the
+ * codes mint immediately, so even the worst case is a tap and an apology
+ * rather than a night that cannot pay.
+ *
+ * GOLD, not red, like everything else in this app that is a fact you need
+ * before you decide rather than a fault: a night with no prizes is perfectly
+ * legitimate and most pub quizzes are one.
+ */
+function prizePanel(s) {
+  if (s.game === 'bingo') return [];
+  // Once vouchers exist the panel below is the better one — it names the
+  // winners and their codes. This is the "before that" half.
+  if ((s.vouchers || []).length) return [];
+  const prizes = (s.rewards || []).map((r) => String(r || '').trim());
+  while (prizes.length && !prizes[prizes.length - 1]) prizes.pop();
+  const atFinal = s.phase === 'final';
+
+  const el = node(`
+    <div class="panel prize-set ${prizes.length ? '' : 'none'}">
+      <h3>${prizes.length ? 'Playing for' : 'No prizes tonight'}</h3>
+      <div class="tiny">${prizes.length
+    ? 'Codes go to the winners’ phones when the final scores go up.'
+    : (atFinal
+      ? 'The scores are up and nobody has a code. Type the prizes and they go out now.'
+      : 'Nobody will get a voucher. Prizes come off the venue’s record — set them here for tonight.')}</div>
+      <div class="prize-set-rows">
+        ${[0, 1, 2].map((i) => `
+          <label class="prize-set-row">
+            <span class="v-place v-place-${i + 1}">${['1st', '2nd', '3rd'][i]}</span>
+            <input type="text" class="prize-box" data-at="${i}" maxlength="80"
+              value="${esc(prizes[i] || '')}" placeholder="${['A bottle of wine', 'Two pints', 'A packet of crisps'][i]}">
+          </label>`).join('')}
+      </div>
+      <button class="minor prize-save" type="button">${atFinal && !prizes.length ? 'Save and send the codes' : 'Save the prizes'}</button>
+      <div class="tiny prize-said"></div>
+    </div>`);
+
+  const said = el.querySelector('.prize-said');
+  el.querySelector('.prize-save').addEventListener('click', async () => {
+    const rewards = [...el.querySelectorAll('.prize-box')].map((b) => b.value.trim());
+    while (rewards.length && !rewards[rewards.length - 1]) rewards.pop();
+    said.textContent = 'Saving…';
+    await act('setPrizes', { rewards });
+    // The state push redraws this panel, so there is nothing to paint here —
+    // and saying "saved" from a button whose panel is about to be replaced is
+    // how a screen ends up disagreeing with itself.
+    said.textContent = '';
+  });
+  return [el];
+}
+
 function voucherPanel(s) {
   // Down the board, first place at the top — the order the room saw and the
   // order the host will read them out in.

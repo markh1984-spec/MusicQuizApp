@@ -890,10 +890,31 @@ function paintCameraButton(s) {
   document.body.appendChild(btn);
 }
 
+/**
+ * What has to be REBUILT rather than merely updated.
+ *
+ * **A VOUCHER ARRIVING IS A REBUILD, and that is not a detail.** On an ordinary
+ * night the winner's code is minted at the moment the phase becomes `final`, so
+ * the key changes anyway and the board is built with the card in it. But prizes
+ * can now be set from the control view mid-night — which is how a host rescues a
+ * night launched with none — and then the voucher appears with NO phase change.
+ * Without it in the key the phone keeps the board it already had and the QR
+ * never draws, so the winner is stood at the bar with an empty screen and the
+ * server insisting it sent them one.
+ *
+ * Found by driving it: the server had the voucher, a reload showed the card, a
+ * live push did not. The same shape as every other fault this app keeps
+ * finding — the payload was right and nothing drew it.
+ *
+ * The `redeemedAt` half matters for the same reason: the card turns into
+ * "Collected" when the bar scans it, and that is also a rebuild with no phase
+ * change behind it.
+ */
 function screenKey(s) {
   if (s.game === 'bingo') return bingoKey(s);
   if (s.phase === 'question' || s.phase === 'reveal') return `q:${s.roundIndex}:${s.questionIndex}:${s.phase}`;
-  return `${s.phase}:${s.roundIndex}`;
+  const won = s.voucher ? `:v${s.voucher.code}${s.voucher.redeemedAt ? ':spent' : ''}` : '';
+  return `${s.phase}:${s.roundIndex}${won}`;
 }
 
 function buildScreen(s) {

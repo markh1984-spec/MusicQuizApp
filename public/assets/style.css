@@ -6656,6 +6656,38 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .v-place-3 { color: #cd895a; }
 .v-row-what { font-size: var(--fs-note); color: var(--ink-dim); }
 
+/* ---- WHAT TONIGHT IS PLAYING FOR, on the control view.
+   GOLD RATHER THAN RED when there are none, because a night with no prizes is
+   perfectly legitimate and most pub quizzes are one — it is a fact you need
+   before the final scores go up, which is what gold means everywhere else
+   here. Red would say a mistake had been made. Same treatment `.in-play` and
+   the clash line already use. */
+.prize-set-rows { display: grid; gap: 8px; margin: 10px 0 12px; }
+.prize-set-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+/* `min-width: 0` on the box for the reason this file keeps recording: a flex
+   child will not go below its own min-content without it, and this panel is
+   read on a phone in the dark. */
+.prize-set-row input { flex: 1 1 auto; min-width: 0; }
+.panel.prize-set.none { border-color: rgba(255, 199, 61, 0.5); background: rgba(255, 199, 61, 0.08); }
+.prize-said { margin-top: 8px; }
+
+/* ---- AND THE SAME THING ON TONIGHT, before a night is launched at all.
+   Its own line rather than a phrase on the end of the run-on one, for the
+   reason recorded at `infoLine()`: the app had technically mentioned it, and
+   a room still went home without their prize. Gold for the same reason as
+   above — legitimate, not a fault. */
+.lb-noprize {
+  margin-top: 8px;
+  padding: 9px 12px;
+  border-radius: var(--r-field);
+  border: 1px solid rgba(255, 199, 61, 0.5);
+  background: rgba(255, 199, 61, 0.08);
+  font-size: var(--fs-note);
+  color: var(--ink-dim);
+}
+.lb-noprize b { display: block; color: var(--gold); }
+.lb-noprize a { color: var(--ink); }
+
 /* First, second and third at launch. One row each, the place on the left so
    the first box is obviously one of a set — without it a lone unlabelled box
    reads as the only field there is, which is exactly how it was reported. */
