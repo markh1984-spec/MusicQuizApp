@@ -111,6 +111,42 @@ test('the whole archive goes out and comes back', () => {
   assert.deepEqual(listArchive(to).map((n) => n.title), listArchive(from).map((n) => n.title));
 });
 
+/**
+ * GIGS CAN SAY WHAT WAS TAKEN, not only what was put up.
+ *
+ * The vouchers have been in the filed record since the bar started scanning
+ * them, and `updateArchivedNight()` keeps them current when one is redeemed
+ * minutes after the night is archived — but the SUMMARY this list is built
+ * from never carried the number, so the console could only ever name the
+ * prizes offered. An unclaimed prize is money still behind a bar, and it is
+ * the quizmaster who gets asked about it weeks later.
+ */
+test('a filed night says how many prizes were actually taken', () => {
+  const dir = tempDir();
+  archiveResults(dir, {
+    packId: 'tonight',
+    quizTitle: 'Tonight',
+    kind: 'quiz',
+    rewards: ['A round of drinks', 'A bar tab', 'A packet of crisps'],
+    vouchers: [
+      { code: 'AAA', redeemedAt: 1_700_000_000_000 },
+      { code: 'BBB', redeemedAt: null },
+      { code: 'CCC', redeemedAt: 1_700_000_100_000 },
+    ],
+    leaderboard: [{ position: 1, name: 'Quizteam Aguilera', score: 10 }],
+  }, Date.now());
+
+  const [night] = listArchive(dir);
+  assert.equal(night.rewards.length, 3, 'what was put up');
+  assert.equal(night.rewardsTaken, 2, 'what was collected — the half nothing read back out');
+});
+
+test('a night with no vouchers reports none taken rather than undefined', () => {
+  const dir = tempDir();
+  archiveResults(dir, { packId: 'p', quizTitle: 'Quiet one', kind: 'quiz' }, Date.now());
+  assert.equal(listArchive(dir)[0].rewardsTaken, 0);
+});
+
 test('a disk that already has nights on it is ahead of any backup', () => {
   // The same rule as the accounts, the invoice book and the play counts.
   // Reading a backup over the top would either duplicate a night or lose one.

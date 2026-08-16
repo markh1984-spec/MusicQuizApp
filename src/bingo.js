@@ -19,7 +19,7 @@
  * silently ignored, because a false alarm is half the fun in a room.
  */
 
-import { cleanTeamName, isSafeId, newId, newToken, ownsPlayer, MAX_PLAYERS, rememberRemoved, wasRemoved, forgetRemoved } from './engine.js';
+import { cleanTeamName, faceKey, isSafeId, newId, newToken, ownsPlayer, MAX_PLAYERS, rememberRemoved, wasRemoved, forgetRemoved } from './engine.js';
 import { comeBackView } from './comeback.js';
 import { recordArcadeScore, arcadeBoard, arcadeFields } from './arcade.js';
 
@@ -810,6 +810,10 @@ export class BingoGame {
       leaderboard: this.playerList()
         .map((p) => ({
           name: p.name,
+          // `faceKey`, never the id — see the same field in `engine.js`. A
+          // filed night is read in public on the gallery, and an id is a
+          // credential.
+          faceKey: faceKey(p.id),
           away: this.squaresAway(p),
           falseCalls: p.falseCalls,
           won: this.state.winners.line.includes(p.id) || this.state.winners.full.includes(p.id),

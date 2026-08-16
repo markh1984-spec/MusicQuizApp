@@ -1006,6 +1006,31 @@ export function launchBar() {
 
     goBtn.onclick = async (ev) => {
       const button = ev.currentTarget;
+      /*
+       * THE BIG SCREEN OPENS ON THE PRESS, and it has to happen HERE.
+       *
+       * Launching and then walking to the laptop to open the projector by hand
+       * is two jobs where the host does one, and the second is done in a dark
+       * pub with a room already looking at the wall.
+       *
+       * **SYNCHRONOUSLY, BEFORE THE AWAIT.** A browser only allows a popup
+       * inside the gesture that asked for it; one opened after the launch
+       * resolves is a blocked popup and a notification bar, which is worse
+       * than no feature because it looks broken. That is the whole reason this
+       * cannot live inside `doLaunch()` beside the request.
+       *
+       * **A NAMED TARGET, so a second launch REUSES the tab** rather than
+       * stacking projector windows across an evening.
+       *
+       * **AND NOTHING CLOSES IT IF THE LAUNCH IS REFUSED**, which took a wrong
+       * turn first. The instinct is to tidy the window away on a 409 — but
+       * `screenLink()` points at the ROOM, not at the game, so a declined
+       * launch leaves the projector showing the night that is still running.
+       * That is not a stale window, it is the correct one. Closing it would
+       * also shut a projector the host had already opened themselves, since a
+       * named target cannot tell you whether it was there a moment ago.
+       */
+      window.open(screenLink(), 'quizscreen');
       await doLaunch(kind, pack.id, {
         // FROM `night`, not from the DOM — see the note where it is declared.
         // The controls live on their own tab now and may not be on screen when

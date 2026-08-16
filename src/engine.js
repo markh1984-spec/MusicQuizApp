@@ -2481,9 +2481,26 @@ export class Engine {
       vouchers: Object.values(this.state.vouchers || {}),
       startedAt: this.state.startedAt,
       finishedAt: this.state.finishedAt,
+      /*
+       * `faceKey`, NEVER the player id — and the distinction is the whole
+       * reason this field can exist at all.
+       *
+       * A filed night is the one record that outlives the game, and it is
+       * READ IN PUBLIC: the gallery serves a published night to anybody with
+       * the link. A player id is a bearer credential (rule 3) — anything that
+       * learns one can answer and rename as that player — so putting ids in
+       * the archive would publish a room's credentials months after the night,
+       * which is the fastest-finger leak wearing a different hat.
+       *
+       * `faceKey()` is the public handle the projector already uses to find
+       * somebody's photo, derived one way from the id. It is what lets a
+       * winner be matched to their face on the gallery without the archive
+       * holding anything that can act as them.
+       */
       leaderboard: this.leaderboard().map((p) => ({
         position: p.position,
         name: p.name,
+        faceKey: faceKey(p.id),
         score: p.score,
         correctCount: p.correctCount,
         answeredCount: p.answeredCount,

@@ -8,7 +8,7 @@ import { field, money, sheet } from './console-invoices.js';
 import { renderBingoPreview, renderQuizPreview } from './console-preview.js';
 import { library, me, setPackDrag } from './console-state.js';
 import { addToTonight, dragging, night, playedAt } from './console-tonight.js';
-import { PACK_SHELF, can, canPin, doorNow, goTo, hostKey, isPinned, keyed, linkTo, load, packWord, pinIcon, render, showDone, togglePin } from './console.js';
+import { PACK_SHELF, can, canPin, doorNow, goTo, hostKey, isPinned, keyed, linkTo, load, packWord, pinIcon, pinRank, render, showDone, togglePin } from './console.js';
 import { tonight } from './diary.js';
 import { lobbyGameChoices, lobbyGameFor } from './lobby-games.js';
 import { inSeason } from './looks.js';
@@ -211,7 +211,7 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
      * never-played before long-ago. That ranking is not decoration once only
      * SIX are shown: it decides what you can reach.
      */
-    const inOrder = [...found].sort((a, b) => (isPinned(b.id) - isPinned(a.id))
+    const inOrder = [...found].sort((a, b) => (pinRank(a.id) - pinRank(b.id))
       || (shelf(a) - shelf(b))
       || (playedAt(a.lastPlayedAt) - playedAt(b.lastPlayedAt)));
     // Only what they can RUN. What is for sale is a room of its own now.

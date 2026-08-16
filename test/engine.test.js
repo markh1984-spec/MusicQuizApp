@@ -784,6 +784,36 @@ test('every change bumps the version, so clients can spot a missed update', () =
   assert.ok(engine.state.version > before);
 });
 
+/**
+ * A FILED NIGHT CARRIES `faceKey`, NEVER THE PLAYER ID.
+ *
+ * The archive is the one record that outlives the game, and the gallery serves
+ * a published night to anybody with the link — so an id in there is a bearer
+ * credential published months after the night (rule 3), which is the
+ * fastest-finger leak in another shape. `faceKey()` is the public handle the
+ * projector already uses to find somebody's photo, derived one way, and it is
+ * what lets a winner be matched to a face without the archive holding anything
+ * that can act as them.
+ */
+test('the archived leaderboard carries a face key and never a player id', () => {
+  const { engine } = makeEngine();
+  const [a] = joinThree(engine);
+  toFirstQuestion(engine);
+  engine.answer({ playerId: a.id, optionIndex: 1 });
+  engine.reveal();
+
+  const rows = engine.results().leaderboard;
+  for (const row of rows) {
+    assert.ok(row.faceKey, `${row.name} was filed with no face key, so no photo can ever be matched`);
+  }
+  const mine = rows.find((r) => r.name === a.name);
+  assert.notEqual(mine.faceKey, a.id,
+    'the ARCHIVE is published on the gallery — a player id in it is a credential handed out '
+    + 'months after the night, which is exactly what faceKey() exists to prevent');
+  assert.equal(JSON.stringify(rows).includes(a.id), false,
+    'a raw player id reached the filed night');
+});
+
 test('the results export has the leaderboard and the questions asked', () => {
   const { engine, at } = makeEngine();
   const [a] = joinThree(engine);

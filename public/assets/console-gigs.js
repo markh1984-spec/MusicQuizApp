@@ -380,6 +380,23 @@ function gigRow(night) {
   // than an empty line.
   const lead = night.venue ? esc(night.venue) : played;
 
+  /*
+   * WHAT WAS PUT UP, AND WHAT WAS ACTUALLY COLLECTED.
+   *
+   * The record has carried both since the bar started scanning vouchers, and
+   * nothing ever said so — Gigs named the headcount and stopped. "Taken" is
+   * the half somebody asks about: an unclaimed prize is money still sitting
+   * behind a bar, and it is the quizmaster who gets asked about it weeks later.
+   *
+   * Silent when there were no prizes, rather than "0 prizes" on every night
+   * that ran without any — the same rule as the venue line above it.
+   */
+  const put = night.games.reduce((n, g) => n + ((g.rewards || []).length), 0);
+  const taken = night.games.reduce((n, g) => n + (g.rewardsTaken || 0), 0);
+  const prizes = put
+    ? ` · ${put} ${put === 1 ? 'prize' : 'prizes'}${taken ? `, ${taken} taken` : ''}`
+    : '';
+
   const el = node(`
     <div class="gig" data-night="${esc(night.night)}" draggable="true">
       <button class="gig-head" type="button">
@@ -394,7 +411,7 @@ function gigRow(night) {
         </span>
         <span class="gig-mid">
           <b>${lead}</b>
-          <span class="tiny">${esc(weekday)}${night.venue ? ` · ${played}` : ''}${heads ? ` · ${heads} played` : ''}</span>
+          <span class="tiny">${esc(weekday)}${night.venue ? ` · ${played}` : ''}${heads ? ` · ${heads} played` : ''}${prizes}</span>
         </span>
         <span class="gig-badges">
           ${night.unbilled ? '<span class="gig-unbilled">Not invoiced</span>' : ''}

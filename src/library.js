@@ -365,6 +365,21 @@ export function listArchive(dir) {
             : (r.reward ? [r.reward] : []),
           playerCount: (r.leaderboard || []).length,
           winner: (r.leaderboard || [])[0]?.name || null,
+          /*
+           * HOW MANY PRIZES WERE ACTUALLY TAKEN.
+           *
+           * The vouchers have been in the filed record since the bar started
+           * scanning them, and `updateArchivedNight()` keeps them current when
+           * one is redeemed minutes after the night is archived. Nothing ever
+           * read the number back out, so Gigs could say what was PUT UP and
+           * never what was COLLECTED — which is the half a landlord asks about,
+           * and the half that says whether a prize is still owed behind the bar.
+           *
+           * A count rather than the vouchers themselves: this summary is built
+           * for a list, and the codes are somebody's to redeem rather than
+           * something to scatter through a payload.
+           */
+          rewardsTaken: (r.vouchers || []).filter((v) => v && v.redeemedAt).length,
         };
       } catch {
         return null;

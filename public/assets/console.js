@@ -73,7 +73,24 @@ export const canPin = () => Boolean(me && !me.bootstrap);
  */
 export const PACK_SHELF = 6;
 
-export const isPinned = (id) => ((library && library.prefs && library.prefs.pinnedPacks) || []).includes(id);
+export const pinnedPacks = () => (library && library.prefs && library.prefs.pinnedPacks) || [];
+export const isPinned = (id) => pinnedPacks().includes(id);
+
+/**
+ * WHERE a pin sits, not merely THAT it is pinned.
+ *
+ * The shelf used to sort on `isPinned(b) - isPinned(a)`, a boolean, so six
+ * pinned packs came back in whatever order the ranking underneath happened to
+ * put them — the pin kept its membership and lost its arrangement. That is the
+ * half of a pin that matters once only SIX are shown: the point is to decide
+ * what is in REACH, and reach means position as well as presence.
+ *
+ * Unpinned packs sort after every pinned one rather than among them.
+ */
+export const pinRank = (id) => {
+  const at = pinnedPacks().indexOf(id);
+  return at === -1 ? Number.MAX_SAFE_INTEGER : at;
+};
 
 /** The drawn pin. Never an emoji — the same rule `binIcon()` follows. */
 export function pinIcon() {
