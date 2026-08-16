@@ -83,6 +83,29 @@ deploy followed by a deliberate launch does not.
 
 ---
 
+## FOUR PLACES THE CONSOLE DELIBERATELY DIFFERS FROM ITS BUILD PLAN
+
+Recorded on 16 August 2026 while deleting the finished entries out of
+`todo/console.md`. Each of these was settled as a plan, built differently on
+purpose, and the reasoning would have gone in the bin with the entry.
+
+- **My account is a FOURTH DOOR, not an account chip top-right.** The plan
+  settled on a chip; the pill reads better beside the other three and keeps one
+  navigation idea instead of two. Calendar sits behind it rather than behind
+  Workshop — organisation, not preparation.
+- **The tier arranger is a dropdown per row, not a drag.** The business rule it
+  existed to serve — *a feature moving up a tier does not take it away from
+  people who had it* — is what mattered, and `setFeatureTier()` computes the
+  holders BEFORE the table changes and writes `kept` to each. The gesture was
+  never the point.
+- **A pack already in Tonight stays on the shelf as a dashed ghost** rather
+  than being removed from the six. The card visibly LEFT, which is the thing a
+  quizmaster needs to see; a card that silently vanishes reads as lost.
+- **The benches are per-DEVICE (`localStorage`), not per-account `prefs`.**
+  What you were half way through editing is a fact about the machine you were
+  editing on, and it is the same reasoning that keeps the venue and the online
+  switch off the device: a fact about one evening is not a setting.
+
 ## THE CONSOLE IS TWELVE FILES — how it was split, and the two faults it found
 
 `console.js` reached **11,222 lines**, and the cost was not readability: it was

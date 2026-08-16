@@ -195,62 +195,21 @@ skin colour, which is a bias this app should not ship.
   use, so `GOOGLE_API_KEY` may or may not cover it — needs a Cloud project with
   the Vision API enabled. Check before promising it.
 
-#### THE BLOCKER, found before building: THERE MAY BE NO PREVIOUS NIGHTS TO SHOW
+### THE GALLERY PUBLISHES WHEN THE NIGHT ENDS — the automatic trigger is what is left
 
-Checked on 15 August 2026 before writing a line of the gallery, and it stops
-the feature until it is fixed.
+**THE GATE AND THE HANDLE ARE BUILT**: `src/gallery.js` holds
+`publishedNights`/`isPublished`/`setPublished`, it fails closed, the list lives
+in the private repo, the route is `server.js:3507` and `galleryToggle()` in
+`console-gigs.js` calls it. Publishing works — as ONE TAP.
 
-**`/photos/<file>` reads the LOCAL DISK** (`server.js:1073`, via
-`room.photos.fileFor`). On Render's free tier **the disk is wiped on every
-deploy** — this file already says so about the invoice book, and it applies
-identically here. So a gallery served through that route shows nothing older
-than the last deploy, which on a day like today is a few hours.
+**What does not exist is the automatic part this entry is named after.** No
+auto-publish, no `published` flag or end moment on a night, and no "never
+before the last game ended" floor. It needs a real booked end time first, which
+is the night-object job.
 
-**The photos survive in the PRIVATE REPO, and only there.** `photoFolder()`
-files them as `photos/<roomId>/<night>/`, and the owner's export tab already
-reads them back (`server.js:1899`, `:1934`, `:1964`). **So the gallery must
-read from the repo, not from `/photos/`** — the pattern exists and it is
-`getFile(..., 'photos')`.
-
-##### AND THE "PHOTO_REPO IS NOT SET" CLAIM WAS WRONG — read this before repeating it
-
-**It IS set on Render.** `docs/history.md` lists it under *"The live app is set
-up now — this is what is actually on Render"*, alongside `PHOTO_TOKEN`,
-`HOST_KEY` and the rest.
-
-**The mistake was measuring the wrong machine.** `process.env.PHOTO_REPO` was
-read inside the development container, which has no relationship to the live
-service's environment at all — and that was then used to tell the host the
-whole gallery was blocked. It was not.
-
-**And the page that lists it says exactly how not to make this mistake:**
-*"READ IT OFF THE APP RATHER THAN OFF THIS PAGE. `GET /api/library` reports
-`generation` … If a feature looks unconfigured, check the payload before
-believing a document."* Neither the document nor the payload was consulted; a
-local environment variable was.
-
-**So the storage is there and the gallery is NOT blocked on it.** What is still
-genuinely unproven is the ROUND TRIP — AUDIT.md lists the photo path as the one
-shipped feature whose happy path has never been confirmed end to end. That is a
-thing to verify, not a blocker to assume:
-
-1. Take one photo on a phone at a real night.
-2. Confirm it appears in the private repo under `photos/<room>/<night>/`.
-3. Check `GET /api/library` reports `backupConfigured` — the live answer, which
-   beats both this list and `history.md`.
-
-##### And then two design consequences that follow from reading the repo
-
-- **The server becomes an image proxy.** Every gallery view is authenticated
-  GitHub fetches on a free tier that sleeps. It needs caching and it needs
-  measuring before anybody is told to scan a QR at the end of a night.
-- **The night id is a plain `YYYY-MM-DD`**, so a link keyed on it is
-  guessable and "unlisted" would be a fiction. An opaque token has to be
-  stored against the archived night (`updateArchivedNight`) or derived from a
-  stable secret — and NOT from `HOST_KEY`, which rotates on deploy and would
-  break every gallery link ever handed out.
-
-### THE GALLERY PUBLISHES WHEN THE NIGHT ENDS — and that is what finally forces a NIGHT to exist
+(The old *"there may be no previous nights to show"* blocker was deleted on 16
+August 2026: the gallery reads the private REPO rather than the disk, so the
+fault it described cannot happen.)
 
 Decided on 15 August 2026, and it is a better answer than the unlisted link I
 proposed: *"the gallery link doesn't get published until the quizmaster

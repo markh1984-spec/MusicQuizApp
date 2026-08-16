@@ -100,7 +100,14 @@ Note what it is NOT: a manual. The app should not need one. It is the page
 somebody reads before they pay, and the page they are pointed at when a
 one-line blurb was not enough.
 
-### 5. Four things raised on the console, none of them built
+### 5. Four things raised on the console — two are built, two are not
+
+**(a) the launch tab and (b) what a night records are BUILT** — (a) shipped as
+Tonight plus the *Tonight's settings* tab, and (b) as the venue, headcount,
+winner and unbilled figures on Gigs. **(d) "Got in my way" is built** as the
+suggestion box. **What is left is (c): agency invoicing**, and it is still
+blocked on the same thing — there is no `parentId` and no children anywhere in
+`src/accounts.js`, so there is no group to invoice for.
 
 Parked together because each is a design decision rather than a tweak, and
 three of the four are really about what a NIGHT is — which is item 1 above.
@@ -131,31 +138,6 @@ three of the four are really about what a NIGHT is — which is item 1 above.
   sent, because nobody files a bug about something that merely annoyed them.
   Naming it as a category is what gives somebody permission. Revisit if it
   turns out nobody ever picks it.
-
-### 5d. Two band shirts went in — the pattern for adding more
-
-**Added 14 August 2026**: `shirt-1d` and `shirt-bmth` in `stickers.js`. Worth
-recording as a recipe, because more will be asked for and each one is about
-ten minutes:
-
-1. One `ART` entry, 100x100, with the die-cut white border every other prop
-   has (`fill="#fff" stroke="#fff" stroke-width="11"`), then the colour, then
-   the dark outline.
-2. **Letters as PATHS, never `<text>`.** A prop renders from a data: URL into
-   an `<img>`, which picks up whatever the handset calls "sans-serif" — so
-   spacing and weight would differ on every phone in the room, and this ends
-   up six feet wide on a projector.
-3. Keep everything inside the shirt body, which is **x 30–70, y 46–86**. Both
-   of these were drawn once with the `D` and the `H` hanging off the side, and
-   the only thing that showed it was rendering them.
-4. **No `♥` in the label** — U+2665 takes emoji presentation on some handsets,
-   and the no-emoji test catches it. "1D shirt" says what it is.
-5. Render at **66, 120 and 240** on a light AND a dark ground before believing
-   it: a prop lands on a photograph of unknown brightness, and 66 is the tile.
-
-The obvious next ones, if a room asks: a plain band tee with no name on it, a
-football shirt, and a hi-vis. Each is another tile in a tray somebody has to
-scan, so add them when a night needs one rather than for the sake of it.
 
 ### 0b. A VENUE IS ONE OBJECT — the tab is built; adverts are the piece left
 
@@ -406,7 +388,20 @@ asking whether it is usable rather than merely unbroken. In particular:
 **Do this by wearing the hat on Bronze at 390px**, not by reasoning about it
 — the same method that found the other three.
 
-### 6. Email — the one dependency several other things are waiting on
+### 6. Email — THE TRANSPORT IS BUILT; the uses are what is left
+
+**Do not rebuild the sending.** `src/email.js` is 224 lines and live:
+`emailConfigured`, `fromAddress`, `sendEmail`, `keepKeyAlive`, `resetEmail`,
+with **two providers** behind one interface. Password reset by magic link is
+fully wired (`server.js:3573-3600` plus `/reset`).
+
+**The whole remainder is CALLERS.** `sendEmail` has exactly one caller in the
+app — the password reset. Invoices still leave by share sheet and `mailto`;
+there is no suggestion-reply email, no billing email, nothing venue-facing.
+Each is a template and a trigger, not infrastructure.
+
+**And the table below is stale in one respect:** it names Resend only. Brevo
+has since been added and `emailProvider()` chooses between them.
 
 **Raised 12 August 2026 while a password could not be reset.** CLAUDE.md says
 do not add an email service without asking; he asked, and the answer is that it
