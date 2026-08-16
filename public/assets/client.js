@@ -106,6 +106,22 @@ export function navMenu({
   if (packs) items.push({ id: 'workshop', label: 'Workshop', href: at('/console?door=workshop') });
   items.push({ id: 'post', label: 'Post gig', href: at('/console?door=post') });
   /*
+   * AND MY ACCOUNT, the fourth — asked for as *"we need a fourth pill at the
+   * top: My Account. Then Calendar, Help and Shop all live there."*
+   *
+   * The first three name MOMENTS of a night — before it, during it, after it.
+   * This one names the one thing that is not a night at all, which is why it
+   * goes on the end rather than in the sequence: your calendar, your
+   * subscription, the support box and the shop are all about YOU, and none of
+   * them is a step in an evening.
+   *
+   * Ungated like the tab it leads to, and for the same reason: this is where
+   * somebody goes when something is wrong, including when the thing that is
+   * wrong is their subscription. A door that disappears at the moment you need
+   * it is worse than not having one.
+   */
+  items.push({ id: 'account', label: 'My account', href: at('/console?door=account') });
+  /*
    * THERE IS NO OWNER DOOR ON THIS MENU, and taking it off was the host's
    * call: *"only my account has two owner links now — defunct. The other QMs
    * don't need any owner links, so I'll keep the top right one and lose the

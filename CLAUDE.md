@@ -885,6 +885,20 @@ board), `src/arcade.js` (the scores, shared by both engines),
 
 Full reasoning: **[`docs/lobby-games.md`](docs/lobby-games.md)**.
 
+### FOUR DOORS: CONSOLE · WORKSHOP · POST GIG · MY ACCOUNT
+
+`DOORS`, `navMenu()`, `doors` on every `TABS` entry. The first three name
+MOMENTS of a night; **the fourth names the one thing that is not a night**, so
+it goes on the end rather than in the sequence.
+
+- **A fact is on ACCOUNT, a switch is on SETTINGS, a price is in the SHOP** —
+  the test for where a new panel goes, or Settings becomes a bin.
+- **THE SHOP SELLS PACKS AND TIERS IN ONE ROOM**, both games in one grid,
+  because there you are shopping rather than launching. **It left the pack
+  shelf**, where it put a till at the bottom of a working page.
+- **HELP KEEPS ITS OWN TAB, NO `needs`, LAST**, and the door is ungated: it is
+  where somebody goes when what is wrong is their subscription.
+
 ### CAPITALS ARE FOR EMPHASIS, NOT FOR LABELLING
 
 Set by the host on 14 August 2026, and it is a BRAND decision rather than a
@@ -1070,11 +1084,10 @@ want to write something.
 - **Quizporium packs** — the ones written for them and sold. Says who wrote it
   and therefore why it costs money, which "the catalogue" never did.
 
-The grid at the top of a pack tab stays **Your quizzes** / **Your bingo
-games**, because it is neither of those two things: it is everything you can
-RUN tonight, which is your own packs and the Quizporium ones you hold, mixed.
-That distinction is the reason the shop sits under its own heading rather than
-in the same grid — see the shop notes below.
+The grid on a pack tab is everything you can RUN tonight — your own packs and
+the Quizporium ones you hold, mixed. **What you do NOT hold is not on it**: the
+shop is its own tab, so a padlocked card can never appear among the ones you
+are choosing between ten minutes before a gig.
 
 ## House style for labels: say what it is, then one line
 
@@ -1179,12 +1192,11 @@ Open the one you are touching; do not read them all.
 - The restart notice, and the one state that made it a lie
 - CHANGING TAB DOES NOT MOVE THE PAGE
 - THE CONSOLE'S THEME — one surface, one heading ladder, a bar that stays
-- The tabs run LEFT TO RIGHT along a quizmaster's evening
+- The tabs run ALONG a quizmaster's evening, behind their door
 - DRAG AND DROP — the console is the laptop with the HDMI in it
-- AND TONIGHT PINS WHERE IT ALREADY IS, RATHER THAN JUMPING TO THE TOP
-- TONIGHT — one launch section, at the top of every tab
+- TONIGHT — one launch section, and it PINS WHERE IT ALREADY IS on a drag
 - A PACK WEARS ITS OWN SUBJECT
-- SET IT UP IS ALWAYS THERE, DISABLED UNTIL THERE IS A NIGHT TO SET UP
+- A CONTROL IS PRESENT AND INERT, NEVER ABSENT
 
 **[`docs/gigs.md`](docs/gigs.md)** — venues, prizes, the diary, past nights, getting paid
 
@@ -1776,20 +1788,17 @@ looking at again.**
 
 Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
-### The tabs run LEFT TO RIGHT along a quizmaster's evening
+### The tabs run ALONG a quizmaster's evening, behind their door
 
-`TABS` in `console.js`. **Music Quiz · Music Bingo · Adverts · Gigs · Invoices ·
-Venues · Help · My account**, with **Tonight** above all of them. The bar reads
-as an evening: what you will PLAY, what goes between the rounds, the NIGHT
-itself, getting PAID for it, the standing arrangements behind all of it, then
-the two you touch twice a year. **Rarely-touched goes right** — My account keeps
-its name rather than becoming Settings. Gigs sits at both ends of the journey
-and stays whole rather than becoming a tenth tab.
+`TABS`, **filtered by DOOR and stacked down the left**. The ORDER still runs
+along the evening: Console is Music Quiz · Music Bingo · Shows · Venues ·
+Tonight's settings — what you will PLAY, then where, then the settings, which
+are the last thing you touch before Launch and the only tab on that door you
+can skip entirely. **Rarely-touched goes last** wherever it lands.
 
-**A reorder is the cheapest change in the app and the easiest to get wrong
-silently** — nothing fails, a tab simply stops being where somebody's thumb
-expects it. Open every tab in a browser at 390 and 1280 afterwards and measure
-the page for overflow.
+**A reorder is the cheapest change and the easiest to get wrong silently** —
+nothing fails, a tab simply stops being where a thumb expects it. Open every
+door in a browser at 390 and 1280 afterwards and measure for overflow.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
@@ -1864,9 +1873,9 @@ buttons STAY** — drag is the fast way and every drag has a way round it.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
-### TONIGHT — one launch section, at the top of every tab
+### TONIGHT — one launch section, on the Console door
 
-`launchBar()` in `console.js`, drawn above the running panel on every tab.
+`launchBar()` in `console.js`, above the running panel on the Console door.
 *"Wherever he is, he can launch from there, and it needs to be fully featured.
 Sometimes you just don't want to think, you want to get in and go and know it
 will work."*

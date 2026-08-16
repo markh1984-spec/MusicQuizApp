@@ -738,7 +738,7 @@ const TABS = [
      * right and what is BOOKED comes before what has been RUN.
      */
     id: 'diary',
-    doors: ['workshop'],
+    doors: ['account'],
     needs: FEATURES.CALENDAR,
     label: 'Calendar',
     blurb: 'What you have got coming, from your venues\u2019 usual nights.',
@@ -876,8 +876,81 @@ const TABS = [
     render: () => tonightSettingsPanel(),
   },
   {
+    /*
+     * ACCOUNT AND SETTINGS ARE TWO TABS AGAIN, and this time it holds.
+     *
+     * They were merged because both halves had shrunk to almost nothing — but
+     * the reason each had shrunk is that the SELL was in here with them, and
+     * the sell now has a room of its own. See `accountSection()`.
+     *
+     * **HELP STAYS ITS OWN TAB.** It is where somebody goes when something is
+     * wrong — including when the thing that is wrong is their subscription —
+     * and burying it inside a page called Account makes it hardest to find at
+     * the moment it matters most. Same reason it carries no `needs` at all.
+     */
+    id: 'account',
+    doors: ['account'],
+    /*
+     * CALLED "ACCOUNT" WHERE THE DOOR IS CALLED "MY ACCOUNT", and that is a
+     * superset naming its first tab rather than the label collision this file
+     * warns about. The door holds four tabs; this is the one about who you
+     * ARE. If it ever reads as a duplicate, rename the TAB — the door is the
+     * name the host chose.
+     */
+    label: 'Account',
+    blurb: 'Who you are, what you are on, and your room.',
+    // Always here, whatever is switched off — it is where things are switched
+    // back on, so it can never be one of the things that goes away.
+    render: () => accountSection(),
+  },
+  {
+    /*
+     * THE SHOP — packs and the rungs, in one room.
+     *
+     * *"Shop will be the place they can buy packs and upgrade their
+     * subscription."* It used to be a section under the pack shelf on the
+     * Workshop door, which put something to spend money on at the bottom of
+     * the page somebody opens to work — and put the pack price a whole tab
+     * away from the tier that is the other way to get the same packs.
+     *
+     * **`needs: CATALOGUE`, so a quizmaster who cannot buy is not shown a
+     * till.** That is the same rule the tab bar already follows everywhere:
+     * above your tier is drawn greyed with a price, switched off by you is
+     * gone. A shop nobody can buy from is the second of those.
+     */
+    id: 'shop',
+    doors: ['account'],
+    needs: FEATURES.CATALOGUE,
+    label: 'Shop',
+    blurb: 'Packs to buy, and the tier above the one you are on.',
+    count: () => [...(library.quizzes || []), ...(library.bingo || [])].filter((p) => p.locked).length,
+    render: () => shopSection(),
+  },
+  {
+    /*
+     * SETTINGS — what you have switched ON, as opposed to what you HAVE.
+     *
+     * Asked for as its own tab, and the test for what belongs on it is that
+     * one word: a fact goes on Account, a switch goes here. Without that line
+     * this is the tab that slowly becomes a bin.
+     *
+     * No `needs`, like Account and Help: it is where things are switched back
+     * on, so it can never be one of the things that goes away.
+     */
+    id: 'settings',
+    doors: ['account'],
+    label: 'Settings',
+    blurb: 'Your colours, what the room may ask for, and which tabs you want.',
+    render: () => settingsSection(),
+  },
+  {
+    /*
+     * HELP IS LAST BEHIND THIS DOOR, which is the *rarely-touched goes last*
+     * rule and not a demotion: it is the one tab here you hope never to need,
+     * and it is still one predictable tap from every page in the app.
+     */
     id: 'help',
-    doors: ['workshop'],
+    doors: ['account'],
     label: 'Help',
     blurb: 'The support door, the suggestion box, and what you have heard back.',
     /*
@@ -889,39 +962,10 @@ const TABS = [
      */
     render: () => helpSection(),
   },
-  {
-    /*
-     * MY ACCOUNT AND SETTINGS ARE ONE TAB AGAIN.
-     *
-     * They were split because they answer different questions — what you HAVE
-     * and what you have ON, one read and one operated — and that was sound
-     * while Settings carried the whole ladder: three tier panels, prices,
-     * locked rows and a switch against every held feature. Scrolling past six
-     * rungs to change a colour is what forced the split.
-     *
-     * Both halves have since shrunk to almost nothing. The sell became a
-     * comparison table, and the switches collapsed to five once a rule decided
-     * which were worth having at all. What is left is two short pages about
-     * one subject, on a tab bar that scrolls sideways on a phone.
-     *
-     * **HELP DELIBERATELY STAYS ITS OWN TAB.** It is where somebody goes when
-     * something is wrong — including when the thing that is wrong is their
-     * subscription — and burying it inside a page called My account makes it
-     * hardest to find at the moment it matters most. Same reason it carries no
-     * `needs` at all.
-     */
-    id: 'account',
-    doors: ['workshop'],
-    label: 'My Account',
-    blurb: 'Who you are, what you are on, your colours and your room.',
-    // Always here, whatever is switched off — it is where things are switched
-    // back on, so it can never be one of the things that goes away.
-    render: () => accountSection(),
-  },
 ];
 
 /**
- * THE THREE DOORS — Console, Workshop, Post gig.
+ * THE DOORS — Console, Workshop, Post gig, My account.
  *
  * Asked for on 15 August 2026: *"this section needs to say Console, Workshop
  * and Post gig and function like that"*, and the names are better than the
@@ -940,7 +984,27 @@ const TABS = [
  * **Console is the default**, so every existing link, bookmark and `?tab=`
  * still lands where it always did.
  */
-const DOORS = ['console', 'workshop', 'post'];
+/*
+ * THE FOUR DOORS. Console · Workshop · Post gig · My account.
+ *
+ * The fourth was asked for once there was somewhere obvious for it to lead:
+ * *"we need a fourth pill at the top — My Account. Then Calendar, Help and
+ * Shop all live there."*
+ *
+ * **It is the door for things that are about YOU rather than about a night**,
+ * which is what makes it the honest fourth rather than a bin. The Workshop had
+ * become one: it held the packs you write, the adverts you sell, the venues
+ * you play — and also your calendar, the support box and your subscription,
+ * which have nothing to do with preparing a quiz.
+ *
+ * **And the Shop belongs here for a reason worth writing down.** It sat under
+ * the pack shelf on the Workshop door, which put something to spend money on
+ * at the bottom of the page somebody opens to WORK. A shop is a place you go,
+ * not a thing that follows you around — and next to the tiers, which is the
+ * other way to get the same packs, it is finally in the same room as its own
+ * alternative.
+ */
+const DOORS = ['console', 'workshop', 'post', 'account'];
 
 function doorNow() {
   const d = new URL(location.href).searchParams.get('door') || '';
@@ -1348,32 +1412,135 @@ function askRoundsPanel() {
   return el;
 }
 
+/**
+ * ACCOUNT — what you HAVE. Read far more often than it is changed.
+ *
+ * **SPLIT FROM SETTINGS AGAIN, and this time the split holds, because the
+ * third thing finally has somewhere to go.** They were one tab because both
+ * halves had shrunk to almost nothing — but the reason each had shrunk was
+ * that the SELL was in here too, and the host has now given the sell a room of
+ * its own: *"shop will be the place they can buy packs and upgrade their
+ * subscription."*
+ *
+ * So the old objection is gone. Three short pages about one subject on a
+ * scrolling tab bar was the problem; three clearly different questions behind
+ * one door is not:
+ *
+ *  - **Account** — what you have. Who you are, what you are on, your room.
+ *  - **Shop** — what you could buy. Packs and the rungs, in one place.
+ *  - **Settings** — what you have switched on.
+ *
+ * The tier comparison went to the Shop with the packs, which is the change
+ * that makes this page short enough to be worth reading.
+ */
 function accountSection() {
   const wrap = document.createDocumentFragment();
   // Who you are and what you are on, in one card at the top. They were two,
   // one under the other, both three short rows — which is two headings and two
   // borders around what is plainly one answer to "what is my account".
   wrap.appendChild(youPanel());
-  // What the rungs are, right under what you are on — the question "what would
-  // Silver actually get me" asked and answered in one glance, rather than by
-  // reading three panels of switches and holding them in your head.
-  const compare = comparePanel();
-  if (compare) wrap.appendChild(compare);
   wrap.appendChild(roomPanel());
   // Silent when the whole catalogue is in reach, which is everybody today —
   // so it genuinely returns nothing rather than an empty panel.
   const lib = libraryPanel();
   if (lib) wrap.appendChild(lib);
-  /*
-   * The two things you OPERATE, below the facts — because this page is read
-   * far more often than anything on it is changed. Settings used to be a tab
-   * of its own; see the note on the tab entry for why it is not any more.
-   */
+  return wrap;
+}
+
+/**
+ * SETTINGS — the things you OPERATE, and nothing you merely read.
+ *
+ * That is the whole test for what belongs here, and it is what stops this
+ * becoming the bin the Workshop had become: **if it is a fact, it is on
+ * Account; if it is a switch, it is here.**
+ */
+function settingsSection() {
+  const wrap = document.createDocumentFragment();
   wrap.appendChild(askRoundsPanel());
   wrap.appendChild(schemePanel()[0] || node('<span></span>'));
   wrap.appendChild(switchPanel());
   wrap.appendChild(demoPrizePanel());
   return wrap;
+}
+
+/**
+ * THE SHOP — packs to buy, and the rung above the one you are on.
+ *
+ * *"Shop will be the place they can buy packs and upgrade their
+ * subscription."* Both halves in one room, and that pairing is the point
+ * rather than a filing convenience: **they are two ways to get the same
+ * thing.** Six packs at three pounds each and a step up a tier are the same
+ * decision asked twice, and answering it used to mean holding a price from the
+ * bottom of one tab against a table on another.
+ *
+ * **IT LEFT THE PACK SHELF, and that is the bigger half of the change.** The
+ * shop lived under the packs on the Workshop door — something to spend money
+ * on at the bottom of the page somebody opens to work. A shop is a place you
+ * go, not a thing that follows you around.
+ *
+ * **BOTH GAMES IN ONE GRID, because you are shopping rather than launching.**
+ * On the shelf a quiz and a bingo game are different jobs and want different
+ * tabs; here they are both "a pack I could buy", and splitting them would mean
+ * checking two tabs to see what is new.
+ */
+function shopSection() {
+  const el = node(`
+    <div class="game-section">
+      <div class="game-head">
+        <div>
+          <h2>Quizporium packs</h2>
+          <div class="tiny"><span class="shop-count"></span> — ${esc(packPrice())} each.
+            Written and checked for you — every question read through twice, and
+            every bingo chorus lands on its own.
+            ${esc((library.catalogue && library.catalogue.blurb) || '')}</div>
+        </div>
+      </div>
+      <div class="pack-grid shop-grid"></div>
+      <div class="shop-tiers"></div>
+      <div class="ask-slot"></div>
+    </div>`);
+
+  const grid = el.querySelector('.shop-grid');
+  const paint = () => {
+    /*
+     * ONE LIST, both kinds, quizzes first — a stable order rather than one
+     * that depends on which library happens to be longer, because a shelf that
+     * reshuffles is worse than one with no order at all.
+     */
+    const forSale = [
+      ...(library.quizzes || []).filter((p) => p.locked).map((p) => ({ kind: 'quiz', pack: p })),
+      ...(library.bingo || []).filter((p) => p.locked).map((p) => ({ kind: 'bingo', pack: p })),
+    ];
+    grid.replaceChildren();
+    el.querySelector('.shop-count').textContent = forSale.length
+      ? `${forSale.length} to buy`
+      : 'Nothing left to buy';
+    if (!forSale.length) {
+      // Everything is already theirs. Say so plainly rather than drawing an
+      // empty grid, which reads as something that failed to load.
+      grid.appendChild(node('<div class="tiny">You have all of them. Anything new turns up here.</div>'));
+      return;
+    }
+    for (const { kind, pack } of forSale) grid.appendChild(packCard(kind, pack, paint));
+  };
+  paint();
+
+  /*
+   * THE RUNGS, UNDER THE PACKS. In that order because the packs are what
+   * somebody came for — the tier is the answer to "is there a cheaper way to
+   * get several of these", which is a question you have after looking at the
+   * prices rather than before.
+   */
+  const compare = comparePanel();
+  if (compare) el.querySelector('.shop-tiers').appendChild(compare);
+
+  /*
+   * "There is nothing here for the night I have booked" — under the shop,
+   * because that is the moment the want actually arrives: you have scrolled
+   * the catalogue and it has not got the thing.
+   */
+  el.querySelector('.ask-slot').appendChild(askForPackPanel('quiz'));
+  return el;
 }
 
 /**
@@ -5492,22 +5659,11 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
     ? `<p class="tiny pack-way"><a href="${linkTo('/editor')}">Write, buy or edit packs →</a></p>` : ''}
       </div>`}
       <div class="pack-grid ${dense ? 'dense' : ''}"></div>
-      <div class="game-head shop-head" hidden>
-        <div>
-          <h2>Quizporium packs</h2>
-          <div class="tiny"><span class="shop-count"></span> — ${esc(packPrice())} each.
-            ${kind === 'bingo'
-              ? 'Put together for you — every chorus lands on its own, no song twice in three months.'
-              : 'Written and checked for you — every question read through twice.'}
-            ${esc((library.catalogue && library.catalogue.blurb) || '')}</div>
-        </div>
-        <!-- THE OTHER WAY TO GET THEM, which the blurb has always mentioned and
-             never linked to. One per SECTION rather than one per card: a
-             second money control on every pack would be the same offer printed
-             nine times, and the card already carries its own price. -->
-        <a class="minor shop-up" href="?tab=account">See the tiers</a>
-      </div>
-      <div class="pack-grid shop-grid ${dense ? 'dense' : ''}"></div>
+      <!-- THE SHOP IS NOT HERE ANY MORE. It is its own tab behind My account
+           - see shopSection(). A shop under the shelf put something to spend
+           money on at the bottom of the page somebody opens to work, and it
+           sat a whole tab away from the tiers, which are the other way to get
+           the same packs. -->
       <div class="ask-slot"></div>
     </div>`);
 
@@ -5531,8 +5687,6 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
   if (door !== 'console') el.querySelector('.ask-slot').appendChild(askForPackPanel(kind));
 
   const grid = el.querySelector('.pack-grid');
-  const shop = el.querySelector('.shop-grid');
-  const shopHead = el.querySelector('.shop-head');
   const search = el.querySelector('.pack-search');
 
   /*
@@ -5568,8 +5722,6 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
   const paint = () => {
     const found = matchPacks(packs || [], packQuery[kind]);
     grid.replaceChildren();
-    shop.replaceChildren();
-    shopHead.hidden = true;
 
     if (!packs || !packs.length) {
       grid.appendChild(node('<div class="tiny">Nothing saved yet — build one above.</div>'));
@@ -5605,8 +5757,8 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
     const inOrder = [...found].sort((a, b) => (isPinned(b.id) - isPinned(a.id))
       || (shelf(a) - shelf(b))
       || (playedAt(a.lastPlayedAt) - playedAt(b.lastPlayedAt)));
+    // Only what they can RUN. What is for sale is a room of its own now.
     const yours = inOrder.filter((p) => !p.locked);
-    const buyable = inOrder.filter((p) => p.locked);
 
     if (!yours.length) {
       grid.appendChild(node(`<div class="tiny">None of the ones you have match “${esc(packQuery[kind])}”.</div>`));
@@ -5670,23 +5822,6 @@ function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
       headEl.textContent = typing ? 'Your library' : 'Recommended';
     }
     for (const pack of shown) grid.appendChild(packCard(kind, pack, paint));
-
-
-
-    /*
-     * THE SHOP IS WORKSHOP FURNITURE TOO, and the loudest of it.
-     *
-     * Buying a pack is preparation, and a shop on the launch page is the
-     * plainest possible breach of *the common job is the fast one* — it puts
-     * something to spend money on between a quizmaster and the button they
-     * came to press. It sells perfectly well one door away.
-     */
-    if (buyable.length && door !== 'console') {
-      shopHead.hidden = false;
-      shopHead.querySelector('.shop-count').textContent =
-        `${buyable.length} more ${kind === 'quiz' ? (buyable.length === 1 ? 'quiz' : 'quizzes') : (buyable.length === 1 ? 'bingo game' : 'bingo games')}`;
-      for (const pack of buyable) shop.appendChild(packCard(kind, pack, paint));
-    }
   };
 
   // Redrawn in place rather than through render(), so the box keeps focus and

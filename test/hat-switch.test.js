@@ -105,20 +105,26 @@ test('NO IDENTITY GETS AN OWNER DOOR ON THE MENU', () => {
   }
 });
 
-test('and the three doors are in the same order whoever is reading', () => {
+test('and the doors are in the same order whoever is reading', () => {
   /*
    * THE DOORS ARE MOMENTS NOW, NOT TOOLS — Console · Workshop · Post gig,
    * ordered by the gig: during it, before it, after it. They replaced Console
    * · Control · Packs, which named the software's parts rather than the
    * quizmaster's evening.
    *
+   * **My account is the fourth and it is deliberately outside that sequence**,
+   * which is why it is on the end rather than in it: the first three are
+   * moments of a night, and your calendar, your subscription, the shop and the
+   * support box are not steps in an evening at all.
+   *
    * The RULE being guarded is unchanged and is the one that matters: the same
    * doors in the same order whoever is reading, because a menu that reorders
    * itself is not a menu.
    */
+  const DOORS = ['Console', 'Workshop', 'Post gig', 'My account'];
   const labels = (rights) => (navMenu(rights).match(/>([^<]+)</g) || []).map((s) => s.slice(1, -1));
-  assert.deepEqual(labels(menuRights(quizmaster())), ['Console', 'Workshop', 'Post gig']);
-  assert.deepEqual(labels(menuRights(quizmaster({ actingAs: true }))), ['Console', 'Workshop', 'Post gig']);
+  assert.deepEqual(labels(menuRights(quizmaster())), DOORS);
+  assert.deepEqual(labels(menuRights(quizmaster({ actingAs: true }))), DOORS);
 });
 
 test('AN OWNER PRESSING CONSOLE PUTS THE QUIZMASTER HAT ON', () => {

@@ -5469,7 +5469,10 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   font-family: inherit; font-weight: 900; font-size: var(--fs-ctl);
 }
 .pack-card.locked .go.buy:hover { background: rgba(255,255,255,0.16); }
-.game-section .shop-head { margin-top: 26px; }
+/* THE SHOP IS ITS OWN TAB NOW, behind My account — the head is the section's
+   own, so it needs no top margin pushing it away from a shelf above it. What
+   is left is the gap between the packs and the tiers underneath them. */
+.shop-tiers { margin-top: 26px; }
 
 
 /* A pack written to be current, and one that no longer is.
@@ -7035,7 +7038,6 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 }
 /* The way to the tiers, beside the shop heading. Quiet: it is the alternative,
    not the offer, and the packs below are what the section is for. */
-.shop-up { align-self: center; white-space: nowrap; }
 
 /* A prize row can be taken away now that there is no fixed three. The cross is
    quiet and only earns attention on hover: it sits beside a box somebody is
