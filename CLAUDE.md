@@ -1330,6 +1330,17 @@ Full reasoning: **[`docs/artwork.md`](docs/artwork.md)**. The rules:
   corner-radius decision and turned an argument about which numbers are
   "correct" into a glance at four blocks. Build the mock from the real
   `style.css` and the real markup, or the comparison is of something else.
+- **READ THROUGH AN AGENT, NOT THROUGH THIS WINDOW — this is the default, not
+  a fallback.** Set on 16 August 2026, when the host reported that a project he
+  could work on for a week and a half now needs a new session every day. The
+  cause is size: `console.js` is 11,000 lines, `style.css` 7,700, `server.js`
+  5,800, and **almost every task now lands in one of them**. `locator` finding
+  a function in `console.js` costs a paragraph; reading it costs 20,000 tokens
+  and it is the same answer. The four in `.claude/agents` — `locator`,
+  `screenshotter`, `gig-guard`, `sweeper` — exist for this and were used for
+  almost none of the day that produced this rule. **Ask for the conclusion, not
+  the file.** Read directly only when the judgement genuinely needs the whole
+  thing in front of you, which is rarer than it feels.
 - **SEND THE SCREENSHOT; DO NOT OPEN IT.** Set on 15 August 2026 after a
   session ran short: *"can the screenshots be delivered to me, and then that
   context reclaimed immediately after? It's usually just a UI decision that I
@@ -1340,7 +1351,9 @@ Full reasoning: **[`docs/artwork.md`](docs/artwork.md)**. The rules:
   is opened **only when the judgement is Claude's own**: *"do these figures
   read at 200px"* needs eyes, *"does this look right to you"* does not. Twelve
   screenshots read in one session is most of a feature's worth of context spent
-  on pictures somebody else was going to decide about.
+  on pictures somebody else was going to decide about. **Under-applied on 16
+  August 2026 — about ten were opened, and the session ran short.** The default
+  is SEND; open only when the question is one nobody but Claude can answer.
 - **SHOW A SCREENSHOT FOR EVERY UI CHANGE. This is a rule, not a nicety** —
   set by the host on 14 August 2026: *"whenever you change the UI of anything
   in this app you MUST show me, since the UI of this app is extremely
@@ -1749,27 +1762,22 @@ Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
 ### The intro round skips the dead air, and that is a SCORING fix
 
-`public/assets/cue.js`, `cue.from`, `position_ms` on the Spotify play call, and
-**Skip the dead air** in the editor. **It is SCORING, not polish**: the clock
-starts when the question goes up, so two seconds of silence at the front of a
-track takes two seconds of score off everybody for a reason that has nothing to
-do with whether they knew it — the same argument as the picture round's four
-reveals running on one curve. **What is trimmed is silence; how quickly a track
-becomes recognisable is the question's difficulty and must never be trimmed.**
+`public/assets/cue.js`, `cue.from`, `position_ms` on the Spotify play call.
+**It is SCORING, not polish**: the clock starts when the question goes up, so
+two seconds of silence takes two seconds of score off everybody for a reason
+that has nothing to do with whether they knew it. **What is trimmed is silence;
+how quickly a track becomes recognisable is the question's difficulty and must
+never be trimmed.**
 
-- **An unreadable offset plays from the START** — `cueOffsetMs()` returns `null`
-  for prose, a negative, `1:75` or anything past ten minutes, and the server
-  then sends no `position_ms` at all. A typo costs the old behaviour, never a
-  silent jump into the middle of a song in front of a room.
-- **Every pack on disk says `0:00`**, and a test walks `quizzes/` and fails if a
-  cue ever arrives with an offset on it. The generator is told to write exactly
-  `0:00`, because only somebody who has LISTENED knows where the audio begins.
-- **The editor echoes what it understood on every keystroke**, repainted in
-  place. The control view prints the offset only when there IS one.
+- **An unreadable offset plays from the START** — a typo costs the old
+  behaviour, never a silent jump into the middle of a song in front of a room.
+- **Every pack on disk says `0:00`**, with a test walking `quizzes/`: only
+  somebody who has LISTENED knows where the audio begins.
 - **DO NOT "fix" this by giving the intro round a longer clock** — a longer
   round is a round worth MORE points, which is the same fault deliberately.
 
 Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
+
 
 ### The draw from the bottom half — a retention feature, not a raffle
 
@@ -2200,33 +2208,25 @@ Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
 `REVEAL_MODES` in `src/quizzes.js`: **zoom** (the fallback), **pixelate**,
 **blur**, **tiles**. A round names one, a question can override it, and `mix`
-rotates through all four **by position, not at random**, so a Redo mid-gig hands
-the room back the effect they were half way through. **A GENERATED picture round
-is `mix`** — it was not for two years of packs, and there is a test on it now,
-because nothing else would notice it going missing.
-
-**They all run on the same curve, and that is a SCORING decision** — see the
-decisions table. Which is why **pixelate ramps its resolution GEOMETRICALLY**:
-`PIX_FROM * (PIX_TO/PIX_FROM) ** shown`. Ramped linearly it solved about two
-seconds in. **No `ctx.filter`** — the old-iOS trap `filters.js` exists to avoid —
-and the `image-rendering` fallbacks are ordered least-known-last on purpose. **A
-misspelt mode is a validation error**, never a silent fall back to zoom.
+rotates through all four **by position, not at random**, so a Redo mid-gig
+hands the room back the effect they were half way through. **A GENERATED
+picture round is `mix`**, with a test on it. They all run on the same curve —
+a SCORING decision, see the decisions table. **No `ctx.filter`** (the old-iOS
+trap `filters.js` exists to avoid), and **a misspelt mode is a validation
+error**, never a silent fall back to zoom.
 
 Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
+
 
 ### How many questions of each type
 
 `roundPlan()` in `src/generate-quiz.js`. `rounds` is a list of `{ type, count }`
 — or bare type names, which take the fallback — so "fifteen general knowledge,
-five pictures and ten first-letter" is one call. It used to be one number
-applied to every round, which is not the shape of a quiz night.
+five pictures and ten first-letter" is one call. **It is also the whitelist and
+the clamp, in one place**, so a typo is dropped rather than quietly becoming a
+round of general knowledge. Full reasoning:
+**[`docs/generation.md`](docs/generation.md)**.
 
-The console has a count next to each round's tickbox. Unticking greys the
-number rather than hiding it, so what you typed is still there when you tick it
-back on. `roundPlan` is also the whitelist and the clamp, in one place, so a
-typo is dropped rather than quietly becoming a round of general knowledge.
-
----
 
 ## Checks
 

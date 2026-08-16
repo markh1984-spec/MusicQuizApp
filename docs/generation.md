@@ -416,3 +416,21 @@ reopening the paragraph above.
 different fact from one person asking four times, and it is the number that
 decides whether it is worth a pack. The kept list is grouped too, or one idea
 four people asked for looks like four jobs.
+
+
+---
+
+## How many questions of each type
+
+
+`roundPlan()` in `src/generate-quiz.js`. `rounds` is a list of `{ type, count }`
+— or bare type names, which take the fallback — so "fifteen general knowledge,
+five pictures and ten first-letter" is one call. It used to be one number
+applied to every round, which is not the shape of a quiz night.
+
+The console has a count next to each round's tickbox. Unticking greys the
+number rather than hiding it, so what you typed is still there when you tick it
+back on. `roundPlan` is also the whitelist and the clamp, in one place, so a
+typo is dropped rather than quietly becoming a round of general knowledge.
+
+---

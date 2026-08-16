@@ -1920,6 +1920,49 @@ It touches the tab every gig starts from, so it wants its own screenshots at
 1280 and 390, and a real Launch pressed in a browser afterwards — the protected
 surface, not a diff review.
 
+### SPLIT `console.js` — the reason a session now lasts a day instead of a week
+
+Raised by the host on 16 August 2026: *"we're starting new sessions constantly
+now this needs sorting out."* He chose this, plus using the agents by default
+and not opening screenshots — the last two are now rules in CLAUDE.md; **this
+one is the code job and it is the only one that compounds.**
+
+**THE CAUSE IS MEASURED, NOT GUESSED.** 272 files, ~120,000 lines.
+`console.js` is **11,222 lines**, `style.css` 7,749, `server.js` 5,778 — and
+almost every task now lands in one of them, so every session pays for the same
+haystack before it does anything. `CLAUDE.md` is NOT the cause: it is 135,000
+bytes and was 200,618 two days ago.
+
+**IT HAS SEAMS ALREADY**, which is what makes this a move rather than a
+rewrite. `console.js` carries its own banner comments — MY ACCOUNT (1570),
+PAST GIGS (7998), HEADCOUNT PER VENUE (8088), ADVERTS (10366) — and 149
+top-level functions. The obvious files: the two benches, the venue shelf, the
+diary, the invoices, the shop, the pack shelf, Tonight.
+
+**DO IT AS A MECHANICAL MOVE, BY LINE NUMBER, LIKE THE `CLAUDE.md` SPLIT.**
+That is the lesson this file already records: a script that moves whole
+sections costs the same for 4,000 lines as for 40, and — the better argument —
+**it cannot quietly reword anything on the way through.** Do not retype
+functions into new files.
+
+Four things to get right:
+
+- **THE MODULE-LEVEL STATE IS THE HARD PART, not the functions.** `bench`,
+  `nightBench`, `venueWanted`, `packDrag`, `library`, `me`, `openPack` and
+  friends are read from everywhere. They probably want their own
+  `console-state.js` that the sections import — decide that BEFORE moving a
+  line, or the first move turns into a rewrite.
+- **`renderKeepingPlace()` AND `render()` STAY IN ONE PLACE.** Everything calls
+  them; they are the spine.
+- **IT TOUCHES THE PAGE EVERY GIG STARTS FROM.** `npm test` proves nothing
+  here — `browser-parses.test.js` is `node --check` and `console-markup.test.js`
+  counts tags. **Press Launch in a real browser for a quiz AND a bingo pack
+  afterwards**, and open all four doors at 390 and 1280.
+- **A cleanup frees nothing in the session that performs it** — CLAUDE.md says
+  so already. The saving lands on every session after.
+
+**Its own piece of work, on a day with no gig.**
+
 ### BINGO PAYS OUT TOO — prizes per STAGE, defined by the venue
 
 Asked for on 16 August 2026: *"bingo should get prizes as well — as defined by

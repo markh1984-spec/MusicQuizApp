@@ -439,3 +439,53 @@ A misspelt mode is a **validation problem**, not a silent fall back to zoom —
 otherwise you find out by watching the wrong effect in front of a room. The
 editor hides "Starting zoom" on a question that does not zoom, because a knob
 that does nothing reads as a knob you have to set.
+
+
+---
+
+## The picture round's four reveals — the full note
+
+
+`REVEAL_MODES` in `src/quizzes.js`: **zoom** (the fallback), **pixelate**,
+**blur**, **tiles**. A round names one, a question can override it, and `mix`
+rotates through all four **by position, not at random**, so a Redo mid-gig hands
+the room back the effect they were half way through. **A GENERATED picture round
+is `mix`** — it was not for two years of packs, and there is a test on it now,
+because nothing else would notice it going missing.
+
+**They all run on the same curve, and that is a SCORING decision** — see the
+decisions table. Which is why **pixelate ramps its resolution GEOMETRICALLY**:
+`PIX_FROM * (PIX_TO/PIX_FROM) ** shown`. Ramped linearly it solved about two
+seconds in. **No `ctx.filter`** — the old-iOS trap `filters.js` exists to avoid —
+and the `image-rendering` fallbacks are ordered least-known-last on purpose. **A
+misspelt mode is a validation error**, never a silent fall back to zoom.
+
+Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
+
+
+---
+
+## The intro round's cue — the full note
+
+
+`public/assets/cue.js`, `cue.from`, `position_ms` on the Spotify play call, and
+**Skip the dead air** in the editor. **It is SCORING, not polish**: the clock
+starts when the question goes up, so two seconds of silence at the front of a
+track takes two seconds of score off everybody for a reason that has nothing to
+do with whether they knew it — the same argument as the picture round's four
+reveals running on one curve. **What is trimmed is silence; how quickly a track
+becomes recognisable is the question's difficulty and must never be trimmed.**
+
+- **An unreadable offset plays from the START** — `cueOffsetMs()` returns `null`
+  for prose, a negative, `1:75` or anything past ten minutes, and the server
+  then sends no `position_ms` at all. A typo costs the old behaviour, never a
+  silent jump into the middle of a song in front of a room.
+- **Every pack on disk says `0:00`**, and a test walks `quizzes/` and fails if a
+  cue ever arrives with an offset on it. The generator is told to write exactly
+  `0:00`, because only somebody who has LISTENED knows where the audio begins.
+- **The editor echoes what it understood on every keystroke**, repainted in
+  place. The control view prints the offset only when there IS one.
+- **DO NOT "fix" this by giving the intro round a longer clock** — a longer
+  round is a round worth MORE points, which is the same fault deliberately.
+
+Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
