@@ -21,6 +21,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { Accounts } from '../src/accounts.js';
+import { consoleSource } from './console-source.js';
 
 function book(now = () => 1_000_000) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'support-'));
@@ -281,7 +282,7 @@ test('THE GUARD READS THE ACTING FLAG, NEVER THE GRANT ON AN ACCOUNT', () => {
  * `me.account.support`, which is undefined and silently empties the log.
  */
 test('the support panel reads the grant off `me`, which is already the account', () => {
-  const console_ = fs.readFileSync(new URL('../public/assets/console.js', import.meta.url), 'utf8');
+  const console_ = consoleSource();
   const at = console_.indexOf('function supportPanel');
   const panel = console_.slice(at, at + 1200);
   assert.match(panel, /\(me && me\.support\)/, 'the support panel cannot find the grant');

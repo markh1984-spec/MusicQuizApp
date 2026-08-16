@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { OWNER_ONLY, changesTheLibrary } from '../src/gates.js';
+import { consoleSource } from './console-source.js';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -270,7 +271,7 @@ test('a photo is filed under its own room', () => {
  * before their own gig.
  */
 test('no Big screen link opens the house projector by accident', () => {
-  const console_ = fs.readFileSync(new URL('../public/assets/console.js', import.meta.url), 'utf8');
+  const console_ = consoleSource();
   const host = fs.readFileSync(new URL('../public/assets/host.js', import.meta.url), 'utf8');
 
   // A bare '/screen' in a link or window.open, with no room code anywhere near
@@ -302,7 +303,7 @@ test('the room code is on the library payload, not only on a running game', () =
  * page whose whole job is "here is my work".
  */
 test('a past-gigs photo is never labelled as unfiled', () => {
-  const src = fs.readFileSync(new URL('../public/assets/console.js', import.meta.url), 'utf8');
+  const src = consoleSource();
   /*
    * The FIGURE only. `cphoto-bin` is the delete button inside it and has
    * nothing to do with filing — matching it here made this fail the moment a

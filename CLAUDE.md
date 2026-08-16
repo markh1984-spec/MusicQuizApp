@@ -636,7 +636,7 @@ land on rather than scroll to, and its badge counts what you are still owed.
 
 ### THE MONTH IS ON THE LEFT AND WHAT YOU DO ABOUT A DATE IS ON THE RIGHT
 
-`diarySection()` in `console.js`, `.cal-wrap` / `.cal-side` in `style.css`.
+`diarySection()` in `console-diary.js`, `.cal-wrap` / `.cal-side` in `style.css`.
 Two columns from 900px, the month left and what you do about a date right;
 below that the panel goes underneath and the picker scrolls it into view. The
 panel is **the diary when no date is picked and that date when one is**. There
@@ -652,6 +652,37 @@ no buttons on it, and the whole row picks that date. The month is **sticky** at
 over the calendar.
 
 Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
+
+### THE CONSOLE IS TWELVE FILES, AND THE STATE MODULE IS WHY IT WORKS
+
+`console.js` was 11,222 lines. It is now a shell of ~1,750 plus eleven modules
+named for a door or a tab, moved **by line number** — the same mechanical
+transform as the `CLAUDE.md` split, so not one function was retyped and not one
+body changed. All 34 tab views render **byte-identical markup** to the original.
+
+- **`console-state.js` HOLDS THE BINDINGS MORE THAN ONE MODULE WRITES, and it
+  imports NOTHING.** An ES import is a read-only view: `import { library }` then
+  `library = x` throws **when that line runs**, not when the file loads — so the
+  page draws and then a launch dies in a pub. The thirteen shared bindings live
+  there with a setter each; **only 39 assignments had to change, and ~350 reads
+  did not**, because a live binding reads fine from anywhere. State that ONE
+  module writes stays with that module.
+- **THE BOOT CALL MUST BE THE LAST THING IN `console.js`.** `load()` sat at line
+  10,161 — after every declaration. Moved with its neighbours it landed in a
+  module `console.js` IMPORTS, so it ran before `console.js` initialised its own
+  bindings, `rights = menuRights(who)` threw on a `let` in its temporal dead
+  zone, **its own catch swallowed it, and the console drew perfectly with the
+  Workshop door missing from the nav.** Nothing else looked wrong.
+- **`node --check` CANNOT SEE EITHER FAULT** — both are valid syntax — so
+  `browser-parses.test.js` passes them. `test/console-split.test.js` is the
+  guard: no module assigns to a name it imports, the state module stays a leaf,
+  and no module grows back. Verified by breaking each one.
+- **ANYTHING READING THE CONSOLE AS TEXT READS ALL TWELVE** —
+  `test/console-source.js`. Five checks were pointed at the one file; three
+  failed loudly, which was luck. A grep aimed at the wrong file proves nothing,
+  which is this repo's oldest lesson wearing another hat.
+
+Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
 ### CHANGING TAB DOES NOT MOVE THE PAGE
 
@@ -1661,6 +1692,7 @@ src/own-packs.js       a quizmaster's own packs — theirs, and private from the
 src/spend.js           what Claude and OpenAI have actually cost, written down as it happens
 src/chat.js            online chat: what a room is, who is in it, what may be said mid-question
 public/                the screens; *-bingo.js files hold the bingo variants
+  assets/console*.js   the console: a shell plus one module per door or tab
   assets/brandmark.js  the question-in-a-mic logo, shared with the server as the favicon
   assets/avatar.js     a drawn face per team, for anyone who sent no photo
   assets/stickers.js   props to drag onto a photo: dog ears, a clown nose
@@ -1677,7 +1709,8 @@ data/                  live state, history, archived nights (gitignored)
 2. Add it to `LAUNCHERS` in `src/session.js`
 3. Add a card set for the big screen and a branch in `play.js` / `host.js`,
    following the `*-bingo.js` files
-4. Add one entry to `TABS` in `public/assets/console.js` — that gives it a tab,
+4. Add one entry to `TABS` in `public/assets/console.js` — the tab list is
+   still the shell's; the section it names lives in its own module. That gives it a tab,
    a generator slot and a pack grid with nothing else to write
 
 Nothing outside those four places needs to know it exists.
@@ -1834,7 +1867,7 @@ Full reasoning: **[`docs/generation.md`](docs/generation.md)**.
 
 ### DRAG AND DROP — the console is the laptop with the HDMI in it
 
-`gripIcon()` / `dragRow()` in `editor.js`, `packDrag` in `console.js`. The
+`gripIcon()` / `dragRow()` in `editor.js`, `packDrag` in `console-state.js`. The
 console IS the laptop with the HDMI in it, so a mouse is an input it has to
 serve. **HTML5 drag events never fire on touch, so the taps and the arrow
 buttons STAY** — drag is the fast way and every drag has a way round it.
@@ -1927,7 +1960,7 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
 ### A SHOW IS AN EVENING, SAVED — built in advance, dragged onto Tonight
 
 `src/shows.js`, `public/assets/show-parts.js`, `tonightAsShow()` / `loadShow()`
-/ `showsSection()` in `console.js`. *"We're frankensteining nights instead of
+/ `showsSection()` in `console-shows.js`. *"We're frankensteining nights instead of
 having a nights section."*
 
 - **A SHOW IS `items` — A LIST of what is played, in order.** It held one game
@@ -2074,7 +2107,7 @@ Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 
 ### A NIGHT GOES ON THE PUBLIC GALLERY FROM UNDER ITS OWN PHOTOS
 
-`galleryToggle()` in `console.js`, `/api/past-gigs/publish`. **The route
+`galleryToggle()` in `console-gigs.js`, `/api/past-gigs/publish`. **The route
 existed from the day the gallery was built and nothing ever called it** — the
 gate was perfect and had no handle, which is the arcade-board fault again: a
 test that the route works proves nothing about whether anybody can reach it.

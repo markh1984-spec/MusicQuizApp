@@ -1905,6 +1905,31 @@ It touches the tab every gig starts from, so it wants its own screenshots at
 1280 and 390, and a real Launch pressed in a browser afterwards — the protected
 surface, not a diff review.
 
+### SPLIT `launchBar()` — the next seam, and the only one left
+
+**The console split is DONE and is not in this list.** `console.js` is a shell
+of ~1,750 lines plus eleven modules named for a door or a tab; the rules are in
+CLAUDE.md and the reasoning in [`docs/console.md`](docs/console.md). What is
+left is one function.
+
+**`launchBar()` is 1,700 lines on its own**, which is most of why
+`console-tonight.js` is still ~2,460 — the largest module by a distance and the
+only one over its default budget.
+
+**It is NOT the same job as the split was, and that is the decision to record.**
+The split was a move by line number: nothing was read, so nothing could be
+reworded. Taking `launchBar()` apart means deciding what its parts ARE — the
+venue head, the running order slots, the settings line, the Launch button and
+its guards — and that is judgement, on the one control this app cannot afford to
+break. `pub-unchanged.mjs` does not cover it either: the launch bar is browser
+code, so the only proof is pressing Launch for a quiz AND a bingo pack in a real
+browser and comparing the rendered markup before and after, which is what the
+split itself did.
+
+**So it waits for a reason beyond tidiness.** Do it when something genuinely
+needs changing in there, not as a chore — and if it is done, do it the same way:
+markup diffed on all 34 views, both launches pressed.
+
 ### EDITING HAPPENS IN A POPOVER, AND THE DRAFT IS NEVER LOST
 
 Asked for on 16 August 2026 against the Workshop bench: *"both of these

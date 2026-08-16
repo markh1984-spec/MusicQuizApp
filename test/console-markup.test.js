@@ -25,9 +25,10 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { consoleSource } from './console-source.js';
 
-const SRC = readFileSync(new URL('../public/assets/console.js', import.meta.url), 'utf8');
+// Every console module: these builders live in three different files now.
+const SRC = consoleSource();
 
 /**
  * The panel builders worth checking: each returns a whole section of the

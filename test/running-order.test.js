@@ -159,9 +159,8 @@ test('where each round came from is kept, for the host’s screen only', () => {
  * in two places disagrees with itself within a month.
  */
 test('the console and the server agree on how long a night may be', async () => {
-  const fs = await import('node:fs');
-  const url = new URL('../public/assets/console.js', import.meta.url);
-  const console_ = fs.readFileSync(url, 'utf8');
+  const { consoleSource } = await import('./console-source.js');
+  const console_ = consoleSource();
   const found = console_.match(/const MAX_NIGHT_ROUNDS = (\d+);/);
   assert.ok(found, 'the console no longer caps the running order at all');
   assert.equal(Number(found[1]), MAX_ROUNDS,

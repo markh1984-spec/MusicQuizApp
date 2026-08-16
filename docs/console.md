@@ -83,6 +83,130 @@ deploy followed by a deliberate launch does not.
 
 ---
 
+## THE CONSOLE IS TWELVE FILES — how it was split, and the two faults it found
+
+`console.js` reached **11,222 lines**, and the cost was not readability: it was
+that opening the console at all spent most of a session's context before any
+work could start. That is the same argument that split `CLAUDE.md` twice, and
+the method is the one that split learned.
+
+### It is a MOVE BY LINE NUMBER, and that is the whole safety argument
+
+A script tiles the original file into spans and writes each span into a new
+file. **Nothing reads the content, so nothing can quietly reword it** — a
+4,000-line move costs the same as a 40-line one, and a script cannot get bored
+half way and paraphrase a function. The plan asserts it tiles exactly: every
+line of the original is claimed by exactly one destination, and the total is
+checked against the file length. Content preservation was then proved by
+sorting every line of the twelve files against every line of the original — the
+**only** differences are the module headers, the setter calls, and the import
+and `export` lines.
+
+The seams are doors and tabs, because that is what the console already is:
+
+| | lines |
+|---|---|
+| `console.js` — the shell: keys, `load()`, `TABS`, `render()`, the tab bar | ~1,750 |
+| `console-tonight.js` — the launch bar, what is running, tonight's settings | ~2,460 |
+| `console-packs.js` — the shelf, a pack card, the pictures, `doLaunch` | ~1,480 |
+| `console-account.js` — account, shop, settings, support, help | ~1,280 |
+| `console-venues.js` · `console-gigs.js` · `console-invoices.js` | ~640–900 each |
+| `console-generate.js` · `console-diary.js` · `console-preview.js` · `console-shows.js` | ~280–620 each |
+| `console-state.js` — the shared bindings | ~155 |
+
+### THE MODULE STATE WAS THE HARD PART, AND THE ANSWER IS SMALLER THAN IT LOOKS
+
+The functions move mechanically. The `let`s do not, and this is the part to
+understand before moving a line.
+
+**An ES import is a read-only view of the exporting module's binding.** So
+`import { library }` followed by `library = x` is not a mistake the tools catch
+— it throws *"Assignment to constant variable"* **at the moment the line runs**.
+The page loads, every tab draws, and then a drag or a launch dies.
+
+The instinct is to put all the state in one object and rewrite every reference
+to `S.library`. **That is the expensive answer and it is unnecessary**, because
+**reads are fine**: a live binding reads the current value from anywhere. Only
+WRITES are the problem. So the question was asked per binding — *how many
+modules write this?* — by scanning every assignment site before anything moved:
+
+- **written by one module → it stays with that module.** `currentPack`,
+  `lbExtra`, `lbOff`, `lbVenue`, `lbOnline`, `lbGame`, `tonightOpen`,
+  `showWanted`, `showRunning`, `venueWanted`, `packWanted`, `roundDrag`,
+  `offDrag` are all written inside the launch bar and never outside it, so they
+  live in `console-tonight.js` and need nothing.
+- **written by two or more → `console-state.js`, with a setter.** Thirteen:
+  `library`, `me`, `lastDone`, `accountsExist`, `bench`, `nightBench`,
+  `gigsSeen`, `packDrag`, `venueDrag`, `showDrag`, `nightDrag`,
+  `pendingInvoice`, `book`.
+
+**That is 39 assignment lines changed against ~350 read sites left alone**, and
+it is the reason the split stayed a move. Every one of the 39 was printed and
+read; 38 fitted one rule (`x = <expr>;` becomes `setX(<expr>);`) and the
+thirty-ninth was an object literal over five lines, done by hand.
+
+**`console-state.js` imports NOTHING, deliberately.** Every other module imports
+from it and several import each other, so the graph has cycles by design —
+which is fine for function declarations, because they are hoisted, and fatal for
+state, which is not. A leaf cannot be caught half-initialised.
+
+### THE TWO FAULTS, AND NEITHER IS VISIBLE TO ANYTHING THIS REPO ALREADY RAN
+
+**1. A spread is not a property access.** The script that worked out who needs
+which import treated `...firstOwnerPanel()` as `.firstOwnerPanel` — a member
+access, not a use — so `console.js` never imported it. The console went down
+with a `ReferenceError` on the first render. Found in a browser, and only in a
+browser: it parses, the tests pass, and a stub-DOM load in Node died on the stub
+before it ever reached that line.
+
+**2. The boot call has to be last, and moving it broke the nav silently.**
+`load()` runs at the top level and sat at line 10,161 of the original — after
+every declaration in the page. Carried along with its neighbours it landed in
+`console-gigs.js`, which `console.js` imports, so it ran BEFORE `console.js`
+had initialised any of its own bindings. `rights = menuRights(who)` then threw
+on a `let` in its temporal dead zone, **`load()`'s own catch swallowed the
+error**, `render()` ran with the default `rights` — all false — and the console
+drew perfectly, correctly, on every tab, **with the Workshop door missing from
+the nav**. No error on screen, no failing test, no visual defect anywhere else.
+
+Worth sitting with, because it is the more instructive of the two: a catch that
+exists to name failures hid one, and the symptom was a single missing link in a
+menu. The fix is that the boot block is carved out by line number and appended
+to the end of `console.js`, which is where it already was.
+
+### WHAT PROVED IT, and why the screenshots were the wrong instrument
+
+The claim a refactor has to support is *nothing changed*. Pixels turned out to
+be the wrong evidence — the console's washes drift on a timer, so two runs
+freeze at different points and **all 34 screenshots differed** while being
+visually identical. The right instrument is the MARKUP: the rendered
+`body.innerHTML` of every tab on every door at 1280 and 390, dumped from the
+original and from the split and compared as text. **34 of 34 byte-identical**,
+signed in as a real quizmaster so every gated tab actually rendered — on the
+host key most of them never draw, and a missing import only throws when the
+function RUNS.
+
+Both launches were then pressed in the browser for real, which is what
+`CLAUDE.md` has said to do since the day an unimported function shipped a broken
+Launch: a quiz and a bingo pack, each ending with the projector at
+`phase=lobby`. And `pub-unchanged.mjs` against `HEAD` says the engine is
+byte-for-byte what it was, which it should be — nothing outside `public/` and
+`test/` was touched.
+
+### The guard, and what is left
+
+`test/console-split.test.js` asserts the three properties that fail silently: no
+module assigns to a name it imports, `console-state.js` imports nothing, and no
+module grows back past its budget. Each was verified by breaking it and watching
+it fail. `test/console-source.js` is the other half — five checks in the suite
+grep the console as TEXT and were all pointed at the single file; they read all
+twelve now, because a grep aimed at the wrong file proves nothing.
+
+**The next seam is `launchBar()`, which is 1,700 lines on its own** and most of
+why `console-tonight.js` is still the big module. That one is a real split
+rather than a move — it would mean deciding what the bar's parts are — so it
+waits for a reason beyond tidiness.
+
 ## CHANGING TAB DOES NOT MOVE THE PAGE
 
 `renderKeepingPlace()` in `console.js`. Asked for on 15 August 2026: *"can

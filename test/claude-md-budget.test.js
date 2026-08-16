@@ -59,7 +59,18 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * has gone stale before asking for more room; a budget that is only ever
  * raised is a budget nobody is applying.**
  */
-const BUDGET = 135_000;
+/*
+ * RAISED TO 138,000 ON 16 AUGUST 2026, for the console split — and this is the
+ * shape of raise the note above allows: the entry says WHERE ALL THE CONSOLE
+ * CODE NOW LIVES, which every session needs before it can find anything, and
+ * the two faults it records are both invisible to `node --check`.
+ *
+ * Paid for in the same pass, as the rule asks: five pointers in this file named
+ * `console.js` for functions that are no longer in it — `diarySection()`,
+ * `showsSection()`, `galleryToggle()`, `packDrag` and the tab recipe. A pointer
+ * to the wrong file is worse than no pointer, because it is followed.
+ */
+const BUDGET = 138_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
