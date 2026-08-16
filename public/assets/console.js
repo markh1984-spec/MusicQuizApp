@@ -1149,10 +1149,36 @@ function render() {
      * no longer furniture on Invoices, Venues and Calendar, which is most of
      * the reason for the doors at all.
      */
-    (doorNow() !== 'console' ? node('<div></div>') : (live ? node('<div></div>') : launchBar())),
-    doorNow() === 'console' ? runningPanel(running) : node('<div></div>'),
+    doorHead(
+      (doorNow() !== 'console' ? node('<div></div>') : (live ? node('<div></div>') : launchBar())),
+      doorNow() === 'console' ? runningPanel(running) : node('<div></div>'),
+    ),
     consoleColumns(tabBar(active), tabBody(active)),
   );
+}
+
+/**
+ * THE DOOR'S OWN AREA AT THE TOP, WHICH DOES NOT SCROLL.
+ *
+ * Asked for after the Console's layout was named as the thing that works:
+ * *"everything I need is on the screen — no scrolling down and no BS before a
+ * gig… I want each pill section to have their own area at the top that doesn't
+ * scroll with the page, and the menu on the side doesn't scroll, but the
+ * contents DO."*
+ *
+ * **The reason it matters is not tidiness, it is that the reason you opened a
+ * door should still be on screen when you have scrolled to the thing you came
+ * for.** On the Console that is Tonight, and a pack dragged from the bottom of
+ * the shelf now always has its target in view — which is most of what
+ * `pinTonightWhereItIs()` was invented to fake during a drag.
+ *
+ * It is one wrapper rather than a rule per panel, so a door that grows a panel
+ * later inherits the behaviour instead of having to remember it.
+ */
+function doorHead(...parts) {
+  const el = node('<div class="doorhead"></div>');
+  el.append(...parts);
+  return el;
 }
 
 /**
@@ -1216,9 +1242,27 @@ function consoleColumns(bar, body) {
  * bottom of the new tab, which is a real place.
  */
 function renderKeepingPlace() {
+  /*
+   * WHICHEVER THING IS ACTUALLY SCROLLING.
+   *
+   * It read `window.scrollY` and wrote it back, which was right while the
+   * whole page scrolled. With the door shell the frame is a fixed height and
+   * the tab body is its own scroll container, so the window's offset is always
+   * 0 and holding it holds nothing — every tab change would jump to the top of
+   * the content, which is the exact fault this function exists to prevent.
+   *
+   * Both are read and both are written, rather than branching on the
+   * breakpoint: below 900px the page really does scroll and the body does not,
+   * so one of the two is always 0 and putting a 0 back costs nothing. A branch
+   * would be a second place to get the breakpoint wrong.
+   */
   const y = window.scrollY;
+  const pane = mainEl.querySelector('.tabbody');
+  const inner = pane ? pane.scrollTop : 0;
   render();
   window.scrollTo({ top: y });
+  const again = mainEl.querySelector('.tabbody');
+  if (again) again.scrollTop = inner;
 }
 
 

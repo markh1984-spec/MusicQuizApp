@@ -2561,12 +2561,93 @@ body.screen { cursor: none; }
    would push the column wider than the page and the whole console would scroll
    sideways. That is the same trap `.pack-tools` fell into. */
 .consolecols { display: block; }
+
+/* ---- THE DOOR SHELL — one frame, and exactly one thing in it scrolls.
+
+   Asked for after the Console's layout was named as the thing that works:
+   *"everything I need is on the screen — no scrolling down and no BS before a
+   gig… each pill section should have their own area at the top that doesn't
+   scroll with the page, the menu on the side doesn't scroll, but the contents
+   DO."*
+
+   Three fixed regions and one scroller: the topbar, the door's own header
+   (Tonight on the Console), and the tab column all stay put; the tab body is
+   the only thing that moves. The whole page stops scrolling, which is why
+   `renderKeepingPlace()` had to learn to hold the PANE's offset instead of the
+   window's.
+
+   FROM 900px ONLY, and that is not a detail. Below it the tab column is a
+   full-width stack and the door header is most of a phone screen — pinning
+   both would leave a letterbox of content between them. A phone scrolls the
+   page, exactly as it did. */
 @media (min-width: 900px) {
+  /* `dvh` because a mobile-shaped browser window reports `vh` including the
+     chrome that slides away, which puts the bottom of the frame under it. The
+     `vh` line before it is the fallback and must stay first. */
+  .console .wrap {
+    height: 100vh;
+    height: 100dvh;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    /* The 60px tail existed so the last card cleared the bottom of the page.
+       Nothing runs off the bottom of a fixed frame, so it would only ever be
+       dead space the content could have used. */
+    padding-bottom: 0;
+    overflow: hidden;
+  }
+  .console main {
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    /* The door header sets its own bottom margin; without this the gap between
+       it and the columns is counted twice on a frame with no slack in it. */
+    row-gap: 0;
+  }
+  /* The door's own area. It sizes to its content — a folded Tonight is a line,
+     an open one is the panel — so the content pane grows and shrinks with it
+     rather than the header being given a height it has to live inside. */
+  .doorhead { flex: 0 0 auto; }
+
   .consolecols {
     display: grid;
     grid-template-columns: 190px minmax(0, 1fr);
     gap: 8px 24px;
-    align-items: start;
+    /* `stretch`, not `start`: both columns have to fill the frame or the
+       scroller has no height to scroll inside and the page grows instead. */
+    align-items: stretch;
+    min-height: 0;
+  }
+  /* THE ONLY THING THAT SCROLLS. `overscroll-behavior` stops a flick that
+     reaches the end of the list scrolling the window behind it, which on a
+     trackpad reads as the whole app sliding. */
+  .console .tabbody {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    min-height: 0;
+    /* Room for the last card to clear the bottom edge, replacing the tail that
+       came off `.wrap` above. */
+    padding-bottom: 40px;
+  }
+  /* The tab column does not scroll with the content — but it gets its own
+     scrollbar if a door ever holds more tabs than the frame is tall, which is
+     the honest way round: a tab you cannot reach is a tab that does not
+     exist. */
+  .console .tabbar { overflow-y: auto; min-height: 0; }
+
+  /* AND THE TAB'S OWN HEADING STAYS IN VIEW while its content scrolls under
+     it — *"the reason you went there is always in view"*. Sticky inside the
+     scroller rather than lifted out of `tabBody()`, because the heading is
+     drawn in exactly one place on purpose: a heading per render function is
+     the arrangement that let four of them go missing. */
+  .console .tab-head {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    /* Opaque, or the cards scroll through it. `--surf-1` is the console's own
+       surface, so it reads as part of the room rather than as a slab. */
+    background: var(--surf-1);
+    margin-bottom: 0;
+    padding: 2px 0 12px;
   }
 }
 .tabbar {
@@ -2584,7 +2665,9 @@ body.screen { cursor: none; }
      together. No fill and no blur — a column that content passes UNDER needed
      an opaque background; a column with its own lane does not. */
   .tabbar {
-    position: sticky;
+    /* Not sticky any more — the shell holds it still by construction, and a
+       sticky element inside a frame that does not scroll is a no-op that reads
+       as intent. */
     top: calc(var(--topbar-h) + 12px);
     margin-bottom: 0;
     padding-bottom: 0;
