@@ -320,9 +320,9 @@ for something that already exists.
 
 - **[`docs/setup.md`](docs/setup.md)** — the step-by-step host setup:
   keys, repos, Spotify, OpenAI, the four addresses. Nearly all of it done.
-- **[`docs/business.md`](docs/business.md)** — parked strategy: the
-  marketplace, referrals, group and venue accounts, the directory, PayPal,
-  karaoke, and the other directions. Nothing here is scheduled.
+- **[`docs/business.md`](docs/business.md)** — parked strategy, now an index
+  to `docs/business/`: the directory, group and venue accounts, the
+  marketplace, referrals, karaoke, PayPal. Nothing here is scheduled.
 - **[`docs/history.md`](docs/history.md)** — what has changed and when.
 
 **AND THREE AREAS MOVED INTO `todo/` ON 16 AUGUST 2026 — still outstanding

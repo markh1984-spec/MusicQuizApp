@@ -1309,8 +1309,9 @@ separate faults that let one guard report a clean run it had not earned.
 
 Also: **[`docs/artwork.md`](docs/artwork.md)** — the shared portrait library
 (its rules are kept in full below, under *Artwork*);
-**[`docs/business.md`](docs/business.md)** — pricing, the ladder, the shop,
-the marketplace, referrals, group accounts;
+**[`docs/business.md`](docs/business.md)** — pricing and the subscription,
+and the INDEX to `docs/business/`: the quizmaster directory, group and venue
+accounts, the marketplace and referrals, karaoke, the money plumbing;
 **[`docs/setup.md`](docs/setup.md)** — the step-by-step deployment and account
 setup, which is the one to open with the host rather than to read;
 **[`docs/history.md`](docs/history.md)** — what each real night found, the
