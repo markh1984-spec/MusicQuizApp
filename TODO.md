@@ -1925,6 +1925,11 @@ Save.** Crash-proof, survives clicking off, survives a reload, and nothing
 reaches a room until somebody says so. Reopening offers to carry on or throw it
 away, which is the same shape the editor's `dirty` flag already has.
 
+**THE DRAFT IS KEYED PER PACK, not one scratch slot.** Otherwise editing the
+80s quiz, switching to Motown and coming back hands you the wrong unsaved
+changes — which is a worse failure than losing them, because it looks like your
+work and you would save it.
+
 That also settles the click-off behaviour without a "are you sure" dialog:
 **closing costs nothing when the draft is already on disk**, so clicking off
 simply closes it. A confirm on every stray click is the control that trains
