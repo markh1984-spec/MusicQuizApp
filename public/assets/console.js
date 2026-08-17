@@ -15,7 +15,7 @@ import { asksPanel, gigsSection } from './console-gigs.js';
 import { invoicesSection } from './console-invoices.js';
 import { gameSection, preview } from './console-packs.js';
 import { shelfFor, showsSection } from './console-shows.js';
-import { BENCH_STORE, NIGHT_BENCH_STORE, bench, gigsSeen, lastDone, library, me, nightBench, nightDrag, packDrag, setAccountsExist, setBench, setGigsSeen, setLastDone, setLibrary, setMe, setNightBench, setNightDrag, setPackDrag } from './console-state.js';
+import { BENCH_STORE, NIGHT_BENCH_STORE, bench, gigsSeen, lastDone, library, me, nightBench, nightDrag, packDrag, setAccountsExist, setBench, setGigsSeen, setLastDone, setLibrary, setMe, setNightBench, setNightDrag, setNightToOpen, setPackDrag } from './console-state.js';
 import { aNightIsOn, dragging, launchBar, night, putNightOnBench, putOnBench, runningPanel, tonightSettingsPanel } from './console-tonight.js';
 import { advertsSection, editAdvertSet, forgetPanel, venuesSection } from './console-venues.js';
 import { upcoming } from './diary.js';
@@ -1778,6 +1778,13 @@ if (/^\d{4}-\d{2}-\d{2}$/.test(wantedNight)) {
    */
   setNightBench(wantedNight);
   localStorage.setItem(NIGHT_BENCH_STORE, wantedNight);
+  /*
+   * AND OPEN IT, once. The bench alone puts the night in front of you with an
+   * *Open its photos* button beside it — which is one more tap between a host
+   * who has just come off the mic and the pictures they were sent here to
+   * look at. That tap is the one that does not get made.
+   */
+  setNightToOpen(wantedNight);
 }
 
 /*

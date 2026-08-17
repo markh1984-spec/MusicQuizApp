@@ -2,7 +2,7 @@
 
 import { binIcon, esc, node } from './client.js';
 import { invoiceApi, openInvoiceForm } from './console-invoices.js';
-import { bench, book, library, setBook, setGigsSeen, setNightDrag } from './console-state.js';
+import { bench, book, library, nightToOpen, setBook, setGigsSeen, setNightDrag, setNightToOpen } from './console-state.js';
 import { dragging, night } from './console-tonight.js';
 import { can, hostKey, keyed, load } from './console.js';
 import { tonight } from './diary.js';
@@ -413,6 +413,26 @@ function pastGigsSection() {
      */
     setGigsSeen(data.nights || []);
     list.replaceChildren(...data.nights.map(gigRow));
+
+    /*
+     * ARRIVED FROM THE MIC — open that night's photographs straight away.
+     *
+     * `?night=` on the URL is the control view's **Check the photos** button
+     * landing here at the end of a quiz. Opening the row is what makes that a
+     * flow rather than a signpost.
+     *
+     * Through the row's own head, exactly as the bench's *Open its photos*
+     * does — one implementation of "show me this night", so a second one
+     * cannot drift from it and draw a gallery with no bin on the pictures.
+     *
+     * **Cleared whether or not the row was found**, or changing tab and coming
+     * back re-opens a night nobody asked for.
+     */
+    if (nightToOpen) {
+      const head = list.querySelector(`.gig[data-night="${CSS.escape(nightToOpen)}"] .gig-head`);
+      setNightToOpen('');
+      if (head) { head.click(); head.scrollIntoView({ block: 'start' }); }
+    }
   })();
 
   return el;
