@@ -293,7 +293,8 @@ export function venuesSection() {
               </div>
               <button class="minor v-reward-add" type="button">Add a prize</button>
               <button class="minor v-save" hidden>Save it</button>
-              ${can(FEATURES.PAST_GIGS) ? headcountBlock(v.name) + leagueBlock(v.name) : ''}`}
+              ${can(FEATURES.PAST_GIGS) ? headcountBlock(v.name) : ''}
+              ${can(FEATURES.LEAGUE) ? leagueBlock(v.name) : ''}`}
             </div>`;
       }).join('')}
         </div>

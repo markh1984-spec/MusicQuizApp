@@ -104,6 +104,7 @@ export const FEATURES = {
    * onto social media is the owner's own tab, on the owner's own page.
    */
   PAST_GIGS: 'gigs.past',        // the nights already run, and their photos
+  LEAGUE: 'gigs.league',         // the same teams, tracked over a season, per venue
 
   /*
    * **Asking for a pack that does not exist yet — GOLD.**
@@ -455,6 +456,19 @@ export const FEATURE_TIER = {
   [FEATURES.ADVERTS]: 'silver',
   [FEATURES.PHOTOS]: 'bronze',
   [FEATURES.PAST_GIGS]: 'bronze',
+  /*
+   * SILVER, and the reasoning is worth keeping because the cost rule does not
+   * settle it. Nothing about a league costs anything per use — it is
+   * arithmetic over nights already on disk — so the "never in Bronze if it
+   * bills the owner" rule leaves it free to sit anywhere.
+   *
+   * It is here because of what it SELLS. A league is a table on a wall, a
+   * season and a champion: the thing that turns a weekly booking into a
+   * fixture, which is the same job invoicing and the calendar do for the
+   * quizmaster's business. Bronze runs a night; Silver runs the business
+   * around it.
+   */
+  [FEATURES.LEAGUE]: 'silver',
   [FEATURES.REQUEST_PACK]: 'gold',
 
   [FEATURES.INVOICES]: 'bronze',
@@ -523,6 +537,7 @@ export const SWITCHABLE = [
   FEATURES.ADVERTS,
   FEATURES.INVOICES,
   FEATURES.PAST_GIGS,
+  FEATURES.LEAGUE,
   FEATURES.CALENDAR,
   FEATURES.OWN_PACKS,
 ];
@@ -547,6 +562,7 @@ export const FEATURE_META = {
   [FEATURES.BUY_PACKS]: { label: 'Buying packs', blurb: 'Buy any pack in the catalogue, £3 each.' },
   [FEATURES.OWN_PACKS]: { label: 'Your own packs', blurb: 'Write your own. Nobody else can read them.' },
   [FEATURES.LOOKS]: { label: 'Seasonal looks', blurb: 'Halloween, Valentine’s, Christmas.' },
+  [FEATURES.LEAGUE]: { label: 'Quiz leagues', blurb: 'The same teams, ranked over a season, per venue.' },
   [FEATURES.ADVERTS]: { label: 'Advert slides', blurb: 'Sell the venue a slide between rounds.' },
   [FEATURES.PHOTOS]: { label: 'Photos from the room', blurb: 'The room sends pictures to the big screen.' },
   [FEATURES.PAST_GIGS]: { label: 'Past gigs', blurb: 'Every night you have run. Proof for the next venue.' },
@@ -699,6 +715,9 @@ const OWNER_FEATURES = [
   // ladder as well, because it is every quizmaster's own record; this line is
   // what stops an OWNER-signed-in browser being refused their own history.
   FEATURES.PAST_GIGS,
+  // The league is read off those same nights, so it follows Past gigs here for
+  // the same reason: it is the owner's own record of their own venues.
+  FEATURES.LEAGUE,
 ];
 
 export const ROLES = ['owner', 'quizmaster'];

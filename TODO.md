@@ -17,45 +17,45 @@ decision from the host first.
 **DELETE AN ITEM FROM HERE THE MOMENT IT IS BUILT.**
 `test/todo-budget.test.js` fails if anything left in the list claims to be done.
 
-### Needs one decision first — the fix is known, the wording or the shape is not
-
-1. **The upload wording does not mention the public gallery.**
-   *Fix:* `public/assets/play.js:966` and `:140` still say only *"It goes on
-   the big screen"*. The gallery is live, so that is now incomplete at the
-   moment consent is given. **Decision: the host's own words.** One sentence,
-   and it should be his voice rather than mine.
-
 ### The unblocker
 
-2. **A NIGHT AND A BOOKING ARE STILL TWO THINGS.**
+1. **A NIGHT AND A BOOKING ARE STILL TWO THINGS.**
     A booking is `{date, venue, off, note}` in `diary.js`; a played night comes
     out of `mergeGigs()` carrying a venue STRING. **There is no `venueId`
     anywhere in the repo.**
     *Fix:* write a `venueId` at launch beside the name already stored, keep the
     name as the fallback for every night already filed, and give a night a real
     end time instead of the `+2 hours` default `ics.js` applies.
-    **Decision: `venueId`, or keep matching on the name?** Name-matching is what
-    the app already does (adverts match a lowercased venue name) and is the
-    smaller change; it breaks the day a pub is renamed. **The post-night report,
-    the automatic gallery publish and winner badging all wait on this.**
+    **DECIDED 17 August 2026: `venueId`, with the name kept as the fallback**
+    for every night already filed. Name-matching is what the app does elsewhere
+    and is smaller, but it breaks the day a pub is renamed and every feature
+    built on top inherits that. **The post-night report, the automatic gallery
+    publish and winner badging all wait on this.**
 
-### After 2
+### After 1
 
-3. **Editing an intro track does not repoint what plays.** `editor.js:853-854`
+2. **Editing an intro track does not repoint what plays.** `editor.js:853-854`
     writes `cue.title`/`artist` and never touches `cue.spotifyUri`, so a
     corrected track reads right and plays the old song in front of a room.
     *Fix:* look the edited track up on save, write the URI, and echo
     *"matched X"* so a wrong match is visible before the gig.
-4. **Email has one caller.** Transport is built, two providers, reset wired.
-    *Fix:* invoices next. **Decision: does it SEND, or draft for him to send?**
-    CLAUDE.md's rule is the app prepares and the human sends.
-5. **"Add a past gig"** — a write route, an explicit `playerCount`, an
+3. **Email has one caller.** Transport is built, two providers, reset wired.
+    *Fix:* invoices next, and **it DRAFTS — decided 17 August 2026.** The app
+    prepares, the human reads, the human sends. An invoice that goes out unread
+    is the one naming the wrong headcount or billing a cancelled night, and it
+    lands on the relationship the quizmaster is paid to keep.
+4. **"Add a past gig"** — a write route, an explicit `playerCount`, an
     `enteredByHand` flag, and every reader taught to respect it.
-6. **The automatic gallery publish** — gate, route and caller are built; the
-    trigger is not. Needs 2 for a real end time.
-7. **An advert QR that COUNTS** — the offer page served from this app, so
-    opens can be counted. The count is the feature, not the discount.
-8. **The post-night report** — every number it needs already exists. Needs 2.
+5. **The automatic gallery publish** — gate, route and caller are built; the
+    trigger is not. Needs 1 for a real end time.
+6. **An advert QR that COUNTS** — **decided 17 August 2026: the offer page is
+    served by THIS APP**, so the count is ours and it works for any venue with
+    no setup at their end. *"Show this at the bar: QUIZ40"*. The venue puts
+    `?ref=quiz` on their own link if they want to track orders — the
+    quizmaster reports OPENS, the venue reports SALES, so the number that
+    settles it arrives from the person being convinced. The count is the
+    feature, not the discount.
+7. **The post-night report** — every number it needs already exists. Needs 1.
 
 Everything else — the website, the FAQ, print on demand, the nudity check,
 breakout rounds, online video, splitting `launchBar()` — is bigger, parked, or

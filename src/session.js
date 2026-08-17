@@ -289,7 +289,11 @@ export class Session {
          * final slide simply has no table on it.
          */
         try {
-          if (state.venue) {
+          // `leagueOn` is written at launch from the tier check at the route.
+          // A night launched before this existed has no flag and gets no
+          // table, which is the right way round: silence, never a Silver
+          // feature appearing on a projector by default.
+          if (state.leagueOn && state.venue) {
             const nights = mergeGigs(listArchive(this.archiveDir, { boards: true }), []);
             const mine = nights.filter((n) => String(n.venue || '').toLowerCase() === String(state.venue).toLowerCase());
             const league = leagueTable(mine, { now: this.now() });
@@ -402,7 +406,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, look = '', lobbyGame = '', lobbySound = true, online = false, teamPlay = false, venue = '', rewards = [], venueLogo = '', comeBack = null, askForRounds = false, roundIdeas = [], order = null } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, look = '', lobbyGame = '', lobbySound = true, league = false, online = false, teamPlay = false, venue = '', rewards = [], venueLogo = '', comeBack = null, askForRounds = false, roundIdeas = [], order = null } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     /*
      * TONIGHT'S RUNNING ORDER, when one was built — rounds from more than one
@@ -489,6 +493,13 @@ export class Session {
      * true, so a night launched by an older console is not silently muted.
      */
     this.engine.state.lobbySound = lobbySound !== false;
+    /*
+     * Whether tonight ends on a league table. Decided at the route, where the
+     * account and its tier are known, and stored on the night like the lobby
+     * game and the card shape — so a restart brings back the same night rather
+     * than one that has quietly gained or lost a feature.
+     */
+    this.engine.state.leagueOn = league !== false;
 
     /*
      * Whether anybody is in the room tonight.

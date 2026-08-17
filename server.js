@@ -1643,7 +1643,7 @@ async function handleGet(req, res, url, route) {
        *
        * The TABLE only. The leaderboards it was built from stay on the server.
        */
-      leagues: seesTheirNights(req, url) ? leaguesByVenue(gigNights) : {},
+      leagues: seesTheirLeague(req, url) ? leaguesByVenue(gigNights) : {},
       /*
        * Venues this room has played before, so the launch box offers them back
        * rather than asking for the same six words every week. A field you
@@ -3027,6 +3027,21 @@ function seesTheirNights(req, url) {
   const account = whoIs(req, url);
   if (!account) return false;
   return account.bootstrap ? true : can(account, FEATURES.PAST_GIGS);
+}
+
+/**
+ * May whoever is asking see a LEAGUE?
+ *
+ * A sibling of `seesTheirNights` and the same shape for the same reason — the
+ * bare host key has no account, so a lookup by room id would quietly hide the
+ * owner's own leagues. Separate from Past gigs because the league is Silver
+ * and the record it reads is Bronze: everybody keeps their nights, and the
+ * table across them is what the tier buys.
+ */
+function seesTheirLeague(req, url) {
+  const account = whoIs(req, url);
+  if (!account) return false;
+  return account.bootstrap ? true : can(account, FEATURES.LEAGUE);
 }
 
 function invoiceState(books) {
@@ -4994,6 +5009,18 @@ async function handleWrite(req, res, url, route) {
           String(body.lobbyGame || ''),
           (entitlements(whoIs(req, url) || {}) || {}).tier || '',
         ).id;
+        /*
+         * WHETHER TONIGHT ENDS ON A LEAGUE TABLE, decided HERE.
+         *
+         * The tier is checked at the route and never in the console — the same
+         * rule the lobby game above follows, and for the same reason: the
+         * console can be reloaded, edited or simply stale, and a projector
+         * showing a Silver feature to a Bronze account is a gate that runs
+         * backwards.
+         *
+         * Losing it costs a slide at the end of the night, never the launch.
+         */
+        const league = seesTheirLeague(req, url);
         // Whether the phones may make a noise. Defaults to yes, so a console
         // that has not been reloaded since this landed does not mute the room.
         const lobbySound = body.lobbySound !== false;
@@ -5078,7 +5105,7 @@ async function handleWrite(req, res, url, route) {
           ? pickIdeas((fullLibrary(config, room.id, listOwn(room.paths)).quizzes || [])
             .map((q) => q.title))
           : [];
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, lobbyGame, lobbySound, online, teamPlay, venue, rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas, order: wantedOrder });
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, lobbyGame, lobbySound, league, online, teamPlay, venue, rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas, order: wantedOrder });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();

@@ -261,7 +261,16 @@ function openCamera() {
           <b>Put a photo on the big screen</b>
           <button class="cam-close" title="Close">✕</button>
         </div>
-        <p class="tiny cam-warn">No approval — it goes up between questions. Keep it decent.</p>
+        <!-- WHERE IT ACTUALLY ENDS UP, said at the moment the photo is handed
+             over rather than in a policy nobody opens. This used to name only
+             the big screen, which was complete until the public gallery
+             shipped and then quietly was not: a night can be published, and
+             the person holding the phone is the one who should hear that
+             first. Naming WHO decides matters as much as naming the page —
+             the quizmaster publishes, so nothing goes public by itself. -->
+        <p class="tiny cam-warn">No approval — it goes up between questions. Keep it decent.
+          Goes on the big screen tonight — and on this night’s photo page if your
+          quizmaster shares it.</p>
         <label class="cam-pick">
           <input type="file" accept="image/*" hidden>
           <span>Take or choose a photo</span>
@@ -963,7 +972,8 @@ function buildWaiting(s, kicker, title, sub) {
         <span class="wait-item-icon" aria-hidden="true">📷</span>
         <span class="wait-item-what">
           <b>Send a photo</b>
-          <span class="tiny">It goes on the big screen</span>
+          <span class="tiny">On the big screen tonight — and this night’s photo
+            page if your quizmaster shares it</span>
         </span>
       </button>
       </div>
