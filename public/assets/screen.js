@@ -961,9 +961,47 @@ function renderWinner(s) {
           <div class="dip-name">${esc(s.luckyDip.name)}</div>
           <div class="dip-note">drawn from ${s.luckyDip.outOf} still playing at the last question</div>
         </div>` : ''}
+      ${leagueBand(s)}
       ${comeBackBand(s)}
     </div>
   `);
+}
+
+/**
+ * THE LEAGUE, ON THE PROJECTOR, AT THE END OF THE NIGHT.
+ *
+ * The table is the reason the room comes back next week, and it only does that
+ * job if the room SEES it — a card on the quizmaster's console is evidence for
+ * a landlord, not a hook for sixty people who have just finished playing.
+ *
+ * **UNDER the winner, the podium and the draw, and above the comeback band.**
+ * That order is the evening's own: who won tonight, who won something, where
+ * the season stands, when we are back. It is the same rule the comeback slide
+ * follows — nothing may sit over the result the room is waiting for.
+ *
+ * **Silent on a first night.** `session.js` only writes it once the venue has
+ * more than one night in the season, because a "league" containing tonight
+ * alone is just the scoreboard printed twice.
+ *
+ * Sized in `vh` like everything else on this screen: it is read from the back
+ * of a dark pub, and five rows is what fits under a podium without pushing the
+ * comeback band off the bottom.
+ */
+function leagueBand(s) {
+  if (!s.league || !s.league.table || !s.league.table.length) return '';
+  return `
+    <div class="lgb">
+      <div class="lgb-label">The league after tonight</div>
+      <div class="lgb-rows">
+        ${s.league.table.map((t) => `
+          <div class="lgb-row${t.position === 1 ? ' lgb-top' : ''}">
+            <span class="lgb-pos">${t.position}</span>
+            <span class="lgb-name">${esc(t.name)}</span>
+            <span class="lgb-pts">${t.points}</span>
+          </div>`).join('')}
+      </div>
+      <div class="lgb-note">${s.league.teams} teams · ${s.league.nights} nights · 10 points for a win, 1 for playing</div>
+    </div>`;
 }
 
 // ------------------------------------------------------------------- timer

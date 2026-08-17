@@ -1917,6 +1917,18 @@ export class Engine {
      * night with no next date gains no field at all.
      */
     if (s.phase === PHASES.FINAL && s.comeBack) view.comeBack = comeBackView(s.comeBack);
+    /*
+     * THE LEAGUE, AT THE FINAL AND NOWHERE ELSE.
+     *
+     * Same rule as the comeback band and for the same reason: a table of other
+     * nights during a question is two things on one projector, and it would be
+     * telling a room to look at last month while this month is on the clock.
+     *
+     * It is written into the state by `session.js` once the night is FILED, so
+     * the table the room sees includes the night they have just played — and a
+     * restart on the final scores brings back the same one.
+     */
+    if (s.phase === PHASES.FINAL && s.league) view.league = s.league;
 
     /*
      * WHAT THEY ARE PLAYING FOR, on the opening screen.

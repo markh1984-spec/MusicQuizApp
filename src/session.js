@@ -23,7 +23,9 @@ import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFi
 // drifts is the one nobody is looking at.
 import { MAX_REWARDS } from './invoices.js';
 import { listQuizzes } from './quizzes.js';
-import { listBingoPacks, recordLaunch, archiveResults, updateArchivedNight, HOUSE_ROOM } from './library.js';
+import { listBingoPacks, recordLaunch, archiveResults, updateArchivedNight, listArchive, HOUSE_ROOM } from './library.js';
+import { mergeGigs } from './past-gigs.js';
+import { leagueTable } from './league.js';
 import { findSlide } from './adverts.js';
 import { readPack, listOwn } from './own-packs.js';
 import { cleanComeBack } from './comeback.js';
@@ -267,6 +269,42 @@ export class Session {
          */
         state.archivedAs = record.id;
         this.filedVouchers = JSON.stringify(state.vouchers || {});
+
+        /*
+         * THE LEAGUE, WORKED OUT AFTER TONIGHT IS FILED — which is the whole
+         * reason it happens here rather than at launch.
+         *
+         * The room is about to look at it, and a table that did not include
+         * the night they have just played would be worse than no table: the
+         * team who won ten minutes ago would not have moved, and every person
+         * in the room would spot it.
+         *
+         * Into the STATE, like the prizes and the comeback slide, so a restart
+         * on the final scores brings back the same table rather than
+         * recomputing a different one — and so the projector needs no archive
+         * access of its own.
+         *
+         * Wrapped on its own: a league is a nicety and filing the night is
+         * not. If reading the archive throws, the night stays filed and the
+         * final slide simply has no table on it.
+         */
+        try {
+          if (state.venue) {
+            const nights = mergeGigs(listArchive(this.archiveDir, { boards: true }), []);
+            const mine = nights.filter((n) => String(n.venue || '').toLowerCase() === String(state.venue).toLowerCase());
+            const league = leagueTable(mine, { now: this.now() });
+            // The top five only. It is a band under a podium on a projector,
+            // not the wall poster, and the count says how many are in it.
+            if (league.nights > 1) {
+              state.league = {
+                venue: state.venue,
+                nights: league.nights,
+                teams: league.table.length,
+                table: league.table.slice(0, 5),
+              };
+            }
+          }
+        } catch { /* a league is never worth losing a filed night over */ }
         // Never awaited. The night has ended and the room is looking at a
         // scoreboard; whether GitHub is having a good evening is not their
         // problem, and a backup that held up the final slide would be.

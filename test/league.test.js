@@ -145,3 +145,35 @@ test('a venue with no quiz nights in the season has no league at all', () => {
   const leagues = leaguesByVenue([night(1, 'The Crown', ['Lucky'], 'bingo')], { now: NOW });
   assert.deepEqual(leagues, {}, 'an empty table on a card is worse than none');
 });
+
+/**
+ * ON THE PROJECTOR AT THE FINAL AND NOWHERE ELSE — the same rule the comeback
+ * band follows, and for the same reason: a table of other nights while a
+ * question is up is two things on one screen.
+ *
+ * The state is written by `session.js` once the night is FILED, so what the
+ * room sees includes the night they just played. These pin the view rules; the
+ * band was also driven to a real final in a browser, which is the only thing
+ * that proves anybody draws it.
+ */
+test('the league reaches the projector at the final, and at no other phase', async () => {
+  const { Engine } = await import('../src/engine.js');
+  const quiz = {
+    id: 'q', title: 'Q',
+    rounds: [{ name: 'One', type: 'text', questions: [
+      { prompt: 'a', options: ['1', '2'], answerIndex: 0 },
+    ] }],
+  };
+  const e = new Engine({ quiz, now: () => NOW });
+  e.state.league = { venue: 'The Crown', nights: 5, teams: 6, table: [{ position: 1, name: 'Quizzly Bears', points: 42 }] };
+
+  assert.equal(e.screenView().league, undefined, 'a league in the lobby is a table nobody asked for');
+  e.start();
+  e.askQuestion();
+  assert.equal(e.screenView().league, undefined, 'never over a live question');
+  e.reveal();
+  assert.equal(e.screenView().league, undefined, 'never over a reveal');
+
+  e.state.phase = 'final';
+  assert.equal(e.screenView().league.table[0].name, 'Quizzly Bears');
+});
