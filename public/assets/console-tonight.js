@@ -2274,7 +2274,43 @@ export function runningPanel(running) {
           <button class="minor danger stop-running" title="Clear it and go back to waiting">Stop</button>
         </div>
       </div>
+      ${running.finished ? `
+        <!-- THE END OF THE NIGHT, AS A STEP RATHER THAN A HOPE.
+             Asked for on 17 August 2026: "you finish the night on the console,
+             do your well dones and thank yous, and the console prompts you to
+             check the photos as the very next step".
+             It replaces an argument about AUTO-publishing the gallery, and it
+             is the better answer. Publishing at the final scores would have
+             gone out before the night's last photographs arrived — uploads are
+             not phase-gated and the winner announcement is peak photo time —
+             and it would have removed the safeguard that matters most: the
+             publish control sits under the photographs so that nobody
+             publishes a night without having just looked at what is in it.
+             This keeps the looking and makes the app ASK for it. -->
+        <div class="night-done">
+          <div>
+            <b>That's the night done.</b>
+            <div class="tiny">Check the photos before you pack up — it is the last
+              moment anybody is still around to ask about one.</div>
+          </div>
+          <button class="go see-photos" type="button">Check the photos</button>
+        </div>` : ''}
     </div>`);
+
+  /*
+   * Straight to tonight's own photographs, on the Post gig door.
+   *
+   * The night goes on that door's BENCH — the mechanism it already has for
+   * "the night I am working on" — and the key is the 6am roll-over one, the
+   * same as `nightOfGig()` and the photos themselves, so a quiz that finished
+   * at half past midnight lands on the night it belongs to rather than on
+   * tomorrow with no photos under it.
+   */
+  el.querySelector('.see-photos')?.addEventListener('click', () => {
+    const key = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    putNightOnBench(key);
+    location.href = linkTo('/console?door=post&tab=past');
+  });
 
   /*
    * Bill for the night that has just finished, from where you already are.

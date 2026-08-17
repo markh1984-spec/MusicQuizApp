@@ -31,17 +31,13 @@ decision from the host first.
     receipt, a card-failed notice. **Each is its own decision about whose name
     is on the envelope**, and `src/email.js` says in as many words not to grow
     into notifications without one.
-2. **The automatic gallery publish** — gate, route and caller are built; the
-    trigger is not. **A night now knows its venue by id and carries
-    `finishedAt`**, so what is left is deciding when a night counts as over —
-    the last game finishing, or the host saying so.
-3. **THE ADVERT COUNT HAS NOWHERE TO BE READ YET.** The counting is built —
+2. **THE ADVERT COUNT HAS NOWHERE TO BE READ YET.** The counting is built —
     `/o/<pack>/<slide>` serves the offer, records the open, and the projector's
     QR points at it whenever a slide has a code. **What is missing is the
     console side:** somewhere to type the code and the "valid when" line onto a
     slide, and somewhere to read *"41 opens, 12 on the 14th"* back. Until then
     a code has to be put into the advert JSON by hand.
-4. **The post-night report** — every number it needs already exists, and the
+3. **The post-night report** — every number it needs already exists, and the
     venue join is built, so nothing blocks it now.
 
 **AND ONE CORRECTION, because the old entry asked for the wrong thing.** It

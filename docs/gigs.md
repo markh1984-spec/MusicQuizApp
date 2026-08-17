@@ -924,3 +924,42 @@ with.
 
 If it ever comes back, that is the thing to solve first: how a filed night says
 whether the app measured it or somebody typed it.
+
+## AUTO-PUBLISHING THE GALLERY WAS REPLACED BY A STEP — and that is better
+
+Settled with the host on 17 August 2026, after three answers were tried and two
+were wrong.
+
+**The question was when a night counts as "over" so the gallery could publish
+itself.** The calendar cannot say: a booking has a date and an optional start
+and **no duration at all**, so "when the calendar thinks it is over" means
+"start plus a made-up two hours". The host's own answer was better and matched
+what the app already believes — *"the night is probably over once the
+scoreboard goes up"* — and it is right: `isOver(state)` at the final phase is
+exactly when a night is archived and `finishedAt` stamped.
+
+**But publishing at that moment would have gone out too early**, for a reason
+that only shows up in the code: **photo uploads are not phase-gated.**
+`/api/photo` checks whether photos are switched on, not what phase the game is
+in, and `PHOTO_PHASES` deliberately keeps photos on the projector at `final`,
+`won` and `finished` — **the winner announcement is peak photo time.** So an
+auto-publish at the scoreboard would publish a night before its last
+photographs arrived, and those would land on an already-public page with
+nobody having looked at them. That is the safeguard this file already records
+— the publish control sits UNDER the photographs so nobody publishes a night
+without having just seen what is in it — failing silently.
+
+**So the host replaced the whole idea:** *"perhaps there should be an extra
+step — you finish the night on the console, do your well dones and thank yous,
+and the console prompts you to check the photos as the very next step?"*
+
+That is the shape CLAUDE.md argues for everywhere: **the app prepares, the
+human presses.** It keeps the looking and makes the app ASK for it, at the one
+moment the room is still there to be asked about a picture. `runningPanel()`
+shows it once `running.finished`, and it puts the night on the Post gig bench —
+keyed by the same 6am roll-over as the photos, so a quiz that ended at half
+past midnight lands on its own night rather than on tomorrow with nothing
+under it.
+
+**Do not re-propose auto-publishing** without answering the upload window
+first.

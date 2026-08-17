@@ -6890,6 +6890,18 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .lgb-top .lgb-name, .lgb-top .lgb-pts { color: var(--gold); }
 .lgb-note { margin-top: 1vh; font-size: 1.4vh; color: var(--ink-dim); }
 
+/* THE END-OF-NIGHT STEP on the running panel, once a game has finished. It is
+   the one moment the app asks for something rather than offering it, so it is
+   a band across the panel rather than another button in the row — and it takes
+   the account's own gradient on its action, because at that point there is
+   nothing else on the panel competing to be pressed. */
+.night-done {
+  display: flex; gap: 14px; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; margin-top: 14px; padding-top: 14px;
+  border-top: 1px solid var(--panel-line);
+}
+.night-done .go { flex: 0 0 auto; }
+
 /* WHAT A SAVE DID TO THE INTRO CUES. Stays until dismissed rather than
    flashing: it is the one thing worth reading before a gig, and a toast is no
    way to check four track matches. Neutral rather than green or red — it is
