@@ -6890,6 +6890,21 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .lgb-top .lgb-name, .lgb-top .lgb-pts { color: var(--gold); }
 .lgb-note { margin-top: 1vh; font-size: 1.4vh; color: var(--ink-dim); }
 
+/* WHAT A SAVE DID TO THE INTRO CUES. Stays until dismissed rather than
+   flashing: it is the one thing worth reading before a gig, and a toast is no
+   way to check four track matches. Neutral rather than green or red — it is
+   information about a save that already succeeded, not a verdict on it. */
+.cue-said {
+  position: relative; margin: 0 0 14px; padding: 12px 34px 12px 14px;
+  border: 1px solid var(--panel-line); border-radius: var(--r-card);
+  background: var(--panel); font-size: var(--fs-body); line-height: 1.5;
+}
+.cue-said .tiny { color: var(--ink-dim); }
+.cue-said-x {
+  position: absolute; top: 6px; right: 8px; background: none; border: 0;
+  color: var(--ink-dim); font-size: 20px; line-height: 1; cursor: pointer;
+}
+
 /* THE QUIZ LEAGUE on a venue card. Deliberately plain: this is a table of
    numbers somebody reads, and the card it sits on is already carrying a
    headcount, a sparkline and a prize list. The only colour is on first place,

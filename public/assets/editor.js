@@ -925,6 +925,20 @@ async function save(confirmLive = false) {
     // Say whether it is permanent, because "Saved" on its own is misleading
     // when the server's filesystem is temporary.
     flash(result.backedUp ? 'Saved and backed up' : 'Saved here only — not backed up');
+    /*
+     * AND WHAT THE EDITED TRACKS NOW POINT AT.
+     *
+     * Editing a cue's words used to leave `spotifyUri` on the old recording,
+     * so a corrected track read right and played the wrong song in front of a
+     * room. The save re-resolves it now (`src/recue.js`) — but a SILENT
+     * re-point is its own trap, because Spotify's search is a guess and
+     * "Crazy" by anybody is four different records.
+     *
+     * So it says what it matched, and it stays on screen rather than flashing:
+     * this is the one thing worth reading before the gig, and a 1.8-second
+     * toast is not a way to check four tracks.
+     */
+    sayCues(result.cued);
   } catch (err) {
     /*
      * THE QUESTION IS ON A SCREEN RIGHT NOW, and the save changes it.
@@ -969,6 +983,39 @@ async function check() {
   } catch (err) {
     flash('Could not check: ' + err.message);
   }
+}
+
+/**
+ * What the save did to the intro cues, under the toolbar until dismissed.
+ *
+ * Silent when nothing was re-pointed, which is almost every save — a note that
+ * appears on every save is a note nobody reads on the one that matters.
+ */
+function sayCues(cued) {
+  document.querySelector('.cue-said')?.remove();
+  if (!cued || (!cued.matched?.length && !cued.missed?.length && !cued.skipped)) return;
+
+  const bits = [];
+  if (cued.matched?.length) {
+    bits.push(`<b>Re-pointed ${cued.matched.length} track${cued.matched.length === 1 ? '' : 's'}:</b> `
+      + cued.matched.map((m) => esc(`${m.title} — ${m.artist}`)).join(' · ')
+      + ' <span class="tiny">Check that is the recording you meant.</span>');
+  }
+  if (cued.missed?.length) {
+    // Named, because this one costs silence on the night if it is not fixed.
+    bits.push(`<b>Not found on Spotify:</b> `
+      + cued.missed.map((m) => esc(`${m.title} — ${m.artist}`)).join(' · ')
+      + ' <span class="tiny">These will not play from the app — the words still work if you play it yourself.</span>');
+  }
+  if (cued.skipped === 'no-spotify') {
+    bits.push('<b>Spotify is not connected</b>, so the edited tracks were not looked up. '
+      + '<span class="tiny">The cue still says what to play.</span>');
+  }
+
+  const el = node(`<div class="cue-said">${bits.join('<br>')}
+    <button class="cue-said-x" type="button" aria-label="Dismiss">&times;</button></div>`);
+  el.querySelector('.cue-said-x').addEventListener('click', () => el.remove());
+  document.querySelector('main')?.prepend(el);
 }
 
 function flash(message) {

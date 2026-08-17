@@ -21,6 +21,7 @@ import { Hub } from './src/sse.js';
 import { Photos, MAX_BYTES } from './src/photos.js';
 import { Session } from './src/session.js';
 import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked, ROUND_TYPES } from './src/quizzes.js';
+import { recueQuiz } from './src/recue.js';
 import { validateBingoPack, normaliseBingoPack, minimumTracks, CARD_SHAPES, shapeLabel, maxPrizes, stagePlan, stageLabel } from './src/bingo.js';
 import { fullLibrary, listArchive, venuesUsed, rewardsUsed, rewardsByVenue, loadArchived, serialiseArchive, restoreArchive, saveBingoPack, loadBingoPack, deleteBingoPack, readStats } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
@@ -4488,6 +4489,12 @@ async function handleWrite(req, res, url, route) {
      */
     const clash = body.confirmLive ? null : changesTheLiveQuestion('quiz', quiz.id, quiz, room);
     if (clash) return sendJson(res, 409, { error: 'onScreenNow', live: clash }), true;
+    // The same re-pointing as the catalogue save — see the note there. It runs
+    // AFTER the live-question check, so a refused save costs no lookups.
+    let cued = { matched: [], missed: [], skipped: '' };
+    try {
+      cued = await recueQuiz(quiz, readPack('quiz', quiz.id, { config, paths: room.paths }));
+    } catch { /* a save is never lost over a lookup */ }
     try {
       saveOwn('quiz', quiz.id, quiz, { config, paths: room.paths });
     } catch (err) {
@@ -4497,7 +4504,7 @@ async function handleWrite(req, res, url, route) {
     reloadPackEverywhere(quiz.id);
     const backup = await backUpOwnPack(room, 'quiz', quiz.id, JSON.stringify(quiz, null, 2) + '\n');
     return sendJson(res, 200, {
-      ok: true, id: quiz.id, backedUp: backup.ok, backupError: backup.error,
+      ok: true, id: quiz.id, backedUp: backup.ok, backupError: backup.error, cued,
     }), true;
   }
 
@@ -5315,8 +5322,20 @@ async function handleWrite(req, res, url, route) {
     const quizToSave = normaliseQuiz(body, body.id);
     const problems = validateQuiz(quizToSave);
     if (problems.length) return sendJson(res, 400, { error: 'Quiz is not valid', problems }), true;
+    /*
+     * RE-POINT ANY CUE WHOSE TRACK WAS EDITED, before it is written.
+     *
+     * The words and the `spotifyUri` are two halves of one fact, and the
+     * editor only ever wrote the words — so a corrected track read right and
+     * played the old song. See `src/recue.js`. It reads the version on disk to
+     * work out what actually changed, and never fails the save.
+     */
+    let cued = { matched: [], missed: [], skipped: '' };
+    try {
+      cued = await recueQuiz(quizToSave, loadQuiz(config.quizDir, quizToSave.id));
+    } catch { /* a save is never lost over a lookup */ }
     saveQuiz(config.quizDir, quizToSave.id, quizToSave);
-    return sendJson(res, 200, { ok: true, id: quizToSave.id }), true;
+    return sendJson(res, 200, { ok: true, id: quizToSave.id, cued }), true;
   }
 
   // ---- one button: theme in, playable bingo game out.

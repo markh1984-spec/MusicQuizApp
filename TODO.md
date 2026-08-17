@@ -18,30 +18,25 @@ decision from the host first.
 `test/todo-budget.test.js` fails if anything left in the list claims to be done.
 
 
-1. **Editing an intro track does not repoint what plays.** `editor.js:853-854`
-    writes `cue.title`/`artist` and never touches `cue.spotifyUri`, so a
-    corrected track reads right and plays the old song in front of a room.
-    *Fix:* look the edited track up on save, write the URI, and echo
-    *"matched X"* so a wrong match is visible before the gig.
-2. **Email has one caller.** Transport is built, two providers, reset wired.
+1. **Email has one caller.** Transport is built, two providers, reset wired.
     *Fix:* invoices next, and **it DRAFTS — decided 17 August 2026.** The app
     prepares, the human reads, the human sends. An invoice that goes out unread
     is the one naming the wrong headcount or billing a cancelled night, and it
     lands on the relationship the quizmaster is paid to keep.
-3. **"Add a past gig"** — a write route, an explicit `playerCount`, an
+2. **"Add a past gig"** — a write route, an explicit `playerCount`, an
     `enteredByHand` flag, and every reader taught to respect it.
-4. **The automatic gallery publish** — gate, route and caller are built; the
+3. **The automatic gallery publish** — gate, route and caller are built; the
     trigger is not. **A night now knows its venue by id and carries
     `finishedAt`**, so what is left is deciding when a night counts as over —
     the last game finishing, or the host saying so.
-5. **An advert QR that COUNTS** — **decided 17 August 2026: the offer page is
+4. **An advert QR that COUNTS** — **decided 17 August 2026: the offer page is
     served by THIS APP**, so the count is ours and it works for any venue with
     no setup at their end. *"Show this at the bar: QUIZ40"*. The venue puts
     `?ref=quiz` on their own link if they want to track orders — the
     quizmaster reports OPENS, the venue reports SALES, so the number that
     settles it arrives from the person being convinced. The count is the
     feature, not the discount.
-6. **The post-night report** — every number it needs already exists, and the
+5. **The post-night report** — every number it needs already exists, and the
     venue join is built, so nothing blocks it now.
 
 **AND ONE CORRECTION, because the old entry asked for the wrong thing.** It
