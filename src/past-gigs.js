@@ -109,6 +109,17 @@ export function mergeGigs(archived = [], photoNights = []) {
       title: record.title || '',
       players: record.playerCount || 0,
       winner: record.winner || null,
+      rewards: record.rewards || [],
+      rewardsTaken: record.rewardsTaken || 0,
+      /*
+       * The leaderboard rides along ONLY when the caller asked `listArchive`
+       * for it, which is the league and nothing else. This function picks
+       * fields rather than spreading the record — deliberately, so a new field
+       * on a filed night cannot appear in a payload nobody meant to grow — and
+       * that is exactly why the boards were invisible here at first: they were
+       * on the record and dropped one line later.
+       */
+      ...(record.leaderboard ? { leaderboard: record.leaderboard } : {}),
     });
   }
 

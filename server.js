@@ -37,6 +37,7 @@ import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig, playTrack } from './src/spotify.js';
 import { photoFolder, mergeGigs, safePhotoName, isNightFolder, nightOfGig } from './src/past-gigs.js';
 import { venueHeadcounts } from './src/headcounts.js';
+import { leaguesByVenue } from './src/league.js';
 import { comeBackFor } from './src/comeback.js';
 import { isComposed, MAX_ROUNDS } from './src/running-order.js';
 import { listShows, saveShow, deleteShow, showProblems } from './src/shows.js';
@@ -1491,7 +1492,12 @@ async function handleGet(req, res, url, route) {
      * anyway, because a badge saying 40 above a panel that summarises 39 is a
      * page nobody trusts.
      */
-    const gigNights = mergeGigs(listArchive(libRoom.paths.archive), []);
+    /*
+     * WITH the leaderboards: the league is worked out here, on the server, and
+     * only the finished table is sent. `/api/past-gigs` asks without them, so
+     * the list of nights the Gigs tab draws stays the size it always was.
+     */
+    const gigNights = mergeGigs(listArchive(libRoom.paths.archive, { boards: true }), []);
     return sendJson(res, 200, {
       brand: brandForRoom(roomForHost(req, url)),
       appName: config.appName,
@@ -1628,6 +1634,16 @@ async function handleGet(req, res, url, route) {
       headcounts: seesTheirNights(req, url)
         ? venueHeadcounts(gigNights)
         : { venues: [], unplaced: 0 },
+      /*
+       * THE QUIZ LEAGUE, per venue — who keeps coming back and who is winning
+       * the season. Same record, same gate and the same reason as the
+       * headcounts above: sent with the library so a venue card draws its
+       * table with no second request, and so one calculation feeds every
+       * place that shows it.
+       *
+       * The TABLE only. The leaderboards it was built from stay on the server.
+       */
+      leagues: seesTheirNights(req, url) ? leaguesByVenue(gigNights) : {},
       /*
        * Venues this room has played before, so the launch box offers them back
        * rather than asking for the same six words every week. A field you

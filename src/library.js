@@ -334,7 +334,17 @@ export function restoreArchive(dir, serialised) {
   return { ok: true, nights: written };
 }
 
-export function listArchive(dir) {
+/**
+ * The nights on disk, as summaries.
+ *
+ * `boards: true` keeps each night's LEADERBOARD on the summary, which the
+ * league needs and nothing else does. Behind an option rather than always on,
+ * because these summaries are sent to the browser by `/api/past-gigs` and a
+ * season of full leaderboards is a lot of payload for a list of dates — and
+ * the one place that wants them (the league, computed on the server) never
+ * sends them anywhere.
+ */
+export function listArchive(dir, { boards = false } = {}) {
   let files = [];
   try {
     files = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
@@ -380,6 +390,8 @@ export function listArchive(dir) {
            * something to scatter through a payload.
            */
           rewardsTaken: (r.vouchers || []).filter((v) => v && v.redeemedAt).length,
+          // Only when asked for — see the note on the signature.
+          ...(boards ? { leaderboard: r.leaderboard || [] } : {}),
         };
       } catch {
         return null;

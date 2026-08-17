@@ -146,8 +146,66 @@ function shortNight(date) {
   return when.toLocaleDateString('en-GB', opts);
 }
 
+/**
+ * THE LEAGUE TABLE ON A VENUE'S CARD.
+ *
+ * Underneath the headcount, because the two answer a landlord's two questions
+ * in the order he asks them: **how many came**, then **are they the same
+ * people**. The headcount sells the room; the league is what keeps it.
+ *
+ * **The top five and no more.** A card is scanned, not studied — this is the
+ * shape of the thing, and the wall poster is the place for twenty rows. The
+ * count underneath says how many teams are in it, so a five-row table never
+ * reads as the whole league.
+ *
+ * **It says how a team is identified, in one line.** A team is the name typed
+ * on a phone, so a spelling change starts a new team and there is no way for
+ * the app to know. Somebody pinning this to a wall has to know that, and the
+ * house rule is that a warning earns its words where a blurb does not.
+ */
+export function leagueBlock(venue) {
+  const league = (library.leagues || {})[String(venue || '').trim().toLowerCase()];
+  if (!league || !league.table.length) {
+    return `<div class="heads league">
+      <div class="heads-tag">Quiz league</div>
+      <div class="tiny">No quiz nights here yet this season. The table builds itself
+        from the results — there is nothing to set up.</div>
+    </div>`;
+  }
+
+  const top = league.table.slice(0, 5);
+  return `<div class="heads league">
+    <div class="heads-tag">Quiz league</div>
+    <table class="lg-table">
+      <thead>
+        <tr>
+          <th class="lg-pos" aria-label="Position"></th>
+          <th class="lg-name">Team</th>
+          <!-- Abbreviated because the column is two characters wide on a phone
+               and every pub league table in the country abbreviates them. The
+               full words are on the screen-reader label. -->
+          <th class="lg-played"><abbr title="Nights played">P</abbr></th>
+          <th class="lg-pts"><abbr title="Points">Pts</abbr></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${top.map((t) => `
+          <tr${t.position === 1 ? ' class="lg-top"' : ''}>
+            <td class="lg-pos">${t.position}</td>
+            <td class="lg-name">${esc(t.name)}</td>
+            <td class="lg-played tiny">${t.played}</td>
+            <td class="lg-pts"><b>${t.points}</b></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+    <div class="tiny lg-note">${league.table.length} team${league.table.length === 1 ? '' : 's'}
+      across ${league.nights} night${league.nights === 1 ? '' : 's'} · 10 points for a win, 1 for turning up.
+      A team is the name they type, so a change of spelling starts a new one.</div>
+  </div>`;
+}
+
 /** What a venue card shows about how many have played there. */
-function headcountBlock(venue) {
+export function headcountBlock(venue) {
   const entry = headsFor(venue);
   if (!entry) {
     return `<div class="heads">

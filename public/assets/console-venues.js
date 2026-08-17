@@ -2,6 +2,7 @@
 
 import { esc, node, postJson } from './client.js';
 import { field, invoiceApi, sheet } from './console-invoices.js';
+import { headcountBlock, leagueBlock } from './console-gigs.js';
 import { library, setVenueDrag } from './console-state.js';
 import { chooseVenueFromTab, dragging, night } from './console-tonight.js';
 import { can, doorNow, goTo, hostKey, keyed, load } from './console.js';
@@ -292,7 +293,7 @@ export function venuesSection() {
               </div>
               <button class="minor v-reward-add" type="button">Add a prize</button>
               <button class="minor v-save" hidden>Save it</button>
-              ${can(FEATURES.PAST_GIGS) ? headcountBlock(v.name) : ''}`}
+              ${can(FEATURES.PAST_GIGS) ? headcountBlock(v.name) + leagueBlock(v.name) : ''}`}
             </div>`;
       }).join('')}
         </div>
