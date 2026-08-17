@@ -177,3 +177,38 @@ test('the league reaches the projector at the final, and at no other phase', asy
   e.state.phase = 'final';
   assert.equal(e.screenView().league.table[0].name, 'Quizzly Bears');
 });
+
+/**
+ * WHERE THE LEAGUE SITS ON THE LADDER — Silver, decided 17 August 2026.
+ *
+ * Pinned because the reasoning does not fall out of the cost rule. Nothing
+ * about a league bills the owner per use, so *"anything that costs money every
+ * time it is used is not in Bronze"* leaves it free to sit anywhere; it is on
+ * Silver for what it SELLS. A one-line change moves it, and this test is what
+ * makes that a decision rather than a drift.
+ */
+test('the league is a Silver feature, and Bronze does not get it', async () => {
+  const { FEATURES, featuresAt, tierOf } = await import('../public/assets/plans.js');
+
+  assert.equal(tierOf(FEATURES.LEAGUE), 'silver');
+  assert.equal(featuresAt('bronze').includes(FEATURES.LEAGUE), false);
+  assert.equal(featuresAt('silver').includes(FEATURES.LEAGUE), true);
+  assert.equal(featuresAt('gold').includes(FEATURES.LEAGUE), true);
+
+  // And the record it reads stays Bronze: everybody keeps their own nights,
+  // and the TABLE across them is what the tier buys.
+  assert.equal(tierOf(FEATURES.PAST_GIGS), 'bronze');
+});
+
+/**
+ * The projector band is gated by a flag written AT LAUNCH, never by the
+ * console — the same rule the lobby game follows. A night launched before the
+ * flag existed has none, and must get no table rather than a default one.
+ */
+test('no table on a night that was never told it could have one', async () => {
+  const { Engine } = await import('../src/engine.js');
+  const quiz = { id: 'q', title: 'Q', rounds: [{ name: 'One', type: 'text', questions: [{ prompt: 'a', options: ['1', '2'], answerIndex: 0 }] }] };
+  const e = new Engine({ quiz, now: () => NOW });
+  e.state.phase = 'final';
+  assert.equal(e.screenView().league, undefined, 'a night with no league in its state shows none');
+});
