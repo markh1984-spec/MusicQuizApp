@@ -83,6 +83,28 @@ deploy followed by a deliberate launch does not.
 
 ---
 
+## THE RUNNING ORDER IS QUIZ-ONLY, AND A SHOW IS WHY
+
+Decided on 17 August 2026, closing an entry rather than building it.
+
+Tonight's running order takes six packs and `composeQuiz()` welds them into one
+quiz. A bingo pack is refused at the door — one line, twice, in
+`console-tonight.js` — and the obvious reading is that the guard is the bug.
+
+**It is not, because a SHOW already plays a quiz and then a bingo game**, keeps
+the venue, the prizes, the look and the lobby game across the swap, and is
+built and tested. Making the running order do it too would mean a second way to
+compose the same evening, and **two composers that can disagree is the exact
+fault Tonight was built to end** — the console and the projector naming
+different nights.
+
+So the split is: **a RUNNING ORDER is rounds within one quiz; a SHOW is games
+within one evening.** Those are different jobs and the words are already right.
+
+If it is ever picked up anyway, the work is not the guard: a slot is a bare
+pack id, so it would need `{ kind, packId }` and a launch that walks the slots
+rather than handing the lot to `composeQuiz()`.
+
 ## FOUR PLACES THE CONSOLE DELIBERATELY DIFFERS FROM ITS BUILD PLAN
 
 Recorded on 16 August 2026 while deleting the finished entries out of

@@ -17,42 +17,32 @@ decision from the host first.
 **DELETE AN ITEM FROM HERE THE MOMENT IT IS BUILT.**
 `test/todo-budget.test.js` fails if anything left in the list claims to be done.
 
-### Nothing needed from the host — these can just be built
-
-1. **The Console shelf has no route to the Workshop — AND IT MAY BE WRONG TO
-   ADD ONE.** The line *"Write, buy or edit packs →"* exists at
-   `console-packs.js:117` and is drawn on every door except the Console.
-   **But the Console shelf was stripped on purpose** — *"nothing is between the
-   console and the packs, remove everything else"* — and the four-door nav is
-   on every page, so the Workshop IS one tap away already. This entry was
-   written before the doors existed. **Decision: delete it, or add the line
-   back?** Recommendation: delete.
-
 ### Needs one decision first — the fix is known, the wording or the shape is not
 
-2. **The calendar export calls every night a quiz.**
-   *Fix:* `src/ics.js:161` writes `SUMMARY:Quiz — <venue>` for everything.
-   Build it from what was actually played. **Decision: what does a combined
-   night say** — *"Quiz + Bingo — The Crown"*, or the show's own name when one
-   was used?
+1. **THE CALENDAR EXPORT CANNOT SAY WHAT A NIGHT IS, and the earlier entry
+   here was wrong about why.** `src/ics.js:161` writes `SUMMARY:Quiz — <venue>`
+   for everything — but the feed is `upcoming()`, which is **future bookings
+   only, 26 weeks ahead**. Nothing in it has been played, so "name what was
+   played" has nothing to read: a booking is `{date, venue, note, off, time}`
+   and **has no game on it at all**.
 
-3. **The upload wording does not mention the public gallery.**
+   *Fix, and it is a real one rather than a label change:* give a booking a
+   `kind` — quiz, bingo, or a named show — defaulting to quiz so every booking
+   that already exists keeps its meaning, add the picker to **Book a quiz** on
+   the Calendar tab, and let `ics.js` read it. About an hour.
+   **Decision: is a game picker wanted when booking a night?** Without one the
+   honest options are to leave the wording alone or make it say nothing
+   specific, and both keep a bingo night labelled as a quiz in your own phone.
+
+2. **The upload wording does not mention the public gallery.**
    *Fix:* `public/assets/play.js:966` and `:140` still say only *"It goes on
    the big screen"*. The gallery is live, so that is now incomplete at the
    moment consent is given. **Decision: the host's own words.** One sentence,
    and it should be his voice rather than mine.
 
-4. **A bingo pack cannot join the running order.**
-    *Fix:* the guard is one line, twice — `console-tonight.js:1834` and `:1890`
-    — but **removing it is not the job**: a slot is a bare pack id, and
-    `composeQuiz()` builds a QUIZ, so a bingo pack in slot 2 has nothing to
-    launch it. It needs `{ kind, packId }` slots and the launch to walk them.
-    **Decision: is this wanted at all, given a SHOW already plays a quiz and
-    then a bingo game?** If shows cover it, delete this entry instead.
-
 ### The unblocker
 
-5. **A NIGHT AND A BOOKING ARE STILL TWO THINGS.**
+3. **A NIGHT AND A BOOKING ARE STILL TWO THINGS.**
     A booking is `{date, venue, off, note}` in `diary.js`; a played night comes
     out of `mergeGigs()` carrying a venue STRING. **There is no `venueId`
     anywhere in the repo.**
@@ -64,23 +54,23 @@ decision from the host first.
     smaller change; it breaks the day a pub is renamed. **The post-night report,
     the automatic gallery publish and winner badging all wait on this.**
 
-### After 5
+### After 3
 
-6. **Editing an intro track does not repoint what plays.** `editor.js:853-854`
+4. **Editing an intro track does not repoint what plays.** `editor.js:853-854`
     writes `cue.title`/`artist` and never touches `cue.spotifyUri`, so a
     corrected track reads right and plays the old song in front of a room.
     *Fix:* look the edited track up on save, write the URI, and echo
     *"matched X"* so a wrong match is visible before the gig.
-7. **Email has one caller.** Transport is built, two providers, reset wired.
+5. **Email has one caller.** Transport is built, two providers, reset wired.
     *Fix:* invoices next. **Decision: does it SEND, or draft for him to send?**
     CLAUDE.md's rule is the app prepares and the human sends.
-8. **"Add a past gig"** — a write route, an explicit `playerCount`, an
+6. **"Add a past gig"** — a write route, an explicit `playerCount`, an
     `enteredByHand` flag, and every reader taught to respect it.
-9. **The automatic gallery publish** — gate, route and caller are built; the
-    trigger is not. Needs 5 for a real end time.
-10. **An advert QR that COUNTS** — the offer page served from this app, so
+7. **The automatic gallery publish** — gate, route and caller are built; the
+    trigger is not. Needs 3 for a real end time.
+8. **An advert QR that COUNTS** — the offer page served from this app, so
     opens can be counted. The count is the feature, not the discount.
-11. **The post-night report** — every number it needs already exists. Needs 5.
+9. **The post-night report** — every number it needs already exists. Needs 3.
 
 Everything else — the website, the FAQ, print on demand, the nudity check,
 breakout rounds, online video, splitting `launchBar()` — is bigger, parked, or
