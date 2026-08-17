@@ -48,8 +48,22 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-/** A day key in the venue's own terms, so a count lines up with a night. */
-const dayOf = (ms) => new Date(ms).toISOString().slice(0, 10);
+/**
+ * WHICH NIGHT AN OPEN BELONGS TO — the SAME 6am roll-over as everything else.
+ *
+ * This keyed on the plain calendar date at first, and that was wrong for the
+ * exact case it exists to measure. An advert goes up BETWEEN ROUNDS — the
+ * engine refuses one over a live question — so the scans arrive in bursts
+ * through the evening, and a quiz that runs past midnight would have its last
+ * burst counted on the following day. The landlord's question is *"how did it
+ * do on Thursday"*, and the honest answer would have been split in two.
+ *
+ * Identical to `nightOfGig()` in `past-gigs.js` and `nightOf()` in `photos.js`
+ * — a filed night, its photographs and its advert opens have to agree about
+ * which evening they belong to, or a report puts three different dates on one
+ * gig.
+ */
+const dayOf = (ms) => new Date(ms - 6 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
 export class Offers {
   constructor(file) {

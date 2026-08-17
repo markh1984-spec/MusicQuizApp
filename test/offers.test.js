@@ -92,3 +92,31 @@ test('the QR address is short, because every character costs resolution', () => 
   // And still a real address somebody could type, with anything odd escaped.
   assert.equal(offerPath('the crown', 'two for one'), '/o/the%20crown/two%20for%20one');
 });
+
+/**
+ * AN OPEN BELONGS TO A NIGHT, NOT TO A CALENDAR DATE.
+ *
+ * An advert goes up BETWEEN ROUNDS — the engine refuses one over a live
+ * question — so scans arrive in bursts all evening. A quiz that runs past
+ * midnight would otherwise have its last burst counted on the next day, and
+ * the answer to "how did it do on Thursday" would be split across two rows.
+ *
+ * The 6am roll-over is the same one `nightOfGig()` and `photos.nightOf()` use.
+ * A filed night, its photographs and its advert opens must agree about which
+ * evening they belong to.
+ */
+test('a scan after midnight counts on the night it happened, not the next day', () => {
+  const o = new Offers(tempFile());
+  const thursdayEvening = Date.parse('2026-08-13T21:30:00Z');
+  const afterMidnight = Date.parse('2026-08-14T00:20:00Z');   // same gig
+  const nextEvening = Date.parse('2026-08-14T21:00:00Z');     // a different one
+
+  o.opened('crown', 'pizza', thursdayEvening);
+  o.opened('crown', 'pizza', afterMidnight);
+  o.opened('crown', 'pizza', nextEvening);
+
+  const seen = o.forSlide('crown', 'pizza', { now: nextEvening });
+  const byDay = Object.fromEntries(seen.recent.map((r) => [r.day, r.count]));
+  assert.equal(byDay['2026-08-13'], 2, 'the half-midnight scan belongs to Thursday');
+  assert.equal(byDay['2026-08-14'], 1);
+});

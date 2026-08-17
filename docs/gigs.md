@@ -902,3 +902,25 @@ carries no key and it is a no-op for them.
 **It goes on the IMAGES as well as the listing**, because the photo route
 re-checks for itself rather than trusting that the listing let you through —
 without it a preview would be a page of broken pictures.
+
+## "ADD A PAST GIG" WAS ASKED FOR AND THEN DELETED — do not re-propose it
+
+Settled by the host on 17 August 2026: *"I only did this once to test some
+functionality but I don't want QMs adding past gigs and I don't see the
+point."*
+
+**The reason it looked useful is that HE did it once**, filling a night in by
+hand while testing — which is the classic route to a feature that serves the
+person building the app and nobody else. The list has a rule for exactly this:
+if it only ever helps Mark, it is not a product feature.
+
+**And the cost is worse than the absence.** Past gigs, the headcounts and the
+league are EVIDENCE — the numbers a quizmaster shows a landlord. Every one of
+them is currently true by construction: the app recorded the night, counted the
+phones and filed the leaderboard. A hand-typed night puts an unverifiable
+figure into the same column as a measured one, with nothing on screen to tell
+them apart, on the one page whose entire value is that it cannot be argued
+with.
+
+If it ever comes back, that is the thing to solve first: how a filed night says
+whether the app measured it or somebody typed it.
