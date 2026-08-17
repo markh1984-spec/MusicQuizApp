@@ -1408,6 +1408,40 @@ Full reasoning: **[`docs/artwork.md`](docs/artwork.md)**. The rules:
 - Presentation matters: projected in a dark room to paying customers. Big type,
   high contrast, readable from the back.
 
+### BUILD IT, DO NOT LIST IT — and configure it afterwards
+
+Set by the host on 17 August 2026, and it is a correction to how this repo had
+been working: *"I realised adding too many things to the to-do list was
+actually the reason that everything got so big. So what we need to do is just
+build things, and then if we don't need them, we just delete them later."*
+
+**He is right, and the evidence is in this repo's own history.** `TODO.md` had
+reached 124KB, `docs/business.md` 170KB with 89% of it under one heading, and
+the single largest entry in either — a 66KB quizmaster directory — is a thing
+nobody has ever built. **A list is where ideas go to be paid for repeatedly**:
+every session loads it, every session reads past it, and an entry costs
+context on every one of them until somebody either builds it or deletes it.
+
+So, for anything the host asks for directly:
+
+- **BUILD IT. Do not add an entry for it first.** A written plan for a small
+  feature is most of the cost of the feature and none of the value.
+- **The simplest version that works. Configure it later** — *"we can configure
+  these things later on"*. A number that might want to be a setting is a
+  constant with a comment saying so, not a settings panel nobody has asked
+  for. The league shipped with a twelve-week season written into the code for
+  exactly this reason.
+- **If it turns out to be wrong, DELETE IT.** Git history is the record. A
+  feature removed cleanly costs less than a plan that sat in a list for four
+  months.
+- **The entry, if there is one, goes when the thing lands** — which
+  `test/todo-budget.test.js` now enforces.
+
+**WHAT STILL BELONGS IN `TODO.md`:** work that is genuinely blocked on a
+decision only the host can make, work waiting on something else to land, and
+anything with a reason recorded that would otherwise be re-litigated. **Not
+ideas.** An idea nobody is building this month belongs in `docs/`, or nowhere.
+
 ### Which accounts a change is FOR — the words to take literally
 
 Set by the host on 14 August 2026, so a request never has to say it twice.
