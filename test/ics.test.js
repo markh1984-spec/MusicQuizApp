@@ -83,7 +83,12 @@ test('a comma in a venue name does not split the event in half', () => {
   // Chelmsford" would otherwise end one field early and take the rest of the
   // event with it.
   const out = one([{ date: '2026-08-20', venue: 'The Dog & Duck, Chelmsford; upstairs' }]);
-  assert.match(out, /SUMMARY:Quiz — The Dog & Duck\\, Chelmsford\\; upstairs/);
+  // The venue IS the title: the feed cannot know what will be played weeks
+  // ahead, so it no longer says "Quiz —" in front of it. The escaping of the
+  // comma and semicolon is the point of this assertion and is unchanged.
+  assert.match(out, /SUMMARY:The Dog & Duck\\, Chelmsford\\; upstairs/);
+  assert.doesNotMatch(out, /SUMMARY:Quiz/,
+    'the feed is future BOOKINGS — claiming a game labels a bingo night as a quiz');
   assert.match(out, /LOCATION:The Dog & Duck\\, Chelmsford\\; upstairs/);
 });
 

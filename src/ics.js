@@ -158,7 +158,34 @@ export function calendarIcs(nights = [], { name = 'Quiz nights', host = 'quizpor
         `DTEND;VALUE=DATE:${dayAfter(night.date)}`,
       );
     }
-    lines.push(`SUMMARY:${esc(night.venue ? `Quiz — ${night.venue}` : 'Quiz night')}`);
+    /*
+     * THE VENUE IS THE WHOLE TITLE, AND THE FEED NO LONGER CLAIMS A GAME.
+     *
+     * It said `Quiz — The Crown` for every entry, bingo nights included — and
+     * the reason it was wrong is worth keeping, because the obvious fix is the
+     * wrong one. **A booking cannot know what will be played.** This feed is
+     * `upcoming()`: diary bookings, up to 26 weeks ahead, made long before a
+     * pack is chosen. A booking is `{date, venue, note, off, time}` and has no
+     * game on it because at that point nothing has decided one — the console
+     * launches a quiz or a bingo pack on the night itself.
+     *
+     * So the first plan was to put a GAME PICKER on Book a quiz. That was
+     * turned down against this project's own rule that a feature's real price
+     * is the admin it creates on a Monday: it is a field to fill in on every
+     * booking, weeks before you would know the answer, to earn one word in a
+     * calendar entry. It is exactly the box that stops getting filled in by
+     * the third week, and then the label is wrong AND there is a control.
+     *
+     * **The cheap fix is to stop claiming anything.** A calendar entry answers
+     * "where am I on the 23rd", and the venue answers that on its own. The
+     * word Quiz was adding nothing except the chance of being wrong.
+     *
+     * The fallback keeps no game in it either. A booking with no venue should
+     * not exist — `addBooking` wants one and residencies come off a venue
+     * record — so this is defensive, and it says the one thing that is
+     * certainly true about the date.
+     */
+    lines.push(`SUMMARY:${esc(night.venue || 'Booked night')}`);
     if (night.venue) lines.push(`LOCATION:${esc(night.venue)}`);
     const notes = [];
     if (night.note) notes.push(night.note);
