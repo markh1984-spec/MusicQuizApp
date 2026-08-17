@@ -79,7 +79,7 @@ export function mergeGigs(archived = [], photoNights = []) {
     // No photo COUNT here on purpose: knowing how many there are means listing
     // the folder, which is a request per night, and the page only ever needs
     // "is there anything to open". The count arrives with the pictures.
-    if (!nights.has(key)) nights.set(key, { night: key, games: [], hasPhotos: false, venue: '' });
+    if (!nights.has(key)) nights.set(key, { night: key, games: [], hasPhotos: false, venue: '', venueId: '' });
     return nights.get(key);
   };
 
@@ -103,6 +103,10 @@ export function mergeGigs(archived = [], photoNights = []) {
      * a quizmaster who moved venue mid-evening has bigger problems.
      */
     if (!entry.venue && record.venue) entry.venue = record.venue;
+    // The id the same way, and for the same reason: first one wins and only if
+    // it is set, so an evening whose second game was launched without a venue
+    // keeps the one the first game had.
+    if (!entry.venueId && record.venueId) entry.venueId = record.venueId;
     entry.games.push({
       id: record.id,
       kind: record.kind || 'quiz',
@@ -143,4 +147,32 @@ export function mergeGigs(archived = [], photoNights = []) {
  */
 export function safePhotoName(name) {
   return /^[a-z0-9]+\.(jpg|png|webp)$/i.test(String(name || '')) ? String(name) : '';
+}
+
+/**
+ * WHICH VENUE A NIGHT BELONGS TO, as one key.
+ *
+ * **The id when the night has one, the lowercased name when it does not.**
+ *
+ * Every night filed before 17 August 2026 carries only a name, and so does any
+ * night launched with a venue typed straight into the box rather than picked
+ * off the book. Those are not edge cases — they are most of the history — so a
+ * join that insisted on an id would throw away the very thing it exists to
+ * hold together.
+ *
+ * **One function, because two readers must not disagree.** The headcounts and
+ * the league both group by venue, and the day one of them keys on the id while
+ * the other keys on the name is the day a venue card and a league table
+ * describe different sets of nights. That is the same rule `nightHeadcount()`
+ * was written for.
+ *
+ * The known limit, stated rather than hidden: a pub renamed BEFORE it had an
+ * id still reads as two venues, because there is nothing in the old nights to
+ * tie them together. Nights from here on cannot drift apart that way.
+ */
+export function venueKeyOf(night) {
+  if (!night) return '';
+  const id = String(night.venueId || '').trim();
+  if (id) return `id:${id}`;
+  return String(night.venue || '').trim().toLowerCase();
 }

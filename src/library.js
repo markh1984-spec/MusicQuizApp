@@ -364,6 +364,9 @@ export function listArchive(dir, { boards = false } = {}) {
           // existed, which is exactly right — those nights have no venue and
           // saying "" is honest where guessing one would not be.
           venue: r.venue || '',
+          // The join. Empty on every night filed before it existed, which is
+          // exactly why `venueKeyOf()` falls back to the name.
+          venueId: r.venueId || '',
           // What was put up, first place first. Needed by `rewardsUsed` and
           // `rewardsByVenue`, which read this list rather than every file —
           // and both would have quietly returned nothing without it, because

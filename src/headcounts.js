@@ -28,6 +28,8 @@
  * the bingo after it being ONE night rather than two.
  */
 
+import { venueKeyOf } from './past-gigs.js';
+
 /**
  * How many were in the room on one night.
  *
@@ -80,7 +82,13 @@ export function venueHeadcounts(nights = []) {
     // Crown" the next are one venue rather than two half-histories. The
     // spelling shown is the one from the most recent night, which is what
     // `venuesUsed` already does — `nights` arrives newest first.
-    const key = name.toLowerCase();
+    /*
+     * KEYED ON THE JOIN, not on the name. `venueKeyOf()` gives the venue's id
+     * when the night has one and the lowercased name when it does not — the
+     * same helper the league uses, so a venue card and a league table can
+     * never be built from different sets of nights.
+     */
+    const key = venueKeyOf(night);
     if (!byVenue.has(key)) byVenue.set(key, { venue: name, series: [] });
     byVenue.get(key).series.push({ night: night.night, players });
   }

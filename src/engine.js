@@ -2487,6 +2487,10 @@ export class Engine {
       // Where it happened. The whole reason a night is worth filing: a Past
       // gigs page that cannot say WHERE is a list of dates.
       venue: this.state.venue || '',
+      // And which venue that IS, when the launch could resolve one. Absent on
+      // every night filed before this and on any night launched with a venue
+      // that is not in the book — both of which fall back to the name.
+      venueId: this.state.venueId || '',
       // What was on offer and who has taken it. Part of the night's record, so
       // a queried bar tab has an answer rather than the quizmaster's word.
       rewards: this.rewardList(),

@@ -48,6 +48,8 @@
  * as nights the venue ran; they contribute no points.
  */
 
+import { venueKeyOf } from './past-gigs.js';
+
 /**
  * THE POINTS, and why everybody who turns up scores.
  *
@@ -199,17 +201,23 @@ export function leagueTable(nights = [], { weeks = 12, now = Date.now() } = {}) 
 }
 
 /**
- * Every venue's table, keyed the way the venue record is.
+ * Every venue's table, keyed by the JOIN rather than by the name.
  *
- * Lowercased keys, the same comparison the headcounts and the adverts use — a
- * venue typed "the crown" one week and "The Crown" the next is one place.
+ * `venueKeyOf()` returns the venue's id when the night has one and the
+ * lowercased name when it does not, so a pub that gets renamed keeps one table
+ * from the day it had an id — and every night filed before ids existed still
+ * groups exactly as it always did. One helper, shared with the headcounts, so
+ * a venue card and a league table can never describe different sets of nights.
+ *
+ * The KEY is the join; the NAME shown is the most recent one, because `nights`
+ * arrives newest first and that is the name on the pub today.
  */
 export function leaguesByVenue(nights = [], opts = {}) {
   const byVenue = new Map();
   for (const night of nights) {
     const name = String(night.venue || '').trim();
     if (!name) continue;   // a night with no venue belongs to no league
-    const key = name.toLowerCase();
+    const key = venueKeyOf(night);
     if (!byVenue.has(key)) byVenue.set(key, { venue: name, nights: [] });
     byVenue.get(key).nights.push(night);
   }

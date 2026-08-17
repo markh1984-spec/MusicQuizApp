@@ -212,3 +212,57 @@ test('no table on a night that was never told it could have one', async () => {
   e.state.phase = 'final';
   assert.equal(e.screenView().league, undefined, 'a night with no league in its state shows none');
 });
+
+/**
+ * THE JOIN — a night knows WHICH venue, not just what it was called.
+ *
+ * Everything that groups nights by venue matched on the name lowercased, which
+ * works until a pub is renamed and then one venue silently becomes two
+ * half-histories. `venueKeyOf()` is the single answer both the league and the
+ * headcounts ask, so they cannot end up describing different sets of nights.
+ */
+test('a renamed pub keeps ONE league once its nights carry an id', async () => {
+  const { venueKeyOf } = await import('../src/past-gigs.js');
+
+  const withId = (ago, name, id, names) => ({ ...night(ago, name, names), venueId: id });
+  const leagues = leaguesByVenue([
+    withId(1, 'The Crown & Anchor', 'v1', ['Regulars']),   // renamed last week
+    withId(8, 'The Crown', 'v1', ['Regulars']),
+  ], { now: NOW });
+
+  assert.equal(Object.keys(leagues).length, 1, 'a rename must not split the season in two');
+  const [only] = Object.values(leagues);
+  assert.equal(only.table[0].played, 2);
+  // The name shown is the most recent one — nights arrive newest first, and
+  // that is what the pub is called today.
+  assert.equal(only.venue, 'The Crown & Anchor');
+
+  assert.equal(venueKeyOf({ venueId: 'v1', venue: 'Anything' }), 'id:v1');
+});
+
+test('a night with only a name still groups exactly as it always did', async () => {
+  const { venueKeyOf } = await import('../src/past-gigs.js');
+
+  // Most of the history has no id and never will. A join that could not read
+  // those would throw away the thing it exists to hold together.
+  assert.equal(venueKeyOf({ venue: 'The Crown' }), 'the crown');
+  assert.equal(venueKeyOf({ venue: ' the crown ' }), 'the crown');
+  assert.equal(venueKeyOf({}), '');
+
+  const leagues = leaguesByVenue([
+    night(1, 'The Crown', ['Regulars']),
+    night(8, 'the crown', ['Regulars']),
+  ], { now: NOW });
+  assert.equal(Object.keys(leagues).length, 1);
+});
+
+test('an id and a bare name are NOT merged, which is the honest limit', async () => {
+  // A night filed before ids existed has nothing tying it to the record, so it
+  // cannot be joined to one without guessing. Stated in the code and pinned
+  // here so nobody "fixes" it into a name-match that reintroduces the bug.
+  const leagues = leaguesByVenue([
+    { ...night(1, 'The Crown', ['New']), venueId: 'v1' },
+    night(8, 'The Crown', ['Old']),
+  ], { now: NOW });
+  assert.equal(Object.keys(leagues).length, 2);
+});

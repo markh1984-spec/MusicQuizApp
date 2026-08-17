@@ -406,7 +406,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, look = '', lobbyGame = '', lobbySound = true, league = false, online = false, teamPlay = false, venue = '', rewards = [], venueLogo = '', comeBack = null, askForRounds = false, roundIdeas = [], order = null } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, look = '', lobbyGame = '', lobbySound = true, league = false, online = false, teamPlay = false, venue = '', venueId = '', rewards = [], venueLogo = '', comeBack = null, askForRounds = false, roundIdeas = [], order = null } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     /*
      * TONIGHT'S RUNNING ORDER, when one was built — rounds from more than one
@@ -500,6 +500,12 @@ export class Session {
      * than one that has quietly gained or lost a feature.
      */
     this.engine.state.leagueOn = league !== false;
+    /*
+     * WHICH venue, as an id — resolved at the route, where the invoice book
+     * is. The NAME is still written separately and still what every screen
+     * prints; this is the join, so a renamed pub keeps one history.
+     */
+    this.engine.state.venueId = String(venueId || '');
 
     /*
      * Whether anybody is in the room tonight.

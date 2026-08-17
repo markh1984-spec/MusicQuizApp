@@ -5050,6 +5050,21 @@ async function handleWrite(req, res, url, route) {
         const record = named
           ? (room.invoices.customers.find((c) => String(c.name || '').trim().toLowerCase() === named) || {})
           : {};
+        /*
+         * THE VENUE'S ID, WRITTEN ONTO THE NIGHT BESIDE ITS NAME.
+         *
+         * Everything that groups nights by venue has matched on the NAME
+         * lowercased — the adverts, the headcounts, the league. That works
+         * until a pub is renamed or typed differently, and then one venue
+         * silently becomes two half-histories with no way to notice.
+         *
+         * The record is already resolved here for the prizes and the logo, so
+         * the id costs nothing to carry. **The name stays** and is still
+         * written: every night filed before today has only a name, and a join
+         * that could not read those would throw away the entire history it
+         * exists to keep together.
+         */
+        const venueId = String(record.id || '');
         const onFile = record.rewards || null;
         const rewards = Array.isArray(body.rewards) ? body.rewards.map(String)
           : (body.reward ? [String(body.reward)] : (Array.isArray(onFile) ? onFile : []));
@@ -5105,7 +5120,7 @@ async function handleWrite(req, res, url, route) {
           ? pickIdeas((fullLibrary(config, room.id, listOwn(room.paths)).quizzes || [])
             .map((q) => q.title))
           : [];
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, lobbyGame, lobbySound, league, online, teamPlay, venue, rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas, order: wantedOrder });
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, lobbyGame, lobbySound, league, online, teamPlay, venue, venueId, rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas, order: wantedOrder });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();
