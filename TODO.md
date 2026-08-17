@@ -18,24 +18,31 @@ decision from the host first.
 `test/todo-budget.test.js` fails if anything left in the list claims to be done.
 
 
-1. **Email has one caller.** Transport is built, two providers, reset wired.
-    *Fix:* invoices next, and **it DRAFTS — decided 17 August 2026.** The app
-    prepares, the human reads, the human sends. An invoice that goes out unread
-    is the one naming the wrong headcount or billing a cancelled night, and it
-    lands on the relationship the quizmaster is paid to keep.
+1. **Email's remaining uses — and INVOICES ARE NOT ONE OF THEM.**
+    *Settled 17 August 2026 by looking at what is already there.* The decision
+    was that an invoice DRAFTS rather than sends, and `share()` in
+    `console-invoices.js` already does exactly that: the PDF into the share
+    sheet with a written covering note, or the PDF plus a pre-filled `mailto:`
+    on a laptop. **It also comes from the quizmaster's own address**, which
+    server-sent email could not do — a venue receiving an invoice from
+    `quizporium.co.uk` for a self-employed person's work is wrong, and it puts
+    this app's sending reputation behind somebody else's billing.
+    *What is actually left:* the other uses — a reply to a suggestion, a
+    receipt, a card-failed notice. **Each is its own decision about whose name
+    is on the envelope**, and `src/email.js` says in as many words not to grow
+    into notifications without one.
 2. **"Add a past gig"** — a write route, an explicit `playerCount`, an
     `enteredByHand` flag, and every reader taught to respect it.
 3. **The automatic gallery publish** — gate, route and caller are built; the
     trigger is not. **A night now knows its venue by id and carries
     `finishedAt`**, so what is left is deciding when a night counts as over —
     the last game finishing, or the host saying so.
-4. **An advert QR that COUNTS** — **decided 17 August 2026: the offer page is
-    served by THIS APP**, so the count is ours and it works for any venue with
-    no setup at their end. *"Show this at the bar: QUIZ40"*. The venue puts
-    `?ref=quiz` on their own link if they want to track orders — the
-    quizmaster reports OPENS, the venue reports SALES, so the number that
-    settles it arrives from the person being convinced. The count is the
-    feature, not the discount.
+4. **THE ADVERT COUNT HAS NOWHERE TO BE READ YET.** The counting is built —
+    `/o/<pack>/<slide>` serves the offer, records the open, and the projector's
+    QR points at it whenever a slide has a code. **What is missing is the
+    console side:** somewhere to type the code and the "valid when" line onto a
+    slide, and somewhere to read *"41 opens, 12 on the 14th"* back. Until then
+    a code has to be put into the advert JSON by hand.
 5. **The post-night report** — every number it needs already exists, and the
     venue join is built, so nothing blocks it now.
 

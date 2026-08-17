@@ -69,7 +69,7 @@ export function listAdvertPacks(dir) {
           title: norm.title,
           venue: norm.venue,
           slideCount: norm.slides.length,
-          slides: norm.slides.map((s) => ({ id: s.id, heading: s.heading, hasImage: Boolean(s.image), hasLink: Boolean(s.link) })),
+          slides: norm.slides.map((s) => ({ id: s.id, heading: s.heading, hasImage: Boolean(s.image), hasLink: Boolean(s.link), offerCode: s.offerCode || '' })),
         };
       } catch (err) {
         return { id: path.basename(file, '.json'), file, title: file, broken: err.message, slides: [], slideCount: 0 };
@@ -127,6 +127,16 @@ export function normaliseAdvertPack(pack, fallbackId = 'adverts') {
       // rule as a quiz question's host note.
       say: String(s.say || '').slice(0, MAX_BODY),
       ...(cleanSlideImage(s.image) ? { image: cleanSlideImage(s.image) } : {}),
+      /*
+       * THE OFFER: a code somebody says at the bar, and when it is valid.
+       *
+       * Separate from `link` on purpose. A link goes to the venue's own page
+       * and cannot be counted; the CODE is what the app puts on a page it
+       * serves, so an open can be. A slide may have either, both or neither —
+       * a slide that just says "PIZZA 2 FOR 1" is still a fine slide.
+       */
+      ...(s.offerCode ? { offerCode: String(s.offerCode).slice(0, 24).toUpperCase() } : {}),
+      ...(s.offerWhen ? { offerWhen: String(s.offerWhen).slice(0, 80) } : {}),
       ...(s.link ? { link: String(s.link) } : {}),
       ...(s.linkLabel ? { linkLabel: String(s.linkLabel).slice(0, MAX_LABEL) } : {}),
     })),

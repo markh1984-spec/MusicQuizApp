@@ -1870,6 +1870,20 @@ export class Engine {
           image: found.slide.image ? `/quiz-images/${found.slide.image}` : null,
           link: found.slide.link || '',
           linkLabel: found.slide.linkLabel || '',
+          /*
+           * THE QR POINTS AT OUR OWN OFFER PAGE WHEN THERE IS A CODE, so the
+           * open can be counted — see `src/offers.js`. Without one it keeps
+           * pointing at whatever the venue gave, which is the behaviour every
+           * existing slide already has and must not lose.
+           *
+           * The CODE rides along too: the projector says it out loud in text,
+           * because bar staff can hear "QUIZ40" and half a room will never
+           * scan anything.
+           */
+          offerCode: found.slide.offerCode || '',
+          offerLink: found.slide.offerCode
+            ? `/o/${encodeURIComponent(s.advert.packId)}/${encodeURIComponent(found.slide.id)}`
+            : '',
           // `say` is the host's line for the mic. Host view only, like a cue.
         };
       }

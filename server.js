@@ -1058,6 +1058,43 @@ async function handleGet(req, res, url, route) {
   // The photo gallery. Open, like /play and /v — it is for the people who were
   // in the room, who have no account and never will. It shows only nights the
   // quizmaster has published; see src/gallery.js.
+  /*
+   * THE ADVERT OFFER PAGE — `/o/<pack>/<slide>`, and the QR points here.
+   *
+   * Public by necessity: it is scanned by whoever is in the room, on a phone
+   * with no account and no key. It records ONE open and shows the offer.
+   *
+   * **The same room question the gallery has, answered the same way**, so the
+   * two cannot drift: the app owner's own quizmaster room, falling back to the
+   * house. **A second subscriber's offers need the same slug the gallery
+   * needs** — one job fixes both, and inventing a parallel mechanism here
+   * would mean fixing it twice.
+   */
+  if (route.startsWith('/o/')) {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    const bits = route.slice(3).split('/').map((b) => decodeURIComponent(b));
+    const room = rooms.get(offerRoomId());
+    /*
+     * `loadAdvertPack` THROWS on a pack that is not there, so this has to
+     * catch: a mistyped or retired code is the ordinary case for a public
+     * address printed on a projector, and it must land on the "nothing here"
+     * page rather than a 500. Found by scanning a code that did not exist.
+     */
+    let pack = null;
+    try { pack = bits[0] && bits[1] ? loadAdvertPack(room.paths.adverts, bits[0]) : null; } catch { pack = null; }
+    const slide = pack ? (pack.slides || []).find((sl) => sl.id === bits[1]) : null;
+    if (!slide) {
+      return send(res, 404, offerPage(null, null), { 'Content-Type': 'text/html; charset=utf-8' }), true;
+    }
+    /*
+     * COUNTED BEFORE IT IS DRAWN, and never awaited into the response beyond
+     * the write itself: the person holding the phone is standing in a pub, and
+     * a page that waits on bookkeeping is a page they close.
+     */
+    try { room.offers.opened(bits[0], bits[1]); } catch { /* a lost count is not worth a 500 */ }
+    return send(res, 200, offerPage(pack, slide), { 'Content-Type': 'text/html; charset=utf-8' }), true;
+  }
+
   if (route === '/gallery') {
     // NOT in a search result, published or not. Being findable is speculative
     // marketing value; a stranger's face in a search result is a concrete cost
@@ -2115,6 +2152,27 @@ async function handleGet(req, res, url, route) {
    * still a separate job — this fixes whose nights the one public page shows,
    * not how a second person would get one.
    */
+  /*
+   * The same answer as `galleryRoomId()` and deliberately a separate name, so
+   * that when a per-quizmaster slug arrives it is obvious both call sites want
+   * it rather than one quietly keeping the old behaviour.
+   */
+  /*
+   * A `function` rather than a `const` arrow, DELIBERATELY: the `/o/` route is
+   * earlier in this handler than this line, and a const is in its temporal
+   * dead zone until its own line runs — so the first scan of a QR answered 500
+   * with "Cannot access 'offerRoomId' before initialization". A function
+   * declaration hoists to the top of the scope and cannot.
+   *
+   * Exactly the fault the console split hit with its boot call, in a different
+   * file on the same day. Worth the two extra words.
+   */
+  function offerRoomId() {
+    const owner = accounts.owner;
+    const mine = owner ? accounts.ownQuizmasterFor(owner.id) : null;
+    return mine ? mine.id : HOUSE;
+  }
+
   const galleryRoomId = () => {
     const owner = accounts.owner;
     const mine = owner ? accounts.ownQuizmasterFor(owner.id) : null;
@@ -3028,6 +3086,61 @@ function seesTheirNights(req, url) {
   const account = whoIs(req, url);
   if (!account) return false;
   return account.bootstrap ? true : can(account, FEATURES.PAST_GIGS);
+}
+
+/**
+ * THE OFFER PAGE ITSELF — one screen, in a pub, on a stranger's phone.
+ *
+ * Written out here rather than served from `public/` because it is one page
+ * with no behaviour: no script, no fetch, nothing to go wrong on the wifi that
+ * is already struggling with sixty phones. The whole thing is the code and the
+ * words.
+ *
+ * **THE CODE IS THE BIGGEST THING ON IT**, for the reason the voucher card
+ * puts the prize first: the person reading it is about to say a word to a
+ * member of bar staff, and everything else is context. It is also why the code
+ * is spelled out as text rather than shown only as a scan — staff can HEAR
+ * "QUIZ40", and a phone held up in a dark bar is a slower transaction than the
+ * discount is worth.
+ *
+ * **AND IT NEVER PRETENDS TO BE THE VENUE.** It says which venue's offer it is
+ * and stops there — no logo, no colours borrowed. A page that dressed up as
+ * the pub would be a page the pub did not approve, on a domain they do not
+ * own.
+ */
+function offerPage(pack, slide) {
+  const esc = (v) => String(v ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const head = `<!doctype html><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>${slide ? esc(slide.heading || 'Tonight\u2019s offer') : 'Not found'}</title>
+    <style>
+      :root { color-scheme: dark; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center;
+             background: #0b0b12; color: #f4f4f8; font: 16px/1.5 system-ui, -apple-system, sans-serif; padding: 24px; }
+      .card { max-width: 26rem; text-align: center; }
+      h1 { font-size: 1.5rem; margin: 0 0 8px; }
+      .code { display: inline-block; margin: 18px 0 10px; padding: 14px 22px; border-radius: 999px;
+              border: 2px dashed rgba(255,255,255,.35); font-size: 2rem; font-weight: 900; letter-spacing: .08em; }
+      .say { margin: 0 0 18px; font-size: 1.05rem; }
+      .where { color: #a9a9bb; font-size: .9rem; }
+      a.go { display: inline-block; margin-top: 18px; color: #0b0b12; background: #f4f4f8;
+             padding: 12px 20px; border-radius: 10px; font-weight: 800; text-decoration: none; }
+    </style>`;
+
+  if (!slide) {
+    return `${head}<div class="card"><h1>Nothing here</h1>
+      <p class="say">This offer has finished, or the code was mistyped.</p></div>`;
+  }
+  const code = String(slide.offerCode || '').trim();
+  return `${head}<div class="card">
+    <h1>${esc(slide.heading || 'Tonight\u2019s offer')}</h1>
+    ${slide.body ? `<p class="say">${esc(slide.body)}</p>` : ''}
+    ${code ? `<div class="code">${esc(code)}</div>
+      <p class="say">Show this at the bar${slide.offerWhen ? `, ${esc(slide.offerWhen)}` : ''}.</p>` : ''}
+    ${slide.link ? `<a class="go" href="${esc(slide.link)}" rel="noopener nofollow">${esc(slide.linkLabel || 'More')}</a>` : ''}
+    ${pack && pack.venue ? `<p class="where">${esc(pack.venue)}</p>` : ''}
+  </div>`;
 }
 
 /**

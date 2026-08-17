@@ -406,7 +406,17 @@ function updateScoreboard(s) {
  */
 function renderAdvert(s) {
   const a = s.advert || {};
-  const hasQr = Boolean(a.link);
+  /*
+   * THE COUNTED PAGE WINS WHEN THERE IS AN OFFER CODE.
+   *
+   * `offerLink` is this app's own `/o/…`, which records the open before it
+   * shows the offer — the count is what turns a slide from an act of faith
+   * into something a landlord can be shown the morning after. Without a code
+   * the QR points where it always did, at whatever the venue gave, because
+   * every slide that exists today has only that.
+   */
+  const qrTarget = a.offerLink || a.link || '';
+  const hasQr = Boolean(qrTarget);
   return node(`
     <div class="advert ${a.image ? 'has-image' : ''} ${hasQr ? 'has-qr' : ''}">
       ${a.venue ? `<div class="ad-venue">${esc(a.venue)}</div>` : ''}
@@ -418,8 +428,12 @@ function renderAdvert(s) {
         ${a.image ? `<div class="ad-image"><img src="${esc(a.image)}" alt=""></div>` : ''}
         ${hasQr ? `
           <div class="ad-qr">
-            <img src="/qr.svg?text=${encodeURIComponent(a.link)}" alt="Scan for more">
-            <div class="ad-qr-label">${esc(a.linkLabel || 'Scan me')}</div>
+            <img src="/qr.svg?text=${encodeURIComponent(qrTarget)}" alt="Scan for more">
+            <!-- THE CODE IN WORDS, not only in the grid. Bar staff can hear
+                 "QUIZ40", half a room will never scan anything, and a phone
+                 held up in a dark bar is a slower transaction than the
+                 discount is worth. -->
+            <div class="ad-qr-label">${a.offerCode ? esc(a.offerCode) : esc(a.linkLabel || 'Scan me')}</div>
           </div>` : ''}
       </div>
     </div>

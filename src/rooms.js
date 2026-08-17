@@ -44,6 +44,7 @@ import { Store } from './store.js';
 import { Photos } from './photos.js';
 import { Invoices } from './invoices.js';
 import { RoomAsks } from './room-asks.js';
+import { Offers } from './offers.js';
 import { HOUSE_ROOM } from './library.js';
 
 /**
@@ -105,6 +106,9 @@ export class Room {
     // What the ROOM asked for, per quizmaster — a different box from the
     // suggestion one, which is quizmasters writing to the owner.
     this.asks = new RoomAsks(paths.asks);
+    // How many people opened an advert's offer — see src/offers.js. Per room
+    // because an advert belongs to a quizmaster's venue, not to the house.
+    this.offers = new Offers(paths.offers);
     this.session = new Session({
       config,
       store: this.store,
@@ -286,6 +290,7 @@ export class Rooms {
         photos: this.paths.photos || path.join(this.config.dataDir, 'photos'),
         invoices: this.paths.invoices || path.join(this.config.dataDir, 'invoicing.json'),
         asks: this.paths.asks || path.join(this.config.dataDir, 'room-asks.json'),
+        offers: this.paths.offers || path.join(this.config.dataDir, 'offer-opens.json'),
         archive: this.paths.archive || path.join(this.config.dataDir, 'archive'),
         adverts: this.paths.adverts || this.config.advertDir,
         /*
