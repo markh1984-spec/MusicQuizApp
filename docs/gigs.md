@@ -883,6 +883,79 @@ there. Destructive-styled — outlined red, never filled.
 <night>` carries `published`, rather than a second request: a button that has
 to fetch before it knows its own label is a button that flickers.
 
+## CHECKING THE PHOTOS IS THE NEXT PRESS, NOT A PAGE YOU GO AND FIND
+
+Asked for on 17 August 2026, and the wording is the design: *"at the end of the
+quiz it's showing the winner on the scoreboard, you do your well dones etc, and
+then the next click takes you to a huge CHECK PHOTOS link that you can't dodge
+— it's part of the flow."*
+
+**It replaced two weaker answers, and both are worth knowing about because the
+instinct to go back to them will return.**
+
+The first was to publish the night automatically when the scoreboard went up.
+That fails on a fact in the code rather than on taste: `PHOTO_PHASES` in
+`screen.js` includes `final`, `won` and `finished`, and photo uploads are not
+phase-gated at all — so the room is still sending pictures at the moment the
+scoreboard appears. Auto-publishing there publishes a night that is not
+finished arriving.
+
+The second was a prompt on the console: finish the night, and the console
+suggests checking the photos. **That is a page you go and find.** At half past
+eleven, with the room emptying and kit to pack, a suggestion on another screen
+is a suggestion that loses. What makes this happen at all is that it is the
+next press in a sequence the host has been making all evening, in the same
+position, at full size.
+
+**AND IT IS THE LAST MOMENT THE ROOM IS STILL THERE.** Somebody who wants their
+photograph out is stood in front of you now; on a Monday they are a message you
+cannot answer with a bin. That is the argument for tonight rather than for a
+tidier time.
+
+### What the button actually did before
+
+`buildActions()` set the primary at `final` to *Finished*, `disabled`. **A dead
+control, in the one place the thumb has been all night, at the exact moment
+there is still work to do.** This repo already has a rule about controls that
+appear and disappear — *build the next one present and inert* — and this is its
+other half: a control that is present and inert when there IS a next thing is
+the same waste wearing the opposite hat.
+
+### It opens the night. It does not publish it.
+
+The press lands on Post gig → Past gigs with the night on the bench and **its
+row already open**. The publish control is where it always was, underneath the
+photographs, and it is still a deliberate press — the safeguard is that nobody
+puts a night in front of the world without having just looked at what is in it,
+and a button that arrives having skipped the looking would remove exactly that.
+
+**Opening the row was the second half of the job and it is not cosmetic.**
+Landing on the bench alone left an *Open its photos* button between the host
+and the pictures, which is the tap that does not get made. It goes through the
+row's own head — the same call the bench's own button makes — so there is one
+implementation of "show me this night". A second one would drift, and the way
+it would drift is into a gallery with no bin on the pictures.
+
+### The two joins, and why each is where it is
+
+**The night rides in the URL** (`?night=YYYY-MM-DD`) rather than `host.js`
+writing the console's `localStorage` directly. Two pages writing one key is how
+a contract drifts silently — the console is free to change how it remembers a
+bench, and would take the control view down with it. A link can also be
+followed twice, shared or bookmarked, which a storage write cannot.
+
+**The key is the 6am roll-over**, identical to `nightOfGig()` and
+`photos.nightOf()`. A quiz that ends at half past midnight would otherwise open
+tomorrow, with nothing under it, on the one night the host most wants the thing
+to just work.
+
+**And the console sets the bench WITHOUT rendering.** `putNightOnBench()`
+renders, and at boot that runs before `load()` has fetched anything — `library`
+is still null and the first paint throws on `library.brand`. That is the third
+boot-order fault of this work, after the moved `load()` call and `offerRoomId`:
+**a thing that is entirely right once the page is up, run one step too early.**
+The pattern is worth naming, because `node --check` cannot see any of them.
+
 ## AND THE PREVIEW DID NOT WORK ON THE HOST KEY
 
 The owner sees unpublished nights on `/gallery`, marked — asked for directly,

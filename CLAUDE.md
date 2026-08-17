@@ -1264,10 +1264,11 @@ Open the one you are touching; do not read them all.
 - A prize taken at the bar has to reach the filed night
 - **THE GALLERY READS THE OWNER'S OWN QUIZMASTER ROOM, never `HOUSE`** — photos
   are filed per room, and reading the wrong one showed a full night as an empty
-  page. **Both halves were correct; nothing made them agree.** A deleted photo
-  leaves the repo but NOT git history — never imply otherwise.
+  page. A deleted photo leaves the repo but NOT git history — never imply
+  otherwise.
 - PUTTING A NIGHT ON THE PUBLIC GALLERY
 - AND THE PREVIEW DID NOT WORK ON THE HOST KEY
+- CHECKING THE PHOTOS IS THE NEXT PRESS
 
 **[`docs/lobby-games.md`](docs/lobby-games.md)** — what a phone does while the room fills up
 
@@ -2119,6 +2120,23 @@ and **pushed to the backup again**, or the fix reaches this disk and nothing
 else. **The flag that stops a night being filed twice is `state.archivedAs`, not
 a field on the Session** — the old one was cleared by `build()`, which runs on
 boot, so a restart on the final scores filed the whole evening a second time.
+
+Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
+
+### CHECKING THE PHOTOS IS THE NEXT PRESS
+
+`buildActions()` in `host.js`; `?night=` / `nightToOpen` in the console. At
+`final` the primary read *Finished*, disabled.
+
+- **IT DOES NOT PUBLISH AND MUST NOT BE MADE TO** — `PHOTO_PHASES` includes
+  `final`, so the room is still sending. **Nor back to a console prompt** —
+  a page you go and find.
+- **The night rides in the URL on the 6am key**, never `host.js` writing the
+  console's store — two pages writing one key is how a contract drifts. **The
+  bench is set WITHOUT rendering**: a render at boot beats `load()`, so
+  `library` is null and the paint throws.
+- **ARRIVING OPENS THE ROW**, via the row's own head — one "show me this
+  night". One shot.
 
 Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 

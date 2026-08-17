@@ -39,6 +39,17 @@ decision from the host first.
     a code has to be put into the advert JSON by hand.
 3. **The post-night report** — every number it needs already exists, and the
     venue join is built, so nothing blocks it now.
+4. **THERE ARE TWO WAYS TO PUBLISH A NIGHT, AND ONE OF THEM SKIPS THE LOOKING —
+    which do you want?** *Needs a decision from you; it is one line either way.*
+    The gallery control under the photographs is the safeguard: it is inside a
+    night you have opened, below the pictures it would publish, so nobody puts
+    a stranger's face in front of the world without having just seen it. **But
+    the Post gig BENCH has its own *Put it on the gallery* button**, and the
+    bench does not have to be opened — so that safeguard can be walked round in
+    one tap. Three ways out: take the bench button off, make it open the
+    photographs first, or leave it because the bench only ever holds a night
+    you deliberately put there. *I would make it open the photographs first* —
+    it keeps the shortcut and cannot skip the looking.
 
 **AND ONE CORRECTION, because the old entry asked for the wrong thing.** It
 said to give a night "a real end time instead of the `+2 hours` default
