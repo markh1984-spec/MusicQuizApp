@@ -341,7 +341,26 @@ and own packs backing up to `markh1984-spec/quiztopia-packs`.
 
 **Still absent: `BREVO_API_KEY` and `PUBLIC_URL`**, so the forgotten-password
 email is built but not switched on — the sign-in page says so plainly rather
-than pretending to send. **No `BRAND_NAME`** — checked deliberately, because it
+than pretending to send.
+
+**UPDATED 17 August 2026, and the correction is worth more than the fact.**
+The Brevo ACCOUNT exists and **`quizporium.co.uk` is Authenticated and
+Branded** — seen on Brevo's own domains page. So DKIM, SPF and the DNS work
+are done, which is the fiddly half.
+
+**This file said otherwise, and a session believed it.** Working from the note
+above plus `todo/marketing-app.md` — which lists Resend and Kit as the accounts
+held — I told the host outright that nobody had signed up for Brevo. The docs
+were behind reality and were treated as reality. **Read the world, not the
+note, before telling somebody what their own deployment looks like.**
+
+**What is still NOT confirmed: whether `BREVO_API_KEY` and `EMAIL_FROM` are set
+on Render.** They cannot be checked from a session container — its egress is a
+fixed allowlist and the live app is not on it. The app answers the question
+itself: *Forgot password* on `/login` replies *"Password reset by email is not
+set up on this server yet"* when `emailConfigured()` is false, and *"a link is
+on its way"* when it is true. **Confirm it that way rather than writing it down
+on anybody's memory, this note included.** **No `BRAND_NAME`** — checked deliberately, because it
 overrides the per-quizmaster naming and a leftover value would hide that whole
 feature while looking exactly like a failed deploy. `OPENAI_API_KEY` is dead
 ground because the account behind it was deactivated.
