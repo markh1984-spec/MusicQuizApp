@@ -1753,6 +1753,34 @@ function tabBody(active) {
 }
 
 /*
+ * A NIGHT HANDED OVER IN THE URL — `?night=YYYY-MM-DD`.
+ *
+ * The control view's big **Check the photos** button at the final scores lands
+ * here, and this is what makes it open the right night: the key goes onto the
+ * Post gig bench, which is that door's own mechanism for "the night I am
+ * working on".
+ *
+ * In the URL rather than written straight into `localStorage` from `host.js`:
+ * two pages writing one key is how a contract drifts silently, and a link can
+ * be followed twice, shared, or bookmarked. Read BEFORE `load()` so the first
+ * render already has it.
+ */
+const wantedNight = new URL(location.href).searchParams.get('night') || '';
+if (/^\d{4}-\d{2}-\d{2}$/.test(wantedNight)) {
+  /*
+   * The binding and the store, but NOT `putNightOnBench()` — which renders.
+   * Rendering here runs before `load()` has fetched anything, so `library` is
+   * still null and the first paint throws on `library.brand`. The same
+   * boot-order fault the console split hit this morning, in a third place: a
+   * thing that works perfectly once the page is up, run one step too early.
+   *
+   * `load()` paints straight afterwards and picks this up on its own.
+   */
+  setNightBench(wantedNight);
+  localStorage.setItem(NIGHT_BENCH_STORE, wantedNight);
+}
+
+/*
  * Getting in.
  *
  * Try to load first, whatever we do or do not have. `load()` asks who is

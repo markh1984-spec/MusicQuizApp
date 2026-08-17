@@ -965,8 +965,44 @@ function buildActions(s) {
     final: 'Finished',
   }[s.phase] || 'Next';
 
-  const primary = node(`<button class="primary" ${s.phase === 'final' ? 'disabled' : ''}>${esc(label)}</button>`);
+  /*
+   * AT THE FINAL, THE BIG BUTTON BECOMES "CHECK THE PHOTOS".
+   *
+   * It used to read *Finished* and be DISABLED — a dead control in the one
+   * place the host's thumb has been all night, at the exact moment there is
+   * still one thing left to do. Asked for on 17 August 2026: *"at the end of
+   * the quiz it's showing the winner, you do your well dones, and then the
+   * next click takes you to a huge CHECK PHOTOS link that you can't dodge —
+   * it's part of the flow."*
+   *
+   * **That is what makes it happen at all.** A prompt on the console is
+   * something you go and find; this is the next press in a sequence somebody
+   * has been making all evening, in the same position, at full size. It is
+   * also the last moment the room is still there to be asked about a picture,
+   * which is the whole reason the looking has to happen tonight rather than on
+   * a Monday.
+   *
+   * It does NOT publish anything. It takes you to the night's photographs,
+   * where the publish control already lives underneath them — the rule that
+   * nobody publishes a night without having just seen what is in it is exactly
+   * what this is serving.
+   */
+  const done = s.phase === 'final';
+  const primary = node(`<button class="primary">${esc(done ? 'Check the photos' : label)}</button>`);
   primary.addEventListener('click', () => {
+    if (done) {
+      /*
+       * The night's own key, on the same 6am roll-over as `nightOfGig()` and
+       * the photos — so a quiz that ended at half past midnight opens its own
+       * night rather than tomorrow with nothing under it. Handed over in the
+       * URL rather than by writing the console's `localStorage` from here: two
+       * pages writing one key is how a contract drifts, and a link can be
+       * followed twice or bookmarked.
+       */
+      const night = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      location.href = withKey(`/console?door=post&tab=past&night=${night}`);
+      return;
+    }
     // The one press worth being fussy about. Everything else Back undoes
     // quietly; this one the room has already seen.
     if (s.phase === 'question' && questionAge() < TOO_SOON_MS) {
