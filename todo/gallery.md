@@ -197,6 +197,10 @@ skin colour, which is a bias this app should not ship.
 
 ### THE GALLERY PUBLISHES WHEN THE NIGHT ENDS — the automatic trigger is what is left
 
+**`finishedAt` EXISTS on a filed night** (both engines), so any line below
+saying a night has no end moment is out of date. What is left is a BOOKED end
+time — a booking has a start and no duration — and the trigger itself.
+
 **THE GATE AND THE HANDLE ARE BUILT**: `src/gallery.js` holds
 `publishedNights`/`isPublished`/`setPublished`, it fails closed, the list lives
 in the private repo, the route is `server.js:3507` and `galleryToggle()` in
@@ -296,6 +300,13 @@ quizmaster" is not one on a page with no contact on it.
 
 #### Badging the winners in the gallery — half of it joins exactly, half of it does not
 
+**THE ARCHIVE HALF IS BUILT (17 August 2026), and NOT the way this entry asked
+for it.** The filed leaderboard now carries **`faceKey`, deliberately not the
+player id** — the id is a bearer credential (rule 3) and a published night is
+read in public, so an id in the archive would be handing out credentials months
+later. `photos.js` exposes the same key, so the join is exact and safe.
+**What is left is DRAWING the badge in the gallery.**
+
 Asked for on 15 August 2026: highlight the photos from teams that won or did
 well.
 
@@ -341,6 +352,11 @@ is a far better product than a photograph, which is a real point in favour of
 the print idea rather than a decoration on it.
 
 ### TWO NIGHTS, AND THEY ARE NOT THE SAME NIGHT
+
+**THE `ics.js` FAULT NAMED BELOW IS FIXED (17 August 2026).** The feed no longer
+writes *"Quiz — The Crown"* for everything; the venue is the whole title, because
+a BOOKING cannot know what will be played weeks ahead. The booking-versus-games
+distinction below still stands and is still the point of this entry.
 
 Settled on 15 August 2026, and it corrects the section above rather than adding
 to it. The host runs *"a quiz, music bingo and karaoke combo night on a

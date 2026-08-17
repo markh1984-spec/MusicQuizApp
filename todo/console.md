@@ -12,6 +12,12 @@ the parent file.
 
 ### THE CONSOLE IS FOR LAUNCHING — two remnants left
 
+**ONE OF THE TWO IS BUILT.** A pin now keeps its ORDER — `pinRank()` replaced
+the boolean sort — so ignore any line below saying the arrangement is thrown
+away. **What is left: no drag-to-arrange, and the Console shelf still has no
+route to the Workshop** (that second one was deliberately left; see the note in
+`TODO.md`).
+
 **THE MOVE ITSELF IS DONE**: the doors are built, the writing panels are off
 the Console, and the shelf is stripped there. **Two sub-parts are not**, and
 they are all that is left of this entry:
@@ -178,7 +184,7 @@ it. **What is left is the expensive half the entry already named:**
 
 - **A bingo pack cannot enter the running order.** One line, twice:
   `if (!packDrag || packDrag.kind === 'bingo') return;` at
-  `console-tonight.js:1834` and `:1890`.
+  `console-tonight.js:1859` and `:1915`.
 - **The order does not live on the room.** It is module state (`lbExtra`), so a
   reload loses a mixed evening — only a saved SHOW persists one.
 - A slot is a bare pack id rather than `{ kind, packId }`, and nothing marks a

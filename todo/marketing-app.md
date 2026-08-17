@@ -27,6 +27,11 @@ the words.
 
 ### 1. The words are settled INSIDE the app and nowhere else
 
+**A NIGHT IS NOW A REAL OBJECT, so the strongest claim below is out of date.**
+It carries a venue, a `venueId`, `finishedAt`, a headcount, a winner, the prizes
+and how many were taken. **What is still missing is a WRITE path** — no way to
+name or edit a night afterwards, which is the same gap as *"Add a past gig"*.
+
 CLAUDE.md already pins **pack**, **quiz**, **bingo game** and **round**, and
 those hold up in the code. What has no name at all is the thing being sold to
 a venue: **a night.**
@@ -141,6 +146,12 @@ three of the four are really about what a NIGHT is — which is item 1 above.
 
 ### 0b. A VENUE IS ONE OBJECT — the tab is built; adverts are the piece left
 
+**THE DUPLICATE-DATALIST FAULT IS GONE** — there is no `venuesUsed` or
+`rewardsUsed` datalist left in `public/assets` at all, so ignore any paragraph
+below describing it. Adverts appear on the venue card and tonight's venue sorts
+to the front of the control view. **What is left is one thing: an advert set is
+still matched by venue NAME rather than by `venueId`.**
+
 **Built on 14 August 2026.** A **Venues** tab on the console, editing the
 INVOICE BOOK's own customer record rather than a store of its own — that book's
 comment already calls them "the venues you work for" and it holds the name, the
@@ -172,6 +183,13 @@ input binds to the FIRST one — which works today only because all seven hold
 identical content. Render each list ONCE per page instead.
 
 ### 0c. The venue notions that are NOT unified yet
+
+**THREE OF THE FOUR STEPS ARE BUILT (17 August 2026).** Step 1 — the invoice
+customer IS the venue record. **Step 2 — a night carries `venueId` as well as
+the name**, written at launch and joined by `venueKeyOf()`, which the league and
+the headcounts both use. Step 4 — the launch reads the venue's prizes.
+**Only the ADVERT half of step 3 is left: slides still join on the lowercased
+NAME**, not on `venueId`.
 
 **Asked for on 14 August 2026** as "a venues tab where you add the prizes, and
 the launch loads them". The idea is right. What makes it worth more than a tab
@@ -253,30 +271,13 @@ of evidence, and quietly mixing them is how a page stops being trustworthy.
 It also keeps hand-filed nights out of anything that draws conclusions — the
 play counts and "never played by anybody" should ignore them.
 
-### 1e. The demo prize card, personalised to the venue you are pitching to
-
-**Raised on 14 August 2026, parked deliberately.** `/v?c=DEMO` currently says
-"Give them A free drink at the bar" to "Quizteam Aguilera" — generic, which is
-right for a demo and means it is not obviously about the pub you are sitting
-in. Landing on their own name would sell it harder.
-
-Cheap to do: the demo is built from a literal in `voucher.js` and never touches
-the server, so it is a matter of reading a name off the URL —
-`/v?c=DEMO&at=The%20Crown` — and putting it in the card. The QR panel on My
-account would offer a venue picker beside it, filled from the Venues tab.
-
-**Two things to get right, or it stops being a demo:**
-
-- **It must still take no server state.** The whole value is that it works with
-  no game running, on bad wifi, an unlimited number of times. A personalised
-  one that needed a lookup would be a worse version of the real thing.
-- **It must not read as a real voucher.** Somebody's bar staff seeing their own
-  pub's name on a card saying "Give them a free drink" could act on it. The
-  demo already differs (the code is literally `DEMO`), but with a venue name on
-  it that is thinner cover — it probably wants a visible "demonstration" mark
-  on the card once it is personalised.
-
 ### 1d. WHERE REDEMPTIONS ARE VISIBLE — and the snapshot that misses them
+
+**BOTH HALVES ARE NOW BUILT (17 August 2026) — one line is left.** The bug half
+was fixed earlier; the DECISION half shipped too: `rewardsTaken` rides on the
+filed night (`src/library.js`) and Gigs prints *"3 prizes · 2 taken"* beside the
+headcount (`console-gigs.js`). **What is left is only the REINSTATE count** — a
+voucher the quizmaster put back is in the record and nothing surfaces it.
 
 **THE BUG HALF IS FIXED (14 August 2026)** — a voucher moving after the
 night is filed now updates the filed record, and the backup with it. Building
@@ -322,48 +323,6 @@ redemption. A voucher redeemed once is the system working; one put back three
 times is either a bar that cannot reach us or somebody working it. That count
 already exists and already shows above zero — it just needs to reach the
 archive with everything else.
-
-### 5f. EDITING A TRACK DOES NOT REPOINT WHAT ACTUALLY PLAYS
-
-One of two faults found by the host on 14 August 2026 while asking whether a
-wrong track is easy to fix. **The other half — dead air at the front of a
-track, which was a scoring bug — is built** and its rules are in CLAUDE.md
-under *"The intro round skips the dead air"*. This is what is left.
-
-The editor offers **Title, Artist, From and Hint** and writes them straight
-onto `q.cue`. It does not touch `cue.spotifyUri`, which is what
-`startIntroTrack()` hands to Spotify.
-
-So correcting a wrong track leaves the control view saying the RIGHT thing and
-the speakers playing the WRONG one — and you would reasonably believe it was
-fixed. **That is worse than not editing it**, and it is only discoverable with
-a room listening. A cue added by hand is the same fault from the other end:
-`q.cue = { title, artist, from, hint }` has no URI at all, so a question you
-wrote yourself silently never autoplays.
-
-The fix: **re-resolve on edit, and SHOW the match.** Change the title or the
-artist and the app looks it up and repoints, printing what it matched — a
-wrong match then reads as wrong instead of being invisible. Never silent
-either way: no match found has to say so, because a cue with no URI is a
-question that will not play.
-
-### 5a. Launch opens the big screen in a second tab
-
-**Asked for on 14 August 2026, mid-gig-day, and parked for that reason.** The
-host presses Launch and then goes and finds the projector tab himself, every
-night. Two clicks that are always the same two clicks.
-
-Small, and worth doing. The wrinkle is the one thing that makes it a real job
-rather than a line: **a popup blocker only allows `window.open` inside the
-click itself**, so opening it after the launch request returns is blocked in
-Safari. Opening it synchronously before the request means a projector tab for
-a launch that then 409s over a live game — which is the guard working and a
-stray tab anyway.
-
-The likely answer is to open the tab in the click and CLOSE it if the launch
-comes back refused, but that is a thing to prove in a real browser rather
-than reason about. **It is on the protected surface** (console loads, pack
-cards draw, Launch works), so it does not go in on a gig day.
 
 ### 5b. The console and the editor ON A PHONE, from a quizmaster's side
 
