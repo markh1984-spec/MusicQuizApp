@@ -514,9 +514,6 @@ outside the lobby, the teardown and the picker are all shared.
 
 ### Still open
 
-- **Nothing on the projector says WHICH game is on.** The board says "Top
-  scores" whichever it is. Fine with one game a night; confusing the moment
-  somebody asks what the numbers are for.
 - **A FIFTH GAME**, if the ladder wants more to sell. The two still worth
   having, in the order they were argued on 15 August 2026: **Pile Up** — drop
   sliding blocks, overhang trimmed, tower narrows; one tap, no chasing, and the
