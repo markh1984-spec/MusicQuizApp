@@ -7599,6 +7599,14 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
    page sideways — the same trap, for the eighth time. */
 .cal-url { flex: 1 1 260px; min-width: 0; font-size: var(--fs-note); }
 
+/* The referral link, same shape as the calendar's subscription address —
+   a readonly field and a Copy button, the pattern this app already uses
+   anywhere a link has to be handed to somebody else rather than clicked. */
+.acct-refer-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.acct-refer-url { flex: 1 1 260px; min-width: 0; font-size: var(--fs-note); }
+.acct-refer-credit { margin-top: 10px; }
+.acct-refer-credit b { color: var(--good); }
+
 /* ---- THE LOBBY GAME, on a phone.
    `touch-action: none` is the line that matters and it is not cosmetic: this
    game is played by TAPPING the maze, and rapid tapping on a canvas in mobile
@@ -8132,3 +8140,7 @@ body.landing {
 .ld-signup-done { text-align: center; padding: 10px 0; }
 .ld-signup-done h1 { margin: 0 0 10px; font-size: var(--fs-title); }
 .ld-signup-done p { color: var(--ink-dim); line-height: 1.6; }
+.ld-referral-note {
+  margin: 0 0 20px; padding: 10px 12px; border-radius: var(--r-field); font-size: var(--fs-note);
+  font-weight: 700; background: rgba(47, 224, 122, 0.12); color: var(--good);
+}

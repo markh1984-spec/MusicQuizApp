@@ -3,6 +3,10 @@
  * nothing else. See the `/api/signup` route in server.js for why the password
  * is never typed here: a magic link does that, the same mechanism a
  * forgotten password already uses.
+ *
+ * A referral rides in the URL — `?ref=<accountId>` — and is passed straight
+ * through in the POST body. A bad or missing one is not this page's problem
+ * to validate; the server drops anything it cannot use.
  */
 
 const form = document.getElementById('signupForm');
@@ -11,12 +15,19 @@ const formState = document.getElementById('formState');
 const doneState = document.getElementById('doneState');
 const doneText = document.getElementById('doneText');
 
+const ref = new URL(location.href).searchParams.get('ref') || '';
+if (ref) {
+  const note = document.getElementById('referralNote');
+  if (note) note.hidden = false;
+}
+
 form.addEventListener('submit', async (ev) => {
   ev.preventDefault();
   problem.textContent = '';
   const btn = form.querySelector('button');
   btn.disabled = true;
   const data = Object.fromEntries(new FormData(form).entries());
+  if (ref) data.ref = ref;
   try {
     const res = await fetch('/api/signup', {
       method: 'POST',
@@ -29,12 +40,15 @@ form.addEventListener('submit', async (ev) => {
       btn.disabled = false;
       return;
     }
+    const trialLine = body.referred
+      ? `You were referred, so your trial is ${body.trialDays} days.`
+      : `Your trial runs for ${body.trialDays} days.`;
     // Only present when there is no email service configured to send the
     // link the ordinary way — a dev/local fallback, not something the live
     // app hands out in the response body.
-    if (body.devLink) {
-      doneText.innerHTML = `No email is set up here — <a href="${body.devLink}">set your password</a> to finish.`;
-    }
+    doneText.innerHTML = body.devLink
+      ? `${trialLine} No email is set up here — <a href="${body.devLink}">set your password</a> to finish.`
+      : `${trialLine} Check your email for a link to set a password — it lasts 30 minutes.`;
     formState.hidden = true;
     doneState.hidden = false;
   } catch {

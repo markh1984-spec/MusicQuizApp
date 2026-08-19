@@ -33,7 +33,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-import { ROLES, KINDS, DEFAULT_KIND, STATUSES, TIERS, DEFAULT_TIER, findTier, tierFor, can, featuresFor, entitlements, FEATURE_TIER, switchable, setTierOverrides, tierOf, tierOverridesNow } from '../public/assets/plans.js';
+import { ROLES, KINDS, DEFAULT_KIND, STATUSES, TIERS, DEFAULT_TIER, findTier, tierFor, can, featuresFor, entitlements, FEATURE_TIER, switchable, setTierOverrides, tierOf, tierOverridesNow, trialLengthDays, REFERRAL_DISCOUNT } from '../public/assets/plans.js';
 import { findScheme, DEFAULT_SCHEME } from '../public/assets/schemes.js';
 
 /** Work factor for scrypt. Slow enough to matter, fast enough for a login. */
@@ -219,7 +219,7 @@ export class Accounts {
    * @param {boolean} [opts.comped]  everything, for nothing. The owner's own
    *                                 quizmaster account, and anybody he gifts it to.
    */
-  create({ email, password, name = '', role = 'quizmaster', kind = DEFAULT_KIND, tier = '', plan = '', addons = [], comped = false, status = 'trialing', ownedBy = '' }) {
+  create({ email, password, name = '', role = 'quizmaster', kind = DEFAULT_KIND, tier = '', plan = '', addons = [], comped = false, status = 'trialing', ownedBy = '', referredBy = '' }) {
     const clean = normaliseEmail(email);
     if (!clean || !clean.includes('@')) throw new Error('That does not look like an email address.');
     if (this.byEmail(clean)) throw new Error('There is already an account with that email address.');
@@ -238,6 +238,10 @@ export class Accounts {
     if (!TIERS.some((t) => t.id === wanted)) throw new Error(`"${wanted}" is not a tier.`);
     if (!STATUSES.includes(status)) throw new Error(`"${status}" is not a subscription status.`);
     checkPassword(password);
+    // A referral code that is not a real account is dropped rather than
+    // thrown on — the referral link is a query-string parameter anybody can
+    // hand-edit, and a mistyped or stale one must not stop a real signup.
+    const referral = (referredBy && this.find(referredBy)) ? referredBy : '';
 
     const account = {
       id: newId(),
@@ -266,6 +270,18 @@ export class Accounts {
         // Whatever the payment processor calls them. Deliberately just a string:
         // swapping Stripe for PayPal must not need a migration.
         billing: { customerRef: '', processor: '' },
+        /*
+         * THE TRIAL CLOCK, written once and never touched again — there is no
+         * background job in this app to come back and flip a status later, so
+         * every place that cares (`trialExpired()` in plans.js) checks this
+         * live instead. A referral doubles it, 14 days to 28.
+         */
+        ...(status === 'trialing' && !comped
+          ? { trialEndsAt: new Date(this.now() + trialLengthDays(referral) * 86_400_000).toISOString() }
+          : {}),
+        // Who gets the 20% — see `referralCredit()`. Empty means nobody, the
+        // ordinary case.
+        referredBy: referral,
       }),
       createdAt: new Date(this.now()).toISOString(),
       lastSeenAt: null,
@@ -276,6 +292,23 @@ export class Accounts {
     this.data.accounts.push(account);
     this.save();
     return safe(account);
+  }
+
+  /**
+   * 20% of what every account THIS one referred is paying, added together,
+   * for as long as each one stays a paying subscriber — `'active'` is
+   * specifically "paying for real", never `'trialing'`, so nothing is owed
+   * until the referral actually converts.
+   *
+   * There is no live payment processor yet, so this is computed and shown —
+   * see the note on `REFERRAL_DISCOUNT` in plans.js — never deducted from a
+   * real charge. It exists so the number is right the moment billing does
+   * arrive, rather than being invented then.
+   */
+  referralCredit(accountId) {
+    const referred = this.data.accounts.filter((a) => a.referredBy === accountId && a.status === 'active');
+    const pence = referred.reduce((sum, a) => sum + ((findTier(a.tier) || {}).pence || 0), 0);
+    return Math.round(pence * REFERRAL_DISCOUNT);
   }
 
   /** Change a password, checking the old one first unless the owner is resetting it. */

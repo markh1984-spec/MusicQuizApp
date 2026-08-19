@@ -773,6 +773,38 @@ export function kindOf(account) {
 export const STATUSES = ['trialing', 'active', 'past_due', 'cancelled'];
 const PAYING = new Set(['trialing', 'active']);
 
+/*
+ * THE TRIAL, AND THE REFERRAL BONUS ON TOP OF IT.
+ *
+ * `status: 'trialing'` used to mean "paying, forever, until somebody changes
+ * it by hand" — there was no clock on it at all. `trialEndsAt` is written
+ * once, at `accounts.create()`, and never touched again; everything that
+ * gates a feature checks it live rather than a job somewhere flipping the
+ * status, because there is no background process in this app to run one.
+ *
+ * A referral doubles the trial (14 days -> 28) rather than adding a fixed
+ * bonus on top of whatever the base happens to be, so the two numbers can
+ * only ever move together if the base ever changes.
+ */
+export const TRIAL_DAYS = 14;
+export const REFERRAL_BONUS_DAYS = 14;
+// 20% of a referred account's bill, credited to the REFERRER, for as long as
+// the referred account stays a paying subscriber. There is no live payment
+// processor yet (see todo/marketing-app.md), so this is computed and shown —
+// not yet deducted from a real charge.
+export const REFERRAL_DISCOUNT = 0.2;
+
+export function trialLengthDays(referred) {
+  return TRIAL_DAYS + (referred ? REFERRAL_BONUS_DAYS : 0);
+}
+
+/** Has a trialing account run past its own clock? Never true for anybody paying for real. */
+export function trialExpired(account, now = Date.now()) {
+  if (!account || account.status !== 'trialing' || account.comped) return false;
+  if (!account.trialEndsAt) return false;
+  return new Date(account.trialEndsAt).getTime() <= now;
+}
+
 /**
  * Can this account do this thing?
  *
@@ -821,6 +853,7 @@ export function featuresFor(account = {}) {
   // The owner's own quizmaster account: everything on the ladder, for nothing.
   if (account.comped) return featuresAt(TIERS[TIERS.length - 1].id);
   if (!PAYING.has(account.status)) return [];
+  if (trialExpired(account)) return [];
   /*
    * WHAT THE TIER GIVES, PLUS WHAT THIS ACCOUNT WAS ALREADY USING.
    *
@@ -877,6 +910,9 @@ export function whyNot(account, feature) {
   if (account.role === 'owner') {
     return 'That is on your quizmaster account, not the owner console.';
   }
+  if (!account.comped && trialExpired(account)) {
+    return 'Your trial has ended. Get in touch to keep going.';
+  }
   if (!account.comped && !PAYING.has(account.status)) {
     return account.status === 'past_due'
       ? 'Your subscription needs a payment before this comes back.'
@@ -921,6 +957,8 @@ export function entitlements(account) {
     addons: account.addons || [],
     comped: Boolean(account.comped),
     status: account.status,
+    trialExpired: trialExpired(account),
+    trialEndsAt: account.trialEndsAt || '',
     // What is ON — entitled to AND not switched off. This is what the console
     // draws tabs from, and it can only ever be a subset of `entitled`.
     features: on,

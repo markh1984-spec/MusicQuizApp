@@ -1706,9 +1706,11 @@ function tabBody(active) {
     return node(`
       <div class="problems">
         <strong>Nothing to show.</strong>
-        ${esc((me && me.entitlements && me.entitlements.status === 'past_due')
-          ? 'Your subscription needs a payment before your quizzes come back.'
-          : 'Your subscription has ended.')}
+        ${esc((me && me.entitlements && me.entitlements.trialExpired)
+          ? 'Your trial has ended. Get in touch to keep going.'
+          : (me && me.entitlements && me.entitlements.status === 'past_due')
+            ? 'Your subscription needs a payment before your quizzes come back.'
+            : 'Your subscription has ended.')}
       </div>`);
   }
   const wrap = node('<div class="tabbody"></div>');

@@ -59,7 +59,7 @@ import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
 import { ownsPlayer, PHASES } from './src/engine.js';
 import { upcoming } from './public/assets/diary.js';
 import { calendarIcs } from './src/ics.js';
-import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, switchedOn, PACK_PENCE } from './public/assets/plans.js';
+import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, switchedOn, PACK_PENCE, TRIAL_DAYS, REFERRAL_BONUS_DAYS } from './public/assets/plans.js';
 import { lobbyGameFor } from './public/assets/lobby-games.js';
 import { publishedNights, isPublished, setPublished, readableNight } from './src/gallery.js';
 import { sendEmail, emailConfigured, emailProvider, keepKeyAlive, resetEmail, welcomeEmail } from './src/email.js';
@@ -1383,7 +1383,16 @@ async function handleGet(req, res, url, route) {
     if (!account) return sendJson(res, 200, { signedIn: false }), true;
     return sendJson(res, 200, {
       signedIn: true,
-      account: { ...account, entitlements: entitlements(account) },
+      account: {
+        ...account,
+        entitlements: entitlements(account),
+        // 20% of what everybody THIS account referred is paying, added up —
+        // see referralCredit() in accounts.js. Nothing to compute for the
+        // owner, who has no subscription of their own to credit. On the
+        // account object, not a sibling of it, because the browser reads
+        // `who.account` and drops everything else in the response.
+        referralCreditPence: account.role === 'owner' ? 0 : accounts.referralCredit(account.id),
+      },
       /*
        * THE LIVE LADDER, so the browser stops working off the shipped one.
        *
@@ -3999,6 +4008,10 @@ async function handleWrite(req, res, url, route) {
         role: 'quizmaster',
         tier: 'bronze',
         status: 'trialing',
+        // A bad or stale code is dropped rather than refused — see the note
+        // in accounts.create(). This is a query-string param a stranger can
+        // edit; it must never be able to fail a real signup.
+        referredBy: String(body.ref || '').trim(),
       });
     } catch (err) {
       // "There is already an account with that email address" arrives here
@@ -4033,6 +4046,8 @@ async function handleWrite(req, res, url, route) {
 
     return sendJson(res, 200, {
       ok: true,
+      referred: Boolean(made.referredBy),
+      trialDays: made.referredBy ? TRIAL_DAYS + REFERRAL_BONUS_DAYS : TRIAL_DAYS,
       // Only when there is no email service to hand the link to somebody the
       // ordinary way — the same fallback the console's own dev setup relies
       // on elsewhere, and it is this visitor's own new account either way.

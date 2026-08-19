@@ -69,6 +69,8 @@ test('signing up opens a real Bronze, trialing account — and the whole loop wo
     const body = await res.json();
     assert.equal(res.status, 200, `signup answered ${res.status}: ${JSON.stringify(body)}`);
     assert.equal(body.ok, true);
+    assert.equal(body.referred, false);
+    assert.equal(body.trialDays, 14);
     assert.ok(body.devLink, 'no dev fallback link came back, and there is no email service in this test run');
 
     const saved = JSON.parse(readFileSync(join(dir, 'accounts.json'), 'utf8'));
@@ -78,6 +80,7 @@ test('signing up opens a real Bronze, trialing account — and the whole loop wo
     assert.equal(made.role, 'quizmaster');
     assert.equal(made.tier, 'bronze');
     assert.equal(made.status, 'trialing');
+    assert.ok(made.trialEndsAt, 'no trial clock was set');
     assert.ok(!made.hash || made.hash.length, 'a password was set, even if a throwaway one');
 
     // The link actually completes the loop — set a password with it, then
@@ -135,5 +138,49 @@ test('no name, or an unusable email, is refused rather than opening a broken acc
       body: JSON.stringify({ name: 'Rob', email: 'not an email' }),
     });
     assert.equal(badEmail.status, 400);
+  });
+});
+
+test('signing up with a real ?ref= doubles the trial and credits the referrer once they pay', async () => {
+  await withServer(async (base, dir) => {
+    const referrerRes = await fetch(`${base}/api/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Referrer', email: 'referrer@example.com' }),
+    });
+    const referrerId = JSON.parse(readFileSync(join(dir, 'accounts.json'), 'utf8'))
+      .accounts.find((a) => a.email === 'referrer@example.com').id;
+    assert.equal(referrerRes.status, 200);
+
+    const referredRes = await fetch(`${base}/api/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Referred', email: 'referred@example.com', ref: referrerId }),
+    });
+    const referredBody = await referredRes.json();
+    assert.equal(referredRes.status, 200);
+    assert.equal(referredBody.referred, true);
+    assert.equal(referredBody.trialDays, 28);
+
+    const saved = JSON.parse(readFileSync(join(dir, 'accounts.json'), 'utf8'));
+    const referred = saved.accounts.find((a) => a.email === 'referred@example.com');
+    assert.equal(referred.referredBy, referrerId);
+  });
+});
+
+test('a bogus ?ref= is dropped rather than refusing the signup', async () => {
+  await withServer(async (base, dir) => {
+    const res = await fetch(`${base}/api/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Rob', email: 'rob@example.com', ref: 'acc_nonexistent' }),
+    });
+    const body = await res.json();
+    assert.equal(res.status, 200);
+    assert.equal(body.referred, false);
+    assert.equal(body.trialDays, 14);
+
+    const saved = JSON.parse(readFileSync(join(dir, 'accounts.json'), 'utf8'));
+    assert.equal(saved.accounts.find((a) => a.email === 'rob@example.com').referredBy, '');
   });
 });

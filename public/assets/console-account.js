@@ -5,6 +5,7 @@ import { generate } from './console-generate.js';
 import { packCard, packPrice, preview } from './console-packs.js';
 import { accountsExist, library, me, setAccountsExist } from './console-state.js';
 import { night } from './console-tonight.js';
+import { money } from './console-invoices.js';
 import { TABS, can, currentTab, hostKey, keyed, load, render } from './console.js';
 import { FEATURES, FEATURE_META, NOT_BUILT, SWITCHABLE } from './plans.js';
 import { paintScheme } from './schemes.js';
@@ -236,11 +237,63 @@ export function accountSection() {
   // borders around what is plainly one answer to "what is my account".
   wrap.appendChild(youPanel());
   wrap.appendChild(roomPanel());
+  // Silent for the owner, who has no subscription of their own to refer
+  // anybody into.
+  const ref = referralPanel();
+  if (ref) wrap.appendChild(ref);
   // Silent when the whole catalogue is in reach, which is everybody today —
   // so it genuinely returns nothing rather than an empty panel.
   const lib = libraryPanel();
   if (lib) wrap.appendChild(lib);
   return wrap;
+}
+
+/**
+ * REFER A QUIZMASTER, KEEP 20% OF THEIR BILL — FOR LIFE, ONCE THEY PAY.
+ *
+ * The link is `/signup?ref=<accountId>` — the account's own id, not a
+ * separate code to generate and keep straight. `accounts.create()` doubles
+ * the new signup's trial when it carries a real referrer; this panel is only
+ * the other half, showing what THIS account earns from having sent one.
+ *
+ * The credit is READ, never a control — there is nothing to switch on or
+ * off, and it can only ever be zero until somebody it referred is actually
+ * paying (`status: 'active'`, not `'trialing'`). And it is a NUMBER, not yet
+ * a deduction: there is no live payment processor for it to come off a real
+ * charge, so it says so rather than implying it already has.
+ */
+function referralPanel() {
+  if (!me || me.role === 'owner') return null;
+  const link = `${location.origin}/signup?ref=${encodeURIComponent(me.id)}`;
+  const credit = money(me.referralCreditPence || 0);
+  const el = node(`
+    <div class="panel">
+      <h3>Refer a quizmaster</h3>
+      <div class="tiny">Send this link. Whoever signs up with it gets a
+        four-week trial instead of two — and once they are paying, you keep
+        20% of their bill for as long as they stay a subscriber.</div>
+      <div class="row acct-refer-row">
+        <input class="acct-refer-url" type="text" readonly aria-label="Your referral link" value="${esc(link)}">
+        <button class="minor acct-refer-copy" type="button">Copy</button>
+      </div>
+      <div class="tiny acct-refer-said"></div>
+      <div class="tiny acct-refer-credit">Referral credit so far: <b>${esc(credit)}/month</b>${
+  Number(me.referralCreditPence || 0) > 0
+    ? ' — shown here for now; there is no payment processor yet for it to come off a real bill.'
+    : ''}</div>
+    </div>`);
+  el.querySelector('.acct-refer-copy').addEventListener('click', async () => {
+    const box = el.querySelector('.acct-refer-url');
+    const said = el.querySelector('.acct-refer-said');
+    box.select();
+    try {
+      await navigator.clipboard.writeText(link);
+      said.textContent = 'Copied.';
+    } catch {
+      said.textContent = 'Selected — copy it from there.';
+    }
+  });
+  return el;
 }
 
 /**
@@ -1014,7 +1067,13 @@ function youPanel() {
     : ent.role === 'owner' ? 'Owner'
     : tier ? `${tier.label} — ${tier.plan}` : 'None';
   const status = ent.status || 'active';
-  const bad = status === 'past_due' || status === 'cancelled';
+  const bad = status === 'past_due' || status === 'cancelled' || ent.trialExpired;
+  const daysLeft = status === 'trialing' && ent.trialEndsAt && !ent.trialExpired
+    ? Math.max(1, Math.ceil((new Date(ent.trialEndsAt).getTime() - Date.now()) / 86_400_000))
+    : 0;
+  const statusWords = ent.trialExpired ? 'trial ended'
+    : daysLeft ? `trialing — ${daysLeft} day${daysLeft === 1 ? '' : 's'} left`
+    : status.replace('_', ' ');
 
   const el = node(`
     <div class="panel">
@@ -1025,11 +1084,13 @@ function youPanel() {
         <div><div class="tiny">On your projector</div><div class="acct-val brand-preview">${esc(library.brand || '')}</div></div>
         <div><div class="tiny">Tier</div><div class="acct-val">${esc(tierName)}</div></div>
         <div><div class="tiny">Subscription</div>
-          <div class="acct-val ${bad ? 'bad' : 'good'}">${esc(status.replace('_', ' '))}</div></div>
+          <div class="acct-val ${bad ? 'bad' : 'good'}">${esc(statusWords)}</div></div>
       </div>
       <div class="tiny acct-note">Your projector name is your first name and the app's, so it matches
         how you introduce yourself.</div>
-      ${bad ? `<div class="tiny acct-note bad"><b>A lapsed subscription never interrupts a night.</b>
+      ${ent.trialExpired ? `<div class="tiny acct-note bad"><b>Your trial has ended.</b>
+        Get in touch to keep going.</div>`
+        : bad ? `<div class="tiny acct-note bad"><b>A lapsed subscription never interrupts a night.</b>
         It is starting a NEW one that stops.</div>` : ''}
       ${me && !me.bootstrap ? '<div class="row acct-actions"><button class="minor" id="acctPw">Change your password</button></div>' : ''}
     </div>`);

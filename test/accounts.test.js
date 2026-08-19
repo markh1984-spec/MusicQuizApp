@@ -651,3 +651,101 @@ test('a pin for a pack that no longer exists is simply ignored', () => {
     assert.deepEqual(book.find(made.id).prefs.pinnedPacks, ['a-pack-that-was-deleted']);
   });
 });
+
+// ----------------------------------------------------------------- the trial
+
+/*
+ * There is no background job in this app to come back and flip a status
+ * later, so `trialEndsAt` is written once and everything that gates a
+ * feature checks it live — see `trialExpired()` in plans.js.
+ */
+test('an ordinary trialing account gets 14 days, written once at creation', () => {
+  withBook((book) => {
+    const made = book.create({ email: 'rob@example.com', password: PASSWORD, name: 'Rob' });
+    assert.equal(made.status, 'trialing');
+    const days = Math.round((Date.parse(made.trialEndsAt) - AT) / 86_400_000);
+    assert.equal(days, 14);
+  });
+});
+
+test('a referred signup gets 28 days, not 14', () => {
+  withBook((book) => {
+    const referrer = book.create({ email: 'referrer@example.com', password: PASSWORD, name: 'Referrer' });
+    const made = book.create({ email: 'referred@example.com', password: PASSWORD, name: 'Referred', referredBy: referrer.id });
+    const days = Math.round((Date.parse(made.trialEndsAt) - AT) / 86_400_000);
+    assert.equal(days, 28);
+    assert.equal(made.referredBy, referrer.id);
+  });
+});
+
+test('a referral code that matches nobody is dropped, not thrown on', () => {
+  withBook((book) => {
+    const made = book.create({ email: 'rob@example.com', password: PASSWORD, name: 'Rob', referredBy: 'acc_nonexistent' });
+    assert.equal(made.referredBy, '');
+    const days = Math.round((Date.parse(made.trialEndsAt) - AT) / 86_400_000);
+    assert.equal(days, 14, 'a bad code must not silently grant the bonus');
+  });
+});
+
+test('a comped account gets no trial clock at all', () => {
+  withBook((book) => {
+    const made = book.create({ email: 'gifted@example.com', password: PASSWORD, name: 'Gifted', comped: true });
+    assert.equal(made.status, 'active');
+    assert.equal(made.trialEndsAt, undefined);
+  });
+});
+
+test('featuresFor treats an expired trial as nothing paid, and an unexpired one as everything the tier gives', () => {
+  // `featuresFor` -> `trialExpired` reads the REAL clock (this is ordinary
+  // wall-clock gating, not scoring — there is no injected `now` to thread
+  // through it), so the fixture has to sit relative to Date.now() rather
+  // than the fixed historical `AT` this file uses elsewhere for the store.
+  const account = { role: 'quizmaster', status: 'trialing', tier: 'bronze', trialEndsAt: new Date(Date.now() + 86_400_000).toISOString() };
+  assert.ok(featuresFor(account).length > 0, 'a trial with a day left should still work');
+  assert.equal(featuresFor({ ...account, trialEndsAt: new Date(Date.now() - 1000).toISOString() }).length, 0,
+    'a trial that ended a second ago should not');
+});
+
+test('a comped or genuinely paying account is never touched by trial expiry', () => {
+  assert.ok(featuresFor({ role: 'quizmaster', status: 'trialing', comped: true, tier: 'gold', trialEndsAt: new Date(0).toISOString() }).length > 0);
+  assert.ok(featuresFor({ role: 'quizmaster', status: 'active', tier: 'bronze' }).length > 0, 'status active has no clock at all');
+});
+
+// --------------------------------------------------------------- referral credit
+
+/*
+ * 20% of what a referral is actually paying, added up, and it must count
+ * ONLY somebody genuinely paying — a referral still on their own trial has
+ * not converted yet, and crediting the referrer for it would be paying out
+ * on money that was never taken.
+ */
+test('referral credit is 20% of what a referred, PAYING account is on — nothing for a trialing one', () => {
+  withBook((book) => {
+    const referrer = book.create({ email: 'referrer@example.com', password: PASSWORD, name: 'Referrer' });
+    const stillTrialing = book.create({ email: 'a@example.com', password: PASSWORD, name: 'A', referredBy: referrer.id });
+    assert.equal(book.referralCredit(referrer.id), 0, 'nobody referred has started paying yet');
+
+    book.update(stillTrialing.id, { status: 'active', tier: 'silver' });
+    // Silver is 2000 pence — 20% is 400.
+    assert.equal(book.referralCredit(referrer.id), 400);
+  });
+});
+
+test('referral credit adds up across more than one referred, paying account', () => {
+  withBook((book) => {
+    const referrer = book.create({ email: 'referrer@example.com', password: PASSWORD, name: 'Referrer' });
+    const a = book.create({ email: 'a@example.com', password: PASSWORD, name: 'A', referredBy: referrer.id });
+    const b = book.create({ email: 'b@example.com', password: PASSWORD, name: 'B', referredBy: referrer.id });
+    book.update(a.id, { status: 'active', tier: 'bronze' }); // 1000 * 0.2 = 200
+    book.update(b.id, { status: 'active', tier: 'gold' });   // 3000 * 0.2 = 600
+    assert.equal(book.referralCredit(referrer.id), 800);
+  });
+});
+
+test('an account referred by nobody earns nothing for anybody', () => {
+  withBook((book) => {
+    const referrer = book.create({ email: 'referrer@example.com', password: PASSWORD, name: 'Referrer' });
+    book.create({ email: 'independent@example.com', password: PASSWORD, name: 'Independent', tier: 'gold', status: 'active' });
+    assert.equal(book.referralCredit(referrer.id), 0);
+  });
+});
