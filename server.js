@@ -1785,8 +1785,16 @@ async function handleGet(req, res, url, route) {
   if (route.startsWith('/api/advert/')) {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const id = decodeURIComponent(route.slice('/api/advert/'.length));
+    const advertRoom = roomForHost(req, url);
     try {
-      return sendJson(res, 200, loadAdvertPack(roomForHost(req, url).paths.adverts, id)), true;
+      const pack = loadAdvertPack(advertRoom.paths.adverts, id);
+      /*
+       * THE OPENS, ON THE SAME READ AS THE PACK — the editor already fetches
+       * this exact route to open a set, so there is no second request for the
+       * count to fall out of step with. Keyed by slide id, same as the pack's
+       * own `slides` list, so the browser needs no join to show them together.
+       */
+      return sendJson(res, 200, { ...pack, opens: advertRoom.offers.forPack(id) }), true;
     } catch {
       /*
        * The reason is deliberately NOT passed through.

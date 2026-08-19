@@ -13,8 +13,14 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { spawn } from 'node:child_process';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import { Offers, offerPath } from '../src/offers.js';
+
+const ROOT = new URL('..', import.meta.url).pathname;
 
 const tempFile = () => path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'offers-')), 'offer-opens.json');
 const DAY = 86400000;
@@ -119,4 +125,83 @@ test('a scan after midnight counts on the night it happened, not the next day', 
   const byDay = Object.fromEntries(seen.recent.map((r) => [r.day, r.count]));
   assert.equal(byDay['2026-08-13'], 2, 'the half-midnight scan belongs to Thursday');
   assert.equal(byDay['2026-08-14'], 1);
+});
+
+/* -------------------------------------------------- the wiring, over HTTP */
+
+/**
+ * THE COUNT REACHES THE CONSOLE, THE SAME WAY THE FEATURE WAS MISSING.
+ *
+ * `forSlide()`/`forPack()` were tested and correct for as long as this file
+ * has existed, and nothing in `server.js` ever called them — the counting
+ * worked and there was no route a console could ask for it through, which is
+ * exactly the class of miss the arcade board and the gallery's publish button
+ * were. So this proves the whole path over real HTTP: save a pack with a
+ * code, scan its public offer page, and read the count back off the same
+ * route the editor uses to open a set.
+ */
+async function withServer(run) {
+  const dir = mkdtempSync(join(tmpdir(), 'offers-route-'));
+  const port = 4990 + (process.pid % 90);
+  const child = spawn(process.execPath, ['server.js'], {
+    cwd: ROOT,
+    /*
+     * ADVERT_DIR EXPLICITLY, or the house room's adverts default to
+     * `<repo>/adverts` — a real, git-tracked folder — and this test would
+     * write its fixture packs straight into it. Found by doing exactly that
+     * once; the fix is never to let a test process default to a live path.
+     */
+    env: { ...process.env, PORT: String(port), DATA_DIR: dir, ADVERT_DIR: join(dir, 'adverts'), HOST_KEY: 'offers-test-key' },
+    stdio: 'ignore',
+  });
+  const base = `http://127.0.0.1:${port}`;
+  try {
+    let up = false;
+    for (let i = 0; i < 100 && !up; i++) {
+      try { await fetch(`${base}/api/quizzes?key=offers-test-key`); up = true; } catch { await new Promise((r) => setTimeout(r, 100)); }
+    }
+    assert.ok(up, 'the server never came up');
+    await run(base);
+  } finally {
+    child.kill('SIGKILL');
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+test('a saved code, scanned twice, reads back on the same route that opened the set', async () => {
+  await withServer(async (base) => {
+    const put = await fetch(`${base}/api/advert/the-crown?key=offers-test-key`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 'The Crown',
+        venue: 'The Crown',
+        slides: [{ id: 's1', heading: 'PIZZA — 2 FOR 1', offerCode: 'QUIZ40', offerWhen: 'Tuesdays' }],
+      }),
+    });
+    assert.equal(put.status, 200, await put.text());
+
+    // Scanned as the room's public offer page — no key, exactly like a phone.
+    assert.equal((await fetch(`${base}/o/the-crown/s1`)).status, 200);
+    assert.equal((await fetch(`${base}/o/the-crown/s1`)).status, 200);
+
+    const got = await (await fetch(`${base}/api/advert/the-crown?key=offers-test-key`)).json();
+    assert.equal(got.opens.s1.total, 2, 'both scans reached the same slide');
+    assert.equal(got.slides[0].offerCode, 'QUIZ40', 'the code round-trips through save and load');
+
+    // Never on the object the browser would PUT straight back.
+    assert.equal(Object.prototype.hasOwnProperty.call(got, 'title'), true);
+  });
+});
+
+test('a code with nothing scanned yet reads back with no opens rather than a throw', async () => {
+  await withServer(async (base) => {
+    await fetch(`${base}/api/advert/quiet-pub?key=offers-test-key`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: 'Quiet pub', venue: 'The Anchor', slides: [{ id: 's1', heading: 'Fresh code', offerCode: 'NEW10' }] }),
+    });
+    const got = await (await fetch(`${base}/api/advert/quiet-pub?key=offers-test-key`)).json();
+    assert.deepEqual(got.opens, {});
+  });
 });

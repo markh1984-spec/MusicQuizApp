@@ -778,11 +778,16 @@ export function editAdvertSet(id, seed = null) {
   // on the adverts tab. Everything else about the sheet is identical, so there
   // is one editor rather than a second one for imports.
   let pack = { id: '', title: '', venue: '', slides: [], ...(seed || {}) };
+  // The opens ride in on the SAME fetch as the pack (see the route in
+  // server.js) but are held apart from it — `opens` is not a pack field and
+  // must never reach the PUT that saves one; `normaliseAdvertPack` would drop
+  // it anyway, but keeping it out of `pack` is the honest version of that.
+  let opens = {};
 
   const draw = () => {
     overlay.querySelector('#adTitle').value = pack.title;
     overlay.querySelector('#adVenue').value = pack.venue;
-    const parts = pack.slides.map((slide, i) => slideEditor(slide, i, pack, draw));
+    const parts = pack.slides.map((slide, i) => slideEditor(slide, i, pack, draw, opens));
     const add = node('<button class="minor" style="margin-top:12px">Add a slide</button>');
     add.addEventListener('click', () => {
       pack.slides.push({ id: 's' + (pack.slides.length + 1), heading: '', body: '', say: '' });
@@ -823,11 +828,29 @@ export function editAdvertSet(id, seed = null) {
   if (!id) { pack.title = 'New advert set'; draw(); return; }
   fetch(keyed('/api/advert/' + encodeURIComponent(id)))
     .then((r) => r.json())
-    .then((loaded) => { pack = loaded; draw(); })
+    .then((loaded) => { const { opens: op, ...rest } = loaded; pack = rest; opens = op || {}; draw(); })
     .catch(() => { body.replaceChildren(node('<div class="tiny">Could not open it.</div>')); });
 }
 
-function slideEditor(slide, i, pack, redraw) {
+/**
+ * "41 opens, 12 on the 14th" — read back on the slide it belongs to, rather
+ * than a second panel to keep in step with the code that earns it.
+ *
+ * Silent until there is a code to count, and silent again until anybody has
+ * actually scanned it — a slide with a fresh code and no opens yet is not a
+ * failure to report on.
+ */
+function opensLine(slide, opens) {
+  if (!slide.offerCode) return '';
+  const stat = (opens || {})[slide.id];
+  if (!stat || !stat.total) return '<div class="tiny ad-opens">No opens yet.</div>';
+  const last = stat.lastNight
+    ? `, ${stat.lastNight.count} on ${new Date(stat.lastNight.day + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}`
+    : '';
+  return `<div class="tiny ad-opens">${stat.total} open${stat.total === 1 ? '' : 's'}${last}</div>`;
+}
+
+function slideEditor(slide, i, pack, redraw, opens = {}) {
   const el = node(`
     <div class="ad-slide">
       <div class="ad-slide-head">
@@ -855,6 +878,19 @@ function slideEditor(slide, i, pack, redraw) {
       <label class="tiny">A link to put a QR code on the slide — tickets, a booking page</label>
       <input class="ad-l" placeholder="https://..." value="${esc(slide.link || '')}">
       <input class="ad-ll" maxlength="40" placeholder="What the QR is for — e.g. Tickets for the 28th" value="${esc(slide.linkLabel || '')}">
+      <!--
+        A CODE, SAID AT THE BAR, IS WHAT MAKES THE QR COUNTABLE — src/offers.js.
+        With one, the QR points at this app's own offer page instead of the
+        link above, records the open, and shows the code and the link on
+        that page. Without one, the QR keeps pointing straight at the link,
+        exactly as every slide already did — nothing here breaks a slide
+        that has never used a code.
+      -->
+      <label class="tiny">A code to say at the bar — makes the QR countable, and works
+        without a phone at all</label>
+      <input class="ad-code" maxlength="24" placeholder="QUIZ40" value="${esc(slide.offerCode || '')}">
+      <input class="ad-when" maxlength="80" placeholder="When it is valid — e.g. Tuesdays in August" value="${esc(slide.offerWhen || '')}">
+      ${opensLine(slide, opens)}
       <label class="tiny">Your line for the mic — never goes on the screen</label>
       <input class="ad-say" maxlength="160" placeholder="Mention the pizza deal while this is up" value="${esc(slide.say || '')}">
     </div>`);
@@ -885,6 +921,8 @@ function slideEditor(slide, i, pack, redraw) {
   bind('.ad-b', 'body');
   bind('.ad-l', 'link');
   bind('.ad-ll', 'linkLabel');
+  bind('.ad-code', 'offerCode');
+  bind('.ad-when', 'offerWhen');
   bind('.ad-say', 'say');
 
   el.querySelector('.ad-del').addEventListener('click', () => {
