@@ -184,9 +184,18 @@ export function venuesSection() {
      * editing here to explain.
      */
     const findOnly = doorNow() === 'console';
+    /*
+     * ONE "VENUES" HEADING, NOT TWO. `tabBody()` in console.js already draws
+     * the shared gradient tab-head heading on every door except Console — so
+     * this panel's OWN heading only needs to appear where that one is
+     * suppressed. Without `findOnly` guarding it, the Workshop door said
+     * "Venues" twice: once in the mic-icon `.tab-head`, once again here,
+     * immediately under it — the exact thing the shared heading was built to
+     * stop happening tab by tab.
+     */
     el.replaceChildren(node(`
       <div class="panel">
-        <h3>Venues</h3>
+        ${findOnly ? '<h3>Venues</h3>' : ''}
         ${findOnly ? '' : `<div class="tiny">Set the prizes here and they fill themselves in when you
           launch a night at this venue. Give a venue its usual night and the
           launch bar knows whose night tonight is — and the big screen ends the

@@ -150,19 +150,34 @@ export function showsSection() {
   const draw = () => {
     const shows = library.shows || [];
     const findOnly = doorNow() === 'console';
+    /*
+     * ONE "SHOWS" HEADING, NOT TWO — same fault, same fix as Venues.
+     * `tabBody()` already draws the shared gradient tab-head on every door but
+     * Console, so this panel's own `<h2>` only needs to appear where that one
+     * does not, or Workshop said "Shows" twice in a row.
+     *
+     * And ONE explanation of an empty shelf, not two: the general explainer
+     * ("Set a night up under Tonight's settings…") and the empty-state line
+     * were saying the same sentence back to back whenever Workshop had no
+     * shows yet. The empty-state line is the more useful of the two — it
+     * links straight to Tonight and to the settings tab — so it is the one
+     * that stays; the general explainer only shows once a show exists to make
+     * it worth explaining what one IS.
+     */
+    const empty = !shows.length;
     el.replaceChildren(node(`
       <div class="game-section">
         <div class="game-head">
           <div>
-            <h2>Shows</h2>
-            ${findOnly ? '' : `<div class="tiny">A whole evening kept as one thing —
+            ${findOnly ? '<h2>Shows</h2>' : ''}
+            ${findOnly || empty ? '' : `<div class="tiny">A whole evening kept as one thing —
               the packs, which rounds are on, the venue and its prizes, the look and
               the lobby game. Set a night up under Tonight’s settings and press
               <b>Keep this as a show</b>.</div>`}
           </div>
         </div>
         <div class="show-list">
-          ${!shows.length ? `<div class="tiny">No shows yet. Set a night up in
+          ${empty ? `<div class="tiny">No shows yet. Set a night up in
             ${goTo('console', 'quiz', 'Tonight')}, then press <b>Keep this as a show</b>
             under ${goTo('console', 'setup', 'Tonight’s settings')}.</div>`
     : shows.map((show) => {

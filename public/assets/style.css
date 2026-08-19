@@ -2068,6 +2068,12 @@ body.console::after { display: none; }
 .pack-card.shut > .pack-yours { position: relative; z-index: 2; }
 @media (max-width: 560px) {
   .pack-card.shut { min-height: 104px; }
+  /* The disclosure that opens a shut card measured at 18px tall on a phone —
+     under the 44px floor this shelf is meant to be scanned and tapped at.
+     `.pack-title` is already `position: relative` on a shut card (two rules
+     up), so an invisible `::before` widens the tap area without moving the
+     visible one-to-three-line title or the fade behind it. */
+  .pack-card.shut .pack-title::before { content: ''; position: absolute; inset: -14px -8px; }
 }
 /* THREE SIZES BY LENGTH — see `titleSize()`. The type gets BIGGER on a short
    name rather than smaller on a long one, which is the opposite of what fitting
@@ -3245,6 +3251,18 @@ button.pack-title:hover::after { opacity: 1; }
     -webkit-overflow-scrolling: touch;
   }
   .console .topnav::-webkit-scrollbar, .editor .topnav::-webkit-scrollbar { display: none; }
+  /* A HALF-CUT WORD IS NOT A SCROLL HINT. "My accou" at the right edge reads
+     as broken, not as "there is more" — the sideways scroll above is real and
+     deliberate, this just says so. A static fade on the last stretch of the
+     row rather than a JS-driven one that hides once fully scrolled: cheap,
+     and wrong only in the harmless direction — it stays after the last door
+     is reached and still just as truthfully says "there is more to scroll to". */
+  @supports (mask-image: linear-gradient(#000, #000)) or (-webkit-mask-image: linear-gradient(#000, #000)) {
+    .console .topnav, .editor .topnav {
+      -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
+      mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
+    }
+  }
 
   /* THE CONTROL VIEW CANNOT WRAP, SO SOMETHING ELSE HAS TO GIVE — and the
      wordmark is the right thing to lose.
@@ -5874,6 +5892,15 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .lb-set > * { min-width: 0; }
 .lb-set .pack-shape { margin: 0; min-width: 0; }
 .lb-set select, .lb-set input { min-width: 0; max-width: 100%; }
+/* "While they wait" carries the longest option text in the app — each game's
+   name AND its one-line blurb, so the open list still explains itself. A
+   native select cannot ellipsis its own CLOSED text no matter what CSS says,
+   so an equal-width grid cell hard-clipped it mid-word ("Maze Mouth — a maze
+   cha"). Two tracks instead of one gives it roughly double the room; on a
+   single-column phone layout this is a no-op, since there is only one track
+   to span. */
+.lb-set .pack-shape-wide { grid-column: span 2; }
+@media (max-width: 560px) { .lb-set .pack-shape-wide { grid-column: span 1; } }
 /* Big, because it is pressed in a dark room by somebody who is late.
  * The gradient is written out here rather than inherited: the app's `.go`
  * fill is scoped to `.pack-card .go`, so a Launch button anywhere else came
@@ -5989,6 +6016,12 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    nothing truncating the text can also truncate the ring. */
 .lb-where:focus-visible { color: var(--ink); text-decoration: underline; outline: none; box-shadow: inset 0 0 0 2px var(--hot); border-radius: var(--r-field); }
 .lb-where[aria-expanded="true"]::after { transform: rotate(180deg); }
+/* THE VISIBLE TEXT STAYS A ONE-LINE FACT; THE TAP AREA DOES NOT. Measured at
+   15-16px tall — a thumb target on the control that opens the venue picker
+   ten minutes before a gig. An invisible `::before`, not real padding, so the
+   fact still reads as one compact line and nothing in the row around it moves. */
+.lb-where { position: relative; }
+.lb-where::before { content: ''; position: absolute; inset: -15px -6px; }
 
 /* The picker itself. A list you search rather than a dropdown you scroll:
    fifteen residencies in a native select, in a dark pub, is the thing this
@@ -6188,6 +6221,15 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
      three rows, and a half-width tile is still a target you cannot miss. */
   .lb-tiles, .pack-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lb-tiles .lb-tile { min-height: 58px; padding: 8px; }
+  /* ONE EMPTY SLOT ON A PHONE, not up to six. The six-slot row is sized for a
+     rare six-pack night on the laptop this console is built around — on a
+     390px screen, before a single pack is added, it was three rows of empty
+     "Add pack" tiles above the tab list a host actually needs. `.lb-drop` is
+     only ever on an EMPTY slot (a chosen pack carries `.is-pack` instead), and
+     they always sit after any filled tiles in the row — so hiding every
+     `.lb-drop` that follows another one leaves exactly one "Add a pack"
+     affordance, whatever the pack count, with the JS slot logic untouched. */
+  .lb-tiles .lb-tile.lb-drop ~ .lb-tile.lb-drop { display: none; }
 }
 /* THE THREE FACTS GET THEIR OWN ROW. Three columns always, because there are
    always exactly three of them — where, when and what for — and an auto grid
@@ -6226,8 +6268,13 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   padding: 0; border: 0; background: none; font: inherit; cursor: pointer;
   color: var(--ink); font-weight: 700; min-width: 0; overflow-wrap: anywhere;
   border-bottom: 1px dashed var(--panel-line);
+  position: relative;
 }
 .lb-say-venue:hover { color: var(--hot); border-bottom-color: var(--hot); }
+/* Same tap-area expansion as `.lb-where` — measured at 15-16px tall. The
+   inset stays tight side to side, since this sits mid-sentence next to other
+   `.lb-say-bit` text a wider overlay would start stealing taps from. */
+.lb-say-venue::before { content: ''; position: absolute; inset: -15px -3px; }
 .lb-tile {
   position: relative; display: flex; flex-direction: column; justify-content: flex-end;
   gap: 2px; min-width: 0; padding: 10px;

@@ -987,14 +987,19 @@ export const TABS = [
      * the page somebody opens to work — and put the pack price a whole tab
      * away from the tier that is the other way to get the same packs.
      *
-     * **`needs: CATALOGUE`, so a quizmaster who cannot buy is not shown a
+     * **`needs: BUY_PACKS`, so a quizmaster who cannot buy is not shown a
      * till.** That is the same rule the tab bar already follows everywhere:
      * above your tier is drawn greyed with a price, switched off by you is
      * gone. A shop nobody can buy from is the second of those.
+     *
+     * (This was `FEATURES.CATALOGUE` — the OWNER'S right to write the
+     * catalogue, not a quizmaster's right to buy from it — which hid the
+     * tab from every non-owner account on every tier. Found by a design
+     * audit, not by anybody clicking around.)
      */
     id: 'shop',
     doors: ['account'],
-    needs: FEATURES.CATALOGUE,
+    needs: FEATURES.BUY_PACKS,
     label: 'Shop',
     blurb: 'Packs to buy, and the tier above the one you are on.',
     count: () => [...(library.quizzes || []), ...(library.bingo || [])].filter((p) => p.locked).length,

@@ -358,6 +358,30 @@ test('every feature and tier blurb is one short line', async () => {
  * /login would follow a signed-in quizmaster around for as long as the browser
  * kept it, and nobody would think to look at a redirect.
  */
+/*
+ * THE SHOP TAB IS FOR QUIZMASTERS, NOT FOR THE OWNER.
+ *
+ * `needs: FEATURES.CATALOGUE` gates it against the owner's own right to WRITE
+ * the catalogue — so it was drawn `// ---- Owner only.` a few lines above its
+ * own definition in plans.js, and no quizmaster, on any tier, ever saw a
+ * Shop tab. Found by a design audit, not by anybody clicking around, which
+ * is exactly the kind of bug a test that only checks routes never catches:
+ * the tab was reachable, gated, and simply always false for the one
+ * population it exists for.
+ *
+ * `packs.buy` is the quizmaster's actual right to buy from the shelf.
+ */
+test('the shop tab is gated on buying packs, not on writing the catalogue', () => {
+  const src = consoleSource();
+  const at = src.indexOf("id: 'shop',");
+  assert.ok(at > 0, 'the shop tab has moved or gone');
+  const block = src.slice(at, at + 200);
+  assert.match(block, /needs:\s*FEATURES\.BUY_PACKS/,
+    'the shop tab is gated on something other than packs.buy — check which population can see it');
+  assert.ok(!/needs:\s*FEATURES\.CATALOGUE/.test(block),
+    'the shop tab is still gated on the OWNER\'S right to write the catalogue');
+});
+
 test('the bare domain goes by WHO IS ASKING, and is never cached', () => {
   const src = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
   const at = src.indexOf("if (route === '/') {");

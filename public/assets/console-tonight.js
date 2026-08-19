@@ -2409,7 +2409,7 @@ export function tonightSettingsPanel() {
         <label class="pack-shape">Look
           <select class="look-pick">${lookOptions(pack || {})}</select>
         </label>
-        <label class="pack-shape">While they wait
+        <label class="pack-shape pack-shape-wide">While they wait
           <select class="game-pick">${lobbyGameOptions(bingo ? 'bingo' : 'quiz')}</select>
         </label>
         <label class="pack-shape">Game sound
