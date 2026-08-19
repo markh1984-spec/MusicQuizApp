@@ -32,6 +32,9 @@
  * backup would have reissued a number already on somebody's invoice.
  */
 
+import { TIERS } from '../public/assets/plans.js';
+import { receiptEmail, cardFailedEmail } from './email.js';
+
 /**
  * The five things a processor may say. Deliberately small: anything that does
  * not fit one of these is something the app should not be reacting to
@@ -153,4 +156,34 @@ export function applyBilling(accounts, raw = {}) {
   });
 
   return { ok: true, kind: event.kind, tier: patch.tier || account.tier, status: patch.status };
+}
+
+/**
+ * Which email, if any, an APPLIED event earns — and kept apart from
+ * `applyBilling()` on purpose. That function's whole design is a small, pure
+ * translation from an event to an account patch; a network call inside it
+ * would make every future test of it a test of email delivery too. So a
+ * webhook route calls the two in sequence:
+ *
+ *   const result = applyBilling(accounts, raw);
+ *   if (result.ok) { const mail = billingEmail(result, accounts.find(raw.accountId)); if (mail) sendEmail(mail); }
+ *
+ * **Only two of the five events say anything.** `started` and `renewed` are a
+ * payment landing — the decision recorded 19 August 2026 is that the app
+ * sends that one, from Quizporium, because it took the money. `payment_failed`
+ * gets the other half of that same decision. `cancelled` and `expired` are
+ * silent: a quizmaster who has just left is not somebody this app should be
+ * emailing, and the cancellation itself was already their own action.
+ */
+export function billingEmail(result, account) {
+  if (!result || !result.ok || !account || !account.email) return null;
+  const label = (TIERS.find((t) => t.id === result.tier) || {}).label || '';
+  const pence = (TIERS.find((t) => t.id === result.tier) || {}).pence;
+  if (result.kind === 'started' || result.kind === 'renewed') {
+    return { to: account.email, ...receiptEmail({ label, pence }) };
+  }
+  if (result.kind === 'payment_failed') {
+    return { to: account.email, ...cardFailedEmail({ label }) };
+  }
+  return null;
 }

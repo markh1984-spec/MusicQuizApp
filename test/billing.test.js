@@ -19,7 +19,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { Accounts } from '../src/accounts.js';
-import { applyBilling, readEvent, BILLING_EVENTS } from '../src/billing.js';
+import { applyBilling, readEvent, BILLING_EVENTS, billingEmail } from '../src/billing.js';
 import { ladderFor, can, whyNot, FEATURES, FEATURE_TIER } from '../public/assets/plans.js';
 import { Suggestions, PACK_REQUEST_KIND } from '../src/suggestions.js';
 
@@ -399,4 +399,63 @@ test('one open pack request at a time, per account', () => {
   // Answered and cleared, so the next one may be asked for.
   box.reply(box.openPackRequest('rob').id, 'Written — it is in your library.');
   assert.equal(box.openPackRequest('rob'), null, 'a cleared request still blocks the next one');
+});
+
+// ============================================================ billingEmail
+
+/*
+ * WHICH OF THE FIVE EVENTS EARNS AN EMAIL, kept apart from `applyBilling()`
+ * itself — see the doc comment on `billingEmail()` for why. Only two of the
+ * five say anything at all.
+ */
+test('a payment landing gets a receipt, addressed to the account', () => {
+  const accounts = book();
+  const id = subscriber(accounts, { email: 'rob@example.com' });
+  const result = applyBilling(accounts, event('started', { accountId: id, tier: 'silver' }));
+  const mail = billingEmail(result, accounts.find(id));
+  assert.equal(mail.to, 'rob@example.com');
+  assert.equal(mail.subject, 'Payment received — Silver');
+});
+
+test('a renewal gets a receipt too, not only the first payment', () => {
+  const accounts = book();
+  const id = subscriber(accounts, { email: 'rob@example.com', tier: 'gold', status: 'active' });
+  const result = applyBilling(accounts, event('renewed', { accountId: id }));
+  const mail = billingEmail(result, accounts.find(id));
+  assert.equal(mail.subject, 'Payment received — Gold');
+});
+
+test('a failed payment gets the OTHER notice, never a receipt', () => {
+  const accounts = book();
+  const id = subscriber(accounts, { email: 'rob@example.com', tier: 'bronze', status: 'active' });
+  const result = applyBilling(accounts, event('payment_failed', { accountId: id }));
+  const mail = billingEmail(result, accounts.find(id));
+  assert.equal(mail.subject, 'A payment did not go through — Bronze');
+});
+
+test('cancelling and expiring are silent — a quizmaster who has just left is not emailed', () => {
+  const accounts = book();
+  for (const kind of ['cancelled', 'expired']) {
+    const id = subscriber(accounts, { email: `${kind}@example.com`, tier: 'silver', status: 'active' });
+    const result = applyBilling(accounts, event(kind, { accountId: id }));
+    assert.equal(billingEmail(result, accounts.find(id)), null, kind);
+  }
+});
+
+test('an event applyBilling refused earns no email either', () => {
+  const accounts = book();
+  const id = subscriber(accounts, { email: 'rob@example.com' });
+  // A stale event: applied once, then an older one arrives.
+  applyBilling(accounts, event('started', { accountId: id, tier: 'silver', at: NOW }));
+  const stale = applyBilling(accounts, event('started', { accountId: id, tier: 'gold', at: NOW - 1000 }));
+  assert.equal(stale.ok, false);
+  assert.equal(billingEmail(stale, accounts.find(id)), null);
+});
+
+test('nothing is sent without an address to send it to', () => {
+  // Every real account has an email — `Accounts.create()` refuses one without
+  // — so this guards a defensive branch rather than a reachable state.
+  const result = { ok: true, kind: 'started', tier: 'silver' };
+  assert.equal(billingEmail(result, { email: '' }), null);
+  assert.equal(billingEmail(result, null), null);
 });

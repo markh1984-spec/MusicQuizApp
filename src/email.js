@@ -7,14 +7,20 @@
  * one POST with one header.
  *
  * WHAT THIS IS FOR, and what it is deliberately not. The host asked for
- * exactly one thing: a link that lets a quizmaster set a new password. It
- * exists because there was NO WAY BACK IN — the reset route needs an account
- * id, an owner's own account is not in the subscriber list, and Render's free
- * tier has no shell. So a lost password was a locked door with nothing behind
- * it. **Do not grow this into notifications, reminders or marketing.** Those
- * were discussed and parked in TODO.md, they want a different sending domain,
- * and a quizmaster who gets a surprise email from the app they run their
- * livelihood on will not thank anybody.
+ * exactly one thing at first: a link that lets a quizmaster set a new
+ * password. It exists because there was NO WAY BACK IN — the reset route
+ * needs an account id, an owner's own account is not in the subscriber list,
+ * and Render's free tier has no shell. So a lost password was a locked door
+ * with nothing behind it.
+ *
+ * **A second decision, taken 19 August 2026: the app sends the MONEY ones and
+ * nothing else** — `receiptEmail()` when a payment lands, `cardFailedEmail()`
+ * when one does not. Both come from Quizporium, because the app took the
+ * money — unlike an invoice, which is the quizmaster's own and drafts from
+ * their own address, never sent server-side. **Still do not grow this into
+ * marketing, reminders or anything a quizmaster did not just cause** — a
+ * reply to a suggestion stays in-app, and a quizmaster who gets a surprise
+ * email from the app they run their livelihood on will not thank anybody.
  *
  * NOBODY PICKS A PROVIDER ON A BUTTON — the same rule `artProvider()` follows
  * for the picture round. Whichever key is set is the one used, and if both
@@ -221,4 +227,51 @@ export function resetEmail({ name, link }) {
       'If it was not you, ignore this — nothing has changed and your password still works.',
     ].join('\n'),
   };
+}
+
+/**
+ * What a receipt says. Called from `billingEmail()` in `src/billing.js` when
+ * a payment for a subscription lands, and left generic enough to cover a pack
+ * purchase too, whenever that has a money flow of its own to call it from.
+ *
+ * Plain text, like the reset — a receipt with a styled button is the exact
+ * shape a scam email imitates, and this one is short enough not to need one.
+ */
+export function receiptEmail({ label, pence }) {
+  const what = String(label || '').trim() || 'your subscription';
+  return {
+    subject: `Payment received — ${what}`,
+    text: [
+      `Thanks — the payment for ${what} went through${pence ? `, ${money(pence)}` : ''}.`,
+      '',
+      'Nothing else to do. See you at the next one.',
+    ].join('\n'),
+  };
+}
+
+/**
+ * What a card-failed notice says.
+ *
+ * **It must never say a night is at risk**, because it never is —
+ * `applyBilling()` moves the status and never the tier on a failed payment,
+ * so a running or a booked quiz is untouched. Saying otherwise here would be
+ * the app frightening somebody about a game that was never in danger.
+ */
+export function cardFailedEmail({ label }) {
+  const what = String(label || '').trim() || 'your subscription';
+  return {
+    subject: `A payment did not go through — ${what}`,
+    text: [
+      `The card on file for ${what} was declined this time.`,
+      '',
+      'Nothing has been switched off — a quiz you have already booked or are',
+      'running is never affected by this — but the next attempt may fail too,',
+      'so it is worth checking your card details when you get a moment.',
+    ].join('\n'),
+  };
+}
+
+function money(pence) {
+  const n = Math.round(Number(pence) || 0);
+  return `£${(n / 100).toFixed(2)}`;
 }

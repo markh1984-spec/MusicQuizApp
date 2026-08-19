@@ -18,34 +18,6 @@ decision from the host first.
 `test/todo-budget.test.js` fails if anything left in the list claims to be done.
 
 
-1. **THE ADVERT SLIDE EDITOR HOLDS THE WHOLE OFFER, AND READS ITS OWN COUNT
-    BACK.** *Decided 19 August 2026.* The counting is built — `/o/<pack>/<slide>`
-    serves the offer and records the open, `forSlide()` and `forPack()` in
-    `src/offers.js` total it, and the projector's QR already points there. **What
-    is missing is entirely console-side.** One slide editor holds everything
-    the offer needs — the picture, the code, when it is valid, the link — so
-    there is no second place to keep half an advert, and **the opens are read
-    back on the slide itself**: *"41 opens, 12 on the 14th"*. Until it is
-    built a code has to be typed into the advert JSON by hand.
-    *The three seams, so they are not rediscovered:* `slideEditor()` in
-    `console-venues.js` collects six fields and neither `offerCode` nor
-    `offerWhen` is one of them, so the PUT that saves a pack has never carried
-    them; **`server.js` does not import `src/offers.js` at all**, so there is
-    no route a console could ask for a count through; and `normaliseAdvertPack()`
-    already keeps both fields, so nothing in the data model has to change.
-2. **EMAIL: THE APP SENDS THE MONEY ONES AND NOTHING ELSE.** *Decided 19
-    August 2026.* A **receipt for a pack or a subscription** and a
-    **card-failed notice** come from **Quizporium** — the app took the money,
-    so the app's name is on the envelope. **A reply to a suggestion is not
-    email at all**: it goes to and from the account inside the app, which is
-    where the conversation already is and what the queue position, the receipt
-    and the draft-reply button were all built around. **An invoice is settled
-    separately and is not email either** — `share()` in `console-invoices.js`
-    drafts it, from the quizmaster's own address, because a venue receiving an
-    invoice from `quizporium.co.uk` for a self-employed person's work is
-    wrong and it puts this app's sending reputation behind somebody else's
-    billing.
-
 **AND ONE CORRECTION, because the old entry asked for the wrong thing.** It
 said to give a night "a real end time instead of the `+2 hours` default
 `ics.js` applies". A filed night has carried `finishedAt` all along — the +2

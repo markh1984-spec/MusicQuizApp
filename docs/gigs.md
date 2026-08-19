@@ -1046,6 +1046,51 @@ size.
 `venueId` — the join is free text on both sides, lowercased. A venue renamed
 after its slides were written reads as having none.
 
+## THE ADVERT SLIDE EDITOR HOLDS THE OFFER, AND READS ITS OWN COUNT BACK
+
+Decided 19 August 2026, in the same batch as the bench button and the report.
+The counting itself was already finished and untouched by any of it —
+`src/offers.js` records an open and totals them, `/o/<pack>/<slide>` records
+one on every scan, and the projector already points its QR there whenever a
+slide carries a code. **What was missing was entirely on the console, and it
+had never been asked for as a separate feature — it fell out of finishing a
+half-built path**, the same shape as the picture upload on a slide before it:
+the mechanism worked and nobody had built the door onto it.
+
+### The editor gets what the answer needs, not one field at a time
+
+The host's own framing, when asked which fields to add: *"the advert slide
+should be there for an image upload plus anything associated with the offer —
+QR codes, dates etc."* **That is a description of the whole offer, not a list
+of two fields**, and it settled the shape: `offerCode` and `offerWhen` sit
+together, right where the link already was, because a code, when it is valid
+and the link it drives are one decision a venue makes about one deal, not
+three separate ones typed into three separate places.
+
+### The count rides on the same fetch as the pack, deliberately
+
+`editAdvertSet()` already fetches `/api/advert/<id>` to open a set for
+editing — that is not new. What changes is what that route now answers with:
+`{ ...pack, opens: room.offers.forPack(id) }`, so the editor opens the pack
+and the count in one request rather than two that could arrive out of step,
+or one that is simply forgotten. **The count is then held APART from `pack`
+in the browser** — `const { opens, ...rest } = loaded` — because `pack` is
+exactly the object `#adSave` PUTs back, and `opens` is not a field any
+advert pack has ever had. `normaliseAdvertPack()` would drop it silently on
+save regardless, since it builds the saved object from named fields rather
+than spreading the input, but keeping it out of `pack` in the first place is
+the honest version of that safety net rather than a reliance on it.
+
+### Silent twice, for two different reasons
+
+**No code, no line at all** — there is nothing to count, and a blank counter
+under every slide would be furniture on the slides that do not use one.
+**A code with nothing scanned yet says "No opens yet"** rather than staying
+silent, which is a small but deliberate difference from the first case: once
+a venue has committed to a code, the app should say where it stands even when
+that answer is zero, the same instinct that put an unbilled badge on a night
+with nothing invoiced yet rather than nothing at all.
+
 ## AND THE PREVIEW DID NOT WORK ON THE HOST KEY
 
 The owner sees unpublished nights on `/gallery`, marked — asked for directly,

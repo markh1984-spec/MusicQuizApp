@@ -91,7 +91,16 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * route already guards against. Both were tightened for size before this was
  * raised, and 817 bytes is the genuine remainder.
  */
-const BUDGET = 133_000;
+/*
+ * RAISED TO 134,000 THE SAME DAY, for two more from the same batch of
+ * decisions: the advert slide editor now collects `offerCode`/`offerWhen`
+ * and reads the count back on the same fetch that opens a set, and the app's
+ * two money emails exist and are tested but are NOT wired to a live route —
+ * PayPal itself is still blocked on this environment's network egress. That
+ * second fact is exactly the kind of thing a session must not rediscover by
+ * building a webhook route from memory. Both entries were tightened first.
+ */
+const BUDGET = 134_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

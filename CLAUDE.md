@@ -2155,6 +2155,29 @@ the podium — every other Past gigs read asks without it.
 
 Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 
+### THE ADVERT SLIDE EDITOR HOLDS THE OFFER, AND READS ITS OWN COUNT BACK
+
+`slideEditor()` in `console-venues.js` collects `offerCode`/`offerWhen`
+alongside the link — `src/offers.js` was built with no console side at all.
+`/api/advert/<id>` embeds `room.offers.forPack(id)` on the same fetch that
+opens a set, so the count cannot drift from the pack; the editor keeps it OUT
+of the object it PUTs back. Silent until there is a code, silent again until
+anything has scanned it.
+
+Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
+
+### THE APP SENDS THE MONEY EMAILS, AND NOTHING ELSE
+
+`receiptEmail()`/`cardFailedEmail()` in `src/email.js`, `billingEmail()` in
+`src/billing.js` — kept OUT of `applyBilling()`, which stays a pure
+translation with no network call. Only `started`/`renewed` and
+`payment_failed` say anything. **Not wired to a live route** — PayPal is
+still blocked on this environment's network egress — but sender and
+connector are built and tested, waiting for the webhook route. A card-failed
+notice must never say a night is at risk.
+
+Full reasoning: **[`docs/business/plumbing.md`](docs/business/plumbing.md)**.
+
 ### A phone must not say you were right before the projector does
 
 `scoreBefore` on an answer, `positionsAtStart` on the question, and
