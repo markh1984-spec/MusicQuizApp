@@ -1,6 +1,6 @@
 /** The pack shelf — the grid, a pack card, the pictures, and the launch call. */
 
-import { esc, node, postJson } from './client.js';
+import { esc, node, postJson, dragRow, gripIcon, moveWithin } from './client.js';
 import { askForPackPanel, shopSection } from './console-account.js';
 import { generate, streamGeneration } from './console-generate.js';
 import { tonightsVenue, whenish } from './console-gigs.js';
@@ -9,7 +9,6 @@ import { renderBingoPreview, renderQuizPreview } from './console-preview.js';
 import { library, me, setPackDrag } from './console-state.js';
 import { addToTonight, dragging, night, playedAt } from './console-tonight.js';
 import { PACK_SHELF, can, canPin, doorNow, goTo, hostKey, isPinned, keyed, linkTo, load, packWord, pinIcon, pinRank, pinnedPacks, render, reorderPins, showDone, togglePin } from './console.js';
-import { dragRow, gripIcon, moveWithin } from './editor.js';
 import { tonight } from './diary.js';
 import { lobbyGameChoices, lobbyGameFor } from './lobby-games.js';
 import { inSeason } from './looks.js';

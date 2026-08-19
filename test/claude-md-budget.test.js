@@ -100,7 +100,16 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * second fact is exactly the kind of thing a session must not rediscover by
  * building a webhook route from memory. Both entries were tightened first.
  */
-const BUDGET = 134_000;
+/*
+ * RAISED TO 134,500 THE SAME DAY, for one line in the checks section: a page
+ * module (`editor.js`) has its own top-level boot code, and importing shared
+ * helpers FROM it ran that boot code on `/console` and hung the whole page —
+ * `node --check` saw nothing wrong. That is exactly the class of fault this
+ * section already exists to catalogue, and every session touching a console
+ * module needs to know it before reaching for the nearest file that already
+ * has the function rather than the page-agnostic one.
+ */
+const BUDGET = 134_500;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

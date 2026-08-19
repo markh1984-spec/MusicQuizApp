@@ -773,3 +773,110 @@ export function comeBackBand(s) {
       ${link ? `<div class="cb-qr"><img src="/qr.svg?text=${encodeURIComponent(link)}" alt=""></div>` : ''}
     </div>`;
 }
+
+/**
+ * DRAG AND DROP, on the console's own terms — shared by the editor's round
+ * and question reordering and the Workshop's pinned-pack arranger.
+ *
+ * The host drives this from the laptop that is plugged into the projector, so
+ * a mouse is the input this has to serve. The arrow buttons in the editor
+ * STAY regardless: drag is the faster way, not the only way — HTML5 drag
+ * events do not fire on touch at all, and a control that simply does not
+ * exist on a phone is worse than one that is merely slower.
+ *
+ * A GRIP, drawn, rather than making the whole row draggable: a row is often
+ * full of text boxes, and `draggable` on their container stops you selecting
+ * a word to retype it.
+ *
+ * **Lives here rather than in `editor.js`, and that placement is load-bearing
+ * — found the expensive way.** `editor.js` has its OWN top-level boot code
+ * that assumes it is running on `/editor.html`, reading `#quizPick` and
+ * attaching a listener to it. Importing anything from `editor.js` runs that
+ * code immediately, on every page that imports it — which broke `/console`
+ * outright the first time these three functions were imported from there:
+ * `#quizPick` does not exist on that page, so the listener attach threw
+ * before `render()` ever ran, and the whole console hung on "Loading your
+ * library…" for every account. `client.js` has no page of its own and no
+ * boot code, so it is the only safe shared home for anything more than one
+ * page needs.
+ */
+export function gripIcon() {
+  return `<svg class="grip-icon" width="14" height="18" viewBox="0 0 14 18" aria-hidden="true">
+    ${[3, 9, 15].map((y) => `<circle cx="4" cy="${y}" r="1.6" fill="currentColor"/>
+      <circle cx="10" cy="${y}" r="1.6" fill="currentColor"/>`).join('')}
+  </svg>`;
+}
+
+/**
+ * What is being dragged right now.
+ *
+ * Module level because a drag crosses two elements and outlives any one
+ * handler, and `dataTransfer` cannot be read during `dragover` — the one
+ * moment you need to know whether the thing under the cursor is a valid
+ * target. Cleared on `dragend` whatever happened, so an abandoned drag cannot
+ * leave the next click thinking it is a drop.
+ */
+let dragging = null;
+
+/**
+ * Wire one element as a drag source and a drop target.
+ *
+ * `onDrop(from, to, above)` gets the two descriptors and does the move;
+ * everything else here is the plumbing and the line that shows where it
+ * would land.
+ */
+export function dragRow(el, me, canTake, onDrop) {
+  const grip = el.querySelector('.drag-grip');
+  if (grip) {
+    grip.addEventListener('dragstart', (ev) => {
+      dragging = me;
+      ev.dataTransfer.effectAllowed = 'move';
+      // Firefox refuses to start a drag at all without data on the transfer.
+      ev.dataTransfer.setData('text/plain', JSON.stringify(me));
+      ev.dataTransfer.setDragImage(el, 20, 20);
+      el.classList.add('is-dragging');
+    });
+    grip.addEventListener('dragend', () => {
+      dragging = null;
+      el.classList.remove('is-dragging');
+      for (const n of document.querySelectorAll('.drop-above, .drop-below')) {
+        n.classList.remove('drop-above', 'drop-below');
+      }
+    });
+  }
+  el.addEventListener('dragover', (ev) => {
+    if (!dragging || !canTake(dragging)) return;
+    ev.preventDefault();
+    ev.dataTransfer.dropEffect = 'move';
+    // Above or below, decided by which half of the row the cursor is in —
+    // without it a list can only ever be reordered in one direction and the
+    // last position is unreachable.
+    const box = el.getBoundingClientRect();
+    const above = ev.clientY < box.top + box.height / 2;
+    el.classList.toggle('drop-above', above);
+    el.classList.toggle('drop-below', !above);
+  });
+  el.addEventListener('dragleave', () => el.classList.remove('drop-above', 'drop-below'));
+  el.addEventListener('drop', (ev) => {
+    if (!dragging || !canTake(dragging)) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    const box = el.getBoundingClientRect();
+    const above = ev.clientY < box.top + box.height / 2;
+    const from = dragging;
+    dragging = null;
+    el.classList.remove('drop-above', 'drop-below');
+    onDrop(from, me, above);
+  });
+}
+
+/** Move one item of a list to sit before or after another. */
+export function moveWithin(list, from, to, above) {
+  const [item] = list.splice(from, 1);
+  // Taking it out shifts everything after it down one, so a target that was
+  // after the source is now one index lower. Getting this wrong is the
+  // classic off-by-one that makes a drag "not move" when you drop it one
+  // place down.
+  const at = to - (from < to ? 1 : 0) + (above ? 0 : 1);
+  list.splice(Math.max(0, Math.min(list.length, at)), 0, item);
+}

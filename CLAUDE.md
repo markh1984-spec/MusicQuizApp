@@ -2265,6 +2265,12 @@ account is in [`docs/checks.md`](docs/checks.md):**
 - **A TEST THAT NEVER RUNS THE ARTEFACT PROVES NOTHING ABOUT IT.** Reading
   `server.js` as a string to check a route exists is how a broken Launch
   reached the live app with 1,150 tests passing.
+- **IMPORTING FROM A PAGE'S OWN MODULE RUNS THAT PAGE'S OWN BOOT CODE.**
+  `console-packs.js` importing three helpers from `editor.js` ran `editor.js`'s
+  top-level `#quizPick` listener on `/console`, where it does not exist — the
+  whole console hung on "Loading your library…", for every account, and
+  `node --check` saw nothing wrong. Shared code belongs in `client.js`, which
+  has no page and no boot code, never in a file with a page of its own.
 
 Beyond the unit tests, these were run by hand and are worth repeating after
 anything structural: 60 phones with live SSE connections all answering at once;
