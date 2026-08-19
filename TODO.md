@@ -18,38 +18,43 @@ decision from the host first.
 `test/todo-budget.test.js` fails if anything left in the list claims to be done.
 
 
-1. **Email's remaining uses — and INVOICES ARE NOT ONE OF THEM.**
-    *Settled 17 August 2026 by looking at what is already there.* The decision
-    was that an invoice DRAFTS rather than sends, and `share()` in
-    `console-invoices.js` already does exactly that: the PDF into the share
-    sheet with a written covering note, or the PDF plus a pre-filled `mailto:`
-    on a laptop. **It also comes from the quizmaster's own address**, which
-    server-sent email could not do — a venue receiving an invoice from
-    `quizporium.co.uk` for a self-employed person's work is wrong, and it puts
-    this app's sending reputation behind somebody else's billing.
-    *What is actually left:* the other uses — a reply to a suggestion, a
-    receipt, a card-failed notice. **Each is its own decision about whose name
-    is on the envelope**, and `src/email.js` says in as many words not to grow
-    into notifications without one.
-2. **THE ADVERT COUNT HAS NOWHERE TO BE READ YET.** The counting is built —
-    `/o/<pack>/<slide>` serves the offer, records the open, and the projector's
-    QR points at it whenever a slide has a code. **What is missing is the
-    console side:** somewhere to type the code and the "valid when" line onto a
-    slide, and somewhere to read *"41 opens, 12 on the 14th"* back. Until then
-    a code has to be put into the advert JSON by hand.
-3. **The post-night report** — every number it needs already exists, and the
-    venue join is built, so nothing blocks it now.
-4. **THERE ARE TWO WAYS TO PUBLISH A NIGHT, AND ONE OF THEM SKIPS THE LOOKING —
-    which do you want?** *Needs a decision from you; it is one line either way.*
-    The gallery control under the photographs is the safeguard: it is inside a
-    night you have opened, below the pictures it would publish, so nobody puts
-    a stranger's face in front of the world without having just seen it. **But
-    the Post gig BENCH has its own *Put it on the gallery* button**, and the
-    bench does not have to be opened — so that safeguard can be walked round in
-    one tap. Three ways out: take the bench button off, make it open the
-    photographs first, or leave it because the bench only ever holds a night
-    you deliberately put there. *I would make it open the photographs first* —
-    it keeps the shortcut and cannot skip the looking.
+1. **THE BENCH'S PUBLISH BUTTON OPENS THE PHOTOGRAPHS FIRST.** *Decided 19
+    August 2026.* Publishing from under the photographs is safe because you
+    have just looked at what you are publishing; the Post gig bench's own *Put
+    it on the gallery* walked round that in one tap. **The button stays and
+    becomes a way IN** — it opens the night's photographs rather than
+    publishing, so the shortcut is kept and the looking cannot be skipped.
+    Same path as arriving from the mic, which already opens a night's row.
+2. **THE POST-NIGHT REPORT — on the Gigs tab, under the night, out the share
+    sheet.** *Decided 19 August 2026.* It carries **the headcount, the winner
+    and the podium, how many photographs, and the advert opens** if a slide
+    had a code. Every one of those numbers already exists. **On the archived
+    night rather than on the bench**, because it is evidence rather than a
+    thing to do while packing up — and the venue's copy is worth more sent the
+    morning after than at half eleven. **A PDF through the share sheet**, like
+    an invoice, using `src/pdf.js`: no email service, and it goes from the
+    quizmaster's own address rather than this app's.
+3. **THE ADVERT SLIDE EDITOR HOLDS THE WHOLE OFFER, AND READS ITS OWN COUNT
+    BACK.** *Decided 19 August 2026.* The counting is built — `/o/<pack>/<slide>`
+    serves the offer and records the open, `forSlide()` and `forPack()` in
+    `src/offers.js` total it, and the projector's QR already points there. **What
+    is missing is entirely console-side.** One slide editor holds everything
+    the offer needs — the picture, the code, when it is valid, the link — so
+    there is no second place to keep half an advert, and **the opens are read
+    back on the slide itself**: *"41 opens, 12 on the 14th"*. Until it is
+    built a code has to be typed into the advert JSON by hand.
+4. **EMAIL: THE APP SENDS THE MONEY ONES AND NOTHING ELSE.** *Decided 19
+    August 2026.* A **receipt for a pack or a subscription** and a
+    **card-failed notice** come from **Quizporium** — the app took the money,
+    so the app's name is on the envelope. **A reply to a suggestion is not
+    email at all**: it goes to and from the account inside the app, which is
+    where the conversation already is and what the queue position, the receipt
+    and the draft-reply button were all built around. **An invoice is settled
+    separately and is not email either** — `share()` in `console-invoices.js`
+    drafts it, from the quizmaster's own address, because a venue receiving an
+    invoice from `quizporium.co.uk` for a self-employed person's work is
+    wrong and it puts this app's sending reputation behind somebody else's
+    billing.
 
 **AND ONE CORRECTION, because the old entry asked for the wrong thing.** It
 said to give a night "a real end time instead of the `+2 hours` default
