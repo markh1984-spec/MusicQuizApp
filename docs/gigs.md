@@ -956,6 +956,96 @@ boot-order fault of this work, after the moved `load()` call and `offerRoomId`:
 **a thing that is entirely right once the page is up, run one step too early.**
 The pattern is worth naming, because `node --check` cannot see any of them.
 
+### THE BENCH'S PUBLISH BUTTON OPENS THE PHOTOGRAPHS, IT DOES NOT PUBLISH
+
+Decided 19 August 2026, as one of a batch of decisions taken up front rather
+than asked mid-build — the host answered by picking an option in a menu, and
+the reasoning is worth keeping so the choice is not re-litigated.
+
+**The bench's own "Put it on the gallery" button was a second door onto the
+same route, and it skipped the safeguard the first door was built for.** The
+control under the photographs works because it is inside a night you have
+opened, below the pictures it would publish — nobody puts a stranger's face
+in front of the world without having just looked at what is in it. The bench
+does not have to be opened to reach its own copy of that button, so pressing
+it published directly, with nothing looked at.
+
+Three ways out were on the table: take the bench button off, make it open the
+photographs first, or leave it on the theory that the bench only ever holds a
+night you deliberately put there. **The middle one was chosen, because it
+keeps the shortcut and cannot skip the looking.** The button now does exactly
+what *Open its photos* next to it does — clicks the row's own head, through
+the one implementation of "show me this night" that already exists rather
+than a second one that could drift from it.
+
+**Taking a night OFF the gallery stays direct, deliberately.** The safeguard
+exists for publishing, not for withdrawing — removing a photograph from public
+view is never the risky direction, and somebody asking for their photo down
+while stood at the bar deserves the fast path, not an extra screen.
+
+## THE POST-NIGHT REPORT — a PDF for the venue, out the share sheet
+
+Decided 19 August 2026, in the same batch. TODO.md had held the entry for
+days: *"every number it needs already exists, and the venue join is built, so
+nothing blocks it now."* That was true, and the actual work was joining four
+things that had never been read together — the headcount, the podium, the
+photo count and the advert opens — because each had only ever been read on
+its own.
+
+**Where it lives settles a question the entry left open.** Two places were
+possible: the Post gig bench, in the minutes after a quiz ends, or the Gigs
+tab under the archived night. **The archived night won**, on the same
+reasoning that separates Gigs from Calendar elsewhere in this file — Gigs is
+evidence, and evidence is something you show somebody, which is a better fit
+for the morning after than for the car park. A landlord reads a PDF at
+half past eleven the way they read a text message at half past eleven: not at
+all.
+
+**It shares exactly like an invoice, and that is not a coincidence — it is
+the same decision, asked a second time and answered the same way.** No email
+service: the PDF goes through the share sheet, or a laptop gets a new tab with
+the file in it. It goes from the quizmaster's own account, never from this
+app's, which is the whole reason invoicing chose that shape in the first
+place — a venue receiving a report from `quizporium.co.uk` about a
+self-employed person's night is exactly as wrong as an invoice would be.
+
+### The podium needed a read nothing else asks for
+
+`listArchive()` only attaches a leaderboard when called with `{ boards: true
+}`, and every existing caller of Past gigs — the list, the per-night photo
+fetch, the publish route — asks without it, because none of them has ever
+needed second or third place. The report route is the first one that does, so
+it is the one place that cannot reuse another route's read of the archive
+verbatim.
+
+### The route has the same prefix trap the publish route already has
+
+`/api/past-gigs/<night>` matches on `route.startsWith('/api/past-gigs/')` and
+reads everything after the prefix as the night. A route for
+`/api/past-gigs/<night>/report.pdf` added anywhere below that would have its
+own path read as a night — `2026-08-19/report.pdf` is not a date, so it would
+404 as "no night with that date" instead of building a report, which looks
+exactly like a broken link rather than a routing mistake. It sits above the
+generic handler for the same reason the publish route already does, and the
+comment on it says so, because `node --check` cannot see a route ordered
+wrong — the file still parses.
+
+### What it does not attempt
+
+**It does not try to attribute advert opens to one night.** An offer belongs
+to a venue, not to an evening — the same fact `src/adverts.js` states about
+slides generally — so there is no way to say "these eleven scans were from
+Thursday's crowd" and the report does not pretend otherwise. It shows the
+venue's running total instead, which is the honest version of the same number
+and is still worth printing: it is one more thing the app already knew and had
+never said out loud, the same argument `headcounts.js` makes for the room
+size.
+
+**It matches a venue to its adverts by NAME, the same limitation
+`venueKeyOf()` already documents.** Advert packs carry a `venue` field, not a
+`venueId` — the join is free text on both sides, lowercased. A venue renamed
+after its slides were written reads as having none.
+
 ## AND THE PREVIEW DID NOT WORK ON THE HOST KEY
 
 The owner sees unpublished nights on `/gallery`, marked — asked for directly,

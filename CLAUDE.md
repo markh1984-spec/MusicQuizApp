@@ -2137,6 +2137,21 @@ Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
   `library` is null and the paint throws.
 - **ARRIVING OPENS THE ROW**, via the row's own head — one "show me this
   night". One shot.
+- **THE BENCH'S PUBLISH BUTTON OPENS THE PHOTOGRAPHS, not publishes** — it was
+  a way round the safeguard under the photos. Taking a night down stays
+  direct; there is nothing to skip in that direction.
+
+Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
+
+### THE POST-NIGHT REPORT — a PDF, off the archive, out the share sheet
+
+`src/report-pdf.js`, `/api/past-gigs/<night>/report.pdf`, `shareReport()` in
+`console-gigs.js`. Headcount, winner, podium, photo count, advert opens —
+nothing new collected. Same split as invoicing: `pdf.js` for primitives,
+`report-pdf.js` for layout, shared exactly like an invoice. **The route sits
+above the generic `/api/past-gigs/<night>` match**, the same prefix trap the
+publish route guards against, and needs `listArchive({ boards: true })` for
+the podium — every other Past gigs read asks without it.
 
 Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 

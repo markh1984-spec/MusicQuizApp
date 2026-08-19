@@ -82,7 +82,16 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * **A budget that only ever goes up is not a budget.** If a raise is genuinely
  * needed, look first for what has become reasoning rather than rule.
  */
-const BUDGET = 132_000;
+/*
+ * RAISED TO 133,000 ON 19 AUGUST 2026, for two small entries that are both
+ * genuine gotchas rather than description: the bench's publish button now
+ * opens the photographs instead of publishing (a safeguard walked round in
+ * one tap), and the post-night report's PDF route has to sit above the
+ * generic `/api/past-gigs/<night>` match, the same prefix trap the publish
+ * route already guards against. Both were tightened for size before this was
+ * raised, and 817 bytes is the genuine remainder.
+ */
+const BUDGET = 133_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
