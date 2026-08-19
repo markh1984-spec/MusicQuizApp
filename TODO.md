@@ -43,6 +43,12 @@ decision from the host first.
     there is no second place to keep half an advert, and **the opens are read
     back on the slide itself**: *"41 opens, 12 on the 14th"*. Until it is
     built a code has to be typed into the advert JSON by hand.
+    *The three seams, so they are not rediscovered:* `slideEditor()` in
+    `console-venues.js` collects six fields and neither `offerCode` nor
+    `offerWhen` is one of them, so the PUT that saves a pack has never carried
+    them; **`server.js` does not import `src/offers.js` at all**, so there is
+    no route a console could ask for a count through; and `normaliseAdvertPack()`
+    already keeps both fields, so nothing in the data model has to change.
 4. **EMAIL: THE APP SENDS THE MONEY ONES AND NOTHING ELSE.** *Decided 19
     August 2026.* A **receipt for a pack or a subscription** and a
     **card-failed notice** come from **Quizporium** — the app took the money,
