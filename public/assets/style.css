@@ -2227,8 +2227,14 @@ body[data-door="console"] .pack-card .pack-title::after { content: none; }
   opacity: 0.28; transition: opacity 120ms ease, background 120ms ease;
 }
 .pack-pin svg { width: 15px; height: 15px; display: block; transform: rotate(-20deg); }
-.pack-card:hover .pack-pin, .pack-pin:focus-visible { opacity: 0.75; }
+.pack-card:hover .pack-pin { opacity: 0.75; }
 .pack-pin:hover { opacity: 1; background: rgba(255, 255, 255, 0.10); }
+/* FOCUS GETS ITS OWN SIGNAL — it used to share the card-hover opacity (0.75),
+   dimmer than a direct mouse hover on the pin itself (1, plus a background),
+   which is backwards: a keyboard user has no cursor confirming where they
+   are. Full opacity and the account's own colour, like every input's focus
+   ring already uses. */
+.pack-pin:focus-visible { opacity: 1; outline: 2px solid var(--hot); outline-offset: 2px; }
 /* ON follows the account's own colours, like everything that means "this is
    mine and it is set" — never gold, which is the trophy colour. */
 .pack-pin.on {
@@ -5779,7 +5785,14 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   text-align: left; padding: 11px 12px; font: inherit; font-weight: 700;
   color: inherit; background: none; border: none; border-radius: var(--r-field); cursor: pointer;
 }
-.lb-hit:hover, .lb-hit:focus { background: rgba(255, 255, 255, 0.09); outline: none; }
+.lb-hit:hover { background: rgba(255, 255, 255, 0.09); outline: none; }
+/* FOCUS GETS ITS OWN SIGNAL, not the hover one borrowed — a touch-target audit
+   found several non-input controls where a keyboard tab and a mouse hover
+   were visually the same state, which is a weaker signal than either alone
+   for someone navigating without a cursor. The account's own colour, like
+   every input's focus already uses — same language, a control that is not
+   an input. */
+.lb-hit:focus-visible { background: rgba(255, 255, 255, 0.09); outline: 2px solid var(--hot); outline-offset: -2px; }
 
 /* SET IT UP — the settings, once it is open.
    A GRID rather than a wrapping flex row, and every child is allowed to
@@ -5900,7 +5913,15 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   display: inline-block; margin-left: 7px; vertical-align: 2px;
   border: 4px solid transparent; border-top-color: currentColor; border-bottom: 0;
 }
-.lb-where:hover, .lb-where:focus-visible { color: var(--ink); text-decoration: underline; outline: none; }
+.lb-where:hover { color: var(--ink); text-decoration: underline; outline: none; }
+/* Focus gets its own signal rather than the hover one — see the note on
+   `.lb-hit`. An OUTLINE was tried first and is wrong here specifically: this
+   element's own `overflow: hidden` (needed for the ellipsis truncation two
+   lines up) clips an outset outline down to a sliver, found by tabbing to it
+   in a real browser rather than trusting the computed style. An INSET
+   box-shadow draws inside the box it is already allowed to occupy, so
+   nothing truncating the text can also truncate the ring. */
+.lb-where:focus-visible { color: var(--ink); text-decoration: underline; outline: none; box-shadow: inset 0 0 0 2px var(--hot); border-radius: var(--r-field); }
 .lb-where[aria-expanded="true"]::after { transform: rotate(180deg); }
 
 /* The picker itself. A list you search rather than a dropdown you scroll:
@@ -5916,7 +5937,9 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   text-align: left; padding: 10px 12px; font: inherit; font-weight: 700;
   color: inherit; background: none; border: none; border-radius: var(--r-field); cursor: pointer;
 }
-.lb-venue-hit:hover, .lb-venue-hit:focus { background: rgba(255, 255, 255, 0.09); outline: none; }
+.lb-venue-hit:hover { background: rgba(255, 255, 255, 0.09); outline: none; }
+/* Focus gets its own signal rather than the hover one — see the note on `.lb-hit`. */
+.lb-venue-hit:focus-visible { background: rgba(255, 255, 255, 0.09); outline: 2px solid var(--hot); outline-offset: -2px; }
 .lb-venue-foot { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .lb-venue-add { text-decoration: none; }
 /* IN THE ROOM, OR ONLINE. The app's own On/Off shape, so it is recognised

@@ -48,8 +48,13 @@ test('two packs with different names get different colours', () => {
 test('GENRE BEATS DECADE, which is the point of the ordering', () => {
   // Both of these are 2000s packs. If the decade won they would be the same
   // colour, and the shelf would be no faster to read than it is now.
+  //
+  // Not "...Pop R'n'B and Chart..." here — that title also carries "chart",
+  // which the chart-means-mixed rule below deliberately falls through to
+  // the decade on. Same point, made with a title that isn't also proving
+  // the other rule.
   const metal = packLook({ title: 'The 2000s Metal Quiz' });
-  const rnb = packLook({ title: "The 2000s Pop R'n'B and Chart Quiz" });
+  const rnb = packLook({ title: "The 2000s R'n'B Quiz" });
   assert.equal(metal.subject, 'metal');
   assert.equal(rnb.subject, 'soul');
   assert.notEqual(metal.a, rnb.a);
@@ -206,6 +211,21 @@ test('a pack that says Disco is a disco pack, not a soul one', () => {
   assert.equal(packLook({ title: 'Disco & Funk Bingo' }).word, 'DISCO');
   // ...and the plain case is untouched.
   assert.equal(packLook({ title: 'Motown & Soul Bingo' }).word, 'SOUL');
+});
+
+test('a title that announces itself as a chart mix does not win on one genre word', () => {
+  /*
+   * "The 2000s Pop Rnb and Chart Quiz" and "The 2000s R'n'B Quiz" both came
+   * out SOUL on the same shelf — correctly, since Rnb is a soul word, but the
+   * first title lists three things and does not lead with it. Unlike the
+   * disco/funk case, there is no second genre word to prefer instead: "chart"
+   * and "pop" are deliberately not genre words. Falls through to the decade.
+   */
+  assert.equal(packLook({ title: 'The 2000s Pop Rnb and Chart Quiz' }).word, '00s');
+  // ...and the unambiguous pack keeps its real word.
+  assert.equal(packLook({ title: "The 2000s R'n'B Quiz" }).word, 'SOUL');
+  // A chart pack with no other genre word at all still falls through cleanly.
+  assert.equal(packLook({ title: 'The 1990s Chart Quiz' }).word, '90s');
 });
 
 /* ---- THE DRAWN TITLE IS TRIMMED; THE STORED ONE IS NOT

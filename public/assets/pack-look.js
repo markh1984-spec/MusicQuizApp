@@ -213,7 +213,21 @@ export function packLook(pack) {
   const title = (pack && (pack.title || pack.id)) || '';
   const w = words(title);
 
-  const subject = PACK_SUBJECTS.find((s) => s.words.some((word) => w.includes(` ${word} `)))
+  /*
+   * "CHART" MEANS MIXED, so a genre word riding alongside it does not win.
+   *
+   * Found on a real pair: "The 2000s Pop Rnb and Chart Quiz" and "The 2000s
+   * R'n'B Quiz" both printed SOUL on the same shelf — correctly, since Rnb IS
+   * in the soul list, but the first title does not LEAD with it, it lists
+   * three things and Rnb is one of them. The exact fault DISCO-before-SOUL
+   * already exists to catch, on a title neither reordering nor a fixed
+   * priority can fix, because there is no second genre word here to prefer
+   * instead — "chart" and "pop" are not genre words at all, deliberately.
+   * A title that announces itself as a MIX falls through to the decade,
+   * which is what a various-genre pop/chart pack should say about itself.
+   */
+  const isChartMix = w.includes(' chart ');
+  const subject = (isChartMix ? null : PACK_SUBJECTS.find((s) => s.words.some((word) => w.includes(` ${word} `))))
     || DECADES.find((d) => d.test.test(w));
 
   if (subject) {
