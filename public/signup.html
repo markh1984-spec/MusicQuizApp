@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a0a13">
+  <title>Sign up — Quizporium</title>
+  <link rel="stylesheet" href="/assets/style.css">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+</head>
+<body class="landing">
+  <div class="ld-signup-wrap">
+    <a class="ld-signup-back" href="/home">&larr; Back</a>
+    <div class="ld-signup-card">
+      <div id="formState">
+        <h1>Get started</h1>
+        <p class="ld-section-lede">A name and an email is all it takes. Add a
+          venue, your colours and everything else inside the app once you are
+          in.</p>
+        <form id="signupForm" class="ld-signup-form" autocomplete="on">
+          <label>Your name
+            <input type="text" name="name" required maxlength="200" autocomplete="name">
+          </label>
+          <label>Email
+            <input type="email" name="email" required maxlength="200" autocomplete="email">
+          </label>
+          <button class="go" type="submit">Get started</button>
+          <div class="ld-signup-problem" id="problem" role="alert"></div>
+        </form>
+      </div>
+      <div id="doneState" class="ld-signup-done" hidden>
+        <h1>You're in.</h1>
+        <p id="doneText">Check your email for a link to set a password —
+          it lasts 30 minutes.</p>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="/assets/signup.js"></script>
+</body>
+</html>

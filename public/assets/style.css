@@ -7951,3 +7951,184 @@ body.gallery { padding: 0; }
 /* The night tile has no subject colour to wear — a night is not a pack — so it
    takes the plain surface and says its date, venue and headcount instead. */
 .night-tile { background: rgba(255, 255, 255, 0.05); }
+
+/* ================================================================ LANDING
+   /home and /signup — the shop window. Persuade, not Operate: the visitor
+   here is deciding whether to get in touch, not driving a night, so the
+   type runs bigger and the hero gets real weight. Same tokens as everywhere
+   else in the app — colours, radii, the one gradient angle — so it reads as
+   Quizporium rather than a separate marketing site bolted on. Scheme-aware
+   for free: nothing here overrides --hot/--hot-2, so it wears whatever
+   [data-scheme] the page has (the ordinary sunset default, since nobody has
+   signed in yet). */
+body.landing {
+  margin: 0;
+  background:
+    radial-gradient(1200px 600px at 15% -10%, var(--glow-1) 0%, transparent 60%),
+    radial-gradient(1200px 600px at 100% 0%, var(--glow-2) 0%, transparent 55%),
+    var(--bg);
+  color: var(--ink);
+}
+.ld-wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+.ld-top { padding: 20px 0; }
+.ld-top-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.ld-top .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; padding: 4px; }
+.ld-top .brand-name { font-size: var(--fs-lead); font-weight: 900; color: var(--ink); }
+.ld-nav { display: flex; align-items: center; gap: 14px; }
+.ld-nav > a:first-child { color: var(--ink-dim); text-decoration: none; font-size: var(--fs-ctl); font-weight: 700; }
+.ld-nav > a:first-child:hover { color: var(--ink); }
+.ld-nav-cta { padding: 9px 18px; font-size: var(--fs-note); }
+
+.ld-hero { padding: 40px 0 60px; }
+.ld-hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: center; }
+@media (max-width: 860px) { .ld-hero-grid { grid-template-columns: 1fr; gap: 36px; } }
+.ld-eyebrow {
+  margin: 0 0 12px; font-size: var(--fs-tag); font-weight: 900; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--hot-2);
+}
+.ld-h1 {
+  margin: 0 0 16px; font-size: clamp(32px, 5vw, 52px); font-weight: 900; line-height: 1.08;
+  letter-spacing: -0.02em; text-wrap: balance;
+}
+.ld-lede { margin: 0 0 26px; font-size: var(--fs-field); line-height: 1.6; color: var(--ink-dim); max-width: 46ch; }
+.ld-cta-row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+/* THE ONE FILLED GRADIENT CONTROL, same as everywhere else in the app — "Get
+   in touch" is this page's version of Launch. There is a second one in the
+   header only because it is small and functions as a nav item, not a second
+   commitment competing with it. */
+.ld-cta {
+  display: inline-block; padding: 15px 30px; font-size: var(--fs-field); font-weight: 900;
+  text-decoration: none; border-radius: var(--r-field); border: none; cursor: pointer;
+  background: linear-gradient(120deg, var(--hot), var(--hot-2)); color: #12000c;
+}
+.ld-cta:hover { filter: brightness(1.08); }
+.ld-cta-secondary {
+  color: var(--ink-dim); text-decoration: none; font-size: var(--fs-ctl); font-weight: 700;
+  border-bottom: 1px dashed var(--panel-line); padding-bottom: 2px;
+}
+.ld-cta-secondary:hover { color: var(--ink); border-bottom-color: var(--hot); }
+.ld-hero-note { margin: 14px 0 0; color: var(--ink-dim); }
+
+/* The mock projector — drawn from the app's own tokens rather than a
+   screenshot, so it never goes stale and never adds an asset to load. */
+.ld-mock { display: grid; gap: 14px; }
+.ld-mock-screen {
+  background: var(--bg-2); border: 1px solid var(--panel-line); border-radius: var(--r-card);
+  overflow: hidden; box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+}
+.ld-mock-bar { display: flex; gap: 6px; padding: 12px 14px; background: rgba(255, 255, 255, 0.04); }
+.ld-mock-dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, 0.18); }
+.ld-mock-body { padding: 26px 22px 22px; }
+.ld-mock-q { font-size: var(--fs-lead); font-weight: 800; line-height: 1.35; margin-bottom: 18px; }
+.ld-mock-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ld-mock-opt {
+  padding: 12px 14px; border-radius: var(--r-field); font-size: var(--fs-note); font-weight: 800;
+  color: #12000c;
+}
+.ld-mock-opt.a { background: var(--a); }
+.ld-mock-opt.b { background: var(--b); }
+.ld-mock-opt.c { background: var(--c); }
+.ld-mock-opt.d { background: var(--d); }
+.ld-mock-clock {
+  margin-top: 16px; font-size: var(--fs-tag); font-weight: 900; letter-spacing: 0.06em;
+  color: var(--ink-dim); font-variant-numeric: tabular-nums;
+}
+.ld-mock-phones { display: flex; gap: 10px; justify-content: center; }
+.ld-mock-phone {
+  width: 34px; height: 58px; border-radius: 8px; background: var(--bg-2);
+  border: 1px solid var(--panel-line);
+}
+
+.ld-strip { padding: 30px 0; border-top: 1px solid var(--panel-line); border-bottom: 1px solid var(--panel-line); }
+.ld-strip-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+@media (max-width: 760px) { .ld-strip-row { grid-template-columns: 1fr; gap: 18px; } }
+.ld-strip-row > div { font-size: var(--fs-body); line-height: 1.55; color: var(--ink-dim); }
+.ld-strip-row strong { color: var(--ink); }
+
+.ld-section { padding: 64px 0; }
+.ld-h2 { margin: 0 0 8px; font-size: clamp(24px, 3.4vw, 32px); font-weight: 900; letter-spacing: -0.01em; }
+.ld-section-lede { margin: 0 0 32px; color: var(--ink-dim); font-size: var(--fs-field); max-width: 56ch; }
+
+.ld-tiers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+@media (max-width: 760px) { .ld-tiers { grid-template-columns: 1fr; } }
+.ld-tier {
+  position: relative; background: var(--panel); border: 1px solid var(--panel-line);
+  border-radius: var(--r-card); padding: 26px 22px;
+}
+.ld-tier-best { border-color: var(--hot); background: rgba(255, 255, 255, 0.08); }
+.ld-tier-badge {
+  position: absolute; top: -12px; left: 22px; background: linear-gradient(120deg, var(--hot), var(--hot-2));
+  color: #12000c; font-size: var(--fs-tag); font-weight: 900; letter-spacing: 0.04em;
+  text-transform: uppercase; padding: 4px 10px; border-radius: var(--r-pill);
+}
+.ld-tier-name { font-size: var(--fs-lead); font-weight: 900; margin-bottom: 6px; }
+.ld-tier-price { font-size: 34px; font-weight: 900; letter-spacing: -0.01em; margin-bottom: 14px; }
+.ld-tier-price span { font-size: var(--fs-note); font-weight: 700; color: var(--ink-dim); }
+.ld-tier-blurb { color: var(--ink-dim); font-size: var(--fs-body); line-height: 1.55; }
+.ld-tiers-note { margin: 20px 0 0; color: var(--ink-dim); }
+.ld-tiers-note a { color: var(--hot-2); font-weight: 700; }
+
+.ld-honest { background: rgba(255, 255, 255, 0.03); }
+.ld-honest-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; max-width: 68ch; }
+.ld-honest-list li {
+  padding-left: 26px; position: relative; color: var(--ink-dim); font-size: var(--fs-body); line-height: 1.6;
+}
+.ld-honest-list li::before { content: '—'; position: absolute; left: 0; color: var(--ink-dim); }
+
+.ld-faq { display: grid; gap: 10px; max-width: 68ch; }
+.ld-faq-item {
+  background: var(--panel); border: 1px solid var(--panel-line); border-radius: var(--r-field);
+  padding: 4px 18px;
+}
+.ld-faq-item summary {
+  padding: 14px 0; cursor: pointer; font-weight: 800; font-size: var(--fs-field); list-style: none;
+}
+.ld-faq-item summary::-webkit-details-marker { display: none; }
+.ld-faq-item summary::after {
+  content: ''; float: right; margin-top: 8px;
+  border: 4px solid transparent; border-top-color: var(--ink-dim); border-bottom: 0;
+}
+.ld-faq-item[open] summary::after { transform: rotate(180deg); }
+.ld-faq-item p { margin: 0 0 16px; color: var(--ink-dim); line-height: 1.6; }
+
+.ld-final { text-align: center; }
+.ld-final-inner { display: flex; flex-direction: column; align-items: center; }
+.ld-final .ld-section-lede { margin-left: auto; margin-right: auto; }
+
+.ld-foot { padding: 26px 0 40px; border-top: 1px solid var(--panel-line); }
+.ld-foot-row { display: flex; align-items: center; justify-content: space-between; color: var(--ink-dim); font-size: var(--fs-note); }
+.ld-foot-row a { color: var(--ink-dim); }
+
+/* ---- /signup, its own smaller page ---- */
+.ld-signup-wrap { max-width: 460px; margin: 8vh auto; padding: 0 20px; }
+.ld-signup-back { color: var(--ink-dim); text-decoration: none; font-size: var(--fs-note); font-weight: 700; }
+.ld-signup-back:hover { color: var(--ink); }
+.ld-signup-card {
+  margin-top: 20px; background: var(--panel); border: 1px solid var(--panel-line);
+  border-radius: var(--r-card); padding: 30px 26px;
+}
+.ld-signup-card h1 { margin: 0 0 8px; font-size: var(--fs-title); }
+.ld-signup-card .ld-section-lede { margin: 0 0 24px; font-size: var(--fs-body); }
+.ld-signup-form { display: grid; gap: 14px; }
+.ld-signup-form label { display: grid; gap: 5px; font-size: var(--fs-note); font-weight: 700; color: var(--ink-dim); }
+.ld-signup-form input, .ld-signup-form textarea {
+  padding: 12px 14px; font: inherit; font-size: var(--fs-field); border-radius: var(--r-field);
+  border: 1px solid var(--panel-line); background: rgba(255, 255, 255, 0.05); color: var(--ink);
+}
+.ld-signup-form input:focus, .ld-signup-form textarea:focus { outline: none; border-color: var(--hot); }
+.ld-signup-form textarea { resize: vertical; min-height: 70px; font-family: inherit; }
+.ld-signup-form button.go {
+  margin-top: 4px; padding: 14px; font-size: var(--fs-field); font-weight: 900;
+  border: none; border-radius: var(--r-field); cursor: pointer;
+  background: linear-gradient(120deg, var(--hot), var(--hot-2)); color: #12000c;
+}
+.ld-signup-form button.go:hover { filter: brightness(1.08); }
+.ld-signup-form button.go:disabled { opacity: 0.6; cursor: default; }
+.ld-signup-problem:not(:empty) {
+  padding: 10px 12px; border-radius: var(--r-field); font-size: var(--fs-note); font-weight: 700;
+  background: rgba(255, 77, 94, 0.12); color: var(--bad);
+}
+.ld-signup-done { text-align: center; padding: 10px 0; }
+.ld-signup-done h1 { margin: 0 0 10px; font-size: var(--fs-title); }
+.ld-signup-done p { color: var(--ink-dim); line-height: 1.6; }

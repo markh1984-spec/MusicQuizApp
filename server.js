@@ -62,7 +62,7 @@ import { calendarIcs } from './src/ics.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, switchedOn, PACK_PENCE } from './public/assets/plans.js';
 import { lobbyGameFor } from './public/assets/lobby-games.js';
 import { publishedNights, isPublished, setPublished, readableNight } from './src/gallery.js';
-import { sendEmail, emailConfigured, emailProvider, keepKeyAlive, resetEmail } from './src/email.js';
+import { sendEmail, emailConfigured, emailProvider, keepKeyAlive, resetEmail, welcomeEmail } from './src/email.js';
 import { Suggestions, KINDS, PACK_REQUEST_KIND } from './src/suggestions.js';
 import { Spend, spendRecorder, imagePrices } from './src/spend.js';
 // The pack id a generation is going to produce, so a cost has a subject from
@@ -1107,6 +1107,10 @@ async function handleGet(req, res, url, route) {
   if (route === '/editor') return serveFile(res, config.publicDir, 'editor.html'), true;
   if (route === '/console') return serveFile(res, config.publicDir, 'console.html'), true;
   if (route === '/login') return serveFile(res, config.publicDir, 'login.html'), true;
+  // The shop window — open to anybody, no key, no account. The place a
+  // referral or a search result lands.
+  if (route === '/home') return serveFile(res, config.publicDir, 'home.html'), true;
+  if (route === '/signup') return serveFile(res, config.publicDir, 'signup.html'), true;
   // Open, like the sign-in page. It hands out nothing on its own — the token
   // in the address is what has to be right, and the page asks the server.
   if (route === '/reset') return serveFile(res, config.publicDir, 'reset.html'), true;
@@ -3791,8 +3795,18 @@ async function handleWrite(req, res, url, route) {
     // post somebody a hundred emails at the owner's expense.
     if (!started || started.throttled || !started.token) return sendJson(res, 200, said), true;
 
+    /*
+     * NO PROXY HEADER MEANS THE CONNECTION REALLY IS PLAIN HTTP, not "assume
+     * https and hope". Render terminates TLS and forwards plain HTTP with
+     * `x-forwarded-proto: https` set, so that header is the only honest
+     * source for the scheme — this process never speaks TLS itself. Defaulting
+     * to https here produced a link nobody could open on a local run with no
+     * proxy in front, which is exactly how this project's own setup runs it.
+     * Found live: `curl`ing the route directly reproduced an unusable
+     * `https://localhost:PORT/...` link on a server serving plain HTTP.
+     */
     const base = (config.publicUrl || '').replace(/\/+$/, '')
-      || `${(req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim()}://${req.headers.host}`;
+      || `${(req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim()}://${req.headers.host}`;
     const link = `${base}/reset?t=${encodeURIComponent(started.token)}`;
     // `brandForRoom`, not `brandFor` — the second takes a person's NAME and
     // returns a string, so `brandFor(rooms.house).name` was a room passed as a
@@ -3950,6 +3964,80 @@ async function handleWrite(req, res, url, route) {
     if (!result.ok) return sendJson(res, 400, { error: result.error }), true;
     backUpSuggestions();
     return sendJson(res, 200, { ok: true, suggestion: result.suggestion }), true;
+  }
+
+  /*
+   * ---- /signup — a REAL account, self-serve, public, no key.
+   *
+   * LOW FRICTION ON PURPOSE: a name and an email, nothing else. Everything
+   * else a quizmaster might set up — a venue, their colours, their calendar —
+   * is a job for the account itself, once they are in it, not a form standing
+   * between a visitor and trying the app.
+   *
+   * There is still no live payment route (see `todo/marketing-app.md`), so
+   * this cannot take money — it creates the account on Bronze, `trialing`,
+   * exactly the shape `accounts.create()` already defaults to. THE PASSWORD
+   * IS NEVER TYPED HERE: a random one is set at creation and immediately
+   * thrown away, then the same magic-link mechanism a forgotten password
+   * uses (`startReset` / `/reset`) sends them a link to set a real one. One
+   * proven path for "prove you own this address and set a password", used by
+   * both a reset and a signup, rather than a second one invented here that
+   * could drift from it.
+   */
+  if (route === '/api/signup' && req.method === 'POST') {
+    const body = await readJson(req);
+    const name = String(body.name || '').trim();
+    const email = String(body.email || '').trim();
+    if (!name) return sendJson(res, 400, { error: 'A name is needed.' }), true;
+
+    let made;
+    try {
+      made = accounts.create({
+        email,
+        password: randomBytes(24).toString('hex'),
+        name,
+        role: 'quizmaster',
+        tier: 'bronze',
+        status: 'trialing',
+      });
+    } catch (err) {
+      // "There is already an account with that email address" arrives here
+      // in the same words `accounts.create()` already uses everywhere else.
+      return sendJson(res, 400, { error: err.message }), true;
+    }
+    await backUpAccounts();
+
+    // See the note on the same fallback in /api/reset/request — no proxy
+    // header means the connection really is plain HTTP, so 'http' is the
+    // honest default rather than 'https'.
+    const base = (config.publicUrl || '').replace(/\/+$/, '')
+      || `${(req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim()}://${req.headers.host}`;
+    const started = accounts.startReset(email);
+    const link = started && started.token ? `${base}/reset?t=${encodeURIComponent(started.token)}` : '';
+
+    if (link && emailConfigured()) {
+      const brandName = brandForRoom(rooms.get(HOUSE));
+      sendEmail({ to: email, ...welcomeEmail({ name: brandName, link }) })
+        .catch((err) => console.warn('[signup] could not email the new account:', err.message));
+    }
+    // Best-effort only, and never lets a visitor's own signup fail on it —
+    // the account already exists by this point regardless of whether Mark
+    // gets told about it straight away.
+    if (emailConfigured() && accounts.owner && accounts.owner.email) {
+      sendEmail({
+        to: accounts.owner.email,
+        subject: `New signup — ${name}`,
+        text: `${name} <${email}> just signed up on Bronze, trialing.`,
+      }).catch((err) => console.warn('[signup] could not notify the owner:', err.message));
+    }
+
+    return sendJson(res, 200, {
+      ok: true,
+      // Only when there is no email service to hand the link to somebody the
+      // ordinary way — the same fallback the console's own dev setup relies
+      // on elsewhere, and it is this visitor's own new account either way.
+      ...(!emailConfigured() && link ? { devLink: link } : {}),
+    }), true;
   }
 
   /*

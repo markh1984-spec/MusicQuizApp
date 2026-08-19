@@ -230,6 +230,28 @@ export function resetEmail({ name, link }) {
 }
 
 /**
+ * What lands after signing up on `/signup` — same LINK mechanism as a
+ * password reset (`accounts.startReset()`), worded for somebody who has just
+ * asked for an account rather than somebody locked out of one. Kept as its
+ * own function rather than reusing `resetEmail()` with different words spliced
+ * in, so the two can drift in tone without one editing the other by accident.
+ */
+export function welcomeEmail({ name, link }) {
+  const app = String(name || '').trim() || 'Quizporium';
+  return {
+    subject: `Set a password and get started on ${app}`,
+    text: [
+      `Thanks for signing up to ${app}.`,
+      '',
+      'Open this link to set a password. It lasts 30 minutes and works once:',
+      link,
+      '',
+      'Once it is set you are straight into the console — no card needed today.',
+    ].join('\n'),
+  };
+}
+
+/**
  * What a receipt says. Called from `billingEmail()` in `src/billing.js` when
  * a payment for a subscription lands, and left generic enough to cover a pack
  * purchase too, whenever that has a money flow of its own to call it from.
