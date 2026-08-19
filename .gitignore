@@ -24,3 +24,7 @@ screenshots/
 .DS_Store
 *.log
 .env
+
+# Impeccable's own working files (cache, session state) — not the skill
+# itself, which lives in .claude/skills/impeccable/ and IS committed.
+/.impeccable/
