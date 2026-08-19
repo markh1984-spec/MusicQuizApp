@@ -137,8 +137,18 @@ function pinnedArranger(kind, packs) {
       dragRow(row, { i }, () => true, (from, to, above) => {
         const order = [...pins];
         moveWithin(order, from.i, to.i, above);
-        draw();
+        /*
+         * `save()` is ASYNC BUT NOT AWAITED HERE, and the order matters
+         * because of it: its first line, `pins = order`, runs synchronously
+         * the moment it is called — before the function reaches its `await`
+         * — so calling `save()` before `draw()` means `draw()` already sees
+         * the new order. Called the other way round, as this line first was,
+         * the drop visually did nothing until the next full page render:
+         * `draw()` read the OLD `pins`, because nothing had reassigned it
+         * yet. Found by dragging a row and watching it silently snap back.
+         */
         save(order);
+        draw();
       });
       // togglePin() already removes it from prefs.pinnedPacks and re-renders
       // the whole page — the same call the shelf's own pin button makes.
