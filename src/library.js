@@ -393,6 +393,15 @@ export function listArchive(dir, { boards = false } = {}) {
            * something to scatter through a payload.
            */
           rewardsTaken: (r.vouchers || []).filter((v) => v && v.redeemedAt).length,
+          /*
+           * HOW MANY TIMES A VOUCHER WAS PUT BACK — the signal worth reading,
+           * not the redemption itself. `reinstateVoucher()` in engine.js has
+           * counted this on the voucher since the day Put it back existed; it
+           * simply never left the live control view. A voucher redeemed once
+           * is the system working; one put back three times is either a bar
+           * that cannot reach us or somebody working it.
+           */
+          rewardsReinstated: (r.vouchers || []).reduce((n, v) => n + (v && v.reinstated ? v.reinstated : 0), 0),
           // Only when asked for — see the note on the signature.
           ...(boards ? { leaderboard: r.leaderboard || [] } : {}),
         };

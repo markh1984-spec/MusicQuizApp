@@ -229,59 +229,6 @@ Order to do it in, and the first step is the only one that is awkward:
 Until then the archive-based version is live and does the same job with no new
 tab: pick a venue, and what it put up last time fills in.
 
-### 1d. WHERE REDEMPTIONS ARE VISIBLE — and the snapshot that misses them
-
-**BOTH HALVES ARE NOW BUILT (17 August 2026) — one line is left.** The bug half
-was fixed earlier; the DECISION half shipped too: `rewardsTaken` rides on the
-filed night (`src/library.js`) and Gigs prints *"3 prizes · 2 taken"* beside the
-headcount (`console-gigs.js`). **What is left is only the REINSTATE count** — a
-voucher the quizmaster put back is in the record and nothing surfaces it.
-
-**THE BUG HALF IS FIXED (14 August 2026)** — a voucher moving after the
-night is filed now updates the filed record, and the backup with it. Building
-it found and fixed a duplicate night after a restart on the final scores.
-**What is left is a DECISION: showing it on Past gigs**, which is the
-venue-facing half — see below.
-
-**Asked for on 14 August 2026, for two reasons the host gave and both are
-right:** evidence if somebody is being cheeky, and evidence that the night is
-popular and people win things. The second is the one that earns money — *"we
-gave out eighteen drinks across six nights"* is the sentence a venue responds
-to, and it is the only mechanism in this app that could ever say it.
-
-**Today it is live-only.** The **The prizes** panel on the control view updates
-the instant the bar presses Given — the row goes from "Not used yet" to "Used
-at 22:47", the card goes quiet, the button flips to Put it back. Pushed over
-the same connection that drives the quiz, so nothing needs refreshing. But it
-is a panel that CHANGES, not a notification: you notice if you look.
-
-**THE ACTUAL BUG: the archive snapshots too early.** `results()` carries
-`vouchers` with their whole history, so the record is being kept — but
-`session.js` files the night the moment it reaches `FINAL`, and the drinks are
-redeemed at the bar several minutes later. So every archived night says
-`redeemedAt: null` for all of them, for ever. The live panel is right and the
-permanent record is wrong, which is the worst way round.
-
-The fix is to update the filed night when a voucher moves after the night has
-been archived. Note `archivedThisGame` deliberately guards against filing
-twice, so this is an UPDATE to an existing record rather than a second archive
-— and it has to survive the room being reloaded from disk, because the bar may
-scan after a restart.
-
-**Then show it in two places, and they answer different questions:**
-
-- **Past gigs, per night** — "3 prizes, 3 taken" against the date and the
-  venue. This is the venue-facing evidence and belongs next to the headcount
-  and the photos.
-- **The control view, during the night** — already there. Add nothing; a host
-  running a quiz does not want an alert every time somebody gets a drink.
-
-**For "somebody being cheeky", the reinstate count is the signal**, not the
-redemption. A voucher redeemed once is the system working; one put back three
-times is either a bar that cannot reach us or somebody working it. That count
-already exists and already shows above zero — it just needs to reach the
-archive with everything else.
-
 ### 5b. The console and the editor ON A PHONE, from a quizmaster's side
 
 **Parked deliberately on 14 August 2026.** The host runs from a LAPTOP, so

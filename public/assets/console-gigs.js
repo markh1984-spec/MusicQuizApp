@@ -471,8 +471,16 @@ function gigRow(night) {
    */
   const put = night.games.reduce((n, g) => n + ((g.rewards || []).length), 0);
   const taken = night.games.reduce((n, g) => n + (g.rewardsTaken || 0), 0);
+  /*
+   * THE REINSTATE COUNT IS THE SIGNAL, not the redemption — a voucher put
+   * back once is the system working (a mis-scan, a genuine mistake); one put
+   * back three times is either a bar that cannot reach us or somebody working
+   * it. Silent at zero, like "taken" beside it — this is not an alarm, it is
+   * evidence to have ready if the question ever comes up.
+   */
+  const backAgain = night.games.reduce((n, g) => n + (g.rewardsReinstated || 0), 0);
   const prizes = put
-    ? ` · ${put} ${put === 1 ? 'prize' : 'prizes'}${taken ? `, ${taken} taken` : ''}`
+    ? ` · ${put} ${put === 1 ? 'prize' : 'prizes'}${taken ? `, ${taken} taken` : ''}${backAgain ? `, ${backAgain} put back` : ''}`
     : '';
 
   const el = node(`

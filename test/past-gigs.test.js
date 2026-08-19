@@ -147,6 +147,48 @@ test('a night with no vouchers reports none taken rather than undefined', () => 
   assert.equal(listArchive(dir)[0].rewardsTaken, 0);
 });
 
+/**
+ * THE REINSTATE COUNT IS THE SIGNAL, not the redemption.
+ *
+ * `reinstateVoucher()` in engine.js has counted this on the voucher since Put
+ * it back existed — it just never left the live control view. A voucher put
+ * back once is the system working; one put back three times is either a bar
+ * that cannot reach us or somebody working it, and that is worth having on
+ * the filed record rather than only on a panel that changes and is gone.
+ */
+test('a filed night says how many times a voucher was put back', () => {
+  const dir = tempDir();
+  archiveResults(dir, {
+    packId: 'tonight',
+    quizTitle: 'Tonight',
+    kind: 'quiz',
+    rewards: ['A round of drinks', 'A bar tab'],
+    vouchers: [
+      { code: 'AAA', redeemedAt: 1_700_000_000_000, reinstated: 0 },
+      { code: 'BBB', redeemedAt: null, reinstated: 3 },
+    ],
+    leaderboard: [{ position: 1, name: 'Quizteam Aguilera', score: 10 }],
+  }, Date.now());
+
+  const [night] = listArchive(dir);
+  assert.equal(night.rewardsReinstated, 3);
+});
+
+test('a night with no vouchers reports no reinstates rather than undefined', () => {
+  const dir = tempDir();
+  archiveResults(dir, { packId: 'p', quizTitle: 'Quiet one', kind: 'quiz' }, Date.now());
+  assert.equal(listArchive(dir)[0].rewardsReinstated, 0);
+});
+
+test('a voucher filed before reinstate counting existed reports zero, not a crash', () => {
+  const dir = tempDir();
+  archiveResults(dir, {
+    packId: 'p', quizTitle: 'Old night', kind: 'quiz',
+    vouchers: [{ code: 'AAA', redeemedAt: null }],
+  }, Date.now());
+  assert.equal(listArchive(dir)[0].rewardsReinstated, 0);
+});
+
 test('a disk that already has nights on it is ahead of any backup', () => {
   // The same rule as the accounts, the invoice book and the play counts.
   // Reading a backup over the top would either duplicate a night or lose one.

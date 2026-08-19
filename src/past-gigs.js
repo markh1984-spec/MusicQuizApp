@@ -115,6 +115,7 @@ export function mergeGigs(archived = [], photoNights = []) {
       winner: record.winner || null,
       rewards: record.rewards || [],
       rewardsTaken: record.rewardsTaken || 0,
+      rewardsReinstated: record.rewardsReinstated || 0,
       /*
        * The leaderboard rides along ONLY when the caller asked `listArchive`
        * for it, which is the league and nothing else. This function picks
