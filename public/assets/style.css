@@ -783,6 +783,20 @@ body.is-dragging-card .launchbar {
 .drop-above { box-shadow: inset 0 3px 0 0 var(--hot); }
 .drop-below { box-shadow: inset 0 -3px 0 0 var(--hot); }
 
+/* YOUR PINNED SIX, IN ORDER — the Workshop's arranger, console-packs.js. Its
+   own compact list rather than the shelf's cards made draggable: a pack card
+   is already a drag source to Tonight, and a second drag purpose on the same
+   element is two operations fighting over one dragstart. */
+.pin-arranger { margin: 4px 0 14px; }
+.pin-arranger-tag { margin-bottom: 6px; }
+.pin-arranger-rows { display: flex; flex-direction: column; gap: 2px; }
+.pin-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 6px; border-radius: var(--r-field);
+}
+.pin-row-title { flex: 1 1 auto; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pin-row-off { flex: 0 0 auto; line-height: 1; padding: 2px 8px; }
+
 /* WHAT THEY ARE PLAYING FOR, on the lobby. Big enough to read from the back
    while people are still finding a table, and quieter than the join steps —
    the prize is the reason to stay, joining is the thing to do first. */

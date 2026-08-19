@@ -457,8 +457,13 @@ function quizHeader() {
  * A GRIP, drawn, rather than making the whole card draggable: a card is full
  * of text boxes, and `draggable` on their container stops you selecting a word
  * to retype it.
+ *
+ * **Exported for the Workshop's pinned-pack arranger** (`console-packs.js`)
+ * rather than a second copy — the three functions are generic over whatever
+ * shape `me` is, and a second implementation is a second place the drop math
+ * could drift from this one.
  */
-function gripIcon() {
+export function gripIcon() {
   return `<svg class="grip-icon" width="14" height="18" viewBox="0 0 14 18" aria-hidden="true">
     ${[3, 9, 15].map((y) => `<circle cx="4" cy="${y}" r="1.6" fill="currentColor"/>
       <circle cx="10" cy="${y}" r="1.6" fill="currentColor"/>`).join('')}
@@ -482,7 +487,7 @@ let dragging = null;
  * `onDrop(from, to)` gets the two descriptors and does the move; everything
  * else here is the plumbing and the line that shows where it would land.
  */
-function dragRow(el, me, canTake, onDrop) {
+export function dragRow(el, me, canTake, onDrop) {
   const grip = el.querySelector('.drag-grip');
   if (grip) {
     grip.addEventListener('dragstart', (ev) => {
@@ -528,7 +533,7 @@ function dragRow(el, me, canTake, onDrop) {
 }
 
 /** Move one item of a list to sit before or after another. */
-function moveWithin(list, from, to, above) {
+export function moveWithin(list, from, to, above) {
   const [item] = list.splice(from, 1);
   // Taking it out shifts everything after it down one, so a target that was
   // after the source is now one index lower. Getting this wrong is the classic

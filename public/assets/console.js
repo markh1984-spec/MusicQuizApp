@@ -121,6 +121,29 @@ export async function togglePin(id, btn) {
 }
 
 /**
+ * REARRANGE THE PINS, without disturbing the other game's.
+ *
+ * `prefs.pinnedPacks` is ONE list holding both quiz and bingo ids together —
+ * there has never been a reason to split it, because `pinRank()` only ever
+ * compares two packs of the SAME kind (the shelf sorts one kind at a time).
+ * So reordering quiz's pins can drop bingo's out and back in at the end
+ * without changing what either shelf shows.
+ *
+ * @param {string[]} orderedIds  this kind's pins, in their new order
+ * @param {string[]} otherIds    every OTHER kind's pins, untouched
+ */
+export async function reorderPins(orderedIds, otherIds) {
+  const res = await fetch(keyed('/api/me/prefs'), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
+    body: JSON.stringify({ pinnedPacks: [...otherIds, ...orderedIds] }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Could not save that order');
+  library.prefs = data.prefs;
+}
+
+/**
  * THE ERA IN BIG LETTERS, BEHIND EVERYTHING ELSE ON THE CARD.
  *
  * Asked for on 15 August 2026 after cartoon figures were tried and did not

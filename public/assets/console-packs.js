@@ -8,7 +8,8 @@ import { field, money, sheet } from './console-invoices.js';
 import { renderBingoPreview, renderQuizPreview } from './console-preview.js';
 import { library, me, setPackDrag } from './console-state.js';
 import { addToTonight, dragging, night, playedAt } from './console-tonight.js';
-import { PACK_SHELF, can, canPin, doorNow, goTo, hostKey, isPinned, keyed, linkTo, load, packWord, pinIcon, pinRank, render, showDone, togglePin } from './console.js';
+import { PACK_SHELF, can, canPin, doorNow, goTo, hostKey, isPinned, keyed, linkTo, load, packWord, pinIcon, pinRank, pinnedPacks, render, reorderPins, showDone, togglePin } from './console.js';
+import { dragRow, gripIcon, moveWithin } from './editor.js';
 import { tonight } from './diary.js';
 import { lobbyGameChoices, lobbyGameFor } from './lobby-games.js';
 import { inSeason } from './looks.js';
@@ -76,6 +77,81 @@ export function packPrice() {
   return pence % 100 ? `£${(pence / 100).toFixed(2)}` : `£${pence / 100}`;
 }
 
+/**
+ * YOUR PINNED SIX, IN ORDER — drag to rearrange.
+ *
+ * `pinRank()` already sorts the shelf on POSITION within `prefs.pinnedPacks`,
+ * not merely on membership — that half was fixed. What never existed is a way
+ * to SET that position by hand; the only tool was unpinning and repinning in
+ * the order you wanted, which is real but nobody would call it arranging.
+ *
+ * **Its own small list, not the shelf's cards made draggable.** A pack card
+ * is already a drag SOURCE — dragged up to Tonight — and a second, different
+ * drag purpose on the same element is two drag operations competing for one
+ * `dragstart`, which native HTML5 drag resolves by picking whichever
+ * draggable ancestor is closest, not by which one you meant. A short list of
+ * names has no such conflict and reuses `dragRow()`/`moveWithin()` from the
+ * editor exactly as they are.
+ *
+ * **Silent with nothing to arrange.** Reordering nought or one pack is not a
+ * feature, and a permanently-empty control is furniture — the same judgement
+ * that keeps `advertsForVenue()` quiet for a venue with no slides.
+ *
+ * @returns {HTMLElement|null}
+ */
+function pinnedArranger(kind, packs) {
+  if (!canPin()) return null;
+  const idsThisKind = new Set(packs.map((p) => p.id));
+  const byId = new Map(packs.map((p) => [p.id, p]));
+  const otherIds = pinnedPacks().filter((id) => !idsThisKind.has(id));
+  let pins = pinnedPacks().filter((id) => idsThisKind.has(id) && byId.has(id));
+  if (pins.length < 2) return null;
+
+  const el = node(`
+    <div class="pin-arranger">
+      <div class="tiny pin-arranger-tag">Your six, in order — drag to rearrange</div>
+      <div class="pin-arranger-rows"></div>
+    </div>`);
+  const rows = el.querySelector('.pin-arranger-rows');
+
+  const save = async (order) => {
+    const before = pins;
+    pins = order;
+    try {
+      await reorderPins(pins, otherIds);
+    } catch (err) {
+      pins = before;
+      draw();
+      alert(err.message || 'Could not save that order.');
+    }
+  };
+
+  const draw = () => {
+    rows.replaceChildren(...pins.map((id, i) => {
+      const pack = byId.get(id);
+      const row = node(`
+        <div class="pin-row">
+          <span class="drag-grip" draggable="true" title="Drag to reorder">${gripIcon()}</span>
+          <span class="pin-row-title">${esc(shortTitle(pack.title))}</span>
+          <button class="minor pin-row-off" type="button" aria-label="Unpin ${esc(pack.title)}">&times;</button>
+        </div>`);
+      dragRow(row, { i }, () => true, (from, to, above) => {
+        const order = [...pins];
+        moveWithin(order, from.i, to.i, above);
+        draw();
+        save(order);
+      });
+      // togglePin() already removes it from prefs.pinnedPacks and re-renders
+      // the whole page — the same call the shelf's own pin button makes.
+      // Nothing extra to do here; a second write would race it.
+      row.querySelector('.pin-row-off').addEventListener('click', () => togglePin(id, row.querySelector('.pin-row-off')));
+      return row;
+    }));
+  };
+  draw();
+  return el;
+}
+
 export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
   const door = doorNow();
   const dense = localStorage.getItem(DENSE_STORE) === '1';
@@ -115,6 +191,7 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
         ${can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS) || can(FEATURES.GENERATE)
     ? `<p class="tiny pack-way"><a href="${linkTo('/editor')}">Write, buy or edit packs →</a></p>` : ''}
       </div>`}
+      <div class="pin-arranger-slot"></div>
       <div class="pack-grid ${dense ? 'dense' : ''}"></div>
       <!-- THE SHOP IS NOT HERE ANY MORE. It is its own tab behind My account
            - see shopSection(). A shop under the shelf put something to spend
@@ -142,6 +219,18 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
    * actually on the page, not by reading the diff.
    */
   if (door !== 'console') el.querySelector('.ask-slot').appendChild(askForPackPanel(kind));
+
+  /*
+   * CHOOSING THE SIX — drag-to-arrange, in the Workshop only.
+   *
+   * `IT BELONGS IN THE WORKSHOP, NOT THE CONSOLE` — todo/console.md. The pin
+   * itself already works from the shelf below; what was missing is an ORDER
+   * you can set by hand rather than by unpinning and repinning in sequence.
+   */
+  if (door === 'workshop') {
+    const arranger = pinnedArranger(kind, packs || []);
+    if (arranger) el.querySelector('.pin-arranger-slot').appendChild(arranger);
+  }
 
   const grid = el.querySelector('.pack-grid');
   const search = el.querySelector('.pack-search');
