@@ -18,14 +18,7 @@ decision from the host first.
 `test/todo-budget.test.js` fails if anything left in the list claims to be done.
 
 
-1. **THE BENCH'S PUBLISH BUTTON OPENS THE PHOTOGRAPHS FIRST.** *Decided 19
-    August 2026.* Publishing from under the photographs is safe because you
-    have just looked at what you are publishing; the Post gig bench's own *Put
-    it on the gallery* walked round that in one tap. **The button stays and
-    becomes a way IN** — it opens the night's photographs rather than
-    publishing, so the shortcut is kept and the looking cannot be skipped.
-    Same path as arriving from the mic, which already opens a night's row.
-2. **THE POST-NIGHT REPORT — on the Gigs tab, under the night, out the share
+1. **THE POST-NIGHT REPORT — on the Gigs tab, under the night, out the share
     sheet.** *Decided 19 August 2026.* It carries **the headcount, the winner
     and the podium, how many photographs, and the advert opens** if a slide
     had a code. Every one of those numbers already exists. **On the archived
@@ -34,7 +27,7 @@ decision from the host first.
     morning after than at half eleven. **A PDF through the share sheet**, like
     an invoice, using `src/pdf.js`: no email service, and it goes from the
     quizmaster's own address rather than this app's.
-3. **THE ADVERT SLIDE EDITOR HOLDS THE WHOLE OFFER, AND READS ITS OWN COUNT
+2. **THE ADVERT SLIDE EDITOR HOLDS THE WHOLE OFFER, AND READS ITS OWN COUNT
     BACK.** *Decided 19 August 2026.* The counting is built — `/o/<pack>/<slide>`
     serves the offer and records the open, `forSlide()` and `forPack()` in
     `src/offers.js` total it, and the projector's QR already points there. **What
@@ -49,7 +42,7 @@ decision from the host first.
     them; **`server.js` does not import `src/offers.js` at all**, so there is
     no route a console could ask for a count through; and `normaliseAdvertPack()`
     already keeps both fields, so nothing in the data model has to change.
-4. **EMAIL: THE APP SENDS THE MONEY ONES AND NOTHING ELSE.** *Decided 19
+3. **EMAIL: THE APP SENDS THE MONEY ONES AND NOTHING ELSE.** *Decided 19
     August 2026.* A **receipt for a pack or a subscription** and a
     **card-failed notice** come from **Quizporium** — the app took the money,
     so the app's name is on the envelope. **A reply to a suggestion is not

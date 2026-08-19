@@ -586,6 +586,19 @@ function gigRow(night) {
       body.appendChild(bill);
     }
 
+    /*
+     * THE REPORT FOR THE VENUE — headcount, winner, podium, photos, offer
+     * scans, out through the share sheet exactly like an invoice. Present
+     * even with no photographs: a quiet Tuesday is still worth a headcount.
+     */
+    const report = node('<button class="minor gig-report">Report for the venue</button>');
+    report.addEventListener('click', async () => {
+      report.disabled = true;
+      await shareReport(night);
+      report.disabled = false;
+    });
+    body.appendChild(report);
+
     if (!night.hasPhotos) return;
 
     more.textContent = 'Loading…';
@@ -658,6 +671,38 @@ function gigRow(night) {
   });
 
   return el;
+}
+
+/**
+ * THE NIGHT, AS A DOCUMENT — for the venue, out through the share sheet.
+ *
+ * Same shape as `share()` in `console-invoices.js`, and deliberately so: the
+ * decision already made for invoicing is right here too — no email service,
+ * and it goes from the quizmaster's own account rather than this app's. The
+ * PDF itself does the work of picking headcount, podium, photos and offer
+ * scans off the archive; this only has to fetch it and hand it to whichever
+ * sheet the device offers.
+ */
+async function shareReport(night) {
+  const url = keyed(`/api/past-gigs/${encodeURIComponent(night.night)}/report.pdf`);
+  const when = new Date(night.night + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+  const subject = `${night.venue ? night.venue + ' — ' : ''}${when}`;
+  try {
+    const res = await fetch(url, { headers: { 'X-Host-Key': hostKey } });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Could not build the report.');
+    const blob = await res.blob();
+    const file = new File([blob], `${night.night}-report.pdf`, { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: subject });
+      return;
+    }
+  } catch (err) {
+    // A cancelled share sheet throws too — the same trap the invoice share
+    // sheet records — so only THAT falls through silently.
+    if (err && err.name === 'AbortError') return;
+    return alert(err.message || 'Could not share that.');
+  }
+  window.open(url, '_blank', 'noopener');
 }
 
 /**

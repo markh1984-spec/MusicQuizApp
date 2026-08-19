@@ -37,7 +37,8 @@ import { STYLES, findStyle, QUALITIES, DEFAULT_QUALITY } from './src/portraits.j
 import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig, playTrack } from './src/spotify.js';
 import { photoFolder, mergeGigs, safePhotoName, isNightFolder, nightOfGig } from './src/past-gigs.js';
-import { venueHeadcounts } from './src/headcounts.js';
+import { venueHeadcounts, nightHeadcount } from './src/headcounts.js';
+import { nightReportPdf, nightReportFilename } from './src/report-pdf.js';
 import { leaguesByVenue } from './src/league.js';
 import { comeBackFor } from './src/comeback.js';
 import { isComposed, MAX_ROUNDS } from './src/running-order.js';
@@ -2049,6 +2050,57 @@ async function handleGet(req, res, url, route) {
       // So the page can say why there are no pictures against an old night,
       // rather than implying nobody took any.
       photosKept: photosRepoConfigured(),
+    }), true;
+  }
+
+  /*
+   * THE POST-NIGHT REPORT — a PDF for the venue, built from what the archive
+   * and the photo repository already know.
+   *
+   * **IT HAS TO SIT ABOVE `/api/past-gigs/<night>`**, same trap as the
+   * publish route below: that one matches any path under the prefix, and
+   * would answer "that is not a night" to the word `report.pdf`.
+   *
+   * `{ boards: true }` is what makes the podium possible — every other read
+   * of Past gigs asks `listArchive` without it, because the page has never
+   * needed second and third place before.
+   */
+  if (route.startsWith('/api/past-gigs/') && route.endsWith('/report.pdf')) {
+    if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
+    const night = decodeURIComponent(route.slice('/api/past-gigs/'.length, -'/report.pdf'.length));
+    if (!isNightFolder(night)) return sendJson(res, 404, { error: 'No night with that date.' }), true;
+    const gigRoom = roomForHost(req, url);
+    await ensureArchiveRestored(gigRoom);
+    const folders = photosRepoConfigured() ? await listDirs(photoFolder(gigRoom.id), 'photos') : [];
+    const nights = mergeGigs(listArchive(gigRoom.paths.archive, { boards: true }), folders.map((f) => f.name));
+    const entry = nights.find((n) => n.night === night);
+    if (!entry) return sendJson(res, 404, { error: 'No night with that date.' }), true;
+    const photoFiles = photosRepoConfigured()
+      ? await listDir(`${photoFolder(gigRoom.id)}/${night}`, 'photos')
+      : [];
+    const photoCount = photoFiles.map((f) => safePhotoName(f.name)).filter(Boolean).length;
+    /*
+     * ADVERT OPENS FOR THE VENUE, matched by NAME — the same free-text join
+     * every other venue read uses, because an advert pack has no venueId.
+     * All-time rather than "on this night": an offer belongs to the venue,
+     * not to one evening, so there is no per-night count to read.
+     */
+    let opens = 0;
+    let hasOffer = false;
+    if (entry.venue) {
+      const want = entry.venue.trim().toLowerCase();
+      const packs = listAdvertPacks(gigRoom.paths.adverts).filter((p) => String(p.venue || '').trim().toLowerCase() === want);
+      for (const pack of packs) {
+        if (!pack.slides.some((s) => s.offerCode)) continue;
+        hasOffer = true;
+        const totals = gigRoom.offers.forPack(pack.id);
+        for (const slideId of Object.keys(totals)) opens += totals[slideId].total;
+      }
+    }
+    const pdf = nightReportPdf(entry, { headcount: nightHeadcount(entry), photoCount, opens, hasOffer });
+    return send(res, 200, pdf, {
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="${nightReportFilename(entry)}"`,
     }), true;
   }
 
