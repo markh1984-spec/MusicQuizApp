@@ -325,23 +325,29 @@ do not add an email service without asking; he asked, and the answer is that it
 belongs HERE rather than in the app's plumbing, because the reason to buy it is
 mostly commercial.
 
-**What it unblocks, and only the first is what prompted it:**
+**Since this was written, three of the four items below were settled or built,
+and the settling went the OTHER way on two of them — worth reading rather than
+skipping past:**
 
-- **Password reset by magic link.** Today the only route is the owner setting a
-  new one by hand and telling them — which is a Monday job, on the one thing
-  somebody needs at the moment they are locked out.
-- **Invoices sent from the app.** They currently go via the phone's share sheet
-  because there is nothing to send them with. That works and was the right call
-  without email; with it, "bill a venue before you leave the car park" gets
-  shorter still.
-- **A reply to a suggestion arriving where they will see it.** `reply-draft.js`
-  drafts and the console shows the thread, but somebody who has not opened the
-  console does not know they have been answered.
-- **Trial ending, card failed, receipt.** All of billing's polite half, which is
-  currently silent.
-- **Anything sent to a VENUE**, which is why it sits in this list — a post-night
-  report, a headcount summary, an invoice. Those are the things that win the
-  next booking, and none of them can be delivered today.
+- **Password reset by magic link — BUILT.** `/api/reset/request`,
+  `/api/reset/check`, `/api/reset/complete` and `/reset` are fully wired.
+- **Invoices sent from the app — DECIDED AGAINST, deliberately.** `share()` in
+  `console-invoices.js` drafts and hands off to the phone's share sheet, from
+  the quizmaster's own address — a venue receiving an invoice from
+  `quizporium.co.uk` for a self-employed person's work would be wrong, and it
+  puts this app's sending reputation behind somebody else's billing. Settled
+  19 August 2026; see the entry in `CLAUDE.md`.
+- **A reply to a suggestion arriving by email — DECIDED AGAINST, deliberately.**
+  The conversation is already in the app on both sides; email would be a
+  second inbox for a thing that has one. Settled 19 August 2026.
+- **Trial ending, card failed, receipt — the genuine remainder.** Decided 19
+  August 2026: a receipt and a card-failed notice send from Quizporium
+  (the app took the money, so the app's name is on the envelope). Not yet
+  built — the transport exists, these two just need the templates and the
+  triggers wiring in.
+- **Anything sent to a VENUE stays off email too.** The post-night report is
+  built and, like invoicing, deliberately goes through the share sheet rather
+  than server email, for the same reason.
 
 **What it costs:** a transactional provider (Resend, Postmark, SES) at roughly
 £0–15 a month at this volume, plus SPF, DKIM and DMARC records on

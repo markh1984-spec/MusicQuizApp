@@ -116,8 +116,7 @@ some.
 Design rule 4 says build what helps a quizmaster win the next booking. This is
 that list, in the order it should be built, worked out on 12 August 2026.
 
-**The first two items are BUILT** (14 August 2026), both written up in
-CLAUDE.md:
+**The first four items are BUILT**, all written up in CLAUDE.md:
 
 - **Headcount per venue** — "The Crown went from 22 to 58", on the venue's own
   card and on the Gigs tab, out of one record. It also settles what the rest of
@@ -128,60 +127,12 @@ CLAUDE.md:
   one part of the plan below that changed: the Venues tab did not exist when
   that entry was written, and a box typed weekly is a box that is blank by the
   third week.
+- **An advert QR that counts** — the offer page, the shared word-code, and the
+  opens read back on the slide editor itself: *"41 opens, 12 on the 14th"*.
+- **The post-night report for the venue** — a PDF through the share sheet,
+  reusing `src/pdf.js` — headcount, podium, photo count, advert opens.
 
-### 1. An advert QR that COUNTS
-
-Advert slides already take a heading, an image and a QR, and `src/qrcode.js`
-encodes anything. What is missing is what the QR points at.
-
-Serve the offer page from this app — *"Show this at the bar: QUIZ40"* — and it
-can count how many people opened it. **The count is the feature, not the
-discount.** A slide is an act of faith today; with a number the morning after
-it is a media buy with a report, which is what gets it sold, renewed and
-priced. It is also the first thing that makes Silver's advert slides
-demonstrably worth money.
-
-**Food is the obvious use and TICKETS are the better one.** "£5 off your NYE
-ticket" against "£2 off a pizza" — a ticket is £25 where a pizza is £8, and
-tickets are the case where the quizmaster can reasonably take a cut, which is
-the arrangement CLAUDE.md already sketches for a QR to ticket sales.
-
-**How to know whether an open became a sale, without integrating with
-anything.** Do not try to track the money — no till, no EPOS, no per-venue
-plumbing. Put a tag on the end of the venue's own link (`?ref=quiz`) and their
-ordering system counts it. Then:
-
-- **The quizmaster reports OPENS.** Honest, immediate, theirs.
-- **The venue reports ORDERS**, from their own analytics.
-
-That is better than tracking it here, because the number arrives from the
-person being convinced rather than from the person doing the convincing. Opens
-must still never be presented as conversion on their own — the landlord checks
-the till and the quizmaster loses the argument.
-
-**One shared code on the screen, not one per person.** Per-person codes are a
-voucher system — issuance, uniqueness, fraud, staff training — and the failure
-mode is an argument at the bar. With a shared code that argument is the
-venue's, not the quizmaster's, though the room will remember it was at the
-quiz, so the wording is worth agreeing with the landlord rather than inventing.
-
-**The redemption should be a WORD as well as a scan.** Staff can hear
-"QUIZ40". A phone held up in a dark bar at 10pm is a slower transaction than
-the discount is worth.
-
-### 2. The post-night report for the venue
-
-The night ends and the landlord gets: how many played, how that compares, how
-often their slide was up, and the photos. Two things happen — the quizmaster
-looks like a supplier with data rather than somebody with a laptop, and **the
-venue posts the photos themselves**, which reaches their regulars rather than
-the quizmaster's followers.
-
-**Not an email.** That needs an account and a monthly bill, and this file says
-not to add one without asking. It is a PDF through the share sheet, reusing
-`src/pdf.js` — the same dependency-free writer the invoices use.
-
-### 3. A public page per quizmaster — and the consent line
+### 1. A public page per quizmaster — and the consent line
 
 A shareable link, no login: nights, numbers, and "book me". The thing that goes
 in an Instagram bio or a cold email.
