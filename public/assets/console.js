@@ -1366,13 +1366,29 @@ function nightBenchPanel() {
       const row = document.querySelector(`.gig[data-night="${CSS.escape(night.night)}"] .gig-head`);
       if (row) { row.click(); row.scrollIntoView({ block: 'nearest' }); }
     });
+    /*
+     * PUTTING IT UP OPENS THE PHOTOS RATHER THAN PUBLISHING — the bench does
+     * not have to be opened, so its own button was a way round the safeguard
+     * under the photographs: publish without having just looked at what you
+     * are publishing. It becomes a way IN instead, through the row's own
+     * head, same as "Open its photos" above. The actual "Put it on the
+     * gallery" control lives there, under the pictures, and stays the only
+     * place that calls the publish route.
+     *
+     * TAKING IT DOWN has no such safeguard to skip — removing exposure is
+     * never the risky direction — so that half stays direct.
+     */
     el.querySelector('.night-gallery')?.addEventListener('click', async (ev) => {
+      if (!night.published) {
+        el.querySelector('.night-open')?.click();
+        return;
+      }
       const button = ev.currentTarget;
       button.disabled = true;
       try {
         await postJson('/api/past-gigs/publish',
-          { night: night.night, on: !night.published }, { 'X-Host-Key': hostKey });
-        night.published = !night.published;
+          { night: night.night, on: false }, { 'X-Host-Key': hostKey });
+        night.published = false;
         draw(night);
       } catch (err) {
         button.disabled = false;
