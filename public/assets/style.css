@@ -4473,6 +4473,12 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .scheme-blob[data-swatch="ember"]  { background: linear-gradient(120deg, #ff3d3d, #ffa62b); }
 .scheme-blob[data-swatch="citrus"] { background: linear-gradient(120deg, #9ae62b, #ffd23f); }
 .scheme-blob[data-swatch="ultra"]  { background: linear-gradient(120deg, #8b5cf6, #ff2ed6); }
+.scheme-blob[data-swatch="cobalt"]  { background: linear-gradient(120deg, #546dff, #22d3ee); }
+.scheme-blob[data-swatch="meadow"]  { background: linear-gradient(120deg, #22c55e, #14b8a6); }
+.scheme-blob[data-swatch="blush"]   { background: linear-gradient(120deg, #fb7185, #fb923c); }
+.scheme-blob[data-swatch="wine"]    { background: linear-gradient(120deg, #e04444, #a25fdb); }
+.scheme-blob[data-swatch="solstice"] { background: linear-gradient(120deg, #f5b642, #ca5b2e); }
+.scheme-blob[data-swatch="frost"]   { background: linear-gradient(120deg, #94a3b8, #38bdf8); }
 
 /* ============================================================== SCHEMES
    A quizmaster's own two colours — see public/assets/schemes.js.
@@ -4540,6 +4546,66 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   --glow-2: #3d0b47;
   --drift-1: rgba(139, 92, 246, 0.17);
   --drift-2: rgba(255, 46, 214, 0.15);
+}
+
+[data-scheme="cobalt"] {
+  --mark-3: #b8e8ff;
+  --hot: #546dff;
+  --hot-2: #22d3ee;
+  --glow-1: #0d1640;
+  --glow-2: #0a2f3a;
+  --drift-1: rgba(84, 109, 255, 0.16);
+  --drift-2: rgba(34, 211, 238, 0.15);
+}
+
+[data-scheme="meadow"] {
+  --mark-3: #baf7dc;
+  --hot: #22c55e;
+  --hot-2: #14b8a6;
+  --glow-1: #0d2a1a;
+  --glow-2: #0a2b28;
+  --drift-1: rgba(34, 197, 94, 0.16);
+  --drift-2: rgba(20, 184, 166, 0.15);
+}
+
+[data-scheme="blush"] {
+  --mark-3: #ffd9b8;
+  --hot: #fb7185;
+  --hot-2: #fb923c;
+  --glow-1: #3a1420;
+  --glow-2: #3a1f0d;
+  --drift-1: rgba(251, 113, 133, 0.16);
+  --drift-2: rgba(251, 146, 60, 0.15);
+}
+
+[data-scheme="wine"] {
+  --mark-3: #f0c2ff;
+  --hot: #e04444;
+  --hot-2: #a25fdb;
+  --glow-1: #3a0f14;
+  --glow-2: #2a1040;
+  --drift-1: rgba(224, 68, 68, 0.16);
+  --drift-2: rgba(162, 95, 219, 0.15);
+}
+
+[data-scheme="solstice"] {
+  --mark-3: #ffe9b8;
+  --hot: #f5b642;
+  --hot-2: #ca5b2e;
+  --glow-1: #3a2a0d;
+  --glow-2: #3a1f0f;
+  --drift-1: rgba(245, 182, 66, 0.15);
+  --drift-2: rgba(202, 91, 46, 0.15);
+}
+
+[data-scheme="frost"] {
+  --mark-3: #d6ecff;
+  --hot: #94a3b8;
+  --hot-2: #38bdf8;
+  --glow-1: #1a2230;
+  --glow-2: #0d2740;
+  --drift-1: rgba(148, 163, 184, 0.15);
+  --drift-2: rgba(56, 189, 248, 0.15);
 }
 
 /* New Year — gold on midnight, the one look that is about a CLOCK rather than

@@ -70,6 +70,36 @@ export const SCHEMES = [
     label: 'Ultraviolet',
     blurb: 'Violet into magenta. Nightclub, not pub.',
   },
+  {
+    id: 'cobalt',
+    label: 'Cobalt',
+    blurb: 'Electric blue into cyan. Crisp, and a colour this app never had.',
+  },
+  {
+    id: 'meadow',
+    label: 'Meadow',
+    blurb: 'Green into teal. The green this app has never had.',
+  },
+  {
+    id: 'blush',
+    label: 'Blush',
+    blurb: 'Rose into coral. Softer than Sunset.',
+  },
+  {
+    id: 'wine',
+    label: 'Wine',
+    blurb: 'Crimson into plum. Richer than Ember.',
+  },
+  {
+    id: 'solstice',
+    label: 'Solstice',
+    blurb: 'Gold into copper. Warm, and metallic on a projector.',
+  },
+  {
+    id: 'frost',
+    label: 'Frost',
+    blurb: 'Silver into sky blue. The quiet one.',
+  },
 ];
 
 /** A scheme by id, falling back to the ordinary one rather than to nothing. */
