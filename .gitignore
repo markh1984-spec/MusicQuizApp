@@ -28,3 +28,7 @@ screenshots/
 # Impeccable's own working files (cache, session state) — not the skill
 # itself, which lives in .claude/skills/impeccable/ and IS committed.
 /.impeccable/
+
+# Isolated worktrees the Agent tool creates for parallel/mutating sub-agents.
+# Transient scaffolding, auto-removed once the agent finishes.
+.claude/worktrees/
