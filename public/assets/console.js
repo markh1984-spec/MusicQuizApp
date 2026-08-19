@@ -14,6 +14,7 @@ import { generatePanel, importPanel, quizGeneratePanel } from './console-generat
 import { asksPanel, gigsSection } from './console-gigs.js';
 import { invoicesSection } from './console-invoices.js';
 import { gameSection, preview } from './console-packs.js';
+import { editPopover } from './console-editor-popover.js';
 import { shelfFor, showsSection } from './console-shows.js';
 import { BENCH_STORE, NIGHT_BENCH_STORE, bench, gigsSeen, lastDone, library, me, nightBench, nightDrag, packDrag, setAccountsExist, setBench, setGigsSeen, setLastDone, setLibrary, setMe, setNightBench, setNightDrag, setNightToOpen, setPackDrag } from './console-state.js';
 import { aNightIsOn, dragging, launchBar, night, putNightOnBench, putOnBench, runningPanel, tonightSettingsPanel } from './console-tonight.js';
@@ -1268,9 +1269,6 @@ function workBench() {
   if (bench && !on) { setBench(null); localStorage.removeItem(BENCH_STORE); }
 
   const look = on ? packLookAttrs(on, bench.kind) : null;
-  const editHref = on
-    ? `${linkTo('/editor')}${linkTo('/editor').includes('?') ? '&' : '?'}${bench.kind}=${encodeURIComponent(on.id)}`
-    : '';
 
   const el = node(`
     <div class="panel launchbar bench">
@@ -1303,7 +1301,7 @@ function workBench() {
         </div>
         <div class="bench-do">
           ${on ? `
-            <a class="go bench-go role-make" href="${esc(editHref)}">Edit the questions</a>
+            <button class="go bench-go role-make" type="button">Edit the questions</button>
             <button class="minor bench-read" type="button">Read it through</button>
             <p class="tiny">Saved as you go. Take it off when you are done with it.</p>`
     : `
@@ -1316,6 +1314,7 @@ function workBench() {
 
   el.querySelector('.bench-off')?.addEventListener('click', () => putOnBench(null));
   el.querySelector('.bench-read')?.addEventListener('click', () => preview(bench.kind, on));
+  if (on) el.querySelector('.bench-go')?.addEventListener('click', () => editPopover(bench.kind, on));
 
   /*
    * THE SAME DROP GESTURE AS TONIGHT, on the same kind of target — and it

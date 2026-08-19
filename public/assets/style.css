@@ -2846,6 +2846,10 @@ body.screen { cursor: none; }
   box-shadow: var(--shadow);
   overflow: hidden;
 }
+/* The popover editor holds a whole pack's worth of rounds and questions —
+   the same content editor.js lays out on a full page — so it gets more
+   room than a read-through's summary lines need. */
+.sheet-editor { width: min(980px, 100%); }
 .sheet-head {
   flex: 0 0 auto;
   display: flex; align-items: flex-start; gap: 14px;
