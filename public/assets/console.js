@@ -1159,8 +1159,25 @@ export function render() {
   document.body.dataset.door = doorNow();
   const live = Boolean(running && running.phase !== 'lobby' && running.phase !== 'finished');
 
+  /*
+   * THE BACKUP WARNING IS NOT ON THE CONSOLE DOOR — same rule the pack shelf
+   * itself follows: "nothing is between the console and the packs, remove
+   * everything else." It renders unconditionally at the top of every render,
+   * which puts it above the Tonight bar on the one door that exists to
+   * launch fast — a touch-target audit found Launch pushed below ~900px of
+   * scroll on a phone, partly by this. It loses no urgency: still full
+   * prominence on every other door, which is where packs are actually
+   * generated and edited — the thing the warning is about. Only its SCOPE
+   * changes, not its loudness, and it is unbounded in TIME (any host who
+   * never sets GITHUB_TOKEN sees it forever), unlike `firstOwnerPanel()`
+   * below, which is a true one-time gate and stays exactly where it was —
+   * `/console?key=...` with no `?door=` lands on the console door by
+   * default, and that link is the ONLY way in on a fresh install with no
+   * shell (Render's free tier). Hiding it there would remove the one way to
+   * ever see it.
+   */
   mainEl.replaceChildren(
-    ...(backupWarning(library.generation || {}) || []),
+    ...(doorNow() !== 'console' ? backupWarning(library.generation || {}) || [] : []),
     ...doneBanner(),
     ...firstOwnerPanel(),
     ...otherRoomsPanel(library.otherRooms || []),

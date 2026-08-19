@@ -2212,8 +2212,15 @@ body[data-door="console"] .pack-card .pack-title::after { content: none; }
  * focus so it can still be found.
  */
 .pack-pin {
-  position: absolute; top: 6px; left: 6px; z-index: 2;
-  width: 26px; height: 26px; padding: 0;
+  /* THE BOX IS 44×44 AND THE DRAWN ICON STAYS 15×15 — a measured touch-target
+     audit found the pin at 26×26px, well under the 44px floor, on a card
+     tapped one-handed on a phone. Flush at top:0/left:0 rather than centred
+     with a negative offset: `.pack-card` clips with `overflow: hidden` for
+     the wordmark behind it, so a negative inset would be silently cropped
+     back down. The icon moves a few px, which is not visible; the tap target
+     does not. */
+  position: absolute; top: 0; left: 0; z-index: 2;
+  width: 44px; height: 44px; padding: 0;
   display: inline-grid; place-items: center;
   border: 1px solid transparent; border-radius: var(--r-pill);
   background: none; color: var(--ink-dim); cursor: pointer;
@@ -2232,7 +2239,7 @@ body[data-door="console"] .pack-card .pack-title::after { content: none; }
 }
 .pack-pin.on svg { transform: none; }
 /* The title has to clear it, or a two-line pack name runs under the pin. */
-.pack-card.shut .pack-title, .pack-card.open .pack-title { padding-left: 26px; }
+.pack-card.shut .pack-title, .pack-card.open .pack-title { padding-left: 44px; }
 
 /* ---- A PACK WEARS ITS OWN SUBJECT.
  *
@@ -5985,6 +5992,10 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .lb-fold {
   margin-left: auto; flex: 0 0 auto;
   text-align: center;
+  /* MIN-HEIGHT 44px — a measured touch-target audit found this at 29px tall,
+     under the floor. Padding alone was font-size-dependent and fragile;
+     `min-height` plus flex centring holds the floor regardless. */
+  min-height: 44px; display: inline-flex; align-items: center; justify-content: center;
   padding: 6px 12px; border-radius: var(--r-pill);
   background: none; border: 1px solid var(--panel-line); color: var(--ink-dim);
   /* TWO RUNGS IN THIS ROW, NOT THREE. It was `--fs-mini` (12) beside a
@@ -6153,6 +6164,11 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   /* Two lines of a title and then an ellipsis: a pack name is the thing you
      are identifying the square by, and one line loses most of them. */
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  /* A GUTTER FOR THE ×, or a two-line title runs its own tail under it — found
+     on a real pack name at 1280px, wrapping straight into `.lb-tile-off`'s
+     footprint. Same fix as `.pack-title` clearing `.pack-pin`: reserve the
+     space rather than trust the two never to collide. */
+  padding-right: 32px;
 }
 .lb-tile-sub, .lb-tile-cap { color: var(--ink-dim); }
 /* A TICK PER ROUND, and a tap turns it into a cross. It replaces the line
