@@ -19,7 +19,7 @@
  * silently ignored, because a false alarm is half the fun in a room.
  */
 
-import { cleanTeamName, faceKey, isSafeId, newId, newToken, ownsPlayer, MAX_PLAYERS, rememberRemoved, wasRemoved, forgetRemoved } from './engine.js';
+import { cleanTeamName, faceKey, isSafeId, newId, newToken, newVoucherCode, ownsPlayer, MAX_PLAYERS, rememberRemoved, wasRemoved, forgetRemoved } from './engine.js';
 import { comeBackView } from './comeback.js';
 import { recordArcadeScore, arcadeBoard, arcadeFields } from './arcade.js';
 
@@ -471,6 +471,7 @@ export class BingoGame {
     const stageIndex = this.state.stageIndex || 0;
     if (!this.state.prizeWinners.some((w) => w.stageIndex === stageIndex)) {
       this.state.prizeWinners.push({ stageIndex, playerId, name: p.name, stage: this.stage, at });
+      this.issueVoucher(stageIndex, playerId, p.name);
     }
     this.state.phase = BINGO_PHASES.WON;
     this.state.lastWin = {
@@ -479,6 +480,86 @@ export class BingoGame {
     };
     this.changed();
     return { ok: true, valid: true, pattern: result.pattern, stage: this.stage };
+  }
+
+  /**
+   * What is on offer, tidied — see the same method in `engine.js`. Set on the
+   * NIGHT at launch (`session.launch()` writes `state.rewards` for either
+   * game), so a bingo night reads the venue's prizes exactly as a quiz does;
+   * this only exists here so bingo does not have to reach into the quiz
+   * engine to ask.
+   */
+  rewardList() {
+    const list = Array.isArray(this.state.rewards) ? this.state.rewards : [];
+    const out = list.map((r) => String(r || '').trim());
+    while (out.length && !out[out.length - 1]) out.pop();
+    return out;
+  }
+
+  /**
+   * One prize, one voucher, the moment it is actually won — never at the end
+   * of the night, because bingo hands prizes out AS it goes rather than once
+   * at a final scoreboard. The Nth prize on the venue's list goes with the
+   * Nth stage: a night with "a line" then "full house" pays out the first
+   * reward for the line and the second for the house, in the order a pub
+   * actually reads them off a card behind the bar.
+   *
+   * Silent when the venue put up fewer prizes than there are stages — a stage
+   * nobody is paying for is a real thing (a free extra line before the house)
+   * and must not mint a voucher for nothing.
+   */
+  issueVoucher(stageIndex, playerId, name) {
+    const reward = this.rewardList()[stageIndex];
+    if (!reward) return;
+    if (!this.state.vouchers) this.state.vouchers = {};
+    let code = newVoucherCode();
+    while (this.state.vouchers[code]) code = newVoucherCode();
+    this.state.vouchers[code] = {
+      code,
+      winnerId: playerId,
+      name,
+      // Reused as the same "1st / 2nd / 3rd" badge the quiz's voucher panel
+      // already draws — the FIRST prize won is the one a room sees first,
+      // exactly as it is for a quiz's finishing positions.
+      place: stageIndex + 1,
+      stage: this.state.stages[stageIndex],
+      reward,
+      venue: this.state.venue || '',
+      issuedAt: this.now(),
+      redeemedAt: null,
+      reinstated: 0,
+      history: [],
+    };
+  }
+
+  /**
+   * Spend it and put it back — identical to the quiz engine's own methods,
+   * because the redeem route (`/v`, `/api/voucher/redeem`) and the host's
+   * "Mark it used" / "Put it back" buttons call whichever engine is running
+   * without asking which game it is. Two copies rather than a shared mixin,
+   * for the same reason the whole class is separate from `Engine`: a bingo
+   * night and a quiz night must never be able to reach into each other by
+   * accident through something they happen to share.
+   */
+  redeemVoucher(code, { by = 'scan' } = {}) {
+    const v = (this.state.vouchers || {})[String(code || '').toUpperCase()];
+    if (!v) return { ok: false, reason: 'unknown' };
+    if (v.redeemedAt) return { ok: false, reason: 'already', voucher: v };
+    v.redeemedAt = this.now();
+    v.history.push({ what: 'redeemed', by, at: v.redeemedAt });
+    this.changed();
+    return { ok: true, voucher: v };
+  }
+
+  reinstateVoucher(code) {
+    const v = (this.state.vouchers || {})[String(code || '').toUpperCase()];
+    if (!v) return { ok: false, reason: 'unknown' };
+    if (!v.redeemedAt) return { ok: false, reason: 'not_redeemed', voucher: v };
+    v.history.push({ what: 'reinstated', by: 'host', at: this.now(), was: v.redeemedAt });
+    v.redeemedAt = null;
+    v.reinstated += 1;
+    this.changed();
+    return { ok: true, voucher: v };
   }
 
   /**
@@ -727,6 +808,15 @@ export class BingoGame {
     view.yourPrizes = (this.state.prizeWinners || [])
       .filter((w) => w.playerId === playerId)
       .map((w) => stageLabel(w.stage));
+    /*
+     * THE VOUCHERS THEMSELVES — every one this player holds, not just the
+     * latest. A team that wins the line and then the full house is holding
+     * two live prizes at once, both worth showing the bar, so this is an
+     * ARRAY rather than the quiz's single `voucher` — the quiz only ever
+     * issues one, at the very end; bingo hands them out as the night goes.
+     */
+    const mine = Object.values(this.state.vouchers || {}).filter((v) => v.winnerId === playerId);
+    if (mine.length) view.vouchers = mine;
     if (this.state.lastWin) view.win = { name: this.state.lastWin.name, pattern: this.state.lastWin.pattern, label: this.state.lastWin.label };
     /*
      * THE LOBBY GAME — only in the lobby, and only ever these two numbers.
@@ -792,6 +882,12 @@ export class BingoGame {
     view.onesAway = view.players.filter((p) => p.away === 1).length;
     view.claims = this.state.claims.slice(-6).reverse();
     if (this.state.lastWin) view.win = this.state.lastWin;
+    // The prize panel — same shape as the quiz's, so host.js's existing
+    // voucherPanel() draws it with no changes of its own. HOST-ONLY: a
+    // voucher carries a real, scannable, one-use code, so this must never
+    // reach screenView() — that would put a redeemable prize on a projector
+    // sixty people are looking at.
+    view.vouchers = Object.values(this.state.vouchers || {});
     return view;
   }
 
@@ -800,6 +896,13 @@ export class BingoGame {
       kind: 'bingo',
       packId: this.pack.id,
       title: this.pack.title,
+      // Where it happened, what was on offer, and who has taken it — same
+      // three fields the quiz files, read by the same headcount and
+      // rewards-taken code in library.js. A bingo night is a real night too.
+      venue: this.state.venue || '',
+      venueId: this.state.venueId || '',
+      rewards: this.rewardList(),
+      vouchers: Object.values(this.state.vouchers || {}),
       startedAt: this.state.startedAt,
       finishedAt: this.state.finishedAt,
       rounds: this.state.round,

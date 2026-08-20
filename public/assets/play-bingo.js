@@ -75,18 +75,76 @@ export function renderBingo(s, me) {
   const el = node(`
     <div class="bingo-wrap">
       <div class="bingo-status" id="bingoStatus"></div>
+      <div class="bingo-vouchers" id="bingoVouchers"></div>
       <div class="bingo-grid cols-${cols}${strip}" style="grid-template-columns:repeat(${cols}, 1fr)" id="bingoGrid"></div>
       <button class="btn bingo-call" id="bingoCall" disabled>BINGO!</button>
     </div>`);
 
   el.querySelector('#bingoCall').addEventListener('click', () => claim(el));
   paintCard(el, s, me);
+  paintVouchers(el, s);
   return el;
 }
 
 export function updateBingo(s, me) {
   const el = document.querySelector('.bingo-wrap');
-  if (el) paintCard(el, s, me);
+  if (!el) return;
+  paintCard(el, s, me);
+  paintVouchers(el, s);
+}
+
+// Redrawn only when the vouchers actually change — a state push happens on
+// every square anyone in the room marks, and rebuilding a QR image that many
+// times a second is wasted work on a phone.
+let lastVouchersSeen = '';
+
+function paintVouchers(root, s) {
+  const box = root.querySelector('#bingoVouchers');
+  if (!box) return;
+  const list = s.vouchers || [];
+  const seen = JSON.stringify(list);
+  if (seen === lastVouchersSeen) return;
+  lastVouchersSeen = seen;
+  box.replaceChildren(...list.map((v) => node(voucherCard(v))));
+}
+
+/**
+ * One prize, one card — same shape as the quiz's own voucher (`voucherCard()`
+ * in `play.js`), deliberately re-drawn here rather than imported: `play.js`
+ * is a whole page with its own boot code at module scope, and importing from
+ * it would run that boot code on this page too — the exact trap CLAUDE.md
+ * already records for `editor.js`. The markup is presentation and small
+ * enough that two copies is the safer choice.
+ *
+ * BINGO HANDS OUT SEVERAL OF THESE IN ONE NIGHT — a line, then a full house —
+ * so this draws ONE voucher rather than reading `s.voucher` the way the
+ * quiz's page does; the caller loops over `s.vouchers`.
+ */
+function voucherCard(v) {
+  const code = roomCode();
+  const target = `${location.origin}/v?c=${encodeURIComponent(v.code)}${code ? `&g=${encodeURIComponent(code)}` : ''}`;
+  if (v.redeemedAt) {
+    return `
+      <div class="win-card win-spent">
+        ${v.logo ? `<img class="win-logo" alt="${esc(v.venue || '')}" src="${esc(v.logo)}" onerror="this.remove()">` : ''}
+        <div class="sub">Collected</div>
+        <div class="win-what">${esc(v.reward)}</div>
+        <p class="tiny">Already redeemed. If that is wrong, ask the quizmaster.</p>
+      </div>`;
+  }
+  const logo = v.logo
+    ? `<img class="win-logo" alt="${esc(v.venue || '')}" src="${esc(v.logo)}" onerror="this.remove()">`
+    : '';
+  return `
+    <div class="win-card place-${v.place || 1}">
+      ${logo}
+      <div class="sub">You got it</div>
+      <div class="win-what">${esc(v.reward)}</div>
+      <img class="win-qr" alt="Show this at the bar"
+        src="/qr.svg?text=${encodeURIComponent(target)}&dark=%230b0b12&light=%23ffffff">
+      <div class="win-code">${esc(v.code)}</div>
+      <p class="tiny">Show this at the bar. They scan it, you get it. It only works once.</p>
+    </div>`;
 }
 
 function paintCard(root, s, me) {

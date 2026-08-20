@@ -706,6 +706,13 @@ export class Session {
       // phone that wandered off — and it is also how a flood gets cleared up
       // if one ever gets past the door.
       removeIdle: () => this.engine.removeIdlePlayers(),
+      // The bar's phone could not reach us, or it came over and said it was
+      // not working. Both games mint vouchers the same way (see bingo.js's
+      // issueVoucher/redeemVoucher, copied from the quiz's own), so this is
+      // shared rather than duplicated per game — it was quiz-only at first
+      // and a bingo night's "Put it back" button 404'd with "Unknown action".
+      redeemVoucher: () => this.engine.redeemVoucher(body.code, { by: 'host' }),
+      reinstateVoucher: () => this.engine.reinstateVoucher(body.code),
     };
 
     const perGame = this.kind === 'quiz' ? {
@@ -748,10 +755,6 @@ export class Session {
       // did not, which left no way to end a night early except pressing
       // onwards through every remaining question.
       finish: () => this.engine.finish(),
-      // The bar's phone could not reach us, or it came over and said it was
-      // not working. Both are one tap, and neither is a dead end.
-      redeemVoucher: () => this.engine.redeemVoucher(body.code, { by: 'host' }),
-      reinstateVoucher: () => this.engine.reinstateVoucher(body.code),
     } : {
       start: () => this.engine.start(),
       call: () => this.engine.call(String(body.trackId)),

@@ -1686,6 +1686,12 @@ body.bingo-card .bingo-call { margin-right: 72px; }
 .bingo-status .away.hot { color: var(--gold); }
 .bingo-status .won { color: var(--good); font-weight: 900; }
 
+/* A team can hold more than one prize at once — a line, then a full house —
+   so this stacks rather than assuming there is ever only one. Empty most of
+   the round, which is why it takes no space until a voucher exists. */
+.bingo-vouchers { display: flex; flex-direction: column; gap: 10px; }
+.bingo-vouchers:empty { display: none; }
+
 .bingo-grid { display: grid; gap: 7px; flex: 1 1 auto; min-height: 0; }
 .bingo-cell {
   position: relative;

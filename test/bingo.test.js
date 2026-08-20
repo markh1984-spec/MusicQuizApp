@@ -314,6 +314,37 @@ test('the big screen is never sent the uncalled tracks', () => {
   assert.equal(view.includes('"tracks"'), false, 'the whole list never goes to the room');
 });
 
+/*
+ * A voucher carries a real, scannable, one-use code — the same class of
+ * secret the answer key is, and the same rule applies: it is host-only, and
+ * screenView() feeds the projector sixty people are looking at. This is
+ * pinned explicitly because it was misplaced once, in this same change, and
+ * a test that only checked hostView() had it would not have caught that.
+ */
+test('a voucher code never reaches the big screen, only the host', () => {
+  const game = stagedGame(1);
+  game.state.rewards = ['A bottle of wine'];
+  const p = game.join({ name: 'Sharon' });
+  game.start();
+  for (let i = 0; i < p.card.length; i++) {
+    game.call(p.card[i]);
+    game.mark({ playerId: p.id, index: i, marked: true });
+  }
+  game.claim(p.id);
+
+  const [code] = Object.keys(game.state.vouchers);
+  assert.ok(code, 'the test itself needs a real voucher to check against');
+
+  assert.equal(Object.prototype.hasOwnProperty.call(game.screenView(), 'vouchers'), false,
+    'the projector view carries a vouchers field at all');
+  assert.equal(JSON.stringify(game.screenView()).includes(code), false,
+    'the voucher code leaked into the projector payload some other way');
+
+  assert.ok(Object.prototype.hasOwnProperty.call(game.hostView(), 'vouchers'),
+    'the host is the one screen that is supposed to see this');
+  assert.ok(JSON.stringify(game.hostView()).includes(code));
+});
+
 test('a phone is sent its own card and nobody else s', () => {
   const { game } = makeGame();
   const a = game.join({ name: 'Team A' });
@@ -799,4 +830,184 @@ test('somebody else winning does not say "you got it" on your phone', () => {
   assert.equal(game.playerView(a.id).won, true);
   assert.equal(game.playerView(b.id).won, false);
   assert.deepEqual(game.playerView(b.id).yourPrizes, []);
+});
+
+// ----------------------------------------------------------- prize vouchers
+
+/*
+ * Bingo hands out a real, scannable voucher the moment a prize is WON, not at
+ * the end of the night — a team can be holding a line voucher and still be
+ * playing for the full house. `state.rewards` is set at launch by
+ * `session.launch()` for either game (see the same field in the quiz), so a
+ * test sets it directly rather than going through a launch.
+ */
+
+test('a claimed prize mints a voucher, matched to the venue\'s reward for that stage', () => {
+  const game = stagedGame(2); // a line, then a full house
+  game.state.rewards = ['A round of drinks', 'A bar tab'];
+  game.state.venue = 'The Crown';
+  const p = game.join({ name: 'Sharon' });
+  game.start();
+  completeLine(game, p, 0);
+  game.claim(p.id);
+
+  const vouchers = Object.values(game.state.vouchers);
+  assert.equal(vouchers.length, 1);
+  assert.equal(vouchers[0].reward, 'A round of drinks');
+  assert.equal(vouchers[0].venue, 'The Crown');
+  assert.equal(vouchers[0].winnerId, p.id);
+  assert.equal(vouchers[0].place, 1);
+  assert.equal(vouchers[0].redeemedAt, null);
+});
+
+test('a second prize in the same night mints a second, separate voucher', () => {
+  const game = stagedGame(3); // a line, then two lines, then a full house
+  game.state.rewards = ['A round of drinks', 'A bar tab'];
+  const p = game.join({ name: 'Sharon' });
+  game.start();
+  completeLine(game, p, 0);
+  game.claim(p.id);
+  game.playOn();
+  completeLine(game, p, 1); // genuinely two lines now, marked over the first
+  game.claim(p.id);
+
+  const vouchers = Object.values(game.state.vouchers);
+  assert.equal(vouchers.length, 2);
+  assert.deepEqual(vouchers.map((v) => v.reward).sort(), ['A bar tab', 'A round of drinks']);
+  assert.deepEqual(vouchers.map((v) => v.place).sort(), [1, 2]);
+});
+
+test('no reward on offer for a stage means no voucher, not a crash', () => {
+  const game = stagedGame(3);
+  game.state.rewards = ['A round of drinks']; // nothing for the second or third stage
+  const p = game.join({ name: 'Sharon' });
+  game.start();
+  completeLine(game, p, 0);
+  game.claim(p.id);
+  game.playOn();
+  completeLine(game, p, 1);
+  game.claim(p.id);
+
+  assert.equal(Object.values(game.state.vouchers).length, 1, 'only the funded stage gets one');
+});
+
+test('claiming again for the same stage never mints a second voucher for it', () => {
+  const game = stagedGame(2);
+  game.state.rewards = ['A round of drinks', 'A bar tab'];
+  const a = game.join({ name: 'Sharon' });
+  const b = game.join({ name: 'Dave' });
+  game.start();
+  completeLine(game, a, 0);
+  completeLine(game, b, 0);
+  game.claim(a.id);
+  game.claim(b.id); // second claim on the same stage — already won, refused upstream by prizeWinners
+
+  assert.equal(Object.values(game.state.vouchers).length, 1, 'the stage was already taken');
+});
+
+test('the winning player sees their own vouchers, and nobody else does', () => {
+  const game = stagedGame(2);
+  game.state.rewards = ['A round of drinks', 'A bar tab'];
+  const a = game.join({ name: 'Sharon' });
+  const b = game.join({ name: 'Dave' });
+  game.start();
+  completeLine(game, a, 0);
+  game.claim(a.id);
+
+  const mine = game.playerView(a.id).vouchers;
+  assert.equal(mine.length, 1);
+  assert.equal(mine[0].reward, 'A round of drinks');
+  assert.equal(game.playerView(b.id).vouchers, undefined, 'nobody else holds one yet');
+});
+
+test('the host sees every voucher issued so far, across every winner', () => {
+  const game = stagedGame(3);
+  game.state.rewards = ['A round of drinks', 'A bar tab'];
+  const a = game.join({ name: 'Sharon' });
+  const b = game.join({ name: 'Dave' });
+  game.start();
+  completeLine(game, a, 0);
+  game.claim(a.id);
+  game.playOn();
+  completeLine(game, b, 0);
+  completeLine(game, b, 1);
+  game.claim(b.id);
+
+  const vouchers = game.hostView().vouchers;
+  assert.equal(vouchers.length, 2);
+  assert.deepEqual(vouchers.map((v) => v.name).sort(), ['Dave', 'Sharon']);
+});
+
+test('redeeming a voucher marks it spent, once', () => {
+  const game = stagedGame(1); // one prize: a full house
+  game.state.rewards = ['A bottle of wine'];
+  const p = game.join({ name: 'Sharon' });
+  game.start();
+  completeLine(game, p, 0);
+  for (const i of game.lines()[1]) {
+    game.call(p.card[i]);
+    game.mark({ playerId: p.id, index: i, marked: true });
+  }
+  // Full house needs every square marked, so mark the rest too.
+  for (let i = 0; i < p.card.length; i++) {
+    game.call(p.card[i]);
+    game.mark({ playerId: p.id, index: i, marked: true });
+  }
+  game.claim(p.id);
+
+  const [code] = Object.keys(game.state.vouchers);
+  const first = game.redeemVoucher(code, { by: 'scan' });
+  assert.equal(first.ok, true);
+  assert.ok(game.state.vouchers[code].redeemedAt);
+
+  const second = game.redeemVoucher(code, { by: 'scan' });
+  assert.equal(second.ok, false);
+  assert.equal(second.reason, 'already');
+});
+
+test('an unknown code is refused rather than crashing the scan', () => {
+  const game = stagedGame(1);
+  assert.deepEqual(game.redeemVoucher('NOTREAL'), { ok: false, reason: 'unknown' });
+  assert.deepEqual(game.reinstateVoucher('NOTREAL'), { ok: false, reason: 'unknown' });
+});
+
+test('the host can put a voucher back, and the count says how many times', () => {
+  const game = stagedGame(1);
+  game.state.rewards = ['A bottle of wine'];
+  const p = game.join({ name: 'Sharon' });
+  game.start();
+  for (let i = 0; i < p.card.length; i++) {
+    game.call(p.card[i]);
+    game.mark({ playerId: p.id, index: i, marked: true });
+  }
+  game.claim(p.id);
+  const [code] = Object.keys(game.state.vouchers);
+
+  game.redeemVoucher(code);
+  assert.equal(game.reinstateVoucher(code).ok, true);
+  assert.equal(game.state.vouchers[code].redeemedAt, null);
+  assert.equal(game.state.vouchers[code].reinstated, 1);
+
+  // Putting back a voucher that was never redeemed is refused, not a no-op.
+  assert.deepEqual(game.reinstateVoucher(code), { ok: false, reason: 'not_redeemed', voucher: game.state.vouchers[code] });
+});
+
+test('a bingo night files its venue, rewards and vouchers, same as a quiz', () => {
+  const game = stagedGame(1);
+  game.state.rewards = ['A bottle of wine'];
+  game.state.venue = 'The Crown';
+  game.state.venueId = 'v_crown';
+  const p = game.join({ name: 'Sharon' });
+  game.start();
+  for (let i = 0; i < p.card.length; i++) {
+    game.call(p.card[i]);
+    game.mark({ playerId: p.id, index: i, marked: true });
+  }
+  game.claim(p.id);
+
+  const results = game.results();
+  assert.equal(results.venue, 'The Crown');
+  assert.equal(results.venueId, 'v_crown');
+  assert.deepEqual(results.rewards, ['A bottle of wine']);
+  assert.equal(results.vouchers.length, 1);
 });
