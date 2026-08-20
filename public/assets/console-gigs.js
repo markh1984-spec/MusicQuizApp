@@ -438,6 +438,23 @@ function pastGigsSection() {
   return el;
 }
 
+/**
+ * What one archived game is called, on the list row and in the expanded
+ * view alike.
+ *
+ * A running-order night — quiz, a bingo interlude, quiz again — is still one
+ * archived record, so `night.games` has one entry for the whole evening. Its
+ * own `title` names only the part that actually finished it; `parts`, when
+ * present, is every part in order, and that is what gets shown instead —
+ * otherwise the pack the room started on simply never appears here.
+ */
+function gameLabel(g) {
+  if (Array.isArray(g.parts) && g.parts.length) {
+    return g.parts.map((p) => esc(p.title || (p.kind === 'bingo' ? 'Music bingo' : 'Music quiz'))).join(' → ');
+  }
+  return esc(g.title || (g.kind === 'bingo' ? 'Music bingo' : 'Music quiz'));
+}
+
 function gigRow(night) {
   const when = new Date(night.night + 'T12:00:00');
   const day = when.toLocaleDateString('en-GB', { day: 'numeric' });
@@ -449,7 +466,7 @@ function gigRow(night) {
   const year = when.getFullYear() === new Date().getFullYear()
     ? '' : String(when.getFullYear()).slice(2);
   const played = night.games.length
-    ? night.games.map((g) => esc(g.title || (g.kind === 'bingo' ? 'Music bingo' : 'Music quiz'))).join(' · ')
+    ? night.games.map(gameLabel).join(' · ')
     : 'No results saved';
   const heads = night.games.reduce((n, g) => Math.max(n, g.players || 0), 0);
   // The venue is the headline, because it is what you are looking for when you
@@ -544,7 +561,7 @@ function gigRow(night) {
 
     // Who won, which is on the archive and never on a photo.
     for (const game of night.games) {
-      body.appendChild(node(`<div class="tiny">${esc(game.title || '')} —
+      body.appendChild(node(`<div class="tiny">${gameLabel(game)} —
         ${esc(game.winner ? 'won by ' + game.winner : 'no winner recorded')}</div>`));
     }
 

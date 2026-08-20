@@ -88,12 +88,10 @@ directly — a bingo pack drops straight in, a round drags OUT of its pack
 into its own slot. Full reasoning: **[`docs/console.md`](../docs/console.md)**,
 under "THE MIXED ROW". Nothing left to build here.
 
-**ONE KNOWN GAP, left alone deliberately**: the archived record for a mixed
-night keeps only the LAST part's own data — a 3-part night's Past gigs entry
-reads as if it were just the closing quiz. Score, prizes and timing are all
-correct; it is specifically the evidence side (see *Gigs is evidence* below)
-that is thin for a mixed night. Worth fixing before this is leaned on for a
-venue-facing report, not before then.
+**The one known gap was closed on 20 August 2026**: a mixed night's archived
+record now carries every part it was made of (`parts`, resolved fresh at
+archive time in `describeOrderParts()`), not just the closing one — Past gigs
+shows the whole chain, joined with "→", rather than just the last pack played.
 
 Full reasoning, including the two bugs live verification caught (a bingo
 lobby-game default not resetting across the switch, and the voucher

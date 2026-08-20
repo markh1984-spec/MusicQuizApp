@@ -1348,15 +1348,33 @@ Set-it-up tab's own shape/prize pickers already do.
   very `lbExtra` `movePack()` had just computed. `pick()` now takes a
   `keepOrder` option; `movePack()` passes it.
 
-#### One known gap: the archived record only keeps the last part
+#### Fixed on 20 August 2026: the archived record now keeps every part
 
-A mixed night's Past gigs entry currently reads as if it were just the closing
-part — the score, the prizes and the timing are all correct, but a night's
-questions, its bingo interlude, and its earlier quiz part leave no trace in
-the filed record. Given *Gigs is evidence* above, a host wanting to show a
-venue "what we played" from a 3-part night would only see the last third of it.
-Left alone deliberately rather than built under gig-day time pressure; worth
-doing before this is leaned on for a venue-facing report.
+Was: a mixed night's Past gigs entry read as if it were just the closing part
+— score, prizes and timing were all correct, but the earlier quiz part and any
+bingo interlude left no trace in the filed record.
+
+`archiveResults()` only ever sees `engine.results()`, which knows about
+whichever engine is `this.engine` the instant the night truly ends — the last
+part, and only the last part. `Session.describeOrderParts(this.runningOrder)`
+closes the gap by resolving **every** segment fresh at archive time (bingo via
+`LAUNCHERS.bingo.load()`, quiz via `composeQuiz()` — the same loaders the
+night itself used to launch each part), rather than trusting anything cached
+from when a part launched. A pack deleted mid-evening is named as missing
+(`{ title: null }`) rather than dropped from the list or thrown.
+
+The result rides as `parts` on the archived record — absent entirely on an
+ordinary single-game night, so nothing about a normal filed night changes.
+Two more places had to be taught to carry it rather than drop it, because both
+build a picked SUBSET of the record rather than spreading it, on purpose (rule
+1's whitelist reasoning, applied to a filed night instead of a live payload):
+`listArchive()` in `library.js`, and `mergeGigs()` in `past-gigs.js`, which is
+where a running-order night's several archived-looking parts collapse to the
+ONE record it actually is (only the last part ever reaches FINAL/FINISHED, so
+only one file is ever written). `console-gigs.js`'s `gameLabel()` then joins
+`parts` with "→" wherever a game's title is shown, collapsed row and expanded
+view alike, falling back to the plain single title when there is no `parts`
+at all.
 
 #### Verified live, in real browsers, before this shipped
 

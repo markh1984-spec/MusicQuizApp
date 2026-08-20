@@ -101,7 +101,7 @@ test('the quiz keeps the same two actions through run(), unchanged by the move',
 // exactly the one CLAUDE.md warns about: something that reads fine as a
 // method call and is wrong the moment it goes through the actual route.
 
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -269,6 +269,99 @@ test('an intermediate part never archives the night, only the true final part do
 
     it.session.engine.finish(); // the real end of THIS night, bingo being the last part
     assert.equal(archived.length, 1, 'the night never got archived at all');
+  } finally {
+    it.done();
+  }
+});
+
+test('archiving a running-order night records every part, not just the last', () => {
+  // Found the gap live-verifying the feature: `engine.results()` only ever
+  // knows about whichever engine is `this.engine` when the night ends, i.e.
+  // the LAST part — so a quiz split by a bingo interlude used to lose the
+  // quiz's own pack identity from Past gigs entirely. See docs/console.md.
+  const it = withFileSession();
+  try {
+    const segments = [
+      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }] },
+      { kind: 'bingo', packId: 'bingo-a', prizes: 1 },
+      { kind: 'quiz', order: [{ packId: 'quiz-b', round: 0 }] },
+    ];
+    const archived = [];
+    it.session.onArchive = (record) => archived.push(record);
+    it.session.launchRunningOrder(segments);
+    const { id } = it.session.engine.join({ name: 'Quizteam Aguilera' });
+    playQuizSegmentToRoundBoard(it.session, id);
+
+    it.session.advanceOrder(); // into bingo
+    it.session.advanceOrder(); // into the closing quiz
+    it.session.engine.next(); // LOBBY -> RULES
+    it.session.engine.next(); // RULES -> ROUND_INTRO
+    it.session.engine.next(); // ROUND_INTRO -> QUESTION
+    it.session.engine.answer({ playerId: id, optionIndex: 0 });
+    it.session.engine.next(); // QUESTION -> REVEAL
+    it.session.engine.next(); // REVEAL -> ROUND_BOARD
+    it.session.engine.next(); // ROUND_BOARD -> FINAL, the true end
+
+    assert.equal(archived.length, 1);
+    const { parts } = archived[0];
+    assert.ok(Array.isArray(parts), 'the archived record has no parts at all');
+    assert.deepEqual(parts, [
+      { kind: 'quiz', id: '~tonight', title: 'Quiz quiz-a' },
+      { kind: 'bingo', id: 'bingo-a', title: 'Bingo bingo-a' },
+      { kind: 'quiz', id: '~tonight', title: 'Quiz quiz-b' },
+    ]);
+    // And the same list is what a quizmaster's Past gigs page would actually
+    // read back off disk, not just what stayed in memory this run.
+    const onDisk = JSON.parse(readFileSync(join(it.session.archiveDir, `${archived[0].id}.json`), 'utf8'));
+    assert.deepEqual(onDisk.parts, parts);
+  } finally {
+    it.done();
+  }
+});
+
+test('an ordinary, single-game night is archived with no `parts` field at all', () => {
+  const it = withFileSession();
+  try {
+    const archived = [];
+    it.session.onArchive = (record) => archived.push(record);
+    it.session.launch('quiz', 'quiz-a', {});
+    const { id } = it.session.engine.join({ name: 'Quizteam Aguilera' });
+    playQuizSegmentToRoundBoard(it.session, id);
+    it.session.engine.next(); // ROUND_BOARD -> FINAL
+    assert.equal(archived.length, 1);
+    assert.equal('parts' in archived[0], false, 'an ordinary night should not grow a new field nobody asked for');
+  } finally {
+    it.done();
+  }
+});
+
+test('a running-order part whose pack was deleted mid-evening is named as missing, not dropped or thrown', () => {
+  const it = withFileSession();
+  try {
+    const archived = [];
+    it.session.onArchive = (record) => archived.push(record);
+    it.session.launchRunningOrder([
+      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }] },
+      { kind: 'bingo', packId: 'bingo-a', prizes: 1 },
+    ]);
+    const { id } = it.session.engine.join({ name: 'Quizteam Aguilera' });
+    playQuizSegmentToRoundBoard(it.session, id);
+    it.session.advanceOrder();
+    // The first part's own pack is removed from disk between it being
+    // played and the night actually being archived.
+    rmSync(join(it.dir, 'quiz-a.json'));
+
+    it.session.engine.start();
+    const line = it.session.engine.lines()[0];
+    for (const i of line) {
+      it.session.engine.call(it.session.engine.state.players[id].card[i]);
+      it.session.engine.mark({ playerId: id, index: i, marked: true });
+    }
+    it.session.engine.finish();
+
+    assert.equal(archived.length, 1);
+    assert.deepEqual(archived[0].parts[0], { kind: 'quiz', id: null, title: null });
+    assert.deepEqual(archived[0].parts[1], { kind: 'bingo', id: 'bingo-a', title: 'Bingo bingo-a' });
   } finally {
     it.done();
   }

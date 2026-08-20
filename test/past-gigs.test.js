@@ -141,6 +141,42 @@ test('a filed night says how many prizes were actually taken', () => {
   assert.equal(night.rewardsTaken, 2, 'what was collected — the half nothing read back out');
 });
 
+/**
+ * A RUNNING-ORDER NIGHT IS STILL ONE ARCHIVED RECORD, so its one game entry
+ * has to carry every part it was made of, not just the part that happened to
+ * finish it — see session.js's `describeOrderParts()`. Without this, quiz ->
+ * bingo -> quiz merges down to a single game entry naming only the closing
+ * quiz, and the bingo interlude in between vanishes from Past gigs.
+ */
+test('mergeGigs carries a running-order night\'s `parts` through onto its game entry', () => {
+  const dir = tempDir();
+  archiveResults(dir, {
+    packId: '~tonight',
+    quizTitle: 'Quiz quiz-b',
+    kind: 'quiz',
+    parts: [
+      { kind: 'quiz', id: '~tonight', title: 'Quiz quiz-a' },
+      { kind: 'bingo', id: 'bingo-a', title: 'Bingo bingo-a' },
+      { kind: 'quiz', id: '~tonight', title: 'Quiz quiz-b' },
+    ],
+  }, Date.now());
+
+  const [night] = mergeGigs(listArchive(dir), []);
+  assert.equal(night.games.length, 1, 'a running-order night is still one archived record');
+  assert.deepEqual(night.games[0].parts, [
+    { kind: 'quiz', id: '~tonight', title: 'Quiz quiz-a' },
+    { kind: 'bingo', id: 'bingo-a', title: 'Bingo bingo-a' },
+    { kind: 'quiz', id: '~tonight', title: 'Quiz quiz-b' },
+  ]);
+});
+
+test('an ordinary night\'s game entry has no `parts` field', () => {
+  const dir = tempDir();
+  archiveResults(dir, { packId: 'p', quizTitle: 'Ordinary', kind: 'quiz' }, Date.now());
+  const [night] = mergeGigs(listArchive(dir), []);
+  assert.equal('parts' in night.games[0], false);
+});
+
 test('a night with no vouchers reports none taken rather than undefined', () => {
   const dir = tempDir();
   archiveResults(dir, { packId: 'p', quizTitle: 'Quiet one', kind: 'quiz' }, Date.now());

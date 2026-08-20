@@ -337,7 +337,15 @@ export class Session {
     // can clear it.
     if (this.launcher.isOver(state) && !state.archivedAs) {
       try {
-        const record = archiveResults(this.archiveDir, this.engine.results(), this.now());
+        const results = this.engine.results();
+        // A running-order night: fold in every part, not just the one that
+        // happens to be `this.engine` right now. `this.runningOrder` is set
+        // for the whole night, restored on a restart the same way as
+        // `orderPos`, so this is correct however the night ends.
+        const withParts = this.runningOrder
+          ? { ...results, parts: this.describeOrderParts(this.runningOrder) }
+          : results;
+        const record = archiveResults(this.archiveDir, withParts, this.now());
         /*
          * IN THE STATE, not on a flag on this object — and it fixes a second
          * fault as well as enabling the first.
@@ -812,6 +820,40 @@ export class Session {
       ...(scores && scores[p.id] ? scores[p.id] : {}),
     }));
     return this.startOrderSegment(list, this.orderPos + 1, opts, carry, scores);
+  }
+
+  /**
+   * What each part of a running order actually was, resolved FRESH rather
+   * than trusted from whenever it launched — a pack can be deleted mid-
+   * evening, and the archive should say so rather than throw or silently
+   * drop the part.
+   *
+   * Only called once, at archive time, and only on a night that went through
+   * `launchRunningOrder()` — an ordinary single-game night has no
+   * `state.runningOrder` and never reaches this, so its archived record gains
+   * no new field at all. This is what closes the gap `docs/console.md` and
+   * `todo/console.md` flagged: `engine.results()` only ever knows about
+   * whichever engine is live when the night ends, i.e. the LAST part, so a
+   * quiz broken up by a bingo interlude used to lose the quiz's own pack
+   * identity from Past gigs entirely the moment the bingo interlude replaced
+   * it as `this.engine`.
+   */
+  describeOrderParts(list) {
+    return (list || []).map((seg) => {
+      try {
+        if (seg.kind === 'bingo') {
+          const pack = LAUNCHERS.bingo.load(this.config, seg.packId, this.paths);
+          return { kind: 'bingo', id: pack.id, title: pack.title };
+        }
+        const pack = composeQuiz(seg.order, (id) => LAUNCHERS.quiz.load(this.config, id, this.paths));
+        return { kind: 'quiz', id: pack.id, title: pack.title };
+      } catch {
+        // A pack deleted since this part was played — named as missing
+        // rather than dropped silently, the same choice `composeQuiz` itself
+        // makes when a round's own pack has gone.
+        return { kind: seg.kind, id: seg.packId || null, title: null };
+      }
+    });
   }
 
   startOrderSegment(list, pos, opts, carry, scores = null) {

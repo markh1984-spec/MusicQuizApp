@@ -404,6 +404,15 @@ export function listArchive(dir, { boards = false } = {}) {
           rewardsReinstated: (r.vouchers || []).reduce((n, v) => n + (v && v.reinstated ? v.reinstated : 0), 0),
           // Only when asked for — see the note on the signature.
           ...(boards ? { leaderboard: r.leaderboard || [] } : {}),
+          /*
+           * A RUNNING-ORDER NIGHT'S OWN PARTS — quiz, a bingo interlude, quiz
+           * again — small enough to carry unconditionally, unlike the
+           * leaderboard above. Absent entirely on an ordinary night, same as
+           * every other conditional field here: this function builds a
+           * SUBSET, so a field left out of the object above never silently
+           * reaches `mergeGigs()` no matter what the record on disk holds.
+           */
+          ...(Array.isArray(r.parts) && r.parts.length ? { parts: r.parts } : {}),
         };
       } catch {
         return null;

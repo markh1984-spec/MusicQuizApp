@@ -125,6 +125,16 @@ export function mergeGigs(archived = [], photoNights = []) {
        * on the record and dropped one line later.
        */
       ...(record.leaderboard ? { leaderboard: record.leaderboard } : {}),
+      /*
+       * A RUNNING-ORDER NIGHT — quiz, then a bingo interlude, then quiz again
+       * — is still ONE archived record, because only the last part ever
+       * reaches its own game's real ending. Without this, the single game
+       * entry it produces names only that last part, and the quiz either
+       * side of the interlude simply never appears here. `parts` carries
+       * every part in order; a night that was never a running order has no
+       * such field, so nothing changes for the ordinary case.
+       */
+      ...(record.parts ? { parts: record.parts } : {}),
     });
   }
 
