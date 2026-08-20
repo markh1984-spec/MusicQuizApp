@@ -4,7 +4,7 @@
   "subtitle": "Three rounds. Twenty seconds a question. Fastest fingers win.",
   "questionSeconds": 20,
   "createdAt": "2026-08-05T21:58:57.830Z",
-  "notes": "Written by claude-sonnet-5 for \"1980s Pop Music\". NOT YET REVIEWED — read every question in the editor before the gig.",
+  "notes": "Rewritten for the Bronze starter set on 20 August 2026 — three rounds now, mixed round types. Read every question in the editor before the gig.",
   "rounds": [
     {
       "id": "r1",
@@ -131,6 +131,122 @@
           ],
           "correctIndex": 1,
           "answerNote": "Live Aid took place simultaneously at Wembley Stadium and Philadelphia's JFK Stadium."
+        }
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "multi",
+      "title": "Round Two — Pick Them All",
+      "blurb": "More than one answer is right. Lock in every one of them.",
+      "questions": [
+        {
+          "id": "r2q1",
+          "prompt": "Which of these were UK number one singles in the 1980s?",
+          "options": [
+            "Karma Chameleon",
+            "Bohemian Rhapsody",
+            "Careless Whisper",
+            "Livin' on a Prayer",
+            "Never Gonna Give You Up",
+            "Take On Me"
+          ],
+          "correctIndexes": [0, 2, 4],
+          "answerNote": "Bohemian Rhapsody's UK number ones were 1975 and 1991. Livin' on a Prayer and Take On Me both stalled at number 2 and 4 in the UK."
+        },
+        {
+          "id": "r2q2",
+          "prompt": "Which of these artists had a UK number one album in the 1980s?",
+          "options": [
+            "Michael Jackson",
+            "Nirvana",
+            "Madonna",
+            "Oasis",
+            "Whitney Houston",
+            "Dire Straits"
+          ],
+          "correctIndexes": [0, 2, 4, 5],
+          "answerNote": "Nirvana and Oasis are both 1990s acts."
+        },
+        {
+          "id": "r2q3",
+          "prompt": "Which of these performed at Live Aid in July 1985?",
+          "options": [
+            "Queen",
+            "Nirvana",
+            "David Bowie",
+            "Oasis",
+            "Elton John",
+            "U2"
+          ],
+          "correctIndexes": [0, 2, 4, 5],
+          "answerNote": "Neither Nirvana nor Oasis had formed yet in 1985."
+        },
+        {
+          "id": "r2q4",
+          "prompt": "Which of these are genuine 1980s Michael Jackson albums?",
+          "options": [
+            "Thriller",
+            "Dangerous",
+            "Bad",
+            "HIStory",
+            "Invincible",
+            "Michael"
+          ],
+          "correctIndexes": [0, 2],
+          "answerNote": "Dangerous (1991), HIStory (1995), Invincible (2001) and Michael (2010) all came later."
+        },
+        {
+          "id": "r2q5",
+          "prompt": "Which of these films had an 1980s hit single written for it?",
+          "options": [
+            "Ghostbusters",
+            "Titanic",
+            "Flashdance",
+            "The Matrix",
+            "Footloose",
+            "Top Gun"
+          ],
+          "correctIndexes": [0, 2, 4, 5],
+          "answerNote": "Ghostbusters (Ray Parker Jr), Flashdance... What a Feeling (Irene Cara), Footloose (Kenny Loggins), Take My Breath Away (Berlin, from Top Gun)."
+        }
+      ]
+    },
+    {
+      "id": "r3",
+      "type": "alphabet",
+      "title": "Round Three — First Letter",
+      "blurb": "Just the first letter of the answer. Spelling does not count.",
+      "questions": [
+        {
+          "id": "r3q1",
+          "prompt": "Which 1985 Kate Bush song became a global streaming hit decades later after featuring in Stranger Things?",
+          "answer": "Running Up That Hill",
+          "answerNote": "It reached UK number one for the first time in 2022, thirty-seven years after its original release."
+        },
+        {
+          "id": "r3q2",
+          "prompt": "Which 1985 all-star charity single was written by Michael Jackson and Lionel Richie to raise money for famine relief?",
+          "answer": "We Are the World",
+          "answerNote": "The US answer to Band Aid's 'Do They Know It's Christmas?'."
+        },
+        {
+          "id": "r3q3",
+          "prompt": "Which 1984 Prince album and film shares its title with a purple weather phenomenon?",
+          "answer": "Purple Rain",
+          "answerNote": "Prince won an Oscar for Best Original Song Score for the film."
+        },
+        {
+          "id": "r3q4",
+          "prompt": "Which British synth-pop band, without its leading article, had a 1982 hit with 'Don't You Want Me'?",
+          "answer": "Human League",
+          "answerNote": "'Don't You Want Me' was the UK's Christmas number one in 1981."
+        },
+        {
+          "id": "r3q5",
+          "prompt": "Which 1983 Bonnie Tyler song contains the lyric 'turn around, bright eyes'?",
+          "answer": "Total Eclipse of the Heart",
+          "answerNote": "Written and produced by Jim Steinman."
         }
       ]
     }

@@ -144,11 +144,10 @@ room, decades and genres, because a new subscriber has to be able to walk into
 any venue with them. The artist packs are held back: those are the ones you
 pick for a specific night, which is exactly when somebody will buy one.
 
-**But the eight THEMSELVES need rewriting before anybody pays for them.** The
-host's own assessment: the current library was thrown together to have
-something to test against, and a starter set is the first thing a paying
-subscriber sees — it is the whole impression of what the catalogue is worth. Do
-not treat the current ids as settled content. See TODO.md.
+**The eight were rewritten on 20 August 2026** — the four quizzes expanded from
+one thin round each to two or three, the four bingo games checked against the
+house rules and left as they were. See
+[`docs/business/plumbing.md`](business/plumbing.md).
 
 It is a list of pack IDS, so a new pack does not join Bronze on its own — that
 is the point, because Silver's promise is "and every new one as it is written".

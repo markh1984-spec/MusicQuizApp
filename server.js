@@ -1111,6 +1111,12 @@ async function handleGet(req, res, url, route) {
   // referral or a search result lands.
   if (route === '/home') return serveFile(res, config.publicDir, 'home.html'), true;
   if (route === '/signup') return serveFile(res, config.publicDir, 'signup.html'), true;
+  // Legal pages — plain static HTML, same shell as /home. Linked from the
+  // landing page footer and from account/signup so they are always one tap
+  // away, never a page that only exists if you already know the URL.
+  if (route === '/terms') return serveFile(res, config.publicDir, 'terms.html'), true;
+  if (route === '/privacy') return serveFile(res, config.publicDir, 'privacy.html'), true;
+  if (route === '/refunds') return serveFile(res, config.publicDir, 'refunds.html'), true;
   // Open, like the sign-in page. It hands out nothing on its own — the token
   // in the address is what has to be right, and the page asks the server.
   if (route === '/reset') return serveFile(res, config.publicDir, 'reset.html'), true;

@@ -741,8 +741,7 @@ is how a house style stops being one" true inside a company as well as outside.
 
 Rob has no login yet, so this is a hypothesis about a customer who has not used
 it. `PACKS_REPO` is still not configured, which makes step **B2** above
-load-bearing rather than optional the moment anything is shared. And the eight
-starter packs are not worth selling yet.
+load-bearing rather than optional the moment anything is shared.
 
 **But seats do NOT need PayPal, and that is worth knowing.** A seat is an
 account with a company on it — creatable by hand today. So a company account
@@ -757,7 +756,8 @@ The order that actually matters:
 2. `PACKS_REPO` — your ten minutes, step B2.
 3. **Rob gets a login.** You have never had a second real user, and everything
    here is guesswork until then.
-4. The eight starter packs, so there is something worth paying for.
+4. ~~The eight starter packs~~ — **done**, 20 August 2026. See
+   [`plumbing.md`](plumbing.md).
 5. Company accounts and shared packs.
 
 

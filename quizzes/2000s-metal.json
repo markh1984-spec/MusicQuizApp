@@ -1,10 +1,10 @@
 {
   "id": "2000s-metal",
   "title": "The 2000s Metal Quiz",
-  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "subtitle": "Two rounds. Twenty seconds a question. Fastest fingers win.",
   "questionSeconds": 20,
   "createdAt": "2026-08-10T02:30:59.891Z",
-  "notes": "Written by claude-sonnet-5 for \"2000s metal\". NOT YET REVIEWED — read every question in the editor before the gig.",
+  "notes": "Rewritten for the Bronze starter set on 20 August 2026 — a second round added. Read every question in the editor before the gig.",
   "rounds": [
     {
       "id": "r1",
@@ -211,6 +211,70 @@
             "spotifyUri": "spotify:track:3K4HG9evC7dg3N0R9cYqk4",
             "spotifyUrl": "https://open.spotify.com/track/3K4HG9evC7dg3N0R9cYqk4"
           }
+        }
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "multi",
+      "title": "Round Two — Pick Them All",
+      "blurb": "More than one answer is right. Lock in every one of them.",
+      "questions": [
+        {
+          "id": "r2q1",
+          "prompt": "Which of these are genuine nu-metal/rap-metal acts?",
+          "options": [
+            "Linkin Park",
+            "Metallica",
+            "Korn",
+            "Iron Maiden",
+            "Limp Bizkit",
+            "Papa Roach"
+          ],
+          "correctIndexes": [0, 2, 4, 5],
+          "answerNote": "Metallica are thrash metal; Iron Maiden are NWOBHM, both far older scenes."
+        },
+        {
+          "id": "r2q2",
+          "prompt": "Which of these bands has Chester Bennington actually fronted?",
+          "options": [
+            "Linkin Park",
+            "Metallica",
+            "Stone Temple Pilots",
+            "Korn",
+            "Slipknot",
+            "System of a Down"
+          ],
+          "correctIndexes": [0, 2],
+          "answerNote": "Bennington fronted Stone Temple Pilots from 2013 to 2015, alongside his own Linkin Park."
+        },
+        {
+          "id": "r2q3",
+          "prompt": "Which of these bands are British rather than American?",
+          "options": [
+            "Bullet For My Valentine",
+            "Korn",
+            "Muse",
+            "Disturbed",
+            "Feeder",
+            "Slipknot"
+          ],
+          "correctIndexes": [0, 2, 4],
+          "answerNote": "Bullet For My Valentine and Feeder are Welsh; Muse are from Devon."
+        },
+        {
+          "id": "r2q4",
+          "prompt": "Which of these are genuine Linkin Park albums?",
+          "options": [
+            "Hybrid Theory",
+            "Toxicity",
+            "Meteora",
+            "Significant Other",
+            "Minutes to Midnight",
+            "Vol. 3: The Subliminal Verses"
+          ],
+          "correctIndexes": [0, 2, 4],
+          "answerNote": "Toxicity is System of a Down, Significant Other is Limp Bizkit, Vol. 3 is Slipknot."
         }
       ]
     }

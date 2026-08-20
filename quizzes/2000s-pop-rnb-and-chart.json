@@ -1,16 +1,16 @@
 {
   "id": "2000s-pop-rnb-and-chart",
-  "title": "The 2000s Pop Rnb and Chart Quiz",
+  "title": "The 2000s Pop, R&B and Chart Quiz",
   "subtitle": "Three rounds. Twenty seconds a question. Fastest fingers win.",
   "questionSeconds": 20,
   "createdAt": "2026-08-06T20:29:36.883Z",
-  "notes": "Written by claude-sonnet-5 for \"2000s pop rnb and chart\". NOT YET REVIEWED — read every question in the editor before the gig.",
+  "notes": "Rewritten for the Bronze starter set on 20 August 2026 — three rounds now, mixed round types. Read every question in the editor before the gig.",
   "rounds": [
     {
       "id": "r1",
       "type": "text",
-      "title": "Round One — 2000s Pop Rnb and Chart",
-      "blurb": "20 questions on 2000s pop rnb and chart",
+      "title": "Round One — 2000s Pop, R&B and Chart",
+      "blurb": "10 questions on 2000s pop, R&B and chart",
       "questions": [
         {
           "id": "r1q1",
@@ -131,9 +131,17 @@
           ],
           "correctIndex": 2,
           "answerNote": "It was originally written with Michael Jackson in mind."
-        },
+        }
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "text",
+      "title": "Round Two — 2000s Pop, R&B and Chart",
+      "blurb": "10 more questions on 2000s pop, R&B and chart",
+      "questions": [
         {
-          "id": "r1q11",
+          "id": "r2q1",
           "prompt": "Which R&B singer had a 2004 hit with 'Yeah!' featuring Lil Jon and Ludacris?",
           "options": [
             "Usher",
@@ -145,7 +153,7 @@
           "answerNote": "'Yeah!' spent several weeks at UK number one in 2004."
         },
         {
-          "id": "r1q12",
+          "id": "r2q2",
           "prompt": "Which UK singer had a 2000s number one with 'Just a Little'?",
           "options": [
             "Girls Aloud",
@@ -157,7 +165,7 @@
           "answerNote": "Liberty X formed from rejected Popstars contestants."
         },
         {
-          "id": "r1q13",
+          "id": "r2q3",
           "prompt": "Which act had a UK number one in 2000 with 'Rock DJ'?",
           "options": [
             "Westlife",
@@ -169,7 +177,7 @@
           "answerNote": "The controversial video showed Robbie stripping to the bone."
         },
         {
-          "id": "r1q14",
+          "id": "r2q4",
           "prompt": "Which singer topped the UK chart in 2007 with 'Umbrella'?",
           "options": [
             "Ciara",
@@ -181,7 +189,7 @@
           "answerNote": "'Umbrella' featured a rap verse from Jay-Z and spent 10 weeks at number one."
         },
         {
-          "id": "r1q15",
+          "id": "r2q5",
           "prompt": "Which act had the 2003 hit 'Ignition (Remix)'?",
           "options": [
             "Usher",
@@ -193,7 +201,7 @@
           "answerNote": "The 'Remix' was more popular than the original version of the song."
         },
         {
-          "id": "r1q16",
+          "id": "r2q6",
           "prompt": "Which singer had a 2000s hit with 'Complicated'?",
           "options": [
             "Avril Lavigne",
@@ -205,7 +213,7 @@
           "answerNote": "Avril Lavigne was just 17 when this single was released."
         },
         {
-          "id": "r1q17",
+          "id": "r2q7",
           "prompt": "Which UK act topped the chart in 2009 with 'The Fear'?",
           "options": [
             "Adele",
@@ -217,7 +225,7 @@
           "answerNote": "'The Fear' was Lily Allen's second UK number one single."
         },
         {
-          "id": "r1q18",
+          "id": "r2q8",
           "prompt": "Which group had UK hits with 'No Good Advice' and 'Sound of the Underground'?",
           "options": [
             "Atomic Kitten",
@@ -229,7 +237,7 @@
           "answerNote": "Girls Aloud formed on the ITV show Popstars: The Rivals in 2002."
         },
         {
-          "id": "r1q19",
+          "id": "r2q9",
           "prompt": "Which US rapper had a 2003 UK number one with 'In da Club'?",
           "options": [
             "Ja Rule",
@@ -241,7 +249,7 @@
           "answerNote": "'In da Club' was 50 Cent's breakthrough hit, produced by Dr. Dre."
         },
         {
-          "id": "r1q20",
+          "id": "r2q10",
           "prompt": "Which singer had a 2000s UK number one with 'Hole in the Head'?",
           "options": [
             "Sugababes",
@@ -251,6 +259,44 @@
           ],
           "correctIndex": 0,
           "answerNote": "Sugababes topped the chart with 'Hole in the Head' in 2003."
+        }
+      ]
+    },
+    {
+      "id": "r3",
+      "type": "alphabet",
+      "title": "Round Three — First Letter",
+      "blurb": "Just the first letter of the answer. Spelling does not count.",
+      "questions": [
+        {
+          "id": "r3q1",
+          "prompt": "Which US singer had a 2000s hit with 'Hollaback Girl', going platinum after leaving No Doubt?",
+          "answer": "Gwen Stefani",
+          "answerNote": "'Hollaback Girl' was the first digital download to sell a million copies in the US."
+        },
+        {
+          "id": "r3q2",
+          "prompt": "Which British girl group had UK hits including 'Overload' and 'Push the Button'?",
+          "answer": "Sugababes",
+          "answerNote": "'Push the Button' was a UK number one in 2005."
+        },
+        {
+          "id": "r3q3",
+          "prompt": "Which British singer-songwriter had a 2008 breakthrough hit with 'Chasing Pavements'?",
+          "answer": "Adele",
+          "answerNote": "It was the lead single from her debut album, 19."
+        },
+        {
+          "id": "r3q4",
+          "prompt": "Which Atlanta rap duo had a huge global hit in 2003 with 'Hey Ya!'?",
+          "answer": "OutKast",
+          "answerNote": "'Hey Ya!' was written and performed by André 3000."
+        },
+        {
+          "id": "r3q5",
+          "prompt": "Which Canadian singer had a 2007 hit with 'Girlfriend', from her album The Best Damn Thing?",
+          "answer": "Avril Lavigne",
+          "answerNote": "'Girlfriend' reached number one in several countries, including the US."
         }
       ]
     }

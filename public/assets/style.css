@@ -8153,6 +8153,24 @@ body.landing {
 .ld-foot-row { display: flex; align-items: center; justify-content: space-between; color: var(--ink-dim); font-size: var(--fs-note); }
 .ld-foot-row a { color: var(--ink-dim); }
 
+/*
+ * ---- /terms, /privacy, /refunds — plain prose, not a marketing page ----
+ *
+ * Reuses .ld-wrap/.ld-section for the same margins as home.html rather than
+ * a second layout system, then narrows to a reading column and turns the
+ * heading ladder into ordinary section headings.
+ */
+.ld-legal-body { max-width: 68ch; line-height: 1.65; color: var(--ink-dim); }
+.ld-legal-body h3 { margin: 40px 0 10px; font-size: var(--fs-head); font-weight: 800; color: var(--ink); }
+.ld-legal-body h3:first-child { margin-top: 0; }
+.ld-legal-body p, .ld-legal-body li { margin: 0 0 14px; }
+.ld-legal-body ul { margin: 0 0 14px; padding-left: 22px; }
+.ld-legal-body strong { color: var(--ink); }
+.ld-legal-updated { margin: 0 0 28px; font-size: var(--fs-note); color: var(--ink-dim); }
+.ld-legal-nav { display: flex; gap: 16px; flex-wrap: wrap; margin: 0 0 8px; font-size: var(--fs-note); }
+/* A bracketed placeholder Mark has to fill in before this page is real — never a fabricated business detail standing in for one. */
+.ld-legal-todo { color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); border-radius: 4px; padding: 0 4px; }
+
 /* ---- /signup, its own smaller page ---- */
 .ld-signup-wrap { max-width: 460px; margin: 8vh auto; padding: 0 20px; }
 .ld-signup-back { color: var(--ink-dim); text-decoration: none; font-size: var(--fs-note); font-weight: 700; }

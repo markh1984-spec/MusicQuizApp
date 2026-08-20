@@ -4,7 +4,7 @@
   "subtitle": "Three rounds. Twenty seconds a question. Fastest fingers win.",
   "questionSeconds": 20,
   "createdAt": "2026-08-05T20:03:17.294Z",
-  "notes": "Written by claude-sonnet-5 for \"Madonna\". NOT YET REVIEWED — read every question in the editor before the gig.",
+  "notes": "Rewritten for the Bronze starter set on 20 August 2026 — three rounds now, mixed round types. Read every question in the editor before the gig.",
   "rounds": [
     {
       "id": "r1",
@@ -136,6 +136,122 @@
           ],
           "correctIndex": 2,
           "answerNote": "The Blond Ambition Tour's cone bra costume became one of pop's most iconic images."
+        }
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "multi",
+      "title": "Round Two — Pick Them All",
+      "blurb": "More than one answer is right. Lock in every one of them.",
+      "questions": [
+        {
+          "id": "r2q1",
+          "prompt": "Which of these are genuine Madonna studio albums?",
+          "options": [
+            "Like a Virgin",
+            "Thriller",
+            "Ray of Light",
+            "Purple Rain",
+            "Confessions on a Dance Floor",
+            "Rumours"
+          ],
+          "correctIndexes": [0, 2, 4],
+          "answerNote": "Thriller is Michael Jackson, Purple Rain is Prince, Rumours is Fleetwood Mac."
+        },
+        {
+          "id": "r2q2",
+          "prompt": "Which of these films did Madonna actually appear in?",
+          "options": [
+            "Desperately Seeking Susan",
+            "Grease",
+            "A League of Their Own",
+            "Flashdance",
+            "Evita",
+            "Dick Tracy"
+          ],
+          "correctIndexes": [0, 2, 4, 5],
+          "answerNote": "Grease starred Olivia Newton-John; Flashdance starred Jennifer Beals."
+        },
+        {
+          "id": "r2q3",
+          "prompt": "Which of these were genuine Madonna world tours?",
+          "options": [
+            "Blond Ambition Tour",
+            "The Wall Tour",
+            "Confessions Tour",
+            "Zoo TV Tour",
+            "Sticky & Sweet Tour",
+            "MDNA Tour"
+          ],
+          "correctIndexes": [0, 2, 4, 5],
+          "answerNote": "The Wall Tour was Pink Floyd/Roger Waters; Zoo TV was U2."
+        },
+        {
+          "id": "r2q4",
+          "prompt": "Which of these artists has Madonna actually recorded a duet or featured single with?",
+          "options": [
+            "Justin Timberlake",
+            "Ed Sheeran",
+            "Britney Spears",
+            "Adele",
+            "Nicki Minaj",
+            "Sam Smith"
+          ],
+          "correctIndexes": [0, 2, 4],
+          "answerNote": "'4 Minutes' (Timberlake), 'Me Against the Music' (Spears) and 'Bitch I'm Madonna' (Minaj)."
+        },
+        {
+          "id": "r2q5",
+          "prompt": "In which of these decades did Madonna have a UK number one single?",
+          "options": [
+            "1970s",
+            "1980s",
+            "1990s",
+            "2000s",
+            "2010s",
+            "2020s"
+          ],
+          "correctIndexes": [1, 2, 3],
+          "answerNote": "80s: Into the Groove. 90s: Vogue, Like a Prayer. 2000s: Music, American Pie, Sorry."
+        }
+      ]
+    },
+    {
+      "id": "r3",
+      "type": "alphabet",
+      "title": "Round Three — First Letter",
+      "blurb": "Just the first letter of the answer. Spelling does not count.",
+      "questions": [
+        {
+          "id": "r3q1",
+          "prompt": "What one-word title took Madonna to UK number one in November 1990, also the name of a dance style she helped popularise?",
+          "answer": "Vogue",
+          "answerNote": "Vogue spent four weeks at UK number one."
+        },
+        {
+          "id": "r3q2",
+          "prompt": "Which record label did Madonna co-found with her manager in 1992, later also home to Alanis Morissette?",
+          "answer": "Maverick Records",
+          "answerNote": "Maverick was co-founded with Freddy DeMann and Guy Oseary."
+        },
+        {
+          "id": "r3q3",
+          "prompt": "In which US city did Madonna headline the Super Bowl halftime show in February 2012?",
+          "answer": "Indianapolis",
+          "answerNote": "Super Bowl XLVI was played at Lucas Oil Stadium."
+        },
+        {
+          "id": "r3q4",
+          "prompt": "Which US chat-show host confiscated a knife from Madonna live on air in a notorious 1994 interview?",
+          "answer": "David Letterman",
+          "answerNote": "The Late Show appearance is still one of the most cited awkward interviews in TV history."
+        },
+        {
+          "id": "r3q5",
+          "prompt": "What is the title of Madonna's controversial 1989 song and video, featuring burning crosses, that cost her a Pepsi sponsorship deal?",
+          "answer": "Like a Prayer",
+          "answerNote": "Pepsi pulled the ad campaign within days of the video's release."
         }
       ]
     }

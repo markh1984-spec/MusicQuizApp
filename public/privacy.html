@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a0a13">
+  <meta name="description" content="Quizporium — Privacy Policy.">
+  <title>Privacy Policy — Quizporium</title>
+  <link rel="stylesheet" href="/assets/style.css">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+</head>
+<body class="landing">
+
+  <header class="ld-top">
+    <div class="ld-wrap ld-top-row">
+      <a class="brand" href="/home" id="brandSlot"></a>
+      <nav class="ld-nav">
+        <a href="/login">Sign in</a>
+        <a class="ld-cta ld-nav-cta" href="/signup">Get started</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="ld-section" style="padding-top:32px">
+      <div class="ld-wrap">
+        <div class="ld-legal-nav">
+          <a href="/terms">Terms of Service</a>
+          <a href="/privacy">Privacy Policy</a>
+          <a href="/refunds">Refund Policy</a>
+        </div>
+        <h1 class="ld-h2">Privacy Policy</h1>
+        <p class="ld-legal-updated">Last updated 20 August 2026.</p>
+
+        <div class="ld-legal-body">
+          <h3>Who this is with</h3>
+          <p><span class="ld-legal-todo">[trading name and address to go
+            here]</span> is the data controller for the personal data described
+            below. Contact <span class="ld-legal-todo">[support email]</span>
+            with any question or request about your data.</p>
+
+          <h3>What we collect, and why</h3>
+          <p><strong>Your account.</strong> An email address and a password. The
+            password is hashed with scrypt before it is stored — nobody at
+            Quizporium, including us, can see the password itself. Used to run
+            your account and let you sign in.</p>
+          <p><strong>What you create.</strong> Your quizzes, bingo games, venue
+            records, advert slides and settings. Used to run your nights and show
+            them back to you. Your own packs are private to your account — we do
+            not read them ourselves except with your explicit, time-limited
+            support access, logged so you can see exactly what was done.</p>
+          <p><strong>Billing.</strong> Which tier you are on, your subscription
+            status, and an opaque reference from our payment processor. We never
+            receive or store your card number — the processor holds that.</p>
+          <p><strong>Photos from a night.</strong> Photos a player sends in during
+            a quiz are stored against your account and shown on your projector and
+            in your own Past Gigs record. They publish automatically to the room's
+            screen the moment they are sent — there is no separate consent step
+            before that, because the room can already see the projector and the
+            photo is gone from the screen within a few seconds. You can delete a
+            photo at any time from the console, which takes it out of the app and
+            off any public page immediately; because photos are kept in a private,
+            version-controlled backup, a deleted photo can still exist in that
+            backup's history even once it is gone from the live app.</p>
+          <p><strong>Players and teams.</strong> A team name typed in to join a
+            quiz, and, where a player chooses to send one, a photo. This is not an
+            account — there is no password, no persistent profile, and nothing is
+            kept linking a real person's identity to a team name beyond that one
+            night's scoreboard and photos.</p>
+          <p><strong>Venue details.</strong> A venue's name, address and a contact
+            email, where you choose to add them — ordinary business contact
+            details, used for your own diary, invoices and adverts.</p>
+
+          <h3>Why we are allowed to process it</h3>
+          <p>Running your account and a night you launch is necessary to provide
+            the subscription you have signed up for. Billing data is processed to
+            perform that contract and to meet our own accounting obligations.
+            Where we act on a legitimate interest — such as investigating misuse —
+            we keep that narrow and specific to the issue at hand.</p>
+
+          <h3>Who we share it with</h3>
+          <p>Our payment processor, to take your subscription payment — see their
+            own privacy policy for how they handle it. Our hosting provider, to
+            run the servers Quizporium runs on. Nobody else. We do not sell your
+            data, and we do not share your own packs, your players' data or your
+            venue records with other quizmasters or with anyone else.</p>
+
+          <h3>Where it is kept</h3>
+          <p>Quizporium's servers run in the EU. Our payment processor may process
+            billing data outside the UK/EU under their own safeguards — see their
+            privacy policy for details.</p>
+
+          <h3>How long we keep it</h3>
+          <p>For as long as your account is active, plus a reasonable period
+            afterwards for billing and legal records. If you close your account
+            and ask us to delete your data, we will do so, with the same caveat as
+            above for anything already in a version-controlled backup.</p>
+
+          <h3>Cookies and local storage</h3>
+          <p>Quizporium keeps a few small pieces of data in your browser's local
+            storage — your join token as a player, your console preferences as a
+            host. This is not third-party advertising tracking, and we do not run
+            ad trackers or sell browsing data.</p>
+
+          <h3>Children</h3>
+          <p>Quiz and bingo nights are often family events, and a player under 18
+            may type in a team name or send a photo on the night. We do not
+            knowingly collect more than that from a child, we do not build
+            profiles of players, and we do not market to children directly.</p>
+
+          <h3>Your rights</h3>
+          <p>You can ask us to show you what we hold on your account, correct it,
+            or delete it, and you can ask us to export your own packs. Contact
+            <span class="ld-legal-todo">[support email]</span> and we will act on
+            it — and tell you plainly if something (like the backup history above)
+            means a request cannot be met exactly as asked, rather than claim it
+            has been when it has not.</p>
+
+          <h3>Changes to this policy</h3>
+          <p>We may update this policy from time to time. We will post the new
+            version here with an updated date.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="ld-foot">
+    <div class="ld-wrap ld-foot-row">
+      <span>Quizporium</span>
+      <a href="/login">Sign in</a>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { brandMark } from '/assets/client.js';
+    document.getElementById('brandSlot').innerHTML =
+      `${brandMark(28)}<span class="brand-name">Quizporium</span>`;
+  </script>
+</body>
+</html>

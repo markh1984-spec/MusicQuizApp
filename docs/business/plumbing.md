@@ -1,7 +1,6 @@
 # Plumbing the money and the photos will eventually need
 
-PayPal, object storage for photos, and the starter packs — small, real, and
-not scheduled.
+PayPal and object storage for photos — small, real, and not scheduled.
 
 **Parked strategy — nothing here is scheduled.** Part of
 [`../business.md`](../business.md), which is the index. It moved out on 16
@@ -10,28 +9,14 @@ heading, and a session opening it for one answer was paying for all of it.
 
 ---
 
-### Rewrite the eight starter packs — before anybody pays
+### The eight starter packs were rewritten on 20 August 2026
 
-**The most important content job there is, and it is yours rather than mine.**
-
-Bronze now starts with four quizzes and four bingo games. Those eight are the
-first thing a paying subscriber ever sees, and they decide what somebody thinks
-the whole catalogue is worth — but the current library was put together to have
-something to test against, and you have said so yourself.
-
-What to aim at, since a starter pack has a different job from a normal one:
-
-- **They have to work in ANY room.** A new subscriber is walking into a venue
-  you have never seen. Decades and genres, not artists.
-- **They have to be the best in the catalogue, not the average.** Somebody
-  deciding whether to buy a ninth pack is deciding on the strength of these.
-- **Read every one through.** The review flags on the console catch the
-  mechanical faults; the taste is yours.
-
-The eight are listed in `TIER_PACKS.bronze` in `public/assets/plans.js`. Change
-the list in the same breath as renaming a pack — a rename silently drops a pack
-out of Bronze, and there is a test that fails if an id in that list is not in
-the catalogue.
+The four quizzes (`madonna`, `1980s-pop-music`, `2000s-pop-rnb-and-chart`,
+`2000s-metal`) each went from one thin round to two or three, in a mix of
+round types — the bingo four were checked against the house rules (real,
+recognisable, chorus-forward tracks) and were already sound, so they were left
+alone. **Read them through before a paying subscriber sees them** — the
+mechanical checks catch faults, not taste, and that half is still yours.
 
 
 ### Photos will outgrow a git repo — move them to object storage
