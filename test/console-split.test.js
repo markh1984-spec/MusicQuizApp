@@ -92,8 +92,17 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * `addPackToNight()`, the three drop handlers, `paintOrder()`'s branch — none
  * of which can be pulled out without also pulling out the closure state
  * (`currentPack`, `lbExtra`, `lbOff`, `packOf`) they read and write.
+ *
+ * RAISED AGAIN TO 2680 THE SAME DAY, for two bug fixes live verification of
+ * the above caught before it ever reached a real gig: a bingo pack dropped
+ * on the empty tiles row launched as a quiz (the picker's own kind was never
+ * synced on that one entry point), and `movePack()` promoting a different
+ * pack to slot 1 silently DELETED the pack it displaced — `pick()`'s "a
+ * different pack starts the night again" rule firing on a reorder that had
+ * already computed the right `lbExtra` itself. Both fixes are a few lines;
+ * the comments explaining why are not.
  */
-const BUDGET = { 'console-tonight.js': 2650, 'console.js': 2000 };
+const BUDGET = { 'console-tonight.js': 2680, 'console.js': 2000 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

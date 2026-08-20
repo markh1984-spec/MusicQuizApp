@@ -948,7 +948,7 @@ export function launchBar() {
     }
   }
 
-  function pick(pack, { quiet = false } = {}) {
+  function pick(pack, { quiet = false, keepOrder = false } = {}) {
     const switching = !quiet && currentPack?.id !== pack.id;
     /*
      * CHOOSING A DIFFERENT PACK STARTS THE NIGHT AGAIN.
@@ -958,8 +958,16 @@ export function launchBar() {
      * to go, or you would launch a night whose name says one thing and whose
      * rounds are mostly another. Adding to an order is the strip's job and it
      * is a different gesture, which is the whole reason the two are split.
+     *
+     * **UNLESS `keepOrder` SAYS THIS IS A REORDER, NOT A NEW PICK.**
+     * `movePack()` promotes a different pack to slot 1 by calling this — the
+     * SAME pack identity change this block exists to catch, for a reason
+     * this block must not act on. It had already computed the reordered
+     * `lbExtra` itself; without `keepOrder` this silently overwrote it with
+     * `[]`, so dragging pack A to sit after pack B deleted A outright. Found
+     * live: two packs in, drag one past the other, one pack left.
      */
-    if (currentPack && currentPack.id !== pack.id) {
+    if (!keepOrder && currentPack && currentPack.id !== pack.id) {
       lbExtra = [];
       lbOff = new Set();
       lbSlots = null;
@@ -1546,7 +1554,10 @@ export function launchBar() {
     ids.splice(from < to ? to - 1 : to, 0, moved);
     const first = packOf(ids[0]);
     lbExtra = ids.slice(1);
-    if (first && (!currentPack || currentPack.id !== first.id)) pick(first);
+    // `keepOrder`: this IS the reordered `lbExtra`, just computed above — a
+    // reorder promoting a different pack to first is not a fresh pick, and
+    // must not be wiped by `pick()`'s own "different pack starts again" rule.
+    if (first && (!currentPack || currentPack.id !== first.id)) pick(first, { keepOrder: true });
     else paintOrder();
   }
 
@@ -1989,6 +2000,18 @@ export function launchBar() {
      * completely ordinary night, sending no running order at all.
      */
     if (!currentPack) {
+      /*
+       * `pick()` derives its own kind from `gameOf()` — the picker's OWN
+       * selection — rather than trusting what it is handed, so a bingo pack
+       * dropped straight onto the tiles while the picker was still on quiz
+       * launched as a quiz with a bingo pack's id and 400'd. Every OTHER
+       * entry point (the outer section's own drop, `packWanted`) already
+       * syncs the picker first for exactly this reason; this one has to too.
+       */
+      if (gamePick && kind && gamePick.value !== kind) {
+        gamePick.value = kind;
+        lbGame = kind;
+      }
       pick(from);
       return;
     }
