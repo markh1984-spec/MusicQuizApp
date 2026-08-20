@@ -955,15 +955,31 @@ function minorButton(text, handler, danger = false) {
 
 function buildActions(s) {
   if (s.game === 'bingo') return bingoActions(s, act, minorButton);
-  const label = {
+
+  /*
+   * TONIGHT AS MORE THAN ONE GAME — this quiz part is not the whole night,
+   * so its own "Show the winner" (the last round's own ROUND_BOARD) must
+   * not be allowed to run — that is the ordinary next/final path, and it
+   * would file the night, hand out the quiz's prizes and end the evening
+   * two parts early. `s.runningOrder.nextKind` is only present when the
+   * server genuinely has another part queued (`session.js`'s
+   * `advanceOrder`); absent, every phase below behaves exactly as it always
+   * has.
+   */
+  const order = s.runningOrder;
+  const atLastRoundBoard = s.phase === 'round_board' && s.roundIndex >= s.roundCount - 1;
+  const continuing = Boolean(order && order.nextKind) && atLastRoundBoard;
+  const continueWord = continuing && order.nextKind === 'bingo' ? 'the bingo' : 'the quiz';
+
+  const label = continuing ? `Continue to ${continueWord}` : ({
     lobby: 'Start the quiz',
     rules: 'On to round 1',
     round_intro: 'First question',
     question: 'Reveal the answer',
     reveal: 'Next question',
-    round_board: s.roundIndex >= s.roundCount - 1 ? 'Show the winner' : 'Next round',
+    round_board: atLastRoundBoard ? 'Show the winner' : 'Next round',
     final: 'Finished',
-  }[s.phase] || 'Next';
+  }[s.phase] || 'Next');
 
   /*
    * AT THE FINAL, THE BIG BUTTON BECOMES "CHECK THE PHOTOS".
@@ -1001,6 +1017,10 @@ function buildActions(s) {
        */
       const night = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString().slice(0, 10);
       location.href = withKey(`/console?door=post&tab=past&night=${night}`);
+      return;
+    }
+    if (continuing) {
+      act('advanceOrder');
       return;
     }
     // The one press worth being fussy about. Everything else Back undoes

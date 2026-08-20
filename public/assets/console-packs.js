@@ -1346,49 +1346,19 @@ export function packCard(kind, pack, repaint = () => {}) {
  * there must not be two ways OUT, or the 409-and-confirm dance gets fixed in
  * one of them and quietly rots in the other.
  */
-export async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', lobbyGame = '', lobbySound = true, online = false, teamPlay = false, venue = '', order = null }, button) {
-    const send = (replace) => postJson(
-      '/api/host/launch',
-      {
-        game: kind, packId, shape, prizes, look, lobbyGame, lobbySound, online, teamPlay, venue,
-        /*
-         * TONIGHT'S RUNNING ORDER, and only when there IS one.
-         *
-         * An ordinary launch sends no `order` at all rather than sending the
-         * chosen pack's own rounds spelled out — which would be the same night
-         * by a longer road, through code that did not exist last week, on the
-         * protected path. The server composes only when it is given something,
-         * so a night nobody has rearranged goes down exactly the route it
-         * always did.
-         */
-        ...(order && order.length ? { order } : {}),
-        ...(replace ? { replace: true } : {}),
-      },
-      { 'X-Host-Key': hostKey },
-    );
-    /*
-     * PUT THE BUTTON BACK AS IT WAS, not as the word "Launch".
-     *
-     * The three launch buttons do not say the same thing: a pack card's says
-     * "Launch", the launch bar's says "Launch <title>", and a quick pick is
-     * two spans — the pack's name and why it is being offered. Writing the
-     * literal string back turned a quick pick into a bare **Launch** with no
-     * indication of what it runs, sitting next to another one that still said.
-     *
-     * And it happens at the worst possible moment: the only way to get here
-     * is the 409 — two devices on one login, a night already running, which is
-     * exactly when somebody is under pressure and reading fast.
-     *
-     * So the markup is kept and restored. `innerHTML` rather than a clone
-     * because the click handler is bound to the button itself and only its
-     * contents are being replaced.
-     *
-     * **"Launching…" is set HERE and nowhere else**, which is the half that
-     * makes it work: the three call sites each used to write it themselves,
-     * so by the time this function ran the original label was already gone and
-     * there was nothing left to put back. One place that changes the button is
-     * also one place that can change it back.
-     */
+/**
+ * THE ONE DANCE, whichever route is behind it — `doLaunch` and
+ * `doLaunchOrder` both need it: put the button back as it was rather than as
+ * the word "Launch", ask the server once, and on a 409 offer the one
+ * deliberate second press that carries `replace`. One copy of that dance
+ * rather than two, or it gets fixed in one caller and rots in the other.
+ *
+ * @param {function(boolean): object} bodyFor  the request body, given whether
+ *   this is the deliberate second press (so it can add `replace: true` itself)
+ */
+async function sendLaunch(url, bodyFor, button) {
+    const send = (replace) => postJson(url, bodyFor(replace), { 'X-Host-Key': hostKey });
+
     const wasHtml = button.innerHTML;
     button.disabled = true;
     button.textContent = 'Launching…';
@@ -1429,6 +1399,38 @@ export async function doLaunch(kind, packId, { shape = null, prizes = 0, look = 
       back();
       alert('Could not launch: ' + err.message);
     }
+}
+
+/** Actually launch an ordinary night — the one path, whichever button was pressed. */
+export async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', lobbyGame = '', lobbySound = true, online = false, teamPlay = false, venue = '', order = null }, button) {
+  return sendLaunch('/api/host/launch', (replace) => ({
+    game: kind, packId, shape, prizes, look, lobbyGame, lobbySound, online, teamPlay, venue,
+    /*
+     * TONIGHT'S RUNNING ORDER, and only when there IS one.
+     *
+     * An ordinary launch sends no `order` at all rather than sending the
+     * chosen pack's own rounds spelled out — which would be the same night
+     * by a longer road, through code that did not exist last week, on the
+     * protected path. The server composes only when it is given something,
+     * so a night nobody has rearranged goes down exactly the route it
+     * always did.
+     */
+    ...(order && order.length ? { order } : {}),
+    ...(replace ? { replace: true } : {}),
+  }), button);
+}
+
+/**
+ * Launch tonight as MORE THAN ONE GAME — the FIRST part of a running order,
+ * quiz and bingo mixed. `segments` is `itemsOf(show)`'s own shape (see
+ * `show-parts.js`). Every later part loads through `/api/host/advanceOrder`
+ * from the control view, never through here.
+ */
+export async function doLaunchOrder(segments, { look = '', lobbyGame = '', lobbySound = true, online = false, teamPlay = false, venue = '' }, button) {
+  return sendLaunch('/api/host/launchOrder', (replace) => ({
+    segments, look, lobbyGame, lobbySound, online, teamPlay, venue,
+    ...(replace ? { replace: true } : {}),
+  }), button);
 }
 
 /**

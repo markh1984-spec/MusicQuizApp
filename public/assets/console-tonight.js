@@ -4,7 +4,7 @@ import { esc, node, postJson } from './client.js';
 import { dayName, saidTime } from './console-diary.js';
 import { tonightsVenue } from './console-gigs.js';
 import { invoiceApi, openInvoiceForm, share } from './console-invoices.js';
-import { doLaunch, freshLabel, freshness, lobbyGameOptions, lookOptions, playingOptions, shapeOptions } from './console-packs.js';
+import { doLaunch, doLaunchOrder, freshLabel, freshness, lobbyGameOptions, lookOptions, playingOptions, shapeOptions } from './console-packs.js';
 import { packTitle, shelfFor } from './console-shows.js';
 import { BENCH_STORE, NIGHT_BENCH_STORE, bench, library, nightBench, packDrag, setBench, setBook, setLibrary, setNightBench, setPackDrag, setShowDrag, setVenueDrag, showDrag, venueDrag } from './console-state.js';
 import { nowNextRows } from './console-venues.js';
@@ -1004,6 +1004,40 @@ export function launchBar() {
 
     // The same prize list the pack card builds, from the shape actually picked.
 
+    /**
+     * TONIGHT AS MORE THAN ONE GAME — quiz, then a bingo interlude, then quiz
+     * again, one running score across the interruption. Built from a SAVED
+     * SHOW rather than a new composer, because the show editor already lets a
+     * host add a bingo game between two quizzes (`showPartsEditor` in
+     * `console-shows.js`) — a second way to build the same list would be a
+     * second thing that could disagree with it.
+     *
+     * Only when we are sat on PART ZERO of a show with more than one part:
+     * every later part is reached through the control view's own "Continue"
+     * button and `/api/host/advanceOrder`, never through this bar again.
+     *
+     * A part with no `order` of its own (added to the show after the fact,
+     * never opened on Tonight to have rounds ticked off) plays EVERY round —
+     * `roundsOf()` is the same helper the ordinary strip uses for exactly
+     * that shape of pack.
+     */
+    function runningShowSegments() {
+      if (!showRunning || showRunning.at !== 0) return null;
+      const items = itemsOf(showRunning.show);
+      if (items.length < 2) return null;
+      const segments = items.map((item) => {
+        if (item.kind === 'bingo') {
+          return { kind: 'bingo', packId: item.packId, shape: night.shape, prizes: night.prizes };
+        }
+        const order = (item.order && item.order.length)
+          ? item.order
+          : roundsOf((library.quizzes || []).find((p) => p.id === item.packId));
+        return { kind: 'quiz', order };
+      });
+      if (segments.some((s) => (s.kind === 'bingo' ? !s.packId : !s.order.length))) return null;
+      return segments;
+    }
+
     goBtn.onclick = async (ev) => {
       const button = ev.currentTarget;
       /*
@@ -1031,6 +1065,18 @@ export function launchBar() {
        * named target cannot tell you whether it was there a moment ago.
        */
       window.open(screenLink(), 'quizscreen');
+      const segments = runningShowSegments();
+      if (segments) {
+        await doLaunchOrder(segments, {
+          look: night.look,
+          lobbyGame: night.lobbyGame,
+          lobbySound: night.lobbySound,
+          online: lbOnline,
+          teamPlay: night.teamPlay,
+          venue: venueNow(),
+        }, button);
+        return;
+      }
       await doLaunch(kind, pack.id, {
         // FROM `night`, not from the DOM — see the note where it is declared.
         // The controls live on their own tab now and may not be on screen when

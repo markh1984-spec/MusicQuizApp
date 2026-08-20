@@ -29,16 +29,34 @@ export function bingoActions(s, act, minor) {
   // lines", and the button has to agree with what they are about to say.
   const stage = s.stage || { index: 0, total: 2, label: 'a line', last: false };
   const nextLabel = (s.prizes && s.prizes[stage.index + 1] && s.prizes[stage.index + 1].label) || 'a full house';
+
+  /*
+   * TONIGHT AS MORE THAN ONE GAME — this bingo interlude is not the whole
+   * night, so the moment that would ordinarily FINISH it (the last prize
+   * just won) must not archive it early or hand out a quiz's prizes before
+   * the true end. `s.runningOrder.nextKind` is only present when the server
+   * genuinely has another part queued (see `session.js`'s `advanceOrder`) —
+   * absent, this whole file behaves exactly as it always has.
+   */
+  const order = s.runningOrder;
+  const continuing = Boolean(order && order.nextKind);
+  const continueWord = continuing && order.nextKind === 'bingo' ? 'the bingo' : 'the quiz';
+
   const primaryLabel = s.phase === 'lobby'
     ? 'Start — then call your first track'
     : s.win
-      ? (stage.last ? 'Finish the game' : `Play on for ${nextLabel}`)
+      ? (stage.last
+        ? (continuing ? `Continue to ${continueWord}` : 'Finish the game')
+        : `Play on for ${nextLabel}`)
       : 'Tap a track above as you play it';
 
   const primary = node(`<button class="primary" ${!s.win && s.phase !== 'lobby' ? 'disabled' : ''}>${esc(primaryLabel)}</button>`);
   primary.addEventListener('click', () => {
     if (s.phase === 'lobby') act('start');
-    else if (s.win) act(stage.last ? 'finish' : 'playOn');
+    else if (s.win) {
+      if (stage.last && continuing) act('advanceOrder');
+      else act(stage.last ? 'finish' : 'playOn');
+    }
   });
   out.push(primary);
 
@@ -47,6 +65,15 @@ export function bingoActions(s, act, minor) {
     if (confirm('New cards for everyone and nothing called. Carry on?')) act('newRound');
   }));
   out.push(minor('Console', () => { location.href = '/console' + location.search; }));
+  // A deliberate way to move on EARLY — before the last configured prize is
+  // won — without it being mistaken for ending the whole night. "Finish"
+  // below still does that, unchanged, for the host who genuinely wants to
+  // stop here rather than carry on to the next part.
+  if (continuing) {
+    out.push(minor(`Continue to ${continueWord} now`, () => {
+      if (confirm(`Move on to ${continueWord} now? Nobody's scores or cards are lost.`)) act('advanceOrder');
+    }));
+  }
   out.push(minor('Finish', () => {
     if (confirm('End the game and save the result?')) act('finish');
   }, true));
