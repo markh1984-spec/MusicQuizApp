@@ -115,8 +115,13 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * otherwise end a night early. A session touching `session.js`'s launch path,
  * `host.js`'s primary button, or the Shows editor needs to know this exists
  * before assuming the old single-game rules still hold everywhere.
+ *
+ * RAISED TO 136,200 THE SAME DAY, for one sentence: the running order can now
+ * ALSO be built by dragging a bingo pack and a round dot straight onto the
+ * Tonight row itself, not only via a saved show — a session reading the old
+ * wording would wrongly assume the Tonight row still refuses bingo.
  */
-const BUDGET = 136_000;
+const BUDGET = 136_200;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

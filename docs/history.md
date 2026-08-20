@@ -22,6 +22,15 @@ surface payload guard and a real Launch smoke test all passed on the merged
 tip — see "Where to push" in CLAUDE.md for why that branch is pushed to
 directly rather than merged by hand.
 
+**Same day, second deploy:** the Tonight bar itself now builds a mixed night
+too — a bingo pack drags straight into the row, a round drags out of its pack
+into its own slot around it — asked for directly after the first deploy, once
+the host saw what saving-as-a-show could already do and wanted the faster
+gesture. Live verification caught and fixed two real bugs before this went
+out, one new (a bingo pack dropped on the empty row launched as a quiz) and
+one pre-existing (reordering packs could silently delete one) — see "THE
+MIXED ROW" in `docs/console.md`.
+
 All five build stages plus bingo, the console, generation, pack import, the
 tickable review flags, the alphabet round, per-type question counts and the
 picture round's four reveals, invoicing, the seasonal looks and the accounts

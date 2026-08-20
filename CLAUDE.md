@@ -1966,7 +1966,7 @@ having a nights section."*
   because HTML5 drag never fires on touch. Reasoning:
   **[`docs/console.md`](docs/console.md)**.
 
-### QUIZ → BINGO → QUIZ, ONE RUNNING SCORE — built via a SHOW, not the Tonight row
+### QUIZ → BINGO → QUIZ, ONE RUNNING SCORE — a saved show, or dragged straight onto Tonight
 
 `Session.launchRunningOrder()`/`advanceOrder()` in `src/session.js`. **NO
 `engine.js` OR `bingo.js` CHANGES.** The boundary between parts is the pause
@@ -1983,9 +1983,11 @@ of its own. **THE LOBBY GAME MUST NOT CARRY FORWARD** — found live: it must
 re-resolve per part, or a resolved default from part one becomes a permanent
 override the moment a kind changes. Every pack in every part is loaded before
 ANY of them launches, or a deleted pack in part three throws in front of the
-room hours later. Built from a saved SHOW's existing "Add a bingo game" / "Add
-a quiz" editor, not a new Tonight-row composer — the Tonight row itself still
-refuses a bingo pack. Reasoning: **[`docs/console.md`](docs/console.md)**.
+room hours later. Two ways in: a saved SHOW's "Add a bingo game"/"Add a quiz"
+editor, or — the Tonight row itself, since 20 August 2026 — a bingo pack
+dragged straight in and a round dot dragged OUT of its pack into its own
+slot (`console-tonight-mix.js`/`-ui.js`; `lbSlots`, `null` on every ordinary
+night). Reasoning: **[`docs/console.md`](docs/console.md)**.
 
 ### A PACK WEARS ITS OWN SUBJECT
 

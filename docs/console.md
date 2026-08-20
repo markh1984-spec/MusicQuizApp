@@ -1261,22 +1261,92 @@ bingo part. Fixed by leaving `lobbyGame` out of `nightWideOpts()` entirely, so
 every part re-resolves to its own kind's default — exactly what "THE DEFAULT
 FOLLOWS THE GAME" already promises for an ordinary launch.
 
-#### Built via a saved SHOW, not by extending the Tonight bar's own row
+#### Two ways to build one: a saved SHOW, and the Tonight row itself
 
-The Tonight bar's own running order (`lbExtra`, the six `PACK_SLOTS`) still
-refuses a bingo pack — `if (!packDrag || packDrag.kind === 'bingo') return;`,
-unchanged, in `console-tonight.js`'s drop handlers. Composing a mixed night
-goes via Workshop → Shows instead: `itemsOf(show)` already has the right shape
-(`{kind, packId, order?}`), and the show editor already lets a host "Add a
-bingo game" / "Add a quiz" and reorder with arrows — built for a different
-reason months earlier, and it turned out to already be the composing UI this
-needed. Pressing Launch on part 0 of a 2+-item show calls `doLaunchOrder()`
-(in `console-packs.js`, sharing the same 409-and-replace dance as an ordinary
+**First built via a saved SHOW.** Composing a mixed night went via Workshop
+→ Shows: `itemsOf(show)` already had the right shape (`{kind, packId,
+order?}`), and the show editor already let a host "Add a bingo game" / "Add
+a quiz" and reorder with arrows — built for a different reason months
+earlier, and it turned out to already be the composing UI this needed.
+Pressing Launch on part 0 of a 2+-item show calls `doLaunchOrder()` (in
+`console-packs.js`, sharing the same 409-and-replace dance as an ordinary
 launch via a new `sendLaunch()` helper) instead of an ordinary single-pack
 launch; every later part loads through the control view's "Continue" button
-and `/api/host/advanceOrder`, never back through the console. Dragging a
-bingo pack straight into the Tonight row is real, cheap follow-on work now
-that the session-level machinery exists — see `todo/console.md`.
+and `/api/host/advanceOrder`, never back through the console.
+
+**Then, the same day, the Tonight bar's own row learned to do it directly** —
+asked for in exactly these words: *"you've got the rounds inside the quiz
+pack that you can drag out of it into a second slot — you could either leave
+three rounds inside the quiz pack, or drag round three out into another
+slot."* The two `if (!packDrag || packDrag.kind === 'bingo') return;` guards
+in `console-tonight.js`'s drop handlers are gone; a bingo pack can now join
+an existing quiz night in the row, and a round is an individually draggable
+numbered dot that can be pulled OUT of its pack tile into a new position.
+See "THE MIXED ROW" below for how.
+
+Both roads produce the same `segments` shape and go through the same
+`session.launchRunningOrder()`/`advanceOrder()` backend — there is only ever
+one way OUT, whichever way a host builds the night.
+
+### THE MIXED ROW — a round pulled out of its pack, a bingo pack in the row
+
+`public/assets/console-tonight-mix.js` (pure data, no DOM — tested directly
+under plain Node, like `plans.test.js` tests its own browser module) and
+`console-tonight-mix-ui.js` (the DOM/drag half, split out because the state
+module reads `localStorage` at load and cannot be imported outside a
+browser). `console-tonight.js` only holds the wiring that has to live inside
+`launchBar()`'s own closure — `addPackToNight()`, the drop handlers,
+`paintOrder()`'s branch to `paintMixedOrder()`.
+
+**A SLOT is a pack's rounds (any subset) or a bingo game — never both.**
+`{kind:'quiz', packId, rounds:[...]}` or `{kind:'bingo', packId, shape,
+prizes}`. Two slots may name the SAME pack — that is exactly how "round 1
+here, round 3 over there" is represented. **CONSECUTIVE quiz slots compile
+into ONE segment**, whatever packs they name — the same "a run of quiz items
+is one quiz" rule `composeQuiz()` already applies to an ordinary multi-pack
+night, so two quiz slots with no bingo between them play straight through
+with no "Continue" prompt. Only a bingo slot is a real break.
+
+**`lbSlots` is `null` for every ordinary night**, exactly like `lbExtra`
+being empty — the existing single-pack and multi-pack-quiz paths are
+completely untouched, and `pub-unchanged.mjs` confirms byte-identical
+payloads. Entered the moment a bingo pack joins the row or a round is
+genuinely split apart; from then on it is the truth for what launches,
+`lbExtra`/`lbOff` having stopped being updated.
+
+**POSITIONS DO NOT SHIFT under a drag.** A slot left with no rounds becomes
+an empty gap (`null`) IN PLACE rather than the list compacting round it — a
+round dragged out from under slot 2 must not silently turn slot 3 into slot
+2 while a thumb is still moving. Explicit removal (a slot's own × button)
+is a different, deliberate act and DOES compact the list.
+
+**TAP TOGGLES A ROUND OFF/ON — the touch fallback**, since HTML5 drag never
+fires on a phone. An off round shows dimmed/red, same language `lbOff`'s own
+ticks already use, and reappears in the pack's HOME slot (the first one
+naming it) when tapped back on — never wherever else that pack might also
+appear in the row, or a round would seem to belong to two places at once.
+Repositioning WHICH slot a round plays in stays drag-only, the same
+precedent whole-pack reordering already sets.
+
+**EACH BINGO SLOT CARRIES ITS OWN PRIZE COUNT AND CARD SHAPE**, independent
+of every other bingo interlude in the same night — a small inline pair of
+selects on the tile itself, reusing `library.cardShapes` the same way the
+Set-it-up tab's own shape/prize pickers already do.
+
+**TWO BUGS LIVE VERIFICATION CAUGHT BEFORE THIS SHIPPED, both fixed:**
+
+- **A bingo pack dropped on the EMPTY Tonight row launched as a quiz.**
+  `addPackToNight()`'s "nothing chosen yet" branch called `pick()` without
+  syncing the game-kind picker first, unlike every other entry point into
+  that function — `pick()` derives its kind from the picker rather than
+  trusting what it is handed. 400: file not found, quiz kind, bingo id.
+- **Reordering packs by dragging one past another silently DELETED one of
+  them — pre-existing, not new, found while testing the above.** `movePack()`
+  computes the reordered `lbExtra` itself, then calls `pick()` to update
+  which pack is "first" — and `pick()`'s own "a different pack means start
+  the night again, wipe everything" rule fired on that call, overwriting the
+  very `lbExtra` `movePack()` had just computed. `pick()` now takes a
+  `keepOrder` option; `movePack()` passes it.
 
 #### One known gap: the archived record only keeps the last part
 

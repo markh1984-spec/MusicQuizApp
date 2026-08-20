@@ -81,47 +81,19 @@ means.
 
 ### THE MIXED-KIND NIGHT IS BUILT — quiz → bingo → quiz, one running score
 
-Built and live-verified on 20 August 2026, for the exact request that named
-it: *"run a split quiz where the quiz is broken up by two music bingos and the
-quiz prizes are only given out at the end."* The expensive half this entry used
-to describe — **the session runs ONE game, so a kind change mid-evening means
-ending one and starting another while the room, its teams and its scores carry
-on** — is done: `session.launchRunningOrder()` / `session.advanceOrder()` in
-`src/session.js`, the `/api/host/launchOrder` route in `server.js`, and the
-"Continue to the bingo/quiz" button on the control view
-(`host.js`/`host-bingo.js`) replacing next/finish at exactly the moment those
-would otherwise end a part for real. No `engine.js`/`bingo.js` changes at all —
-the boundary is the natural pause every night already has (a composed quiz's
-own `ROUND_BOARD` after its last round, bingo's own `WON`).
+Built and live-verified on 20 August 2026, both the session-level machinery
+(`session.launchRunningOrder()`/`advanceOrder()`, no `engine.js`/`bingo.js`
+changes) and, the same day, the Tonight bar's own row learning to build one
+directly — a bingo pack drops straight in, a round drags OUT of its pack
+into its own slot. Full reasoning: **[`docs/console.md`](../docs/console.md)**,
+under "THE MIXED ROW". Nothing left to build here.
 
-**BUILT A DIFFERENT ROAD THAN THIS ENTRY PLANNED, DELIBERATELY, ON A GIG-DAY
-BUDGET.** The plan below was to extend the Tonight bar's own row (`lbExtra`,
-`PACK_SLOTS`) to accept a bingo pack directly. What shipped instead composes
-the running order from a SAVED SHOW — `itemsOf(show)` already has exactly the
-right shape (`{kind, packId, order?}`), and the Shows editor already lets a
-host "Add a bingo game" / "Add a quiz" and reorder with arrows, so no new
-composing UI had to be built or trusted the night before it mattered. Pressing
-Launch on part 0 of a 2+-item show now goes through `doLaunchOrder()` instead
-of an ordinary launch; every later part loads through the control view's
-"Continue" button, never back through the console.
-
-**WHAT THIS MEANS THE TONIGHT BAR'S OWN ROW STILL CANNOT DO**, and it is the
-one thing genuinely left: `if (!packDrag || packDrag.kind === 'bingo') return;`
-still guards `console-tonight.js`'s own drop handlers (currently around lines
-1905 and 1961), so a bingo pack still cannot be dragged straight into the
-Tonight bar's row — a host wants a mixed night, they go via Workshop → Shows
-first. **This is now a UI convenience, not a risk to cost carefully** — the
-hard part (session-level pause/resume, roster and score carry, no premature
-archiving) is done and tested, so wiring the Tonight row up to the same
-`launchRunningOrder`/`advanceOrder` machinery is a much smaller job than this
-entry used to describe, whenever it is worth the taps saved.
-
-**ONE KNOWN GAP, left alone deliberately on the same budget**: the archived
-record for a mixed night keeps only the LAST part's own data — a 3-part
-night's Past gigs entry reads as if it were just the closing quiz. Score,
-prizes and timing are all correct; it is specifically the evidence side (see
-*Gigs is evidence* below) that is thin for a mixed night. Worth fixing before
-this is leaned on for a venue-facing report, not before then.
+**ONE KNOWN GAP, left alone deliberately**: the archived record for a mixed
+night keeps only the LAST part's own data — a 3-part night's Past gigs entry
+reads as if it were just the closing quiz. Score, prizes and timing are all
+correct; it is specifically the evidence side (see *Gigs is evidence* below)
+that is thin for a mixed night. Worth fixing before this is leaned on for a
+venue-facing report, not before then.
 
 Full reasoning, including the two bugs live verification caught (a bingo
 lobby-game default not resetting across the switch, and the voucher
