@@ -10,6 +10,18 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 20 August 2026, for a gig the following night:** each winning
+bingo team now gets a one-use voucher QR the same way the quiz's winners
+already did, and a night can now run as several PARTS — quiz, a bingo
+interlude, quiz again — with one set of teams and one running score carried
+across the interruption, bingo's own prizes still handed out the moment
+they're won and the quiz's only at the true end. See "QUIZ → BINGO → QUIZ,
+ONE RUNNING SCORE" in CLAUDE.md and the full reasoning in `docs/console.md`.
+Merged straight onto `MusicQuizApp` after the full suite, the protected-
+surface payload guard and a real Launch smoke test all passed on the merged
+tip — see "Where to push" in CLAUDE.md for why that branch is pushed to
+directly rather than merged by hand.
+
 All five build stages plus bingo, the console, generation, pack import, the
 tickable review flags, the alphabet round, per-type question counts and the
 picture round's four reveals, invoicing, the seasonal looks and the accounts

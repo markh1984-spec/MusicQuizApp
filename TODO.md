@@ -310,7 +310,7 @@ entry. Each leaves its name and one line above, so nothing is hidden:
 - **[`todo/gallery.md`](todo/gallery.md)** — photos after the night, print on
   demand, the rude-photo problem.
 - **[`todo/console.md`](todo/console.md)** — the console's UI work: doors,
-  benches, the popover editor, the running order.
+  benches, the popover editor, dragging a bingo pack straight into Tonight.
 
 **The 65KB "photo gallery" section was the tell.** Every new entry had been
 landing in whatever heading was last, so it had come to hold the console doors
@@ -452,7 +452,8 @@ Who may see a night’s photos, what may be printed, and the rude-photo problem 
 
 ## The console's outstanding UI work
 
-Doors, benches, the popover editor, the running order, and the seams left — **[`todo/console.md`](todo/console.md)**.
+Doors, benches, the popover editor, dragging a bingo pack straight into
+Tonight, and the seams left — **[`todo/console.md`](todo/console.md)**.
 
 ## BREAKOUT GAMES — a round that plays for laughs and scores nothing
 

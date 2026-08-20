@@ -79,108 +79,53 @@ has a `dirty` flag and a confirm-on-leave, which is most of the draft
 behaviour, and reusing it would keep one definition of what saving a pack
 means.
 
-### TONIGHT IS A RUNNING ORDER — the mixed-kind night is what is left
+### THE MIXED-KIND NIGHT IS BUILT — quiz → bingo → quiz, one running score
 
-**MOST OF THIS IS BUILT**: six numbered slots (`PACK_SLOTS`), the drag and
-`movePack()`, the round ticks, the 12-round guard, and `composeQuiz()` wired
-through `session.js` — a multi-pack quiz genuinely plays. Do not rebuild any of
-it. **What is left is the expensive half the entry already named:**
+Built and live-verified on 20 August 2026, for the exact request that named
+it: *"run a split quiz where the quiz is broken up by two music bingos and the
+quiz prizes are only given out at the end."* The expensive half this entry used
+to describe — **the session runs ONE game, so a kind change mid-evening means
+ending one and starting another while the room, its teams and its scores carry
+on** — is done: `session.launchRunningOrder()` / `session.advanceOrder()` in
+`src/session.js`, the `/api/host/launchOrder` route in `server.js`, and the
+"Continue to the bingo/quiz" button on the control view
+(`host.js`/`host-bingo.js`) replacing next/finish at exactly the moment those
+would otherwise end a part for real. No `engine.js`/`bingo.js` changes at all —
+the boundary is the natural pause every night already has (a composed quiz's
+own `ROUND_BOARD` after its last round, bingo's own `WON`).
 
-- **A bingo pack cannot enter the running order.** One line, twice:
-  `if (!packDrag || packDrag.kind === 'bingo') return;` at
-  `console-tonight.js:1859` and `:1915`.
-- **The order does not live on the room.** It is module state (`lbExtra`), so a
-  reload loses a mixed evening — only a saved SHOW persists one.
-- A slot is a bare pack id rather than `{ kind, packId }`, and nothing marks a
-  slot as played. *"Next: X"* exists for shows only.
+**BUILT A DIFFERENT ROAD THAN THIS ENTRY PLANNED, DELIBERATELY, ON A GIG-DAY
+BUDGET.** The plan below was to extend the Tonight bar's own row (`lbExtra`,
+`PACK_SLOTS`) to accept a bingo pack directly. What shipped instead composes
+the running order from a SAVED SHOW — `itemsOf(show)` already has exactly the
+right shape (`{kind, packId, order?}`), and the Shows editor already lets a
+host "Add a bingo game" / "Add a quiz" and reorder with arrows, so no new
+composing UI had to be built or trusted the night before it mattered. Pressing
+Launch on part 0 of a 2+-item show now goes through `doLaunchOrder()` instead
+of an ordinary launch; every later part loads through the control view's
+"Continue" button, never back through the console.
 
-Decided on 15 August 2026: *"I think it should be running order so the first
-drop zone is the first thing the app plays, that makes sense."* Three slots,
-each taking ANY pack type, played in the order they sit in.
+**WHAT THIS MEANS THE TONIGHT BAR'S OWN ROW STILL CANNOT DO**, and it is the
+one thing genuinely left: `if (!packDrag || packDrag.kind === 'bingo') return;`
+still guards `console-tonight.js`'s own drop handlers (currently around lines
+1905 and 1961), so a bingo pack still cannot be dragged straight into the
+Tonight bar's row — a host wants a mixed night, they go via Workshop → Shows
+first. **This is now a UI convenience, not a risk to cost carefully** — the
+hard part (session-level pause/resume, roster and score carry, no premature
+archiving) is done and tested, so wiring the Tonight row up to the same
+`launchRunningOrder`/`advanceOrder` machinery is a much smaller job than this
+entry used to describe, whenever it is worth the taps saved.
 
-**This is the NIGHT object again, arriving from a third direction** — after the
-gallery's publish trigger and the two-nights distinction. Three separate roads
-now end at the same piece, which is about as strong a signal as this list gives
-that it is the right thing to build next.
+**ONE KNOWN GAP, left alone deliberately on the same budget**: the archived
+record for a mixed night keeps only the LAST part's own data — a 3-part
+night's Past gigs entry reads as if it were just the closing quiz. Score,
+prizes and timing are all correct; it is specifically the evidence side (see
+*Gigs is evidence* below) that is thin for a mixed night. Worth fixing before
+this is leaned on for a venue-facing report, not before then.
 
-#### AN ITEM IS A PACK, OR THE PART OF ONE YOU PICKED
-
-Asked, and the answer was better than the three options offered: *"can't we
-have it so the QM decides what he does with each pack and sub pack? So if he
-wants a whole quiz pack and then half a second one followed by music bingo he
-should be able to."*
-
-**That dissolves the question rather than answering it.** Composition is not a
-rule about types that the app applies — it is the quizmaster deciding, per pack
-and per round, and the app doing what the row says:
-
-| In the row | What plays |
-|---|---|
-| Quiz pack A, whole | its rounds |
-| Quiz pack B, three rounds ticked off | the rounds left on |
-| A bingo pack | a bingo game |
-
-**A run of quiz items is ONE quiz.** `composeQuiz()` already does exactly this
-— merges chosen rounds from several packs into one game and titles it for the
-evening — so "a whole pack then half of another" is built and working today.
-**A bingo item is its own game**, because bingo is not rounds and cannot be
-merged into a quiz.
-
-So the running order is really about **where one GAME ends and the next
-begins**, and the answer falls out with nothing to decide: a game ends where
-the kind changes. Everything else is the round ticks, which already exist.
-
-**Which makes this smaller than it looked.** No new composition, no merge
-control, no behaviour taken away — what is new is that the row may hold more
-than one KIND, and that the app remembers what comes after the one playing.
-
-#### What has to be built
-
-- **The order lives on the ROOM, not in the game state.** `state` belongs to
-  one game and is replaced when the next launches, so a list that has to
-  survive game one ending cannot live there. Per-room, persisted, restored on
-  boot like everything else that must survive a crash.
-- **Each slot is `{ kind, packId }`** — the game-type dropdown at the top of
-  the bar stops being a mode and becomes, at most, a filter on the search box.
-  Dropping a bingo pack must no longer switch the whole bar over.
-- **Launch fires slot 1** and marks it played. **"Next: <pack 2>"** then has to
-  appear somewhere the host will see it at eleven o'clock with a room in front
-  of them — the running panel, not a tab they would have to go and find.
-- **A played slot is not deleted.** The order is the record of the evening
-  while it is happening, and it is what the night object will be filed from.
-
-#### What NOT to do
-
-- ~~**Do not make it four or five slots.**~~ **SUPERSEDED on 15 August 2026 —
-  it is SIX** (*"need 6 pack slots imo"*). The original reasoning was about
-  PACKS — three being a quiz, a bingo and one spare — and the night has since
-  stopped being made of packs: it is a running order of ELEMENTS, and a quiz
-  split either side of a breakout is three items before a bingo game is
-  anywhere near it. **The worry behind the old rule still stands and is
-  answered by the WIDTH instead of the count**: a row that needs reordering and
-  scrolling is the thing to avoid, so the tiles came down to 160px, which puts
-  six on one laptop row inside the space three took at 200.
-- **Do not auto-launch the next one.** The gap between games is the host on a
-  microphone, and software deciding when that ends is the one thing guaranteed
-  to be wrong in a real room.
-
-#### WHAT IS ACTUALLY LEFT, measured on 15 August 2026
-
-Worth writing down, because the entry above reads as though none of it exists
-and most of it does:
-
-- **A multi-pack QUIZ night is BUILT AND WORKING.** `composeQuiz()` merges
-  chosen rounds from several packs into one game, the three slots draw, the
-  round ticks work, packs reorder by drag, and Launch says *"Launch tonight —
-  2 packs, 3 rounds"*.
-- **What is NOT built is a night that CHANGES KIND partway.** One line does it:
-  `if (!packDrag || packDrag.kind === 'bingo') return;` on the running order's
-  drop handler — a bingo pack cannot be dropped in at all today.
-
-**So the expensive half of this entry is the mixed-kind night**, and it is
-expensive for a reason worth naming: the session runs ONE game, so quiz → bingo
-→ quiz means ending a game and starting another while the room, its teams and
-its scores carry on. That is the piece to cost carefully, not the slots.
+Full reasoning, including the two bugs live verification caught (a bingo
+lobby-game default not resetting across the switch, and the voucher
+dispatcher gap): **[`docs/console.md`](../docs/console.md)**.
 
 ---
 

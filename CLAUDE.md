@@ -1250,6 +1250,7 @@ Open the one you are touching; do not read them all.
 - TONIGHT — one launch section, and it PINS WHERE IT ALREADY IS on a drag
 - A PACK WEARS ITS OWN SUBJECT
 - A CONTROL IS PRESENT AND INERT, NEVER ABSENT
+- Quiz → bingo → quiz, one running score, no engine changes at all
 
 **[`docs/gigs.md`](docs/gigs.md)** — venues, prizes, the diary, past nights, getting paid
 
@@ -1964,6 +1965,27 @@ having a nights section."*
 - **DROPPING ONE IN NEVER LAUNCHES**, and there is a TAP as well as a drag,
   because HTML5 drag never fires on touch. Reasoning:
   **[`docs/console.md`](docs/console.md)**.
+
+### QUIZ → BINGO → QUIZ, ONE RUNNING SCORE — built via a SHOW, not the Tonight row
+
+`Session.launchRunningOrder()`/`advanceOrder()` in `src/session.js`. **NO
+`engine.js` OR `bingo.js` CHANGES.** The boundary between parts is the pause
+every night already has — a composed quiz's own `ROUND_BOARD` after its last
+round, bingo's own `WON` — so the control view offers **"Continue to the
+bingo/quiz"** there instead of next/finish, and an intermediate part simply
+never reaches FINAL/FINISHED: never archived, quiz prizes never issued early.
+**Roster carries via a real `join()` on the fresh engine** (a bingo player
+gets a real card, a quiz player real fields), with the TOKEN patched on
+afterwards — `join()` always mints a fresh one, which would silently strand
+the phone's own stored token — and the SCORE patched in for a quiz part only,
+held in `this.carriedScores` across a bingo interlude that has no score field
+of its own. **THE LOBBY GAME MUST NOT CARRY FORWARD** — found live: it must
+re-resolve per part, or a resolved default from part one becomes a permanent
+override the moment a kind changes. Every pack in every part is loaded before
+ANY of them launches, or a deleted pack in part three throws in front of the
+room hours later. Built from a saved SHOW's existing "Add a bingo game" / "Add
+a quiz" editor, not a new Tonight-row composer — the Tonight row itself still
+refuses a bingo pack. Reasoning: **[`docs/console.md`](docs/console.md)**.
 
 ### A PACK WEARS ITS OWN SUBJECT
 

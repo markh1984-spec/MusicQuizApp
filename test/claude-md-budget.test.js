@@ -108,8 +108,15 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * section already exists to catalogue, and every session touching a console
  * module needs to know it before reaching for the nearest file that already
  * has the function rather than the page-agnostic one.
+ *
+ * RAISED TO 136,000 ON 20 AUGUST 2026, for the quiz → bingo → quiz running
+ * order — a protected-surface feature (Launch, the control view's primary
+ * button) that changes what "Continue" does at exactly the moment it would
+ * otherwise end a night early. A session touching `session.js`'s launch path,
+ * `host.js`'s primary button, or the Shows editor needs to know this exists
+ * before assuming the old single-game rules still hold everywhere.
  */
-const BUDGET = 134_500;
+const BUDGET = 136_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

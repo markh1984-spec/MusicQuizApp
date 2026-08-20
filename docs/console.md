@@ -1174,3 +1174,127 @@ Swapping one is choosing a different pack, which is what a select is for. And
 HTML5 drag events are never delivered on touch, so a drag-only editor would not
 exist on the device half this console is driven from — the same reason the
 round ticks replaced dragging rounds between packs. The arrows do the ordering.
+
+### THE MIXED-KIND NIGHT — quiz, a bingo interlude, quiz again, one score
+
+Built on 20 August 2026 for a gig the following night, from the request in
+those words: *"run a split quiz where the quiz is broken up by two music
+bingos and the quiz prizes are only given out at the end."*
+
+#### Why this was ever expensive
+
+`Session` holds exactly ONE engine at a time, and `launch()` throws the old one
+away unconditionally — `this.build(kind, normalised, null)`, state hardcoded
+null. That is right for an ordinary night and wrong for this one: quiz → bingo
+→ quiz means ending a game and starting another while the room, its teams and
+its running score carry on, and nothing in the engine or the session had ever
+had to do that.
+
+**The fix touches NEITHER `engine.js` NOR `bingo.js`, and that is the whole
+design.** The boundary between two parts is the same natural pause every night
+already has:
+
+- A composed quiz sits at `ROUND_BOARD` after its last round and does **not**
+  advance to `FINAL` until `next()` is pressed again — see `isLastRound` in
+  `engine.js`'s `next()`. Nothing had to be added; the pause already existed,
+  the console simply never offered anything at that exact moment except the
+  ordinary "Show the winner".
+- Bingo sits at `WON`/`PLAYING` until the host explicitly presses Finish —
+  `finish()` is never automatic, even after the last configured prize is won.
+
+So an intermediate part simply never reaches its own real ending. The console
+offers **"Continue to the bingo/quiz"** there instead of next/finish — a new
+`Session.advanceOrder()` action, not a change to what makes a quiz or a bingo
+game actually end. Which means, for free: an intermediate part is never
+archived, a quiz part's prizes never go out early, and the true end — whichever
+part is last — behaves exactly as an ordinary night's ending always has.
+
+#### How the roster and the score actually carry
+
+`Session.seedCarriedPlayers()`, called after the next part's engine is built.
+For every player carried in: `this.engine.join({playerId, name})` on the FRESH
+engine — reusing the real join path, so a bingo player gets a properly-dealt
+card and a quiz player gets properly-initialised per-round fields — then two
+fields `join()` cannot be told are patched directly onto the result:
+
+- **The TOKEN.** `join()` always mints a fresh one for what it sees as a brand
+  new player, which is right for an honest new phone and wrong here: this
+  player already proved who they are earlier tonight, and a silently changed
+  token is exactly the "phone that cannot prove itself" case rule 3 exists to
+  stop — the phone's own stored token would stop matching and it would be
+  treated as a stranger on its next request.
+- **The SCORE, into a quiz part only.** Bingo has no equivalent to carry — a
+  line or a house is its own separate prize, not points — so
+  `Session.advanceOrder()` keeps the last known quiz tally in
+  `this.carriedScores`, refreshed only when a QUIZ part is the one ending, and
+  simply carries it forward unchanged through a bingo interlude that has
+  nothing of its own to update it with. Written onto `engine.state` alongside
+  the running-order plan itself, so a crash mid-interlude does not lose either.
+
+#### The plan survives a restart the same way everything else on the night does
+
+`state.runningOrder` (the parts) and `state.orderPos` (how far through) are
+written onto the CURRENT part's engine state at every `startOrderSegment()` —
+the same place the venue, the prizes and the look already live — so `boot()`
+restores them exactly the way it restores those. No second recovery path, no
+separate file.
+
+#### Every pack in every part is loaded before ANY of them launches
+
+`Session.launchRunningOrder()` calls `composeQuiz()` (for a quiz part) or the
+bingo loader (for a bingo part) on EVERY part up front, throwing away the
+result — purely to prove each one can actually be built. Without this, a pack
+deleted between building tonight's order and pressing Launch would launch part
+one happily and throw when the host reached part two hours later, in front of
+the room. Found by testing the failure path directly, not assumed safe.
+
+#### The lobby game re-resolves per part — do not carry it forward
+
+Found by the live verification run before this shipped: a bingo interlude
+showed Maze Mouth, the QUIZ default, instead of Rally. `nightWideOpts()` — the
+function that reads what should stay true across every part (venue, prizes,
+look…) off the part that is ending — was carrying `state.lobbyGame` forward
+too, and `lobbyGameFor(kind, chosen, tier)` has no way to tell a *resolved
+default* apart from an *explicit choice*: it only ever sees an id. So the quiz
+part's own default became a permanent override the moment it reached the
+bingo part. Fixed by leaving `lobbyGame` out of `nightWideOpts()` entirely, so
+every part re-resolves to its own kind's default — exactly what "THE DEFAULT
+FOLLOWS THE GAME" already promises for an ordinary launch.
+
+#### Built via a saved SHOW, not by extending the Tonight bar's own row
+
+The Tonight bar's own running order (`lbExtra`, the six `PACK_SLOTS`) still
+refuses a bingo pack — `if (!packDrag || packDrag.kind === 'bingo') return;`,
+unchanged, in `console-tonight.js`'s drop handlers. Composing a mixed night
+goes via Workshop → Shows instead: `itemsOf(show)` already has the right shape
+(`{kind, packId, order?}`), and the show editor already lets a host "Add a
+bingo game" / "Add a quiz" and reorder with arrows — built for a different
+reason months earlier, and it turned out to already be the composing UI this
+needed. Pressing Launch on part 0 of a 2+-item show calls `doLaunchOrder()`
+(in `console-packs.js`, sharing the same 409-and-replace dance as an ordinary
+launch via a new `sendLaunch()` helper) instead of an ordinary single-pack
+launch; every later part loads through the control view's "Continue" button
+and `/api/host/advanceOrder`, never back through the console. Dragging a
+bingo pack straight into the Tonight row is real, cheap follow-on work now
+that the session-level machinery exists — see `todo/console.md`.
+
+#### One known gap: the archived record only keeps the last part
+
+A mixed night's Past gigs entry currently reads as if it were just the closing
+part — the score, the prizes and the timing are all correct, but a night's
+questions, its bingo interlude, and its earlier quiz part leave no trace in
+the filed record. Given *Gigs is evidence* above, a host wanting to show a
+venue "what we played" from a 3-part night would only see the last third of it.
+Left alone deliberately rather than built under gig-day time pressure; worth
+doing before this is leaned on for a venue-facing report.
+
+#### Verified live, in real browsers, before this shipped
+
+Two real "phones" (separate browser contexts, so `localStorage` could not be
+shared between them), a real 3-part night driven end to end: identity and
+token unchanged across both switches with no rejoin prompt, the score additive
+across the interruption (760 after part one, 1520 at the true final), no
+premature archiving, no host-only field ever reaching the projector's payload,
+zero console errors. Caught the lobby-game bug above, which no unit test would
+have — nothing short of watching a real bingo lobby render was going to show
+Maze Mouth where Rally belonged.
