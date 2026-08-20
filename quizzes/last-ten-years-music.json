@@ -1,0 +1,322 @@
+{
+  "id": "last-ten-years-music",
+  "title": "The Last Ten Years Music Quiz",
+  "subtitle": "Four rounds. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-08-20T18:56:28.000Z",
+  "notes": "Written by hand for a Thursday-night gig on 20 August 2026, covering big, broadly-recognisable hits from 2016 through 2025 — nothing from 2026 itself, since that is too recent to check with any confidence. Read every question before the gig, same as any pack.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "text",
+      "title": "Round One — 2016 to 2018",
+      "blurb": "10 questions on the biggest hits of 2016, 2017 and 2018",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which song, released in 2016, became a global hit after appearing in the animated film Trolls?",
+          "options": ["Happy", "Uptown Funk", "Can't Stop the Feeling!", "Shut Up and Dance"],
+          "correctIndex": 2,
+          "answerNote": "Written and performed by Justin Timberlake, it was nominated for an Oscar."
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which Canadian rapper had a 2016 UK number one with 'One Dance'?",
+          "options": ["Drake", "The Weeknd", "Travis Scott", "Tory Lanez"],
+          "correctIndex": 0,
+          "answerNote": "'One Dance' spent 15 weeks at UK number one, a record at the time."
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which act had a 2016 hit with 'Closer', featuring Halsey?",
+          "options": ["Major Lazer", "Marshmello", "Zedd", "The Chainsmokers"],
+          "correctIndex": 3,
+          "answerNote": "'Closer' topped the US Billboard Hot 100 for twelve weeks."
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which song gave Ed Sheeran a UK number one in January 2017, while his song 'Castle on the Hill' sat at number two?",
+          "options": ["Perfect", "Shape of You", "Photograph", "Thinking Out Loud"],
+          "correctIndex": 1,
+          "answerNote": "Ed Sheeran occupied the top two chart positions simultaneously with these two singles."
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which Spanish-language song by Luis Fonsi and Daddy Yankee became a global smash in 2017?",
+          "options": ["Despacito", "Bailando", "Danza Kuduro", "Vivir Mi Vida"],
+          "correctIndex": 0,
+          "answerNote": "Despacito, with Justin Bieber on the remix, topped both the UK and US charts."
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which rapper's 2018 hit 'God's Plan' broke streaming records worldwide?",
+          "options": ["Kendrick Lamar", "J. Cole", "Drake", "Travis Scott"],
+          "correctIndex": 2,
+          "answerNote": "The video showed Drake giving away nearly a million dollars to people in Miami."
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which British singer-songwriter had a UK number one in 2018 with 'Shotgun'?",
+          "options": ["Rag'n'Bone Man", "George Ezra", "Jake Bugg", "Tom Odell"],
+          "correctIndex": 1,
+          "answerNote": "'Shotgun' was the lead single from his album Staying at Tamara's."
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which two artists teamed up for the UK number one 'One Kiss' in 2018?",
+          "options": ["David Guetta & Sia", "Clean Bandit & Zara Larsson", "Martin Garrix & Bebe Rexha", "Calvin Harris & Dua Lipa"],
+          "correctIndex": 3,
+          "answerNote": "'One Kiss' was Calvin Harris's ninth UK number one."
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which British singer had a huge hit in 2017 with 'Human'?",
+          "options": ["Rag'n'Bone Man", "Sam Smith", "James Bay", "Jack Garratt"],
+          "correctIndex": 0,
+          "answerNote": "'Human' reached number two on the UK singles chart."
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Childish Gambino's provocative 2018 single and video, tackling gun violence in America, was called what?",
+          "options": ["Redbone", "Feels Like Summer", "This Is America", "3005"],
+          "correctIndex": 2,
+          "answerNote": "It won Grammy Awards for both Song and Record of the Year."
+        }
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "text",
+      "title": "Round Two — 2019 to 2020",
+      "blurb": "10 questions on the biggest hits of 2019 and 2020",
+      "questions": [
+        {
+          "id": "r2q1",
+          "prompt": "Which country-rap crossover by Lil Nas X became the longest-running US number one single ever, in 2019?",
+          "options": ["Panini", "Old Town Road", "Rodeo", "Industry Baby"],
+          "correctIndex": 1,
+          "answerNote": "It spent 19 weeks at number one on the Billboard Hot 100, with Billy Ray Cyrus on the remix."
+        },
+        {
+          "id": "r2q2",
+          "prompt": "Which Scottish singer-songwriter had a UK number one in 2019 with 'Someone You Loved'?",
+          "options": ["Lewis Capaldi", "Calum Scott", "Gerry Cinnamon", "Sam Fender"],
+          "correctIndex": 0,
+          "answerNote": "It was one of the best-selling singles of the decade in the UK."
+        },
+        {
+          "id": "r2q3",
+          "prompt": "Which singer's 2019 single 'Bad Guy' became her international breakthrough hit?",
+          "options": ["Halsey", "Olivia O'Brien", "Lorde", "Billie Eilish"],
+          "correctIndex": 3,
+          "answerNote": "'Bad Guy' knocked 'Old Town Road' off the US number one spot."
+        },
+        {
+          "id": "r2q4",
+          "prompt": "Which grime artist topped the UK singles chart in 2019 with 'Vossi Bop'?",
+          "options": ["Dave", "Stormzy", "AJ Tracey", "Skepta"],
+          "correctIndex": 1,
+          "answerNote": "It was Stormzy's first UK number one as a lead artist."
+        },
+        {
+          "id": "r2q5",
+          "prompt": "Which duo had a 2019 hit with 'Señorita'?",
+          "options": ["Zayn & Selena Gomez", "Charlie Puth & Halsey", "Shawn Mendes & Camila Cabello", "5 Seconds of Summer & Camila Cabello"],
+          "correctIndex": 2,
+          "answerNote": "The pair went on to date after filming the song's music video."
+        },
+        {
+          "id": "r2q6",
+          "prompt": "Which artist's 2020 album Future Nostalgia produced the hit 'Don't Start Now'?",
+          "options": ["Dua Lipa", "Ariana Grande", "Doja Cat", "Sabrina Carpenter"],
+          "correctIndex": 0,
+          "answerNote": "The album was widely praised for lifting spirits during the early pandemic lockdowns."
+        },
+        {
+          "id": "r2q7",
+          "prompt": "Which song by The Weeknd, from his 2020 album After Hours, became one of the biggest-selling singles ever?",
+          "options": ["Save Your Tears", "In Your Eyes", "Heartless", "Blinding Lights"],
+          "correctIndex": 3,
+          "answerNote": "It spent a record-breaking number of weeks on the US Billboard Hot 100."
+        },
+        {
+          "id": "r2q8",
+          "prompt": "Which former boy band member had a 2020 hit with 'Watermelon Sugar'?",
+          "options": ["Niall Horan", "Harry Styles", "Liam Payne", "Louis Tomlinson"],
+          "correctIndex": 1,
+          "answerNote": "It was originally released in 2019 but became a chart hit through 2020."
+        },
+        {
+          "id": "r2q9",
+          "prompt": "Which US rapper's 2020 hit 'The Box' became known for its distinctive squeaking sound?",
+          "options": ["Roddy Ricch", "DaBaby", "Polo G", "Lil Baby"],
+          "correctIndex": 0,
+          "answerNote": "The squeak was created by producer 30 Roc using his own voice."
+        },
+        {
+          "id": "r2q10",
+          "prompt": "Which American singer had a 2020 hit with 'Say So'?",
+          "options": ["Ashnikko", "Saweetie", "Doja Cat", "Rico Nasty"],
+          "correctIndex": 2,
+          "answerNote": "The song was boosted by a viral TikTok dance craze."
+        }
+      ]
+    },
+    {
+      "id": "r3",
+      "type": "text",
+      "title": "Round Three — 2021 to 2022",
+      "blurb": "10 questions on the biggest hits of 2021 and 2022",
+      "questions": [
+        {
+          "id": "r3q1",
+          "prompt": "Which singer-songwriter's 2021 debut single 'Drivers License' became a global sensation and UK number one?",
+          "options": ["Olivia Rodrigo", "Gracie Abrams", "Sabrina Carpenter", "Conan Gray"],
+          "correctIndex": 0,
+          "answerNote": "The song was widely believed to be about her Disney co-star Joshua Bassett."
+        },
+        {
+          "id": "r3q2",
+          "prompt": "Which English singer had a UK number one in 2021 with 'Bad Habits'?",
+          "options": ["Sam Fender", "George Ezra", "Ed Sheeran", "James Bay"],
+          "correctIndex": 2,
+          "answerNote": "The music video saw Sheeran transform into a vampire-like creature."
+        },
+        {
+          "id": "r3q3",
+          "prompt": "Which rapper had a 2021 hit called 'Montero (Call Me By Your Name)'?",
+          "options": ["Jack Harlow", "Lil Nas X", "Roddy Ricch", "DaBaby"],
+          "correctIndex": 1,
+          "answerNote": "The video's pole dance down to Hell caused plenty of controversy."
+        },
+        {
+          "id": "r3q4",
+          "prompt": "Which singer's 2021 comeback single 'Easy On Me' led her album 30?",
+          "options": ["Sia", "Duffy", "Jessie Ware", "Adele"],
+          "correctIndex": 3,
+          "answerNote": "It broke the record for the biggest opening week of streams for a song released that year."
+        },
+        {
+          "id": "r3q5",
+          "prompt": "Which two artists teamed up for the 2021 hit 'Stay'?",
+          "options": ["The Kid Laroi & Justin Bieber", "Lil Tjay & 6lack", "Trippie Redd & Juice WRLD", "YoungBoy & Nicki Minaj"],
+          "correctIndex": 0,
+          "answerNote": "It became one of the fastest songs to reach a billion streams on Spotify."
+        },
+        {
+          "id": "r3q6",
+          "prompt": "Which artist had a huge global hit in 2022 with 'As It Was'?",
+          "options": ["Shawn Mendes", "Sam Smith", "Harry Styles", "Niall Horan"],
+          "correctIndex": 2,
+          "answerNote": "'As It Was' was the lead single from his album Harry's House."
+        },
+        {
+          "id": "r3q7",
+          "prompt": "Which duo scored a UK number one in 2022 with 'Unholy'?",
+          "options": ["Elton John & Dua Lipa", "Sam Smith & Kim Petras", "Calvin Harris & Ellie Goulding", "Years & Years & Jess Glynne"],
+          "correctIndex": 1,
+          "answerNote": "Kim Petras became the first openly transgender woman to win the Grammy the song was nominated for."
+        },
+        {
+          "id": "r3q8",
+          "prompt": "Which American singer had a 2022 hit called 'About Damn Time'?",
+          "options": ["Lizzo", "Doja Cat", "Chlöe", "Latto"],
+          "correctIndex": 0,
+          "answerNote": "The song became a viral TikTok dance sensation."
+        },
+        {
+          "id": "r3q9",
+          "prompt": "Which singer had a 2022 hit with 'Break My Soul'?",
+          "options": ["SZA", "Rihanna", "Janelle Monáe", "Beyoncé"],
+          "correctIndex": 3,
+          "answerNote": "The track was the lead single from her album Renaissance."
+        },
+        {
+          "id": "r3q10",
+          "prompt": "Which Nigerian artist's song 'Calm Down', later remixed with Selena Gomez, was a huge global hit through 2022 and 2023?",
+          "options": ["Burna Boy", "Rema", "Wizkid", "Davido"],
+          "correctIndex": 1,
+          "answerNote": "The remix became one of the most-streamed songs on Spotify that year."
+        }
+      ]
+    },
+    {
+      "id": "r4",
+      "type": "text",
+      "title": "Round Four — 2023 to 2025",
+      "blurb": "10 questions on the biggest hits of 2023, 2024 and 2025",
+      "questions": [
+        {
+          "id": "r4q1",
+          "prompt": "Which singer had a global number one in 2023 with 'Flowers'?",
+          "options": ["Kesha", "Kelly Clarkson", "Miley Cyrus", "Demi Lovato"],
+          "correctIndex": 2,
+          "answerNote": "The lyric 'I can buy myself flowers' became a viral empowerment anthem."
+        },
+        {
+          "id": "r4q2",
+          "prompt": "Which act had a 2023 UK number one with 'Boy's a Liar Pt. 2'?",
+          "options": ["PinkPantheress & Ice Spice", "FLO", "Raye", "Cat Burns"],
+          "correctIndex": 0,
+          "answerNote": "It reunited the British singer with the American rapper after her viral original version."
+        },
+        {
+          "id": "r4q3",
+          "prompt": "Which singer's song 'What Was I Made For?', written for the 2023 film Barbie, won her an Oscar?",
+          "options": ["Dua Lipa", "Billie Eilish", "Nicki Minaj", "Lizzo"],
+          "correctIndex": 1,
+          "answerNote": "She won Best Original Song at the 2024 Academy Awards, her second Oscar overall."
+        },
+        {
+          "id": "r4q4",
+          "prompt": "Which American singer had a 2023 hit with 'Kill Bill'?",
+          "options": ["Summer Walker", "Jhené Aiko", "H.E.R.", "SZA"],
+          "correctIndex": 3,
+          "answerNote": "The song was inspired by the Quentin Tarantino film series of the same name."
+        },
+        {
+          "id": "r4q5",
+          "prompt": "Which BTS member had a 2023 solo hit called 'Seven', featuring Latto?",
+          "options": ["Jung Kook", "RM", "Jimin", "V"],
+          "correctIndex": 0,
+          "answerNote": "It became one of the biggest solo hits by any BTS member."
+        },
+        {
+          "id": "r4q6",
+          "prompt": "Which US singer had back-to-back 2024 hits with 'Espresso' and 'Please Please Please'?",
+          "options": ["Chappell Roan", "Olivia Rodrigo", "Sabrina Carpenter", "Gracie Abrams"],
+          "correctIndex": 2,
+          "answerNote": "'Please Please Please' was co-written with her then-boyfriend, actor Barry Keoghan."
+        },
+        {
+          "id": "r4q7",
+          "prompt": "Which US singer had a 2024 breakout hit with 'Good Luck, Babe!'?",
+          "options": ["Reneé Rapp", "Chappell Roan", "Towa Bird", "Muna"],
+          "correctIndex": 1,
+          "answerNote": "She became one of pop's biggest breakout stars of that year."
+        },
+        {
+          "id": "r4q8",
+          "prompt": "Which UK artist coined 'brat summer' with her 2024 album Brat?",
+          "options": ["Charli XCX", "PinkPantheress", "Jorja Smith", "RAYE"],
+          "correctIndex": 0,
+          "answerNote": "The album's lurid green cover became a cultural phenomenon of its own."
+        },
+        {
+          "id": "r4q9",
+          "prompt": "Which US singer had a 2024 hit called 'Beautiful Things'?",
+          "options": ["Noah Kahan", "Alec Benjamin", "Jeremy Zucker", "Benson Boone"],
+          "correctIndex": 3,
+          "answerNote": "He became known for performing backflips during live performances of the song."
+        },
+        {
+          "id": "r4q10",
+          "prompt": "Which rapper's song 'Not Like Us' dominated 2024, later soundtracking his headline slot at the 2025 Super Bowl halftime show?",
+          "options": ["Drake", "J. Cole", "Kendrick Lamar", "Future"],
+          "correctIndex": 2,
+          "answerNote": "The Grammy-winning diss track was aimed at fellow rapper Drake; Lamar headlined Super Bowl LIX in February 2025."
+        }
+      ]
+    }
+  ]
+}
