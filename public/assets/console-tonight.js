@@ -6,6 +6,10 @@ import { tonightsVenue } from './console-gigs.js';
 import { invoiceApi, openInvoiceForm, share } from './console-invoices.js';
 import { doLaunch, doLaunchOrder, freshLabel, freshness, lobbyGameOptions, lookOptions, playingOptions, shapeOptions } from './console-packs.js';
 import { packTitle, shelfFor } from './console-shows.js';
+import {
+  addBingoSlot, addQuizPackSlot, isMixed, segmentsFromSlots, slotsFromSimple,
+} from './console-tonight-mix.js';
+import { renderSlots } from './console-tonight-mix-ui.js';
 import { BENCH_STORE, NIGHT_BENCH_STORE, bench, library, nightBench, packDrag, setBench, setBook, setLibrary, setNightBench, setPackDrag, setShowDrag, setVenueDrag, showDrag, venueDrag } from './console-state.js';
 import { nowNextRows } from './console-venues.js';
 import { TABS, can, goTo, hostKey, keyInUrl, keyed, linkTo, load, packWord, render, renderKeepingPlace, screenLink, showDone } from './console.js';
@@ -119,6 +123,18 @@ let lbOnline = false;
  * browser tab, going quietly stale.
  */
 let lbExtra = [];
+
+/**
+ * THE MIXED ROW — `null` for every ordinary night, exactly like `lbExtra`
+ * being empty. Set the moment a bingo pack joins the row or a round is split
+ * apart from its siblings (`console-tonight-mix.js`'s own `slots`), and from
+ * then on `paintOrder()`/Launch read THIS instead of `lbExtra`/`lbOff` — two
+ * data shapes for two different nights, never bent into one. Cleared
+ * wherever `lbExtra`/`lbOff` themselves are, so a night thrown away by
+ * `dropPack(0)` or a fresh pack pick does not leave a stale mixed plan
+ * behind for the next one.
+ */
+let lbSlots = null;
 
 /**
  * ROUNDS SWITCHED OFF — a Set of `packId:roundIndex`.
@@ -946,6 +962,7 @@ export function launchBar() {
     if (currentPack && currentPack.id !== pack.id) {
       lbExtra = [];
       lbOff = new Set();
+      lbSlots = null;
       /*
        * AND IT IS NOT THAT SHOW'S EVENING ANY MORE. Choosing a different pack
        * by hand is somebody saying "we are playing THIS", so a "Then: the
@@ -1065,7 +1082,10 @@ export function launchBar() {
        * named target cannot tell you whether it was there a moment ago.
        */
       window.open(screenLink(), 'quizscreen');
-      const segments = runningShowSegments();
+      // Once `lbSlots` exists it is the truth for what launches, whether or
+      // not it still counts as "mixed" — `currentPack`/`lbExtra` stopped
+      // being updated the moment mixed mode was entered.
+      const segments = runningShowSegments() || (lbSlots ? segmentsFromSlots(lbSlots) : null);
       if (segments) {
         await doLaunchOrder(segments, {
           look: night.look,
@@ -1132,6 +1152,7 @@ export function launchBar() {
     lbGame = gamePick.value;
     currentPack = null;
     lbExtra = [];
+    lbSlots = null;
     chosen.hidden = true;
     text.value = '';
     startOn();
@@ -1398,6 +1419,11 @@ export function launchBar() {
 
   /** A pack off the shelf by id. Never stored — see `lbExtra`. */
   const packOf = (id) => (gameOf().packs || []).find((p) => p.id === id);
+  /** A pack off a NAMED shelf, whichever one is active — the mixed row needs
+      to find a bingo pack while quiz is picked, and vice versa. */
+  const packOnShelf = (kind, id) => ((games.find((g) => g.id === kind) || {}).packs || []).find((p) => p.id === id);
+  /** Any pack anywhere in the mixed row, for `renderSlots()`'s own lookups. */
+  const anyPack = (id) => games.flatMap((g) => g.packs || []).find((p) => p.id === id);
 
   /** Tonight, in order: the chosen pack and anything dropped in after it. */
   const lbPacks = () => [currentPack, ...lbExtra.map(packOf)].filter(Boolean);
@@ -1488,6 +1514,7 @@ export function launchBar() {
       currentPack = null;
       lbExtra = [];
       lbOff = new Set();
+      lbSlots = null;
       chosen.hidden = true;
       /*
        * AND SET IT UP GOES BACK TO SLEEP WITH IT. `pick()` switches that
@@ -1605,7 +1632,31 @@ export function launchBar() {
     }
   }
 
+  /*
+   * THE MIXED ROW TAKES OVER THE WHOLE PANEL the moment `lbSlots` exists —
+   * one renderer at a time, never two disagreeing about what is in slot 2.
+   * `renderSlots()` (`console-tonight-mix-ui.js`) draws the tiles; this
+   * still owns the info line and the Launch button, exactly as below.
+   */
+  function paintMixedOrder() {
+    orderEl.hidden = false;
+    const row = renderSlots(lbSlots, {
+      packOf: anyPack,
+      onChange: (next) => { lbSlots = next; paintOrder(); },
+      dragging,
+      getPackDrag: () => packDrag,
+      clearPackDrag: () => setPackDrag(null),
+      maxSlots: PACK_SLOTS,
+    });
+    orderEl.replaceChildren(row, infoLine());
+    const parts = segmentsFromSlots(lbSlots).length;
+    goBtn.disabled = !parts;
+    goBtn.textContent = parts ? `Launch tonight — ${parts} part${parts === 1 ? '' : 's'}` : 'Drag a pack in to launch';
+    paintInTonight();
+  }
+
   function paintOrder() {
+    if (lbSlots) { paintMixedOrder(); return; }
     orderEl.hidden = false;
     const packs = lbPacks();
     const tiles = [];
@@ -1902,7 +1953,7 @@ export function launchBar() {
    * also fire and REPLACE the night with the pack that was just added to it.
    */
   orderEl.addEventListener('dragover', (ev) => {
-    if (!packDrag || packDrag.kind === 'bingo') return;
+    if (!packDrag) return;
     ev.preventDefault();
     ev.stopPropagation();
     ev.dataTransfer.dropEffect = 'copy';
@@ -1928,7 +1979,7 @@ export function launchBar() {
    * panel where letting go should mean something different, which is exactly
    * why the two paths were never going to stay in step.
    */
-  function addPackToNight(from) {
+  function addPackToNight(from, kind = gameOf().id) {
     if (!from) return;
     /*
      * THE FIRST PACK IS THE NIGHT; the rest are added to it. With nothing
@@ -1939,6 +1990,19 @@ export function launchBar() {
      */
     if (!currentPack) {
       pick(from);
+      return;
+    }
+    /*
+     * BINGO JOINING AN EXISTING NIGHT — OR A ROUND ALREADY SPLIT APART — IS
+     * THE MIXED ROW, not `lbExtra`. Once `lbSlots` exists every later add
+     * goes this way too, quiz or bingo, so the night never has to decide
+     * between two systems mid-build. `slotsFromSimple()` is only ever called
+     * ONCE, the moment there was nothing to convert from.
+     */
+    if (kind === 'bingo' || lbSlots) {
+      if (!lbSlots) lbSlots = slotsFromSimple({ currentPack, lbExtra, lbOff, packOf });
+      lbSlots = kind === 'bingo' ? addBingoSlot(lbSlots, from) : addQuizPackSlot(lbSlots, from);
+      paintOrder();
       return;
     }
     // The same pack twice is a mis-drop rather than an intention — a night
@@ -1958,14 +2022,14 @@ export function launchBar() {
   }
 
   orderEl.addEventListener('drop', (ev) => {
-    if (!packDrag || packDrag.kind === 'bingo') return;
+    if (!packDrag) return;
     ev.preventDefault();
     ev.stopPropagation();
     orderEl.classList.remove('drop-here');
     const dropped = packDrag;
     setPackDrag(null);
     dragging(false);
-    addPackToNight(packOf(dropped.id));
+    addPackToNight(packOnShelf(dropped.kind, dropped.id), dropped.kind);
     // However you left it — see `openForDrop`. The bar opened to be aimed at,
     // not to stay open.
     giveTheFoldBack();
@@ -2026,26 +2090,24 @@ export function launchBar() {
     const dropped = packDrag;
     setPackDrag(null);
     dragging(false);
-    // A pack from the other game switches the picker first, or `pick()` would
-    // look for it on the wrong shelf and find nothing.
-    if (gamePick && dropped.kind && gamePick.value !== dropped.kind) {
+    /*
+     * A pack from the other game switches the picker first — but ONLY when
+     * there is nothing playing yet. Once a night is under way, a different
+     * kind joins it through the mixed row instead (`addPackToNight` below),
+     * which is the whole point of this feature: a night that changes kind
+     * partway is exactly what quiz -> bingo -> quiz needs, not something to
+     * still be refused.
+     */
+    if (!currentPack && gamePick && dropped.kind && gamePick.value !== dropped.kind) {
       gamePick.value = dropped.kind;
       lbGame = dropped.kind;
-      currentPack = null;
     }
     /*
      * THE SAME PATH AS A DROP ON THE SLOTS — see `addPackToNight`. This used to
      * call `pick()` directly, which is what made a drag that stopped short wipe
      * the running order.
-     *
-     * A pack of the OTHER kind still replaces the night rather than joining it,
-     * because a night that changes game partway is not built yet: `composeQuiz`
-     * merges quiz rounds and bingo is not rounds. `currentPack` was cleared
-     * just above, so `addPackToNight` takes the first-pack path and starts the
-     * evening on the new shelf, which is what switching game means.
      */
-    const found = gameOf().packs.find((p) => p.id === dropped.id);
-    addPackToNight(found);
+    addPackToNight(packOnShelf(dropped.kind, dropped.id), dropped.kind);
     giveTheFoldBack();
   });
 
@@ -2145,6 +2207,7 @@ export function launchBar() {
     currentPack = shelf.find((p) => p.id === here[0]);
     lbExtra = here.slice(1);
     lbOff = new Set();
+    lbSlots = null;
     if (item.order && item.order.length) {
       const on = new Set(item.order.map((r) => offKey(r.packId, r.round)));
       for (const pack of lbPacks()) {
@@ -2172,17 +2235,13 @@ export function launchBar() {
   if (packWanted) {
     const want = packWanted;
     packWanted = null;
-    /*
-     * A pack from the other game switches the picker FIRST, or `packOf()`
-     * looks on the wrong shelf and finds nothing — the same two lines the drop
-     * handler has always had, for the same reason.
-     */
-    if (gamePick && want.kind && gamePick.value !== want.kind) {
+    // Switches the picker only when starting fresh — see the drop handler's
+    // own note on why a night already under way goes through the mixed row.
+    if (!currentPack && gamePick && want.kind && gamePick.value !== want.kind) {
       gamePick.value = want.kind;
       lbGame = want.kind;
-      currentPack = null;
     }
-    addPackToNight(packOf(want.id));
+    addPackToNight(packOnShelf(want.kind, want.id), want.kind);
   }
   if (venueWanted) { const name = venueWanted; venueWanted = null; chooseVenue(name); }
 

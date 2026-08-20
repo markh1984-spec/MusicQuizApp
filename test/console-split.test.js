@@ -83,8 +83,17 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * A line budget per module. `console-tonight.js` is the big one because
  * `launchBar()` alone is 1,700 lines — that is the next seam to take, and it
  * is a real split rather than a move, so it waits for a reason.
+ *
+ * RAISED TO 2650 ON 20 AUGUST 2026, deliberately, for the mixed-row wiring —
+ * bingo joining an existing night, and a round split apart from its
+ * siblings. The rendering itself lives in the new `console-tonight-mix.js` /
+ * `console-tonight-mix-ui.js` (each well inside `DEFAULT_BUDGET`); what grew
+ * here is the glue that has to live inside `launchBar()`'s own closure —
+ * `addPackToNight()`, the three drop handlers, `paintOrder()`'s branch — none
+ * of which can be pulled out without also pulling out the closure state
+ * (`currentPack`, `lbExtra`, `lbOff`, `packOf`) they read and write.
  */
-const BUDGET = { 'console-tonight.js': 2600, 'console.js': 2000 };
+const BUDGET = { 'console-tonight.js': 2650, 'console.js': 2000 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

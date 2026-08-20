@@ -6386,6 +6386,41 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 }
 .lb-drop-plus { font-size: var(--fs-title); line-height: 1; }
 
+/* THE MIXED ROW'S OWN EMPTY SLOT — same dashed look as `.lb-drop`, but
+   deliberately a different class: `.lb-tiles .lb-tile.lb-drop ~
+   .lb-tile.lb-drop { display: none }` hides every empty invite after the
+   first, right for the ordinary strip's "one way in" and wrong here, where
+   a round might need dropping into any one of several open gaps at once. */
+.lb-tile.mix-drop {
+  align-items: center; justify-content: center; text-align: center;
+  border: 2px dashed var(--panel-line); background: none; color: var(--ink-dim);
+  font-weight: 800; cursor: pointer;
+}
+.lb-tile.mix-drop.drop-here { border-color: var(--hot); color: var(--ink); background: rgba(255, 46, 136, 0.08); }
+.mix-rd {
+  display: inline-grid; place-items: center;
+  width: 22px; height: 22px; padding: 0; margin: 2px 2px 0 0;
+  border-radius: var(--r-pill); cursor: grab;
+  font: inherit; font-size: var(--fs-mini); font-weight: 900; line-height: 1;
+  background: rgba(47, 224, 122, 0.16); border: 1px solid rgba(47, 224, 122, 0.55); color: var(--good);
+}
+.mix-rd:hover { filter: brightness(1.25); }
+.mix-rd.is-lifting { opacity: 0.35; border-style: dashed; }
+/* Off — out of tonight entirely, same red/green language `.lb-rd` already
+   uses. Not draggable (see console-tonight-mix-ui.js): a tap brings it back
+   into its pack's own home slot, which is all a phone needs to be able to
+   do, and dragging an OFF round anywhere would be a control with no target
+   worth having. */
+.mix-rd.off { cursor: pointer; background: rgba(255, 77, 94, 0.12); border: 1px solid rgba(255, 77, 94, 0.5); color: var(--bad); }
+.mix-bingo-set {
+  display: flex; gap: 4px; margin-top: 4px; position: relative; z-index: 1;
+}
+.mix-bingo-set select {
+  font-size: var(--fs-mini); padding: 2px 4px; min-width: 0; max-width: 100%;
+  background: rgba(255, 255, 255, 0.06); border: 1px solid var(--panel-line);
+  border-radius: var(--r-field); color: var(--ink);
+}
+
 /* THE SHELF SHOWS THE GAP. A pack that is in tonight is drawn as an
    outline of itself, so it has visibly LEFT rather than been copied — which
    is what makes the flight read as a move rather than a duplicate appearing.
