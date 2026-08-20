@@ -72,6 +72,66 @@ const LAUNCHERS = {
   },
 };
 
+/**
+ * How many PARTS one night's running order may hold — quiz → bingo → quiz is
+ * two, and a night alternating four times is already an unusual evening. Not
+ * a technical limit, the same as `MAX_ROUNDS` in `running-order.js`: a guard
+ * against a stuck drag or a script, not a ceiling anybody is expected to hit.
+ */
+const MAX_ORDER_PARTS = 8;
+
+/**
+ * Turn whatever the console sent into a list this file trusts.
+ *
+ * The console is reloadable and editable behind the host key, so this is the
+ * same defence in depth as every other launch field — a malformed entry is
+ * dropped rather than trusted, and `launch()`'s own checks (a pack that no
+ * longer exists, a round that is not there) still run per part exactly as
+ * they do for an ordinary launch.
+ */
+function normaliseSegments(segments) {
+  const list = Array.isArray(segments) ? segments : [];
+  return list.map((s) => {
+    if (s && s.kind === 'bingo') {
+      const packId = String((s && s.packId) || '').trim();
+      if (!packId) return null;
+      const shape = s.shape && Number(s.shape.rows) && Number(s.shape.cols)
+        ? { rows: Number(s.shape.rows), cols: Number(s.shape.cols) }
+        : null;
+      const prizes = Math.max(0, Math.min(5, Number(s.prizes) || 0));
+      return { kind: 'bingo', packId, shape, prizes };
+    }
+    const order = Array.isArray(s && s.order) ? s.order : [];
+    if (!order.length) return null;
+    return { kind: 'quiz', order };
+  }).filter(Boolean);
+}
+
+/**
+ * What stays true for the WHOLE night, read off whichever part is currently
+ * running rather than kept a second way — the venue, the prizes, the look,
+ * every one of them was already written onto the state at the part's own
+ * launch, so re-reading it here is the same trick `boot()` uses to restore a
+ * running order after a restart: the state already has the answer.
+ */
+function nightWideOpts(state) {
+  return {
+    venue: state.venue,
+    venueId: state.venueId,
+    rewards: state.rewards,
+    venueLogo: state.venueLogo,
+    comeBack: state.comeBack,
+    look: state.look,
+    lobbyGame: state.lobbyGame,
+    lobbySound: state.lobbySound,
+    league: state.leagueOn,
+    online: state.online,
+    teamPlay: state.teamPlay,
+    askForRounds: state.askForRounds,
+    roundIdeas: state.roundIdeas,
+  };
+}
+
 export class Session {
   /**
    * @param {object} opts
@@ -166,6 +226,17 @@ export class Session {
      * on the console.
      */
     this.launchedSinceBoot = false;
+    /*
+     * A RUNNING ORDER SURVIVES A RESTART THE SAME WAY EVERYTHING ELSE ON THE
+     * NIGHT DOES — it was written onto the state at the last part's launch
+     * (see `startOrderSegment`), so a restart mid-bingo-interlude still knows
+     * two more quiz rounds and a prize-giving are left, and "Continue" keeps
+     * working rather than silently becoming a dead end.
+     */
+    this.runningOrder = (state && Array.isArray(state.runningOrder) && state.runningOrder.length)
+      ? state.runningOrder : null;
+    this.orderPos = (this.runningOrder && typeof state.orderPos === 'number') ? state.orderPos : 0;
+    this.carriedScores = (this.runningOrder && state.carriedScores) || null;
 
     if (state) {
       const players = Object.keys(state.players || {}).length;
@@ -615,10 +686,169 @@ export class Session {
      */
     this.launchedSinceBoot = true;
     this.strandedPhones = 0;
+    /*
+     * A PLAIN LAUNCH IS NOT A RUNNING ORDER, even when one was running a
+     * moment ago — the wrong pack going up and being relaunched must not
+     * leave a stale "2 more parts" on the new night. `startOrderSegment` sets
+     * these again, right after this call, for the case where it genuinely is
+     * one.
+     */
+    this.runningOrder = null;
+    this.orderPos = 0;
+    this.carriedScores = null;
 
     recordLaunch(this.config.dataDir, kind, normalised.id, this.now(), this.roomId);
     this.engine.changed();
     return { kind, id: normalised.id, title: normalised.title };
+  }
+
+  // --------------------------------------------------------- running order
+
+  /**
+   * TONIGHT AS MORE THAN ONE GAME — quiz, then a bingo interlude, then quiz
+   * again, with one set of teams and one running score across the whole
+   * evening. Asked for directly: *"the quiz is broken up by two music
+   * bingos and the quiz prizes are only given out at the end."*
+   *
+   * **`launch()` above stays exactly what it always was — one engine, thrown
+   * away and rebuilt.** This does not change that; it calls it once per PART
+   * and, between parts, carries the roster into the next one: `join()` on
+   * the fresh engine for every carried player (which deals a real bingo
+   * card or sets up a real quiz player exactly as an ordinary join does),
+   * then this patches the two fields `join()` cannot be told — the TOKEN (or
+   * a phone's already-stored one stops matching and it is treated as a
+   * stranger, the exact rule 3 problem this exists to avoid) and, into a
+   * quiz part only, the SCORE (`join()` always starts a new player at zero;
+   * bingo has no equivalent to carry, since a line or a house is its own
+   * separate prize, not points).
+   *
+   * **NO ENGINE CODE CHANGES AT ALL, DELIBERATELY.** The boundary between two
+   * parts is the same natural pause every night already has: a composed
+   * quiz's ROUND_BOARD after its last round does not advance to FINAL until
+   * `next()` is pressed again (`isLastRound` in `engine.js`'s `next()`), and
+   * bingo sits on WON/PLAYING until the host presses Finish. So an
+   * intermediate part simply never reaches FINAL or FINISHED — the console
+   * offers "Continue" there instead of the ordinary next/finish — which
+   * means it is never archived and a quiz part never issues its prizes
+   * early. Only the LAST part in the order goes through its own game's real
+   * ending, exactly as an ordinary night does, and that is what makes "quiz
+   * prizes only at the end" true for free rather than something this file
+   * has to enforce.
+   */
+  launchRunningOrder(segments, opts = {}) {
+    const list = normaliseSegments(segments);
+    if (!list.length) throw new Error('A running order needs at least one part.');
+    if (list.length > MAX_ORDER_PARTS) {
+      throw new Error(`A night can have at most ${MAX_ORDER_PARTS} parts.`);
+    }
+    /*
+     * EVERY PACK IN EVERY PART IS LOADED HERE, BEFORE ANYTHING LAUNCHES —
+     * not just the first one, and not just when the host actually reaches
+     * that part. Without this, a pack deleted between building tonight's
+     * running order and pressing Launch would launch part one perfectly
+     * happily and then throw when `advanceOrder()` tried to build part two
+     * — in front of the room, at whatever time in the evening that happens
+     * to be. `composeQuiz()` already validates a quiz part's own rounds this
+     * way for a single-pack night; this does the same for every part of a
+     * mixed one, and for bingo, which has no `composeQuiz` of its own.
+     */
+    for (const seg of list) {
+      if (seg.kind === 'bingo') {
+        try {
+          LAUNCHERS.bingo.load(this.config, seg.packId, this.paths);
+        } catch {
+          throw new Error(`There is no bingo pack called ${seg.packId} any more.`);
+        }
+      } else {
+        composeQuiz(seg.order, (id) => LAUNCHERS.quiz.load(this.config, id, this.paths));
+      }
+    }
+    return this.startOrderSegment(list, 0, opts, null);
+  }
+
+  /**
+   * Move on to the next part, carrying the roster — and, into a quiz, the
+   * running score — with it. The night-wide facts (venue, prizes, look…) are
+   * read off the part that is ENDING rather than kept a second way, which is
+   * also what makes this survive a restart with no extra state to restore.
+   */
+  advanceOrder() {
+    const list = this.runningOrder;
+    if (!list || this.orderPos >= list.length - 1) return { ok: false, reason: 'no_more_parts' };
+    const opts = nightWideOpts(this.engine.state);
+    /*
+     * THE RUNNING SCORE ONLY EXISTS ON A QUIZ ENGINE'S PLAYERS. Bingo has
+     * nothing of its own to update it with — a line or a house is its own
+     * separate prize, not points — so this refreshes the tally only when a
+     * QUIZ part is the one ending, and simply carries the last one forward
+     * unchanged through a bingo interlude. That is what makes "the score
+     * survives the bingo interruption" true across TWO switches rather than
+     * one: read it here, it would be gone the moment bingo's own players
+     * (who have no `.score` field at all) became the source.
+     */
+    if (this.kind === 'quiz') {
+      this.carriedScores = Object.fromEntries(this.engine.playerList().map((p) => [p.id, {
+        score: p.score, correctCount: p.correctCount,
+        answeredCount: p.answeredCount, totalResponseMs: p.totalResponseMs,
+      }]));
+    }
+    const scores = this.carriedScores;
+    const carry = this.engine.playerList().map((p) => ({
+      id: p.id,
+      token: p.token,
+      name: p.name,
+      ...(scores && scores[p.id] ? scores[p.id] : {}),
+    }));
+    return this.startOrderSegment(list, this.orderPos + 1, opts, carry, scores);
+  }
+
+  startOrderSegment(list, pos, opts, carry, scores = null) {
+    const seg = list[pos];
+    const started = seg.kind === 'bingo'
+      ? this.launch('bingo', seg.packId, { ...opts, shape: seg.shape, prizes: seg.prizes })
+      : this.launch('quiz', null, { ...opts, order: seg.order });
+    /*
+     * `launch()` above just cleared all three of these (`runningOrder`,
+     * `orderPos`, `carriedScores`) — right for an ORDINARY launch, wrong
+     * here, so they are set again now that the new part's engine actually
+     * exists. `scores` has to arrive as a PARAMETER rather than be read back
+     * off `this.carriedScores`: that field is exactly what `launch()` just
+     * wiped, and reading it here would silently carry `null` forward instead
+     * of the tally `advanceOrder()` computed a moment ago.
+     */
+    this.runningOrder = list;
+    this.orderPos = pos;
+    this.carriedScores = scores;
+    this.engine.state.runningOrder = list;
+    this.engine.state.orderPos = pos;
+    this.engine.state.carriedScores = scores;
+    if (carry && carry.length) this.seedCarriedPlayers(carry);
+    this.engine.changed();
+    return started;
+  }
+
+  /**
+   * Put a roster from the part that just ended onto the fresh engine's own
+   * players, keeping their identity — so a phone that already joined tonight
+   * never has to rejoin for a kind switch it did not cause.
+   */
+  seedCarriedPlayers(carry) {
+    for (const rec of carry) {
+      const player = this.engine.join({ playerId: rec.id, name: rec.name });
+      const p = player && player.id && this.engine.state.players[player.id];
+      if (!p) continue;
+      // `join()` always mints a fresh token for a brand-new player — right
+      // for an honest new phone, wrong here: this player already proved who
+      // they are for the rest of tonight, and a changed token is exactly the
+      // "phone that cannot prove itself" case rule 3 exists to prevent.
+      p.token = rec.token;
+      if (this.kind === 'quiz' && typeof rec.score === 'number') {
+        p.score = rec.score;
+        p.correctCount = rec.correctCount || 0;
+        p.answeredCount = rec.answeredCount || 0;
+        p.totalResponseMs = rec.totalResponseMs || 0;
+      }
+    }
   }
 
   // -------------------------------------------------------------- the clock
@@ -678,6 +908,18 @@ export class Session {
         restored: this.restoredOnBoot,
         strandedPhones: this.strandedPhones,
       },
+      /*
+       * SO THE CONSOLE CAN OFFER "CONTINUE" AND SAY WHAT IS NEXT, even after a
+       * restart wiped what it had in memory — `pos`/`total` say how far
+       * through tonight's parts we are, and `nextKind` is enough to word the
+       * button ("Continue to bingo") without this file knowing pack titles.
+       */
+      runningOrder: this.runningOrder ? {
+        pos: this.orderPos,
+        total: this.runningOrder.length,
+        nextKind: this.orderPos < this.runningOrder.length - 1
+          ? this.runningOrder[this.orderPos + 1].kind : null,
+      } : null,
     };
   }
 
@@ -713,6 +955,11 @@ export class Session {
       // and a bingo night's "Put it back" button 404'd with "Unknown action".
       redeemVoucher: () => this.engine.redeemVoucher(body.code, { by: 'host' }),
       reinstateVoucher: () => this.engine.reinstateVoucher(body.code),
+      // "Continue to bingo" / "Continue to the quiz" — the running order's
+      // own button, standing in for the ordinary next/finish at exactly the
+      // point those would otherwise end the part for real. Shared because
+      // either game can be a part of one.
+      advanceOrder: () => this.advanceOrder(),
     };
 
     const perGame = this.kind === 'quiz' ? {

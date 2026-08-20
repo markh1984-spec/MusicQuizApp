@@ -90,3 +90,231 @@ test('the quiz keeps the same two actions through run(), unchanged by the move',
   assert.notEqual(session.run('reinstateVoucher', { code }), undefined);
   assert.equal(session.engine.state.vouchers[code].redeemedAt, null);
 });
+
+// ------------------------------------------------------------ running order
+//
+// Quiz -> bingo -> quiz, one set of teams, one running score across the
+// bingo interruption — asked for directly: "the quiz is broken up by two
+// music bingos and the quiz prizes are only given out at the end." These go
+// through the REAL file-loading path (`launch()`'s own pack loader), not
+// `session.build()` directly, because the bug class this feature risks is
+// exactly the one CLAUDE.md warns about: something that reads fine as a
+// method call and is wrong the moment it goes through the actual route.
+
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+function writeQuizPack(dir, id, { correctIndex = 0 } = {}) {
+  writeFileSync(join(dir, `${id}.json`), JSON.stringify({
+    id, title: `Quiz ${id}`, questionSeconds: 20, showRules: false,
+    rounds: [{ id: 'r1', type: 'text', title: 'Round One', questions: [
+      { id: 'q1', prompt: 'A question?', options: ['a', 'b', 'c', 'd'], correctIndex },
+    ] }],
+  }));
+}
+
+function writeBingoPack(dir, id, trackCount = 40) {
+  writeFileSync(join(dir, `${id}.json`), JSON.stringify({
+    id, title: `Bingo ${id}`, cardSize: 4,
+    tracks: Array.from({ length: trackCount }, (_, i) => ({
+      id: `t${i + 1}`, title: `Track ${i + 1}`, artist: `Artist ${i + 1}`,
+    })),
+  }));
+}
+
+/** A Session whose packs are real files, like a running quizmaster's room. */
+function withFileSession() {
+  const dir = mkdtempSync(join(tmpdir(), 'running-order-'));
+  writeQuizPack(dir, 'quiz-a');
+  writeQuizPack(dir, 'quiz-b');
+  writeBingoPack(dir, 'bingo-a');
+  let at = START;
+  const store = { load: () => null, save: () => {}, flush: () => {}, write: () => {} };
+  const session = new Session({
+    config: { dataDir: dir, quizDir: dir, bingoDir: dir, advertDir: dir },
+    store,
+    onPush: () => {},
+    now: () => at,
+  });
+  return { session, dir, tick: (ms) => { at += ms; }, done: () => rmSync(dir, { recursive: true, force: true }) };
+}
+
+/**
+ * Drive a one-question, one-round quiz segment right up to its own
+ * ROUND_BOARD — the natural pause this whole feature leans on — and answer
+ * correctly on the way, so there is a real score to carry.
+ *
+ * `composeQuiz()` (running-order.js) does not carry a source pack's
+ * `showRules` onto the composed pack — it only copies `id`, `title`, `look`,
+ * `rounds` and `sources` — so a running-order quiz always shows the rules
+ * slide first, regardless of what the fixture pack says. That is existing,
+ * pre-existing behaviour of `composeQuiz` and not something this feature
+ * changes, so the helper drives through RULES rather than assuming it away.
+ */
+function playQuizSegmentToRoundBoard(session, playerId, correctIndex = 0) {
+  session.engine.next(); // LOBBY -> RULES (or ROUND_INTRO, for a plain single-pack launch)
+  if (session.engine.state.phase === 'rules') session.engine.next(); // RULES -> ROUND_INTRO
+  session.engine.next(); // ROUND_INTRO -> QUESTION
+  session.engine.answer({ playerId, optionIndex: correctIndex });
+  session.engine.next(); // QUESTION -> REVEAL
+  session.engine.next(); // REVEAL -> ROUND_BOARD (last question of the only round)
+}
+
+test('quiz -> bingo -> quiz: the same team keeps its identity and its score across both switches', () => {
+  const it = withFileSession();
+  try {
+    const segments = [
+      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }] },
+      // 2 prizes stages the night as [a line, a full house] — a genuine
+      // single-line win only counts against the FIRST of those. See
+      // bingo.test.js's own stagedGame() helper for the same trap.
+      { kind: 'bingo', packId: 'bingo-a', prizes: 2 },
+      { kind: 'quiz', order: [{ packId: 'quiz-b', round: 0 }] },
+    ];
+    it.session.launchRunningOrder(segments, { venue: 'The Nag\'s Head', rewards: ['A trophy'] });
+    assert.equal(it.session.kind, 'quiz');
+
+    const joined = it.session.engine.join({ name: 'Quizteam Aguilera' });
+    const { id, token } = joined;
+    playQuizSegmentToRoundBoard(it.session, id);
+    const scoreAfterPartOne = it.session.engine.state.players[id].score;
+    assert.ok(scoreAfterPartOne > 0, 'the fixture needs a real score to prove it carries');
+    assert.equal(it.session.engine.state.phase, 'round_board');
+
+    // Off to bingo — the same team, with no rejoin.
+    it.session.advanceOrder();
+    assert.equal(it.session.kind, 'bingo');
+    assert.equal(it.session.orderPos, 1);
+    const inBingo = it.session.engine.state.players[id];
+    assert.ok(inBingo, 'the team was not carried into the bingo part at all');
+    assert.equal(inBingo.token, token, 'a new token means the phone\'s stored one stops working');
+    assert.equal(inBingo.name, 'Quizteam Aguilera');
+    assert.ok(Array.isArray(inBingo.card) && inBingo.card.length, 'no card was dealt for the carried player');
+
+    // Win the bingo prize, then move on to the last part.
+    it.session.engine.start();
+    const line = it.session.engine.lines()[0];
+    for (const i of line) {
+      it.session.engine.call(inBingo.card[i]);
+      it.session.engine.mark({ playerId: id, index: i, marked: true });
+    }
+    const claim = it.session.engine.claim(id);
+    assert.ok(claim.valid, 'the bingo interlude needs a real win to prove prizes are separate');
+    assert.equal(Object.keys(it.session.engine.state.vouchers).length, 1, 'the bingo prize was not given out at the time it was won');
+
+    it.session.advanceOrder();
+    assert.equal(it.session.kind, 'quiz');
+    assert.equal(it.session.orderPos, 2);
+    const backInQuiz = it.session.engine.state.players[id];
+    assert.ok(backInQuiz, 'the team did not survive the second switch');
+    assert.equal(backInQuiz.token, token);
+    assert.equal(backInQuiz.score, scoreAfterPartOne, 'the running score did not carry back into the quiz');
+
+    // Finish the last part for real and confirm the quiz's own prize is
+    // only given out HERE, at the true end, never at the interludes.
+    it.session.engine.next(); // LOBBY -> RULES
+    it.session.engine.next(); // RULES -> ROUND_INTRO
+    it.session.engine.next(); // ROUND_INTRO -> QUESTION
+    it.session.engine.answer({ playerId: id, optionIndex: 0 });
+    it.session.engine.next(); // QUESTION -> REVEAL
+    it.session.engine.next(); // REVEAL -> ROUND_BOARD
+    assert.equal(Object.keys(it.session.engine.state.vouchers || {}).length, 0, 'a fresh quiz engine holds no vouchers yet');
+    it.session.engine.next(); // ROUND_BOARD -> FINAL, the real end of the night
+    assert.equal(it.session.engine.state.phase, 'final');
+    assert.equal(Object.keys(it.session.engine.state.vouchers).length, 1, 'the quiz prize was not given out at the true end');
+  } finally {
+    it.done();
+  }
+});
+
+test('an intermediate part never archives the night, only the true final part does', () => {
+  const it = withFileSession();
+  try {
+    const archived = [];
+    it.session.onArchive = (record) => archived.push(record);
+    const segments = [
+      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }] },
+      { kind: 'bingo', packId: 'bingo-a', prizes: 1 },
+    ];
+    it.session.launchRunningOrder(segments);
+    const { id } = it.session.engine.join({ name: 'Quizteam Aguilera' });
+    playQuizSegmentToRoundBoard(it.session, id);
+    assert.equal(archived.length, 0, 'the first part reached round_board, not FINAL — it must not have archived');
+
+    it.session.advanceOrder();
+    assert.equal(archived.length, 0, 'moving into bingo must not archive the quiz part either');
+
+    it.session.engine.finish(); // the real end of THIS night, bingo being the last part
+    assert.equal(archived.length, 1, 'the night never got archived at all');
+  } finally {
+    it.done();
+  }
+});
+
+test('advanceOrder refuses to move past the last part', () => {
+  const it = withFileSession();
+  try {
+    it.session.launchRunningOrder([{ kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }] }]);
+    const result = it.session.advanceOrder();
+    assert.equal(result.ok, false);
+    assert.equal(result.reason, 'no_more_parts');
+  } finally {
+    it.done();
+  }
+});
+
+test('a plain launch() clears any running order left over from a previous night', () => {
+  const it = withFileSession();
+  try {
+    it.session.launchRunningOrder([
+      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }] },
+      { kind: 'bingo', packId: 'bingo-a', prizes: 1 },
+    ]);
+    assert.ok(it.session.runningOrder);
+    it.session.launch('quiz', 'quiz-b', {});
+    assert.equal(it.session.runningOrder, null, 'a stale running order survived an ordinary relaunch');
+    assert.equal(it.session.hostView().runningOrder, null);
+  } finally {
+    it.done();
+  }
+});
+
+test('a restart mid running-order restores the plan from the state, not from memory', () => {
+  const it = withFileSession();
+  try {
+    it.session.launchRunningOrder([
+      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }] },
+      { kind: 'bingo', packId: 'bingo-a', prizes: 1 },
+      { kind: 'quiz', order: [{ packId: 'quiz-b', round: 0 }] },
+    ]);
+    it.session.engine.join({ name: 'Quizteam Aguilera' });
+    it.session.advanceOrder(); // now on the bingo part, orderPos 1
+
+    // What a restart does: the same state, handed to a freshly built Session.
+    const saved = JSON.parse(JSON.stringify(it.session.engine.state));
+    const store2 = { load: () => saved, save: () => {}, flush: () => {}, write: () => {} };
+    const restarted = new Session({
+      config: { dataDir: it.dir, quizDir: it.dir, bingoDir: it.dir, advertDir: it.dir },
+      store: store2,
+      onPush: () => {},
+      now: () => Date.now(),
+    });
+    restarted.boot();
+
+    assert.equal(restarted.orderPos, 1);
+    assert.equal(restarted.runningOrder.length, 3);
+    const view = restarted.hostView();
+    assert.equal(view.runningOrder.pos, 1);
+    assert.equal(view.runningOrder.total, 3);
+    assert.equal(view.runningOrder.nextKind, 'quiz');
+
+    // And the plan restored from disk still actually works.
+    const advanced = restarted.advanceOrder();
+    assert.notEqual(advanced, undefined);
+    assert.equal(restarted.kind, 'quiz');
+    assert.equal(restarted.orderPos, 2);
+  } finally {
+    it.done();
+  }
+});

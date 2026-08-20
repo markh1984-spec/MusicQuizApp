@@ -5414,6 +5414,109 @@ async function handleWrite(req, res, url, route) {
     }
 
     /*
+     * TONIGHT AS MORE THAN ONE GAME — quiz, a bingo interlude, quiz again,
+     * with the same teams and one running score across the interruption. A
+     * SEPARATE action from `launch` above rather than a flag on it, so the
+     * ordinary single-pack path above — the one `launch-route.test.js`
+     * guards as protected surface — is not touched by any of this.
+     *
+     * Every check `launch` makes, this makes too: the feature gate per kind
+     * actually used, every referenced pack owned or licensed (not just the
+     * first one), and the same "here is what you are about to destroy"
+     * guard before replacing a live game.
+     */
+    if (action === 'launchOrder') {
+      const rawSegments = Array.isArray(body.segments) ? body.segments : [];
+      const segments = rawSegments.map((s) => {
+        if (s && s.kind === 'bingo') {
+          return { kind: 'bingo', packId: String((s && s.packId) || ''), shape: s.shape, prizes: s.prizes };
+        }
+        const order = Array.isArray(s && s.order) ? s.order.slice(0, MAX_ROUNDS) : [];
+        return { kind: 'quiz', order };
+      }).filter((s) => (s.kind === 'bingo' ? s.packId : s.order.length));
+
+      // Every pack in every part, checked the same way `launch` checks its
+      // one pack (or its own single-kind running order) — a Bronze account
+      // must not be able to smuggle a Gold pack in as part 3 of a night.
+      const neededQuiz = new Set();
+      const neededBingo = new Set();
+      for (const s of segments) {
+        if (s.kind === 'bingo') neededBingo.add(s.packId);
+        else for (const r of s.order) neededQuiz.add(String((r && r.packId) || ''));
+      }
+      for (const id of neededQuiz) {
+        if (isOwnPack('quiz', id, room.paths)) continue;
+        if (canPlayPack(whoIs(req, url), id, packDating('quiz', id, room))) continue;
+        return sendJson(res, 403, { error: `${id} is not in your library, so it cannot be part of tonight.`, upgrade: true }), true;
+      }
+      for (const id of neededBingo) {
+        if (isOwnPack('bingo', id, room.paths)) continue;
+        if (canPlayPack(whoIs(req, url), id, packDating('bingo', id, room))) continue;
+        return sendJson(res, 403, { error: `${id} is not in your library, so it cannot be part of tonight.`, upgrade: true }), true;
+      }
+      // Gate on whichever kinds tonight actually uses — a quiz-only account
+      // running a quiz-only running order must not be asked about bingo.
+      if (neededQuiz.size && !allowed(req, res, url, FEATURES.QUIZ)) return true;
+      if (neededBingo.size && !allowed(req, res, url, FEATURES.BINGO)) return true;
+
+      const live = session.inProgress();
+      if (live && !body.replace) {
+        return sendJson(res, 409, {
+          error: `"${live.title}" is running right now — ${live.players} playing${live.at ? `, ${live.at}` : ''}.`
+            + ' Launching something else ends it and wipes the scores.',
+          live,
+          replace: true,
+        }), true;
+      }
+
+      try {
+        // The FIRST part decides the lobby default — Maze Mouth before a
+        // quiz, Rally before bingo — exactly like an ordinary launch.
+        const firstKind = segments[0] && segments[0].kind === 'bingo' ? 'bingo' : 'quiz';
+        const look = String(body.look || '');
+        const lobbyGame = lobbyGameFor(
+          firstKind,
+          String(body.lobbyGame || ''),
+          (entitlements(whoIs(req, url) || {}) || {}).tier || '',
+        ).id;
+        const league = seesTheirLeague(req, url);
+        const lobbySound = body.lobbySound !== false;
+        const online = Boolean(body.online);
+        const teamPlay = Boolean(body.teamPlay);
+        const venue = String(body.venue || '');
+        const named = String(body.venue || '').trim().toLowerCase();
+        const record = named
+          ? (room.invoices.customers.find((c) => String(c.name || '').trim().toLowerCase() === named) || {})
+          : {};
+        const venueId = String(record.id || '');
+        const onFile = record.rewards || null;
+        const rewards = Array.isArray(body.rewards) ? body.rewards.map(String)
+          : (body.reward ? [String(body.reward)] : (Array.isArray(onFile) ? onFile : []));
+        const venueLogo = String(record.logo || '');
+        const comeBack = comeBackFor({
+          venue,
+          venues: room.invoices.customers,
+          bookings: room.invoices.bookings,
+          now: Date.now(),
+        });
+        const asker = whoIs(req, url);
+        const askForRounds = Boolean(asker && asker.prefs && asker.prefs.askRounds);
+        const askIdeas = askForRounds
+          ? pickIdeas((fullLibrary(config, room.id, listOwn(room.paths)).quizzes || [])
+            .map((q) => q.title))
+          : [];
+        const started = session.launchRunningOrder(segments, {
+          look, lobbyGame, lobbySound, league, online, teamPlay, venue, venueId,
+          rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas,
+        });
+        backUpLibraryStats();
+        return sendJson(res, 200, { ok: true, started, view: session.hostView() }), true;
+      } catch (err) {
+        return sendJson(res, 400, { error: err.message }), true;
+      }
+    }
+
+    /*
      * "That one's wrong."
      *
      * One tap, no typing, no dialog. The room has just told the host a question
