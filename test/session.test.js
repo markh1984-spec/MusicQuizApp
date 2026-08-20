@@ -228,6 +228,28 @@ test('quiz -> bingo -> quiz: the same team keeps its identity and its score acro
   }
 });
 
+test('the lobby game re-resolves to each part\'s OWN default, rather than carrying the last part\'s across a kind switch', () => {
+  // Found live: a bingo interlude showed Maze Mouth (the QUIZ default)
+  // instead of Rally, because the quiz part's RESOLVED choice was carried
+  // forward as if it had been an explicit one. See nightWideOpts().
+  const it = withFileSession();
+  try {
+    it.session.launchRunningOrder([
+      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }] },
+      { kind: 'bingo', packId: 'bingo-a', prizes: 1 },
+    ]);
+    assert.equal(it.session.engine.state.lobbyGame, 'maze', 'the quiz part should default to Maze Mouth');
+    const { id } = it.session.engine.join({ name: 'Quizteam Aguilera' });
+    playQuizSegmentToRoundBoard(it.session, id);
+
+    it.session.advanceOrder();
+    assert.equal(it.session.kind, 'bingo');
+    assert.equal(it.session.engine.state.lobbyGame, 'rally', 'the bingo part should default to Rally, not inherit the quiz part\'s Maze Mouth');
+  } finally {
+    it.done();
+  }
+});
+
 test('an intermediate part never archives the night, only the true final part does', () => {
   const it = withFileSession();
   try {

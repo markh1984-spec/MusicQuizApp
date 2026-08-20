@@ -122,7 +122,19 @@ function nightWideOpts(state) {
     venueLogo: state.venueLogo,
     comeBack: state.comeBack,
     look: state.look,
-    lobbyGame: state.lobbyGame,
+    /*
+     * NOT `lobbyGame` — deliberately left out. "THE DEFAULT FOLLOWS THE
+     * GAME: Maze Mouth before a quiz, Rally before a bingo" is a rule with
+     * no stated exception for a running order, and `state.lobbyGame` holds
+     * whatever the PREVIOUS part's launch already RESOLVED it to — which
+     * `lobbyGameFor()` cannot tell apart from an explicit choice, because it
+     * only ever sees an id, never why it was chosen. Carrying it forward
+     * turned "the host asked for nothing in particular" into "the host
+     * asked for Maze Mouth", permanently, the moment a quiz part handed it
+     * to a bingo one — found live: a bingo interlude showed Maze Mouth
+     * instead of Rally. Leaving it out lets every part re-resolve to its
+     * own kind's default, exactly as an ordinary launch does.
+     */
     lobbySound: state.lobbySound,
     league: state.leagueOn,
     online: state.online,
