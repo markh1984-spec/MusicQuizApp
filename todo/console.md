@@ -79,23 +79,3 @@ has a `dirty` flag and a confirm-on-leave, which is most of the draft
 behaviour, and reusing it would keep one definition of what saving a pack
 means.
 
-### THE MIXED-KIND NIGHT IS BUILT — quiz → bingo → quiz, one running score
-
-Built and live-verified on 20 August 2026, both the session-level machinery
-(`session.launchRunningOrder()`/`advanceOrder()`, no `engine.js`/`bingo.js`
-changes) and, the same day, the Tonight bar's own row learning to build one
-directly — a bingo pack drops straight in, a round drags OUT of its pack
-into its own slot. Full reasoning: **[`docs/console.md`](../docs/console.md)**,
-under "THE MIXED ROW". Nothing left to build here.
-
-**The one known gap was closed on 20 August 2026**: a mixed night's archived
-record now carries every part it was made of (`parts`, resolved fresh at
-archive time in `describeOrderParts()`), not just the closing one — Past gigs
-shows the whole chain, joined with "→", rather than just the last pack played.
-
-Full reasoning, including the two bugs live verification caught (a bingo
-lobby-game default not resetting across the switch, and the voucher
-dispatcher gap): **[`docs/console.md`](../docs/console.md)**.
-
----
-
