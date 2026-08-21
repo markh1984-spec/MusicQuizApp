@@ -1855,6 +1855,59 @@ body.console {
   --panel-line: var(--surf-line);
 }
 body.console::after { display: none; }
+
+/*
+ * THE QUILL CURSOR AND THE SCROLL-SHAPED CARD — asked for directly on 21
+ * August 2026: "I want the app to have a quill and ink vibe to it... pages
+ * to look subtly like scrolls and the mouse to look like a quill." Rendered
+ * as three options (barely-there grain, this one, a full parchment surface
+ * swap) and this one was chosen: the dark-neon colours and layout stay
+ * exactly as they are, and every card just reads as a scroll unrolled.
+ *
+ * CONSOLE ONLY — My account, Console, Workshop, Post gig, Owner page. Never
+ * the projector or a phone: those screens live by instant, high-contrast
+ * readability in a dark room, which a decorative flourish works against.
+ */
+body.console, body.console * {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Cg fill='none' stroke='%23f7f7fb' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M27 3 C19 5 10 12 4 26' fill='%23ffd23f' stroke='%23ffd23f'/%3E%3Cpath d='M27 3 C19 5 10 12 4 26'/%3E%3Cpath d='M27 3 C22 6 16 8 11 13' stroke='%23ff8a3d'/%3E%3Cpath d='M4 26 L2 28' stroke='%23a7a7c2'/%3E%3C/g%3E%3C/svg%3E")
+    2 28, pointer !important;
+}
+/*
+ * `!important` because dozens of scattered `cursor: pointer` rules on
+ * classes this page shares with host.js/play.js (buttons, chat, tabs) are
+ * each individually more specific than a body selector and would otherwise
+ * keep the ordinary hand — see the note by the nine other !importants in
+ * this file. Three cursor states still carry real meaning, so they are
+ * restored right after at the same weight: a drag affordance (see DRAG AND
+ * DROP), a disabled control, and a text field's insertion point.
+ */
+body.console [draggable="true"],
+body.console .drag-grip { cursor: grab !important; }
+body.console [draggable="true"]:active,
+body.console .drag-grip:active { cursor: grabbing !important; }
+body.console button:disabled,
+body.console [disabled] { cursor: default !important; }
+body.console input:not([type="checkbox"]):not([type="radio"]),
+body.console textarea { cursor: text !important; }
+
+/*
+ * THE SCROLL SHADOW — one token, not a dozen rules, for the same reason
+ * --panel/--panel-line above are one override rather than twenty-nine: a
+ * single place to change it is a single chance to get it right.
+ */
+body.console { --scroll-shadow: inset 0 10px 14px -10px rgba(0, 0, 0, 0.5), inset 0 -10px 14px -10px rgba(0, 0, 0, 0.5); }
+body.console .panel,
+body.console .pack-card,
+body.console .venue-card,
+body.console .launchbar,
+body.console .tier-panel,
+/* :not()s so a live drag-drop indicator's own box-shadow is never fought —
+   an element wearing .drop-before/.drop-after simply does not match this
+   rule at all, rather than winning a specificity fight against it. */
+body.console .lb-tile:not(.drop-before):not(.drop-after) {
+  box-shadow: var(--scroll-shadow);
+}
 /* 1180 RATHER THAN 1000, AND THE TAB BAR IS WHY.
    Nine tabs come to a bit over 1000px, so in a 968px column one of them
    always wrapped — and a wrapped bar that is also STICKY costs a hundred and

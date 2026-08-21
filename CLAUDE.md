@@ -489,6 +489,7 @@ opening a second file.
 - **SSE, not websockets**
 - **No build step**
 - **Packs are JSON files**
+- **The console wears a quill cursor and a scroll-shadow on its cards, console only** — never the projector or a phone.
 - **No profanity filter on team names** — **Do not add word filtering.**
 - **Photo uploads auto-publish** — Do not add one.
 - **Photos go in a SEPARATE PRIVATE repo** — Never the main repo: it is public (checked), and git history is forever.
