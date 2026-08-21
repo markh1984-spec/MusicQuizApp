@@ -1867,6 +1867,23 @@ body.console::after { display: none; }
  * CONSOLE ONLY — My account, Console, Workshop, Post gig, Owner page. Never
  * the projector or a phone: those screens live by instant, high-contrast
  * readability in a dark room, which a decorative flourish works against.
+ *
+ * THE GRAB CURSOR IS A GAUNTLET, and only the grab one — asked for as *"can
+ * the grabby hand be wearing a glove from that time period?"*. The quill keeps
+ * pointing and clicking; the glove is what you get over something draggable,
+ * open to pick a pack up and closed into a fist while you carry it.
+ *
+ * BOTH ARE DRAWN AT 32px AND JUDGED AT 32px. Three silhouettes were rendered
+ * and the first two were unreadable at the only size that exists — a cursor is
+ * never seen at any other. What survives the shrink is CHUNKY separated
+ * fingers, a thumb clearly out to one side, and a cuff cut back to a band: the
+ * first pass gave it a full skirt, which at 32px is just a pale blob with the
+ * hand sat on top of it. The dagged edge and the gold trim are the period
+ * signal and they cost two paths.
+ *
+ * A CURSOR CANNOT FOLLOW THE ACCOUNT'S COLOURS and nothing here should try:
+ * it is a static image file, so it cannot read `--hot` the way a page element
+ * can. Cream and gold, matching the quill, on purpose rather than by omission.
  */
 body.console, body.console * {
   cursor:
@@ -1883,9 +1900,14 @@ body.console, body.console * {
  * DROP), a disabled control, and a text field's insertion point.
  */
 body.console [draggable="true"],
-body.console .drag-grip { cursor: grab !important; }
+body.console .drag-grip {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg stroke='%233a2a16' stroke-width='1.15' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M9.4 21.4 L23.6 21.4 L26.2 25.8 Q22.97 27.7 19.73 25.5 Q16.5 27.7 13.27 25.5 Q10.03 27.7 6.8 25.8 Z' fill='%23e6d5ad'/%3E%3Cpath d='M8 23.3 L25 23.3' stroke='%23b8923f' stroke-width='1.15'/%3E%3Cg fill='%23f6ecd6'%3E%3Crect x='9.4' y='8.6' width='4.7' height='13' rx='2.35'/%3E%3Crect x='14.5' y='5.8' width='4.8' height='15.8' rx='2.4'/%3E%3Crect x='19.7' y='7.8' width='4.6' height='13.8' rx='2.3'/%3E%3Cpath d='M9.4 14 L24.3 14 L24.3 20 Q24.3 22.2 22.1 22.2 L11.6 22.2 Q9.4 22.2 9.4 20 Z'/%3E%3Cpath d='M10.6 15.4 Q4.2 15.8 3.4 19 Q2.9 21.6 6.2 21.9 L10.6 21.7 Z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") 16 15, grab !important;
+}
 body.console [draggable="true"]:active,
-body.console .drag-grip:active { cursor: grabbing !important; }
+body.console .drag-grip:active,
+body.console .dragging {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg stroke='%233a2a16' stroke-width='1.15' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M9.4 21 L23.6 21 L26.2 25.4 Q22.97 27.3 19.73 25.1 Q16.5 27.3 13.27 25.1 Q10.03 27.3 6.8 25.4 Z' fill='%23e6d5ad'/%3E%3Cpath d='M8 22.9 L25 22.9' stroke='%23b8923f' stroke-width='1.15'/%3E%3Cg fill='%23f6ecd6'%3E%3Crect x='9.6' y='11.9' width='4.9' height='9.6' rx='2.45'/%3E%3Crect x='14.9' y='10.8' width='4.9' height='10.7' rx='2.45'/%3E%3Crect x='20.2' y='12.3' width='4.3' height='9.2' rx='2.15'/%3E%3C/g%3E%3Cpath d='M7.2 16.9 Q6.2 20.6 9.8 21.3 L15.8 20.9 Q18.1 20.5 17.9 18.3 Q17.7 16.2 15.2 16.2 L9.9 16.3 Q7.6 16.3 7.2 16.9 Z' fill='%23eddfbc'/%3E%3C/g%3E%3C/svg%3E") 16 15, grabbing !important;
+}
 body.console button:disabled,
 body.console [disabled] { cursor: default !important; }
 body.console input:not([type="checkbox"]):not([type="radio"]),
@@ -1907,6 +1929,88 @@ body.console .tier-panel,
    rule at all, rather than winning a specificity fight against it. */
 body.console .lb-tile:not(.drop-before):not(.drop-after) {
   box-shadow: var(--scroll-shadow);
+}
+
+/*
+ * THE SCROLL RODS — a turned dowel through the rolled top and bottom edge of
+ * the page, poking out past it, in the account's own two colours.
+ *
+ * WHAT SELLS A CYLINDER IS THE SHADING, NOT THE SHAPE. The first attempt was a
+ * pill with a highlight along its top edge and it read as a painted stripe: a
+ * real rod is dark where it turns away at the very top, brightest a quarter of
+ * the way down, then a long fall to a dark underside. Those five stops are the
+ * whole illusion, and the white must stay LOW — pushed up, it bleaches the hue
+ * out and the rod stops being the quizmaster's colour, which is the one thing
+ * it was asked to be.
+ *
+ * ON `.panel` ALONE, and that is not laziness — `.launchbar` is only ever set
+ * ALONGSIDE `.panel` in the markup, so naming both would give Tonight and the
+ * two benches a doubled rod each.
+ */
+body.console .panel { position: relative; }
+body.console .panel::before,
+body.console .panel::after {
+  content: '';
+  position: absolute;
+  /* 10px, against the wrap's own 16px of padding, so a rod can never be what
+     pushes the page sideways on a phone. */
+  left: -9px; right: -9px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  pointer-events: none;
+  background:
+    /* a catchlight on each turned knob, where a real one would take the light */
+    radial-gradient(circle 4px at 4.5px 34%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 70%),
+    radial-gradient(circle 4px at calc(100% - 4.5px) 34%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 70%),
+    /*
+     * THE LONG ROLL RECEDES AND THE ENDS KEEP THE COLOUR, which is both what
+     * was asked for — *"little scroll endings… within the colours defined by
+     * the account"* — and what a real one does: a stained dowel, brass at the
+     * tips. Drawn evenly at full strength it came out brighter than Launch,
+     * twice on every panel, which breaks the one-filled-gradient-per-screen
+     * rule outright: the loudest thing on the console was a decoration nobody
+     * can press. Darkening the MIDDLE rather than the whole rod keeps the
+     * quizmaster's colour where the eye actually lands.
+     */
+    linear-gradient(90deg, rgba(0, 0, 0, 0) 7px, rgba(0, 0, 0, 0.5) 15px,
+                    rgba(0, 0, 0, 0.5) calc(100% - 15px), rgba(0, 0, 0, 0) calc(100% - 7px)),
+    /* the cylinder */
+    linear-gradient(180deg, rgba(0, 0, 0, 0.6) 0%, rgba(255, 255, 255, 0.16) 24%,
+                    rgba(0, 0, 0, 0.2) 46%, rgba(0, 0, 0, 0.5) 76%, rgba(0, 0, 0, 0.72) 100%),
+    /* the account's own two colours, exactly as Launch takes them */
+    linear-gradient(120deg, var(--hot), var(--hot-2));
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.45);
+}
+body.console .panel::before { top: -4px; }
+body.console .panel::after { bottom: -4px; }
+
+/*
+ * AND THE KNOBS, where the browser can mask. A plain pill is the same width
+ * end to end, which reads as a bar through the page rather than a rod with
+ * finials on it. Masking lets the ends be a FATTER circle than the roll
+ * between them — the reference silhouette — while the fill underneath stays
+ * the account gradient, which an SVG data URI could never read.
+ *
+ * Behind `@supports` because without mask compositing the element would paint
+ * as a full RECTANGLE, which is far worse than the pill it replaces — the same
+ * guard, and the same reasoning, as the gradient hairline on the photo card.
+ */
+@supports (mask-composite: add) and (mask-image: radial-gradient(#000, #000)) {
+  body.console .panel::before,
+  body.console .panel::after {
+    height: 11px;
+    border-radius: 0;
+    mask-image:
+      radial-gradient(circle 5.5px at 5.5px 50%, #000 99%, transparent 100%),
+      radial-gradient(circle 5.5px at calc(100% - 5.5px) 50%, #000 99%, transparent 100%),
+      linear-gradient(#000, #000);
+    mask-size: 100% 100%, 100% 100%, calc(100% - 9px) 7px;
+    mask-position: 0 0, 0 0, center;
+    mask-repeat: no-repeat;
+    mask-composite: add;
+  }
+  body.console .panel::before { top: -5.5px; }
+  body.console .panel::after { bottom: -5.5px; }
 }
 /* 1180 RATHER THAN 1000, AND THE TAB BAR IS WHY.
    Nine tabs come to a bit over 1000px, so in a 968px column one of them
