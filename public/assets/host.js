@@ -10,7 +10,10 @@
  * always does the obvious next thing, in the same place every time.
  */
 
-import { esc, node, ServerClock, Live, postJson, brandLink, binIcon, paintNav, paintIdentity, menuRights } from './client.js';
+import {
+  esc, node, ServerClock, Live, postJson, brandLink, binIcon, paintNav, paintIdentity, menuRights,
+  rewardsEditorPopover,
+} from './client.js';
 import { paintScheme } from './schemes.js';
 import { bingoPanels, bingoActions } from './host-bingo.js';
 import { cueOffsetMs, formatOffset } from './cue.js';
@@ -1084,6 +1087,17 @@ function buildActions(s) {
     + `>${backIcon}</button>`);
   back.addEventListener('click', () => act('back'));
   out.push(back);
+
+  /*
+   * PRIZES, EDITABLE FROM WHEREVER YOU ARE — not just Setup, which only
+   * appears at the lobby and the final scores. A landlord changing what's on
+   * the bar mid-quiz, or a host who typed the wrong thing at launch, should
+   * not have to wait for the round to end to fix it. A popover rather than a
+   * permanent line keeps the promise in Setup's own comment: this never sits
+   * across the control view mid-round on its own.
+   */
+  out.push(minor('Prizes', () => rewardsEditorPopover(s, act), false,
+    'Change what tonight is playing for. Takes effect from the next prize onward.'));
 
   if (s.phase === 'question' || s.phase === 'reveal') {
     /*

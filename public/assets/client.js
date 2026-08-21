@@ -368,6 +368,71 @@ export function node(markup) {
 }
 
 /**
+ * Change what tonight is playing for, from the control view, mid-game.
+ *
+ * Lives here rather than in `host.js` because `host-bingo.js` needs it too,
+ * and `host.js` is a PAGE module with its own top-level boot code — importing
+ * from a page's own module runs that page's boot code on whatever imports it,
+ * which is exactly the fault that once hung the whole console on "Loading
+ * your library…". `client.js` has no page and no boot code, so this is the
+ * one place both can share it from.
+ *
+ * `s.rewards` and `act` are passed in rather than read from a module-level
+ * store, so this stays usable from either host.js's own closure or
+ * host-bingo.js's — neither of which shares state with the other.
+ */
+export function rewardsEditorPopover(s, act) {
+  const rows = (s.rewards && s.rewards.length ? s.rewards : ['']).slice();
+  const el = node(`
+    <div class="panel" style="position:fixed;left:12px;right:12px;bottom:150px;z-index:40;max-width:696px;margin:0 auto;background:#161626;max-height:60vh;overflow:auto">
+      <h3>Prizes</h3>
+      <div class="tiny" style="margin-bottom:10px">What tonight is playing for — 1st, then 2nd, then 3rd.
+        Changes apply to the next prize handed out; one already given stays as it was.</div>
+      <div class="rw-rows"></div>
+      <button class="minor" type="button" style="margin-top:6px" id="rwAdd">+ Add a prize</button>
+      <div class="row" style="margin-top:14px;gap:8px">
+        <button class="go" type="button" id="rwSave">Save</button>
+        <button class="minor" type="button" id="rwClose">Close</button>
+      </div>
+    </div>`);
+
+  const list = el.querySelector('.rw-rows');
+  const places = ['1st', '2nd', '3rd'];
+  const addRow = (value = '') => {
+    const row = node(`
+      <div class="row rw-row" style="gap:6px;margin-top:6px;align-items:center">
+        <span class="tiny" style="width:32px">${esc(places[list.children.length] || `${list.children.length + 1}th`)}</span>
+        <input type="text" maxlength="200" value="${esc(value)}" style="flex:1">
+        <button class="minor danger rw-del" type="button" aria-label="Remove this prize" title="Remove this prize">${binIcon(16)}</button>
+      </div>`);
+    row.querySelector('.rw-del').addEventListener('click', () => {
+      row.remove();
+      // Places are read off POSITION, so a removed middle row has to renumber
+      // the ones below it rather than leave a gap the label no longer means.
+      [...list.children].forEach((r, i) => {
+        r.querySelector('span').textContent = places[i] || `${i + 1}th`;
+      });
+    });
+    list.appendChild(row);
+  };
+  rows.forEach((r) => addRow(r));
+
+  el.querySelector('#rwAdd').addEventListener('click', () => addRow());
+  el.querySelector('#rwClose').addEventListener('click', () => el.remove());
+  el.querySelector('#rwSave').addEventListener('click', async () => {
+    const values = [...list.querySelectorAll('input')].map((i) => i.value.trim()).filter(Boolean);
+    const btn = el.querySelector('#rwSave');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    await act('setRewards', { rewards: values });
+    el.remove();
+  });
+
+  document.body.appendChild(el);
+  return el;
+}
+
+/**
  * Keeps a running estimate of the gap between this device's clock and the
  * server's, so a countdown shown on a phone whose clock is ten minutes out
  * still matches the projector. Scoring never uses this — only the display.

@@ -497,6 +497,19 @@ export class BingoGame {
   }
 
   /**
+   * Change what tonight is playing for, mid-game — see the same method on
+   * `engine.js`'s Engine class. Safe for the identical reason: `issueVoucher`
+   * reads `rewardList()` at the moment a stage is actually won, so this only
+   * ever affects a prize not yet handed out.
+   */
+  setRewards(list) {
+    if (!Array.isArray(list)) return false;
+    this.state.rewards = list.slice(0, 10).map((r) => String(r ?? '').trim().slice(0, 200));
+    this.changed();
+    return true;
+  }
+
+  /**
    * One prize, one voucher, the moment it is actually won — never at the end
    * of the night, because bingo hands prizes out AS it goes rather than once
    * at a final scoreboard. The Nth prize on the venue's list goes with the

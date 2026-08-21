@@ -1270,6 +1270,23 @@ export class Engine {
   }
 
   /**
+   * Change what tonight is playing for, mid-game — the landlord changes their
+   * mind about the round, or the host typed the wrong thing at launch.
+   *
+   * Safe to just overwrite `state.rewards`: nothing caches an earlier copy —
+   * `issueVouchers()` and `drawLuckyDip()` both call `rewardList()` at the
+   * moment a prize is actually won, so this takes effect for the NEXT prize
+   * onwards. A voucher already in somebody's hand is not rewritten, same as
+   * everything else this codebase never changes after the fact.
+   */
+  setRewards(list) {
+    if (!Array.isArray(list)) return false;
+    this.state.rewards = list.slice(0, 10).map((r) => String(r ?? '').trim().slice(0, 200));
+    this.changed();
+    return true;
+  }
+
+  /**
    * Spend it. Returns the voucher, or why not.
    *
    * **The FIRST scan wins and every later one is told so**, which is the whole

@@ -1014,6 +1014,12 @@ export class Session {
       // point those would otherwise end the part for real. Shared because
       // either game can be a part of one.
       advanceOrder: () => this.advanceOrder(),
+      // What tonight is playing for, changed mid-game — the landlord changed
+      // their mind, or the host typed the wrong thing at launch. Both games
+      // keep the identical `state.rewards` shape (see `rewardList()` on
+      // either engine), so one action serves both rather than two copies of
+      // the same validation drifting apart.
+      setRewards: () => this.engine.setRewards(body.rewards),
     };
 
     const perGame = this.kind === 'quiz' ? {

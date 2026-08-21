@@ -6,7 +6,7 @@
  * a record is playing.
  */
 
-import { esc, node } from './client.js';
+import { esc, node, rewardsEditorPopover } from './client.js';
 
 let filter = '';
 
@@ -61,6 +61,9 @@ export function bingoActions(s, act, minor) {
   out.push(primary);
 
   out.push(minor('Undo call', () => act('undoCall')));
+  // Same control as the quiz's own — see the comment beside it in host.js.
+  // One shared popover, one shared `setRewards` action, for either game.
+  out.push(minor('Prizes', () => rewardsEditorPopover(s, act)));
   out.push(minor('New round', () => {
     if (confirm('New cards for everyone and nothing called. Carry on?')) act('newRound');
   }));
