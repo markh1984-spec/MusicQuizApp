@@ -446,6 +446,15 @@ function whoIs(req, url) {
   if (isHostKey(req, url)) return BOOTSTRAP;
   const account = accounts.fromToken(cookie(req, SESSION_COOKIE));
   if (!account) return null;
+  /*
+   * A GROUP SEAT'S BILLING FIELDS ARE ITS PARENT'S, from here on — the one
+   * choke point every `can()`/`featuresFor()`/`entitlements()` call in this
+   * file goes through, so nothing downstream had to change. `accounts.js`
+   * cannot do this itself: `plans.js` only ever sees one account and cannot
+   * look another one up, and this is the one place that already has both.
+   * A no-op for the 99% of accounts with no `parentId` at all.
+   */
+  const effective = (a) => accounts.effective(a);
 
   // Wearing the quizmaster hat. Checked against the account book rather than
   // trusted from the cookie, and only ever the owner's OWN linked quizmaster —
@@ -517,12 +526,15 @@ function whoIs(req, url) {
        */
       const preview = cookie(req, TIER_COOKIE);
       if (preview && TIERS.some((t) => t.id === preview)) {
-        return { ...wearing, previewTier: preview, tier: preview, comped: false, status: 'active' };
+        // A deliberate preview downgrade — see the comment above. Applied
+        // AFTER effective(), or a seat's parent-derived tier would silently
+        // win back over the preview the moment this runs.
+        return { ...effective(wearing), previewTier: preview, tier: preview, comped: false, status: 'active' };
       }
-      return wearing;
+      return effective(wearing);
     }
   }
-  return account;
+  return effective(account);
 }
 
 /**
@@ -1454,6 +1466,31 @@ async function handleGet(req, res, url, route) {
         ? TIERS.map(({ id, label, plan }) => ({ id, label, plan }))
         : [],
     }), true;
+  }
+
+  /*
+   * Your own group — a company or a pub group, seats under a parent. See
+   * the POST/DELETE routes in `handleWrite` for adding and removing a seat;
+   * this is the read half, and it lives HERE rather than there because GET
+   * requests are dispatched to `handleGet`, never to `handleWrite` — a
+   * lesson this codebase has already paid for once, the hard way (the
+   * gallery publish route, defined inside `handleGet` where a POST could
+   * never reach it). A route in the wrong handler is dead code that reads
+   * as a feature.
+   */
+  if (route === '/api/group' && req.method === 'GET') {
+    const me = whoIs(req, url);
+    if (!me) return sendJson(res, 401, { error: 'Sign in first' }), true;
+    if (me.bootstrap || me.role === 'owner') return sendJson(res, 200, { seats: [], isSeat: false }), true;
+    if (me.parentId) return sendJson(res, 200, { seats: [], isSeat: true }), true;
+    const seats = accounts.groupStatus(me.id, (childId) => {
+      const room = rooms.get(roomIdFor({ id: childId, role: 'quizmaster' }));
+      const state = room.session.engine.state;
+      const live = state.phase !== 'lobby' || room.session.engine.playerList().length > 0;
+      if (!live) return null;
+      return { phase: state.phase, playerCount: room.session.engine.playerList().length, title: room.session.pack.title };
+    });
+    return sendJson(res, 200, { seats, isSeat: false }), true;
   }
 
   /*
@@ -4165,6 +4202,50 @@ async function handleWrite(req, res, url, route) {
     }
     backUpSuggestions();
     return sendJson(res, 200, { ok: true, suggestions: suggestions.all, summary: suggestions.summary() }), true;
+  }
+
+  /*
+   * ---- group accounts: a company or a pub group, seats under a parent
+   *
+   * A parent is DERIVED, never stored — any quizmaster becomes one the
+   * moment they add a first seat. So there is no "create a group" route,
+   * only "add a seat" and "remove a seat". See CLAUDE.md's Owner/Parent/
+   * Child section and `docs/business/groups.md`.
+   *
+   * EVERY ROUTE HERE RESOLVES FROM `whoIs()`, NEVER FROM AN ID IN THE
+   * REQUEST — the identical rule `/api/host/*` follows for rooms. A group
+   * id taken from the body would be a door into somebody else's seats; the
+   * only door here is "my own account's own children".
+   */
+  if (route === '/api/group/seats' && req.method === 'POST') {
+    const me = whoIs(req, url);
+    if (!me) return sendJson(res, 401, { error: 'Sign in first' }), true;
+    if (me.bootstrap) return sendJson(res, 400, { error: 'The host key is not an account, so there is no group to add a seat to.' }), true;
+    if (me.role === 'owner') return sendJson(res, 400, { error: 'The owner account does not run a group.' }), true;
+    if (me.parentId) return sendJson(res, 400, { error: 'You are a seat in somebody else’s group, so you cannot have seats of your own.' }), true;
+    const body = await readJson(req);
+    let created;
+    try {
+      created = accounts.addChild(me.id, { email: body.email, password: body.password, name: body.name });
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message }), true;
+    }
+    await backUpAccounts();
+    return sendJson(res, 200, { seat: created }), true;
+  }
+
+  if (route.startsWith('/api/group/seats/') && req.method === 'DELETE') {
+    const me = whoIs(req, url);
+    if (!me) return sendJson(res, 401, { error: 'Sign in first' }), true;
+    const childId = decodeURIComponent(route.slice('/api/group/seats/'.length));
+    // THE SCOPING CHECK: only ever a seat that is actually one of MINE.
+    // Without this, any signed-in account could unlink any other account
+    // from its group just by knowing its id.
+    const parent = accounts.parentOf(childId);
+    if (!parent || parent.id !== me.id) return sendJson(res, 404, { error: 'No such seat in your group.' }), true;
+    accounts.removeChild(childId);
+    await backUpAccounts();
+    return sendJson(res, 200, { ok: true }), true;
   }
 
   /*

@@ -1314,6 +1314,15 @@ body.host::after { display: none; }
    fixes a mis-tap. The icon is centred in it and nothing else changes. */
 .actions .back-btn { display: flex; align-items: center; justify-content: center; }
 
+/* ---- "Your group" panel, My account — see console-account.js groupPanel() ---- */
+.grp-seats { display: grid; gap: 6px; margin-top: 10px; }
+.grp-seat-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 12px; border-radius: var(--r-field);
+  background: rgba(255, 255, 255, 0.05);
+}
+.grp-seat-remove { flex-shrink: 0; }
+
 .plist { display: grid; gap: 6px; }
 .prow {
   display: flex; align-items: center; gap: 8px;

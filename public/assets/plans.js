@@ -845,13 +845,25 @@ export function can(account, feature) {
  * add one. That is the line the whole My account page is drawn along.
  */
 export function featuresFor(account = {}) {
+  /*
+   * A CHILD (a group seat) gets everything ITS PARENT'S TIER GIVES, MINUS
+   * STREAMING — "a seat gets everything", the one settled exception being
+   * that egress is a real per-use cost and a group has not been priced for
+   * it. `accounts.js`'s `effective()` has already swapped `tier`/`status`/
+   * `comped` for the PARENT's before this ever runs (this file only ever
+   * sees one account and cannot look another one up), so everything above
+   * this point already reads the parent's standing correctly — `parentId`
+   * itself survives that swap purely so this one line has something to ask.
+   */
+  const strip = (list) => (account.parentId ? list.filter((f) => f !== FEATURES.STREAM) : list);
+
   // Everything, for the same reason `can()` says yes to everything: the key
   // already grants the lot server-side, so reporting less here only ever
   // hides a button that would have worked.
   if (account.bootstrap) return [...new Set([...Object.values(FEATURES)])];
   if (account.role === 'owner') return [...OWNER_FEATURES];
   // The owner's own quizmaster account: everything on the ladder, for nothing.
-  if (account.comped) return featuresAt(TIERS[TIERS.length - 1].id);
+  if (account.comped) return strip(featuresAt(TIERS[TIERS.length - 1].id));
   if (!PAYING.has(account.status)) return [];
   if (trialExpired(account)) return [];
   /*
@@ -872,7 +884,7 @@ export function featuresFor(account = {}) {
    * and this is an empty union.
    */
   const kept = Array.isArray(account.kept) ? account.kept.filter((f) => FEATURE_TIER[f]) : [];
-  return [...new Set([...featuresAt(tierFor(account)), ...kept])];
+  return strip([...new Set([...featuresAt(tierFor(account)), ...kept])]);
 }
 
 /**

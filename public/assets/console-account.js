@@ -1,6 +1,6 @@
 /** MY ACCOUNT — who you are, what you pay for, the shop, and getting help. */
 
-import { esc, node, postJson } from './client.js';
+import { esc, node, postJson, binIcon } from './client.js';
 import { generate } from './console-generate.js';
 import { packCard, packPrice, preview } from './console-packs.js';
 import { accountsExist, library, me, setAccountsExist } from './console-state.js';
@@ -245,7 +245,115 @@ export function accountSection() {
   // so it genuinely returns nothing rather than an empty panel.
   const lib = libraryPanel();
   if (lib) wrap.appendChild(lib);
+  // Silent for the owner, who runs no group of their own.
+  const grp = groupPanel();
+  if (grp) wrap.appendChild(grp);
   return wrap;
+}
+
+/**
+ * YOUR GROUP — a company or a pub group, seats under a parent.
+ *
+ * A parent is DERIVED, never stored: any quizmaster becomes one the moment
+ * they add a first seat, so there is no "create a group" step here, only
+ * "add a seat". See CLAUDE.md's Owner/Parent/Child section and
+ * `docs/business/groups.md`.
+ *
+ * Deliberately a small, self-contained panel rather than a tab or door of
+ * its own — this is a first slice (accounts, entitlements, scoping), not
+ * the full group-admin screen the design doc sketches (that reuses People
+ * and Tonight, scoped, and is a bigger job for when it is actually needed).
+ */
+function groupPanel() {
+  if (!me || me.role === 'owner') return null;
+  const el = node(`
+    <div class="panel">
+      <h3>Your group</h3>
+      <div class="tiny grp-note">Loading…</div>
+      <div class="grp-seats"></div>
+      <div class="grp-add" hidden>
+        <div class="row" style="margin-top:10px;gap:8px">
+          <input type="text" class="grp-add-name" placeholder="Their name" style="flex:1">
+        </div>
+        <div class="row" style="margin-top:8px;gap:8px">
+          <input type="email" class="grp-add-email" placeholder="Their email" style="flex:1">
+        </div>
+        <div class="row" style="margin-top:8px;gap:8px">
+          <input type="password" class="grp-add-password" placeholder="A password for them to start with" style="flex:1">
+        </div>
+        <div class="row" style="margin-top:10px;align-items:center;gap:12px">
+          <button class="go grp-add-go">Add a seat</button>
+          <span class="tiny grp-add-said"></span>
+        </div>
+      </div>
+    </div>`);
+
+  const note = el.querySelector('.grp-note');
+  const seatsEl = el.querySelector('.grp-seats');
+  const addBox = el.querySelector('.grp-add');
+
+  const seatRow = (seat) => `
+    <div class="grp-seat-row" data-id="${esc(seat.id)}">
+      <div>
+        <div><b>${esc(seat.name || seat.email)}</b></div>
+        <div class="tiny">${esc(seat.email)}${seat.running
+          ? ` · <b>Live now</b> — ${seat.running.playerCount} in, ${esc(seat.running.title)}`
+          : ''}</div>
+      </div>
+      <button class="minor danger grp-seat-remove" type="button" aria-label="Remove this seat" title="Remove this seat">${binIcon(16)}</button>
+    </div>`;
+
+  const wireRemove = (row) => {
+    row.querySelector('.grp-seat-remove').addEventListener('click', async () => {
+      if (!confirm('Remove this seat? Their own account, room and packs are untouched — they simply go back to running on their own tier.')) return;
+      await fetch(keyed(`/api/group/seats/${encodeURIComponent(row.dataset.id)}`), {
+        method: 'DELETE', headers: { 'X-Host-Key': hostKey },
+      });
+      row.remove();
+    });
+  };
+
+  fetch(keyed('/api/group')).then((r) => r.json()).then((d) => {
+    if (d.isSeat) {
+      note.textContent = 'You are a seat in somebody else’s group — your tier is set by whoever runs it.';
+      return;
+    }
+    const seats = d.seats || [];
+    note.textContent = seats.length
+      ? 'Everyone here gets everything your own tier gives, except streaming — one bill instead of several.'
+      : 'Running more than one quizmaster? Add them as a seat — they get everything your tier gives, except streaming, on one bill.';
+    seatsEl.replaceChildren(...seats.map((s) => node(seatRow(s))));
+    for (const row of seatsEl.querySelectorAll('.grp-seat-row')) wireRemove(row);
+    addBox.hidden = false;
+  }).catch(() => { note.textContent = 'Could not load your group right now.'; });
+
+  el.querySelector('.grp-add-go').addEventListener('click', async () => {
+    const said = el.querySelector('.grp-add-said');
+    const name = el.querySelector('.grp-add-name').value.trim();
+    const email = el.querySelector('.grp-add-email').value.trim();
+    const password = el.querySelector('.grp-add-password').value;
+    if (!email || !password) { said.textContent = 'An email and a password are needed.'; return; }
+    try {
+      const res = await fetch(keyed('/api/group/seats'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
+        body: JSON.stringify({ name, email, password }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Could not add that seat');
+      el.querySelector('.grp-add-name').value = '';
+      el.querySelector('.grp-add-email').value = '';
+      el.querySelector('.grp-add-password').value = '';
+      said.textContent = '';
+      const row = node(seatRow(data.seat));
+      seatsEl.appendChild(row);
+      wireRemove(row);
+    } catch (err) {
+      said.textContent = err.message;
+    }
+  });
+
+  return el;
 }
 
 /**

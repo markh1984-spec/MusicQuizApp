@@ -219,7 +219,7 @@ export class Accounts {
    * @param {boolean} [opts.comped]  everything, for nothing. The owner's own
    *                                 quizmaster account, and anybody he gifts it to.
    */
-  create({ email, password, name = '', role = 'quizmaster', kind = DEFAULT_KIND, tier = '', plan = '', addons = [], comped = false, status = 'trialing', ownedBy = '', referredBy = '' }) {
+  create({ email, password, name = '', role = 'quizmaster', kind = DEFAULT_KIND, tier = '', plan = '', addons = [], comped = false, status = 'trialing', ownedBy = '', referredBy = '', parentId = '' }) {
     const clean = normaliseEmail(email);
     if (!clean || !clean.includes('@')) throw new Error('That does not look like an email address.');
     if (this.byEmail(clean)) throw new Error('There is already an account with that email address.');
@@ -229,6 +229,22 @@ export class Accounts {
     // One owner, and only one. A second would be a second person able to see
     // every subscriber, which is not something to create by accident.
     if (role === 'owner' && this.owner) throw new Error('There is already an owner account.');
+    /*
+     * A GROUP SEAT — see `addChild()`, which is the only caller that should
+     * ever set this. Validated here anyway rather than trusted, because
+     * `create()` is the one place an account gets written and a bad parentId
+     * would otherwise be a silent way to end up with a broken tree.
+     *
+     * NO NESTING: the parent must not itself be somebody's child. "Nesting is
+     * not needed and should not be built until somebody asks" — CLAUDE.md.
+     */
+    if (parentId) {
+      if (role !== 'quizmaster') throw new Error('Only a quizmaster account can be a group seat.');
+      const parent = this.find(parentId);
+      if (!parent) throw new Error('That parent account does not exist.');
+      if (parent.role !== 'quizmaster') throw new Error('A group can only be run by a quizmaster account.');
+      if (parent.parentId) throw new Error('That account is itself a seat in another group — nesting is not supported.');
+    }
     // `plan` and `addons` are the OLD shape and are still accepted, because a
     // backup written before the ladder existed is restored through here.
     // No tier given? Work it out from the OLD plan-and-add-ons shape, which is
@@ -258,6 +274,10 @@ export class Accounts {
       // quizmaster is support access, which is theirs to grant and is logged —
       // a different feature from wearing your own second hat.
       ...(ownedBy ? { ownedBy } : {}),
+      // Absent on an ordinary account, exactly like `kind` defaults and
+      // `teams` is empty — the common case costs nothing. See CLAUDE.md's
+      // Owner/Parent/Child section, which is where this word was settled.
+      ...(parentId ? { parentId } : {}),
       ...(role === 'owner' ? {} : {
         // Written on at creation rather than left absent, so an account made
         // before kinds existed and one made after read identically to
@@ -593,6 +613,96 @@ export class Accounts {
     this.data.sessions = this.data.sessions.filter((s) => s.accountId !== id);
     this.save();
     return safe(account);
+  }
+
+  // ------------------------------------------------------------------ groups
+
+  /**
+   * A parent is DERIVED, never stored — it is simply any account that at
+   * least one other account points at via `parentId`. So there is no
+   * "create a group" step: any ordinary quizmaster becomes one the moment
+   * they add their first seat, and stops being one the moment the last seat
+   * is removed. See CLAUDE.md's Owner/Parent/Child section.
+   */
+  childrenOf(parentId) {
+    return this.data.accounts
+      .filter((a) => a.parentId === parentId)
+      .map(safe);
+  }
+
+  parentOf(accountId) {
+    const account = this.find(accountId);
+    return account && account.parentId ? this.find(account.parentId) : null;
+  }
+
+  /**
+   * Add a seat under a group — a brand new account, never an existing one
+   * converted. Converting somebody else's independent account into a child
+   * is a consent question this does not attempt to answer (see
+   * `docs/business/groups.md`'s "A LINK NEEDS BOTH SIDES TO AGREE"); a new
+   * seat has no such question because nothing existed to consent on.
+   *
+   * `parentId` MUST be the caller's own account id, resolved by the route
+   * from who is signed in — never taken off the request. See `addSeat` in
+   * server.js, which is the only intended caller.
+   */
+  addChild(parentId, { email, password, name = '' }) {
+    return this.create({ email, password, name, role: 'quizmaster', parentId, status: 'active' });
+  }
+
+  /**
+   * Remove a seat from a group — NEVER destructive. The account, its room,
+   * its own packs and its own history are all untouched; it simply reverts
+   * to being "on their own" and falls back to its own individual `tier`
+   * (Bronze by default, since a seat is created with no tier of its own to
+   * fall back to — see `addChild`). "Anything that deletes shows a bin" does
+   * not apply here because nothing is deleted at all.
+   */
+  removeChild(childId) {
+    const account = this.find(childId);
+    if (!account || !account.parentId) return null;
+    delete account.parentId;
+    this.save();
+    return safe(account);
+  }
+
+  /**
+   * The account to use for ENTITLEMENT PURPOSES — `plans.js` only ever sees
+   * one account and cannot look another one up, so a child's billing fields
+   * are substituted for its PARENT's here, once, before anything downstream
+   * asks `can()`/`featuresFor()` a question. `parentId` itself is kept on
+   * the result (not stripped) so `featuresFor()` can still tell a seat apart
+   * to withhold streaming — the one thing a seat does not get "everything"
+   * on. See `whoIs()` in server.js, the only intended caller.
+   *
+   * A parent that has since vanished (closed, or the data is mid-repair)
+   * falls back to the child's OWN standing rather than throwing — the same
+   * "never interrupt a night" instinct as a lapsed subscription.
+   */
+  effective(account) {
+    if (!account || !account.parentId) return account;
+    const parent = this.find(account.parentId);
+    if (!parent) return account;
+    return {
+      ...account,
+      tier: parent.tier,
+      status: parent.status,
+      comped: parent.comped,
+      trialEndsAt: parent.trialEndsAt || null,
+    };
+  }
+
+  /** Is anybody live right now, across this parent's whole group? For the
+   *  "who's running tonight" line on the group admin view — no camera, no
+   *  video, just the same state every room already carries. See
+   *  `docs/business/groups.md`'s "answers the head-office question without
+   *  a camera". Callers supply `runningFor(roomId)`, since this file knows
+   *  nothing about rooms or live sessions on purpose. */
+  groupStatus(parentId, runningFor) {
+    return this.childrenOf(parentId).map((child) => ({
+      ...child,
+      running: runningFor(child.id) || null,
+    }));
   }
 
   // ---------------------------------------------------------------- signing in
