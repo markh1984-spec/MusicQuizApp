@@ -13,7 +13,7 @@ import { diarySection } from './console-diary.js';
 import { generatePanel, importPanel, quizGeneratePanel } from './console-generate.js';
 import { asksPanel, fillNightDetail, gigsSection } from './console-gigs.js';
 import { invoicesSection } from './console-invoices.js';
-import { gameSection, preview } from './console-packs.js';
+import { gameSection, packActionsMarkup, preview, wirePackActions } from './console-packs.js';
 import { editPopover } from './console-editor-popover.js';
 import { shelfFor, showsSection } from './console-shows.js';
 import { BENCH_STORE, NIGHT_BENCH_STORE, bench, gigsSeen, lastDone, library, me, nightBench, nightDrag, packDrag, setAccountsExist, setBench, setGigsSeen, setLastDone, setLibrary, setMe, setNightBench, setNightDrag, setPackDrag } from './console-state.js';
@@ -1334,12 +1334,23 @@ function workBench() {
             <p class="tiny">Or drag a pack in from below to edit, rename or read
               one you already have.</p>`}
         </div>
+        <!-- RENAME, DELETE, PICTURES, PLAYLIST, A COPY TO KEEP — everything a
+             pack card itself used to open a caret to reach, before a tap
+             started putting the pack here instead. bench-pack-actions is its
+             own class rather than the Post gig bench's bench-actions, which
+             already means "one row of buttons flexed to fit" — reusing it
+             here would fight pack-actions' own grid for the same property,
+             the exact label collision this app keeps a rule against.
+             grid-column: 1 / -1 in the stylesheet is what spans it under both
+             columns of the slot-and-buttons row above. -->
+        ${on ? `<div class="bench-pack-actions">${packActionsMarkup(bench.kind, on)}</div>` : ''}
       </div>
     </div>`);
 
   el.querySelector('.bench-off')?.addEventListener('click', () => putOnBench(null));
   el.querySelector('.bench-read')?.addEventListener('click', () => preview(bench.kind, on));
   if (on) el.querySelector('.bench-go')?.addEventListener('click', () => editPopover(bench.kind, on));
+  if (on) wirePackActions(el, bench.kind, on);
   wireBenchFold(el, WORK_BENCH_OPEN_STORE);
 
   /*

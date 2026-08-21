@@ -265,7 +265,11 @@ export function putNightOnBench(key) {
   renderKeepingPlace();
 }
 
-/** A night being dragged up to the Post gig bench, if any. */
+/**
+ * Put a PACK on the Workshop bench, or take it off with `putOnBench(null)`.
+ * Reachable by dragging a card up, or by a plain tap on one — see the tap
+ * handler on `.pack-title` in `console-packs.js`.
+ */
 export function putOnBench(pack, kind) {
   setBench(pack ? { id: pack.id, kind } : null);
   if (bench) localStorage.setItem(BENCH_STORE, JSON.stringify(bench));

@@ -10,6 +10,21 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 21 August 2026, same day, next deploy — a tap places the pack
+on Workshop too:** clicking a pack card no longer opens it in place; it goes
+straight to the bench, the same way a Console tap has gone straight to
+Tonight for a while. That meant moving the five actions the caret used to
+reveal (Rename, Playlist, Download, Pictures, Delete) off the card and onto
+the bench, since the bench is the one surface that already knows which pack
+is current — `packActionsMarkup()`/`wirePackActions()` in
+`console-packs.js`, called from `workBench()` in `console.js`. The now-dead
+caret CSS, the `openPack` toggle and a stale doc comment on `putOnBench()`
+(copied from `putNightOnBench`, wrongly calling it a night) all went with it
+rather than being left disabled. Verified live across all six library packs
+to confirm the gated buttons match each pack's own rounds and ownership, and
+the Console door's tap-to-Tonight path checked as an explicit regression.
+See "A TAP PLACES THE PACK" in `docs/console.md`.
+
 **Live as of 21 August 2026 — the console wears its retro dress:** the
 quill-and-ink pass landed across seven deploys in one evening, each screenshot
 sent to the host and each tuned on his eye before the next. The console (and

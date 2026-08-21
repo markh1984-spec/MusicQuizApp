@@ -824,6 +824,65 @@ option — "Online — the question goes on their phones" dragged the whole cons
 
 ---
 
+## A TAP PLACES THE PACK — ON EITHER DOOR, AND THE CARD NEVER OPENS AGAIN
+
+`packCard()`, `packActionsMarkup()`, `wirePackActions()` in `console-packs.js`;
+`workBench()` in `console.js`. Asked for directly, on 21 August 2026: *"when
+you click a quiz pack here it needs to open up in the bench."*
+
+**The card's own inline expand was the last thing standing between this and
+the Console door's own rule.** A tap on the Console had already put a pack
+straight into Tonight for a while — "a caret that expands to an empty panel
+is the same fault as the venue name that looked pressable and did nothing,"
+recorded when Tonight took the settings off the card. But Workshop's cards
+still opened in place, because they still had something real behind the
+caret: Read, Rename, Delete, Pictures, Playlist. Moving the click meant
+moving those five first, or the tap would place the pack and strand the only
+way to manage it.
+
+**So they moved to the bench, not to a popover or a second panel.** The bench
+already held one pack for editing — "ONE pack, not a list… a bench with six
+slots would be inviting a job nobody does" — and it is the one surface on
+Workshop that already knows which pack is current. `packActionsMarkup(kind,
+pack)` builds the row (Rename, Playlist/Rebuild/Make playlist, Download,
+Pictures, Delete, each gated exactly as before — `mine`, `ownPack`,
+`ownersJob`, `hasPictureRound`, `hasIntroRound`); `wirePackActions(el, kind,
+pack)` wires it, called only when a pack is actually on the bench, so the row
+appears and disappears with the tile above it rather than sitting there
+disabled. Read stays off the list — the bench already has "Read it through"
+beside "Edit the questions", and a second button with the same job is the
+exact collision `packWord()`'s own history warns about.
+
+**Its own class, `.bench-pack-actions`, not the Post gig bench's
+`.bench-actions`.** The two names are close and mean different things —
+`.bench-actions` is already "one row flexed to fit"; reusing it here would
+have fought `.pack-actions`'s own grid for the same property, which is the
+label-collision fault Sweep mode exists to catch, self-inflicted instead of
+caught.
+
+**The click handler is now three lines, one branch per door**: `addToTonight`
+on Console, `putOnBench` on Workshop, no third case, because there is nothing
+left for a card to open on either one. The `openPack` Map, the `open`/`shut`
+class toggle, the caret glyph and its console-only suppression, and the
+tinted-open background all went with it — not left disabled, deleted,
+because a rule that can never fire is worse than no rule: it is a comment
+above dead CSS telling the next session something true about a state that
+can no longer exist. `putOnBench()`'s own doc comment was wrong too, copied
+from `putNightOnBench` and never corrected — it said "a night," and the
+function has only ever benched a pack.
+
+**Verified live, not just read**: a real browser cycling all six packs in the
+library through the bench, confirming the gated buttons match `hasPictureRound`/
+`hasIntroRound`/`ownPack` per pack, confirming Rename's `prompt()` fires and a
+cancel leaves the bench untouched, confirming the "×" clears the actions row
+along with the tile, and confirming the Console door's tap still lands in
+Tonight with no caret anywhere. The check incidentally triggered a real quiet
+launch on the test server (Tonight's own documented behaviour — a pick lands
+on the big screen when nothing would be lost) and restored the original quiz
+afterwards rather than leaving the test server's state altered.
+
+---
+
 ## A PACK WEARS ITS OWN SUBJECT
 
 `public/assets/pack-look.js`, `.pack-card.tinted` / `.lb-tile.tinted` in

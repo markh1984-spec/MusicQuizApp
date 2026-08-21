@@ -2219,10 +2219,11 @@ body.console .panel::after { bottom: -4px; }
    find tonight's pack and press Launch, and a poster is what you pick out of
    six at a glance.
 
-   ONLY WHEN SHUT. An open card carries four dropdowns, a prize line, the round
-   ticks and Launch — nothing about that fits a square, and forcing it would be
-   the shape deciding what the controls may be. `aspect-ratio` is on `.shut`
-   alone, so opening one simply lets it grow. */
+   `.shut` NAMES THE CLASS RATHER THAN A STATE NOW — no card opens any more
+   (see the note by `.pack-title::after`), so every card carries it, always.
+   The class stayed rather than being folded into `.pack-card` itself only
+   because the name is still the honest one: a square poster is what "shut"
+   was always describing. */
 .pack-card.shut {
   gap: 2px;
   aspect-ratio: 1 / 1;
@@ -2286,26 +2287,13 @@ body.console .panel::after { bottom: -4px; }
    one-line name up off the fade and leaves a gap under it. The card is a fixed
    height now, so nothing below needs the space held open. */
 .pack-grid:not(.dense) .pack-card.shut .pack-title { min-height: 0; }
-/* The caret says it opens — the same job the chevron does on a dropdown, and
-   drawn rather than a glyph for the reason binIcon() is drawn: phones render
-   arrow characters at wildly different weights and some fall back to a box. */
-.pack-card .pack-title::after {
-  content: ''; display: inline-block; margin-left: 8px;
-  border: 4px solid transparent; border-top-color: currentColor;
-  transform: translateY(2px); opacity: 0.5;
-}
-.pack-card.open .pack-title::after { transform: translateY(-2px) rotate(180deg); }
-/* NO CARET BEHIND THE CONSOLE DOOR — there is nothing to open there. The
-   settings and Launch left the card, so what remains behind the caret is
-   Workshop work (Read, Rename, Delete, Pictures), and a tap puts the pack into
-   Tonight instead. A caret that expands to nothing is the same fault as the
-   venue name that looked pressable and did nothing. */
-body[data-door="console"] .pack-card .pack-title::after { content: none; }
-.pack-card.open {
-  grid-column: 1 / -1;
-  border-color: rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.07);
-}
+/* NO CARET ANYWHERE NOW — a card never opens in place on either door. A tap
+   places the pack (Tonight on the Console, the bench in Workshop) instead of
+   expanding it, so a caret would be the same fault as the venue name that
+   looked pressable and did nothing. It used to be drawn on every card and
+   suppressed only behind the Console door; the last thing left behind it —
+   Read, Rename, Delete, Pictures, Playlist — moved to the bench, so the
+   suppression is now the rule everywhere rather than the exception. */
 /* The settings side by side where there is room. `minmax(0, …)` rather than a
    bare width, because a select will not go below its longest option and drags
    the page sideways at 320px — the min-content trap this file has now recorded
@@ -2435,7 +2423,7 @@ body[data-door="console"] .pack-card .pack-title::after { content: none; }
 }
 .pack-pin.on svg { transform: none; }
 /* The title has to clear it, or a two-line pack name runs under the pin. */
-.pack-card.shut .pack-title, .pack-card.open .pack-title { padding-left: 44px; }
+.pack-card.shut .pack-title { padding-left: 44px; }
 
 /* ---- A PACK WEARS ITS OWN SUBJECT.
  *
@@ -2599,15 +2587,6 @@ body[data-door="console"] .pack-card .pack-title::after { content: none; }
     repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 14px),
     linear-gradient(120deg, var(--pk-a), var(--pk-b)),
     var(--panel);
-}
-/* THE OPEN CARD DROPS THE PATTERN AND KEEPS THE COLOUR. It is a panel of
-   dropdowns rather than a tile, and scan lines behind a Look picker and a
-   Launch button compete with the one thing on the card that is meant to be
-   pressed. The colour stays, so a pack does not change identity on being
-   opened — which would be the shelf's own recognition trick working against
-   itself. */
-.pack-card.open.tinted, .pack-card.open.tinted.pk-lines, .pack-card.open.tinted.pk-slash {
-  background: linear-gradient(120deg, var(--pk-a), var(--pk-b)), var(--panel);
 }
 /*
  * Two lines are RESERVED for a title, whether or not it needs them.
@@ -8130,6 +8109,9 @@ body.gallery { padding: 0; }
   min-height: 92px;
 }
 .bench-do p { margin: 2px 0 0; max-width: 46ch; }
+/* THE PACK ACTIONS SPAN BOTH COLUMNS, under the slot and the Edit/Read row —
+   its own third grid row, at the same gap the two above it already keep. */
+.bench-pack-actions { grid-column: 1 / -1; }
 /* GREEN, NOT THE ACCOUNT GRADIENT, and sized to its words. One filled gradient
    per screen means "the night", and there is no night behind these doors —
    making something is the green role. So the Console has exactly one Launch and

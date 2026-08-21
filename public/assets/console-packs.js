@@ -7,7 +7,7 @@ import { tonightsVenue, whenish } from './console-gigs.js';
 import { field, money, sheet } from './console-invoices.js';
 import { renderBingoPreview, renderQuizPreview } from './console-preview.js';
 import { library, me, setPackDrag } from './console-state.js';
-import { addToTonight, dragging, night, playedAt } from './console-tonight.js';
+import { addToTonight, dragging, night, playedAt, putOnBench } from './console-tonight.js';
 import { PACK_SHELF, can, canPin, doorNow, goTo, hostKey, isPinned, keyed, linkTo, load, packWord, pinIcon, pinRank, pinnedPacks, render, reorderPins, showDone, togglePin } from './console.js';
 import { tonight } from './diary.js';
 import { lobbyGameChoices, lobbyGameFor } from './lobby-games.js';
@@ -255,24 +255,15 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
    * gig is looking for.
    */
   /*
-   * ONE PACK IS OPEN AT A TIME, and the rest are just names.
+   * EVERY CARD IS JUST A NAME AND A LINE OF WHAT IT IS, and nothing opens.
    *
-   * Asked for after the first weeks of real use: *"we don't need all the
-   * options for launch on every pack in the list — just the selected one, the
-   * rest can be compacted into a card with their name only."* He is right, and
-   * it is the third design rule doing the work: the common job on this tab is
-   * FIND TONIGHT'S PACK AND PRESS LAUNCH, and nine cards each carrying four
-   * dropdowns, a prize line, five buttons and a Launch is a wall you read
-   * rather than a shelf you scan.
-   *
-   * The settings are per-night decisions about ONE pack, so they belong to the
-   * one you have chosen and nowhere else. Closed, a card is its name and a line
-   * of what it is — which is what you choose BY.
-   *
-   * `repaint` is handed to each card so opening one can redraw the grid
-   * without the whole page reloading. `load()` would work and is far heavier:
-   * it refetches the library, and on a tab whose whole point is being quick
-   * that is a visible stutter for a purely local change.
+   * Cards used to expand in place to a caret's worth of settings, then to a
+   * row of Read/Rename/Delete/Pictures/Playlist once Tonight took the
+   * settings away — and now even THAT went, once a tap started putting the
+   * pack straight on the bench instead (*"when you click a quiz pack here it
+   * needs to open up in the bench"*). The common job on this tab is FIND
+   * TONIGHT'S PACK AND PRESS LAUNCH, and nine cards each carrying a row of
+   * buttons was a wall you read rather than a shelf you scan.
    */
   const paint = () => {
     const found = matchPacks(packs || [], packQuery[kind]);
@@ -376,7 +367,7 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
       const typing = (packQuery[kind] || '').trim();
       headEl.textContent = typing ? 'Your library' : 'Recommended';
     }
-    for (const pack of shown) grid.appendChild(packCard(kind, pack, paint));
+    for (const pack of shown) grid.appendChild(packCard(kind, pack));
   };
 
   // Redrawn in place rather than through render(), so the box keeps focus and
@@ -957,9 +948,7 @@ const canRun = (kind) => can(kind === 'bingo' ? FEATURES.BINGO : FEATURES.QUIZ);
  * Keyed by TAB, so opening a bingo pack does not close the quiz you were
  * looking at, and each tab comes back where you left it.
  */
-const openPack = new Map();
-
-export function packCard(kind, pack, repaint = () => {}) {
+export function packCard(kind, pack) {
   /*
    * A quizmaster READS a pack and LAUNCHES it, and that is the arrangement —
    * the packs are written to a house style and sold. Renaming, deleting,
@@ -1000,24 +989,19 @@ export function packCard(kind, pack, repaint = () => {}) {
     ? `Played ${pack.playCount} time${pack.playCount === 1 ? '' : 's'}${pack.lastPlayedAt ? ` · last ${whenish(pack.lastPlayedAt)}` : ''}`
     : 'Never played';
 
-  const open = openPack.get(kind) === pack.id;
-
   /*
-   * WHAT A CLOSED CARD KEEPS, and it is not quite "the name only".
+   * WHAT A CARD KEEPS — and it is not quite "the name only".
    *
-   * The ask was a card with the name on it. The size and when it was last
-   * played stay, in one small line, because they are what you CHOOSE by:
-   * "never played" and "last played 3 days ago" is how you avoid running the
-   * same quiz at the same venue two weeks running, and it is the exact signal
-   * the quick-launch priority is built out of. Dropping them would make the
-   * grid tidier and the choice harder, which is the wrong trade on the tab
-   * whose job is choosing.
+   * The size and when it was last played stay, in one small line, because
+   * they are what you CHOOSE by: "never played" and "last played 3 days ago"
+   * is how you avoid running the same quiz at the same venue two weeks
+   * running, and it is the exact signal the quick-launch priority is built
+   * out of. Dropping them would make the grid tidier and the choice harder,
+   * which is the wrong trade on the tab whose job is choosing.
    *
-   * WARNINGS ALWAYS STAY, open or closed. A broken pack, a question to fix and
-   * an expired topical one are read once at a moment that matters, and the
-   * house style makes those the exception to being short. A pack that looked
-   * fine closed and turned out to be broken when opened would be the app
-   * saying nothing again.
+   * WARNINGS ALWAYS STAY. A broken pack, a question to fix and an expired
+   * topical one are read once at a moment that matters, and the house style
+   * makes those the exception to being short.
    */
   /*
    * ITS OWN COLOUR, FROM ITS OWN SUBJECT — see `pack-look.js`. A wash behind
@@ -1026,7 +1010,7 @@ export function packCard(kind, pack, repaint = () => {}) {
    */
   const look = packLookAttrs(pack, kind === 'quiz' && isBreakoutPack(pack) ? 'breakout' : kind);
   const el = node(`
-    <div class="pack-card ${open ? 'open' : 'shut'} ${look.cls} ${pack.broken ? 'broken' : ''} ${ownPack ? 'own' : ''} ${freshness(pack).expired ? 'stale' : ''}"
+    <div class="pack-card shut ${look.cls} ${pack.broken ? 'broken' : ''} ${ownPack ? 'own' : ''} ${freshness(pack).expired ? 'stale' : ''}"
       style="${look.style}"
       draggable="${pack.broken ? 'false' : 'true'}" data-pack="${esc(pack.id)}" data-kind="${esc(kind)}">
       ${packWord(look)}
@@ -1037,63 +1021,12 @@ export function packCard(kind, pack, repaint = () => {}) {
            full name is always one hover away and nothing is lost. Search,
            the editor and the archive all still see the stored title - see
            shortTitle() in pack-look.js. -->
-      <button class="pack-title ${titleSize(shortTitle(pack.title))}"
-        title="${open ? 'Close it' : esc(pack.title)}"
-        aria-expanded="${open ? 'true' : 'false'}">${esc(shortTitle(pack.title))}</button>
+      <button class="pack-title ${titleSize(shortTitle(pack.title))}" title="${esc(pack.title)}">${esc(shortTitle(pack.title))}</button>
       ${ownPack ? '<div class="pack-yours" title="You wrote this one. Nobody else can read it.">Yours</div>' : ''}
       <div class="tiny">${esc(detail)} · ${esc(played)}</div>
       ${freshLabel(pack) ? `<div class="tiny fresh ${freshness(pack).expired ? 'gone' : ''}">${esc(freshLabel(pack))}</div>` : ''}
       ${pack.broken ? `<div class="tiny" style="color:var(--bad)">Broken: ${esc(pack.broken)}</div>` : ''}
       ${pack.problems ? `<div class="tiny" style="color:var(--bad)">${pack.problems} thing${pack.problems === 1 ? '' : 's'} to fix</div>` : ''}
-      ${!open ? '' : `
-      <!--
-        TONIGHT'S SETTINGS ARE NOT ON A PACK CARD ANY MORE, AND NEITHER IS
-        LAUNCH.
-
-        Reported in five words - *"this whole expandable section is pointless
-        now"* - and it is the plainest case of the rule this file keeps
-        recording. Every field that was here (cards, prizes, look, while they
-        wait, game sound, where, playing, venue) is a decision about TONIGHT,
-        and Tonight now owns all of them: the bar carries the venue and the
-        in-the-room switch, and Tonight's settings is its own tab. Two controls
-        for one field is how a night gets launched with the setting the other
-        one was showing.
-
-        What is left is what a card is actually FOR: reading the pack,
-        renaming it, deleting it, drawing its portraits, building its playlist.
-        Those are facts about the PACK rather than about an evening, which is
-        the same test that decides Account against Settings.
-      -->
-      <div class="pack-actions">
-        <button class="pack-read" title="Read it through">Read</button>
-        ${mine ? `<button class="pack-rename" ${pack.broken ? 'disabled' : ''} title="Change what it is called">Rename</button>` : ''}
-        ${pack.playlist ? `<a class="pack-spotify" href="${esc(pack.playlist)}" target="_blank" rel="noopener" title="Open it in Spotify">Playlist</a>` : ''}
-        ${ownPack ? '<button class="pack-save" title="Download it as a file you keep">Download</button>' : ''}
-        ${ownersJob && hasPictureRound(pack) ? '<button class="pack-pics" title="Make the round 2 portraits">Pictures</button>' : ''}
-        ${ownersJob && hasIntroRound(pack) ? (pack.playlist
-          // Once one exists, the green button beside this one is already called
-          // Playlist — two buttons with the same word on one card is a card you
-          // have to try to understand. This one says what it does instead, and
-          // its tooltip is honest that Spotify gets a second playlist rather
-          // than an updated one.
-          ? '<button class="pack-playlist" title="Build it again. Spotify gets a NEW playlist — the existing one is left alone.">Rebuild</button>'
-          // AND BEFORE ONE EXISTS IT SAYS "MAKE", NOT "PLAYLIST".
-          //
-          // The two never appear together — the green link only exists once
-          // there is something to open — so this read as one word meaning two
-          // opposite things a week apart: press Playlist on Monday and you
-          // build one, press it on Friday and you are in Spotify. A collision
-          // separated in time is still a collision, and it is the worse kind
-          // because nothing on screen shows you both at once.
-          //
-          // A verb also puts it in the same family as "Make real portraits"
-          // beside it, which is the other thing on this row that makes
-          // something rather than opening something.
-          : '<button class="pack-playlist" title="Build the Spotify playlist for the intro round">Make playlist</button>') : ''}
-        ${mine ? '<button class="pack-del" title="Delete this pack">Delete</button>' : ''}
-      </div>
-      <div class="pics-slot"></div>
-      `}
     </div>`);
 
   /*
@@ -1133,15 +1066,6 @@ export function packCard(kind, pack, repaint = () => {}) {
   });
 
   /*
-   * The title OPENS the card; Read is in the row below.
-   *
-   * It used to open the read-through, which was the only thing it could
-   * sensibly do when every card was already fully open. Now the first thing
-   * you want from a pack is "set tonight up and launch it", so that is what
-   * the biggest target on the card does. Read is one tap further in, on the
-   * card you have already chosen, which is when you actually want to read it.
-   */
-  /*
    * `stopPropagation` on the CLICK and the MOUSEDOWN both — the card is a drag
    * source, so without the second one a press on the pin starts dragging the
    * pack instead of pinning it. That is the same trap the round ticks hit in
@@ -1156,40 +1080,91 @@ export function packCard(kind, pack, repaint = () => {}) {
     });
   }
   /*
-   * ON THE CONSOLE DOOR A TAP PUTS THE PACK IN TONIGHT; in the Workshop it
-   * opens the card.
+   * A TAP PLACES THE PACK — in Tonight on the Console door, on the bench in
+   * Workshop. Neither door has anything left to open ON THE CARD: the
+   * settings and Launch left it for Tonight, and Read/Rename/Delete/Pictures/
+   * Playlist left it for the bench (see `packActionsMarkup` below) the same
+   * afternoon the host asked for packs to "open up in the bench". A caret
+   * that expands to an empty panel is the "control that needs explaining"
+   * fault, so the tap does the thing you came to do instead.
    *
-   * Once the settings and Launch came off, a Console card had nothing left to
-   * open — the actions behind it (Read, Rename, Delete, Pictures, Playlist)
-   * are all Workshop work. A caret that expands to an empty panel is the
-   * "control that needs explaining" fault, so the tap does the thing you
-   * came to do instead.
-   *
-   * Through the SAME path a drop uses, so a tap and a drag cannot come to mean
-   * different things — and it is the way round for touch, where drag events
-   * are never delivered at all. The same arrangement the Shows tab and the
-   * Venues shelf already use.
+   * Through the SAME path a drop uses, so a tap and a drag cannot come to
+   * mean different things — and it is the way round for touch, where drag
+   * events are never delivered at all. The same arrangement the Shows tab and
+   * the Venues shelf already use.
    */
   el.querySelector('.pack-title').addEventListener('click', () => {
-    if (doorNow() === 'console') { addToTonight(pack, kind); return; }
-    if (open) openPack.delete(kind);
-    else openPack.set(kind, pack.id);
-    repaint();
+    if (doorNow() === 'console') addToTonight(pack, kind);
+    else putOnBench(pack, kind);
   });
 
   /*
-   * How many actions this card ended up with, so the stylesheet can lay them
-   * out in an even block rather than leaving a ragged last row.
+   * AND NO LAUNCH HANDLER, because there is no Launch on a pack card.
    *
-   * A card carries between one and five of these depending on what the pack
-   * is and who is looking, and "as many as fit per row" put four out as three
-   * and a lonely one — which reads as a button that has come loose rather than
-   * as a row. Counting them here is the only place that knows.
+   * Tonight is the one place a night starts now. That is a change to the
+   * PROTECTED SURFACE and was made deliberately rather than as a tidy-up: the
+   * guarantee was never "a Launch button on every card", it was that launching
+   * is one predictable move away — and dragging or tapping a pack into Tonight
+   * and pressing the one big button is that move, on the one bar this file
+   * says must never change shape under a thumb.
+   *
+   * The expired-topical warning went with it and is not lost: `doLaunch` is
+   * still the single way out, and the launch bar asks the same question.
    */
+  return el;
+}
+
+/**
+ * THE ACTIONS A BENCHED PACK CARRIES — Rename, its playlist or portraits, a
+ * copy to keep, Delete. Read stays off this list: the bench already has its
+ * own "Read it through" beside "Edit the questions", and a second button
+ * with the same job is the collision `packWord()`'s own history warns about.
+ *
+ * Built once here rather than twice, because it used to live on the card
+ * ITSELF, behind a caret that only Workshop ever showed — until *"when you
+ * click a quiz pack here it needs to open up in the bench"* moved the click
+ * to `putOnBench()` above and left these five with nowhere to render. The
+ * bench is the one place left that holds a single pack, so it is the one
+ * place these belong now.
+ *
+ * Split into a markup function and a wiring function (`wirePackActions`)
+ * rather than one that does both, because the bench BUILDS its own template
+ * string around this markup (see `workBench()` in console.js) — a function
+ * that returned a live element would have nowhere of its own to be inserted.
+ */
+export function packActionsMarkup(kind, pack) {
+  const ownPack = Boolean(pack.mine);
+  const mine = ownPack ? can(FEATURES.OWN_PACKS) : can(FEATURES.CATALOGUE);
+  // Portraits cost the owner money at OpenAI and the playlist step writes to
+  // the owner's own Spotify account, so both stay the owner's whoever wrote
+  // the pack.
+  const ownersJob = can(FEATURES.CATALOGUE);
+  return `
+    <div class="pack-actions">
+      ${mine ? `<button class="pack-rename" ${pack.broken ? 'disabled' : ''} title="Change what it is called">Rename</button>` : ''}
+      ${pack.playlist ? `<a class="pack-spotify" href="${esc(pack.playlist)}" target="_blank" rel="noopener" title="Open it in Spotify">Playlist</a>` : ''}
+      ${ownPack ? '<button class="pack-save" title="Download it as a file you keep">Download</button>' : ''}
+      ${ownersJob && hasPictureRound(pack) ? '<button class="pack-pics" title="Make the round 2 portraits">Pictures</button>' : ''}
+      ${ownersJob && hasIntroRound(pack) ? (pack.playlist
+        // Once one exists, the green link beside this one is already called
+        // Playlist — two buttons with the same word on one panel is a panel
+        // you have to try to understand. This one says what it does instead.
+        ? '<button class="pack-playlist" title="Build it again. Spotify gets a NEW playlist — the existing one is left alone.">Rebuild</button>'
+        : '<button class="pack-playlist" title="Build the Spotify playlist for the intro round">Make playlist</button>') : ''}
+      ${mine ? '<button class="pack-del" title="Delete this pack">Delete</button>' : ''}
+    </div>
+    <div class="pics-slot"></div>`;
+}
+
+/**
+ * Wires `packActionsMarkup`'s buttons once they exist in the DOM. `el` is
+ * the bench panel (or any container) already holding that markup.
+ */
+export function wirePackActions(el, kind, pack) {
+  const ownPack = Boolean(pack.mine);
   const actions = el.querySelector('.pack-actions');
   if (actions) actions.dataset.count = actions.children.length;
 
-  const openIt = () => preview(kind, pack);
   const toggle = (build) => {
     const slot = el.querySelector('.pics-slot');
     const already = slot.dataset.which === build.name;
@@ -1199,10 +1174,6 @@ export function packCard(kind, pack, repaint = () => {}) {
   };
   el.querySelector('.pack-pics')?.addEventListener('click', () => toggle(picturePanel));
   el.querySelector('.pack-playlist')?.addEventListener('click', () => toggle(playlistPanel));
-  // NOT the title — that opens and closes the card now. Wiring both here is
-  // how you get a tap that opens the read-through AND collapses the card
-  // underneath it, which reads as the page jumping.
-  el.querySelector('.pack-read')?.addEventListener('click', openIt);
 
   /*
    * Take a copy away.
@@ -1233,25 +1204,7 @@ export function packCard(kind, pack, repaint = () => {}) {
   });
 
   /*
-   * How many prizes, and what each one is.
-   *
-   * It depends on the card: a 3-across strip has only three lines, so two line
-   * prizes and a full house is all it can carry, and offering four would be
-   * offering one nobody could win. So the list is rebuilt whenever the shape
-   * changes rather than written out once.
-   */
-  /*
-   * NOTHING TO WIRE FOR THE SETTINGS ANY MORE — the card no longer draws them.
-   *
-   * The whole `shapePick` / `prizePick` / `wireVenue` block went with the
-   * markup rather than being left behind guarded, which is the point: a
-   * `querySelector` whose element is gone is the exact fault that took this
-   * console down twice, and the fix is to delete the pair together. Tonight's
-   * settings tab owns these now and has its own copy of the prize painting.
-   */
-
-  /*
-   * Rename without opening the pack.
+   * Rename without opening the editor.
    *
    * The title is the only thing you ever want to change from out here — a pack
    * called "1980s Music Bingo" is fine until the night you run two of them.
@@ -1303,6 +1256,12 @@ export function packCard(kind, pack, repaint = () => {}) {
     }
   });
 
+  /*
+   * Deleting the benched pack leaves it quietly — `workBench()` already
+   * clears the bench itself the moment a re-render finds nothing on the
+   * shelf with that id, the same guard that covers a pack deleted from
+   * anywhere else while it happened to be on the bench.
+   */
   el.querySelector('.pack-del')?.addEventListener('click', async () => {
     if (!confirm(`Delete "${pack.title}"?\n\nThis removes it from your library for good.`)) return;
     const button = el.querySelector('.pack-del');
@@ -1323,20 +1282,6 @@ export function packCard(kind, pack, repaint = () => {}) {
       alert(err.message);
     }
   });
-
-  /*
-   * AND NO LAUNCH HANDLER, because there is no Launch on a pack card.
-   *
-   * Tonight is the one place a night starts now. That is a change to the
-   * PROTECTED SURFACE and was made deliberately rather than as a tidy-up: the
-   * guarantee was never "a Launch button on every card", it was that launching
-   * is one predictable move away — and dragging or tapping a pack into Tonight
-   * and pressing the one big button is that move, on the one bar this file
-   * says must never change shape under a thumb.
-   *
-   * The expired-topical warning went with it and is not lost: `doLaunch` is
-   * still the single way out, and the launch bar asks the same question.
-   */  return el;
 }
 
 /**
