@@ -785,33 +785,18 @@ export const TABS = [
   },
   {
     /*
-     * GIGS — what is on, and what has been. ONE TAB, because it is one object.
+     * THE DIARY, ITS OWN TAB — left of Past gigs, because the evening runs
+     * left to right and what is BOOKED comes before what has been RUN.
      *
-     * A booked night and a night you have run are the same thing at two points
-     * in its life: booked, run, then billed. The console already carries nine
-     * tabs whose bar scrolls sideways on a phone, and a tenth for "the same
-     * nights, earlier" would be splitting by TENSE rather than by question —
-     * which is the opposite of the rule that shaped the owner page.
-     *
-     * **INVOICES DELIBERATELY DID NOT JOIN THEM**, and that was asked. It is a
-     * different question ("who owes me?") asked at a different moment, it has
-     * a whole tab's worth behind it — your details, the bank, VAT, statuses,
-     * the PDF — and its badge counts what you are still owed, which is a
-     * number worth seeing without opening anything. A second badge on one tab
-     * costs the first one its meaning. On a Monday "send the invoices" is a
-     * destination you want to land on rather than scroll to.
-     *
-     * What keeps the chain intact instead is a one-tap **Invoice this** on
-     * every past night, filled in from the night itself — so booked → run →
-     * billed is still one press at each step without one enormous tab.
-     *
-     * The tab needs PAST_GIGS; the diary half asks for CALENDAR separately, so
-     * an account holding one and not the other gets the half it holds rather
-     * than a tab that half works.
-     */
-    /*
-     * THE DIARY, ITS OWN TAB — left of Gigs, because the evening runs left to
-     * right and what is BOOKED comes before what has been RUN.
+     * **INVOICES STAYS ITS OWN TAB TOO, DELIBERATELY.** It is a different
+     * question ("who owes me?") asked at a different moment, it has a whole
+     * tab's worth behind it — your details, the bank, VAT, statuses, the PDF
+     * — and its badge counts what you are still owed, which is a number
+     * worth seeing without opening anything. Past gigs' own bench does NOT
+     * carry an "Invoice this" shortcut any more — it did once, and it was a
+     * second entry point into the identical form Invoices already owns.
+     * Bill from there; Past gigs is where you find the night, not where you
+     * bill it.
      */
     id: 'diary',
     doors: ['account'],
@@ -1381,7 +1366,12 @@ function nightBenchPanel() {
     ? esc(`${when.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}${night.venue ? ` · ${night.venue}` : ''}`)
     : 'Nothing yet'}</span>
           </div>
-          ${night ? '<button class="lb-tile-off bench-off" type="button" aria-label="Take it off the bench">&times;</button>' : ''}
+          <!-- reward-off, not lb-tile-off — that one is position: absolute,
+               meant to sit inside an lb-tile chip it is positioned relative
+               to. Bare in this grid head it had no such ancestor and escaped
+               to the corner of the whole page. lb-right is the head's own
+               third column, same as the launch bar's fold. -->
+          ${night ? '<div class="lb-right"><button class="reward-off bench-off" type="button" aria-label="Take it off the bench">&times;</button></div>' : ''}
         </div>
         ${night ? '<div class="bench-detail"></div>' : `
           <div class="bench-body">

@@ -6961,10 +6961,18 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .gig-head.is-selected { border-color: var(--hot); background: rgba(255, 255, 255, 0.06); }
 
 /* ---- one night's detail, on the POST GIG BENCH — `fillNightDetail()` in
-   console-gigs.js, called from `nightBenchPanel()`. Winner lines, the
-   invoice and report buttons, the photo grid and the gallery toggle, all
-   laid out in the bench's own body rather than a second panel of their own. */
-.bench-detail { display: grid; gap: 8px; margin-top: 10px; }
+   console-gigs.js, called from `nightBenchPanel()`. Winner lines, the report
+   button, the photo grid and the gallery toggle, all laid out in the bench's
+   own body rather than a second panel of their own.
+
+   CAPPED, with its own scroll — the door's own area above the tab column
+   sizes to its content and does not itself scroll (see `.doorhead`), which
+   was never a problem while the bench held a small tile. A night with
+   thirty photos made it tall enough to push the tab column below the fixed
+   frame's bottom edge with nothing left to scroll it back into view — the
+   whole page reads as stuck. The photo grid is the one part of this with no
+   natural limit, so it is this container that needs the ceiling. */
+.bench-detail { display: grid; gap: 8px; margin-top: 10px; max-height: 40vh; overflow-y: auto; }
 /* ---- the diary
    Coming up sits ABOVE the past nights: one is a thing you can still act on,
    the other is a record. A row is a date, a place and a way to say you are not
@@ -7061,7 +7069,6 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
-.gig-bill { margin-top: 10px; }
 /* PUTTING A NIGHT ON THE PUBLIC GALLERY — under the photographs it would
    publish, separated by a rule, because it is a different kind of act from
    everything above it: the rest of this panel is about your own record of the

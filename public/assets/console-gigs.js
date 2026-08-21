@@ -1,12 +1,10 @@
 /** GIGS — the evidence: headcounts, what the room asked for, and nights run. */
 
 import { binIcon, esc, node } from './client.js';
-import { invoiceApi, openInvoiceForm } from './console-invoices.js';
-import { book, library, me, nightBench, setBook, setGigsSeen, setNightDrag } from './console-state.js';
+import { library, me, nightBench, setGigsSeen, setNightDrag } from './console-state.js';
 import { dragging, putNightOnBench } from './console-tonight.js';
-import { can, hostKey, keyed, load } from './console.js';
+import { hostKey, keyed } from './console.js';
 import { tonight } from './diary.js';
-import { FEATURES } from './plans.js';
 
 /*
  * WHICH VENUE CARD IS OPEN — module-level, same as `openVenue` in
@@ -577,12 +575,16 @@ function gameLabel(g) {
 
 /**
  * ONE NIGHT'S FULL DETAIL, INTO A CONTAINER SOMEBODY ELSE OWNS — who won,
- * invoice it, the report for the venue, its photos and the gallery toggle.
- * Exactly what used to open inline under a row's own head, and then briefly
- * lived in a bay of its own inside this tab; it lives on the POST GIG
- * BENCH now (`nightBenchPanel()` in console.js), which already had its own
- * heading and its own "take it off" control, so this only ever fills the
- * body — one place a night's detail is built, wherever it is shown.
+ * the report for the venue, its photos and the gallery toggle. Exactly what
+ * used to open inline under a row's own head, and then briefly lived in a
+ * bay of its own inside this tab; it lives on the POST GIG BENCH now
+ * (`nightBenchPanel()` in console.js), which already had its own heading and
+ * its own "take it off" control, so this only ever fills the body — one
+ * place a night's detail is built, wherever it is shown.
+ *
+ * DELIBERATELY NO INVOICE BUTTON — Invoices is its own tab, one door along,
+ * and a second entry point into the same form is exactly the duplication
+ * this whole rework exists to remove.
  */
 export async function fillNightDetail(body, night) {
   // Who won, which is on the archive and never on a photo.
@@ -592,50 +594,13 @@ export async function fillNightDetail(body, night) {
   }
 
   /*
-   * BILL FOR THIS ONE, from the night itself.
-   *
-   * This is what lets Invoices stay a tab of its own rather than being
-   * swallowed into this one. "Invoice this" already existed on the running
-   * panel — but only in the minutes after a game ends, so a night from a
-   * fortnight ago could only be billed by typing the venue and the date back
-   * in from memory. That is precisely the blank page this app's own rule
-   * says is where the time goes.
-   *
-   * The venue is matched to a record so the address and the usual fee come
-   * with it; an unmatched name still fills the night's own details in, which
-   * is the free-text venue keeping its promise. Only where they hold the
-   * feature — a quizmaster without invoicing gets no button rather than one
-   * that 403s.
+   * NO "INVOICE THIS" HERE — Invoices is its own tab, one door along, and a
+   * second entry point into the same form was the exact duplication this
+   * whole rework exists to remove: the bench had one, the night's own row
+   * had one, and both opened the identical form. One place a night gets
+   * billed from is enough, and it is where the whole invoice book already
+   * lives.
    */
-  if (can(FEATURES.INVOICES)) {
-    const bill = node('<button class="minor gig-bill">Invoice this</button>');
-    bill.addEventListener('click', async () => {
-      bill.disabled = true;
-      try {
-        setBook(await invoiceApi('/api/invoices'));
-      } catch (err) {
-        bill.disabled = false;
-        alert('Could not open the invoices: ' + err.message);
-        return;
-      }
-      const match = book.customers.find(
-        (c) => (c.name || '').toLowerCase() === String(night.venue || '').toLowerCase());
-      const what = night.games.some((g) => g.kind === 'bingo') && night.games.every((g) => g.kind === 'bingo')
-        ? 'Music bingo night' : 'Music quiz night';
-      openInvoiceForm({
-        customerId: match ? match.id : '',
-        // `nightId` has been a field on every invoice since invoicing was
-        // written and was never once set. It is the stable handle back to
-        // the night — what tells the two apart for "have I billed this" is
-        // the venue and the date together, but the id is what anything
-        // later will want and it costs nothing to record now.
-        event: { title: what, venue: night.venue || '', date: night.night, nightId: night.night },
-        description: what,
-      }, () => load());
-      bill.disabled = false;
-    });
-    body.appendChild(bill);
-  }
 
   /*
    * THE REPORT FOR THE VENUE — headcount, winner, podium, photos, offer

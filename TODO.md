@@ -472,3 +472,10 @@ Who may see a night’s photos, what may be printed, and the rude-photo problem 
 
 Doors, benches, the popover editor, and the seams left — **[`todo/console.md`](todo/console.md)**.
 
+## Visual direction — a quill and ink vibe
+
+Asked for on 21 August 2026, for the redesign pass: the host wants the app to
+feel like quill and ink — a direction to weigh against the current dark-neon
+theme (`schemes.js`, the gradient/glow language in `style.css`) rather than a
+spec yet. Render options before building anything, per the house rule.
+
