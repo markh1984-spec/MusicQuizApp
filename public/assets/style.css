@@ -1887,8 +1887,8 @@ body.console::after { display: none; }
  */
 body.console, body.console * {
   cursor:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Cg fill='none' stroke='%23f7f7fb' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M27 3 C19 5 10 12 4 26' fill='%23ffd23f' stroke='%23ffd23f'/%3E%3Cpath d='M27 3 C19 5 10 12 4 26'/%3E%3Cpath d='M27 3 C22 6 16 8 11 13' stroke='%23ff8a3d'/%3E%3Cpath d='M4 26 L2 28' stroke='%23a7a7c2'/%3E%3C/g%3E%3C/svg%3E")
-    2 28, pointer !important;
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg stroke='%234a2c0e' stroke-width='1.15' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M2.8 29.6 Q6.2 24.6 9.7 19.8' fill='none' stroke='%234a2c0e' stroke-width='3.4'/%3E%3Cpath d='M2.8 29.6 Q6.2 24.6 9.7 19.8' fill='none' stroke='%23f2e6c8' stroke-width='1.7'/%3E%3Cpath d='M9.6 19.6 Q7.8 15.6 10.3 11.9 Q13.4 7.4 18.1 4.6 Q23 1.8 28.4 2.8 Q25.4 5.9 24 9.5 L21 10.3 Q19.8 13.7 17.1 15.4 L14.6 15.6 Q13 18 11.7 20.7 Q10.3 21 9.6 19.6 Z' fill='%23ffd23f'/%3E%3Cpath d='M28.4 2.8 Q25.4 5.9 24 9.5 L21 10.3 Q19.8 13.7 17.1 15.4' fill='none' stroke='%23ff8a3d' stroke-width='1.5'/%3E%3Cpath d='M4 28.2 C 9 21.8, 15 14, 27.2 3.8' fill='none' stroke='%23fff7e0' stroke-width='1.2'/%3E%3C/g%3E%3C/svg%3E")
+    3 30, pointer !important;
 }
 /*
  * `!important` because dozens of scattered `cursor: pointer` rules on
@@ -1901,12 +1901,12 @@ body.console, body.console * {
  */
 body.console [draggable="true"],
 body.console .drag-grip {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg stroke='%233a2a16' stroke-width='1.15' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M9.4 21.4 L23.6 21.4 L26.2 25.8 Q22.97 27.7 19.73 25.5 Q16.5 27.7 13.27 25.5 Q10.03 27.7 6.8 25.8 Z' fill='%23e6d5ad'/%3E%3Cpath d='M8 23.3 L25 23.3' stroke='%23b8923f' stroke-width='1.15'/%3E%3Cg fill='%23f6ecd6'%3E%3Crect x='9.4' y='8.6' width='4.7' height='13' rx='2.35'/%3E%3Crect x='14.5' y='5.8' width='4.8' height='15.8' rx='2.4'/%3E%3Crect x='19.7' y='7.8' width='4.6' height='13.8' rx='2.3'/%3E%3Cpath d='M9.4 14 L24.3 14 L24.3 20 Q24.3 22.2 22.1 22.2 L11.6 22.2 Q9.4 22.2 9.4 20 Z'/%3E%3Cpath d='M10.6 15.4 Q4.2 15.8 3.4 19 Q2.9 21.6 6.2 21.9 L10.6 21.7 Z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") 16 15, grab !important;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg stroke='%233a2a16' stroke-width='1.2' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M8.6 21.6 L25 21.6 L27.6 26.4 Q24 28.3 20.4 26.1 Q16.8 28.3 13.2 26.1 Q9.6 28.3 6 26.4 Z' fill='%23e6d5ad'/%3E%3Cpath d='M7.2 23.5 L26.4 23.5' stroke='%23b8923f' stroke-width='1.15'/%3E%3Cg fill='%23f6ecd6'%3E%3Crect x='9.3' y='8.2' width='4.8' height='13' rx='2.4'/%3E%3Crect x='14.4' y='5.6' width='4.9' height='15.6' rx='2.45'/%3E%3Crect x='19.6' y='7.6' width='4.7' height='13.6' rx='2.35'/%3E%3Cpath d='M9.3 13.6 L24.3 13.6 L24.3 19.4 Q24.3 21.8 21.9 21.8 L11.7 21.8 Q9.3 21.8 9.3 19.4 Z'/%3E%3Cpath d='M10.4 15.2 Q4.6 15.4 3.5 18.4 Q2.8 21 5.9 21.6 Q8.4 22 10.4 21.2 Z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") 16 15, grab !important;
 }
 body.console [draggable="true"]:active,
 body.console .drag-grip:active,
 body.console .dragging {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg stroke='%233a2a16' stroke-width='1.15' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M9.4 21 L23.6 21 L26.2 25.4 Q22.97 27.3 19.73 25.1 Q16.5 27.3 13.27 25.1 Q10.03 27.3 6.8 25.4 Z' fill='%23e6d5ad'/%3E%3Cpath d='M8 22.9 L25 22.9' stroke='%23b8923f' stroke-width='1.15'/%3E%3Cg fill='%23f6ecd6'%3E%3Crect x='9.6' y='11.9' width='4.9' height='9.6' rx='2.45'/%3E%3Crect x='14.9' y='10.8' width='4.9' height='10.7' rx='2.45'/%3E%3Crect x='20.2' y='12.3' width='4.3' height='9.2' rx='2.15'/%3E%3C/g%3E%3Cpath d='M7.2 16.9 Q6.2 20.6 9.8 21.3 L15.8 20.9 Q18.1 20.5 17.9 18.3 Q17.7 16.2 15.2 16.2 L9.9 16.3 Q7.6 16.3 7.2 16.9 Z' fill='%23eddfbc'/%3E%3C/g%3E%3C/svg%3E") 16 15, grabbing !important;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg stroke='%233a2a16' stroke-width='1.2' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M8.8 21.2 L24.6 21.2 L27.2 26 Q23.7 27.9 20.2 25.7 Q16.7 27.9 13.2 25.7 Q9.7 27.9 6.2 26 Z' fill='%23e6d5ad'/%3E%3Cpath d='M7.4 23.1 L26 23.1' stroke='%23b8923f' stroke-width='1.15'/%3E%3Cg fill='%23f6ecd6'%3E%3Crect x='9.5' y='11.6' width='5' height='9.8' rx='2.5'/%3E%3Crect x='14.9' y='10.6' width='5' height='10.8' rx='2.5'/%3E%3Crect x='20.3' y='12.1' width='4.4' height='9.3' rx='2.2'/%3E%3C/g%3E%3Cpath d='M7.1 16.8 Q6.1 20.6 9.9 21.3 L16.2 20.9 Q18.5 20.5 18.3 18.2 Q18.1 16.1 15.5 16.1 L9.8 16.2 Q7.5 16.2 7.1 16.8 Z' fill='%23eddfbc'/%3E%3C/g%3E%3C/svg%3E") 16 15, grabbing !important;
 }
 body.console button:disabled,
 body.console [disabled] { cursor: default !important; }
@@ -1962,6 +1962,9 @@ body.console .panel::after {
     /* a catchlight on each turned knob, where a real one would take the light */
     radial-gradient(circle 4px at 4.5px 34%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 70%),
     radial-gradient(circle 4px at calc(100% - 4.5px) 34%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 70%),
+    /* a dark rim low on each knob, so the ball reads as a sphere */
+    radial-gradient(circle 6px at 5.5px 50%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.42) 92%),
+    radial-gradient(circle 6px at calc(100% - 5.5px) 50%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.42) 92%),
     /*
      * THE LONG ROLL RECEDES AND THE ENDS KEEP THE COLOUR, which is both what
      * was asked for — *"little scroll endings… within the colours defined by
@@ -1991,6 +1994,11 @@ body.console .panel::after { bottom: -4px; }
  * between them — the reference silhouette — while the fill underneath stays
  * the account gradient, which an SVG data URI could never read.
  *
+ * THE ROLL STOPS SHORT OF EACH KNOB, leaving a GROOVE. Three finial shapes
+ * were rendered side by side — plain, groove, knob-plus-collar-ring — and
+ * the groove won: it is the one turned-on-a-lathe detail that still reads
+ * at 11px tall, where the collar ring is just a stutter.
+ *
  * Behind `@supports` because without mask compositing the element would paint
  * as a full RECTANGLE, which is far worse than the pill it replaces — the same
  * guard, and the same reasoning, as the gradient hairline on the photo card.
@@ -2004,7 +2012,7 @@ body.console .panel::after { bottom: -4px; }
       radial-gradient(circle 5.5px at 5.5px 50%, #000 99%, transparent 100%),
       radial-gradient(circle 5.5px at calc(100% - 5.5px) 50%, #000 99%, transparent 100%),
       linear-gradient(#000, #000);
-    mask-size: 100% 100%, 100% 100%, calc(100% - 9px) 7px;
+    mask-size: 100% 100%, 100% 100%, calc(100% - 26px) 7px;
     mask-position: 0 0, 0 0, center;
     mask-repeat: no-repeat;
     mask-composite: add;
