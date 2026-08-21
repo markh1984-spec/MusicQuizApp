@@ -79,7 +79,7 @@ export function mergeGigs(archived = [], photoNights = []) {
     // No photo COUNT here on purpose: knowing how many there are means listing
     // the folder, which is a request per night, and the page only ever needs
     // "is there anything to open". The count arrives with the pictures.
-    if (!nights.has(key)) nights.set(key, { night: key, games: [], hasPhotos: false, venue: '', venueId: '' });
+    if (!nights.has(key)) nights.set(key, { night: key, games: [], hasPhotos: false, venue: '', venueId: '', venueMixed: false });
     return nights.get(key);
   };
 
@@ -90,23 +90,38 @@ export function mergeGigs(archived = [], photoNights = []) {
     /*
      * WHERE IT WAS, on the night rather than on each game.
      *
-     * A quiz and the bingo after it are one evening at one venue, so it
-     * belongs to the night — the same reason the tab badge counts nights and
-     * not games. `listArchive` has carried it since a night learned where it
-     * was, and this function simply never passed it through, which is why the
-     * page that exists to show somebody your work never said where any of it
-     * happened.
+     * **STILL KEYED ON THE DATE ALONE, DELIBERATELY** — a photo folder is
+     * physically one-per-date on disk with no venue in its name at all, and
+     * the invoicing "unbilled" match, the PDF export route and the Post-gig
+     * bench's drag-and-drop all address a night by `night.night`, the raw
+     * date string, as though it were unique. Splitting this INTO two rows
+     * by venue was tried and reverted: it would have made every one of
+     * those into an ambiguous lookup on exactly the rare day it was meant
+     * to fix — a worse bug than the one being fixed.
      *
-     * First one wins, and only if it is set: a night filed before venues
-     * existed has none, and the honest answer there is nothing rather than a
-     * guess. If two games somehow disagree the first is as good as either —
-     * a quizmaster who moved venue mid-evening has bigger problems.
+     * So instead: an honest `venueMixed` flag. Two games at the SAME venue
+     * (or both with none set — the ordinary case, a quiz then the bingo
+     * after it) still merge and still claim that venue. Two games at
+     * genuinely DIFFERENT venues on the same day still share one row (the
+     * addressing above needs that), but the row stops CLAIMING either
+     * venue — `venueMixed: true`, `venue: ''` — rather than silently
+     * misattributing everything to whichever was typed first.
+     * `venueKeyOf` is the same canonicalisation `headcounts.js` and the
+     * league already use, so this cannot disagree with either about what
+     * counts as "the same venue".
      */
-    if (!entry.venue && record.venue) entry.venue = record.venue;
-    // The id the same way, and for the same reason: first one wins and only if
-    // it is set, so an evening whose second game was launched without a venue
-    // keeps the one the first game had.
-    if (!entry.venueId && record.venueId) entry.venueId = record.venueId;
+    if (!entry.venueMixed) {
+      const seen = entry.venue || entry.venueId ? venueKeyOf(entry) : '';
+      const now = venueKeyOf(record);
+      if (!seen) {
+        if (record.venue) entry.venue = record.venue;
+        if (record.venueId) entry.venueId = record.venueId;
+      } else if (now && now !== seen) {
+        entry.venueMixed = true;
+        entry.venue = '';
+        entry.venueId = '';
+      }
+    }
     entry.games.push({
       id: record.id,
       kind: record.kind || 'quiz',

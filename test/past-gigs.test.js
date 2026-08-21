@@ -75,6 +75,60 @@ test('a quiz and the bingo after it are one night with two games', () => {
   assert.deepEqual(nights[0].games.map((g) => g.title), ['The Eighties', 'Disco Funk']);
 });
 
+test('two DIFFERENT venues on the same calendar day stay ONE row, but stop claiming either venue', () => {
+  // Found live: this used to silently take the FIRST game's venue for the
+  // whole day, misattributing the second venue's headcount, winner and
+  // prizes to the first. Splitting into two rows was tried and reverted —
+  // photos are one folder per DATE with no venue in the name at all, and
+  // the PDF export / unbilled-invoice match / drag-and-drop bench all
+  // address a night by its date string alone, so two rows sharing one date
+  // would have made every one of those ambiguous. An honest `venueMixed`
+  // flag fixes the misattribution without touching that addressing.
+  const at = Date.parse('2026-08-11T13:00:00Z');
+  const nights = mergeGigs([
+    { id: 'a', kind: 'quiz', title: 'Lunchtime Quiz', archivedAt: at, venue: 'The Crown', playerCount: 12 },
+    { id: 'b', kind: 'quiz', title: 'Evening Quiz', archivedAt: at + 8 * 60 * 60 * 1000, venue: 'The Dog and Duck', playerCount: 40 },
+  ], []);
+  assert.equal(nights.length, 1);
+  assert.equal(nights[0].games.length, 2, 'both games are still there — nothing is dropped');
+  assert.equal(nights[0].venue, '', 'must not silently claim either venue');
+  assert.equal(nights[0].venueMixed, true);
+});
+
+test('the SAME venue, typed identically twice, still merges and claims it cleanly', () => {
+  const at = Date.parse('2026-08-11T21:00:00Z');
+  const nights = mergeGigs([
+    { id: 'a', kind: 'quiz', title: 'The Eighties', archivedAt: at, venue: 'The Crown', playerCount: 31 },
+    { id: 'b', kind: 'bingo', title: 'Disco Funk', archivedAt: at + 40 * 60 * 1000, venue: 'The Crown', playerCount: 28 },
+  ], []);
+  assert.equal(nights.length, 1);
+  assert.equal(nights[0].games.length, 2);
+  assert.equal(nights[0].venue, 'The Crown');
+  assert.equal(nights[0].venueMixed, false);
+});
+
+test('a linked venue id agrees with itself even when the free-text name is typo\'d differently', () => {
+  const at = Date.parse('2026-08-11T21:00:00Z');
+  const nights = mergeGigs([
+    { id: 'a', kind: 'quiz', title: 'The Eighties', archivedAt: at, venue: 'The Crown', venueId: 'v1', playerCount: 31 },
+    { id: 'b', kind: 'bingo', title: 'Disco Funk', archivedAt: at + 40 * 60 * 1000, venue: 'The Crown Pub', venueId: 'v1', playerCount: 28 },
+  ], []);
+  assert.equal(nights.length, 1);
+  assert.equal(nights[0].venueMixed, false, 'the shared id says this is one venue, whatever the free text says');
+});
+
+test('a THIRD game at a third venue the same day is caught too, not just a two-way mismatch', () => {
+  const at = Date.parse('2026-08-11T12:00:00Z');
+  const nights = mergeGigs([
+    { id: 'a', archivedAt: at, venue: 'The Crown', playerCount: 10 },
+    { id: 'b', archivedAt: at + 60 * 60 * 1000, venue: 'The Crown', playerCount: 10 },
+    { id: 'c', archivedAt: at + 2 * 60 * 60 * 1000, venue: 'The Anchor', playerCount: 10 },
+  ], []);
+  assert.equal(nights.length, 1);
+  assert.equal(nights[0].venueMixed, true);
+  assert.equal(nights[0].games.length, 3);
+});
+
 test('a night with photos and no saved results still appears', () => {
   // The archive only started being kept permanently recently, and somebody can
   // finish a night by launching something else. Photographs are evidence the
