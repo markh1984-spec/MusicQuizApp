@@ -53,7 +53,26 @@ to ask for it.
 **AND THE PACK CARD SAYS WHAT TONIGHT IS PLAYING FOR, INCLUDING WHEN IT IS
 NOTHING.** `paintPrizes()` inside `wireVenue()` in `console.js`: pick a venue
 and the line under it reads *"Playing for: **1st** A free drink at the bar ·
-**2nd** …"*, read-only, at the only moment it can still be changed.
+**2nd** …"* — read-only there, which used to mean launch was the only moment
+it could be changed at all.
+
+**IT NO LONGER IS.** Asked for on 20 August 2026, after a real gig: a landlord
+changing what's behind the bar mid-night, or a host who typed the wrong thing
+at launch, used to have no way back short of stopping the game and relaunching
+it — which throws every phone back into a lobby to fix a sentence. **Prizes**,
+a button on the control view's action bar for either game, opens a popover onto
+`state.rewards` directly — `setRewards()` on `Engine`/`BingoGame`, one shared
+`session.js` action for both. Safe to just overwrite: `issueVouchers()` and
+`drawLuckyDip()` (quiz) and `issueVoucher()` (bingo) all call `rewardList()`
+fresh at the moment a prize is actually won, never a copy taken earlier, so an
+edit only ever reaches the NEXT prize handed out — one already on somebody's
+phone stays exactly as it was, the same rule every voucher in this app follows.
+
+**Deliberately NOT folded into the Setup panel**, which only draws at the
+lobby and at the end precisely so it never sits across the control view
+mid-round — see the comment on `prizeLine()` in `host.js`. A popover keeps
+that promise: present at every phase via one more button, taking no space at
+all until it is pressed.
 
 **It exists because the first real night ended with no voucher at all and
 nothing anywhere said why.** The server reading the prizes off the venue record
