@@ -3588,6 +3588,9 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
    hit eight times. `.lb-set` already had it; this one did not, and the lobby
    game picker put the longest option labels in the app on both. */
 .pack-shape select { flex: 1 1 auto; min-width: 0; max-width: 100%; }
+/* The seconds field is a number, not an option list — no longest-option trap
+   to guard against, so it gets a fixed width instead of stretching the row. */
+.pack-shape .seconds-pick { width: 60px; flex: 0 0 auto; }
 
 /* What the last job said, kept where the panel rebuild cannot take it. */
 .panel.done-banner {

@@ -122,6 +122,7 @@ function nightWideOpts(state) {
     venueLogo: state.venueLogo,
     comeBack: state.comeBack,
     look: state.look,
+    questionSeconds: state.questionSeconds,
     /*
      * NOT `lobbyGame` — deliberately left out. "THE DEFAULT FOLLOWS THE
      * GAME: Maze Mouth before a quiz, Rally before a bingo" is a rule with
@@ -497,7 +498,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, look = '', lobbyGame = '', lobbySound = true, league = false, online = false, teamPlay = false, venue = '', venueId = '', rewards = [], venueLogo = '', comeBack = null, askForRounds = false, roundIdeas = [], order = null } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, league = false, online = false, teamPlay = false, venue = '', venueId = '', rewards = [], venueLogo = '', comeBack = null, askForRounds = false, roundIdeas = [], order = null } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     /*
      * TONIGHT'S RUNNING ORDER, when one was built — rounds from more than one
@@ -558,6 +559,18 @@ export class Session {
     this.engine.state.look = LOOKS.some((l) => l.id === look)
       ? look
       : (LOOKS.some((l) => l.id === normalised.look) ? normalised.look : DEFAULT_LOOK);
+
+    /*
+     * HOW LONG EACH QUESTION RUNS TONIGHT, if the host chose to change it.
+     *
+     * Same reasoning as the look, in the same place: written into the STATE
+     * rather than left on the pack, so a restart brings back the number the
+     * room already played half the night on rather than whatever the file
+     * says. 0 means "as the pack says" — the same "empty means as it was"
+     * rule Look and the card shape already follow — and `questionSeconds()`
+     * in engine.js is where a round's OWN override still wins over this.
+     */
+    this.engine.state.questionSeconds = Number(questionSeconds) > 0 ? Number(questionSeconds) : 0;
 
     /*
      * WHICH LOBBY GAME TONIGHT.

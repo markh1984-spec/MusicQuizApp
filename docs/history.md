@@ -10,6 +10,21 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 21 August 2026, same day, next deploy again — the pack editor
+loses "Look", Tonight gains a real timer:** "Look" is gone from both the
+quiz and bingo pack editors — it only ever set a default Tonight's own
+picker already overrode at every launch, the same redundancy prizes never
+had. "Seconds per question" is different: it had no launch-time override
+anywhere, so a genuine one was built — a control on Tonight's settings
+(quiz packs only), threaded through `session.launch()` into
+`engine.state.questionSeconds`, read by `engine.js questionSeconds()` behind
+a round's own override, which still wins. Verified against the real scoring
+clock rather than the code that sets it: launched with 35 and again with 47
+via the actual console UI, read the live question's `endsAt - startedAt`
+back off `/api/state?role=host` both times and got exact matches; an
+ordinary launch with nothing set still comes back 20000ms. See "THE PACK
+EDITOR LOST 'LOOK'..." in `docs/console.md`.
+
 **Live as of 21 August 2026, same day, next deploy — a tap places the pack
 on Workshop too:** clicking a pack card no longer opens it in place; it goes
 straight to the bench, the same way a Console tap has gone straight to

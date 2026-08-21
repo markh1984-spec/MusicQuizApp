@@ -41,12 +41,14 @@ let currentPack = null;
  * screen at the same time.
  *
  * **Empty means "as it was".** A blank look is the pack's own, a blank game is
- * the default for that game type, and `shape: null` leaves the pack's own card
- * shape alone — so a night launched without opening the settings at all takes
- * exactly the route it always did.
+ * the default for that game type, `shape: null` leaves the pack's own card
+ * shape alone, and `questionSeconds: 0` leaves the pack's own pace alone —
+ * so a night launched without opening the settings at all takes exactly the
+ * route it always did.
  */
 export const night = {
   look: '',
+  questionSeconds: 0,
   lobbyGame: '',
   lobbySound: true,
   teamPlay: false,
@@ -1101,6 +1103,7 @@ export function launchBar() {
       if (segments) {
         await doLaunchOrder(segments, {
           look: night.look,
+          questionSeconds: night.questionSeconds,
           lobbyGame: night.lobbyGame,
           lobbySound: night.lobbySound,
           online: lbOnline,
@@ -1116,6 +1119,7 @@ export function launchBar() {
         shape: night.shape,
         prizes: night.prizes,
         look: night.look,
+        questionSeconds: night.questionSeconds,
         lobbyGame: night.lobbyGame,
         lobbySound: night.lobbySound,
         // ONE source for whether tonight is online — the switch in the head,
@@ -2541,6 +2545,10 @@ export function tonightSettingsPanel() {
         <label class="pack-shape">Look
           <select class="look-pick">${lookOptions(pack || {})}</select>
         </label>
+        ${bingo ? '' : `
+        <label class="pack-shape" title="Blank leaves each quiz at its own pace.">Seconds per question
+          <input type="number" class="seconds-pick" min="5" max="120" placeholder="20">
+        </label>`}
         <label class="pack-shape pack-shape-wide">While they wait
           <select class="game-pick">${lobbyGameOptions(bingo ? 'bingo' : 'quiz')}</select>
         </label>
@@ -2585,6 +2593,7 @@ export function tonightSettingsPanel() {
     if (box && value !== '' && value != null) box.value = value;
   };
   put('.look-pick', night.look);
+  put('.seconds-pick', night.questionSeconds || '');
   put('.game-pick', night.lobbyGame);
   put('.sound-pick', night.lobbySound ? 'on' : 'off');
   put('.play-pick', night.teamPlay ? 'teams' : 'solo');
@@ -2610,6 +2619,10 @@ export function tonightSettingsPanel() {
   prizePick?.addEventListener('change', () => { night.prizes = Number(prizePick.value) || 0; });
 
   el.querySelector('.look-pick')?.addEventListener('change', (ev) => { night.look = ev.target.value; });
+  el.querySelector('.seconds-pick')?.addEventListener('input', (ev) => {
+    const n = Math.max(5, Math.min(120, Number(ev.target.value) || 0));
+    night.questionSeconds = ev.target.value === '' ? 0 : n;
+  });
   el.querySelector('.game-pick')?.addEventListener('change', (ev) => { night.lobbyGame = ev.target.value; });
   el.querySelector('.sound-pick')?.addEventListener('change', (ev) => { night.lobbySound = ev.target.value !== 'off'; });
   el.querySelector('.play-pick')?.addEventListener('change', (ev) => { night.teamPlay = ev.target.value === 'teams'; });

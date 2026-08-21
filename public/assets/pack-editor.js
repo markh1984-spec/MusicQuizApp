@@ -18,7 +18,6 @@
  */
 
 import { esc, node, gripIcon, dragRow, moveWithin } from './client.js';
-import { LOOKS } from './looks.js';
 import { cueOffsetSays } from './cue.js';
 
 export const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -53,13 +52,19 @@ function isLive(ctx, ri, qi) {
   return Boolean(live && live.roundIndex === ri && live.questionIndex === qi);
 }
 
-export function lookOptions(current) {
-  return LOOKS
-    .map((l) => `<option value="${l.id}" ${(current || 'default') === l.id ? 'selected' : ''}>${esc(l.label)}</option>`)
-    .join('');
-}
-
 // ------------------------------------------------------------ bingo packs
+
+/*
+ * NO LOOK CONTROL IN EITHER HEADER, ANY MORE — asked for directly, on 21
+ * August 2026: the editor's copy only ever set a fallback default, and
+ * Tonight's own Look picker already fully overrides it at launch every time
+ * (`console-tonight.js`, `.look-pick` in `tonightSettingsPanel()`) — the same
+ * pattern prizes already use, and it never needed a second control in the
+ * pack editor either. Two controls for one field is how a night gets
+ * launched with the setting the other one was showing, which is the exact
+ * fault Tonight itself was built to close. The pack keeps whatever `look` it
+ * already has on disk; nothing here ever writes to it again.
+ */
 
 export function bingoHeader(ctx) {
   const quiz = ctx.quiz;
@@ -72,9 +77,6 @@ export function bingoHeader(ctx) {
           <select id="bSize" style="margin-left:6px">
             ${[3, 4, 5].map((n) => `<option value="${n}" ${quiz.cardSize === n ? 'selected' : ''}>${n}×${n}</option>`).join('')}
           </select>
-        </label>
-        <label class="muted" style="font-size:13px">Look
-          <select id="bLook" style="margin-left:6px">${lookOptions(quiz.look)}</select>
         </label>
         <span class="muted" style="font-size:13px">File: ${esc(quiz.id)}.json</span>
       </div>
@@ -89,7 +91,6 @@ export function bingoHeader(ctx) {
   el.querySelector('#bTitle').addEventListener('input', (e) => ctx.change(() => { ctx.quiz.title = e.target.value; }));
   el.querySelector('#bSubtitle').addEventListener('input', (e) => ctx.change(() => { ctx.quiz.subtitle = e.target.value; }));
   el.querySelector('#bSize').addEventListener('change', (e) => ctx.change(() => { ctx.quiz.cardSize = Number(e.target.value); ctx.render(); }));
-  el.querySelector('#bLook').addEventListener('change', (e) => ctx.change(() => { ctx.quiz.look = e.target.value; }));
   return el;
 }
 
@@ -159,9 +160,6 @@ export function quizHeader(ctx) {
         <label class="muted" style="font-size:13px">Seconds per question
           <input type="number" id="quizSeconds" min="5" max="120" value="${quiz.questionSeconds}" style="width:70px;margin-left:6px">
         </label>
-        <label class="muted" style="font-size:13px" title="How the night looks. You can override this when you launch it.">Look
-          <select id="quizLook" style="margin-left:6px">${lookOptions(quiz.look)}</select>
-        </label>
         <span class="muted" style="font-size:13px">File: ${esc(quiz.id)}.json</span>
       </div>
       <div class="qcard" style="border-radius:0 0 14px 14px">
@@ -173,7 +171,6 @@ export function quizHeader(ctx) {
   el.querySelector('#quizTitle').addEventListener('input', (e) => ctx.change(() => { ctx.quiz.title = e.target.value; }));
   el.querySelector('#quizSubtitle').addEventListener('input', (e) => ctx.change(() => { ctx.quiz.subtitle = e.target.value; }));
   el.querySelector('#quizSeconds').addEventListener('input', (e) => ctx.change(() => { ctx.quiz.questionSeconds = Number(e.target.value) || 20; }));
-  el.querySelector('#quizLook').addEventListener('change', (e) => ctx.change(() => { ctx.quiz.look = e.target.value; }));
   return el;
 }
 

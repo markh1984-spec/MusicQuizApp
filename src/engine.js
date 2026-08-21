@@ -315,9 +315,19 @@ export class Engine {
     return this.questions(ri)[qi] || null;
   }
 
+  /*
+   * A ROUND'S OWN OVERRIDE STILL WINS OVER THE NIGHT'S. `docs/engine.md`
+   * already warns against giving the intro round a longer clock to "absorb
+   * the dead air" — scoring is the base plus seconds-remaining times ten, so
+   * a longer round is a round worth MORE points, silently. That is exactly
+   * why a round-level `questionSeconds` exists at all: a pack author's
+   * deliberate choice for THAT round. `state.questionSeconds` — the host's
+   * choice for tonight, set once at launch — only replaces the PACK'S OWN
+   * default, never a round that was authored with its own number.
+   */
   questionSeconds(ri = this.state.roundIndex) {
     const r = this.round(ri);
-    return (r && r.questionSeconds) || this.quiz.questionSeconds || DEFAULT_QUESTION_SECONDS;
+    return (r && r.questionSeconds) || this.state.questionSeconds || this.quiz.questionSeconds || DEFAULT_QUESTION_SECONDS;
   }
 
   answerKey(ri = this.state.roundIndex, qi = this.state.questionIndex) {

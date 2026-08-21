@@ -883,6 +883,61 @@ afterwards rather than leaving the test server's state altered.
 
 ---
 
+## THE PACK EDITOR LOST "LOOK", AND TONIGHT GAINED A TIMER
+
+`console-tonight.js`'s `tonightSettingsPanel()`, `pack-editor.js`'s
+`quizHeader()`/`bingoHeader()`, `session.js`'s `launch()`, `engine.js`'s
+`questionSeconds()`. Two small changes asked for in the same breath, on 21
+August 2026, while looking at the editor's own header bar: *"these settings
+(as well as prizes etc.) are exactly what should appear on the bench instead
+of inside the packs."*
+
+**"Look" WAS ALREADY REDUNDANT — it just had not been noticed.** The pack
+kept a default and Tonight already overrode it at every launch, exactly the
+way prizes work: the editor's copy only ever set a fallback nobody needed to
+set, because Tonight's own picker resolves it every time regardless. Two
+controls for one field is the exact fault Tonight itself exists to close —
+*"Two controls for one field is how a night gets launched with the setting
+the other one was showing."* Deleted from both headers rather than left
+disabled; the now-unused `lookOptions()` in `pack-editor.js` went with it
+(a second, separate function of the same name still lives in
+`console-packs.js` for Tonight's own picker — the two were never the same
+function, just the same idea, twice).
+
+**"Seconds per question" is a different animal, and was NOT already
+redundant — a real feature had to be built.** Unlike Look, it had no
+launch-time override anywhere: it is read live by the scoring clock
+(`engine.js questionSeconds()`), and `docs/engine.md` already carries a
+standing warning against casually changing it — *"scoring is the base plus
+seconds-remaining times ten, so a longer round is a round worth MORE
+points."* That warning is about giving ONE round a longer clock to paper
+over a different problem (the intro round's dead air); it says nothing
+against a host deliberately choosing the pace for a whole night, which is
+what was actually asked for and built.
+
+**A ROUND'S OWN OVERRIDE STILL WINS OVER THE NIGHT'S.** `questionSeconds(ri)`
+checks the round first, then `state.questionSeconds` (the host's choice,
+written into the state at launch exactly like Look — a SIGKILL must bring
+back the number the room was already playing on, not whatever the file
+says), then the pack's own default, then 20. A pack author's deliberate
+per-round pace is never silently overruled by a blanket night setting; only
+the pack's own baseline is replaced.
+
+**QUIZ ONLY, and the control is absent rather than disabled for bingo** —
+bingo calls tracks, it has no timed question to set a pace on. Carried
+across a running order's own parts by `nightWideOpts()`, same as Look, so a
+bingo interlude does not lose the number when the night returns to a quiz.
+
+**VERIFIED AGAINST THE REAL SCORING CLOCK, not just the code that sets it**:
+launched with `questionSeconds: 35` via a direct API call and again with `47`
+through the real console UI and a real Launch press, then read
+`/api/state?role=host` after advancing to a live question both times —
+`endsAt - startedAt` came back exactly 35000ms and 47000ms. An ordinary
+launch with nothing set was checked the same way and still comes back 20000ms,
+the pack's own default, untouched.
+
+---
+
 ## A PACK WEARS ITS OWN SUBJECT
 
 `public/assets/pack-look.js`, `.pack-card.tinted` / `.lb-tile.tinted` in

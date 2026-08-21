@@ -5433,6 +5433,14 @@ async function handleWrite(req, res, url, route) {
         // carries a default, and "it is the fourteenth of February" is a fact
         // about this evening rather than about the pack.
         const look = String(body.look || '');
+        // How long each question runs tonight, if the host chose to change
+        // it — the pack editor no longer offers this at all (Tonight is the
+        // only place it is set, exactly like Look). 0 means "as the pack
+        // says". Clamped to the same 5-120 range the editor's own field used
+        // to enforce, so a stray value from a curl call cannot hand the room
+        // a one-second question or a five-minute one.
+        const questionSeconds = body.questionSeconds
+          ? Math.max(5, Math.min(120, Number(body.questionSeconds) || 0)) : 0;
         /*
          * WHICH LOBBY GAME, and the TIER IS CHECKED HERE because this is where
          * the account is known. A console cannot be the gate — it is the thing
@@ -5557,7 +5565,7 @@ async function handleWrite(req, res, url, route) {
           ? pickIdeas((fullLibrary(config, room.id, listOwn(room.paths)).quizzes || [])
             .map((q) => q.title))
           : [];
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, lobbyGame, lobbySound, league, online, teamPlay, venue, venueId, rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas, order: wantedOrder });
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, questionSeconds, lobbyGame, lobbySound, league, online, teamPlay, venue, venueId, rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas, order: wantedOrder });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();
@@ -5628,6 +5636,11 @@ async function handleWrite(req, res, url, route) {
         // quiz, Rally before bingo — exactly like an ordinary launch.
         const firstKind = segments[0] && segments[0].kind === 'bingo' ? 'bingo' : 'quiz';
         const look = String(body.look || '');
+        // Same clamp as an ordinary launch — one number for the whole night,
+        // applied to every quiz part; see nightWideOpts() for how it carries
+        // across a bingo interlude untouched.
+        const questionSeconds = body.questionSeconds
+          ? Math.max(5, Math.min(120, Number(body.questionSeconds) || 0)) : 0;
         const lobbyGame = lobbyGameFor(
           firstKind,
           String(body.lobbyGame || ''),
@@ -5660,7 +5673,7 @@ async function handleWrite(req, res, url, route) {
             .map((q) => q.title))
           : [];
         const started = session.launchRunningOrder(segments, {
-          look, lobbyGame, lobbySound, league, online, teamPlay, venue, venueId,
+          look, questionSeconds, lobbyGame, lobbySound, league, online, teamPlay, venue, venueId,
           rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas,
         });
         backUpLibraryStats();

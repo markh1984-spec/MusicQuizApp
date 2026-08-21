@@ -1347,9 +1347,9 @@ async function sendLaunch(url, bodyFor, button) {
 }
 
 /** Actually launch an ordinary night — the one path, whichever button was pressed. */
-export async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', lobbyGame = '', lobbySound = true, online = false, teamPlay = false, venue = '', order = null }, button) {
+export async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, venue = '', order = null }, button) {
   return sendLaunch('/api/host/launch', (replace) => ({
-    game: kind, packId, shape, prizes, look, lobbyGame, lobbySound, online, teamPlay, venue,
+    game: kind, packId, shape, prizes, look, questionSeconds, lobbyGame, lobbySound, online, teamPlay, venue,
     /*
      * TONIGHT'S RUNNING ORDER, and only when there IS one.
      *
@@ -1371,9 +1371,9 @@ export async function doLaunch(kind, packId, { shape = null, prizes = 0, look = 
  * `show-parts.js`). Every later part loads through `/api/host/advanceOrder`
  * from the control view, never through here.
  */
-export async function doLaunchOrder(segments, { look = '', lobbyGame = '', lobbySound = true, online = false, teamPlay = false, venue = '' }, button) {
+export async function doLaunchOrder(segments, { look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, venue = '' }, button) {
   return sendLaunch('/api/host/launchOrder', (replace) => ({
-    segments, look, lobbyGame, lobbySound, online, teamPlay, venue,
+    segments, look, questionSeconds, lobbyGame, lobbySound, online, teamPlay, venue,
     ...(replace ? { replace: true } : {}),
   }), button);
 }
