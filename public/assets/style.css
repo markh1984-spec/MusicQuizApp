@@ -6555,6 +6555,9 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   font-weight: 900; cursor: pointer;
   background: linear-gradient(120deg, var(--hot), var(--hot-2)); color: #12000c;
 }
+/* Never disabled on the team-name form itself — only the breakout form
+   (which reuses this row shape) locks its button once an answer is sent. */
+.team-add:disabled { background: rgba(255, 255, 255, 0.09); color: var(--ink-dim); cursor: default; }
 .team-leave { background: none; border: 0; color: var(--ink-dim); text-decoration: underline; cursor: pointer; padding: 2px; }
 
 /* ---- where an account stands on money, as a £ in a coloured box

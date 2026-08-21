@@ -1305,7 +1305,7 @@ function buildBreakoutAnswers(s) {
         <input type="text" id="breakoutText" maxlength="28" autocomplete="off"
                enterkeyhint="send" placeholder="Your answer…"
                ${already ? 'disabled' : ''} value="${already ? esc(s.yourAnswer.text) : ''}">
-        <button class="lock-btn" id="breakoutSend" type="submit" ${already ? 'disabled' : ''}>
+        <button class="team-add" id="breakoutSend" type="submit" ${already ? 'disabled' : ''}>
           ${already ? 'Sent' : 'Send it'}
         </button>
       </form>

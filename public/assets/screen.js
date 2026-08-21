@@ -922,7 +922,7 @@ function renderBoard(s) {
   const more = all.length - rows.length;
   return node(`
     <div class="board">
-      <h1 class="grad-text">After round ${s.roundIndex + 1}</h1>
+      <h1 class="grad-text">${s.roundType === 'breakout' ? 'After the bonus round' : `After round ${s.scoreRoundNumber ?? s.roundIndex + 1}`}</h1>
       <div class="board-rows">
         ${rows.length ? rows.map((p, i) => boardRow(p, i)).join('') : '<div class="muted" style="font-size:3vh">No scores yet.</div>'}
       </div>
