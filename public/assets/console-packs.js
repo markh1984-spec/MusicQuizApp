@@ -6,7 +6,7 @@ import { generate, streamGeneration } from './console-generate.js';
 import { tonightsVenue, whenish } from './console-gigs.js';
 import { field, money, sheet } from './console-invoices.js';
 import { renderBingoPreview, renderQuizPreview } from './console-preview.js';
-import { library, me, setPackDrag } from './console-state.js';
+import { library, me, setPackDrag, setShelfRoundDrag } from './console-state.js';
 import { addToTonight, dragging, night, playedAt, putOnBench } from './console-tonight.js';
 import { PACK_SHELF, can, canPin, doorNow, goTo, hostKey, isPinned, keyed, linkTo, load, packWord, pinIcon, pinRank, pinnedPacks, render, reorderPins, showDone, togglePin } from './console.js';
 import { tonight } from './diary.js';
@@ -1024,6 +1024,12 @@ export function packCard(kind, pack) {
       <button class="pack-title ${titleSize(shortTitle(pack.title))}" title="${esc(pack.title)}">${esc(shortTitle(pack.title))}</button>
       ${ownPack ? '<div class="pack-yours" title="You wrote this one. Nobody else can read it.">Yours</div>' : ''}
       <div class="tiny">${esc(detail)} · ${esc(played)}</div>
+      ${kind === 'quiz' && !pack.broken && roundCount ? `<div class="lb-rounds pack-rounds" title="Drag one round straight into Tonight, on its own">
+        ${(pack.rounds || []).map((r, i) => `
+        <button class="lb-rd on" type="button" draggable="true" data-round="${i}"
+          title="${esc(r.title || `Round ${i + 1}`)} — drag into Tonight on its own"
+          aria-label="${esc(r.title || `Round ${i + 1}`)}">${i + 1}</button>`).join('')}
+      </div>` : ''}
       ${freshLabel(pack) ? `<div class="tiny fresh ${freshness(pack).expired ? 'gone' : ''}">${esc(freshLabel(pack))}</div>` : ''}
       ${pack.broken ? `<div class="tiny" style="color:var(--bad)">Broken: ${esc(pack.broken)}</div>` : ''}
       ${pack.problems ? `<div class="tiny" style="color:var(--bad)">${pack.problems} thing${pack.problems === 1 ? '' : 's'} to fix</div>` : ''}
@@ -1064,6 +1070,31 @@ export function packCard(kind, pack) {
     el.classList.remove('is-dragging');
     document.querySelector('.launchbar')?.classList.remove('drop-here');
   });
+
+  /*
+   * A SINGLE ROUND, STRAIGHT OFF THE SHELF — never the whole pack. The card
+   * itself is ALSO a drag source (above), so `stopPropagation` on each dot's
+   * own `dragstart` is what lets the browser pick the dot rather than the
+   * card underneath it as the thing actually being lifted — the pin button's
+   * own `mousedown` guard, below, exists for the same reason.
+   */
+  for (const dot of el.querySelectorAll('.pack-rounds .lb-rd')) {
+    dot.addEventListener('mousedown', (ev) => ev.stopPropagation());
+    dot.addEventListener('dragstart', (ev) => {
+      ev.stopPropagation();
+      const round = Number(dot.dataset.round);
+      setShelfRoundDrag({ packId: pack.id, round, title: pack.title });
+      ev.dataTransfer.effectAllowed = 'copy';
+      ev.dataTransfer.setData('text/plain', (pack.rounds[round] && pack.rounds[round].title) || `Round ${round + 1}`);
+      dot.classList.add('is-lifting');
+      dragging(true);
+    });
+    dot.addEventListener('dragend', () => {
+      dot.classList.remove('is-lifting');
+      setShelfRoundDrag(null);
+      dragging(false);
+    });
+  }
 
   /*
    * `stopPropagation` on the CLICK and the MOUSEDOWN both — the card is a drag

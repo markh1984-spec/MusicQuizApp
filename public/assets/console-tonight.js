@@ -7,10 +7,10 @@ import { invoiceApi, openInvoiceForm, share } from './console-invoices.js';
 import { doLaunch, doLaunchOrder, freshLabel, freshness, lobbyGameOptions, lookOptions, playingOptions, shapeOptions } from './console-packs.js';
 import { packTitle, shelfFor } from './console-shows.js';
 import {
-  addBingoSlot, addQuizPackSlot, isMixed, segmentsFromSlots, slotsFromSimple,
+  addBingoSlot, addQuizPackSlot, isMixed, moveRoundToSlot, segmentsFromSlots, slotsFromSimple,
 } from './console-tonight-mix.js';
 import { renderSlots } from './console-tonight-mix-ui.js';
-import { BENCH_STORE, NIGHT_BENCH_STORE, bench, library, nightBench, packDrag, setBench, setBook, setLibrary, setNightBench, setPackDrag, setShowDrag, setVenueDrag, showDrag, venueDrag } from './console-state.js';
+import { BENCH_STORE, NIGHT_BENCH_STORE, bench, library, nightBench, packDrag, setBench, setBook, setLibrary, setNightBench, setPackDrag, setShelfRoundDrag, setShowDrag, setVenueDrag, shelfRoundDrag, showDrag, venueDrag } from './console-state.js';
 import { nowNextRows } from './console-venues.js';
 import { TABS, can, goTo, hostKey, keyInUrl, keyed, linkTo, load, packWord, render, renderKeepingPlace, screenLink, showDone } from './console.js';
 import { clashTonight, nightKey, tonight, upcoming } from './diary.js';
@@ -439,6 +439,7 @@ const KEEP_OF_DROP_ROW = 44;
 window.addEventListener('dragend', () => {
   dragging(false);
   setPackDrag(null);
+  setShelfRoundDrag(null);
   setVenueDrag(null);
 });
 
@@ -1665,6 +1666,8 @@ export function launchBar() {
       dragging,
       getPackDrag: () => packDrag,
       clearPackDrag: () => setPackDrag(null),
+      getShelfRoundDrag: () => shelfRoundDrag,
+      clearShelfRoundDrag: () => setShelfRoundDrag(null),
       maxSlots: PACK_SLOTS,
     });
     orderEl.replaceChildren(row, infoLine());
@@ -1966,13 +1969,20 @@ export function launchBar() {
   }
 
   /*
-   * A PACK DROPPED ON THE STRIP JOINS THE NIGHT.
+   * A PACK — OR NOW A SINGLE ROUND — DROPPED ON THE STRIP JOINS THE NIGHT.
    *
    * `stopPropagation` on both, or the section's own handler underneath would
    * also fire and REPLACE the night with the pack that was just added to it.
+   *
+   * IN MIXED MODE, A DROP LANDING EXACTLY ON ONE TILE IS HANDLED THERE
+   * FIRST, not here — `renderSlots()`'s own per-tile `drop` clears
+   * `shelfRoundDrag`/`packDrag` before this listener ever runs, since a
+   * child's handler runs before the bubbled event reaches this one. So this
+   * one only ever fires for a genuine near-miss (nothing under the cursor
+   * claimed it), never a double-add on top of a precise tile drop.
    */
   orderEl.addEventListener('dragover', (ev) => {
-    if (!packDrag) return;
+    if (!packDrag && !shelfRoundDrag) return;
     ev.preventDefault();
     ev.stopPropagation();
     ev.dataTransfer.dropEffect = 'copy';
@@ -2052,11 +2062,51 @@ export function launchBar() {
     paintOrder();
   }
 
+  /**
+   * A SINGLE ROUND, DROPPED SOMEWHERE ON THE STRIP RATHER THAN ON ONE
+   * PARTICULAR TILE — added onto the end. Landing exactly on a tile goes
+   * through `renderSlots()`'s own drop target instead, which places it
+   * exactly where it was aimed; this is the fallback for a drag that stopped
+   * an inch short, the same reasoning `addPackToNight` above already gives
+   * for a whole pack.
+   *
+   * Never the whole pack it came from — with nothing chosen yet this is what
+   * STARTS the night, so `pick()` runs first for its title, its venue
+   * defaults and its Launch button (the same "nothing chosen yet" branch
+   * `addPackToNight` takes), and `lbSlots` is then set directly to just the
+   * one round rather than through `slotsFromSimple()` — which would bring
+   * in every OTHER round of that pack too, the opposite of what dragging one
+   * round on its own is asking for.
+   */
+  function addRoundToNight(round) {
+    if (!round) return;
+    const pack = anyPack(round.packId);
+    if (!pack) return;
+    if (!currentPack) {
+      if (gamePick && gamePick.value !== 'quiz') { gamePick.value = 'quiz'; lbGame = 'quiz'; }
+      pick(pack);
+      lbSlots = [{ kind: 'quiz', packId: pack.id, rounds: [round.round] }];
+      paintOrder();
+      return;
+    }
+    if (!lbSlots) lbSlots = slotsFromSimple({ currentPack, lbExtra, lbOff, packOf: anyPack });
+    lbSlots = moveRoundToSlot(lbSlots, { packId: round.packId, round: round.round }, lbSlots.length);
+    paintOrder();
+  }
+
   orderEl.addEventListener('drop', (ev) => {
-    if (!packDrag) return;
+    if (!packDrag && !shelfRoundDrag) return;
     ev.preventDefault();
     ev.stopPropagation();
     orderEl.classList.remove('drop-here');
+    if (shelfRoundDrag) {
+      const round = shelfRoundDrag;
+      setShelfRoundDrag(null);
+      dragging(false);
+      addRoundToNight(round);
+      giveTheFoldBack();
+      return;
+    }
     const dropped = packDrag;
     setPackDrag(null);
     dragging(false);
@@ -2067,7 +2117,7 @@ export function launchBar() {
   });
 
   el.addEventListener('dragover', (ev) => {
-    if (!packDrag && !venueDrag && !showDrag) return;
+    if (!packDrag && !shelfRoundDrag && !venueDrag && !showDrag) return;
     ev.preventDefault();
     ev.dataTransfer.dropEffect = 'copy';
     el.classList.add('drop-here');
@@ -2084,10 +2134,25 @@ export function launchBar() {
     }
   });
   el.addEventListener('drop', (ev) => {
-    if (!packDrag && !venueDrag && !showDrag) return;
+    if (!packDrag && !shelfRoundDrag && !venueDrag && !showDrag) return;
     ev.preventDefault();
     el.classList.remove('drop-here');
     openForDrop();
+
+    /*
+     * A SINGLE ROUND, DROPPED NEAR THE BAR BUT OUTSIDE THE STRIP ITSELF —
+     * `orderEl`'s own drop already handles a landing on the tiles or the
+     * strip round them; this is the same near-miss fallback `addPackToNight`
+     * already gets below.
+     */
+    if (shelfRoundDrag) {
+      const round = shelfRoundDrag;
+      setShelfRoundDrag(null);
+      dragging(false);
+      giveTheFoldBack();
+      addRoundToNight(round);
+      return;
+    }
 
     /*
      * A WHOLE EVENING DROPPED IN. It goes through `loadShow`, which is the

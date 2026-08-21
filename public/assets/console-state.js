@@ -48,6 +48,18 @@ export let accountsExist = true;
 export let packDrag = null;
 
 /**
+ * ONE ROUND of a quiz pack being dragged up to Tonight, straight off the
+ * shelf — never the whole pack. `{ packId, round, title }`, same "module
+ * level because `dataTransfer` cannot be read during `dragover`" reasoning
+ * as `packDrag` above. Kept separate from `packDrag` rather than folded into
+ * it: a whole pack lands anywhere on Tonight and adds every round, a single
+ * round has to land on ONE slot and only ever adds that round — two
+ * different shapes of drop, so two different pieces of state rather than one
+ * that changes meaning depending on a field inside it.
+ */
+export let shelfRoundDrag = null;
+
+/**
  * A VENUE being dragged up to Tonight, from the Venues tab.
  *
  * Same gesture as a pack and the same target, because they are the two facts
@@ -149,6 +161,7 @@ export function setBench(v) { bench = v; }
 export function setNightBench(v) { nightBench = v; }
 export function setGigsSeen(v) { gigsSeen = v; }
 export function setPackDrag(v) { packDrag = v; }
+export function setShelfRoundDrag(v) { shelfRoundDrag = v; }
 export function setVenueDrag(v) { venueDrag = v; }
 export function setShowDrag(v) { showDrag = v; }
 export function setNightDrag(v) { nightDrag = v; }

@@ -12,7 +12,7 @@ import { packWord } from './console.js';
 import { library } from './console-state.js';
 import { packLookAttrs, shortTitle, isBreakoutPack } from './pack-look.js';
 import {
-  DEFAULT_BINGO_PRIZES, addBingoSlot, addQuizPackSlot, homeSlotIndex, moveRoundToSlot, moveSlot,
+  DEFAULT_BINGO_PRIZES, addBingoSlot, addQuizPackSlot, homeSlotIndex, moveRoundToSlot, swapSlots,
   offRoundsFor, removeSlot, toggleRoundOff,
 } from './console-tonight-mix.js';
 
@@ -51,7 +51,8 @@ function prizeOptionsFor(shape, selected) {
  * `render()` itself.
  */
 export function renderSlots(slots, {
-  packOf, onChange, dragging, getPackDrag, clearPackDrag, maxSlots = 6,
+  packOf, onChange, dragging, getPackDrag, clearPackDrag,
+  getShelfRoundDrag = () => null, clearShelfRoundDrag = () => {}, maxSlots = 6,
 }) {
   const el = node('<div class="lb-tiles"></div>');
   let roundDrag = null; // { packId, round } while a round dot is being lifted
@@ -85,7 +86,8 @@ export function renderSlots(slots, {
   function wireDropTarget(tile, at) {
     tile.addEventListener('dragover', (ev) => {
       const fromShelf = getPackDrag();
-      if (roundDrag === null && !fromShelf) return;
+      const shelfRound = getShelfRoundDrag();
+      if (roundDrag === null && !fromShelf && !shelfRound) return;
       ev.preventDefault();
       tile.classList.add('drop-here');
     });
@@ -100,6 +102,21 @@ export function renderSlots(slots, {
         commit(moveRoundToSlot(slots, moved, at));
         return;
       }
+      /*
+       * A ROUND OFF THE SHELF — never placed anywhere yet, so
+       * `moveRoundToSlot`'s own "clear it from wherever else it sat" pass is
+       * a no-op and it just lands at `at`. Same refusal as a Tonight-internal
+       * round move: a slot already holding a DIFFERENT pack, or a bingo game,
+       * is left alone rather than mixed.
+       */
+      const shelfRound = getShelfRoundDrag();
+      if (shelfRound) {
+        ev.preventDefault();
+        clearShelfRoundDrag();
+        dragging(false);
+        commit(moveRoundToSlot(slots, shelfRound, at));
+        return;
+      }
       const fromShelf = getPackDrag();
       if (!fromShelf) return;
       ev.preventDefault();
@@ -111,6 +128,19 @@ export function renderSlots(slots, {
     });
   }
 
+  /*
+   * A NUMBERED TILE IS A SLOT, NOT A LIST ITEM — so dragging one onto another
+   * SWAPS them and leaves everything else where it was. The earlier
+   * insert-and-shift (`moveSlot`, still what the ordinary Tonight row and the
+   * pack editor's own round/question lists use) reads as the same thing when
+   * the two tiles are adjacent, because a shift of one and a swap are the
+   * same move there — and as something else entirely once they are not:
+   * dragging tile 1 onto tile 3 shifted every slot between them along by
+   * one, so tile 3 got what tile 1 held but tile 1 got what tile 2 held, not
+   * tile 3's own pack. Reported live: *"pack 1 goes to tile 3, tile 3 goes to
+   * tile 2 and tile 2 goes to tile 1."* A swap has no "before" or "after" to
+   * land on, so the half-of-the-tile check goes with it.
+   */
   function wireSlotDrag(tile, at) {
     tile.addEventListener('dragstart', (ev) => {
       // A press on a round dot or a bingo control starts THAT drag, not the
@@ -129,21 +159,17 @@ export function renderSlots(slots, {
     tile.addEventListener('dragover', (ev) => {
       if (slotDrag === null || slotDrag === at) return;
       ev.preventDefault();
-      const box = tile.getBoundingClientRect();
-      const after = ev.clientX > box.left + box.width / 2;
-      tile.classList.toggle('drop-after', after);
-      tile.classList.toggle('drop-before', !after);
+      tile.classList.add('drop-here');
     });
-    tile.addEventListener('dragleave', () => tile.classList.remove('drop-before', 'drop-after'));
+    tile.addEventListener('dragleave', () => tile.classList.remove('drop-here'));
     tile.addEventListener('drop', (ev) => {
       if (slotDrag === null || slotDrag === at) return;
       ev.preventDefault();
-      const after = tile.classList.contains('drop-after');
-      tile.classList.remove('drop-before', 'drop-after');
+      tile.classList.remove('drop-here');
       const from = slotDrag;
       slotDrag = null;
       dragging(false);
-      commit(moveSlot(slots, from, at + (after ? 1 : 0)));
+      commit(swapSlots(slots, from, at));
     });
   }
 

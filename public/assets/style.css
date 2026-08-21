@@ -2347,6 +2347,10 @@ body.console .panel::after { bottom: -4px; }
 /* The size and the play count, on a shut card only — read once, then noise.
    The OPEN card keeps them: you have chosen it, so they are what you check. */
 .pack-grid.dense .pack-card.shut > .tiny:not([style]) { display: none; }
+/* Dense trades detail for density — a round can still be dragged straight
+   off an ordinary card, just not the compact ones a search for eighty packs
+   is asking to see MORE of, not more to grab hold of. */
+.pack-grid.dense .pack-card .pack-rounds { display: none; }
 .pack-grid.dense .pack-shape { font-size: var(--fs-tag); }
 .pack-grid.dense .pack-shape select { padding: 5px 24px 5px 8px; font-size: var(--fs-mini); }
 .pack-grid.dense .pack-actions { gap: 4px; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); }
@@ -6525,6 +6529,10 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .lb-tile-n.is-empty { background: rgba(255, 255, 255, 0.10); color: var(--ink-dim); }
 .lb-tile.drop-before { box-shadow: inset 3px 0 0 var(--hot); }
 .lb-tile.drop-after { box-shadow: inset -3px 0 0 var(--hot); }
+/* THE MIXED ROW'S OWN TARGET — a swap has no "before" or "after" to land on,
+   so it gets one ring round the whole tile rather than the ordinary row's
+   one-sided line. See `swapSlots()` in `console-tonight-mix.js`. */
+.lb-tile.is-pack.drop-here { box-shadow: inset 0 0 0 2px var(--hot); }
 
 /* AN EMPTY SLOT. Dashed, because here the thing genuinely is waiting to be
    filled — which is the one place in this app a dashed edge is right. It is a

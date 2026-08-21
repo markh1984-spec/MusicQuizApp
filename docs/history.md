@@ -10,6 +10,33 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 21 August 2026, same day, next deploy again — dragging tile 1
+onto tile 3 now swaps them, and a single round can be dragged straight off
+the shelf:** reported live: *"when I drag pack 1 to pack 3, they should swap
+but they don't. What happens is pack 1 goes to tile 3, tile 3 goes to tile 2
+and tile 2 goes to tile 1."* `moveSlot()` was an insert-and-shift, correct
+for the ordinary Tonight row (a genuine reorderable list) and wrong for the
+mixed row's numbered tiles (fixed slots) — the two only ever agreed when the
+dragged tiles happened to be adjacent, which is why the adjacent case had
+already tested clean. Replaced with a real `swapSlots(slots, i, j)`; verified
+live that tile 2 stays untouched dragging tile 1 onto tile 3.
+
+Asked for directly, in the same session: every quiz pack's shelf card now
+carries its own small row of draggable round dots, so a single round can go
+straight into Tonight without placing the whole pack first — landing on one
+specific tile places it exactly there (`moveRoundToSlot()`, unchanged, the
+same function a round already dragged between tiles in Tonight uses);
+landing anywhere else on Tonight starts the night with just that round, none
+of its siblings, via a new `addRoundToNight()`. Found and fixed on the way: a
+latent bug in `slotsFromSimple()` that mapped every pack to `kind: 'quiz'`
+unconditionally, wrong the moment a night converting to the mixed row had a
+BINGO pack as `currentPack` (no `.rounds` at all, by design) — unreachable
+before this feature, reachable now. All three drag cases (start a night from
+one round, merge onto a specific tile, silently refuse a different pack)
+verified live with zero console errors. See "A SINGLE ROUND CAN NOW BE
+DRAGGED STRAIGHT OFF THE SHELF" and the swap-fix entry just above it in
+`docs/console.md`.
+
 **Live as of 21 August 2026, same day, next deploy again — the quill is
 gone, and Tonight's mixed row stopped losing tiles mid-drag:** three fixes in
 one push, all live-verified with real HTML5 drags rather than read off the

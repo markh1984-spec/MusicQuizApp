@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 
 import {
   slotsFromSimple, placedRounds, moveRoundToSlot, addQuizPackSlot, addBingoSlot,
-  removeSlot, moveSlot, segmentsFromSlots, isMixed, homeSlotIndex, toggleRoundOff, offRoundsFor,
+  removeSlot, swapSlots, segmentsFromSlots, isMixed, homeSlotIndex, toggleRoundOff, offRoundsFor,
 } from '../public/assets/console-tonight-mix.js';
 
 const PACK_A = { id: 'a', title: 'Pack A', rounds: [{ title: 'R1' }, { title: 'R2' }, { title: 'R3' }] };
@@ -30,6 +30,12 @@ test('slotsFromSimple: a switched-off round is left out, a second pack becomes a
 
 test('slotsFromSimple: no pack chosen at all is an empty night', () => {
   assert.deepEqual(slotsFromSimple({ currentPack: null, lbExtra: [], lbOff: new Set(), packOf }), []);
+});
+
+test('slotsFromSimple: a BINGO currentPack converts to a bingo slot, not an empty quiz one', () => {
+  const bingoPack = { id: 'disco', title: 'Disco & Funk', trackCount: 40 };
+  const slots = slotsFromSimple({ currentPack: bingoPack, lbExtra: [], lbOff: new Set(), packOf });
+  assert.deepEqual(slots, [{ kind: 'bingo', packId: 'disco', shape: null, prizes: 2 }]);
 });
 
 test('moveRoundToSlot: drags round 3 out of pack A into a new empty slot after a bingo one', () => {
@@ -111,14 +117,27 @@ test('addBingoSlot: a new bingo slot with its OWN prizes/shape, defaulting sensi
   assert.deepEqual(after, [{ kind: 'bingo', packId: 'disco', shape: null, prizes: 2 }]);
 });
 
-test('removeSlot and moveSlot do the obvious thing', () => {
+test('removeSlot drops the one slot and leaves the rest in order', () => {
   const slots = [
     { kind: 'quiz', packId: 'a', rounds: [0] },
     { kind: 'bingo', packId: 'disco', shape: null, prizes: 2 },
     { kind: 'quiz', packId: 'b', rounds: [0] },
   ];
   assert.deepEqual(removeSlot(slots, 1), [slots[0], slots[2]]);
-  assert.deepEqual(moveSlot(slots, 2, 0), [slots[2], slots[0], slots[1]]);
+});
+
+test('swapSlots exchanges two positions and leaves everything between them alone', () => {
+  const slots = [
+    { kind: 'quiz', packId: 'a', rounds: [0] },
+    { kind: 'bingo', packId: 'disco', shape: null, prizes: 2 },
+    { kind: 'quiz', packId: 'b', rounds: [0] },
+  ];
+  // Tile 1 onto tile 3: only those two move — the bingo slot between them
+  // must not shift, which an insert-and-shift would have done instead.
+  assert.deepEqual(swapSlots(slots, 0, 2), [slots[2], slots[1], slots[0]]);
+  // Adjacent tiles: a swap and a shift agree here, so this is also a
+  // regression guard for the adjacent case alone.
+  assert.deepEqual(swapSlots(slots, 1, 2), [slots[0], slots[2], slots[1]]);
 });
 
 test('segmentsFromSlots: consecutive quiz slots merge into ONE segment — a run of quiz items is one quiz', () => {

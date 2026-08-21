@@ -101,8 +101,16 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * different pack starts the night again" rule firing on a reorder that had
  * already computed the right `lbExtra` itself. Both fixes are a few lines;
  * the comments explaining why are not.
+ *
+ * RAISED TO 2760 ON 21 AUGUST 2026, for a single round dragged straight off
+ * the shelf onto Tonight — `addRoundToNight()`, and the three drop zones
+ * (the strip, the section round it, the window's own dragend) that all now
+ * have to check `shelfRoundDrag` alongside `packDrag`. Same reason as the
+ * two raises above: this is glue reading and writing the closure's own
+ * `currentPack`/`lbExtra`/`lbOff`/`lbSlots`, which is exactly the state that
+ * cannot be pulled out without pulling the whole bar out with it.
  */
-const BUDGET = { 'console-tonight.js': 2680, 'console.js': 2000 };
+const BUDGET = { 'console-tonight.js': 2760, 'console.js': 2000 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

@@ -1447,7 +1447,9 @@ of every other bingo interlude in the same night — a small inline pair of
 selects on the tile itself, reusing `library.cardShapes` the same way the
 Set-it-up tab's own shape/prize pickers already do.
 
-**TWO BUGS LIVE VERIFICATION CAUGHT BEFORE THIS SHIPPED, both fixed:**
+**BUGS LIVE VERIFICATION CAUGHT, ALL FIXED** — this started as two and kept
+finding more, which is the argument for verifying live rather than trusting
+the code, said once here rather than repeated at every entry below:
 
 - **A bingo pack dropped on the EMPTY Tonight row launched as a quiz.**
   `addPackToNight()`'s "nothing chosen yet" branch called `pick()` without
@@ -1500,6 +1502,70 @@ Set-it-up tab's own shape/prize pickers already do.
   "quiz tiles grab anywhere, bingo tiles grab here." Verified live: a real
   mousedown on the grip reaches `dragstart`; the identical gesture on the
   `<select>` never does.
+- **DRAGGING TILE 1 ONTO TILE 3 DID NOT SWAP THEM — reported live, in his own
+  words: "pack 1 goes to tile 3, tile 3 goes to tile 2 and tile 2 goes to
+  tile 1."** `moveSlot()` was an insert-and-shift, `list.splice(from,1)` then
+  re-inserted at `to` — the standard reorder-a-list move, and the SAME move as
+  a swap when the two tiles are adjacent, which is exactly why the adjacent
+  case had already tested clean. Once they are not adjacent the two diverge:
+  a shift drags everything BETWEEN the two dragged tiles along by one, so
+  tile 3 ends up with what had been tile 2, never with tile 1. **A numbered
+  tile reads as a fixed slot, not a list item**, so the fix is a genuine
+  `swapSlots(slots, i, j)` — `[list[i], list[j]] = [list[j], list[i]]` — and
+  nothing else moves. The ordinary (non-mixed) Tonight row and the pack
+  editor's own round/question lists keep the old insert-and-shift
+  deliberately: those are genuinely reorderable LISTS, not a fixed set of
+  numbered positions, so they are not the same interaction and were not
+  changed. Verified live: dragging tile 1 onto tile 3 now leaves tile 2
+  completely untouched, both for a fresh drag and immediately after another
+  swap, with no console errors.
+
+**A SINGLE ROUND CAN NOW BE DRAGGED STRAIGHT OFF THE SHELF, never the whole
+pack.** Asked for directly. Every quiz pack's shelf card (`packCard()` in
+`console-packs.js`) grew its own small row of numbered, individually
+draggable round dots — the same `.lb-rd` pill already used everywhere else a
+round is shown, so a round looks the same wherever it is drawn. Bingo cards
+get none (bingo has no rounds); the compact/"dense" grid hides the row too,
+the same trade it already makes for the size/play-count line, because a
+search across eighty packs is asking to see more packs, not more to grab.
+
+- **A NEW PIECE OF SHARED DRAG STATE, `shelfRoundDrag` in
+  `console-state.js`** — `{packId, round, title}` — kept separate from
+  `packDrag` rather than folded into it: a whole pack lands anywhere on
+  Tonight and adds every round, a single round has to land on one slot and
+  only ever adds that one, which is two different shapes of drop rather than
+  one value that means something different depending on a field inside it.
+- **LANDING ON ONE SPECIFIC TILE REUSES `moveRoundToSlot()` UNCHANGED** — the
+  exact function a round dragged BETWEEN tiles already in Tonight uses, since
+  a round arriving from the shelf has never been placed anywhere, so its
+  "clear it from wherever else it sat" pass is simply a no-op. The same
+  refusal rules apply for free: a slot already holding a different pack, or a
+  bingo game, is left alone rather than mixed.
+- **LANDING ANYWHERE ELSE ON TONIGHT CALLS A NEW `addRoundToNight()`.** With
+  nothing chosen yet, this is what STARTS the night — `pick()` runs first,
+  exactly `addPackToNight()`'s existing "nothing chosen yet" branch, for the
+  title, the venue defaults and the Launch button — and then `lbSlots` is set
+  DIRECTLY to just the one round rather than through `slotsFromSimple()`,
+  which would otherwise bring in every other round of that pack too: dragging
+  round 2 on its own must not quietly bring rounds 1 and 3 with it. With
+  something already chosen, it converts to the mixed row if not there
+  already and appends the round as a new trailing slot.
+- **A LATENT BUG FOUND ON THE WAY, FIXED BEFORE IT COULD BITE**:
+  `slotsFromSimple()` mapped every pack to `kind: 'quiz'` unconditionally,
+  which is right for `lbExtra` (quiz-pack ids only, always) but wrong for
+  `currentPack` if the ordinary night in progress was actually BINGO — a
+  bingo pack has no `.rounds` at all, by design, so the result was a
+  `{kind:'quiz', rounds: []}` slot standing in for the real game. Unreachable
+  before this feature (nothing else converted an ordinary BINGO night to the
+  mixed row from a bare `currentPack`), reachable now: drag a quiz round onto
+  Tonight while an ordinary bingo night is chosen, and this is exactly the
+  conversion that runs. Fixed by checking `Array.isArray(currentPack.rounds)`
+  first and emitting a real `{kind:'bingo', ...}` slot when it is not.
+- **VERIFIED LIVE, THREE CASES**: dragging a round onto an empty Tonight
+  starts the night with just that round, none of its siblings; dragging a
+  different round directly onto an existing tile merges into it without
+  touching any other tile; dragging a round onto a tile holding a different
+  pack is silently refused, byte-identical state before and after.
 
 #### Fixed on 20 August 2026: the archived record now keeps every part
 

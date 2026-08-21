@@ -45,9 +45,25 @@
 /** How many rounds this many prizes wants — mirrors `bingo.js`'s DEFAULT_STAGES shape without importing server code into the browser. */
 export const DEFAULT_BINGO_PRIZES = 2;
 
-/** The general slots array, built once from today's simple state — the moment a night needs it (a bingo pack lands in the row, or a round is dragged apart from its siblings). */
+/**
+ * The general slots array, built once from today's simple state — the moment
+ * a night needs it (a bingo pack lands in the row, or a round is dragged
+ * apart from its siblings).
+ *
+ * **`currentPack` MAY ITSELF BE BINGO** — an ordinary bingo night converting
+ * because a second bingo pack, or a quiz round, just joined it. `lbExtra` is
+ * quiz-pack ids ONLY, since the ordinary row never lets a second pack join a
+ * bingo night ("a bingo night gets exactly one"), so `currentPack` is the one
+ * place this has to be checked. Missed once: every pack here was mapped to
+ * `kind: 'quiz'` unconditionally, which for a bingo pack (no `.rounds` at
+ * all, by design — see CLAUDE.md) produced `{kind:'quiz', rounds: []}`, an
+ * empty quiz slot standing in for the actual bingo game.
+ */
 export function slotsFromSimple({ currentPack, lbExtra, lbOff, packOf }) {
   if (!currentPack) return [];
+  if (!Array.isArray(currentPack.rounds)) {
+    return [{ kind: 'bingo', packId: currentPack.id, shape: null, prizes: DEFAULT_BINGO_PRIZES }];
+  }
   const packs = [currentPack, ...lbExtra.map(packOf).filter(Boolean)];
   return packs.map((pack) => ({
     kind: 'quiz',
@@ -123,11 +139,18 @@ export function removeSlot(slots, at) {
   return slots.filter((_, i) => i !== at);
 }
 
-/** Move slot `from` to sit at position `to`, same "which half of the target" rule the pack row already uses. */
-export function moveSlot(slots, from, to) {
+/**
+ * Swap slots `i` and `j` — a numbered tile is a fixed position, not a list
+ * item, so dragging one onto another exchanges the two and leaves every
+ * other slot untouched. An insert-and-shift (what the ordinary pack row
+ * still uses) is the same move as a swap when the two are adjacent, and a
+ * different one otherwise — dragging tile 1 onto tile 3 shifted 2 along
+ * with it, so tile 1 landed on tile 3 but tile 3 landed on what had been
+ * tile 2, not on tile 1.
+ */
+export function swapSlots(slots, i, j) {
   const list = slots.slice();
-  const [moved] = list.splice(from, 1);
-  list.splice(from < to ? to - 1 : to, 0, moved);
+  [list[i], list[j]] = [list[j], list[i]];
   return list;
 }
 
