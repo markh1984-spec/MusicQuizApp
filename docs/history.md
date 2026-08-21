@@ -10,6 +10,21 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 21 August 2026, same day, next deploy again — the cursor's
+index finger now presses on click:** asked for directly after the quill's
+removal — *"the grabby hand is great but I think the normal hand needs a
+longer index finger that looks like its pressing on click."* Four lengths
+were rendered side by side, judged at 32px (the only size a cursor is ever
+seen at), and the answer was *"D for the unclick and A on click"* — the
+longest reaches out as the ordinary hover cursor, and the original length
+comes back the instant something is actually pressed, via a new
+`body.console *:active` rule sitting between the default and the closed
+fist a real drag still shows. Verified live: an ordinary button's cursor
+holds the long finger until a real mousedown, switches to the short one
+while held, and a draggable pack card's mousedown still shows the fist
+throughout — the click state never leaks into a drag. See the gauntlet
+cursor entry in `docs/decisions.md`.
+
 **Live as of 21 August 2026, same day, next deploy again — a bingo card
 defaults to its best fit, and a photo no longer covers the lobby's join
 code:** two more reports from real gigs, both live-verified against real
