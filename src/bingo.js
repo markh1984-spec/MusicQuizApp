@@ -901,6 +901,17 @@ export class BingoGame {
     // reach screenView() — that would put a redeemable prize on a projector
     // sixty people are looking at.
     view.vouchers = Object.values(this.state.vouchers || {});
+    /*
+     * WHAT TONIGHT IS PLAYING FOR — the Prizes popover reads this to fill in
+     * its fields, and its absence here was a live data-loss bug: an empty
+     * payload looked like an empty night rather than a missing field, so the
+     * popover showed one blank box, and Save overwrote every existing prize
+     * with whatever got typed into it. `rewardList()` already existed and
+     * was already correct (it feeds `results()` for the archived record) —
+     * it was simply never put on the view a host's own control view reads.
+     * Same field, same method, as `Engine.hostView()`'s own `view.rewards`.
+     */
+    view.rewards = this.rewardList();
     return view;
   }
 

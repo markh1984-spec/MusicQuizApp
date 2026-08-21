@@ -107,3 +107,28 @@ test('session.run("setRewards") reaches whichever engine is loaded, quiz or bing
   assert.equal(bingoResult, true);
   assert.deepEqual(bingoSession.engine.state.rewards, ['A bingo prize']);
 });
+
+/*
+ * THE READ PATH, NOT JUST THE WRITE PATH — found by a live browser run, not
+ * this file. `setRewards()` writing `state.rewards` correctly says nothing
+ * about whether `hostView()` — the payload the Prizes popover actually reads
+ * to fill in its fields — carries that field at all. It did not, for bingo:
+ * the popover's own fallback to one blank row when `s.rewards` is empty made
+ * a MISSING field look identical to an ordinary night with nothing set yet,
+ * so it never threw and no existing test caught it. A host opening Prizes on
+ * a real bingo night to fix one typo would press Save and silently wipe
+ * every other prize that night was playing for. Exactly the "tested the
+ * write, never checked the read" shape as the arcade board fault.
+ */
+test('hostView() carries rewards for BOTH games, not just the quiz', () => {
+  const engine = new Engine({ quiz: QUIZ, now: () => Date.now() });
+  engine.state.rewards = ['A bottle of wine', 'A bar tab'];
+  assert.deepEqual(engine.hostView().rewards, ['A bottle of wine', 'A bar tab']);
+
+  const game = new BingoGame({ pack: makeBingoPack(), now: () => Date.now() });
+  game.state.rewards = ['Bingo line prize', 'Bingo full house prize'];
+  game.join({ name: 'Sharon' });
+  game.start();
+  assert.deepEqual(game.hostView().rewards, ['Bingo line prize', 'Bingo full house prize'],
+    'a bingo control view with no rewards field is what made the Prizes popover show an empty box and Save wipe every existing prize');
+});
