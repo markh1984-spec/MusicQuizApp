@@ -25,6 +25,20 @@ while held, and a draggable pack card's mousedown still shows the fist
 throughout — the click state never leaks into a drag. See the gauntlet
 cursor entry in `docs/decisions.md`.
 
+**Live as of 21 August 2026, same day, next deploy again — an honest
+attempt at the fist during an actual drag:** asked directly whether the
+fist really does vanish mid-drag, and it does — a real browser limitation,
+confirmed: once a native HTML5 drag begins, every browser takes cursor
+rendering away from the page for as long as it lasts, ignoring CSS
+entirely, and there is no reliable cross-browser fix. Given the honest
+choice, the host chose to try the one unreliable workaround anyway:
+`dragging()` now also sets the fist as an inline `style.cursor` on
+`<body>`, which Chrome sometimes honours where a class is not. The
+MECHANISM is verified live (set on drag start, cleared on drag end, no
+regression to the sticky-panel toggle); whether it changes what a person
+actually sees could not be — a screenshot cannot capture the OS's own
+cursor bitmap. See the gauntlet cursor entry in `docs/decisions.md`.
+
 **Live as of 21 August 2026, same day, next deploy again — a bingo card
 defaults to its best fit, and a photo no longer covers the lobby's join
 code:** two more reports from real gigs, both live-verified against real

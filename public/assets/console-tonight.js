@@ -346,10 +346,26 @@ export function loadShow(show) {
  * gesture is "pick the card up, discover the target is off-screen, give up" —
  * which on a trackpad is worse again. Pinned to the top for the length of the
  * drag, the target is always where the cursor can reach it.
+ *
+ * **THE FIST DURING AN ACTUAL DRAG IS A BEST-EFFORT, NOT A PROMISE.** Asked
+ * directly: *"when the grabby hand grabs a pack, it goes back to being a
+ * regular mouse pointer?"* — yes, and that is a real browser limitation, not
+ * a bug: the moment a native HTML5 drag begins (not just the mouse held
+ * down), every browser takes cursor rendering away from the page and shows
+ * its own default for as long as the drag lasts. `style.css`'s own
+ * `:active`/`.dragging` rule still shows the fist correctly in the moment
+ * BETWEEN pressing down and the drag actually starting; only the drag
+ * itself cannot be styled reliably. An inline `style.cursor` on `<body>` is
+ * sometimes honoured where a CSS class is not, offered to the host as
+ * exactly that caveat and chosen anyway: try it, knowing it may do nothing.
  */
+const DRAGGING_CURSOR = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\' viewBox=\'0 0 32 32\'%3E%3Cg stroke=\'%233a2a16\' stroke-width=\'1.2\' stroke-linejoin=\'round\' stroke-linecap=\'round\'%3E%3Cpath d=\'M8.8 21.2 L24.4 21.2 L27 26 Q23.53 27.9 20.07 25.7 Q16.6 27.9 13.13 25.7 Q9.67 27.9 6.2 26 Z\' fill=\'%23e6d5ad\'/%3E%3Cpath d=\'M7.4 23.1 L25.8 23.1\' stroke=\'%23b8923f\' stroke-width=\'1.15\'/%3E%3Cpath d=\'M9.6 15.2 Q6.4 15.6 6.1 18 Q5.9 20.3 8.6 20.6 L10.8 20.6 Z\' fill=\'%23eddfbc\'/%3E%3Cpath d=\'M8.8 21.2 L8.8 14.4 Q8.8 10.9 10.7 10.7 Q12.5 10.5 12.7 11.9 Q12.9 10.2 14.7 10.2 Q16.4 10.2 16.6 11.7 Q16.8 10 18.6 10.1 Q20.2 10.2 20.4 11.7 Q20.7 10.4 22.3 10.7 Q24.4 11.2 24.4 14.2 L24.4 21.2 Z\' fill=\'%23f6ecd6\'/%3E%3Cpath d=\'M12.7 12.6 L12.7 14.8 M16.6 12.4 L16.6 14.9 M20.4 12.6 L20.4 14.8\' stroke=\'%23c9b183\' stroke-width=\'0.95\' fill=\'none\'/%3E%3C/g%3E%3C/svg%3E") 16 15, grabbing';
+
 export function dragging(on) {
   if (on) pinTonightWhereItIs();
   document.body.classList.toggle('is-dragging-card', Boolean(on));
+  if (on) document.body.style.setProperty('cursor', DRAGGING_CURSOR, 'important');
+  else document.body.style.removeProperty('cursor');
 }
 
 /**
