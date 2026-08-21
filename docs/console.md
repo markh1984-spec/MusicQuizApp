@@ -1461,6 +1461,45 @@ Set-it-up tab's own shape/prize pickers already do.
   the night again, wipe everything" rule fired on that call, overwriting the
   very `lbExtra` `movePack()` had just computed. `pick()` now takes a
   `keepOrder` option; `movePack()` passes it.
+- **TILES WENT ON DISAPPEARING UNDER THE TOPBAR, AND DRAG DIED AFTER A
+  COUPLE OF GOES — found live, some time later, on a real night's worth of
+  packs.** `console-tonight.js`'s `dragging()` toggles a body class that pins
+  the launch bar `position: sticky` for the length of a drag, and is meant to
+  ALWAYS clear on `dragend` — a global `window` listener exists specifically
+  because `dragend` "always fires on the source, whatever happened to the
+  drop." That is true right up until the drop handler is the thing that
+  removes the source from the document: dropping one Tonight tile onto
+  another calls `commit()`, which rebuilds the WHOLE row via
+  `replaceChildren` — synchronously, inside the `drop` handler, before the
+  browser gets to dispatch `dragend`. A `dragend` whose source node has
+  already left the document does not fire at all, so the class stuck, and
+  the launch bar stayed sticky-pinned at whatever offset the LAST drag
+  happened to start at, for good — which reads as tiles vanishing under the
+  topbar on an ordinary scroll, and as drag "dying" once the bar stopped
+  tracking the page. Fixed by calling `dragging(false)` explicitly, in both
+  of `wireDropTarget`'s and `wireSlotDrag`'s own `drop` handlers, BEFORE
+  `commit()` rebuilds the row — costs nothing on the runs where `dragend`
+  still fires (a plain idempotent toggle), fixes the runs where it does not.
+  Verified live by deliberately reproducing the worst case — dispatching a
+  drop with `dragend` suppressed on purpose — across five successive drags:
+  the class cleared every time, every tile stayed fully visible.
+- **A BINGO TILE COULD NOT BE DRAGGED AT ALL — a genuinely different bug,
+  found live by a diagnostic agent while chasing the one above.** Its own two
+  `<select>`s (card shape, prize plan) sit in one unbroken row spanning
+  roughly 99% of the tile's width and 26% of its height — almost the entire
+  lower half, exactly where a hand reaches for a card. A native `<select>`
+  intercepts a mousedown for its own dropdown before any HTML5 drag gesture
+  can begin, which is a hard browser behaviour that no `stopPropagation`
+  reaches, so nothing under the title was ever going to be a drag start point
+  on one. Fixed the same way the pack editor's own round/question rows
+  already solve this exact conflict — a small `.drag-grip` (the same icon,
+  the same class) placed in the title's own row, in normal document flow
+  rather than floated over the top corner, so it never has to guess how much
+  blank space a two-line title left. Given to EVERY tile, quiz and bingo
+  alike, rather than only the ones that needed it — one rule instead of
+  "quiz tiles grab anywhere, bingo tiles grab here." Verified live: a real
+  mousedown on the grip reaches `dragstart`; the identical gesture on the
+  `<select>` never does.
 
 #### Fixed on 20 August 2026: the archived record now keeps every part
 

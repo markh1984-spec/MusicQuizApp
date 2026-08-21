@@ -10,6 +10,47 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 21 August 2026, same day, next deploy again — the quill is
+gone, and Tonight's mixed row stopped losing tiles mid-drag:** three fixes in
+one push, all live-verified with real HTML5 drags rather than read off the
+code.
+
+The quill cursor was dropped outright — the host's own call after living
+with it for a session: *"I'm happy with the open hand and then the grabby
+hand when grabbing stuff."* The OPEN gauntlet is now the one default cursor
+on `body.console`, at the same `!important` weight the quill held; the
+closed fist keeps its one job on `:active`/`.dragging`. See the renamed entry
+in `docs/decisions.md`, *"The console wears a gauntlet cursor…"*.
+
+Two drag bugs in the mixed row (`console-tonight-mix-ui.js`), reported as
+tiles vanishing mid-drag with drag dying after a couple of goes, and a bingo
+tile that could not be dragged anywhere at all, turned out to be unrelated:
+
+- **The vanishing/dying bug** was `console-tonight.js`'s own `dragging()`
+  toggle never clearing. It is meant to always fire on `dragend`, but
+  dropping one Tonight tile onto another commits synchronously, which
+  rebuilds the WHOLE row — detaching the dragged element from the document
+  before the browser gets to dispatch `dragend` on it, and a `dragend` whose
+  source has already been removed does not fire at all. The stuck class pins
+  the launch bar `position: sticky` at a stale offset forever, which is what
+  read as tiles disappearing under the topbar on an ordinary scroll. Fixed by
+  calling `dragging(false)` explicitly in both drop handlers, before the row
+  is rebuilt, rather than trusting the native event. Verified live by
+  deliberately reproducing the worst case — a drop with `dragend` suppressed
+  on purpose — across five successive drags: the class cleared every time,
+  every tile stayed fully visible, nothing degraded.
+- **The bingo tile** had a real cause of its own, found by a diagnostic agent
+  driving real drags: its two `<select>`s (card shape, prize plan) sit as one
+  unbroken row spanning ~99% of the tile's width and ~26% of its height — a
+  native `<select>` intercepts a mousedown for its own dropdown before any
+  HTML5 drag can start, which no `stopPropagation` reaches, so nothing under
+  the title was ever reachable. Fixed with a small `.drag-grip` — this
+  codebase's existing pack-editor pattern for exactly this problem — placed
+  in normal flow next to every tile's title, quiz and bingo alike, so there
+  is one rule rather than a bingo-only special case. Verified live: a real
+  mousedown on the grip reaches `dragstart`; the same gesture on the selects
+  never does.
+
 **Live as of 21 August 2026, same day, next deploy again — the pack editor
 loses "Look", Tonight gains a real timer:** "Look" is gone from both the
 quiz and bingo pack editors — it only ever set a default Tonight's own

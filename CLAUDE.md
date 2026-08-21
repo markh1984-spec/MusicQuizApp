@@ -489,7 +489,7 @@ opening a second file.
 - **SSE, not websockets**
 - **No build step**
 - **Packs are JSON files**
-- **The console wears a quill cursor, a gauntlet on the grab, and scroll rods on its panels, console only** — never the projector or a phone. **A cursor is a static file: it cannot follow the account's colours, and it is judged at 32px.**
+- **The console wears a gauntlet cursor — open hand, closed fist while dragging — and scroll rods on its panels, console only** — never the projector or a phone. **A cursor is a static file: it cannot follow the account's colours, and it is judged at 32px.**
 - **No profanity filter on team names** — **Do not add word filtering.**
 - **Photo uploads auto-publish** — Do not add one.
 - **Photos go in a SEPARATE PRIVATE repo** — Never the main repo: it is public (checked), and git history is forever.

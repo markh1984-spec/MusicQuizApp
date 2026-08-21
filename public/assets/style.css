@@ -1857,38 +1857,30 @@ body.console {
 body.console::after { display: none; }
 
 /*
- * THE QUILL CURSOR AND THE SCROLL-SHAPED CARD — asked for directly on 21
- * August 2026: "I want the app to have a quill and ink vibe to it... pages
- * to look subtly like scrolls and the mouse to look like a quill." Rendered
- * as three options (barely-there grain, this one, a full parchment surface
- * swap) and this one was chosen: the dark-neon colours and layout stay
- * exactly as they are, and every card just reads as a scroll unrolled.
+ * THE GAUNTLET IS THE CURSOR NOW, EVERYWHERE — the quill was dropped:
+ * *"drop the quill - I'm happy with the open hand and then the grabby hand
+ * when grabbing stuff."* One glove doing both jobs is genuinely simpler than
+ * a quill for pointing plus a glove for dragging, and it was the host's own
+ * call once he had lived with both for a session.
  *
  * CONSOLE ONLY — My account, Console, Workshop, Post gig, Owner page. Never
  * the projector or a phone: those screens live by instant, high-contrast
  * readability in a dark room, which a decorative flourish works against.
  *
- * THE GRAB CURSOR IS A GAUNTLET, and only the grab one — asked for as *"can
- * the grabby hand be wearing a glove from that time period?"*. The quill keeps
- * pointing and clicking; the glove is what you get over something draggable,
- * open to pick a pack up and closed into a fist while you carry it.
- *
- * BOTH ARE DRAWN AT 32px AND JUDGED AT 32px. Three silhouettes were rendered
- * and the first two were unreadable at the only size that exists — a cursor is
- * never seen at any other. What survives the shrink is CHUNKY separated
- * fingers, a thumb clearly out to one side, and a cuff cut back to a band: the
- * first pass gave it a full skirt, which at 32px is just a pale blob with the
- * hand sat on top of it. The dagged edge and the gold trim are the period
- * signal and they cost two paths.
+ * DRAWN AND JUDGED AT 32px, the only size a cursor is ever seen at. Three
+ * silhouettes were rendered for the fist and the first two were unreadable
+ * at that size; what survives the shrink is CHUNKY separated fingers, a
+ * thumb clearly out to one side, and a cuff cut back to a band rather than a
+ * full skirt, which at 32px is just a pale blob with the hand sat on it.
  *
  * A CURSOR CANNOT FOLLOW THE ACCOUNT'S COLOURS and nothing here should try:
- * it is a static image file, so it cannot read `--hot` the way a page element
- * can. Cream and gold, matching the quill, on purpose rather than by omission.
+ * it is a static image file, so it cannot read `--hot` the way a page
+ * element can. Cream and gold, on purpose rather than by omission.
  */
 body.console, body.console * {
   cursor:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg stroke='%234a2c0e' stroke-width='1.15' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M2.8 2.4 Q6.2 7.4 9.7 12.2' fill='none' stroke='%234a2c0e' stroke-width='3.4'/%3E%3Cpath d='M2.8 2.4 Q6.2 7.4 9.7 12.2' fill='none' stroke='%23f2e6c8' stroke-width='1.7'/%3E%3Cpath d='M9.6 12.4 Q7.8 16.4 10.3 20.1 Q13.4 24.6 18.1 27.4 Q23 30.2 28.4 29.2 Q25.4 26.1 24 22.5 L21 21.7 Q19.8 18.3 17.1 16.6 L14.6 16.4 Q13 14 11.7 11.3 Q10.3 11 9.6 12.4 Z' fill='%23ffd23f'/%3E%3Cpath d='M28.4 29.2 Q25.4 26.1 24 22.5 L21 21.7 Q19.8 18.3 17.1 16.6' fill='none' stroke='%23ff8a3d' stroke-width='1.5'/%3E%3Cpath d='M4 3.8 C9 10.2 15 18 27.2 28.2' fill='none' stroke='%23fff7e0' stroke-width='1.2'/%3E%3C/g%3E%3C/svg%3E")
-    3 2, pointer !important;
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg stroke='%233a2a16' stroke-width='1.2' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M8.8 21.6 L24.4 21.6 L27 26.4 Q23.53 28.3 20.07 26.1 Q16.6 28.3 13.13 26.1 Q9.67 28.3 6.2 26.4 Z' fill='%23e6d5ad'/%3E%3Cpath d='M7.4 23.5 L25.8 23.5' stroke='%23b8923f' stroke-width='1.15'/%3E%3Cpath d='M9.8 13.6 Q4.8 14 3.8 16.8 Q3 19.6 6 20.4 Q8.6 21 10.6 20.4 Z' fill='%23eddfbc'/%3E%3Cpath d='M8.8 21.6 L8.8 8.5 Q8.8 6.8 10.62 6.8 Q12.45 6.8 12.45 8.5 L12.45 11.2 Q12.7 12.15 12.95 11.2 L12.95 8 Q12.95 6.3 14.65 6.3 Q16.35 6.3 16.35 8 L16.35 11.2 Q16.6 12.15 16.85 11.2 L16.85 8.5 Q16.85 6.8 18.5 6.8 Q20.15 6.8 20.15 8.5 L20.15 11.2 Q20.4 12.15 20.65 11.2 L20.65 10.2 Q20.65 8.6 22.5 8.6 Q24.4 8.6 24.4 10.2 L24.4 21.6 Z' fill='%23f6ecd6'/%3E%3Cpath d='M12.7 13 L12.7 14.9 M16.6 13 L16.6 15 M20.4 13 L20.4 14.9' stroke='%23c9b183' stroke-width='0.95' fill='none'/%3E%3C/g%3E%3C/svg%3E")
+    16 15, pointer !important;
 }
 /*
  * `!important` because dozens of scattered `cursor: pointer` rules on
@@ -1896,13 +1888,11 @@ body.console, body.console * {
  * each individually more specific than a body selector and would otherwise
  * keep the ordinary hand — see the note by the nine other !importants in
  * this file. Three cursor states still carry real meaning, so they are
- * restored right after at the same weight: a drag affordance (see DRAG AND
- * DROP), a disabled control, and a text field's insertion point.
+ * restored right after at the same weight: the fist while actually
+ * dragging, a disabled control, and a text field's insertion point. The
+ * OPEN hand needs no separate rule of its own any more — it is the default
+ * now, so a draggable element already shows it without being named.
  */
-body.console [draggable="true"],
-body.console .drag-grip {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg stroke='%233a2a16' stroke-width='1.2' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M8.8 21.6 L24.4 21.6 L27 26.4 Q23.53 28.3 20.07 26.1 Q16.6 28.3 13.13 26.1 Q9.67 28.3 6.2 26.4 Z' fill='%23e6d5ad'/%3E%3Cpath d='M7.4 23.5 L25.8 23.5' stroke='%23b8923f' stroke-width='1.15'/%3E%3Cpath d='M9.8 13.6 Q4.8 14 3.8 16.8 Q3 19.6 6 20.4 Q8.6 21 10.6 20.4 Z' fill='%23eddfbc'/%3E%3Cpath d='M8.8 21.6 L8.8 8.5 Q8.8 6.8 10.62 6.8 Q12.45 6.8 12.45 8.5 L12.45 11.2 Q12.7 12.15 12.95 11.2 L12.95 8 Q12.95 6.3 14.65 6.3 Q16.35 6.3 16.35 8 L16.35 11.2 Q16.6 12.15 16.85 11.2 L16.85 8.5 Q16.85 6.8 18.5 6.8 Q20.15 6.8 20.15 8.5 L20.15 11.2 Q20.4 12.15 20.65 11.2 L20.65 10.2 Q20.65 8.6 22.5 8.6 Q24.4 8.6 24.4 10.2 L24.4 21.6 Z' fill='%23f6ecd6'/%3E%3Cpath d='M12.7 13 L12.7 14.9 M16.6 13 L16.6 15 M20.4 13 L20.4 14.9' stroke='%23c9b183' stroke-width='0.95' fill='none'/%3E%3C/g%3E%3C/svg%3E") 16 15, grab !important;
-}
 body.console [draggable="true"]:active,
 body.console .drag-grip:active,
 body.console .dragging {
@@ -6470,6 +6460,16 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
      space rather than trust the two never to collide. */
   padding-right: 32px;
 }
+/*
+ * THE MIXED ROW'S OWN HEAD — the grip lives in the name's row, in normal
+ * flow, rather than floated over the top corner: absolute positioning would
+ * have to guess how much blank space a two-line title left, and a bingo
+ * tile's own prize/shape controls already eat the rest of the tile. See
+ * `console-tonight-mix-ui.js`'s `filledTile()` for the reasoning in full.
+ */
+.lb-tile-head { display: flex; align-items: flex-start; gap: 4px; position: relative; z-index: 1; }
+.lb-tile-head .drag-grip { width: 16px; height: 16px; margin-top: 1px; }
+.lb-tile-head .lb-tile-name { flex: 1 1 auto; min-width: 0; }
 .lb-tile-sub, .lb-tile-cap { color: var(--ink-dim); }
 /* A TICK PER ROUND, and a tap turns it into a cross. It replaces the line
    that said "3 rounds" — the same information with nothing you can do about

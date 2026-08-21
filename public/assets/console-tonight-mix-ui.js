@@ -7,7 +7,7 @@
  * one.
  */
 
-import { esc, node } from './client.js';
+import { esc, node, gripIcon } from './client.js';
 import { packWord } from './console.js';
 import { library } from './console-state.js';
 import { packLookAttrs, shortTitle, isBreakoutPack } from './pack-look.js';
@@ -64,6 +64,24 @@ export function renderSlots(slots, {
 
   const commit = (next) => onChange(next.length > maxSlots ? next.slice(0, maxSlots) : next);
 
+  /*
+   * `dragging(false)` IS CALLED HERE, ON DROP, NOT LEFT TO `dragend` —
+   * `console-tonight.js`'s own comment on the window `dragend` listener says
+   * "`dragend` always fires on the source, whatever happened to the drop",
+   * which is true right up until the drop handler is the thing that removes
+   * the source from the document. `commit()` runs `onChange` synchronously,
+   * which rebuilds the WHOLE row via `replaceChildren` — so a tile or round
+   * dot dragged onto another tile IN THIS ROW is detached from the page
+   * before the browser gets to dispatch `dragend` on it, and a dragend whose
+   * source node is no longer in the document does not fire at all. The body
+   * stayed marked `is-dragging-card` for good, which pins the launch bar
+   * `position: sticky` at whatever offset the drag happened to start at —
+   * so tiles read as vanishing under the topbar on an ordinary scroll, and
+   * every drag after the first one was fighting a bar that no longer moved
+   * with the page. Calling it explicitly, before the DOM is rebuilt, costs
+   * nothing when `dragend` does still fire (it is a plain toggle) and fixes
+   * it when it does not.
+   */
   function wireDropTarget(tile, at) {
     tile.addEventListener('dragover', (ev) => {
       const fromShelf = getPackDrag();
@@ -78,6 +96,7 @@ export function renderSlots(slots, {
         ev.preventDefault();
         const moved = roundDrag;
         roundDrag = null;
+        dragging(false);
         commit(moveRoundToSlot(slots, moved, at));
         return;
       }
@@ -85,6 +104,7 @@ export function renderSlots(slots, {
       if (!fromShelf) return;
       ev.preventDefault();
       clearPackDrag();
+      dragging(false);
       const pack = packOf(fromShelf.id);
       if (!pack) return;
       commit(fromShelf.kind === 'bingo' ? addBingoSlot(slots, pack) : addQuizPackSlot(slots, pack));
@@ -122,6 +142,7 @@ export function renderSlots(slots, {
       tile.classList.remove('drop-before', 'drop-after');
       const from = slotDrag;
       slotDrag = null;
+      dragging(false);
       commit(moveSlot(slots, from, at + (after ? 1 : 0)));
     });
   }
@@ -216,6 +237,17 @@ export function renderSlots(slots, {
     return tile;
   }
 
+  /*
+   * A GRIP NEXT TO THE NAME, ON EVERY TILE — a bingo tile's own shape/prize
+   * `<select>`s cover almost its whole lower half, and a native `<select>`
+   * intercepts a mousedown for its own dropdown before any HTML5 drag can
+   * begin; no `stopPropagation` reaches that, so nothing under the title was
+   * ever going to be draggable on one. Given every tile the same handle
+   * rather than only the ones that need it, so there is one rule instead of
+   * "quiz tiles grab anywhere, bingo tiles grab here" — and put in the name's
+   * own row, in normal flow, rather than floated over the top of the tile,
+   * so it never has to guess how much blank space a two-line title left.
+   */
   function filledTile(slot, at) {
     const isBingo = slot.kind === 'bingo';
     const pack = packOf(slot.packId) || { id: slot.packId, title: slot.packId, trackCount: 40, cardSize: 4 };
@@ -225,7 +257,10 @@ export function renderSlots(slots, {
         ${packWord(look)}
         <button class="lb-tile-off" type="button" aria-label="Take this out">&times;</button>
         <span class="lb-tile-n">${at + 1}</span>
-        <b class="lb-tile-name">${esc(shortTitle(pack.title))}</b>
+        <div class="lb-tile-head">
+          <span class="drag-grip" aria-hidden="true" title="Drag to move this pack">${gripIcon()}</span>
+          <b class="lb-tile-name">${esc(shortTitle(pack.title))}</b>
+        </div>
         ${isBingo ? bingoControls(slot, pack) : roundDots(slot, at)}
       </div>`);
 
