@@ -197,6 +197,25 @@ test('a LAPSED parent means the seat has nothing — same as any lapsed account,
   });
 });
 
+// ------------------------------------------------------ a seat's own password
+
+test('a seat can set its own password through the same reset-link mechanism signup uses', () => {
+  withBook((book) => {
+    const parent = makeParent(book);
+    const created = book.addChild(parent.id, { email: 'dave@example.com', password: 'thrown-away-immediately', name: 'Dave' });
+    // The parent never learns or chooses this — a route handles the token,
+    // this just proves the underlying mechanism works for a seat exactly as
+    // it already does for an ordinary signup.
+    const { token } = book.startReset('dave@example.com');
+    assert.ok(token);
+    const completed = book.useReset(token, 'a brand new chosen password');
+    assert.equal(completed.email, 'dave@example.com');
+    assert.ok(book.signIn('dave@example.com', 'a brand new chosen password'));
+    assert.equal(book.signIn('dave@example.com', 'thrown-away-immediately'), null,
+      'the throwaway password addChild used to create the account must not still work');
+  });
+});
+
 test('removing a seat drops it back to its OWN standing, not the ex-parent\'s', () => {
   withBook((book) => {
     const parent = makeParent(book, { tier: 'gold', status: 'active' });

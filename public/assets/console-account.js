@@ -278,9 +278,6 @@ function groupPanel() {
         <div class="row" style="margin-top:8px;gap:8px">
           <input type="email" class="grp-add-email" placeholder="Their email" style="flex:1">
         </div>
-        <div class="row" style="margin-top:8px;gap:8px">
-          <input type="password" class="grp-add-password" placeholder="A password for them to start with" style="flex:1">
-        </div>
         <div class="row" style="margin-top:10px;align-items:center;gap:12px">
           <button class="go grp-add-go">Add a seat</button>
           <span class="tiny grp-add-said"></span>
@@ -331,20 +328,23 @@ function groupPanel() {
     const said = el.querySelector('.grp-add-said');
     const name = el.querySelector('.grp-add-name').value.trim();
     const email = el.querySelector('.grp-add-email').value.trim();
-    const password = el.querySelector('.grp-add-password').value;
-    if (!email || !password) { said.textContent = 'An email and a password are needed.'; return; }
+    if (!email) { said.textContent = 'An email is needed.'; return; }
     try {
       const res = await fetch(keyed('/api/group/seats'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Could not add that seat');
       el.querySelector('.grp-add-name').value = '';
       el.querySelector('.grp-add-email').value = '';
-      el.querySelector('.grp-add-password').value = '';
-      said.textContent = '';
+      // They choose their own password — same link a forgotten-password reset
+      // sends. No email service configured yet, so it comes back here to pass
+      // on; once one is, this branch never fires and it goes to them directly.
+      said.textContent = data.devLink
+        ? `Added. No email is set up yet — send them this link to set a password: ${data.devLink}`
+        : 'Added. They will get an email to set their own password.';
       const row = node(seatRow(data.seat));
       seatsEl.appendChild(row);
       wireRemove(row);

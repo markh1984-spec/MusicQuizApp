@@ -4226,12 +4226,38 @@ async function handleWrite(req, res, url, route) {
     const body = await readJson(req);
     let created;
     try {
-      created = accounts.addChild(me.id, { email: body.email, password: body.password, name: body.name });
+      /*
+       * A SEAT CHOOSES ITS OWN PASSWORD — the identical mechanism `/api/signup`
+       * already uses for exactly the same reason: a random one is set and
+       * immediately thrown away, then the magic-link reset flow sends them
+       * somewhere to set a real one. One proven "prove you own this address"
+       * path, not a second one invented here that could drift from it — and
+       * it means the parent adding a seat never sees, types or holds a
+       * password that is not their own.
+       */
+      created = accounts.addChild(me.id, { email: body.email, password: randomBytes(24).toString('hex'), name: body.name });
     } catch (err) {
       return sendJson(res, 400, { error: err.message }), true;
     }
     await backUpAccounts();
-    return sendJson(res, 200, { seat: created }), true;
+
+    const base = (config.publicUrl || '').replace(/\/+$/, '')
+      || `${(req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim()}://${req.headers.host}`;
+    const started = accounts.startReset(created.email);
+    const link = started && started.token ? `${base}/reset?t=${encodeURIComponent(started.token)}` : '';
+    if (link && emailConfigured()) {
+      const brandName = brandForRoom(rooms.get(HOUSE));
+      sendEmail({ to: created.email, ...welcomeEmail({ name: brandName, link }) })
+        .catch((err) => console.warn('[group] could not email the new seat:', err.message));
+    }
+    return sendJson(res, 200, {
+      seat: created,
+      // Only when there is no email service to hand the link to the SEAT the
+      // ordinary way — same fallback /api/signup already relies on. Shown to
+      // the parent only because there is nobody else to show it to yet; once
+      // email is configured this never reaches them.
+      ...(!emailConfigured() && link ? { devLink: link } : {}),
+    }), true;
   }
 
   if (route.startsWith('/api/group/seats/') && req.method === 'DELETE') {
