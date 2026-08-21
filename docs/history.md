@@ -10,6 +10,30 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 21 August 2026, same day, next deploy again — a Stop sits
+beside "On the big screen now":** asked for directly off a screenshot of
+that exact line. It reads the same `stopRunningNight()` the running panel's
+own Stop button now shares — that panel's copy of the confirm wording and
+the `/api/host/resetAll` call was deleted and both buttons call the one
+function, so a future change to the confirm text or the endpoint cannot
+update one and miss the other. Shown only when `aNightIsOn()` is true — the
+same stricter test the running panel already uses to decide it has anything
+to stop — not the looser "a title exists" check the line's own text uses,
+or the button would offer to stop the default boot-time pack nobody ever
+launched. **The button only exists where the text it sits beside exists**:
+`launchBar()` itself is swapped for nothing on the Console door the moment a
+game is actively mid-question (`live` true), so in that state only the
+separate running panel's own Stop is on screen — unchanged, and correct,
+because the whole row this button lives on is not there either. Live-tested
+against the real `/api/host/launch` and `/api/join` routes: hidden on a
+fresh boot, hidden immediately after Launch until a phone actually joins,
+visible once one has, and pressing it genuinely clears the session
+(`playerCount` back to 0, phase back to `lobby`) with the right pluralised
+kicked-phones count in the confirm text. No overflow at 1280px or 390px, no
+console errors. `test/console-split.test.js`'s line budget for
+`console-tonight.js` raised 2790 → 2820 for the button, its visibility
+wiring and the doc comments explaining the `aNightIsOn` choice.
+
 **Live as of 21 August 2026, same day, next deploy again — "Shows" is now
 "Prepare a night":** asked for directly, and "Prep a gig" was turned down —
 it shares a root word with Past gigs, the exact confusion the tab had just

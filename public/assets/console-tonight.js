@@ -552,8 +552,16 @@ export function launchBar() {
       </div>
       <!-- WHAT IS ACTUALLY ON THE PROJECTOR, which is a different question
            from what the box is set to. Reported from a real night: the two
-           disagreed and nothing said which was which. -->
-      <div class="tiny lb-live" hidden></div>
+           disagreed and nothing said which was which.
+           A STOP SITS BESIDE IT — asked for directly, off a screenshot of this
+           exact line. It reads the projector's own state (aNightIsOn), not
+           whether the box happens to have a title in it, and it is the SAME
+           call as the running panel's own Stop button, through the one shared
+           stopRunningNight() — never a second copy of that confirm wording. -->
+      <div class="lb-live-row" hidden>
+        <span class="tiny lb-live"></span>
+        <button class="minor danger lb-unlaunch" type="button" title="Clear it and go back to waiting">Stop</button>
+      </div>
       <!-- WHAT COMES AFTER THIS, when a show with more than one part is up.
            A show is an EVENING and the bar plays one part of it, so without
            this line the second half exists only in somebody's memory — which
@@ -617,7 +625,9 @@ export function launchBar() {
   const venues = el.querySelector('.lb-venues');
   const venueList = el.querySelector('.lb-venue-list');
   const venueSearch = el.querySelector('.lb-venue-search');
+  const liveRow = el.querySelector('.lb-live-row');
   const liveEl = el.querySelector('.lb-live');
+  const unlaunchBtn = el.querySelector('.lb-unlaunch');
   const thenEl = el.querySelector('.lb-then');
   /**
    * THEN: the next part of tonight's show.
@@ -1298,8 +1308,19 @@ export function launchBar() {
   function paintLive() {
     const running = (library && library.running) || {};
     const title = String(running.title || '');
-    if (!title) { liveEl.hidden = true; return; }
-    liveEl.hidden = false;
+    if (!title) { liveRow.hidden = true; return; }
+    liveRow.hidden = false;
+    /*
+     * THE STOP BUTTON READS `aNightIsOn`, not this line's own title check.
+     *
+     * The title is set the moment a pack is loaded — including the default
+     * one `boot()` falls back to so the projector is never blank — but that is
+     * not a night anybody launched. `aNightIsOn` is the same stricter test the
+     * running panel already uses to decide whether IT has anything to stop, so
+     * the two controls agree about what "on" means rather than one of them
+     * offering to stop a night that was never actually started.
+     */
+    unlaunchBtn.hidden = !aNightIsOn(running);
     /*
      * NOTHING CHOSEN IS NOT A DISAGREEMENT.
      *
@@ -1341,6 +1362,8 @@ export function launchBar() {
         ? `On the big screen now — this one, but filed under ${runVenue || 'nowhere'}. Launch again to move it.`
         : 'On the big screen now — this one';
   }
+
+  unlaunchBtn.addEventListener('click', (ev) => stopRunningNight(ev.currentTarget));
 
   /*
    * OPEN OR A THIN LINE, and the line still says what it is set to.
@@ -2482,6 +2505,33 @@ export function aNightIsOn(running) {
   return Boolean(running) && (running.phase !== 'lobby' || running.playerCount > 0);
 }
 
+/**
+ * STOP WHATEVER IS RUNNING — shared by the running panel's own Stop button
+ * and the launch bar's own quick stop beside the live-drift warning, so the
+ * two cannot end up with different confirm wording or a different call.
+ * Reads `library.running` fresh rather than taking it as a parameter, since
+ * that is what both callers already agree on.
+ */
+async function stopRunningNight(button) {
+  const running = (library && library.running) || {};
+  const n = running.playerCount;
+  const alsoKicks = n
+    ? `\n\n${n} ${n === 1 ? 'phone is' : 'phones are'} in, and will have to scan and join again.`
+    : '';
+  if (!confirm(`Stop "${running.title}"?\n\nScores and cards are cleared and it goes back to waiting.${alsoKicks}`)) return;
+  button.disabled = true;
+  const was = button.textContent;
+  button.textContent = 'Stopping…';
+  try {
+    await postJson('/api/host/resetAll', {}, { 'X-Host-Key': hostKey });
+    await load();
+  } catch (err) {
+    alert(`Could not stop it: ${err.message}`);
+    button.disabled = false;
+    button.textContent = was;
+  }
+}
+
 export function runningPanel(running) {
   if (!aNightIsOn(running)) return node('<div></div>');
   // An owner runs no nights, so there is no night of theirs to show or stop.
@@ -2579,25 +2629,7 @@ export function runningPanel(running) {
    * It clears scores, cards and players and leaves the pack loaded and
    * waiting — the same state as just after a launch. Nothing is deleted.
    */
-  el.querySelector('.stop-running')?.addEventListener('click', async () => {
-    const n = running.playerCount;
-    const alsoKicks = n
-      ? `\n\n${n} ${n === 1 ? 'phone is' : 'phones are'} in, and will have to scan and join again.`
-      : '';
-    if (!confirm(`Stop "${running.title}"?\n\nScores and cards are cleared and it goes back to waiting.${alsoKicks}`)) return;
-
-    const button = el.querySelector('.stop-running');
-    button.disabled = true;
-    button.textContent = 'Stopping…';
-    try {
-      await postJson('/api/host/resetAll', {}, { 'X-Host-Key': hostKey });
-      await load();
-    } catch (err) {
-      alert(`Could not stop it: ${err.message}`);
-      button.disabled = false;
-      button.textContent = 'Stop';
-    }
-  });
+  el.querySelector('.stop-running')?.addEventListener('click', (ev) => stopRunningNight(ev.currentTarget));
 
   return el;
 }

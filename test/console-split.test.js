@@ -114,8 +114,16 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * Workshop bench — `wantPackFromUrl()`, and the `packWanted` doc comment
  * explaining why it cannot render before `load()` has fetched anything, the
  * same boot-order fault `?night=` already exists to avoid.
+ *
+ * RAISED TO 2820 THE SAME DAY, for the unlaunch button beside the live-drift
+ * warning — asked for directly, off a screenshot of that line. The new
+ * `stopRunningNight()` is shared with the running panel's own Stop button
+ * (whose own copy of the same logic was deleted), so the net line cost is
+ * the new button's markup, its `aNightIsOn`-gated visibility inside
+ * `paintLive()`, and the doc comments explaining why it reads that rather
+ * than the line's own looser title check.
  */
-const BUDGET = { 'console-tonight.js': 2790, 'console.js': 2000 };
+const BUDGET = { 'console-tonight.js': 2820, 'console.js': 2000 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

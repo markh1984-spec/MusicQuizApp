@@ -6264,7 +6264,12 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    because that is the moment somebody is about to be surprised — the same
    treatment "not invoiced" and a venue clash get, for the same reason: not a
    fault, but a thing you want to have noticed. */
-.lb-live { margin-top: 6px; color: var(--ink-dim); }
+.lb-live-row { margin-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.lb-live { color: var(--ink-dim); min-width: 0; }
+/* The unlaunch button sits on the same line as the text it belongs to, never
+   its own row — it is one small action about one small fact, not a second
+   thing to notice on the bar. */
+.lb-unlaunch { flex: none; padding: 2px 10px; font-size: 0.8em; }
 /* RED, not gold, and at the host's own instruction: "these should never be
    allowed to drift, but if they do it needs to be a red warning". The rest of
    this app keeps red for wrong and destructive, and that is exactly what this
