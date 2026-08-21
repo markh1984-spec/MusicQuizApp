@@ -137,6 +137,24 @@ that list, in the order it should be built, worked out on 12 August 2026.
 A shareable link, no login: nights, numbers, and "book me". The thing that goes
 in an Instagram bio or a cold email.
 
+**THE GALLERY HALF IS BUILT, 20 August 2026.** `/gallery` was single-tenant —
+hardcoded to the owner's own room, because it was built when Mark was the only
+real subscriber. `?q=<accountId>` now asks for any quizmaster's — the
+underlying `src/gallery.js` was already written generically, so this was a
+matter of removing the hardcoding rather than a rebuild. **The owner-preview
+shortcut does NOT extend to `?q=`** — it would otherwise have let the owner
+preview every subscriber's unpublished, private photos with nothing consented
+and nothing logged, which is exactly the cross-room read the own-packs
+guarantee refuses everywhere else. Tested at the route level: an unrelated
+account gets `preview: false` on somebody else's gallery even by naming their
+id directly; the host key does too.
+
+**Still open, and this is genuinely the rest of the feature:** the "numbers"
+(headcount/nights aggregate — reusing `headcounts.js`) and "book me" (a
+contact line) halves of the page, plus the sender's own photo-consent tick
+described below — none of that is built, only the photo-viewing mechanism
+underneath it.
+
 **This is where photo consent actually starts to matter, and the line is
 narrower than it looks.** The projector is fine exactly as it is: the room can
 see the screen, they chose to send it, and it is gone in three seconds — which

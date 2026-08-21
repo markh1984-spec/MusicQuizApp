@@ -1502,9 +1502,15 @@ async function handleGet(req, res, url, route) {
    * The console asks with `role=host` to get its own instead.
    */
   if (route === '/api/brand') {
-    const room = url.searchParams.get('role') === 'host'
-      ? roomForHost(req, url)
-      : roomForPhone(req, url);
+    // The public gallery names whose photos these are the same way it picks
+    // which room's — `?q=`, an account id, no more secret than the one
+    // already in every `/signup?ref=` link. Checked before the role branch
+    // below: a gallery visit carries neither `role=host` nor a join code.
+    const galleryQ = String(url.searchParams.get('q') || '').trim();
+    const room = galleryQ ? rooms.get(galleryQ)
+      : url.searchParams.get('role') === 'host'
+        ? roomForHost(req, url)
+        : roomForPhone(req, url);
     return sendJson(res, 200, {
       name: brandForRoom(room),
       scheme: schemeForRoom(room),
@@ -2289,24 +2295,53 @@ async function handleGet(req, res, url, route) {
     return mine ? mine.id : HOUSE;
   }
 
+  /*
+   * A PUBLIC GALLERY PER QUIZMASTER, NOT ONLY THE OWNER'S OWN.
+   *
+   * This started as Mark's own tool — `/gallery` with no parameter always
+   * meant HIS room — and every function in `src/gallery.js` was already
+   * written generically, taking a `roomId`, so the single-tenant behaviour
+   * was purely this one hardcoded lookup. `?q=<accountId>` asks for a
+   * SPECIFIC quizmaster's gallery instead; account ids are not secret (the
+   * referral link already puts one in a public URL — see `/signup?ref=`),
+   * and an id that names nothing simply resolves to an empty room with no
+   * published nights, never a crash or a 404 that would let somebody probe
+   * which ids are real.
+   *
+   * `/gallery` with NO `?q=` is UNCHANGED — Mark's existing bookmark and any
+   * marketing link he has already handed out keeps working exactly as it
+   * always has.
+   */
+  const galleryTarget = String(url.searchParams.get('q') || '').trim();
   const galleryRoomId = () => {
+    if (galleryTarget) return galleryTarget;
     const owner = accounts.owner;
     const mine = owner ? accounts.ownQuizmasterFor(owner.id) : null;
     return mine ? mine.id : HOUSE;
   };
 
   /*
-   * THE OWNER SEES IT FIRST, ON EITHER HAT.
+   * THE OWNER SEES IT FIRST, ON EITHER HAT — but ONLY ON THEIR OWN GALLERY.
    *
    * One login holds two identities, and which one is worn should not decide
-   * whether the preview works — checking the room alone would hide it the
-   * moment he switched to the owner hat, on the page he is checking BECAUSE he
-   * is the owner. The host key counts for the same reason.
+   * whether the preview works on MARK'S OWN gallery — checking the room
+   * alone would hide it the moment he switched to the owner hat, on the page
+   * he is checking BECAUSE he is the owner. The host key counts for the same
+   * reason.
+   *
+   * **THAT SHORTCUT MUST NOT SURVIVE `?q=`.** Once this page can show any
+   * quizmaster's gallery, letting the owner-check apply everywhere would
+   * mean the owner previewing EVERY subscriber's unpublished, private
+   * photos with nothing consented and nothing logged — precisely the
+   * cross-room read the own-packs guarantee refuses elsewhere in this app.
+   * So the owner shortcut applies only when nobody asked for anybody else's
+   * gallery; asking by id always falls through to the one real rule —
+   * "you see the drafts on a room you are actually signed in as."
    */
   const galleryPreview = () => {
     const who = whoIs(req, url);
     if (!who) return false;
-    if (who.role === 'owner' || who.bootstrap) return true;
+    if (!galleryTarget && (who.role === 'owner' || who.bootstrap)) return true;
     return roomForHost(req, url).id === galleryRoomId();
   };
 

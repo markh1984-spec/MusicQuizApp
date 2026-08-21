@@ -28,33 +28,6 @@ const title = document.getElementById('galTitle');
 const sub = document.getElementById('galSub');
 
 /*
- * `innerHTML`, NOT `append()` — and this shipped wrong once.
- *
- * `brandMark()` and `brandWords()` return HTML STRINGS, and `Node.append()`
- * treats a string argument as literal text, so the whole SVG source printed
- * across the top of the page as garbled characters. Every other page in the
- * app sets `innerHTML`; this one invented a third way and got it wrong.
- *
- * The name comes from `/api/brand`, the same public endpoint the sign-in page
- * uses — a customer reaching this page has no account, so nothing that needs
- * one can be asked for. And it fails quietly: the page is the photographs, and
- * a missing logo is not a reason to show somebody an error.
- */
-fetch('/api/brand')
-  .then((r) => r.json())
-  .then((d) => {
-    const slot = document.getElementById('brand');
-    if (slot) slot.innerHTML = `${brandMark(26)}${brandWords(d.name, d.appName || '')}`;
-    if (d.name) document.title = `Photos — ${d.name}`;
-  })
-  .catch(() => { /* the gallery works perfectly well without a logo on it */ });
-
-const nightIn = () => {
-  const n = new URLSearchParams(location.search).get('n') || '';
-  return /^\d{4}-\d{2}-\d{2}$/.test(n) ? n : '';
-};
-
-/*
  * THE HOST KEY WORKS HERE TOO, AND ONLY IF IT IS IN THIS VISIT'S ADDRESS.
  *
  * The owner preview is the whole point of this page existing before anything
@@ -72,7 +45,47 @@ const nightIn = () => {
  * A customer's link has no key on it and this is a no-op for them.
  */
 const KEY = new URLSearchParams(location.search).get('key') || '';
-const keyed = (path) => (KEY ? path + (path.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(KEY) : path);
+/*
+ * WHOSE GALLERY THIS IS, the same way — read from the URL and carried onto
+ * every request and every link this page builds (including the brand fetch
+ * below), or the second request in (the night list, then a night's own
+ * photos, then each photo itself) would silently fall back to nobody's
+ * gallery in particular. See `?q=` in `server.js`'s gallery routes.
+ */
+const Q = new URLSearchParams(location.search).get('q') || '';
+const keyed = (path) => {
+  let out = path;
+  if (KEY) out += (out.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(KEY);
+  if (Q) out += (out.includes('?') ? '&' : '?') + 'q=' + encodeURIComponent(Q);
+  return out;
+};
+
+/*
+ * `innerHTML`, NOT `append()` — and this shipped wrong once.
+ *
+ * `brandMark()` and `brandWords()` return HTML STRINGS, and `Node.append()`
+ * treats a string argument as literal text, so the whole SVG source printed
+ * across the top of the page as garbled characters. Every other page in the
+ * app sets `innerHTML`; this one invented a third way and got it wrong.
+ *
+ * The name comes from `/api/brand`, the same public endpoint the sign-in page
+ * uses — a customer reaching this page has no account, so nothing that needs
+ * one can be asked for. And it fails quietly: the page is the photographs, and
+ * a missing logo is not a reason to show somebody an error.
+ */
+fetch(keyed('/api/brand'))
+  .then((r) => r.json())
+  .then((d) => {
+    const slot = document.getElementById('brand');
+    if (slot) slot.innerHTML = `${brandMark(26)}${brandWords(d.name, d.appName || '')}`;
+    if (d.name) document.title = `Photos — ${d.name}`;
+  })
+  .catch(() => { /* the gallery works perfectly well without a logo on it */ });
+
+const nightIn = () => {
+  const n = new URLSearchParams(location.search).get('n') || '';
+  return /^\d{4}-\d{2}-\d{2}$/.test(n) ? n : '';
+};
 
 async function get(path) {
   const res = await fetch(keyed(path), { headers: { Accept: 'application/json' } });
