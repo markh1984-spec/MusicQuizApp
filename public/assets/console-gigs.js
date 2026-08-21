@@ -2,7 +2,7 @@
 
 import { binIcon, esc, node } from './client.js';
 import { invoiceApi, openInvoiceForm } from './console-invoices.js';
-import { bench, book, library, nightToOpen, setBook, setGigsSeen, setNightDrag, setNightToOpen } from './console-state.js';
+import { bench, book, library, me, nightToOpen, setBook, setGigsSeen, setNightDrag, setNightToOpen } from './console-state.js';
 import { dragging, night } from './console-tonight.js';
 import { can, hostKey, keyed, load } from './console.js';
 import { tonight } from './diary.js';
@@ -765,10 +765,19 @@ async function shareReport(night) {
 function galleryToggle(night, on) {
   const wrap = node('<div class="gig-gallery"></div>');
 
+  /*
+   * `?q=` NAMES WHOSE GALLERY THIS IS, and without it the link falls back to
+   * the OWNER's own room — see `galleryRoomId()` in `server.js`. That was
+   * fine while there was only one gallery in the app; now every subscriber
+   * has their own, and a link built with no `q=` sends a quizmaster to look
+   * at Mark's photos instead of their own the moment they press "see it".
+   */
+  const galleryLink = `/gallery?n=${encodeURIComponent(night)}${me?.id ? `&q=${encodeURIComponent(me.id)}` : ''}`;
+
   const paint = (live) => {
     wrap.replaceChildren(node(live
       ? `<div class="tiny gig-gal-live">On the gallery —
-           <a href="/gallery?n=${encodeURIComponent(night)}" target="_blank" rel="noopener">see it</a></div>`
+           <a href="${galleryLink}" target="_blank" rel="noopener">see it</a></div>`
       // Not a warning wrapper and not red: it is a plain statement of what the
       // button does, read before pressing rather than after something went
       // wrong. Red here would say a mistake had been made.
