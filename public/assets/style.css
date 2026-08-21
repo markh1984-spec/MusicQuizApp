@@ -2488,21 +2488,6 @@ body[data-door="console"] .pack-card .pack-title::after { content: none; }
 .gig-head:hover { border-color: var(--hot); }
 .gig-head .an { font-weight: 800; font-size: var(--fs-ctl); }
 .gig-head .gig-more { margin-left: auto; color: var(--hot); font-weight: 700; }
-/* A NIGHT YOU HAVE RUN AND NOT BILLED — money left on the table, and until now
-   nobody was counting it. GOLD rather than red: it is not a fault and it is
-   not urgent, it is a job you have not done yet, and half the nights in a
-   history are ones somebody deliberately did not bill. Pushed right so a
-   column of them reads down the page, and it takes the `auto` margin from
-   .gig-more when both are there — which is right, because "not invoiced" is
-   the one worth reading first. */
-.gig-head .gig-unbilled {
-  margin-left: auto;
-  padding: 2px 9px; border-radius: var(--r-pill);
-  border: 1px solid rgba(255, 210, 63, 0.4);
-  color: var(--gold); font-size: var(--fs-tag); font-weight: 800;
-  letter-spacing: 0.04em; white-space: nowrap;
-}
-.gig-head .gig-unbilled + .gig-more { margin-left: 0; }
 .gig-body { padding: 10px 14px 4px; display: grid; gap: 8px; }
 
 /* ---- the one-button generator on the console */
@@ -6076,6 +6061,15 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    when the setting is the one that can put a question on sixty phones in a
    pub. Off is silent; on is unmissable. */
 .lb-mode { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+/* SAME HEIGHT AS .lb-fold, which sits right beside this in the head row —
+   reported directly, and it was a real mismatch: `.hat-switch` everywhere
+   else is a small inline pill with no height floor of its own, so beside a
+   44px touch-target button (`.lb-fold`'s own floor, set after a measured
+   audit) it read as visibly shorter. Scoped to this one instance rather than
+   `.hat-switch` generally — the switch is reused in tighter rows elsewhere
+   (My account's feature toggles) where a 44px floor would be the wrong call. */
+.lb-mode-switch { min-height: 44px; align-items: stretch; }
+.lb-mode-switch .hat-half { display: inline-flex; align-items: center; justify-content: center; }
 .lb-mode-switch .hat-half.live { background: rgba(255, 255, 255, 0.14); color: var(--ink); }
 .lb-mode-switch .hat-half[data-online="1"].live {
   background: linear-gradient(120deg, var(--hot), var(--hot-2));
@@ -6961,18 +6955,28 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .gig-head.is-selected { border-color: var(--hot); background: rgba(255, 255, 255, 0.06); }
 
 /* ---- one night's detail, on the POST GIG BENCH — `fillNightDetail()` in
-   console-gigs.js, called from `nightBenchPanel()`. Winner lines, the report
-   button, the photo grid and the gallery toggle, all laid out in the bench's
-   own body rather than a second panel of their own.
+   console-gigs.js, called from `nightBenchPanel()`. Winner lines, one row of
+   buttons, one row of photos and the gallery toggle, laid out in the
+   bench's own body rather than a second panel of their own.
 
-   CAPPED, with its own scroll — the door's own area above the tab column
-   sizes to its content and does not itself scroll (see `.doorhead`), which
-   was never a problem while the bench held a small tile. A night with
-   thirty photos made it tall enough to push the tab column below the fixed
-   frame's bottom edge with nothing left to scroll it back into view — the
-   whole page reads as stuck. The photo grid is the one part of this with no
-   natural limit, so it is this container that needs the ceiling. */
-.bench-detail { display: grid; gap: 8px; margin-top: 10px; max-height: 40vh; overflow-y: auto; }
+   NO VERTICAL CAP NEEDED HERE ANY MORE — a night with thirty photos used to
+   grow this past the fixed frame's bottom edge with nothing left to scroll
+   it back into view (the door's own area above the tab column sizes to its
+   content and does not scroll itself; see `.doorhead`). The fix was not a
+   ceiling on this container, it was making the photo row unable to grow
+   tall in the first place — see `.night-strip` below, which scrolls
+   SIDEWAYS instead of wrapping into more rows. */
+.bench-detail { display: grid; gap: 8px; margin-top: 10px; }
+/* Buttons that used to be full-width rows of their own — Report for the
+   venue, and anything that joins it — share one row now. `flex-wrap` is the
+   fallback for a phone too narrow for both at once, not the normal case. */
+.bench-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.bench-actions > * { flex: 1 1 auto; }
+/* ONE ROW OF PHOTOS, SCROLLED SIDEWAYS RATHER THAN WRAPPED. Fixed width per
+   photo so the row has a fixed height whatever the count — the one part of
+   the old layout with no natural ceiling now has one, structurally. */
+.night-strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+.night-strip .cphoto { flex: 0 0 130px; }
 /* ---- the diary
    Coming up sits ABOVE the past nights: one is a thing you can still act on,
    the other is a record. A row is a date, a place and a way to say you are not

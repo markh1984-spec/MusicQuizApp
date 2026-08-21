@@ -548,7 +548,6 @@ function gigRowMarkup(night, isSelected) {
           <span class="tiny">${esc(weekday)}${heads ? ` · ${heads} played` : ''}${prizes}</span>
         </span>
         <span class="gig-badges">
-          ${night.unbilled ? '<span class="gig-unbilled">Not invoiced</span>' : ''}
           ${night.hasPhotos ? '<span class="tiny gig-more">Photos ▸</span>' : ''}
         </span>
         <span class="sr-only">${esc(when.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }))}</span>
@@ -603,6 +602,21 @@ export async function fillNightDetail(body, night) {
    */
 
   /*
+   * THE CLICKABLE THINGS SHARE ONE ROW — asked for after the bench read as a
+   * stack of full-width rows: a button, then a photo count, then a grid,
+   * then another button buried under it. `.bench-actions` is that row;
+   * new buttons join it here rather than each getting a line of their own.
+   *
+   * THE GALLERY TOGGLE IS THE ONE DELIBERATE EXCEPTION, still built below
+   * the photos rather than into this row — see the note on `galleryToggle()`.
+   * It sits under the pictures it would publish so nobody can put a night in
+   * front of the world without having just looked at what is in it; moving
+   * it up here to tidy the row would undo that safeguard.
+   */
+  const actions = node('<div class="bench-actions"></div>');
+  body.appendChild(actions);
+
+  /*
    * THE REPORT FOR THE VENUE — headcount, winner, podium, photos, offer
    * scans, out through the share sheet exactly like an invoice. Present
    * even with no photographs: a quiet Tuesday is still worth a headcount.
@@ -613,7 +627,7 @@ export async function fillNightDetail(body, night) {
     await shareReport(night);
     report.disabled = false;
   });
-  body.appendChild(report);
+  actions.appendChild(report);
 
   if (!night.hasPhotos) return;
 
@@ -629,7 +643,15 @@ export async function fillNightDetail(body, night) {
     return;
   }
   loading.textContent = `${data.photos.length} photo${data.photos.length === 1 ? '' : 's'}`;
-  const grid = node('<div class="night-grid"></div>');
+  /*
+   * ONE ROW, SCROLLED SIDEWAYS RATHER THAN WRAPPED — the shape asked for.
+   * `.night-strip`, not `.night-grid`: the grid wraps into as many rows as
+   * it needs, which is exactly what grew the bench past its own frame on a
+   * night with thirty photos. A single row has a fixed height whatever the
+   * count, so the bench's own size stops depending on how many pictures
+   * somebody took.
+   */
+  const grid = node('<div class="night-strip"></div>');
   for (const p of data.photos) {
     /*
      * `filed`, always — and this was stamping "NOT FILED" on every one.
