@@ -6945,40 +6945,32 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .heads-night:first-child .hn-bar i { opacity: 1; }
 .hn-num { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; }
 
-/* ---- the same numbers on the Gigs tab, one row per venue */
-.heads-list { display: grid; gap: 8px; margin-top: 12px; }
-.heads-venue {
-  display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap;
+/* ---- Past gigs — venue cards, opening into the nights at each one
+   Same `.venue-card`/`.venue-top`/`.venue-name` component the Venues tab
+   uses; see `venueCard()` in console-gigs.js. Shut, the gist is whatever
+   `headcountLine()` says. Open, `.venue-gig-list` reuses `.gig-list`'s own
+   grid/gap — a night row here is the same object as the one the bay was
+   built from, so nothing about it needed a second style. */
+.venue-cards { display: grid; gap: 10px; margin-top: 12px; }
+.venue-gist { margin-top: 4px; }
+.venue-gig-list { margin-top: 10px; }
+
+/* ---- THE BAY — one night's detail, loaded by picking it out of a venue
+   card rather than found by scrolling the whole history. Sits above the
+   venue cards so pressing any night in any open card can bring the view
+   straight back up to it. */
+.gig-bay {
   border: 1px solid var(--panel-line); border-radius: var(--r-card);
-  background: rgba(255, 255, 255, 0.04); padding: 10px 12px;
+  background: var(--panel); padding: 14px; margin: 12px 0;
 }
-.heads-venue > * { min-width: 0; }
-.heads-who { flex: 1 1 200px; }
-.heads-who b { display: block; font-size: var(--fs-lead); }
-.heads-who .heads-line { margin-top: 2px; }
-.heads-who .heads-big { font-size: var(--fs-body); }
-/* The shape of the last dozen nights, newest on the right. Every number it
-   draws is written out beside it, so it is `aria-hidden` and nothing is
-   carried by the picture alone. */
-.heads-spark {
-  display: flex; align-items: flex-end; justify-content: flex-end;
-  gap: 3px; height: 32px; width: 132px; flex: 0 0 auto;
-}
-/* Capped, or a venue with three nights draws three slabs a centimetre wide,
-   which reads as a chart of something else entirely. Bars stay bar-shaped and
-   a short history simply takes less room. */
-.heads-spark span {
-  flex: 1 1 0; min-width: 0; max-width: 11px;
-  border-radius: var(--r-field) 2px 0 0; background: var(--hot); opacity: 0.45;
-}
-.heads-spark span:last-child { opacity: 1; }
-/* On a phone the row wraps, and a 132px block sitting on a line of its own
-   reads as something that fell off. Given the whole width it reads as what it
-   is — the shape of the venue above it. */
-@media (max-width: 560px) {
-  .heads-spark { flex: 1 1 100%; width: auto; justify-content: flex-start; }
-}
-.heads-unplaced { margin-top: 10px; }
+.gig-bay.empty { text-align: center; color: var(--ink-dim); }
+.gig-bay-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
+.gig-bay-head b { font-size: var(--fs-lead); }
+.gig-bay-body { display: grid; gap: 8px; }
+/* The row currently open in the bay, so it is findable again in a long list
+   without having to remember which one it was. Same colour a hovered row
+   already carries, just held rather than momentary. */
+.gig-head.is-selected { border-color: var(--hot); background: rgba(255, 255, 255, 0.06); }
 /* ---- the diary
    Coming up sits ABOVE the past nights: one is a thing you can still act on,
    the other is a record. A row is a date, a place and a way to say you are not

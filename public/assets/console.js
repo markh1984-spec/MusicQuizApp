@@ -831,8 +831,8 @@ export const TABS = [
     id: 'past',
     doors: ['post'],
     needs: FEATURES.PAST_GIGS,
-    label: 'Gigs',
-    blurb: 'What you have got coming, and every night you have run.',
+    label: 'Past gigs',
+    blurb: 'Every night you have run — the evidence you show a venue.',
     // NIGHTS, not games. A quiz and the bingo after it are one evening, and a
     // badge saying 5 above a list of four rows is a badge nobody trusts.
     count: () => library.archiveNights || 0,

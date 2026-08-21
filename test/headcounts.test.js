@@ -83,6 +83,37 @@ test('one venue typed in two cases is one venue, spelt as it was last typed', ()
   assert.equal(venues[0].change, 36);
 });
 
+test('a night with a venueId and a night at the same pub with none are one venue, not two half-histories', () => {
+  // The exact shape that split a pub into two cards on the Gigs tab: one
+  // night launched by picking it off the Venues list (carries a venueId),
+  // another launched by typing the same name freehand (does not).
+  const { venues } = venueHeadcounts([
+    { ...night('2026-08-20', 'The Station Tap, Wokingham', 19), venueId: 'v1' },
+    night('2026-08-13', 'The Station Tap, Wokingham', 17),
+  ]);
+  assert.equal(venues.length, 1);
+  const v = venues[0];
+  assert.equal(v.venue, 'The Station Tap, Wokingham');
+  assert.equal(v.nights, 2);
+  assert.equal(v.first.players, 17);
+  assert.equal(v.latest.players, 19);
+});
+
+test('a RENAME still merges by venueId, even though the names differ', () => {
+  // The other direction: the venue is renamed in the Venues tab, so an
+  // older night carries the old free-text name and a newer one the new
+  // name — both point at the same venueId, and a name-only key would have
+  // split them instead of merging them.
+  const { venues } = venueHeadcounts([
+    { ...night('2026-08-20', 'The Station Tap & Kitchen', 30), venueId: 'v1' },
+    { ...night('2026-07-20', 'The Station Tap', 25), venueId: 'v1' },
+  ]);
+  assert.equal(venues.length, 1);
+  assert.equal(venues[0].nights, 2);
+  // The most recent night's spelling wins, same as every other rename here.
+  assert.equal(venues[0].venue, 'The Station Tap & Kitchen');
+});
+
 test('venues come back most recently played first', () => {
   const { venues } = venueHeadcounts([
     night('2026-08-13', 'The Crown', 58),

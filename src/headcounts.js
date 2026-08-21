@@ -93,7 +93,28 @@ export function venueHeadcounts(nights = []) {
     byVenue.get(key).series.push({ night: night.night, players });
   }
 
-  const venues = [...byVenue.values()]
+  /*
+   * A NIGHT WITH A `venueId` AND A NIGHT AT THE SAME PUB WITHOUT ONE ARE ONE
+   * VENUE, and `venueKeyOf()` alone splits them: pick "The Station Tap" off
+   * the Venues list one week and type the same name freehand the next, and
+   * the two nights land under `id:xyz` and `the station tap` respectively —
+   * two half-histories under one name, on the one page whose whole job is
+   * showing somebody the shape of their own room. Folded together here, a
+   * second pass, purely by the lowercase name every raw group already
+   * carries — `venueKeyOf()` still does the first-pass job of catching a
+   * RENAME (two different names, one id) that a name-only key would miss.
+   */
+  const byName = new Map();
+  for (const entry of byVenue.values()) {
+    const nameKey = entry.venue.toLowerCase();
+    // `nights` arrives newest first, so the raw group created FIRST for a
+    // given name is the one built from the most recent night — its spelling
+    // is the one kept, same as `venuesUsed` already does.
+    if (!byName.has(nameKey)) byName.set(nameKey, { venue: entry.venue, series: [] });
+    byName.get(nameKey).series.push(...entry.series);
+  }
+
+  const venues = [...byName.values()]
     .map(summarise)
     // Most recently played first: the pub you were at last week is the one you
     // are thinking about, and it matches the order every other list of venues

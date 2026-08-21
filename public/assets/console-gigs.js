@@ -2,8 +2,8 @@
 
 import { binIcon, esc, node } from './client.js';
 import { invoiceApi, openInvoiceForm } from './console-invoices.js';
-import { bench, book, library, me, nightToOpen, setBook, setGigsSeen, setNightDrag, setNightToOpen } from './console-state.js';
-import { dragging, night } from './console-tonight.js';
+import { book, library, me, nightToOpen, setBook, setGigsSeen, setNightDrag, setNightToOpen } from './console-state.js';
+import { dragging } from './console-tonight.js';
 import { can, hostKey, keyed, load } from './console.js';
 import { tonight } from './diary.js';
 import { FEATURES } from './plans.js';
@@ -70,15 +70,13 @@ export function tonightsVenue() {
  * Every night's headcount has been in the archive since the app was written;
  * nobody had ever seen the number twice.
  *
- * **ONE RECORD, DRAWN TWO WAYS, and the summary line is the same function on
- * both.** `library.headcounts` is worked out once on the server (see
- * `venueHeadcounts`), so the Venues tab and the Gigs tab cannot arrive at two
- * different answers about a number somebody is showing a landlord.
- *
- *  - **A venue card** opens on its own whole history — every night, its
- *    number, and the bar that shows the shape of it.
- *  - **The Gigs tab** puts every venue side by side, because that is where the
- *    work lives and comparing places is what you do there.
+ * **ONE RECORD, DRAWN ON BOTH TABS, and the summary line is the same function
+ * either place.** `library.headcounts` is worked out once on the server (see
+ * `venueHeadcounts`), so the Venues tab and Past gigs cannot arrive at two
+ * different answers about a number somebody is showing a landlord. Both use
+ * the same `.venue-card` component too: shut, `headcountLine()` is the whole
+ * gist; the Venues tab opens into the full history and the prizes, Past gigs
+ * opens into the nights themselves — see `venueCard()` further down.
  *
  * The bars are `aria-hidden` on purpose: every number they draw is written out
  * next to them, so nothing is carried by a shape alone.
@@ -109,14 +107,6 @@ function headcountLine(entry) {
     <b class="heads-big">${entry.first.players} <span class="heads-arrow">→</span> ${entry.latest.players}</b>
     <span class="tiny">across ${entry.nights} nights · best ${entry.best} · ${entry.average} on average</span>
   </div>`;
-}
-
-/** The last dozen nights as a shape, newest on the right, for the Gigs tab. */
-function headcountSpark(entry) {
-  if (entry.nights < 2) return '';
-  const shown = entry.series.slice(-12);
-  return `<div class="heads-spark" aria-hidden="true">${shown.map((n) => `
-    <span style="height:${Math.max(8, Math.round((n.players / entry.best) * 100))}%"></span>`).join('')}</div>`;
 }
 
 /**
@@ -220,37 +210,27 @@ export function headcountBlock(venue) {
   </div>`;
 }
 
-/**
- * THE GIGS TAB'S PANEL — every venue, and which way each is going.
+/*
+ * THE GIGS TAB USED TO PUT EVERY VENUE'S HEADCOUNT IN ITS OWN PANEL, ABOVE
+ * A FLAT LIST OF EVERY NIGHT — two views of the same archive, agreeing with
+ * each other by construction but reading as two different pages you scroll
+ * past to find one night. It also had a bug this rewrite fixed along the
+ * way: `venueHeadcounts()` keyed on the venue's id when a night had one and
+ * on the lowercase NAME otherwise, so a pub picked off the Venues list one
+ * week and typed freehand the next showed up as two half-histories under
+ * the same name — see the merge pass added to `venueHeadcounts()` in
+ * `src/headcounts.js`.
  *
- * Between the diary and Past gigs: what is coming is the thing you act on,
- * this is the thing you show somebody, and the long list of nights sits under
- * both. Not drawn at all when there is nothing to say, because an empty panel
- * on a tab is the clutter this app's own rules argue against.
+ * Now there is ONE list, of venues, each one a card — same component the
+ * Venues tab already uses (`.venue-card`/`.venue-top`/`.venue-name`), so a
+ * quizmaster is not learning a second shape for the same idea. Shut, a card
+ * shows the venue's headcount line, which is the number the old separate
+ * panel existed to show. Open, it shows every night there, each one a
+ * button — pressing a night does not expand anything inline; it loads that
+ * night's full detail into the BAY at the top of the tab, so there is
+ * always exactly one place a night's photos, invoice button and gallery
+ * toggle live, however many venues are open at once.
  */
-function headcountsSection() {
-  const heads = library.headcounts || { venues: [], unplaced: 0 };
-  if (!heads.venues.length && !heads.unplaced) return document.createDocumentFragment();
-  return node(`
-    <div class="game-section">
-      <div class="game-head">
-        <div>
-          <h2>Headcount</h2>
-          <div class="tiny">How many played at each venue, and which way it is going.</div>
-        </div>
-      </div>
-      <div class="heads-list">
-        ${heads.venues.map((v) => `
-          <div class="heads-venue">
-            <div class="heads-who"><b>${esc(v.venue)}</b>${headcountLine(v)}</div>
-            ${headcountSpark(v)}
-          </div>`).join('')}
-      </div>
-      ${!heads.unplaced ? '' : `<div class="tiny heads-unplaced">${heads.unplaced}
-        night${heads.unplaced === 1 ? ' is' : 's are'} not filed under a venue.
-        Type one at launch and ${heads.unplaced === 1 ? 'it counts' : 'they count'} here.</div>`}
-    </div>`);
-}
 
 /**
  * WHAT THE ROOM ASKED FOR — yes or no, and no is a delete.
@@ -340,7 +320,6 @@ export function asksPanel() {
 }
 
 export function gigsSection() {
-  const wrap = document.createDocumentFragment();
   /*
    * THE DIARY MOVED OUT, and the reason is the host not being able to find it.
    *
@@ -355,15 +334,40 @@ export function gigsSection() {
    * worth less than being findable, and the person who wrote the tidy version
    * could not find his own diary.
    */
-  /*
-   * The numbers sit BETWEEN the two, and the order is the same argument the
-   * rest of this tab is built on: what is coming is what you act on, the
-   * headcounts are what you show a landlord, and the night-by-night list is
-   * the long thing you scroll — so it goes under both.
-   */
-  wrap.appendChild(headcountsSection());
-  wrap.appendChild(pastGigsSection());
-  return wrap;
+  return pastGigsSection();
+}
+
+/**
+ * EVERY NIGHT, SORTED UNDER WHERE IT WAS PLAYED.
+ *
+ * The same merge `venueHeadcounts()` runs server-side, read back off ITS
+ * output rather than re-derived here — a night's date is enough to look up
+ * which of the server's already-deduplicated venue groups it belongs to, so
+ * this list can never disagree with the headcount line on the same card. A
+ * night that summary skipped (no players, or one whose venue carried a
+ * `venueId` the summary never saw because it had none) falls back to its own
+ * raw venue name; one with no name at all goes into `unfiled`.
+ */
+function groupByVenue(nights, headcounts) {
+  const dateVenue = new Map();
+  for (const v of (headcounts.venues || [])) {
+    for (const s of v.series) dateVenue.set(s.night, v.venue);
+  }
+  const byKey = new Map();
+  const unfiled = [];
+  for (const n of nights) {
+    const name = dateVenue.get(n.night) || String(n.venue || '').trim();
+    if (!name) { unfiled.push(n); continue; }
+    const key = name.toLowerCase();
+    if (!byKey.has(key)) byKey.set(key, { key, venue: name, nights: [] });
+    byKey.get(key).nights.push(n);
+  }
+  for (const v of byKey.values()) v.nights.sort((a, b) => b.night.localeCompare(a.night));
+  // Most recently played first, same order every other list of venues in
+  // this app comes back in.
+  const venues = [...byKey.values()]
+    .sort((a, b) => b.nights[0].night.localeCompare(a.nights[0].night));
+  return { venues, unfiled };
 }
 
 function pastGigsSection() {
@@ -372,15 +376,59 @@ function pastGigsSection() {
       <div class="game-head">
         <div>
           <h2>Past gigs</h2>
-          <div class="tiny">Every night you have run. Saved automatically when a game finishes.</div>
+          <div class="tiny">Every night you have run — the evidence you show a venue.</div>
         </div>
       </div>
       <div class="tiny gig-note"></div>
-      <div class="gig-list">Loading…</div>
+      <div class="gig-bay-slot"></div>
+      <div class="venue-cards">Loading…</div>
     </div>`);
 
-  const list = el.querySelector('.gig-list');
+  const bay = el.querySelector('.gig-bay-slot');
+  const cardsWrap = el.querySelector('.venue-cards');
   const note = el.querySelector('.gig-note');
+  bay.appendChild(emptyBay());
+
+  // Which venue card is open, and which night is currently loaded into the
+  // bay — both start fresh every time the tab is opened, same as the old
+  // per-row expand state did.
+  let openKey = '';
+  let selectedNight = '';
+  let groups = { venues: [], unfiled: [] };
+
+  const drawCards = () => {
+    const cards = groups.venues.map((v) => venueCard(v, {
+      open: openKey === v.key,
+      selectedNight,
+      onToggle: () => { openKey = openKey === v.key ? '' : v.key; drawCards(); },
+      onPick: showInBay,
+    }));
+    if (groups.unfiled.length) {
+      cards.push(venueCard(
+        { key: '~unfiled', venue: 'Not filed under a venue', nights: groups.unfiled },
+        {
+          open: openKey === '~unfiled',
+          selectedNight,
+          onToggle: () => { openKey = openKey === '~unfiled' ? '' : '~unfiled'; drawCards(); },
+          onPick: showInBay,
+          noHeadcount: true,
+        },
+      ));
+    }
+    cardsWrap.replaceChildren(...cards);
+  };
+
+  /*
+   * THE BAY IS ONE SLOT, WHOEVER OPENS IT. Every venue card's nights wire up
+   * to this same function, so there is exactly one place a night's photos,
+   * invoice button and gallery toggle can be — never one copy per open card.
+   */
+  const showInBay = async (target) => {
+    selectedNight = target.night;
+    drawCards();
+    bay.replaceChildren(await nightDetail(target));
+    bay.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  };
 
   (async () => {
     let data;
@@ -389,12 +437,12 @@ function pastGigsSection() {
       data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Could not load them');
     } catch (err) {
-      list.replaceChildren(node(`<div class="tiny">${esc(err.message)}</div>`));
+      cardsWrap.replaceChildren(node(`<div class="tiny">${esc(err.message)}</div>`));
       return;
     }
 
     if (!data.nights.length) {
-      list.replaceChildren(node('<div class="tiny">Nothing yet. Finish a game and the night appears here.</div>'));
+      cardsWrap.replaceChildren(node('<div class="tiny">Nothing yet. Finish a game and the night appears here.</div>'));
       return;
     }
     // Said once, at the top, rather than against every night: without the photo
@@ -412,30 +460,133 @@ function pastGigsSection() {
      * photo deleted since is reflected the next time this tab is opened.
      */
     setGigsSeen(data.nights || []);
-    list.replaceChildren(...data.nights.map(gigRow));
+    groups = groupByVenue(data.nights, library.headcounts || { venues: [] });
+    drawCards();
 
     /*
-     * ARRIVED FROM THE MIC — open that night's photographs straight away.
+     * ARRIVED FROM THE MIC — open that night straight into the bay.
      *
      * `?night=` on the URL is the control view's **Check the photos** button
-     * landing here at the end of a quiz. Opening the row is what makes that a
-     * flow rather than a signpost.
+     * landing here at the end of a quiz. Opening its venue card and loading
+     * the bay is what makes that a flow rather than a signpost.
      *
-     * Through the row's own head, exactly as the bench's *Open its photos*
-     * does — one implementation of "show me this night", so a second one
-     * cannot drift from it and draw a gallery with no bin on the pictures.
-     *
-     * **Cleared whether or not the row was found**, or changing tab and coming
-     * back re-opens a night nobody asked for.
+     * **Cleared whether or not the night was found**, or changing tab and
+     * coming back re-opens a night nobody asked for.
      */
     if (nightToOpen) {
-      const head = list.querySelector(`.gig[data-night="${CSS.escape(nightToOpen)}"] .gig-head`);
+      const target = data.nights.find((n) => n.night === nightToOpen);
       setNightToOpen('');
-      if (head) { head.click(); head.scrollIntoView({ block: 'start' }); }
+      if (target) {
+        const home = groups.venues.find((v) => v.nights.includes(target));
+        openKey = home ? home.key : (groups.unfiled.includes(target) ? '~unfiled' : '');
+        drawCards();
+        await showInBay(target);
+      }
     }
   })();
 
   return el;
+}
+
+/**
+ * ONE CARD PER VENUE — the same component the Venues tab already uses
+ * (`.venue-card`/`.venue-top`/`.venue-name`), so this is not a second shape
+ * for one idea. Shut, it shows the headcount line, which is the number the
+ * tab's old separate Headcount panel existed to show. Open, it lists every
+ * night there; pressing one does not expand anything inline — it hands the
+ * night to `onPick`, which loads it into the bay. That is deliberate: with
+ * several venue cards open at once, a night's detail must still live in
+ * exactly one place, or two open cards could each claim to be showing it.
+ */
+function venueCard(entry, { open, selectedNight, onToggle, onPick, noHeadcount = false }) {
+  const summary = noHeadcount ? null : headsFor(entry.venue);
+  const gist = summary
+    ? headcountLine(summary)
+    : `<div class="tiny">${entry.nights.length} night${entry.nights.length === 1 ? '' : 's'} played</div>`;
+
+  const el = node(`
+    <div class="venue-card ${open ? 'open' : 'shut'}">
+      <div class="venue-top">
+        <button class="venue-name" aria-expanded="${open ? 'true' : 'false'}">${esc(entry.venue)}</button>
+      </div>
+      ${open ? '' : `<div class="venue-gist">${gist}</div>`}
+      ${!open ? '' : `
+        <div class="gig-list venue-gig-list">
+          ${entry.nights.map((n) => gigRowMarkup(n, n.night === selectedNight)).join('')}
+        </div>`}
+    </div>`);
+
+  el.querySelector('.venue-name').addEventListener('click', onToggle);
+
+  if (open) {
+    for (const row of el.querySelectorAll('.gig-head')) {
+      const target = entry.nights.find((n) => n.night === row.dataset.night);
+      const wrap = row.closest('.gig');
+      row.addEventListener('click', () => onPick(target));
+      // Drag a night up to the bench — same gesture as a pack onto Tonight.
+      wrap.addEventListener('dragstart', (ev) => {
+        setNightDrag(target.night);
+        ev.dataTransfer.effectAllowed = 'copy';
+        ev.dataTransfer.setData('text/plain', target.night);
+        wrap.classList.add('is-dragging');
+        dragging(true);
+      });
+      wrap.addEventListener('dragend', () => {
+        setNightDrag(null);
+        wrap.classList.remove('is-dragging');
+        dragging(false);
+        document.querySelector('.night-bench')?.classList.remove('drop-here');
+      });
+    }
+  }
+  return el;
+}
+
+/**
+ * ONE NIGHT, compact — the same date-block shape the row always had, minus
+ * the body it used to expand into inline. A press now hands the night to
+ * whichever `onPick` the open venue card was given; see `venueCard()`.
+ */
+function gigRowMarkup(night, isSelected) {
+  const when = new Date(night.night + 'T12:00:00');
+  const day = when.toLocaleDateString('en-GB', { day: 'numeric' });
+  const month = when.toLocaleDateString('en-GB', { month: 'short' });
+  const weekday = when.toLocaleDateString('en-GB', { weekday: 'long' });
+  const year = when.getFullYear() === new Date().getFullYear()
+    ? '' : String(when.getFullYear()).slice(2);
+  const played = night.games.length
+    ? night.games.map(gameLabel).join(' · ')
+    : 'No results saved';
+  const heads = night.games.reduce((n, g) => Math.max(n, g.players || 0), 0);
+  const put = night.games.reduce((n, g) => n + ((g.rewards || []).length), 0);
+  const taken = night.games.reduce((n, g) => n + (g.rewardsTaken || 0), 0);
+  const backAgain = night.games.reduce((n, g) => n + (g.rewardsReinstated || 0), 0);
+  const prizes = put
+    ? ` · ${put} ${put === 1 ? 'prize' : 'prizes'}${taken ? `, ${taken} taken` : ''}${backAgain ? `, ${backAgain} put back` : ''}`
+    : '';
+
+  return `
+    <div class="gig" draggable="true">
+      <button class="gig-head ${isSelected ? 'is-selected' : ''}" type="button" data-night="${esc(night.night)}">
+        <span class="gig-cal" aria-hidden="true">
+          <b>${esc(day)}</b><span>${esc(month)}${year ? ` ${esc(year)}` : ''}</span>
+        </span>
+        <span class="gig-mid">
+          <b>${played}</b>
+          <span class="tiny">${esc(weekday)}${heads ? ` · ${heads} played` : ''}${prizes}</span>
+        </span>
+        <span class="gig-badges">
+          ${night.unbilled ? '<span class="gig-unbilled">Not invoiced</span>' : ''}
+          ${night.hasPhotos ? '<span class="tiny gig-more">Photos ▸</span>' : ''}
+        </span>
+        <span class="sr-only">${esc(when.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }))}</span>
+      </button>
+    </div>`;
+}
+
+/** The bay before anything has been picked. */
+function emptyBay() {
+  return node('<div class="gig-bay empty"><div class="tiny">Pick a night below to see it here.</div></div>');
 }
 
 /**
@@ -455,246 +606,158 @@ function gameLabel(g) {
   return esc(g.title || (g.kind === 'bingo' ? 'Music bingo' : 'Music quiz'));
 }
 
-function gigRow(night) {
+/**
+ * THE BAY'S CONTENTS — one night's full detail: who won, invoice it, the
+ * report for the venue, its photos and the gallery toggle. Exactly what used
+ * to open inline under a row's own head; the shape is unchanged, only where
+ * it lands moved — see the note above `venueCard()`.
+ */
+async function nightDetail(night) {
   const when = new Date(night.night + 'T12:00:00');
-  const day = when.toLocaleDateString('en-GB', { day: 'numeric' });
-  const month = when.toLocaleDateString('en-GB', { month: 'short' });
-  const weekday = when.toLocaleDateString('en-GB', { weekday: 'long' });
-  // The year only when it is not this one. Every row carrying "2026" is four
-  // characters of noise on a list where almost everything is this year — and
-  // the moment one says 2025 it is the thing you actually needed to see.
-  const year = when.getFullYear() === new Date().getFullYear()
-    ? '' : String(when.getFullYear()).slice(2);
-  const played = night.games.length
-    ? night.games.map(gameLabel).join(' · ')
-    : 'No results saved';
-  const heads = night.games.reduce((n, g) => Math.max(n, g.players || 0), 0);
-  // The venue is the headline, because it is what you are looking for when you
-  // scan this list — "what did I play at The Crown". With no venue on the
-  // night, what was played is the next most useful thing to lead with rather
-  // than an empty line.
-  const lead = night.venue ? esc(night.venue) : played;
-
-  /*
-   * WHAT WAS PUT UP, AND WHAT WAS ACTUALLY COLLECTED.
-   *
-   * The record has carried both since the bar started scanning vouchers, and
-   * nothing ever said so — Gigs named the headcount and stopped. "Taken" is
-   * the half somebody asks about: an unclaimed prize is money still sitting
-   * behind a bar, and it is the quizmaster who gets asked about it weeks later.
-   *
-   * Silent when there were no prizes, rather than "0 prizes" on every night
-   * that ran without any — the same rule as the venue line above it.
-   */
-  const put = night.games.reduce((n, g) => n + ((g.rewards || []).length), 0);
-  const taken = night.games.reduce((n, g) => n + (g.rewardsTaken || 0), 0);
-  /*
-   * THE REINSTATE COUNT IS THE SIGNAL, not the redemption — a voucher put
-   * back once is the system working (a mis-scan, a genuine mistake); one put
-   * back three times is either a bar that cannot reach us or somebody working
-   * it. Silent at zero, like "taken" beside it — this is not an alarm, it is
-   * evidence to have ready if the question ever comes up.
-   */
-  const backAgain = night.games.reduce((n, g) => n + (g.rewardsReinstated || 0), 0);
-  const prizes = put
-    ? ` · ${put} ${put === 1 ? 'prize' : 'prizes'}${taken ? `, ${taken} taken` : ''}${backAgain ? `, ${backAgain} put back` : ''}`
-    : '';
-
   const el = node(`
-    <div class="gig" data-night="${esc(night.night)}" draggable="true">
-      <button class="gig-head" type="button">
-        <!-- THE DATE AS A BLOCK, chosen from four layouts on 15 August 2026.
-             The old row was five spans in a flat sequence, which wrapped into
-             a ragged block at any narrow width. This scans DOWN the dates like
-             a diary, which is how somebody looks for a particular night — and
-             it gives the venue a line of its own instead of burying it third
-             in a run of dim text. -->
-        <span class="gig-cal" aria-hidden="true">
-          <b>${esc(day)}</b><span>${esc(month)}${year ? ` ${esc(year)}` : ''}</span>
-        </span>
-        <span class="gig-mid">
-          <b>${lead}</b>
-          <span class="tiny">${esc(weekday)}${night.venue ? ` · ${played}` : ''}${heads ? ` · ${heads} played` : ''}${prizes}</span>
-        </span>
-        <span class="gig-badges">
-          ${night.unbilled ? '<span class="gig-unbilled">Not invoiced</span>' : ''}
-          <!-- Its OWN span: this one is rewritten with "Loading…" and then the
-               photo count the moment the night is opened. -->
-          <span class="tiny gig-more">${night.hasPhotos ? 'Photos ▸' : ''}</span>
-        </span>
-        <!-- The full date for anybody not looking at it. The block above is
-             hidden from screen readers, because "13 Aug" read out as two
-             fragments is worse than the whole date said once.
-             (No backticks in here: it is inside a template literal.) -->
-        <span class="sr-only">${esc(when.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }))}</span>
-      </button>
-      <div class="gig-body" hidden></div>
+    <div class="gig-bay">
+      <div class="gig-bay-head">
+        <b>${night.venue ? esc(night.venue) : 'No venue recorded'}</b>
+        <span class="tiny">${esc(when.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }))}</span>
+      </div>
+      <div class="gig-bay-body"></div>
     </div>`);
+  const body = el.querySelector('.gig-bay-body');
+
+  // Who won, which is on the archive and never on a photo.
+  for (const game of night.games) {
+    body.appendChild(node(`<div class="tiny">${gameLabel(game)} —
+      ${esc(game.winner ? 'won by ' + game.winner : 'no winner recorded')}</div>`));
+  }
 
   /*
-   * DRAG A NIGHT UP TO THE BENCH. Same gesture as a pack onto Tonight, and the
-   * row stays a button as well — a tap opens its photos, which is what it has
-   * always done, so the drag adds a way and takes none away.
+   * BILL FOR THIS ONE, from the night itself.
+   *
+   * This is what lets Invoices stay a tab of its own rather than being
+   * swallowed into this one. "Invoice this" already existed on the running
+   * panel — but only in the minutes after a game ends, so a night from a
+   * fortnight ago could only be billed by typing the venue and the date back
+   * in from memory. That is precisely the blank page this app's own rule
+   * says is where the time goes.
+   *
+   * The venue is matched to a record so the address and the usual fee come
+   * with it; an unmatched name still fills the night's own details in, which
+   * is the free-text venue keeping its promise. Only where they hold the
+   * feature — a quizmaster without invoicing gets no button rather than one
+   * that 403s.
    */
-  el.addEventListener('dragstart', (ev) => {
-    setNightDrag(night.night);
-    ev.dataTransfer.effectAllowed = 'copy';
-    ev.dataTransfer.setData('text/plain', night.night);
-    el.classList.add('is-dragging');
-    dragging(true);
-  });
-  el.addEventListener('dragend', () => {
-    setNightDrag(null);
-    el.classList.remove('is-dragging');
-    dragging(false);
-    document.querySelector('.night-bench')?.classList.remove('drop-here');
-  });
-
-  const body = el.querySelector('.gig-body');
-  const more = el.querySelector('.gig-more');
-  let loaded = false;
-
-  el.querySelector('.gig-head').addEventListener('click', async () => {
-    body.hidden = !body.hidden;
-    if (body.hidden || loaded) return;
-    loaded = true;
-
-    // Who won, which is on the archive and never on a photo.
-    for (const game of night.games) {
-      body.appendChild(node(`<div class="tiny">${gameLabel(game)} —
-        ${esc(game.winner ? 'won by ' + game.winner : 'no winner recorded')}</div>`));
-    }
-
-    /*
-     * BILL FOR THIS ONE, from the night itself.
-     *
-     * This is what lets Invoices stay a tab of its own rather than being
-     * swallowed into this one. "Invoice this" already existed on the running
-     * panel — but only in the minutes after a game ends, so a night from a
-     * fortnight ago could only be billed by typing the venue and the date back
-     * in from memory. That is precisely the blank page this app's own rule
-     * says is where the time goes.
-     *
-     * The venue is matched to a record so the address and the usual fee come
-     * with it; an unmatched name still fills the night's own details in, which
-     * is the free-text venue keeping its promise. Only where they hold the
-     * feature — a quizmaster without invoicing gets no button rather than one
-     * that 403s.
-     */
-    if (can(FEATURES.INVOICES)) {
-      const bill = node('<button class="minor gig-bill">Invoice this</button>');
-      bill.addEventListener('click', async () => {
-        bill.disabled = true;
-        try {
-          setBook(await invoiceApi('/api/invoices'));
-        } catch (err) {
-          bill.disabled = false;
-          alert('Could not open the invoices: ' + err.message);
-          return;
-        }
-        const match = book.customers.find(
-          (c) => (c.name || '').toLowerCase() === String(night.venue || '').toLowerCase());
-        const what = night.games.some((g) => g.kind === 'bingo') && night.games.every((g) => g.kind === 'bingo')
-          ? 'Music bingo night' : 'Music quiz night';
-        openInvoiceForm({
-          customerId: match ? match.id : '',
-          // `nightId` has been a field on every invoice since invoicing was
-          // written and was never once set. It is the stable handle back to
-          // the night — what tells the two apart for "have I billed this" is
-          // the venue and the date together, but the id is what anything
-          // later will want and it costs nothing to record now.
-          event: { title: what, venue: night.venue || '', date: night.night, nightId: night.night },
-          description: what,
-        }, () => load());
+  if (can(FEATURES.INVOICES)) {
+    const bill = node('<button class="minor gig-bill">Invoice this</button>');
+    bill.addEventListener('click', async () => {
+      bill.disabled = true;
+      try {
+        setBook(await invoiceApi('/api/invoices'));
+      } catch (err) {
         bill.disabled = false;
-      });
-      body.appendChild(bill);
-    }
-
-    /*
-     * THE REPORT FOR THE VENUE — headcount, winner, podium, photos, offer
-     * scans, out through the share sheet exactly like an invoice. Present
-     * even with no photographs: a quiet Tuesday is still worth a headcount.
-     */
-    const report = node('<button class="minor gig-report">Report for the venue</button>');
-    report.addEventListener('click', async () => {
-      report.disabled = true;
-      await shareReport(night);
-      report.disabled = false;
+        alert('Could not open the invoices: ' + err.message);
+        return;
+      }
+      const match = book.customers.find(
+        (c) => (c.name || '').toLowerCase() === String(night.venue || '').toLowerCase());
+      const what = night.games.some((g) => g.kind === 'bingo') && night.games.every((g) => g.kind === 'bingo')
+        ? 'Music bingo night' : 'Music quiz night';
+      openInvoiceForm({
+        customerId: match ? match.id : '',
+        // `nightId` has been a field on every invoice since invoicing was
+        // written and was never once set. It is the stable handle back to
+        // the night — what tells the two apart for "have I billed this" is
+        // the venue and the date together, but the id is what anything
+        // later will want and it costs nothing to record now.
+        event: { title: what, venue: night.venue || '', date: night.night, nightId: night.night },
+        description: what,
+      }, () => load());
+      bill.disabled = false;
     });
-    body.appendChild(report);
+    body.appendChild(bill);
+  }
 
-    if (!night.hasPhotos) return;
-
-    more.textContent = 'Loading…';
-    let data;
-    try {
-      const res = await fetch(keyed('/api/past-gigs/' + encodeURIComponent(night.night)));
-      data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Could not load them');
-    } catch (err) {
-      more.textContent = '';
-      body.appendChild(node(`<div class="tiny">${esc(err.message)}</div>`));
-      return;
-    }
-    more.textContent = `${data.photos.length} photo${data.photos.length === 1 ? '' : 's'}`;
-    const grid = node('<div class="night-grid"></div>');
-    for (const p of data.photos) {
-      /*
-       * `filed`, always — and this was stamping "NOT FILED" on every one.
-       *
-       * The badge belongs to the owner's Photos tab, where a photo genuinely
-       * can be sitting on a disk that the next restart wipes. Past gigs reads
-       * the photo list OUT of the repository, so anything shown here is filed
-       * by definition. Without the class the CSS `:not(.filed)` rule fired on
-       * all of them — telling a quizmaster their night's pictures were about
-       * to be lost, on the one page whose whole job is "here is my work".
-       */
-      /*
-       * A BIN ON EVERY PHOTO, bottom right — asked for in those words, and
-       * asked for BEFORE publishing anything, which is the right order: the
-       * gallery control publishes a whole night, so without this the only way
-       * to keep one picture off it was to keep the night off it.
-       *
-       * Bottom right because the top of a photo is where faces are. It is the
-       * drawn `binIcon()`, like everything else in this app that deletes.
-       */
-      const shot = node(`<figure class="cphoto filed">
-        <img src="${esc(p.url)}" alt="" loading="lazy">
-        <button class="cphoto-bin" type="button" aria-label="Delete this photo">${binIcon(15)}</button>
-      </figure>`);
-      shot.querySelector('.cphoto-bin').addEventListener('click', async (ev) => {
-        const btn = ev.currentTarget;
-        /*
-         * ASKED FIRST, and it names what it is deleting rather than saying
-         * "are you sure". This is somebody's photograph and the night is
-         * already filed — there is no undo, and the confirm is the only thing
-         * standing between a mis-tap on a phone and a picture being gone.
-         */
-        if (!confirm('Delete this photo? It will be taken out of this night and can never reach the gallery.')) return;
-        btn.disabled = true;
-        try {
-          const res = await fetch(keyed(`/api/past-photo/${encodeURIComponent(night.night)}/${encodeURIComponent(p.name)}`), {
-            method: 'DELETE',
-            headers: { 'X-Host-Key': hostKey },
-          });
-          const out = await res.json().catch(() => ({}));
-          if (!res.ok) throw new Error(out.error || 'Could not delete that.');
-          // Gone from the page as well as the repository, or the next tap
-          // deletes something that is not there any more.
-          shot.remove();
-          more.textContent = `${grid.querySelectorAll('.cphoto').length} photos`;
-        } catch (err) {
-          btn.disabled = false;
-          alert(err.message);
-        }
-      });
-      grid.appendChild(shot);
-    }
-    body.appendChild(grid);
-    body.appendChild(galleryToggle(night.night, data.published));
+  /*
+   * THE REPORT FOR THE VENUE — headcount, winner, podium, photos, offer
+   * scans, out through the share sheet exactly like an invoice. Present
+   * even with no photographs: a quiet Tuesday is still worth a headcount.
+   */
+  const report = node('<button class="minor gig-report">Report for the venue</button>');
+  report.addEventListener('click', async () => {
+    report.disabled = true;
+    await shareReport(night);
+    report.disabled = false;
   });
+  body.appendChild(report);
 
+  if (!night.hasPhotos) return el;
+
+  const loading = node('<div class="tiny">Loading photos…</div>');
+  body.appendChild(loading);
+  let data;
+  try {
+    const res = await fetch(keyed('/api/past-gigs/' + encodeURIComponent(night.night)));
+    data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not load them');
+  } catch (err) {
+    loading.textContent = err.message;
+    return el;
+  }
+  loading.textContent = `${data.photos.length} photo${data.photos.length === 1 ? '' : 's'}`;
+  const grid = node('<div class="night-grid"></div>');
+  for (const p of data.photos) {
+    /*
+     * `filed`, always — and this was stamping "NOT FILED" on every one.
+     *
+     * The badge belongs to the owner's Photos tab, where a photo genuinely
+     * can be sitting on a disk that the next restart wipes. Past gigs reads
+     * the photo list OUT of the repository, so anything shown here is filed
+     * by definition. Without the class the CSS `:not(.filed)` rule fired on
+     * all of them — telling a quizmaster their night's pictures were about
+     * to be lost, on the one page whose whole job is "here is my work".
+     */
+    /*
+     * A BIN ON EVERY PHOTO, bottom right — asked for in those words, and
+     * asked for BEFORE publishing anything, which is the right order: the
+     * gallery control publishes a whole night, so without this the only way
+     * to keep one picture off it was to keep the night off it.
+     *
+     * Bottom right because the top of a photo is where faces are. It is the
+     * drawn `binIcon()`, like everything else in this app that deletes.
+     */
+    const shot = node(`<figure class="cphoto filed">
+      <img src="${esc(p.url)}" alt="" loading="lazy">
+      <button class="cphoto-bin" type="button" aria-label="Delete this photo">${binIcon(15)}</button>
+    </figure>`);
+    shot.querySelector('.cphoto-bin').addEventListener('click', async (ev) => {
+      const btn = ev.currentTarget;
+      /*
+       * ASKED FIRST, and it names what it is deleting rather than saying
+       * "are you sure". This is somebody's photograph and the night is
+       * already filed — there is no undo, and the confirm is the only thing
+       * standing between a mis-tap on a phone and a picture being gone.
+       */
+      if (!confirm('Delete this photo? It will be taken out of this night and can never reach the gallery.')) return;
+      btn.disabled = true;
+      try {
+        const res = await fetch(keyed(`/api/past-photo/${encodeURIComponent(night.night)}/${encodeURIComponent(p.name)}`), {
+          method: 'DELETE',
+          headers: { 'X-Host-Key': hostKey },
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Could not delete that.');
+        // Gone from the page as well as the repository, or the next tap
+        // deletes something that is not there any more.
+        shot.remove();
+        loading.textContent = `${grid.querySelectorAll('.cphoto').length} photos`;
+      } catch (err) {
+        btn.disabled = false;
+        alert(err.message);
+      }
+    });
+    grid.appendChild(shot);
+  }
+  body.appendChild(grid);
+  body.appendChild(galleryToggle(night.night, data.published));
   return el;
 }
 
