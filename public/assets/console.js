@@ -1248,6 +1248,42 @@ export function render() {
  * **A pack on the bench is NOT opened automatically.** Dropping is choosing,
  * pressing is doing — the same promise every other drop in this app makes.
  */
+const WORK_BENCH_OPEN_STORE = 'musicquiz.workbenchopen';
+const NIGHT_BENCH_OPEN_STORE = 'musicquiz.nightbenchopen';
+
+/**
+ * A SIMPLE FOLD, shared by the Workshop and Post gig benches — asked for as
+ * *"all three benches need consistent functionality — hide/expand"*, Tonight
+ * already having one. Same classes as Tonight's own `.lb-fold` (so it is one
+ * visual language, not three), but not its per-element TUCKING — that exists
+ * because Tonight has several named sub-sections (venue picker, mode switch,
+ * running order) that each need their own fold behaviour. These two benches
+ * hold one thing each, so one body wrapper hidden or shown whole is the
+ * whole mechanism.
+ *
+ * Read from localStorage on every call rather than held in a module
+ * variable — both benches rebuild their whole panel from scratch on every
+ * redraw (`draw()` in `nightBenchPanel()`, `render()` on the workshop door),
+ * so state that lived only in a closure would reset itself the moment
+ * anything else on the page changed.
+ */
+function wireBenchFold(el, storeKey) {
+  let open = localStorage.getItem(storeKey) !== '0';
+  const fold = el.querySelector('.lb-fold');
+  const body = el.querySelector('.bench-fold-body');
+  const paint = () => {
+    fold.setAttribute('aria-expanded', open ? 'true' : 'false');
+    fold.querySelector('.lb-fold-word').textContent = open ? 'Hide' : 'Show';
+    if (body) body.hidden = !open;
+  };
+  fold.addEventListener('click', () => {
+    open = !open;
+    localStorage.setItem(storeKey, open ? '1' : '0');
+    paint();
+  });
+  paint();
+}
+
 function workBench() {
   const on = bench ? shelfFor(bench.kind).find((p) => p.id === bench.id) : null;
   // A pack that has been deleted since it was put on the bench leaves quietly
@@ -1263,6 +1299,9 @@ function workBench() {
           <span class="bench-where">On the bench</span>
           <span class="tiny lb-shut-what">${on ? esc(shortTitle(on.title)) : 'Nothing yet'}</span>
         </div>
+        <div class="lb-right">
+          <button class="lb-fold" type="button" aria-expanded="true"><span class="lb-fold-word"></span></button>
+        </div>
       </div>
       <!-- THE SLOT ON THE LEFT, WHAT YOU DO WITH IT ON THE RIGHT.
            Reported as *"I don't want a tiny button taking up a whole row"* -
@@ -1271,7 +1310,7 @@ function workBench() {
            how big the action is, and "write a new one" is not a full-width
            decision the way Launch is. Two columns put the buttons beside the
            thing they act on and let each one be its own size. -->
-      <div class="bench-body">
+      <div class="bench-body bench-fold-body">
         <div class="bench-slot">
           ${on ? `
             <div class="lb-tile is-pack ${look.cls}" style="${look.style}" title="${esc(on.title)}">
@@ -1301,6 +1340,7 @@ function workBench() {
   el.querySelector('.bench-off')?.addEventListener('click', () => putOnBench(null));
   el.querySelector('.bench-read')?.addEventListener('click', () => preview(bench.kind, on));
   if (on) el.querySelector('.bench-go')?.addEventListener('click', () => editPopover(bench.kind, on));
+  wireBenchFold(el, WORK_BENCH_OPEN_STORE);
 
   /*
    * THE SAME DROP GESTURE AS TONIGHT, on the same kind of target — and it
@@ -1370,11 +1410,15 @@ function nightBenchPanel() {
                meant to sit inside an lb-tile chip it is positioned relative
                to. Bare in this grid head it had no such ancestor and escaped
                to the corner of the whole page. lb-right is the head's own
-               third column, same as the launch bar's fold. -->
-          ${night ? '<div class="lb-right"><button class="reward-off bench-off" type="button" aria-label="Take it off the bench">&times;</button></div>' : ''}
+               third column, same as the launch bar's fold — both live in it
+               together, same as Tonight's mode switch and its own fold. -->
+          <div class="lb-right">
+            ${night ? '<button class="reward-off bench-off" type="button" aria-label="Take it off the bench">&times;</button>' : ''}
+            <button class="lb-fold" type="button" aria-expanded="true"><span class="lb-fold-word"></span></button>
+          </div>
         </div>
-        ${night ? '<div class="bench-detail"></div>' : `
-          <div class="bench-body">
+        ${night ? '<div class="bench-detail bench-fold-body"></div>' : `
+          <div class="bench-body bench-fold-body">
             <div class="bench-slot">
               <div class="lb-drop bench-drop">
                 <span class="lb-drop-plus">+</span>
@@ -1390,6 +1434,7 @@ function nightBenchPanel() {
       </div>`));
 
     el.querySelector('.bench-off')?.addEventListener('click', () => putNightOnBench(''));
+    wireBenchFold(el, NIGHT_BENCH_OPEN_STORE);
     if (night) await fillNightDetail(el.querySelector('.bench-detail'), night);
   };
 
