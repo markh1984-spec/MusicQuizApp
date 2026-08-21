@@ -156,21 +156,20 @@ export function showsSection() {
      * Console, so this panel's own `<h2>` only needs to appear where that one
      * does not, or Workshop said "Shows" twice in a row.
      *
-     * And ONE explanation of an empty shelf, not two: the general explainer
-     * ("Set a night up under Tonight's settings…") and the empty-state line
-     * were saying the same sentence back to back whenever Workshop had no
-     * shows yet. The empty-state line is the more useful of the two — it
-     * links straight to Tonight and to the settings tab — so it is the one
-     * that stays; the general explainer only shows once a show exists to make
-     * it worth explaining what one IS.
+     * **THE CONCEPT EXPLAINER SHOWS ON WORKSHOP ALWAYS, EMPTY OR NOT** —
+     * corrected after it was reported unclear what Shows was even FOR. It
+     * used to hide on an empty shelf on the theory that it repeated the
+     * empty-state line below, which was backwards: the empty-state line only
+     * says HOW to make one, this says WHAT one IS, and the moment you most
+     * need to be told what a Show is is the first time you open the tab and
+     * find nothing in it — precisely when this was being hidden.
      */
     const empty = !shows.length;
     el.replaceChildren(node(`
       <div class="game-section">
         <div class="game-head">
           <div>
-            ${findOnly ? '<h2>Shows</h2>' : ''}
-            ${findOnly || empty ? '' : `<div class="tiny">A whole evening kept as one thing —
+            ${findOnly ? '<h2>Shows</h2>' : `<div class="tiny">A whole evening kept as one thing —
               the packs, which rounds are on, the venue and its prizes, the look and
               the lobby game. Set a night up under Tonight’s settings and press
               <b>Keep this as a show</b>.</div>`}

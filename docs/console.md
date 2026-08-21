@@ -1259,6 +1259,43 @@ The card is also clickable, because **HTML5 drag events are never delivered on
 touch** and half of this console is driven from a phone. Every drag in this app
 has a way round it for the same reason.
 
+### SHOWS WAS MISTAKEN FOR PAST GIGS, AND THE WORKSHOP BENCH NOW POINTS AT IT
+
+Reported live: looking at an empty Shows tab on Workshop, the guess was that
+this was Past gigs under another name — the two are opposites (`docs/gigs.md`'s
+own EVIDENCE-versus-ORGANISATION test), but an empty shelf with a short line
+about *making* one and nothing saying what the finished thing actually IS
+gives a reader nothing to tell them apart by.
+
+**THE CONCEPT SENTENCE NOW SHOWS ON WORKSHOP WHETHER THE SHELF IS EMPTY OR
+NOT** — it used to hide specifically when empty, on the theory that it
+repeated the empty-state line below it (*"the general explainer only shows
+once a show exists to make it worth explaining what one IS"*), which reads
+exactly backwards once you say it in those words: the moment you most need
+to be told what a Show is is the FIRST time you open the tab and find
+nothing there, which is precisely when it was hidden. The empty-state line
+still does its own job — HOW to make one, with links straight to Tonight and
+its settings — the two were never actually saying the same sentence.
+
+**THE WORKSHOP BENCH GOT A BRIDGE INTO IT, NOT A SECOND WAY TO BUILD ONE** —
+asked for directly: *"give the workshop bench a place to save so it goes
+into a show."* The honest answer is that the bench cannot honestly build a
+show: it holds one pack, and a show also needs the venue, the prizes, the
+look and the lobby game, none of which exist on the bench — inventing a save
+button there would either leave those blank (a broken show) or invent a
+SECOND composer for them, which is the exact fault this section's first
+paragraph already refuses. So **Take it to Tonight**, a plain link next to
+the bench's other actions, sends the pack to the ONE place a show is
+actually built instead: `/console?tonightPack=<id>&tonightKind=quiz|bingo`,
+read at boot in `console.js` — before `load()`, mirroring exactly how
+`?night=` already hands a night to the Post Gig bench — so the pack lands on
+Tonight the instant the page draws, ready for the same **Keep this as a
+show** button that was already there. `wantPackFromUrl()` in
+`console-tonight.js` sets state ONLY and does not render, for the identical
+boot-order reason `?night=` does not call `putNightOnBench()` directly: the
+library has not been fetched yet, and a render that early throws on
+`library.brand`.
+
 ### A show is an EVENING, not one game
 
 The first version held ONE game, and the host killed it in a sentence:

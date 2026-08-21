@@ -109,8 +109,13 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * two raises above: this is glue reading and writing the closure's own
  * `currentPack`/`lbExtra`/`lbOff`/`lbSlots`, which is exactly the state that
  * cannot be pulled out without pulling the whole bar out with it.
+ *
+ * RAISED TO 2790 THE SAME DAY, for a pack handed over in the URL from the
+ * Workshop bench — `wantPackFromUrl()`, and the `packWanted` doc comment
+ * explaining why it cannot render before `load()` has fetched anything, the
+ * same boot-order fault `?night=` already exists to avoid.
  */
-const BUDGET = { 'console-tonight.js': 2760, 'console.js': 2000 };
+const BUDGET = { 'console-tonight.js': 2790, 'console.js': 2000 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

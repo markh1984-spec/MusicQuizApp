@@ -10,6 +10,30 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 21 August 2026, same day, next deploy again — Shows explains
+itself even when empty, and the Workshop bench points at it:** reported
+live, a guess that the empty Shows tab was Past gigs under another name —
+the two are opposites (evidence versus organisation), but nothing on an
+empty Shows tab said what the finished thing actually IS. The "a whole
+evening kept as one thing" sentence used to hide specifically when the
+shelf was empty, on the theory it repeated the empty-state line below —
+backwards, since the first empty visit is exactly when that sentence is
+needed most. It now shows on Workshop always.
+
+Asked for directly in the same breath: *"give the workshop bench a place to
+save so it goes into a show."* The bench cannot honestly build one itself —
+it holds one pack, a show also needs the venue/prizes/look, and inventing a
+save button there would either leave those blank or become the "second
+composer" this app already refuses. So the bench got a bridge instead: a
+**Take it to Tonight** link that hands the pack to Console in the URL
+(`?tonightPack=<id>&tonightKind=...`), read at boot before the page's data
+loads — the same pattern `?night=` already uses for the Post Gig bench —
+landing the pack on Tonight ready for the existing **Keep this as a show**
+button. Verified live: the Shows explainer reads correctly on an empty
+shelf, the bench's link carries the right pack id and kind, and clicking it
+genuinely lands the pack on Tonight rather than leaving the URL unconsumed.
+See "SHOWS WAS MISTAKEN FOR PAST GIGS" in `docs/console.md`.
+
 **Live as of 21 August 2026, same day, next deploy again — the cursor's
 index finger now presses on click:** asked for directly after the quill's
 removal — *"the grabby hand is great but I think the normal hand needs a

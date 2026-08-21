@@ -17,7 +17,7 @@ import { gameSection, packActionsMarkup, preview, wirePackActions } from './cons
 import { editPopover } from './console-editor-popover.js';
 import { shelfFor, showsSection } from './console-shows.js';
 import { BENCH_STORE, NIGHT_BENCH_STORE, bench, gigsSeen, lastDone, library, me, nightBench, nightDrag, packDrag, setAccountsExist, setBench, setGigsSeen, setLastDone, setLibrary, setMe, setNightBench, setNightDrag, setPackDrag } from './console-state.js';
-import { aNightIsOn, dragging, launchBar, night, putNightOnBench, putOnBench, runningPanel, tonightSettingsPanel } from './console-tonight.js';
+import { aNightIsOn, dragging, launchBar, night, putNightOnBench, putOnBench, runningPanel, tonightSettingsPanel, wantPackFromUrl } from './console-tonight.js';
 import { advertsSection, editAdvertSet, forgetPanel, venuesSection } from './console-venues.js';
 import { upcoming } from './diary.js';
 import { packLookAttrs, shortTitle, isBreakoutPack } from './pack-look.js';
@@ -1328,7 +1328,10 @@ function workBench() {
           ${on ? `
             <button class="go bench-go role-make" type="button">Edit the questions</button>
             <button class="minor bench-read" type="button">Read it through</button>
-            <p class="tiny">Saved as you go. Take it off when you are done with it.</p>`
+            <a class="minor bench-tonight" href="${esc(linkTo(`/console?tonightPack=${encodeURIComponent(on.id)}&tonightKind=${bench.kind}`))}">Take it to Tonight</a>
+            <p class="tiny">Saved as you go. Take it off when you are done with it.
+              Set it up on Tonight and press <b>Keep this as a show</b> to save the
+              whole evening — the venue, the prizes, the order — not just this pack.</p>`
     : `
             <a class="go bench-go role-make" href="${esc(linkTo('/editor'))}">Write a new one</a>
             <p class="tiny">Or drag a pack in from below to edit, rename or read
@@ -1840,6 +1843,27 @@ if (/^\d{4}-\d{2}-\d{2}$/.test(wantedNight)) {
    */
   setNightBench(wantedNight);
   localStorage.setItem(NIGHT_BENCH_STORE, wantedNight);
+}
+
+/*
+ * A PACK HANDED OVER IN THE URL TOO — `?tonightPack=<id>&tonightKind=quiz`.
+ *
+ * The Workshop bench's own "Take it to Tonight" link is what sends one:
+ * asked for directly — *"give the workshop bench a place to save so it goes
+ * into a show"* — and the honest answer was that the bench cannot BUILD a
+ * show itself (it holds one pack; a show also needs the venue, prizes, look
+ * and lobby game, all of which already live on Tonight, and a second place
+ * that could set them is the "second composer" this app's own rule already
+ * refuses). So the bench hands the pack to the ONE place a show is actually
+ * built, the same door and the same `Keep this as a show` button that
+ * already exist, rather than inventing a second way to reach the same
+ * result. Same reasoning as `?night=` just above: read before `load()`, so
+ * `wantPackFromUrl()` only sets state and does not render.
+ */
+const tonightPackId = new URL(location.href).searchParams.get('tonightPack') || '';
+const tonightKind = new URL(location.href).searchParams.get('tonightKind') || '';
+if (tonightPackId && (tonightKind === 'quiz' || tonightKind === 'bingo')) {
+  wantPackFromUrl(tonightPackId, tonightKind);
 }
 
 /*

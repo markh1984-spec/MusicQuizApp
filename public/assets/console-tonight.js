@@ -260,6 +260,23 @@ export function addToTonight(pack, kind) {
   renderKeepingPlace();
 }
 
+/**
+ * THE SAME THING, HANDED OVER IN THE URL rather than called from a click on
+ * this page — for a pack arriving from the WORKSHOP BENCH, which is a
+ * different door and therefore a real navigation, not a re-render.
+ * `addToTonight()` cannot be called directly for that: it ends in
+ * `renderKeepingPlace()`, and this runs at module load, before `load()` has
+ * fetched anything for the fresh page to render — the same boot-order fault
+ * a night arriving in `?night=` already avoids the same way. Set the state
+ * only; `launchBar()`'s own existing `if (packWanted)` check (the same one
+ * `addToTonight()` feeds) picks it up on the page's first real paint.
+ */
+export function wantPackFromUrl(id, kind) {
+  packWanted = { id, kind };
+  tonightOpen = true;
+  localStorage.setItem(TONIGHT_STORE, '1');
+}
+
 export function putNightOnBench(key) {
   setNightBench(key || '');
   if (nightBench) localStorage.setItem(NIGHT_BENCH_STORE, nightBench);
