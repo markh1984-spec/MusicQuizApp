@@ -10,6 +10,49 @@ heading, and a session opening it for one answer was paying for all of it.
 
 ---
 
+### THE FIRST SLICE SHIPPED ON 20 AUGUST 2026 — read this before the rest of the file
+
+Everything below this note is the design as it stood before any of it was
+built, kept verbatim because most of it is still the plan for what comes
+next. What actually exists today, in one place, so a session does not have
+to reconstruct it from the reasoning below:
+
+- **`parentId` on an account** (`src/accounts.js`) — absent on an ordinary
+  account, set on a seat. A parent is DERIVED from having children, never
+  its own stored thing: `childrenOf()`/`parentOf()` are the only readers,
+  `addChild()`/`removeChild()` the only writers. No nesting — a parent must
+  not itself carry a `parentId`.
+- **A seat gets its parent's tier, minus streaming** — `accounts.effective()`
+  substitutes the parent's `tier`/`status`/`comped`/`trialEndsAt` onto a copy
+  of the child before any entitlement check runs, wired in at one choke
+  point (`whoIs()` in `server.js`), so `plans.js` and every existing
+  `can()`/`featuresFor()` call needed zero changes. `featuresFor()` strips
+  `FEATURES.STREAM` whenever `account.parentId` is set — the one thing "a
+  seat gets everything" does not mean.
+- **Scoped exactly like a room** — `GET /api/group`, `POST
+  /api/group/seats`, `DELETE /api/group/seats/<id>` all resolve from
+  `whoIs()`, never from an id in the request. `removeChild()` is never
+  destructive: the account, its room, its own packs are untouched.
+- **A small panel on My account** (`groupPanel()` in `console-account.js`),
+  not the group-admin screen sketched further down this file.
+
+**NOT built, on purpose**, and each is a real reason rather than a shortage
+of time:
+
+- **Pack sharing between seats.** The obvious next piece, and the one that
+  actually needed a companyId and a shared folder — deliberately not built
+  in the same pass because it would have meant touching roughly seventeen
+  call sites across `readPack()`/`packDir()`, several of them on the
+  PROTECTED launch surface (`session.pack = readPack(...)` at launch), for a
+  feature with no real users to justify that risk yet. This file's own
+  stated order already puts "Rob gets a login" before "company accounts and
+  shared packs" — that prerequisite still has not happened.
+- **Agency invoicing, venue-account specifics, the hat switch generalising
+  to any group admin.** All three are described below and none has changed —
+  they are still exactly the open questions this file already recorded.
+
+---
+
 ### Venue accounts — the same skeleton, used the other way round
 
 **Asked for on 14 August 2026, and the host got the design right in the

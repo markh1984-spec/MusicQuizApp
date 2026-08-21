@@ -120,8 +120,17 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * ALSO be built by dragging a bingo pack and a round dot straight onto the
  * Tonight row itself, not only via a saved show — a session reading the old
  * wording would wrongly assume the Tonight row still refuses bingo.
+ *
+ * RAISED TO 138,500 ON 20 AUGUST 2026, for the first slice of group/parent
+ * accounts — genuinely account-security-boundary work, not a feature a
+ * session can safely rediscover from the docs alone. A session touching
+ * `whoIs()`, `can()`/`featuresFor()`, or anything under `/api/group/*` needs
+ * to know BEFORE it starts that `parentId` is derived rather than assigned,
+ * that `accounts.effective()` is the one substitution point, and that pack
+ * sharing was deliberately left out because it would have touched the
+ * protected launch surface for a feature with no real users yet.
  */
-const BUDGET = 136_200;
+const BUDGET = 138_500;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

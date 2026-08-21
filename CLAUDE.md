@@ -169,6 +169,40 @@ Two smaller notes, both worth having before anybody builds this:
   doubles every scoping question, so it waits for a customer rather than an
   imagination.
 
+### THE FIRST SLICE IS BUILT — accounts, entitlements, scoping. Not invoicing, not venue specifics, not the hat switch.
+
+Built 20 August 2026. **A parent is DERIVED, never stored** — `parentId` on
+the child is the only new field, so any quizmaster becomes one the moment
+they add a first seat and stops the moment the last is removed. No nesting,
+enforced at creation: a parent must not itself carry a `parentId`.
+
+**A seat gets its parent's tier, minus streaming — `accounts.effective()`.**
+`plans.js` only ever sees one account and cannot look another one up, so the
+substitution happens in `accounts.js`, the one place that has both, and is
+wired in at a SINGLE choke point: `whoIs()` in `server.js` wraps every real
+account it returns through `effective()`, so every existing `can()` /
+`featuresFor()` call downstream needed no changes at all. `parentId` itself
+survives the substitution (not stripped) purely so `featuresFor()` has
+something to ask when withholding `FEATURES.STREAM` — the one thing a seat
+does not get "everything" on.
+
+**Scoped exactly like a room**: `/api/group` resolves from `whoIs()`, never
+from an id in the request — the identical rule `/api/host/*` already follows.
+`removeChild()` is never destructive — the account, its room and its own
+packs are untouched; it just goes back to being on its own.
+
+**Reachable from My account, as a small panel** (`groupPanel()` in
+`console-account.js`), not a door or tab of its own — the full group-admin
+screen the design doc sketches (reusing People and Tonight, scoped) is a
+bigger job for when it is actually needed.
+
+**NOT built, and deliberately parked**: pack sharing between seats (it
+touches ~17 call sites on the protected launch path for a feature with zero
+real users yet — `Rob gets a login` is still the doc's own stated
+prerequisite), agency invoicing, venue-account specifics, and generalising
+the hat switch to any group admin. Full reasoning:
+**[`docs/business/groups.md`](docs/business/groups.md)**.
+
 ## The words: a quiz is a product, a round is part of one
 
 Settled deliberately, because the two were used interchangeably for months and
