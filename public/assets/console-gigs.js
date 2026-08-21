@@ -674,7 +674,8 @@ export async function fillNightDetail(body, night) {
         // Gone from the page as well as the repository, or the next tap
         // deletes something that is not there any more.
         shot.remove();
-        loading.textContent = `${grid.querySelectorAll('.cphoto').length} photos`;
+        const left = grid.querySelectorAll('.cphoto').length;
+        loading.textContent = `${left} photo${left === 1 ? '' : 's'}`;
       } catch (err) {
         btn.disabled = false;
         alert(err.message);
