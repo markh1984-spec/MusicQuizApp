@@ -1261,11 +1261,11 @@ has a way round it for the same reason.
 
 ### SHOWS WAS MISTAKEN FOR PAST GIGS, AND THE WORKSHOP BENCH NOW POINTS AT IT
 
-Reported live: looking at an empty Shows tab on Workshop, the guess was that
-this was Past gigs under another name — the two are opposites (`docs/gigs.md`'s
-own EVIDENCE-versus-ORGANISATION test), but an empty shelf with a short line
-about *making* one and nothing saying what the finished thing actually IS
-gives a reader nothing to tell them apart by.
+Reported live: an empty Shows tab on Workshop read as Past gigs under
+another name — the two are opposites (`docs/gigs.md`'s own
+EVIDENCE-versus-ORGANISATION test), but a short line about *making* one,
+with nothing saying what the finished thing IS, gives no way to tell them
+apart.
 
 **THE CONCEPT SENTENCE NOW SHOWS ON WORKSHOP WHETHER THE SHELF IS EMPTY OR
 NOT** — it used to hide specifically when empty, on the theory that it
@@ -1289,12 +1289,29 @@ the bench's other actions, sends the pack to the ONE place a show is
 actually built instead: `/console?tonightPack=<id>&tonightKind=quiz|bingo`,
 read at boot in `console.js` — before `load()`, mirroring exactly how
 `?night=` already hands a night to the Post Gig bench — so the pack lands on
-Tonight the instant the page draws, ready for the same **Keep this as a
-show** button that was already there. `wantPackFromUrl()` in
-`console-tonight.js` sets state ONLY and does not render, for the identical
-boot-order reason `?night=` does not call `putNightOnBench()` directly: the
-library has not been fetched yet, and a render that early throws on
-`library.brand`.
+Tonight the instant the page draws, ready for the same **Keep this ready**
+button that was already there. `wantPackFromUrl()` in `console-tonight.js`
+sets state ONLY and does not render, for the identical boot-order reason
+`?night=` does not call `putNightOnBench()` directly: the library has not
+been fetched yet, and a render that early throws on `library.brand`.
+
+**AND THEN THE TAB ITSELF WAS RENAMED, THE SAME DAY** — *"change 'shows' to
+'prep a gig' so the section is more obvious."* Turned down: it shares its
+root word with **Past gigs**, the exact confusion just fixed. Offered
+alternatives clear of "gig" AND "night" (Set list, Templates, Ready-made);
+the host picked none of them — *"go with 'Prepare a night' for now and I'll
+see if it makes sense"* — knowingly reusing the word the naming comment in
+`console.js` originally avoided (Calendar's things are bookings, Gigs' are
+the archive), as a phrase rather than a bare noun, to judge live.
+
+**DISPLAY TEXT ONLY — THE CODE STILL SAYS `show`/`shows` EVERYWHERE**
+(`src/shows.js`, `console-shows.js`, `library.shows`, `/api/shows`,
+`.show-card`, `showsSection()`…). Renaming all of that too would touch the
+API and the stored field for zero visible benefit. Nine strings changed —
+the tab label on both doors, the `<h2>`, the always-on explainer, the empty
+state, the **Keep this ready** button, both `prompt()` dialogs ("What is
+this called?"), the success toast, and the parts editor's remove-label and
+note — each checked live against the exact wording.
 
 ### A show is an EVENING, not one game
 

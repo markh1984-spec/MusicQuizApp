@@ -2663,15 +2663,17 @@ export function tonightSettingsPanel() {
       ${pack ? '' : `<p class="tiny set-none">Drag a pack into Tonight and the
         card shape and prizes appear here too.</p>`}
       <!--
-        KEEP THE WHOLE EVENING — the way a show is built, and it is deliberately
-        not a second composer.
+        KEEP THE WHOLE EVENING — the way a saved night is built, and it is
+        deliberately not a second composer.
 
-        Everything a show holds is already on the bar and on this tab: the
-        packs, which rounds are on, the venue, the look, the lobby game, the
-        prizes. Building it again in the Workshop would be a second surface
-        that could disagree with the launch, on the one thing that must not —
-        so a show is made by setting a night up here and keeping it, and the
-        Shows tab is where you take one back off the shelf.
+        Everything it holds is already on the bar and on this tab: the packs,
+        which rounds are on, the venue, the look, the lobby game, the prizes.
+        Building it again in the Workshop would be a second surface that
+        could disagree with the launch, on the one thing that must not — so
+        it is made by setting a night up here and keeping it, and the
+        "Prepare a night" tab (still "show"/"shows" in the code and the data
+        underneath — a display rename only, see console.js) is where you take
+        one back off the shelf.
 
         At the BOTTOM of the settings, because it is the last thing you do:
         set it up, then keep it. Ordinary rather than green — "make something"
@@ -2679,7 +2681,7 @@ export function tonightSettingsPanel() {
         you.
       -->
       <div class="set-keep">
-        <button class="minor set-save" type="button">Keep this as a show</button>
+        <button class="minor set-save" type="button">Keep this ready</button>
         <span class="tiny set-keep-why"></span>
       </div>
     </div>`);
@@ -2751,7 +2753,7 @@ export function tonightSettingsPanel() {
     const suggestion = draft.venue
       ? `${dayName(new Date())} at ${draft.venue}`
       : (currentPack.title || 'Tonight');
-    const name = prompt('What is this show called?', suggestion);
+    const name = prompt('What is this called?', suggestion);
     if (name === null) return;
     if (!name.trim()) return;
     save.disabled = true;
@@ -2760,7 +2762,7 @@ export function tonightSettingsPanel() {
     try {
       const res = await postJson('/api/shows', tonightAsShow(name.trim()), { 'X-Host-Key': hostKey });
       await load();
-      showDone('good', `<strong>${esc(res.show.name)}</strong> is on your Shows tab. `
+      showDone('good', `<strong>${esc(res.show.name)}</strong> is on your Prepare a night tab. `
         + 'Drag it onto Tonight whenever you want this evening back.');
       render();
     } catch (err) {

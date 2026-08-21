@@ -10,6 +10,24 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 21 August 2026, same day, next deploy again — "Shows" is now
+"Prepare a night":** asked for directly, and "Prep a gig" was turned down —
+it shares a root word with Past gigs, the exact confusion the tab had just
+been fixed for. Offered alternatives clear of both "gig" and "night" (Set
+list, Templates, Ready-made); the host picked none of them and chose
+"Prepare a night" instead, knowingly reusing a word the original naming
+already avoided for a stated reason, to judge once it was actually on
+screen. **Display text only** — every visible string was checked and
+changed (the tab label on both doors, the heading, the always-on explainer,
+the empty state, the save button, both `prompt()` dialogs, the success
+toast, the parts editor's remove-label and its own note), while the code,
+the files, the data field and the API route underneath all still say
+`show`/`shows`, deliberately: an internal name and a displayed one are
+allowed to differ, and renaming the former would have been a large, separate
+risk for no visible benefit. All nine spots verified live with the exact
+wording read back off the DOM, zero console errors. See "AND THEN THE TAB
+ITSELF WAS RENAMED" in `docs/console.md`.
+
 **Live as of 21 August 2026, same day, next deploy again — Shows explains
 itself even when empty, and the Workshop bench points at it:** reported
 live, a guess that the empty Shows tab was Past gigs under another name —

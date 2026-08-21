@@ -1864,11 +1864,11 @@ Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
 ### The tabs run ALONG a quizmaster's evening, behind their door
 
-`TABS`, **filtered by DOOR and stacked down the left**. The ORDER still runs
-along the evening: Console is Music Quiz · Music Bingo · Shows · Venues ·
+`TABS`, **filtered by DOOR and stacked down the left**. The ORDER runs along
+the evening: Console is Music Quiz · Music Bingo · Prepare a night · Venues ·
 Tonight's settings — what you will PLAY, then where, then the settings, which
-are the last thing you touch before Launch and the only tab on that door you
-can skip entirely. **Rarely-touched goes last** wherever it lands.
+are the last thing before Launch and the only tab on that door you can skip
+entirely. **Rarely-touched goes last** wherever it lands.
 
 **A reorder is the cheapest change and the easiest to get wrong silently** —
 nothing fails, a tab simply stops being where a thumb expects it. Open every

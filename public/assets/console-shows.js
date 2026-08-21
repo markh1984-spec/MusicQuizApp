@@ -1,4 +1,10 @@
-/** Shows — an evening saved: what is played, in order, and where. */
+/**
+ * Prepare a night — an evening saved: what is played, in order, and where.
+ * Shown to a quizmaster as "Prepare a night"; the code, the data field and
+ * the file names underneath all still say `show`/`shows` — a rename of the
+ * DISPLAYED word only, not of the internal one. See the `id: 'shows'` entry
+ * in `console.js` for why.
+ */
 
 import { binIcon, esc, node, postJson } from './client.js';
 import { library, setShowDrag } from './console-state.js';
@@ -83,7 +89,7 @@ function showPartsEditor(show, onSaved) {
                 <button class="minor parts-down" type="button" ${i === items.length - 1 ? 'disabled' : ''}
                   aria-label="Play this later">&darr;</button>
                 <button class="minor danger parts-off" type="button" ${items.length < 2 ? 'disabled' : ''}
-                  aria-label="Take this out of the show">&times;</button>
+                  aria-label="Take this out">&times;</button>
               </span>
               ${item.order ? `<span class="tiny parts-note">${item.order.length} round${
       item.order.length === 1 ? '' : 's'}, as you set it up</span>` : ''}
@@ -95,7 +101,7 @@ function showPartsEditor(show, onSaved) {
     ? `<button class="minor parts-new" type="button" data-kind="${kind}">Add ${
       kind === 'bingo' ? 'a bingo game' : 'a quiz'}</button>` : '')).join('')}
         </div>
-        <p class="tiny">The venue, the prizes and the look belong to the show, so
+        <p class="tiny">The venue, the prizes and the look belong to the night, so
           changing what it plays leaves them alone.</p>
       </div>`));
 
@@ -137,13 +143,14 @@ function showPartsEditor(show, onSaved) {
 }
 
 /**
- * SHOWS — the shelf of evenings built in advance.
+ * PREPARE A NIGHT — the shelf of evenings built in advance.
  *
  * Two doors, one function, exactly like Venues: on the Console it is a shelf
  * you drag off and nothing else, and in the Workshop it is where you rename
- * and throw away. Building happens on Tonight's settings — see *Keep this as
- * a show* — because everything a show holds is already set up there, and a
- * second composer is a second thing that could disagree with the launch.
+ * and throw away. Building happens on Tonight's settings — see *Keep this
+ * ready* — because everything a saved night holds is already set up there,
+ * and a second composer is a second thing that could disagree with the
+ * launch.
  */
 export function showsSection() {
   const el = node('<div></div>');
@@ -151,33 +158,35 @@ export function showsSection() {
     const shows = library.shows || [];
     const findOnly = doorNow() === 'console';
     /*
-     * ONE "SHOWS" HEADING, NOT TWO — same fault, same fix as Venues.
-     * `tabBody()` already draws the shared gradient tab-head on every door but
-     * Console, so this panel's own `<h2>` only needs to appear where that one
-     * does not, or Workshop said "Shows" twice in a row.
+     * ONE HEADING, NOT TWO — same fault, same fix as Venues. `tabBody()`
+     * already draws the shared gradient tab-head on every door but Console,
+     * so this panel's own `<h2>` only needs to appear where that one does
+     * not, or Workshop said the tab's own name twice in a row.
      *
      * **THE CONCEPT EXPLAINER SHOWS ON WORKSHOP ALWAYS, EMPTY OR NOT** —
-     * corrected after it was reported unclear what Shows was even FOR. It
-     * used to hide on an empty shelf on the theory that it repeated the
-     * empty-state line below, which was backwards: the empty-state line only
-     * says HOW to make one, this says WHAT one IS, and the moment you most
-     * need to be told what a Show is is the first time you open the tab and
-     * find nothing in it — precisely when this was being hidden.
+     * corrected after this tab (then called "Shows") was mistaken for Past
+     * gigs, a different door entirely. It used to hide on an empty shelf on
+     * the theory that it repeated the empty-state line below, which was
+     * backwards: the empty-state line only says HOW to make one, this says
+     * WHAT one IS, and the moment you most need telling what one is is the
+     * first time you open the tab and find nothing in it — precisely when
+     * this was being hidden. The tab itself was renamed in the same pass,
+     * from a noun ("Shows") to the action it actually is.
      */
     const empty = !shows.length;
     el.replaceChildren(node(`
       <div class="game-section">
         <div class="game-head">
           <div>
-            ${findOnly ? '<h2>Shows</h2>' : `<div class="tiny">A whole evening kept as one thing —
+            ${findOnly ? '<h2>Prepare a night</h2>' : `<div class="tiny">A whole evening kept as one thing —
               the packs, which rounds are on, the venue and its prizes, the look and
               the lobby game. Set a night up under Tonight’s settings and press
-              <b>Keep this as a show</b>.</div>`}
+              <b>Keep this ready</b>.</div>`}
           </div>
         </div>
         <div class="show-list">
-          ${empty ? `<div class="tiny">No shows yet. Set a night up in
-            ${goTo('console', 'quiz', 'Tonight')}, then press <b>Keep this as a show</b>
+          ${empty ? `<div class="tiny">Nothing prepared yet. Set a night up in
+            ${goTo('console', 'quiz', 'Tonight')}, then press <b>Keep this ready</b>
             under ${goTo('console', 'setup', 'Tonight’s settings')}.</div>`
     : shows.map((show) => {
       const broken = (show.problems || []).length;
@@ -265,7 +274,7 @@ export function showsSection() {
       partsSlot?.addEventListener('mousedown', (ev) => ev.stopPropagation());
 
       card.querySelector('.show-rename')?.addEventListener('click', async () => {
-        const name = prompt('What is this show called?', show.name);
+        const name = prompt('What is this called?', show.name);
         if (name === null || !name.trim() || name.trim() === show.name) return;
         try {
           /*

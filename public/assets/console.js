@@ -747,7 +747,8 @@ export const TABS = [
   },
   {
     /*
-     * SHOWS — a whole evening, built in advance and dragged onto Tonight.
+     * PREPARE A NIGHT — a whole evening, built in advance and dragged onto
+     * Tonight.
      *
      * The host's own diagnosis: *"the launch bar is launching nights, but
      * we're frankensteining nights instead of having a nights section. You
@@ -755,12 +756,21 @@ export const TABS = [
      * console."* The bar composes a night AT THE MOMENT OF LAUNCHING IT,
      * which is the worst time in the week to be composing anything.
      *
-     * **CALLED A SHOW BECAUSE "NIGHT" IS ALREADY TAKEN TWICE.** Calendar's
-     * things are bookings — the pub's night — and Gigs' are the archived
-     * record of a night that happened. A third "Nights" would be one word for
-     * three sets on adjacent doors, which is exactly the collision the sweep
-     * rules exist to catch. A show is the performer's word for the whole
-     * evening at a venue, and this app's user is hired as the entertainer.
+     * **THE TAB WAS CALLED "SHOWS", AND IT WAS MISTAKEN FOR PAST GIGS** — the
+     * two are opposites (evidence versus organisation), but nothing about the
+     * word said which. Renamed to **Prepare a night**, a verb phrase rather
+     * than a noun, on the reasoning that this IS an action a quizmaster
+     * takes, not a shelf of objects with a genre name. `id`, the code, the
+     * data field and the file names all still say `show`/`shows` throughout
+     * — an internal name and a displayed one are allowed to differ, and
+     * renaming every function, file and API route to match would be a large,
+     * separate risk for no visible benefit; only what a quizmaster reads
+     * changed. **"NIGHT" WAS STILL AVOIDED AS A BARE NOUN** for the reason
+     * below — Calendar's own things are bookings, Gigs' are the archived
+     * record of one that happened — but a VERB PHRASE using the word is a
+     * different collision risk than a third tab plainly labelled "Nights",
+     * and the host chose it anyway, to see whether it reads clearly in
+     * practice once it is actually on screen next to those other two.
      *
      * **BEHIND BOTH DOORS, like Venues, and for the same reason.** In the
      * Workshop it is a thing you build and tidy; on the Console it is a shelf
@@ -769,7 +779,7 @@ export const TABS = [
     id: 'shows',
     doors: ['console', 'workshop'],
     needs: FEATURES.LIBRARY,
-    label: 'Shows',
+    label: 'Prepare a night',
     blurb: 'A whole evening, built in advance — packs, venue, prizes and settings.',
     count: () => (library.shows || []).length,
     render: () => showsSection(),
