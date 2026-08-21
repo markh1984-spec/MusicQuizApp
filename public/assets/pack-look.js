@@ -85,7 +85,20 @@ const TINT = { top: 0.30, bottom: 0.16 };
 const KIND_EDGE = {
   quiz: '#2fe07a',
   bingo: '#a855f7',
+  breakout: '#f97316',
 };
+
+/**
+ * A pack IS a breakout pack when every round in it scores nothing — derived,
+ * never declared, same reasoning as everything else this app works out from
+ * its own shape rather than a flag somebody has to remember to set. Mirrors
+ * `isBreakoutPack()` in `src/quizzes.js`; kept as a second small copy rather
+ * than a shared import because browser assets never import from `src/`.
+ */
+export function isBreakoutPack(pack) {
+  const rounds = (pack && pack.rounds) || [];
+  return rounds.length > 0 && rounds.every((r) => r.type === 'breakout');
+}
 
 /**
  * A pack whose kind is not on the list still gets an edge rather than losing

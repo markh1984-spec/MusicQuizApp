@@ -301,6 +301,21 @@ THE ANSWER STARTS WITH. So:
   the wrong letter for it.
 
 Vary the letter across the round. Do not let half of them start with the same one.`,
+
+    breakout: `Round type "breakout": a laugh, not a question — there is no right answer and
+nothing is scored. The room TYPES whatever they like on their own phones, and the host
+reads the funniest ones out loud, Blankety Blank style.
+
+Write ${perRound} prompts fitting "${about}" that invite a short, funny, ONE-LINE typed
+answer. A fill-in-the-blank ("Complete the lyric in your own words: 'I will always love
+___'") and a daft hypothetical ("Write the worst possible name for a tribute act to
+${about}") both work — the point is that any answer can be funny, because none is wrong.
+
+Do NOT give an "answer", "options", "correctIndex" or "correctIndexes" — there is nothing
+to mark right or wrong on this round. Set only "prompt".
+
+Vary the SHAPE of the prompt from one to the next, so the round does not read as the same
+joke six times.`,
   };
 }
 
@@ -678,6 +693,7 @@ function roundTitle(type, index, theme, label = '') {
   if (type === 'intro') return `Round ${ordinal} — Name That Intro`;
   if (type === 'multi') return `Round ${ordinal} — Pick Them All`;
   if (type === 'alphabet') return `Round ${ordinal} — First Letter`;
+  if (type === 'breakout') return `Round ${ordinal} — Bonus Round`;
   return `Round ${ordinal} — ${label || titleCase(theme)}`;
 }
 
@@ -686,6 +702,7 @@ function roundBlurb(type, theme, perRound, label = '') {
   if (type === 'intro') return `${perRound} intros. You get the first few seconds and nothing else.`;
   if (type === 'multi') return 'More than one answer is right. Lock in every one of them.';
   if (type === 'alphabet') return 'Just the first letter of the answer. Spelling does not count.';
+  if (type === 'breakout') return 'Nothing scored — just for laughs. Type your best answer.';
   return `${perRound} questions on ${label ? label.toLowerCase() : theme}`;
 }
 
@@ -1066,7 +1083,11 @@ export async function generateQuizPack({
 
     log(`round ${i + 1} of ${plan.length} (${type}, ${count} question${count === 1 ? '' : 's'}${topical ? ', from the news' : ''})`);
     const questions = await buildRound({
-      brief, perRound: count, check, system, apiKey, model, log, onSpend,
+      // A breakout question has no answer, so there is nothing for the
+      // fact-checking pass to check — it is a joke, not a claim. Skipping it
+      // is not a shortcut, it is the checker being asked to judge something
+      // it was never built to judge.
+      brief, perRound: count, check: check && type !== 'breakout', system, apiKey, model, log, onSpend,
       // Only a round that asked for it. The evergreen round of a topical quiz
       // is deliberately written without the news in front of it — otherwise it
       // writes about the news anyway and the pack has no ground in it.
@@ -1109,6 +1130,8 @@ export async function generateQuizPack({
         prompt: String(q.prompt || '').trim(),
         ...(type === 'alphabet'
           ? { answer: String(q.answer || '').trim() }
+          : type === 'breakout'
+          ? {}
           : {
               options: (q.options || []).slice(0, type === 'multi' ? MULTI_OPTIONS : 4).map((o) => String(o).trim()),
               correctIndex: Number.isInteger(q.correctIndex) ? q.correctIndex : 0,

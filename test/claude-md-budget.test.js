@@ -130,7 +130,18 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * sharing was deliberately left out because it would have touched the
  * protected launch surface for a feature with no real users yet.
  */
-const BUDGET = 138_500;
+/*
+ * RAISED TO 139,500 ON 21 AUGUST 2026, for the breakout round — a new round
+ * TYPE that touches the two-screens rule (a new host-only field,
+ * `breakoutAnswers`, that must never reach the projector or another phone)
+ * and the scoring promise behind "Round X of Y" (`scoringRoundNumber()` now
+ * excludes it, so the label a room reads stays true with one in the night).
+ * A session touching `engine.js`'s answer/reveal functions, or the round
+ * count shown on any screen, needs to know this exists before assuming every
+ * round in `this.rounds` counts. Trimmed to ~1,250 bytes before this was
+ * raised — the entry was closer to 2,200.
+ */
+const BUDGET = 139_500;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

@@ -4693,7 +4693,7 @@ async function handleWrite(req, res, url, route) {
   // What a phone is allowed to do: answer a question, mark a bingo square and
   // call house, and — on an online night — say something in one of its own
   // rooms. Nothing else, and nothing that could hand out a new card.
-  if (['/api/answer', '/api/mark', '/api/claim', '/api/wandered', '/api/say', '/api/team', '/api/arcade'].includes(route) && req.method === 'POST') {
+  if (['/api/answer', '/api/answer-breakout', '/api/mark', '/api/claim', '/api/wandered', '/api/say', '/api/team', '/api/arcade'].includes(route) && req.method === 'POST') {
     const body = await readJson(req);
     const action = route.slice('/api/'.length);
     const result = roomForPhone(req, url, body).session.runPlayerAction(action, body);
@@ -4858,12 +4858,18 @@ async function handleWrite(req, res, url, route) {
           intro: 'Name that intro',
           multi: 'Pick them all',
           alphabet: 'First letter',
+          breakout: 'Bonus round',
         }[r.type] || `Round ${ri + 1}`,
         ...(r.type === 'image' ? { reveal: 'mix' } : {}),
         questions: Array.from({ length: r.count }, (_, qi) => ({
           id: `r${ri + 1}q${qi + 1}`,
           prompt: `Question ${qi + 1} — write it here`,
-          ...(r.type === 'alphabet'
+          // A breakout question has no answer key at all — see
+          // `isBreakoutPack()` in `src/quizzes.js` — so it is a prompt and
+          // nothing else, same as `alphabet` is an answer and nothing else.
+          ...(r.type === 'breakout'
+            ? {}
+            : r.type === 'alphabet'
             ? { answer: `Answer ${qi + 1}` }
             : {
               // Six for a pick-them-all round, four for everything else —

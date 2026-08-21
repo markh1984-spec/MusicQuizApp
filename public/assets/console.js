@@ -20,7 +20,7 @@ import { BENCH_STORE, NIGHT_BENCH_STORE, bench, gigsSeen, lastDone, library, me,
 import { aNightIsOn, dragging, launchBar, night, putNightOnBench, putOnBench, runningPanel, tonightSettingsPanel } from './console-tonight.js';
 import { advertsSection, editAdvertSet, forgetPanel, venuesSection } from './console-venues.js';
 import { upcoming } from './diary.js';
-import { packLookAttrs, shortTitle } from './pack-look.js';
+import { packLookAttrs, shortTitle, isBreakoutPack } from './pack-look.js';
 import { FEATURES, setTierOverrides, tierOf } from './plans.js';
 import { paintScheme } from './schemes.js';
 
@@ -657,6 +657,7 @@ export const QUIZ_ROUNDS = [
   ['intro', 'Name that intro', 10, true, 'You play the first few seconds off your own music app'],
   ['multi', 'Pick them all', 10, false, 'Several answers are right — the room locks in all of them'],
   ['alphabet', 'First letter', 10, false, 'No options: they get a keyboard and only the first letter of the answer has to be right'],
+  ['breakout', 'Breakout', 5, false, 'Nothing scored — the room types whatever they like and you read the funny ones out'],
 ];
 
 /**
@@ -1268,7 +1269,7 @@ function workBench() {
   // rather than drawing a tile for something that is not there.
   if (bench && !on) { setBench(null); localStorage.removeItem(BENCH_STORE); }
 
-  const look = on ? packLookAttrs(on, bench.kind) : null;
+  const look = on ? packLookAttrs(on, bench.kind === 'quiz' && isBreakoutPack(on) ? 'breakout' : bench.kind) : null;
 
   const el = node(`
     <div class="panel launchbar bench">

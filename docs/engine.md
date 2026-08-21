@@ -282,6 +282,145 @@ through the speakers.
 
 ---
 
+## The breakout round — a laugh, not a question, and it scores nothing
+
+`type: 'breakout'` in `ROUND_TYPES` (`src/quizzes.js`), `answerBreakout()` in
+`src/engine.js`, `/api/answer-breakout` in `server.js`. Asked for on 15 August
+2026, in the host's own words: *"the third thing to add to a night will be
+breakout games that aren't part of the quiz points — for e.g. Blankety Blank
+style stuff, so pack 1 — quiz round that contributes to the score, breakout
+game, quiz round 2 that contributes to the score etc."*
+
+**IT IS A ROUND TYPE, NOT A GAME KIND, AND THAT IS THE WHOLE DESIGN.** A night
+is already ONE quiz — `composeQuiz()` builds it in memory from rounds across
+several packs — so a breakout sitting between round one and round two is
+naturally another round in that list. Teams, scores, tokens and phones carry
+through by construction, with nothing to suspend and nothing to hand back.
+Built as a separate GAME it would end the quiz: launching one replaces the
+session, the scores go with it, and round two starts from zero in front of a
+room. **A pack IS a breakout pack when every round in it scores nothing** —
+`isBreakoutPack()` in `src/quizzes.js`, mirrored in `pack-look.js` for the
+browser (which never imports from `src/`) — derived rather than declared, so
+there is nothing to set and nothing to disagree with itself.
+
+**Because it is a round, it is schedulable exactly like everything else in a
+composed night.** `composeQuiz()` merges rounds by index without knowing or
+caring what type they are, so a breakout round dropped into any slot of the
+Tonight running order — first, middle, last, either side of a bingo interlude
+— just works. There is no separate mechanism to build or test for "can this
+go anywhere in the evening"; it is a free consequence of rounds already being
+the unit `composeQuiz()` operates on.
+
+**The phones TYPE, and that is a new answering mechanic** — the second round
+type to change it, after `multi`. `answerBreakout(playerId, text)` is a
+separate method from `answer()`, not a branch inside it, because the shape is
+different enough that forcing it through the same function would mean every
+future reader of `answer()` has to hold "unless this is a breakout" in their
+head. Text is sanitised with `cleanTeamName()` — reused directly, not
+duplicated — exactly as the design doc asked: no profanity filter, no approve
+step, same as team names and photos. `/api/answer-breakout` is its own route
+(added to the same array-driven dispatch `/api/answer` uses in `server.js`,
+so the token-ownership check in `runPlayerAction()` covers it for free) rather
+than teaching `/api/answer` to accept a `text` field — one action, one shape,
+easier to reason about than a route that sometimes means one thing and
+sometimes another depending on which field is present.
+
+**NO SCORE, EVER — verified at every choke point scoring reads from, not just
+at the point of answering.** `correctSet()` returns an empty set and
+`answerText()` returns `''` for this type, so nothing downstream has to know
+it exists to stay safe: `fastestFinger()`'s `if (!a.correct) continue` skips
+every breakout answer (none carry `.correct`), `whoPicked()`'s option array is
+empty so its bucket-by-index loop never runs, and `optionTally()` falls
+through the same way. All three were **verified by inspection AND by test**
+rather than assumed safe because "nothing threw" — a Set holding `[undefined]`
+or a tally array full of `undefined` would not have thrown either, and both
+were real intermediate bugs caught before this shipped (`correctSet()`
+originally fell through to `new Set([q.correctIndex])`, which is
+`new Set([undefined])` for a question with no `correctIndex` — harmless in
+isolation, but exactly the kind of latent trap this house style exists to
+name rather than leave for the next session to rediscover).
+
+**THE ANSWERS ARE HOST-ONLY, NEVER THE PROJECTOR AND NEVER ANOTHER PLAYER'S
+PHONE — the two-screens rule applied to a brand new field.** `view.
+breakoutAnswers` in `hostView()`: every answer, in the order it arrived (not
+player-id order — the newest reader wants "who just said something", the same
+reasoning `whoPicked()` already uses), each carrying the player's own name and
+text. Built from `answersFor()`, filtered to entries that actually carry
+`.text` (an empty `{}` per-player slot never gets created for a breakout
+question, but the filter is there because "trust the shape" is exactly the
+kind of assumption rule 1's whitelist discipline exists to refuse). Neither
+`screenView()` nor `playerView()` builds a `reveal` object at all for a
+breakout question — not an empty one, an absent one — because there is
+nothing to reveal and an empty `{correctText: '', tally: []}` object is still
+a payload somebody could read meaning into. `playerView()`'s own answer,
+`yourAnswer.text`, is the one exception: a phone gets its OWN submitted text
+back (so it can render "Sent!" after a refresh) and nothing else — never
+another player's. There is a test that POSTs a real answer over real HTTP and
+asserts it is present in the host's payload and absent, by string search,
+from the projector's and from a second phone's.
+
+**THE COUNT IS WHAT SCORES — settled on 15 August 2026 after being left open
+in the first pass of this design.** `scoringRoundNumber(ri)` /
+`scoringRoundCount()` in `src/engine.js`: the first counts only rounds whose
+type is not `breakout`, up to and including the round asked about, returning
+`null` for a breakout round itself (unnumbered, not zero — a screen has to
+tell those apart). The second is the total count of scoring rounds. **Quiz,
+breakout, quiz reads "Round 2 of 2", and the breakout announces itself as
+"Bonus round" instead of claiming a number** — on the projector's persistent
+top pill, its round-intro kicker, the phone's round-intro screen, and the
+host's own phase label. The reasoning is a scoring promise: a team working
+out "one round left to catch up" is doing arithmetic the label must not lie
+about, and a round that cannot change the scores is not one of the rounds
+they are counting.
+
+**`roundIndex`/`roundCount` are DELIBERATELY UNCHANGED** — they stay the real
+array position and the real array length, because the engine still navigates
+by them (`round()`, `next()`, `back()`, every `this.rounds[i]` lookup). Only
+what a screen SAYS moved, onto two new fields sent alongside the old ones on
+every view. Changing the meaning of `roundCount` itself was considered and
+rejected: it has ~10 consumers across the console, the editor and both games'
+render code, most of them about a PACK on disk rather than a running composed
+night, and conflating "the position in the array" with "the number a team
+sees" would have been the same kind of two-meanings-one-word mistake the
+owner/parent/child vocabulary work exists to prevent elsewhere in this file.
+
+**Claude can write breakout prompts too** — `roundBriefsFor('breakout')` in
+`src/generate-quiz.js`, in the same shape as every other round's brief, asking
+for short one-line prompts that invite a funny typed answer (a fill-in-the-
+blank, a daft hypothetical) rather than anything with a right answer. **The
+fact-checking pass is skipped for this type alone** — `check: check && type
+!== 'breakout'` at the call site — because `CHECKER_SYSTEM` exists to ask "is
+the marked answer factually wrong", and a breakout question has no marked
+answer. Running it through the checker anyway would not fail safe; it would
+have the checker judging something it was never built to judge, which is a
+worse failure mode than skipping a check that does not apply. The generation
+test that walks every entry in `ROUND_TYPES` and asserts a brief exists for
+each one (`test/generate-quiz.test.js`, "every round type the app offers can
+actually be generated") caught the omission before this shipped — adding a
+round type to the whitelist without a matching brief is exactly the class of
+bug that test was written to catch, and it did.
+
+**Three places independently build the empty-question shape for a new
+breakout round, and all three needed a branch: `blankQuestion()` and
+`reshapeForType()` in `public/assets/pack-editor.js` (the pack editor and its
+console popover), and the `/api/mine/quiz/scaffold` route in `server.js` (the
+"Compose" button's server-side lay-out-empty path).** They are not one
+function — the editor's is browser-side and mutates an in-memory question
+object, the scaffold route's builds one from nothing on the server — and each
+had exactly the same shape to add: `{ id, prompt }` and nothing else, no
+`options`, no `correctIndex`, no `answer`. Missing either one would not have
+thrown; it would have produced a breakout question carrying option fields
+nobody reads, silently, until somebody opened the editor and wondered why a
+"no right answer" round had four blank option boxes.
+
+Orange is this round's colour on a pack card and in a Tonight slot —
+`KIND_EDGE.breakout` in `pack-look.js` — resolved from `isBreakoutPack()`
+rather than from which tab a pack is shown on, because a breakout pack has
+`rounds` and would otherwise be indistinguishable from an ordinary quiz at a
+glance, which is exactly the failure the coloured edge exists to prevent.
+
+---
+
 ## The draw from the bottom half — a retention feature, not a raffle
 
 `drawLuckyDip()` and `state.luckyDip` in `src/engine.js`, the band under the

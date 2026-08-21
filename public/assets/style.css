@@ -1469,6 +1469,10 @@ body.host::after { display: none; }
 .type-image .option .tally,
 .type-intro .option .tally { display: none; }
 
+/* No options at all on a breakout question — the grid would otherwise sit
+   there empty, still claiming the flexible space below the prompt. */
+.type-breakout .options { display: none; }
+
 /* =================================================================== EDITOR
    Where you check every question before the gig. Built for a laptop and a cup
    of tea the afternoon before, not for use in a dark room.

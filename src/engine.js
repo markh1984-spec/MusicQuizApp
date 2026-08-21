@@ -278,6 +278,34 @@ export class Engine {
     return this.rounds[i] || null;
   }
 
+  /**
+   * "Round 2 of 2" — but counting only the rounds that CAN change the score.
+   *
+   * TODO.md, "THE COUNT IS WHAT SCORES": a breakout round is delivered like
+   * any other, but it is not one of the rounds a team is counting when they
+   * work out how much of the night is left to catch up in, so it must not be
+   * numbered as if it were. `roundIndex`/`roundCount` stay the real array
+   * position — the engine still navigates by it — this is only what a screen
+   * SAYS.
+   *
+   * @returns {number|null} null on a breakout round — it announces itself,
+   *   it is simply not numbered.
+   */
+  scoringRoundNumber(ri = this.state.roundIndex) {
+    const round = this.rounds[ri];
+    if (round && round.type === 'breakout') return null;
+    let n = 0;
+    for (let i = 0; i <= ri && i < this.rounds.length; i++) {
+      if (this.rounds[i] && this.rounds[i].type !== 'breakout') n++;
+    }
+    return n;
+  }
+
+  /** How many rounds actually count, for the "of N" half of the same label. */
+  scoringRoundCount() {
+    return this.rounds.filter((r) => r.type !== 'breakout').length;
+  }
+
   questions(i = this.state.roundIndex) {
     const r = this.round(i);
     return (r && r.questions) || [];
@@ -1588,6 +1616,49 @@ export class Engine {
   }
 
   /**
+   * A breakout round's answer — free TEXT rather than an index, and never
+   * scored. A separate method rather than a branch inside `answer()`: the
+   * two have almost nothing in common (no options to validate against, no
+   * correctness, no points, no first-correct bonus), and threading "there is
+   * no scoring here" through the scored path's arithmetic would be exactly
+   * the kind of special-casing this codebase avoids on its most sensitive
+   * surface. Written into the SAME `s.answers` map as a scored answer, keyed
+   * the same way, so "already answered" and crash recovery both fall out of
+   * mechanism this already has rather than a second one beside it.
+   */
+  answerBreakout(playerId, text) {
+    const s = this.state;
+    const player = s.players[playerId];
+    if (!player) return { ok: false, reason: 'unknown_player' };
+    if (player.organiser) return { ok: false, reason: 'organiser' };
+    if (s.phase !== PHASES.QUESTION || !s.question) return { ok: false, reason: 'not_open' };
+
+    const at = this.now();
+    if (at >= s.question.endsAt || s.question.closed) return { ok: false, reason: 'too_late' };
+
+    const round = this.round();
+    if (!round || round.type !== 'breakout') return { ok: false, reason: 'not_a_breakout_round' };
+
+    const key = this.answerKey();
+    if (!s.answers[key]) s.answers[key] = {};
+    const answers = s.answers[key];
+    if (answers[playerId]) return { ok: false, reason: 'already_answered' };
+
+    // Same cap and the same stripping as a team name — an anti-breakage
+    // limit, not a filter on what somebody writes. No profanity filter, no
+    // approve step: the room handles a rude answer the same way it already
+    // handles a rude team name or photo, with the host on a mic.
+    const clean = cleanTeamName(text);
+    if (!clean) return { ok: false, reason: 'empty' };
+
+    answers[playerId] = { text: clean, answeredAt: at };
+    player.answeredCount++;
+    player.lastSeenAt = at;
+    this.changed();
+    return { ok: true };
+  }
+
+  /**
    * What there is to pick from.
    *
    * Every round type answers with an index into a list, which is what lets one
@@ -1610,6 +1681,9 @@ export class Engine {
   correctSet(q, round) {
     if (round && round.type === 'multi') return new Set(q.correctIndexes || []);
     if (round && round.type === 'alphabet') return new Set([answerLetterIndex(q.answer)]);
+    // Nothing is correct on a breakout question — there is nothing to check
+    // an answer against, which is the whole point of the round.
+    if (round && round.type === 'breakout') return new Set();
     return new Set([q.correctIndex]);
   }
 
@@ -1621,6 +1695,11 @@ export class Engine {
    */
   answerText(q, round) {
     if (round && round.type === 'alphabet') return q.answer || '';
+    // No "correct answer" to say out loud on a breakout question — see
+    // `correctSet()`. Empty rather than falling through to a set holding
+    // nothing meaningful, which used to print the literal word "undefined"
+    // on the reveal.
+    if (round && round.type === 'breakout') return '';
     const options = this.optionsFor(q, round);
     return [...this.correctSet(q, round)].map((i) => options[i]).join(', ');
   }
@@ -1673,6 +1752,11 @@ export class Engine {
       quizTitle: this.quiz.title,
       roundIndex: s.roundIndex,
       roundCount: this.rounds.length,
+      // The number a screen actually SAYS — see `scoringRoundNumber()`. Kept
+      // alongside the raw index/count above rather than replacing them: the
+      // engine still navigates by the real position, this is only the label.
+      scoreRoundNumber: this.scoringRoundNumber(),
+      scoreRoundCount: this.scoringRoundCount(),
       questionIndex: s.questionIndex,
       questionCount: this.questions().length,
       roundTitle: round ? round.title : '',
@@ -1751,6 +1835,13 @@ export class Engine {
         // nothing away; the answer and its letter are the answer key and stay
         // in the host view until the reveal.
         return { alphabet: true };
+      case 'breakout':
+        // A flag and nothing else — there is no answer key on a breakout
+        // question, and the prompt is already on the projector via
+        // `view.question.prompt` like every other round. The flag is what
+        // tells the projector not to draw an option grid nobody is picking
+        // from.
+        return { breakout: true };
       case 'text':
       default:
         return {};
@@ -1845,7 +1936,11 @@ export class Engine {
       }
     }
 
-    if (s.phase === PHASES.REVEAL) {
+    // No reveal banner on a breakout round — there is no right answer, no
+    // fastest finger and nothing to tally, and "Nobody got it" over silence
+    // is a worse thing to put on a projector than nothing at all. The host
+    // reads the answers out from their own screen instead.
+    if (s.phase === PHASES.REVEAL && !(round && round.type === 'breakout')) {
       const q = this.question();
       // Safe here and only here: the question is over, the room is meant to see it.
       const revealRound = this.round();
@@ -2072,9 +2167,16 @@ export class Engine {
       quizTitle: this.quiz.title,
       roundIndex: s.roundIndex,
       roundCount: this.rounds.length,
+      // The label a phone actually shows — see `scoringRoundNumber()`. A
+      // breakout round is delivered like any other but does not count.
+      scoreRoundNumber: this.scoringRoundNumber(),
+      scoreRoundCount: this.scoringRoundCount(),
       questionIndex: s.questionIndex,
       questionCount: this.questions().length,
       roundTitle: round ? round.title : '',
+      // Not a secret — the projector already carries it, and the round intro
+      // screen needs it to know whether to announce a number at all.
+      roundType: round ? round.type : null,
       // Not a secret — it is a fact about the night, and the phone has to lay
       // itself out differently for it.
       online: Boolean(s.online),
@@ -2177,29 +2279,36 @@ export class Engine {
         view.multi = Boolean(round && round.type === 'multi');
         // Which keyboard to draw. Not a secret — the alphabet is the alphabet.
         view.alphabet = Boolean(round && round.type === 'alphabet');
+        // No options, no score, no reveal — a free-text box the phone must
+        // draw instead of the ordinary option grid.
+        view.breakout = Boolean(round && round.type === 'breakout');
         view.clock = s.question
           ? { startedAt: s.question.startedAt, endsAt: s.question.endsAt, seconds: s.question.seconds, closed: s.question.closed }
           : null;
         const mine = this.answersFor()[playerId];
         view.yourAnswer = mine
-          ? {
-              optionIndex: mine.optionIndex,
-              optionIndexes: mine.optionIndexes || [mine.optionIndex],
-              // Never tell them whether they were right until the reveal.
-              ...(s.phase === PHASES.REVEAL
-                ? {
-                    correct: mine.correct,
-                    points: mine.points,
-                    isFirstCorrect: mine.isFirstCorrect,
-                    seconds: mine.responseSeconds,
-                    // "You got 2 of 3" — the part-marks version of being told
-                    // whether you were right.
-                    ...(mine.outOf > 1 ? { gotRight: mine.gotRight, outOf: mine.outOf } : {}),
-                  }
-                : {}),
-            }
+          ? view.breakout
+            ? { text: mine.text || '' }
+            : {
+                optionIndex: mine.optionIndex,
+                optionIndexes: mine.optionIndexes || [mine.optionIndex],
+                // Never tell them whether they were right until the reveal.
+                ...(s.phase === PHASES.REVEAL
+                  ? {
+                      correct: mine.correct,
+                      points: mine.points,
+                      isFirstCorrect: mine.isFirstCorrect,
+                      seconds: mine.responseSeconds,
+                      // "You got 2 of 3" — the part-marks version of being told
+                      // whether you were right.
+                      ...(mine.outOf > 1 ? { gotRight: mine.gotRight, outOf: mine.outOf } : {}),
+                    }
+                  : {}),
+              }
           : null;
-        if (s.phase === PHASES.REVEAL) {
+        // No reveal to draw on a breakout question — nothing was right or
+        // wrong, so there is no answer key to send even an empty one of.
+        if (s.phase === PHASES.REVEAL && !view.breakout) {
           const right = [...this.correctSet(q, round)];
           view.reveal = {
             correctIndex: right[0] ?? -1,
@@ -2331,6 +2440,11 @@ export class Engine {
       extras.answer = q.answer || '';
       extras.correctLetter = answerLetter(q.answer);
     }
+    if (round.type === 'breakout') {
+      // A flag so the control view draws the answers list instead of an
+      // empty answer key — there is nothing to check an answer against here.
+      extras.breakout = true;
+    }
     if (round.type === 'intro' && q.cue) {
       // The round 3 "play this now" cue. Host phone only, never the projector.
       extras.cue = {
@@ -2451,6 +2565,21 @@ export class Engine {
       // different decision from the host having a quiet word, and not one to
       // make by accident on the strength of a phone call coming in.
       view.wandered = this.wanderedNow();
+      /*
+       * A BREAKOUT ROUND'S ANSWERS, HOST ONLY, NEVER THE PROJECTOR.
+       *
+       * "Reading them out is the entire feature" — a person reading the good
+       * ones out beats a wall of text the room has to look up at, and it
+       * means nothing a stranger typed ever reaches the big screen unread.
+       * In the order they arrived, same as `whoPicked()`, so the newest is
+       * always at the end rather than reshuffling under the host's thumb.
+       */
+      if (round.type === 'breakout') {
+        view.breakoutAnswers = Object.entries(this.answersFor())
+          .filter(([, a]) => typeof a.text === 'string')
+          .sort(([, a], [, b]) => (a.answeredAt || 0) - (b.answeredAt || 0))
+          .map(([playerId, a]) => ({ name: this.state.players[playerId]?.name || 'Unknown', text: a.text }));
+      }
     }
 
     // Always give the host the next question too, so they can read ahead and

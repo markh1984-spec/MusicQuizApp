@@ -1177,6 +1177,13 @@ export class Session {
         optionIndexes: body.optionIndexes,
       });
     }
+    // A breakout round's phones TYPE rather than pick, so it needed its own
+    // action rather than reusing `answer` — see the note on `answerBreakout`
+    // in engine.js for why that is a separate method rather than a branch
+    // inside `answer()`.
+    if (this.kind === 'quiz' && action === 'answer-breakout') {
+      return this.engine.answerBreakout(body.playerId, body.text);
+    }
     /*
      * Chat. Behind the same token check as everything else on this path — and
      * that matters more here than for an answer, because an answer somebody

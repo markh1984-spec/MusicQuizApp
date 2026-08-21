@@ -10,7 +10,7 @@
 import { esc, node } from './client.js';
 import { packWord } from './console.js';
 import { library } from './console-state.js';
-import { packLookAttrs, shortTitle } from './pack-look.js';
+import { packLookAttrs, shortTitle, isBreakoutPack } from './pack-look.js';
 import {
   DEFAULT_BINGO_PRIZES, addBingoSlot, addQuizPackSlot, homeSlotIndex, moveRoundToSlot, moveSlot,
   offRoundsFor, removeSlot, toggleRoundOff,
@@ -219,7 +219,7 @@ export function renderSlots(slots, {
   function filledTile(slot, at) {
     const isBingo = slot.kind === 'bingo';
     const pack = packOf(slot.packId) || { id: slot.packId, title: slot.packId, trackCount: 40, cardSize: 4 };
-    const look = packLookAttrs(pack, isBingo ? 'bingo' : 'quiz');
+    const look = packLookAttrs(pack, isBingo ? 'bingo' : isBreakoutPack(pack) ? 'breakout' : 'quiz');
     const tile = node(`
       <div class="lb-tile is-pack ${look.cls}" style="${look.style}" draggable="true" title="${esc(pack.title)}">
         ${packWord(look)}

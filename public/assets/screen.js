@@ -83,7 +83,13 @@ function draw(next) {
       ? 'Join now'
       : state.phase === 'final'
         ? 'Results'
-        : `Round ${state.roundIndex + 1} of ${state.roundCount}`;
+        // A breakout round is delivered like any other but scores nothing,
+        // so it is not one of the rounds the room is counting — it
+        // announces itself rather than claiming a number. See TODO.md,
+        // "THE COUNT IS WHAT SCORES".
+        : state.roundType === 'breakout'
+          ? 'Bonus round'
+          : `Round ${state.scoreRoundNumber ?? state.roundIndex + 1} of ${state.scoreRoundCount ?? state.roundCount}`;
 
   // The scoreboard is shown over whatever the quiz is doing, without moving
   // it. Picked here rather than as a phase so there is nothing to undo.
@@ -593,10 +599,14 @@ function renderRoundIntro(s) {
     intro: 'Name that intro',
     multi: 'Pick them all',
     alphabet: 'First letter only',
+    breakout: 'Nothing scored — just for laughs',
   }[intro.type] || '';
+  const kicker = intro.type === 'breakout'
+    ? 'Bonus round'
+    : `Round ${s.scoreRoundNumber ?? s.roundIndex + 1}`;
   return node(`
     <div class="round-intro">
-      <div class="kicker">Round ${s.roundIndex + 1}</div>
+      <div class="kicker">${esc(kicker)}</div>
       <h1 class="grad-text">${esc(intro.title || s.roundTitle)}</h1>
       <div class="blurb">${esc(intro.blurb || '')}</div>
       <div class="facts">
@@ -689,6 +699,11 @@ function renderQuestionMedia(s, q) {
     // not have heard it said, and the whole point is that they can stop
     // worrying about spelling it.
     return '<div class="pick-banner">Tap the <b>first letter</b> of the answer — spelling does not count</div>';
+  }
+  if (s.roundType === 'breakout') {
+    // No options to show — the room is typing whatever they like, on their
+    // own phones, and the host reads the funniest ones out afterwards.
+    return '<div class="pick-banner">Type your best answer — on your phone. Nothing is scored.</div>';
   }
   return '';
 }

@@ -28,6 +28,7 @@ export const ROUND_TYPES = [
   ['intro', 'Intro — you play the track'],
   ['multi', 'Pick them all — several right answers'],
   ['alphabet', 'First letter — they get a keyboard'],
+  ['breakout', 'Breakout — a laugh, nothing scored'],
 ];
 
 /**
@@ -359,6 +360,16 @@ export function questionCard(ctx, round, q, ri, qi) {
     return el;
   }
 
+  /*
+   * A breakout question is a prompt and nothing else — there is no answer to
+   * check against, which is the whole point of the round. See TODO.md,
+   * "BREAKOUT GAMES".
+   */
+  if (round.type === 'breakout') {
+    opts.append(node(`<div class="tiny" style="opacity:.7">No right answer — the room types whatever they like and you read the funny ones out.</div>`));
+    return el;
+  }
+
   const isMulti = round.type === 'multi';
   const count = isMulti ? 6 : 4;
   if (isMulti && !Array.isArray(q.correctIndexes)) q.correctIndexes = [];
@@ -483,6 +494,9 @@ export function reshapeForType(q, type) {
     if (!q.answer) q.answer = (q.options || [])[q.correctIndex] || '';
     return;
   }
+  // Nothing to reshape — a breakout question is just the prompt every round
+  // type already has, and there is no answer key to build one out of.
+  if (type === 'breakout') return;
   if (!Array.isArray(q.options)) q.options = [];
   if (type === 'multi') {
     while (q.options.length < 6) q.options.push('');
@@ -497,6 +511,7 @@ export function reshapeForType(q, type) {
 
 export function blankQuestion(type, id) {
   if (type === 'alphabet') return { id, prompt: '', answer: '' };
+  if (type === 'breakout') return { id, prompt: '' };
   if (type === 'multi') {
     return { id, prompt: '', options: ['', '', '', '', '', ''], correctIndex: 0, correctIndexes: [] };
   }

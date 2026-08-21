@@ -930,7 +930,11 @@ function buildScreen(s) {
     case 'reveal': return buildReveal(s);
     case 'round_board':
     case 'final': return buildBoard(s);
-    case 'round_intro': return buildWaiting(s, `Round ${s.roundIndex + 1}`, s.roundTitle, 'Eyes on the big screen.');
+    case 'round_intro': return buildWaiting(s,
+      // Same rule as the projector's kicker: a breakout round is delivered
+      // like any other but does not count, so it does not claim a number.
+      s.roundType === 'breakout' ? 'Bonus round' : `Round ${s.scoreRoundNumber ?? s.roundIndex + 1}`,
+      s.roundTitle, 'Eyes on the big screen.');
     default: return buildWaiting(s, "You're in", s.you ? s.you.name : '',
       'Hang tight — the quiz starts shortly.');
   }
@@ -1257,6 +1261,7 @@ function questionHead(s, tail) {
 function buildAnswers(s) {
   if (s.multi) return buildMultiAnswers(s);
   if (s.alphabet) return buildAlphabetAnswers(s);
+  if (s.breakout) return buildBreakoutAnswers(s);
   const options = s.options || [];
   const el = node(`
     <div style="display:flex;flex-direction:column;gap:16px;flex:1 1 auto">
@@ -1278,6 +1283,58 @@ function buildAnswers(s) {
   el.querySelectorAll('.answer-btn').forEach((btn) => {
     btn.addEventListener('click', () => choose(Number(btn.dataset.i)));
   });
+  return el;
+}
+
+/**
+ * The breakout round: a laugh, not a question. Type an answer, there is no
+ * right one, and nothing about it is scored — the host reads them out off
+ * their own screen for the room to enjoy. One box, one submit, then it locks
+ * exactly like every other round: no changing your mind once it has gone.
+ */
+function buildBreakoutAnswers(s) {
+  const already = s.yourAnswer && typeof s.yourAnswer.text === 'string';
+  const el = node(`
+    <div style="display:flex;flex-direction:column;gap:16px;flex:1 1 auto">
+      <div class="timer">
+        <div class="bar"><span id="pTimerBar"></span></div>
+        <div class="num" id="pTimerNum">--</div>
+      </div>
+      ${questionHead(s, 'type your best answer')}
+      <form class="team-new" id="breakoutForm">
+        <input type="text" id="breakoutText" maxlength="28" autocomplete="off"
+               enterkeyhint="send" placeholder="Your answer…"
+               ${already ? 'disabled' : ''} value="${already ? esc(s.yourAnswer.text) : ''}">
+        <button class="lock-btn" id="breakoutSend" type="submit" ${already ? 'disabled' : ''}>
+          ${already ? 'Sent' : 'Send it'}
+        </button>
+      </form>
+    </div>
+  `);
+
+  const form = el.querySelector('#breakoutForm');
+  const input = el.querySelector('#breakoutText');
+  const btn = el.querySelector('#breakoutSend');
+  if (!already) {
+    form.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const text = input.value.trim();
+      if (!text || pendingChoice !== null) return;
+      pendingChoice = text;
+      input.disabled = true;
+      btn.disabled = true;
+      btn.textContent = 'Sent';
+      postJson('/api/answer-breakout', { playerId: me.id, token: me.token, text, joinCode: roomCode() })
+        .catch(() => {
+          // The state push is the source of truth; if it did not land the
+          // box comes back live on the next update, same as every other round.
+          pendingChoice = null;
+          input.disabled = false;
+          btn.disabled = false;
+          btn.textContent = 'Send it';
+        });
+    });
+  }
   return el;
 }
 
@@ -1349,6 +1406,7 @@ function buildMultiAnswers(s) {
 }
 
 function answered(s) {
+  if (s && s.breakout) return Boolean(s.yourAnswer && typeof s.yourAnswer.text === 'string');
   return Boolean(s && s.yourAnswer && s.yourAnswer.optionIndex !== undefined);
 }
 
@@ -1408,6 +1466,10 @@ function updateScreen(s) {
   if (s.game === 'bingo') return updateBingo(s, me);
   if (s.phase !== 'question') return;
 
+  // A breakout box locks itself the moment it is submitted — see
+  // `buildBreakoutAnswers` — and there is no option grid here to repaint.
+  if (s.breakout) return;
+
   if (s.multi) {
     const locked = s.yourAnswer ? s.yourAnswer.optionIndexes : pendingChoice;
     if (Array.isArray(locked)) paintLocked(locked);
@@ -1418,6 +1480,19 @@ function updateScreen(s) {
 }
 
 function buildReveal(s) {
+  // No score, no right answer — the host is reading the answers out loud off
+  // their own screen, and this phone's job is just to say "thanks".
+  if (s.breakout) {
+    const sent = s.yourAnswer && typeof s.yourAnswer.text === 'string';
+    return node(`
+      <div style="display:grid;gap:16px">
+        <div class="result">
+          <div class="big">${sent ? 'Sent!' : 'Too slow'}</div>
+          <div class="sub">${sent ? 'Listen out for it.' : 'Next one, be quick.'}</div>
+        </div>
+      </div>
+    `);
+  }
   const r = s.reveal || {};
   // On the first-letter round the answer is what they want to hear, and the
   // letter is how they said it — so say both, in that order.

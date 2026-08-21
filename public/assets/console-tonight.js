@@ -14,7 +14,7 @@ import { BENCH_STORE, NIGHT_BENCH_STORE, bench, library, nightBench, packDrag, s
 import { nowNextRows } from './console-venues.js';
 import { TABS, can, goTo, hostKey, keyInUrl, keyed, linkTo, load, packWord, render, renderKeepingPlace, screenLink, showDone } from './console.js';
 import { clashTonight, nightKey, tonight, upcoming } from './diary.js';
-import { packLookAttrs, shortTitle } from './pack-look.js';
+import { packLookAttrs, shortTitle, isBreakoutPack } from './pack-look.js';
 import { FEATURES } from './plans.js';
 import { itemsOf } from './show-parts.js';
 
@@ -1684,7 +1684,7 @@ export function launchBar() {
       // The KIND comes from the pack itself rather than from the tab you are
       // on: Tonight can hold a quiz and a bingo game at once, so the tab would
       // paint the wrong edge on one of them.
-      const look = packLookAttrs(pack, rounds ? 'quiz' : 'bingo');
+      const look = packLookAttrs(pack, rounds ? (isBreakoutPack(pack) ? 'breakout' : 'quiz') : 'bingo');
       const tile = node(`
         <div class="lb-tile is-pack ${look.cls} ${rounds && (pack.rounds || []).every((_, i) => isOff(pack.id, i)) ? 'is-spent' : ''}" style="${look.style}" draggable="true" title="${esc(pack.title)}">
           ${packWord(look)}

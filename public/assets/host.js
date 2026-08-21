@@ -259,10 +259,12 @@ function whereLabel(s) {
   switch (s.phase) {
     case 'lobby': return 'Lobby — waiting to start';
     case 'rules': return 'The rules';
-    case 'round_intro': return `Round ${s.roundIndex + 1} intro`;
+    // A breakout round is delivered like any other but scores nothing, so it
+    // does not claim a round number here either — same rule as the projector.
+    case 'round_intro': return s.roundType === 'breakout' ? 'Bonus round intro' : `Round ${s.scoreRoundNumber ?? s.roundIndex + 1} intro`;
     case 'question': return `R${s.roundIndex + 1} Q${s.questionIndex + 1} — live`;
     case 'reveal': return `R${s.roundIndex + 1} Q${s.questionIndex + 1} — revealed`;
-    case 'round_board': return `Round ${s.roundIndex + 1} scores`;
+    case 'round_board': return s.roundType === 'breakout' ? 'Bonus round scores' : `Round ${s.scoreRoundNumber ?? s.roundIndex + 1} scores`;
     case 'final': return 'Final results';
     default: return 'Control';
   }
@@ -542,8 +544,50 @@ function keyRows(q, tally) {
     .filter(([i]) => rightSet(q).has(i) || (tally[i] || 0) > 0);
 }
 
+/**
+ * A breakout round has no answer key — there is nothing right or wrong to
+ * check an answer against, which is the whole point of the round. Instead
+ * the host gets every answer as it lands, in the order it arrived, to read
+ * out over the mic. No caret, no tally, nothing to fold away: reading them
+ * out IS the feature.
+ */
+function breakoutPanel(s, q) {
+  const answers = s.breakoutAnswers || [];
+  const el = node(`
+    <div class="panel">
+      <h3>Round ${s.roundIndex + 1}, question ${s.questionIndex + 1} of ${s.questionCount} — breakout</h3>
+      <p class="prompt">${esc(q.prompt)}</p>
+      <div class="tiny" style="margin-bottom:8px;color:var(--cool)">No right answer — read the funny ones out.</div>
+      <div class="keywho" id="breakoutList">
+        ${answers.length
+          ? answers.map((a) => `<span>${esc(a.name)}: ${esc(a.text)}</span>`).join('')
+          : '<span class="tiny" style="opacity:.7">Nothing in yet.</span>'}
+      </div>
+      <div class="tiny" style="margin-top:10px">${answers.length} of ${s.playerCount} answered</div>
+      <button class="report-q" type="button">Something wrong with this one?</button>
+    </div>
+  `);
+
+  const reportBtn = el.querySelector('.report-q');
+  if (reportBtn) {
+    reportBtn.addEventListener('click', async () => {
+      reportBtn.disabled = true;
+      try {
+        await postJson('/api/host/reportQuestion', {}, { 'X-Host-Key': hostKey });
+        reportBtn.textContent = 'Noted — thanks';
+        toast('Reported. Carry on; it is on the owner’s list.');
+      } catch (err) {
+        reportBtn.disabled = false;
+        toast('Could not report it: ' + err.message);
+      }
+    });
+  }
+  return el;
+}
+
 function questionPanel(s) {
   const q = s.question;
+  if (q.breakout) return breakoutPanel(s, q);
   const tally = s.tally || [];
   const rows = keyRows(q, tally);
   const el = node(`
@@ -672,7 +716,10 @@ function nextUpPanel(s) {
         // No options to read ahead — the answer and its letter is the whole
         // thing, and nobody has answered yet so there is no tally to show.
         ? `<div class="answer-said"><span class="answer-letter">${esc(up.correctLetter || '?')}</span><span class="answer-words">${esc(up.answer || '')}</span></div>`
-        : `<div class="keylist">
+        : up.breakout
+          // No answer key to read ahead here either — just the prompt above.
+          ? '<div class="tiny" style="color:var(--cool)">No right answer — read the funny ones out.</div>'
+          : `<div class="keylist">
         ${up.options.map((opt, i) => `
           <div class="keyrow ${rightSet(up).has(i) ? 'is-correct' : ''}">
             <span class="letter">${LETTERS[i]}</span><span>${esc(opt)}</span>

@@ -13,7 +13,7 @@ import path from 'node:path';
 // pack is allowed to ask for and what the screens can draw.
 import { LOOKS } from '../public/assets/looks.js';
 
-export const ROUND_TYPES = ['text', 'image', 'intro', 'multi', 'alphabet'];
+export const ROUND_TYPES = ['text', 'image', 'intro', 'multi', 'alphabet', 'breakout'];
 
 /**
  * A "pick exactly N" round shows six options rather than four.
@@ -37,6 +37,27 @@ export const MULTI_OPTIONS = 6;
  * all work without knowing this round type exists.
  */
 export const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+/**
+ * The breakout round: for laughs, and it contributes nothing to the score.
+ *
+ * "Pack 1 will load first and pack 2 will load second, but if pack 2 is a
+ * breakout game it doesn't contribute to the score on the main quiz" — the
+ * host's own model, and it is the same design as `composeQuiz()` seen from
+ * the other end: a breakout PACK is one whose every round is this type, and
+ * dropping it into a slot merges its round into the composed quiz exactly
+ * like any other, in delivery order. Nothing loads, because nothing ends —
+ * scores, teams, tokens and phones all carry straight through.
+ *
+ * A question here is just `{ id, prompt }` — no options, no answer, nothing
+ * to mark right or wrong, because there is nothing to check. The room TYPES
+ * an answer on their phone rather than picking one — see `answerBreakout()`
+ * in `engine.js` — and the laugh is in what people write. **A HOST screen
+ * lists every answer by team so they can read the good ones out; it is
+ * never on the projector**, the same "typed text from a stranger's phone
+ * goes to a human, never straight to a public screen" rule this app already
+ * applies to team names and photographs.
+ */
 
 /**
  * How a picture round gives itself away.
@@ -68,6 +89,18 @@ export function revealMode(round = {}, q = {}, questionIndex = 0) {
   const asked = String(q.reveal || round.reveal || DEFAULT_REVEAL).toLowerCase();
   if (asked === 'mix') return REVEAL_MODES[questionIndex % REVEAL_MODES.length];
   return REVEAL_MODES.includes(asked) ? asked : DEFAULT_REVEAL;
+}
+
+/**
+ * Is every round in this quiz a breakout round? Derived, never declared —
+ * the same reason a pack's look and its subject are derived rather than
+ * stored: one source of truth that cannot disagree with itself. Used to
+ * decide whether a composed quiz still has anything scored left in it, and
+ * will be what the console's pack-look orange edge reads from.
+ */
+export function isBreakoutPack(quiz) {
+  const rounds = (quiz && quiz.rounds) || [];
+  return rounds.length > 0 && rounds.every((r) => r.type === 'breakout');
 }
 
 /** The letter an answer starts with, or '' if it does not start with one. */
@@ -629,6 +662,10 @@ export function validateQuiz(quiz) {
         }
         return;
       }
+
+      // A breakout question is just its prompt — there is nothing to mark
+      // right, so nothing else to check.
+      if (round.type === 'breakout') return;
 
       const options = q.options || [];
       const wanted = round.type === 'multi' ? MULTI_OPTIONS : 4;

@@ -1259,6 +1259,7 @@ Open the one you are touching; do not read them all.
 - Online mode is ONE BOOLEAN, and the branch count is a budget
 - The alphabet round — no options at all
 - The intro round skips the dead air, and that is a SCORING fix
+- The breakout round — a laugh, not a question, and it scores nothing
 - The draw from the bottom half — a retention feature, not a raffle
 - A phone must not say you were right before the projector does
 - The picture round's four reveals
@@ -1806,6 +1807,28 @@ becomes recognisable is the question's difficulty and must never be trimmed.**
   place. The control view prints the offset only when there IS one.
 - **DO NOT "fix" this by giving the intro round a longer clock** — a longer
   round is a round worth MORE points, which is the same fault deliberately.
+
+Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
+
+### The breakout round — a laugh, not a question, and it scores nothing
+
+`type: 'breakout'`. A Blankety-Blank-style round inside an ordinary composed
+quiz via `composeQuiz()` — nothing loads, nothing ends, so it can sit anywhere
+in a night with no effect on scores, teams or tokens.
+
+- **Phones TYPE.** `answerBreakout()`/`/api/answer-breakout`, a separate
+  action from `answer()`. Text is cleaned with `cleanTeamName()`, exactly as
+  team names are — no profanity filter, no approve step.
+- **NO SCORE, EVER** — `correctSet()`/`answerText()` return empty;
+  `fastestFinger()`/`whoPicked()`/`optionTally()` fall through safely.
+- **ANSWERS ARE HOST-ONLY, NEVER THE PROJECTOR** — `view.breakoutAnswers` in
+  `hostView()`, and no `reveal` at all in `screenView()`/`playerView()`.
+- **THE COUNT IS WHAT SCORES** — `scoringRoundNumber()`/`scoringRoundCount()`
+  exclude it, so "Round 2 of 2" stays true with a breakout between them; every
+  screen says "Bonus round" instead. `roundIndex`/`roundCount` are UNCHANGED —
+  only what a screen SAYS moved.
+- Claude can write these too (`roundBriefsFor('breakout')`), checking pass
+  skipped — there is no answer for a fact-checker to check.
 
 Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 

@@ -12,7 +12,7 @@ import { PACK_SHELF, can, canPin, doorNow, goTo, hostKey, isPinned, keyed, linkT
 import { tonight } from './diary.js';
 import { lobbyGameChoices, lobbyGameFor } from './lobby-games.js';
 import { inSeason } from './looks.js';
-import { packLookAttrs, shortTitle, titleSize } from './pack-look.js';
+import { packLookAttrs, shortTitle, titleSize, isBreakoutPack } from './pack-look.js';
 import { FEATURES, findTier } from './plans.js';
 
 /*
@@ -1024,7 +1024,7 @@ export function packCard(kind, pack, repaint = () => {}) {
    * the card, never a fill: `broken` is still the only red on this shelf that
    * means anything, and it is still on the border where it always was.
    */
-  const look = packLookAttrs(pack, kind);
+  const look = packLookAttrs(pack, kind === 'quiz' && isBreakoutPack(pack) ? 'breakout' : kind);
   const el = node(`
     <div class="pack-card ${open ? 'open' : 'shut'} ${look.cls} ${pack.broken ? 'broken' : ''} ${ownPack ? 'own' : ''} ${freshness(pack).expired ? 'stale' : ''}"
       style="${look.style}"
