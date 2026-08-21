@@ -17,7 +17,9 @@ only the console — never the projector or a phone) now carries: a barbed gold
 quill cursor with the hotspot on its nib; a gauntlet pair on drag — open hand
 and closed fist, both drawn from the QM's side of the hand, the fingers
 separating through the fist's own knuckle grooves, fingertips level with the
-middle 10% longer and the pinky a touch shorter, tuned to that wording; a
+middle 10% longer and the pinky a touch shorter, tuned to that wording, and the
+quill's own orientation flipped so its nib clicks from the top-left like an
+ordinary pointer rather than a hand-drawn quill's natural bottom-left; a
 soft scroll curl-shadow on every card; and turned scroll rods capping every
 panel, dark-stained along the roll with the account's own two colours held in
 the grooved knob finials. All of it is CSS on `body.console` — no payload,

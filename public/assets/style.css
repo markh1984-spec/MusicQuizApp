@@ -1887,8 +1887,8 @@ body.console::after { display: none; }
  */
 body.console, body.console * {
   cursor:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg stroke='%234a2c0e' stroke-width='1.15' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M2.8 29.6 Q6.2 24.6 9.7 19.8' fill='none' stroke='%234a2c0e' stroke-width='3.4'/%3E%3Cpath d='M2.8 29.6 Q6.2 24.6 9.7 19.8' fill='none' stroke='%23f2e6c8' stroke-width='1.7'/%3E%3Cpath d='M9.6 19.6 Q7.8 15.6 10.3 11.9 Q13.4 7.4 18.1 4.6 Q23 1.8 28.4 2.8 Q25.4 5.9 24 9.5 L21 10.3 Q19.8 13.7 17.1 15.4 L14.6 15.6 Q13 18 11.7 20.7 Q10.3 21 9.6 19.6 Z' fill='%23ffd23f'/%3E%3Cpath d='M28.4 2.8 Q25.4 5.9 24 9.5 L21 10.3 Q19.8 13.7 17.1 15.4' fill='none' stroke='%23ff8a3d' stroke-width='1.5'/%3E%3Cpath d='M4 28.2 C 9 21.8, 15 14, 27.2 3.8' fill='none' stroke='%23fff7e0' stroke-width='1.2'/%3E%3C/g%3E%3C/svg%3E")
-    3 30, pointer !important;
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg stroke='%234a2c0e' stroke-width='1.15' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M2.8 2.4 Q6.2 7.4 9.7 12.2' fill='none' stroke='%234a2c0e' stroke-width='3.4'/%3E%3Cpath d='M2.8 2.4 Q6.2 7.4 9.7 12.2' fill='none' stroke='%23f2e6c8' stroke-width='1.7'/%3E%3Cpath d='M9.6 12.4 Q7.8 16.4 10.3 20.1 Q13.4 24.6 18.1 27.4 Q23 30.2 28.4 29.2 Q25.4 26.1 24 22.5 L21 21.7 Q19.8 18.3 17.1 16.6 L14.6 16.4 Q13 14 11.7 11.3 Q10.3 11 9.6 12.4 Z' fill='%23ffd23f'/%3E%3Cpath d='M28.4 29.2 Q25.4 26.1 24 22.5 L21 21.7 Q19.8 18.3 17.1 16.6' fill='none' stroke='%23ff8a3d' stroke-width='1.5'/%3E%3Cpath d='M4 3.8 C9 10.2 15 18 27.2 28.2' fill='none' stroke='%23fff7e0' stroke-width='1.2'/%3E%3C/g%3E%3C/svg%3E")
+    3 2, pointer !important;
 }
 /*
  * `!important` because dozens of scattered `cursor: pointer` rules on
