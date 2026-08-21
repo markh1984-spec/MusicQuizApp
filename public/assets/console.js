@@ -11,12 +11,12 @@ import { brandLink, brandMark, esc, menuRights, node, paintIdentity, paintNav, p
 import { accountSection, backupWarning, firstOwnerPanel, helpSection, otherRoomsPanel, settingsSection, shopSection } from './console-account.js';
 import { diarySection } from './console-diary.js';
 import { generatePanel, importPanel, quizGeneratePanel } from './console-generate.js';
-import { asksPanel, gigsSection } from './console-gigs.js';
+import { asksPanel, fillNightDetail, gigsSection } from './console-gigs.js';
 import { invoicesSection } from './console-invoices.js';
 import { gameSection, preview } from './console-packs.js';
 import { editPopover } from './console-editor-popover.js';
 import { shelfFor, showsSection } from './console-shows.js';
-import { BENCH_STORE, NIGHT_BENCH_STORE, bench, gigsSeen, lastDone, library, me, nightBench, nightDrag, packDrag, setAccountsExist, setBench, setGigsSeen, setLastDone, setLibrary, setMe, setNightBench, setNightDrag, setNightToOpen, setPackDrag } from './console-state.js';
+import { BENCH_STORE, NIGHT_BENCH_STORE, bench, gigsSeen, lastDone, library, me, nightBench, nightDrag, packDrag, setAccountsExist, setBench, setGigsSeen, setLastDone, setLibrary, setMe, setNightBench, setNightDrag, setPackDrag } from './console-state.js';
 import { aNightIsOn, dragging, launchBar, night, putNightOnBench, putOnBench, runningPanel, tonightSettingsPanel } from './console-tonight.js';
 import { advertsSection, editAdvertSet, forgetPanel, venuesSection } from './console-venues.js';
 import { upcoming } from './diary.js';
@@ -1343,26 +1343,35 @@ function workBench() {
 }
 
 /**
- * THE POST GIG BENCH — one night, and the three things you do about it.
+ * THE POST GIG BENCH — one night, and everything you do about it.
  *
  * *"I think I need a bench in the post gig bit as well."* Its cargo is a NIGHT,
  * which is what every job behind that door is about: bill it, show the venue,
- * put it on the gallery. Those three are currently spread across two tabs and
- * an expanded row you have to find first.
+ * put it on the gallery.
  *
- * **IT FETCHES ITS OWN NIGHT RATHER THAN WAITING FOR THE LIST.** The Gigs panel
- * below reads the archive when it renders, and this panel is built before that
+ * **THE DETAIL LIVES HERE NOW, NOT IN A SECOND PLACE.** This used to be a
+ * small tile with three buttons that clicked THROUGH to a row in the list
+ * below — "Open its photos" found `.gig[data-night]` and pressed its head for
+ * you. Past gigs then grew its own bay showing that same detail a second
+ * time, and the host's own reading of the result was right: two places
+ * showing the same thing is less visible than one, not more. So the bench
+ * now builds the detail itself — `fillNightDetail()`, the exact function
+ * Past gigs used to keep in its own bay — and Past gigs is a picker only:
+ * choose a night there, see everything about it here.
+ *
+ * **IT FETCHES ITS OWN NIGHT RATHER THAN WAITING FOR THE LIST.** Past gigs
+ * reads the archive when it renders, and this panel is built before that
  * finishes — so on a fresh load the bench would have nothing to look its
  * remembered night up in. Redrawing the whole page when the list arrives was
- * the obvious fix and is a LOOP: the render rebuilds Gigs, which fetches, which
- * renders. It refills itself in place instead, which touches nothing else.
+ * the obvious fix and is a LOOP: the render rebuilds Past gigs, which
+ * fetches, which renders. It refills itself in place instead, which touches
+ * nothing else.
  */
 function nightBenchPanel() {
   const el = node('<div class="panel launchbar bench night-bench"></div>');
 
-  const draw = (night) => {
+  const draw = async (night) => {
     const when = night ? new Date(night.night + 'T12:00:00') : null;
-    const heads = night ? Math.max(0, ...(night.games || []).map((g) => g.playerCount || 0)) : 0;
     el.replaceChildren(node(`
       <div>
         <div class="lb-head">
@@ -1372,87 +1381,26 @@ function nightBenchPanel() {
     ? esc(`${when.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}${night.venue ? ` · ${night.venue}` : ''}`)
     : 'Nothing yet'}</span>
           </div>
+          ${night ? '<button class="lb-tile-off bench-off" type="button" aria-label="Take it off the bench">&times;</button>' : ''}
         </div>
-        <div class="bench-body">
-          <div class="bench-slot">
-            ${night ? `
-              <div class="lb-tile night-tile">
-                <button class="lb-tile-off bench-off" type="button" aria-label="Take it off the bench">&times;</button>
-                <b class="lb-tile-name">${esc(when.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }))}</b>
-                <span class="tiny lb-tile-sub">${esc(night.venue || 'No venue')}</span>
-                ${heads ? `<span class="tiny">${heads} played</span>` : ''}
-              </div>` : `
+        ${night ? '<div class="bench-detail"></div>' : `
+          <div class="bench-body">
+            <div class="bench-slot">
               <div class="lb-drop bench-drop">
                 <span class="lb-drop-plus">+</span>
                 <span>Drag a night here</span>
-              </div>`}
-          </div>
-          <div class="bench-do">
-            ${night ? `
-              ${can(FEATURES.INVOICES) ? '<button class="go bench-go role-make night-bill" type="button">Invoice this night</button>' : ''}
-              <button class="minor night-open" type="button">Open its photos</button>
-              ${can(FEATURES.PAST_GIGS) ? `<button class="minor night-gallery" type="button">${
-    night.published ? 'Take it off the gallery' : 'Put it on the gallery'}</button>` : ''}`
-    : `
-              <p class="tiny">Drag a night up from the list below and the things
-                you do after a gig are all in one place &mdash; the invoice, the
-                photographs, and whether the venue can show it off.</p>`}
-          </div>
-        </div>
+              </div>
+            </div>
+            <div class="bench-do">
+              <p class="tiny">Or pick one in Past gigs, and the invoice, the
+                photographs and whether the venue can show it off are all in
+                one place, right here.</p>
+            </div>
+          </div>`}
       </div>`));
 
     el.querySelector('.bench-off')?.addEventListener('click', () => putNightOnBench(''));
-    /*
-     * OPEN ITS PHOTOS means open that night's own row, rather than a second
-     * gallery drawn up here. One place a night's photographs are shown, and
-     * it is the one with the bin on each picture.
-     */
-    el.querySelector('.night-open')?.addEventListener('click', () => {
-      const row = document.querySelector(`.gig[data-night="${CSS.escape(night.night)}"] .gig-head`);
-      if (row) { row.click(); row.scrollIntoView({ block: 'nearest' }); }
-    });
-    /*
-     * PUTTING IT UP OPENS THE PHOTOS RATHER THAN PUBLISHING — the bench does
-     * not have to be opened, so its own button was a way round the safeguard
-     * under the photographs: publish without having just looked at what you
-     * are publishing. It becomes a way IN instead, through the row's own
-     * head, same as "Open its photos" above. The actual "Put it on the
-     * gallery" control lives there, under the pictures, and stays the only
-     * place that calls the publish route.
-     *
-     * TAKING IT DOWN has no such safeguard to skip — removing exposure is
-     * never the risky direction — so that half stays direct.
-     */
-    el.querySelector('.night-gallery')?.addEventListener('click', async (ev) => {
-      if (!night.published) {
-        el.querySelector('.night-open')?.click();
-        return;
-      }
-      const button = ev.currentTarget;
-      button.disabled = true;
-      try {
-        await postJson('/api/past-gigs/publish',
-          { night: night.night, on: false }, { 'X-Host-Key': hostKey });
-        night.published = false;
-        draw(night);
-      } catch (err) {
-        button.disabled = false;
-        alert(err.message || 'Could not change that.');
-      }
-    });
-    el.querySelector('.night-bill')?.addEventListener('click', () => {
-      // Through the night's OWN Invoice button, so there is one implementation
-      // of "bill this night" rather than a second that drifts from it.
-      const row = document.querySelector(`.gig[data-night="${CSS.escape(night.night)}"]`);
-      const head = row && row.querySelector('.gig-head');
-      if (!head) return;
-      if (row.querySelector('.gig-body').hidden) head.click();
-      const go = () => row.querySelector('.gig-bill')?.click();
-      // The body loads its contents on first open, so the button may not be
-      // there yet on the very first press.
-      if (row.querySelector('.gig-bill')) go();
-      else setTimeout(go, 400);
-    });
+    if (night) await fillNightDetail(el.querySelector('.bench-detail'), night);
   };
 
   const found = () => gigsSeen.find((n) => n.night === nightBench) || null;
@@ -1471,6 +1419,11 @@ function nightBenchPanel() {
     })();
   }
 
+  /*
+   * DRAG WIRING STAYS OUTSIDE `draw()`, added ONCE — `el` itself is never
+   * replaced, only its children, so listeners added inside `draw()` would
+   * stack up a fresh copy on every redraw.
+   */
   el.addEventListener('dragover', (ev) => {
     if (!nightDrag) return;
     ev.preventDefault();
@@ -1841,13 +1794,6 @@ if (/^\d{4}-\d{2}-\d{2}$/.test(wantedNight)) {
    */
   setNightBench(wantedNight);
   localStorage.setItem(NIGHT_BENCH_STORE, wantedNight);
-  /*
-   * AND OPEN IT, once. The bench alone puts the night in front of you with an
-   * *Open its photos* button beside it — which is one more tap between a host
-   * who has just come off the mic and the pictures they were sent here to
-   * look at. That tap is the one that does not get made.
-   */
-  setNightToOpen(wantedNight);
 }
 
 /*

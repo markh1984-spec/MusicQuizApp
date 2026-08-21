@@ -2,11 +2,22 @@
 
 import { binIcon, esc, node } from './client.js';
 import { invoiceApi, openInvoiceForm } from './console-invoices.js';
-import { book, library, me, nightToOpen, setBook, setGigsSeen, setNightDrag, setNightToOpen } from './console-state.js';
-import { dragging } from './console-tonight.js';
+import { book, library, me, nightBench, setBook, setGigsSeen, setNightDrag } from './console-state.js';
+import { dragging, putNightOnBench } from './console-tonight.js';
 import { can, hostKey, keyed, load } from './console.js';
 import { tonight } from './diary.js';
 import { FEATURES } from './plans.js';
+
+/*
+ * WHICH VENUE CARD IS OPEN — module-level, same as `openVenue` in
+ * console-venues.js, and for the identical reason: picking a night puts it
+ * on the bench through `putNightOnBench()`, which re-renders the WHOLE
+ * console so the door head picks up the change. A variable local to
+ * `pastGigsSection()` would be thrown away and rebuilt on every one of those
+ * re-renders, so the card you just picked a night out of would shut itself
+ * the moment you picked it.
+ */
+let openVenueKey = '';
 
 /**
  * WHOSE NIGHT IS TONIGHT — the cheapest diary there is.
@@ -380,54 +391,35 @@ function pastGigsSection() {
         </div>
       </div>
       <div class="tiny gig-note"></div>
-      <div class="gig-bay-slot"></div>
       <div class="venue-cards">Loading…</div>
     </div>`);
 
-  const bay = el.querySelector('.gig-bay-slot');
   const cardsWrap = el.querySelector('.venue-cards');
   const note = el.querySelector('.gig-note');
-  bay.appendChild(emptyBay());
 
-  // Which venue card is open, and which night is currently loaded into the
-  // bay — both start fresh every time the tab is opened, same as the old
-  // per-row expand state did.
-  let openKey = '';
-  let selectedNight = '';
+  // WHICH NIGHT is picked lives on the bench (`nightBench`), so it survives
+  // this section being rebuilt from scratch. `openVenueKey` is module-level
+  // for the same reason — see the note above it.
   let groups = { venues: [], unfiled: [] };
 
   const drawCards = () => {
     const cards = groups.venues.map((v) => venueCard(v, {
-      open: openKey === v.key,
-      selectedNight,
-      onToggle: () => { openKey = openKey === v.key ? '' : v.key; drawCards(); },
-      onPick: showInBay,
+      open: openVenueKey === v.key,
+      onToggle: () => { openVenueKey = openVenueKey === v.key ? '' : v.key; drawCards(); },
+      onPick: (n) => putNightOnBench(n.night),
     }));
     if (groups.unfiled.length) {
       cards.push(venueCard(
         { key: '~unfiled', venue: 'Not filed under a venue', nights: groups.unfiled },
         {
-          open: openKey === '~unfiled',
-          selectedNight,
-          onToggle: () => { openKey = openKey === '~unfiled' ? '' : '~unfiled'; drawCards(); },
-          onPick: showInBay,
+          open: openVenueKey === '~unfiled',
+          onToggle: () => { openVenueKey = openVenueKey === '~unfiled' ? '' : '~unfiled'; drawCards(); },
+          onPick: (n) => putNightOnBench(n.night),
           noHeadcount: true,
         },
       ));
     }
     cardsWrap.replaceChildren(...cards);
-  };
-
-  /*
-   * THE BAY IS ONE SLOT, WHOEVER OPENS IT. Every venue card's nights wire up
-   * to this same function, so there is exactly one place a night's photos,
-   * invoice button and gallery toggle can be — never one copy per open card.
-   */
-  const showInBay = async (target) => {
-    selectedNight = target.night;
-    drawCards();
-    bay.replaceChildren(await nightDetail(target));
-    bay.scrollIntoView({ block: 'start', behavior: 'smooth' });
   };
 
   (async () => {
@@ -462,27 +454,6 @@ function pastGigsSection() {
     setGigsSeen(data.nights || []);
     groups = groupByVenue(data.nights, library.headcounts || { venues: [] });
     drawCards();
-
-    /*
-     * ARRIVED FROM THE MIC — open that night straight into the bay.
-     *
-     * `?night=` on the URL is the control view's **Check the photos** button
-     * landing here at the end of a quiz. Opening its venue card and loading
-     * the bay is what makes that a flow rather than a signpost.
-     *
-     * **Cleared whether or not the night was found**, or changing tab and
-     * coming back re-opens a night nobody asked for.
-     */
-    if (nightToOpen) {
-      const target = data.nights.find((n) => n.night === nightToOpen);
-      setNightToOpen('');
-      if (target) {
-        const home = groups.venues.find((v) => v.nights.includes(target));
-        openKey = home ? home.key : (groups.unfiled.includes(target) ? '~unfiled' : '');
-        drawCards();
-        await showInBay(target);
-      }
-    }
   })();
 
   return el;
@@ -493,12 +464,12 @@ function pastGigsSection() {
  * (`.venue-card`/`.venue-top`/`.venue-name`), so this is not a second shape
  * for one idea. Shut, it shows the headcount line, which is the number the
  * tab's old separate Headcount panel existed to show. Open, it lists every
- * night there; pressing one does not expand anything inline — it hands the
- * night to `onPick`, which loads it into the bay. That is deliberate: with
- * several venue cards open at once, a night's detail must still live in
- * exactly one place, or two open cards could each claim to be showing it.
+ * night there; pressing one does not expand anything inline — it puts that
+ * night ON THE BENCH (`onPick`), which is the door's own panel at the top,
+ * shared with Invoices. Deliberate: this tab is a PICKER now, not a second
+ * place a night's detail can be shown — the bench is the only one.
  */
-function venueCard(entry, { open, selectedNight, onToggle, onPick, noHeadcount = false }) {
+function venueCard(entry, { open, onToggle, onPick, noHeadcount = false }) {
   const summary = noHeadcount ? null : headsFor(entry.venue);
   const gist = summary
     ? headcountLine(summary)
@@ -512,7 +483,10 @@ function venueCard(entry, { open, selectedNight, onToggle, onPick, noHeadcount =
       ${open ? '' : `<div class="venue-gist">${gist}</div>`}
       ${!open ? '' : `
         <div class="gig-list venue-gig-list">
-          ${entry.nights.map((n) => gigRowMarkup(n, n.night === selectedNight)).join('')}
+          <!-- Marked against nightBench, not a state var of this tab's own —
+               the bench is what says which night is picked, and this list is
+               just a picker, so it reads the same global the bench does. -->
+          ${entry.nights.map((n) => gigRowMarkup(n, n.night === nightBench)).join('')}
         </div>`}
     </div>`);
 
@@ -584,11 +558,6 @@ function gigRowMarkup(night, isSelected) {
     </div>`;
 }
 
-/** The bay before anything has been picked. */
-function emptyBay() {
-  return node('<div class="gig-bay empty"><div class="tiny">Pick a night below to see it here.</div></div>');
-}
-
 /**
  * What one archived game is called, on the list row and in the expanded
  * view alike.
@@ -607,23 +576,15 @@ function gameLabel(g) {
 }
 
 /**
- * THE BAY'S CONTENTS — one night's full detail: who won, invoice it, the
- * report for the venue, its photos and the gallery toggle. Exactly what used
- * to open inline under a row's own head; the shape is unchanged, only where
- * it lands moved — see the note above `venueCard()`.
+ * ONE NIGHT'S FULL DETAIL, INTO A CONTAINER SOMEBODY ELSE OWNS — who won,
+ * invoice it, the report for the venue, its photos and the gallery toggle.
+ * Exactly what used to open inline under a row's own head, and then briefly
+ * lived in a bay of its own inside this tab; it lives on the POST GIG
+ * BENCH now (`nightBenchPanel()` in console.js), which already had its own
+ * heading and its own "take it off" control, so this only ever fills the
+ * body — one place a night's detail is built, wherever it is shown.
  */
-async function nightDetail(night) {
-  const when = new Date(night.night + 'T12:00:00');
-  const el = node(`
-    <div class="gig-bay">
-      <div class="gig-bay-head">
-        <b>${night.venue ? esc(night.venue) : 'No venue recorded'}</b>
-        <span class="tiny">${esc(when.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }))}</span>
-      </div>
-      <div class="gig-bay-body"></div>
-    </div>`);
-  const body = el.querySelector('.gig-bay-body');
-
+export async function fillNightDetail(body, night) {
   // Who won, which is on the archive and never on a photo.
   for (const game of night.games) {
     body.appendChild(node(`<div class="tiny">${gameLabel(game)} —
@@ -689,7 +650,7 @@ async function nightDetail(night) {
   });
   body.appendChild(report);
 
-  if (!night.hasPhotos) return el;
+  if (!night.hasPhotos) return;
 
   const loading = node('<div class="tiny">Loading photos…</div>');
   body.appendChild(loading);
@@ -700,7 +661,7 @@ async function nightDetail(night) {
     if (!res.ok) throw new Error(data.error || 'Could not load them');
   } catch (err) {
     loading.textContent = err.message;
-    return el;
+    return;
   }
   loading.textContent = `${data.photos.length} photo${data.photos.length === 1 ? '' : 's'}`;
   const grid = node('<div class="night-grid"></div>');
@@ -758,7 +719,6 @@ async function nightDetail(night) {
   }
   body.appendChild(grid);
   body.appendChild(galleryToggle(night.night, data.published));
-  return el;
 }
 
 /**

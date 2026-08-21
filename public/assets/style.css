@@ -6949,28 +6949,22 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
    Same `.venue-card`/`.venue-top`/`.venue-name` component the Venues tab
    uses; see `venueCard()` in console-gigs.js. Shut, the gist is whatever
    `headcountLine()` says. Open, `.venue-gig-list` reuses `.gig-list`'s own
-   grid/gap — a night row here is the same object as the one the bay was
-   built from, so nothing about it needed a second style. */
+   grid/gap — a night row here is the same object shown on the Post gig
+   bench, so nothing about it needed a second style. */
 .venue-cards { display: grid; gap: 10px; margin-top: 12px; }
 .venue-gist { margin-top: 4px; }
 .venue-gig-list { margin-top: 10px; }
 
-/* ---- THE BAY — one night's detail, loaded by picking it out of a venue
-   card rather than found by scrolling the whole history. Sits above the
-   venue cards so pressing any night in any open card can bring the view
-   straight back up to it. */
-.gig-bay {
-  border: 1px solid var(--panel-line); border-radius: var(--r-card);
-  background: var(--panel); padding: 14px; margin: 12px 0;
-}
-.gig-bay.empty { text-align: center; color: var(--ink-dim); }
-.gig-bay-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
-.gig-bay-head b { font-size: var(--fs-lead); }
-.gig-bay-body { display: grid; gap: 8px; }
-/* The row currently open in the bay, so it is findable again in a long list
+/* THE ROW CURRENTLY ON THE BENCH, so it is findable again in a long list
    without having to remember which one it was. Same colour a hovered row
    already carries, just held rather than momentary. */
 .gig-head.is-selected { border-color: var(--hot); background: rgba(255, 255, 255, 0.06); }
+
+/* ---- one night's detail, on the POST GIG BENCH — `fillNightDetail()` in
+   console-gigs.js, called from `nightBenchPanel()`. Winner lines, the
+   invoice and report buttons, the photo grid and the gallery toggle, all
+   laid out in the bench's own body rather than a second panel of their own. */
+.bench-detail { display: grid; gap: 8px; margin-top: 10px; }
 /* ---- the diary
    Coming up sits ABOVE the past nights: one is a thing you can still act on,
    the other is a record. A row is a date, a place and a way to say you are not
@@ -8000,18 +7994,11 @@ body.gallery { padding: 0; }
    different type sizes on one line is what made the head read as a caption
    stuck onto a title. */
 .bench .lb-shut-what { font-size: var(--fs-ctl); font-weight: 700; }
-/* The tile's own words sit at the TOP, against the date. They were bottom
-   aligned, which left most of the box empty and the text floating away from
-   the label it belongs to. */
-.night-tile { display: flex; flex-direction: column; justify-content: flex-start; gap: 2px; }
 .bench.drop-here { border-color: var(--good); }
 
 /* A night dragged up to the Post gig bench. Same affordance as a pack card. */
 .gig[draggable="true"] { cursor: grab; }
 .gig.is-dragging { opacity: 0.45; }
-/* The night tile has no subject colour to wear — a night is not a pack — so it
-   takes the plain surface and says its date, venue and headcount instead. */
-.night-tile { background: rgba(255, 255, 255, 0.05); }
 
 /* ================================================================ LANDING
    /home and /signup — the shop window. Persuade, not Operate: the visitor

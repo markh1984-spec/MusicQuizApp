@@ -115,26 +115,10 @@ export let bench = (() => {
  */
 export const NIGHT_BENCH_STORE = 'musicquiz.nightbench';
 export let nightBench = localStorage.getItem(NIGHT_BENCH_STORE) || '';
-/** Every night the Gigs tab last fetched, so the bench can find its one. */
+/** Every night Past gigs last fetched, so the bench can find its one. */
 export let gigsSeen = [];
 
 export let nightDrag = null;
-
-/**
- * A NIGHT TO OPEN AS SOON AS THE ARCHIVE HAS LOADED — one shot.
- *
- * The control view's **Check the photos** button lands on this door with
- * `?night=`, and the point of that press is to be looking at the pictures. The
- * bench alone would leave one more tap between the host and the thing they came
- * for, which on a night that is winding up is exactly the tap that does not get
- * made.
- *
- * Here rather than in either module because BOTH write it: `console.js` sets it
- * at boot from the URL, and the Gigs tab clears it the moment it has used it.
- * **One shot, cleared whether or not the row was found** — otherwise changing
- * tab and coming back re-opens a night nobody asked for.
- */
-export let nightToOpen = '';
 
 /**
  * A DATE HANDED FROM THE CALENDAR TO THE INVOICES TAB.
@@ -168,6 +152,5 @@ export function setPackDrag(v) { packDrag = v; }
 export function setVenueDrag(v) { venueDrag = v; }
 export function setShowDrag(v) { showDrag = v; }
 export function setNightDrag(v) { nightDrag = v; }
-export function setNightToOpen(v) { nightToOpen = v; }
 export function setPendingInvoice(v) { pendingInvoice = v; }
 export function setBook(v) { book = v; }
