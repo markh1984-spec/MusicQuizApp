@@ -169,7 +169,7 @@ Two smaller notes, both worth having before anybody builds this:
   doubles every scoping question, so it waits for a customer rather than an
   imagination.
 
-### THE FIRST SLICE IS BUILT — accounts, entitlements, scoping. Not invoicing, not venue specifics, not the hat switch.
+### THE FIRST SLICE IS BUILT — accounts, entitlements, scoping. Not invoicing, not venue specifics.
 
 Built 20 August 2026. **A parent is DERIVED, never stored** — `parentId` on
 the child is the only new field, so any quizmaster becomes one the moment
@@ -192,15 +192,20 @@ from an id in the request — the identical rule `/api/host/*` already follows.
 packs are untouched; it just goes back to being on its own.
 
 **Reachable from My account, as a small panel** (`groupPanel()` in
-`console-account.js`), not a door or tab of its own — the full group-admin
-screen the design doc sketches (reusing People and Tonight, scoped) is a
-bigger job for when it is actually needed.
+`console-account.js`) — and this IS the group-admin screen, not a stand-in
+waiting to be replaced. Each seat's row carries a `Running` badge, and the
+note says how many are live right now — the scoped "Tonight" view, on the
+same page a group admin already hosts from.
 
-**NOT built, and deliberately parked**: pack sharing between seats (it
-touches ~17 call sites on the protected launch path for a feature with zero
-real users yet — `Rob gets a login` is still the doc's own stated
-prerequisite), agency invoicing, venue-account specifics, and generalising
-the hat switch to any group admin. Full reasoning:
+**THE HAT SWITCH DOES NOT NEED TO GENERALISE — resolved, not parked.** It
+exists for the owner because `/owner` and `/console` are separate routes; a
+group admin has no second route to switch into. Do not build one without a
+real second destination for it first.
+
+**NOT built, deliberately parked**: pack sharing (~17 call sites on the
+protected launch path, zero real users yet — `Rob gets a login` is still the
+prerequisite), agency invoicing (the doc flags the invoice-book question as a
+design contradiction, not a spec), venue-account specifics. Full reasoning:
 **[`docs/business/groups.md`](docs/business/groups.md)**.
 
 ## The words: a quiz is a product, a round is part of one

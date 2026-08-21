@@ -47,9 +47,34 @@ of time:
   feature with no real users to justify that risk yet. This file's own
   stated order already puts "Rob gets a login" before "company accounts and
   shared packs" — that prerequisite still has not happened.
-- **Agency invoicing, venue-account specifics, the hat switch generalising
-  to any group admin.** All three are described below and none has changed —
-  they are still exactly the open questions this file already recorded.
+- **Agency invoicing, venue-account specifics.** Both are described below and
+  neither has changed — they are still exactly the open questions this file
+  already recorded, and agency invoicing in particular is flagged below as a
+  DESIGN that contradicts itself ("the invoice book belongs to the company"
+  vs "a seat invoices the company directly"), not a feature ready to build.
+
+**THE HAT SWITCH GENERALISING TO ANY GROUP ADMIN — RESOLVED ON 21 AUGUST
+2026, and the resolution is that IT DOES NOT NEED ONE.** Looked at on the
+assumption it was the next piece to build, and the assumption did not
+survive contact with what the owner's hat switch is actually FOR: it exists
+because `/owner` and `/console` are two separate ROUTES with two separate
+permission boundaries, and one login needs a way to move between them. A
+group admin has no second route. Their group panel (`groupPanel()` in
+`console-account.js`) already lives on `/console`, under My account, right
+next to the hosting console they run nights from — same page, same login,
+nothing to switch. Building a hat-switch component for a destination that is
+already the page you are standing on would be a control that does nothing,
+which this file's own house style refuses everywhere else.
+
+**What the group panel needed instead was the "Tonight" half done properly,
+and that is now built**: each seat's row shows a `Running` badge exactly like
+the owner's own Tonight tab (`.own-row`/`.own-live`, not a fresh set of
+classes), and the panel's own note summarises "N of M running right now" —
+the head-office live view the design doc asked for, with no camera and no
+separate screen to build. **If this is ever wrong** — if a group admin's
+duties genuinely grow into needing a route of their own, separate from
+hosting — build the switch then, against a real second destination, not
+before one exists.
 
 ---
 

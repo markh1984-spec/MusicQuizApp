@@ -289,15 +289,24 @@ function groupPanel() {
   const seatsEl = el.querySelector('.grp-seats');
   const addBox = el.querySelector('.grp-add');
 
+  /*
+   * "Which of my venues is mid-question right now" — the head-office live
+   * view the group design doc asks for, without a camera. Same shape as the
+   * owner's own Tonight tab (`.own-row`/`.own-live`) rather than a fresh set
+   * of classes, so a session touching either one reads the other for free.
+   */
   const seatRow = (seat) => `
-    <div class="grp-seat-row" data-id="${esc(seat.id)}">
-      <div>
-        <div><b>${esc(seat.name || seat.email)}</b></div>
+    <div class="own-row grp-seat-row ${seat.running ? 'live' : ''}" data-id="${esc(seat.id)}">
+      <div class="own-row-main">
+        <b>${esc(seat.name || seat.email)}</b>
         <div class="tiny">${esc(seat.email)}${seat.running
-          ? ` · <b>Live now</b> — ${seat.running.playerCount} in, ${esc(seat.running.title)}`
+          ? ` · ${seat.running.playerCount} in, ${esc(seat.running.title)}`
           : ''}</div>
       </div>
-      <button class="minor danger grp-seat-remove" type="button" aria-label="Remove this seat" title="Remove this seat">${binIcon(16)}</button>
+      <div class="own-row-num">
+        ${seat.running ? '<span class="own-live">Running</span>' : ''}
+        <button class="minor danger grp-seat-remove" type="button" aria-label="Remove this seat" title="Remove this seat">${binIcon(16)}</button>
+      </div>
     </div>`;
 
   const wireRemove = (row) => {
@@ -316,9 +325,12 @@ function groupPanel() {
       return;
     }
     const seats = d.seats || [];
-    note.textContent = seats.length
-      ? 'Everyone here gets everything your own tier gives, except streaming — one bill instead of several.'
-      : 'Running more than one quizmaster? Add them as a seat — they get everything your tier gives, except streaming, on one bill.';
+    const live = seats.filter((s) => s.running);
+    note.textContent = !seats.length
+      ? 'Running more than one quizmaster? Add them as a seat — they get everything your tier gives, except streaming, on one bill.'
+      : live.length
+        ? `${live.length} of ${seats.length} running right now.`
+        : 'Everyone here gets everything your own tier gives, except streaming — one bill instead of several. Nothing is running right now.';
     seatsEl.replaceChildren(...seats.map((s) => node(seatRow(s))));
     for (const row of seatsEl.querySelectorAll('.grp-seat-row')) wireRemove(row);
     addBox.hidden = false;

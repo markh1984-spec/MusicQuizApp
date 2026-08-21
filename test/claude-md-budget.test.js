@@ -141,7 +141,15 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * round in `this.rounds` counts. Trimmed to ~1,250 bytes before this was
  * raised — the entry was closer to 2,200.
  */
-const BUDGET = 139_500;
+/*
+ * RAISED TO 140,000 THE SAME DAY, for the resolved hat-switch finding: a
+ * group admin does not need one, because unlike the owner (who has a real
+ * second route, `/owner`) their group panel already sits on `/console`, next
+ * to the console they host from. Worth a session knowing BEFORE it goes
+ * looking for `/api/owner/act-as` and tries to generalise a mechanism that
+ * has nowhere to point.
+ */
+const BUDGET = 140_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
