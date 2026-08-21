@@ -10,6 +10,22 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 21 August 2026 — the console wears its retro dress:** the
+quill-and-ink pass landed across seven deploys in one evening, each screenshot
+sent to the host and each tuned on his eye before the next. The console (and
+only the console — never the projector or a phone) now carries: a barbed gold
+quill cursor with the hotspot on its nib; a gauntlet pair on drag — open hand
+and closed fist, both drawn from the QM's side of the hand, the fingers
+separating through the fist's own knuckle grooves, fingertips level with the
+middle 10% longer and the pinky a touch shorter, tuned to that wording; a
+soft scroll curl-shadow on every card; and turned scroll rods capping every
+panel, dark-stained along the roll with the account's own two colours held in
+the grooved knob finials. All of it is CSS on `body.console` — no payload,
+no engine, no phone or projector file was touched, and `pub-unchanged`
+printed IDENTICAL before every one of the seven pushes. The rules and the
+render-variants-judge-at-real-size method are in the decisions table under
+*"The console wears a quill cursor…"*.
+
 **Live as of 20 August 2026, for a gig the following night:** each winning
 bingo team now gets a one-use voucher QR the same way the quiz's winners
 already did, and a night can now run as several PARTS — quiz, a bingo
