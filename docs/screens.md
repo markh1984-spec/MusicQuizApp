@@ -58,6 +58,30 @@ fetch — which is what it did at first — put a rules slide on the projector w
 an empty half, and it never came back, because the card only rebuilds on a
 phase change.
 
+**A PHOTO STILL COVERED IT ON THE LOBBY, AND THIS SECTION IS WHY THE FIRST FIX
+DID NOT CATCH THAT.** Reported live, from a real night: a Polaroid popping up
+mid-lobby sat over the join code. `photoClearance()` in `screen.js` had been
+tuned once, against the SMALL corner code above — a box a few percent of the
+screen wide — and never re-checked against the lobby's own code, which this
+section says plainly is a **big** one, most of a grid column. A fixed
+`padding-right` correct for the small box left the big one wide open.
+
+Fixed by measuring instead of guessing: `photoClearance()` finds whichever of
+`#joinCorner` or the lobby's `.qr-panel` is actually on screen and reads its
+real position, so one function serves both sizes without needing two tuned
+numbers that could drift apart the next time either layout changes. Two CSS
+custom properties carry the result — `--photo-clear` (how much of the right
+side of the screen to leave alone) and `--photo-max-w` (a cap on the `<img>`
+itself, so a wide landscape photo cannot outgrow the reserved gap the way a
+narrow portrait one naturally would not). Both fall back to the original
+tuned values if nothing can be measured, so a projector that skips the
+measurement is no worse off than before this fix, never unconstrained.
+
+Verified live against a real quiz: a real photo uploaded through the actual
+phone route, watched arrive over real SSE, on both the lobby (100px clear of
+the `.qr-panel`) and a round board reached by playing nine real questions
+(235px clear of `#joinCorner`) — not a fixture standing in for either.
+
 ---
 
 ## The countdown before kick-off

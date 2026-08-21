@@ -5143,9 +5143,19 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
    properly centred in what is left instead of being nudged off the middle of
    the screen. The class is set in JS rather than with `:has()`, which is one
    more thing a projector's browser has to be new enough for, on the screen
-   where being conservative is worth most. */
-.photo-big.beside-join { padding-right: 17vw; }
-.photo-big.beside-join img { max-height: 56vh; }
+   where being conservative is worth most.
+
+   **`--photo-clear`/`--photo-max-w` ARE MEASURED, NOT GUESSED** — see
+   `photoClearance()` in `screen.js`. The round board's own join corner is a
+   small box; the lobby's is `.qr-panel`, most of a whole grid column — a
+   single fixed number could only ever be tuned against one of them, and a
+   photo on the LOBBY quietly covered the only code a latecomer could scan.
+   Both properties fall back to the old tuned numbers if JS could not measure
+   anything, which keeps a projector that skipped the measurement (an old
+   browser, a `.stage` not yet in the DOM) at the previous, still-safe
+   behaviour rather than an unconstrained one. */
+.photo-big.beside-join { padding-right: var(--photo-clear, 17vw); }
+.photo-big.beside-join img { max-height: 56vh; max-width: var(--photo-max-w, 74vw); }
 /* A POLAROID: white all round, deep at the bottom, and tilted a few degrees.
    The frame is what makes a phone snap read as a keepsake from the night
    rather than as a picture the projector happened to put up — and the tilt

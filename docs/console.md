@@ -822,6 +822,57 @@ option — "Online — the question goes on their phones" dragged the whole cons
 `max-width: 100%` on the selects. **Measure `scrollWidth` against
 `clientWidth` after anything structural**; nothing else finds it.
 
+### A CARD SHAPE DEFAULTS TO ITS BEST FIT, NOT WHATEVER THE PACK WAS GENERATED WITH
+
+`bestBingoShape()`/`bingoShapeLabel()` in `public/assets/client.js`, used by
+`shapeOptions()` (`console-packs.js`, the Set-it-up tab) and
+`packOwnShape()`/`shapeOptionsFor()` (`console-tonight-mix-ui.js`, a bingo
+tile in the mixed row). Reported live, from a real gig: *"forty songs on a
+four by four... from the bingoer's perspective, they're not even getting a
+song fifty percent of the time."*
+
+**THE MATH WAS ALREADY IN THE APP, JUST POINTING THE OTHER WAY.**
+`minimumTracks()` in `src/bingo.js` refuses a card shape until the pool is at
+least 1.5× its squares — the rule that stops two cards looking alike. Nobody
+had asked the same question forwards: given how many tracks a pack actually
+has, which of the shapes that are still valid uses the MOST of them.
+`bestBingoShape()` is that one line — the shape with the most squares among
+the ones `trackCount >= minimum` — and for the reported case (40 tracks) it
+lands on 5×5, exactly the host's own answer, because 5×5 is the biggest
+shape `minimumTracks()` still allows a 40-track pool to fill.
+
+**PACKED INTO THE LABEL ITSELF RATHER THAN A SEPARATE WARNING** — "5×5 —
+line of 5 · 63% of calls hit your card" — because "line of N" was already
+telling you how long a WIN takes and this is the other half of the same
+decision, how often a call means anything to a given player. Reading every
+option is then an informed override rather than a guess, which is worth more
+than refusing a small card outright: a strip shape might still be exactly
+what a phone-heavy room wants, and the threshold for "too small" is a taste
+call, not a rule to enforce.
+
+**THE DEFAULT NO LONGER TRUSTS `pack.cardRows`/`cardCols`** — what a pack
+happened to be generated or imported with, not a decision anyone made about
+tonight. "THE CARD SHAPE IS CHOSEN AT LAUNCH, not stored on the pack" was
+already the rule; the default just was not living up to it. **Both pickers
+were carrying the SAME logic in two slightly different shapes before this**
+— `shapeOptions()`'s own fallback chain and `packOwnShape()`'s, found while
+fixing one and about to be the exact kind of drift this app keeps a rule
+against, so both now call the one shared function in `client.js` rather than
+each keeping its own copy.
+
+**A LATENT BUG FOUND ON THE SAME PASS**: `packOwnShape()`'s old ultimate
+fallback (nothing stored, nothing fits) was `shapes[shapes.length - 1]` — the
+LAST shape in `CARD_SHAPES`, an 8×3 strip needing 36 tracks, handed out
+regardless of whether the pack actually had that many. `bestBingoShape()`'s
+own fallback is the FIRST shape (3×3, the smallest, hardest to outgrow)
+instead — safer when the track count is not known to be enough for anything.
+
+Verified live against real 40-track packs from the catalogue
+(`motown-soul.json`, `pub-floor-fillers.json`, `rock-anthems.json`): the
+Set-it-up Card picker defaults to 5×5, every option states its own
+percentage, Prizes stays in sync when the shape is changed, and a bingo tile
+in the mixed row defaults the same way.
+
 ---
 
 ## A TAP PLACES THE PACK — ON EITHER DOOR, AND THE CARD NEVER OPENS AGAIN

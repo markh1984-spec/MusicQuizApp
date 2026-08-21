@@ -945,3 +945,36 @@ export function moveWithin(list, from, to, above) {
   const at = to - (from < to ? 1 : 0) + (above ? 0 : 1);
   list.splice(Math.max(0, Math.min(list.length, at)), 0, item);
 }
+
+/*
+ * A CARD DRAGS WHEN IT IS TOO SMALL FOR THE POOL, and nothing said so until
+ * now. Reported live, in the host's own words: a 40-track pack on a 4×4 card
+ * (16 squares) means a given player's card holds 16 of the 40 songs — 40% of
+ * every call is theirs, well under half, which reads as the round dragging
+ * even though the CLOCK is identical to a card that fits well. `minimumTracks()`
+ * in `src/bingo.js` already enforces the other end (a pool at least 1.5× the
+ * squares, so two cards do not look alike) — this is that same idea read the
+ * other way: given how many tracks a pack actually has, which of the shapes
+ * that are still valid uses the MOST of them.
+ *
+ * `cardShapes` is `library.cardShapes` (server-sent, from `CARD_SHAPES` +
+ * `minimumTracks()`/`shapeLabel()` in `src/bingo.js`) — never recomputed
+ * here, so the console cannot drift from the rule that actually runs the
+ * game. Both stay pure, taking everything as a parameter, so a page with no
+ * `library` of its own (there is more than one shape picker) can use them.
+ */
+
+/** The best-fitting shape for a pack this size — the most squares any valid shape offers, so the fewest calls are wasted on a player's own card. */
+export function bestBingoShape(cardShapes, trackCount) {
+  const usable = (cardShapes || []).filter((s) => trackCount >= s.minimum);
+  const pick = usable.length ? usable : (cardShapes || []).slice(0, 1);
+  return pick.reduce((best, s) => ((s.rows * s.cols > best.rows * best.cols) ? s : best), pick[0]) || null;
+}
+
+/** A shape option's label, with the pacing a quizmaster is actually choosing baked in — "line of N" already said how long a WIN takes; this says how often a call means anything to a given player. */
+export function bingoShapeLabel(shape, trackCount) {
+  const line = `${shape.label} — line of ${Math.max(shape.rows, shape.cols)}`;
+  if (!trackCount) return line;
+  const pct = Math.round(((shape.rows * shape.cols) / trackCount) * 100);
+  return `${line} · ${pct}% of calls hit your card`;
+}

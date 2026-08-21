@@ -10,6 +10,41 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 21 August 2026, same day, next deploy again — a bingo card
+defaults to its best fit, and a photo no longer covers the lobby's join
+code:** two more reports from real gigs, both live-verified against real
+packs/uploads rather than fixtures.
+
+A 40-track bingo pack was defaulting to a 4×4 card — 16 of the 40 songs on a
+given player's card, well under half of every call meaning anything to them,
+which read as the round dragging even at a normal clock speed. Reported in
+the host's own words: *"forty songs on a four by four... they're not even
+getting a song fifty percent of the time... when there's forty songs it
+should be a five by five grid."* `minimumTracks()` in `src/bingo.js` already
+enforced the OTHER end (a pool at least 1.5× the squares); `bestBingoShape()`
+in `public/assets/client.js` is that same rule read forwards — the shape with
+the MOST squares among the ones a pack's track count can still fill — and
+for 40 tracks it lands on 5×5, exactly the host's own answer. Every shape
+option now states its own pacing too ("5×5 — line of 5 · 63% of calls hit
+your card"), so picking anything else is still an informed choice rather
+than a guess, and nothing is locked — every viable shape stays on the list.
+Found and fixed a latent bug on the way: `slotsFromSimple()` mislabelled a
+bingo pack as an empty quiz slot when converting to Tonight's mixed row,
+unreachable before the round-drag feature, reachable since. See "A CARD
+SHAPE DEFAULTS TO ITS BEST FIT" in `docs/console.md`.
+
+Separately: the existing "a big photo never dims the join code" fix
+(`beside-join` in `screen.js`) had only ever been tuned against the ROUND
+BOARD's small corner code — the LOBBY carries a much bigger QR panel
+instead, which the fix never checked for, so a photo shown while people were
+still joining sat over the only code they could scan. `photoClearance()`
+now measures whichever of the two is actually on screen and reserves exactly
+that much room, rather than a fixed number tuned for only one of them.
+Verified live: a real photo uploaded through the actual phone route, on both
+the lobby (100px clear) and a round board reached by playing through nine
+real questions (235px clear). See "A PHOTO STILL COVERED IT ON THE LOBBY" in
+`docs/screens.md`.
+
 **Live as of 21 August 2026, same day, next deploy again — dragging tile 1
 onto tile 3 now swaps them, and a single round can be dragged straight off
 the shelf:** reported live: *"when I drag pack 1 to pack 3, they should swap

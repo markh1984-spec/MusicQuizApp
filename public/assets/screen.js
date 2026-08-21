@@ -169,6 +169,51 @@ let bigShowing = false;
 const seenPhotos = new Set();
 let photosSeeded = false;
 
+/*
+ * HOW MUCH ROOM THE JOIN CODE ON SCREEN ACTUALLY NEEDS — measured, not
+ * guessed. Reported live from a real night: a photo covered the QR code
+ * while people were still joining.
+ *
+ * The fixed `padding-right: 17vw` this replaced was tuned against the ROUND
+ * BOARD's small `#joinCorner` box and never checked against the LOBBY's own
+ * code — `.qr-panel`, most of a whole grid column, several times wider — so
+ * a photo shown during the lobby (which `PHOTO_PHASES` has always allowed)
+ * sat centred across the WHOLE stage and painted straight over it. One
+ * measurement, taken against whichever of the two is actually on screen,
+ * covers both rather than needing a second tuned number that could drift
+ * from the first the next time either layout changes.
+ */
+function photoClearance() {
+  const stage = document.querySelector('.stage');
+  const target = document.getElementById('joinCorner') || document.querySelector('.qr-panel');
+  if (!stage || !target) return null;
+  const clear = stage.getBoundingClientRect().right - target.getBoundingClientRect().left;
+  return clear > 0 ? clear : null;
+}
+
+/**
+ * Apply that measurement to a photo already on screen — called both when one
+ * first appears and whenever the join code's own on/off state might have
+ * changed underneath it (`paintJoinCorner()`), since a photo can outlast a
+ * phase change.
+ */
+function applyPhotoClearance(el) {
+  const clear = photoClearance();
+  el.classList.toggle('beside-join', clear != null);
+  if (clear == null) {
+    el.style.removeProperty('--photo-clear');
+    el.style.removeProperty('--photo-max-w');
+    return;
+  }
+  // A gap between the photo and the code, not touching it — and 48px off
+  // the figure's own frame padding either side, or the WHITE POLAROID
+  // BORDER, not just the picture inside it, is what ends up overlapping.
+  const margin = 24;
+  const stage = document.querySelector('.stage');
+  el.style.setProperty('--photo-clear', `${clear + margin}px`);
+  el.style.setProperty('--photo-max-w', `${Math.max(200, stage.getBoundingClientRect().width - clear - margin - 48)}px`);
+}
+
 function showBigPhoto(p) {
   bigQueue.push(p);
   if (!bigShowing) nextBigPhoto();
@@ -205,7 +250,7 @@ function nextBigPhoto() {
   const lean = (2.5 + Math.random() * 4.5) * (Math.random() < 0.5 ? -1 : 1);
   el.style.setProperty('--tilt', lean.toFixed(2) + 'deg');
   /*
-   * Move over for the join code if one is up.
+   * Move over for the join code if one is up — see `photoClearance()`.
    *
    * The photo used to be centred on the whole stage with a full-stage scrim
    * over everything, so for its four and a half seconds it painted across the
@@ -216,7 +261,7 @@ function nextBigPhoto() {
    * Asked at the moment the photo goes up rather than once at boot: the corner
    * comes and goes with the phase and a photo can arrive at any of them.
    */
-  if (document.getElementById('joinCorner')) el.classList.add('beside-join');
+  applyPhotoClearance(el);
   document.querySelector('.stage').appendChild(el);
 
   // Fade out on its own, then hand over to whoever is behind it in the queue.
@@ -265,30 +310,34 @@ function paintJoinCorner(s) {
     && !(s.advert && s.advert.heading !== undefined);
 
   let el = document.getElementById('joinCorner');
+  if (!wanted) {
+    if (el) el.remove();
+  } else if (!el) {
+    el = node(`
+      <div class="join-corner" id="joinCorner">
+        <img src="${joinQr}" alt="Scan to join">
+        <div class="join-corner-words">
+          <b>Just arrived?</b>
+          <span data-join-url></span>
+        </div>
+      </div>`);
+    document.querySelector('.stage').appendChild(el);
+  }
+
   /*
    * A photo already on screen follows the corner in and out.
    *
    * It lasts four and a half seconds and the phase can change underneath it —
-   * a round board arriving puts the code up, the scoreboard takes it away. Set
-   * only when the photo goes up, a picture would either sit shifted with
-   * nothing beside it or slide back under a code that had just appeared.
+   * a round board arriving puts the code up, the scoreboard takes it away.
+   * Measured AFTER the corner above has settled into its final state (added,
+   * removed, or left alone), never before — `photoClearance()` reads
+   * `#joinCorner` straight off the DOM, and reading it mid-change would catch
+   * whichever state was about to stop being true. On the lobby, where the
+   * small corner is never shown at all, this instead finds the big
+   * `.qr-panel` and clears space for that.
    */
   const big = document.getElementById('photoBig');
-  if (big) big.classList.toggle('beside-join', wanted);
-  if (!wanted) {
-    if (el) el.remove();
-    return;
-  }
-  if (el) return;
-  el = node(`
-    <div class="join-corner" id="joinCorner">
-      <img src="${joinQr}" alt="Scan to join">
-      <div class="join-corner-words">
-        <b>Just arrived?</b>
-        <span data-join-url></span>
-      </div>
-    </div>`);
-  document.querySelector('.stage').appendChild(el);
+  if (big) applyPhotoClearance(big);
 }
 
 /**

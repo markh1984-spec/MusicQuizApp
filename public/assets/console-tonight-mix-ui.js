@@ -7,7 +7,7 @@
  * one.
  */
 
-import { esc, node, gripIcon } from './client.js';
+import { esc, node, gripIcon, bestBingoShape, bingoShapeLabel } from './client.js';
 import { packWord } from './console.js';
 import { library } from './console-state.js';
 import { packLookAttrs, shortTitle, isBreakoutPack } from './pack-look.js';
@@ -16,12 +16,16 @@ import {
   offRoundsFor, removeSlot, toggleRoundOff,
 } from './console-tonight-mix.js';
 
-/** The card shape a pack would use if a bingo slot has not been given its own — same fallback chain `console-packs.js`'s `shapeOptions()` uses, kept here because that function does not hand its resolved default back out. */
+/**
+ * The card shape a bingo slot would use if it has not been given its own —
+ * the BEST FIT for this pack's track count, same `bestBingoShape()`
+ * `console-packs.js`'s `shapeOptions()` uses, so an interlude dropped into
+ * Tonight starts on the same shape the ordinary Set-it-up picker would have
+ * defaulted to, not whatever the pack happened to be generated with.
+ */
 function packOwnShape(pack) {
   const shapes = library.cardShapes || [];
-  const found = shapes.find((s) => s.rows === pack.cardRows && s.cols === pack.cardCols)
-    || shapes.find((s) => s.rows === s.cols && s.rows === pack.cardSize)
-    || shapes[shapes.length - 1];
+  const found = bestBingoShape(shapes, pack.trackCount);
   return found ? { rows: found.rows, cols: found.cols } : { rows: 4, cols: 4 };
 }
 
@@ -30,7 +34,7 @@ function shapeOptionsFor(pack, selected) {
   const usable = shapes.length ? shapes : (library.cardShapes || []).slice(0, 1);
   return usable.map((s) => {
     const picked = selected.rows === s.rows && selected.cols === s.cols;
-    return `<option value='{"rows":${s.rows},"cols":${s.cols}}' ${picked ? 'selected' : ''}>${esc(s.label)} — line of ${Math.max(s.rows, s.cols)}</option>`;
+    return `<option value='{"rows":${s.rows},"cols":${s.cols}}' ${picked ? 'selected' : ''}>${esc(bingoShapeLabel(s, pack.trackCount))}</option>`;
   }).join('');
 }
 

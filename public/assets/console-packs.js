@@ -1,6 +1,6 @@
 /** The pack shelf — the grid, a pack card, the pictures, and the launch call. */
 
-import { esc, node, postJson, dragRow, gripIcon, moveWithin } from './client.js';
+import { esc, node, postJson, dragRow, gripIcon, moveWithin, bestBingoShape, bingoShapeLabel } from './client.js';
 import { askForPackPanel, shopSection } from './console-account.js';
 import { generate, streamGeneration } from './console-generate.js';
 import { tonightsVenue, whenish } from './console-gigs.js';
@@ -711,18 +711,26 @@ function playlistPanel(pack) {
  * never written back to the file.
  *
  * Shapes the list cannot fill are left out rather than shown and refused.
+ *
+ * **THE DEFAULT IS THE BEST FIT, NOT THE PACK'S OWN LEFTOVER SHAPE** —
+ * reported live: a 40-track pack defaulted to 4×4, which is 16 of the 40
+ * songs on a given card, well under half of every call meaning anything to
+ * that player, and it read as the round dragging even at the same clock
+ * speed as a card that fits. `bestBingoShape()` picks the shape with the
+ * MOST squares among the ones this pack can actually fill, which is exactly
+ * `minimumTracks()`'s own 1.5×-the-squares rule applied the other way round.
+ * `pack.cardRows`/`cardCols` is what a pack happened to be generated with,
+ * not a decision anybody made about tonight — the same reasoning "chosen at
+ * Launch, never written back" already gives above, just not carried all the
+ * way into the default before now. And every option says its own pacing, so
+ * overriding it is still an informed choice rather than a guess.
  */
 export function shapeOptions(pack) {
   const shapes = (library && library.cardShapes) || [];
-  const fits = shapes.filter((s) => pack.trackCount >= s.minimum);
-  const usable = fits.length ? fits : shapes.slice(0, 1);
-  // The pack's own shape is the default, if it is one of the ones on offer.
-  const own = usable.find((s) => s.rows === pack.cardRows && s.cols === pack.cardCols)
-    || usable.find((s) => s.rows === s.cols && s.rows === pack.cardSize)
-    || usable[usable.length - 1];
-  // "line of 8" is the number that actually decides how long the game runs —
-  // on a square it is the side, on a strip it is the long way.
-  return usable.map((s) => `<option value='{"rows":${s.rows},"cols":${s.cols}}' ${s === own ? 'selected' : ''}>${esc(s.label)} — line of ${Math.max(s.rows, s.cols)}</option>`).join('');
+  const usable = shapes.filter((s) => pack.trackCount >= s.minimum);
+  const pick = usable.length ? usable : shapes.slice(0, 1);
+  const best = bestBingoShape(shapes, pack.trackCount);
+  return pick.map((s) => `<option value='{"rows":${s.rows},"cols":${s.cols}}' ${s === best ? 'selected' : ''}>${esc(bingoShapeLabel(s, pack.trackCount))}</option>`).join('');
 }
 
 /**
