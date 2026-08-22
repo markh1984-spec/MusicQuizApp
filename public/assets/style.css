@@ -760,7 +760,22 @@ body::after {
    spans the full width, the sidebar's lane included, so a pinned sidebar and
    a pinned Tonight are still two things claiming the same top-left. */
 body.is-dragging-card .tabbar { position: static; }
-body.is-dragging-card .launchbar {
+/* `.launchbar.panel`, NOT `.launchbar` ALONE — `body.console .panel` sets its
+   own `position: relative` for the scroll rods, at EQUAL specificity (two
+   classes on body's element each), so whichever rule is LATER in the sheet
+   wins the `position` property regardless of what this comment says it
+   should be. It was: `position: relative` silently beat `position: sticky`
+   on every drag, so the pin never engaged at all — but `top: var(--lb-pin)`
+   below has no competing declaration and applied anyway, as a plain
+   RELATIVE offset with nothing reserving the space it shifted the panel
+   into. Stuck `is-dragging-card` (a drag that never reaches its own
+   `dragend`) then froze that shift on indefinitely, and the panel sat down
+   over whatever followed it in the document — the pack shelf. Naming
+   `.panel` here too costs nothing (the markup always carries both) and
+   makes this the more specific selector, so `position: sticky` wins outright
+   rather than by source order — the same trap this file already has a note
+   about for `border` lower down the sheet. */
+body.is-dragging-card .launchbar.panel {
   position: sticky;
   /* WHERE IT ALREADY IS, worked out at the moment the drag starts — see
      `pinTonightWhereItIs()`. Pinning at `--topbar-h` flat only ever moves a

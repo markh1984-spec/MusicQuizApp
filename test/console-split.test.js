@@ -136,8 +136,16 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * quiz pack rather than disappearing, the same rule this bar already keeps
  * for Launch — so the net line cost is not the settings themselves, which
  * moved rather than grew, but the repaint wiring a tab never needed.
+ *
+ * RAISED TO 2870 THE SAME DAY, for the mixed running order — reported live,
+ * off a screenshot: Card and Prizes read "Bingo only" beside a bingo TILE
+ * that already had its own working shape/prize dropdowns, because
+ * `paintSettings()` only ever asked `currentPack`, which in a mixed night is
+ * just slot 1 and may not be bingo at all. Now asks `lbSlots` too, and moved
+ * the scattered per-call-site repaints into one call inside `paintOrder()`
+ * itself — the seam every `lbSlots` mutation already passes through.
  */
-const BUDGET = { 'console-tonight.js': 2860, 'console.js': 2000 };
+const BUDGET = { 'console-tonight.js': 2870, 'console.js': 2000 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

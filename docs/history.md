@@ -10,6 +10,82 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 21 August 2026, same day, next deploy again — three faults
+reported off one screenshot of a mixed quiz-plus-bingo night, and a real CSS
+bug found chasing the third:**
+
+**1. Card and Prizes read "Bingo only" beside a bingo TILE that already had
+its own working shape/prize dropdowns.** `paintSettings()` decided bingo-ness
+from `currentPack` alone, which in a MIXED running order (`lbSlots` truthy,
+`renderSlots()`'s numbered tiles on screen) is only ever slot 1 and may not
+be bingo at all — the exact scenario in the report, a quiz pack in slot 1
+and a bingo pack in slot 2. Now asks `lbSlots` too: in mixed mode Card and
+Prizes are ALWAYS inert, because every bingo tile carries its own controls
+and there can be more than one, but the label now says **"Set per pack
+below"** rather than the misleading "Bingo only". Seconds per question got
+the matching fix the other way — inert only when NO quiz slot exists at
+all, not just when `currentPack` happens not to be one — and While They
+Wait now reads the FIRST slot's kind rather than asking "is there any bingo
+anywhere", so a quiz-opening mixed night still gets Maze Mouth in the
+lobby. The scattered per-call-site repaints (four different functions each
+remembering to call `paintSettings()`) were collapsed into one call inside
+`paintOrder()` itself — the single seam every `lbSlots` mutation already
+passes through via `renderSlots()`'s own `onChange` — because that is
+exactly the kind of duplication that misses a call site, and had: the
+mixed row's own tile-swap and round-drag never repainted the settings row
+at all until this pass.
+
+**2. "What does 'Keep this ready' mean?"** Added a hover tooltip explaining
+it in one line — save the pack, venue and settings so the whole night can
+be dragged back onto Tonight later from Prepare a night — matching the
+pattern every other button on this bar already uses (`.stop-running`,
+`.lb-unlaunch`).
+
+**3. The pack shelf visually overlapped the settings row and Launch button
+after interacting with the mixed row.** This is a REAL, PRE-EXISTING CSS
+bug, not something the settings migration introduced — found by measuring
+`getComputedStyle('.launchbar').position` during a simulated drag and
+getting `relative` instead of the `sticky` the rule at `body.is-dragging-card
+.launchbar` asks for. `body.console .panel { position: relative }` (the
+scroll-rod styling, dated the same day) targets the SAME element — the
+markup is always `class="panel launchbar"` — at EQUAL specificity (two
+classes on `body`'s selector, either way), so whichever rule sits LATER in
+`style.css` wins the `position` property regardless of which class name
+looks more specific to a reader. The panel-rod rule sits later, so
+`position: relative` silently won on every drag since that CSS landed —
+the sticky pin has never actually engaged. That alone would just mean the
+panel scrolls away during a drag rather than staying reachable (the
+original bug `pinTonightWhereItIs()` was written to fix); the OVERLAP came
+from `top: var(--lb-pin)` on the same rule having no competing declaration
+and applying anyway, as a plain relative offset with nothing reserving the
+space it shifted the panel into — and if a drag never reaches its own
+`dragend` (window focus lost mid-drag, browser chrome swallowing the
+release — a real failure mode neither of two independent live
+investigations could force through a headless browser, since a scripted
+`dragstart`→`dragover`→`drop`→`dragend` sequence always completes cleanly),
+`is-dragging-card` stays on the body and that stale shift never lifts,
+sitting the panel down over whatever follows it in the document. Fixed by
+naming `.launchbar.panel` in the sticky rule — costs nothing since the
+markup always carries both — which makes it the more specific selector and
+wins outright rather than by source order, the same trap this file already
+carries a note about for `border` further down the sheet. Verified two
+ways: the computed `position` is now `sticky` even in a forced stuck-drag
+state, and the pack shelf sits cleanly below the bar with no overlap in
+that same state.
+
+**On the two remaining reports — drag-and-drop for reordering tiles and for
+moving individual quiz rounds between slots — the underlying code checks
+out.** Two independent live investigations, driving the real
+`dragstart`/`dragover`/`drop`/`dragend` listeners `wireSlotDrag()` and
+`wireRoundDots()` (`console-tonight-mix-ui.js`) actually register, both
+confirm a tile swap and a round move complete correctly end to end, and the
+tap-to-toggle fallback for touch works too. The CSS fix above removes one
+concrete way a real drag could leave the page visually broken partway
+through a session, which may be enough on its own; if dragging still fails
+after this ships, it is not explained by anything either investigation
+could reproduce and needs a fresh report with more detail — which part of
+a tile was pressed, and whether the browser window lost focus mid-gesture.
+
 **Live as of 21 August 2026, same day, next deploy again — Tonight's
 settings moved off their own tab and onto the launch bar, and the tab is
 gone:** asked for directly off a screenshot of the tab (Look / Seconds per

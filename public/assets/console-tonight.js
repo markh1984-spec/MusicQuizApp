@@ -660,7 +660,8 @@ export function launchBar() {
            underneath — a display rename only, see console.js) is where
            you take one back off the shelf. -->
       <div class="set-keep">
-        <button class="minor set-save" type="button">Keep this ready</button>
+        <button class="minor set-save" type="button"
+          title="Save everything set up here — the pack, the venue, these settings — so you can drag it back onto Tonight another night, from Prepare a night">Keep this ready</button>
         <span class="tiny set-keep-why"></span>
       </div>
       <!-- LAUNCH IS ALWAYS HERE, hollow until there is something to launch.
@@ -1104,7 +1105,6 @@ export function launchBar() {
      * whether the room heard it a fortnight ago.
      */
     if (liveEl) paintLive();
-    paintSettings();
     const why = (quickPicks(gameOf().packs).find((q) => q.pack.id === pack.id) || {}).why
       || (pack.lastPlayedAt ? `Last played ${whenShort(pack.lastPlayedAt)}` : 'Never played');
     whyEl.textContent = why;
@@ -1353,7 +1353,6 @@ export function launchBar() {
     }
     paintOrder();
     paintLive();
-    paintSettings();
     paintFold();
   }
 
@@ -1446,7 +1445,21 @@ export function launchBar() {
    */
   function paintSettings() {
     const pack = currentPack;
-    const bingo = Boolean(pack && !(pack.rounds || []).length);
+    /*
+     * MIXED MODE HAS TO BE ASKED SEPARATELY, because `lbSlots` is where a
+     * bingo interlude actually lives once the tiled row takes over — the
+     * moment it exists, `currentPack` is only slot 1 and may not even be
+     * bingo itself, exactly the case that made Card and Prizes read as
+     * "Bingo only" beside a bingo tile with its OWN working shape and prize
+     * dropdowns two inches below. Reported live, off a screenshot.
+     */
+    const mixed = Boolean(lbSlots);
+    const hasBingo = mixed ? lbSlots.some((s) => s && s.kind === 'bingo') : Boolean(pack && !(pack.rounds || []).length);
+    const hasQuiz = mixed ? lbSlots.some((s) => s && s.kind === 'quiz') : !hasBingo;
+    // Only an ORDINARY night has a single answer for "the" bingo shape —
+    // in mixed mode every bingo tile carries its own, and there can be more
+    // than one, so the global row cannot stand in for any particular one.
+    const singleBingo = hasBingo && !mixed;
 
     /*
      * PRESENT AND INERT, NOT ABSENT — the same rule this bar already keeps
@@ -1455,19 +1468,21 @@ export function launchBar() {
      * the row does not change shape depending on what is dragged in.
      */
     if (shapePick && prizePick) {
-      shapePick.disabled = !bingo;
-      prizePick.disabled = !bingo;
-      if (bingo) {
+      shapePick.disabled = !singleBingo;
+      prizePick.disabled = !singleBingo;
+      if (singleBingo) {
         shapePick.innerHTML = shapeOptions(pack);
         paintPrizes();
       } else {
-        shapePick.innerHTML = '<option>Bingo only</option>';
-        prizePick.innerHTML = '<option>Bingo only</option>';
+        const label = mixed && hasBingo ? 'Set per pack below' : 'Bingo only';
+        shapePick.innerHTML = `<option>${esc(label)}</option>`;
+        prizePick.innerHTML = `<option>${esc(label)}</option>`;
       }
     }
-    // Seconds per question is the opposite case — a QUIZ setting, inert on
-    // a bingo pack (and on no pack, which plays as a quiz shelf by default).
-    if (secondsPick) secondsPick.disabled = bingo;
+    // Seconds per question is the opposite case — a QUIZ setting, inert only
+    // when there is no quiz component at all (an ordinary bingo pack, or a
+    // mixed night that is bingo tiles with nothing else in it).
+    if (secondsPick) secondsPick.disabled = !hasQuiz;
 
     // The pack can carry its own look, so the OPTIONS themselves have to be
     // rebuilt — a blank `night.look` means "leave the pack's own alone",
@@ -1477,13 +1492,21 @@ export function launchBar() {
       if (night.look) lookPick.value = night.look;
     }
     if (lobbyGamePick) {
-      lobbyGamePick.innerHTML = lobbyGameOptions(bingo ? 'bingo' : 'quiz');
+      // What plays in the LOBBY follows the FIRST thing tonight plays, not
+      // "is there any bingo anywhere" — a quiz opening a mixed night wants
+      // Maze Mouth in the lobby even with a bingo interlude waiting after it.
+      const firstKind = mixed ? ((lbSlots.find(Boolean) || {}).kind || 'quiz') : (hasBingo ? 'bingo' : 'quiz');
+      lobbyGamePick.innerHTML = lobbyGameOptions(firstKind);
       if (night.lobbyGame) lobbyGamePick.value = night.lobbyGame;
     }
 
     if (setSave) {
-      setSave.disabled = !pack;
-      setSaveWhy.textContent = pack ? '' : 'Nothing in Tonight to keep yet.';
+      // Mirrors the exact check `paintMixedOrder()` uses for the Launch
+      // button itself — "anything to keep" and "anything to launch" have to
+      // agree, or one control offers a night the other says does not exist.
+      const hasNight = mixed ? segmentsFromSlots(lbSlots).length > 0 : Boolean(pack);
+      setSave.disabled = !hasNight;
+      setSaveWhy.textContent = hasNight ? '' : 'Nothing in Tonight to keep yet.';
     }
   }
 
@@ -1795,7 +1818,6 @@ export function launchBar() {
        */
       paintOrder();
       paintLive();
-      paintSettings();
       return;
     }
     lbExtra.splice(at - 1, 1);
@@ -1927,6 +1949,14 @@ export function launchBar() {
   }
 
   function paintOrder() {
+    // ONE PLACE, covering both branches below — every `lbSlots` mutation
+    // (a bingo pack dropped into the mixed row, a round dragged between
+    // slots, a tile swapped or removed) runs through `renderSlots()`'s own
+    // `onChange`, which calls only this function. Repainting the settings
+    // row from inside every one of those call sites individually is exactly
+    // the kind of scattered duplication that misses one; this is the seam
+    // they already all pass through.
+    paintSettings();
     if (lbSlots) { paintMixedOrder(); return; }
     orderEl.hidden = false;
     const packs = lbPacks();
