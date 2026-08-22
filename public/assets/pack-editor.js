@@ -58,7 +58,7 @@ function isLive(ctx, ri, qi) {
  * NO LOOK CONTROL IN EITHER HEADER, ANY MORE — asked for directly, on 21
  * August 2026: the editor's copy only ever set a fallback default, and
  * Tonight's own Look picker already fully overrides it at launch every time
- * (`console-tonight.js`, `.look-pick` in `tonightSettingsPanel()`) — the same
+ * (`console-tonight.js`, `.look-pick` on the launch bar itself) — the same
  * pattern prizes already use, and it never needed a second control in the
  * pack editor either. Two controls for one field is how a night gets
  * launched with the setting the other one was showing, which is the exact

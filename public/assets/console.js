@@ -17,7 +17,7 @@ import { gameSection, packActionsMarkup, preview, wirePackActions } from './cons
 import { editPopover } from './console-editor-popover.js';
 import { shelfFor, showsSection } from './console-shows.js';
 import { BENCH_STORE, NIGHT_BENCH_STORE, bench, gigsSeen, lastDone, library, me, nightBench, nightDrag, packDrag, setAccountsExist, setBench, setGigsSeen, setLastDone, setLibrary, setMe, setNightBench, setNightDrag, setPackDrag } from './console-state.js';
-import { aNightIsOn, dragging, launchBar, night, putNightOnBench, putOnBench, runningPanel, tonightSettingsPanel, wantPackFromUrl } from './console-tonight.js';
+import { aNightIsOn, dragging, launchBar, night, putNightOnBench, putOnBench, runningPanel, wantPackFromUrl } from './console-tonight.js';
 import { advertsSection, editAdvertSet, forgetPanel, venuesSection } from './console-venues.js';
 import { upcoming } from './diary.js';
 import { packLookAttrs, shortTitle, isBreakoutPack } from './pack-look.js';
@@ -919,32 +919,6 @@ export const TABS = [
     blurb: 'The places you play, and what they put up as prizes.',
     count: () => (library.venueRecords || []).length,
     render: () => venuesSection(),
-  },
-  {
-    id: 'setup',
-    doors: ['console'],
-    needs: FEATURES.LIBRARY,
-    label: 'Tonight’s settings',
-    /*
-     * ITS OWN TAB ON THE CONSOLE DOOR — the host's answer to *"not sure what
-     * the point of the Set it up bit is."* The point was never the settings;
-     * it was them hanging off the launch bar as a fold, which is furniture
-     * between the bar and the packs. On a tab they are one predictable tap
-     * away and the bar carries nothing but the night.
-     *
-     * **LAST IN THE LIST, and that is why this entry sits down here between
-     * Venues and Help rather than up with the games.** Asked for directly:
-     * *"tonight's settings needs to be at the bottom of the tab list and then
-     * the other four sections above."* It is the same rule the bar already
-     * follows left to right — the tabs run along the evening, and the settings
-     * are the last thing you touch before pressing Launch, after you have
-     * chosen what you are playing and where. It is also the only tab on this
-     * door you can skip entirely: every field on it has a working default.
-     *
-     * It is CONSOLE-ONLY, so moving it here reorders that door and leaves the
-     * Workshop and Post gig exactly as they were.
-     */
-    render: () => tonightSettingsPanel(),
   },
   {
     /*

@@ -881,7 +881,7 @@ board), `src/arcade.js` (the scores, shared by both engines),
   per-account preference would be wrong on half the nights of anybody who runs
   both.
 - **WHICH GAME IS A DECISION ABOUT TONIGHT**, so it goes where the look and the
-  card shape go — chosen under **Set it up**, written into `state.lobbyGame` at
+  card shape go — chosen on the launch bar, written into `state.lobbyGame` at
   launch, restored after a crash. **THE TIER IS CHECKED AT THE ROUTE, never in
   the console**, and a game above the tier is **dropped in favour of the
   default rather than refused**: losing a choice costs a game nobody has seen
@@ -952,7 +952,7 @@ board), `src/arcade.js` (the scores, shared by both engines),
   over the host's mic: the game only exists in the LOBBY, so a noise during a
   question is not unlikely but impossible, by three mechanisms that each have
   tests. **What makes on-by-default safe is that the HOST can switch it off** —
-  *Game sound* under Set it up, into `state.lobbySound` at launch, because a
+  *Game sound* on the launch bar, into `state.lobbySound` at launch, because a
   quiet gastropub and a rowdy Friday are not the same room. **The host's switch
   wins and does not wipe the phone's own**; both default to on wherever the
   field could be absent. **Every noise is tied to something the player DID**
@@ -1865,10 +1865,10 @@ Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 ### The tabs run ALONG a quizmaster's evening, behind their door
 
 `TABS`, **filtered by DOOR and stacked down the left**. The ORDER runs along
-the evening: Console is Music Quiz · Music Bingo · Prepare a night · Venues ·
-Tonight's settings — what you will PLAY, then where, then the settings, which
-are the last thing before Launch and the only tab on that door you can skip
-entirely. **Rarely-touched goes last** wherever it lands.
+the evening: Console is Music Quiz · Music Bingo · Prepare a night · Venues —
+what you will PLAY, then where. Tonight's settings moved OFF this list on 21
+August 2026, onto the launch bar as an always-visible row — see
+`docs/console.md`. **Rarely-touched goes last** wherever it lands.
 
 **A reorder is the cheapest change and the easiest to get wrong silently** —
 nothing fails, a tab simply stops being where a thumb expects it. Open every

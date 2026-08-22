@@ -10,6 +10,65 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 21 August 2026, same day, next deploy again — Tonight's
+settings moved off their own tab and onto the launch bar, and the tab is
+gone:** asked for directly off a screenshot of the tab (Look / Seconds per
+question / While they wait / Playing): "these four options should be on the
+launch bay really, tonight's settings might be defunkt." Clarified with two
+questions rather than guessed at, because both answers changed the shape of
+the work: "one compact row, always visible" (not a fold — no hiding it
+behind another tap) and "everything — kill the tab" (Card shape and Prizes,
+bingo-only, and the Keep this ready save button move too, not just the four
+named fields).
+
+`tonightSettingsPanel()` — a whole separate exported function with its own
+`<h2>` and explainer, rendered fresh only when the tab was opened — is
+deleted outright. Its markup becomes `.lb-set` inside `launchBar()` itself,
+positioned directly above Launch, the same place the tab sat relative to it
+in the door order. The `id: 'setup'` TABS entry and its import go with it.
+
+**Reads and writes the same `night` object the tab always did** — nothing
+about how a setting is HELD changed, only where the controls that write to
+it are drawn. But the tab was rebuilt from scratch every time it was opened,
+which is what let it get away with baking pack-dependent options straight
+into a template string; a bar that stays mounted while packs are dragged in
+and out cannot do that, so a new `paintSettings()` repaints Card, Prizes,
+Seconds and While They Wait's options at every place `currentPack` changes —
+the same "read state, redraw" shape `paintLive()` already used for the
+live-drift line.
+
+**Card and Prizes are BINGO-ONLY and Seconds is QUIZ-ONLY, and both stay
+PRESENT AND INERT rather than appearing and disappearing with the pack** —
+the rule this bar already keeps for Launch itself and for Keep this ready:
+disabled, with a plain "Bingo only" placeholder, rather than absent. The
+original tab did the opposite (conditionally omitted them from the markup
+entirely), which was safe there because the whole panel was rebuilt on
+every open; on an always-mounted bar that would have made the row change
+height depending on what was dragged in, the exact fault "present and
+inert" exists to prevent.
+
+Every stale reference to a "Tonight's settings" tab or a "Set it up" fold
+was found and reworded: the Workshop bench's own "Prepare a night" empty
+state (`console-shows.js`, which used to send two separate links to two
+separate places and now sends one, since both actions live in the same spot
+now), a pack editor comment, and three places in `CLAUDE.md` itself
+(`test/claude-md-budget.test.js`'s ceiling left the fixes at a net three
+bytes UNDER where they started, by trimming words the rewrite no longer
+needed rather than only adding new ones). `test/console-split.test.js`'s
+line budget for `console-tonight.js` raised 2820 → 2860 — the repaint
+wiring a tab never needed, not the settings themselves, which moved rather
+than grew.
+
+Live-tested against the real console: the tab list now reads Music Quiz ·
+Music Bingo · Prepare a night · Venues with no fifth entry; Card and Prizes
+render disabled with no pack and with a quiz pack, and enabled with real
+shape/prize options the moment a bingo pack is chosen, with Seconds per
+question flipping the opposite way; Keep this ready is disabled with
+"Nothing in Tonight to keep yet." until a pack is chosen; a changed Look and
+Seconds per question were confirmed in the actual `POST /api/host/launch`
+body and in the session afterward. No overflow at 1280px or 390px, no
+console errors.
+
 **Live as of 21 August 2026, same day, next deploy again — a Stop sits
 beside "On the big screen now":** asked for directly off a screenshot of
 that exact line. It reads the same `stopRunningNight()` the running panel's

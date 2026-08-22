@@ -147,10 +147,10 @@ function showPartsEditor(show, onSaved) {
  *
  * Two doors, one function, exactly like Venues: on the Console it is a shelf
  * you drag off and nothing else, and in the Workshop it is where you rename
- * and throw away. Building happens on Tonight's settings — see *Keep this
- * ready* — because everything a saved night holds is already set up there,
- * and a second composer is a second thing that could disagree with the
- * launch.
+ * and throw away. Building happens on Tonight itself — see *Keep this
+ * ready*, on the launch bar — because everything a saved night holds is
+ * already set up there, and a second composer is a second thing that could
+ * disagree with the launch.
  */
 export function showsSection() {
   const el = node('<div></div>');
@@ -180,14 +180,13 @@ export function showsSection() {
           <div>
             ${findOnly ? '<h2>Prepare a night</h2>' : `<div class="tiny">A whole evening kept as one thing —
               the packs, which rounds are on, the venue and its prizes, the look and
-              the lobby game. Set a night up under Tonight’s settings and press
+              the lobby game. Set a night up on Tonight and press
               <b>Keep this ready</b>.</div>`}
           </div>
         </div>
         <div class="show-list">
           ${empty ? `<div class="tiny">Nothing prepared yet. Set a night up in
-            ${goTo('console', 'quiz', 'Tonight')}, then press <b>Keep this ready</b>
-            under ${goTo('console', 'setup', 'Tonight’s settings')}.</div>`
+            ${goTo('console', 'quiz', 'Tonight')} and press <b>Keep this ready</b>.</div>`
     : shows.map((show) => {
       const broken = (show.problems || []).length;
       const items = itemsOf(show);

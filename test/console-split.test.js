@@ -122,8 +122,22 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * the new button's markup, its `aNightIsOn`-gated visibility inside
  * `paintLive()`, and the doc comments explaining why it reads that rather
  * than the line's own looser title check.
+ *
+ * RAISED TO 2860 THE SAME DAY, for Tonight's settings — asked for directly,
+ * off a screenshot of that tab: "these four options should be on the launch
+ * bay really", and, once asked which parts, "everything — kill the tab".
+ * `tonightSettingsPanel()` (a whole separate exported function, deleted
+ * outright) becomes `.lb-set` inside `launchBar()` itself, a `paintSettings()`
+ * that repaints it wherever `currentPack` changes (the tab was rebuilt from
+ * scratch on every visit; this bar is not, so the pack-dependent parts —
+ * Card, Prizes, Seconds, Look, While they wait — need painting by hand at
+ * every place that used to just work), and the `id: 'setup'` TABS entry
+ * along with it in `console.js`. Card and Prizes stay PRESENT AND INERT on a
+ * quiz pack rather than disappearing, the same rule this bar already keeps
+ * for Launch — so the net line cost is not the settings themselves, which
+ * moved rather than grew, but the repaint wiring a tab never needed.
  */
-const BUDGET = { 'console-tonight.js': 2820, 'console.js': 2000 };
+const BUDGET = { 'console-tonight.js': 2860, 'console.js': 2000 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

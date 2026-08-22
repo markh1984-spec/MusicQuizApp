@@ -19,10 +19,10 @@ import { FEATURES } from './plans.js';
 import { itemsOf } from './show-parts.js';
 
 /*
- * Remembered OUTSIDE the render, both of them, because this panel is rebuilt
- * on every state push — which during a lobby is every time a phone joins. A
- * pack chosen inside the function, or a Set it up opened inside it, would be
- * thrown away by the next person to type their team name.
+ * Remembered OUTSIDE the render, because this panel is rebuilt on every
+ * state push — which during a lobby is every time a phone joins. A pack
+ * chosen inside the function would be thrown away by the next person to
+ * type their team name.
  */
 let currentPack = null;
 
@@ -30,15 +30,16 @@ let currentPack = null;
  * TONIGHT'S SETTINGS, HELD RATHER THAN READ OFF THE SCREEN.
  *
  * They used to live only as `<select>` values inside the launch bar, and the
- * launch handler read them out of the DOM at the moment it fired. That worked
- * while the controls sat two inches above the button — it stops working the
- * instant they move to a tab of their own, because the tab may not be
- * rendered when Launch is pressed.
+ * launch handler read them out of the DOM at the moment it fired. That broke
+ * the moment the controls moved to a tab of their own — the tab might not be
+ * rendered when Launch was pressed — and they have since moved BACK onto the
+ * bar, but the object stayed, because it turned out to be the better
+ * arrangement regardless of where the controls live.
  *
- * **Which makes this the better arrangement regardless.** A setting that lives
- * in one place and is read from there cannot be lost by a re-render, cannot
- * disagree with a second copy, and does not depend on two panels being on
- * screen at the same time.
+ * **A setting that lives in one place and is read from there** cannot be lost
+ * by a re-render, cannot disagree with a second copy, and is what lets a
+ * saved show (`loadShow()`) write every field directly with no DOM round
+ * trip at all.
  *
  * **Empty means "as it was".** A blank look is the pack's own, a blank game is
  * the default for that game type, `shape: null` leaves the pack's own card
@@ -593,9 +594,10 @@ export function launchBar() {
            under them: it is the one "press this" on the section, and a
            primary button squeezed in beside two minor ones stops looking
            like one. -->
-      <!-- THE RUNNER-UP PACK. "Set it up" used to share this row; the
-           settings are their own tab on this door now, so what is left is one
-           chip answering "not this one". -->
+      <!-- THE RUNNER-UP PACK. "Set it up" used to share this row and then
+           moved to its own tab; the settings are back on the bar itself now
+           (see .lb-set below), so what is left here is one chip answering
+           "not this one". -->
       <div class="lb-row">
         <div class="lb-alt" hidden></div>
       </div>
@@ -607,6 +609,60 @@ export function launchBar() {
            what Launch is about to run. -->
       <div class="lb-order" hidden></div>
       <div class="lb-chosen" hidden></div>
+      <!-- TONIGHT'S SETTINGS, ON THE BAR ITSELF — asked for directly, off a
+           screenshot of this bar: "these four options should be on the
+           launch bay really." Compact and ALWAYS ON, not a fold, per the
+           same answer — a control that has to be found first is a control
+           that goes unset. None of it touches the pack; all of it is read
+           at Launch exactly as it was on the tab it replaces.
+
+           CARD AND PRIZES ARE BINGO-ONLY, SECONDS IS QUIZ-ONLY, and both
+           stay PRESENT AND INERT rather than appearing and disappearing
+           with the pack — the rule this bar already keeps for Launch
+           itself and for Keep this ready below. A control that comes and
+           goes is one you cannot learn the position of, driven with a
+           thumb in a dark pub. paintSettings() fills every option and
+           the disabled state; nothing here is baked into the string. -->
+      <div class="lb-set">
+        <label class="pack-shape">Card
+          <select class="shape-pick" disabled></select>
+        </label>
+        <label class="pack-shape">Prizes
+          <select class="prize-pick" disabled></select>
+        </label>
+        <label class="pack-shape">Look
+          <select class="look-pick"></select>
+        </label>
+        <label class="pack-shape" title="Blank leaves each quiz at its own pace.">Seconds per question
+          <input type="number" class="seconds-pick" min="5" max="120" placeholder="20">
+        </label>
+        <label class="pack-shape pack-shape-wide">While they wait
+          <select class="game-pick"></select>
+        </label>
+        <label class="pack-shape">Game sound
+          <select class="sound-pick">
+            <option value="on">On</option>
+            <option value="off">Off</option>
+          </select>
+        </label>
+        <label class="pack-shape">Playing
+          <select class="play-pick">${playingOptions()}</select>
+        </label>
+      </div>
+      <!-- KEEP THE WHOLE EVENING — the way a saved night is built, and it
+           is deliberately not a second composer. Everything it holds is
+           already on this bar: the packs, which rounds are on, the venue,
+           the look, the lobby game, the prizes. Building it again in the
+           Workshop would be a second surface that could disagree with the
+           launch, on the one thing that must not — so it is made by
+           setting a night up here and keeping it, and the "Prepare a
+           night" tab (still "show"/"shows" in the code and the data
+           underneath — a display rename only, see console.js) is where
+           you take one back off the shelf. -->
+      <div class="set-keep">
+        <button class="minor set-save" type="button">Keep this ready</button>
+        <span class="tiny set-keep-why"></span>
+      </div>
       <!-- LAUNCH IS ALWAYS HERE, hollow until there is something to launch.
            It used to be created and destroyed with the chosen pack, so the
            bar changed height the moment anything was dragged in or out and
@@ -628,6 +684,15 @@ export function launchBar() {
   const liveRow = el.querySelector('.lb-live-row');
   const liveEl = el.querySelector('.lb-live');
   const unlaunchBtn = el.querySelector('.lb-unlaunch');
+  const shapePick = el.querySelector('.shape-pick');
+  const prizePick = el.querySelector('.prize-pick');
+  const lookPick = el.querySelector('.look-pick');
+  const secondsPick = el.querySelector('.seconds-pick');
+  const lobbyGamePick = el.querySelector('.game-pick');
+  const soundPick = el.querySelector('.sound-pick');
+  const playPick = el.querySelector('.play-pick');
+  const setSave = el.querySelector('.set-save');
+  const setSaveWhy = el.querySelector('.set-keep-why');
   const thenEl = el.querySelector('.lb-then');
   /**
    * THEN: the next part of tonight's show.
@@ -975,7 +1040,7 @@ export function launchBar() {
    *
    * Nothing is set up on a quiet switch — no look, no card shape, no prizes,
    * no venue. It is the pack going up on an idle projector, and everything
-   * else is what Set it up and Launch are for.
+   * else is what the settings row and Launch are for.
    */
   async function switchIfFree(pack, kind) {
     try {
@@ -1039,6 +1104,7 @@ export function launchBar() {
      * whether the room heard it a fortnight ago.
      */
     if (liveEl) paintLive();
+    paintSettings();
     const why = (quickPicks(gameOf().packs).find((q) => q.pack.id === pack.id) || {}).why
       || (pack.lastPlayedAt ? `Last played ${whenShort(pack.lastPlayedAt)}` : 'Never played');
     whyEl.textContent = why;
@@ -1050,18 +1116,15 @@ export function launchBar() {
     // sibling after it silently loses the sibling — which here was the Launch
     // button, the only thing on the panel that does anything.
     /*
-     * THE SETTINGS ARE NOT ON THIS BAR ANY MORE — they are the "Tonight's
-     * settings" tab, on this same door.
-     *
-     * *"Not sure what the point of the Set it up bit on the console is"* — and
-     * the point was never the settings, it was them hanging off the launch bar
-     * as a fold. That put furniture between the bar and the packs, which is
-     * the one thing the Console door is not allowed to have. On a tab they are
-     * one predictable tap away, in a position you can learn, instead of behind
-     * a control that came and went with whether a pack was chosen.
-     *
-     * `chosen` still exists because the LAUNCH button lives in it; it simply
-     * carries nothing else now.
+     * `chosen` USED TO HOLD A FOLD OF SETTINGS ("Set it up"), which moved to
+     * its own tab and has since moved AGAIN — onto the bar itself, as the
+     * always-visible `.lb-set` row rather than a fold anybody had to open.
+     * *"Not sure what the point of the Set it up bit on the console is"* was
+     * the report that started that history: the point was never the
+     * settings, it was them hanging off a control that came and went with
+     * whether a pack was chosen. `chosen` itself is now empty — nothing left
+     * needs a place to fold into — and is kept only because other code still
+     * toggles its `hidden` attribute.
      */
     chosen.replaceChildren(node('<div></div>'));
 
@@ -1158,8 +1221,10 @@ export function launchBar() {
       }
       await doLaunch(kind, pack.id, {
         // FROM `night`, not from the DOM — see the note where it is declared.
-        // The controls live on their own tab now and may not be on screen when
-        // this fires.
+        // The controls are on this same bar now, but reading the one shared
+        // object rather than five live selects is still the simpler contract,
+        // and it is what survives a saved show restoring these fields directly
+        // (`loadShow()`) without a DOM element to read them back off.
         shape: night.shape,
         prizes: night.prizes,
         look: night.look,
@@ -1288,6 +1353,7 @@ export function launchBar() {
     }
     paintOrder();
     paintLive();
+    paintSettings();
     paintFold();
   }
 
@@ -1364,6 +1430,132 @@ export function launchBar() {
   }
 
   unlaunchBtn.addEventListener('click', (ev) => stopRunningNight(ev.currentTarget));
+
+  /*
+   * TONIGHT'S SETTINGS, PAINTED FRESH whenever the pack changes — the same
+   * "read state, redraw" shape as `paintLive()`, moved here from a tab that
+   * used to be rebuilt from scratch on every visit. This bar is not rebuilt
+   * that often, so the parts that depend on WHICH pack is chosen have to be
+   * repainted by hand at every place `currentPack` changes.
+   *
+   * CARD, PRIZES, SECONDS AND WHILE THEY WAIT are the only pack-dependent
+   * ones — Look's own OPTIONS change too, because a pack can carry its own
+   * default. Sound and Playing are facts about the NIGHT regardless of the
+   * pack, so they are wired once below rather than repainted here — a
+   * control that cannot change has nothing for a repaint to do.
+   */
+  function paintSettings() {
+    const pack = currentPack;
+    const bingo = Boolean(pack && !(pack.rounds || []).length);
+
+    /*
+     * PRESENT AND INERT, NOT ABSENT — the same rule this bar already keeps
+     * for Launch and for Keep this ready below. Card and Prizes only mean
+     * anything for a bingo pack; disabled and named rather than missing, so
+     * the row does not change shape depending on what is dragged in.
+     */
+    if (shapePick && prizePick) {
+      shapePick.disabled = !bingo;
+      prizePick.disabled = !bingo;
+      if (bingo) {
+        shapePick.innerHTML = shapeOptions(pack);
+        paintPrizes();
+      } else {
+        shapePick.innerHTML = '<option>Bingo only</option>';
+        prizePick.innerHTML = '<option>Bingo only</option>';
+      }
+    }
+    // Seconds per question is the opposite case — a QUIZ setting, inert on
+    // a bingo pack (and on no pack, which plays as a quiz shelf by default).
+    if (secondsPick) secondsPick.disabled = bingo;
+
+    // The pack can carry its own look, so the OPTIONS themselves have to be
+    // rebuilt — a blank `night.look` means "leave the pack's own alone",
+    // exactly as it did on the tab, so it only overrides when set.
+    if (lookPick) {
+      lookPick.innerHTML = lookOptions(pack || {});
+      if (night.look) lookPick.value = night.look;
+    }
+    if (lobbyGamePick) {
+      lobbyGamePick.innerHTML = lobbyGameOptions(bingo ? 'bingo' : 'quiz');
+      if (night.lobbyGame) lobbyGamePick.value = night.lobbyGame;
+    }
+
+    if (setSave) {
+      setSave.disabled = !pack;
+      setSaveWhy.textContent = pack ? '' : 'Nothing in Tonight to keep yet.';
+    }
+  }
+
+  /** The prize plans for whichever shape is currently picked. */
+  function paintPrizes() {
+    if (!shapePick || !prizePick || shapePick.disabled) return;
+    let want;
+    try { want = JSON.parse(shapePick.value); } catch { return; }
+    const found = ((library && library.cardShapes) || [])
+      .find((sh) => sh.rows === want.rows && sh.cols === want.cols);
+    if (!found) return;
+    prizePick.innerHTML = found.plans
+      .map((plan, i) => `<option value="${i + 1}">${i + 1} — ${esc(plan.join(', then '))}</option>`).join('');
+    if (night.prizes) prizePick.value = String(night.prizes);
+  }
+  shapePick?.addEventListener('change', () => {
+    night.shape = JSON.parse(shapePick.value);
+    paintPrizes();
+    night.prizes = Number(prizePick?.value) || 0;
+  });
+  prizePick?.addEventListener('change', () => { night.prizes = Number(prizePick.value) || 0; });
+  lookPick?.addEventListener('change', (ev) => { night.look = ev.target.value; });
+  lobbyGamePick?.addEventListener('change', (ev) => { night.lobbyGame = ev.target.value; });
+
+  // SOUND AND PLAYING ARE NOT PACK-DEPENDENT, so they are set from `night`
+  // once here rather than on every `paintSettings()` — same as Seconds'
+  // own VALUE (only its disabled state is pack-dependent).
+  if (secondsPick) secondsPick.value = night.questionSeconds || '';
+  if (soundPick) soundPick.value = night.lobbySound ? 'on' : 'off';
+  if (playPick) playPick.value = night.teamPlay ? 'teams' : 'solo';
+  secondsPick?.addEventListener('input', (ev) => {
+    const n = Math.max(5, Math.min(120, Number(ev.target.value) || 0));
+    night.questionSeconds = ev.target.value === '' ? 0 : n;
+  });
+  soundPick?.addEventListener('change', (ev) => { night.lobbySound = ev.target.value !== 'off'; });
+  playPick?.addEventListener('change', (ev) => { night.teamPlay = ev.target.value === 'teams'; });
+
+  /*
+   * KEEPING TONIGHT AS A SHOW — present and inert rather than absent when
+   * there is nothing to keep, same as Launch itself: `paintSettings()` sets
+   * the disabled state and the reason above.
+   */
+  setSave?.addEventListener('click', async () => {
+    const draft = tonightAsShow('');
+    if (!draft) return;
+    /*
+     * THE NAME IS SUGGESTED, NEVER IMPOSED. "Thursday at The Crown" is what
+     * somebody would have typed, and a prompt pre-filled with it is one tap
+     * for the common case and still a free field for the rest. A show named
+     * after its pack would collide the moment a second night used it.
+     */
+    const suggestion = draft.venue
+      ? `${dayName(new Date())} at ${draft.venue}`
+      : (currentPack.title || 'Tonight');
+    const name = prompt('What is this called?', suggestion);
+    if (name === null) return;
+    if (!name.trim()) return;
+    setSave.disabled = true;
+    const wasHtml = setSave.innerHTML;
+    setSave.textContent = 'Keeping…';
+    try {
+      const res = await postJson('/api/shows', tonightAsShow(name.trim()), { 'X-Host-Key': hostKey });
+      await load();
+      showDone('good', `<strong>${esc(res.show.name)}</strong> is on your Prepare a night tab. `
+        + 'Drag it onto Tonight whenever you want this evening back.');
+      render();
+    } catch (err) {
+      setSave.disabled = false;
+      setSave.innerHTML = wasHtml;
+      alert(err.message || 'Could not keep that.');
+    }
+  });
 
   /*
    * OPEN OR A THIN LINE, and the line still says what it is set to.
@@ -1603,6 +1795,7 @@ export function launchBar() {
        */
       paintOrder();
       paintLive();
+      paintSettings();
       return;
     }
     lbExtra.splice(at - 1, 1);
@@ -2286,6 +2479,7 @@ export function launchBar() {
     chosen.hidden = true;
     whyEl.textContent = '';
     paintLive();
+    paintSettings();
     paintAlt();
   });
 
@@ -2630,179 +2824,6 @@ export function runningPanel(running) {
    * waiting — the same state as just after a launch. Nothing is deleted.
    */
   el.querySelector('.stop-running')?.addEventListener('click', (ev) => stopRunningNight(ev.currentTarget));
-
-  return el;
-}
-
-/**
- * TONIGHT'S SETTINGS — the look, the lobby game, the sound and how they play.
- *
- * Everything here is a decision about THIS NIGHT rather than about a pack:
- * none of it is written back to the pack file, and all of it is read at
- * launch. That was already true when these controls lived on the launch bar;
- * what has changed is only where they are drawn.
- *
- * **They write to `night`, not to the DOM.** Launch reads that object, so a
- * setting survives a re-render, survives switching tabs, and cannot end up
- * disagreeing with a second copy of the same control somewhere else. See the
- * note where `night` is declared.
- *
- * **The card shape and the prizes need a pack**, because the shapes offered
- * come from the bingo pack itself — so they appear once one is in tonight and
- * say so plainly when one is not. Everything else stands on its own.
- */
-export function tonightSettingsPanel() {
-  const pack = currentPack;
-  const bingo = Boolean(pack && !(pack.rounds || []).length);
-
-  const el = node(`
-    <div class="game-section">
-      <div class="game-head">
-        <div>
-          <h2>Tonight’s settings</h2>
-          <div class="tiny">How this night plays. None of it changes the pack —
-            it is read when you press Launch.</div>
-        </div>
-      </div>
-      <div class="lb-set set-tab">
-        ${bingo ? `
-          <label class="pack-shape">Card
-            <select class="shape-pick">${shapeOptions(pack)}</select>
-          </label>
-          <label class="pack-shape">Prizes
-            <select class="prize-pick"></select>
-          </label>` : ''}
-        <label class="pack-shape">Look
-          <select class="look-pick">${lookOptions(pack || {})}</select>
-        </label>
-        ${bingo ? '' : `
-        <label class="pack-shape" title="Blank leaves each quiz at its own pace.">Seconds per question
-          <input type="number" class="seconds-pick" min="5" max="120" placeholder="20">
-        </label>`}
-        <label class="pack-shape pack-shape-wide">While they wait
-          <select class="game-pick">${lobbyGameOptions(bingo ? 'bingo' : 'quiz')}</select>
-        </label>
-        <label class="pack-shape">Game sound
-          <select class="sound-pick">
-            <option value="on">On</option>
-            <option value="off">Off</option>
-          </select>
-        </label>
-        <label class="pack-shape">Playing
-          <select class="play-pick">${playingOptions()}</select>
-        </label>
-      </div>
-      ${pack ? '' : `<p class="tiny set-none">Drag a pack into Tonight and the
-        card shape and prizes appear here too.</p>`}
-      <!--
-        KEEP THE WHOLE EVENING — the way a saved night is built, and it is
-        deliberately not a second composer.
-
-        Everything it holds is already on the bar and on this tab: the packs,
-        which rounds are on, the venue, the look, the lobby game, the prizes.
-        Building it again in the Workshop would be a second surface that
-        could disagree with the launch, on the one thing that must not — so
-        it is made by setting a night up here and keeping it, and the
-        "Prepare a night" tab (still "show"/"shows" in the code and the data
-        underneath — a display rename only, see console.js) is where you take
-        one back off the shelf.
-
-        At the BOTTOM of the settings, because it is the last thing you do:
-        set it up, then keep it. Ordinary rather than green — "make something"
-        is a whole new pack, and this is a note of what is already in front of
-        you.
-      -->
-      <div class="set-keep">
-        <button class="minor set-save" type="button">Keep this ready</button>
-        <span class="tiny set-keep-why"></span>
-      </div>
-    </div>`);
-
-  /* Start on whatever the night already holds, so coming back to the tab shows
-     what is actually set rather than the defaults again. */
-  const put = (sel, value) => {
-    const box = el.querySelector(sel);
-    if (box && value !== '' && value != null) box.value = value;
-  };
-  put('.look-pick', night.look);
-  put('.seconds-pick', night.questionSeconds || '');
-  put('.game-pick', night.lobbyGame);
-  put('.sound-pick', night.lobbySound ? 'on' : 'off');
-  put('.play-pick', night.teamPlay ? 'teams' : 'solo');
-
-  const shapePick = el.querySelector('.shape-pick');
-  const prizePick = el.querySelector('.prize-pick');
-  const paintPrizes = () => {
-    if (!shapePick || !prizePick) return;
-    const want = JSON.parse(shapePick.value);
-    const found = ((library && library.cardShapes) || [])
-      .find((sh) => sh.rows === want.rows && sh.cols === want.cols);
-    if (!found) return;
-    prizePick.innerHTML = found.plans
-      .map((plan, i) => `<option value="${i + 1}">${i + 1} — ${esc(plan.join(', then '))}</option>`).join('');
-    if (night.prizes) prizePick.value = String(night.prizes);
-  };
-  shapePick?.addEventListener('change', () => {
-    night.shape = JSON.parse(shapePick.value);
-    paintPrizes();
-    night.prizes = Number(prizePick?.value) || 0;
-  });
-  paintPrizes();
-  prizePick?.addEventListener('change', () => { night.prizes = Number(prizePick.value) || 0; });
-
-  el.querySelector('.look-pick')?.addEventListener('change', (ev) => { night.look = ev.target.value; });
-  el.querySelector('.seconds-pick')?.addEventListener('input', (ev) => {
-    const n = Math.max(5, Math.min(120, Number(ev.target.value) || 0));
-    night.questionSeconds = ev.target.value === '' ? 0 : n;
-  });
-  el.querySelector('.game-pick')?.addEventListener('change', (ev) => { night.lobbyGame = ev.target.value; });
-  el.querySelector('.sound-pick')?.addEventListener('change', (ev) => { night.lobbySound = ev.target.value !== 'off'; });
-  el.querySelector('.play-pick')?.addEventListener('change', (ev) => { night.teamPlay = ev.target.value === 'teams'; });
-
-  /*
-   * KEEPING TONIGHT AS A SHOW.
-   *
-   * Present and inert rather than absent when there is nothing to keep — the
-   * rule this bar already follows for Launch and Set it up, and for the same
-   * reason: a control that comes and goes is one you cannot learn the position
-   * of. It says WHY it is off rather than merely being grey.
-   */
-  const save = el.querySelector('.set-save');
-  const why = el.querySelector('.set-keep-why');
-  if (!pack) {
-    save.disabled = true;
-    why.textContent = 'Nothing in Tonight to keep yet.';
-  }
-  save.addEventListener('click', async () => {
-    const draft = tonightAsShow('');
-    if (!draft) return;
-    /*
-     * THE NAME IS SUGGESTED, NEVER IMPOSED. "Thursday at The Crown" is what
-     * somebody would have typed, and a prompt pre-filled with it is one tap
-     * for the common case and still a free field for the rest. A show named
-     * after its pack would collide the moment a second night used it.
-     */
-    const suggestion = draft.venue
-      ? `${dayName(new Date())} at ${draft.venue}`
-      : (currentPack.title || 'Tonight');
-    const name = prompt('What is this called?', suggestion);
-    if (name === null) return;
-    if (!name.trim()) return;
-    save.disabled = true;
-    const wasHtml = save.innerHTML;
-    save.textContent = 'Keeping…';
-    try {
-      const res = await postJson('/api/shows', tonightAsShow(name.trim()), { 'X-Host-Key': hostKey });
-      await load();
-      showDone('good', `<strong>${esc(res.show.name)}</strong> is on your Prepare a night tab. `
-        + 'Drag it onto Tonight whenever you want this evening back.');
-      render();
-    } catch (err) {
-      save.disabled = false;
-      save.innerHTML = wasHtml;
-      alert(err.message || 'Could not keep that.');
-    }
-  });
 
   return el;
 }
