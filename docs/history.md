@@ -14,6 +14,21 @@ unpicked. Read the relevant part before changing anything here.
 reported off one screenshot of a mixed quiz-plus-bingo night, and a real CSS
 bug found chasing the third:**
 
+**1a. CORRECTED THE SAME DAY: present-and-inert was still the wrong answer
+for Card and Prizes in mixed mode.** The fix below (1) left them disabled
+with "Set per pack below" — reported straight back, off the same
+screenshot: *"if they can't function on the bench they should be removed."*
+Right call: in mixed mode they are not "not yet usable" (the case
+present-and-inert actually fits, and still governs Seconds and, outside
+mixed mode, Card/Prizes themselves), they are PERMANENTLY superseded by
+each bingo tile's own controls for as long as the row stays mixed —
+disabled-and-present read as broken rather than deferred. Now hidden
+outright in mixed mode, via two named wrapper elements (`.lb-set-card`/
+`.lb-set-prizes`) `paintSettings()` toggles alongside everything else.
+Live-verified: the settings row reads Look / Seconds / While they wait /
+Game sound / Playing with no dead controls once a second (bingo) tile
+joins the row, and the sticky-drag CSS fix below still holds.
+
 **1. Card and Prizes read "Bingo only" beside a bingo TILE that already had
 its own working shape/prize dropdowns.** `paintSettings()` decided bingo-ness
 from `currentPack` alone, which in a MIXED running order (`lbSlots` truthy,

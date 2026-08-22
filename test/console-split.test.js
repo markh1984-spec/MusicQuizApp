@@ -144,8 +144,18 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * just slot 1 and may not be bingo at all. Now asks `lbSlots` too, and moved
  * the scattered per-call-site repaints into one call inside `paintOrder()`
  * itself — the seam every `lbSlots` mutation already passes through.
+ *
+ * RAISED TO 2890 THE SAME DAY: the fix above disabled Card and Prizes in
+ * mixed mode with a "Set per pack below" placeholder — reported straight
+ * back as still wrong, off the same screenshot: "if they can't function on
+ * the bench they should be removed." Disabled-and-present was the right
+ * call for the ordinary case (a bingo pack landing on this row is one drag
+ * away) but the wrong one here — in mixed mode the global pair is not
+ * "not yet usable", it is permanently superseded by each tile's own
+ * controls, so it is hidden outright instead. Two named wrapper elements
+ * (`.lb-set-card`/`.lb-set-prizes`) for `paintSettings()` to toggle.
  */
-const BUDGET = { 'console-tonight.js': 2870, 'console.js': 2000 };
+const BUDGET = { 'console-tonight.js': 2890, 'console.js': 2000 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

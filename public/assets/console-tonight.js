@@ -616,18 +616,32 @@ export function launchBar() {
            that goes unset. None of it touches the pack; all of it is read
            at Launch exactly as it was on the tab it replaces.
 
-           CARD AND PRIZES ARE BINGO-ONLY, SECONDS IS QUIZ-ONLY, and both
-           stay PRESENT AND INERT rather than appearing and disappearing
-           with the pack — the rule this bar already keeps for Launch
-           itself and for Keep this ready below. A control that comes and
-           goes is one you cannot learn the position of, driven with a
-           thumb in a dark pub. paintSettings() fills every option and
-           the disabled state; nothing here is baked into the string. -->
+           SECONDS IS QUIZ-ONLY and stays PRESENT AND INERT rather than
+           appearing and disappearing with the pack — the rule this bar
+           already keeps for Launch itself and for Keep this ready below.
+           A control that comes and goes is one you cannot learn the
+           position of, driven with a thumb in a dark pub.
+
+           CARD AND PRIZES ARE THE ONE EXCEPTION, AND DELIBERATELY SO — in a
+           MIXED running order every bingo tile carries its own shape/prize
+           controls (renderSlots's own numbered tiles), so the global pair
+           is not "not yet usable", it is PERMANENTLY superseded for as
+           long as the row is mixed: a second control doing the same job as
+           the one already on screen is clutter, not a courtesy. Reported
+           directly, off a screenshot showing them greyed "Set per pack
+           below" beside a bingo tile with its own working dropdowns —
+           "if they can't function on the bench they should be removed."
+           paintSettings() HIDES this pair outright in mixed mode rather
+           than disabling it; outside mixed mode they are present-and-inert
+           exactly like Seconds, because there a bingo pack landing on THIS
+           SAME row is one drag away. paintSettings() fills every option
+           and the disabled/hidden state; nothing here is baked into the
+           string. -->
       <div class="lb-set">
-        <label class="pack-shape">Card
+        <label class="pack-shape lb-set-card">Card
           <select class="shape-pick" disabled></select>
         </label>
-        <label class="pack-shape">Prizes
+        <label class="pack-shape lb-set-prizes">Prizes
           <select class="prize-pick" disabled></select>
         </label>
         <label class="pack-shape">Look
@@ -687,6 +701,8 @@ export function launchBar() {
   const unlaunchBtn = el.querySelector('.lb-unlaunch');
   const shapePick = el.querySelector('.shape-pick');
   const prizePick = el.querySelector('.prize-pick');
+  const cardRow = el.querySelector('.lb-set-card');
+  const prizesRow = el.querySelector('.lb-set-prizes');
   const lookPick = el.querySelector('.look-pick');
   const secondsPick = el.querySelector('.seconds-pick');
   const lobbyGamePick = el.querySelector('.game-pick');
@@ -1462,21 +1478,28 @@ export function launchBar() {
     const singleBingo = hasBingo && !mixed;
 
     /*
-     * PRESENT AND INERT, NOT ABSENT — the same rule this bar already keeps
-     * for Launch and for Keep this ready below. Card and Prizes only mean
-     * anything for a bingo pack; disabled and named rather than missing, so
-     * the row does not change shape depending on what is dragged in.
+     * PRESENT AND INERT OUTSIDE MIXED MODE, HIDDEN INSIDE IT — two different
+     * answers for two different reasons. Outside mixed mode a bingo pack
+     * landing on THIS row is one drag away, so Card and Prizes stay put and
+     * disabled, the same rule this bar already keeps for Launch and for
+     * Keep this ready below. In mixed mode they are not "not yet usable",
+     * they are PERMANENTLY superseded — every bingo tile carries its own
+     * shape/prize controls — so showing them disabled read as broken rather
+     * than deferred: reported directly, off a screenshot, "if they can't
+     * function on the bench they should be removed." A control that has
+     * genuinely moved elsewhere is removed, not greyed.
      */
+    if (cardRow) cardRow.hidden = mixed;
+    if (prizesRow) prizesRow.hidden = mixed;
     if (shapePick && prizePick) {
       shapePick.disabled = !singleBingo;
       prizePick.disabled = !singleBingo;
       if (singleBingo) {
         shapePick.innerHTML = shapeOptions(pack);
         paintPrizes();
-      } else {
-        const label = mixed && hasBingo ? 'Set per pack below' : 'Bingo only';
-        shapePick.innerHTML = `<option>${esc(label)}</option>`;
-        prizePick.innerHTML = `<option>${esc(label)}</option>`;
+      } else if (!mixed) {
+        shapePick.innerHTML = '<option>Bingo only</option>';
+        prizePick.innerHTML = '<option>Bingo only</option>';
       }
     }
     // Seconds per question is the opposite case — a QUIZ setting, inert only
