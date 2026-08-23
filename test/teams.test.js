@@ -1,213 +1,174 @@
 /**
- * TEAM PLAY — several phones, one team, and the score is the AVERAGE.
+ * THE THREE WAYS TO PLAY A NIGHT — `src/teams.js` and the dealing the engine
+ * does at join.
  *
- * The averaging is the whole design and it is the host's own: a big team of
- * chancers must not be able to beat a small team who know their stuff. Add the
- * scores up instead and six people guessing beats two people who are right,
- * which is the opposite of a quiz.
- *
- * The other half of what is tested here is that a night WITHOUT teams takes
- * exactly the code path it always did — because this shipped the week of a
- * gig, and a feature nobody is using must not be able to break one.
+ * The one that needs guarding hardest is the boundary: `solo` must keep the
+ * code path it has always had, and `random` must not leave a door open for a
+ * phone to change its own team afterwards, which would undo the whole mode.
  */
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { Engine, PHASES } from '../src/engine.js';
-import { teamScores, rankPlayers } from '../src/scoring.js';
+import {
+  RANDOM_TEAM_NAMES, RANDOM_TEAM_TARGET, RANDOM_TEAM_MAX, dealInto,
+} from '../src/teams.js';
+import { Engine } from '../src/engine.js';
 
-const quiz = () => ({
-  id: 'teams-test',
-  title: 'A Team Test Quiz',
-  rounds: [{
-    title: 'Round One',
-    type: 'text',
-    questions: [
-      { prompt: 'Q1?', options: ['right', 'wrong', 'wrong', 'wrong'], correctIndex: 0 },
-      { prompt: 'Q2?', options: ['right', 'wrong', 'wrong', 'wrong'], correctIndex: 0 },
-    ],
-  }],
-});
-
-function game({ teamPlay = true } = {}) {
-  let t = 1_000_000;
-  const engine = new Engine({ quiz: quiz(), now: () => t });
-  engine.state.teamPlay = teamPlay;
-  return { engine, at: (ms) => { t = 1_000_000 + ms; }, set: (ms) => { t = ms; } };
+function quiz() {
+  return {
+    id: 'test',
+    title: 'Test Quiz',
+    questionSeconds: 20,
+    rounds: [{
+      id: 'r1',
+      type: 'text',
+      title: 'Round One',
+      questions: [{ id: 'q1', prompt: 'First?', options: ['A', 'B', 'C', 'D'], correctIndex: 1 }],
+    }],
+  };
 }
 
-// ------------------------------------------------------------- the arithmetic
+/** An engine with the clock and the randomness both pinned. */
+function engineOn(state = {}, random = () => 0) {
+  const engine = new Engine({ quiz: quiz(), now: () => 1_700_000_000_000, random });
+  Object.assign(engine.state, state);
+  return engine;
+}
 
-test('A BIG TEAM OF CHANCERS CANNOT BEAT A SMALL TEAM WHO KNOW THEIR STUFF', () => {
-  // Two who both scored 300; six of whom two scored 300 and four scored nothing.
-  const teams = { small: { id: 'small', name: 'The Two' }, big: { id: 'big', name: 'The Six' } };
-  const players = [
-    { id: 'a', name: 'A', teamId: 'small', score: 300 },
-    { id: 'b', name: 'B', teamId: 'small', score: 300 },
-    ...['c', 'd'].map((id) => ({ id, name: id, teamId: 'big', score: 300 })),
-    ...['e', 'f', 'g', 'h'].map((id) => ({ id, name: id, teamId: 'big', score: 0 })),
-  ];
-  const rows = teamScores(players, teams);
-  const small = rows.find((r) => r.teamId === 'small');
-  const big = rows.find((r) => r.teamId === 'big');
-  assert.equal(small.score, 300);
-  assert.equal(big.score, 100, 'the four passengers are zeros in the mean, not skipped');
-  assert.ok(small.score > big.score, 'summing would have made the big team win 1200 to 600');
+const randomTeams = (extra = {}) => engineOn({ teamPlay: true, teamMode: 'random', ...extra });
+
+// ----------------------------------------------------------------- dealing
+
+test('the first phone makes the first team', () => {
+  assert.deepEqual(dealInto([]), { create: RANDOM_TEAM_NAMES[0] });
 });
 
-test('somebody on no team is a team of one, so the board is one kind of row', () => {
-  const rows = teamScores(
-    [{ id: 'solo', name: 'Solo', score: 250 }, { id: 'a', name: 'A', teamId: 't', score: 100 }],
-    { t: { id: 't', name: 'A Team' } },
-  );
-  assert.equal(rows.length, 2);
-  assert.equal(rows.find((r) => r.id === 'solo').size, 1);
+test('a team is filled to the target before another is started', () => {
+  const one = [{ id: 'a', size: RANDOM_TEAM_TARGET - 1 }];
+  assert.deepEqual(dealInto(one), { join: 'a' }, 'still room in it');
+  const full = [{ id: 'a', size: RANDOM_TEAM_TARGET }];
+  assert.deepEqual(dealInto(full), { create: RANDOM_TEAM_NAMES[1] }, 'full, so the Blues start');
 });
 
-test('a tie is broken on total response time, and summing is kinder to a small team', () => {
-  const teams = { x: { id: 'x', name: 'X' }, y: { id: 'y', name: 'Y' } };
-  const rows = teamScores([
-    { id: 'a', name: 'A', teamId: 'x', score: 200, totalResponseMs: 4000 },
-    { id: 'b', name: 'B', teamId: 'x', score: 200, totalResponseMs: 4000 },
-    { id: 'c', name: 'C', teamId: 'y', score: 200, totalResponseMs: 9000 },
-    { id: 'd', name: 'D', teamId: 'y', score: 200, totalResponseMs: 9000 },
-  ], teams);
-  const [first] = rankPlayers(rows);
-  assert.equal(first.teamId, 'x');
+test('THE SMALLEST TEAM WINS, which is what keeps them even', () => {
+  const teams = [{ id: 'a', size: 3 }, { id: 'b', size: 1 }, { id: 'c', size: 2 }];
+  assert.deepEqual(dealInto(teams), { join: 'b' });
 });
 
-// ---------------------------------------------------------------- the engine
+test('a tie is broken at RANDOM, or the deal is just a queue', () => {
+  // Two empty teams and a random that always picks the last candidate.
+  const teams = [{ id: 'a', size: 1 }, { id: 'b', size: 1 }];
+  assert.deepEqual(dealInto(teams, () => 0.99), { join: 'b' });
+  assert.deepEqual(dealInto(teams, () => 0), { join: 'a' });
+});
 
-test('a team is made, joined, and shows on the board with its members', () => {
-  const { engine } = game();
-  const rob = engine.join({ name: 'Rob' }).id;
-  const sam = engine.join({ name: 'Sam' }).id;
+test('THE BOARD IS CAPPED — a big room fills the teams it has', () => {
+  // Every team full and the maximum reached: nobody starts a seventh.
+  const teams = RANDOM_TEAM_NAMES.map((n, i) => ({ id: `t${i}`, size: 40 }));
+  assert.equal(teams.length, RANDOM_TEAM_MAX);
+  assert.ok(dealInto(teams, () => 0).join, 'joins rather than creating');
+});
+
+test('a room grows into even teams', () => {
+  const teams = [];
+  for (let i = 0; i < 14; i += 1) {
+    const d = dealInto(teams, () => 0);
+    if (d.create) teams.push({ id: `t${teams.length}`, name: d.create, size: 1 });
+    else teams.find((t) => t.id === d.join).size += 1;
+  }
+  assert.deepEqual(teams.map((t) => t.size), [4, 4, 4, 2]);
+  assert.deepEqual(teams.map((t) => t.name), RANDOM_TEAM_NAMES.slice(0, 4));
+});
+
+// ------------------------------------------------------------ in the engine
+
+test('SOLO IS UNTOUCHED — no teams, no team fields, nothing dealt', () => {
+  /*
+   * The rule the leaderboard's own note states: an ordinary pub night must
+   * not take a new code path because a feature it is not using exists.
+   */
+  const engine = engineOn();
+  const player = engine.join({ name: 'Team A' });
+  assert.equal(player.teamId, undefined, 'nobody is dealt anywhere');
+  // `teams` is declared empty in `freshState` and stays that way — nothing
+  // ever writes into it on a solo night, which `makeTeam()`'s own guard is for.
+  assert.deepEqual(engine.state.teams || {}, {});
+  const view = engine.playerView(player.id);
+  assert.equal(view.teamPlay, undefined);
+  assert.equal(view.teamMode, undefined);
+});
+
+test('ASSIGNED still lets a phone name and join a team', () => {
+  const engine = engineOn({ teamPlay: true, teamMode: 'assigned' });
+  const player = engine.join({ name: 'Rob' });
+  assert.equal(player.teamId, undefined, 'nothing is dealt in this mode');
   const made = engine.makeTeam('The Quizzly Bears');
   assert.equal(made.ok, true);
-  assert.equal(engine.joinTeam(rob, made.id).ok, true);
-  assert.equal(engine.joinTeam(sam, made.id).ok, true);
+  assert.equal(engine.joinTeam(player.id, made.id).ok, true);
+  assert.equal(engine.state.players[player.id].teamId, made.id);
+  assert.equal(engine.playerView(player.id).teamMode, 'assigned');
+});
 
+test('RANDOM deals every phone as it joins, and says so on its payload', () => {
+  const engine = randomTeams();
+  const a = engine.join({ name: 'Rob' });
+  assert.ok(a.teamId, 'dealt at the moment of joining');
+  const team = engine.state.teams[a.teamId];
+  assert.equal(team.name, RANDOM_TEAM_NAMES[0]);
+  const view = engine.playerView(a.id);
+  assert.equal(view.teamMode, 'random');
+  assert.equal(view.yourTeam, a.teamId);
+});
+
+test('A DEALT TEAM CANNOT BE SWAPPED — the mode would be pointless otherwise', () => {
+  const engine = randomTeams();
+  const a = engine.join({ name: 'Rob' });
+  // Fill the first team so a second one exists to try to hop into.
+  for (let i = 0; i < RANDOM_TEAM_TARGET; i += 1) engine.join({ name: `P${i}` });
+  const others = Object.keys(engine.state.teams).filter((id) => id !== a.teamId);
+  assert.ok(others.length, 'a second team exists');
+  const tried = engine.joinTeam(a.id, others[0]);
+  assert.equal(tried.ok, false);
+  assert.equal(tried.reason, 'random_teams');
+  assert.equal(engine.state.players[a.id].teamId, a.teamId, 'still where they were put');
+});
+
+test('the room ends up in even teams, through the real join path', () => {
+  const engine = randomTeams();
+  for (let i = 0; i < 9; i += 1) engine.join({ name: `P${i}` });
+  const sizes = engine.teamList().map((t) => t.size).sort((x, y) => y - x);
+  assert.deepEqual(sizes, [4, 4, 1]);
+});
+
+test('A LATECOMER IS STILL DEALT — joining at question four lands somewhere', () => {
+  const engine = randomTeams();
+  engine.join({ name: 'Early' });
+  engine.state.phase = 'question';
+  const late = engine.join({ name: 'Late' });
+  assert.ok(late.teamId, 'a phone joining mid-quiz is on a team');
+});
+
+test('the board is by TEAM on a random night, and averaged', () => {
+  const engine = randomTeams();
+  const a = engine.join({ name: 'A' });
+  const b = engine.join({ name: 'B' });
+  assert.equal(engine.state.players[a.id].teamId, engine.state.players[b.id].teamId,
+    'the first two share a team');
+  engine.state.players[a.id].score = 100;
+  engine.state.players[b.id].score = 0;
   const board = engine.leaderboard();
-  assert.equal(board.length, 1, 'two phones, one row');
-  assert.equal(board[0].name, 'The Quizzly Bears');
-  assert.equal(board[0].size, 2);
+  assert.equal(board.length, 1, 'one row for the team, not two for the people');
+  assert.equal(board[0].score, 50, 'averaged, as a team night always has been');
+  assert.equal(board[0].name, RANDOM_TEAM_NAMES[0]);
 });
 
-test('the same name twice is the same team, not two you cannot tell apart', () => {
-  const { engine } = game();
-  const first = engine.makeTeam('The Quizzly Bears');
-  const again = engine.makeTeam('the quizzly bears');
-  assert.equal(again.id, first.id);
-  assert.equal(again.already, true);
-});
-
-test('a team name is tidied like a player name, and never word-filtered', () => {
-  const { engine } = game();
-  const made = engine.makeTeam('  Norfolk\n& Chance  ');
-  assert.equal(engine.state.teams[made.id].name, 'Norfolk & Chance');
-  assert.equal(engine.makeTeam('x'.repeat(60)).ok, true);
-  assert.equal(Object.values(engine.state.teams).at(-1).name.length, 28);
-  assert.equal(engine.makeTeam('   ').ok, false);
-});
-
-test('YOU CANNOT SWITCH TEAMS MID-QUESTION', () => {
-  const { engine } = game();
-  const rob = engine.join({ name: 'Rob' }).id;
-  const winners = engine.makeTeam('Doing Well').id;
-  engine.start();
-  while (engine.state.phase !== PHASES.QUESTION) engine.next();
-
-  const hop = engine.joinTeam(rob, winners);
-  assert.equal(hop.ok, false);
-  assert.equal(hop.reason, 'mid_question', 'otherwise you watch the tally and jump ship');
-
-  engine.reveal();
-  assert.equal(engine.joinTeam(rob, winners).ok, true, 'between questions is fine');
-});
-
-test('the phone is told where its TEAM stands, not where it personally stands', () => {
-  const { engine, set } = game();
-  const rob = engine.join({ name: 'Rob' }).id;
-  const sam = engine.join({ name: 'Sam' }).id;
-  const solo = engine.join({ name: 'Solo' }).id;
-  const team = engine.makeTeam('Us Two').id;
-  engine.joinTeam(rob, team);
-  engine.joinTeam(sam, team);
-
-  engine.start();
-  while (engine.state.phase !== PHASES.QUESTION) engine.next();
-  set(1_000_000 + 1000);
-  engine.answer({ playerId: solo, optionIndex: 0 });   // solo gets it, fast
-  engine.answer({ playerId: rob, optionIndex: 0 });    // Rob gets it
-  // Sam never answers, so the team's average is half of Rob's.
-  engine.reveal();
-
-  const robView = engine.playerView(rob);
-  const soloView = engine.playerView(solo);
-  assert.equal(robView.teamPlay, true);
-  assert.equal(robView.yourTeam, team);
-  assert.equal(soloView.you.position, 1, 'the solo player is ahead of the half-empty team');
-  assert.equal(robView.you.position, 2);
-  assert.equal(robView.you.playerCount, 2, 'two rows on the board, not three phones');
-});
-
-test('the picker lists the teams and how many are in each', () => {
-  const { engine } = game();
-  const rob = engine.join({ name: 'Rob' }).id;
-  const a = engine.makeTeam('A Team').id;
-  engine.makeTeam('An Empty Team');
-  engine.joinTeam(rob, a);
-  const list = engine.playerView(rob).teams;
-  assert.deepEqual(list.map((t) => [t.name, t.size]).sort(), [['A Team', 1], ['An Empty Team', 0]]);
-});
-
-test('it survives a crash, teams and all', () => {
-  const { engine } = game();
-  const rob = engine.join({ name: 'Rob' }).id;
-  const team = engine.makeTeam('Still Here').id;
-  engine.joinTeam(rob, team);
-  const back = new Engine({ quiz: quiz(), state: JSON.parse(JSON.stringify(engine.state)), now: () => 1_000_000 });
-  assert.equal(back.state.teamPlay, true);
-  assert.equal(back.playerView(rob).yourTeam, team);
-  assert.equal(back.leaderboard()[0].name, 'Still Here');
-});
-
-// ------------------------------------------------------ and a night without it
-
-test('WITHOUT TEAM PLAY NOTHING CHANGES AT ALL', () => {
-  const { engine } = game({ teamPlay: false });
-  const rob = engine.join({ name: 'Rob' }).id;
-  engine.join({ name: 'Sam' });
-  const view = engine.playerView(rob);
-  assert.equal(view.teamPlay, undefined, 'the payload does not grow a field it is not using');
-  assert.equal(view.teams, undefined);
-  assert.equal(view.yourTeam, undefined);
-  // And the board is the individual one it has always been.
-  assert.equal(engine.leaderboard().length, 2);
-  assert.equal(engine.leaderboard()[0].size, undefined, 'not a team row');
-});
-
-test('a state written before teams existed plays as individuals', () => {
-  const { engine } = game({ teamPlay: false });
-  const rob = engine.join({ name: 'Rob' }).id;
-  const old = JSON.parse(JSON.stringify(engine.state));
-  delete old.teamPlay;
-  delete old.teams;
-  const back = new Engine({ quiz: quiz(), state: old, now: () => 1_000_000 });
-  assert.equal(back.playerView(rob).teamPlay, undefined);
-  assert.equal(back.leaderboard().length, 1);
-});
-
-test('teams cannot be created on a night that is not a team night', () => {
-  // Found by probing a running server rather than in the unit tests: without
-  // this a phone could write teams into an ordinary quiz's state. Harmless on
-  // the board, which ignores them — and exactly the sort of thing that turns
-  // up in an archive months later with nobody able to account for it.
-  const { engine } = game({ teamPlay: false });
-  const rob = engine.join({ name: 'Rob' }).id;
-  assert.equal(engine.makeTeam('Sneaky').ok, false);
-  assert.equal(engine.makeTeam('Sneaky').reason, 'not_team_play');
-  assert.equal(engine.joinTeam(rob, 'anything').ok, false);
-  assert.deepEqual(engine.state.teams, {});
+test('a night restored from before this existed reads as assigned', () => {
+  // No `teamMode` at all, which is every night saved before today.
+  const engine = engineOn({ teamPlay: true });
+  delete engine.state.teamMode;
+  const player = engine.join({ name: 'Rob' });
+  assert.equal(player.teamId, undefined, 'nothing is dealt');
+  assert.equal(engine.playerView(player.id).teamMode, 'assigned');
+  assert.equal(engine.joinTeam(player.id, null).ok, true, 'and the picker still works');
 });

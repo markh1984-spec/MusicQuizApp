@@ -52,7 +52,16 @@ export const night = {
   questionSeconds: 0,
   lobbyGame: '',
   lobbySound: true,
-  teamPlay: false,
+  /*
+   * HOW THE ROOM IS DIVIDED UP — `solo`, `assigned` or `random`.
+   *
+   * ONE field, because it is one choice. `teamPlay` and `teamMode` are what
+   * the LAUNCH carries (see `src/teams.js` for why the engine wants them as
+   * two), and both are derived from this at the moment of sending — so there
+   * is no second copy on this side that could drift out of step with the
+   * dropdown somebody is looking at.
+   */
+  playing: 'solo',
   shape: null,
   prizes: 0,
   /*
@@ -1364,7 +1373,8 @@ export function launchBar() {
           lobbyGame: night.lobbyGame,
           lobbySound: night.lobbySound,
           online: lbOnline,
-          teamPlay: night.teamPlay,
+          teamPlay: night.playing !== 'solo',
+          teamMode: night.playing === 'random' ? 'random' : 'assigned',
           venue: venueNow(),
           /*
            * PRUNED AGAINST THE SEGMENTS BEING SENT, not against whatever the
@@ -1392,7 +1402,8 @@ export function launchBar() {
         // ONE source for whether tonight is online — the switch in the head,
         // which is the only place it can be set now.
         online: lbOnline,
-        teamPlay: night.teamPlay,
+        teamPlay: night.playing !== 'solo',
+        teamMode: night.playing === 'random' ? 'random' : 'assigned',
         // ONE source for where tonight is — the picker at the top, which is
         // the only place it can be set now. Two controls for one field is how
         // a night gets filed under the pub you were at last week.
@@ -1805,13 +1816,13 @@ export function launchBar() {
   // own VALUE (only its disabled state is pack-dependent).
   if (secondsPick) secondsPick.value = night.questionSeconds || '';
   if (soundPick) soundPick.value = night.lobbySound ? 'on' : 'off';
-  if (playPick) playPick.value = night.teamPlay ? 'teams' : 'solo';
+  if (playPick) playPick.value = night.playing || 'solo';
   secondsPick?.addEventListener('input', (ev) => {
     const n = Math.max(5, Math.min(120, Number(ev.target.value) || 0));
     night.questionSeconds = ev.target.value === '' ? 0 : n;
   });
   soundPick?.addEventListener('change', (ev) => { night.lobbySound = ev.target.value !== 'off'; });
-  playPick?.addEventListener('change', (ev) => { night.teamPlay = ev.target.value === 'teams'; });
+  playPick?.addEventListener('change', (ev) => { night.playing = ev.target.value; });
 
   /*
    * KEEPING TONIGHT AS A SHOW — present and inert rather than absent when
@@ -2986,7 +2997,13 @@ export function launchBar() {
     // Both halves default to ON wherever the field could be absent — the same
     // rule the lobby sound follows everywhere else.
     night.lobbySound = show.lobbySound !== false;
-    night.teamPlay = Boolean(show.teamPlay);
+    /*
+     * A show saved before this existed has `teamPlay` and no mode, and reads
+     * back as "they pick their own" — which is exactly what those nights did.
+     */
+    night.playing = show.teamPlay
+      ? (show.teamMode === 'random' ? 'random' : 'assigned')
+      : 'solo';
     night.shape = (show.shape && show.shape.rows && show.shape.cols)
       ? { rows: Number(show.shape.rows), cols: Number(show.shape.cols) } : null;
     night.prizes = Math.max(0, Math.min(5, Number(show.prizes) || 0));
@@ -3092,7 +3109,8 @@ function tonightAsShow(name) {
     look: night.look,
     lobbyGame: night.lobbyGame,
     lobbySound: night.lobbySound,
-    teamPlay: night.teamPlay,
+    teamPlay: night.playing !== 'solo',
+    teamMode: night.playing === 'random' ? 'random' : 'assigned',
     shape: night.shape,
     prizes: night.prizes,
     // Saved with the prizes and the look, and for the same reason: these are

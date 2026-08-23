@@ -87,7 +87,9 @@ test('THE FIELDS ARE A WHITELIST — anything else is dropped', () => {
     // `cleanPlan()` the launch uses, so a saved plan and an accepted plan
     // cannot come apart.
     'breaks', 'id', 'items', 'kind', 'lobbyGame', 'lobbySound', 'look', 'name', 'online',
-    'packId', 'prizes', 'shape', 'teamPlay', 'updated', 'venue',
+    // `teamMode` joined on 23 August 2026 — how a team night's teams are made,
+    // `assigned` or `random`. Cleaned by the same rule `session.launch()` uses.
+    'packId', 'prizes', 'shape', 'teamMode', 'teamPlay', 'updated', 'venue',
   ]);
   // And the items are a whitelist of their own, or the same hole reopens one
   // level down.

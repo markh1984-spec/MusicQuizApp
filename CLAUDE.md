@@ -974,6 +974,42 @@ board), `src/arcade.js` (the scores, shared by both engines),
 
 Full reasoning: **[`docs/lobby-games.md`](docs/lobby-games.md)**.
 
+### THREE WAYS TO PLAY A NIGHT — individual, they pick, dealt at random
+
+`src/teams.js`, `state.teamMode`, `night.playing` on the console. Asked for:
+*"individual, team random and team assigned — there may be some nights where
+people play as a team and other nights it's just more fun to be random."*
+
+- **`teamPlay` STAYS A BOOLEAN AND STAYS THE GATE.** Six places in the engine
+  read it and every one means "is this a team night", which is true of both
+  team modes; a second value would have touched all six for a question none of
+  them asks. The mode lives beside it in `state.teamMode`, both set from ONE
+  choice at launch, so **a solo night takes the path it always took** — and
+  `pub-unchanged` still says IDENTICAL.
+- **ONE FIELD ON THE CONSOLE (`night.playing`)**, with `teamPlay`/`teamMode`
+  derived at the moment of sending. Two copies on the browser side is how a
+  dropdown and a launch come to disagree.
+- **DEALT AT JOIN, AND NOBODY IS EVER MOVED.** Re-dealing mid-night would take
+  a score away from the people somebody has been sitting with; re-dealing at
+  kick-off would mean the team you were told at the door is not the one you
+  end on. It also survives a restart for free.
+- **THE TEAMS GROW WITH THE ROOM** — smallest team wins, **ties broken at
+  RANDOM** so the deal is not just a queue and two friends joining together
+  are not reliably put together. Four to a team (a pub table), six teams max
+  (a readable board). Constants with a note, not settings.
+- **A TEAM OF ONE IS NOT UNFAIR, which is why the lopsided moment is allowed.**
+  Scores are AVERAGED, so a lone player is on the same scale as a four. Without
+  averaging this dealing would need a shuffle at kick-off, and a shuffle would
+  break the rule above it.
+- **A DEALT TEAM CANNOT BE SWAPPED** — `joinTeam` refuses outright in random
+  mode. The phone draws no picker, and the first thing two friends would do is
+  find each other again.
+- **THE LABELS NAME THE CHOICE, NOT THE MECHANISM.** They read *"One phone
+  each"* and *"Teams — several phones, scores averaged"*, which describes the
+  engine; from the player's side the question is who you are playing WITH.
+
+Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
+
 ### THE BAND ABOVE LAUNCH IS KEPT CLEAR, and one row holds the night
 
 *"That space between packs and launch button needs to be clear, space is at a
@@ -1389,6 +1425,7 @@ Open the one you are touching; do not read them all.
 - Leaving the app mid-question
 - How many people can play
 - Online mode is ONE BOOLEAN, and the branch count is a budget
+- THREE WAYS TO PLAY A NIGHT — individual, they pick, dealt at random
 - The alphabet round — no options at all
 - The intro round skips the dead air, and that is a SCORING fix
 - The breakout round — a laugh, not a question, and it scores nothing

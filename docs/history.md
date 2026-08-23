@@ -10,6 +10,35 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 23 August 2026, same day again — three ways to play a night:**
+
+*"Can we make the phones say 'individual, team random and team assigned' —
+there may be some nights where people play as a team and other nights it's
+just more fun to be random."* Two of the three already existed and had no
+names of their own: the bar offered *"One phone each"* and *"Teams — several
+phones, scores averaged"*, which describes the engine rather than the choice.
+
+**`teamPlay` STAYS A BOOLEAN AND STAYS THE GATE.** Six places in the engine
+read it and every one asks "is this a team night", which is true of both team
+modes — so the mode sits beside it in `state.teamMode` rather than replacing
+it, and a solo night keeps the path it has always had. The console holds the
+opposite arrangement for the same reason: ONE field, with both launch fields
+derived at the moment of sending, so a dropdown and a launch cannot disagree.
+
+**DEALT AT JOIN, AND NOBODY IS EVER MOVED** — re-dealing mid-night takes a
+score away from the people somebody has been sitting with, and re-dealing at
+kick-off means the team you were told at the door is not the one you end on.
+The teams GROW WITH THE ROOM (smallest wins, ties broken at random, four to a
+team, six teams max), because nobody knows at launch how many will turn up.
+**A team of one is not unfair** — scores are averaged — which is what makes
+the lopsided moment acceptable and is why no shuffle is needed.
+
+Proven live with eleven real phones joining one at a time: told Reds, Reds,
+Reds, Reds, Blues, Blues, Blues, Blues, Greens, Greens, Greens — 4/4/3.
+Individual draws no team card at all, "they pick their own" draws the picker,
+and a dealt phone gets a statement it cannot argue with. `pub-unchanged`
+IDENTICAL, 1,511 tests green.
+
 **Live as of 23 August 2026, same day again — the band above Launch is clear
 and the head holds the whole night:**
 

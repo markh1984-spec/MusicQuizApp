@@ -1005,10 +1005,24 @@ function whereOptions() {
  * saying on the control itself rather than leaving to be discovered on a
  * scoreboard in front of a room.
  */
+/**
+ * HOW THE ROOM IS DIVIDED UP — three ways, asked for in these words:
+ * *"individual, team random and team assigned — there may be some nights
+ * where people play as a team and other nights it's just more fun to be
+ * random."*
+ *
+ * **The labels name the CHOICE, not the mechanism.** They used to read *"One
+ * phone each"* and *"Teams — several phones, scores averaged"*, which
+ * describes how the engine works; from the player's side the question is who
+ * you are playing WITH, and each of the three now answers that in two words.
+ * Where the mechanism still matters — averaging, and who decides — it goes in
+ * the tail after a dash, which is the house shape for a label.
+ */
 export function playingOptions() {
   return `
-    <option value="solo" selected>One phone each</option>
-    <option value="teams">Teams — several phones, scores averaged</option>`;
+    <option value="solo" selected>Individual</option>
+    <option value="assigned">Team — they pick their own</option>
+    <option value="random">Team — dealt at random</option>`;
 }
 
 /**
@@ -1514,9 +1528,9 @@ async function sendLaunch(url, bodyFor, button) {
 }
 
 /** Actually launch an ordinary night — the one path, whichever button was pressed. */
-export async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, venue = '', order = null, breaks = {} }, button) {
+export async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, teamMode = 'assigned', venue = '', order = null, breaks = {} }, button) {
   return sendLaunch('/api/host/launch', (replace) => ({
-    game: kind, packId, shape, prizes, look, questionSeconds, lobbyGame, lobbySound, online, teamPlay, venue,
+    game: kind, packId, shape, prizes, look, questionSeconds, lobbyGame, lobbySound, online, teamPlay, teamMode, venue,
     /*
      * WHAT HAPPENS IN THE GAPS. Sent on EVERY launch, including an empty one
      * — a launch that left it out would inherit the previous night's plan,
@@ -1546,9 +1560,9 @@ export async function doLaunch(kind, packId, { shape = null, prizes = 0, look = 
  * `show-parts.js`). Every later part loads through `/api/host/advanceOrder`
  * from the control view, never through here.
  */
-export async function doLaunchOrder(segments, { look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, venue = '', breaks = {} }, button) {
+export async function doLaunchOrder(segments, { look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, teamMode = 'assigned', venue = '', breaks = {} }, button) {
   return sendLaunch('/api/host/launchOrder', (replace) => ({
-    segments, look, questionSeconds, lobbyGame, lobbySound, online, teamPlay, venue,
+    segments, look, questionSeconds, lobbyGame, lobbySound, online, teamPlay, teamMode, venue,
     // Same rule as the ordinary launch — always sent, so a fresh night can
     // never inherit the last one's plan.
     breakPlan: breaks || {},

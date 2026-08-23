@@ -243,7 +243,20 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * left: they were settings edited elsewhere that changed nothing about what
  * launches, and the prizes are the one that is read at launch onto a voucher.
  */
-const BUDGET = { 'console-tonight.js': 3390, 'console.js': 2000, 'console-packs.js': 1720 };
+/*
+ * `console-tonight.js` GOES TO 3420 THE SAME DAY, for the Playing choice
+ * becoming ONE field (`night.playing`) with `teamPlay` and `teamMode` derived
+ * from it at the moment of sending — so there is no second copy on the
+ * browser side that could drift out of step with the dropdown somebody is
+ * looking at.
+ */
+/*
+ * `console-packs.js` GOES TO 1760 ON 23 AUGUST 2026, for the three-way
+ * Playing choice — individual, team-they-pick, team-dealt-at-random. The
+ * options themselves are three lines; the note is why the labels name the
+ * CHOICE rather than the mechanism they used to describe.
+ */
+const BUDGET = { 'console-tonight.js': 3420, 'console.js': 2000, 'console-packs.js': 1760 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

@@ -19,6 +19,96 @@ It keeps every score and clears the scoreboard and advert flags, and `back()`
 from FINAL returns to the round board — so a mis-tap on the host's phone is one
 press to undo. That is why it is not a reset.
 
+## THREE WAYS TO PLAY A NIGHT — individual, they pick, dealt at random
+
+Asked for on 23 August 2026: *"can we make the phones say 'individual, team
+random and team assigned' — there may be some nights where people play as a
+team and other nights it's just more fun to be random."*
+
+Two of the three already existed and had no names of their own. The bar
+offered *"One phone each"* and *"Teams — several phones, scores averaged"* —
+which describes the MECHANISM rather than the choice. Naming them
+**Individual** and **Team — they pick their own** makes room for the third and
+says what each is from the player's side.
+
+### `teamPlay` stays a boolean, and stays the gate
+
+Six places in the engine read it — the leaderboard, `boardIdFor`, `makeTeam`,
+`joinTeam` and two payload builders — and every one of them is asking "is this
+a team night", which is true of both team modes. Turning that field into a
+three-value one would have touched all six for a question none of them asks.
+
+So the mode lives beside it in `state.teamMode`, and both are set from ONE
+choice at launch. **An ordinary solo night therefore takes the code path it
+has always taken**, which is the rule the leaderboard's own comment already
+states and which `pub-unchanged.mjs` exists to prove.
+
+The console keeps the opposite arrangement, and for the same reason: **one
+field, `night.playing`**, with `teamPlay` and `teamMode` derived at the moment
+of sending. Two copies on the browser side is how a dropdown and a launch come
+to disagree about what somebody chose.
+
+### Dealt at join, and nobody is ever moved
+
+A team is decided the moment a phone joins and never again.
+
+- **Re-dealing mid-night** would take somebody's score away from the people
+  they have been sitting with.
+- **Re-dealing at kick-off** would mean the team you were told at the door is
+  not the team you end the night on — and people are told once.
+- Doing it at join also makes it restart-proof for free: the assignment is on
+  the player, in the state, like everything else.
+- And it is the only moment that works for a latecomer. A phone joining at
+  question four still has to land somewhere.
+
+### The teams grow with the room
+
+Nobody knows at launch how many will turn up, so a fixed team count is wrong
+in both directions: six teams of one on a quiet Tuesday, six teams of ten on a
+busy Friday.
+
+`dealInto()` puts each new phone on the **smallest** team, and starts a new one
+only once every team has reached four — a pub table. Six teams is the ceiling,
+because this list goes on the projector and a ten-row board read from the back
+of a dark room is not a board anybody follows.
+
+**Ties are broken at RANDOM**, and that is the part that makes it the mode it
+claims to be: without it the deal is a queue, and two friends joining one after
+the other are reliably put together.
+
+**A team of one is not unfair, which is why the lopsided moment is allowed to
+exist.** Five people become a four and a one. Scores are AVERAGED, so the lone
+player is judged on the same scale — if anything the big team is the harder
+place to be, because one person who knows nothing pulls the average down.
+Without averaging this shape of dealing would need a shuffle at kick-off, and
+a shuffle would break the promise above.
+
+### A dealt team cannot be swapped
+
+`joinTeam()` refuses outright when the mode is random. The phone draws no
+picker, so nothing legitimate ever calls it — but refusing rather than trusting
+that is the same rule `makeTeam()` already follows about writing teams into a
+night that has none. The first thing two friends would otherwise do is find
+each other again, which is the whole mode undone.
+
+The phone says who they are playing for and stops, and that statement is
+deliberately the loudest thing on the waiting screen: somebody who has just
+been told they are a Blue has to remember it for two hours, and it is the only
+place they are ever told.
+
+### The names
+
+Colours, because they are the shortest thing a host can shout across a pub —
+*"that's a point to the Blues"* works from a microphone in a way an invented
+name does not, and nobody has to be told what they mean. They are dealt in a
+fixed order, so the second team on any night is always the Blues.
+
+Worth knowing rather than worth fixing: the option letters A–F carry fixed
+colours of their own on the projector, so a team called Blues can sit near a
+blue answer. They are on different screens and one is a word where the other
+is a swatch — but if a room ever reads them as connected, `RANDOM_TEAM_NAMES`
+is the thing to change.
+
 ## Leaving the app mid-question
 
 `Engine.wandered()`, `wanderedNow()`, and the `/api/wandered` a phone posts on

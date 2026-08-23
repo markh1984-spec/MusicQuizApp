@@ -215,7 +215,13 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * `border` SHORTHAND in the global destructive rule silently flattens the 2px
  * edge every other button wears — the same trap already recorded twice.
  */
-const BUDGET = 152_000;
+/*
+ * RAISED TO 154_400 ON 23 AUGUST 2026, for the three ways to play a night.
+ * Most of the entry forbids something: `teamPlay` stays the boolean gate so a
+ * solo night keeps its path, nobody is ever re-dealt, a dealt team cannot be
+ * swapped, and the console keeps ONE field rather than two that can drift.
+ */
+const BUDGET = 154_400;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

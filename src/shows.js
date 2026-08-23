@@ -225,6 +225,9 @@ export function normalise(raw = {}, now = Date.now()) {
     lobbyGame: String(raw.lobbyGame || '').slice(0, 40),
     lobbySound: raw.lobbySound !== false,
     teamPlay: Boolean(raw.teamPlay),
+    // Cleaned the same way `session.launch()` cleans it, so a saved night and
+    // an accepted launch can never disagree about what the word means.
+    teamMode: raw.teamMode === 'random' ? 'random' : 'assigned',
     online: Boolean(raw.online),
     shape,
     prizes: Math.max(0, Math.min(5, Number(raw.prizes) || 0)),

@@ -154,6 +154,7 @@ function nightWideOpts(state) {
     league: state.leagueOn,
     online: state.online,
     teamPlay: state.teamPlay,
+    teamMode: state.teamMode,
     askForRounds: state.askForRounds,
     roundIdeas: state.roundIdeas,
   };
@@ -574,7 +575,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, league = false, online = false, teamPlay = false, venue = '', venueId = '', rewards = [], venueLogo = '', comeBack = null, askForRounds = false, roundIdeas = [], order = null, breakPlan = null } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, league = false, online = false, teamPlay = false, teamMode = 'assigned', venue = '', venueId = '', rewards = [], venueLogo = '', comeBack = null, askForRounds = false, roundIdeas = [], order = null, breakPlan = null } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     /*
      * TONIGHT'S RUNNING ORDER, when one was built — rounds from more than one
@@ -719,6 +720,14 @@ export class Session {
      * bring the night back as individuals with every team gone.
      */
     this.engine.state.teamPlay = Boolean(teamPlay);
+    /*
+     * HOW THE TEAMS ARE MADE — `src/teams.js`. Only meaningful when the line
+     * above is true, and cleaned here rather than trusted: anything that is
+     * not the word `random` is `assigned`, so a console sending nothing, or
+     * rubbish, or a value from a future version gets the behaviour every
+     * night before this one had.
+     */
+    this.engine.state.teamMode = teamMode === 'random' ? 'random' : 'assigned';
     /*
      * Where tonight is. Tidied exactly like a team name — control characters
      * out, a length cap, and NO word filtering, which is the rule everywhere

@@ -1184,6 +1184,26 @@ function teamPicker(s) {
   const teams = s.teams || [];
   const mine = s.yourTeam || null;
   const here = teams.find((t) => t.id === mine);
+  /*
+   * DEALT AT RANDOM MEANS THERE IS NOTHING TO PICK — so the phone says who
+   * they are playing for and stops. A picker here would be a control that
+   * cannot do anything: the engine refuses `joinTeam` in this mode outright,
+   * so every tap would be a silent no.
+   *
+   * It is a STATEMENT rather than a list, and it is deliberately the loudest
+   * thing on the waiting screen — somebody who has just been told they are a
+   * Blue has to remember it for two hours, and it is the only place they are
+   * ever told.
+   */
+  if (s.teamMode === 'random') {
+    return here
+      ? `<div class="team-pick team-dealt">
+           <div class="tiny team-pick-head">You are playing for</div>
+           <div class="team-mine">${esc(here.name)}</div>
+           <div class="tiny">Everyone on it scores together — the team's average is what goes on the board.</div>
+         </div>`
+      : '';
+  }
   return `
     <div class="team-pick">
       <div class="tiny team-pick-head">${here ? 'You are playing for' : 'Who are you playing with?'}</div>
@@ -1204,7 +1224,8 @@ function teamPicker(s) {
 }
 
 function wireTeamPicker(el, s) {
-  if (!s.teamPlay || !me) return;
+  // Nothing to wire on a dealt night — there are no buttons in the card.
+  if (!s.teamPlay || s.teamMode === 'random' || !me) return;
   const send = (body) => postJson('/api/team', { playerId: me.id, token: me.token, joinCode: roomCode(), ...body })
     .catch(() => { /* the state push is the truth; a failed tap simply does nothing */ });
   for (const b of el.querySelectorAll('[data-team]')) {

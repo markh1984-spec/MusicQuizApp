@@ -5509,6 +5509,9 @@ async function handleWrite(req, res, url, route) {
         const online = Boolean(body.online);
         // Several phones, one team, scores averaged. Also a fact about tonight.
         const teamPlay = Boolean(body.teamPlay);
+        // Cleaned inside `session.launch()`, where the ordinary launch cleans
+        // it too — one definition of what the word means.
+        const teamMode = String(body.teamMode || '');
         // Where tonight is — a name, so it works before venue accounts exist.
         const venue = String(body.venue || '');
         /*
@@ -5600,7 +5603,7 @@ async function handleWrite(req, res, url, route) {
           ? pickIdeas((fullLibrary(config, room.id, listOwn(room.paths)).quizzes || [])
             .map((q) => q.title))
           : [];
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, questionSeconds, lobbyGame, lobbySound, league, online, teamPlay, venue, venueId, rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas, order: wantedOrder, breakPlan: body.breakPlan || {} });
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, questionSeconds, lobbyGame, lobbySound, league, online, teamPlay, teamMode, venue, venueId, rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas, order: wantedOrder, breakPlan: body.breakPlan || {} });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();
@@ -5685,6 +5688,9 @@ async function handleWrite(req, res, url, route) {
         const lobbySound = body.lobbySound !== false;
         const online = Boolean(body.online);
         const teamPlay = Boolean(body.teamPlay);
+        // Cleaned inside `session.launch()`, where the ordinary launch cleans
+        // it too — one definition of what the word means.
+        const teamMode = String(body.teamMode || '');
         const venue = String(body.venue || '');
         const named = String(body.venue || '').trim().toLowerCase();
         const record = named
@@ -5708,7 +5714,7 @@ async function handleWrite(req, res, url, route) {
             .map((q) => q.title))
           : [];
         const started = session.launchRunningOrder(segments, {
-          look, questionSeconds, lobbyGame, lobbySound, league, online, teamPlay, venue, venueId,
+          look, questionSeconds, lobbyGame, lobbySound, league, online, teamPlay, teamMode, venue, venueId,
           rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas,
           /*
            * WHAT HAPPENS IN THE GAPS — passed straight through and cleaned

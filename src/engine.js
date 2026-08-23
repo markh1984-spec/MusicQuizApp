@@ -30,6 +30,7 @@ import * as chat from './chat.js';
 import { comeBackView } from './comeback.js';
 import { recordArcadeScore, arcadeBoard, arcadeFields } from './arcade.js';
 import { breakNow, offersGame, offersPhotos, showsScores, showsAdverts } from '../public/assets/break-parts.js';
+import { dealInto } from './teams.js';
 // For faceKey — a player's public handle, derived one way from their id.
 import { createHash } from 'node:crypto';
 
@@ -269,6 +270,15 @@ export class Engine {
        * ship the night before a gig.
        */
       teamPlay: false,
+      /*
+       * HOW THE TEAMS ARE MADE, when `teamPlay` is on — `assigned` (the
+       * players pick) or `random` (the app deals). See `src/teams.js` for why
+       * this sits BESIDE the boolean rather than replacing it.
+       *
+       * A night saved before this existed has no field, and everything reads
+       * "not random", which is exactly what those nights did.
+       */
+      teamMode: 'assigned',
       teams: {},   // id -> { id, name, createdAt }
       players: {}, // id -> player
       answers: {}, // "roundIndex:questionIndex" -> { playerId -> answer }
@@ -457,8 +467,33 @@ export class Engine {
       wanderedCount: 0,
     };
     this.state.players[player.id] = player;
+    /*
+     * A RANDOM NIGHT DEALS THEM IN AS THEY ARRIVE — see `src/teams.js`.
+     *
+     * At JOIN rather than at kick-off, and never again: the team somebody is
+     * told at the door is the team they end the night on, and the assignment
+     * survives a restart for free because it is on the player like everything
+     * else. It is also the only moment that works — a phone joining at
+     * question four still has to land somewhere.
+     */
+    if (this.state.teamPlay && this.state.teamMode === 'random') this.dealRandomTeam(player);
     this.changed();
     return player;
+  }
+
+  /**
+   * Put one player on a randomly-chosen team, making a new one if the room has
+   * outgrown what it has.
+   *
+   * `makeTeam()` rather than writing into `state.teams` directly, so a dealt
+   * team is exactly the same object a named one is — one shape of team, and
+   * the leaderboard, the picker and the archive cannot tell them apart.
+   */
+  dealRandomTeam(player) {
+    const decision = dealInto(this.teamList(), this.random);
+    if (decision.join) { player.teamId = decision.join; return; }
+    const made = this.makeTeam(decision.create);
+    if (made.ok) player.teamId = made.id;
   }
 
   touch(playerId) {
@@ -765,6 +800,15 @@ export class Engine {
   /** Join a team, or leave one by passing nothing. */
   joinTeam(playerId, teamId) {
     if (!this.state.teamPlay) return { ok: false, reason: 'not_team_play' };
+    /*
+     * NOT ON A RANDOM NIGHT. The app dealt the teams, and a phone that could
+     * move afterwards would undo the whole point of the mode — the first
+     * thing two friends would do is find each other again. The phone does not
+     * draw a picker in this mode, so nothing legitimate ever calls this;
+     * refusing it rather than trusting that is the same rule `makeTeam()`
+     * already follows about writing teams into a night that has none.
+     */
+    if (this.state.teamMode === 'random') return { ok: false, reason: 'random_teams' };
     const player = this.state.players[playerId];
     if (!player) return { ok: false, reason: 'no_player' };
     if (teamId && !this.state.teams?.[teamId]) return { ok: false, reason: 'no_team' };
@@ -2287,7 +2331,18 @@ export class Engine {
        * two empty fields — and `teamList()` is a handful of names and counts,
        * never anything about who answered what, which belongs to the host.
        */
-      ...(s.teamPlay ? { teamPlay: true, teams: this.teamList(), yourTeam: player?.teamId || null } : {}),
+      /*
+       * `teamMode` rides with the rest so the phone draws the picker only when
+       * there is something to pick. It is the SERVER'S answer, like
+       * `lobbyGame` — a phone deciding for itself is how the console and the
+       * room come to disagree.
+       */
+      ...(s.teamPlay ? {
+        teamPlay: true,
+        teamMode: s.teamMode === 'random' ? 'random' : 'assigned',
+        teams: this.teamList(),
+        yourTeam: player?.teamId || null,
+      } : {}),
       you: player
         ? {
             id: player.id,
