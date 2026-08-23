@@ -6787,51 +6787,6 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    somebody to find the shelf. */
 .lb-say-none { color: var(--ink-dim); }
 
-.lb-tile { min-height: 58px; padding: 8px; }
-  /* ONE EMPTY SLOT ON A PHONE, not up to six. The six-slot row is sized for a
-     rare six-pack night on the laptop this console is built around — on a
-     390px screen, before a single pack is added, it was three rows of empty
-     "Add pack" tiles above the tab list a host actually needs. `.lb-drop` is
-     only ever on an EMPTY slot (a chosen pack carries `.is-pack` instead), and
-     they always sit after any filled tiles in the row — so hiding every
-     `.lb-drop` that follows another one leaves exactly one "Add a pack"
-     affordance, whatever the pack count, with the JS slot logic untouched. */
-  .lb-tiles .lb-tile.lb-drop ~ .lb-tile.lb-drop { display: none; }
-}
-/* THE THREE FACTS GET THEIR OWN ROW. Three columns always, because there are
-   always exactly three of them — where, when and what for — and an auto grid
-   would wrap one of them under the others the moment the packs beside them
-   changed count. Below 560px they go to two and then the third drops, which
-   is the only place wrapping is honest: a 320px phone cannot hold three. */
-/*
- * ONE LINE OF DESCRIPTION, not three cards.
- *
- * Where, when and what for are facts somebody READS. As squares they were the
- * same size as the pack slots above, which said they were the same kind of
- * thing — something you drag onto — and they took as much of the screen while
- * doing none of the work. Tonight is at the top of every tab, so its height is
- * charged to every page in the console.
- *
- * It WRAPS rather than scrolling or ellipsising: a venue name is as long as
- * the venue is, and on a phone this is allowed to become two lines. Two lines
- * of text is still a fraction of three squares.
- */
-.lb-say {
-  display: flex; flex-wrap: wrap; align-items: baseline;
-  gap: 2px 10px; margin-top: 8px; min-width: 0;
-  font-size: var(--fs-note); color: var(--ink-dim);
-}
-.lb-say-bit { min-width: 0; overflow-wrap: anywhere; }
-/* Middots between, drawn rather than typed so the last one never trails. */
-.lb-say-bit + .lb-say-bit::before,
-.lb-say-venue + .lb-say-bit::before { content: '·'; margin-right: 10px; opacity: 0.55; }
-/*
- * THE VENUE HERE IS A FACT, NOT A CONTROL — it is picked at the top of the
- * bar, in one place. As a button it needed an invisible 15px tap overlay to
- * be thumb-sized, and that overlay reached into the lines above and below it;
- * as plain text it needs nothing and collides with nothing.
- */
-.lb-say-venue { color: var(--ink); font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
 .lb-tile {
   position: relative; display: flex; flex-direction: column; justify-content: flex-end;
   gap: 2px; min-width: 0; padding: 10px;

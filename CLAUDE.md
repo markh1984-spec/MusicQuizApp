@@ -974,6 +974,37 @@ board), `src/arcade.js` (the scores, shared by both engines),
 
 Full reasoning: **[`docs/lobby-games.md`](docs/lobby-games.md)**.
 
+### A STRAY BRACE IN THE STYLESHEET IS SILENT, AND IT REACHED A REAL CONSOLE
+
+`test/style-structure.test.js`. Reported as *"why is it loading like this?"* —
+Tonight's six pack slots showing as ONE on a laptop, twice, with the markup
+and the JavaScript both correct and six `<button>`s in the DOM.
+
+- **A SCRIPTED EDIT WITH `s.index(needle)` AND NO START OFFSET DUPLICATES
+  TEXT.** It matched an earlier occurrence than intended, so
+  `s[:start] + new + s[end:]` with `end` BEFORE `start` copied everything
+  between them — including the closing brace of a `@media (max-width: 560px)`
+  block. **Always pass the start offset**, and check the brace balance after
+  any scripted CSS edit.
+- **THE MEDIA QUERY THEN ENDED EARLY and its phone-only rule applied at every
+  width** — `.lb-drop ~ .lb-drop { display: none }`, which hides every empty
+  pack slot after the first. CSS throws nothing for this. It re-scopes
+  silently from the stray brace onwards.
+- **AND THE OLD BLOCK SURVIVED AFTER THE NEW ONE, so the old rules won.** A
+  duplicated region does not just add text; it puts a second copy LATER in the
+  cascade.
+- **THE VERIFICATION FAILED IN THE MOST INSTRUCTIVE WAY: it counted `.lb-tile`
+  ELEMENTS, which `display: none` elements still are.** Six came back every
+  time while the screen showed one. **Measure `getClientRects()`, not
+  `querySelectorAll().length`** — "it is in the document" and "somebody can
+  see it" are different questions, and this repo has now been bitten by that
+  distinction three times (the arcade board nobody drew, the publish route
+  nobody called, this).
+- `browser-parses.test.js` catches a JS file that will not parse; nothing
+  caught a stylesheet that parses fine and means something else. Now something
+  does — brace balance, no nested `@media`, and the escaped rule named
+  explicitly. Verified by reintroducing both faults.
+
 ### THREE WAYS TO PLAY A NIGHT — individual, they pick, dealt at random
 
 `src/teams.js`, `state.teamMode`, `night.playing` on the console. Asked for:
@@ -1426,6 +1457,7 @@ Open the one you are touching; do not read them all.
 - How many people can play
 - Online mode is ONE BOOLEAN, and the branch count is a budget
 - THREE WAYS TO PLAY A NIGHT — individual, they pick, dealt at random
+- A STRAY BRACE IN THE STYLESHEET IS SILENT, AND IT REACHED A REAL CONSOLE
 - The alphabet round — no options at all
 - The intro round skips the dead air, and that is a SCORING fix
 - The breakout round — a laugh, not a question, and it scores nothing

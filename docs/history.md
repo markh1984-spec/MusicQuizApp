@@ -10,6 +10,37 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**FIXED, same day — Tonight's six pack slots were showing as ONE, and it was
+a stray brace in the stylesheet:**
+
+Reported twice — *"why is it loading like this?"*, then *"still there"* after
+a redeploy proved it was not a cache. The markup was right, the JavaScript was
+right, and six `<button>`s were in the DOM.
+
+**A SCRIPTED EDIT TO `style.css` USED `s.index(needle)` WITH NO START
+OFFSET**, matched an earlier occurrence than intended, and
+`s[:start] + new + s[end:]` with `end` before `start` DUPLICATED everything
+between them — including the closing brace of a `@media (max-width: 560px)`
+block. The media query then ended early, and the phone-only rule inside it
+(`.lb-drop ~ .lb-drop { display: none }`, which leaves exactly one "add a
+pack" affordance) started applying at every width. CSS throws nothing for
+this; it re-scopes silently from the stray brace onwards. The duplicate also
+left the OLD `.lb-say` block after the new one, where it won on cascade order.
+
+**AND THE VERIFICATION FAILED IN THE MOST INSTRUCTIVE WAY POSSIBLE.** It was
+checked in a real browser, twice, at four widths — and the check counted
+`.lb-tile` ELEMENTS, which `display: none` elements still are. Six came back
+every time while the screen showed one. **Measure `getClientRects()`, not
+`querySelectorAll().length`.** "It is in the document" and "somebody can see
+it" are different questions, and this project has now been bitten by that
+distinction three times: the arcade board that was computed and never drawn,
+the publish route that worked and had no caller, and this.
+
+`test/style-structure.test.js` closes the hole `browser-parses.test.js` left:
+brace balance per stylesheet, no `@media` nested inside another block, and the
+escaped rule named explicitly so a balanced-but-misplaced copy is caught too.
+Verified by reintroducing both faults and watching it fail.
+
 **Live as of 23 August 2026, same day again — three ways to play a night:**
 
 *"Can we make the phones say 'individual, team random and team assigned' —

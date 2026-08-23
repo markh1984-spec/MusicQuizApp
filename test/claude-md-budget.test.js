@@ -221,7 +221,14 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * solo night keeps its path, nobody is ever re-dealt, a dealt team cannot be
  * swapped, and the console keeps ONE field rather than two that can drift.
  */
-const BUDGET = 154_400;
+/*
+ * RAISED TO 156_600 ON 23 AUGUST 2026, for the stray-brace entry. It is a
+ * rule about how to EDIT this repo — always pass a start offset to
+ * `s.index()`, check the brace balance after a scripted CSS edit, and measure
+ * what is VISIBLE rather than what is in the DOM — and the last of those has
+ * now cost this project three separate bugs.
+ */
+const BUDGET = 156_600;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
