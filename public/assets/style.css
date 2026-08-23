@@ -6126,7 +6126,11 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    caption on the tiles above it, which is what it is. */
 .lb-set-pack {
   display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
-  margin: 0 0 10px;
+  /* A REAL GAP ABOVE. Measured at zero: this row sat flush against the venue
+     info line that ends the tiles, and two same-sized lines of dim text
+     touching read as one wrapped paragraph rather than as two facts about
+     different things. */
+  margin: 12px 0 10px;
 }
 /* THEY GROW INTO THE ROOM THE ROW HAS. Fixed at 260px they clipped their own
    option text exactly as they did inside the tile ("63% of cal", "then a full
@@ -6135,8 +6139,11 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    two controls stretch across a 1200px console and stop reading as a pair. */
 .lb-set-pack .pack-shape { flex: 1 1 260px; max-width: 440px; }
 /* Which pack it is setting. Never a heading — with six tiles above it this is
-   a caption, and a bold one would compete with the tile names it points at. */
-.lb-set-for { color: var(--ink-dim); font-weight: 800; }
+   a caption, and a bold one would compete with the tile names it points at.
+   700 rather than 800 for the same reason it needs the gap above: at 800 it
+   was the heaviest thing in a stack of dim lines and pulled the eye off the
+   controls it is captioning. */
+.lb-set-for { color: var(--ink-dim); font-weight: 700; }
 /* Big, because it is pressed in a dark room by somebody who is late.
  * The gradient is written out here rather than inherited: the app's `.go`
  * fill is scoped to `.pack-card .go`, so a Launch button anywhere else came
@@ -6227,37 +6234,49 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    because it is no longer inside the part that folds. */
 .lb-head > .lb-right { grid-column: 3; grid-row: 1; display: flex; align-items: center; gap: 8px; }
 .lb-head .lb-mode { margin: 0; }
-/* THE VENUE IS A BUTTON, and it has to look like one without shouting: it is
-   a fact you read nine times out of ten and change on the tenth. Underlined on
-   hover and focus rather than boxed, because a box here would be a third
-   control competing with the pack and Launch. */
+/* THE VENUE PICKER LOOKS LIKE EVERY OTHER DROPDOWN ON THE BAR — reported
+   directly: *"there's two places to select venue, and neither of them conform
+   to the drop down aesthetic."* Both halves of that were true. The second
+   selector is gone (the venue in the info line under the tiles is plain text
+   now), and this one — the single remaining way in — takes the app's own
+   dropdown treatment: same height, fill, border and radius as a `<select>`,
+   with the gradient chevron block that means "this opens".
+
+   It was deliberately understated before, on the reasoning that a box here
+   would be a third control competing with the pack and Launch. That was the
+   wrong trade: it made the ONE control that decides the prizes, the voucher
+   and what the night is filed under look like a caption, so it read as
+   unclickable and a second way in had to exist beside it. A 27px gradient tab
+   does not compete with a full-width filled button — the same size argument
+   the dropdown rule itself already records. */
 .lb-where {
-  padding: 0; background: none; border: none; cursor: pointer;
-  font: inherit; font-size: var(--fs-note); color: var(--ink-dim);
-  text-align: left; max-width: 100%;
+  appearance: none; -webkit-appearance: none;
+  padding: 8px 34px 8px 11px;
+  border-radius: var(--r-field);
+  border: 1px solid var(--panel-line);
+  background-color: rgba(255, 255, 255, 0.07);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%2312000c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"),
+    linear-gradient(120deg, var(--hot), var(--hot-2));
+  background-repeat: no-repeat, no-repeat;
+  background-position: right 8px center, right center;
+  background-size: 11px 8px, 27px 100%;
+  cursor: pointer;
+  font-family: inherit; font-size: var(--fs-note); font-weight: 800;
+  color: var(--ink);
+  text-align: left; max-width: 100%; min-width: 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  position: relative;
 }
-.lb-where::after {
-  content: '';
-  display: inline-block; margin-left: 7px; vertical-align: 2px;
-  border: 4px solid transparent; border-top-color: currentColor; border-bottom: 0;
-}
-.lb-where:hover { color: var(--ink); text-decoration: underline; outline: none; }
+.lb-where:hover { background-color: rgba(255, 255, 255, 0.11); outline: none; }
 /* Focus gets its own signal rather than the hover one — see the note on
    `.lb-hit`. An OUTLINE was tried first and is wrong here specifically: this
-   element's own `overflow: hidden` (needed for the ellipsis truncation two
-   lines up) clips an outset outline down to a sliver, found by tabbing to it
-   in a real browser rather than trusting the computed style. An INSET
-   box-shadow draws inside the box it is already allowed to occupy, so
-   nothing truncating the text can also truncate the ring. */
-.lb-where:focus-visible { color: var(--ink); text-decoration: underline; outline: none; box-shadow: inset 0 0 0 2px var(--hot); border-radius: var(--r-field); }
-.lb-where[aria-expanded="true"]::after { transform: rotate(180deg); }
-/* THE VISIBLE TEXT STAYS A ONE-LINE FACT; THE TAP AREA DOES NOT. Measured at
-   15-16px tall — a thumb target on the control that opens the venue picker
-   ten minutes before a gig. An invisible `::before`, not real padding, so the
-   fact still reads as one compact line and nothing in the row around it moves. */
-.lb-where { position: relative; }
-.lb-where::before { content: ''; position: absolute; inset: -15px -6px; }
+   element's own `overflow: hidden` (needed for the ellipsis truncation above)
+   clips an outset outline down to a sliver, found by tabbing to it in a real
+   browser rather than trusting the computed style. An INSET box-shadow draws
+   inside the box it is already allowed to occupy, so nothing truncating the
+   text can also truncate the ring. */
+.lb-where:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--hot); }
 
 /* The picker itself. A list you search rather than a dropdown you scroll:
    fifteen residencies in a native select, in a dark pub, is the thing this
@@ -6535,22 +6554,12 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .lb-say-bit + .lb-say-bit::before,
 .lb-say-venue + .lb-say-bit::before { content: '·'; margin-right: 10px; opacity: 0.55; }
 /*
- * THE VENUE IS STILL A BUTTON, because it is the only way into the venue
- * picker from here and the venue is chosen in one place and nowhere else.
- * Underlined rather than boxed: a box would make it a control competing with
- * Launch, and this is a fact you can correct rather than an action.
+ * THE VENUE HERE IS A FACT, NOT A CONTROL — it is picked at the top of the
+ * bar, in one place. As a button it needed an invisible 15px tap overlay to
+ * be thumb-sized, and that overlay reached into the lines above and below it;
+ * as plain text it needs nothing and collides with nothing.
  */
-.lb-say-venue {
-  padding: 0; border: 0; background: none; font: inherit; cursor: pointer;
-  color: var(--ink); font-weight: 700; min-width: 0; overflow-wrap: anywhere;
-  border-bottom: 1px dashed var(--panel-line);
-  position: relative;
-}
-.lb-say-venue:hover { color: var(--hot); border-bottom-color: var(--hot); }
-/* Same tap-area expansion as `.lb-where` — measured at 15-16px tall. The
-   inset stays tight side to side, since this sits mid-sentence next to other
-   `.lb-say-bit` text a wider overlay would start stealing taps from. */
-.lb-say-venue::before { content: ''; position: absolute; inset: -15px -3px; }
+.lb-say-venue { color: var(--ink); font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
 .lb-tile {
   position: relative; display: flex; flex-direction: column; justify-content: flex-end;
   gap: 2px; min-width: 0; padding: 10px;

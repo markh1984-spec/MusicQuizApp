@@ -700,9 +700,15 @@ export function launchBar() {
            night" tab (still "show"/"shows" in the code and the data
            underneath — a display rename only, see console.js) is where
            you take one back off the shelf. -->
+      <!-- THE LABEL ANSWERS THE QUESTION — "Keep this ready" was asked about
+           twice ("what does keep this ready mean?"), which is this file's own
+           rule failing out loud: a control that needs explaining is the wrong
+           control. A tooltip was tried first and did not fix it, because a
+           tooltip is not read at a glance and is not there at all on a phone.
+           It says what it DOES now, and names where it goes. -->
       <div class="set-keep">
         <button class="minor set-save" type="button"
-          title="Save everything set up here — the pack, the venue, these settings — so you can drag it back onto Tonight another night, from Prepare a night">Keep this ready</button>
+          title="Saves the packs, the venue and every setting on this bar, so you can drag the whole evening back on another night">Save for another night</button>
         <span class="tiny set-keep-why"></span>
       </div>
       <!-- LAUNCH IS ALWAYS HERE, hollow until there is something to launch.
@@ -1421,16 +1427,22 @@ export function launchBar() {
     if (!title) { liveRow.hidden = true; return; }
     liveRow.hidden = false;
     /*
-     * THE STOP BUTTON READS `aNightIsOn`, not this line's own title check.
+     * IF THE LINE IS SHOWING, SO IS THE STOP — asked for twice, the second
+     * time with a screenshot of this line reading in RED (the projector
+     * showing one quiz while the bar was set to another) and no way to clear
+     * it: *"can I have a little button next to the text saying what's on the
+     * screen to unlaunch it?"*
      *
-     * The title is set the moment a pack is loaded — including the default
-     * one `boot()` falls back to so the projector is never blank — but that is
-     * not a night anybody launched. `aNightIsOn` is the same stricter test the
-     * running panel already uses to decide whether IT has anything to stop, so
-     * the two controls agree about what "on" means rather than one of them
-     * offering to stop a night that was never actually started.
+     * It was gated on `aNightIsOn()` — the stricter test the running panel
+     * uses, which is false while a game sits in the lobby with nobody joined.
+     * That hid the button at exactly the moment it is most wanted: something
+     * IS on the projector (this line only exists when it is) and the person
+     * reading it wants it gone. The running panel keeps the stricter test for
+     * its own Stop, and that is right for a panel that is about a night in
+     * progress; this button is about the SCREEN, and the screen is showing
+     * something whenever there is a title to name.
      */
-    unlaunchBtn.hidden = !aNightIsOn(running);
+    unlaunchBtn.hidden = false;
     /*
      * NOTHING CHOSEN IS NOT A DISAGREEMENT.
      *
@@ -2329,17 +2341,11 @@ export function launchBar() {
   }
 
   /**
-   * WHERE, WHEN AND WHAT FOR — the three facts a night is filed under, as
-   * squares beside the packs.
-   *
-   * Each is a VIEW of something set elsewhere rather than a second place to
-   * set it, which is the rule this bar already follows for the venue: two
-   * controls for one field is how a night gets launched with the setting the
-   * other one was showing. The venue square opens the same picker the head
-   * does; the other two are read.
-   */
-  /**
    * ONE LINE THAT SAYS EVERYTHING ELSE — where, when, and what for.
+   *
+   * ALL THREE ARE READ, none is a control: the venue is picked once, at the
+   * head of the bar. Two controls for one field is how a night gets launched
+   * with the setting the other one was showing.
    *
    * It was three squares the same size as the pack slots above, which said
    * they were the same KIND of thing: something you drag onto. They are not —
@@ -2373,17 +2379,25 @@ export function launchBar() {
       ? `${prizes[0]}${prizes.length > 1 ? ` +${prizes.length - 1}` : ''}`
       : 'no prizes';
 
-    const el = node(`
+    /*
+     * THE VENUE HERE IS A FACT, NOT A SECOND WAY TO CHANGE IT — reported
+     * directly: *"there's two places to select venue."* There were, and this
+     * was the other one. The picker at the top of the bar is the single
+     * control now, and it looks like one (see `.lb-where`), so a second
+     * entrance mid-sentence is the "two controls for one field" fault this
+     * file already records for the venue itself.
+     *
+     * It also removes a real collision: as a button this carried an invisible
+     * 15px-tall tap overlay above and below itself, which reached into the
+     * lines either side of it.
+     */
+    return node(`
       <div class="lb-say">
-        <button class="lb-say-venue" type="button" title="Pick where tonight is">
-          ${esc(name || 'Pick a venue')}
-        </button>
+        <b class="lb-say-venue">${esc(name || 'No venue yet')}</b>
         <span class="lb-say-bit">${esc(record && record.usualNight ? 'your usual night' : (name ? 'one-off' : 'sets the prizes'))}</span>
         <span class="lb-say-bit">${esc(on && on.time ? `starts ${saidTime(on.time)}` : 'start when you like')}</span>
         <span class="lb-say-bit">${esc(`for ${prizeSaid}`)}</span>
       </div>`);
-    el.querySelector('.lb-say-venue').addEventListener('click', () => toggleVenues());
-    return el;
   }
 
   /*

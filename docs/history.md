@@ -10,6 +10,48 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 23 August 2026, same day again — one venue picker that looks
+like a picker, a Stop that actually shows, and a button that says what it
+does:**
+
+**"Keep this ready" is now "Save for another night".** Asked what it meant
+TWICE — which is this file's own rule failing out loud: *a control that
+needs explaining is the wrong control*. A tooltip was tried after the first
+ask and did not fix it, because a tooltip is not read at a glance and does
+not exist on a phone at all. The LABEL answers the question now.
+
+**The Stop beside "On the big screen now" shows whenever that line does.**
+Asked for a second time, with a screenshot of the line reading in RED (the
+projector on one quiz, the bar set to another) and no button next to it. It
+was gated on `aNightIsOn()` — the stricter test the running panel uses,
+which is false while a game sits in the lobby with nobody joined — so it
+hid at exactly the moment it was most wanted. **The two controls are about
+different things, which is why they can differ:** the running panel is
+about a night in progress, and this is about the SCREEN, which is showing
+something whenever there is a title to name.
+
+**ONE venue selector, and it looks like every other dropdown.** *"There's
+two places to select venue, and neither of them conform to the drop down
+aesthetic."* Both halves were true. The second selector — the venue in the
+info line under the tiles — is now plain text, and the one at the head of
+the bar takes the app's own dropdown treatment: identical height, fill,
+border and radius to a `<select>`, with the gradient chevron block that
+means "this opens" (measured against `.look-pick` afterward: 33px, 10px
+radius, same fill, same chevron). It was deliberately understated before,
+so a box would not compete with Launch — the wrong trade, because it made
+the one control deciding the prizes, the voucher and the filing look like a
+caption, which is *why* a second way in had to exist beside it. The
+keystroke search was already there and already focuses on open; it was just
+behind a control nobody could see was a control.
+
+**And that removed a real collision.** As a button, the info-line venue
+carried an invisible 15px-tall tap overlay above and below itself
+(`::before { inset: -15px -3px }`) reaching into the lines either side —
+visible in the report's own screenshot as the pack-settings line running
+into the venue line. As plain text it needs no overlay. The pack row also
+had a measured 0px gap above it, so two same-sized dim lines were touching
+and read as one wrapped paragraph; now 12px.
+
 **Live as of 23 August 2026, same day — four changes to the launch bay,
 reported off two screenshots:**
 
