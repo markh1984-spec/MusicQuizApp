@@ -1190,3 +1190,93 @@ under it.
 
 **Do not re-propose auto-publishing** without answering the upload window
 first.
+
+---
+
+## THE GALLERY ONLY HOLDS WHAT LOOKED LIKE A CAMERA TOOK IT
+
+Asked for directly on 23 August 2026: *"if people upload photos for a bit of
+a laugh on the night, I don't necessarily want those going into the gallery
+for the night, but them appearing on the screen can be fun."* **Two things
+were being asked for, not one, and the whole feature is keeping them
+separate rather than tightening the upload itself.** The projector stays
+exactly as loose as it always was — any image, camera or gallery, still goes
+up between questions the moment somebody sends it. Only the PUBLIC page,
+built afterward from the private repo, gets pickier.
+
+**The obvious tool — EXIF's `Make`/`Model` tags — turned out to be
+unreachable from where it looks reachable.** A camera photo carries that
+metadata; a screenshot (near-universally PNG) or a downloaded meme almost
+never does. But the upload in `play.js` redraws the chosen file onto a
+canvas before it ever leaves the phone — filters, stickers, the square 1080
+crop — and `canvas.toBlob`/`toDataURL` strips every byte of EXIF on the way
+through. By the time bytes reach `/api/photo` there is nothing left to
+read, camera or not. **The one moment the original file still has it is
+between the file input's `change` event and the first `createImageBitmap`
+call** — so `looksCameraTaken()` in `filters.js` runs there, on the raw
+`File`, and the result travels to the server as `&camera=1` on the upload
+URL rather than being re-derived from bytes that no longer carry the
+answer.
+
+**A DEPENDENCY-FREE JPEG/EXIF READER, in the spirit of `qrcode.js`.** It
+walks the marker sequence from the SOI, stops at APP1 (`0xFFE1`), checks for
+the `"Exif\0\0"` signature, parses the TIFF header (byte order, the 0x002A
+sanity word, the IFD0 offset) and looks for tag `0x010F` (`Make`) in IFD0.
+Nothing more elaborate: `Make` alone is what a phone's own camera app
+writes essentially every time, and reading the whole EXIF tree for one tag
+would be effort spent on precision this signal cannot actually offer — see
+the false-negative paragraph below. Verified against real files, not only
+hand-built byte arrays: a genuine PIL-generated JPEG with `Make: Apple` in
+its EXIF reads `true`; the same image saved with no EXIF, and a plain PNG,
+both read `false` — and the marker walk correctly steps past a real JFIF
+APP0 segment to reach APP1, which a synthetic buffer alone would not have
+proven.
+
+**BEST-EFFORT, NEVER A GATE, and the asymmetry is deliberate.** A photo
+forwarded through WhatsApp, Instagram or Messages very often has its EXIF
+stripped by that app before it ever reaches a phone's camera roll — so this
+can UNDER-count (a real photograph, once shared, reading as "not a
+camera"), but it cannot OVER-count: nothing manufactures a `Make` tag that
+was never there. The projector never asks the question at all — every
+photo still goes up regardless of the answer — and a corrupt or
+unrecognised file falls through to `false` rather than blocking an upload
+the guess was never meant to hold up.
+
+**THE FLAG RIDES IN THE FILENAME, not a second file beside it.** The
+private photo repository has no structured per-photo metadata today — a
+photo is a name and the git commit message that filed it — and the gallery
+route only ever reads a night's own directory listing. A separate manifest
+(one JSON file per night, read-modify-written on every upload) would race
+against itself the moment two people upload within the same second, which a
+pub quiz does constantly, the same shape of problem `published.json`
+avoids by being written once per publish tap rather than once per photo.
+The filename cannot race: `photos.js`'s `add()` decides it once, at the
+moment the id is minted, and appends `NOT_CAMERA_SUFFIX` (`-picked`) before
+the extension when the photo was not camera-taken. Every later reader —
+`isCameraFile()`, the gallery filter, the console's own badge — just looks
+at the name it already has. `past-gigs.js`'s `safePhotoName()` was widened
+by exactly one optional group, `(-picked)?`, to keep matching only names
+this app itself could have issued — not an open door for arbitrary
+hyphens, checked by a test that an unrelated hyphenated name still refuses.
+
+**CHECKED TWICE ON THE WAY OUT, same reason `isPublished` is.**
+`/api/gallery/<night>` filters the listing so a non-camera photo is never
+offered a link; `/gallery-photo/<night>/<name>` refuses one directly too,
+because its name was on the projector all night and a URL can be typed
+without ever having seen the listing. The NIGHT-LEVEL photo count
+(`/api/gallery`) filters the same way, or a night would say "6 photos" and
+open on 4 — the exact "count says one thing, the page says another" fault
+this file's own gallery-preview section already exists to avoid.
+
+**THE HOST STILL SEES EVERYTHING, WITH A BADGE, before publishing.**
+`/api/past-gigs/<night>` — the host's OWN review, gated by the host key,
+completely separate from the public route — is deliberately NOT filtered:
+every photo the night held is shown, and one that will not reach the public
+gallery carries a quiet "Screen only" tag in the same corner `not filed`
+already uses. Never hidden, because the whole point of reviewing photos
+before publishing is not being surprised later by one that quietly is not
+on the page. **No override was built** — there is no per-photo "include
+anyway" toggle. The false-negative case (a genuine photo, re-shared and
+therefore stripped of its EXIF before it reached this app) has no recovery
+path beyond re-uploading through a fresh camera capture; if that turns out
+to matter in practice, add the toggle then rather than guessing at it now.

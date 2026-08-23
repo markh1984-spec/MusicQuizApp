@@ -148,8 +148,15 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * to the console they host from. Worth a session knowing BEFORE it goes
  * looking for `/api/owner/act-as` and tries to generalise a mechanism that
  * has nowhere to point.
+ *
+ * RAISED TO 140,100 ON 23 AUGUST 2026, for one index line: the public
+ * gallery now only holds photos that looked like a camera took them —
+ * `photos.js`'s `NOT_CAMERA_SUFFIX`/`isCameraFile()`, checked twice in
+ * server.js for the same reason the publish gate is. Full reasoning in
+ * `docs/gigs.md`; this is the pointer, same shape as every other gallery
+ * entry already in this index.
  */
-const BUDGET = 140_000;
+const BUDGET = 140_100;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

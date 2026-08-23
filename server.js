@@ -18,7 +18,7 @@ import path from 'node:path';
 import { config, paths, hostKey, hostKeyIsTemporary } from './src/config.js';
 import { Store } from './src/store.js';
 import { Hub } from './src/sse.js';
-import { Photos, MAX_BYTES } from './src/photos.js';
+import { Photos, MAX_BYTES, isCameraFile } from './src/photos.js';
 import { Session } from './src/session.js';
 import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked, ROUND_TYPES } from './src/quizzes.js';
 import { recueQuiz } from './src/recue.js';
@@ -2355,7 +2355,10 @@ async function handleGet(req, res, url, route) {
     const out = [];
     for (const night of nights) {
       const files = await listDir(`${photoFolder(galleryRoomId())}/${night}`, 'photos');
-      const count = (files || []).filter((f) => safePhotoName(f.name)).length;
+      // Only what would actually SHOW once this night is opened — see the
+      // matching filter below. A count that included the ones held back
+      // would read "6 photos" over a page that opens on 4.
+      const count = (files || []).filter((f) => safePhotoName(f.name) && isCameraFile(f.name)).length;
       // A published night with nothing in it is a heading over a blank space.
       if (count) out.push({ night, when: readableNight(night), count, live: live.includes(night) });
     }
@@ -2379,9 +2382,18 @@ async function handleGet(req, res, url, route) {
       when: readableNight(night),
       live: await isPublished(galleryRoomId(), night),
       preview,
+      /*
+       * ONLY WHAT LOOKED LIKE A CAMERA TOOK IT — asked for directly: a
+       * photo picked from the gallery "for a laugh" is fine on the big
+       * screen that night, and stays there, but does not belong on the
+       * public page shown to a venue afterward. `isCameraFile()` reads the
+       * one marker `add()` in photos.js ever wrote — see its own note for
+       * why that is a filename rather than a second file to keep in step.
+       */
       photos: (files || [])
         .map((f) => safePhotoName(f.name))
         .filter(Boolean)
+        .filter(isCameraFile)
         .map((name) => ({ name, url: `/gallery-photo/${night}/${encodeURIComponent(name)}` })),
     }), true;
   }
@@ -2389,13 +2401,17 @@ async function handleGet(req, res, url, route) {
   /*
    * One photo, proxied. The repo is private, so a direct link is a 404 in
    * anybody's browser — and the published check is repeated HERE rather than
-   * trusted from the listing, because a URL can be typed.
+   * trusted from the listing, because a URL can be typed. `isCameraFile` is
+   * repeated for the same reason: the listing already leaves a non-camera
+   * photo off the page, but its name was on the projector all night and this
+   * route must refuse it too, not just decline to advertise it.
    */
   if (route.startsWith('/gallery-photo/')) {
     const parts = route.slice('/gallery-photo/'.length).split('/');
     const night = decodeURIComponent(parts[0] || '');
     const name = safePhotoName(decodeURIComponent(parts[1] || ''));
-    if (parts.length !== 2 || !name || !(galleryPreview() || await isPublished(galleryRoomId(), night))) {
+    if (parts.length !== 2 || !name || !isCameraFile(name)
+      || !(galleryPreview() || await isPublished(galleryRoomId(), night))) {
       return sendJson(res, 404, { error: 'Nothing here.' }), true;
     }
     const bytes = await getFile(`${photoFolder(galleryRoomId())}/${night}/${name}`, 'photos');
@@ -4678,6 +4694,11 @@ async function handleWrite(req, res, url, route) {
       playerId,
       teamName: player.name,
       filter: String(url.searchParams.get('filter') || ''),
+      // Read client-side, from the raw file before it was redrawn onto a
+      // canvas — see looksCameraTaken() in filters.js. Best-effort, never a
+      // gate: every photo still goes up regardless, this only decides
+      // whether it is eligible for the public gallery later.
+      camera: url.searchParams.get('camera') === '1',
     });
     if (result.ok) {
       pushState(room);

@@ -41,6 +41,24 @@ export const MAX_BYTES = 3 * 1024 * 1024;
 
 const ALLOWED = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
 
+/**
+ * MARKS A PHOTO AS NOT LOOKING LIKE A CAMERA TOOK IT — asked for directly:
+ * *"if people upload photos for a bit of a laugh, I don't necessarily want
+ * those going into the gallery, but them appearing on the screen can be
+ * fun."* Detected client-side (`looksCameraTaken()` in `public/assets/
+ * filters.js`) from EXIF the upload's own canvas redraw would otherwise
+ * strip, and carried from there into the filename rather than a second
+ * file — see the note in `add()`. It never keeps a photo off the projector,
+ * only off the public gallery later; `/api/gallery/<night>` in server.js is
+ * the one place that reads this.
+ */
+export const NOT_CAMERA_SUFFIX = '-picked';
+
+/** Whether a filename this app issued was marked NOT camera-taken. */
+export function isCameraFile(name) {
+  return !String(name || '').includes(NOT_CAMERA_SUFFIX);
+}
+
 export function extensionFor(contentType) {
   return ALLOWED[String(contentType || '').split(';')[0].trim().toLowerCase()] || null;
 }
@@ -122,9 +140,9 @@ export class Photos {
 
   /**
    * @param {Buffer} bytes
-   * @param {object} meta  { contentType, playerId, teamName, filter }
+   * @param {object} meta  { contentType, playerId, teamName, filter, camera }
    */
-  add(bytes, { contentType, playerId = '', teamName = '', filter = '' } = {}) {
+  add(bytes, { contentType, playerId = '', teamName = '', filter = '', camera = false } = {}) {
     if (!this.state.enabled) return { ok: false, reason: 'off' };
     if (!bytes || !bytes.length) return { ok: false, reason: 'empty' };
     if (bytes.length > MAX_BYTES) return { ok: false, reason: 'too_big' };
@@ -135,7 +153,19 @@ export class Photos {
 
     const at = this.now();
     const id = `p${at.toString(36)}${Math.floor(at % 997).toString(36)}${this.state.items.length}`;
-    const name = id + ext;
+    /*
+     * THE FLAG RIDES IN THE FILENAME, not a second file beside it.
+     *
+     * The private repo has no structured metadata today — a photo is a name
+     * and the commit message that filed it — and the gallery only ever reads
+     * a night's own directory listing. A separate manifest (one JSON file
+     * per night, read-modify-written every time a photo lands) would race
+     * against itself the moment two people upload within the same second,
+     * which a pub quiz does constantly. The filename cannot race: it is
+     * decided once, here, and every later reader — the gallery filter, the
+     * console's own badge — just looks at the name it already has.
+     */
+    const name = id + (camera ? '' : NOT_CAMERA_SUFFIX) + ext;
 
     try {
       fs.mkdirSync(this.dir, { recursive: true });
@@ -144,7 +174,13 @@ export class Photos {
       return { ok: false, reason: 'could_not_save', error: err.message };
     }
 
-    const item = { id, file: name, at, playerId, teamName, filter, bytes: bytes.length, night: nightOf(at) };
+    const item = {
+      id, file: name, at, playerId, teamName, filter, bytes: bytes.length, night: nightOf(at),
+      // Best-effort, read client-side before the upload's own canvas redraw
+      // stripped the file's EXIF — see looksCameraTaken() in filters.js.
+      // Never gates the projector; only decides gallery eligibility later.
+      camera: Boolean(camera),
+    };
     this.state.items.push(item);
 
     // Oldest out first when it fills up. A night that takes 300 photos is a

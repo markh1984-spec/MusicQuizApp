@@ -53,6 +53,14 @@ test('a photo name has to be one this app issued', () => {
   assert.equal(safePhotoName('a b.jpg'), '');
 });
 
+test('the one exception is the -picked marker photos.js writes, and only that word', () => {
+  // NOT_CAMERA_SUFFIX in photos.js — a photo the gallery filter holds back.
+  assert.equal(safePhotoName('pm1a2b30-picked.jpg'), 'pm1a2b30-picked.jpg');
+  // Still not an open door for an arbitrary hyphenated name.
+  assert.equal(safePhotoName('pm1a2b30-anything.jpg'), '');
+  assert.equal(safePhotoName('-picked.jpg'), '');
+});
+
 // ------------------------------------------------------- one evening, one row
 
 test('a gig that finishes after midnight is filed under the night it started', () => {

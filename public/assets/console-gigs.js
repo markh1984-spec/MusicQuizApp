@@ -672,8 +672,18 @@ export async function fillNightDetail(body, night) {
      * Bottom right because the top of a photo is where faces are. It is the
      * drawn `binIcon()`, like everything else in this app that deletes.
      */
+    /*
+     * "SCREEN ONLY" — a photo a camera did not take, read from the SAME
+     * `-picked` marker `/api/gallery/<night>` filters on server-side (see
+     * `isCameraFile()` in photos.js): nothing new is fetched to say this,
+     * the filename the review already has is the whole answer. Never
+     * "hidden" — the point of showing this HERE, before publishing, is that
+     * nobody is surprised later by a photo that quietly is not on the page.
+     */
+    const screenOnly = String(p.name || '').includes('-picked');
     const shot = node(`<figure class="cphoto filed">
       <img src="${esc(p.url)}" alt="" loading="lazy">
+      ${screenOnly ? `<span class="cphoto-tag" title="This one did not look like a camera took it, so it stays off the public gallery — the big screen showed it either way.">Screen only</span>` : ''}
       <button class="cphoto-bin" type="button" aria-label="Delete this photo">${binIcon(15)}</button>
     </figure>`);
     shot.querySelector('.cphoto-bin').addEventListener('click', async (ev) => {

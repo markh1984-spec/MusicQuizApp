@@ -15,7 +15,7 @@
 
 import { esc, node, ServerClock, Live, postJson, brandMark, brandWords, roomCode, roomParam, rememberRoom } from './client.js';
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
-import { drawFiltered, toJpeg } from './filters.js';
+import { drawFiltered, toJpeg, looksCameraTaken } from './filters.js';
 import { stickersFor, stickerSvg, drawStickers, stickerAt, placed, preloadStickers } from './stickers.js';
 import { paintLook, DEFAULT_LOOK, LOOKS } from './looks.js';
 import { paintScheme } from './schemes.js';
@@ -400,6 +400,10 @@ function openCamera() {
   // The props on the photo, in the order they were added. Positions are
   // fractions of the picture, never pixels — see stickers.js.
   let stuckOn = [];
+  // Whether the ORIGINAL file looked like it came straight off a camera —
+  // read once, from the raw file, before the canvas redraw below strips
+  // every byte of EXIF it might have carried. See looksCameraTaken().
+  let cameraLikely = false;
 
   const repaint = () => {
     if (!source) return;
@@ -703,6 +707,10 @@ function openCamera() {
     const file = input.files && input.files[0];
     if (!file) return;
     status.textContent = 'Loading…';
+    // ON THE RAW FILE, before anything below touches it — the canvas redraw
+    // that builds what actually gets sent strips every byte of EXIF, so this
+    // is the one moment there is anything left to read. See looksCameraTaken().
+    cameraLikely = await looksCameraTaken(file);
     if (!window.createImageBitmap) return theSlowWay(file);
     try {
       const probe = await createImageBitmap(file);
@@ -744,7 +752,7 @@ function openCamera() {
       drawFiltered(canvas, source, PLAIN, 1080, { flip: flipped });
       await drawStickers(canvas, stuckOn);
       const blob = await toJpeg(canvas);
-      const res = await fetch(`/api/photo?playerId=${encodeURIComponent(me.id)}&filter=${encodeURIComponent(PLAIN)}${roomParam()}`, {
+      const res = await fetch(`/api/photo?playerId=${encodeURIComponent(me.id)}&filter=${encodeURIComponent(PLAIN)}${cameraLikely ? '&camera=1' : ''}${roomParam()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'image/jpeg' },
         body: blob,

@@ -1311,6 +1311,7 @@ Open the one you are touching; do not read them all.
 - PUTTING A NIGHT ON THE PUBLIC GALLERY
 - AND THE PREVIEW DID NOT WORK ON THE HOST KEY
 - CHECKING THE PHOTOS IS THE NEXT PRESS
+- THE GALLERY ONLY HOLDS WHAT LOOKED LIKE A CAMERA TOOK IT
 
 **[`docs/lobby-games.md`](docs/lobby-games.md)** — what a phone does while the room fills up
 

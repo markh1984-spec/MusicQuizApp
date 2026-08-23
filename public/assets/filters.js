@@ -232,3 +232,83 @@ export function toJpeg(canvas, quality = 0.85) {
     }
   });
 }
+
+/**
+ * DID A CAMERA TAKE THIS, OR WAS IT PICKED FROM THE GALLERY — asked for
+ * directly, so the public gallery can hold only what somebody actually
+ * photographed that night, while the big screen keeps taking anything: *"if
+ * people upload photos for a bit of a laugh on the night, I don't
+ * necessarily want those going into the gallery, but them appearing on the
+ * screen can be fun."*
+ *
+ * **HAS TO RUN ON THE RAW FILE, BEFORE THE CANVAS.** `sendBtn`'s own upload
+ * redraws everything into a fresh JPEG (`drawFiltered`/`toJpeg` above), and a
+ * canvas round trip strips every byte of EXIF on the way through — so by the
+ * time a photo reaches the server there is nothing left to inspect. The one
+ * moment the original file still carries its own metadata is right after the
+ * file input's `change` event, before `createImageBitmap` ever touches it.
+ *
+ * **A CAMERA JPEG CARRIES A `Make` TAG; almost nothing else does.** A phone's
+ * own camera app writes EXIF with the manufacturer's name in it every time.
+ * A screenshot has no EXIF at all — and is nearly always PNG in the first
+ * place, which this refuses outright. A photo forwarded through WhatsApp,
+ * Instagram or Messages very often has its EXIF stripped by that app before
+ * it ever reaches a camera roll — which means this can under-count (a real
+ * photo, once shared, reading as "not a camera"), but it will not
+ * over-count: nothing manufactures a `Make` tag that was never there. That
+ * asymmetry is why the host still gets to see and override it rather than
+ * this deciding alone — see `.past-cam` in `console-gigs.js`.
+ *
+ * **A BEST-EFFORT READ, NEVER A THROW.** A corrupt or truncated file, a
+ * format this does not recognise, a JPEG some other tool re-wrote its
+ * markers in an unexpected order — every one of those falls through to
+ * `false` rather than blocking the upload the guess was never meant to gate.
+ *
+ * @param {Blob} file
+ * @returns {Promise<boolean>}
+ */
+export async function looksCameraTaken(file) {
+  try {
+    // EXIF sits in the first JPEG segment and that segment is capped at 64KB
+    // by the format itself, so there is never a reason to read further.
+    const head = new Uint8Array(await file.slice(0, 65536).arrayBuffer());
+    if (head.length < 4 || head[0] !== 0xff || head[1] !== 0xd8) return false; // not a JPEG at all
+    let at = 2;
+    while (at + 4 <= head.length) {
+      if (head[at] !== 0xff) return false; // not a marker where one was expected
+      const marker = head[at + 1];
+      if (marker === 0xd8 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) { at += 2; continue; } // no length field
+      if (marker === 0xda) return false; // start of the image data — no more markers, so no EXIF was found
+      const len = (head[at + 2] << 8) | head[at + 3];
+      if (len < 2 || at + 2 + len > head.length) return false;
+      if (marker === 0xe1) return readsExifMake(head, at + 4, at + 2 + len);
+      at += 2 + len;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/** IFD0 of an EXIF APP1 segment, looking only for tag 0x010F (Make). */
+function readsExifMake(buf, start, end) {
+  if (end - start < 14 || String.fromCharCode(...buf.subarray(start, start + 4)) !== 'Exif') return false;
+  const tiff = start + 6; // past "Exif\0\0"
+  const little = buf[tiff] === 0x49 && buf[tiff + 1] === 0x49;
+  const big = buf[tiff] === 0x4d && buf[tiff + 1] === 0x4d;
+  if (!little && !big) return false;
+  const u16 = (o) => (little ? buf[o] | (buf[o + 1] << 8) : (buf[o] << 8) | buf[o + 1]);
+  const u32 = (o) => (little
+    ? (buf[o] | (buf[o + 1] << 8) | (buf[o + 2] << 16) | (buf[o + 3] << 24)) >>> 0
+    : ((buf[o] << 24) | (buf[o + 1] << 16) | (buf[o + 2] << 8) | buf[o + 3]) >>> 0);
+  if (u16(tiff + 2) !== 0x002a) return false;
+  const ifd0 = tiff + u32(tiff + 4);
+  if (ifd0 + 2 > end) return false;
+  const count = u16(ifd0);
+  for (let i = 0; i < count; i++) {
+    const entry = ifd0 + 2 + i * 12;
+    if (entry + 12 > end) return false;
+    if (u16(entry) === 0x010f) return true; // Make
+  }
+  return false;
+}

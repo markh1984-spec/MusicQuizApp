@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { Photos, sniffType, extensionFor, nightOf, MAX_BYTES, MAX_PHOTOS } from '../src/photos.js';
+import { Photos, sniffType, extensionFor, nightOf, MAX_BYTES, MAX_PHOTOS, isCameraFile, NOT_CAMERA_SUFFIX } from '../src/photos.js';
 
 function tempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'mmm-photos-'));
@@ -280,6 +280,55 @@ test('reading a photo back gives the bytes that were stored', () => {
     const read = photos.read(photo.id);
     assert.ok(read.bytes.equals(original));
     assert.equal(photos.read('nope'), null);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+/*
+ * WHICH PHOTOS THE PUBLIC GALLERY MAY LATER HOLD — asked for directly: the
+ * screen still takes anything, but only what looked like a camera took it
+ * should be eligible for the gallery afterward. `camera` is read client-side
+ * (looksCameraTaken() in filters.js, before the upload's own canvas redraw
+ * strips the file's EXIF) and carried through as a filename marker rather
+ * than a second file — see the note in add().
+ */
+test('a camera photo keeps a plain filename; one that is not carries the marker', () => {
+  const dir = tempDir();
+  try {
+    const photos = new Photos(dir, () => 1000);
+    const cam = photos.add(jpeg(), { contentType: 'image/jpeg', camera: true });
+    const picked = photos.add(jpeg(), { contentType: 'image/jpeg', camera: false });
+    assert.ok(!cam.photo.file.includes(NOT_CAMERA_SUFFIX));
+    assert.ok(picked.photo.file.includes(NOT_CAMERA_SUFFIX));
+    assert.equal(cam.photo.camera, true);
+    assert.equal(picked.photo.camera, false);
+    assert.equal(isCameraFile(cam.photo.file), true);
+    assert.equal(isCameraFile(picked.photo.file), false);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('camera defaults to false — an old caller, or one that never answers, is held back rather than assumed genuine', () => {
+  const dir = tempDir();
+  try {
+    const photos = new Photos(dir, () => 1000);
+    const result = photos.add(jpeg(), { contentType: 'image/jpeg' });
+    assert.equal(result.photo.camera, false);
+    assert.equal(isCameraFile(result.photo.file), false);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('the projector never asks — forScreen() carries every photo regardless', () => {
+  const dir = tempDir();
+  try {
+    const photos = new Photos(dir, () => 1000);
+    photos.add(jpeg(), { contentType: 'image/jpeg', camera: true });
+    photos.add(jpeg(), { contentType: 'image/jpeg', camera: false });
+    assert.equal(photos.forScreen().length, 2);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

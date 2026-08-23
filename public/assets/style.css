@@ -4156,6 +4156,18 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   padding: 3px 7px; border-radius: var(--r-pill);
   background: rgba(255, 210, 63, 0.9); color: #221a00;
 }
+/* SCREEN ONLY — the same corner and the same shape as `not filed` above,
+   never both at once in this view (Past gigs reads photos out of the
+   repository, so everything here already IS filed). A quiet grey rather
+   than a warning colour: this is not a fault, it is the app doing exactly
+   what was asked — held off the public gallery, still shown all night. */
+.cphoto-tag {
+  position: absolute; top: 8px; right: 8px; z-index: 2;
+  font-size: var(--fs-tag); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 3px 7px; border-radius: var(--r-pill);
+  background: rgba(10, 8, 16, 0.72); color: var(--ink-dim);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
 .cphoto-acts {
   position: absolute; left: 0; right: 0; bottom: 34px;
   display: flex; gap: 6px; justify-content: center;

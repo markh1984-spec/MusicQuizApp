@@ -10,6 +10,26 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 23 August 2026 — the public gallery now only holds photos that
+looked like a camera took them; the projector still takes anything:** asked
+for directly — uploads "for a bit of a laugh" are fine on the big screen,
+not on the page shown to a venue afterward. Detected client-side, on the
+raw file, from the EXIF `Make` tag before the upload's own canvas redraw
+strips it — a dependency-free JPEG/EXIF reader in `filters.js`, verified
+against real PIL-generated JPEGs as well as hand-built buffers. Best-effort
+by design (a photo re-shared through WhatsApp/Instagram often loses its
+EXIF before it reaches this app, so this can under-count but never
+over-count) and never a gate on the projector, which never asks. The flag
+rides in the filename (`NOT_CAMERA_SUFFIX`/`isCameraFile()` in photos.js)
+rather than a second manifest file, to avoid a read-modify-write race
+against concurrent uploads. The public gallery route filters twice (the
+listing and the direct photo proxy, same reason `isPublished` is checked
+twice); the host's own Past gigs review is deliberately NOT filtered —
+every photo is shown, with a quiet "Screen only" badge on the ones that
+will not reach the public page, so nobody is surprised later. No per-photo
+override built yet — see `docs/gigs.md` for that tradeoff. `CLAUDE.md`'s
+byte budget raised 140,000 → 140,100 for the one index line this needed.
+
 **Live as of 21 August 2026, same day, next deploy again — three faults
 reported off one screenshot of a mixed quiz-plus-bingo night, and a real CSS
 bug found chasing the third:**
