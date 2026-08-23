@@ -26,7 +26,8 @@ import { listQuizzes } from './quizzes.js';
 import { listBingoPacks, recordLaunch, archiveResults, updateArchivedNight, listArchive, HOUSE_ROOM } from './library.js';
 import { mergeGigs } from './past-gigs.js';
 import { leagueTable } from './league.js';
-import { findSlide } from './adverts.js';
+import { findSlide, listAdvertPacks, loadAdvertPack } from './adverts.js';
+import { cleanPlan } from '../public/assets/break-parts.js';
 import { readPack, listOwn } from './own-packs.js';
 import { cleanComeBack } from './comeback.js';
 import { composeQuiz } from './running-order.js';
@@ -137,6 +138,19 @@ function nightWideOpts(state) {
      * own kind's default, exactly as an ordinary launch does.
      */
     lobbySound: state.lobbySound,
+    /*
+     * AND THE BREAK PLAN DOES CARRY, unlike `lobbyGame` directly above it.
+     *
+     * The reason `lobbyGame` cannot is that it holds a RESOLVED id which
+     * `lobbyGameFor()` can no longer tell apart from an explicit choice, so
+     * carrying it turns "no preference" into a permanent override. A break
+     * plan has neither problem: it is keyed by PART (`p0:lobby`, `p1:r2`), so
+     * an entry can only ever apply to the part it names, and it is stored
+     * exactly as the host set it rather than resolved into something else.
+     * Carrying it is what makes a plan a plan — a night's worth of decisions
+     * rather than one part's.
+     */
+    breakPlan: state.breakPlan,
     league: state.leagueOn,
     online: state.online,
     teamPlay: state.teamPlay,
@@ -310,6 +324,68 @@ export class Session {
       } catch {
         return null; // the set was deleted while it was on screen
       }
+    };
+    /*
+     * EVERY SLIDE THIS VENUE HAS, for a break that asked for adverts.
+     *
+     * Handed in for the identical reason as `advertLookup` above — the engine
+     * keeps knowing nothing about the filesystem — and READ AT VIEW TIME for
+     * the identical reason too: a corrected price reaches the projector
+     * without anybody taking a slide down.
+     *
+     * **MATCHED ON THE VENUE'S NAME**, because an advert pack has no
+     * `venueId` — the same free-text join the post-gig report's advert-opens
+     * count already uses, and keeping the two the same is what stops a venue
+     * meaning one thing on a projector and another on a report.
+     *
+     * A night with no venue gets nothing rather than everything: showing one
+     * pub's offers at another is worse than showing none.
+     */
+    this.engine.advertsForVenue = (venue) => {
+      const want = String(venue || '').trim().toLowerCase();
+      if (!want) return [];
+      let listed;
+      try {
+        listed = listAdvertPacks(this.advertDir);
+      } catch {
+        return []; // no adverts folder yet — a break simply shows nothing
+      }
+      const out = [];
+      for (const summary of listed) {
+        if (String(summary.venue || '').trim().toLowerCase() !== want) continue;
+        /*
+         * **`listAdvertPacks()` RETURNS A SUMMARY, NOT THE PACK** — its
+         * `slides` are `{ id, heading, hasImage, hasLink, offerCode }`, with
+         * no body, no link and no image. Building a projector slide out of
+         * those gives a heading over an empty card: nothing throws, the
+         * count is right, and the screen is wrong. Found live, and it is the
+         * same picks-fields trap `mergeGigs()` records twice and
+         * `listArchive()` once — the third sighting this month.
+         */
+        let pack;
+        try {
+          pack = loadAdvertPack(this.advertDir, summary.id);
+        } catch {
+          continue; // deleted between the listing and here
+        }
+        for (const slide of pack.slides || []) {
+          out.push({
+            venue: pack.venue || '',
+            heading: slide.heading,
+            body: slide.body,
+            image: slide.image ? `/quiz-images/${slide.image}` : null,
+            link: slide.link || '',
+            linkLabel: slide.linkLabel || '',
+            offerCode: slide.offerCode || '',
+            offerLink: slide.offerCode
+              ? `/o/${encodeURIComponent(pack.id)}/${encodeURIComponent(slide.id)}`
+              : '',
+            // `say` is the host's mic line and stays off the projector, like
+            // every other host-only field.
+          });
+        }
+      }
+      return out;
     };
     // Games do not all record their pack the same way; make sure the state
     // always says what it is, so a restart can pick the right one back up.
@@ -498,7 +574,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, league = false, online = false, teamPlay = false, venue = '', venueId = '', rewards = [], venueLogo = '', comeBack = null, askForRounds = false, roundIdeas = [], order = null } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, league = false, online = false, teamPlay = false, venue = '', venueId = '', rewards = [], venueLogo = '', comeBack = null, askForRounds = false, roundIdeas = [], order = null, breakPlan = null } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     /*
      * TONIGHT'S RUNNING ORDER, when one was built — rounds from more than one
@@ -597,6 +673,21 @@ export class Session {
      * true, so a night launched by an older console is not silently muted.
      */
     this.engine.state.lobbySound = lobbySound !== false;
+    /*
+     * WHAT HAPPENS IN THE GAPS — `src/breaks.js`.
+     *
+     * **CLEANED HERE RATHER THAN TRUSTED**, like the lobby game above: it
+     * arrives from a browser, and `cleanPlan()` drops anything whose id is
+     * not a real break position and anything that merely restates a default.
+     * That second half is what keeps a night nobody configured genuinely
+     * EMPTY — so its payloads are byte-for-byte the ones this app sent before
+     * breaks existed, and the pub-night guard can still prove it.
+     *
+     * `null` means "leave whatever is there", which is what an advance
+     * through a running order passes so the plan survives the part change
+     * without being re-cleaned each time.
+     */
+    if (breakPlan !== null) this.engine.state.breakPlan = cleanPlan(breakPlan);
     /*
      * Whether tonight ends on a league table. Decided at the route, where the
      * account and its tier are known, and stored on the night like the lobby

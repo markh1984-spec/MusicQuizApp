@@ -82,7 +82,11 @@ test('THE FIELDS ARE A WHITELIST — anything else is dropped', () => {
     assert.equal(show[key], undefined, `${key} should not survive`);
   }
   assert.deepEqual(Object.keys(show).sort(), [
-    'id', 'items', 'kind', 'lobbyGame', 'lobbySound', 'look', 'name', 'online',
+    // `breaks` joined on 23 August 2026 — what happens in each gap of the
+    // night. It is on this list rather than spread in, and cleaned by the same
+    // `cleanPlan()` the launch uses, so a saved plan and an accepted plan
+    // cannot come apart.
+    'breaks', 'id', 'items', 'kind', 'lobbyGame', 'lobbySound', 'look', 'name', 'online',
     'packId', 'prizes', 'shape', 'teamPlay', 'updated', 'venue',
   ]);
   // And the items are a whitelist of their own, or the same hole reopens one

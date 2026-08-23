@@ -5600,7 +5600,7 @@ async function handleWrite(req, res, url, route) {
           ? pickIdeas((fullLibrary(config, room.id, listOwn(room.paths)).quizzes || [])
             .map((q) => q.title))
           : [];
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, questionSeconds, lobbyGame, lobbySound, league, online, teamPlay, venue, venueId, rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas, order: wantedOrder });
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, questionSeconds, lobbyGame, lobbySound, league, online, teamPlay, venue, venueId, rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas, order: wantedOrder, breakPlan: body.breakPlan || {} });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();
@@ -5710,6 +5710,14 @@ async function handleWrite(req, res, url, route) {
         const started = session.launchRunningOrder(segments, {
           look, questionSeconds, lobbyGame, lobbySound, league, online, teamPlay, venue, venueId,
           rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas,
+          /*
+           * WHAT HAPPENS IN THE GAPS — passed straight through and cleaned
+           * inside `session.launch()`, exactly where the ordinary launch
+           * cleans it, so a plan cannot be valid on one route and not the
+           * other. `|| {}` rather than leaving it undefined: a launch that
+           * sends no plan must CLEAR the previous night's, not inherit it.
+           */
+          breakPlan: body.breakPlan || {},
         });
         backUpLibraryStats();
         return sendJson(res, 200, { ok: true, started, view: session.hostView() }), true;

@@ -1202,6 +1202,152 @@ Tuesday under last Thursday's pub. So a door change is a page load and the
 shelf reverts to ranking on the derived default venue, which is the right
 answer when nobody has said otherwise.
 
+## WHAT HAPPENS IN THE GAPS — a break plan, per gap in the night
+
+Asked for on 23 August 2026: *"The while they wait section needs to assign
+games and/or photo upload per break perhaps? So for e.g. if I have a quiz pack
+with 4 rounds and a music bingo, there's 5 breaks — the phones will have an
+activity (each game and/or photo uploads), and the screen itself needs to be
+able to show ads as well."*
+
+### Two of the three things asked for already existed
+
+Worth establishing first, because it decides what was actually built:
+
+- **Photos already ran at every break.** `PHOTO_PHASES` on the projector and
+  `PHOTO_PHASES_PHONE` on the phone have always included `round_board`. That
+  half is making something SWITCHABLE that was always on.
+- **The game ran at the lobby only**, by three separate mechanisms with a test
+  each. And that was the host's own decision, recorded in `play.js` in his own
+  words: *"between rounds it should be photos and before the start of the quiz
+  it's Maze Mouth."* This request reverses it, which he was told before
+  choosing.
+- **An advert only ever went up because somebody pressed a button.**
+  `showAdvert()` is host-driven and any move clears it. Nothing put one up on
+  its own. **That is the genuinely new capability, and the one that pays** —
+  advert slides are the quizmaster's own revenue, which rule 4 names.
+
+### A break is a PLACE, not a number
+
+The host counted "4 rounds and a bingo, so 5 breaks". Right for that night and
+wrong as a model: a round can be switched off on the launch bar, a pack can
+gain one, a part can be dragged out, and a running order adds a lobby per
+part. **A stored list of five would be wrong the first time any of that
+happened, silently, with every entry still looking real** — this repo's
+signature failure.
+
+So a break is `p0:lobby`, `p0:r2`, `p1:lobby`: the part index and the round
+index, both of which are already on the engine state and already survive a
+restart. `breakIdNow()` recomputes it from what is there rather than storing
+anything beside it, so there is nothing that can drift out of step with where
+the night actually is.
+
+The console's strip is the same arithmetic run forwards, over the SAME
+segments Launch is about to send — `segmentsNow()` puts a simple night through
+`slotsFromSimple()` and then the same `segmentsFromSlots()` the mixed row
+uses. The strip cannot count a night one way while the launch builds it
+another.
+
+### Sparse, and empty means "exactly as it was"
+
+`DEFAULTS` is not a taste decision — it is the app's existing behaviour
+written down: the lobby offered a game and the camera, a round board offered
+the camera and put the scores up. `cleanPlan()` drops any entry that only
+restates a default, so a night nobody configured has a genuinely empty plan
+and sends byte-for-byte what it always sent. That is what lets
+`pub-unchanged.mjs` still say IDENTICAL with only `gap` allowed through.
+
+### The three guards changed SUBJECT; they did not go away
+
+The lobby game was kept out of a live quiz three ways, and two had to move
+together — if one had been missed it would have become the real rule by
+accident, and the symptom is a phone quietly playing a game through a
+question.
+
+1. **The seed in the phone's payload** — now `offersGame(breakNow(s))`.
+2. **The refusal at the score route** — `waiting` is now the same test.
+3. **The arcade board on the projector** — **deliberately NOT moved.** It is
+   drawn inside the white QR panel under the join code, and that panel only
+   exists at the lobby. A round board already carries the board the room
+   looked up for, and two leaderboards on one projector is what this app
+   refuses everywhere else. A break can put a game on the phones; where the
+   score goes is still the lobby's answer.
+
+Outside a break `breakNow()` returns null, so a question is as unreachable as
+it ever was. `test/breaks.test.js` asserts each of those three separately,
+including that a question refuses a score *whatever is in the plan*.
+
+### Two things a plan may never touch
+
+- **The FINAL is not a break.** It is the end of the night — the winner, the
+  podium, the draw, the come-back slide, each of which has a rule of its own.
+  A setting that could hide the winner would be able to take away the moment
+  the whole evening is built towards.
+- **The LOBBY has no screen choice.** The join code lives there and nothing in
+  this app may dim it. The setter says so in a line rather than leaving a
+  missing dropdown, because an absent control reads as a bug.
+
+### Scores first, then the slides rotate — and the projector does the rotating
+
+The host's own choice off three options, and the right one for a paid slide:
+the room gets the thing it looked up FOR, and the venue gets the screen once
+it has. A slide that arrived before the scores is a slide people wait through.
+
+**The engine does not run a timer.** One would need restoring mid-cycle after
+a crash and would push state to every phone in the room on each change. The
+engine sends `breakAdverts` — looked up at view-build time, like
+`state.advert`, so a corrected price reaches the projector without anybody
+taking a slide down — and `screen.js` counts for itself.
+
+**The teardown lives in `draw()`, where every card change passes.** That is
+the phone's own expensive lesson applied before it could recur here: its lobby
+game was stopped inside the function that BUILT the lobby, so a game open when
+the quiz started kept its loop running on a detached canvas all night. A
+break's advert timer left running into a question would swap the projector's
+card out from under a live question.
+
+`BREAK_SCORES_MS` and `BREAK_SLIDE_MS` are constants with a note saying they
+might want to be settings one day — the simplest version that works, which is
+the standing instruction for anything not asked for.
+
+### Nothing is a real answer
+
+Asked for by name: *"I also have to be able to put nothing on the screen if I
+want to."* It is not the same as picking neither of the others by accident — a
+host who wants the room talking to each other rather than reading a projector
+is a real thing to want. The round still names itself, because a projector
+with literally nothing on it reads as broken from the back of a room rather
+than as deliberate.
+
+### The strip is under the tiles, not between them
+
+The one place this departs from the picture that was chosen. The tiles are a
+six-column grid, and a break lives between two ROUNDS — which are dots inside
+a 146px tile with no room for anything between them. A row directly underneath
+keeps everything the choice was actually about: same order, same count, one
+chip per real gap, tap it to set it. It wraps rather than scrolling, because
+the console's tab bar already had to be rescued from a sideways scroll nobody
+knew was there.
+
+A chip says what it is SET to, not what it could be, and only a changed one is
+lit — with the account colour on the EDGE, like every other ordinary control
+in this console. A strip where everything shouts says nothing.
+
+### Two bugs the live check found that no test would have
+
+- **`runningShowSegments` was nested inside `pick()`**, so `segmentsNow()` at
+  the bar's own level could not see it. `node --check` passes it — it is valid
+  syntax — and the whole console died on load with *"runningShowSegments is
+  not defined"*. Exactly the fault `test/console-split.test.js` exists for,
+  in a shape it does not cover; the fix was to hoist the declaration to the
+  scope its two callers share.
+- **`listAdvertPacks()` returns a SUMMARY, not the pack.** Its `slides` are
+  `{ id, heading, hasImage, hasLink, offerCode }` — no body, no link, no
+  image. Building a projector slide out of those gives a heading over an empty
+  card: nothing throws, the count is right, and the screen is wrong. **This is
+  the third sighting of the picks-fields trap this month** — `mergeGigs()`
+  records it twice and `listArchive()` once.
+
 ## A CONTROL IS PRESENT AND INERT, NEVER ABSENT
 
 Reported on 15 August 2026: *"slightly clunky how the Set it up appears only

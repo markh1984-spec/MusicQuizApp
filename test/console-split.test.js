@@ -216,7 +216,16 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * saying why the local answer LEADS: the two halves can disagree, and a card
  * at the front of the shelf opening "Played 4 times" reads as a bug.
  */
-const BUDGET = { 'console-tonight.js': 3180, 'console.js': 2000, 'console-packs.js': 1720 };
+/*
+ * RAISED TO 3260 ON 23 AUGUST 2026, for the break strip — *"the while they
+ * wait section needs to assign games and/or photo upload per break"*. The
+ * strip itself is a module of its own (`console-breaks.js`) and the model is
+ * shared with the server (`break-parts.js`); what had to live in this file is
+ * `segmentsNow()` and `breakStripNow()`, both of which read `currentPack`,
+ * `lbExtra`, `lbOff` and `lbSlots` — `launchBar()`'s own closure state, the
+ * same thing that has pinned every raise above it.
+ */
+const BUDGET = { 'console-tonight.js': 3270, 'console.js': 2000, 'console-packs.js': 1720 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

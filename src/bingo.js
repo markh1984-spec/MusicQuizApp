@@ -22,6 +22,7 @@
 import { cleanTeamName, faceKey, isSafeId, newId, newToken, newVoucherCode, ownsPlayer, MAX_PLAYERS, rememberRemoved, wasRemoved, forgetRemoved } from './engine.js';
 import { comeBackView } from './comeback.js';
 import { recordArcadeScore, arcadeBoard, arcadeFields } from './arcade.js';
+import { breakNow, offersGame, offersPhotos } from '../public/assets/break-parts.js';
 
 export const BINGO_PHASES = {
   LOBBY: 'lobby',
@@ -150,6 +151,14 @@ export class BingoGame {
        */
       gameSeed: 1,
       arcade: {},
+      /*
+       * WHAT HAPPENS IN THE GAPS — `src/breaks.js`, the same field the quiz
+       * engine carries. A bingo game has no rounds, so its only break is its
+       * own lobby; the plan is still night-wide and keyed by PART, so a
+       * bingo interlude in a running order reads `p1:lobby` and cannot
+       * collide with the quiz either side of it.
+       */
+      breakPlan: {},
       startedAt: null,
       finishedAt: null,
     };
@@ -322,7 +331,11 @@ export class BingoGame {
    */
   arcadeScore(playerId, score) {
     const res = recordArcadeScore(this.state, playerId, score, {
-      waiting: this.state.phase === BINGO_PHASES.LOBBY,
+      // "A break that offers a game", not "the lobby" — the same change the
+      // quiz engine made, in the same words, because the whole point of
+      // `arcade.js` is that a bingo night must not accept a score a quiz
+      // night refuses.
+      waiting: offersGame(breakNow(this.state)),
     });
     if (res.changed) this.changed();
     return res.ok ? { ok: true, best: res.best } : res;
@@ -836,7 +849,11 @@ export class BingoGame {
      * Same fields, same rule and the same one function as the quiz's, so a
      * phone cannot be handed a seed at a moment the other game would not.
      */
-    if (this.state.phase === BINGO_PHASES.LOBBY) Object.assign(view, arcadeFields(this.state, playerId));
+    const gap = breakNow(this.state);
+    if (gap) {
+      view.gap = { photos: offersPhotos(gap), game: offersGame(gap) };
+      if (offersGame(gap)) Object.assign(view, arcadeFields(this.state, playerId));
+    }
     return view;
   }
 

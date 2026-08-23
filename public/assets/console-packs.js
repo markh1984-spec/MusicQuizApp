@@ -1491,9 +1491,17 @@ async function sendLaunch(url, bodyFor, button) {
 }
 
 /** Actually launch an ordinary night — the one path, whichever button was pressed. */
-export async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, venue = '', order = null }, button) {
+export async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, venue = '', order = null, breaks = {} }, button) {
   return sendLaunch('/api/host/launch', (replace) => ({
     game: kind, packId, shape, prizes, look, questionSeconds, lobbyGame, lobbySound, online, teamPlay, venue,
+    /*
+     * WHAT HAPPENS IN THE GAPS. Sent on EVERY launch, including an empty one
+     * — a launch that left it out would inherit the previous night's plan,
+     * and the server reads a missing field as "clear it" for exactly that
+     * reason. An empty object is also the whole of an ordinary night, so
+     * this costs those nights two bytes and changes nothing they send.
+     */
+    breakPlan: breaks || {},
     /*
      * TONIGHT'S RUNNING ORDER, and only when there IS one.
      *
@@ -1515,9 +1523,12 @@ export async function doLaunch(kind, packId, { shape = null, prizes = 0, look = 
  * `show-parts.js`). Every later part loads through `/api/host/advanceOrder`
  * from the control view, never through here.
  */
-export async function doLaunchOrder(segments, { look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, venue = '' }, button) {
+export async function doLaunchOrder(segments, { look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, venue = '', breaks = {} }, button) {
   return sendLaunch('/api/host/launchOrder', (replace) => ({
     segments, look, questionSeconds, lobbyGame, lobbySound, online, teamPlay, venue,
+    // Same rule as the ordinary launch — always sent, so a fresh night can
+    // never inherit the last one's plan.
+    breakPlan: breaks || {},
     ...(replace ? { replace: true } : {}),
   }), button);
 }

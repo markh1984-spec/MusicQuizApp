@@ -29,6 +29,7 @@ import { ALPHABET, answerLetter, answerLetterIndex, revealMode } from './quizzes
 import * as chat from './chat.js';
 import { comeBackView } from './comeback.js';
 import { recordArcadeScore, arcadeBoard, arcadeFields } from './arcade.js';
+import { breakNow, offersGame, offersPhotos, showsScores, showsAdverts } from '../public/assets/break-parts.js';
 // For faceKey — a player's public handle, derived one way from their id.
 import { createHash } from 'node:crypto';
 
@@ -164,6 +165,21 @@ export class Engine {
        */
       gameSeed: 1,
       arcade: {},
+      /*
+       * WHAT HAPPENS IN THE GAPS — see `src/breaks.js`.
+       *
+       * SPARSE, and empty is not "nothing happens": an empty plan means every
+       * break takes its default, and the defaults are what this app did
+       * before a plan existed. So a night launched without touching it is
+       * byte-for-byte the night it always was, which is what lets the payload
+       * guard still prove a pub night unchanged.
+       *
+       * Night-wide and keyed by PART, so unlike `lobbyGame` it is safe to
+       * carry across a running order: `p1:lobby` means the second part's
+       * lobby whichever part is currently running, so nothing resolved for
+       * one part can leak into another.
+       */
+      breakPlan: {},
       /*
        * WHAT THEY WIN — first, second and third, and all three empty by default.
        *
@@ -485,8 +501,17 @@ export class Engine {
      * best-not-latest rule and the identical refusal outside the lobby. See
      * the note there about why there must not be two copies of this.
      */
+    /*
+     * "WAITING" IS NOW "A BREAK THAT OFFERS A GAME", not "the lobby".
+     *
+     * The second of the three guards, and it has to move with the payload one
+     * or a phone would be handed a seed it could not bank a score from. What
+     * it must NOT become is looser than that: outside a break `breakNow()` is
+     * null, so a score arriving during a question is refused exactly as it
+     * always was — which is the half of this rule that was never negotiable.
+     */
     const res = recordArcadeScore(this.state, playerId, score, {
-      waiting: this.state.phase === PHASES.LOBBY,
+      waiting: offersGame(breakNow(this.state)),
     });
     if (res.changed) this.changed();
     return res.ok ? { ok: true, best: res.best } : res;
@@ -1898,7 +1923,16 @@ export class Engine {
     const round = this.round();
 
     /*
-     * WHO IS WINNING AT THE LOBBY GAME — names and scores, at the lobby only.
+     * WHO IS WINNING AT THE LOBBY GAME — names and scores, at the lobby only,
+     * AND IT STAYS LOBBY-ONLY EVEN THOUGH THE GAME NO LONGER IS.
+     *
+     * The third of the three guards, and the one that deliberately did NOT
+     * generalise with the other two. It is drawn inside the white QR panel,
+     * under the join code — and that panel only exists at the lobby. A round
+     * board already has a board on it, the one the room looked up for, and
+     * two leaderboards on one projector is the thing this app refuses
+     * everywhere else. A break can put a game on the phones; where the score
+     * goes is still the lobby's answer.
      *
      * Safe on the projector where an answer key never is, and the reason is
      * the two-screens rule read properly rather than waved at: this is not
@@ -2021,8 +2055,50 @@ export class Engine {
       };
     }
 
-    if (s.phase === PHASES.ROUND_BOARD || s.phase === PHASES.FINAL || s.phase === PHASES.LOBBY) {
+    /*
+     * THE SCORES — and at a ROUND BOARD it is now the break's decision.
+     *
+     * The FINAL and the LOBBY are deliberately NOT: the final is the end of
+     * the night rather than a gap in it, and hiding the winner is not a
+     * setting worth having; the lobby's screen belongs to the join code,
+     * which nothing in this app may dim.
+     *
+     * `showsScores()` is true for both defaults, so a night nobody configured
+     * sends exactly what it always sent.
+     */
+    const gapNow = breakNow(s);
+    if (s.phase === PHASES.FINAL || s.phase === PHASES.LOBBY
+      || (s.phase === PHASES.ROUND_BOARD && showsScores(gapNow))) {
       view.leaderboard = this.leaderboard().map(publicPlayer);
+    }
+
+    /*
+     * THIS VENUE'S SLIDES, AT A BREAK THAT ASKED FOR THEM.
+     *
+     * **THE FIRST THING IN THIS APP THAT PUTS AN ADVERT UP WITHOUT SOMEBODY
+     * PRESSING A BUTTON**, and it is deliberately not `state.advert`: that is
+     * a FLAG the host raises and any move clears (rule 9), and it must stay
+     * exactly that or a host who puts a slide up by hand would find the break
+     * arguing with them. This is a separate field the projector cycles for
+     * itself.
+     *
+     * **THE PROJECTOR ROTATES, NOT THE ENGINE.** An engine that changed slide
+     * on a timer would need a timer it does not have, would push state to
+     * every phone in the room on each change, and would have to be restored
+     * mid-cycle after a crash. Sending the list and letting one screen count
+     * costs nothing and cannot desynchronise anything, because nothing else
+     * reads it.
+     *
+     * **LOOKED UP WHEN THE VIEW IS BUILT**, like `state.advert` above and for
+     * the same reason: correcting a price on a venue's slide changes what is
+     * on the projector without anybody taking it down and putting it back.
+     *
+     * Only at the round board, so these bytes are never in a lobby push —
+     * which is the one moment sixty phones are all connecting at once.
+     */
+    if (s.phase === PHASES.ROUND_BOARD && showsAdverts(gapNow) && this.advertsForVenue) {
+      const slides = this.advertsForVenue(s.venue || '');
+      if (slides && slides.length) view.breakAdverts = slides;
     }
 
     /*
@@ -2368,18 +2444,33 @@ export class Engine {
     }
 
     /*
-     * THE LOBBY GAME — only in the lobby, and only ever these two numbers.
+     * WHAT THERE IS TO DO IN THIS GAP — and it is now a decision per break
+     * rather than a fact about the phase.
      *
-     * The SEED is what makes every phone play the same game, which is the only
-     * thing that makes a scoreboard of it fair. `arcadeBest` is their own top
-     * score so the phone can say "your best: 70" without keeping its own tally
-     * that a rejoin would lose.
+     * **THE GUARD DID NOT GO AWAY, IT CHANGED SUBJECT.** It used to read "the
+     * lobby"; it now reads "a break that offers a game", and outside a break
+     * `breakNow()` returns null, so `offersGame()` is false and a question is
+     * as unreachable as it ever was. That matters because the old rule was
+     * enforced three separate ways with a test each — here, at the score
+     * route, and on the projector's board — and all three had to move
+     * together or one of them would have become the real rule by accident.
      *
-     * Sent nowhere else on purpose. A phone that still has a seed at question
-     * one is a phone that could still be playing, and the whole design of this
-     * app is a room looking UP.
+     * The SEED is what makes every phone play the same game, which is the
+     * only thing that makes a scoreboard of it fair. `arcadeBest` is their
+     * own top score, so the phone can say "your best: 70" without keeping a
+     * tally a rejoin would lose.
+     *
+     * `view.gap` is what the phone draws its menu from, so the console and
+     * the room cannot disagree about what is on offer — the same reasoning as
+     * `lobbyGame` being resolved at launch and merely honoured by the phone.
+     * It is called `gap` rather than `break` because the latter cannot be
+     * destructured on the other side.
      */
-    if (s.phase === PHASES.LOBBY) Object.assign(view, arcadeFields(s, player.id));
+    const gap = breakNow(s);
+    if (gap) {
+      view.gap = { photos: offersPhotos(gap), game: offersGame(gap) };
+      if (offersGame(gap)) Object.assign(view, arcadeFields(s, player.id));
+    }
 
     if (s.phase === PHASES.FINAL && s.vouchers) {
       const mine = Object.values(s.vouchers).find((v) => v.winnerId === this.boardIdFor(playerId));

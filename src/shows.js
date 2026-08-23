@@ -58,6 +58,7 @@
  * reaches another quizmaster's shows. Same enforcement as own-packs.
  */
 
+import { cleanPlan } from '../public/assets/break-parts.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -227,6 +228,13 @@ export function normalise(raw = {}, now = Date.now()) {
     online: Boolean(raw.online),
     shape,
     prizes: Math.max(0, Math.min(5, Number(raw.prizes) || 0)),
+    /*
+     * WHAT HAPPENS IN THE GAPS — cleaned by the SAME function the launch
+     * cleans it with, so a plan that a show would restore is exactly a plan a
+     * launch would accept. Two normalisers is how a saved night comes to
+     * carry a setting the engine then silently drops.
+     */
+    breaks: cleanPlan(raw.breaks),
     updated: now,
   };
 }

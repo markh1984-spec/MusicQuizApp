@@ -974,6 +974,53 @@ board), `src/arcade.js` (the scores, shared by both engines),
 
 Full reasoning: **[`docs/lobby-games.md`](docs/lobby-games.md)**.
 
+### WHAT HAPPENS IN THE GAPS — a break plan, per gap in the night
+
+`public/assets/break-parts.js` (the model, imported by the SERVER like
+`show-parts.js`), `console-breaks.js` (the strip), `state.breakPlan`,
+`view.gap` on a phone, `view.breakAdverts` on the projector. Asked for
+directly: *"the while they wait section needs to assign games and/or photo
+upload per break… and the screen itself needs to be able to show ads as
+well."*
+
+- **TWO OF THE THREE THINGS ASKED FOR ALREADY EXISTED.** Photos always ran at
+  every break (`PHOTO_PHASES`), so that half is making something SWITCHABLE
+  rather than adding it; the game ran at the lobby only. **An advert only ever
+  went up because somebody pressed a button** — that is the genuinely new
+  capability, and the one that pays.
+- **A BREAK IS A PLACE, NOT A NUMBER** — `p0:lobby`, `p1:r2`. Derived from the
+  part index and round index already on the state, so nothing has to be kept
+  in step and a restart resolves it for free. **A stored list of five breaks
+  would be wrong the first time a round was switched off**, silently, with
+  every row still looking real.
+- **THE PLAN IS SPARSE AND EMPTY MEANS "AS IT WAS".** `DEFAULTS` reproduces
+  the app exactly as it behaved before breaks existed — `cleanPlan()` drops
+  anything that only restates one, which is what lets `pub-unchanged.mjs`
+  still say IDENTICAL.
+- **THE THREE LOBBY-ONLY GUARDS CHANGED SUBJECT, THEY DID NOT GO AWAY.** The
+  seed in the payload and the refusal at the score route now read "a break
+  that offers a game"; outside a break `breakNow()` is null, so **a question
+  is as unreachable as it ever was** and there is a test saying so. **The
+  arcade BOARD deliberately stayed lobby-only** — it draws inside the white QR
+  panel, and a round board already carries the board the room looked up for.
+- **THE FINAL IS NOT A BREAK, AND THE LOBBY HAS NO SCREEN CHOICE.** A plan
+  that could hide the winner would take away the moment the night is built
+  towards; the lobby's screen belongs to the join code, which nothing may dim.
+- **SCORES FIRST, THEN THE SLIDES ROTATE** — the host's own choice: the room
+  gets what it looked up for, and the venue gets the screen once it has.
+  **THE PROJECTOR ROTATES, NOT THE ENGINE** — an engine timer would push state
+  to every phone on each change and need restoring mid-cycle. **The teardown
+  lives in `draw()`**, where every card change passes, which is the lobby
+  game's own expensive lesson applied before it could recur.
+- **NOTHING IS A REAL ANSWER**, asked for by name — the round still names
+  itself, because a projector with literally nothing on it reads as broken.
+- **`listAdvertPacks()` RETURNS A SUMMARY, NOT THE PACK.** Its slides have no
+  body, link or image; building a projector slide from them gives a heading
+  over an empty card, and nothing throws. The third sighting of the
+  picks-fields trap this month.
+
+Full reasoning: **[`docs/console.md`](docs/console.md)**.
+
 ### FOUR DOORS: CONSOLE · WORKSHOP · POST GIG · MY ACCOUNT
 
 `DOORS`, `navMenu()`, `doors` on every `TABS` entry. The first three name
@@ -1289,6 +1336,7 @@ Open the one you are touching; do not read them all.
 - The tabs run ALONG a quizmaster's evening, behind their door
 - DRAG AND DROP — the console is the laptop with the HDMI in it
 - TONIGHT — one launch section, and it PINS WHERE IT ALREADY IS on a drag
+- WHAT HAPPENS IN THE GAPS — a break plan, per gap in the night
 - A PACK WEARS ITS OWN SUBJECT
 - A CONTROL IS PRESENT AND INERT, NEVER ABSENT
 - Quiz → bingo → quiz, one running score, no engine changes at all
@@ -1713,6 +1761,8 @@ public/                the screens; *-bingo.js files hold the bingo variants
   assets/avatar.js     a drawn face per team, for anyone who sent no photo
   assets/stickers.js   props to drag onto a photo: dog ears, a clown nose
   assets/schemes.js    a quizmaster's own two colours, shared with the server
+  assets/break-parts.js  what happens in each gap of a night, shared with the server
+  assets/console-breaks.js  the break strip under Tonight's running order
   assets/diary.js      what is on and when — residencies projected, one-offs typed
   assets/chat.js       the chat sheet on a player's phone, online nights only
 quizzes/ bingo/        the library

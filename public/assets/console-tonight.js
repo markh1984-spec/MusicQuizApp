@@ -1,5 +1,6 @@
 /** TONIGHT — the launch bar, what is running, and the settings for one night. */
 
+import { breakStrip, prunePlan } from './console-breaks.js';
 import { esc, node, postJson } from './client.js';
 import { saidTime } from './console-diary.js';
 import { tonightsVenue } from './console-gigs.js';
@@ -55,7 +56,27 @@ export const night = {
   teamPlay: false,
   shape: null,
   prizes: 0,
+  /*
+   * WHAT HAPPENS IN THE GAPS — `{ [breakId]: { phone, screen } }`, sparse.
+   *
+   * Empty means "as it was" like every other field here: every break takes
+   * its default, and the defaults are what this app did before breaks
+   * existed. It belongs on `night` rather than in a variable of its own for
+   * the reason the comment above gives — a saved show restores these fields
+   * directly, with no DOM to read them back off.
+   */
+  breaks: {},
 };
+
+/**
+ * WHICH BREAK'S PANEL IS OPEN — module level, outside the render.
+ *
+ * The same reason the control view's answer panels and `lbPicked` are: this
+ * bar is repainted whenever anything on the page changes, and a selection
+ * stored inside the render would shut itself the moment you touched the very
+ * thing you had just opened.
+ */
+let lbBreakOpen = '';
 
 /*
  * IS THE WHOLE SECTION OPEN, and it is remembered on the DEVICE rather than in
@@ -1229,39 +1250,6 @@ export function launchBar() {
 
     // The same prize list the pack card builds, from the shape actually picked.
 
-    /**
-     * TONIGHT AS MORE THAN ONE GAME — quiz, then a bingo interlude, then quiz
-     * again, one running score across the interruption. Built from a SAVED
-     * SHOW rather than a new composer, because the show editor already lets a
-     * host add a bingo game between two quizzes (`showPartsEditor` in
-     * `console-shows.js`) — a second way to build the same list would be a
-     * second thing that could disagree with it.
-     *
-     * Only when we are sat on PART ZERO of a show with more than one part:
-     * every later part is reached through the control view's own "Continue"
-     * button and `/api/host/advanceOrder`, never through this bar again.
-     *
-     * A part with no `order` of its own (added to the show after the fact,
-     * never opened on Tonight to have rounds ticked off) plays EVERY round —
-     * `roundsOf()` is the same helper the ordinary strip uses for exactly
-     * that shape of pack.
-     */
-    function runningShowSegments() {
-      if (!showRunning || showRunning.at !== 0) return null;
-      const items = itemsOf(showRunning.show);
-      if (items.length < 2) return null;
-      const segments = items.map((item) => {
-        if (item.kind === 'bingo') {
-          return { kind: 'bingo', packId: item.packId, shape: night.shape, prizes: night.prizes };
-        }
-        const order = (item.order && item.order.length)
-          ? item.order
-          : roundsOf((library.quizzes || []).find((p) => p.id === item.packId));
-        return { kind: 'quiz', order };
-      });
-      if (segments.some((s) => (s.kind === 'bingo' ? !s.packId : !s.order.length))) return null;
-      return segments;
-    }
 
     goBtn.onclick = async (ev) => {
       const button = ev.currentTarget;
@@ -1303,6 +1291,14 @@ export function launchBar() {
           online: lbOnline,
           teamPlay: night.teamPlay,
           venue: venueNow(),
+          /*
+           * PRUNED AGAINST THE SEGMENTS BEING SENT, not against whatever the
+           * strip last drew. They are the same list in practice; sending a
+           * plan that names a break these segments do not have would be a
+           * setting with nowhere to land, and the server would drop it
+           * silently rather than say so.
+           */
+          breaks: prunePlan(night.breaks, segments),
         }, button);
         return;
       }
@@ -1330,6 +1326,9 @@ export function launchBar() {
         // `lbExtra`. An ordinary night sends nothing at all and takes exactly
         // the route it always did.
         order: nightOrder(),
+        // See the running-order branch above: pruned against the night as it
+        // is, so nothing is sent that names a gap this night does not have.
+        breaks: prunePlan(night.breaks, segmentsNow()),
       }, button);
     };
 
@@ -2121,11 +2120,89 @@ export function launchBar() {
       picked: lbPicked,
       onPick: (at) => { lbPicked = at; paintOrder(); },
     });
-    orderEl.replaceChildren(row, infoLine());
+    orderEl.replaceChildren(row, ...[breakStripNow()].filter(Boolean), infoLine());
     const parts = segmentsFromSlots(lbSlots).length;
     goBtn.disabled = !parts;
     goBtn.textContent = parts ? `Launch tonight — ${parts} part${parts === 1 ? '' : 's'}` : 'Drag a pack in to launch';
     paintInTonight();
+  }
+
+  /**
+   * TONIGHT AS MORE THAN ONE GAME — quiz, then a bingo interlude, then quiz
+   * again, one running score across the interruption. Built from a SAVED
+   * SHOW rather than a new composer, because the show editor already lets a
+   * host add a bingo game between two quizzes (`showPartsEditor` in
+   * `console-shows.js`) — a second way to build the same list would be a
+   * second thing that could disagree with it.
+   *
+   * Only when we are sat on PART ZERO of a show with more than one part:
+   * every later part is reached through the control view's own "Continue"
+   * button and `/api/host/advanceOrder`, never through this bar again.
+   *
+   * A part with no `order` of its own (added to the show after the fact,
+   * never opened on Tonight to have rounds ticked off) plays EVERY round —
+   * `roundsOf()` is the same helper the ordinary strip uses for exactly
+   * that shape of pack.
+   */
+  function runningShowSegments() {
+    if (!showRunning || showRunning.at !== 0) return null;
+    const items = itemsOf(showRunning.show);
+    if (items.length < 2) return null;
+    const segments = items.map((item) => {
+      if (item.kind === 'bingo') {
+        return { kind: 'bingo', packId: item.packId, shape: night.shape, prizes: night.prizes };
+      }
+      const order = (item.order && item.order.length)
+        ? item.order
+        : roundsOf((library.quizzes || []).find((p) => p.id === item.packId));
+      return { kind: 'quiz', order };
+    });
+    if (segments.some((s) => (s.kind === 'bingo' ? !s.packId : !s.order.length))) return null;
+    return segments;
+  }
+
+  /**
+   * TONIGHT'S PARTS, THE WAY LAUNCH WILL SEND THEM — one definition, used by
+   * the break strip and by nothing else that could disagree with it.
+   *
+   * A simple night has no segment list of its own, so it is put through
+   * `slotsFromSimple()` and then the SAME `segmentsFromSlots()` the mixed row
+   * uses. That is deliberately the same pair of functions that convert a
+   * simple night into a mixed one when a round is first dragged out — so the
+   * strip cannot count a night one way while the launch builds it another,
+   * which is the whole class of bug the mixed row already had to be rescued
+   * from once.
+   */
+  function segmentsNow() {
+    const show = runningShowSegments();
+    if (show) return show;
+    const slots = lbSlots || slotsFromSimple({ currentPack, lbExtra, lbOff, packOf });
+    return segmentsFromSlots(slots);
+  }
+
+  /**
+   * THE BREAK STRIP, under the tiles — see `console-breaks.js`.
+   *
+   * **PRUNED ON EVERY PAINT.** Switch a round off and the break after it
+   * stops existing; its entry would otherwise sit in the plan invisibly and
+   * come back to life the day the round was switched on again, saying
+   * something set weeks ago that nobody can see. Pruning here rather than
+   * only at launch means what is stored is always what is on screen.
+   */
+  function breakStripNow() {
+    const segments = segmentsNow();
+    night.breaks = prunePlan(night.breaks, segments);
+    return breakStrip({
+      segments,
+      plan: night.breaks,
+      open: lbBreakOpen,
+      onOpen: (id) => { lbBreakOpen = id; paintOrder(); },
+      onSet: (id, set) => {
+        if (!id) { lbBreakOpen = ''; paintOrder(); return; }
+        night.breaks = { ...night.breaks, [id]: set };
+        paintOrder();
+      },
+    });
   }
 
   function paintOrder() {
@@ -2318,7 +2395,7 @@ export function launchBar() {
      */
     const row = node('<div class="lb-tiles"></div>');
     row.append(...tiles);
-    orderEl.replaceChildren(row, infoLine());
+    orderEl.replaceChildren(row, ...[breakStripNow()].filter(Boolean), infoLine());
     paintGo(packs);
     paintInTonight();
   }
@@ -2804,6 +2881,19 @@ export function launchBar() {
     night.shape = (show.shape && show.shape.rows && show.shape.cols)
       ? { rows: Number(show.shape.rows), cols: Number(show.shape.cols) } : null;
     night.prizes = Math.max(0, Math.min(5, Number(show.prizes) || 0));
+    /*
+     * WHAT HAPPENS IN THE GAPS — restored, and it is one of the things a show
+     * is FOR. A break plan is exactly the sort of decision worth making days
+     * early at a laptop rather than ten minutes before a gig, which is what
+     * the whole feature exists for.
+     *
+     * It restores UNPRUNED and `paintOrder()` prunes it a moment later against
+     * the parts the show actually loaded — so a show whose pack has lost a
+     * round drops that break rather than carrying a setting for a gap that
+     * cannot happen.
+     */
+    night.breaks = (show.breaks && typeof show.breaks === 'object') ? { ...show.breaks } : {};
+    lbBreakOpen = '';
   }
   if (showWanted) applyShow(showWanted);
   if (packWanted) {
@@ -2884,6 +2974,10 @@ function tonightAsShow(name) {
     teamPlay: night.teamPlay,
     shape: night.shape,
     prizes: night.prizes,
+    // Saved with the prizes and the look, and for the same reason: these are
+    // facts about the EVENING, which is what a show is. The venue is still
+    // deliberately not here — see the note above.
+    breaks: night.breaks,
   };
 }
 

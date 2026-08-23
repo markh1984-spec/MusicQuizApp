@@ -55,7 +55,17 @@ const cards = {
   round_intro: { key: (s) => `intro:${s.roundIndex}`, render: renderRoundIntro },
   question: { key: (s) => `q:${s.roundIndex}:${s.questionIndex}`, render: renderQuestion, update: updateQuestion },
   reveal: { key: (s) => `q:${s.roundIndex}:${s.questionIndex}`, render: renderQuestion, update: updateQuestion },
-  round_board: { key: (s) => `board:${s.roundIndex}`, render: renderBoard },
+  /*
+   * The key carries WHAT THIS BREAK SHOWS as well as which round it is. The
+   * card is built once and left alone — that is the point of a stable key,
+   * and it is what stops the projector flashing every time a phone pings —
+   * but a break's slides arriving or a plan changing has to rebuild it, and
+   * `board:2` alone would never notice.
+   */
+  round_board: {
+    key: (s) => `board:${s.roundIndex}:${Array.isArray(s.leaderboard) ? 1 : 0}:${(s.breakAdverts || []).length}`,
+    render: renderBoard,
+  },
   final: { key: () => 'final', render: renderWinner },
 };
 
@@ -101,6 +111,9 @@ function draw(next) {
   const key = card.key(state);
   if (key !== currentKey) {
     currentKey = key;
+    // Every card change passes here, which is the only place a break's advert
+    // cycle can be reliably stopped — see `stopBreakCycle()`.
+    stopBreakCycle();
     cardEl.replaceChildren(card.render(state, joinUrl));
   }
   /*
@@ -965,19 +978,116 @@ function easeOut(t) {
 
 // -------------------------------------------------------------- leaderboard
 
-function renderBoard(s) {
+/**
+ * HOW LONG THE SCORES HOLD THE SCREEN BEFORE A SLIDE TAKES OVER, and how long
+ * each slide then gets.
+ *
+ * Constants rather than settings, deliberately — this is the simplest version
+ * that works, and a number that might want to be configurable is a constant
+ * with a note saying so rather than a panel nobody asked for. Twenty seconds
+ * is about as long as a room reads a scoreboard; twelve is longer than anyone
+ * looks at a poster and short enough that three slides get round twice in an
+ * ordinary break.
+ */
+const BREAK_SCORES_MS = 20000;
+const BREAK_SLIDE_MS = 12000;
+
+/**
+ * THE CYCLE IS TORN DOWN WHERE EVERY CARD CHANGE PASSES, not where it starts.
+ *
+ * The phone learned this the expensive way: its lobby game was stopped inside
+ * the function that BUILT the lobby, so a game still open when the quiz began
+ * kept its loop running on a detached canvas for the rest of the night. The
+ * same shape of bug is available here — a break's advert timer left running
+ * into a question would swap the projector's card out from under a live
+ * question — so the stop lives in `draw()`, which every card change goes
+ * through, rather than in the render that starts it.
+ */
+let breakCycle = null;
+function stopBreakCycle() {
+  if (breakCycle) clearInterval(breakCycle);
+  breakCycle = null;
+}
+
+function scoresCard(s) {
   const all = s.leaderboard || [];
   const rows = all.slice(0, 10);
   const more = all.length - rows.length;
-  return node(`
+  return `
     <div class="board">
       <h1 class="grad-text">${s.roundType === 'breakout' ? 'After the bonus round' : `After round ${s.scoreRoundNumber ?? s.roundIndex + 1}`}</h1>
       <div class="board-rows">
         ${rows.length ? rows.map((p, i) => boardRow(p, i)).join('') : '<div class="muted" style="font-size:3vh">No scores yet.</div>'}
       </div>
       ${more > 0 ? `<div class="muted" style="font-size:2.2vh;margin-top:1.6vh">and ${more} more — everyone can see their own position on their phone</div>` : ''}
-    </div>
-  `);
+    </div>`;
+}
+
+/**
+ * THE ROUND BOARD — the scores, this venue's slides, both in turn, or nothing.
+ *
+ * Which of those it is was decided at launch and resolved by the server
+ * (`src/breaks.js`): the scores arrive only when the break asked for them,
+ * and `breakAdverts` only when it asked for those. **This reads what it was
+ * sent rather than deciding for itself**, which is the same rule the phone
+ * follows about `lobbyGame` — a projector working it out separately is how
+ * the big screen and the console come to disagree.
+ *
+ * **THE DEFAULT PATH IS UNCHANGED.** A break nobody configured sends a
+ * leaderboard and no slides, and this then draws exactly the markup it drew
+ * before breaks existed.
+ *
+ * **NOTHING IS A REAL ANSWER**, asked for in those words. It is not the same
+ * as showing neither by accident: a host who wants the room talking to each
+ * other rather than reading a projector gets a quiet screen with the brand on
+ * it, which is what the corner already carries all night.
+ */
+function renderBoard(s) {
+  const hasScores = Array.isArray(s.leaderboard);
+  const ads = Array.isArray(s.breakAdverts) ? s.breakAdverts : [];
+
+  if (!hasScores && !ads.length) {
+    return node(`
+      <div class="board board-quiet">
+        <h1 class="grad-text">${s.roundType === 'breakout' ? 'After the bonus round' : `After round ${s.scoreRoundNumber ?? s.roundIndex + 1}`}</h1>
+      </div>`);
+  }
+
+  if (!ads.length) return node(scoresCard(s));
+
+  const el = node('<div class="board-cycle"></div>');
+  /*
+   * THE SCORES GO FIRST WHEN THERE ARE ANY — the host's own choice, and the
+   * right one for a paid slide: the room gets the thing it looked up FOR, and
+   * the venue gets the screen once it has. A slide that arrives before the
+   * scores is a slide people are waiting through.
+   */
+  const frames = (hasScores ? 1 : 0) + ads.length;
+  let at = 0;
+  const paint = () => {
+    if (hasScores && at === 0) {
+      el.replaceChildren(node(scoresCard(s)));
+      return;
+    }
+    el.replaceChildren(renderAdvert({ ...s, advert: ads[hasScores ? at - 1 : at] }));
+  };
+  paint();
+  /*
+   * ONE INTERVAL, RE-ARMED — not a chain of `setTimeout`s, because the first
+   * frame is longer than the rest and a chain of differing delays is a thing
+   * that can be left half-scheduled when the card is replaced. Clearing one
+   * handle is something `stopBreakCycle()` can do without knowing where in
+   * the cycle it was.
+   */
+  const step = () => {
+    at = (at + 1) % frames;
+    paint();
+    stopBreakCycle();
+    breakCycle = setInterval(step, at === 0 && hasScores ? BREAK_SCORES_MS : BREAK_SLIDE_MS);
+  };
+  stopBreakCycle();
+  breakCycle = setInterval(step, hasScores ? BREAK_SCORES_MS : BREAK_SLIDE_MS);
+  return el;
 }
 
 function boardRow(p, i) {

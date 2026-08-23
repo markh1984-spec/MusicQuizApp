@@ -10,6 +10,53 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 23 August 2026, same day again — WHAT HAPPENS IN THE GAPS is
+now a decision per break:**
+
+*"The while they wait section needs to assign games and/or photo upload per
+break… and the screen itself needs to be able to show ads as well."* Three
+shapes were rendered from the real stylesheet before he chose; he took the
+one where **the breaks are drawn where they happen**, and added *"I also have
+to be able to put nothing on the screen if I want to."*
+
+**TWO OF THE THREE THINGS ASKED FOR ALREADY EXISTED**, which decided what got
+built: photos have always run at every break, the game ran at the lobby only
+— and that was **his own decision**, recorded in `play.js` verbatim
+(*"between rounds it should be photos and before the start of the quiz it's
+Maze Mouth"*), so he was told he was reversing himself before choosing. The
+genuinely new thing is **an advert that goes up without anybody pressing a
+button**, which is the half that pays.
+
+**A BREAK IS A PLACE, NOT A NUMBER.** He counted "4 rounds and a bingo, so 5
+breaks" — right for that night and wrong as a model, since a switched-off
+round removes one. `p0:lobby` / `p0:r2` are derived from state that already
+exists and already survives a restart, so nothing has to be kept in step;
+the console's strip runs the same arithmetic over the **same segments Launch
+sends**.
+
+**THE THREE LOBBY-ONLY GUARDS CHANGED SUBJECT RATHER THAN GOING AWAY** — the
+seed in the payload and the refusal at the score route now read "a break that
+offers a game", and outside a break there is no break, so a question is as
+unreachable as ever. **The arcade BOARD deliberately did not move**: it draws
+inside the lobby's QR panel, and a round board already has the board the room
+looked up for. Three separate assertions, each verified by breaking it.
+
+**AND THE LIVE CHECK EARNED ITS KEEP TWICE.** `runningShowSegments` was
+nested inside `pick()`, so the new caller could not see it — valid syntax,
+`node --check` happy, and the whole console dead on load. Then
+`listAdvertPacks()` turned out to return a **summary** whose slides have no
+body, link or image: a heading over an empty card, nothing thrown, the count
+right and the screen wrong. **That is the third sighting of the picks-fields
+trap this month** — `mergeGigs()` records it twice and `listArchive()` once.
+
+Proven live end to end on one seeded night: the strip goes from 3 chips to 2
+when a round is switched off, the projector holds the scores for 20 seconds
+then rotates two of The Crown's slides (offer QR and code intact) and comes
+back, the phone at that break shows the scores with photos big and the game
+underneath, and the same break set to *Nothing* leaves a screen carrying only
+the round's name. Both games still launch, `pub-unchanged` IDENTICAL with
+only the new `gap` field allowed, 1,510 tests green.
+
 **Live as of 23 August 2026, same day again — the shelf is ranked PER
 VENUE:**
 

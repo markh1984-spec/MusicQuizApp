@@ -553,6 +553,20 @@ body::after {
 /* Centred vertically, so four teams look deliberate rather than stranded at
    the top, and ten still fit comfortably. */
 .board { display: flex; flex-direction: column; height: 100%; justify-content: center; }
+/*
+ * A BREAK THAT ROTATES — the wrapper the scores and this venue's slides take
+ * turns inside. It has to fill the card exactly as either of them would on
+ * its own, or a slide drawn inside it would sit in a shorter box than the
+ * same slide drawn by the host pressing the button. `min-height: 0` because
+ * the advert's own image and QR are flex children further down and would
+ * otherwise refuse to shrink on a 720p projector.
+ */
+.board-cycle { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.board-cycle > * { flex: 1 1 auto; min-height: 0; }
+/* NOTHING ON THE SCREEN, asked for in those words — the round still names
+   itself, because a projector with literally nothing on it reads as broken
+   from the back of a room rather than as deliberate. */
+.board-quiet { justify-content: center; text-align: center; }
 .board h1 { font-size: 6.4vh; margin: 0 0 2.5vh; font-weight: 900; letter-spacing: -0.02em; }
 .board-rows { display: grid; gap: 1.1vh; align-content: start; overflow: hidden; }
 .board-row {
@@ -6507,6 +6521,73 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    which is the same direction the width came down for. THE LIBRARY USES THE
    SAME SIX so a pack is still the shape of the hole it goes in. */
 .lb-tiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+
+/*
+ * THE BREAK STRIP — one chip per gap in tonight, under the tiles it belongs
+ * to. See `console-breaks.js` for why it is a row underneath rather than
+ * markers between the tiles.
+ *
+ * It WRAPS rather than scrolls: a six-part night is ten or eleven chips, and
+ * a strip that scrolled sideways would hide the end of the evening behind a
+ * gesture nobody knows is there. The console's tab bar was rescued from
+ * exactly that.
+ */
+.brk-strip { margin-top: 10px; }
+.brk-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.brk-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 10px;
+  border-radius: var(--r-field);
+  border: 1px solid var(--panel-line);
+  border-bottom: 2px solid transparent;
+  background: var(--panel);
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: var(--fs-note);
+  cursor: pointer;
+}
+.brk-chip:hover { border-color: var(--hot); color: var(--ink); }
+/*
+ * ONLY A BREAK THAT WAS CHANGED IS LIT, and the account's own colour is on
+ * the EDGE rather than the face — the same rule every ordinary button in this
+ * console follows, and the same reason: a row of six chips all wearing the
+ * gradient is a wall of colour that says nothing about which one you touched.
+ */
+.brk-chip.is-set { color: var(--ink); border-bottom-color: var(--hot); }
+.brk-icons { font-size: 15px; line-height: 1.1; letter-spacing: 1px; }
+/* The screen's glyph sits a shade back from the phone's: the phones are what
+   a break is mostly about, and two icons at equal weight read as one blob. */
+.brk-icons i { font-style: normal; opacity: .75; margin-left: 3px; }
+.brk-chip .brk-when { white-space: nowrap; font-weight: 700; }
+/*
+ * THE PANEL FOR ONE BREAK — a FLEX row like the picked-pack settings above
+ * it, not the grid `.lb-set` gives by default. Measured on a real console:
+ * the grid stretched Done into a full-width bar sitting directly under a
+ * full-width Launch, which is two things the same shape and size where only
+ * one of them starts a night.
+ */
+.lb-set-break {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  margin-top: 8px;
+}
+.lb-set-break .pack-shape { flex: 1 1 240px; max-width: 380px; margin: 0; }
+.lb-set-break .brk-why { color: var(--ink-dim); align-self: center; }
+.brk-done {
+  align-self: center;
+  flex: 0 0 auto;
+  padding: 8px 16px;
+  border-radius: var(--r-field);
+  border: 1px solid var(--panel-line);
+  border-bottom: 2px solid var(--hot);
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
 @media (max-width: 560px) {
   /* Shorter still on a phone, where they are a summary rather than a target. */
   /* TWO ACROSS ON A PHONE, not one. `auto-fit` at 160px only fits a single

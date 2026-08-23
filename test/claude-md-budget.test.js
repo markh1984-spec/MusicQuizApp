@@ -189,7 +189,16 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * must not be able to print. Each of those is a change somebody would
  * otherwise make in good faith.
  */
-const BUDGET = 143_600;
+/*
+ * RAISED TO 146_800 ON 23 AUGUST 2026, for the break plan. Every line of it
+ * either forbids something or records a trap that has now bitten more than
+ * once: the three lobby-only guards changed SUBJECT rather than going away
+ * (and one of them deliberately did not move), the final is not a break and
+ * the lobby has no screen choice, an empty plan must stay byte-identical to
+ * the app before breaks existed, and `listAdvertPacks()` returns a summary
+ * rather than the pack — the third sighting of the picks-fields trap.
+ */
+const BUDGET = 146_800;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

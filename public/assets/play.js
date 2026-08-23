@@ -887,13 +887,20 @@ function draw(next) {
  */
 function paintCameraButton(s) {
   /*
-   * NOT IN THE LOBBY, because the waiting screen's menu offers the same thing
-   * on a line of its own. Two controls for one job is how somebody uses the
-   * worse one out of habit — and the floating one is the worse one here,
-   * because it is an icon with no words while the menu row says what it does
-   * and what happens next.
+   * NOT WHEREVER THE GAP MENU IS UP — which is the lobby and now a round
+   * board too, since a break draws the same menu underneath the scores. The
+   * menu offers the same thing on a line of its own, and two controls for one
+   * job is how somebody uses the worse one out of habit; the floating one is
+   * the worse one here, because it is an icon with no words while the menu
+   * row says what it does and what happens next.
+   *
+   * AND NOT AT ALL WHEN THIS BREAK DOES NOT OFFER PHOTOS. A host who set a
+   * break to the game alone, or to nothing, would otherwise find the camera
+   * still one tap away in the corner — the setting would look like it had
+   * done nothing, which is worse than not having it.
    */
-  const wanted = Boolean(s.photosOpen && s.you && s.phase !== 'question' && s.phase !== 'lobby');
+  const menuIsUp = s.phase === 'lobby' || s.phase === 'round_board';
+  const wanted = Boolean(gapWants(s).photos && s.you && s.phase !== 'question' && !menuIsUp);
   let btn = document.getElementById('cameraBtn');
   if (!wanted) {
     if (btn) btn.remove();
@@ -948,6 +955,62 @@ function buildScreen(s) {
   }
 }
 
+/**
+ * WHAT THERE IS TO DO IN THIS GAP — the game, the camera, or both, in the
+ * order that moment wants them.
+ *
+ * **WHICH OF THEM IS OFFERED IS THE SERVER'S ANSWER, NOT THE PHASE'S.**
+ * `s.gap` comes off the payload (`src/breaks.js`), resolved at launch from
+ * what the host set on Tonight — so the console and the room cannot disagree
+ * about what is on offer, which is the same rule `lobbyGame` follows and for
+ * the same reason. A payload from before breaks existed has no `gap` at all,
+ * and both halves then default to ON, which is what those nights did.
+ *
+ * **THE ORDER IS THE MOMENT'S, AND THAT IS THE HOST'S OWN SPLIT KEPT:**
+ * *"between rounds it should be photos and before the start of the quiz it's
+ * Maze Mouth"*. The lobby is dead time with nothing on the projector, which
+ * is what a game is for; a break is when the room is already looking up and a
+ * photo can have its moment on the big screen. Each gets a primary rather
+ * than the two competing — and neither is ever HIDDEN behind the other, so
+ * the second one is still a line you can see rather than something you find
+ * after putting the first away.
+ *
+ * **THE CAMERA STILL ANSWERS TO THE HOST'S KILL SWITCH.** A break asking for
+ * photos cannot turn `photosOpen` back on: that switch is the one that exists
+ * for the moment something has gone up that should not have.
+ */
+function gapWants(s) {
+  const gap = s && s.gap;
+  return {
+    // Absent means an older payload, which offered both.
+    game: !gap || gap.game !== false,
+    photos: (!gap || gap.photos !== false) && Boolean(s && s.photosOpen),
+  };
+}
+
+function gapMenu(s, { photosFirst }) {
+  const wants = gapWants(s);
+  const photo = wants.photos ? `      <button class="wait-item wait-photo" type="button">
+        <span class="wait-item-icon" aria-hidden="true">📷</span>
+        <span class="wait-item-what">
+          <b>Send a photo</b>
+          <span class="tiny">On the big screen tonight — and this night’s photo
+            page if your quizmaster shares it</span>
+        </span>
+      </button>` : '';
+  // `arcadeCard` hides itself when there is no seed, and a break that offers
+  // no game is sent no seed — so the two halves of the decision cannot come
+  // apart even if this line were wrong.
+  const game = wants.game ? arcadeCard(s) : '';
+  if (!photo && !game) return '';
+  return `<div class="wait-menu">${photosFirst ? photo + game : game + photo}</div>`;
+}
+
+function wireGapMenu(el, s) {
+  el.querySelector('.wait-photo')?.addEventListener('click', openCamera);
+  wireArcade(el, s, postArcadeScore);
+}
+
 function buildWaiting(s, kicker, title, sub) {
   const el = node(`
     <div style="display:grid;gap:14px;text-align:center">
@@ -968,32 +1031,11 @@ function buildWaiting(s, kicker, title, sub) {
            in the lobby while this is up — see paintCameraButton — because
            two controls for one job is how somebody ends up using the worse
            one out of habit. -->
-      <div class="wait-menu">
-      ${arcadeCard(s)}
-      <!-- AND THE PHOTO, SECOND HERE AND FIRST EVERYWHERE ELSE.
-           The host's own split: *"between rounds it should be photos and
-           before the start of the quiz it's Maze Mouth"*. Each moment gets a
-           primary rather than the two competing — the lobby is dead time with
-           nothing on the projector, which is what a game is for, and a round
-           board is when the room is already looking up and a photo can have
-           its moment on the big screen.
-           Not REMOVED from the lobby though: somebody arriving with their
-           mates takes the group photo as they sit down, and that is the
-           upload this app most wants. It simply stops being the loud one. -->
-      <button class="wait-item wait-photo" type="button">
-        <span class="wait-item-icon" aria-hidden="true">📷</span>
-        <span class="wait-item-what">
-          <b>Send a photo</b>
-          <span class="tiny">On the big screen tonight — and this night’s photo
-            page if your quizmaster shares it</span>
-        </span>
-      </button>
-      </div>
+      ${gapMenu(s, { photosFirst: false })}
     </div>
   `);
   wireTeamPicker(el, s);
-  el.querySelector('.wait-photo')?.addEventListener('click', openCamera);
-  wireArcade(el, s, postArcadeScore);
+  wireGapMenu(el, s);
   paintStartsIn(s);
   return el;
 }
@@ -1554,7 +1596,7 @@ function buildBoard(s) {
   const youKey = s.you ? s.you.key : '';
   const winner = rows[0];
 
-  return node(`
+  const el = node(`
     <div style="display:grid;gap:16px">
       <h2>${isFinal ? 'Final scores' : `After round ${s.roundIndex + 1}`}</h2>
       ${isFinal && winner ? `<div class="result good"><div class="sub">Winner</div><div class="big">${esc(winner.name)}</div><div class="pts">${winner.score.toLocaleString('en-GB')}</div></div>` : ''}
@@ -1571,8 +1613,16 @@ function buildBoard(s) {
       ${s.you && !rows.some((p) => p.key === youKey)
         ? `<div class="mini-row you"><span class="pos">${s.you.position || '—'}</span><span>${esc(s.you.name)}</span><span class="score">${s.you.score.toLocaleString('en-GB')}</span></div>`
         : ''}
+      <!-- AND WHAT THERE IS TO DO IN THE GAP — under the scores, never over
+           them. Somebody at a round board came to see where they are; the
+           menu is what to do once they have. At the FINAL there is nothing to
+           fill, and a game offered under the winner would be competing with
+           the moment the whole night is built towards. -->
+      ${isFinal ? '' : gapMenu(s, { photosFirst: true })}
     </div>
   `);
+  if (!isFinal) wireGapMenu(el, s);
+  return el;
 }
 
 /**
