@@ -974,6 +974,58 @@ board), `src/arcade.js` (the scores, shared by both engines),
 
 Full reasoning: **[`docs/lobby-games.md`](docs/lobby-games.md)**.
 
+### A DROPDOWN IS NARROW SHUT AND WIDE OPEN — `console-pick.js`
+
+*"All dropdown boxes on the bay must popover… 'look — the usual' needs to only
+be as wide as the pre-filled value, popovers can pop out wider but we need to
+save space."* A native `<select>` cannot do that: the browser sizes the open
+list to the CONTROL, so one narrow enough for "The usual" clips "Halloween —
+in season now".
+
+- **THE NATIVE `<select>` STAYS IN THE DOM AND STAYS THE TRUTH.** The popover
+  is a skin: every `.value` read, every `innerHTML = options(…)` rebuild and
+  every `change` listener goes on working, and **the LAUNCH still reads what it
+  always read**. This bar is the protected surface — a hand-written component
+  holding the values would put every one of those reads at risk for a layout
+  change. **A skin cannot lose a value, because it never holds one.**
+- **SO IT MUST BE REPAINTED WHEN THE SELECT CHANGES UNDERNEATH IT** —
+  `refreshPicks()` at the end of `paintSettings()`, because `.value = x` fires
+  no event and nothing else would tell the face it is stale.
+- **CHOOSING DISPATCHES A REAL `change`.** Setting `.value` from script fires
+  nothing, so without it the picker looks like it worked and the launch sends
+  the value from before.
+- **ONE DOCUMENT LISTENER FOR ALL OF THEM, not one per picker** — the bar is
+  rebuilt on every state push, so per-render listeners leak with the room.
+- **WHICH WAY A MENU OPENS IS MEASURED**, or the rightmost one hangs off the
+  console.
+- **AND A FLOATING SHEET NEEDS AN OUTSIDE-CLICK CLOSE IT DID NOT NEED
+  INLINE.** The venue sheet used to push the bar down; floating, left open it
+  sits over the settings and swallows every click aimed at them. A popover that
+  only its own button can close is a trap.
+- Labels shortened with it: **Secs per Q**, **Game** (the blurb moved into the
+  open menu, with a symbol per game), and Save is just **Save**.
+
+### THE MARKUP GUARD IS THE MARKUP'S HALF OF THE BRACE RULE
+
+`test/markup-balance.test.js`. The same day and the same cause as the
+stylesheet one: a scripted move of the venue sheet left `.lb-what` unclosed and
+an orphan `</div>` behind, and **the head row collapsed — the venue button,
+Save and the mode switch drew on top of one another.**
+
+- **`node --check` PASSES BROKEN HTML.** A template literal holding it is a
+  perfectly good string, and the browser silently re-nests whatever it is
+  given: the page renders, it just renders wrong.
+- **A WHOLE-FILE TAG COUNT WAS TRIED AND TURNED DOWN.** This app builds markup
+  from concatenated fragments — a ternary contributing a `<div>` on one branch,
+  a helper returning a wrapper — so `console-venues.js` is nine divs "short"
+  and entirely correct. **A test needing a growing exceptions list has stopped
+  being a test.** What is left is the launch bar's own template, checked
+  precisely, and verified by reintroducing the fault.
+- **`play.js` genuinely leaves two `<div>`s and a `<label>` open** in the
+  camera sheet. Harmless — the browser closes them at the fragment end — and
+  deliberately not fixed blind, because re-nesting a screen nobody reported a
+  problem with is how you cause the next fault.
+
 ### A STRAY BRACE IN THE STYLESHEET IS SILENT, AND IT REACHED A REAL CONSOLE
 
 `test/style-structure.test.js`. Reported as *"why is it loading like this?"* —
@@ -1457,6 +1509,8 @@ Open the one you are touching; do not read them all.
 - How many people can play
 - Online mode is ONE BOOLEAN, and the branch count is a budget
 - THREE WAYS TO PLAY A NIGHT — individual, they pick, dealt at random
+- A DROPDOWN IS NARROW SHUT AND WIDE OPEN — `console-pick.js`
+- THE MARKUP GUARD IS THE MARKUP'S HALF OF THE BRACE RULE
 - A STRAY BRACE IN THE STYLESHEET IS SILENT, AND IT REACHED A REAL CONSOLE
 - The alphabet round — no options at all
 - The intro round skips the dead air, and that is a SCORING fix
@@ -1913,6 +1967,7 @@ public/                the screens; *-bingo.js files hold the bingo variants
   assets/schemes.js    a quizmaster's own two colours, shared with the server
   assets/break-parts.js  what happens in each gap of a night, shared with the server
   assets/console-breaks.js  the break strip under Tonight's running order
+  assets/console-pick.js   a dropdown that is narrow shut and wide open
   assets/diary.js      what is on and when — residencies projected, one-offs typed
   assets/chat.js       the chat sheet on a player's phone, online nights only
 quizzes/ bingo/        the library

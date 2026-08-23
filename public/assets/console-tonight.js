@@ -1,6 +1,7 @@
 /** TONIGHT — the launch bar, what is running, and the settings for one night. */
 
 import { breakStrip, doorsChip, prunePlan } from './console-breaks.js';
+import { refreshPicks } from './console-pick.js';
 import { esc, node, postJson } from './client.js';
 import { tonightsVenue } from './console-gigs.js';
 import { invoiceApi, openInvoiceForm, share } from './console-invoices.js';
@@ -594,6 +595,23 @@ export function launchBar() {
                "Tonight" makes you open it to find out what it is set to,
                which is the tap this is meant to save. -->
           <span class="tiny lb-shut-what" hidden></span>
+          <!-- SEARCHABLE, because a quizmaster with fifteen residencies scrolling a
+               dropdown in a dark pub is the thing this replaces. It draws from the
+               Venues tab and from where you have actually played, and it keeps the
+               way out for a pub that is not on either list — that is the promise a
+               night's free-text venue was built on. -->
+          <div class="lb-venues" hidden>
+            <input class="lb-venue-search" type="search" autocomplete="off" placeholder="Search your venues…">
+            <div class="lb-venue-list"></div>
+            <div class="lb-venue-foot">
+              <button class="minor lb-venue-other" type="button">Somewhere else…</button>
+              <!-- THROUGH THE WORKSHOP DOOR, because that is where the add form
+                   is now: the Console's Venues tab is a shelf you drag off, and
+                   a link to a form that is not there is worse than no link. -->
+              <a class="minor lb-venue-add" href="?door=workshop&amp;tab=venues${
+  keyInUrl ? `&amp;key=${encodeURIComponent(keyInUrl)}` : ''}">Add a venue</a>
+            </div>
+          </div>
         </div>
         <!-- SAVE SITS UP HERE, BESIDE THE VENUE — asked for directly: *"save
              button also needs to be next to the venue so its obvious what
@@ -614,7 +632,7 @@ export function launchBar() {
              the fact that matters, and the tooltip says the rest. -->
         <div class="set-keep">
           <button class="minor set-save" type="button"
-            title="Keeps the packs and every setting on this bar — but never the venue, so you can run the same night anywhere">Save for another night</button>
+            title="Keeps the packs and every setting on this bar — but never the venue, so you can run the same night anywhere">Save</button>
         </div>
         <!-- WHERE THEY ARE, beside the fold rather than on a row of its own.
              Two pills at the right-hand end: what kind of night it is, and
@@ -665,23 +683,6 @@ export function launchBar() {
              warning should be the thing that moves, not the controls whose
              position people learn. -->
         <div class="lb-warn-slot" hidden></div>
-      </div>
-      <!-- SEARCHABLE, because a quizmaster with fifteen residencies scrolling a
-           dropdown in a dark pub is the thing this replaces. It draws from the
-           Venues tab and from where you have actually played, and it keeps the
-           way out for a pub that is not on either list — that is the promise a
-           night's free-text venue was built on. -->
-      <div class="lb-venues" hidden>
-        <input class="lb-venue-search" type="search" autocomplete="off" placeholder="Search your venues…">
-        <div class="lb-venue-list"></div>
-        <div class="lb-venue-foot">
-          <button class="minor lb-venue-other" type="button">Somewhere else…</button>
-          <!-- THROUGH THE WORKSHOP DOOR, because that is where the add form
-               is now: the Console's Venues tab is a shelf you drag off, and
-               a link to a form that is not there is worse than no link. -->
-          <a class="minor lb-venue-add" href="?door=workshop&amp;tab=venues${
-  keyInUrl ? `&amp;key=${encodeURIComponent(keyInUrl)}` : ''}">Add a venue</a>
-        </div>
       </div>
       <!-- WHAT IS ACTUALLY ON THE PROJECTOR, which is a different question
            from what the box is set to. Reported from a real night: the two
@@ -745,24 +746,34 @@ export function launchBar() {
            below because the LAUNCH only carries one — doLaunchOrder()
            sends it once for the whole running order, so a per-pack control
            would promise something the server cannot keep. -->
+      <!-- EACH ONE ONLY AS WIDE AS ITS ANSWER — *"look, the usual needs to
+           only be as wide as the pre-filled value, popovers can pop out wider
+           but we need to save space."* The data-pop attribute is what turns a
+           native select into that (see console-pick.js); the select itself
+           stays in the DOM and stays what the launch reads. -->
       <div class="lb-set lb-set-night">
         <label class="pack-shape">Look
-          <select class="look-pick"></select>
+          <select class="look-pick" data-pop></select>
         </label>
-        <label class="pack-shape" title="Blank leaves each quiz at its own pace.">Seconds per question
+        <!-- "Secs per Q", abbreviated on request: the full words were the
+             widest label on the bar by half, for a field holding two digits. -->
+        <label class="pack-shape" title="Seconds per question. Blank leaves each quiz at its own pace.">Secs per Q
           <input type="number" class="seconds-pick" min="5" max="120" placeholder="20">
         </label>
-        <label class="pack-shape pack-shape-wide">While they wait
-          <select class="game-pick"></select>
+        <!-- "Game", not "While they wait" — and the option blurb lives in
+             the open menu now rather than on the face, so shut it reads
+             "Maze Mouth" instead of "Maze Mouth — a maze cha…". -->
+        <label class="pack-shape">Game
+          <select class="game-pick" data-pop></select>
         </label>
         <label class="pack-shape">Game sound
-          <select class="sound-pick">
+          <select class="sound-pick" data-pop>
             <option value="on">On</option>
             <option value="off">Off</option>
           </select>
         </label>
         <label class="pack-shape">Playing
-          <select class="play-pick">${playingOptions()}</select>
+          <select class="play-pick" data-pop>${playingOptions()}</select>
         </label>
       </div>
       <!-- TONIGHT'S RUNNING ORDER — the place packs are dropped and where
@@ -793,10 +804,10 @@ export function launchBar() {
       <div class="lb-set lb-set-pack">
         <span class="tiny lb-set-for"></span>
         <label class="pack-shape lb-set-card">Card
-          <select class="shape-pick" disabled></select>
+          <select class="shape-pick" data-pop disabled></select>
         </label>
         <label class="pack-shape lb-set-prizes">Prizes
-          <select class="prize-pick" disabled></select>
+          <select class="prize-pick" data-pop disabled></select>
         </label>
       </div>
       <!-- KEEP THE WHOLE EVENING — the way a saved night is built, and it
@@ -1148,6 +1159,27 @@ export function launchBar() {
     where.setAttribute('aria-expanded', lbVenueOpen ? 'true' : 'false');
     if (lbVenueOpen) { paintVenueList(); venueSearch.focus(); }
   };
+  /*
+   * IT SHUTS WHEN YOU LOOK AWAY — which it did not need to when it was an
+   * ordinary block that pushed the bar down, and does now that it FLOATS.
+   * Caught the moment it started floating: left open, the sheet sits over the
+   * settings row and swallows every click aimed at the controls underneath,
+   * so the bar reads as frozen. A popover that can only be closed by the
+   * control that opened it is a trap.
+   *
+   * On the bar's own element rather than the document, because this listener
+   * dies with the render that made it — the launch bar is rebuilt on every
+   * state push, and a document-level one per render is a leak that grows with
+   * the room.
+   */
+  el.addEventListener('click', (ev) => {
+    if (!lbVenueOpen) return;
+    if (venues.contains(ev.target) || where.contains(ev.target)) return;
+    toggleVenues();
+  }, true);
+  el.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape' && lbVenueOpen) { toggleVenues(); where.focus(); }
+  });
 
   /*
    * THE OTHER PACK WORTH OFFERING, as a chip rather than a second big button.
@@ -1701,6 +1733,13 @@ export function launchBar() {
       if (night.lobbyGame) lobbyGamePick.value = night.lobbyGame;
     }
 
+    /*
+     * THE POPOVER FACES COME BACK INTO STEP HERE. The selects above are set
+     * by script — `.value = x`, `.innerHTML = options(…)` — and neither fires
+     * an event, so nothing else would tell the faces they are stale. This is
+     * the one seam every settings repaint already passes through.
+     */
+    refreshPicks(el);
     if (setSave) {
       // Mirrors the exact check `paintMixedOrder()` uses for the Launch
       // button itself — "anything to keep" and "anything to launch" have to
@@ -1720,7 +1759,16 @@ export function launchBar() {
        * already uses ("Drag a pack in to launch") — one control, one
        * sentence, and no second line to read.
        */
-      setSave.textContent = hasNight ? 'Save for another night' : 'Add a pack to save this night';
+      /*
+       * JUST "SAVE" — asked for once the bar ran out of room: *"'add a
+       * pack...' is now just 'save'."* The reason it is off moves to the
+       * tooltip rather than disappearing, which is the trade a five-word
+       * button was costing on the one row that now holds the whole night.
+       */
+      setSave.textContent = 'Save';
+      setSave.title = hasNight
+        ? 'Keeps the packs and every setting on this bar — but never the venue, so you can run the same night anywhere'
+        : 'Add a pack to Tonight first — there is nothing to keep yet';
     }
   }
 

@@ -244,7 +244,22 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * launches, and the prizes are the one that is read at launch onto a voucher.
  */
 /*
- * `console-tonight.js` GOES TO 3420 THE SAME DAY, for the Playing choice
+ * `console-tonight.js` GOES TO 3480 for the venue sheet becoming a popover —
+ * it moved inside the picker's own cell (so it can hang off it) and gained the
+ * outside-click and Escape closes it never needed as an inline block. A
+ * floating sheet that can only be shut by the control that opened it sits over
+ * the settings row and swallows every click aimed at them.
+ */
+/*
+ * `console-tonight.js` WENT TO 3450 EARLIER THE SAME DAY, for the popover
+ * pickers — *"all dropdown boxes on the bay must popover… we need to save
+ * space."* The component is its own module (`console-pick.js`); what grew
+ * here is the shorter labels, the `data-pop` markers, and the note saying why
+ * the native `<select>` stays in the DOM: the launch reads it, and this bar is
+ * the protected surface.
+ */
+/*
+ * `console-tonight.js` WENT TO 3420 EARLIER THE SAME DAY, for the Playing choice
  * becoming ONE field (`night.playing`) with `teamPlay` and `teamMode` derived
  * from it at the moment of sending — so there is no second copy on the
  * browser side that could drift out of step with the dropdown somebody is
@@ -256,7 +271,7 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * options themselves are three lines; the note is why the labels name the
  * CHOICE rather than the mechanism they used to describe.
  */
-const BUDGET = { 'console-tonight.js': 3420, 'console.js': 2000, 'console-packs.js': 1760 };
+const BUDGET = { 'console-tonight.js': 3480, 'console.js': 2000, 'console-packs.js': 1760 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

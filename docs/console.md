@@ -1577,6 +1577,130 @@ Two details, both found by measuring rather than by looking:
   different shapes, which was most of what read as mess. Stacked, every cell
   is the same two lines and the controls line up along one edge.
 
+## A DROPDOWN IS NARROW SHUT AND WIDE OPEN — `console-pick.js`
+
+Asked for on 23 August 2026, as five separate space savings on one bar:
+
+> *"'add a pack…' is now just 'save' / the venue dropdown box and all dropdown
+> boxes on the bay must popover / 'while they wait' can be changed to 'game'
+> and the explainer can go, just have 'Maze Mouth' and a symbol to show what it
+> is / 'look — the usual' needs to only be as wide as the pre-filled value,
+> popovers can pop out wider but we need to save space, same with the others /
+> Seconds per question can be abbreviated to 'secs per Q' and made narrower."*
+
+Four of the five are wording and widths. The middle one is a component, and it
+is the only reason the other four are possible.
+
+### A NATIVE `<select>` CANNOT BE NARROW AND WIDE AT THE SAME TIME
+
+That is the whole problem in one line. A browser sizes the open list to the
+CONTROL, so a select narrow enough to say "The usual" opens a list that clips
+"Halloween — in season now". The bar was therefore paying for its longest
+option on all five pickers, on every night, whether or not anybody ever opened
+one — five controls at 215px each where the values in them are 66px to 142px.
+
+Measured after: `The usual` 109px, `👻 Maze Mouth` 142px, `On` 66px,
+`Individual` 109px. The game menu opens at 265px over a 142px face, which is
+the feature working — nearly twice its own width, and the explainer the host
+asked to delete is still there, just only while you are choosing.
+
+### THE NATIVE SELECT STAYS IN THE DOM AND STAYS THE TRUTH
+
+`console-pick.js` draws a button and a floating menu BESIDE the real select and
+does nothing else. Every `.value` read, every `innerHTML = options(…)` rebuild
+and every `change` listener in the console goes on working untouched, and the
+launch reads exactly what it always read.
+
+**That is a decision about the protected surface rather than a shortcut.** This
+bar is the path from "the room is sitting down" to "the quiz is running", and
+five of the fields the launch payload is built from live on it. Replacing them
+with a hand-written component would put every one of those reads at risk for
+what is, in the end, a layout change. **A skin over the real control cannot
+lose a value, because it never holds one.**
+
+Three consequences, each of which is a line of code that looks optional and is
+not:
+
+- **Setting `.value` from script fires nothing**, so choosing an option has to
+  `dispatchEvent(new Event('change', { bubbles: true }))` by hand. Without it
+  the picker would look like it worked and the launch would send the value from
+  before — the worst available failure, because it is silent and it is on the
+  launch.
+- **The face has to be repainted when the select changes underneath it.**
+  `paintSettings()` sets `.value` and rebuilds `.innerHTML` directly in several
+  places and neither fires an event, so `refreshPicks(el)` is called at the end
+  of it — the one seam every one of those writes already passes through.
+- **One document-level listener for closing, not one per picker.** The bar is
+  rebuilt on every state push, which during a lobby is every time somebody
+  joins; a listener added per picker per render is a leak that grows with the
+  room.
+
+### THE FACE SHOWS THE SHORT NAME, THE MENU SHOWS THE WHOLE THING
+
+`data-short` on an `<option>`. Without one the face uses the option's own text,
+so nothing has to be annotated unless it wants to be.
+
+That split is what buys the space, and it is also what let the host's third
+request be granted without losing anything: **"Maze Mouth" shut, "👻 Maze Mouth
+— a maze chase" open.** The explainer he asked to delete is not deleted — it
+moved to the moment you are actually choosing, which is the only moment it was
+ever any use.
+
+**The symbol lives on the game, in `lobby-games.js`** — 👻 🏓 🐍 🤠 — beside the
+name rather than instead of it. An icon alone is a rebus; an icon in front of a
+name is something you find again next week without reading.
+
+### WHICH WAY IT OPENS IS MEASURED, NOT ASSUMED
+
+The rightmost picker on the bar sits a few pixels from the edge of the panel,
+and a menu WIDER than its button — which is the entire point of this — would
+otherwise hang off the side of the console. So the menu is shown, measured, and
+flipped to `.to-left` if its right edge is past the viewport.
+
+Measured at open rather than at build, because the bar's width changes with the
+window and with how much is in it, and a class decided once would be wrong the
+first time anybody resized anything.
+
+### THE VENUE SHEET FLOATS, AND THAT NEEDED TWO FIXES NOTHING WOULD HAVE THROWN
+
+The venue picker was already a bespoke sheet rather than a select, so it did
+not need the component — it needed to stop pushing the bar around. Moving it
+inside `.lb-what` and making it `position: absolute` did that: the bar is 348px
+tall open and 348px tall shut.
+
+Both faults it caused were structural and silent:
+
+- **The move left `.lb-what` unclosed and an orphan `</div>` behind.** The head
+  row collapsed and the venue button, Save and the mode switch drew on top of
+  one another. `node --check` is perfectly happy — a template literal holding
+  broken HTML is a good string, and the browser silently re-nests whatever it
+  is given. Diagnosed by asking the head row what its CHILDREN were, which
+  listed things that should have been its siblings.
+- **A floating sheet swallows clicks on whatever is now underneath it.**
+  Playwright named it exactly: *"`<button class="lb-venue-hit">The Crown</button>`
+  … intercepts pointer events"*. It needed an outside-click close and an
+  Escape, which a sheet that pushed the page down had never wanted.
+
+`test/markup-balance.test.js` is the first of those with an assertion on it: it
+counts `<div>` against `</div>` in the `launchBar()` template alone. **A
+whole-file sweep was tried first and turned down** — this app builds markup out
+of concatenated fragments, so `console-venues.js` comes out nine divs short and
+is completely correct. A test that needs a growing list of exceptions has
+stopped being a test.
+
+It is the markup's half of what `test/style-structure.test.js` does for braces,
+written on the same day for the same reason: two structural faults an hour
+apart, both from an edit taking one delimiter too many or too few, and neither
+one a syntax error in anything.
+
+### WHAT WAS PROVED, RATHER THAN LOOKED AT
+
+A launch made entirely through the new pickers — every value chosen by clicking
+a popover, nothing set by script — sent
+`lobbyGame=rally lobbySound=false teamMode=random teamPlay=true seconds=35`.
+That is the only check that matters here: the component is a skin, and the
+question is whether the thing underneath still says what you told it.
+
 ## A CONTROL IS PRESENT AND INERT, NEVER ABSENT
 
 Reported on 15 August 2026: *"slightly clunky how the Set it up appears only

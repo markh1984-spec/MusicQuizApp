@@ -228,7 +228,15 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * what is VISIBLE rather than what is in the DOM — and the last of those has
  * now cost this project three separate bugs.
  */
-const BUDGET = 156_600;
+/*
+ * RAISED TO 159_800 ON 23 AUGUST 2026, for the popover pickers and the markup
+ * guard. The load-bearing lines are the ones that stop a change: the native
+ * `<select>` stays the truth because the LAUNCH reads it, choosing must
+ * dispatch a real `change`, a floating sheet needs an outside-click close, and
+ * a whole-file tag count was tried and turned down because a test needing an
+ * exceptions list is a snapshot rather than a test.
+ */
+const BUDGET = 159_800;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

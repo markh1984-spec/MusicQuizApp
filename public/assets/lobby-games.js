@@ -47,6 +47,8 @@ import { tierRank } from './plans.js';
 export const LOBBY_GAMES = [
   {
     id: 'maze',
+    // A symbol so the console can say which game in a word — the thing chasing you through it.
+    icon: '👻',
     name: 'Maze Mouth',
     how: 'Tap where you want to go',
     blurb: 'a maze chase',
@@ -56,6 +58,8 @@ export const LOBBY_GAMES = [
   },
   {
     id: 'rally',
+    // A symbol so the console can say which game in a word — bat and ball.
+    icon: '🏓',
     name: 'Rally',
     how: 'Slide your thumb along the bottom',
     blurb: 'bat and ball',
@@ -67,6 +71,8 @@ export const LOBBY_GAMES = [
   },
   {
     id: 'tailback',
+    // A symbol so the console can say which game in a word — a tail that grows.
+    icon: '🐍',
     name: 'Tailback',
     how: 'Tap where you want to go',
     blurb: 'a growing tail',
@@ -75,6 +81,8 @@ export const LOBBY_GAMES = [
   },
   {
     id: 'quickdraw',
+    // A symbol so the console can say which game in a word — a shooting gallery.
+    icon: '🤠',
     name: 'Quick Draw',
     how: 'Shoot the outlaws, never the sheriff',
     blurb: 'a western shoot-out',

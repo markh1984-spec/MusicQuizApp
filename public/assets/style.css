@@ -6135,37 +6135,108 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
  * The span is dropped in the same breakpoint: it exists so the longest label
  * on the bar is not cramped, and at a fifth of 1150px it is not.
  */
-@media (min-width: 1150px) {
-  .lb-set.lb-set-night { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  /*
-   * TWO CLASSES ON THE SAME ELEMENT, deliberately. `.lb-set .pack-shape-wide`
-   * sits FOURTEEN LINES FURTHER DOWN this sheet at the identical specificity,
-   * so a single-class override here loses on source order alone and the span
-   * survives — which put "Playing" on a row of its own with four empty cells
-   * beside it and nothing thrown. That is the same shape of trap the pack
-   * tile's `border` shorthand already records; the fix is to out-specify it
-   * rather than to depend on which line came last.
-   */
-  .lb-set.lb-set-night .pack-shape-wide { grid-column: auto; }
-  /*
-   * AND THE LABEL GOES ABOVE ITS CONTROL, not beside it.
-   *
-   * Side by side, a fifth of the bar is not enough for "Seconds per question"
-   * or "While they wait", so those two wrapped to two and three lines while
-   * "Look" and "On" sat on one — a row of five cells each a different shape,
-   * which is the raggedness this whole change is meant to remove. Stacked,
-   * every cell is the same two lines, the labels never break mid-phrase, and
-   * the controls line up along one edge where the eye can run across them.
-   */
-  .lb-set.lb-set-night .pack-shape {
-    display: grid; grid-template-columns: minmax(0, 1fr);
-    align-items: start; gap: 4px; margin: 0;
-  }
-  .lb-set.lb-set-night .pack-shape > * { width: 100%; }
-  /* Except the seconds box, which is a two-digit number and looks absurd
-     stretched to 215px. */
-  .lb-set.lb-set-night .pack-shape .seconds-pick { width: 80px; }
+/*
+ * EACH SETTING ONLY AS WIDE AS ITS ANSWER — *"'look — the usual' needs to only
+ * be as wide as the pre-filled value… we need to save space."*
+ *
+ * A grid of five equal columns gave every control the width of the widest one,
+ * so "On" and "20" were each a fifth of the bar. A wrapping flex row lets each
+ * take what it needs and no more, and the row still fills left to right — the
+ * open MENU is where the space comes from now, and a menu costs nothing until
+ * somebody opens it (see `console-pick.js`).
+ */
+.lb-set-night {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px;
 }
+.lb-set-night .pack-shape { flex: 0 0 auto; }
+/*
+ * THE LABEL SITS ABOVE ITS CONTROL, at every width now that the row is
+ * content-sized rather than five equal columns. Side by side, a label and a
+ * value make a cell as wide as both; stacked, the cell is as wide as the wider
+ * of the two — which for "Secs per Q" over a two-digit box is the label, and
+ * for "Look" over "The usual" is the value.
+ */
+.lb-set-night .pack-shape {
+  display: grid; grid-template-columns: minmax(0, auto);
+  justify-items: start; align-items: start; gap: 4px; margin: 0;
+}
+/* =====================================================================
+ * THE POPOVER PICKER — narrow shut, wide open. See `console-pick.js` for
+ * why a native `<select>` cannot do this: a browser sizes the open list to
+ * the control, so a control narrow enough for "The usual" opens a list that
+ * clips "Halloween — in season now".
+ * ===================================================================== */
+.pick { position: relative; display: inline-flex; }
+/* The real control is still there and still what the launch reads — it is
+   simply not what anybody looks at. `position: absolute` rather than
+   `display: none` so it keeps a box for anything that measures it. */
+.pick > select {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: 0;
+  opacity: 0; pointer-events: none; border: 0;
+}
+/*
+ * THE FACE IS A DROPDOWN, and wears exactly what every other dropdown on the
+ * bar wears — same height, fill, border, radius, and the account's own
+ * gradient on the chevron block. The GUI rules put that gradient there as the
+ * affordance that says "this opens", so a picker without it would read as a
+ * label.
+ */
+.pick-face {
+  display: inline-flex; align-items: center; gap: 8px;
+  max-width: 100%; min-width: 0;
+  padding: 9px 11px;
+  border-radius: var(--r-field);
+  border: 1px solid var(--panel-line);
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--ink);
+  font-family: inherit; font-size: var(--fs-note); font-weight: 800;
+  text-align: left; cursor: pointer;
+}
+.pick-face:hover { border-color: var(--hot); }
+.pick-face:disabled { opacity: 0.6; cursor: default; }
+.pick-word { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pick-caret {
+  flex: 0 0 auto; width: 27px; align-self: stretch; margin: -9px -11px -9px 0;
+  border-radius: 0 var(--r-field) var(--r-field) 0;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%2312000c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / 11px 8px,
+    linear-gradient(120deg, var(--hot), var(--hot-2));
+}
+.pick-face:disabled .pick-caret { filter: grayscale(1); }
+/*
+ * AND THE MENU IS AS WIDE AS IT NEEDS TO BE, which is the whole point. It
+ * floats, so it costs the bar no height and no width until it is opened.
+ */
+.pick-menu {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 60;
+  min-width: 100%; width: max-content; max-width: min(360px, 80vw);
+  max-height: 320px; overflow-y: auto;
+  padding: 4px;
+  border-radius: var(--r-card);
+  border: 1px solid var(--panel-line);
+  background: var(--surf-1, var(--panel));
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+}
+/* Measured on open — the rightmost picker on the bar is a few pixels from the
+   panel edge, and a menu wider than its button would hang off the console. */
+.pick-menu.to-left { left: auto; right: 0; }
+.pick-opt {
+  display: block; width: 100%; text-align: left;
+  padding: 9px 10px; border: 0; border-radius: var(--r-field);
+  background: none; color: var(--ink);
+  font-family: inherit; font-size: var(--fs-note); font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+}
+.pick-opt:hover:not(:disabled) { background: rgba(255, 255, 255, 0.09); }
+/* The one you are on, in the account's own colour — the same "you are here"
+   treatment the lit menu chip uses, and deliberately not the full gradient,
+   which means "press this". */
+.pick-opt.is-on { background: rgba(255, 46, 136, 0.16); background: color-mix(in srgb, var(--hot) 18%, transparent); }
+.pick-opt:disabled { opacity: 0.45; cursor: default; }
+
+/* Two digits. It was a fifth of the bar. */
+.lb-set-night .seconds-pick { width: 72px; }
+
 .lb-set > * { min-width: 0; }
 .lb-set .pack-shape { margin: 0; min-width: 0; }
 .lb-set select, .lb-set input { min-width: 0; max-width: 100%; }
@@ -6330,7 +6401,10 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .lb-head > * { min-width: 0; }
 /* What tonight is: the venue when it is open, the pack as well when it is
    shut. One cell, so the row always has exactly three items in it. */
-.lb-what { display: flex; align-items: baseline; gap: 10px; min-width: 0; overflow: hidden; }
+/* `overflow: hidden` is GONE — it clipped the venue sheet, which now hangs
+   off this cell. The long-name job it was doing is already done by
+   `.lb-where`'s own ellipsis, which is where it belongs. */
+.lb-what { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
 /* PLACED EXPLICITLY, all three. Left to auto-placement, moving the middle cell
    to a second line on a phone let the fold button fall into column 2 — the
    third column collapsed to nothing and the button sat 10px shy of the right
@@ -6401,11 +6475,30 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 /* The picker itself. A list you search rather than a dropdown you scroll:
    fifteen residencies in a native select, in a dark pub, is the thing this
    replaces. */
+/*
+ * THE VENUE SHEET FLOATS TOO — *"the venue dropdown box and all dropdown boxes
+ * on the bay must popover."* It was an ordinary block with a top margin, so
+ * opening it pushed the settings, the packs and Launch down the page: the one
+ * control most likely to be touched in a hurry moved everything under it.
+ *
+ * Anchored to `.lb-what`, which is the picker's own cell, and given the same
+ * surface and shadow as the option menus so the two read as one kind of
+ * object. `min-width` rather than `width`, because a pub name is as long as
+ * the pub is.
+ */
 .lb-venues {
-  display: grid; gap: 8px; margin-top: 10px; padding: 10px;
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 60;
+  display: grid; gap: 8px; padding: 10px;
+  min-width: 280px; width: max-content; max-width: min(420px, 88vw);
+  max-height: 340px; overflow-y: auto;
   border: 1px solid var(--panel-line); border-radius: var(--r-card);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surf-1, var(--panel));
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
 }
+/* The anchor. `.lb-what` holds the picker AND the sheet now, so the sheet
+   hangs off the cell it belongs to rather than off the whole head — which
+   would have put it under the fold button at the far right. */
+.lb-what { position: relative; }
 .lb-venue-list { display: grid; gap: 2px; max-height: 220px; overflow-y: auto; }
 .lb-venue-hit {
   text-align: left; padding: 10px 12px; font: inherit; font-weight: 700;

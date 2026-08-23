@@ -10,6 +10,62 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 23 August 2026 — the launch bar's dropdowns are narrow shut and
+wide open:**
+
+Five space savings asked for in one message, and four of them were only
+possible because of the fifth: *"the venue dropdown box and all dropdown boxes
+on the bay must popover… 'look — the usual' needs to only be as wide as the
+pre-filled value, popovers can pop out wider but we need to save space."*
+
+**A NATIVE `<select>` CANNOT BE NARROW AND WIDE AT THE SAME TIME.** A browser
+sizes the open list to the control, so a select narrow enough to say "The
+usual" opens a list that clips "Halloween — in season now" — and the bar was
+paying for its longest option on all five pickers, on every night, whether or
+not anybody ever opened one. They were 215px each; the values in them are 66px
+to 142px.
+
+**`console-pick.js` IS A SKIN, AND THE REAL SELECT STAYS THE TRUTH.** It draws
+a button and a floating menu beside the native control and does nothing else,
+so every `.value` read, every `innerHTML` rebuild and every `change` listener
+goes on working and **the launch reads exactly what it always read**. That is a
+decision about the protected surface, not a shortcut: five of the fields the
+launch payload is built from live on this bar, and a skin over the real control
+cannot lose a value because it never holds one. Choosing an option has to fire
+a real `change` by hand — setting `.value` from script fires nothing, and
+without it the picker would look like it worked while the launch sent the value
+from before.
+
+**THE FACE SHOWS THE SHORT NAME AND THE MENU SHOWS THE WHOLE THING**, which is
+how the explainer the host asked to delete survived: "👻 Maze Mouth" shut,
+"👻 Maze Mouth — a maze chase" open. It moved to the moment you are actually
+choosing, which is the only moment it was ever any use. Which way a menu opens
+is MEASURED on open, or the rightmost one hangs off the side of the console.
+
+**THE VENUE SHEET NOW FLOATS**, so the bar is the same height open and shut —
+and both faults that caused were structural and silent. The move left
+`.lb-what` unclosed and an orphan `</div>` behind, and the head row collapsed
+with the venue button, Save and the mode switch drawn on top of one another;
+`node --check` is happy, because a template literal holding broken HTML is a
+perfectly good string. Then the floating sheet swallowed clicks on the settings
+underneath it, which Playwright named outright. `test/markup-balance.test.js`
+counts `<div>` against `</div>` in the `launchBar()` template — the markup's
+half of what `style-structure.test.js` does for braces, written the same day
+for the same reason. **A whole-file sweep was tried first and turned down**:
+this app builds markup out of concatenated fragments, so `console-venues.js`
+comes out nine divs short and is completely correct, and a test needing a
+growing list of exceptions has stopped being a test.
+
+Also in the same pass: *"add a pack…"* on the keep button is now just **Save**
+with the reason on its tooltip, *"While they wait"* is **Game**, and *"Seconds
+per question"* is **Secs per Q** in a 72px box.
+
+**Proved rather than looked at:** a launch made entirely through the new
+pickers — every value chosen by clicking a popover, nothing set by script —
+sent `lobbyGame=rally lobbySound=false teamMode=random teamPlay=true
+seconds=35`. 1,515 tests green and `pub-unchanged` IDENTICAL.
+
+
 **FIXED, same day — Tonight's six pack slots were showing as ONE, and it was
 a stray brace in the stylesheet:**
 

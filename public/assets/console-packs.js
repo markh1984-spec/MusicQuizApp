@@ -834,7 +834,15 @@ export function lobbyGameOptions(kind) {
   const fallback = lobbyGameFor(kind, '').id;
   return lobbyGameChoices(tier).map((g) => {
     const label = g.held ? `${g.name} — ${g.blurb}` : `${g.name} — ${(findTier(g.tier) || {}).label || g.tier} and up`;
-    return `<option value="${esc(g.id)}" ${g.held ? '' : 'disabled'} ${g.id === fallback ? 'selected' : ''}>${esc(label)}</option>`;
+    /*
+     * `data-short` IS WHAT THE CLOSED CONTROL SHOWS — the symbol and the name,
+     * nothing else. Asked for directly: *"'while they wait' can be changed to
+     * 'game' and the explainer can go, just have 'Maze Mouth' and a symbol to
+     * show what it is."* The blurb is still there, in the open menu, which is
+     * the one moment somebody is actually choosing between them.
+     */
+    const short = `${g.icon ? `${g.icon} ` : ''}${g.name}`;
+    return `<option value="${esc(g.id)}" data-short="${esc(short)}" ${g.held ? '' : 'disabled'} ${g.id === fallback ? 'selected' : ''}>${esc(`${g.icon ? `${g.icon} ` : ''}${label}`)}</option>`;
   }).join('');
 }
 
