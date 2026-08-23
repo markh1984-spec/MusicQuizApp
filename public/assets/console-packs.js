@@ -34,6 +34,25 @@ const DENSE_STORE = 'musicquiz.compactpacks';
 let packQuery = { quiz: '', bingo: '' };
 
 /**
+ * WHICH JOB THE WORKSHOP SHELF IS DOING — asked for directly, once the search
+ * box left the Console: *"I think the workshop is the place to pin 6 —
+ * perhaps make that a drop down in the workshop, options being 'work on a
+ * pack' and 'set your pinned packs'?"*
+ *
+ * They are genuinely two jobs on one shelf, which is why they were quietly
+ * fighting before: choosing what to WORK on wants the six the app
+ * recommends and a tap that opens the bench, while choosing what to PIN
+ * wants every pack you own on screen at once. One shelf trying to be both
+ * showed six packs and asked you to curate from them.
+ *
+ * Per DEVICE rather than on the account, the same rule the benches and
+ * Compact already follow: this is a fact about how you are working right
+ * now, not a setting.
+ */
+const PACK_MODE_STORE = 'musicquiz.packmode';
+const packMode = () => (localStorage.getItem(PACK_MODE_STORE) === 'pin' ? 'pin' : 'work');
+
+/**
  * What one pack costs, said the way a price is said.
  *
  * `money()` on this page is the INVOICE formatter — it prints £3.00, because an
@@ -164,37 +183,60 @@ function pinnedArranger(kind, packs) {
 export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
   const door = doorNow();
   const dense = localStorage.getItem(DENSE_STORE) === '1';
-  const query = packQuery[kind] || '';
+  /*
+   * THE CONSOLE DOOR HAS NO SEARCH, SO IT MUST NOT CARRY A QUERY EITHER.
+   *
+   * `packQuery` is module state keyed by KIND, not by door — so a search
+   * typed on the Workshop shelf would still be in it when the Console
+   * rendered, and would silently filter a shelf with no visible box to
+   * explain why half the packs had gone. A filter you cannot see is worse
+   * than one you did not want.
+   */
+  const searchable = door !== 'console';
+  const queryFor = () => (searchable ? (packQuery[kind] || '') : '');
+  const query = queryFor();
+  // Only the Workshop has the two jobs; the Console shelf is always the six.
+  const mode = door === 'workshop' && canPin() ? packMode() : 'work';
 
   const el = node(`
     <div class="game-section">
       <!--
-           ON THE CONSOLE DOOR THERE IS NOTHING HERE BUT THE SEARCH BOX.
+           NOTHING AT ALL BETWEEN THE LAUNCH BAR AND THE PACKS ON THE CONSOLE.
 
            *"Nothing is between the console and the packs — remove everything
-           else."* So the heading, the blurb, Compact, My packs and the way to
-           the workshop are all Workshop-door furniture now. Between the launch
-           bar and the cards there is one control, and it is the one that
-           reaches the packs the six do not show.
+           else."* The heading, the blurb, Compact and the way to the workshop
+           went then; the search box went on 23 August 2026, on the same
+           reasoning taken to its end: *"search bar can go — the place to fix
+           the pins for this is the workshop."*
 
-           **SEARCH STAYS AND HAS TO.** See all was removed at the same
-           instruction, so typing is now the ONLY way to reach the seventh pack
-           onwards. Taking the box away as well would strand every pack outside
-           the recommended six.
+           **THIS REVERSES "SEARCH STAYS AND HAS TO", and the pins are why.**
+           That rule was written when the six were chosen by the app's own
+           ranking, so search was the only way to reach the seventh pack —
+           taking it away would have stranded the rest. Pinning changed the
+           premise: the six are now CURATED, in the Workshop, and a shelf you
+           chose does not need searching. The Workshop's own shelf keeps both
+           the search box and the pin arranger, so nothing is unreachable —
+           it is one door away, which is where the choosing happens anyway.
       -->
       <div class="game-head ${door === 'console' ? 'head-bare' : ''}">
         ${door === 'console' ? '' : `<div>
           <h2 class="pack-head">Recommended</h2>
           <div class="tiny">${esc(blurb)}</div>
         </div>`}
-        <div class="pack-tools">
+        ${door === 'console' ? '' : `<div class="pack-tools">
+          <!-- WHICH JOB THIS SHELF IS DOING — see PACK_MODE_STORE. First in
+               the row because it changes what everything after it means. -->
+          ${canPin() ? `<select class="pack-mode" aria-label="What this shelf is for">
+            <option value="work" ${mode === 'work' ? 'selected' : ''}>Work on a pack</option>
+            <option value="pin" ${mode === 'pin' ? 'selected' : ''}>Set your pinned packs</option>
+          </select>` : ''}
           <input class="pack-search" type="search" placeholder="Search ${(packs || []).filter((p) => !p.locked).length}…"
                  value="${esc(query)}" aria-label="Search packs">
-          ${door === 'console' ? '' : `
+          ${mode === 'pin' ? '' : `
           <button class="minor pack-dense" title="${dense ? 'Show the full cards' : 'Squeeze more on screen'}"
                   aria-pressed="${dense}">${dense ? 'Cards' : 'Compact'}</button>
           ${can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS) ? `<a class="minor" href="${linkTo('/editor')}">${esc(editLabel)}</a>` : ''}`}
-        </div>
+        </div>`}
       </div>
       ${door === 'console' ? '' : `<div class="row pack-way-row">
         ${can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS) || can(FEATURES.GENERATE)
@@ -236,9 +278,13 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
    * itself already works from the shelf below; what was missing is an ORDER
    * you can set by hand rather than by unpinning and repinning in sequence.
    */
-  if (door === 'workshop') {
+  if (mode === 'pin') {
     const arranger = pinnedArranger(kind, packs || []);
-    if (arranger) el.querySelector('.pin-arranger-slot').appendChild(arranger);
+    // With fewer than two pins there is no ORDER to set yet, so the arranger
+    // declines to draw — say what to do instead rather than showing a gap.
+    el.querySelector('.pin-arranger-slot').appendChild(arranger || node(
+      '<div class="tiny">Pin the ones you want on the Console shelf — up to six, and you can drag them into order once there are two.</div>',
+    ));
   }
 
   const grid = el.querySelector('.pack-grid');
@@ -266,7 +312,7 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
    * buttons was a wall you read rather than a shelf you scan.
    */
   const paint = () => {
-    const found = matchPacks(packs || [], packQuery[kind]);
+    const found = matchPacks(packs || [], queryFor());
     grid.replaceChildren();
 
     if (!packs || !packs.length) {
@@ -274,7 +320,7 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
       return;
     }
     if (!found.length) {
-      grid.appendChild(node(`<div class="tiny">Nothing matches “${esc(packQuery[kind])}”.</div>`));
+      grid.appendChild(node(`<div class="tiny">Nothing matches “${esc(queryFor())}”.</div>`));
       return;
     }
 
@@ -307,7 +353,7 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
     const yours = inOrder.filter((p) => !p.locked);
 
     if (!yours.length) {
-      grid.appendChild(node(`<div class="tiny">None of the ones you have match “${esc(packQuery[kind])}”.</div>`));
+      grid.appendChild(node(`<div class="tiny">None of the ones you have match “${esc(queryFor())}”.</div>`));
     }
 
     /*
@@ -347,7 +393,14 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
      * to stay one row. A shelf with an expander is a shelf that is sometimes
      * two rows, and "sometimes" is what makes a drag target unlearnable.
      */
-    const shown = yours.slice(0, PACK_SHELF);
+    /*
+     * SIX WHEN YOU ARE CHOOSING WHAT TO PLAY, EVERYTHING WHEN YOU ARE
+     * CHOOSING WHAT TO PIN. The cap exists so a drag has the card and the
+     * slot on screen together — a reason that belongs entirely to the
+     * Console. Curating the six FROM six is the circular thing the mode
+     * dropdown exists to break.
+     */
+    const shown = mode === 'pin' ? yours : yours.slice(0, PACK_SHELF);
     // The heading follows the state — see the note where it is drawn. Set here
     // rather than in the template because `paint()` runs again on every search
     // keystroke and every See all, and the head is not rebuilt with the grid.
@@ -364,7 +417,7 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
        * "Recommended" over them, which is the exact lie the rename existed to
        * stop.
        */
-      const typing = (packQuery[kind] || '').trim();
+      const typing = queryFor().trim();
       headEl.textContent = typing ? 'Your library' : 'Recommended';
     }
     for (const pack of shown) grid.appendChild(packCard(kind, pack));
@@ -372,7 +425,18 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
 
   // Redrawn in place rather than through render(), so the box keeps focus and
   // the caret does not jump to the end after every letter.
-  search.addEventListener('input', () => { packQuery[kind] = search.value; paint(); });
+  // Absent on the Console door — see the note on `searchable` above.
+  search?.addEventListener('input', () => { packQuery[kind] = search.value; paint(); });
+
+  /*
+   * Switching job goes through `render()` rather than `paint()`, because it
+   * changes the HEAD as well as the grid — the arranger appears, Compact and
+   * the editor link stand down. `paint()` only ever rebuilds the cards.
+   */
+  el.querySelector('.pack-mode')?.addEventListener('change', (ev) => {
+    localStorage.setItem(PACK_MODE_STORE, ev.target.value === 'pin' ? 'pin' : 'work');
+    render();
+  });
 
   /*
    * GUARDED, because the button is not drawn on the Console door.

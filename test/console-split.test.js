@@ -177,7 +177,18 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * show, so swapping a part cannot disturb it — is recorded in three other
  * files and would otherwise be put straight back.
  */
-const BUDGET = { 'console-tonight.js': 3060, 'console.js': 2000 };
+/*
+ * `console-packs.js` GETS ITS OWN ENTRY AT 1680, on 23 August 2026, for the
+ * Workshop shelf's two jobs. Asked for once the search box left the Console:
+ * *"the workshop is the place to pin 6 — perhaps make that a drop down,
+ * options being 'work on a pack' and 'set your pinned packs'?"* They really
+ * are two jobs — choosing what to WORK on wants the recommended six, and
+ * choosing what to PIN wants every pack you own on screen, since curating
+ * six FROM six is circular. The mode changes the head as well as the grid,
+ * so it re-renders rather than repainting, and each half needed saying next
+ * to the code that does it.
+ */
+const BUDGET = { 'console-tonight.js': 3060, 'console.js': 2000, 'console-packs.js': 1680 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

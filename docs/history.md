@@ -10,6 +10,38 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 23 August 2026, same day again — the Console shelf lost its
+search box, and the Workshop shelf gained two jobs:**
+
+*"Search bar can go — the place to fix the pins for this is the workshop."*
+**This reverses "SEARCH STAYS AND HAS TO"**, and the pins are why that rule
+expired rather than being wrong: it was written when the six were chosen by
+the app's own ranking, so search was the only way to reach the seventh pack
+and removing it would have stranded the rest. Pinning changed the premise —
+the six are CURATED now, so a shelf you chose does not need searching. The
+Workshop keeps its search and its pin arranger, so nothing is unreachable;
+it is one door away, which is where the choosing happens anyway.
+
+**A REAL TRAP CAUGHT ON THE WAY:** `packQuery` is module state keyed by
+KIND, not by door, so a search typed on the Workshop shelf was still in it
+when the Console rendered — which after this change would have silently
+filtered a shelf with no visible box to explain why half the packs had gone.
+A filter you cannot see is worse than one you did not want. The Console now
+ignores the query entirely, proven live: searching nonsense in the Workshop
+drops it to 0 cards while the Console still shows its 6.
+
+**And the Workshop shelf is now two jobs behind a dropdown** — *"perhaps
+make that a drop down, options being 'work on a pack' and 'set your pinned
+packs'?"* They were quietly fighting before: choosing what to WORK on wants
+the recommended six and a tap that opens the bench, while choosing what to
+PIN wants every pack you own on screen, since **curating six FROM six is
+circular**. So *Set your pinned packs* lifts the six-cap and shows the lot,
+brings up the order arranger (with a line saying what to do when there are
+fewer than two pins), and stands Compact and the editor link down. Per
+device, like the benches and Compact. Verified signed in as a real account —
+the dropdown is correctly absent in bootstrap (host-key-only) mode, because
+`canPin()` is false there by design.
+
 **Live as of 23 August 2026, same day again — a saved night no longer keeps
 its venue, and the bingo card label speaks English:**
 
