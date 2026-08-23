@@ -974,6 +974,42 @@ board), `src/arcade.js` (the scores, shared by both engines),
 
 Full reasoning: **[`docs/lobby-games.md`](docs/lobby-games.md)**.
 
+### THE BAR'S OWN TIDY-UP — and a drag with no tap is a broken control
+
+Reported off a screenshot: *"starting to look a bit messy — can we utilise
+space where possible."* Four placements and one real bug:
+
+- **A CONTROL SITS WITH WHAT IT ACTS ON.** *Stop* was at the far right of a
+  1900px bar, an inch from the line naming what it would stop, so it read as a
+  control over the whole panel. It is **Unlaunch** now — the word pairs with
+  Launch without being told — and it sits 10px from that sentence.
+- **KEEPING A NIGHT IS A NIGHT-LEVEL QUESTION, so it moved into the head**
+  beside the venue, which is where the other three live. **The label has to
+  outrank the adjacency**: a show never keeps the venue, so "Save" alone next
+  to a venue picker would say the opposite of what it does — the words stay
+  *"for another night"*.
+- **THE REASON A CONTROL IS OFF GOES ON THE CONTROL.** *"Nothing in Tonight
+  to keep yet"* was a sentence about the app's own state floating beside a
+  greyed button. The button says **"Add a pack to save this night"**, the
+  shape Launch already uses.
+- **A BIGGER TARGET IS NOT THE SAME AS A HITTABLE ONE.** The pack tile's ×
+  went from ~18px to 30px and the pack NAME then painted over it —
+  `.lb-tile-head` carries `z-index: 1` and comes later in the DOM, so half the
+  button silently did nothing. It needs `z-index` AND `padding-right` on the
+  title.
+- **EVERY DRAG NEEDS ITS TAP, and a shelf round dot never had one.** Reported
+  as *"the drag and drop feature per round doesn't seem to be functional"* —
+  the drag worked and was proved with real mouse events, but the dot carried
+  `mousedown`, `dragstart` and `dragend` and **no `click` at all**. So the
+  first thing anybody tries did nothing, and on a touchscreen there was no way
+  in whatsoever, because HTML5 drag never fires on touch. `addRoundToTonight()`
+  is that tap, through the same path as the drop.
+- **FIVE SETTINGS ON ONE ROW ABOVE 1150px, LABELS ABOVE THEIR CONTROLS.** Side
+  by side at a fifth of the bar, two of the five labels wrapped and three did
+  not — five cells of five different shapes, which was most of the mess.
+
+Full reasoning: **[`docs/console.md`](docs/console.md)**.
+
 ### WHAT HAPPENS IN THE GAPS — a break plan, per gap in the night
 
 `public/assets/break-parts.js` (the model, imported by the SERVER like
@@ -1337,6 +1373,7 @@ Open the one you are touching; do not read them all.
 - DRAG AND DROP — the console is the laptop with the HDMI in it
 - TONIGHT — one launch section, and it PINS WHERE IT ALREADY IS on a drag
 - WHAT HAPPENS IN THE GAPS — a break plan, per gap in the night
+- THE BAR'S OWN TIDY-UP — and a drag with no tap is a broken control
 - A PACK WEARS ITS OWN SUBJECT
 - A CONTROL IS PRESENT AND INERT, NEVER ABSENT
 - Quiz → bingo → quiz, one running score, no engine changes at all

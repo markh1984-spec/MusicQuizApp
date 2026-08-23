@@ -269,6 +269,15 @@ let venueWanted = null;
 let packWanted = null;
 
 /**
+ * A SINGLE ROUND SOMEBODY TAPPED ON THE SHELF, waiting for the bar to be
+ * built — the round-sized twin of `packWanted`, and it exists for the same
+ * reason: the click happens in `console-packs.js`, which cannot reach into
+ * `launchBar()`'s closure, so the request is left here and picked up on the
+ * re-render.
+ */
+let roundWanted = null;
+
+/**
  * WHICH GAME THE BAR IS ON, remembered across renders.
  *
  * **This is a bug fix and the bug was a silent broken Launch.** The game kind
@@ -292,6 +301,30 @@ let packWanted = null;
  * that decides which shelf everything else reads from.
  */
 let lbGame = '';
+
+/**
+ * PUT ONE ROUND INTO TONIGHT — the TAP that the drag never had.
+ *
+ * **The drag worked and the tap did nothing, which is why it was reported as
+ * "the drag and drop feature per round doesn't seem to be functional".** A
+ * shelf round dot carried `mousedown`, `dragstart` and `dragend` and no
+ * `click` at all — so the first thing anybody tries produced silence, and on
+ * a touchscreen there was no way in whatsoever, because HTML5 drag events do
+ * not fire on touch AT ALL.
+ *
+ * That is this repo's own rule broken in the one place it was never applied:
+ * *"the taps and the arrow buttons STAY — drag is the fast way and every drag
+ * has a way round it."* Every other drag on this page already had its tap.
+ *
+ * Same path as the drop, so the two cannot come to mean different things.
+ */
+export function addRoundToTonight(packId, round) {
+  if (!packId) return;
+  roundWanted = { packId, round: Number(round) || 0 };
+  tonightOpen = true;
+  localStorage.setItem(TONIGHT_STORE, '1');
+  renderKeepingPlace();
+}
 
 /** Put a pack into Tonight from anywhere on the page. */
 export function addToTonight(pack, kind) {
@@ -554,6 +587,27 @@ export function launchBar() {
                which is the tap this is meant to save. -->
           <span class="tiny lb-shut-what" hidden></span>
         </div>
+        <!-- SAVE SITS UP HERE, BESIDE THE VENUE — asked for directly: *"save
+             button also needs to be next to the venue so its obvious what
+             that is for"*. It was floating between the tiles and Launch with
+             a note nobody could parse, in the one strip of the bar that
+             belongs to no question at all.
+
+             THIS ROW IS THE NIGHT ITSELF — where it is, whether it is in a
+             room or online, and whether the panel is open. Keeping a night is
+             the fourth question of that kind, and this is the only row that
+             had space for it.
+
+             **AND THE LABEL HAS TO OUTRANK THE ADJACENCY**, because the venue
+             is the one thing a saved night deliberately does NOT keep: a show
+             is a template, and a stale pub on it is somebody refused a drink.
+             Sat next to the venue picker, "Save" alone would say the opposite
+             of what it does — so the words stay "for another night", which is
+             the fact that matters, and the tooltip says the rest. -->
+        <div class="set-keep">
+          <button class="minor set-save" type="button"
+            title="Keeps the packs and every setting on this bar — but never the venue, so you can run the same night anywhere">Save for another night</button>
+        </div>
         <!-- WHERE THEY ARE, beside the fold rather than on a row of its own.
              Two pills at the right-hand end: what kind of night it is, and
              whether the panel is open. Moved there on the host's own reading
@@ -602,7 +656,16 @@ export function launchBar() {
            stopRunningNight() — never a second copy of that confirm wording. -->
       <div class="lb-live-row" hidden>
         <span class="tiny lb-live"></span>
-        <button class="minor danger lb-unlaunch" type="button" title="Clear it and go back to waiting">Stop</button>
+        <!-- UNLAUNCH, AND IT SITS AGAINST THE SENTENCE IT UNDOES — reported
+             off a screenshot: it said "Stop" and sat at the far right of the
+             bar, an inch of empty space away from the line naming what it
+             would stop. At that distance it reads as a control over the whole
+             panel, which is the one thing it must not be mistaken for on a
+             gig night. "Unlaunch" because it is the exact opposite of the
+             button underneath it, and a word somebody can pair with Launch
+             without being told. -->
+        <button class="minor danger lb-unlaunch" type="button"
+          title="Take it off the big screen and go back to waiting">Unlaunch</button>
       </div>
       <!-- WHAT COMES AFTER THIS, when a show with more than one part is up.
            A show is an EVENING and the bar plays one part of it, so without
@@ -728,11 +791,6 @@ export function launchBar() {
            control. A tooltip was tried first and did not fix it, because a
            tooltip is not read at a glance and is not there at all on a phone.
            It says what it DOES now, and names where it goes. -->
-      <div class="set-keep">
-        <button class="minor set-save" type="button"
-          title="Saves the packs and every setting on this bar — but not the venue, so you can run the same night anywhere">Save for another night</button>
-        <span class="tiny set-keep-why"></span>
-      </div>
       <!-- LAUNCH IS ALWAYS HERE, hollow until there is something to launch.
            It used to be created and destroyed with the chosen pack, so the
            bar changed height the moment anything was dragged in or out and
@@ -766,7 +824,6 @@ export function launchBar() {
   const soundPick = el.querySelector('.sound-pick');
   const playPick = el.querySelector('.play-pick');
   const setSave = el.querySelector('.set-save');
-  const setSaveWhy = el.querySelector('.set-keep-why');
   const thenEl = el.querySelector('.lb-then');
   /**
    * THEN: the next part of tonight's show.
@@ -1612,7 +1669,20 @@ export function launchBar() {
       // agree, or one control offers a night the other says does not exist.
       const hasNight = mixed ? segmentsFromSlots(lbSlots).length > 0 : Boolean(pack);
       setSave.disabled = !hasNight;
-      setSaveWhy.textContent = hasNight ? '' : 'Nothing in Tonight to keep yet.';
+      /*
+       * THE REASON GOES ON THE BUTTON, NOT BESIDE IT — reported in exactly
+       * those terms: *"not sure what 'nothing in tonight to keep yet'
+       * means"*. It was a sentence about the app's own state, floating next
+       * to a greyed-out control, describing a condition rather than telling
+       * anybody what to do about it. Two faults at once: it named "Tonight"
+       * as though that were a place you might have put something, and it
+       * said what was missing rather than what to do.
+       *
+       * A disabled button that says what it wants is the same shape Launch
+       * already uses ("Drag a pack in to launch") — one control, one
+       * sentence, and no second line to read.
+       */
+      setSave.textContent = hasNight ? 'Save for another night' : 'Add a pack to save this night';
     }
   }
 
@@ -2906,6 +2976,18 @@ export function launchBar() {
       lbGame = want.kind;
     }
     addPackToNight(packOnShelf(want.kind, want.id), want.kind);
+  }
+  /*
+   * AFTER the pack, never before: a tap on a round of a pack that is not in
+   * the bay yet has to find the pack on the shelf, and `addRoundToNight()`
+   * does that for itself — but if both were ever wanted at once, the pack
+   * has to land first or the round would be moved out of a slot that does
+   * not exist.
+   */
+  if (roundWanted) {
+    const want = roundWanted;
+    roundWanted = null;
+    addRoundToNight(want);
   }
   if (venueWanted) { const name = venueWanted; venueWanted = null; chooseVenue(name); }
 

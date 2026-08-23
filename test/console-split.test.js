@@ -225,7 +225,17 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * `lbExtra`, `lbOff` and `lbSlots` — `launchBar()`'s own closure state, the
  * same thing that has pinned every raise above it.
  */
-const BUDGET = { 'console-tonight.js': 3270, 'console.js': 2000, 'console-packs.js': 1720 };
+/*
+ * RAISED TO 3360 ON 23 AUGUST 2026, for `addRoundToTonight()` — the TAP a
+ * shelf round dot never had. Reported as *"the drag and drop feature per
+ * round doesn't seem to be functional"*: the drag worked and was verified
+ * with real mouse events, but the dot carried no `click` at all, so the
+ * first thing anybody tries did nothing and a touchscreen had no way in
+ * whatsoever. It sits here, with `packWanted`'s twin `roundWanted`, because
+ * the pick-up point is inside `launchBar()`'s closure — the same reason
+ * every raise above it landed here.
+ */
+const BUDGET = { 'console-tonight.js': 3360, 'console.js': 2000, 'console-packs.js': 1720 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

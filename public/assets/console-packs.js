@@ -7,7 +7,7 @@ import { tonightsVenue, whenish } from './console-gigs.js';
 import { field, money, sheet } from './console-invoices.js';
 import { renderBingoPreview, renderQuizPreview } from './console-preview.js';
 import { library, me, setPackDrag, setShelfRoundDrag } from './console-state.js';
-import { addToTonight, dragging, heardHere, heardHereIsLocal, night, putOnBench } from './console-tonight.js';
+import { addRoundToTonight, addToTonight, dragging, heardHere, heardHereIsLocal, night, putOnBench } from './console-tonight.js';
 import { PACK_SHELF, can, canPin, doorNow, goTo, hostKey, isPinned, keyed, linkTo, load, packWord, pinIcon, pinRank, pinnedPacks, render, reorderPins, showDone, togglePin } from './console.js';
 import { tonight } from './diary.js';
 import { lobbyGameChoices, lobbyGameFor } from './lobby-games.js';
@@ -1137,10 +1137,10 @@ export function packCard(kind, pack) {
       <button class="pack-title ${titleSize(shortTitle(pack.title))}" title="${esc(pack.title)}">${esc(shortTitle(pack.title))}</button>
       ${ownPack ? '<div class="pack-yours" title="You wrote this one. Nobody else can read it.">Yours</div>' : ''}
       <div class="tiny">${esc(detail)} · ${esc(played)}</div>
-      ${kind === 'quiz' && !pack.broken && roundCount ? `<div class="lb-rounds pack-rounds" title="Drag one round straight into Tonight, on its own">
+      ${kind === 'quiz' && !pack.broken && roundCount ? `<div class="lb-rounds pack-rounds" title="Tap a round to put just that one in Tonight — or drag it there">
         ${(pack.rounds || []).map((r, i) => `
         <button class="lb-rd on" type="button" draggable="true" data-round="${i}"
-          title="${esc(r.title || `Round ${i + 1}`)} — drag into Tonight on its own"
+          title="${esc(r.title || `Round ${i + 1}`)} — tap to put just this round in Tonight"
           aria-label="${esc(r.title || `Round ${i + 1}`)}">${i + 1}</button>`).join('')}
       </div>` : ''}
       ${freshLabel(pack) ? `<div class="tiny fresh ${freshness(pack).expired ? 'gone' : ''}">${esc(freshLabel(pack))}</div>` : ''}
@@ -1193,6 +1193,29 @@ export function packCard(kind, pack) {
    */
   for (const dot of el.querySelectorAll('.pack-rounds .lb-rd')) {
     dot.addEventListener('mousedown', (ev) => ev.stopPropagation());
+    /*
+     * A TAP PUTS IT IN TONIGHT — and this was MISSING, which is why the
+     * feature was reported as not working at all.
+     *
+     * The drag itself was fine; it was verified end to end with real mouse
+     * events. What was never here is the thing anybody tries FIRST, and the
+     * only thing that works on a touchscreen — HTML5 drag events do not fire
+     * on touch at all, so a drag-only control is a dead control on a phone.
+     * A dot carried `mousedown`, `dragstart` and `dragend` and no `click`,
+     * so pressing one produced silence and nothing on screen said why.
+     *
+     * `stopPropagation` because the card's own title tap puts the WHOLE pack
+     * in, and these two answers must not both fire from one press.
+     *
+     * Same path as the drop (`addRoundToNight`), so a tap and a drag cannot
+     * come to mean different things — the rule the pack cards and the Venues
+     * shelf already follow.
+     */
+    dot.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      if (doorNow() !== 'console') return;
+      addRoundToTonight(pack.id, Number(dot.dataset.round));
+    });
     dot.addEventListener('dragstart', (ev) => {
       ev.stopPropagation();
       const round = Number(dot.dataset.round);

@@ -1348,6 +1348,125 @@ in this console. A strip where everything shouts says nothing.
   the third sighting of the picks-fields trap this month** — `mergeGigs()`
   records it twice and `listArchive()` once.
 
+## THE BAR'S OWN TIDY-UP — and a drag with no tap is a broken control
+
+Reported on 23 August 2026 off a screenshot of the bar with a game running and
+an empty bay: *"starting to look a bit messy — can we utilise space where
+possible."* Four of the five items were placement; the fifth was a real bug
+that had been sitting there since the round drag was built.
+
+### A control sits with the thing it acts on
+
+*Stop* sat at the far right of a 1900px bar. The sentence it belonged to — *"On
+the big screen now: The 2000s Metal Quiz"* — was at the far left, an inch of
+empty space away, because `.lb-live-row` was `justify-content: space-between`
+and the row is as wide as the panel. At that distance it stops reading as a
+control over one game and starts reading as a control over the whole section,
+which is the one thing it must not be mistaken for on a gig night.
+
+It is **Unlaunch** now, and it hugs the sentence. The word was chosen so it
+pairs with the button underneath it without anybody having to be told: Launch
+put it up, Unlaunch takes it down.
+
+### Keeping a night is a night-level question
+
+*Save for another night* was floating between the tiles and Launch, in the one
+strip of the bar that answered no question at all, with a note beside it nobody
+could parse. It moved into the head, which is where the other three
+night-level questions already live: where it is, whether it is in a room or
+online, and whether the panel is open.
+
+**The label has to outrank the adjacency, and that is the interesting part.**
+A show deliberately never keeps the venue — *"there's no way you'd want to run
+the same quiz at the same venue again"* — so a button reading just "Save" sat
+immediately beside a venue picker would state the opposite of what it does.
+The words stay *"for another night"*, which is the fact that matters, and the
+tooltip carries the rest.
+
+It also went in WRONG the first time, in a way worth recording: the head's
+columns are placed explicitly (there is a note there saying why), and they were
+pinned around an `h3` that no longer exists — so the new child auto-placed into
+the empty first cell and rendered to the LEFT of the venue. Adjacent, but in
+the wrong order; the venue is the identity of the night and reads first.
+
+### The reason a control is off goes on the control
+
+*"Nothing in Tonight to keep yet"* was reported directly: *"not sure what that
+means."* Two faults in one line. It named "Tonight" as though that were a place
+you might have put something, and it described a condition rather than telling
+anybody what to do about it — a sentence about the app's own state, floating
+next to a greyed-out button.
+
+The button now says **"Add a pack to save this night"** when it is disabled,
+which is exactly the shape Launch already uses ("Drag a pack in to launch"):
+one control, one sentence, no second line to read.
+
+### A bigger target is not the same as a hittable one
+
+*"The packs need a larger clickable x to get rid of them from the grid."* True
+— it was a 4px-padded glyph, about 18px square, invisible until hovered, on a
+control used in a dark pub with a thumb. It is 30px now, a quiet disc that only
+turns red under the cursor (a filled red × on every tile is the "wall of red"
+the GUI rules already turn down).
+
+**And growing it broke it.** `.lb-tile-head` carries `position: relative;
+z-index: 1` and comes later in the DOM, so the pack NAME painted over the
+button and swallowed every click aimed at its lower half. Nothing throws, the
+button is plainly visible, and about half of it does nothing. It was caught by
+a click reporting *"<b class=lb-tile-name> intercepts pointer events"*, which
+is the only way this ever shows up. The fix is `z-index` on the button AND
+`padding-right` on the title, so the two do not overlap in the first place.
+
+### EVERY DRAG NEEDS ITS TAP — and a shelf round dot never had one
+
+*"The drag and drop feature per round doesn't seem to be functional yet?"*
+
+**The drag was fine.** It was verified end to end with real mouse events — press
+on a round dot on a shelf card, twelve moves, release over slot one, and the
+round lands in Tonight as its own tile. What was missing is the thing anybody
+tries FIRST: the dot carried `mousedown`, `dragstart` and `dragend` and **no
+`click` handler at all**. Tapping one produced silence, and nothing on screen
+said why.
+
+On a touchscreen it was worse than silent — it was impossible. **HTML5 drag
+events do not fire on touch at all**, which this repo already knows and already
+has a rule about: *"the taps and the arrow buttons STAY — drag is the fast way
+and every drag has a way round it."* Every other drag on this page has its tap.
+This one control was built without one, and the gap was invisible because the
+mechanism it was missing is the one nobody thinks to test.
+
+`addRoundToTonight()` is that tap, and it goes through the same
+`addRoundToNight()` the drop uses, so a tap and a drag cannot come to mean
+different things. It rides on `roundWanted`, the round-sized twin of
+`packWanted`, for the same reason that exists: the click happens in
+`console-packs.js`, which cannot reach into `launchBar()`'s closure.
+
+**The general lesson is bigger than this control: a feature reported as "not
+working" may be working exactly as built and missing its most obvious entry
+point.** Testing the mechanism proves nothing about whether anybody can reach
+it — the same sentence this repo already has written down about the arcade
+board that was computed and never drawn.
+
+### Five settings, one row, labels above
+
+`auto-fit` with a 240px floor gave four columns, and "While they wait" spanned
+two of them — so the five night settings landed as three plus two with a third
+of the second row empty. Above 1150px there is room for five side by side.
+
+Two details, both found by measuring rather than by looking:
+
+- **`.lb-set .pack-shape-wide { grid-column: span 2 }` sits fourteen lines
+  further down the sheet at the identical specificity**, so a single-class
+  override loses on source order alone and the span survives — which put
+  "Playing" on a row of its own with four empty cells beside it, and nothing
+  thrown. Same shape of trap as the pack tile's `border` shorthand. The fix is
+  to out-specify it rather than depend on which line came last.
+- **The labels go ABOVE their controls in that row.** Side by side at a fifth
+  of the bar, "Seconds per question" wrapped to two lines and "While they
+  wait" to three while "Look" and "On" sat on one — five cells of five
+  different shapes, which was most of what read as mess. Stacked, every cell
+  is the same two lines and the controls line up along one edge.
+
 ## A CONTROL IS PRESENT AND INERT, NEVER ABSENT
 
 Reported on 15 August 2026: *"slightly clunky how the Set it up appears only

@@ -10,6 +10,41 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 23 August 2026, same day again — the launch bar tidied up, and
+a drag that had no tap:**
+
+*"Starting to look a bit messy — can we utilise space where possible."* Four
+placements: **Stop became Unlaunch** and now sits 10px from the sentence it
+undoes rather than at the far right of a 1900px bar; **Save moved into the
+head beside the venue**, where the other night-level questions live;
+**"Nothing in Tonight to keep yet" became "Add a pack to save this night"**,
+on the button rather than beside it; and the **five night settings fit one
+even row above 1150px** with their labels above their controls, because side
+by side two of the five wrapped and three did not. The bar is 377px tall
+where it was well over 700.
+
+**AND THE ONE THAT WAS A REAL BUG: a shelf round dot had no `click` at all.**
+Reported as *"the drag and drop feature per round doesn't seem to be
+functional"* — and the drag was fine, verified end to end with real mouse
+events. What was missing is the thing anybody tries first, and the only thing
+that works on a touchscreen, since **HTML5 drag never fires on touch**. This
+repo already has the rule (*"every drag has a way round it"*) and every other
+drag on the page already had its tap; this control was built without one and
+the gap was invisible because the mechanism it lacked is the one nobody
+thinks to test. **A feature reported as "not working" may be working exactly
+as built and missing its most obvious entry point.**
+
+**Two traps on the way through, both caught by measuring rather than
+looking.** Growing the pack tile's × to a real 30px target put it UNDER the
+pack name (`z-index: 1`, later in the DOM), so half the button silently did
+nothing — *a bigger target is not the same as a hittable one*. And
+`.lb-set .pack-shape-wide { grid-column: span 2 }` sits fourteen lines below
+the override at identical specificity, so the span survived and "Playing" sat
+alone on a row with four empty cells beside it.
+
+Both games still launch, `pub-unchanged` IDENTICAL, no horizontal overflow at
+1900 / 1280 / 900 / 390, 1,510 tests green.
+
 **Live as of 23 August 2026, same day again — WHAT HAPPENS IN THE GAPS is
 now a decision per break:**
 

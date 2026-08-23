@@ -198,7 +198,16 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * the app before breaks existed, and `listAdvertPacks()` returns a summary
  * rather than the pack — the third sighting of the picks-fields trap.
  */
-const BUDGET = 146_800;
+/*
+ * RAISED TO 149_200 ON 23 AUGUST 2026, for the launch bar's tidy-up. Two of
+ * its lines are rules that would otherwise be rediscovered the expensive way:
+ * **a drag with no tap is a broken control** (a shelf round dot had
+ * `dragstart` and no `click`, so the feature was reported as not working at
+ * all while the drag itself was fine), and **a bigger target is not the same
+ * as a hittable one** (growing the tile's × put it under a `z-index: 1`
+ * title, so half of it silently did nothing).
+ */
+const BUDGET = 149_200;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

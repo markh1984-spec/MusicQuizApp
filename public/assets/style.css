@@ -6121,6 +6121,51 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
   gap: 10px; margin: 12px 0 10px;
 }
+/*
+ * ONE ROW OF FIVE ON A LAPTOP — *"starting to look a bit messy, can we
+ * utilise space where possible"*.
+ *
+ * `auto-fit` with a 240px floor gives four columns on a wide console, and
+ * "While they wait" spans two of them — so the five night settings landed as
+ * three plus two, with a third of the second row empty and the bar a row
+ * taller than it needed to be. At 1150px and up there is room for all five
+ * side by side, which is also where they read as one question each rather
+ * than as two groups that mean different things.
+ *
+ * The span is dropped in the same breakpoint: it exists so the longest label
+ * on the bar is not cramped, and at a fifth of 1150px it is not.
+ */
+@media (min-width: 1150px) {
+  .lb-set.lb-set-night { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  /*
+   * TWO CLASSES ON THE SAME ELEMENT, deliberately. `.lb-set .pack-shape-wide`
+   * sits FOURTEEN LINES FURTHER DOWN this sheet at the identical specificity,
+   * so a single-class override here loses on source order alone and the span
+   * survives — which put "Playing" on a row of its own with four empty cells
+   * beside it and nothing thrown. That is the same shape of trap the pack
+   * tile's `border` shorthand already records; the fix is to out-specify it
+   * rather than to depend on which line came last.
+   */
+  .lb-set.lb-set-night .pack-shape-wide { grid-column: auto; }
+  /*
+   * AND THE LABEL GOES ABOVE ITS CONTROL, not beside it.
+   *
+   * Side by side, a fifth of the bar is not enough for "Seconds per question"
+   * or "While they wait", so those two wrapped to two and three lines while
+   * "Look" and "On" sat on one — a row of five cells each a different shape,
+   * which is the raggedness this whole change is meant to remove. Stacked,
+   * every cell is the same two lines, the labels never break mid-phrase, and
+   * the controls line up along one edge where the eye can run across them.
+   */
+  .lb-set.lb-set-night .pack-shape {
+    display: grid; grid-template-columns: minmax(0, 1fr);
+    align-items: start; gap: 4px; margin: 0;
+  }
+  .lb-set.lb-set-night .pack-shape > * { width: 100%; }
+  /* Except the seconds box, which is a two-digit number and looks absurd
+     stretched to 215px. */
+  .lb-set.lb-set-night .pack-shape .seconds-pick { width: 80px; }
+}
 .lb-set > * { min-width: 0; }
 .lb-set .pack-shape { margin: 0; min-width: 0; }
 .lb-set select, .lb-set input { min-width: 0; max-width: 100%; }
@@ -6226,8 +6271,20 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    heading sat 6px lower open than shut. A grid's first row is sized by the
    heading and the button, which are in both states, so "Tonight" is at the
    same pixel whatever is going on underneath it. */
+/*
+ * THE NIGHT'S OWN ROW — where it is, whether to keep it, what kind of night,
+ * and whether the panel is open. FOUR cells now that Save has moved up here
+ * (see the markup): the `1fr` in the middle is what the button sits in, which
+ * is the strip of dead space this row always had and the reason the bar read
+ * as unfinished at the top and crowded lower down.
+ *
+ * It WRAPS, because the venue name is somebody else's and can be long — "The
+ * Station Tap, Wokingham" and a Save button and two pills do not share 1280px
+ * comfortably, and a row that overflows is worse than one that takes two
+ * lines.
+ */
 .lb-head {
-  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+  display: grid; grid-template-columns: minmax(0, auto) auto minmax(0, 1fr);
   align-items: center; gap: 10px;
 }
 .lb-head > * { min-width: 0; }
@@ -6239,14 +6296,35 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    third column collapsed to nothing and the button sat 10px shy of the right
    edge when open and flush when shut. Pinned, row one cannot move whatever
    happens underneath it. */
-.lb-head > h3 { grid-column: 1; grid-row: 1; }
-.lb-head > .lb-what { grid-column: 2; grid-row: 1; }
+/*
+ * THE VENUE LEADS THE ROW, AND SAVE IS THE CELL NEXT TO IT.
+ *
+ * These are PLACED EXPLICITLY and that is load-bearing — the note below
+ * records why — which is also how Save went in wrong the first time: the
+ * columns were pinned around an `h3` that no longer exists, so a new child
+ * auto-placed into the empty first cell and the button rendered to the LEFT
+ * of the venue. Adjacent, but in the wrong order: the venue is the identity
+ * of the night and reads first.
+ */
+.lb-head > .lb-what { grid-column: 1; grid-row: 1; }
+.lb-head > .set-keep { grid-column: 2; grid-row: 1; }
 /* THE TWO PILLS SHARE THE RIGHT-HAND END — what kind of night it is, and
    whether the panel is open. The mode switch was a row of its own under the
    head, which made a bar meant to be glanceable three rows deep; beside the
    fold it is one of two chips at the end of a line, and it survives the fold
    because it is no longer inside the part that folds. */
-.lb-head > .lb-right { grid-column: 3; grid-row: 1; display: flex; align-items: center; gap: 8px; }
+.lb-head > .lb-right {
+  grid-column: 3; grid-row: 1; justify-self: end;
+  display: flex; align-items: center; gap: 8px;
+}
+/*
+ * ON A PHONE THE SAVE DROPS TO ITS OWN LINE. Two pills, a pub name and a
+ * five-word button do not share 390px, and the pills are what the head is
+ * for — where the night is and whether the panel is open.
+ */
+@media (max-width: 760px) {
+  .lb-head > .set-keep { grid-column: 1 / -1; grid-row: 2; }
+}
 .lb-head .lb-mode { margin: 0; }
 /* THE VENUE PICKER LOOKS LIKE EVERY OTHER DROPDOWN ON THE BAR — reported
    directly: *"there's two places to select venue, and neither of them conform
@@ -6368,7 +6446,19 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    because that is the moment somebody is about to be surprised — the same
    treatment "not invoiced" and a venue clash get, for the same reason: not a
    fault, but a thing you want to have noticed. */
-.lb-live-row { margin-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+/*
+ * UNLAUNCH SITS AGAINST THE SENTENCE IT UNDOES.
+ *
+ * `space-between` put the button at the far right of a 1900px bar, an inch of
+ * empty space from the line naming what it would take down — reported off a
+ * screenshot, and at that distance it reads as a control over the whole
+ * panel rather than over one game. `flex-start` with a small gap makes the
+ * two one phrase: "On the big screen now: The 2000s Metal Quiz [Unlaunch]".
+ */
+.lb-live-row {
+  margin-top: 6px; display: flex; align-items: center;
+  justify-content: flex-start; gap: 10px; flex-wrap: wrap;
+}
 .lb-live { color: var(--ink-dim); min-width: 0; }
 /* The unlaunch button sits on the same line as the text it belongs to, never
    its own row — it is one small action about one small fact, not a second
@@ -6418,6 +6508,8 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
      which is what keeps the heading still. */
   .launchbar.shut .lb-where { display: none; }
   .launchbar:not(.shut) .lb-what { grid-column: 1 / -1; grid-row: 2; }
+  /* The venue has taken row two, so Save goes below it rather than on top. */
+  .launchbar:not(.shut) .lb-head > .set-keep { grid-row: 3; }
 }
 .lb-tucked { display: none !important; }
 .lb-fold {
@@ -6679,7 +6771,16 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
  * tile's own prize/shape controls already eat the rest of the tile. See
  * `console-tonight-mix-ui.js`'s `filledTile()` for the reasoning in full.
  */
-.lb-tile-head { display: flex; align-items: flex-start; gap: 4px; position: relative; z-index: 1; }
+/*
+ * ROOM FOR THE × ON THE RIGHT. Growing that button to a real 30px target put
+ * it under the pack name — `.lb-tile-head` is `z-index: 1` and comes later in
+ * the DOM, so the title PAINTED OVER the button and swallowed clicks aimed at
+ * its lower half. Caught by a click that reported "<b class=lb-tile-name>
+ * intercepts pointer events", which is the only way this shows up: nothing
+ * throws, the button is plainly visible, and about half of it silently does
+ * nothing. Making a target bigger is not the same as making it hittable.
+ */
+.lb-tile-head { display: flex; align-items: flex-start; gap: 4px; position: relative; z-index: 1; padding-right: 30px; }
 .lb-tile-head .drag-grip { width: 16px; height: 16px; margin-top: 1px; }
 .lb-tile-head .lb-tile-name { flex: 1 1 auto; min-width: 0; }
 .lb-tile-sub, .lb-tile-cap { color: var(--ink-dim); }
@@ -6742,12 +6843,32 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   border-radius: var(--r-pill); background: rgba(255, 46, 136, 0.22);
   font-size: var(--fs-tag); font-weight: 900;
 }
+/*
+ * BIG ENOUGH TO HIT — asked for directly: *"the packs need a larger clickable
+ * x to get rid of them from the grid"*. It was a 4px-padded glyph in a corner,
+ * about 18px square, on a control used in a dark pub with a thumb.
+ *
+ * 30px, which is the size a touch target wants to be, and it is a CIRCLE with
+ * a face rather than a bare character: the old one was invisible until you
+ * hovered it, so there was nothing to aim at in the first place. It stays
+ * quiet — dim ink on a faint disc — and only turns red under the cursor,
+ * because a filled red × on every tile is the "wall of red" this app's GUI
+ * rules already turn down, and destructive is outlined and never loud.
+ */
 .lb-tile-off {
-  position: absolute; top: 4px; right: 4px;
-  border: none; background: none; cursor: pointer; color: var(--ink-dim);
-  font-size: var(--fs-ctl); line-height: 1; padding: 4px 6px; border-radius: var(--r-field);
+  /* ABOVE the title, which carries `z-index: 1` of its own — see the note on
+     `.lb-tile-head`. Without this the top-right corner of the tile is a
+     button you can see and cannot press. */
+  position: absolute; top: 4px; right: 4px; z-index: 3;
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; padding: 0;
+  border: 1px solid transparent; border-radius: 999px;
+  background: rgba(0, 0, 0, 0.28); color: var(--ink-dim);
+  font-size: 17px; line-height: 1; cursor: pointer;
 }
-.lb-tile-off:hover { color: var(--bad); background: rgba(255, 77, 94, 0.12); }
+.lb-tile-off:hover, .lb-tile-off:focus-visible {
+  color: var(--bad); border-color: var(--bad); background: rgba(255, 77, 94, 0.16);
+}
 /* Which side a dragged tile will land. Without this a row can only ever be
    reordered one way and the last position is unreachable. */
 /* An empty slot's number is quiet: it says where the next pack would land,
@@ -7814,7 +7935,13 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 /* KEEPING TONIGHT AS A SHOW, at the bottom of the settings. A row rather than
    a lone button so the reason it is off can sit beside it — present and
    inert, never absent. */
-.set-keep { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+/*
+ * IN THE HEAD NOW, so no top margin and no row of its own — it used to sit
+ * between the tiles and Launch with 16px above it, in the one strip of the
+ * bar that answered no question at all.
+ */
+.set-keep { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.set-keep .set-save { white-space: nowrap; }
 
 
 /* ---- what you heard back, where you asked
