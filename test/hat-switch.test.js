@@ -121,7 +121,15 @@ test('and the doors are in the same order whoever is reading', () => {
    * doors in the same order whoever is reading, because a menu that reorders
    * itself is not a menu.
    */
-  const DOORS = ['Console', 'Workshop', 'Post gig', 'My account'];
+  /*
+   * COMMUNITY IS THE FIFTH, added 23 August 2026 and placed BEFORE My account
+   * rather than after it: the first three are moments of a night, this is the
+   * thing that spans nights (a league belongs to the room, over a season), and
+   * My account stays last because that is where an account link lives on every
+   * site anybody has used. The rule below is unchanged — same doors, same
+   * order, whoever is reading.
+   */
+  const DOORS = ['Console', 'Workshop', 'Post gig', 'Community', 'My account'];
   const labels = (rights) => (navMenu(rights).match(/>([^<]+)</g) || []).map((s) => s.slice(1, -1));
   assert.deepEqual(labels(menuRights(quizmaster())), DOORS);
   assert.deepEqual(labels(menuRights(quizmaster({ actingAs: true }))), DOORS);

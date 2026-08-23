@@ -1034,6 +1034,27 @@ export function playingOptions() {
 }
 
 /**
+ * WHAT THE BIG SCREEN DOES AT EVERY BREAK — one choice for the night.
+ *
+ * **The face is short and the menu is long**, the split `console-pick.js`
+ * exists for: shut it reads "The scores", open it says what each one actually
+ * puts on a projector. `data-short` is what buys that, and it is why this is
+ * written here rather than generated from `SCREEN_SAYS` — the words a chip
+ * used and the words a menu wants are not the same words.
+ *
+ * The scores lead because that is what the app has always done and what a
+ * room looks up FOR; the adverts follow because they are the thing being
+ * sold. Nothing at all is last and is a real answer, asked for by name.
+ */
+export function screenOptions() {
+  return `
+    <option value="scores" data-short="🏆 The scores" selected>🏆 The scores — as it has always been</option>
+    <option value="scores+adverts" data-short="🏆📺 Scores, then ads">🏆📺 The scores, then your adverts rotate</option>
+    <option value="adverts" data-short="📺 Your adverts">📺 Your adverts only</option>
+    <option value="nothing" data-short="· Nothing">· Nothing on the screen at all</option>`;
+}
+
+/**
  * HOW OFTEN THIS PACK HAS BEEN PLAYED — and, once tonight has a venue, what
  * THIS ROOM has already heard.
  *

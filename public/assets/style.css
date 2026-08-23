@@ -2610,6 +2610,20 @@ body.console .panel::after { bottom: -4px; }
    to run into. */
 .lb-tile .pack-word { font-size: calc(var(--pk-word-size) * 0.72); bottom: -6px; }
 /*
+ * AND IT MOVES LEFT OF THE GAP DIAL, because the corner it was written for is
+ * now the corner a control lives in.
+ *
+ * `A PACK WEARS ITS OWN SUBJECT` put this word in the tile's bottom-right on
+ * purpose — *"the Tonight tile keeps the corner"* — so the dial landing there
+ * is a genuine collision between two deliberate decisions rather than an
+ * oversight. **The control wins and the decoration moves**: the word is a wash
+ * that says which era a pack is, the dial is something you press in a dark
+ * pub, and the era is still perfectly legible 44px to the left. Shifted rather
+ * than dropped, because a tile with no subject on it is the very thing that
+ * rule exists to prevent.
+ */
+.lb-tile.is-pack .pack-word { right: 52px; }
+/*
  * THE TILE NEEDS ITS OWN, MORE SPECIFIC RULE — and it was written without one,
  * which cost the feature its whole point on the half that matters most.
  *
@@ -6391,7 +6405,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
  * flattening the roles would undo the system the GUI rules are built on.
  */
 .lb-head .minor,
-.lb-head .brk-chip,
+.lb-head .gap-dial,
 .lb-head .lb-where,
 .lb-head .lb-fold,
 .lb-head .hat-half {
@@ -6769,64 +6783,53 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
  * describe is the gaps BETWEEN the tiles either way — and it puts the one
  * filled gradient on the panel back where nothing competes with it.
  */
-.brk-strip { margin-bottom: 10px; }
-.brk-row { display: flex; flex-wrap: wrap; gap: 6px; }
 /*
- * THE SAME FACE AS EVERY OTHER BUTTON IN THE CONSOLE — the top-lit surface
- * and the 1px edge `.console button.minor` defines, rather than a flat panel
- * swatch of its own. It was invented in isolation and looked it: sat in a row
- * under Save and Unlaunch, it read as a different kind of object.
+ * THE GAP DIAL — one 44px symbol in a pack tile's bottom-right corner, and
+ * the size is the whole design. Measured on the real thing before a line of
+ * it was written: a tile is 179 x 76, its round ticks are 22px along the
+ * bottom-left, and a four-round pack leaves 58px clear in that corner. One
+ * touch-floor control fits; two never would.
  *
- * The one deliberate difference is the BOTTOM EDGE, which is transparent
- * until a break has actually been changed — an ordinary button wears the
- * account colour there always, and these are a row of six or more. Lighting
- * every one of them would be the wall of colour the GUI rules turn down, and
- * would say nothing about which one you had touched.
+ * ABSOLUTE, so a pack with four ticks and a pack with one put it in the same
+ * place. A control you drive with a thumb in a dark pub has to be findable
+ * without reading the tile it is on first — the same reason Launch is the
+ * only filled gradient on the panel.
  */
-.brk-chip {
+.gap-dial {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 6px 10px;
+  justify-content: center;
   border-radius: var(--r-field);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-bottom: 2px solid transparent;
-  color: var(--ink-dim);
+  color: var(--ink);
   font: inherit;
-  font-size: var(--fs-note); font-weight: 800;
   cursor: pointer;
 }
-.brk-chip:hover { border-color: var(--hot); color: var(--ink); }
+.gap-dial:hover { border-color: var(--hot); }
+/* Only a gap that was CHANGED wears the account colour, exactly as the chips
+   it replaces did and for the same reason: every tile carrying it is a wall
+   of colour that says nothing about which one you touched. */
+.gap-dial.is-set { border-bottom-color: var(--hot); }
+.gap-dial-icon { font-size: 17px; line-height: 1; letter-spacing: -1px; }
 /*
- * ONLY A BREAK THAT WAS CHANGED IS LIT, and the account's own colour is on
- * the EDGE rather than the face — the same rule every ordinary button in this
- * console follows, and the same reason: a row of six chips all wearing the
- * gradient is a wall of colour that says nothing about which one you touched.
+ * THE TICKS WRAP BEFORE THEY REACH IT. A five-round pack would otherwise run
+ * its last tick underneath a control sitting on top of it — the pack tile's
+ * own `z-index` lesson, where a bigger × was silently painted over by the
+ * title and half the button did nothing.
  */
-.brk-chip.is-set { color: var(--ink); border-bottom-color: var(--hot); }
-.brk-icons { font-size: 15px; line-height: 1.1; letter-spacing: 1px; }
-/* The screen's glyph sits a shade back from the phone's: the phones are what
-   a break is mostly about, and two icons at equal weight read as one blob. */
-.brk-icons i { font-style: normal; opacity: .75; margin-left: 3px; }
-.brk-chip .brk-when { white-space: nowrap; font-weight: 700; }
-/*
- * THE PANEL FOR ONE BREAK — a FLEX row like the picked-pack settings above
- * it, not the grid `.lb-set` gives by default. Measured on a real console:
- * the grid stretched Done into a full-width bar sitting directly under a
- * full-width Launch, which is two things the same shape and size where only
- * one of them starts a night.
- */
-.lb-set-break {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
-  margin-top: 8px;
-}
-.lb-set-break .pack-shape { flex: 1 1 240px; max-width: 380px; margin: 0; }
-.lb-set-break .brk-why { color: var(--ink-dim); align-self: center; }
-/* Nothing of its own — it is `.minor` in the markup now, which is what it
-   always should have been. Only its place in the row is set here. */
-.brk-done { align-self: center; flex: 0 0 auto; }
+.lb-tile .lb-rounds { padding-right: 46px; }
+/* The word beside the doors dial in the head. The dial alone would be a
+   symbol with nothing saying which gap it belongs to — every other one is
+   sitting on the pack it acts on, and this one is not. */
+.lb-doors-word { color: var(--ink-dim); font-weight: 800; white-space: nowrap; }
 @media (max-width: 560px) {
   /* Shorter still on a phone, where they are a summary rather than a target. */
   /* TWO ACROSS ON A PHONE, not one. `auto-fit` at 160px only fits a single
@@ -8118,18 +8121,18 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
  * bar that answered no question at all.
  */
 .set-keep { display: flex; align-items: center; gap: 10px; min-width: 0; }
-/* The Doors chip in the head. It is the same `.brk-chip` the strip draws, so
-   nothing about its face is set here — only that it does not stretch. */
-.lb-doors { display: flex; align-items: center; flex: 0 0 auto; }
-.lb-doors[hidden] { display: none; }
 /*
- * IN THE HEAD IT LIES DOWN. The strip stacks its chips — glyphs over label —
- * because a row of six wants to be scanned down a column of labels; up here
- * it is one control in a line of buttons, and a two-line chip beside a
- * one-line button is exactly the ragged mix *"standardise the buttons to look
- * the same"* is about. Same chip, same face, laid out for the row it is in.
+ * THE DOORS DIAL IN THE HEAD — the one gap with no tile of its own, because
+ * it happens before the first pack rather than after anything.
+ *
+ * It is the SAME control every tile carries, which is what stopped the doors
+ * and "after round 1" reading as two different objects doing one job. Only
+ * its place is set here: a word beside it rather than a bare symbol, since
+ * every other dial is sitting on the pack it acts on and this one has nothing
+ * underneath it to say which gap it means.
  */
-.lb-doors .brk-chip { flex-direction: row; gap: 6px; padding: 9px 13px; }
+.lb-doors { display: flex; align-items: center; flex: 0 0 auto; gap: 8px; }
+.lb-doors[hidden] { display: none; }
 /* Its own line, always — see the markup note. Hidden entirely when the night
    has prizes, which is the ordinary case and costs nothing. */
 .lb-warn-slot { flex: 1 0 100%; min-width: 0; }
@@ -8138,7 +8141,8 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 /* Open, a chip wears the account edge whether or not it has been changed —
    it is the one whose panel is on screen, and "you are looking at this" has
    to outrank "you have touched this". */
-.brk-chip.is-open { color: var(--ink); border-color: var(--hot); border-bottom-color: var(--hot); }
+/* In the head the dial is not inside a tile, so it stops being absolute. */
+.lb-doors .gap-dial { position: static; }
 .set-keep .set-save { white-space: nowrap; }
 
 
@@ -8922,3 +8926,35 @@ body.landing {
   margin: 0 0 20px; padding: 10px 12px; border-radius: var(--r-field); font-size: var(--fs-note);
   font-weight: 700; background: rgba(47, 224, 122, 0.12); color: var(--good);
 }
+
+/* ---- the Community door: what is running, and who is winning -------------
+ *
+ * The bay and the tables. The table itself already had a style — `.lg-table`
+ * was written for the block on a venue card — so nothing about a row is set
+ * again here: the same table in a bigger room, which is what stops one venue's
+ * league and every venue's league looking like two different features.
+ */
+.community-bench .bench-head { display: flex; flex-direction: column; gap: 2px; }
+.community-bench .bench-head b { font-size: var(--fs-head); }
+/*
+ * THE LEADERS RUN ALONG, one per venue, and they WRAP rather than scroll — a
+ * quizmaster with six venues is reading a list, not driving a carousel, and a
+ * row that scrolls sideways hides its own end.
+ */
+.community-bench .bench-row {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;
+}
+.community-lead {
+  display: flex; flex-direction: column; gap: 1px;
+  padding: 7px 11px; border-radius: var(--r-field);
+  background: var(--surf-2, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--surf-line, rgba(255, 255, 255, 0.09));
+  min-width: 0;
+}
+.community-where { color: var(--ink-dim); }
+/* Gold, because it is first place — the trophy colour, used for the one thing
+   in this app it is allowed to mean. */
+.community-who { color: var(--gold); }
+.league-panel + .league-panel { margin-top: 12px; }
+.league-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.league-head b { font-size: var(--fs-head); }

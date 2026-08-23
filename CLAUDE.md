@@ -1175,7 +1175,7 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
 ### WHAT HAPPENS IN THE GAPS — a break plan, per gap in the night
 
 `public/assets/break-parts.js` (the model, imported by the SERVER like
-`show-parts.js`), `console-breaks.js` (the strip), `state.breakPlan`,
+`show-parts.js`), `console-breaks.js` (the dials), `state.breakPlan`,
 `view.gap` on a phone, `view.breakAdverts` on the projector. Asked for
 directly: *"the while they wait section needs to assign games and/or photo
 upload per break… and the screen itself needs to be able to show ads as
@@ -1217,13 +1217,69 @@ well."*
   over an empty card, and nothing throws. The third sighting of the
   picks-fields trap this month.
 
-Full reasoning: **[`docs/console.md`](docs/console.md)**.
+Full reasoning: **[`docs/console/launch-bar.md`](docs/console/launch-bar.md)**.
 
-### FOUR DOORS: CONSOLE · WORKSHOP · POST GIG · MY ACCOUNT
+### THE GAPS ARE A DIAL ON THE PACK, NOT A STRIP UNDER IT
+
+`gapDial()` / `gapsOfPart()` in `console-breaks.js`, the `In the gaps` picker
+on the settings row. The strip of chips lasted a day: *"'doors' and 'after
+round 1' both fill the same function, don't really need both"*, then *"it
+could just be a symbol you click to cycle… and this would live in the bottom
+right of the pack ONCE LOADED."*
+
+- **THE DUPLICATION WAS REAL** — one `chip()`, one plan, one setter, drawn in
+  two places and neither beside the thing it acted on. The label collision
+  Sweep mode hunts, which nothing had caught.
+- **A GAP IS NOT AT THE END OF A SLOT.** A two-round quiz owns the gap INSIDE
+  it as well as the one at its end, so "the end of this slot" can only ever
+  address a pack's LAST gap. A tile's corner owns **every gap that pack
+  creates**, and one dial sets them together — stated, not hidden.
+- **THE TILE'S SIZE DECIDED THE SHAPE, MEASURED FIRST**: 179 x 76, ticks 22px
+  bottom-left, **58px clear** in the corner on a four-round pack. That is ONE
+  44px control and never two — so the dial is the PHONES and the big screen
+  became a night-level picker. **The plan on disk is unchanged**; the picker
+  writes one `screen` to every gap that has one, and `pub-unchanged` still
+  says IDENTICAL.
+- **A DIAL IS SAFE HERE because every state is a real answer** — no invalid
+  position to spin past — **and the order is a SCALE**: photos, game, both,
+  nothing. A dial whose steps are not on a scale has to be memorised.
+- **THE LIT EDGE HAD TO BE MADE HONEST** — `cleanPlan()` now runs on the way
+  OUT of the dial too, or a gap cycled back to its default still claims it was
+  changed.
+- **DOORS KEEPS A DIAL because it is the one gap with no tile** — it happens
+  before the first pack. Same control, word beside it, phone-only because the
+  join code owns the lobby's screen.
+- **THE ERA WORD MOVED 52px LEFT.** *A pack wears its own subject* put it in
+  that corner deliberately, so this is two rules colliding: **the control wins
+  and the decoration moves**, shifted rather than dropped.
+- **A LOST `import` DREW A BAR WITH NO DIALS AND EVERY CHECK PASSED** — a
+  scripted header rewrite ate `import { esc, node }`. Four swallowed
+  `ReferenceError`s, `node --check` happy, 1,516 tests green. The same fault
+  that shipped a broken Launch. **`test/imports-present.test.js`** now asserts
+  every module imports the shared helpers it calls.
+
+Full reasoning: **[`docs/console/launch-bar.md`](docs/console/launch-bar.md)**.
+
+### FIVE DOORS: CONSOLE · WORKSHOP · POST GIG · COMMUNITY · MY ACCOUNT
 
 `DOORS`, `navMenu()`, `doors` on every `TABS` entry. The first three name
-MOMENTS of a night; **the fourth names the one thing that is not a night**, so
-it goes on the end rather than in the sequence.
+MOMENTS of a night; **Community names the thing that SPANS nights**; **My
+account names the one thing that is not a night at all**, so it stays on the
+end rather than in the sequence.
+
+**COMMUNITY IS THE FIFTH, and a league is why it exists.** Asked for directly:
+*"a fifth menu pill at the top entitled 'community', which is for things like
+quiz leagues, and all the controls for that functionality will live there."*
+A league belongs to the ROOM over a season rather than to the quizmaster on a
+night, which is exactly why it fitted under none of the other four and had
+been living as a block on a venue card — one venue at a time, behind the
+Workshop door, found only by going looking. **Nothing new is collected**:
+`src/league.js` has built these out of the archive all along and
+`library.leagues` was already in the payload. `console-community.js` is a
+PLACE to read them. **The bay answers "is anything running" and the tab
+answers "who is winning"** — the same head/section split every other door has.
+**Ungated door, gated tab** (`needs: FEATURES.LEAGUE`), so somebody can see
+what they could buy; a door that vanishes sells nothing.
 
 - **A fact is on ACCOUNT, a switch is on SETTINGS, a price is in the SHOP** —
   or Settings becomes a bin.
@@ -1529,7 +1585,11 @@ Open the one you are touching; do not read them all.
 - A mis-tap must not reveal an answer
 - Looks — dressing a night up
 
-**[`docs/console.md`](docs/console.md)** — launching a night and driving it
+**[`docs/console.md`](docs/console.md)** — launching a night and driving it,
+plus **[`docs/console/launch-bar.md`](docs/console/launch-bar.md)**, which is
+the launch bar's own half: Tonight, the running order, the pack tiles, the
+settings row and the break dials. Split off on 23 August 2026 when
+`console.md` crossed its 100,000-byte cap.
 
 - A launch must say what it is about to destroy
 - The restart notice, and the one state that made it a lie
@@ -1539,6 +1599,8 @@ Open the one you are touching; do not read them all.
 - DRAG AND DROP — the console is the laptop with the HDMI in it
 - TONIGHT — one launch section, and it PINS WHERE IT ALREADY IS on a drag
 - WHAT HAPPENS IN THE GAPS — a break plan, per gap in the night
+- THE GAPS ARE A DIAL ON THE PACK, NOT A STRIP UNDER IT
+- FIVE DOORS, and why Community is the fifth
 - THE BAND ABOVE LAUNCH IS KEPT CLEAR, and one row holds the night
 - THE BAR'S OWN TIDY-UP — and a drag with no tap is a broken control
 - A PACK WEARS ITS OWN SUBJECT
@@ -1966,7 +2028,8 @@ public/                the screens; *-bingo.js files hold the bingo variants
   assets/stickers.js   props to drag onto a photo: dog ears, a clown nose
   assets/schemes.js    a quizmaster's own two colours, shared with the server
   assets/break-parts.js  what happens in each gap of a night, shared with the server
-  assets/console-breaks.js  the break strip under Tonight's running order
+  assets/console-breaks.js  the gap dial in each pack tile's corner
+  assets/console-community.js  the Community door: quiz leagues, per venue
   assets/console-pick.js   a dropdown that is narrow shut and wide open
   assets/diary.js      what is on and when — residencies projected, one-offs typed
   assets/chat.js       the chat sheet on a player's phone, online nights only

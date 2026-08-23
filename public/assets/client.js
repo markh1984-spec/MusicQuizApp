@@ -120,6 +120,22 @@ export function navMenu({
    * wrong is their subscription. A door that disappears at the moment you need
    * it is worse than not having one.
    */
+  /*
+   * COMMUNITY, THE FIFTH — asked for by name: *"a fifth menu pill at the top
+   * entitled 'community', which is for things like quiz leagues."*
+   *
+   * **Fourth in the row, before My account**, because it is work rather than
+   * housekeeping: the first three are the moments of a night and this is the
+   * thing that spans them — a league belongs to the ROOM, over a season, which
+   * is why it fits under none of the other four and had been living as a block
+   * on a venue card.
+   *
+   * **Ungated, like the door it sits beside.** What is behind it is gated in
+   * the ordinary way (`needs: FEATURES.LEAGUE` on the tab, drawn greyed with
+   * the tier it wants), which is the pattern that lets somebody SEE a thing
+   * they could buy. A door that vanishes sells nothing and explains nothing.
+   */
+  items.push({ id: 'community', label: 'Community', href: at('/console?door=community') });
   items.push({ id: 'account', label: 'My account', href: at('/console?door=account') });
   /*
    * THERE IS NO OWNER DOOR ON THIS MENU, and taking it off was the host's

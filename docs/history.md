@@ -10,6 +10,80 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 23 August 2026 — what happens in the gaps is a dial on the pack,
+and there is a fifth door:**
+
+The break strip lasted one day. Reported off a screenshot: *"'doors' and
+'after round 1' both fill the same function, don't really need both — and the
+after round 1 needs to perhaps be a little dropdown on a per slot basis."*
+
+**THE DUPLICATION WAS REAL.** Doors sat in the head and every other gap sat in
+a strip, drawn by the same `chip()` from the same plan, opening the same
+setter — one control in two places, neither beside the thing it acted on.
+That is the label collision Sweep mode is told to hunt and that no test, no
+500 and no visual defect will ever show.
+
+**"AT THE END OF THAT SLOT" WAS RIGHT WITH ONE CORRECTION**, and it decided the
+shape: a gap is NOT at the end of a slot. A two-round quiz owns the gap inside
+it as well as the one at its end, so a control meaning "the end of this slot"
+can only address a pack's last gap. A tile's corner owns *every gap that pack
+creates*, and one dial sets them together — said out loud rather than hidden.
+
+**THE TILE'S SIZE DECIDED EVERYTHING ELSE, AND IT WAS MEASURED FIRST.** A tile
+is 179 x 76, its round ticks are 22px along the bottom-left, and a four-round
+pack leaves exactly **58px** clear in the corner. That is ONE 44px control —
+the touch floor — and never two. So the dial is the PHONES (which genuinely
+differ pack to pack: a game before the bingo, photos between quiz rounds) and
+the big screen became a night-level picker in the settings row, because *"show
+my adverts in the breaks"* is the venue paying for a screen, which is a fact
+about the evening. **The plan on disk did not change at all** — the picker
+writes the same `screen` to every gap that has one, so `break-parts.js`, the
+engine and the projector are untouched and `pub-unchanged` still says
+IDENTICAL.
+
+**A DIAL RATHER THAN A MENU, asked for in those words**, and it is safe here in
+a way cycling controls usually are not: every state is a real answer, so there
+is no invalid position to spin past, and the order is a SCALE — photos, the
+game, both, nothing — rather than an enum to memorise. The lit "you changed
+this" edge had to be made honest to go with it: `cleanPlan()` now runs on the
+way OUT of the dial, so a gap cycled back to its default stops claiming it was
+changed.
+
+**The strip, the chip, the setter and the doors chip are all deleted** —
+`console-breaks.js` went 234 lines to 195 — and the bar is **59px shorter** on
+every night. The era word moved 52px left, which is two deliberate rules
+colliding: *a pack wears its own subject* put it in that corner on purpose, and
+**the control wins while the decoration moves** rather than being dropped.
+
+**AND A LOST `import` DREW A LAUNCH BAR WITH NO DIALS ON IT WHILE EVERY CHECK
+PASSED.** A scripted header rewrite of `console-breaks.js` replaced everything
+above the first `import` — and the first import was `{ esc, node }`. Four
+`ReferenceError`s swallowed by the paint, `node --check` happy, the full suite
+green, and nothing on screen to say a control was missing. **That is the same
+fault that shipped a broken Launch to the live app**, only quieter.
+`test/imports-present.test.js` closes it: every browser module that CALLS a
+shared helper must import or declare it. Verified by deleting the import again
+and watching `node --check` pass while the test failed.
+
+**THE FIFTH DOOR IS COMMUNITY**, asked for the same evening: *"a fifth menu
+pill at the top entitled 'community', which is for things like quiz leagues,
+and all the controls for that functionality will live there."* It goes fourth
+in the row and My account stays last. A league belongs to the ROOM over a
+season rather than to the quizmaster on a night, which is exactly why it fitted
+under none of the other four and had been living as a block on a venue card —
+one venue at a time, behind the Workshop door, found only by going looking.
+**Nothing new is collected or stored**: `src/league.js` has built these tables
+out of the archive all along and `library.leagues` was already in the payload.
+The bay says how many seasons are running and who leads each; the tab holds
+every venue's table in full. Built to the same shape as the other four —
+bay, sub-menu column, main section — and checked at 1280 and 390 on all five
+doors with no overflow and no console errors.
+
+**`docs/console.md` crossed its 100,000-byte cap and was split** on a real
+subject boundary: the launch bar's half is `docs/console/launch-bar.md`,
+moved whole by line number with nothing retyped.
+
+
 **Live as of 23 August 2026 — the launch bar's dropdowns are narrow shut and
 wide open:**
 

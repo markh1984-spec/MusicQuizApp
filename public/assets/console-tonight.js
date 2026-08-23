@@ -1,11 +1,17 @@
 /** TONIGHT — the launch bar, what is running, and the settings for one night. */
 
-import { breakStrip, doorsChip, prunePlan } from './console-breaks.js';
+import { cleanPlan } from './break-parts.js';
+import {
+  gapDial, gapsOfPart, gapsWithScreen, prunePlan,
+} from './console-breaks.js';
 import { refreshPicks } from './console-pick.js';
 import { esc, node, postJson } from './client.js';
 import { tonightsVenue } from './console-gigs.js';
 import { invoiceApi, openInvoiceForm, share } from './console-invoices.js';
-import { doLaunch, doLaunchOrder, freshLabel, freshness, lobbyGameOptions, lookOptions, playingOptions, shapeOptions } from './console-packs.js';
+import {
+  doLaunch, doLaunchOrder, freshLabel, freshness, lobbyGameOptions, lookOptions,
+  playingOptions, screenOptions, shapeOptions,
+} from './console-packs.js';
 import { packTitle, shelfFor } from './console-shows.js';
 import {
   addBingoSlot, addQuizPackSlot, isMixed, moveRoundToSlot, segmentsFromSlots, slotsFromSimple,
@@ -75,6 +81,15 @@ export const night = {
    * directly, with no DOM to read them back off.
    */
   breaks: {},
+  /*
+   * WHAT THE BIG SCREEN DOES AT EVERY GAP — one answer for the night, because
+   * only ONE control fits in a tile's corner (measured — see
+   * `console-breaks.js`) and the phones are the half that belongs there.
+   *
+   * `night.breaks` stays the truth; this is the value the picker shows, kept
+   * beside it exactly as `playing` is kept beside what the launch derives.
+   */
+  gapScreen: 'scores',
 };
 
 /**
@@ -85,7 +100,6 @@ export const night = {
  * stored inside the render would shut itself the moment you touched the very
  * thing you had just opened.
  */
-let lbBreakOpen = '';
 
 /*
  * IS THE WHOLE SECTION OPEN, and it is remembered on the DEVICE rather than in
@@ -775,6 +789,15 @@ export function launchBar() {
         <label class="pack-shape">Playing
           <select class="play-pick" data-pop>${playingOptions()}</select>
         </label>
+        <!-- THE BIG SCREEN IN THE GAPS. Here rather than on a tile because
+             only ONE 44px control fits in a tile's corner - measured, a tile
+             is 179x76 and a four-round pack leaves 58px - and the phones are
+             the half that belongs there. It is also the half that is a fact
+             about the EVENING: "show my adverts in the breaks" is the venue
+             paying for a screen. -->
+        <label class="pack-shape" title="What the big screen does at every break. The lobby always keeps the join code.">In the gaps
+          <select class="screen-pick" data-pop>${screenOptions()}</select>
+        </label>
       </div>
       <!-- TONIGHT'S RUNNING ORDER — the place packs are dropped and where
            they appear, asked for in those words. Along the bottom rather than
@@ -861,6 +884,7 @@ export function launchBar() {
   const lobbyGamePick = el.querySelector('.game-pick');
   const soundPick = el.querySelector('.sound-pick');
   const playPick = el.querySelector('.play-pick');
+  const screenPick = el.querySelector('.screen-pick');
   const setSave = el.querySelector('.set-save');
   const thenEl = el.querySelector('.lb-then');
   /**
@@ -1873,6 +1897,25 @@ export function launchBar() {
   playPick?.addEventListener('change', (ev) => { night.playing = ev.target.value; });
 
   /*
+   * THE BIG SCREEN IN THE GAPS — one choice written across every gap that HAS
+   * a screen, which is every one except a lobby.
+   *
+   * **Stored per break exactly as it always was**, so nothing in
+   * `break-parts.js`, the engine or the projector changed: this writes the
+   * same value to several ids, it is not a new shape of plan. A lobby is
+   * SKIPPED rather than set to something harmless — the join code owns that
+   * screen and nothing in this app may dim it.
+   */
+  if (screenPick) screenPick.value = night.gapScreen || 'scores';
+  screenPick?.addEventListener('change', (ev) => {
+    night.gapScreen = ev.target.value;
+    const next = { ...night.breaks };
+    for (const id of gapsWithScreen(segmentsNow())) next[id] = { ...(next[id] || {}), screen: night.gapScreen };
+    night.breaks = cleanPlan(next);
+    paintOrder();
+  });
+
+  /*
    * KEEPING TONIGHT AS A SHOW — present and inert rather than absent when
    * there is nothing to keep, same as Launch itself: `paintSettings()` sets
    * the disabled state and the reason above.
@@ -2276,7 +2319,22 @@ export function launchBar() {
       picked: lbPicked,
       onPick: (at) => { lbPicked = at; paintOrder(); },
     });
-    orderEl.replaceChildren(...[breakStripNow()].filter(Boolean), row);
+    paintGaps();
+    /* THE DIAL GOES ON A MIXED TILE TOO, added after `renderSlots()` built
+       the row rather than plumbed through it: a mixed slot is already one
+       PART, so the nth tile owns the nth part's gaps — the same rule the
+       ordinary row follows, and no new argument to say so. */
+    const mixSegments = segmentsFromSlots(lbSlots);
+    [...row.querySelectorAll('.lb-tile.is-pack')].forEach((tile, at) => {
+      const dial = gapDial({
+        ids: gapsOfPart(mixSegments, at),
+        plan: night.breaks,
+        onSet: setGaps,
+        what: 'this part\u2019s breaks',
+      });
+      if (dial) tile.appendChild(dial);
+    });
+    orderEl.replaceChildren(row);
     const parts = segmentsFromSlots(lbSlots).length;
     goBtn.disabled = !parts;
     goBtn.textContent = parts ? `Launch tonight — ${parts} part${parts === 1 ? '' : 's'}` : 'Drag a pack in to launch';
@@ -2345,40 +2403,70 @@ export function launchBar() {
    * something set weeks ago that nobody can see. Pruning here rather than
    * only at launch means what is stored is always what is on screen.
    */
-  function breakStripNow() {
+  /**
+   * WHAT HAPPENS IN THE GAPS — pruned, then drawn ON the things the gaps
+   * follow. The strip of chips this replaced was reported as a duplicate of
+   * the Doors button; see `console-breaks.js` for why one control in two
+   * places was the right complaint.
+   *
+   * **PRUNED ON EVERY PAINT.** Switch a round off and the break after it
+   * stops existing; its entry would otherwise sit in the plan invisibly and
+   * come back to life the day the round was switched on again.
+   */
+  function paintGaps() {
     const segments = segmentsNow();
     night.breaks = prunePlan(night.breaks, segments);
-    const onOpen = (id) => { lbBreakOpen = id; paintOrder(); };
-    const onSet = (id, set) => {
-      if (!id) { lbBreakOpen = ''; paintOrder(); return; }
-      night.breaks = { ...night.breaks, [id]: set };
-      paintOrder();
-    };
-    /*
-     * DOORS GOES IN THE HEAD and everything else stays with the order — see
-     * `breakStrip`'s own note on why that split is the coherent one rather
-     * than merely the tidier one. Painted from HERE, in the same function, so
-     * the two halves are drawn from one plan on one pass and cannot disagree
-     * about what a break is set to.
-     */
     if (sayEl) {
       const warn = prizeWarning();
       sayEl.replaceChildren(...(warn ? [warn] : []));
       sayEl.hidden = !warn;
     }
+    /*
+     * THE DOORS ARE THE ONE GAP WITH NO TILE OF THEIR OWN — they happen
+     * before the first pack rather than after anything — so they keep a dial
+     * in the head. The SAME control as a tile's, which is what stopped the
+     * two reading as different objects doing one job. A lobby has no
+     * big-screen choice (the join code owns it), so a phone-only dial is the
+     * whole setting there rather than half of one.
+     */
     if (doorsEl) {
-      const chip = doorsChip({ segments, plan: night.breaks, open: lbBreakOpen, onOpen });
-      doorsEl.replaceChildren(...(chip ? [chip] : []));
-      doorsEl.hidden = !chip;
+      const ids = segments.length ? ['p0:lobby'] : [];
+      const dial = gapDial({ ids, plan: night.breaks, onSet: setGaps, what: 'the doors' });
+      doorsEl.replaceChildren(...(dial ? [node('<span class="tiny lb-doors-word">Doors</span>'), dial] : []));
+      doorsEl.hidden = !dial;
     }
-    return breakStrip({
-      segments,
-      plan: night.breaks,
-      open: lbBreakOpen,
-      skipDoors: true,
-      onOpen,
-      onSet,
-    });
+  }
+
+  /* What the picker should say, read back out of the plan — the first gap
+     that HAS a screen wins. Two can only disagree on a plan built by the
+     strip this replaced; the picker writes all of them, so one press brings
+     such a night back into step. */
+  function screenOfPlan(plan) {
+    const ids = gapsWithScreen(segmentsNow());
+    for (const id of ids) if (plan && plan[id] && plan[id].screen) return plan[id].screen;
+    return 'scores';
+  }
+
+  /** Write one phone setting across every gap a dial owns. */
+  function setGaps(ids, phone) {
+    const next = { ...night.breaks };
+    for (const id of ids) next[id] = { ...(next[id] || breakSetFor(id)), phone };
+    /*
+     * CLEANED, so a dial cycled all the way back to its default stops
+     * claiming it was changed. The lit edge means "you touched this", and an
+     * entry that only restates a default makes that a lie — on the one
+     * control whose whole job is saying which gap is not ordinary.
+     */
+    night.breaks = cleanPlan(next);
+    paintOrder();
+  }
+
+  /* A gap's current pair, so writing the phone half never silently resets a
+     screen half somebody had changed. `prunePlan` drops whatever only
+     restates a default straight after, so this cannot bloat the plan. */
+  function breakSetFor(id) {
+    const set = (night.breaks || {})[id];
+    return set ? { ...set } : {};
   }
 
   function paintOrder() {
@@ -2443,6 +2531,16 @@ export function launchBar() {
           toggleRound(pack.id, Number(dot.dataset.round));
         });
       }
+      /* AND THE GAP DIAL IN THE CORNER — what the phones get in the breaks
+         this pack creates. Placed by the stylesheet, not by the flow, so a
+         four-tick pack and a one-tick pack put it in the same spot. */
+      const dial = gapDial({
+        ids: gapsOfPart(segmentsNow(), at),
+        plan: night.breaks,
+        onSet: setGaps,
+        what: rounds ? 'this quiz\u2019s breaks' : 'the gap before this',
+      });
+      if (dial) tile.appendChild(dial);
       tile.querySelector('.lb-tile-off').addEventListener('click', (ev) => {
         ev.stopPropagation();
         dropPack(at);
@@ -2571,7 +2669,8 @@ export function launchBar() {
      */
     const row = node('<div class="lb-tiles"></div>');
     row.append(...tiles);
-    orderEl.replaceChildren(...[breakStripNow()].filter(Boolean), row);
+    paintGaps();
+    orderEl.replaceChildren(row);
     paintGo(packs);
     paintInTonight();
   }
@@ -3067,7 +3166,9 @@ export function launchBar() {
      * cannot happen.
      */
     night.breaks = (show.breaks && typeof show.breaks === 'object') ? { ...show.breaks } : {};
-    lbBreakOpen = '';
+    /* And the picker's value, READ BACK out of the plan rather than stored a
+       second time on the show — one truth, and this is a view of it. */
+    night.gapScreen = screenOfPlan(night.breaks);
   }
   if (showWanted) applyShow(showWanted);
   if (packWanted) {

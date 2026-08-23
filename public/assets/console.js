@@ -11,6 +11,7 @@ import { brandLink, brandMark, esc, menuRights, node, paintIdentity, paintNav, p
 import { accountSection, backupWarning, firstOwnerPanel, helpSection, otherRoomsPanel, settingsSection, shopSection } from './console-account.js';
 import { diarySection } from './console-diary.js';
 import { generatePanel, importPanel, quizGeneratePanel } from './console-generate.js';
+import { communityBench, leagueSection } from './console-community.js';
 import { asksPanel, fillNightDetail, gigsSection } from './console-gigs.js';
 import { invoicesSection } from './console-invoices.js';
 import { gameSection, packActionsMarkup, preview, wirePackActions } from './console-packs.js';
@@ -823,6 +824,24 @@ export const TABS = [
     render: () => diarySection(),
   },
   {
+    /*
+     * THE LEAGUE FINALLY HAS A PAGE. It has existed since `src/league.js` was
+     * written and its only home was a block on a venue card — one venue at a
+     * time, behind the Workshop door, found by going looking. Nothing about
+     * the arithmetic changed; it got somewhere to be read.
+     */
+    id: 'league',
+    doors: ['community'],
+    needs: FEATURES.LEAGUE,
+    label: 'Quiz league',
+    blurb: 'The same teams, ranked over a season, per venue.',
+    // How many venues have a season running — not how many teams, which is a
+    // number that means nothing until you know how many rooms it is spread
+    // across, and not how many nights, which only ever goes up.
+    count: () => Object.keys(library.leagues || {}).length,
+    render: () => leagueSection(),
+  },
+  {
     id: 'past',
     doors: ['post'],
     needs: FEATURES.PAST_GIGS,
@@ -1054,7 +1073,19 @@ export const TABS = [
  * other way to get the same packs, it is finally in the same room as its own
  * alternative.
  */
-const DOORS = ['console', 'workshop', 'post', 'account'];
+/*
+ * AND A FIFTH, asked for on 23 August 2026: *"a fifth menu pill at the top
+ * entitled 'community', which is for things like quiz leagues, and all the
+ * controls for that functionality will live there."*
+ *
+ * **It goes FOURTH in the list and My account stays last.** The first three
+ * name moments of a night; this names the thing that spans nights and belongs
+ * to the ROOM rather than to the quizmaster — which is precisely why a league
+ * had nowhere good to live and ended up as a block on a venue card, visible
+ * one venue at a time and only if you went looking. My account keeps the end,
+ * where an account link sits on every website anybody has ever used.
+ */
+const DOORS = ['console', 'workshop', 'post', 'community', 'account'];
 
 export function doorNow() {
   const d = new URL(location.href).searchParams.get('door') || '';
@@ -1186,6 +1217,7 @@ export function render() {
       doorNow() === 'console' ? runningPanel(running) : node('<div></div>'),
       doorNow() === 'workshop' ? workBench() : node('<div></div>'),
       doorNow() === 'post' ? nightBenchPanel() : node('<div></div>'),
+      doorNow() === 'community' ? communityBench() : node('<div></div>'),
     ),
     consoleColumns(tabBar(active), tabBody(active)),
   );

@@ -236,7 +236,19 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * a whole-file tag count was tried and turned down because a test needing an
  * exceptions list is a snapshot rather than a test.
  */
-const BUDGET = 159_800;
+/*
+ * RAISED TO 163_800 ON 23 AUGUST 2026 for the gap dial and the fifth door.
+ * The load-bearing lines are the ones that stop a change: a gap is not at the
+ * end of a slot; the tile measurement (58px clear) is what allows ONE control
+ * and forbids two; the dial's order is a SCALE; the era word moved because a
+ * control beats a decoration; and a lost import drew a bar with no dials on it
+ * while every static check passed.
+ *
+ * `docs/console.md` was split the same day — the launch bar's half is now
+ * `docs/console/launch-bar.md` — so the reasoning behind all of it left this
+ * file rather than landing in it.
+ */
+const BUDGET = 163_800;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

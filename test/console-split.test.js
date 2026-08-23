@@ -271,7 +271,19 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * options themselves are three lines; the note is why the labels name the
  * CHOICE rather than the mechanism they used to describe.
  */
-const BUDGET = { 'console-tonight.js': 3480, 'console.js': 2000, 'console-packs.js': 1760 };
+/*
+ * `console-tonight.js` GOES TO 3560 AND `console-packs.js` TO 1770 for the gap
+ * dial — one 44px symbol in each pack tile's corner, cycling what the phones
+ * get in that pack's breaks, plus the night-level big-screen picker that had
+ * to exist because only ONE control fits in that corner.
+ *
+ * **This raise BUYS a deletion rather than paying for an addition**, which is
+ * the only reason it is not simply growth: the strip of chips it replaces is
+ * gone, and `console-breaks.js` went from 234 lines to 195 — the chip, the
+ * setter panel, the strip and the doors chip all deleted outright. The
+ * console is smaller than it was this morning; this one file is not.
+ */
+const BUDGET = { 'console-tonight.js': 3560, 'console.js': 2000, 'console-packs.js': 1770 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {
