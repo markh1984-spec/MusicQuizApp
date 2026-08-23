@@ -1,8 +1,7 @@
 /** TONIGHT — the launch bar, what is running, and the settings for one night. */
 
-import { breakStrip, prunePlan } from './console-breaks.js';
+import { breakStrip, doorsChip, prunePlan } from './console-breaks.js';
 import { esc, node, postJson } from './client.js';
-import { saidTime } from './console-diary.js';
 import { tonightsVenue } from './console-gigs.js';
 import { invoiceApi, openInvoiceForm, share } from './console-invoices.js';
 import { doLaunch, doLaunchOrder, freshLabel, freshness, lobbyGameOptions, lookOptions, playingOptions, shapeOptions } from './console-packs.js';
@@ -617,6 +616,29 @@ export function launchBar() {
              "Venue" rather than "In the room": the word matches the control
              directly to its left, which names the venue, so the pair reads as
              one question with two answers. -->
+        <!-- WHAT IS ON THE PROJECTOR, AND THE DOORS, BOTH UP HERE — asked
+             for directly: *"the doors button and the 'on the big screen now'
+             and unlaunch buttons can all go right at the top to save space."*
+
+             It cost a whole row of its own before, for one short sentence and
+             one small button; and Doors is the gap BEFORE the night starts,
+             which makes it a fact about the evening like the venue beside it
+             rather than a gap inside the running order. Every other break
+             stays down with the order it happens in. -->
+        <div class="lb-live-row" hidden>
+          <span class="tiny lb-live"></span>
+          <!-- UNLAUNCH, AND IT SITS AGAINST THE SENTENCE IT UNDOES — reported
+               off a screenshot: it said "Stop" and sat at the far right of the
+               bar, an inch of empty space away from the line naming what it
+               would stop. At that distance it reads as a control over the whole
+               panel, which is the one thing it must not be mistaken for on a
+               gig night. "Unlaunch" because it is the exact opposite of the
+               button underneath it, and a word somebody can pair with Launch
+               without being told. -->
+          <button class="minor danger lb-unlaunch" type="button"
+            title="Take it off the big screen and go back to waiting">Unlaunch</button>
+        </div>
+        <div class="lb-doors"></div>
         <div class="lb-right">
           <div class="lb-mode">
             <span class="hat-switch lb-mode-switch" data-on="0">
@@ -628,6 +650,12 @@ export function launchBar() {
             <span class="lb-fold-word"></span>
           </button>
         </div>
+        <!-- ONLY WHEN SOMETHING IS WRONG, and on a line of its own when it
+             is. Placed last so it wraps UNDER the row rather than shoving the
+             mode switch and the fold onto a second line in front of it — a
+             warning should be the thing that moves, not the controls whose
+             position people learn. -->
+        <div class="lb-warn-slot" hidden></div>
       </div>
       <!-- SEARCHABLE, because a quizmaster with fifteen residencies scrolling a
            dropdown in a dark pub is the thing this replaces. It draws from the
@@ -654,19 +682,7 @@ export function launchBar() {
            whether the box happens to have a title in it, and it is the SAME
            call as the running panel's own Stop button, through the one shared
            stopRunningNight() — never a second copy of that confirm wording. -->
-      <div class="lb-live-row" hidden>
-        <span class="tiny lb-live"></span>
-        <!-- UNLAUNCH, AND IT SITS AGAINST THE SENTENCE IT UNDOES — reported
-             off a screenshot: it said "Stop" and sat at the far right of the
-             bar, an inch of empty space away from the line naming what it
-             would stop. At that distance it reads as a control over the whole
-             panel, which is the one thing it must not be mistaken for on a
-             gig night. "Unlaunch" because it is the exact opposite of the
-             button underneath it, and a word somebody can pair with Launch
-             without being told. -->
-        <button class="minor danger lb-unlaunch" type="button"
-          title="Take it off the big screen and go back to waiting">Unlaunch</button>
-      </div>
+
       <!-- WHAT COMES AFTER THIS, when a show with more than one part is up.
            A show is an EVENING and the bar plays one part of it, so without
            this line the second half exists only in somebody's memory — which
@@ -810,6 +826,8 @@ export function launchBar() {
   const venueList = el.querySelector('.lb-venue-list');
   const venueSearch = el.querySelector('.lb-venue-search');
   const liveRow = el.querySelector('.lb-live-row');
+  const doorsEl = el.querySelector('.lb-doors');
+  const sayEl = el.querySelector('.lb-warn-slot');
   const liveEl = el.querySelector('.lb-live');
   const unlaunchBtn = el.querySelector('.lb-unlaunch');
   const shapePick = el.querySelector('.shape-pick');
@@ -1090,7 +1108,7 @@ export function launchBar() {
      *
      * Latent before and load-bearing now: that line is the ONLY place those
      * facts appear, since the venue there stopped being a second picker of
-     * its own. `paintOrder()` is what rebuilds it — see `infoLine()`.
+     * its own. `paintOrder()` is what rebuilds it — see `prizeWarning()`.
      */
     paintOrder();
     const running = (library && library.running) || {};
@@ -1619,18 +1637,27 @@ export function launchBar() {
      */
     const picked = pickedPack();
     const pickedIsBingo = Boolean(picked) && picked.kind === 'bingo';
-    if (setForEl) {
-      setForEl.textContent = !picked
-        ? (packsInBay() ? 'Tap a pack above to set it up' : '')
-        : pickedIsBingo
-          ? shortTitle(picked.pack.title)
-          : `${shortTitle(picked.pack.title)} — rounds are the dots on the pack`;
-    }
-    // The whole row stands down when there is nothing in the bay at all:
-    // with no packs there is no pack to be specific about, and an empty
-    // labelled row above Launch is furniture. Once anything is in, it stays
-    // present — inert and saying so — like every other control on this bar.
-    if (packSetRow) packSetRow.hidden = !packsInBay();
+    if (setForEl) setForEl.textContent = pickedIsBingo ? shortTitle(picked.pack.title) : '';
+    /*
+     * THE ROW IS ONLY THERE WHEN IT HOLDS A CONTROL — which today means a
+     * BINGO pack is picked, because Card and Prizes are the only pack-specific
+     * settings there are.
+     *
+     * It used to stand down only when the bay was empty, so every quiz night
+     * carried a labelled row directly above Launch containing one caption and
+     * nothing else: *"1980s Pop — rounds are the dots on the pack"*. That is a
+     * sentence explaining a control that is already visible on the tile, in
+     * the band the host asked to keep clear — *"that space between packs and
+     * launch button needs to be clear, space is at a premium"*.
+     *
+     * This does NOT contradict "a control is present and inert, never absent".
+     * That rule is about a control coming and going as you work, so you cannot
+     * learn where it is. Card and Prizes already do not exist for a quiz pack
+     * — settled earlier, in the host's own words: *"if they can't function on
+     * the bench they should be removed"* — so what is being hidden here is an
+     * empty box, not a control.
+     */
+    if (packSetRow) packSetRow.hidden = !pickedIsBingo;
     if (cardRow) cardRow.hidden = !pickedIsBingo;
     if (prizesRow) prizesRow.hidden = !pickedIsBingo;
     if (shapePick && prizePick) {
@@ -2190,7 +2217,7 @@ export function launchBar() {
       picked: lbPicked,
       onPick: (at) => { lbPicked = at; paintOrder(); },
     });
-    orderEl.replaceChildren(row, ...[breakStripNow()].filter(Boolean), infoLine());
+    orderEl.replaceChildren(...[breakStripNow()].filter(Boolean), row);
     const parts = segmentsFromSlots(lbSlots).length;
     goBtn.disabled = !parts;
     goBtn.textContent = parts ? `Launch tonight — ${parts} part${parts === 1 ? '' : 's'}` : 'Drag a pack in to launch';
@@ -2262,16 +2289,36 @@ export function launchBar() {
   function breakStripNow() {
     const segments = segmentsNow();
     night.breaks = prunePlan(night.breaks, segments);
+    const onOpen = (id) => { lbBreakOpen = id; paintOrder(); };
+    const onSet = (id, set) => {
+      if (!id) { lbBreakOpen = ''; paintOrder(); return; }
+      night.breaks = { ...night.breaks, [id]: set };
+      paintOrder();
+    };
+    /*
+     * DOORS GOES IN THE HEAD and everything else stays with the order — see
+     * `breakStrip`'s own note on why that split is the coherent one rather
+     * than merely the tidier one. Painted from HERE, in the same function, so
+     * the two halves are drawn from one plan on one pass and cannot disagree
+     * about what a break is set to.
+     */
+    if (sayEl) {
+      const warn = prizeWarning();
+      sayEl.replaceChildren(...(warn ? [warn] : []));
+      sayEl.hidden = !warn;
+    }
+    if (doorsEl) {
+      const chip = doorsChip({ segments, plan: night.breaks, open: lbBreakOpen, onOpen });
+      doorsEl.replaceChildren(...(chip ? [chip] : []));
+      doorsEl.hidden = !chip;
+    }
     return breakStrip({
       segments,
       plan: night.breaks,
       open: lbBreakOpen,
-      onOpen: (id) => { lbBreakOpen = id; paintOrder(); },
-      onSet: (id, set) => {
-        if (!id) { lbBreakOpen = ''; paintOrder(); return; }
-        night.breaks = { ...night.breaks, [id]: set };
-        paintOrder();
-      },
+      skipDoors: true,
+      onOpen,
+      onSet,
     });
   }
 
@@ -2465,7 +2512,7 @@ export function launchBar() {
      */
     const row = node('<div class="lb-tiles"></div>');
     row.append(...tiles);
-    orderEl.replaceChildren(row, ...[breakStripNow()].filter(Boolean), infoLine());
+    orderEl.replaceChildren(...[breakStripNow()].filter(Boolean), row);
     paintGo(packs);
     paintInTonight();
   }
@@ -2548,44 +2595,36 @@ export function launchBar() {
    * from here, and CLAUDE.md is explicit that the venue is chosen in one place
    * and nowhere else. Losing it to a tidy-up would take the choice with it.
    */
-  function infoLine() {
+  /**
+   * THE ONE THING THAT IS WRONG, IF ANYTHING IS — and silence otherwise.
+   *
+   * This line used to read *"The Station Tap, Wokingham · one-off · start when
+   * you like · for free drink +2"*, and the host's question about it was the
+   * right one: *"this is all venue settings stuff that can be done in the
+   * workshop?"* Yes. The venue name duplicated the picker two controls away,
+   * *one-off* is `usualNight` on the venue record, and *start when you like*
+   * is the app reporting that a diary field is blank. None of the three
+   * changes what launches, and all three are edited on the Venues shelf.
+   *
+   * **The prizes were the honest exception** — read at LAUNCH onto the
+   * winner's voucher, so this was the last moment to catch a wrong one. But
+   * *"space is at a premium"*, and a night whose prizes are RIGHT gains
+   * nothing from being told so. So the positive case is silent, exactly as
+   * the come-back slide is silent when it has nothing true to say, and only
+   * the case worth interrupting for survives: a venue picked with no prize on
+   * it, which hands the winner a voucher with nothing written on it.
+   *
+   * **It draws in the HEAD, never between the tiles and Launch.** That band
+   * is kept clear on purpose — see `paintOrder()`.
+   */
+  function prizeWarning() {
     const name = venueNow();
+    if (!name) return null;
     const record = (library.venueRecords || [])
       .find((v) => (v.name || '').toLowerCase() === String(name).toLowerCase());
     const prizes = ((record && record.rewards) || []).map((r) => String(r || '').trim()).filter(Boolean);
-
-    // What time tonight starts, if the diary says. A residency carries none —
-    // the venue's arrangement lives in no record here — so this is silent
-    // rather than inventing one.
-    const on = upcoming({
-      venues: library.venueRecords || [],
-      bookings: library.bookings || [],
-      weeks: 1,
-    }).find((n) => n.date === nightKey() && (!name || n.venue.toLowerCase() === String(name).toLowerCase()));
-
-    const prizeSaid = prizes.length
-      ? `${prizes[0]}${prizes.length > 1 ? ` +${prizes.length - 1}` : ''}`
-      : 'no prizes';
-
-    /*
-     * THE VENUE HERE IS A FACT, NOT A SECOND WAY TO CHANGE IT — reported
-     * directly: *"there's two places to select venue."* There were, and this
-     * was the other one. The picker at the top of the bar is the single
-     * control now, and it looks like one (see `.lb-where`), so a second
-     * entrance mid-sentence is the "two controls for one field" fault this
-     * file already records for the venue itself.
-     *
-     * It also removes a real collision: as a button this carried an invisible
-     * 15px-tall tap overlay above and below itself, which reached into the
-     * lines either side of it.
-     */
-    return node(`
-      <div class="lb-say">
-        <b class="lb-say-venue">${esc(name || 'No venue yet')}</b>
-        <span class="lb-say-bit">${esc(record && record.usualNight ? 'your usual night' : (name ? 'one-off' : 'sets the prizes'))}</span>
-        <span class="lb-say-bit">${esc(on && on.time ? `starts ${saidTime(on.time)}` : 'start when you like')}</span>
-        <span class="lb-say-bit">${esc(`for ${prizeSaid}`)}</span>
-      </div>`);
+    if (prizes.length) return null;
+    return node('<div class="lb-say lb-say-none">No prizes set — add them on the Venues shelf</div>');
   }
 
   /*

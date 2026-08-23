@@ -1348,6 +1348,116 @@ in this console. A strip where everything shouts says nothing.
   the third sighting of the picks-fields trap this month** — `mergeGigs()`
   records it twice and `listArchive()` once.
 
+## THE BAND ABOVE LAUNCH IS KEPT CLEAR, and one row holds the night
+
+Reported on 23 August 2026, in two messages a few minutes apart: *"the doors
+button and the 'on the big screen now' and unlaunch buttons can all go right
+at the top to save space… can we also standardise the buttons to look the
+same"*, then, looking at what was left, *"either way that space between packs
+and launch button needs to be clear, space is at a premium."*
+
+### The head became the night's own row
+
+It already held where the night is, whether it is in a room or online, and
+whether the panel is open. It now also holds whether to keep the night, what
+is on the projector right now, and what the phones get before it starts —
+which is every question that is true of the EVENING rather than of a pack.
+
+The live line cost a whole row of its own for one short sentence and one small
+button, on a bar with nothing to spare.
+
+**Doors going up is the coherent split, not merely the tidier one.**
+`p0:lobby` is the gap BEFORE the night starts, so it is a fact about the
+evening like the venue beside it. Every other break — including a later part's
+own lobby, *"Before the bingo"* — happens INSIDE the running order and belongs
+beside the order it happens in. The SETTER still opens down in the strip
+wherever the chip was tapped, so a break is edited in one place rather than
+two.
+
+The head also stopped being a grid. It was three explicitly-placed cells; at
+six items of wildly different widths — a pub name, a five-word button, a
+sentence, a chip and two pills — every breakpoint wanted its own placement, and
+the last thing added auto-placed into an empty cell and came out in the wrong
+order. A wrapping flex row puts them in DOM order at every width, with one
+`margin-left: auto` pushing the pills to the end.
+
+### Standardising the buttons
+
+Measured before the change, the head held four different heights: 36px for the
+mode switch, 38px for Save and Unlaunch, 44px for the fold, and a chip of its
+own size again. Six controls, four heights, no two edges lining up.
+
+**44px because that is the FLOOR, not because it is the biggest.** A
+touch-target audit had already forced the fold up to it and left everything
+beside it underneath; levelling down would have taken the one control that
+passed and broken it.
+
+**The shapes still differ, deliberately.** The radius rule is a field, a card
+or a pill, and it encodes what a control IS: Save, Unlaunch and Doors are
+actions and stay fields; the venue is a dropdown; the mode switch and the fold
+are pills. Standardising the SIZE is what was asked for — flattening the roles
+would undo the system the GUI rules are built on.
+
+Three controls also had bespoke faces that simply had no reason to exist:
+`.lb-unlaunch` carried `padding: 2px 10px; font-size: 0.8em`, which gave the
+row a third text size nobody chose; `.brk-done` was a hand-rolled copy of
+`.minor`; and the break chips were invented in isolation and looked it. All
+three now take the console's own button face.
+
+**And a destructive button in the console had silently lost its edge.** The
+one global rule — the one whose own comment says *"it was written out four
+times in four places and had already drifted; this is the one rule"* — sets
+`border: 1px solid …`, a SHORTHAND, which overwrites all four sides. So
+`.console button.minor.danger`'s 2px bottom became 1px and its top-lit face
+was blanked, leaving Unlaunch and Delete structurally different objects from
+Save and Rename beside them. **That is the shorthand-beats-longhand trap this
+repo already records about the pack tile's border, hit again inside the rule
+that calls itself the one rule.** CLAUDE.md settles which way to fix it:
+*"Destructive keeps RED on its edge in every scheme, like everywhere else."*
+An edge, not a different shape. Outlined-never-filled is about FILL and is
+untouched.
+
+### Nothing between the running order and Launch
+
+Three things were in that band and all three had somewhere better to be.
+
+**The break strip moved above the tiles.** It describes the gaps between them
+either way, and above it does not stand between the order and the one filled
+gradient on the panel.
+
+**The pack settings row now only exists when it holds a control.** It stood
+down only when the bay was empty, so every quiz night carried a labelled row
+directly above Launch containing one caption and nothing else: *"1980s Pop —
+rounds are the dots on the pack"* — a sentence explaining a control already
+visible on the tile. This does not contradict *"a control is present and
+inert, never absent"*: that rule is about a control coming and going as you
+work, so you cannot learn where it is, and Card and Prizes already do not
+exist for a quiz pack — settled earlier in the host's own words, *"if they
+can't function on the bench they should be removed"*. What is hidden here is
+an empty box, not a control.
+
+**The four-fact info line went, and the host's question about it was right.**
+*"This is all venue settings stuff that can be done in the workshop?"* Three
+quarters of it, yes: the venue NAME duplicated the picker two controls away —
+and this bar had already lost a second venue CONTROL for that same reason;
+*one-off / your usual night* is `usualNight` on the venue record; and *start
+when you like* is the app reporting that a diary field is blank, which is a
+sentence about nothing. None of the three changes what launches, and all three
+are edited elsewhere.
+
+**The prizes were the honest exception.** They are read at LAUNCH into the game
+state and printed on the winner's voucher, which somebody carries to a bar —
+so this was the last moment before the night starts that a wrong one could be
+caught, and being wrong costs a real person a drink in front of the room.
+
+But space is at a premium, and **a night whose prizes are right gains nothing
+from being told so**. So the positive case is silent — the same rule the
+come-back slide already follows — and only the case worth interrupting for
+survives: a venue picked with no prize on it, said in the head, on a line of
+its own so it never shoves the mode switch and the fold in front of it. A
+warning should be the thing that moves, not the controls whose position people
+learn.
+
 ## THE BAR'S OWN TIDY-UP — and a drag with no tap is a broken control
 
 Reported on 23 August 2026 off a screenshot of the bar with a game running and

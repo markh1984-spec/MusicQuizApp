@@ -6283,9 +6283,49 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
  * comfortably, and a row that overflows is worse than one that takes two
  * lines.
  */
+/*
+ * THE NIGHT'S OWN ROW — and it now carries everything that is true of the
+ * evening rather than of a pack: where it is, whether to keep it, what is on
+ * the projector right now, what the phones get before it starts, whether it
+ * is in a room or online, and whether the panel is open.
+ *
+ * FLEX, not grid. It was three explicitly-placed grid cells; at five items of
+ * wildly different widths — a pub name, a five-word button, a sentence, a
+ * chip and two pills — every breakpoint needed its own placement, and the
+ * last one to be added auto-placed into an empty cell and came out in the
+ * wrong order. A wrapping flex row puts them in DOM order at every width and
+ * needs no arithmetic: the pills are pushed to the end by a margin, and
+ * everything else falls where it fits.
+ */
 .lb-head {
-  display: grid; grid-template-columns: minmax(0, auto) auto minmax(0, 1fr);
-  align-items: center; gap: 10px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+}
+/*
+ * ONE HEIGHT FOR EVERY CONTROL IN THIS ROW — *"can we also standardise the
+ * buttons to look the same."* Measured before the change, the head held four
+ * different heights: 36px for the mode switch, 38px for Save and Unlaunch,
+ * 44px for the fold, and a chip of its own size again. Six controls, four
+ * heights, no two edges lining up.
+ *
+ * **44px because that is the floor, not because it is the biggest.** A
+ * touch-target audit already forced the fold up to it and left everything
+ * beside it underneath; levelling DOWN would have taken the one control that
+ * passed and broken it. So the row now clears the floor everywhere, and the
+ * tops and bottoms line up as a side effect of getting that right.
+ *
+ * **THE SHAPES STILL DIFFER, and deliberately.** The radius rule is a field,
+ * a card or a pill, and it encodes what a control IS: Save and Unlaunch and
+ * Doors are actions and stay fields, the venue is a dropdown, the mode switch
+ * and the fold are pills. Standardising the SIZE is what was asked for;
+ * flattening the roles would undo the system the GUI rules are built on.
+ */
+.lb-head .minor,
+.lb-head .brk-chip,
+.lb-head .lb-where,
+.lb-head .lb-fold,
+.lb-head .hat-half {
+  min-height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
 }
 .lb-head > * { min-width: 0; }
 /* What tonight is: the venue when it is open, the pack as well when it is
@@ -6297,33 +6337,21 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    edge when open and flush when shut. Pinned, row one cannot move whatever
    happens underneath it. */
 /*
- * THE VENUE LEADS THE ROW, AND SAVE IS THE CELL NEXT TO IT.
- *
- * These are PLACED EXPLICITLY and that is load-bearing — the note below
- * records why — which is also how Save went in wrong the first time: the
- * columns were pinned around an `h3` that no longer exists, so a new child
- * auto-placed into the empty first cell and the button rendered to the LEFT
- * of the venue. Adjacent, but in the wrong order: the venue is the identity
- * of the night and reads first.
+ * THE VENUE LEADS THE ROW — it is the identity of the night and reads first.
+ * Everything after it is in DOM order, which is also reading order.
  */
-.lb-head > .lb-what { grid-column: 1; grid-row: 1; }
-.lb-head > .set-keep { grid-column: 2; grid-row: 1; }
+.lb-head > .lb-what { flex: 0 1 auto; }
+.lb-head > .lb-live-row { flex: 1 1 auto; margin: 0; min-width: 0; }
 /* THE TWO PILLS SHARE THE RIGHT-HAND END — what kind of night it is, and
    whether the panel is open. The mode switch was a row of its own under the
    head, which made a bar meant to be glanceable three rows deep; beside the
    fold it is one of two chips at the end of a line, and it survives the fold
    because it is no longer inside the part that folds. */
+/* THE PILLS ARE PUSHED TO THE END, whatever is in front of them — one
+   `margin-left: auto` instead of a placement rule per breakpoint. */
 .lb-head > .lb-right {
-  grid-column: 3; grid-row: 1; justify-self: end;
+  margin-left: auto;
   display: flex; align-items: center; gap: 8px;
-}
-/*
- * ON A PHONE THE SAVE DROPS TO ITS OWN LINE. Two pills, a pub name and a
- * five-word button do not share 390px, and the pills are what the head is
- * for — where the night is and whether the panel is open.
- */
-@media (max-width: 760px) {
-  .lb-head > .set-keep { grid-column: 1 / -1; grid-row: 2; }
 }
 .lb-head .lb-mode { margin: 0; }
 /* THE VENUE PICKER LOOKS LIKE EVERY OTHER DROPDOWN ON THE BAR — reported
@@ -6455,15 +6483,28 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
  * panel rather than over one game. `flex-start` with a small gap makes the
  * two one phrase: "On the big screen now: The 2000s Metal Quiz [Unlaunch]".
  */
-.lb-live-row {
-  margin-top: 6px; display: flex; align-items: center;
-  justify-content: flex-start; gap: 10px; flex-wrap: wrap;
-}
+/*
+ * UNLAUNCH SITS AGAINST THE SENTENCE IT UNDOES, and the pair is now IN the
+ * head rather than on a line of its own underneath — a whole row for one
+ * short sentence and one small button was the space this bar could least
+ * afford. `min-width: 0` plus the ellipsis below is what lets a long quiz
+ * title give way instead of pushing the pills off the end.
+ */
+.lb-live-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.lb-live-row .lb-live { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lb-live { color: var(--ink-dim); min-width: 0; }
 /* The unlaunch button sits on the same line as the text it belongs to, never
    its own row — it is one small action about one small fact, not a second
    thing to notice on the bar. */
-.lb-unlaunch { flex: none; padding: 2px 10px; font-size: 0.8em; }
+/*
+ * NO SIZE OF ITS OWN — asked for directly: *"can we also standardise the
+ * buttons to look the same."* This carried `padding: 2px 10px` and
+ * `font-size: 0.8em`, which made it visibly smaller than every other button
+ * on the bar and gave the row a third text size nobody chose. `.minor.danger`
+ * already says everything it needs to: outlined, red, the same face and the
+ * same height as Save two lines above it.
+ */
+.lb-unlaunch { flex: none; }
 /* RED, not gold, and at the host's own instruction: "these should never be
    allowed to drift, but if they do it needs to be a red warning". The rest of
    this app keeps red for wrong and destructive, and that is exactly what this
@@ -6507,9 +6548,9 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
      this bar you cannot check at a glance. Row one is unaffected either way,
      which is what keeps the heading still. */
   .launchbar.shut .lb-where { display: none; }
-  .launchbar:not(.shut) .lb-what { grid-column: 1 / -1; grid-row: 2; }
-  /* The venue has taken row two, so Save goes below it rather than on top. */
-  .launchbar:not(.shut) .lb-head > .set-keep { grid-row: 3; }
+  /* The venue takes a line of its own: a truncated pub name is the one thing
+     on this bar you cannot check at a glance. Flex order does the rest. */
+  .launchbar:not(.shut) .lb-what { flex: 1 0 100%; }
 }
 .lb-tucked { display: none !important; }
 .lb-fold {
@@ -6624,8 +6665,31 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
  * gesture nobody knows is there. The console's tab bar was rescued from
  * exactly that.
  */
-.brk-strip { margin-top: 10px; }
+/*
+ * ABOVE THE TILES, NOT BELOW — *"that space between packs and launch button
+ * needs to be clear, space is at a premium."* The band between the running
+ * order and Launch is now empty by rule: the strip sits on top of the order
+ * it describes, the prize warning moved into the head, and the pack settings
+ * row only exists when it actually holds a control.
+ *
+ * Directly above works as well as directly below did, because what the chips
+ * describe is the gaps BETWEEN the tiles either way — and it puts the one
+ * filled gradient on the panel back where nothing competes with it.
+ */
+.brk-strip { margin-bottom: 10px; }
 .brk-row { display: flex; flex-wrap: wrap; gap: 6px; }
+/*
+ * THE SAME FACE AS EVERY OTHER BUTTON IN THE CONSOLE — the top-lit surface
+ * and the 1px edge `.console button.minor` defines, rather than a flat panel
+ * swatch of its own. It was invented in isolation and looked it: sat in a row
+ * under Save and Unlaunch, it read as a different kind of object.
+ *
+ * The one deliberate difference is the BOTTOM EDGE, which is transparent
+ * until a break has actually been changed — an ordinary button wears the
+ * account colour there always, and these are a row of six or more. Lighting
+ * every one of them would be the wall of colour the GUI rules turn down, and
+ * would say nothing about which one you had touched.
+ */
 .brk-chip {
   display: flex;
   flex-direction: column;
@@ -6633,12 +6697,12 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   gap: 2px;
   padding: 6px 10px;
   border-radius: var(--r-field);
-  border: 1px solid var(--panel-line);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-bottom: 2px solid transparent;
-  background: var(--panel);
   color: var(--ink-dim);
   font: inherit;
-  font-size: var(--fs-note);
+  font-size: var(--fs-note); font-weight: 800;
   cursor: pointer;
 }
 .brk-chip:hover { border-color: var(--hot); color: var(--ink); }
@@ -6667,19 +6731,9 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 }
 .lb-set-break .pack-shape { flex: 1 1 240px; max-width: 380px; margin: 0; }
 .lb-set-break .brk-why { color: var(--ink-dim); align-self: center; }
-.brk-done {
-  align-self: center;
-  flex: 0 0 auto;
-  padding: 8px 16px;
-  border-radius: var(--r-field);
-  border: 1px solid var(--panel-line);
-  border-bottom: 2px solid var(--hot);
-  background: var(--panel);
-  color: var(--ink);
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
+/* Nothing of its own — it is `.minor` in the markup now, which is what it
+   always should have been. Only its place in the row is set here. */
+.brk-done { align-self: center; flex: 0 0 auto; }
 @media (max-width: 560px) {
   /* Shorter still on a phone, where they are a summary rather than a target. */
   /* TWO ACROSS ON A PHONE, not one. `auto-fit` at 160px only fits a single
@@ -6689,6 +6743,51 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
      three rows, and a half-width tile is still a target you cannot miss. */
   .lb-tiles, .pack-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lb-tiles .lb-tile { min-height: 58px; padding: 8px; }
+  /* ONE EMPTY SLOT ON A PHONE, not up to six. The six-slot row is sized for a
+     rare six-pack night on the laptop this console is built around — on a
+     390px screen, before a single pack is added, it was three rows of empty
+     "Add pack" tiles above the tab list a host actually needs. `.lb-drop` is
+     only ever on an EMPTY slot (a chosen pack carries `.is-pack` instead), and
+     they always sit after any filled tiles in the row — so hiding every
+     `.lb-drop` that follows another one leaves exactly one "Add a pack"
+     affordance, whatever the pack count, with the JS slot logic untouched. */
+  .lb-tiles .lb-tile.lb-drop ~ .lb-tile.lb-drop { display: none; }
+}
+/* THE THREE FACTS GET THEIR OWN ROW. Three columns always, because there are
+   always exactly three of them — where, when and what for — and an auto grid
+   would wrap one of them under the others the moment the packs beside them
+   changed count. Below 560px they go to two and then the third drops, which
+   is the only place wrapping is honest: a 320px phone cannot hold three. */
+/*
+ * ONE LINE OF DESCRIPTION, not three cards.
+ *
+ * Where, when and what for are facts somebody READS. As squares they were the
+ * same size as the pack slots above, which said they were the same kind of
+ * thing — something you drag onto — and they took as much of the screen while
+ * doing none of the work. Tonight is at the top of every tab, so its height is
+ * charged to every page in the console.
+ *
+ * It WRAPS rather than scrolling or ellipsising: a venue name is as long as
+ * the venue is, and on a phone this is allowed to become two lines. Two lines
+ * of text is still a fraction of three squares.
+ */
+/*
+ * ONE FACT, NOT FOUR. This line carried the venue name, whether tonight was a
+ * one-off, what time it started and the prizes — and three of those were
+ * settings edited elsewhere that changed nothing about what launches. What is
+ * left is the prizes, which are read at LAUNCH onto the winner's voucher and
+ * therefore the one thing here worth checking before pressing the button.
+ */
+.lb-say {
+  margin-top: 8px; min-width: 0;
+  font-size: var(--fs-note); color: var(--ink-dim);
+}
+/* No prize set is not an error — plenty of nights have none — so it is said
+   rather than warned about, and it names where to fix it rather than leaving
+   somebody to find the shelf. */
+.lb-say-none { color: var(--ink-dim); }
+
+.lb-tile { min-height: 58px; padding: 8px; }
   /* ONE EMPTY SLOT ON A PHONE, not up to six. The six-slot row is sized for a
      rare six-pack night on the laptop this console is built around — on a
      390px screen, before a single pack is added, it was three rows of empty
@@ -7124,6 +7223,36 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 }
 .danger:hover, button.danger:hover, .minor.danger:hover,
 .pack-del:hover { background: rgba(255, 77, 94, 0.12); }
+
+/*
+ * AND A DESTRUCTIVE BUTTON IN THE CONSOLE KEEPS THE FACE AND THE 2px EDGE.
+ *
+ * The rule directly above uses the `border` SHORTHAND, which overwrites all
+ * four sides — so it silently flattened `.console button.minor.danger`'s 2px
+ * bottom to 1px and blanked its top-lit face, leaving Unlaunch and Delete
+ * structurally different objects from Save and Rename sitting beside them.
+ * **That is the shorthand-beats-longhand trap this repo already records about
+ * the pack tile's border**, hit again in the one place a rule calls itself
+ * "the one rule".
+ *
+ * CLAUDE.md's own line settles which way to fix it: *"Destructive keeps RED
+ * on its edge in every scheme, like everywhere else."* An edge, not a
+ * different shape. Outlined-never-filled is about FILL and is untouched — the
+ * face here is the same faint top-lit surface every ordinary button wears,
+ * not a red fill.
+ *
+ * Scoped to the console on purpose: the bare `.danger` above also dresses
+ * buttons that never had a face, and widening this would be a change to
+ * screens nobody asked about.
+ */
+.console button.minor.danger, .console a.minor.danger {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 77, 94, 0.45);
+  border-bottom: 2px solid var(--bad);
+}
+.console button.minor.danger:hover, .console a.minor.danger:hover {
+  background: rgba(255, 77, 94, 0.12);
+}
 
 /* MAKE SOMETHING — filled green.
  *
@@ -7941,6 +8070,27 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
  * bar that answered no question at all.
  */
 .set-keep { display: flex; align-items: center; gap: 10px; min-width: 0; }
+/* The Doors chip in the head. It is the same `.brk-chip` the strip draws, so
+   nothing about its face is set here — only that it does not stretch. */
+.lb-doors { display: flex; align-items: center; flex: 0 0 auto; }
+.lb-doors[hidden] { display: none; }
+/*
+ * IN THE HEAD IT LIES DOWN. The strip stacks its chips — glyphs over label —
+ * because a row of six wants to be scanned down a column of labels; up here
+ * it is one control in a line of buttons, and a two-line chip beside a
+ * one-line button is exactly the ragged mix *"standardise the buttons to look
+ * the same"* is about. Same chip, same face, laid out for the row it is in.
+ */
+.lb-doors .brk-chip { flex-direction: row; gap: 6px; padding: 9px 13px; }
+/* Its own line, always — see the markup note. Hidden entirely when the night
+   has prizes, which is the ordinary case and costs nothing. */
+.lb-warn-slot { flex: 1 0 100%; min-width: 0; }
+.lb-warn-slot[hidden] { display: none; }
+.lb-warn-slot .lb-say { margin: 0; }
+/* Open, a chip wears the account edge whether or not it has been changed —
+   it is the one whose panel is on screen, and "you are looking at this" has
+   to outrank "you have touched this". */
+.brk-chip.is-open { color: var(--ink); border-color: var(--hot); border-bottom-color: var(--hot); }
 .set-keep .set-save { white-space: nowrap; }
 
 

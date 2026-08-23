@@ -974,6 +974,49 @@ board), `src/arcade.js` (the scores, shared by both engines),
 
 Full reasoning: **[`docs/lobby-games.md`](docs/lobby-games.md)**.
 
+### THE BAND ABOVE LAUNCH IS KEPT CLEAR, and one row holds the night
+
+*"That space between packs and launch button needs to be clear, space is at a
+premium."* Nothing sits between the running order and Launch now, by rule.
+What was there and where it went:
+
+- **The break strip moved ABOVE the tiles.** It describes the gaps between
+  them either way, and above it does not stand between the order and the one
+  filled gradient on the panel.
+- **The pack settings row only exists when it HOLDS a control** — a bingo pack
+  picked. Every quiz night carried a labelled row above Launch containing one
+  caption and nothing else. That is not the present-and-inert rule being
+  broken: that rule is about a control coming and going as you work, and Card
+  and Prizes already do not exist for a quiz pack.
+- **The four-fact info line is gone, and the host was right about why** —
+  *"this is all venue settings stuff that can be done in the workshop?"* The
+  venue name duplicated the picker, *one-off* is `usualNight` on the venue
+  record, and *start when you like* is the app reporting a blank diary field.
+  **The prizes were the real exception** — read at launch onto the winner's
+  voucher — so what survives is the WARNING only: a venue with no prize on it,
+  said in the head, silent whenever there is nothing wrong.
+- **DOORS, THE LIVE LINE AND UNLAUNCH ALL LIVE IN THE HEAD.** Asked for
+  directly. `p0:lobby` is the one break that belongs up there and that is what
+  makes the split coherent rather than merely tidier: it is the gap BEFORE the
+  night starts, so it is a fact about the evening like the venue. Every other
+  break — including a later part's own lobby — happens inside the running
+  order and stays beside it. **The setter still opens in the strip**, so a
+  break is edited in one place wherever its chip was tapped.
+- **ONE HEIGHT FOR EVERY CONTROL IN THAT ROW — 44px, the touch floor.** The
+  head held four heights before. **44 because it is the FLOOR, not because it
+  is the biggest**: levelling down would have broken the one control a
+  touch-target audit had already fixed. **The shapes still differ** — a field
+  for actions, a pill for the switch and the fold — because the radius encodes
+  what a control IS, and flattening that would undo the GUI rules.
+- **A DESTRUCTIVE BUTTON KEEPS THE FACE AND THE 2px EDGE.** The one global
+  `.danger` rule uses the `border` SHORTHAND, which overwrote all four sides
+  and left Unlaunch and Delete structurally different objects from the buttons
+  beside them — **the shorthand-beats-longhand trap, hit inside the rule that
+  calls itself "the one rule"**. Outlined-never-filled is about FILL and is
+  untouched.
+
+Full reasoning: **[`docs/console.md`](docs/console.md)**.
+
 ### THE BAR'S OWN TIDY-UP — and a drag with no tap is a broken control
 
 Reported off a screenshot: *"starting to look a bit messy — can we utilise
@@ -1373,6 +1416,7 @@ Open the one you are touching; do not read them all.
 - DRAG AND DROP — the console is the laptop with the HDMI in it
 - TONIGHT — one launch section, and it PINS WHERE IT ALREADY IS on a drag
 - WHAT HAPPENS IN THE GAPS — a break plan, per gap in the night
+- THE BAND ABOVE LAUNCH IS KEPT CLEAR, and one row holds the night
 - THE BAR'S OWN TIDY-UP — and a drag with no tap is a broken control
 - A PACK WEARS ITS OWN SUBJECT
 - A CONTROL IS PRESENT AND INERT, NEVER ABSENT

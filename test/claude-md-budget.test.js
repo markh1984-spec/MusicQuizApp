@@ -207,7 +207,15 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * as a hittable one** (growing the tile's × put it under a `z-index: 1`
  * title, so half of it silently did nothing).
  */
-const BUDGET = 149_200;
+/*
+ * RAISED TO 152_000 ON 23 AUGUST 2026, for the band above Launch being kept
+ * clear and the head holding the night. Three of its lines are rules that
+ * stop a change rather than describe one: nothing goes between the running
+ * order and Launch, a row is only drawn when it holds a control, and a
+ * `border` SHORTHAND in the global destructive rule silently flattens the 2px
+ * edge every other button wears — the same trap already recorded twice.
+ */
+const BUDGET = 152_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

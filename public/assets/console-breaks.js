@@ -135,7 +135,7 @@ function setter(slot, plan, onSet) {
     : `<label class="pack-shape">On the big screen
         <select class="brk-screen">${opts(SCREEN_SAYS, set.screen)}</select>
       </label>`}
-      <button class="brk-done" type="button">Done</button>
+      <button class="minor brk-done" type="button">Done</button>
     </div>`);
   const read = () => ({
     phone: el.querySelector('.brk-phone').value,
@@ -157,14 +157,30 @@ function setter(slot, plan, onSet) {
  * @param {function} opts.onSet   `(breakId|null, set|null)` — null closes
  * @param {function} opts.onOpen  `(breakId)` — which chip was tapped
  */
-export function breakStrip({ segments, plan, open, onSet, onOpen }) {
-  const slots = breaksOf(segments);
+export function breakStrip({ segments, plan, open, onSet, onOpen, skipDoors = false }) {
+  const all = breaksOf(segments);
+  /*
+   * DOORS IS DRAWN AT THE TOP OF THE BAR, NOT IN THIS ROW — asked for
+   * directly: *"the doors button and the 'on the big screen now' and unlaunch
+   * buttons can all go right at the top to save space."*
+   *
+   * **And it is the one break that genuinely belongs up there**, which is
+   * what makes the split coherent rather than merely tidier: `p0:lobby` is
+   * the gap BEFORE the night starts, so it is a fact about the evening like
+   * the venue and the look. Every other break — including a later part's own
+   * lobby, "Before the bingo" — happens INSIDE the running order and belongs
+   * beside it.
+   *
+   * The SETTER still opens here wherever the chip was tapped, so there is one
+   * place a break is edited rather than two.
+   */
+  const slots = skipDoors ? all.filter((b) => b.id !== 'p0:lobby') : all;
   /*
    * NOTHING IN THE BAY MEANS NO STRIP. A night with no packs has no gaps, and
    * a row of chips describing breaks that do not exist yet is furniture on
    * the one panel whose job is getting a night started.
    */
-  if (!slots.length) return null;
+  if (!slots.length && !all.some((b) => b.id === open)) return null;
   const el = node(`
     <div class="brk-strip">
       <div class="brk-row"></div>
@@ -175,9 +191,28 @@ export function breakStrip({ segments, plan, open, onSet, onOpen }) {
     c.addEventListener('click', () => onOpen(slot.id === open ? '' : slot.id));
     row.appendChild(c);
   }
-  const openSlot = slots.find((s) => s.id === open);
+  // From `all`, not `slots` — a Doors chip tapped up in the head opens its
+  // panel down here, which is where every other break's panel opens.
+  const openSlot = all.find((s) => s.id === open);
   if (openSlot) el.appendChild(setter(openSlot, plan, onSet));
   return el;
+}
+
+/**
+ * THE DOORS CHIP ON ITS OWN, for the top of the bar.
+ *
+ * Same `chip()` as the strip's, so the two can never drift into looking like
+ * different controls — it is one row of the same list, drawn somewhere else.
+ * Null when tonight has no parts at all, because then there is no night for
+ * its doors to open.
+ */
+export function doorsChip({ segments, plan, open, onOpen }) {
+  const slot = breaksOf(segments).find((b) => b.id === 'p0:lobby');
+  if (!slot) return null;
+  const c = chip(slot, plan);
+  c.classList.toggle('is-open', slot.id === open);
+  c.addEventListener('click', () => onOpen(slot.id === open ? '' : slot.id));
+  return c;
 }
 
 /**

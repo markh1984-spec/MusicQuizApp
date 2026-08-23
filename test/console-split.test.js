@@ -235,7 +235,15 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * the pick-up point is inside `launchBar()`'s closure — the same reason
  * every raise above it landed here.
  */
-const BUDGET = { 'console-tonight.js': 3360, 'console.js': 2000, 'console-packs.js': 1720 };
+/*
+ * RAISED TO 3390 ON 23 AUGUST 2026, for the head row taking over the live
+ * line and the Doors chip, and for cutting the info line down to the prizes.
+ * Net code is roughly flat — the old four-fact line went out as the new one
+ * came in — and what grew is the note saying WHY three of those four facts
+ * left: they were settings edited elsewhere that changed nothing about what
+ * launches, and the prizes are the one that is read at launch onto a voucher.
+ */
+const BUDGET = { 'console-tonight.js': 3390, 'console.js': 2000, 'console-packs.js': 1720 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {
