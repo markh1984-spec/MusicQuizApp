@@ -170,8 +170,15 @@ const ROOT = new URL('..', import.meta.url).pathname;
  *
  * A reversal is the one kind of growth that cannot be moved to `docs/`: the
  * whole value is that the always-loaded file no longer asserts the opposite.
+ *
+ * RAISED TO 140_700 THE SAME DAY, for another reversal and by the same
+ * argument: **a saved night no longer carries its VENUE**. The line it
+ * replaces said the venue stays ON the show, so a session reading it would
+ * put the field straight back — and the cost of that is not cosmetic, since
+ * the prizes and the voucher follow the venue. It also has to say BOTH
+ * halves (never stored, never read), or an old show still restores one.
  */
-const BUDGET = 140_300;
+const BUDGET = 140_700;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

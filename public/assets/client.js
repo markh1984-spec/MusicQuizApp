@@ -971,10 +971,34 @@ export function bestBingoShape(cardShapes, trackCount) {
   return pick.reduce((best, s) => ((s.rows * s.cols > best.rows * best.cols) ? s : best), pick[0]) || null;
 }
 
-/** A shape option's label, with the pacing a quizmaster is actually choosing baked in — "line of N" already said how long a WIN takes; this says how often a call means anything to a given player. */
+/**
+ * A shape option's label, with the pacing a quizmaster is actually choosing
+ * baked in — "line of N" already said how long a WIN takes; this says how
+ * much of the pack a player actually holds.
+ *
+ * **IT COUNTS SONGS RATHER THAN QUOTING A PERCENTAGE**, reported directly:
+ * *"'60% of your calls hit your card' is awkward wording, can we clarify
+ * this and simplify it as well for the reading QM."* Three things were wrong
+ * with it and the count fixes all three: **"your card" was ambiguous** on a
+ * screen only the quizmaster ever reads (it is the PLAYER's card, not
+ * theirs); **a percentage has to be converted** before it means anything,
+ * where "16 of 40 songs" is the thing itself; and it buried the actual
+ * decision, which is whether the round will drag.
+ *
+ * **So the warning is said in words, not left to be derived.** The host's own
+ * report of the fault this exists to prevent was *"they're not even getting a
+ * song fifty percent of the time… the round seems to drag"* — so under half
+ * the pack, the label says `drags`. That is a judgement rather than a
+ * measurement, which is the point: it is the one a quizmaster would have had
+ * to work out from the percentage, and this app's rule is that a control
+ * needing a paragraph is a design problem.
+ */
 export function bingoShapeLabel(shape, trackCount) {
   const line = `${shape.label} — line of ${Math.max(shape.rows, shape.cols)}`;
   if (!trackCount) return line;
-  const pct = Math.round(((shape.rows * shape.cols) / trackCount) * 100);
-  return `${line} · ${pct}% of calls hit your card`;
+  const squares = shape.rows * shape.cols;
+  // Half is the line the host drew himself. At or above it a card keeps up
+  // with the calls; below it most of what is played is on somebody else's.
+  const drags = squares * 2 < trackCount;
+  return `${line} · ${squares} of ${trackCount} songs on a card${drags ? ' — drags' : ''}`;
 }

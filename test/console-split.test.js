@@ -165,8 +165,19 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * a picked pack keeps its shape in one of TWO places depending on the shape
  * of night (its own slot in a mixed running order, `night.*` otherwise), and
  * one function per question beats that branch appearing at every call site.
+ *
+ * RAISED TO 3060 THE SAME DAY, for a REVERSED decision that has to be
+ * explained where it is enforced: a saved night no longer carries its VENUE.
+ * *"Saving everything INCLUDING the venue is pointless, there's no way you'd
+ * want to run the same quiz at the same venue again — but if it could be
+ * saved and the venue left open that would be useful."* Both halves of that
+ * needed writing down next to the code (`tonightAsShow()` stops storing it,
+ * `applyShow()` stops reading it, so shows saved before the change do not
+ * drag an old pub in), because the previous rule — the venue stays ON the
+ * show, so swapping a part cannot disturb it — is recorded in three other
+ * files and would otherwise be put straight back.
  */
-const BUDGET = { 'console-tonight.js': 3020, 'console.js': 2000 };
+const BUDGET = { 'console-tonight.js': 3060, 'console.js': 2000 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

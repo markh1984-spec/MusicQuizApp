@@ -179,9 +179,9 @@ export function showsSection() {
         <div class="game-head">
           <div>
             ${findOnly ? '<h2>Prepare a night</h2>' : `<div class="tiny">A whole evening kept as one thing —
-              the packs, which rounds are on, the venue and its prizes, the look and
-              the lobby game. Set a night up on Tonight and press
-              <b>Save for another night</b>.</div>`}
+              the packs, which rounds are on, the look and the lobby game.
+              The venue is left open, so you can run the same night anywhere.
+              Set one up on Tonight and press <b>Save for another night</b>.</div>`}
           </div>
         </div>
         <div class="show-list">
@@ -190,10 +190,14 @@ export function showsSection() {
     : shows.map((show) => {
       const broken = (show.problems || []).length;
       const items = itemsOf(show);
-      const bits = [
-        show.venue || 'No venue',
-        show.online ? 'Online' : 'In the room',
-      ];
+      /*
+       * NO VENUE ON THE CARD — a saved night does not carry one any more
+       * (see `tonightAsShow()`), so naming it here would either be blank on
+       * every card or, worse, print the pub an OLD show happened to be saved
+       * at while the load deliberately ignores it. The card says what the
+       * night IS; where it happens is tonight's own question.
+       */
+      const bits = [show.online ? 'Online' : 'In the room'];
       return `
             <div class="show-card ${broken ? 'broken' : ''}" data-id="${esc(show.id)}" draggable="true">
               <div class="show-top">

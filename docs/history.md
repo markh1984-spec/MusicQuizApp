@@ -10,6 +10,51 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 23 August 2026, same day again — a saved night no longer keeps
+its venue, and the bingo card label speaks English:**
+
+**THE VENUE IS NEITHER SAVED NOR RESTORED, reversing the original design.**
+*"Saving everything INCLUDING the venue is pointless, there's no way you'd
+want to run the same quiz at the same venue again — but if it could be saved
+and the venue left open that would be useful."* The mistake was a category
+one: **a saved night is a TEMPLATE, not a RECORD** — the archive already
+holds what happened where. A show is reached for precisely when you are
+somewhere new, so carrying the old venue in files tonight under last month's
+pub — and the prizes and the voucher follow the venue, so a stale one is
+somebody refused a drink at the bar. **Both halves were needed**
+(`tonightAsShow()` stops storing, `applyShow()` stops reading), or shows
+saved before the change would still drag a pub in; that also means **no
+migration**. Three things followed it out: the name suggestion (it offered
+"Thursday at The Crown" — a name pointing at a pub the show will not load;
+it names the packs now), the venue on the show card, and the explainer copy
+promising it was kept. `src/shows.js` still accepts and normalises a `venue`
+field deliberately, so older shows do not fail validation.
+
+**"63% of calls hit your card" now counts songs.** Reported as awkward:
+*"can we clarify this and simplify it as well for the reading QM."* Three
+faults, all fixed by counting — *"your card"* is ambiguous on a screen only
+the quizmaster reads (it is the PLAYER's), a percentage has to be converted
+before it means anything, and the actual decision was left to be derived. It
+reads "25 of 40 songs on a card" now, and under half the pack it says
+`drags` in words. The boundary is inclusive — half does not drag, the line
+the host drew himself (*"not even getting a song fifty percent of the
+time"*) — with a test on each side of it.
+
+**AND A LATENT BUG THE FIRST CHANGE EXPOSED.** `chooseVenue()` repainted the
+picker but never the line under the tiles, so picking a venue left that line
+describing the one before it. Caught live, with the picker reading "The
+Station Tap" over a line still saying "No venue yet". Latent before and
+load-bearing now: since the venue there stopped being a second picker, that
+line is the only place its prizes and usual-night facts appear.
+
+**`docs/console.md` WAS SPLIT, because it hit the ceiling its own test
+sets.** The shows material was a third of the file and a subject of its own,
+so it moved whole — by line number, the mechanical transform this repo
+prefers — to `docs/console/shows.md`, leaving a pointer. Verified by diffing
+the extracted body against the original: the only differences are the
+stale-text corrections made deliberately beforehand. `docs/console.md` is
+65KB with real headroom again.
+
 **Live as of 23 August 2026, same day again — one venue picker that looks
 like a picker, a Stop that actually shows, and a button that says what it
 does:**

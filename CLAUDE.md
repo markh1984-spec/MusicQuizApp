@@ -2006,8 +2006,14 @@ having a nights section."*
 - **A SHOW IS `items` — A LIST of what is played, in order.** It held one game
   for one commit and that was wrong: *"say you want to swap out the music bingo
   after, you need to be able to do that independent of removing the venue or
-  other rounds."* **The venue, prizes, look and lobby game stay on the SHOW**,
-  which is what makes a swap unable to touch them.
+  other rounds."* **The prizes, look and lobby game stay on the SHOW**, which
+  is what makes a swap unable to touch them.
+- **THE VENUE IS NEVER SAVED, AND NEVER RESTORED** — *"there's no way you'd
+  want to run the same quiz at the same venue again."* A show is a TEMPLATE,
+  not a record; the prizes and the voucher follow the venue, so a stale one
+  is somebody refused a drink. `tonightAsShow()` does not store it and
+  `applyShow()` does not read it — **both halves**, or an old show still
+  drags a pub in. Do not put it back.
 - **`itemsOf()` IN `show-parts.js` IS THE ONE READER**, server and browser. The
   one-game shape reads as a list of one: **there is no migration step and there
   must not be one** — a rewrite over everybody's file is a one-shot script on a

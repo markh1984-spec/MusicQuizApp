@@ -1,7 +1,7 @@
 /** TONIGHT — the launch bar, what is running, and the settings for one night. */
 
 import { esc, node, postJson } from './client.js';
-import { dayName, saidTime } from './console-diary.js';
+import { saidTime } from './console-diary.js';
 import { tonightsVenue } from './console-gigs.js';
 import { invoiceApi, openInvoiceForm, share } from './console-invoices.js';
 import { doLaunch, doLaunchOrder, freshLabel, freshness, lobbyGameOptions, lookOptions, playingOptions, shapeOptions } from './console-packs.js';
@@ -692,8 +692,9 @@ export function launchBar() {
       </div>
       <!-- KEEP THE WHOLE EVENING — the way a saved night is built, and it
            is deliberately not a second composer. Everything it holds is
-           already on this bar: the packs, which rounds are on, the venue,
-           the look, the lobby game, the prizes. Building it again in the
+           already on this bar: the packs, which rounds are on, the look,
+           the lobby game, the prizes — but NOT the venue, which is the one
+           field never true twice (see tonightAsShow). Building it again in the
            Workshop would be a second surface that could disagree with the
            launch, on the one thing that must not — so it is made by
            setting a night up here and keeping it, and the "Prepare a
@@ -708,7 +709,7 @@ export function launchBar() {
            It says what it DOES now, and names where it goes. -->
       <div class="set-keep">
         <button class="minor set-save" type="button"
-          title="Saves the packs, the venue and every setting on this bar, so you can drag the whole evening back on another night">Save for another night</button>
+          title="Saves the packs and every setting on this bar — but not the venue, so you can run the same night anywhere">Save for another night</button>
         <span class="tiny set-keep-why"></span>
       </div>
       <!-- LAUNCH IS ALWAYS HERE, hollow until there is something to launch.
@@ -995,6 +996,18 @@ export function launchBar() {
     venues.hidden = true;
     where.setAttribute('aria-expanded', 'false');
     paintWhere();
+    /*
+     * AND THE LINE UNDER THE TILES, which reads the venue too — its prizes,
+     * whether tonight is its usual night, what time it starts. It was never
+     * repainted here, so picking a venue updated the button and left that
+     * line describing the one before it; caught live, with the picker
+     * reading "The Station Tap" over a line still saying "No venue yet".
+     *
+     * Latent before and load-bearing now: that line is the ONLY place those
+     * facts appear, since the venue there stopped being a second picker of
+     * its own. `paintOrder()` is what rebuilds it — see `infoLine()`.
+     */
+    paintOrder();
     const running = (library && library.running) || {};
     if (currentPack && running.packId === currentPack.id) {
       switchIfFree(currentPack, gameOf().id);
@@ -1690,14 +1703,19 @@ export function launchBar() {
     const draft = tonightAsShow('');
     if (!draft) return;
     /*
-     * THE NAME IS SUGGESTED, NEVER IMPOSED. "Thursday at The Crown" is what
-     * somebody would have typed, and a prompt pre-filled with it is one tap
-     * for the common case and still a free field for the rest. A show named
-     * after its pack would collide the moment a second night used it.
+     * THE NAME IS SUGGESTED, NEVER IMPOSED — and it names what the night
+     * PLAYS now rather than where it was saved. It used to suggest "Thursday
+     * at The Crown", which stopped making sense the moment the venue stopped
+     * being saved: a name pointing at a pub the show will not load is worse
+     * than a plain one. The packs are what is actually being kept, so they
+     * are what it offers.
      */
-    const suggestion = draft.venue
-      ? `${dayName(new Date())} at ${draft.venue}`
-      : (currentPack.title || 'Tonight');
+    const parts = lbSlots
+      ? [...new Set(lbSlots.filter(Boolean).map((s) => (anyPack(s.packId) || {}).title).filter(Boolean))]
+      : lbPacks().map((p) => p.title);
+    const suggestion = parts.length > 1
+      ? `${shortTitle(parts[0])} + ${parts.length - 1} more`
+      : (parts[0] || currentPack.title || 'Tonight');
     const name = prompt('What is this called?', suggestion);
     if (name === null) return;
     if (!name.trim()) return;
@@ -2745,10 +2763,14 @@ export function launchBar() {
         }
       }
     }
-    // `null` rather than an empty string when the show names no venue, or a
-    // show saved before a venue was set would override tonight's own answer
-    // with "nowhere" — see `venueNow()`.
-    lbVenue = show.venue || null;
+    /*
+     * THE VENUE IS LEFT OPEN, whatever the show carries — see the note on
+     * `tonightAsShow()`. Loading a saved night leaves `lbVenue` alone, so
+     * tonight's own answer (the diary, or a venue already picked) still
+     * stands, and a show saved before this change cannot drag last month's
+     * pub in with it. This is the READING half of "the venue is never
+     * saved"; both halves are needed, or an old show would still restore one.
+     */
     lbOnline = Boolean(show.online);
     night.look = String(show.look || '');
     night.lobbyGame = String(show.lobbyGame || '');
@@ -2791,6 +2813,26 @@ export function launchBar() {
  * `order` is null for an ordinary one-pack night, exactly as at launch, and
  * `normalise()` on the server drops it — so a plain night saved as a show
  * launches down the road it always did rather than through the composer.
+ *
+ * **THE VENUE IS DELIBERATELY NOT SAVED, and that reverses an earlier
+ * decision.** It used to ride along with everything else, on the reasoning
+ * that a show is a whole evening and the venue is part of one. The host
+ * killed that with the case it never survives: *"saving everything INCLUDING
+ * the venue is pointless, there's no way you'd want to run the same quiz at
+ * the same venue again — but if it could be saved and the venue left open
+ * that would be useful."*
+ *
+ * He is right, and it is the difference between a RECORD and a TEMPLATE. A
+ * saved night is reached for precisely when you are somewhere new and want a
+ * running order that worked; carrying the old venue in means the first thing
+ * it does on landing is file tonight under last month's pub, and the prizes
+ * and the voucher follow the venue — so a wrong one is somebody refused a
+ * drink at the bar, which this file already records as the expensive half of
+ * a venue mix-up.
+ *
+ * **Nothing has to be migrated.** Shows saved before this still carry a
+ * `venue` field; `applyShow()` simply stops reading it, so an old one loads
+ * with the venue left open exactly like a new one.
  */
 function tonightAsShow(name) {
   if (!currentPack) return null;
@@ -2809,7 +2851,9 @@ function tonightAsShow(name) {
     kind,
     packId: currentPack.id,
     ...(plain || kind === 'bingo' ? {} : { order: rounds }),
-    venue: lbVenue !== null ? lbVenue : ((tonightsVenue() || {}).name || ''),
+    // NO VENUE — see the note above. A saved night is a running order to
+    // reuse somewhere else, and the venue is the one field that is never
+    // true twice.
     online: lbOnline,
     look: night.look,
     lobbyGame: night.lobbyGame,
