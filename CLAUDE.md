@@ -1303,6 +1303,7 @@ Open the one you are touching; do not read them all.
 - THE MONTH IS ON THE LEFT AND WHAT YOU DO ABOUT A DATE IS ON THE RIGHT
 - The last slide of the night — "Back here Thursday 20th"
 - Headcount per venue — the app finally says a number it always knew
+- WHAT THIS ROOM HAS ALREADY HEARD — the shelf is ranked PER VENUE
 - A prize taken at the bar has to reach the filed night
 - **THE GALLERY READS THE OWNER'S OWN QUIZMASTER ROOM, never `HOUSE`** — photos
   are filed per room, and reading the wrong one showed a full night as an empty
@@ -2174,6 +2175,50 @@ which buys the 6am roll-over for nothing. Tested:
 
 Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 
+### WHAT THIS ROOM HAS ALREADY HEARD — the shelf is ranked PER VENUE
+
+`src/heard.js`, `library.playedByVenue`, `heardHere()` / `whyFresh()` in
+`console-tonight.js`, `playedLine()` in `console-packs.js`. Asked for against
+the existing ranking: *"that's a good order but it needs to be per venue as
+well — if you've done a quiz at venue A and not at venue B recently then this
+needs to be factored in."* Nothing new is collected; the archive has held the
+venue and the pack of every filed night for months and nothing joined them.
+
+- **A GLOBAL "last played" ANSWERS THE WRONG QUESTION.** It says *have I run
+  this lately*, which is a fact about the diary. The shelf is for *will this
+  room have heard it*, which is a fact about one venue — so the 80s quiz run
+  at The Crown on Tuesday is completely fresh at The Station Tap on Thursday,
+  and the old ranking buried it at both.
+- **NEVER PLAYED HERE READS AS NEVER PLAYED, FULL STOP** — 0, not the global
+  date, or the feature does nothing.
+- **WITH NO VENUE CHOSEN IT FALLS BACK TO THE GLOBAL DATE.** Nothing is known
+  about where tonight is, so the old question is the best one left — and that
+  night behaves exactly as it always did.
+- **A NIGHT IS FILED UNDER ITS ID *AND* ITS NAME, and the reader asks under
+  both.** This is the split `venueHeadcounts()` was already bitten by: a venue
+  picked off the book lands under `id:xyz` and the same pub typed freehand
+  under `the crown`. Every night from before venue ids is in the second group.
+  **The reconciling has to be the READER's job** — nothing on a hand-typed
+  night says which book entry it meant, and only the Venues book joins the two.
+- **THE ORDER AND ITS EXPLANATION COME FROM ONE PLACE.** `whyFresh()` says
+  "Never played here" where it ranked on "here"; `playedLine()` LEADS with the
+  local answer and lets the count follow, because *"Played 4 times"* over a
+  card at the FRONT of the shelf reads as a bug. **The two halves must never
+  contradict**: "Never played · here 2 days ago" is a sentence this app should
+  not be able to print.
+- **CHANGING THE VENUE RE-RENDERS THE SHELF.** `chooseVenue()` repainted the
+  bar alone, which left a grid ordered for the pub before it — silently, with
+  every card real and nothing thrown.
+- **The arithmetic is on the SERVER and the venue question is in the BROWSER.**
+  `src/heard.js` takes what `mergeGigs()` returns — same input as the
+  headcounts, so the 6am roll-over and "a quiz and the bingo after it are one
+  night" come free — and rides with the library rather than being fetched per
+  venue change, because the shelf re-ranks on every one of them.
+- **A MIXED NIGHT COUNTS EVERY PART**, not just the one whose ending reached
+  the archive, or a bingo interlude reads as never played here for ever.
+
+Full reasoning: **[`docs/console.md`](docs/console.md)**.
+
 ### A NIGHT GOES ON THE PUBLIC GALLERY FROM UNDER ITS OWN PHOTOS
 
 `galleryToggle()` in `console-gigs.js`, `/api/past-gigs/publish`. **The route
@@ -2335,7 +2380,7 @@ typo is dropped rather than quietly becoming a round of general knowledge.
 ## Checks
 
 ```bash
-npm test        # 1,279 tests, no network, injected clocks — must stay green
+npm test        # 1,497 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check

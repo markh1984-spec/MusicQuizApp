@@ -126,6 +126,16 @@ export function mergeGigs(archived = [], photoNights = []) {
       id: record.id,
       kind: record.kind || 'quiz',
       title: record.title || '',
+      /*
+       * WHICH PACK, AND WHEN — both needed by `playedByVenue()` to answer
+       * "has this room heard this before?", and both were being dropped here
+       * for the reason the note on the leaderboard below already gives: this
+       * function PICKS fields rather than spreading, so anything not named
+       * simply does not come out. `id` above is the night's own file name,
+       * not the pack's.
+       */
+      packId: record.packId || '',
+      archivedAt: record.archivedAt || null,
       players: record.playerCount || 0,
       winner: record.winner || null,
       rewards: record.rewards || [],

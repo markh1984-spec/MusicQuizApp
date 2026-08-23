@@ -1094,6 +1094,114 @@ unnoticed.
 
 ---
 
+## WHAT THIS ROOM HAS ALREADY HEARD — the shelf ranked per venue
+
+Asked for on 23 August 2026, against the ranking that had just been put on the
+shelf: *"that's a good order but it needs to be per venue as well — if you've
+done a quiz at venue A and not at venue B recently then this needs to be
+factored in."*
+
+**He is right, and the code already admitted the gap in its own words.**
+`quickPicks()` carried this comment: *"The app cannot know which venue tonight
+is (a night does not carry one yet), so 'not played recently' is the closest
+honest answer to 'will not be a repeat'."* That was true when it was written.
+A night carries a venue now — it has since 17 August — so the closest honest
+answer stopped being the best one and nobody went back to it. And
+`src/library.js`'s own note on the play counts had been saying the real
+purpose out loud the whole time: *"the whole use of this line is deciding what
+not to run at the same venue again."*
+
+**The two questions are genuinely different, and that difference is the entire
+value of the ranking.** A global "last played" answers *have I run this
+lately*, which is a fact about the quizmaster's diary. What the shelf is for
+is *will this room have heard it*, which is a fact about one venue. Somebody
+running four residencies plays a good pack four times in a fortnight and it is
+brand new to every one of those rooms; under the old ranking it sank to the
+bottom of all four, and the six packs on display were the six he had been
+avoiding.
+
+### Nothing new is collected, and the join was one field away
+
+The archive has recorded the venue and the pack of every filed night for
+months. What it did not do was hand both to anybody: **`listArchive()` and
+`mergeGigs()` both PICK fields rather than spreading**, deliberately, so a new
+field on a filed night cannot appear in a payload nobody meant to grow — and
+`packId` was simply not on either list. That is the same trap `mergeGigs()`
+already records against `rewards` and the league boards, hit a third time. Two
+one-line additions made the question answerable.
+
+`src/heard.js` then does what `headcounts.js` does, for the same reasons:
+**one function takes a SET of nights and returns the answer across them**, and
+it takes what `mergeGigs()` returns rather than the raw archive — which buys
+the 6am roll-over and "a quiz and the bingo after it are one night" for
+nothing. A mixed night counts **every part**, not just the one whose ending
+reached the archive, or the bingo in the middle of a quiz-bingo-quiz evening
+reads as never played here however many times it has been.
+
+### A night answers to its ID *and* its name — and the reader reconciles them
+
+This is the split `venueHeadcounts()` was already bitten by, and its own note
+is the clearest statement of it: *"pick 'The Station Tap' off the Venues list
+one week and type the same name freehand the next, and the two nights land
+under `id:xyz` and `the station tap` respectively — two half-histories under
+one name."* Every night filed before venue ids existed is in the second group,
+and that is most of anybody's history — precisely the half that says a pack
+has been heard before.
+
+So a night is filed under **both** keys. `venueKeyOf()` is still asked first,
+because it does the one thing a name key cannot: catch a **rename**, where two
+different names share one id.
+
+**The reconciling has to happen on the READER's side, and that is a real
+limit rather than an implementation choice.** Nothing on a hand-typed night
+says which book entry it meant; only the Venues book joins a name to an id,
+and the book lives with the console. So `venueKeysNow()` asks under both keys
+and takes the later of the two, and `test/heard.test.js` states the limit
+outright — the id alone does not see the hand-typed half, which is why the
+console never asks with one key.
+
+The headcounts fold the two together in a second pass instead, because they
+are BUILDING a list of venues and must end with one row each. Nothing is being
+listed here; this is a lookup, so double-filing is the cheaper shape of the
+same fix.
+
+### The order and its explanation come from one place
+
+Once the rank is per venue, **a line saying "Never played" over a pack you ran
+at another pub last week is simply wrong**, and the reader has no way to tell
+which question was asked. This app has been bitten by an order and its own
+explanation drifting apart before — the launch bar's whole live-drift line
+exists for that — so both come from `heardHere()`.
+
+- `whyFresh()` on the launch bar says **"Never played here"** and **"Last
+  played here July"**. The word "here" is doing real work.
+- `playedLine()` on a pack card **leads with the local answer** once there is
+  a venue, and lets the global count follow. That order is not a preference:
+  the two can disagree — a pack run four times down the road and never here —
+  and a line opening *"Played 4 times"* over a card sitting at the FRONT of
+  the shelf reads as a bug.
+- **And the two halves must never contradict.** *"Never played · here 2 days
+  ago"* is a sentence this app should not be capable of printing, which is why
+  the line was rewritten rather than having a clause bolted onto it.
+
+### Changing the venue re-renders the shelf
+
+Found in live verification, and it is the kind of fault this repo keeps
+recording: `chooseVenue()` repainted the bar and left the grid below ordered
+for the pub before it. Nothing threw, every card was real, and the only tell
+was a pack you had run there last week sitting at the front.
+
+`renderKeepingPlace()` rather than a repaint, because the grid is built by
+`console-packs.js` and not by anything in the bar's closure — the same call
+`chooseVenueFromTab()` has always made for the same reason. The scroll is
+held and the picker has already shut, so there is nothing on screen to lose.
+
+**Note what this does NOT do: it does not remember the venue.** That rule
+stands — a venue is a fact about one evening, and a remembered one files next
+Tuesday under last Thursday's pub. So a door change is a page load and the
+shelf reverts to ranking on the derived default venue, which is the right
+answer when nobody has said otherwise.
+
 ## A CONTROL IS PRESENT AND INERT, NEVER ABSENT
 
 Reported on 15 August 2026: *"slightly clunky how the Set it up appears only

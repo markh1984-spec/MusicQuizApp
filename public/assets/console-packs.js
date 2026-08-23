@@ -7,7 +7,7 @@ import { tonightsVenue, whenish } from './console-gigs.js';
 import { field, money, sheet } from './console-invoices.js';
 import { renderBingoPreview, renderQuizPreview } from './console-preview.js';
 import { library, me, setPackDrag, setShelfRoundDrag } from './console-state.js';
-import { addToTonight, dragging, night, playedAt, putOnBench } from './console-tonight.js';
+import { addToTonight, dragging, heardHere, heardHereIsLocal, night, putOnBench } from './console-tonight.js';
 import { PACK_SHELF, can, canPin, doorNow, goTo, hostKey, isPinned, keyed, linkTo, load, packWord, pinIcon, pinRank, pinnedPacks, render, reorderPins, showDone, togglePin } from './console.js';
 import { tonight } from './diary.js';
 import { lobbyGameChoices, lobbyGameFor } from './lobby-games.js';
@@ -345,10 +345,15 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
      * the only thing on the shelf worth less tomorrow, expired ones last, and
      * never-played before long-ago. That ranking is not decoration once only
      * SIX are shown: it decides what you can reach.
+     *
+     * **AND IT RANKS ON WHAT TONIGHT'S VENUE HAS HEARD**, through the same
+     * `heardHere()` the launch bar uses, which falls back to the global date
+     * when no venue is chosen. Two orderings of one shelf is how the six you
+     * can reach stop matching the three the bar suggests.
      */
     const inOrder = [...found].sort((a, b) => (pinRank(a.id) - pinRank(b.id))
       || (shelf(a) - shelf(b))
-      || (playedAt(a.lastPlayedAt) - playedAt(b.lastPlayedAt)));
+      || (heardHere(a) - heardHere(b)));
     // Only what they can RUN. What is for sale is a room of its own now.
     const yours = inOrder.filter((p) => !p.locked);
 
@@ -1006,6 +1011,44 @@ export function playingOptions() {
     <option value="teams">Teams — several phones, scores averaged</option>`;
 }
 
+/**
+ * HOW OFTEN THIS PACK HAS BEEN PLAYED — and, once tonight has a venue, what
+ * THIS ROOM has already heard.
+ *
+ * The card's own note says why this line is on a card at all: *"'never played'
+ * and 'last played 3 days ago' is how you avoid running the same quiz at the
+ * same venue two weeks running"*. That sentence names a VENUE, and until now
+ * the line could not answer it — so the moment the shelf started ranking on
+ * `heardHere()`, the order and its explanation were describing two different
+ * questions. The first card could say "last 3 days ago" while sitting above
+ * one marked "Never played", with nothing on screen to say why.
+ *
+ * **ONCE THERE IS A VENUE, THE LOCAL ANSWER LEADS** and the global count
+ * follows it, rather than the other way round. That order is not a
+ * preference: the two can disagree — a pack run four times down the road and
+ * never here — and a line opening "Played 4 times" over a card sitting at the
+ * FRONT of the shelf reads as a bug. Leading with "Never played here" says
+ * why it is there, and the count then adds the thing the local answer cannot.
+ *
+ * **AND THE TWO HALVES MUST NEVER CONTRADICT EACH OTHER**, which is why this
+ * is not simply the old line with a clause bolted on: "Never played · here 2
+ * days ago" is a sentence this app should not be capable of printing.
+ *
+ * A pack played nowhere at all says "Never played" and stops. "Never played
+ * here" underneath it is a second way of saying the same thing, and the house
+ * style is one line that finishes the sentence.
+ */
+function playedLine(pack) {
+  const times = `${pack.playCount} time${pack.playCount === 1 ? '' : 's'}`;
+  if (!heardHereIsLocal()) {
+    if (!pack.playCount) return 'Never played';
+    return `Played ${times}${pack.lastPlayedAt ? ` · last ${whenish(pack.lastPlayedAt)}` : ''}`;
+  }
+  const here = heardHere(pack);
+  if (here) return `Played here ${whenish(here)}${pack.playCount > 1 ? ` · ${times} in all` : ''}`;
+  return pack.playCount ? `Never played here · ${times} in all` : 'Never played';
+}
+
 /** Can this account actually RUN this game? An owner writes packs, never plays. */
 const canRun = (kind) => can(kind === 'bingo' ? FEATURES.BINGO : FEATURES.QUIZ);
 
@@ -1057,9 +1100,7 @@ export function packCard(kind, pack) {
     ? `${pack.questionCount} question${pack.questionCount === 1 ? '' : 's'} · ${roundCount} round${roundCount === 1 ? '' : 's'}`
     : `${pack.trackCount} track${pack.trackCount === 1 ? '' : 's'}`;
 
-  const played = pack.playCount
-    ? `Played ${pack.playCount} time${pack.playCount === 1 ? '' : 's'}${pack.lastPlayedAt ? ` · last ${whenish(pack.lastPlayedAt)}` : ''}`
-    : 'Never played';
+  const played = playedLine(pack);
 
   /*
    * WHAT A CARD KEEPS — and it is not quite "the name only".

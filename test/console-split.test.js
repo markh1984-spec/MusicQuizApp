@@ -188,7 +188,35 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * so it re-renders rather than repainting, and each half needed saying next
  * to the code that does it.
  */
-const BUDGET = { 'console-tonight.js': 3060, 'console.js': 2000, 'console-packs.js': 1680 };
+/*
+ * RAISED TO 3150 ON 23 AUGUST 2026, for per-venue play ranking: *"that's a
+ * good order but it needs to be per venue as well — if you've done a quiz at
+ * venue A and not at venue B recently then this needs to be factored in."*
+ * Four small exported functions — `venueTonight()`, `heardHere()`,
+ * `heardHereIsLocal()` and `whyFresh()` — plus `venueKeyNow()`, which mirrors
+ * the server's `venueKeyOf()` in the browser.
+ *
+ * They are HERE rather than in a module of their own because three of them
+ * read `lbVenue`, which is `launchBar()`'s own closure state and the same
+ * thing that has pinned every raise above. The arithmetic they sit on top of
+ * is NOT here — that is `src/heard.js`, on the server, where the archive is.
+ * What lives in this file is only the browser's half: which venue tonight is,
+ * and what that means for one pack.
+ */
+/*
+ * `console-tonight.js` GOES TO 3180 rather than 3150 for the last piece of the
+ * same change: `chooseVenue()` now RE-RENDERS instead of repainting, because
+ * the shelf below it is ranked on the venue and repainting the bar alone left
+ * a grid ordered for the pub before it — silently, with every card real.
+ */
+/*
+ * `console-packs.js` GOES TO 1720 THE SAME DAY, for `playedLine()` — the small
+ * line under a pack's name, which now has to say what THIS venue has heard
+ * rather than what the diary has. Six lines of code and the rest is the note
+ * saying why the local answer LEADS: the two halves can disagree, and a card
+ * at the front of the shelf opening "Played 4 times" reads as a bug.
+ */
+const BUDGET = { 'console-tonight.js': 3180, 'console.js': 2000, 'console-packs.js': 1720 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

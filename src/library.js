@@ -367,6 +367,15 @@ export function listArchive(dir, { boards = false } = {}) {
           // The join. Empty on every night filed before it existed, which is
           // exactly why `venueKeyOf()` falls back to the name.
           venueId: r.venueId || '',
+          /*
+           * WHICH PACK WAS PLAYED. In the FILE all along — `archiveResults()`
+           * spreads the whole results object and even names the file after it
+           * — but this projection is a SUBSET, so it never came back out.
+           * That is the same trap the note on `rewards` below records, and it
+           * is what made "have I played this here before?" unanswerable from
+           * the archive until now. See `playedByVenue()`.
+           */
+          packId: r.packId || r.quizId || '',
           // What was put up, first place first. Needed by `rewardsUsed` and
           // `rewardsByVenue`, which read this list rather than every file —
           // and both would have quietly returned nothing without it, because

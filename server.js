@@ -38,6 +38,7 @@ import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig, playTrack } from './src/spotify.js';
 import { photoFolder, mergeGigs, safePhotoName, isNightFolder, nightOfGig } from './src/past-gigs.js';
 import { venueHeadcounts, nightHeadcount } from './src/headcounts.js';
+import { playedByVenue } from './src/heard.js';
 import { nightReportPdf, nightReportFilename } from './src/report-pdf.js';
 import { leaguesByVenue } from './src/league.js';
 import { comeBackFor } from './src/comeback.js';
@@ -1735,6 +1736,19 @@ async function handleGet(req, res, url, route) {
       headcounts: seesTheirNights(req, url)
         ? venueHeadcounts(gigNights)
         : { venues: [], unplaced: 0 },
+      /*
+       * WHAT EACH VENUE HAS ALREADY HEARD — the last time it got each pack.
+       *
+       * Off the SAME `gigNights` the headcounts are, so the two cannot
+       * disagree about which nights happened or where. It rides with the
+       * library rather than being fetched when a venue is picked, because
+       * the shelf re-ranks on every venue change and a fetch per change is a
+       * spinner on the one panel that has to feel instant.
+       *
+       * Small: one timestamp per pack per venue actually played, so a busy
+       * year of one residency is a few dozen numbers.
+       */
+      playedByVenue: seesTheirNights(req, url) ? playedByVenue(gigNights) : {},
       /*
        * THE QUIZ LEAGUE, per venue — who keeps coming back and who is winning
        * the season. Same record, same gate and the same reason as the

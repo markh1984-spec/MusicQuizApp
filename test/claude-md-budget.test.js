@@ -178,7 +178,18 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * the prizes and the voucher follow the venue. It also has to say BOTH
  * halves (never stored, never read), or an old show still restores one.
  */
-const BUDGET = 140_700;
+/*
+ * RAISED TO 143_600 ON 23 AUGUST 2026, for per-venue play ranking. It earns
+ * every-session space on the strength of what it FORBIDS rather than what it
+ * adds: never-played-here must read as 0 and not fall back to the global date
+ * (or the feature does nothing), a night is filed under its id AND its name
+ * with the reader reconciling them (the split the headcounts were already
+ * bitten by, hit a third time), and the order and the line explaining it come
+ * from one place — "Never played · here 2 days ago" is a sentence this app
+ * must not be able to print. Each of those is a change somebody would
+ * otherwise make in good faith.
+ */
+const BUDGET = 143_600;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

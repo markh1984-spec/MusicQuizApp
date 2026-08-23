@@ -10,6 +10,49 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 23 August 2026, same day again — the shelf is ranked PER
+VENUE:**
+
+*"That's a good order but it needs to be per venue as well — if you've done a
+quiz at venue A and not at venue B recently then this needs to be factored
+in."* **The code already admitted the gap in its own words:** `quickPicks()`
+carried a comment saying the app *"cannot know which venue tonight is (a
+night does not carry one yet)"*, which stopped being true on 17 August and
+nobody went back to it — while `library.js`'s note on the play counts had
+been stating the real purpose the whole time: *"the whole use of this line is
+deciding what not to run at the same venue again."*
+
+**Nothing new is collected, and the join was one field away.** The archive
+has held the venue and the pack of every filed night for months —
+`listArchive()` and `mergeGigs()` both PICK fields rather than spreading, and
+`packId` was simply not on either list. That is the same trap `mergeGigs()`
+already records against `rewards` and the league boards, **hit a third time**.
+`src/heard.js` is then the same shape as `headcounts.js`: one function over a
+SET of nights, taking what `mergeGigs()` returns, so the 6am roll-over and
+"a quiz and the bingo after it are one night" come free.
+
+**A NIGHT IS FILED UNDER ITS ID *AND* ITS NAME** — the split
+`venueHeadcounts()` was already bitten by, in the other direction: a venue
+picked off the book lands under `id:xyz` and the same pub typed freehand under
+`the crown`, and every night from before venue ids is in the second group.
+**The reconciling has to be the reader's job** — nothing on a hand-typed night
+says which book entry it meant, and only the Venues book joins the two — so
+the console asks under both keys and `test/heard.test.js` states the limit
+outright rather than hiding it.
+
+**AND CHANGING THE VENUE HAD TO RE-RENDER THE SHELF, found in live
+verification.** `chooseVenue()` repainted the bar and left the grid below
+ordered for the pub before it: nothing threw, every card was real, and the
+only tell was a pack you ran there last week sitting at the front.
+
+Proven live at two venues on the same seeded archive: at The Station Tap
+every bingo card reads *"Played here 5 weeks ago"* in longest-ago-first order,
+and at The Crown the identical packs read *"Never played"* with Motown Soul —
+heard at the Tap two days earlier — back on the shelf. The launch bar's why
+line says *"Last played here July"* and *"Never played here"* for one pack at
+the two venues. Both games still launch after a venue pick (protected
+surface), `pub-unchanged` IDENTICAL, 1,497 tests green.
+
 **Live as of 23 August 2026, same day again — the Console shelf lost its
 search box, and the Workshop shelf gained two jobs:**
 

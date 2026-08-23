@@ -857,18 +857,23 @@ export function launchBar() {
     if (dated[0]) out.push({ pack: dated[0], why: freshLabel(dated[0]) });
 
     /*
-     * 2. The one this room is least likely to have heard — never played first,
-     *    then longest ago. The app cannot know which venue tonight is (a night
-     *    does not carry one yet), so "not played recently" is the closest
-     *    honest answer to "will not be a repeat".
+     * 2. The one THIS ROOM is least likely to have heard — never played here
+     *    first, then longest ago here.
+     *
+     * **It used to be the diary at large**, and the comment here admitted
+     * why: *"the app cannot know which venue tonight is (a night does not
+     * carry one yet), so 'not played recently' is the closest honest answer
+     * to 'will not be a repeat'."* A night carries a venue now, so the real
+     * question is answerable — see `heardHere()`. With no venue picked it
+     * still falls back to exactly the old behaviour.
      */
     const rest = packs
       .filter((p) => !out.some((o) => o.pack.id === p.id))
       .filter((p) => !freshness(p).expired)
-      .sort((a, b) => playedAt(a.lastPlayedAt) - playedAt(b.lastPlayedAt));
+      .sort((a, b) => heardHere(a) - heardHere(b));
     for (const p of rest) {
       if (out.length >= 2) break;
-      out.push({ pack: p, why: p.lastPlayedAt ? `Last played ${whenShort(p.lastPlayedAt)}` : 'Never played' });
+      out.push({ pack: p, why: whyFresh(p) });
     }
     return out;
   }
@@ -884,7 +889,9 @@ export function launchBar() {
    * that is working.
    */
   /** Where tonight is: what somebody chose, or the app's own best answer. */
-  const venueNow = () => (lbVenue !== null ? lbVenue : ((tonightsVenue() || {}).name || ''));
+  // The shared one — see `venueTonight()`. The bar and the pack shelf must
+  // agree about where tonight is, or they rank on two different venues.
+  const venueNow = () => venueTonight();
 
   /*
    * WHAT THIS VENUE PUTS UP, under the picker and not inside Set it up.
@@ -1012,6 +1019,22 @@ export function launchBar() {
     if (currentPack && running.packId === currentPack.id) {
       switchIfFree(currentPack, gameOf().id);
     }
+    /*
+     * AND THE SHELF BELOW, which is now RANKED on this answer.
+     *
+     * `heardHere()` asks what THIS venue has already been played, so changing
+     * the venue changes which six packs are on display and what each of their
+     * lines says. Repainting the bar alone left a grid ordered for the pub
+     * before it — and silently: nothing throws, every card is real, and the
+     * only tell is a pack you ran here last week sitting at the front.
+     *
+     * A whole render rather than a repaint because the grid is built by
+     * `console-packs.js`, not by anything in this closure — the same call
+     * `chooseVenueFromTab()` has always made for the same reason. The scroll
+     * is held (`renderKeepingPlace`), and the picker has already shut, so
+     * there is nothing on screen to lose.
+     */
+    renderKeepingPlace();
   }
 
   const toggleVenues = () => {
@@ -1170,7 +1193,7 @@ export function launchBar() {
      */
     if (liveEl) paintLive();
     const why = (quickPicks(gameOf().packs).find((q) => q.pack.id === pack.id) || {}).why
-      || (pack.lastPlayedAt ? `Last played ${whenShort(pack.lastPlayedAt)}` : 'Never played');
+      || whyFresh(pack);
     whyEl.textContent = why;
     hits.hidden = true;
     const kind = gameOf().id;
@@ -2895,6 +2918,96 @@ export function playedAt(at) {
   if (typeof at === 'number') return Number.isFinite(at) ? at : 0;
   const then = Date.parse(at || '');
   return Number.isFinite(then) ? then : 0;
+}
+
+/**
+ * WHERE TONIGHT IS, readable from outside `launchBar()`'s closure.
+ *
+ * The bar's own `venueNow()` is inside that closure because it needs the
+ * picker; this is the same answer for everybody else — the pack shelf, which
+ * has to rank on it (see `heardHere()` below). One function, so the shelf and
+ * the bar can never disagree about which venue tonight is.
+ */
+export function venueTonight() {
+  return lbVenue !== null ? lbVenue : ((tonightsVenue() || {}).name || '');
+}
+
+/**
+ * EVERY KEY TONIGHT'S VENUE ANSWERS TO in `playedByVenue` — its id AND its
+ * name, because a night can have been filed under either.
+ *
+ * **Both, deliberately, and it is the same split `venueHeadcounts()` was
+ * already bitten by**: a venue picked off the Venues list is filed under
+ * `id:xyz` and the same pub typed freehand is filed under `the crown`. Every
+ * night from before venue ids existed is in the second group, and that is
+ * most of anybody's history — so asking under one key alone would report a
+ * pack as never heard here on exactly the venue it has been run at for a
+ * year. `src/heard.js` files a night under both; this asks under both.
+ *
+ * The id goes FIRST, so a renamed pub still finds the nights it ran under
+ * its old name.
+ */
+function venueKeysNow() {
+  const name = String(venueTonight() || '').trim();
+  if (!name) return [];
+  const rec = (library.venueRecords || [])
+    .find((v) => String(v.name || '').toLowerCase() === name.toLowerCase());
+  const keys = [];
+  if (rec && rec.id) keys.push(`id:${rec.id}`);
+  keys.push(name.toLowerCase());
+  return keys;
+}
+
+/**
+ * WHEN THIS VENUE LAST HEARD THIS PACK — the number the shelf ranks on.
+ *
+ * Asked for directly: *"if you've done a quiz at venue A and not at venue B
+ * recently then this needs to be factored in."* A pack run at The Crown on
+ * Tuesday is completely fresh at The Station Tap on Thursday, and ranking on
+ * the global date buried it at both.
+ *
+ * **WITH NO VENUE CHOSEN IT FALLS BACK TO THE GLOBAL DATE**, which is the
+ * honest answer rather than a guess: nothing is known about where tonight is,
+ * so "have I run this lately" is the best question left. That is also exactly
+ * what the ranking did before this existed, so a night with no venue behaves
+ * as it always has.
+ */
+export function heardHere(pack) {
+  const keys = venueKeysNow();
+  if (!keys.length) return playedAt(pack.lastPlayedAt);
+  const index = library.playedByVenue || {};
+  // The LATEST across the keys this venue answers to: a pub run under a name
+  // for a year and off the book since is one room, not two.
+  const at = Math.max(0, ...keys.map((k) => Number((index[k] || {})[pack.id]) || 0));
+  /*
+   * NEVER PLAYED HERE READS AS NEVER PLAYED, FULL STOP — 0, not the global
+   * date. That is the whole feature: a pack this room has not heard should
+   * rank alongside one nobody has heard anywhere, however often it has been
+   * run down the road.
+   */
+  return playedAt(at || 0);
+}
+
+/** Whether the answer above is about THIS venue rather than the diary at large. */
+export function heardHereIsLocal() {
+  return venueKeysNow().length > 0;
+}
+
+/**
+ * WHY A PACK IS BEING OFFERED, in the same terms it was RANKED on.
+ *
+ * The word "here" is doing real work: once the order is per venue, a line
+ * saying "Never played" over a pack you ran at another pub last week is
+ * simply wrong, and the reader has no way to tell which question was asked.
+ * This app has been bitten before by an order and its own explanation
+ * drifting apart — the launch bar's whole live-drift line exists for that —
+ * so the two come from one place.
+ */
+export function whyFresh(pack) {
+  const local = heardHereIsLocal();
+  const at = heardHere(pack);
+  if (!at) return local ? 'Never played here' : 'Never played';
+  return local ? `Last played here ${whenShort(at)}` : `Last played ${whenShort(at)}`;
 }
 
 function whenShort(at) {
