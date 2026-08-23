@@ -7,7 +7,7 @@
  * one.
  */
 
-import { esc, node, gripIcon, bestBingoShape, bingoShapeLabel } from './client.js';
+import { esc, node, gripIcon, bestBingoShape } from './client.js';
 import { packWord } from './console.js';
 import { library } from './console-state.js';
 import { packLookAttrs, shortTitle, isBreakoutPack } from './pack-look.js';
@@ -29,21 +29,6 @@ function packOwnShape(pack) {
   return found ? { rows: found.rows, cols: found.cols } : { rows: 4, cols: 4 };
 }
 
-function shapeOptionsFor(pack, selected) {
-  const shapes = (library.cardShapes || []).filter((s) => pack.trackCount >= s.minimum);
-  const usable = shapes.length ? shapes : (library.cardShapes || []).slice(0, 1);
-  return usable.map((s) => {
-    const picked = selected.rows === s.rows && selected.cols === s.cols;
-    return `<option value='{"rows":${s.rows},"cols":${s.cols}}' ${picked ? 'selected' : ''}>${esc(bingoShapeLabel(s, pack.trackCount))}</option>`;
-  }).join('');
-}
-
-function prizeOptionsFor(shape, selected) {
-  const found = (library.cardShapes || []).find((s) => s.rows === shape.rows && s.cols === shape.cols);
-  const plans = (found && found.plans) || [];
-  return plans.map((plan, i) => `<option value="${i + 1}" ${i + 1 === selected ? 'selected' : ''}>${i + 1} — ${esc(plan.join(', then '))}</option>`).join('');
-}
-
 /**
  * DRAW THE MIXED ROW — one tile per slot, rounds as individually draggable
  * numbered dots, a bingo tile carrying its OWN prize/shape controls.
@@ -57,15 +42,22 @@ function prizeOptionsFor(shape, selected) {
 export function renderSlots(slots, {
   packOf, onChange, dragging, getPackDrag, clearPackDrag,
   getShelfRoundDrag = () => null, clearShelfRoundDrag = () => {}, maxSlots = 6,
+  picked = -1, onPick = () => {},
 }) {
   const el = node('<div class="lb-tiles"></div>');
   let roundDrag = null; // { packId, round } while a round dot is being lifted
   let slotDrag = null; // index of the tile being dragged for reordering
 
-  const shown = Array.from(
-    { length: Math.min(maxSlots, Math.max(slots.length + 1, 1)) },
-    (_, i) => slots[i] || null,
-  );
+  /*
+   * EVERY SLOT, ALWAYS — reported directly: *"when you add a quiz and then a
+   * music bingo you STILL get restricted slots — I need 6 regardless of what's
+   * in the bay."* This used to draw only what was filled plus one, which reads
+   * as a limit that grows as you use it: two packs in and the row said three,
+   * so a night that wanted five looked impossible until you had built four of
+   * it. The ordinary row's own slot count was widened the same way and for the
+   * same reason.
+   */
+  const shown = Array.from({ length: maxSlots }, (_, i) => slots[i] || null);
 
   const commit = (next) => onChange(next.length > maxSlots ? next.slice(0, maxSlots) : next);
 
@@ -206,24 +198,6 @@ export function renderSlots(slots, {
     }
   }
 
-  function wireBingoControls(tile, slot, at) {
-    const shapeSel = tile.querySelector('.mix-shape');
-    const prizeSel = tile.querySelector('.mix-prizes');
-    // A tap on the controls must not also pick the tile up.
-    for (const box of [shapeSel, prizeSel]) box.addEventListener('mousedown', (ev) => ev.stopPropagation());
-    shapeSel.addEventListener('change', () => {
-      const shape = JSON.parse(shapeSel.value);
-      const next = slots.slice();
-      next[at] = { ...slot, shape, prizes: 1 };
-      commit(next);
-    });
-    prizeSel.addEventListener('change', () => {
-      const next = slots.slice();
-      next[at] = { ...slot, prizes: Number(prizeSel.value) || 1 };
-      commit(next);
-    });
-  }
-
   /*
    * OFF rounds — this pack's own, not placed in ANY slot — are drawn ONLY in
    * its HOME slot (the first one naming it), dimmed red, tap to bring back.
@@ -249,12 +223,18 @@ export function renderSlots(slots, {
     return `<div class="lb-rounds">${[...on, ...off].join('')}</div>`;
   }
 
-  function bingoControls(slot, pack) {
+  /*
+   * WHAT THIS BINGO GAME IS SET TO, AS TEXT — the two `<select>`s that used
+   * to live here moved to the settings row under the tiles, because at 146px
+   * they clipped their own option text mid-word and covered the part of the
+   * tile a drag starts from. The tile still SAYS what it is set to, which is
+   * the half that was worth having up here: you can read six tiles at a
+   * glance and only tap the one you want to change.
+   */
+  function bingoSaid(slot, pack) {
     const shape = slot.shape || packOwnShape(pack);
-    return `<div class="mix-bingo-set" title="This interlude's own prizes and card shape">
-      <select class="mix-shape">${shapeOptionsFor(pack, shape)}</select>
-      <select class="mix-prizes">${prizeOptionsFor(shape, slot.prizes || DEFAULT_BINGO_PRIZES)}</select>
-    </div>`;
+    const n = slot.prizes || DEFAULT_BINGO_PRIZES;
+    return `<div class="mix-bingo-said tiny">${esc(`${shape.rows}×${shape.cols}`)} · ${n} prize${n === 1 ? '' : 's'}</div>`;
   }
 
   function emptyTile(at) {
@@ -283,7 +263,7 @@ export function renderSlots(slots, {
     const pack = packOf(slot.packId) || { id: slot.packId, title: slot.packId, trackCount: 40, cardSize: 4 };
     const look = packLookAttrs(pack, isBingo ? 'bingo' : isBreakoutPack(pack) ? 'breakout' : 'quiz');
     const tile = node(`
-      <div class="lb-tile is-pack ${look.cls}" style="${look.style}" draggable="true" title="${esc(pack.title)}">
+      <div class="lb-tile is-pack ${look.cls} ${at === picked ? 'is-picked' : ''}" style="${look.style}" draggable="true" title="${esc(pack.title)}">
         ${packWord(look)}
         <button class="lb-tile-off" type="button" aria-label="Take this out">&times;</button>
         <span class="lb-tile-n">${at + 1}</span>
@@ -291,15 +271,25 @@ export function renderSlots(slots, {
           <span class="drag-grip" aria-hidden="true" title="Drag to move this pack">${gripIcon()}</span>
           <b class="lb-tile-name">${esc(shortTitle(pack.title))}</b>
         </div>
-        ${isBingo ? bingoControls(slot, pack) : roundDots(slot, at)}
+        ${isBingo ? bingoSaid(slot, pack) : roundDots(slot, at)}
       </div>`);
 
     tile.querySelector('.lb-tile-off').addEventListener('mousedown', (ev) => ev.stopPropagation());
-    tile.querySelector('.lb-tile-off').addEventListener('click', () => commit(removeSlot(slots, at)));
+    tile.querySelector('.lb-tile-off').addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      commit(removeSlot(slots, at));
+    });
+    /*
+     * A TAP ON THE TILE PICKS IT — the settings row underneath then talks
+     * about this pack. Everything on the tile that DOES something (the ×,
+     * a round dot) stops the event itself, so picking is what is left: the
+     * whole face of the tile, which is the easiest possible target in a
+     * dark pub, and it never changes the night by accident.
+     */
+    tile.addEventListener('click', () => onPick(at));
     wireSlotDrag(tile, at);
     wireDropTarget(tile, at);
-    if (isBingo) wireBingoControls(tile, slot, at);
-    else wireRoundDots(tile, slot);
+    if (!isBingo) wireRoundDots(tile, slot);
     return tile;
   }
 

@@ -154,8 +154,19 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * "not yet usable", it is permanently superseded by each tile's own
  * controls, so it is hidden outright instead. Two named wrapper elements
  * (`.lb-set-card`/`.lb-set-prizes`) for `paintSettings()` to toggle.
+ *
+ * RAISED TO 3020 ON 23 AUGUST 2026, for the settings SPLIT — asked for
+ * directly: *"I need the packs clickable when in the bay, and when you click
+ * a pack the settings for THAT PACK appear below… settings that only apply
+ * to the night as a whole can sit above the packs."* One `.lb-set` becomes
+ * two (`.lb-set-night` above the tiles, `.lb-set-pack` below), plus
+ * `lbPicked` and the four helpers that resolve it — `pickedPack()`,
+ * `packsInBay()`, `pickedShape()`, `setPickedBingo()` — which exist because
+ * a picked pack keeps its shape in one of TWO places depending on the shape
+ * of night (its own slot in a mixed running order, `night.*` otherwise), and
+ * one function per question beats that branch appearing at every call site.
  */
-const BUDGET = { 'console-tonight.js': 2890, 'console.js': 2000 };
+const BUDGET = { 'console-tonight.js': 3020, 'console.js': 2000 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

@@ -140,6 +140,26 @@ let lbExtra = [];
 let lbSlots = null;
 
 /**
+ * WHICH PACK IN THE BAY IS BEING SET UP — an index into the row as drawn.
+ *
+ * Asked for directly: *"I need the packs clickable when in the bay, and when
+ * you click a pack the settings for THAT PACK appear below."* So a tap on a
+ * tile is a SELECTION rather than an action — nothing about the night
+ * changes, the settings row underneath simply starts talking about that pack
+ * instead. Deliberately not a per-tile control: the shape and prize
+ * `<select>`s that used to sit inside a bingo tile clipped their own text at
+ * 146px and covered the area a drag starts from.
+ *
+ * **OUTSIDE THE RENDER**, like `currentPack` and for the same reason: this
+ * panel is rebuilt on every state push, so a selection held inside the
+ * function would be thrown away by the next phone to join. It indexes the row
+ * AS DRAWN — `lbSlots` in mixed mode, `lbPacks()` otherwise — and both are
+ * bounds-checked on read rather than reset on every change, so a pack removed
+ * from under it falls back to nothing picked instead of throwing.
+ */
+let lbPicked = 0;
+
+/**
  * ROUNDS SWITCHED OFF — a Set of `packId:roundIndex`.
  *
  * The host's own design, and it replaced dragging rounds between packs:
@@ -601,49 +621,22 @@ export function launchBar() {
       <div class="lb-row">
         <div class="lb-alt" hidden></div>
       </div>
-      <!-- TONIGHT'S RUNNING ORDER — the place packs are dropped and where
-           they appear, asked for in those words. Along the bottom rather than
-           off to the right: this bar is already three stacked rows and a
-           fourth column would make the one "press this" on the section share
-           its line with a list. It sits directly ABOVE Launch because it is
-           what Launch is about to run. -->
-      <div class="lb-order" hidden></div>
-      <div class="lb-chosen" hidden></div>
-      <!-- TONIGHT'S SETTINGS, ON THE BAR ITSELF — asked for directly, off a
-           screenshot of this bar: "these four options should be on the
-           launch bay really." Compact and ALWAYS ON, not a fold, per the
-           same answer — a control that has to be found first is a control
-           that goes unset. None of it touches the pack; all of it is read
-           at Launch exactly as it was on the tab it replaces.
+      <!-- THE WHOLE NIGHT'S OWN SETTINGS, ABOVE THE PACKS — asked for
+           directly: *"settings that only apply to the night as a whole can
+           sit above the packs and the pack specific settings can be
+           below?"* Yes, and the split is what makes the second half
+           possible at all: once one row means "this evening" and the other
+           means "this pack", a pack-specific control has somewhere honest
+           to live and does not have to be crammed into a 146px tile.
 
-           SECONDS IS QUIZ-ONLY and stays PRESENT AND INERT rather than
-           appearing and disappearing with the pack — the rule this bar
-           already keeps for Launch itself and for Keep this ready below.
-           A control that comes and goes is one you cannot learn the
-           position of, driven with a thumb in a dark pub.
-
-           CARD AND PRIZES ARE THE ONE EXCEPTION, AND DELIBERATELY SO — in a
-           MIXED running order every bingo tile carries its own shape/prize
-           controls (renderSlots's own numbered tiles), so the global pair
-           is not "not yet usable", it is PERMANENTLY superseded for as
-           long as the row is mixed: a second control doing the same job as
-           the one already on screen is clutter, not a courtesy. Reported
-           directly, off a screenshot showing them greyed "Set per pack
-           below" beside a bingo tile with its own working dropdowns —
-           "if they can't function on the bench they should be removed."
-           paintSettings() HIDES this pair outright in mixed mode rather
-           than disabling it; outside mixed mode they are present-and-inert
-           exactly like Seconds, because there a bingo pack landing on THIS
-           SAME row is one drag away. paintSettings() fills every option
-           and the disabled/hidden state; nothing here is baked into the
-           string. -->
-      <div class="lb-set">
-        <label class="pack-shape lb-set-card">Card
-          <select class="shape-pick" disabled></select>
-        </label>
-        <label class="pack-shape lb-set-prizes">Prizes
-          <select class="prize-pick" disabled></select>
-        </label>
+           Everything here is true of the evening whichever packs are in
+           it, so it never changes when a pack is picked: the look, what
+           phones do in the lobby, whether that makes noise, and whether a
+           team shares a phone. Seconds per question is here rather than
+           below because the LAUNCH only carries one — doLaunchOrder()
+           sends it once for the whole running order, so a per-pack control
+           would promise something the server cannot keep. -->
+      <div class="lb-set lb-set-night">
         <label class="pack-shape">Look
           <select class="look-pick"></select>
         </label>
@@ -661,6 +654,40 @@ export function launchBar() {
         </label>
         <label class="pack-shape">Playing
           <select class="play-pick">${playingOptions()}</select>
+        </label>
+      </div>
+      <!-- TONIGHT'S RUNNING ORDER — the place packs are dropped and where
+           they appear, asked for in those words. Along the bottom rather than
+           off to the right: this bar is already three stacked rows and a
+           fourth column would make the one "press this" on the section share
+           its line with a list. It sits directly ABOVE Launch because it is
+           what Launch is about to run. -->
+      <div class="lb-order" hidden></div>
+      <div class="lb-chosen" hidden></div>
+      <!-- AND THE PICKED PACK'S OWN, DIRECTLY UNDER IT — the other half of
+           the same request: *"I need the packs clickable when in the bay,
+           and when you click a pack the settings for THAT PACK appear
+           below."*
+
+           **THIS REPLACES THE CONTROLS THAT USED TO LIVE INSIDE THE TILE.**
+           A bingo tile carried its own shape and prize dropdowns, two
+           native selects inside a 146px square — they clipped their own
+           option text mid-word ("2 — a line, t"), they covered the half of
+           the tile a drag needs to start from, and there was no room for a
+           third if one were ever added. One row underneath is the same
+           controls with room to read, and it scales: a fourth pack-specific
+           setting costs nothing here and had nowhere to go before.
+
+           It names WHICH pack it is setting, because with six tiles above
+           it an unlabelled row is a row you have to remember the context
+           of. Present and inert with nothing picked, like Launch. -->
+      <div class="lb-set lb-set-pack">
+        <span class="tiny lb-set-for"></span>
+        <label class="pack-shape lb-set-card">Card
+          <select class="shape-pick" disabled></select>
+        </label>
+        <label class="pack-shape lb-set-prizes">Prizes
+          <select class="prize-pick" disabled></select>
         </label>
       </div>
       <!-- KEEP THE WHOLE EVENING — the way a saved night is built, and it
@@ -703,6 +730,8 @@ export function launchBar() {
   const prizePick = el.querySelector('.prize-pick');
   const cardRow = el.querySelector('.lb-set-card');
   const prizesRow = el.querySelector('.lb-set-prizes');
+  const packSetRow = el.querySelector('.lb-set-pack');
+  const setForEl = el.querySelector('.lb-set-for');
   const lookPick = el.querySelector('.look-pick');
   const secondsPick = el.querySelector('.seconds-pick');
   const lobbyGamePick = el.querySelector('.game-pick');
@@ -1472,39 +1501,46 @@ export function launchBar() {
     const mixed = Boolean(lbSlots);
     const hasBingo = mixed ? lbSlots.some((s) => s && s.kind === 'bingo') : Boolean(pack && !(pack.rounds || []).length);
     const hasQuiz = mixed ? lbSlots.some((s) => s && s.kind === 'quiz') : !hasBingo;
-    // Only an ORDINARY night has a single answer for "the" bingo shape —
-    // in mixed mode every bingo tile carries its own, and there can be more
-    // than one, so the global row cannot stand in for any particular one.
-    const singleBingo = hasBingo && !mixed;
 
     /*
-     * PRESENT AND INERT OUTSIDE MIXED MODE, HIDDEN INSIDE IT — two different
-     * answers for two different reasons. Outside mixed mode a bingo pack
-     * landing on THIS row is one drag away, so Card and Prizes stay put and
-     * disabled, the same rule this bar already keeps for Launch and for
-     * Keep this ready below. In mixed mode they are not "not yet usable",
-     * they are PERMANENTLY superseded — every bingo tile carries its own
-     * shape/prize controls — so showing them disabled read as broken rather
-     * than deferred: reported directly, off a screenshot, "if they can't
-     * function on the bench they should be removed." A control that has
-     * genuinely moved elsewhere is removed, not greyed.
+     * THE ROW BELOW BELONGS TO WHICHEVER PACK IS PICKED, and picking one is
+     * a tap on its tile. Card and Prizes are the only pack-specific settings
+     * there are today — Seconds is night-wide because the launch only
+     * carries one — so the row is a bingo pack's two controls, named.
+     *
+     * `pickedPack()` reads the row AS DRAWN, so the same index means the
+     * same tile in both modes, and it is bounds-checked rather than reset:
+     * removing pack 3 while it was picked leaves nothing picked instead of
+     * silently moving the row onto whatever slid into that position.
      */
-    if (cardRow) cardRow.hidden = mixed;
-    if (prizesRow) prizesRow.hidden = mixed;
+    const picked = pickedPack();
+    const pickedIsBingo = Boolean(picked) && picked.kind === 'bingo';
+    if (setForEl) {
+      setForEl.textContent = !picked
+        ? (packsInBay() ? 'Tap a pack above to set it up' : '')
+        : pickedIsBingo
+          ? shortTitle(picked.pack.title)
+          : `${shortTitle(picked.pack.title)} — rounds are the dots on the pack`;
+    }
+    // The whole row stands down when there is nothing in the bay at all:
+    // with no packs there is no pack to be specific about, and an empty
+    // labelled row above Launch is furniture. Once anything is in, it stays
+    // present — inert and saying so — like every other control on this bar.
+    if (packSetRow) packSetRow.hidden = !packsInBay();
+    if (cardRow) cardRow.hidden = !pickedIsBingo;
+    if (prizesRow) prizesRow.hidden = !pickedIsBingo;
     if (shapePick && prizePick) {
-      shapePick.disabled = !singleBingo;
-      prizePick.disabled = !singleBingo;
-      if (singleBingo) {
-        shapePick.innerHTML = shapeOptions(pack);
+      shapePick.disabled = !pickedIsBingo;
+      prizePick.disabled = !pickedIsBingo;
+      if (pickedIsBingo) {
+        shapePick.innerHTML = shapeOptions(picked.pack);
+        const shape = pickedShape(picked);
+        if (shape) shapePick.value = JSON.stringify({ rows: shape.rows, cols: shape.cols });
         paintPrizes();
-      } else if (!mixed) {
-        shapePick.innerHTML = '<option>Bingo only</option>';
-        prizePick.innerHTML = '<option>Bingo only</option>';
       }
     }
-    // Seconds per question is the opposite case — a QUIZ setting, inert only
-    // when there is no quiz component at all (an ordinary bingo pack, or a
-    // mixed night that is bingo tiles with nothing else in it).
+    // Seconds per question is night-wide but only MEANS anything when there
+    // is a quiz in the night at all — inert on an evening of pure bingo.
     if (secondsPick) secondsPick.disabled = !hasQuiz;
 
     // The pack can carry its own look, so the OPTIONS themselves have to be
@@ -1533,6 +1569,59 @@ export function launchBar() {
     }
   }
 
+  /** Is there anything in the bay at all, either shape of night. */
+  function packsInBay() {
+    return lbSlots ? lbSlots.some(Boolean) : lbPacks().length > 0;
+  }
+
+  /**
+   * WHICH PACK THE SETTINGS ROW IS TALKING ABOUT — resolved from `lbPicked`
+   * against the row as it is actually drawn, so one index means one tile in
+   * both shapes of night.
+   *
+   * Returns `{ pack, kind, at, slot }`, or null when nothing is picked or
+   * the picked position is empty. **Bounds-checked rather than reset**: a
+   * pack removed from under the selection leaves the row saying nothing,
+   * which is honest, instead of silently re-pointing at whatever moved into
+   * that slot — the same reasoning `paintLive()` uses for not filling a gap
+   * with an optimistic guess.
+   */
+  function pickedPack() {
+    if (lbSlots) {
+      const slot = lbSlots[lbPicked];
+      if (!slot) return null;
+      const pack = anyPack(slot.packId);
+      return pack ? { pack, kind: slot.kind, at: lbPicked, slot } : null;
+    }
+    const pack = lbPacks()[lbPicked];
+    if (!pack) return null;
+    return { pack, kind: (pack.rounds || []).length ? 'quiz' : 'bingo', at: lbPicked, slot: null };
+  }
+
+  /**
+   * The shape this picked pack is currently set to — its SLOT's own in mixed
+   * mode, the night-wide one otherwise. Two storage places because that is
+   * what the launch already reads: a mixed running order sends a shape per
+   * bingo segment, an ordinary night sends one for the whole game.
+   */
+  function pickedShape(picked) {
+    if (!picked) return null;
+    return picked.slot ? picked.slot.shape : night.shape;
+  }
+
+  /** Write a shape and prize count back to wherever this pack keeps them. */
+  function setPickedBingo(picked, { shape, prizes }) {
+    if (!picked) return;
+    if (picked.slot) {
+      const next = lbSlots.slice();
+      next[picked.at] = { ...picked.slot, ...(shape ? { shape } : {}), ...(prizes != null ? { prizes } : {}) };
+      lbSlots = next;
+      return;
+    }
+    if (shape) night.shape = shape;
+    if (prizes != null) night.prizes = prizes;
+  }
+
   /** The prize plans for whichever shape is currently picked. */
   function paintPrizes() {
     if (!shapePick || !prizePick || shapePick.disabled) return;
@@ -1543,14 +1632,27 @@ export function launchBar() {
     if (!found) return;
     prizePick.innerHTML = found.plans
       .map((plan, i) => `<option value="${i + 1}">${i + 1} — ${esc(plan.join(', then '))}</option>`).join('');
-    if (night.prizes) prizePick.value = String(night.prizes);
+    const picked = pickedPack();
+    const has = picked && picked.slot ? picked.slot.prizes : night.prizes;
+    if (has) prizePick.value = String(has);
   }
   shapePick?.addEventListener('change', () => {
-    night.shape = JSON.parse(shapePick.value);
+    const picked = pickedPack();
+    if (!picked) return;
+    // The plans depend on the shape, so a shape change always re-derives
+    // them and then re-reads the count off the list it just built — picking
+    // a 3×3 while "4 prizes" was set must not keep a number that shape has
+    // no plan for.
+    setPickedBingo(picked, { shape: JSON.parse(shapePick.value) });
     paintPrizes();
-    night.prizes = Number(prizePick?.value) || 0;
+    setPickedBingo(pickedPack(), { prizes: Number(prizePick?.value) || 0 });
+    // The tile shows its own shape, so it has to be redrawn with it.
+    if (lbSlots) paintOrder();
   });
-  prizePick?.addEventListener('change', () => { night.prizes = Number(prizePick.value) || 0; });
+  prizePick?.addEventListener('change', () => {
+    setPickedBingo(pickedPack(), { prizes: Number(prizePick.value) || 0 });
+    if (lbSlots) paintOrder();
+  });
   lookPick?.addEventListener('change', (ev) => { night.look = ev.target.value; });
   lobbyGamePick?.addEventListener('change', (ev) => { night.lobbyGame = ev.target.value; });
 
@@ -1963,6 +2065,8 @@ export function launchBar() {
       getShelfRoundDrag: () => shelfRoundDrag,
       clearShelfRoundDrag: () => setShelfRoundDrag(null),
       maxSlots: PACK_SLOTS,
+      picked: lbPicked,
+      onPick: (at) => { lbPicked = at; paintOrder(); },
     });
     orderEl.replaceChildren(row, infoLine());
     const parts = segmentsFromSlots(lbSlots).length;
@@ -1999,7 +2103,7 @@ export function launchBar() {
       // paint the wrong edge on one of them.
       const look = packLookAttrs(pack, rounds ? (isBreakoutPack(pack) ? 'breakout' : 'quiz') : 'bingo');
       const tile = node(`
-        <div class="lb-tile is-pack ${look.cls} ${rounds && (pack.rounds || []).every((_, i) => isOff(pack.id, i)) ? 'is-spent' : ''}" style="${look.style}" draggable="true" title="${esc(pack.title)}">
+        <div class="lb-tile is-pack ${look.cls} ${at === lbPicked ? 'is-picked' : ''} ${rounds && (pack.rounds || []).every((_, i) => isOff(pack.id, i)) ? 'is-spent' : ''}" style="${look.style}" draggable="true" title="${esc(pack.title)}">
           ${packWord(look)}
           <button class="lb-tile-off" type="button" aria-label="Take this pack out">&times;</button>
           <span class="lb-tile-n">${at + 1}</span>
@@ -2033,7 +2137,15 @@ export function launchBar() {
           toggleRound(pack.id, Number(dot.dataset.round));
         });
       }
-      tile.querySelector('.lb-tile-off').addEventListener('click', () => dropPack(at));
+      tile.querySelector('.lb-tile-off').addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        dropPack(at);
+      });
+      // A tap picks this pack for the settings row underneath — same gesture
+      // and same meaning as the mixed row's own tiles, so the two shapes of
+      // night behave identically. The × and the round ticks stop the event
+      // themselves, so what is left to pick is the face of the tile.
+      tile.addEventListener('click', () => { lbPicked = at; paintOrder(); });
       // Reordering, same shape as the editor's: which HALF of the target the
       // cursor is in decides before or after, or a list can only ever be
       // reordered one way and the last position is unreachable.
@@ -2082,20 +2194,20 @@ export function launchBar() {
     });
 
     /*
-     * The empty slots. Always drawn up to three, and one extra beyond that so
-     * a fourth pack is still possible without the row implying a limit that
-     * is really twelve ROUNDS rather than three packs.
+     * THE ROW IS ALWAYS THE FULL SIX, whatever is in it — reported directly:
+     * *"I need 6 regardless of what's in the bay."*
      *
-     * **A BINGO NIGHT GETS EXACTLY ONE**, and none once it is filled. A bingo
-     * pack is a track list with no rounds in it on disk, so there is nothing
-     * to compose — three slots would be three invitations to do a thing that
-     * cannot be done, which is the clutter rule wearing its worst face: a
-     * control that looks available and is not.
+     * **THE BINGO RESTRICTION IS GONE, and it was stale rather than wrong.**
+     * It read *"a bingo night gets exactly one"*, and that was true when a
+     * bingo pack could not be composed with anything — a track list has no
+     * rounds on disk, so extra slots were invitations to do something that
+     * could not be done. Since quiz → bingo → quiz landed, a bingo game is
+     * one PART of an evening like any other, and the row refusing a second
+     * one was the clutter rule pointed at the wrong thing: it was hiding a
+     * control that now works.
      */
     const composes = gameOf().id === 'quiz';
-    const slots = composes
-      ? Math.max(PACK_SLOTS - packs.length, packs.length ? 1 : PACK_SLOTS)
-      : (packs.length ? 0 : 1);
+    const slots = Math.max(PACK_SLOTS - packs.length, 0);
     for (let i = 0; i < slots; i++) {
       /*
        * THE SLOTS ARE NUMBERED, asked for directly — "add pack 1 pack 2 pack
@@ -2110,9 +2222,13 @@ export function launchBar() {
        * what it is.
        */
       const n = packs.length + i + 1;
-      const label = !composes
-        ? 'Drag a bingo game here'
-        : (!packs.length && i === 0 ? 'Drag pack 1 here' : `Add pack ${n}`);
+      // The teaching label is for the FIRST slot of an empty night only —
+      // it used to be every slot on a bingo shelf, which was fine when a
+      // bingo night had exactly one slot and reads as six identical
+      // instructions now that it has six.
+      const label = packs.length || i > 0
+        ? `Add pack ${n}`
+        : (composes ? 'Drag pack 1 here' : 'Drag a bingo game here');
       const empty = node(`
         <button class="lb-tile lb-drop" type="button">
           <span class="lb-tile-n is-empty">${n}</span>

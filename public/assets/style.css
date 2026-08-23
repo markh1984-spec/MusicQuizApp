@@ -6119,6 +6119,24 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    to span. */
 .lb-set .pack-shape-wide { grid-column: span 2; }
 @media (max-width: 560px) { .lb-set .pack-shape-wide { grid-column: span 1; } }
+
+/* THE PACK-SPECIFIC ROW, directly under the tiles — a FLEX row rather than
+   the night row's grid, because it holds one label and at most two controls
+   and an auto-fit grid would stretch them to full width each. It reads as a
+   caption on the tiles above it, which is what it is. */
+.lb-set-pack {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  margin: 0 0 10px;
+}
+/* THEY GROW INTO THE ROOM THE ROW HAS. Fixed at 260px they clipped their own
+   option text exactly as they did inside the tile ("63% of cal", "then a full
+   hou") — which was the whole reason for moving them out here, so leaving
+   them too narrow would have moved the fault rather than fixed it. Capped, or
+   two controls stretch across a 1200px console and stop reading as a pair. */
+.lb-set-pack .pack-shape { flex: 1 1 260px; max-width: 440px; }
+/* Which pack it is setting. Never a heading — with six tiles above it this is
+   a caption, and a bold one would compete with the tile names it points at. */
+.lb-set-for { color: var(--ink-dim); font-weight: 800; }
 /* Big, because it is pressed in a dark room by somebody who is late.
  * The gradient is written out here rather than inherited: the app's `.go`
  * fill is scoped to `.pack-card .go`, so a Launch button anywhere else came
@@ -6279,11 +6297,37 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    `.hat-switch` generally — the switch is reused in tighter rows elsewhere
    (My account's feature toggles) where a 44px floor would be the wrong call. */
 .lb-mode-switch { min-height: 44px; align-items: stretch; }
-.lb-mode-switch .hat-half { display: inline-flex; align-items: center; justify-content: center; }
-.lb-mode-switch .hat-half.live { background: rgba(255, 255, 255, 0.14); color: var(--ink); }
+/* EQUAL HALVES, so the pill does not change shape as you switch it — "Online"
+   is one character longer than "Venue" and was 2.4px wider for it. Nobody
+   would name that, but a control whose two states are not quite the same
+   object is a control that reads as slightly wrong without saying why. */
+.lb-mode-switch .hat-half {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: 1 1 0; min-width: 0;
+}
+/* THE SAME LIT TREATMENT WHICHEVER HALF IS ON — reported directly: *"the
+   button need to be the same for both regardless of which mode you're in."*
+
+   It was a flat grey for Venue and the full account gradient for Online,
+   on the reasoning that only the dangerous half should shout. Measured, that
+   made the control a different object in each state — grey pill on an
+   ordinary pub night, gradient pill on an online one — and the thing it is
+   saying ("this is the mode you are in") is the same either way.
+
+   **NOT the gradient for both**, which would be the obvious way to make them
+   match and would break the rule this bar exists to keep: ONE gradient on the
+   console, and it is Launch. So both take the lit-chip treatment instead — a
+   tint of the account colour with its own outline, exactly what the menu
+   already uses for "you are here", for the same reason recorded there. The
+   rgba is declared before the color-mix as a fallback, or a projector too old
+   for it loses the fill entirely. */
+.lb-mode-switch .hat-half.live,
 .lb-mode-switch .hat-half[data-online="1"].live {
-  background: linear-gradient(120deg, var(--hot), var(--hot-2));
-  color: #12000c;
+  background: rgba(255, 46, 136, 0.22);
+  background: color-mix(in srgb, var(--hot) 26%, transparent);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px rgba(255, 46, 136, 0.55);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hot) 60%, transparent);
 }
 .lb-mode-said { color: var(--ink-dim); min-width: 0; }
 .lb-prize { margin-top: 8px; }
@@ -6576,6 +6620,24 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   background: var(--panel); border: 1px solid var(--panel-line); cursor: grab;
 }
 .lb-tile.is-pack.is-lifting { opacity: 0.45; }
+/* WHICH PACK THE SETTINGS ROW BELOW IS TALKING ABOUT.
+   An outline in the account's own colour plus a lift, NOT a fill: the tile
+   already carries its own era wash and its kind on the bottom edge, and a
+   third colour across the face would fight both. This says "you are here",
+   which is the same job the lit menu chip does — and it uses the same answer,
+   a tint of --hot rather than gold, for the reason recorded there: gold is
+   the trophy colour and means winning, nowhere else.
+   An rgba fallback before the color-mix, or a projector too old for it loses
+   the ring entirely. */
+.lb-tile.is-pack.is-picked {
+  border-color: var(--hot);
+  box-shadow: 0 0 0 2px rgba(255, 46, 136, 0.35);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--hot) 45%, transparent);
+}
+/* What a bingo game in the row is SET to, read rather than changed — the two
+   dropdowns that used to be here moved to the row under the tiles, where they
+   have room for their own option text. */
+.mix-bingo-said { color: var(--ink-dim); margin-top: 3px; position: relative; z-index: 1; }
 /* EVERY ROUND SWITCHED OFF — an empty pack. It stays in the row rather than
    vanishing, because it is one tap from being back and making somebody find
    it on the shelf again would be the app punishing a change of mind. Dimmed

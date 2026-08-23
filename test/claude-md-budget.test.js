@@ -155,8 +155,23 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * server.js for the same reason the publish gate is. Full reasoning in
  * `docs/gigs.md`; this is the pointer, same shape as every other gallery
  * entry already in this index.
+ *
+ * RAISED TO 140_300 THE SAME DAY, for two changes to the launch bar that a
+ * session must not rediscover by re-applying the old rule:
+ *
+ *  - **the settings SPLIT** — night-wide above the packs, the picked pack's
+ *    own below, and a tile is now tappable to pick it. The line it replaces
+ *    said *"the settings are their own TAB"*, which had been false since the
+ *    tab was deleted two days earlier — so the stale half was paid back
+ *    first, exactly as the note above asks;
+ *  - **a REVERSED decision**: both halves of the In-the-room/Online switch
+ *    now wear the same lit treatment. The old text said only the Online half
+ *    wears the gradient, and a session reading that would put it back.
+ *
+ * A reversal is the one kind of growth that cannot be moved to `docs/`: the
+ * whole value is that the always-loaded file no longer asserts the opposite.
  */
-const BUDGET = 140_100;
+const BUDGET = 140_300;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

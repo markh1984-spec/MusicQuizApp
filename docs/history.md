@@ -10,6 +10,70 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 23 August 2026, same day — four changes to the launch bay,
+reported off two screenshots:**
+
+**1. The Venue/Online switch is the same object in both modes.** *"The button
+need to be the same for both regardless of which mode you're in."* Measured
+before changing anything: the widths and heights were already within 2.4px
+(just the extra character in "Online"), so the real difference was the LIT
+TREATMENT — a flat grey for Venue, the full account gradient for Online. That
+made the control read as two different objects depending on the mode, on a
+switch whose message is the same either way. **Both halves now take the
+lit-chip tint**, the app's own established "you are here" language, and
+neither takes the gradient — Launch keeps that, per the one-gradient rule
+this bar exists to hold. The halves were also equalised (`flex: 1 1 0`) so
+the pill stops changing shape as it is switched. This REVERSES the recorded
+"only the ONLINE half wears the gradient" decision, which is why it had to
+be rewritten in CLAUDE.md rather than moved to a doc: a session reading the
+old line would put the gradient back.
+
+**2. Six slots always, whatever is in the bay.** *"When you add a quiz and
+then a music bingo you STILL get restricted slots — I need 6 regardless."*
+The mixed row drew only what was filled plus one, which reads as a limit
+that grows as you use it; the ordinary row separately capped a bingo night
+at exactly ONE slot. That bingo rule was stale rather than wrong — it dated
+from before quiz → bingo → quiz existed, when a track list genuinely could
+not be composed with anything. Both now fill to six.
+
+**3. Packs are clickable in the bay, and 4. the settings split in two.**
+*"When you click a pack the settings for THAT PACK appear below… settings
+that only apply to the night as a whole can sit above the packs."* Built as
+asked: `.lb-set-night` above the tiles (Look, Seconds per question, While
+they wait, Game sound, Playing) and `.lb-set-pack` below (Card and Prizes,
+for whichever tile is picked, named). A tap on a tile is a SELECTION and
+changes nothing about the night — everything on a tile that acts (the ×, a
+round dot) stops the event itself, so what is left to tap is its face.
+
+**This replaced the controls that used to live INSIDE a bingo tile** — two
+native `<select>`s in a 146px square that clipped their own option text
+mid-word and covered the area a drag starts from. The tile now SAYS what it
+is set to ("5×5 · 2 prizes") and the row below is where it is changed, which
+also scales: a third pack-specific setting costs nothing there and had
+nowhere to go before. The first version of the row was itself too narrow and
+clipped the same text, which was the fault moving rather than being fixed;
+the controls now grow into the row with a cap.
+
+**Seconds per question stayed NIGHT-WIDE deliberately** — `doLaunchOrder()`
+sends one value for the whole running order, so a per-pack control would
+promise something the server cannot keep.
+
+Four helpers carry the split — `pickedPack()`, `packsInBay()`,
+`pickedShape()`, `setPickedBingo()` — because a picked pack keeps its shape
+in one of two places depending on the shape of night (its own slot in a
+mixed running order, `night.*` otherwise), and one function per question
+beats that branch appearing at every call site. `pickedPack()` is
+bounds-checked rather than reset, so removing the picked pack leaves the row
+saying nothing instead of silently re-pointing at whatever slid into that
+position.
+
+Live-verified against the real protected launch path, both shapes of night:
+an ordinary quiz launch carried `look` and `questionSeconds` set on the row
+ABOVE the packs, and a mixed `launchOrder` carried
+`shape: {rows:3, cols:3}` on its bingo segment — the shape set on the picked
+tile via the row BELOW. Six tiles in every state, no overflow at 1280 or
+390, no console errors.
+
 **Live as of 23 August 2026 — the public gallery now only holds photos that
 looked like a camera took them; the projector still takes anything:** asked
 for directly — uploads "for a bit of a laugh" are fine on the big screen,

@@ -1955,7 +1955,8 @@ just don't want to think, you want to get in and go and know it will work."*
 
 - **NOTHING IS CHOSEN FOR YOU** — a bar that guesses guesses wrongly the moment
   a pack is launched, and then the console and the projector name different
-  quizzes. The settings are their own TAB.
+  quizzes. **Night settings sit above the packs, a picked pack's below** — tap
+  a tile to pick it.
 - **ONE gradient button on the whole console.** There were three on this bar
   alone, and a Launch on every pack card besides.
 - **THE CONSOLE AND THE BIG SCREEN MUST AGREE, ALWAYS.** A choice STICKS, and
@@ -1966,8 +1967,10 @@ just don't want to think, you want to get in and go and know it will work."*
   `session.inProgress()`. A 409 is SILENT here. A re-render is not somebody
   choosing a pack (`quiet`), and what is running is READ BACK.
 - **IN THE ROOM / ONLINE is a switch in the head** — a setting whose wrong
-  value ruins the night belongs where it is read. Only the ONLINE half wears
-  the gradient, and shut, the line still says "Online".
+  value ruins the night belongs where it is read. **BOTH halves wear the same
+  lit treatment**, never the gradient (Launch keeps that): the
+  gradient-on-Online-only version was a different object per mode. Shut, the
+  line still says "Online".
 - **The venue is chosen HERE and on the Venues shelf, nowhere else** — both go
   through `chooseVenue()`. **Neither the venue nor online is remembered on the
   device**: both are facts about one evening, and a remembered one files next
