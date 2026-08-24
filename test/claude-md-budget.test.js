@@ -249,7 +249,15 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * `docs/console/launch-bar.md` — so the reasoning behind all of it left this
  * file rather than landing in it.
  */
-const BUDGET = 173_000;
+/*
+ * 174_500 ON 24 AUGUST 2026, for the launch bar's drag rules. Every line of
+ * that block stops a change rather than describing one: the slot you drop on
+ * is the slot it goes in (for a round AND a pack), a highlight may only
+ * promise what the drop will honour, a draggable child is what stops the
+ * browser walking up to the tile, and a child's dragend bubbles into the
+ * handler that removes the pack.
+ */
+const BUDGET = 174_500;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
