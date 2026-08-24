@@ -1306,6 +1306,17 @@ right of the pack ONCE LOADED."*
   the smallest drag handle there is — no flag to arm and disarm, nothing left
   behind if a pointer is lost. The ordinary tile had no head at all and gained
   the same one the mixed row draws.
+- **A PACK TILE LIGHTS UP TOO — AND ONLY WHERE THE DROP WILL BE TAKEN.**
+  `moveRoundToSlot()` refuses a bingo game or a DIFFERENT pack, so a tile that
+  lit and then did nothing would be worse than one that never lit: it promised.
+  A refusal also STOPS the event, or it bubbles to the row and the round lands
+  somewhere the pointer never was. **The inset ring alone was invisible** next
+  to the picked tile's own outline in the same colour — it takes a wash and a
+  lift as well.
+- **A FILLED MIXED TILE HAS TWO WIRINGS AND THEY RACED.** `wireSlotDrag` and
+  `wireDropTarget` both set `drop-here`; the one registered LAST won, so a
+  bingo tile lit for a round it would refuse. **One handler decides**
+  (`takesRound()` in `wireDropTarget`) and the other stands down.
 - **AN EMPTY SLOT TAKES A ROUND AND LIGHTS UP WHILE YOU ARE OVER IT.** Reported
   as *"it won't drag to another slot unless there is a pack there"* — two
   faults at once: an empty slot had no `dragover` of its own, so **nothing lit

@@ -2763,7 +2763,32 @@ export function launchBar() {
         roundDrag = null;
         if (!inside) dropPack(at);
       });
+      /*
+       * A ROUND CAN LAND ON A PACK TILE TOO, and the tile says so — asked for
+       * on 24 August 2026: *"can we make it so the pack being dragged to has a
+       * slight highlight effect or something to make it known that it's active
+       * and accepting the drag."*
+       *
+       * **THE LIGHT ONLY COMES ON WHERE THE DROP WILL ACTUALLY BE TAKEN**, and
+       * that is the whole point of it rather than a detail. `moveRoundToSlot()`
+       * REFUSES a slot holding a bingo game or a DIFFERENT pack — a slot is one
+       * pack's rounds or one bingo game, never a mix — so a tile that lit up
+       * and then did nothing would be worse than a tile that never lit at all.
+       *
+       * A refusal also STOPS the event rather than letting it bubble. Without
+       * that it reaches `orderEl`, which appends to the end of the running
+       * order — so releasing over the wrong pack would quietly put the round
+       * somewhere else entirely, which is the exact complaint the empty slots
+       * were fixed for a round ago.
+       */
       tile.addEventListener('dragover', (ev) => {
+        if (shelfRoundDrag) {
+          ev.preventDefault(); ev.stopPropagation();
+          const takes = rounds && shelfRoundDrag.packId === pack.id;
+          ev.dataTransfer.dropEffect = takes ? 'move' : 'none';
+          tile.classList.toggle('drop-here', takes);
+          return;
+        }
         if (roundDrag === null) return;
         ev.preventDefault(); ev.stopPropagation();
         const box = tile.getBoundingClientRect();
@@ -2771,8 +2796,18 @@ export function launchBar() {
         tile.classList.toggle('drop-after', after);
         tile.classList.toggle('drop-before', !after);
       });
-      tile.addEventListener('dragleave', () => tile.classList.remove('drop-before', 'drop-after'));
+      tile.addEventListener('dragleave', () => tile.classList.remove('drop-before', 'drop-after', 'drop-here'));
       tile.addEventListener('drop', (ev) => {
+        if (shelfRoundDrag) {
+          ev.preventDefault(); ev.stopPropagation();
+          tile.classList.remove('drop-here');
+          const takes = rounds && shelfRoundDrag.packId === pack.id;
+          const round = shelfRoundDrag;
+          setShelfRoundDrag(null);
+          dragging(false);
+          if (takes) addRoundToSlot(round, at);
+          return;
+        }
         if (roundDrag === null) return;
         ev.preventDefault(); ev.stopPropagation();
         const after = tile.classList.contains('drop-after');

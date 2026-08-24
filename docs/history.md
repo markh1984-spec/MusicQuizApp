@@ -122,6 +122,23 @@ The honest probe is `defaultPrevented` on the dragover plus where the round
 actually lands. Same family as every other entry here: a synthetic event that
 skips the browser's own precondition is not running the artefact.
 
+**AND A PACK TILE LIGHTS UP TOO, only where the drop will be taken:** *"can we
+make it so the pack being dragged to has a slight highlight effect."* The rule
+that matters is not the glow but what it promises — `moveRoundToSlot()` refuses
+a bingo game or a DIFFERENT pack, so the highlight asks exactly the question the
+drop asks and a tile that would refuse stays dark. A refusal STOPS the event
+too, or it bubbles to the row and the round lands where the pointer never was.
+
+**Two wirings on one tile raced to set the same class.** A filled mixed tile
+gets both `wireSlotDrag` and `wireDropTarget`; putting the round branch in both
+meant the listener registered LAST won, which is how a bingo tile lit up for a
+round it would refuse. One handler decides now and the other stands down.
+
+**And the inset ring was invisible where it mattered** — the picked tile
+already wears a full outline in the same colour, so on the tile you are most
+likely to be dragging within, "accepting" and "picked" were one picture. It
+takes a wash and a lift as well now.
+
 Verified at 1400, 1280 and 390: no overflow, no console errors, no overlaps
 anywhere, and nothing between the running order and Launch.
 

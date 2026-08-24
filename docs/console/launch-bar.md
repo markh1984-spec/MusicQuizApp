@@ -1585,3 +1585,53 @@ answered the rest.
 This is the same family as every other entry in this file: *a test that never
 runs the artefact proves nothing about it*, and a synthetic event that skips
 the browser's own precondition is not running the artefact.
+
+### A pack tile lights up too — and only where the drop will be taken
+
+*"Can we make it so the pack being dragged to has a slight highlight effect or
+something to make it known that it's active and accepting the drag."*
+
+The empty slots had gained that a round earlier; the FILLED tiles had not, so
+the one place a round most obviously belongs — back on its own pack — was the
+one place nothing happened.
+
+**The rule that matters is not the glow, it is what the glow promises.**
+`moveRoundToSlot()` refuses a slot holding a bingo game or a DIFFERENT pack: a
+slot is one pack's rounds or one bingo game, never a mix. So the highlight asks
+exactly the question the drop asks, and a tile that would refuse stays dark.
+A tile that lit and then did nothing would be worse than one that never lit,
+because it made a promise.
+
+A refusal also STOPS the event rather than letting it bubble. Without that it
+reaches the row, which appends to the end — so releasing over the wrong pack
+would quietly put the round somewhere else entirely, which is the complaint the
+empty slots were fixed for one round earlier.
+
+### Two wirings on one tile, racing to set the same class
+
+A filled tile in the mixed row gets BOTH `wireSlotDrag` (reordering) and
+`wireDropTarget` (things arriving). The first attempt put the round branch in
+`wireSlotDrag` as well — so two `dragover` listeners were setting `drop-here`,
+and **the one registered last won**. That is how a bingo tile came to light up
+for a round it would then refuse: the conditional one ran, and the
+unconditional one ran after it.
+
+`takesRound()` lives in `wireDropTarget` alone now and `wireSlotDrag` stands
+down whenever a round is in flight. One question, one answer, one place.
+
+### And the inset ring was invisible where it mattered most
+
+`.lb-tile.is-pack.drop-here` was an inset ring in the account colour — and the
+PICKED tile already wears a full outline in that same colour. On the tile you
+are most likely to be dragging within, "accepting" and "picked" were the same
+picture. It takes a wash and a small lift as well now, so the answer is legible
+whether or not the tile underneath happens to be the chosen one.
+
+Deliberately not the account GRADIENT: that means "press this", and the one
+control wearing it on this panel is Launch.
+
+Measured, both renderers, holding a round of pack A: its own tile lit and
+accepted; a different pack's tile stayed dark and refused; a bingo tile stayed
+dark and refused; an empty slot lit and accepted. And the outcomes match — a
+round dropped on the wrong pack leaves the running order byte-identical, and
+one dropped back on its own tile merges in.

@@ -7158,7 +7158,25 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 /* THE MIXED ROW'S OWN TARGET — a swap has no "before" or "after" to land on,
    so it gets one ring round the whole tile rather than the ordinary row's
    one-sided line. See `swapSlots()` in `console-tonight-mix.js`. */
-.lb-tile.is-pack.drop-here { box-shadow: inset 0 0 0 2px var(--hot); }
+/*
+ * A PACK TILE THAT WILL TAKE THE ROUND YOU ARE HOLDING — asked for as *"a
+ * slight highlight effect or something to make it known that it's active and
+ * accepting the drag."*
+ *
+ * **An inset ring alone was not enough, and the reason is what it sits next
+ * to.** The PICKED tile already wears a full outline in the same colour, so on
+ * the tile you are most likely to be dragging within, "accepting" and "picked"
+ * were the same picture. This adds a wash and a lift on top, so the answer is
+ * legible whether or not the tile underneath happens to be the chosen one.
+ *
+ * It is deliberately not the account GRADIENT: that means "press this", and
+ * the one thing wearing it on this panel is Launch.
+ */
+.lb-tile.is-pack.drop-here {
+  box-shadow: inset 0 0 0 2px var(--hot), 0 6px 18px rgba(0, 0, 0, 0.5);
+  background-image: linear-gradient(rgba(255, 46, 136, 0.16), rgba(255, 46, 136, 0.16));
+  transform: translateY(-2px);
+}
 
 /* AN EMPTY SLOT. Dashed, because here the thing genuinely is waiting to be
    filled — which is the one place in this app a dashed edge is right. It is a

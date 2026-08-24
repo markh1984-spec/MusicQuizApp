@@ -79,12 +79,39 @@ export function renderSlots(slots, {
    * nothing when `dragend` does still fire (it is a plain toggle) and fixes
    * it when it does not.
    */
+  /**
+   * WOULD A ROUND ACTUALLY LAND HERE?
+   *
+   * An EMPTY slot takes any round. A FILLED one takes a round only from its
+   * own quiz pack — `moveRoundToSlot()` refuses a bingo game or a different
+   * pack outright, because a slot is one pack's rounds or one bingo game and
+   * never a mix of two.
+   *
+   * **The highlight has to ask the same question the drop does**, or a tile
+   * lights up, takes the release and does nothing — which is worse than one
+   * that never lit, because it promised.
+   */
+  function takesRound(at, round) {
+    if (!round) return false;
+    const here = slots[at];
+    if (!here) return true;
+    return here.kind === 'quiz' && here.packId === round.packId;
+  }
+
   function wireDropTarget(tile, at) {
     tile.addEventListener('dragover', (ev) => {
       const fromShelf = getPackDrag();
-      const shelfRound = getShelfRoundDrag();
-      if (roundDrag === null && !fromShelf && !shelfRound) return;
+      const round = roundDrag || getShelfRoundDrag();
+      if (!round && !fromShelf) return;
       ev.preventDefault();
+      ev.stopPropagation();
+      if (round) {
+        // AND THE LIGHT SAYS WHICH — see `takesRound`.
+        const takes = takesRound(at, round);
+        ev.dataTransfer.dropEffect = takes ? 'move' : 'none';
+        tile.classList.toggle('drop-here', takes);
+        return;
+      }
       tile.classList.add('drop-here');
     });
     tile.addEventListener('dragleave', () => tile.classList.remove('drop-here'));
@@ -92,10 +119,14 @@ export function renderSlots(slots, {
       tile.classList.remove('drop-here');
       if (roundDrag !== null) {
         ev.preventDefault();
+        ev.stopPropagation();
         const moved = roundDrag;
+        const takes = takesRound(at, moved);
         roundDrag = null;
         dragging(false);
-        commit(moveRoundToSlot(slots, moved, at));
+        // Refused rather than mixed — and STOPPED, or it bubbles to the row
+        // and the round lands somewhere the pointer never was.
+        if (takes) commit(moveRoundToSlot(slots, moved, at));
         return;
       }
       /*
@@ -108,9 +139,11 @@ export function renderSlots(slots, {
       const shelfRound = getShelfRoundDrag();
       if (shelfRound) {
         ev.preventDefault();
+        ev.stopPropagation();
+        const takes = takesRound(at, shelfRound);
         clearShelfRoundDrag();
         dragging(false);
-        commit(moveRoundToSlot(slots, shelfRound, at));
+        if (takes) commit(moveRoundToSlot(slots, shelfRound, at));
         return;
       }
       const fromShelf = getPackDrag();
@@ -164,13 +197,22 @@ export function renderSlots(slots, {
       slotDrag = null;
       dragging(false);
     });
+    /*
+     * A ROUND OVER THIS TILE IS `wireDropTarget`'S JOB, not this one's — every
+     * tile, full or empty, gets both wirings, and putting the round branch
+     * here as well meant two `dragover` listeners racing to set the same
+     * class. The one registered LAST won, which is how a bingo tile came to
+     * light up for a round it would then refuse.
+     */
     tile.addEventListener('dragover', (ev) => {
+      if (roundDrag !== null || getShelfRoundDrag()) return;
       if (slotDrag === null || slotDrag === at) return;
       ev.preventDefault();
       tile.classList.add('drop-here');
     });
     tile.addEventListener('dragleave', () => tile.classList.remove('drop-here'));
     tile.addEventListener('drop', (ev) => {
+      if (roundDrag !== null || getShelfRoundDrag()) return;
       if (slotDrag === null || slotDrag === at) return;
       ev.preventDefault();
       tile.classList.remove('drop-here');
