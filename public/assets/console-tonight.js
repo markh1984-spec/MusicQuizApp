@@ -2836,6 +2836,43 @@ export function launchBar() {
         find.hidden = !find.hidden;
         if (!find.hidden) text.focus();
       });
+      /*
+       * AN EMPTY SLOT TAKES A ROUND, AND SAYS SO WHILE YOU ARE OVER IT.
+       *
+       * Reported as *"it won't drag to another slot unless there is a pack
+       * there"*, and the row was doing two things wrong at once — one you
+       * could see and one you could not:
+       *
+       * - **NO FEEDBACK.** An empty slot had no `dragover` of its own, so
+       *   nothing lit up as the cursor crossed it. The drop was accepted by
+       *   `orderEl` further up, but from the outside an inert square is a
+       *   square that does not take what you are holding.
+       * - **AND IT IGNORED WHICH SLOT.** `orderEl`'s drop appends at the END
+       *   of the running order, so a round let go over slot 5 appeared in slot
+       *   2. That is the same fault dressed up: you aimed at one place and it
+       *   went to another, which reads as the aim being refused.
+       *
+       * `stopPropagation` is what makes the slot's own answer the one that
+       * counts — without it this fires and THEN `orderEl` fires and appends a
+       * second time.
+       */
+      const slotIndex = packs.length + i;
+      empty.addEventListener('dragover', (ev) => {
+        if (!shelfRoundDrag) return;
+        ev.preventDefault(); ev.stopPropagation();
+        ev.dataTransfer.dropEffect = 'move';
+        empty.classList.add('drop-here');
+      });
+      empty.addEventListener('dragleave', () => empty.classList.remove('drop-here'));
+      empty.addEventListener('drop', (ev) => {
+        if (!shelfRoundDrag) return;
+        ev.preventDefault(); ev.stopPropagation();
+        empty.classList.remove('drop-here');
+        const round = shelfRoundDrag;
+        setShelfRoundDrag(null);
+        dragging(false);
+        addRoundToSlot(round, slotIndex);
+      });
       tiles.push(empty);
     }
 
@@ -3096,6 +3133,30 @@ export function launchBar() {
     }
     if (!lbSlots) lbSlots = slotsFromSimple({ currentPack, lbExtra, lbOff, packOf: anyPack });
     lbSlots = moveRoundToSlot(lbSlots, { packId: round.packId, round: round.round }, lbSlots.length);
+    paintOrder();
+  }
+
+  /**
+   * A ROUND INTO ONE PARTICULAR SLOT — what `addRoundToNight()` does, aimed.
+   *
+   * The difference is only the index: that one always appends at the end of
+   * the running order, which is right for a round arriving from the SHELF
+   * (there is nowhere in particular it was headed) and wrong for one let go
+   * over a slot you picked.
+   *
+   * `moveRoundToSlot()` widens the list to reach an index past the end, so
+   * dropping into slot 5 of a one-pack night leaves real gaps between — which
+   * is the mixed row's own model and not a special case: *positions do not
+   * shift*, so an empty slot stays where it is rather than the row closing up
+   * behind your thumb.
+   */
+  function addRoundToSlot(round, at) {
+    if (!round) return;
+    const pack = anyPack(round.packId);
+    if (!pack) return;
+    if (!currentPack) { addRoundToNight(round); return; }
+    if (!lbSlots) lbSlots = slotsFromSimple({ currentPack, lbExtra, lbOff, packOf: anyPack });
+    lbSlots = moveRoundToSlot(lbSlots, { packId: round.packId, round: round.round }, at);
     paintOrder();
   }
 

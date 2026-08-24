@@ -108,6 +108,20 @@ pack leaves three and puts one in its own slot; the tile refuses its face and
 accepts its grip; reordering, dragging a pack out and clicking a tick off all
 still work.
 
+**AND AN EMPTY SLOT NOW TAKES A ROUND AND SAYS SO:** *"it looks as though it
+won't drag to another slot unless there is a pack there."* Two faults at once —
+an empty slot in the ordinary row had no `dragover` of its own, so nothing lit
+up as the cursor crossed it, and `orderEl`'s drop APPENDS, so a round let go
+over slot 5 turned up in slot 2. Each slot now lights with the same
+`.drop-here` the mixed row already used and places the round at ITS index.
+
+**The test from the round before had said this already worked, and it was
+measuring the wrong thing.** It dispatched `drop` on the target directly — and
+a browser fires no `drop` at all unless `dragover` called `preventDefault()`.
+The honest probe is `defaultPrevented` on the dragover plus where the round
+actually lands. Same family as every other entry here: a synthetic event that
+skips the browser's own precondition is not running the artefact.
+
 Verified at 1400, 1280 and 390: no overflow, no console errors, no overlaps
 anywhere, and nothing between the running order and Launch.
 

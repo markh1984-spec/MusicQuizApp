@@ -7185,6 +7185,11 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   font-weight: 800; cursor: pointer;
 }
 .lb-tile.mix-drop.drop-here { border-color: var(--hot); color: var(--ink); background: rgba(255, 46, 136, 0.08); }
+/* The ORDINARY row's empty slot lights the same way, because it now takes the
+   same thing. It had no dragover of its own at all, so nothing happened as a
+   round crossed it — and an inert square is a square that does not take what
+   you are holding, whatever the drop handler further up would have done. */
+.lb-tile.lb-drop.drop-here { border-color: var(--hot); color: var(--ink); background: rgba(255, 46, 136, 0.08); }
 .mix-rd {
   display: inline-grid; place-items: center;
   width: 28px; height: 28px; padding: 0; margin: 2px 2px 0 0;

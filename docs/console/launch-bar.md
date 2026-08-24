@@ -1539,3 +1539,49 @@ pack leaves that pack with three and puts one in a slot of its own; the tile
 refuses to lift from its face and accepts from its grip; reordering by the grip
 still works; dragging a pack out still removes it; and a plain click on a tick
 still switches its round off.
+
+### An empty slot takes a round — and says so while you are over it
+
+*"It looks as though it won't drag to another slot unless there is a pack there
+— is it possible to do this, and if so how?"*
+
+It was possible and it was half-wired. The row was doing two things wrong at
+once, one visible and one not:
+
+- **NO FEEDBACK.** An empty slot in the ordinary row had no `dragover` handler
+  of its own, so nothing lit up as the cursor crossed it. The drop was in fact
+  accepted further up by `orderEl` — but from the outside an inert square is a
+  square that refuses what you are holding, whatever some ancestor would have
+  done with it.
+- **AND IT IGNORED WHICH SLOT.** `orderEl`'s drop appends at the END of the
+  running order, so a round let go over slot 5 appeared in slot 2. That is the
+  same complaint wearing a different hat: you aimed at one place and it went to
+  another, which reads as the aim being refused.
+
+Each empty slot now has its own `dragover` / `dragleave` / `drop`, lights with
+the same `.drop-here` the mixed row's empty slots already used, and places the
+round at ITS index through `moveRoundToSlot()`. `stopPropagation` is what makes
+the slot's own answer the one that counts — without it the slot handles the
+drop and then `orderEl` handles it again and appends a second copy.
+
+`moveRoundToSlot()` widens the list to reach an index past the end, so dropping
+into slot 5 of a one-pack night leaves real gaps between. That is the mixed
+row's own model rather than a special case: *positions do not shift*, so an
+empty slot stays where it is instead of the row closing up behind your thumb.
+
+### AND THE TEST THAT SAID IT ALREADY WORKED WAS MEASURING THE WRONG THING
+
+The previous round of this work "proved" a round could be dropped on an empty
+slot. It could not. The test dispatched `drop` on the target directly — and **a
+browser fires no `drop` at all unless `dragover` called `preventDefault()`**.
+Synthesising the drop skipped the only question that mattered.
+
+The honest probe is `defaultPrevented` on the dragover: hold the drag over each
+candidate target and ask whether anything accepted it. Done that way the
+ordinary row's empty slots answered `true` for the wrong reason (an ancestor,
+not the slot) and the outcome — which slot the round actually landed in —
+answered the rest.
+
+This is the same family as every other entry in this file: *a test that never
+runs the artefact proves nothing about it*, and a synthetic event that skips
+the browser's own precondition is not running the artefact.

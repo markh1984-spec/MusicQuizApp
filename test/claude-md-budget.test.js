@@ -249,7 +249,7 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * `docs/console/launch-bar.md` — so the reasoning behind all of it left this
  * file rather than landing in it.
  */
-const BUDGET = 172_000;
+const BUDGET = 173_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

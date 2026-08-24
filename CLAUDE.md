@@ -1306,6 +1306,15 @@ right of the pack ONCE LOADED."*
   the smallest drag handle there is — no flag to arm and disarm, nothing left
   behind if a pointer is lost. The ordinary tile had no head at all and gained
   the same one the mixed row draws.
+- **AN EMPTY SLOT TAKES A ROUND AND LIGHTS UP WHILE YOU ARE OVER IT.** Reported
+  as *"it won't drag to another slot unless there is a pack there"* — two
+  faults at once: an empty slot had no `dragover` of its own, so **nothing lit
+  up** and an inert square reads as one that refuses; and `orderEl`'s drop
+  APPENDS, so a round let go over slot 5 appeared in slot 2. `stopPropagation`
+  on the slot's own handlers is what makes its answer the one that counts.
+- **AND MY OWN TEST HAD MISSED IT** by dispatching `drop` directly — a browser
+  fires no `drop` unless `dragover` called `preventDefault()`. Measure
+  `defaultPrevented` on the dragover, not the outcome of a synthetic drop.
 - **A CHILD'S `dragend` BUBBLES TO THE TILE, and the tile's removes the pack.**
   Dragging a round out took the whole pack with it — measured, it emptied
   Tonight. `if (ev.target !== tile) return;` — the `mousedown` trap one level
