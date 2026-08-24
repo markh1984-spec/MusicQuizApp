@@ -798,6 +798,23 @@ export function launchBar() {
         <label class="pack-shape" title="What the big screen does at every break. The lobby always keeps the join code.">In the gaps
           <select class="screen-pick" data-pop>${screenOptions()}</select>
         </label>
+        <!-- CARD AND PRIZES JOIN THE SAME ROW — asked for on 24 August 2026:
+             *"can we have all of these on the same lines"*. They had a row of
+             their own above the running order, which was one row spent on two
+             controls that are off on most nights.
+
+             They are still the only PACK-specific settings on a bar of
+             night-level ones, and that is the one thing this arrangement gives
+             up. It is worth it: they sit at the END of the row, after
+             everything about the evening, and the caption they used to carry
+             is now the reason IN the control - "Add a bingo game" - which is
+             the shape Launch already uses. -->
+        <label class="pack-shape lb-set-card">Card
+          <select class="shape-pick" data-pop disabled></select>
+        </label>
+        <label class="pack-shape lb-set-prizes">Prizes
+          <select class="prize-pick" data-pop disabled></select>
+        </label>
       </div>
       <!-- TONIGHT'S RUNNING ORDER — the place packs are dropped and where
            they appear, asked for in those words. Along the bottom rather than
@@ -822,32 +839,6 @@ export function launchBar() {
            It names WHICH pack it is setting, because with six tiles above
            it an unlabelled row is a row you have to remember the context
            of. Present and inert with nothing picked, like Launch. -->
-      <!-- IT SITS ABOVE THE RUNNING ORDER, NOT UNDER IT. Reported on 24
-           August 2026: *"music bingo breaks the rule of having nothing between
-           launch button and packs - can these options go elsewhere"*. It did
-           break it: a bingo night put a labelled strip of two dropdowns in the
-           one band that is meant to stay clear.
-
-           ABOVE rather than floating, and that is a safety decision rather
-           than a tidiness one. A sheet hanging under the tile it belongs to
-           reads better and would cover the LAUNCH BUTTON, which is the one
-           control on this panel that must never have anything over it. The
-           break strip moved above the tiles for exactly this reason and the
-           precedent is recorded: above, it does not stand between the running
-           order and the one filled gradient on the panel.
-
-           It still names WHICH pack it is setting, because with six tiles
-           under it an unlabelled row is a row you have to remember the
-           context of. -->
-      <div class="lb-set lb-set-pack" hidden>
-        <span class="tiny lb-set-for"></span>
-        <label class="pack-shape lb-set-card">Card
-          <select class="shape-pick" data-pop disabled></select>
-        </label>
-        <label class="pack-shape lb-set-prizes">Prizes
-          <select class="prize-pick" data-pop disabled></select>
-        </label>
-      </div>
       <div class="lb-order" hidden></div>
       <div class="lb-chosen" hidden></div>
       <!-- KEEP THE WHOLE EVENING — the way a saved night is built, and it
@@ -894,8 +885,6 @@ export function launchBar() {
   const prizePick = el.querySelector('.prize-pick');
   const cardRow = el.querySelector('.lb-set-card');
   const prizesRow = el.querySelector('.lb-set-prizes');
-  const packSetRow = el.querySelector('.lb-set-pack');
-  const setForEl = el.querySelector('.lb-set-for');
   const lookPick = el.querySelector('.look-pick');
   const secondsPick = el.querySelector('.seconds-pick');
   const lobbyGamePick = el.querySelector('.game-pick');
@@ -1724,16 +1713,29 @@ export function launchBar() {
     const picked = bingoToSet();
     const pickedIsBingo = Boolean(picked);
     /*
-     * THE LABEL CARRIES THE REASON THE ROW IS OFF — the shape Launch and
-     * *Keep this as a show* already use on this bar. A greyed control beside
-     * a blank caption is a control with no explanation; one that says
-     * "Add a bingo game…" has told you the whole story.
+     * WHICH PACK, ONLY WHEN IT COULD BE MORE THAN ONE.
+     *
+     * The row these two used to live on named its pack in a caption beside
+     * them. On the shared settings row there is no room for a caption and, on
+     * the ordinary night with a single bingo game in it, nothing to
+     * disambiguate — the label is simply `Card`. The moment a night holds TWO
+     * bingo games it matters again, so the pack's name joins the label then
+     * and only then.
      */
-    if (setForEl) {
-      setForEl.textContent = pickedIsBingo
-        ? shortTitle(picked.pack.title)
-        : 'Add a bingo game to set its card and prizes';
-      setForEl.classList.toggle('is-waiting', !pickedIsBingo);
+    const bingoCount = lbSlots
+      ? lbSlots.filter((slot) => slot && slot.kind === 'bingo').length
+      : lbPacks().filter((p) => !(p.rounds || []).length).length;
+    if (cardRow) {
+      cardRow.firstChild.textContent = (pickedIsBingo && bingoCount > 1)
+        ? `Card · ${shortTitle(picked.pack.title)}` : 'Card';
+      cardRow.title = pickedIsBingo
+        ? `The card for ${picked.pack.title}`
+        : 'Add a bingo game to tonight and its card and prizes can be set here.';
+    }
+    if (prizesRow) {
+      prizesRow.firstChild.textContent = (pickedIsBingo && bingoCount > 1)
+        ? `Prizes · ${shortTitle(picked.pack.title)}` : 'Prizes';
+      prizesRow.title = cardRow ? cardRow.title : '';
     }
     /*
      * PRESENT AND GREYED, NEVER ABSENT — asked for on 24 August 2026:
@@ -1761,7 +1763,6 @@ export function launchBar() {
      * you what it is waiting for rather than vanishing. A quiz-specific
      * setting, if one is ever added, has a row to go in.
      */
-    if (packSetRow) packSetRow.hidden = false;
     if (cardRow) cardRow.hidden = false;
     if (prizesRow) prizesRow.hidden = false;
     if (shapePick && prizePick) {
@@ -1781,7 +1782,14 @@ export function launchBar() {
          * The caption to the left already says what it is waiting for, so a
          * dash is all this has to carry.
          */
-        shapePick.innerHTML = '<option>—</option>';
+        /*
+         * THE REASON A CONTROL IS OFF GOES ON THE CONTROL — the same rule
+         * Launch follows when it says "Add a pack to save this night". The
+         * caption that used to sit beside these two went with their row, so
+         * the first of them carries the sentence and the second, right next
+         * to it, only has to not look broken.
+         */
+        shapePick.innerHTML = '<option>Add a bingo game</option>';
         prizePick.innerHTML = '<option>—</option>';
       }
     }
@@ -1938,8 +1946,10 @@ export function launchBar() {
     const found = ((library && library.cardShapes) || [])
       .find((sh) => sh.rows === want.rows && sh.cols === want.cols);
     if (!found) return;
+    // The COUNT shut, what each prize is for open — same split as the card
+    // shape beside it, and for the same reason: this row holds eight controls.
     prizePick.innerHTML = found.plans
-      .map((plan, i) => `<option value="${i + 1}">${i + 1} — ${esc(plan.join(', then '))}</option>`).join('');
+      .map((plan, i) => `<option value="${i + 1}" data-short="${i + 1}">${i + 1} — ${esc(plan.join(', then '))}</option>`).join('');
     // The same pack the row is about, or the count comes off a different one.
     const picked = bingoToSet();
     const has = picked && picked.slot ? picked.slot.prizes : night.prizes;

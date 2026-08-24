@@ -1282,11 +1282,16 @@ right of the pack ONCE LOADED."*
   happens; half width, no number, never a drop target. **The big screen is not
   offered there**: the lobby's projector is the join code and nothing may dim
   it, so that is a change to the protected surface rather than a control.
-- **THE BINGO CARD/PRIZES ROW SITS ABOVE THE RUNNING ORDER** — it was breaking
-  *the band above Launch is kept clear*. Above rather than floating under its
-  tile, which is a SAFETY call: a sheet there would cover Launch. And it is
-  **present and greyed, never absent** — that reverses an exception carved out
-  for this row, and the app's own rule wins.
+- **EVERY NIGHT SETTING IS ON ONE ROW, AND A BOX IS NEVER NARROWER THAN ITS
+  OWN HEADING.** *"It's ok for the boxes to be wider than the headings but when
+  the headings are wider than the boxes it looks messy."* Stacked, a cell is
+  already as wide as the wider of the two — `justify-items: stretch` makes the
+  BOX the wider one every time. **It does not undo *narrow shut, wide open***:
+  the cell is still only as wide as the longer of the value and the word above
+  it. Card and Prizes joined that row, so the separate bingo row is GONE, and
+  both needed `data-short` — one option was 303px and pushed the row onto a
+  second line on its own. **The reason a control is off went into the control**
+  (*"Add a bingo game"*), because the caption beside it went with the row.
 - **THE ROW SERVES ANY BINGO PACK IN TONIGHT, NOT ONLY A PICKED ONE.** Reported
   as *"added a bingo game and the bingo section is greyed out"* — it keyed off
   the PICKED tile, so with the quiz picked the app told him to add a thing that

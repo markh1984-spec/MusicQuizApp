@@ -799,7 +799,13 @@ export function shapeOptions(pack) {
   const usable = shapes.filter((s) => pack.trackCount >= s.minimum);
   const pick = usable.length ? usable : shapes.slice(0, 1);
   const best = bestBingoShape(shapes, pack.trackCount);
-  return pick.map((s) => `<option value='{"rows":${s.rows},"cols":${s.cols}}' ${s === best ? 'selected' : ''}>${esc(bingoShapeLabel(s, pack.trackCount))}</option>`).join('');
+  /*
+   * `data-short` IS THE GRID AND NOTHING ELSE — "5×5" shut, "5×5 — line of 5 ·
+   * 25 of 40 songs on a card" open. Without it this one control was 303px wide
+   * on a row of eight, which on its own pushed the settings onto a second
+   * line: *narrow shut, wide open*, applied to the widest thing on the bar.
+   */
+  return pick.map((s) => `<option value='{"rows":${s.rows},"cols":${s.cols}}' data-short="${esc(`${s.rows}×${s.cols}`)}" ${s === best ? 'selected' : ''}>${esc(bingoShapeLabel(s, pack.trackCount))}</option>`).join('');
 }
 
 /**

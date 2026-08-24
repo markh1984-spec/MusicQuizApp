@@ -139,6 +139,29 @@ already wears a full outline in the same colour, so on the tile you are most
 likely to be dragging within, "accepting" and "picked" were one picture. It
 takes a wash and a lift as well now.
 
+**AND EVERY NIGHT SETTING IS ON ONE ROW NOW:** *"can we have all of these on
+the same lines, and also line up the headings with the boxes — it's ok for the
+boxes to be wider than the headings but when the headings are wider than the
+boxes it looks messy."*
+
+The labels already sat above their controls so a cell comes out as wide as the
+WIDER of the two. What was wrong was `justify-items: start`, which left the
+narrower of the pair floating in the space the wider one made — "SECS PER Q"
+over a two-digit box. `stretch` makes the BOX the wider one every time, and it
+does not undo *narrow shut, wide open*: the cell is still only as wide as the
+longer of the value and the word above it.
+
+**Card and Prizes joined that row and their own row is gone.** Both needed
+`data-short` first — with the full option text on the face, Card was 303px and
+pushed the row onto a second line by itself. It reads "5×5" shut and the whole
+sentence open. The caption that used to name the pack went with the row, so the
+reason a control is off moved INTO the control ("Add a bingo game"), and the
+pack's name rejoins the label only when a night holds two bingo games.
+
+One row at 1400 and 1280, four at 390, and a launch made through the popovers
+still sends `shape: {rows:3, cols:3}` and `prizes: 1` — the skin never held the
+value, so shortening its face could not change what Launch reads.
+
 Verified at 1400, 1280 and 390: no overflow, no console errors, no overlaps
 anywhere, and nothing between the running order and Launch.
 

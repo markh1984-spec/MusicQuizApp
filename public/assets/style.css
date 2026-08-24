@@ -6168,6 +6168,9 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px;
 }
 .lb-set-night .pack-shape { flex: 0 0 auto; }
+/* The face fills the cell its label made — see the note below. */
+.lb-set-night .pack-shape .pick, .lb-set-night .pack-shape .pick-face { width: 100%; }
+.lb-set-night .pack-shape > input { width: 100%; }
 /*
  * THE LABEL SITS ABOVE ITS CONTROL, at every width now that the row is
  * content-sized rather than five equal columns. Side by side, a label and a
@@ -6177,7 +6180,23 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
  */
 .lb-set-night .pack-shape {
   display: grid; grid-template-columns: minmax(0, auto);
-  justify-items: start; align-items: start; gap: 4px; margin: 0;
+  /*
+   * STRETCH, NOT START — asked for on 24 August 2026: *"line up the headings
+   * with the boxes; it's ok for the boxes to be wider than the headings but
+   * when the headings are wider than the boxes it looks messy."*
+   *
+   * The cell is already as wide as the WIDER of its label and its control —
+   * that is what stacking them buys. `justify-items: start` then left the
+   * narrower one floating in the space the wider one made: "SECS PER Q" over a
+   * two-digit box, "GAME SOUND" over "On". Stretching the control to the cell
+   * makes the box the wider of the two rather than the label, every time,
+   * which is exactly the rule he stated.
+   *
+   * It does NOT undo *narrow shut, wide open*. The face is still sized by what
+   * is IN it — the cell is only ever as wide as the longer of the value and
+   * the word above it, and the open menu is still free to be wider than both.
+   */
+  justify-items: stretch; align-items: start; gap: 4px; margin: 0;
 }
 /* =====================================================================
  * THE POPOVER PICKER — narrow shut, wide open. See `console-pick.js` for

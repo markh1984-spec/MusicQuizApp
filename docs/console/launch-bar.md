@@ -1635,3 +1635,54 @@ accepted; a different pack's tile stayed dark and refused; a bingo tile stayed
 dark and refused; an empty slot lit and accepted. And the outcomes match — a
 round dropped on the wrong pack leaves the running order byte-identical, and
 one dropped back on its own tile merges in.
+
+## ONE ROW FOR EVERY NIGHT SETTING — and a box is never narrower than its heading
+
+*"Can we have all of these on the same lines, and also line up the headings
+with the boxes — it's ok for the boxes to be wider than the headings but when
+the headings are wider than the boxes it looks messy."*
+
+Two asks, and the second is a rule worth keeping.
+
+### The heading rule, and why stacking alone did not deliver it
+
+The labels already sit ABOVE their controls, which was done so that a cell
+comes out as wide as the WIDER of the two rather than the sum. That half was
+right. What was wrong was `justify-items: start`: the narrower of the pair then
+floated at the left of the space the wider one had made, so "SECS PER Q" sat
+over a two-digit box and "GAME SOUND" over "On".
+
+`justify-items: stretch` makes the control fill the cell its label defined —
+so the box is the wider of the two, every time, which is exactly the rule he
+stated.
+
+**It does not undo *narrow shut, wide open*.** The cell is still only ever as
+wide as the longer of the value and the word above it, and the open menu is
+still free to be wider than both. What changed is which of the two grows to
+meet the other.
+
+### Card and Prizes join the row, and the separate one goes
+
+They had a row of their own above the running order — one row spent on two
+controls that are off on most nights. They sit at the END of the shared row now,
+after everything about the evening, which is the honest ordering: they are the
+only PACK-specific settings on a bar of night-level ones.
+
+**Two things had to move with them.**
+
+- **`data-short` on both.** With the full option text on the face, Card came
+  out **303px** and Prizes **219px** — that one control pushed the row onto a
+  second line by itself. It reads "5×5" and "2" shut, and "5×5 — line of 5 · 25
+  of 40 songs on a card" open. The rule the pickers were built for, applied to
+  the widest thing on the bar.
+- **The reason a control is off went INTO the control.** The caption that used
+  to name the pack beside them went with the row, so the card picker reads
+  *"Add a bingo game"* when there is none — the shape Launch already uses. The
+  pack's name comes back into the LABEL only when a night holds more than one
+  bingo game, which is the only time it disambiguates anything.
+
+Measured at 1400 and 1280: one row, eight cells, every box at least as wide as
+its own heading, no overflow. At 390 it wraps to four, which is a phone. And a
+launch made through the popovers still sends `shape: {rows:3, cols:3}` and
+`prizes: 1` — the skin never held the value, so shortening its face could not
+change what Launch reads.
