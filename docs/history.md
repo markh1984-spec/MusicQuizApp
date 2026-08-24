@@ -62,8 +62,26 @@ rule wins: a control that comes and goes is one you cannot learn the position
 of. The caption carries the reason it is off, and the pickers get a `—`
 placeholder, because an empty select reads as failed rather than waiting.
 
+**AND THREE MORE OFF THE SAME BAR, same day:**
+
+- **A REAL BUG: *"added a bingo game and the bingo section is greyed out."***
+  The Card/Prizes row keyed off the PICKED tile, so with the quiz picked it
+  told him to add a thing already on the screen. `bingoToSet()` serves the
+  picked pack when that IS a bingo and otherwise the first one in the order —
+  and **the three WRITES had to move with the read**, or the row would have
+  shown one pack's card and saved it onto another, on the path Launch reads.
+- **📵 rather than a dot** for "nothing on the phones", asked outright — *"what
+  does this mean? the . ?"* That question IS the answer: a control that needs
+  explaining is wrong, and the other three states are pictures. Punctuation on
+  a button reads as a control that failed to load.
+- **The round ticks are rounded squares at 28px with a hover you can see.**
+  The old hover was `filter: brightness(1.25)` on a faint 22px dot — a change
+  you cannot find with a mouse. It lifts, rings in the account colour and casts
+  a shadow now, in both renderers. A four-round pack wraps to two rows, which
+  is free: the grid stretches every tile to the tallest.
+
 Verified at 1400, 1280 and 390: no overflow, no console errors, no overlaps
-anywhere, ticks on one row, and nothing between the running order and Launch.
+anywhere, and nothing between the running order and Launch.
 
 
 **Live as of 24 August 2026 — the Community door now holds the people:**

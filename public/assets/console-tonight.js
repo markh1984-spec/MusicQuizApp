@@ -1719,8 +1719,10 @@ export function launchBar() {
      * removing pack 3 while it was picked leaves nothing picked instead of
      * silently moving the row onto whatever slid into that position.
      */
-    const picked = pickedPack();
-    const pickedIsBingo = Boolean(picked) && picked.kind === 'bingo';
+    // WHICHEVER BINGO PACK IS IN TONIGHT, not only a picked one — see
+    // `bingoToSet()` for the bug that made this necessary.
+    const picked = bingoToSet();
+    const pickedIsBingo = Boolean(picked);
     /*
      * THE LABEL CARRIES THE REASON THE ROW IS OFF — the shape Launch and
      * *Keep this as a show* already use on this bar. A greyed control beside
@@ -1872,6 +1874,39 @@ export function launchBar() {
   }
 
   /**
+   * THE BINGO PACK THE CARD AND PRIZES ROW IS ABOUT.
+   *
+   * **Reported on 24 August 2026 as a bug and it was one:** *"added a bingo
+   * game and the bingo section is greyed out."* A bingo pack was sitting in
+   * the running order and the row still said *"Add a bingo game to set its
+   * card and prizes"* — because it keyed off which tile was PICKED, and the
+   * picked tile was the quiz beside it.
+   *
+   * That is worse than unhelpful, it is untrue: the app was telling him to add
+   * a thing that was already on the screen.
+   *
+   * **The picked pack wins when it IS a bingo** — that is how a night with two
+   * bingo games says which one it means — **and otherwise the first bingo pack
+   * in the running order is used.** The row names the pack it is setting, so
+   * there is nothing to guess either way, and it is only ever greyed when
+   * there genuinely is no bingo game in Tonight at all.
+   */
+  function bingoToSet() {
+    const picked = pickedPack();
+    if (picked && picked.kind === 'bingo') return picked;
+    if (lbSlots) {
+      const at = lbSlots.findIndex((slot) => slot && slot.kind === 'bingo');
+      if (at < 0) return null;
+      const pack = anyPack(lbSlots[at].packId);
+      return pack ? { pack, kind: 'bingo', at, slot: lbSlots[at] } : null;
+    }
+    const packs = lbPacks();
+    const at = packs.findIndex((p) => !(p.rounds || []).length);
+    if (at < 0) return null;
+    return { pack: packs[at], kind: 'bingo', at, slot: null };
+  }
+
+  /**
    * The shape this picked pack is currently set to — its SLOT's own in mixed
    * mode, the night-wide one otherwise. Two storage places because that is
    * what the launch already reads: a mixed running order sends a shape per
@@ -1905,12 +1940,20 @@ export function launchBar() {
     if (!found) return;
     prizePick.innerHTML = found.plans
       .map((plan, i) => `<option value="${i + 1}">${i + 1} — ${esc(plan.join(', then '))}</option>`).join('');
-    const picked = pickedPack();
+    // The same pack the row is about, or the count comes off a different one.
+    const picked = bingoToSet();
     const has = picked && picked.slot ? picked.slot.prizes : night.prizes;
     if (has) prizePick.value = String(has);
   }
   shapePick?.addEventListener('change', () => {
-    const picked = pickedPack();
+    /*
+     * `bingoToSet()`, NOT `pickedPack()` — the READ and the WRITE have to name
+     * the same pack. The row started serving whichever bingo game is in
+     * Tonight rather than only a picked one, and leaving these three on the
+     * picked pack would have been the worse half of that bug: the row would
+     * show one pack's card and quietly write it onto another, or onto nothing.
+     */
+    const picked = bingoToSet();
     if (!picked) return;
     // The plans depend on the shape, so a shape change always re-derives
     // them and then re-reads the count off the list it just built — picking
@@ -1918,12 +1961,12 @@ export function launchBar() {
     // no plan for.
     setPickedBingo(picked, { shape: JSON.parse(shapePick.value) });
     paintPrizes();
-    setPickedBingo(pickedPack(), { prizes: Number(prizePick?.value) || 0 });
+    setPickedBingo(bingoToSet(), { prizes: Number(prizePick?.value) || 0 });
     // The tile shows its own shape, so it has to be redrawn with it.
     if (lbSlots) paintOrder();
   });
   prizePick?.addEventListener('change', () => {
-    setPickedBingo(pickedPack(), { prizes: Number(prizePick.value) || 0 });
+    setPickedBingo(bingoToSet(), { prizes: Number(prizePick.value) || 0 });
     if (lbSlots) paintOrder();
   });
   lookPick?.addEventListener('change', (ev) => { night.look = ev.target.value; });

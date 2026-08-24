@@ -1421,3 +1421,64 @@ the row above. So "the same for the quiz options" lands as: the row is always
 there, always says Card and Prizes, and tells you what it is waiting for rather
 than vanishing. A quiz-specific setting, if one is ever added, has a row to go
 in.
+
+## THREE MORE OFF THE SAME BAR — a lie, a dot, and a dot that was a button
+
+### "Added a bingo game and the bingo section is greyed out"
+
+A real bug, and the worst kind: **the app was telling him to add a thing that
+was already on the screen.** The Card and Prizes row keyed off which tile was
+PICKED, and the picked tile was the quiz beside the bingo pack, so the row read
+*"Add a bingo game to set its card and prizes"* with a bingo game two inches to
+the left.
+
+`bingoToSet()` is the fix: the picked pack when that IS a bingo — which is how
+a night with two bingo games says which one it means — and otherwise the first
+bingo pack in the running order. The row names the pack it is setting, so
+there is nothing to guess either way, and it is greyed only when there
+genuinely is no bingo game in Tonight at all.
+
+**The three WRITES had to move with the read**, and that is the part worth
+remembering: the shape handler, the prize handler and the prize repaint were
+all still asking `pickedPack()`. Left alone they would have been the worse half
+of the same bug — the row showing one pack's card and quietly saving it onto
+another, or onto nothing, on the path Launch reads.
+
+### "What does this mean? the . ?"
+
+The gap dial's fourth state — nothing on the phones — was a `·`.
+
+That question IS the answer. This project's first rule is that a control which
+needs explaining is wrong, and a dot needed explaining. The other three states
+are PICTURES of what the phones get: a camera, a joystick, both. "Nothing" had
+no picture, so it got punctuation — and punctuation on a button reads as a
+control that failed to load rather than as a state somebody chose.
+
+📵 is the one symbol that says "nothing on the phones" without a caption.
+
+### The round ticks were dots that did not look like buttons
+
+*"Can you change the green ticks on the packs to be square shaped with round
+edges, perhaps stacked on top of one another, and I need to see when mousing
+over them as well so it's easier to click on/off and also drag the individual
+elements."*
+
+- **Rounded squares, at 28px rather than 22.** Two reasons pulling the same
+  way: bigger is easier to hit, and `--r-field` only READS as a rounded square
+  on a box big enough to have sides — at 22px a 10px radius is very nearly the
+  circle being moved away from.
+- **The hover was `filter: brightness(1.25)`**, which on a faint 22px dot is a
+  change you cannot find with a mouse. It now lifts 2px, takes a ring in the
+  account's own colour and casts a shadow, so the one under the cursor is
+  unmistakable in a row of five. A lift and a shadow rather than a size change,
+  because growing a control on hover moves the ones beside it and makes a row
+  squirm under the pointer.
+- **Both renderers got it**, `.lb-rd` on an ordinary tile and `.mix-rd` in the
+  mixed row — the same idea drawn in two places, and a pill in one and a square
+  in the other is exactly the drift the GUI rules exist to stop. In the mixed
+  row the lift does double duty, because those genuinely drag.
+- **"Stacked" arrives on its own for a pack that needs it.** At 28px a
+  four-round pack wraps to two rows, and that is fine rather than a compromise:
+  the grid stretches every tile to the tallest, so no one tile ends up out of
+  line with the rest of the running order. A forced column for every pack would
+  cost the row ~40px of height on nights that do not need it.

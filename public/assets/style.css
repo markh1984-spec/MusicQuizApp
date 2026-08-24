@@ -7018,11 +7018,32 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    Wraps, because a pack can carry five and a tile is 123px wide on a 320px
    phone; small enough that five fit, big enough to hit with a thumb. */
 .lb-rounds { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+/*
+ * A ROUND IS A SQUARE WITH SOFT CORNERS, NOT A DOT — asked for on 24 August
+ * 2026: *"can you change the green ticks on the packs to be square shaped with
+ * round edges… and I need to see when mousing over them as well so it's easier
+ * to click on/off and also drag the individual elements."*
+ *
+ * `--r-field`, the app's own smallest radius, so it matches every other boxed
+ * control rather than inventing a fourth corner. A pill said "badge"; a
+ * rounded square says "button", which is what it is.
+ */
 .lb-rd {
   display: inline-grid; place-items: center;
-  width: 22px; height: 22px; padding: 0;
-  border-radius: var(--r-pill); cursor: pointer;
+  /*
+   * 28, NOT 22. Two reasons and they pull the same way: *"easier to click
+   * on/off"*, and the app's own `--r-field` corner only READS as a rounded
+   * square on a box big enough to have sides — at 22px a 10px radius is very
+   * nearly a circle, which is the shape being moved away from.
+   *
+   * A four-round pack wraps to two rows at this size, and that is fine rather
+   * than a compromise: the grid stretches every tile to the tallest, so no one
+   * tile ends up out of line with the rest of the running order.
+   */
+  width: 28px; height: 28px; padding: 0;
+  border-radius: var(--r-field); cursor: pointer;
   font: inherit; font-size: var(--fs-mini); font-weight: 900; line-height: 1;
+  transition: transform 90ms ease, box-shadow 90ms ease;
 }
 /* Green for on and red for off, which is the one place in this app those two
    mean exactly what they mean everywhere else: this round is in, this one is
@@ -7030,7 +7051,23 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    dots shouting from a tile whose job is to name a quiz. */
 .lb-rd.on { background: rgba(47, 224, 122, 0.16); border: 1px solid rgba(47, 224, 122, 0.55); color: var(--good); }
 .lb-rd.off { background: rgba(255, 77, 94, 0.12); border: 1px solid rgba(255, 77, 94, 0.5); color: var(--bad); }
-.lb-rd:hover { filter: brightness(1.25); }
+/*
+ * AND THE HOVER HAS TO BE SEEN. `filter: brightness(1.25)` on a 22px dot that
+ * is already faint is a change you cannot find with a mouse — reported as
+ * exactly that, and it is why the ticks read as decoration rather than as
+ * controls you can press and drag.
+ *
+ * It lifts, takes a ring in the account's own colour, and casts a shadow, so
+ * the one under the cursor is unmistakable in a row of five. `translateY` and
+ * a shadow rather than a size change, because growing a control on hover moves
+ * the ones beside it and makes a row of them squirm under the pointer.
+ */
+.lb-rd:hover, .lb-rd:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 2px var(--hot), 0 4px 10px rgba(0, 0, 0, 0.45);
+  outline: none;
+}
+.lb-rd:active { transform: translateY(0); }
 .lb-tile-cap { text-transform: none; letter-spacing: 0; }
 
 /* A PACK IN THE NIGHT. Filled, in the account's own surface, so it reads as
@@ -7150,12 +7187,25 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .lb-tile.mix-drop.drop-here { border-color: var(--hot); color: var(--ink); background: rgba(255, 46, 136, 0.08); }
 .mix-rd {
   display: inline-grid; place-items: center;
-  width: 22px; height: 22px; padding: 0; margin: 2px 2px 0 0;
-  border-radius: var(--r-pill); cursor: grab;
+  width: 28px; height: 28px; padding: 0; margin: 2px 2px 0 0;
+  /* Square with soft corners, like the tile's own — the two are the same idea
+     drawn in two renderers, and a pill in one and a square in the other is the
+     kind of drift the GUI rules exist to stop. */
+  border-radius: var(--r-field); cursor: grab;
+  transition: transform 90ms ease, box-shadow 90ms ease;
   font: inherit; font-size: var(--fs-mini); font-weight: 900; line-height: 1;
   background: rgba(47, 224, 122, 0.16); border: 1px solid rgba(47, 224, 122, 0.55); color: var(--good);
 }
-.mix-rd:hover { filter: brightness(1.25); }
+/* The mixed row's rounds get the same treatment, and they are the ones that
+   genuinely DRAG — so the lift is doing double duty there: it says "press me"
+   and "pick me up". Same rule as the tile's, one place each because the two
+   are different sizes. */
+.mix-rd:hover, .mix-rd:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 2px var(--hot), 0 4px 10px rgba(0, 0, 0, 0.45);
+  outline: none;
+}
+.mix-rd:active { transform: translateY(0); }
 .mix-rd.is-lifting { opacity: 0.35; border-style: dashed; }
 /* Off — out of tonight entirely, same red/green language `.lb-rd` already
    uses. Not draggable (see console-tonight-mix-ui.js): a tap brings it back

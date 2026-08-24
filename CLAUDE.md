@@ -1287,6 +1287,23 @@ right of the pack ONCE LOADED."*
   tile, which is a SAFETY call: a sheet there would cover Launch. And it is
   **present and greyed, never absent** — that reverses an exception carved out
   for this row, and the app's own rule wins.
+- **THE ROW SERVES ANY BINGO PACK IN TONIGHT, NOT ONLY A PICKED ONE.** Reported
+  as *"added a bingo game and the bingo section is greyed out"* — it keyed off
+  the PICKED tile, so with the quiz picked the app told him to add a thing that
+  was already on screen. `bingoToSet()`: the picked pack when it is a bingo,
+  otherwise the first one in the order. **The three WRITES had to move with the
+  read**, or the row would show one pack's card and save it onto another.
+- **📵 RATHER THAN A DOT for "nothing on the phones".** Asked outright — *"what
+  does this mean? the . ?"* — which is the *clarity beats everything* test
+  failing. The other three states are pictures; punctuation on a button reads
+  as a control that failed to load.
+- **A ROUND IS A ROUNDED SQUARE AT 28px, AND ITS HOVER LIFTS.** *"Square shaped
+  with round edges… I need to see when mousing over them."* `--r-field` only
+  reads as a square on a box with sides — at 22px it is nearly a circle. The
+  old hover was `filter: brightness(1.25)`, which on a faint 22px dot is a
+  change you cannot find. **A four-round pack wraps to two rows and that is
+  fine** — the grid stretches every tile to the tallest, so none ends up out of
+  line.
 
 Full reasoning: **[`docs/console/launch-bar.md`](docs/console/launch-bar.md)**.
 

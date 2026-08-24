@@ -49,7 +49,18 @@ export const PHONE_SAYS = {
   [PHONE.BOTH]: { icon: '📷🕹️', words: 'Photos and the game' },
   [PHONE.PHOTOS]: { icon: '📷', words: 'Photos only' },
   [PHONE.GAME]: { icon: '🕹️', words: 'The game only' },
-  [PHONE.NOTHING]: { icon: '·', words: 'Nothing' },
+  /*
+   * 📵 RATHER THAN A DOT, and the dot is why this comment exists. Asked
+   * outright on 24 August 2026 — *"what does this mean? the . ?"* — which is
+   * this project's own test failing: if a control needs explaining, the
+   * control is wrong.
+   *
+   * The other three states are PICTURES of what the phones get. "Nothing" had
+   * no picture, so it got punctuation, and punctuation on a button reads as a
+   * control that failed to load rather than as a state. The no-phones sign is
+   * the one symbol that says "nothing on the phones" without a caption.
+   */
+  [PHONE.NOTHING]: { icon: '📵', words: 'Nothing' },
 };
 
 /**
