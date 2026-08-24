@@ -80,6 +80,34 @@ placeholder, because an empty select reads as failed rather than waiting.
   a shadow now, in both renderers. A four-round pack wraps to two rows, which
   is free: the grid stretches every tile to the tallest.
 
+**AND THE DRAG THAT NEVER WORKED ON A PLAIN QUIZ NIGHT:** *"I still can't drag
+a round onto a fresh slot — it seems to default to dragging the entire pack.
+Can we have it so the pack is dragged from the top and the rounds are dragged
+from the squares they occupy?"*
+
+It was doing exactly that, and the cause is one line of HTML: a drag starts on
+the nearest DRAGGABLE ANCESTOR, and an ordinary row's round tick carried a
+`mousedown` and a `click` and nothing else — so the browser walked past it to
+the tile. The mixed row had been right all along, which is why it only bit on a
+night with no bingo game in it.
+
+**A `draggable` child stops the walk**, and the tile now REFUSES a `dragstart`
+that did not begin on `.lb-tile-head` — the smallest drag handle there is, with
+no flag to arm and disarm. The ordinary tile had no head at all while the mixed
+one had a grip; it gained the same one, so the grip finally points at the only
+place a pack lifts from.
+
+**And a child's `dragend` bubbles into the tile's, which removes the pack** —
+so dragging a round out took the whole pack with it and emptied Tonight. Found
+by driving it rather than reading it. The round's own drag travels the SHELF's
+channel deliberately: `moveRoundToSlot()` takes a round out of wherever it sits
+before placing it, so one already in Tonight moves rather than duplicating.
+
+Proved with real drag events in both renderers: a round out of a four-round
+pack leaves three and puts one in its own slot; the tile refuses its face and
+accepts its grip; reordering, dragging a pack out and clicking a tick off all
+still work.
+
 Verified at 1400, 1280 and 390: no overflow, no console errors, no overlaps
 anywhere, and nothing between the running order and Launch.
 

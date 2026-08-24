@@ -138,9 +138,21 @@ export function renderSlots(slots, {
    * land on, so the half-of-the-tile check goes with it.
    */
   function wireSlotDrag(tile, at) {
+    /*
+     * THE PACK LIFTS FROM ITS GRIP AND NOWHERE ELSE, same as the ordinary
+     * row's tile — asked for on 24 August 2026, and the two renderers have to
+     * agree or a night behaves differently depending on whether a bingo game
+     * happens to be in it.
+     *
+     * A press on a round chip already started THAT drag rather than the
+     * tile's, because the chip is `draggable` itself. This is the other half:
+     * a press on the tile's FACE now starts nothing at all, so the grip in the
+     * head means what it draws.
+     */
+    let liftFrom = null;
+    tile.addEventListener('mousedown', (ev) => { liftFrom = ev.target; });
     tile.addEventListener('dragstart', (ev) => {
-      // A press on a round dot or a bingo control starts THAT drag, not the
-      // whole tile — stopped at the dot/control's own mousedown, below.
+      if (!liftFrom || !liftFrom.closest('.lb-tile-head')) { ev.preventDefault(); return; }
       slotDrag = at;
       ev.dataTransfer.effectAllowed = 'move';
       ev.dataTransfer.setData('text/plain', String(at));

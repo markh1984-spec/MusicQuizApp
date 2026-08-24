@@ -1297,6 +1297,20 @@ right of the pack ONCE LOADED."*
   does this mean? the . ?"* — which is the *clarity beats everything* test
   failing. The other three states are pictures; punctuation on a button reads
   as a control that failed to load.
+- **THE PACK LIFTS FROM ITS GRIP; A ROUND LIFTS FROM ITS OWN SQUARE.** Reported
+  as *"I still can't drag a round onto a fresh slot — it seems to default to
+  dragging the entire pack"*, and that is literally what happened: an ordinary
+  row's tick carried NO drag handlers, so the browser walked up to the nearest
+  draggable ancestor. **A `draggable` child is what stops the walk.** The tile
+  then refuses a `dragstart` that did not begin on `.lb-tile-head`, which is
+  the smallest drag handle there is — no flag to arm and disarm, nothing left
+  behind if a pointer is lost. The ordinary tile had no head at all and gained
+  the same one the mixed row draws.
+- **A CHILD'S `dragend` BUBBLES TO THE TILE, and the tile's removes the pack.**
+  Dragging a round out took the whole pack with it — measured, it emptied
+  Tonight. `if (ev.target !== tile) return;` — the `mousedown` trap one level
+  up, and the round's own drag travels the SHELF channel so
+  `moveRoundToSlot()` MOVES it rather than duplicating it.
 - **A ROUND IS A ROUNDED SQUARE AT 28px, AND ITS HOVER LIFTS.** *"Square shaped
   with round edges… I need to see when mousing over them."* `--r-field` only
   reads as a square on a box with sides — at 22px it is nearly a circle. The

@@ -1482,3 +1482,60 @@ elements."*
   the grid stretches every tile to the tallest, so no one tile ends up out of
   line with the rest of the running order. A forced column for every pack would
   cost the row ~40px of height on nights that do not need it.
+
+## THE PACK LIFTS FROM ITS GRIP; A ROUND LIFTS FROM ITS OWN SQUARE
+
+Reported on 24 August 2026: *"I still can't drag a round onto a fresh slot — it
+seems to default to dragging the entire pack. Can we have it so the pack is
+dragged from the top and the rounds are dragged from the squares they occupy?"*
+
+**It was doing exactly what he described, and the reason is one line of HTML.**
+A drag starts on the nearest DRAGGABLE ANCESTOR of whatever the pointer went
+down on. In the ordinary row the round ticks carried a `mousedown` and a
+`click` and nothing else — no `draggable`, no `dragstart` — so the browser
+walked up past them to the tile and dragged the whole pack. The mixed row had
+been right all along, which is why this only ever bit on a plain quiz night.
+
+**A `draggable` child is what stops the walk.** The tick is draggable itself
+now, and that alone fixes the reported half.
+
+### And the pack gets a handle, which is what he actually asked for
+
+The tile stays `draggable="true"` in the markup and simply REFUSES a
+`dragstart` that did not begin inside `.lb-tile-head`. That is the smallest
+version of a drag handle: no `mousedown` dance arming and disarming a flag, and
+nothing left in a wrong state if a pointer is lost out of the window.
+
+**The ordinary tile had no head at all** — no grip, no wrapper — while the
+mixed row's tile had both. Two renderers drawing one idea two ways is the drift
+the GUI rules exist to stop, so the ordinary tile gained the same head. The
+grip was previously a promise only the mixed row kept; now it is true in both,
+and it points at the only place a pack lifts from.
+
+### A child's `dragend` bubbles to the tile, and the tile's removes the pack
+
+Found by driving it rather than by reading it. The tile's `dragend` is what
+implements *dragged back out* — let go of a pack outside the panel and it
+leaves the night. A round chip's `dragend` fires on the CHIP and bubbles
+straight into that listener, so **dragging a round out of a pack took the whole
+pack with it, and emptied Tonight completely.**
+
+`if (ev.target !== tile) return;` is the fix, and it is the same trap as the
+tick's own `mousedown` one level up: a child that starts its own gesture still
+hands you every event on the way back.
+
+### The round travels the shelf's channel on purpose
+
+A round dragged out of a pack in Tonight uses the same `shelfRoundDrag` path a
+round dragged off a shelf card uses. That looks like a shortcut and is the
+opposite: `addRoundToNight()` ends in `moveRoundToSlot()`, which TAKES a round
+out of wherever it currently sits before placing it — so a round already in
+Tonight moves rather than being duplicated, and a round arriving from the shelf
+is simply one that was nowhere. One path, two origins, no second set of rules
+to keep in step.
+
+Proved end to end with real drag events: dragging round 2 out of a four-round
+pack leaves that pack with three and puts one in a slot of its own; the tile
+refuses to lift from its face and accepts from its grip; reordering by the grip
+still works; dragging a pack out still removes it; and a plain click on a tick
+still switches its round off.

@@ -5,7 +5,7 @@ import {
   gapDial, gapsOfPack, gapsWithScreen, prunePlan,
 } from './console-breaks.js';
 import { refreshPicks } from './console-pick.js';
-import { esc, node, postJson } from './client.js';
+import { esc, gripIcon, node, postJson } from './client.js';
 import { tonightsVenue } from './console-gigs.js';
 import { invoiceApi, openInvoiceForm, share } from './console-invoices.js';
 import {
@@ -2626,7 +2626,15 @@ export function launchBar() {
                and in the hole it is dragged into - which is the one thing the
                shared look function exists to prevent. The tooltip above still
                carries the full name. -->
-          <b class="lb-tile-name">${esc(shortTitle(pack.title))}</b>
+          <!-- THE SAME HEAD THE MIXED ROW'S TILE HAS — a grip and the name.
+               It was missing here, which is why a pack in an ordinary night
+               could be dragged from anywhere on its face and its round ticks
+               could not be dragged at all. Two renderers drawing one idea two
+               ways is the drift the GUI rules exist to stop. -->
+          <div class="lb-tile-head">
+            <span class="drag-grip" aria-hidden="true" title="Drag to move this pack">${gripIcon()}</span>
+            <b class="lb-tile-name">${esc(shortTitle(pack.title))}</b>
+          </div>
           ${rounds
     ? `<div class="lb-rounds">${(pack.rounds || []).map((r, i) => `
           <button class="lb-rd ${isOff(pack.id, i) ? 'off' : 'on'}" type="button"
@@ -2650,6 +2658,34 @@ export function launchBar() {
         dot.addEventListener('click', (ev) => {
           ev.stopPropagation();
           toggleRound(pack.id, Number(dot.dataset.round));
+        });
+        /*
+         * A ROUND DRAGS OUT OF ITS PACK — reported as *"I still can't drag a
+         * round onto a fresh slot, it seems to default to dragging the entire
+         * pack"*, and that is exactly what it did: the tick carried no drag
+         * handlers at all, so the browser walked up to the nearest draggable
+         * ancestor, which was the whole tile.
+         *
+         * The tick is `draggable` itself now, which is what stops that walk —
+         * the same arrangement the mixed row has had all along. It travels on
+         * the SHELF's round channel deliberately: `addRoundToNight()` ends in
+         * `moveRoundToSlot()`, which TAKES a round out of wherever it sits
+         * before placing it, so a round already in Tonight moves rather than
+         * being duplicated. One path, both origins.
+         */
+        dot.draggable = true;
+        dot.addEventListener('dragstart', (ev) => {
+          ev.stopPropagation();
+          ev.dataTransfer.effectAllowed = 'move';
+          ev.dataTransfer.setData('text/plain', `${pack.id}:${dot.dataset.round}`);
+          setShelfRoundDrag({ packId: pack.id, round: Number(dot.dataset.round) });
+          dot.classList.add('is-lifting');
+          dragging(true);
+        });
+        dot.addEventListener('dragend', () => {
+          dot.classList.remove('is-lifting');
+          setShelfRoundDrag(null);
+          dragging(false);
         });
       }
       /* AND THE GAP DIAL IN THE CORNER — what the phones get in the breaks
@@ -2677,13 +2713,39 @@ export function launchBar() {
       // Reordering, same shape as the editor's: which HALF of the target the
       // cursor is in decides before or after, or a list can only ever be
       // reordered one way and the last position is unreachable.
+      /*
+       * THE PACK LIFTS FROM ITS GRIP AND NOWHERE ELSE — asked for directly:
+       * *"can we have it so the pack is dragged from the top and the rounds
+       * are dragged from the squares they occupy?"*
+       *
+       * The tile stays `draggable="true"` in the markup so nothing else about
+       * it changes, and the drag is REFUSED unless it started on the head.
+       * That is the smallest version of a drag handle: no mousedown dance to
+       * arm and disarm a flag, and no state to leave behind if a pointer is
+       * lost. The grip in the head is what it points at, and until now that
+       * grip was a lie — you could lift a pack by its face.
+       */
+      let liftFrom = null;
+      tile.addEventListener('mousedown', (ev) => { liftFrom = ev.target; });
       tile.addEventListener('dragstart', (ev) => {
+        if (!liftFrom || !liftFrom.closest('.lb-tile-head')) { ev.preventDefault(); return; }
         roundDrag = at;
         ev.dataTransfer.effectAllowed = 'move';
         ev.dataTransfer.setData('text/plain', String(at));
         tile.classList.add('is-lifting');
       });
       tile.addEventListener('dragend', (ev) => {
+        /*
+         * ONLY THE TILE'S OWN DRAG ENDS HERE. A round chip's `dragend` fires
+         * on the CHIP and bubbles straight up to this listener — and this one
+         * removes the pack from the night when the pointer finished outside
+         * the bar. So without this line, dragging a round out of a pack took
+         * the whole pack with it: measured, and it emptied Tonight completely.
+         *
+         * The same trap as the tick's `mousedown`, one level up: a child that
+         * starts its own gesture still hands you every event on the way back.
+         */
+        if (ev.target !== tile) return;
         tile.classList.remove('is-lifting');
         /*
          * DRAGGED BACK OUT. A pack lifted off the row and let go anywhere
