@@ -10,6 +10,62 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 24 August 2026 — the pack tiles tidied up, and the doors moved
+into the running order:**
+
+Reported off a screenshot — *"we're getting there - think the top left numbers
+can go once there's a pack in the slot and there's a slight overlap with the
+cross and the game selector"* — then three more in the same sitting. Every one
+was MEASURED before it was changed, and one was a fault nobody had reported.
+
+- **The slot number goes when a pack lands in it**, measured overlapping the
+  title by 18 x 8px. It stays on an EMPTY slot, where it is the whole label —
+  "Add pack 3" is what says where a dragged card would land; on a full slot the
+  order is already visible from position.
+- **The tile is 90px because 30 + 44 does not fit in 76.** The × overlapped the
+  gap dial by 28 x 12px. Moving the × to the top left puts "remove this" where
+  the eye lands first; moving the dial undoes what was asked for. Nothing
+  moves — the tile grew instead, and the row is one line.
+- **A TILE IS NOT A PART, and half the row had no dial.** Not reported, found
+  while measuring: several quiz packs weld into ONE quiz, so tile 1's dial
+  silently owned every gap in the evening and tile 2 had none at all. Nothing
+  threw; the second tile just had an empty corner. `gapsOfPack()` reads the
+  part's `order`, where the gap after round *i* belongs to whichever pack
+  contributed it.
+- **The era word is gone from a Tonight tile.** Shifting it left of the dial
+  was tried and measured — it then overlapped the round ticks by 52 x 18px.
+  There is no third place, so the decoration goes; the wash and the coloured
+  edge still carry the subject, and the word stays on the shelf card.
+- **`:has()` out-specified the phone layout.** `.lb-tiles:has(.lb-doors-slot)`
+  is more specific than `.lb-tiles`, so it beat the 560px rule from outside the
+  media query: 390 came out as four ~50px columns with the dial wider than its
+  tile. The same specificity trap as the `border` shorthand on the pack tile,
+  wearing `:has()`. Nothing throws — the phone just gets the laptop's grid.
+
+**THE DOORS ARE A MINI SLOT AT THE HEAD OF THE ROW** — *"a little mini pack
+slot at the start of the packs to define what shows on big and phone screens
+pre-launch."* Same argument every other dial won: a gap is drawn on the thing
+it follows, and the doors follow nothing, so they belong at position zero of
+the running order rather than up in the head. Half width, no number, never a
+drop target. **The big screen half is deliberately NOT built**: the lobby's
+projector is the join code and nothing in this app may dim it, so offering a
+screen setting there means first deciding what an advert does beside a join
+code — a change to the protected surface rather than a control to add.
+
+**THE BINGO CARD/PRIZES ROW LEFT THE BAND ABOVE LAUNCH** — *"music bingo breaks
+the rule of having nothing between launch button and packs."* It sits above the
+running order now rather than floating under its own tile, and that is a SAFETY
+call: a sheet there would cover Launch. And it is **present and greyed, never
+absent** — *"maybe just have a section for it pre-loaded and greyed out"* —
+which reverses an exception carved out for this row days earlier. The app's own
+rule wins: a control that comes and goes is one you cannot learn the position
+of. The caption carries the reason it is off, and the pickers get a `—`
+placeholder, because an empty select reads as failed rather than waiting.
+
+Verified at 1400, 1280 and 390: no overflow, no console errors, no overlaps
+anywhere, ticks on one row, and nothing between the running order and Launch.
+
+
 **Live as of 24 August 2026 — the Community door now holds the people:**
 
 *"Photos can actually migrate to community as well now, and anything else to do

@@ -2610,19 +2610,24 @@ body.console .panel::after { bottom: -4px; }
    to run into. */
 .lb-tile .pack-word { font-size: calc(var(--pk-word-size) * 0.72); bottom: -6px; }
 /*
- * AND IT MOVES LEFT OF THE GAP DIAL, because the corner it was written for is
- * now the corner a control lives in.
+ * AND ON A TONIGHT TILE IT IS GONE. Measured, twice, and the corner simply has
+ * no room left in it.
  *
  * `A PACK WEARS ITS OWN SUBJECT` put this word in the tile's bottom-right on
- * purpose — *"the Tonight tile keeps the corner"* — so the dial landing there
- * is a genuine collision between two deliberate decisions rather than an
- * oversight. **The control wins and the decoration moves**: the word is a wash
- * that says which era a pack is, the dial is something you press in a dark
- * pub, and the era is still perfectly legible 44px to the left. Shifted rather
- * than dropped, because a tile with no subject on it is the very thing that
- * rule exists to prevent.
+ * purpose — *"the Tonight tile keeps the corner"* — and that was written when
+ * the corner was empty. It now holds a 44px gap dial. Shifting the word 52px
+ * left was tried first and measured: on a 166px tile it then overlapped the
+ * round ticks by 52 x 18px, so it had moved out of one collision into another.
+ * There is no third place: the top is the title and the × , the bottom left is
+ * the ticks, the bottom right is the dial.
+ *
+ * **The control wins and the decoration goes** — and it costs less than it
+ * sounds, because the two things that actually carry a pack's subject are
+ * still there: the wash across the whole tile, and the coloured bottom edge
+ * that says which KIND of pack it is. The word stays on the shelf CARD, where
+ * the corner is still free and where you are scanning nine of them.
  */
-.lb-tile.is-pack .pack-word { right: 52px; }
+.lb-tile.is-pack .pack-word { display: none; }
 /*
  * THE TILE NEEDS ITS OWN, MORE SPECIFIC RULE — and it was written without one,
  * which cost the feature its whole point on the half that matters most.
@@ -6760,7 +6765,28 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    the row is always flush, and the tile is ~180px rather than exactly 160,
    which is the same direction the width came down for. THE LIBRARY USES THE
    SAME SIX so a pack is still the shape of the hole it goes in. */
+/*
+ * THE DOORS SLOT IS HALF A COLUMN AT THE HEAD OF THE ROW, and the six pack
+ * slots keep their share of what is left. `auto` on the first column plus six
+ * equal ones, rather than seven equal ones — a night's packs must not get
+ * narrower because the doors are drawn beside them.
+ */
 .lb-tiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.lb-tiles:has(.lb-doors-slot) { grid-template-columns: auto repeat(6, minmax(0, 1fr)); }
+/*
+ * NARROW, AND DELIBERATELY NOT A DROP TARGET. No dashed border, no number, no
+ * plus — it must never read as a slot with a pack missing out of it. What it
+ * holds is one dial and the word that says which gap it is, which is exactly
+ * what it had in the head before it moved down here to sit where the gap
+ * actually happens.
+ */
+.lb-doors-slot {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; width: 64px; padding: 8px 5px;
+  border: 1px solid var(--panel-line); border-radius: var(--r-card);
+  background: rgba(255, 255, 255, 0.03);
+}
+.lb-doors-slot .gap-dial { position: static; }
 
 /*
  * THE BREAK STRIP — one chip per gap in tonight, under the tiles it belongs
@@ -6820,12 +6846,18 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .gap-dial.is-set { border-bottom-color: var(--hot); }
 .gap-dial-icon { font-size: 17px; line-height: 1; letter-spacing: -1px; }
 /*
- * THE TICKS WRAP BEFORE THEY REACH IT. A five-round pack would otherwise run
- * its last tick underneath a control sitting on top of it — the pack tile's
- * own `z-index` lesson, where a bigger × was silently painted over by the
- * title and half the button did nothing.
+ * THE TICKS STOP BEFORE THEY REACH IT, so a tick can never end up underneath a
+ * control sitting on top of it — the pack tile's own `z-index` lesson, where a
+ * bigger × was silently painted over by the title and half the button did
+ * nothing.
+ *
+ * **40px, measured rather than picked.** The dial is 44 wide and sits 6 from
+ * the tile's right edge, and `.lb-rounds` is already inset 10 by the tile's
+ * padding — so 40 is the exact clearance. At 46 a four-round pack on a 166px
+ * tile had 98px for 100px of ticks and wrapped its fourth onto a second row,
+ * which made that one tile taller than the rest of the running order.
  */
-.lb-tile .lb-rounds { padding-right: 46px; }
+.lb-tile .lb-rounds { padding-right: 40px; }
 /* The word beside the doors dial in the head. The dial alone would be a
    symbol with nothing saying which gap it belongs to — every other one is
    sitting on the pack it acts on, and this one is not. */
@@ -6838,7 +6870,40 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
      Six was fine at three slots and is not at six. Two columns puts it back to
      three rows, and a half-width tile is still a target you cannot miss. */
   .lb-tiles, .pack-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /*
+   * AND THE DOORS SLOT STOPS BEING A COLUMN, which it has to be told twice
+   * because `.lb-tiles:has(.lb-doors-slot)` is a class MORE specific than
+   * `.lb-tiles` — so the seven-column rule above won inside this media query
+   * and beat the phone layout outright. Measured at 390: two packs and the
+   * doors came out as four ~50px columns, the round ticks stacked one per row,
+   * and the gap dial was wider than the tile holding it.
+   *
+   * The specificity trap this repo keeps meeting, wearing `:has()` this time
+   * instead of a `border` shorthand. Nothing throws; the phone just gets the
+   * laptop's grid.
+   *
+   * A full-width strip is also the better shape here: the doors are the first
+   * thing in the evening, and on a narrow screen a row of its own says that
+   * more clearly than a squeezed column ever could.
+   */
+  .lb-tiles:has(.lb-doors-slot) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lb-doors-slot {
+    grid-column: 1 / -1;
+    width: auto; flex-direction: row; justify-content: flex-start; gap: 12px;
+    min-height: 0;
+  }
   .lb-tiles .lb-tile { min-height: 58px; padding: 8px; }
+  /*
+   * A TILE HOLDING A PACK KEEPS ITS FULL HEIGHT ON A PHONE, because it is
+   * holding controls: measured at 390, a 58px tile put the × over the gap dial
+   * by 28 x 26px — the same collision the desktop tile grew to 90 to solve,
+   * and the phone rule was quietly undoing it.
+   *
+   * An EMPTY slot stays short. It has nothing on it but a number and a plus,
+   * so the two are genuinely different objects and giving them one height
+   * would spend a third of a phone screen on slots nobody has filled.
+   */
+  .lb-tiles .lb-tile.is-pack { min-height: 90px; }
   /* ONE EMPTY SLOT ON A PHONE, not up to six. The six-slot row is sized for a
      rare six-pack night on the laptop this console is built around — on a
      390px screen, before a single pack is added, it was three rows of empty
@@ -6898,7 +6963,20 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    * A drop target has to be big enough to hit with a mouse dragging a card,
    * and that is all — which is a height, not a proportion.
    */
-  min-height: 76px;
+  /*
+   * 90, AND THE 14px IS BOUGHT RATHER THAN SPENT. Reported as *"a slight
+   * overlap with the cross and the game selector"* and measured at 28 x 12px:
+   * the × is 30px at the top right and the gap dial is 44px at the bottom
+   * right, which is 74px of controls plus their padding in a 76px tile. They
+   * cannot both live on that edge at this height.
+   *
+   * Three ways out were on the table and this is the least surprising: moving
+   * the × to the top LEFT puts "remove this" where the eye lands first, and
+   * moving the dial off the bottom right undoes the thing that was asked for.
+   * Nothing moves; the tile gets tall enough to hold what is on it. The row is
+   * one line, and deleting the break strip gave 59px back an hour earlier.
+   */
+  min-height: 90px;
   border-radius: var(--r-card); text-align: left;
   font: inherit; color: var(--ink);
 }
@@ -6985,8 +7063,22 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    and dashed, which is the same language the empty slots beside it use. */
 .lb-tile.is-pack.is-spent { opacity: 0.5; border-style: dashed; }
 .lb-tile.is-pack.is-spent .lb-tile-n { background: rgba(255, 255, 255, 0.10); color: var(--ink-dim); }
-/* Which round it is — the thing you are actually reading when you scan a
-   running order. Top left, out of the way of the title. */
+/*
+ * THE SLOT NUMBER IS FOR AN EMPTY SLOT, NOT A FULL ONE.
+ *
+ * Reported off a screenshot: *"the top left numbers can go once there's a pack
+ * in the slot"* — and measured, the badge was overlapping the pack's own title
+ * by 18 x 8px, so on a long name it read as "22000s Pop, R&B and Chart".
+ *
+ * He is right beyond the collision, too. On an EMPTY slot the number is the
+ * whole label — "Add pack 3" is what tells you where a card would land. On a
+ * full one the order is already visible from where the tile IS, so the badge
+ * was a number telling you something the position had already said, sitting on
+ * top of the one thing on the tile you actually read.
+ */
+.lb-tile.is-pack .lb-tile-n { display: none; }
+/* Which slot it is — the label on an EMPTY one. Top left, clear of everything
+   because there is nothing else on it. */
 .lb-tile-n {
   position: absolute; top: 8px; left: 8px;
   display: inline-grid; place-items: center; min-width: 20px; height: 20px;
@@ -8977,3 +9069,6 @@ body.landing {
    numbers a landlord asks about sit together without competing. */
 .league-heads::before { content: "· "; }
 .asks-link { margin: 0 0 10px; }
+/* The pack row's caption when it is waiting rather than naming a pack — dim,
+   because it is the REASON the two controls beside it are off. */
+.lb-set-for.is-waiting { color: var(--ink-dim); }

@@ -2,7 +2,7 @@
 
 import { cleanPlan } from './break-parts.js';
 import {
-  gapDial, gapsOfPart, gapsWithScreen, prunePlan,
+  gapDial, gapsOfPack, gapsWithScreen, prunePlan,
 } from './console-breaks.js';
 import { refreshPicks } from './console-pick.js';
 import { esc, node, postJson } from './client.js';
@@ -805,8 +805,6 @@ export function launchBar() {
            fourth column would make the one "press this" on the section share
            its line with a list. It sits directly ABOVE Launch because it is
            what Launch is about to run. -->
-      <div class="lb-order" hidden></div>
-      <div class="lb-chosen" hidden></div>
       <!-- AND THE PICKED PACK'S OWN, DIRECTLY UNDER IT — the other half of
            the same request: *"I need the packs clickable when in the bay,
            and when you click a pack the settings for THAT PACK appear
@@ -824,7 +822,24 @@ export function launchBar() {
            It names WHICH pack it is setting, because with six tiles above
            it an unlabelled row is a row you have to remember the context
            of. Present and inert with nothing picked, like Launch. -->
-      <div class="lb-set lb-set-pack">
+      <!-- IT SITS ABOVE THE RUNNING ORDER, NOT UNDER IT. Reported on 24
+           August 2026: *"music bingo breaks the rule of having nothing between
+           launch button and packs - can these options go elsewhere"*. It did
+           break it: a bingo night put a labelled strip of two dropdowns in the
+           one band that is meant to stay clear.
+
+           ABOVE rather than floating, and that is a safety decision rather
+           than a tidiness one. A sheet hanging under the tile it belongs to
+           reads better and would cover the LAUNCH BUTTON, which is the one
+           control on this panel that must never have anything over it. The
+           break strip moved above the tiles for exactly this reason and the
+           precedent is recorded: above, it does not stand between the running
+           order and the one filled gradient on the panel.
+
+           It still names WHICH pack it is setting, because with six tiles
+           under it an unlabelled row is a row you have to remember the
+           context of. -->
+      <div class="lb-set lb-set-pack" hidden>
         <span class="tiny lb-set-for"></span>
         <label class="pack-shape lb-set-card">Card
           <select class="shape-pick" data-pop disabled></select>
@@ -833,6 +848,8 @@ export function launchBar() {
           <select class="prize-pick" data-pop disabled></select>
         </label>
       </div>
+      <div class="lb-order" hidden></div>
+      <div class="lb-chosen" hidden></div>
       <!-- KEEP THE WHOLE EVENING — the way a saved night is built, and it
            is deliberately not a second composer. Everything it holds is
            already on this bar: the packs, which rounds are on, the look,
@@ -1704,29 +1721,47 @@ export function launchBar() {
      */
     const picked = pickedPack();
     const pickedIsBingo = Boolean(picked) && picked.kind === 'bingo';
-    if (setForEl) setForEl.textContent = pickedIsBingo ? shortTitle(picked.pack.title) : '';
     /*
-     * THE ROW IS ONLY THERE WHEN IT HOLDS A CONTROL — which today means a
-     * BINGO pack is picked, because Card and Prizes are the only pack-specific
-     * settings there are.
-     *
-     * It used to stand down only when the bay was empty, so every quiz night
-     * carried a labelled row directly above Launch containing one caption and
-     * nothing else: *"1980s Pop — rounds are the dots on the pack"*. That is a
-     * sentence explaining a control that is already visible on the tile, in
-     * the band the host asked to keep clear — *"that space between packs and
-     * launch button needs to be clear, space is at a premium"*.
-     *
-     * This does NOT contradict "a control is present and inert, never absent".
-     * That rule is about a control coming and going as you work, so you cannot
-     * learn where it is. Card and Prizes already do not exist for a quiz pack
-     * — settled earlier, in the host's own words: *"if they can't function on
-     * the bench they should be removed"* — so what is being hidden here is an
-     * empty box, not a control.
+     * THE LABEL CARRIES THE REASON THE ROW IS OFF — the shape Launch and
+     * *Keep this as a show* already use on this bar. A greyed control beside
+     * a blank caption is a control with no explanation; one that says
+     * "Add a bingo game…" has told you the whole story.
      */
-    if (packSetRow) packSetRow.hidden = !pickedIsBingo;
-    if (cardRow) cardRow.hidden = !pickedIsBingo;
-    if (prizesRow) prizesRow.hidden = !pickedIsBingo;
+    if (setForEl) {
+      setForEl.textContent = pickedIsBingo
+        ? shortTitle(picked.pack.title)
+        : 'Add a bingo game to set its card and prizes';
+      setForEl.classList.toggle('is-waiting', !pickedIsBingo);
+    }
+    /*
+     * PRESENT AND GREYED, NEVER ABSENT — asked for on 24 August 2026:
+     * *"maybe just have a section for it pre-loaded and greyed out until a
+     * music bingo pack is added? same with the current quiz options?"*
+     *
+     * **This reverses a decision made a few days earlier and he is right to
+     * reverse it.** The row used to hide itself whenever a bingo pack was not
+     * picked, and the note here argued that was fine because "what is hidden
+     * is an empty box, not a control". That argument does not survive contact
+     * with this app's own rule: a control that comes and goes is a control you
+     * cannot learn the position of, and this bar is driven with a thumb in a
+     * dark pub. Launch and *Keep this as a show* were both fixed the same way,
+     * for the same reason, on the same panel.
+     *
+     * What made hiding it tempting was WHERE it was — directly above Launch,
+     * in the band that has to stay clear. That is now solved by the row
+     * sitting above the running order instead, so the reason to hide it has
+     * gone and the rule can simply apply.
+     *
+     * **THE QUIZ HALF, said plainly: a quiz pack has no pack-level settings
+     * today.** Its rounds are the ticks on its own tile and everything else
+     * about the night is the row above. So "the same for the quiz options"
+     * lands as: the row is always here, always says Card and Prizes, and tells
+     * you what it is waiting for rather than vanishing. A quiz-specific
+     * setting, if one is ever added, has a row to go in.
+     */
+    if (packSetRow) packSetRow.hidden = false;
+    if (cardRow) cardRow.hidden = false;
+    if (prizesRow) prizesRow.hidden = false;
     if (shapePick && prizePick) {
       shapePick.disabled = !pickedIsBingo;
       prizePick.disabled = !pickedIsBingo;
@@ -1735,6 +1770,17 @@ export function launchBar() {
         const shape = pickedShape(picked);
         if (shape) shapePick.value = JSON.stringify({ rows: shape.rows, cols: shape.cols });
         paintPrizes();
+      } else {
+        /*
+         * A PLACEHOLDER, because an EMPTY select reads as broken rather than
+         * as waiting. With no options at all the popover face is a stub the
+         * width of its own caret — which is the shape of a control that has
+         * failed to load, on a bar where that has actually happened before.
+         * The caption to the left already says what it is waiting for, so a
+         * dash is all this has to carry.
+         */
+        shapePick.innerHTML = '<option>—</option>';
+        prizePick.innerHTML = '<option>—</option>';
       }
     }
     // Seconds per question is night-wide but only MEANS anything when there
@@ -2325,15 +2371,20 @@ export function launchBar() {
        PART, so the nth tile owns the nth part's gaps — the same rule the
        ordinary row follows, and no new argument to say so. */
     const mixSegments = segmentsFromSlots(lbSlots);
+    // The nth pack TILE is the nth filled slot — `renderSlots()` draws them in
+    // slot order and only a filled slot gets `.is-pack`.
+    const filled = (lbSlots || []).filter(Boolean);
     [...row.querySelectorAll('.lb-tile.is-pack')].forEach((tile, at) => {
       const dial = gapDial({
-        ids: gapsOfPart(mixSegments, at),
+        ids: gapsOfPack(mixSegments, (filled[at] || {}).packId || '', at),
         plan: night.breaks,
         onSet: setGaps,
-        what: 'this part\u2019s breaks',
+        what: 'the breaks this pack makes',
       });
       if (dial) tile.appendChild(dial);
     });
+    const doors = doorsSlot();
+    if (doors) row.prepend(doors);
     orderEl.replaceChildren(row);
     const parts = segmentsFromSlots(lbSlots).length;
     goBtn.disabled = !parts;
@@ -2421,20 +2472,47 @@ export function launchBar() {
       sayEl.replaceChildren(...(warn ? [warn] : []));
       sayEl.hidden = !warn;
     }
-    /*
-     * THE DOORS ARE THE ONE GAP WITH NO TILE OF THEIR OWN — they happen
-     * before the first pack rather than after anything — so they keep a dial
-     * in the head. The SAME control as a tile's, which is what stopped the
-     * two reading as different objects doing one job. A lobby has no
-     * big-screen choice (the join code owns it), so a phone-only dial is the
-     * whole setting there rather than half of one.
-     */
-    if (doorsEl) {
-      const ids = segments.length ? ['p0:lobby'] : [];
-      const dial = gapDial({ ids, plan: night.breaks, onSet: setGaps, what: 'the doors' });
-      doorsEl.replaceChildren(...(dial ? [node('<span class="tiny lb-doors-word">Doors</span>'), dial] : []));
-      doorsEl.hidden = !dial;
-    }
+    // THE DOORS LEFT THE HEAD — see `doorsSlot()`.
+    if (doorsEl) { doorsEl.replaceChildren(); doorsEl.hidden = true; }
+  }
+
+  /**
+   * THE DOORS, AS A MINI SLOT AT THE HEAD OF THE RUNNING ORDER.
+   *
+   * Asked for on 24 August 2026: *"we might need a little mini pack slot at
+   * the start of the packs to define what shows on big and phone screens
+   * pre-launch."*
+   *
+   * **It is the same argument every other dial already won.** A gap is drawn
+   * on the thing it follows — and the doors follow nothing, they come BEFORE
+   * the first pack. So the honest place for them is position zero of the
+   * running order, which is exactly where they happen; up in the head they
+   * were a control about the evening sitting in a row of controls about the
+   * app.
+   *
+   * **HALF-WIDTH AND NOT A DROP TARGET**, so it can never be mistaken for a
+   * slot with a pack missing out of it: nothing is dragged in, nothing is
+   * taken out, and it carries no number because it is not a slot in the count.
+   *
+   * **THE BIG SCREEN IS DELIBERATELY NOT OFFERED HERE.** The lobby's projector
+   * is the join code, and nothing in this app may dim it — the same rule that
+   * keeps a big photo beside the code rather than over it, and the code off a
+   * question. Giving the doors a screen setting means first deciding what an
+   * advert does BESIDE a join code, which is a change to the protected surface
+   * rather than a control to add.
+   */
+  function doorsSlot() {
+    if (!segmentsNow().length) return null;
+    const dial = gapDial({
+      ids: ['p0:lobby'], plan: night.breaks, onSet: setGaps, what: 'the doors',
+    });
+    if (!dial) return null;
+    const el = node(`
+      <div class="lb-tile lb-doors-slot" title="What the phones do while the room comes in">
+        <span class="tiny lb-doors-word">Doors</span>
+      </div>`);
+    el.appendChild(dial);
+    return el;
   }
 
   /* What the picker should say, read back out of the plan — the first gap
@@ -2535,10 +2613,13 @@ export function launchBar() {
          this pack creates. Placed by the stylesheet, not by the flow, so a
          four-tick pack and a one-tick pack put it in the same spot. */
       const dial = gapDial({
-        ids: gapsOfPart(segmentsNow(), at),
+        // BY PACK, NOT BY SLOT — several quiz packs are welded into ONE quiz,
+        // so mapping a tile to a part gave tile 1 every gap in the night and
+        // tile 2 no dial at all. See `gapsOfPack()`.
+        ids: gapsOfPack(segmentsNow(), pack.id, at),
         plan: night.breaks,
         onSet: setGaps,
-        what: rounds ? 'this quiz\u2019s breaks' : 'the gap before this',
+        what: rounds ? 'the breaks this pack makes' : 'the gap before this',
       });
       if (dial) tile.appendChild(dial);
       tile.querySelector('.lb-tile-off').addEventListener('click', (ev) => {
@@ -2670,6 +2751,8 @@ export function launchBar() {
     const row = node('<div class="lb-tiles"></div>');
     row.append(...tiles);
     paintGaps();
+    const doors = doorsSlot();
+    if (doors) row.prepend(doors);
     orderEl.replaceChildren(row);
     paintGo(packs);
     paintInTonight();

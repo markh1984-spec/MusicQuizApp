@@ -1267,3 +1267,157 @@ row does not change height on the way out any more than on the way in.
 
 
 ---
+
+---
+
+## THE TILE'S OWN TIDY-UP — three collisions, all measured
+
+Reported off a screenshot on 24 August 2026: *"we're getting there - think the
+top left numbers can go once there's a pack in the slot and there's a slight
+overlap with the cross and the game selector"*, then three more in the same
+sitting. Every one was measured before it was changed, and one of them was a
+fault nobody had reported.
+
+### The slot number goes when a pack lands in it
+
+Measured: the badge overlapped the pack's own title by **18 x 8px**, so a long
+name read as "22000s Pop, R&B and Chart".
+
+He is right beyond the collision. On an EMPTY slot the number is the whole
+label — *"Add pack 3"* is what tells you where a dragged card would land. On a
+full one the order is already visible from where the tile IS, so the badge was
+telling you something the position had said, on top of the one thing you
+actually read.
+
+### The tile is 90px because 30 + 44 does not fit in 76
+
+Measured: the × overlapped the gap dial by **28 x 12px**. The × is 30px at the
+top right, the dial is 44px at the bottom right, and 74px of controls plus
+their padding does not fit in 76.
+
+Three ways out, and this is the least surprising:
+
+- **Move the × to the top left** — puts "remove this" where the eye lands
+  first, and the top left is where the drag grip already is.
+- **Move the dial off the bottom right** — undoes the thing that was asked for.
+- **Make the tile tall enough to hold what is on it** — nothing moves, so
+  nothing anybody has learned changes position.
+
+The row is one line, and deleting the break strip an hour earlier gave 59px
+back. On a PHONE the same applies to a tile holding a pack, while an empty slot
+stays short: a slot with a number and a plus on it has no controls to fit, and
+giving them one height would spend a third of a phone screen on empty slots.
+
+### A tile is not a part — and half the row had no dial
+
+Not reported, found while measuring. Several quiz packs are welded into ONE
+quiz by `composeQuiz()`, so a two-pack night has one part — which meant tile
+1's dial silently owned every gap in the evening, including the ones pack 2's
+rounds create, and **tile 2 had no dial at all**. Nothing threw and nothing
+looked broken; the second tile just had an empty corner.
+
+`gapsOfPack()` reads the part's `order` instead: the gap `p{n}:r{i}` is the
+board after round `i`, so it belongs to whichever pack contributed that round.
+That is exactly the promise the dial makes, and it holds however the night is
+built — a composed quiz, a mixed row, or a saved show.
+
+### The era word has nowhere left to go on a tile
+
+*A pack wears its own subject* put the decade in the tile's bottom-right on
+purpose, and that was written when the corner was empty. Shifting it 52px left
+of the dial was tried first and measured: on a 166px tile it then overlapped
+the round ticks by **52 x 18px**. It had moved out of one collision into
+another, and there is no third place — the top is the title and the ×, the
+bottom left is the ticks, the bottom right is the dial.
+
+So the decoration goes, on TONIGHT TILES ONLY. It costs less than it sounds:
+the wash across the whole tile and the coloured bottom edge still say what the
+pack is, and the word stays on the shelf CARD where the corner is free and
+where you are scanning nine of them at once.
+
+The ticks also needed **40px** of clearance rather than 46 — measured, because
+at 46 a four-round pack on a 166px tile had 98px for 100px of ticks and wrapped
+its fourth onto a second row, making that one tile taller than the rest of the
+running order.
+
+### `:has()` OUT-SPECIFIED THE PHONE LAYOUT
+
+`.lb-tiles:has(.lb-doors-slot)` is a class more specific than `.lb-tiles`, so
+the seven-column rule beat the 560px two-column rule from outside the media
+query. Measured at 390: two packs and the doors came out as **four ~50px
+columns**, the round ticks stacked one per row, and the gap dial was wider than
+the tile holding it.
+
+This is the specificity trap this repo already records — a `border` shorthand
+beating a `border-bottom` longhand on the pack tile — wearing `:has()` this
+time. **Nothing throws; the phone simply gets the laptop's grid.** On a phone
+the doors now take a full-width row of their own, which is the better shape
+anyway: they are the first thing in the evening, and a row says that more
+clearly than a squeezed column.
+
+## THE DOORS ARE A MINI SLOT AT THE HEAD OF THE ROW
+
+Asked for directly: *"we might need a little mini pack slot at the start of the
+packs to define what shows on big and phone screens pre-launch."*
+
+**It is the same argument every other dial already won.** A gap is drawn on the
+thing it follows — and the doors follow nothing, they come BEFORE the first
+pack. So the honest place is position zero of the running order, which is
+exactly where they happen. Up in the head they were a control about the evening
+sitting in a row of controls about the app.
+
+Half width, no number, and **not a drop target**: nothing is dragged in and
+nothing is taken out, so it can never be mistaken for a slot with a pack
+missing out of it.
+
+**THE BIG SCREEN IS DELIBERATELY NOT OFFERED THERE, and that half of the
+request is not built.** The lobby's projector is the join code, and nothing in
+this app may dim it — the same rule that keeps a big photo beside the code
+rather than over it, and the code off a question. Giving the doors a screen
+setting means first deciding what an advert does BESIDE a join code, which is a
+change to the protected surface rather than a control to add. Worth doing
+deliberately, with the projector in front of you.
+
+## THE BINGO ROW LEFT THE BAND ABOVE LAUNCH
+
+Reported: *"music bingo breaks the rule of having nothing between launch button
+and packs - can these options go elsewhere"*. It did break it — a bingo night
+put a labelled strip of two dropdowns in the one band that is meant to stay
+clear.
+
+**Above the running order, not floating under its own tile — and that is a
+safety decision rather than a tidiness one.** A sheet hanging off the bingo
+tile reads better and would cover the LAUNCH BUTTON, which is the one control
+on this panel that must never have anything over it. The break strip moved
+above the tiles for exactly this reason and the precedent was already recorded.
+
+### And it is present and greyed, never absent
+
+Asked for in the same sitting: *"maybe just have a section for it pre-loaded and
+greyed out until a music bingo pack is added? same with the current quiz
+options?"*
+
+**This reverses a decision made days earlier, and he is right to reverse it.**
+The row used to hide whenever a bingo pack was not picked, and the note here
+argued that was fine because "what is hidden is an empty box, not a control".
+That does not survive contact with this app's own rule: a control that comes
+and goes is one you cannot learn the position of, and this bar is driven with a
+thumb in a dark pub. Launch and *Keep this as a show* were both fixed the same
+way, on the same panel, for the same reason.
+
+What made hiding it tempting was WHERE it was. That is solved by the move, so
+the reason to hide it has gone and the rule simply applies.
+
+**The caption carries the reason it is off** — *"Add a bingo game to set its
+card and prizes"* — the shape Launch already uses, because a greyed control
+beside a blank label is a control with no explanation. And the two pickers get
+a `—` placeholder, because an EMPTY select renders as a stub the width of its
+own caret, which reads as a control that failed to load rather than one that is
+waiting.
+
+**The quiz half, said plainly: a quiz pack has no pack-level settings today.**
+Its rounds are the ticks on its own tile and everything else about the night is
+the row above. So "the same for the quiz options" lands as: the row is always
+there, always says Card and Prizes, and tells you what it is waiting for rather
+than vanishing. A quiz-specific setting, if one is ever added, has a row to go
+in.

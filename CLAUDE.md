@@ -1257,6 +1257,36 @@ right of the pack ONCE LOADED."*
   `ReferenceError`s, `node --check` happy, 1,516 tests green. The same fault
   that shipped a broken Launch. **`test/imports-present.test.js`** now asserts
   every module imports the shared helpers it calls.
+- **A TILE IS NOT A PART** — several quiz packs are welded into ONE quiz, so
+  mapping a tile to a part gave tile 1 every gap in the night and tile 2 no
+  dial at all. `gapsOfPack()` reads the part's `order`, where the gap after
+  round *i* belongs to whichever pack contributed it.
+- **THE SLOT NUMBER GOES WHEN A PACK LANDS IN IT** — it overlapped the title by
+  18 x 8px, and on a full slot the ORDER is already visible from position. It
+  stays on an EMPTY slot, where it is the whole label.
+- **THE TILE IS 90px BECAUSE 30 + 44 DOES NOT FIT IN 76** — the × and the dial
+  are both on the right edge; measured overlap was 28 x 12. Moving the × to
+  the left puts "remove this" where the eye lands first, and moving the dial
+  undoes what was asked for, so the tile grew instead. **On a phone the
+  `is-pack` tiles keep that height and empty slots stay short.**
+- **THE ERA WORD IS GONE FROM A TONIGHT TILE.** Shifting it left of the dial
+  was tried and measured: it then overlapped the round ticks by 52 x 18. There
+  is no third place, so the decoration goes and the wash plus the coloured
+  edge carry the subject. It stays on the shelf CARD.
+- **`.lb-tiles:has(.lb-doors-slot)` OUT-SPECIFIED THE PHONE RULE** — a class
+  more specific than `.lb-tiles` beat the 560px layout, and 390 came out as
+  four 50px columns with the dial wider than its tile. The specificity trap
+  this file already records, wearing `:has()` instead of a `border` shorthand.
+- **DOORS IS A MINI SLOT AT THE HEAD OF THE ROW** — *"a little mini pack slot
+  at the start of the packs"*. The gap before the first pack, drawn where it
+  happens; half width, no number, never a drop target. **The big screen is not
+  offered there**: the lobby's projector is the join code and nothing may dim
+  it, so that is a change to the protected surface rather than a control.
+- **THE BINGO CARD/PRIZES ROW SITS ABOVE THE RUNNING ORDER** — it was breaking
+  *the band above Launch is kept clear*. Above rather than floating under its
+  tile, which is a SAFETY call: a sheet there would cover Launch. And it is
+  **present and greyed, never absent** — that reverses an exception carved out
+  for this row, and the app's own rule wins.
 
 Full reasoning: **[`docs/console/launch-bar.md`](docs/console/launch-bar.md)**.
 

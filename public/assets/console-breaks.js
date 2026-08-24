@@ -169,12 +169,60 @@ export function gapsWithScreen(segments) {
   return breaksOf(segments).filter((b) => b.kind !== 'lobby').map((b) => b.id);
 }
 
-/** Which gaps belong to one part of the night — what a tile's dial owns. */
+/** Which gaps belong to one part of the night. */
 export function gapsOfPart(segments, at, { skipDoors = true } = {}) {
   return breaksOf(segments)
     .filter((b) => b.part === at)
     .filter((b) => !(skipDoors && b.id === 'p0:lobby'))
     .map((b) => b.id);
+}
+
+/**
+ * WHICH GAPS ONE PACK CREATES — what a tile's dial actually owns.
+ *
+ * **A TILE IS NOT A PART, and assuming it was left half the row without a
+ * dial.** Several quiz packs on an ordinary night are welded into ONE quiz by
+ * `composeQuiz()`, so a two-pack night has one part — which meant tile 1's
+ * dial silently owned every gap in the evening, including the ones pack 2's
+ * rounds create, and tile 2 had no dial at all. Nothing threw and nothing
+ * looked broken; the second tile just had an empty corner.
+ *
+ * A part's rounds are `order`, in order, and the gap `p{n}:r{i}` is the board
+ * AFTER round `i` — so the gap belongs to whichever pack contributed that
+ * round. That is exactly the promise the dial makes, and it holds however the
+ * night is put together: a composed quiz, a mixed row, or a saved show.
+ *
+ * A bingo pack has no rounds and cannot be broken up, so the gap it owns is
+ * the one BEFORE it — its own lobby.
+ */
+export function gapsOfPack(segments, packId, at) {
+  const parts = Array.isArray(segments) ? segments : [];
+  const want = String(packId || '');
+  const live = new Set(breaksOf(parts).map((b) => b.id));
+  const out = [];
+  parts.forEach((part, n) => {
+    if (part.kind === 'bingo') {
+      // Its own lobby — but never the very first, which is the doors and has
+      // a dial of its own in the head.
+      if (String(part.packId || '') === want && n > 0) out.push(`p${n}:lobby`);
+      return;
+    }
+    (part.order || []).forEach((round, i) => {
+      if (String(round.packId || '') !== want) return;
+      const id = `p${n}:r${i}`;
+      // `breaksOf` has already dropped the last board of the last part — that
+      // one is the final, not a gap — so asking it is how this stays true
+      // without repeating the rule.
+      if (live.has(id)) out.push(id);
+    });
+  });
+  /*
+   * A QUIZ PART WITH NO `order` AT ALL falls back to the part it is, which is
+   * what a saved show built before the mixed row existed looks like. Better a
+   * dial covering the whole part than a tile with no control on it.
+   */
+  if (!out.length && Number.isInteger(at)) return gapsOfPart(parts, at);
+  return out;
 }
 
 /**
