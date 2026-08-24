@@ -120,18 +120,59 @@ export function moveRoundToSlot(slots, { packId, round }, toIndex) {
 }
 
 /** Add a whole quiz pack (every round not already placed elsewhere) as a new slot. */
-export function addQuizPackSlot(slots, pack) {
+/**
+ * PUT A NEW SLOT WHERE IT WAS DROPPED — or on the end when nowhere in
+ * particular was aimed at.
+ *
+ * **Reported on 24 August 2026: *"I tried dragging the music bingo onto slot 2
+ * and it populated on slot 4 instead."*** It did, and the target was never the
+ * problem: the empty slot accepted the drop and lit up correctly, and then the
+ * placer appended to the end and ignored which slot had been asked for. The
+ * exact same fault the ROUNDS had two days earlier, one function along — a
+ * highlight that promises a position and a placer that does not read it.
+ *
+ * `at` is honoured only when that slot is genuinely EMPTY. Dropping onto a
+ * tile that already holds something appends instead of overwriting: a slot you
+ * can silently destroy by letting go over it is not a slot, it is a hazard.
+ *
+ * The list widens with `null`s to reach an index past the end, exactly as
+ * `moveRoundToSlot()` does — *positions do not shift*, so slot 4 stays slot 4
+ * rather than the row closing up behind it.
+ */
+function placeAt(slots, entry, at) {
+  if (!Number.isInteger(at) || at < 0 || slots[at]) {
+    /*
+     * NO TARGET MEANS THE NEXT FREE SLOT, which is what the panel's own drop
+     * has always promised in those words — and with holes in the row "the end
+     * of the array" and "the next free slot" are different places. A pack let
+     * go on the panel with slots 3 and 4 empty belongs in slot 3, not slot 6.
+     */
+    const hole = slots.findIndex((slot) => !slot);
+    if (hole >= 0) {
+      const filled = slots.slice();
+      filled[hole] = entry;
+      return filled;
+    }
+    return [...slots, entry];
+  }
+  const width = Math.max(slots.length, at + 1);
+  const out = Array.from({ length: width }, (_, i) => slots[i] || null);
+  out[at] = entry;
+  return out;
+}
+
+export function addQuizPackSlot(slots, pack, at) {
   const placed = placedRounds(slots);
   const rounds = (pack.rounds || [])
     .map((_, i) => i)
     .filter((i) => !placed.has(`${pack.id}:${i}`));
   if (!rounds.length) return slots;
-  return [...slots, { kind: 'quiz', packId: pack.id, rounds }];
+  return placeAt(slots, { kind: 'quiz', packId: pack.id, rounds }, at);
 }
 
 /** Add a bingo pack as its own new slot, with the night-wide defaults until its own control changes them. */
-export function addBingoSlot(slots, pack, { shape = null, prizes = DEFAULT_BINGO_PRIZES } = {}) {
-  return [...slots, { kind: 'bingo', packId: pack.id, shape, prizes }];
+export function addBingoSlot(slots, pack, { shape = null, prizes = DEFAULT_BINGO_PRIZES, at } = {}) {
+  return placeAt(slots, { kind: 'bingo', packId: pack.id, shape, prizes }, at);
 }
 
 /** Remove a whole slot — the tile's own × button, same gesture as today's pack tile. */

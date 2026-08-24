@@ -1311,6 +1311,16 @@ right of the pack ONCE LOADED."*
   the smallest drag handle there is — no flag to arm and disarm, nothing left
   behind if a pointer is lost. The ordinary tile had no head at all and gained
   the same one the mixed row draws.
+- **THE SLOT YOU DROP ON IS THE SLOT IT GOES IN — for a whole PACK too.**
+  Reported as *"I tried dragging the music bingo onto slot 2 and it populated
+  on slot 4 instead"*. The target was never the problem: the slot lit up and
+  accepted, and then `addBingoSlot()` appended and ignored the index it was
+  handed. **The same fault the rounds had two days earlier, one function
+  along.** `at` is honoured only when that slot is genuinely EMPTY — dropping
+  onto a full tile appends rather than overwriting, because a slot you can
+  destroy by letting go over it is a hazard, not a slot. **A drop that MISSES
+  every square still means "the next free slot"**, which with holes in the row
+  is the first hole rather than the end of the array.
 - **A PACK TILE LIGHTS UP TOO — AND ONLY WHERE THE DROP WILL BE TAKEN.**
   `moveRoundToSlot()` refuses a bingo game or a DIFFERENT pack, so a tile that
   lit and then did nothing would be worse than one that never lit: it promised.

@@ -1686,3 +1686,40 @@ its own heading, no overflow. At 390 it wraps to four, which is a phone. And a
 launch made through the popovers still sends `shape: {rows:3, cols:3}` and
 `prizes: 1` — the skin never held the value, so shortening its face could not
 change what Launch reads.
+
+## THE SLOT YOU DROP ON IS THE SLOT IT GOES IN — for a whole pack too
+
+*"I tried dragging the music bingo onto slot 2 and it populated on slot 4
+instead — thoughts?"*
+
+**It is the rounds bug again, one function along, and the third sighting of the
+same shape in a week.** The target was never wrong: the empty slot accepted the
+drop and lit up correctly. Then `addBingoSlot()` — and `addQuizPackSlot()`
+beside it — appended to the end of the list and never read the index the drop
+handler had passed them. A highlight that promises a position and a placer that
+does not read it.
+
+`placeAt()` is the one answer for both, and it draws three lines that are worth
+stating because each was a decision:
+
+- **`at` is honoured only when that slot is genuinely EMPTY.** Dropping onto a
+  tile that already holds something appends instead of overwriting: a slot you
+  can silently destroy by letting go over it is not a slot, it is a hazard.
+- **The list widens with `null`s to reach an index past the end**, exactly as
+  `moveRoundToSlot()` does. *Positions do not shift* — slot 5 stays slot 5
+  rather than the row closing up behind your hand.
+- **No target still means "the next free slot"**, which is what the panel's own
+  drop has promised in those words since it was written. That promise had
+  quietly become untrue: with holes in the row, "the end of the array" and "the
+  next free slot" are different places, so a pack let go on the panel with slots
+  3 and 4 empty was landing in slot 6. It fills the first hole now.
+
+The ordinary row's empty slots claim a pack drop the same way, so the rule holds
+whichever renderer is on screen — and `addPackToNight()` takes the index only as
+an option, so every existing caller that had nowhere in particular in mind
+behaves exactly as it did.
+
+Measured: a bingo aimed at slot 2 lands in slot 2; a second aimed at slot 5
+lands in slot 5 leaving 3 and 4 empty; and one let go on the panel rather than a
+square fills slot 3, the first hole. The round drags, the grip-only pack lift
+and the truthful highlight all still hold.

@@ -153,7 +153,11 @@ export function renderSlots(slots, {
       dragging(false);
       const pack = packOf(fromShelf.id);
       if (!pack) return;
-      commit(fromShelf.kind === 'bingo' ? addBingoSlot(slots, pack) : addQuizPackSlot(slots, pack));
+      // `at` — the slot this was actually dropped on. It used to append and
+      // ignore the target, so a bingo let go over slot 2 turned up in slot 4.
+      commit(fromShelf.kind === 'bingo'
+        ? addBingoSlot(slots, pack, { at })
+        : addQuizPackSlot(slots, pack, at));
     });
   }
 

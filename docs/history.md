@@ -162,6 +162,20 @@ One row at 1400 and 1280, four at 390, and a launch made through the popovers
 still sends `shape: {rows:3, cols:3}` and `prizes: 1` — the skin never held the
 value, so shortening its face could not change what Launch reads.
 
+**AND A WHOLE PACK LANDS IN THE SLOT IT WAS DROPPED ON:** *"I tried dragging
+the music bingo onto slot 2 and it populated on slot 4 instead."* The rounds
+bug again, one function along and the third sighting of the shape in a week —
+the slot lit up and accepted, then `addBingoSlot()` appended and never read the
+index it had been handed.
+
+`placeAt()` answers it for both adders, and three lines of it were decisions:
+`at` is honoured only when that slot is genuinely EMPTY (dropping onto a full
+tile appends rather than overwriting — a slot you can destroy by letting go
+over it is a hazard); the list widens with nulls so positions do not shift; and
+**no target still means "the next free slot"**, a promise that had quietly gone
+untrue, because with holes in the row that is the first hole rather than the end
+of the array.
+
 Verified at 1400, 1280 and 390: no overflow, no console errors, no overlaps
 anywhere, and nothing between the running order and Launch.
 

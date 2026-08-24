@@ -2903,20 +2903,35 @@ export function launchBar() {
        */
       const slotIndex = packs.length + i;
       empty.addEventListener('dragover', (ev) => {
-        if (!shelfRoundDrag) return;
+        if (!shelfRoundDrag && !packDrag) return;
         ev.preventDefault(); ev.stopPropagation();
         ev.dataTransfer.dropEffect = 'move';
         empty.classList.add('drop-here');
       });
       empty.addEventListener('dragleave', () => empty.classList.remove('drop-here'));
       empty.addEventListener('drop', (ev) => {
-        if (!shelfRoundDrag) return;
+        if (!shelfRoundDrag && !packDrag) return;
         ev.preventDefault(); ev.stopPropagation();
         empty.classList.remove('drop-here');
-        const round = shelfRoundDrag;
-        setShelfRoundDrag(null);
+        if (shelfRoundDrag) {
+          const round = shelfRoundDrag;
+          setShelfRoundDrag(null);
+          dragging(false);
+          addRoundToSlot(round, slotIndex);
+          return;
+        }
+        /*
+         * A WHOLE PACK LANDS IN THE SQUARE IT WAS DROPPED ON TOO — reported as
+         * *"I tried dragging the music bingo onto slot 2 and it populated on
+         * slot 4 instead"*. The slot lights up, so it has to keep the promise;
+         * appending to the end is what the PANEL does for a drag that stopped
+         * short of any square, and that stays exactly as it was.
+         */
+        const dropped = packDrag;
+        setPackDrag(null);
         dragging(false);
-        addRoundToSlot(round, slotIndex);
+        addPackToNight(dropped, dropped.kind || gameOf().id, slotIndex);
+        giveTheFoldBack();
       });
       tiles.push(empty);
     }
@@ -3095,7 +3110,7 @@ export function launchBar() {
    * panel where letting go should mean something different, which is exactly
    * why the two paths were never going to stay in step.
    */
-  function addPackToNight(from, kind = gameOf().id) {
+  function addPackToNight(from, kind = gameOf().id, at) {
     if (!from) return;
     /*
      * THE FIRST PACK IS THE NIGHT; the rest are added to it. With nothing
@@ -3129,7 +3144,16 @@ export function launchBar() {
      */
     if (kind === 'bingo' || lbSlots) {
       if (!lbSlots) lbSlots = slotsFromSimple({ currentPack, lbExtra, lbOff, packOf });
-      lbSlots = kind === 'bingo' ? addBingoSlot(lbSlots, from) : addQuizPackSlot(lbSlots, from);
+      /*
+       * `at` — WHICH SLOT IT WAS DROPPED ON, when it was dropped on one.
+       * Undefined for a drop that landed on the panel rather than a square,
+       * and that still means "the next free slot", which is what the note
+       * above is about: a drag that stopped an inch short has not asked for a
+       * position, so inventing one for it would be worse than appending.
+       */
+      lbSlots = kind === 'bingo'
+        ? addBingoSlot(lbSlots, from, { at })
+        : addQuizPackSlot(lbSlots, from, at);
       paintOrder();
       return;
     }
