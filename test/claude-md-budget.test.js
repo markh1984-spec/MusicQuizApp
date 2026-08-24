@@ -257,7 +257,7 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * browser walking up to the tile, and a child's dragend bubbles into the
  * handler that removes the pack.
  */
-const BUDGET = 174_500;
+const BUDGET = 176_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

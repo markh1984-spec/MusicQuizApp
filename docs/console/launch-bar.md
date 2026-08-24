@@ -1723,3 +1723,60 @@ Measured: a bingo aimed at slot 2 lands in slot 2; a second aimed at slot 5
 lands in slot 5 leaving 3 and 4 empty; and one let go on the panel rather than a
 square fills slot 3, the first hole. The round drags, the grip-only pack lift
 and the truthful highlight all still hold.
+
+## A `dropEffect` THE SOURCE DID NOT ALLOW KILLS THE DROP SILENTLY
+
+Reported straight after the last change: *"now the pack drags aren't sticking
+at all?"*
+
+They were not. Giving the ordinary row's empty slots a `dragover` of their own
+included one line that looked like housekeeping:
+
+```js
+ev.dataTransfer.dropEffect = 'move';
+```
+
+**A pack CARD starts its drag with `effectAllowed = 'copy'`.** A `dropEffect`
+the source did not allow makes the browser treat that target as REFUSING — so
+**no `drop` event fires at all**. Rounds kept working, because a round tick
+starts its drag with `'move'` and the hard-coded value happened to match. Every
+pack drop onto a slot was dead.
+
+`shelfRoundDrag ? 'move' : 'copy'` is the whole fix. What matters is why it got
+through.
+
+### The test could not have caught it, and neither could the last one
+
+**A synthesised `DragEvent` enforces none of the browser's own preconditions.**
+This bar has now been bitten by two of them in three days:
+
+- no `drop` fires unless `dragover` called `preventDefault()`;
+- no `drop` fires if `dropEffect` is one the source's `effectAllowed` forbids.
+
+Dispatching `drop` by hand skips both. The check written two changes ago —
+which measured `defaultPrevented`, and was a genuine improvement — still could
+not see this one, because it never asked the browser to carry anything.
+
+### So there is a script now, and it drives the mouse
+
+`scripts/drag-check.mjs` starts its own server on its own port with its own
+`DATA_DIR`, opens a real Chromium, and performs real mouse drags: a pack card
+onto the row, a pack card onto an empty slot, and a round out to a later slot.
+It asserts the shape of the running order after each and fails loudly.
+
+It cannot live in `npm test` — this repo has no dependencies and Playwright is
+a container tool rather than a project one — so it sits beside
+`pub-unchanged.mjs` as a thing you RUN after touching a drag handler.
+
+**Verified by reintroducing the fault**: with `'move'` hard-coded it reports two
+failures and names the shape it wanted; with the fix it passes. Which is the
+only reason to believe it.
+
+### One more thing it caught about itself
+
+Its first draft grabbed `.pack-card[data-pack]` for the second drag — the same
+card it had just placed. A pack already in the running order stays on the shelf
+as a dashed ghost and is deliberately refused a second time, so the check was
+measuring that refusal rather than the drop. `:not(.in-tonight)` fixed it. A
+guard aimed at the wrong element proves nothing, which is this repo's oldest
+lesson and apparently still worth relearning.

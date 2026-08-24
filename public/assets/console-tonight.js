@@ -2905,7 +2905,22 @@ export function launchBar() {
       empty.addEventListener('dragover', (ev) => {
         if (!shelfRoundDrag && !packDrag) return;
         ev.preventDefault(); ev.stopPropagation();
-        ev.dataTransfer.dropEffect = 'move';
+        /*
+         * THE EFFECT HAS TO MATCH WHAT WAS PICKED UP, and getting it wrong
+         * stops the drop dead.
+         *
+         * A pack CARD starts its drag with `effectAllowed = 'copy'` and a
+         * round tick with `'move'`. A `dropEffect` the source did not allow
+         * makes the browser treat this target as refusing — **no `drop` event
+         * fires at all** — so hard-coding `'move'` here silently broke every
+         * pack drop onto a slot while leaving rounds working.
+         *
+         * It survived its own test because a synthesised `DragEvent` does not
+         * enforce the compatibility rule; only a real drag does. Same family
+         * as the `preventDefault` lesson one change earlier: the browser's
+         * preconditions are the thing worth measuring.
+         */
+        ev.dataTransfer.dropEffect = shelfRoundDrag ? 'move' : 'copy';
         empty.classList.add('drop-here');
       });
       empty.addEventListener('dragleave', () => empty.classList.remove('drop-here'));

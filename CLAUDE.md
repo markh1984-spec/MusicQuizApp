@@ -1311,6 +1311,13 @@ right of the pack ONCE LOADED."*
   the smallest drag handle there is — no flag to arm and disarm, nothing left
   behind if a pointer is lost. The ordinary tile had no head at all and gained
   the same one the mixed row draws.
+- **A `dropEffect` THE SOURCE DID NOT ALLOW KILLS THE DROP SILENTLY.** A pack
+  card starts its drag `effectAllowed = 'copy'` and a round tick `'move'`; set
+  the wrong one and the browser treats the target as REFUSING, so **no `drop`
+  fires at all**. Hard-coding `'move'` in a handler serving both broke every
+  pack drop onto a slot while rounds kept working. **A synthesised `DragEvent`
+  does not enforce it** — `node scripts/drag-check.mjs` drives the real mouse,
+  and is the only thing that can see this or the `preventDefault` rule.
 - **THE SLOT YOU DROP ON IS THE SLOT IT GOES IN — for a whole PACK too.**
   Reported as *"I tried dragging the music bingo onto slot 2 and it populated
   on slot 4 instead"*. The target was never the problem: the slot lit up and
@@ -2837,6 +2844,7 @@ npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
 node scripts/pub-unchanged.mjs HEAD~1 --ignore online   # did I break the pub night?
+node scripts/drag-check.mjs             # Tonight's drags, with a REAL browser drag
 ```
 
 **The rules these commands run on, and each was learned expensively — the full
@@ -2856,6 +2864,12 @@ account is in [`docs/checks.md`](docs/checks.md):**
   never looked at the lobby, and it printed the first 300 characters of two
   payloads that are nearly always identical. **A guard that quietly tests
   nothing is worse than no guard, because it is believed.**
+- **A SYNTHESISED `DragEvent` IS NOT A DRAG.** The browser's own preconditions
+  are where this bar keeps breaking: no `drop` fires unless `dragover` called
+  `preventDefault()`, and none fires if `dropEffect` is one the source's
+  `effectAllowed` forbids. A dispatched event enforces neither, so a test built
+  from them passes while every pack drop is dead. `scripts/drag-check.mjs`
+  drives the real mouse; run it after touching a drag handler.
 - **A TEST THAT NEVER RUNS THE ARTEFACT PROVES NOTHING ABOUT IT.** Reading
   `server.js` as a string to check a route exists is how a broken Launch
   reached the live app with 1,150 tests passing.

@@ -176,6 +176,28 @@ over it is a hazard); the list widens with nulls so positions do not shift; and
 untrue, because with holes in the row that is the first hole rather than the end
 of the array.
 
+**AND THEN THE PACK DRAGS STOPPED STICKING, from one line that looked like
+housekeeping.** Giving the empty slots their own `dragover` set
+`dropEffect = 'move'` — but a pack CARD starts its drag with
+`effectAllowed = 'copy'`, and a `dropEffect` the source did not allow makes the
+browser treat the target as REFUSING, so **no `drop` fires at all**. Rounds kept
+working because their `effectAllowed` happened to match. Every pack drop onto a
+slot was dead.
+
+**A synthesised `DragEvent` enforces none of the browser's preconditions**, and
+this bar has now been bitten by two in three days: no drop without
+`preventDefault()` on the dragover, and no drop with an effect the source
+forbids. So `scripts/drag-check.mjs` exists — its own server, its own port, a
+real Chromium and real mouse drags, asserting the running order's shape after
+each. It cannot live in `npm test` (no dependencies here; Playwright is a
+container tool), so it sits beside `pub-unchanged.mjs` as a thing you run after
+touching a drag handler. **Verified by reintroducing the fault.**
+
+Its own first draft grabbed the card it had just placed — a pack in the running
+order stays on the shelf as a ghost and is deliberately refused a second time —
+so it was measuring that refusal rather than the drop. A guard aimed at the
+wrong element proves nothing.
+
 Verified at 1400, 1280 and 390: no overflow, no console errors, no overlaps
 anywhere, and nothing between the running order and Launch.
 
