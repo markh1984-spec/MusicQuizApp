@@ -1328,6 +1328,27 @@ right of the pack ONCE LOADED."*
   destroy by letting go over it is a hazard, not a slot. **A drop that MISSES
   every square still means "the next free slot"**, which with holes in the row
   is the first hole rather than the end of the array.
+- **A DESCRIPTOR IS NOT THE THING IT DESCRIBES.** *"Now I can't drag into
+  slot 2 as an empty slot"*: `packDrag` is `{ id, kind }` and the empty slot's
+  drop handed it on as the pack. With no `rounds`, `addQuizPackSlot()` gave
+  the row back unchanged — **the slot lit, the drop was taken, nothing
+  appeared.** A bingo slot needs only the id, so it read as quiz-only.
+- **A KIND THAT DISAGREES WITH THE NIGHT'S OWN IS A MIXED NIGHT** — the test
+  was `kind === 'bingo' || lbSlots`, so a quiz pack added to a bingo night
+  went into `lbExtra`, whose ids `packOf()` resolves against `gameOf()` alone.
+  It was never found again: `lbPacks()` filtered it out and the row kept
+  showing one tile. **Nothing threw — the state was consistent and the READER
+  could not resolve it.**
+- **A PACK CARD ASKS WHETHER IT IS IN TONIGHT; IT IS NOT PAINTED AFTERWARDS.**
+  `packIsInTonight()`, called by `packCard()` as it builds. `render()`
+  assembles the page OFF the document, so `paintInTonight()` finds the
+  PREVIOUS page's cards — **every tab change drew a shelf with no ghosting**,
+  and the duplicate check then refused a drop the card said was free.
+- **THE BREAK PLUMBING MOVED INTO `console-breaks.js`** rather than the line
+  budget being raised a fifth time — `breakPlumbing({ night, segmentsNow,
+  repaint })`, handed what it needs so the module stays a leaf. **Destructured
+  ABOVE every reader**: a `const` in its temporal dead zone throws when the
+  line RUNS, and the catch swallows it.
 - **A PACK TILE LIGHTS UP TOO — AND ONLY WHERE THE DROP WILL BE TAKEN.**
   `moveRoundToSlot()` refuses a bingo game or a DIFFERENT pack, so a tile that
   lit and then did nothing would be worse than one that never lit: it promised.
@@ -1728,8 +1749,10 @@ Open the one you are touching; do not read them all.
 **[`docs/console.md`](docs/console.md)** — launching a night and driving it,
 plus **[`docs/console/launch-bar.md`](docs/console/launch-bar.md)**, which is
 the launch bar's own half: Tonight, the running order, the pack tiles, the
-settings row and the break dials. Split off on 23 August 2026 when
-`console.md` crossed its 100,000-byte cap.
+settings row and the break dials, and
+**[`docs/console/drag.md`](docs/console/drag.md)**, the drags. Both split off
+when the file above them crossed its 100,000-byte cap. **Read the second
+before touching a drag handler.**
 
 - A launch must say what it is about to destroy
 - The restart notice, and the one state that made it a lie

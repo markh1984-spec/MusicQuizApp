@@ -41,7 +41,7 @@
  */
 import { esc, node } from './client.js';
 import {
-  PHONE, breakFor, breakSlots,
+  PHONE, breakFor, breakSlots, cleanPlan,
 } from './break-parts.js';
 
 /** What each phone setting looks like on the dial, and reads as out loud. */
@@ -252,4 +252,89 @@ export function prunePlan(plan, segments) {
     if (alive.has(id)) out[id] = set;
   }
   return out;
+}
+
+
+/**
+ * THE THREE PIECES OF BREAK PLUMBING THE LAUNCH BAR NEEDS — built against the
+ * bar's own `night`, its `segmentsNow()` and one `repaint`, so this module
+ * still imports nothing from the bar and stays the leaf it was.
+ *
+ * They moved here on 24 August 2026 rather than the budget being raised
+ * again: a doors slot, a screen picker's value and the two writers behind a
+ * dial are all break-plan work, and they were sitting in the launch bar only
+ * because that is where the dial is drawn.
+ */
+export function breakPlumbing({ night, segmentsNow, repaint }) {
+  /**
+   * THE DOORS, AS A MINI SLOT AT THE HEAD OF THE RUNNING ORDER.
+   *
+   * Asked for on 24 August 2026: *"we might need a little mini pack slot at
+   * the start of the packs to define what shows on big and phone screens
+   * pre-launch."*
+   *
+   * **It is the same argument every other dial already won.** A gap is drawn
+   * on the thing it follows — and the doors follow nothing, they come BEFORE
+   * the first pack. So the honest place for them is position zero of the
+   * running order, which is exactly where they happen; up in the head they
+   * were a control about the evening sitting in a row of controls about the
+   * app.
+   *
+   * **HALF-WIDTH AND NOT A DROP TARGET**, so it can never be mistaken for a
+   * slot with a pack missing out of it: nothing is dragged in, nothing is
+   * taken out, and it carries no number because it is not a slot in the count.
+   *
+   * **THE BIG SCREEN IS DELIBERATELY NOT OFFERED HERE.** The lobby's projector
+   * is the join code, and nothing in this app may dim it — the same rule that
+   * keeps a big photo beside the code rather than over it, and the code off a
+   * question. Giving the doors a screen setting means first deciding what an
+   * advert does BESIDE a join code, which is a change to the protected surface
+   * rather than a control to add.
+   */
+  function doorsSlot() {
+    if (!segmentsNow().length) return null;
+    const dial = gapDial({
+      ids: ['p0:lobby'], plan: night.breaks, onSet: setGaps, what: 'the doors',
+    });
+    if (!dial) return null;
+    const el = node(`
+      <div class="lb-tile lb-doors-slot" title="What the phones do while the room comes in">
+        <span class="tiny lb-doors-word">Doors</span>
+      </div>`);
+    el.appendChild(dial);
+    return el;
+  }
+
+  /* What the picker should say, read back out of the plan — the first gap
+     that HAS a screen wins. Two can only disagree on a plan built by the
+     strip this replaced; the picker writes all of them, so one press brings
+     such a night back into step. */
+  function screenOfPlan(plan) {
+    const ids = gapsWithScreen(segmentsNow());
+    for (const id of ids) if (plan && plan[id] && plan[id].screen) return plan[id].screen;
+    return 'scores';
+  }
+
+  /** Write one phone setting across every gap a dial owns. */
+  function setGaps(ids, phone) {
+    const next = { ...night.breaks };
+    for (const id of ids) next[id] = { ...(next[id] || breakSetFor(id)), phone };
+    /*
+     * CLEANED, so a dial cycled all the way back to its default stops
+     * claiming it was changed. The lit edge means "you touched this", and an
+     * entry that only restates a default makes that a lie — on the one
+     * control whose whole job is saying which gap is not ordinary.
+     */
+    night.breaks = cleanPlan(next);
+    paintOrder();
+  }
+
+  /* A gap's current pair, so writing the phone half never silently resets a
+     screen half somebody had changed. `prunePlan` drops whatever only
+     restates a default straight after, so this cannot bloat the plan. */
+  function breakSetFor(id) {
+    const set = (night.breaks || {})[id];
+    return set ? { ...set } : {};
+  }
+  return { doorsSlot, screenOfPlan, setGaps, breakSetFor };
 }

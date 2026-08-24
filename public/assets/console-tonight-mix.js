@@ -170,8 +170,23 @@ export function addQuizPackSlot(slots, pack, at) {
   return placeAt(slots, { kind: 'quiz', packId: pack.id, rounds }, at);
 }
 
+/**
+ * IS THIS PACK ALREADY IN THE RUNNING ORDER?
+ *
+ * The ordinary row has always refused the same pack twice — *"a night does not
+ * play the same ten questions in rounds two and four"* — and the mixed row
+ * enforced it for a QUIZ only by accident, because `addQuizPackSlot()` finds no
+ * unplaced rounds and returns the list unchanged. A bingo game had no such
+ * check at all and could be dropped in twice, giving one evening the same forty
+ * tracks in two different slots.
+ */
+export function hasPack(slots, packId) {
+  return (slots || []).some((slot) => slot && slot.packId === packId);
+}
+
 /** Add a bingo pack as its own new slot, with the night-wide defaults until its own control changes them. */
 export function addBingoSlot(slots, pack, { shape = null, prizes = DEFAULT_BINGO_PRIZES, at } = {}) {
+  if (hasPack(slots, pack.id)) return slots;
   return placeAt(slots, { kind: 'bingo', packId: pack.id, shape, prizes }, at);
 }
 

@@ -10,6 +10,46 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 24 August 2026 — the hole in slot 2, and three faults under one
+sentence:**
+
+Reported off a screenshot of a real running order — a bingo game, an empty
+slot, another bingo game, a quiz — as *"now I can't drag into slot 2 as an
+empty slot?"* None of the three threw, and the first two left the console
+describing a night it was not going to launch.
+
+- **A descriptor is not the thing it describes.** `packDrag` is `{ id, kind }`
+  — what is in flight — and the empty slot's own drop handed it to
+  `addPackToNight()` as though it were the pack. With no `rounds` on it,
+  `addQuizPackSlot()` found nothing to place and returned the row unchanged:
+  the slot lit up, the drop was accepted, and nothing appeared. A bingo slot
+  needs only the id, which is why it read as an intermittent fault. Every
+  other call site already resolved through `packOnShelf()`.
+- **A kind that disagrees with the night's own is a mixed night.** The test
+  was `kind === 'bingo' || lbSlots`, so a quiz pack added to a bingo night
+  took the ordinary path into `lbExtra` — ids that `packOf()` resolves against
+  `gameOf()` alone, so it could never be found again. `lbPacks()` filtered it
+  straight back out, the row kept showing one tile and Launch kept naming the
+  bingo. **The state was perfectly self-consistent; it was the reader that
+  could not resolve it**, which is the shape no test catches.
+- **The shelf ghosting never survived a tab change.** `paintInTonight()`
+  walked the document at the end of every paint — but `render()` assembles the
+  page OFF the document, so it found the previous page's cards. A card asks
+  for itself now (`packIsInTonight()`, called by `packCard()` as it builds),
+  and the duplicate check stopped refusing drops the card said were free.
+
+Verified with real mouse drags in a real browser, on his exact layout: all
+four things you can drop into a hole — a bingo pack card, a quiz pack card, a
+round off the shelf and a round out of a tile — now land in the slot they were
+aimed at, and a mixed night launched to a projector afterwards. `npm test`
+1,516 green, `pub-unchanged` IDENTICAL, `drag-check` clean.
+
+**The budgets were paid rather than raised where there was a seam:** the break
+plumbing (`doorsSlot`, `screenOfPlan`, `setGaps`, `breakSetFor`) moved out of
+`console-tonight.js` into `console-breaks.js` behind `breakPlumbing()`, and
+the drag reasoning moved out of `docs/console/launch-bar.md` into
+`docs/console/drag.md` when that file crossed its cap.
+
 **Live as of 24 August 2026 — the pack tiles tidied up, and the doors moved
 into the running order:**
 

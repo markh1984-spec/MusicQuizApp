@@ -7,7 +7,7 @@ import { tonightsVenue, whenish } from './console-gigs.js';
 import { field, money, sheet } from './console-invoices.js';
 import { renderBingoPreview, renderQuizPreview } from './console-preview.js';
 import { library, me, setPackDrag, setShelfRoundDrag } from './console-state.js';
-import { addRoundToTonight, addToTonight, dragging, heardHere, heardHereIsLocal, night, putOnBench } from './console-tonight.js';
+import { addRoundToTonight, addToTonight, dragging, heardHere, heardHereIsLocal, night, packIsInTonight, putOnBench } from './console-tonight.js';
 import { PACK_SHELF, can, canPin, doorNow, goTo, hostKey, isPinned, keyed, linkTo, load, packWord, pinIcon, pinRank, pinnedPacks, render, reorderPins, showDone, togglePin } from './console.js';
 import { tonight } from './diary.js';
 import { lobbyGameChoices, lobbyGameFor } from './lobby-games.js';
@@ -1172,7 +1172,7 @@ export function packCard(kind, pack) {
    */
   const look = packLookAttrs(pack, kind === 'quiz' && isBreakoutPack(pack) ? 'breakout' : kind);
   const el = node(`
-    <div class="pack-card shut ${look.cls} ${pack.broken ? 'broken' : ''} ${ownPack ? 'own' : ''} ${freshness(pack).expired ? 'stale' : ''}"
+    <div class="pack-card shut ${look.cls} ${pack.broken ? 'broken' : ''} ${ownPack ? 'own' : ''} ${freshness(pack).expired ? 'stale' : ''} ${packIsInTonight(pack.id) ? 'in-tonight' : ''}"
       style="${look.style}"
       draggable="${pack.broken ? 'false' : 'true'}" data-pack="${esc(pack.id)}" data-kind="${esc(kind)}">
       ${packWord(look)}

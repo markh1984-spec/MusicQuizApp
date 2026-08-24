@@ -12,7 +12,7 @@ import { packWord } from './console.js';
 import { library } from './console-state.js';
 import { packLookAttrs, shortTitle, isBreakoutPack } from './pack-look.js';
 import {
-  DEFAULT_BINGO_PRIZES, addBingoSlot, addQuizPackSlot, homeSlotIndex, moveRoundToSlot, swapSlots,
+  DEFAULT_BINGO_PRIZES, addBingoSlot, addQuizPackSlot, hasPack, homeSlotIndex, moveRoundToSlot, swapSlots,
   offRoundsFor, removeSlot, toggleRoundOff,
 } from './console-tonight-mix.js';
 
@@ -108,11 +108,30 @@ export function renderSlots(slots, {
       if (round) {
         // AND THE LIGHT SAYS WHICH — see `takesRound`.
         const takes = takesRound(at, round);
-        ev.dataTransfer.dropEffect = takes ? 'move' : 'none';
+        /*
+         * ONLY EVER `'none'`, AND ONLY TO REFUSE. A positive `dropEffect` the
+         * source did not allow makes the browser treat this target as
+         * refusing, and no `drop` fires at all — and the sources here do not
+         * agree: a pack card and a shelf round dot are `'copy'`, a Tonight
+         * round chip is `'move'`. Left alone the browser picks a compatible
+         * one for whichever it is.
+         */
+        if (!takes) ev.dataTransfer.dropEffect = 'none';
         tile.classList.toggle('drop-here', takes);
         return;
       }
-      tile.classList.add('drop-here');
+      /*
+       * A PACK ALREADY IN THE NIGHT IS REFUSED, AND THE LIGHT SAYS SO.
+       *
+       * It was refused before this too — silently, because
+       * `addQuizPackSlot()` finds no unplaced rounds and hands the list back
+       * unchanged — while the slot still lit up and promised. **That is what
+       * *"I can't drag into slot 2 as an empty slot"* actually was**: the pack
+       * being dragged was already somewhere in the row, and nothing said so.
+       */
+      const takesPack = !hasPack(slots, fromShelf.id);
+      if (!takesPack) ev.dataTransfer.dropEffect = 'none';
+      tile.classList.toggle('drop-here', takesPack);
     });
     tile.addEventListener('dragleave', () => tile.classList.remove('drop-here'));
     tile.addEventListener('drop', (ev) => {

@@ -257,7 +257,21 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * browser walking up to the tile, and a child's dragend bubbles into the
  * handler that removes the pack.
  */
-const BUDGET = 176_000;
+/*
+ * 176_500 ON 24 AUGUST 2026, for the four faults behind *"now I can't drag
+ * into slot 2 as an empty slot"* and for naming `docs/console/drag.md` in the
+ * index. Every line of that block stops a change: a descriptor is not the
+ * thing it describes, a kind that disagrees with the night's own is a mixed
+ * night, a pack card asks whether it is in Tonight rather than being painted
+ * afterwards, and a `const` read in its temporal dead zone throws where the
+ * console's own catch swallows it.
+ *
+ * **The structural price was paid rather than dodged**: 60 lines of break
+ * plumbing left `console-tonight.js` for `console-breaks.js`, and 16KB of
+ * drag reasoning left `docs/console/launch-bar.md` for `docs/console/drag.md`
+ * — so what landed HERE is the rules alone.
+ */
+const BUDGET = 176_500;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

@@ -1,9 +1,7 @@
 /** TONIGHT — the launch bar, what is running, and the settings for one night. */
 
 import { cleanPlan } from './break-parts.js';
-import {
-  gapDial, gapsOfPack, gapsWithScreen, prunePlan,
-} from './console-breaks.js';
+import { breakPlumbing, gapDial, gapsOfPack, gapsWithScreen, prunePlan } from './console-breaks.js';
 import { refreshPicks } from './console-pick.js';
 import { esc, gripIcon, node, postJson } from './client.js';
 import { tonightsVenue } from './console-gigs.js';
@@ -182,6 +180,20 @@ let lbExtra = [];
  * behind for the next one.
  */
 let lbSlots = null;
+
+/**
+ * IS THIS PACK ALREADY IN TONIGHT? — asked by the SHELF as it draws itself
+ * and by `paintInTonight()` after, so the two cannot disagree. **A CARD HAS
+ * TO ASK; IT CANNOT BE PAINTED AFTERWARDS**: `render()` builds the page OFF
+ * the document, so a `querySelectorAll('.pack-card')` run while the bar is
+ * building finds the PREVIOUS page's cards — and every tab change drew a
+ * fresh shelf with the ghosting missing.
+ */
+export function packIsInTonight(id) {
+  if (!id) return false;
+  if (lbSlots) return lbSlots.filter(Boolean).some((slot) => slot.packId === id);
+  return (currentPack && currentPack.id === id) || lbExtra.includes(id);
+}
 
 /**
  * WHICH PACK IN THE BAY IS BEING SET UP — an index into the row as drawn.
@@ -2384,6 +2396,21 @@ export function launchBar() {
    */
   const PACK_SLOTS = 6;
 
+  /*
+   * THE BREAK-PLAN PLUMBING LIVES IN `console-breaks.js`, the module named
+   * for it — the doors slot, what the screen picker says, and the two writers
+   * behind a dial. They are handed the three things they need rather than
+   * reaching for them, so that module stays a leaf.
+   *
+   * **ABOVE EVERY PAINT FUNCTION THAT READS IT.** A `const` in its temporal
+   * dead zone throws when the line RUNS, not when the file loads, and the
+   * console's own catch swallows it — which is how the Workshop door once
+   * went missing with nothing else looking wrong.
+   */
+  const { doorsSlot, screenOfPlan, setGaps } = breakPlumbing({
+    night, segmentsNow, repaint: () => paintOrder(),
+  });
+
   /**
    * THE SHELF SHOWS THE GAP. A pack that is in tonight is drawn as an outline
    * of itself in the library, so the card has visibly LEFT rather than been
@@ -2392,9 +2419,10 @@ export function launchBar() {
    * the card straight back.
    */
   function paintInTonight() {
-    const ids = new Set(lbPacks().map((p) => p.id));
+    // A drop changes the night without rebuilding the page, so cards already
+    // on screen have to be told. A shelf being BUILT asks for itself.
     for (const card of document.querySelectorAll('.pack-card[data-pack]')) {
-      card.classList.toggle('in-tonight', ids.has(card.dataset.pack));
+      card.classList.toggle('in-tonight', packIsInTonight(card.dataset.pack));
     }
   }
 
@@ -2499,15 +2527,6 @@ export function launchBar() {
   }
 
   /**
-   * THE BREAK STRIP, under the tiles — see `console-breaks.js`.
-   *
-   * **PRUNED ON EVERY PAINT.** Switch a round off and the break after it
-   * stops existing; its entry would otherwise sit in the plan invisibly and
-   * come back to life the day the round was switched on again, saying
-   * something set weeks ago that nobody can see. Pruning here rather than
-   * only at launch means what is stored is always what is on screen.
-   */
-  /**
    * WHAT HAPPENS IN THE GAPS — pruned, then drawn ON the things the gaps
    * follow. The strip of chips this replaced was reported as a duplicate of
    * the Doors button; see `console-breaks.js` for why one control in two
@@ -2527,77 +2546,6 @@ export function launchBar() {
     }
     // THE DOORS LEFT THE HEAD — see `doorsSlot()`.
     if (doorsEl) { doorsEl.replaceChildren(); doorsEl.hidden = true; }
-  }
-
-  /**
-   * THE DOORS, AS A MINI SLOT AT THE HEAD OF THE RUNNING ORDER.
-   *
-   * Asked for on 24 August 2026: *"we might need a little mini pack slot at
-   * the start of the packs to define what shows on big and phone screens
-   * pre-launch."*
-   *
-   * **It is the same argument every other dial already won.** A gap is drawn
-   * on the thing it follows — and the doors follow nothing, they come BEFORE
-   * the first pack. So the honest place for them is position zero of the
-   * running order, which is exactly where they happen; up in the head they
-   * were a control about the evening sitting in a row of controls about the
-   * app.
-   *
-   * **HALF-WIDTH AND NOT A DROP TARGET**, so it can never be mistaken for a
-   * slot with a pack missing out of it: nothing is dragged in, nothing is
-   * taken out, and it carries no number because it is not a slot in the count.
-   *
-   * **THE BIG SCREEN IS DELIBERATELY NOT OFFERED HERE.** The lobby's projector
-   * is the join code, and nothing in this app may dim it — the same rule that
-   * keeps a big photo beside the code rather than over it, and the code off a
-   * question. Giving the doors a screen setting means first deciding what an
-   * advert does BESIDE a join code, which is a change to the protected surface
-   * rather than a control to add.
-   */
-  function doorsSlot() {
-    if (!segmentsNow().length) return null;
-    const dial = gapDial({
-      ids: ['p0:lobby'], plan: night.breaks, onSet: setGaps, what: 'the doors',
-    });
-    if (!dial) return null;
-    const el = node(`
-      <div class="lb-tile lb-doors-slot" title="What the phones do while the room comes in">
-        <span class="tiny lb-doors-word">Doors</span>
-      </div>`);
-    el.appendChild(dial);
-    return el;
-  }
-
-  /* What the picker should say, read back out of the plan — the first gap
-     that HAS a screen wins. Two can only disagree on a plan built by the
-     strip this replaced; the picker writes all of them, so one press brings
-     such a night back into step. */
-  function screenOfPlan(plan) {
-    const ids = gapsWithScreen(segmentsNow());
-    for (const id of ids) if (plan && plan[id] && plan[id].screen) return plan[id].screen;
-    return 'scores';
-  }
-
-  /** Write one phone setting across every gap a dial owns. */
-  function setGaps(ids, phone) {
-    const next = { ...night.breaks };
-    for (const id of ids) next[id] = { ...(next[id] || breakSetFor(id)), phone };
-    /*
-     * CLEANED, so a dial cycled all the way back to its default stops
-     * claiming it was changed. The lit edge means "you touched this", and an
-     * entry that only restates a default makes that a lie — on the one
-     * control whose whole job is saying which gap is not ordinary.
-     */
-    night.breaks = cleanPlan(next);
-    paintOrder();
-  }
-
-  /* A gap's current pair, so writing the phone half never silently resets a
-     screen half somebody had changed. `prunePlan` drops whatever only
-     restates a default straight after, so this cannot bloat the plan. */
-  function breakSetFor(id) {
-    const set = (night.breaks || {})[id];
-    return set ? { ...set } : {};
   }
 
   function paintOrder() {
@@ -2795,7 +2743,8 @@ export function launchBar() {
         if (shelfRoundDrag) {
           ev.preventDefault(); ev.stopPropagation();
           const takes = rounds && shelfRoundDrag.packId === pack.id;
-          ev.dataTransfer.dropEffect = takes ? 'move' : 'none';
+          // Only ever `'none'`, and only to refuse — see the empty slot's note.
+          if (!takes) ev.dataTransfer.dropEffect = 'none';
           tile.classList.toggle('drop-here', takes);
           return;
         }
@@ -2906,22 +2855,32 @@ export function launchBar() {
         if (!shelfRoundDrag && !packDrag) return;
         ev.preventDefault(); ev.stopPropagation();
         /*
-         * THE EFFECT HAS TO MATCH WHAT WAS PICKED UP, and getting it wrong
-         * stops the drop dead.
+         * NEVER SET A POSITIVE `dropEffect` — ONLY EVER `'none'` TO REFUSE.
          *
-         * A pack CARD starts its drag with `effectAllowed = 'copy'` and a
-         * round tick with `'move'`. A `dropEffect` the source did not allow
-         * makes the browser treat this target as refusing — **no `drop` event
-         * fires at all** — so hard-coding `'move'` here silently broke every
-         * pack drop onto a slot while leaving rounds working.
+         * A `dropEffect` the source did not allow makes the browser treat this
+         * target as REFUSING, and then **no `drop` event fires at all**. The
+         * sources on this page do not agree: a pack card and a SHELF round dot
+         * start with `effectAllowed = 'copy'`, a Tonight round tick and a tile
+         * with `'move'`. Hard-coding `'move'` here killed every pack drop;
+         * "fixing" it to `'copy'` for anything that was not a Tonight tick
+         * would then have killed the shelf's round dots instead.
          *
-         * It survived its own test because a synthesised `DragEvent` does not
-         * enforce the compatibility rule; only a real drag does. Same family
-         * as the `preventDefault` lesson one change earlier: the browser's
-         * preconditions are the thing worth measuring.
+         * Left alone the browser picks a compatible effect by itself, which is
+         * right for every source there is and cannot be got wrong by the next
+         * one added. `'none'` is the only value safe to write, because it means
+         * "refuse" for all of them.
          */
-        ev.dataTransfer.dropEffect = shelfRoundDrag ? 'move' : 'copy';
-        empty.classList.add('drop-here');
+        /*
+         * A PACK ALREADY IN THE NIGHT IS REFUSED, so the slot must not promise
+         * it. The refusal itself is older than this light — `addPackToNight()`
+         * has always turned the same pack away — but a square that lit up and
+         * then did nothing is what made it read as broken.
+         */
+        const takes = shelfRoundDrag
+          || !(lbSlots ? lbSlots.filter(Boolean).some((s2) => s2.packId === packDrag.id)
+            : lbPacks().some((p) => p.id === packDrag.id));
+        if (!takes) ev.dataTransfer.dropEffect = 'none';
+        empty.classList.toggle('drop-here', Boolean(takes));
       });
       empty.addEventListener('dragleave', () => empty.classList.remove('drop-here'));
       empty.addEventListener('drop', (ev) => {
@@ -2945,7 +2904,15 @@ export function launchBar() {
         const dropped = packDrag;
         setPackDrag(null);
         dragging(false);
-        addPackToNight(dropped, dropped.kind || gameOf().id, slotIndex);
+        /*
+         * `packOnShelf()` FIRST — `packDrag` is a `{ id, kind }` DESCRIPTOR,
+         * not the pack, and this was the one call site handing it straight on.
+         * `addQuizPackSlot()` found no `rounds` and handed the row back
+         * unchanged: **the slot lit up, the drop was taken, nothing
+         * appeared.** A bingo slot needs only the id, which is why it read as
+         * a quiz-only fault. *"Now I can't drag into slot 2."*
+         */
+        addPackToNight(packOnShelf(dropped.kind || gameOf().id, dropped.id), dropped.kind || gameOf().id, slotIndex);
         giveTheFoldBack();
       });
       tiles.push(empty);
@@ -3156,8 +3123,14 @@ export function launchBar() {
      * goes this way too, quiz or bingo, so the night never has to decide
      * between two systems mid-build. `slotsFromSimple()` is only ever called
      * ONCE, the moment there was nothing to convert from.
+     *
+     * **AND A KIND THAT DISAGREES WITH THE NIGHT'S OWN IS MIXED TOO — that
+     * was missing, and it lost a pack in silence.** `lbExtra` holds IDS and
+     * `packOf()` resolves them against `gameOf()` alone, so a quiz pack put
+     * into a bingo night could never be found again: `lbPacks()` filtered it
+     * back out and the row went on showing one tile. Nothing threw.
      */
-    if (kind === 'bingo' || lbSlots) {
+    if (kind === 'bingo' || kind !== gameOf().id || lbSlots) {
       if (!lbSlots) lbSlots = slotsFromSimple({ currentPack, lbExtra, lbOff, packOf });
       /*
        * `at` — WHICH SLOT IT WAS DROPPED ON, when it was dropped on one.
