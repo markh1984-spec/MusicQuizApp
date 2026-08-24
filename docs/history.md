@@ -10,6 +10,63 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 24 August 2026 — the Community door now holds the people:**
+
+*"Photos can actually migrate to community as well now, and anything else to do
+with the people who do the quizzing — ask me as many questions as you need to
+get this right."* Four questions, four answers, each now a rule.
+
+**BY VENUE, BECAUSE A VENUE IS A COMMUNITY.** The Tuesday crowd and the
+Thursday crowd are different people; a league was already per venue, and
+grouping the photographs the same way makes every page on this door something
+you can show one landlord.
+
+**THE PHOTOS MOVED AND PAST GIGS KEPT ITS GRID — not a duplicate.** The same
+pictures do two jobs: there a photo is EVIDENCE, beside the headcount, the
+winner and the report; here it is the room itself. Moving them off Past gigs
+entirely was the alternative and would have put you two doors from the pictures
+while writing the report built out of them. **What is not duplicated is the
+code** — the strip, the bin and its confirm wording, the "Screen only" badge
+and the publish control are `nightPhotos()`, extracted out of
+`fillNightDetail()` and called from both. The publish safeguard survives for
+free: the control is drawn UNDER the photographs it would publish wherever it
+is called, so "nobody publishes a night without having just looked at what is
+in it" needed no restating.
+
+**A READ-ONLY SUMMARY MAY REPEAT; A QUEUE MAY NOT.** That is the line, and it
+decided both halves. The headcount is a summary, so it joins the head of each
+league panel — the landlord's two questions together — and still sits on a
+venue card and a Past gigs card, all from one server-side figure that cannot
+disagree with itself. **"What the room asked for" is a queue — Yes keeps it, No
+bins it — so it MOVED off the Music Quiz tab** rather than being copied, leaving
+a one-line link that is silent unless something is waiting.
+
+**`asksPanel({ whenEmpty })` — one panel, two pages, two right answers.**
+Drawing nothing was correct above the quiz generator and is wrong on a tab whose
+whole job is that list: a blank page reads as broken to the person checking
+whether the feature works, and "nothing here" has two causes because the switch
+is off unless somebody turns it on. The empty state says which and links to the
+switch.
+
+**IT IS YOURS ONLY, FOR NOW.** A room-facing page per venue — the table on a
+wall, a link the regulars check between nights — was offered and deliberately
+parked: a new public surface with its own questions about faces and team names.
+Nothing built here blocks it. The only public thing is still the gallery link.
+
+**Not moved:** the "that one's wrong" reports, which are owner-facing — a
+quizmaster never sees what their own room reported, and a half-built pipeline
+on a new door would be furniture.
+
+Verified in a real browser at 1280 and 390 on all five doors: no overflow, no
+console errors, the strip drawing five photos with five bins, the Screen-only
+badge and the publish control under them. **The photo BYTES were stubbed and
+nothing else was** — photos live in a separate private repository that needs
+`GITHUB_TOKEN`, which the build container has not got, so `hasPhotos` is false
+for every night there; the two routes were answered with real-shaped payloads
+and every line of grouping, rendering, binning and publishing exercised was the
+app's own.
+
+
 **Live as of 23 August 2026 — what happens in the gaps is a dial on the pack,
 and there is a fifth door:**
 

@@ -260,12 +260,28 @@ export function headcountBlock(venue) {
  * different fact from one person asking four times, and it is the number that
  * decides whether it is worth a pack.
  */
-export function asksPanel() {
+export function asksPanel({ whenEmpty = null } = {}) {
+  /*
+   * `whenEmpty` EXISTS BECAUSE THE SAME PANEL ANSWERS TWO DIFFERENT PAGES.
+   *
+   * Drawing NOTHING was right where this used to live: it sat above the quiz
+   * generator, and a box saying "nobody has asked for anything" on the page
+   * you open to write a quiz is furniture. On its own tab on the Community
+   * door it is the opposite — a tab whose entire job is this list, showing a
+   * blank page, reads as broken to the person most likely to be checking
+   * whether the feature works at all.
+   *
+   * One optional argument rather than a second panel, so the triage — Yes
+   * keeps it, No bins it, grouped by idea — has one definition.
+   */
   const el = node('<div></div>');
   const draw = (data) => {
     const asked = data.asked || [];
     const kept = data.kept || [];
-    if (!asked.length && !kept.length) { el.replaceChildren(); return; }
+    if (!asked.length && !kept.length) {
+      el.replaceChildren(...(whenEmpty ? [whenEmpty()] : []));
+      return;
+    }
     el.replaceChildren(node(`
       <div class="panel asks">
         <h3>What the room asked for</h3>
@@ -357,7 +373,7 @@ export function gigsSection() {
  * `venueId` the summary never saw because it had none) falls back to its own
  * raw venue name; one with no name at all goes into `unfiled`.
  */
-function groupByVenue(nights, headcounts) {
+export function groupByVenue(nights, headcounts) {
   const dateVenue = new Map();
   for (const v of (headcounts.venues || [])) {
     for (const s of v.series) dateVenue.set(s.night, v.venue);
@@ -629,6 +645,22 @@ export async function fillNightDetail(body, night) {
   });
   actions.appendChild(report);
 
+  await nightPhotos(body, night);
+}
+
+/**
+ * A NIGHT'S PHOTOGRAPHS, THE BIN ON EACH AND THE GALLERY CONTROL UNDER THEM.
+ *
+ * **Split out of `fillNightDetail()` on 23 August 2026 because a second page
+ * wanted them** — the Community door's Photos tab, where the pictures are
+ * about the PEOPLE rather than about evidence of one night. Extracted rather
+ * than rewritten, and that is the whole point: the bin's confirm wording, the
+ * "Screen only" badge and the publish safeguard are each a decision with a
+ * reason recorded, and a second copy is a second thing to forget.
+ *
+ * The caller owns the container and whatever it puts above this.
+ */
+export async function nightPhotos(body, night) {
   if (!night.hasPhotos) return;
 
   const loading = node('<div class="tiny">Loading photos…</div>');

@@ -237,7 +237,8 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * exceptions list is a snapshot rather than a test.
  */
 /*
- * RAISED TO 163_800 ON 23 AUGUST 2026 for the gap dial and the fifth door.
+ * RAISED TO 166_600 ON 23-24 AUGUST 2026 for the gap dial, the fifth door,
+ * and what moved onto it.
  * The load-bearing lines are the ones that stop a change: a gap is not at the
  * end of a slot; the tile measurement (58px clear) is what allows ONE control
  * and forbids two; the dial's order is a SCALE; the era word moved because a
@@ -248,7 +249,7 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * `docs/console/launch-bar.md` — so the reasoning behind all of it left this
  * file rather than landing in it.
  */
-const BUDGET = 163_800;
+const BUDGET = 166_600;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

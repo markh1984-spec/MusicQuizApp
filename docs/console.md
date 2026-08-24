@@ -602,6 +602,121 @@ word to retype it.
 
 ---
 
+## THE COMMUNITY DOOR — the people who do the quizzing
+
+Asked for on 23 August 2026 as a fifth pill *"for things like quiz leagues"*,
+and extended the same evening: *"photos can actually migrate to community as
+well now, and anything else to do with the people who do the quizzing — ask me
+as many questions as you need to get this right."*
+
+Four questions were asked and each answer is now a rule.
+
+### Why a fifth door was the honest answer rather than a tenth tab
+
+The four doors sort by a rule: Console, Workshop and Post gig name MOMENTS of a
+night — before it, during it, after it — and My account names the one thing
+that is not a night at all.
+
+**A league is neither.** It spans nights and belongs to the ROOM rather than to
+the quizmaster, which is exactly why it had nowhere good to live and had ended
+up as a block on a venue card: visible one venue at a time, behind the Workshop
+door, and only if you went looking for it. The same is true of the photographs
+and of what the room voted for. Once there were three of them, the door was
+obvious.
+
+**It goes fourth and My account stays last** — the night sequence, then the
+work that spans nights, then housekeeping, where an account link sits on every
+site anybody has used.
+
+### By venue, because a venue IS a community
+
+The Tuesday crowd and the Thursday crowd are different people. A league is
+already per venue; grouping the photographs the same way makes every page on
+this door something you can show one landlord, which is the *build what helps a
+quizmaster SELL* rule falling out of a layout decision for free.
+
+### THE PHOTOS MOVED AND PAST GIGS KEPT ITS GRID — and that is not a duplicate
+
+The alternative was on the table and was rejected for a concrete reason: moving
+the pictures off Past gigs entirely would put you two doors away from them
+while writing the report that is BUILT out of them.
+
+**The same photographs do two different jobs.** On Past gigs a photo is
+evidence, sat beside the headcount, the winner and the report a landlord is
+shown. On Community it is the room itself, which is what somebody opens this
+door for.
+
+**What is NOT duplicated is the code.** The strip, the bin and its confirm
+wording, the "Screen only" badge and the publish control are `nightPhotos()` in
+`console-gigs.js` — extracted out of `fillNightDetail()` rather than rewritten,
+and called from both. Each of those is a decision with a reason recorded, and a
+second copy is a second thing to forget.
+
+**The publish safeguard survives for free**, which is the payoff of extracting
+rather than copying: the control is drawn UNDER the photographs it would
+publish, so "nobody puts a night in front of the world without having just
+looked at what is in it" is true on the new page without anything being
+restated.
+
+**A night's photos are fetched when that night is OPENED**, never with the
+list. A photo list is a request per night, and a wall that loaded twenty nights
+on arrival would spend a pub's wifi on pictures nobody had asked to see.
+
+### A READ-ONLY SUMMARY MAY REPEAT; A QUEUE MAY NOT
+
+This is the line that decided everything else, and it is already this app's
+practice rather than a new idea.
+
+**The headcount is a summary, so it repeats.** It joins the head of each league
+panel — one line — because those are the landlord's two questions and CLAUDE.md
+already pairs them: *the headcount sells the room, the league is what keeps
+it*. It also stays on a venue card and on a Past gigs card. None of the three
+can disagree, because `library.headcounts` is worked out once on the server.
+
+**"What the room asked for" is a queue, so it moved.** Yes keeps an idea, No
+bins it — and a triage list drawn in two places is two lists that disagree
+about what has been dealt with, which is what the panel's own note already
+said when it insisted on living on one tab.
+
+Its old placement had a good reason — it answers *"what should I write next"*,
+so it sat above the quiz generator where that is decided — and it lost to a
+better one: this is the players' own voice, three buttons on their phones at
+the end of the night, and the players have a door now. **A one-line link stays
+on the quiz tab**, silent unless something is actually waiting, which is this
+project's own rule that "do it over there" must be a link to there.
+
+### `asksPanel({ whenEmpty })` — one panel, two pages, two right answers
+
+Drawing NOTHING when there is nothing to say was correct above the quiz
+generator: a box saying "nobody has asked for anything" on the page you open to
+write a quiz is furniture.
+
+On its own tab it is the opposite. A tab whose entire job is that list, showing
+a blank page, reads as broken to the person most likely to be checking whether
+the feature works at all — and "nothing here" has two very different causes,
+because the switch is off unless somebody turns it on. So the empty state says
+which, and links to the switch rather than naming it.
+
+One optional argument rather than a second panel, so the triage keeps one
+definition.
+
+### YOURS ONLY, FOR NOW — and the room-facing version was offered and parked
+
+The alternative was a public page per venue: the league table, the photographs,
+when you are back — with the QR on the last slide already able to send a room
+there. It would genuinely help a quizmaster sell, and it was deliberately not
+built yet: it is a new PUBLIC surface with its own questions about faces and
+team names, and none of what is built here blocks it later.
+
+The only public thing remains the existing gallery link.
+
+### What was NOT moved, and why
+
+**"That one's wrong" reports** — corrections the room sends about a question —
+were offered and left alone. They are owner-facing: a quizmaster never sees
+what their own room reported, and putting a half-built pipeline on a new door
+would have been furniture rather than a feature.
+
 ## THE LAUNCH BAR HAS ITS OWN FILE — `docs/console/launch-bar.md`
 
 Tonight, the running order, the pack tiles, the settings row, the break dials

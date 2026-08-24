@@ -8958,3 +8958,22 @@ body.landing {
 .league-panel + .league-panel { margin-top: 12px; }
 .league-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .league-head b { font-size: var(--fs-head); }
+
+/*
+ * The Photos tab's own rows. A venue card holds its nights; a night opens its
+ * strip in place, because this tab is ONLY about photographs — there is no
+ * competing "night detail" for a bay to own, which is what Past gigs has.
+ */
+.photo-night { border-top: 1px solid var(--panel-line); }
+.photo-night-top {
+  display: flex; align-items: baseline; gap: 10px; width: 100%;
+  min-height: 44px; padding: 8px 12px;
+  background: none; border: 0; color: var(--ink); font: inherit;
+  text-align: left; cursor: pointer;
+}
+.photo-night-top:hover { color: var(--hot); }
+.photo-night-body:not(:empty) { padding: 0 12px 12px; }
+/* The headcount beside the league's own count — one line, dimmed, so the two
+   numbers a landlord asks about sit together without competing. */
+.league-heads::before { content: "· "; }
+.asks-link { margin: 0 0 10px; }

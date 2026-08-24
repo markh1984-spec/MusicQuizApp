@@ -11,7 +11,9 @@ import { brandLink, brandMark, esc, menuRights, node, paintIdentity, paintNav, p
 import { accountSection, backupWarning, firstOwnerPanel, helpSection, otherRoomsPanel, settingsSection, shopSection } from './console-account.js';
 import { diarySection } from './console-diary.js';
 import { generatePanel, importPanel, quizGeneratePanel } from './console-generate.js';
-import { communityBench, leagueSection } from './console-community.js';
+import {
+  asksSection, communityBench, leagueSection, photosSection,
+} from './console-community.js';
 import { asksPanel, fillNightDetail, gigsSection } from './console-gigs.js';
 import { invoicesSection } from './console-invoices.js';
 import { gameSection, packActionsMarkup, preview, wirePackActions } from './console-packs.js';
@@ -712,10 +714,19 @@ export const TABS = [
        * switch. Generating is the owner's; wanting to know what the room asked
        * for is everybody's, and what they do about it — write their own, buy
        * one, request one — is their business rather than this panel's.
-       * `asksPanel()` draws nothing at all when there is nothing to say, so an
-       * account that never turns it on never sees it.
+       * **AND IT MOVED TO THE COMMUNITY DOOR ON 23 AUGUST 2026.** The
+       * reasoning above is still true — this answers "what should I write
+       * next" and that is decided here — and it lost to a better one: it is
+       * the players' own voice, and the players have a door now.
+       *
+       * **A LINK, NEVER A SECOND COPY.** The panel is a QUEUE: Yes keeps an
+       * idea, No bins it, and a triage list drawn in two places is two lists
+       * that disagree about what has been dealt with — which is what the note
+       * above already says. So what stays here is one line, only when
+       * something is actually waiting, which is this project's own rule that
+       * "do it over there" must be a link to there.
        */
-      wrap.appendChild(asksPanel());
+      wrap.appendChild(asksLink());
       if (can(FEATURES.GENERATE)) wrap.appendChild(quizGeneratePanel(library.generation || {}));
       if (can(FEATURES.OWN_PACKS) && !can(FEATURES.CATALOGUE)) wrap.appendChild(ownQuizPanel());
       return wrap;
@@ -840,6 +851,36 @@ export const TABS = [
     // across, and not how many nights, which only ever goes up.
     count: () => Object.keys(library.leagues || {}).length,
     render: () => leagueSection(),
+  },
+  {
+    /*
+     * PHOTOS ARE ABOUT THE PEOPLE, and Past gigs keeps its own grid.
+     *
+     * The same pictures do two jobs: there a photo is EVIDENCE, beside the
+     * headcount, the winner and the report a landlord is shown; here it is
+     * the room itself. What is NOT duplicated is the code — the strip, the
+     * bin, the "Screen only" badge and the publish control are `nightPhotos()`
+     * in `console-gigs.js`, called from both.
+     */
+    id: 'photos',
+    doors: ['community'],
+    needs: FEATURES.PHOTOS,
+    label: 'Photos',
+    blurb: 'Every picture the room took, under the venue it was taken in.',
+    render: () => photosSection(),
+  },
+  {
+    /*
+     * MOVED off the Music Quiz tab rather than copied — see `asksLink()`.
+     * No `count`: the number that matters is on the rows themselves, and a
+     * badge on a tab you visit to TRIAGE would only ever say "there is still
+     * work", which the list says better.
+     */
+    id: 'asks',
+    doors: ['community'],
+    label: 'What they asked for',
+    blurb: 'What the room voted for, from their own phones at the end of the night.',
+    render: () => asksSection(),
   },
   {
     id: 'past',
@@ -1624,6 +1665,40 @@ export function renderKeepingPlace() {
  * invisible is a thing you never knew existed. A tab its plan will never
  * include at all is simply absent.
  */
+/**
+ * "THE ROOM ASKED FOR THREE THINGS" — a line on the quiz tab, linking to the
+ * door that holds the list.
+ *
+ * **Silent unless something is waiting**, which is what makes it a pointer
+ * rather than furniture: the panel it replaced already drew nothing at all
+ * when there was nothing to say, and an empty link on the page you open to
+ * write a quiz would be a worse version of the thing that was moved.
+ *
+ * It counts what is ASKED, not what is kept. Kept ideas are a list you work
+ * through when you feel like it; unanswered ones are the thing worth being
+ * told about while you are deciding what to write.
+ */
+function asksLink() {
+  const el = node('<div></div>');
+  (async () => {
+    let data;
+    try {
+      const res = await fetch(keyed('/api/asks'));
+      data = await res.json();
+      if (!res.ok) return;
+    } catch { return; }
+    const n = (data.asked || []).length;
+    if (!n) return;
+    // `goTo()` RETURNS AN ANCHOR — it is the house helper for "do it over
+    // there", and it carries the host key with it so the link works from a
+    // console that got in on one.
+    el.replaceChildren(node(`
+      <p class="tiny asks-link">The room asked for <b>${n} thing${n === 1 ? '' : 's'}</b>
+        you have not answered — ${goTo('community', 'asks', 'have a look')}.</p>`));
+  })();
+  return el;
+}
+
 function visibleTabs() {
   /*
    * Three states, and telling the middle one from the last is the point.

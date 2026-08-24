@@ -1267,7 +1267,8 @@ MOMENTS of a night; **Community names the thing that SPANS nights**; **My
 account names the one thing that is not a night at all**, so it stays on the
 end rather than in the sequence.
 
-**COMMUNITY IS THE FIFTH, and a league is why it exists.** Asked for directly:
+**COMMUNITY IS THE FIFTH, and it holds THE PEOPLE — the league, the photos and
+what the room voted for.** Asked for directly:
 *"a fifth menu pill at the top entitled 'community', which is for things like
 quiz leagues, and all the controls for that functionality will live there."*
 A league belongs to the ROOM over a season rather than to the quizmaster on a
@@ -1280,6 +1281,42 @@ PLACE to read them. **The bay answers "is anything running" and the tab
 answers "who is winning"** — the same head/section split every other door has.
 **Ungated door, gated tab** (`needs: FEATURES.LEAGUE`), so somebody can see
 what they could buy; a door that vanishes sells nothing.
+
+**AND THEN EVERYTHING ELSE ABOUT THE PLAYERS FOLLOWED, on 23 August 2026** —
+*"photos can actually migrate to community as well now, and anything else to do
+with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
+**What they asked for**. Settled by asking, and each answer is a rule:
+
+- **ORGANISED BY VENUE, because a venue IS a community.** The Tuesday crowd and
+  the Thursday crowd are different people, a league is already per venue, and
+  every page then happens to be something you can show one landlord.
+- **THE PHOTOS MOVED AND PAST GIGS KEPT ITS GRID — that is not a duplicate.**
+  The same pictures do two jobs: on Past gigs a photo is EVIDENCE, beside the
+  headcount, the winner and the report; on Community it is the room itself.
+  **What is not duplicated is the CODE** — the strip, the bin, the "Screen
+  only" badge and the publish control are `nightPhotos()` in `console-gigs.js`,
+  called from both, so the confirm wording and the safeguard have one
+  definition. **The publish control keeps its safeguard for free**, because it
+  is drawn UNDER the photographs it would publish wherever it is called.
+- **A READ-ONLY SUMMARY MAY REPEAT; A QUEUE MAY NOT.** That is the line, and it
+  decides both halves: the headcount is a summary, so it joins the league
+  panel's head (the landlord's two questions, together) and still sits on a
+  venue card and a Past gigs card, all from one server-side figure. **"What the
+  room asked for" is a QUEUE — Yes keeps it, No bins it — so it MOVED off the
+  Music Quiz tab rather than being copied**, leaving a one-line link that shows
+  only when something is waiting.
+- **A NIGHT'S PHOTOS ARE FETCHED WHEN THE NIGHT IS OPENED, never up front.** A
+  photo list is a request per night; a wall that loaded twenty on arrival would
+  spend a pub's wifi on pictures nobody asked to see.
+- **`asksPanel({ whenEmpty })` — the same panel answers two pages.** Drawing
+  NOTHING was right above the quiz generator and is wrong on a tab whose whole
+  job is the list: a blank page reads as broken to the person checking whether
+  the feature works. One optional argument, so the triage keeps one definition.
+- **IT IS YOURS ONLY, FOR NOW.** Community is a quizmaster's view of their own
+  rooms; the only public thing is still the existing gallery link. A
+  room-facing page per venue — the table on a wall, a link the regulars check —
+  was offered and deliberately parked: it is a new PUBLIC surface with its own
+  questions about faces and team names, and nothing here blocks it later.
 
 - **A fact is on ACCOUNT, a switch is on SETTINGS, a price is in the SHOP** —
   or Settings becomes a bin.
@@ -1601,6 +1638,7 @@ settings row and the break dials. Split off on 23 August 2026 when
 - WHAT HAPPENS IN THE GAPS — a break plan, per gap in the night
 - THE GAPS ARE A DIAL ON THE PACK, NOT A STRIP UNDER IT
 - FIVE DOORS, and why Community is the fifth
+- WHAT MOVES TO COMMUNITY — a summary may repeat, a queue may not
 - THE BAND ABOVE LAUNCH IS KEPT CLEAR, and one row holds the night
 - THE BAR'S OWN TIDY-UP — and a drag with no tap is a broken control
 - A PACK WEARS ITS OWN SUBJECT
@@ -2029,7 +2067,7 @@ public/                the screens; *-bingo.js files hold the bingo variants
   assets/schemes.js    a quizmaster's own two colours, shared with the server
   assets/break-parts.js  what happens in each gap of a night, shared with the server
   assets/console-breaks.js  the gap dial in each pack tile's corner
-  assets/console-community.js  the Community door: quiz leagues, per venue
+  assets/console-community.js  the Community door: leagues, photos, what they asked for
   assets/console-pick.js   a dropdown that is narrow shut and wide open
   assets/diary.js      what is on and when — residencies projected, one-offs typed
   assets/chat.js       the chat sheet on a player's phone, online nights only
