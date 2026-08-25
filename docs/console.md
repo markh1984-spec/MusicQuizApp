@@ -773,9 +773,9 @@ scrolling page again. The one-scroller design broke without a single visual
 Flex column, `.consolecols { flex: 1 1 0; min-height: 0 }`, everything else
 `flex: 0 0 auto`. Any number of banners; nothing stretches but the columns.
 
-### The shelf grid is auto-fill with a floor, because six columns squeezed the poster under its own content
+### The shelf is six across — and the poster was fixed by content, not width
 
-`repeat(6, minmax(0, 1fr))` beside the 190px tab rail made every shut card
+`repeat(6, minmax(0, 1fr))` beside the 190px tab rail makes every shut card
 146px square. That held until the round squares grew to 28px (asked for, for
 dragging) — then the poster could no longer contain its own stack: titles
 sliced mid-word, the meta wrapped to three lines, the dots clipped, and
@@ -783,12 +783,26 @@ because `justify-content: flex-end` spills overflow off the TOP, the
 worst-case card ("Last Ten Years") lost its **name** — the one thing a shelf
 card exists to show — with nothing thrown anywhere.
 
-`repeat(auto-fill, minmax(150px, 1fr))`: the browser drops a column rather
-than squeezing nine. On this door that is five across at ~178px — and since
-the Tonight slots are ~190px now, the five-column card matches "the thing
-that goes in the hole" better than the 146px card ever did, which was the
-original argument for six. A two-line clamp on the shut card's meta guards
-the narrow case, the same last-resort argument as the title's own clamp.
+An auto-fill floor (five across at ~178px) lasted a day: *"the packs have to
+be 6 in the section below the bays and not 5"* — the shelf mirrors the six
+bays, and that correspondence outranks card size. So the fix moved to the
+CONTENT, where it should have started, and three thefts came back:
+
+- **the title's own width** — a stale `padding-left: 44px` "to clear the pin"
+  survived from when the title lived at the TOP of the card; on the poster it
+  anchors to the bottom, the pin is hover-only, and the rule was costing
+  every name a third of its line for a collision that cannot happen;
+- **the meta's second line** — a two-line clamp, the title's own last-resort
+  argument;
+- **the line itself** — "· 3 rounds" was printed 20px above three numbered
+  round squares that say exactly that. The duplication rule in miniature,
+  and dropping it is what lets "Never played" arrive whole instead of as
+  "Never…". A bingo card keeps its track count: it has no squares to say it.
+
+Result, measured: six across at 146px, every title whole, meta two clean
+lines, dots inside the card, at 1500 and 1280 — and on a phone, where the
+"clamped" flag is a false positive from the invisible 44px tap-target pseudo
+inflating `scrollHeight`, the text itself fits its box on every card.
 
 ### The finish layer — browser surfaces, drawn on purpose
 

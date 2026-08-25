@@ -875,13 +875,14 @@ in now"*.
   bar — and dropped the columns into an implicit row, quietly turning the
   fixed frame back into a scrolling page. Flex takes any number of banners;
   only `.consolecols` grows.
-- **THE SHELF GRID IS AUTO-FILL WITH A 150px FLOOR — do not fix the column
-  count.** Six fixed columns beside the 190px rail squeezed cards to 146px,
-  and the 28px round squares (asked for) then overflowed the square poster:
-  titles sliced mid-word and `flex-end` pushed the worst overflow off the
-  TOP, so one card lost its name entirely, silently. A floor drops a column
-  instead of squeezing nine — five across at ~178px, which also matches the
-  Tonight slots better than 146 ever did.
+- **THE SHELF IS SIX ACROSS, BY DECISION — it mirrors the six bays above
+  it.** *"The packs have to be 6 in the section below the bays and not 5."*
+  An auto-fill floor lasted a day. What actually made the 146px poster hold
+  its content was never width: the meta's two-line clamp, dropping the
+  "· N rounds" text that duplicated the round squares beneath it, and the
+  title getting back the 44px a stale pin-clearance rule stole — which is
+  what had sliced titles mid-word and pushed one card's NAME off the top,
+  silently. **Do not "fix" a squeezed card by dropping a column.**
 - **THE FINISH LAYER at the foot of `style.css` owns selection, caret,
   `:focus-visible` and the card hover** — one named block, so the next
   control gets finished there rather than growing its own scattered rules.

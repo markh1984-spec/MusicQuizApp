@@ -17,10 +17,13 @@ keeping current functionality?"* A batched screenshot sweep of all five doors
 found two real layout bugs before anything cosmetic — the right order to fix.
 `main`'s two-row grid stretched the doorhead ~160px the moment a banner
 rendered above it and broke the one-scroller frame (flex column now); and the
-fixed six-column shelf squeezed the square posters under their own content
-once the round squares grew to 28px — titles sliced mid-word, one card lost
-its NAME off the top, silently (auto-fill with a 150px floor now, five across
-at ~178px, which matches the Tonight slots better than 146 did). Then the
+six-column shelf squeezed the square posters under their own content once the
+round squares grew to 28px — titles sliced mid-word, one card lost its NAME
+off the top, silently. An auto-fill floor (five across) lasted a day — *"the
+packs have to be 6 in the section below the bays"* — so six is the rule and
+the CONTENT was fixed instead: the title got back 44px a stale pin-clearance
+rule stole, the meta gained a two-line clamp, and "· N rounds" left the meta
+line because the numbered round squares beneath it already say it. Then the
 finish layer: `::selection` and the caret in the account's own colour,
 `:focus-visible` extended to the chrome that grew up without it, and the shut
 card answering the hand with a lift and a real shadow. All in

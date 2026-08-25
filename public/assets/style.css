@@ -2221,16 +2221,15 @@ body.console .panel::after { bottom: -4px; }
    empty cells. It reorders the shelf visually rather than in the DOM, which is
    the right trade here: this grid is a thing you SCAN, and a hole in it reads
    as something failing to load. */
-/* AUTO-FILL WITH A 150px FLOOR, not a fixed six. Six equal columns beside the
-   190px tab rail squeezed every card to 146px — and the moment the round
-   squares grew to 28px (asked for, for dragging) the square poster could no
-   longer hold its own content: titles sliced mid-word, the meta wrapped to
-   three lines, and `justify-content: flex-end` pushed the WORST overflow off
-   the TOP, so "Last Ten Years" lost its name entirely. A floor means the
-   browser drops a column instead of squeezing nine; on this door that is five
-   across at ~178px — which also matches the Tonight slots (~190px) far better
-   than 146 did, and matching the hole is why the width was chosen at all. */
-.pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; grid-auto-flow: dense; }
+/* SIX ACROSS, BY DECISION — *"the packs have to be 6 in the section below the
+   bays and not 5."* The shelf mirrors the six Tonight slots above it, so a
+   row of packs reads as the row of holes they go into. An auto-fill floor was
+   tried for a day (the 146px card had stopped holding its own content) and
+   the host put six back; what actually made the poster fit again was not
+   width but the two content fixes beside this rule — the meta's two-line
+   clamp, and the title getting its stolen 44px back (see `.pack-title`'s own
+   note). Do not "fix" a squeezed card by dropping a column again. */
+.pack-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; grid-auto-flow: dense; }
 
 
 /* ---- ONE PACK OPEN AT A TIME, and the rest are names.
@@ -2495,8 +2494,15 @@ body.console .panel::after { bottom: -4px; }
   border-color: color-mix(in srgb, var(--hot) 55%, transparent);
 }
 .pack-pin.on svg { transform: none; }
-/* The title has to clear it, or a two-line pack name runs under the pin. */
-.pack-card.shut .pack-title { padding-left: 44px; }
+/* THE TITLE GOT ITS 44px BACK. This was `padding-left: 44px` "to clear the
+   pin" — written when the title lived at the TOP of the card. On the square
+   poster the title anchors to the BOTTOM, the pin's 44px tap box is flush
+   top-left, and the pin is invisible until hover besides — so the rule was
+   costing every title a third of its width (114px down to 70) for a
+   collision that can no longer happen. That theft is what wrapped "2000-2010
+   Pop, Indie and Rock" to a third line and pushed the whole stack out of the
+   146px card. Symmetric now, so the name is genuinely centred. */
+.pack-card.shut .pack-title { padding-left: 6px; padding-right: 6px; }
 
 /* ---- A PACK WEARS ITS OWN SUBJECT.
  *

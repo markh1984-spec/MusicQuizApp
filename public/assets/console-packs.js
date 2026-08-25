@@ -1145,9 +1145,9 @@ export function packCard(kind, pack) {
   // the pack.
   const ownersJob = can(FEATURES.CATALOGUE);
 
-  const roundCount = (pack.rounds || []).length;
+  const roundCount = (pack.rounds || []).length; // said by the round squares, so not by the meta line
   const detail = kind === 'quiz'
-    ? `${pack.questionCount} question${pack.questionCount === 1 ? '' : 's'} · ${roundCount} round${roundCount === 1 ? '' : 's'}`
+    ? `${pack.questionCount} question${pack.questionCount === 1 ? '' : 's'}`
     : `${pack.trackCount} track${pack.trackCount === 1 ? '' : 's'}`;
 
   const played = playedLine(pack);
