@@ -40,6 +40,18 @@ twenty-one seconds a question, and twelve presses to get from 20 to 30 makes
 the arrows decoration. Typing still takes any number in range — nothing calls
 `checkValidity()` and the field is in no form.
 
+**The first press then still gave 5**, reported straight back, because the 20
+on that field is a PLACEHOLDER and a browser steps an empty number input to its
+`min` — both arrows gave 5, which is the tell that nothing was being stepped.
+**Blank is not nothing**, so the fix is not prefilling 20: an empty field means
+*leave each quiz at its own pace*, and writing 20 over that would override a
+pack author's choice on every night. The field seeds itself with the number it
+is already SHOWING at the moment somebody deliberately reaches for it — a
+`pointerdown`, or an arrow key — and never on a tab through. Measured with a
+real mouse on the real spinner: 25 up, 30 on the next, 15 down, and the launch
+sends 25 on the wire. `state.questionSeconds` had no unit test until this gave
+it a reason to; all three rungs of its fallback are pinned now.
+
 **Live as of 24 August 2026 — the hole in slot 2, and three faults under one
 sentence:**
 

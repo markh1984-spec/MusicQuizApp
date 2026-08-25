@@ -2045,3 +2045,33 @@ test('a game already running through a redeploy does not throw', () => {
   assert.equal(typeof mine.you.score, 'number');
   assert.equal(typeof mine.you.position, 'number');
 });
+
+/**
+ * THE HOST'S SECONDS, AND WHAT A BLANK FIELD MEANS.
+ *
+ * `state.questionSeconds` is Tonight's *Secs per Q* box, set once at launch.
+ * Untested until 24 August 2026, and it became worth testing that day: the
+ * arrows on that box now step by five and seed themselves from the number
+ * they are showing, so the field writes a value where it used to stay empty.
+ *
+ * The three lines below are the contract the console is relying on — a blank
+ * field leaves the pack alone, a number replaces the PACK's default, and a
+ * round authored with its own clock beats both, because a longer round is a
+ * round worth more points and that must stay the pack author's call.
+ */
+test('the host\'s seconds replace the pack default, and a round\'s own beats both', () => {
+  const quiz = makeQuiz();
+  quiz.rounds[1].questionSeconds = 45;
+
+  const blank = new Engine({ quiz, now: () => START });
+  assert.equal(blank.questionSeconds(0), 20, 'blank leaves the quiz at its own pace');
+
+  const host = new Engine({ quiz, now: () => START });
+  host.state.questionSeconds = 25;
+  assert.equal(host.questionSeconds(0), 25, "the host's choice replaces the pack default");
+  assert.equal(host.questionSeconds(1), 45, "a round authored with its own clock wins");
+
+  const zero = new Engine({ quiz, now: () => START });
+  zero.state.questionSeconds = 0;
+  assert.equal(zero.questionSeconds(0), 20, '0 is the blank field, not a zero-second question');
+});

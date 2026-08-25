@@ -789,14 +789,9 @@ export function launchBar() {
         <!-- "Secs per Q", abbreviated on request: the full words were the
              widest label on the bar by half, for a field holding two digits. -->
         <label class="pack-shape" title="Seconds per question. Blank leaves each quiz at its own pace."><span class="set-word">Secs per Q</span>
-        <!-- step=5 - asked for on 24 August 2026: the arrows move it five
-             seconds at a time, because nobody has ever wanted twenty-one
-             seconds a question, and twelve presses to get from 20 to 30 is a
-             control that works and is not worth using. Typing still takes any
-             number in range - the value is read straight off the field and
-             never through checkValidity() - so a hand-typed 22 is honoured.
-             NOTE: no backticks in here. This is inside a template literal,
-             and a stray one made the whole console a syntax error once. -->
+        <!-- step=5, and the arrows seed themselves - see seedSeconds() below.
+             NOTE: no backticks in here. This is a template literal, and a
+             stray one made the whole console a syntax error once. -->
           <input type="number" class="seconds-pick" min="5" max="120" step="5" placeholder="20">
         </label>
         <!-- "Game", not "While they wait" — and the option blurb lives in
@@ -2020,6 +2015,31 @@ export function launchBar() {
   if (secondsPick) secondsPick.value = night.questionSeconds || '';
   if (soundPick) soundPick.value = night.lobbySound ? 'on' : 'off';
   if (playPick) playPick.value = night.playing || 'solo';
+  /**
+   * THE ARROWS STEP FROM WHAT YOU CAN SEE, NOT FROM EMPTY — *"that field
+   * displays 20 but on first click it goes to 5; it should go to 25 up and 15
+   * down."* The 20 is a PLACEHOLDER, so the field is genuinely empty and a
+   * browser steps an empty number input to its `min`. Both arrows gave 5,
+   * which is the tell that nothing was being stepped at all.
+   *
+   * **BLANK IS NOT NOTHING, so the fix is not prefilling 20**: an empty field
+   * means *leave each quiz at its own pace*, and writing 20 over that would
+   * override a pack author's choice on every night. It is seeded with the
+   * number it is ALREADY SHOWING the moment somebody deliberately reaches for
+   * it — a press, or an arrow key — and never on a tab through.
+   */
+  const seedSeconds = () => {
+    if (!secondsPick || secondsPick.value !== '') return;
+    secondsPick.value = secondsPick.placeholder || '20';
+    night.questionSeconds = Number(secondsPick.value) || 0;
+  };
+  // `pointerdown` rather than `focus`: it lands BEFORE the browser steps the
+  // value, which `focus` on some engines does not, and it means a stray tab
+  // through the bar never commits a number.
+  secondsPick?.addEventListener('pointerdown', seedSeconds);
+  secondsPick?.addEventListener('keydown', (ev) => {
+    if (ev.key === 'ArrowUp' || ev.key === 'ArrowDown') seedSeconds();
+  });
   secondsPick?.addEventListener('input', (ev) => {
     const n = Math.max(5, Math.min(120, Number(ev.target.value) || 0));
     night.questionSeconds = ev.target.value === '' ? 0 : n;

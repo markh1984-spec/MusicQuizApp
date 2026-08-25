@@ -1636,6 +1636,39 @@ and the number gets typed instead.
 clamp at both ends: 115 up gives 120 and stays there, 10 down gives 5 and stays
 there.
 
+#### And then the first press still gave 5, because the 20 is a placeholder
+
+Reported straight back: *"that same field displays 20 but on first click it
+goes to 5 — it should go to 25 on an up click and 15 on a down."* The field is
+genuinely EMPTY and the 20 is its placeholder, and a browser steps an empty
+number input to its `min`. Both arrows gave 5, which is the tell: nothing was
+being stepped at all, it was being initialised.
+
+**Blank is not nothing, which is why the fix is not prefilling 20.** An empty
+field means *leave each quiz at its own pace* — `engine.questionSeconds()`
+falls through to the pack's own number — and a bar that quietly wrote 20 over
+that would be overriding a pack author's choice on every night without anybody
+asking it to. (A ROUND authored with its own clock beats both either way, and
+must: a longer round is a round worth more points.)
+
+So the field seeds itself with **the number it is already showing**, at the
+moment somebody deliberately reaches for it and not before — a `pointerdown`
+on the control, or an arrow key while it has focus. `pointerdown` rather than
+`focus` for two reasons: it lands before the browser steps the value, which
+`focus` on some engines does not, and it means tabbing through the bar never
+commits a number to the night.
+
+Measured with a real mouse on the real spinner, from a fresh console showing
+the placeholder: **first up click 25, second 30, first down click 15**, the
+keyboard the same, focus-then-Tab leaves it empty, and clearing it back to
+blank still means the pack's own pace. The launch then sends
+`questionSeconds: 25`, watched on the wire.
+
+`state.questionSeconds` had no unit test at all until this change gave the
+field a reason to write one — `test/engine.test.js` now pins all three rungs
+of that fallback, including that 0 means blank rather than a zero-second
+question.
+
 **Typing still takes any number in range.** A hand-typed 22 sets
 `validity.stepMismatch`, which would matter if anything called
 `checkValidity()` — nothing does, the field is in no `<form>`, and the value is
