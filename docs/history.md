@@ -10,6 +10,39 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 24 August 2026 — the gap dial died again, and this time
+something presses it:**
+
+Reported as *"the change what appears on the phones at the end of each segment
+click has died again"*. `setGaps()` had been lifted out of `console-tonight.js`
+into `console-breaks.js` earlier the same day, to keep a line budget honest —
+a mechanical move, correct about every line it carried — and its last statement
+was `paintOrder()`, which belongs to the launch bar and does not exist in the
+module it landed in. The factory it moved into had been given a `repaint`
+parameter for exactly that call, and the call was never rewired.
+
+**The dial drew perfectly.** The `ReferenceError` only fires when somebody
+presses it, and the click handler's own catch eats it — so `node --check`, all
+1,517 tests, `pub-unchanged` and `drag-check`'s own real-browser drags every
+one of them passed. That last is the instructive one: **"we drive a real
+browser" is not the same claim as "we press the controls."**
+
+Two guards, both verified by putting the fault back:
+
+- **`drag-check.mjs` presses the dial, twice.** Once proves the handler runs;
+  the second press proves it is STEPPING rather than initialising — the same
+  distinction the seconds field turned out to be hiding.
+- **`imports-present.test.js` forbids any module but the bar naming a
+  `paint*`.** A leaf is handed a `repaint`; it never reaches for one.
+
+**And the general version was written first and thrown away.** *"Does any
+module call a name another declares without importing it"* found sixty
+falsehoods and one truth — it cannot see parameters, destructured options bags
+or callbacks, which is how a leaf is meant to receive these. A test needing a
+growing exceptions list has stopped being a test, which this repo had already
+written down twice and has now learned a third time. Full account in
+[`docs/checks.md`](checks.md).
+
 **Also live on 24 August 2026 — the settings row stopped moving:**
 
 Three asks off one screenshot: *"if we can have the drop down menus actually

@@ -96,3 +96,59 @@ test('EVERY SHARED HELPER A MODULE CALLS IS ONE IT IMPORTS', () => {
     + 'so it parses fine, passes node --check and draws a page with a control silently '
     + 'absent from it — which is how a broken Launch once reached the live app.');
 });
+
+/**
+ * AND A MOVED BODY MUST NOT CALL THE PAINT FUNCTION IT LEFT BEHIND.
+ *
+ * ---
+ *
+ * The same class of fault as above in a different disguise, found on
+ * 24 August 2026 and reported as *"the change what appears on the phones at
+ * the end of each segment click has died again"*.
+ *
+ * `setGaps()` was moved out of `console-tonight.js` into `console-breaks.js`
+ * — a mechanical move, right about every line it carried — and its last line
+ * said `paintOrder()`, which belongs to the launch bar and does not exist in
+ * the module it landed in. The factory it moved into had been given a
+ * `repaint` parameter for precisely that call, and the call was never
+ * rewired.
+ *
+ * **Nothing threw at load.** The name is only read when somebody presses the
+ * dial, the click handler's own catch swallowed the `ReferenceError`, and
+ * every dial in the bar drew perfectly and did nothing. `node --check`,
+ * `browser-parses`, the full suite, `pub-unchanged` and `drag-check` all
+ * passed — not one of them presses a dial.
+ *
+ * ---
+ *
+ * **A GENERAL VERSION OF THIS WAS WRITTEN FIRST AND THROWN AWAY.** "Does any
+ * module call a name another module declares without importing it" produced
+ * sixty findings and one true one: it cannot see function parameters,
+ * destructured options bags or callbacks, which is exactly how a leaf module
+ * is supposed to receive these. Understanding those needs a real parser, and
+ * a test needing an exceptions list has stopped being a test — which is the
+ * conclusion the check above it and `markup-balance.test.js` both already
+ * reached, and which I had to reach again.
+ *
+ * So this is the SHORT LIST THAT NEVER LIES: the console's paint functions
+ * are owned by the launch bar and the shell, they are what a moved body
+ * reaches for, and no other module has any business naming one.
+ */
+const PAINTERS = ['paintOrder', 'paintSettings', 'paintGaps', 'paintGo', 'paintLive', 'paintThen', 'paintInTonight', 'paintMixedOrder'];
+const PAINTERS_LIVE_IN = new Set(['console-tonight.js', 'console.js']);
+
+test('ONLY THE BAR ITSELF CALLS THE BAR\'S PAINT FUNCTIONS', () => {
+  const strays = [];
+  for (const { name, src } of modules()) {
+    if (PAINTERS_LIVE_IN.has(name)) continue;
+    const body = code(src);
+    for (const painter of PAINTERS) {
+      if (!new RegExp(`(?<![\\w.$])${painter}\\s*\\(`).test(body)) continue;
+      strays.push(`${name} calls ${painter}() — that belongs to the launch bar`);
+    }
+  }
+  assert.deepEqual(strays, [],
+    `${strays.join('; ')}. A body moved between modules keeps the names of the one it `
+    + 'left: the file still parses, the page still draws, and the control does nothing '
+    + 'the first time somebody presses it. Take a `repaint` callback instead.');
+});

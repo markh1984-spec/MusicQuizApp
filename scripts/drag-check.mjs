@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * DOES TONIGHT'S DRAG AND DROP STILL WORK — with a REAL browser drag.
+ * DOES TONIGHT'S DRAG AND DROP STILL WORK — with a REAL browser drag, and do
+ * the controls on its tiles still DO anything when pressed.
  *
  * ---
  *
@@ -125,6 +126,39 @@ try {
   await drag('.lb-rd, .mix-rd', '[data-probe="1"]');
   check('a round out to a later slot', await shape(), 'doors PACK PACK empty PACK empty empty');
 
+  /*
+   * AND THE CONTROLS ON THOSE TILES ARE PRESSED, because nothing else in this
+   * repo presses one.
+   *
+   * The gap dial has now died twice in a way every static check waves through
+   * — first a lost `import`, then a moved body still calling the launch bar's
+   * `paintOrder()` from a module that has no such function. Both times the
+   * dial DREW perfectly, both times the `ReferenceError` landed in the click
+   * handler's own catch, and both times `node --check`, the full suite,
+   * `pub-unchanged` and this script's own drags all passed.
+   *
+   * A press is the only thing that can see it. Cycling twice is deliberate:
+   * one press proves the handler runs, and the second proves it is stepping a
+   * dial rather than initialising one — which is the same distinction the
+   * seconds field turned out to be hiding.
+   */
+  const dialFaces = () => page.evaluate(() =>
+    [...document.querySelectorAll('.gap-dial')].map((d) => d.textContent.trim()).join(' '));
+
+  const dials = await page.evaluate(() => document.querySelectorAll('.gap-dial').length);
+  check('a gap dial exists to press', dials > 0 ? 'yes' : 'no', 'yes');
+  if (dials) {
+    const first = await dialFaces();
+    await page.locator('.gap-dial').first().click();
+    await wait(250);
+    const second = await dialFaces();
+    check('pressing a gap dial changes it', second === first ? 'nothing happened' : 'changed', 'changed');
+    await page.locator('.gap-dial').first().click();
+    await wait(250);
+    const third = await dialFaces();
+    check('a second press moves it on again', third !== second && third !== first ? 'changed' : `stuck on ${third}`, 'changed');
+  }
+
   check('no console errors', errors.join(' | ') || 'none', 'none');
   await browser.close();
 } finally {
@@ -132,6 +166,6 @@ try {
 }
 
 console.log(failures
-  ? `\n${failures} FAILED — a drag on the launch bar is broken.\n`
-  : '\nEvery drag landed where it was aimed.\n');
+  ? `\n${failures} FAILED — something on the launch bar is broken.\n`
+  : '\nEvery drag landed where it was aimed, and every dial answered.\n');
 process.exit(failures ? 1 : 0);

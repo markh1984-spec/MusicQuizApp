@@ -115,3 +115,67 @@ the one shipped feature whose happy path is still unproven.
 
 ---
 
+
+## NOTHING IN THIS REPO PRESSED A CONTROL, and a dead one draws perfectly
+
+The gap dial — the little symbol in each pack tile's corner that says what the
+phones do in that gap — died twice inside a week, from two unrelated causes,
+and on both occasions every check in this repo passed.
+
+**The first time it was a lost `import`.** A scripted header rewrite of
+`console-breaks.js` ate `import { esc, node } from './client.js';`. The file
+parsed, the suite stayed green, and the launch bar drew with no dials on it at
+all: four swallowed `ReferenceError`s and nothing on screen to say a control
+was missing. `test/imports-present.test.js` came out of that.
+
+**The second time it was a moved body.** `setGaps()` was lifted out of
+`console-tonight.js` into `console-breaks.js` to keep a line budget honest — a
+mechanical move, correct about every line it carried — and its last statement
+was `paintOrder()`, which belongs to the launch bar and does not exist in the
+module it landed in. The factory it moved into had been given a `repaint`
+parameter for exactly that call, and the call was never rewired.
+
+**Both faults are the same shape, and it is a shape this repo keeps meeting:**
+a name that is only read when a human presses something. The dial DREW
+perfectly both times. The `ReferenceError` fires inside the click handler,
+where the handler's own catch eats it. So:
+
+- `node --check` passes — the file is valid JavaScript.
+- `browser-parses.test.js` passes — for the same reason.
+- The full suite passes — nothing in it constructs a launch bar.
+- `pub-unchanged.mjs` says IDENTICAL — no payload changed, and none did.
+- `drag-check.mjs` passed — it drove a real browser and never pressed a dial.
+
+That last one is the instructive one. A script that opens a real Chromium and
+performs real mouse drags still proved nothing about a button, because it was
+never asked to. **"We drive a real browser" is not the same claim as "we press
+the controls."**
+
+### What was added
+
+**`drag-check.mjs` presses the dial, twice.** Once proves the handler runs at
+all; the second press proves it is STEPPING the dial rather than initialising
+it — the same distinction the seconds field turned out to be hiding, where an
+empty number input stepped to its `min` and looked like a working arrow.
+Verified by putting `paintOrder()` back: three failures, naming the dial that
+stuck and the `ReferenceError` behind it.
+
+**`imports-present.test.js` forbids any module but the bar naming a `paint*`.**
+The console's paint functions belong to `console-tonight.js` and `console.js`,
+they are precisely what a moved body reaches for, and no leaf has business
+calling one — a leaf is HANDED a `repaint` callback instead.
+
+### And the general version was written first, and thrown away
+
+The obvious test is *"does any module call a name another module declares,
+without importing it?"* It was written, it ran, and it produced sixty findings
+of which one was real. It cannot see function parameters, destructured options
+bags or callbacks — which is exactly how a leaf module is supposed to receive
+these things — so `segmentsNow()`, `repaint()`, `dragging()`, `packOf()`,
+`act()` and `minor()` were all flagged for being handed in correctly.
+
+Understanding those needs a real parser. **A test needing a growing exceptions
+list has stopped being a test** — which is the conclusion `imports-present.js`
+had already written down about itself, and `markup-balance.test.js` about
+counting tags, and which had to be reached a third time before it stuck. The
+short list that never lies beats the clever one that needs arguing with.

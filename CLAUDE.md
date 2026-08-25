@@ -1358,7 +1358,8 @@ right of the pack ONCE LOADED."*
   budget being raised a fifth time — `breakPlumbing({ night, segmentsNow,
   repaint })`, handed what it needs so the module stays a leaf. **Destructured
   ABOVE every reader**: a `const` in its temporal dead zone throws when the
-  line RUNS, and the catch swallows it.
+  line RUNS, and the catch swallows it. **A moved body keeps the names of the
+  home it left** — this one still called `paintOrder()`; see *Checks*.
 - **A PACK TILE LIGHTS UP TOO — AND ONLY WHERE THE DROP WILL BE TAKEN.**
   `moveRoundToSlot()` refuses a bingo game or a DIFFERENT pack, so a tile that
   lit and then did nothing would be worse than one that never lit: it promised.
@@ -2902,6 +2903,16 @@ account is in [`docs/checks.md`](docs/checks.md):**
 - **A TEST THAT NEVER RUNS THE ARTEFACT PROVES NOTHING ABOUT IT.** Reading
   `server.js` as a string to check a route exists is how a broken Launch
   reached the live app with 1,150 tests passing.
+- **NOTHING IN THIS REPO PRESSED A CONTROL, and a dead one draws perfectly.**
+  A gap dial died twice in a week — a lost `import`, then a moved body calling
+  the bar's `paintOrder()` from a module without one. Both are a
+  `ReferenceError` on the PRESS, eaten by the click handler's catch, so every
+  check passed. **`drag-check.mjs` presses the dial TWICE** — once proves the
+  handler runs, twice proves it steps rather than initialises — and
+  `imports-present.test.js` forbids any module but the bar naming a `paint*`.
+  **A general "every call resolves" test was thrown away**: it cannot see
+  parameters or destructured callbacks, which is how a leaf is MEANT to be
+  handed these, so it found sixty falsehoods and one truth.
 - **IMPORTING FROM A PAGE'S OWN MODULE RUNS THAT PAGE'S OWN BOOT CODE.**
   `console-packs.js` importing three helpers from `editor.js` ran `editor.js`'s
   top-level `#quizPick` listener on `/console`, where it does not exist — the

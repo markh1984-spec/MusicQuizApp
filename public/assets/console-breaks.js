@@ -326,7 +326,18 @@ export function breakPlumbing({ night, segmentsNow, repaint }) {
      * control whose whole job is saying which gap is not ordinary.
      */
     night.breaks = cleanPlan(next);
-    paintOrder();
+    /*
+     * `repaint`, NOT `paintOrder` — this body was MOVED here out of the
+     * launch bar and it carried the old home's function name with it. Nothing
+     * threw at load, because the name is only read when somebody presses the
+     * dial; the click handler's own catch swallowed it, and every dial in the
+     * bar drew perfectly and did nothing. Reported as *"the change what
+     * appears on the phones click has died again"*.
+     *
+     * That is the whole reason this factory takes a `repaint` at all: a leaf
+     * module must be HANDED the way back, never reach for one.
+     */
+    repaint();
   }
 
   /* A gap's current pair, so writing the phone half never silently resets a

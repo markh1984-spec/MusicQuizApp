@@ -271,7 +271,22 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * drag reasoning left `docs/console/launch-bar.md` for `docs/console/drag.md`
  * — so what landed HERE is the rules alone.
  */
-const BUDGET = 176_500;
+/*
+ * 177_500 ON 24 AUGUST 2026, for one bullet under *Checks*, and it is the
+ * cheapest 800 bytes in this file: **nothing in this repo pressed a control,
+ * and a dead control draws perfectly.** The gap dial died twice inside a week
+ * — a lost `import`, then a moved body still calling the launch bar's
+ * `paintOrder()` from a module that has none — and on both occasions
+ * `node --check`, the full suite, `pub-unchanged` and `drag-check`'s own real
+ * browser drags all passed, because a `ReferenceError` on the PRESS lands in
+ * the click handler's catch.
+ *
+ * The bullet stops a change (`drag-check.mjs` presses the dial twice now, and
+ * no module but the bar may name a `paint*`) and it records the test that was
+ * written and thrown away, so nobody writes it again. The full account is in
+ * `docs/checks.md`; what is here is the rule.
+ */
+const BUDGET = 177_500;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
