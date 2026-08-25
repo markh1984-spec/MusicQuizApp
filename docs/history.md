@@ -35,7 +35,10 @@ and shrinks per line afterwards**; `flex-wrap: nowrap` above 1150px is what
 lets the shrink work, with headings ellipsising rather than wrapping.
 
 **"Look" is "Appearance"** — both name the same thing and only one is a noun on
-sight.
+sight. And **the Secs per Q arrows move by five**: nobody has ever wanted
+twenty-one seconds a question, and twelve presses to get from 20 to 30 makes
+the arrows decoration. Typing still takes any number in range — nothing calls
+`checkValidity()` and the field is in no form.
 
 **Live as of 24 August 2026 — the hole in slot 2, and three faults under one
 sentence:**

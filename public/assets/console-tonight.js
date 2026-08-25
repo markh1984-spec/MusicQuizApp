@@ -789,7 +789,15 @@ export function launchBar() {
         <!-- "Secs per Q", abbreviated on request: the full words were the
              widest label on the bar by half, for a field holding two digits. -->
         <label class="pack-shape" title="Seconds per question. Blank leaves each quiz at its own pace."><span class="set-word">Secs per Q</span>
-          <input type="number" class="seconds-pick" min="5" max="120" placeholder="20">
+        <!-- step=5 - asked for on 24 August 2026: the arrows move it five
+             seconds at a time, because nobody has ever wanted twenty-one
+             seconds a question, and twelve presses to get from 20 to 30 is a
+             control that works and is not worth using. Typing still takes any
+             number in range - the value is read straight off the field and
+             never through checkValidity() - so a hand-typed 22 is honoured.
+             NOTE: no backticks in here. This is inside a template literal,
+             and a stray one made the whole console a syntax error once. -->
+          <input type="number" class="seconds-pick" min="5" max="120" step="5" placeholder="20">
         </label>
         <!-- "Game", not "While they wait" — and the option blurb lives in
              the open menu now rather than on the face, so shut it reads

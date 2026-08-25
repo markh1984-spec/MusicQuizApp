@@ -1624,6 +1624,25 @@ has to hold eight controls, spent saying one thing twice. They are the two
 settings of ONE picked bingo game and they sit side by side, so the name on the
 first says whose both are. That alone bought most of the eighty pixels back.
 
+### The seconds arrows move by five
+
+*"Can we make the up and down arrows on Secs per Q change it by 5 instead of
+by 1."* `step="5"` on the field, and it is the difference between a control
+that works and one worth using: nobody has ever wanted twenty-one seconds a
+question, and twelve presses to get from 20 to 30 means the arrows are decoration
+and the number gets typed instead.
+
+`min="5"` means the steps land on 5, 10, 15, 20 — measured, along with the
+clamp at both ends: 115 up gives 120 and stays there, 10 down gives 5 and stays
+there.
+
+**Typing still takes any number in range.** A hand-typed 22 sets
+`validity.stepMismatch`, which would matter if anything called
+`checkValidity()` — nothing does, the field is in no `<form>`, and the value is
+read straight off `.value` by the field's own `input` listener. So the arrows
+are a coarse control and the keyboard is the fine one, which is the right way
+round for a bar somebody drives with a thumb.
+
 ### "Appearance", not "Look"
 
 Both name the same thing and only one of them is a noun on sight. "Look" reads
