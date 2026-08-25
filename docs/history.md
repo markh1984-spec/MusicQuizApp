@@ -10,6 +10,33 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Also live on 24 August 2026 — the settings row stopped moving:**
+
+Three asks off one screenshot: *"if we can have the drop down menus actually
+fill the space there instead of the arrows appearing sort of half way"*,
+*"'look' needs to say 'appearance'"*, and *"also would be good if those
+dropdowns don't change size at all regardless of what's selected."*
+
+The third corrects the worse half of this bar's own oldest rule. Sizing a face
+to the CURRENT value was a real saving on the open MENU and a moving target on
+the closed FACE — choose Halloween and every control to the right of Look
+shifted. **Every option's short name is now drawn into the same grid cell and
+all but the chosen one is `visibility: hidden`**, so the browser reserves the
+width: no measuring, no font guessing, and nothing to keep in step when a pack
+changes what the options are. Verified by walking every option of every picker
+through a real `change` and watching the cell width — one value each.
+
+Two consequences, both improvements: a face that reserves its widest option
+pays for it every night, so **"Summer — in season now" and the two team modes
+got `data-short`**, and **the pack is named on the first of Card/Prizes rather
+than on both** — 286px spent saying one thing twice. `flex-shrink` could not
+keep the row on one line on its own, because **a wrapping flex row wraps first
+and shrinks per line afterwards**; `flex-wrap: nowrap` above 1150px is what
+lets the shrink work, with headings ellipsising rather than wrapping.
+
+**"Look" is "Appearance"** — both name the same thing and only one is a noun on
+sight.
+
 **Live as of 24 August 2026 — the hole in slot 2, and three faults under one
 sentence:**
 

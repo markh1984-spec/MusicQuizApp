@@ -6165,12 +6165,45 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
  * somebody opens it (see `console-pick.js`).
  */
 .lb-set-night {
-  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px;
+  /* 12px between columns rather than 14: eight controls on one line means
+     seven gaps, so two pixels each is a whole heading's worth of room. */
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px;
 }
-.lb-set-night .pack-shape { flex: 0 0 auto; }
+/*
+ * THE ROW STAYS ONE LINE, AND A CELL GIVES GROUND BEFORE THE ROW DOES.
+ *
+ * Each cell asks for the width of its own heading or its widest option,
+ * whichever is longer — but it may SHRINK (`0 1 auto`, `min-width: 0`) rather
+ * than push the row onto a second line. Every setting for the night stays on
+ * one line at a laptop width, which is what was asked for, and what gives way
+ * first is a heading's tail rather than the arrangement.
+ *
+ * Without the shrink the row wrapped the moment a face reserved its widest
+ * option — which is exactly the trade: a control that never moves when you
+ * pick something is a slightly wider control.
+ */
+.lb-set-night .pack-shape { flex: 0 1 auto; min-width: 0; }
 /* The face fills the cell its label made — see the note below. */
 .lb-set-night .pack-shape .pick, .lb-set-night .pack-shape .pick-face { width: 100%; }
 .lb-set-night .pack-shape > input { width: 100%; }
+/* A heading that has run out of room ellipsises rather than wrapping: a
+   second line under one cell drags the whole row down with it. */
+.lb-set-night .set-word { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+/*
+ * AND WRAPPING IS OFF WHERE THE ROW IS MEANT TO BE ONE LINE.
+ *
+ * `flex-shrink` alone could not hold it: a wrapping flex row WRAPS FIRST and
+ * shrinks afterwards, within each line — so a row over its width by twenty
+ * pixels drops a control onto a second line rather than taking twenty pixels
+ * off eight of them. Above 1150px, where every night setting is meant to read
+ * as one row, nothing wraps and the shrink does its job.
+ *
+ * Below that it still wraps, because on a phone a single line of eight
+ * controls is eight controls nobody can read.
+ */
+@media (min-width: 1150px) {
+  .lb-set-night { flex-wrap: nowrap; }
+}
 /*
  * THE LABEL SITS ABOVE ITS CONTROL, at every width now that the row is
  * content-sized rather than five equal columns. Side by side, a label and a
@@ -6232,6 +6265,22 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 }
 .pick-face:hover { border-color: var(--hot); }
 .pick-face:disabled { opacity: 0.6; cursor: default; }
+/*
+ * THE FACE RESERVES ITS WIDEST OPTION AND NEVER MOVES.
+ *
+ * Every option's SHORT name is drawn into this one grid cell and all but the
+ * chosen one is hidden, so the browser sizes the button to the widest of them.
+ * That is what stops the row re-flowing every time somebody picks something —
+ * *"would be good if those dropdowns don't change size at all regardless of
+ * what's selected"* — and it needs no measuring code, so it cannot go stale
+ * when a pack changes what the options are.
+ *
+ * `visibility: hidden` rather than `display: none`, which is the whole trick:
+ * a hidden item still takes part in sizing, a removed one does not.
+ */
+.pick-words { display: grid; flex: 1 1 auto; min-width: 0; }
+.pick-words > span { grid-area: 1 / 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pick-ghost { visibility: hidden; }
 .pick-word { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pick-caret {
   flex: 0 0 auto; width: 27px; align-self: stretch; margin: -9px -11px -9px 0;

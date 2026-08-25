@@ -778,27 +778,32 @@ export function launchBar() {
            native select into that (see console-pick.js); the select itself
            stays in the DOM and stays what the launch reads. -->
       <div class="lb-set lb-set-night">
-        <label class="pack-shape">Look
+        <!-- "Appearance", not "Look" — asked for on 24 August 2026. Both
+             name the same thing and only one of them is a noun on sight:
+             "Look" reads as an instruction for a moment before it reads as a
+             label, which is a word doing two jobs on a bar somebody drives
+             with a thumb in a dark pub. -->
+        <label class="pack-shape"><span class="set-word">Appearance</span>
           <select class="look-pick" data-pop></select>
         </label>
         <!-- "Secs per Q", abbreviated on request: the full words were the
              widest label on the bar by half, for a field holding two digits. -->
-        <label class="pack-shape" title="Seconds per question. Blank leaves each quiz at its own pace.">Secs per Q
+        <label class="pack-shape" title="Seconds per question. Blank leaves each quiz at its own pace."><span class="set-word">Secs per Q</span>
           <input type="number" class="seconds-pick" min="5" max="120" placeholder="20">
         </label>
         <!-- "Game", not "While they wait" — and the option blurb lives in
              the open menu now rather than on the face, so shut it reads
              "Maze Mouth" instead of "Maze Mouth — a maze cha…". -->
-        <label class="pack-shape">Game
+        <label class="pack-shape"><span class="set-word">Game</span>
           <select class="game-pick" data-pop></select>
         </label>
-        <label class="pack-shape">Game sound
+        <label class="pack-shape"><span class="set-word">Game sound</span>
           <select class="sound-pick" data-pop>
             <option value="on">On</option>
             <option value="off">Off</option>
           </select>
         </label>
-        <label class="pack-shape">Playing
+        <label class="pack-shape"><span class="set-word">Playing</span>
           <select class="play-pick" data-pop>${playingOptions()}</select>
         </label>
         <!-- THE BIG SCREEN IN THE GAPS. Here rather than on a tile because
@@ -807,7 +812,7 @@ export function launchBar() {
              the half that belongs there. It is also the half that is a fact
              about the EVENING: "show my adverts in the breaks" is the venue
              paying for a screen. -->
-        <label class="pack-shape" title="What the big screen does at every break. The lobby always keeps the join code.">In the gaps
+        <label class="pack-shape" title="What the big screen does at every break. The lobby always keeps the join code."><span class="set-word">In the gaps</span>
           <select class="screen-pick" data-pop>${screenOptions()}</select>
         </label>
         <!-- CARD AND PRIZES JOIN THE SAME ROW — asked for on 24 August 2026:
@@ -821,10 +826,10 @@ export function launchBar() {
              everything about the evening, and the caption they used to carry
              is now the reason IN the control - "Add a bingo game" - which is
              the shape Launch already uses. -->
-        <label class="pack-shape lb-set-card">Card
+        <label class="pack-shape lb-set-card"><span class="set-word">Card</span>
           <select class="shape-pick" data-pop disabled></select>
         </label>
-        <label class="pack-shape lb-set-prizes">Prizes
+        <label class="pack-shape lb-set-prizes"><span class="set-word">Prizes</span>
           <select class="prize-pick" data-pop disabled></select>
         </label>
       </div>
@@ -1738,15 +1743,22 @@ export function launchBar() {
       ? lbSlots.filter((slot) => slot && slot.kind === 'bingo').length
       : lbPacks().filter((p) => !(p.rounds || []).length).length;
     if (cardRow) {
-      cardRow.firstChild.textContent = (pickedIsBingo && bingoCount > 1)
+      cardRow.querySelector('.set-word').textContent = (pickedIsBingo && bingoCount > 1)
         ? `Card · ${shortTitle(picked.pack.title)}` : 'Card';
       cardRow.title = pickedIsBingo
         ? `The card for ${picked.pack.title}`
         : 'Add a bingo game to tonight and its card and prizes can be set here.';
     }
     if (prizesRow) {
-      prizesRow.firstChild.textContent = (pickedIsBingo && bingoCount > 1)
-        ? `Prizes · ${shortTitle(picked.pack.title)}` : 'Prizes';
+      /*
+       * THE PACK IS NAMED ONCE, NOT TWICE. Card and Prizes are the two
+       * settings of ONE picked bingo game and they sit side by side, so
+       * "Card · Disco & Funk" followed by "Prizes · Disco & Funk" was the
+       * same label twice — the duplication this project's own sweep mode
+       * hunts for, and 70px of a row that has to hold eight controls on one
+       * line. The name on the first of the pair says whose both are.
+       */
+      prizesRow.querySelector('.set-word').textContent = 'Prizes';
       prizesRow.title = cardRow ? cardRow.title : '';
     }
     /*

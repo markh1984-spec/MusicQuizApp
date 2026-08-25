@@ -1535,6 +1535,101 @@ launch made through the popovers still sends `shape: {rows:3, cols:3}` and
 change what Launch reads.
 
 
+## A PICKER NEVER CHANGES SIZE, AND THE ROW NEVER WRAPS
+
+Three asks in one sitting, off a screenshot of the settings row: *"if we can
+have the drop down menus actually fill the space there instead of the arrows
+appearing sort of half way that would be great"*, *"'look' needs to say
+'appearance'"*, and then *"also would be good if those dropdowns don't change
+size at all regardless of what's selected."*
+
+The third one is the interesting one, because it corrects the worse half of
+this bar's own oldest rule.
+
+### The original rule was right about the MENU and wrong about the FACE
+
+*"'Look — the usual' needs to only be as wide as the pre-filled value"* bought
+a genuine saving: a native `<select>` sizes its open list to the control, so a
+bar of five selects was paying for its longest option five times over on every
+night whether or not anybody opened anything. Splitting the face from the menu
+fixed that and still does.
+
+**But sizing the face to the CURRENT value made the whole row a moving
+target.** Choose *Halloween* and Look grew by sixty pixels; every control to
+the right of it shifted. On a bar somebody drives with a thumb, in a dark pub,
+ten minutes before a gig, a control that is not where it was last time is a
+control you have to look for.
+
+### The width is reserved by the OPTIONS, and the browser does the reserving
+
+Every option's short name is drawn into the same grid cell as the chosen one
+and all but that one is `visibility: hidden`. The browser then sizes the button
+to the widest of them — for ever, whatever is selected.
+
+**`visibility: hidden`, never `display: none`.** That is the whole trick: a
+hidden item still takes part in sizing, a removed one does not.
+
+It needs no font measuring, no canvas, no `ch` guessing against a proportional
+face, and — the part that matters most — **nothing to keep in step**. The
+options change when the picked pack changes; the ghosts are rebuilt from the
+same list in the same function that paints the face, so there is no second
+source of truth to go stale.
+
+**It does not undo *narrow shut, wide open*.** The ghosts are the SHORT names,
+so Game reserves "👻 Maze Mouth" and not "👻 Maze Mouth — a maze chase", which
+is still the sentence only the open menu carries.
+
+### And that made two long options expensive, so they got short names
+
+A face that reserves its widest option pays for that option on every night of
+the year. Two were not carrying their weight:
+
+- **"Summer — in season now"** was the widest thing on the whole row. The
+  suffix is a nudge to read while you are CHOOSING and it is noise on the face
+  afterwards, so `data-short` is now the name alone. Eleven months of the year
+  it said nothing at all and still cost 100px.
+- **"Team — they pick their own"** and **"Team — dealt at random"** got
+  `data-short` for the first time.
+
+The screen picker's *"· Nothing"* became **"⬛ Nothing"** at the same time —
+the same objection he had already raised about the gap dial's dot, on the
+sibling control. Punctuation on a button reads as a control that failed to
+load.
+
+### `flex-shrink` alone could not keep the row on one line
+
+With the faces reserving their widest options the row was about eighty pixels
+over its width, and it wrapped. Allowing the cells to shrink did nothing, and
+the reason is a flexbox rule worth remembering:
+
+> **A wrapping flex row WRAPS FIRST and shrinks afterwards, within each line.**
+
+So a row twenty pixels too wide drops a whole control onto a second line rather
+than taking two pixels off each of eight. `flex-wrap: nowrap` above 1150px —
+the width at which this row is meant to read as one row — is what lets the
+shrink do its job. Below that it still wraps, because eight controls on one
+line of a phone is eight controls nobody can read.
+
+**A heading ellipsises rather than wrapping**, which needed each one lifted out
+of a bare text node into its own `<span class="set-word">`: a text node cannot
+carry `text-overflow`, and a heading that wraps to a second line drags the
+whole row down with it. Measured with the longest bingo title in the library:
+nothing clips at 1500 or 1280, and at exactly 1150 two headings ellipsise —
+which is the designed give.
+
+### And the pack is named once, not twice
+
+"Card · Disco & Funk" beside "Prizes · Disco & Funk" was 286px of a row that
+has to hold eight controls, spent saying one thing twice. They are the two
+settings of ONE picked bingo game and they sit side by side, so the name on the
+first says whose both are. That alone bought most of the eighty pixels back.
+
+### "Appearance", not "Look"
+
+Both name the same thing and only one of them is a noun on sight. "Look" reads
+as an instruction for a moment before it reads as a label — a word doing two
+jobs, on the row where clarity beats everything.
+
 ## And the drags have a page of their own
 
 Picking a pack up, dropping it on a slot, dragging a round out of

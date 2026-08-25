@@ -37,6 +37,14 @@
  * may carry `data-short`; without one the face uses the option's own text.
  * That split is what buys the space: "Maze Mouth" shut, "👻 Maze Mouth — a
  * maze chase" open.
+ *
+ * **AND THE FACE RESERVES THE WIDEST OF THOSE SHORT NAMES, so it never moves
+ * when you choose something.** *"Would be good if those dropdowns don't change
+ * size at all regardless of what's selected."* Sized to the CURRENT value, the
+ * whole row re-flowed on every pick — choose Halloween and every control to
+ * the right of Look shifted. The other options are drawn into the same grid
+ * cell and hidden, so the BROWSER reserves the width and there is nothing to
+ * measure and nothing to keep in step.
  */
 
 import { esc, node } from './client.js';
@@ -79,6 +87,28 @@ function paintOne(root) {
   const menu = root.querySelector('.pick-menu');
   if (!select || !face || !menu) return;
   face.querySelector('.pick-word').textContent = faceWords(select);
+  /*
+   * A PICKER NEVER CHANGES SIZE WHEN YOU CHOOSE SOMETHING — asked for on
+   * 24 August 2026: *"would be good if those dropdowns don't change size at
+   * all regardless of what's selected"*, and he is right that it was the
+   * worse half of the original rule. A face sized to the CURRENT value made
+   * the whole row re-flow on every pick: choose *Halloween* and Look grew,
+   * and every control to the right of it moved.
+   *
+   * **THE WIDTH IS RESERVED BY THE OPTIONS, NOT MEASURED IN JAVASCRIPT.**
+   * Every face word is drawn into the same grid cell and all but the chosen
+   * one is `visibility: hidden`, so the browser sizes the button to the
+   * widest of them — with no font measuring, no canvas, and nothing to go
+   * stale when a pack changes what the options are.
+   *
+   * It does NOT undo *narrow shut, wide open*: the ghosts are the SHORT
+   * names, so the face still reserves "Maze Mouth" rather than "👻 Maze
+   * Mouth — a maze chase", which is the sentence the open menu carries.
+   */
+  const words = face.querySelector('.pick-words');
+  const chosen = face.querySelector('.pick-word');
+  words.replaceChildren(chosen, ...[...select.options].map((opt) =>
+    node(`<span class="pick-ghost" aria-hidden="true">${esc(opt.dataset.short || opt.textContent.trim())}</span>`)));
   face.disabled = select.disabled;
   menu.replaceChildren(...[...select.options].map((opt, at) => {
     const row = node(`
@@ -114,7 +144,7 @@ function enhance(select) {
   root.appendChild(select);
   const face = node(`
     <button class="pick-face" type="button" aria-haspopup="listbox" aria-expanded="false">
-      <span class="pick-word"></span>
+      <span class="pick-words"><span class="pick-word"></span></span>
       <span class="pick-caret" aria-hidden="true"></span>
     </button>`);
   const menu = node('<div class="pick-menu" role="listbox" hidden></div>');

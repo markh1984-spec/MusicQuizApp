@@ -978,32 +978,42 @@ Full reasoning: **[`docs/lobby-games.md`](docs/lobby-games.md)**.
 
 *"All dropdown boxes on the bay must popover… 'look — the usual' needs to only
 be as wide as the pre-filled value, popovers can pop out wider but we need to
-save space."* A native `<select>` cannot do that: the browser sizes the open
-list to the CONTROL, so one narrow enough for "The usual" clips "Halloween —
-in season now".
+save space."* A native `<select>` cannot: the browser sizes the open list to
+the CONTROL, so one narrow enough for "The usual" clips "Halloween — in season
+now".
 
 - **THE NATIVE `<select>` STAYS IN THE DOM AND STAYS THE TRUTH.** The popover
   is a skin: every `.value` read, every `innerHTML = options(…)` rebuild and
   every `change` listener goes on working, and **the LAUNCH still reads what it
-  always read**. This bar is the protected surface — a hand-written component
-  holding the values would put every one of those reads at risk for a layout
-  change. **A skin cannot lose a value, because it never holds one.**
+  always read**. This bar is the protected surface, and **a skin cannot lose a
+  value, because it never holds one.**
 - **SO IT MUST BE REPAINTED WHEN THE SELECT CHANGES UNDERNEATH IT** —
   `refreshPicks()` at the end of `paintSettings()`, because `.value = x` fires
   no event and nothing else would tell the face it is stale.
 - **CHOOSING DISPATCHES A REAL `change`.** Setting `.value` from script fires
-  nothing, so without it the picker looks like it worked and the launch sends
+  nothing, so the picker would look like it worked and the launch would send
   the value from before.
 - **ONE DOCUMENT LISTENER FOR ALL OF THEM, not one per picker** — the bar is
   rebuilt on every state push, so per-render listeners leak with the room.
-- **WHICH WAY A MENU OPENS IS MEASURED**, or the rightmost one hangs off the
-  console.
-- **AND A FLOATING SHEET NEEDS AN OUTSIDE-CLICK CLOSE IT DID NOT NEED
-  INLINE.** The venue sheet used to push the bar down; floating, left open it
-  sits over the settings and swallows every click aimed at them. A popover that
-  only its own button can close is a trap.
-- Labels shortened with it: **Secs per Q**, **Game** (the blurb moved into the
-  open menu, with a symbol per game), and Save is just **Save**.
+- **WHICH WAY A MENU OPENS IS MEASURED**, or the rightmost hangs off the edge.
+- **A FLOATING SHEET NEEDS AN OUTSIDE-CLICK CLOSE IT DID NOT NEED INLINE.**
+  Left open, the venue sheet sits over the settings and swallows every click
+  aimed at them. A popover only its own button can close is a trap.
+- **A FACE RESERVES ITS WIDEST OPTION, so it never moves when you choose
+  something** — *"dropdowns don't change size at all regardless of what's
+  selected."* Every option's SHORT name goes into one grid cell, all but the
+  chosen one hidden, so the BROWSER reserves the width. **`visibility`, never
+  `display: none`** — a hidden item still sizes the grid. It does not undo
+  *narrow shut*: the ghosts are short names.
+- **THE ROW MAY NOT WRAP ABOVE 1150px, AND `flex-shrink` ALONE CANNOT HOLD
+  IT** — a wrapping flex row WRAPS FIRST and shrinks per line after, so a row
+  twenty pixels over drops a control onto a second line rather than taking two
+  pixels off eight. `flex-wrap: nowrap`, and **a heading ellipsises rather than
+  wraps**. It still wraps below 1150px.
+- **A LONG OPTION EARNS A `data-short`, or it costs that width for ever**, and
+  **the pack is named on the first of Card/Prizes, not both.**
+- Labels shortened with it: **Secs per Q**, **Game**, and Save is just
+  **Save**. **"Look" became "Appearance"** — it read as an instruction first.
 
 ### THE MARKUP GUARD IS THE MARKUP'S HALF OF THE BRACE RULE
 
@@ -1686,12 +1696,11 @@ itself is wrong.
 
 ## Where the reasoning lives
 
-**A THIRD SPLIT ON 15 AUGUST 2026, and this time with a test on it.** It had
-grown back to 167,474 bytes — larger than the second split left it — because
-every session appends its decisions here. The decisions TABLE alone was 43,034
-of those bytes, a quarter of everything loaded before any work could start. It
-moved whole to **[`docs/decisions.md`](docs/decisions.md)**, leaving every
-decision NAME and every sentence that FORBIDS something, verbatim.
+**A THIRD SPLIT ON 15 AUGUST 2026, and this time with a test on it.** The
+decisions TABLE alone was 43,034 bytes, a quarter of everything loaded before
+any work could start; it moved whole to
+**[`docs/decisions.md`](docs/decisions.md)**, leaving every decision NAME and
+every sentence that FORBIDS something, verbatim.
 
 **A WRITTEN RULE TO KEEP THIS FILE SHORT HAS NOW FAILED TWICE**, so
 `test/claude-md-budget.test.js` asserts the byte count, that every `docs/` link
@@ -1702,17 +1711,14 @@ session; the diff will then say that is what you did.
 **And a mechanical split is only safe where the boundary is STRUCTURAL.** Moving
 table rows worked — a row is a row. The same script pointed at prose, keeping
 "the heading and the first paragraph", quietly threw away the Owner/Parent/Child
-table and every rule under the lobby-games heading, because in this file the
-first paragraph is often the CONTEXT and the rule is below it. That attempt was
-reverted. **If more has to come out, move whole named sections by hand and read
-what is left.**
+table and every rule under the lobby-games heading: in this file the first
+paragraph is often the CONTEXT and the rule is below it. **If more has to come
+out, move whole named sections by hand and read what is left.**
 
-**Every RULE is in this file. The WHY is in `docs/`.** Split on 14 August
-2026 because this file had reached ~90,000 tokens and loaded in full at the
-start of every session, which left little room to do any work in. **Split
-again on 15 August 2026**, the same way and for the same reason — it had
-grown back to ~50,000 as the console theme, the calendar layout, the lobby
-game, Tonight and the drag work each landed with their full reasoning inline.
+**Every RULE is in this file. The WHY is in `docs/`.** Split on 14 August 2026
+because this file had reached ~90,000 tokens and loaded in full at the start of
+every session, and **again on 15 August 2026** the same way, having grown back
+to ~50,000 as each new feature landed with its full reasoning inline.
 
 Nothing was deleted and nothing was summarised — whole sections moved
 verbatim, by line number, so nothing was retyped and nothing could be quietly
