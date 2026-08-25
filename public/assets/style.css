@@ -2221,7 +2221,16 @@ body.console .panel::after { bottom: -4px; }
    empty cells. It reorders the shelf visually rather than in the DOM, which is
    the right trade here: this grid is a thing you SCAN, and a hole in it reads
    as something failing to load. */
-.pack-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; grid-auto-flow: dense; }
+/* AUTO-FILL WITH A 150px FLOOR, not a fixed six. Six equal columns beside the
+   190px tab rail squeezed every card to 146px — and the moment the round
+   squares grew to 28px (asked for, for dragging) the square poster could no
+   longer hold its own content: titles sliced mid-word, the meta wrapped to
+   three lines, and `justify-content: flex-end` pushed the WORST overflow off
+   the TOP, so "Last Ten Years" lost its name entirely. A floor means the
+   browser drops a column instead of squeezing nine; on this door that is five
+   across at ~178px — which also matches the Tonight slots (~190px) far better
+   than 146 did, and matching the hole is why the width was chosen at all. */
+.pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; grid-auto-flow: dense; }
 
 
 /* ---- ONE PACK OPEN AT A TIME, and the rest are names.
@@ -2302,6 +2311,15 @@ body.console .panel::after { bottom: -4px; }
 .pack-card.shut > .pack-title,
 .pack-card.shut > .tiny,
 .pack-card.shut > .pack-yours { position: relative; z-index: 2; }
+/* Two lines of meta, same argument as the title's three: at every real card
+   width it IS two lines, so the clamp only guards the narrow case nobody
+   predicted — a last resort, not the normal case. */
+.pack-card.shut > .tiny {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 @media (max-width: 560px) {
   .pack-card.shut { min-height: 104px; }
   /* The disclosure that opens a shut card measured at 18px tall on a phone —
@@ -2850,14 +2868,23 @@ body.screen { cursor: none; }
     padding-bottom: 0;
     overflow: hidden;
   }
+  /*
+   * A COLUMN, NOT A TWO-ROW GRID — because the grid assumed exactly two
+   * children and the page does not always have two. `auto minmax(0, 1fr)`
+   * put the doorhead in the 1fr row the moment ANY banner rendered above it
+   * (the no-accounts maker, Workshop's backup warning): the doorhead was
+   * STRETCHED — ~160px of nothing under the launch bar on every door — and
+   * the columns fell into an implicit row, so the fixed frame silently
+   * became a scrolling page again. A flex column takes any number of
+   * banners; only `.consolecols` grows, everything else sizes to itself.
+   */
   .console main {
     min-height: 0;
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
-    /* The door header sets its own bottom margin; without this the gap between
-       it and the columns is counted twice on a frame with no slack in it. */
-    row-gap: 0;
+    display: flex;
+    flex-direction: column;
   }
+  .console main > * { flex: 0 0 auto; }
+  .console main > .consolecols { flex: 1 1 0; min-height: 0; }
   /* The door's own area. It sizes to its content — a folded Tonight is a line,
      an open one is the panel — so the content pane grows and shrinks with it
      rather than the header being given a height it has to live inside. */
@@ -9213,3 +9240,62 @@ body.landing {
 /* The pack row's caption when it is waiting rather than naming a pack — dim,
    because it is the REASON the two controls beside it are off. */
 .lb-set-for.is-waiting { color: var(--ink-dim); }
+
+
+/* =====================================================================
+ * THE FINISH LAYER — the browser surfaces nobody draws, and the states a
+ * mouse and a keyboard actually meet. Added on 25 August 2026 as one block
+ * rather than scattered per control, so the next control can see in one
+ * place what "finished" means here.
+ * ===================================================================== */
+
+/* SELECTING TEXT IS PART OF THE DESIGN TOO. The default blue selection is
+   the one colour this app never uses anywhere else, so every drag across a
+   label broke the scheme. The rgba is the fallback; `color-mix` follows the
+   account's own hot colour, the same pattern the lit menu chip uses. */
+::selection { background: rgba(255, 46, 136, 0.45); color: #fff; }
+@supports (background: color-mix(in srgb, red 50%, transparent)) {
+  ::selection { background: color-mix(in srgb, var(--hot) 45%, transparent); color: var(--ink); }
+}
+/* And the caret in a field blinks in the account's colour rather than white —
+   read at the moment somebody is typing into this app's one dark surface. */
+input, textarea, [contenteditable] { caret-color: var(--hot); }
+
+/* KEYBOARD FOCUS, EVERYWHERE A THUMBNAIL AUDIT FOUND IT MISSING. The app's
+   own convention is a 2px hot outline (`.pack-pin`, `.lb-hit` had it); these
+   are the controls that grew up without one. `:focus-visible`, never
+   `:focus`, so a mouse press does not paint rings on a gig night. */
+.topnav a:focus-visible,
+.console button.minor:focus-visible, .console a.minor:focus-visible, .console label.minor:focus-visible,
+.pick-face:focus-visible,
+.gap-dial:focus-visible,
+.pack-title:focus-visible {
+  outline: 2px solid var(--hot);
+  outline-offset: 2px;
+  border-radius: var(--r-field);
+}
+
+/* A CARD IS AN OBJECT YOU PICK UP — so it answers the hand before the hand
+   commits, the same language the round squares already speak (lift + ring).
+   A lift plus a real shadow (offset and blur, never a flat halo), and the
+   hairline brightens. Kept SMALL: sixty cards must not shimmer like a slot
+   machine, they must just feel solid one at a time. */
+.pack-card.shut {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.pack-card.shut:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+/* The nav chips and the console's small buttons ease instead of snapping —
+   the hover styles already existed, only the jump between them was new. */
+.topnav a, .console button.minor, .console a.minor, .console label.minor, .gap-dial, .pick-face {
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+/* Somebody who asked their device to stop moving things still gets the
+   border and shadow answer — the lift is the flourish, not the information. */
+@media (prefers-reduced-motion: reduce) {
+  .pack-card.shut, .topnav a, .console button.minor, .gap-dial, .pick-face { transition: none; }
+  .pack-card.shut:hover { transform: none; }
+}

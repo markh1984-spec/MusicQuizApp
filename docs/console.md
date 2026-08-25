@@ -748,3 +748,67 @@ every fault live verification caught building it.
 It was a third of this file and is a subject of its own, so it moved whole
 when this file hit the 100,000-byte ceiling its own test sets:
 **[`console/shows.md`](console/shows.md)**.
+
+## THE POLISH PASS — one sweep, 25 August 2026
+
+Asked for as *"can we try and pretty up the console… as slick and nice as
+possible and keeping current functionality?"* The sweep was a batched
+screenshot round of all five doors at 1500 and 390, and it found two real
+layout bugs before it found anything cosmetic — which is the right order to
+fix them in.
+
+### `main` is a flex column, because a two-row grid assumed two children
+
+The fixed frame (`.console .wrap` at 100dvh, only `.tabbody` scrolling) gave
+`main` a `grid-template-rows: auto minmax(0, 1fr)` — doorhead, then columns.
+But `render()` puts BANNERS above the doorhead when there are banners to put:
+the no-accounts maker on a fresh install, the backup warning on every door but
+the Console. With three children, the banner took the `auto` row, **the
+doorhead landed in the `1fr` row and was stretched** — ~160px of nothing
+under the launch bar, on every door, for anyone with a banner showing — and
+the columns fell into an implicit row, so the fixed frame quietly became a
+scrolling page again. The one-scroller design broke without a single visual
+"error": everything drew, just wrongly.
+
+Flex column, `.consolecols { flex: 1 1 0; min-height: 0 }`, everything else
+`flex: 0 0 auto`. Any number of banners; nothing stretches but the columns.
+
+### The shelf grid is auto-fill with a floor, because six columns squeezed the poster under its own content
+
+`repeat(6, minmax(0, 1fr))` beside the 190px tab rail made every shut card
+146px square. That held until the round squares grew to 28px (asked for, for
+dragging) — then the poster could no longer contain its own stack: titles
+sliced mid-word, the meta wrapped to three lines, the dots clipped, and
+because `justify-content: flex-end` spills overflow off the TOP, the
+worst-case card ("Last Ten Years") lost its **name** — the one thing a shelf
+card exists to show — with nothing thrown anywhere.
+
+`repeat(auto-fill, minmax(150px, 1fr))`: the browser drops a column rather
+than squeezing nine. On this door that is five across at ~178px — and since
+the Tonight slots are ~190px now, the five-column card matches "the thing
+that goes in the hole" better than the 146px card ever did, which was the
+original argument for six. A two-line clamp on the shut card's meta guards
+the narrow case, the same last-resort argument as the title's own clamp.
+
+### The finish layer — browser surfaces, drawn on purpose
+
+One named block at the foot of `style.css`, so "finished" has one definition
+rather than a rule per control:
+
+- **`::selection`** follows the account's `--hot` (rgba fallback first, the
+  lit-chip pattern) — the default blue was the one colour this app never
+  uses anywhere else.
+- **`caret-color`** in fields matches.
+- **`:focus-visible`** — the 2px hot outline the pack pin and `.lb-hit`
+  already had, extended to the nav chips, the minor buttons, the popover
+  faces, the gap dial and the pack title. `:focus-visible`, never `:focus`,
+  so a mouse press paints nothing on a gig night.
+- **The shut card answers the hand**: a 2px lift, a brightened hairline and a
+  real shadow (offset + blur) on hover — the same language the round squares
+  already speak. Reduced motion keeps the border answer and drops the lift.
+
+Verified: doorhead dead space 0 on Console and Workshop, page no longer
+scrolls (only `.tabbody` does), every card title visible and unclamped at
+1500/1280/390, no horizontal overflow anywhere, drag-check green including
+the dial presses — the frame change moved drop geometry, so the real-mouse
+run was the load-bearing check.

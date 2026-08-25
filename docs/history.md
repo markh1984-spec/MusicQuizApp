@@ -10,6 +10,23 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 25 August 2026 — the console's polish pass:**
+
+*"Can we try and pretty up the console… as slick and nice as possible and
+keeping current functionality?"* A batched screenshot sweep of all five doors
+found two real layout bugs before anything cosmetic — the right order to fix.
+`main`'s two-row grid stretched the doorhead ~160px the moment a banner
+rendered above it and broke the one-scroller frame (flex column now); and the
+fixed six-column shelf squeezed the square posters under their own content
+once the round squares grew to 28px — titles sliced mid-word, one card lost
+its NAME off the top, silently (auto-fill with a 150px floor now, five across
+at ~178px, which matches the Tonight slots better than 146 did). Then the
+finish layer: `::selection` and the caret in the account's own colour,
+`:focus-visible` extended to the chrome that grew up without it, and the shut
+card answering the hand with a lift and a real shadow. All in
+`docs/console.md`; 1,518 tests green, pub-unchanged IDENTICAL, drag-check
+green including the dial presses.
+
 **Live as of 24 August 2026 — the gap dial died again, and this time
 something presses it:**
 

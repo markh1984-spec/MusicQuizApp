@@ -286,7 +286,16 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * written and thrown away, so nobody writes it again. The full account is in
  * `docs/checks.md`; what is here is the rule.
  */
-const BUDGET = 177_500;
+/*
+ * 179_000 ON 25 AUGUST 2026, for the console polish pass — three rules that
+ * each stop a change: `main` is a flex column because its two-row grid
+ * stretched the doorhead the moment a banner rendered above it; the shelf
+ * grid is auto-fill with a 150px floor because a fixed six squeezed the
+ * square poster under its own content and clipped a pack's NAME off the top,
+ * silently; and the finish layer at the foot of style.css is where the next
+ * control's selection/caret/focus/hover lives, so it stays one block.
+ */
+const BUDGET = 179_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

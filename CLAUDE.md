@@ -866,6 +866,28 @@ in now"*.
   changed and the guard stayed byte-identical. It is host-only by construction:
   a note to one person about everybody else.
 
+### THE CONSOLE'S POLISH PASS — three rules from one sweep, 25 August 2026
+
+- **`main` IS A FLEX COLUMN — never give it a row template.** Its
+  `auto minmax(0,1fr)` grid assumed exactly two children, so ANY banner above
+  the doorhead (the no-accounts maker, Workshop's backup warning) pushed the
+  doorhead into the `1fr` row — STRETCHED, ~160px of nothing under the launch
+  bar — and dropped the columns into an implicit row, quietly turning the
+  fixed frame back into a scrolling page. Flex takes any number of banners;
+  only `.consolecols` grows.
+- **THE SHELF GRID IS AUTO-FILL WITH A 150px FLOOR — do not fix the column
+  count.** Six fixed columns beside the 190px rail squeezed cards to 146px,
+  and the 28px round squares (asked for) then overflowed the square poster:
+  titles sliced mid-word and `flex-end` pushed the worst overflow off the
+  TOP, so one card lost its name entirely, silently. A floor drops a column
+  instead of squeezing nine — five across at ~178px, which also matches the
+  Tonight slots better than 146 ever did.
+- **THE FINISH LAYER at the foot of `style.css` owns selection, caret,
+  `:focus-visible` and the card hover** — one named block, so the next
+  control gets finished there rather than growing its own scattered rules.
+  `::selection` follows `--hot` (rgba fallback first); reduced-motion keeps
+  the border answer and drops the lift.
+
 ### THE LOBBY GAMES — AND NONE OF THEM IS NAMED AFTER THE ONE YOU ARE THINKING OF
 
 `public/assets/maze.js` + `lobby-game.js` (Maze Mouth), `rally.js` +
