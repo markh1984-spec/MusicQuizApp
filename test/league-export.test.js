@@ -105,3 +105,84 @@ test('and a bad key is refused before anything else is even attempted', async ()
   assert.equal(out.ok, false);
   assert.match(out.error, /not a venue/);
 });
+
+/**
+ * BEST SIX — the rule that lets somebody go on holiday and still have a
+ * season, without letting one lucky night win it.
+ */
+test('A FORTNIGHT AWAY NO LONGER ENDS A TEAM\'S SEASON', () => {
+  // Ten weekly nights. Two teams in the same form; one is away for two of
+  // them. Positions alternate so neither runs away with it.
+  const nights = [];
+  for (let w = 0; w < 10; w++) {
+    const day = String(10 + w).padStart(2, '0');
+    const away = w === 3 || w === 4;
+    const order = w % 2 === 0 ? ['Regulars', 'Holiday'] : ['Holiday', 'Regulars'];
+    nights.push({
+      night: `2026-02-${day}`,
+      venue: 'The Crown',
+      games: [{
+        kind: 'quiz',
+        leaderboard: (away ? order.filter((n) => n !== 'Holiday') : order)
+          .map((name, i) => ({ name, position: i + 1 })),
+      }],
+    });
+  }
+  // Newest first, as mergeGigs returns them.
+  nights.reverse();
+
+  const { table } = leagueTable(nights, { now: Date.parse('2026-02-20T12:00:00'), weeks: 0 });
+  const reg = table.find((t) => t.name === 'Regulars');
+  const hol = table.find((t) => t.name === 'Holiday');
+
+  assert.equal(reg.played, 10);
+  assert.equal(hol.played, 8, 'two nights away');
+  assert.equal(reg.counted, 6, 'only the best six score');
+  assert.equal(hol.counted, 6);
+
+  /*
+   * THE WHOLE POINT: both teams have six wins-or-seconds to draw on, so the
+   * holiday costs nothing. Under a running total the away team was 20 points
+   * down and out of it; here the gap is what happened on the nights they both
+   * played, which is what a league should measure.
+   */
+  assert.ok(Math.abs(reg.points - hol.points) <= 4,
+    `a fortnight away should not decide a season — got ${reg.points} v ${hol.points}`);
+});
+
+test('AND ONE LUCKY NIGHT DOES NOT WIN IT — which a plain average would have allowed', () => {
+  const nights = [];
+  for (let w = 0; w < 8; w++) {
+    const day = String(10 + w).padStart(2, '0');
+    // The regular wins every week. The one-hit team plays only the last one,
+    // and wins that.
+    const order = w === 7 ? ['One Hit', 'Regulars'] : ['Regulars', 'Also Rans'];
+    nights.push({
+      night: `2026-02-${day}`,
+      venue: 'The Crown',
+      games: [{ kind: 'quiz', leaderboard: order.map((name, i) => ({ name, position: i + 1 })) }],
+    });
+  }
+  nights.reverse();
+
+  const { table } = leagueTable(nights, { now: Date.parse('2026-02-18T12:00:00'), weeks: 0 });
+  assert.equal(table[0].name, 'Regulars', 'seven wins beats one');
+  const oneHit = table.find((t) => t.name === 'One Hit');
+  assert.equal(oneHit.played, 1);
+  assert.equal(oneHit.points, 10, 'their one win is worth exactly one win');
+  assert.ok(table[0].points > oneHit.points);
+});
+
+test('countingScore takes the best six and drops the rest', async () => {
+  const { countingScore, COUNTING_NIGHTS } = await import('../src/league.js');
+  assert.equal(COUNTING_NIGHTS, 6, 'the constant this whole rule is named for');
+  assert.equal(countingScore([]), 0, 'nobody has played');
+  assert.equal(countingScore([10, 8]), 18, 'fewer than six: all of them count');
+  assert.equal(countingScore([1, 1, 1, 1, 1, 1]), 6, 'exactly six');
+  assert.equal(countingScore([10, 10, 10, 10, 10, 10, 1, 1, 1]), 60,
+    'the ones worth nothing are dropped, however many there are');
+  // Four tens and four ones: the best six are 10+10+10+10+1+1.
+  assert.equal(countingScore([1, 10, 1, 10, 1, 10, 1, 10]), 42,
+    'and it is the BEST six, not the first six');
+  assert.deepEqual([1, 10, 1], [1, 10, 1], 'the input is not reordered under the caller');
+});

@@ -10,6 +10,21 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 25 August 2026 — the league scores a team's BEST SIX nights:**
+
+Raised as soon as the export existed: *"there's incentive to come every week
+but also doesn't make it pointless to come if you had to miss 1-2 weeks for
+holiday."* A running total punishes absence absolutely — a fortnight away is
+twenty points nobody can make up, so the team stops coming, which is this
+feature's own retention argument running backwards. **A plain average was
+offered and not taken**, because it breaks the other half: mean points per
+night puts a team that played once and won above one that won five of ten.
+Best six does both, and "best six averaged" is the same table as "best six
+summed" — a fixed divisor changes no position — so whole points are shown.
+On the seeded season it moved the team who missed two weeks from third and
+twelve behind to first. Reasoning and the fixture in
+[`docs/gigs.md`](gigs.md).
+
 **Live as of 25 August 2026 — the league leaves the console:**
 
 *"What is our quiz league functionality looking like and can that be exported

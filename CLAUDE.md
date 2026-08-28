@@ -1470,6 +1470,20 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   NOTHING was right above the quiz generator and is wrong on a tab whose whole
   job is the list: a blank page reads as broken to the person checking whether
   the feature works. One optional argument, so the triage keeps one definition.
+- **A TEAM'S BEST SIX NIGHTS COUNT — a running total is not the league.**
+  *"So there's incentive to come every week but also doesn't make it pointless
+  to come if you had to miss 1-2 weeks for holiday."* A cumulative table
+  punishes absence ABSOLUTELY: a fortnight away is twenty points nobody can
+  make up, so the team works out the season is gone and stops coming — the
+  retention argument this feature exists for, running backwards.
+  **AND A PLAIN AVERAGE BREAKS THE OTHER HALF, which is why it was offered and
+  not taken**: mean points per night puts a team that played ONCE AND WON above
+  one that won five of ten. Measured on a real archive, best six moved the team
+  who missed two weeks from third and twelve behind to first — a race, not a
+  formality. **SUMMED, NOT DIVIDED, AND THE TWO ARE THE SAME TABLE**: dividing
+  by a fixed six scales every number equally and changes no position, while
+  dividing by nights PLAYED is the average again with its one-hit problem back.
+  `COUNTING_NIGHTS = 6` is a constant with a note, like the season length.
 - **THE LEAGUE IS EXPORTED TO TWO AUDIENCES AND THEY WANTED DIFFERENT THINGS**
   — *"can that be exported to the landlord and the quiz teams to view?"* The
   landlord wants EVIDENCE, so the season table joined the post-night report he

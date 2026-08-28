@@ -67,6 +67,65 @@ import { venueKeyOf } from './past-gigs.js';
 export const LEAGUE_POINTS = [10, 8, 6, 5, 4, 3, 2];
 export const POINTS_FOR_TURNING_UP = 1;
 
+/**
+ * HOW MANY NIGHTS COUNT — your best six, and the rest are dropped.
+ *
+ * Asked for on 25 August 2026, and it is the fix to the one thing a
+ * cumulative table gets badly wrong: *"there's incentive to come every week
+ * but also doesn't make it pointless to come if you had to miss 1-2 weeks for
+ * holiday or whatever."*
+ *
+ * **A RUNNING TOTAL PUNISHES ABSENCE ABSOLUTELY.** Two weeks away is twenty
+ * points you can never make up, so the team works out in week six that the
+ * season is gone and stops coming — which is the retention argument this
+ * whole feature exists to serve, running backwards. Measured on a ten-night
+ * fixture: a team away for a fortnight finished 22 points behind on the
+ * total, more than two wins, with no way back.
+ *
+ * **AND A PLAIN AVERAGE BREAKS IT THE OTHER WAY, which is why it was offered
+ * and not taken.** Mean points per night puts a team that played ONCE AND WON
+ * above a team that won five of ten — 10.00 against 9.20 on that same
+ * fixture. That removes the reason to come every week entirely, which is the
+ * half of the ask a mean was meant to protect.
+ *
+ * **BEST SIX DOES BOTH.** The holiday costs nothing while six nights survive;
+ * turning up every week is still worth it, because more nights mean more
+ * chances at a big score AND the right to drop your worst ones. On the
+ * fixture above it closes that 22-point gap to 6 — a race decidable on one
+ * good night rather than one already over.
+ *
+ * **SUMMED, NOT DIVIDED, AND THE TWO ARE THE SAME TABLE.** "Best six
+ * averaged" is this divided by a FIXED six, which changes every number by the
+ * same factor and therefore changes no position at all. Dividing by how many
+ * you actually played is the plain average again, with its one-hit problem
+ * back. So the order is identical and whole points are what get shown, because
+ * "46 points" is what gets read out in a pub and "7.67" is not.
+ *
+ * Six because a rolling twelve-week season is ten to twelve weekly nights, so
+ * it is comfortably half of them off — well past the one or two he asked
+ * about — while still needing a real run to win. A fortnightly venue runs
+ * about six in a season, where this is simply the total and costs nothing.
+ * **A constant with a note rather than a setting**, the same call the season
+ * length itself already made.
+ */
+export const COUNTING_NIGHTS = 6;
+
+/**
+ * The best `COUNTING_NIGHTS` of a team's scores, added up.
+ *
+ * Fewer than six nights played means all of them count, so an early season —
+ * and a team who has only just started — behaves exactly as a running total
+ * did. The drop only ever begins once there is something to drop, which is
+ * what makes this degrade gracefully rather than needing a rule about when it
+ * switches on.
+ */
+export function countingScore(scores = []) {
+  return [...scores]
+    .sort((a, b) => b - a)
+    .slice(0, COUNTING_NIGHTS)
+    .reduce((sum, n) => sum + n, 0);
+}
+
 /** What a finishing position is worth. */
 export function pointsFor(position) {
   const at = Math.floor(Number(position) || 0) - 1;
@@ -163,11 +222,14 @@ export function leagueTable(nights = [], { weeks = 12, now = Date.now() } = {}) 
       if (!teams.has(key)) {
         teams.set(key, {
           key, name: row.name, faceKey: row.faceKey,
-          points: 0, played: 0, wins: 0, best: 0, lastSeen: night.night,
+          // EVERY NIGHT'S SCORE IS KEPT, and the best six are added up at the
+          // end — a running total cannot be un-run once a seventh night
+          // arrives and a worse one has to drop out of it.
+          scores: [], points: 0, played: 0, wins: 0, best: 0, lastSeen: night.night,
         });
       }
       const team = teams.get(key);
-      team.points += pointsFor(row.position);
+      team.scores.push(pointsFor(row.position));
       team.played++;
       if (row.position === 1) team.wins++;
       if (row.position && (!team.best || row.position < team.best)) team.best = row.position;
@@ -191,6 +253,23 @@ export function leagueTable(nights = [], { weeks = 12, now = Date.now() } = {}) 
    * loads of the same page is a table nobody believes.
    */
   const table = [...teams.values()]
+    .map((team) => ({
+      ...team,
+      points: countingScore(team.scores),
+      // How many of their nights actually counted, so a table can say "best 6
+      // of 9" rather than leaving somebody to work out why their total is not
+      // the sum of their weeks.
+      counted: Math.min(team.played, COUNTING_NIGHTS),
+    }))
+    /*
+     * Points, then wins, then the best finish, then the name.
+     *
+     * WINS ARE COUNTED ACROSS EVERY NIGHT, not only the six that scored — it
+     * is a plain fact about the team and it is only ever a tie-break, so the
+     * honest number beats one that would need explaining. Two teams level on
+     * their best six are separated by who actually won more quizzes, which is
+     * how every pub league in the country breaks it.
+     */
     .sort((a, b) => b.points - a.points
       || b.wins - a.wins
       || (a.best || 99) - (b.best || 99)

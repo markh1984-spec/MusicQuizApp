@@ -198,7 +198,7 @@ export function leagueBlock(venue) {
       </tbody>
     </table>
     <div class="tiny lg-note">${league.table.length} team${league.table.length === 1 ? '' : 's'}
-      across ${league.nights} night${league.nights === 1 ? '' : 's'} · 10 points for a win, 1 for turning up.
+      across ${league.nights} night${league.nights === 1 ? '' : 's'} · best six count.
       A team is the name they type, so a change of spelling starts a new one.</div>
   </div>`;
 }

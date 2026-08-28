@@ -8106,7 +8106,11 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 /* Right-aligned and tabular so the columns line up as numbers rather than as
    text — the whole point of a table is comparing down a column. */
 .lg-played, .lg-pts { width: 34px; text-align: right; font-variant-numeric: tabular-nums; }
-.lg-played { color: var(--ink-dim); }
+/* WIDE ENOUGH FOR "9 (6)" ON ONE LINE. At 34px the counted-nights note wrapped
+   under the number it qualifies and made those rows a line taller than the
+   rest — a table of teams reads down the points column, and rows of two
+   different heights break that scan for a footnote. */
+.lg-played { color: var(--ink-dim); width: 52px; white-space: nowrap; }
 .lg-table .lg-top .lg-name, .lg-table .lg-top .lg-pts b { color: var(--gold); }
 .lg-note { margin-top: 8px; }
 .demo-at { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; max-width: 320px; }
@@ -9331,3 +9335,9 @@ input, textarea, [contenteditable] { caret-color: var(--hot); }
   color: var(--gold); font-size: var(--fs-lead);
 }
 .lgp-note { margin-top: 18px; text-align: center; color: var(--ink-dim); }
+
+/* HOW MANY OF A TEAM'S NIGHTS ACTUALLY SCORED, beside how many they played —
+   only ever drawn once some are being dropped, so a team adding their own
+   weeks up can see why the total is not the sum. Quieter than the number it
+   qualifies: the count is the fact and this is the footnote. */
+.lg-drop { opacity: 0.72; font-variant-numeric: tabular-nums; }

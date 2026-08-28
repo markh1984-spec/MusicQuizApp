@@ -1292,6 +1292,73 @@ of the archive with nothing new collected. What did not exist was any way to
 get it out of the console: no PDF, no link, no page. That was a deliberate
 park, recorded at the time, and this is it being unparked.
 
+### First, the scoring changed: a team's best six nights count
+
+Raised as soon as the export existed, and it is the more important half:
+*"the quiz teams' best 6 scores averaged, so there's incentive to come every
+week but also doesn't make it pointless to come if you had to miss 1-2 weeks
+for holiday."*
+
+**A running total punishes absence absolutely.** Two weeks away is twenty
+points that can never be made up, so the team works out in week six that the
+season is gone and stops coming — which is the retention argument this whole
+feature exists to serve, running backwards.
+
+**But a plain average breaks the other half.** Scored as mean points per
+night, on a ten-night fixture:
+
+```
+team       played  total   mean   best6
+Regulars      10      92    9.20      60
+Holiday        8      70    8.75      54
+Casuals        7      47    6.71      42
+OneHit         1      10   10.00      10
+
+by TOTAL : Regulars > Holiday > Casuals > OneHit
+by MEAN  : OneHit   > Regulars > Holiday > Casuals     ← one lucky night wins
+by BEST 6: Regulars > Holiday > Casuals > OneHit
+```
+
+A mean puts a team that played once and won above a team that won five of
+ten. That removes the reason to come every week entirely, which is the half
+the average was meant to protect.
+
+**Best six does both.** The holiday costs nothing while six nights survive;
+turning up every week is still worth it, because more nights mean more
+chances at a big score *and* the right to drop the bad ones.
+
+**Summed rather than divided — and the two are the same table.** "Best six
+averaged" is this divided by a FIXED six, which scales every number equally
+and therefore changes no position at all. Dividing by nights actually played
+is the plain average again, with the one-hit problem back. So the order is
+identical either way and whole points are what get shown, because "56 points"
+is what gets read out in a pub and "9.33" is not.
+
+Six because a rolling twelve-week season is ten to twelve weekly nights — 
+comfortably half of them off, well past the one or two asked about, while
+still needing a real run to win. A fortnightly venue runs about six, where
+this is simply the total and costs nothing. And with fewer than six played it
+IS the total, so an early season and a new team behave exactly as before: the
+drop only begins once there is something to drop.
+
+On the seeded nine-night season, scoring the same archive both ways:
+
+```
+EVERY NIGHT ADDED UP (before)        BEST SIX (now)
+1. Quizzly Bears 74                  1. Norfolk Enchants 56
+2. Brain Trust 67                    2. Quizzly Bears 54
+3. Norfolk Enchants 62               3. Brain Trust 50
+```
+
+Norfolk Enchants missed two weeks. Before: third, twelve behind, out of it.
+Now: top, on the strength of four wins in seven. **The tables say "9 (6)" in
+the played column** once nights are being dropped, so a team adding up their
+own weeks can see why the total is not the sum.
+
+Wins stay counted across EVERY night rather than only the six that scored —
+it is a plain fact about the team, it is only ever a tie-break, and the
+honest number beats one that would need explaining.
+
 ### The two audiences want different things, so they got different things
 
 **A landlord wants evidence, in a document he already receives.** The

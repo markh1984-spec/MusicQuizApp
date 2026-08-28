@@ -306,7 +306,15 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * league was yours only — which is no longer true, and a stale prohibition is
  * worse than none.
  */
-const BUDGET = 180_500;
+/*
+ * 181_500 ON 25 AUGUST 2026, for the league's scoring rule — best six nights,
+ * not a running total and not an average. It forbids both of the things that
+ * look reasonable: a cumulative table (a fortnight away is a season nobody can
+ * win back) and a mean (one lucky night beats a whole season). It also records
+ * that "best six averaged" and "best six summed" are the SAME table, so nobody
+ * re-argues the divisor.
+ */
+const BUDGET = 181_500;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

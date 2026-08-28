@@ -96,7 +96,7 @@ function tableFor(league) {
             <tr${t.position === 1 ? ' class="lg-top"' : ''}>
               <td class="lg-pos">${t.position}</td>
               <td class="lg-name">${esc(t.name)}</td>
-              <td class="lg-played tiny">${t.played}</td>
+              <td class="lg-played tiny">${t.played}${t.counted < t.played ? ` <span class="lg-drop">(${t.counted})</span>` : ''}</td>
               <td class="lg-played tiny">${t.wins}</td>
               <td class="lg-pts"><b>${t.points}</b></td>
             </tr>`).join('')}
@@ -134,8 +134,9 @@ fetch(keyed('/api/league'))
        * page than on the private one.
        */
       + `<p class="tiny lgp-note">Ten points for a win, one for turning up, over a rolling
-        twelve-week season. You are the name you type on the night — spell it the same way
-        each week and the points stack up.</p>`;
+        twelve-week season. <b>Your best six nights count</b> — so a week away costs you
+        nothing, and coming every week gives you more good ones to pick from. You are the
+        name you type on the night, so spell it the same way each week.</p>`;
   })
   .catch(() => {
     body.replaceChildren(node('<p class="muted">The table could not be loaded just now.</p>'));

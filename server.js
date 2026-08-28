@@ -2462,7 +2462,8 @@ async function handleGet(req, res, url, route) {
         next: next ? comeBackText(next.date).replace(/^Back here /, 'Next quiz ') : '',
         // Named fields, never a spread — see the note above.
         table: league.table.map((t) => ({
-          position: t.position, name: t.name, played: t.played, wins: t.wins, points: t.points,
+          position: t.position, name: t.name, played: t.played, counted: t.counted,
+          wins: t.wins, points: t.points,
         })),
         ...(published ? {} : { preview: true }),
       });
