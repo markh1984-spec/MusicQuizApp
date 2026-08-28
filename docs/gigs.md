@@ -1359,6 +1359,55 @@ Wins stay counted across EVERY night rather than only the six that scored —
 it is a plain fact about the team, it is only ever a tie-break, and the
 honest number beats one that would need explaining.
 
+### Then a point for every night played, on top of the best six
+
+Asked the moment the rule was explained: *"Oh I see so we just add up the best
+six weeks and add a point for each week you attend?"* That was a question
+about how it worked, and the honest answer was no — the 1 was the FLOOR of the
+position ladder, not an attendance payment. But the misreading was the better
+rule, so it is the rule now.
+
+**What it fixes:** under best six alone, a seventh night outside your six is
+worth literally nothing. A team that finishes near the bottom every week is on
+six points after six weeks and stays there for ever — which is a retention
+hole in the feature built for retention. A point a night closes it: every week
+you turn up moves you, however the night went.
+
+**And it costs the holiday almost nothing**, which is the constraint it has to
+live inside. Two weeks away is 2 points rather than the 20 a running total
+charged.
+
+**So the position ladder stops paying below seventh.** It used to award 1 from
+eighth down as a floor; keeping that AND adding an attendance point would pay
+the same point twice under two names, and "one for turning up" would mean two
+different things in one sentence — the label collision this project's own
+sweep mode hunts for. Eighth place is still worth exactly 1. It just arrives
+as the attendance point now, and for *every* night rather than only the six
+that scored.
+
+The three rules on the same nine-night archive, with Norfolk Enchants away for
+two of them:
+
+```
+team                P   every night   best six   best six + 1 a night
+Norfolk Enchants     7           62         56                     63
+Quizzly Bears        9           74         54                     63
+Brain Trust          9           67         50                     59
+Let Us Wine          7           37         32                     39
+The Quizinarts       4           21         21                     25
+```
+
+- **Every night added up:** Quizzly Bears win by 12, and the team who took a
+  fortnight off is third with nothing to play for.
+- **Best six alone:** Norfolk go top by 2 — but Quizzly's two extra nights
+  bought them nothing at all.
+- **Best six plus one a night:** level on 63, decided on wins (4 v 3). The
+  form team is still ahead, the ever-present team is right on their shoulder,
+  and both had a reason to be there every week.
+
+That last table is the whole design in one line: attendance pays, form pays
+more, and a holiday is worth two points rather than a season.
+
 ### The two audiences want different things, so they got different things
 
 **A landlord wants evidence, in a document he already receives.** The

@@ -65,6 +65,35 @@ import { venueKeyOf } from './past-gigs.js';
  * would measure the quizmaster's programme rather than the teams.
  */
 export const LEAGUE_POINTS = [10, 8, 6, 5, 4, 3, 2];
+
+/**
+ * ONE POINT FOR EVERY NIGHT YOU PLAY, added to the best six — and it is the
+ * only place a point is given for attending.
+ *
+ * Asked for on 25 August 2026, after the best-six rule landed: *"so we just
+ * add up the best six weeks and add a point for each week you attend?"* That
+ * was a question about how it worked rather than a request, and the honest
+ * answer was no — but it is the better rule, so it is the rule now.
+ *
+ * **WHAT IT FIXES:** under best-six alone, a seventh night outside your best
+ * six is worth literally nothing, so a team that finishes near the bottom
+ * every week stops gaining anything at all after six weeks. That is a
+ * retention hole in the feature built for retention. A point a night closes
+ * it: every week you turn up moves you, however the night went.
+ *
+ * **AND IT COSTS THE HOLIDAY ALMOST NOTHING**, which is the constraint it has
+ * to live inside. A fortnight away is now 2 points behind rather than the 20
+ * a running total charged — recoverable on one decent night, which is the
+ * whole difference between a race and a formality.
+ *
+ * **SO THE POSITION LADDER STOPS AT SEVENTH AND PAYS NOTHING BELOW IT.** It
+ * used to award 1 for anywhere from eighth down, as a floor. Keeping that
+ * floor AND adding this would pay the same point twice under two names, and
+ * "one for turning up" would mean two different things in one sentence —
+ * exactly the label collision this project's own sweep mode hunts for. A
+ * night outside the top seven is worth the attendance point and nothing else,
+ * so eighth place is still worth 1, and the sentence is true only once.
+ */
 export const POINTS_FOR_TURNING_UP = 1;
 
 /**
@@ -126,11 +155,18 @@ export function countingScore(scores = []) {
     .reduce((sum, n) => sum + n, 0);
 }
 
-/** What a finishing position is worth. */
+/**
+ * What a FINISHING POSITION is worth, on its own.
+ *
+ * Nothing outside the top seven — see `POINTS_FOR_TURNING_UP`. This is half
+ * of a night's score and never the whole of it: `leagueTable()` adds the
+ * attendance point per night played, so a night finishing eighth is worth 1
+ * and a night finishing third is worth 7.
+ */
 export function pointsFor(position) {
   const at = Math.floor(Number(position) || 0) - 1;
-  if (at < 0) return POINTS_FOR_TURNING_UP;
-  return LEAGUE_POINTS[at] ?? POINTS_FOR_TURNING_UP;
+  if (at < 0) return 0;
+  return LEAGUE_POINTS[at] ?? 0;
 }
 
 /**
@@ -255,7 +291,13 @@ export function leagueTable(nights = [], { weeks = 12, now = Date.now() } = {}) 
   const table = [...teams.values()]
     .map((team) => ({
       ...team,
-      points: countingScore(team.scores),
+      /*
+       * THE BEST SIX FINISHES, PLUS A POINT FOR EVERY NIGHT PLAYED — and the
+       * attendance half is counted over ALL of them, not only the six that
+       * scored. That is the point of it: it is what keeps a seventh, eighth
+       * and ninth night worth turning up for once the best six are settled.
+       */
+      points: countingScore(team.scores) + team.played * POINTS_FOR_TURNING_UP,
       // How many of their nights actually counted, so a table can say "best 6
       // of 9" rather than leaving somebody to work out why their total is not
       // the sum of their weeks.

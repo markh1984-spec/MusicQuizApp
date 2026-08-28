@@ -40,7 +40,7 @@ test('THE TABLE ON A REPORT IS THE TABLE AS IT STOOD THAT NIGHT', () => {
   const after = leagueAfter(nights, '2026-02-13');
   assert.equal(after.nights, 2, 'the night after this one is not counted');
   assert.equal(after.table[0].name, 'Quizzly Bears');
-  assert.equal(after.table[0].points, 20, 'two wins, and nothing from the 20th');
+  assert.equal(after.table[0].points, 22, 'two wins plus two nights played, and nothing from the 20th');
   assert.ok(!after.table.some((t) => t.name === 'Late Starters'),
     'a team who first played AFTER this night is not on this night\'s table');
 
@@ -141,13 +141,16 @@ test('A FORTNIGHT AWAY NO LONGER ENDS A TEAM\'S SEASON', () => {
   assert.equal(hol.counted, 6);
 
   /*
-   * THE WHOLE POINT: both teams have six wins-or-seconds to draw on, so the
-   * holiday costs nothing. Under a running total the away team was 20 points
-   * down and out of it; here the gap is what happened on the nights they both
-   * played, which is what a league should measure.
+   * THE WHOLE POINT, and the gap is now made of two nameable parts: the form
+   * across their best six, plus TWO for the two nights the away team did not
+   * turn up to. Under a running total the away team was 20 points down and
+   * out of it; here it is six — less than one win, so a single good night
+   * puts them back in front.
    */
-  assert.ok(Math.abs(reg.points - hol.points) <= 4,
-    `a fortnight away should not decide a season — got ${reg.points} v ${hol.points}`);
+  const gap = reg.points - hol.points;
+  assert.equal(gap, 6, `expected a recoverable gap — got ${reg.points} v ${hol.points}`);
+  assert.equal(reg.played - hol.played, 2, 'two nights of that gap are the attendance point');
+  assert.ok(gap < 10, 'and the whole gap is worth less than a single win');
 });
 
 test('AND ONE LUCKY NIGHT DOES NOT WIN IT — which a plain average would have allowed', () => {
@@ -169,7 +172,7 @@ test('AND ONE LUCKY NIGHT DOES NOT WIN IT — which a plain average would have a
   assert.equal(table[0].name, 'Regulars', 'seven wins beats one');
   const oneHit = table.find((t) => t.name === 'One Hit');
   assert.equal(oneHit.played, 1);
-  assert.equal(oneHit.points, 10, 'their one win is worth exactly one win');
+  assert.equal(oneHit.points, 11, 'ten for the win, one for being there — and no more');
   assert.ok(table[0].points > oneHit.points);
 });
 

@@ -1188,7 +1188,7 @@ function leagueBand(s) {
             <span class="lgb-pts">${t.points}</span>
           </div>`).join('')}
       </div>
-      <div class="lgb-note">${s.league.teams} teams · ${s.league.nights} nights · your best six count</div>
+      <div class="lgb-note">${s.league.teams} teams · ${s.league.nights} nights · best six finishes, plus one a night</div>
     </div>`;
 }
 

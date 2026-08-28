@@ -314,7 +314,16 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * that "best six averaged" and "best six summed" are the SAME table, so nobody
  * re-argues the divisor.
  */
-const BUDGET = 181_500;
+/*
+ * 182_000 ON 25 AUGUST 2026, for the attendance point that finished the
+ * league's scoring rule — and for the prohibition that came with it. The
+ * position ladder pays NOTHING below seventh now: it used to floor at 1, and
+ * keeping that floor beside a per-night attendance point would pay one point
+ * twice under two names and make "one for turning up" mean two things in one
+ * sentence. Eighth place is still worth exactly 1. That is the kind of line
+ * that stops somebody "restoring" the floor a year from now.
+ */
+const BUDGET = 182_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

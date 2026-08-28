@@ -258,8 +258,8 @@ export function leagueSection() {
     wrap.appendChild(node(`
       <div class="panel">
         <p>No league has started yet. It builds itself out of the nights you file — ten
-          points for a win, one for turning up, over a rolling twelve-week season —
-          and a team's best six nights are the ones that count.</p>
+          points for a win, plus one for every night a team plays, over a rolling
+          twelve-week season — and their best six finishes are what count.</p>
         <p class="tiny">A night needs a venue on it to belong to a league, and bingo
           nights score nobody: a bingo board is who was dealt a good card rather than a
           finishing order, and awarding league points for it would put somebody top for
@@ -269,11 +269,12 @@ export function leagueSection() {
   }
 
   wrap.appendChild(node(`
-    <p class="tiny">Ten points for a win, one for turning up, over a rolling twelve-week
-      season — and <b>a team's best six nights are the ones that count</b>, so a fortnight
-      away does not end anybody's season. A team is the name they type on the night, so a
-      change of spelling starts a new team — there is no sign-up, and that is what keeps it
-      free to join at the door.</p>`));
+    <p class="tiny">Ten points for a win, down to two for seventh, plus <b>one for every
+      night a team plays</b> — and their <b>best six finishes</b> are the ones that count
+      towards the total. So a fortnight away costs two points rather than a season, and
+      turning up every week is always worth something. Rolling twelve-week season. A team
+      is the name they type on the night, so a change of spelling starts a new team — there
+      is no sign-up, and that is what keeps it free to join at the door.</p>`));
   for (const league of leagues) {
     const panel = node(leagueTableFor(league));
     /*

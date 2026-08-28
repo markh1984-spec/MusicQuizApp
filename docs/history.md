@@ -21,9 +21,18 @@ offered and not taken**, because it breaks the other half: mean points per
 night puts a team that played once and won above one that won five of ten.
 Best six does both, and "best six averaged" is the same table as "best six
 summed" — a fixed divisor changes no position — so whole points are shown.
-On the seeded season it moved the team who missed two weeks from third and
-twelve behind to first. Reasoning and the fixture in
-[`docs/gigs.md`](gigs.md).
+
+**Then a point for every night played, on top.** Asked as a question — *"so we
+just add up the best six weeks and add a point for each week you attend?"* —
+which was a misreading of the ladder's floor, and a better rule than the one
+it misread. Under best six alone a seventh night outside your six is worth
+nothing, so a team finishing near the bottom stops gaining anything at all
+after six weeks. **The ladder therefore stops paying below seventh**: keeping
+its old floor of 1 beside an attendance point would pay one point twice under
+two names. Eighth is still worth exactly 1. On the seeded season the team who
+missed a fortnight went from third and twelve behind to level at the top on
+63, decided on wins — form ahead, the ever-present team on their shoulder.
+Reasoning and the three-way fixture in [`docs/gigs.md`](gigs.md).
 
 **Live as of 25 August 2026 — the league leaves the console:**
 

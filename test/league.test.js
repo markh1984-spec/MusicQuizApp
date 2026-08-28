@@ -25,14 +25,33 @@ const night = (ago, venue, names, kind = 'quiz') => ({
   }],
 });
 
-test('the winner takes ten and everybody who turned up scores', () => {
+test('the winner takes ten, and the ladder stops paying at seventh', () => {
   assert.equal(pointsFor(1), 10);
   assert.equal(pointsFor(2), 8);
   assert.equal(pointsFor(7), 2);
-  // The tail is the point: a team out of contention in week three still has a
-  // reason to come back, which is the same argument the lucky dip is built on.
-  assert.equal(pointsFor(8), 1);
-  assert.equal(pointsFor(40), 1);
+  /*
+   * NOTHING BELOW SEVENTH FROM THE POSITION ITSELF — the point a team gets for
+   * being there is the ATTENDANCE point, added once per night played by
+   * `leagueTable()`. It used to be a floor here as well, and keeping both
+   * would pay the same point twice under two names.
+   *
+   * The tail still matters, which is the argument the lucky dip is built on:
+   * a team out of contention in week three is on one point a week rather than
+   * nothing, and now gets it for EVERY week rather than only their best six.
+   */
+  assert.equal(pointsFor(8), 0);
+  assert.equal(pointsFor(40), 0);
+  assert.equal(pointsFor(0), 0, 'and a missing position pays nothing on its own');
+});
+
+test('A NIGHT IS ITS FINISH PLUS ONE FOR BEING THERE', () => {
+  // Eighth place is still worth exactly 1, as it always was — it just arrives
+  // as the attendance point now instead of as a floor on the ladder.
+  const { table } = leagueTable([
+    night(1, 'The Crown', ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'Also Rans']),
+  ], { now: NOW });
+  assert.equal(table.find((t) => t.name === 'Also Rans').points, 1);
+  assert.equal(table.find((t) => t.name === 'a').points, 11, '10 for the win, 1 for being there');
 });
 
 test('a team is its name, tidied the four ways a team actually types it', () => {
@@ -53,15 +72,16 @@ test('points add up across a season and the table is ordered', () => {
 
   assert.equal(nights, 3);
   assert.equal(table[0].name, 'Quizzly Bears');
-  assert.equal(table[0].points, 28);      // 10 + 8 + 10
+  assert.equal(table[0].points, 31);      // (10 + 8 + 10) + 3 nights played
   assert.equal(table[0].wins, 2);
   assert.equal(table[0].played, 3);
   assert.equal(table[0].position, 1);
-  assert.equal(table[1].points, 26);      // 8 + 10 + 8
+  assert.equal(table[1].points, 29);      // (8 + 10 + 8) + 3 nights played
 });
 
 test('a tie is broken by WINS, the way every pub league breaks it', () => {
-  // Both finish on 18: one has a win and a third, the other two seconds.
+  // Both finish level: one has a win and a third, the other two seconds — and
+  // both played two nights, so the attendance point cannot separate them.
   const { table } = leagueTable([
     night(1, 'The Crown', ['Winners', 'Steady', 'x']),
     night(8, 'The Crown', ['y', 'Steady', 'Winners']),
@@ -69,8 +89,8 @@ test('a tie is broken by WINS, the way every pub league breaks it', () => {
 
   const winners = table.find((t) => t.name === 'Winners');
   const steady = table.find((t) => t.name === 'Steady');
-  assert.equal(winners.points, 16);
-  assert.equal(steady.points, 16);
+  assert.equal(winners.points, 18);       // (10 + 6) + 2 nights
+  assert.equal(steady.points, 18);        // (8 + 8) + 2 nights
   assert.ok(winners.position < steady.position, 'a win has to beat two seconds');
 });
 
@@ -115,7 +135,8 @@ test('an evening with two quizzes is ONE night, and the BEST finish counts', () 
   assert.equal(nights, 1);
   const stayers = table.find((t) => t.name === 'Stayers');
   assert.equal(stayers.played, 1, 'one evening is one appearance');
-  assert.equal(stayers.points, 10, 'their best finish, not both added together');
+  assert.equal(stayers.points, 11,
+    'their best finish plus ONE night — an evening is one appearance, however many quizzes');
 });
 
 test('every venue gets its own table, and a night with no venue joins none', () => {

@@ -133,9 +133,10 @@ fetch(keyed('/api/league'))
        * pretending to a precision the app has not got is worse on the public
        * page than on the private one.
        */
-      + `<p class="tiny lgp-note">Ten points for a win, one for turning up, over a rolling
-        twelve-week season. <b>Your best six nights count</b> — so a week away costs you
-        nothing, and coming every week gives you more good ones to pick from. You are the
+      + `<p class="tiny lgp-note">Ten points for a win, down to two for seventh — and
+        <b>a point for every night you play</b>, whatever happens. Your best six finishes
+        count towards the total, so a week away barely costs you anything, and every week
+        you turn up is worth something. Over a rolling twelve-week season. You are the
         name you type on the night, so spell it the same way each week.</p>`;
   })
   .catch(() => {
