@@ -180,6 +180,36 @@ export function isCleanForPublic(name) {
 export const HIDDEN_LABEL = 'Name hidden';
 
 /**
+ * THE QUIZMASTER HAS THE LAST WORD, IN BOTH DIRECTIONS.
+ *
+ * Asked for on 25 August 2026: *"can I get a manual override so we're erring
+ * on the side of caution but I can override it."* The word list is a guess
+ * about intent and a human who was in the room is not — so the list decides
+ * by default and a person can overrule it either way.
+ *
+ * **BOTH DIRECTIONS, because the list is wrong in both.** It hides "The Pen
+ * Is Mightier" (a real team, caught by the adjacent-pair pass) and it
+ * publishes "Cunning Stunts" (a spoonerism it cannot see). One override with
+ * two values fixes both, and a one-way "allow" control would have left the
+ * second one with no answer at all.
+ *
+ * **KEYED BY `teamKey()`**, the same identity the league groups by — so an
+ * override lands on exactly the row it was made on, and follows that team
+ * across the season rather than being re-made every week.
+ *
+ * @typedef {'allow'|'hide'} NameDecision
+ */
+
+/** What the filter says, unless a human has said otherwise. */
+export function hiddenForPublic(name, decisions = {}, keyOf = null) {
+  const key = keyOf ? keyOf(name) : String(name || '').trim().toLowerCase();
+  const said = decisions[key];
+  if (said === 'allow') return false;
+  if (said === 'hide') return true;
+  return !isCleanForPublic(name);
+}
+
+/**
  * The name to print on a page somebody outside the room can see.
  *
  * **MASKED, NEVER DROPPED.** Taking the row out would move everybody below it
@@ -188,8 +218,8 @@ export const HIDDEN_LABEL = 'Name hidden';
  * still find themselves in by their points. The position and the points are
  * the table's job; the name is the only thing at issue.
  */
-export function publicName(name) {
-  return isCleanForPublic(name) ? String(name || '') : HIDDEN_LABEL;
+export function publicName(name, decisions = {}, keyOf = null) {
+  return hiddenForPublic(name, decisions, keyOf) ? HIDDEN_LABEL : String(name || '');
 }
 
 /**
@@ -199,8 +229,8 @@ export function publicName(name) {
  * two different ideas of what is publishable — the same reason one function
  * builds the table itself.
  */
-export function publicTable(rows = []) {
-  return rows.map((row) => (isCleanForPublic(row.name)
-    ? row
-    : { ...row, name: HIDDEN_LABEL, nameHidden: true }));
+export function publicTable(rows = [], decisions = {}, keyOf = null) {
+  return rows.map((row) => (hiddenForPublic(row.name, decisions, keyOf)
+    ? { ...row, name: HIDDEN_LABEL, nameHidden: true }
+    : row));
 }

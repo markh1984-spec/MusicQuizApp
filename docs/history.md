@@ -29,8 +29,17 @@ place and lies about the season. **Whole words for ordinary profanity**, so
 Scunthorpe, Penistone and "assassin" survive; the slur list alone gets a
 second pass with the spaces stripped, which catches `n i g g a`. **The console
 shows the real name and marks it** `hidden publicly`, or a name vanishes off a
-published table with no way to tell which. Full reasoning in
-[`docs/gigs.md`](gigs.md); 1,534 tests green.
+published table with no way to tell which.
+
+**And a human overrules the list, in both directions** — *"so we're erring on
+the side of caution but I can override it."* The list still decides by default
+and still errs strict; a person who was in the room can say otherwise. Both
+directions, because it is wrong both ways: it hides "The Pen Is Mightier" and
+publishes a spoonerism it cannot see. Keyed by `teamKey()` so a ruling follows
+the team all season, **cleared rather than stored when it only restates the
+filter** (or a later change to the list could never reach that name), and one
+folded control per table rather than a button per row. Full reasoning in
+[`docs/gigs.md`](gigs.md); 1,539 tests green.
 
 **Live as of 25 August 2026 — the league scores a team's BEST SIX nights:**
 

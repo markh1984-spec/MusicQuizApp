@@ -1521,11 +1521,48 @@ on a public web page under the quizmaster's brand are different objects.
   carries a quiet `hidden publicly` pill, or a name vanishes off a table they
   put up and there is no way to tell which one did it.
 
-**One known false positive, accepted knowingly:** "The Pen Is Mightier" joins
-to a listed word on the adjacent-pair pass and is hidden. That is the
-strict-erring trade, and the console reports it. **And one known miss:**
-spoonerisms like "Cunning Stunts" publish, because catching them means
-guessing at intent and that is where a filter starts renaming real teams.
+**One known false positive:** "The Pen Is Mightier" joins to a listed word on
+the adjacent-pair pass and is hidden. **And one known miss:** spoonerisms like
+"Cunning Stunts" publish, because catching them means guessing at intent and
+that is where a filter starts renaming real teams.
+
+### And a human overrules the list, in both directions
+
+*"Can I get a manual override so we're erring on the side of caution but I can
+override it."* Both halves of that sentence are the design: the list still
+decides by default and still errs strict, and a person who was in the room can
+say otherwise.
+
+**Both directions, because the list is wrong both ways** — the two limits
+above are one each. A one-way "allow" control would have fixed "The Pen Is
+Mightier" and left the spoonerism with no answer at all.
+
+- **Keyed by `teamKey()`**, the identity the league already groups by, so a
+  ruling lands on exactly the row it was made on and follows that team across
+  the season rather than being re-made every week.
+- **A ruling that only restates the filter is CLEARED, not stored.** Pressing
+  "hide" on a name the list would have hidden anyway records nothing —
+  otherwise a later change to the word list could never reach that name, and
+  nobody would know why. The gap dial's `cleanPlan()` makes the same call for
+  the same reason.
+- **One control per table, folded away.** Ten teams times several venues is
+  thirty buttons on a page whose job is being read. It sits under the table
+  beside the publish control, which is also the moment somebody wants it —
+  checking the names before putting them up — and the opener carries the count
+  ("Check the names — 1 held back") so the state is legible while it is shut.
+- **The list says what WILL happen, not what the filter thought.** A name a
+  human allowed reads "On the public table" like any other, with a quiet
+  `your call` mark, so the page never argues with itself.
+- **The row's key travels with the row.** The filter's verdict rides with the
+  library (no I/O); the rulings come from the one GitHub read the tab makes;
+  the console combines them. Sending the key rather than recomputing it in the
+  browser is what stops a second copy of `teamKey()` existing — two
+  implementations of one identity is how a ruling eventually lands on the
+  wrong team.
+- **The rulings live in the publish file**, so both halves of "what does this
+  room publish" are one read and one write. Writing the venues alone would
+  wipe every ruling, which is the kind of bug that only surfaces weeks later
+  when a name comes back.
 
 ### Three things this cost, all found by running it
 

@@ -188,6 +188,113 @@ function leagueTableFor(league) {
 }
 
 /**
+ * WHAT THE PUBLIC WILL ACTUALLY SEE FOR ONE TEAM — the word list's verdict,
+ * unless a human has overruled it.
+ *
+ * **This mirrors `hiddenForPublic()` on the server and must keep mirroring
+ * it.** The two halves arrive separately on purpose: the filter's verdict
+ * rides with the library (no I/O), the rulings come from the one GitHub read
+ * this tab makes. The ROW'S KEY travels with the row so this combine cannot
+ * drift — a second copy of `teamKey()` in the browser is how a ruling would
+ * eventually land on the wrong team.
+ */
+function hiddenNow(row, names) {
+  const said = names[row.key];
+  if (said === 'allow') return false;
+  if (said === 'hide') return true;
+  return Boolean(row.nameHidden);
+}
+
+/**
+ * OVERRULE THE FILTER, IN EITHER DIRECTION.
+ *
+ * *"Can I get a manual override so we're erring on the side of caution but I
+ * can override it."* A word list is a guess about intent and the quizmaster
+ * was in the room, so the list decides by default and this is where a person
+ * says otherwise.
+ *
+ * **ONE PLACE, NOT A BUTTON PER ROW.** Ten teams times several venues is
+ * thirty controls on a page whose job is being read, which is the clutter
+ * rule exactly. It is folded away behind one line, under the table and beside
+ * the publish control — which is also the moment somebody would want it:
+ * checking the names before putting them up.
+ *
+ * **THE LIST SAYS WHAT WILL HAPPEN, not what the filter thought.** A name a
+ * human has allowed reads "on the public table" like any other, with a quiet
+ * mark saying the decision was theirs, so the page never argues with itself.
+ */
+function nameReview(league, names, onRuled) {
+  const rows = league.table || [];
+  const wrap = node('<div class="lg-review"></div>');
+
+  const paint = () => {
+    const held = rows.filter((r) => hiddenNow(r, names)).length;
+    wrap.replaceChildren();
+    const head = node(`
+      <button class="minor lg-review-open" type="button" aria-expanded="false">
+        Check the names${held ? ` — ${held} held back` : ''}
+      </button>`);
+    const list = node('<div class="lg-review-list" hidden></div>');
+
+    for (const row of rows) {
+      const hidden = hiddenNow(row, names);
+      const said = names[row.key] || '';
+      const line = node(`
+        <div class="lg-review-row">
+          <span class="lg-review-name">${esc(row.name)}</span>
+          <span class="tiny lg-review-state">${hidden ? 'Held back' : 'On the public table'}${
+  said ? ` <span class="lg-review-yours">your call</span>` : ''}</span>
+        </div>`);
+      // Outlined red to hide, ordinary to show — the app's own roles, so the
+      // more consequential direction reads as the more consequential one.
+      const btn = node(hidden
+        ? '<button class="minor lg-review-go" type="button">Show it</button>'
+        : '<button class="minor danger lg-review-go" type="button">Hide it</button>');
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        /*
+         * A RULING THAT ONLY RESTATES THE FILTER IS CLEARED, not stored. If
+         * the word list would have hidden it anyway, "hide" is the list's own
+         * answer and keeping a human ruling beside it means a later change to
+         * the list silently cannot reach this name. Same rule as the gap
+         * dial's `cleanPlan()`: only what actually differs is recorded.
+         */
+        const want = hidden ? 'allow' : 'hide';
+        const decision = want === (row.nameHidden ? 'hide' : 'allow') ? '' : want;
+        try {
+          const res = await fetch(keyed('/api/league/name'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: row.name, decision }),
+          });
+          const out = await res.json();
+          if (!res.ok) throw new Error(out.error || 'Could not change that.');
+          if (decision) names[row.key] = decision; else delete names[row.key];
+          onRuled();
+          paint();
+          list.hidden = false;
+          head.setAttribute('aria-expanded', 'true');
+        } catch (err) {
+          btn.disabled = false;
+          line.appendChild(node(`<div class="tiny" style="color:var(--bad)">${esc(err.message)}</div>`));
+        }
+      });
+      line.appendChild(btn);
+      list.appendChild(line);
+    }
+
+    head.addEventListener('click', () => {
+      list.hidden = !list.hidden;
+      head.setAttribute('aria-expanded', String(!list.hidden));
+    });
+    wrap.append(head, list);
+  };
+
+  paint();
+  return wrap;
+}
+
+/**
  * PUT THIS VENUE'S TABLE ON A PUBLIC PAGE, or take it back down.
  *
  * Asked for on 25 August 2026 — *"can that be exported to the landlord and
@@ -299,10 +406,31 @@ export function leagueSection() {
      * is public.
      */
     panel.dataset.leagueKey = league.key;
+    byKey.set(league.key, league);
     wrap.appendChild(panel);
   }
   paintPublished();
   return wrap;
+}
+
+/** Every league on screen, by the key its panel carries. */
+const byKey = new Map();
+
+/** Redraw the `hidden publicly` marks from what will ACTUALLY happen. */
+function markPills(panel, league, names) {
+  const rows = league.table || [];
+  [...panel.querySelectorAll('tbody tr')].forEach((tr, i) => {
+    const row = rows[i];
+    const cell = tr.querySelector('.lg-name');
+    if (!row || !cell) return;
+    const hidden = hiddenNow(row, names);
+    const mark = cell.querySelector('.lg-hidden');
+    if (hidden && !mark) {
+      cell.appendChild(node('<span class="lg-hidden" title="This name is hidden on the public table and on a landlord\'s report. It still scores exactly as it is.">hidden publicly</span>'));
+    } else if (!hidden && mark) {
+      mark.remove();
+    }
+  });
 }
 
 /**
@@ -332,10 +460,23 @@ function paintPublished() {
        * A tab changed while the request was in flight simply matches nothing,
        * which is the right answer rather than a control on the wrong page.
        */
+      const names = d.names || {};
       for (const panel of document.querySelectorAll('[data-league-key]')) {
         if (panel.querySelector('.lg-pub-on, .lg-pub-off')) continue;
         const key = panel.dataset.leagueKey;
+        const league = byKey.get(key);
         const where = panel.querySelector('.league-head b');
+        /*
+         * THE PILLS ARE REPAINTED FROM THE COMBINE, not left as the filter
+         * drew them. The table renders before the rulings arrive — it has to,
+         * or the tab would sit blank on a network round trip — so a name the
+         * quizmaster allowed would otherwise keep saying "hidden publicly"
+         * for ever on the one screen that is supposed to tell them the truth.
+         */
+        if (league) {
+          markPills(panel, league, names);
+          panel.appendChild(nameReview(league, names, () => markPills(panel, league, names)));
+        }
         panel.appendChild(leagueToggle(key, where ? where.textContent : '', live.has(key)));
       }
     })

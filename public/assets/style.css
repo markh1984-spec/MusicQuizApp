@@ -9352,3 +9352,34 @@ input, textarea, [contenteditable] { caret-color: var(--hot); }
   color: var(--ink-dim); font-size: var(--fs-mini); font-weight: 800;
   vertical-align: middle; white-space: nowrap;
 }
+
+/* ---- OVERRULING THE NAME FILTER — `nameReview()` in console-community.js.
+   Folded away behind one line under each table, because it is checked before
+   publishing rather than read: thirty toggles on a page whose job is being
+   scanned is the clutter rule exactly. */
+.lg-review { margin-top: 10px; }
+.lg-review-list {
+  display: grid; gap: 6px; margin-top: 8px;
+  padding: 10px; border-radius: var(--r-field);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--panel-line);
+}
+/* Name, then what will happen to it, then the one control. `auto` on the
+   state so a long name gives way first — the verdict is the column somebody
+   is scanning down. */
+.lg-review-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: center; }
+.lg-review-name { font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lg-review-state { color: var(--ink-dim); white-space: nowrap; }
+/* "Your call" — this row is a human's decision rather than the list's, so a
+   later change to the word list will not touch it. Quiet: it is a footnote on
+   a state, not a state of its own. */
+.lg-review-yours {
+  margin-left: 4px; padding: 1px 7px; border-radius: var(--r-pill);
+  border: 1px solid var(--panel-line); color: var(--ink-dim); font-size: var(--fs-mini);
+}
+@media (max-width: 560px) {
+  /* The control drops under the name rather than squeezing three columns
+     into a phone — same give the settings row makes. */
+  .lg-review-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .lg-review-state { grid-column: 1 / -1; }
+}

@@ -1,5 +1,6 @@
 /**
- * WHICH VENUES' LEAGUE TABLES THE ROOM IS ALLOWED TO SEE.
+ * WHAT THIS ROOM HAS DECIDED ABOUT PUBLISHING — which venues' tables are up,
+ * and which team names a human has overruled the filter on.
  *
  * The gate for `/league`, and the exact shape of `src/gallery.js` one door
  * along — deliberately, because the question is the same question and a second
@@ -41,6 +42,7 @@
 
 import { getFile, putFile, photosRepoConfigured } from './github.js';
 import { photoFolder } from './past-gigs.js';
+import { teamKey } from './league.js';
 
 /**
  * Beside the gallery's own list, in the same private repo.
@@ -66,28 +68,93 @@ export function isVenueKey(key) {
 }
 
 /**
+ * The whole decision file, once.
+ *
+ * Both halves live in ONE json — the venues that are up and the names a human
+ * has ruled on — because they are one question ("what does this room publish")
+ * asked at one moment, and two files would be two GitHub round trips on a page
+ * that already waits for one. Fails closed to the empty answer, which for both
+ * halves means "the machine decides and nothing is published".
+ */
+async function readDecisions(roomId) {
+  if (!photosRepoConfigured()) return { venues: [], names: {} };
+  let raw = null;
+  try {
+    raw = await getFile(listPath(roomId), 'private');
+  } catch {
+    return { venues: [], names: {} };
+  }
+  if (!raw) return { venues: [], names: {} };
+  try {
+    const parsed = JSON.parse(raw.toString('utf8'));
+    // An ARRAY is the original shape, from before names could be overruled.
+    // Read it rather than migrating it: a rewrite over everybody's file is a
+    // one-shot script on a disk that gets wiped, which this repo already knows
+    // better than to write.
+    const venues = Array.isArray(parsed) ? parsed : parsed.venues;
+    const names = (!Array.isArray(parsed) && parsed.names) || {};
+    return {
+      venues: [...new Set((venues || []).map((v) => String(v || '')).filter(isVenueKey))].sort(),
+      // Validated on the way OUT: this file is in a repository a human can
+      // edit, and an unknown verdict must not become a third behaviour.
+      names: Object.fromEntries(Object.entries(names)
+        .filter(([k, v]) => k && (v === 'allow' || v === 'hide'))),
+    };
+  } catch {
+    return { venues: [], names: {} };
+  }
+}
+
+/**
+ * The names this room has overruled the filter on, keyed by `teamKey()`.
+ *
+ * @returns {Promise<Record<string, 'allow'|'hide'>>} empty on any doubt, which
+ *   means the word list decides — the cautious default the override sits on
+ *   top of rather than replaces.
+ */
+export async function nameDecisions(roomId) {
+  return (await readDecisions(roomId)).names;
+}
+
+/**
+ * Overrule the filter on one name, or take the ruling back.
+ *
+ * @param {string} name        as typed on the night; keyed by `teamKey()`
+ * @param {'allow'|'hide'|''} decision  '' clears it back to the word list
+ */
+export async function setNameDecision(roomId, name, decision) {
+  const key = teamKey(name);
+  if (!key) return { ok: false, error: 'That is not a name.' };
+  if (!['allow', 'hide', ''].includes(decision)) {
+    return { ok: false, error: 'That is not a decision.' };
+  }
+  if (!photosRepoConfigured()) {
+    return { ok: false, error: 'The private repository is not set up, so there is nowhere to record this.' };
+  }
+  const have = await readDecisions(roomId);
+  const names = { ...have.names };
+  if (decision) names[key] = decision; else delete names[key];
+  if (JSON.stringify(names) === JSON.stringify(have.names)) return { ok: true, names: have.names };
+
+  const res = await putFile(
+    listPath(roomId),
+    JSON.stringify({ venues: have.venues, names }, null, 2),
+    decision ? `${decision === 'allow' ? 'Allow' : 'Hide'} the team name ${key}` : `Clear the ruling on ${key}`,
+    'private',
+  );
+  if (res && res.ok === false) return { ok: false, error: res.error || 'Could not save that.' };
+  return { ok: true, names };
+}
+
+/**
  * Which venues this room has published.
  *
  * @returns {Promise<string[]>} venue keys, sorted. Empty on any doubt.
  */
 export async function publishedVenues(roomId) {
-  if (!photosRepoConfigured()) return [];
-  let raw = null;
-  try {
-    raw = await getFile(listPath(roomId), 'private');
-  } catch {
-    // Fails closed — see the note at the top. A network wobble must not put
-    // anybody's team name on a public page.
-    return [];
-  }
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw.toString('utf8'));
-    const venues = Array.isArray(parsed) ? parsed : parsed.venues;
-    return [...new Set((venues || []).map((v) => String(v || '')).filter(isVenueKey))].sort();
-  } catch {
-    return [];
-  }
+  // Fails closed through `readDecisions` — see the note at the top. A network
+  // wobble must not put anybody's team name on a public page.
+  return (await readDecisions(roomId)).venues;
 }
 
 /** Is this one venue's table public? The question the public route asks first. */
@@ -111,7 +178,8 @@ export async function setVenuePublished(roomId, key, on) {
   if (!photosRepoConfigured()) {
     return { ok: false, error: 'The private repository is not set up, so there is nowhere to record this.' };
   }
-  const have = await publishedVenues(roomId);
+  const decided = await readDecisions(roomId);
+  const have = decided.venues;
   const want = on
     ? [...new Set([...have, String(key)])]
     : have.filter((v) => v !== String(key));
@@ -122,7 +190,10 @@ export async function setVenuePublished(roomId, key, on) {
   const sorted = [...want].sort();
   const res = await putFile(
     listPath(roomId),
-    JSON.stringify({ venues: sorted }, null, 2),
+    // The names ride along untouched — writing only the venues would wipe
+    // every ruling a human had made, which is the shape of bug that only
+    // shows up weeks later when somebody notices a name has come back.
+    JSON.stringify({ venues: sorted, names: decided.names }, null, 2),
     `${on ? 'Publish' : 'Unpublish'} the league table for ${key}`,
     'private',
   );

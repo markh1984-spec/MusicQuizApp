@@ -88,3 +88,69 @@ test('THE ROOM IS UNCHANGED — this filter is at the door, not in the venue', (
   assert.equal(cleanTeamName('Fuck Off'), 'Fuck Off');
   assert.notEqual(cleanTeamName('Nigga'), HIDDEN_LABEL);
 });
+
+/**
+ * THE MANUAL OVERRIDE — *"so we're erring on the side of caution but I can
+ * override it."*
+ *
+ * The word list is a guess about intent; a quizmaster who was in the room is
+ * not. These check that the list still decides by default, that a human beats
+ * it in BOTH directions, and that nothing else about the row moves.
+ */
+import { hiddenForPublic } from '../src/clean-names.js';
+import { teamKey } from '../src/league.js';
+
+test('WITH NO RULING, THE WORD LIST DECIDES — the cautious default is untouched', () => {
+  assert.equal(hiddenForPublic('Nigga', {}, teamKey), true);
+  assert.equal(hiddenForPublic('Quizzly Bears', {}, teamKey), false);
+  // And an unrelated ruling does not leak onto a different team.
+  assert.equal(hiddenForPublic('Nigga', { 'quizzly bears': 'allow' }, teamKey), true);
+});
+
+test('A HUMAN OVERRULES IT IN BOTH DIRECTIONS', () => {
+  /*
+   * BOTH, because the list is wrong both ways. It hides "The Pen Is Mightier"
+   * on the adjacent-pair pass and it publishes a spoonerism it cannot see.
+   * A one-way "allow" control would have left the second with no answer.
+   */
+  const pen = 'The Pen Is Mightier';
+  assert.equal(hiddenForPublic(pen, {}, teamKey), true, 'the list gets this one wrong');
+  assert.equal(hiddenForPublic(pen, { [teamKey(pen)]: 'allow' }, teamKey), false, 'and a human fixes it');
+
+  const stunts = 'Cunning Stunts';
+  assert.equal(hiddenForPublic(stunts, {}, teamKey), false, 'the list cannot see this one');
+  assert.equal(hiddenForPublic(stunts, { [teamKey(stunts)]: 'hide' }, teamKey), true, 'and a human can');
+});
+
+test('a ruling is keyed by team identity, so it follows the team all season', () => {
+  // The same team, typed the four ways `teamKey()` tidies.
+  const ruled = { [teamKey('The Quizzly Bears')]: 'hide' };
+  for (const typed of ['The Quizzly Bears', 'quizzly bears', '  Quizzly   Bears ', 'Quizzly Bears!']) {
+    assert.equal(hiddenForPublic(typed, ruled, teamKey), true, `${typed} is the same team`);
+  }
+  assert.equal(hiddenForPublic('Quizzly Beards', ruled, teamKey), false, 'but a different name is a different team');
+});
+
+test('AN OVERRIDDEN ROW KEEPS EVERYTHING BUT ITS NAME', () => {
+  const rows = [
+    { position: 1, name: 'Cunning Stunts', played: 9, wins: 3, points: 63 },
+    { position: 2, name: 'The Pen Is Mightier', played: 9, wins: 1, points: 40 },
+  ];
+  const ruled = {
+    [teamKey('Cunning Stunts')]: 'hide',
+    [teamKey('The Pen Is Mightier')]: 'allow',
+  };
+  const out = publicTable(rows, ruled, teamKey);
+  assert.equal(out[0].name, HIDDEN_LABEL, 'the spoonerism the list missed');
+  assert.equal(out[0].points, 63, 'and its points are its points');
+  assert.equal(out[0].position, 1, 'and it does not move');
+  assert.equal(out[1].name, 'The Pen Is Mightier', 'the real team the list caught');
+  assert.ok(!out[1].nameHidden);
+});
+
+test('an unknown verdict is ignored rather than becoming a third behaviour', () => {
+  // This file is editable by a human in a repository, so a typo in it must
+  // fall back to the list rather than mean something new.
+  assert.equal(hiddenForPublic('Nigga', { nigga: 'maybe' }, teamKey), true);
+  assert.equal(hiddenForPublic('Quizzly Bears', { 'quizzly bears': 'maybe' }, teamKey), false);
+});

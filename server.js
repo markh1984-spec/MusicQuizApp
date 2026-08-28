@@ -40,7 +40,7 @@ import { photoFolder, mergeGigs, safePhotoName, isNightFolder, nightOfGig } from
 import { venueHeadcounts, nightHeadcount } from './src/headcounts.js';
 import { playedByVenue } from './src/heard.js';
 import { nightReportPdf, nightReportFilename } from './src/report-pdf.js';
-import { leaguesByVenue, leagueAfter } from './src/league.js';
+import { leaguesByVenue, leagueAfter, teamKey } from './src/league.js';
 import { comeBackFor, nextNightAt, comeBackText } from './src/comeback.js';
 import { isComposed, MAX_ROUNDS } from './src/running-order.js';
 import { listShows, saveShow, deleteShow, showProblems } from './src/shows.js';
@@ -63,7 +63,7 @@ import { calendarIcs } from './src/ics.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, switchedOn, PACK_PENCE, TRIAL_DAYS, REFERRAL_BONUS_DAYS } from './public/assets/plans.js';
 import { lobbyGameFor } from './public/assets/lobby-games.js';
 import { publishedNights, isPublished, setPublished, readableNight } from './src/gallery.js';
-import { publishedVenues, setVenuePublished } from './src/league-publish.js';
+import { publishedVenues, setVenuePublished, nameDecisions, setNameDecision } from './src/league-publish.js';
 import { publicTable, isCleanForPublic } from './src/clean-names.js';
 import { sendEmail, emailConfigured, emailProvider, keepKeyAlive, resetEmail, welcomeEmail } from './src/email.js';
 import { Suggestions, KINDS, PACK_REQUEST_KIND } from './src/suggestions.js';
@@ -2226,7 +2226,8 @@ async function handleGet(req, res, url, route) {
        * manager who was not — so it is the far side of the same door.
        */
       if (season.nights > 1 && season.table.length) {
-        league = { ...season, table: publicTable(season.table), teams: season.table.length };
+        const ruled = await nameDecisions(gigRoom.id);
+        league = { ...season, table: publicTable(season.table, ruled, teamKey), teams: season.table.length };
       }
     }
     const pdf = nightReportPdf(entry, { headcount: nightHeadcount(entry), photoCount, opens, hasOffer, league });
@@ -2445,7 +2446,12 @@ async function handleGet(req, res, url, route) {
    */
   if (route === '/api/league/published') {
     if (!allowed(req, res, url, FEATURES.LEAGUE)) return true;
-    return sendJson(res, 200, { venues: await publishedVenues(roomForHost(req, url).id) }), true;
+    const lgId = roomForHost(req, url).id;
+    // Both halves of one decision file, in the one round trip it costs.
+    return sendJson(res, 200, {
+      venues: await publishedVenues(lgId),
+      names: await nameDecisions(lgId),
+    }), true;
   }
 
   if (route === '/api/league') {
@@ -2454,6 +2460,8 @@ async function handleGet(req, res, url, route) {
     const leagueRoom = rooms.get(roomId);
     await ensureArchiveRestored(leagueRoom);
     const live = await publishedVenues(roomId);
+    // The quizmaster's own rulings, which overrule the word list either way.
+    const ruled = await nameDecisions(roomId);
     const nights = mergeGigs(listArchive(leagueRoom.paths.archive, { boards: true }), []);
     const byVenue = leaguesByVenue(nights);
     const book = leagueRoom.invoices;
@@ -2484,7 +2492,7 @@ async function handleGet(req, res, url, route) {
          * same reasoning the two-screens rule is built on.
          */
         // Named fields, never a spread — see the note above.
-        table: publicTable(league.table).map((t) => ({
+        table: publicTable(league.table, ruled, teamKey).map((t) => ({
           position: t.position, name: t.name, played: t.played, counted: t.counted,
           wins: t.wins, points: t.points,
         })),
@@ -3489,7 +3497,21 @@ function markHidden(leagues) {
   for (const [key, league] of Object.entries(leagues)) {
     out[key] = {
       ...league,
-      table: league.table.map((t) => (isCleanForPublic(t.name) ? t : { ...t, nameHidden: true })),
+      /*
+       * THE FILTER'S VERDICT AND THE ROW'S KEY — and deliberately NOT the
+       * quizmaster's own rulings, which live in the private repo and would
+       * cost a GitHub round trip on every console load. The league tab
+       * fetches those once when it opens (`/api/league/published`) and
+       * combines the two there.
+       *
+       * **The key travels with the row so that combine cannot drift.** The
+       * alternative was a copy of `teamKey()` in the browser, and two
+       * implementations of one identity is how a ruling comes to land on the
+       * wrong team six months from now.
+       */
+      table: league.table.map((t) => ({
+        ...t, key: teamKey(t.name), nameHidden: !isCleanForPublic(t.name),
+      })),
     };
   }
   return out;
@@ -4013,6 +4035,29 @@ async function handleWrite(req, res, url, route) {
    * grouped by. Publishing by display name would put the wrong pub up the day
    * somebody renamed one.
    */
+  /*
+   * OVERRULE THE FILTER ON ONE NAME — in either direction.
+   *
+   * *"Can I get a manual override so we're erring on the side of caution but
+   * I can override it."* The word list is a guess about intent; a quizmaster
+   * who was in the room is not. So the list decides by default and this is
+   * how a person overrides it — `allow` to publish a name it held back,
+   * `hide` for one it let through, and an empty string to hand the decision
+   * back to the list.
+   *
+   * Behind the LEAGUE gate and scoped to the signed-in room, exactly like the
+   * publish route beside it: there is no room parameter, so this can only
+   * ever rule on your own teams.
+   */
+  if (route === '/api/league/name' && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.LEAGUE)) return true;
+    const body = await readJson(req);
+    const done = await setNameDecision(
+      roomForHost(req, url).id, String(body.name || ''), String(body.decision || ''),
+    );
+    return sendJson(res, done.ok ? 200 : 400, done), true;
+  }
+
   if (route === '/api/league/publish' && req.method === 'POST') {
     if (!allowed(req, res, url, FEATURES.LEAGUE)) return true;
     const body = await readJson(req);

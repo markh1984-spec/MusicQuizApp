@@ -334,7 +334,15 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * drop, whole words for ordinary profanity, and never run the spaces-stripped
  * pass on the ordinary list.
  */
-const BUDGET = 183_000;
+/*
+ * 184_000 ON 25 AUGUST 2026, for the manual override on the name filter. The
+ * lines that stop a change: it works in BOTH directions (the list is wrong
+ * both ways), a ruling that only restates the filter is CLEARED rather than
+ * stored — or a later change to the word list can never reach that name —
+ * and the row's key travels with the row so the console combines the two
+ * halves without a second copy of `teamKey()` in the browser.
+ */
+const BUDGET = 184_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

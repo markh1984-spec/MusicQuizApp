@@ -1508,6 +1508,18 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   what catches `n i g g a` — **never do that pass on the ordinary list.**
   **THE CONSOLE SHOWS THE REAL NAME AND MARKS IT**, or a name vanishes off a
   published table with no way to tell which.
+- **AND A HUMAN OVERRULES THE LIST, IN BOTH DIRECTIONS** — *"so we're erring
+  on the side of caution but I can override it."* A word list guesses at
+  intent and the quizmaster was in the room. **BOTH directions, because it is
+  wrong both ways**: it hides "The Pen Is Mightier" and publishes a spoonerism
+  it cannot see. Keyed by `teamKey()`, so a ruling follows the team all season.
+  **A RULING THAT ONLY RESTATES THE FILTER IS CLEARED, NOT STORED**, or a
+  later change to the word list silently cannot reach that name — the gap
+  dial's `cleanPlan()` rule again. **ONE CONTROL PER TABLE, FOLDED**, never a
+  button per row: thirty toggles on a page whose job is being read is the
+  clutter rule exactly. **THE ROW'S KEY TRAVELS WITH THE ROW** so the console
+  can combine the filter's verdict with the rulings without a second copy of
+  `teamKey()` in the browser — and the library stays free of the GitHub read.
 - **THE LEAGUE IS EXPORTED TO TWO AUDIENCES AND THEY WANTED DIFFERENT THINGS**
   — *"can that be exported to the landlord and the quiz teams to view?"* The
   landlord wants EVIDENCE, so the season table joined the post-night report he
