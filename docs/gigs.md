@@ -1479,6 +1479,54 @@ it. It writes itself from the venue's usual night through the same
 `nextNightAt()` the projector's comeback slide uses, so there is nothing to
 keep current and it is silent when there is nothing true to say.
 
+### And then a filter — at the door, never in the room
+
+Reported the day the page existed, off a live table with a racial slur ninth
+in it: *"I don't mind there being swearing or risque stuff in the venue
+itself, but when it comes to quiz leagues and people seeing from an external
+source I need to have a certain filter."*
+
+**This does not reverse "no profanity filter on team names". It scopes it.**
+That decision is about the ROOM, and it still holds there: the projector, the
+phones, the control view and the console all show exactly what was typed, and
+`cleanTeamName()` is untouched. What changed is the two places a name reaches
+somebody who was never in the pub — the public league page, and the report a
+landlord can forward to a brewery. A slur on a wall for two hours and a slur
+on a public web page under the quizmaster's brand are different objects.
+
+`src/clean-names.js`, and five decisions inside it:
+
+- **Filtered on the SERVER.** The word never reaches the wire — a filter that
+  ships the name and hides it with CSS is not a filter, which is the same
+  reasoning the two-screens rule is built on. Verified by grepping the actual
+  HTTP payload and the PDF bytes: zero occurrences.
+- **Masked, never dropped.** "Name hidden". Removing the row would move
+  everybody below it up a place and make the table lie about the season, and
+  the team would simply vanish rather than be able to find themselves by their
+  points. Identity, position and points are untouched: this is a VIEW.
+- **It errs strict.** A false positive hides one name on one page and the
+  console says which; a false negative is a slur under somebody's brand found
+  by a customer. Those are not equal, so where they conflict this hides.
+- **Whole words for ordinary profanity.** The classic failure of a naive
+  filter is the substring match, which hides Scunthorpe, Penistone,
+  Cockermouth, Lightwater, "assassin", "classic" and "Dickens". Ordinary
+  profanity is matched on whole words against a normalised form (accents
+  folded, leetspeak undone, repeated letters collapsed), plus adjacent pairs
+  joined so "Bell End" does not walk past. **The slur list alone gets a second
+  pass with every space and symbol stripped**, which is what catches
+  `n i g g a`, `N-I-G-G-A` and `n1gg4` — running that pass on the ordinary
+  list would hide half of Britain.
+- **The console shows the real name and marks it.** The quizmaster was there,
+  so nothing is masked on their own screen; a name that will not publish
+  carries a quiet `hidden publicly` pill, or a name vanishes off a table they
+  put up and there is no way to tell which one did it.
+
+**One known false positive, accepted knowingly:** "The Pen Is Mightier" joins
+to a listed word on the adjacent-pair pass and is hidden. That is the
+strict-erring trade, and the console reports it. **And one known miss:**
+spoonerisms like "Cunning Stunts" publish, because catching them means
+guessing at intent and that is where a filter starts renaming real teams.
+
 ### Three things this cost, all found by running it
 
 - **A GET route written beside its own POST 404s.** `/api/league/published`

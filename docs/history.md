@@ -10,6 +10,28 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 25 August 2026 — team names are filtered at the door:**
+
+Reported off a live league table with a racial slur ninth in it: *"I don't
+mind there being swearing or risque stuff in the venue itself, but when it
+comes to quiz leagues and people seeing from an external source I need to have
+a certain filter."*
+
+**This scopes the standing "no profanity filter on team names" decision rather
+than reversing it.** That rule is about the ROOM and still holds there — the
+projector, the phones and the console show what was typed, and
+`cleanTeamName()` is untouched. `src/clean-names.js` masks names on the two
+surfaces that reach somebody who was not in the pub: the public league page
+and the landlord's report. **Filtered on the server**, so the word never
+reaches the wire (verified by grepping the payload and the PDF bytes — zero
+occurrences). **Masked, never dropped**, or the table moves everybody up a
+place and lies about the season. **Whole words for ordinary profanity**, so
+Scunthorpe, Penistone and "assassin" survive; the slur list alone gets a
+second pass with the spaces stripped, which catches `n i g g a`. **The console
+shows the real name and marks it** `hidden publicly`, or a name vanishes off a
+published table with no way to tell which. Full reasoning in
+[`docs/gigs.md`](gigs.md); 1,534 tests green.
+
 **Live as of 25 August 2026 — the league scores a team's BEST SIX nights:**
 
 Raised as soon as the export existed: *"there's incentive to come every week

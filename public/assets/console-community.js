@@ -164,7 +164,14 @@ function leagueTableFor(league) {
           ${rows.map((t) => `
             <tr${t.position === 1 ? ' class="lg-top"' : ''}>
               <td class="lg-pos">${t.position}</td>
-              <td class="lg-name">${esc(t.name)}</td>
+              <!-- THE REAL NAME, MARKED WHEN IT WILL NOT PUBLISH. This is the
+                   room's own view and the quizmaster was there, so nothing is
+                   masked here — but a name that a public page would hide says
+                   so, or it would vanish off a table they had put up and there
+                   would be no way to tell which one did it. -->
+              <td class="lg-name">${esc(t.name)}${t.nameHidden
+    ? ' <span class="lg-hidden" title="This name is hidden on the public table and on a landlord\'s report. It still scores exactly as it is.">hidden publicly</span>'
+    : ''}</td>
               <!-- "9" plainly, or "9 (6)" once some are being dropped — the
                    number in brackets is what the points came from, said where
                    somebody would otherwise be adding their weeks up and
@@ -274,7 +281,9 @@ export function leagueSection() {
       towards the total. So a fortnight away costs two points rather than a season, and
       turning up every week is always worth something. Rolling twelve-week season. A team
       is the name they type on the night, so a change of spelling starts a new team — there
-      is no sign-up, and that is what keeps it free to join at the door.</p>`));
+      is no sign-up, and that is what keeps it free to join at the door. Names go on
+      the big screen exactly as typed; a few are held back from the <b>public</b> table
+      and the landlord's report, and they are marked below.</p>`));
   for (const league of leagues) {
     const panel = node(leagueTableFor(league));
     /*

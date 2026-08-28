@@ -323,7 +323,18 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * sentence. Eighth place is still worth exactly 1. That is the kind of line
  * that stops somebody "restoring" the floor a year from now.
  */
-const BUDGET = 182_000;
+/*
+ * 183_000 ON 25 AUGUST 2026, for the team-name filter — and this one is a
+ * SCOPE of a standing prohibition rather than a new feature, which is exactly
+ * the kind of text that has to be read before any work starts. "No profanity
+ * filter on team names" still holds in the room and now has one stated
+ * exception at the door; a session that read only half of that would either
+ * strip the projector or publish a slur. The lines that stop a change: filter
+ * on the SERVER (hiding it in the browser is not hiding it), mask rather than
+ * drop, whole words for ordinary profanity, and never run the spaces-stripped
+ * pass on the ordinary list.
+ */
+const BUDGET = 183_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

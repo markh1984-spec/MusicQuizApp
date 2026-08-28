@@ -9341,3 +9341,14 @@ input, textarea, [contenteditable] { caret-color: var(--hot); }
    weeks up can see why the total is not the sum. Quieter than the number it
    qualifies: the count is the fact and this is the footnote. */
 .lg-drop { opacity: 0.72; font-variant-numeric: tabular-nums; }
+
+/* A NAME THE PUBLIC TABLE WILL NOT CARRY, marked on the console's own table
+   only — the room's view shows what was typed. A quiet outlined pill, not red:
+   nothing has gone wrong and nobody is being told off, it is a statement about
+   where the name goes. */
+.lg-hidden {
+  display: inline-block; margin-left: 6px; padding: 1px 8px;
+  border: 1px solid var(--panel-line); border-radius: var(--r-pill);
+  color: var(--ink-dim); font-size: var(--fs-mini); font-weight: 800;
+  vertical-align: middle; white-space: nowrap;
+}

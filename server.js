@@ -64,6 +64,7 @@ import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, p
 import { lobbyGameFor } from './public/assets/lobby-games.js';
 import { publishedNights, isPublished, setPublished, readableNight } from './src/gallery.js';
 import { publishedVenues, setVenuePublished } from './src/league-publish.js';
+import { publicTable, isCleanForPublic } from './src/clean-names.js';
 import { sendEmail, emailConfigured, emailProvider, keepKeyAlive, resetEmail, welcomeEmail } from './src/email.js';
 import { Suggestions, KINDS, PACK_REQUEST_KIND } from './src/suggestions.js';
 import { Spend, spendRecorder, imagePrices } from './src/spend.js';
@@ -1770,7 +1771,14 @@ async function handleGet(req, res, url, route) {
        *
        * The TABLE only. The leaderboards it was built from stay on the server.
        */
-      leagues: seesTheirLeague(req, url) ? leaguesByVenue(gigNights) : {},
+      /*
+       * THE CONSOLE SEES THE REAL NAMES — it is the room's own view, and the
+       * quizmaster was there. What it also gets is `nameHidden` per row, so
+       * the table can say which names will not go on a public page without
+       * the console having to run the filter itself and reach a different
+       * answer from the server. One filter, asked once.
+       */
+      leagues: seesTheirLeague(req, url) ? markHidden(leaguesByVenue(gigNights)) : {},
       /*
        * Venues this room has played before, so the launch box offers them back
        * rather than asking for the same six words every week. A field you
@@ -2212,7 +2220,14 @@ async function handleGet(req, res, url, route) {
       const season = leagueAfter(here, night);
       // One night is not a league — it is tonight's scoreboard printed twice,
       // which is the rule `session.js` already applies to the projector band.
-      if (season.nights > 1 && season.table.length) league = { ...season, teams: season.table.length };
+      /*
+       * AND THE SAME FILTER ON THE REPORT. A landlord was in the room, but
+       * the report is a document he can forward to a brewery or an area
+       * manager who was not — so it is the far side of the same door.
+       */
+      if (season.nights > 1 && season.table.length) {
+        league = { ...season, table: publicTable(season.table), teams: season.table.length };
+      }
     }
     const pdf = nightReportPdf(entry, { headcount: nightHeadcount(entry), photoCount, opens, hasOffer, league });
     return send(res, 200, pdf, {
@@ -2460,8 +2475,16 @@ async function handleGet(req, res, url, route) {
         venue: league.venue,
         nights: league.nights,
         next: next ? comeBackText(next.date).replace(/^Back here /, 'Next quiz ') : '',
+        /*
+         * NAMES FILTERED ON THE WAY OUT — `clean-names.js`. A rude name goes
+         * on the projector as typed and always will; this is the door, not
+         * the room. Applied HERE rather than in the browser so a name that
+         * cannot be published never leaves the server at all — a filter that
+         * ships the word and hides it with CSS is not a filter, which is the
+         * same reasoning the two-screens rule is built on.
+         */
         // Named fields, never a spread — see the note above.
-        table: league.table.map((t) => ({
+        table: publicTable(league.table).map((t) => ({
           position: t.position, name: t.name, played: t.played, counted: t.counted,
           wins: t.wins, points: t.points,
         })),
@@ -3451,6 +3474,27 @@ function offerPage(pack, slide) {
  * and the record it reads is Bronze: everybody keeps their nights, and the
  * table across them is what the tier buys.
  */
+/**
+ * The quizmaster's own league tables, with each row told whether its name is
+ * publishable.
+ *
+ * The console shows the REAL name — the room's own view, and they were there —
+ * and marks the ones a public page would hide, so nothing goes quietly missing
+ * off a table they published and nobody has to guess which name did it. Asked
+ * on the server so the console and the public page cannot disagree about what
+ * counts.
+ */
+function markHidden(leagues) {
+  const out = {};
+  for (const [key, league] of Object.entries(leagues)) {
+    out[key] = {
+      ...league,
+      table: league.table.map((t) => (isCleanForPublic(t.name) ? t : { ...t, nameHidden: true })),
+    };
+  }
+  return out;
+}
+
 function seesTheirLeague(req, url) {
   const account = whoIs(req, url);
   if (!account) return false;

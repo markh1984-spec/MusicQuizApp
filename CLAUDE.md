@@ -490,7 +490,10 @@ opening a second file.
 - **No build step**
 - **Packs are JSON files**
 - **The console wears a gauntlet cursor — open hand, closed fist while dragging — and scroll rods on its panels, console only** — never the projector or a phone. **A cursor is a static file: it cannot follow the account's colours, and it is judged at 32px.**
-- **No profanity filter on team names** — **Do not add word filtering.**
+- **No profanity filter on team names** — **in the ROOM. Do not add word
+  filtering to the projector, the phones or the console.** The public league
+  page and the landlord's report are the one exception, and it is a SCOPE
+  rather than a reversal — see *filtered at the door, never in the room*.
 - **Photo uploads auto-publish** — Do not add one.
 - **Photos go in a SEPARATE PRIVATE repo** — Never the main repo: it is public (checked), and git history is forever.
 - **Filters are pixel maths, not `ctx.filter`**
@@ -1491,6 +1494,20 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   by a fixed six scales every number equally and changes no position, while
   dividing by nights PLAYED is the average again with its one-hit problem back.
   `COUNTING_NIGHTS = 6` is a constant with a note, like the season.
+- **A NAME IS FILTERED AT THE DOOR, NEVER IN THE ROOM** — `clean-names.js`,
+  off a live table with a racial slur ninth in it. The projector, the phones
+  and the console are UNCHANGED and `cleanTeamName()` is untouched; only the
+  public page and the report mask anything. **ON THE SERVER, so the word never
+  reaches the wire** — hiding it in the browser is not hiding it. **MASKED,
+  NEVER DROPPED** ("Name hidden"): dropping the row moves everybody up a place
+  and lies about the season. Points and identity are untouched, so it is a
+  VIEW, like the two-screens rule. **IT ERRS STRICT** — a false positive hides
+  one name and the console says so; a false negative is a slur under his brand
+  in public. **WHOLE WORDS FOR ORDINARY PROFANITY**, or it eats Scunthorpe and
+  "assassin"; the SLUR list is matched AGAIN with the spaces stripped, which is
+  what catches `n i g g a` — **never do that pass on the ordinary list.**
+  **THE CONSOLE SHOWS THE REAL NAME AND MARKS IT**, or a name vanishes off a
+  published table with no way to tell which.
 - **THE LEAGUE IS EXPORTED TO TWO AUDIENCES AND THEY WANTED DIFFERENT THINGS**
   — *"can that be exported to the landlord and the quiz teams to view?"* The
   landlord wants EVIDENCE, so the season table joined the post-night report he
