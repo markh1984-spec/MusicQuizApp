@@ -10,6 +10,38 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 25 August 2026 — the league leaves the console:**
+
+*"What is our quiz league functionality looking like and can that be exported
+to the landlord and the quiz teams to view?"* The league itself was built and
+had four private surfaces (the projector band, the Community tab and bay, a
+venue card); what did not exist was any way out — no PDF, no link, no page.
+Two audiences wanting two different things, so they got two:
+
+- **The landlord's half went on the report PDF he already receives.** It was
+  carrying the headcount — *"how many came"* — and not the league, which is
+  *"are they coming back"*, the question that renews a booking. **The table is
+  wound back to the night the report describes** (`leagueAfter()`): a report
+  handed over in March says what was on the projector that evening, or it is a
+  snapshot rather than evidence. Verified across a seeded season — five
+  reports, five different tables, the first night silent because one night is
+  not a league.
+- **The teams' half is `/league`**, a public page per quizmaster, gated per
+  venue by `src/league-publish.js` — the gallery's shape exactly, list in the
+  private repo, failing closed. **Names and points, never faces**, with the
+  fields named on the way out rather than spread. **The next quiz date is the
+  loudest thing under each table**, chosen over the faces and written from the
+  venue's usual night.
+
+Three faults found by running it rather than reading it: a GET route written
+beside its own POST 404ed (the gallery's own recorded trap), the publish
+control queried the `DocumentFragment` `render()` had already emptied so two
+tables drew with no control and nothing threw, and the first fixture used the
+merged night shape and put both venues on the same dates — which `mergeGigs()`
+rightly folded into one night, losing a league. Full account in
+[`docs/gigs.md`](gigs.md); 1,524 tests green, pub-unchanged IDENTICAL,
+drag-check clean.
+
 **Live as of 25 August 2026 — the console's polish pass:**
 
 *"Can we try and pretty up the console… as slick and nice as possible and

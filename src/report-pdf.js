@@ -29,8 +29,11 @@ const GOLD = [0.55, 0.42, 0.06];
  *   0 when there is nothing coded, which the caller tells apart from
  *   "not shown at all" via `extra.hasOffer`
  * @param {boolean} extra.hasOffer
+ * @param {object|null} [extra.league]  `leagueAfter()` for this venue — the
+ *   table as it stood after THIS night, or null when the account has no
+ *   league or the venue has none running.
  */
-export function nightReportPdf(night, { headcount = 0, photoCount = 0, opens = 0, hasOffer = false } = {}) {
+export function nightReportPdf(night, { headcount = 0, photoCount = 0, opens = 0, hasOffer = false, league = null } = {}) {
   const page = new Page();
   const when = new Date(night.night + 'T12:00:00');
   const dateLine = when.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -62,6 +65,49 @@ export function nightReportPdf(night, { headcount = 0, photoCount = 0, opens = 0
       y += 15;
     }
     y += 8;
+  }
+
+  /*
+   * ---- THE SEASON, AND WHY IT BELONGS ON A LANDLORD'S REPORT.
+   *
+   * The headline number above answers *"how many came"*. This answers *"are
+   * the same people coming back"*, which is the question that actually
+   * renews a booking — and the report was carrying the first without the
+   * second while the app had known the answer all along.
+   *
+   * FIVE ROWS. This is one side of A4 with a headcount, a winner, a podium
+   * and two counters already on it; the full table is the wall poster's job,
+   * and the line underneath says how many are in it so five never reads as
+   * all of them.
+   *
+   * Silent when there is no league — a Bronze account, a venue with one
+   * night, or a bingo-only evening. A heading over an empty table is worse
+   * than no heading, and this is a document somebody hands over.
+   */
+  const seasonRows = league && league.table ? league.table.slice(0, 5) : [];
+  if (seasonRows.length) {
+    y += 10;
+    page.rule(LEFT, y, RIGHT);
+    y += 24;
+    page.text('THE LEAGUE AFTER TONIGHT', LEFT, y, { size: 11, bold: true, rgb: INK });
+    page.text(`${league.teams ?? league.table.length} teams · ${league.nights} nights`,
+      RIGHT, y, { size: 9, align: 'right', rgb: DIM });
+    y += 20;
+    for (const team of seasonRows) {
+      const gold = team.position === 1;
+      page.text(String(team.position), LEFT, y, { size: 10, bold: gold, rgb: gold ? GOLD : DIM });
+      page.text(team.name, LEFT + 18, y, { size: 10, bold: gold, rgb: gold ? GOLD : INK });
+      page.text(`${team.played} played`, RIGHT - 96, y, { size: 9, align: 'right', rgb: DIM });
+      page.text(`${team.points} pts`, RIGHT, y, { size: 10, bold: true, align: 'right', rgb: gold ? GOLD : INK });
+      y += 16;
+    }
+    if (league.table.length > seasonRows.length) {
+      y += 2;
+      page.text(`and ${league.table.length - seasonRows.length} more teams in the season`,
+        LEFT, y, { size: 9, rgb: DIM });
+      y += 14;
+    }
+    y += 4;
   }
 
   y += 10;

@@ -201,6 +201,36 @@ export function leagueTable(nights = [], { weeks = 12, now = Date.now() } = {}) 
 }
 
 /**
+ * THE TABLE AS IT STOOD AFTER ONE PARTICULAR NIGHT.
+ *
+ * The same arithmetic, wound back: nights after `night` are dropped and the
+ * season window is measured from that evening rather than from today. So the
+ * report a landlord is handed for the 14th says what the room was looking at
+ * on the 14th — which is the one thing that makes it evidence rather than a
+ * snapshot that has moved on since.
+ *
+ * It has to be `leagueTable()` itself doing the work, with a different clock
+ * and a shorter list, or the report and the projector would be two
+ * calculations of one number and would eventually disagree. That is the same
+ * argument `headcounts.js` records for taking a SET of nights: one function,
+ * many questions.
+ *
+ * @param {Array} nights   as `mergeGigs()` returns them, newest first
+ * @param {string} night   `YYYY-MM-DD` — the evening the table is "after"
+ */
+export function leagueAfter(nights = [], night, opts = {}) {
+  const upTo = String(night || '');
+  if (!upTo) return leagueTable(nights, opts);
+  // Noon, so no timezone can move the day — the guard the diary and the
+  // comeback slide both already use.
+  const when = Date.parse(`${upTo}T12:00:00`);
+  return leagueTable(
+    nights.filter((n) => String(n.night || '') <= upTo),
+    { ...opts, now: Number.isFinite(when) ? when : opts.now },
+  );
+}
+
+/**
  * Every venue's table, keyed by the JOIN rather than by the name.
  *
  * `venueKeyOf()` returns the venue's id when the night has one and the

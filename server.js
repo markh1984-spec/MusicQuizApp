@@ -40,8 +40,8 @@ import { photoFolder, mergeGigs, safePhotoName, isNightFolder, nightOfGig } from
 import { venueHeadcounts, nightHeadcount } from './src/headcounts.js';
 import { playedByVenue } from './src/heard.js';
 import { nightReportPdf, nightReportFilename } from './src/report-pdf.js';
-import { leaguesByVenue } from './src/league.js';
-import { comeBackFor } from './src/comeback.js';
+import { leaguesByVenue, leagueAfter } from './src/league.js';
+import { comeBackFor, nextNightAt, comeBackText } from './src/comeback.js';
 import { isComposed, MAX_ROUNDS } from './src/running-order.js';
 import { listShows, saveShow, deleteShow, showProblems } from './src/shows.js';
 import { pickIdeas, ideaLabel } from './src/round-ideas.js';
@@ -63,6 +63,7 @@ import { calendarIcs } from './src/ics.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, switchedOn, PACK_PENCE, TRIAL_DAYS, REFERRAL_BONUS_DAYS } from './public/assets/plans.js';
 import { lobbyGameFor } from './public/assets/lobby-games.js';
 import { publishedNights, isPublished, setPublished, readableNight } from './src/gallery.js';
+import { publishedVenues, setVenuePublished } from './src/league-publish.js';
 import { sendEmail, emailConfigured, emailProvider, keepKeyAlive, resetEmail, welcomeEmail } from './src/email.js';
 import { Suggestions, KINDS, PACK_REQUEST_KIND } from './src/suggestions.js';
 import { Spend, spendRecorder, imagePrices } from './src/spend.js';
@@ -1115,6 +1116,17 @@ async function handleGet(req, res, url, route) {
     // that lands on the player. One header to change later if it earns it.
     res.setHeader('X-Robots-Tag', 'noindex, nofollow, noimageindex');
     return serveFile(res, config.publicDir, 'gallery.html'), true;
+  }
+  /*
+   * THE PUBLIC LEAGUE TABLE — the same shape and the same header as the
+   * gallery one door up, because it is the same kind of page: something the
+   * people who were in the room come back to, holding names they typed on a
+   * night rather than anything they signed up for. Not findable, published
+   * or not.
+   */
+  if (route === '/league') {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    return serveFile(res, config.publicDir, 'league.html'), true;
   }
   if (route === '/host') return serveFile(res, config.publicDir, 'host.html'), true;
   if (route === '/editor') return serveFile(res, config.publicDir, 'editor.html'), true;
@@ -2181,7 +2193,28 @@ async function handleGet(req, res, url, route) {
         for (const slideId of Object.keys(totals)) opens += totals[slideId].total;
       }
     }
-    const pdf = nightReportPdf(entry, { headcount: nightHeadcount(entry), photoCount, opens, hasOffer });
+    /*
+     * THE SEASON, AS IT STOOD AFTER THIS NIGHT — not as it stands today.
+     *
+     * A report for the 14th handed over in March has to say what the room was
+     * looking at on the 14th, or it is a snapshot that has moved on rather
+     * than evidence. `leagueAfter()` winds both the night list and the season
+     * window back to that evening.
+     *
+     * Gated exactly like the library's own copy (`seesTheirLeague`): a Bronze
+     * account's report simply has no table on it, which is silence rather
+     * than a locked panel — the same rule the projector band follows.
+     */
+    let league = null;
+    if (entry.venue && seesTheirLeague(req, url)) {
+      const want = entry.venue.trim().toLowerCase();
+      const here = nights.filter((n) => String(n.venue || '').trim().toLowerCase() === want);
+      const season = leagueAfter(here, night);
+      // One night is not a league — it is tonight's scoreboard printed twice,
+      // which is the rule `session.js` already applies to the projector band.
+      if (season.nights > 1 && season.table.length) league = { ...season, teams: season.table.length };
+    }
+    const pdf = nightReportPdf(entry, { headcount: nightHeadcount(entry), photoCount, opens, hasOffer, league });
     return send(res, 200, pdf, {
       'Content-Type': 'application/pdf',
       'Content-Disposition': `inline; filename="${nightReportFilename(entry)}"`,
@@ -2358,6 +2391,90 @@ async function handleGet(req, res, url, route) {
     if (!galleryTarget && (who.role === 'owner' || who.bootstrap)) return true;
     return roomForHost(req, url).id === galleryRoomId();
   };
+
+  /*
+   * WHAT THE PUBLIC LEAGUE PAGE IS ALLOWED TO SAY.
+   *
+   * Every published venue's table for one quizmaster, plus when they are next
+   * on. It reuses `galleryRoomId()` and `galleryPreview()` deliberately: the
+   * two pages ask the identical question — *whose room, and may I see the
+   * drafts* — and a second answer to it is a second thing that can be got
+   * wrong, including the trap those functions already record about `?q=` and
+   * the owner shortcut.
+   *
+   * **THE TABLE IS REBUILT HERE RATHER THAN READ OFF THE LIBRARY PAYLOAD**,
+   * because a visitor has no account and gets no library. Same function, same
+   * archive — `leaguesByVenue()`, exactly as the console's own copy — so the
+   * public page and the quizmaster's cannot disagree about who is winning.
+   *
+   * **AND IT SENDS NAMES, NOT FACES.** `leagueTable()` carries a `faceKey`
+   * per team for the console to draw; the fields are listed by name on the
+   * way out rather than spread, which is the whitelist rule the engine's own
+   * views follow — a spread quietly opts every future field in, and the next
+   * one might be a photograph.
+   */
+  /*
+   * WHICH OF MY TABLES ARE UP — asked when the league tab is OPENED, never
+   * with the library.
+   *
+   * This is a GitHub round trip and the library payload is fetched on every
+   * console render, including the ones a phone joining a lobby causes; putting
+   * it there would spend a network call per push on a fact that changes twice
+   * a season. Same rule as a night's photos — fetched when the thing is
+   * opened, not up front.
+   *
+   * **IT IS A GET, SO IT LIVES UP HERE WITH THE OTHER GETs.** It was written
+   * beside its own POST first and 404ed, because that half of the file only
+   * ever runs for POST — the identical trap the gallery's publish route
+   * records, found the same way: by calling it rather than by reading it.
+   */
+  if (route === '/api/league/published') {
+    if (!allowed(req, res, url, FEATURES.LEAGUE)) return true;
+    return sendJson(res, 200, { venues: await publishedVenues(roomForHost(req, url).id) }), true;
+  }
+
+  if (route === '/api/league') {
+    const roomId = galleryRoomId();
+    const preview = galleryPreview();
+    const leagueRoom = rooms.get(roomId);
+    await ensureArchiveRestored(leagueRoom);
+    const live = await publishedVenues(roomId);
+    const nights = mergeGigs(listArchive(leagueRoom.paths.archive, { boards: true }), []);
+    const byVenue = leaguesByVenue(nights);
+    const book = leagueRoom.invoices;
+    const out = [];
+    for (const [key, league] of Object.entries(byVenue)) {
+      const published = live.includes(key);
+      if (!published && !preview) continue;
+      /*
+       * WHEN THEY ARE NEXT ON — the host's own choice for what a team wants
+       * off this page over their own faces, and it writes itself: the venue's
+       * usual night through `upcoming()`, the same derivation the projector's
+       * comeback slide uses. Silent when there is nothing true to say, which
+       * is the rule that slide already follows.
+       */
+      const next = nextNightAt({
+        venue: league.venue, venues: book.customers, bookings: book.bookings, now: Date.now(),
+      });
+      out.push({
+        venue: league.venue,
+        nights: league.nights,
+        next: next ? comeBackText(next.date).replace(/^Back here /, 'Next quiz ') : '',
+        // Named fields, never a spread — see the note above.
+        table: league.table.map((t) => ({
+          position: t.position, name: t.name, played: t.played, wins: t.wins, points: t.points,
+        })),
+        ...(published ? {} : { preview: true }),
+      });
+    }
+    // Alphabetical, so a quizmaster with four pubs gets a stable page rather
+    // than one that reshuffles with whichever venue was played last.
+    out.sort((a, b) => a.venue.localeCompare(b.venue));
+    // No name in here: the page already asks `/api/brand?q=` for it, which is
+    // the one place that answer is worked out. Two sources for one string is
+    // how a heading and a title come to disagree.
+    return sendJson(res, 200, { leagues: out, preview }), true;
+  }
 
   if (route === '/api/gallery') {
     const preview = galleryPreview();
@@ -3835,6 +3952,27 @@ async function handleWrite(req, res, url, route) {
     const body = await readJson(req);
     const gigRoom = roomForHost(req, url);
     const done = await setPublished(gigRoom.id, String(body.night || ''), body.on !== false);
+    return sendJson(res, done.ok ? 200 : 400, done), true;
+  }
+
+  /*
+   * PUT A VENUE'S LEAGUE TABLE UP, or take it back down.
+   *
+   * Behind the LEAGUE gate rather than PAST_GIGS — it publishes a league —
+   * and the room comes from WHO YOU ARE, so this can only ever publish your
+   * own tables. There is no room parameter on purpose, the identical rule
+   * `/api/host/*` and the gallery's own publish route both follow.
+   *
+   * The key is `venueKeyOf()`'s — an id where the nights have one, a
+   * lowercased name where they do not — because that is what the table is
+   * grouped by. Publishing by display name would put the wrong pub up the day
+   * somebody renamed one.
+   */
+  if (route === '/api/league/publish' && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.LEAGUE)) return true;
+    const body = await readJson(req);
+    const lgRoom = roomForHost(req, url);
+    const done = await setVenuePublished(lgRoom.id, String(body.venueKey || ''), body.on !== false);
     return sendJson(res, done.ok ? 200 : 400, done), true;
   }
 

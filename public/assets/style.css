@@ -9305,3 +9305,29 @@ input, textarea, [contenteditable] { caret-color: var(--hot); }
   .pack-card.shut, .topnav a, .console button.minor, .gap-dial, .pick-face { transition: none; }
   .pack-card.shut:hover { transform: none; }
 }
+
+
+/* ---- THE PUBLIC LEAGUE PAGE — `/league`, `league-page.js`.
+   It borrows the gallery's shell (`body.gallery`, `.gal-wrap`, `.gal-head`)
+   because it is the same kind of page: something the people who were in the
+   room come back to, with no account and no navigation. Only the parts the
+   gallery has no equivalent of are here. */
+.lgp-venue { margin-bottom: 18px; }
+.lgp-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-bottom: 10px; }
+.lgp-where { margin: 0; font-size: var(--fs-head); font-weight: 900; }
+/* THE OWNER'S PREVIEW MARK. Only ever drawn on a table that is NOT public, so
+   it can never be mistaken for a badge the regulars see — and it says the
+   state rather than the action, because there is nothing to press here. */
+.lgp-draft {
+  border: 1px solid var(--panel-line); color: var(--ink-dim);
+  padding: 2px 10px; font-size: var(--fs-mini); font-weight: 800;
+}
+/* WHEN THEY ARE NEXT ON — the loudest thing under the table, by decision:
+   a team lying fourth wants to know when it can do something about it. Gold,
+   because coming back to win is the trophy colour's own job. */
+.lgp-next {
+  margin: 12px 0 0; padding-top: 12px;
+  border-top: 1px solid var(--panel-line);
+  color: var(--gold); font-size: var(--fs-lead);
+}
+.lgp-note { margin-top: 18px; text-align: center; color: var(--ink-dim); }

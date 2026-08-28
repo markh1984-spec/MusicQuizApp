@@ -295,7 +295,18 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * silently; and the finish layer at the foot of style.css is where the next
  * control's selection/caret/focus/hover lives, so it stays one block.
  */
-const BUDGET = 179_000;
+/*
+ * 180_500 ON 25 AUGUST 2026, for the league export — the first time the
+ * league leaves the console. Every line of that block forbids something: a
+ * report shows the table as it stood THAT NIGHT rather than today, the public
+ * page publishes per venue and fails closed, it sends names and points and
+ * NEVER faces (named fields, never a spread, or the next one added is a
+ * photograph on a public web page), and an async paint looks where the thing
+ * is rather than where it was made. It also corrects a bullet that said the
+ * league was yours only — which is no longer true, and a stale prohibition is
+ * worse than none.
+ */
+const BUDGET = 180_500;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

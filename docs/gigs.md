@@ -1280,3 +1280,99 @@ anyway" toggle. The false-negative case (a genuine photo, re-shared and
 therefore stripped of its EXIF before it reached this app) has no recovery
 path beyond re-uploading through a fresh camera capture; if that turns out
 to matter in practice, add the toggle then rather than guessing at it now.
+
+## THE LEAGUE, EXPORTED — evidence for the landlord, a wall for the teams
+
+Asked on 25 August 2026: *"What is our quiz league functionality looking like
+and can that be exported to the landlord and the quiz teams to view?"*
+
+The league itself had been built for a while — `src/league.js`, ten points for
+a win down to one for turning up, a rolling twelve-week season per venue, out
+of the archive with nothing new collected. What did not exist was any way to
+get it out of the console: no PDF, no link, no page. That was a deliberate
+park, recorded at the time, and this is it being unparked.
+
+### The two audiences want different things, so they got different things
+
+**A landlord wants evidence, in a document he already receives.** The
+post-night report PDF was carrying the headcount — *"how many came"* — and not
+the league, which is *"are they coming back"*. The second is the question that
+actually renews a booking, and the app had known the answer all along. Five
+rows on the report, silent when there is no league.
+
+**Teams want the table on the wall.** That is a public page, and a new public
+surface, which is exactly why it was parked: team names go public with no way
+to withdraw one. So it gets the gallery's safeguards rather than a lighter
+version of them.
+
+Building one thing for both would have served neither.
+
+### A report says what the room saw THAT NIGHT
+
+`leagueAfter(nights, night)` winds two things back: the night list, and the
+season window, which is measured from that evening rather than from today. A
+report for the 14th handed over in March therefore says what was on the
+projector on the 14th.
+
+It has to be `leagueTable()` itself doing the work with a different clock and
+a shorter list — not a second calculation — or the report and the projector
+would eventually disagree about who was winning. Same argument
+`headcounts.js` records for taking a SET of nights.
+
+Proved by generating every night's report off one seeded season:
+
+```
+2026-07-24: no league          (one night is not a league — it is the scoreboard twice)
+2026-07-31: 2 nights · 1st Brain Trust 18 pts
+2026-08-07: 3 nights · 1st Quizzly Bears 28 pts
+2026-08-14: 4 nights · 1st Quizzly Bears 36 pts
+2026-08-21: 5 nights · 1st Quizzly Bears 46 pts
+```
+
+The lead changes hands between the first two, which is the point: each report
+is a different document, not the same table stamped five times.
+
+### The public page is a publish, per venue, failing closed
+
+`src/league-publish.js` is `src/gallery.js`'s shape one door along, because it
+is the same question and a second answer to it is a second thing that can be
+got wrong.
+
+- **Per VENUE, not per night.** A league IS a season — a page per pub, put up
+  once and left up, which is what a table on a wall is.
+- **The list lives in the private repo**, beside the gallery's own and the
+  archive this table is built from. A flag in `data/` would silently unpublish
+  every venue on the next deploy and nobody would know until a regular
+  mentioned the page had gone.
+- **Unreachable, unconfigured or unparseable means nothing is published.** A
+  page that shows nothing is a disappointment; a page that shows every team in
+  every pub because a fetch failed is a disclosure.
+- **The control is drawn UNDER the table it publishes**, says what publishing
+  means in one line before you press it, and takes it down as prominently as
+  it puts it up — outlined red. A team will ask.
+
+**Names and points, never faces.** `leagueTable()` carries a `faceKey` per
+team so the console can draw one; the public route lists the fields it sends
+by name rather than spreading the row. A spread quietly opts every future
+field in, and the next one might be a photograph — the same whitelist rule the
+engine's own views follow, for the same reason.
+
+**And the next quiz date is the loudest thing under each table**, chosen over
+the faces: a team lying fourth wants to know when it can do something about
+it. It writes itself from the venue's usual night through the same
+`nextNightAt()` the projector's comeback slide uses, so there is nothing to
+keep current and it is silent when there is nothing true to say.
+
+### Three things this cost, all found by running it
+
+- **A GET route written beside its own POST 404s.** `/api/league/published`
+  landed in the half of `server.js` that only runs for POST — the identical
+  trap the gallery's publish route already records. Found by calling it.
+- **An async paint must look where the thing IS.** The publish control queried
+  the `DocumentFragment` it was built in; `render()` had already moved its
+  children into the page and left the fragment empty, so two tables drew with
+  no control on them and nothing threw.
+- **A seed on the wrong shape proves nothing.** The first fixture wrote the
+  MERGED night shape rather than the on-disk one, and then put both venues on
+  the same dates — which `mergeGigs()` quite rightly folded into one night,
+  losing a whole league. One quizmaster cannot be at two pubs on one evening.

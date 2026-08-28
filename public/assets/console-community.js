@@ -47,13 +47,22 @@ import { esc, node } from './client.js';
 // established pattern here, and safe because it is a hoisted function
 // declaration rather than something read while the shell is half-built.
 import { goTo, keyed } from './console.js';
-import { library } from './console-state.js';
+import { library, me } from './console-state.js';
 import { asksPanel, groupByVenue, nightPhotos } from './console-gigs.js';
 
 /** Every venue with a league running, best-supported first. */
 function leaguesNow() {
-  return Object.values(library.leagues || {})
-    .filter((l) => l && l.table && l.table.length)
+  /*
+   * THE KEY TRAVELS WITH THE TABLE. `library.leagues` is keyed by
+   * `venueKeyOf()` — an id where the nights have one, a lowercased name where
+   * they do not — and that is what the publish control has to send, because
+   * it is what the table was grouped BY. Publishing by display name would put
+   * the wrong pub up the day somebody renamed one, and `Object.values()` was
+   * throwing the key away one line before it was needed.
+   */
+  return Object.entries(library.leagues || {})
+    .filter(([, l]) => l && l.table && l.table.length)
+    .map(([key, l]) => ({ ...l, key }))
     .sort((a, b) => b.nights - a.nights || a.venue.localeCompare(b.venue));
 }
 
@@ -168,6 +177,67 @@ function leagueTableFor(league) {
 }
 
 /**
+ * PUT THIS VENUE'S TABLE ON A PUBLIC PAGE, or take it back down.
+ *
+ * Asked for on 25 August 2026 — *"can that be exported to the landlord and
+ * the quiz teams to view?"* The landlord's half went on the report PDF he
+ * already receives; this is the teams' half, and it is a PUBLIC page, so it
+ * gets the gallery's safeguards rather than a lighter version of them:
+ *
+ * - **The control is drawn UNDER the table it publishes**, so nobody puts a
+ *   pub's teams online without having just looked at the names.
+ * - **It says what publishing means in one line**, read before pressing. Not
+ *   red: red would say a mistake had been made, and this is a choice.
+ * - **Taking it down is as prominent as putting it up**, outlined red. A team
+ *   will ask, and the honest answer is a quizmaster who can do it while stood
+ *   there.
+ * - **Per VENUE, not per night** — a league IS a season, so there is no
+ *   per-night decision to make.
+ *
+ * `?q=` names whose page it is, or the link falls back to the owner's own
+ * room — the exact fault the gallery link was fixed for once already.
+ */
+function leagueToggle(key, venue, on) {
+  const wrap = node('<div class="gig-gallery"></div>');
+  const link = `/league${me?.id ? `?q=${encodeURIComponent(me.id)}` : ''}`;
+
+  const paint = (live) => {
+    wrap.replaceChildren(node(live
+      ? `<div class="tiny gig-gal-live">On the public table —
+           <a href="${link}" target="_blank" rel="noopener">see it</a></div>`
+      : '<div class="tiny gig-gal-note">Anyone with the link can see these team names.</div>'));
+
+    const btn = node(live
+      ? '<button class="minor danger lg-pub-off" type="button">Take this table down</button>'
+      : '<button class="minor lg-pub-on" type="button">Put this table up for the teams</button>');
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      try {
+        const res = await fetch(keyed('/api/league/publish'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ venueKey: key, on: !live }),
+        });
+        const out = await res.json();
+        // SAY WHAT WENT WRONG — the likeliest failure by a distance is that
+        // the private repository is not configured, and "could not save that"
+        // would send somebody hunting through the app for a fault that is in
+        // an environment variable.
+        if (!res.ok) throw new Error(out.error || 'Could not change that.');
+        paint(!live);
+      } catch (err) {
+        btn.disabled = false;
+        wrap.appendChild(node(`<div class="tiny" style="color:var(--bad)">${esc(err.message)}</div>`));
+      }
+    });
+    wrap.appendChild(btn);
+  };
+
+  paint(Boolean(on));
+  return wrap;
+}
+
+/**
  * THE LEAGUE TAB.
  *
  * **The identification rule is printed once here rather than under every
@@ -197,8 +267,62 @@ export function leagueSection() {
     <p class="tiny">Ten points for a win, one for turning up, over a rolling twelve-week
       season. A team is the name they type on the night, so a change of spelling starts a
       new team — there is no sign-up, and that is what keeps it free to join at the door.</p>`));
-  for (const league of leagues) wrap.appendChild(node(leagueTableFor(league)));
+  for (const league of leagues) {
+    const panel = node(leagueTableFor(league));
+    /*
+     * THE PUBLISH CONTROL IS DRAWN NOW AND PAINTED LATER.
+     *
+     * Which tables are up is a GitHub read, so it is fetched ONCE when this
+     * tab is opened rather than riding with the library on every console
+     * render — a fact that changes twice a season must not cost a network
+     * call per state push. Until it answers, the control is simply absent
+     * rather than guessing "not published": a button that says "put this up"
+     * on a table that is already up would be a lie for as long as the fetch
+     * takes, and the one thing this control must never do is misstate what
+     * is public.
+     */
+    panel.dataset.leagueKey = league.key;
+    wrap.appendChild(panel);
+  }
+  paintPublished();
   return wrap;
+}
+
+/**
+ * Ask which tables are up, once, and hang a control on each.
+ *
+ * Silent on failure — an unreachable repository means the publish control
+ * does not appear, which is honest: without it nothing CAN be published, and
+ * a broken button would be worse than no button.
+ */
+function paintPublished() {
+  fetch(keyed('/api/league/published'))
+    .then((r) => (r.ok ? r.json() : null))
+    .then((d) => {
+      if (!d) return;
+      const live = new Set(d.venues || []);
+      /*
+       * THE DOCUMENT, NEVER THE FRAGMENT THIS WAS BUILT IN — and the first
+       * version queried the fragment and silently drew nothing.
+       *
+       * `leagueSection()` returns a `DocumentFragment`, and appending a
+       * fragment MOVES its children out and leaves it empty. By the time this
+       * fetch resolved, the panels were in the page and the fragment was a
+       * husk, so `wrap.querySelectorAll()` matched nothing: two tables, no
+       * publish controls, nothing thrown. An async paint has to look where
+       * the thing IS when it runs, not where it was when it was made.
+       *
+       * A tab changed while the request was in flight simply matches nothing,
+       * which is the right answer rather than a control on the wrong page.
+       */
+      for (const panel of document.querySelectorAll('[data-league-key]')) {
+        if (panel.querySelector('.lg-pub-on, .lg-pub-off')) continue;
+        const key = panel.dataset.leagueKey;
+        const where = panel.querySelector('.league-head b');
+        panel.appendChild(leagueToggle(key, where ? where.textContent : '', live.has(key)));
+      }
+    })
+    .catch(() => {});
 }
 
 /** This venue's headcount, as the one line a card already shows. */

@@ -1470,11 +1470,28 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   NOTHING was right above the quiz generator and is wrong on a tab whose whole
   job is the list: a blank page reads as broken to the person checking whether
   the feature works. One optional argument, so the triage keeps one definition.
-- **IT IS YOURS ONLY, FOR NOW.** Community is a quizmaster's view of their own
-  rooms; the only public thing is still the existing gallery link. A
-  room-facing page per venue — the table on a wall, a link the regulars check —
-  was offered and deliberately parked: it is a new PUBLIC surface with its own
-  questions about faces and team names, and nothing here blocks it later.
+- **THE LEAGUE IS EXPORTED TO TWO AUDIENCES AND THEY WANTED DIFFERENT THINGS**
+  — *"can that be exported to the landlord and the quiz teams to view?"* The
+  landlord wants EVIDENCE, so the season table joined the post-night report he
+  already receives; the teams want the table on a WALL, so `/league` is a
+  public page per quizmaster. Building one thing for both would have served
+  neither.
+  - **A REPORT SAYS WHAT THE ROOM SAW THAT NIGHT, not what is true today** —
+    `leagueAfter()` winds the night list AND the season window back to that
+    evening; a snapshot that has moved on is not evidence. One function, one
+    clock argument, many questions.
+  - **A PUBLIC PAGE IS A PUBLISH, PER VENUE, FAILING CLOSED** —
+    `league-publish.js`, the gallery's shape exactly, in the private repo
+    because `data/` is wiped on every deploy. **NAMES AND POINTS, NEVER
+    FACES**: the fields are named on the way out rather than spread, or the
+    next one added is a photograph on a public page.
+  - **THE NEXT QUIZ DATE IS THE LOUDEST THING UNDER THE TABLE** — a team lying
+    fourth wants to know when it can do something about it. It writes itself
+    from the venue's usual night, like the comeback slide.
+  - **AN ASYNC PAINT LOOKS WHERE THE THING IS, NOT WHERE IT WAS MADE.** The
+    publish control queried the `DocumentFragment` it was built in, which
+    `render()` had already emptied into the page — two tables drew with no
+    control on them and nothing threw.
 
 - **A fact is on ACCOUNT, a switch is on SETTINGS, a price is in the SHOP** —
   or Settings becomes a bin.
@@ -1811,6 +1828,7 @@ before touching a drag handler.**
 - THE MONTH IS ON THE LEFT AND WHAT YOU DO ABOUT A DATE IS ON THE RIGHT
 - The last slide of the night — "Back here Thursday 20th"
 - Headcount per venue — the app finally says a number it always knew
+- THE LEAGUE, EXPORTED — evidence for the landlord, a wall for the teams
 - WHAT THIS ROOM HAS ALREADY HEARD — the shelf is ranked PER VENUE
 - A prize taken at the bar has to reach the filed night
 - **THE GALLERY READS THE OWNER'S OWN QUIZMASTER ROOM, never `HOUSE`** — photos
