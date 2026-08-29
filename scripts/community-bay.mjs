@@ -154,6 +154,14 @@ try {
         },
       });
     });
+    /*
+     * The lamp's own write goes to the private repository, which this harness
+     * has no token for — so it is answered here. Without it the click 400s and
+     * the console-error check fires on the harness rather than on the app.
+     */
+    await page.route('**/api/gallery-photo/**', async (route) => {
+      await route.fulfill({ json: { ok: true } });
+    });
     await page.route('**/shot/*.svg', async (route) => {
       const i = Number(route.request().url().match(/(\d+)\.svg/)[1]);
       const hue = (i * 31) % 360;
@@ -332,6 +340,47 @@ try {
     check(`${label}: every photo has a gallery pill`, pills.all === pills.photos, `${pills.all}/${pills.photos}`);
     check(`${label}: and both states are drawn`, pills.on > 0 && pills.off > 0, `${pills.on} on, ${pills.off} off`);
     check(`${label}: the old Screen only badge is gone`, pills.oldBadge === 0, `${pills.oldBadge}`);
+    /*
+     * A LAMP, NOT A LABEL — *"no text needed but it must be clickable"*. So
+     * what is checked is that it says nothing, that a screen reader still gets
+     * a sentence out of it, and that the HIT AREA reaches the touch floor even
+     * though the dot itself is 18px. A wordless control with a thumb-sized
+     * target is the whole trade; get either half wrong and it is a smudge.
+     */
+    const lamp = await page.evaluate(() => {
+      const el = document.querySelector('.doorhead .cphoto-pub');
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      const after = getComputedStyle(el, '::after');
+      const grow = Math.abs(parseFloat(after.getPropertyValue('inset-block-start')) || 0);
+      return {
+        words: (el.textContent || '').trim(),
+        said: el.getAttribute('aria-label') || '',
+        w: Math.round(r.width), h: Math.round(r.height),
+        hit: Math.round(r.height + grow * 2),
+      };
+    });
+    check(`${label}: the lamp carries no words`, lamp && lamp.words === '', JSON.stringify(lamp && lamp.words));
+    check(`${label}: but it still says what it is`, lamp && lamp.said.length > 10, lamp && lamp.said);
+    check(`${label}: and its target reaches the touch floor`, lamp && lamp.hit >= 44, lamp && `${lamp.w}px dot, ${lamp.hit}px target`);
+    /*
+     * AND PRESSING THE LAMP DOES NOT ALSO OPEN THE PICTURE. It sits ON the
+     * photograph with a hit area bigger than it looks, and the figure beneath
+     * it opens on click — so without the guard, switching a photo off the
+     * gallery would blow it up to fill the bay at the same time.
+     */
+    const wasOn = await page.evaluate(() => document.querySelector('.doorhead .cphoto-pub').classList.contains('is-on'));
+    await page.evaluate(() => document.querySelector('.doorhead .cphoto-pub').click());
+    await page.waitForTimeout(400);
+    const after = await page.evaluate(() => ({
+      opened: document.querySelectorAll('.doorhead .community-big').length,
+      // AND IT ACTUALLY SWITCHED — read against what it WAS, not against a
+      // colour assumed from the fixture. A dead lamp draws perfectly: the
+      // handler's own catch eats a ReferenceError and the colour never moves.
+      on: document.querySelector('.doorhead .cphoto-pub').classList.contains('is-on'),
+    }));
+    check(`${label}: the lamp does not also open the picture`, after.opened === 0, `${after.opened}`);
+    check(`${label}: and pressing it switches the colour`, after.on === !wasOn, `${wasOn} -> ${after.on}`);
 
     /*
      * AND THE FOLD STILL WORKS OVER THE NIGHT YOU HAVE OPEN — which is the
@@ -395,6 +444,28 @@ try {
       });
       await page.evaluate(() => document.querySelectorAll('.doorhead .cphoto')[3].click());
       await page.waitForTimeout(400);
+      /*
+       * AND IT COVERS THE BAY WHILE THE GRID UNDER IT IS SCROLLED — the fault
+       * reported off a screenshot. `position: absolute; inset: 0` inside a
+       * SCROLLED container anchors to the content box's origin, which is above
+       * the visible top, so the picture drew half out of view with thumbnails
+       * showing round it. Measured against the column it is supposed to fill.
+       */
+      const cover = await page.evaluate(() => {
+        const big = document.querySelector('.community-big');
+        const side = document.querySelector('.doorhead .bay-side');
+        if (!big || !side) return null;
+        const b = big.getBoundingClientRect();
+        const s = side.getBoundingClientRect();
+        return {
+          top: Math.round(b.top - s.top), left: Math.round(b.left - s.left),
+          w: Math.round(b.width - s.width), h: Math.round(b.height - s.height),
+        };
+      });
+      check(`${label}: the open picture covers the bay`,
+        cover && Math.abs(cover.top) <= 2 && Math.abs(cover.left) <= 2
+          && Math.abs(cover.w) <= 2 && Math.abs(cover.h) <= 2,
+        JSON.stringify(cover));
       await page.evaluate(() => document.querySelector('.community-big').click());
       await page.waitForTimeout(400);
       const after = await page.evaluate(() => document.querySelector('.doorhead .bay-body').scrollTop);

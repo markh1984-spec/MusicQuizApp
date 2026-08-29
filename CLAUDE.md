@@ -489,7 +489,7 @@ opening a second file.
 - **SSE, not websockets**
 - **No build step**
 - **Packs are JSON files**
-- **The console wears a gauntlet cursor — open hand, closed fist while dragging — and scroll rods on its panels, console only** — never the projector or a phone. **A cursor is a static file: it cannot follow the account's colours.**
+- **The console wears a gauntlet cursor — open hand, closed fist while dragging — and scroll rods on its panels, console only** — never the projector or a phone.
 - **No profanity filter on team names** — **in the ROOM. Do not add word
   filtering to the projector, the phones or the console.** The public league
   page and the landlord's report are the one exception, and it is a SCOPE
@@ -497,14 +497,14 @@ opening a second file.
 - **Photo uploads auto-publish** — Do not add one.
 - **Photos go in a SEPARATE PRIVATE repo** — Never the main repo: it is public (checked), and git history is forever.
 - **Filters are pixel maths, not `ctx.filter`**
-- **"Filters" means PROPS, and the colour grading is GONE** — the only working Undo lived in a hidden box, so **there was no Undo at all on a normal night** and nothing threw. Positions are a **fraction** of the canvas, never pixels.
-- **THE PHOTO CAN BE MIRRORED, and it is a BUTTON rather than a detection** — a plain file input never says which lens was used.
+- **"Filters" means PROPS, and the colour grading is GONE** — positions are a **fraction** of the canvas, never pixels.
+- **THE PHOTO CAN BE MIRRORED, and it is a BUTTON rather than a detection**
 - **THE PHONE MUST NOT SAY "look up" WHILE A QUESTION IS ON** — `PHOTO_PHASES` in `screen.js`: photos at the lobby, a round board and the end only, because twenty seconds and four options wants the whole screen.
-- **A VENUE'S LOGO GOES ON THE WINNER'S VOUCHER, and nowhere else** — **THE WORDS STAY THE PRIZE**, in text directly underneath, so a logo that never loads costs nothing at the bar. **Never an image with the prize written inside it.** **NOT on the projector, and that is BYTES rather than secrecy**: it would ride in every state push, which at a lobby is every join.
+- **A VENUE'S LOGO GOES ON THE WINNER'S VOUCHER, and nowhere else** — **THE WORDS STAY THE PRIZE**, in text underneath. **Never an image with the prize written inside it.** **NOT on the projector, and that is BYTES rather than secrecy.**
 - **The room is told what it is playing for**
 - **SECOND AND THIRD ARE A PODIUM, not a caption**
 - **A BIG PHOTO NEVER DIMS THE JOIN CODE** — the corner sits ABOVE the photo, and the photo centres in the space BESIDE it (`padding-right` on the grid).
-- **A photo gets the MIDDLE of the screen, not a thumbnail** — **The tilt never lands near straight**: half a degree reads as a projector nobody levelled, so a side is picked and the angle is 2.5° to 7° off it.
+- **A photo gets the MIDDLE of the screen, not a thumbnail** — **the tilt never lands near straight**: a side is picked, 2.5° to 7° off it.
 - **Speed scoring is FLAT — 10 points a second, and it stays that way** — **Do not re-propose this.**
 - **The phone shows the answers as the projector does**
 - **…except the alphabet round, which is 5 across on the phone and 9 on the projector**
@@ -525,8 +525,8 @@ opening a second file.
 - **Launch is the last thing on a pack card, and full width** — superseded; a pack card has no Launch. The rule moved to TONIGHT.
 - **The tab icon and the logo are one drawing**
 - **A QUESTION MARK INSIDE A MICROPHONE**
-- **The sound arcs are built but OFF** — **the app never draws this mark above 30px**: 22 on a phone, 26 on the projector, 30 on the console, 16 in the tab.
-- **The name stacks — the possessive above, the app underlining it** — **It splits on the APP NAME, never on the last word**, or `BRAND_NAME="The Crown Quiz League"` is broken in the wrong place.
+- **The sound arcs are built but OFF** — **the app never draws this mark above 30px.**
+- **The name stacks — the possessive above, the app underlining it** — **it splits on the APP NAME, never on the last word.**
 - **One type ladder, ten steps, named for the JOB**
 - **ONE MENU, built in one place, on every page a quizmaster drives**
 
@@ -1663,7 +1663,10 @@ up there too."*
   place.** *"It seems to reload the entire gallery at the top"*: nothing
   reloaded, the bay was REBUILT and a fresh element scrolls at 0. Opening one
   is a local DOM change, no render. **`renderKeepingPlace()` holds every
-  scroller in the frame**, by class.
+  scroller in the frame**, by class. **AND THE OVERLAY HANGS ON THE COLUMN,
+  NEVER ON THE SCROLLING GRID INSIDE IT** — `inset: 0` anchors to the padding
+  box, which in a scrolled container starts at the top of the CONTENT, so it
+  drew exactly one scroll offset too high with thumbnails round it.
 - **ONE REQUEST PER NIGHT, NOT TWO.** `nightPhotos()` fetches the pictures and
   the published flag together, so the control is BUILT in the bay and HUNG in
   the tab body — safe because `render()` evaluates the doorhead before the tab
@@ -2031,16 +2034,19 @@ before touching a drag handler.**
 - THE GALLERY ONLY HOLDS WHAT LOOKED LIKE A CAMERA TOOK IT — **tested now,
   because it fails silently**: `camera` defaults FALSE, and it never keeps a
   photo off the projector
-- **A PILL PER PHOTO SAYS WHETHER IT IS ON THE GALLERY, AND IT IS A SWITCH** —
-  *"a little green pill… and a red one to show it isn't, and I can click one
-  for each purpose."* Green and red are the app's fixed pair and this is what
-  they mean. **It REPLACED the grey "Screen only" badge rather than joining
-  it** — that said what the guess thought, this says what will happen, and two
-  badges saying overlapping things is a label collision. **`showsOnGallery()`
-  is the ONE decision and all three readers ask it** — the listing, the
-  single-photo route and this pill — or a photo is on a page the console swears
-  is private. **A ruling that only restates the guess is CLEARED, not stored**,
-  and it rides in the SAME file as the published nights
+- **A LAMP PER PHOTO SAYS WHETHER IT IS ON THE GALLERY, AND IT IS A SWITCH** —
+  *"an on off button with green for on and red for off, no text needed but it
+  must be clickable."* **NO WORDS, and eighteen of them is the argument**: a
+  label repeated across a grid becomes furniture; a colour is read at a glance.
+  **FILLED, which is not a break of outlined-never-filled** — a lamp, not a
+  button that destroys, and with no text the fill IS the message. **So `title`
+  and `aria-label` are load-bearing**, the 18px dot gets a 44px hit area from a
+  `::after`, and `.cphoto`'s own open must ignore a press on it. **It REPLACED
+  the grey "Screen only" badge** — two badges saying overlapping things is a
+  label collision. **`showsOnGallery()` is the ONE decision and all three
+  readers ask it** — the listing, the single-photo route and this lamp — or a
+  photo is on a page the console swears is private. **A ruling that only
+  restates the guess is CLEARED, not stored**
 - **THE QUIZMASTER ADDS THEIR OWN ROOM PHOTOS** — the room's camera is sixty
   phones pointed at each other and none at the ROOM, which is the one shot that
   sells the night. `POST /api/past-photo/<night>`, **filed against the night in

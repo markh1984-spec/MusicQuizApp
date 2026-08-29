@@ -322,15 +322,24 @@ function photoWall() {
    * ONE PICTURE, OVER THE BAY. `contain` rather than `cover`, because this is
    * the moment somebody is actually LOOKING at it — a crop is right on a wall
    * of thumbnails and wrong here. Clicking anywhere on it goes back.
+   *
+   * **IT HANGS ON THE COLUMN, NOT ON THE SCROLLING GRID INSIDE IT** — and the
+   * first version hung it on the grid, which put it in the wrong place the
+   * moment anything was scrolled. `position: absolute; inset: 0` anchors to
+   * the padding box of the nearest positioned ancestor, and for a SCROLLED
+   * container that box starts at the top of the CONTENT rather than at the top
+   * of what you can see. Reported off a screenshot as a picture floating over
+   * the thumbnails with the grid showing round it; measured, it was 90px high
+   * and 30px short — exactly the scroll offset.
    */
   const openIt = (shot) => {
     openShot = shot;
     const over = node(`
-      <button class="community-big" type="button" title="Click again to go back">
+      <button class="community-big" type="button" aria-label="Back to the photographs">
         <img src="${esc(shot.url)}" alt="">
       </button>`);
     over.addEventListener('click', () => { openShot = null; over.remove(); });
-    body.appendChild(over);
+    (body.closest('.bay-side') || body).appendChild(over);
   };
 
   if (openNight) {
@@ -371,7 +380,8 @@ function photoWall() {
     }
     body.appendChild(grid);
     // A picture that was open when a state push rebuilt the page comes back
-    // over the wall it was opened from, rather than vanishing mid-look.
+    // over the wall it was opened from, rather than vanishing mid-look. After
+    // the grid, so `body.closest('.bay-side')` has somewhere to hang it.
     if (openShot) openIt(openShot);
   };
 

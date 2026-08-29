@@ -1694,7 +1694,36 @@ worth having and is not worth a second badge.
 **Green and red, which is one of the few places they are allowed to mean this.**
 The app's fixed colours are good/paying and wrong/destructive, and "on a public
 page" versus "not" is exactly that pair — read at a glance across eighteen
-thumbnails, which is the whole point of a pill over a list.
+thumbnails, which is the whole point of a lamp over a list.
+
+**And no words on it at all**, which was the correction after the first
+version shipped with "On the gallery" / "Not on it" written on each one:
+
+> *"I need the 'on the gallery' to just be an on off button with green for on
+> and red for off, no text needed but it must be clickable."*
+
+Right, and eighteen of them is the argument. A label repeated across a grid
+stops being read and becomes furniture — the clutter rule exactly — while the
+colour was already doing the whole job on its own. It is **filled** rather than
+outlined, which is not a break of *destructive is outlined, never filled*: this
+is a lamp, not a button that destroys something, and with no text the fill IS
+the message. A dark ring keeps it legible over a sunlit wall or a red curtain.
+
+Three things follow, and each is checked:
+
+- **The `title` and the `aria-label` become load-bearing rather than a nicety.**
+  A wordless control has to say what it is somewhere, a screen reader gets
+  nothing from a colour, and the reason a photo is off — the camera guess, or a
+  ruling — is worth having on hover. This is the one place a native tooltip
+  earns itself: it sits on a picture rather than over a list, which is where
+  the last one was a nuisance.
+- **The dot is 18px and the target is 44px**, from a `::after` that pushes the
+  hit area out without the lamp growing. Small enough to read across a grid,
+  big enough for a thumb.
+- **The figure's own click has to ignore a press on it.** The picture opens on
+  click and the lamp sits on top of it with a target bigger than it looks —
+  without the guard, switching a photo off the gallery also blew it up to fill
+  the bay.
 
 **`showsOnGallery()` is the one decision, and all three readers ask it.** The
 gallery listing, the single-photo route (which re-checks, because a URL can be

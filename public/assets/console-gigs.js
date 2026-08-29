@@ -765,16 +765,37 @@ export async function nightPhotos(body, night, opts = {}) {
     const paintPill = () => {
       pill.classList.toggle('is-on', live);
       pill.classList.toggle('is-off', !live);
-      pill.textContent = live ? 'On the gallery' : 'Not on it';
-      pill.title = live
-        ? 'This one is on the public gallery for this night. Click to take it off.'
+      /*
+       * NO WORDS ON IT — asked for directly: *"I need the 'on the gallery' to
+       * just be an on off button with green for on and red for off, no text
+       * needed but it must be clickable."*
+       *
+       * He is right, and eighteen of them is the argument: a label repeated
+       * across a grid stops being read and starts being furniture, while a
+       * colour is answered at a glance, which is the whole job. Green and red
+       * already mean this in the app, so the dot needs no key.
+       *
+       * **WHICH MAKES THE `title` AND THE `aria-label` LOAD-BEARING RATHER
+       * THAN A NICETY.** A wordless control has to say what it is somewhere —
+       * a screen reader gets nothing from a colour, and the reason a photo is
+       * off (the camera guess, or a ruling) is worth having on hover. This is
+       * the one place a native tooltip earns itself: it is on a picture rather
+       * than over a list, which is where the last one was a nuisance.
+       */
+      const why = live
+        ? 'On the public gallery for this night. Click to take it off.'
         : (String(p.name || '').includes('-picked')
-          ? 'This did not look like a camera took it, so it is off the public gallery. The big screen showed it either way. Click to put it on.'
-          : 'This one is off the public gallery. Click to put it on.');
+          ? 'Off the public gallery — this did not look like a camera took it. The big screen showed it either way. Click to put it on.'
+          : 'Off the public gallery. Click to put it on.');
+      pill.title = why;
+      pill.setAttribute('aria-label', why);
       pill.setAttribute('aria-pressed', String(live));
     };
     paintPill();
-    pill.addEventListener('click', async () => {
+    pill.addEventListener('click', async (ev) => {
+      // Belt to the figure's own braces above: a lamp is a control ON a
+      // picture, and pressing it must never also mean "open this".
+      ev.stopPropagation();
       pill.disabled = true;
       const want = !live;
       try {
@@ -835,7 +856,13 @@ export async function nightPhotos(body, night, opts = {}) {
     if (onOpen) {
       shot.classList.add('is-openable');
       shot.addEventListener('click', (ev) => {
-        if (ev.target.closest('.cphoto-bin')) return;
+        /*
+         * NEVER WHEN THE PRESS WAS ON A CONTROL ON TOP OF IT. Both the bin and
+         * the gallery lamp sit over the picture and both have a hit area
+         * bigger than they look — without this, switching a photo off the
+         * gallery would also blow it up to fill the bay.
+         */
+        if (ev.target.closest('.cphoto-bin, .cphoto-pub')) return;
         onOpen(p);
       });
     }

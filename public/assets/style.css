@@ -4278,20 +4278,37 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
    good/on versus wrong/off, read at a glance across eighteen thumbnails. It is
    OUTLINED rather than filled — the destructive rule, applied to both halves
    so neither shouts louder than the photograph. */
+/* NO WORDS ON IT — *"just be an on off button with green for on and red for
+   off, no text needed but it must be clickable"*. Eighteen of them is the
+   argument: a label repeated across a grid stops being read and becomes
+   furniture, where a colour is answered at a glance.
+
+   FILLED, unlike a destructive button, and that is not a break of the
+   outlined-never-filled rule: this is a LAMP rather than a button you press to
+   destroy something. With no text, the fill IS the message, and an outlined
+   ring at this size reads as a smudge on the photograph.
+
+   A DARK RING ROUND IT so it survives whatever the picture is — green on a
+   sunlit wall and red on a curtain both vanish without one. */
 .cphoto-pub {
   position: absolute; top: 8px; right: 8px; z-index: 2;
-  font-size: var(--fs-tag); font-weight: 800;
-  padding: 4px 9px; min-height: 26px; border-radius: var(--r-pill);
-  background: rgba(10, 8, 16, 0.78); cursor: pointer;
-  border: 1px solid currentColor;
+  width: 18px; height: 18px; padding: 0; border-radius: 999px;
+  cursor: pointer;
+  border: 2px solid rgba(10, 8, 16, 0.75);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
 }
-.cphoto-pub.is-on { color: var(--good); }
-.cphoto-pub.is-off { color: var(--bad); }
-.cphoto-pub:hover { background: rgba(10, 8, 16, 0.92); }
+.cphoto-pub.is-on { background: var(--good); }
+.cphoto-pub.is-off { background: var(--bad); }
+/* THE TARGET IS BIGGER THAN THE DOT. An 18px lamp is the right size to read
+   across a grid and the wrong size to hit with a thumb, so the hit area is
+   pushed out to the touch floor without the dot growing. */
+.cphoto-pub::after { content: ''; position: absolute; inset: -15px; }
+.cphoto-pub:hover { transform: scale(1.15); }
 .cphoto-pub:disabled { opacity: 0.5; cursor: default; }
-/* The wall's own tiles carry no pill — a picture there belongs to whichever
-   night it came from, and a switch with no visible subject is a mis-tap. */
-.community-wall .cphoto-pub { font-size: 10px; padding: 2px 6px; min-height: 22px; top: 5px; right: 5px; }
+@media (prefers-reduced-motion: reduce) { .cphoto-pub:hover { transform: none; } }
+/* Smaller on the wall's tighter tiles, but never below something a thumb can
+   find — the ::after hit area carries that either way. */
+.community-wall .cphoto-pub { width: 14px; height: 14px; top: 5px; right: 5px; }
 .cphoto-acts {
   position: absolute; left: 0; right: 0; bottom: 34px;
   display: flex; gap: 6px; justify-content: center;
@@ -9324,8 +9341,16 @@ body.landing {
    AN OVERLAY RATHER THAN A REPLACEMENT, which is what keeps the wall's scroll:
    the grid underneath is never destroyed, so closing the picture puts you back
    exactly where you were rather than at the top. Opaque, or the thumbnails
-   show through the letterboxing. */
-.bay-body { position: relative; }
+   show through the letterboxing.
+
+   IT HANGS ON THE COLUMN, NEVER ON THE SCROLLING GRID INSIDE IT. `inset: 0`
+   anchors to the nearest positioned ancestor's PADDING BOX, and for a scrolled
+   container that box begins at the top of the content rather than at the top
+   of what you can see — so hung on `.bay-body` it drew exactly one scroll
+   offset too high, with thumbnails showing round it. `.bay-side` does not
+   scroll (`overflow: hidden`, with the grid scrolling inside it), so it is the
+   honest anchor. */
+.bay-side { position: relative; }
 .community-big {
   position: absolute; inset: 0; z-index: 2;
   display: block; width: 100%; height: 100%; padding: 0;

@@ -1357,3 +1357,22 @@ Two smaller things in the same screenshot:
 - **The heading drops a rung.** Level with the rows in size and weight, a
   heading and a row read as one undivided list, which is the opposite of what a
   fold is for.
+
+### And the overlay has to hang on the column, not on the grid
+
+Reported a day later, off a screenshot: an opened picture floating over the
+thumbnails with the grid showing round it.
+
+`position: absolute; inset: 0` anchors to the **padding box** of the nearest
+positioned ancestor — and for a *scrolled* container that box begins at the top
+of the CONTENT, not at the top of what you can see. Hung on `.bay-body`, which
+is the scroller, the overlay therefore drew exactly one scroll offset too high.
+Measured: 90px up and 30px short, which is precisely the offset the grid was
+scrolled by.
+
+It hangs on `.bay-side` now — the column, which does not scroll (`overflow:
+hidden`, with the grid scrolling inside it) — so `inset: 0` means what it looks
+like it means. The check measures the overlay against that column rather than
+merely asserting it exists, because "it is in the document" and "it is where
+somebody can see it" are different questions, and this repo keeps paying for
+the difference.
