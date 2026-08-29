@@ -826,3 +826,164 @@ scrolls (only `.tabbody` does), every card title visible and unclamped at
 1500/1280/390, no horizontal overflow anywhere, drag-check green including
 the dial presses — the frame change moved drop geometry, so the real-mouse
 run was the load-bearing check.
+
+---
+
+## THE COMMUNITY BAY IS THE TAB YOU ARE ON — 29 August 2026
+
+Asked for in one message, off a screenshot of the Community door:
+
+> *"I would like anything that loads to load onto the top bar bit, so if I
+> click photos I want the photos to load perhaps in a 3 x 6 grid at the top
+> there? Quiz league should also load up there with options perhaps on the left
+> hand side going down like the menu below it."*
+
+`communityBench(active)` in `console-community.js`; `console.js` hands it the
+tab it is already handing `tabBar()` and `tabBody()`. The rules are in
+`CLAUDE.md`; this is the reasoning behind them.
+
+### The other four doors already worked this way, and this one did not
+
+Post gig's bay is the night you opened. Workshop's is the pack you picked.
+Console's is tonight — the thing the whole door exists to start. Community's
+was a fixed summary that said *"2 leagues running · 35 teams across 2 nights"*
+whichever of its three tabs you were on.
+
+That is the one region the fixed frame guarantees is on screen, and it was
+spending itself on a sentence you had read the first time. Meanwhile the thing
+you had just pressed a tab to look at was below the fold, inside the only part
+of the page that scrolls. **The door was arranged backwards** — and the fix is
+not a new pattern, it is the pattern the other four already follow.
+
+### Read above, work below — which is why this is not a duplicate
+
+The obvious objection is that the bay now shows a table that the tab under it
+also shows. It is worth being precise about why that is allowed here and would
+not be everywhere.
+
+**The bay is the glance and the tab is the work.** The wall is eighteen
+pictures with nothing on them; the Photos tab underneath is where a night is
+opened, a photograph is binned and a night is published. The league bay is one
+venue's top eight with no controls; the league tab underneath is every venue's
+full table, the publish control and the name review.
+
+That is this project's own line — *a read-only summary may repeat; a queue may
+not* — and the load-bearing half is that **no control is drawn in both
+places**. Every safeguard in this door is a control drawn UNDER the thing it
+acts on: the bin sits with the night it deletes from so you can see which night
+that is; publishing a table sits under the names it would publish so nobody
+puts a pub's teams online without having just read them. Move either into the
+bay and the safeguard is gone, quietly, with the button still working.
+
+`scripts/community-bay.mjs` asserts `.doorhead` contains none of them, on every
+tab and every width. That is a rule with a test on it rather than a note.
+
+### Bounded by construction, because the doorhead does not scroll
+
+This is the constraint that chose both shapes, and it is not a style question.
+
+Above 900px the console is three fixed regions and one scroller: the topbar,
+the door's own header and the tab column stay put, and `.tabbody` is the only
+thing that moves. `.doorhead` sizes to its content. So a bay that grows with
+the data does not get a scrollbar — **it pushes the tab column off the bottom
+of the screen**, and nothing throws, nothing fails a unit test, and the console
+silently loses its menu.
+
+The same fault has already happened here from the other direction: `.console
+main` was an `auto minmax(0,1fr)` grid, so any banner above the doorhead
+dropped the columns into an implicit row and turned the fixed frame back into a
+scrolling page, with every check green.
+
+And the Post gig bench hit the data version of it: a night with thirty
+photographs grew the bench past the frame's bottom edge. **The fix there was
+not a ceiling on the container — it was making the photo row unable to grow
+tall in the first place** (`.night-strip` scrolls sideways rather than
+wrapping). That is the same fix applied here: the wall is a fixed three rows
+and the bay's table a fixed eight, and what is left over is SAID (*"and 3 more,
+below"*) rather than drawn.
+
+Measured with the harness's own warning banners suppressed, since neither is on
+a configured console:
+
+| | doorhead | left for the columns at 1280x720 |
+|---|---|---|
+| Quiz league | 357px | 280px |
+| Photos | 455px | 182px |
+| What they asked for | 173px | 464px |
+
+182px is the tightest and it is deliberate: the tab column is three chips and
+fits inside it, and the content that used to need that space is now above.
+
+### Six across, because everything else on this console is six across
+
+The pack shelf is six by decision and the Tonight bays are six by decision, and
+the wall sits two inches from both. A grid that mirrors them reads as the same
+app.
+
+It is also the half of "3 x 6" that costs less: three across and six down is
+the same eighteen pictures and twice the height, which is exactly what the
+doorhead cannot afford. On a phone it drops to three across — the page scrolls
+there anyway, and six 52px thumbnails is a contact sheet nobody can see.
+
+**The cells are 110px tall with `object-position: center 30%`.** A fixed height
+is what makes three rows a fixed bay height; the crop is biased above centre
+because a wide crop of a portrait photo taken on a phone otherwise lands on
+torsos, and a pub photograph is people.
+
+### The rail is the same object as the tab column under it
+
+190px, stacked, lit on the left edge, `role="tablist"` — the tab column's own
+markup and the tab column's own CSS idiom, because it is doing the tab column's
+own job one region higher. *"Options perhaps on the left hand side going down
+like the menu below it"* is literally that, and a second way of saying "pick
+one of these" on one screen is the label collision this repo keeps finding.
+
+The lit marker is the LEFT edge for the same reason the tabs' is: under a
+stacked list a bottom border reads as a rule between two rows rather than as a
+mark on one.
+
+### The wall is fetched once per page load, and stops asking
+
+A photo list is one request per night — the reason the tab below fetches a
+night's pictures on the press rather than up front. A wall built by asking
+every night in the archive would spend a pub's wifi on twenty requests to draw
+eighteen thumbnails.
+
+So `loadWall()` walks the newest nights and stops the moment eighteen are in
+hand, and never asks more than `WALL_NIGHTS` of them. An ordinary night carries
+more than eighteen photographs on its own, so the usual cost is **one request**.
+
+The result is held in a module binding rather than refetched, because the bay
+is rebuilt on every state push — which during a lobby is every time somebody
+joins, on the one connection that must not stutter. A photograph that arrives
+after that is caught the next time the console is opened, which is the right
+trade for a wall.
+
+### `scripts/community-bay.mjs` — and what it measures is geometry
+
+Nothing in this repo can see any of the above. `node --check` passes a bay that
+crushes the frame; a unit test reading the module as text proves nothing about
+its height; and a dead rail button draws perfectly, because the click handler's
+own catch swallows the `ReferenceError`.
+
+So the guard is a real browser with a viewport, like `drag-check.mjs`, and what
+it asserts is:
+
+- the page itself still does not scroll at 1500x900 and 1280x720;
+- enough is left for the tab column, and every tab in it is reachable;
+- nothing overflows sideways at any of the three widths;
+- **no control is in the bay** — no publish, no name review, no bin;
+- the wall stops at eighteen, six across (three on a phone);
+- the bay's table stops at eight, and every venue is on the rail;
+- **pressing a rail button actually changes the table**, not merely lights up;
+- no console errors.
+
+It seeds its own archive of two venues' league nights and stands in for the
+private photo repository with `page.route()`, so the console's own fetching and
+layout code is the real thing throughout and only the network behind it is a
+fixture.
+
+Two fixture traps it is worth not rediscovering: the HOUSE room's archive is
+`DATA_DIR/archive`, not `DATA_DIR/rooms/HOUSE/archive`; and **two venues seeded
+on the same dates produce no leagues at all**, because `mergeGigs` folds them
+into one night, marks it `venueMixed` and drops the venue.

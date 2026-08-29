@@ -1258,7 +1258,7 @@ export function render() {
       doorNow() === 'console' ? runningPanel(running) : node('<div></div>'),
       doorNow() === 'workshop' ? workBench() : node('<div></div>'),
       doorNow() === 'post' ? nightBenchPanel() : node('<div></div>'),
-      doorNow() === 'community' ? communityBench() : node('<div></div>'),
+      doorNow() === 'community' ? communityBench(active) : node('<div></div>'),
     ),
     consoleColumns(tabBar(active), tabBody(active)),
   );

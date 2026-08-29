@@ -342,7 +342,15 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * and the row's key travels with the row so the console combines the two
  * halves without a second copy of `teamKey()` in the browser.
  */
-const BUDGET = 184_000;
+/*
+ * RAISED TO 187,000 ON 29 AUGUST 2026, deliberately, for the Community bay —
+ * the doorhead now carries the tab's own content, and the rule that keeps it
+ * from crushing the fixed frame (bounded by construction, never a ceiling on
+ * the box round it) is one a session touching that door has to have read
+ * before it starts. The reasoning went to `docs/console.md`; what is here is
+ * the rules and the guard's name.
+ */
+const BUDGET = 187_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

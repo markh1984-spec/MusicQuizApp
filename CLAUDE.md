@@ -1543,6 +1543,42 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
     `render()` had already emptied into the page — two tables drew with no
     control on them and nothing threw.
 
+### THE COMMUNITY BAY IS THE TAB YOU ARE ON — a wall, or a venue rail
+
+`communityBench(active)` in `console-community.js`, `.community-wall` /
+`.community-rail`. *"Anything that loads should load onto the top bar bit — the
+photos in a 3 x 6 grid, and quiz league up there too with options on the left
+hand side going down like the menu below it."*
+
+- **THE OTHER FOUR DOORS ALREADY DID THIS** — Post gig's bay is the night you
+  opened. Community's said the same three numbers on every tab.
+- **READ ABOVE, WORK BELOW — which is why it is not a duplicate.** Every
+  control that ACTS stays UNDER the thing it acts on: the bin with its night,
+  publishing a table under the names it publishes. *A summary may repeat; a
+  queue may not*, and **no control is drawn in both places** — the check
+  asserts `.doorhead` holds none, because those controls ARE the safeguards.
+- **BOUNDED BY CONSTRUCTION, NEVER A CEILING ON THE BOX ROUND IT.** Above 900px
+  the doorhead does not scroll, so a bay that grows with the data pushes the
+  tab column off the bottom and nothing throws. The wall is a fixed three rows
+  and the bay's table a fixed eight; the remainder is SAID, not drawn. Same fix
+  as `.night-strip`.
+- **SIX ACROSS, because everything else here is six across** — the shelf and
+  the Tonight bays. Three DOWN is the half of "3 x 6" the doorhead can afford;
+  three across on a phone, where the page scrolls anyway.
+- **THE RAIL IS THE TAB COLUMN, one region higher** — 190px, stacked, lit on
+  the LEFT edge. Two ways of saying "pick one of these" on one screen is a
+  label collision.
+- **THE WALL IS FETCHED ONCE PER PAGE LOAD AND STOPS ASKING** — a photo list is
+  a request per night, so it walks the newest until eighteen are in hand and
+  never past `WALL_NIGHTS`. Held in a module binding: the bay is rebuilt on
+  every state push, which at a lobby is every join.
+- **`node scripts/community-bay.mjs` IS THE GUARD, and it measures GEOMETRY** —
+  doorhead height, what is left for the columns, whether the page has started
+  to scroll, and that the rail CHANGES the table rather than merely lighting up.
+  Nothing in `npm test` can see any of it.
+
+Full reasoning: **[`docs/console.md`](docs/console.md)**.
+
 - **A fact is on ACCOUNT, a switch is on SETTINGS, a price is in the SHOP** —
   or Settings becomes a bin.
 - **THE SHOP SELLS PACKS AND TIERS IN ONE ROOM**, both games in one grid,
@@ -2960,12 +2996,13 @@ typo is dropped rather than quietly becoming a round of general knowledge.
 ## Checks
 
 ```bash
-npm test        # 1,497 tests, no network, injected clocks — must stay green
+npm test        # 1,539 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
 node scripts/pub-unchanged.mjs HEAD~1 --ignore online   # did I break the pub night?
 node scripts/drag-check.mjs             # Tonight's drags, with a REAL browser drag
+node scripts/community-bay.mjs          # does the Community bay still fit the frame?
 ```
 
 **The rules these commands run on, and each was learned expensively — the full

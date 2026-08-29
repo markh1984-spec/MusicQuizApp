@@ -9225,6 +9225,86 @@ body.landing {
 /* Gold, because it is first place — the trophy colour, used for the one thing
    in this app it is allowed to mean. */
 .community-who { color: var(--gold); }
+
+/* ---- THE BAY IS THE TAB YOU ARE ON — the wall, and the venue rail.
+ *
+ * Both shapes are BOUNDED BY CONSTRUCTION rather than by a `max-height` on the
+ * box round them, and that is the whole reason they are safe up here: above
+ * 900px the doorhead sizes to its content and nothing scrolls it, so a bay
+ * that grows with the data pushes the tab column off the bottom of the frame.
+ * The wall is three fixed rows and the rail's table is eight fixed rows — the
+ * same fix `.night-strip` took when a night with thirty photographs grew the
+ * Post gig bench past its own frame. */
+
+/* SIX ACROSS, mirroring the pack shelf and the six Tonight bays two inches
+   below it. `minmax(0, 1fr)` because a grid child defaults to `min-width:
+   auto` and an image's own intrinsic width would otherwise push the column
+   wider than the page — the trap `.consolecols` already carries a note about. */
+.community-wall {
+  display: grid; gap: 6px; margin-top: 10px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.community-wall-none { grid-column: 1 / -1; }
+/* A FIXED CELL HEIGHT is what makes three rows a fixed bay height. `cover` so
+   a portrait phone photo and a landscape one are the same object on the wall
+   rather than two different shapes. */
+.community-shot {
+  display: block; border-radius: var(--r-field); overflow: hidden;
+  border: 1px solid var(--surf-line, rgba(255, 255, 255, 0.09));
+  background: var(--surf-2, rgba(255, 255, 255, 0.04));
+}
+/* `object-position` ABOVE CENTRE, because a wide crop of a portrait photo
+   taken on a phone otherwise lands on torsos. A pub photograph is people, and
+   people are in the top half of the frame. */
+.community-shot img {
+  display: block; width: 100%; height: 110px;
+  object-fit: cover; object-position: center 30%;
+}
+.community-shot:hover { border-color: var(--hot); }
+
+/* THE RAIL AND WHAT IT PICKS — the same two columns as `.consolecols` under
+   it, deliberately: it is the same object doing the same job, and a second
+   way of saying "pick one of these" on one screen is a label collision. */
+.community-bay { display: grid; gap: 8px 18px; grid-template-columns: 1fr; }
+.community-rail { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+/* The lit marker is the LEFT edge, exactly as the tab column's is — under a
+   stacked list a bottom border reads as a rule between two rows. */
+.community-venue {
+  display: flex; flex-direction: column; gap: 1px; text-align: left;
+  min-height: 44px; padding: 6px 10px; min-width: 0;
+  border: 1px solid var(--surf-line, rgba(255, 255, 255, 0.09));
+  border-left: 3px solid transparent;
+  border-radius: var(--r-field);
+  background: var(--surf-2, rgba(255, 255, 255, 0.04));
+  color: var(--ink-dim); cursor: pointer;
+}
+.community-venue:hover { color: var(--ink); }
+.community-venue.on {
+  color: var(--ink);
+  border-left-color: var(--hot);
+  background: rgba(255, 255, 255, 0.07);
+  background: color-mix(in srgb, var(--hot) 12%, transparent);
+}
+.community-venue-name {
+  font-weight: 800; font-size: var(--fs-ctl);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.community-side { min-width: 0; }
+.community-side .lg-table { margin-top: 6px; }
+
+/* TWO COLUMNS ONLY WHERE THERE IS ROOM. Below 900px the door's own area is
+   not pinned and the tab column is a full-width stack, so the rail goes above
+   its table for the same reason the tabs do. */
+@media (min-width: 900px) {
+  .community-bay { grid-template-columns: 190px minmax(0, 1fr); }
+}
+/* A PHONE GETS THREE ACROSS. Six 52px thumbnails is a contact sheet nobody can
+   see; the row count is what the doorhead cared about, and on a phone the
+   doorhead scrolls with the page anyway. */
+@media (max-width: 700px) {
+  .community-wall { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
 .league-panel + .league-panel { margin-top: 12px; }
 .league-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .league-head b { font-size: var(--fs-head); }

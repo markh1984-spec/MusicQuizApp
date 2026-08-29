@@ -67,14 +67,55 @@ function leaguesNow() {
 }
 
 /**
- * THE BAY — what is running, in one line you read without choosing anything.
+ * THE BAY IS THE TAB YOU ARE ON — asked for directly, 29 August 2026.
+ *
+ * *"I would like anything that loads to load onto the top bar bit, so if I
+ * click photos I want the photos to load perhaps in a 3 x 6 grid at the top
+ * there? Quiz league should also load up there with options perhaps on the
+ * left hand side going down like the menu below it."*
+ *
+ * **THE OTHER FOUR DOORS ALREADY WORK THIS WAY AND THIS ONE DID NOT.** The
+ * Post gig bay is the night you opened; the Workshop bay is the pack you
+ * picked; the Console bay is tonight. Community's was a fixed summary that
+ * said the same three numbers whichever tab you were on — so the one region
+ * the frame guarantees is always on screen was spending itself on a sentence
+ * you had already read, while the thing you pressed a tab to see was down in
+ * the scroller.
+ *
+ * **THE SPLIT IS READ ABOVE, WORK BELOW — not a repeat.** The bay is the
+ * glance: the wall of pictures, the standings at one pub. The tab underneath
+ * keeps everything that ACTS — the bin on a photograph, publishing a night,
+ * publishing a table, overruling the filter on a name. That is this project's
+ * own rule about what may appear twice: *a read-only summary may repeat; a
+ * queue may not*, and no control is drawn in both places.
+ *
+ * **AND EVERY BAY HERE IS BOUNDED BY CONSTRUCTION, which is the constraint
+ * that decides the shapes.** Above 900px the doorhead does not scroll — it
+ * sizes to its content and the tab body is the only scroller — so a bay that
+ * can grow with the data pushes the page off the bottom of the frame with
+ * nothing left to bring it back. That is exactly what a night with thirty
+ * photographs did to the Post gig bench, and the fix there was the same one
+ * as here: make the thing unable to grow tall rather than putting a ceiling
+ * on the box round it. So the wall is a fixed `WALL_DOWN` rows and the
+ * league bay a fixed `BAY_ROWS`, both with the remainder said in a line
+ * rather than drawn.
+ */
+export function communityBench(active) {
+  if (active === 'photos') return photoWall();
+  if (active === 'league' && leaguesNow().length) return leagueBay();
+  return summaryBench();
+}
+
+/**
+ * WHAT IS RUNNING, in one line you read without choosing anything — the bay
+ * as it was, still right for the tab that has no shape of its own.
  *
  * **It says the same thing whether there are five leagues or none**, which is
  * the empty-state rule this project holds everywhere: a door that draws
  * nothing until you have data reads as broken on the day somebody opens it
  * for the first time, which is the day they are deciding whether to bother.
  */
-export function communityBench() {
+function summaryBench() {
   const leagues = leaguesNow();
   const teams = new Set();
   for (const l of leagues) for (const t of l.table) teams.add(t.name.toLowerCase());
@@ -112,6 +153,209 @@ export function communityBench() {
           </div>`).join('')}
       </div>
     </div>`);
+}
+
+/*
+ * THE WALL — six across and three down, which is the "3 x 6" that was asked
+ * for, laid out the way round the rest of this console already is.
+ *
+ * **SIX ACROSS BECAUSE EVERYTHING ELSE HERE IS SIX ACROSS** — the pack shelf
+ * and the Tonight bays, both by decision. A grid that mirrors the one two
+ * inches below it reads as the same app; three across and six down would
+ * also be eighteen pictures and would be twice as tall, which the doorhead
+ * cannot afford.
+ *
+ * **AND THREE ROWS IS THE CEILING, not a page size.** The count is what makes
+ * this bay safe in a region that does not scroll — see `communityBench()`.
+ */
+const WALL_ACROSS = 6;
+const WALL_DOWN = 3;
+const WALL_MAX = WALL_ACROSS * WALL_DOWN;
+
+/*
+ * HOW MANY NIGHTS ARE OPENED TO FILL IT.
+ *
+ * A photo list is one request per night — the reason the tab below fetches a
+ * night's pictures on the press rather than up front — so a wall built by
+ * asking every night in the archive would spend a pub's wifi on twenty
+ * requests to draw eighteen thumbnails. Newest first, stopping the moment the
+ * wall is full, and never more than this many: an ordinary night carries more
+ * than eighteen photographs on its own, so the usual cost is ONE request.
+ */
+const WALL_NIGHTS = 4;
+
+/**
+ * FETCHED ONCE PER PAGE LOAD, then held.
+ *
+ * The bay is rebuilt on every state push — which during a lobby is every time
+ * somebody joins — so a fetch inside the render would be a request storm on
+ * the one evening the connection must not stutter. A photograph that arrives
+ * after this is caught the next time the console is opened, which is the
+ * right trade for a wall.
+ */
+let wallShots = null;
+
+function photoWall() {
+  const el = node(`
+    <div class="panel bench community-bench">
+      <div class="bench-head">
+        <b>The wall</b>
+        <span class="tiny">The last ${WALL_MAX} pictures the rooms sent. Every night's own
+          set — and the bin — are underneath.</span>
+      </div>
+      <div class="community-wall"></div>
+    </div>`);
+  const grid = el.querySelector('.community-wall');
+
+  const draw = (shots) => {
+    grid.replaceChildren();
+    if (!shots.length) {
+      grid.appendChild(node(`<div class="tiny community-wall-none">No photographs yet. The
+        camera is on the phones in the gaps, and whatever the room sends lands here.</div>`));
+      return;
+    }
+    for (const shot of shots) {
+      /*
+       * A LINK TO THE PICTURE ITSELF, and nothing else on it. There is no bin
+       * up here on purpose: a bin belongs beside the night it deletes from,
+       * where you can see which night that is. A thumbnail on a wall with a
+       * delete button on it is a mis-tap with no undo.
+       */
+      grid.appendChild(node(`
+        <a class="community-shot" href="${esc(shot.url)}" target="_blank" rel="noopener"
+           title="${esc(shot.where)}">
+          <img src="${esc(shot.url)}" alt="" loading="lazy">
+        </a>`));
+    }
+  };
+
+  if (wallShots) draw(wallShots);
+  else {
+    grid.appendChild(node('<div class="tiny">Loading the photographs…</div>'));
+    loadWall().then(draw).catch(() => draw([]));
+  }
+  return el;
+}
+
+/** The newest pictures across the newest nights, up to a wall's worth. */
+async function loadWall() {
+  const res = await fetch(keyed('/api/past-gigs'));
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Could not load them');
+  const nights = (data.nights || []).filter((n) => n.hasPhotos).slice(0, WALL_NIGHTS);
+  const shots = [];
+  for (const night of nights) {
+    if (shots.length >= WALL_MAX) break;
+    let one;
+    try {
+      const r = await fetch(keyed('/api/past-gigs/' + encodeURIComponent(night.night)));
+      one = await r.json();
+      if (!r.ok) continue;
+    } catch { continue; }
+    // Where it was taken, on the picture's own tooltip — the wall is mixed by
+    // definition, so a thumbnail with no answer to "which night was that" is
+    // a picture you cannot go and find again.
+    const where = `${readable(night.night)}${night.venue ? ` — ${night.venue}` : ''}`;
+    for (const p of one.photos || []) {
+      shots.push({ url: p.url, where });
+      if (shots.length >= WALL_MAX) break;
+    }
+  }
+  wallShots = shots;
+  return shots;
+}
+
+/*
+ * THE BAY'S TABLE STOPS AT EIGHT, and the rest is said in a line.
+ *
+ * The tab underneath draws ten and the full count; this is the glance, in a
+ * region that cannot scroll. Eight is what fits at 720px with the tab column
+ * still usable below it, measured rather than guessed.
+ */
+const BAY_ROWS = 8;
+
+/** Which venue the bay is showing. Module-level, or a state push resets it. */
+let picked = '';
+
+/**
+ * THE LEAGUE BAY — venues down the left, that venue's table beside them.
+ *
+ * *"Options perhaps on the left hand side going down like the menu below
+ * it."* Literally that: the rail is the same object as the tab column under
+ * it — a stack of buttons, the lit one marked on its left edge — because a
+ * second way of saying "pick one of these" on one screen is the label
+ * collision this project keeps finding.
+ *
+ * **ONE VENUE AT A TIME, WHICH IS THE POINT.** The tab below lists every
+ * league one after another and is the right shape for reading them all; a bay
+ * is a glance, and "who is winning at The Crown" is a question about one pub.
+ * The rail is what makes that a tap rather than a scroll.
+ *
+ * **NO CONTROLS UP HERE.** Publishing a table and overruling the filter on a
+ * name both stay under the full table below, where the safeguard is that you
+ * have just read the names you are about to put on a public page. Moving
+ * either into the bay would put it above the thing it acts on.
+ */
+function leagueBay() {
+  const leagues = leaguesNow();
+  const el = node('<div class="panel bench community-bench community-bay"></div>');
+
+  const paint = () => {
+    if (!leagues.some((l) => l.key === picked)) picked = leagues[0].key;
+    const league = leagues.find((l) => l.key === picked);
+    el.replaceChildren();
+
+    const rail = node('<div class="community-rail" role="tablist"></div>');
+    for (const l of leagues) {
+      const btn = node(`
+        <button class="community-venue ${l.key === picked ? 'on' : ''}" type="button"
+                role="tab" aria-selected="${l.key === picked}">
+          <span class="community-venue-name">${esc(l.venue)}</span>
+          <span class="tiny">${l.table.length} team${l.table.length === 1 ? '' : 's'}
+            · ${l.nights} night${l.nights === 1 ? '' : 's'}</span>
+        </button>`);
+      btn.addEventListener('click', () => { picked = l.key; paint(); });
+      rail.appendChild(btn);
+    }
+
+    const rows = league.table.slice(0, BAY_ROWS);
+    const heads = headsLine(league.venue);
+    const side = node(`
+      <div class="community-side">
+        <div class="league-head">
+          <b>${esc(league.venue)}</b>
+          ${heads ? `<span class="tiny league-heads">${heads}</span>` : ''}
+        </div>
+        <table class="lg-table">
+          <thead>
+            <tr>
+              <th class="lg-pos" aria-label="Position"></th>
+              <th class="lg-name">Team</th>
+              <th class="lg-played"><abbr title="Nights played">P</abbr></th>
+              <th class="lg-played"><abbr title="Nights won">W</abbr></th>
+              <th class="lg-pts"><abbr title="Points">Pts</abbr></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map((t) => `
+              <tr${t.position === 1 ? ' class="lg-top"' : ''}>
+                <td class="lg-pos">${t.position}</td>
+                <td class="lg-name">${esc(t.name)}</td>
+                <td class="lg-played tiny">${t.played}</td>
+                <td class="lg-played tiny">${t.wins}</td>
+                <td class="lg-pts"><b>${t.points}</b></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+        ${league.table.length > rows.length
+    ? `<div class="tiny lg-note">and ${league.table.length - rows.length} more, below.</div>` : ''}
+      </div>`);
+
+    el.append(rail, side);
+  };
+
+  paint();
+  return el;
 }
 
 /**
