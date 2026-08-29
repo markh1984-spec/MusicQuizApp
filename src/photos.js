@@ -59,6 +59,25 @@ export function isCameraFile(name) {
   return !String(name || '').includes(NOT_CAMERA_SUFFIX);
 }
 
+/**
+ * WHETHER ONE PHOTOGRAPH GOES ON THE PUBLIC GALLERY — the filename's guess,
+ * unless a human has said otherwise.
+ *
+ * **ONE FUNCTION, because there are three readers and they must not drift.**
+ * The gallery listing, the single-photo route (which re-checks, since a URL
+ * can be typed) and the console's own pill all ask this — and the day one of
+ * them answers differently is the day a photograph is on a page the console
+ * says is private, or missing from one it says is public.
+ *
+ * @param {string} name      the file, as this app issued it
+ * @param {string} said      'on' | 'off' | undefined — the human's ruling
+ */
+export function showsOnGallery(name, said) {
+  if (said === 'on') return true;
+  if (said === 'off') return false;
+  return isCameraFile(name);
+}
+
 export function extensionFor(contentType) {
   return ALLOWED[String(contentType || '').split(';')[0].trim().toLowerCase()] || null;
 }

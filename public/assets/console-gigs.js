@@ -731,12 +731,70 @@ export async function nightPhotos(body, night, opts = {}) {
      * "hidden" — the point of showing this HERE, before publishing, is that
      * nobody is surprised later by a photo that quietly is not on the page.
      */
-    const screenOnly = String(p.name || '').includes('-picked');
+    /*
+     * A PILL PER PHOTO, AND IT IS A SWITCH — asked for on 29 August 2026:
+     * *"a little green pill to show it's on the public gallery for this night
+     * and a red one to show it isn't, and I can click one for each purpose."*
+     *
+     * **IT REPLACES THE "Screen only" BADGE rather than joining it.** That one
+     * said what the camera GUESS thought; this says what will actually happen,
+     * which is the same fact once a human can overrule it — and two badges on
+     * one photograph saying overlapping things is the label collision this app
+     * has a rule against. The reason lives in the pill's own title, where the
+     * difference between "we thought you uploaded this" and "you turned it
+     * off" is worth having and is not worth a second badge.
+     *
+     * **GREEN AND RED, which is the one place they are allowed to mean this.**
+     * The app's fixed colours are good/paying and wrong/destructive — and "on
+     * a public page" versus "not" is exactly that pair, read at a glance
+     * across eighteen thumbnails.
+     */
     const shot = node(`<figure class="cphoto filed">
       <img src="${esc(p.url)}" alt="" loading="lazy">
-      ${screenOnly ? `<span class="cphoto-tag" title="This one did not look like a camera took it, so it stays off the public gallery — the big screen showed it either way.">Screen only</span>` : ''}
+      <button class="cphoto-pub ${p.onGallery ? 'is-on' : 'is-off'}" type="button"></button>
       <button class="cphoto-bin" type="button" aria-label="Delete this photo">${binIcon(15)}</button>
     </figure>`);
+
+    /*
+     * PAINTED FROM ONE PLACE, so the label, the colour and the title cannot
+     * drift apart — and so the optimistic flip on a click and the answer that
+     * comes back are drawn by the same code.
+     */
+    let live = Boolean(p.onGallery);
+    const pill = shot.querySelector('.cphoto-pub');
+    const paintPill = () => {
+      pill.classList.toggle('is-on', live);
+      pill.classList.toggle('is-off', !live);
+      pill.textContent = live ? 'On the gallery' : 'Not on it';
+      pill.title = live
+        ? 'This one is on the public gallery for this night. Click to take it off.'
+        : (String(p.name || '').includes('-picked')
+          ? 'This did not look like a camera took it, so it is off the public gallery. The big screen showed it either way. Click to put it on.'
+          : 'This one is off the public gallery. Click to put it on.');
+      pill.setAttribute('aria-pressed', String(live));
+    };
+    paintPill();
+    pill.addEventListener('click', async () => {
+      pill.disabled = true;
+      const want = !live;
+      try {
+        const res = await fetch(keyed(`/api/gallery-photo/${encodeURIComponent(night.night)}/${encodeURIComponent(p.name)}`), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ on: want }),
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Could not change that.');
+        live = want;
+        paintPill();
+      } catch (err) {
+        // SAY WHAT WENT WRONG rather than silently snapping back — the
+        // likeliest failure by a distance is that the private repository is
+        // not configured, which is a fault in an env var and not in the photo.
+        alert(err.message);
+      }
+      pill.disabled = false;
+    });
     shot.querySelector('.cphoto-bin').addEventListener('click', async (ev) => {
       const btn = ev.currentTarget;
       /*

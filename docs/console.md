@@ -1324,3 +1324,36 @@ That last one is a source check, which is the honest shape here: the routes
 read the private repository, so running them needs a token this suite does not
 have and must not need. What it guards is the PAIR — dropping either half is a
 silent hole, and nothing else would notice.
+
+### The fold that did nothing — 29 August 2026
+
+> *"Slight UI issues and the section needs to collapse on click and expand on
+> click."*
+
+It did neither, and nothing threw. The rail forced a group open whenever it
+held the picked row — written the day before, to stop a pick made from the tab
+body lighting a row inside a shut fold. The reasoning was sound; the trade was
+wrong. **Once you have opened a night, the group holding it is the one you are
+looking at**, so pressing its heading set the remembered flag, re-rendered, and
+the override put it straight back.
+
+**A control that does nothing when pressed is worse than the problem it was
+avoiding.** So `holdsPicked` is a DEFAULT now rather than an override, and the
+case it guarded is answered by SHOWING instead of forcing: a shut group holding
+what you are looking at wears the lit left edge itself, so the rail still says
+where you are. Nothing is lost either way, because the thing you picked is
+filling the bay beside it.
+
+The guard presses the fold **with a night open**, which is the state it was
+dead in — verified by putting the override back and watching six checks fail.
+
+Two smaller things in the same screenshot:
+
+- **No `title` anywhere in the rail.** A native tooltip is an unstyled box that
+  lands over the rows underneath — visible in the report — and it was only
+  there because the name was being ellipsised at 190px. Letting the name WRAP
+  to two lines removes the need and the tooltip together. A pub name is worth
+  two lines; it is the thing being read.
+- **The heading drops a rung.** Level with the rows in size and weight, a
+  heading and a row read as one undivided list, which is the opposite of what a
+  fold is for.

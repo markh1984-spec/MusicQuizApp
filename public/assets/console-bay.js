@@ -96,7 +96,7 @@ export function bayRail({
     const btn = node(`
       <button class="bay-pick ${item.key === picked ? 'on' : ''} ${esc(item.cls || '')}"
               type="button" role="tab" aria-selected="${item.key === picked}"
-              style="${esc(item.style || '')}" title="${esc(item.name)}">
+              style="${esc(item.style || '')}">
         <span class="bay-pick-name">${esc(item.name)}</span>
         ${item.note ? `<span class="tiny bay-pick-note">${esc(item.note)}</span>` : ''}
       </button>`);
@@ -132,22 +132,43 @@ export function bayRail({
     if (!group.name) { for (const item of group.rows) rail.appendChild(row(item)); continue; }
 
     /*
-     * A GROUP HOLDING WHAT YOU ARE LOOKING AT IS OPEN, whatever else is
-     * remembered. Otherwise a pick made from the tab body — or a night
-     * restored from last time — would light a row inside a shut fold, and the
-     * rail would be pointing at nothing while claiming to be a picker.
+     * WHAT IS REMEMBERED WINS, ALWAYS — and the first version of this had it
+     * the other way round, which made the control DEAD in the commonest case.
+     *
+     * It forced a group open whenever it held the picked row, so that a pick
+     * made from the tab body could never light a row inside a shut fold. The
+     * reasoning was sound and the trade was wrong: once you have opened a
+     * night, the group holding it is the one you are looking at, so pressing
+     * its heading set the flag, re-rendered, and the override put it straight
+     * back. Reported as *"the section needs to collapse on click and expand on
+     * click"* — it did neither, and nothing threw.
+     *
+     * **A CONTROL THAT DOES NOTHING WHEN PRESSED IS WORSE THAN THE PROBLEM IT
+     * WAS AVOIDING.** So `holdsPicked` is a DEFAULT now rather than an
+     * override, and the case it was guarding is answered by SHOWING rather
+     * than forcing: a shut group that holds what you are looking at wears the
+     * lit edge itself, so the rail still says where you are. Nothing is lost
+     * either way, because the thing you picked is filling the bay beside it.
      *
      * With one group there is nothing to choose between, so it opens: a lone
      * fold hiding the only list on the page is a control with no job.
      */
     const key = `${railId}::${group.name}`;
     const holdsPicked = group.rows.some((r) => r.key === picked);
-    const byDefault = groups.length === 1 || (!anyPicked && index === 0);
-    const isOpen = holdsPicked || (openGroups.has(key) ? openGroups.get(key) : byDefault);
+    const byDefault = holdsPicked || groups.length === 1 || (!anyPicked && index === 0);
+    const isOpen = openGroups.has(key) ? openGroups.get(key) : byDefault;
 
+    /*
+     * NO `title`, ANYWHERE IN THE RAIL. A native tooltip is an unstyled box
+     * that lands over the rows underneath — visible in the screenshot that
+     * reported this — and it was only there because the name was being
+     * ellipsised. Letting the name WRAP instead removes the need and the
+     * tooltip together: a pub is worth two lines, and it is the one thing on
+     * the row somebody is reading.
+     */
     const head = node(`
-      <button class="bay-rail-group ${isOpen ? 'on' : ''}" type="button"
-              aria-expanded="${isOpen}" title="${esc(group.name)}">
+      <button class="bay-rail-group ${isOpen ? 'on' : ''} ${!isOpen && holdsPicked ? 'holds-picked' : ''}"
+              type="button" aria-expanded="${isOpen}">
         <span class="bay-rail-caret" aria-hidden="true"></span>
         <span class="bay-rail-what">${esc(group.name)}</span>
         <span class="tiny bay-rail-count">${group.rows.length}</span>

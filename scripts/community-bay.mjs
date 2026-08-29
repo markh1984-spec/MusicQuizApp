@@ -144,7 +144,12 @@ try {
           night,
           published: false,
           photos: Array.from({ length: many }, (_, i) => ({
-            name: `${i}.jpg`, url: `/shot/${(i * 7 + night.length) % 12}.svg`,
+            name: `p${i}${i % 4 === 0 ? '-picked' : ''}.jpg`,
+            url: `/shot/${(i * 7 + night.length) % 12}.svg`,
+            // A quarter of them off the gallery, so the pill has both states
+            // to draw and the check has something to count.
+            onGallery: i % 4 !== 0,
+            ruled: '',
           })),
         },
       });
@@ -310,6 +315,46 @@ try {
      * phone"*. A `<label>` wrapping a hidden file input, so what is checked is
      * that the input EXISTS and that the label is what a thumb can hit.
      */
+    /*
+     * A PILL PER PHOTO, IN BOTH STATES — *"a little green pill to show it's on
+     * the public gallery and a red one to show it isn't"*. Counted rather than
+     * eyeballed, because a pill that drew one colour for everything would look
+     * fine in a screenshot and be useless.
+     */
+    const pills = await page.evaluate(() => ({
+      all: document.querySelectorAll('.doorhead .cphoto-pub').length,
+      on: document.querySelectorAll('.doorhead .cphoto-pub.is-on').length,
+      off: document.querySelectorAll('.doorhead .cphoto-pub.is-off').length,
+      photos: document.querySelectorAll('.doorhead .cphoto').length,
+      // The old grey badge is gone rather than sitting beside it.
+      oldBadge: document.querySelectorAll('.cphoto-tag').length,
+    }));
+    check(`${label}: every photo has a gallery pill`, pills.all === pills.photos, `${pills.all}/${pills.photos}`);
+    check(`${label}: and both states are drawn`, pills.on > 0 && pills.off > 0, `${pills.on} on, ${pills.off} off`);
+    check(`${label}: the old Screen only badge is gone`, pills.oldBadge === 0, `${pills.oldBadge}`);
+
+    /*
+     * AND THE FOLD STILL WORKS OVER THE NIGHT YOU HAVE OPEN — which is the
+     * case it did NOT, reported as *"the section needs to collapse on click
+     * and expand on click"*. `holdsPicked` was forcing the group open, so
+     * pressing its heading set the flag, re-rendered, and the override put it
+     * straight back: a dead control, in the commonest state there is, with
+     * nothing thrown. Pressed here with a night open on purpose.
+     */
+    const railBefore = await page.evaluate(() => document.querySelectorAll('.doorhead .bay-pick').length);
+    await page.locator('.doorhead .bay-rail-group').first().click();
+    await page.waitForTimeout(600);
+    const railShut = await page.evaluate(() => ({
+      rows: document.querySelectorAll('.doorhead .bay-pick').length,
+      // Shut over what you are looking at, the heading says so itself rather
+      // than forcing itself open — which is how the rail still points at you.
+      marked: document.querySelectorAll('.doorhead .bay-rail-group.holds-picked').length,
+    }));
+    check(`${label}: the fold works over the night you have open`, railShut.rows < railBefore, `${railBefore} -> ${railShut.rows}`);
+    check(`${label}: and a shut group says it holds you`, railShut.marked === 1, `${railShut.marked}`);
+    await page.locator('.doorhead .bay-rail-group').first().click();
+    await page.waitForTimeout(600);
+
     const mine = await page.locator('.tabbody .mine-add input[type=file]').count();
     const hittable = await page.evaluate(() => {
       const l = document.querySelector('.tabbody .mine-pick');

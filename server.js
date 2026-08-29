@@ -18,7 +18,7 @@ import path from 'node:path';
 import { config, paths, hostKey, hostKeyIsTemporary } from './src/config.js';
 import { Store } from './src/store.js';
 import { Hub } from './src/sse.js';
-import { Photos, MAX_BYTES, isCameraFile, extensionFor, sniffType } from './src/photos.js';
+import { Photos, MAX_BYTES, isCameraFile, extensionFor, showsOnGallery, sniffType } from './src/photos.js';
 import { Session } from './src/session.js';
 import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked, ROUND_TYPES } from './src/quizzes.js';
 import { recueQuiz } from './src/recue.js';
@@ -62,7 +62,10 @@ import { upcoming } from './public/assets/diary.js';
 import { calendarIcs } from './src/ics.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, switchedOn, PACK_PENCE, TRIAL_DAYS, REFERRAL_BONUS_DAYS } from './public/assets/plans.js';
 import { lobbyGameFor } from './public/assets/lobby-games.js';
-import { publishedNights, isPublished, setPublished, readableNight } from './src/gallery.js';
+import {
+  publishedNights, isPublished, setPublished, readableNight,
+  photoDecisions, photoKey, setPhotoDecision,
+} from './src/gallery.js';
 import { publishedVenues, setVenuePublished, nameDecisions, setNameDecision } from './src/league-publish.js';
 import { publicTable, isCleanForPublic } from './src/clean-names.js';
 import { sendEmail, emailConfigured, emailProvider, keepKeyAlive, resetEmail, welcomeEmail } from './src/email.js';
@@ -2260,6 +2263,7 @@ async function handleGet(req, res, url, route) {
     const files = photosRepoConfigured()
       ? await listDir(`${photoFolder(gigRoom.id)}/${night}`, 'photos')
       : [];
+    const rulings = photosRepoConfigured() ? await photoDecisions(gigRoom.id) : {};
     return sendJson(res, 200, {
       night,
       // Whether this night is on the public gallery, so the control that puts
@@ -2273,7 +2277,25 @@ async function handleGet(req, res, url, route) {
         .filter(Boolean)
         // Served back through this server, because the photo repository is
         // private and a browser cannot fetch from it.
-        .map((name) => ({ name, url: `/past-photo/${night}/${name}` })),
+        .map((name) => ({
+          name,
+          url: `/past-photo/${night}/${name}`,
+          /*
+           * WHETHER THIS ONE IS ON THE PUBLIC GALLERY, worked out HERE and
+           * sent, rather than guessed in the browser from the filename.
+           *
+           * The console draws a pill per photo — *"a little green pill to show
+           * it's on the public gallery for this night and a red one to show it
+           * isn't"* — and the one thing that pill must never do is disagree
+           * with the page it describes. `showsOnGallery()` is the single
+           * function all three readers ask, so it cannot.
+           */
+          onGallery: showsOnGallery(name, rulings[photoKey(night, name)]),
+          // WHY it is off, when nobody has ruled: so the pill can say the
+          // difference between "we thought you uploaded this" and "you turned
+          // it off", which are different things to want to change.
+          ruled: rulings[photoKey(night, name)] || '',
+        })),
     }), true;
   }
 
@@ -2540,6 +2562,7 @@ async function handleGet(req, res, url, route) {
       return sendJson(res, 404, { error: 'Nothing here.' }), true;
     }
     const files = await listDir(`${photoFolder(galleryRoomId())}/${night}`, 'photos');
+    const said = await photoDecisions(galleryRoomId());
     return sendJson(res, 200, {
       night,
       when: readableNight(night),
@@ -2556,7 +2579,10 @@ async function handleGet(req, res, url, route) {
       photos: (files || [])
         .map((f) => safePhotoName(f.name))
         .filter(Boolean)
-        .filter(isCameraFile)
+        // THE FILENAME'S GUESS, UNLESS A HUMAN HAS SAID OTHERWISE — one
+        // function, shared with the route below and with the console's pill,
+        // so the three cannot drift into three answers.
+        .filter((name) => showsOnGallery(name, said[photoKey(night, name)]))
         .map((name) => ({ name, url: `/gallery-photo/${night}/${encodeURIComponent(name)}` })),
     }), true;
   }
@@ -2573,8 +2599,13 @@ async function handleGet(req, res, url, route) {
     const parts = route.slice('/gallery-photo/'.length).split('/');
     const night = decodeURIComponent(parts[0] || '');
     const name = safePhotoName(decodeURIComponent(parts[1] || ''));
-    if (parts.length !== 2 || !name || !isCameraFile(name)
+    if (parts.length !== 2 || !name
       || !(galleryPreview() || await isPublished(galleryRoomId(), night))) {
+      return sendJson(res, 404, { error: 'Nothing here.' }), true;
+    }
+    // RE-CHECKED HERE rather than trusted from the listing, because a URL can
+    // be typed and this photo's name was on the projector all night.
+    if (!showsOnGallery(name, (await photoDecisions(galleryRoomId()))[photoKey(night, name)])) {
       return sendJson(res, 404, { error: 'Nothing here.' }), true;
     }
     const bytes = await getFile(`${photoFolder(galleryRoomId())}/${night}/${name}`, 'photos');
@@ -4021,6 +4052,41 @@ async function handleWrite(req, res, url, route) {
       // downstream has to know where this one came from.
       ok: true, night, name, url: `/past-photo/${night}/${name}`,
     }), true;
+  }
+
+  /*
+   * ONE PHOTOGRAPH ON OR OFF THE PUBLIC GALLERY.
+   *
+   * *"There may be some that were uploaded but are appropriate for a public
+   * gallery that I can switch on."* The filename's camera guess decides by
+   * default; this is where a human who was in the room overrules it, in either
+   * direction — because the guess is wrong both ways. It misses a real
+   * photograph whose EXIF a share sheet stripped, and it passes a screenshot
+   * taken with somebody's own camera app.
+   *
+   * A ruling that only restates the guess is CLEARED rather than stored — see
+   * `setPhotoDecision()`.
+   */
+  if (route.startsWith('/api/gallery-photo/') && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
+    const parts = route.slice('/api/gallery-photo/'.length).split('/');
+    const night = decodeURIComponent(parts[0] || '');
+    const name = safePhotoName(decodeURIComponent(parts[1] || ''));
+    if (parts.length !== 2 || !isNightFolder(night) || !name) {
+      return sendJson(res, 404, { error: 'No photo there.' }), true;
+    }
+    const body = await readJson(req);
+    const on = Boolean(body && body.on);
+    const room = roomForHost(req, url);
+    /*
+     * WHAT THE FILENAME WOULD HAVE SAID, so a ruling that agrees with it is
+     * cleared instead of stored. Otherwise a later change to how the guess is
+     * made could never reach this photo again.
+     */
+    const decision = on === isCameraFile(name) ? '' : (on ? 'on' : 'off');
+    const done = await setPhotoDecision(room.id, night, name, decision);
+    if (!done.ok) return sendJson(res, 400, { error: done.error || 'Could not save that.' }), true;
+    return sendJson(res, 200, { ok: true, night, name, onGallery: on }), true;
   }
 
   if (route.startsWith('/api/past-photo/') && req.method === 'DELETE') {

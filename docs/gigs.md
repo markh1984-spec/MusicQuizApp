@@ -1665,3 +1665,52 @@ suite does not have and must not need — so the deepest assertion is that an
 unconfigured repo is refused with a message that NAMES the missing thing. That
 is the branch a fresh deployment actually hits, and a generic "could not save
 that" would send somebody hunting through the app for a fault in an env var.
+
+### A pill per photo, and it is a switch
+
+> *"Can each photo have a little pill in the corner just so I can visually see
+> which ones are showing in the gallery for this collection of photos? There
+> may be some that were uploaded but are appropriate for a public gallery that
+> I can switch on… maybe a little green pill to show it's on the public gallery
+> for this night and a red one to show it isn't, and I can click one for each
+> purpose."*
+
+**This is the team-name override wearing different clothes**, and the reasoning
+transfers exactly: a machine guess decides by default, and a human who was in
+the room can overrule it — **in both directions, because the guess is wrong
+both ways**. `looksCameraTaken()` misses a real photograph whose EXIF a share
+sheet stripped, and it passes a screenshot somebody took with their own camera
+app. One override with two values answers both; a one-way "allow" control would
+have left the second with no answer at all.
+
+**It replaced the grey "Screen only" badge rather than joining it.** That badge
+said what the camera guess *thought*; the pill says what will actually
+*happen*, which is the same fact once a human can overrule it. Two badges on
+one photograph saying overlapping things is the label collision this app has a
+standing rule against — so the reason lives in the pill's own title, where the
+difference between "we thought you uploaded this" and "you turned it off" is
+worth having and is not worth a second badge.
+
+**Green and red, which is one of the few places they are allowed to mean this.**
+The app's fixed colours are good/paying and wrong/destructive, and "on a public
+page" versus "not" is exactly that pair — read at a glance across eighteen
+thumbnails, which is the whole point of a pill over a list.
+
+**`showsOnGallery()` is the one decision, and all three readers ask it.** The
+gallery listing, the single-photo route (which re-checks, because a URL can be
+typed and that photo's name was on the projector all night) and the console's
+own pill. The day one of them answers differently is the day a photograph is on
+a page the console swears is private, or missing from one it says is public —
+so the test asserts all three call it by name.
+
+**A ruling that only restates the guess is cleared, not stored** — the gap
+dial's rule and the team-name override's. Otherwise a later change to how the
+guess is made could never reach that photo again.
+
+It rides in the **same file** as the published nights, for the same reason the
+league's rulings ride with its published venues: one question ("what does this
+room publish"), asked at one moment, and two files would be two GitHub round
+trips on a page that already waits for one. `setPublished()` carries the
+rulings through untouched — writing only the nights would wipe every one, which
+is the shape of bug that shows up weeks later when somebody notices a photo has
+come back.

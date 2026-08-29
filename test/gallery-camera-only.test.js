@@ -27,7 +27,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { Photos, isCameraFile, NOT_CAMERA_SUFFIX } from '../src/photos.js';
+import { Photos, isCameraFile, NOT_CAMERA_SUFFIX, showsOnGallery } from '../src/photos.js';
 
 /** The smallest thing `sniffType()` will accept as a JPEG. */
 const JPEG = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(64, 1)]);
@@ -79,21 +79,58 @@ test('a marked photo is still in the room list, because the screen still shows i
   assert.ok(shots.list().some((i) => i.file === taken.photo.file));
 });
 
-test('BOTH gallery routes check it — the listing and the one photo', () => {
+/**
+ * AND A HUMAN OVERRULES THE GUESS, IN BOTH DIRECTIONS.
+ *
+ * Asked for on 29 August 2026: *"there may be some that were uploaded but are
+ * appropriate for a public gallery that I can switch on."* The same shape as
+ * the team-name override, for the same reason: the guess is wrong BOTH ways —
+ * it misses a real photograph whose EXIF a share sheet stripped, and it passes
+ * a screenshot somebody took with their own camera app.
+ */
+test('a ruling beats the filename, either way', () => {
+  assert.equal(showsOnGallery('p1abc.jpg', undefined), true);
+  assert.equal(showsOnGallery('p1abc-picked.jpg', undefined), false);
+  // The two overrides, which are the whole feature.
+  assert.equal(showsOnGallery('p1abc-picked.jpg', 'on'), true);
+  assert.equal(showsOnGallery('p1abc.jpg', 'off'), false);
+});
+
+test('an unknown ruling falls back to the filename rather than becoming a third state', () => {
+  // The file lives in a repository a human can edit. A typo in it must not
+  // invent a behaviour — `photoDecisions()` drops anything that is not on/off,
+  // and this is the belt to that braces.
+  for (const junk of ['yes', 'true', '1', '', null]) {
+    assert.equal(showsOnGallery('p1abc-picked.jpg', junk), false);
+    assert.equal(showsOnGallery('p1abc.jpg', junk), true);
+  }
+});
+
+test('ALL THREE READERS ASK THE ONE FUNCTION', () => {
   /*
    * A SOURCE CHECK, and it is the honest shape for this one: the routes read
    * the private repository, so running them needs a GitHub token this suite
-   * does not have and must not need. What it guards is the pair — the listing
-   * already leaves a picked photo off the page, and the single-photo route has
-   * to refuse it too, because its name was on the projector all night and
-   * anybody who saw it can type the URL. Dropping either half is a silent
-   * hole, and this is the only thing that would notice.
+   * does not have and must not need.
+   *
+   * What it guards is that there is ONE decision. The gallery listing, the
+   * single-photo route (which re-checks, because a URL can be typed and that
+   * photo's name was on the projector all night) and the console's own pill
+   * all have to answer the same way — and the day one of them does not is the
+   * day a photograph is on a page the console swears is private.
    */
   const src = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
   const listing = src.slice(src.indexOf("if (route.startsWith('/api/gallery/'"));
-  assert.ok(listing.slice(0, 2000).includes('isCameraFile'),
-    'the gallery LISTING must filter out photos that were not camera-taken');
+  assert.ok(listing.slice(0, 2400).includes('showsOnGallery'),
+    'the gallery LISTING must ask showsOnGallery()');
   const one = src.slice(src.indexOf("if (route.startsWith('/gallery-photo/'"));
-  assert.ok(one.slice(0, 1200).includes('isCameraFile'),
-    'the single-photo route must refuse them too — a URL can be typed');
+  assert.ok(one.slice(0, 1600).includes('showsOnGallery'),
+    'the single-photo route must ask it too — a URL can be typed');
+  /*
+   * The night's own listing, NOT the report route that shares its prefix — the
+   * same prefix trap `/report.pdf` already exists above to avoid, wearing a
+   * test's clothes this time.
+   */
+  const console_ = src.slice(src.indexOf("if (route.startsWith('/api/past-gigs/')) {"));
+  assert.ok(console_.slice(0, 3000).includes('showsOnGallery'),
+    "the console's per-photo pill must ask it as well, or it will disagree with the page");
 });

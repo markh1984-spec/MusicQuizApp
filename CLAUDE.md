@@ -489,7 +489,7 @@ opening a second file.
 - **SSE, not websockets**
 - **No build step**
 - **Packs are JSON files**
-- **The console wears a gauntlet cursor — open hand, closed fist while dragging — and scroll rods on its panels, console only** — never the projector or a phone. **A cursor is a static file: it cannot follow the account's colours, and it is judged at 32px.**
+- **The console wears a gauntlet cursor — open hand, closed fist while dragging — and scroll rods on its panels, console only** — never the projector or a phone. **A cursor is a static file: it cannot follow the account's colours.**
 - **No profanity filter on team names** — **in the ROOM. Do not add word
   filtering to the projector, the phones or the console.** The public league
   page and the landlord's report are the one exception, and it is a SCOPE
@@ -497,14 +497,14 @@ opening a second file.
 - **Photo uploads auto-publish** — Do not add one.
 - **Photos go in a SEPARATE PRIVATE repo** — Never the main repo: it is public (checked), and git history is forever.
 - **Filters are pixel maths, not `ctx.filter`**
-- **"Filters" means PROPS, and the colour grading is GONE** — So the only working Undo lived inside a hidden box and the visible one was never unhidden: **there was no Undo at all on a normal night**, on the feature the props exist for, and nothing threw. Positions are stored as a **fraction** of the canvas, never pixels.
-- **THE PHOTO CAN BE MIRRORED, and it is a BUTTON rather than a detection** — A photo comes in through a plain file input, so the phone's own camera app takes it and we are never told which lens was used.
-- **THE PHONE MUST NOT SAY "look up" WHILE A QUESTION IS ON** — `PHOTO_PHASES` in `screen.js` — the projector only carries photos in the lobby, at a round board and at the end, because twenty seconds and four options wants the whole screen (the same reason the join code is never drawn over a question).
-- **A VENUE'S LOGO GOES ON THE WINNER'S VOUCHER, and nowhere else** — **THE WORDS STAY THE PRIZE.** `reward` is directly underneath in text, so a logo that never loads, was never set, or is on a phone with no signal costs nothing at the bar — and `onerror` removes it rather than leaving a broken-image icon on the one screen somebody is holding up to be served. **Never an image with the prize written inside it.** **It is NOT on the projector, and that is about BYTES rather than secrecy**: a logo in the screen payload rides in every state push, which at a lobby is every time somebody joins — sixty joins is sixty copies over pub wifi, on the one connection that must not stutter.
+- **"Filters" means PROPS, and the colour grading is GONE** — the only working Undo lived in a hidden box, so **there was no Undo at all on a normal night** and nothing threw. Positions are a **fraction** of the canvas, never pixels.
+- **THE PHOTO CAN BE MIRRORED, and it is a BUTTON rather than a detection** — a plain file input never says which lens was used.
+- **THE PHONE MUST NOT SAY "look up" WHILE A QUESTION IS ON** — `PHOTO_PHASES` in `screen.js`: photos at the lobby, a round board and the end only, because twenty seconds and four options wants the whole screen.
+- **A VENUE'S LOGO GOES ON THE WINNER'S VOUCHER, and nowhere else** — **THE WORDS STAY THE PRIZE**, in text directly underneath, so a logo that never loads costs nothing at the bar. **Never an image with the prize written inside it.** **NOT on the projector, and that is BYTES rather than secrecy**: it would ride in every state push, which at a lobby is every join.
 - **The room is told what it is playing for**
 - **SECOND AND THIRD ARE A PODIUM, not a caption**
-- **A BIG PHOTO NEVER DIMS THE JOIN CODE** — Two halves, and both are wanted: the corner sits ABOVE the photo so it can never be dimmed whatever else changes, and the photo centres in the space BESIDE it (`padding-right` on the grid, so it is properly centred in what is left rather than nudged off the middle).
-- **A photo gets the MIDDLE of the screen, not a thumbnail** — **The tilt never lands near straight**: a plain `random() * 12 - 6` gives half a degree often enough, and half a degree does not read as scrapbook, it reads as a projector nobody levelled. A side is picked and the angle is 2.5° to 7° off it — always obviously deliberate, never far enough to cost the picture height on the one screen where filling the height is the point.
+- **A BIG PHOTO NEVER DIMS THE JOIN CODE** — the corner sits ABOVE the photo, and the photo centres in the space BESIDE it (`padding-right` on the grid).
+- **A photo gets the MIDDLE of the screen, not a thumbnail** — **The tilt never lands near straight**: half a degree reads as a projector nobody levelled, so a side is picked and the angle is 2.5° to 7° off it.
 - **Speed scoring is FLAT — 10 points a second, and it stays that way** — **Do not re-propose this.**
 - **The phone shows the answers as the projector does**
 - **…except the alphabet round, which is 5 across on the phone and 9 on the projector**
@@ -514,19 +514,19 @@ opening a second file.
 - **Anything that deletes shows a bin**
 - **No Instagram follow-for-points**
 - **British spelling and UK chart references**
-- **Deploying on Render** — Serverless (Vercel/Netlify) is wrong — the app holds a live connection to every phone all night.
+- **Deploying on Render** — serverless is wrong: the app holds a live connection to every phone all night.
 - **Alphabetical bingo call sheet**
 - **The call sheet is a grid, not a list**
 - **The chosen shape lives in the GAME STATE**
-- **The card shape is chosen at LAUNCH, not stored on the pack** — `session.launch(kind, id, { shape })` overrides the pack's own shape for that game and never writes it back.
+- **The card shape is chosen at LAUNCH, not stored on the pack** — `session.launch()` overrides it for that game and never writes it back.
 - **How many prizes is chosen at launch too**
 - **"You got it" means the prize ON THE TABLE**
 - **A strip wins the long way only**
 - **Launch is the last thing on a pack card, and full width** — superseded; a pack card has no Launch. The rule moved to TONIGHT.
 - **The tab icon and the logo are one drawing**
 - **A QUESTION MARK INSIDE A MICROPHONE**
-- **The sound arcs are built but OFF** — **The app never draws this mark above 30px**: 22 on a phone, 26 on the projector and the owner page, 30 on the console and login, 16 in the tab.
-- **The name stacks — the possessive above, the app underlining it** — **It splits on the APP NAME, never on the last word** — so `BRAND_NAME="The Crown Quiz League"` stays one line instead of being guessed at and broken in the wrong place.
+- **The sound arcs are built but OFF** — **the app never draws this mark above 30px**: 22 on a phone, 26 on the projector, 30 on the console, 16 in the tab.
+- **The name stacks — the possessive above, the app underlining it** — **It splits on the APP NAME, never on the last word**, or `BRAND_NAME="The Crown Quiz League"` is broken in the wrong place.
 - **One type ladder, ten steps, named for the JOB**
 - **ONE MENU, built in one place, on every page a quizmaster drives**
 
@@ -1593,10 +1593,21 @@ with photographs).
   pub between, which reads as two pubs of one name. **FOUR TO A GROUP, the rest
   named as being below** — the rail is the night you are thinking about; the
   tab body is the archive.
-- **A GROUP HOLDING WHAT YOU ARE LOOKING AT IS OPEN**, and so is the picked row
-  even past the cap, or a pick made below lights a row in a shut fold. **With
-  nothing picked the FIRST group opens**, or the rail has nothing to press. **The folds live in a module Map keyed by rail AND group** — the
-  bay is rebuilt on every push, and "The Crown" is a group on two doors.
+- **WHAT IS REMEMBERED WINS, ALWAYS — the first build had it the other way and
+  the control was DEAD.** It FORCED a group open whenever it held the picked
+  row, so once a night was open, pressing its heading set the flag, re-rendered
+  and the override put it straight back: *"the section needs to collapse on
+  click and expand on click"* — it did neither, and nothing threw. **A control
+  that does nothing when pressed is worse than the problem it was avoiding**,
+  so `holdsPicked` is a DEFAULT and the case it guarded is answered by SHOWING:
+  a shut group holding what you are looking at wears the lit edge. **With
+  nothing picked the FIRST group opens.** **The folds live in a module Map
+  keyed by rail AND group** — the bay is rebuilt on every push, and "The Crown"
+  is a group on two doors.
+- **NO `title` ANYWHERE IN THE RAIL — the names WRAP to two lines instead.** A
+  native tooltip is an unstyled box that lands over the rows beneath it, and it
+  was only there because the name was ellipsised. The heading drops a rung in
+  size too: level with the rows, the two read as one undivided list.
 - **`.bay-rail > * { flex: 0 0 auto }` IS LOAD-BEARING.** A flex column shrinks
   its children when the content overflows, and the rail always overflows — it
   scrolls. The rows survived on `min-height: 44px`; the pub headings had no
@@ -2018,18 +2029,27 @@ before touching a drag handler.**
 - AND THE PREVIEW DID NOT WORK ON THE HOST KEY
 - CHECKING THE PHOTOS IS THE NEXT PRESS
 - THE GALLERY ONLY HOLDS WHAT LOOKED LIKE A CAMERA TOOK IT — **tested now,
-  because it fails silently**: `camera` defaults FALSE, BOTH routes check it,
-  and it never keeps a photo off the projector
-- **THE QUIZMASTER ADDS THEIR OWN ROOM PHOTOS** — *"add room photos to the
-  gallery that everyone sees, that I take from my own phone"*. The room's
-  camera is sixty phones pointed at each other and none at the ROOM, which is
-  the one shot that sells the night. `POST /api/past-photo/<night>`, **filed
-  against the night in the URL and never against today** — the live store dates
-  a picture by the clock when it lands, so a Friday upload would file a
-  Thursday quiz under Friday. **Camera-eligible by definition** (no `-picked`):
-  these ARE the promo photographs. Scaled down in the browser, `square: false`
-  — a room is a room. **A POST written beside GETs is the 404 this repo has
-  already shipped once**, so the test asserts against the 404, not the 400
+  because it fails silently**: `camera` defaults FALSE, and it never keeps a
+  photo off the projector
+- **A PILL PER PHOTO SAYS WHETHER IT IS ON THE GALLERY, AND IT IS A SWITCH** —
+  *"a little green pill… and a red one to show it isn't, and I can click one
+  for each purpose."* Green and red are the app's fixed pair and this is what
+  they mean. **It REPLACED the grey "Screen only" badge rather than joining
+  it** — that said what the guess thought, this says what will happen, and two
+  badges saying overlapping things is a label collision. **`showsOnGallery()`
+  is the ONE decision and all three readers ask it** — the listing, the
+  single-photo route and this pill — or a photo is on a page the console swears
+  is private. **A ruling that only restates the guess is CLEARED, not stored**,
+  and it rides in the SAME file as the published nights
+- **THE QUIZMASTER ADDS THEIR OWN ROOM PHOTOS** — the room's camera is sixty
+  phones pointed at each other and none at the ROOM, which is the one shot that
+  sells the night. `POST /api/past-photo/<night>`, **filed against the night in
+  the URL and never against today** — the live store dates a picture by the
+  clock, so a Friday upload files a Thursday quiz under Friday.
+  **Camera-eligible by definition** (no `-picked`): these ARE the promo shots.
+  Scaled in the browser, `square: false` — a room is a room. **A POST written
+  beside GETs is the 404 this repo already shipped once**, so the test asserts
+  against the 404, not the 400
 
 **[`docs/lobby-games.md`](docs/lobby-games.md)** — what a phone does while the room fills up
 

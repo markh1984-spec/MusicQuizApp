@@ -4265,18 +4265,33 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   padding: 3px 7px; border-radius: var(--r-pill);
   background: rgba(255, 210, 63, 0.9); color: #221a00;
 }
-/* SCREEN ONLY — the same corner and the same shape as `not filed` above,
-   never both at once in this view (Past gigs reads photos out of the
-   repository, so everything here already IS filed). A quiet grey rather
-   than a warning colour: this is not a fault, it is the app doing exactly
-   what was asked — held off the public gallery, still shown all night. */
-.cphoto-tag {
+/* ON THE GALLERY, OR NOT — a pill per photo, and it is a SWITCH.
+   *"A little green pill to show it's on the public gallery for this night and
+   a red one to show it isn't, and I can click one for each purpose."*
+
+   It replaced the old grey "Screen only" badge in the same corner. That said
+   what the camera guess THOUGHT; this says what will actually happen, which is
+   the same fact once a human can overrule it — and two badges on one
+   photograph saying overlapping things is a label collision.
+
+   GREEN AND RED ARE THE APP'S FIXED PAIR and this is squarely what they mean:
+   good/on versus wrong/off, read at a glance across eighteen thumbnails. It is
+   OUTLINED rather than filled — the destructive rule, applied to both halves
+   so neither shouts louder than the photograph. */
+.cphoto-pub {
   position: absolute; top: 8px; right: 8px; z-index: 2;
-  font-size: var(--fs-tag); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
-  padding: 3px 7px; border-radius: var(--r-pill);
-  background: rgba(10, 8, 16, 0.72); color: var(--ink-dim);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: var(--fs-tag); font-weight: 800;
+  padding: 4px 9px; min-height: 26px; border-radius: var(--r-pill);
+  background: rgba(10, 8, 16, 0.78); cursor: pointer;
+  border: 1px solid currentColor;
 }
+.cphoto-pub.is-on { color: var(--good); }
+.cphoto-pub.is-off { color: var(--bad); }
+.cphoto-pub:hover { background: rgba(10, 8, 16, 0.92); }
+.cphoto-pub:disabled { opacity: 0.5; cursor: default; }
+/* The wall's own tiles carry no pill — a picture there belongs to whichever
+   night it came from, and a switch with no visible subject is a mis-tap. */
+.community-wall .cphoto-pub { font-size: 10px; padding: 2px 6px; min-height: 22px; top: 5px; right: 5px; }
 .cphoto-acts {
   position: absolute; left: 0; right: 0; bottom: 34px;
   display: flex; gap: 6px; justify-content: center;
@@ -9348,9 +9363,12 @@ body.landing {
   background: rgba(255, 255, 255, 0.07);
   background: color-mix(in srgb, var(--hot) 12%, transparent);
 }
+/* THE ROW'S NAME WRAPS TO TWO LINES TOO, for the same reason — a pack called
+   "2000s Pop, R&B and Chart" is unreadable ellipsised at 190px, and it had a
+   `title` on it only because of that. */
 .bay-pick-name {
-  font-weight: 800; font-size: var(--fs-ctl);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-weight: 800; font-size: var(--fs-ctl); min-width: 0; overflow: hidden;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
 }
 /* A PUB, THEN ITS NIGHTS UNDER IT — *"can this section be collapsible within
    its current dimensions, i.e. Station Tap Wokingham collapses and then
@@ -9362,15 +9380,32 @@ body.landing {
    is a flat grey box, so it takes the same face and hover the rows do. */
 .bay-rail-group {
   display: flex; align-items: center; gap: 8px; width: 100%;
-  min-height: 40px; padding: 4px 10px; text-align: left;
-  border: 1px solid transparent; border-radius: var(--r-field);
+  min-height: 40px; padding: 6px 10px; text-align: left;
+  border: 1px solid transparent;
+  /* A LEFT EDGE THAT IS ALWAYS THERE, so the heading lines up with the rows
+     under it rather than sitting 3px left of them — and so it has somewhere to
+     light up when it is shut over the night you are looking at. */
+  border-left: 3px solid transparent;
+  border-radius: var(--r-field);
   background: none; color: var(--ink-dim); cursor: pointer;
-  font-weight: 800; letter-spacing: 0.01em;
+  /* A RUNG BELOW THE ROWS, not level with them. The rows are the thing you
+     press; this names the pile they are in, and at the same size and weight
+     the two read as one undifferentiated list. */
+  font-size: var(--fs-note); font-weight: 700;
 }
 .bay-rail-group:hover { color: var(--ink); background: rgba(255, 255, 255, 0.05); }
 .bay-rail-group.on { color: var(--ink); }
-.bay-rail-what { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bay-rail-count { margin-left: auto; opacity: 0.75; }
+/* SHUT, OVER THE NIGHT YOU ARE LOOKING AT — the rail still says where you are
+   without forcing itself open, which is what made the fold do nothing. */
+.bay-rail-group.holds-picked { color: var(--ink); border-left-color: var(--hot); }
+/* IT WRAPS RATHER THAN ELLIPSISING, which is what let the `title` attribute go
+   — a native tooltip is an unstyled box that lands over the rows beneath it. A
+   pub name is worth two lines; it is the thing being read. */
+.bay-rail-what {
+  min-width: 0; overflow: hidden;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+}
+.bay-rail-count { margin-left: auto; flex: 0 0 auto; opacity: 0.75; }
 /* A TRIANGLE, DRAWN — no font, no asset, and it turns rather than swapping for
    a different glyph, so the fold reads as one control in two positions. */
 .bay-rail-caret {
