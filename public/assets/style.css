@@ -2859,6 +2859,12 @@ body.screen { cursor: none; }
    full-width stack and the door header is most of a phone screen — pinning
    both would leave a letterbox of content between them. A phone scrolls the
    page, exactly as it did. */
+/* THE BAY HEIGHT EVERY DOOR SHARES — the launch bar's own open height,
+   measured rather than chosen. Two values because the bar's settings row wraps
+   below 1150px and the bar gets taller; see the rule further down. */
+@media (min-width: 900px) { :root { --bay-h: 425px; } }
+@media (min-width: 1150px) { :root { --bay-h: 362px; } }
+
 @media (min-width: 900px) {
   /* `dvh` because a mobile-shaped browser window reports `vh` including the
      chrome that slides away, which puts the bottom of the frame under it. The
@@ -2895,6 +2901,43 @@ body.screen { cursor: none; }
      an open one is the panel — so the content pane grows and shrinks with it
      rather than the header being given a height it has to live inside. */
   .doorhead { flex: 0 0 auto; }
+
+  /* ---- EVERY DOOR'S BAY IS THE LAUNCH BAY'S SIZE.
+   *
+   * A hard rule, set on 29 August 2026: *"the bay at the top ALWAYS has the
+   * same dimensions as the launch bay, this must be consistent across
+   * sections."*
+   *
+   * Before this, the top of the page changed shape as you moved between doors
+   * — 386px on the Console, 194 on Workshop and Post gig, and whatever the
+   * data came to on Community. That is the same fault a heading per render
+   * function was: five sections each deciding their own version of one thing.
+   * The frame is fixed from 900px up, so a bay that changes height moves the
+   * tab column and the whole page under it every time a door is pressed.
+   *
+   * `--bay-h` IS THE LAUNCH BAR'S OWN OPEN PANEL HEIGHT, measured — the panel
+   * rather than the doorhead round it, since the doorhead adds its own margin
+   * and every bay is then the same on screen. It changes at
+   * 1150px for the same reason the bar does — its settings row wraps below
+   * that. The bar itself is deliberately NOT given this height: it is the
+   * REFERENCE rather than a follower, it folds to a line on purpose, and
+   * clipping the one panel on the protected launch path to a number in a
+   * stylesheet is not a trade worth making. `scripts/community-bay.mjs`
+   * asserts the two agree, so the bar growing fails a check rather than
+   * silently making every other door the wrong size.
+   *
+   * BELOW 900px THERE IS NO RULE, because there is no fixed frame: the page
+   * scrolls, the bay is most of a phone screen already, and forcing the
+   * launch bar's 745px onto every door would be a screen of empty panel. */
+  .doorhead > .panel.bench {
+    height: var(--bay-h);
+    /* The content decides what scrolls — the photos bay keeps its heading and
+       scrolls its body, the league bay scrolls its two columns. Anything that
+       has not said otherwise scrolls whole, which is the honest fallback: a
+       bay you cannot see the bottom of is worse than one that moves. */
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
 
   .consolecols {
     display: grid;
@@ -9228,39 +9271,45 @@ body.landing {
 
 /* ---- THE BAY IS THE TAB YOU ARE ON — the wall, and the venue rail.
  *
- * Both shapes are BOUNDED BY CONSTRUCTION rather than by a `max-height` on the
- * box round them, and that is the whole reason they are safe up here: above
- * 900px the doorhead sizes to its content and nothing scrolls it, so a bay
- * that grows with the data pushes the tab column off the bottom of the frame.
- * The wall is three fixed rows and the rail's table is eight fixed rows — the
- * same fix `.night-strip` took when a night with thirty photographs grew the
- * Post gig bench past its own frame. */
+ * *"Anything that loads should load onto the top bar bit"*, and *"the bottom
+ * is for controls and options, not for displaying the actual thing — so you
+ * click the thing at the bottom to reveal it at the top."*
+ *
+ * THE HEIGHT IS NOT THIS BLOCK'S TO CHOOSE. Every door's bay is exactly the
+ * launch bar's size — see `--bay-h` in the door shell — so what is decided
+ * here is only what happens INSIDE that fixed box. */
 
 /* SIX ACROSS, mirroring the pack shelf and the six Tonight bays two inches
    below it. `minmax(0, 1fr)` because a grid child defaults to `min-width:
    auto` and an image's own intrinsic width would otherwise push the column
    wider than the page — the trap `.consolecols` already carries a note about. */
 .community-wall {
-  display: grid; gap: 6px; margin-top: 10px;
+  display: grid; gap: 6px;
   grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-content: start;
 }
 .community-wall-none { grid-column: 1 / -1; }
-/* A FIXED CELL HEIGHT is what makes three rows a fixed bay height. `cover` so
-   a portrait phone photo and a landscape one are the same object on the wall
-   rather than two different shapes. */
-.community-shot {
-  display: block; border-radius: var(--r-field); overflow: hidden;
-  border: 1px solid var(--surf-line, rgba(255, 255, 255, 0.09));
-  background: var(--surf-2, rgba(255, 255, 255, 0.04));
+/* A FIXED CELL HEIGHT, so three rows are a known height inside a fixed bay and
+   a night with thirty pictures scrolls rather than growing the box. 96px is
+   what three rows plus the heading come to inside `--bay-h`.
+   `object-position` ABOVE CENTRE, because a wide crop of a portrait photo
+   taken on a phone otherwise lands on torsos, and a pub photograph is people. */
+.community-wall .cphoto {
+  margin: 0; padding: 0; width: auto; flex: none;
+  border-radius: var(--r-field); overflow: hidden;
 }
-/* `object-position` ABOVE CENTRE, because a wide crop of a portrait photo
-   taken on a phone otherwise lands on torsos. A pub photograph is people, and
-   people are in the top half of the frame. */
-.community-shot img {
-  display: block; width: 100%; height: 110px;
-  object-fit: cover; object-position: center 30%;
+.community-wall .cphoto img { height: 96px; object-position: center 30%; }
+.cphoto.is-openable { cursor: pointer; }
+.cphoto.is-openable:hover { border-color: var(--hot); }
+
+/* ONE PICTURE, FILLING THE BAY — `contain`, because this is the moment
+   somebody is actually looking at it, and a crop is right on a wall of
+   thumbnails and wrong here. The whole thing is the button back. */
+.community-big {
+  display: block; width: 100%; height: 100%; padding: 0;
+  background: none; border: 0; cursor: pointer;
 }
-.community-shot:hover { border-color: var(--hot); }
+.community-big img { display: block; width: 100%; height: 100%; object-fit: contain; }
 
 /* THE RAIL AND WHAT IT PICKS — the same two columns as `.consolecols` under
    it, deliberately: it is the same object doing the same job, and a second
@@ -9292,15 +9341,29 @@ body.landing {
 .community-side { min-width: 0; }
 .community-side .lg-table { margin-top: 6px; }
 
-/* TWO COLUMNS ONLY WHERE THERE IS ROOM. Below 900px the door's own area is
-   not pinned and the tab column is a full-width stack, so the rail goes above
-   its table for the same reason the tabs do. */
+/* The photos bay: a heading that stays and a body that scrolls under it. */
+.community-photos-bay { display: flex; flex-direction: column; min-height: 0; }
+.community-photos-bay > .bench-head { flex: 0 0 auto; }
+.community-bay-body { flex: 1 1 auto; min-height: 0; margin-top: 10px; }
+
+/* THE NIGHT SHOWING IN THE BAY, marked in the list — the same held hover the
+   Post gig bench uses for the row it has on the bench. Its one control sits
+   under it, which is where every control that ACTS lives on this door. */
+.photo-night.is-showing { background: rgba(255, 255, 255, 0.05); }
+.photo-night.is-showing .photo-night-top b { color: var(--hot); }
+.photo-night-controls { padding: 0 12px 10px; }
+
 @media (min-width: 900px) {
   .community-bay { grid-template-columns: 190px minmax(0, 1fr); }
+  /* Each column scrolls on its own inside the fixed bay: a quizmaster with ten
+     venues can reach the tenth without the table moving, and a long table can
+     be read without losing the rail. */
+  .community-rail, .community-side { overflow-y: auto; min-height: 0; }
+  .community-bay-body { overflow-y: auto; }
 }
 /* A PHONE GETS THREE ACROSS. Six 52px thumbnails is a contact sheet nobody can
-   see; the row count is what the doorhead cared about, and on a phone the
-   doorhead scrolls with the page anyway. */
+   see; the row count is what the bay cared about, and on a phone the bay
+   scrolls with the page anyway. */
 @media (max-width: 700px) {
   .community-wall { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }

@@ -660,7 +660,26 @@ export async function fillNightDetail(body, night) {
  *
  * The caller owns the container and whatever it puts above this.
  */
-export async function nightPhotos(body, night) {
+export async function nightPhotos(body, night, opts = {}) {
+  /*
+   * THREE OPTIONS, ALL FOR THE COMMUNITY DOOR, and they exist so there is
+   * still exactly ONE definition of a photograph in this app.
+   *
+   * On Past gigs a night's pictures are evidence sat inside the night's own
+   * row, so they are a sideways strip with the publish control under them. On
+   * Community the pictures are the thing you came for and they live in the
+   * bay, with the controls in the tab below — *"the bottom is for controls and
+   * options, not for displaying the actual thing"*. That is a different
+   * PLACEMENT of the same objects, not a different photograph: the bin's
+   * confirm wording, the "Screen only" badge and the publish safeguard each
+   * carry a decision with a reason recorded, and a second copy is a second
+   * thing to forget.
+   *
+   * - `wall`         lay them out as a grid rather than a sideways strip
+   * - `controlsInto` where the publish control goes, if not under the pictures
+   * - `onOpen`       called with a photo instead of following its link
+   */
+  const { wall = false, controlsInto = null, onOpen = null } = opts;
   if (!night.hasPhotos) return;
 
   const loading = node('<div class="tiny">Loading photos…</div>');
@@ -683,7 +702,7 @@ export async function nightPhotos(body, night) {
    * count, so the bench's own size stops depending on how many pictures
    * somebody took.
    */
-  const grid = node('<div class="night-strip"></div>');
+  const grid = node(`<div class="${wall ? 'community-wall' : 'night-strip'}"></div>`);
   for (const p of data.photos) {
     /*
      * `filed`, always — and this was stamping "NOT FILED" on every one.
@@ -745,10 +764,27 @@ export async function nightPhotos(body, night) {
         alert(err.message);
       }
     });
+    /*
+     * A CLICK ON THE PICTURE ITSELF OPENS IT, AND THE NEXT CLICK GOES BACK —
+     * asked for in those words. Only where a caller offered somewhere to open
+     * it INTO; on Past gigs a photograph is a thumbnail in a row and there is
+     * no bay to fill, so nothing changes there.
+     *
+     * On the figure rather than on the image, so the whole tile is the target
+     * — but never when the press started on the bin, which is a control on top
+     * of it and must not also mean "open this".
+     */
+    if (onOpen) {
+      shot.classList.add('is-openable');
+      shot.addEventListener('click', (ev) => {
+        if (ev.target.closest('.cphoto-bin')) return;
+        onOpen(p);
+      });
+    }
     grid.appendChild(shot);
   }
   body.appendChild(grid);
-  body.appendChild(galleryToggle(night.night, data.published));
+  (controlsInto || body).appendChild(galleryToggle(night.night, data.published));
 }
 
 /**

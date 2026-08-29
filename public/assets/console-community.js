@@ -46,7 +46,7 @@ import { esc, node } from './client.js';
 // `keyed` comes from the shell, exactly as `console-gigs.js` takes it — the
 // established pattern here, and safe because it is a hoisted function
 // declaration rather than something read while the shell is half-built.
-import { goTo, keyed } from './console.js';
+import { goTo, keyed, renderKeepingPlace } from './console.js';
 import { library, me } from './console-state.js';
 import { asksPanel, groupByVenue, nightPhotos } from './console-gigs.js';
 
@@ -89,16 +89,19 @@ function leaguesNow() {
  * own rule about what may appear twice: *a read-only summary may repeat; a
  * queue may not*, and no control is drawn in both places.
  *
- * **AND EVERY BAY HERE IS BOUNDED BY CONSTRUCTION, which is the constraint
- * that decides the shapes.** Above 900px the doorhead does not scroll — it
- * sizes to its content and the tab body is the only scroller — so a bay that
- * can grow with the data pushes the page off the bottom of the frame with
- * nothing left to bring it back. That is exactly what a night with thirty
- * photographs did to the Post gig bench, and the fix there was the same one
- * as here: make the thing unable to grow tall rather than putting a ceiling
- * on the box round it. So the wall is a fixed `WALL_DOWN` rows and the
- * league bay a fixed `BAY_ROWS`, both with the remainder said in a line
- * rather than drawn.
+ * **AND EVERY BAY IS THE LAUNCH BAY'S SIZE — a hard rule**: *"the bay at the
+ * top ALWAYS has the same dimensions as the launch bay, this must be
+ * consistent across sections."* `--bay-h` in the stylesheet, applied to every
+ * door's bench from 900px up, which is where the frame is fixed.
+ *
+ * That is what makes all of this safe as well as consistent. The doorhead does
+ * not scroll — it is a fixed region and the tab body is the only scroller — so
+ * before the rule a bay that grew with the data pushed the tab column off the
+ * bottom of the screen with nothing left to bring it back, which is exactly
+ * what a night with thirty photographs did to the Post gig bench. Given a
+ * fixed box instead, a wall of any size and a league of any length simply
+ * SCROLL INSIDE IT, and neither needs a cap or a "and N more" line pointing at
+ * somewhere they are not.
  */
 export function communityBench(active) {
   if (active === 'photos') return photoWall();
@@ -123,7 +126,7 @@ function summaryBench() {
 
   if (!leagues.length) {
     return node(`
-      <div class="panel bench community-bench">
+      <div class="panel launchbar bench community-bench">
         <div class="bench-head">
           <b>Nothing running yet</b>
           <span class="tiny">A league builds itself out of the nights you file — there is
@@ -138,7 +141,7 @@ function summaryBench() {
    * far into the season are we (nights). A fourth would be furniture.
    */
   return node(`
-    <div class="panel bench community-bench">
+    <div class="panel launchbar bench community-bench">
       <div class="bench-head">
         <b>${leagues.length} league${leagues.length === 1 ? '' : 's'} running</b>
         <span class="tiny">${teams.size} team${teams.size === 1 ? '' : 's'}
@@ -161,26 +164,20 @@ function summaryBench() {
  *
  * **SIX ACROSS BECAUSE EVERYTHING ELSE HERE IS SIX ACROSS** — the pack shelf
  * and the Tonight bays, both by decision. A grid that mirrors the one two
- * inches below it reads as the same app; three across and six down would
- * also be eighteen pictures and would be twice as tall, which the doorhead
- * cannot afford.
- *
- * **AND THREE ROWS IS THE CEILING, not a page size.** The count is what makes
- * this bay safe in a region that does not scroll — see `communityBench()`.
+ * inches below it reads as the same app; three across and six down would be
+ * the same eighteen pictures and twice as tall, which the bay cannot afford.
  */
-const WALL_ACROSS = 6;
-const WALL_DOWN = 3;
-const WALL_MAX = WALL_ACROSS * WALL_DOWN;
+const WALL_MAX = 18;
 
 /*
  * HOW MANY NIGHTS ARE OPENED TO FILL IT.
  *
- * A photo list is one request per night — the reason the tab below fetches a
- * night's pictures on the press rather than up front — so a wall built by
- * asking every night in the archive would spend a pub's wifi on twenty
- * requests to draw eighteen thumbnails. Newest first, stopping the moment the
- * wall is full, and never more than this many: an ordinary night carries more
- * than eighteen photographs on its own, so the usual cost is ONE request.
+ * A photo list is one request per night — the reason a night's own pictures
+ * are fetched on the press rather than up front — so a wall built by asking
+ * every night in the archive would spend a pub's wifi on twenty requests to
+ * draw eighteen thumbnails. Newest first, stopping the moment the wall is
+ * full, and never more than this many: an ordinary night carries more than
+ * eighteen photographs on its own, so the usual cost is ONE request.
  */
 const WALL_NIGHTS = 4;
 
@@ -190,48 +187,126 @@ const WALL_NIGHTS = 4;
  * The bay is rebuilt on every state push — which during a lobby is every time
  * somebody joins — so a fetch inside the render would be a request storm on
  * the one evening the connection must not stutter. A photograph that arrives
- * after this is caught the next time the console is opened, which is the
- * right trade for a wall.
+ * after this is caught the next time the console is opened, which is the right
+ * trade for a wall.
  */
 let wallShots = null;
 
+/**
+ * WHICH NIGHT IS OPEN, AND WHICH PICTURE IS BLOWN UP.
+ *
+ * Module-level, because the bay and the tab body are built by two different
+ * calls inside one `render()` and both have to agree — and because a state
+ * push rebuilds the lot, so anything held inside either function would reset
+ * itself the next time somebody joined the lobby.
+ */
+let openNight = null;
+let openShot = null;
+
+/**
+ * THE OPEN NIGHT'S PUBLISH CONTROL, MADE IN THE BAY AND HUNG IN THE TAB.
+ *
+ * `nightPhotos()` fetches a night's pictures and its published flag in ONE
+ * request, so the control has to be built where that request is made — in the
+ * bay — while it has to APPEAR under the night's row in the tab body, which is
+ * where controls live. Asking twice would be a second request per night for a
+ * boolean the first one already carried.
+ *
+ * Safe because `render()` evaluates its arguments in order: the doorhead is
+ * built before the tab body, so the element exists by the time the row wants
+ * it. Cleared whenever no night is open, or a stale control would be hung on
+ * the next night somebody opened.
+ */
+let nightControls = null;
+
+/** Go back to the wall — what the night list does when you press it again. */
+export function closeNight() { openNight = null; openShot = null; nightControls = null; }
+
+/**
+ * THE PHOTOS BAY — the wall, one night, or one picture.
+ *
+ * Three states and each is the answer to the last thing pressed, which is the
+ * model asked for: *"you click the thing at the bottom to reveal it at the
+ * top"*, and *"when you click into a photo another click should go back
+ * again"*.
+ */
 function photoWall() {
   const el = node(`
-    <div class="panel bench community-bench">
+    <div class="panel launchbar bench community-bench community-photos-bay">
       <div class="bench-head">
-        <b>The wall</b>
-        <span class="tiny">The last ${WALL_MAX} pictures the rooms sent. Every night's own
-          set — and the bin — are underneath.</span>
+        <b class="community-bay-what"></b>
+        <span class="tiny community-bay-note"></span>
       </div>
-      <div class="community-wall"></div>
+      <div class="community-bay-body"></div>
     </div>`);
-  const grid = el.querySelector('.community-wall');
+  const what = el.querySelector('.community-bay-what');
+  const note = el.querySelector('.community-bay-note');
+  const bodyEl = el.querySelector('.community-bay-body');
+
+  /* ONE PICTURE, FILLING THE BAY. `contain` rather than `cover`, because this
+     is the moment somebody is actually LOOKING at it — a crop is right on a
+     wall of thumbnails and wrong here. Clicking anywhere on it goes back. */
+  if (openShot) {
+    what.textContent = 'One picture';
+    note.textContent = 'Click it again to go back.';
+    const big = node(`
+      <button class="community-big" type="button" title="Back to the photographs">
+        <img src="${esc(openShot.url)}" alt="">
+      </button>`);
+    big.addEventListener('click', () => { openShot = null; renderKeepingPlace(); });
+    bodyEl.appendChild(big);
+    return el;
+  }
+
+  /* ONE NIGHT, opened from the list below. The bin rides on each picture —
+     it belongs to the photograph rather than being a control panel — and the
+     publish control is drawn in the tab body by `photosSection()`. */
+  if (openNight) {
+    what.textContent = readable(openNight.night);
+    note.textContent = openNight.venue
+      ? `${openNight.venue} — press it again below to come back to the wall.`
+      : 'Press it again below to come back to the wall.';
+    nightControls = node('<div class="photo-night-controls"></div>');
+    nightPhotos(bodyEl, openNight, {
+      wall: true,
+      // Built here, hung under the night's row in the tab body — see above.
+      controlsInto: nightControls,
+      onOpen: (p) => { openShot = p; renderKeepingPlace(); },
+    });
+    return el;
+  }
+
+  what.textContent = 'The wall';
+  note.textContent = `The last ${WALL_MAX} pictures the rooms sent. Open a night below for its own set.`;
 
   const draw = (shots) => {
-    grid.replaceChildren();
+    bodyEl.replaceChildren();
     if (!shots.length) {
-      grid.appendChild(node(`<div class="tiny community-wall-none">No photographs yet. The
+      bodyEl.appendChild(node(`<div class="tiny community-wall-none">No photographs yet. The
         camera is on the phones in the gaps, and whatever the room sends lands here.</div>`));
       return;
     }
+    const grid = node('<div class="community-wall"></div>');
     for (const shot of shots) {
       /*
-       * A LINK TO THE PICTURE ITSELF, and nothing else on it. There is no bin
-       * up here on purpose: a bin belongs beside the night it deletes from,
-       * where you can see which night that is. A thumbnail on a wall with a
-       * delete button on it is a mis-tap with no undo.
+       * NO BIN ON THE WALL, deliberately. A bin belongs beside the night it
+       * deletes from, where you can see which night that is — a thumbnail in
+       * a mixed wall with a delete button on it is a mis-tap with no undo.
+       * Open the night and every picture in it has one.
        */
-      grid.appendChild(node(`
-        <a class="community-shot" href="${esc(shot.url)}" target="_blank" rel="noopener"
-           title="${esc(shot.where)}">
+      const tile = node(`
+        <button class="cphoto filed is-openable" type="button" title="${esc(shot.where)}">
           <img src="${esc(shot.url)}" alt="" loading="lazy">
-        </a>`));
+        </button>`);
+      tile.addEventListener('click', () => { openShot = shot; renderKeepingPlace(); });
+      grid.appendChild(tile);
     }
+    bodyEl.appendChild(grid);
   };
 
   if (wallShots) draw(wallShots);
   else {
-    grid.appendChild(node('<div class="tiny">Loading the photographs…</div>'));
+    bodyEl.appendChild(node('<div class="tiny">Loading the photographs…</div>'));
     loadWall().then(draw).catch(() => draw([]));
   }
   return el;
@@ -253,8 +328,8 @@ async function loadWall() {
       if (!r.ok) continue;
     } catch { continue; }
     // Where it was taken, on the picture's own tooltip — the wall is mixed by
-    // definition, so a thumbnail with no answer to "which night was that" is
-    // a picture you cannot go and find again.
+    // definition, so a thumbnail with no answer to "which night was that" is a
+    // picture you cannot go and find again.
     const where = `${readable(night.night)}${night.venue ? ` — ${night.venue}` : ''}`;
     for (const p of one.photos || []) {
       shots.push({ url: p.url, where });
@@ -266,13 +341,16 @@ async function loadWall() {
 }
 
 /*
- * THE BAY'S TABLE STOPS AT EIGHT, and the rest is said in a line.
+ * EVERY TEAM IS IN THE BAY, AND THE BAY SCROLLS.
  *
- * The tab underneath draws ten and the full count; this is the glance, in a
- * region that cannot scroll. Eight is what fits at 720px with the tab column
- * still usable below it, measured rather than guessed.
+ * It was capped at eight with "and N more, below" under it — which was true
+ * only while the tab underneath drew the table as well. It does not any more:
+ * *"if a quiz league appears at the top it shouldn't be at the bottom"*. A cap
+ * plus a pointer at a table that no longer exists is a page lying about
+ * itself, and the fixed bay height makes the cap unnecessary anyway: the
+ * column scrolls inside a box that cannot grow, so a league of forty teams
+ * costs nothing and is all reachable.
  */
-const BAY_ROWS = 8;
 
 /** Which venue the bay is showing. Module-level, or a state push resets it. */
 let picked = '';
@@ -298,7 +376,7 @@ let picked = '';
  */
 function leagueBay() {
   const leagues = leaguesNow();
-  const el = node('<div class="panel bench community-bench community-bay"></div>');
+  const el = node('<div class="panel launchbar bench community-bench community-bay"></div>');
 
   const paint = () => {
     if (!leagues.some((l) => l.key === picked)) picked = leagues[0].key;
@@ -314,12 +392,19 @@ function leagueBay() {
           <span class="tiny">${l.table.length} team${l.table.length === 1 ? '' : 's'}
             · ${l.nights} night${l.nights === 1 ? '' : 's'}</span>
         </button>`);
-      btn.addEventListener('click', () => { picked = l.key; paint(); });
+      /*
+       * THE WHOLE PAGE REPAINTS, not just the bay — because the CONTROLS for
+       * this venue live in the tab body underneath, and a rail that changed
+       * the table up here while leaving "put this table up" pointing at the
+       * pub before it would publish the wrong room's names.
+       */
+      btn.addEventListener('click', () => { picked = l.key; renderKeepingPlace(); });
       rail.appendChild(btn);
     }
 
-    const rows = league.table.slice(0, BAY_ROWS);
+    const rows = league.table;
     const heads = headsLine(league.venue);
+    const names = (published || {}).names || {};
     const side = node(`
       <div class="community-side">
         <div class="league-head">
@@ -340,15 +425,21 @@ function leagueBay() {
             ${rows.map((t) => `
               <tr${t.position === 1 ? ' class="lg-top"' : ''}>
                 <td class="lg-pos">${t.position}</td>
-                <td class="lg-name">${esc(t.name)}</td>
+                <!-- THE REAL NAME, MARKED WHEN IT WILL NOT PUBLISH. This is the
+                     room's own view and the quizmaster was there, so nothing is
+                     masked — but a name a public page would hide says so, or it
+                     would vanish off a table they had put up with no way to tell
+                     which one did it. Drawn from the COMBINE in hiddenNow(), so
+                     a name a human has allowed stops claiming it is held back. -->
+                <td class="lg-name">${esc(t.name)}${hiddenNow(t, names)
+    ? ' <span class="lg-hidden" title="This name is hidden on the public table and on a landlord\'s report. It still scores exactly as it is.">hidden publicly</span>'
+    : ''}</td>
                 <td class="lg-played tiny">${t.played}</td>
                 <td class="lg-played tiny">${t.wins}</td>
                 <td class="lg-pts"><b>${t.points}</b></td>
               </tr>`).join('')}
           </tbody>
         </table>
-        ${league.table.length > rows.length
-    ? `<div class="tiny lg-note">and ${league.table.length - rows.length} more, below.</div>` : ''}
       </div>`);
 
     el.append(rail, side);
@@ -356,79 +447,6 @@ function leagueBay() {
 
   paint();
   return el;
-}
-
-/**
- * ONE VENUE'S TABLE IN FULL — the tab, where the venue card only ever had
- * room for the top five.
- *
- * **Ten rows, not five and not all of them.** The card is scanned and this is
- * read, so it can afford more; a table of forty rows on a screen is still not
- * a thing anybody reads, and the count underneath says how many there are.
- * If somebody wants the lot it wants to be a printable poster, which is a
- * different job and is not built.
- */
-function leagueTableFor(league) {
-  const rows = league.table.slice(0, 10);
-  /*
-   * THE HEADCOUNT SITS IN THE HEAD, one line, not a panel of its own.
-   *
-   * They are the landlord's two questions and CLAUDE.md already pairs them:
-   * *"how many came"* and *"are the same people coming back"* — the headcount
-   * sells the room and the league is what keeps it. A tab each would separate
-   * the only two numbers anybody reads together.
-   *
-   * **A READ-ONLY SUMMARY MAY REPEAT; A QUEUE MAY NOT.** This same line is on
-   * a venue card and on a Past gigs card, deliberately, and cannot disagree
-   * with either because `library.headcounts` is worked out once on the server.
-   * That is the line this app draws — and it is why "what the room asked for"
-   * MOVED here rather than being copied: a triage list in two places is two
-   * lists that disagree about what has been dealt with.
-   */
-  const heads = headsLine(league.venue);
-  return `
-    <div class="panel league-panel">
-      <div class="league-head">
-        <b>${esc(league.venue)}</b>
-        <span class="tiny">${league.table.length} team${league.table.length === 1 ? '' : 's'}
-          across ${league.nights} night${league.nights === 1 ? '' : 's'}</span>
-        ${heads ? `<span class="tiny league-heads">${heads}</span>` : ''}
-      </div>
-      <table class="lg-table">
-        <thead>
-          <tr>
-            <th class="lg-pos" aria-label="Position"></th>
-            <th class="lg-name">Team</th>
-            <th class="lg-played"><abbr title="Nights played">P</abbr></th>
-            <th class="lg-played"><abbr title="Nights won">W</abbr></th>
-            <th class="lg-pts"><abbr title="Points">Pts</abbr></th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map((t) => `
-            <tr${t.position === 1 ? ' class="lg-top"' : ''}>
-              <td class="lg-pos">${t.position}</td>
-              <!-- THE REAL NAME, MARKED WHEN IT WILL NOT PUBLISH. This is the
-                   room's own view and the quizmaster was there, so nothing is
-                   masked here — but a name that a public page would hide says
-                   so, or it would vanish off a table they had put up and there
-                   would be no way to tell which one did it. -->
-              <td class="lg-name">${esc(t.name)}${t.nameHidden
-    ? ' <span class="lg-hidden" title="This name is hidden on the public table and on a landlord\'s report. It still scores exactly as it is.">hidden publicly</span>'
-    : ''}</td>
-              <!-- "9" plainly, or "9 (6)" once some are being dropped — the
-                   number in brackets is what the points came from, said where
-                   somebody would otherwise be adding their weeks up and
-                   getting a different answer. -->
-              <td class="lg-played tiny">${t.played}${t.counted < t.played ? ` <span class="lg-drop">(${t.counted})</span>` : ''}</td>
-              <td class="lg-played tiny">${t.wins}</td>
-              <td class="lg-pts"><b>${t.points}</b></td>
-            </tr>`).join('')}
-        </tbody>
-      </table>
-      ${league.table.length > rows.length
-    ? `<div class="tiny lg-note">and ${league.table.length - rows.length} more.</div>` : ''}
-    </div>`;
 }
 
 /**
@@ -600,13 +618,58 @@ function leagueToggle(key, venue, on) {
 }
 
 /**
- * THE LEAGUE TAB.
+ * WHICH TABLES ARE UP AND WHAT A HUMAN HAS RULED — fetched once, then held.
  *
- * **The identification rule is printed once here rather than under every
- * table.** A team is the name typed on a phone — there is no login for a
- * phone and there must not be one — so a change of spelling starts a new team
- * and a borrowed name is the same team. Somebody pinning this to a wall has
- * to know that, and saying it five times is how a page stops being read.
+ * A GitHub read, so it rides on the tab being opened rather than on the
+ * library: a fact that changes twice a season must not cost a network call per
+ * state push. Held in a module binding because the door is rebuilt on every
+ * push, and because the BAY needs it too — it draws the `hidden publicly`
+ * marks from the same combine the controls act on, and two fetches would be
+ * two answers.
+ */
+let published = null;
+let asking = false;
+
+function loadPublished() {
+  if (published || asking) return;
+  asking = true;
+  fetch(keyed('/api/league/published'))
+    .then((r) => (r.ok ? r.json() : null))
+    .then((d) => {
+      if (!d) return;
+      published = { venues: d.venues || [], names: d.names || {} };
+      /*
+       * ONE REPAINT WHEN IT LANDS, and it has to be the whole page: the marks
+       * are in the BAY and the controls are in the tab body, so painting one
+       * of them would leave the other saying something else. Guarded by
+       * `published` itself, so this happens once rather than on every render.
+       */
+      renderKeepingPlace();
+    })
+    .catch(() => {})
+    .finally(() => { asking = false; });
+}
+
+/**
+ * THE LEAGUE TAB — THE CONTROLS, AND NOT THE TABLE.
+ *
+ * *"If a quiz league appears at the top it shouldn't be at the bottom — the
+ * bottom is for controls and options, not for displaying the actual thing."*
+ * So the table is in the bay, once, and this is what you DO about it: put it
+ * up for the teams, take it down, and overrule the filter on a name.
+ *
+ * **THE CONTROLS FOLLOW THE VENUE IN THE BAY.** There is one set of them and
+ * they act on whatever the rail is pointing at, which is why the rail
+ * repaints the page rather than only the bay. A control per venue stacked
+ * down this tab would be the duplicate display again wearing buttons.
+ *
+ * **THE SAFEGUARD SURVIVES THE MOVE, and that was the thing to check.** The
+ * rule is that nobody publishes a pub's team names without having just looked
+ * at them — it was kept by drawing the button UNDER the table. In a fixed
+ * frame the bay is on screen while this is pressed, with the names in it, so
+ * the button is still directly beneath the thing it publishes. What would
+ * break the rule is a control on a screen the table is not on, and there
+ * isn't one.
  */
 export function leagueSection() {
   const leagues = leaguesNow();
@@ -626,105 +689,41 @@ export function leagueSection() {
     return wrap;
   }
 
+  loadPublished();
+  const league = leagues.find((l) => l.key === picked) || leagues[0];
+
   wrap.appendChild(node(`
     <p class="tiny">Ten points for a win, down to two for seventh, plus <b>one for every
       night a team plays</b> — and their <b>best six finishes</b> are the ones that count
       towards the total. So a fortnight away costs two points rather than a season, and
       turning up every week is always worth something. Rolling twelve-week season. A team
       is the name they type on the night, so a change of spelling starts a new team — there
-      is no sign-up, and that is what keeps it free to join at the door. Names go on
-      the big screen exactly as typed; a few are held back from the <b>public</b> table
-      and the landlord's report, and they are marked below.</p>`));
-  for (const league of leagues) {
-    const panel = node(leagueTableFor(league));
-    /*
-     * THE PUBLISH CONTROL IS DRAWN NOW AND PAINTED LATER.
-     *
-     * Which tables are up is a GitHub read, so it is fetched ONCE when this
-     * tab is opened rather than riding with the library on every console
-     * render — a fact that changes twice a season must not cost a network
-     * call per state push. Until it answers, the control is simply absent
-     * rather than guessing "not published": a button that says "put this up"
-     * on a table that is already up would be a lie for as long as the fetch
-     * takes, and the one thing this control must never do is misstate what
-     * is public.
-     */
-    panel.dataset.leagueKey = league.key;
-    byKey.set(league.key, league);
-    wrap.appendChild(panel);
+      is no sign-up, and that is what keeps it free to join at the door. Names go on the big
+      screen exactly as typed; a few are held back from the <b>public</b> table and the
+      landlord's report, and they are marked in the table above.</p>`));
+
+  const panel = node(`
+    <div class="panel league-panel">
+      <div class="league-head">
+        <b>${esc(league.venue)}</b>
+        <span class="tiny">${league.table.length} team${league.table.length === 1 ? '' : 's'}
+          across ${league.nights} night${league.nights === 1 ? '' : 's'} — showing above</span>
+      </div>
+    </div>`);
+  /*
+   * UNTIL THE RULINGS ARRIVE THERE IS NO CONTROL, rather than a guessed one.
+   * A button saying "put this up" on a table that is already up would be a lie
+   * for as long as the fetch takes, and the one thing this must never do is
+   * misstate what is public.
+   */
+  if (published) {
+    panel.appendChild(nameReview(league, published.names, () => renderKeepingPlace()));
+    panel.appendChild(leagueToggle(league.key, league.venue, published.venues.includes(league.key)));
+  } else {
+    panel.appendChild(node('<div class="tiny">Checking what is published…</div>'));
   }
-  paintPublished();
+  wrap.appendChild(panel);
   return wrap;
-}
-
-/** Every league on screen, by the key its panel carries. */
-const byKey = new Map();
-
-/** Redraw the `hidden publicly` marks from what will ACTUALLY happen. */
-function markPills(panel, league, names) {
-  const rows = league.table || [];
-  [...panel.querySelectorAll('tbody tr')].forEach((tr, i) => {
-    const row = rows[i];
-    const cell = tr.querySelector('.lg-name');
-    if (!row || !cell) return;
-    const hidden = hiddenNow(row, names);
-    const mark = cell.querySelector('.lg-hidden');
-    if (hidden && !mark) {
-      cell.appendChild(node('<span class="lg-hidden" title="This name is hidden on the public table and on a landlord\'s report. It still scores exactly as it is.">hidden publicly</span>'));
-    } else if (!hidden && mark) {
-      mark.remove();
-    }
-  });
-}
-
-/**
- * Ask which tables are up, once, and hang a control on each.
- *
- * Silent on failure — an unreachable repository means the publish control
- * does not appear, which is honest: without it nothing CAN be published, and
- * a broken button would be worse than no button.
- */
-function paintPublished() {
-  fetch(keyed('/api/league/published'))
-    .then((r) => (r.ok ? r.json() : null))
-    .then((d) => {
-      if (!d) return;
-      const live = new Set(d.venues || []);
-      /*
-       * THE DOCUMENT, NEVER THE FRAGMENT THIS WAS BUILT IN — and the first
-       * version queried the fragment and silently drew nothing.
-       *
-       * `leagueSection()` returns a `DocumentFragment`, and appending a
-       * fragment MOVES its children out and leaves it empty. By the time this
-       * fetch resolved, the panels were in the page and the fragment was a
-       * husk, so `wrap.querySelectorAll()` matched nothing: two tables, no
-       * publish controls, nothing thrown. An async paint has to look where
-       * the thing IS when it runs, not where it was when it was made.
-       *
-       * A tab changed while the request was in flight simply matches nothing,
-       * which is the right answer rather than a control on the wrong page.
-       */
-      const names = d.names || {};
-      for (const panel of document.querySelectorAll('[data-league-key]')) {
-        if (panel.querySelector('.lg-pub-on, .lg-pub-off')) continue;
-        const key = panel.dataset.leagueKey;
-        const league = byKey.get(key);
-        const where = panel.querySelector('.league-head b');
-        /*
-         * THE PILLS ARE REPAINTED FROM THE COMBINE, not left as the filter
-         * drew them. The table renders before the rulings arrive — it has to,
-         * or the tab would sit blank on a network round trip — so a name the
-         * quizmaster allowed would otherwise keep saying "hidden publicly"
-         * for ever on the one screen that is supposed to tell them the truth.
-         */
-        if (league) {
-          markPills(panel, league, names);
-          panel.appendChild(nameReview(league, names, () => markPills(panel, league, names)));
-        }
-        panel.appendChild(leagueToggle(key, where ? where.textContent : '', live.has(key)));
-      }
-    })
-    .catch(() => {});
 }
 
 /** This venue's headcount, as the one line a card already shows. */
@@ -740,30 +739,28 @@ function headsLine(venue) {
 }
 
 /**
- * THE PHOTOS TAB — every picture the room took, under the venue it was taken
- * in.
+ * THE PHOTOS TAB — THE LIST YOU PICK FROM, AND WHAT YOU DO ABOUT ONE NIGHT.
  *
  * ---
  *
  * Asked for on 23 August 2026: *"photos can actually migrate to community as
- * well now, and anything else to do with the people who do the quizzing."*
+ * well now, and anything else to do with the people who do the quizzing"* —
+ * and rearranged on 29 August: *"the bottom is for controls and options, not
+ * for displaying the actual thing, so you click the thing at the bottom to
+ * reveal it at the top."*
+ *
+ * So this tab draws NO photographs. It is venues, then nights inside them —
+ * options — and under the night you opened, the one control that acts on it.
+ * The pictures themselves are in the bay, where there is a whole screen for
+ * them and where they are still on screen while this is read.
  *
  * **THE PER-NIGHT GRID ON PAST GIGS STAYS, and that is not a duplicate.** The
  * same pictures do two different jobs: on Past gigs a photo is EVIDENCE, sat
  * beside the headcount, the winner and the report you hand a landlord; here it
- * is the room itself, which is what somebody comes to this door for. Splitting
- * them off Past gigs entirely was the alternative and it would have put you two
- * doors from the pictures while writing the report built out of them.
- *
- * **WHAT IS NOT DUPLICATED IS THE CODE.** The strip, the bin, the "Screen only"
- * badge and the publish control are `nightPhotos()` in `console-gigs.js`,
- * called from both — so the confirm wording, the badge and the safeguard have
- * one definition. A second copy is a second thing to forget.
- *
- * **THE PUBLISH CONTROL KEEPS ITS SAFEGUARD BECAUSE IT COMES WITH THEM.** It
- * is drawn UNDER the photographs it would publish, so nobody puts a night in
- * front of the world without having just looked at what is in it — true here
- * for the same reason it is true there, without anything being restated.
+ * is the room itself. **What is not duplicated is the CODE** — the figures,
+ * the bin, the "Screen only" badge and the publish control are `nightPhotos()`
+ * in `console-gigs.js`, called from both, so the confirm wording and the
+ * safeguard have one definition.
  *
  * **A NIGHT WITH NO PICTURES IS NOT LISTED.** This tab is the photographs; a
  * row saying a night has none belongs on the page about nights.
@@ -775,7 +772,6 @@ export function photosSection() {
   el.append(note, wrap);
 
   const open = new Set();
-  const shown = new Map();   // night key -> the element holding its strip
   let groups = { venues: [], unfiled: [] };
 
   const draw = () => {
@@ -792,12 +788,11 @@ export function photosSection() {
 
   const venuePhotos = (entry) => {
     const isOpen = open.has(entry.key);
-    const count = entry.nights.reduce((n, x) => n + 1, 0);
     const card = node(`
       <div class="venue-card ${isOpen ? 'is-open' : ''}">
         <button class="venue-top" type="button" aria-expanded="${isOpen}">
           <span class="venue-name">${esc(entry.venue)}</span>
-          <span class="tiny">${count} night${count === 1 ? '' : 's'} with photos</span>
+          <span class="tiny">${entry.nights.length} night${entry.nights.length === 1 ? '' : 's'} with photos</span>
         </button>
       </div>`);
     card.querySelector('.venue-top').addEventListener('click', () => {
@@ -810,32 +805,32 @@ export function photosSection() {
   };
 
   const nightRow = (night) => {
+    const showing = Boolean(openNight) && openNight.night === night.night;
     const row = node(`
-      <div class="photo-night">
-        <button class="photo-night-top" type="button">
+      <div class="photo-night ${showing ? 'is-showing' : ''}">
+        <button class="photo-night-top" type="button" aria-pressed="${showing}">
           <b>${esc(readable(night.night))}</b>
-          <span class="tiny">Photos ▸</span>
+          <span class="tiny">${showing ? 'Showing above — press to close' : 'Show these above ▸'}</span>
         </button>
       </div>`);
-    const body = node('<div class="photo-night-body"></div>');
-    row.appendChild(body);
-    row.querySelector('.photo-night-top').addEventListener('click', async () => {
-      if (shown.has(night.night)) {
-        shown.delete(night.night);
-        body.replaceChildren();
-        return;
-      }
-      shown.set(night.night, body);
-      body.replaceChildren();
-      /*
-       * FETCHED WHEN IT IS OPENED, never up front. A photo list is a request
-       * per night, and a wall that loaded twenty nights on arrival would spend
-       * a pub's wifi on pictures nobody had asked to see — the same reason
-       * Past gigs loads a night's pictures on the press rather than with the
-       * list.
-       */
-      await nightPhotos(body, night);
+    /*
+     * ONE PRESS PUTS IT IN THE BAY AND THE NEXT PRESS TAKES IT BACK OUT, which
+     * is the whole model: the list is what you press and the bay is what
+     * answers. The page repaints because the bay is built by a different call
+     * inside the same `render()`.
+     */
+    row.querySelector('.photo-night-top').addEventListener('click', () => {
+      if (showing) closeNight(); else { openNight = night; openShot = null; nightControls = null; }
+      renderKeepingPlace();
     });
+    /*
+     * AND THE PUBLISH CONTROL IS DRAWN ONLY FOR THE NIGHT THAT IS SHOWING.
+     * The safeguard is unchanged in substance — nobody publishes a night
+     * without having just looked at what is in it — because the pictures are
+     * in the bay, on screen, directly above this button. What it must never
+     * become is a button on a row whose photographs nobody has opened.
+     */
+    if (showing && nightControls) row.appendChild(nightControls);
     return row;
   };
 
@@ -855,6 +850,16 @@ export function photosSection() {
     }
     const withPhotos = (data.nights || []).filter((n) => n.hasPhotos);
     groups = groupByVenue(withPhotos, library.headcounts || { venues: [] });
+    /*
+     * THE VENUE OF THE NIGHT IN THE BAY IS OPENED, so arriving with one
+     * showing does not leave its row folded away inside a shut card — the
+     * bay would be describing a night nothing on the page points at.
+     */
+    if (openNight) {
+      for (const entry of groups.venues) {
+        if (entry.nights.some((n) => n.night === openNight.night)) open.add(entry.key);
+      }
+    }
     draw();
   })();
 

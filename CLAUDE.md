@@ -1543,39 +1543,72 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
     `render()` had already emptied into the page — two tables drew with no
     control on them and nothing threw.
 
+### EVERY DOOR'S BAY IS THE LAUNCH BAY'S SIZE
+
+`--bay-h` in `style.css`, on `.doorhead > .panel.bench`, from 900px up. A hard
+rule: *"the bay at the top ALWAYS has the same dimensions as the launch bay,
+this must be consistent across sections."* It was 386px on the Console, 194 on
+Workshop and Post gig, and whatever the data came to on Community — so the top
+of the page changed shape on every door press, and under a fixed frame that
+moves the tab column and everything below it.
+
+- **THE VALUE IS THE LAUNCH BAR'S OWN OPEN PANEL HEIGHT, MEASURED** — the panel
+  rather than the doorhead round it, which adds a margin. Two values, because
+  the bar's settings row wraps below 1150px and the bar gets taller.
+- **THE BAR ITSELF IS NOT GIVEN THE HEIGHT.** It is the REFERENCE, it folds to
+  a line on purpose, and clipping the one panel on the protected launch path to
+  a number in a stylesheet is not a trade worth making. `community-bay.mjs`
+  asserts the two agree, so the bar growing fails a check rather than silently
+  making every other door the wrong size.
+- **BELOW 900px THERE IS NO RULE**, because there is no fixed frame — and the
+  launch bar is 745px on a phone, which as a floor would be a screen of empty
+  panel on every door.
+- **A FIXED BOX IS WHAT LETS THE CONTENT STOP WORRYING.** A wall of any size
+  and a league of any length SCROLL INSIDE IT, so nothing needs a row cap or an
+  "and N more" line — which is the opposite of the answer `.night-strip` needed
+  when the bay sized to its content.
+
 ### THE COMMUNITY BAY IS THE TAB YOU ARE ON — a wall, or a venue rail
 
-`communityBench(active)` in `console-community.js`, `.community-wall` /
-`.community-rail`. *"Anything that loads should load onto the top bar bit — the
-photos in a 3 x 6 grid, and quiz league up there too with options on the left
-hand side going down like the menu below it."*
+`communityBench(active)` in `console-community.js`. *"Anything that loads
+should load onto the top bar bit — the photos in a 3 x 6 grid, and quiz league
+up there too with options on the left hand side going down like the menu below
+it."*
 
-- **THE OTHER FOUR DOORS ALREADY DID THIS** — Post gig's bay is the night you
-  opened. Community's said the same three numbers on every tab.
-- **READ ABOVE, WORK BELOW — which is why it is not a duplicate.** Every
-  control that ACTS stays UNDER the thing it acts on: the bin with its night,
-  publishing a table under the names it publishes. *A summary may repeat; a
-  queue may not*, and **no control is drawn in both places** — the check
-  asserts `.doorhead` holds none, because those controls ARE the safeguards.
-- **BOUNDED BY CONSTRUCTION, NEVER A CEILING ON THE BOX ROUND IT.** Above 900px
-  the doorhead does not scroll, so a bay that grows with the data pushes the
-  tab column off the bottom and nothing throws. The wall is a fixed three rows
-  and the bay's table a fixed eight; the remainder is SAID, not drawn. Same fix
-  as `.night-strip`.
+- **THE BOTTOM IS CONTROLS AND OPTIONS. IT NEVER DISPLAYS THE THING.** *"If a
+  quiz league appears at the top it shouldn't be at the bottom — so you click
+  the thing at the bottom to reveal it at the top."* The league tab draws no
+  table and the Photos tab draws no photographs: what is down there is the
+  venue rail's controls, the night list, and the one button that acts on the
+  thing showing above.
+- **THE SAFEGUARDS SURVIVED THE MOVE, and that was the thing to check.** Nobody
+  publishes a night or a table without having just looked at it — kept by
+  drawing the button UNDER the thing. In a fixed frame the bay is on screen
+  while the button is pressed, so it still is. The publish control is drawn
+  ONLY for the night that is showing; a button on a row nobody has opened is
+  what would break it.
+- **ONE PRESS PUTS IT IN THE BAY, THE NEXT TAKES IT OUT** — and *"when you
+  click into a photo another click should go back again"*: wall → one night →
+  one picture, each step reversed by pressing the same thing.
+- **ONE REQUEST PER NIGHT, NOT TWO.** `nightPhotos()` fetches the pictures and
+  the published flag together, so the control is BUILT in the bay and HUNG in
+  the tab body — safe because `render()` evaluates the doorhead before the tab
+  body.
 - **SIX ACROSS, because everything else here is six across** — the shelf and
-  the Tonight bays. Three DOWN is the half of "3 x 6" the doorhead can afford;
-  three across on a phone, where the page scrolls anyway.
+  the Tonight bays; three across on a phone.
 - **THE RAIL IS THE TAB COLUMN, one region higher** — 190px, stacked, lit on
   the LEFT edge. Two ways of saying "pick one of these" on one screen is a
-  label collision.
+  label collision. **It repaints the whole page**, or the controls below would
+  publish the pub before it.
 - **THE WALL IS FETCHED ONCE PER PAGE LOAD AND STOPS ASKING** — a photo list is
   a request per night, so it walks the newest until eighteen are in hand and
   never past `WALL_NIGHTS`. Held in a module binding: the bay is rebuilt on
   every state push, which at a lobby is every join.
 - **`node scripts/community-bay.mjs` IS THE GUARD, and it measures GEOMETRY** —
-  doorhead height, what is left for the columns, whether the page has started
-  to scroll, and that the rail CHANGES the table rather than merely lighting up.
-  Nothing in `npm test` can see any of it.
+  every door's bay against the launch bar's, what is left for the columns,
+  whether the page scrolls, that no control is in the bay and no table or photo
+  is at the bottom, and that pressing a rail button, a night and a picture each
+  actually change what is drawn. Nothing in `npm test` can see any of it.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 

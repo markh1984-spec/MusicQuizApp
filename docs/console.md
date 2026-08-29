@@ -829,6 +829,76 @@ run was the load-bearing check.
 
 ---
 
+## EVERY DOOR'S BAY IS THE LAUNCH BAY'S SIZE — 29 August 2026
+
+> *"Also a hard rule is that the bay at the top ALWAYS has the same dimensions
+> as the launch bay, this must be consistent across sections."*
+
+`--bay-h` in `style.css`, applied to `.doorhead > .panel.bench` from 900px up.
+
+### What it was before, and why that was worse than it looked
+
+Measured across the doors on the day the rule was set:
+
+| Door | bay |
+|---|---|
+| Console (the launch bar) | 386px |
+| Workshop | 194px |
+| Post gig | 194px |
+| Community | 122–455px, depending on the tab and the data |
+
+So the top of the page changed shape every time a door was pressed, and the
+tab column and everything under it moved with it. Under the fixed frame that is
+not a cosmetic wobble: the columns are given whatever is left, so pressing
+Workshop after Console handed the tab body 190px more and pressing back took it
+away again. The console had five sections each deciding its own version of one
+thing, which is the same fault a heading per render function was.
+
+### Why the launch bar is the reference and not a follower
+
+It would be tidier to give every bay including the launch bar a single height
+and be done. That is not worth doing:
+
+- **The launch bar is on the protected surface.** Clipping the one panel that
+  gets a night started to a number in a stylesheet is a bad trade for symmetry.
+- **It folds to a line on purpose**, remembered in `localStorage`. A fixed
+  height would either fight that or have to know about it.
+- **Its own height is the honest standard.** Every other bay is being asked to
+  match the busiest, most-used panel in the app, which is the one that earned
+  its size.
+
+So `--bay-h` is the launch bar's own OPEN PANEL height — the panel, not the
+doorhead round it, which adds a 24px margin, so that every bay comes out the
+same on screen. **362px above 1150 and 425px between 900 and 1150**, because
+the bar's settings row wraps below 1150 and the bar gets taller.
+
+`scripts/community-bay.mjs` measures the launch bar at each width and asserts
+every other door matches it. That is what keeps this a rule rather than a
+sentence: if the bar grows, a check fails and the token is updated
+deliberately, rather than every other door quietly being the wrong size.
+
+### Below 900px there is no rule, and that is not an exception
+
+There is no fixed frame below 900px — the page scrolls, exactly as it always
+did. And the launch bar is **745px** on a 390px phone, so applying the rule
+there would put most of a screen of empty panel at the top of every door. The
+rule exists to stop the frame moving, and below 900 there is no frame to move.
+
+### What a fixed box buys, which is more than consistency
+
+The version of the Community bay built the day before this rule had to be
+*bounded by construction*: a fixed three rows of photographs, a fixed eight
+rows of table, and the remainder said in a line rather than drawn — because
+`.doorhead` sized to its content and a bay that grew pushed the tab column off
+the bottom of the screen.
+
+Given a fixed box instead, the content can simply **scroll inside it**. So the
+caps came off: the wall shows what it has and a league shows every team, and
+neither needs an "and N more" line pointing at somewhere they are not. The
+constraint that looked like a restriction is what removed two of them.
+
+---
+
 ## THE COMMUNITY BAY IS THE TAB YOU ARE ON — 29 August 2026
 
 Asked for in one message, off a screenshot of the Community door:
@@ -855,64 +925,76 @@ you had just pressed a tab to look at was below the fold, inside the only part
 of the page that scrolls. **The door was arranged backwards** — and the fix is
 not a new pattern, it is the pattern the other four already follow.
 
-### Read above, work below — which is why this is not a duplicate
+### The bottom is controls and options. It never displays the thing.
 
-The obvious objection is that the bay now shows a table that the tab under it
-also shows. It is worth being precise about why that is allowed here and would
-not be everywhere.
+The first version put the content in the bay and left the tab underneath as it
+was — the full tables, the photographs, and the controls mixed in with them.
+That was reported immediately and correctly:
 
-**The bay is the glance and the tab is the work.** The wall is eighteen
-pictures with nothing on them; the Photos tab underneath is where a night is
-opened, a photograph is binned and a night is published. The league bay is one
-venue's top eight with no controls; the league tab underneath is every venue's
-full table, the publish control and the name review.
+> *"If a quiz league appears at the top it shouldn't be at the bottom — the
+> bottom is for controls and options etc., not for displaying the actual thing
+> — so you click the thing at the bottom to reveal it at the top."*
 
-That is this project's own line — *a read-only summary may repeat; a queue may
-not* — and the load-bearing half is that **no control is drawn in both
-places**. Every safeguard in this door is a control drawn UNDER the thing it
-acts on: the bin sits with the night it deletes from so you can see which night
-that is; publishing a table sits under the names it would publish so nobody
-puts a pub's teams online without having just read them. Move either into the
-bay and the safeguard is gone, quietly, with the button still working.
+So the split is not "summary above, detail below". It is **the thing above, and
+what you do about it below**:
 
-`scripts/community-bay.mjs` asserts `.doorhead` contains none of them, on every
-tab and every width. That is a rule with a test on it rather than a note.
-
-### Bounded by construction, because the doorhead does not scroll
-
-This is the constraint that chose both shapes, and it is not a style question.
-
-Above 900px the console is three fixed regions and one scroller: the topbar,
-the door's own header and the tab column stay put, and `.tabbody` is the only
-thing that moves. `.doorhead` sizes to its content. So a bay that grows with
-the data does not get a scrollbar — **it pushes the tab column off the bottom
-of the screen**, and nothing throws, nothing fails a unit test, and the console
-silently loses its menu.
-
-The same fault has already happened here from the other direction: `.console
-main` was an `auto minmax(0,1fr)` grid, so any banner above the doorhead
-dropped the columns into an implicit row and turned the fixed frame back into a
-scrolling page, with every check green.
-
-And the Post gig bench hit the data version of it: a night with thirty
-photographs grew the bench past the frame's bottom edge. **The fix there was
-not a ceiling on the container — it was making the photo row unable to grow
-tall in the first place** (`.night-strip` scrolls sideways rather than
-wrapping). That is the same fix applied here: the wall is a fixed three rows
-and the bay's table a fixed eight, and what is left over is SAID (*"and 3 more,
-below"*) rather than drawn.
-
-Measured with the harness's own warning banners suppressed, since neither is on
-a configured console:
-
-| | doorhead | left for the columns at 1280x720 |
+| | The bay | The tab |
 |---|---|---|
-| Quiz league | 357px | 280px |
-| Photos | 455px | 182px |
-| What they asked for | 173px | 464px |
+| **Photos** | the wall, or one night, or one picture | venues → nights, and the publish control for the night showing |
+| **Quiz league** | the venue rail and that venue's whole table | the scoring note, *Check the names*, and *Put this table up* |
+| **What they asked for** | what is running, in a line | the queue itself |
 
-182px is the tightest and it is deliberate: the tab column is three chips and
-fits inside it, and the content that used to need that space is now above.
+`scripts/community-bay.mjs` asserts both halves: no publish control and no name
+review inside `.doorhead`, and **no `.lg-table` and no `.cphoto` inside
+`.tabbody`** on this door. The second assertion is the one that would have
+caught the first version.
+
+### The safeguards survived the move, and that was the thing to check
+
+Every safeguard on this door is the same mechanism: a control drawn UNDER the
+thing it acts on, so nobody publishes a pub's team names or a room's
+photographs without having just looked at them.
+
+Moving the display up and the control down sounds like exactly what breaks
+that. It does not, for one specific reason: **the frame is fixed, so the bay is
+on screen while the control is pressed** — the pictures are literally above the
+button, in a region that cannot scroll away. What the rule actually forbids is
+a control on a screen the thing is not on, and there isn't one.
+
+The load-bearing detail is that **the publish control is drawn only for the
+night that is SHOWING**. A button on every row would be exactly the fault: one
+tap from a stranger's face going public, on a night nobody had opened.
+
+### One press puts it in the bay, the next takes it out
+
+Three states on the Photos tab, and every step is reversed by pressing the same
+thing again — including *"when you click into a photo another click should go
+back again"*:
+
+```
+the wall  →  press a night in the list  →  that night's photographs
+                    ↑                                  ↓
+              press it again              press a picture / press it again
+                                                       ↓
+                                                  one picture
+```
+
+The night list marks the one showing (`is-showing`, the same held colour the
+Post gig bench uses) and its label says *"Showing above — press to close"*, so
+the way back is on the thing that got you here rather than on a separate
+control in the bay.
+
+### One request per night, not two
+
+`nightPhotos()` fetches a night's pictures and its published flag in the same
+request. The pictures belong in the bay and the control belongs in the tab, so
+the control is **built where the request is made and hung where it is read**:
+`photoWall()` creates the container and `photosSection()` appends it.
+
+That is safe because `render()` evaluates its arguments in order — the doorhead
+is built before the tab body, so the element exists by the time the row wants
+it. Asking twice would be a second request per night for a boolean the first
+one already carried, and two answers that could disagree.
 
 ### Six across, because everything else on this console is six across
 
@@ -925,10 +1007,11 @@ the same eighteen pictures and twice the height, which is exactly what the
 doorhead cannot afford. On a phone it drops to three across — the page scrolls
 there anyway, and six 52px thumbnails is a contact sheet nobody can see.
 
-**The cells are 110px tall with `object-position: center 30%`.** A fixed height
-is what makes three rows a fixed bay height; the crop is biased above centre
-because a wide crop of a portrait photo taken on a phone otherwise lands on
-torsos, and a pub photograph is people.
+**The cells are 96px tall with `object-position: center 30%`.** A fixed cell
+height means a night with thirty pictures scrolls inside the bay rather than
+changing its size; the crop is biased above centre because a wide crop of a
+portrait photo taken on a phone otherwise lands on torsos, and a pub photograph
+is people.
 
 ### The rail is the same object as the tab column under it
 
@@ -969,13 +1052,19 @@ own catch swallows the `ReferenceError`.
 So the guard is a real browser with a viewport, like `drag-check.mjs`, and what
 it asserts is:
 
+- **every door's bay is the launch bay's height**, measured from the launch bar
+  itself rather than from the token, on Console, Workshop, Post gig and all
+  three Community tabs — and still is with a night open in it;
 - the page itself still does not scroll at 1500x900 and 1280x720;
 - enough is left for the tab column, and every tab in it is reachable;
 - nothing overflows sideways at any of the three widths;
-- **no control is in the bay** — no publish, no name review, no bin;
+- **no control is in the bay**, and **no table or photograph is at the bottom**;
 - the wall stops at eighteen, six across (three on a phone);
-- the bay's table stops at eight, and every venue is on the rail;
+- every venue is on the rail and every team is in the table;
 - **pressing a rail button actually changes the table**, not merely lights up;
+- **pressing a night puts its photographs in the bay** and its publish control
+  under its row, and pressing it again returns to the wall;
+- **pressing a picture opens it and pressing it again goes back**;
 - no console errors.
 
 It seeds its own archive of two venues' league nights and stands in for the

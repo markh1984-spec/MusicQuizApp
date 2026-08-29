@@ -343,14 +343,22 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * halves without a second copy of `teamKey()` in the browser.
  */
 /*
- * RAISED TO 187,000 ON 29 AUGUST 2026, deliberately, for the Community bay —
- * the doorhead now carries the tab's own content, and the rule that keeps it
- * from crushing the fixed frame (bounded by construction, never a ceiling on
- * the box round it) is one a session touching that door has to have read
- * before it starts. The reasoning went to `docs/console.md`; what is here is
- * the rules and the guard's name.
+ * RAISED TO 189,000 ON 29 AUGUST 2026, deliberately, and for two rules rather
+ * than one.
+ *
+ * The first is CROSS-CUTTING and is the expensive one to have to rediscover:
+ * every door's bay is the launch bay's size, `--bay-h`, from 900px up. It
+ * governs five sections and any that are added, and a session that changes a
+ * bay without knowing it will break the rule silently — the frame is fixed, so
+ * a bay that grows moves the tab column and everything under it, and nothing
+ * throws. The second is the Community door's own arrangement: the bay is the
+ * tab you are on, and the bottom is controls and options rather than a second
+ * copy of the thing.
+ *
+ * The reasoning for both went to `docs/console.md`; what is here is the rules
+ * and the guard's name.
  */
-const BUDGET = 187_000;
+const BUDGET = 189_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

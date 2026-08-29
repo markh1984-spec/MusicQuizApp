@@ -46,7 +46,9 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 
-const PORT = Number(process.env.PORT || 48822);
+// A port of its own per run, so two of these side by side cannot half-connect
+// to each other's server and report a failure that is about the harness.
+const PORT = Number(process.env.PORT || (48000 + Math.floor(Math.random() * 900)));
 const KEY = 'baycheck';
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'baycheck-'));
 const OUT = process.argv[2] || path.join(os.tmpdir(), 'bayshots');
@@ -158,6 +160,21 @@ try {
       });
     });
 
+    /*
+     * THE LAUNCH BAR IS THE REFERENCE, so it is measured rather than assumed.
+     * If it grows, this fails and `--bay-h` gets updated deliberately — which
+     * is the only way "every bay is the launch bay's size" stays true rather
+     * than being a sentence in a stylesheet.
+     */
+    await page.goto(`http://127.0.0.1:${PORT}/console?key=${KEY}&door=console&tab=quiz`, { waitUntil: 'load' });
+    await page.addStyleTag({ content: '.backup-warn, main > .panel.warn { display: none !important; }' });
+    await page.waitForTimeout(1800);
+    const bayH = await page.evaluate(() => {
+      const d = document.querySelector('.doorhead');
+      return d ? Math.round(d.getBoundingClientRect().height) : 0;
+    });
+    console.log(`\n${label} ${width}x${height} — the launch bay is ${bayH}px tall`);
+
     const frame = () => page.evaluate(() => {
       const head = document.querySelector('.doorhead');
       const cols = document.querySelector('.consolecols');
@@ -171,13 +188,19 @@ try {
         tabsFit: bar ? bar.scrollHeight <= bar.clientHeight + 1 : false,
         pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
         pageScrolls: document.documentElement.scrollHeight - document.documentElement.clientHeight,
-        wall: document.querySelectorAll('.community-shot').length,
+        wall: document.querySelectorAll('.community-wall .cphoto').length,
         wallCols: wall ? getComputedStyle(wall).gridTemplateColumns.split(' ').length : 0,
         rail: document.querySelectorAll('.community-venue').length,
         bayRows: document.querySelectorAll('.community-side tbody tr').length,
-        // No control may be drawn up here: publishing a table and overruling
-        // the filter both belong under the table they act on.
-        bayControls: document.querySelectorAll('.doorhead .lg-pub-on, .doorhead .lg-pub-off, .doorhead .lg-review, .doorhead .cphoto-bin').length,
+        // NO CONTROL AND NO SECOND COPY OF THE THING. Publishing a table,
+        // publishing a night and overruling the filter all belong under what
+        // they act on; a table drawn in the tab body as well as the bay is the
+        // duplicate display this door was rearranged to stop.
+        bayControls: document.querySelectorAll('.doorhead .lg-pub-on, .doorhead .lg-pub-off, .doorhead .lg-review').length,
+        bodyTables: document.querySelectorAll('.tabbody .lg-table').length,
+        bodyPhotos: document.querySelectorAll('.tabbody .cphoto').length,
+        bayPhotos: document.querySelectorAll('.doorhead .cphoto').length,
+        bigShot: document.querySelectorAll('.doorhead .community-big').length,
         lit: (document.querySelector('.community-venue.on .community-venue-name') || {}).textContent || '',
       };
     });
@@ -196,18 +219,68 @@ try {
       if (width >= 900) {
         check(`${label}/${tab}: the page itself does not scroll`, f.pageScrolls <= 0, `${f.pageScrolls}px`);
         check(`${label}/${tab}: the tab column still fits`, f.tabsFit && f.colsHeight > 140, `${f.colsHeight}px left for the columns`);
+        check(`${label}/${tab}: the bay is the launch bay's height`, f.doorhead === bayH, `${f.doorhead}px, launch bar is ${bayH}px`);
       }
       check(`${label}/${tab}: nothing overflows sideways`, f.pageOverflow <= 0, `${f.pageOverflow}px`);
       check(`${label}/${tab}: no control in the bay`, f.bayControls === 0, `${f.bayControls}`);
+      check(`${label}/${tab}: the thing itself is not also at the bottom`, f.bodyTables === 0 && f.bodyPhotos === 0, `${f.bodyTables} tables, ${f.bodyPhotos} photos`);
       if (tab === 'photos') {
         check(`${label}: the wall stops at 18`, f.wall === 18, `drew ${f.wall}`);
         check(`${label}: ${width < 700 ? 'three' : 'six'} across`, f.wallCols === (width < 700 ? 3 : 6), `${f.wallCols}`);
       }
       if (tab === 'league') {
         check(`${label}: every venue on the rail`, f.rail === 2, `${f.rail}`);
-        check(`${label}: the bay's table stops at 8`, f.bayRows === 8, `${f.bayRows}`);
+        // EVERY team, because the bay scrolls inside a fixed height — a cap
+        // plus "and N more, below" would point at a table that is not there.
+        check(`${label}: every team is in the bay's table`, f.bayRows === 11, `${f.bayRows}`);
       }
     }
+
+    /* ---- EVERY DOOR, not only this one. The rule is that the bay is the same
+       size across sections, so a door left out of the sweep is a door that can
+       drift back to its own height without anything noticing. */
+    if (width >= 900) {
+      for (const [door, tab] of [['workshop', 'quiz'], ['post', 'gigs'], ['community', 'league']]) {
+        await page.goto(`http://127.0.0.1:${PORT}/console?key=${KEY}&door=${door}&tab=${tab}`, { waitUntil: 'load' });
+        await page.addStyleTag({ content: '.backup-warn, main > .panel.warn { display: none !important; }' });
+        await page.waitForTimeout(1500);
+        const h = await page.evaluate(() => Math.round(document.querySelector('.doorhead').getBoundingClientRect().height));
+        check(`${label}: the ${door} bay is the launch bay's height`, h === bayH, `${h}px vs ${bayH}px`);
+      }
+    }
+
+    /* ---- PRESS THE THING AT THE BOTTOM, SEE IT AT THE TOP — and press a
+       picture to open it, and again to come back. All four are click handlers,
+       and a dead one draws perfectly: the handler's own catch swallows a
+       ReferenceError and the button simply does nothing. */
+    await page.goto(`http://127.0.0.1:${PORT}/console?key=${KEY}&door=community&tab=photos`, { waitUntil: 'load' });
+    await page.addStyleTag({ content: '.backup-warn, main > .panel.warn { display: none !important; }' });
+    await page.waitForTimeout(2200);
+    await page.locator('.tabbody .venue-top').first().click();
+    await page.waitForTimeout(500);
+    await page.locator('.tabbody .photo-night-top').first().click();
+    await page.waitForTimeout(1800);
+    const opened = await frame();
+    check(`${label}: opening a night puts its photos in the bay`, opened.bayPhotos > 0, `${opened.bayPhotos}`);
+    check(`${label}: and none of them at the bottom`, opened.bodyPhotos === 0, `${opened.bodyPhotos}`);
+    const pubUnder = await page.locator('.tabbody .photo-night-controls .gig-gallery').count();
+    check(`${label}: the publish control is under the night's row`, pubUnder === 1, `${pubUnder}`);
+    if (width >= 900) {
+      const h = await page.evaluate(() => Math.round(document.querySelector('.doorhead').getBoundingClientRect().height));
+      check(`${label}: an open night does not change the bay's height`, h === bayH, `${h}px vs ${bayH}px`);
+    }
+    await page.locator('.doorhead .cphoto').first().click();
+    await page.waitForTimeout(500);
+    check(`${label}: clicking a photo opens it`, (await frame()).bigShot === 1);
+    if (label === 'desk') await page.screenshot({ path: path.join(OUT, 'desk-photo-open.png') });
+    await page.locator('.community-big').click();
+    await page.waitForTimeout(500);
+    const back = await frame();
+    check(`${label}: clicking it again goes back`, back.bigShot === 0 && back.bayPhotos > 0, `${back.bigShot}/${back.bayPhotos}`);
+    if (label === 'desk') await page.screenshot({ path: path.join(OUT, 'desk-night-open.png') });
+    await page.locator('.tabbody .photo-night-top').first().click();
+    await page.waitForTimeout(1500);
+    check(`${label}: pressing the night again returns to the wall`, (await frame()).wall === 18, `${(await frame()).wall}`);
 
     // AND THE RAIL ACTUALLY CHANGES THE TABLE. A dead control draws perfectly:
     // the click handler's own catch would swallow a `ReferenceError` and leave
