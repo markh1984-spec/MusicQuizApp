@@ -18,7 +18,7 @@ import path from 'node:path';
 import { config, paths, hostKey, hostKeyIsTemporary } from './src/config.js';
 import { Store } from './src/store.js';
 import { Hub } from './src/sse.js';
-import { Photos, MAX_BYTES, isCameraFile } from './src/photos.js';
+import { Photos, MAX_BYTES, isCameraFile, extensionFor, sniffType } from './src/photos.js';
 import { Session } from './src/session.js';
 import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked, ROUND_TYPES } from './src/quizzes.js';
 import { recueQuiz } from './src/recue.js';
@@ -3944,6 +3944,85 @@ async function handleWrite(req, res, url, route) {
    * matters if somebody ever asks for their photograph to be destroyed rather
    * than taken down, and the app must not imply otherwise.
    */
+  /*
+   * THE QUIZMASTER'S OWN PHOTOGRAPHS OF THE ROOM — asked for on 29 August
+   * 2026: *"would be good to be able to add room photos to the gallery that
+   * everyone sees, that I take from my own phone?"*
+   *
+   * ---
+   *
+   * **THE ROOM'S CAMERA IS SIXTY PHONES POINTED AT EACH OTHER, and none of
+   * them is pointed at the room.** What a venue wants to be shown is the place
+   * full — the bar three deep, forty heads looking at a projector — and that
+   * is a picture only the person standing at the front takes. Every photo the
+   * gallery has held until now came in through a PLAYER's phone, so the one
+   * shot that actually sells the night was the one that could not get in.
+   *
+   * **IT GOES STRAIGHT INTO THE FILED NIGHT, never through the room's live
+   * photo store**, and that is what makes it usable at all. `photos.add()`
+   * dates a picture by the clock at the moment it lands, so anything sent on
+   * the Friday would file itself under the Friday — a Thursday quiz, and a
+   * photograph of it in a folder for a night that did not happen. Naming the
+   * night in the URL is what lets him do this in the car park, or on Monday.
+   *
+   * **AND IT IS CAMERA-ELIGIBLE BY DEFINITION.** The marker exists to keep a
+   * meme somebody picked off their camera roll off a venue's page; these are
+   * the promotional photographs, taken by the person whose name is on the
+   * page. The one thing they must never do is arrive marked and then silently
+   * not appear.
+   *
+   * Host-only, scoped by `roomForHost` like every other write behind this
+   * door: there is no night, folder or room anybody can send that reaches
+   * another quizmaster's history.
+   */
+  if (route.startsWith('/api/past-photo/') && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
+    const night = decodeURIComponent(route.slice('/api/past-photo/'.length));
+    if (!isNightFolder(night)) return sendJson(res, 404, { error: 'No night with that date.' }), true;
+    if (!photosRepoConfigured()) {
+      // Name the missing thing rather than saying "could not save that", which
+      // would send somebody hunting through the app for a fault in an env var.
+      return sendJson(res, 400, { error: 'The private photo repository is not set up, so there is nowhere to keep these.' }), true;
+    }
+
+    let bytes;
+    try {
+      bytes = await readBody(req, MAX_BYTES);
+    } catch {
+      return sendJson(res, 413, { error: 'That photo is too big. It should be scaled down before it is sent.' }), true;
+    }
+    /*
+     * WHAT THE BYTES ACTUALLY ARE, rather than what the request claimed — the
+     * same sniff `photos.add()` makes, and for the same reason: this file is
+     * served straight back as an image on a public page, so a mislabelled one
+     * would be a broken box in front of a venue.
+     */
+    const sniffed = sniffType(bytes);
+    const ext = sniffed && extensionFor(sniffed);
+    if (!ext) return sendJson(res, 415, { error: 'That is not a photo.' }), true;
+
+    const room = roomForHost(req, url);
+    /*
+     * `mine` IN THE NAME, so a photograph the quizmaster added is tellable
+     * from one the room sent — for a bin, for a count, and for whatever wants
+     * to know later. It carries no `-picked`, so `isCameraFile()` lets it
+     * through to the gallery, which is the whole point of the feature.
+     */
+    const name = `mine${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}${ext}`;
+    const done = await putFile(
+      `${photoFolder(room.id)}/${night}/${name}`,
+      bytes,
+      `${night} — added by the quizmaster`,
+      'photos',
+    );
+    if (done && done.ok === false) return sendJson(res, 502, { error: done.error || 'Could not save that.' }), true;
+    return sendJson(res, 200, {
+      // The same route every other filed photo is served through, so nothing
+      // downstream has to know where this one came from.
+      ok: true, night, name, url: `/past-photo/${night}/${name}`,
+    }), true;
+  }
+
   if (route.startsWith('/api/past-photo/') && req.method === 'DELETE') {
     if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
     const parts = route.slice('/api/past-photo/'.length).split('/');

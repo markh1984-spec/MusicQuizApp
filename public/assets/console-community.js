@@ -43,6 +43,10 @@
  */
 
 import { esc, node } from './client.js';
+// `filters.js` has no page and no boot code — only exported functions — which
+// is what makes importing it here safe. Importing from a module with top-level
+// listeners is what once hung the whole console on "Loading your library…".
+import { drawFiltered } from './filters.js';
 // `keyed` comes from the shell, exactly as `console-gigs.js` takes it — the
 // established pattern here, and safe because it is a hoisted function
 // declaration rather than something read while the shell is half-built.
@@ -331,6 +335,7 @@ function photoWall() {
 
   if (openNight) {
     nightControls = node('<div class="photo-night-controls"></div>');
+    nightControls.appendChild(myPhotos(openNight));
     nightPhotos(body, openNight, {
       wall: true,
       controlsInto: nightControls,
@@ -379,6 +384,105 @@ function photoWall() {
     bayHead('The wall', `The last ${WALL_MAX} pictures the rooms sent.`), body,
   ]));
   return el;
+}
+
+/**
+ * THE QUIZMASTER'S OWN PHOTOGRAPHS OF THE ROOM.
+ *
+ * Asked for on 29 August 2026: *"would be good to be able to add room photos
+ * to the gallery that everyone sees, that I take from my own phone?"*
+ *
+ * **THE ROOM'S CAMERA IS SIXTY PHONES POINTED AT EACH OTHER.** What a venue
+ * wants to be shown is the place FULL — the bar three deep, forty heads
+ * looking at a projector — and that is a picture only the person at the front
+ * takes. Every photo the gallery has ever held came in through a player's
+ * phone, so the one shot that actually sells the night was the one with no way
+ * in.
+ *
+ * **IT IS FILED AGAINST THE NIGHT IN THE URL, never against today.** The
+ * room's own photo store dates a picture by the clock when it lands, so
+ * anything sent on the Friday would file itself under the Friday. Naming the
+ * night is what lets him do this in the car park, or on the Monday.
+ *
+ * **SCALED DOWN HERE, BEFORE IT IS SENT.** A modern phone photograph is five
+ * to eight megabytes and the route caps at three — and this is a quizmaster on
+ * pub wifi, which is the connection this app protects above all others.
+ * `square: false`, unlike a player's photo: a picture of a room is a room, and
+ * cropping it to a square for a wall of thumbnails would throw away the half
+ * that shows how full it was.
+ *
+ * **ONE AT A TIME, IN ORDER, with the count going up as they land.** Firing
+ * six at once is six GitHub writes racing on one folder, and a progress line
+ * that only moves at the end reads as a page that has hung.
+ */
+function myPhotos(night) {
+  const wrap = node(`
+    <div class="mine-add">
+      <label class="minor mine-pick">
+        Add your own photos
+        <input type="file" accept="image/*" multiple hidden>
+      </label>
+      <span class="tiny mine-said">Yours go on the gallery — they are what sells the night.</span>
+    </div>`);
+  const input = wrap.querySelector('input');
+  const said = wrap.querySelector('.mine-said');
+  const label = wrap.querySelector('.mine-pick');
+
+  input.addEventListener('change', async () => {
+    const files = [...(input.files || [])];
+    input.value = '';
+    if (!files.length) return;
+    label.classList.add('is-busy');
+    let done = 0;
+    for (const file of files) {
+      said.textContent = `Sending ${done + 1} of ${files.length}…`;
+      try {
+        const blob = await shrink(file);
+        const res = await fetch(keyed(`/api/past-photo/${encodeURIComponent(night.night)}`), {
+          method: 'POST',
+          headers: { 'Content-Type': 'image/jpeg' },
+          body: blob,
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Could not add that one.');
+        done += 1;
+      } catch (err) {
+        said.textContent = err.message;
+        label.classList.remove('is-busy');
+        return;
+      }
+    }
+    said.textContent = `${done} added.`;
+    label.classList.remove('is-busy');
+    /*
+     * THE WALL IS STALE NOW, so it is dropped rather than left showing the
+     * night as it was a moment ago — the one thing worse than a slow wall is
+     * one that does not have the picture you just watched it accept.
+     */
+    wallShots = null;
+    renderKeepingPlace();
+  });
+  return wrap;
+}
+
+/** A phone photograph, down to something a pub's wifi can carry. */
+function shrink(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const src = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(src);
+      try {
+        const canvas = document.createElement('canvas');
+        // `square: false` — a room is a room. 1600 rather than the phone's
+        // 1280 because this one is meant to be looked at on a laptop.
+        drawFiltered(canvas, img, 'none', 1600, { square: false });
+        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Could not read that photo.'))), 'image/jpeg', 0.85);
+      } catch (err) { reject(err); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(src); reject(new Error('That file is not a photo.')); };
+    img.src = src;
+  });
 }
 
 /** The photos rail, lit on whatever is showing. */

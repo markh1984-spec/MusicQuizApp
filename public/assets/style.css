@@ -9414,6 +9414,14 @@ body.landing {
 .photo-night.is-showing { background: rgba(255, 255, 255, 0.05); }
 .photo-night.is-showing .photo-night-top b { color: var(--hot); }
 .photo-night-controls { padding: 0 12px 10px; }
+/* THE QUIZMASTER'S OWN PHOTOGRAPHS. A `<label>` wrapping a hidden file input,
+   because a bare `<input type="file">` cannot be styled and would be the one
+   flat grey box in the app. Ordinary role — outlined, no fill — since adding a
+   photograph is not the loudest thing on this page; publishing is. */
+.mine-add { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.mine-pick { cursor: pointer; }
+.mine-pick.is-busy { opacity: 0.6; pointer-events: none; }
+.mine-said { color: var(--ink-dim); }
 
 @media (min-width: 900px) {
   .baycols { grid-template-columns: 190px minmax(0, 1fr); }

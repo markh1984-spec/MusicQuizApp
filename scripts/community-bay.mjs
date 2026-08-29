@@ -304,6 +304,19 @@ try {
     check(`${label}: and none of them at the bottom`, opened.bodyPhotos === 0, `${opened.bodyPhotos}`);
     const pubUnder = await page.locator('.tabbody .photo-night-controls .gig-gallery').count();
     check(`${label}: the publish control is under the night's row`, pubUnder === 1, `${pubUnder}`);
+    /*
+     * AND THE WAY TO ADD YOUR OWN IS THERE — *"would be good to be able to add
+     * room photos to the gallery that everyone sees, that I take from my own
+     * phone"*. A `<label>` wrapping a hidden file input, so what is checked is
+     * that the input EXISTS and that the label is what a thumb can hit.
+     */
+    const mine = await page.locator('.tabbody .mine-add input[type=file]').count();
+    const hittable = await page.evaluate(() => {
+      const l = document.querySelector('.tabbody .mine-pick');
+      return l ? Math.round(l.getBoundingClientRect().height) : 0;
+    });
+    check(`${label}: you can add your own photos to the night`, mine === 1, `${mine}`);
+    check(`${label}: and the control is big enough to press`, hittable >= 36, `${hittable}px`);
     if (width >= 900) {
       const h = await page.evaluate(() => Math.round(document.querySelector('.doorhead').getBoundingClientRect().height));
       check(`${label}: an open night does not change the bay's height`, h === bayH, `${h}px vs ${bayH}px`);

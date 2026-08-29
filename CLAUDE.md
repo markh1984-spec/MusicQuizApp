@@ -2020,6 +2020,16 @@ before touching a drag handler.**
 - THE GALLERY ONLY HOLDS WHAT LOOKED LIKE A CAMERA TOOK IT — **tested now,
   because it fails silently**: `camera` defaults FALSE, BOTH routes check it,
   and it never keeps a photo off the projector
+- **THE QUIZMASTER ADDS THEIR OWN ROOM PHOTOS** — *"add room photos to the
+  gallery that everyone sees, that I take from my own phone"*. The room's
+  camera is sixty phones pointed at each other and none at the ROOM, which is
+  the one shot that sells the night. `POST /api/past-photo/<night>`, **filed
+  against the night in the URL and never against today** — the live store dates
+  a picture by the clock when it lands, so a Friday upload would file a
+  Thursday quiz under Friday. **Camera-eligible by definition** (no `-picked`):
+  these ARE the promo photographs. Scaled down in the browser, `square: false`
+  — a room is a room. **A POST written beside GETs is the 404 this repo has
+  already shipped once**, so the test asserts against the 404, not the 400
 
 **[`docs/lobby-games.md`](docs/lobby-games.md)** — what a phone does while the room fills up
 

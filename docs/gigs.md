@@ -1577,3 +1577,91 @@ Mightier" and left the spoonerism with no answer at all.
   MERGED night shape rather than the on-disk one, and then put both venues on
   the same dates — which `mergeGigs()` quite rightly folded into one night,
   losing a whole league. One quizmaster cannot be at two pubs on one evening.
+
+---
+
+## THE QUIZMASTER'S OWN ROOM PHOTOGRAPHS — 29 August 2026
+
+> *"Would be good to be able to add room photos to the gallery that everyone
+> sees, that I take from my own phone?"*
+
+`POST /api/past-photo/<night>` in `server.js`, `myPhotos()` in
+`console-community.js`, under the night showing in the Community bay.
+
+### The room's camera is sixty phones pointed at each other
+
+Every photograph the gallery has ever held arrived through a PLAYER's phone,
+and a player's phone is pointed at their own table. What a venue actually wants
+to be shown is the place full — the bar three deep, forty heads turned towards
+a projector — and that picture can only be taken by the person standing at the
+front.
+
+So the one shot that genuinely sells the night was the one shot with no way in.
+That is the gap, and it is a *Build what helps a quizmaster SELL* feature
+rather than a convenience: the gallery is the evidence, and it was missing its
+best exhibit.
+
+### It is filed against the night in the URL, never against today
+
+This is the load-bearing detail. `photos.add()` dates a picture by the clock at
+the moment it lands — right for a phone in the room, and wrong for everything
+else. A photograph sent on the Friday would file itself under the Friday: a
+Thursday quiz, and a picture of it in a folder for a night that did not happen,
+which the gallery would then show under the wrong date to a venue.
+
+Naming the night in the URL is what makes the feature usable at all — in the
+car park, on the drive home, or on the Monday with the rest of the admin.
+
+It also means the write goes **straight into the private repository**, past the
+room's live photo store. There is nothing to keep in step, because there is no
+second copy.
+
+### Camera-eligible by definition
+
+The `-picked` marker exists to keep a meme somebody pulled off their camera
+roll off a venue's public page. These are the opposite: the promotional
+photographs, taken by the person whose name is at the top of that page.
+
+So they carry no marker and `isCameraFile()` lets them straight through. The
+one thing they must never do is arrive marked and then silently not appear —
+which is exactly what would have happened if this had reused the player upload
+path, since `camera` defaults to FALSE there and a phone's own share sheet
+often strips the EXIF that would say otherwise.
+
+The filename starts `mine`, so a photograph the quizmaster added is tellable
+from one the room sent — for a bin, for a count, and for whatever wants to know
+later.
+
+### Scaled down in the browser, and not cropped square
+
+A modern phone photograph is five to eight megabytes; the route caps at three,
+and this is a quizmaster on pub wifi, which is the connection this app protects
+above every other. So `drawFiltered()` redraws it to 1600px before it is sent —
+1600 rather than a player's 1280, because this one is meant to be looked at on
+a laptop.
+
+**`square: false`, unlike a player's photo.** A picture of a room IS the room,
+and cropping it to a square for a wall of thumbnails would throw away the half
+that shows how full it was.
+
+They are sent **one at a time, in order**, with the count going up as they
+land: six at once is six writes racing on one folder, and a progress line that
+only moves at the end reads as a page that has hung.
+
+### The test asserts against the 404, not the 400
+
+A new POST written beside its GET neighbours is the exact shape of a fault this
+repo has already shipped: the gallery publish route lived inside `handleGet`,
+which only ever runs for GET and HEAD, so every POST fell through to the
+generic 404. It read as a working feature for months — the gate perfect, and no
+handle on it.
+
+So `test/own-photos-route.test.js` posts over real HTTP and asserts the answer
+is **not 404**. A test written for the 400 would pass against a route that does
+not exist. It was verified by renaming the route and watching it fail.
+
+What it cannot reach is the write itself, which needs a repository token this
+suite does not have and must not need — so the deepest assertion is that an
+unconfigured repo is refused with a message that NAMES the missing thing. That
+is the branch a fresh deployment actually hits, and a generic "could not save
+that" would send somebody hunting through the app for a fault in an env var.
