@@ -288,44 +288,53 @@ function photoRail() {
 }
 
 /**
- * THE PHOTOS BAY — the wall, one night, or one picture.
+ * THE PHOTOS BAY — the wall or one night, with a picture over the top of it.
  *
- * Three states and each is the answer to the last thing pressed, which is the
- * model asked for: *"you click the thing at the bottom to reveal it at the
- * top"*, and *"when you click into a photo another click should go back
- * again"*. Since the rail arrived the pressing can also happen in the bay
- * itself, which is what the other doors do.
+ * Two states in the page and a third laid OVER them, which is the fix for
+ * *"when I click into a photo on the gallery and then click off, it seems to
+ * reload the entire gallery at the top — can it not just go back to where I
+ * was?"*
+ *
+ * **NOTHING WAS RELOADING.** The wall is held in a module binding and no fetch
+ * happened. What happened is that opening a picture repainted the page, which
+ * REBUILT the bay — and a fresh element scrolls at 0. Holding the offset
+ * across that is possible (and `renderKeepingPlace()` now does hold every
+ * scroller in the frame, which was worth fixing on its own), but it cannot
+ * help here: the wall is not on screen while the picture is, so by the time
+ * you press back the offset being remembered is the PICTURE's, which is zero.
+ *
+ * **SO THE PICTURE IS AN OVERLAY AND NOTHING IS DESTROYED.** Opening and
+ * closing one is a local DOM operation inside this panel — no render, no
+ * rebuild, and the wall underneath keeps its scroll because it was never
+ * touched. It is also simply faster, and it leaves the heading and the rail
+ * in place so you can still see which night you are looking into.
  */
 function photoWall() {
   loadPhotoNights();
   const el = node('<div class="panel launchbar bench community-bench bay-scroller"></div>');
   const body = node('<div class="bay-body"></div>');
 
-  /* ONE PICTURE, FILLING THE BAY. `contain` rather than `cover`, because this
-     is the moment somebody is actually LOOKING at it — a crop is right on a
-     wall of thumbnails and wrong here. Clicking anywhere on it goes back. */
-  if (openShot) {
-    const big = node(`
-      <button class="community-big" type="button" title="Back to the photographs">
-        <img src="${esc(openShot.url)}" alt="">
+  /*
+   * ONE PICTURE, OVER THE BAY. `contain` rather than `cover`, because this is
+   * the moment somebody is actually LOOKING at it — a crop is right on a wall
+   * of thumbnails and wrong here. Clicking anywhere on it goes back.
+   */
+  const openIt = (shot) => {
+    openShot = shot;
+    const over = node(`
+      <button class="community-big" type="button" title="Click again to go back">
+        <img src="${esc(shot.url)}" alt="">
       </button>`);
-    big.addEventListener('click', () => { openShot = null; renderKeepingPlace(); });
-    body.appendChild(big);
-    el.appendChild(bayColumns(rail(openShotNight()), [
-      bayHead('One picture', 'Click it again to go back.'), body,
-    ]));
-    return el;
-  }
+    over.addEventListener('click', () => { openShot = null; over.remove(); });
+    body.appendChild(over);
+  };
 
-  /* ONE NIGHT. The bin rides on each picture — it belongs to the photograph
-     rather than being a control panel — and the publish control is built here
-     and hung under the night's row in the tab body. */
   if (openNight) {
     nightControls = node('<div class="photo-night-controls"></div>');
     nightPhotos(body, openNight, {
       wall: true,
       controlsInto: nightControls,
-      onOpen: (p) => { openShot = p; renderKeepingPlace(); },
+      onOpen: openIt,
     });
     el.appendChild(bayColumns(rail(openNight.night), [
       bayHead(readable(openNight.night), openNight.venue || ''), body,
@@ -352,10 +361,13 @@ function photoWall() {
         <button class="cphoto filed is-openable" type="button" title="${esc(shot.where)}">
           <img src="${esc(shot.url)}" alt="" loading="lazy">
         </button>`);
-      tile.addEventListener('click', () => { openShot = shot; renderKeepingPlace(); });
+      tile.addEventListener('click', () => openIt(shot));
       grid.appendChild(tile);
     }
     body.appendChild(grid);
+    // A picture that was open when a state push rebuilt the page comes back
+    // over the wall it was opened from, rather than vanishing mid-look.
+    if (openShot) openIt(openShot);
   };
 
   if (wallShots) draw(wallShots);
@@ -369,14 +381,16 @@ function photoWall() {
   return el;
 }
 
-/** Which rail row a blown-up picture belongs to — its night, or the wall. */
-function openShotNight() { return openNight ? openNight.night : ''; }
-
 /** The photos rail, lit on whatever is showing. */
 function rail(picked) {
   return bayRail({
     items: photoRail(),
     picked,
+    railId: 'photos',
+    // A rail is a picker, not the archive — the whole list, with its venue
+    // cards and headcounts, is the tab body directly underneath.
+    more: 'Older nights are in the list below.',
+    onFold: () => renderKeepingPlace(),
     onPick: (key) => {
       openShot = null;
       nightControls = null;
@@ -509,6 +523,8 @@ function leagueBay() {
         note: `${l.table.length} team${l.table.length === 1 ? '' : 's'} · ${l.nights} night${l.nights === 1 ? '' : 's'}`,
       })),
       picked,
+      railId: 'league',
+      onFold: () => renderKeepingPlace(),
       /*
        * THE WHOLE PAGE REPAINTS, not just the bay — because the CONTROLS for
        * this venue live in the tab body underneath, and a rail that changed the

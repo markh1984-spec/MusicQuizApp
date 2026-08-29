@@ -1368,12 +1368,39 @@ export function renderKeepingPlace() {
    * would be a second place to get the breakpoint wrong.
    */
   const y = window.scrollY;
-  const pane = mainEl.querySelector('.tabbody');
-  const inner = pane ? pane.scrollTop : 0;
+  /*
+   * AND EVERY SCROLLER IN THE FRAME, not only the tab body.
+   *
+   * Reported as *"when I click into a photo on the gallery and then click off,
+   * it seems to reload the entire gallery at the top — can it not just go back
+   * to where I was?"* It was not reloading anything: the wall is held in a
+   * module binding and nothing was fetched again. The bay is simply REBUILT,
+   * and a fresh element scrolls at 0.
+   *
+   * That is the identical fault this function was written for, one region up.
+   * Since the bay became a rail and what it picked there are three scrollers
+   * rather than one — the rail, the thing beside it, and the tab body — and
+   * every one of them is a place somebody can be. Holding only the tab body's
+   * offset holds a third of the page.
+   *
+   * BY CLASS RATHER THAN BY A LIST OF PLACES: a door that grows another
+   * scroller gets this for free, which is what stops the next one being
+   * reported the same way. Matched in DOM order and written back in DOM order,
+   * so it does not matter that the elements themselves are new.
+   */
+  const SCROLLERS = '.tabbody, .bay-rail, .bay-body, .bay-side';
+  const held = [...mainEl.querySelectorAll(SCROLLERS)].map((el) => el.scrollTop);
   render();
   window.scrollTo({ top: y });
-  const again = mainEl.querySelector('.tabbody');
-  if (again) again.scrollTop = inner;
+  /*
+   * A DIFFERENT NUMBER OF SCROLLERS IS NOT A FAILURE — opening a picture swaps
+   * the bay's two columns for one. Anything that has no offset saved keeps its
+   * own, and anything saved with nowhere to go is dropped. The common case is
+   * the same shape both sides and every offset lands.
+   */
+  [...mainEl.querySelectorAll(SCROLLERS)].forEach((el, i) => {
+    if (held[i] !== undefined) el.scrollTop = held[i];
+  });
 }
 
 /* ========================================================== MY ACCOUNT

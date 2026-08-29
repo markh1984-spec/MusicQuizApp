@@ -262,6 +262,28 @@ try {
         }));
         check(`${label}: the ${door} bay is the launch bay's height`, m.h === bayH, `${m.h}px vs ${bayH}px`);
         check(`${label}: ${door} has a rail`, m.rail > 0, `${m.rail} rows`);
+        /*
+         * A GROUP FOLDS AND UNFOLDS. Nothing in this repo presses a control,
+         * and a dead one draws perfectly — the handler's own catch eats the
+         * ReferenceError, so the caret simply never turns.
+         */
+        const beforeRows = m.rail;
+        /*
+         * ONLY WHERE THERE IS SOMETHING TO FOLD. The league rail is one row per
+         * venue with nothing above a venue to fold it into, which is correct —
+         * a fold with one level under it is a control with no job.
+         */
+        if (!(await page.locator('.doorhead .bay-rail-group').count())) continue;
+        await page.locator('.doorhead .bay-rail-group').first().click();
+        await page.waitForTimeout(600);
+        const shut = await page.evaluate(() => document.querySelectorAll('.doorhead .bay-pick').length);
+        await page.locator('.doorhead .bay-rail-group').first().click();
+        await page.waitForTimeout(600);
+        const open2 = await page.evaluate(() => document.querySelectorAll('.doorhead .bay-pick').length);
+        check(`${label}: ${door}'s first group folds`, shut < beforeRows, `${beforeRows} -> ${shut}`);
+        check(`${label}: and unfolds again`, open2 === beforeRows, `${shut} -> ${open2}`);
+        // FOUR AT A TIME, with the rest named as being below — asked for.
+        check(`${label}: ${door} shows at most 4 per group`, open2 <= 4 * 3, `${open2}`);
         check(`${label}: ${door}'s group headings are not squashed`, m.squashed === 0, `${m.squashed} under 12px`);
       }
     }
@@ -294,6 +316,32 @@ try {
     await page.waitForTimeout(500);
     const back = await frame();
     check(`${label}: clicking it again goes back`, back.bigShot === 0 && back.bayPhotos > 0, `${back.bigShot}/${back.bayPhotos}`);
+
+    /*
+     * AND THE WALL KEEPS ITS PLACE. Reported as *"it seems to reload the
+     * entire gallery at the top"* — nothing reloaded; the bay was REBUILT, and
+     * a fresh element scrolls at 0. The picture is an overlay now, so the grid
+     * underneath is never destroyed and there is an offset to compare either
+     * side of it.
+     *
+     * Clicked through `evaluate` rather than the mouse ON PURPOSE: Playwright
+     * scrolls a target into view before clicking it, which would put the wall
+     * back to the top itself and make this assertion about the harness. The
+     * real-mouse path is already proved by the two checks above.
+     */
+    if (width >= 900) {
+      const scrolled = await page.evaluate(() => {
+        const b = document.querySelector('.doorhead .bay-body');
+        b.scrollTop = 120;
+        return b.scrollTop;
+      });
+      await page.evaluate(() => document.querySelectorAll('.doorhead .cphoto')[3].click());
+      await page.waitForTimeout(400);
+      await page.evaluate(() => document.querySelector('.community-big').click());
+      await page.waitForTimeout(400);
+      const after = await page.evaluate(() => document.querySelector('.doorhead .bay-body').scrollTop);
+      check(`${label}: and it goes back where you were`, scrolled > 0 && after === scrolled, `${scrolled} -> ${after}`);
+    }
     if (label === 'desk') await page.screenshot({ path: path.join(OUT, 'desk-night-open.png') });
     await page.locator('.tabbody .photo-night-top').first().click();
     await page.waitForTimeout(1500);

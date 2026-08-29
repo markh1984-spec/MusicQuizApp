@@ -1231,3 +1231,96 @@ override they had made.
 **The cost, accepted knowingly:** two genuinely different pubs that share a
 name merge. That was already true on the name-only path, and it is why venue
 names in practice carry their town.
+
+### The pub folds, four nights at a time — 29 August 2026
+
+> *"Can this section be collapsible within its current dimensions, i.e. Station
+> Tap Wokingham collapses and then expands into each night (perhaps the last 4
+> nights, with older nights accessible in the venues section below)?"*
+
+This overrules a line written the day before — *a heading, never a second level
+of clicking* — and the correction is fair. That reasoning was measured against
+a rail holding two pubs and three nights. Against a real archive it holds a
+dozen dates under three or four pubs, which is a rail you scroll to find
+anything in. A fold is worth a tap when the alternative is a scroll.
+
+Four defaults that make it work, each of which was a wrong version first:
+
+- **A group holding what you are looking at is open, whatever is remembered** —
+  and **the picked row is always drawn, even past the cap.** Otherwise opening
+  an older night from the list below lights a row inside a shut fold, and the
+  rail points at nothing while claiming to be a picker.
+- **With nothing picked, the FIRST group opens.** The first build had every
+  group shut by default, which landed on exactly the moment somebody arrives
+  with nothing on the bench: two headings, nothing to press, and a tap needed
+  before the rail does anything at all.
+- **With one group there is no fold.** A disclosure hiding the only list on the
+  page is a control with no job — so the league rail, which is one row per
+  venue, has no headings at all.
+- **The folds live in a module `Map`, keyed by rail AND group.** The bay is
+  rebuilt on every state push, so a fold held in a closure shuts itself the
+  moment the next phone joins. And "The Crown" is a group on Post gig *and* on
+  Community — one key would make opening it on one door open it on the other.
+
+`GROUP_CAP` is 4, asked for by name, with *"Older nights are in Past gigs
+below"* under a group that has more. The rail is the night you are thinking
+about; the tab body underneath is the archive, with search and headcounts on
+it. A rail that tries to be the archive stops being a picker.
+
+### A picture is an overlay, and that is what keeps the wall's place
+
+> *"When I click into a photo on the gallery and then click off, it seems to
+> reload the entire gallery at the top — can it not just go back to where I
+> was?"*
+
+**Nothing was reloading.** The wall is held in a module binding and no fetch
+happened. What happened is that opening a picture called `renderKeepingPlace()`
+— which rebuilt the bay — and a fresh element scrolls at 0.
+
+Two fixes, and both were worth making:
+
+**`renderKeepingPlace()` now holds every scroller in the frame.** It held
+`.tabbody` only, which was right when that was the only one. Since the bay
+became a rail and what it picked there are three — the rail, the thing beside
+it, and the tab body — and every one is a place somebody can be. Matched by
+CLASS rather than by a list of places, so a door that grows another scroller
+gets it for free.
+
+**But that alone could not fix this one**, which is the instructive half: the
+wall is not on screen while the picture is, so by the time you press back the
+offset being remembered is the *picture's*, which is zero. So the picture
+became an **overlay** — absolutely positioned over `.bay-body`, opened and
+closed by a local DOM change with no render at all. The grid underneath is
+never destroyed, so there is nothing to restore. It is also faster, and it
+leaves the heading and the rail in place so you can still see which night you
+are looking into.
+
+The check drives this with `evaluate` rather than the mouse, deliberately:
+Playwright scrolls a target into view before clicking it, which would put the
+wall back to the top itself and make the assertion about the harness. The
+real-mouse path is proved by the two checks either side of it.
+
+### The gallery already only held camera photos — it just had no test
+
+> *"Can we make it so only photos actually taken on the night appear on the
+> gallery on the website, and the uploaded photos can go on the screen but
+> aren't accessible? Uploaded photos are funny but aren't good promo."*
+
+This was built. `looksCameraTaken()` reads the EXIF Make tag off the original
+file before the upload's own canvas redraw strips it, sends `&camera=1`, and
+`add()` writes the `-picked` marker into the filename when it is absent;
+`isCameraFile()` reads it, and `server.js` checks it **twice** — once when
+listing a night and again on the single-photo route, because a URL can be
+typed and that photo's name was on the projector all night.
+
+What did not exist was an assertion, and this is a rule that fails **silently**:
+the page still loads, it just has somebody's meme on it. `test/gallery-camera-
+only.test.js` now covers the marker in both directions, that `camera` defaults
+to FALSE so an unreadable photo errs off the page, that a marked photo is still
+in the room's own list (the rule is a VIEW, never a refusal — the whole point
+is that it still goes on the projector), and that both routes filter.
+
+That last one is a source check, which is the honest shape here: the routes
+read the private repository, so running them needs a token this suite does not
+have and must not need. What it guards is the PAIR — dropping either half is a
+silent hole, and nothing else would notice.

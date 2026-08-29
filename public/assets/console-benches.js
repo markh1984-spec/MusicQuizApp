@@ -204,6 +204,11 @@ export function workBench() {
     bayRail({
       items: railRows,
       picked: bench ? `${bench.kind}:${bench.id}` : '',
+      railId: 'packs',
+      // The rail is the handful you are working on; the shelf below is every
+      // pack you hold, with its search and its filters.
+      more: 'The rest are on the shelf below.',
+      onFold: () => putOnBench(bench ? shelfFor(bench.kind).find((p) => p.id === bench.id) : null, bench && bench.kind),
       onPick: (key) => {
         const kind = key.slice(0, key.indexOf(':'));
         const id = key.slice(kind.length + 1);
@@ -361,6 +366,11 @@ export function nightBenchPanel() {
       bayRail({
         items: railRows(),
         picked: night ? night.night : '',
+        railId: 'nights',
+        // The rail is the last few; Past gigs underneath is the whole archive,
+        // with its venue cards, headcounts and search on it.
+        more: 'Older nights are in Past gigs below.',
+        onFold: () => draw(night),
         onPick: (key) => putNightOnBench(key),
         empty: 'Nothing filed yet.',
       }),

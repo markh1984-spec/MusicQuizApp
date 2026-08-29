@@ -522,7 +522,7 @@ opening a second file.
 - **How many prizes is chosen at launch too**
 - **"You got it" means the prize ON THE TABLE**
 - **A strip wins the long way only**
-- **Launch is the last thing on a pack card, and full width** — superseded; a pack card has no Launch. The rule moved to TONIGHT: biggest thing, nothing under it, so it cannot be hit on the way elsewhere.
+- **Launch is the last thing on a pack card, and full width** — superseded; a pack card has no Launch. The rule moved to TONIGHT.
 - **The tab icon and the logo are one drawing**
 - **A QUESTION MARK INSIDE A MICROPHONE**
 - **The sound arcs are built but OFF** — **The app never draws this mark above 30px**: 22 on a phone, 26 on the projector and the owner page, 30 on the console and login, 16 in the tab.
@@ -1587,12 +1587,16 @@ with photographs).
   stack, same lit left edge.
 - **A RAIL PICKS; IT NEVER ACTS.** Nothing in it deletes, publishes or
   launches, so the worst a mis-tap does is show you something else.
-- **COMPARTMENTALISED BY PUB, THEN THE NIGHTS FROM THERE** — asked for in those
-  words. A HEADING, never a second level of clicking: a row you must open
-  before you can pick it costs two taps to save one line. **Group by the pub
-  FIRST, then order within it** — walking the archive in date order and
-  printing the venue whenever it changed drew "The Crown" twice with a
-  different pub between, which reads as two pubs of one name.
+- **COMPARTMENTALISED BY PUB, AND THE PUB FOLDS** — *"can this section be
+  collapsible?"* **Group by the pub FIRST, then order within it**: printing the
+  venue whenever it changed in date order drew "The Crown" twice with another
+  pub between, which reads as two pubs of one name. **FOUR TO A GROUP, the rest
+  named as being below** — the rail is the night you are thinking about; the
+  tab body is the archive.
+- **A GROUP HOLDING WHAT YOU ARE LOOKING AT IS OPEN**, and so is the picked row
+  even past the cap, or a pick made below lights a row in a shut fold. **With
+  nothing picked the FIRST group opens**, or the rail has nothing to press. **The folds live in a module Map keyed by rail AND group** — the
+  bay is rebuilt on every push, and "The Crown" is a group on two doors.
 - **`.bay-rail > * { flex: 0 0 auto }` IS LOAD-BEARING.** A flex column shrinks
   its children when the content overflows, and the rail always overflows — it
   scrolls. The rows survived on `min-height: 44px`; the pub headings had no
@@ -1639,21 +1643,26 @@ up there too."*
   publishes a night or a table without having just looked at it — kept by
   drawing the button UNDER the thing. In a fixed frame the bay is on screen
   while the button is pressed, so it still is. The publish control is drawn
-  ONLY for the night that is showing; a button on a row nobody has opened is
-  what would break it.
+  ONLY for the night that is showing; a button on a row nobody has opened
+  breaks it.
 - **ONE PRESS PUTS IT IN THE BAY, THE NEXT TAKES IT OUT** — and *"when you
   click into a photo another click should go back again"*: wall → one night →
   one picture, each step reversed by pressing the same thing.
+- **A PICTURE IS AN OVERLAY, NOT A REPLACEMENT — which keeps the wall's
+  place.** *"It seems to reload the entire gallery at the top"*: nothing
+  reloaded, the bay was REBUILT and a fresh element scrolls at 0. Opening one
+  is a local DOM change, no render. **`renderKeepingPlace()` holds every
+  scroller in the frame**, by class.
 - **ONE REQUEST PER NIGHT, NOT TWO.** `nightPhotos()` fetches the pictures and
   the published flag together, so the control is BUILT in the bay and HUNG in
   the tab body — safe because `render()` evaluates the doorhead before the tab
   body.
 - **SIX ACROSS, because everything else here is six across** — the shelf and
-  the Tonight bays; three across on a phone.
+  the Tonight bays; three on a phone.
 - **THE WALL IS FETCHED ONCE PER PAGE LOAD AND STOPS ASKING** — a photo list is
   a request per night, so it walks the newest until eighteen are in hand and
   never past `WALL_NIGHTS`. Held in a module binding: the bay is rebuilt on
-  every state push, which at a lobby is every join.
+  every push, at a lobby every join.
 - **`node scripts/community-bay.mjs` IS THE GUARD, and it measures GEOMETRY** —
   every door's bay against the launch bar's, that each has a rail whose
   headings are not squashed, what is left for the columns, whether the page
@@ -2008,7 +2017,9 @@ before touching a drag handler.**
 - PUTTING A NIGHT ON THE PUBLIC GALLERY
 - AND THE PREVIEW DID NOT WORK ON THE HOST KEY
 - CHECKING THE PHOTOS IS THE NEXT PRESS
-- THE GALLERY ONLY HOLDS WHAT LOOKED LIKE A CAMERA TOOK IT
+- THE GALLERY ONLY HOLDS WHAT LOOKED LIKE A CAMERA TOOK IT — **tested now,
+  because it fails silently**: `camera` defaults FALSE, BOTH routes check it,
+  and it never keeps a photo off the projector
 
 **[`docs/lobby-games.md`](docs/lobby-games.md)** — what a phone does while the room fills up
 

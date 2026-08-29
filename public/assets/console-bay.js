@@ -42,34 +42,57 @@
 import { esc, node } from './client.js';
 
 /**
+ * HOW MANY OF A GROUP'S ROWS THE RAIL SHOWS BEFORE IT STOPS.
+ *
+ * *"Perhaps the last 4 nights, with older nights accessible in the venues
+ * section below?"* Four is the number asked for and it is a good one: the rail
+ * is for **the night you are thinking about**, which is almost always one of
+ * the last few, and the tab body below already has the whole archive with
+ * search and headcounts on it. A rail that tries to be the archive stops being
+ * a picker.
+ */
+const GROUP_CAP = 4;
+
+/**
+ * WHICH GROUPS ARE OPEN, remembered across renders.
+ *
+ * Module-level because the bay is rebuilt on every state push — which during a
+ * lobby is every time somebody joins — so a fold kept inside the render would
+ * shut itself the moment the next phone arrived. That is the same fault the
+ * who-picked-what panel records, and the same fix.
+ *
+ * **KEYED BY RAIL AND GROUP, never by group alone.** Two doors can hold a
+ * group of the same name — "The Crown" is a pub on Post gig and a pub on
+ * Community — and one key would make opening it on one door open it on the
+ * other, which is a fold that appears to have a mind of its own.
+ */
+const openGroups = new Map();
+
+/**
  * One rail.
  *
  * @param {object}   o
- * @param {Array}    o.items   `{ key, name, note, style?, cls? }` per row.
- *   `style`/`cls` are for a pack's own colours — see `packLookAttrs()`; a row
- *   with neither is a plain row, which is what a night and a venue are.
+ * @param {Array}    o.items   `{ key, name, note, group?, style?, cls? }` per
+ *   row. `style`/`cls` are for a pack's own colours — see `packLookAttrs()`; a
+ *   row with neither is a plain row, which is what a night and a venue are.
  * @param {string}   o.picked  the key that is lit
  * @param {Function} o.onPick  called with the key
  * @param {string} [o.empty]   what to say when there is nothing to pick
+ * @param {string} [o.railId]  which rail this is, for remembering its folds
+ * @param {string} [o.more]    the line under a group that has more than it shows
+ * @param {Function} [o.onFold]  redraw, after a group is opened or shut
  */
-export function bayRail({ items = [], picked = '', onPick = () => {}, empty = '' }) {
+export function bayRail({
+  items = [], picked = '', onPick = () => {}, empty = '', railId = '', more = '',
+  onFold = () => {},
+}) {
   const rail = node('<div class="bay-rail" role="tablist"></div>');
   if (!items.length) {
     if (empty) rail.appendChild(node(`<div class="tiny bay-rail-none">${esc(empty)}</div>`));
     return rail;
   }
-  let group = '';
-  for (const item of items) {
-    /*
-     * COMPARTMENTALISED BY PUB, AND THEN THE NIGHTS FROM THERE — asked for in
-     * those words. A heading rather than a second level of clicking: a rail
-     * whose rows have to be opened before they can be picked makes the common
-     * job two taps to save one line of text, which is the wrong way round.
-     */
-    if (item.group && item.group !== group) {
-      group = item.group;
-      rail.appendChild(node(`<div class="tiny bay-rail-group">${esc(group)}</div>`));
-    }
+
+  const row = (item) => {
     const btn = node(`
       <button class="bay-pick ${item.key === picked ? 'on' : ''} ${esc(item.cls || '')}"
               type="button" role="tab" aria-selected="${item.key === picked}"
@@ -78,7 +101,83 @@ export function bayRail({ items = [], picked = '', onPick = () => {}, empty = ''
         ${item.note ? `<span class="tiny bay-pick-note">${esc(item.note)}</span>` : ''}
       </button>`);
     btn.addEventListener('click', () => onPick(item.key));
-    rail.appendChild(btn);
+    return btn;
+  };
+
+  /*
+   * GROUPED FIRST, in the order the caller gave them — the caller has already
+   * decided that a pub's nights sit together and which pub comes first, and
+   * re-sorting here would be a second opinion about it.
+   */
+  const groups = [];
+  const byName = new Map();
+  for (const item of items) {
+    const name = item.group || '';
+    if (!byName.has(name)) { byName.set(name, { name, rows: [] }); groups.push(byName.get(name)); }
+    byName.get(name).rows.push(item);
+  }
+
+  /*
+   * A GROUP OPENS BY DEFAULT WHEN NOTHING IS PICKED — the FIRST one, and only
+   * it. Every fold shut is a rail with nothing to pick in it, which is the
+   * two-taps-to-save-a-line fault this app has a rule against, and it lands on
+   * exactly the moment somebody arrives with nothing on the bench. One list
+   * open and the rest folded is compact AND usable.
+   */
+  const anyPicked = items.some((i) => i.key === picked);
+
+  for (const [index, group] of groups.entries()) {
+    // Ungrouped rows are just rows — the league rail is every venue, and there
+    // is nothing above a venue to fold it into.
+    if (!group.name) { for (const item of group.rows) rail.appendChild(row(item)); continue; }
+
+    /*
+     * A GROUP HOLDING WHAT YOU ARE LOOKING AT IS OPEN, whatever else is
+     * remembered. Otherwise a pick made from the tab body — or a night
+     * restored from last time — would light a row inside a shut fold, and the
+     * rail would be pointing at nothing while claiming to be a picker.
+     *
+     * With one group there is nothing to choose between, so it opens: a lone
+     * fold hiding the only list on the page is a control with no job.
+     */
+    const key = `${railId}::${group.name}`;
+    const holdsPicked = group.rows.some((r) => r.key === picked);
+    const byDefault = groups.length === 1 || (!anyPicked && index === 0);
+    const isOpen = holdsPicked || (openGroups.has(key) ? openGroups.get(key) : byDefault);
+
+    const head = node(`
+      <button class="bay-rail-group ${isOpen ? 'on' : ''}" type="button"
+              aria-expanded="${isOpen}" title="${esc(group.name)}">
+        <span class="bay-rail-caret" aria-hidden="true"></span>
+        <span class="bay-rail-what">${esc(group.name)}</span>
+        <span class="tiny bay-rail-count">${group.rows.length}</span>
+      </button>`);
+    /*
+     * THE COUNT STAYS ON THE HEADING WHETHER IT IS OPEN OR SHUT. Shut, it is
+     * the only thing saying there is anything in there; open, it is what says
+     * how many are NOT being shown once the cap bites.
+     */
+    // Redrawn by whoever owns the bay — the rail is handed the way back rather
+    // than reaching for one, so it stays a leaf that imports nothing but the
+    // shared helpers. The same rule `breakPlumbing()` follows.
+    head.addEventListener('click', () => { openGroups.set(key, !isOpen); onFold(); });
+    rail.appendChild(head);
+    if (!isOpen) continue;
+
+    const shown = group.rows.slice(0, GROUP_CAP);
+    /*
+     * AND THE ONE YOU ARE LOOKING AT IS ALWAYS DRAWN, even past the cap.
+     * Otherwise opening an older night from the list below lights a row the
+     * rail has decided not to show, which is the fold problem again one level
+     * down.
+     */
+    if (holdsPicked && !shown.some((r) => r.key === picked)) {
+      shown[shown.length - 1] = group.rows.find((r) => r.key === picked);
+    }
+    for (const item of shown) rail.appendChild(row(item));
+    if (group.rows.length > shown.length && more) {
+      rail.appendChild(node(`<div class="tiny bay-rail-more">${esc(more)}</div>`));
+    }
   }
   return rail;
 }
