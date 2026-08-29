@@ -1076,3 +1076,158 @@ Two fixture traps it is worth not rediscovering: the HOUSE room's archive is
 `DATA_DIR/archive`, not `DATA_DIR/rooms/HOUSE/archive`; and **two venues seeded
 on the same dates produce no leagues at all**, because `mergeGigs` folds them
 into one night, marks it `venueMixed` and drops the venue.
+
+---
+
+## EVERY BAY IS A RAIL AND WHAT IT PICKED — 29 August 2026
+
+Off a screenshot of the Community league bay:
+
+> *"The way this is presented is perfect — content taking up the bulk to the
+> right, controls on the left. How can we utilise this for all of the
+> sections?"*
+
+`public/assets/console-bay.js` — `bayRail()`, `bayColumns()`, `bayHead()`.
+
+### Each door had already invented its own version of it
+
+That is what makes this an extraction rather than a new feature. Before it:
+
+| Door | how you changed what the bay was showing |
+|---|---|
+| Workshop | drag a pack up from the shelf, or tap a card down there |
+| Post gig | drag a night up from the list |
+| Community | scroll the tab body to find the venue you wanted |
+
+Three answers to one question — *pick one of these* — none of them the same
+shape, and one of them (Community's) with no picker at all until the day
+before. A single rail is the correction, and the rail deliberately IS the tab
+column one region higher: same 190px, same stack, same lit left edge. Two
+different ways of saying "pick one of these" on one screen is the label
+collision this project has a standing rule against, so the second one is the
+first one.
+
+### The Console door is the exception, and it should stay one
+
+Its bay is the launch bar. Three reasons not to give it a rail, in order:
+
+- **it is the protected surface** — the path from "the room is sitting down" to
+  "the quiz is running", and the one panel where a regression costs an evening;
+- **it is the reference** every other bay is sized against (`--bay-h`);
+- **it is not a list of things to look at.** It is the one thing you came to
+  do. A rail down its left would be answering a question nobody asks there.
+
+### A rail picks; it never acts
+
+Nothing in `bayRail()` deletes, publishes or launches. Controls live under the
+thing they act on — the Community door's own rule, and the reason the worst a
+mis-tap on a rail can do is show you something else.
+
+`scripts/community-bay.mjs` asserts every door has a rail and that the Console
+door does not.
+
+### Compartmentalised by pub, then the nights from there
+
+> *"The same pub having two evenings is fine — but it should probably be
+> compartmentalised into a single pub and then nights from there."*
+
+A **heading** in the rail, never a second level of clicking: a row you have to
+open before you can pick it costs two taps to save one line of text, which is
+the wrong way round on the app's own ease-of-use rule.
+
+The trap is in the ordering, and the first version fell into it. Walking the
+archive in date order and printing the venue whenever it *changed* is not
+grouping — two Thursdays at The Crown either side of a Monday at The Station
+Tap printed "The Crown" twice, which reads as two pubs with the same name. So
+the nights are grouped by pub first; the pubs keep date order (the one you
+played at last is first, as every list of venues here does) and the nights
+inside each keep theirs.
+
+### `.bay-rail > * { flex: 0 0 auto }` is load-bearing
+
+The rail is a flex column, and **a flex column shrinks its children when the
+content is taller than the box**. The rail is always taller than the box — it
+scrolls.
+
+The rows survived that on `min-height: 44px`. The pub headings had no floor, so
+they rendered at **2px, with their text present in the DOM**: a rail that had
+compartmentalised its nights perfectly drew as one undivided list, `groups`
+came back with both venue names in it, and nothing threw.
+
+Found by measuring `getBoundingClientRect()` on them rather than counting them.
+That is the third time this repo has been bitten by the difference between "it
+is in the document" and "somebody can see it" — the arcade board nobody drew,
+the publish route nobody called, and now this. The check now fails any rail
+heading under 12px.
+
+### The drags survived, because they were never on the slot
+
+Both benches wire `dragover`/`drop` on the **panel**, not on the tile inside
+it, so putting a rail in front of them changed nothing. Each empty state keeps
+its drop zone too — a quizmaster with nothing filed has an empty rail, and the
+panel still has to say what it is for.
+
+### `console-benches.js` — the seam the budget test asked for
+
+Adding the rail pushed `console.js` past its 2,000-line budget, and the
+budget's own message names the fix: *take a seam out of it*. `workBench()` and
+`nightBenchPanel()` are a real seam rather than an arbitrary cut — they are the
+same object twice, one holding a pack and one holding a night, they share
+`wireBenchFold()` and the two storage keys, and neither is the shell's job.
+
+Moved **by line number**, so not one function body was retyped. It imports from
+`console.js`, which is the established direction here (`console-community.js`
+and `console-gigs.js` already do) and is safe because everything taken is
+either a hoisted declaration or a `const` evaluated while `console.js`
+initialises — long before the boot call at the end of it.
+
+---
+
+## ONE PUB IS ONE LEAGUE — 29 August 2026
+
+Reported as a screenshot of the league rail with **"The Station Tap,
+Wokingham" in it twice**, once with 17 teams and once with 20.
+
+### What was happening
+
+`venueKeyOf()` returns `id:xyz` when a night carries a `venueId` and the
+lowercased name when it does not. The host picks the venue off his Venues list
+some weeks and types it freehand others, so his nights at one pub were filed
+under two keys — and `leaguesByVenue()` grouped on that key and stopped.
+
+On a headcount that is two half-histories. On a **league** it is worse: the
+season is cut in half, every team's best-six is computed from part of their
+record, and the table that goes on a public page and into a landlord's report
+is wrong while looking entirely plausible.
+
+### The fix already existed one file along
+
+`venueHeadcounts()` makes exactly this second pass, folding by the lowercase
+name every raw group already carries, with the reasoning written out. Two
+readers of one archive disagreeing about what counts as one venue is the
+collision; the fix is the existing answer applied rather than a new one.
+
+`venueKeyOf()` still does the first pass, because it catches a **rename** (two
+different names, one id) that a name-only key would miss.
+
+### It reverses a pinned test, and that is worth being explicit about
+
+There was a test asserting the split, with a note saying it was pinned so
+nobody would "fix" it into a name-match. Reversing a decision that was recorded
+on purpose needs a better reason than a preference, and there are two:
+
+- **the evidence** — it is not a theoretical limit, it is the host's own season
+  in half, found on a live console;
+- **the asymmetry was indefensible on its own terms.** Two freehand nights at
+  "The Crown" have always merged, because `venueKeyOf()` falls back to the
+  name. So the old rule said that *adding an id* to one of them — strictly more
+  information — made the answer worse.
+
+**The key kept is the `id:` one.** Whether a table is published, and every
+human ruling on a team name, are stored against that key — so folding onto the
+bare name would silently unpublish a table somebody had put up and drop every
+override they had made.
+
+**The cost, accepted knowingly:** two genuinely different pubs that share a
+name merge. That was already true on the name-only path, and it is why venue
+names in practice carry their town.

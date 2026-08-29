@@ -49,6 +49,7 @@ import { esc, node } from './client.js';
 import { goTo, keyed, renderKeepingPlace } from './console.js';
 import { library, me } from './console-state.js';
 import { asksPanel, groupByVenue, nightPhotos } from './console-gigs.js';
+import { bayColumns, bayHead, bayRail } from './console-bay.js';
 
 /** Every venue with a league running, best-supported first. */
 function leaguesNow() {
@@ -223,66 +224,119 @@ let nightControls = null;
 export function closeNight() { openNight = null; openShot = null; nightControls = null; }
 
 /**
+ * THE NIGHTS THAT HAVE PHOTOGRAPHS, for the rail. Fetched once, then held.
+ *
+ * The same list the tab body already fetches — held here because the RAIL is
+ * in the bay and the bay is rebuilt on every state push, and because two
+ * fetches of one list is two answers that can disagree about which nights
+ * exist.
+ */
+let photoNights = null;
+
+function loadPhotoNights() {
+  if (photoNights || photoNightsAsking) return;
+  photoNightsAsking = true;
+  fetch(keyed('/api/past-gigs'))
+    .then((r) => (r.ok ? r.json() : null))
+    .then((d) => {
+      if (!d) return;
+      photoNights = (d.nights || []).filter((n) => n.hasPhotos);
+      renderKeepingPlace();
+    })
+    .catch(() => {})
+    .finally(() => { photoNightsAsking = false; });
+}
+let photoNightsAsking = false;
+
+/**
+ * The rail's rows: the wall, then every night under the pub it happened at.
+ *
+ * **GROUPED BY PUB FIRST, THEN THE NIGHTS FROM THERE** — *"the same pub having
+ * two evenings is fine, but it should probably be compartmentalised into a
+ * single pub and then nights from there."* Walking the archive in date order
+ * and printing the venue whenever it changed did NOT do that: two Thursdays at
+ * The Crown either side of a Monday at The Station Tap printed "The Crown"
+ * twice, which reads as two pubs with the same name — the exact confusion the
+ * league rail had for real, one bug up.
+ *
+ * The pubs keep DATE order — the one you played at last is first, like every
+ * other list of venues in this app — and the nights inside each keep theirs.
+ */
+function photoRail() {
+  const rows = [{ key: '', name: 'The wall', note: 'The newest pictures' }];
+  const byPub = new Map();
+  for (const night of photoNights || []) {
+    // Keyed on the lowercase name for the same reason the league is: one pub
+    // typed two ways is one pub. The FIRST spelling seen wins, which is the
+    // most recent night's — `venuesUsed` and the headcounts already do that.
+    const name = night.venue || 'No venue on these';
+    const key = name.trim().toLowerCase();
+    if (!byPub.has(key)) byPub.set(key, { name, nights: [] });
+    byPub.get(key).nights.push(night);
+  }
+  for (const pub of byPub.values()) {
+    for (const night of pub.nights) {
+      rows.push({
+        key: night.night,
+        group: pub.name,
+        name: readable(night.night),
+        note: night.venueMixed ? 'Two venues' : '',
+      });
+    }
+  }
+  return rows;
+}
+
+/**
  * THE PHOTOS BAY — the wall, one night, or one picture.
  *
  * Three states and each is the answer to the last thing pressed, which is the
  * model asked for: *"you click the thing at the bottom to reveal it at the
  * top"*, and *"when you click into a photo another click should go back
- * again"*.
+ * again"*. Since the rail arrived the pressing can also happen in the bay
+ * itself, which is what the other doors do.
  */
 function photoWall() {
-  const el = node(`
-    <div class="panel launchbar bench community-bench community-photos-bay">
-      <div class="bench-head">
-        <b class="community-bay-what"></b>
-        <span class="tiny community-bay-note"></span>
-      </div>
-      <div class="community-bay-body"></div>
-    </div>`);
-  const what = el.querySelector('.community-bay-what');
-  const note = el.querySelector('.community-bay-note');
-  const bodyEl = el.querySelector('.community-bay-body');
+  loadPhotoNights();
+  const el = node('<div class="panel launchbar bench community-bench bay-scroller"></div>');
+  const body = node('<div class="bay-body"></div>');
 
   /* ONE PICTURE, FILLING THE BAY. `contain` rather than `cover`, because this
      is the moment somebody is actually LOOKING at it — a crop is right on a
      wall of thumbnails and wrong here. Clicking anywhere on it goes back. */
   if (openShot) {
-    what.textContent = 'One picture';
-    note.textContent = 'Click it again to go back.';
     const big = node(`
       <button class="community-big" type="button" title="Back to the photographs">
         <img src="${esc(openShot.url)}" alt="">
       </button>`);
     big.addEventListener('click', () => { openShot = null; renderKeepingPlace(); });
-    bodyEl.appendChild(big);
+    body.appendChild(big);
+    el.appendChild(bayColumns(rail(openShotNight()), [
+      bayHead('One picture', 'Click it again to go back.'), body,
+    ]));
     return el;
   }
 
-  /* ONE NIGHT, opened from the list below. The bin rides on each picture —
-     it belongs to the photograph rather than being a control panel — and the
-     publish control is drawn in the tab body by `photosSection()`. */
+  /* ONE NIGHT. The bin rides on each picture — it belongs to the photograph
+     rather than being a control panel — and the publish control is built here
+     and hung under the night's row in the tab body. */
   if (openNight) {
-    what.textContent = readable(openNight.night);
-    note.textContent = openNight.venue
-      ? `${openNight.venue} — press it again below to come back to the wall.`
-      : 'Press it again below to come back to the wall.';
     nightControls = node('<div class="photo-night-controls"></div>');
-    nightPhotos(bodyEl, openNight, {
+    nightPhotos(body, openNight, {
       wall: true,
-      // Built here, hung under the night's row in the tab body — see above.
       controlsInto: nightControls,
       onOpen: (p) => { openShot = p; renderKeepingPlace(); },
     });
+    el.appendChild(bayColumns(rail(openNight.night), [
+      bayHead(readable(openNight.night), openNight.venue || ''), body,
+    ]));
     return el;
   }
 
-  what.textContent = 'The wall';
-  note.textContent = `The last ${WALL_MAX} pictures the rooms sent. Open a night below for its own set.`;
-
   const draw = (shots) => {
-    bodyEl.replaceChildren();
+    body.replaceChildren();
     if (!shots.length) {
-      bodyEl.appendChild(node(`<div class="tiny community-wall-none">No photographs yet. The
+      body.appendChild(node(`<div class="tiny community-wall-none">No photographs yet. The
         camera is on the phones in the gaps, and whatever the room sends lands here.</div>`));
       return;
     }
@@ -301,15 +355,36 @@ function photoWall() {
       tile.addEventListener('click', () => { openShot = shot; renderKeepingPlace(); });
       grid.appendChild(tile);
     }
-    bodyEl.appendChild(grid);
+    body.appendChild(grid);
   };
 
   if (wallShots) draw(wallShots);
   else {
-    bodyEl.appendChild(node('<div class="tiny">Loading the photographs…</div>'));
+    body.appendChild(node('<div class="tiny">Loading the photographs…</div>'));
     loadWall().then(draw).catch(() => draw([]));
   }
+  el.appendChild(bayColumns(rail(''), [
+    bayHead('The wall', `The last ${WALL_MAX} pictures the rooms sent.`), body,
+  ]));
   return el;
+}
+
+/** Which rail row a blown-up picture belongs to — its night, or the wall. */
+function openShotNight() { return openNight ? openNight.night : ''; }
+
+/** The photos rail, lit on whatever is showing. */
+function rail(picked) {
+  return bayRail({
+    items: photoRail(),
+    picked,
+    onPick: (key) => {
+      openShot = null;
+      nightControls = null;
+      openNight = key ? (photoNights || []).find((n) => n.night === key) || null : null;
+      renderKeepingPlace();
+    },
+    empty: 'No photographs yet.',
+  });
 }
 
 /** The newest pictures across the newest nights, up to a wall's worth. */
@@ -376,76 +451,80 @@ let picked = '';
  */
 function leagueBay() {
   const leagues = leaguesNow();
-  const el = node('<div class="panel launchbar bench community-bench community-bay"></div>');
+  if (!leagues.some((l) => l.key === picked)) picked = leagues[0].key;
+  const league = leagues.find((l) => l.key === picked);
+  const names = (published || {}).names || {};
+  const heads = headsLine(league.venue);
 
-  const paint = () => {
-    if (!leagues.some((l) => l.key === picked)) picked = leagues[0].key;
-    const league = leagues.find((l) => l.key === picked);
-    el.replaceChildren();
-
-    const rail = node('<div class="community-rail" role="tablist"></div>');
-    for (const l of leagues) {
-      const btn = node(`
-        <button class="community-venue ${l.key === picked ? 'on' : ''}" type="button"
-                role="tab" aria-selected="${l.key === picked}">
-          <span class="community-venue-name">${esc(l.venue)}</span>
-          <span class="tiny">${l.table.length} team${l.table.length === 1 ? '' : 's'}
-            · ${l.nights} night${l.nights === 1 ? '' : 's'}</span>
-        </button>`);
-      /*
-       * THE WHOLE PAGE REPAINTS, not just the bay — because the CONTROLS for
-       * this venue live in the tab body underneath, and a rail that changed
-       * the table up here while leaving "put this table up" pointing at the
-       * pub before it would publish the wrong room's names.
-       */
-      btn.addEventListener('click', () => { picked = l.key; renderKeepingPlace(); });
-      rail.appendChild(btn);
-    }
-
-    const rows = league.table;
-    const heads = headsLine(league.venue);
-    const names = (published || {}).names || {};
-    const side = node(`
-      <div class="community-side">
-        <div class="league-head">
-          <b>${esc(league.venue)}</b>
-          ${heads ? `<span class="tiny league-heads">${heads}</span>` : ''}
-        </div>
-        <table class="lg-table">
-          <thead>
-            <tr>
-              <th class="lg-pos" aria-label="Position"></th>
-              <th class="lg-name">Team</th>
-              <th class="lg-played"><abbr title="Nights played">P</abbr></th>
-              <th class="lg-played"><abbr title="Nights won">W</abbr></th>
-              <th class="lg-pts"><abbr title="Points">Pts</abbr></th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows.map((t) => `
-              <tr${t.position === 1 ? ' class="lg-top"' : ''}>
-                <td class="lg-pos">${t.position}</td>
-                <!-- THE REAL NAME, MARKED WHEN IT WILL NOT PUBLISH. This is the
-                     room's own view and the quizmaster was there, so nothing is
-                     masked — but a name a public page would hide says so, or it
-                     would vanish off a table they had put up with no way to tell
-                     which one did it. Drawn from the COMBINE in hiddenNow(), so
-                     a name a human has allowed stops claiming it is held back. -->
-                <td class="lg-name">${esc(t.name)}${hiddenNow(t, names)
+  /*
+   * EVERY TEAM IS IN THE BAY, AND THE BAY SCROLLS. It was capped at eight with
+   * "and N more, below" under it — true only while the tab underneath drew the
+   * table as well, which it does not any more. The fixed bay height makes the
+   * cap unnecessary: the column scrolls inside a box that cannot grow, so a
+   * league of forty teams costs nothing and is all reachable.
+   */
+  const table = node(`
+    <table class="lg-table">
+      <thead>
+        <tr>
+          <th class="lg-pos" aria-label="Position"></th>
+          <th class="lg-name">Team</th>
+          <th class="lg-played"><abbr title="Nights played">P</abbr></th>
+          <th class="lg-played"><abbr title="Nights won">W</abbr></th>
+          <th class="lg-pts"><abbr title="Points">Pts</abbr></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${league.table.map((t) => `
+          <tr${t.position === 1 ? ' class="lg-top"' : ''}>
+            <td class="lg-pos">${t.position}</td>
+            <!-- THE REAL NAME, MARKED WHEN IT WILL NOT PUBLISH. This is the
+                 room's own view and the quizmaster was there, so nothing is
+                 masked — but a name a public page would hide says so, or it
+                 would vanish off a table they had put up with no way to tell
+                 which one did it. Drawn from the COMBINE in hiddenNow(), so a
+                 name a human has allowed stops claiming it is held back. -->
+            <td class="lg-name">${esc(t.name)}${hiddenNow(t, names)
     ? ' <span class="lg-hidden" title="This name is hidden on the public table and on a landlord\'s report. It still scores exactly as it is.">hidden publicly</span>'
     : ''}</td>
-                <td class="lg-played tiny">${t.played}</td>
-                <td class="lg-played tiny">${t.wins}</td>
-                <td class="lg-pts"><b>${t.points}</b></td>
-              </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>`);
+            <td class="lg-played tiny">${t.played}</td>
+            <td class="lg-played tiny">${t.wins}</td>
+            <td class="lg-pts"><b>${t.points}</b></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`);
 
-    el.append(rail, side);
-  };
-
-  paint();
+  const el = node('<div class="panel launchbar bench community-bench bay-scroller"></div>');
+  /*
+   * THE HEADING SITS AT THE TOP OF THE RIGHT COLUMN, not above both — which is
+   * the arrangement the host looked at and called perfect: *"content taking up
+   * the bulk to the right, controls on the left."* Above both, the rail starts
+   * an inch down and the two columns stop reading as one object.
+   */
+  el.appendChild(bayColumns(
+    bayRail({
+      items: leagues.map((l) => ({
+        key: l.key,
+        name: l.venue,
+        note: `${l.table.length} team${l.table.length === 1 ? '' : 's'} · ${l.nights} night${l.nights === 1 ? '' : 's'}`,
+      })),
+      picked,
+      /*
+       * THE WHOLE PAGE REPAINTS, not just the bay — because the CONTROLS for
+       * this venue live in the tab body underneath, and a rail that changed the
+       * table up here while leaving "put this table up" pointing at the pub
+       * before it would publish the wrong room's names.
+       */
+      onPick: (key) => { picked = key; renderKeepingPlace(); },
+    }),
+    [
+      bayHead(league.venue, [
+        `${league.table.length} team${league.table.length === 1 ? '' : 's'} across ${league.nights} night${league.nights === 1 ? '' : 's'}`,
+        heads,
+      ].filter(Boolean).join(' · ')),
+      table,
+    ],
+  ));
   return el;
 }
 

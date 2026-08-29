@@ -373,12 +373,44 @@ export function leaguesByVenue(nights = [], opts = {}) {
     byVenue.get(key).nights.push(night);
   }
 
-  const out = {};
+  /*
+   * A NIGHT WITH A `venueId` AND A NIGHT AT THE SAME PUB WITHOUT ONE ARE ONE
+   * VENUE, and `venueKeyOf()` alone splits them — the identical second pass
+   * `venueHeadcounts()` already makes, for the identical reason, and its
+   * absence here was reported off a live console showing **"The Station Tap,
+   * Wokingham" twice in the rail**, once with 17 teams and once with 20.
+   *
+   * Pick a venue off the Venues list one week and type the same name freehand
+   * the next, and the two nights land under `id:xyz` and `the station tap`.
+   * On a headcount that is two half-histories; on a LEAGUE it is worse — the
+   * season is cut in half, every team's best-six is computed from part of
+   * their record, and the table that goes on a public page is wrong while
+   * looking entirely plausible.
+   *
+   * Folded by the lowercase name every raw group already carries.
+   * `venueKeyOf()` still does the first-pass job of catching a RENAME (two
+   * different names, one id) that a name-only key would miss, and the KEY
+   * KEPT is the id one where there is one — that is what the publish list and
+   * the rulings are stored against, so folding onto the name key would
+   * silently unpublish a table somebody had put up.
+   */
+  const byName = new Map();
   for (const [key, entry] of byVenue) {
+    const nameKey = entry.venue.trim().toLowerCase();
+    if (!byName.has(nameKey)) byName.set(nameKey, { key, venue: entry.venue, nights: [] });
+    const held = byName.get(nameKey);
+    // An id beats a bare name: `id:` is stable across a rename and is what
+    // anything stored per venue is keyed on.
+    if (key.startsWith('id:') && !held.key.startsWith('id:')) held.key = key;
+    held.nights.push(...entry.nights);
+  }
+
+  const out = {};
+  for (const entry of byName.values()) {
     const league = leagueTable(entry.nights, opts);
     // A venue with no quiz nights in the season has no league, and saying so
     // by absence is better than an empty table on a card.
-    if (league.nights) out[key] = { venue: entry.venue, ...league };
+    if (league.nights) out[entry.key] = { venue: entry.venue, ...league };
   }
   return out;
 }

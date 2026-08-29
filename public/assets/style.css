@@ -9314,11 +9314,18 @@ body.landing {
 /* THE RAIL AND WHAT IT PICKS — the same two columns as `.consolecols` under
    it, deliberately: it is the same object doing the same job, and a second
    way of saying "pick one of these" on one screen is a label collision. */
-.community-bay { display: grid; gap: 8px 18px; grid-template-columns: 1fr; }
-.community-rail { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.baycols { display: grid; gap: 8px 18px; grid-template-columns: 1fr; }
+/* `flex: 0 0 auto` on the children is load-bearing rather than tidy: a flex
+   column SHRINKS its children when the content is taller than the box, and the
+   rail always is — it scrolls. The rows survived on `min-height: 44px`, but the
+   pub headings had no floor and were squashed to 2px, so a rail that had
+   compartmentalised its nights perfectly rendered as one undivided list and
+   nothing threw. Measured, not spotted: they were in the DOM the whole time. */
+.bay-rail { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.bay-rail > * { flex: 0 0 auto; }
 /* The lit marker is the LEFT edge, exactly as the tab column's is — under a
    stacked list a bottom border reads as a rule between two rows. */
-.community-venue {
+.bay-pick {
   display: flex; flex-direction: column; gap: 1px; text-align: left;
   min-height: 44px; padding: 6px 10px; min-width: 0;
   border: 1px solid var(--surf-line, rgba(255, 255, 255, 0.09));
@@ -9327,24 +9334,50 @@ body.landing {
   background: var(--surf-2, rgba(255, 255, 255, 0.04));
   color: var(--ink-dim); cursor: pointer;
 }
-.community-venue:hover { color: var(--ink); }
-.community-venue.on {
+.bay-pick:hover { color: var(--ink); }
+.bay-pick.on {
   color: var(--ink);
   border-left-color: var(--hot);
   background: rgba(255, 255, 255, 0.07);
   background: color-mix(in srgb, var(--hot) 12%, transparent);
 }
-.community-venue-name {
+.bay-pick-name {
   font-weight: 800; font-size: var(--fs-ctl);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.community-side { min-width: 0; }
-.community-side .lg-table { margin-top: 6px; }
+/* A PUB, THEN ITS NIGHTS UNDER IT — *"compartmentalised into a single pub and
+   then nights from there"*. A heading in the rail rather than a second level
+   of clicking: a row you have to open before you can pick it costs two taps to
+   save one line. */
+.bay-rail-group {
+  padding: 8px 10px 2px; color: var(--ink-dim);
+  text-transform: none; font-weight: 800; letter-spacing: 0.01em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.bay-rail-group:first-child { padding-top: 0; }
+/* A RAIL ROW MAY WEAR ITS PACK'S OWN COLOURS. Same wash `.pack-card.tinted`
+   and `.lb-tile.tinted` take, capped the same way — the subject at a glance on
+   a 190px row. `.on` still wins, because "you are here" outranks the era. */
+.bay-pick.tinted {
+  background: linear-gradient(120deg, var(--pk-a), var(--pk-b)), var(--surf-2, rgba(255, 255, 255, 0.04));
+}
+/* THE KIND ALONG THE BOTTOM, exactly as a pack card wears it — quiz green,
+   bingo purple. Three pixels that answer "which game is this" before the words
+   are read, on the one list where both kinds sit together. */
+.bay-pick.tinted { border-bottom: 2px solid var(--pk-edge); }
+.bay-side { min-width: 0; }
+.bay-side .lg-table { margin-top: 8px; }
 
-/* The photos bay: a heading that stays and a body that scrolls under it. */
-.community-photos-bay { display: flex; flex-direction: column; min-height: 0; }
-.community-photos-bay > .bench-head { flex: 0 0 auto; }
-.community-bay-body { flex: 1 1 auto; min-height: 0; margin-top: 10px; }
+/* A bay whose right column scrolls under a heading that stays. The panel is a
+   flex column so the two-column grid inside it gets the full fixed height, and
+   the grid's own rows are `min-content` then `1fr` so the heading keeps its
+   size and the body takes the rest. */
+.bay-scroller { display: flex; flex-direction: column; min-height: 0; }
+.bay-scroller > .baycols { flex: 1 1 auto; min-height: 0; }
+.bay-side { display: flex; flex-direction: column; min-height: 0; }
+.bay-head { flex: 0 0 auto; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.bay-head b { font-size: var(--fs-head); }
+.bay-body { flex: 1 1 auto; min-height: 0; margin-top: 8px; }
 
 /* THE NIGHT SHOWING IN THE BAY, marked in the list — the same held hover the
    Post gig bench uses for the row it has on the bench. Its one control sits
@@ -9354,12 +9387,17 @@ body.landing {
 .photo-night-controls { padding: 0 12px 10px; }
 
 @media (min-width: 900px) {
-  .community-bay { grid-template-columns: 190px minmax(0, 1fr); }
+  .baycols { grid-template-columns: 190px minmax(0, 1fr); }
   /* Each column scrolls on its own inside the fixed bay: a quizmaster with ten
      venues can reach the tenth without the table moving, and a long table can
      be read without losing the rail. */
-  .community-rail, .community-side { overflow-y: auto; min-height: 0; }
-  .community-bay-body { overflow-y: auto; }
+  /* Each column scrolls on its own inside the fixed bay: a quizmaster with ten
+     venues can reach the tenth without the table moving, and a long table can
+     be read without losing the rail. The heading does not scroll with it. */
+  .bay-rail { overflow-y: auto; min-height: 0; }
+  .bay-side { overflow: hidden; }
+  .bay-side > .lg-table { overflow-y: auto; display: block; }
+  .bay-body { overflow-y: auto; }
 }
 /* A PHONE GETS THREE ACROSS. Six 52px thumbnails is a contact sheet nobody can
    see; the row count is what the bay cared about, and on a phone the bay

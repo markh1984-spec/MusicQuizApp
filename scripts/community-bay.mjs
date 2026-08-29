@@ -190,8 +190,8 @@ try {
         pageScrolls: document.documentElement.scrollHeight - document.documentElement.clientHeight,
         wall: document.querySelectorAll('.community-wall .cphoto').length,
         wallCols: wall ? getComputedStyle(wall).gridTemplateColumns.split(' ').length : 0,
-        rail: document.querySelectorAll('.community-venue').length,
-        bayRows: document.querySelectorAll('.community-side tbody tr').length,
+        rail: document.querySelectorAll('.bay-pick').length,
+        bayRows: document.querySelectorAll('.bay-side tbody tr').length,
         // NO CONTROL AND NO SECOND COPY OF THE THING. Publishing a table,
         // publishing a night and overruling the filter all belong under what
         // they act on; a table drawn in the tab body as well as the bay is the
@@ -201,7 +201,7 @@ try {
         bodyPhotos: document.querySelectorAll('.tabbody .cphoto').length,
         bayPhotos: document.querySelectorAll('.doorhead .cphoto').length,
         bigShot: document.querySelectorAll('.doorhead .community-big').length,
-        lit: (document.querySelector('.community-venue.on .community-venue-name') || {}).textContent || '',
+        lit: (document.querySelector('.bay-pick.on .bay-pick-name') || {}).textContent || '',
       };
     });
 
@@ -240,12 +240,29 @@ try {
        size across sections, so a door left out of the sweep is a door that can
        drift back to its own height without anything noticing. */
     if (width >= 900) {
-      for (const [door, tab] of [['workshop', 'quiz'], ['post', 'gigs'], ['community', 'league']]) {
+      for (const [door, tab] of [['workshop', 'quiz'], ['post', 'past'], ['community', 'league']]) {
         await page.goto(`http://127.0.0.1:${PORT}/console?key=${KEY}&door=${door}&tab=${tab}`, { waitUntil: 'load' });
         await page.addStyleTag({ content: '.backup-warn, main > .panel.warn { display: none !important; }' });
         await page.waitForTimeout(1500);
-        const h = await page.evaluate(() => Math.round(document.querySelector('.doorhead').getBoundingClientRect().height));
-        check(`${label}: the ${door} bay is the launch bay's height`, h === bayH, `${h}px vs ${bayH}px`);
+        const m = await page.evaluate(() => ({
+          h: Math.round(document.querySelector('.doorhead').getBoundingClientRect().height),
+          // A RAIL ON EVERY DOOR BUT THE CONSOLE — its bay is the launch bar,
+          // which is the reference and is not a list of things to look at.
+          rail: document.querySelectorAll('.doorhead .bay-pick').length,
+          /*
+           * AND THE PUB HEADINGS ARE VISIBLE, not merely present. A flex column
+           * shrinks its children, and these had no floor: they rendered at 2px
+           * with their text in the DOM, so a rail that had compartmentalised
+           * its nights perfectly drew as one undivided list and nothing threw.
+           * `getClientRects()` over `querySelectorAll().length` — the third
+           * time this repo has been bitten by that difference.
+           */
+          squashed: [...document.querySelectorAll('.doorhead .bay-rail-group')]
+            .filter((g) => g.getBoundingClientRect().height < 12).length,
+        }));
+        check(`${label}: the ${door} bay is the launch bay's height`, m.h === bayH, `${m.h}px vs ${bayH}px`);
+        check(`${label}: ${door} has a rail`, m.rail > 0, `${m.rail} rows`);
+        check(`${label}: ${door}'s group headings are not squashed`, m.squashed === 0, `${m.squashed} under 12px`);
       }
     }
 
@@ -288,7 +305,7 @@ try {
     await page.goto(`http://127.0.0.1:${PORT}/console?key=${KEY}&door=community&tab=league`, { waitUntil: 'load' });
     await page.waitForTimeout(2000);
     const first = (await frame()).lit;
-    await page.locator('.community-venue:not(.on)').first().click();
+    await page.locator('.bay-pick:not(.on)').first().click();
     await page.waitForTimeout(400);
     const second = (await frame()).lit;
     check(`${label}: the rail changes the table`, Boolean(first) && first !== second, `${first} → ${second}`);

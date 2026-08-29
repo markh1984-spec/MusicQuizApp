@@ -277,13 +277,46 @@ test('a night with only a name still groups exactly as it always did', async () 
   assert.equal(Object.keys(leagues).length, 1);
 });
 
-test('an id and a bare name are NOT merged, which is the honest limit', async () => {
-  // A night filed before ids existed has nothing tying it to the record, so it
-  // cannot be joined to one without guessing. Stated in the code and pinned
-  // here so nobody "fixes" it into a name-match that reintroduces the bug.
+test('an id and a bare name at one pub are ONE league, and the id keeps the key', async () => {
+  /*
+   * THIS REVERSES AN EARLIER DECISION, DELIBERATELY, AND OFF REAL EVIDENCE.
+   *
+   * It used to assert the opposite — that a night carrying a `venueId` and a
+   * night typed freehand at the same pub stay two leagues, on the reasoning
+   * that joining them is a guess. That was pinned here on purpose, so this is
+   * a reversal rather than an oversight and is worth the words.
+   *
+   * What changed is a screenshot of a live console: **"The Station Tap,
+   * Wokingham" in the rail twice**, once with 17 teams and once with 20,
+   * because the host picked the venue off his Venues list some weeks and typed
+   * it other weeks. That is not a theoretical limit, it is his season cut in
+   * half — every team's best-six computed from part of their record, on the
+   * table that goes on a public page.
+   *
+   * And the asymmetry was indefensible on its own terms: two freehand nights
+   * at "The Crown" have ALWAYS merged, because `venueKeyOf()` falls back to
+   * the lowercased name. So the old rule said that adding an id to one of them
+   * — strictly more information — made the answer worse. `venueHeadcounts()`
+   * had already reached this conclusion and written down the same second pass;
+   * two readers of one archive disagreeing about what counts as one venue is
+   * the collision this repo hunts.
+   *
+   * THE COST, ACCEPTED KNOWINGLY: two genuinely different pubs that share a
+   * name merge. That was already true on the name-only path, and it is why
+   * venue names in practice carry their town.
+   */
   const leagues = leaguesByVenue([
     { ...night(1, 'The Crown', ['New']), venueId: 'v1' },
     night(8, 'The Crown', ['Old']),
   ], { now: NOW });
-  assert.equal(Object.keys(leagues).length, 2);
+  const keys = Object.keys(leagues);
+  assert.equal(keys.length, 1);
+  /*
+   * AND THE KEY KEPT IS THE ID ONE. Whether a table is published and every
+   * ruling on a team name are stored against this key — so folding onto the
+   * bare name would silently unpublish a table somebody had put up and drop
+   * every override they had made.
+   */
+  assert.equal(keys[0], 'id:v1');
+  assert.equal(leagues['id:v1'].table.length, 2);
 });

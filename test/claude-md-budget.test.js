@@ -355,10 +355,18 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * tab you are on, and the bottom is controls and options rather than a second
  * copy of the thing.
  *
- * The reasoning for both went to `docs/console.md`; what is here is the rules
- * and the guard's name.
+ * RAISED AGAIN TO 192,000 THE SAME DAY, for the generalisation of that
+ * arrangement to every door — `console-bay.js` — and for one pub being one
+ * league. Both are cross-cutting: the first governs five sections and any
+ * added after them, and the second is a reader rule about the archive that
+ * `venueHeadcounts()` and `playedByVenue()` also live under. A session that
+ * does not know either will reintroduce the exact faults they were written
+ * for, and neither fails a test until somebody looks at a screen.
+ *
+ * The reasoning for all of it went to `docs/console.md`; what is here is the
+ * rules and the guard's name.
  */
-const BUDGET = 189_000;
+const BUDGET = 192_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

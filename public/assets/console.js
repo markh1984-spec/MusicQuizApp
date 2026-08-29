@@ -9,21 +9,20 @@
 
 import { brandLink, brandMark, esc, menuRights, node, paintIdentity, paintNav, postJson } from './client.js';
 import { accountSection, backupWarning, firstOwnerPanel, helpSection, otherRoomsPanel, settingsSection, shopSection } from './console-account.js';
+import { nightBenchPanel, workBench } from './console-benches.js';
 import { diarySection } from './console-diary.js';
 import { generatePanel, importPanel, quizGeneratePanel } from './console-generate.js';
 import {
   asksSection, communityBench, leagueSection, photosSection,
 } from './console-community.js';
-import { asksPanel, fillNightDetail, gigsSection } from './console-gigs.js';
+import { gigsSection } from './console-gigs.js';
 import { invoicesSection } from './console-invoices.js';
-import { gameSection, packActionsMarkup, preview, wirePackActions } from './console-packs.js';
-import { editPopover } from './console-editor-popover.js';
-import { shelfFor, showsSection } from './console-shows.js';
-import { BENCH_STORE, NIGHT_BENCH_STORE, bench, gigsSeen, lastDone, library, me, nightBench, nightDrag, packDrag, setAccountsExist, setBench, setGigsSeen, setLastDone, setLibrary, setMe, setNightBench, setNightDrag, setPackDrag } from './console-state.js';
-import { aNightIsOn, dragging, launchBar, night, putNightOnBench, putOnBench, runningPanel, wantPackFromUrl } from './console-tonight.js';
+import { gameSection, preview } from './console-packs.js';
+import { showsSection } from './console-shows.js';
+import { NIGHT_BENCH_STORE, bench, lastDone, library, me, setAccountsExist, setLastDone, setLibrary, setMe, setNightBench } from './console-state.js';
+import { aNightIsOn, dragging, launchBar, night, putNightOnBench, runningPanel, wantPackFromUrl } from './console-tonight.js';
 import { advertsSection, editAdvertSet, forgetPanel, venuesSection } from './console-venues.js';
 import { upcoming } from './diary.js';
-import { packLookAttrs, shortTitle, isBreakoutPack } from './pack-look.js';
 import { FEATURES, setTierOverrides, tierOf } from './plans.js';
 import { paintScheme } from './schemes.js';
 
@@ -878,7 +877,12 @@ export const TABS = [
      */
     id: 'asks',
     doors: ['community'],
-    label: 'What they asked for',
+    // RENAMED FROM "What they asked for" on 29 August 2026, asked for
+    // directly. The old one was a sentence pretending to be a label — you had
+    // to read it and then work out who "they" were, on a tab that sits under a
+    // one-word heading ladder. "Quiz requests" names the noun, and the blurb
+    // under it says whose.
+    label: 'Quiz requests',
     blurb: 'What the room voted for, from their own phones at the end of the night.',
     render: () => asksSection(),
   },
@@ -1282,275 +1286,6 @@ export function render() {
  * It is one wrapper rather than a rule per panel, so a door that grows a panel
  * later inherits the behaviour instead of having to remember it.
  */
-/**
- * THE WORKSHOP BENCH — the door's own section at the top, in the same place
- * and of the same weight as Tonight.
- *
- * *"I can then drag quiz packs there to edit them as a QM, or start a fresh
- * one — that's what that section is there to do."*
- *
- * **IT MIRRORS TONIGHT DELIBERATELY**: the same head line, the same dashed
- * drop area, the same one primary button at the bottom. Two doors that behave
- * the same way are one thing to learn rather than two, which is the whole
- * reason the shell exists — and it is why the drop zone is built from
- * `.lb-tile` and `.lb-drop`, the classes Tonight already uses, rather than a
- * second set that would drift.
- *
- * **THE PRIMARY IS GREEN, NOT THE ACCOUNT GRADIENT.** One filled gradient per
- * screen means "the night", and there is no night behind this door; making
- * something new is the green role. So the Console has exactly one Launch and
- * the Workshop has exactly one Write a new one, and neither can be mistaken
- * for the other in a dark pub.
- *
- * **A pack on the bench is NOT opened automatically.** Dropping is choosing,
- * pressing is doing — the same promise every other drop in this app makes.
- */
-const WORK_BENCH_OPEN_STORE = 'musicquiz.workbenchopen';
-const NIGHT_BENCH_OPEN_STORE = 'musicquiz.nightbenchopen';
-
-/**
- * A SIMPLE FOLD, shared by the Workshop and Post gig benches — asked for as
- * *"all three benches need consistent functionality — hide/expand"*, Tonight
- * already having one. Same classes as Tonight's own `.lb-fold` (so it is one
- * visual language, not three), but not its per-element TUCKING — that exists
- * because Tonight has several named sub-sections (venue picker, mode switch,
- * running order) that each need their own fold behaviour. These two benches
- * hold one thing each, so one body wrapper hidden or shown whole is the
- * whole mechanism.
- *
- * Read from localStorage on every call rather than held in a module
- * variable — both benches rebuild their whole panel from scratch on every
- * redraw (`draw()` in `nightBenchPanel()`, `render()` on the workshop door),
- * so state that lived only in a closure would reset itself the moment
- * anything else on the page changed.
- */
-function wireBenchFold(el, storeKey) {
-  let open = localStorage.getItem(storeKey) !== '0';
-  const fold = el.querySelector('.lb-fold');
-  const body = el.querySelector('.bench-fold-body');
-  const paint = () => {
-    fold.setAttribute('aria-expanded', open ? 'true' : 'false');
-    fold.querySelector('.lb-fold-word').textContent = open ? 'Hide' : 'Show';
-    if (body) body.hidden = !open;
-  };
-  fold.addEventListener('click', () => {
-    open = !open;
-    localStorage.setItem(storeKey, open ? '1' : '0');
-    paint();
-  });
-  paint();
-}
-
-function workBench() {
-  const on = bench ? shelfFor(bench.kind).find((p) => p.id === bench.id) : null;
-  // A pack that has been deleted since it was put on the bench leaves quietly
-  // rather than drawing a tile for something that is not there.
-  if (bench && !on) { setBench(null); localStorage.removeItem(BENCH_STORE); }
-
-  const look = on ? packLookAttrs(on, bench.kind === 'quiz' && isBreakoutPack(on) ? 'breakout' : bench.kind) : null;
-
-  const el = node(`
-    <div class="panel launchbar bench">
-      <div class="lb-head">
-        <div class="lb-what">
-          <span class="bench-where">On the bench</span>
-          <span class="tiny lb-shut-what">${on ? esc(shortTitle(on.title)) : 'Nothing yet'}</span>
-        </div>
-        <div class="lb-right">
-          <button class="lb-fold" type="button" aria-expanded="true"><span class="lb-fold-word"></span></button>
-        </div>
-      </div>
-      <!-- THE SLOT ON THE LEFT, WHAT YOU DO WITH IT ON THE RIGHT.
-           Reported as *"I don't want a tiny button taking up a whole row"* -
-           and that was the fault: one small green button stretched across a
-           panel, under a drop zone half its width. A button's width should say
-           how big the action is, and "write a new one" is not a full-width
-           decision the way Launch is. Two columns put the buttons beside the
-           thing they act on and let each one be its own size. -->
-      <div class="bench-body bench-fold-body">
-        <div class="bench-slot">
-          ${on ? `
-            <div class="lb-tile is-pack ${look.cls}" style="${look.style}" title="${esc(on.title)}">
-              ${packWord(look)}
-              <button class="lb-tile-off bench-off" type="button" aria-label="Take it off the bench">&times;</button>
-              <b class="lb-tile-name">${esc(shortTitle(on.title))}</b>
-              <span class="tiny lb-tile-sub">${esc(bench.kind === 'bingo' ? 'bingo' : 'quiz')}</span>
-            </div>` : `
-            <div class="lb-drop bench-drop">
-              <span class="lb-drop-plus">+</span>
-              <span>Drag a pack here</span>
-            </div>`}
-        </div>
-        <div class="bench-do">
-          ${on ? `
-            <button class="go bench-go role-make" type="button">Edit the questions</button>
-            <button class="minor bench-read" type="button">Read it through</button>
-            <a class="minor bench-tonight" href="${esc(linkTo(`/console?tonightPack=${encodeURIComponent(on.id)}&tonightKind=${bench.kind}`))}">Take it to Tonight</a>
-            <p class="tiny">Saved as you go. Take it off when you are done with it.
-              Set it up on Tonight and press <b>Keep this as a show</b> to save the
-              whole evening — the venue, the prizes, the order — not just this pack.</p>`
-    : `
-            <a class="go bench-go role-make" href="${esc(linkTo('/editor'))}">Write a new one</a>
-            <p class="tiny">Or drag a pack in from below to edit, rename or read
-              one you already have.</p>`}
-        </div>
-        <!-- RENAME, DELETE, PICTURES, PLAYLIST, A COPY TO KEEP — everything a
-             pack card itself used to open a caret to reach, before a tap
-             started putting the pack here instead. bench-pack-actions is its
-             own class rather than the Post gig bench's bench-actions, which
-             already means "one row of buttons flexed to fit" — reusing it
-             here would fight pack-actions' own grid for the same property,
-             the exact label collision this app keeps a rule against.
-             grid-column: 1 / -1 in the stylesheet is what spans it under both
-             columns of the slot-and-buttons row above. -->
-        ${on ? `<div class="bench-pack-actions">${packActionsMarkup(bench.kind, on)}</div>` : ''}
-      </div>
-    </div>`);
-
-  el.querySelector('.bench-off')?.addEventListener('click', () => putOnBench(null));
-  el.querySelector('.bench-read')?.addEventListener('click', () => preview(bench.kind, on));
-  if (on) el.querySelector('.bench-go')?.addEventListener('click', () => editPopover(bench.kind, on));
-  if (on) wirePackActions(el, bench.kind, on);
-  wireBenchFold(el, WORK_BENCH_OPEN_STORE);
-
-  /*
-   * THE SAME DROP GESTURE AS TONIGHT, on the same kind of target — and it
-   * takes a BINGO pack as readily as a quiz, because the editor does.
-   */
-  el.addEventListener('dragover', (ev) => {
-    if (!packDrag) return;
-    ev.preventDefault();
-    ev.dataTransfer.dropEffect = 'copy';
-    el.classList.add('drop-here');
-  });
-  el.addEventListener('dragleave', (ev) => {
-    if (!el.contains(ev.relatedTarget)) el.classList.remove('drop-here');
-  });
-  el.addEventListener('drop', (ev) => {
-    if (!packDrag) return;
-    ev.preventDefault();
-    el.classList.remove('drop-here');
-    const dropped = packDrag;
-    setPackDrag(null);
-    dragging(false);
-    putOnBench(shelfFor(dropped.kind).find((p) => p.id === dropped.id), dropped.kind);
-  });
-  return el;
-}
-
-/**
- * THE POST GIG BENCH — one night, and everything you do about it.
- *
- * *"I think I need a bench in the post gig bit as well."* Its cargo is a NIGHT,
- * which is what every job behind that door is about: bill it, show the venue,
- * put it on the gallery.
- *
- * **THE DETAIL LIVES HERE NOW, NOT IN A SECOND PLACE.** This used to be a
- * small tile with three buttons that clicked THROUGH to a row in the list
- * below — "Open its photos" found `.gig[data-night]` and pressed its head for
- * you. Past gigs then grew its own bay showing that same detail a second
- * time, and the host's own reading of the result was right: two places
- * showing the same thing is less visible than one, not more. So the bench
- * now builds the detail itself — `fillNightDetail()`, the exact function
- * Past gigs used to keep in its own bay — and Past gigs is a picker only:
- * choose a night there, see everything about it here.
- *
- * **IT FETCHES ITS OWN NIGHT RATHER THAN WAITING FOR THE LIST.** Past gigs
- * reads the archive when it renders, and this panel is built before that
- * finishes — so on a fresh load the bench would have nothing to look its
- * remembered night up in. Redrawing the whole page when the list arrives was
- * the obvious fix and is a LOOP: the render rebuilds Past gigs, which
- * fetches, which renders. It refills itself in place instead, which touches
- * nothing else.
- */
-function nightBenchPanel() {
-  const el = node('<div class="panel launchbar bench night-bench"></div>');
-
-  const draw = async (night) => {
-    const when = night ? new Date(night.night + 'T12:00:00') : null;
-    el.replaceChildren(node(`
-      <div>
-        <div class="lb-head">
-          <div class="lb-what">
-            <span class="bench-where">On the bench</span>
-            <span class="tiny lb-shut-what">${night
-    ? esc(`${when.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}${night.venue ? ` · ${night.venue}` : ''}`)
-    : 'Nothing yet'}</span>
-          </div>
-          <!-- reward-off, not lb-tile-off — that one is position: absolute,
-               meant to sit inside an lb-tile chip it is positioned relative
-               to. Bare in this grid head it had no such ancestor and escaped
-               to the corner of the whole page. lb-right is the head's own
-               third column, same as the launch bar's fold — both live in it
-               together, same as Tonight's mode switch and its own fold. -->
-          <div class="lb-right">
-            ${night ? '<button class="reward-off bench-off" type="button" aria-label="Take it off the bench">&times;</button>' : ''}
-            <button class="lb-fold" type="button" aria-expanded="true"><span class="lb-fold-word"></span></button>
-          </div>
-        </div>
-        ${night ? '<div class="bench-detail bench-fold-body"></div>' : `
-          <div class="bench-body bench-fold-body">
-            <div class="bench-slot">
-              <div class="lb-drop bench-drop">
-                <span class="lb-drop-plus">+</span>
-                <span>Drag a night here</span>
-              </div>
-            </div>
-            <div class="bench-do">
-              <p class="tiny">Or pick one in Past gigs, and the invoice, the
-                photographs and whether the venue can show it off are all in
-                one place, right here.</p>
-            </div>
-          </div>`}
-      </div>`));
-
-    el.querySelector('.bench-off')?.addEventListener('click', () => putNightOnBench(''));
-    wireBenchFold(el, NIGHT_BENCH_OPEN_STORE);
-    if (night) await fillNightDetail(el.querySelector('.bench-detail'), night);
-  };
-
-  const found = () => gigsSeen.find((n) => n.night === nightBench) || null;
-  draw(nightBench ? found() : null);
-  if (nightBench && !found()) {
-    (async () => {
-      try {
-        const data = await (await fetch(keyed('/api/past-gigs'))).json();
-        setGigsSeen(data.nights || []);
-        const mine = found();
-        // Filed under a night that is no longer there — it leaves quietly
-        // rather than drawing a tile for something that has gone.
-        if (!mine) { setNightBench(''); localStorage.removeItem(NIGHT_BENCH_STORE); }
-        draw(mine);
-      } catch { /* the list below will say so; the bench stays empty */ }
-    })();
-  }
-
-  /*
-   * DRAG WIRING STAYS OUTSIDE `draw()`, added ONCE — `el` itself is never
-   * replaced, only its children, so listeners added inside `draw()` would
-   * stack up a fresh copy on every redraw.
-   */
-  el.addEventListener('dragover', (ev) => {
-    if (!nightDrag) return;
-    ev.preventDefault();
-    ev.dataTransfer.dropEffect = 'copy';
-    el.classList.add('drop-here');
-  });
-  el.addEventListener('dragleave', (ev) => {
-    if (!el.contains(ev.relatedTarget)) el.classList.remove('drop-here');
-  });
-  el.addEventListener('drop', (ev) => {
-    if (!nightDrag) return;
-    ev.preventDefault();
-    el.classList.remove('drop-here');
-    const key = nightDrag;
-    setNightDrag(null);
-    dragging(false);
-    putNightOnBench(key);
-  });
-  return el;
-}
-
 function doorHead(...parts) {
   const el = node('<div class="doorhead"></div>');
   el.append(...parts);

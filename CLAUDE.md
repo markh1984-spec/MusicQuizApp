@@ -1568,19 +1568,73 @@ moves the tab column and everything below it.
   "and N more" line — which is the opposite of the answer `.night-strip` needed
   when the bay sized to its content.
 
+### EVERY BAY IS A RAIL AND WHAT IT PICKED — `console-bay.js`
+
+*"The way this is presented is perfect — content taking up the bulk to the
+right, controls on the left. How can we utilise this for all of the
+sections?"* `bayRail()` / `bayColumns()` / `bayHead()`, drawn by Workshop
+(your packs), Post gig (your nights) and Community (venues, and the nights
+with photographs).
+
+- **THE CONSOLE DOOR IS THE EXCEPTION, DELIBERATELY.** Its bay is the launch
+  bar — the protected surface, and the REFERENCE every other bay is sized
+  against. It is not a list of things to look at, it is the one thing you came
+  to do. **Do not give it a rail.**
+- **ONE DEFINITION, because each door had already invented its own.** A pack
+  tile you drag onto, a night you drag up, a venue you scroll to find: three
+  answers to one question, which is the label collision this file keeps
+  recording. The rail is the TAB COLUMN one region higher — same 190px, same
+  stack, same lit left edge.
+- **A RAIL PICKS; IT NEVER ACTS.** Nothing in it deletes, publishes or
+  launches, so the worst a mis-tap does is show you something else.
+- **COMPARTMENTALISED BY PUB, THEN THE NIGHTS FROM THERE** — asked for in those
+  words. A HEADING, never a second level of clicking: a row you must open
+  before you can pick it costs two taps to save one line. **Group by the pub
+  FIRST, then order within it** — walking the archive in date order and
+  printing the venue whenever it changed drew "The Crown" twice with a
+  different pub between, which reads as two pubs of one name.
+- **`.bay-rail > * { flex: 0 0 auto }` IS LOAD-BEARING.** A flex column shrinks
+  its children when the content overflows, and the rail always overflows — it
+  scrolls. The rows survived on `min-height: 44px`; the pub headings had no
+  floor and rendered at **2px with their text in the DOM**, so a perfectly
+  compartmentalised rail drew as one undivided list and nothing threw. Found by
+  measuring `getClientRects()`, not by counting elements.
+- **THE DRAGS SURVIVED because they were on the PANEL, not on a slot inside
+  it** — and each empty state keeps its drop zone, since an empty rail still
+  has to say what the panel is for.
+
+### ONE PUB IS ONE LEAGUE — the id key and the typed name are the same room
+
+`leaguesByVenue()` in `src/league.js`. Reported off a live console: **"The
+Station Tap, Wokingham" in the rail twice**, 17 teams and 20. Pick the venue
+off the Venues list some weeks and type it freehand others, and `venueKeyOf()`
+files the nights under `id:xyz` and `the station tap` — **the season cut in
+half**, every team's best-six computed from part of their record, on the table
+that goes on a public page.
+
+- **THE SECOND PASS ALREADY EXISTED IN `venueHeadcounts()`**, with the same
+  reasoning. Two readers of one archive disagreeing about what counts as one
+  venue is the collision, and the fix is the existing answer applied.
+- **THIS REVERSES A PINNED TEST, deliberately.** The old one asserted the
+  split, and the asymmetry was indefensible on its own terms: two freehand
+  nights at one pub have always merged, so the old rule said that ADDING an id
+  to one of them made the answer worse.
+- **THE KEY KEPT IS THE `id:` ONE.** Whether a table is published and every
+  ruling on a team name are stored against it, so folding onto the bare name
+  would silently unpublish a table and drop every override.
+- **THE COST, ACCEPTED KNOWINGLY:** two genuinely different pubs sharing a name
+  merge. Already true on the name-only path, and why venue names carry a town.
+
 ### THE COMMUNITY BAY IS THE TAB YOU ARE ON — a wall, or a venue rail
 
 `communityBench(active)` in `console-community.js`. *"Anything that loads
 should load onto the top bar bit — the photos in a 3 x 6 grid, and quiz league
-up there too with options on the left hand side going down like the menu below
-it."*
+up there too."*
 
 - **THE BOTTOM IS CONTROLS AND OPTIONS. IT NEVER DISPLAYS THE THING.** *"If a
   quiz league appears at the top it shouldn't be at the bottom — so you click
   the thing at the bottom to reveal it at the top."* The league tab draws no
-  table and the Photos tab draws no photographs: what is down there is the
-  venue rail's controls, the night list, and the one button that acts on the
-  thing showing above.
+  table and the Photos tab draws no photographs.
 - **THE SAFEGUARDS SURVIVED THE MOVE, and that was the thing to check.** Nobody
   publishes a night or a table without having just looked at it — kept by
   drawing the button UNDER the thing. In a fixed frame the bay is on screen
@@ -1596,19 +1650,16 @@ it."*
   body.
 - **SIX ACROSS, because everything else here is six across** — the shelf and
   the Tonight bays; three across on a phone.
-- **THE RAIL IS THE TAB COLUMN, one region higher** — 190px, stacked, lit on
-  the LEFT edge. Two ways of saying "pick one of these" on one screen is a
-  label collision. **It repaints the whole page**, or the controls below would
-  publish the pub before it.
 - **THE WALL IS FETCHED ONCE PER PAGE LOAD AND STOPS ASKING** — a photo list is
   a request per night, so it walks the newest until eighteen are in hand and
   never past `WALL_NIGHTS`. Held in a module binding: the bay is rebuilt on
   every state push, which at a lobby is every join.
 - **`node scripts/community-bay.mjs` IS THE GUARD, and it measures GEOMETRY** —
-  every door's bay against the launch bar's, what is left for the columns,
-  whether the page scrolls, that no control is in the bay and no table or photo
-  is at the bottom, and that pressing a rail button, a night and a picture each
-  actually change what is drawn. Nothing in `npm test` can see any of it.
+  every door's bay against the launch bar's, that each has a rail whose
+  headings are not squashed, what is left for the columns, whether the page
+  scrolls, that no control is in the bay and no table or photo is at the
+  bottom, and that pressing a rail button, a night and a picture each actually
+  change what is drawn. Nothing in `npm test` can see any of it.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
