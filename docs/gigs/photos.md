@@ -1,0 +1,560 @@
+# The photographs — the room's, yours, and what reaches the public gallery
+
+Split out of `docs/gigs.md` on 29 August 2026, when that file crossed the
+100,000-byte cap `test/docs-index.test.js` holds every `docs/` page to. Split by
+SUBJECT rather than by size: the photographs are one story, from the phone that
+takes them to the page a venue is shown, and they had grown to a third of a file
+about venues, invoices and the diary.
+
+Moved **by line number**, so nothing was retyped and nothing could be quietly
+reworded on the way through — the same mechanical transform as every split
+before it.
+
+---
+
+## PUTTING A NIGHT ON THE PUBLIC GALLERY
+
+`galleryToggle()` in `console.js`, `/api/past-gigs/publish`, `src/gallery.js`.
+
+**THE ROUTE EXISTED FROM THE DAY THE GALLERY WAS BUILT AND NOTHING EVER CALLED
+IT.** A night could be published only by hand, which in practice means not at
+all — on the feature whose entire purpose is putting a night up. The gate was
+perfect and the gate had no handle.
+
+That is the same class of miss as the projector's arcade board and the launch
+route: the server was ready, the page was ready, the tests passed, and no
+control joined them together. **A test that the route works proves nothing
+about whether anybody can reach it**, so `test/gallery.test.js` now also
+asserts that something under `public/` calls it. A text search is a weak check
+and is the right weight, because the fault was not a broken caller — it was the
+total absence of one.
+
+**AND WHEN A CALLER WAS FINALLY WIRED UP, THE ROUTE 404ED.** It was defined
+inside `handleGet`, which is only ever called for GET and HEAD — every POST
+goes to `handleWrite` — so a POST to it fell through to the generic 404 and had
+done since the day it was written. **Dead code that read as a working
+feature**: the gate was tested, the page was built, this file described it, and
+the one call that puts a night up could never have been answered.
+
+Found by a browser agent posting to it and getting *"Not found"* where the
+honest answer is *"there is nowhere to record this"*. The test now POSTs over
+real HTTP and **asserts against the 404 rather than for the 400** — that
+difference IS the bug, and it is invisible to anything that does not make the
+request. Verified by putting the handler back in `handleGet` and watching it
+fail.
+
+**IT SITS UNDER THE PHOTOGRAPHS, AND THAT PLACEMENT IS THE SAFEGUARD.** It is
+inside a night that has to be opened, below the pictures it would publish — so
+nobody can put a night in front of the world without having just looked at
+what is in it. A button on the collapsed row would be one tap from a stranger's
+face going public, taken on a phone whose only promise was that it *"goes on
+the big screen"*.
+
+**IT SAYS WHAT PUBLISHING MEANS, in one line** — *"Anyone with the link can see
+these."* The house style says a control gets a title and one short line, and
+that warnings are the exception because they are read once at a moment that
+matters. This is one, and it costs somebody something real if it is not said.
+Not styled as a warning and not red: it is a plain statement read BEFORE
+pressing, and red would say a mistake had already been made.
+
+**TAKING IT DOWN IS AS PROMINENT AS PUTTING IT UP.** Somebody will ask for
+their photograph to be removed, and the only honest answer on a page with no
+contact details is a quizmaster who can do it in one tap while they are stood
+there. Destructive-styled — outlined red, never filled.
+
+**The published state rides on the call that is already made.** `/api/past-gigs/
+<night>` carries `published`, rather than a second request: a button that has
+to fetch before it knows its own label is a button that flickers.
+
+## CHECKING THE PHOTOS IS THE NEXT PRESS, NOT A PAGE YOU GO AND FIND
+
+Asked for on 17 August 2026, and the wording is the design: *"at the end of the
+quiz it's showing the winner on the scoreboard, you do your well dones etc, and
+then the next click takes you to a huge CHECK PHOTOS link that you can't dodge
+— it's part of the flow."*
+
+**It replaced two weaker answers, and both are worth knowing about because the
+instinct to go back to them will return.**
+
+The first was to publish the night automatically when the scoreboard went up.
+That fails on a fact in the code rather than on taste: `PHOTO_PHASES` in
+`screen.js` includes `final`, `won` and `finished`, and photo uploads are not
+phase-gated at all — so the room is still sending pictures at the moment the
+scoreboard appears. Auto-publishing there publishes a night that is not
+finished arriving.
+
+The second was a prompt on the console: finish the night, and the console
+suggests checking the photos. **That is a page you go and find.** At half past
+eleven, with the room emptying and kit to pack, a suggestion on another screen
+is a suggestion that loses. What makes this happen at all is that it is the
+next press in a sequence the host has been making all evening, in the same
+position, at full size.
+
+**AND IT IS THE LAST MOMENT THE ROOM IS STILL THERE.** Somebody who wants their
+photograph out is stood in front of you now; on a Monday they are a message you
+cannot answer with a bin. That is the argument for tonight rather than for a
+tidier time.
+
+### What the button actually did before
+
+`buildActions()` set the primary at `final` to *Finished*, `disabled`. **A dead
+control, in the one place the thumb has been all night, at the exact moment
+there is still work to do.** This repo already has a rule about controls that
+appear and disappear — *build the next one present and inert* — and this is its
+other half: a control that is present and inert when there IS a next thing is
+the same waste wearing the opposite hat.
+
+### It opens the night. It does not publish it.
+
+The press lands on Post gig → Past gigs with the night on the bench and **its
+row already open**. The publish control is where it always was, underneath the
+photographs, and it is still a deliberate press — the safeguard is that nobody
+puts a night in front of the world without having just looked at what is in it,
+and a button that arrives having skipped the looking would remove exactly that.
+
+**Opening the row was the second half of the job and it is not cosmetic.**
+Landing on the bench alone left an *Open its photos* button between the host
+and the pictures, which is the tap that does not get made. It goes through the
+row's own head — the same call the bench's own button makes — so there is one
+implementation of "show me this night". A second one would drift, and the way
+it would drift is into a gallery with no bin on the pictures.
+
+### The two joins, and why each is where it is
+
+**The night rides in the URL** (`?night=YYYY-MM-DD`) rather than `host.js`
+writing the console's `localStorage` directly. Two pages writing one key is how
+a contract drifts silently — the console is free to change how it remembers a
+bench, and would take the control view down with it. A link can also be
+followed twice, shared or bookmarked, which a storage write cannot.
+
+**The key is the 6am roll-over**, identical to `nightOfGig()` and
+`photos.nightOf()`. A quiz that ends at half past midnight would otherwise open
+tomorrow, with nothing under it, on the one night the host most wants the thing
+to just work.
+
+**And the console sets the bench WITHOUT rendering.** `putNightOnBench()`
+renders, and at boot that runs before `load()` has fetched anything — `library`
+is still null and the first paint throws on `library.brand`. That is the third
+boot-order fault of this work, after the moved `load()` call and `offerRoomId`:
+**a thing that is entirely right once the page is up, run one step too early.**
+The pattern is worth naming, because `node --check` cannot see any of them.
+
+### THE BENCH'S PUBLISH BUTTON OPENS THE PHOTOGRAPHS, IT DOES NOT PUBLISH
+
+Decided 19 August 2026, as one of a batch of decisions taken up front rather
+than asked mid-build — the host answered by picking an option in a menu, and
+the reasoning is worth keeping so the choice is not re-litigated.
+
+**The bench's own "Put it on the gallery" button was a second door onto the
+same route, and it skipped the safeguard the first door was built for.** The
+control under the photographs works because it is inside a night you have
+opened, below the pictures it would publish — nobody puts a stranger's face
+in front of the world without having just looked at what is in it. The bench
+does not have to be opened to reach its own copy of that button, so pressing
+it published directly, with nothing looked at.
+
+Three ways out were on the table: take the bench button off, make it open the
+photographs first, or leave it on the theory that the bench only ever holds a
+night you deliberately put there. **The middle one was chosen, because it
+keeps the shortcut and cannot skip the looking.** The button now does exactly
+what *Open its photos* next to it does — clicks the row's own head, through
+the one implementation of "show me this night" that already exists rather
+than a second one that could drift from it.
+
+**Taking a night OFF the gallery stays direct, deliberately.** The safeguard
+exists for publishing, not for withdrawing — removing a photograph from public
+view is never the risky direction, and somebody asking for their photo down
+while stood at the bar deserves the fast path, not an extra screen.
+
+---
+
+## AND THE PREVIEW DID NOT WORK ON THE HOST KEY
+
+The owner sees unpublished nights on `/gallery`, marked — asked for directly,
+so the whole path can be proved before a single photograph becomes public. It
+hangs on the server knowing who is asking, and **the page never sent the host
+key with its own requests**. A signed-in account sends a cookie and needs
+nothing; somebody arriving on a `?key=` link sent nothing at all, so the
+preview silently did not work and the page looked empty — on the identity most
+likely to be checking it.
+
+The key is read **from the URL, never from localStorage**, which is the rule
+this app already follows for links: a remembered key must not spread itself
+onto new pages and into browser history. This one is already in the address bar
+of the visit that is happening, so nothing new is exposed. A customer's link
+carries no key and it is a no-op for them.
+
+**It goes on the IMAGES as well as the listing**, because the photo route
+re-checks for itself rather than trusting that the listing let you through —
+without it a preview would be a page of broken pictures.
+
+---
+
+## AUTO-PUBLISHING THE GALLERY WAS REPLACED BY A STEP — and that is better
+
+Settled with the host on 17 August 2026, after three answers were tried and two
+were wrong.
+
+**The question was when a night counts as "over" so the gallery could publish
+itself.** The calendar cannot say: a booking has a date and an optional start
+and **no duration at all**, so "when the calendar thinks it is over" means
+"start plus a made-up two hours". The host's own answer was better and matched
+what the app already believes — *"the night is probably over once the
+scoreboard goes up"* — and it is right: `isOver(state)` at the final phase is
+exactly when a night is archived and `finishedAt` stamped.
+
+**But publishing at that moment would have gone out too early**, for a reason
+that only shows up in the code: **photo uploads are not phase-gated.**
+`/api/photo` checks whether photos are switched on, not what phase the game is
+in, and `PHOTO_PHASES` deliberately keeps photos on the projector at `final`,
+`won` and `finished` — **the winner announcement is peak photo time.** So an
+auto-publish at the scoreboard would publish a night before its last
+photographs arrived, and those would land on an already-public page with
+nobody having looked at them. That is the safeguard this file already records
+— the publish control sits UNDER the photographs so nobody publishes a night
+without having just seen what is in it — failing silently.
+
+**So the host replaced the whole idea:** *"perhaps there should be an extra
+step — you finish the night on the console, do your well dones and thank yous,
+and the console prompts you to check the photos as the very next step?"*
+
+That is the shape CLAUDE.md argues for everywhere: **the app prepares, the
+human presses.** It keeps the looking and makes the app ASK for it, at the one
+moment the room is still there to be asked about a picture. `runningPanel()`
+shows it once `running.finished`, and it puts the night on the Post gig bench —
+keyed by the same 6am roll-over as the photos, so a quiz that ended at half
+past midnight lands on its own night rather than on tomorrow with nothing
+under it.
+
+**Do not re-propose auto-publishing** without answering the upload window
+first.
+
+---
+
+## THE GALLERY ONLY HOLDS WHAT LOOKED LIKE A CAMERA TOOK IT
+
+Asked for directly on 23 August 2026: *"if people upload photos for a bit of
+a laugh on the night, I don't necessarily want those going into the gallery
+for the night, but them appearing on the screen can be fun."* **Two things
+were being asked for, not one, and the whole feature is keeping them
+separate rather than tightening the upload itself.** The projector stays
+exactly as loose as it always was — any image, camera or gallery, still goes
+up between questions the moment somebody sends it. Only the PUBLIC page,
+built afterward from the private repo, gets pickier.
+
+**The obvious tool — EXIF's `Make`/`Model` tags — turned out to be
+unreachable from where it looks reachable.** A camera photo carries that
+metadata; a screenshot (near-universally PNG) or a downloaded meme almost
+never does. But the upload in `play.js` redraws the chosen file onto a
+canvas before it ever leaves the phone — filters, stickers, the square 1080
+crop — and `canvas.toBlob`/`toDataURL` strips every byte of EXIF on the way
+through. By the time bytes reach `/api/photo` there is nothing left to
+read, camera or not. **The one moment the original file still has it is
+between the file input's `change` event and the first `createImageBitmap`
+call** — so `looksCameraTaken()` in `filters.js` runs there, on the raw
+`File`, and the result travels to the server as `&camera=1` on the upload
+URL rather than being re-derived from bytes that no longer carry the
+answer.
+
+**A DEPENDENCY-FREE JPEG/EXIF READER, in the spirit of `qrcode.js`.** It
+walks the marker sequence from the SOI, stops at APP1 (`0xFFE1`), checks for
+the `"Exif\0\0"` signature, parses the TIFF header (byte order, the 0x002A
+sanity word, the IFD0 offset) and looks for tag `0x010F` (`Make`) in IFD0.
+Nothing more elaborate: `Make` alone is what a phone's own camera app
+writes essentially every time, and reading the whole EXIF tree for one tag
+would be effort spent on precision this signal cannot actually offer — see
+the false-negative paragraph below. Verified against real files, not only
+hand-built byte arrays: a genuine PIL-generated JPEG with `Make: Apple` in
+its EXIF reads `true`; the same image saved with no EXIF, and a plain PNG,
+both read `false` — and the marker walk correctly steps past a real JFIF
+APP0 segment to reach APP1, which a synthetic buffer alone would not have
+proven.
+
+**BEST-EFFORT, NEVER A GATE, and the asymmetry is deliberate.** A photo
+forwarded through WhatsApp, Instagram or Messages very often has its EXIF
+stripped by that app before it ever reaches a phone's camera roll — so this
+can UNDER-count (a real photograph, once shared, reading as "not a
+camera"), but it cannot OVER-count: nothing manufactures a `Make` tag that
+was never there. The projector never asks the question at all — every
+photo still goes up regardless of the answer — and a corrupt or
+unrecognised file falls through to `false` rather than blocking an upload
+the guess was never meant to hold up.
+
+**THE FLAG RIDES IN THE FILENAME, not a second file beside it.** The
+private photo repository has no structured per-photo metadata today — a
+photo is a name and the git commit message that filed it — and the gallery
+route only ever reads a night's own directory listing. A separate manifest
+(one JSON file per night, read-modify-written on every upload) would race
+against itself the moment two people upload within the same second, which a
+pub quiz does constantly, the same shape of problem `published.json`
+avoids by being written once per publish tap rather than once per photo.
+The filename cannot race: `photos.js`'s `add()` decides it once, at the
+moment the id is minted, and appends `NOT_CAMERA_SUFFIX` (`-picked`) before
+the extension when the photo was not camera-taken. Every later reader —
+`isCameraFile()`, the gallery filter, the console's own badge — just looks
+at the name it already has. `past-gigs.js`'s `safePhotoName()` was widened
+by exactly one optional group, `(-picked)?`, to keep matching only names
+this app itself could have issued — not an open door for arbitrary
+hyphens, checked by a test that an unrelated hyphenated name still refuses.
+
+**CHECKED TWICE ON THE WAY OUT, same reason `isPublished` is.**
+`/api/gallery/<night>` filters the listing so a non-camera photo is never
+offered a link; `/gallery-photo/<night>/<name>` refuses one directly too,
+because its name was on the projector all night and a URL can be typed
+without ever having seen the listing. The NIGHT-LEVEL photo count
+(`/api/gallery`) filters the same way, or a night would say "6 photos" and
+open on 4 — the exact "count says one thing, the page says another" fault
+this file's own gallery-preview section already exists to avoid.
+
+**THE HOST STILL SEES EVERYTHING, WITH A BADGE, before publishing.**
+`/api/past-gigs/<night>` — the host's OWN review, gated by the host key,
+completely separate from the public route — is deliberately NOT filtered:
+every photo the night held is shown, and one that will not reach the public
+gallery carries a quiet "Screen only" tag in the same corner `not filed`
+already uses. Never hidden, because the whole point of reviewing photos
+before publishing is not being surprised later by one that quietly is not
+on the page. **No override was built** — there is no per-photo "include
+anyway" toggle. The false-negative case (a genuine photo, re-shared and
+therefore stripped of its EXIF before it reached this app) has no recovery
+path beyond re-uploading through a fresh camera capture; if that turns out
+to matter in practice, add the toggle then rather than guessing at it now.
+
+---
+
+## THE QUIZMASTER'S OWN ROOM PHOTOGRAPHS — 29 August 2026
+
+> *"Would be good to be able to add room photos to the gallery that everyone
+> sees, that I take from my own phone?"*
+
+`POST /api/past-photo/<night>` in `server.js`, `myPhotos()` in
+`console-community.js`, under the night showing in the Community bay.
+
+### The room's camera is sixty phones pointed at each other
+
+Every photograph the gallery has ever held arrived through a PLAYER's phone,
+and a player's phone is pointed at their own table. What a venue actually wants
+to be shown is the place full — the bar three deep, forty heads turned towards
+a projector — and that picture can only be taken by the person standing at the
+front.
+
+So the one shot that genuinely sells the night was the one shot with no way in.
+That is the gap, and it is a *Build what helps a quizmaster SELL* feature
+rather than a convenience: the gallery is the evidence, and it was missing its
+best exhibit.
+
+### It is filed against the night in the URL, never against today
+
+This is the load-bearing detail. `photos.add()` dates a picture by the clock at
+the moment it lands — right for a phone in the room, and wrong for everything
+else. A photograph sent on the Friday would file itself under the Friday: a
+Thursday quiz, and a picture of it in a folder for a night that did not happen,
+which the gallery would then show under the wrong date to a venue.
+
+Naming the night in the URL is what makes the feature usable at all — in the
+car park, on the drive home, or on the Monday with the rest of the admin.
+
+It also means the write goes **straight into the private repository**, past the
+room's live photo store. There is nothing to keep in step, because there is no
+second copy.
+
+### Camera-eligible by definition
+
+The `-picked` marker exists to keep a meme somebody pulled off their camera
+roll off a venue's public page. These are the opposite: the promotional
+photographs, taken by the person whose name is at the top of that page.
+
+So they carry no marker and `isCameraFile()` lets them straight through. The
+one thing they must never do is arrive marked and then silently not appear —
+which is exactly what would have happened if this had reused the player upload
+path, since `camera` defaults to FALSE there and a phone's own share sheet
+often strips the EXIF that would say otherwise.
+
+The filename starts `mine`, so a photograph the quizmaster added is tellable
+from one the room sent — for a bin, for a count, and for whatever wants to know
+later.
+
+### Scaled down in the browser, and not cropped square
+
+A modern phone photograph is five to eight megabytes; the route caps at three,
+and this is a quizmaster on pub wifi, which is the connection this app protects
+above every other. So `drawFiltered()` redraws it to 1600px before it is sent —
+1600 rather than a player's 1280, because this one is meant to be looked at on
+a laptop.
+
+**`square: false`, unlike a player's photo.** A picture of a room IS the room,
+and cropping it to a square for a wall of thumbnails would throw away the half
+that shows how full it was.
+
+They are sent **one at a time, in order**, with the count going up as they
+land: six at once is six writes racing on one folder, and a progress line that
+only moves at the end reads as a page that has hung.
+
+### The test asserts against the 404, not the 400
+
+A new POST written beside its GET neighbours is the exact shape of a fault this
+repo has already shipped: the gallery publish route lived inside `handleGet`,
+which only ever runs for GET and HEAD, so every POST fell through to the
+generic 404. It read as a working feature for months — the gate perfect, and no
+handle on it.
+
+So `test/own-photos-route.test.js` posts over real HTTP and asserts the answer
+is **not 404**. A test written for the 400 would pass against a route that does
+not exist. It was verified by renaming the route and watching it fail.
+
+What it cannot reach is the write itself, which needs a repository token this
+suite does not have and must not need — so the deepest assertion is that an
+unconfigured repo is refused with a message that NAMES the missing thing. That
+is the branch a fresh deployment actually hits, and a generic "could not save
+that" would send somebody hunting through the app for a fault in an env var.
+
+### A pill per photo, and it is a switch
+
+> *"Can each photo have a little pill in the corner just so I can visually see
+> which ones are showing in the gallery for this collection of photos? There
+> may be some that were uploaded but are appropriate for a public gallery that
+> I can switch on… maybe a little green pill to show it's on the public gallery
+> for this night and a red one to show it isn't, and I can click one for each
+> purpose."*
+
+**This is the team-name override wearing different clothes**, and the reasoning
+transfers exactly: a machine guess decides by default, and a human who was in
+the room can overrule it — **in both directions, because the guess is wrong
+both ways**. `looksCameraTaken()` misses a real photograph whose EXIF a share
+sheet stripped, and it passes a screenshot somebody took with their own camera
+app. One override with two values answers both; a one-way "allow" control would
+have left the second with no answer at all.
+
+**It replaced the grey "Screen only" badge rather than joining it.** That badge
+said what the camera guess *thought*; the pill says what will actually
+*happen*, which is the same fact once a human can overrule it. Two badges on
+one photograph saying overlapping things is the label collision this app has a
+standing rule against — so the reason lives in the pill's own title, where the
+difference between "we thought you uploaded this" and "you turned it off" is
+worth having and is not worth a second badge.
+
+**Green and red, which is one of the few places they are allowed to mean this.**
+The app's fixed colours are good/paying and wrong/destructive, and "on a public
+page" versus "not" is exactly that pair — read at a glance across eighteen
+thumbnails, which is the whole point of a lamp over a list.
+
+**And no words on it at all**, which was the correction after the first
+version shipped with "On the gallery" / "Not on it" written on each one:
+
+> *"I need the 'on the gallery' to just be an on off button with green for on
+> and red for off, no text needed but it must be clickable."*
+
+Right, and eighteen of them is the argument. A label repeated across a grid
+stops being read and becomes furniture — the clutter rule exactly — while the
+colour was already doing the whole job on its own. It is **filled** rather than
+outlined, which is not a break of *destructive is outlined, never filled*: this
+is a lamp, not a button that destroys something, and with no text the fill IS
+the message. A dark ring keeps it legible over a sunlit wall or a red curtain.
+
+Three things follow, and each is checked:
+
+- **The `title` and the `aria-label` become load-bearing rather than a nicety.**
+  A wordless control has to say what it is somewhere, a screen reader gets
+  nothing from a colour, and the reason a photo is off — the camera guess, or a
+  ruling — is worth having on hover. This is the one place a native tooltip
+  earns itself: it sits on a picture rather than over a list, which is where
+  the last one was a nuisance.
+- **The dot is 18px and the target is 44px**, from a `::after` that pushes the
+  hit area out without the lamp growing. Small enough to read across a grid,
+  big enough for a thumb.
+- **The figure's own click has to ignore a press on it.** The picture opens on
+  click and the lamp sits on top of it with a target bigger than it looks —
+  without the guard, switching a photo off the gallery also blew it up to fill
+  the bay.
+
+**`showsOnGallery()` is the one decision, and all three readers ask it.** The
+gallery listing, the single-photo route (which re-checks, because a URL can be
+typed and that photo's name was on the projector all night) and the console's
+own pill. The day one of them answers differently is the day a photograph is on
+a page the console swears is private, or missing from one it says is public —
+so the test asserts all three call it by name.
+
+**A ruling that only restates the guess is cleared, not stored** — the gap
+dial's rule and the team-name override's. Otherwise a later change to how the
+guess is made could never reach that photo again.
+
+It rides in the **same file** as the published nights, for the same reason the
+league's rulings ride with its published venues: one question ("what does this
+room publish"), asked at one moment, and two files would be two GitHub round
+trips on a page that already waits for one. `setPublished()` carries the
+rulings through untouched — writing only the nights would wipe every one, which
+is the shape of bug that shows up weeks later when somebody notices a photo has
+come back.
+
+### It flips now and saves later
+
+> *"The 1-2 second load on clicking green/red is annoying, can it not just load
+> in the background perhaps at a later time?"*
+
+The write goes to GitHub — about a second on a good connection and longer on a
+pub's. Waiting for it before moving the colour made a lamp feel like a form
+submission, on a control whose whole job is being flicked across a grid of
+eighteen.
+
+**The colour is the local truth and `saved` is the server's**, which is what
+makes this honest rather than a lie. If the write fails the lamp goes back to
+what the server actually holds and says why on the line that counts the
+photographs — **never an `alert`**, which is a modal interruption for something
+that happened in the background, and **never a silent revert**, which reads as
+a lamp with a mind of its own. Nothing is ever left claiming a state that was
+not recorded.
+
+**It settles before it sends** — 600ms after the last press. Somebody deciding
+about a photograph often presses twice, and two taps that end where they
+started need no write at all, while two that do not need ONE rather than two
+racing.
+
+**And every gallery write goes through one promise chain.** They all rewrite
+the same `published.json` — it holds the published nights and every per-photo
+ruling together — and a GitHub content write is read-modify-write against a
+sha. Fire three at once and two are working from a sha that is already stale:
+at best a 409, at worst the last one home quietly undoes the other two. The
+chain costs nothing that matters, because the flip is already instant.
+
+### The league bay is a venue that folds into its nights
+
+> *"Quiz league also needs a similar drop down for each night and also a
+> summary at the top? Perhaps the summary (i.e. the actual quiz league table)
+> is the one that displays when you click venue, and then you can click each
+> night to see who won and when on any given night."*
+
+The same rail as the Photos bay, which is the point: one shape, learned once.
+
+**The pub's own row is `The table`, inside the fold, and never the heading
+itself.** The heading is the FOLD; a heading that both folds and picks is one
+control doing two jobs, which is the collision this app has a standing rule
+against. Pressing the pub opens it; pressing *The table* shows the season.
+
+Each night's row carries **Won by …**, so the rail answers most of the question
+before anything is pressed — which is what a rail is for.
+
+**`evenings` rides in the library payload, built where `leagueTable()` already
+has it.** The night walk assembles `tonight` — the evening's finishing order —
+one line before it starts scoring, so emitting a summary from there is free,
+where working it out afterwards would mean carrying every leaderboard through
+to the caller.
+
+Two things keep it cheap and honest:
+
+- **It is capped at `NIGHT_ROWS`.** A season is twelve weeks and a quizmaster
+  may have four venues, so uncapped this is thousands of rows for a panel that
+  shows the top of the night. Eight is the podium and its neighbours, which is
+  what "who won" means; the count says how many there were.
+- **It carries the POINTS**, worked out on the server from `pointsFor()`. The
+  first version had a copy of the ladder in the browser, which is exactly the
+  duplication this repo keeps paying for — two implementations of one sum, on a
+  number a team can add up themselves.
+
+The field is `evenings` rather than `nights` because **`nights` is already read
+as a COUNT** in a dozen places — the venue card, the bay's heading, the public
+page, the report. Reusing the name for a list would have been a label collision
+on a field that is everywhere.
+
+**A board with no `position` on it scores nobody**, which is worth knowing
+because it fails quietly: the night view draws its headers and an empty body. A
+fixture written without positions was testing a shape the app never sees, and
+the check now asserts the table has rows in it rather than merely columns.

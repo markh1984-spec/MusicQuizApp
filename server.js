@@ -3543,6 +3543,15 @@ function markHidden(leagues) {
       table: league.table.map((t) => ({
         ...t, key: teamKey(t.name), nameHidden: !isCleanForPublic(t.name),
       })),
+      // The same two fields on each night's own placings, so a name marked in
+      // the season table is marked the same way when you open the night it was
+      // typed on. One verdict, drawn wherever the name appears.
+      evenings: (league.evenings || []).map((e) => ({
+        ...e,
+        top: e.top.map((t) => ({
+          ...t, key: teamKey(t.name), nameHidden: !isCleanForPublic(t.name),
+        })),
+      })),
     };
   }
   return out;

@@ -716,10 +716,9 @@ Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 
 ### THE CONSOLE IS TWELVE FILES, AND THE STATE MODULE IS WHY IT WORKS
 
-`console.js` was 11,222 lines. It is now a shell of ~1,750 plus eleven modules
-named for a door or a tab, moved **by line number** — the same mechanical
-transform as the `CLAUDE.md` split, so not one function was retyped and not one
-body changed. All 34 tab views render **byte-identical markup** to the original.
+`console.js` was 11,222 lines. It is now a shell plus a module per door or tab,
+moved **by line number** — the same mechanical transform as the `CLAUDE.md`
+split, so not one body changed.
 
 - **`console-state.js` HOLDS THE BINDINGS MORE THAN ONE MODULE WRITES, and it
   imports NOTHING.** An ES import is a read-only view: `import { library }` then
@@ -747,21 +746,15 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
 ### CHANGING TAB DOES NOT MOVE THE PAGE
 
-`renderKeepingPlace()` in `console.js`. **This is the third arrangement of one
-behaviour and each was right about the console it was written for**: first the
-tab BAR was scrolled to the top of the screen, which was a way of hiding a
-launch panel too tall to want on screen; then that panel became a line and a
-drop zone, so `top: 0` was honest. Both MOVE THE PAGE, and moving the page is
-only worth it if there is something to get away from — there is not any more.
-Tabs are one page with the middle swapped, and jumping to the top on every
-press makes them feel like nine separate pages.
+`renderKeepingPlace()` in `console.js`. Tabs are one page with the middle
+swapped, and jumping to the top on every press makes them feel like nine
+separate pages.
 
-**It must HOLD the scroll, not merely decline to change it**, which is the part
-that looks like a one-line deletion and is not: `render()` replaces the whole
-of `mainEl`, so for an instant the document is short, the browser clamps
-`scrollY`, and putting the content back does not put the scroll back. Read the
-offset before, write it after. **A shorter tab still clamps and that is
-correct** — there is nowhere else to go.
+**It must HOLD the scroll, not merely decline to change it**, which looks like
+a one-line deletion and is not: `render()` replaces the whole of `mainEl`, so
+for an instant the document is short, the browser clamps `scrollY`, and putting
+the content back does not put the scroll back. Read the offset before, write it
+after. **A shorter tab still clamps and that is correct.**
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
@@ -1939,8 +1932,8 @@ every sentence that FORBIDS something, verbatim.
 **A WRITTEN RULE TO KEEP THIS FILE SHORT HAS NOW FAILED TWICE**, so
 `test/claude-md-budget.test.js` asserts the byte count, that every `docs/` link
 resolves, and that no decision exists in the doc without being named here.
-Raise the budget deliberately when something genuinely must be read by every
-session; the diff will then say that is what you did.
+**Pay for a new rule by trimming an old one to its prohibition** before raising
+the budget; the diff will then say which you did.
 
 **And a mechanical split is only safe where the boundary is STRUCTURAL.** Moving
 table rows worked — a row is a row. The same script pointed at prose, keeping
@@ -2011,7 +2004,9 @@ before touching a drag handler.**
 - A CONTROL IS PRESENT AND INERT, NEVER ABSENT
 - Quiz → bingo → quiz, one running score, no engine changes at all
 
-**[`docs/gigs.md`](docs/gigs.md)** — venues, prizes, the diary, past nights, getting paid
+**[`docs/gigs.md`](docs/gigs.md)** — venues, prizes, the diary, past nights,
+getting paid; **[`docs/gigs/photos.md`](docs/gigs/photos.md)** is the
+photographs' own half, split off at the 100,000-byte cap.
 
 - The winner's prize, on their phone
 - The diary — a calendar that maintains itself
@@ -2028,7 +2023,7 @@ before touching a drag handler.**
   are filed per room, and reading the wrong one showed a full night as an empty
   page. A deleted photo leaves the repo but NOT git history — never imply
   otherwise.
-- PUTTING A NIGHT ON THE PUBLIC GALLERY
+- PUTTING A NIGHT ON THE PUBLIC GALLERY (now in `docs/gigs/photos.md`)
 - AND THE PREVIEW DID NOT WORK ON THE HOST KEY
 - CHECKING THE PHOTOS IS THE NEXT PRESS
 - THE GALLERY ONLY HOLDS WHAT LOOKED LIKE A CAMERA TOOK IT — **tested now,
@@ -2047,6 +2042,23 @@ before touching a drag handler.**
   readers ask it** — the listing, the single-photo route and this lamp — or a
   photo is on a page the console swears is private. **A ruling that only
   restates the guess is CLEARED, not stored**
+- **IT FLIPS NOW AND SAVES LATER** — *"the 1-2 second load on clicking
+  green/red is annoying."* The colour is the local truth and `saved` is the
+  server's, so a failed write puts the lamp BACK and says why on the count
+  line — never an `alert` for something that happened in the background, and
+  never a silent revert. **It settles before it sends** (600ms): two taps that
+  end where they started write nothing at all. **AND EVERY GALLERY WRITE GOES
+  THROUGH ONE PROMISE CHAIN** — they all rewrite the same `published.json`
+  against a sha, so three at once is a 409 at best and the last one home
+  quietly undoing the other two at worst
+- **THE LEAGUE BAY IS A VENUE THAT FOLDS INTO ITS NIGHTS** — *"the summary is
+  what displays when you click venue, and then you can click each night to see
+  who won."* **The pub's own row is `The table`, INSIDE the fold, never the
+  heading** — a heading that both folds and picks is one control doing two
+  jobs. Each night carries *Won by …* on the row, so the rail answers most of
+  it unpressed. **`evenings` rides in the payload, capped at `NIGHT_ROWS`**,
+  built where `leagueTable()` already has the evening's order — **and it
+  carries the POINTS**, so the browser needs no second copy of the ladder
 - **THE QUIZMASTER ADDS THEIR OWN ROOM PHOTOS** — the room's camera is sixty
   phones pointed at each other and none at the ROOM, which is the one shot that
   sells the night. `POST /api/past-photo/<night>`, **filed against the night in
@@ -3001,68 +3013,54 @@ Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 ### A prize taken at the bar has to reach the filed night
 
 `updateArchivedNight()` in `src/library.js`, and `state.archivedAs`. A night is
-archived the instant it reaches the final scores and the bar scans the winner's
-QR minutes later — so every filed night said the prize was never taken. An
-UPDATE rather than a second archive, compared against what was last filed before
-writing (or a game sitting on the final scores rewrites the file on every push),
-and **pushed to the backup again**, or the fix reaches this disk and nothing
-else. **The flag that stops a night being filed twice is `state.archivedAs`, not
-a field on the Session** — the old one was cleared by `build()`, which runs on
-boot, so a restart on the final scores filed the whole evening a second time.
+archived the instant it reaches the final scores and the bar scans the QR
+minutes later. An UPDATE rather than a second archive, compared against what was
+last filed before writing, and **pushed to the backup again**. **The flag that
+stops a night being filed twice is `state.archivedAs`, not a field on the
+Session** — the old one was cleared by `build()`, which runs on boot, so a
+restart on the final scores filed the whole evening again.
 
 Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 
 ### CHECKING THE PHOTOS IS THE NEXT PRESS
 
-`buildActions()` in `host.js`; `?night=` / `nightToOpen` in the console. At
-`final` the primary read *Finished*, disabled.
+`buildActions()` in `host.js`; `?night=` / `nightToOpen` in the console.
 
 - **IT DOES NOT PUBLISH AND MUST NOT BE MADE TO** — `PHOTO_PHASES` includes
-  `final`, so the room is still sending. **Nor back to a console prompt** —
-  a page you go and find.
+  `final`, so the room is still sending. **Nor back to a console prompt.**
 - **The night rides in the URL on the 6am key**, never `host.js` writing the
-  console's store — two pages writing one key is how a contract drifts. **The
-  bench is set WITHOUT rendering**: a render at boot beats `load()`, so
-  `library` is null and the paint throws.
-- **ARRIVING OPENS THE ROW**, via the row's own head — one "show me this
-  night". One shot.
+  console's store. **The bench is set WITHOUT rendering**: a render at boot
+  beats `load()`, so `library` is null and the paint throws.
+- **ARRIVING OPENS THE ROW**, via the row's own head. One shot.
 - **THE BENCH'S PUBLISH BUTTON OPENS THE PHOTOGRAPHS, not publishes** — it was
-  a way round the safeguard under the photos. Taking a night down stays
-  direct; there is nothing to skip in that direction.
+  a way round the safeguard under the photos.
 
 Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 
 ### THE POST-NIGHT REPORT — a PDF, off the archive, out the share sheet
 
-`src/report-pdf.js`, `/api/past-gigs/<night>/report.pdf`, `shareReport()` in
-`console-gigs.js`. Headcount, winner, podium, photo count, advert opens —
-nothing new collected. Same split as invoicing: `pdf.js` for primitives,
-`report-pdf.js` for layout, shared exactly like an invoice. **The route sits
-above the generic `/api/past-gigs/<night>` match**, the same prefix trap the
-publish route guards against, and needs `listArchive({ boards: true })` for
-the podium — every other Past gigs read asks without it.
+`src/report-pdf.js`, `/api/past-gigs/<night>/report.pdf`. Nothing new
+collected. **The route sits above the generic `/api/past-gigs/<night>` match**,
+the same prefix trap the publish route guards against, and needs
+`listArchive({ boards: true })` for the podium.
 
 Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 
 ### THE ADVERT SLIDE EDITOR HOLDS THE OFFER, AND READS ITS OWN COUNT BACK
 
-`slideEditor()` in `console-venues.js` collects `offerCode`/`offerWhen`
-alongside the link — `src/offers.js` was built with no console side at all.
-`/api/advert/<id>` embeds `room.offers.forPack(id)` on the same fetch that
-opens a set, so the count cannot drift from the pack; the editor keeps it OUT
-of the object it PUTs back. Silent until there is a code, silent again until
-anything has scanned it.
+`slideEditor()` in `console-venues.js` collects `offerCode`/`offerWhen`.
+`/api/advert/<id>` embeds `room.offers.forPack(id)` on the same fetch, so the
+count cannot drift from the pack; the editor keeps it OUT of the object it PUTs
+back. Silent until there is a code, and until anything has scanned it.
 
 Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 
 ### THE APP SENDS THE MONEY EMAILS, AND NOTHING ELSE
 
 `receiptEmail()`/`cardFailedEmail()` in `src/email.js`, `billingEmail()` in
-`src/billing.js` — kept OUT of `applyBilling()`, which stays a pure
-translation with no network call. Only `started`/`renewed` and
-`payment_failed` say anything. **Not wired to a live route** — PayPal is
-still blocked on this environment's network egress — but sender and
-connector are built and tested, waiting for the webhook route. A card-failed
+`src/billing.js` — kept OUT of `applyBilling()`, which stays a pure translation
+with no network call. Only `started`/`renewed` and `payment_failed` say
+anything. **Not wired to a live route**, waiting on the webhook. A card-failed
 notice must never say a night is at risk.
 
 Full reasoning: **[`docs/business/plumbing.md`](docs/business/plumbing.md)**.

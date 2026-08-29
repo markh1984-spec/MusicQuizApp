@@ -660,6 +660,32 @@ export async function fillNightDetail(body, night) {
  *
  * The caller owns the container and whatever it puts above this.
  */
+/**
+ * HOW LONG A LAMP WAITS BEFORE IT SAVES.
+ *
+ * Long enough to swallow a change of mind — two taps that end where they
+ * started send nothing at all — and short enough that nobody notices it. Not a
+ * setting: a number with a note, like the season length and the team size.
+ */
+const WRITE_AFTER = 600;
+
+/**
+ * ONE GALLERY WRITE AT A TIME, ACROSS EVERY LAMP ON THE PAGE.
+ *
+ * Every one of these writes the SAME file in the private repository —
+ * `published.json` holds the nights and every per-photo ruling together — and
+ * a GitHub content write is read-modify-write against a sha. Fire three at
+ * once and two of them are working from a sha that is already stale: at best a
+ * 409, at worst the last one home quietly undoes the other two.
+ *
+ * A promise chain is the whole fix, and it costs nothing that matters: the
+ * flip is already instant, so the queue is invisible.
+ */
+let galleryChain = Promise.resolve();
+function galleryQueue(job) {
+  galleryChain = galleryChain.catch(() => {}).then(job);
+}
+
 export async function nightPhotos(body, night, opts = {}) {
   /*
    * THREE OPTIONS, ALL FOR THE COMMUNITY DOOR, and they exist so there is
@@ -693,7 +719,18 @@ export async function nightPhotos(body, night, opts = {}) {
     loading.textContent = err.message;
     return;
   }
-  loading.textContent = `${data.photos.length} photo${data.photos.length === 1 ? '' : 's'}`;
+  const counted = `${data.photos.length} photo${data.photos.length === 1 ? '' : 's'}`;
+  loading.textContent = counted;
+  /*
+   * WHERE A BACKGROUND WRITE SAYS IT FAILED — the line that already counts the
+   * photographs, borrowed rather than a second line appearing and disappearing
+   * above the grid. One place, and it goes back to the count the moment the
+   * next write lands, so a stale complaint cannot sit there.
+   */
+  const trouble = (msg) => {
+    loading.textContent = msg || counted;
+    loading.style.color = msg ? 'var(--bad)' : '';
+  };
   /*
    * ONE ROW, SCROLLED SIDEWAYS RATHER THAN WRAPPED — the shape asked for.
    * `.night-strip`, not `.night-grid`: the grid wraps into as many rows as
@@ -792,29 +829,68 @@ export async function nightPhotos(body, night, opts = {}) {
       pill.setAttribute('aria-pressed', String(live));
     };
     paintPill();
-    pill.addEventListener('click', async (ev) => {
+
+    /*
+     * IT FLIPS NOW AND SAVES LATER — asked for directly: *"the 1-2 second load
+     * on clicking green/red is annoying, can it not just load in the
+     * background?"*
+     *
+     * The write goes to GitHub, which takes about a second on a good
+     * connection and longer on a pub's. Waiting for it before moving the
+     * colour made a lamp feel like a form submission, on a control whose whole
+     * job is being flicked across a grid of eighteen.
+     *
+     * **THE COLOUR IS THE LOCAL TRUTH AND `saved` IS THE SERVER'S**, which is
+     * what makes this safe rather than a lie: if the write fails the lamp goes
+     * back to what the server actually holds and says why. Nothing is ever
+     * left claiming a state that was not recorded.
+     */
+    let saved = live;
+    let timer = null;
+
+    pill.addEventListener('click', (ev) => {
       // Belt to the figure's own braces above: a lamp is a control ON a
       // picture, and pressing it must never also mean "open this".
       ev.stopPropagation();
-      pill.disabled = true;
-      const want = !live;
-      try {
-        const res = await fetch(keyed(`/api/gallery-photo/${encodeURIComponent(night.night)}/${encodeURIComponent(p.name)}`), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ on: want }),
+      live = !live;
+      paintPill();
+      /*
+       * SETTLE FIRST, THEN SEND. Somebody deciding about a photograph often
+       * presses twice — and two taps that end where they started need no write
+       * at all, while two that do not need ONE rather than two writes racing
+       * on the same file. The wait is short enough to be invisible and long
+       * enough to swallow a change of mind.
+       */
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (live === saved) return;   // back where it started: nothing to say
+        const want = live;
+        galleryQueue(async () => {
+          try {
+            const res = await fetch(keyed(`/api/gallery-photo/${encodeURIComponent(night.night)}/${encodeURIComponent(p.name)}`), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ on: want }),
+            });
+            const out = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(out.error || 'Could not change that.');
+            saved = want;
+            trouble('');
+          } catch (err) {
+            /*
+             * PUT IT BACK AND SAY WHY — never an `alert`, which is a modal
+             * interruption for something that happened in the background, and
+             * never a silent revert, which reads as a lamp with a mind of its
+             * own. The likeliest failure by a distance is that the private
+             * repository is not configured, which is a fault in an env var
+             * rather than in the photograph.
+             */
+            live = saved;
+            paintPill();
+            trouble(err.message);
+          }
         });
-        const out = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(out.error || 'Could not change that.');
-        live = want;
-        paintPill();
-      } catch (err) {
-        // SAY WHAT WENT WRONG rather than silently snapping back — the
-        // likeliest failure by a distance is that the private repository is
-        // not configured, which is a fault in an env var and not in the photo.
-        alert(err.message);
-      }
-      pill.disabled = false;
+      }, WRITE_AFTER);
     });
     shot.querySelector('.cphoto-bin').addEventListener('click', async (ev) => {
       const btn = ev.currentTarget;

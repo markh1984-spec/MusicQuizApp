@@ -577,21 +577,57 @@ let picked = '';
  * have just read the names you are about to put on a public page. Moving
  * either into the bay would put it above the thing it acts on.
  */
+/** Which night the league bay is showing, if any. `''` is the season table. */
+let leagueNight = '';
+
+/**
+ * THE LEAGUE BAY — the season at one venue, or one of its nights.
+ *
+ * Asked for on 29 August 2026, once the Photos bay had the shape: *"Quiz
+ * league also needs a similar drop down for each night… perhaps the summary
+ * (i.e. the actual quiz league table) is the one that displays when you click
+ * venue, and then you can click each night to see who won and when on any
+ * given night."*
+ *
+ * So the rail is the same object the Photos rail is: **a pub that folds, with
+ * its nights inside it** — and the pub's own row, *The table*, is the first
+ * one in the fold rather than the heading itself. That is deliberate: the
+ * heading is the FOLD, and a heading that both folds and picks is one control
+ * doing two jobs, which is the collision this app has a rule against. Pressing
+ * the pub opens it; pressing *The table* shows the season.
+ */
 function leagueBay() {
   const leagues = leaguesNow();
-  if (!leagues.some((l) => l.key === picked)) picked = leagues[0].key;
+  if (!leagues.some((l) => l.key === picked)) { picked = leagues[0].key; leagueNight = ''; }
   const league = leagues.find((l) => l.key === picked);
   const names = (published || {}).names || {};
-  const heads = headsLine(league.venue);
+  const evening = leagueNight && (league.evenings || []).find((e) => e.night === leagueNight);
 
   /*
-   * EVERY TEAM IS IN THE BAY, AND THE BAY SCROLLS. It was capped at eight with
-   * "and N more, below" under it — true only while the tab underneath drew the
-   * table as well, which it does not any more. The fixed bay height makes the
-   * cap unnecessary: the column scrolls inside a box that cannot grow, so a
-   * league of forty teams costs nothing and is all reachable.
+   * ONE ROW PER PLACING, and the same `.lg-table` either way — the season and
+   * a single night are the same object with a different column in the middle,
+   * so drawing them with two components would be two things to keep in step.
    */
-  const table = node(`
+  const table = evening ? node(`
+    <table class="lg-table">
+      <thead>
+        <tr>
+          <th class="lg-pos" aria-label="Position"></th>
+          <th class="lg-name">Team</th>
+          <th class="lg-pts"><abbr title="What that placing was worth — the ladder plus the point for turning up">Pts</abbr></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${evening.top.map((t) => `
+          <tr${t.position === 1 ? ' class="lg-top"' : ''}>
+            <td class="lg-pos">${t.position}</td>
+            <td class="lg-name">${esc(t.name)}${hiddenNow(t, names)
+    ? ' <span class="lg-hidden" title="This name is hidden on the public table and on a landlord\'s report. It still scores exactly as it is.">hidden publicly</span>'
+    : ''}</td>
+            <td class="lg-pts"><b>${t.points}</b></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`) : node(`
     <table class="lg-table">
       <thead>
         <tr>
@@ -610,8 +646,8 @@ function leagueBay() {
                  room's own view and the quizmaster was there, so nothing is
                  masked — but a name a public page would hide says so, or it
                  would vanish off a table they had put up with no way to tell
-                 which one did it. Drawn from the COMBINE in hiddenNow(), so a
-                 name a human has allowed stops claiming it is held back. -->
+                 which one did it. Drawn from the COMBINE in hiddenNow(), so
+                 a name a human has allowed stops claiming it is held back. -->
             <td class="lg-name">${esc(t.name)}${hiddenNow(t, names)
     ? ' <span class="lg-hidden" title="This name is hidden on the public table and on a landlord\'s report. It still scores exactly as it is.">hidden publicly</span>'
     : ''}</td>
@@ -622,22 +658,38 @@ function leagueBay() {
       </tbody>
     </table>`);
 
-  const el = node('<div class="panel launchbar bench community-bench bay-scroller"></div>');
   /*
-   * THE HEADING SITS AT THE TOP OF THE RIGHT COLUMN, not above both — which is
-   * the arrangement the host looked at and called perfect: *"content taking up
-   * the bulk to the right, controls on the left."* Above both, the rail starts
-   * an inch down and the two columns stop reading as one object.
+   * THE RAIL: every venue, folded, with its own table row and its nights.
+   * A venue's key is its own; a night's is `key|date`, so one flat list of
+   * rows can address both without a second piece of state.
    */
+  const items = [];
+  for (const l of leagues) {
+    items.push({
+      key: l.key,
+      group: l.venue,
+      name: 'The table',
+      note: `${l.table.length} team${l.table.length === 1 ? '' : 's'} · ${l.nights} night${l.nights === 1 ? '' : 's'}`,
+    });
+    for (const e of l.evenings || []) {
+      items.push({
+        key: `${l.key}|${e.night}`,
+        group: l.venue,
+        name: readable(e.night),
+        // WHO WON, on the row — so the rail answers most of the question
+        // before anything is pressed, which is what a rail is for.
+        note: e.top[0] ? `Won by ${e.top[0].name}` : `${e.teams} teams`,
+      });
+    }
+  }
+
+  const el = node('<div class="panel launchbar bench community-bench bay-scroller"></div>');
   el.appendChild(bayColumns(
     bayRail({
-      items: leagues.map((l) => ({
-        key: l.key,
-        name: l.venue,
-        note: `${l.table.length} team${l.table.length === 1 ? '' : 's'} · ${l.nights} night${l.nights === 1 ? '' : 's'}`,
-      })),
-      picked,
+      items,
+      picked: leagueNight ? `${picked}|${leagueNight}` : picked,
       railId: 'league',
+      more: 'Older nights are on the public table.',
       onFold: () => renderKeepingPlace(),
       /*
        * THE WHOLE PAGE REPAINTS, not just the bay — because the CONTROLS for
@@ -645,13 +697,23 @@ function leagueBay() {
        * table up here while leaving "put this table up" pointing at the pub
        * before it would publish the wrong room's names.
        */
-      onPick: (key) => { picked = key; renderKeepingPlace(); },
+      onPick: (key) => {
+        const bar = key.indexOf('|');
+        picked = bar < 0 ? key : key.slice(0, bar);
+        leagueNight = bar < 0 ? '' : key.slice(bar + 1);
+        renderKeepingPlace();
+      },
     }),
     [
-      bayHead(league.venue, [
-        `${league.table.length} team${league.table.length === 1 ? '' : 's'} across ${league.nights} night${league.nights === 1 ? '' : 's'}`,
-        heads,
-      ].filter(Boolean).join(' · ')),
+      bayHead(
+        evening ? readable(evening.night) : league.venue,
+        evening
+          ? `${league.venue} · ${evening.teams} team${evening.teams === 1 ? '' : 's'}`
+          : [
+            `${league.table.length} team${league.table.length === 1 ? '' : 's'} across ${league.nights} night${league.nights === 1 ? '' : 's'}`,
+            headsLine(league.venue),
+          ].filter(Boolean).join(' · '),
+      ),
       table,
     ],
   ));

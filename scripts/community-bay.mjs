@@ -87,7 +87,12 @@ const seed = (venue, teams, weeksBack, shift, dayOffset = 0) => {
   // anything and what puts different numbers in the P column.
   const board = teams.filter(() => r() > 0.2)
     .map((name) => ({ name, score: Math.round(1500 + r() * 2500), faceKey: '' }))
-    .sort((a, b) => b.score - a.score);
+    .sort((a, b) => b.score - a.score)
+    // `position` IS WHAT THE LEAGUE SCORES ON — a board without it scores
+    // nobody, so a fixture without it draws an empty night and an empty table.
+    // Real archived boards carry it; this one has to as well or it is testing
+    // a shape the app never sees.
+    .map((row, i) => ({ ...row, position: i + 1 }));
   const id = `night-${n += 1}`;
   fs.writeFileSync(path.join(arc, `${id}.json`), JSON.stringify({
     id, kind: 'quiz', quizTitle: '80s Anthems', packId: 'eighties',
@@ -242,7 +247,13 @@ try {
         check(`${label}: ${width < 700 ? 'three' : 'six'} across`, f.wallCols === (width < 700 ? 3 : 6), `${f.wallCols}`);
       }
       if (tab === 'league') {
-        check(`${label}: every venue on the rail`, f.rail === 2, `${f.rail}`);
+        /*
+         * A VENUE'S OWN TABLE ROW PLUS ITS NIGHTS, capped like every other
+         * group — so with two venues, one open, the rail is `The table` and up
+         * to four dates rather than the two rows it held before the nights
+         * arrived.
+         */
+        check(`${label}: the open venue shows its table and its nights`, f.rail > 2, `${f.rail} rows`);
         // EVERY team, because the bay scrolls inside a fixed height — a cap
         // plus "and N more, below" would point at a table that is not there.
         check(`${label}: every team is in the bay's table`, f.bayRows === 11, `${f.bayRows}`);
@@ -486,7 +497,22 @@ try {
     await page.waitForTimeout(400);
     const second = (await frame()).lit;
     check(`${label}: the rail changes the table`, Boolean(first) && first !== second, `${first} → ${second}`);
-    if (label === 'desk') await page.screenshot({ path: path.join(OUT, 'desk-league-second.png') });
+    /*
+     * AND A NIGHT SHOWS THAT NIGHT — *"you can click each night to see who won
+     * and when on any given night."* The season table has five columns and a
+     * night has three, which is the cheapest thing to tell them apart by that
+     * is not the words themselves.
+     */
+    const nightTable = await page.evaluate(() => ({
+      cols: document.querySelectorAll('.doorhead .lg-table thead th').length,
+      // AND IT HAS ROWS IN IT. A header with an empty body draws perfectly and
+      // is what a board with no `position` on it produces — which is exactly
+      // what a fixture without one was quietly testing.
+      rows: document.querySelectorAll('.doorhead .lg-table tbody tr').length,
+    }));
+    check(`${label}: a night's own placings are a different table`, nightTable.cols === 3, `${nightTable.cols} columns`);
+    check(`${label}: and it actually has placings in it`, nightTable.rows > 0, `${nightTable.rows} rows`);
+    if (label === 'desk') await page.screenshot({ path: path.join(OUT, 'desk-league-night.png') });
 
     check(`${label}: no console errors`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await page.close();

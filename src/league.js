@@ -202,6 +202,15 @@ export function teamKey(name) {
  * @param {number} [opts.now]    injected clock, never Date.now() inline
  * @returns {{table: Array, nights: number, from: string, to: string}}
  */
+/**
+ * HOW MANY OF A NIGHT'S PLACINGS RIDE IN THE PAYLOAD.
+ *
+ * The podium and its neighbours, which is what "who won on that night" means.
+ * A constant with a note rather than a setting — the same call as the season
+ * length and the counting nights above it.
+ */
+const NIGHT_ROWS = 8;
+
 export function leagueTable(nights = [], { weeks = 12, now = Date.now() } = {}) {
   /*
    * A ROLLING SEASON, not everything ever.
@@ -215,6 +224,8 @@ export function leagueTable(nights = [], { weeks = 12, now = Date.now() } = {}) 
   const floor = weeks > 0 ? now - weeks * 7 * 24 * 60 * 60 * 1000 : 0;
 
   const teams = new Map();
+  /** Each night that scored, newest first — the order `nights` arrives in. */
+  const order = [];
   let counted = 0;
   let first = '';
   let last = '';
@@ -253,6 +264,41 @@ export function leagueTable(nights = [], { weeks = 12, now = Date.now() } = {}) 
         }
       }
     }
+
+    /*
+     * WHAT HAPPENED ON THIS NIGHT, kept as it is walked past.
+     *
+     * Asked for on 29 August 2026: *"you can click each night to see who won
+     * and when on any given night."* It is free here — `tonight` is already
+     * the evening's finishing order, built one line up — where working it out
+     * afterwards would mean carrying every leaderboard through to the caller.
+     *
+     * **CAPPED, because this rides in the library payload on every console
+     * load.** A season is twelve weeks and a quizmaster may have four venues,
+     * so uncapped this is thousands of rows for a panel that shows the top of
+     * the night. Eight is the podium and its neighbours, which is what "who
+     * won" means; the count says how many there were.
+     */
+    order.push({
+      night: night.night,
+      teams: tonight.size,
+      top: [...tonight.values()]
+        .filter((r) => r.position)
+        .sort((a, b) => a.position - b.position)
+        .slice(0, NIGHT_ROWS)
+        .map((r) => ({
+          name: r.name,
+          position: r.position,
+          faceKey: r.faceKey || '',
+          /*
+           * WHAT THAT PLACING WAS WORTH, worked out HERE — so nothing else
+           * ever needs a second copy of the ladder. The console draws this
+           * beside a team on a night somebody can add up themselves, and two
+           * implementations of one sum is how they come to disagree.
+           */
+          points: pointsFor(r.position) + POINTS_FOR_TURNING_UP,
+        })),
+    });
 
     for (const [key, row] of tonight) {
       if (!teams.has(key)) {
@@ -318,7 +364,13 @@ export function leagueTable(nights = [], { weeks = 12, now = Date.now() } = {}) 
       || a.name.localeCompare(b.name))
     .map((team, i) => ({ ...team, position: i + 1 }));
 
-  return { table, nights: counted, from: first, to: last };
+  /*
+   * `nights` STAYS THE COUNT and the list is `evenings`, because `nights` is
+   * read as a number in a dozen places — the card, the bay's heading, the
+   * public page, the report. Reusing the name for a list would have been the
+   * label collision this repo hunts, on a field that is already everywhere.
+   */
+  return { table, nights: counted, evenings: order, from: first, to: last };
 }
 
 /**
