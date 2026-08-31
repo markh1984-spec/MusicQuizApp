@@ -71,13 +71,29 @@ const keyed = (path) => {
   return out;
 };
 
+/*
+ * A LINK CARRIES THE KEY AND `?q=`, BUT NEVER `?venue=` — the venue is already
+ * in the path it points at, and appending it as well produced
+ * `/station-tap-wokingham/gallery/27-august?venue=station-tap-wokingham`,
+ * which is the tidy address with the untidy one stapled back on.
+ *
+ * `keyed()` stays as it is for API calls, which genuinely need the venue as a
+ * parameter because there is nowhere else on a request to put it.
+ */
+const linked = (path) => {
+  let out = path;
+  if (KEY) out += (out.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(KEY);
+  if (Q) out += (out.includes('?') ? '&' : '?') + 'q=' + encodeURIComponent(Q);
+  return out;
+};
+
 /** A link back to this page — the venue's own address, or the plain one. */
-const home = () => keyed(VENUE ? `/${VENUE}/gallery` : '/gallery');
+const home = () => linked(VENUE ? `/${VENUE}/gallery` : '/gallery');
 
 /** A link INTO one night, in whichever address style this page arrived on. */
 const nightLink = (night) => (VENUE
-  ? keyed(`/${VENUE}/gallery/${nightSlug(night)}`)
-  : keyed(`/gallery?n=${encodeURIComponent(night)}`));
+  ? linked(`/${VENUE}/gallery/${nightSlug(night)}`)
+  : linked(`/gallery?n=${encodeURIComponent(night)}`));
 
 /*
  * `innerHTML`, NOT `append()` — and this shipped wrong once.
@@ -173,6 +189,15 @@ async function showNight(night) {
   }
   title.textContent = data.when || night;
   sub.textContent = `${data.photos.length} photo${data.photos.length === 1 ? '' : 's'}`;
+  /*
+   * TWO ELEMENTS, APPENDED SEPARATELY — and this is why "All nights" had never
+   * appeared under a night's photographs.
+   *
+   * `node()` returns `firstElementChild`, so the grid came back and the
+   * paragraph after it was dropped in silence. Somebody who opened a night had
+   * no way back but the browser's own button, on a page a regular reaches from
+   * a link with no history behind it.
+   */
   body.replaceChildren(node(`
     <div class="gal-grid">
       ${data.photos.map((p) => `
@@ -183,8 +208,8 @@ async function showNight(night) {
                without it would be a page of broken images. -->
           <img src="${esc(keyed(p.url))}" alt="A photo from the night" loading="lazy" decoding="async">
         </figure>`).join('')}
-    </div>
-    <p class="gal-back"><a href="${esc(home())}">All nights</a></p>`));
+    </div>`));
+  body.appendChild(node(`<p class="gal-back"><a href="${esc(home())}">All nights</a></p>`));
   if (data.preview && data.live === false) sub.append(' · ', notLive());
 }
 

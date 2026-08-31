@@ -201,7 +201,7 @@ it stopped being harmless the moment packs became something to sell.
 | | The whole product | A part of it |
 |---|---|---|
 | **Music quiz** | a **quiz** — a night's worth, several rounds of questions | a **round** — ten general knowledge questions, *or* five pictures. All one type |
-| **Music bingo** | a **bingo game** — one theme, forty-odd tracks, the cards built from them | a **round** — `newRound()`, fresh cards to everybody, played until the last prize goes |
+| **Music bingo** | a **bingo game** — one theme, forty-odd tracks, the cards built from them | a **round** — `newRound()`, fresh cards, played until the last prize goes |
 
 And a third word, because the code leans on it: a **pack** is either of those
 as a file on disk — `quizzes/eighties.json` and `bingo/disco-funk.json` are both
@@ -1600,12 +1600,11 @@ with photographs).
 Station Tap, Wokingham" in the rail twice**, 17 teams and 20. Pick the venue
 off the Venues list some weeks and type it freehand others, and `venueKeyOf()`
 files the nights under `id:xyz` and `the station tap` — **the season cut in
-half**, every team's best-six computed from part of their record, on the table
-that goes on a public page.
+half**, every team's best-six from part of their record, on a public page.
 
 - **THE SECOND PASS ALREADY EXISTED IN `venueHeadcounts()`**, with the same
   reasoning. Two readers of one archive disagreeing about what counts as one
-  venue is the collision, and the fix is the existing answer applied.
+  venue is the collision; the fix is the existing answer applied.
 - **THIS REVERSES A PINNED TEST, deliberately.** The old one asserted the
   split, and the asymmetry was indefensible on its own terms: two freehand
   nights at one pub have always merged, so the old rule said that ADDING an id
@@ -1647,8 +1646,6 @@ up there too."*
   the published flag together, so the control is BUILT in the bay and HUNG in
   the tab body — safe because `render()` evaluates the doorhead before the tab
   body.
-- **SIX ACROSS, because everything else here is six across** — the shelf and
-  the Tonight bays; three on a phone.
 - **THE WALL IS FETCHED ONCE PER PAGE LOAD AND STOPS ASKING** — a photo list is
   a request per night, so it walks the newest until eighteen are in hand and
   never past `WALL_NIGHTS`. Held in a module binding: the bay is rebuilt on
@@ -2035,6 +2032,10 @@ photographs' own half, split off at the 100,000-byte cap.
   **and it carries the POINTS**, so the browser needs no second copy of the
   ladder. **A board with no `position` scores nobody**, and it fails quietly: a
   night view with headers and an empty body
+- **`node()` KEEPS THE FIRST ELEMENT AND DROPS THE REST, SILENTLY** — it had
+  cost the gallery's *"All nights"* link and My account's whole list of sent
+  suggestions. A grep cannot find these (nested template literals), so `node()`
+  now `console.error`s when it drops one.
 - **A VENUE HAS ITS OWN ADDRESS** — *"URLs conveniently reachable, so something
   like quizporium.co.uk/station-tap-wokingham/gallery/20-august and
   /station-tap-wokingham/quiz-league."* `public/assets/slugs.js`, shared by the
@@ -2051,7 +2052,8 @@ photographs' own half, split off at the 100,000-byte cap.
   knows which room the public pages fall back to; `role === 'owner'` in the
   browser was wrong in BOTH directions. **An address is not a key**: it names a
   venue, and the league switch and published list still decide whether that
-  venue has a page at all.
+  venue has a page at all
+
 - **A LEAGUE IS A THING YOU RUN, AND IT IS OFF UNTIL SOMEBODY SAYS SO** —
   *"quiz leagues should be turn on and offable… it might be misleading if this
   app just had that as standard even in venues that don't have a quiz league."*

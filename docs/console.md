@@ -1376,3 +1376,51 @@ like it means. The check measures the overlay against that column rather than
 merely asserting it exists, because "it is in the document" and "it is where
 somebody can see it" are different questions, and this repo keeps paying for
 the difference.
+
+### `node()` keeps the first element and drops the rest — 31 August 2026
+
+Found while photographing the public gallery for the first time: the *"All
+nights"* link under a night's photographs was not there. Measured, not spotted
+— the screenshot looked plausible.
+
+`node()` in `client.js` builds a `<template>` and returns
+`content.firstElementChild`. The gallery's markup was a grid **and** a
+paragraph, so the paragraph was dropped in silence, and somebody who opened a
+night had no way back but the browser's own button — on a page a regular
+reaches from a link with no history behind it.
+
+**It had cost a second thing nobody had noticed either.** On My account, the
+suggestion box appends a heading and then the list of everything the quizmaster
+has sent, with Mark's replies in it. Same shape, same loss: the heading drew,
+the list did not. On the one panel whose entire purpose is *"you send something
+into the dark and never learn whether it landed"*.
+
+#### A grep cannot find these
+
+The markup is a template literal with template literals nested inside it — a
+`.map()` per row, another per reply — so a regex looking for the closing
+backtick stops in the middle of the first one. A scanner written specifically
+to hunt this found the account one and **missed the gallery one**, which is
+worse than not having written it: it would have been quoted as a clean sweep.
+
+That is this repo's own standing rule about tests that measure something
+adjacent to the thing that matters, arriving in yet another costume.
+
+#### So it says so, at the moment it happens
+
+`node()` now `console.error`s when it is handed more than one top-level element,
+naming the markup it kept. Three reasons that is the right guard rather than a
+test:
+
+- **It is always a mistake.** There is no legitimate call that wants the
+  second element thrown away.
+- **It fires on whatever page it happens on**, including pages no check visits
+  yet, and including a call written next year.
+- **Every browser check in this repo already fails on a console error**, so it
+  is caught by something somebody already runs rather than by somebody
+  eventually noticing a link that was never there.
+
+Changing `node()` to return a fragment was the other option and was not taken:
+callers do `.querySelector()`, `.classList` and `.addEventListener` on the
+result, and a silent type change across every page in the app — including the
+protected launch path — to fix two cosmetic drops is the wrong trade.

@@ -931,8 +931,17 @@ function suggestionPanel() {
   fetch(keyed('/api/suggestions/mine')).then((r) => r.json()).then((d) => {
     const sent = d.suggestions || [];
     if (!sent.length) return;
+    /*
+     * THE HEADING AND THE LIST ARE APPENDED SEPARATELY, and that is a fix
+     * rather than a style: `node()` returns `firstElementChild`, so the whole
+     * list — every suggestion sent and every reply from Mark — was dropped in
+     * silence under a heading that rendered fine. On the one panel whose
+     * entire job is *"you send something into the dark and never learn whether
+     * it landed"*.
+     */
+    mine.appendChild(node('<div class="tiny" style="margin-top:16px"><b>What you have sent</b></div>'));
     mine.appendChild(node(`
-      <div class="tiny" style="margin-top:16px"><b>What you have sent</b></div>
+      <div class="sugg-mine-list">
       ${sent.slice(0, 8).map((s) => `
         <div class="sugg-mine-row">
           <div>${esc(s.text)}</div>
@@ -940,7 +949,8 @@ function suggestionPanel() {
             <div class="sugg-reply"><span class="tiny">${esc(r.by || 'Mark')} replied</span>
               <div>${esc(r.text)}</div></div>`).join('')
             || '<div class="tiny">Not answered yet — it is on the list.</div>'}
-        </div>`).join('')}`));
+        </div>`).join('')}
+      </div>`));
   }).catch(() => { /* never worth an error on this panel */ });
 
   let kind = 'idea';

@@ -380,6 +380,34 @@ export function html(strings, ...values) {
 export function node(markup) {
   const t = document.createElement('template');
   t.innerHTML = markup.trim();
+  /*
+   * IT RETURNS ONE ELEMENT, AND ANYTHING AFTER THE FIRST IS LOST — which is
+   * silent, and had cost two things by the time anybody noticed.
+   *
+   * The gallery's *"All nights"* link, under a night's photographs, has never
+   * rendered: the markup was a grid AND a paragraph, so the paragraph was
+   * dropped and somebody who opened a night had no way back but the browser's
+   * own button. And on My account, the whole list of suggestions a quizmaster
+   * had sent — with Mark's replies in it — was dropped under its own heading,
+   * on the panel whose entire job is *"you send something into the dark and
+   * never learn whether it landed"*.
+   *
+   * **A GREP CANNOT FIND THESE.** The markup is a template literal with
+   * template literals nested inside it, so a regex looking for the closing
+   * backtick stops in the middle of the first `.map()` — a scanner written for
+   * exactly this found one of the two and missed the other, which is worse
+   * than none.
+   *
+   * So it says so instead, at the moment it happens, on whatever page it
+   * happens on. `console.error` rather than a warning because it is ALWAYS a
+   * mistake — every browser check in this repo fails on a console error, so
+   * the next one is caught by a check somebody already runs rather than by
+   * somebody eventually noticing a link that was never there.
+   */
+  if (t.content.children.length > 1) {
+    console.error('node() was given more than one top-level element and kept only the first:',
+      markup.trim().slice(0, 120));
+  }
   return t.content.firstElementChild;
 }
 
