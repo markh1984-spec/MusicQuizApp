@@ -54,6 +54,7 @@ import { goTo, keyed, renderKeepingPlace } from './console.js';
 import { library, me } from './console-state.js';
 import { asksPanel, groupByVenue, nightPhotos } from './console-gigs.js';
 import { bayColumns, bayHead, bayRail } from './console-bay.js';
+import { venueSlug } from './slugs.js';
 
 /** Every venue with a league running, best-supported first. */
 function leaguesNow() {
@@ -929,12 +930,30 @@ function runningToggle(key, on) {
  */
 function leagueToggle(key, venue, on) {
   const wrap = node('<div class="gig-gallery"></div>');
-  const link = `/league${me?.id ? `?q=${encodeURIComponent(me.id)}` : ''}`;
+  /*
+   * THE ADDRESS, WRITTEN OUT — asked for on 31 August 2026: *"I want to be
+   * able to have the URLs conveniently reachable."* A link somebody has to
+   * construct is a link nobody hands out, so the page says what it is.
+   *
+   * **THE PRETTY FORM IS THE OWNER'S OWN**, because the pretty path resolves
+   * against the owner's room; anybody else gets the same page with `?q=` on
+   * it, which is exactly what they had before addresses existed. So the
+   * console prints whichever one will actually work for the account reading
+   * it, rather than an address that looks nicer and 404s.
+   */
+  const slug = venueSlug(venue);
+  // ANSWERED BY THE SERVER, never guessed here — see `ownAddress` in
+  // `/api/me`. `role === 'owner'` was wrong in both directions.
+  const mine = Boolean(me && me.ownAddress);
+  const link = mine && slug
+    ? `/${slug}/quiz-league`
+    : `/league${me?.id ? `?q=${encodeURIComponent(me.id)}` : ''}`;
 
   const paint = (live) => {
     wrap.replaceChildren(node(live
       ? `<div class="tiny gig-gal-live">On the public table —
-           <a href="${link}" target="_blank" rel="noopener">see it</a></div>`
+           <a href="${esc(link)}" target="_blank" rel="noopener">see it</a>
+           <code class="pub-address">${esc(location.host + link)}</code></div>`
       : '<div class="tiny gig-gal-note">Anyone with the link can see these team names.</div>'));
 
     const btn = node(live

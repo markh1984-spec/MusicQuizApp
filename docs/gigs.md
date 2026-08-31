@@ -1353,3 +1353,103 @@ each already fold. The switch is stored against whichever key the league itself
 ended up under, so a reader asking under one form alone finds nothing roughly
 half the time. Asking under both is the rule this repo already has for it; see
 `heard.js`.
+
+## A VENUE HAS ITS OWN ADDRESS — 31 August 2026
+
+> *"So I want to be able to have the URLs conveniently reachable, so something
+> like quizporium.co.uk/station-tap-wokingham/gallery/20-august and
+> quizporium.co.uk/station-tap-wokingham/quiz-league (or similar). Possible?"*
+
+`public/assets/slugs.js`, and two routes in `server.js`.
+
+### Derived, never stored
+
+A slug is a function of the venue's name and the night's date, both of which
+the app already holds — so there is no second record to keep in step, nothing
+to migrate, and no address book to go stale. Same call `pack-look.js` makes
+about a pack's colours and rule 11 makes about packs: **fewer copies beats
+better syncing.**
+
+The cost, taken knowingly: **renaming a venue breaks its link.** A stored slug
+would survive the rename and then name a pub that no longer exists — a link
+that works and lies. This one 404s, which is a question somebody asks rather
+than an answer nobody checks.
+
+### It lives in `public/assets/` because both sides read it
+
+The server routes the address and the page reads its own path to know which
+venue it is — so `venueSlug()` runs in two places, and two implementations of
+one slug is a link that works in the browser and 404s on the server. Shared the
+way `schemes.js`, `show-parts.js` and `break-parts.js` already are, which is
+safe because the file has no page and no boot code.
+
+Nothing is templated. The **same file** is served on `/league` and on
+`/station-tap-wokingham/quiz-league`; the difference is entirely what the page
+reads out of `location.pathname`.
+
+### A one-segment prefix at the root is a catch-all, and the first version ate `/api/gallery`
+
+Two segments, the second one `gallery` — exactly the shape a venue address has.
+So the API started answering with the gallery **page**, and four unrelated
+tests failed with *"Unexpected token '<', "<!doctype "…"*. The commit that
+introduced it carried a comment warning about catch-alls at the root.
+
+Naming the second segment is necessary and not sufficient: **the first segment
+has to be refused too.** `RESERVED` in `slugs.js` holds every top-level name
+this app serves, and `test/slugs.test.js` walks `server.js` for every literal
+route and fails if one is missing from it — because a reserved list kept by
+hand is one somebody forgets on the day they add `/leaderboard`, and the
+failure is a public page answering with the wrong file.
+
+It found six I had missed on the first pass: `health`, `photos`,
+`quiz-images`, `reset`, `qr.svg` and `join-qr.svg`.
+
+### `ownAddress` is answered by the server, not guessed in the browser
+
+The pretty path resolves against the room the public pages fall back to — the
+owner's own quizmaster room, or the house room when there are no accounts yet.
+Everybody else keeps `?q=`, which is exactly what they had before addresses
+existed; the pretty form belongs to the app owner, whose domain this is.
+
+The first version tested `role === 'owner'` in the console, and that is wrong
+**in both directions**: the bootstrap host key resolves to the house room and
+so *does* get the pretty form, while the owner's own quizmaster hat is not
+`role === 'owner'` and also does. So `/api/me` carries `ownAddress` — one fact,
+known where the rooms are, rather than a rule about identities re-derived
+somewhere that cannot see them.
+
+An address book mapping every subscriber's venue to a global slug is the next
+step if that is ever wanted. It is deliberately not built for one customer —
+and it would need a collision rule the moment two quizmasters both play at a
+Red Lion.
+
+### An address is not a key
+
+A slug resolves to a venue. Whether that venue has a page at all is still
+decided by the league switch and the published list, exactly as before.
+
+And **a slug that names nothing answers exactly like one that names an
+unpublished venue** — the page, with nothing on it. Three different answers
+would let a stranger map which pubs exist by trying names, which is the same
+rule `/api/voucher` and the gallery's own 404 already follow.
+
+### A date in the address is resolved against the list
+
+`/…/gallery/20-august` names a night the way somebody says it. The only thing
+that knows which real date that is — for this venue, among the nights it has
+actually published — is the list, which the page fetches anyway. So it is
+matched rather than parsed and trusted, and a slug that matches nothing falls
+back to the list rather than erroring: "that night is not up" and "there is no
+such night" are the same answer to a stranger and should look it.
+
+`matchNightSlug()` reads `20-august` and `20-august-2026`, and the newest match
+wins because the list arrives newest first. The short form is what somebody
+would type; the exact one is there for a link that must never drift.
+
+### The console writes the address out
+
+A link somebody has to construct is a link nobody hands out. So the publish
+control prints the address in full, monospaced and selectable, beside the "see
+it" link — and it prints whichever form will actually work for the account
+reading it. An address that looks nicer and 404s would be worse than the honest
+one.

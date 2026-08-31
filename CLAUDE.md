@@ -91,16 +91,15 @@ months later, in a route somebody wrote in a hurry.
 | **Child** (sub-account) | an account managed by a parent: a venue, a company's quizmaster | **itself** |
 
 **THE STATS ARE A VIEW, NOT AN ACCOUNT — and that is what makes the uniformity
-free.** Proposed, reasonably: *"every entity has one parent and one child, and
-you add extra children — because even a solo quizmaster wants stats. Head
-office wants stats across five children, a solo wants his own."*
+free.** Proposed, reasonably: *"every entity has one parent and one child…
+because even a solo quizmaster wants stats."*
 
 **The goal is right and it should be one mechanism.** What does not follow is a
 second ACCOUNT per person. A solo quizmaster wanting headcounts needs a PAGE,
-and they already have one: Past gigs is their own history on their own account.
-Giving them a parent as well means a second login or a hat switch for one
-person, a bill question about an account that buys nothing, and an entity
-invented at every sign-up whose only job is to look at its owner's own data.
+and they already have one: Past gigs. Giving them a parent as well means a
+second login or a hat switch for one person, a bill question about an account
+that buys nothing, and an entity invented at every sign-up whose only job is to
+look at its owner's own data.
 
 So put the generalisation in the QUERY, where it costs nothing:
 
@@ -113,18 +112,12 @@ account. Build the aggregation that way FROM THE START — the real risk here is
 shipping "past gigs for one person" and later "stats across venues" as two
 features that then drift.
 
-**What a parent-for-everybody would actually cost, concretely:** the owner's
-People tab doubles in length with empty parents nobody signed up for, and every
-one of them raises a question with no good answer — what tier is it, does it
-have a login, does it count in "4 accounts · 3 paying", what happens when the
-quizmaster cancels. None of those questions exist if the stats are a view.
-
-**AND THEREFORE THE HAT DOES NOT BECOME UNIVERSAL.** Asked directly, and the
-answer is no. **A hat switches between IDENTITIES, not between pages** — if the
-stats are a view, a solo quizmaster has one identity with an extra tab on it,
-and a switch offering nothing on the other side is the fault this file keeps
-recording. It would also break the host's own hard rule that the switch must
-never appear on anybody else's account.
+**AND THEREFORE THE HAT DOES NOT BECOME UNIVERSAL.** **A hat switches between
+IDENTITIES, not between pages** — if the stats are a view, a solo quizmaster
+has one identity with an extra tab on it, and a switch offering nothing on the
+other side is the fault this file keeps recording. It would also break the
+host's own hard rule that the switch must never appear on anybody else's
+account.
 
 A hat is right when one login genuinely holds TWO identities with different
 powers and different rooms. That is:
@@ -137,26 +130,21 @@ powers and different rooms. That is:
 And nobody else: not a solo quizmaster, not a pub group's head office that
 never hosts, not a venue running its own night. **One identity, no switch.**
 
-**"ON THEIR OWN" IS A CASE, NOT A GROUP OF ONE, and getting that wrong is
-expensive.** A solo quizmaster is not a child of anything — Rob with no company
-has no parent and needs none. If the model requires a group, then every
-subscriber needs one invented for them at sign-up, every query goes through a
-join that is pointless for almost every account, and a concept that serves a
-handful of companies is paid for by everybody. **`parentId` is simply absent on
-an ordinary account**, exactly as `kind` defaults and `teams` is empty — the
-same rule this file follows everywhere: the common case costs nothing.
+**"ON THEIR OWN" IS A CASE, NOT A GROUP OF ONE.** A solo quizmaster is not a
+child of anything. If the model requires a group, every subscriber needs one
+invented at sign-up and every query goes through a pointless join. **`parentId`
+is simply absent on an ordinary account** — the rule this file follows
+everywhere: the common case costs nothing.
 
 **A PARENT MANAGES; A CHILD RUNS.** That is the host's "parent is the stats and
 the data, the child actually runs the quiz", and it is right as the common
 case — HQ reads numbers, venues run nights.
 
-**But it is a tendency rather than a rule, and building it as a rule would be
-wrong.** A small quiz company's manager hosts on Fridays; a landlord runs their
-own quiz on the weeks nobody is booked. **A person who does both has two hats,
-which is a thing this app already has** — `hatSwitch()`, one login, no second
-password. So a parent MAY run nights; it simply usually does not. Do not model
-"parent" as "cannot run a quiz", or the first company that promotes a host
-breaks.
+**But it is a tendency rather than a rule.** A small quiz company's manager
+hosts on Fridays. **A person who does both has two hats, which this app already
+has** — `hatSwitch()`, one login. So a parent MAY run nights; it usually does
+not. Do not model "parent" as "cannot run a quiz", or the first company that
+promotes a host breaks.
 
 Two smaller notes, both worth having before anybody builds this:
 
@@ -172,40 +160,37 @@ Two smaller notes, both worth having before anybody builds this:
 ### THE FIRST SLICE IS BUILT — accounts, entitlements, scoping. Not invoicing, not venue specifics.
 
 Built 20 August 2026. **A parent is DERIVED, never stored** — `parentId` on
-the child is the only new field, so any quizmaster becomes one the moment
-they add a first seat and stops the moment the last is removed. No nesting,
-enforced at creation: a parent must not itself carry a `parentId`.
+the child is the only new field, so any quizmaster becomes one the moment they
+add a first seat and stops the moment the last is removed. No nesting,
+enforced at creation: a parent must not carry a `parentId`.
 
 **A seat gets its parent's tier, minus streaming — `accounts.effective()`.**
 `plans.js` only ever sees one account and cannot look another one up, so the
-substitution happens in `accounts.js`, the one place that has both, and is
-wired in at a SINGLE choke point: `whoIs()` in `server.js` wraps every real
-account it returns through `effective()`, so every existing `can()` /
-`featuresFor()` call downstream needed no changes at all. `parentId` itself
-survives the substitution (not stripped) purely so `featuresFor()` has
-something to ask when withholding `FEATURES.STREAM` — the one thing a seat
-does not get "everything" on.
+substitution happens in `accounts.js`, the one place that has both, at a SINGLE
+choke point: `whoIs()` wraps every real account through `effective()`, so every
+`can()` / `featuresFor()` call downstream needed no changes. `parentId`
+survives the substitution purely so `featuresFor()` has something to ask when
+withholding `FEATURES.STREAM`.
 
 **Scoped exactly like a room**: `/api/group` resolves from `whoIs()`, never
-from an id in the request — the identical rule `/api/host/*` already follows.
-`removeChild()` is never destructive — the account, its room and its own
-packs are untouched; it just goes back to being on its own.
+from an id in the request — the rule `/api/host/*` already follows.
+`removeChild()` is never destructive: the account, its room and its own packs
+are untouched.
 
 **Reachable from My account, as a small panel** (`groupPanel()` in
-`console-account.js`) — and this IS the group-admin screen, not a stand-in
-waiting to be replaced. Each seat's row carries a `Running` badge, and the
-note says how many are live right now — the scoped "Tonight" view, on the
-same page a group admin already hosts from.
+`console-account.js`) — and this IS the group-admin screen, not a stand-in.
+Each seat's row carries a `Running` badge and the note says how many are live
+now — the scoped "Tonight" view, on the page a group admin already hosts
+from.
 
 **THE HAT SWITCH DOES NOT NEED TO GENERALISE — resolved, not parked.** It
 exists for the owner because `/owner` and `/console` are separate routes; a
 group admin has no second route to switch into. Do not build one without a
-real second destination for it first.
+real second destination first.
 
 **NOT built, deliberately parked**: pack sharing (~17 call sites on the
-protected launch path, zero real users yet — `Rob gets a login` is still the
-prerequisite), agency invoicing (the doc flags the invoice-book question as a
-design contradiction, not a spec), venue-account specifics. Full reasoning:
+protected launch path, zero real users yet), agency invoicing, venue-account
+specifics. Full reasoning:
 **[`docs/business/groups.md`](docs/business/groups.md)**.
 
 ## The words: a quiz is a product, a round is part of one
@@ -2050,6 +2035,23 @@ photographs' own half, split off at the 100,000-byte cap.
   **and it carries the POINTS**, so the browser needs no second copy of the
   ladder. **A board with no `position` scores nobody**, and it fails quietly: a
   night view with headers and an empty body
+- **A VENUE HAS ITS OWN ADDRESS** — *"URLs conveniently reachable, so something
+  like quizporium.co.uk/station-tap-wokingham/gallery/20-august and
+  /station-tap-wokingham/quiz-league."* `public/assets/slugs.js`, shared by the
+  server and the page like `schemes.js`, because two implementations of one
+  slug is a link that works in the browser and 404s on the server. **DERIVED,
+  never stored** — so a rename changes the address rather than leaving a stale
+  one that lies. **The SAME FILE is served**; the page reads its own path.
+  **A ONE-SEGMENT PREFIX AT THE ROOT IS A CATCH-ALL AND THE FIRST VERSION ATE
+  `/api/gallery`** — two segments, the second one `gallery`. Naming the second
+  segment is not enough: `RESERVED` refuses the first, and
+  `test/slugs.test.js` walks `server.js` for every literal top-level route so a
+  route added next year cannot be shadowed. It found six I had missed.
+  **`ownAddress` on `/api/me` says whether the pretty form works** — the server
+  knows which room the public pages fall back to; `role === 'owner'` in the
+  browser was wrong in BOTH directions. **An address is not a key**: it names a
+  venue, and the league switch and published list still decide whether that
+  venue has a page at all.
 - **A LEAGUE IS A THING YOU RUN, AND IT IS OFF UNTIL SOMEBODY SAYS SO** —
   *"quiz leagues should be turn on and offable… it might be misleading if this
   app just had that as standard even in venues that don't have a quiz league."*

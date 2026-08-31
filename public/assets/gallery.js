@@ -22,6 +22,7 @@
  */
 
 import { esc, node, brandMark, brandWords } from './client.js';
+import { matchNightSlug, nightSlug, readVenuePath } from './slugs.js';
 
 const body = document.getElementById('galBody');
 const title = document.getElementById('galTitle');
@@ -53,12 +54,30 @@ const KEY = new URLSearchParams(location.search).get('key') || '';
  * gallery in particular. See `?q=` in `server.js`'s gallery routes.
  */
 const Q = new URLSearchParams(location.search).get('q') || '';
+/*
+ * AND WHICH VENUE, off the address bar — `/station-tap-wokingham/gallery`.
+ *
+ * The server serves this same file on both routes and templates nothing, so
+ * the page reads its own path. Empty on plain `/gallery`, which is unchanged
+ * and still shows every published night at every venue.
+ */
+const HERE = readVenuePath(location.pathname) || { venue: '', night: '' };
+const VENUE = HERE.venue;
 const keyed = (path) => {
   let out = path;
   if (KEY) out += (out.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(KEY);
   if (Q) out += (out.includes('?') ? '&' : '?') + 'q=' + encodeURIComponent(Q);
+  if (VENUE) out += (out.includes('?') ? '&' : '?') + 'venue=' + encodeURIComponent(VENUE);
   return out;
 };
+
+/** A link back to this page — the venue's own address, or the plain one. */
+const home = () => keyed(VENUE ? `/${VENUE}/gallery` : '/gallery');
+
+/** A link INTO one night, in whichever address style this page arrived on. */
+const nightLink = (night) => (VENUE
+  ? keyed(`/${VENUE}/gallery/${nightSlug(night)}`)
+  : keyed(`/gallery?n=${encodeURIComponent(night)}`));
 
 /*
  * `innerHTML`, NOT `append()` — and this shipped wrong once.
@@ -82,6 +101,16 @@ fetch(keyed('/api/brand'))
   })
   .catch(() => { /* the gallery works perfectly well without a logo on it */ });
 
+/*
+ * WHICH NIGHT, from `?n=2026-08-20` or from `/…/gallery/20-august`.
+ *
+ * A DATE SLUG IS RESOLVED AGAINST THE LIST, never parsed into a date and
+ * trusted: the list is fetched anyway, it already holds only the nights this
+ * venue actually published, and matching against it means a slug that names
+ * nothing simply shows the list rather than 404ing on a date that exists but
+ * is private. `matchNightSlug()` reads both `20-august` and `20-august-2026`,
+ * and the NEWEST match wins, because the list arrives newest first.
+ */
 const nightIn = () => {
   const n = new URLSearchParams(location.search).get('n') || '';
   return /^\d{4}-\d{2}-\d{2}$/.test(n) ? n : '';
@@ -118,7 +147,7 @@ async function showNights() {
   body.replaceChildren(node(`
     <div class="gal-nights">
       ${nights.map((n) => `
-        <a class="gal-night ${n.live === false ? 'is-draft' : ''}" href="${esc(keyed('/gallery?n=' + encodeURIComponent(n.night)))}">
+        <a class="gal-night ${n.live === false ? 'is-draft' : ''}" href="${esc(nightLink(n.night))}">
           <b>${esc(n.when || n.night)}</b>
           <span class="tiny">${n.count} photo${n.count === 1 ? '' : 's'}</span>
         </a>`).join('')}
@@ -139,7 +168,7 @@ async function showNight(night) {
     sub.textContent = '';
     body.replaceChildren(node(`
       <p class="muted gal-empty">This night is not up.
-      <a href="${esc(keyed('/gallery'))}">See what is.</a></p>`));
+      <a href="${esc(home())}">See what is.</a></p>`));
     return;
   }
   title.textContent = data.when || night;
@@ -155,11 +184,30 @@ async function showNight(night) {
           <img src="${esc(keyed(p.url))}" alt="A photo from the night" loading="lazy" decoding="async">
         </figure>`).join('')}
     </div>
-    <p class="gal-back"><a href="${esc(keyed('/gallery'))}">All nights</a></p>`));
+    <p class="gal-back"><a href="${esc(home())}">All nights</a></p>`));
   if (data.preview && data.live === false) sub.append(' · ', notLive());
 }
 
-const night = nightIn();
-(night ? showNight(night) : showNights()).catch(() => {
+/*
+ * A DATE IN THE ADDRESS IS RESOLVED AGAINST THE LIST FIRST.
+ *
+ * `/…/gallery/20-august` names a night the way somebody says it, and the only
+ * thing that knows which real date that is — for THIS venue, among the nights
+ * it has actually published — is the list. So the list is fetched, matched,
+ * and the night opened; a slug that matches nothing falls back to the list
+ * itself rather than an error, because "that night is not up" and "there is no
+ * such night" are the same answer to a stranger and should look it.
+ */
+async function start() {
+  if (HERE.night) {
+    const data = await get('/api/gallery');
+    const found = (data && data.nights || []).find((n) => matchNightSlug(n.night, HERE.night));
+    return found ? showNight(found.night) : showNights();
+  }
+  const night = nightIn();
+  return night ? showNight(night) : showNights();
+}
+
+start().catch(() => {
   body.replaceChildren(node('<p class="muted gal-empty">That did not load. Try again in a moment.</p>'));
 });

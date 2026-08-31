@@ -41,6 +41,7 @@ import { venueHeadcounts, nightHeadcount } from './src/headcounts.js';
 import { playedByVenue } from './src/heard.js';
 import { nightReportPdf, nightReportFilename } from './src/report-pdf.js';
 import { leaguesByVenue, leagueAfter, teamKey } from './src/league.js';
+import { matchNightSlug, readVenuePath, venueSlug } from './public/assets/slugs.js';
 import { comeBackFor, nextNightAt, comeBackText } from './src/comeback.js';
 import { isComposed, MAX_ROUNDS } from './src/running-order.js';
 import { listShows, saveShow, deleteShow, showProblems } from './src/shows.js';
@@ -1135,6 +1136,36 @@ async function handleGet(req, res, url, route) {
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     return serveFile(res, config.publicDir, 'league.html'), true;
   }
+
+  /*
+   * A VENUE'S OWN ADDRESS — `/station-tap-wokingham/quiz-league` and
+   * `/station-tap-wokingham/gallery/20-august`.
+   *
+   * Asked for on 31 August 2026: *"I want to be able to have the URLs
+   * conveniently reachable."* These are the same two pages `/league` and
+   * `/gallery` already serve — the SAME FILE, byte for byte — and the page
+   * reads its own address to know which venue it is. Nothing is templated,
+   * because this app has no template engine and does not want one.
+   *
+   * **THE SECOND SEGMENT IS NAMED EXACTLY, which is what makes a
+   * one-segment prefix safe at the root.** A catch-all here would quietly
+   * start shadowing whatever route is added next year; `/anything/quiz-league`
+   * cannot collide with anything, and `readVenuePath()` refuses every other
+   * shape — including a path traversal in the venue segment.
+   *
+   * **IT RESOLVES AGAINST THE OWNER'S OWN ROOM, or the one named by `?q=`.**
+   * The pretty form belongs to the app owner, whose domain this is; a
+   * subscriber's public link carries `?q=` as it already does. An address book
+   * mapping every subscriber's venue to a global slug is the next step if that
+   * is ever wanted, and it is deliberately not built for one customer.
+   */
+  const venuePath = readVenuePath(route);
+  if (venuePath) {
+    res.setHeader('X-Robots-Tag', venuePath.page === 'gallery'
+      ? 'noindex, nofollow, noimageindex' : 'noindex, nofollow');
+    return serveFile(res, config.publicDir,
+      venuePath.page === 'gallery' ? 'gallery.html' : 'league.html'), true;
+  }
   if (route === '/host') return serveFile(res, config.publicDir, 'host.html'), true;
   if (route === '/editor') return serveFile(res, config.publicDir, 'editor.html'), true;
   if (route === '/console') return serveFile(res, config.publicDir, 'console.html'), true;
@@ -1430,6 +1461,23 @@ async function handleGet(req, res, url, route) {
         // account object, not a sibling of it, because the browser reads
         // `who.account` and drops everything else in the response.
         referralCreditPence: account.role === 'owner' ? 0 : accounts.referralCredit(account.id),
+        /*
+         * DOES A VENUE'S OWN ADDRESS WORK FOR THIS ACCOUNT?
+         *
+         * `/station-tap-wokingham/quiz-league` resolves against the room the
+         * public pages fall back to — the owner's own quizmaster room, or the
+         * house room when there are no accounts yet. Every other account keeps
+         * `?q=`, which is what they had before addresses existed.
+         *
+         * **THE SERVER ANSWERS THIS RATHER THAN THE BROWSER GUESSING.** The
+         * first version tested `role === 'owner'` in the console, which is
+         * wrong in both directions: the bootstrap host key resolves to the
+         * house room and so DOES get the pretty form, while the owner's own
+         * quizmaster hat is not `role === 'owner'` and does. One fact, known
+         * here, sent — rather than a rule about identities re-derived in a
+         * place that cannot see the rooms.
+         */
+        ownAddress: roomForHost(req, url).id === publicRoomId(),
       },
       /*
        * THE LIVE LADDER, so the browser stops working off the shipped one.
@@ -2510,8 +2558,17 @@ async function handleGet(req, res, url, route) {
     const nights = mergeGigs(listArchive(leagueRoom.paths.archive, { boards: true }), []);
     const byVenue = leaguesByVenue(nights);
     const book = leagueRoom.invoices;
+    /*
+     * ONE VENUE, WHEN THE PAGE CAME IN ON ITS OWN ADDRESS. Derived from the
+     * name rather than looked up, so there is no second record to keep in
+     * step — see `public/assets/slugs.js`. A slug that matches nothing returns an empty
+     * list, which is the same answer an unpublished venue gives: one refusal
+     * for every miss, so nobody can map which pubs exist by trying names.
+     */
+    const wantVenue = String(url.searchParams.get('venue') || '').trim().toLowerCase();
     const out = [];
     for (const [key, league] of Object.entries(byVenue)) {
+      if (wantVenue && venueSlug(league.venue) !== wantVenue) continue;
       if (!runs.includes(key)) continue;
       const published = live.includes(key);
       if (!published && !preview) continue;
@@ -2557,12 +2614,31 @@ async function handleGet(req, res, url, route) {
   if (route === '/api/gallery') {
     const preview = galleryPreview();
     const live = await publishedNights(galleryRoomId());
+    /*
+     * ONE VENUE'S NIGHTS, when the page came in on its own address.
+     *
+     * The photo repository is foldered by DATE alone — a deliberate choice
+     * recorded in `mergeGigs()`, because every route that addresses a night
+     * addresses it by its date — so which venue a night belongs to lives in
+     * the archive, and this is the join. Only read when a slug was asked for,
+     * so the plain `/gallery` costs exactly what it always did.
+     */
+    const wantVenue = String(url.searchParams.get('venue') || '').trim().toLowerCase();
+    let atVenue = null;
+    if (wantVenue) {
+      const room = rooms.get(galleryRoomId());
+      await ensureArchiveRestored(room);
+      atVenue = new Set(mergeGigs(listArchive(room.paths.archive), [])
+        .filter((n) => venueSlug(n.venue) === wantVenue)
+        .map((n) => n.night));
+    }
     const nights = preview
       ? [...new Set([...live, ...(await listDirs(photoFolder(galleryRoomId()), 'photos')).map((f) => f.name).filter(isNightFolder)])]
         .sort().reverse()
       : live;
     const out = [];
     for (const night of nights) {
+      if (atVenue && !atVenue.has(night)) continue;
       const files = await listDir(`${photoFolder(galleryRoomId())}/${night}`, 'photos');
       // Only what would actually SHOW once this night is opened — see the
       // matching filter below. A count that included the ones held back
@@ -3598,6 +3674,21 @@ async function leagueRunsAt(roomId, entry) {
   const name = String(entry.venue || '').trim().toLowerCase();
   const key = venueKeyOf(entry);
   return on.some((k) => k === key || k === name);
+}
+
+/**
+ * WHICH ROOM THE PUBLIC PAGES FALL BACK TO — the owner's own quizmaster room,
+ * or the house room when nobody has made an account yet.
+ *
+ * The same answer `galleryRoomId()` gives with no `?q=`, lifted out so that
+ * `/api/me` can tell the console whether a venue's own address will work for
+ * it. Two copies of this lookup is how the console would come to print an
+ * address that 404s.
+ */
+function publicRoomId() {
+  const owner = accounts.owner;
+  const mine = owner ? accounts.ownQuizmasterFor(owner.id) : null;
+  return mine ? mine.id : HOUSE;
 }
 
 function seesTheirLeague(req, url) {

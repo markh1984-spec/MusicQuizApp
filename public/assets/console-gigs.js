@@ -1,6 +1,7 @@
 /** GIGS — the evidence: headcounts, what the room asked for, and nights run. */
 
 import { binIcon, esc, node } from './client.js';
+import { nightSlug, venueSlug } from './slugs.js';
 import { library, me, nightBench, setGigsSeen, setNightDrag } from './console-state.js';
 import { dragging, putNightOnBench } from './console-tonight.js';
 import { hostKey, keyed } from './console.js';
@@ -945,7 +946,7 @@ export async function nightPhotos(body, night, opts = {}) {
     grid.appendChild(shot);
   }
   body.appendChild(grid);
-  (controlsInto || body).appendChild(galleryToggle(night.night, data.published));
+  (controlsInto || body).appendChild(galleryToggle(night.night, data.published, night.venue));
 }
 
 /**
@@ -1012,7 +1013,7 @@ async function shareReport(night) {
  * @param {string} night `YYYY-MM-DD`
  * @param {boolean} on   whether it is already published
  */
-function galleryToggle(night, on) {
+function galleryToggle(night, on, venue = '') {
   const wrap = node('<div class="gig-gallery"></div>');
 
   /*
@@ -1021,13 +1022,26 @@ function galleryToggle(night, on) {
    * fine while there was only one gallery in the app; now every subscriber
    * has their own, and a link built with no `q=` sends a quizmaster to look
    * at Mark's photos instead of their own the moment they press "see it".
+   *
+   * **AND THE OWNER GETS THE VENUE'S OWN ADDRESS** —
+   * `/station-tap-wokingham/gallery/20-august`, asked for on 31 August 2026.
+   * The pretty path resolves against the owner's room, so it is printed only
+   * for the account it will actually work for; anybody else keeps `?q=`, which
+   * is exactly what they had. An address that looks nicer and 404s would be
+   * worse than the honest one.
    */
-  const galleryLink = `/gallery?n=${encodeURIComponent(night)}${me?.id ? `&q=${encodeURIComponent(me.id)}` : ''}`;
+  const slug = venueSlug(venue);
+  // ANSWERED BY THE SERVER — see `ownAddress` in `/api/me`.
+  const pretty = Boolean(me && me.ownAddress) && slug && nightSlug(night);
+  const galleryLink = pretty
+    ? `/${slug}/gallery/${nightSlug(night)}`
+    : `/gallery?n=${encodeURIComponent(night)}${me?.id ? `&q=${encodeURIComponent(me.id)}` : ''}`;
 
   const paint = (live) => {
     wrap.replaceChildren(node(live
       ? `<div class="tiny gig-gal-live">On the gallery —
-           <a href="${galleryLink}" target="_blank" rel="noopener">see it</a></div>`
+           <a href="${esc(galleryLink)}" target="_blank" rel="noopener">see it</a>
+           <code class="pub-address">${esc(location.host + galleryLink)}</code></div>`
       // Not a warning wrapper and not red: it is a plain statement of what the
       // button does, read before pressing rather than after something went
       // wrong. Red here would say a mistake had been made.

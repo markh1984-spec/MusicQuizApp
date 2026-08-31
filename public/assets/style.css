@@ -9506,6 +9506,15 @@ body.landing {
 /* DOES THIS PUB RUN A LEAGUE — the switch the publish control depends on, so
    it sits above it with a rule between them: two questions, asked in the order
    the second one needs. */
+/* THE ADDRESS, WRITTEN OUT so it can be read off the screen and typed, or
+   selected and copied. Monospace because it is a thing to transcribe, and it
+   wraps rather than ellipsising: half an address is worse than none. */
+.pub-address {
+  display: block; margin-top: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--fs-note); color: var(--ink-dim);
+  overflow-wrap: anywhere; user-select: all;
+}
 .lg-running { display: grid; gap: 8px; justify-items: start; margin-bottom: 12px;
   padding-bottom: 12px; border-bottom: 1px solid var(--panel-line); }
 .league-panel + .league-panel { margin-top: 12px; }

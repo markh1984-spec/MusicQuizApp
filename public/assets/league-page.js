@@ -31,6 +31,7 @@
  */
 
 import { esc, node, brandMark, brandWords } from './client.js';
+import { readVenuePath } from './slugs.js';
 
 const body = document.getElementById('lgBody');
 const sub = document.getElementById('lgSub');
@@ -49,10 +50,19 @@ const sub = document.getElementById('lgSub');
  */
 const KEY = new URLSearchParams(location.search).get('key') || '';
 const Q = new URLSearchParams(location.search).get('q') || '';
+/*
+ * THE VENUE COMES OFF THE ADDRESS BAR — `/station-tap-wokingham/quiz-league`.
+ *
+ * The server serves this same file on both routes and templates nothing, so
+ * the page reads its own path to know which venue it is. Empty on `/league`,
+ * which is unchanged and still shows every published venue.
+ */
+const VENUE = (readVenuePath(location.pathname) || {}).venue || '';
 const keyed = (path) => {
   let out = path;
   if (KEY) out += (out.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(KEY);
   if (Q) out += (out.includes('?') ? '&' : '?') + 'q=' + encodeURIComponent(Q);
+  if (VENUE) out += (out.includes('?') ? '&' : '?') + 'venue=' + encodeURIComponent(VENUE);
   return out;
 };
 

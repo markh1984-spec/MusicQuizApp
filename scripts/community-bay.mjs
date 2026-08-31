@@ -175,8 +175,11 @@ try {
      * both sides of the switch are on screen to be checked.
      */
     let running = ['id:v1'];
+    // Published as well as running, so the address the console hands out is
+    // on screen to be checked — it is only printed once a table is actually
+    // up, which is the only time it would work.
     await page.route('**/api/league/published*', async (route) => {
-      await route.fulfill({ json: { venues: [], names: {}, running } });
+      await route.fulfill({ json: { venues: [...running], names: {}, running } });
     });
     await page.route('**/api/league/running*', async (route) => {
       const body = JSON.parse(route.request().postData() || '{}');
@@ -287,6 +290,23 @@ try {
         }));
         check(`${label}: the league has an on/off switch`, lg.run === 1, JSON.stringify(lg));
         check(`${label}: a running venue is offered a public page`, lg.on === 1 && lg.pub === 1, JSON.stringify(lg));
+        /*
+         * AND THE ADDRESS IS WRITTEN OUT — *"I want to be able to have the
+         * URLs conveniently reachable."* A link somebody has to construct is a
+         * link nobody hands out, so the console says what it is; and it is the
+         * venue's own address rather than `?q=`, because this account is the
+         * owner and the pretty path resolves against the owner's room.
+         */
+        const addr = await page.evaluate(() => {
+          const el = document.querySelector('.tabbody .pub-address');
+          const a = document.querySelector('.tabbody .gig-gal-live a');
+          return { said: el ? el.textContent.trim() : '', href: a ? a.getAttribute('href') : '' };
+        });
+        // `crown`, not `the-crown` — the article is dropped, because an
+        // article is not an address. See `venueSlug()`.
+        check(`${label}: the league's address is written out`,
+          /\/crown\/quiz-league$/.test(addr.said), addr.said);
+        check(`${label}: and the link goes to it`, addr.href === '/crown/quiz-league', addr.href);
         await page.locator('.tabbody .lg-run-off').click();
         await page.waitForTimeout(700);
         const off = await page.evaluate(() => ({
