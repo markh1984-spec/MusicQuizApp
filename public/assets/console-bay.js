@@ -271,10 +271,21 @@ export function bayColumns(rail, side) {
  * tab's heading in one place: a heading each is the arrangement that let four
  * of them go missing.
  */
-export function bayHead(what, note = '') {
-  return node(`
+export function bayHead(what, note = '', extra = null) {
+  const head = node(`
     <div class="bay-head">
       <b>${esc(what)}</b>
       ${note ? `<span class="tiny">${esc(note)}</span>` : ''}
     </div>`);
+  /*
+   * AND ANYTHING ELSE THE DOOR WANTS ON THAT LINE — an ELEMENT, never a string.
+   *
+   * The head is a wide row with a date at one end and nothing at the other, and
+   * on the Photos bay that space is where the night's own public address
+   * belongs — *"this is a bit of space where you could link to the live
+   * gallery?"* Handed in as a node rather than built here, because this file is
+   * a leaf: it knows what a bay looks like and nothing about galleries.
+   */
+  if (extra) head.appendChild(extra);
+  return head;
 }

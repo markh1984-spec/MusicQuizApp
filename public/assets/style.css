@@ -9551,6 +9551,22 @@ body.landing {
 .bay-rail > * { flex: 0 0 auto; }
 /* The lit marker is the LEFT edge, exactly as the tab column's is — under a
    stacked list a bottom border reads as a rule between two rows. */
+/* THE NIGHT'S PUBLIC ADDRESS, at the far end of the bay's head — the empty
+   half of a row that had a date at one end and nothing at the other.
+
+   `margin-left: auto` rather than a spacer, so it sits at the end whatever is
+   beside it and the head needs no layout change. Quiet by default and the
+   account's own colour once the night is actually live: the difference between
+   "you could look at this" and "anybody can". */
+.bay-head-live {
+  margin-left: auto; flex: 0 0 auto;
+  font-size: var(--fs-note); color: var(--ink-dim); text-decoration: none;
+  padding: 4px 10px; border-radius: var(--r-pill);
+  border: 1px solid var(--surf-line, rgba(255, 255, 255, 0.09));
+}
+.bay-head-live:hover { color: var(--ink); border-color: var(--hot); }
+.bay-head-live.is-live { color: var(--good); border-color: color-mix(in srgb, var(--good) 45%, transparent); }
+
 /* ---- A ROW WITH A LAMP ON IT — the publish switch, on the Photos rail only.
 
    The lamp is a SIBLING of the row rather than a child: a button inside a

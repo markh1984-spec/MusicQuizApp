@@ -401,6 +401,34 @@ try {
     const opened = await frame();
     check(`${label}: opening a night puts its photos in the bay`, opened.bayPhotos > 0, `${opened.bayPhotos}`);
 
+    /* ---- AND THE HEAD OF THE BAY CARRIES THE NIGHT'S PUBLIC ADDRESS.
+       A link that says "see it live" over a night nobody else can see would be
+       the app lying about its own state, so the WORDS are checked as well as
+       the href — the two states are the whole point of it. */
+    const link = await page.evaluate(() => {
+      const a = document.querySelector('.bay-head .bay-head-live');
+      if (!a) return null;
+      const head = a.closest('.bay-head').getBoundingClientRect();
+      const r = a.getBoundingClientRect();
+      return {
+        href: a.getAttribute('href') || '', text: a.textContent.trim(),
+        live: a.classList.contains('is-live'),
+        blank: a.getAttribute('target') === '_blank',
+        // It must be IN the head, not spilling out of it.
+        inside: r.right <= head.right + 1 && r.left >= head.left - 1,
+        seen: a.getClientRects().length > 0,
+      };
+    });
+    check(`${label}: the bay head links to the live gallery`, Boolean(link && link.seen), `${link && link.href}`);
+    if (link) {
+      check(`${label}: and the link points at this night`, /gallery/.test(link.href), link.href);
+      check(`${label}: it opens in its own tab, not over the console`, link.blank);
+      check(`${label}: the words match whether it is actually public`,
+        link.live ? /see it/i.test(link.text) : /preview/i.test(link.text),
+        `${link.live ? 'live' : 'draft'} — "${link.text}"`);
+      check(`${label}: and it stays inside the head`, link.inside);
+    }
+
     /* ---- THE P LAMP ON A RAIL ROW — the one control allowed in a rail.
 
        *A rail picks; it never acts* is bent here on purpose, and the reason
@@ -454,8 +482,20 @@ try {
       await page.waitForTimeout(500);
     }
     check(`${label}: and none of them at the bottom`, opened.bodyPhotos === 0, `${opened.bodyPhotos}`);
+    /*
+     * THERE IS EXACTLY ONE WAY TO PUBLISH ON THIS DOOR, and it is the lamp.
+     *
+     * This check used to demand the OPPOSITE — a `.gig-gallery` panel under the
+     * night's row — because that is where the control was. It moved to the
+     * rail on 31 August 2026 and the panel went with it: two controls for one
+     * job on one screen is the label collision this app has a rule against, and
+     * they are the pair that can disagree. So the check is inverted rather than
+     * deleted, because "no second publish button grew back" is the half worth
+     * guarding now.
+     */
     const pubUnder = await page.locator('.tabbody .photo-night-controls .gig-gallery').count();
-    check(`${label}: the publish control is under the night's row`, pubUnder === 1, `${pubUnder}`);
+    check(`${label}: publishing is the lamp and nothing else`, pubUnder === 0,
+      `${pubUnder} publish panels under the night`);
     /*
      * AND THE WAY TO ADD YOUR OWN IS THERE — *"would be good to be able to add
      * room photos to the gallery that everyone sees, that I take from my own

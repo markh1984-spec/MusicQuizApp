@@ -1019,19 +1019,19 @@ export async function nightPhotos(body, night, opts = {}) {
   }
   body.appendChild(grid);
   /*
-   * THE BUTTON, OR JUST THE ADDRESS — see `galleryToggle()`.
+   * ON PAST GIGS THIS PANEL PUBLISHES; ON COMMUNITY IT DRAWS NOTHING AT ALL.
    *
-   * On Community the rail carries a P lamp per night that publishes in one
-   * press, so drawing a second control saying the same thing here would be two
-   * controls for one job on one screen: the label collision this app has a
-   * rule against, and the pair that can disagree. **The read-only half stays**
-   * — a published night still prints its public address, which is the thing
-   * somebody actually wants off this panel and is a summary rather than a
-   * control. *A read-only summary may repeat; a queue may not.*
+   * Community publishes from the rail's P lamp and prints the night's public
+   * address in the head of the bay — so a control here would be two controls
+   * for one job, and an address here would be two copies of one URL. Both are
+   * the label collision this app has a rule against, and the second is the
+   * shape that ends with a link working in one place and 404ing in the other.
+   *
+   * Past gigs has no rail and no bay head, so it keeps both.
    */
-  (controlsInto || body).appendChild(
-    galleryToggle(night.night, data.published, night.venue, { control: !controlsInto }),
-  );
+  if (!controlsInto) {
+    body.appendChild(galleryToggle(night.night, data.published, night.venue));
+  }
 }
 
 /**
@@ -1067,6 +1067,34 @@ async function shareReport(night) {
 }
 
 /**
+ * THE PUBLIC ADDRESS OF ONE NIGHT — one definition, two callers.
+ *
+ * `?q=` NAMES WHOSE GALLERY THIS IS, and without it the link falls back to the
+ * OWNER's own room — see `galleryRoomId()` in `server.js`. That was fine while
+ * there was only one gallery in the app; now every subscriber has their own,
+ * and a link built with no `q=` sends a quizmaster to look at Mark's photos
+ * instead of their own.
+ *
+ * **AND THE OWNER GETS THE VENUE'S OWN ADDRESS** —
+ * `/station-tap-wokingham/gallery/20-august`. The pretty path resolves against
+ * the owner's room, so it is built only for the account it will actually work
+ * for; anybody else keeps `?q=`, which is exactly what they had. An address
+ * that looks nicer and 404s would be worse than the honest one.
+ *
+ * Exported because the Photos bay prints it in its head as well — *"this is a
+ * bit of space where you could link to the live gallery?"* Two places building
+ * one URL is how a link comes to work in the bay and 404 in the panel.
+ */
+export function galleryAddress(night, venue = '') {
+  const slug = venueSlug(venue);
+  // ANSWERED BY THE SERVER — see `ownAddress` in `/api/me`.
+  const pretty = Boolean(me && me.ownAddress) && slug && nightSlug(night);
+  return pretty
+    ? `/${slug}/gallery/${nightSlug(night)}`
+    : `/gallery?n=${encodeURIComponent(night)}${me?.id ? `&q=${encodeURIComponent(me.id)}` : ''}`;
+}
+
+/**
  * PUT THIS NIGHT ON THE PUBLIC GALLERY, or take it back down.
  *
  * The route for this has existed since the gallery was built and **nothing
@@ -1098,29 +1126,11 @@ async function shareReport(night) {
  * @param {string} night `YYYY-MM-DD`
  * @param {boolean} on   whether it is already published
  */
-function galleryToggle(night, on, venue = '', { control = true } = {}) {
+function galleryToggle(night, on, venue = '') {
   const wrap = node('<div class="gig-gallery"></div>');
 
-  /*
-   * `?q=` NAMES WHOSE GALLERY THIS IS, and without it the link falls back to
-   * the OWNER's own room — see `galleryRoomId()` in `server.js`. That was
-   * fine while there was only one gallery in the app; now every subscriber
-   * has their own, and a link built with no `q=` sends a quizmaster to look
-   * at Mark's photos instead of their own the moment they press "see it".
-   *
-   * **AND THE OWNER GETS THE VENUE'S OWN ADDRESS** —
-   * `/station-tap-wokingham/gallery/20-august`, asked for on 31 August 2026.
-   * The pretty path resolves against the owner's room, so it is printed only
-   * for the account it will actually work for; anybody else keeps `?q=`, which
-   * is exactly what they had. An address that looks nicer and 404s would be
-   * worse than the honest one.
-   */
-  const slug = venueSlug(venue);
-  // ANSWERED BY THE SERVER — see `ownAddress` in `/api/me`.
-  const pretty = Boolean(me && me.ownAddress) && slug && nightSlug(night);
-  const galleryLink = pretty
-    ? `/${slug}/gallery/${nightSlug(night)}`
-    : `/gallery?n=${encodeURIComponent(night)}${me?.id ? `&q=${encodeURIComponent(me.id)}` : ''}`;
+  // Whose gallery, and the pretty path where it works — see `galleryAddress()`.
+  const galleryLink = galleryAddress(night, venue);
 
   const paint = (live) => {
     wrap.replaceChildren(node(live
@@ -1130,18 +1140,7 @@ function galleryToggle(night, on, venue = '', { control = true } = {}) {
       // Not a warning wrapper and not red: it is a plain statement of what the
       // button does, read before pressing rather than after something went
       // wrong. Red here would say a mistake had been made.
-      : (control
-        // Not a warning wrapper and not red: it is a plain statement of what
-        // the button does, read before pressing rather than after something
-        // went wrong. Red here would say a mistake had been made.
-        ? '<div class="tiny gig-gal-note">Anyone with the link can see these.</div>'
-        // With no button on this panel the sentence has nothing to describe;
-        // the P lamp beside the night says what pressing it will do.
-        : '<div class="tiny gig-gal-note">Not on the gallery — press the P beside this night to put it up.</div>')));
-
-    // Community publishes from the rail's P lamp, so there is no button here —
-    // the address above is the whole of what this panel says there.
-    if (!control) return;
+      : '<div class="tiny gig-gal-note">Anyone with the link can see these.</div>'));
 
     const btn = node(live
       ? '<button class="minor danger gig-gal-off" type="button">Take it off the gallery</button>'

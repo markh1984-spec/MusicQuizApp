@@ -1610,9 +1610,12 @@ with photographs).
   public, so nobody publishes strangers' faces without seeing them, and one
   more press takes it down. The two-step control it replaced bought the same
   thing by refusing to draw until you had looked. **It is opt-in per item**, so
-  no other rail can grow one by accident, and **the tab body's button GOES** —
-  two controls for one job is the collision; its read-only half (the public
-  address) stays.
+  no other rail can grow one by accident, and **the tab body's panel GOES** —
+  two controls for one job is the collision. **The night's public address moved
+  into the HEAD of the bay** (*"a bit of space where you could link to the live
+  gallery"*), built by one `galleryAddress()`: two copies of a URL is how a link
+  works in one place and 404s in the other. **It says which kind it is** —
+  *see it* when live, *preview* when not, because an owner can open a draft.
 - **COMPARTMENTALISED BY PUB, AND THE PUB FOLDS** — *"can this section be
   collapsible?"* **Group by the pub FIRST, then order within it**: printing the
   venue whenever it changed in date order drew "The Crown" twice with another

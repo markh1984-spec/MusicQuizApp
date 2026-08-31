@@ -52,7 +52,7 @@ import { drawFiltered } from './filters.js';
 // declaration rather than something read while the shell is half-built.
 import { goTo, keyed, renderKeepingPlace } from './console.js';
 import { library, me } from './console-state.js';
-import { asksPanel, groupByVenue, nightPhotos } from './console-gigs.js';
+import { asksPanel, galleryAddress, groupByVenue, nightPhotos } from './console-gigs.js';
 import { bayColumns, bayHead, bayRail } from './console-bay.js';
 import { venueSlug } from './slugs.js';
 
@@ -419,7 +419,7 @@ function photoWall() {
       onOpen: openIt,
     });
     el.appendChild(bayColumns(rail(openNight.night), [
-      bayHead(readable(openNight.night), openNight.venue || ''), body,
+      bayHead(readable(openNight.night), openNight.venue || '', liveLink(openNight)), body,
     ]));
     return el;
   }
@@ -561,6 +561,39 @@ function shrink(file) {
     img.onerror = () => { URL.revokeObjectURL(src); reject(new Error('That file is not a photo.')); };
     img.src = src;
   });
+}
+
+/**
+ * THE NIGHT'S OWN PUBLIC ADDRESS, IN THE HEAD OF THE BAY.
+ *
+ * Asked for on 31 August 2026, pointing at the empty half of that line: *"this
+ * is a bit of space where you could link to the live gallery?"* He is right —
+ * it is a wide row with a date at one end and nothing at the other, and it sits
+ * directly above the photographs it is the address of.
+ *
+ * **IT MOVED HERE RATHER THAN BEING ADDED HERE.** The address was printed in
+ * the panel underneath; two copies of one URL is how a link comes to work in
+ * one place and 404 in the other, and this door already publishes from the
+ * rail's P lamp, so the panel had nothing left to be.
+ *
+ * **IT SAYS WHICH KIND OF LINK IT IS.** Published, it is the address anybody
+ * can open and the words say so. Unpublished, the same page is still reachable
+ * BY HIM — the gallery shows an owner their drafts — so it is offered as a
+ * preview rather than hidden: checking what a night looks like before putting
+ * it up is the whole reason that preview exists. Saying "see it live" over a
+ * night nobody else can see would be the app lying about its own state.
+ *
+ * `target="_blank"`, because this is somebody checking a page mid-job — losing
+ * the console to go and look at it would cost them the night they had open.
+ */
+function liveLink(night) {
+  const href = galleryAddress(night.night, night.venue || '');
+  const live = Boolean(night.published);
+  return node(`
+    <a class="bay-head-live ${live ? 'is-live' : ''}" href="${esc(href)}"
+       target="_blank" rel="noopener">
+      ${live ? 'On the gallery — see it' : 'Preview this night'}
+    </a>`);
 }
 
 /** The photos rail, lit on whatever is showing. */

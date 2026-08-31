@@ -978,3 +978,37 @@ exactly one per row, that **the wall row has none** (there is no night behind
 it), that pressing it changes the colour, that pressing it **also opens that
 night's photographs**, that a wordless colour still says what it is, and that
 nothing went wrong writing it.
+
+
+## THE NIGHT'S ADDRESS MOVED INTO THE HEAD OF THE BAY
+
+Asked for the same day, pointing at the empty half of that line: *"this is a
+bit of space where you could link to the live gallery?"*
+
+He is right — the bay's head is a wide row with a date at one end and nothing
+at the other, sitting directly above the photographs it is the address of.
+
+- **IT MOVED, IT WAS NOT ADDED.** The address was printed in the panel
+  underneath, and that panel had already lost its button to the P lamp. Two
+  copies of one URL is how a link comes to work in one place and 404 in the
+  other, so `galleryAddress()` in `console-gigs.js` is now the single builder
+  and the panel draws nothing at all on this door. **Past gigs keeps both** —
+  no rail and no bay head there, so nothing is duplicated.
+- **IT SAYS WHICH KIND OF LINK IT IS.** Published, it reads *"On the gallery —
+  see it"* in the good colour. Unpublished, the same page is still reachable by
+  the owner — the gallery shows them their drafts — so it is offered as
+  *"Preview this night"* rather than hidden: checking what a night looks like
+  before putting it up is the whole reason that preview exists, and saying "see
+  it live" over a page nobody else can open would be the app lying about its
+  own state.
+- **`target="_blank"`**, because this is somebody checking a page mid-job.
+  Losing the console to go and look would cost them the night they had open.
+- **`bayHead()` takes an ELEMENT, never a string** — it is a leaf that knows
+  what a bay looks like and nothing about galleries, so the door hands it a
+  node rather than the file learning about URLs.
+- **`margin-left: auto` rather than a spacer**, so it sits at the end whatever
+  is beside it and the head needed no layout change.
+
+The guard checks the href, that it points at a gallery, that it opens in its
+own tab, that it stays inside the head, and **that the words match whether the
+night is actually public** — the two states being the entire point of it.
