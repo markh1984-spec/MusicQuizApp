@@ -131,8 +131,14 @@ export function bayRail({
        * repo's markup guard exists for.
        */
       const wrap = node('<div class="bay-pick-row"></div>');
+      /*
+       * `data-lamp` IS HOW IT IS REPAINTED WITHOUT A RENDER. Flipping a colour
+       * must not rebuild the bay — see `paintPublish()` on the Photos door —
+       * so the owner needs to find this button again, and a key is how.
+       */
       const lamp = node(`
         <button class="bay-lamp ${item.lamp.on ? 'is-on' : 'is-off'}" type="button"
+                data-lamp="${esc(item.key)}"
                 aria-pressed="${Boolean(item.lamp.on)}"
                 title="${esc(item.lamp.said || '')}"
                 aria-label="${esc(item.lamp.said || '')}">P</button>`);

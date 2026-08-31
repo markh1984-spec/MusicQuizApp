@@ -1073,6 +1073,53 @@ AT NINETY-NINE      : about 99 calls per page open.
 - `decoding="async"` on the console's grids, which the public gallery already
   had — decoding a phone photo off the main thread while eighteen more arrive.
 
+### "Even at 5,000, 99 photos stops working" — and the arithmetic is worse
+
+He is right, and it is worse than he said: 5,000 ÷ 99 is about **fifty page
+opens an hour**, not five hundred. And the traffic a gallery actually gets is
+the WORST shape for that — a link sent to a pub full of people who were all
+there on the same evening, so it is the SAME night opened by many different
+people.
+
+**The browser's own day-long cache never helped that case.** It covers somebody
+coming back; it does nothing for the fiftieth different person opening a night
+for the first time.
+
+### So the bytes are held on the SERVER, where everybody shares them
+
+`src/photo-cache.js`. Measured:
+
+```
+30 PHOTOGRAPHS      : 30 GitHub calls (1.0 per photo), 298ms
+20 DIFFERENT PEOPLE : 0 GitHub calls for 600 photo requests
+```
+
+**A night is paid for ONCE.** The first person through the door costs 99 calls
+and everybody after them costs nothing, so the ceiling is now *different nights
+an hour* rather than *visitors an hour* — which is a number nobody will reach,
+because a quizmaster files a couple of nights a week.
+
+- **A FILED PHOTOGRAPH IS IMMUTABLE BY NAME.** `add()` issues a fresh id per
+  picture and nothing rewrites one, so there is no staleness to reason about.
+  **The only event that can make an entry wrong is a DELETION**, and `dropPhoto()`
+  is called there — somebody asking for theirs to come down must not be served
+  it a moment later out of memory. There is a test, verified by taking the drop
+  out again.
+- **NOTHING THAT DECIDES WHO MAY SEE IT IS CACHED WITH THE BYTES.** Whether the
+  night is published and whether this picture is on the gallery are asked on
+  every single request, against `published.json` behind its own short cache with
+  exact invalidation. A photograph switched off is refused whether or not its
+  bytes are still in hand.
+- **THE CAP IS THE POINT, not the caching.** 48MB, `PHOTO_CACHE_MB` to change
+  it, least-recently-used out first. This process also runs live quizzes for
+  sixty phones on a 512MB instance, and *reliability beats cleverness* decides
+  it: a cache that makes a gallery quick and a Wednesday night flaky is a bad
+  trade. **A picture bigger than the whole cap is not kept at all** — it would
+  evict everything to hold one.
+- **LEAST RECENTLY USED, not oldest kept**, so the night everybody is looking at
+  survives somebody opening an old one.
+- **It empties on a redeploy**, which is correct and costs one page open.
+
 ### What is left, and it is BYTES rather than calls
 
 A filed photograph is scaled to 1600px on upload, so a night of ninety-nine is
@@ -1084,3 +1131,37 @@ in the browser, since there is no dependency-free resize on the server. It is
 not built: it doubles the files in the private repository and helps only nights
 filed AFTER it ships, which makes it a decision about somebody's storage rather
 than a tidy-up. Raised with the host rather than done quietly.
+
+
+## PUBLISHING MUST NOT REBUILD THE GALLERY TO CHANGE A COLOUR
+
+Reported on 31 August 2026: *"publishing or unpublishing the gallery here
+shouldn't need to reload the gallery each time?"*
+
+It should not, and it was doing it **three times a press** — once for the pick,
+once for the optimistic flip and once for the answer — each throwing away the
+whole bay and rebuilding a grid of thirty `<img>` elements to change the colour
+of a 30px button.
+
+**THIS IS THE PER-PHOTO LAMP'S OWN RULE ARRIVING LATE.** That one paints itself
+and never re-renders, for exactly this reason. The publish lamp reached for
+`renderKeepingPlace()` because it also had to update the head's link, and the
+big hammer was easier than finding two elements. Two elements is the right
+answer — `paintPublish()`, which moves the lamp, the head link and the error
+line where they stand.
+
+- **The lamp is found by `data-lamp`**, so it repaints whether or not that night
+  is the one showing — the rail carries one per night and only one is open.
+- **Picking what is already open is not a change either.** The P picks before it
+  acts, so pressing it on the night already showing rebuilt the bay for nothing.
+- **The error line is written AND removed in place**, or a stale failure sits
+  under a lamp that is now working.
+
+### The guard measures identity, not count
+
+A photograph in the grid is stamped before the press and checked for afterwards:
+if the bay was rebuilt, that exact element is no longer in the document.
+**Counting the images would say thirty either way** — the same "in the document"
+versus "the one I had" distinction that has bitten this repo three times. Put
+the render back and all three sizes fail with *"the photographs were thrown away
+and redrawn"*.

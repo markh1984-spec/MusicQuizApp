@@ -88,6 +88,9 @@ import { draftReply, briefFor, mostlyMine } from './src/reply-draft.js';
 import { OWNER_ONLY, changesTheLibrary } from './src/gates.js';
 import { listOwn, readPack, saveOwn, deleteOwn, isOwnPack, inCatalogue, countOwn, backupPath, MAX_OWN } from './src/own-packs.js';
 import { brandFor } from './src/branding.js';
+// Picture bytes, held briefly so the fiftieth person to open one night does not
+// spend a fiftieth page's worth of GitHub calls on it — see the file's own note.
+import { cachedPhoto, keepPhoto, dropPhoto } from './src/photo-cache.js';
 import { findScheme, DEFAULT_SCHEME, SCHEMES } from './public/assets/schemes.js';
 // The logo, shared with the browser so the tab icon and the on-screen mark are
 // one drawing rather than two that look alike today.
@@ -807,6 +810,15 @@ function roomForHost(req, url) {
  * `publicRoomId()` falls back to `HOUSE` when there is no owner's quizmaster
  * account, so a fresh install is unchanged too.
  */
+/** A filed photograph, from memory if it is there — see `photo-cache.js`. */
+async function photoBytes(at) {
+  const held = cachedPhoto(at);
+  if (held) return held;
+  const bytes = await getFile(at, 'photos');
+  if (bytes) keepPhoto(at, bytes);
+  return bytes;
+}
+
 function galleryRoomFor(req, url) {
   const id = roomForHost(req, url).id;
   return id === HOUSE ? publicRoomId() : id;
@@ -2859,7 +2871,12 @@ async function handleGet(req, res, url, route) {
     if (!showsOnGallery(name, (await photoDecisions(galleryRoomId()))[photoKey(night, name)])) {
       return sendJson(res, 404, { error: 'Nothing here.' }), true;
     }
-    const bytes = await getFile(`${photoFolder(galleryRoomId())}/${night}/${name}`, 'photos');
+    /*
+     * THE GATE IS ASKED FIRST AND EVERY TIME; ONLY THE BYTES ARE CACHED.
+     * Both checks above ran against `published.json`, so a photograph taken
+     * down is refused here whether or not its bytes are still in hand.
+     */
+    const bytes = await photoBytes(`${photoFolder(galleryRoomId())}/${night}/${name}`);
     if (!bytes) return sendJson(res, 404, { error: 'Nothing here.' }), true;
     res.writeHead(200, {
       'Content-Type': name.endsWith('.png') ? 'image/png' : name.endsWith('.webp') ? 'image/webp' : 'image/jpeg',
@@ -2893,7 +2910,7 @@ async function handleGet(req, res, url, route) {
       return sendJson(res, 404, { error: 'No photo there.' }), true;
     }
     const bytes = photosRepoConfigured()
-      ? await getFile(`${photoFolder(galleryRoomFor(req, url))}/${night}/${name}`, 'photos')
+      ? await photoBytes(`${photoFolder(galleryRoomFor(req, url))}/${night}/${name}`)
       : null;
     if (!bytes) return sendJson(res, 404, { error: 'No photo there.' }), true;
     res.writeHead(200, {
@@ -4431,11 +4448,12 @@ async function handleWrite(req, res, url, route) {
       // somebody hunting through the app for a fault in an env var.
       return sendJson(res, 400, { error: 'The private photo repository is not set up, so there is nothing to delete from.' }), true;
     }
-    const done = await deleteFile(
-      `${photoFolder(galleryRoomFor(req, url))}/${night}/${name}`,
-      `Remove a photo from ${night}`,
-      'photos',
-    );
+    const gone = `${photoFolder(galleryRoomFor(req, url))}/${night}/${name}`;
+    const done = await deleteFile(gone, `Remove a photo from ${night}`, 'photos');
+    // THE ONE EVENT THAT CAN MAKE A CACHED PICTURE WRONG. A filed photograph is
+    // immutable by name, so nothing else invalidates one — but somebody asking
+    // for theirs to be removed must not be served it a moment later.
+    dropPhoto(gone);
     if (done && done.ok === false) return sendJson(res, 502, { error: done.error || 'Could not delete that.' }), true;
     return sendJson(res, 200, { ok: true, night, name }), true;
   }

@@ -1510,7 +1510,7 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   `node --import`: real server, fixture network. **Publishing lived behind a
   token the suite must never need, so nothing had ever run it** — two silent
   live bugs in one day. The loop test signs in with a PASSWORD, not the host
-  key, which resolves to the house room and hides this whole class.
+  key, which resolves to the house room and hides this class.
 - **`published.json` HAS ONE WRITER AT A TIME, PER ROOM — `inOrder()` in
   `src/gallery.js`.** Which nights are up and the per-photo rulings are one
   file that two callers edit, each reading the whole thing and writing it back
@@ -1528,21 +1528,28 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   LIST THE NIGHT'S PAGE SHOWS**, so a pin can never advertise a photograph that
   page refuses. **A pin is a PREFERENCE; the lamp is the GATE.** **Three,
   refused not trimmed.**
-- **`published.json` IS READ ONCE PER ROOM, NOT ONCE PER PHOTOGRAPH.** Serving
-  one photo asked it TWICE first — 3 GitHub calls each, so 99 photos cost ~297
-  **per page open** against 5,000/hour: seventeen visits and the gallery stops
-  working. **Defensible only because `inOrder()` drops it on every write, in
-  AND out** — stale here means serving a photo somebody asked to have removed.
-  **It caches the PROMISE**, or 99 arriving at once all miss together; a test
-  caught the obvious version. **The browser window is NOT lengthened past a
-  day** — taking a photo down is a promise a cache cannot reach.
+- **A GALLERY IS PAID FOR ONCE — not per photo, not per visitor.** GitHub
+  allows 5,000 calls an hour and a 99-photo night once cost ~297 **per page
+  open**, so the gallery died after seventeen visits; a link goes to a pub full
+  of people who were all there the SAME night, which is the worst shape for a
+  limit. Both caches (`src/gallery.js`, `photo-cache.js`): 20 people, 600
+  requests, **0 calls**.
+  - **`inOrder()` drops the file on every write, IN and OUT** — stale here
+    serves a photo somebody asked to have removed. **It caches the PROMISE**,
+    or 99 arriving at once all miss together.
+  - **Bytes: a filed photo is immutable by NAME, so only a DELETION
+    invalidates one** (`dropPhoto()`). **Nothing deciding who may see it is
+    cached with them.** **Bounded 48MB LRU — this process also runs live
+    quizzes on a 512MB box**; quick gallery, flaky Wednesday is a bad trade.
+  - **The browser window is NOT lengthened past a day** — taking a photo down
+    is a promise a cache cannot reach.
 - **EVERY WRITER OF `published.json` CARRIES THE HALVES IT IS NOT CHANGING** —
   nights, rulings, pins. The third is when it gets forgotten; a test walks them.
-- **A NIGHT NAMES ITS PUB AND STEPS TO THE ONE EITHER SIDE AT THAT PUB.**
-  **Decided on the SERVER** — only it has the archive saying which pub a dated
-  photo folder belongs to. **An end of the run is an ABSENT link, not a dead
-  one**: the one place *present and inert* does not apply, since that rule is
-  about a page somebody drives weekly and this is one a stranger sees once.
+- **A NIGHT NAMES ITS PUB AND STEPS TO THE ONE EITHER SIDE AT THAT PUB**,
+  **decided on the SERVER** — only it has the archive. **An end of the run is
+  an ABSENT link, not a dead one**: the one place *present and inert* does not
+  apply, since that rule is about a page driven weekly and this is one a
+  stranger sees once.
 - **THE LEAGUE IS EXPORTED TO TWO AUDIENCES AND THEY WANTED DIFFERENT THINGS**
   — *"can that be exported to the landlord and the quiz teams to view?"* The
   landlord wants EVIDENCE, so the season table joined the post-night report he

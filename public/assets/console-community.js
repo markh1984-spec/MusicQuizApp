@@ -331,7 +331,8 @@ const pubLive = new Map();
  */
 async function togglePublish(night, want) {
   pubLive.set(night, want);
-  renderKeepingPlace();
+  // IN PLACE, NEVER A RENDER — see `paintPublish()`.
+  paintPublish(night);
   try {
     const res = await fetch(keyed('/api/past-gigs/publish'), {
       method: 'POST',
@@ -353,7 +354,60 @@ async function togglePublish(night, want) {
     pubLive.set(night, !want);
     pubTrouble = err.message;
   }
-  renderKeepingPlace();
+  paintPublish(night);
+}
+
+/**
+ * REPAINT THE LAMP AND THE HEAD LINK WHERE THEY STAND — never a render.
+ *
+ * Reported on 31 August 2026: *"publishing or unpublishing the gallery here
+ * shouldn't need to reload the gallery each time?"* It should not, and it was
+ * doing it THREE times a press — once for the pick, once for the optimistic
+ * flip and once for the answer — and each one threw the whole bay away and
+ * rebuilt a grid of thirty `<img>` elements to change the colour of a 30px
+ * button.
+ *
+ * **THIS IS THE PER-PHOTO LAMP'S OWN RULE, arriving late.** That one paints
+ * itself (`paintPill()`) and never re-renders, for exactly this reason; the
+ * publish lamp was written with a `renderKeepingPlace()` because it also had to
+ * update the head's link, and reaching for the big hammer was easier than
+ * finding two elements. Two elements is the right answer.
+ *
+ * **IT REPAINTS BY KEY, so it works whether or not that night is the one
+ * showing** — the rail carries a lamp per night and only one of them is open.
+ */
+function paintPublish(night) {
+  const up = pubLive.has(night) ? pubLive.get(night) : false;
+  const lamp = document.querySelector(`.bay-lamp[data-lamp="${CSS.escape(night)}"]`);
+  if (lamp) {
+    lamp.classList.toggle('is-on', up);
+    lamp.classList.toggle('is-off', !up);
+    const said = up
+      ? 'On the public gallery. Press to take it off.'
+      : 'Not on the public gallery. Press to put it up — the photos open above.';
+    lamp.title = said;
+    lamp.setAttribute('aria-label', said);
+    lamp.setAttribute('aria-pressed', String(up));
+  }
+  // The head's link says which kind of page it points at, so it moves too —
+  // only when the night being changed is the one on screen.
+  const head = document.querySelector('.bay-head .bay-head-live');
+  if (head && openNight && openNight.night === night) {
+    head.classList.toggle('is-live', up);
+    head.textContent = up ? 'On the gallery — see it' : 'Preview this night';
+  }
+  /*
+   * A FAILED WRITE STILL HAS TO BE SAID, and that line lives in the rail, which
+   * this is deliberately not rebuilding. So it is written in place too — and
+   * removed again the moment a write succeeds, or a stale error sits under a
+   * lamp that is now working.
+   */
+  const rail = document.querySelector('.bay-rail');
+  const shown = rail && rail.querySelector('.bay-rail-trouble');
+  if (shown) shown.remove();
+  if (pubTrouble && rail) {
+    rail.appendChild(node(`<div class="tiny bay-rail-trouble">${esc(pubTrouble)}</div>`));
+  }
 }
 
 /** What went wrong with the last publish, said under the rail. */
@@ -607,6 +661,13 @@ function rail(picked) {
     more: 'Older nights are in the list below.',
     onFold: () => renderKeepingPlace(),
     onPick: (key) => {
+      /*
+       * PICKING WHAT IS ALREADY OPEN IS NOT A CHANGE. The P lamp picks before
+       * it acts, so pressing it on the night already showing used to rebuild
+       * the whole bay for nothing — a grid of thirty photographs thrown away
+       * and drawn again to change a colour.
+       */
+      if (key && openNight && openNight.night === key && !openShot) return;
       openShot = null;
       nightControls = null;
       openNight = key ? (photoNights || []).find((n) => n.night === key) || null : null;

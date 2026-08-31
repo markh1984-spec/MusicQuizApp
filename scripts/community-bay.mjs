@@ -452,6 +452,22 @@ try {
     check(`${label}: the wall row has no lamp — there is no night behind it`, !lampsAt.onWall);
 
     if (lampsAt.total) {
+      /*
+       * AND THE GALLERY MUST NOT BE REBUILT TO CHANGE A COLOUR — reported as
+       * *"publishing or unpublishing shouldn't need to reload the gallery each
+       * time?"* It was rendering three times a press.
+       *
+       * MEASURED BY IDENTITY, not by counting: a stamped photograph is held on
+       * to, and if the bay was rebuilt that exact element is no longer in the
+       * document. Counting the images would say thirty either way — the same
+       * "in the document" versus "the one I had" distinction that has bitten
+       * this repo before.
+       */
+      await page.evaluate(() => {
+        const img = document.querySelector('.doorhead .cphoto img');
+        window.__keptPhoto = img;
+        window.__keptSrc = img && img.src;
+      });
       const lampWas = await page.evaluate(() => {
         const l = document.querySelector('.doorhead .bay-lamp');
         return { on: l.classList.contains('is-on'), said: l.getAttribute('aria-label') || '' };
@@ -477,6 +493,13 @@ try {
       check(`${label}: a wordless colour still says what it is`,
         lampNow.said.length > 8 && lampNow.said !== lampWas.said, lampNow.said);
       check(`${label}: and nothing went wrong writing it`, !lampNow.trouble, lampNow.trouble);
+      const survived = await page.evaluate(() => ({
+        same: Boolean(window.__keptPhoto && document.contains(window.__keptPhoto)),
+        still: document.querySelectorAll('.doorhead .cphoto').length,
+      }));
+      check(`${label}: publishing does NOT rebuild the gallery`, survived.same,
+        `the photographs were ${survived.same ? 'left alone' : 'thrown away and redrawn'}`);
+      check(`${label}: and they are all still there`, survived.still > 0, `${survived.still}`);
       // Put it back, so the checks below start where they expect.
       await page.evaluate(() => document.querySelector('.doorhead .bay-lamp').click());
       await page.waitForTimeout(500);

@@ -419,8 +419,32 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * SILENT** — a fault nothing throws, nothing fails and only a person notices.
  * Everything bought on 31 August is that shape. A feature description is not,
  * and belongs in `docs/`.
+ *
+ * AND A THIRD TIME ON 31 AUGUST, to 198,000. Three raises in one day is the
+ * pattern this budget exists to make visible, so: what bought it, and what was
+ * cut first.
+ *
+ * CUT FIRST, in this order, and it came to about 900 bytes: two photo-cache
+ * rules merged into one when they turned out to be the same story told twice;
+ * the gallery-index card rule, the night-navigation rule, the bay-head link
+ * rule and the private-repo-stub rule each trimmed to their prohibitions with
+ * their reasoning left in `docs/gigs/photos.md`; and the new rule's own
+ * history — 297 calls, then 99, then 0 — moved out of it, because CLAUDE.md
+ * carries the rule and `docs/` carries how it was arrived at.
+ *
+ * WHAT IT BOUGHT: a gallery that stopped working after seventeen visits. Every
+ * photograph served cost three GitHub calls against a 5,000/hour limit, and
+ * the traffic a gallery actually gets is a link sent to a pub full of people
+ * who were all there on the same night — the worst possible shape for a
+ * per-request limit. Nothing threw, no test failed, and the only symptom was
+ * *"these photos take a while to load"*.
+ *
+ * That is the line, unchanged and now applied a third time: **a raise is for a
+ * rule about something SILENT.** A feature description is not, and belongs in
+ * `docs/`. Four of the five things cut above were feature descriptions that had
+ * crept in the same day, which is the real lesson of this raise.
  */
-const BUDGET = 197_000;
+const BUDGET = 198_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
