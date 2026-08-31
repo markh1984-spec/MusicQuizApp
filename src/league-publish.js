@@ -76,15 +76,17 @@ export function isVenueKey(key) {
  * that already waits for one. Fails closed to the empty answer, which for both
  * halves means "the machine decides and nothing is published".
  */
+const NOTHING = { venues: [], names: {}, running: [] };
+
 async function readDecisions(roomId) {
-  if (!photosRepoConfigured()) return { venues: [], names: {} };
+  if (!photosRepoConfigured()) return { ...NOTHING };
   let raw = null;
   try {
     raw = await getFile(listPath(roomId), 'private');
   } catch {
-    return { venues: [], names: {} };
+    return { ...NOTHING };
   }
-  if (!raw) return { venues: [], names: {} };
+  if (!raw) return { ...NOTHING };
   try {
     const parsed = JSON.parse(raw.toString('utf8'));
     // An ARRAY is the original shape, from before names could be overruled.
@@ -93,16 +95,87 @@ async function readDecisions(roomId) {
     // better than to write.
     const venues = Array.isArray(parsed) ? parsed : parsed.venues;
     const names = (!Array.isArray(parsed) && parsed.names) || {};
+    const running = (!Array.isArray(parsed) && parsed.running) || [];
+    const keys = (list) => [...new Set((list || []).map((v) => String(v || '')).filter(isVenueKey))].sort();
     return {
-      venues: [...new Set((venues || []).map((v) => String(v || '')).filter(isVenueKey))].sort(),
+      venues: keys(venues),
       // Validated on the way OUT: this file is in a repository a human can
       // edit, and an unknown verdict must not become a third behaviour.
       names: Object.fromEntries(Object.entries(names)
         .filter(([k, v]) => k && (v === 'allow' || v === 'hide'))),
+      running: keys(running),
     };
   } catch {
-    return { venues: [], names: {} };
+    return { ...NOTHING };
   }
+}
+
+/**
+ * WHICH VENUES ACTUALLY RUN A LEAGUE — and it is OFF until somebody says so.
+ *
+ * Asked for on 31 August 2026: *"quiz leagues should be turn on and offable as
+ * well — it's useful to have the information regardless, but from the point of
+ * view of showing a page that is quiz league format it might be misleading if
+ * this app just had that as standard even in venues that don't have a quiz
+ * league."*
+ *
+ * **THE TABLE IS ARITHMETIC AND THE LEAGUE IS A THING YOU RUN.** Every venue
+ * with two filed nights HAS a table, because the app can always add up
+ * finishing positions — but a pub where nobody has ever mentioned a league
+ * does not have one, and printing a season table in that landlord's report
+ * says it does. That is the app asserting something about somebody else's
+ * night, which is worse than saying nothing.
+ *
+ * **SO IT GATES WHAT LEAVES, AND NOTHING THE QUIZMASTER SEES.** The console
+ * draws every venue's table either way — *"it's useful to have the information
+ * regardless"* — and this decides whether it reaches the landlord's report and
+ * whether it can go on a public page at all.
+ *
+ * **OFF BY DEFAULT, which is a change of behaviour and the point of the
+ * request.** Erring the other way puts a league table in front of a venue that
+ * never asked for one; erring this way costs one tap on the venues that did.
+ *
+ * @returns {Promise<string[]>} venue keys, sorted. Empty on any doubt.
+ */
+export async function leaguesRunning(roomId) {
+  return (await readDecisions(roomId)).running;
+}
+
+/** Does this venue run a league? The question the report and `/league` ask. */
+export async function isLeagueRunning(roomId, key) {
+  if (!isVenueKey(key)) return false;
+  return (await leaguesRunning(roomId)).includes(String(key));
+}
+
+/**
+ * Say that a venue runs a league, or that it does not.
+ *
+ * **SWITCHING IT OFF TAKES THE PUBLIC TABLE DOWN WITH IT.** A venue that does
+ * not run a league cannot have a published one — leaving the page up while the
+ * switch says otherwise is the app disagreeing with itself in public, on the
+ * one surface where that is expensive.
+ */
+export async function setLeagueRunning(roomId, key, on) {
+  if (!isVenueKey(key)) return { ok: false, error: 'That is not a venue.' };
+  if (!photosRepoConfigured()) {
+    return { ok: false, error: 'The private repository is not set up, so there is nowhere to record this.' };
+  }
+  const held = await readDecisions(roomId);
+  const running = on
+    ? [...new Set([...held.running, String(key)])].sort()
+    : held.running.filter((v) => v !== String(key));
+  const venues = on ? held.venues : held.venues.filter((v) => v !== String(key));
+  const same = running.length === held.running.length && venues.length === held.venues.length;
+  if (same) return { ok: true, running: held.running, venues: held.venues };
+
+  const res = await putFile(
+    listPath(roomId),
+    JSON.stringify({ venues, names: held.names, running }, null, 2),
+    `${on ? 'Run' : 'Stop'} the league at ${key}`,
+    'private',
+  );
+  if (res && res.ok === false) return { ok: false, error: res.error || 'Could not save that.' };
+  return { ok: true, running, venues };
 }
 
 /**
@@ -138,7 +211,7 @@ export async function setNameDecision(roomId, name, decision) {
 
   const res = await putFile(
     listPath(roomId),
-    JSON.stringify({ venues: have.venues, names }, null, 2),
+    JSON.stringify({ venues: have.venues, names, running: have.running }, null, 2),
     decision ? `${decision === 'allow' ? 'Allow' : 'Hide'} the team name ${key}` : `Clear the ruling on ${key}`,
     'private',
   );
@@ -193,7 +266,7 @@ export async function setVenuePublished(roomId, key, on) {
     // The names ride along untouched — writing only the venues would wipe
     // every ruling a human had made, which is the shape of bug that only
     // shows up weeks later when somebody notices a name has come back.
-    JSON.stringify({ venues: sorted, names: decided.names }, null, 2),
+    JSON.stringify({ venues: sorted, names: decided.names, running: decided.running }, null, 2),
     `${on ? 'Publish' : 'Unpublish'} the league table for ${key}`,
     'private',
   );

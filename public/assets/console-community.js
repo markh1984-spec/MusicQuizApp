@@ -672,14 +672,22 @@ function leagueBay() {
       note: `${l.table.length} team${l.table.length === 1 ? '' : 's'} · ${l.nights} night${l.nights === 1 ? '' : 's'}`,
     });
     for (const e of l.evenings || []) {
-      items.push({
-        key: `${l.key}|${e.night}`,
-        group: l.venue,
-        name: readable(e.night),
-        // WHO WON, on the row — so the rail answers most of the question
-        // before anything is pressed, which is what a rail is for.
-        note: e.top[0] ? `Won by ${e.top[0].name}` : `${e.teams} teams`,
-      });
+      /*
+       * THE DATE AND NOTHING ELSE — *"save space here by just putting the
+       * dates."*
+       *
+       * It carried *Won by …* underneath, on the reasoning that a rail which
+       * answers before it is pressed is a better rail. That is true of a short
+       * note and false of this one: a team called "Stephen Hawking Dance
+       * School" wraps to two lines under the date, so a row meant to be
+       * scanned became three lines tall and four nights filled the whole bay.
+       *
+       * **A RAIL IS A PICKER, AND THE THING IT PICKS IS ONE PRESS AWAY.** The
+       * winner is the first row of the night itself, which is where somebody
+       * looking for it is going anyway — so the note was buying a glance and
+       * charging two-thirds of the rail for it.
+       */
+      items.push({ key: `${l.key}|${e.night}`, group: l.venue, name: readable(e.night) });
     }
   }
 
@@ -689,7 +697,10 @@ function leagueBay() {
       items,
       picked: leagueNight ? `${picked}|${leagueNight}` : picked,
       railId: 'league',
-      more: 'Older nights are on the public table.',
+      // NOT "on the public table" — that was true only while every venue had
+      // one, and a venue that does not run a league now has no public page at
+      // all. This says the thing that is true either way.
+      more: 'Older nights still count towards the table.',
       onFold: () => renderKeepingPlace(),
       /*
        * THE WHOLE PAGE REPAINTS, not just the bay — because the CONTROLS for
@@ -828,6 +839,74 @@ function nameReview(league, names, onRuled) {
 }
 
 /**
+ * DOES THIS VENUE RUN A LEAGUE — the switch everything outward depends on.
+ *
+ * Asked for on 31 August 2026: *"quiz leagues should be turn on and offable as
+ * well — it's useful to have the information regardless, but from the point of
+ * view of showing a page that is quiz league format it might be misleading if
+ * this app just had that as standard even in venues that don't have a quiz
+ * league."*
+ *
+ * **THE TABLE IS ARITHMETIC; A LEAGUE IS A THING YOU RUN.** Every venue with
+ * two filed nights has a table, because finishing positions always add up. A
+ * pub where nobody has ever mentioned a league does not have one, and printing
+ * a season table in that landlord's report says otherwise — which is the app
+ * asserting something about somebody else's night.
+ *
+ * **SO THIS GATES WHAT LEAVES AND NOTHING THE QUIZMASTER SEES.** The bay draws
+ * every venue's table either way; this decides whether it reaches the report
+ * and whether it can go public at all.
+ *
+ * **AND THE CONTROLS UNDER IT ARE ABSENT RATHER THAN GREYED, which is the one
+ * place this app does that on purpose.** *A control is present and inert,
+ * never absent* is about a control that comes and goes AS YOU WORK — a thumb
+ * has to learn where it is. Publishing a league at a pub that does not run one
+ * is not a disabled action, it is a question that does not arise, and offering
+ * it would say the opposite of what the switch above just said.
+ */
+function runningToggle(key, on) {
+  const wrap = node('<div class="lg-running"></div>');
+
+  const paint = (live) => {
+    wrap.replaceChildren(node(`
+      <div class="tiny">${live
+    ? 'This pub runs a league — the table goes on its report, and can go on a public page.'
+    : 'No league here yet. The table is still worked out and shown above; it just stays in this console.'}</div>`));
+    const btn = node(live
+      ? '<button class="minor danger lg-run-off" type="button">This pub does not run a league</button>'
+      : '<button class="minor lg-run-on" type="button">This pub runs a league</button>');
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      try {
+        const res = await fetch(keyed('/api/league/running'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ venueKey: key, on: !live }),
+        });
+        const out = await res.json();
+        if (!res.ok) throw new Error(out.error || 'Could not change that.');
+        /*
+         * SWITCHING IT OFF TAKES THE PUBLIC TABLE DOWN TOO — the server does
+         * that, and the answer carries both lists back, so the page repaints
+         * from what was actually recorded rather than from what was asked
+         * for. A publish control still claiming "on the public table" under a
+         * pub that no longer runs one is the app disagreeing with itself.
+         */
+        published = { ...published, running: out.running || [], venues: out.venues || [] };
+        renderKeepingPlace();
+      } catch (err) {
+        btn.disabled = false;
+        wrap.appendChild(node(`<div class="tiny" style="color:var(--bad)">${esc(err.message)}</div>`));
+      }
+    });
+    wrap.appendChild(btn);
+  };
+
+  paint(Boolean(on));
+  return wrap;
+}
+
+/**
  * PUT THIS VENUE'S TABLE ON A PUBLIC PAGE, or take it back down.
  *
  * Asked for on 25 August 2026 — *"can that be exported to the landlord and
@@ -908,7 +987,7 @@ function loadPublished() {
     .then((r) => (r.ok ? r.json() : null))
     .then((d) => {
       if (!d) return;
-      published = { venues: d.venues || [], names: d.names || {} };
+      published = { venues: d.venues || [], names: d.names || {}, running: d.running || [] };
       /*
        * ONE REPAINT WHEN IT LANDS, and it has to be the whole page: the marks
        * are in the BAY and the controls are in the tab body, so painting one
@@ -988,8 +1067,17 @@ export function leagueSection() {
    * misstate what is public.
    */
   if (published) {
-    panel.appendChild(nameReview(league, published.names, () => renderKeepingPlace()));
-    panel.appendChild(leagueToggle(league.key, league.venue, published.venues.includes(league.key)));
+    /*
+     * DOES THIS PUB RUN A LEAGUE — first, because everything under it depends
+     * on the answer. *"It's useful to have the information regardless, but…
+     * it might be misleading if this app just had that as standard even in
+     * venues that don't have a quiz league."*
+     */
+    panel.appendChild(runningToggle(league.key, published.running.includes(league.key)));
+    if (published.running.includes(league.key)) {
+      panel.appendChild(nameReview(league, published.names, () => renderKeepingPlace()));
+      panel.appendChild(leagueToggle(league.key, league.venue, published.venues.includes(league.key)));
+    }
   } else {
     panel.appendChild(node('<div class="tiny">Checking what is published…</div>'));
   }

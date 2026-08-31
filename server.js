@@ -36,7 +36,7 @@ import {
 import { STYLES, findStyle, QUALITIES, DEFAULT_QUALITY } from './src/portraits.js';
 import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig, playTrack } from './src/spotify.js';
-import { photoFolder, mergeGigs, safePhotoName, isNightFolder, nightOfGig } from './src/past-gigs.js';
+import { photoFolder, mergeGigs, safePhotoName, isNightFolder, nightOfGig, venueKeyOf } from './src/past-gigs.js';
 import { venueHeadcounts, nightHeadcount } from './src/headcounts.js';
 import { playedByVenue } from './src/heard.js';
 import { nightReportPdf, nightReportFilename } from './src/report-pdf.js';
@@ -66,7 +66,10 @@ import {
   publishedNights, isPublished, setPublished, readableNight,
   photoDecisions, photoKey, setPhotoDecision,
 } from './src/gallery.js';
-import { publishedVenues, setVenuePublished, nameDecisions, setNameDecision } from './src/league-publish.js';
+import {
+  publishedVenues, setVenuePublished, nameDecisions, setNameDecision,
+  leaguesRunning, setLeagueRunning,
+} from './src/league-publish.js';
 import { publicTable, isCleanForPublic } from './src/clean-names.js';
 import { sendEmail, emailConfigured, emailProvider, keepKeyAlive, resetEmail, welcomeEmail } from './src/email.js';
 import { Suggestions, KINDS, PACK_REQUEST_KIND } from './src/suggestions.js';
@@ -2217,7 +2220,13 @@ async function handleGet(req, res, url, route) {
      * than a locked panel — the same rule the projector band follows.
      */
     let league = null;
-    if (entry.venue && seesTheirLeague(req, url)) {
+    /*
+     * AND ONLY WHERE A LEAGUE IS ACTUALLY RUN. A season table in the report of
+     * a pub that has never heard of a league is the app asserting something
+     * about somebody else's night — worse than saying nothing, which is what
+     * this does instead.
+     */
+    if (entry.venue && seesTheirLeague(req, url) && await leagueRunsAt(gigRoom.id, entry)) {
       const want = entry.venue.trim().toLowerCase();
       const here = nights.filter((n) => String(n.venue || '').trim().toLowerCase() === want);
       const season = leagueAfter(here, night);
@@ -2473,6 +2482,9 @@ async function handleGet(req, res, url, route) {
     return sendJson(res, 200, {
       venues: await publishedVenues(lgId),
       names: await nameDecisions(lgId),
+      // WHICH VENUES ACTUALLY RUN A LEAGUE — the third half of one decision
+      // file, in the one round trip it already costs.
+      running: await leaguesRunning(lgId),
     }), true;
   }
 
@@ -2482,6 +2494,17 @@ async function handleGet(req, res, url, route) {
     const leagueRoom = rooms.get(roomId);
     await ensureArchiveRestored(leagueRoom);
     const live = await publishedVenues(roomId);
+    /*
+     * A VENUE THAT DOES NOT RUN A LEAGUE HAS NO PAGE, whatever else is set —
+     * *"it might be misleading if this app just had that as standard even in
+     * venues that don't have a quiz league."* The table is arithmetic and can
+     * always be worked out; a league is a thing somebody runs.
+     *
+     * It gates the PREVIEW as well, deliberately: the whole point of the owner
+     * preview is seeing what a team will see, so a preview that showed a venue
+     * the public page never will would be worse than no preview.
+     */
+    const runs = await leaguesRunning(roomId);
     // The quizmaster's own rulings, which overrule the word list either way.
     const ruled = await nameDecisions(roomId);
     const nights = mergeGigs(listArchive(leagueRoom.paths.archive, { boards: true }), []);
@@ -2489,6 +2512,7 @@ async function handleGet(req, res, url, route) {
     const book = leagueRoom.invoices;
     const out = [];
     for (const [key, league] of Object.entries(byVenue)) {
+      if (!runs.includes(key)) continue;
       const published = live.includes(key);
       if (!published && !preview) continue;
       /*
@@ -3557,6 +3581,25 @@ function markHidden(leagues) {
   return out;
 }
 
+/**
+ * DOES THIS NIGHT'S VENUE RUN A LEAGUE — asked under BOTH of its keys.
+ *
+ * `venueKeyOf()` gives `id:xyz` when a night carries a venue id and the
+ * lowercased name when it does not, and one pub often has both across a
+ * season — which is the split `leaguesByVenue()` and `venueHeadcounts()` each
+ * already fold. The switch is stored against whichever key the league itself
+ * ended up under, so a reader that asks under one form alone finds nothing
+ * roughly half the time. The rule this repo already has for that is to ask
+ * under both; see `heard.js`.
+ */
+async function leagueRunsAt(roomId, entry) {
+  const on = await leaguesRunning(roomId);
+  if (!on.length) return false;
+  const name = String(entry.venue || '').trim().toLowerCase();
+  const key = venueKeyOf(entry);
+  return on.some((k) => k === key || k === name);
+}
+
 function seesTheirLeague(req, url) {
   const account = whoIs(req, url);
   if (!account) return false;
@@ -4210,6 +4253,24 @@ async function handleWrite(req, res, url, route) {
       roomForHost(req, url).id, String(body.name || ''), String(body.decision || ''),
     );
     return sendJson(res, done.ok ? 200 : 400, done), true;
+  }
+
+  /*
+   * DOES THIS VENUE RUN A LEAGUE AT ALL.
+   *
+   * Off until somebody says so — see `setLeagueRunning()`. It gates what
+   * LEAVES: the landlord's report and the public page. The console draws every
+   * venue's table either way, because the arithmetic is useful regardless of
+   * whether the pub calls it a league.
+   */
+  if (route === '/api/league/running' && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.LEAGUE)) return true;
+    const body = await readJson(req);
+    const key = String((body && body.venueKey) || '');
+    if (!isVenueKey(key)) return sendJson(res, 400, { error: 'That is not a venue.' }), true;
+    const done = await setLeagueRunning(roomForHost(req, url).id, key, Boolean(body && body.on));
+    if (!done.ok) return sendJson(res, 400, { error: done.error || 'Could not save that.' }), true;
+    return sendJson(res, 200, { ok: true, running: done.running, venues: done.venues }), true;
   }
 
   if (route === '/api/league/publish' && req.method === 'POST') {

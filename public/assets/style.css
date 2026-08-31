@@ -9503,6 +9503,11 @@ body.landing {
   .community-wall { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
+/* DOES THIS PUB RUN A LEAGUE — the switch the publish control depends on, so
+   it sits above it with a rule between them: two questions, asked in the order
+   the second one needs. */
+.lg-running { display: grid; gap: 8px; justify-items: start; margin-bottom: 12px;
+  padding-bottom: 12px; border-bottom: 1px solid var(--panel-line); }
 .league-panel + .league-panel { margin-top: 12px; }
 .league-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .league-head b { font-size: var(--fs-head); }

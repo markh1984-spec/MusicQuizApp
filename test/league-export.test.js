@@ -189,3 +189,50 @@ test('countingScore takes the best six and drops the rest', async () => {
     'and it is the BEST six, not the first six');
   assert.deepEqual([1, 10, 1], [1, 10, 1], 'the input is not reordered under the caller');
 });
+
+/**
+ * A LEAGUE IS A THING YOU RUN, AND IT IS OFF UNTIL SOMEBODY SAYS SO.
+ *
+ * Asked for on 31 August 2026: *"quiz leagues should be turn on and offable as
+ * well — it's useful to have the information regardless, but from the point of
+ * view of showing a page that is quiz league format it might be misleading if
+ * this app just had that as standard even in venues that don't have a quiz
+ * league."*
+ *
+ * **THE TABLE IS ARITHMETIC AND THE LEAGUE IS A DECISION.** Every venue with
+ * two filed nights HAS a table, because finishing positions always add up —
+ * and printing one in the report of a pub that has never mentioned a league is
+ * the app asserting something about somebody else's night.
+ *
+ * These are unit checks on the store, which is where the default lives. The
+ * two surfaces it gates — the landlord's report and `/league` — are checked in
+ * `scripts/community-bay.mjs`, in a browser, because a route that reads the
+ * private repository cannot run here.
+ */
+test('nothing runs a league until it is switched on', async () => {
+  const { leaguesRunning, isLeagueRunning } = await import('../src/league-publish.js');
+  // No repository configured is the same answer as none switched on, and it
+  // has to be: failing OPEN here would put a table in every landlord's report
+  // the first time a token expired.
+  assert.deepEqual(await leaguesRunning('HOUSE'), []);
+  assert.equal(await isLeagueRunning('HOUSE', 'id:v1'), false);
+});
+
+test('a venue key is validated on the way in, like every other one', async () => {
+  const { setLeagueRunning } = await import('../src/league-publish.js');
+  for (const bad of ['', 'a\nb', '<script>', 'x'.repeat(201)]) {
+    const out = await setLeagueRunning('HOUSE', bad, true);
+    assert.equal(out.ok, false, `${JSON.stringify(bad)} was accepted`);
+    assert.match(out.error, /not a venue/i);
+  }
+});
+
+test('with no repository it says WHICH thing is missing', async () => {
+  // "Could not save that" would send somebody hunting through the app for a
+  // fault that is in an environment variable — the same rule every other
+  // write behind this door follows.
+  const { setLeagueRunning } = await import('../src/league-publish.js');
+  const out = await setLeagueRunning('HOUSE', 'id:v1', true);
+  assert.equal(out.ok, false);
+  assert.match(out.error, /private repository/i);
+});

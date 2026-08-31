@@ -1285,3 +1285,71 @@ Mightier" and left the spoonerism with no answer at all.
   losing a whole league. One quizmaster cannot be at two pubs on one evening.
 
 ---
+
+## A LEAGUE IS A THING YOU RUN — 31 August 2026
+
+> *"Quiz leagues should be turn on and offable as well — it's useful to have
+> the information regardless, but from the point of view of showing a page that
+> is quiz league format (say a URL) it might be misleading if this app just had
+> that as standard even in venues that don't have a quiz league."*
+
+`leaguesRunning()` / `setLeagueRunning()` in `src/league-publish.js`, the
+switch at the top of the league tab's controls.
+
+### The table is arithmetic; the league is a decision
+
+Every venue with two filed nights **has** a table, because finishing positions
+always add up. That is not the same as the pub running a league — and printing
+a season table in the report of a pub where nobody has ever mentioned one is
+the app asserting something about somebody else's night. Saying nothing is
+better than saying something the venue would not recognise.
+
+So the switch draws the line the app could not draw for itself.
+
+### It gates what LEAVES, and nothing the quizmaster sees
+
+That half is explicit in the request — *"it's useful to have the information
+regardless"* — and it is what keeps the feature cheap. The bay still draws
+every venue's table, the headcounts still sit beside it, and nothing about the
+console changes. What the switch decides is:
+
+- **the landlord's report** carries no season table for a venue that is off;
+- **the public `/league` page** skips it entirely, preview included.
+
+The preview is gated too, deliberately: the whole point of an owner preview is
+seeing what a team will see, so one that showed a venue the public page never
+would is worse than no preview at all.
+
+### Off by default, which is the point rather than a side effect
+
+The two mistakes are not equal. Erring the other way puts a league table in
+front of a venue that never asked for one; erring this way costs one tap at the
+venues that did. It also fails closed on an unreachable repository, for the
+same reason every other decision in that file does — a token expiring must not
+start publishing tables.
+
+### Switching it off takes the public page down with it
+
+`setLeagueRunning(…, false)` removes the venue from `published` in the same
+write. Leaving the page up while the switch says the pub runs no league is the
+app disagreeing with itself in public, which is the one place that is
+expensive.
+
+### The controls under it are absent, not greyed
+
+This is the one deliberate exception to *a control is present and inert, never
+absent*. That rule is about a control that comes and goes **as you work** — a
+thumb has to be able to learn where things are. Publishing a league at a pub
+that runs none is not a disabled action, it is a question that does not arise,
+and offering it greyed would say the opposite of what the switch immediately
+above it just said.
+
+### The report asks under BOTH venue keys
+
+`leagueRunsAt()` in `server.js`. `venueKeyOf()` gives `id:xyz` when a night
+carries a venue id and the lowercased name when it does not, and one pub often
+has both across a season — the split `leaguesByVenue()` and `venueHeadcounts()`
+each already fold. The switch is stored against whichever key the league itself
+ended up under, so a reader asking under one form alone finds nothing roughly
+half the time. Asking under both is the rule this repo already has for it; see
+`heard.js`.

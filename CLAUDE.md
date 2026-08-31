@@ -839,11 +839,10 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
 ### THE HOST'S SCREEN SAYS WHAT THE ROOM IS LOOKING AT
 
-`phonesAre()` in `public/assets/phones.js`, drawn under the status line on the
+`phonesAre()` in `public/assets/phones.js`, under the status line on the
 control view. **A performer's prompt, not a status readout** — a quizmaster
 behind a microphone cannot see sixty phones, and what is on them decides what
-they say next: *"there's a game on there while we set up"*, *"get your photos
-in now"*.
+they say next.
 
 - **IT NAMES ITS SUBJECT.** `whereLabel()` an inch above says where the GAME
   has got to; this says what the PHONES have got. Two bare one-line statuses
@@ -1036,9 +1035,8 @@ now".
 
 ### THE MARKUP GUARD IS THE MARKUP'S HALF OF THE BRACE RULE
 
-`test/markup-balance.test.js`. The same day and the same cause as the
-stylesheet one: a scripted move of the venue sheet left `.lb-what` unclosed and
-an orphan `</div>` behind, and **the head row collapsed — the venue button,
+`test/markup-balance.test.js`. Same cause as the stylesheet one: a scripted
+move left `.lb-what` unclosed, and **the head row collapsed — the venue button,
 Save and the mode switch drew on top of one another.**
 
 - **`node --check` PASSES BROKEN HTML.** A template literal holding it is a
@@ -1772,17 +1770,14 @@ And it demotes anything that only makes the app cleverer.
 
 ### The fifth constraint: MONDAY, and what a feature actually costs
 
-Stated by the host on 12 August 2026 and it is context every design decision
-here sits inside. **He runs three businesses and has one admin day a week.**
-Monday is when the inbox is read, the replies go out, the topical pack is
-generated and read through, and app changes get made.
+**He runs three businesses and has one admin day a week.** Monday is when the
+inbox is read, the replies go out, the topical pack is generated and read
+through, and app changes get made.
 
-**It is a boundary that BUYS the turnaround rather than costing it**, and that
-is his own framing: *"it's actually not a function of laziness. It's a function
-of wanting to be as good as possible."* A week is fast for software — most
-companies take three — and a stated weekly cadence that is kept beats an
-unstated "when we get to it" by a distance. What makes it keepable is not
-working harder on Monday; it is Monday not being swamped.
+**It is a boundary that BUYS the turnaround rather than costing it** — *"it's
+not a function of laziness. It's a function of wanting to be as good as
+possible."* What makes it keepable is not working harder on Monday; it is
+Monday not being swamped.
 
 So the rule that falls out, and it is the one to apply when weighing anything
 new:
@@ -1790,12 +1785,11 @@ new:
 > **A feature's real price is the ADMIN IT CREATES ON A MONDAY, not the code it
 > takes to write.**
 
-That is the thread running through a lot of what is already built, and it is
-worth seeing them as one system rather than as separate conveniences: the
-draft-reply button, the inbox that gets shorter when you answer something, the
-queue position on pack requests, the been-opened receipt, the "one open request
-at a time" limit, the refusal to add an email service. **Every one of them is a
-Monday-load reducer.**
+That is the thread through a lot of what is already built — the draft-reply
+button, the inbox that gets shorter when you answer something, the queue
+position on pack requests, the been-opened receipt, the "one open request at a
+time" limit, the refusal to add an email service. **Every one is a Monday-load
+reducer.**
 
 Two things follow:
 
@@ -1817,45 +1811,38 @@ to them as a quizmaster on their side as well."*
 
 **Every Monday-load reducer in this file was built for the OWNER. A quizmaster
 has the identical problem and nobody has built it for them.** They finish at
-half eleven, drive home, and owe a venue an invoice, a thank-you and a nudge
-about next month — and none of that happens, because the blank page is the
-expensive part rather than the sending.
+half eleven and owe a venue an invoice, a thank-you and a nudge about next
+month — and none of it happens, because the blank page is the expensive part
+rather than the sending.
 
 **THE SHAPE IS ALWAYS THE SAME AND IT IS THE ONE `reply-draft.js` ALREADY
-USES: the app prepares, the human reads, the human sends.** Four reasons it is
-the right shape everywhere rather than a compromise:
+USES: the app prepares, the human reads, the human sends.** Four reasons:
 
-- **The blank page is where the time goes**, not the pressing of send. Removing
-  it is most of the saving available.
+- **The blank page is where the time goes**, not the pressing of send.
 - **The human stays accountable for what goes out**, so nothing goes publicly
-  wrong in their name — which is the whole reason `reply-draft.js` drafts and
-  never sends.
-- **It needs no email service**, because the share sheet and the clipboard are
-  already how invoices leave this app. So it is not blocked on anything.
-- **It is dual-purpose**, which is the guard rail below: the venue gets a
-  faster reply AND a better one, rather than the quizmaster simply doing less.
+  wrong in their name — the whole reason `reply-draft.js` drafts and never
+  sends.
+- **It needs no email service**: the share sheet and the clipboard are already
+  how invoices leave this app.
+- **It is dual-purpose**, which is the guard rail below.
 
-**Do not build a send that skips the reading**, however much it looks like the
-obvious next step. An invoice or a thank-you that goes out unread is the
-version that names the wrong headcount, or bills a night that was cancelled —
-and it lands on the relationship the quizmaster is being paid to keep.
+**Do not build a send that skips the reading.** An invoice or a thank-you that
+goes out unread is the one that names the wrong headcount, or bills a night
+that was cancelled — and it lands on the relationship the quizmaster is being
+paid to keep.
 
-**AND THE GUARD RAIL, which is what keeps the rule honest: every one of those
-is dual-purpose, and an admin reducer that makes the customer's experience
-worse is the WRONG reducer.** The host's own framing — they exist to make the
-admin burden as small as possible *and* to give the customer the most value,
-not one at the expense of the other. Each is genuinely two-ended: the draft
-reply means a thirty-second answer AND that they get an answer at all; the
-queue position means not being chased AND that they know when; the receipt
-means knowing it landed AND that they know it was seen; "one open at a time"
-protects the time AND replaces a silent refusal with a stated rule.
+**AND THE GUARD RAIL, which keeps the rule honest: every one of those is
+dual-purpose, and an admin reducer that makes the customer's experience worse
+is the WRONG reducer.** They exist to make the admin burden as small as
+possible *and* to give the customer the most value, not one at the expense of
+the other. Each is two-ended: the draft reply means a thirty-second answer AND
+that they get an answer at all; the queue position means not being chased AND
+knowing when; "one open at a time" protects the time AND replaces a silent
+refusal with a stated rule.
 
-The distinction matters because "reduce the admin" would otherwise justify the
-opposite of all of it — ignoring the inbox, sending replies unread, hiding the
-way to get in touch. **The load comes down by making the work FASTER AND MORE
-CERTAIN, never by doing less of it.** That is the line between this and a
-software company nobody can get hold of, and it is why `reply-draft.js` drafts
-and never sends.
+**The load comes down by making the work FASTER AND MORE CERTAIN, never by
+doing less of it.** That is the line between this and a software company nobody
+can get hold of.
 
 ---
 
@@ -2055,10 +2042,27 @@ photographs' own half, split off at the 100,000-byte cap.
   what displays when you click venue, and then you can click each night to see
   who won."* **The pub's own row is `The table`, INSIDE the fold, never the
   heading** — a heading that both folds and picks is one control doing two
-  jobs. Each night carries *Won by …* on the row, so the rail answers most of
-  it unpressed. **`evenings` rides in the payload, capped at `NIGHT_ROWS`**,
-  built where `leagueTable()` already has the evening's order — **and it
-  carries the POINTS**, so the browser needs no second copy of the ladder
+  jobs. **A night row is the DATE and nothing else** (*"save space here by just
+  putting the dates"*): *Won by …* under it wrapped to two lines on a long team
+  name, so four nights filled the bay — and the winner is the first row of the
+  night, one press away. **`evenings` rides in the payload, capped at
+  `NIGHT_ROWS`**, built where `leagueTable()` already has the evening's order —
+  **and it carries the POINTS**, so the browser needs no second copy of the
+  ladder. **A board with no `position` scores nobody**, and it fails quietly: a
+  night view with headers and an empty body
+- **A LEAGUE IS A THING YOU RUN, AND IT IS OFF UNTIL SOMEBODY SAYS SO** —
+  *"quiz leagues should be turn on and offable… it might be misleading if this
+  app just had that as standard even in venues that don't have a quiz league."*
+  **The table is ARITHMETIC; a league is a DECISION** — every venue with two
+  filed nights has a table, and printing one in the report of a pub that never
+  mentioned a league is the app asserting something about somebody else's
+  night. **It gates what LEAVES and nothing the quizmaster sees**: the console
+  draws every table either way. **Switching it off takes the public page down
+  with it**, or the app disagrees with itself in public. **The controls under
+  it are ABSENT, not greyed** — the one deliberate exception to *present and
+  inert*, because publishing a league at a pub that runs none is not a disabled
+  action, it is a question that does not arise. **The report asks under BOTH
+  venue keys** (`leagueRunsAt()`), like every other reader of that split
 - **THE QUIZMASTER ADDS THEIR OWN ROOM PHOTOS** — the room's camera is sixty
   phones pointed at each other and none at the ROOM, which is the one shot that
   sells the night. `POST /api/past-photo/<night>`, **filed against the night in
@@ -3125,7 +3129,7 @@ typo is dropped rather than quietly becoming a round of general knowledge.
 ## Checks
 
 ```bash
-npm test        # 1,539 tests, no network, injected clocks — must stay green
+npm test        # 1,553 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check

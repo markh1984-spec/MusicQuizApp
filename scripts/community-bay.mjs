@@ -78,7 +78,7 @@ const rnd = (n) => {
 };
 
 let n = 0;
-const seed = (venue, teams, weeksBack, shift, dayOffset = 0) => {
+const seed = (venue, teams, weeksBack, shift, dayOffset = 0, venueId = '') => {
   // DIFFERENT DAYS PER VENUE, or `mergeGigs` folds both onto one night, marks
   // it `venueMixed`, drops the venue — and there is then no league at all.
   const at = base - weeksBack * 7 * DAY - dayOffset * DAY;
@@ -96,12 +96,14 @@ const seed = (venue, teams, weeksBack, shift, dayOffset = 0) => {
   const id = `night-${n += 1}`;
   fs.writeFileSync(path.join(arc, `${id}.json`), JSON.stringify({
     id, kind: 'quiz', quizTitle: '80s Anthems', packId: 'eighties',
-    archivedAt: at, venue, leaderboard: board,
+    // A venue ID, so the league's key is `id:…` deterministically — which is
+    // what the decision file is keyed on and what this harness has to mock.
+    archivedAt: at, venue, venueId, leaderboard: board,
   }, null, 2));
 };
 for (let w = 0; w < 8; w += 1) {
-  seed('The Crown', TEAMS_A, w, w);
-  seed('The Station Tap', TEAMS_B, w, w * 3 + 1, 3);
+  seed('The Crown', TEAMS_A, w, w, 0, 'v1');
+  seed('The Station Tap', TEAMS_B, w, w * 3 + 1, 3, 'v2');
 }
 
 const server = spawn(process.execPath, ['server.js'], {
@@ -166,6 +168,22 @@ try {
      */
     await page.route('**/api/gallery-photo/**', async (route) => {
       await route.fulfill({ json: { ok: true } });
+    });
+    /*
+     * The league's own decision file lives in the private repository, which
+     * this harness has no token for. Answered here with one venue running, so
+     * both sides of the switch are on screen to be checked.
+     */
+    let running = ['id:v1'];
+    await page.route('**/api/league/published*', async (route) => {
+      await route.fulfill({ json: { venues: [], names: {}, running } });
+    });
+    await page.route('**/api/league/running*', async (route) => {
+      const body = JSON.parse(route.request().postData() || '{}');
+      running = body.on
+        ? [...new Set([...running, body.venueKey])]
+        : running.filter((v) => v !== body.venueKey);
+      await route.fulfill({ json: { ok: true, running, venues: [] } });
     });
     await page.route('**/shot/*.svg', async (route) => {
       const i = Number(route.request().url().match(/(\d+)\.svg/)[1]);
@@ -254,6 +272,34 @@ try {
          * arrived.
          */
         check(`${label}: the open venue shows its table and its nights`, f.rail > 2, `${f.rail} rows`);
+        /*
+         * AND A VENUE THAT DOES NOT RUN A LEAGUE IS NOT OFFERED A PUBLIC PAGE
+         * — *"it might be misleading if this app just had that as standard
+         * even in venues that don't have a quiz league."* The switch decides,
+         * and the controls under it are absent rather than greyed: publishing
+         * a league at a pub that does not run one is not a disabled action, it
+         * is a question that does not arise.
+         */
+        const lg = await page.evaluate(() => ({
+          run: document.querySelectorAll('.tabbody .lg-run-on, .tabbody .lg-run-off').length,
+          pub: document.querySelectorAll('.tabbody .lg-pub-on, .tabbody .lg-pub-off').length,
+          on: document.querySelectorAll('.tabbody .lg-run-off').length,
+        }));
+        check(`${label}: the league has an on/off switch`, lg.run === 1, JSON.stringify(lg));
+        check(`${label}: a running venue is offered a public page`, lg.on === 1 && lg.pub === 1, JSON.stringify(lg));
+        await page.locator('.tabbody .lg-run-off').click();
+        await page.waitForTimeout(700);
+        const off = await page.evaluate(() => ({
+          run: document.querySelectorAll('.tabbody .lg-run-on').length,
+          pub: document.querySelectorAll('.tabbody .lg-pub-on, .tabbody .lg-pub-off').length,
+          table: document.querySelectorAll('.doorhead .lg-table tbody tr').length,
+        }));
+        check(`${label}: switching it off removes the publish control`, off.run === 1 && off.pub === 0, JSON.stringify(off));
+        // AND THE TABLE STAYS — *"it's useful to have the information
+        // regardless"*. The switch gates what LEAVES, never what he sees.
+        check(`${label}: but the table is still there to read`, off.table > 0, `${off.table} rows`);
+        await page.locator('.tabbody .lg-run-on').click();
+        await page.waitForTimeout(700);
         // EVERY team, because the bay scrolls inside a fixed height — a cap
         // plus "and N more, below" would point at a table that is not there.
         check(`${label}: every team is in the bay's table`, f.bayRows === 11, `${f.bayRows}`);
