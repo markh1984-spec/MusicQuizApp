@@ -619,3 +619,37 @@ written for it read `locked: true` before AND after, which is a measurement that
 cannot fail. See *A PAGE SCROLLS* in `CLAUDE.md`: fixing the base is what made
 this rule real, and it is verified by taking the class away again and watching a
 phone's wall slide 315 → 815 under an open picture.
+
+
+## PHOTOGRAPHS FILED BEFORE THE CAMERA FLAG STAY SHOWN BY DEFAULT — 31 August 2026
+
+Reported off a live gallery: *"on that 13th August there are clearly photos that
+were uploaded instead of taken on the night? the big lemon for e.g. — that needs
+to be hidden from the public gallery since I want (mostly) photos that were
+either taken on the night or look as though they were."*
+
+**It is not a fault in the filter.** `NOT_CAMERA_SUFFIX` shipped on 23 August
+2026; the night is ten days older, so those files carry no marker because the
+marker did not exist, and `isCameraFile()` reads "no marker" as "a camera took
+it". The app has no evidence either way for anything filed before that date.
+
+**Three answers were put up and the host took the third: leave the default and
+switch them off by hand.** The lamp already works on an old night and reaches
+the public page the moment it is pressed, and there are few enough of these to
+be worth nobody's code.
+
+The two that were turned down, so they are not re-proposed:
+
+- **Defaulting pre-23-August nights to OFF.** Strict in the same direction as
+  the team-name filter, and wrong here for a reason that filter does not have:
+  it would empty every already-published historical gallery — the genuine room
+  photographs included — on live public pages, all at once, to catch a handful
+  of jokes.
+- **A "hide them all on this night" control.** A real convenience and not worth
+  a control: the clutter rule says leave it out and wait for somebody to miss
+  it, and the set it would serve is a fixed, shrinking list of nights from
+  before August.
+
+**If it comes back, the trigger to watch for is volume** — this is cheap while
+the pre-flag nights are a handful and stops being cheap if a season of them ever
+needs curating.
