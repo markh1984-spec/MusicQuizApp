@@ -173,6 +173,11 @@ try {
     await page.route('**/api/gallery-pin/**', async (route) => {
       await route.fulfill({ json: { ok: true } });
     });
+    // The rail's P lamp writes through here. Answered, or the click 400s and
+    // the console-error check fires on the harness rather than on the app.
+    await page.route('**/api/past-gigs/publish*', async (route) => {
+      await route.fulfill({ json: { ok: true, nights: [] } });
+    });
     /*
      * The league's own decision file lives in the private repository, which
      * this harness has no token for. Answered here with one venue running, so
@@ -395,6 +400,59 @@ try {
     await page.waitForTimeout(1800);
     const opened = await frame();
     check(`${label}: opening a night puts its photos in the bay`, opened.bayPhotos > 0, `${opened.bayPhotos}`);
+
+    /* ---- THE P LAMP ON A RAIL ROW — the one control allowed in a rail.
+
+       *A rail picks; it never acts* is bent here on purpose, and the reason
+       the rule existed is kept by the lamp ALSO picking: the night's pictures
+       land in the bay at the moment it goes public, so nobody publishes a set
+       of strangers' faces without seeing them.
+
+       So there are three things to prove, and pressing is the only way to see
+       any of them — a dead handler draws a perfect lamp. */
+    const lampsAt = await page.evaluate(() => ({
+      total: document.querySelectorAll('.doorhead .bay-lamp').length,
+      rows: document.querySelectorAll('.doorhead .bay-pick-row').length,
+      // The wall row has no night behind it, so it must NOT carry one.
+      onWall: Boolean(document.querySelector('.doorhead .bay-pick-row .bay-pick-name')
+        && [...document.querySelectorAll('.doorhead .bay-pick-row')]
+          .some((r) => r.textContent.includes('The wall'))),
+    }));
+    check(`${label}: every night row has a publish lamp`, lampsAt.total > 0, `${lampsAt.total}`);
+    check(`${label}: one lamp per row, never a spare`, lampsAt.total === lampsAt.rows,
+      `${lampsAt.total} lamps, ${lampsAt.rows} rows`);
+    check(`${label}: the wall row has no lamp — there is no night behind it`, !lampsAt.onWall);
+
+    if (lampsAt.total) {
+      const lampWas = await page.evaluate(() => {
+        const l = document.querySelector('.doorhead .bay-lamp');
+        return { on: l.classList.contains('is-on'), said: l.getAttribute('aria-label') || '' };
+      });
+      await page.evaluate(() => document.querySelector('.doorhead .bay-lamp').click());
+      await page.waitForTimeout(700);
+      const lampNow = await page.evaluate(() => {
+        const l = document.querySelector('.doorhead .bay-lamp');
+        const row = l.closest('.bay-pick-row');
+        return {
+          on: l.classList.contains('is-on'),
+          // PRESSING IT ALSO PICKS THE ROW — the whole safeguard.
+          picked: row.querySelector('.bay-pick').classList.contains('on'),
+          photos: document.querySelectorAll('.doorhead .cphoto').length,
+          said: l.getAttribute('aria-label') || '',
+          trouble: document.querySelector('.bay-rail-trouble')?.textContent || '',
+        };
+      });
+      check(`${label}: pressing P changes the colour`, lampNow.on === !lampWas.on,
+        `${lampWas.on} -> ${lampNow.on}`);
+      check(`${label}: and it opens that night's photos`, lampNow.picked && lampNow.photos > 0,
+        `picked=${lampNow.picked}, ${lampNow.photos} photos`);
+      check(`${label}: a wordless colour still says what it is`,
+        lampNow.said.length > 8 && lampNow.said !== lampWas.said, lampNow.said);
+      check(`${label}: and nothing went wrong writing it`, !lampNow.trouble, lampNow.trouble);
+      // Put it back, so the checks below start where they expect.
+      await page.evaluate(() => document.querySelector('.doorhead .bay-lamp').click());
+      await page.waitForTimeout(500);
+    }
     check(`${label}: and none of them at the bottom`, opened.bodyPhotos === 0, `${opened.bodyPhotos}`);
     const pubUnder = await page.locator('.tabbody .photo-night-controls .gig-gallery').count();
     check(`${label}: the publish control is under the night's row`, pubUnder === 1, `${pubUnder}`);

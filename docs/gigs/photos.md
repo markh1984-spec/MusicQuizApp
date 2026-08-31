@@ -914,3 +914,67 @@ folder.
 
 **It is deliberately dumb** — no shas, no conflicts, no rate limits. What it is
 for is proving that a write lands where the next read looks.
+
+
+## A P ON THE NIGHT ROW — publishing in one press
+
+Asked for on 31 August 2026, looking at the two-step control:
+*"put a red P here by default and a click to put it to green publishes the
+gallery, and another click unpublishes it and makes it red."*
+
+### It overrules two written rules, and both were argued before building
+
+- ***A rail picks; it never acts*** — written so the worst a mis-tap in the
+  rail can do is show you something else.
+- **The publish control sits UNDER the photographs** — *"so nobody publishes a
+  night without having just looked at what is in it. A button on the collapsed
+  row would be one tap from a stranger's face going public."*
+
+Both were about the same thing: not publishing a set of faces blind. **So the
+lamp keeps the reason and drops the two presses** — pressing P also PICKS the
+row, so the night's photographs load into the bay at the same moment it goes
+public. You are looking at what you just published, and one more press takes it
+down. The old control bought that by refusing to draw until you had opened the
+night; this buys it by opening the night for you.
+
+### The shape
+
+- **Opt-in per item.** `bayRail()` draws a lamp only for an item carrying one,
+  so the league and pack rails cannot grow one by accident.
+- **A SIBLING of the row, not a child.** A button inside a button is invalid
+  HTML — the browser re-nests it and the inner one silently stops receiving
+  clicks, which is the class of fault `markup-balance.test.js` exists for.
+- **Green for on, red for off**, the same words the per-photo lamp uses, so the
+  two controls on this door agree about what a colour means. It carries the
+  letter **P** rather than being a bare dot: a night row is read rather than
+  scanned like a grid of eighteen, and a lone dot beside a date has nothing
+  near it to say what it is about.
+- **It flips now and saves later, with NO settle delay** — unlike the photo
+  lamp, which waits 600ms because it is flicked across a grid and often changed
+  twice. A night is published once and the press is a decision; delaying it
+  only delays the page somebody is about to go and check.
+- **A failed write puts the lamp back and says why**, under the rail. Never an
+  alert for something that happened in the background, never a silent revert.
+- **The list is corrected in place** rather than re-fetched — a whole archive
+  read to learn one boolean the browser already knows is a request nobody
+  needs.
+
+### And the old button goes, because two controls for one job is the collision
+
+`nightPhotos()` on Community no longer draws *Put these on the gallery*. **The
+read-only half stays**: a published night still prints its public address,
+which is what somebody actually wants off that panel, and an unpublished one
+now says where the switch is. *A read-only summary may repeat; a control may
+not.*
+
+**Past gigs keeps its button.** It is a different door with no rail, and the
+control there is not a duplicate of anything on screen.
+
+### The guard presses it
+
+`scripts/community-bay.mjs` — nothing in this repo presses a control and a dead
+one draws perfectly. It checks every night row has a lamp, that there is
+exactly one per row, that **the wall row has none** (there is no night behind
+it), that pressing it changes the colour, that pressing it **also opens that
+night's photographs**, that a wordless colour still says what it is, and that
+nothing went wrong writing it.

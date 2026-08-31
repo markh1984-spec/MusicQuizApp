@@ -92,6 +92,28 @@ export function bayRail({
     return rail;
   }
 
+  /*
+   * A ROW MAY CARRY ONE LAMP, AND THAT IS THE ONE EXCEPTION TO *A RAIL PICKS;
+   * IT NEVER ACTS*.
+   *
+   * Asked for on 31 August 2026, against the two-step publish:
+   * *"put a red P here by default and a click to put it to green publishes the
+   * gallery, and another click unpublishes it."* The rule it bends was written
+   * so that the worst a mis-tap in the rail could do is show you something
+   * else — and publishing is a stranger's face going onto a public page, which
+   * is the most consequential thing on this door.
+   *
+   * **SO THE REASON THE RULE EXISTED IS KEPT, IT IS JUST NOT KEPT BY MAKING
+   * SOMEBODY PRESS TWICE.** Pressing the lamp also PICKS the row, so the
+   * night's photographs land in the bay at the same moment they go public: you
+   * are looking at what you published, and one more press takes it down. The
+   * old safeguard — the control drawn under the pictures — bought the same
+   * thing by refusing to draw until you had looked.
+   *
+   * It is OPTIONAL and no other rail has one. A rail without a `lamp` on its
+   * items is exactly what it was, so this cannot leak onto the league or the
+   * pack rails by accident.
+   */
   const row = (item) => {
     const btn = node(`
       <button class="bay-pick ${item.key === picked ? 'on' : ''} ${esc(item.cls || '')}"
@@ -101,6 +123,30 @@ export function bayRail({
         ${item.note ? `<span class="tiny bay-pick-note">${esc(item.note)}</span>` : ''}
       </button>`);
     btn.addEventListener('click', () => onPick(item.key));
+    if (item.lamp) {
+      /*
+       * A BUTTON INSIDE A BUTTON IS INVALID HTML, so the lamp is a SIBLING and
+       * the row becomes a wrapper. Nested, the browser re-nests the markup and
+       * the inner one stops receiving clicks — the silent kind of wrong this
+       * repo's markup guard exists for.
+       */
+      const wrap = node('<div class="bay-pick-row"></div>');
+      const lamp = node(`
+        <button class="bay-lamp ${item.lamp.on ? 'is-on' : 'is-off'}" type="button"
+                aria-pressed="${Boolean(item.lamp.on)}"
+                title="${esc(item.lamp.said || '')}"
+                aria-label="${esc(item.lamp.said || '')}">P</button>`);
+      lamp.addEventListener('click', (ev) => {
+        // A control ON a row must never also mean whatever the row means —
+        // except here it deliberately does BOTH, in one order: pick first so
+        // the pictures are on their way, then act.
+        ev.stopPropagation();
+        onPick(item.key);
+        item.lamp.onPress();
+      });
+      wrap.append(btn, lamp);
+      return wrap;
+    }
     return btn;
   };
 

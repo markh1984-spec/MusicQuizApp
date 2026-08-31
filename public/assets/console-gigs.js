@@ -1018,7 +1018,20 @@ export async function nightPhotos(body, night, opts = {}) {
     grid.appendChild(shot);
   }
   body.appendChild(grid);
-  (controlsInto || body).appendChild(galleryToggle(night.night, data.published, night.venue));
+  /*
+   * THE BUTTON, OR JUST THE ADDRESS — see `galleryToggle()`.
+   *
+   * On Community the rail carries a P lamp per night that publishes in one
+   * press, so drawing a second control saying the same thing here would be two
+   * controls for one job on one screen: the label collision this app has a
+   * rule against, and the pair that can disagree. **The read-only half stays**
+   * — a published night still prints its public address, which is the thing
+   * somebody actually wants off this panel and is a summary rather than a
+   * control. *A read-only summary may repeat; a queue may not.*
+   */
+  (controlsInto || body).appendChild(
+    galleryToggle(night.night, data.published, night.venue, { control: !controlsInto }),
+  );
 }
 
 /**
@@ -1085,7 +1098,7 @@ async function shareReport(night) {
  * @param {string} night `YYYY-MM-DD`
  * @param {boolean} on   whether it is already published
  */
-function galleryToggle(night, on, venue = '') {
+function galleryToggle(night, on, venue = '', { control = true } = {}) {
   const wrap = node('<div class="gig-gallery"></div>');
 
   /*
@@ -1117,7 +1130,18 @@ function galleryToggle(night, on, venue = '') {
       // Not a warning wrapper and not red: it is a plain statement of what the
       // button does, read before pressing rather than after something went
       // wrong. Red here would say a mistake had been made.
-      : '<div class="tiny gig-gal-note">Anyone with the link can see these.</div>'));
+      : (control
+        // Not a warning wrapper and not red: it is a plain statement of what
+        // the button does, read before pressing rather than after something
+        // went wrong. Red here would say a mistake had been made.
+        ? '<div class="tiny gig-gal-note">Anyone with the link can see these.</div>'
+        // With no button on this panel the sentence has nothing to describe;
+        // the P lamp beside the night says what pressing it will do.
+        : '<div class="tiny gig-gal-note">Not on the gallery — press the P beside this night to put it up.</div>')));
+
+    // Community publishes from the rail's P lamp, so there is no button here —
+    // the address above is the whole of what this panel says there.
+    if (!control) return;
 
     const btn = node(live
       ? '<button class="minor danger gig-gal-off" type="button">Take it off the gallery</button>'

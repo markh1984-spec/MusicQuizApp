@@ -1602,8 +1602,17 @@ with photographs).
   answers to one question, which is the label collision this file keeps
   recording. The rail is the TAB COLUMN one region higher — same 190px, same
   stack, same lit left edge.
-- **A RAIL PICKS; IT NEVER ACTS.** Nothing in it deletes, publishes or
-  launches, so the worst a mis-tap does is show you something else.
+- **A RAIL PICKS; IT NEVER ACTS — with ONE lamp as the stated exception.**
+  Nothing in it deletes or launches, so the worst a mis-tap does is show you
+  something else. **The Photos rail's P publishes a night in one press**
+  (31 August 2026), and **the reason the rule existed is kept by the lamp also
+  PICKING**: the night's photographs land in the bay at the moment it goes
+  public, so nobody publishes strangers' faces without seeing them, and one
+  more press takes it down. The two-step control it replaced bought the same
+  thing by refusing to draw until you had looked. **It is opt-in per item**, so
+  no other rail can grow one by accident, and **the tab body's button GOES** —
+  two controls for one job is the collision; its read-only half (the public
+  address) stays.
 - **COMPARTMENTALISED BY PUB, AND THE PUB FOLDS** — *"can this section be
   collapsible?"* **Group by the pub FIRST, then order within it**: printing the
   venue whenever it changed in date order drew "The Crown" twice with another

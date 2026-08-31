@@ -2239,8 +2239,22 @@ async function handleGet(req, res, url, route) {
       await ensureInvoicesRestored(gigRoom);
       unbilled = new Set(gigRoom.invoices.unbilledNights(nights).map((n) => n.night));
     }
+    /*
+     * AND WHICH ARE ON THE PUBLIC GALLERY — one read of one file for the whole
+     * list, so the rail can carry a lamp per night without a request each.
+     *
+     * From `galleryRoomFor()` like every other photo read, or the lamp would
+     * report a different room's publishing from the button that sets it.
+     */
+    const up = photosRepoConfigured()
+      ? new Set(await publishedNights(galleryRoomFor(req, url)))
+      : new Set();
     return sendJson(res, 200, {
-      nights: nights.map((n) => (unbilled.has(n.night) ? { ...n, unbilled: true } : n)),
+      nights: nights.map((n) => ({
+        ...n,
+        ...(unbilled.has(n.night) ? { unbilled: true } : {}),
+        published: up.has(n.night),
+      })),
       // So the page can say why there are no pictures against an old night,
       // rather than implying nobody took any.
       photosKept: photosRepoConfigured(),

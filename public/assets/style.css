@@ -9551,6 +9551,40 @@ body.landing {
 .bay-rail > * { flex: 0 0 auto; }
 /* The lit marker is the LEFT edge, exactly as the tab column's is — under a
    stacked list a bottom border reads as a rule between two rows. */
+/* ---- A ROW WITH A LAMP ON IT — the publish switch, on the Photos rail only.
+
+   The lamp is a SIBLING of the row rather than a child: a button inside a
+   button is invalid HTML, and the browser re-nests it so the inner one stops
+   receiving clicks — silently.
+
+   `flex: 1 1 auto` plus `min-width: 0` on the row is what stops a long date
+   pushing the lamp out of the rail; `flex: 0 0 auto` on the lamp is the
+   `.bay-rail > *` rule's reasoning one level in — a flex line shrinks its
+   children, and a squashed 28px lamp is a smear. */
+.bay-pick-row { display: flex; align-items: stretch; gap: 6px; min-width: 0; }
+.bay-pick-row .bay-pick { flex: 1 1 auto; min-width: 0; }
+
+/* GREEN FOR ON AND RED FOR OFF, which is the one place in this app they are
+   allowed to mean this — "on a public page" versus "not" is exactly the
+   good/wrong pair, read at a glance down a list of nights. The same words the
+   per-photo lamp uses, so the two controls agree about what a colour means.
+
+   It carries the letter P rather than being a bare dot: a night row is read,
+   not scanned like a grid of eighteen thumbnails, and a lone dot beside a date
+   has nothing near it to say what it is about. */
+.bay-lamp {
+  flex: 0 0 auto; align-self: center;
+  width: 30px; height: 30px; padding: 0; border-radius: 999px; cursor: pointer;
+  font: inherit; font-size: var(--fs-mini); font-weight: 800; line-height: 1;
+  color: #fff; border: 2px solid rgba(10, 8, 16, 0.55);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+.bay-lamp.is-on { background: var(--good); }
+.bay-lamp.is-off { background: var(--bad); }
+.bay-lamp:hover { transform: scale(1.1); }
+@media (prefers-reduced-motion: reduce) { .bay-lamp:hover { transform: none; } }
+.bay-rail-trouble { color: var(--bad); padding: 4px 10px; }
+
 .bay-pick {
   display: flex; flex-direction: column; gap: 1px; text-align: left;
   min-height: 44px; padding: 6px 10px; min-width: 0;

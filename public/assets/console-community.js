@@ -281,16 +281,83 @@ function photoRail() {
   }
   for (const pub of byPub.values()) {
     for (const night of pub.nights) {
+      /*
+       * THE LAMP IS THE LOCAL TRUTH, `night.published` IS THE SERVER'S — the
+       * same split the per-photo lamp uses, and for the same reason: the write
+       * goes to GitHub and takes about a second, which on a control you flick
+       * down a list of nights is a control that feels broken. `pubLive` holds
+       * what the eye has been told; a failed write puts it back and says so.
+       */
+      const up = pubLive.has(night.night) ? pubLive.get(night.night) : Boolean(night.published);
       rows.push({
         key: night.night,
         group: pub.name,
         name: readable(night.night),
         note: night.venueMixed ? 'Two venues' : '',
+        lamp: {
+          on: up,
+          said: up
+            ? 'On the public gallery. Press to take it off.'
+            : 'Not on the public gallery. Press to put it up — the photos open above.',
+          onPress: () => togglePublish(night.night, !up),
+        },
       });
     }
   }
   return rows;
 }
+
+/**
+ * WHICH NIGHTS THE EYE HAS BEEN TOLD ARE PUBLIC — a module Map, because the
+ * bay is rebuilt on every state push and a value held on an element would go
+ * with it.
+ */
+const pubLive = new Map();
+
+/**
+ * PUT A NIGHT UP OR TAKE IT DOWN, FROM THE RAIL — asked for on 31 August 2026:
+ * *"put a red P here by default and a click to put it to green publishes the
+ * gallery, and another click unpublishes it and makes it red."*
+ *
+ * **IT FLIPS NOW AND SAVES LATER**, the pattern the per-photo lamp already
+ * uses. There is deliberately NO settle delay here, unlike that one: a photo
+ * lamp is flicked across a grid of eighteen and often changed twice, where a
+ * night is published once and the press is a decision. Waiting 600ms to send a
+ * decision buys nothing and delays the thing somebody is about to check.
+ *
+ * **A FAILED WRITE PUTS THE LAMP BACK AND SAYS WHY** — never an alert for
+ * something that happened in the background, and never a silent revert, which
+ * reads as a control with a mind of its own.
+ */
+async function togglePublish(night, want) {
+  pubLive.set(night, want);
+  renderKeepingPlace();
+  try {
+    const res = await fetch(keyed('/api/past-gigs/publish'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ night, on: want }),
+    });
+    const out = await res.json().catch(() => ({}));
+    // SAY WHAT WENT WRONG. The likeliest failure by far is that the private
+    // photo repository is not configured, and "could not save that" would send
+    // somebody hunting through the app for a fault in an environment variable.
+    if (!res.ok) throw new Error(out.error || 'Could not change that.');
+    // The list the rail is built from is now stale by one field. Corrected
+    // here rather than re-fetched: a whole archive read to learn one boolean
+    // we already know is a request nobody needs.
+    const row = (photoNights || []).find((n) => n.night === night);
+    if (row) row.published = want;
+    pubTrouble = '';
+  } catch (err) {
+    pubLive.set(night, !want);
+    pubTrouble = err.message;
+  }
+  renderKeepingPlace();
+}
+
+/** What went wrong with the last publish, said under the rail. */
+let pubTrouble = '';
 
 /**
  * THE PHOTOS BAY — the wall or one night, with a picture over the top of it.
@@ -498,7 +565,7 @@ function shrink(file) {
 
 /** The photos rail, lit on whatever is showing. */
 function rail(picked) {
-  return bayRail({
+  const list = bayRail({
     items: photoRail(),
     picked,
     railId: 'photos',
@@ -514,6 +581,15 @@ function rail(picked) {
     },
     empty: 'No photographs yet.',
   });
+  /*
+   * A FAILED PUBLISH SAYS SO IN THE RAIL, under the row it happened on — never
+   * an `alert` for something that went wrong in the background, and never a
+   * silent revert, which reads as a lamp with a mind of its own.
+   */
+  if (pubTrouble) {
+    list.appendChild(node(`<div class="tiny bay-rail-trouble">${esc(pubTrouble)}</div>`));
+  }
+  return list;
 }
 
 /** The newest pictures across the newest nights, up to a wall's worth. */
