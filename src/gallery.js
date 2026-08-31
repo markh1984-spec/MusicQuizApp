@@ -58,7 +58,64 @@ function listPath(roomId) {
  * without a migration — a rewrite over everybody's file is a one-shot script
  * on a disk that gets wiped, which this repo knows better than to write.
  */
-async function readAll(roomId) {
+/*
+ * ---- ONE READ OF `published.json`, NOT ONE PER PHOTOGRAPH -----------------
+ *
+ * **MEASURED, because "photos take a while to load" is a symptom and not a
+ * diagnosis.** Serving one photograph asks this file TWICE — once for "is this
+ * night published" and once for "has a human overruled the camera guess" —
+ * before it fetches the picture itself. Counted against a stubbed repo: THREE
+ * GitHub calls per photograph, of which two are the same small file.
+ *
+ * A night of thirty cost ninety calls. A night of NINETY-NINE costs about two
+ * hundred and ninety-seven, **every time somebody opens the page**, against a
+ * limit of five thousand an hour — so seventeen visits and the gallery stops
+ * working altogether, which is a good deal worse than slow.
+ *
+ * **THE INVALIDATION IS EXACT RATHER THAN HOPEFUL, and that is what makes a
+ * cache safe on a file that decides what is public.** Every write already goes
+ * through `inOrder()`, so there is exactly one place to drop it from, and a
+ * photograph switched off is off on the very next request. A stale answer here
+ * would mean a picture somebody asked to have taken down still being served,
+ * which is not a performance trade anybody would accept.
+ *
+ * **THE TTL IS A BACKSTOP, NOT THE MECHANISM.** This file lives in a repo a
+ * human can edit — the validation on the way out exists because of that — so a
+ * hand-edit in GitHub's own web editor is invisible to `inOrder()`. Thirty
+ * seconds bounds how long that can be wrong without making the common path pay
+ * anything.
+ */
+const CACHE_MS = 30_000;
+const cached = new Map();
+
+/** Forget a room's file — called by every writer, on the way out. */
+function forget(roomId) {
+  cached.delete(roomId);
+}
+
+/*
+ * IT CACHES THE PROMISE, NOT THE ANSWER — and that is the difference between
+ * a cache that helps and one that does nothing on the only burst that matters.
+ *
+ * Caching the resolved value only fills after the first read RETURNS, so a
+ * page opening ninety-nine photographs at once has ninety-nine readers all
+ * miss together and ninety-nine fetches of one small file. Holding the
+ * in-flight promise means the second reader through the door waits on the
+ * first one's fetch instead of starting its own. Found by a test that expected
+ * one fetch for forty readers and got twenty.
+ */
+function readAll(roomId) {
+  const held = cached.get(roomId);
+  if (held && Date.now() - held.at < CACHE_MS) return held.data;
+  // A rejection is not cached — `readAllNow()` fails closed rather than
+  // throwing, but a promise that settled badly must never become the answer
+  // for the next thirty seconds.
+  const pending = readAllNow(roomId).catch((err) => { forget(roomId); throw err; });
+  cached.set(roomId, { at: Date.now(), data: pending });
+  return pending;
+}
+
+async function readAllNow(roomId) {
   if (!photosRepoConfigured()) return { nights: [], photos: {}, pins: {} };
   let raw = null;
   try {
@@ -140,7 +197,18 @@ async function readAll(roomId) {
 const writing = new Map();
 
 function inOrder(roomId, job) {
-  const after = (writing.get(roomId) || Promise.resolve()).then(job, job);
+  /*
+   * AND EVERY WRITE FORGETS THE CACHED FILE, on the way IN and on the way OUT.
+   *
+   * On the way in, because the job is about to read the file and must not read
+   * a copy taken before the write it is queued behind. On the way out, because
+   * what it just wrote is now the truth and the next reader has to see it — a
+   * photograph switched off must be off on the very next request, not in thirty
+   * seconds. Both, or the cache is a performance win that can serve a picture
+   * somebody asked to have taken down.
+   */
+  const wrapped = () => { forget(roomId); return Promise.resolve(job()).finally(() => forget(roomId)); };
+  const after = (writing.get(roomId) || Promise.resolve()).then(wrapped, wrapped);
   writing.set(roomId, after.then(() => {}, () => {}));
   return after;
 }

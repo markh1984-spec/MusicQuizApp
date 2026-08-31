@@ -1523,13 +1523,19 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   lamp settles for 600ms, so the press that overlaps a publish is exactly the
   one it has not started. Order it where the FILE is.
 - **A NIGHT IS A CARD WITH ITS PHOTOGRAPHS FANNED ON IT, GROUPED BY PUB** —
-  `coverPhotos()`. **Pins lead, the rest is a SPREAD** — one per slice of the
-  evening, because the first three photos of a night are one table in one
-  minute. **Stable**, seeded off the date. **BUILT FROM THE SAME FILTERED LIST
-  THE NIGHT'S PAGE SHOWS**, so a pin can never advertise a photograph that
+  `coverPhotos()`. **Pins lead, the rest is a SPREAD** (one per slice of the
+  evening), **stable**, seeded off the date. **BUILT FROM THE SAME FILTERED
+  LIST THE NIGHT'S PAGE SHOWS**, so a pin can never advertise a photograph that
   page refuses. **A pin is a PREFERENCE; the lamp is the GATE.** **Three,
-  refused not trimmed** — silently keeping three looks like a press that did
-  not register.
+  refused not trimmed.**
+- **`published.json` IS READ ONCE PER ROOM, NOT ONCE PER PHOTOGRAPH.** Serving
+  one photo asked it TWICE first — 3 GitHub calls each, so 99 photos cost ~297
+  **per page open** against 5,000/hour: seventeen visits and the gallery stops
+  working. **Defensible only because `inOrder()` drops it on every write, in
+  AND out** — stale here means serving a photo somebody asked to have removed.
+  **It caches the PROMISE**, or 99 arriving at once all miss together; a test
+  caught the obvious version. **The browser window is NOT lengthened past a
+  day** — taking a photo down is a promise a cache cannot reach.
 - **EVERY WRITER OF `published.json` CARRIES THE HALVES IT IS NOT CHANGING** —
   nights, rulings, pins. The third is when it gets forgotten; a test walks them.
 - **A NIGHT NAMES ITS PUB AND STEPS TO THE ONE EITHER SIDE AT THAT PUB.**
@@ -1603,19 +1609,15 @@ with photographs).
   recording. The rail is the TAB COLUMN one region higher — same 190px, same
   stack, same lit left edge.
 - **A RAIL PICKS; IT NEVER ACTS — with ONE lamp as the stated exception.**
-  Nothing in it deletes or launches, so the worst a mis-tap does is show you
-  something else. **The Photos rail's P publishes a night in one press**
-  (31 August 2026), and **the reason the rule existed is kept by the lamp also
-  PICKING**: the night's photographs land in the bay at the moment it goes
-  public, so nobody publishes strangers' faces without seeing them, and one
-  more press takes it down. The two-step control it replaced bought the same
-  thing by refusing to draw until you had looked. **It is opt-in per item**, so
-  no other rail can grow one by accident, and **the tab body's panel GOES** —
-  two controls for one job is the collision. **The night's public address moved
-  into the HEAD of the bay** (*"a bit of space where you could link to the live
-  gallery"*), built by one `galleryAddress()`: two copies of a URL is how a link
-  works in one place and 404s in the other. **It says which kind it is** —
-  *see it* when live, *preview* when not, because an owner can open a draft.
+  Nothing in it deletes or launches. **The Photos rail's P publishes a night in
+  one press**, and **the reason the rule existed is kept by the lamp also
+  PICKING** — the photographs land in the bay as it goes public, so nobody
+  publishes strangers' faces unseen. **Opt-in per item**, so no other rail grows
+  one, and **the tab body's panel GOES**: two controls for one job is the
+  collision. **The night's address is in the bay HEAD, from one
+  `galleryAddress()`** — two copies of a URL is how a link works in one place
+  and 404s in the other — and **it says which kind it is**, *see it* versus
+  *preview*, because an owner can open a draft.
 - **COMPARTMENTALISED BY PUB, AND THE PUB FOLDS** — *"can this section be
   collapsible?"* **Group by the pub FIRST, then order within it**: printing the
   venue whenever it changed in date order drew "The Crown" twice with another

@@ -2864,9 +2864,18 @@ async function handleGet(req, res, url, route) {
     res.writeHead(200, {
       'Content-Type': name.endsWith('.png') ? 'image/png' : name.endsWith('.webp') ? 'image/webp' : 'image/jpeg',
       'Content-Length': bytes.length,
-      // A filed photo is written once and never rewritten, so a page of forty
-      // should not fetch forty every time somebody opens it.
-      'Cache-Control': 'public, max-age=86400',
+      /*
+       * A filed photo is written once and never rewritten, so a page of forty
+       * should not fetch forty every time somebody opens it. `immutable` says
+       * so outright: within the window a browser does not even revalidate.
+       *
+       * **THE WINDOW IS NOT LENGTHENED, DELIBERATELY.** A year would be
+       * correct for content that never changes and wrong for this one: taking
+       * a photograph down is a promise this app makes — *"somebody will want
+       * their photo gone"* — and a cache is the one place it cannot reach. A
+       * day is the existing trade and it stays.
+       */
+      'Cache-Control': 'public, max-age=86400, immutable',
       // NOT in a search result. Being findable on Google is speculative
       // marketing value; a stranger's face turning up in a search is a
       // concrete cost, and it lands on the player rather than the business.

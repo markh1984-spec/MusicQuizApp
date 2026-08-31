@@ -34,8 +34,10 @@ import assert from 'node:assert/strict';
 process.env.PHOTO_REPO = 'someone/photos';
 process.env.PHOTO_TOKEN = 'stub';
 
-const { setPublished, setPhotoDecision, publishedNights, photoDecisions } =
-  await import('../src/gallery.js');
+const {
+  setPublished, setPhotoDecision, publishedNights, photoDecisions,
+  setPhotoPin, photoPins,
+} = await import('../src/gallery.js');
 
 const NIGHT = '2026-08-20';
 const ROOM = 'qm-mark';
@@ -44,6 +46,7 @@ const ROOM = 'qm-mark';
 function stubRepo({ readDelay = 0 } = {}) {
   const files = new Map();
   const real = globalThis.fetch;
+  let reads = 0;
   globalThis.fetch = async (input, init = {}) => {
     const url = typeof input === 'string' ? input : input.url;
     if (!url.startsWith('https://api.github.com/')) return real(input, init);
@@ -52,6 +55,7 @@ function stubRepo({ readDelay = 0 } = {}) {
       files.set(at, Buffer.from(JSON.parse(init.body).content, 'base64').toString('utf8'));
       return new Response(JSON.stringify({ content: { sha: 'x' } }), { status: 200 });
     }
+    reads += 1;
     if (readDelay) await new Promise((r) => setTimeout(r, readDelay));
     if (!files.has(at)) return new Response('{"message":"Not Found"}', { status: 404 });
     return new Response(JSON.stringify({
@@ -59,7 +63,7 @@ function stubRepo({ readDelay = 0 } = {}) {
       content: Buffer.from(files.get(at), 'utf8').toString('base64'),
     }), { status: 200 });
   };
-  return { files, restore: () => { globalThis.fetch = real; } };
+  return { files, reads: () => reads, restore: () => { globalThis.fetch = real; } };
 }
 
 test('a lamp pressed while a night is being published does not un-publish it', async () => {
@@ -119,4 +123,73 @@ test('unpublishing still works, and is not undone by a ruling either', async () 
   } finally {
     repo.restore();
   }
+});
+
+/*
+ * ---- AND ONE READ OF THE FILE, NOT ONE PER PHOTOGRAPH --------------------
+ *
+ * Reported as *"these photos take a while to load"*, and measured before
+ * anything was changed: serving ONE photograph asked `published.json` twice —
+ * is this night up, and has a human overruled this picture — before fetching
+ * the picture itself. Three GitHub calls each, two of them the same small file.
+ *
+ * A night of thirty cost ninety calls; a night of ninety-nine costs about two
+ * hundred and ninety-seven **every time the page is opened**, against a limit
+ * of five thousand an hour. That is not slowness, it is a gallery that stops
+ * working after seventeen visits.
+ *
+ * **THE CACHE IS ONLY DEFENSIBLE BECAUSE THE INVALIDATION IS EXACT.** This
+ * file decides what is public, so a stale answer means a photograph somebody
+ * asked to have taken down still being served — which is not a trade anybody
+ * would accept for a faster page. Every write already goes through `inOrder()`,
+ * so there is exactly one place to drop it from, and these cases assert the
+ * dropping rather than the speed.
+ */
+
+test('the file is read ONCE for many readers, not once each', async () => {
+  const repo = stubRepo();
+  try {
+    await setPublished(ROOM, NIGHT, true);
+    const before = repo.reads();
+    await Promise.all(Array.from({ length: 20 }, () => publishedNights(ROOM)));
+    await Promise.all(Array.from({ length: 20 }, () => photoDecisions(ROOM)));
+    const cost = repo.reads() - before;
+    assert.ok(cost <= 1, `forty readers cost ${cost} fetches of one small file`);
+  } finally { repo.restore(); }
+});
+
+test('SWITCHING A PHOTO OFF IS VISIBLE ON THE VERY NEXT READ', async () => {
+  /*
+   * The case the whole design turns on. If a cache can outlive a ruling by even
+   * one request, the app is serving a picture it has been told to stop serving.
+   */
+  const repo = stubRepo();
+  try {
+    await setPhotoDecision(ROOM, NIGHT, 'p1abc.jpg', 'off');
+    // Warm it, the way a page of photographs does.
+    await photoDecisions(ROOM);
+    await setPhotoDecision(ROOM, NIGHT, 'p1abc.jpg', 'on');
+    assert.deepEqual(await photoDecisions(ROOM), { [`${NIGHT}/p1abc.jpg`]: 'on' },
+      'a ruling made after the file was cached did not reach the next reader');
+  } finally { repo.restore(); }
+});
+
+test('and taking a NIGHT down is visible on the very next read', async () => {
+  const repo = stubRepo();
+  try {
+    await setPublished(ROOM, NIGHT, true);
+    await publishedNights(ROOM);            // warm
+    await setPublished(ROOM, NIGHT, false);
+    assert.deepEqual(await publishedNights(ROOM), [],
+      'a night unpublished after the file was cached was still being served');
+  } finally { repo.restore(); }
+});
+
+test('a pin made after a read reaches the next reader too', async () => {
+  const repo = stubRepo();
+  try {
+    await photoPins(ROOM);                  // warm on an empty file
+    await setPhotoPin(ROOM, NIGHT, 'p1.jpg', true);
+    assert.deepEqual((await photoPins(ROOM))[NIGHT], ['p1.jpg']);
+  } finally { repo.restore(); }
 });

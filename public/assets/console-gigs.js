@@ -805,7 +805,7 @@ export async function nightPhotos(body, night, opts = {}) {
      * right-hand corner it already had.
      */
     const shot = node(`<figure class="cphoto filed">
-      <img src="${esc(p.url)}" alt="" loading="lazy">
+      <img src="${esc(p.url)}" alt="" loading="lazy" decoding="async">
       <button class="cphoto-pin ${p.pinned ? 'is-on' : ''}" type="button">${pinIcon(15)}</button>
       <button class="cphoto-pub ${p.onGallery ? 'is-on' : 'is-off'}" type="button"></button>
       <button class="cphoto-bin" type="button" aria-label="Delete this photo">${binIcon(15)}</button>

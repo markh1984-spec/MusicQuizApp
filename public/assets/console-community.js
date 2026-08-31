@@ -441,7 +441,7 @@ function photoWall() {
        */
       const tile = node(`
         <button class="cphoto filed is-openable" type="button" title="${esc(shot.where)}">
-          <img src="${esc(shot.url)}" alt="" loading="lazy">
+          <img src="${esc(shot.url)}" alt="" loading="lazy" decoding="async">
         </button>`);
       tile.addEventListener('click', () => openIt(shot));
       grid.appendChild(tile);

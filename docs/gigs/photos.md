@@ -1012,3 +1012,75 @@ at the other, sitting directly above the photographs it is the address of.
 The guard checks the href, that it points at a gallery, that it opens in its
 own tab, that it stays inside the head, and **that the words match whether the
 night is actually public** — the two states being the entire point of it.
+
+
+## "THESE PHOTOS TAKE A WHILE TO LOAD" — three calls per photograph, two of them the same file
+
+Reported on 31 August 2026. Measured before anything was changed, against a
+stubbed repository that counts:
+
+```
+the night's LISTING : 5 GitHub calls
+30 PHOTOGRAPHS      : 90 GitHub calls (3.0 per photo)
+   of which         : 60 x published.json (the same small file), 30 photographs
+```
+
+**Serving ONE photograph asks `published.json` twice** — *is this night
+published* and *has a human overruled the camera guess on this picture* —
+before it fetches the picture itself.
+
+**AND IT IS NOT ACTUALLY A SPEED PROBLEM.** A night of ninety-nine costs about
+**297 calls every time the page is opened**, against a limit of **5,000 an
+hour**. That is roughly **seventeen visits before the gallery stops working
+altogether** — a landlord opening the link a few times on a Friday could do it.
+
+### One read, cached per room
+
+```
+the night's LISTING : 2 GitHub calls
+30 PHOTOGRAPHS      : 30 GitHub calls (1.0 per photo)
+AT NINETY-NINE      : about 99 calls per page open.
+```
+
+- **THE INVALIDATION IS EXACT, WHICH IS THE ONLY REASON A CACHE IS DEFENSIBLE
+  HERE.** This file decides what is public, so a stale answer means a
+  photograph somebody asked to have taken down still being served. That is not
+  a trade worth a faster page. Every write already goes through `inOrder()`, so
+  there is exactly one place to drop it from — **on the way IN and on the way
+  OUT**: in, because the job is about to read a file it must not read a copy of
+  from before the write it is queued behind; out, because what it just wrote is
+  the truth and the next request has to see it.
+- **THE TTL IS A BACKSTOP, NOT THE MECHANISM.** Thirty seconds, for the one
+  case `inOrder()` cannot see: a hand-edit in GitHub's own web editor, which
+  the validation on the way out already exists because of.
+- **IT CACHES THE PROMISE, NOT THE ANSWER**, and that is the difference between
+  a cache that helps and one that does nothing on the only burst that matters.
+  Caching the resolved value fills only after the first read RETURNS, so
+  ninety-nine photographs arriving at once all miss together. **Found by a test
+  that expected one fetch for forty readers and got twenty** — the first
+  version of this was written the obvious way and was nearly useless.
+- **A rejection is never cached.** `readAllNow()` fails closed rather than
+  throwing, but a badly settled promise must not become the answer for the next
+  thirty seconds.
+
+### And the small ones
+
+- `Cache-Control: … immutable` on a filed photograph — within the window a
+  browser does not even revalidate. **The window is NOT lengthened**: a year
+  would be right for content that never changes and wrong for this, because
+  taking a photograph down is a promise this app makes and a cache is the one
+  place it cannot reach.
+- `decoding="async"` on the console's grids, which the public gallery already
+  had — decoding a phone photo off the main thread while eighteen more arrive.
+
+### What is left, and it is BYTES rather than calls
+
+A filed photograph is scaled to 1600px on upload, so a night of ninety-nine is
+tens of megabytes for a grid of 150px thumbnails. Every grid already lazy-loads,
+so only what is on screen is fetched — but the visible ones are still full-size.
+
+**The fix would be a thumbnail written beside each photograph at UPLOAD time**,
+in the browser, since there is no dependency-free resize on the server. It is
+not built: it doubles the files in the private repository and helps only nights
+filed AFTER it ships, which makes it a decision about somebody's storage rather
+than a tidy-up. Raised with the host rather than done quietly.
