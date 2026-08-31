@@ -1,6 +1,6 @@
 /** GIGS — the evidence: headcounts, what the room asked for, and nights run. */
 
-import { binIcon, esc, node } from './client.js';
+import { binIcon, pinIcon, esc, node } from './client.js';
 import { nightSlug, venueSlug } from './slugs.js';
 import { library, me, nightBench, setGigsSeen, setNightDrag } from './console-state.js';
 import { dragging, putNightOnBench } from './console-tonight.js';
@@ -787,8 +787,26 @@ export async function nightPhotos(body, night, opts = {}) {
      * a public page" versus "not" is exactly that pair, read at a glance
      * across eighteen thumbnails.
      */
+    /*
+     * AND A PIN, BOTTOM LEFT — asked for on 31 August 2026: *"random spread
+     * across a night but also the ability to pick them — a little icon bottom
+     * left on each photo where I can pin up to 3, so if I dislike one of the
+     * random photos I can remove the pin from that one and give it to
+     * something else."*
+     *
+     * **IT IS A PREFERENCE, NEVER A GATE.** The pin says which photographs lead
+     * on the night's card on the public index; whether a photograph is public
+     * at all is the lamp, and a pin on a photo the lamp has switched off simply
+     * is not used. Two controls, two questions, and the server asks each one
+     * once — the label collision this app keeps a rule about.
+     *
+     * **BOTTOM LEFT, opposite the bin**, so the two controls that do very
+     * different things are never adjacent under a thumb. The lamp keeps the
+     * right-hand corner it already had.
+     */
     const shot = node(`<figure class="cphoto filed">
       <img src="${esc(p.url)}" alt="" loading="lazy">
+      <button class="cphoto-pin ${p.pinned ? 'is-on' : ''}" type="button">${pinIcon(15)}</button>
       <button class="cphoto-pub ${p.onGallery ? 'is-on' : 'is-off'}" type="button"></button>
       <button class="cphoto-bin" type="button" aria-label="Delete this photo">${binIcon(15)}</button>
     </figure>`);
@@ -893,6 +911,60 @@ export async function nightPhotos(body, night, opts = {}) {
         });
       }, WRITE_AFTER);
     });
+    /*
+     * THE PIN, ON THE SAME OPTIMISTIC PATTERN AS THE LAMP — flip now, settle,
+     * then send, and put it back with a reason if the write fails.
+     *
+     * **THE CAP IS THE SERVER'S ANSWER, NOT A COUNT IN THE BROWSER.** Counting
+     * pins here would be a second copy of a rule `setPhotoPin()` already owns,
+     * and the two would disagree the first time two tabs were open. A fourth
+     * press comes back 400 with the reason, which is then shown and the pin
+     * goes back off — so the refusal is visible rather than silent.
+     */
+    const pin = shot.querySelector('.cphoto-pin');
+    let pinned = Boolean(p.pinned);
+    let pinSaved = pinned;
+    let pinTimer = null;
+    const paintPin = () => {
+      pin.classList.toggle('is-on', pinned);
+      const why = pinned
+        ? "On this night's card. Click to take it off."
+        : `Put this on the night's card. Up to ${night.maxPins || 3}.`;
+      pin.title = why;
+      pin.setAttribute('aria-label', why);
+      pin.setAttribute('aria-pressed', String(pinned));
+    };
+    paintPin();
+
+    pin.addEventListener('click', (ev) => {
+      // A control ON a picture must never also mean "open this".
+      ev.stopPropagation();
+      pinned = !pinned;
+      paintPin();
+      clearTimeout(pinTimer);
+      pinTimer = setTimeout(() => {
+        if (pinned === pinSaved) return;
+        const want = pinned;
+        galleryQueue(async () => {
+          try {
+            const res = await fetch(keyed(`/api/gallery-pin/${encodeURIComponent(night.night)}/${encodeURIComponent(p.name)}`), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ on: want }),
+            });
+            const out = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(out.error || 'Could not change that.');
+            pinSaved = want;
+            trouble('');
+          } catch (err) {
+            pinned = pinSaved;
+            paintPin();
+            trouble(err.message);
+          }
+        });
+      }, WRITE_AFTER);
+    });
+
     shot.querySelector('.cphoto-bin').addEventListener('click', async (ev) => {
       const btn = ev.currentTarget;
       /*

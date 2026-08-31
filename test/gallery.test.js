@@ -254,7 +254,16 @@ test('A QUIZMASTER CAN ONLY EVER DELETE OUT OF THEIR OWN NIGHTS', () => {
   const at = src.indexOf("route.startsWith('/api/past-photo/') && req.method === 'DELETE'");
   assert.ok(at > 0, 'the delete route has gone');
   const body = src.slice(at, at + 1400);
-  assert.ok(body.includes('roomForHost(req, url)'), 'the delete route no longer derives the room from the caller');
+  /*
+   * EITHER NAME COUNTS, because both derive the room from the CALLER and that
+   * is the property. `galleryRoomFor()` is `roomForHost()` with the house room
+   * redirected to the owner's own quizmaster room — see its note in
+   * `server.js` — so it takes nothing from the request either. What must never
+   * appear is a room read out of the URL or the body, which is the assertion
+   * underneath and the one that actually guards anything.
+   */
+  assert.ok(body.includes('roomForHost(req, url)') || body.includes('galleryRoomFor(req, url)'),
+    'the delete route no longer derives the room from the caller');
   assert.ok(!/body\.room|searchParams\.get\('room'\)|params\.room/.test(body),
     'the delete route takes a room from the request — a quizmaster could name somebody else\'s');
   assert.ok(body.includes('safePhotoName'), 'the filename is no longer filtered');

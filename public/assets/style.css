@@ -4345,6 +4345,41 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 /* Smaller on the wall's tighter tiles, but never below something a thumb can
    find — the ::after hit area carries that either way. */
 .community-wall .cphoto-pub { width: 14px; height: 14px; top: 5px; right: 5px; }
+/* ---- THE PIN — "this one leads on the night's card".
+
+   BOTTOM LEFT, opposite the bin, so the control that chooses and the control
+   that destroys are never adjacent under a thumb. The lamp keeps its own
+   top-right corner.
+
+   IT IS A PREFERENCE, NOT A STATE OF THE PHOTOGRAPH, so it does not borrow the
+   lamp's green and red: those mean "public" and "not", which is the lamp's
+   question and must not be said twice with the same colours. Off is quiet, on
+   is the account's own `--hot` — the colour that follows a scheme, which is
+   exactly what a preference should wear. Filled on, outlined off, because at
+   15px an outline-only difference is not a difference.
+
+   The same dark ring and oversized hit area as the lamp, for the same reasons:
+   a mark this size disappears on a bright photograph, and a 22px control is
+   the right size to read and the wrong size to press. */
+.cphoto-pin {
+  position: absolute; bottom: 8px; left: 8px; z-index: 2;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; padding: 0; border-radius: 999px; cursor: pointer;
+  color: rgba(255, 255, 255, 0.85); background: rgba(10, 8, 16, 0.72);
+  border: 2px solid rgba(10, 8, 16, 0.75);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+.cphoto-pin.is-on {
+  color: #fff;
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
+  border-color: rgba(255, 255, 255, 0.55);
+}
+.cphoto-pin::after { content: ''; position: absolute; inset: -13px; }
+.cphoto-pin:hover { transform: scale(1.15); }
+@media (prefers-reduced-motion: reduce) { .cphoto-pin:hover { transform: none; } }
+.community-wall .cphoto-pin { width: 18px; height: 18px; bottom: 5px; left: 5px; }
+.community-wall .cphoto-pin svg { width: 12px; height: 12px; }
+
 .cphoto-acts {
   position: absolute; left: 0; right: 0; bottom: 34px;
   display: flex; gap: 6px; justify-content: center;
@@ -8913,29 +8948,56 @@ body.gallery { padding: 0; }
 .gal-sub { color: var(--ink-dim); margin: 0; font-size: var(--fs-note); }
 .gal-empty { text-align: center; padding: 32px 8px; }
 
-/* Nights, newest first. A row rather than a card grid — a date is a line of
-   text, and dressing one up as a tile makes the page look emptier than it is. */
-.gal-nights { display: grid; gap: 10px; }
-.gal-night {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
-  padding: 14px 16px; border-radius: var(--r-card);
-  background: var(--panel); border: 1px solid var(--panel-line);
-  color: var(--ink); text-decoration: none;
-  /* A team name has no spaces if somebody decides it does not, and a date is
-     short — but the count must never push the date off a 320px phone. */
-  min-width: 0;
-}
-.gal-night b { min-width: 0; overflow-wrap: anywhere; }
-.gal-night:hover { border-color: var(--hot); }
-.gal-night.is-draft { border-style: dashed; }
+/* ---- NIGHTS AS CARDS, GROUPED BY PUB.
 
-/* Only the owner ever sees this, and only before publishing. Quiet, because
-   it is a state rather than a warning. */
-.gal-draft {
-  display: inline-block; margin-left: 8px; padding: 2px 8px;
-  border-radius: var(--r-pill); font-size: var(--fs-tag); font-weight: 700;
-  color: var(--ink-dim); border: 1px dashed var(--panel-line);
+   The pub is a heading and its nights are cards under it. `auto-fill` rather
+   than a fixed count, so one night is not stretched across a laptop and twenty
+   are not postage stamps on a phone — the same rule the photo grid follows. */
+.gal-groups { display: grid; gap: 34px; }
+.gal-group-name {
+  margin: 0 0 12px; font-size: var(--fs-head); font-weight: 800; color: var(--ink);
 }
+.gal-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
+.gal-card {
+  display: block; text-decoration: none; color: var(--ink);
+  background: var(--panel); border: 1px solid var(--panel-line);
+  border-radius: var(--r-card); padding: 16px 14px 14px;
+}
+.gal-card b { display: block; text-align: center; margin-top: 14px; font-size: var(--fs-note); }
+.gal-card:hover { border-color: var(--hot); }
+
+/* ---- THE FANNED PILE — snapshots dropped on a table.
+
+   THE TILT IS FIXED PER POSITION, never random: a random angle would change on
+   every visit and make a page of twelve cards restless. Three set angles read
+   as a pile and stay where they were.
+
+   The pictures are absolutely positioned inside a fixed-ratio box so the card
+   height never depends on how many photographs came back — a night with one
+   photo and a night with three are the same shape on the shelf. The white
+   border is the polaroid edge the projector's big photo already wears. */
+.gal-fan { display: block; position: relative; aspect-ratio: 4 / 3; }
+.gal-fan img {
+  position: absolute; left: 50%; top: 50%; width: 56%; aspect-ratio: 1 / 1;
+  object-fit: cover; border-radius: 4px;
+  border: 4px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+  background: var(--panel-2, var(--panel));
+}
+/* The FIRST one sits on top — it is the one a human pinned, if they pinned any,
+   so the choice actually shows. They are printed in reverse for that. */
+/* Spread far enough that the back two are PHOTOGRAPHS rather than slivers —
+   at a tighter offset each showed about a sixth of itself, which reads as an
+   edge rather than as three pictures. `spill` is measured in the driver: the
+   pile has to stay inside its own card at every card width. */
+.gal-fan-0 { transform: translate(-50%, -46%) rotate(-4deg); z-index: 3; }
+.gal-fan-1 { transform: translate(-78%, -56%) rotate(-13deg); z-index: 2; }
+.gal-fan-2 { transform: translate(-22%, -52%) rotate(9deg); z-index: 1; }
+.gal-fan.is-empty { background: var(--panel-line); border-radius: var(--r-field); opacity: 0.4; }
+@media (prefers-reduced-motion: reduce) { .gal-card { transition: none; } }
+
+/* NO DRAFT MARKER HERE — see the note in `gallery.js`. Whether a night is
+   published is the console's to say, on the control that sets it. */
 
 /* The photos. `auto-fill` rather than a fixed column count, so one photo is
    not stretched across a laptop and forty are not postage stamps on a phone. */
@@ -8981,33 +9043,41 @@ body.gallery { padding: 0; }
    scroll the overlay exists to preserve. */
 body.gal-zoomed { overflow: hidden; }
 
-/* ---- OTHER NIGHTS AT THE SAME PUB — under the photographs.
+/* ---- AN ARROW EITHER SIDE OF THE DATE — forwards and backwards in time.
 
-   Three cells rather than a flex row with a gap: the middle one has to stay
-   in the MIDDLE whether there are neighbours on both sides, one, or neither,
-   and a flex row would slide "All nights" about as the ends came and went.
-   The empty span holds its column open, which is what keeps it still.
+   Three columns with the sides on `auto` and the middle taking the rest, so
+   the date stays centred whether there are neighbours on both sides, one, or
+   neither: at an end of the run the cell is still there, empty, and the
+   heading does not jump sideways.
 
-   It wraps to a column on a phone, where three dates side by side is three
-   lines of two words each. */
-.gal-nav {
-  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
-  gap: 12px; margin-top: 28px;
+   A 44px round target, quiet until it is wanted — the arrows must not compete
+   with the date they sit beside, which is the thing somebody came to read. */
+.gal-title-row {
+  /* THEY HUG THE DATE, they do not sit at the edges of the page. Asked for as
+     *"arrows either side of the date"* — a `1fr` middle column pushed them to
+     the far sides of an 1100px wrap, which is a page control rather than
+     something on the heading. `auto` columns, centred as a group, and the
+     middle one may shrink so a long date still wraps rather than overflows. */
+  display: grid; grid-template-columns: auto minmax(0, auto) auto;
+  justify-content: center; align-items: center; gap: 4px; margin: 0 0 4px;
 }
-.gal-step, .gal-back-link {
+.gal-title-row h1 { margin: 0; min-width: 0; }
+.gal-arrow, .gal-arrow-gap {
+  width: 44px; height: 44px; border-radius: var(--r-pill); flex: 0 0 auto;
+}
+.gal-arrow {
   display: inline-flex; align-items: center; justify-content: center;
-  min-height: 44px; padding: 0 14px; border-radius: var(--r-field);
-  text-decoration: none; color: var(--ink-dim); font-size: var(--fs-note);
+  font-size: 30px; line-height: 1; text-decoration: none;
+  color: var(--ink-dim); border: 1px solid transparent;
 }
-.gal-step.is-older { justify-self: start; }
-.gal-step.is-newer { justify-self: end; }
-.gal-step:hover, .gal-back-link:hover { color: var(--ink); }
-.gal-back-link { color: var(--ink); font-weight: 700; }
-.gal-step.is-none { min-height: 0; padding: 0; }
+.gal-arrow:hover, .gal-arrow:focus-visible {
+  color: var(--ink); border-color: var(--panel-line);
+}
 @media (max-width: 560px) {
-  .gal-nav { grid-template-columns: 1fr; justify-items: center; }
-  .gal-step.is-older, .gal-step.is-newer { justify-self: center; }
-  .gal-step.is-none { display: none; }
+  /* The date wraps to two lines on a phone and the arrows stay on its row. */
+  .gal-title-row { gap: 0; }
+  .gal-arrow, .gal-arrow-gap { width: 36px; }
+  .gal-arrow { font-size: 26px; }
 }
 
 .gal-back { text-align: center; margin-top: 24px; }

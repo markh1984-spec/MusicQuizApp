@@ -367,6 +367,27 @@ export function binIcon(size = 18) {
     </svg>`;
 }
 
+/**
+ * A DRAWING PIN — "this one goes on the night's card".
+ *
+ * Drawn rather than fetched, like every other mark in this app. The head is
+ * filled and the needle is a stroke, so the shape still reads at 15px on a
+ * thumbnail: an all-stroke pin at that size is a smudge, and an all-filled one
+ * is a blob. `fill="currentColor"` on the head is what lets one icon serve both
+ * states — the button's own colour says whether it is pinned, so there is no
+ * second drawing to keep in step.
+ */
+export function pinIcon(size = 18) {
+  return `
+    <svg class="pin-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+         aria-hidden="true">
+      <circle cx="12" cy="9" r="4.4" fill="currentColor" stroke="none"/>
+      <path d="M12 3.2a5.8 5.8 0 0 0-5.8 5.8c0 1.9 1.1 3.6 2.4 5"/>
+      <path d="M12 13.4V21"/>
+    </svg>`;
+}
+
 export function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',

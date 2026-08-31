@@ -1507,6 +1507,16 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   and both callers get a 200. **AND THE BROWSER'S QUEUE CANNOT COVER IT**: the
   lamp settles for 600ms, so the press that overlaps a publish is exactly the
   one it has not started. Order it where the FILE is.
+- **A NIGHT IS A CARD WITH ITS PHOTOGRAPHS FANNED ON IT, GROUPED BY PUB** —
+  `coverPhotos()`. **Pins lead, the rest is a SPREAD** — one per slice of the
+  evening, because the first three photos of a night are one table in one
+  minute. **Stable**, seeded off the date. **BUILT FROM THE SAME FILTERED LIST
+  THE NIGHT'S PAGE SHOWS**, so a pin can never advertise a photograph that
+  page refuses. **A pin is a PREFERENCE; the lamp is the GATE.** **Three,
+  refused not trimmed** — silently keeping three looks like a press that did
+  not register.
+- **EVERY WRITER OF `published.json` CARRIES THE HALVES IT IS NOT CHANGING** —
+  nights, rulings, pins. The third is when it gets forgotten; a test walks them.
 - **A NIGHT NAMES ITS PUB AND STEPS TO THE ONE EITHER SIDE AT THAT PUB.**
   **Decided on the SERVER** — only it has the archive saying which pub a dated
   photo folder belongs to. **An end of the run is an ABSENT link, not a dead

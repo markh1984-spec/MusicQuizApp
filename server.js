@@ -18,7 +18,13 @@ import path from 'node:path';
 import { config, paths, hostKey, hostKeyIsTemporary } from './src/config.js';
 import { Store } from './src/store.js';
 import { Hub } from './src/sse.js';
-import { Photos, MAX_BYTES, isCameraFile, extensionFor, showsOnGallery, galleryPhotosOf, sniffType } from './src/photos.js';
+import {
+  Photos, MAX_BYTES, isCameraFile, extensionFor, showsOnGallery, galleryPhotosOf,
+  coverPhotos, sniffType,
+} from './src/photos.js';
+
+/** How many photographs the fanned pile on a night's card shows. */
+const COVER_PHOTOS = 3;
 import { Session } from './src/session.js';
 import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked, ROUND_TYPES } from './src/quizzes.js';
 import { recueQuiz } from './src/recue.js';
@@ -65,7 +71,7 @@ import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, p
 import { lobbyGameFor } from './public/assets/lobby-games.js';
 import {
   publishedNights, isPublished, setPublished, readableNight,
-  photoDecisions, photoKey, setPhotoDecision,
+  photoDecisions, photoKey, setPhotoDecision, photoPins, setPhotoPin, MAX_PINS,
 } from './src/gallery.js';
 import {
   publishedVenues, setVenuePublished, nameDecisions, setNameDecision,
@@ -775,6 +781,35 @@ function schemeForRoom(room) {
 function roomForHost(req, url) {
   const account = whoIs(req, url);
   return rooms.get(roomIdFor(account), account ? account.name || account.email : '');
+}
+
+/**
+ * WHICH ROOM'S PHOTOGRAPHS THE PUBLIC GALLERY WILL SHOW FOR THIS CALLER.
+ *
+ * **ONE ROOM FOR THE WHOLE PHOTO STORY, and it had two.** The console read and
+ * wrote through `roomForHost()` — the HOUSE room for the owner and for the host
+ * key — while the public gallery has read the owner's OWN QUIZMASTER room ever
+ * since a full night came out as an empty page. So a night could be published
+ * into a folder the public page never looks at, be told it worked, and read
+ * back as "Not published" on the page itself, with no error anywhere.
+ *
+ * That was written down as a hazard in the note above `galleryRoomId()` — in
+ * as many words, *"a night could have been published into a folder this page
+ * never looked at"* — and left. It then turned up as a bug report with a
+ * screenshot, which is what a written-down hazard becomes.
+ *
+ * **IT CHANGES NOTHING FOR AN ORDINARY QUIZMASTER.** Their room id is their
+ * account id, which is never `HOUSE`, and their gallery is read with that same
+ * id — so this returns exactly what `roomForHost()` did. It redirects only the
+ * two identities that drive the house room, to the room their own nights are
+ * actually filed in.
+ *
+ * `publicRoomId()` falls back to `HOUSE` when there is no owner's quizmaster
+ * account, so a fresh install is unchanged too.
+ */
+function galleryRoomFor(req, url) {
+  const id = roomForHost(req, url).id;
+  return id === HOUSE ? publicRoomId() : id;
 }
 
 function roomForPhone(req, url, body = null) {
@@ -2181,8 +2216,9 @@ async function handleGet(req, res, url, route) {
     if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
     const gigRoom = roomForHost(req, url);
     await ensureArchiveRestored(gigRoom);
+    // The gallery's room, like every other photo read — see `galleryRoomFor()`.
     const folders = photosRepoConfigured()
-      ? await listDirs(photoFolder(gigRoom.id), 'photos')
+      ? await listDirs(photoFolder(galleryRoomFor(req, url)), 'photos')
       : [];
     const nights = mergeGigs(listArchive(gigRoom.paths.archive), folders.map((f) => f.name));
     /*
@@ -2229,12 +2265,12 @@ async function handleGet(req, res, url, route) {
     if (!isNightFolder(night)) return sendJson(res, 404, { error: 'No night with that date.' }), true;
     const gigRoom = roomForHost(req, url);
     await ensureArchiveRestored(gigRoom);
-    const folders = photosRepoConfigured() ? await listDirs(photoFolder(gigRoom.id), 'photos') : [];
+    const folders = photosRepoConfigured() ? await listDirs(photoFolder(galleryRoomFor(req, url)), 'photos') : [];
     const nights = mergeGigs(listArchive(gigRoom.paths.archive, { boards: true }), folders.map((f) => f.name));
     const entry = nights.find((n) => n.night === night);
     if (!entry) return sendJson(res, 404, { error: 'No night with that date.' }), true;
     const photoFiles = photosRepoConfigured()
-      ? await listDir(`${photoFolder(gigRoom.id)}/${night}`, 'photos')
+      ? await listDir(`${photoFolder(galleryRoomFor(req, url))}/${night}`, 'photos')
       : [];
     const photoCount = photoFiles.map((f) => safePhotoName(f.name)).filter(Boolean).length;
     /*
@@ -2316,11 +2352,16 @@ async function handleGet(req, res, url, route) {
     if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
     const night = decodeURIComponent(route.slice('/api/past-gigs/'.length));
     if (!isNightFolder(night)) return sendJson(res, 404, { error: 'No night with that date.' }), true;
-    const gigRoom = roomForHost(req, url);
+    // THE ROOM THE PUBLIC PAGE READS — see `galleryRoomFor()`. The photos, the
+    // lamps and the published flag all have to come from ONE room, or the
+    // console describes a page it is not the one publishing to.
+    const gigRoomId = galleryRoomFor(req, url);
     const files = photosRepoConfigured()
-      ? await listDir(`${photoFolder(gigRoom.id)}/${night}`, 'photos')
+      ? await listDir(`${photoFolder(gigRoomId)}/${night}`, 'photos')
       : [];
-    const rulings = photosRepoConfigured() ? await photoDecisions(gigRoom.id) : {};
+    const rulings = photosRepoConfigured() ? await photoDecisions(gigRoomId) : {};
+    // Which ones a human chose for this night's card on the public index.
+    const pinnedHere = photosRepoConfigured() ? (await photoPins(gigRoomId))[night] || [] : [];
     return sendJson(res, 200, {
       night,
       // Whether this night is on the public gallery, so the control that puts
@@ -2328,7 +2369,8 @@ async function handleGet(req, res, url, route) {
       // second one: it is already made the moment a night is opened, and a
       // button that has to fetch before it knows its own label is a button
       // that flickers.
-      published: await isPublished(gigRoom.id, night),
+      published: await isPublished(gigRoomId, night),
+      maxPins: MAX_PINS,
       photos: files
         .map((f) => safePhotoName(f.name))
         .filter(Boolean)
@@ -2348,6 +2390,13 @@ async function handleGet(req, res, url, route) {
            * function all three readers ask, so it cannot.
            */
           onGallery: showsOnGallery(name, rulings[photoKey(night, name)]),
+          /*
+           * PINNED TO THE NIGHT'S CARD — worked out here for the same reason
+           * `onGallery` is: the browser must not hold a second copy of a rule
+           * the server already owns. The cap rides along so the console can say
+           * why a fourth press was refused without hardcoding a number.
+           */
+          pinned: pinnedHere.includes(name),
           // WHY it is off, when nobody has ruled: so the pill can say the
           // difference between "we thought you uploaded this" and "you turned
           // it off", which are different things to want to change.
@@ -2624,14 +2673,23 @@ async function handleGet(req, res, url, route) {
      * so the plain `/gallery` costs exactly what it always did.
      */
     const wantVenue = String(url.searchParams.get('venue') || '').trim().toLowerCase();
-    let atVenue = null;
-    if (wantVenue) {
-      const room = rooms.get(galleryRoomId());
-      await ensureArchiveRestored(room);
-      atVenue = new Set(mergeGigs(listArchive(room.paths.archive), [])
-        .filter((n) => venueSlug(n.venue) === wantVenue)
-        .map((n) => n.night));
-    }
+    /*
+     * THE VENUE OF EVERY NIGHT, NOT ONLY WHEN ONE WAS ASKED FOR.
+     *
+     * This read used to be conditional on `?venue=`, so the plain `/gallery`
+     * cost nothing. It is unconditional now because the page GROUPS by pub and
+     * names it on every card — *"grouped by pub, newest first"* — so there is
+     * no version of this page that does not need the join. It is a local
+     * archive read; the one network call in it is the restore, which the
+     * console makes on every load anyway.
+     */
+    const listRoom = rooms.get(galleryRoomId());
+    await ensureArchiveRestored(listRoom);
+    const venueOfNight = new Map(mergeGigs(listArchive(listRoom.paths.archive), [])
+      .map((g) => [g.night, g.venue || '']));
+    const atVenue = wantVenue
+      ? new Set([...venueOfNight].filter(([, v]) => venueSlug(v) === wantVenue).map(([n]) => n))
+      : null;
     const nights = preview
       ? [...new Set([...live, ...(await listDirs(photoFolder(galleryRoomId()), 'photos')).map((f) => f.name).filter(isNightFolder)])]
         .sort().reverse()
@@ -2653,18 +2711,36 @@ async function handleGet(req, res, url, route) {
      * from the right one.
      */
     const saidHere = await photoDecisions(galleryRoomId());
+    // The pins ride in on the same read as the rulings — one file, one fetch.
+    const pinsHere = await photoPins(galleryRoomId());
     for (const night of nights) {
       if (atVenue && !atVenue.has(night)) continue;
       const files = await listDir(`${photoFolder(galleryRoomId())}/${night}`, 'photos');
       // Only what would actually SHOW once this night is opened — the same
       // one decision, asked the same way. A count that included the ones held
       // back would read "6 photos" over a page that opens on 4.
-      const count = galleryPhotosOf(
+      const shown = galleryPhotosOf(
         (files || []).map((f) => safePhotoName(f.name)).filter(Boolean),
         night, saidHere, photoKey,
-      ).length;
+      );
       // A published night with nothing in it is a heading over a blank space.
-      if (count) out.push({ night, when: readableNight(night), count, live: live.includes(night) });
+      if (shown.length) {
+        out.push({
+          night,
+          when: readableNight(night),
+          venue: venueOfNight.get(night) || '',
+          count: shown.length,
+          live: live.includes(night),
+          /*
+           * THE FEW ON THE CARD, off the SAME filtered list the count is taken
+           * from — so a photograph held back cannot appear on the card that
+           * advertises the night, pinned or not. `coverPhotos()` puts the
+           * human's pins first and spreads the rest across the evening.
+           */
+          cover: coverPhotos(shown, night, pinsHere[night] || [], COVER_PHOTOS)
+            .map((name) => `/gallery-photo/${night}/${encodeURIComponent(name)}`),
+        });
+      }
     }
     return sendJson(res, 200, { nights: out, preview }), true;
   }
@@ -2794,7 +2870,7 @@ async function handleGet(req, res, url, route) {
       return sendJson(res, 404, { error: 'No photo there.' }), true;
     }
     const bytes = photosRepoConfigured()
-      ? await getFile(`${photoFolder(roomForHost(req, url).id)}/${night}/${name}`, 'photos')
+      ? await getFile(`${photoFolder(galleryRoomFor(req, url))}/${night}/${name}`, 'photos')
       : null;
     if (!bytes) return sendJson(res, 404, { error: 'No photo there.' }), true;
     res.writeHead(200, {
@@ -4236,7 +4312,6 @@ async function handleWrite(req, res, url, route) {
     const ext = sniffed && extensionFor(sniffed);
     if (!ext) return sendJson(res, 415, { error: 'That is not a photo.' }), true;
 
-    const room = roomForHost(req, url);
     /*
      * `mine` IN THE NAME, so a photograph the quizmaster added is tellable
      * from one the room sent — for a bin, for a count, and for whatever wants
@@ -4245,7 +4320,7 @@ async function handleWrite(req, res, url, route) {
      */
     const name = `mine${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}${ext}`;
     const done = await putFile(
-      `${photoFolder(room.id)}/${night}/${name}`,
+      `${photoFolder(galleryRoomFor(req, url))}/${night}/${name}`,
       bytes,
       `${night} — added by the quizmaster`,
       'photos',
@@ -4281,16 +4356,43 @@ async function handleWrite(req, res, url, route) {
     }
     const body = await readJson(req);
     const on = Boolean(body && body.on);
-    const room = roomForHost(req, url);
     /*
      * WHAT THE FILENAME WOULD HAVE SAID, so a ruling that agrees with it is
      * cleared instead of stored. Otherwise a later change to how the guess is
      * made could never reach this photo again.
      */
     const decision = on === isCameraFile(name) ? '' : (on ? 'on' : 'off');
-    const done = await setPhotoDecision(room.id, night, name, decision);
+    // The gallery's room — this and the publish route write the SAME file, so
+    // sending them to two rooms is two half-truths rather than one answer.
+    const done = await setPhotoDecision(galleryRoomFor(req, url), night, name, decision);
     if (!done.ok) return sendJson(res, 400, { error: done.error || 'Could not save that.' }), true;
     return sendJson(res, 200, { ok: true, night, name, onGallery: on }), true;
+  }
+
+  /*
+   * PIN A PHOTOGRAPH TO A NIGHT'S CARD, or take the pin off.
+   *
+   * *"A little icon on each photo where I can pin up to 3, so if I dislike one
+   * of the random photos I can remove the pin from that one and give it to
+   * something else."* Three is `MAX_PINS`; over it this answers 400 with the
+   * reason rather than silently dropping the press.
+   *
+   * Scoped by `galleryRoomFor` like every other photo write — no room in the
+   * URL, so a quizmaster cannot reach another's night.
+   */
+  if (route.startsWith('/api/gallery-pin/') && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
+    const parts = route.slice('/api/gallery-pin/'.length).split('/');
+    const night = decodeURIComponent(parts[0] || '');
+    const name = safePhotoName(decodeURIComponent(parts[1] || ''));
+    if (parts.length !== 2 || !isNightFolder(night) || !name) {
+      return sendJson(res, 404, { error: 'No photo there.' }), true;
+    }
+    const body = await readJson(req);
+    const on = Boolean(body && body.on);
+    const done = await setPhotoPin(galleryRoomFor(req, url), night, name, on);
+    if (!done.ok) return sendJson(res, 400, { error: done.error || 'Could not save that.' }), true;
+    return sendJson(res, 200, { ok: true, night, name, pinned: on, pins: done.pins }), true;
   }
 
   if (route.startsWith('/api/past-photo/') && req.method === 'DELETE') {
@@ -4306,9 +4408,8 @@ async function handleWrite(req, res, url, route) {
       // somebody hunting through the app for a fault in an env var.
       return sendJson(res, 400, { error: 'The private photo repository is not set up, so there is nothing to delete from.' }), true;
     }
-    const room = roomForHost(req, url);
     const done = await deleteFile(
-      `${photoFolder(room.id)}/${night}/${name}`,
+      `${photoFolder(galleryRoomFor(req, url))}/${night}/${name}`,
       `Remove a photo from ${night}`,
       'photos',
     );
@@ -4366,8 +4467,7 @@ async function handleWrite(req, res, url, route) {
   if (route === '/api/past-gigs/publish' && req.method === 'POST') {
     if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
     const body = await readJson(req);
-    const gigRoom = roomForHost(req, url);
-    const done = await setPublished(gigRoom.id, String(body.night || ''), body.on !== false);
+    const done = await setPublished(galleryRoomFor(req, url), String(body.night || ''), body.on !== false);
     return sendJson(res, done.ok ? 200 : 400, done), true;
   }
 

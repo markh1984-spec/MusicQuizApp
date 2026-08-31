@@ -749,3 +749,102 @@ for the same room."*
   same breath. Still never the projector and never a phone, which is the
   decision's own prohibition: the gallery is neither, and on a touch screen it
   costs nothing because there is no cursor to draw.
+
+
+## THE GALLERY INDEX IS A SHELF OF NIGHTS — 31 August 2026
+
+Asked for: *"would like this to be a sort of gallery box selection — so it has
+the date and perhaps a mix of 2-3 of the photos from the gallery itself in the
+image for that sub-gallery."* Four questions were put and answered:
+
+| | Chosen |
+|---|---|
+| The picture | **a stacked/fanned pile** of up to three |
+| The words | **date and venue** |
+| The order | **grouped by pub, newest first** |
+| Which photos | **a random spread, plus pins he can set** |
+
+### The venue became the heading rather than a line on every card
+
+The answer was "date and venue" and both are on screen — but under a pub
+heading, printing the pub on twelve cards is the clutter rule exactly, and on a
+venue's own address every card would repeat the same eight words. So the pub is
+the group heading and the card is the date. **If that reads as too bare, the
+venue goes back on the card and the headings come off** — it is one line either
+way, and the choice was mine rather than his.
+
+A night with no venue still gets a group of its own: nights filed before venues
+existed have none, and dropping them would quietly shorten the archive.
+
+### The fan
+
+Three fixed angles, never random — a random tilt would change on every visit and
+make a page of twelve cards restless. The first photograph is on TOP, which is
+the pinned one if any are pinned, so the choice actually shows.
+
+The pictures are absolutely positioned inside a fixed-ratio box, so a night with
+one photo and a night with three are the same shape on the shelf. The pile is
+measured against its own card in `galindex` driving: at a tighter offset the
+back two showed about a sixth of themselves and read as edges rather than
+photographs, and at a wider one they hung 22px over the card. 56% wide with the
+outer two at ±28% is the pair that fits at both card widths.
+
+### `coverPhotos()` — pins first, then one from each slice of the night
+
+- **A SPREAD, NOT THE FIRST THREE.** The first three photographs of a night are
+  usually one table within a minute, so "the first three" is three pictures of
+  one moment.
+- **Two simpler versions were tried and both broke on real data.** Stepping by
+  `length / need` from zero never reaches the last photograph, so a four-photo
+  night was always its first three. Adding a seeded offset and wrapping modulo
+  the length fixed that and destroyed the chronology instead — a forty-photo
+  night picked 36, 16 and 35, two of them adjacent, which is the original fault
+  again. Cutting the night into as many slices as the card wants and taking one
+  from each keeps the picks in order AND apart, and the seed still varies which
+  one inside each slice.
+- **Stable**, seeded from the night's own date rather than a random number — the
+  same rule the pack colours follow. A shelf that reshuffles is worse than one
+  with no colour on it.
+- **IT ONLY EVER DRAWS FROM WHAT THE NIGHT'S PAGE WOULD SHOW.** The caller hands
+  in the already-filtered list, so a photograph held off the gallery cannot
+  reach the card that advertises it — **including a pinned one**. A pin is a
+  preference about which of the public photos to lead with, never a way round
+  the decision about whether it is public.
+
+### The pin
+
+*"A little icon bottom left on each photo where I can pin up to 3, so if I
+dislike one of the random photos I can remove the pin from that one and give it
+to something else."*
+
+- **BOTTOM LEFT, opposite the bin**, so the control that chooses and the control
+  that destroys are never adjacent under a thumb. The lamp keeps top right.
+- **It does not borrow the lamp's green and red.** Those mean public and not
+  public, which is the lamp's question; saying it twice in the same colours is
+  the label collision this app has a rule against. Off is quiet, on is the
+  account's own `--hot` — the colour that follows a scheme, which is what a
+  preference should wear.
+- **Filled on, outlined off**, because at 15px an outline-only difference is not
+  a difference.
+- **THE CAP IS THE SERVER'S ANSWER, not a count in the browser.** Counting pins
+  in the console would be a second copy of a rule `setPhotoPin()` owns, and the
+  two would disagree the first time two tabs were open. A fourth press comes
+  back 400 with the reason and the pin goes back off, so the refusal is visible.
+- **Refused rather than trimmed.** Silently keeping three would look exactly
+  like a press that did not register — the same reasoning as refusing an
+  over-full `multi` answer.
+- **It is never work anybody has to do.** A night with no pins still gets a
+  card; the spread picks three. The pin exists for the night where the random
+  three happen to be three pictures of the same table.
+- **`scripts/community-bay.mjs` presses it**, because nothing in this repo
+  presses a control and a dead one draws perfectly — the handler's own catch
+  eats a `ReferenceError` and the mark never moves. Pressed against what it WAS
+  rather than a state assumed from the fixture, and checked for the
+  not-also-opening guard the lamp needs, since it sits on the photograph too.
+
+### Three writers now share one file
+
+`published.json` holds the nights, the rulings and the pins. Every writer has to
+carry the halves it is not changing, and the third half is exactly when that
+gets forgotten — `test/gallery-pins.test.js` publishes a night with a pin and a
+ruling on it and checks all three survive, in both directions.

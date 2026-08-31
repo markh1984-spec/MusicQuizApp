@@ -138,18 +138,86 @@ async function get(path) {
   return res.json().catch(() => null);
 }
 
-/** A night that is visible to the owner alone says so, plainly and quietly. */
-function notLive() {
-  return node(`<span class="gal-draft" title="Only you can see this">Not published</span>`);
+/*
+ * THERE IS NO "NOT PUBLISHED" BADGE ON THIS PAGE, AND THAT IS DELIBERATE.
+ *
+ * Removed on 31 August 2026, asked for by name after it had been wrong twice:
+ * *"still says not published, remove this from the public gallery please."*
+ *
+ * It only ever showed on the owner's own preview, so no customer saw it — but
+ * it was a SECOND place stating whether a night is live, a screen away from
+ * the control that decides it, and the two disagreed. **Publish state belongs
+ * to the console**, on the button that sets it and can be pressed. A read-only
+ * echo of it on the public page is a label collision that can only ever go out
+ * of step, which it did.
+ *
+ * If a preview ever needs to say "you are looking at a draft" again, say it on
+ * the CONSOLE beside the control, not here.
+ */
+
+/**
+ * EVERY NIGHT AS A CARD, GROUPED BY PUB — the way in.
+ *
+ * Asked for on 31 August 2026: *"would like this to be a sort of gallery box
+ * selection — so it has the date and perhaps a mix of 2-3 of the photos from
+ * the gallery itself in the image for that sub-gallery."* A list of dates says
+ * nothing about what is behind it; a card with the night's own photographs on
+ * it is the only thing on this page that makes somebody want to open one.
+ *
+ * **GROUPED BY PUB, NEWEST FIRST**, chosen over a flat run of dates: a person
+ * arriving here cares about their own local, not about the quizmaster's diary.
+ * The nights are already newest first from the server, so grouping preserves
+ * that inside each pub, and the pubs are ordered by whichever has the most
+ * recent night — the one somebody is most likely to have just been to.
+ *
+ * **THE PUB IS THE HEADING, SO THE CARD IS THE DATE.** The answer given was
+ * "date and venue", and both are on screen — but printing the pub on twelve
+ * cards under a heading that already says it is the clutter rule exactly, and
+ * on a venue's own address every card would repeat the same eight words. If
+ * this reads as too bare, the venue goes back on the card and the headings go.
+ *
+ * **A NIGHT WITH NO PUB ON IT STILL GETS A HOME** — nights filed before venues
+ * existed have no venue, and dropping them would quietly shorten the archive.
+ */
+function groupsOf(nights) {
+  const by = new Map();
+  for (const n of nights) {
+    const key = n.venue || '';
+    if (!by.has(key)) by.set(key, []);
+    by.get(key).push(n);
+  }
+  // The list arrives newest first, so the first night in each group is that
+  // pub's most recent — which is what the pubs themselves are ordered on.
+  return [...by.entries()].map(([venue, list]) => ({ venue, list }));
+}
+
+/**
+ * THE FANNED PILE — two or three photographs dropped on a table.
+ *
+ * **THE FIRST ONE IS ON TOP**, which is the one a human pinned if they pinned
+ * any. So the choice actually shows rather than being one of three at random.
+ *
+ * **THE TILT IS FIXED PER POSITION, not random.** A random angle per card would
+ * make the page restless and would change on every visit; three fixed angles
+ * read as a pile and stay put. The same reasoning as the projector's own tilt
+ * never landing near straight — these are deliberately off, so they read as
+ * snapshots rather than as a broken grid.
+ *
+ * `aria-hidden`, because the card's own text already names the night: three
+ * "a photo from the night" labels in a row is noise to a screen reader.
+ */
+function fanOf(urls) {
+  if (!urls.length) return '<span class="gal-fan is-empty" aria-hidden="true"></span>';
+  return `<span class="gal-fan" aria-hidden="true">${urls.slice(0, 3).map((u, i) => `
+    <img class="gal-fan-${i}" src="${esc(keyed(u))}" alt="" loading="lazy" decoding="async">`)
+    .reverse().join('')}</span>`;
 }
 
 async function showNights() {
   const data = await get('/api/gallery');
   const nights = (data && data.nights) || [];
   title.textContent = 'Photos';
-  sub.textContent = nights.length
-    ? 'Pick a night.'
-    : '';
+  sub.textContent = nights.length ? 'Pick a night.' : '';
   if (!nights.length) {
     /*
      * SAY WHICH KIND OF EMPTY IT IS. "Nothing here yet" on a page somebody
@@ -160,19 +228,21 @@ async function showNights() {
       <p class="muted gal-empty">No photos are up yet. They go up after the night.</p>`));
     return;
   }
+  const groups = groupsOf(nights);
   body.replaceChildren(node(`
-    <div class="gal-nights">
-      ${nights.map((n) => `
-        <a class="gal-night ${n.live === false ? 'is-draft' : ''}" href="${esc(nightLink(n.night))}">
-          <b>${esc(n.when || n.night)}</b>
-          <span class="tiny">${n.count} photo${n.count === 1 ? '' : 's'}</span>
-        </a>`).join('')}
+    <div class="gal-groups">
+      ${groups.map((g) => `
+        <section class="gal-group">
+          ${g.venue ? `<h2 class="gal-group-name">${esc(g.venue)}</h2>` : ''}
+          <div class="gal-cards">
+            ${g.list.map((n) => `
+              <a class="gal-card" href="${esc(nightLink(n.night))}">
+                ${fanOf(n.cover || [])}
+                <b>${esc(n.when || n.night)}</b>
+              </a>`).join('')}
+          </div>
+        </section>`).join('')}
     </div>`));
-  if (data.preview) {
-    for (const [i, n] of nights.entries()) {
-      if (n.live === false) body.querySelectorAll('.gal-night')[i]?.append(notLive());
-    }
-  }
 }
 
 async function showNight(night) {
@@ -225,51 +295,56 @@ async function showNight(night) {
           <img src="${esc(keyed(p.url))}" alt="A photo from the night" loading="lazy" decoding="async">
         </button>`).join('')}
     </div>`);
+  placeArrows(data);
   body.replaceChildren(grid);
-  body.appendChild(nightNav(data));
+  body.appendChild(node(`<p class="gal-back"><a href="${esc(home())}">All nights</a></p>`));
   wireBigPicture(grid, data.photos);
-  if (data.preview && data.live === false) sub.append(' · ', notLive());
 }
 
 /**
- * BACK A NIGHT, ON A NIGHT, AND THE WAY OUT — under the photographs.
+ * AN ARROW EITHER SIDE OF THE DATE — forwards and backwards in time.
  *
- * Asked for on 31 August 2026: *"the galleries should have navigation so you
- * can get to a previous one or a new one on a per-venue, per-QM basis."*
+ * Asked for on 31 August 2026: *"was hoping for arrows either side of the date
+ * to nav forward or backwards in time."* The first version put a row of links
+ * under the photographs, which on a wall of eighteen is below the fold and
+ * therefore not navigation anybody finds.
  *
- * **THE NEIGHBOURS ARE THE SAME PUB'S, decided on the server**, because only
- * the server has the archive that says which pub a night was at — the photo
- * folders are dated and nothing else. So this draws what it is handed and
- * works out nothing, which is also why it cannot disagree with the list.
+ * **BESIDE THE THING THEY MOVE.** The date is what the arrows change, so they
+ * belong on it — the same rule the launch bar's *Unlaunch* follows, sat with
+ * the line it acts on rather than across the room from it.
  *
- * **OLDER ON THE LEFT, NEWER ON THE RIGHT**, the way time is drawn everywhere,
- * and each names its DATE rather than saying "previous" — the date is what
- * somebody is actually looking for, and it says whether there is anything
- * worth pressing before they press it.
+ * **THE NEIGHBOURS ARE THE SAME PUB'S, decided on the server**, which is the
+ * only side holding the archive that says which pub a dated photo folder
+ * belongs to. This draws what it is handed and works out nothing.
  *
- * **AN END OF THE RUN IS AN ABSENT LINK, NOT A DEAD ONE.** This is the one
- * place the present-and-inert rule does not apply: that rule is about a
- * control whose position must be learnable on a page somebody drives every
- * week, and this is a page a stranger sees once. A greyed arrow on it is a
- * question ("why can I not press that?") where nothing at all is simply the
- * end of the pub's nights.
+ * **AN END OF THE RUN IS AN EMPTY CELL, NOT A DEAD ARROW.** The one place
+ * *present and inert* does not apply: that rule is about a control whose
+ * position must be learnable on a page somebody drives every week, and this is
+ * a page a stranger sees once. A greyed arrow there is a question; an empty
+ * space is simply the end of the pub's nights. **The cell stays**, so the date
+ * does not shift sideways when one runs out.
  *
- * **"All nights" ALWAYS SHOWS**, in the middle, because it is the way out and
- * a page reached from a link has no history behind it.
+ * **NO `title`.** A native tooltip is an unstyled box that lands over the
+ * heading — the rule the bay rail already sets. The date each arrow leads to
+ * is in its `aria-label`, and pressing it shows the date anyway.
  */
-function nightNav(data) {
-  // The arrow leads on the way back and trails on the way forward, so the
-  // pair points outwards from the night you are on.
-  const step = (n, side) => (n
-    ? `<a class="gal-step is-${side}" href="${esc(nightLink(n.night))}">${
-      side === 'older' ? `\u2190 ${esc(n.when || n.night)}` : `${esc(n.when || n.night)} \u2192`}</a>`
-    : '<span class="gal-step is-none" aria-hidden="true"></span>');
-  return node(`
-    <nav class="gal-nav" aria-label="Other nights here">
-      ${step(data.older, 'older')}
-      <a class="gal-back-link" href="${esc(home())}">All nights</a>
-      ${step(data.newer, 'newer')}
-    </nav>`);
+function placeArrows(data) {
+  let row = document.querySelector('.gal-title-row');
+  if (!row) {
+    // The heading is in the page's own markup, so the row is built round it
+    // rather than replacing it — `title` stays the same element throughout.
+    row = node('<div class="gal-title-row"></div>');
+    title.parentNode.insertBefore(row, title);
+    row.appendChild(title);
+  }
+  for (const old of row.querySelectorAll('.gal-arrow, .gal-arrow-gap')) old.remove();
+  const arrow = (n, side) => (n
+    ? node(`<a class="gal-arrow is-${side}" href="${esc(nightLink(n.night))}"
+        aria-label="${side === 'older' ? 'Earlier' : 'Later'} — ${esc(n.when || n.night)}"
+        >${side === 'older' ? '\u2039' : '\u203a'}</a>`)
+    : node('<span class="gal-arrow-gap" aria-hidden="true"></span>'));
+  row.insertBefore(arrow(data.older, 'older'), title);
+  row.appendChild(arrow(data.newer, 'newer'));
 }
 
 /**

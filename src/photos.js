@@ -102,6 +102,86 @@ export function galleryPhotosOf(names, night, said, key) {
   return names.filter((name) => showsOnGallery(name, said[key(night, name)]));
 }
 
+/**
+ * THE THREE PHOTOGRAPHS ON A NIGHT'S CARD — pinned first, then a spread.
+ *
+ * Asked for on 31 August 2026: a card per night on `/gallery` showing a fanned
+ * pile of a few of its photographs, *"random spread across a night but also the
+ * ability to pick them."*
+ *
+ * **IT ONLY EVER DRAWS FROM WHAT THE NIGHT'S PAGE WOULD SHOW.** The caller
+ * hands in the already-filtered list, so a photograph held off the gallery
+ * cannot reach the card that advertises it — including a PINNED one, which is
+ * the case worth stating: a pin is a preference about which of the public
+ * photos to lead with, never a way round the decision about whether it is
+ * public. One decision, asked once, exactly as `showsOnGallery()` is.
+ *
+ * **A SPREAD, NOT THE FIRST THREE.** The first three photographs of a night are
+ * usually taken within a minute of each other by the same table, so "the first
+ * three" is three pictures of one moment. Walking the list at even intervals
+ * gives the room filling up, the middle of the quiz and the end of it.
+ *
+ * **STABLE, because a card that reshuffles is worse than one with no picture.**
+ * The offset is derived from the night's own date rather than from a random
+ * number, so the same night gives the same card on every device and every
+ * reload — the rule the pack colours already follow.
+ *
+ * @param {string[]} shown   the night's photos, already filtered to the public ones
+ * @param {string} night     `YYYY-MM-DD`, which is also the seed
+ * @param {string[]} pinned  names a human chose, in the order they chose them
+ * @param {number} want      how many the card has room for
+ */
+export function coverPhotos(shown, night, pinned = [], want = 3) {
+  const have = new Set(shown);
+  // A pin on a photo that is no longer public — or no longer there — is simply
+  // not used. It is left in the file rather than pruned here: this is a READ,
+  // and a read that quietly rewrites what a person saved is a worse surprise
+  // than a pin that does nothing until they look at it.
+  const out = pinned.filter((n) => have.has(n)).slice(0, want);
+  if (out.length >= want || !shown.length) return out;
+
+  const rest = shown.filter((n) => !out.includes(n));
+  const need = Math.min(want - out.length, rest.length);
+  // A small deterministic offset from the date, so two nights of the same
+  // length do not both take photo 0, 4, 8.
+  let seed = 0;
+  for (const ch of night) seed = (seed * 31 + ch.charCodeAt(0)) % 9973;
+  /*
+   * ONE FROM EACH SLICE OF THE NIGHT, and the seed only moves the pick WITHIN
+   * its slice.
+   *
+   * Two simpler versions were tried and both were wrong in a way that only
+   * shows on real data. Stepping by `length / need` from zero never reaches the
+   * last photograph, so a four-photo night was always its first three. Adding
+   * the offset and wrapping modulo the length fixed that and broke the
+   * chronology instead — on a forty-photo night it picked 36, 16 and 35, two of
+   * them adjacent, which is three pictures of one moment again.
+   *
+   * Cutting the night into as many slices as the card wants and taking one
+   * from each keeps the picks in order and keeps them apart, and the seed still
+   * varies which one inside the slice, so two nights of the same length do not
+   * produce the same card.
+   */
+  for (let i = 0; i < need; i += 1) {
+    const from = Math.floor((i * rest.length) / need);
+    const to = Math.max(from + 1, Math.floor(((i + 1) * rest.length) / need));
+    out.push(rest[from + ((seed + i) % (to - from))]);
+  }
+  // The offset can land two picks on one photo when a night has barely more
+  // photographs than the card wants; dedupe and top up in order rather than
+  // showing the same picture twice on one card.
+  const seen = new Set(out);
+  if (seen.size < out.length) {
+    const unique = [...seen];
+    for (const n of rest) {
+      if (unique.length >= want) break;
+      if (!seen.has(n)) { unique.push(n); seen.add(n); }
+    }
+    return unique.slice(0, want);
+  }
+  return out.slice(0, want);
+}
+
 export function extensionFor(contentType) {
   return ALLOWED[String(contentType || '').split(';')[0].trim().toLowerCase()] || null;
 }

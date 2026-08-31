@@ -33,6 +33,15 @@
 import { getFile, putFile, photosRepoConfigured } from './github.js';
 import { photoFolder, isNightFolder } from './past-gigs.js';
 
+/**
+ * HOW MANY PHOTOGRAPHS A NIGHT'S CARD CAN BE PINNED TO — three.
+ *
+ * The card on `/gallery` is a fanned pile of three, so three is what there is
+ * room for rather than a number anybody picked. A constant with a note, which
+ * is what this repo does instead of a setting nobody has asked for.
+ */
+export const MAX_PINS = 3;
+
 /** Beside the photos it governs, in the same private repo. */
 function listPath(roomId) {
   return `${photoFolder(roomId)}/published.json`;
@@ -50,18 +59,19 @@ function listPath(roomId) {
  * on a disk that gets wiped, which this repo knows better than to write.
  */
 async function readAll(roomId) {
-  if (!photosRepoConfigured()) return { nights: [], photos: {} };
+  if (!photosRepoConfigured()) return { nights: [], photos: {}, pins: {} };
   let raw = null;
   try {
     raw = await getFile(listPath(roomId), 'photos');
   } catch {
-    return { nights: [], photos: {} };
+    return { nights: [], photos: {}, pins: {} };
   }
-  if (!raw) return { nights: [], photos: {} };
+  if (!raw) return { nights: [], photos: {}, pins: {} };
   try {
     const parsed = JSON.parse(raw.toString('utf8'));
     const nights = Array.isArray(parsed) ? parsed : parsed.nights;
     const photos = (!Array.isArray(parsed) && parsed.photos) || {};
+    const pins = (!Array.isArray(parsed) && parsed.pins) || {};
     return {
       nights: (nights || [])
         .map((n) => String(n || ''))
@@ -78,9 +88,24 @@ async function readAll(roomId) {
        */
       photos: Object.fromEntries(Object.entries(photos)
         .filter(([k, v]) => photoKeyOk(k) && (v === 'on' || v === 'off'))),
+      /*
+       * WHICH PHOTOGRAPHS A HUMAN CHOSE FOR A NIGHT'S CARD — `{ night: [name,
+       * name, name] }`, at most `MAX_PINS`.
+       *
+       * Validated on the way OUT as well as in, like everything else here: the
+       * file is in a repo a person can edit, and a bad line must not become a
+       * path. Anything over the cap is TRIMMED rather than dropped, because a
+       * hand-edited fourth pin should cost the fourth pin and not the night.
+       */
+      pins: Object.fromEntries(Object.entries(pins)
+        .filter(([night, names]) => isNightFolder(night) && Array.isArray(names))
+        .map(([night, names]) => [night, names
+          .filter((n) => photoKeyOk(photoKey(night, n)))
+          .slice(0, MAX_PINS)])
+        .filter(([, names]) => names.length)),
     };
   } catch {
-    return { nights: [], photos: {} };
+    return { nights: [], photos: {}, pins: {} };
   }
 }
 
@@ -203,10 +228,12 @@ async function publishNow(roomId, night, on) {
   const sorted = [...want].sort().reverse();
   const res = await putFile(
     listPath(roomId),
-    // The per-photo rulings ride along untouched — writing only the nights
-    // would wipe every one a human had made, which is the shape of bug that
-    // only shows up weeks later when somebody notices a photo has come back.
-    JSON.stringify({ nights: sorted, photos: held.photos }, null, 2),
+    // The per-photo rulings and the card pins ride along untouched — writing
+    // only the nights would wipe every one a human had made, which is the shape
+    // of bug that only shows up weeks later when somebody notices a photo has
+    // come back. EVERY writer of this file has to carry the halves it is not
+    // changing; there is a test walking them.
+    JSON.stringify({ nights: sorted, photos: held.photos, pins: held.pins }, null, 2),
     `${on ? 'Publish' : 'Unpublish'} the gallery for ${night}`,
     'photos',
   );
@@ -244,12 +271,76 @@ async function decideNow(roomId, key, decision) {
 
   const res = await putFile(
     listPath(roomId),
-    JSON.stringify({ nights: held.nights, photos }, null, 2),
+    // The nights and the card pins ride along untouched — see the note on the
+    // publish writer above.
+    JSON.stringify({ nights: held.nights, photos, pins: held.pins }, null, 2),
     decision ? `${decision === 'on' ? 'Show' : 'Hide'} ${key} on the gallery` : `Clear the ruling on ${key}`,
     'photos',
   );
   if (res && res.ok === false) return { ok: false, error: res.error || 'Could not save that.' };
   return { ok: true, photos };
+}
+
+/**
+ * PIN A PHOTOGRAPH TO A NIGHT'S CARD, OR TAKE THE PIN OFF IT.
+ *
+ * Asked for on 31 August 2026: *"random spread across a night but also the
+ * ability to pick them — perhaps a little icon on each photo where I can pin up
+ * to 3, so if I dislike one of the random photos I can remove the pin from that
+ * one and give it to something else."*
+ *
+ * **PINS ARE AN OVERRIDE, NOT A REQUIREMENT.** A night with none still gets a
+ * card: the spread picks three for it. So this is never work anybody has to do,
+ * which is the Monday rule — it is there for the night where the random three
+ * happen to be three pictures of the same table.
+ *
+ * **THE CAP IS REFUSED, NOT TRIMMED.** Silently dropping a fourth pin would
+ * look exactly like a failed press. Somebody has to take one off first, and the
+ * error says so — the same reasoning as refusing an over-full `multi` answer
+ * rather than trimming it.
+ *
+ * **ORDER IS THE ORDER THEY WERE PINNED**, so the card is stable and a person
+ * can predict what moves when they unpin one.
+ *
+ * @param {boolean} on
+ */
+export async function setPhotoPin(roomId, night, name, on) {
+  if (!photoKeyOk(photoKey(night, name))) return { ok: false, error: 'No photo there.' };
+  if (!photosRepoConfigured()) {
+    return { ok: false, error: 'The private photo repository is not set up, so there is nowhere to record this.' };
+  }
+  // The same queue as the nights and the rulings — one file, one writer.
+  return inOrder(roomId, () => pinNow(roomId, night, name, on));
+}
+
+async function pinNow(roomId, night, name, on) {
+  const held = await readAll(roomId);
+  const had = held.pins[night] || [];
+  if (on && had.includes(name)) return { ok: true, pins: had };
+  if (on && had.length >= MAX_PINS) {
+    return { ok: false, error: `Three is the most a card can show. Take one off first.` };
+  }
+  const want = on ? [...had, name] : had.filter((n) => n !== name);
+  if (want.length === had.length && want.every((n, i) => n === had[i])) {
+    return { ok: true, pins: had };
+  }
+  const pins = { ...held.pins };
+  // An empty list is REMOVED rather than stored as `[]` — the same rule as a
+  // ruling that only restates the guess: nothing to say, nothing kept.
+  if (want.length) pins[night] = want; else delete pins[night];
+  const res = await putFile(
+    listPath(roomId),
+    JSON.stringify({ nights: held.nights, photos: held.photos, pins }, null, 2),
+    `${on ? 'Pin' : 'Unpin'} ${photoKey(night, name)} on the gallery card`,
+    'photos',
+  );
+  if (res && res.ok === false) return { ok: false, error: res.error || 'Could not save that.' };
+  return { ok: true, pins: want };
+}
+
+/** Which photographs a human pinned, per night. */
+export async function photoPins(roomId) {
+  return (await readAll(roomId)).pins;
 }
 
 /**

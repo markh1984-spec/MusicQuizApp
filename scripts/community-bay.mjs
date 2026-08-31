@@ -169,6 +169,10 @@ try {
     await page.route('**/api/gallery-photo/**', async (route) => {
       await route.fulfill({ json: { ok: true } });
     });
+    // The pin's write goes to the same private repository, for the same reason.
+    await page.route('**/api/gallery-pin/**', async (route) => {
+      await route.fulfill({ json: { ok: true } });
+    });
     /*
      * The league's own decision file lives in the private repository, which
      * this harness has no token for. Answered here with one venue running, so
@@ -458,6 +462,34 @@ try {
     }));
     check(`${label}: the lamp does not also open the picture`, after.opened === 0, `${after.opened}`);
     check(`${label}: and pressing it switches the colour`, after.on === !wasOn, `${wasOn} -> ${after.on}`);
+
+    /*
+     * THE PIN IS PRESSED TOO, and for the reason the dial's two presses exist:
+     * nothing in this repo presses a control, and a dead one draws perfectly —
+     * the handler's own catch swallows a ReferenceError and the mark never
+     * moves. Pressed against what it WAS rather than against a state assumed
+     * from the fixture, and checked for the same not-also-opening guard the
+     * lamp needs, since it sits on the photograph as well.
+     */
+    const pins = await page.evaluate(() => document.querySelectorAll('.doorhead .cphoto-pin').length);
+    check(`${label}: every photo has a pin`, pins > 0, `${pins}`);
+    if (pins) {
+      const pinWas = await page.evaluate(() => document.querySelector('.doorhead .cphoto-pin').classList.contains('is-on'));
+      await page.evaluate(() => document.querySelector('.doorhead .cphoto-pin').click());
+      await page.waitForTimeout(400);
+      const pinNow = await page.evaluate(() => ({
+        on: document.querySelector('.doorhead .cphoto-pin').classList.contains('is-on'),
+        opened: document.querySelectorAll('.doorhead .community-big').length,
+        // A wordless control has to say what it is somewhere.
+        said: document.querySelector('.doorhead .cphoto-pin').getAttribute('aria-label') || '',
+      }));
+      check(`${label}: pressing the pin marks the photo`, pinNow.on === !pinWas, `${pinWas} -> ${pinNow.on}`);
+      check(`${label}: the pin does not also open the picture`, pinNow.opened === 0, `${pinNow.opened}`);
+      check(`${label}: and it says what it is`, pinNow.said.length > 8, pinNow.said);
+      // Put it back, so the fold checks below start from the state they expect.
+      await page.evaluate(() => document.querySelector('.doorhead .cphoto-pin').click());
+      await page.waitForTimeout(200);
+    }
 
     /*
      * AND THE FOLD STILL WORKS OVER THE NIGHT YOU HAVE OPEN — which is the

@@ -86,10 +86,19 @@ test('AND IT DOES NOT EAT A ROUTE THIS APP ALREADY SERVES', async () => {
     assert.ok(!body.startsWith('<'), 'the API answered with a page — the venue route ate it');
     assert.doesNotThrow(() => JSON.parse(body), 'the API answered with something that is not JSON');
 
+    /*
+     * MATCH SOMETHING ONLY THE PAGE HAS, never a filename.
+     *
+     * This looked for the string `gallery.js` — which is the page's script tag,
+     * and also any COMMENT anywhere that happens to name the file. A note added
+     * to `style.css` pointing at `gallery.js` failed this test with the routing
+     * perfectly correct. `id="galBody"` is markup: it exists in the gallery page
+     * and nowhere else, so it cannot be written into a stylesheet by accident.
+     */
     for (const path of ['/assets/style.css', '/api/brand']) {
       const one = await fetch(`${base}${path}`);
       const text = await one.text();
-      assert.ok(!text.includes('gallery.js'), `${path} was served the gallery page`);
+      assert.ok(!text.includes('id="galBody"'), `${path} was served the gallery page`);
     }
   });
 });
