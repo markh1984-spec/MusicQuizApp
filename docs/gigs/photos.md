@@ -653,3 +653,99 @@ The two that were turned down, so they are not re-proposed:
 **If it comes back, the trigger to watch for is volume** — this is cheap while
 the pre-flag nights are a handful and stops being cheap if a season of them ever
 needs curating.
+
+
+## "IT SAYS NOT PUBLISHED, BUT IT IS" — a lost update on `published.json`
+
+Reported off a live gallery on 31 August 2026, with a screenshot: the night's
+page read *"28 photos · Not published"* on a night the console had published
+and been told it had.
+
+### One file, two halves, two callers
+
+`published.json` holds **which nights are up** and **the per-photo rulings**
+behind the green and red lamps. `setPublished()` and `setPhotoDecision()` each
+read the whole file, change their own half, and write the whole thing back.
+
+Nothing ordered them. So a lamp write that *began* before a publish finished
+wrote the nights back exactly as they were before it — un-publishing the night
+somebody had just published. The photographs still showed to the owner, because
+the preview does not depend on the flag; a stranger with the link saw nothing.
+
+### And nothing could report it
+
+**GitHub cannot refuse the second write.** `putFile()` fetches a fresh sha
+immediately before writing, so the write is never *against* the version its
+content was built from. The API sees an ordinary update and answers 200. Both
+callers are told they succeeded, and there is no error anywhere.
+
+**The browser's own queue cannot cover it either.** `galleryQueue()` serialises
+the console's own calls — but the lamp deliberately settles for 600ms before
+sending, which means the press that overlaps a publish is precisely the one
+that queue has not started yet. Ordering had to go where the file is.
+
+### The fix, and why it is per room
+
+`inOrder()` in `src/gallery.js` — a promise chain keyed by room, with the READ
+inside it as well as the write. Reading outside the queue would buy nothing:
+it is reading a version somebody else is about to replace that loses the
+update, not the writing.
+
+A chain per room rather than one global, because two quizmasters write
+different files and have no reason to wait for each other. The chain swallows
+rejections, so one failed write cannot wedge a room for ever, and every caller
+still gets its own result back.
+
+`test/gallery-writes-serialise.test.js` puts the private repo behind a stubbed
+`fetch` — a Map, with a delay on the read so the interleaving is deterministic
+rather than lucky — and covers the publish-then-lamp order, the lamp-then-
+publish order, four lamps at once, and unpublishing. All four failed before the
+fix.
+
+### The one that was NOT the cause, but is real
+
+While chasing this, a second way to get the same symptom was reproduced:
+publishing on the **host key** writes the flag into the HOUSE room, while the
+public gallery reads the owner's own quizmaster room, so the night is published
+into a folder the page never looks at — with a 200 and no error. The comment
+above `galleryRoomId()` in `server.js` had already predicted this in as many
+words and left it, which is how a written-down hazard becomes a bug.
+
+It is left alone deliberately for now: routing the write to the gallery's room
+would publish nights whose photographs are in the *other* room, which is a
+worse silence than the one it fixes. The real answer is for the console's photo
+pages and the publish route to agree on one room, and that is a bigger change
+than the fault reported.
+
+## OTHER NIGHTS AT THE SAME PUB — 31 August 2026
+
+Asked for: *"the galleries should have navigation so you can get to a previous
+one or a new one on a per-venue, per-QM basis… each gallery should say which QM
+it's for as well as which room, so scrolling through the galleries should be
+for the same room."*
+
+- **The quizmaster was already there.** The page header carries the name from
+  `/api/brand`; what was missing was the venue, so that is what was added —
+  one line under the date, beside the count, silent when a night has no venue.
+- **The neighbours are worked out on the server.** The photo repository is
+  foldered by DATE alone — the choice `mergeGigs()` records — so which pub a
+  night was at lives in the archive, and only the server has it. The browser
+  draws what it is handed and computes nothing, which is also why the page and
+  the night list cannot disagree.
+- **A night with no venue falls back to every night**, rather than to none.
+  Nights filed before venues existed have no pub on them, and navigation that
+  silently vanishes on those is worse than navigation that is broader than it
+  promised.
+- **An end of the run is an absent link, not a greyed one.** This is the one
+  place *a control is present and inert, never absent* does not apply: that
+  rule is about a control whose position has to be learnable on a page somebody
+  drives every week, and this is a page a stranger sees once. A greyed arrow
+  there is a question; nothing at all is simply the end of the pub's nights.
+- **Three grid cells, not a flex row.** "All nights" has to stay in the middle
+  whether there are neighbours on both sides, one, or neither — a flex row
+  would slide it about as the ends came and went. The empty span holds its
+  column open. It stacks to a column below 560px.
+- **And the gallery wears the app's gauntlet cursor now** — asked for in the
+  same breath. Still never the projector and never a phone, which is the
+  decision's own prohibition: the gallery is neither, and on a touch screen it
+  costs nothing because there is no cursor to draw.

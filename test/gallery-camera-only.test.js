@@ -149,14 +149,30 @@ test('ALL FOUR READERS ASK THE ONE FUNCTION', () => {
   const listAt = src.indexOf("if (route === '/api/gallery'");
   assert.ok(listAt > -1, 'the night list route must still be findable');
   const list = src.slice(listAt, src.indexOf("if (route.startsWith('/api/gallery/'"));
-  assert.ok(asks(list),
+  assert.ok(list.length > 0 && asks(list),
     'the night LIST must ask it, or its count will disagree with the page it counts');
 
-  const listing = src.slice(src.indexOf("if (route.startsWith('/api/gallery/'"));
-  assert.ok(asks(listing.slice(0, 2400)),
+  /*
+   * EACH SLICE RUNS TO THE NEXT ROUTE, NEVER A CHARACTER COUNT.
+   *
+   * These were fixed windows — 2,400 characters and 1,600 — and adding the
+   * venue and the night-to-night navigation pushed the call past the end of
+   * the first one, so a correct route failed. The other way round is worse and
+   * is the real reason: a window that no longer reaches the code it was aimed
+   * at goes on passing while covering nothing, which is this file's own
+   * subject wearing a different hat. A route's boundary is the next route.
+   */
+  const between = (from, to) => {
+    const a = src.indexOf(from);
+    assert.ok(a > -1, `${from} — has this route moved?`);
+    const b = to ? src.indexOf(to, a + 1) : -1;
+    assert.ok(!to || b > a, `${to} — has this route moved?`);
+    return src.slice(a, b > a ? b : undefined);
+  };
+
+  assert.ok(asks(between("if (route.startsWith('/api/gallery/'", "if (route.startsWith('/gallery-photo/'")),
     "a night's own PAGE must ask it");
-  const one = src.slice(src.indexOf("if (route.startsWith('/gallery-photo/'"));
-  assert.ok(asks(one.slice(0, 1600)),
+  assert.ok(asks(between("if (route.startsWith('/gallery-photo/'", "if (route.startsWith('/past-photo/'")),
     'the single-photo route must ask it too — a URL can be typed');
   /*
    * The night's own listing, NOT the report route that shares its prefix — the

@@ -1,0 +1,122 @@
+/**
+ * TWO WRITES TO `published.json` MUST NOT LOSE EACH OTHER.
+ *
+ * Reported off a live gallery on 31 August 2026, from a screenshot: *"it says
+ * 'not published', but it is."* The console had published the night and been
+ * told it worked; the public page said the opposite, and a stranger with the
+ * link would have seen nothing.
+ *
+ * **IT IS A LOST UPDATE, AND NOTHING COULD REPORT IT.** One file holds both
+ * halves of what a room publishes — which NIGHTS are up, and the per-photo
+ * rulings behind the green/red lamps — and `setPublished()` and
+ * `setPhotoDecision()` each read the whole thing, change their own half, and
+ * write the whole thing back. Nothing serialised them, so a lamp write that
+ * began before a publish finished wrote back the nights as they were BEFORE
+ * it, quietly undoing it.
+ *
+ * **AND GITHUB CANNOT REFUSE IT**, which is why it is silent: `putFile()`
+ * fetches a fresh sha immediately before writing, so the write is never
+ * "against" the version its content was built from. The API sees a perfectly
+ * ordinary update and answers 200. Both callers are told they succeeded.
+ *
+ * **THE BROWSER'S OWN QUEUE CANNOT COVER THIS.** `galleryQueue()` serialises
+ * the console's own calls, and the lamp deliberately settles for 600ms before
+ * sending — so the press that overlaps a publish is exactly the one the queue
+ * has not started yet. The ordering has to be where the file is.
+ *
+ * No network: the private repo is a Map behind a stubbed `fetch`, with a delay
+ * on the read so the interleaving is deterministic rather than lucky.
+ */
+
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+process.env.PHOTO_REPO = 'someone/photos';
+process.env.PHOTO_TOKEN = 'stub';
+
+const { setPublished, setPhotoDecision, publishedNights, photoDecisions } =
+  await import('../src/gallery.js');
+
+const NIGHT = '2026-08-20';
+const ROOM = 'qm-mark';
+
+/** The repository, as a Map — and a read that takes long enough to overlap. */
+function stubRepo({ readDelay = 0 } = {}) {
+  const files = new Map();
+  const real = globalThis.fetch;
+  globalThis.fetch = async (input, init = {}) => {
+    const url = typeof input === 'string' ? input : input.url;
+    if (!url.startsWith('https://api.github.com/')) return real(input, init);
+    const at = decodeURI(url.match(/\/contents\/([^?]*)/)[1]);
+    if ((init.method || 'GET').toUpperCase() === 'PUT') {
+      files.set(at, Buffer.from(JSON.parse(init.body).content, 'base64').toString('utf8'));
+      return new Response(JSON.stringify({ content: { sha: 'x' } }), { status: 200 });
+    }
+    if (readDelay) await new Promise((r) => setTimeout(r, readDelay));
+    if (!files.has(at)) return new Response('{"message":"Not Found"}', { status: 404 });
+    return new Response(JSON.stringify({
+      name: 'published.json', path: at, sha: 'x', type: 'file', encoding: 'base64',
+      content: Buffer.from(files.get(at), 'utf8').toString('base64'),
+    }), { status: 200 });
+  };
+  return { files, restore: () => { globalThis.fetch = real; } };
+}
+
+test('a lamp pressed while a night is being published does not un-publish it', async () => {
+  const repo = stubRepo({ readDelay: 25 });
+  try {
+    // Both start before either finishes — the real case, where the lamp's own
+    // 600ms settle lands on top of the publish that was pressed just after it.
+    await Promise.all([
+      setPublished(ROOM, NIGHT, true),
+      setPhotoDecision(ROOM, NIGHT, 'p1abc-picked.jpg', 'on'),
+    ]);
+    assert.deepEqual(await publishedNights(ROOM), [NIGHT],
+      'the night was published and a lamp write put it back the way it was');
+    assert.deepEqual(await photoDecisions(ROOM), { [`${NIGHT}/p1abc-picked.jpg`]: 'on' },
+      'and the ruling has to survive too — losing it the other way round is the same bug');
+  } finally {
+    repo.restore();
+  }
+});
+
+test('and it holds the other way round, with the publish second', async () => {
+  const repo = stubRepo({ readDelay: 25 });
+  try {
+    await Promise.all([
+      setPhotoDecision(ROOM, NIGHT, 'p1abc-picked.jpg', 'off'),
+      setPublished(ROOM, NIGHT, true),
+    ]);
+    assert.deepEqual(await publishedNights(ROOM), [NIGHT]);
+    assert.deepEqual(await photoDecisions(ROOM), { [`${NIGHT}/p1abc-picked.jpg`]: 'off' });
+  } finally {
+    repo.restore();
+  }
+});
+
+test('several lamps at once all land — none is overwritten by its neighbour', async () => {
+  const repo = stubRepo({ readDelay: 15 });
+  try {
+    const names = ['p1a-picked.jpg', 'p2b-picked.jpg', 'p3c-picked.jpg', 'p4d-picked.jpg'];
+    await Promise.all(names.map((n) => setPhotoDecision(ROOM, NIGHT, n, 'on')));
+    assert.deepEqual(await photoDecisions(ROOM),
+      Object.fromEntries(names.map((n) => [`${NIGHT}/${n}`, 'on'])));
+  } finally {
+    repo.restore();
+  }
+});
+
+test('unpublishing still works, and is not undone by a ruling either', async () => {
+  const repo = stubRepo({ readDelay: 20 });
+  try {
+    await setPublished(ROOM, NIGHT, true);
+    await Promise.all([
+      setPublished(ROOM, NIGHT, false),
+      setPhotoDecision(ROOM, NIGHT, 'p9z-picked.jpg', 'on'),
+    ]);
+    assert.deepEqual(await publishedNights(ROOM), [],
+      'taking a night down must be as reliable as putting it up');
+  } finally {
+    repo.restore();
+  }
+});

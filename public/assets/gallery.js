@@ -188,7 +188,17 @@ async function showNight(night) {
     return;
   }
   title.textContent = data.when || night;
-  sub.textContent = `${data.photos.length} photo${data.photos.length === 1 ? '' : 's'}`;
+  /*
+   * WHICH PUB, BESIDE THE COUNT — asked for on 31 August 2026: *"each gallery
+   * should say which QM it's for as well as which room."* The quizmaster is
+   * already in the header (`/api/brand`), so this is the missing half, and it
+   * is one line rather than a second heading: somebody who scanned a code in
+   * the room knows where they were, and this is confirmation rather than news.
+   * Silent when the night has no venue on it, like every other derived line
+   * in this app.
+   */
+  const count = `${data.photos.length} photo${data.photos.length === 1 ? '' : 's'}`;
+  sub.textContent = data.venue ? `${data.venue} · ${count}` : count;
   /*
    * TWO ELEMENTS, APPENDED SEPARATELY — and this is why "All nights" had never
    * appeared under a night's photographs.
@@ -216,9 +226,50 @@ async function showNight(night) {
         </button>`).join('')}
     </div>`);
   body.replaceChildren(grid);
-  body.appendChild(node(`<p class="gal-back"><a href="${esc(home())}">All nights</a></p>`));
+  body.appendChild(nightNav(data));
   wireBigPicture(grid, data.photos);
   if (data.preview && data.live === false) sub.append(' · ', notLive());
+}
+
+/**
+ * BACK A NIGHT, ON A NIGHT, AND THE WAY OUT — under the photographs.
+ *
+ * Asked for on 31 August 2026: *"the galleries should have navigation so you
+ * can get to a previous one or a new one on a per-venue, per-QM basis."*
+ *
+ * **THE NEIGHBOURS ARE THE SAME PUB'S, decided on the server**, because only
+ * the server has the archive that says which pub a night was at — the photo
+ * folders are dated and nothing else. So this draws what it is handed and
+ * works out nothing, which is also why it cannot disagree with the list.
+ *
+ * **OLDER ON THE LEFT, NEWER ON THE RIGHT**, the way time is drawn everywhere,
+ * and each names its DATE rather than saying "previous" — the date is what
+ * somebody is actually looking for, and it says whether there is anything
+ * worth pressing before they press it.
+ *
+ * **AN END OF THE RUN IS AN ABSENT LINK, NOT A DEAD ONE.** This is the one
+ * place the present-and-inert rule does not apply: that rule is about a
+ * control whose position must be learnable on a page somebody drives every
+ * week, and this is a page a stranger sees once. A greyed arrow on it is a
+ * question ("why can I not press that?") where nothing at all is simply the
+ * end of the pub's nights.
+ *
+ * **"All nights" ALWAYS SHOWS**, in the middle, because it is the way out and
+ * a page reached from a link has no history behind it.
+ */
+function nightNav(data) {
+  // The arrow leads on the way back and trails on the way forward, so the
+  // pair points outwards from the night you are on.
+  const step = (n, side) => (n
+    ? `<a class="gal-step is-${side}" href="${esc(nightLink(n.night))}">${
+      side === 'older' ? `\u2190 ${esc(n.when || n.night)}` : `${esc(n.when || n.night)} \u2192`}</a>`
+    : '<span class="gal-step is-none" aria-hidden="true"></span>');
+  return node(`
+    <nav class="gal-nav" aria-label="Other nights here">
+      ${step(data.older, 'older')}
+      <a class="gal-back-link" href="${esc(home())}">All nights</a>
+      ${step(data.newer, 'newer')}
+    </nav>`);
 }
 
 /**

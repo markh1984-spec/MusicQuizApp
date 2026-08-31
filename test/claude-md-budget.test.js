@@ -373,8 +373,27 @@ const ROOT = new URL('..', import.meta.url).pathname;
  *
  * The reasoning for all of it went to `docs/console.md` and `docs/gigs.md`;
  * what is here is the rules and the guards' names.
+ *
+ * RAISED TO 195,000 ON 31 AUGUST 2026, and the note above asked for the next
+ * addition to pay for itself instead — so here is what it bought and what was
+ * cut, because the point of this number is that a raise has to be argued for.
+ *
+ * CUT FIRST, and it came to about 1,700 bytes: 27 lines of the `docs/` index
+ * restated a section CLAUDE.md already carries with its own *Full reasoning*
+ * link at the foot of it, one entry was listed twice, and one pointed at a
+ * file it was already filed under. None of that was a rule; all of it was
+ * paid for on every session.
+ *
+ * WHAT IT BOUGHT: two rules about SILENT DATA LOSS ON A PUBLIC PAGE, which is
+ * what an always-loaded file is for. `published.json` holds two halves that
+ * two callers edit, and nothing ordered them — a lamp write that overlapped a
+ * publish quietly un-published the night, GitHub answered 200 to both, and it
+ * reached a live gallery. Plus the rule that a page SCROLLS and the projector
+ * is the one that does not, after four public pages spent two years unable to
+ * scroll at all. Both are the shape this budget exists to keep visible: a
+ * fault that nothing throws, nothing fails, and only a person notices.
  */
-const BUDGET = 193_000;
+const BUDGET = 195_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

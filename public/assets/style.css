@@ -1936,7 +1936,16 @@ body.console::after { display: none; }
  * closed fist while dragging is untouched — this is about clicking, not
  * grabbing.
  */
-body.console, body.console * {
+/* ---- AND THE PUBLIC GALLERY WEARS IT TOO, asked for on 31 August 2026:
+   *"can we keep the mouse clicker from the app for this as well?"*
+ *
+ * It is still never the projector and never a phone — the decision's own
+ * prohibition, and untouched. The gallery is neither: it is a page somebody
+ * reads on a laptop, and it is the one public page that should feel like the
+ * app rather than like a stock web page. On a phone it costs nothing, because
+ * a touch screen has no cursor to draw. */
+body.console, body.console *,
+body.gallery, body.gallery * {
   cursor:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg stroke='%233a2a16' stroke-width='1.2' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M8.8 21.6 L24.4 21.6 L27 26.4 Q23.53 28.3 20.07 26.1 Q16.6 28.3 13.13 26.1 Q9.67 28.3 6.2 26.4 Z' fill='%23e6d5ad'/%3E%3Cpath d='M7.4 23.5 L25.8 23.5' stroke='%23b8923f' stroke-width='1.15'/%3E%3Cpath d='M9.8 13.6 Q4.8 14 3.8 16.8 Q3 19.6 6 20.4 Q8.6 21 10.6 20.4 Z' fill='%23eddfbc'/%3E%3Cpath d='M8.8 21.6 L8.8 5 Q8.8 3.2 10.62 3.2 Q12.45 3.2 12.45 5 L12.45 11.2 Q12.7 12.15 12.95 11.2 L12.95 8 Q12.95 6.3 14.65 6.3 Q16.35 6.3 16.35 8 L16.35 11.2 Q16.6 12.15 16.85 11.2 L16.85 8.5 Q16.85 6.8 18.5 6.8 Q20.15 6.8 20.15 8.5 L20.15 11.2 Q20.4 12.15 20.65 11.2 L20.65 10.2 Q20.65 8.6 22.5 8.6 Q24.4 8.6 24.4 10.2 L24.4 21.6 Z' fill='%23f6ecd6'/%3E%3Cpath d='M12.7 13 L12.7 14.9 M16.6 13 L16.6 15 M20.4 13 L20.4 14.9' stroke='%23c9b183' stroke-width='0.95' fill='none'/%3E%3C/g%3E%3C/svg%3E")
     16 15, pointer !important;
@@ -1957,7 +1966,8 @@ body.console, body.console * {
  * shows the fist rather than this — the ordering here only has to make
  * sense to a reader, not to the cascade.
  */
-body.console *:active {
+body.console *:active,
+body.gallery *:active {
   cursor:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg stroke='%233a2a16' stroke-width='1.2' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M8.8 21.6 L24.4 21.6 L27 26.4 Q23.53 28.3 20.07 26.1 Q16.6 28.3 13.13 26.1 Q9.67 28.3 6.2 26.4 Z' fill='%23e6d5ad'/%3E%3Cpath d='M7.4 23.5 L25.8 23.5' stroke='%23b8923f' stroke-width='1.15'/%3E%3Cpath d='M9.8 13.6 Q4.8 14 3.8 16.8 Q3 19.6 6 20.4 Q8.6 21 10.6 20.4 Z' fill='%23eddfbc'/%3E%3Cpath d='M8.8 21.6 L8.8 8.5 Q8.8 6.8 10.62 6.8 Q12.45 6.8 12.45 8.5 L12.45 11.2 Q12.7 12.15 12.95 11.2 L12.95 8 Q12.95 6.3 14.65 6.3 Q16.35 6.3 16.35 8 L16.35 11.2 Q16.6 12.15 16.85 11.2 L16.85 8.5 Q16.85 6.8 18.5 6.8 Q20.15 6.8 20.15 8.5 L20.15 11.2 Q20.4 12.15 20.65 11.2 L20.65 10.2 Q20.65 8.6 22.5 8.6 Q24.4 8.6 24.4 10.2 L24.4 21.6 Z' fill='%23f6ecd6'/%3E%3Cpath d='M12.7 13 L12.7 14.9 M16.6 13 L16.6 15 M20.4 13 L20.4 14.9' stroke='%23c9b183' stroke-width='0.95' fill='none'/%3E%3C/g%3E%3C/svg%3E")
     16 15, pointer !important;
@@ -1979,7 +1989,9 @@ body.console .dragging {
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg stroke='%233a2a16' stroke-width='1.2' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M8.8 21.2 L24.4 21.2 L27 26 Q23.53 27.9 20.07 25.7 Q16.6 27.9 13.13 25.7 Q9.67 27.9 6.2 26 Z' fill='%23e6d5ad'/%3E%3Cpath d='M7.4 23.1 L25.8 23.1' stroke='%23b8923f' stroke-width='1.15'/%3E%3Cpath d='M9.6 15.2 Q6.4 15.6 6.1 18 Q5.9 20.3 8.6 20.6 L10.8 20.6 Z' fill='%23eddfbc'/%3E%3Cpath d='M8.8 21.2 L8.8 14.4 Q8.8 10.9 10.7 10.7 Q12.5 10.5 12.7 11.9 Q12.9 10.2 14.7 10.2 Q16.4 10.2 16.6 11.7 Q16.8 10 18.6 10.1 Q20.2 10.2 20.4 11.7 Q20.7 10.4 22.3 10.7 Q24.4 11.2 24.4 14.2 L24.4 21.2 Z' fill='%23f6ecd6'/%3E%3Cpath d='M12.7 12.6 L12.7 14.8 M16.6 12.4 L16.6 14.9 M20.4 12.6 L20.4 14.8' stroke='%23c9b183' stroke-width='0.95' fill='none'/%3E%3C/g%3E%3C/svg%3E") 16 15, grabbing !important;
 }
 body.console button:disabled,
-body.console [disabled] { cursor: default !important; }
+body.console [disabled],
+body.gallery button:disabled,
+body.gallery [disabled] { cursor: default !important; }
 body.console input:not([type="checkbox"]):not([type="radio"]),
 body.console textarea { cursor: text !important; }
 
@@ -8968,6 +8980,35 @@ body.gallery { padding: 0; }
    otherwise move the wall somebody is about to come back to, which is the
    scroll the overlay exists to preserve. */
 body.gal-zoomed { overflow: hidden; }
+
+/* ---- OTHER NIGHTS AT THE SAME PUB — under the photographs.
+
+   Three cells rather than a flex row with a gap: the middle one has to stay
+   in the MIDDLE whether there are neighbours on both sides, one, or neither,
+   and a flex row would slide "All nights" about as the ends came and went.
+   The empty span holds its column open, which is what keeps it still.
+
+   It wraps to a column on a phone, where three dates side by side is three
+   lines of two words each. */
+.gal-nav {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  gap: 12px; margin-top: 28px;
+}
+.gal-step, .gal-back-link {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: 0 14px; border-radius: var(--r-field);
+  text-decoration: none; color: var(--ink-dim); font-size: var(--fs-note);
+}
+.gal-step.is-older { justify-self: start; }
+.gal-step.is-newer { justify-self: end; }
+.gal-step:hover, .gal-back-link:hover { color: var(--ink); }
+.gal-back-link { color: var(--ink); font-weight: 700; }
+.gal-step.is-none { min-height: 0; padding: 0; }
+@media (max-width: 560px) {
+  .gal-nav { grid-template-columns: 1fr; justify-items: center; }
+  .gal-step.is-older, .gal-step.is-newer { justify-self: center; }
+  .gal-step.is-none { display: none; }
+}
 
 .gal-back { text-align: center; margin-top: 24px; }
 

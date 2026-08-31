@@ -84,6 +84,42 @@ async function readAll(roomId) {
   }
 }
 
+/*
+ * ---- ONE WRITER AT A TIME, PER ROOM ------------------------------------
+ *
+ * **`published.json` HOLDS TWO HALVES AND TWO CALLERS EDIT IT.** Which nights
+ * are up is `setPublished()`; the per-photo rulings behind the green and red
+ * lamps are `setPhotoDecision()`. Each reads the WHOLE file, changes its own
+ * half and writes the whole thing back — so without ordering, a lamp write
+ * that began before a publish finished writes the nights back the way they
+ * were and quietly un-publishes it.
+ *
+ * That reached a live gallery: the console said the night was published, the
+ * public page said it was not, and a stranger with the link saw nothing.
+ *
+ * **GITHUB CANNOT REFUSE IT.** `putFile()` fetches a fresh sha immediately
+ * before writing, so the write is never against the version its content was
+ * built from — the API sees an ordinary update and answers 200 to both. There
+ * is no error anywhere to notice.
+ *
+ * **AND THE BROWSER'S QUEUE CANNOT COVER IT.** `galleryQueue()` orders the
+ * console's own calls, and the lamp deliberately settles for 600ms before
+ * sending, so the press that overlaps a publish is precisely the one that
+ * queue has not started. Ordering belongs where the file is.
+ *
+ * A chain per room rather than one global: two quizmasters write different
+ * files and have no reason to wait for each other. The chain swallows
+ * rejections so one failed write cannot wedge the room for ever — every
+ * caller still gets its own result.
+ */
+const writing = new Map();
+
+function inOrder(roomId, job) {
+  const after = (writing.get(roomId) || Promise.resolve()).then(job, job);
+  writing.set(roomId, after.then(() => {}, () => {}));
+  return after;
+}
+
 /** `2026-08-27/p1abc.jpg` — a night we recognise and a name we issued. */
 function photoKeyOk(key) {
   const [night, name, ...rest] = String(key || '').split('/');
@@ -150,6 +186,12 @@ export async function setPublished(roomId, night, on) {
   if (!photosRepoConfigured()) {
     return { ok: false, error: 'The private photo repository is not set up, so there is nowhere to record this.' };
   }
+  // The READ is inside the queue with the write, or the ordering buys nothing:
+  // it is reading a version somebody else is about to replace that loses this.
+  return inOrder(roomId, () => publishNow(roomId, night, on));
+}
+
+async function publishNow(roomId, night, on) {
   const held = await readAll(roomId);
   const have = held.nights;
   const want = on ? [...new Set([...have, night])] : have.filter((n) => n !== night);
@@ -189,6 +231,12 @@ export async function setPhotoDecision(roomId, night, name, decision) {
   if (!photosRepoConfigured()) {
     return { ok: false, error: 'The private photo repository is not set up, so there is nowhere to record this.' };
   }
+  // Behind the same queue as publishing, and it has to be the SAME one: these
+  // two edit one file, so ordering them separately would order nothing.
+  return inOrder(roomId, () => decideNow(roomId, key, decision));
+}
+
+async function decideNow(roomId, key, decision) {
   const held = await readAll(roomId);
   const photos = { ...held.photos };
   if (decision) photos[key] = decision; else delete photos[key];

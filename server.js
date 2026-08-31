@@ -2682,9 +2682,51 @@ async function handleGet(req, res, url, route) {
     }
     const files = await listDir(`${photoFolder(galleryRoomId())}/${night}`, 'photos');
     const said = await photoDecisions(galleryRoomId());
+    /*
+     * WHICH PUB THIS WAS, AND WHAT IS EITHER SIDE OF IT AT THE SAME PUB.
+     *
+     * Asked for on 31 August 2026: *"the galleries should have navigation so
+     * you can get to a previous one or a new one on a per-venue, per-QM
+     * basis… each gallery should say which QM it's for as well as which room,
+     * so scrolling through the galleries should be for the same room."*
+     *
+     * **THE QUIZMASTER WAS ALREADY THERE and the venue was not** — the page's
+     * own header carries the name from `/api/brand`, so this adds the half
+     * that was missing rather than both.
+     *
+     * The photo repository is foldered by DATE alone — the deliberate choice
+     * `mergeGigs()` records — so the venue lives in the archive and this is
+     * the join, the same one the night LIST makes for `?venue=`. Read here
+     * unconditionally because a single night's page needs it either way; the
+     * list keeps its conditional read and still costs what it always did.
+     *
+     * **A NIGHT WITH NO VENUE FALLS BACK TO EVERY NIGHT rather than to
+     * none.** Nights filed before venues existed have no pub on them, and
+     * navigation that silently disappears on those is worse than navigation
+     * that is merely broader than it promised.
+     */
+    const gRoom = rooms.get(galleryRoomId());
+    await ensureArchiveRestored(gRoom);
+    const venueOf = new Map(mergeGigs(listArchive(gRoom.paths.archive), [])
+      .map((n) => [n.night, n.venue || '']));
+    const venue = venueOf.get(night) || '';
+    const visible = preview
+      ? [...new Set([...(await publishedNights(galleryRoomId())),
+        ...(await listDirs(photoFolder(galleryRoomId()), 'photos')).map((f) => f.name).filter(isNightFolder)])]
+      : await publishedNights(galleryRoomId());
+    const run = visible
+      .filter((n) => (venue ? (venueOf.get(n) || '') === venue : true))
+      .sort().reverse();
+    const at = run.indexOf(night);
+    // Newest first, so the one BEFORE this in the list is the more recent one.
+    const step = (i) => (i >= 0 && i < run.length && run[i] !== night
+      ? { night: run[i], when: readableNight(run[i]) } : null);
     return sendJson(res, 200, {
       night,
       when: readableNight(night),
+      venue,
+      newer: at > -1 ? step(at - 1) : null,
+      older: at > -1 ? step(at + 1) : null,
       live: await isPublished(galleryRoomId(), night),
       preview,
       /*

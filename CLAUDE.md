@@ -474,7 +474,7 @@ opening a second file.
 - **SSE, not websockets**
 - **No build step**
 - **Packs are JSON files**
-- **The console wears a gauntlet cursor — open hand, closed fist while dragging — and scroll rods on its panels, console only** — never the projector or a phone.
+- **The console wears a gauntlet cursor — open hand, closed fist while dragging — and scroll rods on its panels, console only** — and the public gallery since 31 August 2026. Never the projector or a phone.
 - **No profanity filter on team names** — **in the ROOM. Do not add word
   filtering to the projector, the phones or the console.** The public league
   page and the landlord's report are the one exception, and it is a SCOPE
@@ -1496,6 +1496,22 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   clutter rule exactly. **THE ROW'S KEY TRAVELS WITH THE ROW** so the console
   can combine the filter's verdict with the rulings without a second copy of
   `teamKey()` in the browser — and the library stays free of the GitHub read.
+- **`published.json` HAS ONE WRITER AT A TIME, PER ROOM — `inOrder()` in
+  `src/gallery.js`.** Which nights are up and the per-photo rulings are one
+  file that two callers edit, each reading the whole thing and writing it back
+  — so a lamp write that began before a publish finished put the nights back as
+  they were and **silently un-published the night**. It reached a live gallery:
+  the console said published, the page said not, a stranger saw nothing.
+  **GITHUB CANNOT REFUSE IT** — `putFile()` fetches a fresh sha just before
+  writing, so a write is never against the version its content was built from
+  and both callers get a 200. **AND THE BROWSER'S QUEUE CANNOT COVER IT**: the
+  lamp settles for 600ms, so the press that overlaps a publish is exactly the
+  one it has not started. Order it where the FILE is.
+- **A NIGHT NAMES ITS PUB AND STEPS TO THE ONE EITHER SIDE AT THAT PUB.**
+  **Decided on the SERVER** — only it has the archive saying which pub a dated
+  photo folder belongs to. **An end of the run is an ABSENT link, not a dead
+  one**: the one place *present and inert* does not apply, since that rule is
+  about a page somebody drives weekly and this is one a stranger sees once.
 - **THE LEAGUE IS EXPORTED TO TWO AUDIENCES AND THEY WANTED DIFFERENT THINGS**
   — *"can that be exported to the landlord and the quiz teams to view?"* The
   landlord wants EVIDENCE, so the season table joined the post-night report he
