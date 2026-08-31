@@ -87,6 +87,17 @@ const linked = (path) => {
   return out;
 };
 
+/**
+ * THE WAY BACK TO THE CONSOLE, carrying the key that got you here.
+ *
+ * Only ever drawn in preview, so it is never offered to a customer — and the
+ * key comes from THIS visit's address rather than from localStorage, the rule
+ * this app follows everywhere: a remembered key must not spread itself onto
+ * new pages and into browser history.
+ */
+const consoleLink = () => '/console?door=community&tab=photos'
+  + (KEY ? `&key=${encodeURIComponent(KEY)}` : '');
+
 /** A link back to this page — the venue's own address, or the plain one. */
 const home = () => linked(VENUE ? `/${VENUE}/gallery` : '/gallery');
 
@@ -228,8 +239,39 @@ async function showNights() {
       <p class="muted gal-empty">No photos are up yet. They go up after the night.</p>`));
     return;
   }
+  /*
+   * AND ONE LINE FOR THE QUIZMASTER, WHEN NIGHTS ARE HERE BUT NOT PUBLIC.
+   *
+   * The "Not published" badge per night was removed on 31 August 2026, asked
+   * for by name — but the information is worth having and only the badge was
+   * the problem. This is the same fact said ONCE for the page instead of
+   * eighteen times down it, which is the clutter rule rather than a reversal.
+   *
+   * **IT IS THE ANSWER TO A REAL CONFUSION, not a status readout.** Signed
+   * out, this page correctly shows nothing when nothing is published — and it
+   * then says *"No photos are up yet"*, which to the person who filed those
+   * nights is simply untrue. Preview shows them and this says why nobody else
+   * can see them.
+   *
+   * **PREVIEW ONLY**, by construction: a customer is never sent it, because a
+   * customer never receives an unpublished night in the first place.
+   *
+   * **AND IT LINKS TO WHERE THE SWITCH IS.** Naming another page and leaving
+   * somebody to find it is the split-over-two-screens fault this app has a
+   * rule against — *"do it over there" must be a link to there*.
+   */
+  const drafts = data.preview ? nights.filter((n) => n.live === false).length : 0;
+  if (drafts) {
+    sub.textContent = `Pick a night. ${drafts} of these ${drafts === 1 ? 'is' : 'are'} only visible to you.`;
+  }
   const groups = groupsOf(nights);
-  body.replaceChildren(node(`
+  body.replaceChildren();
+  if (drafts) {
+    body.appendChild(node(`
+      <p class="gal-drafts">Not on the public page yet.
+        <a href="${esc(consoleLink())}">Put them up in the console</a>.</p>`));
+  }
+  body.appendChild(node(`
     <div class="gal-groups">
       ${groups.map((g) => `
         <section class="gal-group">

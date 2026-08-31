@@ -848,3 +848,37 @@ to something else."*
 carry the halves it is not changing, and the third half is exactly when that
 gets forgotten — `test/gallery-pins.test.js` publishes a night with a pin and a
 ruling on it and checks all three survive, in both directions.
+
+
+## "NO PHOTOS ARE UP YET" WAS TRUE FOR A CUSTOMER AND FALSE FOR THE OWNER
+
+Reported the same day the badge came off, with a screenshot of the plain
+`/gallery` on a phone: *"I'm seeing this when I should be seeing the main
+gallery page."*
+
+**The page was right and the sentence was wrong.** With no key on the link
+there is no preview, so a stranger correctly sees only published nights — and
+there were none in the room the gallery reads. But it then says *"No photos are
+up yet. They go up after the night"*, which to the person who filed a dozen
+nights is simply untrue, and reads as the page being broken rather than as the
+publishing step not having been taken.
+
+The route itself was checked before concluding that, because it had been edited
+that day — an archive read and a cover-photo step were both added to it. Driven
+against a stubbed private repo it lists six nights for a stranger when they are
+published, zero when they are not, and all six marked `live: false` on the host
+key. The venue filter was checked too.
+
+**So one line, in preview only:** *"Not on the public page yet. Put them up in
+the console."* — with a link to the tab that does it.
+
+- **It is the badge's information said ONCE for the page rather than eighteen
+  times down it.** That is the clutter rule rather than a reversal of the
+  removal: what was asked for was the end of a per-night badge that had been
+  wrong twice, not the end of knowing.
+- **Preview only, by construction.** A customer never receives an unpublished
+  night, so there is nothing for them to be told about.
+- **It links to where the switch is.** Naming another page and leaving somebody
+  to find it is the split-over-two-screens fault this app has a rule against.
+- **The key on that link comes from THIS visit's address**, never localStorage —
+  a remembered key must not spread itself onto new pages and into history.

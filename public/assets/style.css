@@ -8948,6 +8948,14 @@ body.gallery { padding: 0; }
 .gal-sub { color: var(--ink-dim); margin: 0; font-size: var(--fs-note); }
 .gal-empty { text-align: center; padding: 32px 8px; }
 
+/* One line for the quizmaster, never for a customer — see gallery.js. Quiet
+   rather than a warning: it is a state, and a state read before anything has
+   gone wrong. Centred, because the whole head of this page is. */
+.gal-drafts {
+  text-align: center; margin: 0 0 22px; font-size: var(--fs-note); color: var(--ink-dim);
+}
+.gal-drafts a { color: var(--ink); }
+
 /* ---- NIGHTS AS CARDS, GROUPED BY PUB.
 
    The pub is a heading and its nights are cards under it. `auto-fill` rather
