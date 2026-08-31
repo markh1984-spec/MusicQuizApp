@@ -78,6 +78,30 @@ export function showsOnGallery(name, said) {
   return isCameraFile(name);
 }
 
+/**
+ * WHICH OF A NIGHT'S PHOTOGRAPHS GO ON THE PUBLIC PAGE — the whole list, in
+ * one call, so the two places that need it cannot ask it differently.
+ *
+ * **THIS EXISTS BECAUSE THEY DID.** The night LIST counted with
+ * `isCameraFile()` while the night's own PAGE filtered with
+ * `showsOnGallery()`, one screen apart, under a comment claiming they matched.
+ * Switching a single photograph off by hand then left the list saying
+ * "12 photos" over a page that opened on 11, and switching a night's whole set
+ * off left a date in the list whose page was blank.
+ *
+ * `showsOnGallery()` was already the one decision; what drifted was which
+ * READER remembered to ask it. So the loop is here too, and there is nothing
+ * left at the call sites to get wrong.
+ *
+ * @param {string[]} names  file names, already checked as safe
+ * @param {string} night    the night they belong to, for the ruling key
+ * @param {object} said     every ruling, keyed `night/name` — see gallery.js
+ * @param {function(string, string): string} key  how a ruling is keyed
+ */
+export function galleryPhotosOf(names, night, said, key) {
+  return names.filter((name) => showsOnGallery(name, said[key(night, name)]));
+}
+
 export function extensionFor(contentType) {
   return ALLOWED[String(contentType || '').split(';')[0].trim().toLowerCase()] || null;
 }

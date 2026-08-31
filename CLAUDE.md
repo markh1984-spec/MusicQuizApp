@@ -507,7 +507,7 @@ opening a second file.
 - **How many prizes is chosen at launch too**
 - **"You got it" means the prize ON THE TABLE**
 - **A strip wins the long way only**
-- **Launch is the last thing on a pack card, and full width** — superseded; a pack card has no Launch. The rule moved to TONIGHT.
+- **Launch is the last thing on a pack card, and full width** — superseded; the rule moved to TONIGHT.
 - **The tab icon and the logo are one drawing**
 - **A QUESTION MARK INSIDE A MICROPHONE**
 - **The sound arcs are built but OFF** — **the app never draws this mark above 30px.**
@@ -1667,6 +1667,25 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
 - **HELP KEEPS ITS OWN TAB, NO `needs`, LAST**, and the door is ungated: it is
   where you go when what is wrong is your subscription.
 
+### A PAGE SCROLLS. THE PROJECTOR IS THE ONE THAT DOES NOT
+
+`body { overflow: auto }`, with `body.screen { overflow: hidden }` naming the
+exception. It was the other way round for two years and **Terms, Privacy,
+Refunds and the sign-up form could not be scrolled at all** — 2,528px of terms
+in a 900px window, and a real wheel moved nothing.
+
+- **`body`'s overflow PROPAGATES TO THE VIEWPORT** when `html` is `visible`, so
+  `hidden` there does not clip a box, it switches off the document. **A default
+  six pages must escape is how two of them come to be missed** — name the
+  exception instead.
+- **A PROGRAMMATIC SCROLL IS NOT A SCROLL.** `scrollTo(0, 220)` succeeds on a
+  hidden viewport and `scrollY` reads back 220, so a check written that way
+  reports a page scrolling while a finger does nothing. **Turn the real wheel**
+  — `node scripts/pages-scroll.mjs`, which asserts the projector is PINNED
+  rather than merely still.
+- **THE PROJECTOR MUST NEVER GAIN IT**: a stray scroll in a dark pub takes the
+  question off the top of the room's screen.
+
 ### CAPITALS ARE FOR EMPHASIS, NOT FOR LABELLING
 
 Set by the host on 14 August 2026, and it is a BRAND decision rather than a
@@ -1902,7 +1921,9 @@ every sentence that FORBIDS something, verbatim.
 `test/claude-md-budget.test.js` asserts the byte count, that every `docs/` link
 resolves, and that no decision exists in the doc without being named here.
 **Pay for a new rule by trimming an old one to its prohibition** before raising
-the budget; the diff will then say which you did.
+the budget; the diff will then say which you did. **And the index below names
+only what is NOT already a heading here** — 27 lines restated a section this
+file carries, with its own *Full reasoning* link at the foot of it.
 
 **And a mechanical split is only safe where the boundary is STRUCTURAL.** Moving
 table rows worked — a row is a row. The same script pointed at prose, keeping
@@ -1926,17 +1947,6 @@ Open the one you are touching; do not read them all.
 - Stopping a quiz early
 - Leaving the app mid-question
 - How many people can play
-- Online mode is ONE BOOLEAN, and the branch count is a budget
-- THREE WAYS TO PLAY A NIGHT — individual, they pick, dealt at random
-- A DROPDOWN IS NARROW SHUT AND WIDE OPEN — `console-pick.js`
-- THE MARKUP GUARD IS THE MARKUP'S HALF OF THE BRACE RULE
-- A STRAY BRACE IN THE STYLESHEET IS SILENT, AND IT REACHED A REAL CONSOLE
-- The alphabet round — no options at all
-- The intro round skips the dead air, and that is a SCORING fix
-- The breakout round — a laugh, not a question, and it scores nothing
-- The draw from the bottom half — a retention feature, not a raffle
-- A phone must not say you were right before the projector does
-- The picture round's four reveals
 
 **[`docs/screens.md`](docs/screens.md)** — the projector, the phone, the moments on them
 
@@ -1945,7 +1955,6 @@ Open the one you are touching; do not read them all.
 - The countdown before kick-off
 - A mis-tap must not reveal an answer
 - The fastest finger gets their face on the projector
-- A mis-tap must not reveal an answer
 - Looks — dressing a night up
 
 **[`docs/console.md`](docs/console.md)** — launching a night and driving it,
@@ -1958,20 +1967,10 @@ before touching a drag handler.**
 
 - A launch must say what it is about to destroy
 - The restart notice, and the one state that made it a lie
-- CHANGING TAB DOES NOT MOVE THE PAGE
-- THE CONSOLE'S THEME — one surface, one heading ladder, a bar that stays
-- The tabs run ALONG a quizmaster's evening, behind their door
-- DRAG AND DROP — the console is the laptop with the HDMI in it
 - TONIGHT — one launch section, and it PINS WHERE IT ALREADY IS on a drag
-- WHAT HAPPENS IN THE GAPS — a break plan, per gap in the night
-- THE GAPS ARE A DIAL ON THE PACK, NOT A STRIP UNDER IT
 - FIVE DOORS, and why Community is the fifth
 - WHAT MOVES TO COMMUNITY — a summary may repeat, a queue may not
-- THE BAND ABOVE LAUNCH IS KEPT CLEAR, and one row holds the night
-- THE BAR'S OWN TIDY-UP — and a drag with no tap is a broken control
-- A PACK WEARS ITS OWN SUBJECT
 - A CONTROL IS PRESENT AND INERT, NEVER ABSENT
-- Quiz → bingo → quiz, one running score, no engine changes at all
 
 **[`docs/gigs.md`](docs/gigs.md)** — venues, prizes, the diary, past nights,
 getting paid; **[`docs/gigs/photos.md`](docs/gigs/photos.md)** is the
@@ -1982,19 +1981,12 @@ photographs' own half, split off at the 100,000-byte cap.
 - Past gigs — the record of somebody's work, and who may take it away
 - Invoicing
 - Getting paid: what you have not billed, and who has not paid
-- THE MONTH IS ON THE LEFT AND WHAT YOU DO ABOUT A DATE IS ON THE RIGHT
-- The last slide of the night — "Back here Thursday 20th"
-- Headcount per venue — the app finally says a number it always knew
 - THE LEAGUE, EXPORTED — evidence for the landlord, a wall for the teams
-- WHAT THIS ROOM HAS ALREADY HEARD — the shelf is ranked PER VENUE
-- A prize taken at the bar has to reach the filed night
 - **THE GALLERY READS THE OWNER'S OWN QUIZMASTER ROOM, never `HOUSE`** — photos
   are filed per room, and reading the wrong one showed a full night as an empty
   page. A deleted photo leaves the repo but NOT git history — never imply
   otherwise.
-- PUTTING A NIGHT ON THE PUBLIC GALLERY (now in `docs/gigs/photos.md`)
 - AND THE PREVIEW DID NOT WORK ON THE HOST KEY
-- CHECKING THE PHOTOS IS THE NEXT PRESS
 - THE GALLERY ONLY HOLDS WHAT LOOKED LIKE A CAMERA TOOK IT — **tested now,
   because it fails silently**: `camera` defaults FALSE, and it never keeps a
   photo off the projector
@@ -2007,10 +1999,18 @@ photographs' own half, split off at the 100,000-byte cap.
   and `aria-label` are load-bearing**, the 18px dot gets a 44px hit area from a
   `::after`, and `.cphoto`'s own open must ignore a press on it. **It REPLACED
   the grey "Screen only" badge** — two badges saying overlapping things is a
-  label collision. **`showsOnGallery()` is the ONE decision and all three
-  readers ask it** — the listing, the single-photo route and this lamp — or a
-  photo is on a page the console swears is private. **A ruling that only
-  restates the guess is CLEARED, not stored**
+  label collision. **`showsOnGallery()` is the ONE decision and all FOUR
+  readers ask it** — the night LIST, a night's page, the single-photo route and
+  this lamp — or a photo is on a page the console swears is private. **A ruling
+  that only restates the guess is CLEARED, not stored**
+- **THE COUNT AND THE PAGE ARE ONE QUESTION — `galleryPhotosOf()`.** The night
+  list counted on the filename alone while the page it counted for asked the
+  ruling too, so one photo switched off said *"12 photos"* over a page opening
+  on 11. **The guard sliced from `/api/gallery/` — with the slash, the night's
+  PAGE** — so the list was never a reader it checked. **AND WITH THE FAULT PUT
+  BACK IT STILL PASSED: it had matched the COMMENT explaining the fix.** A
+  source check strips comments first, or it goes green the better a file is
+  documented
 - **IT FLIPS NOW AND SAVES LATER** — *"the 1-2 second load on clicking
   green/red is annoying."* The colour is the local truth and `saved` is the
   server's, so a failed write puts the lamp BACK and says why on the count
@@ -2095,7 +2095,6 @@ photographs' own half, split off at the 100,000-byte cap.
 **[`docs/generation.md`](docs/generation.md)** — writing quizzes, checking them, what they cost
 
 - Generated questions are checked, not trusted
-- What the room asked for — THREE BUTTONS, not a box
 
 **[`docs/owner.md`](docs/owner.md)** — the business — five tabs
 
@@ -3133,13 +3132,14 @@ typo is dropped rather than quietly becoming a round of general knowledge.
 ## Checks
 
 ```bash
-npm test        # 1,553 tests, no network, injected clocks — must stay green
+npm test        # 1,571 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
 node scripts/pub-unchanged.mjs HEAD~1 --ignore online   # did I break the pub night?
 node scripts/drag-check.mjs             # Tonight's drags, with a REAL browser drag
 node scripts/community-bay.mjs          # does the Community bay still fit the frame?
+node scripts/pages-scroll.mjs           # can a person actually scroll each page?
 ```
 
 **The rules these commands run on, and each was learned expensively — the full

@@ -27,7 +27,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { Photos, isCameraFile, NOT_CAMERA_SUFFIX, showsOnGallery } from '../src/photos.js';
+import { Photos, isCameraFile, NOT_CAMERA_SUFFIX, showsOnGallery, galleryPhotosOf } from '../src/photos.js';
 
 /** The smallest thing `sniffType()` will accept as a JPEG. */
 const JPEG = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(64, 1)]);
@@ -106,24 +106,57 @@ test('an unknown ruling falls back to the filename rather than becoming a third 
   }
 });
 
-test('ALL THREE READERS ASK THE ONE FUNCTION', () => {
+test('ALL FOUR READERS ASK THE ONE FUNCTION', () => {
   /*
    * A SOURCE CHECK, and it is the honest shape for this one: the routes read
    * the private repository, so running them needs a GitHub token this suite
    * does not have and must not need.
    *
-   * What it guards is that there is ONE decision. The gallery listing, the
-   * single-photo route (which re-checks, because a URL can be typed and that
-   * photo's name was on the projector all night) and the console's own pill
-   * all have to answer the same way — and the day one of them does not is the
-   * day a photograph is on a page the console swears is private.
+   * What it guards is that there is ONE decision. Four things answer "is this
+   * photograph public" and every one of them has to answer the same way — the
+   * day one does not is the day a photograph is on a page the console swears
+   * is private.
+   *
+   * **IT SAID THREE, AND THE MISSING FOURTH IS THE ONE THAT WENT WRONG.** The
+   * slice below started at `/api/gallery/` — with the slash, which is a NIGHT'S
+   * OWN PAGE. The night LIST is `/api/gallery` without it, and it was never
+   * looked at, so it spent weeks counting on the filename alone while the page
+   * it was counting for asked the full question. A guard aimed one character
+   * off its target passes for ever and proves nothing, which is this repo's
+   * oldest lesson wearing a URL this time.
+   *
+   * `galleryPhotosOf()` counts as asking: it is `showsOnGallery()` over a
+   * list, in the module that owns the decision.
    */
   const src = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  /*
+   * THE COMMENTS COME OUT FIRST, and this was found by putting the fault back.
+   *
+   * The fix for the count drift left a paragraph above it explaining what had
+   * gone wrong — a paragraph that names `showsOnGallery()`. So when the broken
+   * line was restored underneath to check this test could see it, the test
+   * passed: it had matched the note ABOUT the rule instead of the rule. A
+   * source check that its own documentation satisfies is a check that goes
+   * green the better a file is commented, which in this repo is always.
+   */
+  const code = (text) => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  const asks = (text) => {
+    const bare = code(text);
+    return bare.includes('showsOnGallery') || bare.includes('galleryPhotosOf');
+  };
+
+  // The LIST of nights — up to where the night's own page begins.
+  const listAt = src.indexOf("if (route === '/api/gallery'");
+  assert.ok(listAt > -1, 'the night list route must still be findable');
+  const list = src.slice(listAt, src.indexOf("if (route.startsWith('/api/gallery/'"));
+  assert.ok(asks(list),
+    'the night LIST must ask it, or its count will disagree with the page it counts');
+
   const listing = src.slice(src.indexOf("if (route.startsWith('/api/gallery/'"));
-  assert.ok(listing.slice(0, 2400).includes('showsOnGallery'),
-    'the gallery LISTING must ask showsOnGallery()');
+  assert.ok(asks(listing.slice(0, 2400)),
+    "a night's own PAGE must ask it");
   const one = src.slice(src.indexOf("if (route.startsWith('/gallery-photo/'"));
-  assert.ok(one.slice(0, 1600).includes('showsOnGallery'),
+  assert.ok(asks(one.slice(0, 1600)),
     'the single-photo route must ask it too — a URL can be typed');
   /*
    * The night's own listing, NOT the report route that shares its prefix — the
@@ -131,6 +164,62 @@ test('ALL THREE READERS ASK THE ONE FUNCTION', () => {
    * test's clothes this time.
    */
   const console_ = src.slice(src.indexOf("if (route.startsWith('/api/past-gigs/')) {"));
-  assert.ok(console_.slice(0, 3000).includes('showsOnGallery'),
+  assert.ok(asks(console_.slice(0, 3000)),
     "the console's per-photo pill must ask it as well, or it will disagree with the page");
+});
+
+/*
+ * THE COUNT AND THE PAGE ARE ONE QUESTION.
+ *
+ * The night list said "N photos" and the night's page showed the photos, and
+ * for a while they were worked out by two different filters a screen apart —
+ * the list on the filename alone, the page on the filename AND the human's
+ * ruling. So the first time a photograph was switched off by hand the list
+ * over-counted, and switching a whole night off left a date in the list whose
+ * page was blank. Nothing threw; the page simply lied about itself.
+ *
+ * `galleryPhotosOf()` is now the only way either of them asks, so these cases
+ * are about that function rather than about two call sites staying in step.
+ */
+
+const key = (night, name) => `${night}/${name}`;
+
+test('the list and the page count the same photographs', () => {
+  const night = '2026-08-13';
+  const names = ['a.jpg', 'b-picked.jpg', 'c.jpg'];
+  const said = {};
+  // Nothing ruled on: the filename decides, and the picked one is out.
+  assert.deepEqual(galleryPhotosOf(names, night, said, key), ['a.jpg', 'c.jpg']);
+});
+
+test('switching one off takes it out of the count as well as off the page', () => {
+  const night = '2026-08-13';
+  const names = ['a.jpg', 'b-picked.jpg', 'c.jpg'];
+  const said = { [key(night, 'a.jpg')]: 'off' };
+  assert.deepEqual(galleryPhotosOf(names, night, said, key), ['c.jpg']);
+});
+
+test('switching a picked one ON puts it in the count as well as on the page', () => {
+  const night = '2026-08-13';
+  const names = ['a.jpg', 'b-picked.jpg'];
+  const said = { [key(night, 'b-picked.jpg')]: 'on' };
+  assert.deepEqual(galleryPhotosOf(names, night, said, key), ['a.jpg', 'b-picked.jpg']);
+});
+
+test('a night with every photograph switched off counts NOTHING, so it is not listed', () => {
+  /*
+   * This is the case the list's own `if (count)` is there to catch — a night
+   * whose page is a heading over a blank space. Counting on the filename alone
+   * could never see it, because switching a photo off does not rename it.
+   */
+  const night = '2026-08-13';
+  const names = ['a.jpg', 'c.jpg'];
+  const said = { [key(night, 'a.jpg')]: 'off', [key(night, 'c.jpg')]: 'off' };
+  assert.equal(galleryPhotosOf(names, night, said, key).length, 0);
+});
+
+test("a ruling on ANOTHER night does not reach this one", () => {
+  const names = ['a.jpg'];
+  const said = { [key('2026-08-20', 'a.jpg')]: 'off' };
+  assert.deepEqual(galleryPhotosOf(names, '2026-08-13', said, key), ['a.jpg']);
 });

@@ -206,7 +206,26 @@ html, body {
 }
 
 body {
-  overflow: hidden;
+  /* ---- A PAGE SCROLLS. THE PROJECTOR IS THE ONE THAT DOES NOT.
+   *
+   * This said `hidden` for two years, written for the big screen — and `body`'s
+   * overflow PROPAGATES TO THE VIEWPORT when `html` is `visible`, so it was not
+   * clipping the body box, it was switching off scrolling for the whole
+   * document. Every page then had to opt back OUT of it, and four of the eight
+   * did: console, host, editor, phone.
+   *
+   * The four that did not were public. Measured with a real wheel: Terms was
+   * 2,528px tall in a 900px window and moved ZERO — the same for Privacy,
+   * Refunds and the sign-up form, and for a gallery of fourteen photographs on
+   * a phone. Nobody could read the legal pages this app SELLS against.
+   *
+   * A programmatic `scrollTo()` works fine on a hidden viewport, which is why
+   * this survived being looked at: it has to be driven with a real gesture.
+   *
+   * So the default is the ordinary web one and the exception is named — the
+   * projector, on `body.screen`. A default that six pages have to escape is
+   * how two of them came to be missed. */
+  overflow: auto;
   /* Through variables so a look can repaint the whole room. These were written
      out as hex here, which meant changing --bg for Halloween moved almost
      nothing — the two corner glows were still the ordinary purple and teal. */
@@ -2808,7 +2827,12 @@ body.console .panel::after { bottom: -4px; }
 
 /* Nothing on the big screen is clickable, and a mouse pointer sitting in the
    middle of a projected image looks amateurish. Hide it. */
-body.screen { cursor: none; }
+/* NO CURSOR AND NO SCROLL. This is the one page in the app that must not move:
+   it is a fixed 16:9 sheet on a wall, there is nothing below the fold to reach,
+   and a stray scroll in a dark pub takes the question off the top of the room's
+   screen with no way to know it has happened. It is the reason `body` said
+   `overflow: hidden` for years; it now says it here, where it is true. */
+body.screen { cursor: none; overflow: hidden; }
 
 /* The quiz generator, distinguished from the bingo one below it. */
 .panel.quiz-generate { border-color: rgba(75, 216, 255, 0.4); background: rgba(75, 216, 255, 0.07); }
@@ -8904,11 +8928,47 @@ body.gallery { padding: 0; }
 /* The photos. `auto-fill` rather than a fixed column count, so one photo is
    not stretched across a laptop and forty are not postage stamps on a phone. */
 .gal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
-.gal-shot { margin: 0; }
+/* A BUTTON NOW, because it is pressed — reset to the figure it replaced, so
+   the wall looks exactly as it did and only the behaviour is new. */
+.gal-shot {
+  margin: 0; padding: 0; border: 0; background: none; display: block;
+  width: 100%; cursor: zoom-in;
+}
 .gal-shot img {
   width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block;
   border-radius: var(--r-card); background: var(--panel);
+  transition: transform 140ms ease;
 }
+.gal-shot:hover img, .gal-shot:focus-visible img { transform: scale(1.02); }
+@media (prefers-reduced-motion: reduce) { .gal-shot img { transition: none; } }
+
+/* ---- ONE PHOTOGRAPH, FILLING THE SCREEN.
+
+   `fixed`, not `absolute`: this covers the WINDOW rather than a panel, and the
+   page behind it genuinely scrolls — the console's own version sits inside a
+   fixed bay and is `absolute` for that reason.
+
+   `contain`, because this is the moment somebody is actually looking at it. A
+   crop is right on a wall of thumbnails and wrong here.
+
+   The whole picture is the way back, so the cursor says so and there is no
+   button in a corner competing with the photograph. Opaque, or the thumbnails
+   show through the letterboxing. */
+.gal-big {
+  position: fixed; inset: 0; z-index: 60;
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%; padding: 12px;
+  border: 0; background: rgba(6, 4, 12, 0.94); cursor: zoom-out;
+  /* Under the notch and above the home bar on a phone. */
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+           max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+}
+.gal-big img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: var(--r-card); }
+/* THE PAGE BEHIND IT DOES NOT SCROLL — a flick meant for the photograph would
+   otherwise move the wall somebody is about to come back to, which is the
+   scroll the overlay exists to preserve. */
+body.gal-zoomed { overflow: hidden; }
+
 .gal-back { text-align: center; margin-top: 24px; }
 
 /* ---- THE TIER BUCKETS on the owner page — what each rung includes.

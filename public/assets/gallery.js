@@ -198,19 +198,91 @@ async function showNight(night) {
    * no way back but the browser's own button, on a page a regular reaches from
    * a link with no history behind it.
    */
-  body.replaceChildren(node(`
+  const grid = node(`
     <div class="gal-grid">
-      ${data.photos.map((p) => `
-        <figure class="gal-shot">
+      ${data.photos.map((p, i) => `
+        <!-- A BUTTON, NOT A FIGURE, because it is pressed — asked for on
+             31 August 2026: *"can we make it so the gallery page is clickable
+             to enlarge a specific photo?"* Nothing in this app that is pressed
+             is left as a bare element with a click handler on it: a button is
+             what a keyboard reaches and what a screen reader announces. -->
+        <button class="gal-shot" type="button" data-at="${i}"
+                aria-label="Enlarge photo ${i + 1} of ${data.photos.length}">
           <!-- The KEY goes on the picture too, not only on the listing: the
                photo route re-checks for itself rather than trusting that the
                listing let you through, so on an unpublished night a preview
                without it would be a page of broken images. -->
           <img src="${esc(keyed(p.url))}" alt="A photo from the night" loading="lazy" decoding="async">
-        </figure>`).join('')}
-    </div>`));
+        </button>`).join('')}
+    </div>`);
+  body.replaceChildren(grid);
   body.appendChild(node(`<p class="gal-back"><a href="${esc(home())}">All nights</a></p>`));
+  wireBigPicture(grid, data.photos);
   if (data.preview && data.live === false) sub.append(' · ', notLive());
+}
+
+/**
+ * ONE PHOTOGRAPH, FILLING THE SCREEN — and the next press puts it back.
+ *
+ * Asked for on 31 August 2026: *"can we make it so the gallery page is
+ * clickable to enlarge a specific photo?"*
+ *
+ * **AN OVERLAY, NEVER A REPLACEMENT.** The grid underneath is not touched, so
+ * closing the picture puts somebody back exactly where they were rather than
+ * at the top of a wall of fourteen — the same fault, and the same fix, as the
+ * console's own photo bay. `position: fixed` rather than `absolute`, because
+ * here it covers the WINDOW rather than a panel, and the page behind it
+ * genuinely scrolls.
+ *
+ * **`contain`, not `cover`.** This is the moment somebody is actually looking
+ * at it; a crop is right on a wall of thumbnails and wrong here.
+ *
+ * **THREE WAYS OUT, and no visible control.** Click it, press Escape, or press
+ * the back button — the whole picture is the way back, which is what was asked
+ * for and what nobody has to be told. A close button in a corner would be one
+ * more thing on top of a photograph, and this page's whole job is the
+ * photographs.
+ *
+ * **NO ARROWS AND NO COUNTER, deliberately.** They were not asked for, and a
+ * gallery of fourteen is closed and reopened without effort. The rule this app
+ * holds everywhere: leave it out and wait for somebody to miss it.
+ */
+function wireBigPicture(grid, photos) {
+  let open = null;
+
+  const close = () => {
+    if (!open) return;
+    open.remove();
+    open = null;
+    document.body.classList.remove('gal-zoomed');
+  };
+
+  const show = (at) => {
+    close();
+    const p = photos[at];
+    if (!p) return;
+    open = node(`
+      <button class="gal-big" type="button" aria-label="Close this photo">
+        <img src="${esc(keyed(p.url))}" alt="A photo from the night">
+      </button>`);
+    open.addEventListener('click', close);
+    document.body.appendChild(open);
+    // The page behind it must not scroll under the picture — a flick meant for
+    // the photograph would otherwise move the wall you are about to come back
+    // to, which is the scroll this exists to preserve.
+    document.body.classList.add('gal-zoomed');
+    open.focus();
+  };
+
+  grid.addEventListener('click', (ev) => {
+    const shot = ev.target.closest('.gal-shot');
+    if (shot) show(Number(shot.dataset.at));
+  });
+  // ESCAPE, because this is a page people reach on a laptop too and it is what
+  // every other overlay on the web does. One listener on the document rather
+  // than one per picture: the grid is rebuilt when a night changes, and a
+  // per-element listener would leak with it.
+  document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') close(); });
 }
 
 /*

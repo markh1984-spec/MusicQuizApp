@@ -18,7 +18,7 @@ import path from 'node:path';
 import { config, paths, hostKey, hostKeyIsTemporary } from './src/config.js';
 import { Store } from './src/store.js';
 import { Hub } from './src/sse.js';
-import { Photos, MAX_BYTES, isCameraFile, extensionFor, showsOnGallery, sniffType } from './src/photos.js';
+import { Photos, MAX_BYTES, isCameraFile, extensionFor, showsOnGallery, galleryPhotosOf, sniffType } from './src/photos.js';
 import { Session } from './src/session.js';
 import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked, ROUND_TYPES } from './src/quizzes.js';
 import { recueQuiz } from './src/recue.js';
@@ -2637,13 +2637,32 @@ async function handleGet(req, res, url, route) {
         .sort().reverse()
       : live;
     const out = [];
+    /*
+     * THE RULINGS, ONCE FOR THE WHOLE LIST — the same read the night's own
+     * page makes below, and it has to be the same QUESTION as well.
+     *
+     * This counted with `isCameraFile()` alone while the page filtered with
+     * `showsOnGallery()`, so the comment underneath — "see the matching filter
+     * below" — described a filter that did not match. Switching one photo off
+     * by hand left the list saying "12 photos" over a page that opened on 11,
+     * and switching every one of them off left a night in the list whose page
+     * was the blank space the `if (count)` underneath exists to prevent.
+     *
+     * That is the drift `showsOnGallery()` was written to make impossible, and
+     * it survived because this reader asks a cheaper question one line away
+     * from the right one.
+     */
+    const saidHere = await photoDecisions(galleryRoomId());
     for (const night of nights) {
       if (atVenue && !atVenue.has(night)) continue;
       const files = await listDir(`${photoFolder(galleryRoomId())}/${night}`, 'photos');
-      // Only what would actually SHOW once this night is opened — see the
-      // matching filter below. A count that included the ones held back
-      // would read "6 photos" over a page that opens on 4.
-      const count = (files || []).filter((f) => safePhotoName(f.name) && isCameraFile(f.name)).length;
+      // Only what would actually SHOW once this night is opened — the same
+      // one decision, asked the same way. A count that included the ones held
+      // back would read "6 photos" over a page that opens on 4.
+      const count = galleryPhotosOf(
+        (files || []).map((f) => safePhotoName(f.name)).filter(Boolean),
+        night, saidHere, photoKey,
+      ).length;
       // A published night with nothing in it is a heading over a blank space.
       if (count) out.push({ night, when: readableNight(night), count, live: live.includes(night) });
     }
@@ -2676,14 +2695,14 @@ async function handleGet(req, res, url, route) {
        * one marker `add()` in photos.js ever wrote — see its own note for
        * why that is a filename rather than a second file to keep in step.
        */
-      photos: (files || [])
-        .map((f) => safePhotoName(f.name))
-        .filter(Boolean)
-        // THE FILENAME'S GUESS, UNLESS A HUMAN HAS SAID OTHERWISE — one
-        // function, shared with the route below and with the console's pill,
-        // so the three cannot drift into three answers.
-        .filter((name) => showsOnGallery(name, said[photoKey(night, name)]))
-        .map((name) => ({ name, url: `/gallery-photo/${night}/${encodeURIComponent(name)}` })),
+      // THE FILENAME'S GUESS, UNLESS A HUMAN HAS SAID OTHERWISE — the same
+      // call the count above makes, so a night cannot advertise a number its
+      // own page disagrees with. The single-photo route below and the
+      // console's pill ask the same one decision underneath it.
+      photos: galleryPhotosOf(
+        (files || []).map((f) => safePhotoName(f.name)).filter(Boolean),
+        night, said, photoKey,
+      ).map((name) => ({ name, url: `/gallery-photo/${night}/${encodeURIComponent(name)}` })),
     }), true;
   }
 

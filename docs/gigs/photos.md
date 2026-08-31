@@ -558,3 +558,64 @@ on a field that is everywhere.
 because it fails quietly: the night view draws its headers and an empty body. A
 fixture written without positions was testing a shape the app never sees, and
 the check now asserts the table has rows in it rather than merely columns.
+
+
+## ONE PHOTOGRAPH, FILLING THE SCREEN — 31 August 2026
+
+Asked for directly: *"can we make it so the gallery page is clickable to
+enlarge a specific photo?"*
+
+`wireBigPicture()` in `public/assets/gallery.js`, `.gal-big` in `style.css`.
+
+### A button, not a figure
+
+Each thumbnail was a `<figure>`. It is a `<button>` now, with `data-at` and an
+`aria-label` naming its position — *"Enlarge photo 4 of 14"*. Nothing in this
+app that is pressed is left as a bare element with a click handler on it: a
+button is what a keyboard reaches and what a screen reader announces, and the
+CSS reset that follows means the wall looks exactly as it did.
+
+One delegated listener on the grid rather than fourteen on the pictures, because
+the grid is rebuilt whenever the night changes and per-element listeners would
+go with it.
+
+### An overlay, never a replacement
+
+The grid underneath is untouched, so closing the picture puts somebody back
+exactly where they were rather than at the top of a wall of fourteen. That is
+the same fault, and the same fix, as the console's own photo bay.
+
+`position: fixed` rather than `absolute` — here it covers the WINDOW rather
+than a panel, which is the opposite of the console's case and for the opposite
+reason: the console's bay does not scroll and this page does.
+
+`object-fit: contain`, because this is the moment somebody is actually looking
+at it. A crop is right on a wall of thumbnails and wrong here. Opaque, or the
+thumbnails show through the letterboxing.
+
+### Three ways out, and no visible control
+
+Click the picture, press Escape, or press the browser's back button. The whole
+photograph is the way back, which is what was asked for and what nobody has to
+be told — a close button in a corner would be one more thing on top of a
+photograph, on a page whose entire job is the photographs.
+
+The Escape listener is one on the document rather than one per picture, for the
+same reason as the grid's.
+
+**No arrows and no counter, deliberately.** They were not asked for, and a
+gallery of fourteen is closed and reopened without effort. Leave it out and
+wait for somebody to miss it.
+
+### The wall behind it does not move — and the first version of that was a lie
+
+`body.gal-zoomed { overflow: hidden }`, so a flick meant for the photograph does
+not scroll the wall somebody is about to come back to.
+
+**It was written first and did nothing at all**, because the base rule was
+already `body { overflow: hidden }` — the projector's, propagated to every page
+in the app. Adding a class that set it again changed nothing, and the check
+written for it read `locked: true` before AND after, which is a measurement that
+cannot fail. See *A PAGE SCROLLS* in `CLAUDE.md`: fixing the base is what made
+this rule real, and it is verified by taking the class away again and watching a
+phone's wall slide 315 → 815 under an open picture.
