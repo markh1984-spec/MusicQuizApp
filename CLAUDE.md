@@ -1496,6 +1496,21 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   clutter rule exactly. **THE ROW'S KEY TRAVELS WITH THE ROW** so the console
   can combine the filter's verdict with the rulings without a second copy of
   `teamKey()` in the browser — and the library stays free of the GitHub read.
+- **ONE ROOM FOR THE WHOLE PHOTO STORY — `galleryRoomFor()`.** Photos are filed
+  per room and the gallery reads the OWNER'S OWN QUIZMASTER ROOM, never
+  `HOUSE`; reading the wrong one showed a full night as an empty page. The
+  console did exactly that on the write side: it read
+  and wrote through `roomForHost()` (HOUSE for the owner and the host key) while
+  the gallery reads the owner's own quizmaster room: a night could be published
+  into a folder the page never looks at, be told it worked, and read back as
+  *"Not published"*. **The hazard was written down above `galleryRoomId()` and
+  left** — which is how a noted hazard becomes a bug report. No change for an
+  ordinary quizmaster: their room id is never HOUSE.
+- **THE PRIVATE REPO IS TESTABLE NOW** — `test/helpers/photo-repo-stub.mjs` via
+  `node --import`: real server, fixture network. **Publishing lived behind a
+  token the suite must never need, so nothing had ever run it** — two silent
+  live bugs in one day. The loop test signs in with a PASSWORD, not the host
+  key, which resolves to the house room and hides this whole class.
 - **`published.json` HAS ONE WRITER AT A TIME, PER ROOM — `inOrder()` in
   `src/gallery.js`.** Which nights are up and the per-photo rulings are one
   file that two callers edit, each reading the whole thing and writing it back
@@ -2008,10 +2023,8 @@ photographs' own half, split off at the 100,000-byte cap.
 - Invoicing
 - Getting paid: what you have not billed, and who has not paid
 - THE LEAGUE, EXPORTED — evidence for the landlord, a wall for the teams
-- **THE GALLERY READS THE OWNER'S OWN QUIZMASTER ROOM, never `HOUSE`** — photos
-  are filed per room, and reading the wrong one showed a full night as an empty
-  page. A deleted photo leaves the repo but NOT git history — never imply
-  otherwise.
+- **A deleted photo leaves the repo but NOT git history — never imply
+  otherwise.**
 - AND THE PREVIEW DID NOT WORK ON THE HOST KEY
 - THE GALLERY ONLY HOLDS WHAT LOOKED LIKE A CAMERA TOOK IT — **tested now,
   because it fails silently**: `camera` defaults FALSE, and it never keeps a

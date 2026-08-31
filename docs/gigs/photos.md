@@ -882,3 +882,35 @@ the console."* — with a link to the tab that does it.
   to find it is the split-over-two-screens fault this app has a rule against.
 - **The key on that link comes from THIS visit's address**, never localStorage —
   a remembered key must not spread itself onto new pages and into history.
+
+
+## THE PRIVATE REPOSITORY IS RUNNABLE BY THE SUITE NOW
+
+`test/helpers/photo-repo-stub.mjs`, loaded with `node --import`, answering the
+GitHub Contents API out of a temporary directory.
+
+**Everything about a night going public lived behind a token the suite has no
+business needing** — the published flag, the per-photo rulings, the card pins,
+and which ROOM any of it lands in. So those routes were only ever read as text,
+and this repo already knows what that is worth: a test that never runs the
+artefact proves nothing about it. Two silent live bugs came out of that gap in
+one day.
+
+`test/gallery-publish-loop.test.js` walks the whole thing over real HTTP: sign
+up, set a password, sign in, see your own unpublished night, publish it, and
+check a stranger can now see it with three photographs on its card. Taking it
+down is a case of its own, because somebody asking for their photograph to come
+off is the one request that must never quietly fail.
+
+**IT SIGNS IN WITH A PASSWORD RATHER THAN THE HOST KEY, and that is the point
+rather than a detail.** The key resolves to the house room — which is precisely
+the room the gallery does NOT read — so a test written on the key would have
+exercised the identity that hides this whole class of fault. A quizmaster with
+a password is both the ordinary case and the one a customer's experience
+depends on.
+
+Verified by putting the room bug back: two of the three cases fail, naming the
+folder.
+
+**It is deliberately dumb** — no shas, no conflicts, no rate limits. What it is
+for is proving that a write lands where the next read looks.

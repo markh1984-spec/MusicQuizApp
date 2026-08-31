@@ -392,8 +392,35 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * is the one that does not, after four public pages spent two years unable to
  * scroll at all. Both are the shape this budget exists to keep visible: a
  * fault that nothing throws, nothing fails, and only a person notices.
+ *
+ * AND RAISED AGAIN THE SAME DAY, to 197,000, which is the second raise on
+ * 31 August and needs saying rather than hiding.
+ *
+ * WHAT IT BOUGHT: the two halves of the fault behind *"it says not published,
+ * but it is"*. One is that the console read and wrote photo state through a
+ * different ROOM from the one the public gallery reads, so a night could be
+ * published into a folder the page never looks at and still report success —
+ * a hazard that was written down in `server.js` in as many words and left,
+ * until it arrived as a bug report with a screenshot. The other is that the
+ * private repository had never been runnable by this suite at all, so nothing
+ * about publishing had ever been executed; two silent live bugs in one day
+ * came out of that gap, and the stub that closes it deserves a line somebody
+ * reads before writing the next photo route.
+ *
+ * WHY NOT TRIMMED THIS TIME: the candidates were measured. What is left in
+ * this file is rules — the best-six league argument, the name filter, the gap
+ * dial, the drags — and each is a paragraph that stops a specific bad change.
+ * Cutting one to pay for another is not a saving, it is choosing which fault
+ * to reintroduce. About 1,700 bytes of genuine duplication went earlier today
+ * (27 index lines restating headings, a repeat, a pointer to a pointer) and
+ * that is spent.
+ *
+ * **The line to hold now is that a raise must be for a rule about something
+ * SILENT** — a fault nothing throws, nothing fails and only a person notices.
+ * Everything bought on 31 August is that shape. A feature description is not,
+ * and belongs in `docs/`.
  */
-const BUDGET = 195_000;
+const BUDGET = 197_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
