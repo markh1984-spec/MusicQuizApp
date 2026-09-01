@@ -1414,3 +1414,91 @@ all-stroke pin at 18px is a smudge and an all-filled one is a blob; a filled
 body with a stroked cap and needle keeps the silhouette. `fill="currentColor"`
 means one drawing serves both states, so there is no second icon to keep in step
 when the button turns pink.
+
+## `GitHub 409` — the sha we read back was a lie
+
+Reported off a live console, in red across the top of a night's photographs:
+
+```
+GitHub 409: {"message":"photos/…/published.json does not match 50979a2a…"}
+```
+
+Two things were wrong at once, and the second is the interesting one.
+
+### It should have been impossible by this file's own reasoning
+
+The note above `inOrder()` said, in as many words, that **GitHub cannot refuse
+one of these**: every write reads a fresh sha immediately before sending, so a
+write is never against the version its content was built from.
+
+The first thing to check was whether the serialising had a hole in it — a
+fourth writer of `published.json` outside `inOrder()`, which is exactly the
+shape of the bug that mechanism was built for. It does not: `setPublished`,
+`setPhotoDecision` and `setPhotoPin` are the only three, all three go through
+the chain, and nothing else in the codebase names the file.
+
+**So the sha was never RACED. It was STALE.**
+
+### The Contents API is not read-after-write consistent
+
+`GET /repos/…/contents/…` is served from a replica and through a cache. A read
+moments after a `PUT` that has *already answered 200* can hand back the version
+before it — and there is no header on our request telling anything not to.
+
+The shape that hits this is precisely what the P lamp and the photo lamps
+produce: writes to one small file, back to back, with the serialising chain
+guaranteeing there is no gap between them at all. The thing that made the
+writes safe from each other is the thing that made them fast enough to outrun
+GitHub's own replicas.
+
+### The fix is to stop reading it back
+
+**A `PUT` returns the file's new sha in its own response.** That is the one
+copy of it that nothing can serve stale, because it is not a read. So
+`putFile()` remembers it, per repository and path, and the next write to that
+path sends it with no read in front of it at all.
+
+That is also **a call cheaper**, on an API this app spent a day fitting inside
+5,000 an hour — a write through the Contents API was two round trips and is now
+one.
+
+### But it is a cache, so it has to be able to be wrong
+
+Anything editing the file from outside this process moves the sha underneath
+us, and `published.json` positively invites that: it is a small readable JSON
+file in a repository the host owns, and GitHub's web editor is one click away.
+The note above `readAll()` already flags a hand-edit as something the app
+cannot see.
+
+So a 409 is **forgotten, re-read past the caches, and retried exactly once**:
+
+- **Forgotten**, because whatever we remember is now demonstrably wrong.
+- **Past the caches** — `Cache-Control: no-cache` and a cache-busting
+  parameter. Without it the retry reads the same cached body, sends the same
+  sha and fails the same way, which is a retry that only doubles the bill.
+- **Once.** A file genuinely being written by two people wants to be
+  *reported*, not fought over in a loop.
+
+### Each of the three halves is needed, and each fails on its own
+
+That is the part worth writing down, because it is where this kind of guard
+usually rots. With all three in, everything passes; the memory alone leaves the
+outside-editor case broken; the retry alone leaves every rapid write spending a
+409 and two extra calls to recover; and the retry without the fresh read fails
+identically twice.
+
+`test/github-sha.test.js` models a repository that keeps **real shas**, refuses
+a write carrying the wrong one, and can be told to answer ordinary reads from
+one version behind. Each half was removed in turn and the case that proves it
+watched to fail. **The first version of the stale-read case passed with either
+half removed** — it asserted only that the write eventually landed, which a
+working retry delivers while the memory rots away behind it. It asserts
+`conflicts === 0` now: not "recovered from", but *never sent a stale sha at
+all*.
+
+### And a 409 is said in words
+
+GitHub's own answer is a sha and a documentation URL. On the console's error
+line that is a wall of JSON naming no cause and suggesting no action — which is
+exactly how it appeared in the report. A conflict that survives the retry now
+reads *"That file was changed by something else a moment ago. Try again."*

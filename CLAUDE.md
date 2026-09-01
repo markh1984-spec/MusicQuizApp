@@ -1517,11 +1517,18 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   — so a lamp write that began before a publish finished put the nights back as
   they were and **silently un-published the night**. It reached a live gallery:
   the console said published, the page said not, a stranger saw nothing.
-  **GITHUB CANNOT REFUSE IT** — `putFile()` fetches a fresh sha just before
-  writing, so a write is never against the version its content was built from
-  and both callers get a 200. **AND THE BROWSER'S QUEUE CANNOT COVER IT**: the
-  lamp settles for 600ms, so the press that overlaps a publish is exactly the
-  one it has not started. Order it where the FILE is.
+  **AND THE BROWSER'S QUEUE CANNOT COVER IT**: the lamp settles for 600ms, so
+  the press that overlaps a publish is exactly the one it has not started.
+  Order it where the FILE is.
+- **A READ-BACK SHA CAN BE STALE — this file claimed GitHub could not refuse a
+  write, and `GitHub 409` then reached a live console.** The Contents API is
+  served from a replica and through a cache, so a `GET` moments after a `PUT`
+  that answered 200 can hand back the version before it, and lamps flicked down
+  a night are writes with no gap. **The sha a `PUT` HANDS BACK cannot be served
+  stale**, so `putFile()` remembers it (`lastSha`) — a call cheaper too. **It is
+  a CACHE, so it must be able to be wrong** (the host in GitHub's web editor),
+  and a 409 is **forgotten, re-read PAST the caches, retried once**. **All three
+  halves fail on their own**, and a 409 that survives is said in WORDS
 - **A NIGHT IS A CARD WITH ITS PHOTOGRAPHS FANNED ON IT, GROUPED BY PUB** —
   `coverPhotos()`. **Pins lead, the rest is a SPREAD** (one per slice of the
   evening), **stable**, seeded off the date. **BUILT FROM THE SAME FILTERED

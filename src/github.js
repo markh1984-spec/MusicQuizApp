@@ -179,10 +179,55 @@ async function api(path, options = {}, which = 'app') {
   return res;
 }
 
-/** The current sha of a file, or null if it is not there yet. */
-async function shaOf(filePath, which = 'app') {
+/**
+ * ---- THE SHA WE LAST WROTE, PER FILE -----------------------------------
+ *
+ * **A `PUT` HANDS BACK THE FILE'S NEW SHA, AND THAT IS THE ONLY COPY OF IT
+ * NOBODY CAN SERVE STALE.** Reading it back is a different question with the
+ * same-looking answer, and the two came apart on a live console:
+ *
+ *     GitHub 409: photos/…/published.json does not match 50979a2a…
+ *
+ * — sent by an app whose writes to that file are already serialised one at a
+ * time per room, with nothing else in the codebase writing it. So the sha was
+ * not RACED, it was STALE: the Contents API is served from a replica and
+ * through a cache, so a `GET` moments after a `PUT` that already answered 200
+ * can hand back the version before it. Flicking lamps down a night is exactly
+ * the shape that hits it — the writes land back to back with no gap at all.
+ *
+ * **Remembering it is also a call cheaper**, on an API this app has already
+ * spent a day fitting inside 5,000 an hour: a remembered sha is a write with
+ * no read in front of it.
+ *
+ * **IT IS A CACHE, SO IT HAS TO BE ABLE TO BE WRONG.** Anything editing the
+ * file from outside this process — the host in GitHub's own web editor, which
+ * `published.json` invites — moves the sha underneath us. That is what the
+ * 409 retry below is for: forget, read FRESH, and go again once. Belt and
+ * braces, because either half alone still fails.
+ */
+const lastSha = new Map();
+const shaKey = (which, filePath) => `${which}:${filePath}`;
+
+/** Drop what we remember about a path, whenever we can no longer vouch for it. */
+function forgetSha(which, filePath) {
+  lastSha.delete(shaKey(which, filePath));
+}
+
+/**
+ * The current sha of a file, or null if it is not there yet.
+ *
+ * `fresh` asks GitHub to skip its caches — used on the retry after a 409,
+ * where a cached body is precisely the thing that would make the retry fail
+ * the same way.
+ */
+async function shaOf(filePath, which = 'app', { fresh = false } = {}) {
   const { owner, name, branch } = settings(which);
-  const res = await api(`/repos/${owner}/${name}/contents/${encodeURI(filePath)}?ref=${encodeURIComponent(branch)}`, {}, which);
+  const bust = fresh ? `&_=${Date.now()}` : '';
+  const res = await api(
+    `/repos/${owner}/${name}/contents/${encodeURI(filePath)}?ref=${encodeURIComponent(branch)}${bust}`,
+    fresh ? { headers: { 'Cache-Control': 'no-cache' } } : {},
+    which,
+  );
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`GitHub ${res.status}: ${(await res.text()).slice(0, 160)}`);
   const data = await res.json();
@@ -200,10 +245,11 @@ export async function putFile(filePath, contents, message, which = 'app') {
         : 'GitHub backup';
     return { ok: false, error: `${named} is not set up` };
   }
+  const key = shaKey(which, filePath);
   try {
     const { owner, name, branch } = settings(which);
-    const sha = await shaOf(filePath, which);
-    const res = await api(`/repos/${owner}/${name}/contents/${encodeURI(filePath)}`, {
+    const bytes = (Buffer.isBuffer(contents) ? contents : Buffer.from(contents, 'utf8')).toString('base64');
+    const send = (sha) => api(`/repos/${owner}/${name}/contents/${encodeURI(filePath)}`, {
       method: 'PUT',
       body: JSON.stringify({
         // [skip render] stops the host redeploying, so filing a pack never
@@ -211,15 +257,54 @@ export async function putFile(filePath, contents, message, which = 'app') {
         message: `${message} [skip render]`,
         // A Buffer goes up as-is. Running a PNG through utf8 would replace
         // every byte that is not valid utf8 and file a corrupt image.
-        content: (Buffer.isBuffer(contents) ? contents : Buffer.from(contents, 'utf8')).toString('base64'),
+        content: bytes,
         branch,
         ...(sha ? { sha } : {}),
       }),
     }, which);
-    if (!res.ok) return { ok: false, error: `GitHub ${res.status}: ${(await res.text()).slice(0, 160)}` };
+
+    // The sha we last wrote beats reading one back — see `lastSha` above.
+    let sha = lastSha.has(key) ? lastSha.get(key) : await shaOf(filePath, which);
+    let res = await send(sha);
+
+    /*
+     * A 409 MEANS THE SHA WE SENT IS NOT THE ONE ON THE BRANCH, AND IT IS
+     * WORTH EXACTLY ONE MORE GO. Whatever made it stale — a replica behind, a
+     * cached body, somebody editing the file in GitHub's web editor — has
+     * already happened, so the fix is the same: forget, read past the caches,
+     * write again. Retrying FOREVER would be wrong; a file genuinely being
+     * written by two people wants to be reported, not fought over.
+     */
+    if (res.status === 409) {
+      forgetSha(which, filePath);
+      sha = await shaOf(filePath, which, { fresh: true });
+      res = await send(sha);
+    }
+
+    if (!res.ok) {
+      // We no longer know what is on the branch, so the next write reads.
+      forgetSha(which, filePath);
+      const body = (await res.text()).slice(0, 160);
+      // SAY WHAT A 409 ACTUALLY MEANS. GitHub's own words are a sha and a
+      // documentation URL, which on the console's error line is a wall of
+      // JSON that names no cause and suggests no action.
+      if (res.status === 409) {
+        return { ok: false, error: 'That file was changed by something else a moment ago. Try again.' };
+      }
+      return { ok: false, error: `GitHub ${res.status}: ${body}` };
+    }
     const data = await res.json();
+    /*
+     * REMEMBER IT ONLY IF GITHUB ACTUALLY SAID ONE. A response shape we did
+     * not expect must leave the next write reading the sha, never writing with
+     * `undefined` — which GitHub reads as "create this file" and refuses on a
+     * file that exists.
+     */
+    if (data.content?.sha) lastSha.set(key, data.content.sha);
+    else forgetSha(which, filePath);
     return { ok: true, url: data.content?.html_url };
   } catch (err) {
+    forgetSha(which, filePath);
     return { ok: false, error: err.message };
   }
 }
@@ -306,8 +391,16 @@ export async function putFiles(files, message, which = 'app') {
       method: 'PATCH',
       body: JSON.stringify({ sha: commit.sha }),
     });
+    /*
+     * A BATCH MOVES FILES `putFile` MAY BE REMEMBERING THE SHA OF, so it has
+     * to forget them — a remembered sha that a commit has just superseded is
+     * the exact fault this whole mechanism exists to stop, arriving by the
+     * other door.
+     */
+    for (const file of list) forgetSha(which, file.path);
     return { ok: true, count: list.length };
   } catch (err) {
+    for (const file of list) forgetSha(which, file.path);
     return { ok: false, error: err.message };
   }
 }
@@ -392,6 +485,13 @@ export async function listDirs(dirPath, which = 'app') {
 
 export async function deleteFile(filePath, message, which = 'app') {
   if (!readyFor(which)) return { ok: false, error: 'not set up' };
+  /*
+   * A DELETED FILE HAS NO SHA, so whatever `putFile` remembers about this path
+   * is wrong from here on — whether the delete works or not. Forgotten UP
+   * FRONT rather than on the way out, because the read below must not be
+   * answered from a memory of a file we are about to remove.
+   */
+  forgetSha(which, filePath);
   try {
     const { owner, name, branch } = settings(which);
     const sha = await shaOf(filePath, which);
