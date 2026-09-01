@@ -1238,3 +1238,42 @@ browser, since there is no dependency-free resize on the server. **Not built:**
 it doubles the files in the private repository and helps only nights filed after
 it ships, which makes it a decision about somebody's storage rather than a
 tidy-up.
+
+
+## THE LIVE LINK LOOKS LIKE A BUTTON NOW
+
+*"The live link is great but it needs a mouseover and click animation so it's
+obvious it's a button."*
+
+**THE SHAPE WAS HALF OF WHY.** It was a flat outlined PILL, and in this app a
+pill is what BADGES wear — BRONZE, GOLD, PAID, YOURS. So it was saying "label"
+before anybody got near it. `--r-field` is what a button wears here.
+
+The other half is the app's own ordinary-button face, which the GUI rules
+already settle: a top-lit surface rather than a flat swatch, with the account's
+colour arriving as the bottom EDGE only. Never a flat grey box, never a wall of
+colour.
+
+- **THE LIFT AND THE PRESS ARE BOTH NEEDED.** Hover raises it 1px with a
+  shadow; the press puts it 1px BELOW where it started and thins the bottom edge
+  to 1px, so the whole control shortens under the finger the way a real button
+  does. **A hover-only control still reads as a label that happens to glow.**
+- **LIVE WEARS GREEN ON THE EDGE** — the account's colour says *yours*, green
+  says *it is actually up*. The face is untouched, so it stays the same object
+  in both states.
+- **Reduced motion keeps the ANSWER and drops the movement** — the finish
+  layer's own rule: hover and press still change the surface, they just do not
+  move it.
+
+### The guard drives a real pointer
+
+A `:hover` rule cannot be seen any other way — a class can be asserted in a unit
+test and still paint nothing, and this app has shipped a dead hover before
+(`filter: brightness(1.25)` on a 22px dot, a change you could not find). So
+`community-bay.mjs` hovers, holds the mouse DOWN, and measures the rendered box:
+
+```
+the link LIFTS under the pointer  — 100.0 -> 99.0
+and it presses DOWN past where it started — hover 99.0 -> press 101.0
+its edge thins under the finger  — 1px
+```

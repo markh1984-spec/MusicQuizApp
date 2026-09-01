@@ -427,6 +427,49 @@ try {
         link.live ? /see it/i.test(link.text) : /preview/i.test(link.text),
         `${link.live ? 'live' : 'draft'} — "${link.text}"`);
       check(`${label}: and it stays inside the head`, link.inside);
+
+      /*
+       * IT HAS TO LOOK AND FEEL LIKE A BUTTON — *"it needs a mouseover and
+       * click animation so it's obvious it's a button"*.
+       *
+       * Both states are DRIVEN with a real pointer and MEASURED, because a
+       * `:hover` rule cannot be seen any other way: a class can be asserted in
+       * a unit test and still paint nothing, and this app has shipped a dead
+       * hover before (`filter: brightness(1.25)` on a 22px dot, a change you
+       * could not find). What is measured is the rendered box moving.
+       */
+      const a = page.locator('.bay-head .bay-head-live');
+      const box = await a.boundingBox();
+      const resting = await page.evaluate(() => {
+        const el = document.querySelector('.bay-head .bay-head-live');
+        return { y: el.getBoundingClientRect().top, shadow: getComputedStyle(el).boxShadow };
+      });
+      await a.hover();
+      await page.waitForTimeout(220);
+      const hovered = await page.evaluate(() => {
+        const el = document.querySelector('.bay-head .bay-head-live');
+        return { y: el.getBoundingClientRect().top, shadow: getComputedStyle(el).boxShadow };
+      });
+      check(`${label}: the link LIFTS under the pointer`, hovered.y < resting.y - 0.4,
+        `${resting.y.toFixed(1)} -> ${hovered.y.toFixed(1)}`);
+      check(`${label}: and gains a shadow`, hovered.shadow !== resting.shadow && hovered.shadow !== 'none');
+
+      // The press: hold the button down over it and measure before releasing.
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.waitForTimeout(220);
+      const pressed = await page.evaluate(() => {
+        const el = document.querySelector('.bay-head .bay-head-live');
+        return { y: el.getBoundingClientRect().top, edge: getComputedStyle(el).borderBottomWidth };
+      });
+      await page.mouse.up();
+      check(`${label}: and it presses DOWN past where it started`, pressed.y > hovered.y + 0.9,
+        `hover ${hovered.y.toFixed(1)} -> press ${pressed.y.toFixed(1)}`);
+      check(`${label}: its edge thins under the finger`, pressed.edge === '1px', pressed.edge);
+      // The press opened a new tab; come back to the console.
+      const extra = page.context().pages().filter((p2) => p2 !== page);
+      for (const p2 of extra) await p2.close();
+      await page.waitForTimeout(200);
     }
 
     /* ---- THE P LAMP ON A RAIL ROW — the one control allowed in a rail.

@@ -9560,12 +9560,51 @@ body.landing {
    "you could look at this" and "anybody can". */
 .bay-head-live {
   margin-left: auto; flex: 0 0 auto;
-  font-size: var(--fs-note); color: var(--ink-dim); text-decoration: none;
-  padding: 4px 10px; border-radius: var(--r-pill);
-  border: 1px solid var(--surf-line, rgba(255, 255, 255, 0.09));
+  display: inline-flex; align-items: center; min-height: 34px;
+  font-size: var(--fs-note); font-weight: 800; text-decoration: none;
+  padding: 6px 13px; color: var(--ink);
+  /* ---- IT IS SHAPED LIKE A BUTTON NOW, AND IT WAS SHAPED LIKE A BADGE.
+
+     Reported as *"it needs a mouseover and click animation so it's obvious
+     it's a button"*, and the shape was half of why: a flat outlined PILL is
+     what this app's badges wear — BRONZE, PAID, YOURS — so it was saying
+     "label" before anybody got near it. `--r-field` is what a button wears
+     here, and the ordinary-button face is a top-lit surface with the
+     account's colour on the bottom EDGE: never a flat grey box, never a wall
+     of colour. The same treatment `.minor` gets, at the size this one sits at. */
+  border-radius: var(--r-field);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-bottom: 2px solid var(--hot);
+  transition: transform 90ms ease, box-shadow 90ms ease, background 90ms ease;
 }
-.bay-head-live:hover { color: var(--ink); border-color: var(--hot); }
-.bay-head-live.is-live { color: var(--good); border-color: color-mix(in srgb, var(--good) 45%, transparent); }
+/* THE LIFT ON HOVER AND THE PRESS ON CLICK — the two halves that make an
+   object feel like one. The press goes PAST where it started (1px down, and
+   the bottom edge thins to 1px) so the whole thing shortens under the finger,
+   which is what a real button does; a hover-only control still reads as a
+   label that happens to glow. */
+.bay-head-live:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.07));
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+.bay-head-live:active {
+  transform: translateY(1px);
+  border-bottom-width: 1px;
+  box-shadow: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+}
+.bay-head-live:focus-visible { outline: 2px solid var(--hot); outline-offset: 2px; }
+/* LIVE WEARS GREEN ON THE EDGE, which is this app's fixed meaning for good and
+   paying — the account's colour says "yours", green says "it is actually up".
+   The face is untouched, so it is the same object in both states. */
+.bay-head-live.is-live { color: var(--good); border-bottom-color: var(--good); }
+@media (prefers-reduced-motion: reduce) {
+  /* The ANSWER survives, the movement goes — the rule the finish layer sets:
+     hover and press still change the surface, they just do not move it. */
+  .bay-head-live { transition: none; }
+  .bay-head-live:hover, .bay-head-live:active { transform: none; }
+}
 
 /* ---- A ROW WITH A LAMP ON IT — the publish switch, on the Photos rail only.
 
