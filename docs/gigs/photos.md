@@ -997,7 +997,7 @@ at the other, sitting directly above the photographs it is the address of.
 - **IT SAYS WHICH KIND OF LINK IT IS.** Published, it reads *"On the gallery —
   see it"* in the good colour. Unpublished, the same page is still reachable by
   the owner — the gallery shows them their drafts — so it is offered as
-  *"Preview this night"* rather than hidden: checking what a night looks like
+  *"Preview this gallery"* rather than hidden: checking what a night looks like
   before putting it up is the whole reason that preview exists, and saying "see
   it live" over a page nobody else can open would be the app lying about its
   own state.
@@ -1502,3 +1502,21 @@ GitHub's own answer is a sha and a documentation URL. On the console's error
 line that is a wall of JSON naming no cause and suggesting no action — which is
 exactly how it appeared in the report. A conflict that survives the retry now
 reads *"That file was changed by something else a moment ago. Try again."*
+
+### The link says "gallery" on both sides of the switch
+
+*"See this gallery live."* It read *"On the gallery — see it"*, which is a
+sentence with the verb at the end and the subject implied, on a control that is
+only ever a few words wide.
+
+The half worth noting is the other label. The two are **one link in two
+states** — one replaces the other in place, with no re-render — so
+*"Preview this night"* against *"See this gallery live"* would be a single
+thing wearing two nouns, which is the label collision this file keeps
+recording, in the smallest form it comes in. It is **"Preview this gallery"**
+now: the noun is fixed and the word that VARIES is the one carrying the
+meaning, which is whether anybody else can open it.
+
+They are named as constants because `paintPublish()` repaints this link without
+re-rendering, so the same words are written in two places and would otherwise
+drift apart the first time one was edited.

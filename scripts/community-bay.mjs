@@ -592,6 +592,8 @@ try {
       check(`${label}: publishing does NOT rebuild the gallery`, survived.same,
         `the photographs were ${survived.same ? 'left alone' : 'thrown away and redrawn'}`);
       check(`${label}: and they are all still there`, survived.still > 0, `${survived.still}`);
+      const wordsWhenUp = await page.evaluate(() =>
+        (document.querySelector('.bay-head .bay-head-live')?.textContent || '').trim());
       // Put it back, so the checks below start where they expect — which also
       // walks the OTHER branch of the warning, and that is the one nothing else
       // reaches: the fixture starts unpublished, so without this press the
@@ -611,8 +613,21 @@ try {
        */
       const backToRed = await page.evaluate(() =>
         document.querySelector('.doorhead .bay-lamp').classList.contains('is-on'));
+      const wordsNow = await page.evaluate(() =>
+        (document.querySelector('.bay-head .bay-head-live')?.textContent || '').trim());
       check(`${label}: and pressing it again really does take it down`,
         backToRed === lampWas.on, `ended ${backToRed ? 'green' : 'red'}`);
+      /*
+       * AND THE HEAD'S LINK FOLLOWED IT BOTH WAYS. The fixture starts
+       * unpublished, so the check further up only ever sees the DRAFT wording
+       * — the live half was never read by anything until a lamp was pressed.
+       * Both are one link in two states, repainted in place with no render, so
+       * the pair is exactly the kind that drifts.
+       */
+      check(`${label}: the link named the live gallery, then went back`,
+        /live/i.test(wordsWhenUp) && /preview/i.test(wordsNow)
+          && /gallery/i.test(wordsWhenUp) && /gallery/i.test(wordsNow),
+        `up: "${wordsWhenUp}" -> down: "${wordsNow}"`);
     }
     check(`${label}: and none of them at the bottom`, opened.bodyPhotos === 0, `${opened.bodyPhotos}`);
     /*

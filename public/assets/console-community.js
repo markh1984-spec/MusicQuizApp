@@ -451,7 +451,7 @@ function paintPublish(night) {
   const head = document.querySelector('.bay-head .bay-head-live');
   if (head && openNight && openNight.night === night) {
     head.classList.toggle('is-live', up);
-    head.textContent = up ? 'On the gallery — see it' : 'Preview this night';
+    head.textContent = up ? LIVE_WORDS : DRAFT_WORDS;
   }
   /*
    * A FAILED WRITE STILL HAS TO BE SAID, and that line lives in the rail, which
@@ -697,13 +697,26 @@ function shrink(file) {
  * `target="_blank"`, because this is somebody checking a page mid-job — losing
  * the console to go and look at it would cost them the night they had open.
  */
+/*
+ * BOTH LABELS SAY "GALLERY", BECAUSE THEY ARE THE SAME LINK IN TWO STATES.
+ * One replaces the other in place, and *"preview this night"* against *"see
+ * this gallery live"* is one thing under two nouns — the label collision this
+ * repo keeps recording, in the smallest possible form. The word that VARIES is
+ * the one carrying the meaning: live, or a preview.
+ *
+ * They are named here rather than written twice because `paintPublish()`
+ * repaints this link without re-rendering, so the two would drift.
+ */
+const LIVE_WORDS = 'See this gallery live';
+const DRAFT_WORDS = 'Preview this gallery';
+
 function liveLink(night) {
   const href = galleryAddress(night.night, night.venue || '');
   const live = Boolean(night.published);
   return node(`
     <a class="bay-head-live ${live ? 'is-live' : ''}" href="${esc(href)}"
        target="_blank" rel="noopener">
-      ${live ? 'On the gallery — see it' : 'Preview this night'}
+      ${live ? LIVE_WORDS : DRAFT_WORDS}
     </a>`);
 }
 
