@@ -87,3 +87,40 @@ export function dropPhoto(path) {
 export function photoCacheState() {
   return { photos: held.size, bytes: bytesHeld, cap: CAP };
 }
+
+/*
+ * ---- AND WHAT IS IN A NIGHT'S FOLDER ------------------------------------
+ *
+ * **THE GALLERY INDEX LISTED EVERY NIGHT'S DIRECTORY, ONE AFTER ANOTHER.**
+ * Measured with a season on the shelf: twenty-one nights cost twenty-two GitHub
+ * calls and **3.3 seconds**, every time anybody opened the page — because the
+ * loop `await`ed each listing before starting the next.
+ *
+ * Running them together fixes the seconds. Holding the answer fixes the calls,
+ * which is the half that matters, because it is the same index everybody opens.
+ *
+ * **A NIGHT'S FOLDER CHANGES IN EXACTLY THREE PLACES**: a photograph arriving
+ * from the room, the quizmaster adding one of their own, and one being deleted.
+ * All three call `dropNight()`. A listing is otherwise as immutable as the
+ * pictures in it.
+ *
+ * Names only — a listing is a few hundred bytes, so this is not counted against
+ * the byte cap the pictures share. It is bounded by the number of NIGHTS a
+ * quizmaster has, which grows by two a week.
+ */
+const nights = new Map();
+
+/** A night's file names, or `null`. */
+export function cachedNight(folder) {
+  const hit = nights.get(folder);
+  return hit ? hit.names : null;
+}
+
+export function keepNight(folder, names) {
+  nights.set(folder, { names });
+}
+
+/** Forget one — called wherever a photograph lands in or leaves a folder. */
+export function dropNight(folder) {
+  nights.delete(folder);
+}

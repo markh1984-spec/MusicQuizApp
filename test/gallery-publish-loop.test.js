@@ -182,3 +182,60 @@ test('AND TAKING IT DOWN IS AS RELIABLE AS PUTTING IT UP', async () => {
       'somebody asked for their photo to come down and it did not');
   });
 });
+
+/*
+ * ---- A CACHED LISTING MUST NOT OUTLIVE A PHOTOGRAPH ----------------------
+ *
+ * The gallery index listed every night's folder one after another — twenty-one
+ * nights cost twenty-two GitHub calls and 3.3 seconds, on the page that is the
+ * way in. They run together now and the answer is held.
+ *
+ * **WHICH IS ONLY SAFE IF A FOLDER FORGETS ITSELF WHEN IT CHANGES.** A stale
+ * listing on this page means a photograph somebody asked to have deleted still
+ * being offered — the same class of harm as a stale publish flag, and the
+ * reason this is tested over real HTTP rather than against the cache's own
+ * functions: what matters is that the ROUTES drop it, not that the module can.
+ */
+
+test('a photograph added is on the page immediately, not in a minute', async () => {
+  await withApp(async (app) => {
+    const cookie = await signedIn(app);
+    fileANight(app.data, app.repo);
+    await post(app.base, '/api/past-gigs/publish', { night: NIGHT, on: true }, cookie);
+
+    const count = async () => ((await gallery(app.base)).nights[0] || {}).count || 0;
+    const before = await count();          // warms the listing
+    assert.equal(before, 5);
+
+    // The smallest thing `sniffType()` takes as a JPEG.
+    const jpeg = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(200, 1)]);
+    const up = await fetch(`${app.base}/api/past-photo/${NIGHT}`, {
+      method: 'POST', headers: { 'Content-Type': 'image/jpeg', Cookie: cookie }, body: jpeg,
+    });
+    assert.equal(up.status, 200, 'the upload was refused');
+    assert.equal(await count(), before + 1,
+      'the added photograph is missing — a cached listing outlived it');
+  });
+});
+
+test('AND A PHOTOGRAPH DELETED IS GONE FROM IT IMMEDIATELY', async () => {
+  await withApp(async (app) => {
+    const cookie = await signedIn(app);
+    fileANight(app.data, app.repo);
+    await post(app.base, '/api/past-gigs/publish', { night: NIGHT, on: true }, cookie);
+
+    const page = async () => (await fetch(`${app.base}/api/gallery/${NIGHT}`)).json();
+    const first = await page();            // warms the listing
+    const name = first.photos[0].name;
+
+    const del = await fetch(`${app.base}/api/past-photo/${NIGHT}/${name}`, {
+      method: 'DELETE', headers: { Cookie: cookie },
+    });
+    assert.equal(del.status, 200, 'the delete was refused');
+
+    const after = await page();
+    assert.equal(after.photos.length, first.photos.length - 1);
+    assert.ok(!after.photos.some((p) => p.name === name),
+      'a deleted photograph is still being offered from a cached listing');
+  });
+});

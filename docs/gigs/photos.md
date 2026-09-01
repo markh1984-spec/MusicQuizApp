@@ -1165,3 +1165,76 @@ if the bay was rebuilt, that exact element is no longer in the document.
 versus "the one I had" distinction that has bitten this repo three times. Put
 the render back and all three sizes fail with *"the photographs were thrown away
 and redrawn"*.
+
+
+## THE EFFICIENCY SWEEP — 31 August 2026
+
+Asked for: *"can we run an efficiency sweep on all photos and photo related
+stuff to make sure we're not doing a lot more than we have to."* Everything
+below was measured against a stubbed repository that counts GitHub calls, not
+reasoned about.
+
+### The worst one was the way in
+
+The gallery INDEX listed every night's folder **one after another**, because the
+loop `await`ed each listing before starting the next:
+
+```
+the INDEX (21 nights): 22 GitHub calls, 3341ms
+```
+
+Three and a third seconds, every time anybody opened the page whose whole job is
+to be the way in. Running them together and holding the answers:
+
+```
+the INDEX (21 nights): 22 GitHub calls, 324ms      (first person)
+the INDEX again      : 0 GitHub calls,    4ms      (everybody else)
+the night's LISTING  : 0 GitHub calls,    2ms
+```
+
+**A NIGHT'S FOLDER CHANGES IN EXACTLY THREE PLACES** — a photograph arriving
+from the room, the quizmaster adding one, and one being deleted — and all three
+call `dropNight()`. That is the whole safety argument, and it is tested over
+real HTTP rather than against the cache's own functions: what matters is that
+the ROUTES drop it, not that the module can. Take the two invalidations out and
+both cases fail.
+
+### The whole tally
+
+| | Was | Now |
+|---|---|---|
+| The index, 21 nights | 22 calls, 3341ms | 22 calls 324ms, then **0 calls, 4ms** |
+| A night's page | 2 calls | **0**, once warm |
+| One photograph | 3 calls | 1, then **0** for everybody after |
+| 20 people, one night | ~1,800 calls | **0** |
+| Publishing from the rail | 3 full page rebuilds | **none** |
+
+### What HELD — checked and left alone
+
+A sweep says what held as well as what failed, or it teaches you to skim it.
+
+- **The console wall fetches nights serially, and that is correct.** It stops as
+  soon as eighteen pictures are in hand, so serial-with-an-early-exit does LESS
+  work than parallel-everything. Parallelising it would fetch `WALL_NIGHTS`
+  regardless to save latency that the caches have now removed anyway.
+- **`ensureAdvertsRestored()` and `ensureOwnPacksRestored()` are serial and
+  fine.** They are the PACKS repo rather than photos, they run once per room per
+  boot behind a `Set`, and only when the disk is empty after a redeploy. Nobody
+  is waiting on them in a hot loop.
+- **`/api/past-gigs` is one `listDirs` call** for the whole archive, not one per
+  night.
+- **Every grid already lazy-loads**, and `decoding="async"` is now on all of
+  them rather than only the public gallery.
+- **The 24-hour browser cache is right and is NOT lengthened.** Taking a
+  photograph down is a promise, and a cache is the one place it cannot reach.
+
+### What is left is BYTES, and it is a decision rather than a bug
+
+A filed photograph is 1600px and a grid shows it at about 150. Lazy loading
+means only what is on screen is fetched, but the visible ones are full size.
+
+The fix is a thumbnail written beside each photograph at UPLOAD time, in the
+browser, since there is no dependency-free resize on the server. **Not built:**
+it doubles the files in the private repository and helps only nights filed after
+it ships, which makes it a decision about somebody's storage rather than a
+tidy-up.

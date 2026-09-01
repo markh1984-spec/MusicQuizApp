@@ -90,7 +90,9 @@ import { listOwn, readPack, saveOwn, deleteOwn, isOwnPack, inCatalogue, countOwn
 import { brandFor } from './src/branding.js';
 // Picture bytes, held briefly so the fiftieth person to open one night does not
 // spend a fiftieth page's worth of GitHub calls on it — see the file's own note.
-import { cachedPhoto, keepPhoto, dropPhoto } from './src/photo-cache.js';
+import {
+  cachedPhoto, keepPhoto, dropPhoto, cachedNight, keepNight, dropNight,
+} from './src/photo-cache.js';
 import { findScheme, DEFAULT_SCHEME, SCHEMES } from './public/assets/schemes.js';
 // The logo, shared with the browser so the tab icon and the on-screen mark are
 // one drawing rather than two that look alike today.
@@ -810,6 +812,22 @@ function roomForHost(req, url) {
  * `publicRoomId()` falls back to `HOUSE` when there is no owner's quizmaster
  * account, so a fresh install is unchanged too.
  */
+/**
+ * WHAT IS IN A NIGHT'S FOLDER, from memory if it is there.
+ *
+ * The gallery index asks this once per night, so on a season's worth it was
+ * twenty-odd GitHub calls a page open — see `photo-cache.js`. Dropped wherever
+ * a photograph lands in or leaves a folder, which is the only thing that can
+ * change the answer.
+ */
+async function nightFiles(folder) {
+  const held = cachedNight(folder);
+  if (held) return held;
+  const names = (await listDir(folder, 'photos')) || [];
+  keepNight(folder, names);
+  return names;
+}
+
 /** A filed photograph, from memory if it is there — see `photo-cache.js`. */
 async function photoBytes(at) {
   const held = cachedPhoto(at);
@@ -2296,7 +2314,7 @@ async function handleGet(req, res, url, route) {
     const entry = nights.find((n) => n.night === night);
     if (!entry) return sendJson(res, 404, { error: 'No night with that date.' }), true;
     const photoFiles = photosRepoConfigured()
-      ? await listDir(`${photoFolder(galleryRoomFor(req, url))}/${night}`, 'photos')
+      ? await nightFiles(`${photoFolder(galleryRoomFor(req, url))}/${night}`)
       : [];
     const photoCount = photoFiles.map((f) => safePhotoName(f.name)).filter(Boolean).length;
     /*
@@ -2383,7 +2401,7 @@ async function handleGet(req, res, url, route) {
     // console describes a page it is not the one publishing to.
     const gigRoomId = galleryRoomFor(req, url);
     const files = photosRepoConfigured()
-      ? await listDir(`${photoFolder(gigRoomId)}/${night}`, 'photos')
+      ? await nightFiles(`${photoFolder(gigRoomId)}/${night}`)
       : [];
     const rulings = photosRepoConfigured() ? await photoDecisions(gigRoomId) : {};
     // Which ones a human chose for this night's card on the public index.
@@ -2739,9 +2757,17 @@ async function handleGet(req, res, url, route) {
     const saidHere = await photoDecisions(galleryRoomId());
     // The pins ride in on the same read as the rulings — one file, one fetch.
     const pinsHere = await photoPins(galleryRoomId());
-    for (const night of nights) {
-      if (atVenue && !atVenue.has(night)) continue;
-      const files = await listDir(`${photoFolder(galleryRoomId())}/${night}`, 'photos');
+    /*
+     * TOGETHER, NOT ONE AFTER ANOTHER. This loop `await`ed each night's folder
+     * listing before starting the next, so a season on the shelf was twenty-one
+     * round trips end to end — measured at 3.3 seconds for a page whose whole
+     * job is to be the way in.
+     */
+    const wanted = nights.filter((n) => !atVenue || atVenue.has(n));
+    const listings = new Map(await Promise.all(wanted.map(async (n) =>
+      [n, await nightFiles(`${photoFolder(galleryRoomId())}/${n}`)])));
+    for (const night of wanted) {
+      const files = listings.get(night);
       // Only what would actually SHOW once this night is opened — the same
       // one decision, asked the same way. A count that included the ones held
       // back would read "6 photos" over a page that opens on 4.
@@ -2782,7 +2808,7 @@ async function handleGet(req, res, url, route) {
     if (!isNightFolder(night) || !(preview || await isPublished(galleryRoomId(), night))) {
       return sendJson(res, 404, { error: 'Nothing here.' }), true;
     }
-    const files = await listDir(`${photoFolder(galleryRoomId())}/${night}`, 'photos');
+    const files = await nightFiles(`${photoFolder(galleryRoomId())}/${night}`);
     const said = await photoDecisions(galleryRoomId());
     /*
      * WHICH PUB THIS WAS, AND WHAT IS EITHER SIDE OF IT AT THE SAME PUB.
@@ -3951,12 +3977,15 @@ async function fileAway(room, photo) {
   const { photos } = room;
   const read = photos.read(photo.id);
   if (!read) return { ok: false };
+  const folder = `${photoFolder(room.id)}/${photo.night}`;
+  // One of the three places a night's folder changes — see `photo-cache.js`.
+  dropNight(folder);
   const result = await putFile(
     // Foldered per room, so one quizmaster's night is never mixed in with
     // another's. The house keeps the flat path it has always used — Mark has
     // nights filed under it already and moving them would make his own history
     // vanish from the page this record exists to be.
-    `${photoFolder(room.id)}/${photo.night}/${photo.file}`,
+    `${folder}/${photo.file}`,
     read.bytes,
     `${photo.night}${photo.teamName ? ` — ${photo.teamName}` : ''}`,
     'photos',
@@ -4359,8 +4388,10 @@ async function handleWrite(req, res, url, route) {
      * through to the gallery, which is the whole point of the feature.
      */
     const name = `mine${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}${ext}`;
+    const mine = `${photoFolder(galleryRoomFor(req, url))}/${night}`;
+    dropNight(mine);
     const done = await putFile(
-      `${photoFolder(galleryRoomFor(req, url))}/${night}/${name}`,
+      `${mine}/${name}`,
       bytes,
       `${night} — added by the quizmaster`,
       'photos',
@@ -4454,6 +4485,7 @@ async function handleWrite(req, res, url, route) {
     // immutable by name, so nothing else invalidates one — but somebody asking
     // for theirs to be removed must not be served it a moment later.
     dropPhoto(gone);
+    dropNight(gone.slice(0, gone.lastIndexOf('/')));
     if (done && done.ok === false) return sendJson(res, 502, { error: done.error || 'Could not delete that.' }), true;
     return sendJson(res, 200, { ok: true, night, name }), true;
   }

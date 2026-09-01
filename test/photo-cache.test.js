@@ -93,3 +93,43 @@ test('re-keeping the same name does not double-count its bytes', () => {
   assert.equal(photoCacheState().bytes - start, 20 * 1024,
     'one photograph kept twice was counted twice, so the cap would drift');
 });
+
+/*
+ * ---- AND WHAT IS IN A NIGHT'S FOLDER --------------------------------------
+ *
+ * The gallery index asked GitHub for every night's directory, one after
+ * another. Measured with a season on the shelf: twenty-one nights cost
+ * twenty-two calls and 3.3 SECONDS, every time anybody opened the way in.
+ *
+ * A folder changes in exactly three places — a photograph arriving from the
+ * room, the quizmaster adding one, and one being deleted — and all three call
+ * `dropNight()`. These cases are about that, because a stale listing shows a
+ * deleted photograph on a page.
+ */
+
+const { cachedNight, keepNight, dropNight } = await import('../src/photo-cache.js');
+
+test("a night's file names come back without a second listing", () => {
+  keepNight('photos/room/2026-08-13', [{ name: 'p1.jpg' }, { name: 'p2.jpg' }]);
+  assert.equal(cachedNight('photos/room/2026-08-13').length, 2);
+  assert.equal(cachedNight('photos/room/2026-08-20'), null);
+});
+
+test('A PHOTOGRAPH LANDING OR LEAVING FORGETS THE FOLDER', () => {
+  keepNight('photos/room/2026-08-13', [{ name: 'p1.jpg' }]);
+  dropNight('photos/room/2026-08-13');
+  assert.equal(cachedNight('photos/room/2026-08-13'), null,
+    'a deleted photograph would still be listed on the page');
+});
+
+test('two rooms are two folders, and one does not answer for the other', () => {
+  /*
+   * The key is the whole path, so the house room's flat `photos/<night>` and a
+   * quizmaster's `photos/<id>/<night>` cannot collide — which they would if
+   * this were keyed on the date, and one quizmaster would see another's list.
+   */
+  keepNight('photos/2026-08-13', [{ name: 'house.jpg' }]);
+  keepNight('photos/qm-mark/2026-08-13', [{ name: 'mine.jpg' }, { name: 'more.jpg' }]);
+  assert.equal(cachedNight('photos/2026-08-13').length, 1);
+  assert.equal(cachedNight('photos/qm-mark/2026-08-13').length, 2);
+});

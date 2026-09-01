@@ -1543,6 +1543,14 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
     quizzes on a 512MB box**; quick gallery, flaky Wednesday is a bad trade.
   - **The browser window is NOT lengthened past a day** — taking a photo down
     is a promise a cache cannot reach.
+  - **THE INDEX LISTED EVERY NIGHT'S FOLDER ONE AFTER ANOTHER** — 21 nights,
+    22 calls, **3.3 SECONDS**, on the page that is the way in. Together, and
+    held: 324ms, then 0 calls. **A folder changes in exactly three places** —
+    a photo arriving, one added, one deleted — and all three `dropNight()`,
+    tested over real HTTP because what matters is that the ROUTES drop it.
+  - **Publishing paints in place; it does NOT re-render.** It rebuilt the bay
+    THREE times a press. Measured by holding a photo element and checking it is
+    still in the document — counting them says thirty either way.
 - **EVERY WRITER OF `published.json` CARRIES THE HALVES IT IS NOT CHANGING** —
   nights, rulings, pins. The third is when it gets forgotten; a test walks them.
 - **A NIGHT NAMES ITS PUB AND STEPS TO THE ONE EITHER SIDE AT THAT PUB**,
