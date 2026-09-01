@@ -738,6 +738,24 @@ body::after {
 }
 .winner .cb-qr img { display: block; width: 100%; height: 100%; }
 
+/* ---- TONIGHT'S PHOTOGRAPHS — a slide of its own, and the code is the point.
+ *
+ * The comeback band's 14vh QR is sized to sit BESIDE a line of text under a
+ * podium, where it is the second thing on the slide. Here it is the only
+ * thing, and the job is harder than the join code's at the start of the night:
+ * that one is read by people sitting down at a table, this one by people
+ * standing up with their coats on. Measured at 1280x720 the band's code came
+ * out 86px across, which is not a code anybody scans from the back of a pub.
+ *
+ * 34vh, and the words go ABOVE it rather than beside it, so the code gets the
+ * full width of the card rather than what is left of it. */
+.photos-slide .comeback {
+  display: grid; justify-items: center; gap: 1.5vh;
+  grid-template-columns: none;
+}
+.photos-slide .cb-qr { width: 34vh; height: 34vh; padding: 1.4vh; }
+.photos-slide .cb-line { font-size: 4vh; }
+
 /* Silver and bronze. Only these two — a fourth place has no medal. */
 .winner .place-2 { border-color: rgba(214, 218, 226, 0.5); background: rgba(214, 218, 226, 0.09); }
 .winner .place-2 .rplace { background: #d6dae2; }

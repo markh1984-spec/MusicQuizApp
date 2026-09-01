@@ -1204,6 +1204,45 @@ function buildActions(s) {
   }
   out.push(boardBtn);
 
+  /*
+   * TONIGHT'S PHOTOGRAPHS ON THE BIG SCREEN — the same shape as the scoreboard
+   * above, deliberately, because it is the same kind of act: a slide put over
+   * the final without moving anything.
+   *
+   * **THE LABEL CARRIES THE AUDIENCE, and here that is load-bearing rather
+   * than tidy.** The primary button at the final already says *"Check the
+   * photos"* and opens the CONSOLE — so two controls on one screen would say
+   * "photos" and mean different things, which is the collision this app has a
+   * rule against. *"to the room"* is the same fix `Scores to the room` already
+   * uses one line up.
+   *
+   * **AT THE FINAL ONLY**, because that is the only phase the engine will
+   * honour it at — a button drawn where the server refuses it is a control
+   * that does nothing, which this repo has shipped before.
+   */
+  if (s.phase === 'final') {
+    // `s.photoSlide`, never `s.photos` — that one is the room's own
+    // photographs, set by the server over the top of this view.
+    const photos = s.photoSlide || {};
+    const photosUp = Boolean(photos.up);
+    const photoBtn = minor(photosUp ? 'Take the photos off' : 'Photos to the room',
+      () => act('photos', { on: !photosUp }), false, photosUp
+        ? 'Take the photos slide down and give the room the winner back.'
+        : 'Put a QR on the big screen for tonight\u2019s photographs. Nothing is published '
+          + 'by this \u2014 the page says they are up in the morning, and you decide what goes on it.');
+    photoBtn.classList.toggle('on', photosUp);
+    /*
+     * NO ADDRESS MEANS NO SLIDE, and the reason goes on the control.
+     * A QR that goes nowhere in front of sixty people is worse than no QR, so
+     * the engine refuses it — and a button that silently fails is worse still.
+     */
+    if (!photos.link) {
+      photoBtn.disabled = true;
+      photoBtn.title = 'No gallery address for tonight \u2014 this night has no venue on it';
+    }
+    out.push(photoBtn);
+  }
+
   // The host's own copy, on their phone, which is a different thing from
   // putting it on the projector — so it says so on the button rather than
   // only in a tooltip nobody on a phone will ever see.

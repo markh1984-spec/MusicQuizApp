@@ -1537,27 +1537,25 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   refused not trimmed.**
 - **A GALLERY IS PAID FOR ONCE — not per photo, not per visitor.** GitHub
   allows 5,000 calls an hour and a 99-photo night once cost ~297 **per page
-  open**, so the gallery died after seventeen visits; a link goes to a pub full
-  of people who were all there the SAME night, which is the worst shape for a
-  limit. Both caches (`src/gallery.js`, `photo-cache.js`): 20 people, 600
-  requests, **0 calls**.
+  open**; a link goes to a pub full of people who were all there the SAME
+  night, the worst shape for a limit. Both caches: 20 people, 600 requests,
+  **0 calls**.
   - **`inOrder()` drops the file on every write, IN and OUT** — stale here
     serves a photo somebody asked to have removed. **It caches the PROMISE**,
     or 99 arriving at once all miss together.
   - **Bytes: a filed photo is immutable by NAME, so only a DELETION
     invalidates one** (`dropPhoto()`). **Nothing deciding who may see it is
     cached with them.** **Bounded 48MB LRU — this process also runs live
-    quizzes on a 512MB box**; quick gallery, flaky Wednesday is a bad trade.
+    quizzes on a 512MB box.**
   - **The browser window is NOT lengthened past a day** — taking a photo down
     is a promise a cache cannot reach.
-  - **THE INDEX LISTED EVERY NIGHT'S FOLDER ONE AFTER ANOTHER** — 21 nights,
-    22 calls, **3.3 SECONDS**, on the page that is the way in. Together, and
-    held: 324ms, then 0 calls. **A folder changes in exactly three places** —
-    a photo arriving, one added, one deleted — and all three `dropNight()`,
-    tested over real HTTP because what matters is that the ROUTES drop it.
-  - **Publishing paints in place; it does NOT re-render.** It rebuilt the bay
+  - **THE INDEX LISTED EVERY NIGHT'S FOLDER ONE AFTER ANOTHER** — 22 calls,
+    **3.3 SECONDS**, on the way in. Together and held: 0 calls. **A folder
+    changes in exactly three places** and all three `dropNight()`, tested over
+    real HTTP because what matters is that the ROUTES drop it.
+  - **Publishing paints in place; it does NOT re-render** — it rebuilt the bay
     THREE times a press. Measured by holding a photo element and checking it is
-    still in the document — counting them says thirty either way.
+    still in the document; counting them says thirty either way.
 - **EVERY WRITER OF `published.json` CARRIES THE HALVES IT IS NOT CHANGING** —
   nights, rulings, pins. The third is when it gets forgotten; a test walks them.
 - **A NIGHT NAMES ITS PUB AND STEPS TO THE ONE EITHER SIDE AT THAT PUB**,
@@ -2108,6 +2106,28 @@ photographs' own half, split off at the 100,000-byte cap.
 - **THE PIN IS A DRAWING PIN, NEVER A MAP PIN** — a round head on a stem reads
   as a lollipop at 18px. Cap bar, filled body, stroked needle: all-stroke is a
   smudge that size, all-filled a blob. A map pin says *location*
+- **THE LAST SLIDE POINTS AT THE PHOTOGRAPHS, AND THE ADDRESS EXISTS BEFORE
+  THEY DO** — `galleryPath()` moved into `slugs.js` (one builder, both sides);
+  `state.photoLink` resolved at LAUNCH like `comeBack`. **DERIVED, not stored,
+  is what makes it work**: publishing happens afterwards, so the code sixty
+  people photograph at eleven opens a real gallery on Tuesday.
+- **A SLIDE OF ITS OWN, BECAUSE THE FINAL WAS ALREADY CLIPPING** — measured, at
+  every resolution: podium + 4th + draw + comeback is 707px in a 674px card and
+  `.winner` CENTRES it, so **"Tonight's winner" went off the top and half the
+  comeback QR off the bottom** on any night with a draw. A fifth band would
+  have made it worse. **The band's QR is 86px at 720p** — fine beside text,
+  hopeless as the only thing on a slide; 34vh here. **A flag at the FINAL
+  only** (rule 9), refused with no address, never on a phone. **Labelled
+  "Photos to the room"**: the primary already says *Check the photos*.
+- **`view.photos` WAS ALREADY TAKEN, AND IT COST THE BUTTON** — `server.js`
+  sets it to the room's own photographs, host AND screen, AFTER the engine
+  builds the view. The field existed, held somebody else's data, the control
+  was never drawn, nothing threw. **Found by pressing it in a real browser.**
+- **A PHONE THAT SCANS EARLY IS TOLD "not up yet", AND THE WORDING IS THE ONLY
+  CHANGE** — the server still answers ONE 404 for every refusal, so a night
+  that never happened reads identically to a real unpublished one. **A
+  `pending` state on the server was turned down for exactly that**: it would
+  have leaked which dates exist
 - **THE LEAGUE BAY IS A VENUE THAT FOLDS INTO ITS NIGHTS** — *"the summary is
   what displays when you click venue, and then you can click each night to see
   who won."* **The pub's own row is `The table`, INSIDE the fold, never the

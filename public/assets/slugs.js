@@ -89,6 +89,33 @@ export function nightSlugExact(night) {
 }
 
 /**
+ * THE ADDRESS OF ONE NIGHT'S GALLERY — the ONE builder, for both sides.
+ *
+ * **It lives here because the SERVER needs it now as well as the browser.**
+ * The projector's photos slide carries a QR of this address, resolved at
+ * launch; the console prints the same address under a night's photographs.
+ * Two implementations of one URL is the fault this file already exists to
+ * prevent — a link that works in the browser and 404s on the server — so it is
+ * written once and handed what each caller knows.
+ *
+ * **The pretty form is not always available**, which is why `pretty` is an
+ * argument rather than something guessed here: it depends on whether this
+ * quizmaster's room is the one the public pages fall back to, and only the
+ * server can answer that (`ownAddress` on `/api/me`). The plain form always
+ * works, so it is the fallback rather than an error.
+ *
+ * @param {string} night  `2026-08-20`
+ * @param {string} venue  the pub's name, for the slug
+ * @param {{pretty?: boolean, room?: string}} how
+ */
+export function galleryPath(night, venue, { pretty = false, room = '' } = {}) {
+  const slug = venueSlug(venue);
+  const date = nightSlug(night);
+  if (pretty && slug && date) return `/${slug}/gallery/${date}`;
+  return `/gallery?n=${encodeURIComponent(night)}${room ? `&q=${encodeURIComponent(room)}` : ''}`;
+}
+
+/**
  * Does this night match what somebody typed?
  *
  * Reads `20-august` and `20-august-2026`, and is deliberately forgiving about

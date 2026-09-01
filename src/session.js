@@ -122,6 +122,10 @@ function nightWideOpts(state) {
     rewards: state.rewards,
     venueLogo: state.venueLogo,
     comeBack: state.comeBack,
+    // Night-wide like the comeback line beside it: the pub and the date do not
+    // change between a quiz and the bingo after it, so neither does the
+    // address their photographs will live at.
+    photoLink: state.photoLink,
     look: state.look,
     questionSeconds: state.questionSeconds,
     /*
@@ -575,7 +579,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, league = false, online = false, teamPlay = false, teamMode = 'assigned', venue = '', venueId = '', rewards = [], venueLogo = '', comeBack = null, askForRounds = false, roundIdeas = [], order = null, breakPlan = null } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, league = false, online = false, teamPlay = false, teamMode = 'assigned', venue = '', venueId = '', rewards = [], venueLogo = '', comeBack = null, photoLink = null, askForRounds = false, roundIdeas = [], order = null, breakPlan = null } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     /*
      * TONIGHT'S RUNNING ORDER, when one was built — rounds from more than one
@@ -776,6 +780,14 @@ export class Session {
      * at it is the one place to be strict.
      */
     this.engine.state.comeBack = cleanComeBack(comeBack);
+    /*
+     * WHERE TONIGHT'S PHOTOGRAPHS WILL LIVE — resolved by the SERVER at launch
+     * and written in, like the comeback line above. A path only: the projector
+     * turns it into a full address, so nothing here has to know the host name.
+     */
+    this.engine.state.photoLink = typeof photoLink === 'string' && photoLink.startsWith('/')
+      ? photoLink
+      : null;
     /*
      * Whether the room may ask for a round at the end. In the state like
      * everything else decided at launch, so a restart cannot turn it on for a
@@ -1142,6 +1154,8 @@ export class Session {
       reveal: () => this.engine.reveal(),
       // The scores on the big screen, without moving the quiz.
       scoreboard: () => this.engine.showScoreboard(body.on !== false),
+      // Tonight's photographs, as a slide of their own at the final.
+      photos: () => this.engine.showPhotoSlide(body.on !== false),
       // An advertising slide, the same way.
       advert: () => this.engine.showAdvert(
         body.packId ? { packId: body.packId, slideId: body.slideId } : null,

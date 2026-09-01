@@ -1,7 +1,7 @@
 /** GIGS — the evidence: headcounts, what the room asked for, and nights run. */
 
 import { binIcon, pinIcon, esc, node } from './client.js';
-import { nightSlug, venueSlug } from './slugs.js';
+import { galleryPath, nightSlug, venueSlug } from './slugs.js';
 import { library, me, nightBench, setGigsSeen, setNightDrag } from './console-state.js';
 import { dragging, putNightOnBench } from './console-tonight.js';
 import { hostKey, keyed } from './console.js';
@@ -1086,12 +1086,11 @@ async function shareReport(night) {
  * one URL is how a link comes to work in the bay and 404 in the panel.
  */
 export function galleryAddress(night, venue = '') {
-  const slug = venueSlug(venue);
-  // ANSWERED BY THE SERVER — see `ownAddress` in `/api/me`.
-  const pretty = Boolean(me && me.ownAddress) && slug && nightSlug(night);
-  return pretty
-    ? `/${slug}/gallery/${nightSlug(night)}`
-    : `/gallery?n=${encodeURIComponent(night)}${me?.id ? `&q=${encodeURIComponent(me.id)}` : ''}`;
+  // THE SHAPE IS IN `slugs.js`, because the SERVER builds this address too —
+  // the projector's photos slide carries a QR of it. This function's only job
+  // is to answer the two questions the browser knows: whether the pretty form
+  // works here (`ownAddress`, decided by the server) and whose room it is.
+  return galleryPath(night, venue, { pretty: Boolean(me && me.ownAddress), room: me?.id || '' });
 }
 
 /**

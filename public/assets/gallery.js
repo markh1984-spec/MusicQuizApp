@@ -290,13 +290,33 @@ async function showNights() {
 async function showNight(night) {
   const data = await get(`/api/gallery/${encodeURIComponent(night)}`);
   if (!data) {
-    // The same nothing for every refusal — not a night, not published, or
-    // empty. Three different messages would map which dates exist.
-    title.textContent = 'Nothing here';
+    /*
+     * "NOT UP YET" RATHER THAN "NOTHING HERE" — and the wording is the WHOLE
+     * change, which is what makes it safe.
+     *
+     * The projector now carries a QR of this address at the end of the night,
+     * hours before the photographs are published: publishing is deliberately
+     * something the quizmaster does afterwards, having looked at what is in
+     * them. So the most likely person reading this page is somebody who
+     * scanned that code in the pub — and telling them "nothing here" about
+     * their own night, which they were at, reads as the app being broken.
+     *
+     * **THE SERVER IS UNTOUCHED, and that is the point.** It still answers ONE
+     * 404 for every refusal — not a night, not published, or empty — so this
+     * page says exactly the same thing to somebody guessing a date at random
+     * as to somebody holding a real link. Nothing new can be mapped, because
+     * nothing new is known. The alternative was a `pending` state on the
+     * server, which would have leaked precisely which dates exist.
+     *
+     * It promises the morning rather than a time: the app cannot know when
+     * somebody will get round to it, and a deadline it does not control is one
+     * it would break.
+     */
+    title.textContent = 'Not up yet';
     sub.textContent = '';
     body.replaceChildren(node(`
-      <p class="muted gal-empty">This night is not up.
-      <a href="${esc(home())}">See what is.</a></p>`));
+      <p class="muted gal-empty">These photos are not up yet — try again in the morning.
+      <a href="${esc(home())}">See what is up.</a></p>`));
     return;
   }
   title.textContent = data.when || night;

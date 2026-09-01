@@ -20,7 +20,7 @@ import { Store } from './src/store.js';
 import { Hub } from './src/sse.js';
 import {
   Photos, MAX_BYTES, isCameraFile, extensionFor, showsOnGallery, galleryPhotosOf,
-  coverPhotos, sniffType,
+  coverPhotos, sniffType, nightOf,
 } from './src/photos.js';
 
 /** How many photographs the fanned pile on a night's card shows. */
@@ -47,7 +47,7 @@ import { venueHeadcounts, nightHeadcount } from './src/headcounts.js';
 import { playedByVenue } from './src/heard.js';
 import { nightReportPdf, nightReportFilename } from './src/report-pdf.js';
 import { leaguesByVenue, leagueAfter, teamKey } from './src/league.js';
-import { matchNightSlug, readVenuePath, venueSlug } from './public/assets/slugs.js';
+import { galleryPath, matchNightSlug, readVenuePath, venueSlug } from './public/assets/slugs.js';
 import { comeBackFor, nextNightAt, comeBackText } from './src/comeback.js';
 import { isComposed, MAX_ROUNDS } from './src/running-order.js';
 import { listShows, saveShow, deleteShow, showProblems } from './src/shows.js';
@@ -835,6 +835,38 @@ async function photoBytes(at) {
   const bytes = await getFile(at, 'photos');
   if (bytes) keepPhoto(at, bytes);
   return bytes;
+}
+
+/**
+ * WHERE TONIGHT'S PHOTOGRAPHS WILL LIVE — resolved at LAUNCH, like the
+ * comeback line, and written into the game state.
+ *
+ * **THE ADDRESS EXISTS BEFORE THE PHOTOGRAPHS DO, and that is the whole
+ * mechanism.** It is derived from the pub and the date rather than stored, so
+ * the projector can carry a QR of it at eleven o'clock while the gallery
+ * itself is still private — publishing is deliberately something the
+ * quizmaster does afterwards, having looked at what is in it. The link people
+ * photograph tonight is the link that works on Tuesday.
+ *
+ * **`galleryPath()` IS SHARED WITH THE BROWSER** (`public/assets/slugs.js`),
+ * because the console prints this same address under a night's photographs —
+ * two implementations of one URL is a link that works in one place and 404s in
+ * the other, which is the fault that file exists to prevent.
+ *
+ * The 6am roll-over is `nightOf()` — the photo store's OWN dating function
+ * rather than a second copy of the arithmetic, so
+ * a quiz that ends at half past midnight points at its own night rather than
+ * tomorrow's empty one.
+ */
+function photoLinkFor(req, url, venue) {
+  const room = galleryRoomFor(req, url);
+  return galleryPath(nightOf(Date.now()), venue, {
+    // The pretty `/the-crown/gallery/20-august` form only works for the room
+    // the public pages fall back to — the same fact `/api/me` sends as
+    // `ownAddress`. Everybody else gets the plain form, which always works.
+    pretty: room === publicRoomId(),
+    room,
+  });
 }
 
 function galleryRoomFor(req, url) {
@@ -6371,7 +6403,7 @@ async function handleWrite(req, res, url, route) {
           ? pickIdeas((fullLibrary(config, room.id, listOwn(room.paths)).quizzes || [])
             .map((q) => q.title))
           : [];
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, questionSeconds, lobbyGame, lobbySound, league, online, teamPlay, teamMode, venue, venueId, rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas, order: wantedOrder, breakPlan: body.breakPlan || {} });
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, questionSeconds, lobbyGame, lobbySound, league, online, teamPlay, teamMode, venue, venueId, rewards, venueLogo, comeBack, photoLink: photoLinkFor(req, url, venue), askForRounds, roundIdeas: askIdeas, order: wantedOrder, breakPlan: body.breakPlan || {} });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();
@@ -6483,7 +6515,8 @@ async function handleWrite(req, res, url, route) {
           : [];
         const started = session.launchRunningOrder(segments, {
           look, questionSeconds, lobbyGame, lobbySound, league, online, teamPlay, teamMode, venue, venueId,
-          rewards, venueLogo, comeBack, askForRounds, roundIdeas: askIdeas,
+          rewards, venueLogo, comeBack, photoLink: photoLinkFor(req, url, venue),
+          askForRounds, roundIdeas: askIdeas,
           /*
            * WHAT HAPPENS IN THE GAPS — passed straight through and cleaned
            * inside `session.launch()`, exactly where the ordinary launch

@@ -132,6 +132,29 @@ export class Engine {
        */
       comeBack: null,
       /*
+       * WHERE TONIGHT'S PHOTOGRAPHS WILL LIVE, and whether that slide is up.
+       *
+       * `photoLink` is the gallery's address for this night, resolved at
+       * LAUNCH exactly like `comeBack` above and for the same three reasons:
+       * it needs the venue record and the room the engine cannot see, it must
+       * survive a restart at half eleven, and the state is the record of the
+       * night. Null when there is nothing true to point at.
+       *
+       * **THE ADDRESS IS KNOWN BEFORE THE PHOTOGRAPHS ARE PUBLISHED, and that
+       * is what makes this work at all.** It is derived from the pub and the
+       * date rather than stored, so the QR can go on the projector at eleven
+       * and the same link becomes a real gallery whenever the quizmaster
+       * publishes it — which is deliberately afterwards, having looked at what
+       * is in it. A phone that scans early is told the photos are not up yet.
+       *
+       * `photoSlide` is a FLAG, like the scoreboard and the adverts, and for
+       * the reason rule 9 gives: it puts something over the final without
+       * moving the quiz, so pressing it again gives the room the winner back.
+       * It is only ever honoured at the FINAL.
+       */
+      photoLink: null,
+      photoSlide: false,
+      /*
        * MAY THE ROOM ASK FOR A ROUND at the end? Set at launch like the look
        * and the card shape, and off unless the account holds it — so a night
        * run by somebody who has not got the feature shows no box at all, and a
@@ -963,6 +986,51 @@ export class Engine {
   }
 
   /**
+   * PUT TONIGHT'S PHOTOGRAPHS ON THE BIG SCREEN — a slide of its own, at the
+   * end of the night, with a QR of the address they will live at.
+   *
+   * **A SLIDE RATHER THAN A BAND UNDER THE WINNER, and that was measured.**
+   * The final already carries the winner, the podium, fourth place, the draw,
+   * the league and the comeback line, and on a night with both a draw and a
+   * comeback it was ALREADY clipping 50px off the top and the bottom at every
+   * resolution — *"Tonight's winner"* gone and the comeback QR sliced in half,
+   * because `.winner` centres its content and `body.screen` hides the
+   * overflow. There was no room to add anything, and a QR nobody can scan is
+   * worse than no QR.
+   *
+   * So it takes the screen for a moment instead, which also gives it the one
+   * thing a code being read from the back of a pub actually needs: size.
+   *
+   * **A FLAG, LIKE THE SCOREBOARD** (rule 9) — pressing it again gives the
+   * room the winner back, with nothing about the quiz having moved.
+   *
+   * **THE FINAL ONLY.** It is refused anywhere else, which makes it
+   * unreachable from a live question by construction rather than by a guard
+   * that has to stay right — and a slide that could cover the quiz is a slide
+   * that will, on the night somebody presses it by accident.
+   *
+   * **AND IT IS REFUSED WITH NOTHING TO POINT AT.** No venue and no address
+   * means a QR that goes nowhere, which is the comeback slide's own rule:
+   * silence beats a slide with a hole in it.
+   */
+  showPhotoSlide(on = true) {
+    const wanted = Boolean(on);
+    if (wanted && this.state.phase !== PHASES.FINAL) {
+      return { ok: false, reason: 'not_final' };
+    }
+    if (wanted && !this.state.photoLink) {
+      return { ok: false, reason: 'no_gallery' };
+    }
+    if (this.state.photoSlide === wanted) return { ok: true, photoSlide: wanted };
+    this.state.photoSlide = wanted;
+    // Two things cannot be on one projector — the same rule the scoreboard and
+    // the adverts already keep between themselves.
+    if (wanted) { this.state.scoreboard = false; this.state.advert = null; }
+    this.changed();
+    return { ok: true, photoSlide: wanted };
+  }
+
+  /**
    * Put the scores on the big screen, mid-round, without moving the quiz.
    *
    * Deliberately a flag rather than a phase. The host wants this every few
@@ -1017,9 +1085,11 @@ export class Engine {
   /** Put the current question on the screen and start the clock. */
   askQuestion() {
     if (!this.question()) return false;
-    // A question can never appear behind the scoreboard or an advert.
+    // A question can never appear behind the scoreboard, an advert or the
+    // photos slide.
     this.state.scoreboard = false;
     this.state.advert = null;
+    this.state.photoSlide = false;
     const seconds = this.questionSeconds();
     const startedAt = this.now();
     this.state.phase = PHASES.QUESTION;
@@ -1093,6 +1163,10 @@ export class Engine {
     // presses.
     s.scoreboard = false;
     s.advert = null;
+    // A slide that survived a move would sit over a quiz that had gone on
+    // without it — the reason rule 9 makes these flags rather than phases is
+    // that a move puts the quiz back on screen.
+    s.photoSlide = false;
     switch (s.phase) {
       case PHASES.LOBBY:
         return this.start();
@@ -1438,6 +1512,10 @@ export class Engine {
     const s = this.state;
     s.scoreboard = false;
     s.advert = null;
+    // A slide that survived a move would sit over a quiz that had gone on
+    // without it — the reason rule 9 makes these flags rather than phases is
+    // that a move puts the quiz back on screen.
+    s.photoSlide = false;
     switch (s.phase) {
       case PHASES.REVEAL:
         // Back from a reveal reopens the same question, cleared, from the top.
@@ -2174,6 +2252,18 @@ export class Engine {
      */
     if (s.phase === PHASES.FINAL && s.comeBack) view.comeBack = comeBackView(s.comeBack);
     /*
+     * TONIGHT'S PHOTOGRAPHS — the slide, and only while it is up.
+     *
+     * At the FINAL and nowhere else, exactly like the comeback band above, and
+     * only when the host has actually put it up: the address is a fact about
+     * the night from the moment it launches, but a projector has no use for it
+     * until somebody asks for the slide, and a field the screen cannot act on
+     * is a field the next person wires to something.
+     */
+    if (s.phase === PHASES.FINAL && s.photoSlide && s.photoLink) {
+      view.photoSlide = { link: String(s.photoLink), venue: String(s.venue || '') };
+    }
+    /*
      * THE LEAGUE, AT THE FINAL AND NOWHERE ELSE.
      *
      * Same rule as the comeback band and for the same reason: a table of other
@@ -2700,6 +2790,23 @@ export class Engine {
      * and the host is the only person who knows they are not doing the 20th.
      */
     if (s.comeBack) view.comeBack = comeBackView(s.comeBack);
+    /*
+     * AND THE HOST SEES THE PHOTOS SLIDE FROM THE LOBBY ON, whether it is up
+     * or not — the same reasoning as the comeback line directly above. They
+     * are the one person who can check the address is right, and they need the
+     * button to exist before they press it. `up` is what the room is looking
+     * at; `link` is what the QR will carry.
+     *
+     * **IT IS `photoSlide` AND NOT `photos`, AND THAT IS NOT A PREFERENCE.**
+     * `view.photos` is ALREADY TAKEN on both the host and the screen —
+     * `server.js` sets it to the room's own photographs AFTER this view is
+     * built, so the first version of this line was silently overwritten and
+     * the button it fed never appeared. Nothing threw: the field existed, held
+     * somebody else's data, and the control simply was not drawn. Found by
+     * pressing the button in a real browser, which is the only thing that
+     * could have found it.
+     */
+    view.photoSlide = { up: Boolean(s.photoSlide), link: String(s.photoLink || '') };
 
     if (q && round) {
       view.question = {

@@ -52,6 +52,7 @@ const cards = {
   // pinged.
   scoreboard: { key: () => 'scores', render: renderScoreboard, update: updateScoreboard },
   advert: { key: (s) => `ad:${s.advert && s.advert.heading}`, render: renderAdvert },
+  photos: { key: () => 'photos', render: renderPhotosSlide },
   round_intro: { key: (s) => `intro:${s.roundIndex}`, render: renderRoundIntro },
   question: { key: (s) => `q:${s.roundIndex}:${s.questionIndex}`, render: renderQuestion, update: updateQuestion },
   reveal: { key: (s) => `q:${s.roundIndex}:${s.questionIndex}`, render: renderQuestion, update: updateQuestion },
@@ -107,7 +108,12 @@ function draw(next) {
     ? cards.advert
     : state.scoreboard
       ? cards.scoreboard
-      : isBingo ? bingoCard(state) : (cards[state.phase] || cards.lobby);
+      // Tonight's photographs, over the final. The engine only ever sends this
+      // at the FINAL and only while the host has it up, so no phase check is
+      // repeated here — one decision, made where the state is.
+      : state.photoSlide
+        ? cards.photos
+        : isBingo ? bingoCard(state) : (cards[state.phase] || cards.lobby);
   const key = card.key(state);
   if (key !== currentKey) {
     currentKey = key;
@@ -472,6 +478,48 @@ function updateScoreboard(s) {
  * The host's line for the mic (`say`) is NOT here — that goes to the control
  * view only, like every other thing meant for the host and not the room.
  */
+/**
+ * TONIGHT'S PHOTOGRAPHS — the last slide of the night, and one big QR.
+ *
+ * **A SLIDE OF ITS OWN, BECAUSE THE FINAL HAD NO ROOM LEFT.** Measured at
+ * 1280x720 and again at 1920x1080: the winner, the podium, fourth place, the
+ * draw and the comeback band together come to 707px in a 674px card, and
+ * `.winner` centres what it holds — so a night with both a draw and a comeback
+ * was ALREADY losing "Tonight's winner" off the top and half the comeback QR
+ * off the bottom, at every resolution, before anything was added. A fifth band
+ * would have made a bad slide worse and given the code nowhere to be big.
+ *
+ * **THE QR IS THE POINT, so it gets the size a QR needs.** It is read from
+ * across a pub by people holding a drink, which is a harder job than the join
+ * code has at the start of the night — they are sitting down for that one.
+ *
+ * **IT SAYS THE PHOTOS MAY NOT BE THERE YET, and that is not a hedge.**
+ * Publishing is deliberately something the quizmaster does afterwards, having
+ * looked at what is in the pictures — so at the moment this slide is up, the
+ * gallery is almost always still private. Promising them now and delivering in
+ * the morning is the truth; "see them now" would be the app lying about its
+ * own state, which is the rule the comeback slide already follows.
+ */
+function renderPhotosSlide(s) {
+  const p = s.photoSlide || {};
+  const link = String(p.link || '');
+  // The projector knows its own origin; the state carries a path, so nothing
+  // server-side has to know the host name. A QR needs the whole address.
+  const full = link.startsWith('http') ? link : `${location.origin}${link}`;
+  return node(`
+    <div class="winner photos-slide">
+      <div class="kicker">Tonight&rsquo;s photos</div>
+      <h1 class="grad-text">${esc(p.venue || 'From the room')}</h1>
+      <div class="comeback has-qr">
+        <div class="cb-words">
+          <div class="cb-line">Scan to see them all</div>
+          <div class="cb-note">Up in the morning &mdash; the link keeps working</div>
+        </div>
+        <div class="cb-qr"><img src="/qr.svg?text=${encodeURIComponent(full)}" alt=""></div>
+      </div>
+    </div>`);
+}
+
 function renderAdvert(s) {
   const a = s.advert || {};
   /*

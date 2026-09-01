@@ -465,7 +465,27 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * That is the line, unchanged and now applied a fourth time: **a raise is for
  * a rule about something SILENT.**
  */
-const BUDGET = 199_000;
+/*
+ * 199,000 -> 201,000 on 1 SEPTEMBER 2026, and the trims came first again: four
+ * gallery-cache bullets cut to their prohibition, and the four new rules
+ * written twice, the second time shorter.
+ *
+ * WHAT IT BOUGHT: three rules about things that fail SILENTLY, which is the
+ * line this budget has always been raised on.
+ *
+ *  - The projector's final slide has been CLIPPING on any night with both a
+ *    draw and a comeback — "Tonight's winner" off the top, half the QR off the
+ *    bottom, at every resolution, for as long as both have existed. Nobody
+ *    reported it; it was found by measuring for something else.
+ *  - `view.photos` was already taken, on the host AND the screen, and
+ *    `server.js` sets it AFTER the engine builds the view. A new field of that
+ *    name held somebody else's data and the button it fed was never drawn.
+ *  - The gallery's "not up yet" page changes the WORDING and nothing else, so
+ *    a night that never happened still reads identically to a real
+ *    unpublished one. The rule is there to stop the obvious next change — a
+ *    `pending` state on the server — which would leak which dates exist.
+ */
+const BUDGET = 201_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

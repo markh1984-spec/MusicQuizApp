@@ -1520,3 +1520,110 @@ meaning, which is whether anybody else can open it.
 They are named as constants because `paintPublish()` repaints this link without
 re-rendering, so the same words are written in two places and would otherwise
 drift apart the first time one was edited.
+
+## The last slide of the night points at the photographs — 1 September 2026
+
+Asked as a question: *"at the end of a quiz is it possible for the quiz itself
+to show the link to the gallery for that evening?"* It is, and two things
+decided how.
+
+### The address exists before the photographs do
+
+`galleryPath()` in `public/assets/slugs.js`, resolved at LAUNCH into
+`state.photoLink` exactly as `comeBack` is, and for the same three reasons: it
+needs the venue record and the room the engine cannot see, it must survive a
+restart at half eleven, and the state is the record of the night.
+
+**That the address is DERIVED rather than stored is what makes the whole
+feature possible.** Publishing is deliberately something the quizmaster does
+afterwards, having looked at what is in the pictures — so at the moment the QR
+goes on the projector, the gallery is still private. Because the link is built
+from the pub and the date, the code sixty people photograph at eleven o'clock
+is the same code that opens a real gallery on Tuesday.
+
+**The builder moved into `slugs.js` rather than being written a second time.**
+The console already prints this address under a night's photographs; two
+implementations of one URL is a link that works in the browser and 404s on the
+server, which is the fault that file exists to prevent. It takes what each
+caller knows — `pretty` (whether this room is the one the public pages fall
+back to, which only the server can answer) and `room`.
+
+### There was no room on the final, and that was already true
+
+The obvious answer was a fifth band under the podium. Measured first, at
+1280x720 and again at 1920x1080:
+
+```
+podium only          fits
++ 4th                fits
++ comeback           fits
++ draw               fits
++ draw + comeback    CLIPPED 50px top / 50px bottom
+```
+
+**So on any night with both a draw and a comeback slide, the final was already
+losing "Tonight's winner" off the top and half the comeback QR off the
+bottom** — at every resolution, because everything on the projector is sized in
+`vh` and `.winner` centres what it holds while `body.screen` hides the
+overflow. That is a live defect nobody had reported, found by measuring for
+something else, and it is why a band was the wrong answer: it would have made a
+bad slide worse and given the code nowhere to be big.
+
+A slide of its own also gives the QR the one thing it needs. **The comeback
+band's 14vh code came out 86px across at 720p** — sized to sit beside a line of
+text, which is a fine job for the second thing on a slide and hopeless for the
+only thing. It is 34vh here, with the words above rather than beside, and
+measured back at 225px. The job is harder than the join code's: that one is
+read by people sitting at a table, this one by people standing up with their
+coats on.
+
+### A flag at the final, like the scoreboard
+
+`showPhotoSlide()` in `src/engine.js`, `state.photoSlide`. Rule 9's shape
+exactly — it puts something over the final without moving the quiz, so pressing
+again gives the room the winner back and any move takes it down.
+
+- **The FINAL only, refused everywhere else.** That makes it unreachable from a
+  live question by construction rather than by a guard that has to stay right.
+- **Refused with no address**, the comeback slide's own rule: a QR that goes
+  nowhere in front of sixty people is worse than no QR, so silence wins.
+- **The phones are never told.** Same as the comeback band — it is a projector
+  slide, and the link lives on the night rather than in anybody's pocket.
+- **The host sees it from the lobby on**, so the button exists before it is
+  pressed and the address can be checked while there is still time.
+
+### `view.photos` was already taken, and it cost the button
+
+The first version put the host's half on `view.photos`. **`server.js` sets that
+same field to the room's own photographs, on the host AND the screen, after the
+engine has built the view** — so the field existed, held somebody else's data,
+and the button it fed was never drawn. Nothing threw and no test failed.
+
+It was found by pressing the button in a real browser, which is the only thing
+that could have found it, and it is the same lesson this repo keeps paying for:
+a name collision on a payload is silent, and a control that is never drawn
+looks exactly like one that has not been built yet. It is `view.photoSlide`
+now, with a test asserting it does not squat on `photos`.
+
+### And the label says who it is for
+
+The primary button at the final already says *"Check the photos"* and opens the
+console. A second control saying "photos" and meaning the projector is the
+label collision this app has a rule against — so it is **"Photos to the
+room"**, which is the fix `Scores to the room` one line above already uses.
+
+### What a phone gets if somebody scans early
+
+**"Not up yet — try again in the morning."** The change is the WORDING and
+nothing else, which is what makes it safe: the server still answers ONE 404 for
+every refusal — not a night, not published, or empty — so this page says
+exactly the same thing to somebody guessing a date at random as to somebody
+holding a real link. Nothing new can be mapped because nothing new is known.
+
+The alternative was a `pending` state on the server, and it was turned down for
+precisely that: it would have leaked which dates exist. Verified live — a night
+that never happened and a real unpublished one give the identical page.
+
+It promises the morning rather than a time. The app cannot know when somebody
+will get round to publishing, and a deadline it does not control is one it
+would break.
