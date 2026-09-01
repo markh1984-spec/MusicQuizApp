@@ -131,6 +131,23 @@ try {
 
   for (const [label, width, height] of [['desk', 1500, 900], ['laptop', 1280, 720], ['phone', 390, 844]]) {
     const page = await browser.newPage({ viewport: { width, height } });
+    /*
+     * THE PUBLISH LAMP ASKS FIRST, and a browser dialog stops the page dead
+     * until it is answered — so this harness has to be the finger that answers
+     * it, or every check below the lamp press waits for ever.
+     *
+     * `answer` is what the next dialog gets. It is a variable rather than a
+     * constant because the half worth guarding is the NO: a confirmation that
+     * does not actually stop the press is worse than no confirmation at all,
+     * since it teaches somebody the question is a formality.
+     */
+    const asked = [];
+    let answer = true;
+    page.on('dialog', async (d) => {
+      asked.push(d.message());
+      if (answer) await d.accept();
+      else await d.dismiss();
+    });
     const errors = [];
     page.on('pageerror', (e) => errors.push(String(e.message)));
     page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
@@ -515,6 +532,38 @@ try {
         const l = document.querySelector('.doorhead .bay-lamp');
         return { on: l.classList.contains('is-on'), said: l.getAttribute('aria-label') || '' };
       });
+      /*
+       * SAYING NO CHANGES NOTHING — checked BEFORE the yes, because it is the
+       * half that can rot silently. A confirm wired in front of a press that
+       * happens anyway looks identical from the outside until somebody
+       * publishes a stranger's face by pressing Cancel.
+       */
+      asked.length = 0;
+      answer = false;
+      await page.evaluate(() => document.querySelector('.doorhead .bay-lamp').click());
+      await page.waitForTimeout(400);
+      const afterNo = await page.evaluate(() => {
+        const l = document.querySelector('.doorhead .bay-lamp');
+        return l.classList.contains('is-on');
+      });
+      check(`${label}: the P lamp asks before it publishes`, asked.length === 1,
+        `${asked.length} questions asked`);
+      check(`${label}: and saying no changes nothing`, afterNo === lampWas.on,
+        `${lampWas.on} -> ${afterNo}`);
+      /*
+       * AND THE QUESTION NAMES THE NIGHT — this app's own confirm rule, the one
+       * the photo bin follows: say what is about to happen to WHICH thing,
+       * never *"are you sure"*. A lamp pressed on a rail of a dozen dates is
+       * exactly where the wrong row gets hit.
+       */
+      const question = asked[0] || '';
+      check(`${label}: the question says which way it is going`,
+        /about to (un)?publish this gallery/i.test(question), question.split('\n')[0]);
+      check(`${label}: and it names the night rather than asking "are you sure"`,
+        /\d/.test(question) && !/are you sure/i.test(question), question.split('\n')[0]);
+      check(`${label}: and it says what that means for a stranger`,
+        /link/i.test(question), question.replace(/\n+/g, ' ').slice(0, 120));
+      answer = true;
       await page.evaluate(() => document.querySelector('.doorhead .bay-lamp').click());
       await page.waitForTimeout(700);
       const lampNow = await page.evaluate(() => {
@@ -543,9 +592,27 @@ try {
       check(`${label}: publishing does NOT rebuild the gallery`, survived.same,
         `the photographs were ${survived.same ? 'left alone' : 'thrown away and redrawn'}`);
       check(`${label}: and they are all still there`, survived.still > 0, `${survived.still}`);
-      // Put it back, so the checks below start where they expect.
+      // Put it back, so the checks below start where they expect — which also
+      // walks the OTHER branch of the warning, and that is the one nothing else
+      // reaches: the fixture starts unpublished, so without this press the
+      // "take it down" wording could say anything at all.
+      asked.length = 0;
       await page.evaluate(() => document.querySelector('.doorhead .bay-lamp').click());
       await page.waitForTimeout(500);
+      check(`${label}: taking it down asks its own question, not the same one`,
+        /about to unpublish this gallery/i.test(asked[0] || ''),
+        (asked[0] || '').split('\n')[0]);
+      /*
+       * *"and another click unpublishes it and makes it red."* It did not: the
+       * row captured its state when it was built and this rail is never
+       * rebuilt, so every press sent "publish" and the lamp stayed green.
+       * Nothing threw and the colour of the FIRST press was right, which is why
+       * only pressing it twice can see this.
+       */
+      const backToRed = await page.evaluate(() =>
+        document.querySelector('.doorhead .bay-lamp').classList.contains('is-on'));
+      check(`${label}: and pressing it again really does take it down`,
+        backToRed === lampWas.on, `ended ${backToRed ? 'green' : 'red'}`);
     }
     check(`${label}: and none of them at the bottom`, opened.bodyPhotos === 0, `${opened.bodyPhotos}`);
     /*

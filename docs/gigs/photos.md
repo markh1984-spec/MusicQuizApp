@@ -1277,3 +1277,140 @@ the link LIFTS under the pointer  — 100.0 -> 99.0
 and it presses DOWN past where it started — hover 99.0 -> press 101.0
 its edge thins under the finger  — 1px
 ```
+
+## The publish lamp asks first — 1 September 2026
+
+Asked for the day after the lamp shipped: *"can you have a little warning pop up
+when someone clicks the red green at the gallery level saying 'you are about to
+publish this gallery, proceed?' and 'you are about to unpublish this gallery,
+proceed?' with a yes/no option, so its clear what they're about to do."*
+
+He is right, and the reason is the thing that made the lamp good in the first
+place. It is a **wordless** control — a coloured letter — which is exactly what
+`docs` argued for on a grid of eighteen photographs, where a repeated label
+becomes furniture. But this one is not on a grid of eighteen. It is on a rail of
+a dozen dates, one press away from a stranger's face going onto a page anyone
+with the link can open, and there is no undo that reaches somebody who has
+already looked. A colour that carries all of its meaning is the right control
+for a photograph and half a control for a publish.
+
+### It is the browser's own `confirm()`, deliberately
+
+He asked for *"a yes/no option"* and a native dialog renders **OK/Cancel**. A
+literal Yes/No means drawing a dialog, and this app has never had one: twelve
+confirmations in the console — the photo bin, deleting a pack, removing a seat,
+writing off a night — are all native.
+
+**So a drawn one here would put two kinds of confirmation on one door**, and the
+photo bin's is a few inches below this button. That is the label collision this
+repo keeps recording, wearing a dialog instead of a word: one question asked two
+ways, and the day one of them grows a habit the other has not is the day
+somebody presses the wrong thing quickly. The clarity he is asking for lives in
+the SENTENCE, which is entirely ours to write, rather than in two button labels
+the browser owns.
+
+If a drawn dialog is ever built, it should be built once and then take all
+thirteen, never one.
+
+### The sentence names the night and says the consequence
+
+The confirm rule this app already follows — set by the photo bin — is that a
+confirmation says what it is about to do to WHICH thing, never *"are you sure"*.
+A lamp pressed on a rail of a dozen dates is precisely where the wrong row gets
+hit, and the date plus the pub is what tells you it is the row you meant:
+
+> You are about to publish this gallery — Thu, 27 Aug — The Crown.
+>
+> Anyone with the link will be able to see these photos.
+>
+> Proceed?
+
+and, the other way:
+
+> You are about to unpublish this gallery — Thu, 27 Aug — The Crown.
+>
+> The link stops working and nobody but you can see these photos.
+>
+> Proceed?
+
+**The second line is the half that matters**, and it is the half a coloured P
+cannot carry however well it is drawn. Publishing is not "turning something on";
+it is handing out a link. Unpublishing is not "turning it off"; it is a link
+somebody may already have going dead.
+
+### Saying no must change nothing — and that is the half the guard checks first
+
+A confirmation in front of a press that happens anyway is worse than no
+confirmation at all: it looks identical from the outside, and it teaches
+somebody that the question is a formality to be clicked through. It is also the
+half that can rot silently — the yes path is exercised every time anybody uses
+the feature, and the no path is exercised by nobody until it matters.
+
+So `scripts/community-bay.mjs` answers **no** first and asserts the lamp did not
+move, then answers yes. The harness holds the answer in a variable rather than a
+constant for exactly that reason.
+
+### What the guard found: the row's state was captured, and the rail is never rebuilt
+
+Walking the *other* branch of the wording — pressing the lamp a second time to
+put the fixture back, and checking the question said *unpublish* — failed. It
+said *publish* again.
+
+**The cause is older than the confirm and had nothing to do with it.**
+`photoRail()` reads whether a night is up when it builds the row, and closes
+over that value:
+
+```js
+const up = pubLive.has(night.night) ? pubLive.get(night.night) : Boolean(night.published);
+…
+onPress: () => togglePublish(night.night, !up),   // stale from the first press onwards
+```
+
+That is fine on any rail that is redrawn after a press — and this one is
+deliberately the opposite. `paintPublish()` exists precisely so that flipping a
+colour does not throw away a grid of thirty photographs, so nothing rebuilds the
+row and `up` stays at whatever it was when the page was drawn. Every press after
+the first therefore sent `on: true` again.
+
+**It was invisible for three reasons at once**, which is why it is written down:
+
+- **The first press was right**, and the first press is what anybody checks.
+- **Nothing threw and nothing went red.** The write succeeded; the server was
+  told to publish a night that was already published, which is a no-op.
+- **A state push fixes it.** The bay is rebuilt on every push, so at a console
+  with a game running the row is refreshed within seconds and the second press
+  works. It only fails on a quiet console — which is exactly when somebody is
+  doing their photographs.
+
+The fix is to ask again at the moment of the press. `upNow(night, fallback)` is
+the one place that question is answered, because the rail, the press and the
+repaint all need the same answer at three different moments.
+
+**And the general shape is one this file has recorded before**: a value read
+when a control is BUILT is a bug waiting for the first thing that stops
+rebuilding. The gap dial, the pack card's *in Tonight* ghosting and this are the
+same fault three times.
+
+## The pin looks like a pin now — 1 September 2026
+
+*"Love the tooltip for this but can the actual symbol be more obviously like a
+pin."* It was a filled circle with an arc over it and a line beneath — which is
+a map pin's skeleton, and at 18px on a dark thumbnail it read as a lollipop or a
+magnifying glass.
+
+Five candidates were rendered at the real 18px, in the real 30px dot, on both
+the plain and the gradient state, before choosing:
+
+- **The old one** — the lollipop.
+- **A stroked thumbtack** — recognisable, but thin and weak beside its neighbours.
+- **A filled thumbtack** — cap bar, filled body, stroked needle. **Chosen.**
+- **An angled thumbtack** (the Lucide shape) — reads as a pin, but the diagonal
+  muddies at 18px and it points off-axis inside a round button.
+- **A map pin** — rejected on MEANING rather than looks: it says *location*, and
+  what this button says is *this one goes on the night's card*.
+
+**The mix of fill and stroke is the thing that makes it work at that size.** An
+all-stroke pin at 18px is a smudge and an all-filled one is a blob; a filled
+body with a stroked cap and needle keeps the silhouette. `fill="currentColor"`
+means one drawing serves both states, so there is no second icon to keep in step
+when the button turns pink.

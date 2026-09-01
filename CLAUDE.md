@@ -2084,10 +2084,23 @@ photographs' own half, split off at the 100,000-byte cap.
   server's, so a failed write puts the lamp BACK and says why on the count
   line — never an `alert` for something that happened in the background, and
   never a silent revert. **It settles before it sends** (600ms): two taps that
-  end where they started write nothing at all. **AND EVERY GALLERY WRITE GOES
-  THROUGH ONE PROMISE CHAIN** — they all rewrite the same `published.json`
-  against a sha, so three at once is a 409 at best and the last one home
-  quietly undoing the other two at worst
+  end where they started write nothing at all, and every gallery write goes
+  through the one promise chain below
+- **THE PUBLISH LAMP ASKS FIRST, AND THE QUESTION NAMES THE NIGHT** — *"so its
+  clear what they're about to do."* The browser's own `confirm()`, like the
+  other twelve here: **a second kind of dialog beside the photo bin's is the
+  label collision wearing a dialog**, so it reads OK/Cancel, not Yes/No. **It
+  says the CONSEQUENCE** — a link strangers can open, or one going dead — which
+  a coloured P cannot. **AND SAYING NO MUST CHANGE NOTHING**: a confirm in front
+  of a press that happens anyway teaches that the question is a formality, and
+  it is the half that rots unseen, so the guard answers NO before yes
+- **A ROW READS ITS STATE WHEN BUILT, AND THIS RAIL IS NEVER REBUILT** — the
+  press must ask AGAIN (`upNow()`), never close over `up`. It did, so every
+  press after the first re-sent *publish*, against *"another click unpublishes
+  it"*. **The FIRST press was right, which is why only pressing twice sees it**
+- **THE PIN IS A DRAWING PIN, NEVER A MAP PIN** — a round head on a stem reads
+  as a lollipop at 18px. Cap bar, filled body, stroked needle: all-stroke is a
+  smudge that size, all-filled a blob. A map pin says *location*
 - **THE LEAGUE BAY IS A VENUE THAT FOLDS INTO ITS NIGHTS** — *"the summary is
   what displays when you click venue, and then you can click each night to see
   who won."* **The pub's own row is `The table`, INSIDE the fold, never the
@@ -2474,18 +2487,13 @@ directly or reads `server.js` as TEXT — **nothing in this repo had ever
 executed the file.** It was found by a browser agent clicking the button, which
 is precisely what the paragraph above says to do and what had not been done.
 
-`test/launch-route.test.js` is that advice with an assertion on it: it starts
-the real server on its own port and its own `DATA_DIR`, posts a real launch,
-and checks the projector has a quiz on it afterwards. It was verified by
-removing the import again and watching all three of its cases fail. **Keep it
-shallow** — it guards the protected surface, not the feature, and a slow suite
-is one people stop running before a gig.
+`test/launch-route.test.js` is that advice with an assertion on it: the real
+server on its own port, a real launch, a projector with a quiz on it after.
+**Keep it shallow** — it guards the protected surface, not the feature, and a
+slow suite is one people stop running before a gig.
 
 **The general lesson is bigger than the import: A TEST THAT NEVER RUNS THE
-ARTEFACT PROVES NOTHING ABOUT IT.** Reading `server.js` as a string to check a
-route exists is the same class of mistake as `screenView()` computing a board
-no projector ever drew — both were tested, both were wrong, and in both cases
-the test was measuring something adjacent to the thing that mattered.
+ARTEFACT PROVES NOTHING ABOUT IT** — see *Checks*.
 
 ### "Sweep mode" — find everything, change nothing
 
@@ -3223,9 +3231,7 @@ account is in [`docs/checks.md`](docs/checks.md):**
   has been quoted as a pass twice while proving nothing.
 - **When it says IDENTICAL, ask what it did not compare.** Four separate faults
   in that one script each made it answer confidently about something it was not
-  looking at: it never sent a valid answer, it ignored the commit you named, it
-  never looked at the lobby, and it printed the first 300 characters of two
-  payloads that are nearly always identical. **A guard that quietly tests
+  looking at — all four in `docs/checks.md`. **A guard that quietly tests
   nothing is worse than no guard, because it is believed.**
 - **A SYNTHESISED `DragEvent` IS NOT A DRAG.** The browser's own preconditions
   are where this bar keeps breaking: no `drop` fires unless `dragover` called

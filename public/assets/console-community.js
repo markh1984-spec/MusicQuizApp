@@ -288,7 +288,7 @@ function photoRail() {
        * down a list of nights is a control that feels broken. `pubLive` holds
        * what the eye has been told; a failed write puts it back and says so.
        */
-      const up = pubLive.has(night.night) ? pubLive.get(night.night) : Boolean(night.published);
+      const up = upNow(night.night, night.published);
       rows.push({
         key: night.night,
         group: pub.name,
@@ -299,12 +299,35 @@ function photoRail() {
           said: up
             ? 'On the public gallery. Press to take it off.'
             : 'Not on the public gallery. Press to put it up — the photos open above.',
-          onPress: () => togglePublish(night.night, !up),
+          /*
+           * IT ASKS AGAIN AT THE MOMENT OF THE PRESS, never `!up` from above.
+           *
+           * `up` is read when the row is BUILT, and this rail is deliberately
+           * never rebuilt — that is what `paintPublish()` exists for. So a
+           * captured value is stale from the first press onwards: the second
+           * press sent `on: true` a second time and the warning said *publish*
+           * over a night that was already up. Found by the guard walking the
+           * other branch of the wording, not by anything failing.
+           */
+          onPress: () => togglePublish(
+            night.night, !upNow(night.night, night.published), pub.name,
+          ),
         },
       });
     }
   }
   return rows;
+}
+
+/**
+ * IS THIS NIGHT UP? — what the eye has been told, else what the server said.
+ *
+ * The one place that question is answered, because the rail, the lamp's own
+ * press and the repaint all have to agree about it and they run at three
+ * different moments.
+ */
+function upNow(night, fallback) {
+  return pubLive.has(night) ? pubLive.get(night) : Boolean(fallback);
 }
 
 /**
@@ -329,7 +352,8 @@ const pubLive = new Map();
  * something that happened in the background, and never a silent revert, which
  * reads as a control with a mind of its own.
  */
-async function togglePublish(night, want) {
+async function togglePublish(night, want, venue) {
+  if (!confirm(publishWarning(night, want, venue))) return;
   pubLive.set(night, want);
   // IN PLACE, NEVER A RENDER — see `paintPublish()`.
   paintPublish(night);
@@ -358,6 +382,39 @@ async function togglePublish(night, want) {
 }
 
 /**
+ * WHAT THE PRESS IS ABOUT TO DO, SAID BEFORE IT DOES IT — asked for on
+ * 1 September 2026: *"can you have a little warning pop up when someone clicks
+ * the red green at the gallery level saying 'you are about to publish this
+ * gallery, proceed?'… so its clear what they're about to do."*
+ *
+ * **IT NAMES THE NIGHT, which is this app's own confirm rule** — the photo bin
+ * says what it is deleting rather than *"are you sure"*, and a lamp pressed on
+ * a rail of a dozen dates is exactly where the wrong row gets hit. The date and
+ * the pub are what tells you it is the row you meant.
+ *
+ * **AND IT SAYS THE CONSEQUENCE, WHICH IS THE HALF THAT MATTERS.** Publishing
+ * is a stranger's face going onto a page anyone with the link can open; taking
+ * one down is a link somebody has already been given going dead. Neither is
+ * obvious from a coloured letter P, which is the whole reason this was asked
+ * for.
+ *
+ * **IT IS THE BROWSER'S OWN `confirm()`, like the other twelve in this app.**
+ * That renders OK/Cancel rather than Yes/No — a literal Yes/No means drawing a
+ * dialog, and a second kind of confirmation on a door that already has the
+ * native one under the photo bin is the label collision this repo keeps
+ * recording, in dialog form. One question, one answer.
+ */
+function publishWarning(night, want, venue) {
+  const which = [readable(night), venue && venue !== 'No venue on these' ? venue : '']
+    .filter(Boolean).join(' — ');
+  return want
+    ? `You are about to publish this gallery — ${which}.\n\n`
+      + 'Anyone with the link will be able to see these photos.\n\nProceed?'
+    : `You are about to unpublish this gallery — ${which}.\n\n`
+      + 'The link stops working and nobody but you can see these photos.\n\nProceed?';
+}
+
+/**
  * REPAINT THE LAMP AND THE HEAD LINK WHERE THEY STAND — never a render.
  *
  * Reported on 31 August 2026: *"publishing or unpublishing the gallery here
@@ -377,7 +434,7 @@ async function togglePublish(night, want) {
  * showing** — the rail carries a lamp per night and only one of them is open.
  */
 function paintPublish(night) {
-  const up = pubLive.has(night) ? pubLive.get(night) : false;
+  const up = upNow(night, (photoNights || []).find((n) => n.night === night)?.published);
   const lamp = document.querySelector(`.bay-lamp[data-lamp="${CSS.escape(night)}"]`);
   if (lamp) {
     lamp.classList.toggle('is-on', up);

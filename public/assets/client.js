@@ -380,11 +380,11 @@ export function binIcon(size = 18) {
 export function pinIcon(size = 18) {
   return `
     <svg class="pin-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"
-         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+         stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
          aria-hidden="true">
-      <circle cx="12" cy="9" r="4.4" fill="currentColor" stroke="none"/>
-      <path d="M12 3.2a5.8 5.8 0 0 0-5.8 5.8c0 1.9 1.1 3.6 2.4 5"/>
-      <path d="M12 13.4V21"/>
+      <path d="M9.2 3.4h5.6" stroke-width="2.2"/>
+      <path d="M10.6 3.4v4.4L7.7 10.9v1.7h8.6v-1.7l-2.9-3.1V3.4z" fill="currentColor" stroke-width="1.6"/>
+      <path d="M12 12.9V20.8" stroke-width="2"/>
     </svg>`;
 }
 

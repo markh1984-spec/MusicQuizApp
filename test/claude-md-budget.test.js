@@ -444,7 +444,28 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * `docs/`. Four of the five things cut above were feature descriptions that had
  * crept in the same day, which is the real lesson of this raise.
  */
-const BUDGET = 198_000;
+/*
+ * 198,000 -> 199,000 on 1 SEPTEMBER 2026, and the trims came FIRST — the diff
+ * beside this line says which. Four passages were cut to their prohibition
+ * before a byte was asked for: the *"a test that never runs the artefact"*
+ * paragraph in the protected-surface section, which `Checks` already states
+ * verbatim; the promise-chain sentence on the photo lamp, which the
+ * `published.json` rule below it already carries; the four `pub-unchanged`
+ * faults, which `docs/checks.md` lists in full; and the launch-route test's
+ * own description. The three new rules were then written twice, the second
+ * time at half the length. It still came to 398 bytes over.
+ *
+ * WHAT IT BOUGHT: a publish that asks first, and the reason the fault it
+ * uncovered was invisible. A row that reads its state when it is BUILT is
+ * wrong the moment something stops rebuilding it — and the lamp's whole point
+ * is that nothing rebuilds it. The first press was right, nothing threw, and a
+ * state push papered over it, so it only failed on a quiet console: exactly
+ * when somebody is doing their photographs.
+ *
+ * That is the line, unchanged and now applied a fourth time: **a raise is for
+ * a rule about something SILENT.**
+ */
+const BUDGET = 199_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
