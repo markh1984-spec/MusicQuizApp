@@ -1449,44 +1449,36 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   as the attendance point. A fortnight away costs 2 rather than 20.
 - **A TEAM'S BEST SIX NIGHTS COUNT — a running total is not the league.**
   *"So there's incentive to come every week but also doesn't make it pointless
-  to come if you had to miss 1-2 weeks for holiday."* A cumulative table
-  punishes absence ABSOLUTELY: a fortnight away is twenty points nobody can
-  make up, so the team works out the season is gone and stops coming — the
-  retention argument this feature exists for, running backwards.
-  **AND A PLAIN AVERAGE BREAKS THE OTHER HALF, which is why it was offered and
-  not taken**: mean points per night puts a team that played ONCE AND WON above
-  one that won five of ten. On a real archive it moved the team who missed two
-  weeks from third and twelve behind to level at the top.
-  **SUMMED, NOT DIVIDED, AND THE TWO ARE THE SAME TABLE**: dividing
-  by a fixed six scales every number equally and changes no position, while
-  dividing by nights PLAYED is the average again with its one-hit problem back.
-  `COUNTING_NIGHTS = 6` is a constant with a note, like the season.
+  to come if you had to miss 1-2 weeks."* A cumulative table punishes absence
+  ABSOLUTELY, so the team works out the season is gone and stops coming — the
+  retention argument running backwards. **AND A PLAIN AVERAGE BREAKS THE OTHER
+  HALF, which is why it was offered and not taken**: mean points per night puts
+  a team that played ONCE AND WON above one that won five of ten. **SUMMED, NOT
+  DIVIDED**: dividing by a fixed six changes no position, and dividing by
+  nights PLAYED is the average again. `COUNTING_NIGHTS = 6` is a constant with
+  a note, like the season.
 - **A NAME IS FILTERED AT THE DOOR, NEVER IN THE ROOM** — `clean-names.js`,
   off a live table with a racial slur ninth in it. The projector, the phones
   and the console are UNCHANGED and `cleanTeamName()` is untouched; only the
   public page and the report mask anything. **ON THE SERVER, so the word never
-  reaches the wire** — hiding it in the browser is not hiding it. **MASKED,
-  NEVER DROPPED** ("Name hidden"): dropping the row moves everybody up a place
-  and lies about the season. Points and identity are untouched, so it is a
-  VIEW, like the two-screens rule. **IT ERRS STRICT** — a false positive hides
-  one name and the console says so; a false negative is a slur under his brand
-  in public. **WHOLE WORDS FOR ORDINARY PROFANITY**, or it eats Scunthorpe and
-  "assassin"; the SLUR list is matched AGAIN with the spaces stripped, which is
-  what catches `n i g g a` — **never do that pass on the ordinary list.**
-  **THE CONSOLE SHOWS THE REAL NAME AND MARKS IT**, or a name vanishes off a
-  published table with no way to tell which.
-- **AND A HUMAN OVERRULES THE LIST, IN BOTH DIRECTIONS** — *"so we're erring
-  on the side of caution but I can override it."* A word list guesses at
-  intent and the quizmaster was in the room. **BOTH directions, because it is
+  reaches the wire.** **MASKED, NEVER DROPPED** ("Name hidden"): dropping the
+  row moves everybody up a place and lies about the season — a VIEW, like the
+  two-screens rule. **IT ERRS STRICT** — a false positive hides one name and
+  the console says so; a false negative is a slur under his brand in public.
+  **WHOLE WORDS FOR ORDINARY PROFANITY**, or it eats Scunthorpe; the SLUR list
+  is matched AGAIN with the spaces stripped, which catches `n i g g a` —
+  **never do that pass on the ordinary list.** **THE CONSOLE SHOWS THE REAL
+  NAME AND MARKS IT**, or a name vanishes off a published table with no way to
+  tell which.
+- **AND A HUMAN OVERRULES THE LIST, IN BOTH DIRECTIONS** — *"we're erring on
+  the side of caution but I can override it."* **BOTH directions, because it is
   wrong both ways**: it hides "The Pen Is Mightier" and publishes a spoonerism
   it cannot see. Keyed by `teamKey()`, so a ruling follows the team all season.
-  **A RULING THAT ONLY RESTATES THE FILTER IS CLEARED, NOT STORED**, or a
-  later change to the word list silently cannot reach that name — the gap
-  dial's `cleanPlan()` rule again. **ONE CONTROL PER TABLE, FOLDED**, never a
-  button per row: thirty toggles on a page whose job is being read is the
-  clutter rule exactly. **THE ROW'S KEY TRAVELS WITH THE ROW** so the console
-  can combine the filter's verdict with the rulings without a second copy of
-  `teamKey()` in the browser — and the library stays free of the GitHub read.
+  **A RULING THAT ONLY RESTATES THE FILTER IS CLEARED, NOT STORED**, or a later
+  change to the word list silently cannot reach that name. **ONE CONTROL PER
+  TABLE, FOLDED**, never a button per row — the clutter rule exactly. **THE
+  ROW'S KEY TRAVELS WITH THE ROW**, so the browser needs no second copy of
+  `teamKey()` and the library stays free of the GitHub read.
 - **ONE ROOM FOR THE WHOLE PHOTO STORY — `galleryRoomFor()`.** Photos are filed
   per room and the gallery reads the OWNER'S OWN QUIZMASTER ROOM, never
   `HOUSE`; reading the wrong one showed a full night as an empty page. The
@@ -1633,15 +1625,14 @@ with photographs).
   tab body is the archive.
 - **WHAT IS REMEMBERED WINS, ALWAYS — the first build had it the other way and
   the control was DEAD.** It FORCED a group open whenever it held the picked
-  row, so once a night was open, pressing its heading set the flag, re-rendered
-  and the override put it straight back: *"the section needs to collapse on
-  click and expand on click"* — it did neither, and nothing threw. **A control
-  that does nothing when pressed is worse than the problem it was avoiding**,
-  so `holdsPicked` is a DEFAULT and the case it guarded is answered by SHOWING:
-  a shut group holding what you are looking at wears the lit edge. **With
-  nothing picked the FIRST group opens.** **The folds live in a module Map
-  keyed by rail AND group** — the bay is rebuilt on every push, and "The Crown"
-  is a group on two doors.
+  row, so pressing its heading set the flag, re-rendered and the override put
+  it straight back — it neither collapsed nor expanded, and nothing threw. **A
+  control that does nothing when pressed is worse than the problem it was
+  avoiding**, so `holdsPicked` is a DEFAULT and the case it guarded is answered
+  by SHOWING: a shut group holding what you are looking at wears the lit edge.
+  **With nothing picked the FIRST group opens.** **The folds live in a module
+  Map keyed by rail AND group** — the bay is rebuilt on every push, and "The
+  Crown" is a group on two doors.
 - **NO `title` ANYWHERE IN THE RAIL — the names WRAP to two lines instead.** A
   native tooltip is an unstyled box that lands over the rows beneath it, and it
   was only there because the name was ellipsised. The heading drops a rung in
@@ -2035,7 +2026,10 @@ before touching a drag handler.**
 
 **[`docs/gigs.md`](docs/gigs.md)** — venues, prizes, the diary, past nights,
 getting paid; **[`docs/gigs/photos.md`](docs/gigs/photos.md)** is the
-photographs' own half, split off at the 100,000-byte cap.
+photographs' own half, and
+**[`docs/gigs/gallery-page.md`](docs/gigs/gallery-page.md)** the public
+page's — its address, its index, what a stranger sees and what serving it
+costs. Both split off at the 100,000-byte cap.
 
 - The winner's prize, on their phone
 - The diary — a calendar that maintains itself
@@ -2139,6 +2133,20 @@ photographs' own half, split off at the 100,000-byte cap.
   red** (nothing has gone wrong), naming how many and where the switch is. **AND `live` HAD BEEN IN THE PAYLOAD PER NIGHT SINCE DAY
   ONE WITH NO CARD DRAWING IT** — the fifth sighting: a banner says how many,
   only a card says WHICH (*"Only you"*)
+- **AND `?as=visitor` STANDS THE PREVIEW DOWN, so the check is possible at
+  all** — *"needs to display these photos without signing in otherwise there's
+  no point in it being published at all."* It already did for a published
+  night; what was impossible was VERIFYING it, because the browser a quizmaster
+  checks in is the one signed into the console. Telling him was necessary and
+  not sufficient. **ON THE SERVER** — a browser-side filter proves the page can
+  hide a draft, not that the server refuses one. **IT ONLY EVER SUBTRACTS,
+  which is why it needs no gate**: nothing in this app grants a permission from
+  a query string, so a stranger typing it gets what they already had. **It
+  rides on every request and link** like `key` and `?q=`, or the next page in
+  is the preview again. **PRESENT AND INERT** — drawn whether or not anything
+  is a draft, because *"is it really up?"* is asked when everything LOOKS fine.
+  **The way back is drawn on the "Not up yet" dead end**, which is exactly
+  where the check lands
 - **THE LEAGUE BAY IS A VENUE THAT FOLDS INTO ITS NIGHTS** — *"the summary is
   what displays when you click venue, and then you can click each night to see
   who won."* **The pub's own row is `The table`, INSIDE the fold, never the
@@ -2170,27 +2178,23 @@ photographs' own half, split off at the 100,000-byte cap.
   that venue has a page at all
 
 - **A LEAGUE IS A THING YOU RUN, AND IT IS OFF UNTIL SOMEBODY SAYS SO** —
-  *"quiz leagues should be turn on and offable… it might be misleading if this
-  app just had that as standard even in venues that don't have a quiz league."*
-  **The table is ARITHMETIC; a league is a DECISION** — every venue with two
-  filed nights has a table, and printing one in the report of a pub that never
-  mentioned a league is the app asserting something about somebody else's
-  night. **It gates what LEAVES and nothing the quizmaster sees**: the console
-  draws every table either way. **Switching it off takes the public page down
-  with it**, or the app disagrees with itself in public. **The controls under
-  it are ABSENT, not greyed** — the one deliberate exception to *present and
-  inert*, because publishing a league at a pub that runs none is not a disabled
-  action, it is a question that does not arise. **The report asks under BOTH
-  venue keys** (`leagueRunsAt()`), like every other reader of that split
-- **THE QUIZMASTER ADDS THEIR OWN ROOM PHOTOS** — the room's camera is sixty
-  phones pointed at each other and none at the ROOM, which is the one shot that
-  sells the night. `POST /api/past-photo/<night>`, **filed against the night in
-  the URL and never against today** — the live store dates a picture by the
-  clock, so a Friday upload files a Thursday quiz under Friday.
-  **Camera-eligible by definition** (no `-picked`): these ARE the promo shots.
-  Scaled in the browser, `square: false` — a room is a room. **A POST written
-  beside GETs is the 404 this repo already shipped once**, so the test asserts
-  against the 404, not the 400
+  *"it might be misleading if this app just had that as standard even in venues
+  that don't have a quiz league."* **The table is ARITHMETIC; a league is a
+  DECISION** — printing one in the report of a pub that never mentioned a
+  league is the app asserting something about somebody else's night. **It gates
+  what LEAVES and nothing the quizmaster sees**. **Switching it off takes the
+  public page down with it**, or the app disagrees with itself in public. **The
+  controls under it are ABSENT, not greyed** — the one deliberate exception to
+  *present and inert*: it is a question that does not arise. **The report asks
+  under BOTH venue keys** (`leagueRunsAt()`)
+- **THE QUIZMASTER ADDS THEIR OWN ROOM PHOTOS** — sixty phones point at each
+  other and none at the ROOM, which is the shot that sells the night.
+  `POST /api/past-photo/<night>`, **filed against the night in the URL and
+  never against today** — the live store dates a picture by the clock, so a
+  Friday upload files a Thursday quiz under Friday. **Camera-eligible by
+  definition** (no `-picked`). Scaled in the browser, `square: false`. **A POST
+  written beside GETs is the 404 this repo already shipped once**, so the test
+  asserts against the 404, not the 400
 
 **[`docs/lobby-games.md`](docs/lobby-games.md)** — what a phone does while the room fills up
 
@@ -2307,17 +2311,15 @@ Full reasoning: **[`docs/artwork.md`](docs/artwork.md)**. The rules:
   corner-radius decision and turned an argument about which numbers are
   "correct" into a glance at four blocks. Build the mock from the real
   `style.css` and the real markup, or the comparison is of something else.
-- **SEND THE SCREENSHOT; DO NOT OPEN IT.** Set on 15 August 2026 after a
-  session ran short: *"can the screenshots be delivered to me, and then that
-  context reclaimed immediately after? It's usually just a UI decision that I
-  then action and move on from."* **Context cannot be reclaimed** — an image is
-  in the window for the rest of the session once it is read — but it never has
-  to go in: `SendUserFile` costs one line of text, `Read` on a full-page
-  screenshot costs 2–4k tokens. So an agent MEASURES, the file is SENT, and it
-  is opened **only when the judgement is Claude's own**: *"do these figures
-  read at 200px"* needs eyes, *"does this look right to you"* does not. Twelve
-  screenshots read in one session is most of a feature's worth of context spent
-  on pictures somebody else was going to decide about.
+- **SEND THE SCREENSHOT; DO NOT OPEN IT.** *"Can the screenshots be delivered
+  to me, and then that context reclaimed immediately after? It's usually just a
+  UI decision that I then action and move on from."* **Context cannot be
+  reclaimed** — an image is in the window for the rest of the session once it
+  is read — but it never has to go in: `SendUserFile` costs one line of text,
+  `Read` on a full-page screenshot costs 2–4k tokens. So an agent MEASURES, the
+  file is SENT, and it is opened **only when the judgement is Claude's own**:
+  *"do these figures read at 200px"* needs eyes, *"does this look right to
+  you"* does not.
 - **SHOW A SCREENSHOT FOR EVERY UI CHANGE. This is a rule, not a nicety** —
   set by the host on 14 August 2026: *"whenever you change the UI of anything
   in this app you MUST show me, since the UI of this app is extremely

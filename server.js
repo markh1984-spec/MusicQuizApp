@@ -2606,6 +2606,28 @@ async function handleGet(req, res, url, route) {
    * "you see the drafts on a room you are actually signed in as."
    */
   const galleryPreview = () => {
+    /*
+     * `?as=visitor` STANDS THE PREVIEW DOWN — asked for as *"needs to display
+     * these photos without signing in otherwise there's no point in it being
+     * published at all."*
+     *
+     * The preview is what makes checking a night before strangers see it
+     * possible, and it is also why a quizmaster CANNOT check: their laptop
+     * carries the console's cookie, so the page they look at is never the page
+     * their customers get. Signing out to find out is a bad answer, and a
+     * private window is one nobody thinks of at eleven at night.
+     *
+     * **IT CAN ONLY EVER TAKE ACCESS AWAY, WHICH IS WHAT MAKES IT SAFE.** It
+     * is the first line rather than the last so nothing below can hand it back,
+     * and there is no parameter anywhere in this app that adds a permission —
+     * see `/api/host/*` and the gallery's own publish route. A stranger typing
+     * it gets what they already had.
+     *
+     * **ON THE SERVER, SO IT IS THE REAL ANSWER.** Filtering the drafts out in
+     * the browser would prove the page can hide them, not that the server
+     * refuses them — and refusing them is the thing being checked.
+     */
+    if (url.searchParams.get('as') === 'visitor') return false;
     const who = whoIs(req, url);
     if (!who) return false;
     if (!galleryTarget && (who.role === 'owner' || who.bootstrap)) return true;

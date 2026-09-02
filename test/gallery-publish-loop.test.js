@@ -170,6 +170,84 @@ test('PUBLISHING PUTS IT WHERE THE PUBLIC PAGE LOOKS — the bug that shipped', 
   });
 });
 
+/*
+ * ---- SEEING IT AS A VISITOR -----------------------------------------------
+ *
+ * *"This is the public gallery and needs to display these photos without
+ * signing in otherwise there's no point in it being published at all."*
+ *
+ * It does — and the quizmaster is the one person who cannot verify that,
+ * because the browser they check in carries the console's cookie and therefore
+ * always gets the preview. `?as=visitor` stands the preview down.
+ *
+ * **THE POINT OF TESTING IT HERE IS THAT IT IS THE SERVER'S ANSWER.** A page
+ * that filtered its own drafts out would prove the page can hide them, not
+ * that the server refuses them — and refusing them is the thing being checked.
+ * So this asserts on the JSON, signed in, against the SAME night the test
+ * above proves a stranger cannot see.
+ */
+test('?as=visitor gives a signed-in quizmaster exactly what a stranger gets', async () => {
+  await withApp(async (app) => {
+    const cookie = await signedIn(app);
+    fileANight(app.data, app.repo);
+
+    // Signed in: the preview, with the draft on it.
+    const mine = await gallery(app.base, cookie);
+    assert.equal(mine.preview, true);
+    assert.equal(mine.nights.length, 1, 'the preview is not showing the draft');
+
+    // The same browser, the same cookie, standing the preview down.
+    const asVisitor = await (await fetch(`${app.base}/api/gallery?as=visitor`,
+      { headers: { Cookie: cookie } })).json();
+    assert.equal(asVisitor.preview, false, 'the preview survived ?as=visitor');
+    assert.deepEqual(asVisitor.nights, [],
+      'a quizmaster checking as a visitor was still shown their own draft');
+
+    // And it matches what a stranger genuinely gets, which is the whole claim.
+    const theirs = await gallery(app.base);
+    assert.deepEqual(asVisitor.nights, theirs.nights,
+      'as=visitor and a real stranger disagree about what is public');
+
+    /*
+     * IT MUST REACH THE NIGHT'S OWN PAGE AND THE PHOTOGRAPHS THEMSELVES, or
+     * the check passes on the way in and quietly fails one click later — which
+     * is the shape of every gallery bug this file already records.
+     */
+    const one = await fetch(`${app.base}/api/gallery/${NIGHT}?as=visitor`,
+      { headers: { Cookie: cookie } });
+    assert.equal(one.status, 404, "a draft night's own page opened as a visitor");
+    const pic = await fetch(`${app.base}/gallery-photo/${NIGHT}/p0.jpg?as=visitor`,
+      { headers: { Cookie: cookie } });
+    assert.equal(pic.status, 404, "a draft night's photographs served as a visitor");
+  });
+});
+
+/*
+ * AND IT ONLY EVER TAKES ACCESS AWAY. A parameter that granted anything would
+ * be a gate with a query string round it; this asserts the published case is
+ * untouched, so the switch cannot be mistaken for one that changes what is
+ * public rather than what this browser is shown.
+ */
+test('?as=visitor never hides anything that is genuinely published', async () => {
+  await withApp(async (app) => {
+    const cookie = await signedIn(app);
+    fileANight(app.data, app.repo);
+    await post(app.base, '/api/past-gigs/publish', { night: NIGHT, on: true }, cookie);
+
+    const asVisitor = await (await fetch(`${app.base}/api/gallery?as=visitor`,
+      { headers: { Cookie: cookie } })).json();
+    assert.equal(asVisitor.nights.length, 1, 'a published night vanished under ?as=visitor');
+    assert.equal(asVisitor.nights[0].live, true);
+
+    const one = await fetch(`${app.base}/api/gallery/${NIGHT}?as=visitor`,
+      { headers: { Cookie: cookie } });
+    assert.equal(one.status, 200, "a published night's page was refused as a visitor");
+    const pic = await fetch(`${app.base}/gallery-photo/${NIGHT}/p0.jpg?as=visitor`,
+      { headers: { Cookie: cookie } });
+    assert.equal(pic.status, 200, 'a published photograph was refused as a visitor');
+  });
+});
+
 test('AND TAKING IT DOWN IS AS RELIABLE AS PUTTING IT UP', async () => {
   await withApp(async (app) => {
     const cookie = await signedIn(app);

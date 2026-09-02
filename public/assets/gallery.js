@@ -63,12 +63,36 @@ const Q = new URLSearchParams(location.search).get('q') || '';
  */
 const HERE = readVenuePath(location.pathname) || { venue: '', night: '' };
 const VENUE = HERE.venue;
+/*
+ * LOOKING AT IT AS A VISITOR — `?as=visitor`, and the SERVER honours it.
+ *
+ * A quizmaster cannot check their own gallery, because the browser they check
+ * it in is the one signed into the console: they get the preview, drafts and
+ * all, and their customers get something else. *"Needs to display these photos
+ * without signing in otherwise there's no point in it being published at
+ * all."* Signing out to find out is a bad answer and a private window is one
+ * nobody thinks of at eleven at night.
+ *
+ * It rides on every request and every link this page builds, exactly like the
+ * key and `?q=`, or the second page in would quietly be the preview again.
+ *
+ * It only ever takes access AWAY — see `galleryPreview()` in `server.js`.
+ */
+const AS_VISITOR = new URLSearchParams(location.search).get('as') === 'visitor';
 const keyed = (path) => {
   let out = path;
   if (KEY) out += (out.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(KEY);
   if (Q) out += (out.includes('?') ? '&' : '?') + 'q=' + encodeURIComponent(Q);
   if (VENUE) out += (out.includes('?') ? '&' : '?') + 'venue=' + encodeURIComponent(VENUE);
+  if (AS_VISITOR) out += (out.includes('?') ? '&' : '?') + 'as=visitor';
   return out;
+};
+
+/** This page's own address, with or without the visitor stand-down on it. */
+const asVisitor = (on) => {
+  const u = new URL(location.href);
+  if (on) u.searchParams.set('as', 'visitor'); else u.searchParams.delete('as');
+  return u.pathname + u.search;
 };
 
 /*
@@ -84,6 +108,7 @@ const linked = (path) => {
   let out = path;
   if (KEY) out += (out.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(KEY);
   if (Q) out += (out.includes('?') ? '&' : '?') + 'q=' + encodeURIComponent(Q);
+  if (AS_VISITOR) out += (out.includes('?') ? '&' : '?') + 'as=visitor';
   return out;
 };
 
@@ -224,6 +249,40 @@ function fanOf(urls) {
     .reverse().join('')}</span>`;
 }
 
+/**
+ * THE ONE CONTROL THAT SETTLES "does a stranger see this?" — and the reason it
+ * exists is that nobody could answer that question without signing out.
+ *
+ * `/gallery` shows drafts to whoever is signed in, so the browser a quizmaster
+ * checks in is the one browser guaranteed to show them the wrong page. The
+ * banner above says so in words; this makes it something you can LOOK at,
+ * which is the difference between being told and being shown.
+ *
+ * **IT IS PRESENT AND INERT, NEVER ABSENT** — drawn for the signed-in person
+ * whether or not anything is a draft, because "is it really up?" is asked most
+ * often when everything LOOKS fine. A control that appears only when there is
+ * a problem is one nobody can find when they want to prove there is not.
+ *
+ * **IN VISITOR MODE IT IS THE WAY BACK, and it must be drawn before any early
+ * return** — the honest visitor view of a night nobody has published yet is an
+ * empty page, and that is exactly the page you must not be stranded on.
+ */
+function visitorSwitch(previewing) {
+  if (AS_VISITOR) {
+    return node(`
+      <p class="gal-asvisitor">
+        <b>This is exactly what a visitor sees.</b>
+        You are still signed in — nothing has changed except what this page is
+        allowed to show you.
+        <a href="${esc(asVisitor(false))}">Back to your preview</a>.</p>`);
+  }
+  if (!previewing) return null;
+  return node(`
+    <p class="gal-asvisitor is-quiet">
+      You are signed in, so this is your own preview.
+      <a href="${esc(asVisitor(true))}">See it as a visitor</a>.</p>`);
+}
+
 async function showNights() {
   const data = await get('/api/gallery');
   const nights = (data && data.nights) || [];
@@ -235,7 +294,10 @@ async function showNights() {
      * scanned a code to reach reads as broken; saying the photos go up after
      * the night is a promise they can act on.
      */
-    body.replaceChildren(node(`
+    body.replaceChildren();
+    const sw = visitorSwitch(Boolean(data && data.preview));
+    if (sw) body.appendChild(sw);
+    body.appendChild(node(`
       <p class="muted gal-empty">No photos are up yet. They go up after the night.</p>`));
     return;
   }
@@ -266,6 +328,8 @@ async function showNights() {
   }
   const groups = groupsOf(nights);
   body.replaceChildren();
+  const sw = visitorSwitch(Boolean(data.preview));
+  if (sw) body.appendChild(sw);
   /*
    * THIS IS A WARNING, SO IT IS ALLOWED TO BE LOUD — and it had been written
    * as the quietest thing on the page.
@@ -343,7 +407,19 @@ async function showNight(night) {
      */
     title.textContent = 'Not up yet';
     sub.textContent = '';
-    body.replaceChildren(node(`
+    body.replaceChildren();
+    /*
+     * AND THE WAY BACK OUT OF VISITOR MODE IS DRAWN HERE TOO.
+     *
+     * This is the page a quizmaster lands on when they check a night that is
+     * NOT up — which is the whole reason they pressed the switch. Without it
+     * the honest answer strands them on a dead end with nothing but the
+     * browser's back button, on the one screen where they most need to know
+     * they are still signed in.
+     */
+    const back = visitorSwitch(false);
+    if (back) body.appendChild(back);
+    body.appendChild(node(`
       <p class="muted gal-empty">These photos are not up yet — try again in the morning.
       <a href="${esc(home())}">See what is up.</a></p>`));
     return;
@@ -360,6 +436,9 @@ async function showNight(night) {
    */
   const count = `${data.photos.length} photo${data.photos.length === 1 ? '' : 's'}`;
   sub.textContent = data.venue ? `${data.venue} · ${count}` : count;
+  body.replaceChildren();
+  const nightSw = visitorSwitch(Boolean(data.preview) && data.live === false);
+  if (nightSw) body.appendChild(nightSw);
   /*
    * TWO ELEMENTS, APPENDED SEPARATELY — and this is why "All nights" had never
    * appeared under a night's photographs.
@@ -387,7 +466,9 @@ async function showNight(night) {
         </button>`).join('')}
     </div>`);
   placeArrows(data);
-  body.replaceChildren(grid);
+  // APPENDED, never `replaceChildren(grid)` — the visitor switch above was put
+  // there before the photographs were built and replacing would drop it.
+  body.appendChild(grid);
   body.appendChild(node(`<p class="gal-back"><a href="${esc(home())}">All nights</a></p>`));
   wireBigPicture(grid, data.photos);
 }
