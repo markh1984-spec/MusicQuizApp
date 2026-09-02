@@ -615,7 +615,30 @@ body::after {
 .board-row.top3 { border-color: rgba(255, 138, 61, 0.5); }
 
 /* ---- winner */
-.winner { text-align: center; display: grid; place-content: center; gap: 2vh; height: 100%; }
+/* ---- THE FINAL FITS, ALWAYS — see `fitWinner()` in `screen.js`.
+ *
+ * `place-content: center` in a fixed-height card with the projector's overflow
+ * hidden means content that is too tall is cut at BOTH ends — which it was, by
+ * 142px each way on a night with a draw, a league and a comeback. `--fit` is
+ * measured after the card draws and is 1 on any night that already fitted, so
+ * this changes nothing about a slide that was never in trouble. */
+.winner {
+  text-align: center; display: grid; place-content: center; gap: 2vh; height: 100%;
+  transform: scale(var(--fit, 1));
+  transform-origin: center center;
+}
+/* THE DRAW AND THE COMEBACK SIT SIDE BY SIDE, which is the half of the fix
+   that costs nothing: there is plenty of width going spare — both bands are
+   centred and narrow — and stacking them was most of the overflow. They wrap
+   on a narrow screen rather than being squeezed, and their own `margin-top` is
+   dropped because the row carries it once for both. */
+.winner .endband {
+  display: flex; flex-wrap: wrap; gap: 2vw;
+  justify-content: center; align-items: stretch;
+  margin-top: 3.5vh;
+}
+.winner .endband:empty { display: none; margin-top: 0; }
+.winner .endband > * { margin-top: 0; }
 .winner .kicker { font-size: 3vh; letter-spacing: 0.5em; text-transform: uppercase; color: var(--gold); }
 /* `overflow-wrap: anywhere` on both the winner and the podium, because a team
    name has no spaces in it if somebody decides it does not — there is

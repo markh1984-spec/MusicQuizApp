@@ -1627,3 +1627,83 @@ that never happened and a real unpublished one give the identical page.
 It promises the morning rather than a time. The app cannot know when somebody
 will get round to publishing, and a deadline it does not control is one it
 would break.
+
+## And the final slide fits now — 2 September 2026
+
+The clipping found while measuring for the photos slide was left standing that
+day, because fixing it meant deciding what gives. Measured properly it was
+worse than first reported, because it grows with the night:
+
+```
+                            1280x720   1920x1080   1024x768
+  draw + comeback              72px       104px       75px
+  draw + league + comeback    142px       212px      151px
+```
+
+Cut at **both ends**, because `.winner` is a grid with `place-content: center`
+inside a fixed-height card and `body.screen` hides the overflow. What went was
+**"Tonight's winner"** off the top and the foot of the comeback band — with its
+QR sliced in half — off the bottom. Proportional, so every projector lost the
+same share, and a 4:3 one lost slightly more.
+
+### Tightening the margins is not a fix
+
+`.dip` and `.comeback` both carry `margin-top: 4.5vh`, so the obvious first
+move is to take some back. Measured: still clipping **120px** on a league
+night. It is a plaster the next feature undoes, and this slide has now grown
+four things (the podium, fourth place, the draw, the league) since it was
+designed for one.
+
+### Two parts, and each does a different job
+
+**The draw and the comeback go side by side** — `.endband`. There is plenty of
+width going spare; both bands are centred and narrow, and stacking them was
+most of the overflow. It costs nothing: everything stays visible, no behaviour
+changes, no press.
+
+**`fitWinner()` shrinks to fit as a backstop.** After the card draws, the
+content's real extent is measured against the room and `--fit` is set to the
+ratio, never above 1.
+
+Together, measured across every combination a real night produces at three
+screen shapes:
+
+- an ordinary 16:9 night with a draw and a comeback now fits at **scale 1.00** —
+  the layout change alone does it, and nothing shrinks;
+- the worst case (draw + league + comeback on 4:3) scales to **0.65** with
+  everything on screen;
+- the comeback QR ends up **larger on most nights than it is today**, because
+  today it is clipped.
+
+**Why both.** The side-by-side is what keeps the slide full size on an ordinary
+night; the backstop is what makes it impossible to regress. Either alone is
+half a fix — with only the backstop, a full night quietly shrinks to 0.86 and
+takes the QR with it; with only the layout, the next band added clips again.
+
+### `scrollHeight` clamps, and it clamps in the worst direction
+
+The first backstop used `w.scrollHeight`. On a grid with `place-content:
+center` that value **clamps to the container**, so it under-reports precisely
+when the content is too tall — which is the only moment the function is asked
+anything. It computed 0.84 where 0.70 was needed and the slide still clipped.
+
+It measures the children's bounding rects now, and `--fit` is reset to 1 before
+measuring, or each pass would measure an already-shrunk box and creep towards
+nothing.
+
+### The guard, and the blind spot it started with
+
+`node scripts/final-fits.mjs` builds the winner card from the real stylesheet,
+runs the real fit, and measures. Six combinations, three screen shapes.
+Verified by removing each half in turn: without the backstop, eight failures;
+without the side-by-side, the "needed no shrinking" assertion fails.
+
+**It also checks the QR actually PAINTS.** Every other measurement is about
+position — where the box is, how big, whether it is inside the card — and a QR
+that is perfectly placed and blank passes all of them. `toSvg()` returns an SVG
+with a viewBox and no intrinsic size, so `naturalWidth` reads 0 even when it is
+fine; the only honest test is to draw it into a canvas and count the dark
+pixels. That is *"it is in the document" versus "somebody can see it"* for the
+fourth time in this repo, so it is now checked rather than assumed. The page is
+served rather than `setContent`-ed for that one reason: an `about:blank`
+document taints the canvas.

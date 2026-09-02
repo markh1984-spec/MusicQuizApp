@@ -1058,12 +1058,11 @@ and the JavaScript both correct and six `<button>`s in the DOM.
   duplicated region does not just add text; it puts a second copy LATER in the
   cascade.
 - **THE VERIFICATION FAILED IN THE MOST INSTRUCTIVE WAY: it counted `.lb-tile`
-  ELEMENTS, which `display: none` elements still are.** Six came back every
-  time while the screen showed one. **Measure `getClientRects()`, not
-  `querySelectorAll().length`** — "it is in the document" and "somebody can
-  see it" are different questions, and this repo has now been bitten by that
-  distinction three times (the arcade board nobody drew, the publish route
-  nobody called, this).
+  ELEMENTS, which `display: none` elements still are.** **Measure
+  `getClientRects()`, not `querySelectorAll().length`** — "it is in the
+  document" and "somebody can see it" are different questions, and this repo
+  has now been bitten by it four times (the arcade board nobody drew, the
+  publish route nobody called, this, and a QR checked for position not paint).
 - `browser-parses.test.js` catches a JS file that will not parse; nothing
   caught a stylesheet that parses fine and means something else. Now something
   does — brace balance, no nested `@media`, and the escaped rule named
@@ -1510,7 +1509,7 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   `node --import`: real server, fixture network. **Publishing lived behind a
   token the suite must never need, so nothing had ever run it** — two silent
   live bugs in one day. The loop test signs in with a PASSWORD, not the host
-  key, which resolves to the house room and hides this class.
+  key, which hides this class.
 - **`published.json` HAS ONE WRITER AT A TIME, PER ROOM — `inOrder()` in
   `src/gallery.js`.** Which nights are up and the per-photo rulings are one
   file that two callers edit, each reading the whole thing and writing it back
@@ -1595,9 +1594,8 @@ Workshop and Post gig, and whatever the data came to on Community — so the top
 of the page changed shape on every door press, and under a fixed frame that
 moves the tab column and everything below it.
 
-- **THE VALUE IS THE LAUNCH BAR'S OWN OPEN PANEL HEIGHT, MEASURED** — the panel
-  rather than the doorhead round it, which adds a margin. Two values, because
-  the bar's settings row wraps below 1150px and the bar gets taller.
+- **THE VALUE IS THE LAUNCH BAR'S OWN OPEN PANEL HEIGHT, MEASURED** — the panel,
+  not the doorhead round it. Two values: the bar's row wraps below 1150px.
 - **THE BAR ITSELF IS NOT GIVEN THE HEIGHT.** It is the REFERENCE, it folds to
   a line on purpose, and clipping the one panel on the protected launch path to
   a number in a stylesheet is not a trade worth making. `community-bay.mjs`
@@ -2111,14 +2109,25 @@ photographs' own half, split off at the 100,000-byte cap.
   `state.photoLink` resolved at LAUNCH like `comeBack`. **DERIVED, not stored,
   is what makes it work**: publishing happens afterwards, so the code sixty
   people photograph at eleven opens a real gallery on Tuesday.
-- **A SLIDE OF ITS OWN, BECAUSE THE FINAL WAS ALREADY CLIPPING** — measured, at
-  every resolution: podium + 4th + draw + comeback is 707px in a 674px card and
-  `.winner` CENTRES it, so **"Tonight's winner" went off the top and half the
-  comeback QR off the bottom** on any night with a draw. A fifth band would
-  have made it worse. **The band's QR is 86px at 720p** — fine beside text,
-  hopeless as the only thing on a slide; 34vh here. **A flag at the FINAL
-  only** (rule 9), refused with no address, never on a phone. **Labelled
-  "Photos to the room"**: the primary already says *Check the photos*.
+- **A SLIDE OF ITS OWN, BECAUSE THE FINAL WAS ALREADY CLIPPING.** **The band's
+  QR is 86px at 720p** — fine beside text, hopeless as the only thing on a
+  slide; 34vh here. **A flag at the FINAL only** (rule 9), refused with no
+  address, never on a phone. **Labelled "Photos to the room"**: the primary
+  already says *Check the photos*.
+- **AND THE FINAL FITS NOW, IN TWO PARTS — `.endband` AND `fitWinner()`.**
+  `.winner` centres inside a fixed card with the projector's overflow hidden,
+  so anything too tall was cut at BOTH ends: **142px each way at 720p on a
+  night with a draw, a league and a comeback** — the kicker gone, the comeback
+  QR sliced — at every resolution, unreported, for as long as both existed.
+  **The draw and the comeback go SIDE BY SIDE**, which buys the height honestly
+  and leaves an ordinary 16:9 night at scale 1.00; **`fitWinner()` then shrinks
+  to fit as a backstop**, so nothing added later can push anything off again.
+  **Tightening the margins was tried and still clipped 120px.** **It measures
+  the CHILDREN, not `scrollHeight`**, which clamps to the container and so
+  under-reports exactly when the content is too tall — the first version read
+  0.84 where 0.70 was needed and still clipped.
+  **`final-fits.mjs`** is the guard, and it checks the QR **actually paints**,
+  not merely that it is placed
 - **`view.photos` WAS ALREADY TAKEN, AND IT COST THE BUTTON** — `server.js`
   sets it to the room's own photographs, host AND screen, AFTER the engine
   builds the view. The field existed, held somebody else's data, the control
@@ -2152,10 +2161,9 @@ photographs' own half, split off at the 100,000-byte cap.
   never stored** — so a rename changes the address rather than leaving a stale
   one that lies. **The SAME FILE is served**; the page reads its own path.
   **A ONE-SEGMENT PREFIX AT THE ROOT IS A CATCH-ALL AND THE FIRST VERSION ATE
-  `/api/gallery`** — two segments, the second one `gallery`. Naming the second
-  segment is not enough: `RESERVED` refuses the first, and
-  `test/slugs.test.js` walks `server.js` for every literal top-level route so a
-  route added next year cannot be shadowed. It found six I had missed.
+  `/api/gallery`** — two segments, the second one `gallery`. Naming it is not
+  enough: `RESERVED` refuses the first, and `test/slugs.test.js` walks
+  `server.js` for every literal top-level route. It found six I had missed.
   **`ownAddress` on `/api/me` says whether the pretty form works** — the server
   knows which room the public pages fall back to; `role === 'owner'` in the
   browser was wrong in BOTH directions. **An address is not a key**: it names a
@@ -3243,6 +3251,7 @@ node scripts/pub-unchanged.mjs HEAD~1 --ignore online   # did I break the pub ni
 node scripts/drag-check.mjs             # Tonight's drags, with a REAL browser drag
 node scripts/community-bay.mjs          # does the Community bay still fit the frame?
 node scripts/pages-scroll.mjs           # can a person actually scroll each page?
+node scripts/final-fits.mjs             # is the last slide of the night all on screen?
 ```
 
 **The rules these commands run on, and each was learned expensively — the full
