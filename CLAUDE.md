@@ -1491,53 +1491,46 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   ordinary quizmaster: their room id is never HOUSE.
 - **THE PRIVATE REPO IS TESTABLE NOW** — `test/helpers/photo-repo-stub.mjs` via
   `node --import`: real server, fixture network. **Publishing lived behind a
-  token the suite must never need, so nothing had ever run it** — two silent
-  live bugs in one day. The loop test signs in with a PASSWORD, not the host
-  key, which hides this class.
+  token the suite must never need, so nothing had ever run it.** The loop test
+  signs in with a PASSWORD, not the host key, which hides this class.
 - **`published.json` HAS ONE WRITER AT A TIME, PER ROOM — `inOrder()` in
-  `src/gallery.js`.** Which nights are up and the per-photo rulings are one
-  file that two callers edit, each reading the whole thing and writing it back
-  — so a lamp write that began before a publish finished put the nights back as
-  they were and **silently un-published the night**. It reached a live gallery:
-  the console said published, the page said not, a stranger saw nothing.
+  `src/gallery.js`.** The nights and the rulings are one file two callers edit,
+  each reading it whole and writing it back — so a lamp write begun before a
+  publish finished **silently un-published the night**, on a live gallery.
   **AND THE BROWSER'S QUEUE CANNOT COVER IT**: the lamp settles for 600ms, so
-  the press that overlaps a publish is exactly the one it has not started.
-  Order it where the FILE is.
-- **A READ-BACK SHA CAN BE STALE — this file claimed GitHub could not refuse a
-  write, and `GitHub 409` then reached a live console.** The Contents API is
-  served from a replica and through a cache, so a `GET` moments after a `PUT`
-  that answered 200 can hand back the version before it, and lamps flicked down
-  a night are writes with no gap. **The sha a `PUT` HANDS BACK cannot be served
-  stale**, so `putFile()` remembers it (`lastSha`) — a call cheaper too. **It is
-  a CACHE, so it must be able to be wrong** (the host in GitHub's web editor),
-  and a 409 is **forgotten, re-read PAST the caches, retried once**. **All three
-  halves fail on their own**, and a 409 that survives is said in WORDS
+  the press that overlaps a publish is the one it has not started. Order it
+  where the FILE is.
+- **A READ-BACK SHA CAN BE STALE — `GitHub 409` reached a live console.** The
+  Contents API is served from a replica and a cache, so a `GET` moments after a
+  200 `PUT` can hand back the version before it. **The sha a `PUT` HANDS BACK
+  cannot be served stale**, so `putFile()` remembers it (`lastSha`). **It is a
+  CACHE, so it must be able to be wrong**, and a 409 is **forgotten, re-read
+  PAST the caches, retried once**. **All three halves fail on their own**, and a
+  409 that survives is said in WORDS
 - **A NIGHT IS A CARD WITH ITS PHOTOGRAPHS FANNED ON IT, GROUPED BY PUB** —
   `coverPhotos()`. **Pins lead, the rest is a SPREAD**, stable, seeded off the
   date. **BUILT FROM THE SAME FILTERED LIST THE NIGHT'S PAGE SHOWS**, so a pin
   cannot advertise a photograph that page refuses. **A pin is a PREFERENCE; the
-  lamp is the GATE.** **Three, refused not trimmed.**
+  lamp is the GATE. Three, refused not trimmed.**
 - **A GALLERY IS PAID FOR ONCE — not per photo, not per visitor.** GitHub
   allows 5,000 calls an hour and a 99-photo night once cost ~297 **per page
-  open**; a link goes to a pub full of people who were all there the SAME
-  night, the worst shape for a limit. Both caches: 20 people, 600 requests,
-  **0 calls**.
+  open**, to a pub full of people who were all there the SAME night — the worst
+  shape for a limit. Both caches: 20 people, 600 requests, **0 calls**.
   - **`inOrder()` drops the file on every write, IN and OUT** — stale here
     serves a photo somebody asked to have removed. **It caches the PROMISE**,
     or 99 arriving at once all miss together.
   - **Bytes: a filed photo is immutable by NAME, so only a DELETION
     invalidates one** (`dropPhoto()`). **Nothing deciding who may see it is
-    cached with them.** **Bounded 48MB LRU — this process also runs live
-    quizzes on a 512MB box.**
-  - **The browser window is NOT lengthened past a day** — taking a photo down
-    is a promise a cache cannot reach.
+    cached with them. Bounded 48MB LRU — this process also runs live quizzes
+    on a 512MB box.**
+  - **The browser window is NOT lengthened past a day**: taking a photo down is a
+    promise a cache cannot reach.
   - **THE INDEX LISTED EVERY NIGHT'S FOLDER ONE AFTER ANOTHER** — 22 calls,
-    **3.3 SECONDS**, on the way in. Together and held: 0 calls. **A folder
-    changes in exactly three places** and all three `dropNight()`, tested over
-    real HTTP because what matters is that the ROUTES drop it.
+    **3.3 SECONDS**. Together and held: 0 calls. **A folder changes in exactly
+    three places** and all three `dropNight()`, tested over real HTTP because
+    what matters is that the ROUTES drop it.
   - **Publishing paints in place; it does NOT re-render** — it rebuilt the bay
-    THREE times a press. Measured by holding a photo element and checking it is
-    still in the document; counting them says thirty either way.
+    THREE times a press.
 - **EVERY WRITER OF `published.json` CARRIES THE HALVES IT IS NOT CHANGING** —
   nights, rulings, pins. The third is when it gets forgotten; a test walks them.
 - **A NIGHT NAMES ITS PUB AND STEPS TO THE ONE EITHER SIDE AT THAT PUB**,
@@ -2040,9 +2033,22 @@ costs. Both split off at the 100,000-byte cap.
 - **A deleted photo leaves the repo but NOT git history — never imply
   otherwise.**
 - AND THE PREVIEW DID NOT WORK ON THE HOST KEY
-- THE GALLERY ONLY HOLDS WHAT LOOKED LIKE A CAMERA TOOK IT — **tested now,
-  because it fails silently**: `camera` defaults FALSE, and it never keeps a
-  photo off the projector
+- **THE CAMERA GATE IS GONE — every photograph is on the gallery unless a
+  human switches it off** (`showsByDefault()`, 2 September 2026). It used to
+  need EXIF proving a camera took it, and **it failed on EVERY photograph of a
+  real night** — which is the finding, because a room that uploads some memes
+  gives a MIX; a whole night at zero is a check that cannot succeed on the
+  handsets in the room (HEIC, EXIF stripped by a share sheet). It was not
+  filtering memes, it was filtering everything, and the index then drops a
+  published night with nothing showing — so the gallery was empty and silent.
+  **The gate that replaces it was already there: the publish control is drawn
+  UNDER the photographs so nobody publishes without looking.** `isCameraFile()`
+  survives as a NOTE on the lamp, never a gate. **THE CLEARING RULE
+  IN `/api/gallery-photo/` HAD THE OLD DEFAULT WRITTEN OUT A SECOND TIME** —
+  flip one and pressing a lamp RED clears the ruling and the new default puts
+  the photo straight back ON, silently. One function, asked by both. **Four
+  pinned tests were REVERSED, not weakened**, and **the projector is
+  untouched**: this was always a VIEW, never a refusal
 - **A LAMP PER PHOTO SAYS WHETHER IT IS ON THE GALLERY, AND IT IS A SWITCH** —
   *"green for on and red for off, no text needed but it must be clickable."*
   **NO WORDS, and eighteen of them is the argument**: a label repeated across a
@@ -2052,10 +2058,9 @@ costs. Both split off at the 100,000-byte cap.
   load-bearing**, the 18px dot gets a 44px hit area from a `::after`, and
   `.cphoto`'s own open must ignore a press on it. **It REPLACED the grey
   "Screen only" badge** — two badges saying overlapping things is a label
-  collision. **`showsOnGallery()` is the ONE decision and all FOUR
-  readers ask it** — the night LIST, a night's page, the single-photo route and
-  this lamp — or a photo is on a page the console swears is private. **A ruling
-  that only restates the guess is CLEARED, not stored**
+  collision. **`showsOnGallery()` is the ONE decision and all FOUR readers ask
+  it** — the night LIST, a night's page, the single-photo route and this lamp.
+  **A ruling that only restates the DEFAULT is CLEARED, not stored**
 - **THE COUNT AND THE PAGE ARE ONE QUESTION — `galleryPhotosOf()`.** The night
   list counted on the filename alone while the page it counted for asked the
   ruling too, so one photo switched off said *"12 photos"* over a page opening
@@ -2112,16 +2117,13 @@ costs. Both split off at the 100,000-byte cap.
 - **A PHONE THAT SCANS EARLY IS TOLD "not up yet", AND THE WORDING IS THE ONLY
   CHANGE** — the server still answers ONE 404 for every refusal, so a night
   that never happened reads identically to a real unpublished one. **A
-  `pending` state on the server was turned down for exactly that**: it would
-  have leaked which dates exist
-- **THE COUNT SAYS HOW MANY WILL SHOW, NOT HOW MANY THERE ARE** — *"photos are
-  definitely published"* over a gallery reading *"No photos are up yet"*, both
-  true: only what `showsOnGallery()` allows reaches the page, and the INDEX
+  `pending` state was turned down for exactly that**: it leaks which dates
+  exist
+- **THE COUNT SAYS HOW MANY WILL SHOW, NOT HOW MANY THERE ARE** — the INDEX
   drops a night whose whole set is held back (a card to a blank page is worse
-  than no card), so a camera-roll night publishes, answers 200 on its own
-  address, and is invisible on the way in. **Every part worked as written;
-  nobody SAID it. A number right about the wrong question is how a working app
-  looks broken.** Silent when they all show
+  than no card), so such a night publishes, answers 200 on its own address, and
+  is invisible on the way in. **A number right about the wrong question is how
+  a working app looks broken.** Silent when they all show
 - **`/gallery` SHOWS DRAFTS TO WHOEVER IS SIGNED IN, AND THE PAGE HAS TO SAY
   SO LOUDLY** — *"on my phone it's showing nothing but on my laptop it's
   showing two"*, and both were right: `whoIs()` reads a COOKIE, so a laptop
@@ -2159,10 +2161,9 @@ costs. Both split off at the 100,000-byte cap.
   **and it carries the POINTS**, so the browser needs no second copy of the
   ladder. **A board with no `position` scores nobody**, and it fails quietly: a
   night view with headers and an empty body
-- **`node()` KEEPS THE FIRST ELEMENT AND DROPS THE REST, SILENTLY** — it had
-  cost the gallery's *"All nights"* link and My account's whole list of sent
-  suggestions. A grep cannot find these (nested template literals), so `node()`
-  now `console.error`s when it drops one.
+- **`node()` KEEPS THE FIRST ELEMENT AND DROPS THE REST, SILENTLY.** A grep
+  cannot find these (nested template literals), so `node()` `console.error`s
+  when it drops one.
 - **A VENUE HAS ITS OWN ADDRESS** — `/station-tap-wokingham/gallery/20-august`,
   built by `public/assets/slugs.js`, shared by the server and the page like
   `schemes.js`: two implementations of one slug is a link that works in the

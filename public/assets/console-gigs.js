@@ -866,11 +866,24 @@ export async function nightPhotos(body, night, opts = {}) {
        * the one place a native tooltip earns itself: it is on a picture rather
        * than over a list, which is where the last one was a nuisance.
        */
+      /*
+       * OFF CAN ONLY MEAN "YOU TURNED IT OFF" NOW — the camera guess stopped
+       * being the gate on 2 September 2026 (`showsByDefault()`), so the old
+       * second branch described a state that can no longer happen. A tooltip
+       * explaining an impossible reason is worse than none: it sends somebody
+       * looking for a setting that is not there.
+       *
+       * The `-picked` marker survives as a NOTE on a photograph that is still
+       * ON, because "this one came off a camera roll" is worth a second look
+       * before a night goes public — which is the job the guess is actually
+       * good at.
+       */
+      const picked = String(p.name || '').includes('-picked');
       const why = live
-        ? 'On the public gallery for this night. Click to take it off.'
-        : (String(p.name || '').includes('-picked')
-          ? 'Off the public gallery — this did not look like a camera took it. The big screen showed it either way. Click to put it on.'
-          : 'Off the public gallery. Click to put it on.');
+        ? (picked
+          ? 'On the public gallery — though it did not look like a camera took it, so worth a look before you publish. Click to take it off.'
+          : 'On the public gallery for this night. Click to take it off.')
+        : 'You have taken this one off the public gallery. Click to put it back.';
       pill.title = why;
       pill.setAttribute('aria-label', why);
       pill.setAttribute('aria-pressed', String(live));

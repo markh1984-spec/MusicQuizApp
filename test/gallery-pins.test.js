@@ -120,15 +120,22 @@ test('A PIN CANNOT PUT A HIDDEN PHOTOGRAPH ON THE CARD', () => {
    * pin on a photo the lamp switched off is simply not used. Getting this
    * wrong would advertise a night with a picture its own page refuses.
    */
+  /*
+   * BOTH HIDDEN ONES ARE NOW HIDDEN BY A RULING, because the camera marker
+   * stopped being a gate on 2 September 2026 (`showsByDefault()`). The point
+   * of the test is unchanged and is the reason it was written: a pin on a
+   * photograph the lamp switched off must not reach the card.
+   */
   const all = ['a.jpg', 'b-picked.jpg', 'c.jpg', 'd.jpg'];
-  const said = { [`${NIGHT}/a.jpg`]: 'off' };
+  const said = { [`${NIGHT}/a.jpg`]: 'off', [`${NIGHT}/b-picked.jpg`]: 'off' };
   const shown = galleryPhotosOf(all, NIGHT, said, (n, m) => `${n}/${m}`);
   assert.deepEqual(shown, ['c.jpg', 'd.jpg'], 'the filter itself moved');
-  // 'a.jpg' is switched off and 'b-picked.jpg' was never camera-taken.
   const cover = coverPhotos(shown, NIGHT, ['a.jpg', 'b-picked.jpg']);
   assert.equal(cover.includes('a.jpg'), false, 'a hidden photo reached the card');
-  assert.equal(cover.includes('b-picked.jpg'), false, 'a non-camera photo reached the card');
+  assert.equal(cover.includes('b-picked.jpg'), false, 'a hidden photo reached the card');
   assert.equal(showsOnGallery('a.jpg', 'off'), false);
+  // And a picked one with NO ruling is on the card like any other.
+  assert.equal(showsOnGallery('b-picked.jpg', undefined), true);
 });
 
 test('the card is the same on every device and every reload', () => {

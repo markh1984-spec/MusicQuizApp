@@ -60,7 +60,46 @@ export function isCameraFile(name) {
 }
 
 /**
- * WHETHER ONE PHOTOGRAPH GOES ON THE PUBLIC GALLERY — the filename's guess,
+ * WITH NO HUMAN RULING, DOES A PHOTOGRAPH GO ON THE GALLERY? YES.
+ *
+ * **THIS REVERSES THE CAMERA GATE, ON 2 SEPTEMBER 2026, AND IT WAS REVERSED
+ * BY MEASUREMENT.** The rule used to be `isCameraFile(name)` — a photograph
+ * reached the public page only if `looksCameraTaken()` had found EXIF with a
+ * camera Make tag in the raw upload. The intent was good: keep a meme
+ * somebody picked off their camera roll off the page a venue is shown.
+ *
+ * **IT FAILED ON EVERY PHOTOGRAPH OF A REAL NIGHT.** Reported as a night that
+ * said published on the console and showed nothing on a phone — and the tell
+ * was that it was ALL of them. A room that uploaded some memes gives a MIX; a
+ * whole night at zero is a check that cannot succeed on the handsets in the
+ * room. Modern phones shoot HEIC, and a share sheet strips EXIF on the way
+ * in, so there was frequently nothing left to read. It was not filtering
+ * memes, it was filtering everything — and then the index DROPS a published
+ * night with nothing showing, so the gallery was empty and nothing anywhere
+ * said why.
+ *
+ * *"Those first two galleries didn't have that camera gate so they should
+ * appear automatically unless I specifically switch specific photos off."*
+ *
+ * **THE GATE THAT REPLACES IT IS THE ONE THAT WAS ALREADY THERE: a human
+ * looks at the whole night before publishing it.** The publish control is
+ * drawn UNDER the photographs for exactly that reason. The camera sniff was a
+ * second, silent gate standing behind a review that already happens — and
+ * "reliability beats cleverness" decides that pair.
+ *
+ * `isCameraFile()` is NOT deleted: the marker still rides in the filename and
+ * still tells the console's lamp why a picture might be worth a second look.
+ * It is a NOTE now, not a gate.
+ *
+ * **IT TAKES THE NAME even though it does not read it**, so that going back to
+ * a per-photograph guess is one function body rather than a hunt for callers.
+ */
+export function showsByDefault(_name) {
+  return true;
+}
+
+/**
+ * WHETHER ONE PHOTOGRAPH GOES ON THE PUBLIC GALLERY — the default above,
  * unless a human has said otherwise.
  *
  * **ONE FUNCTION, because there are three readers and they must not drift.**
@@ -69,13 +108,21 @@ export function isCameraFile(name) {
  * them answers differently is the day a photograph is on a page the console
  * says is private, or missing from one it says is public.
  *
+ * **AND A FOURTH READER HAS TO ASK `showsByDefault()` TOO: the route that
+ * records a ruling**, which clears one that only restates the default rather
+ * than storing it. Those two were the same expression written out twice, and
+ * flipping this one alone would have been silent and nasty — pressing a lamp
+ * RED on a `-picked` photograph would have computed "that agrees with the
+ * guess", cleared the ruling, and put the photograph straight back on the
+ * gallery. One function, asked by both.
+ *
  * @param {string} name      the file, as this app issued it
  * @param {string} said      'on' | 'off' | undefined — the human's ruling
  */
 export function showsOnGallery(name, said) {
   if (said === 'on') return true;
   if (said === 'off') return false;
-  return isCameraFile(name);
+  return showsByDefault(name);
 }
 
 /**

@@ -1108,3 +1108,98 @@ meaning, which is whether anybody else can open it.
 They are named as constants because `paintPublish()` repaints this link without
 re-rendering, so the same words are written in two places and would otherwise
 drift apart the first time one was edited.
+
+## The camera gate is GONE — every photograph shows unless switched off, 2 September 2026
+
+Reported as *"it still isn't loading on phone… it's saying published on my
+laptop but it isn't?"* — the third report in three days about one gallery, and
+the first two fixes were both correct and both beside the point.
+
+### The deduction, and it was airtight before a line was changed
+
+- The console's P lamp reads `publishedNights()`, so the night WAS in
+  `published.json`.
+- A stranger's `/api/gallery` lists a night only `if (shown.length)`.
+- The console draws its own lamps from the SAME `showsOnGallery()` call.
+
+So: he could see the photographs, a stranger saw nothing, therefore **every
+lamp on that night was red**. Nothing else can produce that pair.
+
+### What it was, and why the "all of them" is the whole finding
+
+A photograph reached the public page only if `isCameraFile(name)` — no
+`-picked` in the filename — which `add()` writes from `camera=1`, which the
+phone sets from `looksCameraTaken()`, which needs the RAW upload to start
+`FF D8` and carry an EXIF `Make` tag.
+
+**It failed on every photograph of a real night.** That is the finding, not the
+failure count: a room that uploaded some memes gives a MIX. A whole night at
+zero is a check that cannot succeed on the handsets in the room — modern phones
+shoot HEIC, a share sheet strips EXIF, and `<input type="file" accept="image/*">`
+carries no `capture` attribute to declare intent. **It was not filtering memes,
+it was filtering everything.**
+
+And then the index drops a published night with nothing showing, so the whole
+thing was silent: published, 200 on its own address, invisible on the way in.
+
+### The gate that replaces it was already there
+
+*"Those first two galleries didn't have that camera gate so they should appear
+automatically unless I specifically switch specific photos off."*
+
+**The publish control is drawn UNDER the photographs precisely so nobody
+publishes a night without looking at it.** The camera sniff was a second,
+silent gate standing behind a human review that already happens — and
+*reliability beats cleverness* decides that pair. The red lamp is how a
+particular picture comes off, and it is one press.
+
+`showsByDefault(name)` returns true. `isCameraFile()` is **not deleted**: the
+marker still rides in the filename and now feeds the lamp's tooltip on a
+photograph that is ON — *"it did not look like a camera took it, so worth a
+look before you publish."* A note, not a gate. It takes the `name` it does not
+read, so going back to a per-photograph guess is one function body.
+
+### THE TRAP: the clearing rule was the old default, written out twice
+
+`/api/gallery-photo/` clears a ruling that only restates the default, so a
+later change to that default can still reach the photograph. It said:
+
+```js
+const decision = on === isCameraFile(name) ? '' : (on ? 'on' : 'off');
+```
+
+**Flip `showsOnGallery()` alone and pressing a lamp RED on a `-picked`
+photograph computes "that agrees with the guess", clears the ruling, and the
+new default puts the photograph straight back ON.** A control that silently
+undoes itself, nothing thrown, and only visible if you press it and then look
+at the public page.
+
+It is `on === showsByDefault(name)` now — the same function the fallback uses —
+and `test/gallery-camera-only.test.js` asserts the pair from both sides.
+Verified by re-introducing each half separately: the first fails one test, the
+second fails five.
+
+### Verified end to end on his actual case
+
+A published night whose every photograph carries `-picked`, over real HTTP
+against the stubbed private repository:
+
+```
+A STRANGER SEES  : ["2026-08-20 (5)"]     (it was [] before)
+THE NIGHT'S PAGE : 200, 5 photos
+ONE PHOTOGRAPH   : 200
+LAMP -> RED      : stranger now ["2026-08-20 (4)"], that photograph 404s
+LAMP -> GREEN    : back to 5
+```
+
+The 404 on a switched-off photograph is the half worth keeping an eye on: the
+single-photo route re-checks for itself, because a URL can be typed.
+
+### Four pinned tests were REVERSED, deliberately
+
+Not weakened — rewritten to assert the new rule, the way `leaguesByVenue()`
+reversed its own. The one that asserted a `-picked` file was refused now
+asserts it is served; the pin test hides both its photographs with rulings
+instead of relying on the marker. **The projector is untouched** and the test
+saying so is unchanged: this was always a VIEW, never a refusal, and it still
+is — only the default flipped.

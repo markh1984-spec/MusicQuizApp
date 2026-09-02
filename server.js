@@ -19,7 +19,7 @@ import { config, paths, hostKey, hostKeyIsTemporary } from './src/config.js';
 import { Store } from './src/store.js';
 import { Hub } from './src/sse.js';
 import {
-  Photos, MAX_BYTES, isCameraFile, extensionFor, showsOnGallery, galleryPhotosOf,
+  Photos, MAX_BYTES, extensionFor, showsOnGallery, showsByDefault, galleryPhotosOf,
   coverPhotos, sniffType, nightOf,
 } from './src/photos.js';
 
@@ -4461,15 +4461,13 @@ async function handleWrite(req, res, url, route) {
   /*
    * ONE PHOTOGRAPH ON OR OFF THE PUBLIC GALLERY.
    *
-   * *"There may be some that were uploaded but are appropriate for a public
-   * gallery that I can switch on."* The filename's camera guess decides by
-   * default; this is where a human who was in the room overrules it, in either
-   * direction — because the guess is wrong both ways. It misses a real
-   * photograph whose EXIF a share sheet stripped, and it passes a screenshot
-   * taken with somebody's own camera app.
+   * Every photograph is on by default since 2 September 2026 — see
+   * `showsByDefault()` — so in practice this is where one gets switched OFF.
+   * It still works both ways, because a night can be tidied and then changed
+   * back.
    *
-   * A ruling that only restates the guess is CLEARED rather than stored — see
-   * `setPhotoDecision()`.
+   * A ruling that only restates the DEFAULT is CLEARED rather than stored, or
+   * a later change to that default could never reach this photograph again.
    */
   if (route.startsWith('/api/gallery-photo/') && req.method === 'POST') {
     if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
@@ -4482,11 +4480,19 @@ async function handleWrite(req, res, url, route) {
     const body = await readJson(req);
     const on = Boolean(body && body.on);
     /*
-     * WHAT THE FILENAME WOULD HAVE SAID, so a ruling that agrees with it is
-     * cleared instead of stored. Otherwise a later change to how the guess is
-     * made could never reach this photo again.
+     * WHAT WOULD HAPPEN WITH NO RULING AT ALL, so a ruling that agrees with it
+     * is cleared instead of stored. Otherwise a later change to the default
+     * could never reach this photograph again.
+     *
+     * **IT MUST BE THE SAME FUNCTION `showsOnGallery()` FALLS BACK TO.** This
+     * used to say `isCameraFile(name)` — the old default written out a second
+     * time — and when the default was flipped, leaving this behind would have
+     * been silent and nasty: pressing a lamp RED on a `-picked` photograph
+     * computes "that agrees with the guess", clears the ruling, and the new
+     * default puts the photograph straight back ON. A control that undoes
+     * itself, with nothing thrown.
      */
-    const decision = on === isCameraFile(name) ? '' : (on ? 'on' : 'off');
+    const decision = on === showsByDefault(name) ? '' : (on ? 'on' : 'off');
     // The gallery's room — this and the publish route write the SAME file, so
     // sending them to two rooms is two half-truths rather than one answer.
     const done = await setPhotoDecision(galleryRoomFor(req, url), night, name, decision);

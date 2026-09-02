@@ -27,7 +27,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { Photos, isCameraFile, NOT_CAMERA_SUFFIX, showsOnGallery, galleryPhotosOf } from '../src/photos.js';
+import {
+  Photos, isCameraFile, NOT_CAMERA_SUFFIX, showsOnGallery, showsByDefault, galleryPhotosOf,
+} from '../src/photos.js';
 
 /** The smallest thing `sniffType()` will accept as a JPEG. */
 const JPEG = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(64, 1)]);
@@ -88,21 +90,59 @@ test('a marked photo is still in the room list, because the screen still shows i
  * it misses a real photograph whose EXIF a share sheet stripped, and it passes
  * a screenshot somebody took with their own camera app.
  */
-test('a ruling beats the filename, either way', () => {
+test('WITH NO RULING, EVERY PHOTOGRAPH IS ON — the camera guess is not the gate', () => {
+  /*
+   * REVERSED ON 2 SEPTEMBER 2026, and this test is the reversal rather than a
+   * weakening of the old one. The guess held back EVERY photograph of a real
+   * night — reported as a gallery that said published and showed nothing — so
+   * what it filtered was not memes, it was everything.
+   *
+   * The gate is now the human review the publish button already forces.
+   */
   assert.equal(showsOnGallery('p1abc.jpg', undefined), true);
-  assert.equal(showsOnGallery('p1abc-picked.jpg', undefined), false);
-  // The two overrides, which are the whole feature.
-  assert.equal(showsOnGallery('p1abc-picked.jpg', 'on'), true);
+  assert.equal(showsOnGallery('p1abc-picked.jpg', undefined), true,
+    'the camera marker is still acting as a gate');
+  // The overrides, and switching OFF is now the one that carries the feature.
+  assert.equal(showsOnGallery('p1abc-picked.jpg', 'off'), false);
   assert.equal(showsOnGallery('p1abc.jpg', 'off'), false);
+  assert.equal(showsOnGallery('p1abc-picked.jpg', 'on'), true);
 });
 
-test('an unknown ruling falls back to the filename rather than becoming a third state', () => {
+test('an unknown ruling falls back to the default rather than becoming a third state', () => {
   // The file lives in a repository a human can edit. A typo in it must not
   // invent a behaviour — `photoDecisions()` drops anything that is not on/off,
   // and this is the belt to that braces.
   for (const junk of ['yes', 'true', '1', '', null]) {
-    assert.equal(showsOnGallery('p1abc-picked.jpg', junk), false);
+    assert.equal(showsOnGallery('p1abc-picked.jpg', junk), true);
     assert.equal(showsOnGallery('p1abc.jpg', junk), true);
+  }
+});
+
+/**
+ * THE ROUTE THAT CLEARS A REDUNDANT RULING MUST ASK THE SAME FUNCTION.
+ *
+ * This is the trap the reversal walked into and stepped over. `/api/gallery-photo/`
+ * clears a ruling that only restates the default, so that a later change to
+ * the default can still reach the photograph. It had the OLD default written
+ * out a second time as `isCameraFile(name)` — so flipping `showsOnGallery()`
+ * alone would have made pressing a lamp RED on a `-picked` photograph compute
+ * "that agrees with the guess", clear the ruling, and let the new default put
+ * the photograph straight back ON.
+ *
+ * A control that silently undoes itself, with nothing thrown anywhere. So the
+ * two expressions are one function now, and this says so.
+ */
+test('THE CLEARING RULE AND THE FALLBACK ARE ONE FUNCTION', () => {
+  const src = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  assert.match(src, /on === showsByDefault\(name\)/,
+    'the ruling route is not asking showsByDefault() — a second copy of the default has crept back');
+  assert.equal(src.includes('on === isCameraFile(name)'), false,
+    'the route still uses the old camera guess as the default it compares against');
+  // And the fallback itself, so the pair cannot drift from the other side.
+  for (const name of ['p1abc.jpg', 'p1abc-picked.jpg']) {
+    assert.equal(showsOnGallery(name, undefined), showsByDefault(name),
+      'showsOnGallery does not fall back to showsByDefault');
   }
 });
 
@@ -204,15 +244,15 @@ test('the list and the page count the same photographs', () => {
   const night = '2026-08-13';
   const names = ['a.jpg', 'b-picked.jpg', 'c.jpg'];
   const said = {};
-  // Nothing ruled on: the filename decides, and the picked one is out.
-  assert.deepEqual(galleryPhotosOf(names, night, said, key), ['a.jpg', 'c.jpg']);
+  // Nothing ruled on: every one of them shows, the picked one included.
+  assert.deepEqual(galleryPhotosOf(names, night, said, key), names);
 });
 
 test('switching one off takes it out of the count as well as off the page', () => {
   const night = '2026-08-13';
   const names = ['a.jpg', 'b-picked.jpg', 'c.jpg'];
   const said = { [key(night, 'a.jpg')]: 'off' };
-  assert.deepEqual(galleryPhotosOf(names, night, said, key), ['c.jpg']);
+  assert.deepEqual(galleryPhotosOf(names, night, said, key), ['b-picked.jpg', 'c.jpg']);
 });
 
 test('switching a picked one ON puts it in the count as well as on the page', () => {
