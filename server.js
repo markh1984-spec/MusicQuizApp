@@ -47,7 +47,9 @@ import { venueHeadcounts, nightHeadcount } from './src/headcounts.js';
 import { playedByVenue } from './src/heard.js';
 import { nightReportPdf, nightReportFilename } from './src/report-pdf.js';
 import { leaguesByVenue, leagueAfter, teamKey } from './src/league.js';
-import { galleryPath, matchNightSlug, readVenuePath, venueSlug } from './public/assets/slugs.js';
+import {
+  galleryPath, matchNightSlug, readVenuePath, venueSlug, sameVenueSlug,
+} from './public/assets/slugs.js';
 import { comeBackFor, nextNightAt, comeBackText } from './src/comeback.js';
 import { isComposed, MAX_ROUNDS } from './src/running-order.js';
 import { listShows, saveShow, deleteShow, showProblems } from './src/shows.js';
@@ -2715,7 +2717,9 @@ async function handleGet(req, res, url, route) {
     const wantVenue = String(url.searchParams.get('venue') || '').trim().toLowerCase();
     const out = [];
     for (const [key, league] of Object.entries(byVenue)) {
-      if (wantVenue && venueSlug(league.venue) !== wantVenue) continue;
+      // One pub is one page whichever of its spellings is in the address —
+      // `sameVenueSlug()`, the same fold the gallery index uses below.
+      if (wantVenue && !sameVenueSlug(venueSlug(league.venue), wantVenue)) continue;
       if (!runs.includes(key)) continue;
       const published = live.includes(key);
       if (!published && !preview) continue;
@@ -2786,7 +2790,10 @@ async function handleGet(req, res, url, route) {
     const venueOfNight = new Map(mergeGigs(listArchive(listRoom.paths.archive), [])
       .map((g) => [g.night, g.venue || '']));
     const atVenue = wantVenue
-      ? new Set([...venueOfNight].filter(([, v]) => venueSlug(v) === wantVenue).map(([n]) => n))
+      ? new Set([...venueOfNight]
+        // `sameVenueSlug()` rather than `===`: one pub filed under two
+        // spellings had two addresses and each showed only its own half.
+        .filter(([, v]) => sameVenueSlug(venueSlug(v), wantVenue)).map(([n]) => n))
       : null;
     const nights = preview
       ? [...new Set([...live, ...(await listDirs(photoFolder(galleryRoomId()), 'photos')).map((f) => f.name).filter(isNightFolder)])]
@@ -2897,7 +2904,13 @@ async function handleGet(req, res, url, route) {
         ...(await listDirs(photoFolder(galleryRoomId()), 'photos')).map((f) => f.name).filter(isNightFolder)])]
       : await publishedNights(galleryRoomId());
     const run = visible
-      .filter((n) => (venue ? (venueOf.get(n) || '') === venue : true))
+      /*
+       * AND STEPPING TO THE NIGHT EITHER SIDE ASKS THE SAME QUESTION. This
+       * compared the venue STRINGS, so a run of nights at one pub split into
+       * two runs the moment its name was typed differently — the arrows would
+       * skip a night that is plainly at the same pub, or stop early.
+       */
+      .filter((n) => (venue ? sameVenueSlug(venueSlug(venueOf.get(n) || ''), venueSlug(venue)) : true))
       .sort().reverse();
     const at = run.indexOf(night);
     // Newest first, so the one BEFORE this in the list is the more recent one.

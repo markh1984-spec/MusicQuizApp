@@ -19,6 +19,7 @@ import fs from 'node:fs';
 
 import {
   RESERVED, matchNightSlug, nightSlug, nightSlugExact, readVenuePath, venueSlug,
+  sameVenueSlug,
 } from '../public/assets/slugs.js';
 
 test('a venue name becomes something somebody could type', () => {
@@ -103,4 +104,65 @@ test('and every reserved name is refused as a venue', () => {
   for (const name of RESERVED) {
     assert.equal(readVenuePath(`/${name}/gallery`), null, `${name} was allowed`);
   }
+});
+
+/*
+ * ---- ONE PUB IS ONE ADDRESS ------------------------------------------------
+ *
+ * Reported as *"quizporium.co.uk/station-tap/gallery is still showing no
+ * photos, only when I tap the logo do the photos load"* — the logo goes to the
+ * plain `/gallery`, which filters by nothing.
+ *
+ * The venue filter was an exact string equality on the slug, so one pub filed
+ * under two spellings had two addresses and each showed only its own half.
+ * This is the id-versus-name split `venueHeadcounts()` and `leaguesByVenue()`
+ * were both already fixed for, arriving a third time wearing a URL.
+ */
+
+test('ONE PUB IS ONE ADDRESS — a town on the name does not split it', () => {
+  const withTown = venueSlug('The Station Tap, Wokingham');
+  const without = venueSlug('The Station Tap');
+  assert.equal(withTown, 'station-tap-wokingham');
+  assert.equal(without, 'station-tap');
+  assert.ok(sameVenueSlug(withTown, without), 'the two spellings did not fold together');
+});
+
+test('AND IT FOLDS BOTH WAYS, or one address still shows half the pub', () => {
+  // Asymmetry here would be the original fault restated: `/station-tap` would
+  // show everything while `/station-tap-wokingham` showed only its own nights.
+  assert.ok(sameVenueSlug('station-tap', 'station-tap-wokingham'));
+  assert.ok(sameVenueSlug('station-tap-wokingham', 'station-tap'));
+  assert.ok(sameVenueSlug('station-tap', 'station-tap'));
+});
+
+test('IT BREAKS ON A HYPHEN, NEVER MID-WORD', () => {
+  // `crown` matching `crownley` would merge two pubs that share four letters
+  // and nothing else. A slug is hyphen-separated, so the boundary is free.
+  assert.equal(sameVenueSlug('crown', 'crownley'), false);
+  assert.equal(sameVenueSlug('bell', 'bellingham-arms'), false, 'matched mid-word');
+  assert.ok(sameVenueSlug('bell', 'bell-inn'), 'a real word boundary did not match');
+  // Neither is a prefix of the other: two different pubs.
+  assert.equal(sameVenueSlug('crown', 'red-lion'), false);
+  assert.equal(sameVenueSlug('station-tap-wokingham', 'station-bar-wokingham'), false);
+});
+
+test('an empty slug matches NOTHING, including another empty one', () => {
+  // A night with no venue on it must not be swept into every pub's page.
+  assert.equal(sameVenueSlug('', 'crown'), false);
+  assert.equal(sameVenueSlug('crown', ''), false);
+  assert.equal(sameVenueSlug('', ''), false);
+});
+
+test('EVERY VENUE COMPARISON IN server.js GOES THROUGH IT', () => {
+  /*
+   * The gallery index, the league page and the night-page's own prev/next all
+   * ask "is this the same pub". A bare `venueSlug(x) === y` left anywhere is
+   * this bug still live on that route — the arrows were the third site and
+   * were found only by grepping for the pattern rather than the symptom.
+   */
+  const src = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const bare = src.match(/venueSlug\([^)]*\)\s*[!=]==/g) || [];
+  assert.deepEqual(bare, [],
+    `a venue comparison is not using sameVenueSlug(): ${bare.join(', ')}`);
 });

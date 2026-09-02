@@ -1529,15 +1529,14 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
     **3.3 SECONDS**. Together and held: 0 calls. **A folder changes in exactly
     three places** and all three `dropNight()`, tested over real HTTP because
     what matters is that the ROUTES drop it.
-  - **Publishing paints in place; it does NOT re-render** — it rebuilt the bay
-    THREE times a press.
+  - **Publishing paints in place; it does NOT re-render.**
 - **EVERY WRITER OF `published.json` CARRIES THE HALVES IT IS NOT CHANGING** —
   nights, rulings, pins. The third is when it gets forgotten; a test walks them.
 - **A NIGHT NAMES ITS PUB AND STEPS TO THE ONE EITHER SIDE AT THAT PUB**,
   **decided on the SERVER** — only it has the archive. **An end of the run is
   an ABSENT link, not a dead one**: the one place *present and inert* does not
-  apply, since that rule is about a page driven weekly and this is one a
-  stranger sees once.
+  apply, that rule being about a page driven weekly rather than one a stranger
+  sees once.
 - **THE LEAGUE IS EXPORTED TO TWO AUDIENCES AND THEY WANTED DIFFERENT THINGS**
   — the landlord wants EVIDENCE, so the season table joined the post-night
   report he already receives; the teams want the table on a WALL, so `/league`
@@ -1660,6 +1659,21 @@ half**, every team's best-six from part of their record, on a public page.
   would silently unpublish a table and drop every override.
 - **THE COST, ACCEPTED KNOWINGLY:** two genuinely different pubs sharing a name
   merge. Already true on the name-only path, and why venue names carry a town.
+- **AND A THIRD TIME, WEARING A URL — `sameVenueSlug()` in `slugs.js`.**
+  *"`/station-tap/gallery` is still showing no photos, only when I tap the logo
+  do they load"* — the logo goes to the plain `/gallery`, which filters by
+  nothing. "The Station Tap, Wokingham" slugs to `station-tap-wokingham` and
+  the same pub typed freehand to `station-tap`, and the filter was `===`, so
+  each address showed half the pub and one showed none of it. A public address
+  has no id, so **the fold happens on the SLUGS**. **SYMMETRICALLY** — a
+  one-directional prefix leaves the other address still showing half, which is
+  the fault restated — and **on a HYPHEN, never mid-word** (`crown` must not
+  match `crownley`); an EMPTY slug matches nothing, or a night with no venue
+  lands on every pub's page. **THREE call sites and the third was the night
+  page's own PREV/NEXT ARROWS**, which compared venue STRINGS and silently
+  skipped a night at the same pub. `test/slugs.test.js` forbids a bare
+  `venueSlug(x) === y` anywhere in `server.js` — **the pattern, not the
+  symptom**, which is what finds the third one
 
 ### THE COMMUNITY BAY IS THE TAB YOU ARE ON — a wall, or a venue rail
 
@@ -2034,48 +2048,43 @@ costs. Both split off at the 100,000-byte cap.
   otherwise.**
 - AND THE PREVIEW DID NOT WORK ON THE HOST KEY
 - **THE CAMERA GATE IS GONE — every photograph is on the gallery unless a
-  human switches it off** (`showsByDefault()`, 2 September 2026). It used to
-  need EXIF proving a camera took it, and **it failed on EVERY photograph of a
-  real night** — which is the finding, because a room that uploads some memes
-  gives a MIX; a whole night at zero is a check that cannot succeed on the
-  handsets in the room (HEIC, EXIF stripped by a share sheet). It was not
-  filtering memes, it was filtering everything, and the index then drops a
-  published night with nothing showing — so the gallery was empty and silent.
-  **The gate that replaces it was already there: the publish control is drawn
-  UNDER the photographs so nobody publishes without looking.** `isCameraFile()`
-  survives as a NOTE on the lamp, never a gate. **THE CLEARING RULE
-  IN `/api/gallery-photo/` HAD THE OLD DEFAULT WRITTEN OUT A SECOND TIME** —
-  flip one and pressing a lamp RED clears the ruling and the new default puts
-  the photo straight back ON, silently. One function, asked by both. **Four
-  pinned tests were REVERSED, not weakened**, and **the projector is
-  untouched**: this was always a VIEW, never a refusal
+  human switches it off** (`showsByDefault()`, 2 September 2026). It needed
+  EXIF proving a camera took it and **failed on EVERY photograph of a real
+  night** — the finding, because some memes give a MIX; a whole night at zero
+  is a check that cannot succeed on the handsets in the room. It filtered
+  everything, and the index drops a published night with nothing showing, so
+  the gallery was empty and silent. **The gate that replaces it was already
+  there: the publish control is drawn UNDER the photographs so nobody publishes
+  without looking.** `isCameraFile()` survives as a NOTE on the lamp, never a
+  gate. **THE CLEARING RULE IN `/api/gallery-photo/` HAD THE OLD DEFAULT
+  WRITTEN OUT A SECOND TIME** — flip one and pressing a lamp RED clears the
+  ruling and the new default puts the photo straight back ON, silently. One
+  function, asked by both. **Four pinned tests were REVERSED, not weakened**,
+  and **the projector is untouched**: always a VIEW, never a refusal
 - **A LAMP PER PHOTO SAYS WHETHER IT IS ON THE GALLERY, AND IT IS A SWITCH** —
   *"green for on and red for off, no text needed but it must be clickable."*
   **NO WORDS, and eighteen of them is the argument**: a label repeated across a
-  grid becomes furniture; a colour is read at a glance. **FILLED, which is not
-  a break of outlined-never-filled** — a lamp, not a button that destroys, and
-  with no text the fill IS the message. **So `title` and `aria-label` are
-  load-bearing**, the 18px dot gets a 44px hit area from a `::after`, and
-  `.cphoto`'s own open must ignore a press on it. **It REPLACED the grey
-  "Screen only" badge** — two badges saying overlapping things is a label
-  collision. **`showsOnGallery()` is the ONE decision and all FOUR readers ask
-  it** — the night LIST, a night's page, the single-photo route and this lamp.
-  **A ruling that only restates the DEFAULT is CLEARED, not stored**
+  grid becomes furniture. **FILLED, which is not a break of
+  outlined-never-filled** — a lamp, not a button that destroys, and with no text
+  the fill IS the message. **So `title` and `aria-label` are load-bearing**, the
+  18px dot gets a 44px hit area from a `::after`, and `.cphoto`'s own open must
+  ignore a press on it. **It REPLACED the grey "Screen only" badge** — two
+  badges saying overlapping things is a label collision. **`showsOnGallery()`
+  is the ONE decision and all FOUR readers ask it** — the night LIST, a night's
+  page, the single-photo route and this lamp. **A ruling that only restates the
+  DEFAULT is CLEARED, not stored**
 - **THE COUNT AND THE PAGE ARE ONE QUESTION — `galleryPhotosOf()`.** The night
-  list counted on the filename alone while the page it counted for asked the
-  ruling too, so one photo switched off said *"12 photos"* over a page opening
-  on 11. **The guard sliced from `/api/gallery/` — with the slash, the night's
-  PAGE** — so the list was never a reader it checked. **AND WITH THE FAULT PUT
-  BACK IT STILL PASSED: it had matched the COMMENT explaining the fix.** A
-  source check strips comments first, or it goes green the better a file is
-  documented
-- **IT FLIPS NOW AND SAVES LATER** — *"the 1-2 second load on clicking
-  green/red is annoying."* The colour is the local truth and `saved` is the
-  server's, so a failed write puts the lamp BACK and says why on the count
-  line — never an `alert` for something that happened in the background, and
+  list counted on the filename while the page asked the ruling too. **The guard
+  sliced from `/api/gallery/` — with the slash, the night's PAGE** — so the
+  list was never a reader it checked. **AND WITH THE FAULT PUT BACK IT STILL
+  PASSED: it had matched the COMMENT explaining the fix.** A source check
+  strips comments first, or it goes green the better a file is documented
+- **IT FLIPS NOW AND SAVES LATER.** The colour is the local truth and `saved`
+  is the server's, so a failed write puts the lamp BACK and says why on the
+  count line — never an `alert` for something that happened in the background,
   never a silent revert. **It settles before it sends** (600ms): two taps that
-  end where they started write nothing at all, and every gallery write goes
-  through the one promise chain below
+  end where they started write nothing, and every gallery write goes through
+  the one promise chain below
 - **THE PUBLISH LAMP ASKS FIRST, AND THE QUESTION NAMES THE NIGHT** — *"so its
   clear what they're about to do."* The browser's own `confirm()`, like the
   other twelve here: **a second kind of dialog beside the photo bin's is the
@@ -2088,28 +2097,24 @@ costs. Both split off at the 100,000-byte cap.
   press must ask AGAIN (`upNow()`), never close over `up`. It did, so every
   press after the first re-sent *publish*, against *"another click unpublishes
   it"*. **The FIRST press was right, which is why only pressing twice sees it**
-- **THE PIN IS A DRAWING PIN, NEVER A MAP PIN** — a round head on a stem reads
-  as a lollipop at 18px. Cap bar, filled body, stroked needle: all-stroke is a
-  smudge that size, all-filled a blob. A map pin says *location*
+- **THE PIN IS A DRAWING PIN, NEVER A MAP PIN** — a map pin says *location*.
+  Cap bar, filled body, stroked needle: all-stroke smudges at 18px, all-filled
+  is a blob
 - **THE LAST SLIDE POINTS AT THE PHOTOGRAPHS, AND THE ADDRESS EXISTS BEFORE
-  THEY DO** — `galleryPath()` moved into `slugs.js` (one builder, both sides);
+  THEY DO** — `galleryPath()` in `slugs.js` (one builder, both sides);
   `state.photoLink` resolved at LAUNCH like `comeBack`. **DERIVED, not stored,
   is what makes it work**: publishing happens afterwards, so the code sixty
   people photograph at eleven opens a real gallery on Tuesday.
 - **A SLIDE OF ITS OWN, BECAUSE THE FINAL WAS ALREADY CLIPPING.** **The band's
-  QR is 86px at 720p** — fine beside text, hopeless as the only thing on a
-  slide; 34vh here. **A flag at the FINAL only** (rule 9), refused with no
-  address, never on a phone. **Labelled "Photos to the room"**: the primary
-  already says *Check the photos*.
+  QR is 86px at 720p**, hopeless as the only thing on a slide; 34vh here. **A
+  flag at the FINAL only** (rule 9), refused with no address, never on a phone.
 - **AND THE FINAL FITS NOW, IN TWO PARTS — `.endband` AND `fitWinner()`.**
-  `.winner` centres inside a fixed card with overflow hidden, so anything too
-  tall was cut at BOTH ends — 142px each way at 720p, unreported, for as long
-  as both existed. **The draw and the comeback go SIDE BY SIDE**, which buys
-  the height honestly; **`fitWinner()` then shrinks to fit as a backstop**, so
-  nothing added later can push anything off again. **It measures the CHILDREN,
-  not `scrollHeight`**, which clamps to the container and so under-reports
-  exactly when the content is too tall. **`final-fits.mjs`** is the guard, and
-  it checks the QR **actually paints**, not merely that it is placed
+  `.winner` centres in a fixed card with overflow hidden, so anything too tall
+  was cut at BOTH ends — 142px each way at 720p, unreported. **The draw and the
+  comeback go SIDE BY SIDE**; **`fitWinner()` shrinks to fit as a backstop**.
+  **It measures the CHILDREN, not `scrollHeight`**, which clamps to the
+  container and under-reports exactly when the content is too tall.
+  **`final-fits.mjs`** checks the QR **actually paints**, not that it is placed
 - **`view.photos` WAS ALREADY TAKEN, AND IT COST THE BUTTON** — `server.js`
   sets it to the room's own photographs, host AND screen, AFTER the engine
   builds the view. The field existed, held somebody else's data, the control
@@ -2126,29 +2131,24 @@ costs. Both split off at the 100,000-byte cap.
   a working app looks broken.** Silent when they all show
 - **`/gallery` SHOWS DRAFTS TO WHOEVER IS SIGNED IN, AND THE PAGE HAS TO SAY
   SO LOUDLY** — *"on my phone it's showing nothing but on my laptop it's
-  showing two"*, and both were right: `whoIs()` reads a COOKIE, so a laptop
-  with the console open previews and a phone gets the truth. **THE PREVIEW
-  STAYS** — it is what checking a night before strangers see it IS; do not
-  level the page for everybody. What was wrong was saying so in `--fs-note` at
-  `--ink-dim` above a wall of photographs, to the one person who cannot tell by
-  looking because the drafts are on their own screen. A panel, full ink, **not
-  red** (nothing has gone wrong), naming how many and where the switch is. **AND `live` HAD BEEN IN THE PAYLOAD PER NIGHT SINCE DAY
-  ONE WITH NO CARD DRAWING IT** — the fifth sighting: a banner says how many,
-  only a card says WHICH (*"Only you"*)
+  showing two"*, both right: `whoIs()` reads a COOKIE. **THE PREVIEW STAYS** —
+  it is what checking a night before strangers see it IS; do not level the page
+  for everybody. It was said in `--fs-note` at `--ink-dim` above a wall of
+  photographs, to the one person who cannot tell by looking. A panel, full ink,
+  **not red** (nothing has gone wrong), naming how many and where the switch
+  is. **AND `live` HAD BEEN IN THE PAYLOAD PER NIGHT SINCE DAY ONE WITH NO CARD
+  DRAWING IT** — the fifth sighting: a banner says how many, only a card says
+  WHICH (*"Only you"*)
 - **AND `?as=visitor` STANDS THE PREVIEW DOWN, so the check is possible at
-  all** — *"needs to display these photos without signing in otherwise there's
-  no point in it being published at all."* It already did for a published
-  night; what was impossible was VERIFYING it, because the browser a quizmaster
-  checks in is the one signed into the console. Telling him was necessary and
-  not sufficient. **ON THE SERVER** — a browser-side filter proves the page can
-  hide a draft, not that the server refuses one. **IT ONLY EVER SUBTRACTS,
-  which is why it needs no gate**: nothing in this app grants a permission from
-  a query string, so a stranger typing it gets what they already had. **It
-  rides on every request and link** like `key` and `?q=`, or the next page in
-  is the preview again. **PRESENT AND INERT** — drawn whether or not anything
-  is a draft, because *"is it really up?"* is asked when everything LOOKS fine.
-  **The way back is drawn on the "Not up yet" dead end**, which is exactly
-  where the check lands
+  all** — the browser a quizmaster checks in is the one signed into the
+  console, so telling him was necessary and not sufficient. **ON THE SERVER** —
+  a browser-side filter proves the page can hide a draft, not that the server
+  refuses one. **IT ONLY EVER SUBTRACTS, which is why it needs no gate**:
+  nothing in this app grants a permission from a query string. **It rides on
+  every request and link** like `key` and `?q=`, or the next page in is the
+  preview again. **PRESENT AND INERT** — drawn whether or not anything is a
+  draft, because *"is it really up?"* is asked when everything LOOKS fine.
+  **The way back is drawn on the "Not up yet" dead end**
 - **THE LEAGUE BAY IS A VENUE THAT FOLDS INTO ITS NIGHTS** — *"the summary is
   what displays when you click venue, and then you can click each night to see
   who won."* **The pub's own row is `The table`, INSIDE the fold, never the

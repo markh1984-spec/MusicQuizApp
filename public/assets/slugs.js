@@ -62,6 +62,57 @@ export function venueSlug(name) {
   return parts.join('-');
 }
 
+/**
+ * ARE THESE TWO VENUE SLUGS THE SAME PUB? — and this is the THIRD reader of
+ * one archive to need the answer.
+ *
+ * Reported as *"quizporium.co.uk/station-tap/gallery is still showing no
+ * photos, only when I tap the logo do the photos load."* Tapping the logo goes
+ * to the plain `/gallery`, which filters by nothing, so it showed everything —
+ * and the venue address showed nothing.
+ *
+ * **ONE PUB, TWO SPELLINGS, TWO ADDRESSES.** A night filed as "The Station
+ * Tap, Wokingham" slugs to `station-tap-wokingham`; the same pub typed
+ * freehand as "The Station Tap" slugs to `station-tap`. The venue filter was
+ * an exact string equality, so each address showed only its own half of the
+ * pub and neither showed all of it. Reproduced on a real server:
+ *
+ * ```
+ * /gallery                        both nights
+ * /station-tap/gallery            only "The Station Tap"
+ * /station-tap-wokingham/gallery  only "The Station Tap, Wokingham"
+ * ```
+ *
+ * **THIS IS THE SPLIT `venueHeadcounts()` AND `leaguesByVenue()` WERE BOTH
+ * ALREADY FIXED FOR**, arriving a third time wearing a URL. Those two
+ * reconcile an `id:` key against a lowercased name; a public address has no
+ * id, so the reconciling has to happen on the slugs themselves.
+ *
+ * **IT FOLDS SYMMETRICALLY, and that is what makes it a fix rather than half
+ * of one.** Matching only "the shorter is a prefix of the longer" would make
+ * `/station-tap` show everything while `/station-tap-wokingham` still showed
+ * half — two addresses for one pub that disagree, which is the fault restated.
+ * Either being a prefix of the other counts, so every address for a pub shows
+ * the whole pub.
+ *
+ * **ON A HYPHEN, NEVER A BARE PREFIX** — `crown` must not match `crownley`,
+ * and a slug is hyphen-separated so the boundary is free.
+ *
+ * **THE COST IS THE ONE ALREADY ACCEPTED KNOWINGLY**, recorded under *one pub
+ * is one league*: two genuinely different pubs whose names nest — "The Bell"
+ * and "The Bell Inn" — merge. That was already true of the name-only path and
+ * is why venue names carry a town. The alternative on offer is a quizmaster's
+ * own link showing a stranger nothing, which is what was happening.
+ */
+export function sameVenueSlug(a, b) {
+  const x = String(a || '');
+  const y = String(b || '');
+  if (!x || !y) return false;
+  if (x === y) return true;
+  const [longer, shorter] = x.length > y.length ? [x, y] : [y, x];
+  return longer.startsWith(`${shorter}-`);
+}
+
 const MONTHS = ['january', 'february', 'march', 'april', 'may', 'june',
   'july', 'august', 'september', 'october', 'november', 'december'];
 

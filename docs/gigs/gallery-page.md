@@ -854,3 +854,71 @@ switch** — the stub writes 64 bytes of `1`, which is not a decodable JPEG.
 Established by measuring the same night in preview, where they are equally
 "broken". A number that looks like a regression has to be compared against a
 control before it is reported as one.
+
+## One pub, two addresses, half a pub each — 2 September 2026
+
+Reported as *"quizporium.co.uk/station-tap/gallery is still showing no photos,
+only when I tap the quiz podium logo do the photos load."*
+
+**The logo goes to the plain `/gallery`, which filters by nothing.** So the
+symptom was precise and the diagnosis was in it: everything worked except the
+venue filter.
+
+### The third sighting of one split
+
+A night filed as "The Station Tap, Wokingham" slugs to `station-tap-wokingham`.
+The same pub typed freehand as "The Station Tap" slugs to `station-tap`. The
+index compared them with `===`:
+
+```js
+.filter(([, v]) => venueSlug(v) === wantVenue)
+```
+
+so each address showed only its own half of the pub, and if every night carried
+the town, `/station-tap/gallery` showed **nothing**. Reproduced on a real
+server before a line was changed:
+
+```
+/gallery                        both nights
+/station-tap/gallery            only "The Station Tap"
+/station-tap-wokingham/gallery  only "The Station Tap, Wokingham"
+```
+
+**`venueHeadcounts()` and `leaguesByVenue()` were both already fixed for this
+exact split** — an `id:` key against a lowercased name, reconciled by the
+reader. This is the same defect arriving a third time wearing a URL, and a
+public address has no id, so the reconciling has to happen on the slugs.
+
+### `sameVenueSlug()`, and the two things that make it a fix
+
+- **IT FOLDS SYMMETRICALLY.** Matching only "the shorter is a prefix of the
+  longer" would make `/station-tap` show everything while
+  `/station-tap-wokingham` still showed half — two addresses for one pub that
+  disagree, which is the original fault restated. Either being a prefix of the
+  other counts.
+- **IT BREAKS ON A HYPHEN, NEVER MID-WORD.** `crown` must not match `crownley`.
+  A slug is hyphen-separated, so the boundary is free.
+- **An empty slug matches nothing, including another empty one**, or a night
+  with no venue on it is swept onto every pub's page.
+
+**The cost is the one already accepted knowingly** under *one pub is one
+league*: two genuinely different pubs whose names nest — "The Bell" and "The
+Bell Inn" — merge. That was already true of the name-only path and is why venue
+names carry a town. The alternative on offer was a quizmaster's own link
+showing a stranger nothing.
+
+### THREE call sites, and the third was found by grepping the PATTERN
+
+The gallery index and the public league page were the two anybody would look
+for. The third is the night page's own **prev/next arrows**, which compared the
+venue STRINGS — so a run of nights at one pub split into two runs the moment
+its name was typed differently, and the arrows skipped a night plainly at the
+same pub or stopped early. Nothing reported it, because a missing arrow reads
+as the end of the run.
+
+`test/slugs.test.js` now asserts there is **no bare `venueSlug(x) === y` left
+in `server.js` at all** — the pattern rather than the symptom, which is what
+would have caught the arrows on the first pass. Verified by putting each fault
+back in turn: the one-directional fold fails two tests, dropping the hyphen
+boundary fails one, and restoring `===` at any call site fails the source
+check.
