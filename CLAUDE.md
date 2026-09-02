@@ -1424,30 +1424,24 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
 **What they asked for**. Settled by asking, and each answer is a rule:
 
 - **ORGANISED BY VENUE, because a venue IS a community.** The Tuesday crowd and
-  the Thursday crowd are different people, a league is already per venue, and
-  every page then happens to be something you can show one landlord.
+  the Thursday crowd are different people, and every page then happens to be
+  something you can show one landlord.
 - **THE PHOTOS MOVED AND PAST GIGS KEPT ITS GRID — that is not a duplicate.**
-  The same pictures do two jobs: on Past gigs a photo is EVIDENCE, beside the
-  headcount, the winner and the report; on Community it is the room itself.
-  **What is not duplicated is the CODE** — the strip, the bin, the "Screen
-  only" badge and the publish control are `nightPhotos()` in `console-gigs.js`,
-  called from both, so the confirm wording and the safeguard have one
-  definition. **The publish control keeps its safeguard for free**, because it
-  is drawn UNDER the photographs it would publish wherever it is called.
-- **A READ-ONLY SUMMARY MAY REPEAT; A QUEUE MAY NOT.** That is the line, and it
-  decides both halves: the headcount is a summary, so it joins the league
-  panel's head (the landlord's two questions, together) and still sits on a
-  venue card and a Past gigs card, all from one server-side figure. **"What the
-  room asked for" is a QUEUE — Yes keeps it, No bins it — so it MOVED off the
-  Music Quiz tab rather than being copied**, leaving a one-line link that shows
-  only when something is waiting.
-- **A NIGHT'S PHOTOS ARE FETCHED WHEN THE NIGHT IS OPENED, never up front.** A
-  photo list is a request per night; a wall that loaded twenty on arrival would
-  spend a pub's wifi on pictures nobody asked to see.
+  On Past gigs a photo is EVIDENCE; on Community it is the room itself. **What
+  is not duplicated is the CODE** — `nightPhotos()` in `console-gigs.js`, called
+  from both, so the confirm wording and the safeguard have one definition, and
+  **the publish control keeps its safeguard for free** by being drawn UNDER the
+  photographs wherever it is called.
+- **A READ-ONLY SUMMARY MAY REPEAT; A QUEUE MAY NOT.** The headcount is a
+  summary, so it sits on the league panel's head, a venue card and a Past gigs
+  card, all from one server-side figure. **"What the room asked for" is a
+  QUEUE — Yes keeps it, No bins it — so it MOVED off the Music Quiz tab rather
+  than being copied**, leaving a link that shows only when something waits.
+- **A NIGHT'S PHOTOS ARE FETCHED WHEN THE NIGHT IS OPENED, never up front** —
+  a photo list is a request per night.
 - **`asksPanel({ whenEmpty })` — the same panel answers two pages.** Drawing
-  NOTHING was right above the quiz generator and is wrong on a tab whose whole
-  job is the list: a blank page reads as broken to the person checking whether
-  the feature works. One optional argument, so the triage keeps one definition.
+  NOTHING was right above the quiz generator and wrong on a tab whose whole job
+  is the list. One optional argument, so the triage keeps one definition.
 - **AND ONE POINT FOR EVERY NIGHT PLAYED, ON TOP OF THE BEST SIX.** Under
   best-six alone a seventh night outside your six is worth NOTHING, so a team
   finishing near the bottom stops gaining anything after six weeks — a
@@ -1529,11 +1523,10 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   and a 409 is **forgotten, re-read PAST the caches, retried once**. **All three
   halves fail on their own**, and a 409 that survives is said in WORDS
 - **A NIGHT IS A CARD WITH ITS PHOTOGRAPHS FANNED ON IT, GROUPED BY PUB** —
-  `coverPhotos()`. **Pins lead, the rest is a SPREAD** (one per slice of the
-  evening), **stable**, seeded off the date. **BUILT FROM THE SAME FILTERED
-  LIST THE NIGHT'S PAGE SHOWS**, so a pin can never advertise a photograph that
-  page refuses. **A pin is a PREFERENCE; the lamp is the GATE.** **Three,
-  refused not trimmed.**
+  `coverPhotos()`. **Pins lead, the rest is a SPREAD**, stable, seeded off the
+  date. **BUILT FROM THE SAME FILTERED LIST THE NIGHT'S PAGE SHOWS**, so a pin
+  cannot advertise a photograph that page refuses. **A pin is a PREFERENCE; the
+  lamp is the GATE.** **Three, refused not trimmed.**
 - **A GALLERY IS PAID FOR ONCE — not per photo, not per visitor.** GitHub
   allows 5,000 calls an hour and a 99-photo night once cost ~297 **per page
   open**; a link goes to a pub full of people who were all there the SAME
@@ -1719,10 +1712,9 @@ up there too."*
   the published flag together, so the control is BUILT in the bay and HUNG in
   the tab body — safe because `render()` evaluates the doorhead before the tab
   body.
-- **THE WALL IS FETCHED ONCE PER PAGE LOAD AND STOPS ASKING** — a photo list is
-  a request per night, so it walks the newest until eighteen are in hand and
-  never past `WALL_NIGHTS`. Held in a module binding: the bay is rebuilt on
-  every push, at a lobby every join.
+- **THE WALL IS FETCHED ONCE PER PAGE LOAD AND STOPS ASKING** — it walks the
+  newest until eighteen are in hand, never past `WALL_NIGHTS`. Held in a module
+  binding: the bay is rebuilt on every push, at a lobby every join.
 - **`node scripts/community-bay.mjs` IS THE GUARD, and it measures GEOMETRY** —
   every door's bay against the launch bar's, that each has a rail whose
   headings are not squashed, what is left for the columns, whether the page
@@ -2137,6 +2129,14 @@ photographs' own half, split off at the 100,000-byte cap.
   that never happened reads identically to a real unpublished one. **A
   `pending` state on the server was turned down for exactly that**: it would
   have leaked which dates exist
+- **THE COUNT SAYS HOW MANY WILL SHOW, NOT HOW MANY THERE ARE** — *"photos are
+  definitely published"* over a gallery reading *"No photos are up yet"*, and
+  **both were true**: only what `showsOnGallery()` allows reaches the page, and
+  the INDEX drops a night whose whole set is held back (a card to a blank page
+  is worse than no card), so a night picked from a camera roll publishes,
+  answers 200 on its own address, and is invisible on the way in. **Every part
+  worked as written; nobody SAID it.** **A number right about the wrong
+  question is how a working app looks broken.** Silent when they all show
 - **THE LEAGUE BAY IS A VENUE THAT FOLDS INTO ITS NIGHTS** — *"the summary is
   what displays when you click venue, and then you can click each night to see
   who won."* **The pub's own row is `The table`, INSIDE the fold, never the

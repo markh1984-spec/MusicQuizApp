@@ -720,8 +720,36 @@ export async function nightPhotos(body, night, opts = {}) {
     loading.textContent = err.message;
     return;
   }
-  const counted = `${data.photos.length} photo${data.photos.length === 1 ? '' : 's'}`;
-  loading.textContent = counted;
+  /*
+   * THE COUNT SAYS HOW MANY WILL ACTUALLY SHOW, NOT JUST HOW MANY THERE ARE.
+   *
+   * Reported as *"photos are definitely published"* over a gallery reading
+   * "No photos are up yet". Both were true. A photograph only reaches the
+   * public page if `showsOnGallery()` allows it — camera-taken, or ruled ON by
+   * hand — and the index DROPS a night whose whole set is held back, because a
+   * card leading to a blank page is worse than no card. So a night of pictures
+   * that were all picked from a camera roll publishes perfectly, answers 200
+   * on its own address, and is invisible on the way in.
+   *
+   * Everything in that chain was working as written. What was missing was
+   * anybody SAYING it: the console counted every photograph, the lamps each
+   * knew their own answer, and no line added them up. **A number that is right
+   * about the wrong question is how a working app looks broken.**
+   *
+   * It is silent when they all show, which is the ordinary night — this is the
+   * count line, not a warning that lives here.
+   */
+  const showing = () => data.photos.filter((p) => p.onGallery).length;
+  const counted = () => {
+    const all = data.photos.length;
+    const on = showing();
+    const many = `${all} photo${all === 1 ? '' : 's'}`;
+    if (!all || on === all) return many;
+    return on
+      ? `${many} · ${on} on the gallery`
+      : `${many} · none on the gallery — the green dots decide`;
+  };
+  loading.textContent = counted();
   /*
    * WHERE A BACKGROUND WRITE SAYS IT FAILED — the line that already counts the
    * photographs, borrowed rather than a second line appearing and disappearing
@@ -729,7 +757,7 @@ export async function nightPhotos(body, night, opts = {}) {
    * next write lands, so a stale complaint cannot sit there.
    */
   const trouble = (msg) => {
-    loading.textContent = msg || counted;
+    loading.textContent = msg || counted();
     loading.style.color = msg ? 'var(--bad)' : '';
   };
   /*
@@ -846,6 +874,16 @@ export async function nightPhotos(body, night, opts = {}) {
       pill.title = why;
       pill.setAttribute('aria-label', why);
       pill.setAttribute('aria-pressed', String(live));
+      /*
+       * AND THE COUNT LINE ADDS THE LAMPS UP, so the aggregate follows the
+       * flick rather than the page load. `p.onGallery` is what `showing()`
+       * reads, so the local truth has to be written back onto it — otherwise
+       * the line says "none on the gallery" over a grid of green dots, which
+       * is the same class of untruth this line was added to end.
+       */
+      p.onGallery = live;
+      loading.textContent = counted();
+      loading.style.color = '';
     };
     paintPill();
 

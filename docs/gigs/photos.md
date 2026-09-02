@@ -1707,3 +1707,69 @@ pixels. That is *"it is in the document" versus "somebody can see it"* for the
 fourth time in this repo, so it is now checked rather than assumed. The page is
 served rather than `setContent`-ed for that one reason: an `about:blank`
 document taints the canvas.
+
+## "Photos are definitely published" — and the gallery said none were
+
+Reported with a screenshot of `/gallery` reading **"No photos are up yet"**,
+from somebody who had just published a night. Both statements were true, and
+the chain between them was working exactly as written.
+
+### What actually happens
+
+A photograph only reaches the public page if `showsOnGallery()` allows it —
+camera-taken, or ruled ON by hand with the green lamp. A picture a player chose
+from their camera roll carries `-picked` and is held back by default; that is
+the rule, and it is the right one.
+
+The index then does this, deliberately:
+
+```js
+// A published night with nothing in it is a heading over a blank space.
+if (shown.length) { out.push({ … }); }
+```
+
+So a night whose whole set is held back **is published, answers 200 on its own
+address, and is invisible on the index**. If that is the only published night,
+the way in is an empty page saying nothing is up.
+
+Reproduced against the stubbed private repository — two published nights, one
+of camera photos and one of `-picked`:
+
+```
+published in the file: 2026-09-01 (camera) and 2026-08-25 (uploaded)
+the index shows      : ["2026-09-01 (2)"]
+```
+
+### Nothing was broken; nothing said anything
+
+That is the whole finding, and it is worth keeping as a shape. The publish
+worked. The filter worked. Dropping the empty night from the index is a
+deliberate decision with a comment on it. Each lamp knew its own answer.
+
+**What was missing was any line that added the lamps up.** The console counted
+`data.photos.length` — every photograph filed against the night — which answers
+*"how many are there"* when the question on that screen is *"how many will
+anybody see"*.
+
+**A number that is right about the wrong question is how a working app looks
+broken.** It is the same family as the arcade board nobody drew and the publish
+route nobody called: every part correct, no part joined up, and no error
+anywhere to notice.
+
+### The line tells the truth now
+
+- all showing → **"12 photos"**, unchanged, which is the ordinary night;
+- some held back → **"12 photos · 4 on the gallery"**;
+- none showing → **"12 photos · none on the gallery — the green dots decide"**.
+
+It follows the lamp rather than the page load: flicking one green writes the
+local truth back onto `p.onGallery` and repaints the line, or it would sit
+saying "none on the gallery" over a grid of green dots — the same untruth in
+the other direction.
+
+**It is silent when they all show.** This is the count line, not a warning that
+has taken up residence in it.
+
+`community-bay.mjs` asserts both halves — that the line names how many will
+show, and that pressing a lamp moves the number. Verified by flattening the
+line back to a plain count and watching both fail.

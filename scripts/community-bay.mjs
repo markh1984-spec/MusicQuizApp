@@ -697,8 +697,30 @@ try {
      * gallery would blow it up to fill the bay at the same time.
      */
     const wasOn = await page.evaluate(() => document.querySelector('.doorhead .cphoto-pub').classList.contains('is-on'));
+    /*
+     * THE COUNT LINE HAS TO ADD THE LAMPS UP — reported as *"photos are
+     * definitely published"* over a public gallery reading "No photos are up
+     * yet". Both were true: the index drops a night whose whole set is held
+     * back, and the console's count answered "how many photographs are there"
+     * where the question was "how many will anybody see". A number that is
+     * right about the wrong question is how a working app looks broken.
+     *
+     * The fixture holds a quarter of them back, so the line must say so — and
+     * must follow the lamp rather than the page load.
+     */
+    const countBefore = await page.evaluate(() =>
+      [...document.querySelectorAll('.tabbody .tiny, .doorhead .tiny')]
+        .map((n) => n.textContent.trim()).find((t) => /\d+ photos?/.test(t)) || '');
+    check(`${label}: the count says how many will actually show`,
+      /on the gallery|none on the gallery/.test(countBefore), countBefore);
+
     await page.evaluate(() => document.querySelector('.doorhead .cphoto-pub').click());
     await page.waitForTimeout(400);
+    const countAfter = await page.evaluate(() =>
+      [...document.querySelectorAll('.tabbody .tiny, .doorhead .tiny')]
+        .map((n) => n.textContent.trim()).find((t) => /\d+ photos?/.test(t)) || '');
+    check(`${label}: and it follows the lamp rather than the page load`,
+      Boolean(countAfter) && countAfter !== countBefore, `${countBefore} -> ${countAfter}`);
     const after = await page.evaluate(() => ({
       opened: document.querySelectorAll('.doorhead .community-big').length,
       // AND IT ACTUALLY SWITCHED — read against what it WAS, not against a
