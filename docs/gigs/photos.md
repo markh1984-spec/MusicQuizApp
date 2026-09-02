@@ -1773,3 +1773,82 @@ has taken up residence in it.
 `community-bay.mjs` asserts both halves — that the line names how many will
 show, and that pressing a lamp moves the number. Verified by flattening the
 line back to a plain count and watching both fail.
+
+## "On my phone it's showing nothing, on my laptop it's showing two" — 2 September 2026
+
+Reported the day after the count line above, and it is the same family again:
+both devices were correct, they were answering different questions, and
+nothing anywhere said so loudly enough to notice.
+
+### The phone was right and the laptop was a preview
+
+`galleryPreview()` in `server.js` shows **unpublished** nights to whoever is
+signed in. A laptop that has the console open carries the session cookie, so
+`whoIs()` resolves it to an account and the page adds the drafts. A phone
+opening the same link cold carries nothing, resolves to nobody, and gets the
+published list — which was empty.
+
+Reproduced exactly, against the stubbed private repository:
+
+```
+published.json says: NOTHING is published
+PHONE  (no cookie) : [] | preview: false
+LAPTOP (signed in) : ["2026-09-01","2026-08-25"] | preview: true
+  of those, live   : ["2026-09-01: false","2026-08-25: false"]
+```
+
+**So the two nights were drafts.** Almost certainly because the `GitHub 409`
+screenshotted a few hours earlier *was* the publish write failing — that retry
+is deployed now, so pressing the lamp again sticks.
+
+### The preview is right and must stay
+
+It is what makes checking a night before strangers see it possible at all, and
+the whole reason `?key=` was wired onto the images. **Do not "fix" this by
+making the page identical for everybody** — that would take away the preview
+to solve a labelling problem.
+
+### What was actually wrong was how quietly it said so
+
+The page did say it. In `--fs-note` at `--ink-dim`, one centred line, above a
+wall of large photographs — **this app's two weakest tools, at the one moment
+they are least affordable.** The person reading that line is the person
+checking whether publishing worked, and they are the one person who cannot
+tell by looking, because the drafts are on their screen.
+
+The cost of getting it wrong is telling a pub their photographs are up when
+nobody outside the building can open them.
+
+So the banner is a panel now: full-strength ink, a surface of its own, and it
+says three things a note could not — how many, why this device differs from
+everybody else's, and where the switch is. **A warning is the stated exception
+to the short-label rule.** It is **not red**: nothing has gone wrong, and red
+would say a mistake had been made.
+
+### And the cards say WHICH — the server had been sending it all along
+
+`live` has been on every entry in the index payload since the day this page was
+written, and **no card ever drew it**. Two drafts sat among three live nights
+looking identical, so the count in the banner could not be matched to anything
+on screen.
+
+A `.gal-draft-tag` reading **"Only you"** in the corner, and the fan behind it
+dimmed. Same fault as the arcade board, the publish route, the hidden pack
+slots and the QR checked for position rather than paint: **the field was in the
+payload and nobody drew it.** That is now five sightings, and the lesson has
+not changed — *a test that the payload is right proves nothing about whether
+anybody drew it.*
+
+Verified in a real browser at both sizes:
+
+```
+laptop-signed-in {cards: 2, drafts: 1, tags: ["Only you"], banner: "1 of these
+  is only visible to you. You are signed in, so this page is showing you drafts
+  — on anyone else's phone it is missing. Put it up in the console"}
+phone-stranger   {cards: 1, drafts: 0, tags: [], banner: ""}
+```
+
+**The grammar is written out rather than templated** — `is`/`are`, `it`/`them`,
+`it is missing`/`they are missing`, and a different sentence entirely when
+every night on the page is a draft. A page whose whole job is to be believed
+cannot open with *"1 of these are only visible to you."*

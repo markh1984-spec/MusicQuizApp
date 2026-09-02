@@ -8989,13 +8989,42 @@ body.gallery { padding: 0; }
 .gal-sub { color: var(--ink-dim); margin: 0; font-size: var(--fs-note); }
 .gal-empty { text-align: center; padding: 32px 8px; }
 
-/* One line for the quizmaster, never for a customer — see gallery.js. Quiet
-   rather than a warning: it is a state, and a state read before anything has
-   gone wrong. Centred, because the whole head of this page is. */
+/* One line for the quizmaster, never for a customer — see gallery.js.
+
+   IT USED TO SAY "quiet rather than a warning: it is a state", AND THAT WAS
+   THE FAULT — the state it reports is that nobody else can see this page.
+
+   A WARNING IS THE STATED EXCEPTION TO THE SHORT-LABEL RULE, and this one had
+   been written in `--fs-note` at `--ink-dim` — the two weakest tools this app
+   has — above a wall of large photographs. It is the one line that separates
+   "published" from "only you can see this", read by the person least able to
+   tell the difference, so it gets a surface of its own and full-strength ink.
+
+   NOT RED: nothing has gone wrong. It is a state, not a mistake — the same
+   reasoning the publish control's own line follows. */
 .gal-drafts {
-  text-align: center; margin: 0 0 22px; font-size: var(--fs-note); color: var(--ink-dim);
+  max-width: 640px; margin: 0 auto 26px; padding: 12px 16px;
+  border-radius: var(--r-card);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  text-align: center; font-size: var(--fs-body); color: var(--ink-dim);
+  line-height: 1.5;
 }
+.gal-drafts b { color: var(--ink); display: block; margin-bottom: 2px; }
 .gal-drafts a { color: var(--ink); }
+
+/* AND WHICH ONES — the server has sent `live` per night since the day this
+   page was written and the card never drew it, so two drafts sat beside three
+   live nights looking identical. The banner says how many; only the card can
+   say WHICH. */
+.gal-card { position: relative; }
+.gal-card.is-draft .gal-fan { opacity: 0.75; }
+.gal-draft-tag {
+  position: absolute; top: 8px; right: 8px;
+  padding: 3px 9px; border-radius: var(--r-pill);
+  font-size: var(--fs-note); font-weight: 800; letter-spacing: 0.04em;
+  color: #17131b; background: rgba(255, 255, 255, 0.88);
+}
 
 /* ---- NIGHTS AS CARDS, GROUPED BY PUB.
 

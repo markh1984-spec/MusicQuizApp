@@ -266,10 +266,37 @@ async function showNights() {
   }
   const groups = groupsOf(nights);
   body.replaceChildren();
+  /*
+   * THIS IS A WARNING, SO IT IS ALLOWED TO BE LOUD — and it had been written
+   * as the quietest thing on the page.
+   *
+   * Reported as *"on my phone it's showing nothing but on my laptop it's
+   * showing two galleries — it should show two on both."* Both devices were
+   * right: `/gallery` shows unpublished nights to whoever is SIGNED IN, and a
+   * laptop carries the console's session cookie where a phone does not. So the
+   * laptop was a preview of two drafts and the phone was the truth.
+   *
+   * The page did say so, in `--fs-note` at `--ink-dim` above a wall of large
+   * photographs — which is this app's own two weakest tools, used at the one
+   * moment that matters most: the person checking whether publishing worked is
+   * the person least able to tell that it did not. Getting it wrong means
+   * telling a pub their photos are up when nobody can see them.
+   *
+   * A warning is the stated exception to the short-label rule, so it says what
+   * is true, why it differs from what anybody else sees, and where the switch
+   * is.
+   */
   if (drafts) {
     body.appendChild(node(`
-      <p class="gal-drafts">Not on the public page yet.
-        <a href="${esc(consoleLink())}">Put them up in the console</a>.</p>`));
+      <p class="gal-drafts">
+        <b>${drafts === nights.length
+          ? `Nobody else can see ${drafts === 1 ? 'this night' : 'these nights'} yet.`
+          : `${drafts} of these ${drafts === 1 ? 'is' : 'are'} only visible to you.`}</b>
+        You are signed in, so this page is showing you drafts — on anyone
+        else's phone ${drafts === nights.length
+          ? 'it is empty'
+          : (drafts === 1 ? 'it is missing' : 'they are missing')}.
+        <a href="${esc(consoleLink())}">Put ${drafts === 1 ? 'it' : 'them'} up in the console</a>.</p>`));
   }
   body.appendChild(node(`
     <div class="gal-groups">
@@ -278,9 +305,11 @@ async function showNights() {
           ${g.venue ? `<h2 class="gal-group-name">${esc(g.venue)}</h2>` : ''}
           <div class="gal-cards">
             ${g.list.map((n) => `
-              <a class="gal-card" href="${esc(nightLink(n.night))}">
+              <a class="gal-card${n.live === false ? ' is-draft' : ''}"
+                 href="${esc(nightLink(n.night))}">
                 ${fanOf(n.cover || [])}
                 <b>${esc(n.when || n.night)}</b>
+                ${n.live === false ? '<span class="gal-draft-tag">Only you</span>' : ''}
               </a>`).join('')}
           </div>
         </section>`).join('')}

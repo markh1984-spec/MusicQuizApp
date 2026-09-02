@@ -951,21 +951,19 @@ board), `src/arcade.js` (the scores, shared by both engines),
   rounds.** The floating camera button stands down in the lobby.
 - **SOUND IS SYNTHESISED, ON BY DEFAULT, AND NEVER ON A TIMER.**
   `lobby-sound.js` — Web Audio, no files, like everything else here is drawn.
-  **It shipped OFF and that was wrong**, on a worry about phones making noises
-  over the host's mic: the game only exists in the LOBBY, so a noise during a
-  question is not unlikely but impossible, by three mechanisms that each have
+  **It shipped OFF and that was wrong**: the game only exists in the LOBBY, so
+  a noise during a question is impossible, by three mechanisms that each have
   tests. **What makes on-by-default safe is that the HOST can switch it off** —
-  *Game sound* on the launch bar, into `state.lobbySound` at launch, because a
-  quiet gastropub and a rowdy Friday are not the same room. **The host's switch
-  wins and does not wipe the phone's own**; both default to on wherever the
-  field could be absent. **Every noise is tied to something the player DID**
-  — nothing on a timer, or it is sixty phones chirping at nobody. It never
-  carries information: a phone on a pub table is on silent and iOS mutes Web
-  Audio outright, so every game stays playable in silence. **There is no yeehaw
-  and that is deliberate** — a synthesised whoop is a kazoo and a recorded one
-  is an asset; shipping one is a decision to break the no-assets rule on
-  purpose. The toggle is UNDER the canvas: on it, a tap that missed by a few
-  pixels is a shot, and the shot could be the sheriff.
+  *Game sound* on the launch bar, into `state.lobbySound` at launch. **The
+  host's switch wins and does not wipe the phone's own**; both default to on
+  wherever the field could be absent. **Every noise is tied to something the
+  player DID** — nothing on a timer, or it is sixty phones chirping at nobody.
+  It never carries information: a phone on a pub table is on silent and iOS
+  mutes Web Audio outright, so every game stays playable in silence. **There is
+  no yeehaw and that is deliberate** — a synthesised whoop is a kazoo and a
+  recorded one is an asset; shipping one breaks the no-assets rule on purpose.
+  The toggle is UNDER the canvas: on it, a tap that missed by a few pixels is a
+  shot, and the shot could be the sheriff.
 - **THE BOARD IS ON THE PROJECTOR AT THE LOBBY ONLY** — `lobby-board.js`, one
   file for both projectors, inside the white QR panel and UNDER the code, which
   nothing in this app may dim. **It was computed and never drawn for as long as
@@ -1556,11 +1554,9 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   apply, since that rule is about a page driven weekly and this is one a
   stranger sees once.
 - **THE LEAGUE IS EXPORTED TO TWO AUDIENCES AND THEY WANTED DIFFERENT THINGS**
-  — *"can that be exported to the landlord and the quiz teams to view?"* The
-  landlord wants EVIDENCE, so the season table joined the post-night report he
-  already receives; the teams want the table on a WALL, so `/league` is a
-  public page per quizmaster. Building one thing for both would have served
-  neither.
+  — the landlord wants EVIDENCE, so the season table joined the post-night
+  report he already receives; the teams want the table on a WALL, so `/league`
+  is a public page per quizmaster. One thing for both would serve neither.
   - **A REPORT SAYS WHAT THE ROOM SAW THAT NIGHT, not what is true today** —
     `leagueAfter()` winds the night list AND the season window back to that
     evening; a snapshot that has moved on is not evidence. One function, one
@@ -2054,15 +2050,15 @@ photographs' own half, split off at the 100,000-byte cap.
   because it fails silently**: `camera` defaults FALSE, and it never keeps a
   photo off the projector
 - **A LAMP PER PHOTO SAYS WHETHER IT IS ON THE GALLERY, AND IT IS A SWITCH** —
-  *"an on off button with green for on and red for off, no text needed but it
-  must be clickable."* **NO WORDS, and eighteen of them is the argument**: a
-  label repeated across a grid becomes furniture; a colour is read at a glance.
-  **FILLED, which is not a break of outlined-never-filled** — a lamp, not a
-  button that destroys, and with no text the fill IS the message. **So `title`
-  and `aria-label` are load-bearing**, the 18px dot gets a 44px hit area from a
-  `::after`, and `.cphoto`'s own open must ignore a press on it. **It REPLACED
-  the grey "Screen only" badge** — two badges saying overlapping things is a
-  label collision. **`showsOnGallery()` is the ONE decision and all FOUR
+  *"green for on and red for off, no text needed but it must be clickable."*
+  **NO WORDS, and eighteen of them is the argument**: a label repeated across a
+  grid becomes furniture; a colour is read at a glance. **FILLED, which is not
+  a break of outlined-never-filled** — a lamp, not a button that destroys, and
+  with no text the fill IS the message. **So `title` and `aria-label` are
+  load-bearing**, the 18px dot gets a 44px hit area from a `::after`, and
+  `.cphoto`'s own open must ignore a press on it. **It REPLACED the grey
+  "Screen only" badge** — two badges saying overlapping things is a label
+  collision. **`showsOnGallery()` is the ONE decision and all FOUR
   readers ask it** — the night LIST, a night's page, the single-photo route and
   this lamp — or a photo is on a page the console swears is private. **A ruling
   that only restates the guess is CLEARED, not stored**
@@ -2107,19 +2103,14 @@ photographs' own half, split off at the 100,000-byte cap.
   address, never on a phone. **Labelled "Photos to the room"**: the primary
   already says *Check the photos*.
 - **AND THE FINAL FITS NOW, IN TWO PARTS — `.endband` AND `fitWinner()`.**
-  `.winner` centres inside a fixed card with the projector's overflow hidden,
-  so anything too tall was cut at BOTH ends: **142px each way at 720p on a
-  night with a draw, a league and a comeback** — the kicker gone, the comeback
-  QR sliced — at every resolution, unreported, for as long as both existed.
-  **The draw and the comeback go SIDE BY SIDE**, which buys the height honestly
-  and leaves an ordinary 16:9 night at scale 1.00; **`fitWinner()` then shrinks
-  to fit as a backstop**, so nothing added later can push anything off again.
-  **Tightening the margins was tried and still clipped 120px.** **It measures
-  the CHILDREN, not `scrollHeight`**, which clamps to the container and so
-  under-reports exactly when the content is too tall — the first version read
-  0.84 where 0.70 was needed and still clipped.
-  **`final-fits.mjs`** is the guard, and it checks the QR **actually paints**,
-  not merely that it is placed
+  `.winner` centres inside a fixed card with overflow hidden, so anything too
+  tall was cut at BOTH ends — 142px each way at 720p, unreported, for as long
+  as both existed. **The draw and the comeback go SIDE BY SIDE**, which buys
+  the height honestly; **`fitWinner()` then shrinks to fit as a backstop**, so
+  nothing added later can push anything off again. **It measures the CHILDREN,
+  not `scrollHeight`**, which clamps to the container and so under-reports
+  exactly when the content is too tall. **`final-fits.mjs`** is the guard, and
+  it checks the QR **actually paints**, not merely that it is placed
 - **`view.photos` WAS ALREADY TAKEN, AND IT COST THE BUTTON** — `server.js`
   sets it to the room's own photographs, host AND screen, AFTER the engine
   builds the view. The field existed, held somebody else's data, the control
@@ -2130,13 +2121,24 @@ photographs' own half, split off at the 100,000-byte cap.
   `pending` state on the server was turned down for exactly that**: it would
   have leaked which dates exist
 - **THE COUNT SAYS HOW MANY WILL SHOW, NOT HOW MANY THERE ARE** — *"photos are
-  definitely published"* over a gallery reading *"No photos are up yet"*, and
-  **both were true**: only what `showsOnGallery()` allows reaches the page, and
-  the INDEX drops a night whose whole set is held back (a card to a blank page
-  is worse than no card), so a night picked from a camera roll publishes,
-  answers 200 on its own address, and is invisible on the way in. **Every part
-  worked as written; nobody SAID it.** **A number right about the wrong
-  question is how a working app looks broken.** Silent when they all show
+  definitely published"* over a gallery reading *"No photos are up yet"*, both
+  true: only what `showsOnGallery()` allows reaches the page, and the INDEX
+  drops a night whose whole set is held back (a card to a blank page is worse
+  than no card), so a camera-roll night publishes, answers 200 on its own
+  address, and is invisible on the way in. **Every part worked as written;
+  nobody SAID it. A number right about the wrong question is how a working app
+  looks broken.** Silent when they all show
+- **`/gallery` SHOWS DRAFTS TO WHOEVER IS SIGNED IN, AND THE PAGE HAS TO SAY
+  SO LOUDLY** — *"on my phone it's showing nothing but on my laptop it's
+  showing two"*, and both were right: `whoIs()` reads a COOKIE, so a laptop
+  with the console open previews and a phone gets the truth. **THE PREVIEW
+  STAYS** — it is what checking a night before strangers see it IS; do not
+  level the page for everybody. What was wrong was saying so in `--fs-note` at
+  `--ink-dim` above a wall of photographs, to the one person who cannot tell by
+  looking because the drafts are on their own screen. A panel, full ink, **not
+  red** (nothing has gone wrong), naming how many and where the switch is. **AND `live` HAD BEEN IN THE PAYLOAD PER NIGHT SINCE DAY
+  ONE WITH NO CARD DRAWING IT** — the fifth sighting: a banner says how many,
+  only a card says WHICH (*"Only you"*)
 - **THE LEAGUE BAY IS A VENUE THAT FOLDS INTO ITS NIGHTS** — *"the summary is
   what displays when you click venue, and then you can click each night to see
   who won."* **The pub's own row is `The table`, INSIDE the fold, never the
@@ -2153,22 +2155,19 @@ photographs' own half, split off at the 100,000-byte cap.
   cost the gallery's *"All nights"* link and My account's whole list of sent
   suggestions. A grep cannot find these (nested template literals), so `node()`
   now `console.error`s when it drops one.
-- **A VENUE HAS ITS OWN ADDRESS** — *"URLs conveniently reachable, so something
-  like quizporium.co.uk/station-tap-wokingham/gallery/20-august and
-  /station-tap-wokingham/quiz-league."* `public/assets/slugs.js`, shared by the
-  server and the page like `schemes.js`, because two implementations of one
-  slug is a link that works in the browser and 404s on the server. **DERIVED,
-  never stored** — so a rename changes the address rather than leaving a stale
-  one that lies. **The SAME FILE is served**; the page reads its own path.
-  **A ONE-SEGMENT PREFIX AT THE ROOT IS A CATCH-ALL AND THE FIRST VERSION ATE
-  `/api/gallery`** — two segments, the second one `gallery`. Naming it is not
-  enough: `RESERVED` refuses the first, and `test/slugs.test.js` walks
-  `server.js` for every literal top-level route. It found six I had missed.
-  **`ownAddress` on `/api/me` says whether the pretty form works** — the server
-  knows which room the public pages fall back to; `role === 'owner'` in the
-  browser was wrong in BOTH directions. **An address is not a key**: it names a
-  venue, and the league switch and published list still decide whether that
-  venue has a page at all
+- **A VENUE HAS ITS OWN ADDRESS** — `/station-tap-wokingham/gallery/20-august`,
+  built by `public/assets/slugs.js`, shared by the server and the page like
+  `schemes.js`: two implementations of one slug is a link that works in the
+  browser and 404s on the server. **DERIVED, never stored**, so a rename
+  changes the address rather than leaving a stale one that lies. **The SAME
+  FILE is served**; the page reads its own path. **A ONE-SEGMENT PREFIX AT THE
+  ROOT IS A CATCH-ALL AND THE FIRST VERSION ATE `/api/gallery`** — two
+  segments, the second one `gallery`; `RESERVED` refuses the first and
+  `test/slugs.test.js` walks `server.js` for every literal top-level route.
+  **`ownAddress` on `/api/me` says whether the pretty form works** —
+  `role === 'owner'` in the browser was wrong in BOTH directions. **An address
+  is not a key**: the league switch and the published list still decide whether
+  that venue has a page at all
 
 - **A LEAGUE IS A THING YOU RUN, AND IT IS OFF UNTIL SOMEBODY SAYS SO** —
   *"quiz leagues should be turn on and offable… it might be misleading if this
