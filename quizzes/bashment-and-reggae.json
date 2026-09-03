@@ -1,0 +1,123 @@
+{
+  "id": "bashment-and-reggae",
+  "title": "The Bashment & Reggae Quiz",
+  "subtitle": "Fifteen questions. Twenty seconds each. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-03T00:00:00.000Z",
+  "notes": "Written 3 September 2026 for a short two-quiz night. Ska and rocksteady through roots, lovers rock, dancehall and modern bashment, so the room gets more than one era. READ EVERY QUESTION IN THE EDITOR BEFORE THE GIG — these were written in one pass without the generator's second checking call.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "text",
+      "title": "Round One — Bashment & Reggae",
+      "blurb": "15 questions on reggae, dancehall and bashment",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which 1968 Toots and the Maytals song put the word on a record label for the first time?",
+          "options": ["Do the Reggay", "Pressure Drop", "54-46 That's My Number", "Monkey Man"],
+          "correctIndex": 0,
+          "answerNote": "It was spelt \"reggay\" on the label, and the whole genre took its name from it."
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which Jamaican singer took \"Israelites\" to number one in the UK in 1969?",
+          "options": ["Desmond Dekker", "Jimmy Cliff", "Prince Buster", "Laurel Aitken"],
+          "correctIndex": 0,
+          "answerNote": "Desmond Dekker & the Aces reached the top of the UK chart with it in April 1969."
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which 1977 Bob Marley and the Wailers album contains \"Jamming\" and \"One Love\"?",
+          "options": ["Kaya", "Exodus", "Survival", "Uprising"],
+          "correctIndex": 1,
+          "answerNote": "Marley recorded it in London after leaving Jamaica, and Time later called it the album of the century."
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which British reggae band had a number one with their version of \"Red Red Wine\"?",
+          "options": ["Steel Pulse", "Aswad", "UB40", "Black Slate"],
+          "correctIndex": 2,
+          "answerNote": "Neil Diamond wrote it, but the band learned it from Tony Tribe's reggae version."
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which 2002 Sean Paul album features \"Get Busy\" and \"Gimme the Light\"?",
+          "options": ["Stage One", "Dutty Rock", "The Trinity", "Imperial Blaze"],
+          "correctIndex": 1,
+          "answerNote": "It won him the Grammy for Best Reggae Album."
+        },
+        {
+          "id": "r1q6",
+          "prompt": "\"Pass the Dutchie\" was a 1982 UK number one for which young British reggae band?",
+          "options": ["Musical Youth", "The Beat", "Matumbi", "Janet Kay"],
+          "correctIndex": 0,
+          "answerNote": "The band were still schoolboys in Birmingham when it went to number one."
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which Jamaican pair, a drummer and a bass player, are known as the Riddim Twins?",
+          "options": ["Steely & Clevie", "Sly & Robbie", "Michigan & Smiley", "Chaka Demus & Pliers"],
+          "correctIndex": 1,
+          "answerNote": "Sly Dunbar plays the drums and Robbie Shakespeare played the bass on hundreds of records."
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which 1972 film starring Jimmy Cliff carried reggae to a far wider audience?",
+          "options": ["Rockers", "Countryman", "The Harder They Come", "Babylon"],
+          "correctIndex": 2,
+          "answerNote": "Its soundtrack was the first reggae record a lot of people ever owned."
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which 1982 Gregory Isaacs song shares its name with the album it appeared on?",
+          "options": ["Night Nurse", "Bam Bam", "Sweet Sensation", "Rivers of Babylon"],
+          "correctIndex": 0,
+          "answerNote": "Isaacs was known as the Cool Ruler, and this is the song he is remembered for."
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which dancehall star was born Adidja Palmer?",
+          "options": ["Bounty Killer", "Mavado", "Vybz Kartel", "Popcaan"],
+          "correctIndex": 2,
+          "answerNote": "Mavado led the rival Gully side of dancehall's best-known feud with him."
+        },
+        {
+          "id": "r1q11",
+          "prompt": "Which 2005 Damian Marley album takes its name from his own track \"Welcome to Jamrock\"?",
+          "options": ["Halfway Tree", "Stony Hill", "Welcome to Jamrock", "Distant Relatives"],
+          "correctIndex": 2,
+          "answerNote": "Damian is Bob Marley's youngest son and is nicknamed Jr Gong."
+        },
+        {
+          "id": "r1q12",
+          "prompt": "Which Jamaican singer won the Grammy for Best Reggae Album in 2020 with \"Rapture\"?",
+          "options": ["Protoje", "Chronixx", "Etana", "Koffee"],
+          "correctIndex": 3,
+          "answerNote": "Rapture was her debut EP, and she was nineteen when it won."
+        },
+        {
+          "id": "r1q13",
+          "prompt": "Which duo had 1990s hits with \"Tease Me\" and \"Murder She Wrote\"?",
+          "options": ["Chaka Demus & Pliers", "Michigan & Smiley", "Brick & Lace", "Steely & Clevie"],
+          "correctIndex": 0,
+          "answerNote": "Murder She Wrote is one of the most recycled riddims in all of dancehall."
+        },
+        {
+          "id": "r1q14",
+          "prompt": "Which teenage duo topped the UK chart in 1978 with \"Uptown Top Ranking\"?",
+          "options": ["Althea & Donna", "The Pioneers", "Louisa Mark", "Carroll Thompson"],
+          "correctIndex": 0,
+          "answerNote": "They were teenagers from Kingston and it was the only UK hit they ever had."
+        },
+        {
+          "id": "r1q15",
+          "prompt": "Which Lee \"Scratch\" Perry studio behind his Kingston home shaped the sound of 1970s dub?",
+          "options": ["Studio One", "Tuff Gong", "Channel One", "The Black Ark"],
+          "correctIndex": 3,
+          "answerNote": "Perry recorded the Congos and Max Romeo there before the place burned down."
+        }
+      ]
+    }
+  ]
+}

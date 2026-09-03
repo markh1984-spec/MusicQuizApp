@@ -1,0 +1,123 @@
+{
+  "id": "2000s-and-2010s-pop",
+  "title": "The 2000s & 2010s Pop Quiz",
+  "subtitle": "Fifteen questions. Twenty seconds each. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-03T00:00:00.000Z",
+  "notes": "Written 3 September 2026 for a short two-quiz night. Deliberately shares no answer with the other 2000s packs on the shelf, so it can follow them at the same venue. READ EVERY QUESTION IN THE EDITOR BEFORE THE GIG — written in one pass without the generator's second checking call.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "text",
+      "title": "Round One — 2000s & 2010s Pop",
+      "blurb": "15 questions on the pop of 2000 to 2010",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which Glasgow band had a 2004 hit with \"Take Me Out\"?",
+          "options": ["Franz Ferdinand", "Editors", "Razorlight", "The View"],
+          "correctIndex": 0,
+          "answerNote": "The song changes tempo about a minute in, which is why it still fills a dancefloor."
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which 2006 Arctic Monkeys album was the fastest-selling debut in UK chart history?",
+          "options": ["Favourite Worst Nightmare", "Humbug", "Whatever People Say I Am, That's What I'm Not", "AM"],
+          "correctIndex": 2,
+          "answerNote": "It shifted well over 300,000 copies in its first week on sale."
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which X Factor winner released \"Bleeding Love\" in 2007?",
+          "options": ["Leona Lewis", "Diana Vickers", "Stacey Solomon", "Rebecca Ferguson"],
+          "correctIndex": 0,
+          "answerNote": "Ryan Tedder of OneRepublic co-wrote it."
+        },
+        {
+          "id": "r1q4",
+          "prompt": "\"Hips Don't Lie\" gave which Colombian singer a UK number one in 2006?",
+          "options": ["Jennifer Lopez", "Shakira", "Nelly Furtado", "Gloria Estefan"],
+          "correctIndex": 1,
+          "answerNote": "Wyclef Jean features on it."
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which single, released in 2008, was Lady Gaga's debut?",
+          "options": ["Poker Face", "Paparazzi", "Bad Romance", "Just Dance"],
+          "correctIndex": 3,
+          "answerNote": "It features Colby O'Donis and came off her album The Fame."
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which London rapper topped the UK chart in 2010 with \"Pass Out\"?",
+          "options": ["Professor Green", "Tinie Tempah", "Example", "Chipmunk"],
+          "correctIndex": 1,
+          "answerNote": "It took two Brit Awards for him the following year."
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which band released \"Year 3000\" and \"Crashed the Wedding\" before splitting in 2005?",
+          "options": ["McFly", "Busted", "Son of Dork", "Blue"],
+          "correctIndex": 1,
+          "answerNote": "Two of them reunited with McFly years later as McBusted."
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which producer made \"Maneater\" with Nelly Furtado and \"SexyBack\" in the same year?",
+          "options": ["Pharrell Williams", "Mark Ronson", "Timbaland", "will.i.am"],
+          "correctIndex": 2,
+          "answerNote": "2006 was the year he seemed to be on every record in the chart."
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which Glasgow band's \"Chelsea Dagger\" became a terrace anthem?",
+          "options": ["The Fratellis", "Franz Ferdinand", "Travis", "Idlewild"],
+          "correctIndex": 0,
+          "answerNote": "It is named after the singer's wife, who performed under that name."
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which 2010 Katy Perry single features Snoop Dogg?",
+          "options": ["Firework", "Teenage Dream", "California Gurls", "Hot n Cold"],
+          "correctIndex": 2,
+          "answerNote": "It was the lead single from her album Teenage Dream."
+        },
+        {
+          "id": "r1q11",
+          "prompt": "Which Coldplay album came between \"Parachutes\" and \"X&Y\"?",
+          "options": ["Mylo Xyloto", "Ghost Stories", "A Rush of Blood to the Head", "Viva la Vida"],
+          "correctIndex": 2,
+          "answerNote": "It gave them both \"The Scientist\" and \"Clocks\"."
+        },
+        {
+          "id": "r1q12",
+          "prompt": "\"Hallelujah\" was the 2008 Christmas number one for which X Factor winner?",
+          "options": ["Joe McElderry", "Matt Cardle", "Alexandra Burke", "Shayne Ward"],
+          "correctIndex": 2,
+          "answerNote": "Jeff Buckley's version of the same song reached number two that week."
+        },
+        {
+          "id": "r1q13",
+          "prompt": "Which Estelle single featuring Kanye West topped the UK chart in 2008?",
+          "options": ["1980", "American Boy", "Come Over", "Freak"],
+          "correctIndex": 1,
+          "answerNote": "It won a Grammy for Best Rap/Sung Collaboration the following year."
+        },
+        {
+          "id": "r1q14",
+          "prompt": "Which Welsh singer released the 2008 album \"Rockferry\"?",
+          "options": ["Katherine Jenkins", "Charlotte Church", "Marina Diamandis", "Duffy"],
+          "correctIndex": 3,
+          "answerNote": "Its single \"Mercy\" reached number one in the UK."
+        },
+        {
+          "id": "r1q15",
+          "prompt": "\"Tik Tok\" was a 2010 UK number one for which American singer?",
+          "options": ["Pink", "Jessie J", "Kesha", "Lily Allen"],
+          "correctIndex": 2,
+          "answerNote": "She styled her name with a dollar sign at the time."
+        }
+      ]
+    }
+  ]
+}
