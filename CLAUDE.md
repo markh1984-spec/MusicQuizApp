@@ -487,7 +487,7 @@ opening a second file.
 - **THE PHONE MUST NOT SAY "look up" WHILE A QUESTION IS ON** — `PHOTO_PHASES` in `screen.js`: photos at the lobby, a round board and the end only, because twenty seconds and four options wants the whole screen.
 - **A VENUE'S LOGO GOES ON THE WINNER'S VOUCHER, and nowhere else** — **THE WORDS STAY THE PRIZE**, in text underneath. **Never an image with the prize written inside it.** **NOT on the projector, and that is BYTES rather than secrecy.**
 - **The room is told what it is playing for**
-- **SECOND AND THIRD ARE A PODIUM, not a caption**
+- **SECOND AND THIRD ARE A PODIUM, not a caption** — **and the podium is the TOP THREE. Do not put a fourth back.**
 - **A BIG PHOTO NEVER DIMS THE JOIN CODE** — the corner sits ABOVE the photo, and the photo centres in the space BESIDE it (`padding-right` on the grid).
 - **A photo gets the MIDDLE of the screen, not a thumbnail** — **the tilt never lands near straight**: a side is picked, 2.5° to 7° off it.
 - **Speed scoring is FLAT — 10 points a second, and it stays that way** — **Do not re-propose this.**

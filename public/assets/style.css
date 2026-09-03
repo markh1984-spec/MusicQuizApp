@@ -729,11 +729,6 @@ body::after {
   overflow-wrap: anywhere;
 }
 .winner .rscore { font-size: 3.2vh; font-weight: 700; color: var(--ink-dim); }
-/* FOURTH IS A LINE, NOT A CARD. It is context rather than a placing, and
-   dressing it like one is exactly what cost second and third their meaning. */
-.winner .alsoran {
-  margin-top: 1.8vh; font-size: 2.6vh; font-weight: 700; color: var(--ink-dim);
-}
 /* THE DRAW, under the podium and deliberately not on it.
    It is a real prize and a real moment, but it is not a placing — somebody
    who came eleventh has not beaten anybody, and putting them in the medal row

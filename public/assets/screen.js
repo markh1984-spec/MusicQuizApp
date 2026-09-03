@@ -1232,11 +1232,21 @@ function renderWinner(s) {
    * this screen must not be.
    */
   const rest = board.filter((p) => p.position !== 1);
+  /*
+   * THE TOP THREE AND NOTHING ELSE — *"number 4 doesn't matter on the winner's
+   * podium, show the top 3 only."*
+   *
+   * Fourth used to get a line under the podium, as context rather than a
+   * placing. He is right that it earns nothing: the screen the night is built
+   * towards should hold the result, and a team that came fourth has not won
+   * anything to be named for. The room's full standing already had its moment
+   * on the round board.
+   *
+   * It also buys the slide height back, which the final was already short of —
+   * `fitWinner()` shrinks everything to fit, so one fewer line means the winner
+   * and the podium get drawn bigger rather than the space going spare.
+   */
   const runners = rest.filter((p) => p.position <= 3).slice(0, 3);
-  // Fourth, if the board has one. A LINE rather than a card: it is context,
-  // not a placing, and giving it the podium's treatment is what cost second
-  // and third theirs in the first place.
-  const alsoRan = rest.filter((p) => p.position > 3).slice(0, 1);
   return node(`
     <div class="winner">
       <div class="kicker">${alsoFirst.length > 1 ? 'It is a tie' : 'Tonight&rsquo;s winner'}</div>
@@ -1248,8 +1258,6 @@ function renderWinner(s) {
           <span class="rname">${esc(p.name)}</span>
           <span class="rscore">${p.score.toLocaleString('en-GB')}</span>
         </div>`).join('')}</div>` : ''}
-      ${alsoRan.length ? `<div class="alsoran">${alsoRan.map((p) => `
-        <span>${p.position}. ${esc(p.name)} — ${p.score.toLocaleString('en-GB')}</span>`).join('')}</div>` : ''}
       ${leagueBand(s)}
       <div class="endband">
         ${s.luckyDip ? `
