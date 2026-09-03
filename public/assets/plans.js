@@ -837,6 +837,27 @@ export function can(account, feature) {
 }
 
 /**
+ * IS THIS ACCOUNT INSIDE A LIVE TRIAL — the one question three readers ask.
+ *
+ * `featuresFor()` asks it to hand over the whole ladder, `entitlements()`
+ * reports it as `previewing`, and the console draws the trial's own words off
+ * that. **One definition**, or the day the rule changes the page keeps saying
+ * the old one — the label collision this repo keeps finding, wearing a
+ * boolean.
+ *
+ * **CAPABILITIES ONLY. IT DOES NOT TOUCH THE CATALOGUE**, and that is a
+ * decision rather than an oversight: `packsFor()` reads `tierFor()`, so a
+ * trialist gets the eight starter packs whatever this returns. *"The lever is
+ * the library"* is this file's own stated reason the ladder works at all —
+ * handing over every pack for a fortnight sells the packs and then takes them
+ * away, which is churn rather than a preview. What he asked to be previewable
+ * is the MODES, and modes are capabilities.
+ */
+export function trialPreview(account = {}) {
+  return account.status === 'trialing' && !trialExpired(account);
+}
+
+/**
  * Everything an account is ENTITLED to, as a flat list.
  *
  * Entitlement only. What somebody has chosen to switch off is a separate
@@ -866,6 +887,40 @@ export function featuresFor(account = {}) {
   if (account.comped) return strip(featuresAt(TIERS[TIERS.length - 1].id));
   if (!PAYING.has(account.status)) return [];
   if (trialExpired(account)) return [];
+  /*
+   * A LIVE TRIAL RUNS AT THE TOP OF THE LADDER — every capability, for the
+   * fortnight.
+   *
+   * Asked for directly: *"if they're getting a free trial they should be
+   * allowed to preview in whichever mode they want… I want them to want that
+   * tier."* He is right, and the old arrangement argued against itself: a
+   * trial opened at BRONZE, so the four things a trialist might climb FOR —
+   * adverts, the league, pack requests and online mode — were the exact four
+   * they never saw. A fortnight of Bronze sells Bronze.
+   *
+   * **IT IS THE STATUS THAT GRANTS THIS, NEVER THE TIER**, and that is what
+   * keeps *"there is no free tier"* true. `account.tier` stays whatever they
+   * signed up on and every price, invoice and downgrade still reads it; this
+   * only widens what a LIVE trial may touch, and it stops on its own the day
+   * the clock runs out because `trialExpired()` is checked one line above.
+   * Nothing has to remember to take it away.
+   *
+   * **The same expression `comped` uses**, deliberately: "everything on the
+   * ladder" now has one definition rather than two that can drift apart.
+   *
+   * **A group seat is still stripped of streaming** — `strip()` is applied
+   * here too, because egress is a real per-use cost and a trial does not
+   * change what a group was priced for.
+   *
+   * **WHEN STREAMING ACTUALLY BILLS, THIS WANTS A CAP** — *"run an online quiz
+   * once is fine as well"*. There is no video behind the switch yet, so an
+   * online night costs nothing today and a counter would be machinery guarding
+   * a bill that does not exist. The moment Cloudflare is wired it is a real
+   * per-use cost on an account that has paid nothing, which is precisely the
+   * shape the join-flood rule exists for: hold it at a stated number rather
+   * than discovering it on an invoice.
+   */
+  if (trialPreview(account)) return strip(featuresAt(TIERS[TIERS.length - 1].id));
   /*
    * WHAT THE TIER GIVES, PLUS WHAT THIS ACCOUNT WAS ALREADY USING.
    *
@@ -971,6 +1026,14 @@ export function entitlements(account) {
     status: account.status,
     trialExpired: trialExpired(account),
     trialEndsAt: account.trialEndsAt || '',
+    /*
+     * Inside a live trial the whole ladder's CAPABILITIES are held, while
+     * `tier` and the `ladder`'s own `included` still say what is being paid
+     * for. Both are true and the page has to say both — so this rides along
+     * rather than either one being bent. Without it the compare table prints
+     * a dash beside a feature the account can plainly use.
+     */
+    previewing: trialPreview(account),
     // What is ON — entitled to AND not switched off. This is what the console
     // draws tabs from, and it can only ever be a subset of `entitled`.
     features: on,

@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 import {
   FEATURES, TIERS, FEATURE_TIER, DEFAULT_TIER,
   can, featuresFor, activeFeatures, whyNot, entitlements,
-  tierFor, tierRank, featuresAt, ladderFor, FEATURE_META, switchable, SWITCHABLE, NOT_BUILT } from '../public/assets/plans.js';
+  tierFor, tierRank, featuresAt, ladderFor, packsFor, FEATURE_META, switchable, SWITCHABLE, NOT_BUILT } from '../public/assets/plans.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -498,5 +498,94 @@ test('every switchable feature is on the ladder', () => {
   for (const f of SWITCHABLE) {
     assert.ok(FEATURE_TIER[f], `${f} is switchable but on no tier`);
     assert.ok(FEATURE_META[f], `${f} is switchable but has nothing to draw`);
+  }
+});
+
+/*
+ * ---- A LIVE TRIAL RUNS AT THE TOP OF THE LADDER ----------------------------
+ *
+ * *"If they're getting a free trial they should be allowed to preview in
+ * whichever mode they want… I want them to want that tier."*
+ *
+ * The old arrangement argued against itself: a trial opened at Bronze, so the
+ * four things somebody might climb FOR — adverts, the league, pack requests
+ * and online mode — were the exact four a trialist never saw.
+ */
+
+test('a live trial can reach the features a Bronze account cannot', () => {
+  const trial = { tier: 'bronze', status: 'trialing', trialEndsAt: Date.now() + 86400000 };
+  const paying = { tier: 'bronze', status: 'active' };
+  for (const f of [FEATURES.ADVERTS, FEATURES.LEAGUE, FEATURES.REQUEST_PACK, FEATURES.STREAM]) {
+    assert.ok(featuresFor(trial).includes(f), `a trial cannot reach ${f}`);
+    assert.equal(featuresFor(paying).includes(f), false,
+      `${f} is not actually gated above bronze, so this test proves nothing`);
+  }
+});
+
+test('THE STATUS GRANTS IT, NEVER THE TIER — so "no free tier" stays true', () => {
+  // The rung they are on is untouched: every price, invoice and downgrade
+  // still reads `tier`. Only what a LIVE trial may touch is widened.
+  const trial = { tier: 'bronze', status: 'trialing', trialEndsAt: Date.now() + 86400000 };
+  assert.equal(tierFor(trial), 'bronze', 'the trial changed the rung they are billed on');
+});
+
+test('and it stops on its own the day the clock runs out', () => {
+  // Nothing has to remember to take it away — `trialExpired()` is checked
+  // before the grant, so an expired trial falls to nothing as it always did.
+  const over = { tier: 'bronze', status: 'trialing', trialEndsAt: Date.now() - 86400000 };
+  assert.deepEqual(featuresFor(over), [], 'an expired trial still had the run of the place');
+});
+
+test('A GROUP SEAT ON TRIAL IS STILL STRIPPED OF STREAMING', () => {
+  // Egress is a real per-use cost and a group was never priced for it. A trial
+  // widens what somebody may try; it does not change what a seat is.
+  const seat = { tier: 'bronze', status: 'trialing', parentId: 'hq', trialEndsAt: Date.now() + 86400000 };
+  assert.equal(featuresFor(seat).includes(FEATURES.STREAM), false);
+  assert.ok(featuresFor(seat).includes(FEATURES.LEAGUE), 'the seat lost more than streaming');
+});
+
+test('a paying Bronze account is completely unchanged by any of this', () => {
+  // The whole risk of widening a trial is that it leaks into the paying case.
+  const paying = { tier: 'bronze', status: 'active' };
+  const before = [FEATURES.QUIZ, FEATURES.BINGO, FEATURES.PHOTOS, FEATURES.PAST_GIGS];
+  for (const f of before) assert.ok(featuresFor(paying).includes(f));
+  assert.equal(featuresFor(paying).includes(FEATURES.STREAM), false,
+    'a paying bronze account has been given gold');
+});
+
+test('THE CATALOGUE IS NOT PART OF IT — capabilities widen, content does not', () => {
+  /*
+   * The deliberate half of the split. `packsFor()` reads `tierFor()`, so a
+   * trialist keeps the eight starter packs — *"the lever is the library"* is
+   * this ladder's own stated reason for working, and handing over every pack
+   * for a fortnight sells the packs and then takes them away. What he asked to
+   * be previewable is the MODES.
+   */
+  const trial = { tier: 'bronze', status: 'trialing', trialEndsAt: Date.now() + 86400000 };
+  const paying = { tier: 'bronze', status: 'active' };
+  assert.deepEqual(packsFor(trial), packsFor(paying),
+    'a trial widened the catalogue as well as the capabilities');
+  assert.notEqual(packsFor(trial), 'all', 'a trial was handed the whole catalogue');
+});
+
+test('the console is TOLD it is previewing, so it can say what ends', () => {
+  /*
+   * A trial holds every capability while `tier` and the ladder's own
+   * `included` still say what is being paid for. Both are true and the page
+   * has to say both — without this flag the compare table prints a dash beside
+   * a feature the account can plainly use, and a fortnight of everything then
+   * stops one morning with no explanation.
+   */
+  const trial = { tier: 'bronze', status: 'trialing', trialEndsAt: Date.now() + 86400000 };
+  const ent = entitlements(trial);
+  assert.equal(ent.previewing, true);
+  assert.equal(ent.tier, 'bronze', 'the flag moved the rung it is meant to leave alone');
+  const top = ent.ladder[ent.ladder.length - 1];
+  assert.equal(top.included, false,
+    'the top rung read as included, so nothing would offer them a subscription');
+
+  for (const other of [{ tier: 'bronze', status: 'active' },
+    { tier: 'bronze', status: 'trialing', trialEndsAt: Date.now() - 86400000 }]) {
+    assert.equal(entitlements(other).previewing, false);
   }
 });

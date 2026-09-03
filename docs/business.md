@@ -198,6 +198,82 @@ same subscribers cost about 2 GB a month, still pennies, and a CDN removes even
 that. **Charge per quiz because your time writing it is worth money, not
 because serving it costs anything.**
 
+### A FREE TRIAL RUNS AT THE TOP OF THE LADDER — capabilities, never the catalogue
+
+Asked for directly on 3 September 2026: *"On signup if they're getting a free
+trial they should be allowed to preview in whichever mode they want? Run an
+online quiz once is fine as well I want them to want that tier."*
+
+**He is right, and the old arrangement argued against itself.** A trial opened
+at Bronze, because `featuresFor()` read `tierFor()` and a trialist's tier is
+whatever they picked on the sign-up page. `FEATURE_TIER` gates adverts and the
+league at Silver and pack requests and streaming at Gold — so the four things a
+trialist might ever climb FOR were the exact four they never saw. **A fortnight
+of Bronze sells Bronze.**
+
+**THE STATUS GRANTS IT, NEVER THE TIER, and that is what keeps *"there is no
+free tier"* true.** `trialPreview()` in `plans.js` is the one definition;
+`featuresFor()` asks it to hand over the whole ladder and `entitlements()`
+reports it as `previewing`. `account.tier` is untouched, so every price,
+invoice and downgrade still reads what they signed up on — and there is still
+no £0 rung, which is the thing that note has always been guarding against.
+
+**It stops on its own.** `trialExpired()` is checked one line above the grant,
+so the day the clock runs out the account falls to nothing exactly as it did
+before. Nothing has to remember to take it away, and there is no scheduled job
+to fail quietly.
+
+**It is the same expression `comped` uses**, deliberately — "everything on the
+ladder" now has one definition rather than two that can drift apart.
+
+**A GROUP SEAT IS STILL STRIPPED OF STREAMING.** `strip()` is applied to the
+trial grant too: egress is a real per-use cost and a group was never priced for
+it. A trial widens what somebody may try; it does not change what a seat is.
+
+#### The catalogue is deliberately NOT part of it
+
+`packsFor()` reads `tierFor()`, so a trialist keeps whatever packs their rung
+holds — eight to start, on Bronze.
+
+**That is a decision, and this file's own reasoning is what settles it:** *"the
+upsell is deliberately not a greyed-out button… so the lever is the library."*
+The ladder works because content is the thing being climbed for. Handing over
+every pack for a fortnight sells the packs and then takes them away, which is
+churn dressed up as generosity — and it is the one half of a trial that would
+be genuinely expensive to reverse, because somebody who has run four catalogue
+nights has already had the value.
+
+What he asked to be previewable is the MODES, and modes are capabilities. The
+two halves are separable and they have been separated.
+
+#### And the end of it has to be said BEFORE it happens
+
+A fortnight of everything that simply stops one morning, with four features
+missing and no explanation, is the exact thing this app must never do to
+somebody on a gig day. Money and warnings are the stated exceptions to the
+one-short-line rule, so the account panel says plainly what is switched on, how
+many days are left, which rung they land on, and that the packs were never part
+of it.
+
+**A CELL IN THE TIERS TABLE DESCRIBES THE RUNG, NEVER THE ACCOUNT — and the
+trial very nearly broke that.** The first build printed "on trial" wherever a
+rung above yours held a capability. Rendered at 1280, it read as nonsense: the
+BRONZE column claimed adverts were on trial, which says something untrue about
+Bronze, while Silver and Gold kept a plain tick that now looked like "yours".
+What the ACCOUNT holds is already carried by the shading and by the `yours`
+label; what a RUNG holds is what those cells are for, and a trialist is not on
+a different ladder. **Said once, in the line under the table**, where it is a
+fact about them rather than about the tiers. Found by rendering it, which is
+the whole reason that rule exists.
+
+**When streaming actually bills, this wants a cap** — *"run an online quiz once
+is fine as well"*. There is no video behind the switch yet, so an online night
+costs nothing today and a counter would be machinery guarding a bill that does
+not exist. The moment Cloudflare is wired it becomes a real per-use cost on an
+account that has paid nothing, which is precisely the shape the join-flood rule
+exists for: **hold it at a stated number rather than discovering it on an
+invoice.** The note is in `featuresFor()`, beside the grant.
+
 ### Pictures in a quiz — the bit that changes when you start selling
 
 **"Fair use" is American. The UK has "fair dealing", and it is much narrower.**

@@ -627,6 +627,7 @@ function demoPrizePanel() {
 function comparePanel() {
   const ladder = (me && me.entitlements && me.entitlements.ladder) || [];
   if (ladder.length < 2) return null;
+  const previewing = Boolean(me && me.entitlements && me.entitlements.previewing);
 
   /*
    * A capability is worth a ROW only if some rung has it and some rung does
@@ -643,8 +644,21 @@ function comparePanel() {
     }
   }
 
+  /*
+   * A CELL DESCRIBES THE RUNG, NEVER THE ACCOUNT — and a live trial was very
+   * nearly allowed to break that.
+   *
+   * The trial holds every capability, so the first attempt printed "on trial"
+   * wherever a rung above yours had one. Rendered, it read as nonsense: the
+   * BRONZE column claimed adverts were on trial, which says something untrue
+   * about Bronze, while Silver and Gold kept a plain tick that now looked like
+   * "yours". What the account holds is carried by the shading and by `yours`;
+   * what a RUNG holds is what these cells are for, and a trialist is not on a
+   * different ladder. So the trial is said ONCE, in the line under the table,
+   * where it is a fact about them rather than about the tiers.
+   */
   const cell = (tier, row) => {
-    if (tier.rank < row.from) return '<span class="cmp-no" aria-label="not included">—</span>';
+    if (tier.rank < row.from) return '<span class="cmp-no" aria-label="not included">&mdash;</span>';
     if (row.soon) return '<span class="cmp-soon">not yet</span>';
     return '<span class="cmp-yes" aria-label="included">&#10003;</span>';
   };
@@ -659,6 +673,7 @@ function comparePanel() {
    * hold; the label says where you ARE.
    */
   const yours = ladder.reduce((best, t, i) => (t.included ? i : best), -1);
+  const yourRung = (ladder[yours] && ladder[yours].label) || 'your tier';
 
   /*
    * The packs row carries each rung's own label and nothing is spliced on.
@@ -704,6 +719,10 @@ function comparePanel() {
           </tbody>
         </table>
       </div>
+      ${previewing ? `<div class="tiny acct-note"><b>Your trial has every rung's features
+        switched on.</b> That is why everything past ${esc(yourRung)} already works.
+        When it ends you are on ${esc(yourRung)}. The packs are the exception &mdash; those
+        follow your tier throughout, trial or not.</div>` : ''}
       <div class="tiny acct-note"><b>Each tier includes the one before it.</b>
         Every tier is the whole app — both games, all five round types, your own packs,
         photos from the room, past gigs, invoicing and your diary. What changes is how
@@ -1205,6 +1224,23 @@ function youPanel() {
     : daysLeft ? `trialing — ${daysLeft} day${daysLeft === 1 ? '' : 's'} left`
     : status.replace('_', ' ');
 
+  /*
+   * WHAT THE END OF A TRIAL COSTS YOU, SAID BEFORE IT HAPPENS.
+   *
+   * A trial runs at the top of the ladder (`trialPreview()` in plans.js), so
+   * without this line a fortnight of everything simply stops one morning and
+   * four features are missing with no explanation — which is the one thing
+   * this app must never do to somebody on a gig day. Money and warnings are
+   * the stated exceptions to the one-short-line rule.
+   *
+   * It also says what the trial is NOT, because the catalogue is the thing
+   * being sold and a trialist who assumes the whole library is coming with
+   * them is being set up for a worse surprise than the features. The rung's
+   * own pack label is deliberately NOT spliced into that sentence — the
+   * labels are headings ("Eight packs to start"), and a heading dropped
+   * mid-sentence reads as a bug. The compare table's Packs row says which.
+   */
+
   const el = node(`
     <div class="panel">
       <h3>Your account</h3>
@@ -1221,7 +1257,14 @@ function youPanel() {
       ${ent.trialExpired ? `<div class="tiny acct-note bad"><b>Your trial has ended.</b>
         Get in touch to keep going.</div>`
         : bad ? `<div class="tiny acct-note bad"><b>A lapsed subscription never interrupts a night.</b>
-        It is starting a NEW one that stops.</div>` : ''}
+        It is starting a NEW one that stops.</div>`
+        : ent.previewing ? `<div class="tiny acct-note"><b>Your trial has every feature switched on
+        &mdash; adverts, the league, pack requests and online nights.</b>
+        ${daysLeft ? `For ${daysLeft} more day${daysLeft === 1 ? '' : 's'}, then you are on
+        ${esc(tier ? tier.label : 'your tier')}.` : `When it ends you are on
+        ${esc(tier ? tier.label : 'your tier')}.`}
+        A trial widens what the app can do, never which packs you get &mdash; those follow
+        your tier throughout.</div>` : ''}
       ${me && !me.bootstrap ? '<div class="row acct-actions"><button class="minor" id="acctPw">Change your password</button></div>' : ''}
     </div>`);
 
