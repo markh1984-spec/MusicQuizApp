@@ -447,9 +447,25 @@ export function node(markup) {
  * host-bingo.js's — neither of which shares state with the other.
  */
 export function rewardsEditorPopover(s, act) {
+  /*
+   * ONE AT A TIME, AND THE REASON IS THAT THEY STACK INVISIBLY.
+   *
+   * Reported off a live night: *"the window doesn't go away when I press
+   * close"*. It did go away — every press of Prizes appended ANOTHER copy,
+   * `position: fixed` at the same coordinates as the last, so two presses left
+   * two panels pixel-identical and exactly on top of each other. Close removed
+   * the top one and revealed one indistinguishable from it, which reads as a
+   * dead button on the one control a host reaches for mid-round.
+   *
+   * Nothing threw and nothing looked wrong in the DOM either — the elements
+   * are all real, all visible and all correct. It is only ever seen by
+   * pressing the button twice, which is exactly what somebody does when they
+   * come back to change a prize later in the night.
+   */
+  document.querySelectorAll('.rw-pop').forEach((old) => old.remove());
   const rows = (s.rewards && s.rewards.length ? s.rewards : ['']).slice();
   const el = node(`
-    <div class="panel" style="position:fixed;left:12px;right:12px;bottom:150px;z-index:40;max-width:696px;margin:0 auto;background:#161626;max-height:60vh;overflow:auto">
+    <div class="panel rw-pop" style="position:fixed;left:12px;right:12px;bottom:150px;z-index:40;max-width:696px;margin:0 auto;background:#161626;max-height:60vh;overflow:auto">
       <h3>Prizes</h3>
       <div class="tiny" style="margin-bottom:10px">What tonight is playing for — 1st, then 2nd, then 3rd.
         Changes apply to the next prize handed out; one already given stays as it was.</div>
@@ -492,6 +508,21 @@ export function rewardsEditorPopover(s, act) {
     await act('setRewards', { rewards: values });
     el.remove();
   });
+
+  /*
+   * ESCAPE CLOSES IT TOO — a floating sheet only its own button can shut is a
+   * trap, which this repo already learned on the venue sheet. Listener on the
+   * document rather than the panel, because the panel does not hold focus, and
+   * removed with the panel so a night's worth of opens leaves nothing behind.
+   */
+  const onKey = (ev) => {
+    if (ev.key !== 'Escape') return;
+    document.removeEventListener('keydown', onKey);
+    el.remove();
+  };
+  document.addEventListener('keydown', onKey);
+  el.querySelector('#rwClose').addEventListener('click', () => document.removeEventListener('keydown', onKey));
+  el.querySelector('#rwSave').addEventListener('click', () => document.removeEventListener('keydown', onKey));
 
   document.body.appendChild(el);
   return el;
