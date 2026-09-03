@@ -9406,6 +9406,82 @@ body.landing {
 
 /* The mock projector — drawn from the app's own tokens rather than a
    screenshot, so it never goes stale and never adds an asset to load. */
+/* ---- THE SALES PAGE'S REAL SCREENS -----------------------------------------
+
+   The hero used to be `.ld-mock` — a hand-drawn CSS impression of a question
+   screen. It is real screenshots now, which is what the marketing entry asked
+   for in the first place: *"screenshots or a thirty-second video, not prose"*.
+
+   A drawn mock-up is the one thing on a sales page a buyer cannot check, and
+   it was also slightly WRONG — four flat option chips and a bare clock, where
+   the real screen has the countdown bar, the answered count and the round
+   pills. Showing the actual thing is both more honest and better looking.
+
+   `.ld-mock` is left in the sheet deliberately: nothing uses it today, and
+   deleting a block on the way past is how a page nobody was looking at breaks.
+
+   THE IMAGE CARRIES ITS OWN ASPECT via width/height on the tag, so the page
+   does not jump about while the shots load on a pub's wifi. */
+.ld-shot { margin: 0; }
+.ld-shot img {
+  display: block; width: 100%; height: auto;
+  border-radius: var(--r-card);
+  border: 1px solid var(--panel-line);
+  /* A screenshot of a dark app on a dark page needs an edge, or it bleeds
+     into the background and reads as part of the page rather than as a thing
+     the app actually drew. */
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+}
+.ld-shot figcaption {
+  margin-top: 10px; color: var(--ink-dim); line-height: 1.5;
+}
+.ld-shot-hero figcaption { text-align: center; }
+
+.ld-shots {
+  display: grid; gap: 26px; margin-top: 26px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 900px) {
+  /* Two projector shots side by side and the phone beside them — the phone is
+     narrow, so it gets its own column rather than being stretched to match. */
+  .ld-shots { grid-template-columns: 1fr 1fr; align-items: start; }
+  .ld-shot-phone { grid-column: 1 / -1; display: grid; gap: 18px;
+    grid-template-columns: 260px 1fr; align-items: center; }
+  .ld-shot-phone figcaption { margin-top: 0; font-size: var(--fs-body); }
+}
+
+/* ---- THE HALF THAT WINS THE NEXT BOOKING.
+
+   This section is the whole reason the page works for two audiences at once —
+   the host's own words: a quizmaster who runs on this software is a better
+   option as a host. Everything in it is evidence a venue can be SHOWN, which
+   is what a venue decides on, and having it is what a subscriber is buying. */
+.ld-sell-grid {
+  display: grid; gap: 18px; margin-top: 26px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 700px) { .ld-sell-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1050px) { .ld-sell-grid { grid-template-columns: repeat(3, 1fr); } }
+.ld-sell-item {
+  padding: 20px 20px 22px;
+  border-radius: var(--r-card);
+  border: 1px solid var(--panel-line);
+  background: var(--panel);
+  /* The account colour on the edge, never on the face — the same rule an
+     ordinary button in the console follows, for the same reason: six of these
+     in a grid should say whose app this is once, not six times. */
+  border-bottom: 2px solid var(--hot);
+}
+.ld-sell-item h3 {
+  margin: 0 0 8px; font-size: var(--fs-head); color: var(--ink);
+}
+.ld-sell-item p { margin: 0; color: var(--ink-dim); line-height: 1.55; }
+
+/* A rung with no button is a price list; a rung with one is a shop. Silver
+   keeps the filled gradient because it is the recommended one and there is
+   still only ONE of those on the screen. */
+.ld-tier-go { display: block; margin-top: 16px; text-align: center; }
+
 .ld-mock { display: grid; gap: 14px; }
 .ld-mock-screen {
   background: var(--bg-2); border: 1px solid var(--panel-line); border-radius: var(--r-card);

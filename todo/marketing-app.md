@@ -72,9 +72,25 @@ significant. Worth answering properly:
 
 ### 3. A website that sells this AS A QUIZMASTER SOLUTION
 
-There is none. There is an app and a login, and the only way in is somebody
-being handed an account by hand. What a prospective subscriber needs to see
-before they will pay:
+**BUILT on 3 September 2026 — `public/home.html`, and `/` is its front door.**
+Full reasoning in `CLAUDE.md`; what follows is the entry it was built from,
+kept because the four things a subscriber needs to see are still the test for
+anything added to that page.
+
+**THE ONE ARGUMENT IT IS BUILT ON, and it is the host's own:** *"you can sell
+it as a QM who uses this software could be a better option as a host as well."*
+Both audiences read the same page rather than a split landing — a quizmaster
+buys it to become the host venues rebook, and a venue reading the same page
+sees why. The evidence half (headcounts, the report, the gallery, the league,
+the comeback slide, advert scans) is the demo to one and the proof to the other,
+which is what stops either pitch being diluted.
+
+**STILL NOT BUILT: the payment processor.** The page is built around a real
+button per rung (`/signup?tier=…`) and the rung is recorded as `wantedTier` —
+a note of intent, never a grant — so signing up works today on the trial and
+Stripe swaps in behind it without the page being redesigned.
+
+What a prospective subscriber needs to see before they will pay:
 
 - **What a night looks like** — projector, phones, the reveal. Screenshots or
   a thirty-second video, not prose.

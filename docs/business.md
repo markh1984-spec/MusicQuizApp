@@ -289,3 +289,94 @@ The original list, for reference:
   on the quizmaster console because that is where they were built first.
 
 ---
+
+## The sales page — one argument, both audiences, 3 September 2026
+
+`public/home.html`, and `/` now leads to it.
+
+### A shop with its lights on and the door round the back
+
+`/` sent anybody not signed in to `/login` — a password box for an account they
+do not have — while the page that sells the thing sat at `/home`, reachable only
+by knowing to type it. **That was the single biggest thing wrong with "there is
+no website":** there was one, and nothing pointed at it. Signed in is unchanged
+(console for a quizmaster, owner page for the owner), so nobody who works here
+walks past the marketing, and signing in is one press from the header.
+
+### The argument is the host's own, and it is why one page serves two audiences
+
+*"You can sell it as a QM who uses this software could be a better option as a
+host as well."*
+
+That is sharper than the three options it was chosen from, and it dissolves the
+problem with selling to quizmasters and venues at once. It is **one argument,
+not two**: a quizmaster buys this to become the host venues rebook, and the
+evidence half — headcount per venue, the post-night report, the public gallery,
+the league, the comeback slide, advert scans that count — is simultaneously the
+demo to a quizmaster and the proof to a venue. A split landing page would have
+given each half a weaker pitch; this gives both the same strong one.
+
+So the page leads on **"Be the quizmaster they book again"** rather than "run
+the whole night from one laptop", which was true and sold an operations tool.
+
+### Real screens, because a drawn mock is the one thing a buyer cannot check
+
+The hero was `.ld-mock` — a hand-drawn CSS impression of a question screen. It
+is five real screenshots now, which is what this entry asked for in the first
+place. The mock was also quietly WRONG: four flat chips and a bare clock, where
+the real screen carries the countdown bar, the answered count and the round
+pills.
+
+**They are fixture teams, never a real room** — no player's face or name goes in
+the public repo. **WebP at 1200px: 4.6MB of PNG became 180KB**, which matters on
+the wifi a quizmaster reads this on. **Under `/assets/`** rather than a new
+top-level `/site/` route — a one-segment prefix at the root is a catch-all, and
+this repo has already had one eat `/api/gallery`.
+
+**The declared `width`/`height` are the files' real dimensions, checked rather
+than assumed.** The console shot was declared 1200x750 and is 1200x675, which
+would have made the page jump as it loaded — found by measuring the files.
+
+### A rung with no button is a price list
+
+Each tier now has a real button (`/signup?tier=bronze|silver|gold`), and the
+rung rides through signup exactly like `?ref=` already did.
+
+**IT IS RECORDED AS `wantedTier` AND MUST NEVER BECOME `tier`.** `tier` is what
+the app grants; this is only what somebody pressed. Reading a rung out of a
+request body and granting it hands anybody Gold for nothing — a stranger types
+`?tier=gold` as easily as pressing it, the same shape as the pack id that had to
+be re-checked at the launch route rather than trusted to the console not drawing
+a button. The route validates against the real `TIERS` ladder, so junk arrives
+as an empty string and the spread drops it.
+
+Before payments exist it is the only signal about which price people actually
+want; after they exist it is what to offer rather than ask again.
+
+### `create()` DROPS WHAT IT DOES NOT DESTRUCTURE, SILENTLY
+
+`accounts.create()` takes a fixed parameter list, so `wantedTier` went in and
+vanished with nothing thrown — the quiet-loss shape this repo keeps meeting. It
+is in the signature and on the account now, absent unless a rung was pressed.
+
+### ADDING A 113th TEST FILE MADE THE SUITE FLAKY
+
+The tests were written as `test/signup-tier.test.js` and the suite started
+failing **a different test each run** — the breakout HTTP test once, two offers
+tests the next — each passing in isolation.
+
+**It was the file, not the code.** `npm test` is `node --test test/*.test.js`,
+one process per file at CPU concurrency; the 113th tipped the server-spawning
+tests into contending. Attributed properly by stashing **including untracked
+files** — the first attempt stashed only tracked ones, so my new tests ran
+against stashed-out source and the control proved nothing. Clean tree: green
+twice. My tree: flaky twice.
+
+Folded into `test/signup-route.test.js`, which already starts a real server —
+so the tier round trip is now asserted over real HTTP against the account file
+the route actually writes, which is stronger than the unit test it replaced.
+Green twice after.
+
+**A flaky suite is worse than a slow one.** A slow one gets skipped before a
+gig; a flaky one teaches you to ignore red, which is the same failure with more
+steps.

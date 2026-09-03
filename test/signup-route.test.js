@@ -184,3 +184,102 @@ test('a bogus ?ref= is dropped rather than refusing the signup', async () => {
     assert.equal(saved.accounts.find((a) => a.email === 'rob@example.com').referredBy, '');
   });
 });
+
+/*
+ * ---- WHICH RUNG THEY PRESSED ON THE WAY IN ---------------------------------
+ *
+ * The sales page has a button per tier, so a signup carries which one was
+ * pressed. That is worth keeping: before payments exist it is the only signal
+ * about what people actually want to pay for, and afterwards it is what to
+ * offer rather than ask again.
+ *
+ * **THE WHOLE RISK IS THAT IT BECOMES A GRANT.** A rung read out of a request
+ * body and written to `tier` hands anybody Gold for nothing — and a stranger
+ * can type `?tier=gold` as easily as press it. Same shape as the pack id that
+ * had to be re-checked at the launch route rather than trusted to the console
+ * not drawing a button. So this goes over real HTTP: what matters is what the
+ * ROUTE writes to the account file, not what a function would do if asked
+ * nicely.
+ */
+
+const accountsIn = (dir) => JSON.parse(readFileSync(join(dir, 'accounts.json'), 'utf8')).accounts;
+
+test('the rung pressed on the sales page is recorded, and is NOT granted', async () => {
+  await withServer(async (base, dir) => {
+    const res = await fetch(`${base}/api/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Gold Presser', email: 'gold@example.com', tier: 'gold' }),
+    });
+    assert.equal(res.status, 200);
+    const acc = accountsIn(dir).find((a) => a.email === 'gold@example.com');
+    assert.ok(acc, 'the account was not created at all');
+    assert.equal(acc.wantedTier, 'gold', 'the rung they pressed was dropped on the way through');
+    assert.equal(acc.tier, 'bronze',
+      'asking for gold GRANTED gold — that is anybody upgrading themselves for free');
+  });
+});
+
+test('a rung that is not on the ladder is dropped rather than stored', async () => {
+  await withServer(async (base, dir) => {
+    // `?tier=` is a query-string parameter a stranger can hand-edit. A junk one
+    // must not be kept and later believed by whatever wires up the payments.
+    const res = await fetch(`${base}/api/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Chancer', email: 'junk@example.com', tier: 'free' }),
+    });
+    assert.equal(res.status, 200, 'a junk tier failed a real signup — it must only be dropped');
+    const acc = accountsIn(dir).find((a) => a.email === 'junk@example.com');
+    assert.equal('wantedTier' in acc, false, 'a rung that does not exist was stored anyway');
+    assert.equal(acc.tier, 'bronze');
+  });
+});
+
+test('somebody who pressed no rung carries no field at all', async () => {
+  await withServer(async (base, dir) => {
+    // The common case costs nothing, like `parentId` on an ordinary account.
+    await fetch(`${base}/api/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Plain', email: 'plain@example.com' }),
+    });
+    const acc = accountsIn(dir).find((a) => a.email === 'plain@example.com');
+    assert.equal('wantedTier' in acc, false);
+  });
+});
+
+/*
+ * ---- THE FRONT DOOR ---------------------------------------------------------
+ *
+ * `/` used to send anybody not signed in to `/login` — a password box for an
+ * account they do not have — while the page that sells the thing sat at `/home`,
+ * findable only by knowing to type it. A shop with its lights on and the door
+ * round the back.
+ */
+
+test('A STRANGER AT THE ROOT GETS THE SALES PAGE, NOT A PASSWORD BOX', async () => {
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/`, { redirect: 'manual' });
+    assert.equal(res.status, 302);
+    assert.equal(res.headers.get('location'), '/home',
+      'a visitor typing the domain is still being met by a login form');
+  });
+});
+
+test('and the sales page offers a way in at every rung', async () => {
+  await withServer(async (base) => {
+    const html = await (await fetch(`${base}/home`)).text();
+    for (const tier of ['bronze', 'silver', 'gold']) {
+      assert.ok(html.includes(`/signup?tier=${tier}`),
+        `no way to start on ${tier} — that rung is a price with no button`);
+    }
+    // And the screenshots it rests on are actually served, not 404s in a page
+    // nobody looked at.
+    for (const shot of ['night-winner', 'night-lobby', 'night-question', 'night-phone', 'the-console']) {
+      const img = await fetch(`${base}/assets/site/${shot}.webp`);
+      assert.equal(img.status, 200, `${shot}.webp is missing from the sales page`);
+      assert.equal(img.headers.get('content-type'), 'image/webp');
+    }
+  });
+});

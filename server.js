@@ -1166,9 +1166,25 @@ async function handleGet(req, res, url, route) {
    * to /login would follow a signed-in quizmaster around for as long as the
    * browser kept it, which is the kind of fault nobody thinks to look for.
    */
+  /*
+   * THE FRONT DOOR, AND A STRANGER GETS THE SHOP WINDOW RATHER THAN A LOCK.
+   *
+   * This sent everybody who was not signed in to `/login` — so somebody typing
+   * the domain, or following a link off a business card, was met by a password
+   * box for an account they do not have. The sales page existed and was
+   * reachable only by knowing to type `/home`, which is a shop with its
+   * lights on and the door round the back.
+   *
+   * Signed in is UNCHANGED and stays the common case: the console for a
+   * quizmaster, the owner page for the owner. Nobody who works here has to
+   * walk past the marketing.
+   *
+   * Signing in is one press from the header of the page they now land on, so
+   * nothing is further away than it was — the door is just the right way round.
+   */
   if (route === '/') {
     const who = whoIs(req, url);
-    const to = who ? (who.role === 'owner' ? '/owner' : '/console') : '/login';
+    const to = who ? (who.role === 'owner' ? '/owner' : '/console') : '/home';
     send(res, 302, '', { Location: to, 'Cache-Control': 'no-store' });
     return true;
   }
@@ -4961,6 +4977,25 @@ async function handleWrite(req, res, url, route) {
         // in accounts.create(). This is a query-string param a stranger can
         // edit; it must never be able to fail a real signup.
         referredBy: String(body.ref || '').trim(),
+        /*
+         * WHICH RUNG THEY PRESSED ON THE WAY IN — a NOTE OF INTENT, and it is
+         * deliberately NOT `tier`.
+         *
+         * The sales page has a button per rung, so somebody who pressed "Start
+         * on Gold" has told you something worth keeping: before payments exist
+         * it is the only signal about what people actually want, and once
+         * Stripe is wired it is what they should be offered rather than asked
+         * again.
+         *
+         * **IT MUST NEVER BECOME `tier`.** That field is what the app grants,
+         * and it is set to bronze above. Reading a rung out of a request body
+         * and granting it would hand anybody Gold for nothing — a stranger can
+         * type `?tier=gold` as easily as press it, which is the same shape as
+         * the pack id that had to be re-checked at the launch route. Validated
+         * against the real ladder so a junk value is dropped rather than kept.
+         */
+        wantedTier: TIERS.some((t) => t.id === String(body.tier || ''))
+          ? String(body.tier) : '',
       });
     } catch (err) {
       // "There is already an account with that email address" arrives here

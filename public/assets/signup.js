@@ -7,6 +7,12 @@
  * A referral rides in the URL — `?ref=<accountId>` — and is passed straight
  * through in the POST body. A bad or missing one is not this page's problem
  * to validate; the server drops anything it cannot use.
+ *
+ * **`?tier=` rides the same way, and for the same reason it is not checked
+ * here.** The sales page has a button per rung, so this carries which one was
+ * pressed. It is a NOTE OF INTENT and never a grant — the server records it as
+ * `wantedTier` and starts everybody on bronze regardless, because a rung read
+ * out of a request body would hand anybody Gold for nothing.
  */
 
 const form = document.getElementById('signupForm');
@@ -16,6 +22,7 @@ const doneState = document.getElementById('doneState');
 const doneText = document.getElementById('doneText');
 
 const ref = new URL(location.href).searchParams.get('ref') || '';
+const tier = new URL(location.href).searchParams.get('tier') || '';
 if (ref) {
   const note = document.getElementById('referralNote');
   if (note) note.hidden = false;
@@ -28,6 +35,7 @@ form.addEventListener('submit', async (ev) => {
   btn.disabled = true;
   const data = Object.fromEntries(new FormData(form).entries());
   if (ref) data.ref = ref;
+  if (tier) data.tier = tier;
   try {
     const res = await fetch('/api/signup', {
       method: 'POST',

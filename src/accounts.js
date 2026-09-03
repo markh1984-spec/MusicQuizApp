@@ -219,7 +219,7 @@ export class Accounts {
    * @param {boolean} [opts.comped]  everything, for nothing. The owner's own
    *                                 quizmaster account, and anybody he gifts it to.
    */
-  create({ email, password, name = '', role = 'quizmaster', kind = DEFAULT_KIND, tier = '', plan = '', addons = [], comped = false, status = 'trialing', ownedBy = '', referredBy = '', parentId = '' }) {
+  create({ email, password, name = '', role = 'quizmaster', kind = DEFAULT_KIND, tier = '', plan = '', addons = [], comped = false, status = 'trialing', ownedBy = '', referredBy = '', parentId = '', wantedTier = '' }) {
     const clean = normaliseEmail(email);
     if (!clean || !clean.includes('@')) throw new Error('That does not look like an email address.');
     if (this.byEmail(clean)) throw new Error('There is already an account with that email address.');
@@ -278,6 +278,21 @@ export class Accounts {
       // `teams` is empty — the common case costs nothing. See CLAUDE.md's
       // Owner/Parent/Child section, which is where this word was settled.
       ...(parentId ? { parentId } : {}),
+      /*
+       * WHICH RUNG THEY PRESSED ON THE SALES PAGE — a note of intent, absent
+       * unless they pressed one.
+       *
+       * **It is not `tier` and must never be read as one.** `tier` is what the
+       * app grants and is set below from the caller's own argument; this is
+       * only what somebody clicked on the way in. Before payments exist it is
+       * the one signal about which price people actually want, and after they
+       * exist it is what to offer rather than ask again.
+       *
+       * The route validates it against the real ladder before it gets here, so
+       * a hand-edited `?tier=free` arrives as an empty string and is dropped
+       * by the spread — the same shape as a stale referral above.
+       */
+      ...(wantedTier ? { wantedTier } : {}),
       ...(role === 'owner' ? {} : {
         // Written on at creation rather than left absent, so an account made
         // before kinds existed and one made after read identically to

@@ -855,19 +855,15 @@ they say next.
   bar — and dropped the columns into an implicit row, quietly turning the
   fixed frame back into a scrolling page. Flex takes any number of banners;
   only `.consolecols` grows.
-- **THE SHELF IS SIX ACROSS, BY DECISION — it mirrors the six bays above
-  it.** *"The packs have to be 6 in the section below the bays and not 5."*
-  An auto-fill floor lasted a day. What actually made the 146px poster hold
-  its content was never width: the meta's two-line clamp, dropping the
-  "· N rounds" text that duplicated the round squares beneath it, and the
-  title getting back the 44px a stale pin-clearance rule stole — which is
-  what had sliced titles mid-word and pushed one card's NAME off the top,
-  silently. **Do not "fix" a squeezed card by dropping a column.**
+- **THE SHELF IS SIX ACROSS, BY DECISION — it mirrors the six bays above it.**
+  What made the 146px poster hold its content was never width: the meta's
+  two-line clamp, dropping the "· N rounds" that duplicated the round squares,
+  and the title getting back 44px a stale pin-clearance rule stole. **Do not
+  "fix" a squeezed card by dropping a column.**
 - **THE FINISH LAYER at the foot of `style.css` owns selection, caret,
-  `:focus-visible` and the card hover** — one named block, so the next
-  control gets finished there rather than growing its own scattered rules.
-  `::selection` follows `--hot` (rgba fallback first); reduced-motion keeps
-  the border answer and drops the lift.
+  `:focus-visible` and the card hover** — one named block, so the next control
+  gets finished there rather than growing scattered rules. `::selection` follows
+  `--hot` (rgba fallback first); reduced-motion keeps the border, drops the lift.
 
 ### THE LOBBY GAMES — AND NONE OF THEM IS NAMED AFTER THE ONE YOU ARE THINKING OF
 
@@ -1150,10 +1146,9 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
 Reported off a screenshot: *"starting to look a bit messy — can we utilise
 space where possible."* Four placements and one real bug:
 
-- **A CONTROL SITS WITH WHAT IT ACTS ON.** *Stop* was at the far right of a
-  1900px bar, an inch from the line naming what it would stop, so it read as a
-  control over the whole panel. It is **Unlaunch** now — the word pairs with
-  Launch without being told — and it sits 10px from that sentence.
+- **A CONTROL SITS WITH WHAT IT ACTS ON.** *Stop* sat at the far right of a
+  1900px bar and read as a control over the whole panel. It is **Unlaunch** now,
+  10px from the sentence naming what it stops.
 - **KEEPING A NIGHT IS A NIGHT-LEVEL QUESTION, so it moved into the head**
   beside the venue, which is where the other three live. **The label has to
   outrank the adjacency**: a show never keeps the venue, so "Save" alone next
@@ -1163,18 +1158,13 @@ space where possible."* Four placements and one real bug:
   to keep yet"* was a sentence about the app's own state floating beside a
   greyed button. The button says **"Add a pack to save this night"**, the
   shape Launch already uses.
-- **A BIGGER TARGET IS NOT THE SAME AS A HITTABLE ONE.** The pack tile's ×
-  went from ~18px to 30px and the pack NAME then painted over it —
-  `.lb-tile-head` carries `z-index: 1` and comes later in the DOM, so half the
-  button silently did nothing. It needs `z-index` AND `padding-right` on the
-  title.
-- **EVERY DRAG NEEDS ITS TAP, and a shelf round dot never had one.** Reported
-  as *"the drag and drop feature per round doesn't seem to be functional"* —
-  the drag worked and was proved with real mouse events, but the dot carried
-  `mousedown`, `dragstart` and `dragend` and **no `click` at all**. So the
-  first thing anybody tries did nothing, and on a touchscreen there was no way
-  in whatsoever, because HTML5 drag never fires on touch. `addRoundToTonight()`
-  is that tap, through the same path as the drop.
+- **A BIGGER TARGET IS NOT THE SAME AS A HITTABLE ONE.** The tile's × grew to
+  30px and the pack NAME painted over it — half the button silently did
+  nothing. It needs `z-index` AND `padding-right` on the title.
+- **EVERY DRAG NEEDS ITS TAP, and a shelf round dot never had one** — it
+  carried `mousedown`, `dragstart` and `dragend` and **no `click` at all**, so
+  the first thing anybody tries did nothing and a touchscreen had no way in at
+  all. `addRoundToTonight()` is that tap, through the drop's own path.
 - **FIVE SETTINGS ON ONE ROW ABOVE 1150px, LABELS ABOVE THEIR CONTROLS.** Side
   by side at a fifth of the bar, two of the five labels wrapped and three did
   not — five cells of five different shapes, which was most of the mess.
@@ -1273,11 +1263,10 @@ right of the pack ONCE LOADED."*
 - **THE SLOT NUMBER GOES WHEN A PACK LANDS IN IT** — it overlapped the title by
   18 x 8px, and on a full slot the ORDER is already visible from position. It
   stays on an EMPTY slot, where it is the whole label.
-- **THE TILE IS 90px BECAUSE 30 + 44 DOES NOT FIT IN 76** — the × and the dial
-  are both on the right edge; measured overlap was 28 x 12. Moving the × to
-  the left puts "remove this" where the eye lands first, and moving the dial
-  undoes what was asked for, so the tile grew instead. **On a phone the
-  `is-pack` tiles keep that height and empty slots stay short.**
+- **THE TILE IS 90px BECAUSE 30 + 44 DOES NOT FIT IN 76** — measured overlap
+  28 x 12. Moving the × left puts "remove this" where the eye lands first and
+  moving the dial undoes what was asked for, so the tile grew. **On a phone
+  `is-pack` tiles keep that height; empty slots stay short.**
 - **THE ERA WORD IS GONE FROM A TONIGHT TILE.** Shifting it left of the dial
   was tried and measured: it then overlapped the round ticks by 52 x 18. There
   is no third place, so the decoration goes and the wash plus the coloured
@@ -1292,34 +1281,27 @@ right of the pack ONCE LOADED."*
   offered there**: the lobby's projector is the join code and nothing may dim
   it, so that is a change to the protected surface rather than a control.
 - **EVERY NIGHT SETTING IS ON ONE ROW, AND A BOX IS NEVER NARROWER THAN ITS
-  OWN HEADING.** *"It's ok for the boxes to be wider than the headings but when
-  the headings are wider than the boxes it looks messy."* Stacked, a cell is
-  already as wide as the wider of the two — `justify-items: stretch` makes the
-  BOX the wider one every time. **It does not undo *narrow shut, wide open***:
-  the cell is still only as wide as the longer of the value and the word above
-  it. Card and Prizes joined that row, so the separate bingo row is GONE, and
-  both needed `data-short` — one option was 303px and pushed the row onto a
-  second line on its own. **The reason a control is off went into the control**
-  (*"Add a bingo game"*), because the caption beside it went with the row.
-- **THE ROW SERVES ANY BINGO PACK IN TONIGHT, NOT ONLY A PICKED ONE.** Reported
-  as *"added a bingo game and the bingo section is greyed out"* — it keyed off
-  the PICKED tile, so with the quiz picked the app told him to add a thing that
-  was already on screen. `bingoToSet()`: the picked pack when it is a bingo,
-  otherwise the first one in the order. **The three WRITES had to move with the
-  read**, or the row would show one pack's card and save it onto another.
+  OWN HEADING.** `justify-items: stretch` makes the BOX the wider one every
+  time. **It does not undo *narrow shut, wide open***: the cell is still only as
+  wide as the longer of the value and the word above it. Card and Prizes joined
+  that row, so the separate bingo row is GONE, and both needed `data-short`.
+  **The reason a control is off went into the control** (*"Add a bingo game"*),
+  because the caption went with the row.
+- **THE ROW SERVES ANY BINGO PACK IN TONIGHT, NOT ONLY A PICKED ONE** — it
+  keyed off the PICKED tile, so with the quiz picked the app said to add a thing
+  already on screen. `bingoToSet()`: the picked pack when it is a bingo, else the
+  first in the order. **The three WRITES had to move with the read**, or the row
+  shows one pack's card and saves it onto another.
 - **📵 RATHER THAN A DOT for "nothing on the phones".** Asked outright — *"what
   does this mean? the . ?"* — which is the *clarity beats everything* test
   failing. The other three states are pictures; punctuation on a button reads
   as a control that failed to load.
-- **THE PACK LIFTS FROM ITS GRIP; A ROUND LIFTS FROM ITS OWN SQUARE.** Reported
-  as *"I still can't drag a round onto a fresh slot — it seems to default to
-  dragging the entire pack"*, and that is literally what happened: an ordinary
-  row's tick carried NO drag handlers, so the browser walked up to the nearest
-  draggable ancestor. **A `draggable` child is what stops the walk.** The tile
-  then refuses a `dragstart` that did not begin on `.lb-tile-head`, which is
-  the smallest drag handle there is — no flag to arm and disarm, nothing left
-  behind if a pointer is lost. The ordinary tile had no head at all and gained
-  the same one the mixed row draws.
+- **THE PACK LIFTS FROM ITS GRIP; A ROUND LIFTS FROM ITS OWN SQUARE.** A row's
+  tick carried NO drag handlers, so the browser walked up to the nearest
+  draggable ancestor and took the whole pack. **A `draggable` child is what
+  stops the walk.** The tile then refuses a `dragstart` that did not begin on
+  `.lb-tile-head` — the smallest drag handle there is, no flag to arm and
+  disarm, nothing left behind if a pointer is lost.
 - **A `dropEffect` THE SOURCE DID NOT ALLOW KILLS THE DROP SILENTLY.** A pack
   card starts its drag `effectAllowed = 'copy'` and a round tick `'move'`; set
   the wrong one and the browser treats the target as REFUSING, so **no `drop`
@@ -1327,32 +1309,24 @@ right of the pack ONCE LOADED."*
   pack drop onto a slot while rounds kept working. **A synthesised `DragEvent`
   does not enforce it** — `node scripts/drag-check.mjs` drives the real mouse,
   and is the only thing that can see this or the `preventDefault` rule.
-- **THE SLOT YOU DROP ON IS THE SLOT IT GOES IN — for a whole PACK too.**
-  Reported as *"I tried dragging the music bingo onto slot 2 and it populated
-  on slot 4 instead"*. The target was never the problem: the slot lit up and
-  accepted, and then `addBingoSlot()` appended and ignored the index it was
-  handed. **The same fault the rounds had two days earlier, one function
-  along.** `at` is honoured only when that slot is genuinely EMPTY — dropping
-  onto a full tile appends rather than overwriting, because a slot you can
-  destroy by letting go over it is a hazard, not a slot. **A drop that MISSES
-  every square still means "the next free slot"**, which with holes in the row
-  is the first hole rather than the end of the array.
+- **THE SLOT YOU DROP ON IS THE SLOT IT GOES IN — for a whole PACK too.** The
+  slot lit up and accepted, then `addBingoSlot()` appended and ignored the index
+  it was handed. `at` is honoured only when that slot is genuinely EMPTY —
+  dropping onto a full tile appends rather than overwriting, because a slot you
+  can destroy by letting go over it is a hazard. **A drop that MISSES every
+  square means "the next free slot"**, which with holes is the first hole.
 - **A DESCRIPTOR IS NOT THE THING IT DESCRIBES.** *"Now I can't drag into
   slot 2 as an empty slot"*: `packDrag` is `{ id, kind }` and the empty slot's
   drop handed it on as the pack. With no `rounds`, `addQuizPackSlot()` gave
   the row back unchanged — **the slot lit, the drop was taken, nothing
   appeared.** A bingo slot needs only the id, so it read as quiz-only.
-- **A KIND THAT DISAGREES WITH THE NIGHT'S OWN IS A MIXED NIGHT** — the test
-  was `kind === 'bingo' || lbSlots`, so a quiz pack added to a bingo night
-  went into `lbExtra`, whose ids `packOf()` resolves against `gameOf()` alone.
-  It was never found again: `lbPacks()` filtered it out and the row kept
-  showing one tile. **Nothing threw — the state was consistent and the READER
-  could not resolve it.**
+- **A KIND THAT DISAGREES WITH THE NIGHT'S OWN IS A MIXED NIGHT** — a quiz pack
+  added to a bingo night went into `lbExtra`, whose ids `packOf()` resolves
+  against `gameOf()` alone, and was never found again. **Nothing threw — the
+  state was consistent and the READER could not resolve it.**
 - **A PACK CARD ASKS WHETHER IT IS IN TONIGHT; IT IS NOT PAINTED AFTERWARDS.**
-  `packIsInTonight()`, called by `packCard()` as it builds. `render()`
-  assembles the page OFF the document, so `paintInTonight()` finds the
-  PREVIOUS page's cards — **every tab change drew a shelf with no ghosting**,
-  and the duplicate check then refused a drop the card said was free.
+  `render()` assembles the page OFF the document, so a later paint finds the
+  PREVIOUS page's cards — **every tab change drew a shelf with no ghosting**.
 - **THE BREAK PLUMBING MOVED INTO `console-breaks.js`** rather than the line
   budget being raised a fifth time — `breakPlumbing({ night, segmentsNow,
   repaint })`, handed what it needs so the module stays a leaf. **Destructured
@@ -1370,20 +1344,18 @@ right of the pack ONCE LOADED."*
   `wireDropTarget` both set `drop-here`; the one registered LAST won, so a
   bingo tile lit for a round it would refuse. **One handler decides**
   (`takesRound()` in `wireDropTarget`) and the other stands down.
-- **AN EMPTY SLOT TAKES A ROUND AND LIGHTS UP WHILE YOU ARE OVER IT.** Reported
-  as *"it won't drag to another slot unless there is a pack there"* — two
-  faults at once: an empty slot had no `dragover` of its own, so **nothing lit
-  up** and an inert square reads as one that refuses; and `orderEl`'s drop
-  APPENDS, so a round let go over slot 5 appeared in slot 2. `stopPropagation`
-  on the slot's own handlers is what makes its answer the one that counts.
+- **AN EMPTY SLOT TAKES A ROUND AND LIGHTS UP WHILE YOU ARE OVER IT** — two
+  faults at once: no `dragover` of its own, so **nothing lit up** and an inert
+  square reads as one that refuses; and `orderEl`'s drop APPENDS, so a round let
+  go over slot 5 appeared in slot 2. `stopPropagation` on the slot's own
+  handlers makes its answer the one that counts.
 - **AND MY OWN TEST HAD MISSED IT** by dispatching `drop` directly — a browser
   fires no `drop` unless `dragover` called `preventDefault()`. Measure
   `defaultPrevented` on the dragover, not the outcome of a synthetic drop.
 - **A CHILD'S `dragend` BUBBLES TO THE TILE, and the tile's removes the pack.**
-  Dragging a round out took the whole pack with it — measured, it emptied
-  Tonight. `if (ev.target !== tile) return;` — the `mousedown` trap one level
-  up, and the round's own drag travels the SHELF channel so
-  `moveRoundToSlot()` MOVES it rather than duplicating it.
+  Dragging a round out emptied Tonight. `if (ev.target !== tile) return;` — and
+  the round's own drag travels the SHELF channel so `moveRoundToSlot()` MOVES it
+  rather than duplicating it.
 - **A ROUND IS A ROUNDED SQUARE AT 28px, AND ITS HOVER LIFTS.** *"Square shaped
   with round edges… I need to see when mousing over them."* `--r-field` only
   reads as a square on a box with sides — at 22px it is nearly a circle. The
@@ -1717,6 +1689,40 @@ up there too."*
   change what is drawn. Nothing in `npm test` can see any of it.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
+
+### THE SALES PAGE — one argument, both audiences, and `/` leads to it
+
+`public/home.html`. Full reasoning: **[`docs/business.md`](docs/business.md)**.
+
+- **`/` NOW LEADS TO THE SHOP WINDOW.** It sent anybody not signed in to
+  `/login` — a password box for an account they do not have — while the page
+  selling the thing sat at `/home`, reachable only by typing it. Signed in is
+  UNCHANGED, so nobody who works here walks past the marketing.
+- **ONE ARGUMENT, NOT TWO — the host's own**: *"you can sell it as a QM who
+  uses this software could be a better option as a host as well."* A split
+  landing gives each half a weaker pitch; this gives both the same one, because
+  the evidence half (headcounts, the report, the gallery, the league, the
+  comeback slide, advert scans) is the DEMO to a quizmaster and the PROOF to a
+  venue. It leads on *"Be the quizmaster they book again"*, not "run the night
+  from one laptop" — true, and it sold an operations tool.
+- **REAL SCREENS, because a drawn mock is the one thing a buyer cannot check** —
+  and the one there was also quietly WRONG. **Fixture teams only, never a real
+  face or name in the public repo.** WebP: 4.6MB → 180KB. **Under `/assets/`,
+  never a new top-level prefix** — one of those ate `/api/gallery`.
+  **`width`/`height` are MEASURED**, or the page jumps as it loads.
+- **A RUNG WITH NO BUTTON IS A PRICE LIST.** Each tier goes to
+  `/signup?tier=…`, riding through as `?ref=` already did — recorded as
+  **`wantedTier`, which MUST NEVER BECOME `tier`**: a rung read out of a request
+  body and granted hands anybody Gold for nothing, the pack-id trap wearing a
+  price. Validated against `TIERS`.
+- **`accounts.create()` DROPS WHAT IT DOES NOT DESTRUCTURE, SILENTLY.**
+- **A 113th TEST FILE MADE THE SUITE FLAKY — a different test each run**, each
+  passing alone: one process per file at CPU concurrency, and the
+  server-spawning tests began contending. **Attribute a flake by stashing
+  INCLUDING UNTRACKED FILES**, or the control runs your new tests against
+  stashed-out source and proves nothing. Folded into an existing file. **A flaky
+  suite is worse than a slow one**: slow gets skipped, flaky teaches you to
+  ignore red.
 
 - **A fact is on ACCOUNT, a switch is on SETTINGS, a price is in the SHOP** —
   or Settings becomes a bin.
@@ -2986,13 +2992,12 @@ Launch, and nine identical cards make that a reading task.
   length, calibrated to the REAL 146px card: **a design measured against
   invented content is measured against nothing**, and the first ones were —
   they clipped two real names with an ellipsis.
-- **THE ERA IN THE CORNER RAN THROUGH THE TITLES** — a corner has no room, so
-  the word tucked under the text. Centred under a fade it cannot; the Tonight
-  tile keeps the corner. **Only printed when short enough to read**: a decade is three characters, a genre five, "CHRISTMAS" gets
-  nothing, and there is a test on the length. Gradient text behind an
-  `@supports` with a SOLID colour first, or a browser without `background-clip`
-  prints nothing. It needed `position: relative` on `.pack-card`, missing until
-  then — the **Yours** badge had been positioning against the wrong ancestor.
+- **THE ERA IN THE CORNER RAN THROUGH THE TITLES** — centred under a fade it
+  cannot; the Tonight tile keeps the corner. **Only printed when short enough to
+  read**, with a test on the length. Gradient text behind an `@supports` with a
+  SOLID colour first, or a browser without `background-clip` prints nothing. It
+  needed `position: relative` on `.pack-card` — the **Yours** badge had been
+  positioning against the wrong ancestor.
 - **THE EDGE IS THE KIND AND THE WASH IS THE ERA; the difference in strength is
   the job.** The wash must stay faint, which makes the hue hard to name; three
   pixels with nothing over them says it outright. **On the bottom because an
