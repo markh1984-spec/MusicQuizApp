@@ -34,6 +34,35 @@ import { dealInto } from './teams.js';
 // For faceKey — a player's public handle, derived one way from their id.
 import { createHash } from 'node:crypto';
 
+/**
+ * HOW MANY PLACES A NIGHT RECOGNISES — the podium, and who gets a voucher.
+ *
+ * Asked for on 3 September 2026: *"I want to be able to define how many
+ * winners there are for a specific quiz — tonight I want to do two shorter
+ * quizzes and only have a single winner for each."*
+ *
+ * **THREE IS THE DEFAULT AND IS EXACTLY WHAT THE APP DID BEFORE**, so a night
+ * that never touches the setting is byte-for-byte the night it was.
+ *
+ * **IT CAN ONLY EVER SUBTRACT.** One winner draws no podium and issues one
+ * voucher; it can never issue a voucher the prize list does not hold, because
+ * `rewards[position - 1]` still has to find one. That asymmetry is deliberate
+ * on a control added on a gig day — the worst it can do is show less.
+ *
+ * **A STATE WRITTEN BEFORE THIS EXISTED HAS NO `winners`**, and a redeploy
+ * mid-season must not change what a running night pays out, so every reader
+ * falls back to three rather than to zero. Same reasoning as a phone holding
+ * an id and no token.
+ */
+export const DEFAULT_WINNERS = 3;
+export const MAX_WINNERS = 3;
+
+/** How many places tonight recognises, for a state of any age. */
+export function winnersOf(state = {}) {
+  const n = Math.floor(Number(state.winners));
+  return Number.isFinite(n) && n >= 1 && n <= MAX_WINNERS ? n : DEFAULT_WINNERS;
+}
+
 export const PHASES = {
   LOBBY: 'lobby',
   // How it works and how it scores, before anything is asked. Every room has
@@ -230,6 +259,13 @@ export class Engine {
        * already means first place everywhere in this app.
        */
       rewards: [],
+      /*
+       * How many places tonight recognises — see `winnersOf()` at the top of
+       * this file. Set at launch beside the prizes and the card shape, and in
+       * the STATE for the reason those are: the podium is drawn at half eleven,
+       * which is exactly when a free host restarts.
+       */
+      winners: DEFAULT_WINNERS,
       /*
        * THE VENUE'S LOGO, for the winner's voucher and nothing else.
        *
@@ -1283,6 +1319,14 @@ export class Engine {
        * quietly handed the runner-up's drink to somebody the room watched
        * finish level would be inventing a result.
        */
+      /*
+       * PAST THE PLACES TONIGHT RECOGNISES, NOBODY IS PAID. A one-winner night
+       * hands out one voucher even where the venue put three prizes up, which
+       * is the whole point of the setting — and the check is a floor rather
+       * than a substitute: `rewards[position - 1]` still has to find a prize,
+       * so this can only ever issue FEWER, never one that does not exist.
+       */
+      if (row.position > winnersOf(s)) continue;
       const reward = rewards[row.position - 1];
       if (!reward) continue;
       if (already.has(row.id)) continue;
@@ -2250,6 +2294,15 @@ export class Engine {
      * Spread in only when there is one, like the draw and the countdown, so a
      * night with no next date gains no field at all.
      */
+    /*
+     * HOW MANY PLACES THE PODIUM SHOWS, at the FINAL and nowhere else.
+     *
+     * Spread in ONLY when it is not the default, exactly like the draw and the
+     * comeback band above — so an ordinary three-place night gains no field and
+     * `pub-unchanged` still says IDENTICAL. `screen.js` falls back to three,
+     * which is also what a payload from before this existed means.
+     */
+    if (s.phase === PHASES.FINAL && winnersOf(s) !== DEFAULT_WINNERS) view.winners = winnersOf(s);
     if (s.phase === PHASES.FINAL && s.comeBack) view.comeBack = comeBackView(s.comeBack);
     /*
      * TONIGHT'S PHOTOGRAPHS — the slide, and only while it is up.

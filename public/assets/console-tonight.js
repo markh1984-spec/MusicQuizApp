@@ -67,6 +67,9 @@ export const night = {
    * dropdown somebody is looking at.
    */
   playing: 'solo',
+  // How many places tonight recognises — the podium, and who gets a voucher.
+  // Three is what the app did before the setting existed.
+  winners: 3,
   shape: null,
   prizes: 0,
   /*
@@ -809,6 +812,20 @@ export function launchBar() {
         <label class="pack-shape"><span class="set-word">Playing</span>
           <select class="play-pick" data-pop>${playingOptions()}</select>
         </label>
+        <!-- HOW MANY PLACES TONIGHT RECOGNISES. Beside Playing because both
+             are about how the night is SCORED rather than what is played, and
+             it is a fact about the evening like the prizes. One winner draws
+             no podium and issues one voucher. Every option carries a short
+             name, or "Winner, second and third" costs that width for ever.
+             NOTE: no backticks in here — this is a template literal, and a
+             stray one made the whole console a syntax error once. -->
+        <label class="pack-shape" title="How many places the big screen shows at the end, and how many vouchers go out."><span class="set-word">Winners</span>
+          <select class="winners-pick" data-pop>
+            <option value="1" data-short="Winner">Just the winner</option>
+            <option value="2" data-short="Top 2">Winner and runner-up</option>
+            <option value="3" data-short="Top 3">Winner, second and third</option>
+          </select>
+        </label>
         <!-- THE BIG SCREEN IN THE GAPS. Here rather than on a tile because
              only ONE 44px control fits in a tile's corner - measured, a tile
              is 179x76 and a four-round pack leaves 58px - and the phones are
@@ -910,6 +927,7 @@ export function launchBar() {
   const lobbyGamePick = el.querySelector('.game-pick');
   const soundPick = el.querySelector('.sound-pick');
   const playPick = el.querySelector('.play-pick');
+  const winnersPick = el.querySelector('.winners-pick');
   const screenPick = el.querySelector('.screen-pick');
   const setSave = el.querySelector('.set-save');
   const thenEl = el.querySelector('.lb-then');
@@ -1457,6 +1475,7 @@ export function launchBar() {
           online: lbOnline,
           teamPlay: night.playing !== 'solo',
           teamMode: night.playing === 'random' ? 'random' : 'assigned',
+          winners: night.winners,
           venue: venueNow(),
           /*
            * PRUNED AGAINST THE SEGMENTS BEING SENT, not against whatever the
@@ -1486,6 +1505,7 @@ export function launchBar() {
         online: lbOnline,
         teamPlay: night.playing !== 'solo',
         teamMode: night.playing === 'random' ? 'random' : 'assigned',
+        winners: night.winners,
         // ONE source for where tonight is — the picker at the top, which is
         // the only place it can be set now. Two controls for one field is how
         // a night gets filed under the pub you were at last week.
@@ -2015,6 +2035,7 @@ export function launchBar() {
   if (secondsPick) secondsPick.value = night.questionSeconds || '';
   if (soundPick) soundPick.value = night.lobbySound ? 'on' : 'off';
   if (playPick) playPick.value = night.playing || 'solo';
+  if (winnersPick) winnersPick.value = String(night.winners || 3);
   /**
    * THE ARROWS STEP FROM WHAT YOU CAN SEE, NOT FROM EMPTY — *"that field
    * displays 20 but on first click it goes to 5; it should go to 25 up and 15
@@ -2046,6 +2067,7 @@ export function launchBar() {
   });
   soundPick?.addEventListener('change', (ev) => { night.lobbySound = ev.target.value !== 'off'; });
   playPick?.addEventListener('change', (ev) => { night.playing = ev.target.value; });
+  winnersPick?.addEventListener('change', (ev) => { night.winners = Number(ev.target.value) || 3; });
 
   /*
    * THE BIG SCREEN IN THE GAPS — one choice written across every gap that HAS
@@ -3497,6 +3519,9 @@ export function launchBar() {
     night.playing = show.teamPlay
       ? (show.teamMode === 'random' ? 'random' : 'assigned')
       : 'solo';
+    // A show saved before this existed carries no `winners`, and three is what
+    // those nights did — so an old show restores to exactly the night it was.
+    night.winners = Number(show.winners) >= 1 && Number(show.winners) <= 3 ? Number(show.winners) : 3;
     night.shape = (show.shape && show.shape.rows && show.shape.cols)
       ? { rows: Number(show.shape.rows), cols: Number(show.shape.cols) } : null;
     night.prizes = Math.max(0, Math.min(5, Number(show.prizes) || 0));
@@ -3608,6 +3633,10 @@ function tonightAsShow(name) {
     teamMode: night.playing === 'random' ? 'random' : 'assigned',
     shape: night.shape,
     prizes: night.prizes,
+    // How many places the night recognises, saved with the prizes for exactly
+    // the reason they are: it is a fact about the EVENING, which is what a
+    // show is. An older show has no `winners` and `applyShow` reads three.
+    winners: night.winners,
     // Saved with the prizes and the look, and for the same reason: these are
     // facts about the EVENING, which is what a show is. The venue is still
     // deliberately not here — see the note above.

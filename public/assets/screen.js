@@ -1246,7 +1246,15 @@ function renderWinner(s) {
    * `fitWinner()` shrinks everything to fit, so one fewer line means the winner
    * and the podium get drawn bigger rather than the space going spare.
    */
-  const runners = rest.filter((p) => p.position <= 3).slice(0, 3);
+  /*
+   * HOW MANY PLACES TONIGHT RECOGNISES — `state.winners`, chosen at launch.
+   * Absent means three, which is what every night before the setting existed
+   * meant and what a payload from an older server still means. One winner
+   * draws no podium at all, which is the point: *"only have a single winner
+   * for each."*
+   */
+  const places = Number(s.winners) >= 1 && Number(s.winners) <= 3 ? Number(s.winners) : 3;
+  const runners = rest.filter((p) => p.position <= places).slice(0, 3);
   return node(`
     <div class="winner">
       <div class="kicker">${alsoFirst.length > 1 ? 'It is a tie' : 'Tonight&rsquo;s winner'}</div>

@@ -356,3 +356,97 @@ test('a game restored from before logos existed simply has none', () => {
   back.finish();
   assert.equal(back.playerView(rob.id).voucher.logo, undefined);
 });
+
+/*
+ * ---- HOW MANY WINNERS TONIGHT HAS ---------------------------------------
+ *
+ * *"I want to be able to define how many winners there are for a specific
+ * quiz — tonight I want to do two shorter quizzes and only have a single
+ * winner for each."*
+ *
+ * The setting can only ever SUBTRACT, which is what made it safe to add on a
+ * gig day: it caps the places that are paid and the places the podium draws,
+ * and it can never invent a prize the venue did not put up.
+ */
+
+test('one winner pays one place, even with three prizes on the venue', () => {
+  const { engine } = withGame();
+  engine.state.rewards = ['A free drink', 'A bag of crisps', 'A packet of nuts'];
+  engine.state.winners = 1;
+  const a = engine.join({ name: 'Rob' });
+  const b = engine.join({ name: 'Jo' });
+  const c = engine.join({ name: 'Sam' });
+  engine.state.players[a.id].score = 300;
+  engine.state.players[b.id].score = 200;
+  engine.state.players[c.id].score = 100;
+  engine.finish();
+
+  assert.equal(Object.keys(engine.state.vouchers).length, 1, 'more than the one winner was paid');
+  assert.equal(engine.playerView(a.id).voucher.reward, 'A free drink');
+  assert.equal(engine.playerView(b.id).voucher, undefined, 'second was paid on a one-winner night');
+  assert.equal(engine.playerView(c.id).voucher, undefined, 'third was paid on a one-winner night');
+});
+
+test('IT CAN ONLY SUBTRACT — three winners and one prize still pays one', () => {
+  // The guard is a floor, not a substitute: `rewards[position - 1]` still has
+  // to find a prize, so a generous `winners` cannot conjure one.
+  const { engine } = withGame();
+  engine.state.rewards = ['A free drink'];
+  engine.state.winners = 3;
+  const a = engine.join({ name: 'Rob' });
+  const b = engine.join({ name: 'Jo' });
+  engine.state.players[a.id].score = 300;
+  engine.state.players[b.id].score = 200;
+  engine.finish();
+  assert.equal(Object.keys(engine.state.vouchers).length, 1);
+});
+
+test('THE DEFAULT IS THREE, and a state written before this existed reads as three', () => {
+  // A redeploy mid-season must not change what a running night pays out.
+  const { engine } = withGame();
+  engine.state.rewards = ['One', 'Two', 'Three'];
+  delete engine.state.winners;
+  const a = engine.join({ name: 'Rob' });
+  const b = engine.join({ name: 'Jo' });
+  const c = engine.join({ name: 'Sam' });
+  engine.state.players[a.id].score = 300;
+  engine.state.players[b.id].score = 200;
+  engine.state.players[c.id].score = 100;
+  engine.finish();
+  assert.equal(Object.keys(engine.state.vouchers).length, 3,
+    'a state with no `winners` field stopped paying three places');
+});
+
+test('the projector is told only when it is NOT the default', () => {
+  /*
+   * The field is spread in like the draw and the comeback band, so an ordinary
+   * three-place night gains nothing at all and `pub-unchanged` still says
+   * IDENTICAL. `screen.js` reads three when it is absent.
+   */
+  const { engine } = withGame();
+  engine.join({ name: 'Rob' });
+  engine.finish();
+  assert.equal(engine.screenView().winners, undefined,
+    'a default night put a new field on every projector payload');
+
+  const two = withGame().engine;
+  two.join({ name: 'Rob' });
+  two.state.winners = 1;
+  two.finish();
+  assert.equal(two.screenView().winners, 1);
+});
+
+test('a tie for first is still paid in full on a one-winner night', () => {
+  // Two rows share position 1, the room watched it happen, and the cap is on
+  // POSITION rather than on how many rows have been paid.
+  const { engine } = withGame();
+  engine.state.rewards = ['A free drink', 'A bag of crisps'];
+  engine.state.winners = 1;
+  const a = engine.join({ name: 'Rob' });
+  const b = engine.join({ name: 'Jo' });
+  engine.state.players[a.id].score = 300;
+  engine.state.players[b.id].score = 300;
+  engine.finish();
+  assert.equal(Object.keys(engine.state.vouchers).length, 2, 'a tied winner went unpaid');
+  for (const v of Object.values(engine.state.vouchers)) assert.equal(v.place, 1);
+});

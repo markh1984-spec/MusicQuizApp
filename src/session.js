@@ -15,7 +15,7 @@
 
 import path from 'node:path';
 
-import { Engine, PHASES, isSafeId, ownsPlayer, newToken } from './engine.js';
+import { Engine, PHASES, MAX_WINNERS, isSafeId, ownsPlayer, newToken } from './engine.js';
 import { JoinGate } from './joins.js';
 import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFields, stagePlan, maxPrizes } from './bingo.js';
 // ONE cap on how many prizes a night can carry, shared with the venue record
@@ -579,7 +579,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, league = false, online = false, teamPlay = false, teamMode = 'assigned', venue = '', venueId = '', rewards = [], venueLogo = '', comeBack = null, photoLink = null, askForRounds = false, roundIdeas = [], order = null, breakPlan = null } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, league = false, online = false, teamPlay = false, teamMode = 'assigned', venue = '', venueId = '', rewards = [], venueLogo = '', comeBack = null, photoLink = null, askForRounds = false, roundIdeas = [], order = null, breakPlan = null } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     /*
      * TONIGHT'S RUNNING ORDER, when one was built — rounds from more than one
@@ -601,6 +601,17 @@ export class Session {
       Object.assign(normalised, shapeFields(shape));
     }
     this.build(kind, normalised, null);
+    /*
+     * HOW MANY PLACES TONIGHT RECOGNISES — the podium, and who gets a voucher.
+     * Beside the prizes and the card shape because it is the same kind of
+     * fact: a decision about THIS EVENING rather than about the pack. Zero
+     * means "not asked for", which leaves `freshState()`'s default of three,
+     * so nothing that does not send it changes at all.
+     */
+    if (winners) {
+      this.engine.state.winners = Math.max(1, Math.min(MAX_WINNERS, Math.floor(winners)));
+    }
+
     // How many prizes tonight, decided alongside the card shape and for the
     // same reason: it is a decision about this evening, not about the pack.
     if (kind === 'bingo' && prizes) {

@@ -1772,6 +1772,34 @@ greyed out, and maybe a tooltip should come out trying to sell it."*
 
 Full reasoning: **[`docs/business.md`](docs/business.md)**.
 
+### HOW MANY WINNERS A NIGHT HAS — `winners`, chosen at launch
+
+`DEFAULT_WINNERS`/`winnersOf()` in `engine.js`, the **Winners** picker on the
+launch bar. *"I want to be able to define how many winners there are for a
+specific quiz — tonight I want two shorter quizzes and only a single winner
+for each."* One winner draws no podium and issues one voucher.
+
+- **THREE IS THE DEFAULT AND IS EXACTLY WHAT THE APP DID BEFORE.** The field
+  is spread into the projector's payload ONLY when it is not three, like the
+  draw and the comeback band, so `pub-unchanged` says IDENTICAL with no
+  `--ignore`.
+- **IT CAN ONLY EVER SUBTRACT** — `rewards[position - 1]` still has to find a
+  prize, so a generous setting cannot conjure one. That is what made it safe
+  to add on a gig day.
+- **A STATE OR A SHOW WRITTEN BEFORE THIS EXISTED READS AS THREE**, never as
+  zero: a redeploy mid-season must not change what a running night pays out.
+- **A TIE FOR FIRST IS STILL PAID IN FULL** — the cap is on POSITION, not on
+  how many rows have been paid, so two teams the room watched finish level
+  both get the prize.
+- **`doLaunch()`/`doLaunchOrder()` IN `console-packs.js` DESTRUCTURE A
+  WHITELIST, AND A FIELD MISSING FROM IT IS DROPPED IN SILENCE.** `winners`
+  was wired through the bar, `night`, both payload builders, the route,
+  `session.launch()` and the show — and still arrived as null, because it was
+  not named there. Nothing threw and the night simply paid three places. The
+  same trap as `accounts.create()` and `shows.js`'s own whitelist, which this
+  one change hit BOTH of. **Prove a new launch field by reading the request
+  body out of a real browser, not by reading the diff.**
+
 ### A PAGE SCROLLS. THE PROJECTOR IS THE ONE THAT DOES NOT
 
 `body { overflow: auto }`, with `body.screen { overflow: hidden }` naming the
@@ -2186,14 +2214,12 @@ costs. Both split off at the 100,000-byte cap.
   string. **It rides on every request and link**, or the next page in is the
   preview again. **PRESENT AND INERT**, because *"is it really up?"* is asked
   when everything LOOKS fine
-- **THE LEAGUE BAY IS A VENUE THAT FOLDS INTO ITS NIGHTS** — *"the summary is
-  what displays when you click venue, and then you can click each night to see
-  who won."* **The pub's own row is `The table`, INSIDE the fold, never the
-  heading** — a heading that both folds and picks is one control doing two
-  jobs. **A night row is the DATE and nothing else.** `evenings` rides in the
-  payload capped at `NIGHT_ROWS` **and carries the POINTS**, so the browser
-  needs no second copy of the ladder. **A board with no `position` scores
-  nobody**, and it fails quietly
+- **THE LEAGUE BAY IS A VENUE THAT FOLDS INTO ITS NIGHTS** — **the pub's own
+  row is `The table`, INSIDE the fold, never the heading**: a heading that both
+  folds and picks is one control doing two jobs. **A night row is the DATE and
+  nothing else.** `evenings` rides in the payload capped at `NIGHT_ROWS` **and
+  carries the POINTS**, so the browser needs no second copy of the ladder. **A
+  board with no `position` scores nobody**, and it fails quietly
 - **`node()` KEEPS THE FIRST ELEMENT AND DROPS THE REST, SILENTLY.** A grep
   cannot find these (nested template literals), so `node()` `console.error`s
   when it drops one.
@@ -2220,64 +2246,9 @@ costs. Both split off at the 100,000-byte cap.
   other and none at the ROOM, which is the shot that sells the night.
   `POST /api/past-photo/<night>`, **filed against the night in the URL and
   never against today** — the live store dates a picture by the clock, so a
-  Friday upload files a Thursday quiz under Friday. **Camera-eligible by
-  definition** (no `-picked`). Scaled in the browser, `square: false`. **A POST
-  written beside GETs is the 404 this repo already shipped once**, so the test
-  asserts against the 404, not the 400
-
-**[`docs/lobby-games.md`](docs/lobby-games.md)** — what a phone does while the room fills up
-
-- MAZE MOUTH — THE LOBBY GAME, AND IT IS NEVER CALLED PAC-MAN
-- RALLY — the bingo night's game, and it is not called Pong
-- TAILBACK — a tail that grows, and the first game behind the picker
-- QUICK DRAW — a shooting gallery, and the third answer to one fairness problem
-- SOUND — synthesised, the host's to switch off, and never on a timer
-- THE PICKER, AND WHAT A TIER ACTUALLY BUYS
-
-**[`docs/accounts.md`](docs/accounts.md)** — hats, tiers, rooms, gates, own packs
-
-- My account — and the line that page is built along
-- Accounts, and who is allowed to do what
-- Read-only packs, and the other half of that
-
-**[`docs/generation.md`](docs/generation.md)** — writing quizzes, checking them, what they cost
-
-- Generated questions are checked, not trusted
-
-**[`docs/owner.md`](docs/owner.md)** — the business — five tabs
-
-- The owner page — five questions, five tabs
-
-**[`docs/branding.md`](docs/branding.md)** — the name on it, and whose colours it wears
-
-- The name on it, and whose colours it wears
-
-**[`docs/deployment.md`](docs/deployment.md)** — what the host has, and what that blocks
-
-**[`docs/modes.md`](docs/modes.md)** — GSD mode and Sweep mode in full. **Open
-it when he types one of them**, not before.
-
-**[`docs/checks.md`](docs/checks.md)** — what the checks are for, and the four
-separate faults that let one guard report a clean run it had not earned.
-
-- Things the host does not have, and what that blocks
-
-Also: **[`docs/artwork.md`](docs/artwork.md)** — the shared portrait library
-(its rules are kept in full below, under *Artwork*);
-**[`docs/business.md`](docs/business.md)** — pricing and the subscription,
-and the INDEX to `docs/business/`: the quizmaster directory, group and venue
-accounts, the marketplace and referrals, karaoke, the money plumbing;
-**[`docs/setup.md`](docs/setup.md)** — the step-by-step deployment and account
-setup, which is the one to open with the host rather than to read;
-**[`docs/history.md`](docs/history.md)** — what each real night found, the
-sweeps, and the live deployment state; and
-**[`docs/SPLIT-PLAN.md`](docs/SPLIT-PLAN.md)**, which is how this was done.
-
----
-## Artwork — the shared portrait library
-
-Full reasoning: **[`docs/artwork.md`](docs/artwork.md)**. The rules:
-
+  Friday upload files a Thursday quiz under Friday. **A POST written beside
+  GETs is the 404 this repo already shipped once**, so the test asserts against
+  the 404, not the 400
 - **A picture is keyed on the MUSICIAN and the STYLE, and nothing else.**
   Never on the question's `imagePrompt` — those are written by Claude, so two
   quizzes wanting Madonna would produce two keys and two bills, and the host

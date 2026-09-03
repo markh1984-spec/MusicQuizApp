@@ -232,6 +232,14 @@ export function normalise(raw = {}, now = Date.now()) {
     shape,
     prizes: Math.max(0, Math.min(5, Number(raw.prizes) || 0)),
     /*
+     * How many places the night recognises. Cleaned exactly as
+     * `session.launch()` cleans it, for the reason `teamMode` above says: two
+     * normalisers is how a saved night comes to carry a setting the engine
+     * then silently drops. A show saved before this existed has none, and 0
+     * means "not asked for", which the launch reads as the default of three.
+     */
+    winners: Math.max(0, Math.min(3, Number(raw.winners) || 0)),
+    /*
      * WHAT HAPPENS IN THE GAPS — cleaned by the SAME function the launch
      * cleans it with, so a plan that a show would restore is exactly a plan a
      * launch would accept. Two normalisers is how a saved night comes to

@@ -6340,6 +6340,13 @@ async function handleWrite(req, res, url, route) {
           ? { rows: Number(body.shape.rows), cols: Number(body.shape.cols) }
           : null;
         const prizes = Math.max(0, Math.min(5, Number(body.prizes) || 0));
+        /*
+         * How many places tonight recognises. 0 means the console did not ask,
+         * which leaves the engine's default of three — so an old console, or a
+         * saved show from before this existed, launches exactly as it did.
+         * `session.launch()` clamps it again; this is the door, not the rule.
+         */
+        const winners = Math.max(0, Math.min(3, Number(body.winners) || 0));
         // How it looks tonight. Same reasoning as the card shape: the pack
         // carries a default, and "it is the fourteenth of February" is a fact
         // about this evening rather than about the pack.
@@ -6479,7 +6486,7 @@ async function handleWrite(req, res, url, route) {
           ? pickIdeas((fullLibrary(config, room.id, listOwn(room.paths)).quizzes || [])
             .map((q) => q.title))
           : [];
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, look, questionSeconds, lobbyGame, lobbySound, league, online, teamPlay, teamMode, venue, venueId, rewards, venueLogo, comeBack, photoLink: photoLinkFor(req, url, venue), askForRounds, roundIdeas: askIdeas, order: wantedOrder, breakPlan: body.breakPlan || {} });
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, winners, look, questionSeconds, lobbyGame, lobbySound, league, online, teamPlay, teamMode, venue, venueId, rewards, venueLogo, comeBack, photoLink: photoLinkFor(req, url, venue), askForRounds, roundIdeas: askIdeas, order: wantedOrder, breakPlan: body.breakPlan || {} });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();
@@ -6589,8 +6596,14 @@ async function handleWrite(req, res, url, route) {
           ? pickIdeas((fullLibrary(config, room.id, listOwn(room.paths)).quizzes || [])
             .map((q) => q.title))
           : [];
+        /*
+         * How many places the night recognises, on the mixed path too. A
+         * running order reaches ONE final, so this is a fact about the whole
+         * evening exactly as it is on the ordinary launch.
+         */
+        const winners = Math.max(0, Math.min(3, Number(body.winners) || 0));
         const started = session.launchRunningOrder(segments, {
-          look, questionSeconds, lobbyGame, lobbySound, league, online, teamPlay, teamMode, venue, venueId,
+          look, questionSeconds, lobbyGame, lobbySound, league, online, teamPlay, teamMode, winners, venue, venueId,
           rewards, venueLogo, comeBack, photoLink: photoLinkFor(req, url, venue),
           askForRounds, roundIdeas: askIdeas,
           /*

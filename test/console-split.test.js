@@ -284,7 +284,24 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * setter panel, the strip and the doors chip all deleted outright. The
  * console is smaller than it was this morning; this one file is not.
  */
-const BUDGET = { 'console-tonight.js': 3900, 'console.js': 2000, 'console-packs.js': 1770 };
+/*
+ * `console-tonight.js` GOES TO 3940 ON 3 SEPTEMBER 2026 for the Winners
+ * picker — how many places the night recognises, asked for on a gig day:
+ * *"I want to be able to define how many winners there are for a specific
+ * quiz."* Twenty-nine lines, and they are the control plus its five wiring
+ * points: the default on `night`, the paint, the change handler, the two
+ * launch payloads and the show's save and restore. A night setting that is
+ * sent from only some of those is the half-wired feature this file keeps
+ * catching, so none of them is optional.
+ */
+/*
+ * AND `console-packs.js` TO 1790 the same day, for eleven lines: `winners` in
+ * the two launch senders plus the note above them. Those senders DESTRUCTURE
+ * a whitelist, so a field missing from them is dropped in silence — which is
+ * exactly what happened, and the note is there so the next field is not added
+ * everywhere else and forgotten here.
+ */
+const BUDGET = { 'console-tonight.js': 3940, 'console.js': 2000, 'console-packs.js': 1790 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

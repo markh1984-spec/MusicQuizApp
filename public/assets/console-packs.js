@@ -1564,9 +1564,20 @@ async function sendLaunch(url, bodyFor, button) {
 }
 
 /** Actually launch an ordinary night — the one path, whichever button was pressed. */
-export async function doLaunch(kind, packId, { shape = null, prizes = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, teamMode = 'assigned', venue = '', order = null, breaks = {} }, button) {
+/*
+ * BOTH SENDERS DESTRUCTURE A WHITELIST, AND A FIELD MISSING FROM IT IS
+ * DROPPED IN SILENCE. `winners` was added to the launch bar, to `night`, to
+ * both payload builders, to `session.launch()`, to the route and to the show,
+ * and it still arrived at the server as null — because it was not named here.
+ * Nothing threw, the launch worked, and the night simply paid three places.
+ *
+ * The same trap as `accounts.create()` dropping `wantedTier`. Add a launch
+ * field HERE as well as everywhere else, and prove it by reading the request
+ * body out of a real browser rather than by reading the diff.
+ */
+export async function doLaunch(kind, packId, { shape = null, prizes = 0, winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, teamMode = 'assigned', venue = '', order = null, breaks = {} }, button) {
   return sendLaunch('/api/host/launch', (replace) => ({
-    game: kind, packId, shape, prizes, look, questionSeconds, lobbyGame, lobbySound, online, teamPlay, teamMode, venue,
+    game: kind, packId, shape, prizes, winners, look, questionSeconds, lobbyGame, lobbySound, online, teamPlay, teamMode, venue,
     /*
      * WHAT HAPPENS IN THE GAPS. Sent on EVERY launch, including an empty one
      * — a launch that left it out would inherit the previous night's plan,
@@ -1596,9 +1607,9 @@ export async function doLaunch(kind, packId, { shape = null, prizes = 0, look = 
  * `show-parts.js`). Every later part loads through `/api/host/advanceOrder`
  * from the control view, never through here.
  */
-export async function doLaunchOrder(segments, { look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, teamMode = 'assigned', venue = '', breaks = {} }, button) {
+export async function doLaunchOrder(segments, { winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, teamMode = 'assigned', venue = '', breaks = {} }, button) {
   return sendLaunch('/api/host/launchOrder', (replace) => ({
-    segments, look, questionSeconds, lobbyGame, lobbySound, online, teamPlay, teamMode, venue,
+    segments, winners, look, questionSeconds, lobbyGame, lobbySound, online, teamPlay, teamMode, venue,
     // Same rule as the ordinary launch — always sent, so a fresh night can
     // never inherit the last one's plan.
     breakPlan: breaks || {},

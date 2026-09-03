@@ -668,3 +668,70 @@ A misspelt mode is a **validation problem**, not a silent fall back to zoom —
 otherwise you find out by watching the wrong effect in front of a room. The
 editor hides "Starting zoom" on a question that does not zoom, because a knob
 that does nothing reads as a knob you have to set.
+
+## HOW MANY WINNERS A NIGHT HAS — `winners`, chosen at launch
+
+Asked for on a gig day, 3 September 2026: *"I also want to be able to define
+how many winners there are for a specific quiz — tonight I want to do two
+shorter quizzes and only have a single winner for each if this is possible?"*
+
+`DEFAULT_WINNERS` / `MAX_WINNERS` / `winnersOf()` in `src/engine.js`,
+`state.winners`, and the **Winners** picker on the launch bar's settings row.
+One winner draws no podium and issues one voucher; three is what the app has
+always done.
+
+### Half of it already existed, and that half is not the half you would guess
+
+Vouchers were ALREADY configurable: `issueVouchers()` reads
+`rewards[position - 1]`, so a venue with one prize on it has always paid one
+place. What was hardcoded was the PODIUM — `renderWinner()` in `screen.js`
+drew second and third whatever the prizes were.
+
+So deriving "how many winners" from the prize list was the obvious move and is
+wrong: a night with NO prizes at all still shows a podium today, and that is
+deliberate — *"being on the podium is most of what a quiz night gives the
+people who did not win it"*. Deriving it would silently delete the podium on
+every prize-less night. It is its own setting, and it sits with the card shape
+and the prizes because it is the same kind of fact: a decision about TONIGHT.
+
+### It can only ever subtract, which is why it was safe on a gig day
+
+The voucher guard is a FLOOR rather than a substitute: `rewards[position - 1]`
+still has to find a prize, so a generous `winners` cannot conjure one. The
+worst the setting can do in either direction is show and pay less.
+
+Three more properties, each with a test that was verified by reintroducing its
+fault:
+
+- **The projector is told ONLY when it is not the default**, spread in like the
+  draw and the comeback band — so an ordinary night gains no field at all and
+  `pub-unchanged` reports IDENTICAL with no `--ignore`.
+- **A state written before this existed reads as THREE, never zero.** A
+  redeploy mid-season must not change what a running night pays out; same
+  reasoning as a phone holding an id and no token. A saved show is the same:
+  no `winners` on it means three.
+- **A tie for first is paid in full.** The cap is on POSITION, not on how many
+  rows have been paid, so two teams the room watched finish level both get the
+  prize — which is the rule `issueVouchers()` already followed.
+
+### The wiring trap, hit twice in one change
+
+`winners` was added to the launch bar, to `night`, to both payload builders in
+`console-tonight.js`, to the route, to `session.launch()` and to the show — and
+it still arrived at the server as `null`.
+
+**`doLaunch()` and `doLaunchOrder()` in `console-packs.js` DESTRUCTURE A
+WHITELIST**, and a field missing from it is dropped without a word. Nothing
+threw, the launch worked, and the night simply paid three places. `shows.js`
+has a whitelist of its own and swallowed it the same way, so one change hit the
+trap twice — and it is the third sighting this month, after `accounts.create()`
+dropping `wantedTier`.
+
+It was found by capturing the real `/api/host/launch` request body out of a
+real browser. **A new launch field is proved that way, not by reading the
+diff** — every layer looked correct in isolation.
+
+The last link was proved the same way: the same night launched twice against a
+real server, once with one winner and once with three, counting `.winner
+.runner` elements on the projector. One winner drew none; three drew two and
+sent no `winners` field at all.

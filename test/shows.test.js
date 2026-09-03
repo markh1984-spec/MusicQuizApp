@@ -89,7 +89,10 @@ test('THE FIELDS ARE A WHITELIST — anything else is dropped', () => {
     'breaks', 'id', 'items', 'kind', 'lobbyGame', 'lobbySound', 'look', 'name', 'online',
     // `teamMode` joined on 23 August 2026 — how a team night's teams are made,
     // `assigned` or `random`. Cleaned by the same rule `session.launch()` uses.
-    'packId', 'prizes', 'shape', 'teamMode', 'teamPlay', 'updated', 'venue',
+    // `winners` joined on 3 September 2026 — how many places the night
+    // recognises. Cleaned by the same clamp `session.launch()` uses, so a
+    // saved night cannot carry a value the engine would then silently drop.
+    'packId', 'prizes', 'shape', 'teamMode', 'teamPlay', 'updated', 'venue', 'winners',
   ]);
   // And the items are a whitelist of their own, or the same hole reopens one
   // level down.
