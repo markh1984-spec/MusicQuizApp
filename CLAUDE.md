@@ -2531,6 +2531,20 @@ slow suite is one people stop running before a gig.
 **The general lesson is bigger than the import: A TEST THAT NEVER RUNS THE
 ARTEFACT PROVES NOTHING ABOUT IT** — see *Checks*.
 
+### A PUSH IS A DEPLOY, AND A DEPLOY ON A GIG NIGHT IS AN OUTAGE
+
+Learned on 3 September 2026 by doing it: four pushes while he was setting up.
+Render watches `MusicQuizApp`, so **every push restarts the server and wipes
+`data/`** — the projector lost its stream, the code in `data/room-codes.json`
+stopped resolving, and a tab left open kept showing a lobby that no longer
+existed. **Not one of the four changes was risky. The DEPLOY was**, and that
+is the whole point: a docs file and a JSON title are as dangerous as an engine
+rewrite when the cost is the restart rather than the diff.
+
+**ASK BEFORE PUSHING IF A NIGHT COULD BE ON.** Commit, say plainly that it is
+waiting, and push when he says he is clear. A commit held for two hours costs
+nothing; a restart mid-round costs the gig.
+
 ### "Sweep mode" — find everything, change nothing
 
 **If he types `Sweep mode`, run a full sweep and REPORT. Do not action any of

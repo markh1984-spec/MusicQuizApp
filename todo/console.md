@@ -115,3 +115,36 @@ anything. **If the caption does not fit, the answer is a different dial icon
 state rather than a bigger tile.**
 
 Do not do this on a gig day. It is on the protected launch path.
+
+---
+
+## THE TWO CONTROLS THAT STOP A NIGHT ARE BOTH BEHIND A NATIVE `confirm()`
+
+Off a live gig, 3 September 2026: *"I tried to unlaunch and it does nothing"*,
+then *"I launched 80s and it still came up with this"*. Both are real reports
+and **neither is a bug in the launch path** — they are the same browser state.
+
+**A BROWSER CAN SWITCH `confirm()` OFF.** Chrome offers *"Prevent this page
+from creating additional dialogs"* after a few dialogs on one page load, and
+from then on `confirm()` returns **false** without drawing anything. It is
+exactly what a host generates on a busy night: the prizes confirm, the publish
+confirm, the replace confirm.
+
+`stopRunningNight()` in `console-tonight.js` opens with a `confirm()` and
+returns on false; the Launch path in `console-packs.js` asks the server, gets a
+**409** because a night is running, and offers a `confirm()` to replace. So
+**both Unlaunch and Launch-over-a-running-game become dead buttons at once, in
+silence** — and the `alert()` that would report a genuine failure is muted by
+the same tick, so even a real error says nothing.
+
+**THE FIX IS THE APP'S OWN DIALOG, NOT A LONGER `confirm()` STRING.** A dialog
+the app draws cannot be suppressed, can be styled, and works on a touchscreen.
+The wording and the OK/Cancel order stay as they are — this is a change of
+mechanism, not of what is asked. **Do the launch bar's two first**; the other
+eleven `confirm()`s in the app are on pages where a dead button costs a Monday
+rather than a night.
+
+**AND A DEAD CONTROL MUST NOT BE SILENT.** Whatever replaces it, a press that
+resolves to "no" should leave something on screen saying so — the reason this
+took three exchanges to find is that pressing the button produced no evidence
+of any kind.
