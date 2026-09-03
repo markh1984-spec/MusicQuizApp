@@ -485,7 +485,27 @@ const ROOT = new URL('..', import.meta.url).pathname;
  *    unpublished one. The rule is there to stop the obvious next change — a
  *    `pending` state on the server — which would leak which dates exist.
  */
-const BUDGET = 201_000;
+/*
+ * RAISED TO 202,000 ON 3 SEPTEMBER 2026, for the metals: three tokens and one
+ * sheen, replacing SIX hand-written sets with SEVEN different values (bronze
+ * alone was #cd7f32, #cd895a, #e0a066 and #cd8c58). That is a token system
+ * rather than a description, and the entry is mostly prohibitions — name the
+ * token never a hex, fills only and metal text stays solid, `--gold` and
+ * `--metal-gold` are two jobs, a `background` shorthand resets
+ * `background-clip`.
+ *
+ * **What was trimmed first, per the rule above.** Twelve entries across two
+ * commits today went from narrative to their prohibitions: the gallery's
+ * cache accounting, the camera gate, the photo lamp, the publish confirm, the
+ * league bay, a venue's own address, `?as=visitor`, the drafts banner, the
+ * stale sha, the pin spread, the flips-now-saves-later lamp and the final's
+ * two-part fit. The suite's own line in the Checks block was also two hundred
+ * tests out of date, which is its own small lesson.
+ *
+ * 823 bytes is the genuine remainder, and the trims are in the same diff so
+ * it can be read as a trade rather than as growth.
+ */
+const BUDGET = 202_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

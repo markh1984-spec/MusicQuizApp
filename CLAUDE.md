@@ -589,6 +589,29 @@ to a gold-ish Launch button and muddles. The fix is to make "you are here"
 neutral rather than to move gold. Left alone for now because it is on a screen
 used on a gig day.
 
+### THE METALS ARE THREE TOKENS AND A SHEEN — `--metal-*` in `style.css`
+
+Bronze / Silver / Gold mean a TIER, and second and third on the podium.
+**`--gold` is a different job** — the trophy colour — so they stay separate
+tokens even though the hex matches: two jobs, not one colour.
+
+- **THEY WERE WRITTEN OUT SIX TIMES WITH SEVEN VALUES** (bronze was `#cd7f32`,
+  `#cd895a`, `#e0a066` and `#cd8c58`) — a rule nobody was applying, exactly
+  like the radii below. **Add a metal surface by naming the token, never a
+  hex.**
+- **A HIGHLIGHT IN THE TOP CORNER PLUS A SHADOW IN THE FAR ONE**
+  (`--metal-sheen`). Rendered against a plain 120deg sweep first: the sweep is
+  louder and says nothing extra, and **the corner pair still reads at the 24px
+  chips**, where a sweep is only a lighter dot. It is a POSITION, not an angle,
+  so the rule below stands — and it is ONE position everywhere, which is that
+  rule's own discipline.
+- **FILLS ONLY. METAL TEXT STAYS SOLID** — rendered at 11, 17 and 26px, a
+  gradient on text is indistinguishable from flat at every size this app uses.
+  **The sheen LAYERS OVER the flat colour**, so the metal stays one token and
+  is still readable as a `color` by `color-mix` and by text.
+- **A `background` SHORTHAND RESETS `background-clip`** — the `border` trap
+  this file records, wearing another property.
+
 ### One angle, three radii
 
 `120deg` for every gradient, and **10px / 14px / 999px** — a field, a card, a
@@ -1484,13 +1507,12 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   cannot advertise a photograph that page refuses. **A pin is a PREFERENCE; the
   lamp is the GATE. Three, refused not trimmed.**
 - **A GALLERY IS PAID FOR ONCE — not per photo, not per visitor.** A 99-photo
-  night once cost ~297 GitHub calls **per page open**, against a 5,000/hour
-  limit, to a pub full of people who were all there the SAME night. Both
-  caches: 20 people, 600 requests, **0 calls**. **Nothing deciding who may see
-  a photo is cached with it**; **the browser window is NOT lengthened past a
-  day** — taking a photo down is a promise a cache cannot reach; **48MB LRU**,
-  because this process also runs live quizzes on a 512MB box. Full reasoning
-  and the four invalidation points: **[`docs/gigs/gallery-page.md`](docs/gigs/gallery-page.md)**.
+  night once cost ~297 GitHub calls **per page open** against a 5,000/hour
+  limit. **Nothing deciding who may see a photo is cached with it**; **the
+  browser window is NOT lengthened past a day** — taking a photo down is a
+  promise a cache cannot reach; **48MB LRU**, because this process also runs
+  live quizzes on a 512MB box.
+  **[`docs/gigs/gallery-page.md`](docs/gigs/gallery-page.md)**.
 - **EVERY WRITER OF `published.json` CARRIES THE HALVES IT IS NOT CHANGING** —
   nights, rulings, pins. The third is when it gets forgotten; a test walks them.
 - **A NIGHT NAMES ITS PUB AND STEPS TO THE ONE EITHER SIDE AT THAT PUB**,
@@ -2072,31 +2094,28 @@ costs. Both split off at the 100,000-byte cap.
   otherwise.**
 - AND THE PREVIEW DID NOT WORK ON THE HOST KEY
 - **THE CAMERA GATE IS GONE — every photograph is on the gallery unless a
-  human switches it off** (`showsByDefault()`, 2 September 2026). It needed
-  EXIF proving a camera took it and **failed on EVERY photograph of a real
-  night** — the finding, because some memes give a MIX; a whole night at zero
-  is a check that cannot succeed on the handsets in the room. It filtered
+  human switches it off** (`showsByDefault()`). It needed EXIF proving a camera
+  took it and **failed on EVERY photograph of a real night**: a whole night at
+  zero is a check that cannot succeed on the handsets in the room. It filtered
   everything, and the index drops a published night with nothing showing, so
   the gallery was empty and silent. **The gate that replaces it was already
-  there: the publish control is drawn UNDER the photographs so nobody publishes
-  without looking.** `isCameraFile()` survives as a NOTE on the lamp, never a
-  gate. **THE CLEARING RULE IN `/api/gallery-photo/` HAD THE OLD DEFAULT
-  WRITTEN OUT A SECOND TIME** — flip one and pressing a lamp RED clears the
-  ruling and the new default puts the photo straight back ON, silently. One
-  function, asked by both. **Four pinned tests were REVERSED, not weakened**,
-  and **the projector is untouched**: always a VIEW, never a refusal
+  there: the publish control is drawn UNDER the photographs.** `isCameraFile()`
+  survives as a NOTE on the lamp, never a gate. **THE CLEARING RULE IN
+  `/api/gallery-photo/` HAD THE OLD DEFAULT WRITTEN OUT A SECOND TIME** — flip
+  one and pressing a lamp RED clears the ruling and the new default puts the
+  photo straight back ON, silently. One function, asked by both. **Four pinned
+  tests were REVERSED, not weakened**, and **the projector is untouched**
 - **A LAMP PER PHOTO SAYS WHETHER IT IS ON THE GALLERY, AND IT IS A SWITCH** —
   *"green for on and red for off, no text needed but it must be clickable."*
   **NO WORDS, and eighteen of them is the argument**: a label repeated across a
   grid becomes furniture. **FILLED, which is not a break of
-  outlined-never-filled** — a lamp, not a button that destroys, and with no text
-  the fill IS the message. **So `title` and `aria-label` are load-bearing**, the
-  18px dot gets a 44px hit area from a `::after`, and `.cphoto`'s own open must
-  ignore a press on it. **It REPLACED the grey "Screen only" badge** — two
+  outlined-never-filled** — a lamp, not a button that destroys, and with no
+  text the fill IS the message. **So `title` and `aria-label` are
+  load-bearing**, the 18px dot gets a 44px hit area, and `.cphoto`'s own open
+  must ignore a press on it. **It REPLACED the grey "Screen only" badge** — two
   badges saying overlapping things is a label collision. **`showsOnGallery()`
-  is the ONE decision and all FOUR readers ask it** — the night LIST, a night's
-  page, the single-photo route and this lamp. **A ruling that only restates the
-  DEFAULT is CLEARED, not stored**
+  is the ONE decision and all FOUR readers ask it**. **A ruling that only
+  restates the DEFAULT is CLEARED, not stored**
 - **THE COUNT AND THE PAGE ARE ONE QUESTION — `galleryPhotosOf()`.** The night
   list counted on the filename while the page asked the ruling too. **AND WITH
   THE FAULT PUT BACK THE GUARD STILL PASSED: it had matched the COMMENT
@@ -2133,10 +2152,11 @@ costs. Both split off at the 100,000-byte cap.
 - **AND THE FINAL FITS NOW, IN TWO PARTS — `.endband` AND `fitWinner()`.**
   `.winner` centres in a fixed card with overflow hidden, so anything too tall
   was cut at BOTH ends — 142px each way at 720p, unreported. **The draw and the
-  comeback go SIDE BY SIDE**; **`fitWinner()` shrinks to fit as a backstop**.
-  **It measures the CHILDREN, not `scrollHeight`**, which clamps to the
+  comeback go SIDE BY SIDE**; **`fitWinner()` shrinks to fit as a backstop**,
+  and **it measures the CHILDREN, not `scrollHeight`**, which clamps to the
   container and under-reports exactly when the content is too tall.
-  **`final-fits.mjs`** checks the QR **actually paints**, not that it is placed
+  **`final-fits.mjs`** checks the QR **actually paints**, not that it is
+  placed
 - **`view.photos` WAS ALREADY TAKEN, AND IT COST THE BUTTON** — `server.js`
   sets it to the room's own photographs, host AND screen, AFTER the engine
   builds the view. The field existed, held somebody else's data, the control
@@ -2147,10 +2167,10 @@ costs. Both split off at the 100,000-byte cap.
   `pending` state was turned down for exactly that**: it leaks which dates
   exist
 - **THE COUNT SAYS HOW MANY WILL SHOW, NOT HOW MANY THERE ARE** — the INDEX
-  drops a night whose whole set is held back (a card to a blank page is worse
-  than no card), so such a night publishes, answers 200 on its own address, and
-  is invisible on the way in. **A number right about the wrong question is how
-  a working app looks broken.** Silent when they all show
+  drops a night whose whole set is held back, so such a night publishes,
+  answers 200 on its own address, and is invisible on the way in. **A number
+  right about the wrong question is how a working app looks broken.** Silent
+  when they all show
 - **`/gallery` SHOWS DRAFTS TO WHOEVER IS SIGNED IN, AND THE PAGE HAS TO SAY
   SO LOUDLY** — *"on my phone it's showing nothing but on my laptop it's
   showing two"*, both right: `whoIs()` reads a COOKIE. **THE PREVIEW STAYS** —
