@@ -5900,6 +5900,63 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .tier-preview .tier-half.t-gold.live   { background: #ffd23f; color: #1a1200; }
 .tier-preview .tier-half:disabled { opacity: 0.5; cursor: default; }
 
+/* ---- THE SUBSCRIBER'S OWN RUNGS — `console-tiers.js`.
+ *
+ * The owner's control above is a downgrade tool and lives in a topbar corner,
+ * so it is three initials. This one sells, is read by somebody who has never
+ * seen it, and sits in a panel with room — so it spells the words. Rendered
+ * side by side before choosing: a locked `S` at half opacity is a grey dot.
+ *
+ * The metal is the meaning here, exactly as on the rungs above and the tier
+ * panels — a scheme changes personality, never meaning. A locked rung KEEPS
+ * its metal, dimmed, rather than going flat grey: it has to read as the thing
+ * you could have. */
+.tier-rungs { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.tier-rung {
+  padding: 7px 13px; min-height: 32px;
+  border: 1px solid var(--panel-line); border-radius: var(--r-pill);
+  background: none; color: var(--ink-dim);
+  font: inherit; font-size: var(--fs-tag); font-weight: 800;
+  cursor: pointer;
+}
+.tier-rung.tier-bronze { --tier: #cd7f32; --tier-ink: #1a0e02; }
+.tier-rung.tier-silver { --tier: #c0c7d0; --tier-ink: #10131a; }
+.tier-rung.tier-gold   { --tier: #ffd23f; --tier-ink: #1a1200; }
+/* Yours and on-trial are both "this works" and look the same, because they
+   are the same fact from the account's side. What differs is how long, and
+   the card says that in words rather than in a third colour nobody can
+   decode. */
+.tier-rung.is-yours, .tier-rung.is-trial {
+  background: var(--tier); color: var(--tier-ink); border-color: transparent;
+}
+/* The rgba fallback comes FIRST, or a browser without `color-mix` drops the
+   declaration and the locked rung loses its tint entirely. */
+.tier-rung.is-locked { color: var(--ink-dim); opacity: 0.72; }
+.tier-rung.is-locked { color: color-mix(in srgb, var(--tier) 72%, var(--ink-dim)); }
+.tier-rung.is-locked:hover, .tier-rung.is-locked:focus-visible { opacity: 1; }
+.tier-rung[aria-expanded="true"] { outline: 2px solid var(--hot); outline-offset: 2px; }
+
+/* `rung-row`, NOT `tier-row` — that name is already the owner page's
+   feature-mover (`owner.js`), whose own rule sits 3,300 lines lower in this
+   sheet and therefore WON: my block laid itself out as a flex row, the card
+   floated beside the pills, and at 390px the text wrapped to "A topical quiz /
+   every week". Nothing threw and it looked deliberate. Same trap as the
+   `border` shorthand, wearing a class name. */
+.rung-row { margin-top: 10px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.tier-card {
+  width: 100%; max-width: 340px; padding: 12px 14px;
+  background: var(--surf-2, rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--panel-line); border-radius: var(--r-card);
+}
+.tier-card-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.tier-card-head.tier-bronze { --tier: #cd7f32; }
+.tier-card-head.tier-silver { --tier: #c0c7d0; }
+.tier-card-head.tier-gold   { --tier: #ffd23f; }
+.tier-card-head b { color: var(--tier, var(--ink)); font-size: var(--fs-head); }
+.tier-adds { margin: 0 0 8px; padding-left: 18px; }
+.tier-adds li { color: var(--ink-dim); line-height: 1.6; }
+.tier-card-foot { color: var(--ink); }
+
 /* The whole page picks up a gold hairline while the quizmaster hat is on, so
    even a screenshot of the middle of the console says which hat it was taken
    in. Cheaper than a banner and it covers nothing. */

@@ -1469,39 +1469,28 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   `src/gallery.js`.** The nights and the rulings are one file two callers edit,
   each reading it whole and writing it back — so a lamp write begun before a
   publish finished **silently un-published the night**, on a live gallery.
-  **AND THE BROWSER'S QUEUE CANNOT COVER IT**: the lamp settles for 600ms, so
-  the press that overlaps a publish is the one it has not started. Order it
-  where the FILE is.
+  **AND THE BROWSER'S QUEUE CANNOT COVER IT**: the press that overlaps a
+  publish is the one it has not started. Order it where the FILE is
 - **A READ-BACK SHA CAN BE STALE — `GitHub 409` reached a live console.** The
-  Contents API is served from a replica and a cache, so a `GET` moments after a
-  200 `PUT` can hand back the version before it. **The sha a `PUT` HANDS BACK
-  cannot be served stale**, so `putFile()` remembers it (`lastSha`). **It is a
-  CACHE, so it must be able to be wrong**, and a 409 is **forgotten, re-read
-  PAST the caches, retried once**. **All three halves fail on their own**, and a
-  409 that survives is said in WORDS
+  Contents API is served from a replica, so a `GET` moments after a 200 `PUT`
+  can hand back the version before it. **The sha a `PUT` HANDS BACK cannot be
+  served stale**, so `putFile()` remembers it. **It is a CACHE, so it must be
+  able to be wrong**: a 409 is forgotten, re-read PAST the caches, retried
+  once. **All three halves fail on their own**, and a surviving 409 is said in
+  WORDS
 - **A NIGHT IS A CARD WITH ITS PHOTOGRAPHS FANNED ON IT, GROUPED BY PUB** —
   `coverPhotos()`. **Pins lead, the rest is a SPREAD**, stable, seeded off the
   date. **BUILT FROM THE SAME FILTERED LIST THE NIGHT'S PAGE SHOWS**, so a pin
   cannot advertise a photograph that page refuses. **A pin is a PREFERENCE; the
   lamp is the GATE. Three, refused not trimmed.**
-- **A GALLERY IS PAID FOR ONCE — not per photo, not per visitor.** GitHub
-  allows 5,000 calls an hour and a 99-photo night once cost ~297 **per page
-  open**, to a pub full of people who were all there the SAME night — the worst
-  shape for a limit. Both caches: 20 people, 600 requests, **0 calls**.
-  - **`inOrder()` drops the file on every write, IN and OUT** — stale here
-    serves a photo somebody asked to have removed. **It caches the PROMISE**,
-    or 99 arriving at once all miss together.
-  - **Bytes: a filed photo is immutable by NAME, so only a DELETION
-    invalidates one** (`dropPhoto()`). **Nothing deciding who may see it is
-    cached with them. Bounded 48MB LRU — this process also runs live quizzes
-    on a 512MB box.**
-  - **The browser window is NOT lengthened past a day**: taking a photo down is a
-    promise a cache cannot reach.
-  - **THE INDEX LISTED EVERY NIGHT'S FOLDER ONE AFTER ANOTHER** — 22 calls,
-    **3.3 SECONDS**. Together and held: 0 calls. **A folder changes in exactly
-    three places** and all three `dropNight()`, tested over real HTTP because
-    what matters is that the ROUTES drop it.
-  - **Publishing paints in place; it does NOT re-render.**
+- **A GALLERY IS PAID FOR ONCE — not per photo, not per visitor.** A 99-photo
+  night once cost ~297 GitHub calls **per page open**, against a 5,000/hour
+  limit, to a pub full of people who were all there the SAME night. Both
+  caches: 20 people, 600 requests, **0 calls**. **Nothing deciding who may see
+  a photo is cached with it**; **the browser window is NOT lengthened past a
+  day** — taking a photo down is a promise a cache cannot reach; **48MB LRU**,
+  because this process also runs live quizzes on a 512MB box. Full reasoning
+  and the four invalidation points: **[`docs/gigs/gallery-page.md`](docs/gigs/gallery-page.md)**.
 - **EVERY WRITER OF `published.json` CARRIES THE HALVES IT IS NOT CHANGING** —
   nights, rulings, pins. The third is when it gets forgotten; a test walks them.
 - **A NIGHT NAMES ITS PUB AND STEPS TO THE ONE EITHER SIDE AT THAT PUB**,
@@ -1731,6 +1720,35 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
   shelf**, which put a till at the bottom of a working page.
 - **HELP KEEPS ITS OWN TAB, NO `needs`, LAST**, and the door is ungated: it is
   where you go when what is wrong is your subscription.
+
+### THE RUNGS ON A SUBSCRIBER'S ACCOUNT SELL; THEY MUST NEVER GRANT
+
+`console-tiers.js`, on My account.
+Bronze / Silver / Gold, yours lit in its metal, the ones above locked; pressing
+one opens a card naming what that rung holds. Asked for off the owner's own hat
+switch — *"if they're only paying for bronze then silver and gold should be
+greyed out, and maybe a tooltip should come out trying to sell it."*
+
+- **IT IS SHAPED LIKE THE OWNER'S AND IS THE OPPOSITE OF IT.** `tierPreview()`
+  in `client.js` DOWNGRADES a comped account through `/api/owner/act-as`. This
+  one only sells: **pressing Gold on a Bronze account must stay inert**, or
+  Gold is free. The owner sees both, so his keeps INITIALS and this spells
+  WORDS — which is also what makes it readable, rendered first: a locked `S`
+  at half opacity is a grey dot to somebody who has never seen the control.
+- **A LOCKED RUNG IS PRESSABLE** — `disabled` greys it and swallows the press,
+  and the sell is the point. It keeps its metal, dimmed.
+- **NOT A NATIVE `title`** — unstyled, lands over what is beneath it, dead on a
+  touchscreen. A card, outside-click close, one document listener for all rows.
+- **BUILT FROM `ladderFor()`, never written out**, and **`NOT_BUILT` says "not
+  yet"**: a rung listing something that does not exist is one nobody trusts.
+- **NO SUBSCRIBE BUTTON UNTIL THERE IS A PROCESSOR** — *"Get in touch to move
+  up"*, the expired trial's own wording. A dead button is worse than a
+  sentence.
+- **`.tier-row` WAS ALREADY `owner.js`'S**, styled 3,300 lines lower and so
+  winning at equal specificity: the card floated beside the pills and wrapped
+  mid-sentence at 390px, silently. It is `.rung-row`.
+
+Full reasoning: **[`docs/business.md`](docs/business.md)**.
 
 ### A PAGE SCROLLS. THE PROJECTOR IS THE ONE THAT DOES NOT
 
@@ -2080,25 +2098,23 @@ costs. Both split off at the 100,000-byte cap.
   page, the single-photo route and this lamp. **A ruling that only restates the
   DEFAULT is CLEARED, not stored**
 - **THE COUNT AND THE PAGE ARE ONE QUESTION — `galleryPhotosOf()`.** The night
-  list counted on the filename while the page asked the ruling too. **The guard
-  sliced from `/api/gallery/` — with the slash, the night's PAGE** — so the
-  list was never a reader it checked. **AND WITH THE FAULT PUT BACK IT STILL
-  PASSED: it had matched the COMMENT explaining the fix.** A source check
-  strips comments first, or it goes green the better a file is documented
+  list counted on the filename while the page asked the ruling too. **AND WITH
+  THE FAULT PUT BACK THE GUARD STILL PASSED: it had matched the COMMENT
+  explaining the fix.** A source check strips comments first, or it goes green
+  the better a file is documented
 - **IT FLIPS NOW AND SAVES LATER.** The colour is the local truth and `saved`
   is the server's, so a failed write puts the lamp BACK and says why on the
   count line — never an `alert` for something that happened in the background,
-  never a silent revert. **It settles before it sends** (600ms): two taps that
-  end where they started write nothing, and every gallery write goes through
-  the one promise chain below
+  never a silent revert. **It settles before it sends** (600ms), and every
+  gallery write goes through the one promise chain above
 - **THE PUBLISH LAMP ASKS FIRST, AND THE QUESTION NAMES THE NIGHT** — *"so its
   clear what they're about to do."* The browser's own `confirm()`, like the
-  other twelve here: **a second kind of dialog beside the photo bin's is the
-  label collision wearing a dialog**, so it reads OK/Cancel, not Yes/No. **It
-  says the CONSEQUENCE** — a link strangers can open, or one going dead — which
-  a coloured P cannot. **AND SAYING NO MUST CHANGE NOTHING**: a confirm in front
-  of a press that happens anyway teaches that the question is a formality, and
-  it is the half that rots unseen, so the guard answers NO before yes
+  other twelve here: **a second kind of dialog is the label collision wearing a
+  dialog**, so it reads OK/Cancel, not Yes/No. **It says the CONSEQUENCE**,
+  which a coloured P cannot. **AND SAYING NO MUST CHANGE NOTHING** — a confirm
+  in front of a press that happens anyway teaches that the question is a
+  formality, and it is the half that rots unseen, so the guard answers NO
+  before yes
 - **A ROW READS ITS STATE WHEN BUILT, AND THIS RAIL IS NEVER REBUILT** — the
   press must ask AGAIN (`upNow()`), never close over `up`. It did, so every
   press after the first re-sent *publish*, against *"another click unpublishes
@@ -2138,52 +2154,38 @@ costs. Both split off at the 100,000-byte cap.
 - **`/gallery` SHOWS DRAFTS TO WHOEVER IS SIGNED IN, AND THE PAGE HAS TO SAY
   SO LOUDLY** — *"on my phone it's showing nothing but on my laptop it's
   showing two"*, both right: `whoIs()` reads a COOKIE. **THE PREVIEW STAYS** —
-  it is what checking a night before strangers see it IS; do not level the page
-  for everybody. It was said in `--fs-note` at `--ink-dim` above a wall of
-  photographs, to the one person who cannot tell by looking. A panel, full ink,
-  **not red** (nothing has gone wrong), naming how many and where the switch
-  is. **AND `live` HAD BEEN IN THE PAYLOAD PER NIGHT SINCE DAY ONE WITH NO CARD
-  DRAWING IT** — the fifth sighting: a banner says how many, only a card says
-  WHICH (*"Only you"*)
+  do not level the page for everybody. A panel, full ink, **not red** (nothing
+  has gone wrong), naming how many and where the switch is. **AND `live` HAD
+  BEEN IN THE PAYLOAD PER NIGHT SINCE DAY ONE WITH NO CARD DRAWING IT** — a
+  banner says how many, only a card says WHICH (*"Only you"*)
 - **AND `?as=visitor` STANDS THE PREVIEW DOWN, so the check is possible at
   all** — the browser a quizmaster checks in is the one signed into the
-  console, so telling him was necessary and not sufficient. **ON THE SERVER** —
-  a browser-side filter proves the page can hide a draft, not that the server
-  refuses one. **IT ONLY EVER SUBTRACTS, which is why it needs no gate**:
-  nothing in this app grants a permission from a query string. **It rides on
-  every request and link** like `key` and `?q=`, or the next page in is the
-  preview again. **PRESENT AND INERT** — drawn whether or not anything is a
-  draft, because *"is it really up?"* is asked when everything LOOKS fine.
-  **The way back is drawn on the "Not up yet" dead end**
+  console. **ON THE SERVER**: a browser-side filter proves the page can hide a
+  draft, not that the server refuses one. **IT ONLY EVER SUBTRACTS, which is
+  why it needs no gate** — nothing in this app grants a permission from a query
+  string. **It rides on every request and link**, or the next page in is the
+  preview again. **PRESENT AND INERT**, because *"is it really up?"* is asked
+  when everything LOOKS fine
 - **THE LEAGUE BAY IS A VENUE THAT FOLDS INTO ITS NIGHTS** — *"the summary is
   what displays when you click venue, and then you can click each night to see
   who won."* **The pub's own row is `The table`, INSIDE the fold, never the
   heading** — a heading that both folds and picks is one control doing two
-  jobs. **A night row is the DATE and nothing else** (*"save space here by just
-  putting the dates"*): *Won by …* under it wrapped to two lines on a long team
-  name, so four nights filled the bay — and the winner is the first row of the
-  night, one press away. **`evenings` rides in the payload, capped at
-  `NIGHT_ROWS`**, built where `leagueTable()` already has the evening's order —
-  **and it carries the POINTS**, so the browser needs no second copy of the
-  ladder. **A board with no `position` scores nobody**, and it fails quietly: a
-  night view with headers and an empty body
+  jobs. **A night row is the DATE and nothing else.** `evenings` rides in the
+  payload capped at `NIGHT_ROWS` **and carries the POINTS**, so the browser
+  needs no second copy of the ladder. **A board with no `position` scores
+  nobody**, and it fails quietly
 - **`node()` KEEPS THE FIRST ELEMENT AND DROPS THE REST, SILENTLY.** A grep
   cannot find these (nested template literals), so `node()` `console.error`s
   when it drops one.
 - **A VENUE HAS ITS OWN ADDRESS** — `/station-tap-wokingham/gallery/20-august`,
-  built by `public/assets/slugs.js`, shared by the server and the page like
-  `schemes.js`: two implementations of one slug is a link that works in the
-  browser and 404s on the server. **DERIVED, never stored**, so a rename
-  changes the address rather than leaving a stale one that lies. **The SAME
-  FILE is served**; the page reads its own path. **A ONE-SEGMENT PREFIX AT THE
-  ROOT IS A CATCH-ALL AND THE FIRST VERSION ATE `/api/gallery`** — two
-  segments, the second one `gallery`; `RESERVED` refuses the first and
-  `test/slugs.test.js` walks `server.js` for every literal top-level route.
-  **`ownAddress` on `/api/me` says whether the pretty form works** —
-  `role === 'owner'` in the browser was wrong in BOTH directions. **An address
-  is not a key**: the league switch and the published list still decide whether
-  that venue has a page at all
-
+  from `public/assets/slugs.js`, shared by the server and the page: two
+  implementations of one slug is a link that works in the browser and 404s on
+  the server. **DERIVED, never stored**, so a rename cannot leave a stale
+  address that lies. **A ONE-SEGMENT PREFIX AT THE ROOT IS A CATCH-ALL AND THE
+  FIRST VERSION ATE `/api/gallery`** — two segments, `RESERVED` refuses the
+  first, and `test/slugs.test.js` walks `server.js` for every literal top-level
+  route. **An address is not a key**: the league switch and the published list
+  still decide whether that venue has a page
 - **A LEAGUE IS A THING YOU RUN, AND IT IS OFF UNTIL SOMEBODY SAYS SO** —
   *"it might be misleading if this app just had that as standard even in venues
   that don't have a quiz league."* **The table is ARITHMETIC; a league is a
@@ -3250,7 +3252,7 @@ typo is dropped rather than quietly becoming a round of general knowledge.
 ## Checks
 
 ```bash
-npm test        # 1,603 tests, no network, injected clocks — must stay green
+npm test        # 1,643 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check

@@ -43,6 +43,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { consoleFiles } from './console-source.js';
 
 /** Comments mention names without using them; strings are left alone. */
@@ -295,4 +296,66 @@ test('no console module has grown back', () => {
       + '11,222 lines cost every session most of its context before any work started. Take a '
       + 'seam out of it, or raise the budget in this test deliberately.');
   }
+});
+
+/*
+ * ---- THE SUBSCRIBER'S RUNG ROW MUST NEVER CHANGE WHAT THEY HOLD ----------
+ *
+ * `console-tiers.js` draws Bronze / Silver / Gold on a quizmaster's account
+ * with the ones above theirs locked, and pressing one opens a card selling it.
+ * It is deliberately shaped like the OWNER's `tierPreview()` in `client.js`,
+ * which is the opposite control: that one DOWNGRADES a comped account through
+ * `/api/owner/act-as` so the owner can see what a Bronze subscriber sees.
+ *
+ * So the hazard is a future session "finishing" this one by wiring it to the
+ * same route — at which point pressing Gold on a Bronze account gives them
+ * Gold, and the ladder is decoration. It is a UI-only control by design and
+ * this is the assertion that keeps it one.
+ *
+ * **THE COMMENTS ARE STRIPPED FIRST.** A source check that greps the raw text
+ * matches the prose explaining the rule and passes for that reason alone —
+ * which has already happened once in this repo, on the gallery photo count,
+ * where the guard went green because it had matched the comment describing the
+ * fix. The better a file is documented, the more certain that failure is.
+ */
+test('the rung row is UI only — it can never grant a tier', () => {
+  const src = readFileSync(new URL('../public/assets/console-tiers.js', import.meta.url), 'utf8');
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+  for (const forbidden of ['act-as', 'postJson', 'fetch(', 'previewTier', 'location.reload']) {
+    assert.equal(code.includes(forbidden), false,
+      `console-tiers.js contains "${forbidden}". This row SELLS a tier; it must never `
+      + 'change what the account holds. The owner\'s tierPreview() in client.js is the '
+      + 'control that talks to the server, and it only ever downgrades his own comped account.');
+  }
+  // And the guard has to be able to fail: the string it looks for must be one
+  // the real granting control actually uses.
+  const client = readFileSync(new URL('../public/assets/client.js', import.meta.url), 'utf8');
+  assert.ok(client.includes('act-as'),
+    'client.js no longer mentions act-as, so the check above is looking for a string '
+    + 'nothing uses and would pass whatever console-tiers.js did.');
+});
+
+test('and something actually draws it', () => {
+  /*
+   * The gallery publish route existed for weeks with no caller: a perfect gate
+   * with no handle. A component nobody renders is the same fault, and it draws
+   * perfectly in isolation.
+   */
+  const drawn = consoleFiles().filter(({ name, src }) => name !== 'console-tiers.js' && src.includes('tierRow('));
+  assert.ok(drawn.length >= 1, 'nothing in the console calls tierRow() — the row is never drawn');
+});
+
+test('the rung row does not reuse a class name the owner page already owns', () => {
+  /*
+   * `.tier-row` IS taken — `owner.js`'s feature-mover — and its rule sits 3,300
+   * lines lower in the stylesheet, so at equal specificity it WON: this row
+   * laid out as a flex row, the card floated beside the pills and at 390px the
+   * text wrapped mid-sentence. Nothing threw and it looked deliberate. The same
+   * trap as the `border` shorthand, wearing a class name.
+   */
+  const src = readFileSync(new URL('../public/assets/console-tiers.js', import.meta.url), 'utf8');
+  assert.equal(/class="tier-row"/.test(src), false,
+    'console-tiers.js is using .tier-row, which owner.js already owns and which is styled '
+    + 'later in style.css — it will silently win.');
 });

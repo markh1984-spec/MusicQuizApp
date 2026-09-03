@@ -274,6 +274,120 @@ account that has paid nothing, which is precisely the shape the join-flood rule
 exists for: **hold it at a stated number rather than discovering it on an
 invoice.** The note is in `featuresFor()`, beside the grant.
 
+### THE RUNGS ON A SUBSCRIBER'S ACCOUNT — they sell, and they must never grant
+
+Asked for on 3 September 2026, pointing at the owner's own hat switch: *"I've
+got a little button that I can switch between gold, silver, and bronze. I feel
+like all of the Quizmaster accounts should get that as well. But obviously, if
+they're only paying for bronze then silver and gold should be greyed out, and
+maybe a tooltip should come out trying to sell it."*
+
+`console-tiers.js`, on My account.
+
+#### The trap is that the owner's control is the OPPOSITE control
+
+`tierPreview()` in `client.js` is a DOWNGRADE tool. The owner's linked
+quizmaster account is comped, so wearing the hat has only ever shown the top of
+the ladder — and every irritation a Bronze subscriber hits is invisible from
+there. Pressing `B` calls `/api/owner/act-as` and makes his own console render
+as Bronze, so *"Rob says the Invoices tab has gone"* is answerable.
+
+A subscriber's version can only ever do the reverse, and **the reverse is the
+one thing it must not actually do**: pressing Gold on a Bronze account has to
+be inert, or the ladder is decoration and Gold is free. So the two controls
+look alike and mean opposite things — which is exactly the label collision this
+project hunts, and the owner is the one person who sees both, his own in the
+topbar and this one when he wears the quizmaster hat.
+
+**The separation is the words.** His keeps its three initials: he uses it
+daily, a topbar corner has no room, and `B S G` is faster to him than labels.
+This one spells Bronze / Silver / Gold. `test/console-split.test.js` asserts
+the module contains no `act-as`, no `postJson`, no `fetch(` and no
+`location.reload` — **with the comments stripped first**, because a source
+check that greps raw text matches the prose explaining the rule and passes for
+that reason alone. That has already happened here once, on the gallery photo
+count. The same test checks that `client.js` still contains `act-as`, so the
+guard cannot quietly start looking for a string nothing uses.
+
+#### Rendering it first is what decided the shape
+
+Three treatments were built from the real stylesheet before anything was
+chosen, which is this project's standing rule for a UI question.
+
+- **The initials do not survive the audience change.** A locked `S` and `G` at
+  `opacity: 0.5` in 24px chips are two grey dots. That is fine for the one
+  person who uses the control constantly and useless to somebody who has never
+  seen it.
+- **A locked rung has to be PRESSABLE**, because the sell is the entire reason
+  it is on screen. `disabled` greys it correctly and then swallows the press.
+  It is `.locked`, a real button, keeping its metal dimmed — it has to read as
+  the thing you could have rather than as a thing that is broken.
+- **Not a native `title`.** A hover tooltip is an unstyled box that lands over
+  whatever is beneath it and does nothing at all on a touchscreen, which is
+  where the host usually is — the same reasoning that took `title` out of the
+  bay rail. It is a card, and it closes on an outside click, because a popover
+  only its own button can close is a trap. One document listener for every row,
+  not one per render: the account page is rebuilt on every state push.
+- **Every rung answers, including the one you are on.** A row where two of the
+  three do something is one you have to learn — the gap dial's rule, that every
+  state is a real answer.
+
+#### What the card says, and where it comes from
+
+Built from `ladderFor()` rather than written out, so a feature moving tier in
+`FEATURE_TIER` moves here too and this cannot start quoting a rung that is not
+the one being sold. Each card is that rung's packs, then the capabilities that
+START at it — `ladderFor()` has already filtered `features` to those, so the
+list reads as "what this adds" with no arithmetic here.
+
+**Anything in `NOT_BUILT` says "not yet"**, which today is Online quizzes on
+Gold. A rung listing something that does not exist is one nobody trusts the
+rest of.
+
+**There is no Subscribe button, because there is no processor yet.** The
+locked card ends *"Get in touch to move up"* — the wording the expired-trial
+note already uses. A button that does nothing is worse than the sentence; that
+line becomes the button the day Stripe lands.
+
+#### It is NOT on the Shop tab, and it was built there before that was obvious
+
+The placement chosen was "My account and the Shop". It went in at the head of
+the Shop's tiers panel, and rendering it settled the question the other way:
+the row's Silver card read *"The whole catalogue / Advert slides / Quiz
+leagues"* directly above a table whose Silver column says exactly that, and
+says it beside the other two rungs. **Two controls answering one question, ten
+pixels apart** — and the table is the better half, because comparing is the
+whole reason somebody is on that tab.
+
+So the row has one home. This is the *read-only summary may repeat* rule
+reaching its limit: a summary may repeat somewhere the fuller answer is not,
+and it may not sit on top of the fuller answer.
+
+#### A live trial lights every rung, and says so
+
+`trialPreview()` grants the whole ladder's capabilities, so during a trial a
+locked Gold would be the app lying about its own behaviour — the features
+genuinely work. Every rung is lit and the card says *"Switched on for the rest
+of your trial"*. Which rung is YOURS stays the one you are billed for, from
+`included`; the trial is said in words rather than smuggled into the lit state,
+so nothing has to guess later what somebody is actually paying for.
+
+#### `.tier-row` was already taken, and it won silently
+
+`owner.js`'s feature-mover owns that class, and its rule sits 3,300 lines lower
+in `style.css` — so at equal specificity it won. The row laid itself out as a
+flex row, the card floated beside the pills, and at 390px the text wrapped to
+"A topical quiz / every week". Nothing threw and it looked deliberate.
+
+It is `.rung-row`. This is the `border`-shorthand trap wearing a class name,
+and the general lesson is the same one: **a later rule at equal specificity
+wins, and CSS reports nothing.** It was found by measuring the computed
+`display` and walking up the ancestors, not by reading the stylesheet.
+
+A second, quieter case in the same change: `--tier` is declared on each RUNG,
+and the card is a sibling rather than a child — so the card's heading inherited
+nothing and drew in body ink. The metals are declared on the card head too.
+
 ### Pictures in a quiz — the bit that changes when you start selling
 
 **"Fair use" is American. The UK has "fair dealing", and it is much narrower.**

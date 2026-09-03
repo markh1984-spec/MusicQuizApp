@@ -8,6 +8,7 @@ import { night } from './console-tonight.js';
 import { money } from './console-invoices.js';
 import { TABS, can, currentTab, hostKey, keyed, load, render } from './console.js';
 import { FEATURES, FEATURE_META, NOT_BUILT, SWITCHABLE } from './plans.js';
+import { priceLabel, tierRow } from './console-tiers.js';
 import { paintScheme } from './schemes.js';
 
 /**
@@ -689,7 +690,7 @@ function comparePanel() {
    * the cumulative fact once. The capability rows already read cumulatively on
    * their own, because the ticks repeat down the columns.
    */
-  return node(`
+  const panel = node(`
     <div class="panel">
       <h3>The tiers</h3>
       <div class="cmp-scroll">
@@ -728,12 +729,21 @@ function comparePanel() {
         photos from the room, past gigs, invoicing and your diary. What changes is how
         much of the catalogue you get.</div>
     </div>`);
-}
 
-/** £30 a month, £15 a month, or "included". Pence in, words out. */
-function priceLabel(pence) {
-  if (!pence) return 'included';
-  return `£${(pence / 100).toFixed(pence % 100 ? 2 : 0)} a month`;
+  /*
+   * NO RUNG ROW HERE, AND IT WAS BUILT BEFORE THAT WAS OBVIOUS.
+   *
+   * The row went in at the head of this panel and was rendered: its Silver
+   * card read "The whole catalogue / Advert slides / Quiz leagues" directly
+   * above a table whose Silver column says exactly that, side by side with the
+   * other two. Two controls answering one question, ten pixels apart — the
+   * label collision, and the table is the better half because comparing is the
+   * whole reason somebody is on this tab.
+   *
+   * It stays on My account, where there is no table and the question is "what
+   * am I on, and what would I get". Do not add it back here.
+   */
+  return panel;
 }
 
 /**
@@ -1248,10 +1258,11 @@ function youPanel() {
         <div><div class="tiny">Name</div><div class="acct-val">${esc((me && me.name) || '—')}</div></div>
         <div><div class="tiny">Email</div><div class="acct-val">${esc((me && me.email) || '—')}</div></div>
         <div><div class="tiny">On your projector</div><div class="acct-val brand-preview">${esc(library.brand || '')}</div></div>
-        <div><div class="tiny">Tier</div><div class="acct-val">${esc(tierName)}</div></div>
+        <div><div class="tiny">Tier</div><div class="acct-val acct-tier">${esc(tierName)}</div></div>
         <div><div class="tiny">Subscription</div>
           <div class="acct-val ${bad ? 'bad' : 'good'}">${esc(statusWords)}</div></div>
       </div>
+      <div class="tier-slot"></div>
       <div class="tiny acct-note">Your projector name is your first name and the app's, so it matches
         how you introduce yourself.</div>
       ${ent.trialExpired ? `<div class="tiny acct-note bad"><b>Your trial has ended.</b>
@@ -1267,6 +1278,16 @@ function youPanel() {
         your tier throughout.</div>` : ''}
       ${me && !me.bootstrap ? '<div class="row acct-actions"><button class="minor" id="acctPw">Change your password</button></div>' : ''}
     </div>`);
+
+  /*
+   * THE RUNGS, UNDER THE FACTS ABOUT THE ACCOUNT — see `console-tiers.js`.
+   *
+   * A read-only summary MAY repeat, which is the rule that lets this sit here
+   * AND at the head of the Shop's tiers panel: one is "what am I on", asked
+   * while looking at your own account, and the other is "what would I get",
+   * asked while looking at prices. A QUEUE may not repeat; this is neither.
+   */
+  el.querySelector('.tier-slot')?.appendChild(tierRow(ent) || document.createComment('no ladder'));
 
   el.querySelector('#acctPw')?.addEventListener('click', async () => {
     const current = prompt('Your current password');
