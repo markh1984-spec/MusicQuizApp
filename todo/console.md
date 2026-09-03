@@ -79,3 +79,39 @@ has a `dirty` flag and a confirm-on-leave, which is most of the draft
 behaviour, and reusing it would keep one definition of what saving a pack
 means.
 
+
+---
+
+## A BINGO TILE'S GAP DIAL SITS AFTER THE PACK AND MEANS BEFORE IT
+
+Reported off a two-bingo night, in his own words: ***"hella confusing"***.
+
+**The behaviour is correct and only the LABELLING is wrong — do not "fix" it
+by moving which gap the dial owns.** A quiz pack contributes rounds, so the
+gaps it creates come after them; a bingo pack has no rounds and cannot be
+broken up, so the only gap it can own is the one BEFORE it — its own lobby.
+That is written out in `gapsOfPack()` in `console-breaks.js` and it is the
+only arrangement that gives every gap in a mixed night exactly one dial.
+
+What it looks like on screen is the problem. On a two-bingo night the row
+draws **Doors · MBC 4 (no dial) · MBC 3 (dial)** — so the FIRST pack looks
+like it has no break control and the LAST looks like it owns something after
+the end of the night, when in fact the doors dial is round one's and the MBC 3
+dial is the interval between the two.
+
+**The wording already exists and is only in a `title`** — `gapDial()` is
+handed `what: 'the gap before this'` for a pack with no rounds, against
+`'the breaks this pack makes'` for one with them. A tooltip is no use to
+somebody driving this with a thumb in a dark pub, which is this file's own
+standing complaint about native tooltips.
+
+**The fix is to put the word on the tile**, not to add a second control: a
+small `before` caption beside the dial on a bingo tile only, taking the
+wording from the same `what` string so the two cannot drift. Check it against
+the measurements in `docs/console/launch-bar.md` first — that corner is
+already 58px of clear space holding one 44px control, and the era word was
+dropped from a Tonight tile precisely because there was no third place to put
+anything. **If the caption does not fit, the answer is a different dial icon
+state rather than a bigger tile.**
+
+Do not do this on a gig day. It is on the protected launch path.
