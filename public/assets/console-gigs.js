@@ -835,7 +835,19 @@ export async function nightPhotos(body, night, opts = {}) {
     const shot = node(`<figure class="cphoto filed">
       <img src="${esc(p.url)}" alt="" loading="lazy" decoding="async">
       <button class="cphoto-pin ${p.pinned ? 'is-on' : ''}" type="button">${pinIcon(15)}</button>
-      <button class="cphoto-pub ${p.onGallery ? 'is-on' : 'is-off'}" type="button"></button>
+      ${p.senderSaidNo
+        /*
+         * A STATUS, NOT A SWITCH. The person in the picture asked for it not to
+         * go on the website, and that is the one answer the lamp may not
+         * overrule — so there is no lamp. Drawing one that refuses to move
+         * would be the dead control this console keeps being caught by, and
+         * drawing one that WORKED would quietly undo somebody's consent months
+         * later, from a tidy-up.
+         */
+        ? `<span class="cphoto-pub is-locked" role="img"
+             title="The person who sent this asked for it not to go on the website"
+             aria-label="Kept off the website at the sender's request"></span>`
+        : `<button class="cphoto-pub ${p.onGallery ? 'is-on' : 'is-off'}" type="button"></button>`}
       <button class="cphoto-bin" type="button" aria-label="Delete this photo">${binIcon(15)}</button>
     </figure>`);
 
@@ -847,6 +859,13 @@ export async function nightPhotos(body, night, opts = {}) {
     let live = Boolean(p.onGallery);
     const pill = shot.querySelector('.cphoto-pub');
     const paintPill = () => {
+      /*
+       * A STATUS HAS NOTHING TO SAY BACK, but the BIN and the PIN below still
+       * have to work — a photograph somebody asked to keep off the website is
+       * exactly the one a quizmaster is most likely to want to delete, so
+       * returning early here would have taken the delete away with the lamp.
+       */
+      if (p.senderSaidNo) return;
       pill.classList.toggle('is-on', live);
       pill.classList.toggle('is-off', !live);
       /*
@@ -922,6 +941,14 @@ export async function nightPhotos(body, night, opts = {}) {
       // Belt to the figure's own braces above: a lamp is a control ON a
       // picture, and pressing it must never also mean "open this".
       ev.stopPropagation();
+      /*
+       * A REFUSED PHOTOGRAPH'S MARKER IS NOT A SWITCH. It is a `<span>`, so it
+       * takes no keyboard press and looks like nothing to aim at — but a
+       * listener attached to it would still fire on a stray tap and post a
+       * ruling the server is right to ignore, which is the silent
+       * disagreement between console and page this file exists to prevent.
+       */
+      if (p.senderSaidNo) return;
       live = !live;
       paintPill();
       /*

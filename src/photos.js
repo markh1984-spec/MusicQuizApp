@@ -54,6 +54,23 @@ const ALLOWED = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.web
  */
 export const NOT_CAMERA_SUFFIX = '-picked';
 
+/**
+ * THE SENDER SAID DO NOT PUT THIS ON THE WEBSITE.
+ *
+ * In the NAME, like the camera marker above it and for the same reason: the
+ * private repo has no structured metadata, a photograph is a file name, and a
+ * marker that rides in the name survives the round trip with nothing to keep
+ * in step. It also means every reader of `showsOnGallery()` honours it without
+ * being changed, which is the whole point of that function having four callers
+ * and one definition.
+ */
+export const NO_WEB_SUFFIX = '-noweb';
+
+/** Whether the person who sent it is happy for it to be published. */
+export function senderAllowsWeb(name) {
+  return !String(name || '').includes(NO_WEB_SUFFIX);
+}
+
 /** Whether a filename this app issued was marked NOT camera-taken. */
 export function isCameraFile(name) {
   return !String(name || '').includes(NOT_CAMERA_SUFFIX);
@@ -120,6 +137,13 @@ export function showsByDefault(_name) {
  * @param {string} said      'on' | 'off' | undefined — the human's ruling
  */
 export function showsOnGallery(name, said) {
+  /*
+   * **A SENDER'S NO IS THE ONE ANSWER NOBODY ELSE CAN OVERRULE**, so it is
+   * asked before the quizmaster's own ruling rather than after it. A consent
+   * that a lamp can switch back on is not consent, and the lamp is the control
+   * most likely to be pressed by somebody tidying up months later.
+   */
+  if (!senderAllowsWeb(name)) return false;
   if (said === 'on') return true;
   if (said === 'off') return false;
   return showsByDefault(name);
@@ -312,7 +336,7 @@ export class Photos {
    * @param {Buffer} bytes
    * @param {object} meta  { contentType, playerId, teamName, filter, camera }
    */
-  add(bytes, { contentType, playerId = '', teamName = '', filter = '', camera = false } = {}) {
+  add(bytes, { contentType, playerId = '', teamName = '', filter = '', camera = false, web = true } = {}) {
     if (!this.state.enabled) return { ok: false, reason: 'off' };
     if (!bytes || !bytes.length) return { ok: false, reason: 'empty' };
     if (bytes.length > MAX_BYTES) return { ok: false, reason: 'too_big' };
@@ -335,7 +359,7 @@ export class Photos {
      * decided once, here, and every later reader — the gallery filter, the
      * console's own badge — just looks at the name it already has.
      */
-    const name = id + (camera ? '' : NOT_CAMERA_SUFFIX) + ext;
+    const name = id + (camera ? '' : NOT_CAMERA_SUFFIX) + (web ? '' : NO_WEB_SUFFIX) + ext;
 
     try {
       fs.mkdirSync(this.dir, { recursive: true });

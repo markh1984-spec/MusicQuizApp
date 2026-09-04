@@ -19,7 +19,7 @@ import { config, paths, hostKey, hostKeyIsTemporary } from './src/config.js';
 import { Store } from './src/store.js';
 import { Hub } from './src/sse.js';
 import {
-  Photos, MAX_BYTES, extensionFor, showsOnGallery, showsByDefault, galleryPhotosOf,
+  Photos, MAX_BYTES, extensionFor, showsOnGallery, showsByDefault, galleryPhotosOf, senderAllowsWeb,
   coverPhotos, sniffType, nightOf,
 } from './src/photos.js';
 
@@ -2495,6 +2495,14 @@ async function handleGet(req, res, url, route) {
           // difference between "we thought you uploaded this" and "you turned
           // it off", which are different things to want to change.
           ruled: rulings[photoKey(night, name)] || '',
+          /*
+           * THE SENDER ASKED FOR IT NOT TO BE PUBLISHED. Worked out here for
+           * the same reason `onGallery` is — the browser must not hold a second
+           * copy of a rule the server owns — and drawn as a STATUS rather than
+           * a lamp, because a switch that cannot change anything is a dead
+           * control and this one deliberately cannot.
+           */
+          senderSaidNo: !senderAllowsWeb(name),
         })),
     }), true;
   }
@@ -5589,6 +5597,13 @@ async function handleWrite(req, res, url, route) {
       // gate: every photo still goes up regardless, this only decides
       // whether it is eligible for the public gallery later.
       camera: url.searchParams.get('camera') === '1',
+      /*
+       * THE SENDER'S OWN ANSWER, and the only one the quizmaster cannot
+       * overrule. The projector is unchanged either way — they chose to send
+       * it and the room can already see the screen — so this decides one
+       * thing: whether it may ever be published to the open web.
+       */
+      web: url.searchParams.get('web') !== 'no',
     });
     if (result.ok) {
       pushState(room);
