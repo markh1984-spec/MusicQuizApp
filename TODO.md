@@ -18,6 +18,30 @@ decision from the host first.
 `test/todo-budget.test.js` fails if anything left in the list claims to be done.
 
 
+### 1. PLAY FOUR LOBBY GAMES ON A REAL PHONE — the only thing left on them
+
+**Nothing else here is blocked on the host; this is.** Rally, Tailback, Quick
+Draw and **Pile Up** have never been touched by a human thumb — every check on
+them so far has been a headless browser, and this repo's own history says that
+proves the code runs, not that the game is playable. **Maze Mouth is done**
+(4 September 2026) and its corners and its new death are worth a second look at
+the same time.
+
+**How:** open the console, drop a pack into Tonight, set **Game** to each in
+turn, Launch, and join on the phone — the join QR is on the projector, or
+**https://musicquizapp.onrender.com/play** for the house room. One code covers
+all five; the game is chosen at launch, not in the URL.
+
+**What only a phone can answer:** whether the controls read under a thumb,
+whether it is playable one-handed, whether Pile Up's crate is too fast by the
+tenth row, and whether Quick Draw's windows are generous enough on a real
+touchscreen — **a reaction game puts input latency in the score, and that is
+the one limit no test here can see.**
+
+**DELETE THIS ENTRY once he has played all four and said what is wrong.**
+
+---
+
 **AND ONE CORRECTION, because the old entry asked for the wrong thing.** It
 said to give a night "a real end time instead of the `+2 hours` default
 `ics.js` applies". A filed night has carried `finishedAt` all along — the +2
