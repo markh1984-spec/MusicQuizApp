@@ -134,6 +134,10 @@ const MEASURE = () => {
     const st = getComputedStyle(n);
     // A deliberate ellipsis is graceful truncation, not a clip.
     if (st.textOverflow === 'ellipsis' && st.whiteSpace === 'nowrap') continue;
+    // `-webkit-line-clamp` is the multi-line version of the same thing: it
+    // truncates with an ellipsis on purpose. The call sheet uses it so no box
+    // is twice the height of its neighbours, with the reason written above it.
+    if (st.webkitLineClamp && st.webkitLineClamp !== 'none') continue;
     const hidden = st.overflow === 'hidden' || st.overflowY === 'hidden' || st.overflowX === 'hidden';
     const dh = n.scrollHeight - n.clientHeight;
     const dw = n.scrollWidth - n.clientWidth;
@@ -312,6 +316,172 @@ try {
       }
     }
     await p.screenshot({ path: `${SHOTS}/24-host-scrolled__host__${v.name}.png` });
+  }
+
+  /*
+   * AND THE WHOLE BINGO NIGHT, which is a DIFFERENT ENGINE with different
+   * screens — a card in somebody's hand, a call sheet on the wall, a claim, a
+   * prize stage, fresh cards. None of it shares a view with the quiz, so none
+   * of it was covered by anything above.
+   */
+  {
+    const bctx = {};
+    for (const v of VIEWS) {
+      const ctx = await browser.newContext({ viewport: { width: v.w, height: v.h } });
+      const pages = { screen: await ctx.newPage(), phone: await ctx.newPage(), host: await ctx.newPage() };
+      for (const [role, pg] of Object.entries(pages)) {
+        pg.on('pageerror', (e) => errors.push(`bingo ${v.name}/${role}: ${e.message}`));
+        pg.on('console', (m) => { if (m.type() === 'error') errors.push(`bingo ${v.name}/${role}: ${m.text().slice(0, 120)}`); });
+      }
+      bctx[v.name] = pages;
+    }
+    const bshot = async (state) => {
+      for (const v of VIEWS) {
+        for (const [role, pg] of Object.entries(bctx[v.name])) {
+          await pg.screenshot({ path: `${SHOTS}/${state}__${role}__${v.name}.png` });
+          note(`${state} ${role}/${v.name}`, await pg.evaluate(MEASURE));
+        }
+      }
+    };
+
+    // A 5x5 with three prizes, so every stage — a line, two lines, a full house.
+    await api('/api/host/launch', { game: 'bingo', packId: 'eighties-bingo', replace: true,
+      shape: { rows: 5, cols: 5 }, prizes: 3 });
+    await wait(1000);
+    for (const v of VIEWS) {
+      await bctx[v.name].screen.goto(`${B}/screen`, { waitUntil: 'domcontentloaded' });
+      await bctx[v.name].host.goto(`${B}/host?key=${KEY}`, { waitUntil: 'domcontentloaded' });
+      await bctx[v.name].phone.goto(`${B}/play`, { waitUntil: 'domcontentloaded' });
+    }
+    await wait(2500);
+    await bshot('b01-lobby');
+
+    for (const v of VIEWS) {
+      await bctx[v.name].phone.waitForSelector('#nameInput', { timeout: 15000 });
+      await bctx[v.name].phone.fill('#nameInput', `Bingo ${v.name}`);
+      await bctx[v.name].phone.click('#joinBtn');
+    }
+    await wait(2000);
+    await bshot('b02-joined');
+
+    /* `start`, not `next` — bingo has its own dispatcher and `next` is a quiz
+       action, so calling it here left the game sitting in the lobby and every
+       screenshot after it was of a lobby. */
+    await api('/api/host/start');
+    for (let i = 0; i < 25 && (await phase()) === 'lobby'; i += 1) await wait(200);
+    await wait(1500);
+    if ((await phase()) === 'lobby') found.push('bingo: the game would not start — still in the lobby after `start`');
+    await bshot('b03-card');
+
+    /* The tracks under one phone's card, so the calling can actually reach a
+       win rather than hoping — and CALLED BY PRESSING THE CALL SHEET, which is
+       what a host does and what an API call would not prove. */
+    /* The TITLE only — `.bt` — because a cell also carries the artist and the
+       call sheet is matched on its own `.tt`. Comparing whole cell text against
+       a title never matched, so nothing was ever called and every screen after
+       it was of a game that had not started. */
+    const cardTitles = await bctx.mobile.phone.evaluate(() =>
+      [...document.querySelectorAll('.bingo-cell')].map((n) => {
+        const t = n.querySelector('.bt');
+        return (t ? t.textContent : n.textContent || '').trim();
+      }));
+    if (!cardTitles.length) found.push('bingo: the phone was issued no card once the game started');
+
+    const calledCount = () => fetch(`${B}/api/state?role=screen`).then((r) => r.json())
+      .then((x) => Number(x.calledCount || (x.called || []).length) || 0).catch(() => 0);
+
+    const callFor = async (titles) => {
+      for (const t of titles) {
+        const hit = await bctx.desktop.host.evaluate((want) => {
+          const box = [...document.querySelectorAll('.trackbox')]
+            .find((n) => (n.querySelector('.tt') || n).textContent.trim() === want);
+          if (!box || box.classList.contains('called')) return false;
+          box.scrollIntoView({ block: 'center' }); box.click(); return true;
+        }, t);
+        if (hit) await wait(220);
+      }
+    };
+    const before = await calledCount();
+    await callFor(cardTitles.slice(0, 5));
+    await wait(900);
+    if ((await calledCount()) === before) {
+      found.push('bingo: tapping a track on the call sheet did not call it — the count did not move');
+    }
+    await bshot('b04-tracks-called');
+
+    /* MARK ONCE, AND ONLY WHAT HAS BEEN PLAYED.
+       A square is good only when it is marked AND called, and a cell TOGGLES —
+       so clicking every cell on each pass turned the marks straight back off
+       and claimed on squares whose track had never been played. That is a false
+       alarm, which is a real state but not the one being tested. */
+    const markCalled = async () => {
+      for (const v of VIEWS) {
+        await bctx[v.name].phone.evaluate(() => {
+          for (const c of document.querySelectorAll('.bingo-cell')) {
+            if (!c.classList.contains('marked')) c.click();
+          }
+        });
+      }
+      await wait(1000);
+    };
+    await markCalled();
+    await bshot('b05-marked');
+
+    /* Then play the WHOLE SHEET rather than matching titles for the rest.
+       Matching left two squares uncalled — a title that differs by a character
+       between the card and the sheet is enough — and the phone then sat two
+       away from a line for ever. Pressing every uncalled box is what a caller
+       ends up doing anyway, and it cannot miss. */
+    /* ONE AT A TIME. Calling a track pushes state and the call sheet REBUILDS,
+       so a loop that grabs every uncalled box and clicks them in one go lands
+       the first press and throws the other nineteen at detached nodes — the
+       card then sits two squares short for ever and the claim is refused,
+       correctly, with "one of those has not been played". */
+    /* Read every track's id off the sheet ONCE, then play them. Pressing the
+       boxes one by one is what a caller does and it is checked above; for
+       getting to a full house it is the wrong tool, because the sheet rebuilds
+       under each press and a stale handle silently does nothing. */
+    const allIds = await bctx.desktop.host.evaluate(() =>
+      [...document.querySelectorAll('.trackbox')].map((n) => n.dataset.id).filter(Boolean));
+    for (const id of allIds) { await api('/api/host/call', { trackId: id }); }
+    await wait(1200);
+    const playedAll = await fetch(`${B}/api/state?role=screen`).then((r) => r.json())
+      .then((x) => Number(x.calledCount || 0)).catch(() => 0);
+    if (playedAll < allIds.length) {
+      found.push(`bingo: only ${playedAll} of ${allIds.length} tracks registered as played`);
+    }
+    await wait(900);
+    await markCalled();
+    await markCalled();
+    const armed = await bctx.mobile.phone.evaluate(() => {
+      const b = document.querySelector('#bingoCall');
+      return Boolean(b && !b.disabled);
+    });
+    await bshot('b06-bingo-armed');
+    if (!armed) found.push('bingo: BINGO! never became pressable with every track on the card played and marked');
+
+    if (armed) {
+      await bctx.mobile.phone.click('#bingoCall');
+      await wait(2200);
+      await bshot('b07-claimed');
+      const won = await fetch(`${B}/api/state?role=screen`).then((r) => r.json())
+        .then((x) => Boolean(x.win)).catch(() => false);
+      if (!won) found.push('bingo: BINGO! was pressed on a full line and the projector never showed a win');
+    }
+
+    /* On to the next prize, then a fresh round — the two moves a caller makes
+       between a claim and the rest of the night. */
+    await api('/api/host/playOn');
+    await wait(1800);
+    await bshot('b08-next-prize');
+
+    await api('/api/host/newRound');
+    await wait(2000);
+    await bshot('b09-new-round');
+
+    await bctx.mobile.phone.close();
+    await bctx.tablet.phone.close();
+    await bctx.desktop.phone.close();
   }
 
   /* AND THE FOUR LOBBY GAMES, which nothing else in this repo looks at. */
