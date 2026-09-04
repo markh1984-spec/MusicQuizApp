@@ -608,7 +608,26 @@ export class Session {
      * means "not asked for", which leaves `freshState()`'s default of three,
      * so nothing that does not send it changes at all.
      */
-    if (winners) {
+    /*
+     * **A QUIZ ONLY, AND THAT IS NOT A TIDY-UP — `winners` IS TWO FIELDS.**
+     *
+     * `bingo.js` has had `state.winners = { line: [], full: [] }` since it was
+     * written; the quiz's is a NUMBER of places. Writing the number onto a
+     * bingo game replaced the object, and `screenView()` then threw on
+     * `state.winners.line.map` — so **`/api/state` answered 500 and the
+     * projector went blank the moment a bingo game was launched with this
+     * field in the body**, which the console sends on every launch. Nothing in
+     * the suite saw it: every unit test calls `session.launch()` without
+     * `winners`, and the one field name reads as correct in both files.
+     *
+     * The name collision is the fault, and it is the label collision this
+     * repo hunts on screens, wearing a state field: two things called
+     * `winners` meaning different sets. It is fixed by KIND here rather than
+     * by renaming, because the quiz field is already in saved shows and in
+     * states on disk, and a rename would make every one of them read as
+     * "three" on the night somebody was expecting one.
+     */
+    if (winners && kind === 'quiz') {
       this.engine.state.winners = Math.max(1, Math.min(MAX_WINNERS, Math.floor(winners)));
     }
 

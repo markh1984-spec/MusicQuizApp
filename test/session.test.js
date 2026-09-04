@@ -433,3 +433,43 @@ test('a restart mid running-order restores the plan from the state, not from mem
     it.done();
   }
 });
+
+/*
+ * `winners` IS TWO DIFFERENT FIELDS AND THE COLLISION BLANKED THE PROJECTOR.
+ *
+ * The quiz's `state.winners` is a NUMBER of places, added on 3 September 2026
+ * and sent by the console on every launch. `bingo.js`'s has always been
+ * `{ line: [], full: [] }`. `session.launch()` wrote the number onto whatever
+ * engine it had just built, so launching a bingo game replaced the object —
+ * and `screenView()` threw on `state.winners.line.map`, which means
+ * `GET /api/state` answered 500 and **the big screen went blank**.
+ *
+ * Nothing saw it: every other test calls `launch()` without `winners`, and the
+ * name reads as correct in both files. Found by a browser walking the gig path
+ * and switching from a quiz to a bingo game, which is what a host does.
+ */
+test('launching a bingo game with the quiz\'s winners setting does not blank the projector', async () => {
+  const fs = await import('node:fs');
+  const os = await import('node:os');
+  const path = await import('node:path');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'winners-'));
+  const pack = bingoPack();
+  fs.writeFileSync(path.join(dir, `${pack.id}.json`), JSON.stringify(pack));
+
+  let at = START;
+  const session = new Session({
+    config: { dataDir: dir, quizDir: dir, bingoDir: dir, advertDir: dir },
+    store: { load: () => null, save: () => {}, flush: () => {}, write: () => {} },
+    onPush: () => {},
+    now: () => at,
+  });
+
+  session.launch('bingo', pack.id, { winners: 3 });
+  assert.deepEqual(
+    session.engine.state.winners, { line: [], full: [] },
+    'the quiz\'s number of places overwrote bingo\'s own winners object',
+  );
+  assert.doesNotThrow(() => session.screenView(), 'the projector\'s own view threw');
+
+  fs.rmSync(dir, { recursive: true, force: true });
+});
