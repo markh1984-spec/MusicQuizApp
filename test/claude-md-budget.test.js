@@ -555,7 +555,16 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * the lost-life behaviour, which was built the obvious way first and drew a
  * full-width crate balanced on a sliver.
  */
-const BUDGET = 209_800;
+/*
+ * AND TO 210_800 for MAZE MOUTH'S TURN BUFFER. Off the live game — *"you can
+ * press left or right ahead of the next turn and it'll remember"* — and the
+ * bullet is there because the FAULT is the part worth keeping: an arrow used
+ * to set a target by running down the corridor, so a blocked press targeted
+ * the player's own cell and stopped them dead. That is not obvious from the
+ * fix, and "run to the end of the corridor" is exactly the shape somebody
+ * would reintroduce as a tidy-up.
+ */
+const BUDGET = 210_800;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

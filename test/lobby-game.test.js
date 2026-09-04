@@ -18,7 +18,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { Engine } from '../src/engine.js';
-import { MAZE, COLS, ROWS, pellets, reachable, startPoints, open } from '../public/assets/maze.js';
+import { MAZE, COLS, ROWS, pellets, reachable, startPoints, open, stepToward, turnFrom } from '../public/assets/maze.js';
 
 const QUIZ = {
   id: 'test',
@@ -246,4 +246,103 @@ test('a game restored from before this existed still has a seed rather than none
   const view = back.playerView(join.id);
   assert.ok(view.gameSeed >= 1, 'a restored night handed the room no seed at all');
   assert.doesNotThrow(() => back.arcadeScore(join.id, 10));
+});
+
+/*
+ * ---- A TURN PRESSED EARLY IS REMEMBERED ---------------------------------
+ *
+ * Reported off the live game: *"the turning corners function is a little
+ * glitchy — usually you can press left or right ahead of the next turn and
+ * it'll remember to turn that way?"*
+ *
+ * It was worse than glitchy. The arrow handler set a TARGET by running as far
+ * down the corridor as it could, so with a wall that way the run never
+ * happened and the target came out as the cell the player was standing on —
+ * which `stepToward()` answers with null. Pressing a turn a moment early
+ * therefore STOPPED THE PLAYER DEAD, in front of three chasers, until they
+ * pressed again. From the starting cell both Up and Down do it.
+ */
+
+const LEFT = [-1, 0];
+const RIGHT = [1, 0];
+const UP = [0, -1];
+const DOWN = [0, 1];
+
+test('THE OLD ARROW HANDLER STOPPED YOU DEAD — the fault, pinned', () => {
+  /*
+   * Kept as a test of `stepToward` rather than of deleted code: it is the
+   * property the old handler leant on, and it is still true. Anybody
+   * reintroducing "run down the corridor and target the far end" gets a null
+   * step the moment there is a wall that way.
+   */
+  const you = startPoints().player;
+  assert.equal(open(you.col + UP[0], you.row + UP[1]), false, 'the start cell should have a wall above it');
+  let col = you.col;
+  let row = you.row;
+  while (open(col + UP[0], row + UP[1])) { col += UP[0]; row += UP[1]; }
+  assert.deepEqual({ col, row }, { col: you.col, row: you.row },
+    'a blocked run targets the cell you are standing on');
+  assert.equal(stepToward(you, { col, row }), null,
+    'and a target of your own cell is a null step — which is the player stopping dead');
+});
+
+test('a turn that is legal right now happens on the next step', () => {
+  const you = startPoints().player;
+  assert.equal(open(you.col + LEFT[0], you.row + LEFT[1]), true, 'the start cell should be open to the left');
+  const out = turnFrom(you, RIGHT, LEFT, 6);
+  assert.deepEqual(out.dir, LEFT);
+  assert.deepEqual(out.heading, LEFT, 'taking the turn has to become the new heading');
+  assert.equal(out.want, null, 'a turn that was taken must not stay buffered');
+});
+
+test('a turn into a wall does NOT stop you — you carry on and it waits', () => {
+  // The whole bug, stated as the behaviour that replaces it.
+  const you = startPoints().player;
+  const out = turnFrom(you, LEFT, UP, 6);
+  assert.deepEqual(out.dir, LEFT, 'pressing a blocked turn stopped the player dead');
+  assert.deepEqual(out.want, UP, 'the turn was forgotten instead of being remembered');
+  assert.equal(out.wantFor, 5, 'the buffer has to tick down or it never expires');
+});
+
+test('and it FIRES at the first cell where it becomes legal', () => {
+  /*
+   * The sentence he actually wrote: *"press left or right ahead of the next
+   * turn and it'll remember to turn that way"*. Walk the corridor with the
+   * turn held and assert it is taken at the first opening rather than missed.
+   */
+  const you = { ...startPoints().player };
+  let heading = LEFT;
+  let want = UP;
+  let wantFor = 6;
+  let turned = null;
+  let at = { ...you };
+  for (let i = 0; i < 6 && !turned; i++) {
+    const out = turnFrom(at, heading, want, wantFor);
+    heading = out.heading;
+    want = out.want;
+    wantFor = out.wantFor;
+    if (!out.dir) break;
+    if (out.dir === UP) { turned = { ...at }; break; }
+    at = { col: at.col + out.dir[0], row: at.row + out.dir[1] };
+  }
+  assert.ok(turned, 'walking left with Up held never took the turn at an opening');
+  assert.equal(open(turned.col, turned.row - 1), true,
+    'it turned at a cell with no opening above it');
+});
+
+test('the buffer expires, so a forgotten press cannot turn you later', () => {
+  // A turn nobody remembers asking for is worse than one that did not happen.
+  const you = startPoints().player;
+  let want = UP;
+  let wantFor = 1;
+  const out = turnFrom(you, LEFT, want, wantFor);
+  assert.equal(out.want, null, 'the last step of the buffer should drop it');
+  assert.deepEqual(out.dir, LEFT, 'and it must not stop the player on the way out');
+});
+
+test('running into a wall stops you facing it, and never picks a way for you', () => {
+  const you = startPoints().player;
+  const out = turnFrom(you, UP, null, 0);
+  assert.equal(out.dir, null, 'it should stop rather than invent a direction');
+  assert.equal(out.heading, null, 'and let go of the heading it could not follow');
 });

@@ -28,7 +28,7 @@
  * to do, not a game anybody is trying to beat.
  */
 
-import { MAZE, COLS, ROWS, open, startPoints, pellets, stepToward } from './maze.js';
+import { MAZE, COLS, ROWS, open, startPoints, pellets, stepToward, turnFrom } from './maze.js';
 /**
  * EVERY PHONE IN THE ROOM PLAYS THE SAME GAME, and that is what makes a
  * scoreboard mean anything.
@@ -91,6 +91,40 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
    * works too for anybody who prefers it.
    */
   let target = null;
+
+  /*
+   * THE ARROWS STEER, AND A TURN PRESSED EARLY IS REMEMBERED.
+   *
+   * Reported off the live game: *"the turning corners function is a little
+   * glitchy — usually you can press left or right ahead of the next turn and
+   * it'll remember to turn that way?"* He is describing input buffering, which
+   * every maze game has had since 1980, and this one had the opposite.
+   *
+   * **A KEY USED TO SET A TARGET, AND A BLOCKED KEY TARGETED YOUR OWN CELL.**
+   * `onKey` ran as far down the corridor as it could and made that the target;
+   * with a wall in that direction the loop never ran, so the target came out as
+   * the cell you were standing on — and `stepToward()` returns null when the
+   * two are the same. So pressing a turn a moment early did not merely fail to
+   * turn, **it stopped you dead in front of three chasers**, until you pressed
+   * again. Measured: from the starting cell, Up and Down both do it.
+   *
+   * So the keys drive a HEADING plus a buffered WANT, which is the arcade
+   * model: you keep going the way you are going, and the turn fires at the
+   * first cell where it is legal.
+   */
+  let heading = null;
+  let wantDir = null;
+  let wantFor = 0;
+
+  /*
+   * How many steps a wanted turn waits for its junction — a constant with a
+   * note rather than a setting, until somebody misses it. At `STEP_MS` this is
+   * about nine tenths of a second, which is long enough to press well before a
+   * corner and short enough that a stray key does not turn you at a junction
+   * you had forgotten asking for.
+   */
+  const TURN_BUFFER_STEPS = 6;
+
   const aim = (ev) => {
     const t = ev.touches ? ev.touches[0] : ev;
     if (!t) return;
@@ -108,6 +142,10 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
     const row = Math.floor((py - offY) / size);
     if (!open(col, row)) return;
     target = { col, row };
+    // A tap is a change of mind: it must not fight a heading the keys left
+    // behind, or the player walks somewhere nobody asked for.
+    heading = null;
+    wantDir = null;
   };
   const onDown = (ev) => { wakeSound(); aim(ev); };
   const onMove = (ev) => { if (ev.buttons || ev.touches) aim(ev); };
@@ -121,12 +159,16 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
     const d = map[ev.key];
     if (!d) return;
     ev.preventDefault();
-    let col = you.col;
-    let row = you.row;
-    // Run as far that way as the corridor allows, so one press is a move
-    // rather than a nudge.
-    while (open(col + d[0], row + d[1])) { col += d[0]; row += d[1]; }
-    target = { col, row };
+    /*
+     * It is a WANT, not a move. If it is legal from here it happens on the
+     * next step; if it is not, it waits for the first cell where it is. That
+     * is the whole fix — see the note above `heading`.
+     */
+    wantDir = d;
+    wantFor = TURN_BUFFER_STEPS;
+    // The keys and the tap are two ways to drive one player, so taking hold of
+    // one lets go of the other.
+    target = null;
   };
   canvas.addEventListener('touchstart', onDown, { passive: true });
   canvas.addEventListener('touchmove', onMove, { passive: true });
@@ -137,6 +179,25 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
   /* ------------------------------------------------------------- the rules */
   const step = (at, dir) => ({ col: at.col + dir[0], row: at.row + dir[1] });
 
+  /**
+   * WHICH WAY THIS STEP GOES — the buffered turn, then the heading, then the tap.
+   *
+   * The order is the whole behaviour. A wanted turn is tried FIRST at every
+   * cell, which is what makes "press it early and it turns at the corner"
+   * true; failing that you carry on the way you were going, which is what
+   * makes it a heading rather than a nudge; and only with neither does the
+   * tapped target get a say, so a phone plays exactly as it always did.
+   */
+  function nextStep() {
+    const out = turnFrom(you, heading, wantDir, wantFor);
+    heading = out.heading;
+    wantDir = out.want;
+    wantFor = out.wantFor;
+    // Only with no heading and no turn left to make does the tapped target get
+    // a say, so a phone plays exactly as it always did.
+    return out.dir || stepToward(you, target);
+  }
+
   function movePlayer(now) {
     if (now - you.last < STEP_MS) return;
     you.last = now;
@@ -144,7 +205,7 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
     // mind mid-corridor and the very next move goes the new way, which in a
     // maze with three things chasing you is the difference between a control
     // and a passenger.
-    const dir = stepToward(you, target);
+    const dir = nextStep();
     if (!dir) { you.dir = null; return; }
     you.dir = dir;
     you.col += dir[0];
@@ -226,6 +287,8 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
       // second one on the same square.
       you = { ...begin.player, dir: null, last: now };
       target = null;
+      heading = null;
+      wantDir = null;
       chasers = chasers.map((c) => ({ ...c, col: c.home.col, row: c.home.row, dir: null }));
       scaredUntil = 0;
       return;

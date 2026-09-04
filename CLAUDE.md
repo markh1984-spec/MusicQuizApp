@@ -968,6 +968,20 @@ board), `src/arcade.js` (the scores, shared by both engines),
   photo uploads"*. The module is imported only when the button is pressed.
 - **No control panel: you tap and it walks there.** A swipe has to be READ and a
   misread one costs a life. `touch-action: none` on the canvas is load-bearing.
+- **AND ON THE KEYS, A TURN PRESSED EARLY IS REMEMBERED** — `turnFrom()` in
+  `maze.js`, pure and tested. *"The turning corners function is a little
+  glitchy — usually you can press left or right ahead of the next turn and
+  it'll remember to turn that way?"* **It was worse than glitchy**: an arrow
+  set a TARGET by running as far down the corridor as it could, so with a wall
+  that way the run never happened, the target came out as the cell you were
+  standing on, and `stepToward()` answers that with null — **pressing a turn a
+  moment early stopped the player DEAD in front of three chasers.** From the
+  start cell both Up and Down did it. The keys now drive a HEADING plus a
+  buffered WANT, tried first at every cell and expiring after
+  `TURN_BUFFER_STEPS`; **a wall stops you facing it and never picks a
+  direction for you**, and the tapped target still decides when neither is
+  set, so a phone plays exactly as it did. **The rule lives in `maze.js`, not
+  the canvas file** — a decision that can be tested without a clock should be.
 - **ONE POST LEAVES A PHONE, at game over and at each life lost.** Never a
   stream of positions — the lobby is exactly when sixty people are joining.
   Banking at each life is what puts the people who played LONGEST on the board:

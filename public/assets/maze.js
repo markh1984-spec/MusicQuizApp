@@ -187,3 +187,57 @@ export function stepToward(from, to) {
   }
   return best;
 }
+
+/**
+ * WHICH WAY THE NEXT STEP GOES when somebody is steering with the keys.
+ *
+ * **A TURN PRESSED EARLY IS REMEMBERED**, which is what every maze game has
+ * done since 1980 and what this one did the opposite of. Reported off the live
+ * game: *"the turning corners function is a little glitchy — usually you can
+ * press left or right ahead of the next turn and it'll remember to turn that
+ * way?"*
+ *
+ * The old arrow handler set a TARGET by running as far down the corridor as it
+ * could — so with a wall that way the run never happened and the target came
+ * out as the cell you were standing on, which `stepToward()` answers with
+ * null. Pressing a turn a moment early therefore did not merely fail to turn,
+ * **it stopped you dead in front of three chasers.**
+ *
+ * Pure, so it can be tested without a canvas or a clock: it takes where you
+ * are, the way you are going and the way you have asked to go, and returns the
+ * step plus the state to carry into the next one.
+ *
+ * @param {{col:number,row:number}} at   where the player is now
+ * @param {number[]|null} heading        the way they are travelling
+ * @param {number[]|null} want           the turn they have asked for
+ * @param {number} wantFor               how many more steps to hold that turn
+ * @returns {{ dir: number[]|null, heading: number[]|null, want: number[]|null, wantFor: number }}
+ */
+export function turnFrom(at, heading, want, wantFor) {
+  const canGo = (d) => Boolean(d) && open(at.col + d[0], at.row + d[1]);
+
+  /*
+   * THE WANTED TURN IS TRIED FIRST AT EVERY CELL. That is the whole feature:
+   * it is what makes "press it before the corner and it turns at the corner"
+   * true, rather than "press it at the exact cell or nothing happens".
+   */
+  if (want && canGo(want)) {
+    return { dir: want, heading: want, want: null, wantFor: 0 };
+  }
+
+  // Not yet — hold it for a few more cells, then forget it. A turn nobody
+  // remembers asking for is worse than one that did not happen.
+  const left = want ? wantFor - 1 : 0;
+  const stillWant = want && left > 0 ? want : null;
+
+  if (canGo(heading)) {
+    return { dir: heading, heading, want: stillWant, wantFor: left };
+  }
+
+  /*
+   * Ran into a wall. STOP FACING IT, exactly as a maze game does — picking
+   * some other direction for somebody is how a control stops being one. The
+   * caller falls back to the tapped target from here.
+   */
+  return { dir: null, heading: null, want: stillWant, wantFor: left };
+}
