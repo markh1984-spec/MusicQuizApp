@@ -29,7 +29,6 @@ import path from 'node:path';
 
 import {
   Photos, isCameraFile, NOT_CAMERA_SUFFIX, showsOnGallery, showsByDefault, galleryPhotosOf,
-  senderAllowsWeb, NO_WEB_SUFFIX,
 } from '../src/photos.js';
 
 /** The smallest thing `sniffType()` will accept as a JPEG. */
@@ -279,47 +278,4 @@ test("a ruling on ANOTHER night does not reach this one", () => {
   const names = ['a.jpg'];
   const said = { [key('2026-08-20', 'a.jpg')]: 'off' };
   assert.deepEqual(galleryPhotosOf(names, '2026-08-13', said, key), ['a.jpg']);
-});
-
-/*
- * THE SENDER'S OWN ANSWER, and the one nobody else can overrule.
- *
- * The tick on the phone says "keep mine off the website". It is an OPT-OUT
- * rather than an opt-in, deliberately: an unticked opt-in gating publication
- * would hide every photograph by default, which is exactly the empty-and-
- * silent gallery the camera gate was removed to end. So an untouched tick
- * leaves a photograph behaving as it always has, and only a deliberate no
- * changes anything.
- */
-test('a photo the sender asked to keep off the website carries the marker', () => {
-  const shots = room();
-  const out = shots.add(JPEG, { contentType: 'image/jpeg', camera: true, web: false });
-  assert.ok(out.ok, 'the photo still goes up — the projector is not in question');
-  assert.ok(out.photo.file.includes(NO_WEB_SUFFIX), out.photo.file);
-  assert.equal(senderAllowsWeb(out.photo.file), false);
-});
-
-test('and it is refused by the gallery whatever the quizmaster has ruled', () => {
-  const no = `p1abc${NO_WEB_SUFFIX}.jpg`;
-  assert.equal(showsOnGallery(no, undefined), false, 'a sender no is refused by default');
-  assert.equal(showsOnGallery(no, 'off'), false);
-  assert.equal(
-    showsOnGallery(no, 'on'), false,
-    'the lamp must NOT be able to publish a photo somebody asked to keep off — '
-    + 'a consent a switch can undo is not consent',
-  );
-});
-
-test('saying nothing leaves a photo exactly as it behaved before', () => {
-  const shots = room();
-  const out = shots.add(JPEG, { contentType: 'image/jpeg', camera: true });
-  assert.ok(senderAllowsWeb(out.photo.file));
-  assert.equal(showsOnGallery(out.photo.file, undefined), showsByDefault(out.photo.file));
-});
-
-test('the night list drops it too, so the count cannot promise a photo the page refuses', () => {
-  const yes = 'p1aaa.jpg';
-  const no = `p1bbb${NO_WEB_SUFFIX}.jpg`;
-  const shown = galleryPhotosOf([yes, no], '2026-09-04', {}, (night, name) => `${night}/${name}`);
-  assert.deepEqual(shown, [yes]);
 });

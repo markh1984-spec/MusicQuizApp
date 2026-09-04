@@ -571,7 +571,13 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * eating him, that nothing may move while it runs, and that the score is
  * banked at the catch rather than after the animation.
  */
-const BUDGET = 211_900;
+/*
+ * AND TO 212_100 — 119 bytes, for REPLACING the photo-consent entry rather
+ * than adding one. The tick shipped for a day and was removed; the entry now
+ * says why a sender-side switch must not be rebuilt, which is worth more than
+ * the entry that described the switch.
+ */
+const BUDGET = 212_100;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

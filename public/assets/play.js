@@ -300,24 +300,6 @@ function openCamera() {
                is always next to the thing it sends, whatever you have just
                added. -->
           <button class="cam-send">Send it up</button>
-          <!-- WHERE THE WEBSITE QUESTION IS ASKED, and it is asked ONCE.
-               The projector is not in question: they chose to send it, the room
-               can already see the screen, and it is gone in seconds. Publishing
-               to a public page is a different act — permanent, and reaching
-               people who were never in the room — so that is the only thing
-               this decides.
-               IT IS AN OPT-OUT, NOT AN OPT-IN, and that is deliberate. An
-               unticked opt-in gating publication would hide EVERY photograph by
-               default, which is precisely the empty-and-silent gallery the
-               camera-gate reversal was written to end. So the default is what
-               the app already does, and the tick is how somebody says no.
-               THE PHONE REMEMBERS IT. Asked per photograph it would be a
-               nag on the one flow that has to stay quick, so the answer is kept
-               on the device and the box simply arrives the way it was left. -->
-          <label class="cam-web">
-            <input type="checkbox" class="cam-web-box">
-            <span>Keep mine off the website</span>
-          </label>
           <!-- ONE UNDO, AND IT IS NOT HERE. It used to be in this row too,
                which meant querySelector('.cam-undo') found this one first —
                and this row is hidden on an ordinary night, so the only wired
@@ -386,21 +368,6 @@ function openCamera() {
   const seasonProps = sheet.querySelector('.cam-props-season');
   const seasonName = sheet.querySelector('.cam-season-name');
   const sendBtn = sheet.querySelector('.cam-send');
-
-  /*
-   * WHAT THIS PHONE SAID LAST TIME. `localStorage` because it is this handset's
-   * standing answer rather than anything the game owns — a rejoin, a new round
-   * and next Thursday all keep it, and clearing the browser asks again, which
-   * is the right way round for a preference somebody set about themselves.
-   */
-  const WEB_KEY = 'qz-photo-web';
-  const webBox = sheet.querySelector('.cam-web-box');
-  if (webBox) {
-    try { webBox.checked = localStorage.getItem(WEB_KEY) === 'no'; } catch { /* private mode */ }
-    webBox.addEventListener('change', () => {
-      try { localStorage.setItem(WEB_KEY, webBox.checked ? 'no' : 'yes'); } catch { /* private mode */ }
-    });
-  }
   const status = sheet.querySelector('.cam-status');
 
   let source = null;
@@ -785,8 +752,7 @@ function openCamera() {
       drawFiltered(canvas, source, PLAIN, 1080, { flip: flipped });
       await drawStickers(canvas, stuckOn);
       const blob = await toJpeg(canvas);
-      const keepOff = Boolean(webBox && webBox.checked);
-      const res = await fetch(`/api/photo?playerId=${encodeURIComponent(me.id)}&filter=${encodeURIComponent(PLAIN)}${cameraLikely ? '&camera=1' : ''}${keepOff ? '&web=no' : ''}${roomParam()}`, {
+      const res = await fetch(`/api/photo?playerId=${encodeURIComponent(me.id)}&filter=${encodeURIComponent(PLAIN)}${cameraLikely ? '&camera=1' : ''}${roomParam()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'image/jpeg' },
         body: blob,

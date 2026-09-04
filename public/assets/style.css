@@ -343,7 +343,12 @@ body::after {
 .screen .topbar > * { min-width: 0; }
 .screen .topbar .title { font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.screen .topbar .right { flex: 0 0 auto; }
+/* The pills SHRINK rather than push the row off the stage. Bingo's status pill
+   is a sentence — "Playing for 2 lines — prize 2 of 3" — and beside the player
+   count it ran 11px past the edge of a narrow stage, where `overflow: hidden`
+   means gone rather than scrolled to. */
+.screen .topbar .right { flex: 0 1 auto; min-width: 0; overflow: hidden; }
+.screen .topbar .right > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .screen .topbar .right { display: flex; gap: 0.8vw; align-items: center; }
 
 .screen .card {
@@ -1868,7 +1873,14 @@ body.bingo-card .bingo-call { margin-right: 72px; }
 .bingo-status {
   display: flex; justify-content: space-between; align-items: center;
   font-size: var(--fs-ctl); font-weight: 700; color: var(--ink-dim);
+  /* IT WRAPS. Once somebody has won a prize this row carries THREE things —
+     what is being played for, how far away they are, and what they already
+     hold — and at 390px they ran 72px off the side with the last one gone
+     entirely. That is the moment right after a prize, which is the moment
+     everybody is looking at their phone. */
+  flex-wrap: wrap; gap: 2px 10px; row-gap: 2px;
 }
+.bingo-status > * { min-width: 0; }
 .bingo-status .away { font-weight: 900; color: var(--ink); }
 .bingo-status .away.hot { color: var(--gold); }
 .bingo-status .won { color: var(--good); font-weight: 900; }
@@ -1969,6 +1981,9 @@ body.bingo-card .bingo-call { margin-right: 72px; }
   grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
   gap: 6px;
 }
+/* The caller's own filter, on the page they drive the room from — it was 39px. */
+#trackFilter { min-height: 44px; }
+
 .trackbox {
   display: grid;
   grid-template-columns: 16px 1fr;

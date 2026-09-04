@@ -2275,16 +2275,19 @@ costs. Both split off at the 100,000-byte cap.
   badges saying overlapping things is a label collision. **`showsOnGallery()`
   is the ONE decision and all FOUR readers ask it**. **A ruling that only
   restates the DEFAULT is CLEARED, not stored**
-- **THE SENDER GETS A SAY, AND THEIR NO BEATS THE LAMP** — *"Keep mine off the
-  website"* on the camera sheet, `NO_WEB_SUFFIX` in the filename (the private
-  repo has no metadata store; a photograph IS its name). `showsOnGallery()`
-  short-circuits on it BEFORE the ruling, so a quizmaster cannot overrule the
-  person in the picture — the console draws a locked status there, not a
-  switch. **OPT-OUT, NOT OPT-IN**, which is the opposite of what the list said
-  and is settled by the camera gate above: a default-off gate produced an
-  empty, silent gallery. **REMEMBERED ON THE PHONE** (`qz-photo-web`) — *"this
-  will be annoying if they get asked each time"* — in a try/catch, because
-  private mode throws on the accessor itself.
+- **SENDING IT IS THE CONSENT. THERE IS NO PER-PHOTO OPT-OUT AND ONE WAS
+  BUILT AND REMOVED.** A *"Keep mine off the website"* tick shipped for a day
+  and was taken out on the host's own reasoning: *"if they upload it to the
+  screen it's allowed on the gallery — can't be remembering which photos I can
+  and can't publish, I simply shouldn't have access to photos if there's no
+  consent behind them in the first place."* **He is right on both halves.** A
+  flag the quizmaster has to respect is a rule he has to REMEMBER, on a Monday,
+  about a photograph he did not take — exactly the Monday-load this file exists
+  to refuse; and a photograph nobody consented to should not be in the app at
+  all rather than in it wearing a label. The consent is the ACT of pressing
+  send, which is also what *photo uploads auto-publish* has always said.
+  **Do not rebuild a sender-side switch.** The gate that exists is the publish
+  control drawn UNDER the photographs, and the lamp is the quizmaster's own.
 - **THE COUNT AND THE PAGE ARE ONE QUESTION — `galleryPhotosOf()`.** The night
   list counted on the filename while the page asked the ruling too. **AND WITH
   THE FAULT PUT BACK THE GUARD STILL PASSED: it had matched the COMMENT
