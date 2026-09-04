@@ -7787,6 +7787,21 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    drags the whole row with it. The "who am I" line gives way instead — it is
    the one thing up there you can afford to lose the end of. */
 .topbar-out, .hat-switch { white-space: nowrap; }
+/* THE BAR ITSELF NEEDS IT FIRST, AND THAT WAS THE HALF THAT WAS MISSING.
+   `.topbar` is a GRID ITEM of `.wrap`, and a grid item defaults to
+   `min-width: auto` exactly as a flex item does — so the bar refused to go
+   below its own max-content and simply grew past the window. `.wrap` is
+   `overflow-x: hidden`, so the excess was CLIPPED with no scrollbar to reach
+   it: with a game running at ~960px the bar came out 1128px wide and the tier
+   rungs were off the side of the screen, unreachable. Reported as "UI issue"
+   off a screenshot with the ends cut off both sides.
+
+   Constraining the bar is what makes the two rules below do anything at all —
+   until it was, the children were never asked to give way, so `min-width: 0`
+   on them had nothing to act on. The projector's own topbar has had this since
+   a long pack name stacked it to four lines (`.screen .topbar > *`); the
+   console's never got it. */
+.console .topbar { min-width: 0; }
 /* The two bits of prose in the bar are what give way — "Owner — you@…" and
    "Now: The Madonna Quiz (6 in)". They are the only things up there you can
    afford to lose the end of, and without `min-width: 0` a flex item will not

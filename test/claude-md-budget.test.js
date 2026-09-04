@@ -577,7 +577,13 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * says why a sender-side switch must not be rebuilt, which is worth more than
  * the entry that described the switch.
  */
-const BUDGET = 212_100;
+/*
+ * AND TO 213_300 for the console topbar's `min-width: 0`. One CSS line, but
+ * the entry is the third sighting of `min-width: auto` in this file and the
+ * first where the overflow was CLIPPED rather than scrollable — a control off
+ * the side of the screen with nothing thrown and nothing looking broken.
+ */
+const BUDGET = 213_300;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

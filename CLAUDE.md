@@ -871,6 +871,20 @@ they say next.
 
 ### THE CONSOLE'S POLISH PASS — three rules from one sweep, 25 August 2026
 
+- **THE CONSOLE'S TOPBAR IS A GRID ITEM, AND A GRID ITEM DEFAULTS TO
+  `min-width: auto` TOO.** Reported as *"UI issue"* off a screenshot with both
+  ends cut off. `.topbar` sits in `.wrap`, which is `overflow-x: hidden`, so a
+  bar that refuses to shrink below its own max-content is **CLIPPED with no
+  scrollbar to reach it** — with a game running at ~960px it came out 1128px
+  wide and **the tier rungs were off the side of the screen**. `min-width: 0`
+  on the BAR is what makes the existing `min-width: 0` on `#whoami` and
+  `#runningNow` do anything: until the bar is constrained, its children are
+  never asked to give way. **The rule was applied one level too deep**, and the
+  projector's own topbar has had `.screen .topbar > *` since a long pack name
+  stacked it to four lines. **This is the third sighting of `min-width: auto`
+  in this file** — `.option`, the `minmax(0, 1fr)` content column, and now
+  this. **A clipped overflow is worse than a scrolling one**: nothing throws,
+  nothing looks broken, and the control is simply unreachable.
 - **`main` IS A FLEX COLUMN — never give it a row template.** Its
   `auto minmax(0,1fr)` grid assumed exactly two children, so ANY banner above
   the doorhead (the no-accounts maker, Workshop's backup warning) pushed the
