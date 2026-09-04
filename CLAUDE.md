@@ -997,6 +997,20 @@ board), `src/arcade.js` (the scores, shared by both engines),
   thing being torn down is built.**
 - **Each moment has a primary: the game before the quiz, photos between the
   rounds.** The floating camera button stands down in the lobby.
+- **MAZE MOUTH'S DEATH IS A GULP, AND IT IS THE ONLY DEATH THE GAME HAS.**
+  Asked for — *"if Maze Mouth dies we need a funny death animation"* — and
+  chosen off four rendered and animated first. The chaser that caught you
+  swells, burps and you are gone. **It is never telling a story that did not
+  happen**: being caught is the only way to die, so the animation also answers
+  *what got me*, which is half of why it was the pick. **NOT the unfurl-and-
+  spin** — that one is Namco's, and this app is sold. **NOTHING MOVES while it
+  runs** (`dying`, `GULP_MS`), or a chaser wanders off mid-swallow leaving the
+  mouth it was closing. **THE PLAYER IS DRAWN BEFORE THE CHASERS and that is
+  the whole illusion** — painted after, he would sit on top of the thing eating
+  him. **ONLY the one that caught you bulges**; a row of fat chasers says
+  nothing about which. **The score is banked at the CATCH, never after the
+  animation** — a game interrupted by the quiz starting must not lose the life
+  it just paid for, and a second of not playing is exactly when that happens.
 - **SOUND IS SYNTHESISED, ON BY DEFAULT, AND NEVER ON A TIMER.**
   `lobby-sound.js` — Web Audio, no files, like everything else here is drawn.
   **It shipped OFF and that was wrong**: the game only exists in the LOBBY, so

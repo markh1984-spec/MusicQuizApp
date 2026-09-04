@@ -45,7 +45,7 @@ import { MAZE, COLS, ROWS, open, startPoints, pellets, stepToward, turnFrom } fr
  * be one copy of it.
  */
 import { seeded } from './seeded.js';
-import { wakeSound, playPlink, playRicochet, playLost } from './lobby-sound.js';
+import { wakeSound, playPlink, playRicochet, playLost, playBurp } from './lobby-sound.js';
 
 const STEP_MS = 150;          // how often anything moves. Slow enough to steer.
 const CHASE_MS = 260;         // the chasers are slower than you, or it is grim.
@@ -115,6 +115,29 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
   let heading = null;
   let wantDir = null;
   let wantFor = 0;
+
+  /*
+   * BEING EATEN — `{ until, by, at, last }`, or null.
+   *
+   * Asked for: *"if Maze Mouth dies we need a funny death animation."* The
+   * chaser that caught you opens up and swallows you whole, then bulges and
+   * burps. **It is the only death this game has** — you can only ever die by
+   * being caught — so the animation is never telling a story that did not
+   * happen, and it answers "what got me?" as well as being a joke.
+   *
+   * While it runs NOTHING MOVES: the loop draws and does not step. That is
+   * what stops a chaser wandering off mid-swallow, and it means the maze
+   * behind is exactly the one you died in rather than a frame of it still
+   * playing without you.
+   */
+  let dying = null;
+
+  /*
+   * How long it lasts. Short on purpose — you have three lives and this plays
+   * between each of them, so a beat too long turns a joke into a wait. A
+   * constant with a note rather than a setting, until somebody times it.
+   */
+  const GULP_MS = 1100;
 
   /*
    * How many steps a wanted turn waits for its junction — a constant with a
@@ -282,15 +305,15 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
        * stream, and the engine keeps the best of them anyway.
        */
       onBank(score);
-      if (lives <= 0) { end(false); return; }
-      // Everybody back to their corner, so a lost life is not immediately a
-      // second one on the same square.
-      you = { ...begin.player, dir: null, last: now };
-      target = null;
-      heading = null;
-      wantDir = null;
-      chasers = chasers.map((c) => ({ ...c, col: c.home.col, row: c.home.row, dir: null }));
-      scaredUntil = 0;
+      /*
+       * THE SCORE IS BANKED AT THE CATCH, NOT AFTER THE ANIMATION.
+       *
+       * A game interrupted by the quiz starting must not lose the life it had
+       * just paid for — and the animation is exactly when that is most likely,
+       * because it is a second of not playing. The reset waits; the post does
+       * not.
+       */
+      dying = { until: now + GULP_MS, by: g, at: { col: you.col, row: you.row }, burped: false };
       return;
     }
   }
@@ -323,15 +346,33 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
 
     // You. A circle with a mouth that opens and shuts as you go — the one
     // detail that makes a dot read as something alive.
-    const bite = Math.abs(Math.sin(now / 90)) * 0.7;
-    const facing = you.dir ? Math.atan2(you.dir[1], you.dir[0]) : 0;
-    ctx.fillStyle = '#ffd23f';
-    ctx.beginPath();
-    ctx.moveTo(offX + you.col * size + size / 2, offY + you.row * size + size / 2);
-    ctx.arc(offX + you.col * size + size / 2, offY + you.row * size + size / 2,
-      size * 0.42, facing + bite / 2, facing - bite / 2 + Math.PI * 2);
-    ctx.closePath();
-    ctx.fill();
+    /*
+     * BEING SWALLOWED — he slides the last of the way into the chaser's mouth
+     * and shrinks to nothing, then the chaser is drawn over the top of him.
+     *
+     * The ORDER is the whole illusion: the player is painted first and the
+     * chasers after, so he really does disappear behind the thing eating him
+     * rather than sitting on top of it. That is why this lives here and not in
+     * its own pass.
+     */
+    const gulp = dying ? Math.min(1, 1 - (dying.until - now) / GULP_MS) : 0;
+    const eat = dying ? Math.min(1, gulp / 0.45) : 0;
+    if (!dying || eat < 1) {
+      const bite = dying
+        // The mouth flaps wide as he goes in, which reads as a yell.
+        ? 0.6 + Math.abs(Math.sin(now / 40)) * 1.3
+        : Math.abs(Math.sin(now / 90)) * 0.7;
+      const facing = you.dir ? Math.atan2(you.dir[1], you.dir[0]) : 0;
+      const px = offX + you.col * size + size / 2;
+      const py = offY + you.row * size + size / 2;
+      const r = size * 0.42 * (dying ? 1 - eat : 1);
+      ctx.fillStyle = '#ffd23f';
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.arc(px, py, Math.max(0.5, r), facing + bite / 2, facing - bite / 2 + Math.PI * 2);
+      ctx.closePath();
+      ctx.fill();
+    }
 
     const scared = now < scaredUntil;
     for (const g of chasers) {
@@ -341,11 +382,24 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
       ctx.fillStyle = scared
         ? (scaredUntil - now < 1500 && Math.floor(now / 200) % 2 ? '#ffffff' : '#3a3a7a')
         : g.colour;
+      /*
+       * THE ONE THAT ATE HIM SWELLS, then settles with a wobble. Only that
+       * one: a whole row of bulging chasers would say nothing about which of
+       * them got you, which is half of what this animation is for.
+       */
+      let fat = 0;
+      if (dying && g === dying.by) {
+        const k = Math.min(1, 1 - (dying.until - now) / GULP_MS);
+        fat = Math.sin(Math.min(1, k / 0.75) * Math.PI) * 0.26;
+        if (k > 0.62) fat += Math.sin((k - 0.62) * 26) * 0.05;
+        if (k > 0.62 && !dying.burped) { dying.burped = true; playBurp(); }
+      }
+      const gr = size * (0.36 + Math.max(0, fat));
       ctx.beginPath();
-      ctx.arc(x, y - size * 0.05, size * 0.36, Math.PI, 0);
-      ctx.lineTo(x + size * 0.36, y + size * 0.34);
+      ctx.arc(x, y - size * 0.05, gr, Math.PI, 0);
+      ctx.lineTo(x + gr, y + size * 0.34);
       ctx.lineTo(x, y + size * 0.16);
-      ctx.lineTo(x - size * 0.36, y + size * 0.34);
+      ctx.lineTo(x - gr, y + size * 0.34);
       ctx.closePath();
       ctx.fill();
       ctx.fillStyle = '#0b0b14';
@@ -356,8 +410,38 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
     }
   }
 
+  /**
+   * The end of a swallow: put everybody back, or finish the game.
+   *
+   * `lives` was already taken at the catch, so this only ever moves things —
+   * which is what makes it safe to reach from the draw loop.
+   */
+  function afterGulp(now) {
+    dying = null;
+    if (lives <= 0) { end(false); return; }
+    // Everybody back to their corner, so a lost life is not immediately a
+    // second one on the same square.
+    you = { ...begin.player, dir: null, last: now };
+    target = null;
+    heading = null;
+    wantDir = null;
+    wantFor = 0;
+    chasers = chasers.map((c) => ({ ...c, col: c.home.col, row: c.home.row, dir: null }));
+    scaredUntil = 0;
+  }
+
   function frame(now) {
     if (over) return;
+    /*
+     * NOTHING MOVES WHILE SOMEBODY IS BEING EATEN — the loop draws and steps
+     * nothing. A chaser wandering off mid-swallow would leave the mouth it was
+     * closing behind it, and the player is already gone, so there is nothing
+     * for `movePlayer` to do but find a target and walk a corpse.
+     */
+    if (dying) {
+      if (now >= dying.until) { afterGulp(now); if (over) return; }
+      else { draw(now); raf = requestAnimationFrame(frame); return; }
+    }
     movePlayer(now);
     moveChasers(now);
     touching(now);

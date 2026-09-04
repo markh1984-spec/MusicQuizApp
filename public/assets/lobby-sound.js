@@ -218,6 +218,44 @@ export function playOops() {
   o.stop(at + 0.26);
 }
 
+/**
+ * THE BURP, after a chaser has swallowed somebody whole.
+ *
+ * Synthesised like everything else here — a low sawtooth wobbled hard and
+ * dragged downwards through a lowpass, which is a burp the same way the
+ * jaw-harp above is a "no": recognisably the thing without being a recording
+ * of one. **That distinction is the no-yeehaw rule**: a synthesised noise is
+ * fine, a sampled human one would break the no-assets rule on purpose.
+ *
+ * It carries no information — a phone on a pub table is on silent and iOS
+ * mutes Web Audio outright, so the death still reads with the sound off. It is
+ * only there to make somebody laugh at losing a life.
+ */
+export function playBurp() {
+  if (!soundOn() || !ctx) return;
+  const at = ctx.currentTime;
+  const o = ctx.createOscillator();
+  o.type = 'sawtooth';
+  o.frequency.setValueAtTime(105, at);
+  o.frequency.exponentialRampToValueAtTime(48, at + 0.34);
+  // The wobble is what makes it a burp rather than a groan.
+  const wob = ctx.createOscillator();
+  wob.type = 'square';
+  wob.frequency.value = 22;
+  const depth = ctx.createGain();
+  depth.gain.value = 34;
+  wob.connect(depth).connect(o.frequency);
+  const lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 620;
+  o.connect(lp);
+  env(lp, at, VOL * 0.85, 0.36);
+  o.start(at);
+  wob.start(at);
+  o.stop(at + 0.4);
+  wob.stop(at + 0.4);
+}
+
 /** A saloon-piano plink, for eating something or picking something up. */
 export function playPlink(step = 0) {
   if (!soundOn() || !ctx) return;

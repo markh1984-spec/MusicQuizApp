@@ -564,7 +564,14 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * fix, and "run to the end of the corridor" is exactly the shape somebody
  * would reintroduce as a tidy-up.
  */
-const BUDGET = 210_800;
+/*
+ * AND TO 211_900 for MAZE MOUTH'S GULP. The bullet holds three things that
+ * are invisible in the diff and would each be undone by a tidy-up: that the
+ * player must be painted BEFORE the chasers or he sits on top of the thing
+ * eating him, that nothing may move while it runs, and that the score is
+ * banked at the catch rather than after the animation.
+ */
+const BUDGET = 211_900;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
