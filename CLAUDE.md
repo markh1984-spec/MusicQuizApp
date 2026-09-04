@@ -1823,11 +1823,20 @@ bingo winners on thursday didn't receive a QR code"*.
   `newRound()` clears `prizeWinners` and deliberately does NOT clear
   `vouchers`, so a guard asking only *"is stage 1 paid"* refuses round two's
   line winner.
-- **THE CARD SHAPE CHOOSES THE PRIZE COUNT — the most that card can carry.**
-  3x8 → 3, 4x6 → 4, 5x5 → 5, which is `maxPrizes()` for each: **one rule, not a
-  table a sixth shape falls through.** It also ended a disagreement with the
-  launch — the picker showed one prize while a falsy count launched the pack's
-  own two — and **it CLAMPS**, or a count carried onto a smaller card names an
+- **THE CARD SHAPE CHOOSES THE PRIZE COUNT, AND IT IS A NUMBER PER SHAPE
+  RATHER THAN A FORMULA.** `defaultPrizes()` / the `prizes` field on
+  `CARD_SHAPES`: 3x3 → 1, 4x4 → 2, 5x5 → 5, 4x6 → 4, 3x8 → 3. **It WAS a
+  formula for one commit and that was wrong** — the first three named were each
+  exactly `maxPrizes()`, so "the most that card can carry" looked like the one
+  rule behind them, and then *"3 x 3 should give one prize for a full house and
+  4 x 4 should give 2"* arrived, where the maximum is five. A 3x3 stopped four
+  times before a full house is over before the room has settled. **The table
+  lives BESIDE the shape, never in the console** — like `plans` and `minimum`,
+  so a sixth shape must name its own default in the line that adds it rather
+  than inherit an answer nobody chose. **Clamped**, so it can never promise a
+  prize the geometry cannot pay. It also ended a disagreement with the launch —
+  the picker showed one prize while a falsy count launched the pack's own two —
+  and **the picker CLAMPS too**, or a count carried onto a smaller card names an
   option that no longer exists and the select goes silently blank.
 
 ### A PAGE SCROLLS. THE PROJECTOR IS THE ONE THAT DOES NOT

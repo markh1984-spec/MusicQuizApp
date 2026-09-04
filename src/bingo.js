@@ -1135,12 +1135,36 @@ export function shapeFields({ rows, cols }) {
  * what makes them longer games than a 5×5 despite having one fewer square.
  */
 export const CARD_SHAPES = [
-  { rows: 3, cols: 3 },
-  { rows: 4, cols: 4 },
-  { rows: 5, cols: 5 },
-  { rows: 6, cols: 4 },
-  { rows: 8, cols: 3 },
+  { rows: 3, cols: 3, prizes: 1 },
+  { rows: 4, cols: 4, prizes: 2 },
+  { rows: 5, cols: 5, prizes: 5 },
+  { rows: 6, cols: 4, prizes: 4 },
+  { rows: 8, cols: 3, prizes: 3 },
 ];
+
+/**
+ * How many prizes a shape starts on when nobody has chosen.
+ *
+ * **A NUMBER PER SHAPE, NOT A FORMULA — and it was a formula first, wrongly.**
+ * The three the host named — *"a 3 x 8 grid DEFAULTS to 3 prizes, a 4 x 6 grid
+ * DEFAULTS to 4 prizes and a 5 x 5 grid DEFAULTS to 5 prizes"* — are each
+ * exactly `maxPrizes()`, so "the most that card can carry" looked like the one
+ * rule behind all three. It is not: the two small squares came back as
+ * *"3 x 3 should give one prize for a full house and 4 x 4 should give 2"*,
+ * where the maximum is five. A 3x3 stopped four times before a full house is
+ * a card that is over before the room has settled.
+ *
+ * So it lives BESIDE the shape rather than in the console, for the reason
+ * `plans` and `minimum` already do: a sixth shape then has to name its own
+ * default in the same line that adds it, instead of silently inheriting an
+ * answer nobody chose for it.
+ *
+ * **Clamped, so the table can never promise a prize the geometry cannot pay.**
+ */
+export function defaultPrizes(shape) {
+  const found = CARD_SHAPES.find((s) => s.rows === shape.rows && s.cols === shape.cols);
+  return Math.max(1, Math.min(maxPrizes(shape), Math.floor(found?.prizes || maxPrizes(shape))));
+}
 
 /** Same shape of checks as the quiz packs: catch it now, not on the night. */
 export function validateBingoPack(pack) {

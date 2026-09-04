@@ -28,7 +28,7 @@ const COVER_PHOTOS = 3;
 import { Session } from './src/session.js';
 import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked, ROUND_TYPES } from './src/quizzes.js';
 import { recueQuiz } from './src/recue.js';
-import { validateBingoPack, normaliseBingoPack, minimumTracks, CARD_SHAPES, shapeLabel, maxPrizes, stagePlan, stageLabel } from './src/bingo.js';
+import { validateBingoPack, normaliseBingoPack, minimumTracks, CARD_SHAPES, shapeLabel, maxPrizes, defaultPrizes, stagePlan, stageLabel } from './src/bingo.js';
 import { fullLibrary, listArchive, venuesUsed, rewardsUsed, rewardsByVenue, loadArchived, serialiseArchive, restoreArchive, saveBingoPack, loadBingoPack, deleteBingoPack, readStats } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
 import { generateQuizPack, buildIntroPlaylists, roundPlan, TOPICAL_ROUNDS, TOPICAL_DAYS, topicalNaming } from './src/generate-quiz.js';
@@ -1827,6 +1827,10 @@ async function handleGet(req, res, url, route) {
         // How many prizes this shape can carry, and what each of them is, so
         // the console can offer the right ones without doing the sums itself.
         maxPrizes: maxPrizes(shape),
+        // And where it STARTS — a number per shape, not the maximum. See
+        // `defaultPrizes()`: a 3x3 stopped four times before a full house is a
+        // card that is over before the room has settled.
+        prizes: defaultPrizes(shape),
         plans: Array.from({ length: maxPrizes(shape) }, (_, i) => stagePlan(i + 1).map(stageLabel)),
       })),
       /*

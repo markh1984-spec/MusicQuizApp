@@ -506,8 +506,13 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * it can be read as a trade rather than as growth.
  */
 /*
- * AND TO 204,700 ON 4 SEPTEMBER 2026, for two entries. 1,892 bytes of *A PRIZE
- * TYPED IN LATE STILL REACHES THE WINNER*. Off a live gig — *"my quiz and bingo winners
+ * AND TO 205,500 ON 4 SEPTEMBER 2026, for two entries. ~2,600 bytes of *A
+ * PRIZE TYPED IN LATE STILL REACHES THE WINNER* — 700 of which arrived the
+ * same evening, correcting its own last bullet: the prize default was written
+ * up as a formula, the host then named two shapes the formula gets wrong, and
+ * the entry now records that it is a table and WHY the formula looked right.
+ * A rule that was reversed within the hour is exactly the kind a future
+ * session re-derives if the reversal is not written down beside it. Off a live gig — *"my quiz and bingo winners
  * on thursday didn't receive a QR code"* — and it holds four rules a future
  * session would otherwise rediscover from a room: where prizes are read from,
  * why pressing Prizes afterwards has to pay anybody owed, why bingo's catch-up
@@ -527,7 +532,7 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * to-do list asked for, which is exactly the kind of thing this file exists to
  * settle once.
  */
-const BUDGET = 204_700;
+const BUDGET = 205_500;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

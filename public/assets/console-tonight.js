@@ -2001,17 +2001,20 @@ export function launchBar() {
     const picked = bingoToSet();
     const has = picked && picked.slot ? picked.slot.prizes : night.prizes;
     /*
-     * THE SHAPE CHOOSES THE COUNT — the most that card can carry. *"a 3 x 8
-     * grid DEFAULTS to 3 prizes, a 4 x 6 to 4 and a 5 x 5 to 5"* is exactly
-     * `maxPrizes()` for those three, so it is ONE rule and not a table a
-     * sixth shape falls through. It also ENDS A DISAGREEMENT WITH THE LAUNCH:
-     * the picker showed option one while `session.launch()` reads a falsy
-     * count as the pack's own — a line and a full house — so the console said
-     * 1 and the room played 2. And it CLAMPS, the same fault reversed: five
-     * prizes on a 5x5 then switched to a strip left `.value = '5'` naming an
-     * option that no longer existed, so the select went blank silently.
+     * THE SHAPE CHOOSES THE COUNT, and the number comes from the SHAPE —
+     * `found.prizes`, beside `plans` in `CARD_SHAPES`. It was `plans.length`
+     * here for one commit, reading "the most it can carry" as the rule behind
+     * *"3 x 8 defaults to 3, 4 x 6 to 4, 5 x 5 to 5"*; it is not, because
+     * *"3 x 3 should give one prize and 4 x 4 should give 2"*, where the
+     * maximum is five. See `defaultPrizes()` for why it stays server-side.
+     * It also ENDS A DISAGREEMENT WITH THE LAUNCH: the picker showed option
+     * one while `session.launch()` reads a falsy count as the pack's own — a
+     * line and a full house — so the console said 1 and the room played 2.
+     * And it CLAMPS, the same fault reversed: five prizes on a 5x5 switched
+     * to a strip left `.value = '5'` naming an option that had gone.
      */
-    const count = Math.min(Number(has) || found.plans.length, found.plans.length);
+    const starts = Number(found.prizes) || found.plans.length;
+    const count = Math.min(Number(has) || starts, found.plans.length);
     prizePick.value = String(count);
     setPickedBingo(picked, { prizes: count });
   }
