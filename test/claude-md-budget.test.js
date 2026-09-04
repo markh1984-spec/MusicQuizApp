@@ -532,16 +532,7 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * to-do list asked for, which is exactly the kind of thing this file exists to
  * settle once.
  */
-/*
- * AND TO 207,300 THE SAME EVENING, for *ONE PRIZE EACH PER BINGO ROUND* —
- * off a live night where one player took three of four prizes. It records
- * four things a future session would otherwise undo: that a refused claim is
- * still a CORRECT claim, that the rule must lift once everybody has won or a
- * small room cannot finish, that the button stays present and inert, and that
- * pub-unchanged.mjs reads `quizzes/` only and so proves nothing at all about
- * a bingo change.
- */
-const BUDGET = 207_300;
+const BUDGET = 205_500;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

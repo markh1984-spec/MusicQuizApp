@@ -1839,35 +1839,6 @@ bingo winners on thursday didn't receive a QR code"*.
   and **the picker CLAMPS too**, or a count carried onto a smaller card names an
   option that no longer exists and the select goes silently blank.
 
-### ONE PRIZE EACH PER BINGO ROUND, WHILE ANYBODY IS STILL WITHOUT ONE
-
-`claim()` / `holdsAPrize()` / `stillWithoutAPrize()` in `src/bingo.js`,
-`view.standDown`. Off a live night: *"I had one person win three of the four
-music bingo prizes yesterday… it looks really bad on me if one guy wins all
-the prizes."*
-
-- **IT IS THE SHAPE OF THE GAME, NOT LUCK.** The best card wins the line and
-  is then nearest to two lines and nearest to the house, so **whoever takes
-  the first prize is the favourite for every prize after it.**
-- **THE CLAIM IS STILL RIGHT AND IS RECORDED AS RIGHT** — no false call, no
-  telling-off. The prize passes to somebody who has not had one. **A room that
-  hears a shout and sees the app call it a mistake is worse than the problem
-  this fixes**, which is why the phone says *"Correct — but you have already
-  won this round"* and the control view has THREE outcomes rather than two.
-- **IT LIFTS THE MOMENT EVERYBODY HAS ONE**, which is what stops a small room
-  stalling — four prizes and three players, and the fourth is open again. **The
-  test is "is anybody left without", never a count of prizes**, so it holds at
-  any room size. Removing that valve breaks two tests that predate it.
-- **THE BUTTON STAYS AND SAYS WHY** (`standDown`), present and inert — one
-  vanishing at the exact moment somebody has just won reads as the app
-  breaking.
-- **NO SETTING.** A venue wanting one person to take the lot is not a thing
-  anybody has asked for, and it is one line to invert if it ever is.
-- **`pub-unchanged.mjs` SAYS NOTHING ABOUT ANY OF THIS — it reads `quizzes/`
-  only and never loads a bingo pack.** IDENTICAL on a bingo change is the
-  guard answering confidently about something it is not looking at, which is
-  this repo's oldest trap. Drive two real phones instead.
-
 ### A PAGE SCROLLS. THE PROJECTOR IS THE ONE THAT DOES NOT
 
 `body { overflow: auto }`, with `body.screen { overflow: hidden }` naming the
