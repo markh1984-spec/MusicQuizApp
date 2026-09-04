@@ -211,6 +211,23 @@ function draw(next) {
     : `${state.playerCount} playing`;
   mainEl.replaceChildren(...restartNotice(state), ...advertPanel(state), ...voucherPanel(state), ...buildPanels(state), ...photoPanel(state));
   actionsEl.replaceChildren(...buildActions(state));
+  /*
+   * MAKE ROOM FOR THE BAR THAT SITS ON TOP OF THE PAGE.
+   *
+   * `.actions` is `position: fixed; bottom: 0`, so it is out of flow and the
+   * document ends underneath it. The last panel on this page is *Photos on the
+   * big screen* — the one-tap kill switch for something going up on the
+   * projector — and it sat at 682-772 with the bar starting at 705, **fully
+   * scrolled, at 390 and at 1440**. Not hard to reach: impossible. The page had
+   * no more scroll to give.
+   *
+   * MEASURED, never written out, for the reason the topbar is: this bar wraps
+   * to two or three rows depending on the phase and the width, so any number
+   * put in the stylesheet is wrong at some size. Read after the row is built,
+   * which is the only moment its height is true.
+   */
+  const bar = actionsEl.getBoundingClientRect().height;
+  if (bar) mainEl.style.paddingBottom = `${Math.round(bar + 16)}px`;
 }
 
 /**

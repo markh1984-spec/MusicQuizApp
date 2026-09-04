@@ -336,7 +336,14 @@ body::after {
   border-bottom: 1px solid var(--panel-line);
   flex: 0 0 auto;
 }
-.screen .topbar .title { font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
+/* THE HEADER IS A BAR AND MUST NOT GROW. A long pack name stacked it to four
+   lines on a narrow stage, which pushed it past the `top: 8.5vh` the join
+   corner is pinned at — so the QR card painted over the round and player
+   pills. One line, ellipsised, and the collision cannot happen. */
+.screen .topbar > * { min-width: 0; }
+.screen .topbar .title { font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.screen .topbar .right { flex: 0 0 auto; }
 .screen .topbar .right { display: flex; gap: 0.8vw; align-items: center; }
 
 .screen .card {
@@ -468,7 +475,10 @@ body::after {
 .round-intro .kicker { font-size: 2.4vh; letter-spacing: 0.4em; text-transform: uppercase; color: var(--ink-dim); }
 .round-intro h1 { font-size: 11vh; margin: 2vh 0; font-weight: 900; letter-spacing: -0.03em; line-height: 0.95; }
 .round-intro .blurb { font-size: 3.4vh; color: var(--ink-dim); }
-.round-intro .facts { margin-top: 5vh; display: flex; gap: 1.4vw; justify-content: center; font-size: 2vh; }
+/* THEY WRAP. Two pills side by side ran 19px off a narrow stage, which on a
+   `overflow: hidden` projector means the round's own description is cut. */
+.round-intro .facts { margin-top: 5vh; display: flex; flex-wrap: wrap; gap: 1.4vw;
+  justify-content: center; font-size: 2vh; }
 
 /* ---- question */
 .q-head {
@@ -512,6 +522,15 @@ body::after {
   font-weight: 700;
   transition: transform 260ms, background 260ms, border-color 260ms, opacity 260ms;
 }
+/* A SOLID WORD BREAKS RATHER THAN RUNNING OFF THE STAGE.
+   The same rule `.ab-name` already carries, and it belongs here far more:
+   `body.screen` is `overflow: hidden`, so an option wider than its column is
+   not scrolled to, it is GONE — measured at 328px off a 1440 stage and 1300px
+   off an 820 one, with the room unable to read two of the four answers. A flex
+   item defaults to `min-width: auto`, so the box refuses to shrink below its
+   longest word; `min-width: 0` is what lets the wrap happen at all. */
+.option { min-width: 0; }
+.option .text { min-width: 0; overflow-wrap: anywhere; }
 .option .letter {
   flex: 0 0 auto;
   width: 2em; height: 2em;
@@ -588,7 +607,12 @@ body::after {
   animation: cardIn 340ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .reveal-banner .label { font-size: 0.62em; letter-spacing: 0.24em; text-transform: uppercase; color: var(--gold); font-weight: 800; }
-.reveal-banner .who { font-weight: 900; font-size: 1.15em; }
+/* THE ONE I MISSED FIRST TIME ROUND. Options, the phone's card and the host's
+   key were all fixed and this still pushed the banner 319px off a narrow stage
+   — same solid word, same rule, a different box. */
+.reveal-banner { min-width: 0; }
+.reveal-banner > * { min-width: 0; }
+.reveal-banner .who { font-weight: 900; font-size: 1.15em; overflow-wrap: anywhere; }
 .reveal-banner .pts { margin-left: auto; font-weight: 900; color: var(--gold); font-size: 1.5em; }
 /* The fastest finger's own face. Sized in vh like everything else on the
    projector so it holds its proportion from a laptop to a 4K screen, and
@@ -1207,6 +1231,10 @@ body.phone {
 .result .big { font-size: 34px; font-weight: 900; margin-bottom: 6px; }
 .result .pts { font-size: 46px; font-weight: 900; color: var(--gold); font-variant-numeric: tabular-nums; }
 .result .sub { color: var(--ink-dim); font-size: var(--fs-field); margin-top: 6px; }
+/* An answer nobody can read is the same fault as an option nobody can read —
+   a solid word pushed this card 44px wider than a 390px phone and took the
+   answer off the right-hand edge. */
+.result, .result .big, .result .sub, .result .sub strong { overflow-wrap: anywhere; min-width: 0; }
 .result .bonus { display: inline-block; margin-top: 10px; padding: 6px 14px; border-radius: var(--r-pill); background: var(--gold); color: #1a1200; font-weight: 900; font-size: var(--fs-body); }
 
 .mini-board { display: grid; gap: 8px; }
@@ -1330,6 +1358,11 @@ body.host::after { display: none; }
   font-size: var(--fs-ctl); font-weight: 600;
   cursor: default;
 }
+/* AND THE HOST HAS TO BE ABLE TO READ THEIR OWN KEY. Same solid-word fault:
+   the answer ran off the panel on a phone, which is the one screen they are
+   holding while the room waits for them to say it. */
+.keyrow { min-width: 0; overflow-wrap: anywhere; }
+.keyrow > * { min-width: 0; }
 .keyrow.has-who { cursor: pointer; }
 .keyrow.has-who:hover { background: rgba(255, 255, 255, 0.09); }
 .keyrow .caret {
@@ -1379,6 +1412,22 @@ body.host::after { display: none; }
   -webkit-tap-highlight-color: transparent;
 }
 .actions .primary:disabled { opacity: 0.45; }
+/* 44px, THE TOUCH FLOOR — the launch bar's own rule, applied to the row that is
+   actually pressed all night. These came out at 36px and the row menu at 27px. */
+.actions .minor { min-height: 44px; }
+/* AND EVERY OTHER PRESSABLE THING ON THIS PAGE, not just the bar at the bottom.
+   The first pass scoped this to `.actions` and left twelve controls at 34-41px
+   — Load, Reset scores, Clear everything, the three timer buttons, Switch off,
+   the pack picker and the brand. Scoped to `body.host` so the console, which
+   has its own 44px rule on the launch bar, is untouched. */
+.host .minor, .host select, .host .brand { min-height: 44px; }
+.host .brand { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; }
+.host select { padding-top: 0; padding-bottom: 0; }
+/* The row menu is not in the action bar — it is on each player's line, and at
+   31x27 it was the smallest control on the page. */
+.host [data-act="menu"] { min-width: 44px; min-height: 44px; }
+/* And the two full-width minors that came out at 35-36px. */
+.host .minor.tidy, .host .report-q { min-height: 44px; }
 .actions .minor {
   padding: 13px 6px; font-size: var(--fs-note); font-weight: 800;
   border-radius: var(--r-field); cursor: pointer;
@@ -3530,8 +3579,29 @@ button.pack-title:hover::after { opacity: 1; }
    beside them. On the owner page that put the Owner chip on top of the email
    address. Everything else on the bar gives way instead; on a phone the media
    query below hands the menu a line of its own. */
-.topnav { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+/* ONE ROW THAT SCROLLS — not a row that wraps.
+   On a 390px control view this read "Console | Worksh" with the last three
+   doors past the right edge, so four of the five could not be reached from the
+   page a host drives the night from. Wrapping was tried first and was WORSE:
+   five pills became five ROWS in a sticky header, ~270px of a 844px screen,
+   and the header then covered the panel behind it — a control that was merely
+   off-screen became a control with something on top of it.
+   The header has to stay one row tall, so the row scrolls instead. This is not
+   the horizontal-scroll arrangement the console's TAB bar deleted: that was
+   replaced by a vertical column because there was room for one. There is no
+   room for one inside a fixed header. */
+.topnav {
+  display: flex; align-items: center; gap: 6px;
+  flex: 1 1 auto; min-width: 0; flex-wrap: nowrap;
+  overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.topnav::-webkit-scrollbar { display: none; }
+.topnav > * { flex: 0 0 auto; }
 .topnav a {
+  /* THE TOUCH FLOOR, on the one page driven with a thumb in a dark pub. These
+     were 33px tall. */
+  min-height: 44px; display: inline-flex; align-items: center;
   padding: 8px 14px;
   border-radius: var(--r-pill);
   border: 1px solid var(--panel-line);
@@ -8990,8 +9060,15 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .arcade-under .arcade-said { min-width: 0; }
 .arcade-sound {
   flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
+  /* 44px, THE TOUCH FLOOR. It was 34x34 — in every game, at every viewport, and
+     it is the ONLY control on a game screen. The button keeps its own size
+     rather than gaining one from a rule higher up the sheet: this one is
+     8,600 lines lower and would win anyway, which is the trap. */
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0;
   border: 0;
   border-radius: var(--r-pill);
