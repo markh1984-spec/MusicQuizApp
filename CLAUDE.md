@@ -915,7 +915,7 @@ board), `src/arcade.js` (the scores, shared by both engines),
   phone with a game on it stays in the FOREGROUND, so sixty connections do not
   all come back at the moment the join gate is busiest. That is a RELIABILITY
   feature dressed as a toy. **Locked games are SHOWN, not filtered out.**
-- **THEY ARE CALLED MAZE MOUTH, RALLY, TAILBACK AND QUICK DRAW.** The names,
+- **THEY ARE CALLED MAZE MOUTH, RALLY, TAILBACK, QUICK DRAW AND PILE UP.** The names,
   mazes and characters of the things the first three resemble are Namco's and
   Atari's, and this app is SOLD — a legal line, not a taste one. Say whatever
   you like on a mic; do not print it. **An unnamed game keeps inviting the
@@ -923,11 +923,26 @@ board), `src/arcade.js` (the scores, shared by both engines),
   written. (Quick Draw is the exception that proves it: a shooting gallery is
   a fairground stall older than video games, so the honest name was also the
   safe one.)
+- **AND ON PILE UP THE LEGAL LINE DECIDED THE GAME, NOT ONLY THE NAME.** It is
+  a crate STACKER — one swings across the top, you tap to drop it, the overhang
+  shears off — and it is deliberately **not** the falling-blocks one: the seven
+  tetromino shapes, the playfield and their colouring were held to be
+  protectable expression in *Tetris Holding v. Xio*, so a clone is the one
+  version worth not having in something that is SOLD. **Do not "improve" it
+  into one** — no rotation, no shapes, no line clears, no well, and there is a
+  test on the words. **Its control is the most forgiving of the five**: one
+  tap, nothing to aim, so a fat thumb or a tired digitiser has nothing to
+  misread, and **a late tap is a narrower crate rather than a lost life** — it
+  degrades smoothly where a reaction game cannot. **A LOST LIFE POPS THE TOWER
+  BACK DOWN to a wider crate rather than pushing a wide one on top**: the first
+  build did the latter and drew a full-width crate balanced on a sliver, which
+  is the one thing a player can tell at a glance is wrong.
 - **THERE ARE THREE WAYS A GAME IS MADE THE SAME ON EVERY PHONE, and a new one
   must use one of them:** a GRID with a fixed step (Maze Mouth, Tailback),
   an ACCUMULATOR of whole ticks with the catch-up capped (Rally), or a
   SCHEDULE where the state at time T is a pure function of the seed and T
-  (Quick Draw — the cleanest, because nothing accumulates so nothing drifts).
+  (Quick Draw and Pile Up — the cleanest, because nothing accumulates so
+  nothing drifts).
   **A frame delta is none of them and is always wrong here.** And note the one
   limit that cannot be engineered away: a REACTION game makes input latency
   part of the score, so its windows have to stay generous enough that eighty
@@ -2700,6 +2715,7 @@ public/                the screens; *-bingo.js files hold the bingo variants
   assets/stickers.js   props to drag onto a photo: dog ears, a clown nose
   assets/schemes.js    a quizmaster's own two colours, shared with the server
   assets/break-parts.js  what happens in each gap of a night, shared with the server
+  assets/pileup.js     Pile Up — the fifth lobby game: stack the crates
   assets/console-breaks.js  the gap dial in each pack tile's corner
   assets/console-community.js  the Community door: leagues, photos, what they asked for
   assets/console-pick.js   a dropdown that is narrow shut and wide open

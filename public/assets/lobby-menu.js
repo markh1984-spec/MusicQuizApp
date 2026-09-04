@@ -44,6 +44,7 @@ const LOADERS = {
   rally: () => import('./lobby-rally.js'),
   tailback: () => import('./lobby-tailback.js'),
   quickdraw: () => import('./lobby-quickdraw.js'),
+  pileup: () => import('./lobby-pileup.js'),
 };
 
 /**

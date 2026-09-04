@@ -546,7 +546,16 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * It also records that pub-unchanged.mjs reads `quizzes/` only and so proves
  * nothing whatever about a bingo change.
  */
-const BUDGET = 208_700;
+/*
+ * AND TO 209_800 for PILE UP, the fifth lobby game. Most of the 911 bytes are
+ * one bullet, and it is the only place recording that the legal line decided
+ * the GAME here rather than only its name — a falling-blocks clone is the one
+ * version worth not having in something that is sold, and "improve it into
+ * one" is exactly what a later session would otherwise try. It also records
+ * the lost-life behaviour, which was built the obvious way first and drew a
+ * full-width crate balanced on a sliver.
+ */
+const BUDGET = 209_800;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
