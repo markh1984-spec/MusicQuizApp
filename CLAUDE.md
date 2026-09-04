@@ -1800,6 +1800,36 @@ for each."* One winner draws no podium and issues one voucher.
   one change hit BOTH of. **Prove a new launch field by reading the request
   body out of a real browser, not by reading the diff.**
 
+### A PRIZE TYPED IN LATE STILL REACHES THE WINNER — and the card shape says how many
+
+`setRewards()` in `engine.js` and `bingo.js`, `paintPrizes()` and
+`prizeWarning()` in `console-tonight.js`. Off a live night: *"my quiz and
+bingo winners on thursday didn't receive a QR code"*.
+
+- **PRIZES ARE READ OFF THE VENUE RECORD AT LAUNCH AND NOWHERE ELSE.** A night
+  with no venue picked has none, mints no voucher, and the winner's phone is
+  simply blank at the end — which reads as the app being broken rather than as
+  a setting nobody filled in. **The warning now names the CONSEQUENCE and
+  draws with no venue too**: it began `if (!name) return null`, switched off in
+  precisely the case it was for.
+- **SO PRESSING *Prizes* AFTERWARDS PAYS ANYBODY ALREADY OWED.** Both engines
+  said the change "takes effect for the NEXT prize onwards", which was true and
+  was the bug — the obvious thing a host does about a blank phone did nothing
+  at all, for ever. **Both catch-ups are IDEMPOTENT** (`issueVouchers()` skips
+  a winner already holding one, `drawLuckyDip()` returns on `s.luckyDip`),
+  which is what makes replaying them safe rather than a second live code in one
+  hand.
+- **BINGO KEYS ON THE WIN'S OWN TIMESTAMP, NEVER THE STAGE ALONE** —
+  `newRound()` clears `prizeWinners` and deliberately does NOT clear
+  `vouchers`, so a guard asking only *"is stage 1 paid"* refuses round two's
+  line winner.
+- **THE CARD SHAPE CHOOSES THE PRIZE COUNT — the most that card can carry.**
+  3x8 → 3, 4x6 → 4, 5x5 → 5, which is `maxPrizes()` for each: **one rule, not a
+  table a sixth shape falls through.** It also ended a disagreement with the
+  launch — the picker showed one prize while a falsy count launched the pack's
+  own two — and **it CLAMPS**, or a count carried onto a smaller card names an
+  option that no longer exists and the select goes silently blank.
+
 ### A PAGE SCROLLS. THE PROJECTOR IS THE ONE THAT DOES NOT
 
 `body { overflow: auto }`, with `body.screen { overflow: hidden }` naming the
@@ -2144,6 +2174,16 @@ costs. Both split off at the 100,000-byte cap.
   badges saying overlapping things is a label collision. **`showsOnGallery()`
   is the ONE decision and all FOUR readers ask it**. **A ruling that only
   restates the DEFAULT is CLEARED, not stored**
+- **THE SENDER GETS A SAY, AND THEIR NO BEATS THE LAMP** — *"Keep mine off the
+  website"* on the camera sheet, `NO_WEB_SUFFIX` in the filename (the private
+  repo has no metadata store; a photograph IS its name). `showsOnGallery()`
+  short-circuits on it BEFORE the ruling, so a quizmaster cannot overrule the
+  person in the picture — the console draws a locked status there, not a
+  switch. **OPT-OUT, NOT OPT-IN**, which is the opposite of what the list said
+  and is settled by the camera gate above: a default-off gate produced an
+  empty, silent gallery. **REMEMBERED ON THE PHONE** (`qz-photo-web`) — *"this
+  will be annoying if they get asked each time"* — in a try/catch, because
+  private mode throws on the accessor itself.
 - **THE COUNT AND THE PAGE ARE ONE QUESTION — `galleryPhotosOf()`.** The night
   list counted on the filename while the page asked the ruling too. **AND WITH
   THE FAULT PUT BACK THE GUARD STILL PASSED: it had matched the COMMENT

@@ -505,7 +505,29 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * 823 bytes is the genuine remainder, and the trims are in the same diff so
  * it can be read as a trade rather than as growth.
  */
-const BUDGET = 202_000;
+/*
+ * AND TO 204,700 ON 4 SEPTEMBER 2026, for two entries. 1,892 bytes of *A PRIZE
+ * TYPED IN LATE STILL REACHES THE WINNER*. Off a live gig — *"my quiz and bingo winners
+ * on thursday didn't receive a QR code"* — and it holds four rules a future
+ * session would otherwise rediscover from a room: where prizes are read from,
+ * why pressing Prizes afterwards has to pay anybody owed, why bingo's catch-up
+ * keys on the win's timestamp rather than the stage, and that the card shape
+ * chooses the count.
+ *
+ * **THIS ONE IS GROWTH, NOT A TRADE, and the diff should say so.** The rule
+ * above is to trim an old entry to its prohibition first, and it was tried:
+ * the two largest candidate sections were read through bullet by bullet and
+ * every one of them is already at prohibition density — the shortest is 164
+ * bytes. There was nothing left to take out that was not itself a rule.
+ *
+ * The other ~700 is the photo consent tick — that the SENDER's no outranks the
+ * quizmaster's lamp, that it is opt-OUT rather than opt-in (the camera gate
+ * above is why), and that the phone remembers it. All three are rules a future
+ * session would otherwise reverse, and the middle one contradicts what the
+ * to-do list asked for, which is exactly the kind of thing this file exists to
+ * settle once.
+ */
+const BUDGET = 204_700;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

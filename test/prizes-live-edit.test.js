@@ -132,3 +132,106 @@ test('hostView() carries rewards for BOTH games, not just the quiz', () => {
   assert.deepEqual(game.hostView().rewards, ['Bingo line prize', 'Bingo full house prize'],
     'a bingo control view with no rewards field is what made the Prizes popover show an empty box and Save wipe every existing prize');
 });
+
+/*
+ * ---- A PRIZE TYPED IN AFTER SOMEBODY HAS ALREADY WON IT ------------------
+ *
+ * Reported off a live night: *"my quiz and bingo winners on thursday didn't
+ * receive a QR code"*. The whole chain is silent. A night launched with no
+ * prize on the venue record issues no vouchers at all — `issueVouchers()`
+ * returns on an empty list — so the winner's phone simply has no card on it,
+ * which reads as the app being broken rather than as a setting nobody filled
+ * in. The obvious thing a host does about that is press **Prizes** on the
+ * control view and type them in. That did nothing, for ever, because both
+ * `setRewards()` methods were written for the case where the prize changes
+ * BEFORE anybody has won it — and both said so in a comment, which is how it
+ * survived two engines and every test in this file.
+ *
+ * Verified by reintroducing the fault in each engine: drop the catch-up and
+ * the two "gets it now" assertions fail while everything else stays green.
+ */
+
+test('a quiz prize typed in AT the final scores still reaches the winner', () => {
+  const engine = new Engine({ quiz: QUIZ, now: () => Date.parse('2026-09-03T22:30:00.000Z') });
+  const rob = engine.join({ name: 'Rob' });
+  engine.start();
+  while (engine.state.phase !== 'final') engine.next();
+
+  // The night as it was launched: nothing on the venue, so nothing minted.
+  assert.deepEqual(Object.values(engine.state.vouchers), [],
+    'a night with no prizes set should mint nothing at all');
+  assert.equal(engine.playerView(rob.id).voucher, undefined);
+
+  // The host notices, presses Prizes, types one in.
+  engine.setRewards(['A free drink']);
+  const mine = engine.playerView(rob.id).voucher;
+  assert.ok(mine, 'the winner got no voucher when the prize was typed in after the final scores');
+  assert.equal(mine.reward, 'A free drink');
+  assert.equal(mine.place, 1);
+
+  // Pressing Save again must not mint a second code for the same hand.
+  engine.setRewards(['A free drink']);
+  assert.equal(Object.values(engine.state.vouchers).length, 1);
+});
+
+test('a bingo prize typed in after a line is won still reaches that winner', () => {
+  const game = new BingoGame({ pack: makeBingoPack(), now: () => Date.parse('2026-09-03T21:00:00.000Z') });
+  const sharon = game.join({ name: 'Sharon' });
+  game.start();
+  // Play every track on her card, mark them all, and claim the line.
+  const player = game.state.players[sharon.id];
+  player.card.forEach((trackId, i) => {
+    game.call(trackId);
+    game.mark({ playerId: sharon.id, index: i, marked: true });
+  });
+  assert.equal(game.claim(sharon.id).valid, true);
+  assert.deepEqual(Object.values(game.state.vouchers || {}), [],
+    'a bingo night with no prizes set should mint nothing at all');
+
+  game.setRewards(['A free drink', 'A bottle of wine']);
+  const mine = game.playerView(sharon.id).vouchers;
+  assert.ok(mine && mine.length, 'the line winner got no voucher when the prize was typed in afterwards');
+  assert.equal(mine[0].reward, 'A free drink');
+
+  // Twice, and then with the wording corrected: still exactly one code.
+  game.setRewards(['A free drink', 'A bottle of wine']);
+  game.setRewards(['Two free drinks', 'A bottle of wine']);
+  assert.equal(Object.values(game.state.vouchers).length, 1,
+    'saving the prizes again minted a second code for a prize already in somebody hand');
+});
+
+/*
+ * THE ROUND IS WHAT TELLS TWO LINE WINS APART. `newRound()` clears
+ * `prizeWinners` and `stageIndex` and deliberately does NOT clear `vouchers`
+ * — round one's line prize is still live at the bar — so a catch-up that
+ * asked only "is there a voucher for stage 1" would refuse to pay round two.
+ */
+test('a second bingo round still pays its own line winner', () => {
+  let clock = Date.parse('2026-09-03T21:00:00.000Z');
+  const game = new BingoGame({ pack: makeBingoPack(), now: () => clock });
+  const sharon = game.join({ name: 'Sharon' });
+  game.state.rewards = ['A free drink', 'A bottle of wine'];
+
+  const winALine = () => {
+    game.start();
+    const player = game.state.players[sharon.id];
+    player.card.forEach((trackId, i) => {
+      game.call(trackId);
+      game.mark({ playerId: sharon.id, index: i, marked: true });
+    });
+    assert.equal(game.claim(sharon.id).valid, true);
+  };
+
+  winALine();
+  assert.equal(Object.values(game.state.vouchers).length, 1);
+
+  clock += 60 * 60 * 1000;
+  game.newRound();
+  winALine();
+  assert.equal(Object.values(game.state.vouchers).length, 2,
+    'the second round line winner was refused because round one had already been paid for stage 1');
+
+  // And a Save in the middle of round two must still not duplicate either.
+  game.setRewards(['A free drink', 'A bottle of wine']);
+  assert.equal(Object.values(game.state.vouchers).length, 2);
+});

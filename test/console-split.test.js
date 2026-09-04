@@ -310,7 +310,18 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * the title has one too, and the reason is that a press on a button must not
  * fire both.
  */
-const BUDGET = { 'console-tonight.js': 3940, 'console.js': 2000, 'console-packs.js': 1810 };
+/*
+ * AND `console-tonight.js` TO 3960 ON 4 SEPTEMBER 2026, for twenty-eight
+ * lines across two faults from one live night: *"my quiz and bingo winners
+ * didn't receive a QR code"*. Prizes are read off the venue record at launch,
+ * so a night with no venue picked has none and issues no vouchers — and the
+ * warning that would have said so began `if (!name) return null`, switched
+ * off in exactly that case. The other half is the prize COUNT, which the
+ * shape now sets and clamps rather than leaving the picker saying one while
+ * the launch played two. Most of the twenty-eight are those two notes, kept
+ * because both changes read as arbitrary without them.
+ */
+const BUDGET = { 'console-tonight.js': 3960, 'console.js': 2000, 'console-packs.js': 1810 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

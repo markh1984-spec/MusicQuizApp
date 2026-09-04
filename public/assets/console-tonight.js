@@ -2000,7 +2000,20 @@ export function launchBar() {
     // The same pack the row is about, or the count comes off a different one.
     const picked = bingoToSet();
     const has = picked && picked.slot ? picked.slot.prizes : night.prizes;
-    if (has) prizePick.value = String(has);
+    /*
+     * THE SHAPE CHOOSES THE COUNT — the most that card can carry. *"a 3 x 8
+     * grid DEFAULTS to 3 prizes, a 4 x 6 to 4 and a 5 x 5 to 5"* is exactly
+     * `maxPrizes()` for those three, so it is ONE rule and not a table a
+     * sixth shape falls through. It also ENDS A DISAGREEMENT WITH THE LAUNCH:
+     * the picker showed option one while `session.launch()` reads a falsy
+     * count as the pack's own — a line and a full house — so the console said
+     * 1 and the room played 2. And it CLAMPS, the same fault reversed: five
+     * prizes on a 5x5 then switched to a strip left `.value = '5'` naming an
+     * option that no longer existed, so the select went blank silently.
+     */
+    const count = Math.min(Number(has) || found.plans.length, found.plans.length);
+    prizePick.value = String(count);
+    setPickedBingo(picked, { prizes: count });
   }
   shapePick?.addEventListener('change', () => {
     /*
@@ -2016,9 +2029,11 @@ export function launchBar() {
     // them and then re-reads the count off the list it just built — picking
     // a 3×3 while "4 prizes" was set must not keep a number that shape has
     // no plan for.
-    setPickedBingo(picked, { shape: JSON.parse(shapePick.value) });
+    // THE COUNT IS CLEARED SO THE NEW SHAPE'S OWN DEFAULT LANDS — a default
+    // that only filled a blank would leave 8x3's three prizes on a 5x5. Only
+    // an explicit press of THIS control clears it, so a typed count sticks.
+    setPickedBingo(picked, { shape: JSON.parse(shapePick.value), prizes: 0 });
     paintPrizes();
-    setPickedBingo(bingoToSet(), { prizes: Number(prizePick?.value) || 0 });
     // The tile shows its own shape, so it has to be redrawn with it.
     if (lbSlots) paintOrder();
   });
@@ -3106,12 +3121,25 @@ export function launchBar() {
    */
   function prizeWarning() {
     const name = venueNow();
-    if (!name) return null;
-    const record = (library.venueRecords || [])
-      .find((v) => (v.name || '').toLowerCase() === String(name).toLowerCase());
+    const record = name
+      ? (library.venueRecords || [])
+        .find((v) => (v.name || '').toLowerCase() === String(name).toLowerCase())
+      : null;
     const prizes = ((record && record.rewards) || []).map((r) => String(r || '').trim()).filter(Boolean);
     if (prizes.length) return null;
-    return node('<div class="lb-say lb-say-none">No prizes set — add them on the Venues shelf</div>');
+    /*
+     * IT SAYS THE CONSEQUENCE, AND IT SAYS IT WITH NO VENUE PICKED TOO.
+     *
+     * Off a live night: *"my quiz and bingo winners didn't receive a QR
+     * code"*. Prizes are read off the venue record at launch and nowhere
+     * else, so a night with no venue has none, issues no vouchers, and the
+     * warning began `if (!name) return null` — switched off in exactly the
+     * case it was for. It names the VOUCHER rather than the list: "no prizes
+     * set" is a fact about a form, "nothing to scan" is what the room sees.
+     */
+    return node(`<div class="lb-say lb-say-none">No prizes set${
+      name ? '' : ' — no venue picked'}, so the winners get no voucher to scan${
+      name ? ` — add them on ${goTo('workshop', 'venues', 'the Venues tab')}` : ''}</div>`);
   }
 
   /*

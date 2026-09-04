@@ -1500,13 +1500,33 @@ export class Engine {
    *
    * Safe to just overwrite `state.rewards`: nothing caches an earlier copy —
    * `issueVouchers()` and `drawLuckyDip()` both call `rewardList()` at the
-   * moment a prize is actually won, so this takes effect for the NEXT prize
-   * onwards. A voucher already in somebody's hand is not rewritten, same as
-   * everything else this codebase never changes after the fact.
+   * moment a prize is actually won. A voucher already in somebody's hand is
+   * not rewritten, same as everything else this codebase never changes after
+   * the fact.
+   *
+   * **BUT A PRIZE TYPED IN AFTER THE FINAL SCORES STILL HAS TO REACH THE
+   * WINNER, and for months it did not.** Reported off a live night: *"my quiz
+   * and bingo winners didn't receive a QR code"*. The chain is silent at every
+   * link — a night launched with no prize on the venue record issues no
+   * vouchers (`issueVouchers()` returns on an empty list), the winner's phone
+   * simply has no card on it, and the obvious thing to do about that is press
+   * **Prizes** on the control view and type them in. That did nothing at all,
+   * for ever, because this method was written for the case where the prize is
+   * changed BEFORE anybody has won it.
+   *
+   * So it catches up. Both calls are idempotent — `issueVouchers()` skips a
+   * winner already holding one and `drawLuckyDip()` returns on `s.luckyDip` —
+   * which is what makes replaying them safe rather than a second code in the
+   * same hand. It is gated on the phase only because there is nothing to catch
+   * up before the final: the vouchers are minted there and nowhere else.
    */
   setRewards(list) {
     if (!Array.isArray(list)) return false;
     this.state.rewards = list.slice(0, 10).map((r) => String(r ?? '').trim().slice(0, 200));
+    if (this.state.phase === PHASES.FINAL) {
+      this.issueVouchers();
+      this.drawLuckyDip();
+    }
     this.changed();
     return true;
   }

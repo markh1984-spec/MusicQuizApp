@@ -511,15 +511,46 @@ export class BingoGame {
 
   /**
    * Change what tonight is playing for, mid-game — see the same method on
-   * `engine.js`'s Engine class. Safe for the identical reason: `issueVoucher`
-   * reads `rewardList()` at the moment a stage is actually won, so this only
-   * ever affects a prize not yet handed out.
+   * `engine.js`'s Engine class, and the same catch-up for the same reason.
+   *
+   * **A LINE WON BEFORE THE PRIZE WAS TYPED IN STILL GETS ITS VOUCHER.** This
+   * used to say the change "only ever affects a prize not yet handed out",
+   * which was true and was the bug: bingo mints a voucher at the instant a
+   * stage is claimed, so on a night launched with nothing on the venue record
+   * the line winner got no QR — and pressing **Prizes** afterwards, which is
+   * exactly what a host does about it, changed nothing they could see.
    */
   setRewards(list) {
     if (!Array.isArray(list)) return false;
     this.state.rewards = list.slice(0, 10).map((r) => String(r ?? '').trim().slice(0, 200));
+    this.payWinnersOwed();
     this.changed();
     return true;
+  }
+
+  /**
+   * Anybody who has already won a stage this round and holds no voucher for it.
+   *
+   * **KEYED ON THE ROUND, NOT JUST THE STAGE, because `newRound()` clears
+   * `prizeWinners` and `stageIndex` and deliberately does NOT clear
+   * `vouchers`** — the line prize from round one is still live in somebody's
+   * hand at the bar. So a guard that only asked "is there a voucher for stage
+   * 1" would refuse to pay round two's line winner. The win's own timestamp is
+   * what tells them apart: a voucher for THIS win cannot have been issued
+   * before the win happened.
+   *
+   * `at` is missing on a state written before `prizeWinners` carried one, and
+   * the fallback is to pay: an unpaid winner standing at the bar costs more
+   * than a duplicate code the host can void.
+   */
+  payWinnersOwed() {
+    const held = Object.values(this.state.vouchers || {});
+    for (const w of this.state.prizeWinners || []) {
+      const paid = held.some((v) => v.winnerId === w.playerId
+        && v.place === w.stageIndex + 1
+        && (!w.at || v.issuedAt >= w.at));
+      if (!paid) this.issueVoucher(w.stageIndex, w.playerId, w.name);
+    }
   }
 
   /**
