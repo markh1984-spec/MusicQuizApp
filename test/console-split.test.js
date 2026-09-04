@@ -301,7 +301,16 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * exactly what happened, and the note is there so the next field is not added
  * everywhere else and forgotten here.
  */
-const BUDGET = { 'console-tonight.js': 3940, 'console.js': 2000, 'console-packs.js': 1790 };
+/*
+ * AND TO 1810 ON 4 SEPTEMBER 2026, for the twelve lines that make the WHOLE
+ * pack card take a tap rather than the 15px-tall name on it. Measured off a
+ * live gig where a pack could not be got into Tonight at all: 8% of a
+ * 146 x 146 card answered a press. Nine of the twelve are the note saying so,
+ * kept because the handler looks misplaced without it — it is on the card and
+ * the title has one too, and the reason is that a press on a button must not
+ * fire both.
+ */
+const BUDGET = { 'console-tonight.js': 3940, 'console.js': 2000, 'console-packs.js': 1810 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

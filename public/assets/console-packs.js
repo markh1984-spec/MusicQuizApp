@@ -1310,9 +1310,31 @@ export function packCard(kind, pack) {
    * events are never delivered at all. The same arrangement the Shows tab and
    * the Venues shelf already use.
    */
-  el.querySelector('.pack-title').addEventListener('click', () => {
+  const placeIt = () => {
     if (doorNow() === 'console') addToTonight(pack, kind);
     else putOnBench(pack, kind);
+  };
+  el.querySelector('.pack-title').addEventListener('click', placeIt);
+
+  /*
+   * AND THE WHOLE POSTER TAKES THE TAP, NOT JUST THE NAME ON IT.
+   *
+   * Reported off a live gig as *"it won't let me change my music bingo"*, then
+   * measured: the card is **146 x 146** and `.pack-title` is **112 x 15**, so
+   * **8% of it answered a press** and the other 92% did nothing at all — no
+   * error, no movement. Eight probe points across the face hit the card and
+   * not one hit the button. A regression from *a shut card is a square
+   * poster*, which moved the name into a 15px strip and left the thing that
+   * listens behind — and it is on the protected path, because a tap is the
+   * only way in on a touchscreen, where drag events never fire.
+   *
+   * A press on a BUTTON or a link is left alone: the title runs `placeIt`
+   * itself, and the dots and the pin already stop the bubble. One press stays
+   * exactly one action.
+   */
+  el.addEventListener('click', (ev) => {
+    if (ev.target.closest('button, a, input, select, textarea, label')) return;
+    placeIt();
   });
 
   /*
