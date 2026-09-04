@@ -200,8 +200,17 @@ function paintCard(root, s, me) {
 
   const button = root.querySelector('#bingoCall');
   if (button) {
-    button.disabled = !s.canClaim;
-    button.textContent = s.canClaim ? 'BINGO!' : `Mark ${lineWording(s).replace(/^Get /, '')} first`;
+    /*
+     * ONE PRIZE EACH — the reason goes ON the button, never in place of it.
+     * `standDown` means they have already won this round and somebody else
+     * has not, so the next prize is not theirs to take. Present and inert:
+     * the control staying put with its reason on it is what keeps somebody
+     * from pressing it, hearing nothing, and pressing it again louder.
+     */
+    button.disabled = s.standDown || !s.canClaim;
+    button.textContent = s.standDown
+      ? 'You have won this round'
+      : (s.canClaim ? 'BINGO!' : `Mark ${lineWording(s).replace(/^Get /, '')} first`);
   }
 }
 
@@ -228,7 +237,12 @@ async function claim(root) {
   button.disabled = true;
   try {
     const result = await postJson('/api/claim', { playerId: me.id, token: me.token, joinCode: roomCode() });
-    if (result.valid) {
+    if (result.valid && result.prize === false) {
+      // Their card WAS right — the prize passed to somebody who has not had
+      // one. Said as good news, because being told off for a correct call is
+      // exactly what this rule must not do.
+      flash(root, 'Correct — but you have already won this round', true);
+    } else if (result.valid) {
       flash(root, 'BINGO — that is a line', true);
     } else {
       // Not a telling-off: they may have misheard, and a false alarm is part

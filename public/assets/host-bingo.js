@@ -169,7 +169,15 @@ function claimsPanel(s) {
         ${s.claims.map((c) => `
           <div class="prow">
             <span class="nm">${esc(c.name)}</span>
-            <span class="sc" style="color:${c.valid ? 'var(--good)' : 'var(--bad)'}">${c.valid ? 'GOOD' : 'false alarm'}</span>
+            <span class="sc" style="color:${c.valid ? 'var(--good)' : 'var(--bad)'}">${
+  /*
+   * THREE OUTCOMES, NOT TWO — a correct call that took no prize has to be
+   * told apart from both. The room heard the shout and is looking at the
+   * host, so "GOOD" alone would have them handing over a prize that went
+   * elsewhere, and "false alarm" would call a right answer wrong. See the
+   * one-prize-each rule in `bingo.js`.
+   */
+  c.standDown ? 'GOOD — already won' : (c.valid ? 'GOOD' : 'false alarm')}</span>
           </div>`).join('')}
       </div>
     </div>`);
