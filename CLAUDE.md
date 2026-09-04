@@ -1839,6 +1839,55 @@ bingo winners on thursday didn't receive a QR code"*.
   and **the picker CLAMPS too**, or a count carried onto a smaller card names an
   option that no longer exists and the select goes silently blank.
 
+### ONE PRIZE EACH PER BINGO ROUND, WHILE ANYBODY IS STILL WITHOUT ONE
+
+`claim()` / `holdsAPrize()` / `stillWithoutAPrize()` in `src/bingo.js`,
+`view.standDown`. Off a live night: *"I had one person win three of the four
+music bingo prizes yesterday… it looks really bad on me if one guy wins all
+the prizes."*
+
+- **IT IS THE SHAPE OF THE GAME, NOT LUCK.** The best card wins the line and
+  is then nearest to two lines and nearest to the house, so **whoever takes
+  the first prize is the favourite for every prize after it.**
+- **THE CLAIM IS STILL RIGHT AND IS RECORDED AS RIGHT** — no false call, no
+  telling-off. The prize passes to somebody who has not had one. **A room that
+  hears a shout and sees the app call it a mistake is worse than the problem
+  this fixes**, so the control view has THREE outcomes rather than two.
+- **AND NO SENTENCE ON A PHONE MAY SAY "you have already won".** Asked for in
+  those words, and the first build was reverted off the live app for it. **The
+  wording is about the PRIZE, never about the person** — the button says
+  *"Playing on"* and a forced press says *"Correct — that one has gone"*. Same
+  fact; the difference is whether the app is describing the night or telling
+  somebody off for winning. The `yourPrizes` line already prints what they
+  hold, so the button repeating it was the app saying it twice.
+- **THE CARDS CANNOT DO THIS ON THEIR OWN, and that was asked for twice** —
+  *"I want the cards to be produced with different winners at source."* A card
+  is dealt at JOIN and who wins is decided by **the order the host plays the
+  tracks in**, which the app never sees. **What IS in the cards is the real
+  cause**: the stages are NESTED — a line ⊂ 2 lines ⊂ 3 lines ⊂ a full house —
+  so the first winner already holds part of every prize after it. Measured over
+  400 simulated rounds at 60 players: somebody wins 2+ of 4 in **100%** of
+  rounds as it stands, 3+ in 19%. **Disjoint patterns** (rows 1-2, 3-4, 5-6,
+  house) take that to **11%** with no rig at all, and **two rounds of two
+  prizes** to 15% with no code at all. Both were offered and the rig was chosen
+  — *"just rig it that way bro, it's meant to be a bit of fun and it's not fun
+  if one person wins everything."* Keep the numbers here: the next session to
+  wonder whether dealing could do it should read them rather than re-derive
+  them.
+- **IT LIFTS THE MOMENT EVERYBODY HAS ONE**, which is what stops a small room
+  stalling — four prizes and three players, and the fourth is open again. **The
+  test is "is anybody left without", never a count of prizes**, so it holds at
+  any room size. Removing that valve breaks two tests that predate it.
+- **THE BUTTON STAYS AND SAYS WHY** (`standDown`), present and inert — one
+  vanishing at the exact moment somebody has just won reads as the app
+  breaking.
+- **NO SETTING.** A venue wanting one person to take the lot is not a thing
+  anybody has asked for, and it is one line to invert if it ever is.
+- **`pub-unchanged.mjs` SAYS NOTHING ABOUT ANY OF THIS — it reads `quizzes/`
+  only and never loads a bingo pack.** IDENTICAL on a bingo change is the
+  guard answering confidently about something it is not looking at, which is
+  this repo's oldest trap. Drive two real phones instead.
+
 ### A PAGE SCROLLS. THE PROJECTOR IS THE ONE THAT DOES NOT
 
 `body { overflow: auto }`, with `body.screen { overflow: hidden }` naming the

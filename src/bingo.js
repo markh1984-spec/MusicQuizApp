@@ -475,6 +475,37 @@ export class BingoGame {
       return { ok: true, valid: false, reason: 'not_yet' };
     }
 
+    /*
+     * ONE PRIZE EACH PER ROUND, WHILE ANYBODY ELSE IS STILL IN.
+     *
+     * Reported off a live night: *"I had one person win three of the four
+     * music bingo prizes yesterday… it looks really bad on me if one guy wins
+     * all the prizes."* It is not luck going wrong, it is the shape of the
+     * game — the person holding the best card wins the line, and that same
+     * card is then nearest to two lines and nearest to the house. Whoever
+     * takes the first prize is the FAVOURITE for every prize after it.
+     *
+     * **THE CLAIM IS STILL RIGHT, AND IS RECORDED AS RIGHT.** They are not
+     * charged a false call and their card is not wrong — the prize simply
+     * passes to somebody who has not had one. That distinction is the whole
+     * design: a room that hears a shout and sees the app call it a mistake is
+     * worse than the problem this fixes.
+     *
+     * **AND IT LIFTS THE MOMENT EVERYBODY HAS ONE**, which is what stops a
+     * small room stalling: with four prizes and three players, the fourth is
+     * open to all of them again. The test is "is there anybody left who has
+     * not won", never a count of prizes, so it holds at any room size.
+     *
+     * It does not need a setting. A venue wanting one person to take the lot
+     * is not a thing anybody has asked for, and this is one line to invert if
+     * it ever is.
+     */
+    if (this.holdsAPrize(playerId) && this.stillWithoutAPrize(playerId) > 0) {
+      record.standDown = true;
+      this.changed();
+      return { ok: true, valid: true, prize: false, reason: 'already_won' };
+    }
+
     const list = this.state.winners[result.pattern];
     if (!list.includes(playerId)) list.push(playerId);
     // Who won which prize, so the projector can list them at the end. Keyed by
@@ -543,6 +574,23 @@ export class BingoGame {
    * the fallback is to pay: an unpaid winner standing at the bar costs more
    * than a duplicate code the host can void.
    */
+  /** Has this player already taken a prize in the round being played? */
+  holdsAPrize(playerId) {
+    return (this.state.prizeWinners || []).some((w) => w.playerId === playerId);
+  }
+
+  /**
+   * How many OTHER players are still waiting for their first prize.
+   *
+   * The safety valve on the rule above: at zero, everybody in the room has
+   * won something and the next prize is open to all of them again. Counted
+   * off `playerList()` so somebody the host removed is not still holding the
+   * round open from outside it.
+   */
+  stillWithoutAPrize(playerId) {
+    return this.playerList().filter((p) => p.id !== playerId && !this.holdsAPrize(p.id)).length;
+  }
+
   payWinnersOwed() {
     const held = Object.values(this.state.vouchers || {});
     for (const w of this.state.prizeWinners || []) {
@@ -851,6 +899,16 @@ export class BingoGame {
     // stops the button being mashed when no line is even marked.
     view.canClaim = this.hasMarkedPattern(p);
     /*
+     * STOOD DOWN — they hold a prize and somebody else has not had one yet.
+     *
+     * The button is drawn PRESENT AND INERT with the reason on it rather than
+     * being taken away: a control that vanishes is one you cannot learn the
+     * position of, and this one vanishing at the exact moment somebody has
+     * just won reads as the app breaking. It is also what stops the room
+     * hearing a shout the screen then ignores.
+     */
+    view.standDown = this.holdsAPrize(playerId) && this.stillWithoutAPrize(playerId) > 0;
+    /*
      * "You got it" means the prize ON THE TABLE, not one won earlier.
      *
      * With three prizes a player wins a line and then keeps playing for two
@@ -941,6 +999,8 @@ export class BingoGame {
       .sort((a, b) => a.away - b.away || a.name.localeCompare(b.name));
 
     view.onesAway = view.players.filter((p) => p.away === 1).length;
+    // `standDown` rides with each row: a correct call that took no prize is a
+    // third outcome and the control view has to say which — see `claimsPanel`.
     view.claims = this.state.claims.slice(-6).reverse();
     if (this.state.lastWin) view.win = this.state.lastWin;
     // The prize panel — same shape as the quiz's, so host.js's existing

@@ -200,8 +200,26 @@ function paintCard(root, s, me) {
 
   const button = root.querySelector('#bingoCall');
   if (button) {
-    button.disabled = !s.canClaim;
-    button.textContent = s.canClaim ? 'BINGO!' : `Mark ${lineWording(s).replace(/^Get /, '')} first`;
+    /*
+     * ONE PRIZE EACH — the reason goes ON the button, never in place of it.
+     * `standDown` means they hold a prize and somebody else does not, so the
+     * next one is not theirs to take. Present and inert: a control that
+     * vanished at the exact moment somebody had just won would read as the
+     * app breaking, and one that stays but says nothing gets pressed again,
+     * louder.
+     *
+     * **IT DOES NOT SAY "you have already won", WHICH IS THE POINT.** Asked
+     * for in those words: *"I don't want them to be told 'you've already
+     * won'."* The line above this already prints what they hold
+     * (`yourPrizes`), so repeating it on the button was the app telling
+     * somebody off for winning. **"Playing on" is what a bingo hall says**,
+     * it is true, and it reads as the night carrying on rather than as a
+     * refusal aimed at them.
+     */
+    button.disabled = s.standDown || !s.canClaim;
+    button.textContent = s.standDown
+      ? 'Playing on'
+      : (s.canClaim ? 'BINGO!' : `Mark ${lineWording(s).replace(/^Get /, '')} first`);
   }
 }
 
@@ -228,7 +246,16 @@ async function claim(root) {
   button.disabled = true;
   try {
     const result = await postJson('/api/claim', { playerId: me.id, token: me.token, joinCode: roomCode() });
-    if (result.valid) {
+    if (result.valid && result.prize === false) {
+      /*
+       * Their card WAS right — the prize passed to somebody who has not had
+       * one. **It says the PRIZE is gone, never that THEY have already won**:
+       * *"I don't want them to be told 'you've already won'."* Same fact,
+       * and the difference is whether the sentence is about the prize or
+       * about them. Green, because their call was correct.
+       */
+      flash(root, 'Correct — that one has gone', true);
+    } else if (result.valid) {
       flash(root, 'BINGO — that is a line', true);
     } else {
       // Not a telling-off: they may have misheard, and a false alarm is part
