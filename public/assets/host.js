@@ -1300,7 +1300,20 @@ function buildActions(s) {
    * and Back from there returns to the round board, so a mis-tap is one press
    * to undo.
    */
-  if (s.phase !== 'lobby' && s.phase !== 'final') {
+  /*
+   * NOT WHILE THERE IS ANOTHER PART TO COME — the same guard the primary
+   * button has carried since running orders were built, which this one was
+   * simply never given. `finish()` archives the night and issues the quiz's
+   * vouchers, so from part one of three it files the evening two hours early,
+   * hands a real prize to whoever is leading, and then the true ending files
+   * it a SECOND time. The confirm promises Back undoes it; Back undoes the
+   * phase, not an archive or a voucher in somebody's hand.
+   *
+   * The server refuses it as well (`moreToCome()` in session.js) — this half
+   * is so the host is never offered something that will be turned down.
+   */
+  const moreToCome = Boolean(s.runningOrder && s.runningOrder.nextKind);
+  if (s.phase !== 'lobby' && s.phase !== 'final' && !moreToCome) {
     out.push(minor('Stop the quiz', () => {
       if (confirm('Stop here and show the winner? The scores are kept, and Back undoes it.')) act('finish');
     }, true, 'End the night here and go straight to the winner. Every score is kept and Back undoes it.'));

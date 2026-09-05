@@ -63,7 +63,7 @@ import { cueOffsetMs } from './public/assets/cue.js';
 import { Accounts } from './src/accounts.js';
 import { Reports } from './src/reports.js';
 import { randomBytes } from 'node:crypto';
-import { Rooms, HOUSE, tidyCode } from './src/rooms.js';
+import { Rooms, HOUSE, GALLERY_NONE, tidyCode } from './src/rooms.js';
 // The one proof a phone has. Same rule as answering: an id is not a
 // credential, the token is — see rule 3.
 import { ownsPlayer, PHASES } from './src/engine.js';
@@ -77,7 +77,7 @@ import {
 } from './src/gallery.js';
 import {
   publishedVenues, setVenuePublished, nameDecisions, setNameDecision,
-  leaguesRunning, setLeagueRunning,
+  leaguesRunning, setLeagueRunning, isVenueKey,
 } from './src/league-publish.js';
 import { publicTable, isCleanForPublic } from './src/clean-names.js';
 import { sendEmail, emailConfigured, emailProvider, keepKeyAlive, resetEmail, welcomeEmail } from './src/email.js';
@@ -777,6 +777,26 @@ function brandForRoom(room) {
     appName: config.appName,
     override: config.brandName,
   });
+}
+
+/**
+ * WHICH ROOM A PUBLIC `?q=` MAY NAME — and the answer is "an account, or nobody".
+ *
+ * `?q=` is documented as an account id and is not a secret; `/signup?ref=` has
+ * put one in a public URL for months. What it was never allowed to be is an
+ * arbitrary string handed to `rooms.get()`, which files a room under it — see
+ * `isRoomId()` in rooms.js for what that cost.
+ *
+ * **An id that names nothing still answers as an empty gallery**, which is the
+ * behaviour the comment over `galleryRoomId()` asks for: never a 404, so nobody
+ * can probe which ids are real. It just lands on ONE reserved empty room now
+ * rather than minting a fresh one per string.
+ */
+function galleryRoomFrom(q) {
+  const want = String(q || '').trim();
+  if (!want) return '';
+  if (want === HOUSE) return HOUSE;
+  return accounts.find(want) ? want : GALLERY_NONE;
 }
 
 /** The two colours this room's screens wear. */
@@ -1705,7 +1725,7 @@ async function handleGet(req, res, url, route) {
     // which room's — `?q=`, an account id, no more secret than the one
     // already in every `/signup?ref=` link. Checked before the role branch
     // below: a gallery visit carries neither `role=host` nor a join code.
-    const galleryQ = String(url.searchParams.get('q') || '').trim();
+    const galleryQ = galleryRoomFrom(url.searchParams.get('q'));
     const room = galleryQ ? rooms.get(galleryQ)
       : url.searchParams.get('role') === 'host'
         ? roomForHost(req, url)
@@ -2629,7 +2649,14 @@ async function handleGet(req, res, url, route) {
    * marketing link he has already handed out keeps working exactly as it
    * always has.
    */
-  const galleryTarget = String(url.searchParams.get('q') || '').trim();
+  /*
+   * TWO VALUES, DELIBERATELY. `galleryAsked` is *was a gallery named*, which is
+   * what stands the owner's preview shortcut down (see `galleryPreview()`);
+   * `galleryTarget` is *which room that resolves to*. Folding them into one
+   * would mean `?q=` naming nothing quietly handed the owner shortcut back.
+   */
+  const galleryAsked = String(url.searchParams.get('q') || '').trim();
+  const galleryTarget = galleryRoomFrom(galleryAsked);
   const galleryRoomId = () => {
     if (galleryTarget) return galleryTarget;
     const owner = accounts.owner;
@@ -2680,7 +2707,7 @@ async function handleGet(req, res, url, route) {
     if (url.searchParams.get('as') === 'visitor') return false;
     const who = whoIs(req, url);
     if (!who) return false;
-    if (!galleryTarget && (who.role === 'owner' || who.bootstrap)) return true;
+    if (!galleryAsked && (who.role === 'owner' || who.bootstrap)) return true;
     return roomForHost(req, url).id === galleryRoomId();
   };
 
@@ -3003,7 +3030,18 @@ async function handleGet(req, res, url, route) {
     const parts = route.slice('/gallery-photo/'.length).split('/');
     const night = decodeURIComponent(parts[0] || '');
     const name = safePhotoName(decodeURIComponent(parts[1] || ''));
-    if (parts.length !== 2 || !name
+    /*
+     * `isNightFolder` IS A PATH GUARD HERE, and it was the only route without
+     * it — every sibling has one. `safePhotoName()` cleans the FILENAME and
+     * nothing cleaned the night, `getFile()` encodes with `encodeURI()` which
+     * leaves `/` and `.` alone, and GitHub's Contents API resolves `..` and
+     * serves the traversed file with a 200. So `night` was a way OUT of this
+     * room's photo folder and into another quizmaster's unpublished
+     * photographs — and `galleryPreview()` short-circuits the `isPublished()`
+     * call that had been doing the validating by accident, so anybody signed in
+     * got there. Filenames are deterministic, so a night is enumerable.
+     */
+    if (parts.length !== 2 || !name || !isNightFolder(night)
       || !(galleryPreview() || await isPublished(galleryRoomId(), night))) {
       return sendJson(res, 404, { error: 'Nothing here.' }), true;
     }
@@ -3124,13 +3162,23 @@ async function handleGet(req, res, url, route) {
    * gate, unlike the feed itself — knowing your own address is a signed-in
    * question, reading the feed cannot be.
    */
-  if (route === '/api/calendar/link' && (req.method === 'GET' || req.method === 'POST')) {
+  if (route === '/api/calendar/link' && req.method === 'GET') {
     if (!allowed(req, res, url, FEATURES.CALENDAR)) return true;
     const who = whoIs(req, url);
     if (!who || !who.id) return sendJson(res, 403, { error: 'Sign in to get your calendar link.' }), true;
-    const key = req.method === 'POST'
-      ? accounts.rollCalendarKey(who.id)
-      : accounts.calendarKey(who.id);
+    /*
+     * THE HOST KEY IS NOT AN ACCOUNT, so there is nothing to hang a feed on —
+     * the same sentence the other `/api/me/*` routes already say. It got this
+     * far because `BOOTSTRAP.id` is the string `host-key`, which passes a
+     * `!who.id` test, and `calendarKey()` then answered `''` for an account it
+     * could not find: the diary printed `…/api/calendar.ics?key=` into the copy
+     * box and it 404s for ever, silently, on the identity most likely to be
+     * setting a calendar up.
+     */
+    if (who.bootstrap) {
+      return sendJson(res, 400, { error: 'The host key is not an account, so there is nothing to remember this against. Sign in to get a calendar link.' }), true;
+    }
+    const key = accounts.calendarKey(who.id);
     await backUpAccounts();
     return sendJson(res, 200, { path: `/api/calendar.ics?key=${encodeURIComponent(key)}` }), true;
   }
@@ -5318,6 +5366,32 @@ async function handleWrite(req, res, url, route) {
     if (!saved) return sendJson(res, 404, { error: 'No such account' }), true;
     await backUpAccounts();
     return sendJson(res, 200, { ok: true, prefs: saved.prefs || {} }), true;
+  }
+
+  /*
+   * A NEW CALENDAR ADDRESS — the only way to revoke a leaked feed.
+   *
+   * **IT LIVED IN `handleGet` AND THEREFORE 404ED.** Written beside its own GET
+   * for readability, which put a POST inside the handler that only ever runs
+   * for GET and HEAD, so every press of *"Make a new address?"* fell through to
+   * the generic 404 — the identical fault the gallery's publish route already
+   * carries a comment about, in this same file. A route in the wrong handler is
+   * dead code that reads as a feature.
+   *
+   * The GET stays where it was: knowing your own address is a read.
+   */
+  if (route === '/api/calendar/link' && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.CALENDAR)) return true;
+    const who = whoIs(req, url);
+    if (!who || !who.id) return sendJson(res, 403, { error: 'Sign in to get your calendar link.' }), true;
+    if (who.bootstrap) {
+      return sendJson(res, 400, {
+        error: 'The host key is not an account, so there is nothing to remember this against. Sign in to change it.',
+      }), true;
+    }
+    const key = accounts.rollCalendarKey(who.id);
+    await backUpAccounts();
+    return sendJson(res, 200, { path: `/api/calendar.ics?key=${encodeURIComponent(key)}` }), true;
   }
 
   // Your own password. The old one is required even though you are signed in:

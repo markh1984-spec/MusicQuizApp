@@ -1107,3 +1107,60 @@ test('the phone is told to stand down, and the control view says which of three 
   assert.equal(latest.standDown, true,
     'the host is looking at a room that just heard a shout — GOOD alone would hand over the wrong prize');
 });
+
+/*
+ * THE SAME RULE AS THE QUIZ, ON THE ENGINE NOBODY WENT BACK TO — rule 3.
+ *
+ * `engine.js` closed this leak, wrote the reasoning above its own version of
+ * the field, and grew a test that walks EVERY phase of a quiz looking for an
+ * id. None of it reached `bingo.js`, whose lobby list went on sending
+ * `{ id, name }` for months — and because reads take no token
+ * (`/api/state?role=player&playerId=…`), one id off the projector returned that
+ * player's whole card, every mark on it, and their voucher code once they won.
+ *
+ * So this is deliberately the quiz test's twin rather than a spot check: a
+ * decision taken once for both engines needs an assertion in both, which is the
+ * same argument `src/arcade.js` exists for.
+ */
+test('THE BINGO SCREEN AND PLAYER PAYLOADS NEVER CARRY A PLAYER ID', () => {
+  const { game } = makeGame();
+  const alice = game.join({ name: 'The Quizzy Rascals' });
+  const bob = game.join({ name: 'Back Table' });
+
+  const ids = [alice.id, bob.id];
+  const look = (where) => {
+    for (const [role, view] of [['screen', game.screenView()], ['player', game.playerView(bob.id)]]) {
+      const blob = JSON.stringify(view);
+      for (const id of ids) {
+        // A player's own view legitimately knows its own id.
+        if (role === 'player' && id === bob.id) continue;
+        assert.ok(!blob.includes(id),
+          `the ${role} payload contains a player id at ${where} — anybody with the join code can now read that person's card, their marks and their voucher code`);
+      }
+    }
+  };
+
+  // The lobby is the one place the WHOLE room is listed at once, which is why
+  // it was the expensive one.
+  look('the lobby');
+  assert.ok(game.screenView().lobby.players[0].key, 'the lobby list lost its handle altogether');
+  assert.equal(game.screenView().lobby.players[0].id, undefined,
+    'the projector is publishing a credential again');
+
+  // …and then every phase a real night passes through, including a win, which
+  // is when there is a voucher worth stealing.
+  game.start();
+  look(BINGO_PHASES.PLAYING);
+  winLine(game, alice);
+  game.claim({ playerId: alice.id });
+  look(BINGO_PHASES.WON);
+  game.newRound();
+  look('a fresh round');
+  game.finish();
+  look(BINGO_PHASES.FINISHED);
+
+  // The host keeps the real thing: removing somebody needs it, and the control
+  // view is not public.
+  assert.ok(JSON.stringify(game.hostView()).includes(alice.id),
+    'the control view lost the ids it needs to remove a phone');
+});

@@ -1722,10 +1722,23 @@ export class Engine {
     for (const [playerId, a] of Object.entries(answers)) {
       const p = this.state.players[playerId];
       if (!p) continue;
-      p.score -= a.points;
+      /*
+       * `|| 0` BECAUSE NOT EVERY ANSWER SCORED — a breakout answer is
+       * `{ text, answeredAt }` and nothing else (`answerBreakout()` below), so
+       * `a.points` and `a.responseMs` are undefined on one.
+       *
+       * Without it, one press of Back at a breakout reveal — or Skip, or Ask
+       * again, all three of which come through here — turned every answering
+       * player's score into `NaN` for the rest of the night. `JSON.stringify`
+       * renders that as `null`, so the projector showed a blank rather than
+       * anything that looked broken, and `rankPlayers()`'s comparator became
+       * undefined behaviour: the finishing order, and therefore who got the
+       * voucher, went arbitrary. On the round type that exists to be a laugh.
+       */
+      p.score -= a.points || 0;
       p.answeredCount = Math.max(0, p.answeredCount - 1);
       if (a.correct) p.correctCount = Math.max(0, p.correctCount - 1);
-      p.totalResponseMs = Math.max(0, p.totalResponseMs - a.responseMs);
+      p.totalResponseMs = Math.max(0, p.totalResponseMs - (a.responseMs || 0));
     }
     delete this.state.answers[key];
   }

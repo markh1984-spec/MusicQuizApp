@@ -80,10 +80,12 @@ function updateLobby(s) {
   if (!strip) return;
   const wanted = (s.lobby && s.lobby.players) || [];
   const have = new Set([...strip.children].map((c) => c.dataset.id));
+  // `key`, not `id` — the derived handle, for the reason written over the field
+  // in `bingo.js`. A chip only has to tell two players apart on a screen.
   for (const p of wanted) {
-    if (!have.has(p.id)) strip.prepend(node(`<div class="player-chip" data-id="${esc(p.id)}">${esc(p.name)}</div>`));
+    if (!have.has(p.key)) strip.prepend(node(`<div class="player-chip" data-id="${esc(p.key)}">${esc(p.name)}</div>`));
   }
-  const ids = new Set(wanted.map((p) => p.id));
+  const ids = new Set(wanted.map((p) => p.key));
   for (const child of [...strip.children]) if (!ids.has(child.dataset.id)) child.remove();
 }
 

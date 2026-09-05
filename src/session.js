@@ -15,7 +15,7 @@
 
 import path from 'node:path';
 
-import { Engine, PHASES, MAX_WINNERS, isSafeId, ownsPlayer, newToken } from './engine.js';
+import { Engine, PHASES, MAX_WINNERS, winnersOf, isSafeId, ownsPlayer, newToken } from './engine.js';
 import { JoinGate } from './joins.js';
 import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFields, stagePlan, maxPrizes } from './bingo.js';
 // ONE cap on how many prizes a night can carry, shared with the venue record
@@ -142,6 +142,28 @@ function nightWideOpts(state) {
      * own kind's default, exactly as an ordinary launch does.
      */
     lobbySound: state.lobbySound,
+    /*
+     * AND `lobbyGames` DOES CARRY, even though `lobbyGame` above it must not.
+     *
+     * The distinction is the same one the note above turns on: `lobbyGame` is a
+     * RESOLVED id that cannot be told apart from a choice, while `lobbyGames`
+     * IS the choice — the list the host handed the room, already tier-checked
+     * at the launch route. Left out, `launch()`'s `lobbyGames = []` default
+     * resolved it to `null` and *"Let them choose"* switched itself off after
+     * part one: the bingo interlude offered one game and no chooser.
+     */
+    lobbyGames: state.lobbyGames,
+    /*
+     * HOW MANY PLACES THE NIGHT PAYS — and it is night-wide by definition.
+     *
+     * `advanceOrder()` rebuilds `opts` from here, so leaving `winners` out sent
+     * every later part back to `DEFAULT_WINNERS`. Vouchers are only ever issued
+     * by the LAST part, which is precisely the one that never received it — so
+     * on a running order the picker was 100% inert: asked for one winner, three
+     * drinks went out. `winnersOf()` rather than the raw field, so a state
+     * written before this existed still reads as three rather than as zero.
+     */
+    winners: winnersOf(state),
     /*
      * AND THE BREAK PLAN DOES CARRY, unlike `lobbyGame` directly above it.
      *
@@ -1036,9 +1058,22 @@ export class Session {
       id: p.id,
       token: p.token,
       name: p.name,
+      /*
+       * AND WHO THEY ARE SITTING WITH — `teams.js`: *"nobody is ever moved
+       * once dealt"*, which was true within a part and not across one.
+       *
+       * The fresh engine starts with an empty `state.teams`, so a two-part
+       * team night lost the grouping at the boundary: the projector went from
+       * team rows to individual rows mid-evening, `teamPlay` stayed on so
+       * every phone drew a team picker against an empty list, and the final
+       * voucher went to a person rather than to the table that won it.
+       */
+      teamId: p.teamId || '',
       ...(scores && scores[p.id] ? scores[p.id] : {}),
     }));
-    return this.startOrderSegment(list, this.orderPos + 1, opts, carry, scores);
+    const prevState = this.engine.state;
+    return this.startOrderSegment(list, this.orderPos + 1, opts, carry, scores,
+      prevState.teams || null, prevState);
   }
 
   /**
@@ -1075,7 +1110,7 @@ export class Session {
     });
   }
 
-  startOrderSegment(list, pos, opts, carry, scores = null) {
+  startOrderSegment(list, pos, opts, carry, scores = null, teams = null, prevState = null) {
     const seg = list[pos];
     const started = seg.kind === 'bingo'
       ? this.launch('bingo', seg.packId, { ...opts, shape: seg.shape, prizes: seg.prizes })
@@ -1095,6 +1130,34 @@ export class Session {
     this.engine.state.runningOrder = list;
     this.engine.state.orderPos = pos;
     this.engine.state.carriedScores = scores;
+    /*
+     * AND WHICH NIGHT THIS ALREADY IS, IF IT HAS BEEN FILED — `archivedAs`.
+     *
+     * It is the flag that stops one evening being filed twice, and it lived on
+     * a state the part boundary throws away, so a night archived from part one
+     * was archived AGAIN at the true end: two rows in Past gigs, two
+     * headcounts, two league contributions, for one evening. Reachable from
+     * bingo's own *Finish* — which is a deliberate escape hatch and stays one —
+     * and, until `host.js` stopped drawing it mid-order, from *Stop the quiz*.
+     *
+     * Carrying it means the second ending takes the branch that already exists
+     * for a prize claimed at the bar: `updateArchivedNight()`, an UPDATE of the
+     * night already on file rather than a new one. The evening ends up filed
+     * once, with the whole of it in the record.
+     */
+    if (!this.engine.state.archivedAs && prevState && prevState.archivedAs) {
+      this.engine.state.archivedAs = prevState.archivedAs;
+    }
+    /*
+     * THE TEAMS GO ON BEFORE ANYBODY IS SEEDED, and that ordering is the whole
+     * fix rather than an implementation detail: `join()` deals a random-mode
+     * player into a team the moment it is called, so seeding first would deal
+     * the whole room again from scratch against an empty list — a fresh deal,
+     * which is precisely what `teams.js` forbids. With the map already there,
+     * `seedCarriedPlayers()` restores each player's own `teamId` and the deal
+     * never gets a say.
+     */
+    if (teams && Object.keys(teams).length) this.engine.state.teams = teams;
     if (carry && carry.length) this.seedCarriedPlayers(carry);
     this.engine.changed();
     return started;
@@ -1115,6 +1178,15 @@ export class Session {
       // they are for the rest of tonight, and a changed token is exactly the
       // "phone that cannot prove itself" case rule 3 exists to prevent.
       p.token = rec.token;
+      /*
+       * PUT BACK AFTERWARDS, like the token above it and for a related reason:
+       * `join()` has just DEALT this player a team of its own on a random-mode
+       * night, and the team they were told at the door is the one they finish
+       * on. An empty string means they had none, which is a real answer — a
+       * night that is not a team night, or somebody who never picked one.
+       */
+      if (rec.teamId && this.engine.state.teams?.[rec.teamId]) p.teamId = rec.teamId;
+      else if (!rec.teamId) delete p.teamId;
       if (this.kind === 'quiz' && typeof rec.score === 'number') {
         p.score = rec.score;
         p.correctCount = rec.correctCount || 0;
@@ -1199,6 +1271,7 @@ export class Session {
   results() {
     return this.engine.results();
   }
+
 
   // ---------------------------------------------------------------- actions
 

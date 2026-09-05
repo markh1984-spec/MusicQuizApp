@@ -828,7 +828,21 @@ export class BingoGame {
 
     if (this.state.phase === BINGO_PHASES.LOBBY) {
       view.lobby = {
-        players: this.playerList().sort((a, b) => b.joinedAt - a.joinedAt).map((p) => ({ id: p.id, name: p.name })),
+        /*
+         * THE DERIVED HANDLE, NEVER THE ID — and this is the same leak
+         * `engine.js` closed, on the engine nobody went back to.
+         *
+         * This payload is public to anybody holding the join code, which is on
+         * the projector and read out on the mic. An id was enough to read that
+         * player back through `/api/state?role=player&playerId=…`, which takes
+         * no token because reads never did — so a bored table got every card in
+         * the room, every mark on it, and the winner's redeemable voucher CODE
+         * before the winner reached the bar. The token is not in the payload, so
+         * rule 3 held for ACTIONS; this was read access, and on bingo the cards
+         * ARE the game.
+         */
+        players: this.playerList().sort((a, b) => b.joinedAt - a.joinedAt)
+          .map((p) => ({ key: faceKey(p.id), name: p.name })),
       };
       /*
        * WHO IS WINNING AT RALLY — at the lobby only.

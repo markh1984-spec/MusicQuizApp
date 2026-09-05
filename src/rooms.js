@@ -58,6 +58,40 @@ import { HOUSE_ROOM } from './library.js';
 export const HOUSE = HOUSE_ROOM;
 
 /**
+ * A GALLERY THAT NAMES NOBODY. One room, reserved, permanently empty.
+ *
+ * `?q=` on the public pages names an ACCOUNT, and an id that names nothing has
+ * always answered as an empty gallery rather than a 404 — deliberately, so
+ * nobody can probe which ids are real. What it must NOT do is mint a room per
+ * junk string: `rooms.get()` never evicts, `codeFor()` persists a join code and
+ * every persist pushes the private repo, so an open URL was a memory leak and a
+ * GitHub-quota leak at the same time. Every unknown target lands here instead.
+ */
+export const GALLERY_NONE = 'gallery-none';
+
+/**
+ * WHAT A ROOM ID MAY LOOK LIKE — and this is a PATH guard, not a tidiness one.
+ *
+ * A room's files are `path.join(dataDir, 'rooms', roomId)`, so a `..` in an id
+ * walks OUT of that folder, and `..` on its own resolves to `dataDir` ITSELF —
+ * which is the HOUSE room's own `state.json`. That was reachable with no cookie
+ * and no key: `GET /api/brand?q=..` minted a shadow room over the house room's
+ * crash-recovery file, `POST /api/join` wrote a player into it, and the next
+ * restart booted the projector from a stranger's state. **That is protected
+ * surface item 5**, reached from two unauthenticated GETs.
+ *
+ * Every real id is `crypto.randomBytes(9).toString('base64url')` (`newId()` in
+ * accounts.js) plus the literal `house`, so this alphabet is exactly what the
+ * app already mints and nothing legitimate is turned away.
+ */
+const ROOM_ID = /^[A-Za-z0-9_-]{1,64}$/;
+
+/** Is this a string this app could ever have filed a room under? */
+export function isRoomId(id) {
+  return ROOM_ID.test(String(id || ''));
+}
+
+/**
  * Codes a phone can be told down a microphone and typed without a question.
  *
  * No vowels, so it cannot spell anything; no 0/O/1/I/L, which are the pairs
@@ -265,6 +299,9 @@ export class Rooms {
 
   codeFor(roomId) {
     if (roomId === HOUSE) return '';   // the default room needs no code — see below
+    // Nor does the reserved empty gallery: nobody plays in it, and minting one
+    // would persist a code and push the backup for every junk `?q=` there is.
+    if (roomId === GALLERY_NONE) return '';
     if (this.codes[roomId]) return this.codes[roomId];
     const taken = new Set(Object.values(this.codes));
     let code = newCode();
@@ -349,6 +386,20 @@ export class Rooms {
   /** The room for this id, booted from its own saved state the first time. */
   get(roomId = HOUSE, label = '') {
     const id = String(roomId || HOUSE);
+    /*
+     * REFUSED, NEVER QUIETLY SWAPPED FOR THE HOUSE ROOM — see `isRoomId()`.
+     *
+     * A 400 rather than a 500 because it is the caller's string that is wrong,
+     * and `badRequest` is the shape `server.js`'s one top-level catch already
+     * answers. Falling back to HOUSE was the tempting version and is the same
+     * fault wearing a friendlier face: it hands somebody else's room to a
+     * caller who asked for nonsense.
+     */
+    if (!isRoomId(id)) {
+      const err = new Error('That is not a room.');
+      err.badRequest = true;
+      throw err;
+    }
     if (this.rooms.has(id)) {
       const room = this.rooms.get(id);
       if (label && !room.label) room.label = label;
