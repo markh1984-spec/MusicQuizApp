@@ -942,6 +942,26 @@ they say next.
   the tab column** — measured 200px tall at y=315 and invisible. **The numbers
   said fixed and the render said broken**, which is this file's oldest trap and
   why the screenshot is the check.
+- **AND THE FRAME'S MINIMUM HEIGHT IS TWO NUMBERS, BECAUSE THE DOORHEAD IS TWO
+  HEIGHTS.** 700 was 73 + 425 + 200 and was worked out from an **IDLE** launch
+  bar. Measured with a night actually running, the doorhead is **573px at
+  1150px and up and 636-690px below it** — so the frame pinned itself at
+  heights it could not honour and handed `.consolecols` **0-134px**, with the
+  tab column off the bottom and nothing able to reach it. It is
+  `(min-width: 1150px) and (min-height: 850px), (min-width: 900px) and
+  (min-height: 965px)` now, from the measurement. **Do not collapse it to one
+  number**: one either takes the frame off a 1500x900 laptop that fits it, or
+  keeps it at 960x760 where it does not. **A 720p laptop scrolls now and that
+  is correct** — 73 + 549 + 200 does not fit in 720, and it only ever "fitted"
+  by hiding the tabs.
+- **AND THE EQUAL-BAY RULE ONLY EXISTS BECAUSE OF THE FRAME**, so
+  `community-bay.mjs` checks it only where the frame is on. Its own reason is
+  that a bay which changes height moves the tab column and everything under
+  it — a fact about a PINNED page. Where the console scrolls, a taller bay
+  just makes a longer page, exactly as under 900px where there is no rule.
+  **Both scripts carry the frame's two numbers; if they move, they move
+  together** — a guard holding a stale threshold reports the app broken when it
+  is the check that is out of date.
 - **TWO COLUMNS IS A WIDTH DECISION; THE PINNED FRAME IS A HEIGHT ONE.** They
   were in one media query, so gating it on height took the SIDEBAR away too —
   the tabs went full width above the shelf, which pushed the pack cards down

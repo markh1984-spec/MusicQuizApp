@@ -3096,7 +3096,23 @@ body.screen { cursor: none; overflow: hidden; }
   }
 }
 
-@media (min-width: 900px) and (min-height: 700px) {
+/* THE MINIMUM HEIGHT IS TWO NUMBERS, BECAUSE THE DOORHEAD IS TWO HEIGHTS.
+ *
+ * 700 was 73 + 425 + 200 — the topbar, the bay and a readable tab column —
+ * and it was worked out from an IDLE launch bar. Measured with a night
+ * actually running, the doorhead is 573px at 1150px and up, and 636-690px
+ * below that where the settings row wraps. So the frame was pinning itself at
+ * heights it could not honour, and `.consolecols` came out at 0-134px with
+ * the tab column off the bottom of the screen and nothing able to reach it.
+ *
+ * The two conditions are 73 + 573 + 200 = 846 and 73 + 690 + 200 = 963,
+ * rounded up. Below them the console SCROLLS, which is what it has always
+ * done under 900px of width and is strictly better than a control nobody can
+ * get to. **Do not collapse this to one number**: a single threshold either
+ * takes the frame away from a 1500x900 laptop that fits it perfectly well, or
+ * keeps it at 960x760 where it does not fit at all. */
+@media (min-width: 1150px) and (min-height: 850px),
+       (min-width: 900px) and (min-height: 965px) {
   /* `dvh` because a mobile-shaped browser window reports `vh` including the
      chrome that slides away, which puts the bottom of the frame under it. The
      `vh` line before it is the fallback and must stay first. */
@@ -3105,6 +3121,24 @@ body.screen { cursor: none; overflow: hidden; }
     height: 100dvh;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
+    /*
+     * AND IT SCROLLS WHEN IT GENUINELY CANNOT FIT, rather than clipping.
+     *
+     * `overflow: hidden` below is what makes the frame a frame, and it was
+     * also unreachable-tabs waiting to happen: with a night running the
+     * doorhead is 573-690px rather than the 425 the 700px minimum was worked
+     * out from, so `.consolecols` was handed 0-134px and the tab column went
+     * off the bottom with nothing to reach it by.
+     *
+     * **A clipped overflow is worse than a scrolling one** — this file's own
+     * rule, three sightings old, and the frame itself was breaking it. Paired
+     * with the floor on `.consolecols` below, the worst case is now a console
+     * that scrolls a little, which is exactly what it does under 900px anyway.
+     * Nothing is ever cut off. `overflow-x` stays hidden: sideways is the one
+     * direction that is always a fault.
+     */
+    overflow-x: hidden;
+    overflow-y: auto;
     /* The 60px tail existed so the last card cleared the bottom of the page.
        Nothing runs off the bottom of a fixed frame, so it would only ever be
        dead space the content could have used. */
@@ -3127,7 +3161,10 @@ body.screen { cursor: none; overflow: hidden; }
     flex-direction: column;
   }
   .console main > * { flex: 0 0 auto; }
-  .console main > .consolecols { flex: 1 1 0; min-height: 0; }
+  /* THE FLOOR GOES HERE, not on the bare `.consolecols` rule further down —
+     this selector is more specific and was resetting it to 0. See the note on
+     that rule for why there is a floor at all. */
+  .console main > .consolecols { flex: 1 1 0; min-height: 200px; }
   /* The door's own area. It sizes to its content — a folded Tonight is a line,
      an open one is the panel — so the content pane grows and shrinks with it
      rather than the header being given a height it has to live inside. */
@@ -3170,7 +3207,15 @@ body.screen { cursor: none; overflow: hidden; }
     overscroll-behavior: contain;
   }
 
-  .consolecols { min-height: 0; }
+  /*
+   * A READABLE TAB COLUMN OR THE FRAME GIVES WAY. 200px is the same number
+   * the frame's own minimum height was built from — four tabs and a little
+   * air. `min-height` rather than a media query because the thing that
+   * squeezes it is the doorhead's CONTENT (a live night's bar is 120px taller
+   * than an idle one), which no query can measure. When it will not fit, the
+   * wrap above scrolls instead of hiding it.
+   */
+  .consolecols { min-height: 200px; }
   /* THE ONLY THING THAT SCROLLS. `overscroll-behavior` stops a flick that
      reaches the end of the list scrolling the window behind it, which on a
      trackpad reads as the whole app sliding. */

@@ -259,7 +259,15 @@ try {
     page.on('pageerror', (e) => errors.push(String(e.message)));
     page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
 
-    const framed = width >= 900 && height >= 700;
+    /*
+     * THE FRAME'S OWN RULE, KEPT IN STEP WITH `style.css`. It is two numbers
+     * because the doorhead is two heights: 73 + 573 + 200 at 1150px and up,
+     * and 73 + 690 + 200 below that where the launch bar's settings row wraps.
+     * A guard carrying a stale copy of a threshold reports the app broken when
+     * it is the check that is out of date — so if these move, they move
+     * together.
+     */
+    const framed = (width >= 1150 && height >= 850) || (width >= 900 && height >= 965);
     const twoCols = width >= 900;
     console.log(`\n${label} ${width}x${height} — ${framed ? 'pinned frame' : 'the page scrolls'}${twoCols ? ', two columns' : ', one column'}`);
 
@@ -479,7 +487,14 @@ try {
       };
     });
     check(`${label}: there is a drop slot and a pack to put in it`, drag.slot && drag.card, JSON.stringify(drag));
-    if (twoCols && drag.slot && drag.card) {
+    /*
+     * ONLY WHERE THE FRAME IS PINNED. Where it is not, the page scrolls — and
+     * `pinTonightWhereItIs()` exists for exactly that: it freezes Tonight
+     * where the eye last saw it when a card is picked up, so the drop target
+     * cannot scroll away. Demanding both ends on screen at once there would be
+     * asserting against the answer this app already has.
+     */
+    if (framed && drag.slot && drag.card) {
       check(`${label}: and both ends of the drag are on screen at once`, drag.together,
         `slot ${drag.slotY}, card ${drag.cardY}, window ${drag.view}`);
     }

@@ -129,7 +129,22 @@ try {
   }
   const browser = await chromium.launch();
 
-  for (const [label, width, height] of [['desk', 1500, 900], ['laptop', 1280, 720], ['phone', 390, 844]]) {
+  for (const [label, width, height] of [['desk', 1500, 900], ['laptop', 1280, 900], ['short', 1280, 720], ['phone', 390, 844]]) {
+    /*
+     * THE EQUAL-BAY RULE ONLY EXISTS BECAUSE OF THE FRAME, so it is checked
+     * only where the frame is on. Its stated reason is that a bay which
+     * changes height "moves the tab column and the whole page under it every
+     * time a door is pressed" — which is a fact about a PINNED page. Where the
+     * console scrolls, a taller bay just makes a longer page, exactly as it
+     * does under 900px where there is deliberately no rule at all.
+     *
+     * `short` is 1280x720 and is here for that: with a night running the
+     * doorhead is 549px, so 73 + 549 + 200 does not fit in 720 and the frame
+     * rightly stands down. It used to "fit" by putting the tab column off the
+     * bottom of the screen. The numbers match `style.css`; if they move, they
+     * move together.
+     */
+    const framed = (width >= 1150 && height >= 850) || (width >= 900 && height >= 965);
     const page = await browser.newPage({ viewport: { width, height } });
     /*
      * THE PUBLISH LAMP ASKS FIRST, and a browser dialog stops the page dead
@@ -281,7 +296,7 @@ try {
       console.log(`\n${label} ${width}x${height} — ${tab}\n   ${JSON.stringify(f)}`);
       await page.screenshot({ path: path.join(OUT, `${label}-${tab}.png`) });
 
-      if (width >= 900) {
+      if (framed) {
         check(`${label}/${tab}: the page itself does not scroll`, f.pageScrolls <= 0, `${f.pageScrolls}px`);
         check(`${label}/${tab}: the tab column still fits`, f.tabsFit && f.colsHeight > 140, `${f.colsHeight}px left for the columns`);
         check(`${label}/${tab}: the bay is the launch bay's height`, f.doorhead === bayH, `${f.doorhead}px, launch bar is ${bayH}px`);
@@ -355,7 +370,7 @@ try {
     /* ---- EVERY DOOR, not only this one. The rule is that the bay is the same
        size across sections, so a door left out of the sweep is a door that can
        drift back to its own height without anything noticing. */
-    if (width >= 900) {
+    if (framed) {
       for (const [door, tab] of [['workshop', 'quiz'], ['post', 'past'], ['community', 'league']]) {
         await page.goto(`http://127.0.0.1:${PORT}/console?key=${KEY}&door=${door}&tab=${tab}`, { waitUntil: 'load' });
         await page.addStyleTag({ content: '.backup-warn, main > .panel.warn { display: none !important; }' });
@@ -788,7 +803,7 @@ try {
     });
     check(`${label}: you can add your own photos to the night`, mine === 1, `${mine}`);
     check(`${label}: and the control is big enough to press`, hittable >= 36, `${hittable}px`);
-    if (width >= 900) {
+    if (framed) {
       const h = await page.evaluate(() => Math.round(document.querySelector('.doorhead').getBoundingClientRect().height));
       check(`${label}: an open night does not change the bay's height`, h === bayH, `${h}px vs ${bayH}px`);
     }
@@ -813,7 +828,7 @@ try {
      * back to the top itself and make this assertion about the harness. The
      * real-mouse path is already proved by the two checks above.
      */
-    if (width >= 900) {
+    if (framed) {
       const scrolled = await page.evaluate(() => {
         const b = document.querySelector('.doorhead .bay-body');
         b.scrollTop = 120;

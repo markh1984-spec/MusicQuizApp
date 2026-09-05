@@ -709,7 +709,17 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * 230px narrow. Both are the kind of thing a session re-derives from a
  * screenshot at 11pm otherwise.
  */
-const BUDGET = 229_400;
+/*
+ * AND TO 231_000 on 5 SEPTEMBER 2026 for the frame's minimum height.
+ *
+ * WHAT IT BOUGHT: the numbers and the reason they are two rather than one. The
+ * old 700 was derived from an IDLE launch bar and a live one is 120-260px
+ * taller, so the frame pinned itself where it could not fit and put the tab
+ * column off the screen. A future session WILL want to simplify two thresholds
+ * into one — the entry says what that costs in both directions, and that both
+ * guard scripts carry the same pair.
+ */
+const BUDGET = 231_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
