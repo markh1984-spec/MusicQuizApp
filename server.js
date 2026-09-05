@@ -70,7 +70,7 @@ import { ownsPlayer, PHASES } from './src/engine.js';
 import { upcoming } from './public/assets/diary.js';
 import { calendarIcs } from './src/ics.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, switchedOn, PACK_PENCE, TRIAL_DAYS, REFERRAL_BONUS_DAYS } from './public/assets/plans.js';
-import { lobbyGameFor } from './public/assets/lobby-games.js';
+import { lobbyGameFor, lobbyGamesFor, ANY_LOBBY_GAME } from './public/assets/lobby-games.js';
 import {
   publishedNights, isPublished, setPublished, readableNight,
   photoDecisions, photoKey, setPhotoDecision, photoPins, setPhotoPin, MAX_PINS,
@@ -6383,11 +6383,26 @@ async function handleWrite(req, res, url, route) {
          * refused. Losing a choice costs a game nobody has seen yet; refusing
          * the launch costs the night.
          */
+        const tierNow = (entitlements(whoIs(req, url) || {}) || {}).tierInUse || '';
         const lobbyGame = lobbyGameFor(
           String(body.game || 'quiz'),
           String(body.lobbyGame || ''),
-          (entitlements(whoIs(req, url) || {}) || {}).tierInUse || '',
+          tierNow,
         ).id;
+        /*
+         * AND "LET THEM CHOOSE" IS A LIST, RESOLVED IN THE SAME BREATH.
+         *
+         * The tier is read once, here, where the account is known — so the
+         * list a room is handed is the list that account holds, and the phone
+         * honours it without re-checking, exactly as it honours the single
+         * choice above. A console that sent the sentinel while holding
+         * nothing gets an empty list and the night falls back to one game,
+         * which is what every night did before this existed.
+         */
+        const lobbyGames = String(body.lobbyGame || '') === ANY_LOBBY_GAME
+          ? lobbyGamesFor(String(body.game || 'quiz'), tierNow)
+          : [];
+
         /*
          * WHETHER TONIGHT ENDS ON A LEAGUE TABLE, decided HERE.
          *
@@ -6502,7 +6517,7 @@ async function handleWrite(req, res, url, route) {
           ? pickIdeas((fullLibrary(config, room.id, listOwn(room.paths)).quizzes || [])
             .map((q) => q.title))
           : [];
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, winners, look, questionSeconds, lobbyGame, lobbySound, league, online, teamPlay, teamMode, venue, venueId, rewards, venueLogo, comeBack, photoLink: photoLinkFor(req, url, venue), askForRounds, roundIdeas: askIdeas, order: wantedOrder, breakPlan: body.breakPlan || {} });
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, winners, look, questionSeconds, lobbyGame, lobbyGames, lobbySound, league, online, teamPlay, teamMode, venue, venueId, rewards, venueLogo, comeBack, photoLink: photoLinkFor(req, url, venue), askForRounds, roundIdeas: askIdeas, order: wantedOrder, breakPlan: body.breakPlan || {} });
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();
@@ -6578,11 +6593,26 @@ async function handleWrite(req, res, url, route) {
         // across a bingo interlude untouched.
         const questionSeconds = body.questionSeconds
           ? Math.max(5, Math.min(120, Number(body.questionSeconds) || 0)) : 0;
+        const tierNow = (entitlements(whoIs(req, url) || {}) || {}).tierInUse || '';
         const lobbyGame = lobbyGameFor(
           firstKind,
           String(body.lobbyGame || ''),
-          (entitlements(whoIs(req, url) || {}) || {}).tierInUse || '',
+          tierNow,
         ).id;
+        /*
+         * AND "LET THEM CHOOSE" IS A LIST, RESOLVED IN THE SAME BREATH.
+         *
+         * The tier is read once, here, where the account is known — so the
+         * list a room is handed is the list that account holds, and the phone
+         * honours it without re-checking, exactly as it honours the single
+         * choice above. A console that sent the sentinel while holding
+         * nothing gets an empty list and the night falls back to one game,
+         * which is what every night did before this existed.
+         */
+        const lobbyGames = String(body.lobbyGame || '') === ANY_LOBBY_GAME
+          ? lobbyGamesFor(firstKind, tierNow)
+          : [];
+
         const league = seesTheirLeague(req, url);
         const lobbySound = body.lobbySound !== false;
         const online = Boolean(body.online);
@@ -6619,7 +6649,7 @@ async function handleWrite(req, res, url, route) {
          */
         const winners = Math.max(0, Math.min(3, Number(body.winners) || 0));
         const started = session.launchRunningOrder(segments, {
-          look, questionSeconds, lobbyGame, lobbySound, league, online, teamPlay, teamMode, winners, venue, venueId,
+          look, questionSeconds, lobbyGame, lobbyGames, lobbySound, league, online, teamPlay, teamMode, winners, venue, venueId,
           rewards, venueLogo, comeBack, photoLink: photoLinkFor(req, url, venue),
           askForRounds, roundIdeas: askIdeas,
           /*

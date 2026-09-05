@@ -10,6 +10,7 @@ import {
   doLaunch, doLaunchOrder, freshLabel, freshness, lobbyGameOptions, lookOptions,
   playingOptions, screenOptions, shapeOptions,
 } from './console-packs.js';
+import { ANY_LOBBY_GAME } from './lobby-games.js';
 import { packTitle, shelfFor } from './console-shows.js';
 import {
   addBingoSlot, addQuizPackSlot, isMixed, moveRoundToSlot, segmentsFromSlots, simpleNight,
@@ -56,7 +57,10 @@ let currentPack = null;
 export const night = {
   look: '',
   questionSeconds: 0,
-  lobbyGame: '',
+  // OPEN CHOICE IS THE NIGHT'S DEFAULT. Empty already means "use the default
+  // game", so the sentinel has to be set HERE as well as drawn on the picker
+  // or the control says one thing and the launch sends another.
+  lobbyGame: ANY_LOBBY_GAME,
   lobbySound: true,
   /*
    * HOW THE ROOM IS DIVIDED UP — `solo`, `assigned` or `random`.
@@ -3580,7 +3584,10 @@ export function launchBar() {
      */
     lbOnline = Boolean(show.online);
     night.look = String(show.look || '');
-    night.lobbyGame = String(show.lobbyGame || '');
+    // A show saved with no game reads as open choice. It is a TEMPLATE, not a
+    // running night — "must not change a night already up" is kept by
+    // `state.lobbyGames` being absent on a restored state, which is elsewhere.
+    night.lobbyGame = String(show.lobbyGame || '') || ANY_LOBBY_GAME;
     // Both halves default to ON wherever the field could be absent — the same
     // rule the lobby sound follows everywhere else.
     night.lobbySound = show.lobbySound !== false;

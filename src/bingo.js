@@ -155,6 +155,10 @@ export class BingoGame {
        * something rather than `undefined`, exactly as the quiz's does.
        */
       gameSeed: 1,
+      // The games a room may choose between, when the quizmaster left it open.
+      // `null` is "no choice, play the one in `lobbyGame`" — which is every
+      // night before this existed, and what a restored old state reads as.
+      lobbyGames: null,
       arcade: {},
       /*
        * WHAT HAPPENS IN THE GAPS — `src/breaks.js`, the same field the quiz
@@ -334,13 +338,22 @@ export class BingoGame {
    * purpose: a bingo lobby must not accept a score a quiz lobby refuses. All
    * this adds is which phase counts as waiting.
    */
-  arcadeScore(playerId, score) {
+  arcadeScore(playerId, score, game = '') {
+    /*
+     * `game` IS WHAT THE PHONE SAYS IT WAS PLAYING — a LABEL, never a
+     * permission, so there is nothing to win by lying about it. It is checked
+     * against the real list inside `recordArcadeScore`, where the rest of the
+     * scoreboard's rules live: validating it here and in the bingo engine
+     * would be two copies of one rule, which is the fault `arcade.js` exists
+     * to prevent.
+     */
     const res = recordArcadeScore(this.state, playerId, score, {
       // "A break that offers a game", not "the lobby" — the same change the
       // quiz engine made, in the same words, because the whole point of
       // `arcade.js` is that a bingo night must not accept a score a quiz
       // night refuses.
       waiting: offersGame(breakNow(this.state)),
+      game,
     });
     if (res.changed) this.changed();
     return res.ok ? { ok: true, best: res.best } : res;

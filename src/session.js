@@ -579,7 +579,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, league = false, online = false, teamPlay = false, teamMode = 'assigned', venue = '', venueId = '', rewards = [], venueLogo = '', comeBack = null, photoLink = null, askForRounds = false, roundIdeas = [], order = null, breakPlan = null } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbyGames = [], lobbySound = true, league = false, online = false, teamPlay = false, teamMode = 'assigned', venue = '', venueId = '', rewards = [], venueLogo = '', comeBack = null, photoLink = null, askForRounds = false, roundIdeas = [], order = null, breakPlan = null } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     /*
      * TONIGHT'S RUNNING ORDER, when one was built — rounds from more than one
@@ -713,6 +713,22 @@ export class Session {
      * the account is known; by the time it reaches here the decision is made.
      */
     this.engine.state.lobbyGame = lobbyGameFor(kind, lobbyGame).id;
+    /*
+     * AND THE LIST THE ROOM MAY CHOOSE FROM, when the quizmaster left it open.
+     *
+     * **`null` rather than an empty array when there is no choice**, because
+     * ABSENT is what every night before this had and it is what the phone
+     * reads as "one game, the one beside this" — a redeploy in the middle of a
+     * night must not hand the room a chooser it did not have at nine o'clock.
+     *
+     * Resolved at the ROUTE against the tier, like the single game above it;
+     * by the time it reaches here the decision is made and this only stores
+     * it. A list of one is a pinned game wearing a list, so it is dropped —
+     * the phone should draw the plain card, not a menu with one thing on it.
+     */
+    this.engine.state.lobbyGames = Array.isArray(lobbyGames) && lobbyGames.length > 1
+      ? lobbyGames.slice()
+      : null;
     /*
      * WHETHER THE PHONES MAY MAKE A NOISE TONIGHT.
      *
@@ -1334,7 +1350,7 @@ export class Session {
      * (`src/arcade.js`), so there is nothing here to keep in step.
      */
     if (action === 'arcade') {
-      return this.engine.arcadeScore(String(body.playerId || ''), body.score);
+      return this.engine.arcadeScore(String(body.playerId || ''), body.score, String(body.game || ''));
     }
     if (this.kind === 'quiz' && action === 'wandered') {
       return this.engine.wandered(String(body.playerId || ''));

@@ -675,7 +675,18 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * removes the banner it was checking against. A future session writing the
  * next geometry check will hit all four, and none is guessable.
  */
-const BUDGET = 223_000;
+/*
+ * AND TO 226_500 on 5 SEPTEMBER 2026 for the room picking its own lobby game.
+ *
+ * WHAT IT BOUGHT: four entries, and three of them are prohibitions rather than
+ * descriptions. The sentinel must never be an empty string; the list must be
+ * spread in rather than always present, or `pub-unchanged` stops being able to
+ * say a pub night is unchanged; the game id on a score is a LABEL and must
+ * never become a permission; and the photo gate was argued and turned down on
+ * consent grounds, which is exactly the kind of thing a future session will
+ * re-propose in good faith unless the reasoning is written where it loads.
+ */
+const BUDGET = 226_500;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

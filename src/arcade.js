@@ -14,6 +14,8 @@
  * not this file's.
  */
 
+import { lobbyGameById } from '../public/assets/lobby-games.js';
+
 /** Nothing on a projector is worth a bigger number than this. */
 export const MAX_ARCADE_SCORE = 99999;
 
@@ -43,7 +45,7 @@ export const MAX_ARCADE_SCORE = 99999;
  *   `changed` is whether anything actually moved — the caller flushes only
  *   then, or a phone posting a worse score writes the whole state to disk.
  */
-export function recordArcadeScore(state, playerId, score, { waiting }) {
+export function recordArcadeScore(state, playerId, score, { waiting, game = '' } = {}) {
   const player = state.players[String(playerId || '')];
   if (!player) return { ok: false, reason: 'unknown_player' };
   if (!waiting) return { ok: false, reason: 'not_waiting' };
@@ -52,6 +54,30 @@ export function recordArcadeScore(state, playerId, score, { waiting }) {
   const best = state.arcade[player.id] || 0;
   if (got <= best) return { ok: true, best, changed: false };
   state.arcade[player.id] = got;
+  /*
+   * WHICH GAME IT WAS SET ON — in a map BESIDE the scores, never folded into
+   * them.
+   *
+   * `state.arcade` is `{ id: number }` and is on disk in every state file and
+   * every backup there is; turning a number into an object would need a
+   * migration on a host whose disk is wiped every deploy, which this app has
+   * a standing rule against. A parallel map costs nothing and an old state
+   * simply has none — those rows draw without an icon, which is honest,
+   * because nothing recorded what they were playing.
+   *
+   * It matters at all because the room can now pick its own game: a maze
+   * score and a crate-stacking score are not comparable, so a board that did
+   * not say which was quietly inventing a league table out of five different
+   * sports.
+   */
+  // CHECKED AGAINST THE REAL LIST, because it comes off a phone and lands on
+  // a projector. Nothing is granted by it, so an unknown id is simply dropped
+  // rather than refused — the row then draws with no icon, which is what a
+  // score from before this existed does anyway.
+  if (lobbyGameById(game)) {
+    if (!state.arcadeGame) state.arcadeGame = {};
+    state.arcadeGame[player.id] = String(game);
+  }
   return { ok: true, best: got, changed: true };
 }
 
@@ -65,7 +91,18 @@ export function recordArcadeScore(state, playerId, score, { waiting }) {
  */
 export function arcadeBoard(state, top = 5) {
   return Object.entries(state.arcade || {})
-    .map(([id, score]) => ({ name: (state.players[id] || {}).name || '', score }))
+    .map(([id, score]) => ({
+      name: (state.players[id] || {}).name || '',
+      score,
+      /*
+       * The game it was set on — SPREAD IN ONLY WHEN THERE IS ONE, so a night
+       * with a pinned game sends the exact two-field row it has always sent
+       * and nothing downstream has to learn a new shape. A score banked before
+       * the room could choose has none, and the projector draws that row as it
+       * always did.
+       */
+      ...((state.arcadeGame || {})[id] ? { game: state.arcadeGame[id] } : {}),
+    }))
     .filter((row) => row.name)
     .sort((a, b) => b.score - a.score)
     .slice(0, top);
@@ -102,6 +139,18 @@ export function arcadeFields(state, playerId) {
      * it is — which is exactly what it used to do.
      */
     lobbyGame: state.lobbyGame || '',
+    /*
+     * AND THE LIST, when the quizmaster left the choice to the room.
+     *
+     * **Spread in only when there IS one**, like `winners` and the comeback
+     * band — a night with a pinned game sends exactly the payload it sent
+     * before this existed, so `pub-unchanged` can still say IDENTICAL about
+     * every ordinary gig. The phone draws its plain card whenever this is
+     * absent, which is also what a state restored from an older deploy gives
+     * it.
+     */
+    ...(Array.isArray(state.lobbyGames) && state.lobbyGames.length > 1
+      ? { lobbyGames: state.lobbyGames.slice() } : {}),
     /*
      * Whether the phones may make a noise tonight — the host's switch. A night
      * saved before this existed has no field, and `!== false` means it plays,

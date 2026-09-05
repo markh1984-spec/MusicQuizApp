@@ -952,6 +952,50 @@ they say next.
 board), `src/arcade.js` (the scores, shared by both engines),
 `state.gameSeed`, `state.arcade`, `state.lobbyGame`.
 
+- **THE ROOM PICKS, AND THAT IS THE DEFAULT — `lobbyGamesFor()`,
+  `state.lobbyGames`.** Asked for: *"can we default to all of the games
+  available for that QMs level? So the quiz customer gets to pick the game?"*
+  The picker's first option is **Let them choose** and it is SELECTED, so a
+  quizmaster who never opens it hands the room the whole menu; **pinning one is
+  still there** for the booking where it matters. **`ANY_LOBBY_GAME` is a
+  SENTINEL, never an empty string** — empty already means *"nobody said, use
+  the default"*, and reusing it would silently turn every night ever saved into
+  an open choice. **Resolved at the LAUNCH ROUTE against `tierInUse`** like the
+  single choice it replaces, and **the phone honours the list and re-checks
+  nothing**. **`null` rather than `[]` when there is no choice, and the field is
+  SPREAD into the payload only when it exists** — a pinned night sends what it
+  always sent, so `pub-unchanged` still says IDENTICAL with no `--ignore`, and a
+  state restored mid-night from an older deploy hands out one game exactly as it
+  did at nine o'clock. **A list of ONE is dropped**: a menu with one thing on it
+  is not a choice. **An unknown tier falls to the bottom rung**, so it holds the
+  two everybody has rather than none.
+- **ONE ROW EITHER WAY, AND THE CHOICE IS ONE TAP INSIDE IT.** Three phone
+  layouts were rendered at 390px first: a row per game is **423px of menu** and
+  pushes *Send a photo* off the bottom, which breaks *don't disincentivise
+  photo uploads*. So the lobby keeps its shape and the row says how many there
+  are. **The box opens on the CHOOSER and nothing runs yet** — auto-starting
+  the first one spends somebody's opening seconds on a game they did not pick,
+  and on a reaction game it spends a life. **Switching calls `stopArcade()`
+  first and RESHAPES the canvas** (a maze is square, a tower is 2:3), or a loop
+  keeps drawing on a resized canvas and banking under the wrong game.
+- **NO PHOTO GATE, AND ONE WAS PROPOSED AND TURNED DOWN.** *"I think they
+  should have to have sent a photo for their avatar first"* — argued and not
+  built, on his own decision. **It prices consent**: *sending it is the
+  consent*, and a photo goes on the projector and by default on a public
+  gallery, so making the game conditional turns a free choice into a toll.
+  **And it undercuts what the game is FOR** — a phone with a game on it stays
+  in the foreground, so gating it puts fewer phones there at exactly the moment
+  the join gate is busiest. `avatar.js` already draws everyone a face; a photo
+  never was mandatory.
+- **THE BOARD SAYS WHICH GAME EACH SCORE WAS ON — `state.arcadeGame`, a map
+  BESIDE the scores.** With the room choosing, five scores can be five
+  different sports, so a bare list would invent a ranking nobody played. **A
+  parallel map, never folded into `state.arcade`** — that is `{id: number}` in
+  every state file and backup there is, and turning it into an object needs a
+  migration on a disk wiped every deploy. **The id is a LABEL, never a
+  permission**, checked against the real list in `arcade.js` alone — validating
+  it in both engines would be two copies of one rule. **The icon draws only on
+  a MIXED board**; a pinned night's rows are the two columns they always were.
 - **THE DEFAULT FOLLOWS THE GAME RATHER THAN THE ACCOUNT: Maze Mouth before a
   quiz, Rally before the bingo.** A bingo night should have a character of its
   own rather than being the quiz with different content in it, and a remembered

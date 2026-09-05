@@ -1048,8 +1048,12 @@ function buildWaiting(s, kicker, title, sub) {
  * serves two screens which hold their own identity, and it has no business
  * knowing about either.
  */
-const postArcadeScore = (score) => postJson('/api/arcade', {
-  playerId: me.id, token: me.token, joinCode: roomCode(), score,
+const postArcadeScore = (score, game = '') => postJson('/api/arcade', {
+  // `game` is which of them they were playing — a LABEL for the projector's
+  // board, never a permission. The room can pick its own game now, so a board
+  // that did not say which was quietly comparing a maze score to a
+  // crate-stacking one.
+  playerId: me.id, token: me.token, joinCode: roomCode(), score, game,
 }).catch(() => {});
 
 /**

@@ -10,7 +10,7 @@ import { library, me, setPackDrag, setShelfRoundDrag } from './console-state.js'
 import { addRoundToTonight, addToTonight, dragging, heardHere, heardHereIsLocal, night, packIsInTonight, putOnBench } from './console-tonight.js';
 import { PACK_SHELF, can, canPin, doorNow, goTo, hostKey, isPinned, keyed, linkTo, load, packWord, pinIcon, pinRank, pinnedPacks, render, reorderPins, showDone, togglePin } from './console.js';
 import { tonight } from './diary.js';
-import { lobbyGameChoices, lobbyGameFor } from './lobby-games.js';
+import { lobbyGameChoices, lobbyGameFor, ANY_LOBBY_GAME } from './lobby-games.js';
 import { inSeason } from './looks.js';
 import { packLookAttrs, shortTitle, titleSize, isBreakoutPack } from './pack-look.js';
 import { FEATURES, findTier } from './plans.js';
@@ -844,8 +844,22 @@ export function lobbyGameOptions(kind) {
    * browser talking to a server from before the field existed.
    */
   const tier = (me && me.entitlements && (me.entitlements.tierInUse || me.entitlements.tier)) || '';
-  const fallback = lobbyGameFor(kind, '').id;
-  return lobbyGameChoices(tier).map((g) => {
+  /*
+   * "LET THEM CHOOSE" LEADS, AND IT IS THE DEFAULT — asked for directly:
+   * *"can we default to all of the games available for that QMs level? So the
+   * quiz customer gets to pick the game?"*
+   *
+   * **It is the first option AND the selected one**, so a quizmaster who never
+   * opens this picker hands the room the whole menu. Pinning one is still
+   * here, one tap below, for the night where it matters — a corporate booking,
+   * or a game that is misbehaving on the handsets in that room.
+   *
+   * The count is not written out: what the room actually gets is resolved at
+   * the launch ROUTE against the tier, and a number here would be a second
+   * answer to that question, drawn from a browser that can be stale.
+   */
+  const anyOption = `<option value="${ANY_LOBBY_GAME}" data-short="🕹️ They choose" selected>🕹️ Let them choose — whatever your tier holds</option>`;
+  return anyOption + lobbyGameChoices(tier).map((g) => {
     const label = g.held ? `${g.name} — ${g.blurb}` : `${g.name} — ${(findTier(g.tier) || {}).label || g.tier} and up`;
     /*
      * `data-short` IS WHAT THE CLOSED CONTROL SHOWS — the symbol and the name,
@@ -855,7 +869,7 @@ export function lobbyGameOptions(kind) {
      * the one moment somebody is actually choosing between them.
      */
     const short = `${g.icon ? `${g.icon} ` : ''}${g.name}`;
-    return `<option value="${esc(g.id)}" data-short="${esc(short)}" ${g.held ? '' : 'disabled'} ${g.id === fallback ? 'selected' : ''}>${esc(`${g.icon ? `${g.icon} ` : ''}${label}`)}</option>`;
+    return `<option value="${esc(g.id)}" data-short="${esc(short)}" ${g.held ? '' : 'disabled'} >${esc(`${g.icon ? `${g.icon} ` : ''}${label}`)}</option>`;
   }).join('');
 }
 

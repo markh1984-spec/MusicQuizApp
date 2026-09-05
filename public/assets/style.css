@@ -450,6 +450,10 @@ body::after {
    one has to break rather than push the score off the panel. */
 .arcade-board .ab-name { font-weight: 700; overflow-wrap: anywhere; min-width: 0; }
 .arcade-board .ab-score { font-weight: 800; font-variant-numeric: tabular-nums; }
+/* Which game that score was set on, when the room picked its own. Drawn only
+   on a mixed board — see lobby-board.js — so a pinned night's rows are the two
+   columns they always were. */
+.arcade-board .ab-game { flex: 0 0 auto; line-height: 1; }
 
 .player-strip {
   flex: 0 0 auto;
@@ -9212,6 +9216,34 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+/* ---- PICKING ONE, when the quizmaster left it to the room.
+   A grid rather than a row of pills: five names have to be readable at 390px
+   and a wrapping row of pills puts one game on a line of its own, which reads
+   as the odd one out rather than as the fifth choice. `auto-fit` with a floor
+   means two or five both come out even. */
+.arcade-pick {
+  display: grid; gap: 6px; width: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+}
+.arcade-pick-one {
+  display: grid; gap: 4px; justify-items: center;
+  /* 44px is the touch floor and this is the one control in a game that is not
+     the game — a miss here opens the wrong one and costs the tap. */
+  min-height: 44px; padding: 8px 4px;
+  border-radius: var(--r-field);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--ink); font: inherit; cursor: pointer;
+}
+.arcade-pick-one:active { transform: translateY(1px); }
+/* The one being played wears the account's own colour on its edge — the same
+   "you are here" the console's ordinary buttons use, and deliberately not a
+   fill: a filled chip in a row of five would read as the thing to press. */
+.arcade-pick-one.on { border-color: var(--hot); background: rgba(255, 255, 255, 0.14); }
+.arcade-pick-icon { font-size: var(--fs-sub); line-height: 1; }
+.arcade-pick-name { font-size: var(--fs-mini); line-height: 1.15; text-align: center; color: var(--ink-dim); }
+.arcade-pick-one.on .arcade-pick-name { color: var(--ink); }
 
 .arcade-under {
   width: 100%;

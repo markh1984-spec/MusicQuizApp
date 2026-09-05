@@ -67,14 +67,35 @@ export function paintArcadeBoard(s) {
    * game on the big screen is worse than naming none.
    */
   const game = lobbyGameById(s && s.lobbyGame);
+  /*
+   * WITH THE ROOM CHOOSING, THE HEADING CANNOT NAME ONE GAME AND EACH ROW HAS
+   * TO SAY WHICH IT WAS.
+   *
+   * The board was always a league table of one game, which is what made the
+   * seed matter. Once anybody can pick, five scores can be five different
+   * sports — so a bare list would be inventing a ranking nobody played. The
+   * icon per row is the smallest honest fix: it stops the comparison being
+   * implied and it answers *"what is everyone playing?"* at a glance, which is
+   * what the room is actually curious about ten minutes before a quiz.
+   *
+   * **The heading keeps naming the game when there IS only one** — a pinned
+   * night, or a night from before this existed — so nothing about those
+   * changed. A row whose score was set before anything recorded a game simply
+   * has no icon, which is honest rather than a guess.
+   */
+  const mixed = rows.some((r) => r.game) && new Set(rows.map((r) => r.game)).size > 1;
   box.replaceChildren(node(`
     <div>
-      <div class="ab-head">Top scores${game ? ` · ${esc(game.name)}` : ''}</div>
-      ${rows.map((r, i) => `
+      <div class="ab-head">Top scores${!mixed && game ? ` · ${esc(game.name)}` : ''}</div>
+      ${rows.map((r, i) => {
+    const played = lobbyGameById(r.game);
+    return `
         <div class="ab-row">
           <span class="ab-pos">${i + 1}</span>
           <span class="ab-name">${esc(r.name)}</span>
+          ${mixed ? `<span class="ab-game" title="${esc(played ? played.name : '')}">${played ? played.icon : ''}</span>` : ''}
           <span class="ab-score">${Number(r.score).toLocaleString('en-GB')}</span>
-        </div>`).join('')}
+        </div>`;
+  }).join('')}
     </div>`));
 }

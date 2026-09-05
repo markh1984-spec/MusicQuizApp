@@ -329,7 +329,13 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * choose the ordinary route when a burst row is really one pack in order,
  * which is the whole thing keeping every gig off the running-order path.
  */
-const BUDGET = { 'console-tonight.js': 4010, 'console.js': 2000, 'console-packs.js': 1810 };
+/*
+ * `console-packs.js` 1810 -> 1830 on 5 September 2026: the lobby-game picker
+ * gained "Let them choose", which is the night's new default — the option
+ * itself, plus the note recording that pinning one is still worth a control
+ * for the booking where it matters.
+ */
+const BUDGET = { 'console-tonight.js': 4010, 'console.js': 2000, 'console-packs.js': 1830 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

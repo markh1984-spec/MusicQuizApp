@@ -25,7 +25,7 @@
  * wifi, on the one page sixty people are opening at the same moment.
  */
 
-import { lobbyGameFor } from './lobby-games.js';
+import { lobbyGameFor, lobbyGameById } from './lobby-games.js';
 import { soundButton, wireSoundButton, allowSound } from './lobby-sound.js';
 
 /**
@@ -61,6 +61,21 @@ export function lobbyGame(s) {
 }
 
 /**
+ * THE GAMES THIS ROOM MAY CHOOSE BETWEEN, or an empty list when the
+ * quizmaster pinned one.
+ *
+ * Read straight off the payload and NOT re-checked against the tier — the
+ * launch route resolved this against the account, and a phone second-guessing
+ * it is how the console comes to say one thing and the room to be handed
+ * another. Ids the phone does not recognise are dropped, so a night launched
+ * by a newer server than the browser cannot draw a card with nothing behind
+ * it.
+ */
+export function lobbyGames(s) {
+  return ((s && s.lobbyGames) || []).map(lobbyGameById).filter(Boolean);
+}
+
+/**
  * The card, as markup, for whichever screen is putting it up.
  *
  * Hidden rather than absent when there is no seed: a night launched by an
@@ -69,19 +84,41 @@ export function lobbyGame(s) {
  */
 export function arcadeCard(s) {
   const game = lobbyGame(s);
+  const choices = lobbyGames(s);
   // What tonight says, before the button draws itself — or a muted room shows
   // a speaker icon that is on.
   allowSound(s.lobbySound !== false);
+  /*
+   * ONE ROW EITHER WAY, and the choice lives one tap inside it.
+   *
+   * Rendered against a row per game and a strip of chips before this was
+   * chosen: five rows is 423px of menu on a 390px phone and it pushes *Send a
+   * photo* off the bottom, which breaks the standing rule not to
+   * disincentivise photo uploads. So the lobby keeps the shape it has and the
+   * games are what is behind the button — the row simply says how many there
+   * are, which is the part somebody needs before deciding to tap.
+   */
+  const many = choices.length > 1;
   return `
     <div class="arcade" ${s.gameSeed ? '' : 'hidden'}>
       <button class="wait-item arcade-open" type="button">
         <span class="wait-item-icon" aria-hidden="true">🕹️</span>
         <span class="wait-item-what">
-          <b>Play ${game.name}</b>
-          <span class="tiny">Top scores go on the big screen</span>
+          <b>${many ? 'Play a game' : `Play ${game.name}`}</b>
+          <span class="tiny">${many
+            ? `${choices.length} to choose from — top scores go on the big screen`
+            : 'Top scores go on the big screen'}</span>
         </span>
       </button>
       <div class="arcade-box" hidden>
+        ${many ? `
+        <div class="arcade-pick">
+          ${choices.map((g) => `
+            <button class="arcade-pick-one" type="button" data-game="${g.id}">
+              <span class="arcade-pick-icon" aria-hidden="true">${g.icon}</span>
+              <span class="arcade-pick-name">${g.name}</span>
+            </button>`).join('')}
+        </div>` : ''}
         <div class="arcade-stage">
           <canvas class="arcade-canvas ${game.canvas.klass}" width="${game.canvas.w}" height="${game.canvas.h}"></canvas>
           <!-- The countdown, in the corner of the game. See paintStartsIn:
@@ -147,32 +184,85 @@ export function wireArcade(el, s, postScore) {
   if (!box || !open || !s.gameSeed) return;
   const game = lobbyGame(s);
   const said = el.querySelector('.arcade-said');
-  open.addEventListener('click', async () => {
-    const label = open.querySelector('b');
-    if (!box.hidden) { box.hidden = true; stopArcade(); label.textContent = `Play ${game.name}`; return; }
-    box.hidden = false;
-    label.textContent = 'Put it away';
-    wireSoundButton(box);
-    const { startGame } = await LOADERS[game.id]();
+  const choices = lobbyGames(s);
+  const stage = el.querySelector('.arcade-stage');
+  const shut = choices.length > 1 ? 'Play a game' : `Play ${game.name}`;
+
+  /**
+   * START ONE. Called with whichever game the room picked, or with the
+   * night's own when the quizmaster pinned it.
+   *
+   * **`stopArcade()` FIRST, every time.** Switching games is the same hazard
+   * as the phase changing: a loop left running on a canvas that has just been
+   * resized keeps drawing, keeps a window `keydown` listener, and keeps
+   * banking scores under the wrong game. That fault has already cost this app
+   * a night's worth of swallowed arrow keys.
+   */
+  const start = async (pick) => {
+    stopArcade();
+    /*
+     * THE CANVAS IS RESHAPED TO THE GAME. Each one names its own drawing
+     * surface and its own aspect class — a maze is square and a tower is 2:3
+     * — so switching without this would letterbox one game inside another's
+     * frame, or squash it.
+     */
+    const canvas = box.querySelector('.arcade-canvas');
+    canvas.width = pick.canvas.w;
+    canvas.height = pick.canvas.h;
+    canvas.className = `arcade-canvas ${pick.canvas.klass}`;
+    said.textContent = pick.how;
+    for (const b of box.querySelectorAll('.arcade-pick-one')) {
+      b.classList.toggle('on', b.dataset.game === pick.id);
+    }
+    const { startGame } = await LOADERS[pick.id]();
     const play = () => {
-      running = startGame(box.querySelector('.arcade-canvas'), {
-        // EVERY PHONE IN THE ROOM PLAYS THE SAME GAME — the seed comes off the
-        // game state, which is what makes the scoreboard mean anything.
+      running = startGame(canvas, {
+        // EVERY PHONE PLAYING THIS GAME PLAYS THE SAME ONE — the seed comes
+        // off the game state. It is shared across all of them on purpose:
+        // each game derives its own layout from it, so one seed still means
+        // two people who chose Pile Up are stacking the same crates.
         seed: s.gameSeed,
         // Banked at each life lost as well as at the end: a game interrupted
         // by the night starting never reaches game over, and by then the phase
         // has moved and a score is rightly refused. So the people who played
         // longest were the ones missing from the board.
-        onBank: (score) => { postScore(score); },
+        onBank: (score) => { postScore(score, pick.id); },
         onEnd: ({ score, won }) => {
           said.textContent = won ? `Cleared it — ${score}. Tap to play again.` : `${score}. Tap to play again.`;
           // ONE post, at game over. Not a stream of positions: the lobby is
           // exactly when the connection is busiest.
-          postScore(score);
-          box.querySelector('.arcade-canvas').addEventListener('click', play, { once: true });
+          postScore(score, pick.id);
+          canvas.addEventListener('click', play, { once: true });
         },
       });
     };
     play();
+  };
+
+  open.addEventListener('click', async () => {
+    const label = open.querySelector('b');
+    if (!box.hidden) { box.hidden = true; stopArcade(); label.textContent = shut; return; }
+    box.hidden = false;
+    label.textContent = 'Put it away';
+    wireSoundButton(box);
+    /*
+     * WITH A CHOICE, THE BOX OPENS ON THE CHOOSER AND NOTHING RUNS YET.
+     *
+     * Auto-starting the first one and letting them switch was the other way
+     * round and is worse: it spends somebody's first seconds on a game they
+     * did not choose, and on a reaction game it spends a life as well. The
+     * stage is hidden until they pick, so the row of games IS the screen.
+     */
+    if (choices.length > 1) { stage.hidden = true; return; }
+    await start(game);
   });
+
+  for (const button of el.querySelectorAll('.arcade-pick-one')) {
+    button.addEventListener('click', async () => {
+      const pick = choices.find((g) => g.id === button.dataset.game);
+      if (!pick) return;
+      stage.hidden = false;
+      await start(pick);
+    });
+  }
 }

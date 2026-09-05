@@ -105,6 +105,44 @@ export const LOBBY_GAMES = [
 
 export const DEFAULT_LOBBY_GAME = 'maze';
 
+/**
+ * "LET THEM CHOOSE" — what the console sends when the room picks for itself.
+ *
+ * A sentinel rather than an empty string, because empty ALREADY means "nobody
+ * said, use the default for this kind of night" — and every state, every saved
+ * show and every quiet auto-launch on disk sends exactly that. Reusing it
+ * would silently turn every night ever saved into an open choice, which is a
+ * change to what a running night does rather than a new option beside it.
+ */
+export const ANY_LOBBY_GAME = 'any';
+
+/**
+ * THE GAMES A ROOM MAY CHOOSE BETWEEN — every one this tier holds, for this
+ * kind of night, with the kind's own default first.
+ *
+ * **Resolved at the LAUNCH ROUTE and written into the state, exactly like the
+ * single choice it replaces.** The phone honours the list and re-checks
+ * nothing: a phone working the tier out for itself is how the console comes to
+ * say one thing and the room to be handed another.
+ *
+ * **The default leads.** Somebody who opens the chooser and taps the first
+ * thing gets what the night would have given them anyway, which is what makes
+ * this safe to switch on by default.
+ *
+ * An unknown tier resolves to the bottom rung, so it holds the two that ship
+ * — the same way `tierFor()` degrades, and the safe direction: a missing tier
+ * hands out the games everybody has rather than none, and it can never hand
+ * out one somebody has not paid for.
+ */
+export function lobbyGamesFor(kind, tier = '') {
+  const held = LOBBY_GAMES.filter((g) => heldAt(g, tier));
+  const first = lobbyGameFor(kind, '');
+  return [
+    ...held.filter((g) => g.id === first.id),
+    ...held.filter((g) => g.id !== first.id),
+  ].map((g) => g.id);
+}
+
 /** One by id, or undefined. */
 export function lobbyGameById(id) {
   return LOBBY_GAMES.find((g) => g.id === String(id || ''));

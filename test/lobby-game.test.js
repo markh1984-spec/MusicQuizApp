@@ -19,6 +19,8 @@ import assert from 'node:assert/strict';
 
 import { Engine } from '../src/engine.js';
 import { MAZE, COLS, ROWS, pellets, reachable, startPoints, open, stepToward, turnFrom } from '../public/assets/maze.js';
+import { lobbyGamesFor } from '../public/assets/lobby-games.js';
+import { arcadeFields } from '../src/arcade.js';
 
 const QUIZ = {
   id: 'test',
@@ -345,4 +347,69 @@ test('running into a wall stops you facing it, and never picks a way for you', (
   const out = turnFrom(you, UP, null, 0);
   assert.equal(out.dir, null, 'it should stop rather than invent a direction');
   assert.equal(out.heading, null, 'and let go of the heading it could not follow');
+});
+
+/* ------------------------------------------------------------------ THE ROOM
+ * PICKS ITS OWN GAME — *"can we default to all of the games available for that
+ * QMs level? So the quiz customer gets to pick the game?"*
+ *
+ * The thing worth pinning here is not the chooser, it is the two ways it could
+ * quietly change a night nobody asked it to change: a state written before this
+ * existed must still hand out one game, and an ordinary pinned night must send
+ * the payload it always sent — which is what lets `pub-unchanged` still say
+ * IDENTICAL with no `--ignore`.
+ */
+
+test('the list a room may choose from is what that TIER holds, default first', () => {
+  // Bronze holds the two that ship; Gold holds all five. The kind's own
+  // default leads, so somebody who taps the first thing gets what the night
+  // would have handed them anyway — which is what makes this safe on by
+  // default.
+  assert.deepEqual(lobbyGamesFor('quiz', 'bronze'), ['maze', 'rally']);
+  assert.deepEqual(lobbyGamesFor('bingo', 'bronze'), ['rally', 'maze']);
+  assert.deepEqual(lobbyGamesFor('quiz', 'gold')[0], 'maze');
+  assert.equal(lobbyGamesFor('quiz', 'gold').length, 5);
+  // AN UNKNOWN TIER FALLS TO THE BOTTOM RUNG, like `tierFor()` does — so it
+  // hands out the two everybody has rather than none, and it can never hand
+  // out one nobody paid for. Written down because the first version of this
+  // claimed it held nothing, which was wrong in the safe direction and would
+  // still have been a comment lying about the code.
+  assert.deepEqual(lobbyGamesFor('quiz', ''), ['maze', 'rally']);
+});
+
+test('A NIGHT WITH A PINNED GAME SENDS THE PAYLOAD IT ALWAYS SENT', () => {
+  const { e } = game();
+  // No `lobbyGames` at all, which is every night before this existed and every
+  // night whose quizmaster pinned one. The field must be ABSENT rather than
+  // empty, or `pub-unchanged` stops being able to say a pub night is
+  // byte-for-byte what it was.
+  e.state.lobbyGame = 'maze';
+  e.state.lobbyGames = null;
+  assert.equal('lobbyGames' in arcadeFields(e.state, 'nobody'), false);
+  // And with a real choice on it, it rides.
+  e.state.lobbyGames = ['maze', 'rally'];
+  assert.deepEqual(arcadeFields(e.state, 'nobody').lobbyGames, ['maze', 'rally']);
+});
+
+test('A SCORE SAYS WHICH GAME IT WAS SET ON, and an unknown id is dropped', () => {
+  const { e } = game();
+  const { id } = e.join('Mick');
+  // The board was always a league table of ONE game, which is what made the
+  // seed matter. Once anybody can pick, five scores can be five different
+  // sports — so the row has to say which, or the projector is inventing a
+  // ranking nobody played.
+  e.arcadeScore(id, 900, 'pileup');
+  assert.equal(e.arcadeBoard()[0].game, 'pileup');
+  // A LABEL, NEVER A PERMISSION — nothing is granted by it, so a phone sending
+  // rubbish loses the icon rather than the score, and the row draws exactly as
+  // a pre-choice score does.
+  e.arcadeScore(id, 4000, 'not-a-game');
+  assert.equal(e.arcadeBoard()[0].score, 4000);
+  assert.equal(e.arcadeBoard()[0].game, 'pileup');
+  // And a score banked with no game named leaves the row the two fields it
+  // has always had — which is what every score before this existed is.
+  const other = e.join('Rita');
+  e.arcadeScore(other.id, 100);
+  const row = e.arcadeBoard().find((r) => r.score === 100);
+  assert.equal('game' in row, false);
 });

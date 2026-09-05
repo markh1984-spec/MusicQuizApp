@@ -60,8 +60,8 @@ export function renderBingo(s, me) {
         <p class="muted" style="font-size:14px">This card is yours for the whole round — it will not change.</p>
         <div class="wait-menu">${arcadeCard(s)}</div>
       </div>`);
-    wireArcade(el, s, (score) => postJson('/api/arcade', {
-      playerId: me.id, token: me.token, joinCode: roomCode(), score,
+    wireArcade(el, s, (score, game = '') => postJson('/api/arcade', {
+      playerId: me.id, token: me.token, joinCode: roomCode(), score, game,
     }).catch(() => {}));
     return el;
   }
