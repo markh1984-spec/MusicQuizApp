@@ -660,7 +660,22 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * front of you, and getting either wrong is silent — the night still launches,
  * it just launches down a path that was rare last week and is now universal.
  */
-const BUDGET = 221_500;
+/*
+ * AND TO 223_000 on 5 SEPTEMBER 2026 for `console-frame.mjs` and the phone-diet
+ * fix it found on its first run.
+ *
+ * WHAT IT BOUGHT: the hit-test rule. Three separate bugs in one week were one
+ * bug — a control in the DOM, sized, passing every test, and not on the screen
+ * — and each was found by a human looking at a screenshot, the third AFTER my
+ * own measurements said it was fixed. The entry is short and every clause in
+ * it is a trap the script itself fell into while being written: scrolling an
+ * `overflow: hidden` box reports the clipping fault as fine, scrolling `body`
+ * reports every control on a phone as missing, an idle console is a narrower
+ * bar than the one that broke, and a harness that creates an account also
+ * removes the banner it was checking against. A future session writing the
+ * next geometry check will hit all four, and none is guessable.
+ */
+const BUDGET = 223_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

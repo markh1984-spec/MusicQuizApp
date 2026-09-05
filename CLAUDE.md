@@ -1878,7 +1878,12 @@ greyed out, and maybe a tooltip should come out trying to sell it."*
   44px rungs cost 68px the bar does not have and would put the owner's topbar
   on two rows at every width there is. A mouse on a laptop presses this. **The
   hat switch beside it went to 34px too**, or the secondary control is taller
-  than the primary one inside it.
+  than the primary one inside it. **AND THE 560px DIET HAS TO TAKE BOTH DOWN
+  TOGETHER** — it was already shrinking the halves and the rungs were left out
+  of it, so a phone drew 34px of rung inside a 24px pill and the owner's bar
+  ran 5px off a 390px screen: the whole console scrolled sideways, on the one
+  account that has these controls at all. Found by `console-frame.mjs` on its
+  first real run, which is what the script is for.
 - **BUILT FROM `ladderFor()`, never written out**, and **`NOT_BUILT` says "not
   yet"**: a rung listing something that does not exist is one nobody trusts.
 - **NO SUBSCRIBE BUTTON UNTIL THERE IS A PROCESSOR** — *"Get in touch to move
@@ -3537,6 +3542,7 @@ node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
 node scripts/pub-unchanged.mjs HEAD~1 --ignore online   # did I break the pub night?
 node scripts/drag-check.mjs             # Tonight's drags, with a REAL browser drag
 node scripts/community-bay.mjs          # does the Community bay still fit the frame?
+node scripts/console-frame.mjs          # is every control on the Console door reachable?
 node scripts/pages-scroll.mjs           # can a person actually scroll each page?
 node scripts/final-fits.mjs             # is the last slide of the night all on screen?
 ```
@@ -3548,6 +3554,18 @@ account is in [`docs/checks.md`](docs/checks.md):**
   `public/` for two years; a stray backtick in an HTML comment made
   `console.js` a syntax error and `/console` did not load AT ALL, for every
   quizmaster, with the full suite green. `browser-parses.test.js` closes it.
+- **PUT A FINGER ON IT — `console-frame.mjs`.** Three bugs in one week were one
+  bug: a control in the DOM, with a size, passing every test, not on the
+  screen. **`elementFromPoint()` at a control's middle sees clipped,
+  off-screen and painted-over at once** — *in the document*, *has a size* and
+  *can be pressed* are three questions, and this repo has been bitten by the
+  gap five times. **It may only scroll what a FINGER could** — `auto`/`scroll`,
+  never `hidden` (that is the clipping fault reported as fine), never `body`
+  (its overflow propagates to the viewport). **It launches a quiz and puts a
+  banner up**: an idle bar is narrower than the one that broke, and the owner
+  account it needs removed both banners the container used to raise, so the
+  `main`-layout check silently skipped itself. Six sizes, each on a threshold
+  in `style.css`; verified by reintroducing four real faults.
 - **`pub-unchanged.mjs` is the one to run before a gig week**, and **compare
   against the branch you are merging into, not `HEAD`** — on a committed clean
   checkout `HEAD` IS the working tree, so it can only ever print IDENTICAL. It
