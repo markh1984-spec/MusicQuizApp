@@ -79,7 +79,7 @@ import {
   publishedVenues, setVenuePublished, nameDecisions, setNameDecision,
   leaguesRunning, setLeagueRunning, isVenueKey,
 } from './src/league-publish.js';
-import { publicTable, isCleanForPublic } from './src/clean-names.js';
+import { publicTable, publicName, isCleanForPublic } from './src/clean-names.js';
 import { sendEmail, emailConfigured, emailProvider, keepKeyAlive, resetEmail, welcomeEmail } from './src/email.js';
 import { Suggestions, KINDS, PACK_REQUEST_KIND } from './src/suggestions.js';
 import { Spend, spendRecorder, imagePrices } from './src/spend.js';
@@ -1110,7 +1110,25 @@ const server = http.createServer(async (req, res) => {
 const SUPPORT_MINUTES = 30;
 
 const SUPPORT_NEVER = ['/api/host/'];
-const SUPPORT_QUIET = ['/api/state', '/api/live', '/health', '/api/me', '/api/brand', '/api/has-accounts'];
+/*
+ * WHAT IS TOO DULL TO WRITE DOWN — and it was wrong in BOTH directions.
+ *
+ * **Matched EXACTLY now, never as a prefix.** The old test was
+ * `route === p || route.startsWith(p + '/')`, so `/api/me` on this list quietly
+ * covered every `/api/me/*` WRITE: changing somebody's colour scheme — which is
+ * what their projector and sixty phones wear — left no line at all, and neither
+ * did hiding tabs from their console. The panel promises *"everything done
+ * while it is on is in your support log"*, and this is the one feature whose
+ * entire pitch is the log.
+ *
+ * **And `/api/live` is not a route in this app.** The SSE route is
+ * `/api/stream`, so every reconnect wrote a line — and `noteSupport` keeps the
+ * last 500, so stream noise was evicting the entries that matter.
+ *
+ * A route added here has to be one where a LINE would be noise, not one where
+ * the ACT is dull. There are no `/api/me/*` reads that write anything.
+ */
+const SUPPORT_QUIET = ['/api/state', '/api/stream', '/health', '/api/me', '/api/brand', '/api/has-accounts'];
 
 /**
  * What a support session did, in words a subscriber would use.
@@ -1157,6 +1175,16 @@ function supportWords(method, route) {
   if (route.startsWith('/api/advert')) {
     return read ? 'Looked at your venue slides' : 'Changed your venue slides';
   }
+  /*
+   * THE TWO WRITES THAT USED TO BE SILENT — see `SUPPORT_QUIET`. A scheme is
+   * what the room sees tonight, and hidden tabs are what the console offers,
+   * so both are changes to somebody's app rather than to a setting nobody
+   * notices. Named, so the log says which.
+   */
+  if (route === '/api/me/scheme') return 'Changed your colours';
+  if (route === '/api/me/prefs') return 'Changed your settings';
+  if (route === '/api/me/password') return 'Changed your password';
+  if (route === '/api/calendar/link') return read ? 'Looked at your calendar link' : 'Made you a new calendar address';
   if (route.startsWith('/api/archive')) return 'Looked at your past nights';
   if (route.startsWith('/api/photos')) return 'Looked at your photos';
   if (route === '/api/library') return 'Looked at your pack library';
@@ -1178,7 +1206,7 @@ function supportGuard(req, res, url, route) {
     return false;
   }
 
-  if (!SUPPORT_QUIET.some((p) => route === p || route.startsWith(p + '/'))) {
+  if (!SUPPORT_QUIET.includes(route)) {
     accounts.noteSupport(who.id, supportWords(req.method, route));
   }
   return true;
@@ -2456,7 +2484,14 @@ async function handleGet(req, res, url, route) {
      * about somebody else's night — worse than saying nothing, which is what
      * this does instead.
      */
-    if (entry.venue && seesTheirLeague(req, url) && await leagueRunsAt(gigRoom.id, entry)) {
+    /*
+     * READ ONCE, FOR BOTH HALVES OF THE DOCUMENT. The rulings decide the league
+     * table AND the winner's name below, and a report that masked one and not
+     * the other is exactly what this hoist fixes. From the gallery room, like
+     * every other read of `leagues-published.json`.
+     */
+    const ruled = await nameDecisions(galleryRoomFor(req, url));
+    if (entry.venue && seesTheirLeague(req, url) && await leagueRunsAt(galleryRoomFor(req, url), entry)) {
       const want = entry.venue.trim().toLowerCase();
       const here = nights.filter((n) => String(n.venue || '').trim().toLowerCase() === want);
       const season = leagueAfter(here, night);
@@ -2468,11 +2503,31 @@ async function handleGet(req, res, url, route) {
        * manager who was not — so it is the far side of the same door.
        */
       if (season.nights > 1 && season.table.length) {
-        const ruled = await nameDecisions(gigRoom.id);
         league = { ...season, table: publicTable(season.table, ruled, teamKey), teams: season.table.length };
       }
     }
-    const pdf = nightReportPdf(entry, { headcount: nightHeadcount(entry), photoCount, opens, hasOffer, league });
+    /*
+     * AND THE WINNER'S NAME IS FILTERED TOO, which it was not.
+     *
+     * The season table was masked and the podium three lines above it printed
+     * raw, in one document — so the rule's own stated scope ("the public league
+     * page and the landlord's report") held for half of the report. The name
+     * that goes largest, in gold, at the top, was the one that got through.
+     *
+     * Masked HERE rather than in `report-pdf.js`, so the filter keeps one
+     * definition and the PDF stays a layout: `publicName()` is the same call
+     * `publicTable()` makes per row, with the same rulings, which is what lets
+     * a human overrule it in both directions on the report as well.
+     */
+    const named = {
+      ...entry,
+      games: (entry.games || []).map((g) => ({
+        ...g,
+        winner: g.winner ? publicName(g.winner, ruled, teamKey) : g.winner,
+        leaderboard: (g.leaderboard || []).map((r) => ({ ...r, name: publicName(r.name, ruled, teamKey) })),
+      })),
+    };
+    const pdf = nightReportPdf(named, { headcount: nightHeadcount(entry), photoCount, opens, hasOffer, league });
     return send(res, 200, pdf, {
       'Content-Type': 'application/pdf',
       'Content-Disposition': `inline; filename="${nightReportFilename(entry)}"`,
@@ -2749,7 +2804,10 @@ async function handleGet(req, res, url, route) {
    */
   if (route === '/api/league/published') {
     if (!allowed(req, res, url, FEATURES.LEAGUE)) return true;
-    const lgId = roomForHost(req, url).id;
+    // `galleryRoomFor`, MATCHING THE WRITES — a read and a write that disagree
+    // about the room is how the console came to say "not published" about a
+    // table it had just published. One function, asked by both sides.
+    const lgId = galleryRoomFor(req, url);
     // Both halves of one decision file, in the one round trip it costs.
     return sendJson(res, 200, {
       venues: await publishedVenues(lgId),
@@ -4743,8 +4801,20 @@ async function handleWrite(req, res, url, route) {
   if (route === '/api/league/name' && req.method === 'POST') {
     if (!allowed(req, res, url, FEATURES.LEAGUE)) return true;
     const body = await readJson(req);
+    /*
+     * `galleryRoomFor`, NOT `roomForHost` — the same fix the photographs
+     * already had, on the file it was never applied to.
+     *
+     * `leagues-published.json` lives in the photo folder and the PUBLIC page
+     * reads it through `galleryRoomId()`, which for the owner and the host key
+     * is their own quizmaster room. `roomForHost()` is HOUSE for both of those,
+     * so a ruling or a publish was written into a folder the page never looks
+     * at: it succeeded, said so, and read back as though nothing had happened.
+     * No change at all for an ordinary quizmaster — their room id is never
+     * HOUSE, so the two functions agree.
+     */
     const done = await setNameDecision(
-      roomForHost(req, url).id, String(body.name || ''), String(body.decision || ''),
+      galleryRoomFor(req, url), String(body.name || ''), String(body.decision || ''),
     );
     return sendJson(res, done.ok ? 200 : 400, done), true;
   }
@@ -4762,7 +4832,8 @@ async function handleWrite(req, res, url, route) {
     const body = await readJson(req);
     const key = String((body && body.venueKey) || '');
     if (!isVenueKey(key)) return sendJson(res, 400, { error: 'That is not a venue.' }), true;
-    const done = await setLeagueRunning(roomForHost(req, url).id, key, Boolean(body && body.on));
+    // `galleryRoomFor` — see the ruling route above.
+    const done = await setLeagueRunning(galleryRoomFor(req, url), key, Boolean(body && body.on));
     if (!done.ok) return sendJson(res, 400, { error: done.error || 'Could not save that.' }), true;
     return sendJson(res, 200, { ok: true, running: done.running, venues: done.venues }), true;
   }
@@ -4770,8 +4841,10 @@ async function handleWrite(req, res, url, route) {
   if (route === '/api/league/publish' && req.method === 'POST') {
     if (!allowed(req, res, url, FEATURES.LEAGUE)) return true;
     const body = await readJson(req);
-    const lgRoom = roomForHost(req, url);
-    const done = await setVenuePublished(lgRoom.id, String(body.venueKey || ''), body.on !== false);
+    // `galleryRoomFor` — see the ruling route above. This is the one that
+    // decides whether a venue's table has a public page at all, so writing it
+    // into the wrong folder meant publishing and reading back "not published".
+    const done = await setVenuePublished(galleryRoomFor(req, url), String(body.venueKey || ''), body.on !== false);
     return sendJson(res, done.ok ? 200 : 400, done), true;
   }
 

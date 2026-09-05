@@ -78,7 +78,34 @@ export function isVenueKey(key) {
  */
 const NOTHING = { venues: [], names: {}, running: [] };
 
+/**
+ * HELD FOR A FEW SECONDS, PER ROOM — a public page asks this THREE times.
+ *
+ * `/api/league` reads the published venues, the leagues running and the name
+ * rulings, and every one of those is `readDecisions()`, so one stranger opening
+ * one page cost three GitHub round trips against a 5,000/hour limit the gallery
+ * is already budgeting against. It is one file and one answer.
+ *
+ * **Short, and dropped on every write** (see `inOrder()` below), because this
+ * decides what LEAVES the app: taking a table down is a promise a cache must
+ * not sit in front of. A few seconds collapses one page load and nothing more.
+ */
+const CACHE_MS = 5_000;
+const held = new Map();
+
+function forget(roomId) {
+  held.delete(roomId);
+}
+
 async function readDecisions(roomId) {
+  const cached = held.get(roomId);
+  if (cached && cached.at > Date.now() - CACHE_MS) return cached.value;
+  const fresh = await readDecisionsNow(roomId);
+  held.set(roomId, { at: Date.now(), value: fresh });
+  return fresh;
+}
+
+async function readDecisionsNow(roomId) {
   if (!photosRepoConfigured()) return { ...NOTHING };
   let raw = null;
   try {
@@ -137,6 +164,38 @@ async function readDecisions(roomId) {
  *
  * @returns {Promise<string[]>} venue keys, sorted. Empty on any doubt.
  */
+/**
+ * ONE WRITER AT A TIME, PER ROOM — the same rule, and for the same reason, as
+ * `inOrder()` in `src/gallery.js`.
+ *
+ * `leagues-published.json` holds three things — which venues are published,
+ * which run a league, and every ruling on a team name — and three separate
+ * callers each read it WHOLE and write it back. Overlap two and the second
+ * one's copy was taken before the first one's write landed, so it puts the old
+ * value back: a name ruling saved while a publish was in flight silently
+ * UN-PUBLISHED the table, on a live page.
+ *
+ * **The browser's own queueing cannot cover it** — the press that overlaps a
+ * publish is the one it has not started. Ordering belongs where the file is.
+ *
+ * A chain per room, and it swallows rejections so one failed write cannot
+ * wedge a room for ever; every caller still gets its own result.
+ */
+const writing = new Map();
+
+function inOrder(roomId, job) {
+  /*
+   * AND EVERY WRITE FORGETS THE CACHED FILE, on the way IN and on the way OUT
+   * — `gallery.js`'s own note, for the same reason. In, because the job is
+   * about to read the file and must not read a copy taken before the write it
+   * is queued behind; out, because what it just wrote is the truth now.
+   */
+  const wrapped = () => { forget(roomId); return Promise.resolve(job()).finally(() => forget(roomId)); };
+  const after = (writing.get(roomId) || Promise.resolve()).then(wrapped, wrapped);
+  writing.set(roomId, after.then(() => {}, () => {}));
+  return after;
+}
+
 export async function leaguesRunning(roomId) {
   return (await readDecisions(roomId)).running;
 }
@@ -155,7 +214,7 @@ export async function isLeagueRunning(roomId, key) {
  * switch says otherwise is the app disagreeing with itself in public, on the
  * one surface where that is expensive.
  */
-export async function setLeagueRunning(roomId, key, on) {
+async function setLeagueRunningNow(roomId, key, on) {
   if (!isVenueKey(key)) return { ok: false, error: 'That is not a venue.' };
   if (!photosRepoConfigured()) {
     return { ok: false, error: 'The private repository is not set up, so there is nowhere to record this.' };
@@ -195,7 +254,7 @@ export async function nameDecisions(roomId) {
  * @param {string} name        as typed on the night; keyed by `teamKey()`
  * @param {'allow'|'hide'|''} decision  '' clears it back to the word list
  */
-export async function setNameDecision(roomId, name, decision) {
+async function setNameDecisionNow(roomId, name, decision) {
   const key = teamKey(name);
   if (!key) return { ok: false, error: 'That is not a name.' };
   if (!['allow', 'hide', ''].includes(decision)) {
@@ -246,7 +305,7 @@ export async function isVenuePublished(roomId, key) {
  *
  * @returns {Promise<{ok: boolean, venues?: string[], error?: string}>}
  */
-export async function setVenuePublished(roomId, key, on) {
+async function setVenuePublishedNow(roomId, key, on) {
   if (!isVenueKey(key)) return { ok: false, error: 'That is not a venue.' };
   if (!photosRepoConfigured()) {
     return { ok: false, error: 'The private repository is not set up, so there is nowhere to record this.' };
@@ -272,4 +331,20 @@ export async function setVenuePublished(roomId, key, on) {
   );
   if (res && res.ok === false) return { ok: false, error: res.error || 'Could not save that.' };
   return { ok: true, venues: sorted };
+}
+
+
+/** Queued behind anything else writing this room's decision file — `inOrder()`. */
+export function setLeagueRunning(roomId, key, on) {
+  return inOrder(roomId, () => setLeagueRunningNow(roomId, key, on));
+}
+
+/** Queued behind anything else writing this room's decision file — `inOrder()`. */
+export function setNameDecision(roomId, name, decision) {
+  return inOrder(roomId, () => setNameDecisionNow(roomId, name, decision));
+}
+
+/** Queued behind anything else writing this room's decision file — `inOrder()`. */
+export function setVenuePublished(roomId, key, on) {
+  return inOrder(roomId, () => setVenuePublishedNow(roomId, key, on));
 }

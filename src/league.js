@@ -459,6 +459,20 @@ export function leaguesByVenue(nights = [], opts = {}) {
 
   const out = {};
   for (const entry of byName.values()) {
+    /*
+     * AND THE FOLD HAS TO PUT THEM BACK IN ORDER — `leagueTable()` says
+     * "newest first" in its own signature and leans on it three times: for
+     * where the season window starts, for which SPELLING of a team name wins
+     * ("the name they used most recently"), and for the order of `evenings`,
+     * which rides to the console rail and the public page.
+     *
+     * Each raw group arrived newest-first on its own, and concatenating two
+     * sorted runs does not give one sorted run — so a pub whose nights were
+     * filed under both an id and a bare name came out interleaved: the wrong
+     * season start date, and the older spelling of a team name on a public
+     * page. Nothing threw, and the table looked entirely plausible.
+     */
+    entry.nights.sort((a, b) => String(b.night || '').localeCompare(String(a.night || '')));
     const league = leagueTable(entry.nights, opts);
     // A venue with no quiz nights in the season has no league, and saying so
     // by absence is better than an empty table on a card.

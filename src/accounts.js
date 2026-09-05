@@ -128,7 +128,24 @@ export class Accounts {
     this.data = {
       accounts: parsed.accounts,
       sessions: Array.isArray(parsed.sessions) ? parsed.sessions : [],
+      /*
+       * AND THE FEATURE LADDER'S OVERRIDES, which this dropped — silently, and
+       * then SAVED the loss over the file.
+       *
+       * `restore()` runs whenever the disk is empty, which on Render's free
+       * tier is every deploy. `load()` reads `tiers`, `serialise()` writes
+       * them, the backup carried them; only this rebuild forgot, so every
+       * deploy quietly re-priced the ladder back to whatever the code ships.
+       * Existing `kept` flags survive, so nothing 403s and nobody notices —
+       * which is word for word the failure the note above `tiers` says storing
+       * them in this file exists to prevent.
+       */
+      tiers: (parsed.tiers && typeof parsed.tiers === 'object' && !Array.isArray(parsed.tiers))
+        ? parsed.tiers : {},
     };
+    // The in-memory ladder is set from a table, not read off `this.data` — so
+    // restoring the field is only half of it.
+    setTierOverrides(this.data.tiers);
     this.save();
     return { ok: true, accounts: this.data.accounts.length };
   }
@@ -518,8 +535,22 @@ export class Accounts {
     const goingUp = TIERS.findIndex((t) => t.id === tier) > TIERS.findIndex((t) => t.id === from);
     // Worked out BEFORE the table changes, or the answer is the one after the
     // move and protects nobody.
+    /*
+     * `effective(a)`, NOT THE RAW ACCOUNT — a group seat holds its PARENT'S
+     * tier, and its own stored `tier` is whatever `create()` gave it.
+     *
+     * So when a feature moved up a rung, the parent was grandfathered and every
+     * seat under it lost the feature in the same second — on a Silver company
+     * whose venues were all mid-season. The rule this list exists to keep is
+     * that anybody already holding a feature keeps it while they stay
+     * subscribed, chosen over the alternative because otherwise *"a quizmaster
+     * finds out on a GIG NIGHT, in a pub, with a room in"*. Seats run nights.
+     *
+     * It also under-counted: the line the owner reads afterwards said "1
+     * account kept it" while five were about to lose it.
+     */
     const holders = goingUp
-      ? this.data.accounts.filter((a) => a.role !== 'owner' && featuresFor(a).includes(feature))
+      ? this.data.accounts.filter((a) => a.role !== 'owner' && featuresFor(this.effective(a)).includes(feature))
       : [];
 
     const tiers = { ...(this.data.tiers || {}) };
@@ -991,9 +1022,26 @@ export function checkPassword(password) {
   return true;
 }
 
-/** Never hand the hash out, not even to the owner. */
+/**
+ * NEVER HAND A CREDENTIAL OUT, not even to the owner — and the password hash
+ * was not the only one on here.
+ *
+ * `calendarKey` IS a credential: the whole point of it is that a calendar app
+ * cannot sign in, so the key has to BE the URL — one GET of
+ * `/api/calendar.ics?key=…` with no cookie returns somebody's entire diary,
+ * which pubs they are at on which nights. `/api/me` spreads the account
+ * object, so it was going out on every console load, and a support session read
+ * it without leaving a line: the credential outlives the thirty-minute window,
+ * and the button that rolls it 404'd. `/api/calendar/link` is the route that
+ * exists to hand this over, deliberately and on purpose.
+ *
+ * `reset` is the live password-reset token's hash and its expiry — same
+ * argument, smaller blast radius.
+ */
 export function safe(account) {
   if (!account) return null;
-  const { hash, salt, scrypt, ...rest } = account;
+  const {
+    hash, salt, scrypt, calendarKey, reset, ...rest
+  } = account;
   return rest;
 }

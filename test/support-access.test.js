@@ -232,8 +232,14 @@ test('the log tells looking apart from changing, on their OWN packs too', () => 
 
 test('the owner cannot extend a grant from inside the session', () => {
   const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
-  const route = server.slice(server.indexOf("route === '/api/me/support'"),
-    server.indexOf("route === '/api/me/prefs'"));
+  // FORWARD FROM THE ROUTE, BY LENGTH — never between two names. `supportWords`
+  // now mentions `/api/me/prefs` as well, hundreds of lines ABOVE this route,
+  // so slicing between the two ran backwards and matched nothing: a test that
+  // fails, or passes, for a reason that has nothing to do with what it checks.
+  // Exactly the trap the test below this one already records.
+  const at = server.indexOf("route === '/api/me/support'");
+  assert.ok(at > 0, 'the support route has gone');
+  const route = server.slice(at, at + 1600);
   assert.match(route, /account\.actingAs/,
     'one grant could extend itself for ever from inside a support session');
 });
