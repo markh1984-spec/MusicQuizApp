@@ -86,13 +86,16 @@ test('THE FIELDS ARE A WHITELIST — anything else is dropped', () => {
     // night. It is on this list rather than spread in, and cleaned by the same
     // `cleanPlan()` the launch uses, so a saved plan and an accepted plan
     // cannot come apart.
+    // `questionSeconds` joined on 5 September 2026 — it was on both launch
+    // payloads and on neither this list nor `tonightAsShow()`, so a night saved
+    // at thirty seconds came back at the pack's own pace, silently.
     'breaks', 'id', 'items', 'kind', 'lobbyGame', 'lobbySound', 'look', 'name', 'online',
     // `teamMode` joined on 23 August 2026 — how a team night's teams are made,
     // `assigned` or `random`. Cleaned by the same rule `session.launch()` uses.
     // `winners` joined on 3 September 2026 — how many places the night
     // recognises. Cleaned by the same clamp `session.launch()` uses, so a
     // saved night cannot carry a value the engine would then silently drop.
-    'packId', 'prizes', 'shape', 'teamMode', 'teamPlay', 'updated', 'venue', 'winners',
+    'packId', 'prizes', 'questionSeconds', 'shape', 'teamMode', 'teamPlay', 'updated', 'venue', 'winners',
   ]);
   // And the items are a whitelist of their own, or the same hole reopens one
   // level down.

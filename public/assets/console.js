@@ -692,7 +692,11 @@ export const TABS = [
     needs: FEATURES.LIBRARY,
     label: 'Music Quiz',
     blurb: 'Three rounds, twenty seconds a question, fastest fingers win.',
-    editLabel: 'My packs',
+    // "Pack editor", not "My packs" — the panel below it is called My packs and
+    // means the ones you wrote, while this opens the editor's picker, which
+    // lists your WHOLE library, most of it Quizporium's. Two controls on one
+    // screen, one word, two different sets.
+    editLabel: 'Pack editor',
     packs: () => library.quizzes,
     // Generating is the owner's, on the owner's bill. A quizmaster buys packs
     // — and writes their own, which is a different library and a different
@@ -737,7 +741,11 @@ export const TABS = [
     needs: FEATURES.LIBRARY,
     label: 'Music Bingo',
     blurb: 'You play the tracks. Every phone gets its own card.',
-    editLabel: 'My packs',
+    // "Pack editor", not "My packs" — the panel below it is called My packs and
+    // means the ones you wrote, while this opens the editor's picker, which
+    // lists your WHOLE library, most of it Quizporium's. Two controls on one
+    // screen, one word, two different sets.
+    editLabel: 'Pack editor',
     packs: () => library.bingo,
     generator: () => {
       const wrap = document.createDocumentFragment();

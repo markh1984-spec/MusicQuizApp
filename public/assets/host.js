@@ -1160,8 +1160,20 @@ function buildActions(s) {
    * permanent line keeps the promise in Setup's own comment: this never sits
    * across the control view mid-round on its own.
    */
-  out.push(minor('Prizes', () => rewardsEditorPopover(s, act), false,
-    'Change what tonight is playing for. Takes effect from the next prize onward.'));
+  /*
+   * "CHANGE THE PRIZES", AND THE SENTENCE SAYS WHAT IT ACTUALLY DOES NOW.
+   *
+   * Two things were wrong with the old wording. It read "Prizes", which is
+   * also the heading of the panel listing the vouchers already issued — a
+   * button and a record sharing a noun. And it promised *"takes effect from
+   * the next prize onward"*, which was true and was the bug: both engines
+   * were changed to pay anybody ALREADY owed, precisely because a real night's
+   * winners got no QR code. The engine comments were updated; the sentence the
+   * host reads while looking at a blank phone was not, so it told them the one
+   * control that fixes it would not help the person standing in front of them.
+   */
+  out.push(minor('Change the prizes', () => rewardsEditorPopover(s, act), false,
+    'Change what tonight is playing for — anyone already owed gets their voucher now.'));
 
   if (s.phase === 'question' || s.phase === 'reveal') {
     /*
@@ -1242,7 +1254,16 @@ function buildActions(s) {
     // photographs, set by the server over the top of this view.
     const photos = s.photoSlide || {};
     const photosUp = Boolean(photos.up);
-    const photoBtn = minor(photosUp ? 'Take the photos off' : 'Photos to the room',
+    /*
+     * "PHOTO LINK", BECAUSE IT IS A LINK AND NOT THE PHOTOGRAPHS.
+     *
+     * It put a QR of the gallery address on the projector and showed no
+     * pictures at all — while the panel four inches below it is headed "Photos
+     * on the big screen" and IS the wall of pictures, and its neighbour
+     * "Scores to the room" does exactly what its wording says. Three controls
+     * on one screen with photos in the name; this one names its object.
+     */
+    const photoBtn = minor(photosUp ? 'Take the photo link off' : 'Photo link to the room',
       () => act('photos', { on: !photosUp }), false, photosUp
         ? 'Take the photos slide down and give the room the winner back.'
         : 'Put a QR on the big screen for tonight\u2019s photographs. Nothing is published '

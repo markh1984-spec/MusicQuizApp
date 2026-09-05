@@ -309,6 +309,19 @@ export function soundButton() {
 export function wireSoundButton(root) {
   const btn = root.querySelector('.arcade-sound');
   if (!btn) return;
+  /*
+   * WIRED ONCE PER BUTTON, however many times it is asked.
+   *
+   * The lobby calls this every time the game box is OPENED, and the card
+   * itself is only rebuilt when the phase changes — which it does not while a
+   * room is joining. So the listeners stacked: open, close, open, and the two
+   * of them toggled the sound twice, back to where it started. The icon did
+   * not move and the button read as broken, on every even open, while still
+   * making a noise each press. Sound ships ON, so this is the control somebody
+   * reaches for in a pub.
+   */
+  if (btn.dataset.wired) return;
+  btn.dataset.wired = '1';
   btn.addEventListener('click', (ev) => {
     // Stop it reaching the canvas underneath — on Quick Draw that would be a
     // shot at whatever is behind the button, which is a life if it is the

@@ -401,7 +401,10 @@ function pastGigsSection() {
     <div class="game-section">
       <div class="game-head">
         <div>
-          <h2>Past gigs</h2>
+          <!-- No h2 here: tabBody() already prints the tab's own label as the
+               heading, in one place, precisely so a heading per render function
+               cannot go missing or - as here - appear twice. Two identical
+               "Past gigs" 38px apart, in a frame with a fixed height. -->
           <div class="tiny">Every night you have run — the evidence you show a venue.</div>
         </div>
       </div>

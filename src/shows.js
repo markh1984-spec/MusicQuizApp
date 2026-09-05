@@ -222,6 +222,15 @@ export function normalise(raw = {}, now = Date.now()) {
     items,
     venue: String(raw.venue || '').trim().slice(0, 80),
     look: String(raw.look || '').slice(0, 40),
+    /*
+     * HOW LONG A QUESTION LASTS. On both launch payloads and in neither this
+     * whitelist nor `tonightAsShow()`, so a night saved at thirty seconds came
+     * back at the pack's own pace — silently, because a whitelist DROPS what it
+     * does not name, which is the trap `winners` and `accounts.create()` have
+     * each already sprung. Clamped the same way the launch clamps it; 0 means
+     * "leave the pack alone", which is what an older show carries.
+     */
+    questionSeconds: Math.max(0, Math.min(120, Number(raw.questionSeconds) || 0)),
     lobbyGame: String(raw.lobbyGame || '').slice(0, 40),
     lobbySound: raw.lobbySound !== false,
     teamPlay: Boolean(raw.teamPlay),

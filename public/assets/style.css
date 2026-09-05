@@ -4019,10 +4019,19 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 
 /* Choosing tonight's card shape, on the pack card, above Launch — because the
    shape is a decision about tonight, not about the pack. */
+/* NOT SHOUTED — capitals are for emphasis, never for labelling.
+   These nine words are the launch bar's labels (Appearance, Secs per Q, Lobby
+   game, Game sound, Playing, Winners, In the gaps, Card, Bingo prizes), and the
+   rule names exactly three exceptions: the projector, the option letters A-F,
+   and one-word badges. Nine multi-word labels on the console's main bar are
+   none of those. It survived because the markup writes them in sentence case
+   and only the stylesheet shouted them, so the diff looked right on either
+   side. Told apart by BRIGHTNESS and weight instead, which is what the rule
+   prescribes; the tracking stays, because that is spacing rather than volume. */
 .pack-shape {
   display: flex; align-items: center; gap: 8px; margin: 8px 0 2px;
   font-size: var(--fs-mini); color: var(--ink-dim); font-weight: 800;
-  text-transform: uppercase; letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
 }
 /* `max-width` as well as `min-width: 0`, because a <select> will not go below
    the width of its LONGEST OPTION on its own — the trap this codebase has now

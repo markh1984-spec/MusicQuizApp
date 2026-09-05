@@ -674,9 +674,14 @@ export function launchBar() {
              — on its own line it was a third row in a bar that is meant to be
              glanceable, and it is one of the two facts that place a night, so
              it belongs beside the other one rather than under it.
-             "Venue" rather than "In the room": the word matches the control
-             directly to its left, which names the venue, so the pair reads as
-             one question with two answers. -->
+             "In the room" rather than "Venue", and the reason it was Venue is
+             exactly why it had to change: it was chosen so "the pair reads as
+             one question with two answers" with the venue button to its left —
+             which is the definition of two controls on one row sharing a word
+             for different things. One picks WHICH PUB; this one decides
+             whether the questions go on sixty phones. The project notes have
+             said "IN THE ROOM / ONLINE" all along, so this is the code
+             catching up rather than a new opinion. -->
         <!-- WHAT IS ON THE PROJECTOR, AND THE DOORS, BOTH UP HERE — asked
              for directly: *"the doors button and the 'on the big screen now'
              and unlaunch buttons can all go right at the top to save space."*
@@ -703,7 +708,7 @@ export function launchBar() {
         <div class="lb-right">
           <div class="lb-mode">
             <span class="hat-switch lb-mode-switch" data-on="0">
-              <button class="hat-half live" type="button" data-online="0">Venue</button>
+              <button class="hat-half live" type="button" data-online="0">In the room</button>
               <button class="hat-half" type="button" data-online="1">Online</button>
             </span>
           </div>
@@ -745,7 +750,7 @@ export function launchBar() {
            HTML5 drag does not fire on touch AT ALL, so a drag-only bar is a
            dead panel on a phone: tapping the dotted cutout opens this. -->
       <div class="lb-find" hidden>
-        ${games.length > 1 ? `<select class="lb-game">
+        ${games.length > 1 ? `<select class="lb-game" aria-label="Quiz or bingo" title="What you are running tonight — a quiz or the bingo">
           ${games.map((g) => `<option value="${esc(g.id)}">${esc(g.label)}</option>`).join('')}
         </select>` : ''}
         <div class="lb-search">
@@ -802,10 +807,18 @@ export function launchBar() {
              stray one made the whole console a syntax error once. -->
           <input type="number" class="seconds-pick" min="5" max="120" step="5" placeholder="20">
         </label>
-        <!-- "Game", not "While they wait" — and the option blurb lives in
-             the open menu now rather than on the face, so shut it reads
-             "Maze Mouth" instead of "Maze Mouth — a maze cha…". -->
-        <label class="pack-shape"><span class="set-word">Game</span>
+        <!-- "Lobby game", not "Game" and not "While they wait". The option
+             blurb lives in the open menu rather than on the face, so shut it
+             reads "Maze Mouth" instead of "Maze Mouth — a maze cha…".
+
+             IT WAS "Game", AND THAT IS THE COLLISION: this picks the arcade
+             toy on the phones, while the finder 73px above it — with no label
+             at all — picks whether the night is a QUIZ or the BINGO. A
+             quizmaster ten minutes before a gig looking for "which game am I
+             running" read the one that says Game and found Maze Mouth, on the
+             bar whose whole job is get in and go. The other one is labelled
+             now too. -->
+        <label class="pack-shape"><span class="set-word">Lobby game</span>
           <select class="game-pick" data-pop></select>
         </label>
         <label class="pack-shape"><span class="set-word">Game sound</span>
@@ -854,7 +867,10 @@ export function launchBar() {
         <label class="pack-shape lb-set-card"><span class="set-word">Card</span>
           <select class="shape-pick" data-pop disabled></select>
         </label>
-        <label class="pack-shape lb-set-prizes"><span class="set-word">Prizes</span>
+        <!-- "Bingo prizes" rather than "Prizes" — see prizeWarning(). Two
+             controls on one panel called Prizes, meaning the card's stopping
+             points and the venue's list of what is on the table. -->
+        <label class="pack-shape lb-set-prizes" title="How many stopping points the bingo card pays out — a line, two lines, a full house."><span class="set-word">Bingo prizes</span>
           <select class="prize-pick" data-pop disabled></select>
         </label>
       </div>
@@ -3177,7 +3193,15 @@ export function launchBar() {
      * case it was for. It names the VOUCHER rather than the list: "no prizes
      * set" is a fact about a form, "nothing to scan" is what the room sees.
      */
-    return node(`<div class="lb-say lb-say-none">No prizes set${
+    /*
+     * "VENUE prizes", because "Prizes" is taken 80px lower on the same panel.
+     * That control is how many stopping points a bingo CARD pays out; this is
+     * the venue's list of what they are — a bottle of house red — read at
+     * launch onto the voucher. A bar reading "Prizes 5" under "No prizes set"
+     * says the app is broken, and this line exists because a real night's
+     * winners got no QR code.
+     */
+    return node(`<div class="lb-say lb-say-none">No venue prizes set${
       name ? '' : ' — no venue picked'}, so the winners get no voucher to scan${
       name ? ` — add them on ${goTo('workshop', 'venues', 'the Venues tab')}` : ''}</div>`);
   }
@@ -3587,6 +3611,9 @@ export function launchBar() {
      */
     lbOnline = Boolean(show.online);
     night.look = String(show.look || '');
+    // 0 means "leave the pack's own pace alone", which is what a show saved
+    // before this field existed carries and what those nights actually did.
+    night.questionSeconds = Number(show.questionSeconds) || 0;
     // A show saved with no game reads as open choice. It is a TEMPLATE, not a
     // running night — "must not change a night already up" is kept by
     // `state.lobbyGames` being absent on a restored state, which is elsewhere.
@@ -3688,27 +3715,43 @@ export function launchBar() {
  * with the venue left open exactly like a new one.
  */
 function tonightAsShow(name) {
-  if (!currentPack) return null;
-  const packs = [currentPack.id, ...lbExtra];
-  const kind = (library.bingo || []).some((p) => p.id === currentPack.id) ? 'bingo' : 'quiz';
-  const rounds = [];
-  for (const id of packs) {
-    const pack = [...(library.quizzes || []), ...(library.bingo || [])].find((p) => p.id === id);
-    (pack && pack.rounds ? pack.rounds : []).forEach((_, i) => {
-      if (!lbOff.has(`${id}:${i}`)) rounds.push({ packId: id, round: i });
-    });
-  }
-  const plain = packs.length < 2 && !lbOff.size;
+  /*
+   * BUILT FROM `segmentsNow()` — THE SAME LIST LAUNCH SENDS.
+   *
+   * It read `currentPack` and `lbExtra`, which stopped being the truth the day
+   * packs started BURSTING into one tile per round: `lbSlots` exists on every
+   * night now, and this file says so itself twelve hundred lines up — *"once
+   * `lbSlots` exists it is the truth for what launches"*. So a bar holding five
+   * tiles across two packs saved a show with ONE pack in it, no order, and
+   * nothing said so; the loss only showed the next time it was dragged back on.
+   *
+   * The comment that used to sit here claimed it read "the SAME module-level
+   * state the launch reads, deliberately, so a saved show and the night that
+   * would have been launched cannot differ." That was the intent and it had
+   * stopped being true. It is true now because it is literally the same call.
+   */
+  const segments = segmentsNow();
+  if (!segments.length) return null;
+  const items = segments.map((seg) => (seg.kind === 'bingo'
+    ? { kind: 'bingo', packId: seg.packId }
+    : { kind: 'quiz', packId: (seg.order[0] || {}).packId || '', order: seg.order }));
   return {
     name,
-    kind,
-    packId: currentPack.id,
-    ...(plain || kind === 'bingo' ? {} : { order: rounds }),
+    kind: items[0].kind,
+    packId: items[0].packId,
+    items,
     // NO VENUE — see the note above. A saved night is a running order to
     // reuse somewhere else, and the venue is the one field that is never
     // true twice.
     online: lbOnline,
     look: night.look,
+    /*
+     * HOW LONG A QUESTION LASTS — on both launch payloads and in neither the
+     * show nor its whitelist, so a night built on a Monday at thirty seconds
+     * came back on Thursday at the pack's own pace. It is a fact about the
+     * EVENING, which is what a show is, exactly like the look beside it.
+     */
+    questionSeconds: night.questionSeconds,
     lobbyGame: night.lobbyGame,
     lobbySound: night.lobbySound,
     teamPlay: night.playing !== 'solo',
@@ -3943,10 +3986,21 @@ export function nowPlaying(running) {
      * So the never-launched case says so in as many words, and the lobby stops
      * claiming nobody is in it when somebody is.
      */
+    /*
+     * A NIGHT THAT IS OVER SAYS SO — and that rung goes ABOVE the lobby ones,
+     * not beside them. `live` is "not lobby and not finished", so bingo's own
+     * FINISHED phase fell straight through to the lobby branches: a finished
+     * night was headed **"Waiting in the lobby"**, or with nobody joined
+     * **"Loaded, nobody playing"**, directly over a line already reading
+     * "Finished — the winners are up". Same shape as the fault one branch
+     * along, and it lands at the end of every bingo night — which is exactly
+     * when the host is reading this panel to decide what to do next.
+     */
     heading: running.launched === false ? 'Nothing launched yet'
-      : running.phase !== 'lobby' && running.phase !== 'finished' ? 'Running now'
-        : n > 0 ? 'Waiting in the lobby'
-          : 'Loaded, nobody playing',
+      : running.phase === 'finished' || running.phase === 'final' ? "That's the night done"
+        : running.phase !== 'lobby' ? 'Running now'
+          : n > 0 ? 'Waiting in the lobby'
+            : 'Loaded, nobody playing',
     // Said only for the fallback, because it is the one state somebody can
     // mistake for a night they started.
     note: running.launched === false

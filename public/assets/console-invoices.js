@@ -20,7 +20,7 @@ export function invoicesSection() {
     <div class="game-section">
       <div class="game-head">
         <div>
-          <h2>Invoices</h2>
+          <!-- No h2 here - tabBody() prints the tab's own. See console-gigs.js. -->
           <div class="tiny status">Loading…</div>
         </div>
         <div class="row">

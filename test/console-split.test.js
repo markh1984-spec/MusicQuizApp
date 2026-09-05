@@ -355,8 +355,22 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * "Loaded, nobody playing" over "2 playing" in the same box, and that sentence
  * cost an evening: a boot fallback was read as a launched night. The paragraph
  * explaining it is worth more than the lines it costs.
+ *
+ * 4110 -> 4140 on 5 September 2026 for the label collisions the sweep found on
+ * this one bar: "Game" naming the arcade toy 73px above the unlabelled control
+ * that picks quiz-or-bingo, "Prizes" naming the bingo card's stopping points
+ * 80px under a warning about the venue's prize list, and "Venue" on the
+ * mode switch beside the button that picks the venue. Each note says what the
+ * pair was, because a rename with no reason gets renamed back.
+ *
+ * 4080 -> 4110 on 5 September 2026 for three notes, all recording something
+ * that was silently wrong: `tonightAsShow()` reading `currentPack`/`lbExtra`
+ * after packs started bursting, so a five-tile bar saved a one-pack show;
+ * `questionSeconds` missing from the show entirely; and a finished bingo night
+ * headed "Waiting in the lobby". The first of those had a comment claiming the
+ * opposite was true, which is why the replacement has to say what changed.
  */
-const BUDGET = { 'console-tonight.js': 4080, 'console.js': 2000, 'console-packs.js': 1830 };
+const BUDGET = { 'console-tonight.js': 4140, 'console.js': 2000, 'console-packs.js': 1830 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {
