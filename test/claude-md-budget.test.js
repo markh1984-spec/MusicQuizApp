@@ -686,7 +686,17 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * consent grounds, which is exactly the kind of thing a future session will
  * re-propose in good faith unless the reasoning is written where it loads.
  */
-const BUDGET = 226_500;
+/*
+ * AND TO 227_300 on 5 SEPTEMBER 2026 for the quiet launch carrying the game.
+ *
+ * WHAT IT BOUGHT: the entry is one prohibition and one general lesson. Tapping
+ * a pack is a LAUNCH and has to carry what the bar says, or the console and
+ * the room disagree on the one setting a player can see — which reached him
+ * twice in an evening. And the reason it stayed hidden is worth more than the
+ * fix: the comment over that call said it sent "no venue" while the code had
+ * sent one for months, so the note read as a rule and was actually a lie.
+ */
+const BUDGET = 227_300;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

@@ -1336,14 +1336,17 @@ export function launchBar() {
    * under the box tells you the projector is showing something else, which is
    * exactly the state that line exists for.
    *
-   * Nothing is set up on a quiet switch — no look, no card shape, no prizes,
-   * no venue. It is the pack going up on an idle projector, and everything
-   * else is what the settings row and Launch are for.
+   * A QUIET SWITCH CARRIES THE FACTS ABOUT THE EVENING — venue, online, lobby
+   * game — never the look, card shape or prizes. **The comment said "no venue"
+   * while the code sent one**, which is how the gap went unseen: `lobbyGame`
+   * was missing, so a tapped-up night went out with the DEFAULT while the bar
+   * said *Let them choose* — twice reported as *"still only allowing maze
+   * mouth"*, both times on a night nobody had pressed Launch on.
    */
   async function switchIfFree(pack, kind) {
     try {
       await postJson('/api/host/launch',
-        { game: kind, packId: pack.id, venue: venueNow(), online: lbOnline },
+        { game: kind, packId: pack.id, venue: venueNow(), online: lbOnline, lobbyGame: night.lobbyGame },
         { 'X-Host-Key': hostKey });
       /*
        * It went up. Ask the SERVER what is running rather than assuming it

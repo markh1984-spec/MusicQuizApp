@@ -21,6 +21,7 @@ import { Engine } from '../src/engine.js';
 import { MAZE, COLS, ROWS, pellets, reachable, startPoints, open, stepToward, turnFrom } from '../public/assets/maze.js';
 import { lobbyGamesFor } from '../public/assets/lobby-games.js';
 import { arcadeFields } from '../src/arcade.js';
+import { readFileSync } from 'node:fs';
 
 const QUIZ = {
   id: 'test',
@@ -412,4 +413,28 @@ test('A SCORE SAYS WHICH GAME IT WAS SET ON, and an unknown id is dropped', () =
   e.arcadeScore(other.id, 100);
   const row = e.arcadeBoard().find((r) => r.score === 100);
   assert.equal('game' in row, false);
+});
+
+test('THE QUIET LAUNCH CARRIES THE CHOICE — tapping a pack is a launch too', () => {
+  /*
+   * Tapping a pack card puts it straight on the projector through
+   * `switchIfFree()`, and that call sent the venue and whether the night is
+   * online but NOT the lobby game — so a night tapped up got the DEFAULT while
+   * the bar above it said "Let them choose". Reported twice as "still only
+   * allowing maze mouth", both times on a night nobody had pressed Launch on.
+   *
+   * A source check rather than a behavioural one because the gesture lives in
+   * a browser module with no server behind it here; `scripts/console-frame.mjs`
+   * and the tap harness drive the real thing. What this pins is that the field
+   * cannot quietly fall back out of that one request body again.
+   */
+  const src = readFileSync(new URL('../public/assets/console-tonight.js', import.meta.url), 'utf8')
+    // Comments stripped first: this repo has already had a guard go green
+    // because it matched the note explaining the fix rather than the code.
+    .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const body = src.slice(src.indexOf('async function switchIfFree'));
+  const call = body.slice(0, body.indexOf('}'));
+  assert.match(call, /lobbyGame: night\.lobbyGame/,
+    'switchIfFree must send the night\'s chosen lobby game, or tapping a pack '
+    + 'hands the room a different game from the one the console names');
 });

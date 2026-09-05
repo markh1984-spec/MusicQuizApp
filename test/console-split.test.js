@@ -335,7 +335,16 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * itself, plus the note recording that pinning one is still worth a control
  * for the booking where it matters.
  */
-const BUDGET = { 'console-tonight.js': 4010, 'console.js': 2000, 'console-packs.js': 1830 };
+/*
+ * `console-tonight.js` 4010 -> 4020 on 5 September 2026: `switchIfFree()` now
+ * carries the night's lobby game, and the note above it records why. Raised
+ * rather than trimmed further — the paragraph it pays for is the account of a
+ * fault that reached the live app TWICE ("still only allowing maze mouth"),
+ * caused by a comment that had drifted from the line under it. Trimming that
+ * to fit a number would be deleting the only thing standing between the next
+ * session and the same afternoon.
+ */
+const BUDGET = { 'console-tonight.js': 4020, 'console.js': 2000, 'console-packs.js': 1830 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

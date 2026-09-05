@@ -969,6 +969,16 @@ board), `src/arcade.js` (the scores, shared by both engines),
   did at nine o'clock. **A list of ONE is dropped**: a menu with one thing on it
   is not a choice. **An unknown tier falls to the bottom rung**, so it holds the
   two everybody has rather than none.
+- **AND THE QUIET LAUNCH CARRIES THE CHOICE — `switchIfFree()`.** Tapping a
+  pack puts it on the projector immediately, and that call sent the venue and
+  `online` but NOT the game, so a tapped-up night ran the DEFAULT while the bar
+  above said *Let them choose*. **Reported twice as *"still only allowing maze
+  mouth"*, both times on a night nobody had pressed Launch on** — the
+  console-and-projector disagreement this bar exists to prevent. **The comment
+  over it claimed it sent "no venue" while the code had sent one all along**,
+  which is how the gap stayed invisible: a note nobody re-read against the line
+  beneath it. **A stale comment is not a tidiness problem — it is where the
+  next bug hides.**
 - **ONE ROW EITHER WAY, AND THE CHOICE IS ONE TAP INSIDE IT.** Three phone
   layouts were rendered at 390px first: a row per game is **423px of menu** and
   pushes *Send a photo* off the bottom, which breaks *don't disincentivise
