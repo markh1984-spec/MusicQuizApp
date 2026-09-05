@@ -2801,17 +2801,24 @@ ARTEFACT PROVES NOTHING ABOUT IT** — see *Checks*.
 
 ### A PUSH IS A DEPLOY, AND A DEPLOY ON A GIG NIGHT IS AN OUTAGE
 
-Learned on 3 September 2026 by doing it: four pushes while he was setting up.
 Render watches `MusicQuizApp`, so **every push restarts the server and wipes
-`data/`** — the projector lost its stream, the code in `data/room-codes.json`
-stopped resolving, and a tab left open kept showing a lobby that no longer
-existed. **Not one of the four changes was risky. The DEPLOY was**, and that
-is the whole point: a docs file and a JSON title are as dangerous as an engine
-rewrite when the cost is the restart rather than the diff.
+`data/`** — the projector loses its stream, the code in `data/room-codes.json`
+stops resolving, and a tab left open shows a lobby that no longer exists.
+**A docs file is as dangerous as an engine rewrite when the cost is the
+restart rather than the diff.**
 
-**ASK BEFORE PUSHING IF A NIGHT COULD BE ON.** Commit, say plainly that it is
-waiting, and push when he says he is clear. A commit held for two hours costs
-nothing; a restart mid-round costs the gig.
+**PUSH AS SOON AS IT IS READY. HE SAYS WHEN NOT TO** — set by the host on 5
+September 2026 in his own words: *"can you please just always push ASAP I'll
+let you know otherwise."* **This REVERSES the ask-first rule that stood here
+before it**, and it is his call to make: he is the only person who knows
+whether a room is sitting down, and asking every time put a question in front
+of him on every change instead of the two that mattered.
+
+**What does NOT change is why a deploy is the risk.** Say it in one line when
+a push could land badly — a lobby open on his phone, a gig in an hour — and
+push anyway unless he says hold. **The note is the value, not the delay**: he
+restarts a lobby in ten seconds knowing that is what happened, and cannot
+diagnose it at all if nobody said.
 
 ### "Sweep mode" — find everything, change nothing
 
