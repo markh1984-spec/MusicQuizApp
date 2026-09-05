@@ -966,7 +966,18 @@ board), `src/arcade.js` (the scores, shared by both engines),
   `s.lobbyGame` and re-checks nothing**, or the console and the room disagree.
 - **THE TIER GATES HOW MANY GAMES, NOT WHETHER THERE IS ONE.** Bronze holds the
   two that ship and they are also the two defaults; higher tiers hold what is
-  added after. **Do not sell the game itself away from the bottom tier** — a
+  added after. **THESE ARE THE ONLY THING IN THE APP GATED BY TIER RANK RATHER
+  THAN A `FEATURES` FLAG, so they ask `tierInUse()` and never `tierFor()`** —
+  a comped account and a live trial hold every FEATURE while `tier` still reads
+  `bronze`, which is what it is paid for. Reported as *"still only allowing me
+  to play maze mouth even when main account is gold"*: the owner's own
+  quizmaster account is comped, fifteen features out of fifteen, and the picker
+  locked three of the five games while the launch route — which DROPS a game
+  above the tier rather than refusing the night — silently swapped it for the
+  default every time. **Nothing threw and the console agreed with the room,
+  because both were wrong the same way.** A tier PREVIEW still downgrades:
+  `whoIs()` clears `comped` when it applies one, precisely so this cannot win
+  it back. **Do not sell the game itself away from the bottom tier** — a
   phone with a game on it stays in the FOREGROUND, so sixty connections do not
   all come back at the moment the join gate is busiest. That is a RELIABILITY
   feature dressed as a toy. **Locked games are SHOWN, not filtered out.**

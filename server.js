@@ -6386,7 +6386,7 @@ async function handleWrite(req, res, url, route) {
         const lobbyGame = lobbyGameFor(
           String(body.game || 'quiz'),
           String(body.lobbyGame || ''),
-          (entitlements(whoIs(req, url) || {}) || {}).tier || '',
+          (entitlements(whoIs(req, url) || {}) || {}).tierInUse || '',
         ).id;
         /*
          * WHETHER TONIGHT ENDS ON A LEAGUE TABLE, decided HERE.
@@ -6581,7 +6581,7 @@ async function handleWrite(req, res, url, route) {
         const lobbyGame = lobbyGameFor(
           firstKind,
           String(body.lobbyGame || ''),
-          (entitlements(whoIs(req, url) || {}) || {}).tier || '',
+          (entitlements(whoIs(req, url) || {}) || {}).tierInUse || '',
         ).id;
         const league = seesTheirLeague(req, url);
         const lobbySound = body.lobbySound !== false;

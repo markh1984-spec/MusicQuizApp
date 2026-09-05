@@ -836,7 +836,14 @@ export function shapeOptions(pack) {
  * gets exactly what they got before the picker existed.
  */
 export function lobbyGameOptions(kind) {
-  const tier = (me && me.entitlements && me.entitlements.tier) || '';
+  /*
+   * `tierInUse`, NOT `tier` — a comped account (the owner's own quizmaster
+   * one) and a live trial hold the whole ladder's features while `tier` still
+   * reads bronze, so this locked three of five games on an account holding
+   * everything. See `tierInUse()` in plans.js. `tier` is the fallback for a
+   * browser talking to a server from before the field existed.
+   */
+  const tier = (me && me.entitlements && (me.entitlements.tierInUse || me.entitlements.tier)) || '';
   const fallback = lobbyGameFor(kind, '').id;
   return lobbyGameChoices(tier).map((g) => {
     const label = g.held ? `${g.name} — ${g.blurb}` : `${g.name} — ${(findTier(g.tier) || {}).label || g.tier} and up`;

@@ -604,6 +604,41 @@ export function tierFor(account = {}) {
   return DEFAULT_TIER;
 }
 
+/**
+ * THE TIER WHOSE CAPABILITIES APPLY RIGHT NOW — which is not always the tier
+ * being PAID for, and the difference is what broke the lobby games.
+ *
+ * `tierFor()` above answers "what is this account on", and the account page is
+ * right to print that. But `featuresFor()` hands the WHOLE ladder to a comped
+ * account, a live trial and the bootstrap key — so for anything asked by RANK
+ * rather than by feature, `tierFor()` gives the opposite answer to the one
+ * every other gate in the app gives.
+ *
+ * **It was reported as the owner's own nights only ever offering Maze Mouth.**
+ * His quizmaster account is comped: fifteen features out of fifteen, and
+ * `tier` reading `bronze`. The picker therefore locked three of the five
+ * games, and the launch route — which drops a game above the tier rather than
+ * refusing the night — silently swapped Quick Draw for Maze Mouth every time.
+ * Nothing threw, and the console and the room agreed, because they were both
+ * wrong in the same way.
+ *
+ * **The lobby games are the ONLY thing in this app gated on a tier RANK rather
+ * than a `FEATURES` flag**, which is why nothing else showed it. Anything else
+ * gated that way must ask this rather than `tierFor()`.
+ *
+ * A deliberate tier PREVIEW still downgrades: `whoIs()` clears `comped` when
+ * it applies one, precisely so this cannot win it back.
+ */
+export function tierInUse(account = {}) {
+  if (account.role === 'owner') return 'owner';
+  // The same three cases `featuresFor()` opens the whole ladder for, in the
+  // same order, so the two answers cannot drift apart again.
+  if (account.bootstrap || account.comped || trialPreview(account)) {
+    return TIERS[TIERS.length - 1].id;
+  }
+  return tierFor(account);
+}
+
 /** Everything at or below a tier, in ladder order. */
 /**
  * WHERE THE OWNER HAS MOVED A FEATURE TO, when they have moved one.
@@ -1021,6 +1056,12 @@ export function entitlements(account) {
     // still reading it gets something sensible rather than undefined.
     tier: account.role === 'owner' ? 'owner' : tierFor(account),
     plan: account.role === 'owner' ? 'owner' : tierFor(account),
+    /*
+     * What is PAID for is `tier` above; this is what the capabilities are
+     * currently running at, which a comped account and a live trial answer
+     * differently. Anything gated by RANK reads this one — see `tierInUse()`.
+     */
+    tierInUse: tierInUse(account),
     addons: account.addons || [],
     comped: Boolean(account.comped),
     status: account.status,

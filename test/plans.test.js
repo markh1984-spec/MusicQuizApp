@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 import {
   FEATURES, TIERS, FEATURE_TIER, DEFAULT_TIER,
   can, featuresFor, activeFeatures, whyNot, entitlements,
-  tierFor, tierRank, featuresAt, ladderFor, packsFor, FEATURE_META, switchable, SWITCHABLE, NOT_BUILT } from '../public/assets/plans.js';
+  tierFor, tierInUse, tierRank, featuresAt, ladderFor, packsFor, FEATURE_META, switchable, SWITCHABLE, NOT_BUILT } from '../public/assets/plans.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -588,4 +588,52 @@ test('the console is TOLD it is previewing, so it can say what ends', () => {
     { tier: 'bronze', status: 'trialing', trialEndsAt: Date.now() - 86400000 }]) {
     assert.equal(entitlements(other).previewing, false);
   }
+});
+
+test('WHAT IS PAID FOR AND WHAT IS RUNNING ARE TWO QUESTIONS — tierInUse', async () => {
+  /*
+   * Reported as the owner's own nights only ever offering Maze Mouth. His
+   * quizmaster account is COMPED: `featuresFor()` hands it the whole ladder,
+   * and `tierFor()` said `bronze` — so the one gate in this app asked by RANK
+   * rather than by feature locked three of the five lobby games, and the
+   * launch route silently swapped the chosen one for the default every time.
+   * Nothing threw and the console agreed with the room, both being wrong the
+   * same way.
+   *
+   * The two answers have to move together, so this walks BOTH: anything
+   * holding every feature must also be at the top of the ladder for a
+   * rank question, and anything that is not must not be.
+   */
+  const { featuresFor, FEATURES } = await import('../public/assets/plans.js');
+  const top = TIERS[TIERS.length - 1].id;
+  const everyFeature = Object.values(FEATURES).filter((f) => featuresAt(top).includes(f)).length;
+
+  const cases = [
+    ['the owner\'s own comped quizmaster account', { role: 'quizmaster', status: 'active', comped: true }, top],
+    ['a live trial', { role: 'quizmaster', status: 'trialing', trialEndsAt: new Date(Date.now() + 6e8).toISOString() }, top],
+    ['the bootstrap key', { bootstrap: true }, top],
+    ['a paying Bronze account', { role: 'quizmaster', status: 'active', tier: 'bronze' }, 'bronze'],
+    ['a paying Gold account', { role: 'quizmaster', status: 'active', tier: 'gold' }, 'gold'],
+  ];
+  for (const [what, account, want] of cases) {
+    assert.equal(tierInUse(account), want, `${what} is running at the wrong rung`);
+    /*
+     * AND THE TWO GATES MUST AGREE. An account at the top of the ladder for a
+     * rank question has to be holding the whole ladder's features, and one
+     * that is not must not be — that agreement IS the fix.
+     */
+    const holdsEverything = featuresFor(account).length >= everyFeature;
+    assert.equal(holdsEverything, want === top,
+      `${what}: features say ${holdsEverything ? 'everything' : 'some'} and the rank says ${want}`);
+  }
+
+  /*
+   * A DELIBERATE TIER PREVIEW MUST STILL DOWNGRADE. `whoIs()` clears `comped`
+   * when it applies one, precisely so this cannot win it back — that is the
+   * owner looking at the console as a Bronze subscriber sees it, and it is
+   * the whole reason the preview exists.
+   */
+  assert.equal(tierInUse({ role: 'quizmaster', status: 'active', tier: 'bronze', comped: false }), 'bronze');
+  // The owner's own hat holds everything by a different route, and says so.
+  assert.equal(tierInUse({ role: 'owner' }), 'owner');
 });

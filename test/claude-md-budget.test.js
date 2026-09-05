@@ -634,7 +634,20 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * about that axis, and nothing failed; it just stopped being possible to drag
  * a pack to the launch bar.
  */
-const BUDGET = 217_800;
+/*
+ * AND TO 218_600 for `tierInUse` — the rule that WHAT IS PAID FOR and WHAT IS
+ * RUNNING are two questions.
+ *
+ * WHAT IT BOUGHT: the one gate in this app asked by tier RANK rather than by a
+ * `FEATURES` flag was reading `tierFor()`, which says `bronze` for a comped
+ * account and a live trial while `featuresFor()` hands both of them the whole
+ * ladder. So the owner's own nights offered two lobby games out of five, the
+ * launch route silently swapped his choice for the default, and the console
+ * and the room agreed because both were wrong the same way. It is worth
+ * always-loaded space because the next rank-gated thing will reach for
+ * `tierFor()` too, and the failure is silent in both directions.
+ */
+const BUDGET = 218_600;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
