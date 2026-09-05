@@ -787,7 +787,23 @@ function schemeForRoom(room) {
 
 function roomForHost(req, url) {
   const account = whoIs(req, url);
-  return rooms.get(roomIdFor(account), account ? account.name || account.email : '');
+  const room = rooms.get(roomIdFor(account), account ? account.name || account.email : '');
+  /*
+   * AND A ROOM NOBODY HAS LAUNCHED STILL OFFERS THIS ACCOUNT'S OWN GAMES.
+   *
+   * The tier is known HERE and nowhere below this, which is the same reason
+   * the launch route resolves it rather than the console. `offerLobbyGames()`
+   * refuses to touch a night that was actually launched, so this can only ever
+   * fill in the gap a boot fallback leaves — see the note on it in
+   * `session.js` for why that gap is the normal state of a room on a host with
+   * no permanent disk.
+   */
+  if (account) {
+    room.session.offerLobbyGames(
+      lobbyGamesFor(room.session.kind, (entitlements(account) || {}).tierInUse || ''),
+    );
+  }
+  return room;
 }
 
 /**

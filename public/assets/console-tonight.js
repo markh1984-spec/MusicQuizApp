@@ -3932,6 +3932,26 @@ export function nowPlaying(running) {
     who: `${n} ${n === 1 ? 'player' : 'players'}`,
     short: `Now on: ${n} in`,
     live: running.phase !== 'lobby' && running.phase !== 'finished',
+    /*
+     * AND THE HEADING, because the old pair could contradict itself in one
+     * panel: it read "Loaded, nobody playing" over "Music quiz — 2 playing",
+     * and that sentence is what cost an evening. It was read as a running
+     * night when it was a BOOT FALLBACK — the pack `boot()` puts up so the
+     * projector is never blank, which on a host with no permanent disk is
+     * what a room is after every restart.
+     *
+     * So the never-launched case says so in as many words, and the lobby stops
+     * claiming nobody is in it when somebody is.
+     */
+    heading: running.launched === false ? 'Nothing launched yet'
+      : running.phase !== 'lobby' && running.phase !== 'finished' ? 'Running now'
+        : n > 0 ? 'Waiting in the lobby'
+          : 'Loaded, nobody playing',
+    // Said only for the fallback, because it is the one state somebody can
+    // mistake for a night they started.
+    note: running.launched === false
+      ? 'This is just the pack sitting on the big screen so it is not blank. Nothing you set here reaches it until you press Launch.'
+      : '',
   };
 }
 
@@ -3948,7 +3968,8 @@ export function runningPanel(running) {
   const who = now.who;
   const el = node(`
     <div class="panel running ${live ? 'live' : ''}">
-      <h3>${live ? 'Running now' : 'Loaded, nobody playing'}</h3>
+      <h3>${esc(now.heading)}</h3>
+      ${now.note ? `<div class="tiny running-note">${esc(now.note)}</div>` : ''}
       <div class="running-row">
         <div>
           <div class="running-title">${esc(running.title)}</div>

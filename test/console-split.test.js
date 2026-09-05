@@ -350,8 +350,13 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * three wordings of it and that the short form is a different job rather than
  * an abbreviation. Raised rather than trimmed: the paragraph is the reason the
  * topbar stopped carrying the title, which is what stopped the header wrapping.
+ *
+ * 4050 -> 4080 for the HEADING and the note beside it. The panel could read
+ * "Loaded, nobody playing" over "2 playing" in the same box, and that sentence
+ * cost an evening: a boot fallback was read as a launched night. The paragraph
+ * explaining it is worth more than the lines it costs.
  */
-const BUDGET = { 'console-tonight.js': 4050, 'console.js': 2000, 'console-packs.js': 1830 };
+const BUDGET = { 'console-tonight.js': 4080, 'console.js': 2000, 'console-packs.js': 1830 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

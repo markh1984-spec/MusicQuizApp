@@ -9348,6 +9348,11 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
   .arcade-going.soon { animation: none; transform: scale(1.15); }
 }
 
+/* The one line that says a night was never launched — see `nowPlaying()`.
+   Full ink rather than dim: it is the difference between the pack sitting on
+   the projector and a night that is actually on, and it was misread once. */
+.running-note { color: var(--ink); margin: -2px 0 8px; max-width: 62ch; }
+
 /* ---- WHILE YOU WAIT — the two things there are to do, as a menu.
    Rows rather than a row of buttons: each one has a name and a line saying
    what happens next, which is the house style everywhere else and is worth

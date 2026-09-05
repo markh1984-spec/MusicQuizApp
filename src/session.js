@@ -219,6 +219,40 @@ export class Session {
     this.filedVouchers = null;
   }
 
+  /**
+   * THE GAMES A ROOM MAY OFFER WHEN NOBODY HAS LAUNCHED A NIGHT.
+   *
+   * **`boot()` always builds a game so the projector is never blank — and on a
+   * host with no permanent disk that is the state after EVERY restart.** The
+   * disk is wiped on each deploy, so the room comes back around the first pack
+   * it can find, with `launched: false` and not one night setting on it. A
+   * phone can still join it, because the join code is on the projector.
+   *
+   * That is how *"still only allowing maze mouth"* survived two fixes: every
+   * push redeployed, the room rebuilt as a fallback, and the phone joined a
+   * night nobody had launched — so `lobbyGames` was absent and it drew the
+   * plain card. Nothing that had been built was ever reached.
+   *
+   * **It is refused the moment a night IS launched**, which is what keeps
+   * "resolved at the launch route" true: a launched night has already decided,
+   * whether it pinned one game or opened the list, and this must never
+   * overwrite that.
+   *
+   * **In memory only, deliberately** — no flush. It is DERIVED from the tier,
+   * so a restart works it out again; writing it would put a fact about the
+   * account into the file that records the night.
+   */
+  offerLobbyGames(ids) {
+    const state = this.engine && this.engine.state;
+    // ABSENT MEANS LAUNCHED — a state written before the field existed is
+    // there because somebody launched it, so only an explicit `false` is a
+    // room this may speak for.
+    if (!state || state.launched !== false) return;
+    const want = Array.isArray(ids) && ids.length > 1 ? ids.slice() : null;
+    if (JSON.stringify(state.lobbyGames || null) === JSON.stringify(want)) return;
+    state.lobbyGames = want;
+  }
+
   get launcher() {
     return LAUNCHERS[this.kind];
   }
