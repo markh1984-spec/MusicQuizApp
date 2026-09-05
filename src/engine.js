@@ -110,6 +110,27 @@ export class Engine {
     return {
       quizId: quiz.id,
       phase: PHASES.LOBBY,
+      /*
+       * HAS ANYBODY ACTUALLY LAUNCHED THIS, or is it just the pack the server
+       * had loaded when it booted?
+       *
+       * A room always has a game built — `boot()` falls back to the first pack
+       * it can find — so "what is on the big screen" was answered with a pack
+       * title from the moment the process started, on a console nobody had
+       * touched. And `resetAll()` builds a state exactly like this one without
+       * unloading the pack, so **Unlaunch changed nothing anybody could see**:
+       * the line named the same quiz before and after. Reported in those
+       * words — *"unlaunching doesn't actually unlaunch anything"*.
+       *
+       * `false` here and `true` in `session.launch()` is the whole mechanism;
+       * the server puts it on `running.launched` and `paintLive()` in
+       * `console-tonight.js` hides the line when it is false.
+       * It is written EXPLICITLY rather than left absent, because absent has
+       * to keep meaning "launched": a state saved before this field existed is
+       * on disk only because somebody launched it, and a redeploy mid-quiz
+       * must not come back saying the projector is idle.
+       */
+      launched: false,
       roundIndex: 0,
       questionIndex: 0,
       // Monotonic counter bumped on every change, so clients can spot a

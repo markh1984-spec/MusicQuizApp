@@ -583,7 +583,34 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * first where the overflow was CLIPPED rather than scrollable — a control off
  * the side of the screen with nothing thrown and nothing looking broken.
  */
-const BUDGET = 213_300;
+/*
+ * AND TO 214_700 on 4 SEPTEMBER 2026, and the first half of it was a REPLACEMENT
+ * rather than an addition: the `min-width: 0` entry written a day earlier was
+ * partly wrong, because constraining the bar moved the overflow onto the menu
+ * instead of removing it. Trimmed to its prohibition and given the other half.
+ *
+ * WHAT IT BOUGHT: two rules about things that fail SILENTLY, which is the line
+ * this budget has always been raised on.
+ *
+ *  - **A door went missing and nothing threw.** `.topnav` scrolls with no
+ *    scrollbar by design, so once the bar could shrink, "My account" was
+ *    simply absent — reported as *"what happened to the other menu?"*. The
+ *    general rule is the one worth the bytes: a fix that relieves pressure has
+ *    to be followed to wherever the pressure went.
+ *  - **Height is the free dimension in a topbar and width is not**, which is
+ *    why the owner's tier rungs stop at 34px rather than the app's own 44px
+ *    touch floor. Written down because the next person to apply the floor
+ *    mechanically would put that bar on two rows at every width there is.
+ *
+ * AND TO 215_500 the same day for the third of them, which is the one a
+ * session is most likely to undo: **a loaded pack is not a night**. Unlaunch
+ * looked broken because a room always has a game built, so the live line named
+ * a quiz before anybody had launched one and was unchanged by clearing it.
+ * `state.launched` is written explicitly precisely so ABSENT can keep meaning
+ * launched — the non-obvious half, and the one that stops a redeploy mid-quiz
+ * telling the host the projector is idle.
+ */
+const BUDGET = 215_500;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

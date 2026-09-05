@@ -115,6 +115,11 @@ export class BingoGame {
       ...shapeFields(cardShape(pack)),
       phase: BINGO_PHASES.LOBBY,
       version: 0,
+      // Whether anybody launched this, or it is just the pack the server had
+      // loaded at boot. The quiz's own `freshState()` carries the full note;
+      // both engines need it because either can be the thing on the projector,
+      // and `resetAll()` on either one builds a state exactly like this.
+      launched: false,
       // The prizes, and which one is being played for. Chosen at launch beside
       // the card shape and, like the shape, written here so a restart brings
       // the same night back rather than the default.

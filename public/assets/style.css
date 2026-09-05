@@ -5971,7 +5971,13 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   flex: 0 0 auto;
 }
 .hat-switch .hat-half {
-  padding: 7px 14px;
+  /* 10px rather than 7px top and bottom — 34px tall, not 28. The bar already
+     has the room (73px tall, 45px of it inside the padding, and the brand mark
+     is what sets that), so the whole switch grew without the topbar moving a
+     pixel. It is levelled with the tier rungs beside it, which had to grow for
+     the reason written over them; a secondary control taller than the primary
+     one it sits inside would read as the wrong way round. */
+  padding: 10px 14px;
   border: none;
   border-radius: var(--r-pill);
   background: none;
@@ -6001,14 +6007,35 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
    anything while the hat is on. Initials rather than words — B S G with "All"
    in front — because this is a corner of a topbar, not a settings page, and the
    metal on the live one says which is which faster than the label would. */
+/* THE RUNGS WERE 24 x 22px WITH 2px BETWEEN THEM, and that is what was wrong
+   with them: *"the clickable part of the G/S/B needs to increase, it's hard to
+   click at the moment."* Measured before changing anything — 528px² each, and
+   a two-pixel gap, so a slightly-off press lands on the neighbouring tier and
+   silently previews the wrong one.
+
+   They are 30 x 34 now with 5px between them: **the hit area roughly doubles
+   and the gap between two adjacent targets more than doubles**, which is the
+   half of "hard to click" that a bigger button on its own does not fix.
+
+   HEIGHT IS THE FREE DIMENSION AND WIDTH IS NOT, which is why it is 34 rather
+   than the app's 44px touch floor. The topbar has 45px of room inside its
+   padding, so growing DOWNWARDS costs nothing at all; growing sideways costs
+   the bar 68px it does not have at 1180px, and four 44px rungs would push the
+   owner's topbar onto two rows at every width there is. A mouse on a laptop is
+   what presses this — it is the owner's own control and lives in a corner of a
+   sticky header — so the floor that exists for a thumb in a dark pub is the
+   wrong rule to spend the whole bar on. */
 .tier-preview {
-  display: inline-flex; align-items: center; gap: 2px;
+  display: inline-flex; align-items: center; gap: 5px;
   margin-left: 4px; padding-left: 6px;
   border-left: 1px solid var(--panel-line);
 }
 .tier-preview .tier-half {
-  min-width: 24px;
-  padding: 5px 6px;
+  min-width: 30px;
+  /* 11px, not 10 — the rungs are a smaller font than the hat halves beside
+     them, so equal padding came out two pixels shorter. Levelled on the drawn
+     HEIGHT rather than on the number in the rule. */
+  padding: 11px 7px;
   border: none; border-radius: var(--r-pill);
   background: none; color: var(--ink-dim);
   font: inherit; font-size: var(--fs-tag); font-weight: 800;
@@ -7802,6 +7829,29 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    a long pack name stacked it to four lines (`.screen .topbar > *`); the
    console's never got it. */
 .console .topbar { min-width: 0; }
+/* AND WHEN IT STILL WILL NOT FIT, THE BAR TAKES A SECOND ROW — it must never
+   swallow a door.
+
+   Constraining the bar above moved the overflow rather than removing it: the
+   menu is `flex: 1 1 auto` with `overflow-x: auto`, so it was the thing that
+   gave way, and at 1000px it was handed 376px of the 519px it needs. There is
+   no scrollbar on it by design, so **"My account" simply was not there** —
+   measured, and reported as *"what happened to the other menu?"* off a
+   screenshot with the Community chip cut down the middle. A door you cannot
+   see is a door that does not exist; that is the fault the tab bar's own wrap
+   rule was written for, and this is the same fault one region higher.
+
+   A wrapping flex row places items on lines at their FULL size and only
+   shrinks per line afterwards, so `wrap` alone is the whole fix: the menu can
+   no longer be squeezed, and the bar stays one row at every width where one
+   row is enough. The owner is the account that overflows — the hat switch and
+   the tier rungs are 295px nobody else carries — and a quizmaster's bar is
+   unchanged at every size.
+
+   It is not scoped to a breakpoint on purpose. The phone rule below still
+   gives the menu a line of its own from 430px down, where a second row is
+   wanted rather than merely tolerated. */
+.console .topbar { flex-wrap: wrap; row-gap: 8px; }
 /* The two bits of prose in the bar are what give way — "Owner — you@…" and
    "Now: The Madonna Quiz (6 in)". They are the only things up there you can
    afford to lose the end of, and without `min-width: 0` a flex item will not

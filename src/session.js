@@ -602,6 +602,20 @@ export class Session {
     }
     this.build(kind, normalised, null);
     /*
+     * SOMEBODY PRESSED LAUNCH. Every other path that builds an engine —
+     * `boot()`, `resetAll()` — leaves `freshState()`'s `false` alone, which is
+     * what makes Unlaunch visible and stops the console naming a pack nobody
+     * put up. `startOrderSegment()` comes through here too, so part two of a
+     * running order is launched by construction.
+     *
+     * NOT `launchedSinceBoot`, which is a different question. That one is in
+     * MEMORY and answers "did the host launch during this process" — the
+     * stranded-phone count depends on it being false again after a restart.
+     * This one is on the STATE, so a redeploy mid-quiz comes back still
+     * saying the projector has a night on it.
+     */
+    this.engine.state.launched = true;
+    /*
      * HOW MANY PLACES TONIGHT RECOGNISES — the podium, and who gets a voucher.
      * Beside the prizes and the card shape because it is the same kind of
      * fact: a decision about THIS EVENING rather than about the pack. Zero

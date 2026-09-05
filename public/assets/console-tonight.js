@@ -1647,7 +1647,7 @@ export function launchBar() {
   function paintLive() {
     const running = (library && library.running) || {};
     const title = String(running.title || '');
-    if (!title) { liveRow.hidden = true; return; }
+    if (!title || running.launched === false) { liveRow.hidden = true; return; }
     liveRow.hidden = false;
     /*
      * IF THE LINE IS SHOWING, SO IS THE STOP — asked for twice, the second

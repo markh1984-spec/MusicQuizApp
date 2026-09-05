@@ -145,3 +145,44 @@ test('the lobby game chosen at launch reaches the phone', async () => {
     assert.ok(view.gameSeed >= 1, 'the phone was given no seed');
   });
 });
+
+test('UNLAUNCH ACTUALLY UNLAUNCHES — and a booted pack is not a night', async () => {
+  /*
+   * Reported in those words: *"unlaunching doesn't actually unlaunch
+   * anything."* It did clear the room; there was nothing on screen to show for
+   * it, because `resetAll()` builds a fresh lobby around the SAME pack and the
+   * console's live line is built from the pack's title. So the sentence "On
+   * the big screen now: The 1980s Pop Music Quiz" was word for word identical
+   * before the launch, after it, and after Unlaunch.
+   *
+   * `state.launched` is the whole fix, and the first assertion is the half
+   * that is easy to forget: a room ALWAYS has a pack loaded (`boot()` falls
+   * back to the first one it can find so the projector is never blank), so the
+   * flag has to be false on a server nobody has touched as well as after a
+   * reset. It is checked over real HTTP because that is where the console
+   * reads it.
+   */
+  const packId = aRealQuiz();
+  await withServer(async (base) => {
+    const running = async () => (await (await fetch(`${base}/api/library`, {
+      headers: { 'X-Host-Key': KEY },
+    })).json()).running;
+
+    assert.equal((await running()).launched, false,
+      'a console that has launched nothing was told a night is on the big screen');
+
+    await fetch(`${base}/api/host/launch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Host-Key': KEY },
+      body: JSON.stringify({ game: 'quiz', packId, replace: true }),
+    });
+    assert.equal((await running()).launched, true, 'a launch did not register as one');
+
+    await fetch(`${base}/api/host/resetAll`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Host-Key': KEY },
+      body: '{}',
+    });
+    assert.equal((await running()).launched, false, 'Unlaunch left the night claiming to be on');
+  });
+});

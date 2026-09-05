@@ -878,13 +878,25 @@ they say next.
   scrollbar to reach it** — with a game running at ~960px it came out 1128px
   wide and **the tier rungs were off the side of the screen**. `min-width: 0`
   on the BAR is what makes the existing `min-width: 0` on `#whoami` and
-  `#runningNow` do anything: until the bar is constrained, its children are
-  never asked to give way. **The rule was applied one level too deep**, and the
-  projector's own topbar has had `.screen .topbar > *` since a long pack name
-  stacked it to four lines. **This is the third sighting of `min-width: auto`
-  in this file** — `.option`, the `minmax(0, 1fr)` content column, and now
-  this. **A clipped overflow is worse than a scrolling one**: nothing throws,
-  nothing looks broken, and the control is simply unreachable.
+  `#runningNow` do anything. **The rule was applied one level too deep**, and
+  the projector's own topbar has had `.screen .topbar > *` since a long pack
+  name stacked it to four lines. **This is the third sighting of
+  `min-width: auto` in this file** — `.option`, the `minmax(0, 1fr)` content
+  column, and now this. **A clipped overflow is worse than a scrolling one**:
+  nothing throws, nothing looks broken, and the control is simply unreachable.
+- **…AND CONSTRAINING IT MOVED THE OVERFLOW ONTO THE MENU, so `flex-wrap: wrap`
+  IS THE OTHER HALF.** The next screenshot came back *"what happened to the
+  other menu?"* with the Community chip cut down the middle: `.topnav` is
+  `flex: 1 1 auto` with a deliberately invisible `overflow-x`, so once the bar
+  could shrink, the MENU was what gave way — 376px of the 519px it needs at
+  1000px, and **My account simply was not there**. **A door you cannot see is a
+  door that does not exist**, which is the fault the tab bar's own wrap rule
+  was written for, one region higher. **`wrap` alone is the whole fix, because
+  a wrapping flex row places items at FULL size and only shrinks per line
+  afterwards** — so the menu can no longer be squeezed and the bar stays one
+  row wherever one row is enough. **A fix that relieves pressure has to be
+  followed to wherever the pressure went**; the first half was right and
+  finished nothing.
 - **`main` IS A FLEX COLUMN — never give it a row template.** Its
   `auto minmax(0,1fr)` grid assumed exactly two children, so ANY banner above
   the doorhead (the no-accounts maker, Workshop's backup warning) pushed the
@@ -1818,6 +1830,15 @@ greyed out, and maybe a tooltip should come out trying to sell it."*
   and the sell is the point. It keeps its metal, dimmed.
 - **NOT A NATIVE `title`** — unstyled, lands over what is beneath it, dead on a
   touchscreen. A card, outside-click close, one document listener for all rows.
+- **THE OWNER'S OWN RUNGS ARE 30 x 34 WITH 5px BETWEEN THEM, AND HEIGHT IS THE
+  FREE DIMENSION.** *"The clickable part of the G/S/B needs to increase, it's
+  hard to click."* Measured first: **24 x 22 with a 2px gap**, so a slightly-off
+  press previews the wrong tier. **Not the 44px touch floor, deliberately** —
+  the topbar has 45px inside its padding, so growing DOWN is free, while four
+  44px rungs cost 68px the bar does not have and would put the owner's topbar
+  on two rows at every width there is. A mouse on a laptop presses this. **The
+  hat switch beside it went to 34px too**, or the secondary control is taller
+  than the primary one inside it.
 - **BUILT FROM `ladderFor()`, never written out**, and **`NOT_BUILT` says "not
   yet"**: a rung listing something that does not exist is one nobody trusts.
 - **NO SUBSCRIBE BUTTON UNTIL THERE IS A PROCESSOR** — *"Get in touch to move
@@ -3014,6 +3035,18 @@ just don't want to think, you want to get in and go and know it will work."*
 - **THE CONSOLE AND THE BIG SCREEN MUST AGREE, ALWAYS.** A choice STICKS, and
   `paintLive()` prints what is actually on the projector in gold when it
   differs from what the bar is set to.
+- **A LOADED PACK IS NOT A NIGHT — `state.launched`, and Unlaunch is what it
+  was for.** A room ALWAYS has a game built: `boot()` falls back to the first
+  pack it can find so the projector is never blank. So the live line named a
+  quiz on a console nobody had touched, and `resetAll()` builds another lobby
+  around the SAME pack — *"unlaunching doesn't actually unlaunch anything"*,
+  reported in those words. It cleared the room; there was nothing on screen to
+  show for it. `false` in both `freshState()`s, `true` in
+  `session.launch()` alone. **Written EXPLICITLY, so ABSENT can mean
+  launched** — a state on disk from before the field existed is there because
+  somebody launched it, and a redeploy mid-quiz must not report an idle
+  projector. **Not `launchedSinceBoot`**, beside it, which answers a
+  different question in MEMORY for the stranded-phone count.
 - **Picking a pack puts it on the big screen when nothing would be lost.** THE
   SERVER decides which — the launch call without `replace` answers 409 when
   `session.inProgress()`. A 409 is SILENT here. A re-render is not somebody

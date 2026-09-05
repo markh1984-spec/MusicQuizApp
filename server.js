@@ -1852,6 +1852,18 @@ async function handleGet(req, res, url, route) {
         packId: session.pack.id,
         title: session.pack.title,
         /*
+         * DID SOMEBODY PUT THIS UP, or is it just the pack the server loaded
+         * at boot? A room always has a game built, so `title` alone said a
+         * quiz was on the big screen from the moment the process started and
+         * kept saying it after Unlaunch. See `freshState()` in engine.js.
+         *
+         * `!== false` rather than a truth test: a state written before the
+         * field existed is on disk only because it WAS launched, so absent has
+         * to read as launched or a redeploy mid-round tells the host the
+         * projector is idle.
+         */
+        launched: session.engine.state.launched !== false,
+        /*
          * WHERE tonight is, as the running night itself understands it.
          *
          * Read off the game state rather than off the console's own picker,
