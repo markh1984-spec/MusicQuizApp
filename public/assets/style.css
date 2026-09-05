@@ -3069,6 +3069,29 @@ body.screen { cursor: none; overflow: hidden; }
  * fixed frame with nowhere to put anything. 700 is the topbar (73) plus the
  * bay (425) plus a readable tab column (200), so the frame exists precisely
  * where it can hold what it promises. */
+/* TWO COLUMNS IS A WIDTH DECISION AND THE PINNED FRAME IS A HEIGHT ONE — they
+   were in the same block and gating that block on height took the SIDEBAR away
+   with it. On a short window the tabs went full width above the shelf, which
+   pushed the pack cards down the page and put a wall of tab between them and
+   the launch bar: *"the submenu was meant to allow for the content to be
+   dragged to the launch bar, at the moment it takes up the full width of the
+   page and is in the way of this functionality."*
+
+   **The drag is what the layout is FOR**, and it needs the shelf beside a
+   190px rail rather than under a full-width one. The page scrolling is fine
+   for it — `pinTonightWhereItIs()` was written for exactly that case, and
+   pins Tonight where the eye last saw it when a card is picked up. */
+@media (min-width: 900px) {
+  .consolecols {
+    display: grid;
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 8px 24px;
+    /* `stretch`, not `start`: both columns have to fill the frame or the
+       scroller has no height to scroll inside and the page grows instead. */
+    align-items: stretch;
+  }
+}
+
 @media (min-width: 900px) and (min-height: 700px) {
   /* `dvh` because a mobile-shaped browser window reports `vh` including the
      chrome that slides away, which puts the bottom of the frame under it. The
@@ -3143,15 +3166,7 @@ body.screen { cursor: none; overflow: hidden; }
     overscroll-behavior: contain;
   }
 
-  .consolecols {
-    display: grid;
-    grid-template-columns: 190px minmax(0, 1fr);
-    gap: 8px 24px;
-    /* `stretch`, not `start`: both columns have to fill the frame or the
-       scroller has no height to scroll inside and the page grows instead. */
-    align-items: stretch;
-    min-height: 0;
-  }
+  .consolecols { min-height: 0; }
   /* THE ONLY THING THAT SCROLLS. `overscroll-behavior` stops a flick that
      reaches the end of the list scrolling the window behind it, which on a
      trackpad reads as the whole app sliding. */
@@ -3192,9 +3207,9 @@ body.screen { cursor: none; overflow: hidden; }
   margin-bottom: 22px;
   padding-bottom: 2px;
 }
-/* Gated on height as well, for the reason written over the frame above: this
-   is the frame's own rule and has to come and go with it. */
-@media (min-width: 900px) and (min-height: 700px) {
+/* The sidebar's own dressing, on WIDTH — it goes with the two columns above,
+   not with the pinned frame. `top` only bites where something is sticky. */
+@media (min-width: 900px) {
   /* IT STAYS WHERE IT IS WHILE THE TAB SCROLLS, which is most of what a
      sidebar buys over a bar: nine tabs pinned beside a long Gigs list rather
      than a strip you have to scroll back up to. `top` is the sticky topbar's

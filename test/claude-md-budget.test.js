@@ -625,8 +625,16 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * repair, letting the bay shrink, painted the launch bar OVER the tabs while
  * every measurement reported them present at a sensible size. A session
  * reaching for that repair needs to know it was tried.
+ *
+ * AND TO 217_800 for the third rule out of the same report, which is the one
+ * that generalises: **a media query is two decisions the moment it names two
+ * axes.** Gating the frame on height took the SIDEBAR with it, because the two
+ * columns and the pinning shared a block — and the sidebar is what the pack
+ * drag needs. The fix for one axis silently removed something that was never
+ * about that axis, and nothing failed; it just stopped being possible to drag
+ * a pack to the launch bar.
  */
-const BUDGET = 217_000;
+const BUDGET = 217_800;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

@@ -916,6 +916,16 @@ they say next.
   the tab column** — measured 200px tall at y=315 and invisible. **The numbers
   said fixed and the render said broken**, which is this file's oldest trap and
   why the screenshot is the check.
+- **TWO COLUMNS IS A WIDTH DECISION; THE PINNED FRAME IS A HEIGHT ONE.** They
+  were in one media query, so gating it on height took the SIDEBAR away too —
+  the tabs went full width above the shelf, which pushed the pack cards down
+  the page and put a wall of tab between them and the drop slots: *"the submenu
+  was meant to allow for the content to be dragged to the launch bar, at the
+  moment it takes up the full width of the page and is in the way of this
+  functionality."* **THE DRAG IS WHAT THE LAYOUT IS FOR**, so the 190px rail
+  holds at every height and only the pinning goes. **A media query is two
+  decisions the moment it names two axes** — split it, or a fix on one axis
+  silently removes something that was never about that axis.
 - **`main` IS A FLEX COLUMN — never give it a row template.** Its
   `auto minmax(0,1fr)` grid assumed exactly two children, so ANY banner above
   the doorhead (the no-accounts maker, Workshop's backup warning) pushed the
