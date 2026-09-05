@@ -216,3 +216,34 @@ export function venueKeyOf(night) {
   if (id) return `id:${id}`;
   return String(night.venue || '').trim().toLowerCase();
 }
+
+/**
+ * ARE THESE TWO NIGHTS AT THE SAME PUB? — the id-or-name fold, as one answer.
+ *
+ * `venueKeyOf()` alone SPLITS a pub, because picking a venue off the book files
+ * a night under `id:xyz` and typing the same name freehand files it under the
+ * bare name. That split has now been found three times — the rail showing "The
+ * Station Tap, Wokingham" twice, the headcounts, and the gallery's own URLs —
+ * and each was fixed where it was found.
+ *
+ * This is the same fold as a function, because there were still THREE more
+ * places asking the question a fourth way: the landlord's report and the
+ * projector's league band both compared venue STRINGS directly, and one of them
+ * did not even trim. A rename, or one week booked off the book and the next
+ * typed in, and a season quietly splits — on a document a landlord forwards.
+ *
+ * **The id wins when both have one**, so two pubs that genuinely share a name
+ * stay apart wherever the book was used. Otherwise it falls to the name, which
+ * is all a night filed before venue ids existed has — and that is most of the
+ * history. An EMPTY venue matches nothing, or every night with no pub on it
+ * lands in every pub's season.
+ */
+export function sameVenue(a, b) {
+  if (!a || !b) return false;
+  const idA = String(a.venueId || '').trim();
+  const idB = String(b.venueId || '').trim();
+  if (idA && idB) return idA === idB;
+  const nameA = String(a.venue || '').trim().toLowerCase();
+  const nameB = String(b.venue || '').trim().toLowerCase();
+  return Boolean(nameA) && nameA === nameB;
+}

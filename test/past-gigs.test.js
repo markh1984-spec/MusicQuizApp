@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { photoFolder, isNightFolder, nightOfGig, mergeGigs, safePhotoName } from '../src/past-gigs.js';
+import { photoFolder, isNightFolder, nightOfGig, mergeGigs, safePhotoName, sameVenue } from '../src/past-gigs.js';
 import { archiveResults, serialiseArchive, restoreArchive, listArchive, HOUSE_ROOM } from '../src/library.js';
 import { nightOf } from '../src/photos.js';
 
@@ -319,4 +319,34 @@ test('serialising a folder that is not there is empty rather than a throw', () =
   // take a backup down with them.
   const serialised = serialiseArchive(path.join(tempDir(), 'never-made'));
   assert.deepEqual(JSON.parse(serialised), { nights: [] });
+});
+
+/*
+ * ONE PUB IS ONE PUB, whichever way it was filed — `sameVenue()`.
+ *
+ * Three readers of the archive had each invented their own answer to this, and
+ * two of them compared venue STRINGS: the landlord's report and the projector's
+ * own league band, the second of which did not even trim. A pub picked off the
+ * book one week and typed freehand the next split a season in half, on a
+ * document that gets forwarded to a brewery.
+ */
+test('sameVenue folds an id and a typed name into one pub', () => {
+  const byId = { venue: 'The Station Tap, Wokingham', venueId: 'v1' };
+  const typed = { venue: 'The Station Tap, Wokingham' };
+  const spaced = { venue: '  the station tap, wokingham ' };
+
+  assert.equal(sameVenue(byId, typed), true, 'an id and the same name typed in are one pub');
+  assert.equal(sameVenue(typed, spaced), true, 'case and stray spaces are not a second pub');
+  assert.equal(sameVenue(byId, { venue: 'The Station Tap, Wokingham', venueId: 'v1' }), true);
+
+  // Two pubs that genuinely share a name stay apart wherever the book was used
+  // — that is what the id is for, and it is the cost the fold accepts knowingly
+  // everywhere it has no id to go on.
+  assert.equal(sameVenue(byId, { venue: 'The Station Tap, Wokingham', venueId: 'v2' }), false);
+  assert.equal(sameVenue(byId, { venue: 'The Crown' }), false);
+
+  // A night with no pub on it must not land in every pub's season.
+  assert.equal(sameVenue({ venue: '' }, { venue: '' }), false);
+  assert.equal(sameVenue({ venue: '' }, typed), false);
+  assert.equal(sameVenue(null, typed), false);
 });

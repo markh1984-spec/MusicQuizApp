@@ -989,6 +989,174 @@ they say next.
   gets finished there rather than growing scattered rules. `::selection` follows
   `--hot` (rgba fallback first); reduced-motion keeps the border, drops the lift.
 
+### A ROOM ID IS A PATH, AND `?q=` NAMES AN ACCOUNT OR NOBODY
+
+`isRoomId()` / `GALLERY_NONE` in `src/rooms.js`, `galleryRoomFrom()` in
+`server.js`. Found by a sweep and reproduced end to end with no cookie and no
+key.
+
+- **A ROOM'S FILES ARE `path.join(dataDir, 'rooms', roomId)`, so `..` WALKS
+  OUT** — and `..` alone resolves to `dataDir` ITSELF, which is the HOUSE
+  room's own `state.json`. `GET /api/brand?q=..` minted a shadow room over the
+  projector's crash-recovery file, `POST /api/join` wrote a player into it, and
+  the next restart booted the room from a stranger's state. **That is protected
+  surface item 5, from two unauthenticated GETs.**
+- **REFUSED, NEVER QUIETLY SWAPPED FOR THE HOUSE ROOM.** `get()` throws a
+  `badRequest` on anything outside the alphabet this app actually mints. Falling
+  back to HOUSE is the same fault wearing a friendlier face — it hands somebody
+  else's room to a caller who asked for nonsense.
+- **AN UNKNOWN `?q=` STILL ANSWERS AS AN EMPTY GALLERY**, deliberately: a 404
+  would let anybody probe which account ids are real. It lands on ONE reserved
+  room now instead of minting a room, a join code and a backup push per junk
+  string — `rooms.get()` never evicts and `codeFor()` persists, so an open URL
+  was a memory leak and a GitHub-quota leak at once.
+- **`galleryAsked` AND `galleryTarget` ARE TWO VALUES.** One is *was a gallery
+  named* (which stands the owner's preview shortcut down); the other is *which
+  room that resolves to*. Folding them hands the shortcut back on a junk `?q=`.
+- **AND THE RULE IN `own-packs.js` NEEDS READING WITH THIS**: "no room parameter
+  on any route" is now "no room parameter on any route that reads or writes a
+  room's CONTENTS". `?q=` names a gallery and is validated against the accounts
+  book. The packs guarantee itself is unchanged and still holds.
+
+### A DECISION TAKEN FOR BOTH ENGINES NEEDS AN ASSERTION IN BOTH
+
+`engine.js` closed the player-id leak, wrote up why, and grew a test walking
+every phase of a quiz. **None of it reached `bingo.js`**, whose lobby list went
+on sending `{ id, name }` for months.
+
+- **AND READS TAKE NO TOKEN**, by design — so one id off the projector returned
+  that player's whole card, every mark on it, and their voucher CODE once they
+  won. Rule 3 held for ACTIONS; this was read access, and on bingo the cards ARE
+  the game.
+- **The bingo test is the quiz test's TWIN, not a spot check** — same walk, same
+  assertion, verified by putting the fault back. Same argument `src/arcade.js`
+  exists for: two copies of one rule is one rule that gets fixed once.
+
+### WHAT A PART BOUNDARY CARRIES — `nightWideOpts()`
+
+A running order builds a FRESH engine per part, so anything night-wide has to be
+handed over explicitly. Three were not, and each failed silently:
+
+- **`winners`** — vouchers are only issued by the LAST part, the one that never
+  received it, so the picker was 100% inert on every running order. Asked for one
+  winner, three drinks went out.
+- **`lobbyGames`** — *"Let them choose"* switched itself off after part one.
+  **This is not the same as `lobbyGame`, which must still NOT carry**: that one
+  is a RESOLVED id indistinguishable from a choice; this one IS the choice.
+- **THE TEAMS, AND THE MAP GOES ON BEFORE ANYBODY IS SEEDED.** `join()` deals a
+  random-mode player the moment it is called, so seeding first re-deals the whole
+  room — a fresh deal, which `teams.js` forbids. A team night became an
+  individual one mid-evening with every phone drawing a picker against an empty
+  list.
+- **`archivedAs` CARRIES TOO, so an evening files ONCE.** Bingo's *Finish* is a
+  deliberate escape hatch and stays one; what was wrong is that the flag stopping
+  a second archive lived on a state the boundary throws away. Two rows in Past
+  gigs, two headcounts, two league contributions, for one night. **The quiz's
+  "Stop the quiz" is not drawn while another part is queued** — its confirm
+  promises Back undoes it, and Back does not undo an archive or a voucher.
+
+### EVERY READER AND WRITER OF `leagues-published.json` USES `galleryRoomFor`
+
+- **A READ AND A WRITE THAT DISAGREE ABOUT THE ROOM IS INVISIBLE.** The league's
+  three writers used `roomForHost` (HOUSE for the owner and the host key) while
+  the public page reads the owner's own quizmaster room, so a table could be
+  published, be told it worked, and read back as *"Not published"*. No change for
+  an ordinary quizmaster — their room id is never HOUSE.
+- **`inOrder()` PER ROOM, like `gallery.js`** — three callers each read the file
+  whole and write it back, so a name ruling overlapping a publish put the old
+  value back and silently un-published the table.
+- **A FOLD MUST RESTORE THE ORDER IT DEPENDS ON.** `leagueTable()` says "newest
+  first" three times and leans on it for the season start, for which spelling of
+  a name wins, and for `evenings`. Two sorted runs concatenated are not one
+  sorted run.
+- **AND THE REPORT MASKS THE WINNER, not just the table** — it printed the
+  podium raw three lines above a masked season table, in one document. The filter
+  is `publicName()` at the ROUTE, so it keeps one definition and the PDF stays a
+  layout.
+
+### ONE PUB IS ONE PUB — `sameVenue()` in `past-gigs.js`
+
+Fourth sighting of the id-versus-typed-name split, so it is a function now. **An
+id beats a name; a name matches a name; an EMPTY venue matches nothing**, or a
+night with no pub lands in every pub's season. The report and the projector's
+league band both compared venue STRINGS, and one did not even trim.
+
+### THE SUPPORT LOG IS MATCHED EXACTLY, NEVER BY PREFIX
+
+`SUPPORT_QUIET` in `server.js`. It was wrong in both directions: `/api/me` on
+the quiet list covered every `/api/me/*` WRITE, so changing somebody's colour
+scheme — what their projector and sixty phones wear — left no line; and
+`/api/live` is not a route in this app, so every SSE reconnect wrote one and
+evicted real entries from a 500-line log. **A route belongs on that list when a
+LINE would be noise, never when the ACT is dull.**
+
+**AND `safe()` STRIPS `calendarKey` AND `reset`.** The calendar key IS a
+credential — one GET with no cookie returns somebody's whole diary — and it rode
+out on every `/api/me`. `/api/calendar/link` is the route that exists to hand it
+over.
+
+### TWO MORE WHITELISTS THAT DROPPED WHAT THEY DID NOT NAME
+
+The trap this file already records for `accounts.create()`, `shows.js` and
+`doLaunch()`, found twice more:
+
+- **`Accounts.restore()` DROPPED `tiers` AND THEN SAVED THE LOSS** — and it runs
+  whenever the disk is empty, which on Render's free tier is every deploy. The
+  note above `tiers` says storing them in that file exists to prevent exactly
+  that. Nothing 403s, so nobody notices.
+- **`shows.js` DROPPED `questionSeconds`**, so a night saved at thirty seconds
+  came back at the pack's own pace.
+- **AND GRANDFATHERING ASKED THE RAW ACCOUNT.** A group seat holds its PARENT'S
+  tier, so `featuresFor(a)` rather than `featuresFor(effective(a))` made every
+  seat lose a feature in the same second its parent was grandfathered — and the
+  "N accounts kept it" line under-counted, so nobody would know. Seats run nights.
+
+### A COMMENT THAT CLAIMS THE OPPOSITE IS WHERE THE NEXT BUG HIDES
+
+Third sighting, and the clearest yet. `tonightAsShow()` carried *"read off the
+SAME module-level state the launch reads, deliberately, so a saved show and the
+night that would have been launched cannot differ"* — while reading
+`currentPack`/`lbExtra`, which stopped being the truth the day packs began
+BURSTING into a tile per round. A bar holding five tiles across two packs saved
+a show with one pack in it. **It is built from `segmentsNow()` now, which is
+literally the call the launch makes.**
+
+### THE LABELS THE SWEEP RENAMED — do not rename them back
+
+Each was two controls on one screen sharing a word for different sets, which
+rule 1 says is a rename rather than an argument:
+
+- **`Lobby game`**, not `Game` — it named the arcade toy 73px above the
+  unlabelled control that picks quiz-or-bingo. That one has an `aria-label` now.
+- **`Bingo prizes`**, not `Prizes`, and the warning says **"No VENUE prizes
+  set"** — the bar could read *Prizes 5* under *No prizes set*. One is the
+  card's stopping points, the other the venue's list of what is on the table.
+- **`In the room` / `Online`** on the mode switch, not `Venue` — which was
+  chosen so it would "read as one question with two answers" with the venue
+  button beside it. That is the collision, stated as the reason. The project
+  notes had said IN THE ROOM all along.
+- **`Pack editor`**, not `My packs` — the panel under it means the packs you
+  WROTE; the link opens an editor listing the whole catalogue.
+- **`Photo link to the room`**, not `Photos to the room` — it puts up a QR and
+  no photographs, four inches under a panel headed *Photos on the big screen*.
+- **`Change the prizes`**, and its tooltip no longer says *"takes effect from
+  the next prize onward"* — that was true once and is the reason both engines
+  were changed to pay anybody already owed. It told a host looking at a blank
+  winner's phone that the one control which fixes it would not help.
+- **AND THE NINE LAUNCH-BAR LABELS ARE NOT SHOUTED.** `text-transform:
+  uppercase` on `.pack-shape` fought sentence-case markup, so the diff looked
+  right on either side. Capitals are for emphasis; the rule names three
+  exceptions and nine multi-word labels are none of them.
+
+### A FIELD ON A VIEW IS A PROMISE THAT SOMETHING DRAWS IT
+
+`canStart`, `msRemaining` and `rounds` were built on every host push and read by
+nothing — `rounds` mapped the whole pack each time, and during a question a host
+push is every time a team answers. `teamScores()`'s `members` list was the same,
+with a `key` that was always `undefined`. **Removed rather than left**: the
+arcade board sat in a payload for as long as the feature existed with nobody
+drawing it. If the control view wants a round list, draw one.
+
 ### THE LOBBY GAMES — AND NONE OF THEM IS NAMED AFTER THE ONE YOU ARE THINKING OF
 
 `public/assets/maze.js` + `lobby-game.js` (Maze Mouth), `rally.js` +
@@ -3642,7 +3810,7 @@ typo is dropped rather than quietly becoming a round of general knowledge.
 ## Checks
 
 ```bash
-npm test        # 1,643 tests, no network, injected clocks — must stay green
+npm test        # 1,684 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check

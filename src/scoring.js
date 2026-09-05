@@ -146,7 +146,15 @@ export function teamScores(players, teams) {
       size: members.length,
       totalResponseMs: members.reduce((n, p) => n + (p.totalResponseMs || 0), 0),
       answeredCount: members.reduce((n, p) => n + (p.answeredCount || 0), 0),
-      members: members.map((p) => ({ key: p.faceKey, name: p.name, score: p.score || 0 })),
+      /*
+       * NO `members` LIST. It was built here on the hot path and read nowhere
+       * — and its `key` was `p.faceKey`, a field no player object anywhere
+       * carries: `join()` does not set one, and `engine.js` writes
+       * `player.faceKey || faceKey(player.id)` precisely because it is absent.
+       * So every entry had `key: undefined`, on a list nothing drew. A
+       * half-built field that reads as working is what the next person wires
+       * something to; if a team board should name its members, build it then.
+       */
     });
   }
   return rows;

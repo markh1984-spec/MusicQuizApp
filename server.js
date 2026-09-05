@@ -42,7 +42,7 @@ import {
 import { STYLES, findStyle, QUALITIES, DEFAULT_QUALITY } from './src/portraits.js';
 import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig, playTrack } from './src/spotify.js';
-import { photoFolder, mergeGigs, safePhotoName, isNightFolder, nightOfGig, venueKeyOf } from './src/past-gigs.js';
+import { photoFolder, mergeGigs, safePhotoName, isNightFolder, nightOfGig, venueKeyOf, sameVenue } from './src/past-gigs.js';
 import { venueHeadcounts, nightHeadcount } from './src/headcounts.js';
 import { playedByVenue } from './src/heard.js';
 import { nightReportPdf, nightReportFilename } from './src/report-pdf.js';
@@ -2492,8 +2492,10 @@ async function handleGet(req, res, url, route) {
      */
     const ruled = await nameDecisions(galleryRoomFor(req, url));
     if (entry.venue && seesTheirLeague(req, url) && await leagueRunsAt(galleryRoomFor(req, url), entry)) {
-      const want = entry.venue.trim().toLowerCase();
-      const here = nights.filter((n) => String(n.venue || '').trim().toLowerCase() === want);
+      // `sameVenue()`, not a string compare — see the note on it. A pub booked
+      // off the book one week and typed freehand the next split the season on
+      // the one document a landlord forwards to a brewery.
+      const here = nights.filter((n) => sameVenue(n, entry));
       const season = leagueAfter(here, night);
       // One night is not a league — it is tonight's scoreboard printed twice,
       // which is the rule `session.js` already applies to the projector band.

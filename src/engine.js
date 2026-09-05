@@ -2841,7 +2841,6 @@ export class Engine {
     const round = this.round();
     const q = this.question();
 
-    view.canStart = s.phase === PHASES.LOBBY && this.rounds.length > 0;
     /*
      * THE HOST SEES EVERY ROOM, and that is the whole moderation story.
      *
@@ -2856,7 +2855,6 @@ export class Engine {
      */
     view.chat = s.online ? (s.chat || {}) : {};
     if (s.teamPlay) view.teams = this.teamList();
-    view.msRemaining = this.msRemaining();
     /*
      * FIELD BY FIELD, like the other two views — this was `{ ...s.question }`.
      *
@@ -2984,14 +2982,22 @@ export class Engine {
       lastSeenAt: p.lastSeenAt,
     }));
 
-    view.rounds = this.rounds.map((r, i) => ({
-      index: i,
-      title: r.title,
-      type: r.type,
-      questionCount: (r.questions || []).length,
-      current: i === s.roundIndex,
-    }));
-
+    /*
+     * `canStart`, `msRemaining` AND `rounds` HAVE GONE FROM HERE.
+     *
+     * All three were built on every host push and read by nothing — grepped
+     * across every browser file, every script and every test; the only
+     * `msRemaining` outside this file is a call to the METHOD. `rounds`
+     * mapped the whole pack each time, and during a question a host push is
+     * every time a team answers.
+     *
+     * They are removed rather than left, because a field on a view is a
+     * promise that something draws it: the arcade board sat in a payload for
+     * as long as the feature existed with no projector reading it, and this
+     * file's own note says a test that the payload is right proves nothing
+     * about whether anybody drew it. If the control view ever wants a round
+     * list, draw one — do not restore a field nobody asked for.
+     */
     return view;
   }
 

@@ -24,7 +24,7 @@ import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFi
 import { MAX_REWARDS } from './invoices.js';
 import { listQuizzes } from './quizzes.js';
 import { listBingoPacks, recordLaunch, archiveResults, updateArchivedNight, listArchive, HOUSE_ROOM } from './library.js';
-import { mergeGigs } from './past-gigs.js';
+import { mergeGigs, sameVenue } from './past-gigs.js';
 import { leagueTable } from './league.js';
 import { findSlide, listAdvertPacks, loadAdvertPack } from './adverts.js';
 import { cleanPlan } from '../public/assets/break-parts.js';
@@ -524,7 +524,13 @@ export class Session {
           // feature appearing on a projector by default.
           if (state.leagueOn && state.venue) {
             const nights = mergeGigs(listArchive(this.archiveDir, { boards: true }), []);
-            const mine = nights.filter((n) => String(n.venue || '').toLowerCase() === String(state.venue).toLowerCase());
+            /*
+             * `sameVenue()`, not a string compare — and this one did not even
+             * trim, so " The Crown" and "The Crown" were two pubs. Same fold
+             * as the report and the rail: an id beats a name, a name matches a
+             * name, and an empty venue matches nothing.
+             */
+            const mine = nights.filter((n) => sameVenue(n, { venue: state.venue, venueId: state.venueId }));
             const league = leagueTable(mine, { now: this.now() });
             // The top five only. It is a band under a podium on a projector,
             // not the wall poster, and the count says how many are in it.
@@ -1435,6 +1441,19 @@ export class Session {
      */
     const player = this.engine.state.players?.[String(body.playerId || '')];
     if (!ownsPlayer(player, body.token)) return { ok: false, reason: 'not_yours' };
+    /*
+     * KNOWN LIMIT, DELIBERATELY LEFT: this binds a token the phone is never
+     * told about, so "trusted once and then bound" is literally once. A second
+     * action carrying no token comes back `not_yours`, and rejoining with the
+     * id mints a NEW player — stranding the old row on the board.
+     *
+     * It is not reachable through the real client, and that is the whole
+     * reason it stands: `play.js` posts `/api/join` on load, and `join()` binds
+     * AND returns the token, so the ordering saves it. Closing it properly
+     * means returning the minted token here and teaching the phone to store it
+     * off an action reply — a change to the answering path, which is protected
+     * surface. Worth doing with a real handset in hand, not blind.
+     */
     if (player && !player.token) player.token = newToken();
 
     if (this.kind === 'bingo') {

@@ -719,7 +719,35 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * into one — the entry says what that costs in both directions, and that both
  * guard scripts carry the same pair.
  */
-const BUDGET = 231_000;
+/*
+ * AND TO 241_000 on 5 SEPTEMBER 2026, for a four-way sweep the host asked to be
+ * fixed in one go. This is the largest single raise this budget has taken and
+ * the reason is that most of it is PROHIBITIONS rather than description.
+ *
+ * WHAT IT BOUGHT, and none of it is a symptom:
+ *
+ * - A ROOM ID IS A PATH. `?q=..` walked out of `data/rooms/` onto the house
+ *   room's own state file, from an unauthenticated GET, and a restart then
+ *   booted the projector from a stranger's state. The entry says why the
+ *   tempting fix — falling back to HOUSE — is the same fault, and why an
+ *   unknown id must still answer as an empty gallery rather than a 404.
+ * - A DECISION TAKEN FOR BOTH ENGINES NEEDS AN ASSERTION IN BOTH. The quiz's
+ *   id-leak fix, its write-up and its whole-walk test never reached bingo, and
+ *   the payload sat there for months.
+ * - WHAT A PART BOUNDARY CARRIES, as a list, with the one field that must NOT
+ *   carry and why it is different. Three had been forgotten one at a time.
+ * - A FOLD MUST RESTORE THE ORDER IT DEPENDS ON, and `sameVenue()` — the fourth
+ *   sighting of one pub filed two ways, so it is a function now.
+ * - A COMMENT THAT CLAIMS THE OPPOSITE IS WHERE THE NEXT BUG HIDES, with the
+ *   clearest example this repo has produced.
+ * - The renamed labels, each with the PAIR that made it a collision. A rename
+ *   with no reason recorded gets renamed back, and one of these had its own
+ *   collision written down as the JUSTIFICATION for the word.
+ *
+ * A future session trimming this file should take the prose and keep the
+ * prohibitions, which is the rule the header already sets.
+ */
+const BUDGET = 241_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
