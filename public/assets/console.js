@@ -20,7 +20,7 @@ import { invoicesSection } from './console-invoices.js';
 import { gameSection, preview } from './console-packs.js';
 import { showsSection } from './console-shows.js';
 import { NIGHT_BENCH_STORE, bench, lastDone, library, me, setAccountsExist, setLastDone, setLibrary, setMe, setNightBench } from './console-state.js';
-import { aNightIsOn, dragging, launchBar, night, putNightOnBench, runningPanel, wantPackFromUrl } from './console-tonight.js';
+import { aNightIsOn, dragging, launchBar, night, nowPlaying, putNightOnBench, runningPanel, wantPackFromUrl } from './console-tonight.js';
 import { advertsSection, editAdvertSet, forgetPanel, venuesSection } from './console-venues.js';
 import { upcoming } from './diary.js';
 import { FEATURES, setTierOverrides, tierOf } from './plans.js';
@@ -1189,9 +1189,15 @@ export function render() {
   // already wearing them.
   paintScheme(library.scheme);
   const running = library.running;
-  runningEl.textContent = aNightIsOn(running)
-    ? `Now: ${running.title} (${running.playerCount} in)`
-    : '';
+  /*
+   * THE ONE PLACE THAT DECIDES — `nowPlaying()` in `console-tonight.js`. It
+   * used to word this here and the panel word it again below, which is the
+   * drift this replaced. The bar takes the SHORT form: the title is the
+   * panel's job, and on a bar capped at 1180px by `.console .wrap` it was
+   * 222px that pushed the whole header onto two rows.
+   */
+  const now = nowPlaying(running);
+  runningEl.textContent = now ? now.short : '';
   // Rebuilt on every render rather than once: the join code arrives with the
   // library, and which links you get depends on the tier you are previewing.
   // The lit door is the one you are behind, not always "console" — all three

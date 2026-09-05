@@ -696,7 +696,20 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * fix: the comment over that call said it sent "no venue" while the code had
  * sent one for months, so the note read as a rule and was actually a lie.
  */
-const BUDGET = 227_300;
+/*
+ * AND TO 229_000 on 5 SEPTEMBER 2026 for the topbar wrapping and the one
+ * wording of what is playing.
+ *
+ * WHAT IT BOUGHT: two general traps, not two symptoms. A media query on the
+ * WINDOW is wrong the moment a container caps the thing it protects — the
+ * diet was off at exactly the widths the bar needed it, for months, on the
+ * only account that has those controls. And a guard that stands a night up
+ * without letting anybody JOIN measures a console nobody uses: an empty lobby
+ * makes `aNightIsOn()` false, so the live line is blank and the bar comes out
+ * 230px narrow. Both are the kind of thing a session re-derives from a
+ * screenshot at 11pm otherwise.
+ */
+const BUDGET = 229_400;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

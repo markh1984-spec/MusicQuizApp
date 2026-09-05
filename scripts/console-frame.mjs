@@ -230,6 +230,27 @@ try {
   });
   check('a quiz is running, so the bar carries a live line', launched.status === 200, `${launched.status}`);
 
+  /*
+   * AND TWO PHONES IN IT — because `aNightIsOn()` is false for an EMPTY lobby,
+   * so the topbar's live line stays blank and the bar measures ~230px narrower
+   * than the one the host actually drives.
+   *
+   * That gap is exactly how this script passed every size while his header was
+   * on two rows. **A guard that sets a night up but never lets anybody join is
+   * measuring a console nobody uses** — the launch is not the state that
+   * matters here, the ROOM being in it is.
+   */
+  const joinCode = ((await (await fetch(`http://127.0.0.1:${PORT}/api/library`, {
+    headers: { 'X-Host-Key': KEY },
+  })).json()).running || {}).joinCode || '';
+  for (const name of ['Mick', 'Rita']) {
+    await fetch(`http://127.0.0.1:${PORT}/api/join${joinCode ? `?g=${joinCode}` : ''}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+  }
+
   const browser = await chromium.launch();
 
   for (const [label, width, height] of SIZES) {
@@ -305,6 +326,15 @@ try {
     await page.waitForTimeout(500);
 
     /* ---- THE TOPBAR: every door, the hat and the rungs ------------------ */
+
+    /*
+     * THE LIVE LINE HAS TO BE ON THE BAR BEFORE ANY OF THIS MEANS ANYTHING.
+     * It arrives with a later fetch, so measuring without waiting measures the
+     * narrow bar again — the same miss, one step further along.
+     */
+    const liveLine = await page.evaluate(
+      () => ((document.querySelector('#runningNow') || {}).textContent || '').trim());
+    check(`${label}: the bar is carrying the live line`, liveLine.length > 0, `"${liveLine}"`);
 
     const doors = await page.evaluate(REACH, '.topnav a');
     check(`${label}: all five doors are on the screen`, doors.length === 5, `${doors.length} chips`);

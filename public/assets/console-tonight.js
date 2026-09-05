@@ -3905,15 +3905,47 @@ async function stopRunningNight(button) {
   }
 }
 
+/**
+ * WHAT IS PLAYING NOW, IN WORDS — the one place that decides.
+ *
+ * Asked for: *"can we make it so what is displayed as 'playing now' is all read
+ * from the same place so its never drifting?"* He is right, and there were
+ * THREE: the topbar wrote `Now: <title> (<n> in)`, this panel wrote
+ * `<kind> — <n> playing`, and the launch bar's live line worded it a third way.
+ * One fact, three sentences, and nothing stopping them disagreeing.
+ *
+ * **The SHORT form is not an abbreviation of the long one, it is a different
+ * job.** The topbar has to say *something is live and how many are in* from any
+ * door in the app; the panel is the thing itself and says what it is and where
+ * it has got to. So the title lives in the panel, where it is not competing for
+ * room — which is also what stops the bar wrapping: the title was 222px the
+ * capped bar could not afford.
+ */
+export function nowPlaying(running) {
+  if (!aNightIsOn(running)) return null;
+  const n = running.playerCount || 0;
+  return {
+    title: running.title || '',
+    kind: running.game === 'bingo' ? 'Music bingo' : 'Music quiz',
+    // "2 in" rather than "2 playing" on the bar: it sits beside a door menu
+    // rather than under a heading, so it has to read as a count at a glance.
+    who: `${n} ${n === 1 ? 'player' : 'players'}`,
+    short: `Now on: ${n} in`,
+    live: running.phase !== 'lobby' && running.phase !== 'finished',
+  };
+}
+
 export function runningPanel(running) {
   if (!aNightIsOn(running)) return node('<div></div>');
   // An owner runs no nights, so there is no night of theirs to show or stop.
   // Their room is the house one, and driving it from here would be a Stop
   // button over a game somebody else is in the middle of.
   if (!can(FEATURES.QUIZ) && !can(FEATURES.BINGO)) return node('<div></div>');
-  const live = running.phase !== 'lobby' && running.phase !== 'finished';
-  const what = running.game === 'bingo' ? 'Music bingo' : 'Music quiz';
-  const who = `${running.playerCount} playing`;
+  // FROM `nowPlaying()`, never worked out again here — see the note on it.
+  const now = nowPlaying(running);
+  const live = now.live;
+  const what = now.kind;
+  const who = now.who;
   const el = node(`
     <div class="panel running ${live ? 'live' : ''}">
       <h3>${live ? 'Running now' : 'Loaded, nobody playing'}</h3>

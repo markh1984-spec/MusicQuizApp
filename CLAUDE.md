@@ -892,6 +892,32 @@ they say next.
   there**. **A door you cannot see is a door that does not exist.** **A fix
   that relieves pressure has to be followed to wherever the pressure went**;
   the first half was right and finished nothing.
+- **THE DIET HAS NO UPPER BOUND, BECAUSE `.console .wrap` CAPS THE BAR AT
+  1180px.** Reported as *"the menu at the top is fucked AGAIN"*: the diet was
+  `@media (max-width: 1179px)`, which measures the WINDOW — but the bar is
+  ~1148px wide at every window width there is, so a 1900px laptop gets the same
+  bar as a 1200px one and the diet switched OFF exactly where the bar still
+  needed it. With a night running the owner's header wrapped to two rows at
+  **every desktop size**. **A media query on the window is the wrong tool the
+  moment a CONTAINER caps the thing you are protecting.**
+- **AND `#runningNow` IS WHY NOTHING SAW IT: `aNightIsOn()` IS FALSE FOR AN
+  EMPTY LOBBY.** `console-frame.mjs` launched a quiz and let nobody join, so
+  the live line stayed blank and it measured a bar **230px narrower than the
+  one the host drives** — passing every size while his header was on two rows.
+  **A guard that sets a night up but never lets anybody in is measuring a
+  console nobody uses.** It joins two phones now and asserts the line is
+  actually there before trusting a single measurement.
+- **WHAT IS PLAYING NOW IS WORDED IN ONE PLACE — `nowPlaying()`.** Asked for:
+  *"can we make it so what is displayed as 'playing now' is all read from the
+  same place so its never drifting?"* There were THREE — the topbar, the
+  running panel and the launch bar's live line — one fact, three sentences,
+  nothing stopping them disagreeing. **The SHORT form is a different job, not
+  an abbreviation**: the bar says *something is on and how many are in* from
+  any door, and the TITLE stays in the panel, which is also the 222px the
+  capped bar could not afford. **Under 1050px the live line stands down** — it
+  is the only thing in that bar that is a summary of something else on screen,
+  so it is the only thing that may go; a door that is not there is a door that
+  does not exist.
 - **THE BAR GOES ON A DIET BELOW 1180px; WRAPPING IS ONLY THE FALLBACK.**
   *"The menu items all need to sit at the top."* Two rows read as a second bar
   and, under the fixed frame, every row the header takes comes off the tab

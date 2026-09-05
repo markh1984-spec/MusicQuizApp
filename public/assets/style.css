@@ -7935,12 +7935,36 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    else's bar was ever close to overflowing — and putting an ordinary
    quizmaster's wordmark on a diet to solve a problem they do not have is how a
    fix for one account lands on everybody. */
-@media (min-width: 431px) and (max-width: 1179px) {
+/* AND IT HAS NO UPPER BOUND, WHICH IS THE WHOLE CORRECTION.
+ *
+ * This was `max-width: 1179px` and that measured the WRONG BOX. `.console
+ * .wrap` is `max-width: 1180px`, so the bar is ~1148px wide at EVERY window
+ * width — a 1900px laptop gets exactly the same bar as a 1200px one. Keying
+ * the diet to the window therefore switched it off above 1180px while the bar
+ * stayed the width that needed it, and with a night running the owner's header
+ * wrapped to two rows at every desktop size there is.
+ *
+ * **A media query on the window is the wrong tool the moment a container caps
+ * the thing you are protecting.** Reported as *"the menu at the top is fucked
+ * AGAIN"*, and it is the same fault as the first time wearing a threshold: the
+ * bar cannot shrink and nothing was telling it to. */
+@media (min-width: 431px) {
   .console .topbar:has(.hat-switch) { gap: 10px; padding-left: 14px; padding-right: 14px; }
   .console .topbar:has(.hat-switch) .brand-name { display: none; }
   .console .topbar:has(.hat-switch) .topnav { gap: 5px; }
   .console .topbar:has(.hat-switch) .topnav a { padding: 8px 10px; }
   .console .topbar:has(.hat-switch) .hat-switch .hat-half { padding: 10px 10px; }
+}
+/* AND UNDER ~1050px THE LIVE LINE STANDS DOWN, because the diet alone is not
+   enough: the mark, five doors, the hat, four rungs and Sign out come to more
+   than the bar has, and something has to be allowed to go.
+   IT IS THE RIGHT THING TO LOSE. Every other item in that bar is the only copy
+   of itself — a door you cannot see is a door that does not exist — while this
+   is a SUMMARY of the running panel a few inches below, which says the same
+   fact in full and never moves. Losing the summary costs a glance; losing a
+   door costs the page. */
+@media (max-width: 1050px) {
+  .console .topbar:has(.hat-switch) #runningNow { display: none; }
 }
 /* The two bits of prose in the bar are what give way — "Owner — you@…" and
    "Now: The Madonna Quiz (6 in)". They are the only things up there you can

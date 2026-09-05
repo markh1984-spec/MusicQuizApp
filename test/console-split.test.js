@@ -344,7 +344,14 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * to fit a number would be deleting the only thing standing between the next
  * session and the same afternoon.
  */
-const BUDGET = { 'console-tonight.js': 4020, 'console.js': 2000, 'console-packs.js': 1830 };
+/*
+ * `console-tonight.js` 4020 -> 4050 on 5 September 2026: `nowPlaying()` — the
+ * ONE place that words what is on — plus the note recording that there were
+ * three wordings of it and that the short form is a different job rather than
+ * an abbreviation. Raised rather than trimmed: the paragraph is the reason the
+ * topbar stopped carrying the title, which is what stopped the header wrapping.
+ */
+const BUDGET = { 'console-tonight.js': 4050, 'console.js': 2000, 'console-packs.js': 1830 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {
