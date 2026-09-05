@@ -9,23 +9,51 @@ import assert from 'node:assert/strict';
 import {
   slotsFromSimple, placedRounds, moveRoundToSlot, addQuizPackSlot, addBingoSlot,
   removeSlot, swapSlots, segmentsFromSlots, isMixed, homeSlotIndex, toggleRoundOff, offRoundsFor,
+  simpleNight,
 } from '../public/assets/console-tonight-mix.js';
 
 const PACK_A = { id: 'a', title: 'Pack A', rounds: [{ title: 'R1' }, { title: 'R2' }, { title: 'R3' }] };
 const PACK_B = { id: 'b', title: 'Pack B', rounds: [{ title: 'R1' }] };
 const packOf = (id) => ({ a: PACK_A, b: PACK_B }[id]);
 
-test('slotsFromSimple: one pack, nothing switched off', () => {
+/*
+ * THESE TWO WERE REVERSED DELIBERATELY on 5 September 2026. They pinned a pack
+ * arriving as ONE slot holding all its rounds; a pack now arrives as one slot
+ * PER ROUND — *"the packs shouldn't be dragged in as packs… all of the rounds
+ * go into separate slots."* The night it compiles to is unchanged, which is
+ * the assertion two tests below this one.
+ */
+test('slotsFromSimple: one pack becomes one slot PER ROUND', () => {
   const slots = slotsFromSimple({ currentPack: PACK_A, lbExtra: [], lbOff: new Set(), packOf });
-  assert.deepEqual(slots, [{ kind: 'quiz', packId: 'a', rounds: [0, 1, 2] }]);
+  assert.deepEqual(slots, [
+    { kind: 'quiz', packId: 'a', rounds: [0] },
+    { kind: 'quiz', packId: 'a', rounds: [1] },
+    { kind: 'quiz', packId: 'a', rounds: [2] },
+  ]);
 });
 
-test('slotsFromSimple: a switched-off round is left out, a second pack becomes a second slot', () => {
+test('slotsFromSimple: a switched-off round is left out, and a second pack keeps going', () => {
   const slots = slotsFromSimple({ currentPack: PACK_A, lbExtra: ['b'], lbOff: new Set(['a:1']), packOf });
   assert.deepEqual(slots, [
-    { kind: 'quiz', packId: 'a', rounds: [0, 2] },
+    { kind: 'quiz', packId: 'a', rounds: [0] },
+    { kind: 'quiz', packId: 'a', rounds: [2] },
     { kind: 'quiz', packId: 'b', rounds: [0] },
   ]);
+});
+
+test('BURSTING CHANGES THE ROW AND NOT THE NIGHT — the segments are identical', () => {
+  /*
+   * The whole safety argument for this change, asserted rather than believed.
+   * `segmentsFromSlots()` merges CONSECUTIVE quiz slots into one segment, so a
+   * pack spread over three tiles compiles to exactly what one tile compiled
+   * to. If this ever fails, bursting has started changing what a room plays.
+   */
+  const grouped = [{ kind: 'quiz', packId: 'a', rounds: [0, 1, 2] }];
+  const burst = slotsFromSimple({ currentPack: PACK_A, lbExtra: [], lbOff: new Set(), packOf });
+  assert.deepEqual(segmentsFromSlots(burst), segmentsFromSlots(grouped));
+  // And a hole between two of them does not split the segment either.
+  const withHole = [burst[0], null, burst[1], burst[2]];
+  assert.deepEqual(segmentsFromSlots(withHole), segmentsFromSlots(grouped));
 });
 
 test('slotsFromSimple: no pack chosen at all is an empty night', () => {
@@ -103,7 +131,8 @@ test('addQuizPackSlot: only the rounds not already placed elsewhere come in', ()
   const after = addQuizPackSlot(start, PACK_A);
   assert.deepEqual(after, [
     { kind: 'quiz', packId: 'a', rounds: [0] },
-    { kind: 'quiz', packId: 'a', rounds: [1, 2] },
+    { kind: 'quiz', packId: 'a', rounds: [1] },
+    { kind: 'quiz', packId: 'a', rounds: [2] },
   ]);
 });
 
@@ -205,4 +234,40 @@ test('offRoundsFor: every round of a pack not placed in any slot', () => {
   const slots = [{ kind: 'quiz', packId: 'a', rounds: [0, 2] }];
   assert.deepEqual(offRoundsFor(slots, 'a', 3), [1]);
   assert.deepEqual(offRoundsFor(slots, 'a', 4), [1, 3]);
+});
+
+/* ------------------------------------------------- collapsing back to simple */
+
+test('SIMPLE NIGHT: one pack in order still launches down the ordinary route', () => {
+  /*
+   * The other half of the safety argument. Bursting means `lbSlots` exists on
+   * EVERY night rather than only a rearranged one — and `lbSlots` is what
+   * switches the launch from `/api/host/launch` to `/api/host/launchOrder`.
+   * Letting that happen to every gig would be a change to the protected
+   * surface bought with a change to the layout, so the row bursts and the
+   * launch collapses back.
+   */
+  const burst = slotsFromSimple({ currentPack: PACK_A, lbExtra: [], lbOff: new Set(), packOf });
+  assert.deepEqual(simpleNight(burst), { packId: 'a', rounds: [0, 1, 2] });
+  // A round switched off is still an ordinary night — that is what `lbOff` is.
+  const some = slotsFromSimple({ currentPack: PACK_A, lbExtra: [], lbOff: new Set(['a:1']), packOf });
+  assert.deepEqual(simpleNight(some), { packId: 'a', rounds: [0, 2] });
+  // Holes in the row are positions, not content.
+  assert.deepEqual(simpleNight([burst[0], null, burst[1]]), { packId: 'a', rounds: [0, 1] });
+});
+
+test('SIMPLE NIGHT: anything the ordinary launch cannot express keeps the running order', () => {
+  const A = (r) => ({ kind: 'quiz', packId: 'a', rounds: [r] });
+  const cases = [
+    ['nothing in the row', []],
+    ['a bingo game', [A(0), { kind: 'bingo', packId: 'disco', shape: null, prizes: 2 }]],
+    ['two different packs', [A(0), { kind: 'quiz', packId: 'b', rounds: [0] }]],
+    // The one that matters most: an ordinary launch plays a pack in the PACK'S
+    // order, so rounds reordered is a genuinely different night it cannot say.
+    ['rounds reordered', [A(2), A(0), A(1)]],
+    ['the same round twice', [A(0), A(0)]],
+  ];
+  for (const [what, slots] of cases) {
+    assert.equal(simpleNight(slots), null, `${what} was wrongly called a simple night`);
+  }
 });

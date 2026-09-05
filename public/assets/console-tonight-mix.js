@@ -64,14 +64,14 @@ export function slotsFromSimple({ currentPack, lbExtra, lbOff, packOf }) {
   if (!Array.isArray(currentPack.rounds)) {
     return [{ kind: 'bingo', packId: currentPack.id, shape: null, prizes: DEFAULT_BINGO_PRIZES }];
   }
+  // ONE SLOT PER ROUND, like `addQuizPackSlot()` — a night converting into
+  // this shape must look the same as one built in it, or the row rearranges
+  // itself the moment a bingo game joins.
   const packs = [currentPack, ...lbExtra.map(packOf).filter(Boolean)];
-  return packs.map((pack) => ({
-    kind: 'quiz',
-    packId: pack.id,
-    rounds: (pack.rounds || [])
-      .map((_, i) => i)
-      .filter((i) => !lbOff.has(`${pack.id}:${i}`)),
-  }));
+  return packs.flatMap((pack) => (pack.rounds || [])
+    .map((_, i) => i)
+    .filter((i) => !lbOff.has(`${pack.id}:${i}`))
+    .map((round) => ({ kind: 'quiz', packId: pack.id, rounds: [round] })));
 }
 
 /** Every quiz round currently placed anywhere in the slots, so a shelf pick or a drag-in can refuse a duplicate. */
@@ -161,13 +161,69 @@ function placeAt(slots, entry, at) {
   return out;
 }
 
+/**
+ * A PACK ARRIVES AS ITS ROUNDS, ONE TILE EACH — asked for directly: *"the
+ * packs shouldn't be dragged in as packs… the pack will be dragged onto the
+ * bay and then all of the rounds go into separate slots."*
+ *
+ * **NOTHING IS COPIED, WHICH IS WHY THIS IS SAFE.** A slot has always held
+ * `packId` plus round INDEXES, so a burst tile still points at the one file on
+ * disk — a correction to a question still reaches a night built this way, and
+ * rule 11 needs no new thought.
+ *
+ * **AND THE NIGHT IT COMPILES TO IS IDENTICAL**, because `segmentsFromSlots()`
+ * merges consecutive quiz slots into ONE segment whatever packs they name. So
+ * three tiles from a three-round quiz produce exactly the segment one tile
+ * produced. That is what made this a change to the ROW rather than to the
+ * launch — see `simpleNight()` for the other half.
+ *
+ * They are placed one at a time through the same `placeAt()` the whole pack
+ * used, so each finds the next free slot; a `null` between two of them does
+ * not split the segment, since the compiler skips holes.
+ */
 export function addQuizPackSlot(slots, pack, at) {
   const placed = placedRounds(slots);
   const rounds = (pack.rounds || [])
     .map((_, i) => i)
     .filter((i) => !placed.has(`${pack.id}:${i}`));
   if (!rounds.length) return slots;
-  return placeAt(slots, { kind: 'quiz', packId: pack.id, rounds }, at);
+  return rounds.reduce(
+    (row, round, n) => placeAt(row, { kind: 'quiz', packId: pack.id, rounds: [round] },
+      Number.isInteger(at) ? at + n : at),
+    slots,
+  );
+}
+
+/**
+ * IS THIS ROW REALLY JUST ONE PACK, IN ORDER? — and if so, what the ordinary
+ * launch would call it.
+ *
+ * **This is what keeps a normal Thursday on the route it has always taken.**
+ * Bursting means `lbSlots` now exists on every night rather than only a
+ * rearranged one, and `lbSlots` is what switches the launch from
+ * `/api/host/launch` to `/api/host/launchOrder`. Letting that happen to every
+ * gig would be a change to the protected surface in exchange for a change to
+ * the LAYOUT, which is not a trade worth making.
+ *
+ * So the row bursts and the launch collapses back: one pack, its rounds in
+ * ascending order, nothing else in the row, and the night goes out exactly as
+ * it did before anybody dragged anything.
+ *
+ * **ASCENDING IS THE WHOLE TEST.** Rounds reordered (3, 1, 2) is a genuinely
+ * different night that the ordinary launch cannot express — it plays a pack in
+ * the pack's own order — so that one has to keep the running-order route.
+ *
+ * @returns {{packId: string, rounds: number[]}|null}
+ */
+export function simpleNight(slots) {
+  const filled = (slots || []).filter(Boolean);
+  if (!filled.length) return null;
+  if (filled.some((slot) => slot.kind !== 'quiz')) return null;
+  const packId = filled[0].packId;
+  if (filled.some((slot) => slot.packId !== packId)) return null;
+  const rounds = filled.flatMap((slot) => slot.rounds);
+  for (let i = 1; i < rounds.length; i += 1) if (rounds[i] <= rounds[i - 1]) return null;
+  return { packId, rounds };
 }
 
 /**

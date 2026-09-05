@@ -57,7 +57,24 @@ export function renderSlots(slots, {
    * it. The ordinary row's own slot count was widened the same way and for the
    * same reason.
    */
-  const shown = Array.from({ length: maxSlots }, (_, i) => slots[i] || null);
+  /*
+   * …AND IT GROWS A WHOLE ROW AT A TIME, now that a pack arrives as one tile
+   * per round. Six fixed slots was right when a tile was a whole pack; a
+   * four-round quiz plus a bingo game plus a three-round quiz is eight tiles,
+   * and a row that stopped at six would make that night look impossible.
+   *
+   * **BOTH OF HIS RULES ARE KEPT, and they pull opposite ways.** *"I need 6
+   * regardless of what's in the bay"* — so an empty bay still shows six, never
+   * "filled plus one", which reads as a limit that grows as you use it. And
+   * *as little clutter as possible* — so it does not jump to twelve dashed
+   * boxes the moment the first round lands. Filling out to the next multiple
+   * of six does both: six until a night needs more, then twelve, and the grid
+   * is already six columns so the second row needs no new CSS.
+   */
+  const ROW = 6;
+  const filled = slots.filter(Boolean).length;
+  const want = Math.min(maxSlots, Math.max(ROW, Math.ceil((filled + 1) / ROW) * ROW));
+  const shown = Array.from({ length: Math.max(want, slots.length) }, (_, i) => slots[i] || null);
 
   const commit = (next) => onChange(next.length > maxSlots ? next.slice(0, maxSlots) : next);
 
@@ -335,20 +352,58 @@ export function renderSlots(slots, {
    * own row, in normal flow, rather than floated over the top of the tile,
    * so it never has to guess how much blank space a two-line title left.
    */
+  /*
+   * WHAT A TILE IS CALLED — and the tile now names the ROUND, with the pack
+   * underneath in smaller type.
+   *
+   * A pack arrives burst into one tile per round, so a row of tiles all
+   * reading "1980s Pop" says nothing about the order of the evening, which is
+   * the one thing this row exists to show. The round is the heading and the
+   * pack is the note; a slot still holding more than one round (two dropped
+   * onto each other) keeps the pack's name and its round ticks, because there
+   * the pack IS what the tile is.
+   */
+  function roundName(pack, i) {
+    const round = (pack.rounds || [])[i];
+    const written = String((round && round.title) || '').trim();
+    /*
+     * THE "ROUND ONE — " IS TRIMMED OFF, for the same reason `shortTitle()`
+     * trims a trailing "Quiz" from a pack: the tile already says which
+     * position it is by WHERE IT IS in the row, and the packs on disk name
+     * their rounds "Round One — 1980s Pop Music". Left whole, a three-round
+     * pack drew three tiles reading "Round One —…", "Round Two —…", "Round
+     * Three —…" with the only distinguishing half clipped off the end —
+     * measured at the real 167px tile, which is why it was caught.
+     *
+     * Falls back to what was written, then to the position, so a round titled
+     * only "Round Two" still says something rather than going blank — the same
+     * fallback `shortTitle()` makes when its trim empties a name.
+     */
+    const trimmed = written.replace(/^round\s+\S+\s*[—–-]\s*/i, '').trim();
+    return trimmed || written || `Round ${i + 1}`;
+  }
+
   function filledTile(slot, at) {
     const isBingo = slot.kind === 'bingo';
     const pack = packOf(slot.packId) || { id: slot.packId, title: slot.packId, trackCount: 40, cardSize: 4 };
     const look = packLookAttrs(pack, isBingo ? 'bingo' : isBreakoutPack(pack) ? 'breakout' : 'quiz');
+    const one = !isBingo && slot.rounds.length === 1;
+    const name = one ? roundName(pack, slot.rounds[0]) : shortTitle(pack.title);
     const tile = node(`
-      <div class="lb-tile is-pack ${look.cls} ${at === picked ? 'is-picked' : ''}" style="${look.style}" draggable="true" title="${esc(pack.title)}">
+      <div class="lb-tile is-pack ${look.cls} ${at === picked ? 'is-picked' : ''}" style="${look.style}" draggable="true" title="${esc(one ? `${name} — ${pack.title}` : pack.title)}">
         ${packWord(look)}
         <button class="lb-tile-off" type="button" aria-label="Take this out">&times;</button>
         <span class="lb-tile-n">${at + 1}</span>
         <div class="lb-tile-head">
-          <span class="drag-grip" aria-hidden="true" title="Drag to move this pack">${gripIcon()}</span>
-          <b class="lb-tile-name">${esc(shortTitle(pack.title))}</b>
+          <span class="drag-grip" aria-hidden="true" title="Drag to move this round">${gripIcon()}</span>
+          <b class="lb-tile-name">${esc(name)}</b>
         </div>
-        ${isBingo ? bingoSaid(slot, pack) : roundDots(slot, at)}
+        ${isBingo ? bingoSaid(slot, pack) : one
+          // NOT WHEN IT ONLY SAYS THE NAME AGAIN — a pack whose round is
+          // titled after the pack drew the same words twice, one above the
+          // other, which reads as a rendering fault rather than a label.
+          ? (name === shortTitle(pack.title) ? '' : `<div class="lb-tile-sub">${esc(shortTitle(pack.title))}</div>`)
+          : roundDots(slot, at)}
       </div>`);
 
     tile.querySelector('.lb-tile-off').addEventListener('mousedown', (ev) => ev.stopPropagation());

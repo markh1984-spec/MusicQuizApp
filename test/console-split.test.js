@@ -321,7 +321,15 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * the launch played two. Most of the twenty-eight are those two notes, kept
  * because both changes read as arbitrary without them.
  */
-const BUDGET = { 'console-tonight.js': 3960, 'console.js': 2000, 'console-packs.js': 1810 };
+/*
+ * AND TO 4010 ON 5 SEPTEMBER 2026, for a pack arriving as one tile per ROUND.
+ * Paid for first: the reasoning for the collapse-back lives on `simpleNight()`
+ * in `console-tonight-mix.js`, where the function is, and this file keeps a
+ * four-line pointer. What is left is the launch branch itself — the lines that
+ * choose the ordinary route when a burst row is really one pack in order,
+ * which is the whole thing keeping every gig off the running-order path.
+ */
+const BUDGET = { 'console-tonight.js': 4010, 'console.js': 2000, 'console-packs.js': 1810 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

@@ -104,9 +104,22 @@ try {
   await page.waitForSelector('.pack-card[data-pack]');
   await page.waitForTimeout(500);
 
+  /*
+   * A PACK ARRIVES AS ITS ROUNDS, so these count tiles rather than pinning a
+   * literal row. Before 5 September 2026 a pack card made exactly one PACK
+   * tile and the shapes could be written out; it now makes one per round, and
+   * a pack's round count is a fact about a JSON file that a check on the drag
+   * has no business asserting.
+   */
+  const packs = async () => (await shape()).split(' ').filter((w) => w === 'PACK').length;
+  const names = () => page.evaluate(() => [...document.querySelectorAll('.lb-tiles .lb-tile.is-pack .lb-tile-name')]
+    .map((b) => b.textContent.trim()).join(' | '));
+
   console.log('\nTONIGHT — real browser drags\n');
   await drag('.pack-card[data-pack]', '.lb-tiles');
-  check('a pack card onto the row', await shape(), 'doors PACK empty empty empty empty empty');
+  const afterOne = await packs();
+  check('a pack card onto the row BURSTS into a tile per round', afterOne > 1, true);
+  check('and each tile names its own round', /\| /.test(await names()), true);
 
   /*
    * `:not(.in-tonight)` — a pack already in the running order stays on the
@@ -116,15 +129,28 @@ try {
    * this drop.
    */
   await drag('.pack-card[data-pack]:not(.in-tonight)', '.lb-tile.lb-drop, .lb-tile.mix-drop');
-  check('a pack card onto an EMPTY SLOT', await shape(), 'doors PACK PACK empty empty empty empty');
+  check('a second pack card onto an EMPTY SLOT adds its rounds too', await packs() > afterOne, true);
 
+  /*
+   * MOVING A ROUND IS NOW MOVING ITS TILE — with one round to a tile there
+   * are no round dots to lift, and the tile's own grip is the handle. The
+   * check is that the ORDER changed and nothing was lost: a drag that
+   * silently drops a round is the fault this whole script exists for.
+   */
+  const before = await names();
+  const held = await packs();
+  // Onto another FILLED tile — that is the swap gesture the row actually has
+  // for reordering. An empty square is a drop TARGET for a pack or a round
+  // off the shelf, which is a different wiring and already checked above.
   await page.evaluate(() => {
-    const e = [...document.querySelectorAll('.lb-tile.lb-drop, .lb-tile.mix-drop')]
-      .filter((x) => x.getClientRects().length)[1];
-    if (e) e.setAttribute('data-probe', '1');
+    const filled = [...document.querySelectorAll('.lb-tiles .lb-tile.is-pack')]
+      .filter((x) => x.getClientRects().length);
+    const last = filled[filled.length - 1];
+    if (last) last.setAttribute('data-probe', '1');
   });
-  await drag('.lb-rd, .mix-rd', '[data-probe="1"]');
-  check('a round out to a later slot', await shape(), 'doors PACK PACK empty PACK empty empty');
+  await drag('.lb-tiles .lb-tile.is-pack .drag-grip', '[data-probe="1"]');
+  check('a round tile dragged to a later slot moves', await names() !== before, true);
+  check('and nothing was lost on the way', await packs(), held);
 
   /*
    * AND THE CONTROLS ON THOSE TILES ARE PRESSED, because nothing else in this

@@ -3187,6 +3187,47 @@ dragged straight in and a round dot dragged OUT of its pack into its own
 slot (`console-tonight-mix.js`/`-ui.js`; `lbSlots`, `null` on every ordinary
 night). Reasoning: **[`docs/console.md`](docs/console.md)**.
 
+### A PACK ARRIVES AS ITS ROUNDS — one tile each, and the launch collapses back
+
+`addQuizPackSlot()` / `slotsFromSimple()` / **`simpleNight()`** in
+`console-tonight-mix.js`. *"The packs shouldn't be dragged in as packs… the
+pack will be dragged onto the bay and then all of the rounds go into separate
+slots."*
+
+- **NOTHING IS COPIED, WHICH IS WHY THIS WAS CHEAP.** A slot has always held
+  `packId` plus round INDEXES, so a burst tile still points at the one file on
+  disk — rule 11 needed no new thought, and *"losing the pack"* is only about
+  how a night is PLAYED. The pack is still the unit on the shelf.
+- **THE ROW CHANGED AND THE NIGHT DID NOT** — `segmentsFromSlots()` merges
+  consecutive quiz slots into ONE segment, so three tiles compile to exactly
+  what one tile compiled to. A hole between them does not split it either.
+  There is a test asserting the two are `deepEqual`.
+- **AND `simpleNight()` IS WHAT KEEPS EVERY GIG OFF THE RUNNING-ORDER ROUTE.**
+  Bursting means `lbSlots` exists on every quiz night rather than only a
+  rearranged one — and `lbSlots` alone used to be enough to send the night down
+  `/api/host/launchOrder`. That would have moved the protected path for every
+  booking in exchange for a change to the LAYOUT. So the row bursts and the
+  launch collapses: one pack, rounds ascending, nothing else — and the ordinary
+  call goes out with no `order` at all, **verified by reading the request body
+  out of a real browser**, which is the rule `winners` taught. **ASCENDING is
+  the whole test**: the ordinary launch plays a pack in the PACK'S order, so
+  rounds reordered is a night it cannot express and rightly keeps the segments.
+- **THE ROW GROWS A WHOLE ROW AT A TIME**, six then twelve, capped at eighteen.
+  Two of his rules pull opposite ways here — *"I need 6 regardless of what's in
+  the bay"* against *as little clutter as possible* — and filling out to the
+  next multiple of six honours both. **The grid is already six columns, so the
+  second row needed no CSS at all.**
+- **A TILE NAMES THE ROUND, WITH THE PACK UNDER IT** — a row of tiles all
+  reading "1980s Pop" says nothing about the order of the evening, which is the
+  one thing the row is for. **The "Round One — " is trimmed off**, like
+  `shortTitle()` trims a trailing "Quiz": left whole, three tiles read "Round
+  One —…", "Round Two —…" with the distinguishing half clipped, measured at the
+  real 167px tile. **And the sub is dropped when it only repeats the name.**
+- **MOVING A ROUND IS MOVING ITS TILE NOW** — with one round to a tile there
+  are no dots to lift, and the tile's own grip is the handle. `drag-check.mjs`
+  was rewritten to that gesture and to COUNTING tiles, because a pack's round
+  count is a fact about a JSON file that a drag check has no business pinning.
+
 ### A PACK WEARS ITS OWN SUBJECT
 
 `public/assets/pack-look.js`, `.pack-card.tinted` / `.lb-tile.tinted`. A pack's

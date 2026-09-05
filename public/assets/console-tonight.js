@@ -12,7 +12,8 @@ import {
 } from './console-packs.js';
 import { packTitle, shelfFor } from './console-shows.js';
 import {
-  addBingoSlot, addQuizPackSlot, isMixed, moveRoundToSlot, segmentsFromSlots, slotsFromSimple,
+  addBingoSlot, addQuizPackSlot, isMixed, moveRoundToSlot, segmentsFromSlots, simpleNight,
+  slotsFromSimple,
 } from './console-tonight-mix.js';
 import { renderSlots } from './console-tonight-mix-ui.js';
 import { BENCH_STORE, NIGHT_BENCH_STORE, bench, library, nightBench, packDrag, setBench, setBook, setLibrary, setNightBench, setPackDrag, setShelfRoundDrag, setShowDrag, setVenueDrag, shelfRoundDrag, showDrag, venueDrag } from './console-state.js';
@@ -1465,7 +1466,16 @@ export function launchBar() {
       // Once `lbSlots` exists it is the truth for what launches, whether or
       // not it still counts as "mixed" — `currentPack`/`lbExtra` stopped
       // being updated the moment mixed mode was entered.
-      const segments = runningShowSegments() || (lbSlots ? segmentsFromSlots(lbSlots) : null);
+      /*
+       * A BURST ROW THAT IS STILL AN ORDINARY NIGHT LAUNCHES THE ORDINARY WAY
+       * — `simpleNight()` in `console-tonight-mix.js` carries the whole note.
+       * Without it, bursting would move every gig onto the running-order
+       * route in exchange for a change to the layout.
+       */
+      const simple = runningShowSegments() ? null : simpleNight(lbSlots || []);
+      const simplePack = simple ? anyPack(simple.packId) : null;
+      const segments = runningShowSegments()
+        || (lbSlots && !simplePack ? segmentsFromSlots(lbSlots) : null);
       if (segments) {
         await doLaunchOrder(segments, {
           look: night.look,
@@ -1488,7 +1498,12 @@ export function launchBar() {
         }, button);
         return;
       }
-      await doLaunch(kind, pack.id, {
+      // `pack`/`kind` come off `currentPack`/`gameOf()`, which stop being
+      // updated the moment slots exist — reading them here would launch the
+      // pack chosen BEFORE the row was built.
+      const launchPack = simplePack || pack;
+      const launchKind = simplePack ? 'quiz' : kind;
+      await doLaunch(launchKind, launchPack.id, {
         // FROM `night`, not from the DOM — see the note where it is declared.
         // The controls are on this same bar now, but reading the one shared
         // object rather than five live selects is still the simpler contract,
@@ -1513,7 +1528,16 @@ export function launchBar() {
         // Empty unless a second pack has actually been dropped in — see
         // `lbExtra`. An ordinary night sends nothing at all and takes exactly
         // the route it always did.
-        order: nightOrder(),
+        //
+        // A collapsed burst row spells its rounds out ONLY when some are
+        // missing, for that same reason: every round in order IS the ordinary
+        // night, and saying so the long way would put it through code that did
+        // not run last week.
+        order: simplePack
+          ? (simple.rounds.length === (launchPack.rounds || []).length
+            ? null
+            : simple.rounds.map((round) => ({ packId: simple.packId, round })))
+          : nightOrder(),
         // See the running-order branch above: pruned against the night as it
         // is, so nothing is sent that names a gap this night does not have.
         breaks: prunePlan(night.breaks, segmentsNow()),
@@ -2474,7 +2498,11 @@ export function launchBar() {
    * the tiles came down to 160px, which puts six on one row of a laptop inside
    * the same space three used to take at 200.
    */
-  const PACK_SLOTS = 6;
+  // A CAP, not the row's width: a tile is one ROUND now, and `renderSlots()`
+  // draws six and grows a row at a time up to here.
+  const PACK_SLOTS = 18;
+  /** What an EMPTY night offers — one row, the shape the bar has always had. */
+  const EMPTY_SLOTS = 6;
 
   /*
    * THE BREAK-PLAN PLUMBING LIVES IN `console-breaks.js`, the module named
@@ -2871,7 +2899,9 @@ export function launchBar() {
      * control that now works.
      */
     const composes = gameOf().id === 'quiz';
-    const slots = Math.max(PACK_SLOTS - packs.length, 0);
+    // SIX, NOT `PACK_SLOTS` — that is the burst row's CAP (eighteen), and
+    // this painter only ever draws an EMPTY night now.
+    const slots = Math.max(EMPTY_SLOTS - packs.length, 0);
     for (let i = 0; i < slots; i++) {
       /*
        * THE SLOTS ARE NUMBERED, asked for directly — "add pack 1 pack 2 pack
@@ -3208,6 +3238,15 @@ export function launchBar() {
         lbGame = kind;
       }
       pick(from);
+      /*
+       * …AND THEN IT BURSTS — `pick()` builds the settings and the Launch
+       * button, so the first pack still goes through it, and the ROW it draws
+       * is one tile per round. A bingo pack has no rounds and is untouched.
+       */
+      if ((from.rounds || []).length) {
+        lbSlots = slotsFromSimple({ currentPack: from, lbExtra: [], lbOff, packOf });
+        paintOrder();
+      }
       return;
     }
     /*
@@ -3223,7 +3262,9 @@ export function launchBar() {
      * into a bingo night could never be found again: `lbPacks()` filtered it
      * back out and the row went on showing one tile. Nothing threw.
      */
-    if (kind === 'bingo' || kind !== gameOf().id || lbSlots) {
+    // AND A QUIZ PACK GOES THIS WAY TOO NOW — that is what bursts it. The
+    // launch collapses the row back; see `simpleNight()`.
+    if (kind === 'bingo' || kind !== gameOf().id || lbSlots || (from.rounds || []).length) {
       if (!lbSlots) lbSlots = slotsFromSimple({ currentPack, lbExtra, lbOff, packOf });
       /*
        * `at` — WHICH SLOT IT WAS DROPPED ON, when it was dropped on one.

@@ -647,7 +647,20 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * always-loaded space because the next rank-gated thing will reach for
  * `tierFor()` too, and the failure is silent in both directions.
  */
-const BUDGET = 218_600;
+/*
+ * AND TO 221_500 on 5 SEPTEMBER 2026 for the biggest change to the launch bar
+ * since it was built: a quiz pack now arrives as one tile per ROUND.
+ *
+ * WHAT IT BOUGHT, and why it is worth always-loaded space rather than a link:
+ * the entry is mostly the SAFETY argument, and a session that changes this row
+ * without it will move the protected path by accident. `segmentsFromSlots()`
+ * merging consecutive quiz slots is what makes bursting free; `simpleNight()`
+ * collapsing back is what keeps every ordinary gig on `/api/host/launch`
+ * rather than the running-order route. Neither is guessable from the code in
+ * front of you, and getting either wrong is silent — the night still launches,
+ * it just launches down a path that was rare last week and is now universal.
+ */
+const BUDGET = 221_500;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
