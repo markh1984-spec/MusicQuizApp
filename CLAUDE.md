@@ -884,19 +884,38 @@ they say next.
   `min-width: auto` in this file** — `.option`, the `minmax(0, 1fr)` content
   column, and now this. **A clipped overflow is worse than a scrolling one**:
   nothing throws, nothing looks broken, and the control is simply unreachable.
-- **…AND CONSTRAINING IT MOVED THE OVERFLOW ONTO THE MENU, so `flex-wrap: wrap`
-  IS THE OTHER HALF.** The next screenshot came back *"what happened to the
-  other menu?"* with the Community chip cut down the middle: `.topnav` is
-  `flex: 1 1 auto` with a deliberately invisible `overflow-x`, so once the bar
-  could shrink, the MENU was what gave way — 376px of the 519px it needs at
-  1000px, and **My account simply was not there**. **A door you cannot see is a
-  door that does not exist**, which is the fault the tab bar's own wrap rule
-  was written for, one region higher. **`wrap` alone is the whole fix, because
-  a wrapping flex row places items at FULL size and only shrinks per line
-  afterwards** — so the menu can no longer be squeezed and the bar stays one
-  row wherever one row is enough. **A fix that relieves pressure has to be
-  followed to wherever the pressure went**; the first half was right and
-  finished nothing.
+- **…AND CONSTRAINING IT MOVED THE OVERFLOW ONTO THE MENU.** The next
+  screenshot came back *"what happened to the other menu?"* with the Community
+  chip cut down the middle: `.topnav` is `flex: 1 1 auto` with a deliberately
+  invisible `overflow-x`, so once the bar could shrink, the MENU was what gave
+  way — 376px of the 519px it needs at 1000px, and **My account simply was not
+  there**. **A door you cannot see is a door that does not exist.** **A fix
+  that relieves pressure has to be followed to wherever the pressure went**;
+  the first half was right and finished nothing.
+- **THE BAR GOES ON A DIET BELOW 1180px; WRAPPING IS ONLY THE FALLBACK.**
+  *"The menu items all need to sit at the top."* Two rows read as a second bar
+  and, under the fixed frame, every row the header takes comes off the tab
+  column below it. So the **wordmark goes and the mark stays** — the trade the
+  control view already makes on a phone — plus tighter gaps, padding and door
+  chips. **Scoped with `:has(.hat-switch)` to the OWNER's bar**, the only one
+  carrying the switch and the rungs' 326px: nobody else was ever close, and
+  putting an ordinary quizmaster's wordmark on a diet for a problem they do not
+  have is how a fix for one account lands on everybody.
+- **THE FIXED FRAME NEEDS A MINIMUM HEIGHT, AND THAT IS THE SAME ARGUMENT AS
+  THE WIDTH.** *"The sub menu is still missing from the console."* The frame is
+  off under 900px because the header would be most of a phone screen — a
+  statement about ROOM, and height was never asked. On a 476px-tall window the
+  bay alone is 425, so `.consolecols` was handed **zero height** inside a
+  `.wrap` that is `overflow: hidden`: the tab column and the whole pack shelf
+  sat 592px down a 515px frame. **`@media (min-width: 900px) and
+  (min-height: 700px)`** — 73 for the topbar, 425 for the bay, 200 for a
+  readable tab column — and under it the console SCROLLS, exactly as it does
+  under 900px of width. **LETTING THE BAY SHRINK INSTEAD WAS TRIED AND IS
+  WORSE**: the Console's bay IS the launch bar, which deliberately has no
+  `--bay-h`, so the doorhead shrank and the bar did not and it **painted over
+  the tab column** — measured 200px tall at y=315 and invisible. **The numbers
+  said fixed and the render said broken**, which is this file's oldest trap and
+  why the screenshot is the check.
 - **`main` IS A FLEX COLUMN — never give it a row template.** Its
   `auto minmax(0,1fr)` grid assumed exactly two children, so ANY banner above
   the doorhead (the no-accounts maker, Workshop's backup warning) pushed the

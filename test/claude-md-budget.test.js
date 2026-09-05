@@ -610,7 +610,23 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * launched — the non-obvious half, and the one that stops a redeploy mid-quiz
  * telling the host the projector is idle.
  */
-const BUDGET = 215_500;
+/*
+ * AND TO 217_000 the same evening, for two rules out of one report — and the
+ * first half was again a REPLACEMENT: the `flex-wrap` entry written an hour
+ * earlier described wrapping as the fix when it is only the fallback, so it
+ * was cut back to its prohibition and the diet written beside it.
+ *
+ * WHAT IT BOUGHT: the fixed frame needs a MINIMUM HEIGHT as well as a minimum
+ * width, which is the same sentence the existing rule already makes about
+ * width and nobody had asked of the other axis. It is worth always-loaded
+ * space for the failure it names: on a short window the frame handed
+ * `.consolecols` zero height inside an `overflow: hidden` wrap, so an entire
+ * submenu and pack shelf were absent with nothing thrown — and the obvious
+ * repair, letting the bay shrink, painted the launch bar OVER the tabs while
+ * every measurement reported them present at a sensible size. A session
+ * reaching for that repair needs to know it was tried.
+ */
+const BUDGET = 217_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

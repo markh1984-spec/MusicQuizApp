@@ -3042,7 +3042,34 @@ body.screen { cursor: none; overflow: hidden; }
 @media (min-width: 900px) { :root { --bay-h: 425px; } }
 @media (min-width: 1150px) { :root { --bay-h: 362px; } }
 
-@media (min-width: 900px) {
+/* AND IT NEEDS A MINIMUM HEIGHT TOO, WHICH IS THE SAME ARGUMENT AS THE WIDTH.
+ *
+ * The rule below already says the frame is off under 900px because "the tab
+ * column is a full-width stack and the door header is most of a phone screen —
+ * pinning both would leave a letterbox of content between them". That is a
+ * statement about how much ROOM there is, and height was never checked.
+ *
+ * A 476px-tall window is a browser not maximised on a laptop, and the bay
+ * alone is 425 of it. The frame pinned the bay and the topbar and handed
+ * `.consolecols` ZERO height — inside a `.wrap` that is `overflow: hidden`, so
+ * the tab column and the whole pack shelf were 592px down a 515px frame and
+ * simply not on the page. Reported as *"the sub menu is still missing from the
+ * console"*, twice, with nothing thrown and nothing looking broken.
+ *
+ * LETTING THE BAY SHRINK INSTEAD WAS TRIED AND IS WORSE. The Console's own bay
+ * is the launch bar, which deliberately has no `--bay-h` — so the doorhead
+ * shrank and the bar inside it did not, and it PAINTED OVER the tab column.
+ * The tabs measured 200px tall at y=315 and were invisible: the same
+ * in-the-document-but-not-on-the-screen trap this file records four times
+ * over, which is why this was caught by looking at the render and not at the
+ * numbers.
+ *
+ * So under 700px of height the console SCROLLS, exactly as it does under
+ * 900px of width — the arrangement that has always worked, rather than a
+ * fixed frame with nowhere to put anything. 700 is the topbar (73) plus the
+ * bay (425) plus a readable tab column (200), so the frame exists precisely
+ * where it can hold what it promises. */
+@media (min-width: 900px) and (min-height: 700px) {
   /* `dvh` because a mobile-shaped browser window reports `vh` including the
      chrome that slides away, which puts the bottom of the frame under it. The
      `vh` line before it is the fallback and must stay first. */
@@ -3165,7 +3192,9 @@ body.screen { cursor: none; overflow: hidden; }
   margin-bottom: 22px;
   padding-bottom: 2px;
 }
-@media (min-width: 900px) {
+/* Gated on height as well, for the reason written over the frame above: this
+   is the frame's own rule and has to come and go with it. */
+@media (min-width: 900px) and (min-height: 700px) {
   /* IT STAYS WHERE IT IS WHILE THE TAB SCROLLS, which is most of what a
      sidebar buys over a bar: nine tabs pinned beside a long Gigs list rather
      than a strip you have to scroll back up to. `top` is the sticky topbar's
@@ -7852,6 +7881,36 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    gives the menu a line of its own from 430px down, where a second row is
    wanted rather than merely tolerated. */
 .console .topbar { flex-wrap: wrap; row-gap: 8px; }
+
+/* …BUT WRAPPING IS THE FALLBACK, NOT THE ARRANGEMENT. *"The menu items all
+   need to sit at the top."* Two rows put the hat switch and Sign out on a line
+   of their own under the doors, which reads as a second bar; and under the
+   fixed frame every row the header takes comes off the tab column below it.
+
+   So below 1180px — where `.wrap` stops being capped and the bar stops being a
+   constant width — the bar goes on a DIET instead, and the order of what it
+   gives up is the point: the two things that must survive are the five doors
+   and the account controls, because those are the only things up there anybody
+   presses.
+
+   THE WORDMARK IS WHAT GOES, and the mark stays. It is the same trade the
+   control view already makes on a phone, for the same stated reason: a door
+   that is not there is a worse breach than a smaller logo. The name is six
+   feet wide on the projector and on every player's phone; this is a header on
+   the operator's own laptop.
+
+   SCOPED TO A BAR THAT HAS A HAT SWITCH, which is the owner's alone. Nobody
+   else carries the 326px the switch and the tier rungs come to, so nobody
+   else's bar was ever close to overflowing — and putting an ordinary
+   quizmaster's wordmark on a diet to solve a problem they do not have is how a
+   fix for one account lands on everybody. */
+@media (min-width: 431px) and (max-width: 1179px) {
+  .console .topbar:has(.hat-switch) { gap: 10px; padding-left: 14px; padding-right: 14px; }
+  .console .topbar:has(.hat-switch) .brand-name { display: none; }
+  .console .topbar:has(.hat-switch) .topnav { gap: 5px; }
+  .console .topbar:has(.hat-switch) .topnav a { padding: 8px 10px; }
+  .console .topbar:has(.hat-switch) .hat-switch .hat-half { padding: 10px 10px; }
+}
 /* The two bits of prose in the bar are what give way — "Owner — you@…" and
    "Now: The Madonna Quiz (6 in)". They are the only things up there you can
    afford to lose the end of, and without `min-width: 0` a flex item will not
