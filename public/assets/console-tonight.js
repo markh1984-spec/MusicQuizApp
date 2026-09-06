@@ -2159,7 +2159,7 @@ export function launchBar() {
    * the disabled state and the reason above.
    */
   setSave?.addEventListener('click', async () => {
-    const draft = tonightAsShow('');
+    const draft = tonightAsShow('', segmentsNow);
     if (!draft) return;
     /*
      * THE NAME IS SUGGESTED, NEVER IMPOSED — and it names what the night
@@ -2182,7 +2182,7 @@ export function launchBar() {
     const wasHtml = setSave.innerHTML;
     setSave.textContent = 'Keeping…';
     try {
-      const res = await postJson('/api/shows', tonightAsShow(name.trim()), { 'X-Host-Key': hostKey });
+      const res = await postJson('/api/shows', tonightAsShow(name.trim(), segmentsNow), { 'X-Host-Key': hostKey });
       await load();
       showDone('good', `<strong>${esc(res.show.name)}</strong> is on your Prepare a night tab. `
         + 'Drag it onto Tonight whenever you want this evening back.');
@@ -3714,7 +3714,24 @@ export function launchBar() {
  * `venue` field; `applyShow()` simply stops reading it, so an old one loads
  * with the venue left open exactly like a new one.
  */
-function tonightAsShow(name) {
+/**
+ * `segmentsNow` ARRIVES AS AN ARGUMENT, and that is the whole reason this
+ * broke — the dependency was invisible.
+ *
+ * This function is module scope; `segmentsNow()` is declared INSIDE
+ * `launchBar()`. Calling it from here was a `ReferenceError` the moment
+ * anybody pressed Save, thrown before the `try` that would have caught it, so
+ * the button did nothing at all: no prompt, no request, no error on screen.
+ * **`Save for another night` is the only thing that creates a show**, so
+ * "Prepare a night" became a tab nothing could be put into and every
+ * running-order feature was unreachable — with `node --check` happy, 1,684
+ * tests green and five browser guards passing.
+ *
+ * Handed in rather than moved inside, which is the shape `breakPlumbing()`
+ * already uses for exactly this: a leaf is given what it needs, and the
+ * parameter list is then the thing that says so out loud.
+ */
+function tonightAsShow(name, segmentsNow) {
   /*
    * BUILT FROM `segmentsNow()` — THE SAME LIST LAUNCH SENDS.
    *
