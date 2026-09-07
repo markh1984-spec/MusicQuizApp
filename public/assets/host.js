@@ -964,15 +964,24 @@ function toolsPanel(s) {
    * round boards, where this panel does not exist at all. So the bar keeps
    * them and Setup keeps only what has no other home — which quiz is loaded,
    * the results, and the two things that clear a night.
+   *
+   * AND THE QUIZ PICKER AND ITS `Load` BUTTON HAVE GONE, because the button
+   * was dead. It posted `loadQuiz`, which no handler on the server answers —
+   * the confirm promised to clear the scores and the players, and the toast
+   * that came back read *"Failed: Unknown action: loadQuiz"*. Measured
+   * pressable at 430x900, drawn at the lobby and at the final, which is
+   * exactly when a host reaches for it.
+   *
+   * REMOVED RATHER THAN WIRED, and that is the decision: **Tonight is the
+   * only way a pack reaches the projector.** The pack cards stopped launching
+   * for the same reason — a second way to swap what is running, driven from a
+   * phone in the dark with a room watching, is precisely what that
+   * arrangement took away. `Loaded:` below still says which quiz is on.
    */
   const el = node(`
     <div class="panel">
       <h3>Setup</h3>
       <div class="row">
-        <select id="quizPick"><option>Loading quizzes…</option></select>
-        <button class="minor" id="loadQuiz">Load</button>
-      </div>
-      <div class="row" style="margin-top:10px">
         <a class="minor" style="text-decoration:none;display:inline-block" href="/api/results.csv?key=${encodeURIComponent(hostKey)}">Download results</a>
         <button class="minor danger" id="resetScores">Reset scores</button>
         <button class="minor danger" id="resetAll">Clear everything</button>
@@ -984,19 +993,6 @@ function toolsPanel(s) {
     </div>
   `);
 
-  fetch(`/api/quizzes?key=${encodeURIComponent(hostKey)}`)
-    .then((r) => r.json())
-    .then((d) => {
-      const sel = el.querySelector('#quizPick');
-      sel.replaceChildren(...(d.quizzes || []).map((q) =>
-        node(`<option value="${esc(q.id)}" ${q.id === d.loaded ? 'selected' : ''}>${esc(q.title)} (${q.questionCount})</option>`)));
-    })
-    .catch(() => {});
-
-  el.querySelector('#loadQuiz').addEventListener('click', async () => {
-    const id = el.querySelector('#quizPick').value;
-    if (id && confirm('Load this quiz? Scores and players will be cleared.')) await act('loadQuiz', { quizId: id });
-  });
   el.querySelector('#resetScores').addEventListener('click', async () => {
     if (confirm('Set every score back to zero? Everyone stays in.')) await act('resetScores');
   });

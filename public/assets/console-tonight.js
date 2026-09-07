@@ -1883,7 +1883,7 @@ export function launchBar() {
          * the first of them carries the sentence and the second, right next
          * to it, only has to not look broken.
          */
-        shapePick.innerHTML = '<option>Add a bingo game</option>';
+        shapePick.innerHTML = '<option data-short="Bingo only">Add a bingo game</option>';
         prizePick.innerHTML = '<option>—</option>';
       }
     }

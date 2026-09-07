@@ -1057,8 +1057,8 @@ function whereOptions() {
 export function playingOptions() {
   return `
     <option value="solo" data-short="Individual" selected>Individual</option>
-    <option value="assigned" data-short="Team — they pick">Team — they pick their own</option>
-    <option value="random" data-short="Team — at random">Team — dealt at random</option>`;
+    <option value="assigned" data-short="Own teams">Team — they pick their own</option>
+    <option value="random" data-short="Random teams">Team — dealt at random</option>`;
 }
 
 /**
@@ -1076,9 +1076,9 @@ export function playingOptions() {
  */
 export function screenOptions() {
   return `
-    <option value="scores" data-short="🏆 The scores" selected>🏆 The scores — as it has always been</option>
-    <option value="scores+adverts" data-short="🏆📺 Scores + ads">🏆📺 The scores, then your adverts rotate</option>
-    <option value="adverts" data-short="📺 Your adverts">📺 Your adverts only</option>
+    <option value="scores" data-short="🏆 Scores" selected>🏆 The scores — as it has always been</option>
+    <option value="scores+adverts" data-short="🏆📺 Scores, ads">🏆📺 The scores, then your adverts rotate</option>
+    <option value="adverts" data-short="📺 Adverts">📺 Your adverts only</option>
     <option value="nothing" data-short="⬛ Nothing">⬛ Nothing on the screen at all</option>`;
 }
 

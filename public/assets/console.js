@@ -433,8 +433,30 @@ export async function load() {
     return;
   }
   if (res.status === 403) {
+    /*
+     * A LAPSED SUBSCRIPTION STILL GETS MY ACCOUNT AND HELP.
+     *
+     * This branch used to be eight words and a Sign out button — no doors, no
+     * Help tab, no My account, no tier ladder, and no way to get in touch. It
+     * is what every signup that has not converted in fourteen days lands on,
+     * so it is the page that has to sell the hardest and it was the one page
+     * in the app with nothing on it.
+     *
+     * The two tabs that survive are the two with no `needs` and a reason:
+     * **My account** carries the tier ladder and what the subscription is
+     * doing, and **Help** is where somebody goes when the thing that is wrong
+     * IS their subscription — which is exactly why that tab was built ungated
+     * in the first place.
+     *
+     * A STUB LIBRARY RATHER THAN A SECOND KIND OF PAGE. `render()` and the two
+     * tab bodies read a handful of fields between them; giving them empty ones
+     * means the lapsed console is the same console, drawn by the same code,
+     * with two tabs in it. A page of its own would be a second layout to keep
+     * in step with the first, which is how this one came to be eight words.
+     */
     const why = await res.json().catch(() => ({}));
-    mainEl.replaceChildren(node(`<div class="problems"><strong>${esc(why.error || 'Not on your plan.')}</strong></div>`));
+    setLibrary(lapsedLibrary(why.error));
+    render();
     return;
   }
   if (!res.ok) throw new Error('Could not load the library');
@@ -442,6 +464,31 @@ export async function load() {
   render();
   openRequestedRead();
   openRequestedSet();
+}
+
+/**
+ * WHAT A LAPSED CONSOLE IS DRAWN FROM — the fields `render()`, `accountSection()`
+ * and `helpSection()` actually read, and nothing else.
+ *
+ * Empty rather than absent, in every case: the two tab bodies count packs and
+ * venues to say "3 of 20", and a missing array is a throw where an empty one is
+ * a nought. Nothing here is fetched, so a lapsed account is not handed a
+ * library it cannot use — `lapsed` is the only field with anything in it.
+ */
+function lapsedLibrary(reason) {
+  return {
+    lapsed: reason || 'Your subscription has lapsed.',
+    brand: (me && me.account && me.account.brand) || '',
+    appName: '',
+    scheme: (me && me.account && me.account.scheme) || '',
+    schemes: [],
+    prefs: (me && me.account && me.account.prefs) || {},
+    quizzes: [], bingo: [], shows: [], venueRecords: [], adverts: [], otherRooms: [],
+    catalogue: { quizzes: 0, bingo: 0 },
+    generation: {},
+    running: null,
+    joinCode: '',
+  };
 }
 
 /**
@@ -1141,6 +1188,10 @@ export const TABS = [
 const DOORS = ['console', 'workshop', 'post', 'community', 'account'];
 
 export function doorNow() {
+  // A lapsed subscription has one door. Forced here rather than in the menu
+  // alone, or the address bar still carries `?door=workshop` and the page
+  // draws a Workshop with nothing in it.
+  if (library && library.lapsed) return 'account';
   const d = new URL(location.href).searchParams.get('door') || '';
   return DOORS.includes(d) ? d : 'console';
 }
@@ -1179,6 +1230,27 @@ export function showDone(tone, html) {
   setLastDone({ tone, html });
 }
 
+/**
+ * WHY THE REST OF THE CONSOLE IS NOT HERE — said once, at the top, in words.
+ *
+ * Not red: nothing has gone wrong with the app and nothing has been lost. It
+ * is a warning in the sense the house style allows one — read once, at a
+ * moment that matters, where being short costs somebody something real — so
+ * it names the consequence and then says exactly what to do about it, with
+ * the two places to do it as links rather than as instructions to go looking.
+ */
+function lapsedBanner() {
+  if (!library || !library.lapsed) return [];
+  return [node(`
+    <div class="panel done-banner">
+      <div class="done-text">
+        <strong>${esc(library.lapsed)}</strong>
+        <div class="tiny" style="margin-top:6px">Your packs, venues and past nights are all still here.
+          Nothing is deleted. Pick up where you left off by getting in touch on the Help tab.</div>
+      </div>
+    </div>`)];
+}
+
 function doneBanner() {
   if (!lastDone) return [];
   const el = node(`
@@ -1210,7 +1282,9 @@ export function render() {
   // library, and which links you get depends on the tier you are previewing.
   // The lit door is the one you are behind, not always "console" — all three
   // are this same page, so the menu cannot work it out from the address alone.
-  paintNav(document.getElementById('navSlot'), { current: doorNow(), key: keyInUrl, ...rights });
+  paintNav(document.getElementById('navSlot'), {
+    current: doorNow(), key: keyInUrl, ...rights, lapsed: Boolean(library.lapsed),
+  });
 
   const active = currentTab();
   /*
@@ -1243,6 +1317,7 @@ export function render() {
    * ever see it.
    */
   mainEl.replaceChildren(
+    ...lapsedBanner(),
     ...(doorNow() !== 'console' ? backupWarning(library.generation || {}) || [] : []),
     ...doneBanner(),
     ...firstOwnerPanel(),
@@ -1487,6 +1562,12 @@ function visibleTabs() {
    *    trying to sell somebody the thing they just put away, which is both
    *    wrong and annoying.
    */
+  // Lapsed: My account and Help, which are the two tabs that answer "why can
+  // I not get in" and "how do I pay". Calendar and Shop carry a `needs` and
+  // would draw greyed with a price on them, which is the shop trying to sell
+  // an add-on to somebody whose subscription has stopped; Settings is
+  // switches for features they do not currently hold.
+  if (library && library.lapsed) return TABS.filter((tab) => tab.id === 'account' || tab.id === 'help');
   const door = doorNow();
   return TABS.filter((tab) => doorsOf(tab).includes(door)).filter((tab) => {
     if (!tab.needs) return true;

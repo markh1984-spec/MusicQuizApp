@@ -53,6 +53,7 @@ export function brandLink(name, { key = '', size = 30, appName = '' } = {}) {
  */
 export function navMenu({
   current = '', key = '', control = true, packs = true, owner = false, acting = false,
+  lapsed = false,
 } = {}) {
   // `?` OR `&`, because two of the doors already carry a `door=` — appending a
   // second `?` makes the key part of the door's value and the page loses it.
@@ -157,7 +158,20 @@ export function navMenu({
    * `owner` and `acting` are still taken, because Control uses them to know
    * whether to put the hat ON on the way through.
    */
-  return items.map((i) => `<a class="${i.id === current ? 'here' : ''}" href="${esc(i.href)}"${
+  /*
+   * A LAPSED SUBSCRIPTION KEEPS ONE DOOR, AND IT IS THE ONE THAT ANSWERS THE
+   * QUESTION THEY HAVE.
+   *
+   * The other four all lead to work this account cannot do, and a chip that
+   * takes you somewhere and then says no is worse than one that is not there.
+   * My account is where the tier ladder and "get in touch" live, and Help is
+   * a TAB behind it — which is why this is the door that survives rather than
+   * the doors being greyed: the rule about a door that vanishes selling
+   * nothing is about a feature they could BUY, and this is a bill they have
+   * already had.
+   */
+  const shown = lapsed ? items.filter((i) => i.id === 'account') : items;
+  return shown.map((i) => `<a class="${i.id === current ? 'here' : ''}" href="${esc(i.href)}"${
     i.hatOff ? ' data-hat="off"' : ''}${i.hatOn ? ' data-hat="on"' : ''}${
     i.id === current ? ' aria-current="page"' : ''}>${esc(i.label)}</a>`).join('');
 }
