@@ -1843,6 +1843,21 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   publish finished **silently un-published the night**, on a live gallery.
   **AND THE BROWSER'S QUEUE CANNOT COVER IT**: the press that overlaps a
   publish is the one it has not started. Order it where the FILE is
+- **A READ THAT FAILED IS NOT AN EMPTY FOLDER — `tryGetFile()` /
+  `tryListDir()`.** `getFile()` answers `null` and `listDir()` `[]` for a 404,
+  a 403, a 500 and a dropped connection alike — right for ninety callers,
+  **data loss for the four that LATCH**: every `ensure*Restored` added to its
+  Set BEFORE the await, so one 403 after a deploy marked a room restored with
+  nothing restored (league empty, Past gigs zero nights) for the process's
+  lifetime, backup intact, nothing logged. **A 404 is an ANSWER;
+  anything else is a failure to LOOK.** `restoreOnce()` latches on the way OUT
+  and holds an in-flight promise per room. **ONE IMPLEMENTATION** —
+  `getFile`/`listDir` delegate, ninety call sites unchanged. **The photo cache
+  had the same shape and REMEMBERED it**: one 403 on the first visit gave
+  everybody after it an empty page, and the index drops a night with nothing
+  showing, so it vanished rather than looking thin. A failed listing is not
+  cached; **no TTL, which would still serve the wrong answer for its
+  length.**
 - **A READ-BACK SHA CAN BE STALE — `GitHub 409` reached a live console.** The
   Contents API is served from a replica, so a `GET` moments after a 200 `PUT`
   can hand back the version before it. **The sha a `PUT` HANDS BACK cannot be

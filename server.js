@@ -54,7 +54,7 @@ import { comeBackFor, nextNightAt, comeBackText } from './src/comeback.js';
 import { isComposed, MAX_ROUNDS } from './src/running-order.js';
 import { listShows, saveShow, deleteShow, showProblems } from './src/shows.js';
 import { pickIdeas, ideaLabel } from './src/round-ideas.js';
-import { getFile, listDir, listDirs, githubConfigured, missingGithubConfig, putFile, putFiles, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem, privateRepoConfigured, packsRepoConfigured, packsRepoName } from './src/github.js';
+import { getFile, tryGetFile, listDir, tryListDir, listDirs, githubConfigured, missingGithubConfig, putFile, putFiles, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem, privateRepoConfigured, packsRepoConfigured, packsRepoName } from './src/github.js';
 import { Invoices, totals, toPence, money } from './src/invoices.js';
 import { invoicePdf, invoiceFilename } from './src/invoice-pdf.js';
 import { toSvg } from './src/qrcode.js';
@@ -882,9 +882,28 @@ function roomForHost(req, url) {
 async function nightFiles(folder) {
   const held = cachedNight(folder);
   if (held) return held;
-  const names = (await listDir(folder, 'photos')) || [];
-  keepNight(folder, names);
-  return names;
+  /*
+   * A READ THAT FAILED IS NOT AN EMPTY FOLDER, AND IT MUST NOT BE REMEMBERED
+   * AS ONE.
+   *
+   * `listDir()` answers `[]` for a 403, a 500 and a dropped connection alike,
+   * and this cache has no expiry — so one rate-limited moment on the first
+   * visit to a published night gave EVERY visitor after it an empty page, for
+   * the whole process lifetime. The index then drops a night with nothing
+   * showing, so it did not look thin: it vanished. And the burst that produces
+   * the 403 is exactly the burst this cache was built for — he reads the
+   * gallery address out to sixty people at once.
+   *
+   * So the failure is not cached and the next visitor tries again. No TTL,
+   * because a TTL would still serve the wrong answer for its length.
+   */
+  const read = await tryListDir(folder, 'photos');
+  if (!read.ok) {
+    console.warn(`[gallery] could not list ${folder}:`, read.error);
+    return [];
+  }
+  keepNight(folder, read.files);
+  return read.files;
 }
 
 /** A filed photograph, from memory if it is there — see `photo-cache.js`. */
@@ -3458,20 +3477,61 @@ async function backUpArchive(room) {
  * running would show an empty shelf, which looks exactly like the work having
  * been lost.
  */
+/**
+ * ONCE PER ROOM PER BOOT — AND ONLY IF IT ACTUALLY WORKED.
+ *
+ * **All four restores latched BEFORE they awaited**, which turned one bad
+ * morning at GitHub into permanent data loss: a single 403 on the first read
+ * after a deploy marked the room restored with nothing restored, and the
+ * public league came back empty, `report.pdf` 404'd and Past gigs showed zero
+ * nights — for the whole process lifetime, with the backup intact and nothing
+ * logged anywhere. It looks exactly like the app having forgotten on purpose,
+ * which is the one thing the archive backup exists to prevent.
+ *
+ * Latching AFTER is not enough on its own: a console opening two tabs would
+ * then run the restore twice at once and both would write. So a room in flight
+ * holds its promise and later callers await the same one.
+ *
+ * **A 404 IS A SUCCESS.** There genuinely is no backup yet on a first boot,
+ * and retrying that on every request would be a GitHub call per page open. The
+ * distinction comes from `tryGetFile()`/`tryListDir()`, which is what those two
+ * exist for.
+ *
+ * @param {Set} done   the module's own "restored" set, kept per kind
+ * @param {Map} flight the in-flight promises, same key
+ * @param {string} id  the room
+ * @param {function} run  does the restore; RESOLVES only when it read cleanly
+ */
+async function restoreOnce(done, flight, id, run) {
+  if (done.has(id)) return;
+  if (flight.has(id)) { await flight.get(id); return; }
+  const going = (async () => {
+    const ok = await run();
+    // `undefined` from a restore that never says is treated as success, so a
+    // future one that forgets to return cannot retry on every request.
+    if (ok !== false) done.add(id);
+  })().finally(() => flight.delete(id));
+  flight.set(id, going);
+  await going;
+}
+
 const archiveRestored = new Set();
+const archiveInFlight = new Map();
 async function ensureArchiveRestored(room) {
-  if (archiveRestored.has(room.id)) return;
-  archiveRestored.add(room.id);
-  if (!privateRepoConfigured()) return;
-  try {
-    const saved = await getFile(archiveBackupName(room), 'private');
-    if (!saved) return;
-    const result = restoreArchive(room.paths.archive, saved.toString('utf8'));
+  await restoreOnce(archiveRestored, archiveInFlight, room.id, async () => {
+    if (!privateRepoConfigured()) return true;
+    const read = await tryGetFile(archiveBackupName(room), 'private');
+    if (!read.ok) {
+      // Never fatal. GitHub having a bad morning must not stop a quiz night —
+      // but it must not be remembered as "there were no past nights" either.
+      console.warn(`[archive] could not fetch the backup for ${room.id}:`, read.error);
+      return false;
+    }
+    if (!read.body) return true;
+    const result = restoreArchive(room.paths.archive, read.body.toString('utf8'));
     if (result.ok && result.nights) console.log(`[archive] restored ${result.nights} past night(s) for ${room.id}`);
-  } catch (err) {
-    // Never fatal. A GitHub having a bad morning must not stop a quiz night.
-    console.warn(`[archive] could not fetch the backup for ${room.id}:`, err.message);
-  }
+    return true;
+  });
 }
 
 /*
@@ -3535,23 +3595,32 @@ async function deleteAdvertBackup(room, id) {
  * is never shown an empty venue list that looks like lost work.
  */
 const advertsRestored = new Set();
+const advertsInFlight = new Map();
 async function ensureAdvertsRestored(room) {
-  if (room.id === HOUSE || advertsRestored.has(room.id) || !packsRepoConfigured()) return;
-  advertsRestored.add(room.id);
-  if (listAdvertPacks(room.paths.adverts).length) return;   // disk wins, always
-  try {
-    const files = await listDir(`adverts/${room.id}`, 'packs');
-    for (const file of files) {
-      if (!file.name.endsWith('.json')) continue;
-      const body = await getFile(file.path, 'packs');
-      if (!body) continue;
-      fs.mkdirSync(room.paths.adverts, { recursive: true });
-      fs.writeFileSync(path.join(room.paths.adverts, safeAdvertFile(file.name)), body);
+  if (room.id === HOUSE || !packsRepoConfigured()) return;
+  await restoreOnce(advertsRestored, advertsInFlight, room.id, async () => {
+    if (listAdvertPacks(room.paths.adverts).length) return true;   // disk wins, always
+    const listing = await tryListDir(`adverts/${room.id}`, 'packs');
+    if (!listing.ok) {
+      console.warn(`[adverts] could not list ${room.id}:`, listing.error);
+      return false;
     }
-    if (files.length) console.log(`[adverts] restored ${files.length} venue set(s) for room ${room.id}`);
-  } catch (err) {
-    console.warn(`[adverts] could not restore ${room.id}:`, err.message);
-  }
+    let missed = 0;
+    for (const file of listing.files) {
+      if (!file.name.endsWith('.json')) continue;
+      const read = await tryGetFile(file.path, 'packs');
+      // A file that could not be READ leaves the room half restored, so the
+      // latch is withheld and the next console open tries the lot again —
+      // `saveOwn()`'s "disk wins" rule then makes the retry a no-op for
+      // whatever did land.
+      if (!read.ok) { missed += 1; continue; }
+      if (!read.body) continue;
+      fs.mkdirSync(room.paths.adverts, { recursive: true });
+      fs.writeFileSync(path.join(room.paths.adverts, safeAdvertFile(file.name)), read.body);
+    }
+    if (listing.files.length) console.log(`[adverts] restored ${listing.files.length - missed} venue set(s) for room ${room.id}`);
+    return missed === 0;
+  });
 }
 
 /**
@@ -3706,23 +3775,25 @@ async function restoreFromBackup() {
  * tracked here rather than asking GitHub every time the tab is opened.
  */
 const invoicesRestored = new Set();
+const invoicesInFlight = new Map();
 async function ensureInvoicesRestored(room) {
-  if (invoicesRestored.has(room.id)) return;
-  invoicesRestored.add(room.id);
-  if (!privateRepoConfigured() || !room.invoices.isEmpty()) return;
-  try {
-    const saved = await getFile(invoiceBackupName(room), 'private');
-    if (!saved) return;
-    const result = room.invoices.restore(saved.toString('utf8'));
+  await restoreOnce(invoicesRestored, invoicesInFlight, room.id, async () => {
+    if (!privateRepoConfigured() || !room.invoices.isEmpty()) return true;
+    const read = await tryGetFile(invoiceBackupName(room), 'private');
+    if (!read.ok) {
+      // Never fatal, and never latched — see `restoreOnce()`.
+      console.warn(`[invoices] could not fetch the backup for ${room.id}:`, read.error);
+      return false;
+    }
+    if (!read.body) return true;
+    const result = room.invoices.restore(read.body.toString('utf8'));
     if (result.ok) {
       console.log(`[invoices] restored ${result.invoices} invoice(s) and ${result.customers} customer(s) for ${room.id}; next number ${result.nextNumber}`);
     } else {
       console.warn(`[invoices] could not restore ${room.id}:`, result.reason);
     }
-  } catch (err) {
-    // Never fatal: GitHub having a bad morning must not stop a quiz night.
-    console.warn(`[invoices] could not fetch the backup for ${room.id}:`, err.message);
-  }
+    return true;
+  });
 }
 
 /**
@@ -4482,28 +4553,42 @@ async function removeOwnPackBackup(room, kind, id) {
  * looks exactly like their work having been lost.
  */
 const ownPacksRestored = new Set();
+const ownPacksInFlight = new Map();
 
 async function ensureOwnPacksRestored(room) {
-  if (ownPacksRestored.has(room.id) || !packsRepoConfigured()) return;
-  ownPacksRestored.add(room.id);
-  if (countOwn(room.paths)) return;   // disk wins, always
-  for (const kind of ['quiz', 'bingo']) {
-    const dir = kind === 'quiz' ? room.paths.ownQuizzes : room.paths.ownBingo;
-    if (!dir) continue;
-    const files = await listDir(`packs/${room.id}/${kind}`, 'packs');
-    for (const file of files) {
-      if (!file.name.endsWith('.json')) continue;
-      const body = await getFile(file.path, 'packs');
-      if (!body) continue;
-      try {
-        fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(path.join(dir, file.name), body);
-      } catch (err) {
-        console.error(`[own-packs] could not restore ${file.path}:`, err.message);
+  if (!packsRepoConfigured()) return;
+  await restoreOnce(ownPacksRestored, ownPacksInFlight, room.id, async () => {
+    if (countOwn(room.paths)) return true;   // disk wins, always
+    let missed = 0;
+    for (const kind of ['quiz', 'bingo']) {
+      const dir = kind === 'quiz' ? room.paths.ownQuizzes : room.paths.ownBingo;
+      if (!dir) continue;
+      const listing = await tryListDir(`packs/${room.id}/${kind}`, 'packs');
+      // A LISTING THAT FAILED IS NOT AN EMPTY LIBRARY. Latched, it meant a
+      // quizmaster's own packs were gone for the process's lifetime with the
+      // backup intact — their own writing, which is the worst thing here to
+      // lose.
+      if (!listing.ok) {
+        console.warn(`[own-packs] could not list ${kind} for ${room.id}:`, listing.error);
+        missed += 1;
+        continue;
       }
+      for (const file of listing.files) {
+        if (!file.name.endsWith('.json')) continue;
+        const read = await tryGetFile(file.path, 'packs');
+        if (!read.ok) { missed += 1; continue; }
+        if (!read.body) continue;
+        try {
+          fs.mkdirSync(dir, { recursive: true });
+          fs.writeFileSync(path.join(dir, file.name), read.body);
+        } catch (err) {
+          console.error(`[own-packs] could not restore ${file.path}:`, err.message);
+        }
+      }
+      if (listing.files.length) console.log(`[own-packs] restored ${listing.files.length} ${kind} pack(s) for room ${room.id}`);
     }
-    if (files.length) console.log(`[own-packs] restored ${files.length} ${kind} pack(s) for room ${room.id}`);
-  }
+    return missed === 0;
+  });
 }
 
 function csvCell(value) {

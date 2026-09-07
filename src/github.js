@@ -418,16 +418,52 @@ export async function putFiles(files, message, which = 'app') {
  * with no backup yet is the normal case, not an error.
  */
 export async function getFile(filePath, which = 'app') {
-  if (!readyFor(which)) return null;
+  const read = await tryGetFile(filePath, which);
+  return read.ok ? read.body : null;
+}
+
+/**
+ * THE SAME READ, BUT IT CAN SAY "I COULD NOT LOOK".
+ *
+ * `getFile()` answers `null` for a 404, a 403, a 500 and a dropped
+ * connection alike — *"there is nothing there"* and *"I could not find out"*
+ * are the same word. For ninety call sites that is right and deliberate: a
+ * first boot with no backup is the normal case, and a restore that treats a
+ * bad morning at GitHub as fatal would stop a quiz night.
+ *
+ * **For a caller that LATCHES on the answer it is a data-loss bug.** One 403
+ * on the first read after a deploy marked a room restored with nothing
+ * restored — public league empty, `report.pdf` 404, Past gigs zero nights —
+ * for the whole process lifetime, with the backup intact and nothing logged.
+ * The photo cache had the same shape: one 403 on the first visit to a
+ * published night and every visitor after it got an empty page, because the
+ * failure was cached with no way to tell it from an empty folder.
+ *
+ * So this is the same request with the distinction kept:
+ *
+ *   `{ ok: true, body }`  — read it. `body` is `null` when it is genuinely
+ *                           not there (a 404), which is a real answer.
+ *   `{ ok: false, error }` — could not read it. The caller must not treat
+ *                            that as "empty" and must not remember it.
+ *
+ * **ONE IMPLEMENTATION**, with `getFile()` above delegating to it — two copies
+ * of a read is two chances for one to be fixed and the other not, which is the
+ * reason `src/arcade.js` exists.
+ */
+export async function tryGetFile(filePath, which = 'app') {
+  if (!readyFor(which)) return { ok: true, body: null };
   try {
     const { owner, name, branch } = settings(which);
     const res = await api(`/repos/${owner}/${name}/contents/${encodeURI(filePath)}?ref=${encodeURIComponent(branch)}`, {}, which);
-    if (!res.ok) return null;
+    // A 404 is an ANSWER: the file is not there. Anything else is a failure to
+    // look, and the difference is the whole point of this function.
+    if (res.status === 404) return { ok: true, body: null };
+    if (!res.ok) return { ok: false, error: `GitHub ${res.status}` };
     const data = await res.json();
-    if (!data || typeof data.content !== 'string') return null;
-    return Buffer.from(data.content, 'base64');
-  } catch {
-    return null;
+    if (!data || typeof data.content !== 'string') return { ok: true, body: null };
+    return { ok: true, body: Buffer.from(data.content, 'base64') };
+  } catch (err) {
+    return { ok: false, error: err.message };
   }
 }
 
@@ -442,18 +478,35 @@ export async function getFile(filePath, which = 'app') {
  * normal case, not a failure.
  */
 export async function listDir(dirPath, which = 'app') {
-  if (!readyFor(which)) return [];
+  const read = await tryListDir(dirPath, which);
+  return read.ok ? read.files : [];
+}
+
+/**
+ * THE SAME LISTING, BUT IT CAN SAY "I COULD NOT LOOK" — see `tryGetFile()`
+ * above, which this is the folder half of, for why the distinction matters.
+ *
+ *   `{ ok: true, files }`  — read it. An empty array is a real answer: a
+ *                            subscriber who has written nothing yet.
+ *   `{ ok: false, error }` — could not read it. Not the same thing.
+ */
+export async function tryListDir(dirPath, which = 'app') {
+  if (!readyFor(which)) return { ok: true, files: [] };
   try {
     const { owner, name, branch } = settings(which);
     const res = await api(`/repos/${owner}/${name}/contents/${encodeURI(dirPath)}?ref=${encodeURIComponent(branch)}`, {}, which);
-    if (!res.ok) return [];
+    if (res.status === 404) return { ok: true, files: [] };
+    if (!res.ok) return { ok: false, error: `GitHub ${res.status}` };
     const data = await res.json();
-    if (!Array.isArray(data)) return [];
-    return data
-      .filter((entry) => entry && entry.type === 'file')
-      .map((entry) => ({ name: entry.name, path: entry.path }));
-  } catch {
-    return [];
+    if (!Array.isArray(data)) return { ok: true, files: [] };
+    return {
+      ok: true,
+      files: data
+        .filter((entry) => entry && entry.type === 'file')
+        .map((entry) => ({ name: entry.name, path: entry.path })),
+    };
+  } catch (err) {
+    return { ok: false, error: err.message };
   }
 }
 

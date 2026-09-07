@@ -18,7 +18,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { putFiles } from '../src/github.js';
+import { putFiles, getFile, tryGetFile, listDir, tryListDir } from '../src/github.js';
+import fs from 'node:fs';
 
 const realFetch = globalThis.fetch;
 const realEnv = { ...process.env };
@@ -156,4 +157,101 @@ test('an unconfigured repo says so rather than half-committing', async () => {
   assert.equal(result.ok, false);
   assert.match(result.error, /not set up/);
   assert.equal(calls.length, 0);
+});
+
+/*
+ * A READ THAT FAILED IS NOT AN EMPTY FOLDER.
+ *
+ * `getFile()` answers `null` and `listDir()` answers `[]` for a 404, a 403, a
+ * 500 and a dropped connection alike — right for ninety call sites, and a
+ * data-loss bug for the four that LATCH on the answer. One 403 on the first
+ * read after a deploy marked a room restored with nothing restored: public
+ * league empty, `report.pdf` 404, Past gigs zero nights, for the whole process
+ * lifetime, with the backup intact and nothing logged. The photo cache had the
+ * same shape and cached it.
+ */
+function answersWith(status, body = '{}') {
+  globalThis.fetch = async () => new Response(body, { status });
+}
+
+test('tryGetFile TELLS A MISSING FILE APART FROM A FAILED READ', async () => {
+  repoEnv();
+
+  // A 404 is an ANSWER: there genuinely is no backup yet, which is a first
+  // boot and must not be retried on every request.
+  answersWith(404, '{"message":"Not Found"}');
+  assert.deepEqual(await tryGetFile('backup.json', 'app'), { ok: true, body: null });
+  assert.equal(await getFile('backup.json', 'app'), null);
+
+  // Everything else is a failure to LOOK.
+  for (const status of [403, 429, 500, 502]) {
+    answersWith(status, '{"message":"nope"}');
+    const read = await tryGetFile('backup.json', 'app');
+    assert.equal(read.ok, false, `a ${status} must not read as "there is nothing there"`);
+    assert.match(read.error, new RegExp(String(status)));
+    // …and the old shape is unchanged, because ninety callers still want it.
+    assert.equal(await getFile('backup.json', 'app'), null);
+  }
+
+  // A dropped connection is the same kind of answer.
+  globalThis.fetch = async () => { throw new Error('socket hang up'); };
+  assert.equal((await tryGetFile('backup.json', 'app')).ok, false);
+  assert.equal(await getFile('backup.json', 'app'), null);
+
+  // And a real read still comes back.
+  answersWith(200, JSON.stringify({ content: Buffer.from('hello').toString('base64') }));
+  const good = await tryGetFile('backup.json', 'app');
+  assert.equal(good.ok, true);
+  assert.equal(good.body.toString('utf8'), 'hello');
+});
+
+test('tryListDir TELLS AN EMPTY FOLDER APART FROM A FAILED LISTING', async () => {
+  repoEnv();
+
+  answersWith(404, '{"message":"Not Found"}');
+  assert.deepEqual(await tryListDir('packs/rob/quiz', 'app'), { ok: true, files: [] });
+
+  answersWith(403, '{"message":"rate limited"}');
+  const read = await tryListDir('packs/rob/quiz', 'app');
+  assert.equal(read.ok, false, 'a rate-limited moment is not an empty library');
+  assert.deepEqual(await listDir('packs/rob/quiz', 'app'), [],
+    'the old shape is unchanged — ninety callers still want an empty array');
+
+  answersWith(200, JSON.stringify([
+    { name: 'a.json', path: 'packs/rob/quiz/a.json', type: 'file' },
+    { name: 'sub', path: 'packs/rob/quiz/sub', type: 'dir' },
+  ]));
+  assert.deepEqual(await tryListDir('packs/rob/quiz', 'app'),
+    { ok: true, files: [{ name: 'a.json', path: 'packs/rob/quiz/a.json' }] });
+});
+
+test('NO RESTORE LATCHES BEFORE IT KNOWS THE READ WORKED', () => {
+  /*
+   * The four `ensure*Restored()` functions each did `set.add(room.id)` on the
+   * line before the await, so a transient failure was remembered as a
+   * successful restore for ever. They go through `restoreOnce()` now, which
+   * latches on the way OUT and holds an in-flight promise per room so two tabs
+   * cannot both restore at once.
+   *
+   * A source check, because these live in `server.js` and are not importable
+   * without booting the app — and what it pins is the SHAPE, which is what
+   * would have caught this in all four places at once.
+   */
+  const src = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8')
+    // Comments first: three guards in this repo have gone green on the note
+    // explaining a fix rather than on the code.
+    .replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^\s*\/\/.*$/gm, ' ');
+
+  for (const name of ['ensureArchiveRestored', 'ensureInvoicesRestored',
+    'ensureAdvertsRestored', 'ensureOwnPacksRestored']) {
+    const at = src.indexOf(`async function ${name}(`);
+    assert.ok(at > 0, `${name}() has gone`);
+    const body = src.slice(at, src.indexOf('\n}', at));
+    assert.match(body, /restoreOnce\(/,
+      `${name}() must go through restoreOnce(), or one bad morning at GitHub `
+      + 'is permanent data loss');
+    assert.doesNotMatch(body, /Restored\.add\(/,
+      `${name}() must not latch its own set — restoreOnce() does it on the way `
+      + 'out, only when the read actually worked');
+  }
 });
