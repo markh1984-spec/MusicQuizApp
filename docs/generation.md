@@ -312,6 +312,132 @@ Development-mode app look identical otherwise.
 
 ---
 
+## A playlist becomes an intro round — 7 September 2026
+
+Asked for directly, a few days before it was needed: *"on thursday I really
+want to start running music intro rounds — this will require 10 questions set
+up in the quiz and those same ten correct answers must be created in a spotify
+playlist with the same name. How much of this can be done inside the app and
+what is the slickest way to make sure the question and song line up?"*
+
+Most of it already could. Writing the questions in the editor already
+re-resolved every cue against Spotify on save (`src/recue.js`) and said what it
+matched; **Make playlist** on the pack card already built the playlist in
+question order; and on the night **Next** already starts the track at the cue's
+offset, with the *Coming up* panel showing the following one. What was missing
+was the thing the question was actually about.
+
+### The song is held twice and nothing compared them
+
+An intro question carries `cue.title` — which is what plays — and a correct
+option, which is what the room is marked against. `validateQuiz()` only ever
+asked that a cue *existed*. So this saves clean, and builds a perfectly
+self-consistent playlist:
+
+```json
+{ "options": ["Sulfur", "Psychosocial", "Before I Forget", "Duality"],
+  "correctIndex": 1,
+  "cue": { "title": "Duality", "artist": "Slipknot" } }
+```
+
+"Duality" plays and the board marks "Psychosocial" right. Nothing throws, the
+playlist is correct — it is built from the cues — and the first person to find
+out is holding a microphone.
+
+`recue.js` had already fixed the neighbour: *the cue points at the wrong
+RECORDING*. It cannot see this one, because it has no opinion about what the
+answer says.
+
+### Three fixes were offered and the strongest was taken
+
+- **Warn when they disagree.** Cheapest, catches it before the gig. But it is a
+  check bolted onto a shape that permits the fault.
+- **Type the song once.** The editor fills the correct option from the cue, so
+  they cannot differ. Stronger, and it changes how you write distractors.
+- **Import the playlist.** The right answer and the cue come from ONE Spotify
+  track object, so there is no state in which they differ — nothing to
+  validate, nothing to remember. Taken, with the addition the host asked for in
+  the same breath: *"I also want you to generate 3 viable wrong answers at the
+  same time, ideally all within Claude or with the click of a button."*
+
+### What Claude is and is not asked
+
+**Only the wrong answers.** The right one is off Spotify before Claude is
+called at all, so the worst a bad reply can do is give you a weak decoy — which
+you can see in the editor, and which does not mark anybody wrong. Generating an
+intro round outright has the opposite risk profile: a confident wrong answer
+key is one of the things that comes back.
+
+**One call for the whole round**, not one per question. Ten calls is ten
+chances to fail and ten lots of latency for an input that fits in one message —
+and seeing the whole round at once is what makes it possible to ask for decoys
+that are not another question's answer.
+
+The prompt asks for same-artist titles wherever the artist has three others
+worth knowing, because that makes the question *which song is this* rather than
+*who is this*, which is the harder and better question.
+
+**And it works with no Claude key at all.** `claudeAsker()` answers `null`
+rather than throwing, and the decoys then come from the other tracks in the
+playlist: always available, obviously on-theme, and **said out loud** in the
+result (`fellBack`) because a round whose decoys are other questions' answers
+is a different round to read through. A round you can build with no key beats a
+better round you cannot build.
+
+### The smaller decisions
+
+- **`sameSong()` sees through a remaster suffix, a feature credit and
+  punctuation** — "Duality" against "Duality - 2008 Remaster", "Chop Suey!"
+  against "Chop Suey". A decoy that is really the answer wearing different
+  spelling is a board with two right answers on it. It is deliberately only
+  ever used to REJECT a decoy, never to accept one, so a loose match can only
+  cost a decoy and never create a wrong one.
+- **A question is topped up rather than left short.** Whatever Claude did not
+  usefully supply is filled from the playlist, so one can never reach the room
+  with two options; when the playlist itself is too small to fill four, the
+  result says so.
+- **`from` is always `0:00`.** The generator's own rule, for the same reason:
+  how far into a track its audio begins is something only somebody who has
+  LISTENED knows, and a plausible guess skips real seconds of a real song in
+  front of a room. The editor is where you set it, afterwards.
+- **The playlist is read, never created.** `round.spotifyPlaylist` points at the
+  one you already have. Creating a second from the round would rebuild, on
+  purpose, the two-copies-that-drift problem — rule 11's argument in miniature.
+- **It produces a one-round PACK.** Tonight bursts a pack into a tile per
+  round, so a one-round pack already *is* a round you drag in beside two
+  others. That is why this needed no new composing UI and cannot produce a
+  second answer to "what is being played tonight".
+- **An id that already exists is refused.** The id is slugged from the
+  playlist's name, so importing the same playlist twice lands on one file —
+  and `reloadPackEverywhere()` would push the replacement into a game already
+  running. `saveOwn()` refuses this in its own words; so does the route.
+- **Twenty questions maximum.** A round, not an evening.
+
+### The test could not have worked the way it was first written
+
+It reached for the module registry to stub Spotify. **An ES module namespace is
+read-only** — `Object.defineProperty` on it throws — so every case using it
+failed with a `TypeError` before reaching an assertion.
+
+`recueQuiz` had already answered this: it takes its `lookup` and `configured`
+as arguments. `importIntroRound` does the same, and the test hands in a
+playlist instead of a network. The lesson generalises past this file: **in this
+codebase the answer to "how do I stub that" is almost always "inject it", the
+same way `now()` and `random` already are.**
+
+### And the route was fired rather than read
+
+`/api/import/intro` is exercised over real HTTP with no Spotify credentials, so
+the assertion is *not a 404* rather than *a happy path* — the wrong-handler
+trap the publish route already shipped once. The console's button is pressed in
+a real browser too, with `elementFromPoint` at its middle.
+
+That check caught two things. The first run measured a console with **no
+accounts book**, so every gated panel was absent and the generator was not
+there either — the same class of fault as measuring an idle launch bar. The
+second looked at the **Console door**, where the generator slot correctly does
+not draw: writing packs is Workshop work.
+
 ## What the room asked for — THREE BUTTONS, not a box
 
 `src/round-ideas.js`, `src/room-asks.js`, the card on the phone's final

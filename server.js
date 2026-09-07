@@ -31,9 +31,10 @@ import { recueQuiz } from './src/recue.js';
 import { validateBingoPack, normaliseBingoPack, minimumTracks, CARD_SHAPES, shapeLabel, maxPrizes, defaultPrizes, stagePlan, stageLabel } from './src/bingo.js';
 import { fullLibrary, listArchive, venuesUsed, rewardsUsed, rewardsByVenue, serialiseArchive, restoreArchive, saveBingoPack, loadBingoPack, deleteBingoPack, readStats } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
-import { generateQuizPack, buildIntroPlaylists, roundPlan, TOPICAL_ROUNDS, TOPICAL_DAYS, topicalNaming } from './src/generate-quiz.js';
+import { generateQuizPack, buildIntroPlaylists, claudeAsker, roundPlan, TOPICAL_ROUNDS, TOPICAL_DAYS, topicalNaming } from './src/generate-quiz.js';
 import { portraitPath } from './src/portraits.js';
 import { importBingoPack } from './src/import-bingo.js';
+import { importIntroRound } from './src/import-intro.js';
 import { listAdvertPacks, loadAdvertPack, saveAdvertPack, deleteAdvertPack, validateAdvertPack, normaliseAdvertPack, safeAdvertFile } from './src/adverts.js';
 import {
   generateImages, imageStatus, imageJobs, imagePlan,
@@ -7570,6 +7571,76 @@ async function handleWrite(req, res, url, route) {
 
   // Bring in a track list you already have — a Spotify playlist you built, or
   // one Claude made for you in a browser. Streams like the generators do.
+  /*
+   * A SPOTIFY PLAYLIST BECOMES AN INTRO ROUND.
+   *
+   * The right answer and the cue are written from ONE Spotify track, so they
+   * cannot disagree — see the head of `src/import-intro.js`. Claude is asked
+   * only for the WRONG answers, and only if there is a key: without one the
+   * decoys come from the other tracks in the playlist and the round is still
+   * playable, which is why `claudeAsker` answers null rather than throwing.
+   */
+  if (route === '/api/import/intro' && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.GENERATE)) return true;
+    const body = await readJson(req);
+    const stream = progressStream(res);
+    const log = stream.log;
+    try {
+      const result = await importIntroRound({
+        playlistUrl: String(body.playlistUrl || ''),
+        count: Number(body.count) || undefined,
+        title: String(body.title || '').slice(0, 80),
+        // Null when there is no key. The import reads that as "fill the decoys
+        // from the playlist" and says so in the log.
+        // `spend` is the app's own ledger, not a local array — the decoy call
+        // is billed like every other Claude call and shows on the Money tab.
+        ask: claudeAsker({ what: 'intro round decoys', onSpend: spendRecorder(spend, { packId: themeSlug(String(body.title || '')) }) }),
+        log,
+      });
+
+      /*
+       * REFUSED RATHER THAN WRITTEN OVER — rule 11, running backwards.
+       *
+       * The id is slugged from the playlist's name, so importing the same
+       * playlist twice lands on the same file. Writing it would replace a pack
+       * somebody may have spent an evening editing, and
+       * `reloadPackEverywhere()` would push the replacement into a game already
+       * running. `saveOwn()` refuses this in its own words; so does this.
+       */
+      if (fs.existsSync(path.join(config.quizDir, result.id + '.json'))) {
+        throw new Error(`There is already a pack called "${result.id}". Give the playlist a different name, or type a title for this one.`);
+      }
+
+      saveQuiz(config.quizDir, result.id, result.quiz, { allowProblems: true });
+      log(`saved ${result.id}.json`);
+      backUpSpend();
+      const backup = await backUp(
+        `quizzes/${result.id}.json`,
+        JSON.stringify(result.quiz, null, 2) + '\n',
+        `Import intro round: ${result.quiz.title}`,
+        log,
+      );
+      log('DONE ' + JSON.stringify({
+        id: result.id,
+        title: result.quiz.title,
+        count: result.count,
+        playlist: result.playlist.url,
+        playlistName: result.playlist.name,
+        // Said out loud rather than left in the log: a round whose decoys all
+        // came from the playlist is a DIFFERENT round to read through, and the
+        // console has to be able to tell you which one you got.
+        fellBack: result.fellBack,
+        short: result.short,
+        problems: result.problems,
+        backedUp: backup.ok,
+      }));
+    } catch (err) {
+      log('ERROR ' + err.message);
+    }
+    stream.end();
+    return true;
+  }
+
   if (route === '/api/import/bingo' && req.method === 'POST') {
     const body = await readJson(req, 512 * 1024);
     const stream = progressStream(res);

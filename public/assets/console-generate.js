@@ -274,6 +274,103 @@ function historyLine(done) {
  *   that is the owner's generator's record of what it has used, and neither
  *   half of that is true of a list somebody else pasted.
  */
+/**
+ * A SPOTIFY PLAYLIST BECOMES AN INTRO ROUND, IN ONE PRESS.
+ *
+ * Beside the quiz generator rather than beside the bingo import, because what
+ * comes out is a QUIZ PACK — a one-round one, which Tonight bursts into a
+ * single tile you drag in beside two others. That is why it needed no new
+ * composing UI: a round is already a thing this app can carry on its own.
+ *
+ * **The reason to use this over writing the round by hand** is that the track
+ * that plays and the answer key are written from the same Spotify object, so
+ * they cannot disagree — the failure that ends with you on a microphone
+ * marking a room wrong on a song they just heard. See `src/import-intro.js`.
+ *
+ * The wrong answers are Claude's and nothing else is: the right answer is off
+ * Spotify before it is called. So the read-through before the gig is a
+ * read-through of the DECOYS, which is a much smaller job than checking an
+ * answer key, and the panel says which questions fell back to using other
+ * tracks from the playlist.
+ */
+export function introImportPanel(gen) {
+  const el = node(`
+    <div class="panel import">
+      <h3>Turn a Spotify playlist into an intro round</h3>
+      <div class="tiny">Every question plays a track off the playlist and is marked against that
+        same track — the two are written together, so they cannot drift apart. Claude writes the
+        three wrong answers. You get a one-round pack to drag into Tonight.</div>
+      <div class="gen-row">
+        <input type="text" id="introUrl" placeholder="Spotify playlist link" autocomplete="off">
+        <button class="role-make" id="introGo">Build the round</button>
+      </div>
+      <div class="gen-opts">
+        <label>Questions <input type="number" id="introCount" value="10" min="1" max="20" style="width:64px"></label>
+        <label>Call it <input type="text" id="introTitle" placeholder="the playlist's name" style="width:170px"></label>
+      </div>
+      <div class="gen-status" id="introStatus"></div>
+      <pre class="gen-log" id="introLog" hidden></pre>
+      ${gen.spotify ? '' : '<div class="tiny warn">Spotify is not set up, so a playlist link cannot be read. Run `npm run spotify:login` first.</div>'}
+    </div>`);
+
+  const go = el.querySelector('#introGo');
+  const run = async () => {
+    const playlistUrl = el.querySelector('#introUrl').value.trim();
+    if (!playlistUrl) return;
+    const logEl = el.querySelector('#introLog');
+    const status = el.querySelector('#introStatus');
+    go.disabled = true;
+    go.textContent = 'Building…';
+    logEl.hidden = false;
+    logEl.textContent = '';
+    status.textContent = '';
+    const say = (line) => { logEl.textContent += line + '\n'; logEl.scrollTop = logEl.scrollHeight; };
+    try {
+      const { done, error } = await streamGeneration('/api/import/intro', {
+        playlistUrl,
+        count: Number(el.querySelector('#introCount').value) || 10,
+        title: el.querySelector('#introTitle').value.trim(),
+      }, say);
+      if (error) {
+        showDone('bad', `<b>Could not build it.</b> ${esc(error)}`);
+      } else if (done) {
+        /*
+         * SAY WHICH ROUND YOU GOT, not just that one was made.
+         *
+         * A round whose decoys all came from the playlist is a different round
+         * to read through — the wrong answers are then other questions'
+         * answers — and a green tick that does not distinguish them is the
+         * app knowing something the host does not.
+         */
+        const bits = [`<b>${esc(done.title)}</b> — ${done.count} question${done.count === 1 ? '' : 's'}, `
+          + `built from <a href="${esc(done.playlist)}" target="_blank" rel="noopener">${esc(done.playlistName)}</a>.`];
+        if (done.fellBack) {
+          bits.push(`<span class="tiny">${done.fellBack} of them took their wrong answers from other tracks `
+            + `in the playlist — worth a look in the editor.</span>`);
+        }
+        if (done.short) {
+          bits.push(`<span class="tiny">${done.short} ${done.short === 1 ? 'has' : 'have'} fewer than four options. `
+            + `The playlist is small — add some in the editor.</span>`);
+        }
+        if ((done.problems || []).length) {
+          bits.push(`<span class="tiny">${esc(done.problems.join(' · '))}</span>`);
+        }
+        bits.push('<span class="tiny">Set each cue\'s start offset in the editor once you have heard the track.</span>');
+        showDone(done.fellBack || done.short ? 'warn' : 'good', bits.join('<br>'));
+        await load();
+      }
+    } catch (err) {
+      say('\n' + err.message);
+      showDone('bad', `<b>Could not build it.</b> ${esc(err.message)}`);
+    }
+    go.disabled = false;
+    go.textContent = 'Build the round';
+  };
+  go.addEventListener('click', run);
+  el.querySelector('#introUrl').addEventListener('keydown', (e) => { if (e.key === 'Enter') run(); });
+  return el;
+}
+
 export function importPanel(gen, { own = false } = {}) {
   const el = node(`
     <div class="panel import">

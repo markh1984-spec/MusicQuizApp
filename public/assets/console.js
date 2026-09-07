@@ -11,7 +11,7 @@ import { brandLink, brandMark, esc, menuRights, node, paintIdentity, paintNav, p
 import { accountSection, backupWarning, firstOwnerPanel, helpSection, otherRoomsPanel, settingsSection, shopSection } from './console-account.js';
 import { nightBenchPanel, workBench } from './console-benches.js';
 import { diarySection } from './console-diary.js';
-import { generatePanel, importPanel, quizGeneratePanel } from './console-generate.js';
+import { generatePanel, importPanel, introImportPanel, quizGeneratePanel } from './console-generate.js';
 import {
   asksSection, communityBench, leagueSection, photosSection,
 } from './console-community.js';
@@ -778,6 +778,10 @@ export const TABS = [
        */
       wrap.appendChild(asksLink());
       if (can(FEATURES.GENERATE)) wrap.appendChild(quizGeneratePanel(library.generation || {}));
+      // Under the generator, because it is the same job arriving from the
+      // other end: you already have the songs and want the questions round
+      // them, rather than a theme and want the whole thing written.
+      if (can(FEATURES.GENERATE)) wrap.appendChild(introImportPanel(library.generation || {}));
       if (can(FEATURES.OWN_PACKS) && !can(FEATURES.CATALOGUE)) wrap.appendChild(ownQuizPanel());
       return wrap;
     },

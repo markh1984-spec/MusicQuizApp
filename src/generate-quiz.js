@@ -560,6 +560,27 @@ An "alphabet" round is the other exception: no options and no correctIndex at al
  *   Off when there is not enough to be worth it — below Anthropic's minimum a
  *   cache write is not free, it is a surcharge on tokens nothing will reuse.
  */
+/**
+ * One Claude call, handed to somebody who only needs one.
+ *
+ * `askClaude` stays private — it carries the caching, thinking and spend
+ * plumbing that only the generators have any business setting. This is the
+ * door for a caller that has a system prompt, a prompt, and wants JSON back:
+ * `src/import-intro.js` asks for the wrong answers to an intro round and needs
+ * nothing else in this file.
+ *
+ * **It returns null when there is no key, rather than throwing.** Every caller
+ * of this so far is an IMPROVEMENT to something that already works — the intro
+ * import has its right answers off Spotify before Claude is involved at all —
+ * so "no key" has to be a path the caller can take, not an error it has to
+ * catch to carry on.
+ */
+export function claudeAsker({ model = DEFAULT_MODEL, what = '', onSpend = () => {} } = {}) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return null;
+  return ({ system, prompt }) => askClaude({ system, prompt, apiKey, model, what, onSpend });
+}
+
 async function askClaude({ system, extra = '', cache = false, prompt, apiKey, model, think = false, what = '', onSpend = () => {} }) {
   const body = {
     model,
