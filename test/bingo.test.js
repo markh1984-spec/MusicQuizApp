@@ -1295,3 +1295,77 @@ test('A BINGO NIGHT CAN TIDY UP THE PHONES THAT DID NOTHING', () => {
   assert.equal(game.playerList()[0].name, 'Keen',
     'anybody who has marked even one square is left alone — a locked screen is still somebody at a table');
 });
+
+/*
+ * A PRIZE CORRECTED AFTER IT WAS WON REACHES THE CODE ALREADY IN SOMEBODY'S
+ * HAND.
+ *
+ * `payWinnersOwed()` decided "paid" from winner + place + time and never
+ * compared the WORDS — so the venue changes what the line is worth, the host
+ * presses *Prizes* (the one control that exists for exactly this), and nothing
+ * happened: the winner's phone went on showing the old prize and the bar went
+ * on reading it out.
+ */
+test('CHANGING A PRIZE AFTER IT IS WON UPDATES THE VOUCHER, rather than doing nothing', () => {
+  const game = new BingoGame({ pack: makePack(), now: () => Date.parse('2026-09-04T21:00:00.000Z') });
+  const dave = game.join({ name: 'Dave' });
+  game.join({ name: 'Sue' });
+  game.state.stages = [1, 'full'];
+  game.setRewards(['A bottle of wine', 'A pint']);
+  game.start();
+
+  playWholeCard(game, dave.id);
+  assert.equal(game.claim(dave.id).valid, true);
+  const [code] = Object.keys(game.state.vouchers);
+  assert.equal(game.state.vouchers[code].reward, 'A bottle of wine');
+
+  game.setRewards(['A bottle of prosecco', 'A pint']);
+  assert.equal(Object.keys(game.state.vouchers).length, 1,
+    'two live codes in one hand is what the idempotency check exists to prevent');
+  assert.equal(game.state.vouchers[code].reward, 'A bottle of prosecco',
+    'the bar was still reading out the prize the venue had withdrawn');
+});
+
+test('…but a prize already redeemed is left alone, because the drink has gone', () => {
+  const game = new BingoGame({ pack: makePack(), now: () => Date.parse('2026-09-04T21:00:00.000Z') });
+  const dave = game.join({ name: 'Dave' });
+  game.join({ name: 'Sue' });
+  game.state.stages = [1, 'full'];
+  game.setRewards(['A bottle of wine', 'A pint']);
+  game.start();
+  playWholeCard(game, dave.id);
+  game.claim(dave.id);
+  const [code] = Object.keys(game.state.vouchers);
+  game.redeemVoucher(code, { by: 'scan' });
+
+  game.setRewards(['A bottle of prosecco', 'A pint']);
+  assert.equal(game.state.vouchers[code].reward, 'A bottle of wine',
+    'rewriting a spent voucher is editing history rather than correcting a promise');
+});
+
+/*
+ * THE ROUND CAN STALL, AND THE HOST IS THE ONE WHO CAN UNSTICK IT.
+ *
+ * One prize each holds while anybody is still without one — so if the only
+ * people who have completed the card already hold a prize, nobody can claim
+ * this stage and the round waits for a card that may never land. The
+ * end-of-night card then silently shows one prize where two were set up.
+ */
+test('THE CONTROL VIEW SAYS WHEN NOBODY LEFT CAN CLAIM THE PRIZE', () => {
+  const game = new BingoGame({ pack: makePack(), now: () => Date.parse('2026-09-04T21:00:00.000Z') });
+  const dave = game.join({ name: 'Dave' });
+  game.join({ name: 'Sue' });
+  game.state.stages = [1, 2, 'full'];
+  game.start();
+
+  playWholeCard(game, dave.id);
+  assert.equal(game.hostView().stalled, undefined, 'nothing is stuck while the prize is there to take');
+  game.claim(dave.id);
+  game.playOn();
+
+  // Dave has the whole card and already holds a prize; Sue has nothing.
+  assert.equal(game.hostView().stalled, 1,
+    'the app had watched somebody complete the card and said nothing about it');
+  // The rule itself is untouched — this is a note, not a lift.
+  assert.equal(game.claim(dave.id).prize, false);
+});

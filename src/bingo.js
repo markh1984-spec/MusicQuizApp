@@ -690,12 +690,35 @@ export class BingoGame {
   }
 
   payWinnersOwed() {
+    const rewards = this.rewardList();
     const held = Object.values(this.state.vouchers || {});
     for (const w of this.state.prizeWinners || []) {
-      const paid = held.some((v) => v.winnerId === w.playerId
+      const mine = held.find((v) => v.winnerId === w.playerId
         && v.place === w.stageIndex + 1
         && (!w.at || v.issuedAt >= w.at));
-      if (!paid) this.issueVoucher(w.stageIndex, w.playerId, w.name);
+      if (!mine) { this.issueVoucher(w.stageIndex, w.playerId, w.name); continue; }
+      /*
+       * AND A PRIZE CORRECTED AFTER IT WAS WON REACHES THE CODE ALREADY IN
+       * SOMEBODY'S HAND.
+       *
+       * "Paid" was decided from winner + place + time and never compared the
+       * WORDS. So the venue changes what the line is worth, the host presses
+       * *Prizes* — the one control that exists for exactly this — and nothing
+       * happened: the winner's phone went on showing the old prize and the bar
+       * went on reading it out. This is the same fault the quiz's own
+       * *"takes effect from the next prize onward"* wording used to describe,
+       * which both engines were changed to stop doing.
+       *
+       * **UPDATED IN PLACE, never a second voucher** — two live codes in one
+       * hand is the thing `issueVoucher()`'s idempotency exists to prevent,
+       * and the code they are holding stays the one that scans.
+       *
+       * **A REDEEMED ONE IS LEFT ALONE.** The drink has gone; rewriting what
+       * it said afterwards is editing history rather than correcting a
+       * promise.
+       */
+      const now = rewards[w.stageIndex];
+      if (now && !mine.redeemedAt && mine.reward !== now) mine.reward = now;
     }
   }
 
@@ -1048,7 +1071,32 @@ export class BingoGame {
      * ARRAY rather than the quiz's single `voucher` — the quiz only ever
      * issues one, at the very end; bingo hands them out as the night goes.
      */
-    const mine = Object.values(this.state.vouchers || {}).filter((v) => v.winnerId === playerId);
+    /*
+     * BUILT FIELD BY FIELD, like the quiz's own — this was the ONE voucher in
+     * the app that went out as a raw spread.
+     *
+     * It leaks nothing today, and that is exactly the problem: **a whitelist
+     * is supposed to BE the decision**, so the next field added to a stored
+     * voucher rides out to a phone without anybody choosing that it should.
+     * The same argument as `hostView()` naming its clock fields rather than
+     * spreading `s.question`, and the same list the quiz sends — with the
+     * venue's logo, which the quiz's card already carries.
+     */
+    const mine = Object.values(this.state.vouchers || {})
+      .filter((v) => v.winnerId === playerId)
+      .map((v) => ({
+        code: v.code,
+        name: v.name,
+        place: v.place,
+        stage: v.stage,
+        reward: v.reward,
+        venue: v.venue,
+        // The words are still the prize; this is decoration on it, and a logo
+        // that never arrives costs nothing at the bar.
+        ...(this.state.venueLogo ? { logo: this.state.venueLogo } : {}),
+        issuedAt: v.issuedAt,
+        redeemedAt: v.redeemedAt,
+      }));
     if (mine.length) view.vouchers = mine;
     if (this.state.lastWin) view.win = { name: this.state.lastWin.name, pattern: this.state.lastWin.pattern, label: this.state.lastWin.label };
     /*
@@ -1137,6 +1185,27 @@ export class BingoGame {
       .sort((a, b) => a.away - b.away || a.name.localeCompare(b.name));
 
     view.onesAway = view.players.filter((p) => p.away === 1).length;
+    /*
+     * THE ROUND CAN STALL, AND THE HOST IS THE ONE WHO CAN UNSTICK IT.
+     *
+     * One prize each holds while anybody is still without one — so if the only
+     * people who have completed the card already hold a prize, nobody can
+     * claim this stage and the round waits for a card that may never land. A
+     * small room, or a round the night ran out of time for. The end-of-night
+     * card then silently shows one prize where two were set up.
+     *
+     * **The rule itself is not touched**: lifting it automatically is the rig
+     * running backwards, and the host already has *Play on*, *New round* and
+     * *Finish*. What was missing is being TOLD — an app that has watched
+     * somebody complete the card and says nothing is the one thing a host
+     * cannot work out from the room.
+     *
+     * Host-only, and only when it is actually true.
+     */
+    const stuck = this.playerList().filter((p) => this.squaresAway(p) === 0);
+    if (stuck.length && stuck.every((p) => this.holdsAPrize(p.id)) && !this.stageTaken()) {
+      view.stalled = stuck.length;
+    }
     // `standDown` rides with each row: a correct call that took no prize is a
     // third outcome and the control view has to say which — see `claimsPanel`.
     view.claims = this.state.claims.slice(-6).reverse();

@@ -180,11 +180,24 @@ function callerPanel(s, act) {
  */
 function playersPanel(s, act) {
   const closest = (s.players || []).slice(0, 12);
+  /*
+   * AND WHEN THE ROUND HAS STALLED, SAY SO. `stalled` is the engine's own
+   * count of people who have completed the card and already hold a prize — so
+   * nobody can claim this stage and it will wait for a card that may never
+   * land. The host has *Play on*, *New round* and *Finish*; what they did not
+   * have was knowing.
+   */
+  const stalled = s.stalled
+    ? `<div class="tiny" style="color:var(--gold);padding:6px 0">${s.stalled} ${
+      s.stalled === 1 ? 'card is' : 'cards are'} complete and already holding a prize — nobody
+      else can claim this one. Play on, start a new round, or hand it over yourself.</div>`
+    : '';
   const el = node(`
     <div>
     <div class="joinq-slot"></div>
     <div class="panel">
       <h3>${s.onesAway} one square away — closest first</h3>
+      ${stalled}
       <div class="plist">
         ${closest.map((p) => `
           <div class="prow">

@@ -1182,6 +1182,10 @@ rule 1 says is a rename rather than an argument:
   WROTE; the link opens an editor listing the whole catalogue.
 - **`Photo link to the room`**, not `Photos to the room` — it puts up a QR and
   no photographs, four inches under a panel headed *Photos on the big screen*.
+- **`Open the projector`**, not `Big screen`, and **`Edit this pack`**, not
+  `Edit` — the first was the only control naming the projector that does not
+  ACT on it, six inches from *Scores to the room* which does; the second was a
+  bare verb whose object lived in a tooltip a phone never shows.
 - **`Change the prizes`**, and its tooltip no longer says *"takes effect from
   the next prize onward"* — that was true once and is the reason both engines
   were changed to pay anybody already owed. It told a host looking at a blank
@@ -1808,21 +1812,19 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
 **What they asked for**. Settled by asking, and each answer is a rule:
 
 - **ORGANISED BY VENUE, because a venue IS a community.** The Tuesday crowd and
-  the Thursday crowd are different people, and every page then happens to be
-  something you can show one landlord.
+  the Thursday crowd are different people, and every page is then something you
+  can show one landlord.
 - **THE PHOTOS MOVED AND PAST GIGS KEPT ITS GRID — that is not a duplicate.**
   On Past gigs a photo is EVIDENCE; on Community it is the room itself. **What
   is not duplicated is the CODE** — `nightPhotos()` in `console-gigs.js`, called
-  from both, so the confirm wording and the safeguard have one definition, and
-  **the publish control keeps its safeguard for free** by being drawn UNDER the
-  photographs wherever it is called.
+  from both, so **the publish control keeps its safeguard for free** by being
+  drawn UNDER the photographs wherever it is called.
 - **A READ-ONLY SUMMARY MAY REPEAT; A QUEUE MAY NOT.** The headcount is a
-  summary, so it sits on the league panel's head, a venue card and a Past gigs
-  card, all from one server-side figure. **"What the room asked for" is a
-  QUEUE — Yes keeps it, No bins it — so it MOVED off the Music Quiz tab rather
-  than being copied**, leaving a link that shows only when something waits.
-- **A NIGHT'S PHOTOS ARE FETCHED WHEN THE NIGHT IS OPENED, never up front** —
-  a photo list is a request per night.
+  summary, so it sits on three pages from one server-side figure. **"What the
+  room asked for" is a QUEUE — Yes keeps it, No bins it — so it MOVED off the
+  Music Quiz tab rather than being copied**, leaving a link that shows only
+  when something waits.
+- **A NIGHT'S PHOTOS ARE FETCHED WHEN THE NIGHT IS OPENED**, never up front.
 - **`asksPanel({ whenEmpty })` — the same panel answers two pages.** Drawing
   NOTHING was right above the quiz generator and wrong on a tab whose whole job
   is the list. One optional argument, so the triage keeps one definition.
@@ -1868,14 +1870,13 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   report. No change for an ordinary quizmaster: their room id is never HOUSE.
 - **THE PRIVATE REPO IS TESTABLE NOW** — `test/helpers/photo-repo-stub.mjs` via
   `node --import`: real server, fixture network. **Publishing lived behind a
-  token the suite must never need, so nothing had ever run it.** The loop test
-  signs in with a PASSWORD, not the host key, which hides this class.
+  token the suite must never need, so nothing had ever run it.**
 - **`published.json` HAS ONE WRITER AT A TIME, PER ROOM — `inOrder()` in
-  `src/gallery.js`.** The nights and the rulings are one file two callers edit,
-  each reading it whole and writing it back — so a lamp write begun before a
-  publish finished **silently un-published the night**, on a live gallery.
-  **AND THE BROWSER'S QUEUE CANNOT COVER IT**: the press that overlaps a
-  publish is the one it has not started. Order it where the FILE is
+  `src/gallery.js`.** Two callers each read the file whole and write it back, so
+  a lamp write begun before a publish finished **silently un-published the
+  night**, on a live gallery. **AND THE BROWSER'S QUEUE CANNOT COVER IT**: the
+  press that overlaps a publish is the one it has not started. Order it where
+  the FILE is
 - **A READ THAT FAILED IS NOT AN EMPTY FOLDER — `tryGetFile()` /
   `tryListDir()`.** `getFile()` answers `null` and `listDir()` `[]` for a 404, a
   403, a 500 and a dropped connection alike — right for ninety callers, **data
@@ -1893,19 +1894,17 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   can hand back the version before it. **The sha a `PUT` HANDS BACK cannot be
   served stale**, so `putFile()` remembers it. **It is a CACHE, so it must be
   able to be wrong**: a 409 is forgotten, re-read PAST the caches, retried
-  once. **All three halves fail on their own**, and a surviving 409 is said in
-  WORDS
+  once, and a surviving one is said in WORDS
 - **A NIGHT IS A CARD WITH ITS PHOTOGRAPHS FANNED ON IT, GROUPED BY PUB** —
   `coverPhotos()`. **Pins lead, the rest is a SPREAD**, stable, seeded off the
   date. **BUILT FROM THE SAME FILTERED LIST THE NIGHT'S PAGE SHOWS**, so a pin
   cannot advertise a photograph that page refuses. **A pin is a PREFERENCE; the
-  lamp is the GATE. Three, refused not trimmed.**
+  lamp is the GATE.**
 - **A GALLERY IS PAID FOR ONCE — not per photo, not per visitor.** A 99-photo
   night once cost ~297 GitHub calls **per page open** against a 5,000/hour
   limit. **Nothing deciding who may see a photo is cached with it**; **the
   browser window is NOT lengthened past a day** — taking a photo down is a
-  promise a cache cannot reach; **48MB LRU**, because this process also runs
-  live quizzes on a 512MB box.
+  promise a cache cannot reach; **48MB LRU**, this box being 512MB.
   **[`docs/gigs/gallery-page.md`](docs/gigs/gallery-page.md)**.
 - **EVERY WRITER OF `published.json` CARRIES THE HALVES IT IS NOT CHANGING** —
   nights, rulings, pins. The third is when it gets forgotten; a test walks them.
@@ -1990,13 +1989,11 @@ with photographs).
 - **WHAT IS REMEMBERED WINS, ALWAYS — the first build had it the other way and
   the control was DEAD.** It FORCED a group open whenever it held the picked
   row, so pressing its heading set the flag, re-rendered and the override put
-  it straight back — it neither collapsed nor expanded, and nothing threw. **A
+  it straight back: it neither collapsed nor expanded, and nothing threw. **A
   control that does nothing when pressed is worse than the problem it was
   avoiding**, so `holdsPicked` is a DEFAULT and the case it guarded is answered
-  by SHOWING: a shut group holding what you are looking at wears the lit edge.
-  **With nothing picked the FIRST group opens.** **The folds live in a module
-  Map keyed by rail AND group** — the bay is rebuilt on every push, and "The
-  Crown" is a group on two doors.
+  by SHOWING. **The folds live in a module Map keyed by rail AND group** — the
+  bay is rebuilt on every push, and "The Crown" is a group on two doors.
 - **NO `title` ANYWHERE IN THE RAIL — the names WRAP to two lines instead.** A
   native tooltip is an unstyled box that lands over the rows beneath it. The
   heading drops a rung in size too: level with the rows, the two read as one
@@ -2014,35 +2011,29 @@ with photographs).
 
 `leaguesByVenue()` in `src/league.js`. Reported off a live console: **"The
 Station Tap, Wokingham" in the rail twice**, 17 teams and 20. Pick the venue
-off the Venues list some weeks and type it freehand others, and `venueKeyOf()`
+off the Venues list some weeks and type it freehand others and `venueKeyOf()`
 files the nights under `id:xyz` and `the station tap` — **the season cut in
-half**, every team's best-six from part of their record, on a public page.
+half**, on a public page.
 
-- **THE SECOND PASS ALREADY EXISTED IN `venueHeadcounts()`**, with the same
-  reasoning. Two readers of one archive disagreeing about what counts as one
-  venue is the collision; the fix is the existing answer applied.
-- **THIS REVERSES A PINNED TEST, deliberately.** The old one asserted the
-  split, and the asymmetry was indefensible on its own terms: two freehand
-  nights at one pub have always merged, so the old rule said that ADDING an id
-  to one of them made the answer worse.
+- **THE SECOND PASS ALREADY EXISTED IN `venueHeadcounts()`.** Two readers of
+  one archive disagreeing about what counts as one venue is the collision.
+- **THIS REVERSES A PINNED TEST, deliberately.** Two freehand nights at one pub
+  have always merged, so the old rule said ADDING an id made the answer
+  worse.
 - **THE KEY KEPT IS THE `id:` ONE.** Whether a table is published and every
   ruling on a team name are stored against it, so folding onto the bare name
-  would silently unpublish a table and drop every override.
-- **THE COST, ACCEPTED KNOWINGLY:** two genuinely different pubs sharing a name
-  merge. Already true on the name-only path, and why venue names carry a town.
-- **AND A THIRD TIME, WEARING A URL — `sameVenueSlug()` in `slugs.js`.**
-  *"`/station-tap/gallery` is still showing no photos, only when I tap the logo
-  do they load"* — the logo goes to the plain `/gallery`, which filters by
-  nothing. "The Station Tap, Wokingham" slugs to `station-tap-wokingham` and
-  the same pub typed freehand to `station-tap`, and the filter was `===`, so
-  each address showed half the pub and one showed none of it. A public address
-  has no id, so **the fold happens on the SLUGS**. **SYMMETRICALLY** — a
-  one-directional prefix leaves the other address still showing half, which is
-  the fault restated — and **on a HYPHEN, never mid-word** (`crown` must not
-  match `crownley`); an EMPTY slug matches nothing, or a night with no venue
-  lands on every pub's page. **THREE call sites and the third was the night
-  page's own PREV/NEXT ARROWS**, which compared venue STRINGS and silently
-  skipped a night at the same pub. `test/slugs.test.js` forbids a bare
+  unpublishes a table and drops every override.
+- **THE COST, ACCEPTED KNOWINGLY:** two different pubs sharing a name merge —
+  already true on the name-only path, and why venue names carry a town.
+- **AND A THIRD TIME, WEARING A URL — `sameVenueSlug()` in `slugs.js`.** "The
+  Station Tap, Wokingham" slugs to `station-tap-wokingham` and the same pub
+  typed freehand to `station-tap`, and the filter was `===`, so each address
+  showed half the pub and one showed none of it. A public address has no id, so
+  **the fold happens on the SLUGS**. **SYMMETRICALLY** — a one-directional
+  prefix leaves the other address still showing half — and **on a HYPHEN, never
+  mid-word** (`crown` must not match `crownley`); an EMPTY slug matches
+  nothing. **THREE call sites and the third was the night page's own PREV/NEXT
+  ARROWS**, which compared venue STRINGS. `test/slugs.test.js` forbids a bare
   `venueSlug(x) === y` anywhere in `server.js` — **the pattern, not the
   symptom**, which is what finds the third one
 
@@ -2067,12 +2058,11 @@ up there too."*
   one picture, each step reversed by pressing the same thing.
 - **A PICTURE IS AN OVERLAY, NOT A REPLACEMENT — which keeps the wall's
   place.** *"It seems to reload the entire gallery at the top"*: nothing
-  reloaded, the bay was REBUILT and a fresh element scrolls at 0. Opening one
-  is a local DOM change, no render. **`renderKeepingPlace()` holds every
-  scroller in the frame**, by class. **AND THE OVERLAY HANGS ON THE COLUMN,
-  NEVER ON THE SCROLLING GRID INSIDE IT** — `inset: 0` anchors to the padding
-  box, which in a scrolled container starts at the top of the CONTENT, so it
-  drew exactly one scroll offset too high with thumbnails round it.
+  reloaded, the bay was REBUILT and a fresh element scrolls at 0. **
+  `renderKeepingPlace()` holds every scroller in the frame**, by class. **AND
+  THE OVERLAY HANGS ON THE COLUMN, NEVER ON THE SCROLLING GRID INSIDE IT** —
+  `inset: 0` anchors to the padding box, which in a scrolled container starts
+  at the top of the CONTENT, so it drew one scroll offset too high.
 - **ONE REQUEST PER NIGHT, NOT TWO.** `nightPhotos()` fetches the pictures and
   the published flag together, so the control is BUILT in the bay and HUNG in
   the tab body — safe because `render()` evaluates the doorhead before the tab
@@ -2081,11 +2071,10 @@ up there too."*
   newest until eighteen are in hand, never past `WALL_NIGHTS`. Held in a module
   binding: the bay is rebuilt on every push, at a lobby every join.
 - **`node scripts/community-bay.mjs` IS THE GUARD, and it measures GEOMETRY** —
-  every door's bay against the launch bar's, that each has a rail whose
-  headings are not squashed, what is left for the columns, whether the page
-  scrolls, that no control is in the bay and no table or photo is at the
-  bottom, and that pressing a rail button, a night and a picture each actually
-  change what is drawn. Nothing in `npm test` can see any of it.
+  every door's bay against the launch bar's, that each rail's headings are not
+  squashed, whether the page scrolls, that no control is in the bay and no
+  table or photo is at the bottom, and that pressing a rail button, a night and
+  a picture each change what is drawn. Nothing in `npm test` sees any of it.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
@@ -2228,6 +2217,12 @@ bingo winners on thursday didn't receive a QR code"*.
 - **BINGO KEYS ON THE WIN'S OWN TIMESTAMP, NEVER THE STAGE ALONE** —
   `newRound()` clears `prizeWinners` and deliberately does NOT clear
   `vouchers`, so *"is stage 1 paid"* alone refuses round two's line winner.
+  **AND "PAID" NOW COMPARES THE WORDS.** It asked winner + place + time only,
+  so a prize CHANGED after it was won never reached the code in somebody's
+  hand: the phone showed the old one and the bar read it out. **Updated in
+  place, never a second voucher** — two live codes in one hand is what the
+  idempotency exists to prevent — and **a REDEEMED one is left alone**, because
+  rewriting a spent voucher is editing history.
 - **THE CARD SHAPE CHOOSES THE PRIZE COUNT, AND IT IS A NUMBER PER SHAPE
   RATHER THAN A FORMULA** — `defaultPrizes()`: 3x3 → 1, 4x4 → 2, 5x5 → 5,
   4x6 → 4, 3x8 → 3. **The table lives BESIDE the shape, never in the console**,
@@ -2290,6 +2285,12 @@ the prizes."*
   SAYS WHAT IT COSTS** — it is a deliberate escape hatch, so it is not hidden
   the way the quiz's *Stop* is — but its confirm names what filing on the bingo
   alone leaves out.
+- **AND THE ROUND CAN STALL, SO THE CONTROL VIEW SAYS SO — `view.stalled`.**
+  If the only people who have completed the card already hold a prize, nobody
+  can claim this stage and the round waits for a card that may never land: the
+  end-of-night card silently shows one prize where two were set up. **The rule
+  is NOT lifted** — that is the rig running backwards, and the host already has
+  *Play on*, *New round* and *Finish*. What was missing is being told.
 - **`pub-unchanged.mjs` SAYS NOTHING ABOUT ANY OF THIS — it reads `quizzes/`
   only.** IDENTICAL on a bingo change is the guard answering confidently about
   something it is not looking at. `node scripts/bingo-prizes.mjs` drives three

@@ -1176,13 +1176,28 @@ function buildActions(s) {
     out.push(minor('Skip', () => act('skip'), true,
       'Drop this question and move on — its points are wiped. For one that is wrong, or that the room has already had.'));
   } else {
-    // ?g= or it opens the HOUSE room's projector rather than this one — see
-    // screenLink() in console.js for what that cost.
-    out.push(minor('Big screen', () => window.open(
-      s.joinCode ? `/screen?g=${encodeURIComponent(s.joinCode)}` : '/screen', '_blank')),
-    );
-    out.push(minor('Edit', () => { location.href = withKey('/editor'); }, false,
-      'Open this pack in the editor. Saving reloads it in the running game.'));
+    /*
+     * "OPEN THE PROJECTOR", NOT "BIG SCREEN" — it is the only control naming
+     * the projector that does not ACT on it.
+     *
+     * *"Scores on the big screen"* six inches away changes what the room is
+     * looking at; this opens a second window showing it. Two controls sharing
+     * a noun for two different jobs is the label collision rule 1 answers with
+     * a rename, and this one was also the only button on the bar with no
+     * `title` at all.
+     *
+     * **"Edit" was a bare verb whose object lived in a tooltip** — and a
+     * tooltip is dead on the phone this bar is driven from. The object goes in
+     * the label; the tooltip keeps only what a label cannot say.
+     *
+     * `?g=` or it opens the HOUSE room's projector rather than this one — see
+     * `screenLink()` in `console.js` for what that cost.
+     */
+    out.push(minor('Open the projector', () => window.open(
+      s.joinCode ? `/screen?g=${encodeURIComponent(s.joinCode)}` : '/screen', '_blank'),
+    false, 'Open this room\'s big screen in a second window. It changes nothing the room can see.'));
+    out.push(minor('Edit this pack', () => { location.href = withKey('/editor'); }, false,
+      'Saving reloads it in the running game.'));
   }
 
   /*
