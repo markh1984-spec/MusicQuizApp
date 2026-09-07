@@ -17,6 +17,9 @@ import path from 'node:path';
 import { normaliseQuiz, validateQuiz, MULTI_OPTIONS, ROUND_TYPES, answerLetter } from './quizzes.js';
 import { cleanTheme, quizTitleFor, themeSlug, titleCase } from './theme.js';
 import { spotifyConfigured, findTrack, createPlaylist } from './spotify.js';
+// `sameSong` lives with the import because that is where the rule it enforces
+// is stated — one definition of "the same track written two ways".
+import { sameSong } from './import-intro.js';
 import { portraitPath } from './portraits.js';
 import { balanceAnswers } from '../public/assets/balance.js';
 // Not asking the same thing twice across the catalogue. Keyed on the ANSWER,
@@ -748,6 +751,7 @@ export async function buildIntroPlaylist({ round, quizTitle, log = () => {} }) {
 
   log(`  looking the intro tracks up on Spotify…`);
   const uris = [];
+  const corrected = [];
   let missing = 0;
 
   for (const q of round.questions) {
@@ -758,6 +762,39 @@ export async function buildIntroPlaylist({ round, quizTitle, log = () => {} }) {
         missing++;
         log(`    not on Spotify: ${q.cue.title} — ${q.cue.artist}`);
         continue;
+      }
+      /*
+       * THE CUE WINS, BECAUSE THE CUE IS WHAT PLAYS.
+       *
+       * A GENERATED intro question holds the song twice — the correct option
+       * and `cue.title` — written as two separate strings by a model that was
+       * never asked to make them match. Nothing compared them, so a question
+       * could play "Duality" while the board marked the room against
+       * "Psychosocial": no error, and a playlist built off the cues that agrees
+       * with itself perfectly. `src/import-intro.js` removed that fault by
+       * construction for an IMPORTED round and could not reach this path,
+       * where the two strings genuinely are typed separately.
+       *
+       * The checking pass does print them side by side — `ANSWER > …` above
+       * `plays: …` — but its brief never mentions the cue, so it is never
+       * asked to compare them. Noticing is luck, and luck is not a guard.
+       *
+       * **Only a REAL disagreement is corrected.** `sameSong()` sees through
+       * a remaster suffix, a feature credit and punctuation, so the ordinary
+       * case — Claude's "Chop Suey" against Spotify's "Chop Suey!" — leaves
+       * the tidier wording alone. That matters because this string goes on the
+       * PROJECTOR: replacing every option with Spotify's own spelling would
+       * put "Duality - 2008 Remaster" six feet wide in front of a room.
+       *
+       * When they genuinely differ the CUE is the truth — it is the audio the
+       * room just heard — so the option is rewritten to it and the change is
+       * said out loud rather than made quietly.
+       */
+      const wasAnswer = (q.options || [])[q.correctIndex];
+      if (wasAnswer && !sameSong(wasAnswer, found.title)) {
+        q.options = q.options.slice();
+        q.options[q.correctIndex] = found.title;
+        corrected.push(`${wasAnswer} → ${found.title}`);
       }
       // Trust Spotify's spelling, and keep the uri so the cue can be tapped.
       q.cue.title = found.title;
@@ -771,6 +808,15 @@ export async function buildIntroPlaylist({ round, quizTitle, log = () => {} }) {
     }
   }
 
+  /*
+   * SAID BEFORE THE PLAYLIST, because a corrected answer key is the more
+   * important of the two things that just happened.
+   */
+  if (corrected.length) {
+    log(`  ${corrected.length} answer${corrected.length === 1 ? '' : 's'} did not match the track that plays — corrected to the cue:`);
+    for (const line of corrected) log(`    ${line}`);
+  }
+
   if (!uris.length) {
     log(`  no tracks found — no playlist made`);
     return null;
@@ -782,7 +828,7 @@ export async function buildIntroPlaylist({ round, quizTitle, log = () => {} }) {
     uris,
   });
   log(`  playlist: ${playlist.url}${missing ? ` (${missing} not found)` : ''}`);
-  return { ...playlist, missing };
+  return { ...playlist, missing, corrected: corrected.length };
 }
 
 /**

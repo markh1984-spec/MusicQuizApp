@@ -1246,10 +1246,9 @@ board), `src/arcade.js` (the scores, shared by both engines),
   IDENTICAL. **A list of ONE is dropped.** **An unknown tier falls to the
   bottom rung.**
 - **AND THE QUIET LAUNCH SENDS THE WHOLE NIGHT — `nightOpts()`.** Tapping a
-  pack sent FIVE of the twelve fields Launch does, so the default look ran and
-  "at random" dealt nobody. **The SHAPE changed rather than the list: one
-  `nightOpts()`, spread into all three launches**, with a test that fails if a
-  fourth caller writes its own.
+  pack sent FIVE of Launch's twelve fields. **The SHAPE changed rather than the
+  list: one `nightOpts()`, spread into all three launches**, with a test that
+  fails if a fourth writes its own.
 - **ONE ROW EITHER WAY, AND THE CHOICE IS ONE TAP INSIDE IT.** A row per game
   is **423px of menu** at 390px and pushes *Send a photo* off the bottom. **The
   box opens on the CHOOSER and nothing runs yet** — auto-starting spends
@@ -1973,18 +1972,16 @@ with photographs).
   answers to one question. The rail is the TAB COLUMN one region higher: same
   190px, same stack, same lit left edge.
 - **A RAIL PICKS; IT NEVER ACTS — with ONE lamp as the stated exception.**
-  Nothing in it deletes or launches. **The Photos rail's P publishes a night in
-  one press**, and **the reason the rule existed is kept by the lamp also
-  PICKING** — the photographs land in the bay as it goes public, so nobody
-  publishes strangers' faces unseen. **Opt-in per item**, and **the tab body's
-  panel GOES**: two controls for one job is the collision. **The night's address
-  is in the bay HEAD, from one `galleryAddress()`**, and **it says which kind it
-  is** — *see it* versus *preview*, because an owner can open a draft.
+  **The Photos rail's P publishes a night in one press**, and **the reason the
+  rule existed is kept by the lamp also PICKING** — the photographs land in the
+  bay as it goes public, so nobody publishes strangers' faces unseen. **Opt-in
+  per item**, and **the tab body's panel GOES**. **The night's address is in the
+  bay HEAD, from one `galleryAddress()`**, saying which kind it is — *see it*
+  versus *preview*, an owner being able to open a draft.
 - **COMPARTMENTALISED BY PUB, AND THE PUB FOLDS.** **Group by the pub FIRST,
-  then order within it**: printing the venue whenever it changed in date order
-  drew "The Crown" twice with another pub between. **FOUR TO A GROUP, the rest
-  named as being below** — the rail is the night you are thinking about; the tab
-  body is the archive.
+  then order within it**, or "The Crown" prints twice with another pub between.
+  **FOUR TO A GROUP, the rest named as below** — the rail is the night you are
+  thinking about; the tab body is the archive.
 - **WHAT IS REMEMBERED WINS, ALWAYS — the first build had it the other way and
   the control was DEAD.** Forcing a group open whenever it held the picked row
   meant pressing its heading put it straight back, and nothing threw. **A
@@ -2019,17 +2016,14 @@ half**, on a public page.
   unpublishes a table and drops every override.
 - **THE COST, ACCEPTED KNOWINGLY:** two different pubs sharing a name merge —
   already true on the name-only path, and why venue names carry a town.
-- **AND A THIRD TIME, WEARING A URL — `sameVenueSlug()` in `slugs.js`.** "The
-  Station Tap, Wokingham" slugs to `station-tap-wokingham` and the same pub
-  typed freehand to `station-tap`, and the filter was `===`, so each address
-  showed half the pub and one showed none of it. A public address has no id, so
-  **the fold happens on the SLUGS**. **SYMMETRICALLY** — a one-directional
-  prefix leaves the other address still showing half — and **on a HYPHEN, never
-  mid-word** (`crown` must not match `crownley`); an EMPTY slug matches
-  nothing. **THREE call sites and the third was the night page's own PREV/NEXT
-  ARROWS**, which compared venue STRINGS. `test/slugs.test.js` forbids a bare
-  `venueSlug(x) === y` anywhere in `server.js` — **the pattern, not the
-  symptom**, which is what finds the third one
+- **AND A THIRD TIME, WEARING A URL — `sameVenueSlug()` in `slugs.js`.** One
+  pub slugged `station-tap-wokingham` and `station-tap`, filtered with `===`,
+  so each address showed half of it. A public address has no id, so **the fold
+  happens on the SLUGS**: **SYMMETRICALLY**, and **on a HYPHEN, never mid-word**
+  (`crown` must not match `crownley`); an EMPTY slug matches nothing. **THREE
+  call sites and the third was the night page's own PREV/NEXT ARROWS.**
+  `test/slugs.test.js` forbids a bare `venueSlug(x) === y` in `server.js` —
+  **the pattern, not the symptom**, which is what finds the third one
 
 ### THE COMMUNITY BAY IS THE TAB YOU ARE ON — a wall, or a venue rail
 
@@ -2041,19 +2035,17 @@ up there too."*
   quiz league appears at the top it shouldn't be at the bottom — so you click
   the thing at the bottom to reveal it at the top."* The league tab draws no
   table and the Photos tab draws no photographs.
-- **THE SAFEGUARDS SURVIVED THE MOVE, and that was the thing to check.** Nobody
-  publishes a night or a table without having just looked at it — kept by
-  drawing the button UNDER the thing, and **drawn ONLY for the night that is
-  showing**: a button on a row nobody has opened breaks it.
+- **THE SAFEGUARDS SURVIVED THE MOVE.** Nobody publishes a night or a table
+  without having just looked at it — the button is UNDER the thing, and **drawn
+  ONLY for the night showing**: one on an unopened row breaks it.
 - **ONE PRESS PUTS IT IN THE BAY, THE NEXT TAKES IT OUT** — wall → one night →
   one picture, each step reversed by pressing the same thing.
 - **A PICTURE IS AN OVERLAY, NOT A REPLACEMENT — which keeps the wall's
-  place.** *"It seems to reload the entire gallery at the top"*: nothing
-  reloaded, the bay was REBUILT and a fresh element scrolls at 0. **
-  `renderKeepingPlace()` holds every scroller in the frame**, by class. **AND
-  THE OVERLAY HANGS ON THE COLUMN, NEVER ON THE SCROLLING GRID INSIDE IT** —
-  `inset: 0` anchors to the padding box, which in a scrolled container starts
-  at the top of the CONTENT, so it drew one scroll offset too high.
+  place.** Nothing reloaded; the bay was REBUILT and a fresh element scrolls at
+  0. **`renderKeepingPlace()` holds every scroller in the frame**, by class.
+  **AND THE OVERLAY HANGS ON THE COLUMN, NEVER ON THE SCROLLING GRID INSIDE
+  IT** — `inset: 0` anchors to the padding box, which in a scrolled container
+  starts at the top of the CONTENT.
 - **ONE REQUEST PER NIGHT, NOT TWO.** `nightPhotos()` fetches the pictures and
   the published flag together, so the control is BUILT in the bay and HUNG in
   the tab body — safe because `render()` evaluates the doorhead before the tab
@@ -3256,6 +3248,14 @@ self-consistent playlist and nothing thrown.
   `recueQuiz`'s lookup: **an ES module namespace is READ-ONLY**, so a test
   cannot stub the import — the first version did and threw before reaching an
   assertion.
+- **AND THE GENERATED PATH GETS THE SAME GUARANTEE — THE CUE WINS.**
+  `buildIntroPlaylist` resolved the CUE against Spotify and left the option as
+  Claude typed it, so a generated round had the identical fault. It now
+  compares them with `sameSong()` and rewrites the option to the cue on a REAL
+  disagreement, **saying which**. **Only a real one**: this string is on the
+  PROJECTOR, and canonicalising every option puts *"Duality - 2008 Remaster"*
+  six feet wide in front of a room. The checking pass prints `ANSWER >` above
+  `plays:` and **is never asked to compare them** — noticing is luck.
 
 Full reasoning: **[`docs/generation.md`](docs/generation.md)**.
 

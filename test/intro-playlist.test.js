@@ -138,3 +138,97 @@ test('a playlist that works still comes back with its url', async () => {
   // the pack card and survives a restart.
   assert.equal(quiz.rounds[0].spotifyPlaylist.url, 'https://open.spotify.com/playlist/pl1');
 });
+
+/* ---- the answer key against the track that plays ---------------------- */
+
+/**
+ * A generated intro question carries the song TWICE and nothing made them
+ * match: `cue.title` is what plays, the correct option is what the room is
+ * marked against, and Claude writes them as two separate strings. So a
+ * question could play "Duality" while the board scored "Psychosocial" — with
+ * a playlist built off the cues that agreed with itself perfectly, and no
+ * error anywhere. `src/import-intro.js` removed this by construction for an
+ * imported round and could not reach the generated path.
+ *
+ * The cue wins, because the cue is the audio the room just heard.
+ */
+function quizWhoseAnswerDisagrees() {
+  return {
+    title: 'The Slipknot Quiz',
+    rounds: [{
+      title: 'Name that intro',
+      type: 'intro',
+      questions: [
+        // The board says Psychosocial. The thing that PLAYS is Duality.
+        { prompt: 'Which track is this?', options: ['Sulfur', 'Psychosocial', 'Before I Forget', 'Snuff'], correctIndex: 1,
+          cue: { title: 'Duality', artist: 'Slipknot' } },
+        // And one that only LOOKS different — Spotify's own spelling carries a
+        // remaster suffix. This must be left exactly as written.
+        { prompt: 'Which track is this?', options: ['Wait and Bleed', 'Vermilion', 'Left Behind', 'Spit It Out'], correctIndex: 0,
+          cue: { title: 'Wait and Bleed', artist: 'Slipknot' } },
+      ],
+    }],
+  };
+}
+
+/** Spotify answers with its own spelling, suffix and all. */
+function spotifyAnswering(titleFor) {
+  return async (url) => {
+    const u = String(url);
+    if (u.includes('/api/token')) {
+      return { ok: true, status: 200, json: async () => ({ access_token: 't', expires_in: 3600, scope: 'playlist-modify-private' }) };
+    }
+    if (u.includes('/search')) {
+      /*
+       * `findTrack` sends `track:"Title" artist:"Artist"` through
+       * `URLSearchParams`, which encodes a space as `+` — and
+       * `decodeURIComponent` does NOT turn that back into a space. Matching a
+       * title with spaces in it therefore never fires, which is exactly how
+       * the first version of this stub answered "Duality" to every question
+       * and made a passing guard look like a failing one.
+       */
+      const name = titleFor(decodeURIComponent(u).replace(/\+/g, ' '));
+      return { ok: true, status: 200, json: async () => ({ tracks: { items: [{ id: 'x', uri: `spotify:track:${name}`, name, artists: [{ name: 'Slipknot' }] }] } }) };
+    }
+    return { ok: true, status: 200, json: async () => ({ id: 'p', external_urls: { spotify: 'https://open.spotify.com/playlist/p' }, uri: 'spotify:playlist:p' }) };
+  };
+}
+
+test('an answer that is not the track that plays is corrected to the cue, and said', async () => {
+  spotifyEnv();
+  // Spotify hands back a remaster suffix on the second one, which is the
+  // SAME song and must not be treated as a disagreement.
+  globalThis.fetch = spotifyAnswering((asked) => (
+    /wait and bleed/i.test(asked) ? 'Wait and Bleed - 2015 Remaster' : 'Duality'
+  ));
+
+  const quiz = quizWhoseAnswerDisagrees();
+  const said = [];
+  const results = await buildIntroPlaylists({ quiz, log: (l) => said.push(l) });
+
+  const [one, two] = quiz.rounds[0].questions;
+  // THE WHOLE POINT: the board now names the song that plays.
+  assert.equal(one.options[one.correctIndex], 'Duality');
+  assert.equal(one.cue.title, 'Duality');
+  // …and the other options are untouched, so the question still reads right.
+  assert.deepEqual(one.options, ['Sulfur', 'Duality', 'Before I Forget', 'Snuff']);
+
+  // THE ORDINARY CASE IS LEFT ALONE. This string goes on the PROJECTOR, and
+  // rewriting it would put "- 2015 Remaster" six feet wide in front of a room.
+  assert.equal(two.options[two.correctIndex], 'Wait and Bleed');
+
+  // SAID OUT LOUD — a corrected answer key is not a thing to fix quietly.
+  assert.ok(said.some((l) => /did not match the track that plays/.test(l)), said.join('\n'));
+  assert.ok(said.some((l) => /Psychosocial → Duality/.test(l)), said.join('\n'));
+  assert.equal(results[0].playlist.corrected, 1, 'one correction, not two');
+});
+
+test('a question with no options at all is left alone rather than throwing', async () => {
+  spotifyEnv();
+  globalThis.fetch = spotifyAnswering(() => 'One');
+  // The shape the older tests use — a cue and nothing else.
+  const quiz = quizWithIntro();
+  const results = await buildIntroPlaylists({ quiz });
+  assert.equal(results[0].playlist.corrected, 0);
+  assert.equal(quiz.rounds[0].questions[0].cue.title, 'One');
+});

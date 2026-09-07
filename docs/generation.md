@@ -413,6 +413,58 @@ better round you cannot build.
   running. `saveOwn()` refuses this in its own words; so does the route.
 - **Twenty questions maximum.** A round, not an evening.
 
+### And the generated path had the same fault — 7 September 2026
+
+Asked immediately afterwards: *"is there a way to avoid the paste step?"* There
+already was one, and it was the weaker half I had failed to point at:
+`generateQuizPack` with an intro round writes ten questions from a theme,
+resolves every cue against Spotify and builds the playlist in question order.
+One press, no paste.
+
+**But it is the typed path wearing a nicer coat.** Claude writes the correct
+option and `cue.title` as two separate strings, and `buildIntroPlaylist`
+resolved only the CUE — writing Spotify's spelling back onto it and leaving the
+option exactly as typed. So the one-press route carried precisely the fault
+`import-intro.js` had just removed, and the fix could not reach it.
+
+The checking pass is shown both, one line under the other:
+
+```
+[3] Which track is this?
+    ANSWER > Psychosocial
+    plays: Duality by Slipknot
+```
+
+…and `CHECKER_SYSTEM` never mentions the cue, so it is never asked to compare
+them. It might notice. **Luck is not a guard.**
+
+#### Only a real disagreement is corrected, and the reason is the projector
+
+The obvious fix — write the resolved title into the option — would put
+*"Duality - 2008 Remaster"* six feet wide in front of a room. Spotify's own
+spelling carries remaster suffixes and feature credits that nobody wants on a
+big screen.
+
+So the comparison goes through `sameSong()`, the same function the import uses
+to reject a decoy that is really the answer. When Claude's *"Chop Suey"* meets
+Spotify's *"Chop Suey!"* they are the same song and the tidier wording is left
+alone. When they genuinely differ **the cue wins** — it is the audio the room
+just heard — and the correction is logged by name (`Psychosocial → Duality`)
+rather than made quietly.
+
+`sameSong` is imported from `import-intro.js` rather than copied, because that
+is where the rule it enforces is written down. One definition of "the same
+track spelt two ways".
+
+#### The stub that made a working guard look broken
+
+The test's fake Spotify matched the search query to decide which title to
+return, and answered "Duality" to every question. `findTrack` builds its query
+through `URLSearchParams`, which encodes a space as `+` — and
+`decodeURIComponent` does **not** turn that back into a space, so a title with
+spaces in it never matched. Worth remembering: the fault was in the harness, and
+it presented exactly as a fault in the code.
+
 ### The test could not have worked the way it was first written
 
 It reached for the module registry to stub Spotify. **An ES module namespace is
