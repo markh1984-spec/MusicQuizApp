@@ -1498,24 +1498,20 @@ export function launchBar() {
        *
        * **A NAMED TARGET, so a second launch REUSES the tab** rather than
        * stacking projector windows across an evening.
-       *
-       * **AND NOTHING CLOSES IT IF THE LAUNCH IS REFUSED**, which took a wrong
-       * turn first. The instinct is to tidy the window away on a 409 — but
-       * `screenLink()` points at the ROOM, not at the game, so a declined
-       * launch leaves the projector showing the night that is still running.
-       * That is not a stale window, it is the correct one. Closing it would
-       * also shut a projector the host had already opened themselves, since a
-       * named target cannot tell you whether it was there a moment ago.
+       * **AND NOTHING CLOSES IT IF THE LAUNCH IS REFUSED.** `screenLink()`
+       * points at the ROOM, not at the game, so a declined launch leaves the
+       * projector showing the night that is still running — not a stale
+       * window, the correct one. Closing it would also shut a projector the
+       * host had opened themselves, since a named target cannot tell you
+       * whether it was there a moment ago.
        */
       window.open(screenLink(), 'quizscreen');
-      // Once `lbSlots` exists it is the truth for what launches, whether or
-      // not it still counts as "mixed" — `currentPack`/`lbExtra` stopped
-      // being updated the moment mixed mode was entered.
       /*
-       * A BURST ROW THAT IS STILL AN ORDINARY NIGHT LAUNCHES THE ORDINARY WAY
-       * — `simpleNight()` in `console-tonight-mix.js` carries the whole note.
-       * Without it, bursting would move every gig onto the running-order
-       * route in exchange for a change to the layout.
+       * ONCE `lbSlots` EXISTS IT IS THE TRUTH FOR WHAT LAUNCHES, mixed or not
+       * — `currentPack`/`lbExtra` stop being updated the moment it does. A
+       * burst row that is still an ordinary night launches the ordinary way;
+       * `simpleNight()` carries that note, and without it bursting would move
+       * every gig onto the running-order route for a change to the layout.
        */
       const simple = runningShowSegments() ? null : simpleNight(lbSlots || []);
       const simplePack = simple ? anyPack(simple.packId) : null;
@@ -1866,6 +1862,15 @@ export function launchBar() {
         shapePick.innerHTML = shapeOptions(picked.pack);
         const shape = pickedShape(picked);
         if (shape) shapePick.value = JSON.stringify({ rows: shape.rows, cols: shape.cols });
+        /* THE DISPLAYED DEFAULT IS WRITTEN BACK, WHERE IT IS DISPLAYED.
+           `shapeOptions()` marks the best shape `selected` and nothing wrote it
+           anywhere, so the bar read "5x5 — 25 of 40 songs on a card" and the
+           launch sent `shape: null`: the room got a 4x4 running five prize
+           stops. Choosing one BY HAND worked, so only the DEFAULT was lost.
+           Only when nothing is held, or a repaint rewrites `lbSlots`. */
+        if (!shape && shapePick.value) {
+          try { setPickedBingo(picked, { shape: JSON.parse(shapePick.value) }); } catch { /* not a shape */ }
+        }
         paintPrizes();
       } else {
         /*
@@ -2088,15 +2093,12 @@ export function launchBar() {
     setPickedBingo(picked, { prizes: count });
     /*
      * AND THE FACE HAS TO BE REPAINTED, or the popover is a skin over a select
-     * that has changed underneath it.
-     *
-     * This function rewrites `prizePick.innerHTML` and sets `.value`, and
-     * neither fires an event — the exact rule `console-pick.js` states. It is
-     * called from the SHAPE's change handler, which is outside
-     * `paintSettings()`, so the one `refreshPicks()` in this file never ran
-     * for it: after switching the card, the Prizes face showed the old count
-     * and its ghost menu still listed the old options. Pressing one that had
-     * gone blanked the control and launched `prizes: 0`.
+     * that has changed underneath it. This rewrites `prizePick.innerHTML` and
+     * sets `.value`, neither of which fires an event, and it is called from
+     * the SHAPE's change handler — outside `paintSettings()`, so the one
+     * `refreshPicks()` in this file never ran for it. After switching the card
+     * the Prizes face showed the old count and its ghost menu the old options;
+     * pressing one that had gone blanked the control and launched `prizes: 0`.
      */
     refreshPicks(el);
   }
@@ -2581,12 +2583,9 @@ export function launchBar() {
     }
   }
 
-  /*
-   * THE MIXED ROW TAKES OVER THE WHOLE PANEL the moment `lbSlots` exists —
-   * one renderer at a time, never two disagreeing about what is in slot 2.
-   * `renderSlots()` (`console-tonight-mix-ui.js`) draws the tiles; this
-   * still owns the info line and the Launch button, exactly as below.
-   */
+  /* THE MIXED ROW TAKES OVER THE WHOLE PANEL the moment `lbSlots` exists —
+     one renderer at a time, never two disagreeing about what is in slot 2.
+     `renderSlots()` draws the tiles; this owns the info line and Launch. */
   function paintMixedOrder() {
     orderEl.hidden = false;
     const row = renderSlots(lbSlots, {
@@ -2608,11 +2607,10 @@ export function launchBar() {
        ordinary row follows, and no new argument to say so. */
     const mixSegments = segmentsFromSlots(lbSlots);
     /* ONE TILE, ITS OWN GAP — never the whole pack's. This asked
-       `gapsOfPack()`, which was right when a tile was a pack and wrong the
-       day packs began bursting: all four tiles of a four-round pack were
-       handed the same four gaps, so pressing the last tile's dial changed the
-       first. The nth tile is the nth filled slot, and the FINAL is not a gap
-       — filtered here so each caller does not repeat that rule. */
+       `gapsOfPack()`, right when a tile was a pack and wrong the day packs
+       began bursting: all four tiles of a four-round pack got the same four
+       gaps, so pressing the last tile's dial changed the first. The nth tile
+       is the nth filled slot; the FINAL is not a gap, filtered here. */
     const liveGaps = new Set(breaksOf(mixSegments).map((b) => b.id));
     [...row.querySelectorAll('.lb-tile.is-pack')].forEach((tile, at) => {
       const ids = gapIdsOfSlot(lbSlots, at).filter((id) => liveGaps.has(id));
@@ -2669,7 +2667,12 @@ export function launchBar() {
       const order = (item.order && item.order.length)
         ? item.order
         : roundsOf((library.quizzes || []).find((p) => p.id === item.packId));
-      return { kind: 'quiz', order };
+      /* AND THE TICKS ARE HONOURED. This read the SHOW's order and nothing
+         else, so a round switched off on a loaded show was still played:
+         measured off the wire, Launch re-labelled itself "2 rounds" and
+         `launchOrder` carried all three. `lbOff` is what the tick and the
+         button label read, so it is the truth here too. */
+      return { kind: 'quiz', order: order.filter((r) => !isOff(r.packId, r.round)) };
     });
     if (segments.some((s) => (s.kind === 'bingo' ? !s.packId : !s.order.length))) return null;
     return segments;
@@ -3173,10 +3176,9 @@ export function launchBar() {
     goBtn.textContent = `Launch tonight — ${packs.length} packs, ${rounds} round${rounds === 1 ? '' : 's'}`;
   }
 
-  /* THE VENUE STAYS A BUTTON at the head of the bar and is READ here — it is
-     the only way into the venue picker from this section, and the venue is
-     chosen in one place and nowhere else. Two controls for one field is how a
-     night gets launched with the setting the other one was showing. */
+  /* THE VENUE STAYS A BUTTON at the head of the bar and is READ here: it is
+     the only way into the picker from this section, and two controls for one
+     field is how a night launches with the setting the other one showed. */
   /**
    * THE ONE THING THAT IS WRONG, IF ANYTHING IS — and silence otherwise.
    *
@@ -3803,11 +3805,10 @@ function tonightAsShow(name, segmentsNow) {
   const segments = segmentsNow();
   if (!segments.length) return null;
   /* A BINGO PART KEEPS ITS OWN CARD AND PRIZE COUNT. These were dropped and
-     the night-level pair below saved in their place — which on a MIXED night
-     is a pair nothing writes, because `setPickedBingo()` puts them on the
-     SLOT the moment there is more than one part. A 3x3 one-prize interlude
-     set up on Monday came back on Thursday as the pack's own 4x4 and two
-     prizes. The night-level pair stays for an ordinary one-game night. */
+     the night-level pair saved instead — which on a MIXED night is a pair
+     nothing writes, since `setPickedBingo()` puts them on the SLOT once there
+     is more than one part, so a 3x3 one-prize interlude came back as the
+     pack's own 4x4. That pair stays for an ordinary one-game night. */
   const items = segments.map((seg) => (seg.kind === 'bingo'
     ? {
       kind: 'bingo',

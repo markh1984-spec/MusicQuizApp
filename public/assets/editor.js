@@ -410,6 +410,26 @@ document.getElementById('newQuiz').addEventListener('click', async () => {
   const title = prompt('What is this quiz called?', 'The 1990s Music Quiz');
   if (!title) return;
   const id = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'quiz';
+  /*
+   * A NEW QUIZ MAY NOT LAND ON A PACK THAT ALREADY EXISTS.
+   *
+   * The title becomes the FILENAME, so typing one that already exists opened
+   * that pack's id with a one-round, one-question stub in the editor — and one
+   * press of Save wrote the stub over it. No confirm, no warning, no undo. On a
+   * catalogue pack that is rule 11 running backwards: there is exactly one file
+   * and every subscriber reads it, so a three-round distributed quiz became a
+   * single blank question for everybody holding it, `reloadPackEverywhere()`
+   * pushing the wreck into any game already running.
+   *
+   * The wording is `saveOwn()`'s, deliberately — one sentence for one rule
+   * wherever it is hit, and that one already had to explain this exact
+   * collision to somebody in a hurry.
+   */
+  const taken = [...pickEl.options].some((opt) => opt.value === `quiz:${id}`);
+  if (taken) {
+    alert(`There is already a pack called ${id}. Give yours a different name.`);
+    return;
+  }
   const fresh = {
     id, title, subtitle: '', questionSeconds: 20,
     rounds: [{ id: 'r1', type: 'text', title: 'Round One', blurb: '', questions: [blankQuestion('text', 'r1q1')] }],

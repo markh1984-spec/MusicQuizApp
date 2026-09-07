@@ -505,3 +505,64 @@ test('checking a pack is open to both, and neither can save one they may not', a
     assert.equal(anon.status, 401, 'checking a pack is open to a stranger');
   });
 });
+
+test('AND THE OWNER CANNOT CREATE OVER A PACK THAT ALREADY EXISTS', async () => {
+  /*
+   * `POST /api/quiz` is the CREATE route — an edit comes back through
+   * `PUT /api/quiz/<id>`. So a POST naming an id already on disk is somebody
+   * typing a title that slugs to it, which is exactly what the editor's *New
+   * quiz* did: it took the title, slugged it, and opened that pack's id with a
+   * one-round one-question stub in hand. One press of Save and rule 11 ran
+   * backwards — there is exactly one file per catalogue pack and every
+   * subscriber reads it, so a three-round distributed quiz became a single
+   * blank question for everybody holding it, with `reloadPackEverywhere()`
+   * pushing the wreck into any game already running.
+   *
+   * Over HTTP rather than as a regex, because the fault is what the ROUTE does
+   * — and this file's own header says why a regex could never see the last one.
+   */
+  await withServer(async (base) => {
+    const mark = await cookieFor(base, 'owner@x.com', 'a-long-owner-password');
+    const list = await (await fetch(`${base}/api/library`, { headers: { Cookie: mark } })).json();
+    const existing = (list.quizzes || [])[0];
+    assert.ok(existing, 'no catalogue pack to try to write over');
+
+    const stub = {
+      id: existing.id,
+      title: existing.title,
+      rounds: [{
+        id: 'r1', type: 'text', title: 'Round One',
+        questions: [{
+          id: 'r1q1', prompt: 'Who?', options: ['a', 'b', 'c', 'd'], correctIndex: 0,
+        }],
+      }],
+    };
+    const refused = await fetch(`${base}/api/quiz`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: mark },
+      body: JSON.stringify(stub),
+    });
+    assert.equal(refused.status, 409,
+      'a create over an existing pack must be refused — the same collision '
+      + 'saveOwn() already refuses, on the file everybody reads');
+    assert.match((await refused.json()).error, /already a pack called/);
+
+    // AND THE PACK ON DISK IS UNTOUCHED, which is the thing that matters —
+    // a 409 that had already written would be worse than no check.
+    const after = await (await fetch(`${base}/api/library`, { headers: { Cookie: mark } })).json();
+    const same = (after.quizzes || []).find((q) => q.id === existing.id);
+    assert.equal(same.questionCount, existing.questionCount,
+      'the refused save changed the pack anyway');
+
+    // An EDIT still works — this must not have broken saving a pack.
+    const full = await (await fetch(`${base}/api/quiz/${encodeURIComponent(existing.id)}`, {
+      headers: { Cookie: mark },
+    })).json();
+    const edited = await fetch(`${base}/api/quiz/${encodeURIComponent(existing.id)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Cookie: mark },
+      body: JSON.stringify(full.quiz || full),
+    });
+    assert.equal(edited.status, 200, 'editing an existing pack must still save');
+  });
+});

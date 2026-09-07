@@ -1601,3 +1601,76 @@ and turned down. The rules themselves stay in `CLAUDE.md` verbatim.
   `:focus-visible` and the card hover** — one named block, so the next control
   gets finished there rather than growing scattered rules. `::selection` follows
   `--hot` (rgba fallback first); reduced-motion keeps the border, drops the lift.
+
+## The catalogue can be destroyed from the editor, and was destroyed by its own test
+
+### "New quiz" landed on a pack that already existed
+
+The editor's *New quiz* takes the title, slugs it into an id, and opens that id
+with a one-round, one-question stub in hand. Type a title that already exists —
+"1980s Pop Music" — and the editor is now holding the id of a real, distributed
+pack. One press of Save and the three-round, twenty-question quiz on disk is a
+single blank question. No confirm, no warning, no undo.
+
+On a catalogue pack that is rule 11 running backwards. There is exactly one file
+per pack and every subscriber's console reads it, which is precisely what makes
+a correction reach everybody — and it is what makes a mistake reach everybody
+too, with `reloadPackEverywhere()` pushing the wreck into any game already
+running. The Workshop door offers three links straight to that page.
+
+Two layers, because the browser's list is what the browser was told and the file
+on disk is the truth. `newQuiz()` checks the picker it already has and refuses;
+`POST /api/quiz` — which is the CREATE route, an edit coming back through
+`PUT /api/quiz/<id>` — answers 409 for an id already on disk. Both say what
+`saveOwn()` already says for the same collision, because one sentence for one
+rule is the rule. `replace: true` is the way through for a caller that means it,
+and nothing in the app sends it.
+
+### And the test that checked it destroyed the pack
+
+`QUIZ_DIR` and `BINGO_DIR` default to the repository's own `quizzes/` and
+`bingo/` — the packs the app ships, tracked in git. `withServer()` gave every
+live test a fresh `DATA_DIR` and its own `ADVERT_DIR` (that one after
+`offers.test.js` wrote fixtures into the real `adverts/` folder once) and left
+the catalogue pointing at the real thing.
+
+So verifying the refusal above — take the check out for one run, watch the test
+fail — replaced `1980s-pop-music.json` in the working tree with the
+one-question stub, exactly as the bug would have. `npm test` caught it a minute
+later and `pub-unchanged` caught it again, which is the system working; but a
+guard that can damage the thing it guards is one nobody should have to remember
+to be careful around. Every live test gets a copy now: 240KB, thrown away with
+its temporary directory.
+
+## The bar said one card and the room got another
+
+`shapeOptions()` marks the best shape for a bingo pack `selected`, and nothing
+wrote that anywhere. So the Card face read *"5x5 — 25 of 40 songs on a card"*,
+the tile in Tonight said 5x5, and the launch body carried `shape: null`: the
+room got a 4x4 with five prize stops on a card that can only pay two. Choosing a
+shape by hand worked perfectly, so what was lost was only the DEFAULT — which is
+every bingo night nobody opens the picker on.
+
+The fix is one line where the value is displayed, and it is written back only
+when nothing is held, or a repaint would rewrite `lbSlots` on every state push.
+
+`pub-unchanged.mjs` cannot see any of this: it reads `quizzes/` and never loads
+a bingo pack, and it compares the engine's payloads rather than what the console
+asked for. `scripts/bar-reaches-the-room.mjs` reads the launch body out of a
+real browser and then asks the room, which is the rule `winners` taught. It is
+the third time this exact shape has bitten — the lobby game missing from the
+quiet launch, the quiet launch sending five of twelve fields, and now this — so
+the guard is named for the class rather than the bug.
+
+## A round switched off on a loaded show was still played
+
+`runningShowSegments()` builds from `item.order` on the saved show and never
+read `lbOff`, while the tick and the Launch button's label read `lbOff` and
+nothing else. Two-part show loaded, tick pressed, Launch re-labelled itself
+"2 rounds" — and `launchOrder` carried all three. It only bites shows of two or
+more parts, which is exactly the night somebody has planned in advance.
+
+He drops a round to make time, the tick goes red, the button agrees with him,
+and the room plays it. One answer to "what is being played tonight", and it is
+the one the tick already reads.
+

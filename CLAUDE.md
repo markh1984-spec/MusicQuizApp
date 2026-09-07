@@ -450,6 +450,21 @@ update, and the failure is silent and lands in front of a paying room months
 later. One file cannot miss it. The host's model is right; the implementation
 that satisfies it is fewer copies rather than better syncing.
 
+**AND A CREATE MAY NOT LAND ON A PACK THAT ALREADY EXISTS.** The editor's *New
+quiz* slugs the title into an id, so typing one that was already there opened
+that pack with a one-question stub in hand and one Save wrote it over — this
+rule running backwards, `reloadPackEverywhere()` pushing the wreck into a game
+already running. The browser refuses it and `POST /api/quiz` answers 409, **in
+`saveOwn()`'s own words**. **`PUT /api/quiz/<id>` is the edit** and is
+untouched.
+
+**AND A TEST MAY NOT WRITE THE SHIPPED CATALOGUE.** `QUIZ_DIR`/`BINGO_DIR`
+default to the repository's own folders, so `live-server.mjs` hands every live
+test a COPY. Verifying the refusal above meant taking it out for one run, and
+that run replaced `1980s-pop-music.json` with the stub in the working tree.
+**A guard that can damage the thing it guards is one nobody should have to
+remember to be careful around.**
+
 **Which means an own-pack must never be able to SHADOW a catalogue id**, or
 that quizmaster silently stops receiving corrections for ever. `saveOwn()`
 refuses it — *"There is already a pack called … in the catalogue. Give yours a
@@ -1116,22 +1131,17 @@ board), `src/arcade.js` (the scores, shared by both engines),
 `state.gameSeed`, `state.arcade`, `state.lobbyGame`.
 
 - **THE ROOM PICKS, AND THAT IS THE DEFAULT — `lobbyGamesFor()`,
-  `state.lobbyGames`.** Asked for: *"can we default to all of the games
-  available for that QMs level? So the quiz customer gets to pick the game?"*
-  The picker's first option is **Let them choose** and it is SELECTED, so a
-  quizmaster who never opens it hands the room the whole menu; **pinning one is
-  still there** for the booking where it matters. **`ANY_LOBBY_GAME` is a
-  SENTINEL, never an empty string** — empty already means *"nobody said, use
-  the default"*, and reusing it would silently turn every night ever saved into
-  an open choice. **Resolved at the LAUNCH ROUTE against `tierInUse`** like the
-  single choice it replaces, and **the phone honours the list and re-checks
-  nothing**. **`null` rather than `[]` when there is no choice, and the field is
-  SPREAD into the payload only when it exists** — a pinned night sends what it
-  always sent, so `pub-unchanged` still says IDENTICAL with no `--ignore`, and a
-  state restored mid-night from an older deploy hands out one game exactly as it
-  did at nine o'clock. **A list of ONE is dropped**: a menu with one thing on it
-  is not a choice. **An unknown tier falls to the bottom rung**, so it holds the
-  two everybody has rather than none.
+  `state.lobbyGames`.** The picker's first option is **Let them choose** and it
+  is SELECTED, so a quizmaster who never opens it hands the room the whole
+  menu; **pinning one is still there**. **`ANY_LOBBY_GAME` is a SENTINEL, never
+  an empty string** — empty already means *"nobody said, use the default"*, and
+  reusing it would turn every night ever saved into an open choice. **Resolved
+  at the LAUNCH ROUTE against `tierInUse`**, and **the phone honours the list
+  and re-checks nothing**. **`null` rather than `[]` when there is no choice,
+  and SPREAD into the payload only when it exists** — a pinned night sends what
+  it always sent, so `pub-unchanged` still says IDENTICAL with no `--ignore`.
+  **A list of ONE is dropped**: a menu with one thing on it is not a choice.
+  **An unknown tier falls to the bottom rung.**
 - **AND THE QUIET LAUNCH SENDS THE WHOLE NIGHT — `nightOpts()`.** Tapping a
   pack put it on the projector with FIVE of the twelve fields Launch sends, so
   the default look ran, Game sound Off was ignored and "at random" dealt
@@ -1144,20 +1154,16 @@ board), `src/arcade.js` (the scores, shared by both engines),
 - **ONE ROW EITHER WAY, AND THE CHOICE IS ONE TAP INSIDE IT.** Three phone
   layouts were rendered at 390px first: a row per game is **423px of menu** and
   pushes *Send a photo* off the bottom, which breaks *don't disincentivise
-  photo uploads*. So the lobby keeps its shape and the row says how many there
-  are. **The box opens on the CHOOSER and nothing runs yet** — auto-starting
-  the first one spends somebody's opening seconds on a game they did not pick,
+  photo uploads*. **The box opens on the CHOOSER and nothing runs yet** —
+  auto-starting spends somebody's opening seconds on a game they did not pick,
   and on a reaction game it spends a life. **Switching calls `stopArcade()`
-  first and RESHAPES the canvas** (a maze is square, a tower is 2:3), or a loop
-  keeps drawing on a resized canvas and banking under the wrong game.
-- **NO PHOTO GATE, AND ONE WAS PROPOSED AND TURNED DOWN.** *"I think they
-  should have to have sent a photo for their avatar first"* — argued and not
-  built, on his own decision. **It prices consent**: *sending it is the
-  consent*, and a photo goes on the projector and by default on a public
-  gallery, so making the game conditional turns a free choice into a toll.
-  **And it undercuts what the game is FOR** — gating it puts fewer phones in the
-  foreground at exactly the moment the join gate is busiest. `avatar.js` already
-  draws everyone a face; a photo never was mandatory.
+  first and RESHAPES the canvas**, or a loop keeps drawing on a resized canvas
+  and banking under the wrong game.
+- **NO PHOTO GATE, AND ONE WAS PROPOSED AND TURNED DOWN.** **It prices
+  consent**: *sending it is the consent*, so making the game conditional turns
+  a free choice into a toll. **And it undercuts what the game is FOR** — gating
+  it puts fewer phones in the foreground exactly when the join gate is busiest.
+  `avatar.js` already draws everyone a face; a photo never was mandatory.
 - **THE BOARD SAYS WHICH GAME EACH SCORE WAS ON — `state.arcadeGame`, a map
   BESIDE the scores.** With the room choosing, five scores can be five
   different sports, so a bare list would invent a ranking nobody played. **A
@@ -1250,19 +1256,16 @@ board), `src/arcade.js` (the scores, shared by both engines),
 - **No control panel: you tap and it walks there.** A swipe has to be READ and a
   misread one costs a life. `touch-action: none` on the canvas is load-bearing.
 - **AND ON THE KEYS, A TURN PRESSED EARLY IS REMEMBERED** — `turnFrom()` in
-  `maze.js`, pure and tested. *"The turning corners function is a little
-  glitchy — usually you can press left or right ahead of the next turn and
-  it'll remember to turn that way?"* **It was worse than glitchy**: an arrow
-  set a TARGET by running as far down the corridor as it could, so with a wall
-  that way the run never happened, the target came out as the cell you were
-  standing on, and `stepToward()` answers that with null — **pressing a turn a
-  moment early stopped the player DEAD in front of three chasers.** From the
-  start cell both Up and Down did it. The keys now drive a HEADING plus a
-  buffered WANT, tried first at every cell and expiring after
-  `TURN_BUFFER_STEPS`; **a wall stops you facing it and never picks a
-  direction for you**, and the tapped target still decides when neither is
-  set, so a phone plays exactly as it did. **The rule lives in `maze.js`, not
-  the canvas file** — a decision that can be tested without a clock should be.
+  `maze.js`, pure and tested. An arrow used to set a TARGET by running as far
+  down the corridor as it could, so with a wall that way the target came out as
+  the cell you were standing on and `stepToward()` answers that with null:
+  **pressing a turn a moment early stopped the player DEAD in front of three
+  chasers.** The keys drive a HEADING plus a buffered WANT, tried at every cell
+  and expiring after `TURN_BUFFER_STEPS`; **a wall stops you facing it and
+  never picks a direction for you**, and the tapped target still decides when
+  neither is set, so a phone plays exactly as it did. **The rule lives in
+  `maze.js`, not the canvas file** — a decision testable without a clock
+  should be.
 - **THE BIG SCREEN IS ONLY PROMISED WHERE THE BOARD DRAWS.** The board is
   lobby-only by decision; when the game was generalised to *a break that
   offers a game* the three guards changed subject and the phone's line did
@@ -1283,35 +1286,26 @@ board), `src/arcade.js` (the scores, shared by both engines),
   thing being torn down is built.**
 - **Each moment has a primary: the game before the quiz, photos between the
   rounds.** The floating camera button stands down in the lobby.
-- **MAZE MOUTH'S DEATH IS A GULP, AND IT IS THE ONLY DEATH THE GAME HAS.**
-  Asked for — *"if Maze Mouth dies we need a funny death animation"* — and
-  chosen off four rendered and animated first. The chaser that caught you
-  swells, burps and you are gone. **It is never telling a story that did not
-  happen**: being caught is the only way to die, so the animation also answers
-  *what got me*, which is half of why it was the pick. **NOT the unfurl-and-
-  spin** — that one is Namco's, and this app is sold. **NOTHING MOVES while it
-  runs** (`dying`, `GULP_MS`), or a chaser wanders off mid-swallow leaving the
-  mouth it was closing. **THE PLAYER IS DRAWN BEFORE THE CHASERS and that is
-  the whole illusion** — painted after, he would sit on top of the thing eating
-  him. **ONLY the one that caught you bulges**; a row of fat chasers says
-  nothing about which. **The score is banked at the CATCH, never after the
-  animation** — a game interrupted by the quiz starting must not lose the life
-  it just paid for, and a second of not playing is exactly when that happens.
+- **MAZE MOUTH'S DEATH IS A GULP, AND IT IS THE ONLY DEATH THE GAME HAS.** The
+  chaser that caught you swells, burps and you are gone — **never telling a
+  story that did not happen**, being caught being the only way to die. **NOT
+  the unfurl-and-spin**, which is Namco's and this app is sold. **NOTHING MOVES
+  while it runs** (`dying`, `GULP_MS`). **THE PLAYER IS DRAWN BEFORE THE
+  CHASERS and that is the whole illusion.** **ONLY the one that caught you
+  bulges.** **The score is banked at the CATCH, never after the animation** — a
+  game interrupted by the quiz starting must not lose the life it just paid
+  for.
 - **SOUND IS SYNTHESISED, ON BY DEFAULT, AND NEVER ON A TIMER.**
   `lobby-sound.js` — Web Audio, no files, like everything else here is drawn.
-  **It shipped OFF and that was wrong**: the game only exists in the LOBBY, so
-  a noise during a question is impossible, by three mechanisms that each have
-  tests. **What makes on-by-default safe is that the HOST can switch it off** —
-  *Game sound* on the launch bar, into `state.lobbySound` at launch. **The
-  host's switch wins and does not wipe the phone's own**; both default to on
-  wherever the field could be absent. **Every noise is tied to something the
-  player DID** — nothing on a timer, or it is sixty phones chirping at nobody.
-  It never carries information: a phone on a pub table is on silent and iOS
-  mutes Web Audio outright, so every game stays playable in silence. **There is
-  no yeehaw and that is deliberate** — a synthesised whoop is a kazoo and a
-  recorded one is an asset; shipping one breaks the no-assets rule on purpose.
-  The toggle is UNDER the canvas: on it, a tap that missed by a few pixels is a
-  shot, and the shot could be the sheriff.
+  **What makes on-by-default safe is that the HOST can switch it off** — *Game
+  sound* on the launch bar, into `state.lobbySound` at launch. **The host's
+  switch wins and does not wipe the phone's own**; both default to on wherever
+  the field could be absent. **Every noise is tied to something the player
+  DID** — nothing on a timer, or it is sixty phones chirping at nobody — and it
+  never carries information, because a phone on a pub table is on silent.
+  **There is no yeehaw and that is deliberate**: a synthesised whoop is a kazoo
+  and a recorded one is an asset. The toggle is UNDER the canvas, or a tap that
+  missed by a few pixels is a shot.
 - **THE BOARD IS ON THE PROJECTOR AT THE LOBBY ONLY** — `lobby-board.js`, one
   file for both projectors, inside the white QR panel and UNDER the code, which
   nothing in this app may dim. **It was computed and never drawn for as long as
@@ -1654,6 +1648,16 @@ right of the pack ONCE LOADED."*
   already on screen. `bingoToSet()`: the picked pack when it is a bingo, else the
   first in the order. **The three WRITES had to move with the read**, or the row
   shows one pack's card and saves it onto another.
+- **THE CARD'S DISPLAYED DEFAULT IS WRITTEN BACK WHERE IT IS DISPLAYED.** The
+  bar read *"5x5 — 25 of 40 songs on a card"* and the launch sent
+  `shape: null`: **the room got a 4x4 running five prize stops.** Only the
+  DEFAULT was lost — every bingo night nobody opens the picker on. **`pub-
+  unchanged` cannot see it: it reads `quizzes/` and never loads a bingo pack.**
+  `bar-reaches-the-room.mjs` can.
+- **A ROUND SWITCHED OFF ON A LOADED SHOW IS NOT PLAYED.**
+  `runningShowSegments()` read the SHOW's order and never `lbOff`, so the tick
+  went red, Launch said *"2 rounds"* and the wire carried three. **One answer
+  to "what is being played tonight."**
 - **"IN THE GAPS" IS INERT ON A NIGHT WITH NO GAP.** A bingo game contributes
   only its own lobby, whose screen is the join code — so the picker was live,
   took any of four choices and the launch sent an empty plan.
@@ -3810,6 +3814,7 @@ node scripts/dead-controls.mjs --door console   # and is anything inert? (one do
 node scripts/pages-scroll.mjs           # can a person actually scroll each page?
 node scripts/final-fits.mjs             # is the last slide of the night all on screen?
 node scripts/advert-on-the-wall.mjs     # does a corrected slide reach the projector?
+node scripts/bar-reaches-the-room.mjs   # does the launch bar's card reach the room?
 ```
 
 **The rules these commands run on, and each was learned expensively — the full

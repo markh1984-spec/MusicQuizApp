@@ -56,6 +56,13 @@ export function freePort() {
  * sign-in answers 401. A test failing on its own scaffolding is the worst kind
  * to read.
  */
+/** One of the shipped pack folders, copied where a test may safely write it. */
+function catalogueCopy(dir, name) {
+  const to = path.join(dir, name);
+  fs.cpSync(new URL(`../../${name}/`, import.meta.url).pathname, to, { recursive: true });
+  return to;
+}
+
 export async function withServer(run, { seed, hostKey = 'live-test-key', env = {} } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'live-server-'));
   const seeded = seed ? seed(dir) : undefined;
@@ -77,6 +84,23 @@ export async function withServer(run, { seed, hostKey = 'live-test-key', env = {
            * that once.
            */
           ADVERT_DIR: path.join(dir, 'adverts'),
+          /*
+           * AND THE CATALOGUE IS A COPY, for exactly the same reason one step
+           * further on. `QUIZ_DIR`/`BINGO_DIR` default to the repository's own
+           * `quizzes/` and `bingo/` — the packs the app SHIPS, tracked in git
+           * — so any test that writes a pack edits them in the working tree.
+           *
+           * One did: checking that `POST /api/quiz` refuses to create over an
+           * existing pack meant taking the refusal out for a single run, and
+           * that run replaced `1980s-pop-music.json` with the one-question stub
+           * the bug would have written. `npm test` and `pub-unchanged` both
+           * caught it a minute later — but a guard that can damage the thing it
+           * guards is one nobody should have to remember to be careful around.
+           *
+           * 240KB of JSON per run, thrown away with the rest of the directory.
+           */
+          QUIZ_DIR: catalogueCopy(dir, 'quizzes'),
+          BINGO_DIR: catalogueCopy(dir, 'bingo'),
           HOST_KEY: hostKey,
           ...env,
         },

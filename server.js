@@ -7120,6 +7120,35 @@ async function handleWrite(req, res, url, route) {
     const problems = validateQuiz(quizToSave);
     if (problems.length) return sendJson(res, 400, { error: 'Quiz is not valid', problems }), true;
     /*
+     * A CREATE MAY NOT LAND ON A PACK THAT ALREADY EXISTS.
+     *
+     * This is the CREATE route — an edit comes back through
+     * `PUT /api/quiz/<id>` — so a POST naming an id already on disk is somebody
+     * typing a title that slugs to it, which the editor's *New quiz* did with a
+     * one-round, one-question stub in hand. One press of Save and rule 11 ran
+     * backwards: there is exactly one file per catalogue pack and every
+     * subscriber reads it, so a three-round distributed quiz became a single
+     * blank question for everyone holding it, with `reloadPackEverywhere()`
+     * pushing the wreck into a game already running.
+     *
+     * The browser refuses it first, off the picker it already has. This is the
+     * belt to that pair of braces, because the browser's list is what the
+     * browser was told and the file on disk is the truth.
+     *
+     * `replace: true` is the way through, for a caller that means it — and
+     * nothing in the app sends it today.
+     */
+    // `loadQuiz()` THROWS when the file is not there, which is the ordinary
+    // case here — a create — so it is asked inside a try rather than tested
+    // for truthiness.
+    let already = false;
+    try { already = Boolean(loadQuiz(config.quizDir, quizToSave.id)); } catch { already = false; }
+    if (!body.replace && already) {
+      return sendJson(res, 409, {
+        error: `There is already a pack called ${quizToSave.id}. Give yours a different name.`,
+      }), true;
+    }
+    /*
      * RE-POINT ANY CUE WHOSE TRACK WAS EDITED, before it is written.
      *
      * The words and the `spotifyUri` are two halves of one fact, and the
