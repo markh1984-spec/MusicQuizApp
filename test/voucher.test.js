@@ -24,7 +24,23 @@ function withGame({ reward = '', teamPlay = false } = {}) {
   const engine = new Engine({ quiz: QUIZ, now: () => at });
   engine.state.reward = reward;
   engine.state.teamPlay = teamPlay;
-  return { engine, tick: (ms) => { at += ms; } };
+  /*
+   * SOMEBODY WHO ACTUALLY PLAYED.
+   *
+   * A voucher is not issued to a row that scored NOTHING — `rankPlayers()`
+   * gives equal scores the same position, so an all-zero board is everybody at
+   * position 1, and paying by position handed a first-place voucher and a live
+   * code to every phone in a room where nobody had answered. These tests are
+   * about the voucher rather than about the scoring, so the points are handed
+   * over rather than earned a question at a time; where a test cares about the
+   * ORDER it sets its own.
+   */
+  const plays = (name, score = 100) => {
+    const player = engine.join({ name });
+    engine.state.players[player.id].score = score;
+    return player;
+  };
+  return { engine, plays, tick: (ms) => { at += ms; } };
 }
 
 test('an ordinary night — no reward — issues nothing at all', () => {
@@ -37,9 +53,9 @@ test('an ordinary night — no reward — issues nothing at all', () => {
 });
 
 test('the winner gets one, and it carries what the room was told', () => {
-  const { engine } = withGame({ reward: 'A free drink at the bar' });
+  const { engine, plays } = withGame({ reward: 'A free drink at the bar' });
   engine.state.venue = 'The Station Tap';
-  const rob = engine.join({ name: 'Rob' });
+  const rob = plays('Rob');
   engine.finish();
   const view = engine.playerView(rob.id);
   assert.ok(view.voucher, 'the winner was told nothing');
@@ -73,8 +89,8 @@ test('THE CODE IS NEVER ON THE PROJECTOR, AND NEVER ON ANYBODY ELSE"S PHONE', ()
 });
 
 test('a copy of the code is worthless — the FIRST redeem wins', () => {
-  const { engine, tick } = withGame({ reward: 'A free drink' });
-  engine.join({ name: 'Rob' });
+  const { engine, plays, tick } = withGame({ reward: 'A free drink' });
+  plays('Rob');
   engine.finish();
   const code = Object.values(engine.state.vouchers)[0].code;
 
@@ -90,8 +106,8 @@ test('a copy of the code is worthless — the FIRST redeem wins', () => {
 });
 
 test('the host can put it back, and it is counted', () => {
-  const { engine } = withGame({ reward: 'A free drink' });
-  engine.join({ name: 'Rob' });
+  const { engine, plays } = withGame({ reward: 'A free drink' });
+  plays('Rob');
   engine.finish();
   const code = Object.values(engine.state.vouchers)[0].code;
 
@@ -135,9 +151,9 @@ test('going back and forward again does not mint a second code', () => {
 });
 
 test('a TEAM gets one voucher between them, not one each', () => {
-  const { engine } = withGame({ reward: 'A £50 bar tab', teamPlay: true });
-  const a = engine.join({ name: 'Rob' });
-  const b = engine.join({ name: 'Jo' });
+  const { engine, plays } = withGame({ reward: 'A £50 bar tab', teamPlay: true });
+  const a = plays('Rob');
+  const b = plays('Jo');
   const made = engine.makeTeam('The Quizzards');
   assert.equal(made.ok, true, 'the team was not made');
   const teamId = made.id;
@@ -151,6 +167,48 @@ test('a TEAM gets one voucher between them, not one each', () => {
   const two = engine.playerView(b.id).voucher;
   assert.ok(one && two, 'somebody on the winning team was shown nothing');
   assert.equal(one.code, two.code, 'the team was handed two different codes');
+});
+
+/*
+ * A NIGHT WHERE NOBODY SCORED HAS NO WINNER.
+ *
+ * `rankPlayers()` gives equal scores the same position, correctly — so an
+ * all-zero board is EVERYBODY at position 1, and paying by position handed a
+ * first-place voucher and its own live code to every phone in the room. Eight
+ * phones joined, nobody answered, the host pressed *Stop the quiz*: eight
+ * vouchers, every one "place 1", and the bar honours all of them.
+ *
+ * Three ordinary ways in — the wrong pack and Stop early, the projector never
+ * connected so nobody answered, and any breakout-only night, whose rounds
+ * score nothing by design.
+ */
+test('NOBODY SCORED IS NOT EVERYBODY WON', () => {
+  const { engine } = withGame({ reward: 'A pint on the house' });
+  const phones = ['Rob', 'Jo', 'Sam', 'Pat', 'Ali', 'Kim', 'Lee', 'Max']
+    .map((name) => engine.join({ name }));
+  engine.finish();
+  assert.deepEqual(engine.state.vouchers, {},
+    'a room where nobody answered was handed a prize each');
+  for (const phone of phones) {
+    assert.equal(engine.playerView(phone.id).voucher, undefined,
+      'a phone that scored nothing is showing a voucher');
+  }
+  // And the board still says what it always said — this is a floor on PAYING,
+  // not a change to the ranking the room is looking at.
+  assert.equal(engine.leaderboard().length, 8);
+  assert.equal(engine.leaderboard()[0].position, 1);
+});
+
+test('AND ONE REAL SCORE AMONG EIGHT IS ONE VOUCHER', () => {
+  const { engine, plays } = withGame({ reward: 'A pint on the house' });
+  const rob = plays('Rob', 40);
+  const others = ['Jo', 'Sam', 'Pat'].map((name) => engine.join({ name }));
+  engine.finish();
+  assert.equal(Object.keys(engine.state.vouchers).length, 1);
+  assert.ok(engine.playerView(rob.id).voucher, 'the person who actually won was not paid');
+  for (const other of others) {
+    assert.equal(engine.playerView(other.id).voucher, undefined);
+  }
 });
 
 test('a TIE gets one each, because the room watched it happen', () => {
@@ -245,10 +303,10 @@ test('a gap in the middle cannot be expressed', () => {
  * what putting it in the state was meant to prevent.
  */
 test('an older game with a single `reward` still issues its voucher', () => {
-  const { engine } = withGame();
+  const { engine, plays } = withGame();
   delete engine.state.rewards;
   engine.state.reward = 'A free drink at the bar';
-  engine.join({ name: 'Rob' });
+  plays('Rob');
   engine.finish();
   const issued = Object.values(engine.state.vouchers);
   assert.equal(issued.length, 1);
@@ -256,9 +314,9 @@ test('an older game with a single `reward` still issues its voucher', () => {
 });
 
 test('trailing blanks are not prizes', () => {
-  const { engine } = withGame();
+  const { engine, plays } = withGame();
   engine.state.rewards = ['A free drink', '', ''];
-  engine.join({ name: 'Rob' });
+  plays('Rob');
   engine.finish();
   assert.equal(Object.keys(engine.state.vouchers).length, 1);
   assert.deepEqual(engine.rewardList(), ['A free drink']);
@@ -288,6 +346,9 @@ test('a voucher is issued at the END OF THE QUIZ, not at a round board', () => {
   const engine = new Engine({ quiz: twoRounds, now: () => at });
   engine.state.rewards = ['A free drink'];
   const rob = engine.join({ name: 'Rob' });
+  // Its own engine, so `plays()` is not in scope — and a row that scored
+  // nothing is not paid, so the leader has to have led something.
+  engine.state.players[rob.id].score = 100;
 
   // Drive it: rules, round intro, question, reveal, round board…
   for (let i = 0; i < 20 && engine.state.phase !== PHASES.ROUND_BOARD; i++) {
@@ -318,10 +379,10 @@ test('a voucher is issued at the END OF THE QUIZ, not at a round board', () => {
  */
 test('the winner\'s phone carries the venue logo, and the projector never does', () => {
   const png = 'data:image/png;base64,iVBORw0KGgo=';
-  const { engine } = withGame({ reward: 'A £30 bar tab' });
+  const { engine, plays } = withGame({ reward: 'A £30 bar tab' });
   engine.state.venue = 'The Dog & Duck';
   engine.state.venueLogo = png;
-  const rob = engine.join({ name: 'Rob' });
+  const rob = plays('Rob');
   engine.finish();
 
   const view = engine.playerView(rob.id);
@@ -340,19 +401,20 @@ test('the winner\'s phone carries the venue logo, and the projector never does',
 });
 
 test('no logo means no field, so an ordinary venue gains nothing', () => {
-  const { engine } = withGame({ reward: 'A £30 bar tab' });
-  const rob = engine.join({ name: 'Rob' });
+  const { engine, plays } = withGame({ reward: 'A £30 bar tab' });
+  const rob = plays('Rob');
   engine.finish();
   assert.equal('logo' in engine.playerView(rob.id).voucher, false,
     'a venue with no logo grew an empty field on every voucher');
 });
 
 test('a game restored from before logos existed simply has none', () => {
-  const { engine } = withGame({ reward: 'A £30 bar tab' });
+  const { engine, plays } = withGame({ reward: 'A £30 bar tab' });
   const old = JSON.parse(JSON.stringify(engine.state));
   delete old.venueLogo;
   const back = new Engine({ quiz: QUIZ, state: old, now: () => Date.parse('2026-08-14T21:00:00.000Z') });
   const rob = back.join({ name: 'Rob' });
+  back.state.players[rob.id].score = 100;
   back.finish();
   assert.equal(back.playerView(rob.id).voucher.logo, undefined);
 });

@@ -75,6 +75,8 @@ function voucherIn(record, code) {
 function playIt(session) {
   session.engine.state.reward = 'A free drink at the bar';
   const winner = session.engine.join({ name: 'Quizteam Aguilera' });
+  // A row that scored nothing is not paid — see `issueVouchers()`.
+  session.engine.state.players[winner.id].score = 100;
   session.engine.start();
   session.engine.finish();
   const [code] = Object.keys(session.engine.state.vouchers);

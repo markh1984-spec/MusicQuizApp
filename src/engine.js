@@ -1361,6 +1361,25 @@ export class Engine {
        * so this can only ever issue FEWER, never one that does not exist.
        */
       if (row.position > winnersOf(s)) continue;
+      /*
+       * AND A ROW THAT SCORED NOTHING HAS NOT WON ANYTHING.
+       *
+       * `rankPlayers()` gives equal scores the same position, correctly — so
+       * an all-zero board is EVERYBODY at position 1, and this paid by
+       * position. Eight phones joined, nobody answered, the host pressed *Stop
+       * the quiz*: **eight vouchers, every one "place 1 — a pint on the
+       * house", each with its own live code**, every phone showing it, and the
+       * bar honouring the lot. Three ordinary ways in — the wrong pack and
+       * Stop early, the projector never connected so nobody answered, or any
+       * breakout-only night, whose rounds score nothing by design.
+       *
+       * It is a FLOOR, like the two checks above it: it can only ever issue
+       * fewer. A tie for first at a real score is still paid in full, which is
+       * the rule this file already sets, and a whole board on zero is now no
+       * result rather than a result for everybody. `drawLuckyDip()` has the
+       * same shape of floor for the same reason.
+       */
+      if (!(row.score > 0)) continue;
       const reward = rewards[row.position - 1];
       if (!reward) continue;
       if (already.has(row.id)) continue;

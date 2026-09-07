@@ -1168,11 +1168,9 @@ board), `src/arcade.js` (the scores, shared by both engines),
   BESIDE the scores.** With the room choosing, five scores can be five
   different sports, so a bare list would invent a ranking nobody played. **A
   parallel map, never folded into `state.arcade`** — that is `{id: number}` in
-  every state file and backup there is, and turning it into an object needs a
-  migration on a disk wiped every deploy. **The id is a LABEL, never a
-  permission**, checked against the real list in `arcade.js` alone — validating
-  it in both engines would be two copies of one rule. **The icon draws only on
-  a MIXED board**; a pinned night's rows are the two columns they always were.
+  every state file and backup there is. **The id is a LABEL, never a
+  permission**, checked in `arcade.js` alone. **The icon draws only on a MIXED
+  board.**
 - **THE DEFAULT FOLLOWS THE GAME RATHER THAN THE ACCOUNT: Maze Mouth before a
   quiz, Rally before the bingo.** A bingo night should have a character of its
   own rather than being the quiz with different content in it, and a remembered
@@ -1212,18 +1210,15 @@ board), `src/arcade.js` (the scores, shared by both engines),
   safe one.)
 - **AND ON PILE UP THE LEGAL LINE DECIDED THE GAME, NOT ONLY THE NAME.** It is
   a crate STACKER — one swings across the top, you tap to drop it, the overhang
-  shears off — and it is deliberately **not** the falling-blocks one: the seven
-  tetromino shapes, the playfield and their colouring were held to be
-  protectable expression in *Tetris Holding v. Xio*, so a clone is the one
-  version worth not having in something that is SOLD. **Do not "improve" it
-  into one** — no rotation, no shapes, no line clears, no well, and there is a
-  test on the words. **Its control is the most forgiving of the five**: one
-  tap, nothing to aim, so a fat thumb or a tired digitiser has nothing to
-  misread, and **a late tap is a narrower crate rather than a lost life** — it
-  degrades smoothly where a reaction game cannot. **A LOST LIFE POPS THE TOWER
-  BACK DOWN to a wider crate rather than pushing a wide one on top**: the first
-  build did the latter and drew a full-width crate balanced on a sliver, which
-  is the one thing a player can tell at a glance is wrong.
+  shears off — deliberately **not** the falling-blocks one: the seven tetromino
+  shapes, the playfield and their colouring were held to be protectable
+  expression in *Tetris Holding v. Xio*, and this app is SOLD. **Do not
+  "improve" it into one** — no rotation, no shapes, no line clears, no well,
+  and there is a test on the words. **Its control is the most forgiving of the
+  five**, and **a late tap is a narrower crate rather than a lost life**. **A
+  LOST LIFE POPS THE TOWER BACK DOWN to a wider crate rather than pushing a
+  wide one on top**: the first build drew a full-width crate balanced on a
+  sliver, which a player can tell at a glance is wrong.
 - **THERE ARE THREE WAYS A GAME IS MADE THE SAME ON EVERY PHONE, and a new one
   must use one of them:** a GRID with a fixed step (Maze Mouth, Tailback),
   an ACCUMULATOR of whole ticks with the catch-up capped (Rally), or a
@@ -2170,6 +2165,13 @@ for each."* One winner draws no podium and issues one voucher.
   to add on a gig day.
 - **A STATE OR A SHOW WRITTEN BEFORE THIS EXISTED READS AS THREE**, never as
   zero: a redeploy mid-season must not change what a running night pays out.
+- **NOBODY SCORED IS NOT EVERYBODY WON.** `rankPlayers()` gives equal scores
+  the same position, correctly — so an all-zero board is EVERYBODY at position
+  1, and paying by position handed **a first-place voucher with its own live
+  code to every phone in the room**, which the bar then honours. Three ways in:
+  the wrong pack and Stop early, the projector never connected, and any
+  breakout-only night, whose rounds score nothing by design. **A row scoring
+  zero is skipped** — a FLOOR, so it can only ever issue fewer.
 - **A TIE FOR FIRST IS STILL PAID IN FULL** — the cap is on POSITION, not on
   how many rows have been paid, so two teams the room watched finish level
   both get the prize.

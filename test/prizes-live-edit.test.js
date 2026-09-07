@@ -34,6 +34,8 @@ test('setRewards changes what a voucher issued AFTER it says', () => {
   const engine = new Engine({ quiz: QUIZ, now: () => Date.parse('2026-08-20T21:00:00.000Z') });
   engine.state.rewards = ['A bottle of wine'];
   const rob = engine.join({ name: 'Rob' });
+  // A row that scored nothing is not paid — see `issueVouchers()`.
+  engine.state.players[rob.id].score = 100;
 
   assert.equal(engine.setRewards(['A £20 bar tab']), true);
   assert.deepEqual(engine.state.rewards, ['A £20 bar tab']);
@@ -47,6 +49,8 @@ test('a voucher already issued is not rewritten by a later change', () => {
   const engine = new Engine({ quiz: QUIZ, now: () => Date.parse('2026-08-20T21:00:00.000Z') });
   engine.state.rewards = ['A bottle of wine'];
   const rob = engine.join({ name: 'Rob' });
+  // A row that scored nothing is not paid — see `issueVouchers()`.
+  engine.state.players[rob.id].score = 100;
   engine.finish();
   const before = engine.playerView(rob.id).voucher.reward;
 
@@ -154,6 +158,8 @@ test('hostView() carries rewards for BOTH games, not just the quiz', () => {
 test('a quiz prize typed in AT the final scores still reaches the winner', () => {
   const engine = new Engine({ quiz: QUIZ, now: () => Date.parse('2026-09-03T22:30:00.000Z') });
   const rob = engine.join({ name: 'Rob' });
+  // A row that scored nothing is not paid — see `issueVouchers()`.
+  engine.state.players[rob.id].score = 100;
   engine.start();
   while (engine.state.phase !== 'final') engine.next();
 

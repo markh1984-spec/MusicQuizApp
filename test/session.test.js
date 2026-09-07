@@ -80,6 +80,9 @@ test('the quiz keeps the same two actions through run(), unchanged by the move',
   session.build('quiz', quiz);
   session.engine.state.rewards = ['A free drink'];
   const p = session.engine.join({ name: 'Quizteam Aguilera' });
+  // A row that scored nothing is not paid — see `issueVouchers()` — and this
+  // test is about the two actions, not about the scoring.
+  session.engine.state.players[p.id].score = 100;
   session.engine.start();
   session.engine.finish();
   const [code] = Object.keys(session.engine.state.vouchers);
