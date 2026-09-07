@@ -205,7 +205,6 @@ test('the phone is given the seed in the bingo lobby and NOWHERE else', () => {
 
   e.start();
   assert.equal(e.playerView(join.id).gameSeed, undefined);
-  assert.equal(e.playerView(join.id).arcadeBest, undefined);
 });
 
 test('an unknown phone cannot put a score on the bingo projector', () => {

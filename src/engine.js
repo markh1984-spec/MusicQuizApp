@@ -2564,7 +2564,16 @@ export class Engine {
             // running — see `scoreBefore` in `answer()`. Their real total
             // everywhere else, including the moment the reveal lands.
             score: this.scoreToShow(player),
-            correctCount: player.correctCount,
+            /*
+             * `correctCount` IS DELIBERATELY NOT HERE, and it was a leak.
+             *
+             * The score and the position two lines either side of it are held
+             * at what they were before this question — that is the whole point
+             * of `scoreToShow()`. `correctCount` sat between them reading LIVE,
+             * so a phone that tapped the right answer could count its own ticks
+             * going up several seconds before the projector said anything, and
+             * so could the next table. Nothing in the app ever drew it.
+             */
             position: this.positionToShow(player),
             playerCount: this.playerCount(),
           }
@@ -2721,9 +2730,7 @@ export class Engine {
      * together or one of them would have become the real rule by accident.
      *
      * The SEED is what makes every phone play the same game, which is the
-     * only thing that makes a scoreboard of it fair. `arcadeBest` is their
-     * own top score, so the phone can say "your best: 70" without keeping a
-     * tally a rejoin would lose.
+     * only thing that makes a scoreboard of it fair.
      *
      * `view.gap` is what the phone draws its menu from, so the console and
      * the room cannot disagree about what is on offer — the same reasoning as
@@ -2734,7 +2741,7 @@ export class Engine {
     const gap = breakNow(s);
     if (gap) {
       view.gap = { photos: offersPhotos(gap), game: offersGame(gap) };
-      if (offersGame(gap)) Object.assign(view, arcadeFields(s, player.id));
+      if (offersGame(gap)) Object.assign(view, arcadeFields(s));
     }
 
     if (s.phase === PHASES.FINAL && s.vouchers) {
@@ -2973,17 +2980,15 @@ export class Engine {
       name: p.name,
       score: p.score,
       position: p.position,
-      correctCount: p.correctCount,
       answeredCount: p.answeredCount,
       connected: p.connected,
-      joinedDuringQuiz: p.joinedDuringQuiz,
       wanderedCount: p.wanderedCount || 0,
       answeredThisQuestion: Boolean(this.answersFor()[p.id]),
-      lastSeenAt: p.lastSeenAt,
     }));
 
     /*
-     * `canStart`, `msRemaining` AND `rounds` HAVE GONE FROM HERE.
+     * `canStart`, `msRemaining`, `rounds`, `correctCount`, `joinedDuringQuiz`
+     * AND `lastSeenAt` HAVE GONE FROM HERE.
      *
      * All three were built on every host push and read by nothing — grepped
      * across every browser file, every script and every test; the only
@@ -3094,7 +3099,7 @@ export class Engine {
  * and a photo still finds its person — it just gives nothing back.
  */
 function publicPlayer(p) {
-  return { key: faceKey(p.id), name: p.name, score: p.score, position: p.position, correctCount: p.correctCount };
+  return { key: faceKey(p.id), name: p.name, score: p.score, position: p.position };
 }
 
 export function cleanTeamName(name) {

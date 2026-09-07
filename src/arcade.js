@@ -109,21 +109,26 @@ export function arcadeBoard(state, top = 5) {
 }
 
 /**
- * THE TWO NUMBERS A PHONE IS TOLD, and only ever these two.
+ * WHAT A PHONE IS TOLD ABOUT THE LOBBY GAME.
  *
  * The SEED is what makes every phone play the same game, which is the only
- * thing that makes a scoreboard of it fair. `arcadeBest` is their own top
- * score, so the phone can say "your best: 70" without keeping its own tally
- * that a rejoin would lose.
+ * thing that makes a scoreboard of it fair.
+ *
+ * **`arcadeBest` USED TO BE HERE AND NOTHING EVER DREW IT.** The comment above
+ * it said it was there "so the phone can say 'your best: 70'", which was never
+ * true of any build — the same shape as the arcade board that sat in a payload
+ * for as long as the feature existed with no projector reading it. A field on a
+ * view is a promise that something draws it, so it is gone rather than left. If
+ * a phone ever wants its own best back, add it here and draw it in the same
+ * commit.
  *
  * Sent at the lobby and nowhere else, by both engines. A phone that still has
  * a seed at question one is a phone that could still be playing, and the whole
  * design of this app is a room looking UP.
  */
-export function arcadeFields(state, playerId) {
+export function arcadeFields(state) {
   return {
     gameSeed: state.gameSeed || 1,
-    arcadeBest: (state.arcade || {})[playerId] || 0,
     /*
      * WHICH GAME TONIGHT, resolved at launch and read from the state — never
      * worked out on the phone.

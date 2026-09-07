@@ -174,7 +174,6 @@ test('the phone is given the seed in the lobby and NOWHERE else', () => {
   e.start();
   e.askQuestion();
   assert.equal(e.playerView(join.id).gameSeed, undefined);
-  assert.equal(e.playerView(join.id).arcadeBest, undefined);
 });
 
 test('an unknown phone cannot put a score on the projector', () => {
@@ -386,10 +385,10 @@ test('A NIGHT WITH A PINNED GAME SENDS THE PAYLOAD IT ALWAYS SENT', () => {
   // byte-for-byte what it was.
   e.state.lobbyGame = 'maze';
   e.state.lobbyGames = null;
-  assert.equal('lobbyGames' in arcadeFields(e.state, 'nobody'), false);
+  assert.equal('lobbyGames' in arcadeFields(e.state), false);
   // And with a real choice on it, it rides.
   e.state.lobbyGames = ['maze', 'rally'];
-  assert.deepEqual(arcadeFields(e.state, 'nobody').lobbyGames, ['maze', 'rally']);
+  assert.deepEqual(arcadeFields(e.state).lobbyGames, ['maze', 'rally']);
 });
 
 test('A SCORE SAYS WHICH GAME IT WAS SET ON, and an unknown id is dropped', () => {

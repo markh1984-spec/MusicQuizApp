@@ -913,7 +913,6 @@ export class BingoGame {
       id: p.id,
       name: p.name,
       squaresAway: this.squaresAway(p),
-      falseCalls: p.falseCalls,
     };
     view.card = p.card.map((trackId, i) => {
       const t = this.track(trackId);
@@ -973,7 +972,7 @@ export class BingoGame {
     const gap = breakNow(this.state);
     if (gap) {
       view.gap = { photos: offersPhotos(gap), game: offersGame(gap) };
-      if (offersGame(gap)) Object.assign(view, arcadeFields(this.state, playerId));
+      if (offersGame(gap)) Object.assign(view, arcadeFields(this.state));
     }
     return view;
   }
