@@ -315,6 +315,28 @@ export function breakPlumbing({ night, segmentsNow, repaint }) {
     return 'scores';
   }
 
+  /**
+   * WRITE THE NIGHT'S ONE SCREEN CHOICE ACROSS EVERY GAP THERE IS NOW.
+   *
+   * `night.gapScreen` is one answer for the evening; the plan stores it per
+   * break, so the two only agree while the running order stands still. The
+   * picker used to write the gaps that existed WHEN IT WAS PRESSED — so
+   * adding a second pack after choosing *Your adverts* left the new gaps on
+   * the default, and the venue's slides stopped half way through the night
+   * while the control still said they were on. That is the quizmaster's own
+   * revenue, and the venue is who notices.
+   *
+   * Called from the bar's `paintOrder()`, which every mutation of the row
+   * already runs through — one seam rather than a call beside each drop.
+   */
+  function applyGapScreen() {
+    const next = { ...night.breaks };
+    for (const id of gapsWithScreen(segmentsNow())) {
+      next[id] = { ...(next[id] || breakSetFor(id)), screen: night.gapScreen || 'scores' };
+    }
+    night.breaks = cleanPlan(next);
+  }
+
   /** Write one phone setting across every gap a dial owns. */
   function setGaps(ids, phone) {
     const next = { ...night.breaks };
@@ -347,5 +369,5 @@ export function breakPlumbing({ night, segmentsNow, repaint }) {
     const set = (night.breaks || {})[id];
     return set ? { ...set } : {};
   }
-  return { doorsSlot, screenOfPlan, setGaps, breakSetFor };
+  return { applyGapScreen, doorsSlot, screenOfPlan, setGaps, breakSetFor };
 }

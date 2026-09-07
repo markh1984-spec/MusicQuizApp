@@ -1,7 +1,6 @@
 /** TONIGHT — the launch bar, what is running, and the settings for one night. */
 
-import { cleanPlan } from './break-parts.js';
-import { breakPlumbing, gapDial, gapsOfPack, gapsWithScreen, prunePlan } from './console-breaks.js';
+import { breakPlumbing, gapDial, gapsOfPack, prunePlan } from './console-breaks.js';
 import { refreshPicks } from './console-pick.js';
 import { esc, gripIcon, node, postJson } from './client.js';
 import { tonightsVenue } from './console-gigs.js';
@@ -2127,9 +2126,23 @@ export function launchBar() {
   secondsPick?.addEventListener('keydown', (ev) => {
     if (ev.key === 'ArrowUp' || ev.key === 'ArrowDown') seedSeconds();
   });
+  const secondsClamp = (v) => Math.max(5, Math.min(120, Number(v) || 0));
   secondsPick?.addEventListener('input', (ev) => {
-    const n = Math.max(5, Math.min(120, Number(ev.target.value) || 0));
-    night.questionSeconds = ev.target.value === '' ? 0 : n;
+    night.questionSeconds = ev.target.value === '' ? 0 : secondsClamp(ev.target.value);
+  });
+  /*
+   * AND THE FIELD IS PUT RIGHT WHEN THEY FINISH, or it shows one number and
+   * launches another: the clamp went into `night` and never back into the
+   * box, so 3 left "3" on the bar and ran five seconds, and 200 ran 120.
+   *
+   * **On `change`, not on `input`** — clamping per keystroke turns "12" into
+   * "52", because the 1 is corrected to 5 before the 2 arrives.
+   */
+  secondsPick?.addEventListener('change', (ev) => {
+    if (ev.target.value === '') { night.questionSeconds = 0; return; }
+    const n = secondsClamp(ev.target.value);
+    night.questionSeconds = n;
+    if (String(n) !== ev.target.value) ev.target.value = String(n);
   });
   soundPick?.addEventListener('change', (ev) => { night.lobbySound = ev.target.value !== 'off'; });
   playPick?.addEventListener('change', (ev) => { night.playing = ev.target.value; });
@@ -2148,9 +2161,7 @@ export function launchBar() {
   if (screenPick) screenPick.value = night.gapScreen || 'scores';
   screenPick?.addEventListener('change', (ev) => {
     night.gapScreen = ev.target.value;
-    const next = { ...night.breaks };
-    for (const id of gapsWithScreen(segmentsNow())) next[id] = { ...(next[id] || {}), screen: night.gapScreen };
-    night.breaks = cleanPlan(next);
+    applyGapScreen();
     paintOrder();
   });
 
@@ -2485,27 +2496,16 @@ export function launchBar() {
    *
    * Asked for once the drag existed: *"can we make the packs square shaped so
    * they drop in the console and there's like 3 cut out squares to drop them
-   * into? perhaps a couple of other squares that give other info like venue,
-   * time, prizes or whatever."*
+   * into?"*
    *
-   * **The unit is a PACK, not a round**, and that is the change this made.
-   * The first build listed every round as a chip, which is the truthful view
-   * of what gets played and the wrong one to hand somebody five minutes
-   * before a gig: twelve chips is a list you read, three squares is a night
-   * you see. Rounds are still what the server composes — a square simply
-   * stands for all of its pack's.
+   * **THE UNIT IS A ROUND, and this comment used to say the opposite** — it
+   * was written when a square stood for a whole pack, and left standing when
+   * packs began bursting into a tile per round.
    *
    * **THE EMPTY SLOTS ARE PART OF THE PICTURE.** Every square is always
    * drawn, filled or not, so the bar has the same shape whether the night is
-   * set up or not — and an empty one is a dotted cutout that says what to do
-   * with it. A row that grows a box each time you drop something reflows the
-   * whole bar under your hand.
-   *
-   * **THE INFO SQUARES ARE READ, NOT PRESSED** (except the venue, which was
-   * already a control). They restate the three facts a night is filed under —
-   * where, when, what it plays for — at a glance, in the place the decision is
-   * made. Nothing is duplicated: each one is a view of something set
-   * elsewhere, and the venue tile drives the same `chooseVenue` the head does.
+   * set up or not, and a row that grew a box per drop would reflow under your
+   * hand.
    */
   /**
    * SIX, ASKED FOR ON 15 AUGUST 2026 — *"need 6 pack slots imo"*.
@@ -2539,7 +2539,7 @@ export function launchBar() {
    * console's own catch swallows it — which is how the Workshop door once
    * went missing with nothing else looking wrong.
    */
-  const { doorsSlot, screenOfPlan, setGaps } = breakPlumbing({
+  const { applyGapScreen, doorsSlot, screenOfPlan, setGaps } = breakPlumbing({
     night, segmentsNow, repaint: () => paintOrder(),
   });
 
@@ -2681,6 +2681,9 @@ export function launchBar() {
   }
 
   function paintOrder() {
+    // Every gap there is NOW takes the night's screen choice — see
+    // `applyGapScreen()` in `console-breaks.js`.
+    applyGapScreen();
     // ONE PLACE, covering both branches below — every `lbSlots` mutation
     // (a bingo pack dropped into the mixed row, a round dragged between
     // slots, a tile swapped or removed) runs through `renderSlots()`'s own

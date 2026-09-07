@@ -19,6 +19,7 @@ import { spawn } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { freePort } from './helpers/live-server.mjs';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const KEY = 'gallery-route-test-key';
@@ -35,7 +36,16 @@ async function withServer(run) {
   const a = book.create({ email: 'alice@example.com', password: 'a horse walked into a pub', name: 'Alice', tier: 'gold', status: 'active' });
   const b = book.create({ email: 'bob@example.com', password: 'a horse walked into a pub', name: 'Bob', tier: 'gold', status: 'active' });
 
-  const port = 4500 + (process.pid % 500);
+  /*
+   * A PORT FROM THE OPERATING SYSTEM, NEVER FROM THE PID.
+   *
+   * Ten test files spawn a server and every one of them derived a port from
+   * `process.pid` — the SAME pid — so their ranges overlapped and, at CPU
+   * concurrency, two suites could want one port. That is a flake that reads
+   * as a bug in the app: a different test each run, all of them passing
+   * alone. See `test/helpers/live-server.mjs`.
+   */
+  const port = await freePort();
   const child = spawn(process.execPath, ['server.js'], {
     cwd: ROOT,
     env: { ...process.env, PORT: String(port), DATA_DIR: dir, HOST_KEY: KEY },

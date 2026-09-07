@@ -810,6 +810,23 @@ function draw(next) {
     localStorage.removeItem(STORE_KEY);
     me = null;
     if (live) { live.stop(); live = null; }
+    /*
+     * AND EVERYTHING THAT LIVES ON THE BODY GOES WITH THEM.
+     *
+     * The camera button and the chat button are deliberately outside `bodyEl`
+     * so they survive a redraw — which means `showJoin()` cannot take them
+     * away, and this branch returns before the two calls that would. A removed
+     * phone kept a live camera button and a live chat button sitting over the
+     * words "you were removed", both still pointed at a player the server no
+     * longer has.
+     *
+     * The status light is the same shape of thing: `live.stop()` above ends
+     * the stream and nothing told the dot, so it stayed green saying
+     * "Connected" with nothing connected.
+     */
+    paintCameraButton(state);
+    paintChatButton(state, null);
+    setStatus('offline');
     showJoin('You were removed from the quiz. Join again below.');
     return;
   }

@@ -28,7 +28,7 @@ const roomLabel = (id) => LABEL[id] || (id.startsWith('team:') ? 'Your team' : i
 
 let open = false;
 let room = MAIN;
-const seen = new Map();    // roomId -> how many messages had been read
+const seen = new Map();    // roomId -> the id of the last message read there
 let lastState = null;
 /*
  * WHO WE ARE, passed in rather than read off the state.
@@ -44,12 +44,32 @@ let me = null;
 const messagesIn = (s, id) => (s.chat && s.chat[id]) || [];
 const roomIds = (s) => Object.keys((s && s.chat) || {});
 
-/** How many have arrived in rooms we are not looking at. */
+/**
+ * How many have arrived in rooms we are not looking at.
+ *
+ * **COUNTED FROM THE LAST ONE READ, NEVER FROM A LENGTH.** A room's list is
+ * capped at `KEEP_PER_ROOM` (60) on the server — `append()` splices the oldest
+ * off — so once a busy room saturates, `length` is 60 for ever and
+ * `length - seen` is 0 for ever. The badge simply stopped counting, on the
+ * night it would matter most, and the organisers' back channel with it.
+ *
+ * An id is stable where a position is not, so this asks "how many came after
+ * the last one I saw". A room that has scrolled PAST that message answers with
+ * the whole window, which is honest: everything on screen is unread.
+ */
+function unreadIn(s, id) {
+  const list = messagesIn(s, id);
+  const last = seen.get(id);
+  if (!last) return list.length;
+  const at = list.findIndex((m) => m.id === last);
+  return at === -1 ? list.length : list.length - at - 1;
+}
+
 function unread(s) {
   let n = 0;
   for (const id of roomIds(s)) {
     if (open && id === room) continue;
-    n += Math.max(0, messagesIn(s, id).length - (seen.get(id) || 0));
+    n += unreadIn(s, id);
   }
   return n;
 }
@@ -157,7 +177,7 @@ function redraw(s) {
   const tabs = sheet.querySelector('#chatTabs');
   tabs.innerHTML = ids.length > 1
     ? ids.map((id) => {
-        const n = Math.max(0, messagesIn(s, id).length - (seen.get(id) || 0));
+        const n = unreadIn(s, id);
         return `<button class="chat-tab ${id === room ? 'here' : ''}" data-room="${esc(id)}">${esc(roomLabel(id))}${n && id !== room ? ` <span class="chat-dot">${n}</span>` : ''}</button>`;
       }).join('')
     : `<span class="chat-tab here">${esc(roomLabel(room))}</span>`;
@@ -170,7 +190,18 @@ function redraw(s) {
   // question there is one of those every time anybody answers.
   const list = sheet.querySelector('#chatList');
   const messages = messagesIn(s, room);
-  if (list.dataset.count !== String(messages.length) || list.dataset.room !== room) {
+  /*
+   * KEYED ON THE LAST MESSAGE'S ID AS WELL AS THE COUNT, and the count alone
+   * was a freeze. The server caps a room at 60 and splices the oldest off, so
+   * on the sixty-first message the length does not change — the transcript
+   * stopped redrawing and every message after it was invisible on every phone
+   * in the room.
+   */
+  const lastId = messages.length ? messages[messages.length - 1].id : '';
+  if (list.dataset.count !== String(messages.length)
+      || list.dataset.last !== String(lastId)
+      || list.dataset.room !== room) {
+    list.dataset.last = String(lastId);
     const atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 40;
     list.dataset.count = String(messages.length);
     list.dataset.room = room;
@@ -185,7 +216,7 @@ function redraw(s) {
           : 'Nothing yet. Say hello.'}</div>`;
     if (atBottom) list.scrollTop = list.scrollHeight;
   }
-  seen.set(room, messages.length);
+  seen.set(room, messages.length ? messages[messages.length - 1].id : '');
 
   /*
    * The one rule anybody notices, said plainly rather than enforced silently.
