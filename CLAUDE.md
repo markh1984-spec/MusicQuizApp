@@ -770,51 +770,47 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
 ### THE INVOICE BOOK IS NOT ENCRYPTED, AND THAT IS THE DECISION
 
-Settled on 14 August 2026 after the host asked whether personal details in the
-invoice book should be encrypted. The answer is no, and the reasoning is worth
-keeping because the instinct to revisit it will come back.
+Settled on 14 August 2026, and the reasoning is kept because the instinct to
+revisit it will come back.
 
-**The bank details are the quizmaster's OWN, and they are printed on every
-invoice they send.** A sort code and an account number exist to be given to the
-venue. Every pub they have ever invoiced already has them. Encrypting data
-whose entire purpose is to be handed out is theatre.
+**The bank details are the quizmaster's OWN, printed on every invoice they
+send.** A sort code and an account number exist to be given to the venue; every
+pub they have invoiced already has them. Encrypting data whose entire purpose
+is to be handed out is theatre.
 
 **The venue records are BUSINESS contact details** — a pub name, an address, a
-landlord's email. The same information is on the pub's own website. This is not
-consumer personal data and the stakes are correspondingly low.
+landlord's email, all on the pub's own website. Not consumer personal data, and
+the stakes are correspondingly low.
 
-**No card details are stored and none ever will be.** When payments are wired
-in the processor holds those; the app never sees a card number. That is the
-real answer to *"people put their bank account into apps all the time"* —
-those apps mostly do not store it either.
+**No card details are stored and none ever will be.** The processor holds
+those; the app never sees a card number. That is the real answer to *"people
+put their bank account into apps all the time"* — those apps mostly do not
+store it either.
 
 **Server-side encryption where the SERVER holds the key buys almost nothing.**
-The server has to decrypt to draft an invoice, so the key and the data sit on
-one machine. It helps in exactly one case: the private-repo backup, the only
-copy that can leak without the server.
+The server decrypts to draft an invoice, so key and data sit on one machine. It
+helps in one case: the private-repo backup, the only copy that can leak without
+the server.
 
-**And the cost of that is severe in a shape this app has already been bitten
-by.** On Render's free tier the disk is wiped on every deploy, so the backup IS
-the data. Encrypt it and losing the key makes the invoice book landfill — and
-the host has already lost his own console once when `HOST_KEY` rotated on a
-deploy. Encryption converts *"GitHub suffers a breach"*, which is unlikely and
-their problem, into *"I lose an environment variable"*, which is likely and
-entirely his.
+**And the cost is severe in a shape this app has already been bitten by.** On
+Render's free tier the disk is wiped every deploy, so the backup IS the data:
+lose the key and the invoice book is landfill — and the host has already lost
+his own console once when `HOST_KEY` rotated. Encryption converts *"GitHub
+suffers a breach"*, unlikely and their problem, into *"I lose an environment
+variable"*, likely and entirely his.
 
 **AND THE HOST'S OWN CLINCHER: INVOICING IS OPTIONAL.** *"You can invoice them
-personally if you want, or you can invoice through the software if you want.
-Nobody is being forced to use this."* A quizmaster who would rather use their
-own accounts package simply never fills the tab in, so the data is there
-because somebody chose to put it there.
+personally if you want, or you can invoice through the software if you want."*
+A quizmaster who would rather use their own accounts package never fills the
+tab in, so the data is there because somebody chose to put it there.
 
-**NEVER CLAIM IT CANNOT BE READ.** That would be a lie, and it is the same rule
+**NEVER CLAIM IT CANNOT BE READ.** That would be a lie, and it is the rule
 this file already sets for own-packs: the honest pitch is *"the app will not
 let me in unless you let me, and here is the log"*, never *"I cannot see it"*.
-Say plainly what is stored and where.
 
-**What to do instead of encrypting**, and it is worth more: **do not store what
-is not needed.** A venue needs a name, an address and one email. It does not
-need a phone number nobody dials.
+**Instead of encrypting**, and worth more: **do not store what is not
+needed.** A venue needs a name, an address and one email — not a phone number
+nobody dials.
 
 ### THE CONSOLE'S THEME — one surface, one heading ladder, a bar that stays
 
@@ -2141,8 +2137,8 @@ greyed out, and maybe a tooltip should come out trying to sell it."*
   touchscreen. A card, outside-click close, one document listener for all rows.
 - **THE OWNER'S OWN RUNGS ARE 30 x 34 WITH 5px BETWEEN THEM, AND HEIGHT IS THE
   FREE DIMENSION.** *"The clickable part of the G/S/B needs to increase, it's
-  hard to click."* Measured first: **24 x 22 with a 2px gap**, so a slightly-off
-  press previews the wrong tier. **Not the 44px touch floor, deliberately** —
+  hard to click."* Measured first at **24 x 22 with a 2px gap**, so a
+  slightly-off press previewed the wrong tier. **Not the 44px touch floor, deliberately** —
   the topbar has 45px inside its padding, so growing DOWN is free, while four
   44px rungs cost 68px the bar does not have and would put the owner's topbar
   on two rows at every width there is. A mouse on a laptop presses this. **The
@@ -3818,6 +3814,7 @@ node scripts/drag-check.mjs             # Tonight's drags, with a REAL browser d
 node scripts/community-bay.mjs          # does the Community bay still fit the frame?
 node scripts/console-frame.mjs          # is every control on the Console door reachable?
 node scripts/console-controls.mjs       # and does pressing one do what it says?
+node scripts/dead-controls.mjs --door console   # and is anything inert? (one door: 25min for all)
 node scripts/pages-scroll.mjs           # can a person actually scroll each page?
 node scripts/final-fits.mjs             # is the last slide of the night all on screen?
 ```
@@ -3863,14 +3860,20 @@ account is in [`docs/checks.md`](docs/checks.md):**
 - **A GREP WITH THE COMMENTS LEFT IN GOES GREEN THE BETTER A FILE IS
   DOCUMENTED.** Deleting the `/api/past-gigs` gate and leaving a comment saying
   `FEATURES.PAST_GIGS` kept `gates.test.js` 22/22; commenting out the only
-  caller of `tierRow()` kept console-split green while the subscriber upsell
-  vanished. Every does-anything-call-this search goes through
-  `withoutComments()` now, and the claims that matter are FIRED too.
-- **A TEST THAT SPAWNS A SERVER TAKES A FREE PORT, NEVER ONE FROM ITS PID.**
-  Three files spawn one and a fixed port made the suite flaky again — two runs
-  in three, a different file each time, all passing alone.
-  `test/helpers/live-server.mjs` asks the OS for a port and seeds the accounts
-  book BEFORE the spawn: `Accounts` reads its file once at boot.
+  caller of `tierRow()` kept console-split green while the upsell vanished.
+  Every such search goes through `withoutComments()` now, and the claims that
+  matter are FIRED too.
+- **EVERY BROWSER GUARD STARTS THE APP THROUGH `scripts/helpers/live-app.mjs`,
+  AND FOUR COULD NOT EXIT WITHOUT IT.** Cleanup was on `process.on('exit')`
+  alone and a spawned child holds the loop open, so `gig-path.mjs` printed
+  *"The whole gig path works"* and hung for ever — 27 seconds of work, then an
+  infinite wait. `unref()` is the fix; the helper also asks the OS for the
+  port, because a guessed one fails to bind SILENTLY and every measurement is
+  then about somebody else's process.
+- **A TEST THAT SPAWNS A SERVER TAKES A FREE PORT TOO** — three files do, and a
+  fixed port made the suite flaky again: two runs in three, a different file
+  each time, all passing alone. `test/helpers/live-server.mjs` also seeds the
+  accounts book BEFORE the spawn — `Accounts` reads it once.
 - **A CONTROL THAT REPORTS SUCCESS IT DID NOT HAVE is this repo's commonest
   fault, and `console-controls.mjs` presses one.** Five at once, all green
   under `node --check`, 1,684 tests and every browser guard — including a

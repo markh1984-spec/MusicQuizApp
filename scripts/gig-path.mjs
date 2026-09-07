@@ -35,7 +35,6 @@
  *   node scripts/gig-path.mjs
  */
 
-import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -44,37 +43,26 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 
-/*
- * A RANDOM PORT, because a run that is killed leaves its server behind.
- * A fixed one then collides with the orphan and every check quietly runs
- * against a server this script never started — which happened, and read as
- * three failures in the app. The guard below still refuses a busy port; the
- * random one just means it almost never has to.
- */
-const PORT = Number(process.env.PORT || 48775 + Math.floor(Math.random() * 120));
+import { startApp } from './helpers/live-app.mjs';
+
 const KEY = 'gigpath';
-const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'gigpath-'));
-const BASE = `http://127.0.0.1:${PORT}`;
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-let server = null;
-const start = () => {
-  server = spawn(process.execPath, ['server.js'], {
-    env: { ...process.env, PORT: String(PORT), HOST_KEY: KEY, DATA_DIR: DATA },
-    stdio: 'ignore',
-  });
-};
-const up = async () => {
-  for (let i = 0; i < 60; i += 1) {
-    try { await fetch(`${BASE}/health`); return true; } catch { await wait(250); }
-  }
-  return false;
-};
-const stop = () => {
-  if (server) server.kill('SIGKILL');
-  fs.rmSync(DATA, { recursive: true, force: true });
-};
-process.on('exit', stop);
+/*
+ * THE APP COMES FROM `helpers/live-app.mjs`.
+ *
+ * This script used to guess a port and then hard-stop if something was already
+ * answering on it — which is a fair guard and the wrong shape: it turns a
+ * collision into a refusal to run rather than into no collision at all. It
+ * also could not EXIT, because cleanup was on `process.on('exit')` and a
+ * spawned child holds the event loop open. It printed *"The whole gig path
+ * works, in a real browser"* and then hung for ever.
+ *
+ * `restart()` is why this one needs more than `withApp()`: step 5 SIGKILLs the
+ * server mid-question and brings it back on the same port and the same disk,
+ * which is the only honest way to check crash recovery.
+ */
+const { base: BASE, stop, restart } = await startApp({ key: KEY });
 // A killed run must still take its server with it.
 for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => { stop(); process.exit(1); });
 
@@ -85,27 +73,7 @@ const check = (name, ok, detail = '') => {
   console.log(`  ${ok ? 'ok  ' : 'FAIL'} ${name}${ok || !detail ? '' : `\n         ${detail}`}`);
 };
 
-/*
- * REFUSE TO RUN AGAINST SOMEBODY ELSE'S SERVER.
- *
- * A previous run that did not clean up leaves a server on this port with a
- * game half way through it — and the spawn below then fails to bind, quietly,
- * while the browser happily talks to the OLD one. Every check still runs and
- * every answer is about a server this script never started. That is exactly
- * the "guard that quietly tests nothing" this repo keeps being bitten by, so
- * it is a hard stop rather than a warning.
- */
-const portIsFree = async () => {
-  try { await fetch(`http://127.0.0.1:${PORT}/health`); return false; } catch { return true; }
-};
-if (!await portIsFree()) {
-  console.error(`\nSomething is already answering on ${PORT}. Stop it, or run with PORT=<free port>.`);
-  process.exit(1);
-}
-
 try {
-  start();
-  if (!await up()) throw new Error('the server never came up');
 
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 1000 } });
@@ -277,10 +245,7 @@ try {
   // ---- 5. crash recovery --------------------------------------------------
   console.log('\n5. A SIGKILL MID-QUESTION\n');
   const before = await fetch(`${BASE}/api/state?role=screen`).then((r) => r.json());
-  server.kill('SIGKILL');
-  await wait(800);
-  start();
-  if (!await up()) throw new Error('the server never came back');
+  if (!await restart()) throw new Error('the server never came back');
   await wait(600);
   const after = await fetch(`${BASE}/api/state?role=screen`).then((r) => r.json());
   check('the same phase comes back', after.phase === before.phase, `${before.phase} -> ${after.phase}`);
@@ -357,3 +322,6 @@ if (failures) {
 } else {
   console.log('The whole gig path works, in a real browser.');
 }
+// AND THEN IT ENDS. It used to print the line above and hang for ever, which
+// from outside is indistinguishable from the app hanging.
+stop();

@@ -55,7 +55,17 @@ const srv = http.createServer((q, r) => {
   }
   const f = path.join(ROOT, u.pathname);
   if (!fs.existsSync(f) || fs.statSync(f).isDirectory()) { r.writeHead(404); return r.end(); }
-  r.writeHead(200, { 'Content-Type': u.pathname.endsWith('.css') ? 'text/css' : 'text/plain' });
+  /*
+   * A MODULE HAS TO BE SERVED AS JAVASCRIPT. Everything that was not a
+   * stylesheet went out as `text/plain`, and a browser refuses a module with
+   * the wrong MIME type — silently, as a network-level refusal rather than a
+   * script error. That is why this page could only ever run a RETYPED copy of
+   * `fitWinner()`: the real one could not be imported at all.
+   */
+  const type = u.pathname.endsWith('.css') ? 'text/css'
+    : /\.m?js$/.test(u.pathname) ? 'text/javascript'
+      : u.pathname.endsWith('.svg') ? 'image/svg+xml' : 'text/plain';
+  r.writeHead(200, { 'Content-Type': type });
   r.end(fs.readFileSync(f));
 });
 await new Promise((r) => srv.listen(PORT, r));
@@ -104,27 +114,37 @@ for (const size of SIZES) {
   console.log(`\n${size.width}x${size.height}`);
   for (const [name, body] of Object.entries(NIGHTS)) {
     const page = await browser.newPage({ viewport: size });
+    /*
+     * THE PAGE IMPORTS THE PROJECTOR'S OWN `fitWinner()`.
+     *
+     * It used to RETYPE it into a `page.evaluate` below, under a comment
+     * saying it was "the real `fitWinner()`, run the way the projector runs
+     * it" — so deleting the projector's copy outright and renaming `.endband`
+     * left all eighteen of these checks green. A guard that reimplements the
+     * thing it guards is testing its own arithmetic.
+     *
+     * `fitWinner` moved to `client.js` for this: that file has no page and no
+     * boot code, so importing it here cannot start somebody else's projector.
+     */
     servePage = () => `<!doctype html><html><head>
       <link rel="stylesheet" href="/assets/style.css"></head>
       <body class="screen"><div class="stage">
         <header class="topbar"><div class="titles"><span class="title">The 1980s Pop Music Quiz</span></div>
           <div class="right"><span class="pill">Results</span><span class="pill">18 playing</span></div></header>
         <main id="card" class="card"><div class="winner">${body}</div></main>
-      </div></body></html>`;
+      </div>
+      <script type="module">
+        import { fitWinner } from '/assets/client.js';
+        window.__fitWinner = fitWinner;
+      </script></body></html>`;
     await page.goto(`http://127.0.0.1:${PORT}/night`, { waitUntil: 'networkidle' });
 
-    // The real `fitWinner()`, run the way the projector runs it.
+    // The projector's own function, imported — not a copy of it.
+    await page.waitForFunction(() => typeof window.__fitWinner === 'function');
     const scale = await page.evaluate(() => {
-      const w = document.querySelector('.winner');
       const cardEl = document.querySelector('main.card');
-      w.style.setProperty('--fit', '1');
-      const room = cardEl.clientHeight;
-      const kids = [...w.children];
-      const top = Math.min(...kids.map((n) => n.getBoundingClientRect().top));
-      const bottom = Math.max(...kids.map((n) => n.getBoundingClientRect().bottom));
-      const r = Math.min(1, room / Math.max(1, bottom - top));
-      w.style.setProperty('--fit', String(r));
-      return r;
+      window.__fitWinner(cardEl);
+      return Number(getComputedStyle(document.querySelector('.winner')).getPropertyValue('--fit')) || 1;
     });
     await page.waitForTimeout(60);
 

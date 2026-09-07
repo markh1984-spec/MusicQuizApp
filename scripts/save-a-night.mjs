@@ -31,68 +31,26 @@
  * Its own port, its own DATA_DIR, both cleaned up on the way out.
  */
 
-import { spawn } from 'node:child_process';
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-import net from 'node:net';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 
-const PORT = Number(process.env.PORT || 48991);
+import { startApp } from './helpers/live-app.mjs';
+
 const KEY = 'savecheck';
-const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'savecheck-'));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /*
- * REFUSE TO RUN AGAINST SOMEBODY ELSE'S SERVER — and this check learned that
- * the hard way, on itself.
+ * THE APP COMES FROM `helpers/live-app.mjs`.
  *
- * `spawn` here has `stdio: 'ignore'`, so a port already in use fails silently:
- * no server of our own starts, and every request goes to whatever is already
- * listening — with ITS data directory, which outlives this run. A stale server
- * from an earlier crash made "and the server kept it" pass on a deliberately
- * broken Save, because the show it read back was the previous run's.
- *
- * A guard that quietly measures the wrong process is worse than no guard, so
- * this one stops rather than lying.
+ * This file used to probe its own fixed port and stop dead if something was
+ * answering on it — a fair guard and the wrong shape, because it turns a
+ * collision into a refusal to run rather than into no collision at all. The
+ * helper asks the OS for a free one, `unref()`s the child so the script can
+ * end, and cleans up whether the run passed, failed or threw.
  */
-const busy = await new Promise((resolve) => {
-  const probe = net.createServer();
-  probe.once('error', () => resolve(true));
-  probe.once('listening', () => probe.close(() => resolve(false)));
-  probe.listen(PORT, '127.0.0.1');
-});
-if (busy) {
-  console.error(`\nPort ${PORT} is already in use, so this check would talk to somebody`);
-  console.error('else\'s server and could pass on a broken Save. Stop that process, or');
-  console.error(`run with PORT=<free port>.\n`);
-  process.exit(1);
-}
-
-const server = spawn(process.execPath, ['server.js'], {
-  env: { ...process.env, PORT: String(PORT), HOST_KEY: KEY, DATA_DIR: DATA },
-  stdio: 'ignore',
-});
-/*
- * `unref()` AND AN EXPLICIT STOP, not just the exit hook.
- *
- * A spawned child keeps node's event loop alive, so `process.on('exit')` never
- * fires: the script printed every result and then sat there for ever, which
- * from outside is indistinguishable from the app hanging. It cost this check
- * eight hours on its first run before anybody looked at where it was stuck.
- */
-let stopped = false;
-const stop = () => {
-  if (stopped) return;
-  stopped = true;
-  server.kill();
-  fs.rmSync(DATA, { recursive: true, force: true });
-};
-server.unref();
-process.on('exit', stop);
+const { base: BASE, stop } = await startApp({ key: KEY });
 
 let failures = 0;
 const check = (name, got, want) => {
@@ -104,10 +62,6 @@ const check = (name, got, want) => {
 
 let browser;
 try {
-  for (let i = 0; i < 40; i += 1) {
-    try { await fetch(`http://127.0.0.1:${PORT}/`); break; } catch { await wait(250); }
-  }
-
   browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1400, height: 1100 } });
 
@@ -135,7 +89,7 @@ try {
     }
   });
 
-  await page.goto(`http://127.0.0.1:${PORT}/console?key=${KEY}`, { waitUntil: 'load' });
+  await page.goto(`${BASE}/console?key=${KEY}`, { waitUntil: 'load' });
   await page.waitForTimeout(2000);
   await page.evaluate(() => document.querySelector('button.tab[data-tab="quiz"]')?.click());
   await page.waitForSelector('.pack-card[data-pack]');
@@ -181,7 +135,7 @@ try {
    * a show back from the thing that stores it is the difference between "the
    * request left" and "the night is saved".
    */
-  const lib = await (await fetch(`http://127.0.0.1:${PORT}/api/library`, {
+  const lib = await (await fetch(`${BASE}/api/library`, {
     headers: { 'X-Host-Key': KEY },
   })).json();
   const kept = (lib.shows || []).map((s) => s.name);

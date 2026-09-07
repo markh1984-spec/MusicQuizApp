@@ -1112,3 +1112,64 @@ export function bingoShapeLabel(shape, trackCount) {
   const drags = squares * 2 < trackCount;
   return `${line} · ${squares} of ${trackCount} songs on a card${drags ? ' — drags' : ''}`;
 }
+
+/**
+ * NOTHING ON THE FINAL MAY BE CUT OFF — the backstop, measured after it draws.
+ *
+ * **THE SLIDE WAS ALREADY CLIPPING, and nobody had reported it.** `.winner` is
+ * a grid with `place-content: center` inside a fixed-height card, and
+ * `body.screen` hides the overflow — so content taller than the card is cut at
+ * BOTH ends at once. Measured against the real stylesheet:
+ *
+ * ```
+ *                              1280x720   1920x1080   1024x768
+ *   draw + comeback              72px        104px       75px
+ *   draw + league + comeback    142px        212px      151px
+ * ```
+ *
+ * What went was **"Tonight's winner"** off the top and the bottom of the
+ * comeback band — with its QR sliced in half — off the foot. Proportional, so
+ * every projector lost the same share.
+ *
+ * **TIGHTENING THE MARGINS WAS TRIED AND IS NOT A FIX**: it still clipped
+ * 120px on a league night. That is a plaster the next feature undoes, which is
+ * exactly what this function exists to stop happening a third time.
+ *
+ * **SO THE REAL FIX IS IN TWO PARTS AND THIS IS THE SECOND.** The draw and the
+ * comeback sit SIDE BY SIDE now (`.endband`), which buys the height honestly
+ * and loses nothing — on an ordinary 16:9 night that alone is enough and this
+ * scales by 1.00, changing nothing. This is the guarantee underneath it: after
+ * that, whatever is on the slide, it is shrunk just enough to fit rather than
+ * cut.
+ *
+ * **IT MEASURES THE CHILDREN, NOT `scrollHeight`.** On a grid with
+ * `place-content: center` scrollHeight CLAMPS to the container — so it
+ * under-reports precisely when the content is too tall, which is the only
+ * moment this is asked anything. The first version used it, computed 0.84
+ * where 0.70 was needed, and still clipped.
+ *
+ * **`--fit` IS RESET TO 1 BEFORE MEASURING**, or each pass would measure a box
+ * that is already shrunk and creep towards nothing.
+ *
+ * **IT LIVES HERE RATHER THAN IN `screen.js` SO THE GUARD CAN RUN THE REAL
+ * ONE.** `final-fits.mjs` had a retyped copy of this and a comment claiming it
+ * was this — so deleting the original left all eighteen of its checks green.
+ * `client.js` has no page and no boot code, which is what makes it importable
+ * from a check without starting somebody else's projector.
+ *
+ * It takes the card element rather than closing over one, and that is the only
+ * difference from the version that sat in `screen.js`.
+ */
+export function fitWinner(cardEl) {
+  const w = cardEl && cardEl.querySelector('.winner');
+  if (!w) return;
+  w.style.setProperty('--fit', '1');
+  const room = cardEl.clientHeight;
+  const kids = [...w.children];
+  if (!room || !kids.length) return;
+  const top = Math.min(...kids.map((n) => n.getBoundingClientRect().top));
+  const bottom = Math.max(...kids.map((n) => n.getBoundingClientRect().bottom));
+  const need = bottom - top;
+  // Never GROW past 1: a sparse night must look exactly as it always has.
+  w.style.setProperty('--fit', String(Math.min(1, room / Math.max(1, need))));
+}

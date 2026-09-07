@@ -34,23 +34,45 @@
  *
  * Its own port, its own DATA_DIR, both cleaned up on the way out.
  */
-import { spawn } from 'node:child_process';
-import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
-import net from 'node:net'; import { createRequire } from 'node:module';
+import path from 'node:path';
+import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
-const PORT = Number(process.env.PORT || 49001), KEY = 'yellowcheck';
-const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'yellow-'));
+
+import { startApp } from './helpers/live-app.mjs';
+const KEY = 'yellowcheck';
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const busy = await new Promise((res) => { const p = net.createServer();
-  p.once('error', () => res(true)); p.once('listening', () => p.close(() => res(false))); p.listen(PORT, '127.0.0.1'); });
-if (busy) { console.error('port busy'); process.exit(1); }
-const server = spawn(process.execPath, ['server.js'], {
-  env: { ...process.env, PORT: String(PORT), HOST_KEY: KEY, DATA_DIR: DATA }, stdio: 'ignore' });
-let stopped = false;
-const stop = () => { if (stopped) return; stopped = true; server.kill(); fs.rmSync(DATA, { recursive: true, force: true }); };
-server.unref(); process.on('exit', stop);
-const B = `http://127.0.0.1:${PORT}`;
+
+/*
+ * THE APP COMES FROM `helpers/live-app.mjs`.
+ *
+ * This file used to probe its own fixed port and stop dead if something was
+ * answering on it — a fair guard and the wrong shape, because it turns a
+ * collision into a refusal to run rather than into no collision at all. The
+ * helper asks the OS for a free one, `unref()`s the child so the script can
+ * end, and cleans up whether the run passed, failed or threw.
+ */
+/*
+ * A REAL SIGNED-IN OWNER AND QUIZMASTER, not the host key: the key has no
+ * account to save a colour or a preference against, so half of what is checked
+ * here cannot persist on it and the run would be measuring the wrong thing.
+ *
+ * Seeded BEFORE the spawn, which is what `seed` is for — `Accounts` reads its
+ * file once at boot, so a book written afterwards means a server that has
+ * never heard of either account. This script used to start, kill, write and
+ * start again to work around that.
+ */
+const { base: B, stop } = await startApp({
+  key: KEY,
+  async seed(dir) {
+    const { Accounts } = await import(new URL('../src/accounts.js', import.meta.url).href);
+    const book = new Accounts(path.join(dir, 'accounts.json'));
+    book.create({ email: 'owner@example.com', password: 'owner passphrase here', name: 'Owner', role: 'owner', status: 'active' });
+    book.create({ email: 'qm@example.com', password: 'quizmaster passphrase', name: 'Quizzy Rascal', role: 'quizmaster', tier: 'gold', status: 'active' });
+    book.save();
+  },
+});
+
 let fails = 0;
 const check = (name, got, want) => {
   const ok = JSON.stringify(got) === JSON.stringify(want);
@@ -60,24 +82,6 @@ const check = (name, got, want) => {
 };
 let browser;
 try {
-  for (let i = 0; i < 40; i += 1) { try { await fetch(`${B}/`); break; } catch { await wait(250); } }
-  // A REAL SIGNED-IN QUIZMASTER, not the host key: the host key has no account
-  // to save a colour or a preference against, so half of what is being checked
-  // here cannot persist on it and the check would be measuring the wrong thing.
-  server.kill();
-  await wait(500);
-  const { Accounts } = await import(new URL('../src/accounts.js', import.meta.url).href);
-  const bookFile = path.join(DATA, 'accounts.json');
-  const book = new Accounts(bookFile);
-  book.create({ email: 'owner@example.com', password: 'owner passphrase here', name: 'Owner', role: 'owner', status: 'active' });
-  const qm = book.create({ email: 'qm@example.com', password: 'quizmaster passphrase',
-    name: "Quizzy Rascal", role: 'quizmaster', tier: 'gold', status: 'active' });
-  book.save();
-  const again = spawn(process.execPath, ['server.js'], {
-    env: { ...process.env, PORT: String(PORT), HOST_KEY: KEY, DATA_DIR: DATA }, stdio: 'ignore' });
-  again.unref(); process.on('exit', () => again.kill());
-  for (let i = 0; i < 40; i += 1) { try { await fetch(`${B}/`); break; } catch { await wait(250); } }
-
   browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
   await page.goto(`${B}/login`, { waitUntil: 'load' });

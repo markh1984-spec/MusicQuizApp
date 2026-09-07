@@ -29,29 +29,32 @@
  * touches a real one, and cleans both up on the way out.
  */
 
-import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 
+import { startApp } from './helpers/live-app.mjs';
+
 const require = createRequire(import.meta.url);
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 
-const PORT = Number(process.env.PORT || 48771);
 const KEY = 'dragcheck';
-const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'dragcheck-'));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const server = spawn(process.execPath, ['server.js'], {
-  env: { ...process.env, PORT: String(PORT), HOST_KEY: KEY, DATA_DIR: DATA },
-  stdio: 'ignore',
-});
-const stop = () => {
-  server.kill();
-  fs.rmSync(DATA, { recursive: true, force: true });
-};
-process.on('exit', stop);
+/*
+ * THE APP COMES FROM `helpers/live-app.mjs`.
+ *
+ * It used to pick a port and hope. `spawn` here has `stdio: 'ignore'`, so a
+ * port already in use fails SILENTLY — no server of ours starts and every
+ * measurement is about somebody else's process. That is not theoretical: this
+ * folder produced a false PASS that way once, and a false FAIL on the
+ * projector while another check was running. The helper asks the OS for a free
+ * port and `unref()`s the child, which is also what lets a script actually
+ * end.
+ */
+const { base: BASE, stop } = await startApp({ key: KEY });
+
 
 let failures = 0;
 const check = (name, got, want) => {
@@ -62,16 +65,13 @@ const check = (name, got, want) => {
 };
 
 try {
-  for (let i = 0; i < 40; i += 1) {
-    try { await fetch(`http://127.0.0.1:${PORT}/`); break; } catch { await wait(250); }
-  }
 
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1400, height: 1100 } });
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e.message)));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
-  await page.goto(`http://127.0.0.1:${PORT}/console?key=${KEY}`, { waitUntil: 'load' });
+  await page.goto(`${BASE}/console?key=${KEY}`, { waitUntil: 'load' });
   await page.waitForTimeout(2000);
 
   /** What the running order looks like, slot by slot. */

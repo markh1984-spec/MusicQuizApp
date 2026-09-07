@@ -84,15 +84,41 @@ for (const i of [0, 1, 2, 5]) await cells[i]?.click();
 await wait(500);
 await shot(p0, 'bingo-card');
 
-// ---- ANTI-CHEAT CHECK: reload and confirm the identical card comes back
-await p0.reload({ waitUntil: 'domcontentloaded' });
-await wait(1200);
-const cardAfter = await p0.$$eval('.bingo-cell .bt', (els) => els.map((e) => e.textContent));
-const same = JSON.stringify(cardBefore) === JSON.stringify(cardAfter);
-console.log(`\n  card identical after a full page reload: ${same ? 'YES' : 'NO'}`);
-if (!same) {
-  console.log('  before:', cardBefore.slice(0, 4));
-  console.log('  after: ', cardAfter.slice(0, 4));
+/*
+ * ---- ANTI-CHEAT CHECK: reload and confirm the identical card comes back
+ *
+ * **THIS IS RULE 6'S ONLY GUARD IN A BROWSER, AND IT USED TO PASS ON
+ * NOTHING.** It read two lists of card squares and compared them; with the
+ * selector matching nothing both were `[]`, `JSON.stringify` made them equal,
+ * and it printed *"card identical after a full page reload: YES"*. Renaming
+ * one class in `play-bingo.js` was enough — and it never set an exit code
+ * either, so a real NO also came back as a pass to anything running it.
+ *
+ * The fourth sighting in this repo of "it is in the document" being confused
+ * with "somebody can see it": count what you found, and say so.
+ */
+const EXPECT_LEAST = 9;  // the smallest card this app deals is 3 x 3
+if (cardBefore.length < EXPECT_LEAST) {
+  console.log(`\n  CARD CHECK CANNOT RUN — found ${cardBefore.length} squares before the reload.`);
+  console.log('  The selector ".bingo-cell .bt" matches nothing, so this check would compare');
+  console.log('  two empty lists and call them identical. Rule 6 has no browser guard until');
+  console.log('  this is pointed at the real markup again.');
+  process.exitCode = 1;
+} else {
+  await p0.reload({ waitUntil: 'domcontentloaded' });
+  await wait(1200);
+  const cardAfter = await p0.$$eval('.bingo-cell .bt', (els) => els.map((e) => e.textContent));
+  const same = cardAfter.length === cardBefore.length
+    && JSON.stringify(cardBefore) === JSON.stringify(cardAfter);
+  console.log(`\n  card identical after a full page reload: ${same ? 'YES' : 'NO'} (${cardBefore.length} squares)`);
+  if (!same) {
+    console.log('  before:', cardBefore.slice(0, 4));
+    console.log('  after: ', cardAfter.slice(0, 4));
+    // A CARD THAT CHANGED IS THE ONE THING THIS SCRIPT MUST NOT SHRUG AT: it
+    // is the whole of rule 6, and the host asked for it by name to stop
+    // cheating.
+    process.exitCode = 1;
+  }
 }
 
 // ---- a false alarm, then a real win

@@ -36,7 +36,6 @@
  *   node scripts/visual-qa.mjs --shots /tmp/look    # keep the pictures
  */
 
-import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -45,20 +44,17 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 
+import { startApp } from './helpers/live-app.mjs';
+
 const at = process.argv.indexOf('--shots');
 const SHOTS = at > -1 ? process.argv[at + 1] : fs.mkdtempSync(path.join(os.tmpdir(), 'visualqa-shots-'));
 fs.mkdirSync(SHOTS, { recursive: true });
 
-/* A random port: a killed run leaves its server behind, and a fixed port then
-   collides with the orphan so every check quietly measures a server this script
-   never started. */
-const PORT = Number(process.env.PORT || 49100 + Math.floor(Math.random() * 200));
 const KEY = 'visualqa';
 const ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'visualqa-'));
-const DATA = path.join(ROOT, 'data');
 const QUIZ = path.join(ROOT, 'quizzes');
 const BINGO = path.join(ROOT, 'bingo');
-for (const d of [DATA, QUIZ, BINGO]) fs.mkdirSync(d, { recursive: true });
+for (const d of [QUIZ, BINGO]) fs.mkdirSync(d, { recursive: true });
 // Packs only — `bingo/` also holds a `tracklists/` directory.
 const copyPacks = (from, to) => {
   for (const f of fs.readdirSync(from)) {
@@ -107,11 +103,21 @@ const VIEWS = [
   { name: 'desktop', w: 1440, h: 900 },
 ];
 const GAMES = ['maze', 'rally', 'tailback', 'quickdraw'];
-const B = `http://127.0.0.1:${PORT}`;
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-let server = null;
-const stop = () => { if (server) server.kill('SIGKILL'); fs.rmSync(ROOT, { recursive: true, force: true }); };
+/*
+ * THE APP COMES FROM `helpers/live-app.mjs` — a port asked for rather than
+ * guessed, and a child that is `unref()`d so this script can end. It could
+ * not: cleanup was on `process.on('exit')` alone, which never fires while a
+ * spawned child holds the loop open.
+ *
+ * The fixture packs stay in this script's own ROOT and ride in on `QUIZ_DIR`
+ * and `BINGO_DIR`; the DATA dir is the helper's.
+ */
+const { base: B, stop: stopApp } = await startApp({
+  key: KEY, env: { QUIZ_DIR: QUIZ, BINGO_DIR: BINGO },
+});
+const stop = () => { stopApp(); fs.rmSync(ROOT, { recursive: true, force: true }); };
 process.on('exit', stop);
 for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => { stop(); process.exit(1); });
 
@@ -184,10 +190,6 @@ const note = (where, m) => {
 };
 
 try {
-  server = spawn(process.execPath, ['server.js'], { stdio: 'ignore',
-    env: { ...process.env, PORT: String(PORT), HOST_KEY: KEY, DATA_DIR: DATA, QUIZ_DIR: QUIZ, BINGO_DIR: BINGO } });
-  for (let i = 0; i < 80; i += 1) { try { await fetch(`${B}/health`); break; } catch { await wait(250); } }
-
   const browser = await chromium.launch();
   const ctxs = {};
   for (const v of VIEWS) {
@@ -546,3 +548,6 @@ if (found.length || uniqueErrors.length) {
 } else {
   console.log(`Nothing clipped, nothing off screen, nothing under the touch floor, nothing unreachable, no errors.\nPictures: ${SHOTS}`);
 }
+
+// AND IT ENDS. See the note by `startApp` above.
+stop();

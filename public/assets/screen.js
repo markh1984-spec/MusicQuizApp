@@ -10,7 +10,7 @@
  * simply does not put it in this payload.
  */
 
-import { comeBackBand, esc, node, ServerClock, Live, brandMark, brandWords, roomCode, roomParam } from './client.js';
+import { comeBackBand, esc, fitWinner, node, ServerClock, Live, brandMark, brandWords, roomCode, roomParam } from './client.js';
 import { bingoCard, bingoTopbar } from './screen-bingo.js';
 import { paintLook, DEFAULT_LOOK } from './looks.js';
 import { paintScheme } from './schemes.js';
@@ -123,7 +123,7 @@ function draw(next) {
     cardEl.replaceChildren(card.render(state, joinUrl));
     // The final is the one card whose content can outgrow the screen — see
     // `fitWinner()`. A frame first, so the browser has laid it out.
-    requestAnimationFrame(fitWinner);
+    requestAnimationFrame(() => fitWinner(cardEl));
   }
   /*
    * And update even on the FIRST paint, not only on later pushes.
@@ -1151,61 +1151,25 @@ function boardRow(p, i) {
     </div>`;
 }
 
-/**
- * NOTHING ON THE FINAL MAY BE CUT OFF — the backstop, measured after it draws.
+/*
+ * `fitWinner()` LIVES IN `client.js` NOW, and the move is what makes its guard
+ * real.
  *
- * **THE SLIDE WAS ALREADY CLIPPING, and nobody had reported it.** `.winner` is
- * a grid with `place-content: center` inside a fixed-height card, and
- * `body.screen` hides the overflow — so content taller than the card is cut at
- * BOTH ends at once. Measured against the real stylesheet:
+ * `final-fits.mjs` measured a RETYPED COPY of this function, under a comment
+ * saying it was "the real `fitWinner()`, run the way the projector runs it".
+ * It was not: deleting this function outright and renaming `.endband` left all
+ * eighteen of its checks green. A guard that reimplements the thing it is
+ * guarding is testing its own arithmetic.
  *
- * ```
- *                              1280x720   1920x1080   1024x768
- *   draw + comeback              72px        104px       75px
- *   draw + league + comeback    142px        212px      151px
- * ```
- *
- * What went was **"Tonight's winner"** off the top and the bottom of the
- * comeback band — with its QR sliced in half — off the foot. Proportional, so
- * every projector lost the same share.
- *
- * **TIGHTENING THE MARGINS WAS TRIED AND IS NOT A FIX**: it still clipped
- * 120px on a league night. That is a plaster the next feature undoes, which is
- * exactly what this function exists to stop happening a third time.
- *
- * **SO THE REAL FIX IS IN TWO PARTS AND THIS IS THE SECOND.** The draw and the
- * comeback sit SIDE BY SIDE now (`.endband`), which buys the height honestly
- * and loses nothing — on an ordinary 16:9 night that alone is enough and this
- * scales by 1.00, changing nothing. This is the guarantee underneath it: after
- * that, whatever is on the slide, it is shrunk just enough to fit rather than
- * cut.
- *
- * **IT MEASURES THE CHILDREN, NOT `scrollHeight`.** On a grid with
- * `place-content: center` scrollHeight CLAMPS to the container — so it
- * under-reports precisely when the content is too tall, which is the only
- * moment this is asked anything. The first version used it, computed 0.84
- * where 0.70 was needed, and still clipped.
- *
- * **`--fit` IS RESET TO 1 BEFORE MEASURING**, or each pass would measure a box
- * that is already shrunk and creep towards nothing.
+ * `client.js` is the right home by the rule this repo already has — shared
+ * code goes in the file with no page and no boot code, so importing it cannot
+ * run somebody else's start-up. It takes the card element rather than closing
+ * over `cardEl`, which is the only change to it.
  */
-function fitWinner() {
-  const w = cardEl.querySelector('.winner');
-  if (!w) return;
-  w.style.setProperty('--fit', '1');
-  const room = cardEl.clientHeight;
-  const kids = [...w.children];
-  if (!room || !kids.length) return;
-  const top = Math.min(...kids.map((n) => n.getBoundingClientRect().top));
-  const bottom = Math.max(...kids.map((n) => n.getBoundingClientRect().bottom));
-  const need = bottom - top;
-  // Never GROW past 1: a sparse night must look exactly as it always has.
-  w.style.setProperty('--fit', String(Math.min(1, room / Math.max(1, need))));
-}
 
 // A projector plugged into a different screen mid-evening is a real thing, and
 // the room it has to fit into changes with it.
-window.addEventListener('resize', () => requestAnimationFrame(fitWinner));
+window.addEventListener('resize', () => requestAnimationFrame(() => fitWinner(cardEl)));
 
 function renderWinner(s) {
   const board = s.leaderboard || [];

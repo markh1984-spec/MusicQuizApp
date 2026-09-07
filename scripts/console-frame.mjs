@@ -50,18 +50,17 @@
  * numbers.
  */
 
-import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 
+import { startApp } from './helpers/live-app.mjs';
+
 const require = createRequire(import.meta.url);
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 
-const PORT = Number(process.env.PORT || (49000 + Math.floor(Math.random() * 900)));
 const KEY = 'framecheck';
-const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'framecheck-'));
 const OUT = process.argv[2] || path.join(os.tmpdir(), 'frameshots');
 fs.mkdirSync(OUT, { recursive: true });
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -80,15 +79,28 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
  */
 const OWNER = { email: 'frame@example.com', password: 'framecheck-password' };
 const { Accounts } = await import('../src/accounts.js');
-new Accounts(path.join(DATA, 'accounts.json'))
+/*
+ * WRITTEN BEFORE THE SERVER STARTS — `seed` runs first for exactly this
+ * reason. `Accounts` reads its file once at boot, so an account created after
+ * the spawn does not exist as far as the running app is concerned and the
+ * sign-in below would answer 401.
+ */
+const seedOwner = (dir) => new Accounts(path.join(dir, 'accounts.json'))
   .create({ ...OWNER, name: 'Frame Check', role: 'owner' });
 
-const server = spawn(process.execPath, ['server.js'], {
-  env: { ...process.env, PORT: String(PORT), HOST_KEY: KEY, DATA_DIR: DATA },
-  stdio: 'ignore',
-});
-const stop = () => { server.kill(); fs.rmSync(DATA, { recursive: true, force: true }); };
-process.on('exit', stop);
+/*
+ * THE APP COMES FROM `helpers/live-app.mjs`.
+ *
+ * It used to pick a port and hope. `spawn` here has `stdio: 'ignore'`, so a
+ * port already in use fails SILENTLY — no server of ours starts and every
+ * measurement is about somebody else's process. That is not theoretical: this
+ * folder produced a false PASS that way once, and a false FAIL on the
+ * projector while another check was running. The helper asks the OS for a free
+ * port and `unref()`s the child, which is also what lets a script actually
+ * end.
+ */
+const { base: BASE, stop } = await startApp({ key: KEY, seed: seedOwner });
+
 
 let failures = 0;
 const check = (name, ok, detail = '') => {
@@ -207,9 +219,6 @@ const say = (rows) => unreachable(rows)
   .join('; ');
 
 try {
-  for (let i = 0; i < 40; i += 1) {
-    try { await fetch(`http://127.0.0.1:${PORT}/`); break; } catch { await wait(250); }
-  }
 
   /*
    * LAUNCH SOMETHING FIRST, because an idle console is not the bar that broke.
@@ -223,7 +232,7 @@ try {
    * catching itself building.
    */
   const packId = fs.readdirSync('quizzes').filter((f) => f.endsWith('.json'))[0].replace(/\.json$/, '');
-  const launched = await fetch(`http://127.0.0.1:${PORT}/api/host/launch`, {
+  const launched = await fetch(`${BASE}/api/host/launch`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Host-Key': KEY },
     body: JSON.stringify({ game: 'quiz', packId, replace: true }),
@@ -240,11 +249,11 @@ try {
    * measuring a console nobody uses** — the launch is not the state that
    * matters here, the ROOM being in it is.
    */
-  const joinCode = ((await (await fetch(`http://127.0.0.1:${PORT}/api/library`, {
+  const joinCode = ((await (await fetch(`${BASE}/api/library`, {
     headers: { 'X-Host-Key': KEY },
   })).json()).running || {}).joinCode || '';
   for (const name of ['Mick', 'Rita']) {
-    await fetch(`http://127.0.0.1:${PORT}/api/join${joinCode ? `?g=${joinCode}` : ''}`, {
+    await fetch(`${BASE}/api/join${joinCode ? `?g=${joinCode}` : ''}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name }),
@@ -272,9 +281,9 @@ try {
     console.log(`\n${label} ${width}x${height} — ${framed ? 'pinned frame' : 'the page scrolls'}${twoCols ? ', two columns' : ', one column'}`);
 
     // The context's own cookie jar, so the page that follows is signed in.
-    await page.context().request.post(`http://127.0.0.1:${PORT}/api/sign-in`, { data: OWNER });
+    await page.context().request.post(`${BASE}/api/sign-in`, { data: OWNER });
 
-    await page.goto(`http://127.0.0.1:${PORT}/console?key=${KEY}&door=console&tab=quiz`, { waitUntil: 'load' });
+    await page.goto(`${BASE}/console?key=${KEY}&door=console&tab=quiz`, { waitUntil: 'load' });
     await page.waitForTimeout(2200);
 
     /*

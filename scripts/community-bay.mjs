@@ -37,20 +37,19 @@
  * is the real thing throughout; only the network behind it is a fixture.
  */
 
-import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
+
+import { startApp } from './helpers/live-app.mjs';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 
 // A port of its own per run, so two of these side by side cannot half-connect
 // to each other's server and report a failure that is about the harness.
-const PORT = Number(process.env.PORT || (48000 + Math.floor(Math.random() * 900)));
 const KEY = 'baycheck';
-const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'baycheck-'));
 const OUT = process.argv[2] || path.join(os.tmpdir(), 'bayshots');
 fs.mkdirSync(OUT, { recursive: true });
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -58,8 +57,10 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 /* ---- an archive of league nights ------------------------------------- */
 
 // The HOUSE room's archive is `DATA_DIR/archive`, not `DATA_DIR/rooms/HOUSE`.
-const arc = path.join(DATA, 'archive');
-fs.mkdirSync(arc, { recursive: true });
+// Filled by `seedArchive()` below, which `startApp` runs BEFORE the server
+// starts — a night written afterwards is a night the running app has already
+// decided is not there.
+let arc = '';
 
 const TEAMS_A = ['The Quizzy Rascals', 'Norfolk Enchants', 'Beer Pressure', 'Agatha Quiztie',
   'Let Us Win', 'Quiz Team Aguilera', 'The Pen Is Mightier', 'Trivia Newton John',
@@ -101,17 +102,28 @@ const seed = (venue, teams, weeksBack, shift, dayOffset = 0, venueId = '') => {
     archivedAt: at, venue, venueId, leaderboard: board,
   }, null, 2));
 };
-for (let w = 0; w < 8; w += 1) {
-  seed('The Crown', TEAMS_A, w, w, 0, 'v1');
-  seed('The Station Tap', TEAMS_B, w, w * 3 + 1, 3, 'v2');
+function seedArchive(dir) {
+  arc = path.join(dir, 'archive');
+  fs.mkdirSync(arc, { recursive: true });
+  for (let w = 0; w < 8; w += 1) {
+    seed('The Crown', TEAMS_A, w, w, 0, 'v1');
+    seed('The Station Tap', TEAMS_B, w, w * 3 + 1, 3, 'v2');
+  }
 }
 
-const server = spawn(process.execPath, ['server.js'], {
-  env: { ...process.env, PORT: String(PORT), HOST_KEY: KEY, DATA_DIR: DATA },
-  stdio: 'ignore',
-});
-const stop = () => { server.kill(); fs.rmSync(DATA, { recursive: true, force: true }); };
-process.on('exit', stop);
+/*
+ * THE APP COMES FROM `helpers/live-app.mjs`.
+ *
+ * It used to pick a port and hope. `spawn` here has `stdio: 'ignore'`, so a
+ * port already in use fails SILENTLY — no server of ours starts and every
+ * measurement is about somebody else's process. That is not theoretical: this
+ * folder produced a false PASS that way once, and a false FAIL on the
+ * projector while another check was running. The helper asks the OS for a free
+ * port and `unref()`s the child, which is also what lets a script actually
+ * end.
+ */
+const { base: BASE, stop } = await startApp({ key: KEY, seed: seedArchive });
+
 
 /* ---- a stand-in for the private photo repository ---------------------- */
 
@@ -124,9 +136,6 @@ const check = (name, ok, detail = '') => {
 };
 
 try {
-  for (let i = 0; i < 40; i += 1) {
-    try { await fetch(`http://127.0.0.1:${PORT}/`); break; } catch { await wait(250); }
-  }
   const browser = await chromium.launch();
 
   for (const [label, width, height] of [['desk', 1500, 900], ['laptop', 1280, 900], ['short', 1280, 720], ['phone', 390, 844]]) {
@@ -246,7 +255,7 @@ try {
      * is the only way "every bay is the launch bay's size" stays true rather
      * than being a sentence in a stylesheet.
      */
-    await page.goto(`http://127.0.0.1:${PORT}/console?key=${KEY}&door=console&tab=quiz`, { waitUntil: 'load' });
+    await page.goto(`${BASE}/console?key=${KEY}&door=console&tab=quiz`, { waitUntil: 'load' });
     await page.addStyleTag({ content: '.backup-warn, main > .panel.warn { display: none !important; }' });
     await page.waitForTimeout(1800);
     const bayH = await page.evaluate(() => {
@@ -286,7 +295,7 @@ try {
     });
 
     for (const tab of ['league', 'photos', 'asks']) {
-      await page.goto(`http://127.0.0.1:${PORT}/console?key=${KEY}&door=community&tab=${tab}`, { waitUntil: 'load' });
+      await page.goto(`${BASE}/console?key=${KEY}&door=community&tab=${tab}`, { waitUntil: 'load' });
       /* The two warnings a bare environment raises — no GitHub, no accounts —
          are not on a configured console, and 282px of them would make every
          measurement here about the harness rather than about the bay. */
@@ -372,7 +381,7 @@ try {
        drift back to its own height without anything noticing. */
     if (framed) {
       for (const [door, tab] of [['workshop', 'quiz'], ['post', 'past'], ['community', 'league']]) {
-        await page.goto(`http://127.0.0.1:${PORT}/console?key=${KEY}&door=${door}&tab=${tab}`, { waitUntil: 'load' });
+        await page.goto(`${BASE}/console?key=${KEY}&door=${door}&tab=${tab}`, { waitUntil: 'load' });
         await page.addStyleTag({ content: '.backup-warn, main > .panel.warn { display: none !important; }' });
         await page.waitForTimeout(1500);
         const m = await page.evaluate(() => ({
@@ -423,7 +432,7 @@ try {
        picture to open it, and again to come back. All four are click handlers,
        and a dead one draws perfectly: the handler's own catch swallows a
        ReferenceError and the button simply does nothing. */
-    await page.goto(`http://127.0.0.1:${PORT}/console?key=${KEY}&door=community&tab=photos`, { waitUntil: 'load' });
+    await page.goto(`${BASE}/console?key=${KEY}&door=community&tab=photos`, { waitUntil: 'load' });
     await page.addStyleTag({ content: '.backup-warn, main > .panel.warn { display: none !important; }' });
     await page.waitForTimeout(2200);
     await page.locator('.tabbody .venue-top').first().click();
@@ -871,7 +880,7 @@ try {
     // AND THE RAIL ACTUALLY CHANGES THE TABLE. A dead control draws perfectly:
     // the click handler's own catch would swallow a `ReferenceError` and leave
     // a rail that lights up and does nothing.
-    await page.goto(`http://127.0.0.1:${PORT}/console?key=${KEY}&door=community&tab=league`, { waitUntil: 'load' });
+    await page.goto(`${BASE}/console?key=${KEY}&door=community&tab=league`, { waitUntil: 'load' });
     await page.waitForTimeout(2000);
     const first = (await frame()).lit;
     await page.locator('.bay-pick:not(.on)').first().click();

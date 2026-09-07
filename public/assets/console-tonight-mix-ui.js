@@ -331,9 +331,28 @@ export function renderSlots(slots, {
     return `<div class="mix-bingo-said tiny">${esc(`${shape.rows}×${shape.cols}`)} · ${n} prize${n === 1 ? '' : 's'}</div>`;
   }
 
+  /*
+   * AN EMPTY SLOT IS A DROP TARGET, NOT A BUTTON — and it used to say it was.
+   *
+   * It carried `role="button"` and `tabindex="0"`, so it was announced as a
+   * control and could be tabbed to and pressed with Enter — and pressing it
+   * did nothing at all, on a mouse, a keyboard and by construction on a
+   * touchscreen, because a slot has no tap action to have. The rule this file
+   * already follows is that a tile lights up ONLY where the drop will be
+   * taken, precisely so a control never promises something it will not do;
+   * announcing an inert square as a button is that promise made in words.
+   *
+   * The way a slot is filled without a drag is unchanged and is on the PACK
+   * CARD: tapping one puts it in the next free slot, which is the half that
+   * works on a phone where HTML5 drag never fires at all.
+   *
+   * The label goes on the element instead, so a screen reader still says what
+   * the square is for rather than nothing.
+   */
   function emptyTile(at) {
     const tile = node(`
-      <div class="lb-tile mix-drop" tabindex="0" role="button" title="Drop a round or a pack here">
+      <div class="lb-tile mix-drop" aria-label="Slot ${at + 1} — drop a round or a pack here"
+           title="Drop a round or a pack here">
         <span class="lb-tile-n is-empty">${at + 1}</span>
         <span class="lb-drop-plus" aria-hidden="true">+</span>
       </div>`);

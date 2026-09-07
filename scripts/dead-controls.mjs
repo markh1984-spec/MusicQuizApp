@@ -33,29 +33,31 @@
  * a container tool. Run it before a gig week, and after anything that moves a
  * listener or restructures a card.
  *
- *   node scripts/dead-controls.mjs
- *   node scripts/dead-controls.mjs --door workshop     # just one door
+ *   node scripts/dead-controls.mjs --door console     # ~1 minute, the usual form
+ *   node scripts/dead-controls.mjs                    # every door, 25+ minutes
+ *
+ * **ONE DOOR IS THE EVERYDAY FORM, because the full walk takes over twenty-five
+ * minutes** — it presses every control on every tab and waits for the page
+ * between each, and the account door alone has thirty-nine on the calendar. A
+ * guard nobody has time to run is a guard nobody runs, so name the door you
+ * changed. The Console door is the protected surface and the one to reach for
+ * by default.
+ *
+ * **IT PUTS A PACK IN TONIGHT FIRST**, which is what makes it able to see the
+ * launch bar at all: those controls are deliberately `disabled` while the row
+ * is empty, and a disabled control is skipped, correctly. On an idle console
+ * that hid eleven of them — including `Save`, which was dead for a day with
+ * every check in the repo green.
  */
 
-import { spawn } from 'node:child_process';
 import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 import { createRequire } from 'node:module';
+
+import { startApp } from './helpers/live-app.mjs';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 
-/*
- * A RANDOM PORT, because a run that is killed leaves its server behind.
- * A fixed one then collides with the orphan and every check quietly runs
- * against a server this script never started — which happened, and read as
- * three failures in the app. The guard below still refuses a busy port; the
- * random one just means it almost never has to.
- */
-const PORT = Number(process.env.PORT || 48773 + Math.floor(Math.random() * 120));
-const KEY = 'deadcontrols';
-const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'deadcontrols-'));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const onlyDoor = (() => {
@@ -64,32 +66,17 @@ const onlyDoor = (() => {
 })();
 
 /*
- * REFUSE TO RUN AGAINST SOMEBODY ELSE'S SERVER.
+ * THE APP COMES FROM `helpers/live-app.mjs` NOW, and that fixes two things
+ * this file used to do for itself and get wrong.
  *
- * A previous run that did not clean up leaves a server on this port with a
- * game half way through it — and the spawn below then fails to bind, quietly,
- * while the browser happily talks to the OLD one. Every check still runs and
- * every answer is about a server this script never started. That is exactly
- * the "guard that quietly tests nothing" this repo keeps being bitten by, so
- * it is a hard stop rather than a warning.
+ * The port is asked for rather than guessed, so there is nothing to collide
+ * with and no hard stop to hit; and the child is `unref()`d, so this script
+ * can actually END. It could not: cleanup was on `process.on('exit')` alone,
+ * which never fires while a spawned child holds the event loop open, so it
+ * printed every result and then sat there for ever — measured at 4 minutes
+ * and still going, with a browser and a temp directory attached.
  */
-const portIsFree = async () => {
-  try { await fetch(`http://127.0.0.1:${PORT}/health`); return false; } catch { return true; }
-};
-if (!await portIsFree()) {
-  console.error(`\nSomething is already answering on ${PORT}. Stop it, or run with PORT=<free port>.`);
-  process.exit(1);
-}
-
-const server = spawn(process.execPath, ['server.js'], {
-  env: { ...process.env, PORT: String(PORT), HOST_KEY: KEY, DATA_DIR: DATA },
-  stdio: 'ignore',
-});
-const stop = () => {
-  server.kill();
-  fs.rmSync(DATA, { recursive: true, force: true });
-};
-process.on('exit', stop);
+const { base: BASE, key: KEY, stop } = await startApp({ key: 'deadcontrols' });
 // A killed run must still take its server with it.
 for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => { stop(); process.exit(1); });
 
@@ -127,23 +114,30 @@ let dead = [];
 let tiny = [];
 let errors = [];
 
+let browser;
 try {
-  for (let i = 0; i < 40; i += 1) {
-    try { await fetch(`http://127.0.0.1:${PORT}/`); break; } catch { await wait(250); }
-  }
-
-  const browser = await chromium.launch();
+  browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1400, height: 1100 } });
   page.on('pageerror', (e) => errors.push(String(e.message)));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text().slice(0, 160)); });
-  // Every dialog is answered NO. A check that can say yes is a check that can
-  // change something, and this one is meant to be safe to run on any day.
-  page.on('dialog', (d) => d.dismiss().catch(() => {}));
+  /*
+   * EVERY DIALOG IS ANSWERED NO — a check that can say yes is a check that can
+   * change something, and this one is meant to be safe to run on any day.
+   *
+   * **BUT A DIALOG APPEARING IS ITSELF PROOF THE PRESS WAS HEARD**, and
+   * without counting it this script called `Save` dead. Save opens a
+   * `prompt()`; dismissed, it returns null and the handler correctly gives up,
+   * so nothing changes in the DOM and no request goes out — which is exactly
+   * the fingerprint of a control that does nothing. The one that was genuinely
+   * dead for a day and the one asking what to call the night looked identical.
+   */
+  let dialogs = 0;
+  page.on('dialog', (d) => { dialogs += 1; d.dismiss().catch(() => {}); });
 
   let requests = 0;
   page.on('request', (r) => { if (r.url().includes('/api/')) requests += 1; });
 
-  const url = `http://127.0.0.1:${PORT}/console?key=${KEY}`;
+  const url = `${BASE}/console?key=${KEY}`;
   await page.goto(url, { waitUntil: 'load' });
   await page.waitForTimeout(2000);
 
@@ -187,7 +181,34 @@ try {
     await goDoor(door);
     await page.evaluate((t) => document.querySelector(`button.tab[data-tab="${t}"]`)?.click(), tab);
     await page.waitForTimeout(900);
+    await putAPackInTonight();
   };
+
+  /*
+   * A NIGHT IN TONIGHT BEFORE ANYTHING IS PRESSED — and its absence is why
+   * this check could not see Save being dead for a day.
+   *
+   * The launch bar's controls are deliberately `disabled` while the row is
+   * empty ("Add a pack to save this night"), and this script skips a disabled
+   * control, correctly. So an IDLE console hides eleven of them — including
+   * Save, which creates the only thing that makes a show, and all four gap
+   * dials, which have died twice in a week. **A guard that never sets a night
+   * up is measuring a console nobody uses**, the same lesson `console-frame`
+   * already records about an empty lobby.
+   *
+   * Silent and cheap when there is nothing to tap: a pack card only exists on
+   * the two pack tabs, and a tile already in the row means the work is done.
+   */
+  async function putAPackInTonight() {
+    const done = await page.evaluate(() => {
+      if (document.querySelector('.lb-tiles .lb-tile.is-pack')) return true;
+      const card = document.querySelector('.pack-card[data-pack]');
+      if (!card) return false;
+      card.click();
+      return true;
+    }).catch(() => false);
+    if (done) await page.waitForTimeout(700);
+  }
 
   /*
    * THE CONTROLS ON WHATEVER IS ON SCREEN, as stable descriptions rather than
@@ -283,11 +304,14 @@ try {
         }
         const before = await print();
         const reqBefore = requests;
+        const dlgBefore = dialogs;
         const found = await press(c);
         if (!found) continue;
         await page.waitForTimeout(450);
         const after = await print();
-        if (after === before && requests === reqBefore) dead.push({ door, tab, ...c });
+        if (after === before && requests === reqBefore && dialogs === dlgBefore) {
+          dead.push({ door, tab, ...c });
+        }
         else dirty = true;
         n += 1;
       }
@@ -324,3 +348,11 @@ if (dead.length) {
 } else {
   console.log('Every control pressed did something.');
 }
+/*
+ * THE BROWSER IS CLOSED AND THE APP STOPPED, HERE, rather than left to an
+ * exit hook. Playwright holds handles of its own and the server child held
+ * the loop open, so this script used to print all of the above and then never
+ * end — which from outside looks exactly like the app hanging.
+ */
+await browser?.close().catch(() => {});
+stop();
